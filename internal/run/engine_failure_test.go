@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -211,5 +212,158 @@ func TestOverrunningFailedStartFinishesTheRun(t *testing.T) {
 	runToEnd(t, h)
 	if r := h.c.Current(); r.State != run.Finished || r.Outcome != run.Incomplete || !h.c.Budget().Overrun {
 		t.Fatal("an overrunning failed start did not finish the run", r, h.c.Budget())
+	}
+}
+
+// A submit whose changes the capture would refuse is refused with the file's
+// path while the step still runs, so the Agent can register the file and
+// submit within the same step (core rule S4).
+func TestSubmitIsRefusedEarlyWhenItsChangesCannotBeCaptured(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		if s.Manager != "lending" || s.Phase != run.PhaseWork {
+			return happyAgent(s)
+		}
+		return []action{
+			{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n", "out/stray.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolRefused},
+			{Tool: run.ToolReservePath, Args: `{"path":"out/stray.go","form":"code"}`, Want: run.ToolOK},
+			{Tool: run.ToolRegister, Args: `{"path":"out/stray.go","form":"code","realizes":["lending/Item"],"why":"Helper."}`, Want: run.ToolOK},
+			{Tool: run.ToolSubmit, Args: submitArgs("local", "complete"), Want: run.ToolOK},
+		}
+	}
+	h := newHarnessWith(t, stepInputsWith(t, true, withCreationArea(t)), agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	if n := strings.Count(strings.Join(admitted(h), ","), "lending work"); n != 1 {
+		t.Fatal("the step did not conclude as a submission", admitted(h), h.sessions.answers)
+	}
+	if !slices.ContainsFunc(h.sessions.answers, func(a string) bool {
+		return strings.HasPrefix(a, "lending work submit refused these changes cannot be captured:") && strings.Contains(a, "(out/stray.go)")
+	}) {
+		t.Fatal("the refusal did not name the file", h.sessions.answers)
+	}
+	if _, ok := h.engine.Aggregate().Registry().Lookup(mustPath(t, "out/stray.go")); !ok {
+		t.Fatal("the registered file did not reach the aggregate")
+	}
+}
+
+// A limited delivery that changes nothing and holds no earlier own changes
+// delivers nothing, so the Host refuses it while the step runs.
+func TestALimitedSubmitWithNothingToDeliverIsRefused(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseWork {
+			return append([]action{{Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolRefused}}, happyAgent(s)...)
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	if !slices.Contains(h.sessions.answers, "lending work submit refused a limited delivery needs changed files; with nothing to deliver, submit complete or wait") {
+		t.Fatal("the limited submit was not refused", h.sessions.answers)
+	}
+}
+
+// The early check is advisory: when the workspace cannot be observed, the
+// submit is accepted and the conclusion remains authoritative.
+func TestAPeekFailureDoesNotRefuseTheSubmit(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
+			return []action{{Write: map[string]string{"out/stray.go": "package library\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	h.ws.failPeek = true
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	// The conclusion still rejects the unregistered file and the step runs again.
+	if n := strings.Count(strings.Join(admitted(h), ","), "lending work"); n != 2 {
+		t.Fatal("the conclusion did not fail the step", admitted(h), h.sessions.answers)
+	}
+}
+
+// A limited delivery that changes nothing is accepted when the task still holds
+// its rejected own changes: it resubmits them.
+func TestALimitedResubmitOfRejectedOwnChangesIsAccepted(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0:
+			return []action{{Write: map[string]string{"out/library.go": "package library\n\ntype Item struct{}\n"}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseWork:
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate:
+			return []action{{Tool: run.ToolSubmitReview, Args: rejectArgs, Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	// The reviewer rejects until the limit; each resubmission is reviewed.
+	if n := strings.Count(strings.Join(admitted(h), ","), "lending reviewer-candidate"); n != 2 {
+		t.Fatal("the resubmission of own changes was not reviewed", admitted(h), h.sessions.answers)
+	}
+	for _, a := range h.sessions.answers {
+		if strings.Contains(a, "a limited delivery needs changed files") {
+			t.Fatal("a resubmission of own changes was refused", h.sessions.answers)
+		}
+	}
+}
+
+// When the workspace cannot be observed, the tool accepts an empty limited
+// submit, and the conclusion fails the step with the reason (core rule S4).
+func TestAnEmptyLimitedSubmitFailsAtTheConclusionWithoutAPeek(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
+			return []action{{Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	h.ws.failPeek = true
+	runToEnd(t, h)
+	if h.c.Current().State != run.Verifying {
+		t.Fatal("run did not complete", h.c.Current(), h.sessions.answers)
+	}
+	if n := strings.Count(strings.Join(admitted(h), ","), "lending work"); n != 2 {
+		t.Fatal("the empty limited step was not failed and admitted again", admitted(h), h.sessions.answers)
+	}
+	var retry string
+	for _, p := range h.sessions.packets {
+		if p.Manager == "lending" && p.Phase == run.PhaseWork {
+			retry = string(p.Context.Bytes)
+		}
+	}
+	if !strings.Contains(retry, "a limited delivery needs changed files") {
+		t.Fatal("the next step did not see why the last one failed", retry)
+	}
+}
+
+// A wait ends the step like a submit, so uncapturable changes are refused
+// there too.
+func TestAWaitWithUncapturableChangesIsRefused(t *testing.T) {
+	t.Parallel()
+	agent := func(s agentStep) []action {
+		if s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt == 0 {
+			return []action{{Write: map[string]string{"out/stray.go": "package library\n"}, Tool: run.ToolWait, Args: `{"on":[{"kind":"delivery","ref":"."}],"reason":"Needs the root."}`, Want: run.ToolRefused}}
+		}
+		return happyAgent(s)
+	}
+	h := newHarness(t, true, agent)
+	runToEnd(t, h)
+	if !slices.ContainsFunc(h.sessions.answers, func(a string) bool {
+		return strings.HasPrefix(a, "lending work wait refused these changes cannot be captured:")
+	}) {
+		t.Fatal("the wait was not refused for its changes", h.sessions.answers)
 	}
 }

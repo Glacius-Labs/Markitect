@@ -331,6 +331,7 @@ func (f stepFailure) Unwrap() error { return f.err }
 type stepRun struct {
 	task         string
 	manager      string
+	workspace    WorkspaceID
 	phase        Phase
 	writes       bool
 	session      SessionID
@@ -391,7 +392,7 @@ func (e *Engine) Advance(ctx context.Context) (bool, error) {
 	if err != nil {
 		return true, err
 	}
-	s := &stepRun{task: task.ID, manager: item.Manager, phase: item.Phase, writes: item.Writes, session: sid, version: version, openID: "open-" + string(sid)}
+	s := &stepRun{task: task.ID, manager: item.Manager, workspace: workspace, phase: item.Phase, writes: item.Writes, session: sid, version: version, openID: "open-" + string(sid)}
 	s.plan = SessionPlan{ID: sid, Role: role, Workspace: materialized.Volume, ProviderHome: item.Home, Resume: item.Resume, ImageID: profile.ImageID, CredentialRef: profile.CredentialRef,
 		Candidate: version.tree.Digest(), ReadOnly: !item.Writes, MaxWireBytes: profile.MaxWireBytes, Profile: profile.Profile.Ref(), Tools: tools.Ref()}
 	prepared, err := c.PrepareTaskSessionCommand(e.meta("prepare-session"), item, s.plan, Reservation{ID: s.openID, Kind: SessionStart, Purpose: purpose, Maximum: e.cfg.Limits.StartTimeout}, profile.Profile, tools)
@@ -748,6 +749,11 @@ func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tre
 		}
 		composed, result.Aggregate, result.AggregateTree = next, next.Version(), next.Tree().Digest()
 	}
+	if result.Failure == "" && s.writes && s.phase != PhaseReply && !result.Candidate.Valid() {
+		if args, err := CallArguments(ToolSubmit, result.Input.Bytes()); err == nil && emptyLimited(task, args) {
+			result.Failure = emptyLimitedReason
+		}
+	}
 	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, result)
 	if err != nil {
 		return err
@@ -853,6 +859,9 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 			}
 			if phase.writing() {
 				if reason := e.formMismatch(s); reason != "" {
+					return refuse(reason)
+				}
+				if reason := e.preflight(ctx, s, call.Tool, args); reason != "" {
 					return refuse(reason)
 				}
 			}
@@ -1010,6 +1019,40 @@ func (e *Engine) registrable(s *stepRun, record realization.Registration) error 
 	return nil
 }
 
+// preflight tells the Agent before its outcome why the step's changes would
+// not be captured, or why a limited delivery would deliver nothing. It
+// observes the running workspace, which is advisory: when the observation is
+// not complete it stays silent, and the conclusion remains authoritative.
+func (e *Engine) preflight(ctx context.Context, s *stepRun, tool string, args []byte) string {
+	peek, err := e.cfg.Workspaces.Peek(ctx, HarvestRequest{ID: s.workspace, MaxEntries: e.cfg.Limits.HarvestEntries, MaxBytes: e.cfg.Limits.HarvestBytes})
+	if err != nil || !peek.Complete() {
+		return ""
+	}
+	changed, proposes := !peek.Tree.Equal(s.version.tree), e.proposes(s)
+	if changed || proposes {
+		if _, err := e.capture(s, peek.Tree); err != nil {
+			return "these changes cannot be captured: " + err.Error() + "; correct them first"
+		}
+	}
+	if tool != ToolSubmit || changed || proposes {
+		return ""
+	}
+	if task, ok := e.cfg.Coordinator.Task(s.manager); ok && emptyLimited(task, args) {
+		return emptyLimitedReason
+	}
+	return ""
+}
+
+const emptyLimitedReason = "a limited delivery needs changed files; with nothing to deliver, submit complete or wait"
+
+// emptyLimited reports whether submit arguments name a limited delivery of a
+// task that holds no unaccepted own changes; with no file or registry change
+// in the step, such a delivery delivers nothing.
+func emptyLimited(task TaskView, args []byte) bool {
+	var in submitInput
+	return decodeArgs(args, &in) == nil && in.Scope == "limited" && task.Own == (BlobRef{})
+}
+
 // proposes reports whether the step's Manager has a registry proposal that
 // differs from the aggregate.
 func (e *Engine) proposes(s *stepRun) bool {
@@ -1070,7 +1113,11 @@ func (e *Engine) read(phase Phase, version stepVersion, ref string) (ToolOutcome
 func findingText(findings []realization.Finding) string {
 	var parts []string
 	for _, f := range findings {
-		parts = append(parts, f.Code+": "+f.Message)
+		code := f.Code
+		if f.Path != (snapshot.Path{}) {
+			code += " (" + f.Path.String() + ")"
+		}
+		parts = append(parts, code+": "+f.Message)
 	}
 	return strings.Join(parts, "; ")
 }

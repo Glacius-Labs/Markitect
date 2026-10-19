@@ -237,6 +237,23 @@ func TestWorkspaceRefusesImageCopyUpBeforeExtraction(t *testing.T) {
 	}
 }
 
+func TestWorkspacePeekObservesMountedWorkspace(t *testing.T) {
+	w, f := workspaceAdapter(t)
+	ctx := context.Background()
+	tree := workspaceTree(t, workspaceEntry(t, "a", snapshot.Regular, "contents"))
+	if _, err := w.Materialize(ctx, run.WorkspaceSpec{ID: "w", Tree: tree}); err != nil {
+		t.Fatal(err)
+	}
+	f.mounts = []string{"running-step"}
+	h, err := w.Peek(ctx, run.HarvestRequest{ID: "w", MaxEntries: 10, MaxBytes: 100})
+	if err != nil || !h.Complete() || !h.Tree.Equal(tree) {
+		t.Fatalf("peek %+v %v", h, err)
+	}
+	if _, err = w.Peek(ctx, run.HarvestRequest{ID: "unknown", MaxEntries: 10, MaxBytes: 100}); err == nil {
+		t.Fatal("peek of an absent workspace succeeded")
+	}
+}
+
 func TestWorkspaceHarvestRefusesMountedAndCloseRefusesUnowned(t *testing.T) {
 	w, f := workspaceAdapter(t)
 	ctx := context.Background()

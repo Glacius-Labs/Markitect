@@ -125,7 +125,7 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 	// The engine may initialize a fresh named volume from the image's /work.
 	// Observe it before extraction so image content cannot be overwritten merely
 	// because the volume name was freshly created.
-	initial, initialErr := w.harvest(ctx, run.HarvestRequest{ID: request.ID, MaxEntries: 1 << 20, MaxBytes: 1 << 32})
+	initial, initialErr := w.harvest(ctx, run.HarvestRequest{ID: request.ID, MaxEntries: 1 << 20, MaxBytes: 1 << 32}, true)
 	if initialErr != nil || !initial.Complete() || initial.Tree.EntryCount() != 0 {
 		err = errors.Join(initialErr, fmt.Errorf("new workspace volume was not observed empty before materialization"))
 		result.Uncertain, result.Reason = true, err.Error()
@@ -159,7 +159,7 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 		result.Uncertain, result.Reason = true, err.Error()
 		return result, err
 	}
-	harvest, harvestErr := w.harvest(ctx, run.HarvestRequest{ID: request.ID, MaxEntries: 1 << 20, MaxBytes: 1 << 32})
+	harvest, harvestErr := w.harvest(ctx, run.HarvestRequest{ID: request.ID, MaxEntries: 1 << 20, MaxBytes: 1 << 32}, true)
 	if harvest.Complete() {
 		result.Tree = harvest.Tree.Digest()
 	}
@@ -200,10 +200,17 @@ func (w *Workspaces) ownedVolume(ctx context.Context, id run.WorkspaceID) (strin
 func (w *Workspaces) Harvest(ctx context.Context, request run.HarvestRequest) (run.WorkspaceHarvest, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	return w.harvest(ctx, request)
+	return w.harvest(ctx, request, true)
 }
 
-func (w *Workspaces) harvest(ctx context.Context, request run.HarvestRequest) (result run.WorkspaceHarvest, err error) {
+// Peek takes the Harvest census without requiring the volume to be unmounted.
+func (w *Workspaces) Peek(ctx context.Context, request run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	return w.harvest(ctx, request, false)
+}
+
+func (w *Workspaces) harvest(ctx context.Context, request run.HarvestRequest, stopped bool) (result run.WorkspaceHarvest, err error) {
 	result.ID = request.ID
 	defer func() {
 		if err != nil {
@@ -220,8 +227,10 @@ func (w *Workspaces) harvest(ctx context.Context, request run.HarvestRequest) (r
 	if !observed.Exists {
 		return result, fmt.Errorf("workspace volume is absent")
 	}
-	if err = w.unmounted(ctx, volume); err != nil {
-		return result, err
+	if stopped {
+		if err = w.unmounted(ctx, volume); err != nil {
+			return result, err
+		}
 	}
 	helperCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
@@ -239,7 +248,9 @@ func (w *Workspaces) harvest(ctx context.Context, request run.HarvestRequest) (r
 	_ = reader.CloseWithError(err)
 	err = errors.Join(err, <-done)
 	// A census helper has ended before this second all-container observation.
-	err = errors.Join(err, w.unmounted(ctx, volume))
+	if stopped {
+		err = errors.Join(err, w.unmounted(ctx, volume))
+	}
 	_, after, inspectErr := w.ownedVolume(ctx, request.ID)
 	if inspectErr == nil && !after.Exists {
 		inspectErr = fmt.Errorf("workspace volume disappeared during census")

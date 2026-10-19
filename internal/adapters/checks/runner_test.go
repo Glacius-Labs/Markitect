@@ -45,6 +45,9 @@ func (p *workspacePeer) Materialize(_ context.Context, s run.WorkspaceSpec) (run
 func (p *workspacePeer) Harvest(context.Context, run.HarvestRequest) (run.WorkspaceHarvest, error) {
 	panic("check does not harvest its mutated copy")
 }
+func (p *workspacePeer) Peek(context.Context, run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	panic("check does not peek its mutated copy")
+}
 func (p *workspacePeer) Close(ctx context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
 	p.closed++
 	if p.close != nil {

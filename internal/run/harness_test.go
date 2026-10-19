@@ -100,6 +100,7 @@ type fakeWorkspaces struct {
 	// Fault injection: the next failHarvest harvests fail; failMaterialize
 	// refuses every materialization. closes counts Close calls.
 	failHarvest     int
+	failPeek        bool
 	failMaterialize bool
 	closes          int
 }
@@ -131,6 +132,13 @@ func (w *fakeWorkspaces) Harvest(_ context.Context, r run.HarvestRequest) (run.W
 		return run.WorkspaceHarvest{ID: r.ID, Uncertain: true, Reason: "absent"}, errors.New("absent")
 	}
 	return run.WorkspaceHarvest{ID: r.ID, Tree: tree}, nil
+}
+
+func (w *fakeWorkspaces) Peek(_ context.Context, r run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	if w.failPeek {
+		return run.WorkspaceHarvest{ID: r.ID, Uncertain: true, Reason: "injected"}, errors.New("injected peek failure")
+	}
+	return run.WorkspaceHarvest{ID: r.ID, Tree: w.trees[r.ID]}, nil
 }
 
 func (w *fakeWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
