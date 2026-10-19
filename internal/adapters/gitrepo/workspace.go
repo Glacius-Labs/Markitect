@@ -73,6 +73,9 @@ func (w *Workspaces) volume(id run.WorkspaceID) string {
 	return "markitect-workspace-" + hex.EncodeToString(digest[:])
 }
 
+// spec names each helper container after its volume as well as a sequence,
+// because the sequence restarts in every process: two Applies with the same
+// helper name run at the same time must not collide on a container name.
 func (w *Workspaces) spec(volume string, readOnly bool) container.ContainerSpec {
 	w.seq++
 	spec := w.helper
@@ -80,7 +83,8 @@ func (w *Workspaces) spec(volume string, readOnly bool) container.ContainerSpec 
 	if len(name) > 95 {
 		name = name[:95]
 	}
-	spec.Name = name + "-workspace-" + strconv.FormatUint(w.seq, 10)
+	digest := sha256.Sum256([]byte(volume))
+	spec.Name = name + "-workspace-" + hex.EncodeToString(digest[:6]) + "-" + strconv.FormatUint(w.seq, 10)
 	spec.Labels = cloneWorkspaceLabels(spec.Labels)
 	spec.Mounts = []container.Mount{{Volume: volume, Target: "/work", ReadOnly: readOnly}}
 	spec.Workdir = "/work"
