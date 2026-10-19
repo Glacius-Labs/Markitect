@@ -124,6 +124,12 @@ func (w *fakeWS) Close(_ context.Context, id WorkspaceID) (WorkspaceObservation,
 	return WorkspaceObservation{ID: id, Closed: true}, nil
 }
 
+func (w *fakeWS) setExtra(names ...string) {
+	w.mu.Lock()
+	w.extra = names
+	w.mu.Unlock()
+}
+
 func (w *fakeWS) mount(name string, delta int) {
 	w.mu.Lock()
 	w.mounted[name] += delta
@@ -390,6 +396,7 @@ type recEvidence struct {
 	events    []Event
 	failAfter int
 	failKind  string
+	onRecord  func(Event)
 }
 
 func (r *recEvidence) Record(e Event) error {
@@ -399,6 +406,9 @@ func (r *recEvidence) Record(e Event) error {
 		return errors.New("disk full")
 	}
 	r.events = append(r.events, e)
+	if r.onRecord != nil {
+		r.onRecord(e)
+	}
 	return nil
 }
 

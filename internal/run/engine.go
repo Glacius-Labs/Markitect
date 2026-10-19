@@ -32,6 +32,16 @@ type candidate struct {
 	tree   snapshot.Tree
 	id     WorkspaceID
 	volume string
+	// unsupported lists the entries of the harvested shared tree that a tree
+	// cannot hold; the candidate cannot be green while they stand.
+	unsupported []string
+}
+
+// item is one undelivered piece of work for a Manager. finding is the ID of
+// the finding an item restates; such an item lapses once the finding is closed.
+type item struct {
+	text    string
+	finding string
 }
 
 // mgr is the engine's state of one Manager. Every field is guarded by engine.mu.
@@ -41,8 +51,8 @@ type mgr struct {
 	execHome     string
 	verifyHome   string
 	conversation string
-	items        []string
-	consumed     []string
+	items        []item
+	consumed     []item
 	running      bool
 	disabled     bool
 	failures     int
@@ -61,6 +71,7 @@ type roundState struct {
 	structural  []*Finding
 	assessments map[string]Assessment
 	assessed    map[string]bool
+	started     map[string]bool
 }
 
 type engine struct {
@@ -429,6 +440,7 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	e.work = shared.volume
 	for round := 1; ; round++ {
 		if round > 1 && !e.affordRound() {
+			e.closeVolume(cand.id)
 			return e.incomplete("the agent turn budget cannot cover another Verify round")
 		}
 		green := e.verifyRound(round, cand)
@@ -466,8 +478,8 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 // capture harvests the quiescent shared tree into the next candidate.
 func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (candidate, bool) {
 	h, err := e.cfg.Workspaces.Harvest(e.ctx, HarvestRequest{ID: work, MaxEntries: e.cfg.MaxEntries, MaxBytes: e.cfg.MaxBytes})
-	if err == nil && !h.Complete() {
-		err = fmt.Errorf("harvest is incomplete (uncertain %t, %d unsupported entries): %s", h.Uncertain, len(h.Unsupported), h.Reason)
+	if err == nil && h.Uncertain {
+		err = fmt.Errorf("harvest is uncertain: %s", h.Reason)
 	}
 	if err != nil {
 		e.halt("capture of the shared tree is uncertain: " + err.Error())
@@ -478,10 +490,14 @@ func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (c
 		e.closeVolume(e.volumeID(fmt.Sprintf("c%d", round)))
 		return candidate{}, false
 	}
-	next.index = round
+	next.index, next.unsupported = round, h.Unsupported
 	e.observeWrites(round, previous, h.Tree)
 	_ = e.record(Event{Kind: "candidate", Round: round + 1, Data: map[string]any{"tree": h.Tree.Digest().String(), "workspace": next.id, "volume": next.volume, "entries": h.Tree.EntryCount(), "harvest": map[string]any{"uncertain": h.Uncertain, "unsupported": h.Unsupported, "reason": h.Reason}}})
-	return next, e.ctx.Err() == nil
+	if e.ctx.Err() != nil {
+		e.closeVolume(next.id)
+		return candidate{}, false
+	}
+	return next, true
 }
 
 // observeWrites records which owners' files changed although the owner ran no

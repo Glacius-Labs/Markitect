@@ -3,6 +3,8 @@ package run
 import (
 	"context"
 	"errors"
+	"maps"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -59,29 +61,75 @@ func TestVerifyTurnWithoutObservedStopFinishesIncomplete(t *testing.T) {
 	}
 }
 
-func TestIncompleteHarvestFinishesIncompleteAndKeepsTheTree(t *testing.T) {
-	for name, edit := range map[string]func(*fakeWS){
-		"uncertain":   func(w *fakeWS) { w.uncertain = true },
-		"unsupported": func(w *fakeWS) { w.extra = []string{"link"} },
-	} {
-		t.Run(name, func(t *testing.T) {
-			f := newFixture(t)
-			edit(f.ws)
-			f.agents.script = libraryFinding(func(c *call) error {
-				c.write("library/new.go", "x")
-				return c.defaultScript()
-			})
-			out := f.run()
-			if out.Status != Incomplete || !strings.Contains(out.Reason, "capture") {
-				t.Fatalf("%s %s", out.Status, out.Reason)
+func TestUncertainHarvestFinishesIncompleteAndKeepsTheTree(t *testing.T) {
+	f := newFixture(t)
+	f.ws.uncertain = true
+	f.agents.script = libraryFinding(func(c *call) error {
+		c.write("library/new.go", "x")
+		return c.defaultScript()
+	})
+	out := f.run()
+	if out.Status != Incomplete || !strings.Contains(out.Reason, "capture") {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	if f.ws.harvests != 1 || f.ws.isClosed("run1-work") || len(out.Rounds) != 1 {
+		t.Fatalf("harvests %d rounds %d", f.ws.harvests, len(out.Rounds))
+	}
+	if !out.Candidate.Equal(snapshot.Tree{}) {
+		t.Fatal("an incomplete run names a candidate")
+	}
+}
+
+func TestUnsupportedHarvestEntriesBecomeFindingsOfTheirOwners(t *testing.T) {
+	f := newFixture(t)
+	f.ws.setExtra("library/odd", "link", "../x")
+	f.agents.script = libraryFinding(func(c *call) error {
+		if c.round() == 2 {
+			f.ws.setExtra()
+		}
+		c.write("library/new"+c.turn.ID+".go", "x")
+		return c.defaultScript()
+	})
+	out := f.run()
+	if out.Status != Verified || len(out.Rounds) != 3 || out.Rounds[1].Green {
+		t.Fatalf("%s %s rounds %d", out.Status, out.Reason, len(out.Rounds))
+	}
+	owners := map[string]string{}
+	for _, fd := range out.Findings {
+		if fd.RaisedBy != MarkitectFinding {
+			continue
+		}
+		if !fd.Blocking || !fd.Closed || fd.ClosedRound != 3 {
+			t.Errorf("finding %+v", fd)
+		}
+		for _, name := range []string{"library/odd", "link", "../x"} {
+			if strings.Contains(fd.Observed, `"`+name+`"`) {
+				owners[name] = fd.Owner
 			}
-			if f.ws.harvests != 1 || f.ws.isClosed("run1-work") || len(out.Rounds) != 1 {
-				t.Fatalf("harvests %d rounds %d", f.ws.harvests, len(out.Rounds))
-			}
-			if !out.Candidate.Equal(snapshot.Tree{}) {
-				t.Fatal("an incomplete run names a candidate")
-			}
-		})
+		}
+	}
+	if want := (map[string]string{"library/odd": "library", "link": ".", "../x": "."}); !maps.Equal(owners, want) {
+		t.Fatalf("owners %v", owners)
+	}
+	contains(t, "library verify prompt", f.agents.prompt("run1-r2-library-v1"), "library/odd")
+}
+
+func TestVerifyTurnErrorIsKeptInTheRunReason(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		if c.is(1, "library", VerifyTurn) {
+			return errTest
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Incomplete || !strings.Contains(out.Reason, "test failure") || !strings.Contains(out.Reason, `"library"`) {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	for _, tr := range out.Turns {
+		if tr.Manager == "library" && !strings.Contains(tr.Reason, "test failure") {
+			t.Errorf("turn record %+v", tr)
+		}
 	}
 }
 
@@ -170,7 +218,7 @@ func TestTurnAndRoundBudgetsEndIncomplete(t *testing.T) {
 			return c.defaultScript()
 		}
 		out := f.run()
-		if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || len(out.Turns) > 9 || len(out.Turns) < 6 {
+		if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || len(out.Turns) > 9 || len(out.Turns) < 5 {
 			t.Fatalf("%s %s %d turns", out.Status, out.Reason, len(out.Turns))
 		}
 	})
@@ -203,6 +251,79 @@ func TestTurnAndRoundBudgetsEndIncomplete(t *testing.T) {
 		out := f.run()
 		if out.Status != Incomplete || countKind(out, ExecuteTurn) != 0 || f.ws.harvests != 0 {
 			t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
+		}
+	})
+}
+
+func TestEarlyExecuteKeepsRoomForTheOpenRoundOneVerifyTurns(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.Budget.AgentTurns = 8
+	libReported := make(chan struct{})
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is(1, "library", VerifyTurn):
+			c.assess(false, []fnd{finding("library", "library obligation", true)})
+			close(libReported)
+			return nil
+		case c.is(1, "lending/reminders", VerifyTurn):
+			if err := c.wait(libReported); err != nil {
+				return err
+			}
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || countKind(out, ExecuteTurn) != 0 || len(out.Turns) != 4 {
+		t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
+	}
+}
+
+func TestIncompleteExitsCloseTheCandidateVolume(t *testing.T) {
+	t.Run("no budget for another round", func(t *testing.T) {
+		f := newFixture(t)
+		f.cfg.Budget.AgentTurns = 9
+		libReported := make(chan struct{})
+		f.agents.script = func(c *call) error {
+			switch {
+			case c.is(1, "library", VerifyTurn):
+				c.assess(false, []fnd{finding("library", "library obligation", true)})
+				close(libReported)
+				return nil
+			case c.is(1, "lending/reminders", VerifyTurn) && strings.HasSuffix(c.turn.ID, "-v1"):
+				// No assessment: the retry takes one more turn of the budget.
+				return c.wait(libReported)
+			case c.turn.Kind == ExecuteTurn:
+				c.write("library/n.go", "x")
+			}
+			return c.defaultScript()
+		}
+		out := f.run()
+		if out.Status != Incomplete || !strings.Contains(out.Reason, "cannot cover another Verify round") || !slices.Contains(f.ws.order, "run1-c1") {
+			t.Fatalf("%s %s %v %v", out.Status, out.Reason, f.ws.order, turnIDs(out))
+		}
+		if !f.ws.isClosed("run1-c1") {
+			t.Fatal("candidate volume stays")
+		}
+	})
+	t.Run("run stops right after capture", func(t *testing.T) {
+		f := newFixture(t)
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
+		f.ev.onRecord = func(e Event) {
+			if e.Kind == "candidate" {
+				cancel()
+			}
+		}
+		f.agents.script = libraryFinding(func(c *call) error {
+			c.write("library/n.go", "x")
+			return c.defaultScript()
+		})
+		out, err := Reconcile(ctx, f.cfg)
+		if err != nil || out.Status != Incomplete {
+			t.Fatalf("%v %s %s", err, out.Status, out.Reason)
+		}
+		if !f.ws.isClosed("run1-c1") {
+			t.Fatal("candidate volume stays")
 		}
 	})
 }

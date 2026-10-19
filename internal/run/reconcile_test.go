@@ -155,7 +155,7 @@ func TestFindingsDriveParallelExecuteCaptureAndGreen(t *testing.T) {
 		if tr.ReadOnly || tr.Workspace != "vol-run1-work" || tr.Resume != "" || !strings.HasPrefix(tr.ID, "run1-r1-") || !strings.HasSuffix(tr.ID, "-x1") {
 			t.Errorf("execute turn %+v", tr)
 		}
-		contains(t, "execute prompt", tr.Prompt, mandate, "Other Managers work in it at the same time", "Go is available", "Finding F", "parent: ")
+		contains(t, "execute prompt", tr.Prompt, mandate, "Other Managers work in it at the same time", "Run the project's build and tests yourself", "Finding F", "parent: ")
 	}
 	var round2 []string
 	for _, tr := range f.agents.turnsOf(VerifyTurn) {
@@ -554,6 +554,40 @@ func TestFindingsStayOpenUntilTheRaiserClosesThem(t *testing.T) {
 	}
 	if advisory.RaisedBy != "library" || advisory.Owner != "library" {
 		t.Fatalf("advisory finding %+v", advisory)
+	}
+}
+
+func TestItemsOfFindingsClosedByTheRaiserLapse(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is(1, "lending", VerifyTurn):
+			c.assess(false, []fnd{finding("lending/reminders", "reminders obligation", true)})
+		case c.is(1, "library", VerifyTurn):
+			c.assess(false, []fnd{finding("library", "first", true)})
+		case c.is(2, "library", VerifyTurn):
+			// lending closes F1 in the same round; library keeps the round red.
+			c.assess(false, []fnd{finding("library", "second", true)}, c.myOpen()...)
+		case c.turn.Kind == ExecuteTurn:
+			c.write("library/x"+c.turn.ID+".go", "x")
+			return c.defaultScript()
+		default:
+			return c.defaultScript()
+		}
+		return nil
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	var reminders []string
+	for _, tr := range out.Turns {
+		if tr.Kind == ExecuteTurn && tr.Manager == "lending/reminders" {
+			reminders = append(reminders, tr.ID)
+		}
+	}
+	if len(reminders) != 1 || !strings.HasPrefix(reminders[0], "run1-r1-") {
+		t.Fatalf("a closed finding triggers an Execute turn: %v", turnIDs(out))
 	}
 }
 

@@ -54,17 +54,22 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
 The first Execute turn of a Manager gets the mandate, its brief, contacts, owner decisions,
 the shared-tree note and its items; later turns resume the conversation and get only new
 items. A turn that fails after its container stopped gets one retry with a note; the second
-consecutive failure stops scheduling that Manager.
+consecutive failure stops scheduling that Manager. An item that restates a finding lapses once
+the finding is closed; messages and notes stay. An early round 1 Execute turn starts only while
+the budget covers it, the unstarted round 1 Verify turns and one closing round.
 
 ## Stopping and trust
 
 The deadline cancels all running turns and checks and waits for them. The agent turn budget
 and the round budget end the run Incomplete. Any turn whose container end was not observed
-(`TurnResult.Stopped` false), an incomplete harvest or a failed evidence record also ends it
+(`TurnResult.Stopped` false), an uncertain harvest or a failed evidence record also ends it
 Incomplete, because quiescence, capture or the record is uncertain; nothing may then be
 published. A definite error of the configuration or a port is Failed; a check that
 cannot run on a candidate, such as a missing check directory before the first Execute,
-is a failed check.
+is a failed check. An unsupported harvest entry (a symlink, a device or an invalid name)
+is not uncertain: the candidate is the harvested tree and one blocking `markitect` finding per
+entry goes to the owner of its path (Root for an invalid name), so the candidate cannot be green
+while it stands.
 
 Managers are trusted to write only their own area. After each capture the engine compares
 the new candidate with the previous one and records `write.observed` for files of a Manager

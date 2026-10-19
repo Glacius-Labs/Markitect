@@ -425,8 +425,12 @@ func TestInvalidTurnsFailBeforeAnyContainerStarts(t *testing.T) {
 			turn := testTurn()
 			turn.Tools = append([]run.ToolSpec(nil), turn.Tools...)
 			mutate(&turn)
-			if _, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string))); err == nil || h.starts != 0 {
+			res, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string)))
+			if err == nil || h.starts != 0 {
 				t.Fatalf("err=%v starts=%d", err, h.starts)
+			}
+			if !res.Stopped || !strings.HasPrefix(res.Reason, "no container started: ") || res.Started.IsZero() {
+				t.Fatalf("a turn that never started is over: %+v", res)
 			}
 		})
 	}
@@ -440,8 +444,9 @@ func TestCredentialFailureStartsNothing(t *testing.T) {
 	profile := validProfile()
 	profile.CredentialRef = "missing"
 	h := newHarness(t, newFakeRuntime(), profile)
-	if _, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string))); err == nil || h.starts != 0 {
-		t.Fatalf("err=%v starts=%d", err, h.starts)
+	res, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
+	if err == nil || h.starts != 0 || !res.Stopped || !strings.Contains(res.Reason, "no container started: ") || !strings.Contains(res.Reason, "missing") {
+		t.Fatalf("err=%v starts=%d res=%+v", err, h.starts, res)
 	}
 }
 
@@ -462,6 +467,20 @@ func TestConstructorsRefuseInvalidInput(t *testing.T) {
 		if _, err := call(); err == nil {
 			t.Errorf("%s accepted", name)
 		}
+	}
+}
+
+func TestKnownTokenIsRedactedFromToolArgumentsBeforeTheHandler(t *testing.T) {
+	escaped, _ := json.Marshal(testToken)
+	rt := newFakeRuntime()
+	rt.calls = []frame.ToolCall{{ID: 1, Name: "report", Arguments: json.RawMessage(`{"leak":` + string(escaped) + `}`)}}
+	h := newHarness(t, rt, validProfile())
+	var seen []string
+	if _, err := h.agents.Run(context.Background(), testTurn(), echoHandler(&seen)); err != nil {
+		t.Fatal(err)
+	}
+	if len(seen) != 1 || strings.Contains(seen[0], "sk-ant") || !strings.Contains(seen[0], "[REDACTED]") || !json.Valid([]byte(strings.TrimPrefix(seen[0], "report "))) {
+		t.Fatalf("handler saw %q", seen)
 	}
 }
 

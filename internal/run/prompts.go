@@ -70,7 +70,7 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)
-	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. Go is available; run build and tests yourself.\n")
+	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact.\n")
 	list(&b, "Items:", items)
 	b.WriteString("\nWork on them. Use send to coordinate through your parent and children. Call finish when you are done or waiting.\n")
 	return b.String()
