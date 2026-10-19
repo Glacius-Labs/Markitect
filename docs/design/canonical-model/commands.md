@@ -49,6 +49,8 @@ These are meanings, not selected wire-enum names. Missing evidence does not coun
 
 Extract initially describes what exists. It does not use adoption as an opportunity to improve product behavior or repair code. Code, tests, interfaces, documentation, configuration, CI and recorded decisions are evidence. An observed behavior is not automatically intended behavior. When sources conflict and existing authority does not settle the intended rule, present a question with both sources instead of silently choosing one. When an authoritative requirement is already clear, retain it and record violating code, tests or documentation as a realization deviation; do not require the owner to decide the same intent again.
 
+[DEC-061](../../concepts/register.md#dec-061-what-an-extracted-model-contains) fixes what the extracted model states. One Package owns the project as a whole: purpose, scope and non-goals, delivery obligations and technical boundary. A statement is binding when it is observable at the project's boundary or documented as intended; internal structure, names, wiring and the order of internal steps remain realization choices. Extract may propose checks from documented build and test commands for the owner's adoption.
+
 ### Build the first candidate
 
 1. Fix the repository revision and selected scope, including the existing requirements and decisions that can establish intended meaning. Keep exclusions and unknown areas visible. Existing code and other realizations remain the observation basis throughout the refinement loop; a complete canonical model cannot be an entry requirement when the purpose is to derive it.
