@@ -147,7 +147,13 @@ func renderStructureBrief(in structureBriefInput) string {
 	var b strings.Builder
 	b.WriteString("You are the Manager of Root in the structure phase of an Extract. You are the only Manager of this phase.\n\n")
 	b.WriteString("The existing artifacts (read-only evidence)\n")
-	fmt.Fprintf(&b, "Artifact roots: %s. They hold %d artifact file(s) in all; the artifacts also include files outside the roots. Overview by directory:\n", strings.Join(in.Roots, ", "), len(in.Artifacts))
+	underRoots := 0
+	for _, p := range in.Artifacts {
+		if slices.ContainsFunc(in.Roots, func(root string) bool { return p.String() == root || strings.HasPrefix(p.String(), root+"/") }) {
+			underRoots++
+		}
+	}
+	fmt.Fprintf(&b, "Artifact roots: %s. They hold %d artifact file(s); %d more lie outside the roots. Overview by directory:\n", strings.Join(in.Roots, ", "), underRoots, len(in.Artifacts)-underRoots)
 	lines, more := directorySummary(in.Artifacts, 60)
 	for _, line := range lines {
 		fmt.Fprintf(&b, "- %s\n", line)
@@ -156,8 +162,10 @@ func renderStructureBrief(in structureBriefInput) string {
 		b.WriteString("- and more directories: list them in /work\n")
 	}
 	b.WriteString("\nWhat you write\n")
-	b.WriteString("Only .markitect/model/** (the Definitions of the proposed Packages) and layout.exceptions of .markitect/execution.yaml. In /work everything else is read-only or, where it is a single file (the model manifest and lock, the execution document apart from layout.exceptions, ignore.yaml), must stay byte-for-byte as it is: a change blocks the candidate. The imported dependency models under ")
-	b.WriteString(strings.Join(append([]string{}, in.Dependencies...), ", "))
+	b.WriteString("Only .markitect/model/** (the Definitions of the proposed Packages) and layout.exceptions of .markitect/execution.yaml. In /work everything else is read-only or, where it is a single file (the model manifest and lock, the execution document apart from layout.exceptions, ignore.yaml), must stay byte-for-byte as it is: a change blocks the candidate. The imported dependency models")
+	if len(in.Dependencies) > 0 {
+		b.WriteString(" under " + strings.Join(in.Dependencies, ", "))
+	}
 	b.WriteString(" and the artifact roots are read-only.\n")
 	b.WriteString("\nThe layout\n")
 	fmt.Fprintf(&b, "Ownership of artifacts is the persistent layout of .markitect/execution.yaml: the artifact roots (%s) mirror the model hierarchy, so a file in %s/lending/reminders/ belongs to the Package lending/reminders (the deepest Package wins); the files directly in a root and every file outside the roots belong to Root. A file in a subdirectory of a root that no Package directory or exception covers has no owner and blocks the candidate. A Package whose artifacts live in a directory of another name gets an exception, for example:\n\nlayout:\n  roots: [%s]\n  exceptions:\n    - {path: %s/some/directory, owner: some/package, reason: The artifacts there realize that Package.}\n\n", strings.Join(in.Roots, ", "), in.Roots[0], strings.Join(in.Roots, ", "), in.Roots[0])

@@ -51,14 +51,18 @@ type VerifyReport struct {
 // are never null.
 func NewExtractReport(id string, result apply.ExtractResult) ExtractReport {
 	r := ExtractReport{Deviations: []run.Finding{}, OpenQuestions: []run.Question{}, Publication: result.Receipt, RetainedWork: result.RetainedWork}
-	var outcomes []run.Outcome
+	questions := result.Structure.Questions
 	if result.Structure.Status != "" {
-		r.Structure = NewRunReport(id+"-structure", result.Structure)
-		outcomes = append(outcomes, result.Structure)
+		r.Structure = NewRunReport(id+"-"+apply.ExtractStructurePhase, result.Structure)
 	}
 	if result.Model != nil {
-		r.Model = NewRunReport(id+"-model", *result.Model)
-		outcomes = append(outcomes, *result.Model)
+		r.Model = NewRunReport(id+"-"+apply.ExtractModelPhase, *result.Model)
+		// The model phase continues the structure phase's owner channel, so its
+		// questions include the structure phase's; a model phase that failed to
+		// start has none.
+		if len(result.Model.Questions) >= len(questions) {
+			questions = result.Model.Questions
+		}
 		r.ModelComplete = result.Model.Status == run.Verified
 		r.Deviations = append(r.Deviations, apply.ExtractDeviations(result.Model.Findings)...)
 		if rounds := result.Model.Rounds; len(rounds) > 0 {
@@ -66,11 +70,9 @@ func NewExtractReport(id string, result apply.ExtractResult) ExtractReport {
 			r.Verify = &VerifyReport{Round: last.Number, Green: last.Green, Assessments: last.Assessments}
 		}
 	}
-	for _, outcome := range outcomes {
-		for _, q := range outcome.Questions {
-			if !q.Answered {
-				r.OpenQuestions = append(r.OpenQuestions, q)
-			}
+	for _, q := range questions {
+		if !q.Answered {
+			r.OpenQuestions = append(r.OpenQuestions, q)
 		}
 	}
 	return r
@@ -86,7 +88,7 @@ func ExtractStatus(result apply.ExtractResult, err error) model.Status {
 	if err != nil || result.Model == nil {
 		return model.NotCompleted
 	}
-	return ApplyStatus(*result.Model, result.Receipt, err)
+	return ApplyStatus(*result.Model, result.Receipt, nil)
 }
 
 type ExtractFunc func(context.Context, ExtractRequest) (ExtractReport, error)

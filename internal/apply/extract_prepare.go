@@ -80,7 +80,7 @@ func requireEmptyModel(compiled model.Result) error {
 // same capture with the candidate's model, layout and registry, and the same
 // settings resolved for the candidate's Manager tree.
 func (s extractStage) next(candidate snapshot.Tree) (extractStage, error) {
-	structural := rebindStructural(s.structural.Model(), candidate, true)
+	structural := rebindStructural(s.structural.Model(), candidate, extractStructure)
 	for name, status := range map[string]model.Status{"model": structural.Model().compiled.Status, "registry": structural.registry.Status(), "files": structural.files.Status(), "execution": structural.execution.Status(), "contexts": structural.contexts.Status()} {
 		if status != model.Passed {
 			return extractStage{}, fmt.Errorf("the structure candidate does not prepare (%s %s)", name, status)
@@ -104,8 +104,10 @@ func (s extractStage) next(candidate snapshot.Tree) (extractStage, error) {
 // registry shards and the other repository-local inputs are read from the tree,
 // everything that lies outside the repository stays as captured. It is a pure
 // function of its arguments and shares no mutable state, so concurrent callers
-// are safe.
-func rebindStructural(start CapturedModel, tree snapshot.Tree, extract bool) CapturedPreparationAttempt {
+// are safe. The phase says which phase's candidate the tree is: while the
+// structure is proposed, artifacts without an owner or registration are still
+// expected; in the model phase they block.
+func rebindStructural(start CapturedModel, tree snapshot.Tree, phase extractPhase) CapturedPreparationAttempt {
 	raw := cloneRaw(start.inputs.Raw)
 	raw.Census = tree
 	raw.Local = rebindModelSource(raw.Local, tree)
@@ -119,7 +121,7 @@ func rebindStructural(start CapturedModel, tree snapshot.Tree, extract bool) Cap
 			raw.Registry = append(raw.Registry, SourceFile{Location: SourceLocation{Boundary: repository, Path: entry.Path()}, File: entry, RepositoryPath: entry.Path()})
 		}
 	}
-	stage := CapturedModel{request: start.request, inputs: CapturedInputs{Raw: raw, Head: start.inputs.Head, Guard: start.inputs.Guard}, limits: start.limits, extract: extract}
+	stage := CapturedModel{request: start.request, inputs: CapturedInputs{Raw: raw, Head: start.inputs.Head, Guard: start.inputs.Guard}, limits: start.limits, extract: phase == extractStructure}
 	stage.compiled = compileModel(raw, start.limits)
 	registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 	return CapturedPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts()}

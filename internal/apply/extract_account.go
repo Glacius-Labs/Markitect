@@ -15,7 +15,14 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// extractPhase names the two phases of an Extract.
+// The names of the two phases of an Extract: the identity of a phase in run
+// identifiers, evidence and reports.
+const (
+	ExtractStructurePhase = "structure"
+	ExtractModelPhase     = "model"
+)
+
+// extractPhase identifies one of the two phases of an Extract.
 type extractPhase int
 
 const (
@@ -25,6 +32,19 @@ const (
 	// registers the artifacts; the Managers of the proposed tree work.
 	extractModel
 )
+
+// extractPhaseDescriptor is what distinguishes a phase besides its accounting:
+// its name, the mandate it hands the Agents and its Verify guidance.
+type extractPhaseDescriptor struct {
+	name, mandate, verifyGuidance string
+}
+
+var extractPhaseDescriptors = [...]extractPhaseDescriptor{
+	extractStructure: {ExtractStructurePhase, structureMandate, structureVerifyGuidance},
+	extractModel:     {ExtractModelPhase, modelMandate, modelVerifyGuidance},
+}
+
+func (p extractPhase) descriptor() extractPhaseDescriptor { return extractPhaseDescriptors[p] }
 
 // extractAccounting accounts the candidates of one Extract phase against that
 // phase's start. It holds only immutable values: Account compiles and checks
@@ -70,20 +90,23 @@ func (a extractAccounting) ownerOfName(name string) string {
 // in the model phase, accounts every file against the shards; in both phases
 // only the phase's own area may differ from the start.
 func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
+	findings := a.account(tree)
+	slices.SortFunc(findings, func(x, y CandidateFinding) int {
+		return cmp.Or(cmp.Compare(x.Owner, y.Owner), cmp.Compare(x.Path, y.Path), cmp.Compare(x.Code, y.Code), cmp.Compare(x.Message, y.Message))
+	})
+	return slices.Compact(findings)
+}
+
+// account collects the findings of a candidate tree, unsorted. Every path
+// returns the guard's findings exactly once.
+func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
 	add := func(owner, code, name, message string) {
 		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: name, Message: message})
 	}
-	defer func() {
-		slices.SortFunc(findings, func(x, y CandidateFinding) int {
-			return cmp.Or(cmp.Compare(x.Owner, y.Owner), cmp.Compare(x.Path, y.Path), cmp.Compare(x.Code, y.Code), cmp.Compare(x.Message, y.Message))
-		})
-		findings = slices.Compact(findings)
-	}()
 	// Every candidate is guarded, whatever else fails to prepare.
 	guarded := a.guard(tree)
-	findings = append(findings, guarded...)
-	structural := rebindStructural(a.start.structural.Model(), tree, a.phase == extractStructure)
+	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
 	compiled := structural.Model().compiled
 	if compiled.Status != model.Passed {
 		local := structural.Model().inputs.Raw.Local
@@ -97,25 +120,24 @@ func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
 		if len(compiled.Diagnostics) == 0 {
 			add(organization.Root, "model.not_passed", "", "The candidate model does not compile: its status is "+string(compiled.Status)+".")
 		}
-		return findings
+		return append(findings, guarded...)
 	}
 	for _, d := range structural.files.diagnostics {
 		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, positioned(d.Message, d.Position))
 	}
 	if structural.execution.Status() != model.Passed {
-		return findings
+		return append(findings, guarded...)
 	}
 	topology, err := organization.BuildTopology(compiled)
 	if err != nil {
 		add(organization.Root, "model.topology", "", err.Error())
-		return findings
+		return append(findings, guarded...)
 	}
 	if a.phase == extractStructure {
 		a.accountStructure(structural, topology, add)
-		return findings
+		return append(findings, guarded...)
 	}
-	a.accountModel(structural, tree, guarded, &findings, add)
-	return findings
+	return append(findings, a.accountModel(structural, tree, guarded)...)
 }
 
 // accountStructure checks the proposal of the structure phase: at least one
@@ -146,8 +168,13 @@ func (a extractAccounting) accountStructure(structural CapturedPreparationAttemp
 
 // accountModel accounts the model phase: the Package inventory of the start is
 // kept, and every file is explained, registered in its owner's shard and linked
-// to existing Definitions of the candidate model.
-func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, tree snapshot.Tree, guarded []CandidateFinding, findings *[]CandidateFinding, add func(owner, code, name, message string)) {
+// to existing Definitions of the candidate model. Its result holds the guard's
+// findings once.
+func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, tree snapshot.Tree, guarded []CandidateFinding) []CandidateFinding {
+	var findings []CandidateFinding
+	add := func(owner, code, name, message string) {
+		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: name, Message: message})
+	}
 	candidate := packageNames(structural.Model().compiled)
 	for _, name := range candidate {
 		if !slices.Contains(a.packages, name) {
@@ -162,12 +189,12 @@ func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, t
 	c, err := newCandidates(structural, structural.files.classifications, nil, structural.registry.registry)
 	if err != nil {
 		add(organization.Root, "model.topology", "", err.Error())
-		return
+		return append(findings, guarded...)
 	}
-	// The guard's findings are in findings already; Account's compaction drops
-	// the repeat, and Candidates uses their paths to suppress file.unexplained.
+	// Candidates reports the guard's findings with its own, and uses their paths
+	// to suppress file.unexplained.
 	c.guard = func(snapshot.Tree) []CandidateFinding { return guarded }
-	*findings = append(*findings, c.Account(tree)...)
+	return append(findings, c.Account(tree)...)
 }
 
 func positioned(message string, position *model.Position) string {
@@ -175,6 +202,12 @@ func positioned(message string, position *model.Position) string {
 		return message
 	}
 	return fmt.Sprintf("%s (line %d)", message, position.Line)
+}
+
+// exemptFromGuard names the paths Apply's protected-input accounting leaves
+// alone too: the Host's own state and the repository's git data are not inputs.
+func exemptFromGuard(name string) bool {
+	return strings.HasPrefix(name, ".markitect/state/") || strings.HasPrefix(name, ".git/")
 }
 
 // guard reports every change outside the phase's writable area: artifacts,
@@ -205,6 +238,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 		name := before.Path().String()
 		after, found := tree.Lookup(before.Path())
 		switch {
+		case exemptFromGuard(name):
 		case a.phase == extractStructure && name == executionFile:
 			if !found {
 				report(name, before, "input.deleted", "deleted")
@@ -220,7 +254,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	}
 	for _, after := range tree.Entries() {
 		name := after.Path().String()
-		if _, found := a.start.tree.Lookup(after.Path()); !found && !writable(name) {
+		if _, found := a.start.tree.Lookup(after.Path()); !found && !writable(name) && !exemptFromGuard(name) {
 			report(name, snapshot.Entry{}, "input.added", "added")
 		}
 	}

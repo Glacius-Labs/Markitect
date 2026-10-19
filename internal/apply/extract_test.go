@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -90,9 +91,12 @@ func TestExtractRefusesBeforeAnyEffectWithoutVolumeSubpaths(t *testing.T) {
 	}
 }
 
-func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
+// extractAttemptWithTurns prepares the library case 3 with another agent-turn
+// budget in its execution document.
+func extractAttemptWithTurns(t *testing.T, turns int) apply.CapturedSettingsAttempt {
+	t.Helper()
 	selection, raw := extractInputs(t)
-	execution := strings.Replace(extractExecution, "agentTurns: 120", "agentTurns: 3", 1)
+	execution := strings.Replace(extractExecution, "agentTurns: 120", "agentTurns: "+strconv.Itoa(turns), 1)
 	entry, err := snapshot.NewEntry(path(t, ".markitect/execution.yaml"), snapshot.Regular, []byte(execution))
 	if err != nil {
 		t.Fatal(err)
@@ -107,8 +111,12 @@ func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
 		t.Fatal(err)
 	}
 	raw.Execution[0].File = entry
+	return prepareExtract(t, selection, raw)
+}
+
+func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
 	req := extractRequest(t)
-	req.Prepared = prepareExtract(t, selection, raw)
+	req.Prepared = extractAttemptWithTurns(t, 3)
 	workspaces := &fakeWorkspaces{}
 	req.Workspaces, req.Evidence, req.Agents = workspaces, &memoryEvidence{}, failingAgents{}
 	if _, err := apply.Extract(context.Background(), req); err == nil || !strings.Contains(err.Error(), "at least 4 agent turns") || len(workspaces.open) != 0 {
@@ -139,7 +147,7 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 		t.Fatalf("write plan:\n got %+v\nwant %+v", got, want)
 	}
 	brief := cfg.Team[0].Brief
-	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization", "realization/lending/reminders: 2 file(s)", "layout.exceptions", "Software.Concept",
+	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization. They hold 8 artifact file(s); 1 more lie outside the roots.", "realization/lending/reminders: 2 file(s)", "dependency models under .markitect/dependencies/core, .markitect/dependencies/software and the artifact roots are read-only", "layout.exceptions", "Software.Concept",
 		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them"} {
 		if !strings.Contains(brief, w) {
 			t.Errorf("brief lacks %q:\n%s", w, brief)
@@ -411,5 +419,63 @@ func TestExtractDeviationsAreOpenNonBlockingRealizationDeviations(t *testing.T) 
 	got := apply.ExtractDeviations(findings)
 	if len(got) != 1 || got[0].ID != "f1" {
 		t.Fatalf("%+v", got)
+	}
+}
+
+func TestExtractModelAccountingReportsEachFindingOnce(t *testing.T) {
+	req := extractRequest(t)
+	start := extractStart(t)
+	cfg, err := apply.ExtractModelConfig(req, proposedTree(t, start), extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name    string
+		changes map[string]*string
+		want    []string
+	}{
+		{"changed artifact", map[string]*string{"realization/lending/borrow.go": text("package lending // edited\n")}, []string{"lending input.changed"}},
+		{"deleted artifact", map[string]*string{"realization/members/member.go": nil}, []string{". files.registry_not_passed", "members registry.artifact_missing", "members input.deleted"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			findings := cfg.Account(change(t, registeredModel(t, start), tc.changes))
+			for _, f := range findings {
+				if f.Owner == "" || f.Obligation == "" || f.Observed == "" {
+					t.Errorf("incomplete finding %+v", f)
+				}
+			}
+			if got := summarize(findings); !slices.Equal(got, tc.want) {
+				t.Errorf("findings:\n got %v\nwant %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestExtractGuardLeavesTheHostStateAndGitDataAlone(t *testing.T) {
+	req := extractRequest(t)
+	start := extractStart(t)
+	structure, err := apply.ExtractStructureConfig(req, extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model, err := apply.ExtractModelConfig(req, proposedTree(t, start), extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := map[string]*string{".markitect/state/runs/x.json": text("{}\n")}
+	git := map[string]*string{".git/HEAD": text("ref: refs/heads/main\n")}
+	if got := structure.Account(change(t, proposedTree(t, start), state)); len(got) != 0 {
+		t.Errorf("state in the structure phase: %+v", got)
+	}
+	if got := structure.Account(change(t, proposedTree(t, start), git)); len(got) != 0 {
+		t.Errorf("git data in the structure phase: %+v", got)
+	}
+	if got := model.Account(change(t, registeredModel(t, start), state)); len(got) != 0 {
+		t.Errorf("state in the model phase: %+v", got)
+	}
+	for _, f := range model.Account(change(t, registeredModel(t, start), git)) {
+		if strings.HasPrefix(f.Obligation, "input.") {
+			t.Errorf("git data is guarded in the model phase: %+v", f)
+		}
 	}
 }

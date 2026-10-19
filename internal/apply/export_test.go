@@ -41,7 +41,7 @@ func ExtractStructureConfig(req ExtractRequest, now time.Time) (run.Config, erro
 	if err != nil {
 		return run.Config{}, err
 	}
-	return req.phase("structure").config(accounting, start, now.Add(start.budget.ExecutionTime.Value), start.budget.AgentTurns.Value)
+	return req.phase(extractStructure).config(accounting, start, now.Add(start.budget.ExecutionTime.Value), start.budget.AgentTurns.Value)
 }
 
 func ExtractModelConfig(req ExtractRequest, candidate snapshot.Tree, now time.Time) (run.Config, error) {
@@ -57,7 +57,7 @@ func ExtractModelConfig(req ExtractRequest, candidate snapshot.Tree, now time.Ti
 	if err != nil {
 		return run.Config{}, err
 	}
-	return req.phase("model").config(accounting, next, now.Add(start.budget.ExecutionTime.Value), start.budget.AgentTurns.Value)
+	return req.phase(extractModel).config(accounting, next, now.Add(start.budget.ExecutionTime.Value), start.budget.AgentTurns.Value)
 }
 
 // RequireModelChangesOnly exposes the publication filter of an Extract.

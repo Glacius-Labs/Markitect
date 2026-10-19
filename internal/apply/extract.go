@@ -91,14 +91,14 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	if err != nil {
 		return result, err
 	}
-	structurePhase := req.phase("structure")
+	structurePhase := req.phase(extractStructure)
 	cfg, err := structurePhase.config(structure, start, deadline, structureTurns)
 	if err != nil {
 		return result, err
 	}
 	outcome, runErr := run.Reconcile(ctx, cfg)
 	result.Structure = outcome
-	structurePhase.cleanup(ctx, outcome, "structure")
+	structurePhase.cleanup(ctx, outcome)
 	if outcome.Status != run.Verified || runErr != nil {
 		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), structurePhase.reconcile())
 		return result, runErr
@@ -118,7 +118,7 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	if err != nil {
 		return keepStructure(err)
 	}
-	phase := req.phase("model")
+	phase := req.phase(extractModel)
 	cfg, err = phase.config(model, next, deadline, start.budget.AgentTurns.Value-len(outcome.Turns))
 	if err != nil {
 		return keepStructure(err)
@@ -128,7 +128,7 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	cfg.Questions = outcome.Questions
 	modelOutcome, runErr := run.Reconcile(ctx, cfg)
 	result.Model = &modelOutcome
-	phase.cleanup(ctx, modelOutcome, "model")
+	phase.cleanup(ctx, modelOutcome)
 	if modelOutcome.Status != run.Verified || runErr != nil {
 		// A model phase that never held its own work volume leaves the structure
 		// as the only result.
@@ -197,10 +197,12 @@ func (r ExtractRequest) now() time.Time {
 type extractPhaseRun struct {
 	req   ExtractRequest
 	runID string
+	phase extractPhaseDescriptor
 }
 
-func (r ExtractRequest) phase(name string) extractPhaseRun {
-	return extractPhaseRun{req: r, runID: r.RunID + "-" + name}
+func (r ExtractRequest) phase(p extractPhase) extractPhaseRun {
+	d := p.descriptor()
+	return extractPhaseRun{req: r, runID: r.RunID + "-" + d.name, phase: d}
 }
 
 // reconcile returns the request the shared Apply helpers (home removal, volume
@@ -212,12 +214,12 @@ func (p extractPhaseRun) reconcile() ReconcileRequest {
 }
 
 // cleanup removes the turns' provider homes and records the phase's outcome.
-func (p extractPhaseRun) cleanup(ctx context.Context, outcome run.Outcome, name string) {
+func (p extractPhaseRun) cleanup(ctx context.Context, outcome run.Outcome) {
 	cleanup := context.WithoutCancel(ctx)
 	for _, home := range outcome.Homes {
 		removeHome(cleanup, p.reconcile(), home)
 	}
-	_ = p.req.Evidence.Record(run.Event{At: p.req.now(), Kind: "extract.phase", Data: map[string]any{"phase": name, "status": outcome.Status, "reason": outcome.Reason, "rounds": len(outcome.Rounds), "turns": len(outcome.Turns)}})
+	_ = p.req.Evidence.Record(run.Event{At: p.req.now(), Kind: "extract.phase", Data: map[string]any{"phase": p.phase.name, "status": outcome.Status, "reason": outcome.Reason, "rounds": len(outcome.Rounds), "turns": len(outcome.Turns)}})
 }
 
 // config builds the engine configuration of one phase from its start.
@@ -225,10 +227,6 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 	team, err := accounting.team(stage)
 	if err != nil {
 		return run.Config{}, err
-	}
-	mandate, guidance := structureMandate, structureVerifyGuidance
-	if accounting.phase == extractModel {
-		mandate, guidance = modelMandate, modelVerifyGuidance
 	}
 	r := p.req
 	return run.Config{
@@ -238,7 +236,7 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 		Budget:     run.Budget{Deadline: deadline, TurnTimeout: stage.budget.TurnTimeout.Value, AgentTurns: agentTurns, Rounds: stage.budget.Rounds.Value},
 		MaxEntries: r.MaxEntries, MaxBytes: r.MaxBytes,
 		Agents: r.Agents, Workspaces: r.Workspaces, Owner: r.Owner, Evidence: r.Evidence, Clock: r.Clock,
-		Mandate: mandate, VerifyGuidance: guidance, CheckTool: true,
+		Mandate: p.phase.mandate, VerifyGuidance: p.phase.verifyGuidance, CheckTool: true,
 	}, nil
 }
 
@@ -246,30 +244,41 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 // children: Root alone in the structure phase, the proposed tree in the model
 // phase.
 func (a extractAccounting) team(stage extractStage) ([]run.Manager, error) {
+	if a.phase == extractStructure {
+		return a.structureTeam(stage)
+	}
+	return a.modelTeam(stage)
+}
+
+// structureTeam is Root alone, with the Brief of the structure phase.
+func (a extractAccounting) structureTeam(stage extractStage) ([]run.Manager, error) {
+	structural := stage.structural
+	root, ok := stage.settings.Manager(organization.Root)
+	if !ok {
+		return nil, errors.New("Root has no resolved settings")
+	}
+	layout := structural.files.layout
+	var dependencies []string
+	for _, dependency := range structural.Model().inputs.Raw.Dependencies {
+		if area := dependency.RepositoryArea; area.String() != "" {
+			dependencies = append(dependencies, area.String())
+		}
+	}
+	slices.Sort(dependencies)
+	var roots []string
+	for _, r := range layout.Roots() {
+		roots = append(roots, r.String())
+	}
+	brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().compiled), Settings: root, Checks: a.declaredChecks()})
+	return []run.Manager{{Path: organization.Root, Role: "proposes the first model structure of the whole project", Brief: brief,
+		ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: a.WritePlan(organization.Root)}}, nil
+}
+
+// modelTeam is the Manager tree of the proposed topology, each with the Brief of
+// the model phase.
+func (a extractAccounting) modelTeam(stage extractStage) ([]run.Manager, error) {
 	structural := stage.structural
 	compiled := structural.Model().compiled
-	checks := a.declaredChecks()
-	if a.phase == extractStructure {
-		root, ok := stage.settings.Manager(organization.Root)
-		if !ok {
-			return nil, errors.New("Root has no resolved settings")
-		}
-		layout := structural.files.layout
-		var dependencies []string
-		for _, dependency := range structural.Model().inputs.Raw.Dependencies {
-			if area := dependency.RepositoryArea; area.String() != "" {
-				dependencies = append(dependencies, area.String())
-			}
-		}
-		slices.Sort(dependencies)
-		var roots []string
-		for _, r := range layout.Roots() {
-			roots = append(roots, r.String())
-		}
-		brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(compiled), Settings: root, Checks: checks})
-		return []run.Manager{{Path: organization.Root, Role: "proposes the first model structure of the whole project", Brief: brief,
-			ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: a.WritePlan(organization.Root)}}, nil
-	}
 	topology, err := organization.BuildTopology(compiled)
 	if err != nil {
 		return nil, err
@@ -287,6 +296,7 @@ func (a extractAccounting) team(stage extractStage) ([]run.Manager, error) {
 		return selection
 	}
 	kinds := vocabularyOf(compiled)
+	checks := a.declaredChecks()
 	artifacts := artifactPaths(stage.tree)
 	var team []run.Manager
 	for _, manager := range topology.Managers() {

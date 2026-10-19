@@ -144,3 +144,21 @@ func TestExtractStatusIsPassedOnlyForAPublishedVerifiedModel(t *testing.T) {
 		}
 	}
 }
+
+func TestExtractReportTakesOpenQuestionsFromTheFinalPhase(t *testing.T) {
+	asked := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	answered := run.Question{ID: "Q1", Text: "Structure?", Asked: asked, Answered: true, Answer: "yes"}
+	open := run.Question{ID: "Q2", Text: "Currency?", Asked: asked}
+	// The model phase carries the structure phase's questions: Q1 is reported once or not at all.
+	carried := NewExtractReport("x-1", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered}},
+		Model: &run.Outcome{Status: run.Incomplete, Questions: []run.Question{answered, open}}})
+	if len(carried.OpenQuestions) != 1 || carried.OpenQuestions[0].ID != "Q2" {
+		t.Errorf("questions %+v", carried.OpenQuestions)
+	}
+	// A model phase that never started has none of its own: the structure's stay.
+	unstarted := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered, open}},
+		Model: &run.Outcome{Status: run.Failed}})
+	if len(unstarted.OpenQuestions) != 1 || unstarted.OpenQuestions[0].ID != "Q2" {
+		t.Errorf("questions %+v", unstarted.OpenQuestions)
+	}
+}

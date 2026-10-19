@@ -8,6 +8,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -320,5 +321,84 @@ func TestExtractKeepsTheStructureWhenTheModelPhaseCannotStart(t *testing.T) {
 	}
 	if result.RetainedWork != "x-1-structure-work" || slices.Contains(workspaces.closed, "x-1-structure-work") || len(publisher.requests) != 0 {
 		t.Fatalf("retained %q closed %v", result.RetainedWork, workspaces.closed)
+	}
+}
+
+func TestExtractKeepsTheModelWorkWhenTheModelPhaseDoesNotVerify(t *testing.T) {
+	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
+	// Root registers nothing: its artifacts stay unexplained in every round.
+	agents.writes["x-1-model ."] = nil
+	result, err := apply.Extract(context.Background(), req)
+	if err != nil || result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status != run.Incomplete {
+		t.Fatalf("err %v, structure %s, model %+v", err, result.Structure.Status, result.Model)
+	}
+	// The model phase's own volume is the result; the structure one is closed.
+	if result.RetainedWork != "x-1-model-work" || slices.Contains(workspaces.closed, "x-1-model-work") || !slices.Contains(workspaces.closed, "x-1-structure-work") ||
+		result.Receipt != nil || len(publisher.requests) != 0 {
+		t.Fatalf("retained %q closed %v receipt %+v", result.RetainedWork, workspaces.closed, result.Receipt)
+	}
+}
+
+func TestExtractFailsWhenTheVerifiedCandidateChangesMoreThanTheModel(t *testing.T) {
+	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
+	// The Host's state is no guarded input, so accounting lets this candidate pass;
+	// only the publication filter refuses it.
+	agents.writes["x-1-model ."][".markitect/state/runs/x.json"] = "{}\n"
+	result, err := apply.Extract(context.Background(), req)
+	if err == nil || !strings.Contains(err.Error(), "refusing to publish .markitect/state/runs/x.json") {
+		t.Fatalf("err = %v", err)
+	}
+	if result.Model == nil || result.Model.Status != run.Failed || !strings.Contains(result.Model.Reason, "refusing to publish") {
+		t.Fatalf("model %+v", result.Model)
+	}
+	if result.RetainedWork != "x-1-model-work" || slices.Contains(workspaces.closed, "x-1-model-work") || result.Receipt != nil || len(publisher.requests) != 0 {
+		t.Fatalf("retained %q closed %v receipt %+v", result.RetainedWork, workspaces.closed, result.Receipt)
+	}
+}
+
+func TestExtractKeepsTheStructureWhenTheModelPhaseHasTooFewTurns(t *testing.T) {
+	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
+	// 13 turns give the structure phase 6 and the model phase the 11 it has left
+	// after the structure phase's two; its six Managers need 12.
+	req.Prepared = extractAttemptWithTurns(t, 13)
+	agents.writes["x-1-structure ."][".markitect/execution.yaml"] = strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 13", 1)
+	result, err := apply.Extract(context.Background(), req)
+	if err != nil || result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status != run.Incomplete || !strings.Contains(result.Model.Reason, "agent turn budget of 11") {
+		t.Fatalf("err %v, structure %s, model %+v", err, result.Structure.Status, result.Model)
+	}
+	if result.RetainedWork != "x-1-structure-work" || slices.Contains(workspaces.closed, "x-1-structure-work") || result.Receipt != nil || len(publisher.requests) != 0 {
+		t.Fatalf("retained %q closed %v", result.RetainedWork, workspaces.closed)
+	}
+}
+
+func TestExtractDeadlineIsTheEarlierOfTheOperatorAndTheExecutionTime(t *testing.T) {
+	now := time.Now()
+	for _, tc := range []struct {
+		name     string
+		operator time.Time
+		want     time.Time
+	}{
+		{"operator first", now.Add(5 * time.Minute), now.Add(5 * time.Minute)},
+		{"execution time first", now.Add(2 * time.Hour), now.Add(25 * time.Minute)},
+		{"no operator deadline", time.Time{}, now.Add(25 * time.Minute)},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req, _, _, _, _, _, _ := bothPhases(t)
+			evidence := &memoryEvidence{}
+			req.Evidence, req.Clock, req.Deadline = evidence, func() time.Time { return now }, tc.operator
+			if _, err := apply.Extract(context.Background(), req); err != nil {
+				t.Fatal(err)
+			}
+			var deadlines []time.Time
+			for _, e := range evidence.events {
+				if e.Kind == "run.start" {
+					deadlines = append(deadlines, e.Data.(map[string]any)["deadline"].(time.Time))
+				}
+			}
+			// Both phases share one deadline.
+			if len(deadlines) != 2 || !deadlines[0].Equal(tc.want) || !deadlines[1].Equal(tc.want) {
+				t.Errorf("deadlines %v, want %v", deadlines, tc.want)
+			}
+		})
 	}
 }
