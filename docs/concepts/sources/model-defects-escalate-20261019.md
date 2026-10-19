@@ -20,7 +20,7 @@ Recorder's note: the session agreed with general escalation and proposed one rul
   - Not a model defect, but not solvable in the tree: Root asks the owner a question, and the run continues with an answer that stays within the model.
 - Gaps without effect at the project boundary are realization freedom (DEC-061). The Manager decides and documents them without escalation.
 
-The session also proposed to first finish the Apply evidence report and then implement the rule.
+Recorder's note: the session also proposed to first finish the Apply evidence report and then implement the rule.
 
 ## The answer
 
