@@ -135,11 +135,17 @@ const assessSchemaSubjects = `{
   }
 }`
 
-func executeTools(root, check, defect bool) []ToolSpec {
+// executeTools lists the Execute tools of a Manager: owner says that Root can
+// ask the human through send (Config.Owner), defect that Root reports model
+// defects (Config.DefectTool).
+func executeTools(root, owner, check, defect bool) []ToolSpec {
 	to := "Send a message to your parent (to \"parent\") or to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
 	finish := "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts. The summary of done reaches your parent, so it needs no separate message."
 	if root {
-		to = "Send a message to a direct child (to its path) or ask the human owner (to \"owner\"). Other recipients are refused. The answer returns what has arrived for you."
+		to = "Send a message to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
+		if owner {
+			to = "Send a message to a direct child (to its path) or ask the human owner (to \"owner\"). Other recipients are refused. The answer returns what has arrived for you."
+		}
 		finish = "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts."
 	}
 	tools := []ToolSpec{

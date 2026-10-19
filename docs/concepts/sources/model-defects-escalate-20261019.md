@@ -25,3 +25,13 @@ Recorder's note: the session also proposed to first finish the Apply evidence re
 ## The answer
 
 > Ja mache es so
+
+## Follow-up: one way out
+
+Recorder's note: after DEC-063 was implemented, the scenario RA-Q2 ran without bound owner decisions. Root recognized a boundary gap (a borrow whose due date would fall after 9999-12-31). It asked the gap as an ordinary owner question instead of reporting a model defect, and continued with the scripted answer. The session asked:
+
+> In RA-Q2 hat Root eine Modelllücke an der Projektgrenze korrekt erkannt, sie aber als normale Owner-Frage gestellt statt als Modellfehler zu melden, und dann mit der Antwort weitergearbeitet. Soll ich Apply vereinfachen, sodass Root nach außen nur noch einen Weg hat?
+
+Options offered: "Nur noch Modellfehler (Recommended)": in Apply the mid-run owner question goes away; what Root cannot settle within the model is reported with model_defect, the run ends at once without publishing, the owner corrects the model and starts again; Extract keeps its questions. "Beides behalten": keep both and only sharpen the tool description.
+
+> Nur noch Modellfehler (Recommended)

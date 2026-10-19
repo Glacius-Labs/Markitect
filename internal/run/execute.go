@@ -131,7 +131,7 @@ func (e *engine) startLocked(m *mgr) {
 	m.execCount++
 	m.running, m.ran, m.execUsed = true, true, true
 	ts := &turnState{m: m, kind: ExecuteTurn, id: fmt.Sprintf("%s-r%d-%s-x%d", e.cfg.RunID, e.execRound, m.slug, m.execCount), round: e.execRound}
-	turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "", e.cfg.CheckTool, e.cfg.DefectTool)}
+	turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "", e.cfg.Owner != nil, e.cfg.CheckTool, e.cfg.DefectTool)}
 	if m.Write.Enforced {
 		turn.ReadOnly, turn.Mounts = !m.Write.Base, slices.Clone(m.Write.Mounts)
 	}
@@ -257,7 +257,7 @@ func (e *engine) executeHandler(m *mgr, ts *turnState) ToolHandler {
 			}
 		}
 		var names []string
-		for _, t := range executeTools(m.Parent == "", e.cfg.CheckTool, e.cfg.DefectTool) {
+		for _, t := range executeTools(m.Parent == "", e.cfg.Owner != nil, e.cfg.CheckTool, e.cfg.DefectTool) {
 			names = append(names, fmt.Sprintf("%q", t.Name))
 		}
 		return refuse("Unknown tool %q; in Execute you have %s.", name, strings.Join(names, ", "))
@@ -384,6 +384,9 @@ func (e *engine) takeItemsLocked(m *mgr) string {
 
 func (e *engine) askOwner(ctx context.Context, m *mgr, ts *turnState, text string) ToolAnswer {
 	if e.cfg.Owner == nil {
+		if e.cfg.DefectTool {
+			return refuse("No human answers questions in this run. Decide within the model and the bound owner decisions; a defect of the model itself goes to the tool model_defect, which ends the run.")
+		}
 		return refuse("No human can answer in this run. Decide within the bound owner decisions, or report the open question in your finish summary.")
 	}
 	e.mu.Lock()

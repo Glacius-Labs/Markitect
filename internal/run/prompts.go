@@ -152,13 +152,13 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 	for _, c := range m.Children {
 		contacts = append(contacts, "child: "+contact(e.byPath[c]))
 	}
-	switch {
-	case m.Parent == "" && e.cfg.DefectTool:
-		contacts = append(contacts, "owner (the human; ask only what the model and the owner decisions leave open; a defect of the model itself goes to the tool model_defect instead)")
-	case m.Parent == "":
+	if m.Parent == "" && e.cfg.Owner != nil {
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)
+	if m.Parent == "" && e.cfg.DefectTool {
+		b.WriteString("\nWhat the model and the owner decisions settle, you decide within the tree. A defect of the model itself goes to the owner only through the tool model_defect, which ends the run.\n")
+	}
 	check := ""
 	if e.cfg.CheckTool {
 		check = checkNote
