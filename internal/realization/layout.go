@@ -25,8 +25,10 @@ type LayoutException struct {
 
 // Layout is the project's persistent artifact ownership: artifact roots that
 // mirror the model hierarchy (root/lending/reminders/... belongs to the local
-// Package lending/reminders) plus explicit exceptions. The deepest mapping wins
-// and everything else belongs to Root. The zero Layout is "not declared": the
+// Package lending/reminders) plus explicit exceptions. The deepest mapping wins.
+// Root owns the files directly in an artifact root and every file outside the
+// roots; a file in an unmapped subdirectory of a root has no owner (HasOwner).
+// The zero Layout is "not declared": the
 // registry shards alone say who owns what. A Layout fixes lexical facts only;
 // it grants no write authority and observes no file.
 type Layout struct {
@@ -152,8 +154,24 @@ func (l Layout) Exceptions() []LayoutException { return slices.Clone(l.exception
 // directory is deeper; otherwise the deepest local Package mirrored below the
 // path's artifact root; otherwise Root. An exception on the very directory of a
 // mirrored Package overrides it. Calling OwnerOf on an undeclared Layout returns
-// Root, because no path mapping exists.
+// Root, because no path mapping exists. A file in a subdirectory of an artifact
+// root that no Package directory or exception covers has no owner (HasOwner is
+// false); OwnerOf returns Root for it, which must resolve it.
 func (l Layout) OwnerOf(path snapshot.Path) Owner {
+	owner, _ := l.ownerOf(path)
+	return owner
+}
+
+// HasOwner reports whether the layout assigns the path to an owner. Root owns the
+// files directly in an artifact root and every file outside the roots; a file in
+// a subdirectory of a root that is neither inside a mirrored Package directory
+// nor inside an exception has no owner. An undeclared layout owns every path.
+func (l Layout) HasOwner(path snapshot.Path) bool {
+	_, owned := l.ownerOf(path)
+	return owned || !l.declared
+}
+
+func (l Layout) ownerOf(path snapshot.Path) (Owner, bool) {
 	name := path.String()
 	var exception *LayoutException
 	for i := range l.exceptions {
@@ -176,12 +194,55 @@ func (l Layout) OwnerOf(path snapshot.Path) Owner {
 		}
 	}
 	if exception != nil && depth(exception.Path.String()) >= mirroredDepth {
-		return exception.Owner
+		return exception.Owner, true
 	}
 	if mirroredDepth > 0 {
-		return mirrored
+		return mirrored, true
 	}
-	return RootOwner()
+	for _, root := range l.roots {
+		if below, inside := strings.CutPrefix(name, root+"/"); inside && strings.Contains(below, "/") {
+			return RootOwner(), false
+		}
+	}
+	return RootOwner(), true
+}
+
+// Area is a directory subtree held by its owner except for the deeper areas
+// inside it: a mirrored Package directory below an artifact root or an exception
+// directory.
+type Area struct {
+	Path  snapshot.Path
+	Owner Owner
+}
+
+// Areas returns the layout's directory areas, parents before descendants: every
+// mirrored Package directory under each root and every exception, except one on
+// a file of the tree, which cannot be an area. An exception on a mirrored
+// directory replaces the mirrored area. Root's files directly in a root are not
+// an area.
+func (l Layout) Areas(tree snapshot.Tree) []Area {
+	owners := make(map[string]Owner)
+	for _, root := range l.roots {
+		for name := range l.packages {
+			owners[root+"/"+name] = Owner{packageName: name}
+		}
+	}
+	for _, exception := range l.exceptions {
+		if _, isFile := tree.Lookup(exception.Path); !isFile {
+			owners[exception.Path.String()] = exception.Owner
+		}
+	}
+	names := make([]string, 0, len(owners))
+	for name := range owners {
+		names = append(names, name)
+	}
+	slices.Sort(names)
+	areas := make([]Area, len(names))
+	for i, name := range names {
+		path, _ := snapshot.NewPath(name)
+		areas[i] = Area{Path: path, Owner: owners[name]}
+	}
+	return areas
 }
 
 // Describe returns short human-readable descriptions of the areas owner owns
@@ -207,15 +268,15 @@ func (l Layout) Describe(owner Owner, tree snapshot.Tree) []string {
 		}
 		shared := ""
 		for _, entry := range tree.Entries() {
-			if strings.HasPrefix(entry.Path().String(), root+"/") && l.OwnerOf(entry.Path()).IsRoot() {
+			if below, inside := strings.CutPrefix(entry.Path().String(), root+"/"); inside && !strings.Contains(below, "/") && l.OwnerOf(entry.Path()).IsRoot() {
 				shared = entry.Path().String()
 				break
 			}
 		}
 		if shared != "" {
-			areas = append(areas, fmt.Sprintf("shared files in %s/ such as %s", root, shared))
+			areas = append(areas, fmt.Sprintf("files directly in %s/ such as %s", root, shared))
 		} else {
-			areas = append(areas, fmt.Sprintf("shared files in %s/ that no Package or exception area covers", root))
+			areas = append(areas, fmt.Sprintf("files directly in %s/", root))
 		}
 	}
 	for _, exception := range l.exceptions {
@@ -230,7 +291,7 @@ func (l Layout) Describe(owner Owner, tree snapshot.Tree) []string {
 		areas = append(areas, area(name, l.foreignInside(name, owner, tree, l.mirroredInside(name, owner))))
 	}
 	if owner.IsRoot() {
-		areas = append(areas, "every other file of the repository outside the roots and exceptions")
+		areas = append(areas, "every file outside the artifact roots and exceptions")
 	}
 	return areas
 }

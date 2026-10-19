@@ -11,6 +11,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -169,7 +170,7 @@ func TestCandidatesLibraryLayoutOwnersShardsAndAreas(t *testing.T) {
 		"lending":           {"realization/lending/** except realization/lending/reminders/**"},
 		"lending/reminders": {"realization/lending/reminders/**"},
 		"library":           {"realization/library/**", "realization/cmd/library/**"},
-		".":                 {"shared files in realization/ such as realization/go.mod", "every other file of the repository outside the roots and exceptions"},
+		".":                 {"files directly in realization/ such as realization/go.mod", "every file outside the artifact roots and exceptions"},
 		"missing":           nil,
 	} {
 		if got := candidates.Areas(manager); !reflect.DeepEqual(got, want) {
@@ -458,5 +459,80 @@ func TestFileCheckAppliesTheDeclaredLayoutBeforeAnyWork(t *testing.T) {
 	selection, raw = fileCheckInputs(t)
 	if _, declared := checkedFiles(t, selection, raw).Layout(); declared {
 		t.Fatal("a project without a layout reported one")
+	}
+}
+
+func TestCandidatesNoOwnerFilesBlockAndGoToRoot(t *testing.T) {
+	candidates, start := layoutCandidates(t)
+	stray := change(t, start, map[string]*string{"realization/cmd/other/main.go": text("package main\n"), "realization/Makefile": text("all:\n")})
+	findings := candidates.Account(stray)
+	want := []string{". file.unexplained realization/Makefile", ". layout.no_owner realization/cmd/other/main.go"}
+	if got := summary(findings); !reflect.DeepEqual(got, want) {
+		t.Fatalf("findings %v, want %v", got, want)
+	}
+	if !strings.Contains(findings[1].Message, "owning Package directory or a persistent layout exception") {
+		t.Fatalf("message must say how to resolve it: %q", findings[1].Message)
+	}
+	if candidates.OwnerOf(path(t, "realization/cmd/other/main.go")) != "." {
+		t.Fatal("Root must resolve a file without an owner")
+	}
+}
+
+func TestCandidatesWritePlansOfTheLibraryLayout(t *testing.T) {
+	candidates, _ := layoutCandidates(t)
+	ro := func(p string) run.PathMount { return run.PathMount{Path: p, Writable: false} }
+	rw := func(p string) run.PathMount { return run.PathMount{Path: p, Writable: true} }
+	for manager, want := range map[string]run.WritePlan{
+		".": {Enforced: true, Base: true, Mounts: []run.PathMount{
+			ro(".markitect"), rw(".markitect/registry"),
+			ro(".markitect/registry/catalog"), ro(".markitect/registry/lending"), ro(".markitect/registry/library"), ro(".markitect/registry/members"),
+			ro("realization/catalog"), ro("realization/cmd/library"), ro("realization/lending"), ro("realization/library"), ro("realization/members"),
+		}},
+		"library": {Enforced: true, Mounts: []run.PathMount{
+			rw(".markitect/registry/library"), rw("realization/cmd/library"), rw("realization/library"),
+		}},
+		"lending": {Enforced: true, Mounts: []run.PathMount{
+			rw(".markitect/registry/lending"), ro(".markitect/registry/lending/reminders"),
+			rw("realization/lending"), ro("realization/lending/reminders"),
+		}},
+		"lending/reminders": {Enforced: true, Mounts: []run.PathMount{
+			rw(".markitect/registry/lending/reminders"), rw("realization/lending/reminders"),
+		}},
+	} {
+		if got := candidates.WritePlan(manager); !reflect.DeepEqual(got, want) {
+			t.Errorf("write plan of %s:\n got %+v\nwant %+v", manager, got, want)
+		}
+	}
+	for manager, want := range map[string]bool{".": false, "library": false, "lending": false, "lending/reminders": false} {
+		if got := candidates.Building(manager); got != want {
+			t.Errorf("Building(%s) = %v, want %v", manager, got, want)
+		}
+	}
+}
+
+func TestCandidatesWithoutLayoutEnforceNothing(t *testing.T) {
+	selection, raw := executionInputs(t, documentedExecution(t))
+	libraryLayoutFiles(t, &selection, &raw)
+	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got := candidates.WritePlan("lending"); !reflect.DeepEqual(got, run.WritePlan{}) {
+		t.Fatalf("an undeclared layout must not enforce: %+v", got)
+	}
+}
+
+func TestCandidatesBuildingManagersOwnNothingRegisteredAtTheStart(t *testing.T) {
+	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
+	censusFile(t, &raw, "realization/library/library.go", snapshot.Regular, []byte("package library\n"))
+	registrySource(t, &selection, &raw, libraryShard, shardYAML(shardEntry("realization/library/library.go", "code", "library/library")), true)
+	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for manager, want := range map[string]bool{".": true, "library": false, "lending": true, "lending/reminders": true} {
+		if got := candidates.Building(manager); got != want {
+			t.Errorf("Building(%s) = %v, want %v", manager, got, want)
+		}
 	}
 }

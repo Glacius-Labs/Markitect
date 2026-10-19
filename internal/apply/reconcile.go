@@ -147,18 +147,32 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		}
 		required = append(required, requiredDefinition{Definition: definition, Checks: requiredChecks[id]})
 	}
+	selectionOf := func(path string) (selection organization.ContextSelection) {
+		for _, candidate := range selections {
+			if candidate.Package() == path {
+				selection = candidate
+			}
+		}
+		return selection
+	}
 	var team []run.Manager
 	for _, manager := range topology.Managers() {
 		managerSettings, ok := settings.Manager(manager.Package)
 		if !ok {
 			return run.Config{}, fmt.Errorf("manager %q has no resolved settings", manager.Package)
 		}
-		var selection organization.ContextSelection
-		for _, candidate := range selections {
-			if candidate.Package() == manager.Package {
-				selection = candidate
+		selection := selectionOf(manager.Package)
+		var children []briefChild
+		for _, path := range manager.Children {
+			child := briefChild{Path: path, Areas: candidates.Areas(path)}
+			for _, definition := range selectionOf(path).Definitions() {
+				if definition.Definition.Identity.Package == path {
+					child.Definitions = append(child.Definitions, identityText(definition.Definition.Identity)+": "+definitionTitle(definition.Definition))
+				}
 			}
+			children = append(children, child)
 		}
+		write := candidates.WritePlan(manager.Package)
 		var manageRequired []requiredDefinition
 		if !slices.ContainsFunc(selection.Definitions(), func(d organization.ContextDefinition) bool { return d.Definition.Identity.Package == manager.Package }) {
 			manageRequired = required
@@ -169,7 +183,10 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 			ExecuteProfile: managerSettings.Execute.Profile.Value.Name,
 			VerifyProfile:  managerSettings.Verify.Profile.Value.Name,
 			Brief: renderBrief(briefInput{Manager: manager, Selection: selection, Settings: managerSettings,
-				Areas: candidates.Areas(manager.Package), Shard: candidates.Shard(manager.Package), Checks: briefChecks, Required: manageRequired}),
+				Areas: candidates.Areas(manager.Package), Shard: candidates.Shard(manager.Package), Checks: briefChecks, Required: manageRequired,
+				Children: children, Enforced: write.Enforced}),
+			Write:    write,
+			Building: candidates.Building(manager.Package),
 		}
 		team = append(team, member)
 	}
