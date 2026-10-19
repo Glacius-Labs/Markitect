@@ -8,7 +8,7 @@ Status, 19 October 2026 (Main `f15ea723`):
 
 - Main holds the recursive Apply of [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) with execute-first ([DEC-058](concepts/register.md#dec-058-apply-always-executes-before-independent-verify)), enforced ownership and the outside oracle ([DEC-059](concepts/register.md#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle)) and the owner-realizes rule ([DEC-060](concepts/register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters)), plus a first bounded Extract. The [runtime contract](design/canonical-model/manager-apply-runtime.md) describes what is implemented.
 - Three timed library demonstrations verified both Applies in one Verify round each ([record](validation/recursive-apply-repetitions-20261019.md)). The first Extract runs work as a mechanism; the extracted model is not yet adoptable as binding intent ([record](validation/library-extract-20261019.md)).
-- Not yet established: Apply without the demonstration harness, a repair round, a real owner question, an interrupted run, a second example, a release and owner acceptance.
+- Not yet established: Apply without the demonstration harness, a repair of injected drift under an unchanged model, a real owner question, an interrupted run, a second example, a release and owner acceptance.
 
 ## Target and baseline
 
@@ -22,7 +22,7 @@ The [canonical language v1](design/canonical-model/minimal-language/language-con
 
 <a id="architect-and-coordinator"></a>
 
-Three sessions work in parallel. Each owns its write scope; anything outside it goes through the owning session.
+Three sessions work in parallel. This continues the owner's [division of 17 October 2026](concepts/sources/architecture-review-20261017.md#division-of-work) ("Konzept und Herzstück" for the core, "die Dinge aussenrum" for the Coordinator): on 19 October 2026 the owner gave the Coordinator "alles drumherum umzusetzten, zu refinen und zu implementieren" and the other two sessions Apply and Extract. The sessions agreed the write scopes below; they are an assignment, not an owner decision, and the owner can change them. Each session owns its write scope; anything outside it goes through the owning session.
 
 | Stream | Write scope | Next |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ Three sessions work in parallel. Each owns its write scope; anything outside it 
 The Coordinator's sequence:
 
 1. **Cleanup.** This plan, superseded design documents to [history](history/README.md), stale status lines, merged worktrees and branches.
-2. **Runtime image.** Python 3 in the base image and a C toolchain in the Go example image, both observed as missing in real runs.
+2. **Runtime image.** Python 3 in the base image and a C toolchain in the Go example image, both reported missing by the Apply core's analysis of the real runs.
 3. **Host setup.** A product command that builds and binds the images and writes today's Host profile and run configuration, so that `apply` and `extract` need no harness. It produces the existing formats and changes none of them.
 4. **Evidence.** Roombook and Readinglog through product commands only, with their oracles.
 5. **Self-model.** Adopt the accepted [preparation-to-publication proposal](design/canonical-model/reconciliation-model-proposal.md) into `.markitect/`.
@@ -48,7 +48,7 @@ The owner-adopted [working method](development/working-method.md) applies: learn
 
 Each session owns its scope, its pull requests and its merges. Implementation work runs in an isolated worktree from the integrated base, with one bounded task, owned paths and acceptance criteria. Sessions coordinate directly; actual state, candidate SHAs, reviews and results live in each chat and PR.
 
-**Shared files** have one writer at a time and are announced to the other sessions before an edit: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the architecture and module gates and the code map. The run configuration, `.markitect/execution.yaml` and the Host profile formats change only after notice to the Coordinator, because Host setup produces them. Port changes belong to the Apply core.
+**Shared files** have one writer at a time and are announced to the other sessions before an edit: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside a stream's own packages, the architecture and module gates and the code map. The run configuration, `.markitect/execution.yaml` and the Host profile formats change only after notice to the Coordinator, because Host setup produces them. Port changes belong to the Apply core.
 
 ### Branch names
 

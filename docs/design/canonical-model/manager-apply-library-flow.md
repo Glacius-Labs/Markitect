@@ -196,7 +196,7 @@ The concise result distinguishes changed and retained areas, the model obligatio
 
 ## First business-rule change: from five to seven
 
-Status: owner-accepted working-day walkthrough, 17 October 2026 ([source](../project-capability-skills-20261009.md#owner-source)). Assume the first reconciliation above has succeeded and the existing application conforms to the adopted five-loan model. This is a hypothetical continuation, not evidence of an executed Apply. It changes no model fixture, implementation or delivery scope; the [delivery demonstration](../../implementation-plan.md#target-and-baseline) retains its separate five-to-three change.
+Status: owner-accepted working-day walkthrough, 17 October 2026 ([source](../project-capability-skills-20261009.md#owner-source)). Assume the first reconciliation above has succeeded and the existing application conforms to the adopted five-loan model. This is a hypothetical continuation, not evidence of an executed Apply. It changes no model fixture, implementation or delivery scope; the [library demonstrations](../../validation/recursive-apply-repetitions-20261019.md) cover the separate five-to-three change.
 
 The owner's ordinary request can be: "Increase the limit from five to seven simultaneously open loans per member. Preserve its existing scope and all other conditions. Update the model first, then have Markitect reconcile the application. Ask only about material conflicts or missing authority." This is a change of intended behavior, rather than a defect repair against unchanged intent. A discussion-only request authorizes neither the model edit nor execution; this document records the workflow only.
 
