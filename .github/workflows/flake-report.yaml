@@ -4,8 +4,6 @@ name: Flake report
 # that passed and failed on the same commit and OS, plus every failing test
 # (backlog TEST-05). It reruns nothing and never changes a CI verdict.
 on:
-  schedule:
-    - cron: '13 6 * * 1'
   workflow_dispatch:
     inputs:
       days:
