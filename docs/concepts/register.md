@@ -70,6 +70,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-055](#dec-055-a-submission-must-pass-its-required-checks) | Decision | A submission must pass its required checks | Accepted |
 | [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted direction; implementation pending |
 | [DEC-057](#dec-057-three-fundamental-starting-situations) | Clarification | Three fundamental starting situations | Accepted high-level direction; documentation only |
+| [DEC-058](#dec-058-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implementation on branch |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -691,6 +692,13 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Reconcile:** Managers reconcile artifacts with the accepted model, including repair against unchanged intent. Parents investigate contradictory child results during Apply or Verify and escalate unresolved intent through Root.
 - **Adopt:** Managers derive, review and integrate a model from existing artifacts, iteratively refine it using read-only Verify, and involve the owner especially for contradictions. Existing artifacts remain unchanged during derivation. Retain supported intent and known realization defects rather than changing meaning to manufacture a pass; later artifact repair belongs to reconciliation.
 - **Owner and scope:** [Vision: three starting situations](../vision.md#three-starting-situations) owns the high-level account. [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) and the existing [Extract design](../design/canonical-model/commands.md#extract-the-existing-stand) retain their technical scope. This documentation decision adds no runtime, language construct, implementation assignment or provider/study authority.
+
+### DEC-058 Enforced responsibilities, build start and an outside oracle
+
+- **Status:** Accepted, owner, 19 October 2026, after the first real library demonstration ([verbatim owner source](sources/ownership-build-order-oracle-20261019.md), [validation record](../validation/recursive-apply-demonstration-20261019.md)). Implementation on branch `dev/enforced-ownership-build-order`, pending review, CI and a new demonstration.
+- **Responsibilities:** A parent must not take over its children's work or tell them they need do nothing. Under a declared layout, ownership is now enforced in the shared working tree: an Execute turn may write only its own areas and registry shard; everything else, including protected inputs and the children's areas, is read-only. Root owns the files directly in an artifact root and every file outside the roots; a subdirectory of an artifact root needs an owning Package directory or a persistent exception. Briefs name each child's areas and Definitions and the parent's role (supply foundations, coordinate, integrate). This amends DEC-056's "initially trust, enforce later" for projects with a declared layout; without a layout ownership stays trusted.
+- **Build start:** In starting situation 1 of [DEC-057](#dec-057-three-fundamental-starting-situations), an area without artifacts starts its first Execute turn only after its building parent ended its own first turn. Root prepares the skeleton and shared prerequisites, and the children build on it recursively. Siblings stay parallel, and reconciliation of existing areas is not ordered. The initial Verify round stays unchanged.
+- **Oracle:** The independent library oracle observes once after each Apply, outside the process. It is no longer a required check and gives the Agents no feedback.
 
 ## Promises
 

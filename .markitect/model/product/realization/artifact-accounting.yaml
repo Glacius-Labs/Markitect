@@ -10,6 +10,7 @@ body: >-
   Shared root artifacts belong to Root unless explicitly mapped otherwise; a requiring Definition supplies semantic links rather than silently changing the path owner.
   Each Manager can create and register files within its area without per-file reservations, and maintains its own registry shard for aggregation.
   Reject missing or duplicate accounting and ambiguous ownership before Apply and at the final candidate, including new files.
-  Initially trust writing ownership and observe violations without claiming technical enforcement or complete writer attribution from a shared diff.
+  With a declared layout, enforce writing ownership in the shared working tree: Execute writes only its own areas and registry shard, everything else is read-only; Root owns files directly in artifact roots, and a root subdirectory needs an owning Package directory or a persistent exception.
+  Without a layout, trust writing ownership and observe violations without claiming technical enforcement or complete writer attribution from a shared diff.
   Candidates preserve source identity and observed findings; pure accounting values do not schedule or publish work.
 spec: {}

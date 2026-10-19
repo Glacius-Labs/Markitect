@@ -4,6 +4,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves owner wording and documentation acceptance for the three fundamental project workflows without assigning implementation work.
+  - path: "docs/concepts/sources/ownership-build-order-oracle-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the owner decisions after the first real demonstration: enforced responsibilities, the build start and an outside oracle."
   - path: "docs/concepts/sources/recursive-apply-implementation-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]

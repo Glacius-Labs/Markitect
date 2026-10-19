@@ -25,3 +25,6 @@ fi
 timeout 60 bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" > /dev/null 2>&1
 echo "end_utc=$(date -u +%FT%TZ) total_seconds=$(( $(date +%s) - T0 ))" >> "$ATTEMPT/timing.txt"
 cat "$ATTEMPT/timing.txt"
+# The independent oracle observes each published Apply afterwards, outside the
+# process and the time limit; its result never reaches the Agents.
+bash "$(dirname "$0")/ra_assess.sh" "$ATTEMPT" 2>&1 | tee "$ATTEMPT/oracle.txt"

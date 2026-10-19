@@ -16,14 +16,6 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Runs the separate no-change Apply on the accepted A2 outside the timed demonstration."
-  - path: "experiments/recursive-apply-demo/oracle/Dockerfile"
-    form: build
-    realizes: [examples/independent-oracles]
-    why: "Builds the check image that runs the independent library oracle outside every Agent's write area."
-  - path: "experiments/recursive-apply-demo/oracle/check.py"
-    form: code
-    realizes: [examples/independent-oracles]
-    why: "Runs the independent library oracle as a required Apply check on the candidate's realization."
   - path: "experiments/recursive-apply-demo/owner-decisions.json"
     form: config
     realizes: [product/run/confirmed-run-history]
