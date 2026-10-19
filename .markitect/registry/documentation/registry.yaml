@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/modeling-skill-guidance.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records accepted modeling-skill guidance, authority boundaries and teaching examples while preserving the documentation-only scope and existing skill split.
   - path: "docs/concepts/sources/apply-execute-first-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
