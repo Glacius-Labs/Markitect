@@ -120,7 +120,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		}
 		return 3
 	}
-	if verb == "apply" && c.apply == nil || verb == "answer" && c.answer == nil {
+	if verb == "apply" && c.apply == nil || verb == "answer" && c.answer == nil || verb == "extract" && c.extract == nil {
 		return incomplete("Execution is unavailable because its concrete execution/publication ports are not configured.")
 	}
 	question := ""
@@ -136,9 +136,13 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 	config := flags.String("run-config", "", "explicit absolute invocation configuration")
 	var repo, manifest, host, text string
 	var dependencies manifestList
-	if verb == "apply" {
+	if verb == "apply" || verb == "extract" {
 		flags.StringVar(&repo, "repo", ".", "repository root")
-		flags.StringVar(&manifest, "model", ".markitect/model.yaml", "explicit model.yaml")
+		if verb == "apply" {
+			flags.StringVar(&manifest, "model", ".markitect/model.yaml", "explicit model.yaml")
+		} else {
+			manifest = extractManifest
+		}
 		flags.StringVar(&host, "host-profile", "", "explicit absolute Host profile document")
 		flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
 	} else {
@@ -155,10 +159,10 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		fmt.Fprintln(stderr, "invalid execution arguments; see help")
 		return 2
 	}
-	if *config == "" || verb == "apply" && host == "" {
+	if *config == "" || verb != "answer" && host == "" {
 		return incomplete("Execution is unavailable without explicit --run-config and --host-profile absolute paths.")
 	}
-	if !filepath.IsAbs(*config) || filepath.Clean(*config) != *config || verb == "apply" && (!filepath.IsAbs(host) || filepath.Clean(host) != host) {
+	if !filepath.IsAbs(*config) || filepath.Clean(*config) != *config || verb != "answer" && (!filepath.IsAbs(host) || filepath.Clean(host) != host) {
 		fmt.Fprintln(stderr, "--run-config and --host-profile require explicit absolute native paths")
 		return 2
 	}
@@ -194,6 +198,17 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		return 2
 	}
 	selection.HostProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(host), Path: path}}
+	if verb == "extract" {
+		report, err := c.extract(ctx, ExtractRequest{Selection: selection, RunConfig: *config})
+		report.FormatVersion, report.Operation = 1, verb
+		if err != nil {
+			report.Error = err.Error()
+		}
+		if emit(report) != 0 {
+			return 3
+		}
+		return exitStatus(report.Status, err)
+	}
 	report, err := c.apply(ctx, ApplyRequest{Selection: selection, RunConfig: *config})
 	report.FormatVersion, report.Operation = 1, verb
 	if err != nil {

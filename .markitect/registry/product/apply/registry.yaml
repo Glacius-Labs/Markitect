@@ -20,6 +20,38 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Exposes the use case's configuration and publication steps to the external tests.
+  - path: "internal/apply/extract.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Runs the two Extract phases over the Apply engine and publishes a verified model as the changed model, registry and layout files, never an artifact.
+  - path: "internal/apply/extract_prepare.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Validates the start of an Extract and prepares each phase from its start tree, the captured repository or the verified structure candidate.
+  - path: "internal/apply/extract_account.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Accounts the candidates of both Extract phases (compiled model, layout, Package inventory, registration, protected inputs) and gives each phase its write plan.
+  - path: "internal/apply/extract_brief.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Renders the Briefs of the Extract phases with the artifact areas, the registry shard and the language authoring guide.
+  - path: "internal/apply/extract_texts.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: States the mandates and Verify guidance of the two Extract phases.
+  - path: "internal/apply/extract_fixture_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Provides the library case 3 start stand and the structure and registered-model candidates for the Extract tests.
+  - path: "internal/apply/extract_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Tests Extract preparation, write plans, teams, briefs and the accounting findings of both phases, including concurrent accounting.
+  - path: "internal/apply/extract_run_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Runs both Extract phases and the publication with scripted fake ports, and an unverified structure phase.
   - path: "internal/apply/candidates.go"
     form: code
     realizes: [product/realization/artifact-accounting]

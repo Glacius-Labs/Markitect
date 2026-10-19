@@ -125,7 +125,7 @@ func renderBrief(in briefInput) string {
 	case len(in.Required) > 0:
 		example = identityText(in.Required[0].Definition.Identity)
 	}
-	fmt.Fprintf(&b, "\nRegistry\nEvery file you create is registered by you in your registry shard %s, in the same change; a file that is not registered there is unexplained and blocks the candidate. Entries use this shape:\n\napiVersion: markitect.registry/v1\nartifacts:\n  - path: path/of/the/file/from/the/repository/root\n    form: code   # one of code, test, doc, build, config\n    realizes: [%s]   # existing Definition identities\n    why: One sentence on what the file contributes.\n\n", in.Shard, example)
+	fmt.Fprintf(&b, "\nRegistry\nEvery file you create is registered by you in your registry shard %s, in the same change; a file that is not registered there is unexplained and blocks the candidate. %s\n\n", in.Shard, registryShape(example))
 	b.WriteString("Protected intent\nThe canonical model under /work/.markitect is the binding intent. Read it; never change it.\n\n")
 
 	b.WriteString("Model obligations\nYour own Definitions are your obligations. Included Definitions describe contracts of other areas: rely on their owners' realization, coordinated through your parent or children, instead of realizing them again in your area.\n")
@@ -180,6 +180,11 @@ func renderBrief(in briefInput) string {
 	writeInstructions(&b, "Execute", in.Settings.Execute)
 	writeInstructions(&b, "Verify", in.Settings.Verify)
 	return b.String()
+}
+
+// registryShape shows the entries of a registry shard.
+func registryShape(example string) string {
+	return fmt.Sprintf("Entries use this shape:\n\napiVersion: markitect.registry/v1\nartifacts:\n  - path: path/of/the/file/from/the/repository/root\n    form: code   # one of code, test, doc, build, config\n    realizes: [%s]   # existing Definition identities\n    why: One sentence on what the file contributes.", example)
 }
 
 func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own bool, reader organization.Manager, requiredBy []string) {

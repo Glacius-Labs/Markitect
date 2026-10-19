@@ -45,6 +45,9 @@ type Candidates struct {
 	classifications []realization.Classification
 	protections     []realization.Protection
 	layout          realization.Layout
+	// guard, when set, replaces the protected-input check of Account: Extract
+	// guards a different set of inputs than Apply does.
+	guard func(snapshot.Tree) []CandidateFinding
 }
 
 // NewCandidates binds candidate accounting to one passed preparation: its
@@ -62,13 +65,19 @@ func NewCandidates(prepared CapturedSettingsAttempt) (Candidates, error) {
 	if !classified || !protected || !registered {
 		return Candidates{}, ErrCandidatesUnavailable
 	}
+	return newCandidates(structural, classifications, protections, registry)
+}
+
+// newCandidates binds candidate accounting to a structural preparation whose
+// complete sets the caller has already obtained.
+func newCandidates(structural CapturedPreparationAttempt, classifications []realization.Classification, protections []realization.Protection, registry realization.Registry) (Candidates, error) {
 	stage := structural.Model()
 	topology, err := organization.BuildTopology(stage.compiled)
 	if err != nil {
 		return Candidates{}, fmt.Errorf("candidate accounting: %w", err)
 	}
 	c := Candidates{compiled: stage.compiled, start: stage.inputs.Raw.Census, topology: topology, registry: registry, protections: protections}
-	c.layout, _ = files.Layout()
+	c.layout = structural.files.layout
 	// The start shards are replaced by the candidate's own: a Manager may add,
 	// change or remove its shard.
 	for _, classification := range classifications {
@@ -138,18 +147,28 @@ func (c Candidates) WritePlan(manager string) run.WritePlan {
 	if !c.layout.Declared() {
 		return run.WritePlan{}
 	}
-	type region struct{ path, owner string }
-	regions := []region{{".markitect", ""}, {strings.TrimSuffix(registryDirectory, "/"), organization.Root}}
+	regions := []writeRegion{{".markitect", ""}, {strings.TrimSuffix(registryDirectory, "/"), organization.Root}}
 	for _, member := range c.topology.Managers() {
 		if member.Package != organization.Root {
-			regions = append(regions, region{registryDirectory + member.Package, member.Package})
+			regions = append(regions, writeRegion{registryDirectory + member.Package, member.Package})
 		}
 	}
 	for _, area := range c.layout.Areas(c.start) {
-		regions = append(regions, region{area.Path.String(), ownerName(area.Owner)})
+		regions = append(regions, writeRegion{area.Path.String(), ownerName(area.Owner)})
 	}
-	slices.SortFunc(regions, func(a, b region) int { return cmp.Compare(a.path, b.path) })
-	plan := run.WritePlan{Enforced: true, Base: manager == organization.Root}
+	return regionPlan(manager, manager == organization.Root, regions)
+}
+
+// writeRegion is a directory of the shared tree and the Manager that holds it;
+// an empty owner holds it for no Manager.
+type writeRegion struct{ path, owner string }
+
+// regionPlan turns the regions into the write plan of one Manager: the base is
+// writable or not, and the mounts overlay only where the writability changes,
+// parents before their descendants.
+func regionPlan(manager string, base bool, regions []writeRegion) run.WritePlan {
+	slices.SortFunc(regions, func(a, b writeRegion) int { return cmp.Compare(a.path, b.path) })
+	plan := run.WritePlan{Enforced: true, Base: base}
 	for i, r := range regions {
 		inherited := plan.Base
 		for j := i - 1; j >= 0; j-- {
@@ -175,7 +194,11 @@ func (c Candidates) Account(tree snapshot.Tree) []CandidateFinding {
 	}
 	registry, classifications := c.shards(tree, add)
 	changed := make(map[string]bool)
-	for _, finding := range c.protectedInputs(tree) {
+	protected := c.protectedInputs
+	if c.guard != nil {
+		protected = c.guard
+	}
+	for _, finding := range protected(tree) {
 		changed[finding.Path] = true
 		findings = append(findings, finding)
 	}

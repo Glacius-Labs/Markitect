@@ -88,6 +88,26 @@ findings. Trust, not enforcement: nothing here attributes a write to an Agent.
 whether it mounts a directory of a volume. `Reconcile` requires and calls it when any Manager's
 write plan is enforced, and refuses the run if it fails (Docker server 26 or newer).
 
+## Extract
+
+`PreparationService.CaptureExtract` prepares the start of an Extract (artifacts, no
+model): the same capture, compile, settings and profile preparation as
+`CaptureSettings`, except that unregistered artifacts (`file.unexplained`) and
+artifacts that no Package covers yet (`layout.no_owner`) do not fail file checking.
+`Extract(ctx, ExtractRequest)` then runs two phases over `run.Reconcile`: a
+structure phase with Root alone, which proposes Packages with one overview
+Definition each and the layout exceptions they need, and a model phase with the
+Manager tree of the verified proposal, which derives each Package's model and
+registers the artifacts. It refuses a start whose local model has Definitions or
+that declares no artifact roots, never changes an artifact, and publishes a
+verified model only as the changed `.markitect` model, registry and layout files.
+`extractAccounting` compiles each candidate tree from scratch (pure, safe for the
+engine's concurrent `check` calls) and gives each phase its write plan; the
+required checks are prepared but not run. `ExtractDeviations` selects the open
+non-blocking findings whose obligation starts with `RealizationDeviation`. The
+[runtime contract](../../docs/design/canonical-model/manager-apply-runtime.md#extract-first-bounded-implementation)
+states the plans, accounting, budget and limits.
+
 ## Publication
 
 `Publisher` preflights and publishes a verified tree against the captured source

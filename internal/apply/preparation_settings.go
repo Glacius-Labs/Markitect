@@ -85,16 +85,26 @@ func (r PreviewSettingsResult) Prepared() (PreviewSettingsAttempt, bool) {
 // A recovered earlier metadata error remains in its original attempt; the
 // returned error describes the final attempt, closure refusal or cancellation.
 func (s *PreparationService) CaptureSettings(ctx context.Context, request CaptureRequest, limits model.Limits, agents AgentProfilePreparer, checks CheckProfilePreparer) (CapturedSettingsResult, error) {
-	return s.capturePreparation(ctx, request, limits, &preparationSettingsPorts{agents, checks})
+	return s.capturePreparation(ctx, request, limits, &preparationSettingsPorts{agents: agents, checks: checks})
+}
+
+// CaptureExtract prepares the start of an Extract like CaptureSettings, except
+// that the artifacts are not registered yet: the files that no registry shard
+// explains and that the layout cannot yet assign to a Package are tolerated,
+// because Extract is what accounts for them. Everything else is prepared and
+// checked exactly as for Apply.
+func (s *PreparationService) CaptureExtract(ctx context.Context, request CaptureRequest, limits model.Limits, agents AgentProfilePreparer, checks CheckProfilePreparer) (CapturedSettingsResult, error) {
+	return s.capturePreparation(ctx, request, limits, &preparationSettingsPorts{agents: agents, checks: checks, extract: true})
 }
 
 func (s *PreparationService) PreviewSettings(ctx context.Context, request PreviewRequest, limits model.Limits, agents AgentProfilePreparer, checks CheckProfilePreparer) (PreviewSettingsResult, error) {
-	return s.previewPreparation(ctx, request, limits, &preparationSettingsPorts{agents, checks})
+	return s.previewPreparation(ctx, request, limits, &preparationSettingsPorts{agents: agents, checks: checks})
 }
 
 // A nil set selects strictly structural preparation. A requested settings entry
 // with unavailable metadata ports remains distinct and reports NotCompleted.
 type preparationSettingsPorts struct {
-	agents AgentProfilePreparer
-	checks CheckProfilePreparer
+	agents  AgentProfilePreparer
+	checks  CheckProfilePreparer
+	extract bool
 }
