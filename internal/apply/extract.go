@@ -57,12 +57,14 @@ type ExtractResult struct {
 	RetainedWork   string
 }
 
-// ProposedCheck is one required check the structure phase proposed.
+// ProposedCheck is one required check the structure phase proposed. Timeout is
+// written as the execution document writes durations, for example "2m".
 type ProposedCheck struct {
 	ID        string   `json:"id"`
 	Profile   string   `json:"profile"`
 	Directory string   `json:"directory"`
 	Args      []string `json:"args"`
+	Timeout   string   `json:"timeout"`
 }
 
 // Extract develops a model candidate from the existing artifacts in two phases
@@ -102,8 +104,8 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	}
 	outcome, runErr := run.Reconcile(ctx, cfg)
 	result.Structure = outcome
-	structurePhase.record(outcome)
 	structurePhase.ports().removeHomes(ctx, outcome.Homes)
+	structurePhase.record(outcome)
 	if outcome.Status != run.Verified || runErr != nil {
 		result.RetainedWork = structurePhase.ports().retainedWork(ctx)
 		return result, runErr
@@ -133,13 +135,18 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	cfg.Questions = outcome.Questions
 	modelOutcome, runErr := run.Reconcile(ctx, cfg)
 	result.Model = &modelOutcome
+	phase.ports().removeHomes(ctx, modelOutcome.Homes)
 	phase.record(modelOutcome)
 	verified := modelOutcome.Status == run.Verified && runErr == nil
 	if verified {
 		// The model phase holds its own start; the structure's volume has no use left.
 		structurePhase.ports().closeWork(ctx)
 	}
-	receipt, retained, err := phase.ports().conclude(ctx, modelOutcome, runErr, func(ctx context.Context) (*PublicationReceipt, error) {
+	// The homes are removed above, before the phase is recorded; conclude must
+	// not remove them again.
+	concluded := modelOutcome
+	concluded.Homes = nil
+	receipt, retained, err := phase.ports().conclude(ctx, concluded, runErr, func(ctx context.Context) (*PublicationReceipt, error) {
 		result.ProposedChecks = proposedChecks(start, modelOutcome.Candidate)
 		changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
 		if err := requireModelChangesOnly(changes); err != nil {
@@ -178,10 +185,23 @@ func proposedChecks(start extractStage, candidate snapshot.Tree) []ProposedCheck
 	proposed := []ProposedCheck{}
 	for _, check := range declared(rebindStructural(start.structural.Model(), candidate, extractModel)) {
 		if !known[check.ID.Value] {
-			proposed = append(proposed, ProposedCheck{ID: check.ID.Value, Profile: check.Profile.Value, Directory: check.Directory.Value.String(), Args: slices.Clone(check.Args.Value)})
+			proposed = append(proposed, ProposedCheck{ID: check.ID.Value, Profile: check.Profile.Value, Directory: check.Directory.Value.String(), Args: slices.Clone(check.Args.Value), Timeout: durationText(check.Timeout.Value)})
 		}
 	}
 	return proposed
+}
+
+// durationText writes a duration without the zero units that time.Duration
+// prints, so that 2 minutes read "2m" as in an execution document.
+func durationText(d time.Duration) string {
+	text := d.String()
+	if strings.HasSuffix(text, "m0s") {
+		text = strings.TrimSuffix(text, "0s")
+	}
+	if strings.HasSuffix(text, "h0m") {
+		text = strings.TrimSuffix(text, "0m")
+	}
+	return text
 }
 
 // requireModelChangesOnly refuses to publish anything but the model, the

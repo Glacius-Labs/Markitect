@@ -189,7 +189,9 @@ type Config struct {
 	Questions      []Question
 
 	ArtifactFindingsAdvisory bool
-	ResolveDefinition        func(snapshot.Tree, string) bool
+	// ResolveDefinition may be called concurrently, from several Managers' assess
+	// handlers at the same time, so it must be safe for concurrent use.
+	ResolveDefinition func(snapshot.Tree, string) bool
 }
 
 // Status is the result of a run.

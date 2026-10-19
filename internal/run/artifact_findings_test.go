@@ -1,6 +1,7 @@
 package run
 
 import (
+	"encoding/json"
 	"errors"
 	"slices"
 	"strings"
@@ -170,5 +171,43 @@ func TestArtifactFindingsAreStoredAdvisoryAndModelFindingsKeepTheirFlag(t *testi
 		if !ok || (fd.Subject == "artifact") == fd.Blocking {
 			t.Errorf("recorded finding %+v", r.Data)
 		}
+	}
+}
+
+func TestAssessSchemasDifferOnlyInTheFindingSubject(t *testing.T) {
+	findingItems := func(name, schema string) (items struct {
+		Required   []string                   `json:"required"`
+		Properties map[string]json.RawMessage `json:"properties"`
+	}) {
+		var parsed struct {
+			Properties struct {
+				Findings struct {
+					Items struct {
+						Required   []string                   `json:"required"`
+						Properties map[string]json.RawMessage `json:"properties"`
+					} `json:"items"`
+				} `json:"findings"`
+			} `json:"properties"`
+		}
+		if err := json.Unmarshal([]byte(schema), &parsed); err != nil {
+			t.Fatalf("%s is not JSON: %v", name, err)
+		}
+		return parsed.Properties.Findings.Items
+	}
+	on, off := findingItems("assessSchemaSubjects", assessSchemaSubjects), findingItems("assessSchema", assessSchema)
+	var subject struct {
+		Enum []string `json:"enum"`
+	}
+	if err := json.Unmarshal(on.Properties["subject"], &subject); err != nil || !slices.Equal(subject.Enum, []string{"artifact", "model"}) {
+		t.Errorf("subject property %s: %v", on.Properties["subject"], err)
+	}
+	if _, ok := on.Properties["definition"]; !ok || !slices.Contains(on.Required, "subject") {
+		t.Errorf("option-on findings: properties %v, required %v", on.Properties, on.Required)
+	}
+	if _, ok := off.Properties["subject"]; ok || slices.Contains(off.Required, "subject") {
+		t.Errorf("option-off findings have a subject: properties %v, required %v", off.Properties, off.Required)
+	}
+	if _, ok := off.Properties["definition"]; ok {
+		t.Error("option-off findings have a definition")
 	}
 }

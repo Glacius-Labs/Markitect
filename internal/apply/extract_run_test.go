@@ -281,7 +281,7 @@ func TestExtractReportsTheChecksTheStructureProposed(t *testing.T) {
 	if err != nil || result.Model == nil || result.Model.Status != run.Verified {
 		t.Fatalf("%v %+v", err, result.Model)
 	}
-	want := []apply.ProposedCheck{{ID: "project-vet", Profile: "library-tests", Directory: "realization", Args: []string{"vet", "./..."}}}
+	want := []apply.ProposedCheck{{ID: "project-vet", Profile: "library-tests", Directory: "realization", Args: []string{"vet", "./..."}, Timeout: "2m"}}
 	if !reflect.DeepEqual(result.ProposedChecks, want) {
 		t.Errorf("proposed checks %+v, want %+v", result.ProposedChecks, want)
 	}

@@ -323,24 +323,42 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	return findings
 }
 
-// equalBesidesProposals reports whether two execution documents are equal after
-// layout.exceptions and checks, the parts the structure phase proposes, are
-// removed from both. A document that does not parse differs.
+// equalBesidesProposals reports whether the structure phase changed the
+// execution document only in the parts it may propose: layout.exceptions and
+// added checks. Every check of the start stays, as the identical entry; a
+// changed or removed owner-declared check is a change beyond the proposals, as
+// is any other difference. A document that does not parse differs.
 func equalBesidesProposals(before, after []byte) bool {
-	strip := func(data []byte) (map[string]any, bool) {
-		var document map[string]any
+	strip := func(data []byte) (document map[string]any, checks any, ok bool) {
 		if err := yaml.Unmarshal(data, &document); err != nil || document == nil {
-			return nil, false
+			return nil, nil, false
 		}
-		if layout, ok := document["layout"].(map[string]any); ok {
+		if layout, isMap := document["layout"].(map[string]any); isMap {
 			delete(layout, "exceptions")
 		}
+		checks = document["checks"]
 		delete(document, "checks")
-		return document, true
+		return document, checks, true
 	}
-	x, okX := strip(before)
-	y, okY := strip(after)
-	return okX && okY && reflect.DeepEqual(x, y)
+	x, startChecks, okX := strip(before)
+	y, candidateChecks, okY := strip(after)
+	if !okX || !okY || !reflect.DeepEqual(x, y) {
+		return false
+	}
+	if startChecks == nil {
+		return true
+	}
+	kept, _ := candidateChecks.([]any)
+	declared, isList := startChecks.([]any)
+	if !isList {
+		return reflect.DeepEqual(startChecks, candidateChecks)
+	}
+	for _, check := range declared {
+		if !slices.ContainsFunc(kept, func(candidate any) bool { return reflect.DeepEqual(check, candidate) }) {
+			return false
+		}
+	}
+	return true
 }
 
 // WritePlan returns where a Manager's Execute turns may write in the shared

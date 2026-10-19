@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Scripted owner for Extract scenarios: answers every question of the run's
 # owner channel after a short delay and logs question and answer. A question
-# about the loan period (14 or 21 days) gets the scenario's decision; any other
-# question gets a neutral answer that settles nothing. Stops when STOP exists.
+# whose text is about the loan period (14 or 21 days) gets the scenario's
+# decision; any other question gets a neutral answer that settles nothing. Only
+# the question text is matched, never its id or timestamp. Stops when STOP exists.
 # Usage: rx_owner.sh MARKITECT RUN_CONFIG STATE_DIR LOG STOP
 set -uo pipefail
 MARKITECT="$1"
@@ -19,7 +20,8 @@ while [ ! -e "$STOP" ]; do
     [ -e "$STATE/answers/$id.txt" ] && continue
     grep -q "^$id " "$LOG" 2>/dev/null && continue
     sleep 20
-    if grep -Eqi '21|14 ?(calendar )?days|loan period' "$q"; then answer="$PERIOD"; kind=period; else answer="$NEUTRAL"; kind=neutral; fi
+    text=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1])).get("text", ""))' "$q" 2>/dev/null)
+    if printf '%s' "$text" | grep -Eqi '\b(14|21)\b|loan period'; then answer="$PERIOD"; kind=period; else answer="$NEUTRAL"; kind=neutral; fi
     "$MARKITECT" answer "$id" --text "$answer" --run-config "$CONFIG" > /dev/null 2>&1
     echo "$id $kind exit=$? $(date -u +%FT%TZ)" >> "$LOG"
     cp "$q" "$(dirname "$LOG")/question-$id.json"

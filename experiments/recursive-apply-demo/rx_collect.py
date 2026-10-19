@@ -5,14 +5,30 @@ the owner log, the published model, and, when present, the rebuild's Apply
 report and the oracle summary."""
 import json
 import pathlib
+import re
 import statistics
 import sys
+from datetime import datetime
+
+
+def parse_time(text):
+    """Parse Go's RFC3339Nano: any number of fraction digits, Z or an offset."""
+    m = re.fullmatch(r"(.+?)(?:\.(\d+))?(Z|[+-]\d\d:\d\d)", text)
+    base, fraction, offset = m.groups()
+    return datetime.fromisoformat(base + "." + (fraction or "").ljust(6, "0")[:6] + offset.replace("Z", "+00:00"))
 
 
 def seconds(turn):
-    from datetime import datetime
-    parse = lambda s: datetime.fromisoformat(s.replace("Z", "+00:00")[:26] + "+00:00")
-    return (parse(turn["ended"]) - parse(turn["started"])).total_seconds()
+    return (parse_time(turn["ended"]) - parse_time(turn["started"])).total_seconds()
+
+
+def deviation(f):
+    """One report deviation, whichever shape its report has: the Definition with
+    owners, raisers and observed texts, or an older owner and obligation."""
+    if "definition" in f:
+        return {"definition": f.get("definition"), "owners": f.get("owners", []), "raisedBy": f.get("raisedBy", []),
+                "observed": [str(o)[:160] for o in f.get("observed", [])]}
+    return {"owner": f.get("owner"), "obligation": (f.get("obligation") or "")[:160]}
 
 
 def phase(p):
@@ -52,7 +68,7 @@ for arg in sys.argv[1:]:
         x = json.loads(rep.read_text())
         row.update({"status": x.get("status"), "modelComplete": x.get("modelComplete"),
                     "structure": phase(x.get("structure", {})), "model": phase(x.get("model", {})),
-                    "deviations": [{"owner": f.get("owner"), "obligation": f.get("obligation")[:160]} for f in x.get("deviations", [])],
+                    "deviations": [deviation(f) for f in x.get("deviations", [])],
                     "openQuestions": len(x.get("openQuestions", []))})
     owner = a / "out" / "owner.log"
     row["owner_answers"] = owner.read_text().splitlines() if owner.is_file() else []

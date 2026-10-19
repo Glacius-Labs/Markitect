@@ -252,6 +252,8 @@ func TestExtractStructureAccountsProposedChecks(t *testing.T) {
 		{"unknown profile", extractExecutionProposed + extractProposedCheck("no-such-profile"), `names the profile "no-such-profile", which the Host does not offer. The Host offers the check profiles: library-tests.`},
 		{"check that does not decode", extractExecutionProposed + "  - id: broken\n    profile: library-tests\n", "The Host offers the check profiles: library-tests."},
 		{"change elsewhere beside a check", strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1) + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
+		{"changed owner check", strings.Replace(extractExecutionProposed, "args: [test, ./...]", "args: [test, -run, Nothing, ./...]", 1), "changed beyond layout.exceptions and checks"},
+		{"removed owner check", strings.Replace(extractExecutionProposed, "checks:\n  - id: project-tests\n    profile: library-tests\n    directory: realization\n    args: [test, ./...]\n    timeout: 2m\n", "", 1) + "checks:\n" + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			findings := account(tc.execution)

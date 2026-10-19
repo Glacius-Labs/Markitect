@@ -34,7 +34,7 @@ if not m:
     sys.exit("no go.mod registration in the root shard")
 required = m.group(1).strip()
 text = template.read_text()
-text = re.sub(r"^  exceptions:.*?(?=^checks:)", exceptions, text, flags=re.S | re.M)
+text = re.sub(r"^  exceptions:.*?(?=^checks:)", lambda m: exceptions, text, flags=re.S | re.M)
 text = re.sub(r"requiredBy: \S+", "requiredBy: " + required, text)
 (target / ".markitect/execution.yaml").write_text(text)
 print("requiredBy", required)
