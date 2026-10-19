@@ -89,6 +89,21 @@ func TestReconcileConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
 	if !strings.Contains(seen["."].Brief, "You are the Manager of Root") || !strings.Contains(seen["."].Brief, ".markitect/registry/registry.yaml") {
 		t.Errorf("Root brief: %s", seen["."].Brief)
 	}
+	// Root has no Definitions of its own: it still sees what the required checks are for.
+	rootBrief := seen["."].Brief
+	for _, want := range []string{"realizes: [library/callable-interface]", "library/callable-interface (", "included because: required by check project-tests"} {
+		if !strings.Contains(rootBrief, want) {
+			t.Errorf("Root brief lacks %q:\n%s", want, rootBrief)
+		}
+	}
+	if strings.Contains(rootBrief, "package/id") || strings.Contains(rootBrief, "none are included") {
+		t.Errorf("Root brief keeps the placeholder:\n%s", rootBrief)
+	}
+	for _, manager := range []string{"lending", "lending/reminders", "library"} {
+		if strings.Contains(seen[manager].Brief, "required by check") {
+			t.Errorf("%s has Definitions of its own and needs no check-required ones:\n%s", manager, seen[manager].Brief)
+		}
+	}
 	if len(cfg.Checks) != 1 || cfg.Checks[0].Name != "project-tests" || cfg.Checks[0].Owner != "." || cfg.Checks[0].RequiredBy != "library/callable-interface" {
 		t.Fatalf("checks: %+v", cfg.Checks)
 	}
@@ -271,5 +286,46 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 		if !slices.Contains(workspaces.closed, run.WorkspaceID(home)) {
 			t.Errorf("home %s was not removed", home)
 		}
+	}
+}
+
+// TestReconcileClosesTheWorkVolumeOnlyAfterPublication covers a verified outcome:
+// the shared work volume is the verified work, so it goes only once published.
+func TestReconcileClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
+	req, start := layoutRequest(t)
+	candidate := change(t, start, map[string]*string{"realization/lending/borrow.go": text("package lending // changed\n")})
+	for _, tc := range []struct {
+		name      string
+		publisher *fakePublisher
+		tree      snapshot.Tree
+		closed    bool
+		wantErr   bool
+	}{
+		{"applied", &fakePublisher{receipt: apply.PublicationReceipt{ID: "run-1", Outcome: apply.PublicationApplied}}, candidate, true, false},
+		{"no change", &fakePublisher{receipt: apply.PublicationReceipt{ID: "run-1", Outcome: apply.PublicationNoChange}}, start, true, false},
+		{"stale", &fakePublisher{preflight: apply.ErrCaptureChanged}, candidate, false, false},
+		{"partial", &fakePublisher{receipt: apply.PublicationReceipt{ID: "run-1", Outcome: apply.PublicationPartial}, publish: errors.New("write")}, candidate, false, true},
+		{"unknown", &fakePublisher{receipt: apply.PublicationReceipt{ID: "run-1", Outcome: apply.PublicationUnknown}}, candidate, false, false},
+		{"preflight error", &fakePublisher{preflight: errors.New("disk")}, candidate, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			workspaces := &fakeWorkspaces{}
+			if _, err := workspaces.Materialize(context.Background(), run.WorkspaceSpec{ID: "run-1-work"}); err != nil {
+				t.Fatal(err)
+			}
+			req := req
+			req.Workspaces, req.Evidence, req.Publisher = workspaces, &memoryEvidence{}, tc.publisher
+			result, err := apply.Conclude(context.Background(), req, start, run.Outcome{Status: run.Verified, Candidate: tc.tree}, nil)
+			if (err != nil) != tc.wantErr {
+				t.Fatalf("error %v", err)
+			}
+			closed := slices.Contains(workspaces.closed, "run-1-work")
+			if closed != tc.closed {
+				t.Fatalf("work volume closed = %v, want %v", closed, tc.closed)
+			}
+			if wantRetained := map[bool]string{true: "", false: "run-1-work"}[tc.closed]; result.RetainedWork != wantRetained {
+				t.Fatalf("retained work %q, want %q", result.RetainedWork, wantRetained)
+			}
+		})
 	}
 }
