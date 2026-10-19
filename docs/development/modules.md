@@ -6,13 +6,11 @@ The repository uses one Go module. Packages are organized by concrete responsibi
 
 Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Apply owns preparation and consumer ports; adapters implement concrete acquisition and metadata protocols. Bootstrap constructs actual services. Product and maintenance commands remain thin entrypoints with separate composition.
 
-The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and owns the frame transport of `internal/agentd/frame` with agentd. The concrete Codex and Claude session adapters may consume the frame DTOs exposed by that container API while implementing `run.Sessions`. Each provider adapter keeps its own protocol handling and cannot import the other provider or agentd execution. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
+The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and owns the frame transport of `internal/agentd/frame` with agentd. The concrete Codex and Claude turn adapters may consume the frame DTOs exposed by that container API while implementing `run.Agents`. Each provider adapter keeps its own protocol handling and cannot import the other provider or agentd execution. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
 
-Run owns fixed input bindings, deterministic budget and lifecycle transitions, and its narrow journal port. A proposal changes no confirmed state; an exact append acknowledgement commits the transition. The Orchestrator supplies clock observations. There is no SQL, repository acquisition, provider protocol or public execution path in this package.
+Run owns the reconciliation engine ([DEC-056](../concepts/register.md)): fresh Verify of the starting stand, parallel Execute turns of the Managers in one shared working tree, observed quiescence, one immutable candidate per Verify round, and repair through the owners. It depends only on snapshot values and on ports its adapters implement: Agents, workspaces, checks, the owner channel and evidence. There is no repository acquisition, provider protocol, persistence or public execution path in this package.
 
-Existing history is reconstructed through bounded, revision-pinned reads and the same transition rules. Required blobs and complete batches are verified before a projection is returned. Reading creates no effect observations; open invocations retain their holds until explicit reconciliation.
-
-The [SQLite journal adapter](../../internal/adapters/journal/README.md) implements Apply control and Run recording. Production imports only Apply and Run; its owned integration fixtures may import model and snapshot values from test files. Repository-local lifetime control remains independent of the external store directory. SQL commits validate the live epoch and required byte references; reopening never implies that previous processes stopped.
+Bootstrap supplies the Host-side ports of one Apply: a file evidence directory, a file owner channel, an Agents router over the Claude and Codex turn adapters and an exclusive lock per state directory. Evidence stays under the state directory outside the repository.
 
 The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../../internal/adapters/claudecode/README.md) metadata preparers use narrow image readers backed by the container adapter. Bootstrap injects their factories; only a selected source-bound profile supplies the engine executable and immutable image ID. Preparation consumes Apply's profile ports and pure model, organization and snapshot values. It inspects the image and copies its build metadata from a created, never started container. It starts no Session or provider and observes no schema inventory.
 
@@ -22,18 +20,17 @@ The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../..
 | --- | --- |
 | Model, snapshot | No other Markitect responsibility |
 | Organization, realization | Model, snapshot |
-| Run | Model, snapshot, organization, realization |
+| Run | Snapshot |
 | Apply | Model, snapshot, organization, realization, run |
 | Model view | Apply, model, snapshot |
 | Repository, workspace and publication adapter | Apply, Run, required pure values and container API |
-| Journal adapter | Apply and Run; model and snapshot only in tests |
-| Codex metadata and session adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
-| Claude metadata and session adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
+| Codex metadata and turn adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
+| Claude metadata and turn adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
 | Check metadata and execution adapter | Apply, model, organization, snapshot, Run and container API |
 | Container adapter | Agent frame protocol |
 | Session helper (agentd) | Agent frame protocol |
 | Agent frame protocol | No other Markitect responsibility |
-| CLI adapter | Apply, pure report values, model view, build metadata and licenses |
+| CLI adapter | Apply, Run report values, pure report values, model view, build metadata and licenses |
 | Document adapter | Model view and reviewed guarded-write API |
 | Product bootstrap | Its actual services and adapters |
 | Product command | Product bootstrap |

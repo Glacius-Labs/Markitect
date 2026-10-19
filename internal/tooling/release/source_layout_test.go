@@ -15,9 +15,9 @@ func rootLayoutFixture(t *testing.T) string {
 	for name, content := range map[string]string{
 		"go.mod": "module github.com/Glacius-Labs/Markitect\n", "go.sum": "", "LICENSE": "license\n",
 		"cmd/markitect/main.go": "package main\n", "internal/model/model.go": "package model\n",
-		"internal/run/state.go":                       "package run\n",
-		"internal/adapters/journal/store.go":          "package journal\n",
-		"internal/run/testdata/basis-v1.json":         "literal historical fixture\n",
+		"internal/run/engine.go":                      "package run\n",
+		"internal/adapters/gitrepo/git.go":            "package gitrepo\n",
+		"internal/apply/testdata/fixture.json":        "literal historical fixture\n",
 		"internal/adapters/documents/writer.go":       "package documents\n",
 		"internal/tooling/release/install/install.go": "package releaseinstall\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
@@ -54,7 +54,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/run/state.go", "internal/adapters/journal/store.go", "internal/run/testdata/basis-v1.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig", "internal/apply/strategy_defaults.yaml"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/run/engine.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig", "internal/apply/strategy_defaults.yaml"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}
@@ -118,7 +118,7 @@ func TestClaudeCodecLiveAndFixedSourceBytes(t *testing.T) {
 }
 
 func TestRootLayoutRejectsUnsupportedInputsBeforeFiltering(t *testing.T) {
-	for _, name := range []string{"src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/journal-extra/store.go", "internal/adapters/checks-extra/profile.go", "internal/adapters/claudecode-extra/codec.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
+	for _, name := range []string{"src/cmd/markitect/main.go", "internal/other/x.txt", "internal/model-extra/x.go", "internal/run-extra/x.go", "internal/adapters/direct.go", "internal/adapters/gitrepo-extra/git.go", "internal/adapters/checks-extra/profile.go", "internal/adapters/claudecode-extra/codec.go", "internal/adapters/unowned/codec.go", "internal/tooling-extra/release/x.go", "internal/tooling/other/x.go", "cmd/other/main.go", "internal/model/nested/go.mod"} {
 		t.Run(name, func(t *testing.T) {
 			root := rootLayoutFixture(t)
 			writeLayoutFile(t, root, name, "unexpected\n")

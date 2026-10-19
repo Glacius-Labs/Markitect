@@ -51,7 +51,7 @@ artifacts:
   - path: "internal/adapters/claudecode/agents.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Implements run.Agents: one Claude turn per container with Host tool answers, usage and an observed stop.
+    why: "Implements run.Agents: one Claude turn per container with Host tool answers, usage and an observed stop."
   - path: "internal/adapters/claudecode/agents_test.go"
     form: test
     realizes: [product/ports-and-adapters]

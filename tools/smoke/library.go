@@ -198,6 +198,23 @@ func (s *smoke) libraryPreparation() error {
 	if err := requireAbsent(s.work, "never-created"); err != nil {
 		return err
 	}
+	// A configuration of the removed sequential Apply (formatVersion 1) is refused
+	// as failed before the repository is acquired, the lock is taken or any
+	// container engine or provider is started.
+	oldConfig := filepath.Join(s.work, "old-run.json")
+	state := filepath.Join(s.work, "never-created-state")
+	if err := os.WriteFile(oldConfig, []byte(fmt.Sprintf(`{"formatVersion":1,"stateDirectory":%q,"allocation":{"runs":1}}`, state)), 0644); err != nil {
+		return err
+	}
+	out, err = s.run(repo, nil, s.tool("markitect"), "apply", "--repo", filepath.Join(s.work, "never-created"), "--host-profile", host, "--run-config", oldConfig)
+	if err == nil || !strings.Contains(out, `"status": "failed"`) || !strings.Contains(out, "formatVersion 2") {
+		return fmt.Errorf("Apply accepted an invalid run configuration: %s", tail(out))
+	}
+	for _, name := range []string{"never-created", "never-created-state"} {
+		if err := requireAbsent(s.work, name); err != nil {
+			return err
+		}
+	}
 	return nil
 }
 

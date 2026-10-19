@@ -45,7 +45,9 @@ type applyPorts struct {
 	Evidence   *fileEvidence
 	Publisher  apply.Publisher
 	Harvest    harvestLimits
-	Clock      func() time.Time
+	// Deadline is the operator's absolute wall-clock limit; zero means none.
+	Deadline time.Time
+	Clock    func() time.Time
 }
 
 // Execute prepares the committed repository, composes the ports and runs the
@@ -199,7 +201,7 @@ func (s *executionService) ports(cfg runConfig, configPath string, prepared appl
 		return applyPorts{}, err
 	}
 	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Owner: owner, Evidence: evidence,
-		Publisher: s.repository, Harvest: cfg.Harvest, Clock: time.Now}, nil
+		Publisher: s.repository, Harvest: cfg.Harvest, Deadline: cfg.deadline(), Clock: time.Now}, nil
 }
 
 // newAgents builds one adapter per provider that a selected profile uses and
@@ -222,9 +224,17 @@ func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg r
 		}
 		switch input.Section() {
 		case "codexAppServer":
-			codexProfiles[input.Name()], err = codexappserver.ProfileFromPrepared(profile)
+			var p codexappserver.Profile
+			if p, err = codexappserver.ProfileFromPrepared(profile); err == nil {
+				err = credentialMapped(cfg, p.CredentialRef, "codex-app-server")
+			}
+			codexProfiles[input.Name()] = p
 		case "claudeCode":
-			claudeProfiles[input.Name()], err = claudecode.ProfileFromPrepared(profile)
+			var p claudecode.Profile
+			if p, err = claudecode.ProfileFromPrepared(profile); err == nil {
+				err = credentialMapped(cfg, p.CredentialRef, "claude-code")
+			}
+			claudeProfiles[input.Name()] = p
 		default:
 			err = errors.New("selected Agent profile has no supported execution adapter")
 		}
@@ -252,6 +262,15 @@ func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg r
 		}
 	}
 	return newAgentsRouter(routes), nil
+}
+
+// credentialMapped requires the explicit run configuration to map the profile's
+// exact credential reference to a credential of the profile's provider.
+func credentialMapped(cfg runConfig, ref, provider string) error {
+	if source, found := cfg.Credentials[ref]; !found || source.Provider != provider {
+		return errors.New("prepared Agent has no exact explicit credential mapping")
+	}
+	return nil
 }
 
 func executionCheck(selected apply.CheckSelection, cfg runConfig) (runport.CheckRequest, error) {

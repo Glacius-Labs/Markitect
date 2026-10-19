@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -23,7 +24,9 @@ var errRunConfigIO = errors.New("run configuration file could not be completely 
 // runConfig supplies explicit invocation assertions and concrete Host inputs.
 // It adds no project settings or profile defaults. ProductBuild is the
 // operator's assertion identifying the frozen build, not a verified source SHA.
-// Harvest bounds every observation of a shared working tree.
+// Harvest bounds every observation of a shared working tree. Deadline is the
+// optional absolute wall-clock limit (RFC 3339, UTC) that the run must finish
+// before; the project's own budget still applies.
 type runConfig struct {
 	FormatVersion      int                         `json:"formatVersion"`
 	RepositoryIdentity string                      `json:"repositoryIdentity"`
@@ -34,6 +37,7 @@ type runConfig struct {
 	EngineExecutable   string                      `json:"engineExecutable"`
 	WorkspaceHelper    container.ContainerSpec     `json:"workspaceHelper"`
 	Harvest            harvestLimits               `json:"harvest"`
+	Deadline           string                      `json:"deadline,omitempty"`
 	Credentials        map[string]credentialSource `json:"credentials"`
 }
 
@@ -64,10 +68,10 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	if err != nil {
 		return runConfig{}, err
 	}
-	// ownerDecisions is the only optional field (DEC-053).
+	// ownerDecisions (DEC-053) and deadline are the optional fields.
 	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "engineExecutable", "workspaceHelper", "harvest", "credentials"}
 	for key := range root {
-		if !slices.Contains(required, key) && key != "ownerDecisions" {
+		if !slices.Contains(required, key) && key != "ownerDecisions" && key != "deadline" {
 			return runConfig{}, errRunConfig
 		}
 	}
@@ -101,7 +105,7 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 		}
 	}
 	var cfg runConfig
-	if json.Unmarshal(data, &cfg) != nil || !cfg.valid() {
+	if json.Unmarshal(data, &cfg) != nil || root["deadline"] != nil && cfg.Deadline == "" || !cfg.valid() {
 		return runConfig{}, errRunConfig
 	}
 	// Constructor validation performs no credential file I/O.
@@ -171,6 +175,11 @@ func (c runConfig) valid() bool {
 	}) {
 		return false
 	}
+	if c.Deadline != "" {
+		if t, err := time.Parse(time.RFC3339, c.Deadline); err != nil || !strings.HasSuffix(c.Deadline, "Z") || t.IsZero() {
+			return false
+		}
+	}
 	h := c.WorkspaceHelper
 	if !(runport.HarvestRequest{ID: "harvest", MaxEntries: c.Harvest.MaxEntries, MaxBytes: c.Harvest.MaxBytes}).Valid() {
 		return false
@@ -184,6 +193,12 @@ func (c runConfig) valid() bool {
 		}
 	}
 	return true
+}
+
+// deadline returns the configured wall-clock limit, or the zero time for none.
+func (c runConfig) deadline() time.Time {
+	t, _ := time.Parse(time.RFC3339, c.Deadline)
+	return t
 }
 
 func runConfigText(value string) bool {

@@ -17,7 +17,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/run
     layer: apply-run
-    purpose: Fixed run bindings, assignment budgets and confirmed journal transitions.
+    purpose: Recursive reconciliation engine over ports for Agents, workspaces, checks, owner and evidence.
     doc: docs/development/modules.md
   - path: internal/apply
     layer: apply-usecase
@@ -33,15 +33,15 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/claudecode
     layer: apply-adapter
-    purpose: Claude Code stream protocol and step session adaptation through the container runtime.
+    purpose: Claude Code stream protocol and one-turn Agent adaptation through the container runtime.
     doc: internal/adapters/claudecode/README.md
   - path: internal/adapters/cli
     layer: apply-adapter
-    purpose: Concrete repository, profile metadata and document I/O.
+    purpose: Command parsing and JSON reports for preparation, Apply and owner answers.
     doc: docs/development/modules.md
   - path: internal/adapters/codexappserver
     layer: apply-adapter
-    purpose: Prepares Codex image metadata and implements step sessions through the container runtime.
+    purpose: Prepares Codex image metadata and implements one-turn Agents through the container runtime.
     doc: internal/adapters/codexappserver/README.md
   - path: internal/adapters/container
     layer: apply-adapter
@@ -55,13 +55,9 @@ packages:
     layer: apply-adapter
     purpose: Repository capture, workspace volumes and guarded publication.
     doc: docs/development/modules.md
-  - path: internal/adapters/journal
-    layer: apply-adapter
-    purpose: Repository control and fenced durable SQLite journal storage.
-    doc: internal/adapters/journal/README.md
   - path: internal/bootstrap
     layer: apply-bootstrap
-    purpose: Constructs actual services and their adapters.
+    purpose: Constructs actual services and adapters; owns the Agents router, file evidence, file owner channel and state lock.
     doc: docs/development/modules.md
   - path: cmd/markitect
     layer: apply-command

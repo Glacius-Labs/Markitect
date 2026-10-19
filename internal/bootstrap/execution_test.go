@@ -126,3 +126,18 @@ func TestApplyReportRetainedAsEvidenceMatchesThePrintedShape(t *testing.T) {
 		t.Fatal("report is not JSON")
 	}
 }
+
+func TestAgentProfilesNeedAnExactCredentialMappingOfTheirProvider(t *testing.T) {
+	cfg := runConfig{Credentials: map[string]credentialSource{
+		"codex-ref":  {Provider: "codex-app-server", Mode: "api-key", Path: "/abs/codex"},
+		"claude-ref": {Provider: "claude-code", Mode: "dedicated-runtime-token", Path: "/abs/claude"},
+	}}
+	if credentialMapped(cfg, "codex-ref", "codex-app-server") != nil || credentialMapped(cfg, "claude-ref", "claude-code") != nil {
+		t.Fatal("exact mappings refused")
+	}
+	for _, tc := range [][2]string{{"missing", "codex-app-server"}, {"codex-ref", "claude-code"}, {"claude-ref", "codex-app-server"}, {"", "claude-code"}} {
+		if credentialMapped(cfg, tc[0], tc[1]) == nil {
+			t.Errorf("%v accepted", tc)
+		}
+	}
+}

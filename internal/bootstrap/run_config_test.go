@@ -8,6 +8,7 @@ import (
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -64,6 +65,28 @@ func TestRunConfigRetainsOptionalOwnerDecisions(t *testing.T) {
 	cfg, err := decodeRunConfig(configBytes(t, document))
 	if err != nil || len(cfg.OwnerDecisions) != 2 || cfg.OwnerDecisions[1] != "A due date after 9999-12-31 refuses the borrow." {
 		t.Fatal("the owner decisions were not retained", err, cfg.OwnerDecisions)
+	}
+}
+
+func TestRunConfigDeadlineIsOptionalAbsoluteUTC(t *testing.T) {
+	document := runConfigFixture(t)
+	if cfg, err := decodeRunConfig(configBytes(t, document)); err != nil || !cfg.deadline().IsZero() {
+		t.Fatal("a run config without a deadline changed", err)
+	}
+	document["deadline"] = "2026-10-19T18:30:00Z"
+	cfg, err := decodeRunConfig(configBytes(t, document))
+	if err != nil || !cfg.deadline().Equal(time.Date(2026, 10, 19, 18, 30, 0, 0, time.UTC)) {
+		t.Fatal("the deadline was not retained", err)
+	}
+	for _, bad := range []any{"", "tomorrow", "2026-10-19", "2026-10-19T18:30:00", "2026-10-19T20:30:00+02:00", "2026-10-19T18:30:00+00:00", "0001-01-01T00:00:00Z", 1792434600} {
+		document["deadline"] = bad
+		if _, err := decodeRunConfig(configBytes(t, document)); !errors.Is(err, errRunConfig) {
+			t.Errorf("deadline %v accepted", bad)
+		}
+	}
+	document["deadline"] = nil
+	if _, err := decodeRunConfig(configBytes(t, document)); !errors.Is(err, errRunConfig) {
+		t.Error("null deadline accepted")
 	}
 }
 

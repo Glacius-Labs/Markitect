@@ -36,14 +36,6 @@ artifacts:
     form: code
     realizes: [product/ports-and-adapters]
     why: Defines the consumer-owned Publisher port for guarded publication and read-back.
-  - path: "internal/apply/execute.go"
-    form: code
-    realizes: [product/ports-and-adapters]
-    why: Runs a controlled basis through the core, its required checks and its guarded publication.
-  - path: "internal/apply/execute_test.go"
-    form: test
-    realizes: [product/ports-and-adapters]
-    why: Checks a whole first Apply through controlled ports, up to publication and a stale source.
   - path: "internal/apply/host_profiles_sections_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
@@ -56,22 +48,6 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Checks that only changed shards are regenerated, in their captured record order.
-  - path: "internal/apply/control.go"
-    form: code
-    realizes: [product/ports-and-adapters]
-    why: Owns the repository Control port and a lifetime-bound journal consumer without physical storage or execution.
-  - path: "internal/apply/control_capture.go"
-    form: code
-    realizes: [product/ports-and-adapters, product/apply/read-only-preparation]
-    why: Revalidates original captured facts under Control and restores confirmed RUN history with bounded reads.
-  - path: "internal/apply/control_capture_test.go"
-    form: test
-    realizes: [product/ports-and-adapters, product/apply/read-only-preparation]
-    why: Rejects capture drift, failed reconstruction and invalid control identities while preserving observations and cleanup errors.
-  - path: "internal/apply/control_test.go"
-    form: test
-    realizes: [product/ports-and-adapters]
-    why: Composes actual RUN restoration and uncertainty through checked journal operations and explicit Control lifetime.
   - path: "internal/apply/copy.go"
     form: code
     realizes: [product/apply/read-only-preparation]
@@ -312,18 +288,6 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/apply/run_binding.go"
-    form: code
-    realizes: [product/apply/read-only-preparation]
-    why: Projects one complete captured preparation and explicit Host facts into a fixed run basis without effects.
-  - path: "internal/apply/run_binding_failures_test.go"
-    form: test
-    realizes: [product/apply/read-only-preparation]
-    why: Rejects incomplete captures, missing Host facts and invalid allocations before basis construction.
-  - path: "internal/apply/run_binding_test.go"
-    form: test
-    realizes: [product/apply/read-only-preparation]
-    why: Checks final capture identity, original input provenance and absence of new acquisition effects.
   - path: "internal/apply/settings_preparation.go"
     form: code
     realizes: [product/apply/read-only-preparation]
