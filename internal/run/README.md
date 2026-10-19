@@ -91,6 +91,14 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
   findings it raised. An invalid call is refused with the reason and may be repeated. A valid
   report is kept in the turn and applied when the turn ends; a later valid call replaces it. A turn
   that ends without a valid report is retried once with a fresh turn; then the run is Incomplete.
+  With `Config.ArtifactFindingsAdvisory` (Extract's model phase; it requires `Config.ResolveDefinition`)
+  every finding also carries `subject` (`artifact`: an artifact does not conform to the model;
+  `model`: the model itself is defective) and, for an artifact, `definition`, the identity of the
+  Definition it deviates from, which `ResolveDefinition` must confirm on the candidate. A report
+  without a valid subject, or an artifact finding without a resolvable Definition, is refused. An
+  artifact finding is stored non-blocking whatever the reviewer says; a model finding keeps the
+  reviewer's flag. `Finding.Subject` and `Finding.Definition` hold both. Without the option the
+  schema has no such fields and a call that sends them is refused as any unknown field.
 - Execute: `send {to, text}` where `to` is `parent`, a direct child path or, for Root only,
   `owner`; anything else is refused with the allowed contacts. An answer also returns the
   caller's new undelivered items. `finish {status: done|waiting, summary}` records how the turn

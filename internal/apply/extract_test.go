@@ -3,6 +3,7 @@ package apply_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"slices"
 	"strconv"
 	"strings"
@@ -442,16 +443,56 @@ func TestExtractPublishesOnlyTheModel(t *testing.T) {
 	}
 }
 
-func TestExtractDeviationsAreOpenNonBlockingRealizationDeviations(t *testing.T) {
+func TestExtractDeviationsGroupOpenArtifactFindingsByDefinition(t *testing.T) {
 	findings := []run.Finding{
-		{ID: "f1", Obligation: "Realization deviation: lending/lending", Blocking: false},
-		{ID: "f2", Obligation: "realization deviation: members/members", Blocking: false, Closed: true},
-		{ID: "f3", Obligation: "Realization deviation: catalog/catalog", Blocking: true},
-		{ID: "f4", Obligation: "Missing statement", Blocking: false},
+		{ID: "f1", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "borrow.go admits a sixth loan."},
+		{ID: "f2", Owner: "members", RaisedBy: "members", Subject: "artifact", Definition: "members/members", Observed: "closed one", Closed: true},
+		{ID: "f3", Owner: "catalog", RaisedBy: "catalog", Subject: "model", Obligation: "Missing statement", Blocking: true},
+		{ID: "f4", Owner: "lending/reminders", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "remind.go counts 14 days."},
+		{ID: "f5", Owner: "catalog", RaisedBy: "library", Subject: "artifact", Definition: "catalog/catalog", Observed: "search.go ignores case."},
+		{ID: "f6", Owner: "lending", RaisedBy: "lending", Obligation: "Better wording"},
+		{ID: "f7", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "README.md says 14 days."},
 	}
 	got := apply.ExtractDeviations(findings)
-	if len(got) != 1 || got[0].ID != "f1" {
+	want := []apply.ArtifactDeviation{
+		{Definition: "catalog/catalog", Owners: []string{"catalog"}, RaisedBy: []string{"library"}, Observed: []string{"search.go ignores case."}},
+		{Definition: "lending/lending", Owners: []string{"lending", "lending/reminders"}, RaisedBy: []string{"lending"}, Observed: []string{"borrow.go admits a sixth loan.", "remind.go counts 14 days.", "README.md says 14 days."}},
+	}
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("%+v", got)
+	}
+	if got := apply.ExtractDeviations(nil); len(got) != 0 {
+		t.Fatalf("%+v", got)
+	}
+}
+
+func TestExtractModelPhaseResolvesDefinitionsOfTheCandidate(t *testing.T) {
+	req := extractRequest(t)
+	start := extractStart(t)
+	proposed := proposedTree(t, start)
+	model, err := apply.ExtractModelConfig(req, proposed, extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !model.ArtifactFindingsAdvisory || model.ResolveDefinition == nil {
+		t.Fatalf("the model phase does not report artifact findings: %+v", model)
+	}
+	for id, want := range map[string]bool{"lending/lending": true, "lending/reminders/reminders": true, "lending/reminders": false, "lending/other": false, "other/lending": false, "": false} {
+		if got := model.ResolveDefinition(proposed, id); got != want {
+			t.Errorf("%q resolves %v", id, got)
+		}
+	}
+	// The identities are those of the tree that is asked about.
+	without := change(t, proposed, map[string]*string{".markitect/model/lending/lending.yaml": nil})
+	if model.ResolveDefinition(without, "lending/lending") || !model.ResolveDefinition(proposed, "lending/lending") {
+		t.Error("the resolver kept the identities of another tree")
+	}
+	structure, err := apply.ExtractStructureConfig(req, extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if structure.ArtifactFindingsAdvisory || structure.ResolveDefinition != nil {
+		t.Error("the structure phase reports artifact findings")
 	}
 }
 

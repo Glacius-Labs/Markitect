@@ -167,7 +167,7 @@ func bothPhases(t *testing.T) (apply.ExtractRequest, *scriptedAgents, *memoryWor
 	agents := &scriptedAgents{ws: workspaces, writes: map[string]map[string]string{
 		"x-1-structure .": diff(start, proposed, func(string) bool { return true }),
 	}, findings: map[string][]map[string]any{
-		"x-1-model lending": {{"owner": "lending", "obligation": "Realization deviation: lending/lending", "observed": "borrow.go admits a sixth loan.", "blocking": false}},
+		"x-1-model lending": {{"owner": "lending", "subject": "artifact", "definition": "lending/lending", "obligation": "Loans are limited", "observed": "borrow.go admits a sixth loan.", "blocking": true}},
 	}}
 	for _, owner := range []string{".", "catalog", "library", "lending", "lending/reminders", "members"} {
 		shard := ".markitect/registry/" + owner + "/registry.yaml"
@@ -206,9 +206,16 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	if len(result.ProposedChecks) != 0 {
 		t.Errorf("no check was proposed: %+v", result.ProposedChecks)
 	}
+	// The reviewer called the artifact finding blocking; it is stored advisory and
+	// the model verified anyway.
 	deviations := apply.ExtractDeviations(result.Model.Findings)
-	if len(deviations) != 1 || deviations[0].Owner != "lending" || !strings.Contains(deviations[0].Observed, "sixth loan") {
+	if len(deviations) != 1 || deviations[0].Definition != "lending/lending" || !slices.Equal(deviations[0].Owners, []string{"lending"}) || !slices.Equal(deviations[0].RaisedBy, []string{"lending"}) || len(deviations[0].Observed) != 1 || !strings.Contains(deviations[0].Observed[0], "sixth loan") {
 		t.Fatalf("deviations %+v", deviations)
+	}
+	for _, f := range result.Model.Findings {
+		if f.Subject == "artifact" && f.Blocking {
+			t.Errorf("a blocking artifact finding: %+v", f)
+		}
 	}
 	// Publication: the guarded Publisher gets exactly the model, registry and layout changes.
 	if result.Receipt == nil || result.Receipt.Outcome != apply.PublicationApplied || len(publisher.requests) != 1 || result.RetainedWork != "" {
@@ -245,7 +252,7 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		!slices.ContainsFunc(structureExecute.Tools, func(s run.ToolSpec) bool { return s.Name == "check" }) {
 		t.Errorf("structure prompt:\n%s", structureExecute.Prompt)
 	}
-	if !strings.Contains(modelVerify.Prompt, "Realization deviation") || !strings.Contains(modelVerify.Prompt, "could important behavior of this area change") {
+	if !strings.Contains(modelVerify.Prompt, "report it with subject artifact") || !strings.Contains(modelVerify.Prompt, "could important behavior of this area change") {
 		t.Errorf("verify prompt lacks the Extract guidance:\n%s", modelVerify.Prompt)
 	}
 	phases := 0

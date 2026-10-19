@@ -110,8 +110,8 @@ extract options:
   exceptions, phase two derives the model of every Package and registers the
   artifacts. Artifacts are never changed or published; a verified model is
   published as the changed .markitect model, registry and layout files. The
-  JSON report lists model completion, the final Verify result, the realization
-  deviations, open owner questions, per-phase rounds, turns and usage and the
+  JSON report lists model completion, the final Verify result, the artifact
+  deviations per Definition, open owner questions, per-phase rounds, turns and usage and the
   publication. Questions are answered with the answer command.
 
 answer options:

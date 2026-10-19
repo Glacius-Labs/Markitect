@@ -1,6 +1,9 @@
 package run
 
-import "encoding/json"
+import (
+	"encoding/json"
+	"strings"
+)
 
 // Host tool names. Execute turns send and finish, and check when Config offers
 // it; Verify turns assess.
@@ -75,6 +78,22 @@ const assessSchema = `{
   }
 }`
 
+// Finding subjects of an assess report when Config.ArtifactFindingsAdvisory is
+// set: an artifact that does not conform to the model, or a defect of the model.
+const (
+	subjectArtifact = "artifact"
+	subjectModel    = "model"
+)
+
+// assessSchemaSubjects is assessSchema with the two fields every finding needs
+// when Config.ArtifactFindingsAdvisory is set.
+var assessSchemaSubjects = strings.NewReplacer(
+	`"required": ["owner", "obligation", "observed", "blocking"],`, `"required": ["owner", "subject", "obligation", "observed", "blocking"],`,
+	`"blocking": {"type": "boolean"}`, `"blocking": {"type": "boolean"},
+          "subject": {"type": "string", "enum": ["artifact", "model"], "description": "artifact: an artifact does not conform to the model. model: the model itself is defective."},
+          "definition": {"type": "string", "description": "Required when subject is artifact: the identity of the Definition the artifact deviates from."}`,
+).Replace(assessSchema)
+
 func executeTools(root, check bool) []ToolSpec {
 	to := "Send a message to your parent (to \"parent\") or to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
 	finish := "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts. The summary of done reaches your parent, so it needs no separate message."
@@ -92,6 +111,10 @@ func executeTools(root, check bool) []ToolSpec {
 	return tools
 }
 
-func verifyTools() []ToolSpec {
-	return []ToolSpec{{Name: toolAssess, Description: "Report your assessment of the candidate when your assessment is complete. An invalid call is refused with the reason; if you call it again, the last valid call counts.", InputSchema: json.RawMessage(assessSchema)}}
+func verifyTools(subjects bool) []ToolSpec {
+	schema := assessSchema
+	if subjects {
+		schema = assessSchemaSubjects
+	}
+	return []ToolSpec{{Name: toolAssess, Description: "Report your assessment of the candidate when your assessment is complete. An invalid call is refused with the reason; if you call it again, the last valid call counts.", InputSchema: json.RawMessage(schema)}}
 }

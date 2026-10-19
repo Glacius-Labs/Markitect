@@ -106,8 +106,13 @@ verified model only as the changed `.markitect` model, registry and layout files
 engine's concurrent `check` calls) and gives each phase its write plan; a
 proposed check must name a check profile the Host offers, and the required checks
 are prepared but not run. `ExtractResult.ProposedChecks` lists the proposed checks
-for the report. `ExtractDeviations` selects the open
-non-blocking findings whose obligation starts with `RealizationDeviation`. The
+for the report. The model phase sets
+`run.Config.ArtifactFindingsAdvisory` with a `ResolveDefinition` that compiles the
+candidate's model (the identities of the latest tree are kept), so Verify reports an
+artifact that deviates from a justified statement as a non-blocking finding with
+subject `artifact` and its Definition. `ExtractDeviations` groups the open such
+findings into one `ArtifactDeviation` per Definition: its owners, raisers and
+observed texts. The
 [runtime contract](../../docs/design/canonical-model/manager-apply-runtime.md#extract-first-bounded-implementation)
 states the plans, accounting, budget and limits.
 

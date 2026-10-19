@@ -207,16 +207,48 @@ func requireModelChangesOnly(changes []snapshot.Change) error {
 	return nil
 }
 
-// ExtractDeviations returns the open non-blocking findings that record an
-// artifact deviating from a justified model statement.
-func ExtractDeviations(findings []run.Finding) []run.Finding {
-	var deviations []run.Finding
+// ArtifactDeviation is one Definition that artifacts deviate from: the owners,
+// the raising Managers and the observed texts of its open artifact findings.
+type ArtifactDeviation struct {
+	Definition string   `json:"definition"`
+	Owners     []string `json:"owners"`
+	RaisedBy   []string `json:"raisedBy"`
+	Observed   []string `json:"observed"`
+}
+
+// ExtractDeviations groups the open findings with the subject artifact by the
+// Definition they name, in Definition order: an artifact that deviates from a
+// statement documented intent justifies, which the model phase reports instead
+// of changing the model.
+func ExtractDeviations(findings []run.Finding) []ArtifactDeviation {
+	byDefinition := map[string]*ArtifactDeviation{}
+	var deviations []*ArtifactDeviation
 	for _, f := range findings {
-		if !f.Blocking && !f.Closed && strings.HasPrefix(strings.ToLower(strings.TrimSpace(f.Obligation)), strings.ToLower(RealizationDeviation)) {
-			deviations = append(deviations, f)
+		if f.Subject != "artifact" || f.Closed {
+			continue
+		}
+		d := byDefinition[f.Definition]
+		if d == nil {
+			d = &ArtifactDeviation{Definition: f.Definition}
+			byDefinition[f.Definition] = d
+			deviations = append(deviations, d)
+		}
+		d.Observed = append(d.Observed, f.Observed)
+		if !slices.Contains(d.Owners, f.Owner) {
+			d.Owners = append(d.Owners, f.Owner)
+		}
+		if !slices.Contains(d.RaisedBy, f.RaisedBy) {
+			d.RaisedBy = append(d.RaisedBy, f.RaisedBy)
 		}
 	}
-	return deviations
+	slices.SortFunc(deviations, func(x, y *ArtifactDeviation) int { return strings.Compare(x.Definition, y.Definition) })
+	out := make([]ArtifactDeviation, len(deviations))
+	for i, d := range deviations {
+		slices.Sort(d.Owners)
+		slices.Sort(d.RaisedBy)
+		out[i] = *d
+	}
+	return out
 }
 
 func (r ExtractRequest) now() time.Time {
@@ -263,7 +295,7 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 		return run.Config{}, err
 	}
 	r := p.req
-	return run.Config{
+	cfg := run.Config{
 		RunID: p.runID, Team: team, Start: stage.tree, OwnerRequest: r.OwnerRequest, OwnerDecisions: r.OwnerDecisions,
 		Account:    func(tree snapshot.Tree) []run.Finding { return accountFindings(accounting.Account(tree)) },
 		OwnerOf:    accounting.OwnerOf,
@@ -271,7 +303,13 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 		MaxEntries: r.MaxEntries, MaxBytes: r.MaxBytes,
 		Agents: r.Agents, Workspaces: r.Workspaces, Owner: r.Owner, Evidence: r.Evidence, Clock: r.Clock,
 		Mandate: p.phase.mandate, VerifyGuidance: p.phase.verifyGuidance, CheckTool: true,
-	}, nil
+	}
+	if accounting.phase == extractModel {
+		// The artifacts are fixed evidence of the model phase: a deviation of an
+		// artifact is reported against a Definition of the candidate, not repaired.
+		cfg.ArtifactFindingsAdvisory, cfg.ResolveDefinition = true, accounting.definitionResolver()
+	}
+	return cfg, nil
 }
 
 // team lists the Managers of the phase, Root first and every parent before its

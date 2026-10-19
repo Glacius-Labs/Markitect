@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -80,7 +81,9 @@ func TestExtractReportShape(t *testing.T) {
 	modelOutcome := run.Outcome{Status: run.Verified,
 		Rounds: []run.Round{{Number: 1, Assessments: []run.Assessment{{Manager: ".", Satisfied: false}}}, {Number: 2, Green: true, Assessments: []run.Assessment{{Manager: ".", Satisfied: true, Summary: "fine"}, {Manager: "lending", Satisfied: true, Summary: "fine"}}}},
 		Findings: []run.Finding{
-			{ID: "f1", Owner: "lending", RaisedBy: "lending", Obligation: "Realization deviation: lending/loan-limit", Observed: "borrow.go admits a sixth loan.", Blocking: false},
+			{ID: "f1", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/loan-limit", Obligation: "At most five loans", Observed: "borrow.go admits a sixth loan.", Blocking: false},
+			{ID: "f4", Owner: "lending/reminders", RaisedBy: "lending", Subject: "artifact", Definition: "lending/loan-limit", Obligation: "At most five loans", Observed: "remind.go counts six.", Blocking: false},
+			{ID: "f5", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/closed", Obligation: "Closed", Observed: "x", Closed: true},
 			{ID: "f2", Owner: "lending", RaisedBy: "lending", Obligation: "Missing statement", Observed: "Refusal.", Blocking: true, Closed: true},
 			{ID: "f3", Owner: "lending", RaisedBy: "lending", Obligation: "Better wording", Observed: "x", Blocking: false},
 		},
@@ -98,7 +101,7 @@ func TestExtractReportShape(t *testing.T) {
 	if report.Verify == nil || report.Verify.Round != 2 || !report.Verify.Green || len(report.Verify.Assessments) != 2 {
 		t.Fatalf("verify %+v", report.Verify)
 	}
-	if len(report.Deviations) != 1 || report.Deviations[0].ID != "f1" || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
+	if len(report.Deviations) != 1 || report.Deviations[0].Definition != "lending/loan-limit" || len(report.Deviations[0].Observed) != 2 || !slices.Equal(report.Deviations[0].Owners, []string{"lending", "lending/reminders"}) || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
 		t.Fatalf("deviations %+v questions %+v", report.Deviations, report.OpenQuestions)
 	}
 	if len(report.ProposedChecks) != 1 || report.ProposedChecks[0].ID != "project-tests" {

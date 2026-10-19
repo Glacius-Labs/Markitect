@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
@@ -145,6 +146,34 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 		return append(findings, guarded...)
 	}
 	return append(findings, a.accountModel(structural, tree, guarded)...)
+}
+
+// definitionResolver returns the function that tells whether a candidate tree's
+// model holds a Definition with the identity "package/ID". It compiles the
+// candidate once and keeps the identities of the latest tree, because the
+// engine asks for several Definitions of the same candidate; it is safe for
+// concurrent use.
+func (a extractAccounting) definitionResolver() func(snapshot.Tree, string) bool {
+	var mu sync.Mutex
+	var digest string
+	var known map[string]bool
+	return func(tree snapshot.Tree, identity string) bool {
+		mu.Lock()
+		defer mu.Unlock()
+		if d := tree.Digest().String(); known == nil || d != digest {
+			digest, known = d, map[string]bool{}
+			if compiled := rebindStructural(a.start.structural.Model(), tree, a.phase).Model().compiled; compiled.Status == model.Passed {
+				for _, owner := range compiled.Models {
+					if owner.Local {
+						for _, definition := range owner.Definitions {
+							known[identityText(definition.Identity)] = true
+						}
+					}
+				}
+			}
+		}
+		return known[identity]
+	}
 }
 
 // accountChecks reports each proposed check whose profile the Host does not

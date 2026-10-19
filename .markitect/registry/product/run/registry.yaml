@@ -140,6 +140,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks the custom mandate and Verify guidance, the unchanged Apply texts and the check tool.
+  - path: "internal/run/artifact_findings_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks the assess schema with and without artifact findings, their refusals and that an artifact finding is stored non-blocking.
   - path: "internal/run/failure_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
