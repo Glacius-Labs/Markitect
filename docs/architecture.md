@@ -1,6 +1,6 @@
 # Architecture
 
-Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 compilation and read-only preparation, plus a separately guarded generated view. Execution and Apply remain unavailable.
+Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 compilation and read-only preparation, a separately guarded generated view and the recursive Apply of [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) on branch `dev/recursive-apply-simplified`, pending review, CI and owner acceptance. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
 
 ## Product flow
 
@@ -8,11 +8,13 @@ Markitect is canonical model-first development with delegated realization. The [
 
 The repository adapter captures actual sources. ModelService compiles only complete acquired inputs. PreparationService composes actual model, registry, complete file accounting, execution declarations and static context selection. Optional metadata/settings preparation uses explicit Orchestrator sources and actual profile adapters. The CLI presents those reports without inventing run records or execution readiness.
 
-Generated views use `internal/modeldocs` and its document-writer port, implemented by `internal/adapters/documents`. Their guard is independent of Apply publication. `apply` returns unavailable before acquisition or effects.
+Generated views use `internal/modeldocs` and its document-writer port, implemented by `internal/adapters/documents`. Their guard is independent of Apply publication.
+
+`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `run.Reconcile` over `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file-based owner channel and evidence.
 
 ## Authority and evidence
 
-The canonical model states intended behavior; exact registry entries state artifact ownership and Definition basis. Execution declarations, product defaults, Orchestrator observations, assignments and future runtime records have separate responsibilities. A committed model binds its specification revision, not an authenticated human decision. Source checks, hosted CI, provider execution, releases and owner acceptance remain separate evidence.
+The canonical model states intended behavior; exact registry entries state artifact ownership and Definition basis. Execution declarations, product defaults, Orchestrator observations and run evidence have separate responsibilities. A committed model binds its specification revision, not an authenticated human decision. Source checks, hosted CI, provider execution, releases and owner acceptance remain separate evidence.
 
 ## Layers
 
@@ -23,7 +25,8 @@ All maintained Go packages use one root module. [The code map](development/code-
 | Canonical language values/compiler | `internal/model` | No other Markitect responsibility |
 | Fixed path/file/tree values | `internal/snapshot` | No other Markitect responsibility |
 | Topology, exact settings and context | `internal/organization` | Model and snapshot |
-| Ownership, accounting and candidates | `internal/realization` | Model and snapshot |
+| Ownership layout, accounting and candidates | `internal/realization` | Model and snapshot |
+| Reconciliation engine | `internal/run` | Model, snapshot, organization and realization; no I/O |
 | Read-only preparation and consumer ports | `internal/apply` | Pure responsibilities |
 | Generated model view/write plan | `internal/modeldocs` | Apply, model and snapshot |
 | Physical/protocol adapters | Explicit `internal/adapters/*` packages | Their actual inward consumers; no general sibling privilege |
@@ -41,29 +44,27 @@ There is one ordinary root and one Manager per local canonical Package, includin
 
 `gitrepo` implements Source, PreviewSource and explicit revision resolution. Committed capture requires clean HEAD and returns its comparison guard. Working/fixed previews never return that guard. It checks exact spellings, modes, physical directory identity, manifest roots and the complete census. Native aliases of the already confirmed selected root retain their repository coordinates; redirects and unbound external historical sources remain refused.
 
-Metadata preparers parse explicitly selected source-bound profiles. Codex metadata preparation inspects the selected image and copies its recorded metadata without starting it; Check metadata preparation observes the selected executable without running it. These preparation paths invoke no provider session or project check. Separate session, workspace, check, journal and publication adapters implement the execution ports described below. The document adapter writes a reviewed generated target through the independent guarded-write API.
+Metadata preparers parse explicitly selected source-bound profiles. Codex metadata preparation inspects the selected image and copies its recorded metadata without starting it; Check metadata preparation observes the selected executable without running it. These preparation paths invoke no provider session or project check. Separate Agent, workspace, check and publication adapters implement the execution ports described below. The document adapter writes a reviewed generated target through the independent guarded-write API.
 
 ## Application layer
 
 `internal/apply` owns the acquisition and metadata-preparation ports. It retains original requests, every actual capture attempt, known failures and incomplete observations. New closure inputs require a fresh complete acquisition, never an extended old guard. Static context preserves actual Definitions, resolved values and inclusion reasons. Settings resolution preserves authored absence and the original embedded defaults source.
 
-A complete captured settings result can assemble a fixed run basis through `run.Bind`. Original inputs and provenance come from that final capture; the Orchestrator explicitly supplies the owner request, allocation and identity assertions. This projection acquires nothing and creates no run or journal record. Static profile metadata grants no execution capability.
+A passed captured settings preparation fixes the team, each Manager's profiles and instructions, the budget, the required checks and the layout. `Candidates.Account` accounts the start stand and every candidate against that capture, and `Publisher` publishes a verified tree against the captured source guard. Static profile metadata grants no execution capability.
 
 Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation and uses the repository port to resolve explicit refs once. It does not invoke Git directly or reconstruct producer semantics.
 
 ## Runtime layer
 
-`internal/run` supplies fixed run bindings, assignment budget admission and confirmed journal transitions. It reconstructs confirmed state from bounded reads pinned to one journal revision, without replaying external effects. Open reservations retain their holds behind a separate recovery barrier. Physical storage belongs to the separate [journal adapter](../internal/adapters/journal/README.md); the pure run package owns no storage engine.
-
-Recorded cap extensions preserve spent and held capacity; explicit quiescent closure makes an assignment immutable before a fresh ordinary assignment receives its own ledger on the same repository stream. Orchestrator-supplied observations do not establish physical termination or authenticated authority.
+`internal/run` reconciles one bound run through its ports: fresh Verify of the start stand, parallel Execute of the Managers in one shared working tree, observed quiescence, one immutable candidate per closing Verify round and repair through the owners until a round is green or the budget ends. It performs no file, process or provider I/O and keeps no journal; a run is not restored after an interruption. Managers are trusted to write only their own area; the engine records observations and accounting rejects registrations outside it.
 
 The [container runtime](../internal/adapters/container/README.md) implements the isolation boundary ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session containers from an immutable engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Orchestrator tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex and Claude Code.
 
-The [provider guide](provider-adapters.md#container-runtime) routes to the implemented Codex and Claude session adapters, container workspaces and check runner, SQLite journal and guarded publisher. Their prepared adapter smokes remain unexecuted. The [delivery plan](implementation-plan.md) owns the remaining Manager orchestration and public Apply composition. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
+The [provider guide](provider-adapters.md#container-runtime) routes to the implemented Codex and Claude Agent adapters, container workspaces, check runner and guarded publisher. Their prepared adapter smokes and any real provider run need separate authority and remain unexecuted by source tests. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
 
 ## Operational record storage
 
-Read-only preparation creates no run/task/budget/candidate or journal. Document writes retain observed completed paths if a later validation fails. Future durable execution/recovery records belong to actual consumer ports and their implementations; a preview cannot fabricate them.
+Read-only preparation creates no run, candidate or evidence. An Apply keeps its evidence in the operator's state directory outside the repository (`runs/<runID>/events.jsonl`, transcripts and `report.json`, plus the owner question and answer files) and holds one lock per state directory. Document writes retain observed completed paths if a later validation fails. A preview cannot fabricate run evidence.
 
 ## Project artifact boundary
 
