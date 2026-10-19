@@ -1812,6 +1812,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: "Preserves the evidence and assessment of three repeated library demonstrations after execute-first and enforced responsibilities."
+  - path: "docs/validation/apply-evidence-haiku-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the bounded Apply evidence of #492 on the library with Haiku and its open findings."
   - path: "docs/validation/recursive-apply-demonstration-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
