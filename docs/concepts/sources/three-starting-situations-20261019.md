@@ -106,3 +106,22 @@ The owner accepted the criteria and requested documentation:
 > Ja, halte die Abschlusskriterien so in den Docs fest: Wesentliche offene Modellfragen blockieren, bekannte belegte Fehler in Artefakten nicht. Modellabschluss, Verify-Ergebnis und spätere Reparatur bleiben getrennt. Weiterhin keine Implementierung.
 
 Recorder's interpretation: this confirms the existing DEC-044 completion/adoption distinction and refines DEC-057's Extract workflow. It authorizes documentation only, not an Extract runtime, new status schema, automatic adoption, artifact repair, model/fixture changes or provider runs. Earlier quotations and evidence retain their original scope.
+
+## Owner confirms the Extract to Apply transition
+
+Recorder's note: subsequent discussion in the same thread **Workflow** on 19 October 2026. The owner asked how the model is adopted and known artifact defects are handled by the first Apply, still without implementation.
+
+Recorder's summary of the assistant walkthrough, not verbatim owner text:
+
+- Root presents a readable adoption subject covering model meaning, structure, selected scope, decisions, artifact responsibilities, actual Verify result, known deviations and retained proposals, exclusions and dependencies. YAML inspection is not required.
+- Adopt the selected model and necessary registry assignments as one coherent reviewed stand through the project's normal decision process. The decision establishes authority; the revision binds the exact stand. Material changes at adoption need relevant renewed assessment. Adoption neither changes application artifacts nor accepts or closes their defects.
+- Carry known deviations, applicable Definitions, evidence, examined artifact revisions and responsibilities into the first authorized regular Apply. Bind that Apply to its actual starting stand and reassess old findings if artifacts have changed. Adoption alone grants no artifact-repair authority or broader scope.
+- The adopted scope is now case 2. Root and parents supply or assess their own foundations before child work; every required Manager reconciles its applicable responsibility and parents integrate upward. Known defects guide the work without restricting Apply to the finding list or adding an initial Verify round.
+- A writer's repair report does not close a defect. Independent Verify must support resolution on the exact integrated candidate while assessing the remaining obligations. Known violations retain normal blocking effect; budget exhaustion, unresolved decisions or necessary model clarification retain their ordinary boundaries.
+- In the five-loan example, adoption retains the open sixth-loan defect; Lending repairs it and necessary tests in Apply, and independent Verify establishes whether it is resolved. Exact finding storage and handoff formats remain future design.
+
+The owner accepted the transition and requested documentation:
+
+> Ja, halte den Übergang so in den Docs fest: Modell und Registry gemeinsam übernehmen, bekannte Artefaktfehler ins erste reguläre Apply mitführen und erst nach unabhängiger Verify als behoben behandeln. Weiterhin keine Implementierung.
+
+Recorder's interpretation: this refines DEC-057 and the existing Extract adoption boundary. It authorizes documentation only, not an Extract runtime, a special adoption Apply, new finding schemas or transport, canonical-model/registry changes, artifact repair or provider runs. Earlier sources and evidence retain their original scope.
