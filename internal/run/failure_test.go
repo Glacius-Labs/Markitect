@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 	"maps"
 	"slices"
 	"strings"
@@ -353,6 +354,46 @@ func TestEvidenceFailureFinishesIncomplete(t *testing.T) {
 	}
 }
 
+func TestUnsupportedHarvestEntriesAreAggregatedPerOwner(t *testing.T) {
+	f := newFixture(t)
+	var names []string
+	for i := range 100 {
+		names = append(names, fmt.Sprintf("library/link%03d", i), fmt.Sprintf("lending/link%03d", i))
+	}
+	names = append(names, "../bad")
+	f.ws.setExtra(names...)
+	f.agents.script = libraryFinding(func(c *call) error {
+		if c.round() == 2 {
+			f.ws.setExtra()
+		}
+		c.write("library/new"+c.turn.ID+".go", "x")
+		return c.defaultScript()
+	})
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	got := map[string]string{}
+	for _, fd := range out.Findings {
+		if fd.RaisedBy != MarkitectFinding {
+			continue
+		}
+		if _, dup := got[fd.Owner]; dup {
+			t.Fatalf("two findings for owner %s", fd.Owner)
+		}
+		got[fd.Owner] = fd.Observed
+	}
+	if len(got) != 3 {
+		t.Fatalf("findings %v", got)
+	}
+	contains(t, "library finding", got["library"], "100 unsupported entries", `"library/link000"`, `"library/link019"`, "and 80 more")
+	contains(t, "lending finding", got["lending"], "100 unsupported entries", "and 80 more")
+	contains(t, "root finding", got["."], "1 unsupported entries", `"../bad"`)
+	if strings.Contains(got["library"], `"library/link020"`) || strings.Count(got["library"], `"library/link`) != maxListedNames {
+		t.Fatalf("library finding lists too much: %s", got["library"])
+	}
+}
+
 func TestExecuteFailuresAreRetriedOnceThenTheManagerIsStopped(t *testing.T) {
 	t.Run("repeated", func(t *testing.T) {
 		f := newFixture(t)
@@ -380,22 +421,27 @@ func TestExecuteFailuresAreRetriedOnceThenTheManagerIsStopped(t *testing.T) {
 			t.Fatalf("%s %s", out.Status, out.Reason)
 		}
 	})
-	t.Run("first turn without a conversation gets its items again", func(t *testing.T) {
-		f := newFixture(t)
-		f.agents.noConversation = true
-		f.agents.script = libraryFinding(func(c *call) error {
-			if strings.HasSuffix(c.turn.ID, "-x1") {
-				return errTest
+	for name, noConversation := range map[string]bool{"without a conversation": true, "with a conversation": false} {
+		t.Run("failed first turn "+name+" gets mandate and items again", func(t *testing.T) {
+			f := newFixture(t)
+			f.agents.noConversation = noConversation
+			f.agents.script = libraryFinding(func(c *call) error {
+				if strings.HasSuffix(c.turn.ID, "-x1") {
+					return errTest
+				}
+				c.write("library/n.go", "x")
+				return c.defaultScript()
+			})
+			out := f.run()
+			if out.Status != Verified {
+				t.Fatalf("%s %s", out.Status, out.Reason)
 			}
-			c.write("library/n.go", "x")
-			return c.defaultScript()
+			contains(t, "second prompt", f.agents.prompt("run1-r1-library-x2"), mandate, "Library brief.", "Finding F1", "Note: your previous turn ended with an error")
+			if resume := f.agents.turnsOf(ExecuteTurn)[1].Resume; noConversation != (resume == "") {
+				t.Fatalf("resume %q", resume)
+			}
 		})
-		out := f.run()
-		if out.Status != Verified {
-			t.Fatalf("%s %s", out.Status, out.Reason)
-		}
-		contains(t, "second prompt", f.agents.prompt("run1-r1-library-x2"), mandate, "Finding F1", "Note: your previous turn ended with an error")
-	})
+	}
 }
 
 func TestPortErrors(t *testing.T) {
@@ -472,6 +518,12 @@ func TestInvalidConfigurationIsRefusedBeforeAnyEffect(t *testing.T) {
 		"unknown parent": func(c *Config) { c.Team[3].Parent = "ghost" },
 		"unlisted child": func(c *Config) { c.Team[0].Children = []string{"lending"} },
 		"phantom child":  func(c *Config) { c.Team[0].Children = append(c.Team[0].Children, "ghost") },
+		"own parent": func(c *Config) {
+			c.Team[3].Parent = "library"
+			c.Team[3].Children = append(c.Team[3].Children, "library")
+		},
+		"own child":      func(c *Config) { c.Team[3].Children = []string{"library"} },
+		"root own child": func(c *Config) { c.Team[0].Children = append(c.Team[0].Children, ".") },
 		"no profile":     func(c *Config) { c.Team[3].VerifyProfile = "" },
 		"same slug": func(c *Config) {
 			c.Team = append(c.Team, Manager{Path: "lending-reminders", Parent: ".", ExecuteProfile: "e", VerifyProfile: "v"})

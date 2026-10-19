@@ -54,6 +54,8 @@ type fakeRuntime struct {
 	stops   int
 	closed  bool
 
+	closeErr       error
+	toolArgs       string
 	useTool        bool
 	toolThread     string
 	toolName       string
@@ -67,7 +69,7 @@ type fakeRuntime struct {
 }
 
 func newRuntime() *fakeRuntime {
-	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), toolName: "submit"}
+	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), toolName: "submit", toolArgs: `{"summary":"done"}`}
 }
 func (f *fakeRuntime) emit(raw string) { f.stream.chunks <- []byte(raw + "\n") }
 func (f *fakeRuntime) StartProvider(_ context.Context, s frame.Start) (frame.Started, error) {
@@ -106,7 +108,7 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 			if f.toolThread != "" {
 				thread = f.toolThread
 			}
-			f.tools <- frame.ToolCall{ID: 1, Name: f.toolName, Arguments: json.RawMessage(`{"summary":"done"}`), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"call-1"}`)}
+			f.tools <- frame.ToolCall{ID: 1, Name: f.toolName, Arguments: json.RawMessage(f.toolArgs), Meta: json.RawMessage(`{"threadId":"` + thread + `","callId":"call-1"}`)}
 		default:
 			f.finish()
 		}
@@ -146,7 +148,7 @@ func (f *fakeRuntime) Close() error {
 	f.closed = true
 	f.mu.Unlock()
 	f.stream.close()
-	return nil
+	return f.closeErr
 }
 
 func testProfile() Profile {
@@ -363,6 +365,30 @@ func TestRunStoppedOnlyWhenExitWasObserved(t *testing.T) {
 	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
 	if err == nil || res.Stopped || !rt.closed {
 		t.Fatalf("unobserved exit reported as stopped: %+v %v", res, err)
+	}
+}
+
+func TestRunStoppedOnlyWhenTheContainerEndWasObserved(t *testing.T) {
+	rt := newRuntime()
+	rt.closeErr = errors.Join(container.ErrForcedClose, errors.New("engine "+testKey))
+	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
+	if err == nil || !strings.Contains(err.Error(), "removed by force") || res.Stopped || !strings.Contains(res.Reason, "container end was not") || !rt.closed {
+		t.Fatalf("forced close reported as stopped: %+v %v", res, err)
+	}
+	if strings.Contains(err.Error(), testKey) || strings.Contains(res.Reason, testKey) {
+		t.Fatal("secret leaked")
+	}
+}
+
+func TestRunRedactsKnownSecretsFromToolArgumentsBeforeTheHandler(t *testing.T) {
+	rt := newRuntime()
+	rt.useTool, rt.toolArgs = true, `{"summary":"leak `+testKey+`"}`
+	var calls []string
+	if _, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(&calls)); err != nil {
+		t.Fatal(err)
+	}
+	if len(calls) != 1 || strings.Contains(calls[0], testKey) || calls[0] != `submit {"summary":"leak [REDACTED]"}` {
+		t.Fatalf("handler saw %q", calls)
 	}
 }
 

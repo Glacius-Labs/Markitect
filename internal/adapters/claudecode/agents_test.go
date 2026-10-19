@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -61,6 +62,7 @@ type fakeRuntime struct {
 	endStream bool     // closes stdout after the prompt instead of a result
 	startErr  error
 	stopErr   error
+	closeErr  error
 	exit      frame.Exited
 	stopCalls int
 	closed    bool
@@ -139,7 +141,7 @@ func (f *fakeRuntime) Close() error {
 	f.closed = true
 	f.mu.Unlock()
 	f.stream.close()
-	return nil
+	return f.closeErr
 }
 
 type harness struct {
@@ -379,6 +381,76 @@ func TestUncertainStopIsReportedAsNotStopped(t *testing.T) {
 	}
 	if !rt.closed {
 		t.Fatal("runtime not closed")
+	}
+}
+
+func TestForcedCloseIsNotAnObservedContainerEnd(t *testing.T) {
+	rt := newFakeRuntime()
+	rt.closeErr = errors.Join(container.ErrForcedClose, errors.New("engine "+testToken))
+	h := newHarness(t, rt, validProfile())
+	res, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
+	if !errors.Is(err, container.ErrForcedClose) || res.Stopped || !strings.Contains(res.Reason, "container end was not") || res.Final != "all done" {
+		t.Fatalf("%v %+v", err, res)
+	}
+	if strings.Contains(err.Error(), testToken) || strings.Contains(res.Reason, testToken) {
+		t.Fatal("token leaked")
+	}
+}
+
+// assistantLine is one assistant message with its usage, as the provider streams it.
+func assistantLine(id string, in, out, read, create int) string {
+	return fmt.Sprintf(`{"type":"assistant","message":{"id":%q,"role":"assistant","content":[{"type":"text","text":"x"}],"usage":{"input_tokens":%d,"output_tokens":%d,"cache_read_input_tokens":%d,"cache_creation_input_tokens":%d}},"parent_tool_use_id":null,"uuid":"u-%s-%d","session_id":"conversation-1"}`, id, in, out, read, create, id, out)
+}
+
+func TestStreamedUsageSurvivesATurnWithoutResult(t *testing.T) {
+	for name, setup := range map[string]func(*fakeRuntime) (context.Context, context.CancelFunc, time.Duration){
+		"timeout": func(*fakeRuntime) (context.Context, context.CancelFunc, time.Duration) {
+			return context.Background(), func() {}, 150 * time.Millisecond
+		},
+		"cancel": func(*fakeRuntime) (context.Context, context.CancelFunc, time.Duration) {
+			ctx, cancel := context.WithCancel(context.Background())
+			time.AfterFunc(150*time.Millisecond, cancel)
+			return ctx, cancel, 0
+		},
+	} {
+		t.Run(name, func(t *testing.T) {
+			rt := newFakeRuntime()
+			rt.silent = true
+			// The first message is repeated per content block with growing output.
+			rt.extra = []string{assistantLine("m1", 10, 1, 100, 5), assistantLine("m1", 10, 7, 100, 5), assistantLine("m2", 20, 3, 200, 0)}
+			h := newHarness(t, rt, validProfile())
+			ctx, cancel, timeout := setup(rt)
+			defer cancel()
+			turn := testTurn()
+			turn.Timeout = timeout
+			res, err := h.agents.Run(ctx, turn, echoHandler(new([]string)))
+			want := run.Usage{Model: "claude-test-model", InputTokens: 30, OutputTokens: 10, CacheReadTokens: 300, CacheCreationTokens: 5, ProviderTurns: 2}
+			if err == nil || !res.Stopped || res.Usage != want || !strings.Contains(res.Reason, "usage partial: no result message") {
+				t.Fatalf("%v %+v", err, res)
+			}
+		})
+	}
+}
+
+func TestResultTotalsReplaceStreamedUsage(t *testing.T) {
+	rt := newFakeRuntime()
+	rt.extra = []string{assistantLine("m1", 1, 1, 1, 1)}
+	h := newHarness(t, rt, validProfile())
+	res, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
+	want := run.Usage{Model: "claude-test-model", InputTokens: 11, OutputTokens: 22, CacheReadTokens: 33, CacheCreationTokens: 44, CostUSD: 0.25, ProviderTurns: 3}
+	if err != nil || res.Usage != want || strings.Contains(res.Reason, "usage partial") {
+		t.Fatalf("%v %+v", err, res)
+	}
+}
+
+func TestResultWithoutTotalsKeepsStreamedUsageAndSaysPartial(t *testing.T) {
+	rt := newFakeRuntime()
+	rt.extra = []string{assistantLine("m1", 4, 5, 6, 7)}
+	rt.result = `{"type":"result","subtype":"success","session_id":"conversation-1","uuid":"res","is_error":false,"result":"ok","num_turns":1}`
+	h := newHarness(t, rt, validProfile())
+	res, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
+	if err != nil || res.Usage.InputTokens != 4 || res.Usage.OutputTokens != 5 || !strings.Contains(res.Reason, "usage partial: the result message carries no usage") {
+		t.Fatalf("%v %+v", err, res)
 	}
 }
 

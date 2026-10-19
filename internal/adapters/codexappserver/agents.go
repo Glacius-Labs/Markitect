@@ -89,8 +89,9 @@ type turnRun struct {
 }
 
 // Run runs one turn. It always stops the container before it returns; Stopped
-// is true when the provider's exit was observed, or when no container was ever
-// started.
+// is true when the provider's exit and the end of the container were observed,
+// or when no container was ever started. Known secrets are removed from tool
+// call arguments before the handler sees them.
 func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler) (res run.TurnResult, err error) {
 	res.Started = time.Now().UTC()
 	defer func() { res.Ended = time.Now().UTC() }()
@@ -411,7 +412,7 @@ func (t *turnRun) answer(ctx context.Context, call frame.ToolCall) error {
 	if raw, err := frame.EncodeToolCall(call); err == nil {
 		t.tr.record("tool-call", raw)
 	}
-	answer := t.handler(ctx, call.Name, call.Arguments)
+	answer := t.handler(ctx, call.Name, t.redact(call.Arguments))
 	type text struct {
 		Type string `json:"type"`
 		Text string `json:"text"`
@@ -504,7 +505,7 @@ func (t *turnRun) accept(e event, open bool) (Message, error) {
 // cleanup failure.
 func (t *turnRun) finish(ctx context.Context, res *run.TurnResult, err error) error {
 	close(t.done)
-	observed := false
+	observed, closed := false, false
 	if t.peer != nil {
 		stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
 		exit, stopErr := stopProvider(stopCtx, t.peer, t.agents.stopGrace)
@@ -513,10 +514,21 @@ func (t *turnRun) finish(ctx context.Context, res *run.TurnResult, err error) er
 			observed = true
 			t.tr.record("exit", []byte(fmt.Sprintf("code=%d signal=%s", exit.Code, exit.Signal)))
 		}
-		err = errors.Join(err, t.safe(stopErr), t.safe(t.peer.Close()))
+		// The container really ends in Close: Stopped also needs a Close that did
+		// not have to give up on it.
+		closeErr := t.safe(t.peer.Close())
+		closed = closeErr == nil
+		err = errors.Join(err, t.safe(stopErr), closeErr)
+		switch {
+		case !observed:
+			res.Reason = strings.TrimPrefix(res.Reason+"; provider exit not observed", "; ")
+		case !closed:
+			res.Reason = strings.TrimPrefix(res.Reason+"; provider exit observed but the container end was not", "; ")
+		}
 	}
-	res.Stopped = observed || !t.attempted
-	if observed || t.peer == nil {
+	ended := observed && closed
+	res.Stopped = ended || !t.attempted
+	if ended || t.peer == nil {
 		cleanCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
 		cleanErr := t.removeCredential(cleanCtx)
 		cancel()

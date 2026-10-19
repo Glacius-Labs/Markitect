@@ -33,8 +33,8 @@ func TestInitialGreenIsVerifiedWithoutExecute(t *testing.T) {
 	if len(out.Rounds) != 1 || !out.Rounds[0].Green || len(out.Rounds[0].Assessments) != 4 || len(out.Rounds[0].Checks) != 1 || !out.Rounds[0].Checks[0].Passed {
 		t.Fatalf("rounds %+v", out.Rounds)
 	}
-	if !slices.Equal(f.ws.order, []string{"run1-c0", "run1-work"}) || !f.ws.isClosed("run1-c0") || !f.ws.isClosed("run1-work") {
-		t.Fatalf("volumes %v closed %v", f.ws.order, f.ws.closed)
+	if !slices.Equal(f.ws.order, []string{"run1-c0", "run1-work"}) || !f.ws.isClosed("run1-c0") || f.ws.isClosed("run1-work") {
+		t.Fatalf("volumes %v closed %v: the caller owns the work volume", f.ws.order, f.ws.closed)
 	}
 	if f.ws.harvests != 0 {
 		t.Fatal("harvested without Execute")
@@ -166,8 +166,8 @@ func TestFindingsDriveParallelExecuteCaptureAndGreen(t *testing.T) {
 	if len(round2) != 4 || round2[0] != "vol-run1-c1" {
 		t.Fatalf("round 2 volumes %v", round2)
 	}
-	if !slices.Equal(f.ws.order, []string{"run1-c0", "run1-work", "run1-c1"}) || !f.ws.isClosed("run1-c0") || !f.ws.isClosed("run1-c1") || !f.ws.isClosed("run1-work") {
-		t.Fatalf("volumes %v closed %v", f.ws.order, f.ws.closed)
+	if !slices.Equal(f.ws.order, []string{"run1-c0", "run1-work", "run1-c1"}) || !f.ws.isClosed("run1-c0") || !f.ws.isClosed("run1-c1") || f.ws.isClosed("run1-work") {
+		t.Fatalf("volumes %v closed %v: the caller owns the work volume", f.ws.order, f.ws.closed)
 	}
 	if out.Usage.InputTokens != 10*int64(len(out.Turns)) {
 		t.Fatalf("usage %+v for %d turns", out.Usage, len(out.Turns))

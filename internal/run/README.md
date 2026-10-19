@@ -15,8 +15,9 @@ and publishes a verified candidate; this package never publishes and never commi
 
 1. Candidate 0 is the start stand, materialized read-only as `<RunID>-c0`; the shared
    working tree is `<RunID>-work`. Later candidates are `<RunID>-c<N>`. Candidate volumes
-   close after their round. The shared volume closes only when the outcome is Verified;
-   otherwise it keeps the incomplete work.
+   close after their round. The engine never closes the shared volume: after `Reconcile`
+   returns, in every outcome, the caller owns it and closes it after a successful
+   publication or keeps it as retained work.
 2. A round runs `Account` and all required checks on the candidate (checks in parallel),
    then one fresh Verify turn per Manager, children before parents, independent branches
    in parallel. A parent starts when all its children's Verify turns of the round ended.
@@ -51,10 +52,11 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
   caller's new undelivered items. `finish {status: done|waiting, summary}` ends the turn;
   a turn that ends without it counts as done. Without an `Owner`, a question is refused.
 
-The first Execute turn of a Manager gets the mandate, its brief, contacts, owner decisions,
-the shared-tree note and its items; later turns resume the conversation and get only new
-items. A turn that fails after its container stopped gets one retry with a note; the second
-consecutive failure stops scheduling that Manager. An item that restates a finding lapses once
+A Manager's Execute turns get the mandate, its brief, contacts, owner decisions, the
+shared-tree note and its items until one of them finished without error; later turns
+resume the conversation and get only new items. A turn that fails after its container
+stopped gets one retry with a note and the items it consumed again, even when the adapter
+reported a conversation; the second consecutive failure stops scheduling that Manager. An item that restates a finding lapses once
 the finding is closed; messages and notes stay. An early round 1 Execute turn starts only while
 the budget covers it, the unstarted round 1 Verify turns and one closing round.
 
@@ -68,8 +70,9 @@ published. A definite error of the configuration or a port is Failed; a check th
 cannot run on a candidate, such as a missing check directory before the first Execute,
 is a failed check. An unsupported harvest entry (a symlink, a device or an invalid name)
 is not uncertain: the candidate is the harvested tree and one blocking `markitect` finding per
-entry goes to the owner of its path (Root for an invalid name), so the candidate cannot be green
-while it stands.
+owner goes to the owner of the paths (Root for an invalid name). It counts all entries and
+names at most 20 of them, so their number never grows a prompt, and the candidate cannot be
+green while they stand.
 
 Managers are trusted to write only their own area. After each capture the engine compares
 the new candidate with the previous one and records `write.observed` for files of a Manager

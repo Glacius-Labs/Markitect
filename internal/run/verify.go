@@ -46,8 +46,8 @@ func (e *engine) verifyRound(n int, c candidate) bool {
 		}
 		rs.structural = append(rs.structural, e.addFindingLocked(f, n))
 	}
-	for _, name := range c.unsupported {
-		rs.structural = append(rs.structural, e.addFindingLocked(e.unsupportedFinding(name), n))
+	for _, f := range e.unsupportedFindings(c.unsupported) {
+		rs.structural = append(rs.structural, e.addFindingLocked(f, n))
 	}
 	for i, r := range results {
 		_ = e.record(Event{Kind: "check", Round: n, Data: r})
@@ -354,19 +354,43 @@ func (e *engine) deliverLocked(round int) {
 	}
 }
 
-// unsupportedFinding is the blocking finding for one entry of the shared tree
-// that a candidate cannot hold. Its owner removes the entry in the next
-// Execute phase.
-func (e *engine) unsupportedFinding(name string) Finding {
-	owner := "."
-	if p, err := snapshot.NewPath(name); err == nil {
-		if o := e.cfg.OwnerOf(p); e.byPath[o] != nil {
-			owner = o
+// unsupportedFindings returns one blocking finding per owner for the entries of
+// the shared tree that a candidate cannot hold, so the number of entries never
+// grows the prompts. A finding names at most maxListedNames entries and counts
+// all of them; its owner removes the entries in the next Execute phase.
+func (e *engine) unsupportedFindings(names []string) []Finding {
+	names = slices.Sorted(slices.Values(names))
+	byOwner := map[string][]string{}
+	var owners []string
+	for _, name := range names {
+		owner := "."
+		if p, err := snapshot.NewPath(name); err == nil {
+			if o := e.cfg.OwnerOf(p); e.byPath[o] != nil {
+				owner = o
+			}
 		}
+		if byOwner[owner] == nil {
+			owners = append(owners, owner)
+		}
+		byOwner[owner] = append(byOwner[owner], name)
 	}
-	return Finding{Owner: owner, RaisedBy: MarkitectFinding, Blocking: true,
-		Obligation: "Every entry under /work is a regular file or a directory the candidate can hold",
-		Observed:   fmt.Sprintf("%q is not supported (a symbolic link, device or other special entry, or a name that is not a valid path); remove it", name)}
+	var out []Finding
+	for _, owner := range owners {
+		all := byOwner[owner]
+		shown := all[:min(len(all), maxListedNames)]
+		quoted := make([]string, len(shown))
+		for i, name := range shown {
+			quoted[i] = fmt.Sprintf("%q", name)
+		}
+		listing := strings.Join(quoted, ", ")
+		if len(all) > len(shown) {
+			listing += fmt.Sprintf(" and %d more", len(all)-len(shown))
+		}
+		out = append(out, Finding{Owner: owner, RaisedBy: MarkitectFinding, Blocking: true,
+			Obligation: "Every entry under /work is a regular file or a directory the candidate can hold",
+			Observed:   fmt.Sprintf("%d unsupported entries (symbolic links, devices or other special entries, or names that are not valid paths); remove them: %s", len(all), listing)})
+	}
+	return out
 }
 
 // openLocked reports whether the item still asks for work: an item of a

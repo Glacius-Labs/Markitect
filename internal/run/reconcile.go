@@ -148,7 +148,10 @@ const (
 )
 
 // Outcome is the run's result. Candidate is the verified stand and is set only
-// when Status is Verified; it equals Start when nothing needed to change.
+// when Status is Verified; it equals Start when nothing needed to change. The
+// engine closes every candidate volume itself, but never the shared work volume
+// "<RunID>-work": after Reconcile returns, in every outcome, the caller owns it
+// and decides to close it or keep it as retained work.
 type Outcome struct {
 	Status    Status
 	Reason    string
@@ -207,7 +210,9 @@ type TurnRecord struct {
 // starting stand, parallel Execute in one shared working tree, observed
 // quiescence and one immutable candidate per closing Verify round, fresh
 // recursive Verify with the required checks on that candidate, and repair
-// through the owners until a round is green or the budget ends.
+// through the owners until a round is green or the budget ends. The shared
+// work volume "<RunID>-work" belongs to the caller once Reconcile returns, in
+// every outcome, including Verified.
 func Reconcile(ctx context.Context, cfg Config) (Outcome, error) {
 	return reconcile(ctx, cfg)
 }

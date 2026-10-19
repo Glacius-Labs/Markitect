@@ -19,6 +19,10 @@ const (
 	closeTimeout = 30 * time.Second
 )
 
+// ErrForcedClose is joined into Close's result when the container did not end
+// within the close timeout and was removed by force.
+var ErrForcedClose = errors.New("the container did not end within the close timeout and was removed by force")
+
 // Session is the Host side of one agentd connection. Provider output is
 // buffered up to a bound, so control replies such as a census or the exit
 // never wait for the consumer. Tool calls arrive on a short queue; the
@@ -308,21 +312,24 @@ func (s *Session) Err() error {
 
 // Close ends the connection. agentd then stops the provider and exits, which
 // ends the container. If that does not happen within the close timeout, the
-// container is removed by force. Close returns the engine process's result;
-// it depends neither on the consumer reading Stdout or ToolCalls nor on a
-// writer that is blocked.
+// container is removed by force. Close returns the engine process's result,
+// joined with ErrForcedClose when it had to give up waiting; a nil result means
+// the container ended by itself. It depends neither on the consumer reading
+// Stdout or ToolCalls nor on a writer that is blocked.
 func (s *Session) Close() error {
 	s.closeOnce.Do(func() {
 		close(s.closing)
 		s.stdout.detach()
 		_ = s.in.Close()
+		var forced error
 		select {
 		case <-s.ended:
 		case <-time.After(s.closeTimeout):
 			s.kill()
 			<-s.ended
+			forced = ErrForcedClose
 		}
-		s.closeErr = s.wait()
+		s.closeErr = errors.Join(forced, s.wait())
 	})
 	return s.closeErr
 }
