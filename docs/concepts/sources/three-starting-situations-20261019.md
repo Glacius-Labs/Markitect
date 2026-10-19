@@ -88,3 +88,21 @@ The owner accepted the rule and requested documentation:
 > Ja, halte das so in den Docs fest: Managerstruktur innerhalb einer Extract-Runde stabil halten, Strukturänderungen zwischen Runden übernehmen und Erkenntnisse, Referenzen sowie offene Fragen vollständig mitführen. Weiterhin keine Implementierung.
 
 Recorder's interpretation: this refines the accepted Extract workflow and DEC-057 without authorizing implementation, a new runtime state machine, canonical-model changes, artifact repair or provider runs. It does not require final human adoption of the model at every provisional round transition. Earlier source statements retain their original scope.
+
+## Owner confirms Extract completion criteria
+
+Recorder's note: subsequent discussion in the same thread **Workflow** on 19 October 2026. The owner asked when Extract is complete and how open questions and known artifact defects are handled.
+
+Recorder's summary of the assistant walkthrough, not verbatim owner text:
+
+- Each Manager supplies a source-supported model of its essential responsibility and explained artifact assignments. Parents integrate shared meaning, boundaries, relationships and cross-area rules. Root judges the selected scope after local and integrated independent model review and read-only Verify against the exact candidate and fixed artifacts.
+- Essential unresolved intended rules, missing responsibilities or relationships, and evidence gaps preventing a sound model or assessment block the affected scope. Root presents unresolved intent to the owner. A future idea can remain a proposal without blocking an otherwise sound current scope; difficult questions are not dismissed as immaterial.
+- A known, evidenced realization defect does not by itself block model completion. Preserve the justified intended rule and the defect's Definition, artifact basis and evidence. Uncertain intent or an unsupported defect suspicion cannot be relabeled as a known deviation to finish.
+- Root gives an understandable account separating model readiness for adoption, the actual Verify result, and later separately authorized artifact repair. Partial scope and dependencies remain explicit. Budget exhaustion or no useful progress leaves an incomplete result with retained knowledge and questions.
+- The five-loan example can finish with a reviewed model while retaining the evidenced sixth-loan defect and nonconforming Verify result. No application repair occurs during Extract. Final adoption remains the normal project decision boundary.
+
+The owner accepted the criteria and requested documentation:
+
+> Ja, halte die Abschlusskriterien so in den Docs fest: Wesentliche offene Modellfragen blockieren, bekannte belegte Fehler in Artefakten nicht. Modellabschluss, Verify-Ergebnis und spätere Reparatur bleiben getrennt. Weiterhin keine Implementierung.
+
+Recorder's interpretation: this confirms the existing DEC-044 completion/adoption distinction and refines DEC-057's Extract workflow. It authorizes documentation only, not an Extract runtime, new status schema, automatic adoption, artifact repair, model/fixture changes or provider runs. Earlier quotations and evidence retain their original scope.
