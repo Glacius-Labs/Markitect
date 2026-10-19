@@ -173,8 +173,8 @@ def _(env):
     add(env, "b")
     if env.stat()[2] == first:
         fail("the data file kept its identity: the second mutation did not replace it atomically")
-    if sorted(path.name for path in env.dbdir.iterdir()) != [env.db.name]:
-        fail("leftover files next to the database: %s" % sorted(path.name for path in env.dbdir.iterdir()))
+    if env.leftover_temp_files():
+        fail("temporary files left next to the database: %s" % env.leftover_temp_files())
 
 
 # -- stage 1: finish and status filter -------------------------------------------
@@ -259,12 +259,20 @@ def _(env):
 HEADER = "id,title,author,pages\n"
 
 
+def imported(env, path):
+    """The `imported` count of an import; the model only says an object with imported."""
+    result = env.ok("import", "--csv", path)
+    if type(result.get("imported")) is not int:
+        fail("import must return an object with an integer `imported`, got %s" % result)
+    return result["imported"]
+
+
 @check("import-valid", 2, ["import", "book", "interface"],
        "Import appends unread books in input order after the existing ones and reports the count")
 def _(env):
     first = add(env, "z", "Existing")
     path = env.write_input("in.csv", HEADER + "b,Second,Writer,20\na,First,Other,5\n")
-    expect_equal(env.ok("import", "--csv", path), {"imported": 2}, "import result")
+    expect_equal(imported(env, path), 2, "imported count")
     after = books(env)
     expect_equal(after[0], first, "existing record")
     book_record(after[1], "first imported", id="b", title="Second", author="Writer", pages=20, status="unread")
@@ -276,7 +284,7 @@ def _(env):
 @check("import-into-missing-data", 2, ["import", "storage"], "Import into a missing data file starts from empty state")
 def _(env):
     path = env.write_input("in.csv", HEADER + "a,T,A,1\n")
-    expect_equal(env.ok("import", "--csv", path), {"imported": 1}, "import result")
+    expect_equal(imported(env, path), 1, "imported count")
     expect_equal(len(books(env)), 1, "listing")
 
 
@@ -284,7 +292,7 @@ def _(env):
 def _(env):
     add(env, "a")
     before = env.raw()
-    expect_equal(env.ok("import", "--csv", env.write_input("in.csv", HEADER)), {"imported": 0}, "import result")
+    expect_equal(imported(env, env.write_input("in.csv", HEADER)), 0, "imported count")
     expect_equal(len(books(env)), 1, "listing")
     if env.raw() != before:
         fail("importing zero rows changed the stored data")
@@ -333,15 +341,14 @@ def _(env):
 
 @check("import-ids-case-sensitive", 2, ["import", "inputs"], "Imported ids differing only in case are distinct")
 def _(env):
-    expect_equal(env.ok("import", "--csv", env.write_input("in.csv", HEADER + "a,T,A,1\nA,T,A,1\n")),
-                 {"imported": 2}, "import result")
+    expect_equal(imported(env, env.write_input("in.csv", HEADER + "a,T,A,1\nA,T,A,1\n")), 2, "imported count")
 
 
 @check("import-csv-quoting", 2, ["import"], "Quoted commas and newlines, UTF-8 text and CRLF line ends are read as CSV")
 def _(env):
     content = 'id,title,author,pages\r\na,"Story,\npart ☕","Zöe ""Z""",12\r\nb,Plain,Writer,3\r\n'
     path = env.write_input("in.csv", content.encode("utf-8"))
-    expect_equal(env.ok("import", "--csv", path), {"imported": 2}, "import result")
+    expect_equal(imported(env, path), 2, "imported count")
     first = books(env)[0]
     expect_equal((first["title"], first["author"]), ("Story,\npart ☕", 'Zöe "Z"'), "quoted fields")
 
@@ -374,8 +381,7 @@ def _(env):
 
 def authors(env):
     result = env.ok("summary")
-    expect_keys(result, {"authors"}, "summary result")
-    if not isinstance(result["authors"], list):
+    if not isinstance(result.get("authors"), list):
         fail("summary.authors must be an array")
     for entry in result["authors"]:
         expect_keys(entry, {"author", "books", "finished", "pages"}, "summary entry")
@@ -386,7 +392,7 @@ def authors(env):
 
 @check("summary-empty", 3, ["summary", "storage"], "Empty state yields an empty authors array and creates no file")
 def _(env):
-    expect_equal(env.ok("summary"), {"authors": []}, "summary of a missing database")
+    expect_equal(authors(env), [], "summary of a missing database")
     if env.db.exists():
         fail("summary created the missing data file")
 

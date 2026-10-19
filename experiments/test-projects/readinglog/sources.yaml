@@ -28,7 +28,7 @@ refinements:
     sourceLimit: The copied application, public test and preserved upstream contract remain unchanged.
 templateDerivations:
   - target: template/.markitect/execution.yaml
-    change: Adapt illustrative profile names, remove Library Package override, and bind the Python test command to readinglog/interface.
+    change: Adapt illustrative profile names, remove Library Package override, bind the Python test command to readinglog/interface, set a budget for one Apply (20 minutes, 8-minute turns, 60 Agent turns, 4 rounds), use the python-tests check profile, and declare the persistent layout with the artifact root realization and one directory exception giving realization to the readinglog Package.
   - target: template/.markitect/registry/readinglog/registry.yaml
     change: Register only the two actual copied baseline files against their existing behavior; no future feature implementation is supplied.
 copiedInputs:

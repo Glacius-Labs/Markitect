@@ -41,8 +41,7 @@ def check_record(record, label, **expected):
 
 def listing(env, *extra):
     result = env.ok("list", *extra)
-    expect_keys(result, {"reservations"}, "list result")
-    if not isinstance(result["reservations"], list):
+    if not isinstance(result.get("reservations"), list):
         fail("list.reservations must be an array")
     return result["reservations"]
 
@@ -51,8 +50,8 @@ def listing(env, *extra):
 
 @check("list-empty", 1, ["list", "storage", "interface"], "A missing data file is empty state")
 def _(env):
-    expect_equal(env.ok("list"), {"reservations": []}, "list on a missing database")
-    expect_equal(env.ok("list", "--room", "A"), {"reservations": []}, "filtered list on a missing database")
+    expect_equal(listing(env), [], "list on a missing database")
+    expect_equal(listing(env, "--room", "A"), [], "filtered list on a missing database")
 
 
 @check("book-record", 1, ["book", "reservation", "interface"],
@@ -206,8 +205,8 @@ def _(env):
     book(env, "B", at(10), at(11))
     if env.stat()[2] == first:
         fail("the data file kept its identity: the second mutation did not replace it atomically")
-    if sorted(path.name for path in env.dbdir.iterdir()) != [env.db.name]:
-        fail("leftover files next to the database: %s" % sorted(path.name for path in env.dbdir.iterdir()))
+    if env.leftover_temp_files():
+        fail("temporary files left next to the database: %s" % env.leftover_temp_files())
 
 
 # -- stage 2: cancel -------------------------------------------------------------
@@ -294,8 +293,7 @@ def _(env):
 
 def rooms(env):
     result = env.ok("summary")
-    expect_keys(result, {"rooms"}, "summary result")
-    if not isinstance(result["rooms"], list):
+    if not isinstance(result.get("rooms"), list):
         fail("summary.rooms must be an array")
     for entry in result["rooms"]:
         expect_keys(entry, {"room", "active", "minutes"}, "summary entry")
@@ -306,7 +304,7 @@ def rooms(env):
 
 @check("summary-empty", 3, ["summary", "storage"], "Empty state yields an empty rooms array")
 def _(env):
-    expect_equal(env.ok("summary"), {"rooms": []}, "summary of a missing database")
+    expect_equal(rooms(env), [], "summary of a missing database")
 
 
 @check("summary-counts-minutes", 3, ["summary", "reservation"],
@@ -336,7 +334,7 @@ def _(env):
     env.ok("cancel", "--id", only["id"])
     expect_equal(rooms(env), [{"room": "Live", "active": 1, "minutes": 60}], "summary with a fully canceled room")
     env.ok("cancel", "--id", live["id"])
-    expect_equal(env.ok("summary"), {"rooms": []}, "summary when everything is canceled")
+    expect_equal(rooms(env), [], "summary when everything is canceled")
     expect_equal(len(listing(env)), 2, "canceled history in list")
 
 

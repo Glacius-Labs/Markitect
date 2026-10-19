@@ -137,9 +137,31 @@ class Env:
         error = result.obj.get("error")
         if set(result.obj) != {"error"} or type(error) is not str or not error.strip():
             fail("%s must write only a nonempty string `error`, got %s" % (label, short(result.obj)))
-        if unchanged and self.raw() != before:
+        if unchanged and self.raw() != before and not self.still_empty(before):
             fail("%s changed the stored data although it failed" % label)
         return result
+
+    def still_empty(self, before):
+        """A missing file is empty state, so a failed command may leave it missing or write an empty-state file."""
+        if before is not None or self.raw() is None:
+            return False
+        result = self.run("list")
+        if result.code != 0 or result.obj is None:
+            return False
+        lists = [value for value in result.obj.values() if isinstance(value, list)]
+        return len(lists) == 1 and not lists[0]
+
+    def leftover_temp_files(self):
+        """Files beside the database that look like abandoned temporary files of a replacement."""
+        found = []
+        for path in self.dbdir.iterdir():
+            name = path.name.lower()
+            if path.name == self.db.name:
+                continue
+            if (name.startswith(self.db.stem.lower()) or "tmp" in name or "temp" in name or name.startswith(".")
+                    or name.endswith(("~", ".new", ".bak", ".swp"))):
+                found.append(path.name)
+        return sorted(found)
 
     # -- stored data --------------------------------------------------------------
 

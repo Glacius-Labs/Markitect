@@ -21,8 +21,9 @@ COPY --from=python /usr/local/lib/python3.13 /usr/local/lib/python3.13
 COPY --from=python /usr/local/lib/libpython3.13.so.1.0 /usr/local/lib/libpython3.13.so.1.0
 # Agent CLIs run commands in login shells, whose /etc/profile resets PATH;
 # links on the default PATH keep the interpreter reachable there too. The
-# base already carries the C libraries of the standard-library modules
-# (OpenSSL, SQLite, zlib, bzip2, lzma, readline, libdb, time zones).
+# base already carries the C libraries of the verified modules (ssl, sqlite3,
+# zlib, bz2, lzma, ctypes, readline, curses, dbm, uuid, zoneinfo); tkinter is
+# not available.
 # Image observation checks every ancestor directory of a check executable and
 # the engine walks each one's whole subtree, which is slow for /usr/local. A
 # small regular wrapper in a small directory is the check executable.
