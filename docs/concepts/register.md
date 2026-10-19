@@ -2,6 +2,8 @@
 
 This register records Markitect's long-term vision, product-level decisions, clarifications, endorsed directions, promises, assumptions, concepts, future enhancements, ideas and open questions. Each entry has a status and an origin. "Owner" means Markitect's product owner. The [concept record guide](README.md) defines entry types, statuses and the rules for changing entries. The [vision](../vision.md) presents the thesis these entries support. Earlier collections from the Concepts and Ideas chats are preserved in the [sources](sources/README.md) and mapped [below](#imported-collections).
 
+**Current Apply reading:** [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) amends conflicting process choices in DEC-036, DEC-039 to DEC-041, DEC-043 and DEC-045 to DEC-055. Those dated entries remain historical decision records; they do not require the superseded delivery/review machinery in the simplified strategy. The [current Apply concept](../design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the exact replacement and remaining engineering details. Documentation is not implementation evidence.
+
 ## Index
 
 Earlier work-item IDs and wave names in this register are historical references. Their recorded decisions retain their status; the [current delivery plan](../implementation-plan.md) alone assigns rebuild scope and dependencies.
@@ -66,6 +68,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Accepted |
 | [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count) | Decision | A rejection that finds fewer gaps does not count | Accepted |
 | [DEC-055](#dec-055-a-submission-must-pass-its-required-checks) | Decision | A submission must pass its required checks | Accepted |
+| [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted direction; implementation pending |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -666,6 +669,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Cost:** Each submit runs the required checks once more; in R2-A1-12 a check took about 10 seconds. A Manager that cannot make the checks pass alone has to wait for the file it needs or ask its owner, instead of submitting.
 - **Scope:** Amends S4 in the way [PR #457](https://github.com/Glacius-Labs/Markitect/pull/457) amended S4 for uncapturable changes. The review rules, the evidence requirements, the rejection limit and the checks' configuration are unchanged.
 - **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#steps), rule S4, and the [execution contract](../design/canonical-model/manager-apply-execution.md).
+
+### DEC-056 Recursive reconciliation with a shared workspace
+
+- **Status:** Accepted direction, owner, 19 October 2026; documentation and independent design review commissioned, implementation reserved for a later Claude session. [Verbatim owner source](sources/recursive-apply-simplification-20261019.md).
+- **Decision:** Keep the permanent recursive Manager organization. Define ownership before Apply through persistent artifact areas with recommended mirrored model structure, explicit exceptions and deepest-owner responsibility. Managers create/register their own files in per-area registry shards. Initially trust write boundaries and observe violations; technical ownership enforcement is future work. All communication is strictly parent/child, and only Root asks the human.
+- **Cycle:** Fresh Verify against an immutable starting stand; parallel Execute on a shared working tree where needed; quiesce writers and capture one immutable closing stand; fresh recursive Verify and required checks; repair through owners and repeat, bounded by the overall budget. No global initial audit barrier; no artificial Execute when already valid. Review checks actual artifacts and child interactions. Root completion requires every responsibility, current closure of blocking findings and the exact reviewed/published stand.
+- **Simplification:** Replace per-turn private writer composition, path reservations, delivery purpose/scope types, expectations-case administration, separate no-change transactions, mandatory named per-delivery reviewer/arbiter machinery and rejection-counter exceptions. Preserve model authority, complete accounting, independent perspectives, concrete findings, mandatory checks and guarded publication/read-back. The [supersession map](../design/canonical-model/manager-apply-concept.md#implementation-handoff-and-supersession) specifies the boundaries; it does not replace all earlier decisions wholesale.
+- **Owners and evidence:** [Apply concept](../design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026), [library walkthrough](../design/canonical-model/manager-apply-library-flow.md#current-library-walkthrough), and canonical product organization/run/accounting Rules. The prior Luna experiment is bounded evidence for prepared parallel work with separate copies, not this shared-workspace design or its scalability. Stop/capture mechanics, mapping schema and native message capabilities need concrete engineering validation. No runtime change is part of this decision record.
+
 
 ## Promises
 

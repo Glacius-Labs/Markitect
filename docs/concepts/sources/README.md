@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Recursive Apply simplification](recursive-apply-simplification-20261019.md) | Direct owner discussion, 19 October 2026 | Permanent ownership, parent-child communication, fresh recursive Verify, shared working tree, and documentation-only handoff for a later Claude implementation |
 | [Model restructuring and migration](model-migrations-20261017.md) | Direct owner messages in the Commands chat, 17 October 2026 | Meaning-preserving Package moves/merges, explicit identity migration, future Manager rebuilding, registry/configuration adjustment and documentation-only Main publication |
 | [Technical risk derivation](technical-risk-derivation-20261017.md) | Direct owner messages, 17 October 2026 | Require Managers and reviewers to derive technical risks independently and clarify existing concept and role templates without new mechanisms |
 | [Commands, Extract and Optimize](commands-extract-optimize-20261017.md) | Direct owner messages in the Commands chat, 17 October 2026 | Static operation instructions, read-only Verify, Extract of existing behavior through reused Manager review and integration, model optimization and explicit Main publication |

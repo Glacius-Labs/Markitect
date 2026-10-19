@@ -1,5 +1,7 @@
 # Budget and lifecycle contract for the first Apply
 
+> **Design supersession, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) selects a simpler strategy. Start with the [current Apply concept and implementation handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026). Conflicting private-workspace, delivery, expectations, reviewer-roster and rejection-counter mechanics below describe the earlier design; do not implement them for compatibility. Existing source/schema support and historical evidence retain their actual status. Revise this technical owner coherently when implementing the new strategy.
+
 This contract owns budget accounting, execution admission, findings that block completion, run transitions and their displayed meaning. The [configuration](manager-apply-configuration.md) owns the input fields and Package overrides; the [journal](manager-apply-journal.md) owns durable records and storage. The `run` package implements these rules.
 
 [DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) extends this target to named review teams, bounded arbitration and complete product defaults. Existing source and historical single-reviewer policies retain their actual supported version; this document change does not migrate them.

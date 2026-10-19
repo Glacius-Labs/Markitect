@@ -18,15 +18,19 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-Status: the design basis for the rebuild commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start). The owner decisions include [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization) and [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). DEC-039 owns the fixed Manager process and its confirmed refinements, including rejection counting; DEC-037 owns the container boundary. Producer packages refine exact Go names and versioned schemas in review within those decisions. These documents describe target behavior; implementation pull requests establish which parts work. Historical source comparisons retain their stated revision and are not live status. A change of intent goes to its owning document, not into a parallel note.
+**Current direction, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) and the [current Apply concept / Claude handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026) govern the simplified strategy: permanent responsibility, parallel shared-tree Execute and fresh recursive Verify on one immutable closing stand. Read the [current library walkthrough](manager-apply-library-flow.md#current-library-walkthrough) next. No runtime implementation is claimed.
 
-[DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) adds the owner-accepted project team/defaults target: start at [configuration](manager-apply-configuration.md#project-execution-file), then [conflict arbitration](manager-apply-execution.md#review-conflicts-and-arbitration). It is a bounded later owner change, not evidence that current v1 decoders or execution implement it.
+The detailed descriptions and terminology below preserve the preceding design. Their conflicting rules are superseded, including the old freeze; they are engineering inputs to revise rather than an additional implementation contract.
+
+Historical basis before DEC-056: the rebuild was commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start), with [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization) and [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). DEC-039 described the earlier fixed process and rejection counting; DEC-056 replaces those conflicting mechanics. DEC-037 retains the Linux/container boundary without requiring private writer copies or per-turn workspace reconstruction. Producer packages refine exact Go names and versioned schemas in review within those decisions. These documents describe target behavior; implementation pull requests establish which parts work. Historical source comparisons retain their stated revision and are not live status. A change of intent goes to its owning document, not into a parallel note.
+
+[DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) adds the owner-accepted project team/defaults target: start at [configuration](manager-apply-configuration.md#project-execution-file), then [conflict arbitration](manager-apply-execution.md#review-conflicts-and-arbitration). This records the earlier team-roster target; DEC-056 no longer requires that machinery for the simplified strategy. It is not evidence that current decoders or execution implement either target.
 
 Read in this order:
 
 | Document | Owns |
 | --- | --- |
-| [Apply concept](manager-apply-concept.md) | Organization, fixed Manager cycle, semantic review responsibilities, ownership and reporting. |
+| [Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) | Current recursive reconciliation cycle, permanent ownership, fresh verification and Claude implementation handoff. |
 | [Core protocol](manager-apply-core.md) | Steps, the Manager task machine, Orchestrator tools, messages, issues, deliveries and composition, by rule ID. |
 | [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
 | [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
@@ -40,7 +44,7 @@ Read in this order:
 | [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |
 | [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
 
-These documents are frozen under [DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs) until one Package runs end to end. Until then, changes only complete them, without adding scope, except the explicit owner-authorized team/default extension in DEC-043. The [architecture review of 17 October 2026](apply-architecture-review-20261017.md) is a dated assessment of this design and its proposed approach. It does not own any contract.
+Historically, [DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs) froze the earlier design, with DEC-043 as an exception at that time. [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) is the later owner-authorized change for the simplified Apply direction; the earlier freeze does not prohibit implementing that direction after a separate owner dispatch. The [architecture review of 17 October 2026](apply-architecture-review-20261017.md) remains a dated assessment of the previous design, not the current contract.
 
 Implementations identify the supported part of this target and its evidence. An intentional deviation changes the owning contract in the same pull request; partial implementation does not silently redefine the target. Record shapes, event tags and Go signatures in the design are illustrative unless explicitly identified as executable fixtures; the behavioral requirements remain binding. Exact implemented formats belong to the versioned contracts in source.
 

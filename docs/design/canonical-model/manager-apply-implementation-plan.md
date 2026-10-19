@@ -1,5 +1,7 @@
 # Acceptance gates for the first reliable Apply
 
+> **Design supersession, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) selects a simpler strategy. Start with the [current Apply concept and implementation handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026). Conflicting private-workspace, delivery, expectations, reviewer-roster and rejection-counter mechanics below describe the earlier design; do not implement them for compatibility. Existing source/schema support and historical evidence retain their actual status. Revise this technical owner coherently when implementing the new strategy.
+
 This document owns what each step of the rebuild must prove. The [delivery plan](../../implementation-plan.md) owns the packages, their order and dispatch; the [rebuild plan](manager-apply-rebuild-plan.md) owns what each package replaces. The gate identifiers P00 to P12 are stable names for acceptance criteria, not work assignments.
 
 ## The target

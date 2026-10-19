@@ -6,6 +6,7 @@ Use this map to find the product guide or the document that owns a decision or s
 
 | If you want to… | Start here |
 |---|---|
+| Implement the owner-agreed simplified recursive Apply | [Current concept and Claude handoff](design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026), [library walkthrough](design/canonical-model/manager-apply-library-flow.md#current-library-walkthrough), and [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) |
 | Inspect current canonical v1 preparation | [Project workflow](project-workflow.md), [Project operations](project-operations.md), and the [self-model](../.markitect/README.md) |
 | Understand what Markitect is for, before assessing or redirecting it | [Markitect in brief](vision.md#markitect-in-brief), [Common misreadings](vision.md#common-misreadings), and the [concept register](concepts/register.md) |
 | Understand where the idea came from and why its mechanisms might help | [Origin and rationale](concepts/origin-and-rationale.md) and the [owner's original account](concepts/sources/owner-origin-20261015.md) |

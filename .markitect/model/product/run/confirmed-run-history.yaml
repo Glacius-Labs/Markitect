@@ -3,5 +3,19 @@ imports:
     as: Vocab
 id: confirmed-run-history
 kind: Vocab.Rule
-body: "Bind each run to its exact supplied model, repository, configuration and owner request. Admit work against finite assignment budgets and required review capacity. Change confirmed run state only after an exact journal acknowledgement. Preserve uncertain effects and their budget holds. The Orchestrator guarantees unchanged Apply propagation through every local Manager along direct parent-child edges. Managers act only on delivered messages and communicate only with their direct parent or children. Participation, required local and integration review, correction and completion follow a fixed Orchestrator protocol, never an AI plan. Managers judge local realization and integration, with reviewed change or no-change outcomes; parent-owned prerequisite work remains possible while children wait. Route cross-area questions through the tree and never compensate for missing model links. Finish only with current complete evidence and observed publication, not Agent consensus. Keep transition semantics separate from SQL, repository acquisition and provider protocols."
+body: >-
+  Bind reconciliation to the exact model, repository, controls, owner request and finite execution budget.
+  Prepare and account for the complete source before dispatch and ensure every required Manager participates.
+  Use an immutable starting stand for fresh Verify; independent Execute work can begin without a global initial planning barrier.
+  Execute in parallel on one shared mutable working tree within persistent ownership, without private writer branches or per-turn accepted-delta replay.
+  Before closing Verify, observe quiescence of writers and their subprocesses and capture one complete immutable candidate; uncertainty prevents publication.
+  Pause Execute throughout closing Verify, run fresh recursive assessments and required checks on the same stand, and keep check outputs outside that stand.
+  Concrete model violations, absent model-required evidence and failed mandatory closing checks block; additional preferred test depth is advisory.
+  Keep unresolved findings visible until independently closed on the current candidate.
+  Correct through the responsible owners and repeat closing Verify on a new candidate; initially prefer whole-tree reassessment over fine-grained invalidation.
+  No-change needs assessed responsibility, not a separate delivery transaction.
+  Retain sufficient actual input, session, finding, check and effect evidence without special delivery purposes/scopes, expectations ledgers or rejection-counter exceptions.
+  Finish only with complete current evidence, guarded publication and exact read-back of the verified bytes, never Agent consensus alone.
+  Budget exhaustion, unresolved decisions or uncertain effects retain visible incomplete work.
+  Keep execution semantics independent of SQL, provider protocols and repository acquisition.
 spec: {}

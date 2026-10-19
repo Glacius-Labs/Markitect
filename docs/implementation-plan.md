@@ -1,6 +1,8 @@
 # Delivery plan: the first reliable Apply
 
-Date: 16 October 2026. This is the single current delivery and coordination plan, commissioned by the [owner](design/canonical-model/sources/manager-realization-20261016.md#polish-the-concept-and-start-the-coordinated-rebuild). It replaces the old waves, role queues, backlog and local dashboard. Old assignments do not carry execution authority into this rebuild.
+> **Owner direction, 19 October 2026:** [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) and the [current concept / later Claude handoff](design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026) replace the conflicting sequential/private-workspace and delivery-review process below. This change documents intent only. Existing implementation assignments remain bounded to their sessions; the historical queue below is not a new dispatch or authority to interfere with active writers. Reconcile concrete delivery assignments in the later implementation session.
+
+Date: 16 October 2026. This is the delivery and coordination owner, originally commissioned by the [owner](design/canonical-model/sources/manager-realization-20261016.md#polish-the-concept-and-start-the-coordinated-rebuild). It replaces the old waves, role queues, backlog and local dashboard. Old assignments do not carry execution authority into this rebuild.
 
 ## Target and baseline
 
@@ -12,12 +14,14 @@ Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing 
 
 ## Guiding decisions
 
+The process bullets below record the pre-DEC-056 implementation baseline. Their sequential/private-workspace, per-delivery review and freeze choices are superseded by the current concept. Existing ownership reservations are still relevant to avoiding interference; they are not authority to revive the old process.
+
 - Implement completed v1 and the Manager concept directly. Compatibility is not required; delete obsolete product paths, formats and tests together.
-- One ordinary root and one Manager per local Package, shared across code, tests and docs. The accepted team target now has named independent reviewers and a dispute-only arbiter ([DEC-043](concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults)); current single-reviewer execution remains a separate implementation stage. Writing stays sequential. [DEC-039](concepts/register.md#dec-039-deterministic-manager-process) requires unchanged Orchestrator-guaranteed operation propagation to every Manager, adjacent-only communication and fixed review/integration; AI-planned participation and rewritten child operations are superseded.
+- Current organization remains one ordinary Root and one Manager per local Package across code, tests and docs. [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) now selects parallel shared-tree Execute and fresh recursive Verify on one closing stand. The earlier sequential writing and mandatory named per-delivery reviewers/arbiter are superseded for this strategy. Direct parent/child communication and complete participation remain required.
 - Separate pure model/snapshot/organization/realization values from execution, repository I/O and provider protocols. Use consumer-owned Ports and Adapters and one Go module.
 - Reuse work with current assessment, not old approval. Keep exact bindings, recorded questions and actual effect observations.
 - Budget shortage and uncertainty produce visible retained incomplete work. They cannot waive evidence or authorize blind replay.
-- Build the technical core first. The four [working-day scenarios](concepts/reflections/working-day-demonstration-20261016.md) remain separate follow-up evidence. Government, experience, doctor, cockpit, parallel writers and extra providers/commands are deferred.
+- Build the technical core first. The four [working-day scenarios](concepts/reflections/working-day-demonstration-20261016.md) remain separate follow-up evidence. Government, experience, doctor, cockpit and extra providers/commands remain deferred. Parallel writing is now part of the DEC-056 direction, not a runtime capability proved by this plan.
 
 ## How we work
 

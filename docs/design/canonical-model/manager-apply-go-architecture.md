@@ -1,5 +1,7 @@
 # Go architecture for reliable Apply
 
+> **Design supersession, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) selects a simpler strategy. Start with the [current Apply concept and implementation handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026). Conflicting private-workspace, delivery, expectations, reviewer-roster and rejection-counter mechanics below describe the earlier design; do not implement them for compatibility. Existing source/schema support and historical evidence retain their actual status. Revise this technical owner coherently when implementing the new strategy.
+
 This document owns the target packages, their responsibilities and the dependency direction. The [port contracts](manager-apply-port-contracts.md) own the interfaces between them, and the [rebuild plan](manager-apply-rebuild-plan.md) owns what happens to the current source. The architecture gate described in [module rules](../../development/modules.md#apply-target-dependencies) enforces the dependency table below.
 
 ## Organize by responsibility

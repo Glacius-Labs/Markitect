@@ -3,5 +3,13 @@ imports:
     as: Vocab
 id: artifact-accounting
 kind: Vocab.Rule
-body: "Account for every observed regular file as a protected input, exact registered artifact or exact explained ignore. Bind each artifact to one responsibility and existing model Definitions. Claims, candidates and composition preserve ownership and source identity; these values do not schedule or publish work."
+body: >-
+  Account for every observed regular file as a protected input, exact registered artifact or exact explained ignore.
+  Bind each artifact to one persistent responsibility and existing model Definitions with reasons.
+  Derive ownership from the deepest unambiguous Manager area in the declared artifact layout, with mirrored model hierarchy as the default and explicit persistent exceptions.
+  Shared root artifacts belong to Root unless explicitly mapped otherwise; a requiring Definition supplies semantic links rather than silently changing the path owner.
+  Each Manager can create and register files within its area without per-file reservations, and maintains its own registry shard for aggregation.
+  Reject missing or duplicate accounting and ambiguous ownership before Apply and at the final candidate, including new files.
+  Initially trust writing ownership and observe violations without claiming technical enforcement or complete writer attribution from a shared diff.
+  Candidates preserve source identity and observed findings; pure accounting values do not schedule or publish work.
 spec: {}

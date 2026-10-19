@@ -1,5 +1,106 @@
 # Manager organization and reliable Apply
 
+## Current agreed concept — 19 October 2026
+
+**Status:** owner-accepted direction, documentation and independent design review only; no implementation or new Apply run in this change. [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) and its [owner source](../../concepts/sources/recursive-apply-simplification-20261019.md) replace the conflicting process choices in the earlier design below. This section is the current behavioral owner and the handoff for the later Claude implementation session. The [library walkthrough](manager-apply-library-flow.md#current-library-walkthrough) applies it to the existing example.
+
+The purpose is model fidelity with less routine human supervision: permanent responsibilities, parallel independent work, different review perspectives and recursive integration. Manager count, message count and a green test suite are not success criteria by themselves. Apply reconciles artifacts with the canonical model, including drift under unchanged intent; it never changes the model to make a realization pass.
+
+### Permanent organization and ownership
+
+One ordinary Root Manager and one Manager per local canonical Package form the responsibility tree. Canonical Package identity, not incidental code/test subdirectories, defines a Manager. Parents follow the model hierarchy. Every Manager assesses its area; Root cannot select a smaller team and silently omit responsibilities. Managers are accountable roles, not individual provider conversations.
+
+Recommended layout mirrors the model hierarchy beneath declared artifact roots such as `src`, `tests` and `docs`. Roots and explicit exceptions are persistent project choices, not per-Apply negotiations. Support existing framework layouts and colocated tests. The deepest Manager mapped to an artifact path owns it; ancestor areas exclude deeper owners. Shared files at an artifact root belong to Root unless a persistent explicit mapping says otherwise. Reject overlapping or ambiguous ownership before work starts, including path aliases under the actual platform's path rules.
+
+This deliberately replaces ownership-by-creation/reservation and common-ancestor negotiation for ordinary new paths. A Manager creates files in its own area and registers them itself without per-file approval. Transfers and layout changes are explicit changes to the persistent organization, not a way to evade a finding during Apply. The registry preserves exact paths, one owner, links to existing Definitions and reasons. One artifact can realize several Definitions without gaining several owners.
+
+Keep separate registry shards per responsibility, structurally corresponding to the model, and aggregate them for complete accounting. Do not make a global writable registry the synchronization point. Registry/control files remain outside the canonical Definition roots. Physical shard names and any format migration are implementation details to settle coherently, not new language v1 semantics.
+
+Every observed regular file is a recognized protected input, an exactly registered artifact or an explicitly explained ignore. Preflight blocks on missing/duplicate registrations or ambiguous ownership; repeat the census for the closing candidate, including new files. Existing `.markitect/ignore.yaml` is the current ignore input: the discussion's word `.markitectignore` does not introduce another supported format. Gitignore is not artifact accounting. Root ownership of otherwise shared paths does not silently register unexplained files.
+
+**Initial trust boundary:** trust Managers to respect writing ownership and inspect ordinary session/tool evidence for violations. Technical ownership enforcement is future work. A shared Git diff cannot reliably attribute every write to an Agent; do not claim complete violation detection or security isolation. An observed violation becomes a concrete correction/escalation, not an automatic ownership transfer. Protected model intent cannot be redefined by a Manager.
+
+### Context and communication
+
+Each Manager gets the same reconciliation mandate plus its identity, owned areas, direct parent and children with their roles, relevant model obligations and required cross-area contracts. A per-area base prompt or `AGENTS.md` may explain work and responsibility; it must not become a second owner of business rules. Compile applicable obligations and their provenance; do not infer missing canonical links or replace supplied obligations with Agent-selected relevance.
+
+Communication is exclusively between direct parent and child. Give the Manager only those session contacts. Necessary knowledge of another area's interface is not permission to contact its Manager. A question outside the local area goes to the parent, which resolves it, delegates to a direct child or escalates further. Only Root asks the human. Root is not a central planner for every file or task; each parent coordinates its own children.
+
+Prefer native session messaging as a transport where its observed capabilities fit. Do not assume either provider enforces tree routing. Keep ordinary readable questions, answers and findings; no special answer-only steps, per-hop AI relay transactions or bespoke message taxonomy. Do not add a direct sibling channel to avoid a parent bottleneck. Useful project coordination belongs in a parent's next normal work, not a mandatory separate planning ceremony.
+
+The first strategy's parent/child contact list is an operational tool/context boundary, not a claim that an Agent cannot discover other identities. Observe and report routing violations. If provider tooling exposes unrestricted cross-session calls, the implementation must state that limitation or restrict the exposed calls; it must not silently claim enforced routing from a prompt alone.
+
+For a prerequisite, the consumer explains the missing interface or file to its parent. The parent gets the owner to supply it in the shared tree and tells the consumer what changed. No `limited` delivery or separate prerequisite acceptance is required before development can proceed. Missing scaffolding and mutually waiting children are coordination work for their parent, not grounds to invent duplicate shared types. A genuinely unresolved policy goes upward rather than being bypassed locally.
+
+### Shared working tree and reconciliation cycle
+
+All Execute sessions use one shared mutable working tree. Separate Agent containers may mount that same directory; a private container does not imply a private code copy. No per-Manager branches, continual rebases, delta replay or parent workspace updates are needed. Container lifetime and provider transport remain technical details; the existing Linux/container boundary is not a requirement to recreate a workspace for every turn.
+
+1. **Prepare.** Bind the committed model, project controls, starting repository, owner decisions and finite budget. Perform complete structural preparation and accounting before dispatch. All required Managers receive their mandate.
+2. **Initial Verify.** Fresh sessions inspect an immutable starting snapshot against applicable obligations. This is the first normal reconciliation round, not an expectations phase, a separate audit institution or a global plan approval. Preserve already valid realization. Independent Execute work may start when concrete deviations are known while other initial assessments continue against the unchanged snapshot.
+3. **Execute.** Owners correct code, tests, documentation and registry in parallel in the shared working tree. Parents coordinate dependencies and their own artifacts. They do not write child-owned files to make integration easier. In-progress checks may fail because collaborators are unfinished; a Manager must report that honestly rather than weakening checks or calling the partial program complete.
+4. **Quiesce and capture.** For closing Verify, stop further writing work and finish or terminate existing write commands, background processes and tools. A chat's 'ready' message alone is not proof of quiescence. Capture one immutable, complete candidate with the bound model/control basis and registry. If stop or capture is uncertain, retain incomplete work and do not publish. A read-only snapshot alone does not excuse a racy capture.
+5. **Closing Verify.** All fresh Verify sessions and mandatory checks use that same immutable candidate. Writers stay paused for this round. Build/test outputs use separate scratch space. Independent branches verify in parallel; parents inspect their own obligations and their children's actual interaction and reports. Root completes the whole-project assessment.
+6. **Repair or finish.** Blocking findings go through the tree to the owners. Resume Execute for corrections, capture a new candidate, and initially repeat the whole closing Verify round. Do not build dependency-based review reuse first. Green with complete participation, closed blocking findings and passing required checks permits guarded publication and exact read-back of the reviewed bytes. A changed model or control basis requires a new bound run, not a continuation under old intent. Exhausted budget or unresolved decisions leave a visible incomplete outcome; the loop is finite.
+
+If initial Verify finds no work, its snapshot may serve as the closing candidate only while the complete byte set and bound inputs are unchanged, every responsibility has the required independent assessment and mandatory checks pass. No Execute round or duplicate Verify is required merely to satisfy the cycle's shape. Once Execute changes anything, initial findings are provisional and do not approve the new candidate.
+
+The deliberate tradeoff is a global pause for closing verification and a new whole-tree review round after repair. It is simpler than continuously merging private workspaces or tracking precise review invalidation. It can waste waiting/review time; measure that before adding finer scheduling or reuse.
+
+### Fresh verification and recursive acceptance
+
+Every Verify starts a fresh provider conversation without the author's dialogue or justification. It receives the relevant complete model, fixed owner decisions, exact candidate, check results, ordinary open findings and direct-child assessments. Fresh does not mean missing obligations or forgetting unresolved defects. Execute conversations may retain working context.
+
+The same Manager responsibility covers realization, coordination, integration and review, with independent review sessions. A parent reviews its own applicable obligations and cross-child behavior using actual artifacts, not just green summaries. It need not duplicate every leaf test. Its Execute conversation cannot approve its own work: use a fresh Verify session, including at Root, without introducing another permanent Manager hierarchy. Child reports are evidence to inspect, not authority to waive a parent obligation.
+
+An unchanged area still gets assessed; no separate no-change delivery transaction or expectations-case ledger is required. A Manager's result is a short statement of checked scope and stand, findings or satisfaction, required-check status and unresolved dependencies/questions. Every required Manager must be represented before Root can close.
+
+Blocking findings require a concrete model violation, absent evidence explicitly required by the model, or a failed mandatory closing check. Cite the obligation and observed behavior or source evidence. An arbitrary preferred test depth is advisory. A reproduction is valuable but an unambiguous source-level contradiction can also be concrete evidence. Do not require every conceivable case to have a separately recorded execution receipt.
+
+Keep earlier unresolved findings until independently closed or shown inapplicable on the current candidate with a reason. A fresh reviewer overlooking one does not close it. A small finding record is enough; do not recreate the former expectations/case matrix. Reviewers may derive technical consequences from existing obligations, but cannot create new business policy.
+
+The independent library oracle complements model review. The prior experiment's oracle was green before review found two runtime defects and missing model-required suspension coverage. Neither the oracle nor Agent agreement proves complete model fidelity. Green means the specified checks and independent assessments passed for the identified stand, within their stated limits.
+
+### Small Orchestrator boundary
+
+The deterministic component prepares and supplies contexts, starts sessions, exposes only allowed contacts, keeps all responsibilities visible, bounds resource use, establishes quiescence/candidates and checks completion/publication. Retain enough ordinary execution evidence to identify the inputs, participant results, findings, checks and published stand, including uncertainty. Exact transport, record/schema and stop mechanics are implementation work. Do not substitute a second AI workflow planner or retain the old task machine merely under different names.
+
+Managers decide how to investigate and repair within their responsibility. The runtime does not prescribe per-case test plans, per-file reservations, separate reply turns, delivery purposes/scopes, rejection-counter resets or progress exceptions. A blocked parent-child relationship remains visible; budget and completion constraints cannot be waived by an Agent.
+
+### Implementation handoff and supersession
+
+The later Claude session should start with this section, the [current library walkthrough](manager-apply-library-flow.md#current-library-walkthrough), [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), the canonical self-model and the repository's normal contribution instructions. This documentation session does not authorize or perform runtime implementation, further provider runs, releases, merges of implementation work or human acceptance of generated artifacts. A separate owner dispatch will authorize that work.
+
+| Earlier mechanism | Current direction |
+| --- | --- |
+| Fixed responsibility hierarchy and artifact-only Apply | Retained; no per-run ownership discovery or AI-selected participation. |
+| Ownership by `reserve_path`, creation and nearest-common-parent decisions | Replace with persistent artifact roots, deepest-owner mapping, explicit exceptions and owner-maintained registry shards. |
+| `library` owns all project-level module files because its Definition requires them | Deliberately reassign shared root files to Root under the new layout rule; keep their links to `library/callable-interface`. |
+| Sequential per-turn private workspaces and accepted-delta composition | Parallel Execute on one shared working tree; one immutable closing candidate per round. |
+| `local`/`integration`, `limited`/`complete`, no-change acceptance transactions | Ordinary work/results and recursive fresh Verify; keep every responsibility assessed. |
+| Expectations before work, recorded case matrices and per-case execution receipts | One fresh model-based Verify with concrete findings and actual required checks. |
+| Separate mandatory reviewers for each delivery plus parent integration reviewers | Fresh Verify sessions for each responsibility plus upward integration review; no second permanent hierarchy. |
+| Mandatory named reviewer roster and dispute-only arbiter | Not required for this simplified first strategy; extra perspectives are optional, not an additional acceptance bureaucracy. |
+| Rejection limit, restart/progress exceptions, completion-reserve admissions by delivery purpose | Finite overall execution budget and visible incomplete outcomes; no special rejection counter for this strategy. |
+| Mandatory passing whole-project checks before each partial submission | Required checks on the closing candidate; useful development checks remain available without a submission ceremony. |
+| Hop-by-hop protocol and special reply steps | Direct parent/child contacts using ordinary session communication; only Root escalates to the human. |
+
+This amends the conflicting choices in DEC-036, DEC-039 to DEC-041, DEC-043 and DEC-045 to DEC-055; it retains their useful intent where compatible, including independent risk derivation and run-wide owner decisions. The owner-approved concept discussion is an exception to the old freeze. The older detailed [core](manager-apply-core.md), [execution](manager-apply-execution.md), [configuration](manager-apply-configuration.md), [ports](manager-apply-port-contracts.md), [journal](manager-apply-journal.md), architecture and acceptance documents must be revised consistently during implementation. Their old tool/state schemas are not constraints to preserve for compatibility.
+
+Unsettled engineering details are deliberately limited: concrete evidence of writer quiescence and safe snapshot capture; persistent mapping/shard schema including path aliases; transport/address restriction using observed provider capabilities; and minimal result/finding/check records. Choose the smallest mechanism satisfying this behavior, then demonstrate it in complete workflows. Do not turn these details into more permanent roles, compulsory planning phases or case-specific decisions.
+
+### Evidence and independent review
+
+The preceding isolated experiment used Luna for 15 Agent jobs, completed M1→A1 and loan-limit-five-to-three M2→A2, and reported about 13 minutes plus 5–6 minutes respectively, about 20 minutes from experiment creation. It used prepared ownership/APIs, separate writer copies and external orchestration. Its final model reviews, Go checks and independent oracle passed after three review findings were fixed. Actual billed money is unknown. These timings exclude the full surrounding design/harness work and do not prove the shared-tree strategy, native communication, write attribution, live migration or scalability.
+
+The experiment's export is `luna-parallel-experiment/results.json` alongside the associated chat artifact, not a portable repository fixture. Preserve that evidence at its original scope; do not label this documentation or the new target as an executed Apply. Independent design review findings and their disposition are recorded below after review of this exact documentation change.
+
+Two independent Luna reviewers assessed the written concept: one for unnecessary bureaucracy, one for concurrency and evidence risks. Their first-pass concerns led to explicit preservation of no-change assessment, an explicit Root/module ownership change, a correct library topology, observable quiescence rather than a chat acknowledgement, retained open findings and an honest trust/attribution boundary. Their document review also requested a source for the Luna runtime preference, unambiguous supersession in the delivery plan/vision and separation of publication from human acceptance. Those corrections were incorporated. No reviewer proposed another role, case ledger or state machine as necessary. Exact stop/capture implementation, path aliases, actual message-tool limits and shared-tree scalability remain unproved engineering boundaries; design review is not runtime acceptance.
+
+## Earlier design reference
+
+The following text preserves the previous detailed design and its link anchors for existing sources. **It predates DEC-056. It is not an alternative implementation contract.** Where it conflicts with the current agreed concept above, implement the current concept and update the affected technical owners coherently. Historical source quotations and completed evidence retain their original scope.
+
 This is the product concept for realizing a canonical model through Managers. It owns organization, context, delegation, deliveries, review purposes, artifact ownership, the Apply lifecycle and reporting. The [design map](README.md#apply-design) lists the technical contracts that refine it and states the status of the whole set. The [north star](manager-realization-north-star.md) keeps the ideas and variants that this concept did not select.
 
 The concept uses the [completed language v1](minimal-language/language-contract.md) without new Core Kinds or semantics. The owner decisions include [DEC-025 to DEC-036](../../concepts/register.md#dec-025-package-managers-organize-realization) and the superseding [DEC-039 process clarification](../../concepts/register.md#dec-039-deterministic-manager-process).
