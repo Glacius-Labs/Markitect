@@ -147,7 +147,7 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 		t.Fatalf("write plan:\n got %+v\nwant %+v", got, want)
 	}
 	brief := cfg.Team[0].Brief
-	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization. They hold 8 artifact file(s); 1 more lie outside the roots.", "realization/lending/reminders: 2 file(s)", "dependency models under .markitect/dependencies/core, .markitect/dependencies/software and the artifact roots are read-only", "layout.exceptions", "Software.Concept",
+	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization. They hold 8 artifact file(s); 1 more lie outside the roots.", "realization/lending/reminders: 2 file(s)", "the artifacts and the imported dependency models under .markitect/dependencies/core, .markitect/dependencies/software.", "layout.exceptions", "Software.Concept",
 		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them"} {
 		if !strings.Contains(brief, w) {
 			t.Errorf("brief lacks %q:\n%s", w, brief)
@@ -282,13 +282,13 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 	}
 	// Briefs.
 	root := team["."].Brief
-	for _, w := range []string{"Root in the model phase", ".markitect/registry/registry.yaml", "realization/go.mod", "README.md", "You have no model Package directory", "- lending\n  artifact areas: realization/lending/** except realization/lending/reminders/**", "Definition lending/lending: lending"} {
+	for _, w := range []string{"Root in the model phase", ".markitect/registry/registry.yaml", "realization/go.mod", "README.md", "You have no Package", "- lending\n  artifact areas: realization/lending/** except realization/lending/reminders/**", "Definition lending/lending: lending"} {
 		if !strings.Contains(root, w) {
 			t.Errorf("Root brief lacks %q:\n%s", w, root)
 		}
 	}
 	reminders := team["lending/reminders"].Brief
-	for _, w := range []string{"Package lending/reminders in the model phase", ".markitect/model/lending/reminders, writable", ".markitect/registry/lending/reminders/registry.yaml", "realization/lending/reminders/remind.go", "realization/lending/reminders/remind_test.go",
+	for _, w := range []string{"Package lending/reminders in the model phase", "Your Package directory is .markitect/model/lending/reminders;", ".markitect/registry/lending/reminders/registry.yaml", "realization/lending/reminders/remind.go", "realization/lending/reminders/remind_test.go",
 		"lending/reminders/reminders (software/Concept)", "realizes: [lending/reminders/reminders]", "[[Software.other-id]]", "Observed behavior is evidence, not intent", "project-tests"} {
 		if !strings.Contains(reminders, w) {
 			t.Errorf("reminders brief lacks %q:\n%s", w, reminders)
@@ -298,7 +298,7 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 		t.Errorf("a child lists its parent's artifacts:\n%s", reminders)
 	}
 	lending := team["lending"].Brief
-	for _, w := range []string{"- lending/reminders\n  artifact areas: realization/lending/reminders/**", "You integrate their results", "realization/lending/borrow.go"} {
+	for _, w := range []string{"- lending/reminders\n  artifact areas: realization/lending/reminders/**", "You integrate their results in your own Package", "realization/lending/borrow.go"} {
 		if !strings.Contains(lending, w) {
 			t.Errorf("lending brief lacks %q:\n%s", w, lending)
 		}

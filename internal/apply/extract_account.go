@@ -178,7 +178,7 @@ func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, t
 	candidate := packageNames(structural.Model().compiled)
 	for _, name := range candidate {
 		if !slices.Contains(a.packages, name) {
-			add(modelPackageOf(a.packages, modelDirectory+name+"/x"), "model.structure_changed", modelDirectory+name, fmt.Sprintf("Package %q is new. The Manager tree is stable within an Extract round: describe the missing responsibility in your own Package and propose the new Package to Root as a finding for the next round.", name))
+			add(modelPackageOf(a.packages, modelDirectory+name+"/x"), "model.structure_changed", modelDirectory+name, fmt.Sprintf("Package %q is new; this phase keeps the proposed Packages. Describe the responsibility in your own Package and name the proposed Package in your summary.", name))
 		}
 	}
 	for _, name := range a.packages {
@@ -231,7 +231,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 		if strings.HasPrefix(name, markitectDir) {
 			kind, rule = "The canonical or Markitect control input", "Managers cannot change the model's dependencies or the project controls."
 		}
-		message := fmt.Sprintf("%s was %s; %s Restore it, and ask the owner through Root if a change is really needed.", kind, what, rule) + originalText(before, code, &quoted)
+		message := fmt.Sprintf("%s was %s; %s Restore it.", kind, what, rule) + originalText(before, code, &quoted)
 		findings = append(findings, CandidateFinding{Owner: a.ownerOfName(name), Code: code, Path: name, Message: message})
 	}
 	for _, before := range a.start.tree.Entries() {

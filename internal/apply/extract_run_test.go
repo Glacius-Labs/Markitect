@@ -237,7 +237,7 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 			modelVerify = turn
 		}
 	}
-	if !strings.Contains(structureExecute.Prompt, "This first phase proposes only the structure of the model") || !strings.Contains(structureExecute.Prompt, "structure phase of an Extract") ||
+	if !strings.Contains(structureExecute.Prompt, "Your task is the structure of the model") || !strings.Contains(structureExecute.Prompt, "structure phase of an Extract") ||
 		!slices.ContainsFunc(structureExecute.Tools, func(s run.ToolSpec) bool { return s.Name == "check" }) {
 		t.Errorf("structure prompt:\n%s", structureExecute.Prompt)
 	}
