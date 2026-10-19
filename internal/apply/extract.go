@@ -48,10 +48,21 @@ type ExtractRequest struct {
 // RetainedWork names the shared work volume that was kept: a phase did not
 // verify, or the verified model was not published.
 type ExtractResult struct {
-	Structure    run.Outcome
-	Model        *run.Outcome
-	Receipt      *PublicationReceipt
-	RetainedWork string
+	Structure run.Outcome
+	Model     *run.Outcome
+	Receipt   *PublicationReceipt
+	// ProposedChecks are the checks of a verified model's execution document that
+	// the start did not have: a proposal for the owner's adoption, never run.
+	ProposedChecks []ProposedCheck
+	RetainedWork   string
+}
+
+// ProposedCheck is one required check the structure phase proposed.
+type ProposedCheck struct {
+	ID        string   `json:"id"`
+	Profile   string   `json:"profile"`
+	Directory string   `json:"directory"`
+	Args      []string `json:"args"`
 }
 
 // Extract develops a model candidate from the existing artifacts in two phases
@@ -141,6 +152,7 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 		return result, runErr
 	}
 	closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
+	result.ProposedChecks = proposedChecks(start, modelOutcome.Candidate)
 	changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
 	if err := requireModelChangesOnly(changes); err != nil {
 		// Account blocks every such candidate, so this is a defect, not an
@@ -159,6 +171,28 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
 	}
 	return result, err
+}
+
+// proposedChecks lists the checks of the candidate's execution document that the
+// start's document does not declare.
+func proposedChecks(start extractStage, candidate snapshot.Tree) []ProposedCheck {
+	declared := func(structural CapturedPreparationAttempt) []ExecutionCheck {
+		if checks := structural.execution.authored.Checks; checks != nil {
+			return checks.Value
+		}
+		return nil
+	}
+	known := make(map[string]bool)
+	for _, check := range declared(start.structural) {
+		known[check.ID.Value] = true
+	}
+	proposed := []ProposedCheck{}
+	for _, check := range declared(rebindStructural(start.structural.Model(), candidate, extractModel)) {
+		if !known[check.ID.Value] {
+			proposed = append(proposed, ProposedCheck{ID: check.ID.Value, Profile: check.Profile.Value, Directory: check.Directory.Value.String(), Args: slices.Clone(check.Args.Value)})
+		}
+	}
+	return proposed
 }
 
 // requireModelChangesOnly refuses to publish anything but the model, the
@@ -269,7 +303,7 @@ func (a extractAccounting) structureTeam(stage extractStage) ([]run.Manager, err
 	for _, r := range layout.Roots() {
 		roots = append(roots, r.String())
 	}
-	brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().compiled), Settings: root, Checks: a.declaredChecks()})
+	brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().compiled), Settings: root, Checks: a.declaredChecks(), CheckProfiles: stage.checkProfiles})
 	return []run.Manager{{Path: organization.Root, Role: "proposes the first model structure of the whole project", Brief: brief,
 		ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: a.WritePlan(organization.Root)}}, nil
 }

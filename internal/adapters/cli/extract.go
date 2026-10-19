@@ -21,7 +21,8 @@ type ExtractRequest struct {
 
 // ExtractReport projects the observations of one Extract: the preparation, the
 // two phases, the model's completion, the final Verify result, the realization
-// deviations and open questions, the publication and where the evidence is kept.
+// deviations, the proposed checks and open questions, the publication and where
+// the evidence is kept.
 type ExtractReport struct {
 	FormatVersion int          `json:"formatVersion"`
 	Operation     string       `json:"operation"`
@@ -33,6 +34,7 @@ type ExtractReport struct {
 	Model             *RunReport                `json:"model,omitempty"`
 	Verify            *VerifyReport             `json:"verify,omitempty"`
 	Deviations        []run.Finding             `json:"deviations"`
+	ProposedChecks    []apply.ProposedCheck     `json:"proposedChecks"`
 	OpenQuestions     []run.Question            `json:"openQuestions"`
 	Publication       *apply.PublicationReceipt `json:"publication,omitempty"`
 	RetainedWork      string                    `json:"retainedWork,omitempty"`
@@ -50,7 +52,7 @@ type VerifyReport struct {
 // NewExtractReport projects the result of an Extract with the run identity. Lists
 // are never null.
 func NewExtractReport(id string, result apply.ExtractResult) ExtractReport {
-	r := ExtractReport{Deviations: []run.Finding{}, OpenQuestions: []run.Question{}, Publication: result.Receipt, RetainedWork: result.RetainedWork}
+	r := ExtractReport{Deviations: []run.Finding{}, ProposedChecks: []apply.ProposedCheck{}, OpenQuestions: []run.Question{}, Publication: result.Receipt, RetainedWork: result.RetainedWork}
 	questions := result.Structure.Questions
 	if result.Structure.Status != "" {
 		r.Structure = NewRunReport(id+"-"+apply.ExtractStructurePhase, result.Structure)
@@ -70,6 +72,7 @@ func NewExtractReport(id string, result apply.ExtractResult) ExtractReport {
 			r.Verify = &VerifyReport{Round: last.Number, Green: last.Green, Assessments: last.Assessments}
 		}
 	}
+	r.ProposedChecks = append(r.ProposedChecks, result.ProposedChecks...)
 	for _, q := range questions {
 		if !q.Answered {
 			r.OpenQuestions = append(r.OpenQuestions, q)

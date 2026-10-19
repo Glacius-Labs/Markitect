@@ -132,15 +132,29 @@ func writeProjectChecks(b *strings.Builder, checks []briefCheck) {
 	}
 }
 
+// writeCheckProfiles lists the check profiles the Host offers, so that a
+// proposed check can name one.
+func writeCheckProfiles(b *strings.Builder, offers []checkProfileOffer) {
+	b.WriteString("\nThe check profiles the Host offers (a check in checks of .markitect/execution.yaml names one)\n")
+	if len(offers) == 0 {
+		b.WriteString("- none\n")
+	}
+	for _, offer := range offers {
+		fmt.Fprintf(b, "- %s: runs %s\n", offer.Name, offer.Runs)
+	}
+	b.WriteString("A check is {id: some-id, profile: <profile>, directory: <directory>, args: [<argument>, ...], timeout: 2m}.\n")
+}
+
 // structureBriefInput is everything Root's Brief of the structure phase states.
 type structureBriefInput struct {
-	Roots        []string
-	Exceptions   []realization.LayoutException
-	Dependencies []string
-	Artifacts    []snapshot.Path
-	Kinds        []vocabularyKind
-	Settings     organization.ManagerSettings
-	Checks       []briefCheck
+	Roots         []string
+	Exceptions    []realization.LayoutException
+	Dependencies  []string
+	Artifacts     []snapshot.Path
+	Kinds         []vocabularyKind
+	Settings      organization.ManagerSettings
+	Checks        []briefCheck
+	CheckProfiles []checkProfileOffer
 }
 
 func renderStructureBrief(in structureBriefInput) string {
@@ -162,7 +176,7 @@ func renderStructureBrief(in structureBriefInput) string {
 		b.WriteString("- and more directories: list them in /work\n")
 	}
 	b.WriteString("\nWhat you write\n")
-	b.WriteString("The Definitions of the proposed Packages under .markitect/model and layout.exceptions of .markitect/execution.yaml. Everything else stays as it is: the model manifest and lock, the rest of the execution document, ignore.yaml, the artifacts and the imported dependency models")
+	b.WriteString("The Definitions of the proposed Packages under .markitect/model and layout.exceptions and checks of .markitect/execution.yaml. Everything else stays as it is: the model manifest and lock, the rest of the execution document, ignore.yaml, the artifacts and the imported dependency models")
 	if len(in.Dependencies) > 0 {
 		b.WriteString(" under " + strings.Join(in.Dependencies, ", "))
 	}
@@ -182,6 +196,7 @@ func renderStructureBrief(in structureBriefInput) string {
 	fmt.Fprintf(&b, "Each proposed Package, including an intermediate one, has one overview Definition of kind %s in .markitect/model/<package-path>/<id>.yaml; the Package's id of the overview may be its own name. It describes the responsibility and its relationships to neighbouring Packages (links). Root has no Definition of its own: the model root is not a Package.\n", kind)
 	writeAuthoringGuide(&b, in.Kinds)
 	writeProjectChecks(&b, in.Checks)
+	writeCheckProfiles(&b, in.CheckProfiles)
 	writeInstructions(&b, "Execute", in.Settings.Execute)
 	writeInstructions(&b, "Verify", in.Settings.Verify)
 	return b.String()

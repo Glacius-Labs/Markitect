@@ -88,7 +88,8 @@ func TestExtractReportShape(t *testing.T) {
 		Turns:     []run.TurnRecord{{ID: "t2", Manager: ".", Kind: run.VerifyTurn, Round: 2}}, Usage: run.Usage{InputTokens: 7},
 	}
 	receipt := &apply.PublicationReceipt{ID: "x-1", Outcome: apply.PublicationApplied}
-	result := apply.ExtractResult{Structure: structure, Model: &modelOutcome, Receipt: receipt}
+	proposed := []apply.ProposedCheck{{ID: "project-tests", Profile: "go-tests", Directory: "realization", Args: []string{"test", "./..."}}}
+	result := apply.ExtractResult{Structure: structure, Model: &modelOutcome, Receipt: receipt, ProposedChecks: proposed}
 	report := NewExtractReport("x-1", result)
 	report.FormatVersion, report.Operation, report.Status = 1, "extract", ExtractStatus(result, nil)
 	if report.Status != model.Passed || !report.ModelComplete || report.Structure.ID != "x-1-structure" || report.Model.ID != "x-1-model" || report.Model.Usage.InputTokens != 7 || report.Structure.Usage.InputTokens != 3 {
@@ -100,6 +101,9 @@ func TestExtractReportShape(t *testing.T) {
 	if len(report.Deviations) != 1 || report.Deviations[0].ID != "f1" || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
 		t.Fatalf("deviations %+v questions %+v", report.Deviations, report.OpenQuestions)
 	}
+	if len(report.ProposedChecks) != 1 || report.ProposedChecks[0].ID != "project-tests" {
+		t.Fatalf("proposed checks %+v", report.ProposedChecks)
+	}
 	data, err := json.Marshal(ReportValue(report))
 	if err != nil {
 		t.Fatal(err)
@@ -108,14 +112,14 @@ func TestExtractReportShape(t *testing.T) {
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		t.Fatal(err)
 	}
-	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "openQuestions", "publication"} {
+	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "proposedChecks", "openQuestions", "publication"} {
 		if _, ok := decoded[key]; !ok {
 			t.Errorf("report lacks %q: %s", key, data)
 		}
 	}
 	// Lists are never null, even for an Extract that stopped in the first phase.
 	stopped := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Incomplete, Reason: "budget"}})
-	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.OpenQuestions == nil || stopped.Structure.Rounds == nil {
+	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.OpenQuestions == nil || stopped.Structure.Rounds == nil {
 		t.Fatalf("%+v", stopped)
 	}
 }

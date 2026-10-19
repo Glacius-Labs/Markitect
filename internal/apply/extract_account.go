@@ -123,10 +123,17 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 		return append(findings, guarded...)
 	}
 	for _, d := range structural.files.diagnostics {
-		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, positioned(d.Message, d.Position))
+		message := positioned(d.Message, d.Position)
+		if a.phase == extractStructure && d.Source.File == executionFile && strings.HasPrefix(d.Source.Field, "/checks") {
+			message += " " + a.offeredProfiles() // a defect of a proposed check
+		}
+		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, message)
 	}
 	if structural.execution.Status() != model.Passed {
 		return append(findings, guarded...)
+	}
+	if a.phase == extractStructure {
+		a.accountChecks(structural, add)
 	}
 	topology, err := organization.BuildTopology(compiled)
 	if err != nil {
@@ -138,6 +145,32 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 		return append(findings, guarded...)
 	}
 	return append(findings, a.accountModel(structural, tree, guarded)...)
+}
+
+// accountChecks reports each proposed check whose profile the Host does not
+// offer: the next phase could not prepare such a check.
+func (a extractAccounting) accountChecks(structural CapturedPreparationAttempt, add func(owner, code, name, message string)) {
+	declared := structural.execution.authored.Checks
+	if declared == nil {
+		return
+	}
+	for _, check := range declared.Value {
+		if !slices.ContainsFunc(a.start.checkProfiles, func(o checkProfileOffer) bool { return o.Name == check.Profile.Value }) {
+			add(organization.Root, "execution.check_profile_missing", executionFile, fmt.Sprintf("Check %q names the profile %q, which the Host does not offer. %s Name one of them in profile, or remove the check.", check.ID.Value, check.Profile.Value, a.offeredProfiles()))
+		}
+	}
+}
+
+// offeredProfiles states the check profiles the Host offers.
+func (a extractAccounting) offeredProfiles() string {
+	if len(a.start.checkProfiles) == 0 {
+		return "The Host offers no check profile."
+	}
+	names := make([]string, len(a.start.checkProfiles))
+	for i, o := range a.start.checkProfiles {
+		names[i] = o.Name
+	}
+	return "The Host offers the check profiles: " + strings.Join(names, ", ") + "."
 }
 
 // accountStructure checks the proposal of the structure phase: at least one
@@ -212,8 +245,8 @@ func exemptFromGuard(name string) bool {
 
 // guard reports every change outside the phase's writable area: artifacts,
 // dependencies, manifest, lock and project configuration stay as captured. The
-// structure phase may write the model and the layout exceptions of the
-// execution document, the model phase the model and the registry shards.
+// structure phase may write the model and, in the execution document, the layout
+// exceptions and the checks, the model phase the model and the registry shards.
 func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
 	quoted := 0
@@ -242,8 +275,8 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 		case a.phase == extractStructure && name == executionFile:
 			if !found {
 				report(name, before, "input.deleted", "deleted")
-			} else if after != before && !equalBesidesLayoutExceptions(before.Bytes(), after.Bytes()) {
-				report(name, before, "input.changed", "changed beyond layout.exceptions")
+			} else if after != before && !equalBesidesProposals(before.Bytes(), after.Bytes()) {
+				report(name, before, "input.changed", "changed beyond layout.exceptions and checks")
 			}
 		case writable(name):
 		case !found:
@@ -261,10 +294,10 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	return findings
 }
 
-// equalBesidesLayoutExceptions reports whether two execution documents are
-// equal after layout.exceptions is removed from both. A document that does not
-// parse differs.
-func equalBesidesLayoutExceptions(before, after []byte) bool {
+// equalBesidesProposals reports whether two execution documents are equal after
+// layout.exceptions and checks, the parts the structure phase proposes, are
+// removed from both. A document that does not parse differs.
+func equalBesidesProposals(before, after []byte) bool {
 	strip := func(data []byte) (map[string]any, bool) {
 		var document map[string]any
 		if err := yaml.Unmarshal(data, &document); err != nil || document == nil {
@@ -273,6 +306,7 @@ func equalBesidesLayoutExceptions(before, after []byte) bool {
 		if layout, ok := document["layout"].(map[string]any); ok {
 			delete(layout, "exceptions")
 		}
+		delete(document, "checks")
 		return document, true
 	}
 	x, okX := strip(before)

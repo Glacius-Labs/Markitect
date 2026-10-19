@@ -20,7 +20,7 @@ One Package owns the project as a whole: its purpose, scope and non-goals, its d
 
 For each Package, including intermediate ones, write one overview Definition in plain, meaning-first language: what the Package is for, what it owns and how it relates to its neighbours, with body links. State only what the artifacts support, without behavioral detail. A Definition states intent, not evidence: name the artifacts behind each boundary in your summary, not in the Definition.
 
-Fit the layout to the proposal: an artifact directory below an artifact root belongs to the Package whose path mirrors it, and a Package whose artifacts live elsewhere gets an exception in layout.exceptions of .markitect/execution.yaml with a reason. Every artifact ends up owned by a Package or by Root.
+Fit the layout to the proposal: an artifact directory below an artifact root belongs to the Package whose path mirrors it, and a Package whose artifacts live elsewhere gets an exception in layout.exceptions of .markitect/execution.yaml with a reason. Every artifact ends up owned by a Package or by Root. Where the artifacts document how the project is built and tested, propose those commands as entries of checks in .markitect/execution.yaml; they apply only once the owner adopts the model.
 
 Ask the owner only what the artifacts cannot settle about the intended boundaries. Finish with a summary of the Packages, the artifacts behind each boundary and the open questions.`
 

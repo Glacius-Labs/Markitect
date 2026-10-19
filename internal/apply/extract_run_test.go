@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -202,6 +203,9 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	if len(result.Structure.Turns) != 2 || len(result.Model.Turns) < 12 || len(result.Structure.Rounds) != 1 || len(result.Model.Rounds) != 1 || result.Model.Usage.InputTokens != int64(10*len(result.Model.Turns)) {
 		t.Fatalf("turns %d/%d rounds %d/%d usage %+v", len(result.Structure.Turns), len(result.Model.Turns), len(result.Structure.Rounds), len(result.Model.Rounds), result.Model.Usage)
 	}
+	if len(result.ProposedChecks) != 0 {
+		t.Errorf("no check was proposed: %+v", result.ProposedChecks)
+	}
 	deviations := apply.ExtractDeviations(result.Model.Findings)
 	if len(deviations) != 1 || deviations[0].Owner != "lending" || !strings.Contains(deviations[0].Observed, "sixth loan") {
 		t.Fatalf("deviations %+v", deviations)
@@ -260,6 +264,33 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	// The structure phase gets half of the 120 agent turns; the model phase the rest it left.
 	if len(turnBudgets) != 2 || turnBudgets[0] != 60 || turnBudgets[1] != 118 {
 		t.Errorf("agent-turn budgets of the phases: %v", turnBudgets)
+	}
+}
+
+func TestExtractReportsTheChecksTheStructureProposed(t *testing.T) {
+	req, agents, _, publisher, _, _, _ := bothPhases(t)
+	agents.writes["x-1-structure ."][".markitect/execution.yaml"] += extractProposedCheck("library-tests")
+	result, err := apply.Extract(context.Background(), req)
+	if err != nil || result.Model == nil || result.Model.Status != run.Verified {
+		t.Fatalf("%v %+v", err, result.Model)
+	}
+	want := []apply.ProposedCheck{{ID: "project-vet", Profile: "library-tests", Directory: "realization", Args: []string{"vet", "./..."}}}
+	if !reflect.DeepEqual(result.ProposedChecks, want) {
+		t.Errorf("proposed checks %+v, want %+v", result.ProposedChecks, want)
+	}
+	// The Managers of the model phase see the proposal as a declared check, and the
+	// execution document is published with it.
+	modelBriefs := 0
+	for _, turn := range agents.turns {
+		if turn.Kind == run.ExecuteTurn && strings.HasPrefix(turn.ID, "x-1-model") && strings.Contains(turn.Prompt, "project-vet: profile library-tests: vet ./...") {
+			modelBriefs++
+		}
+	}
+	if modelBriefs == 0 {
+		t.Error("no model-phase Brief lists the proposed check")
+	}
+	if len(publisher.requests) != 1 || !slices.ContainsFunc(publisher.requests[0].Changes, func(c snapshot.Change) bool { return c.Path().String() == ".markitect/execution.yaml" }) {
+		t.Errorf("the execution document is not published: %+v", publisher.requests)
 	}
 }
 

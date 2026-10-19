@@ -135,7 +135,7 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 	if !cfg.CheckTool || cfg.Mandate == "" || cfg.VerifyGuidance == "" || len(cfg.Checks) != 0 || !cfg.Start.Equal(extractStart(t)) {
 		t.Fatalf("config: tool %v mandate %d guidance %d checks %d", cfg.CheckTool, len(cfg.Mandate), len(cfg.VerifyGuidance), len(cfg.Checks))
 	}
-	if !strings.Contains(cfg.Mandate, "structure") || !strings.Contains(cfg.Mandate, "Folder names are clues, not authority") {
+	if !strings.Contains(cfg.Mandate, "structure") || !strings.Contains(cfg.Mandate, "Folder names are clues, not authority") || !strings.Contains(cfg.Mandate, "propose those commands as entries of checks in .markitect/execution.yaml; they apply only once the owner adopts the model.") {
 		t.Errorf("mandate: %s", cfg.Mandate)
 	}
 	want := run.WritePlan{Enforced: true, Base: false, Mounts: []run.PathMount{
@@ -148,7 +148,8 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 	}
 	brief := cfg.Team[0].Brief
 	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization. They hold 8 artifact file(s); 1 more lie outside the roots.", "realization/lending/reminders: 2 file(s)", "the artifacts and the imported dependency models under .markitect/dependencies/core, .markitect/dependencies/software.", "layout.exceptions", "Software.Concept",
-		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them"} {
+		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them",
+		"layout.exceptions and checks of .markitect/execution.yaml", "The check profiles the Host offers", "- library-tests: runs program", "timeout: 2m"} {
 		if !strings.Contains(brief, w) {
 			t.Errorf("brief lacks %q:\n%s", w, brief)
 		}
@@ -230,6 +231,38 @@ func TestExtractStructureAccounting(t *testing.T) {
 	changed := cfg.Account(change(t, proposedTree(t, start), map[string]*string{"realization/lending/borrow.go": text("package lending // edited\n")}))
 	if len(changed) != 1 || !strings.Contains(changed[0].Observed, "Original content") || !strings.Contains(changed[0].Observed, "package lending\n") || !strings.Contains(changed[0].Observed, "Extract never changes artifacts") {
 		t.Errorf("%+v", changed)
+	}
+}
+
+func TestExtractStructureAccountsProposedChecks(t *testing.T) {
+	cfg, err := apply.ExtractStructureConfig(extractRequest(t), extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account := func(execution string) []run.Finding {
+		return cfg.Account(change(t, proposedTree(t, cfg.Start), map[string]*string{".markitect/execution.yaml": text(execution)}))
+	}
+	if got := account(extractExecutionProposed + extractProposedCheck("library-tests")); len(got) != 0 {
+		t.Fatalf("a check with an offered profile is not accounted: %+v", got)
+	}
+	for _, tc := range []struct {
+		name, execution, want string
+	}{
+		{"unknown profile", extractExecutionProposed + extractProposedCheck("no-such-profile"), `names the profile "no-such-profile", which the Host does not offer. The Host offers the check profiles: library-tests.`},
+		{"check that does not decode", extractExecutionProposed + "  - id: broken\n    profile: library-tests\n", "The Host offers the check profiles: library-tests."},
+		{"change elsewhere beside a check", strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1) + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			findings := account(tc.execution)
+			if len(findings) == 0 {
+				t.Fatal("no finding")
+			}
+			for _, f := range findings {
+				if f.Owner != "." || !f.Blocking || !strings.Contains(f.Observed, tc.want) && !strings.Contains(f.Obligation, tc.want) {
+					t.Errorf("finding %+v lacks %q", f, tc.want)
+				}
+			}
+		})
 	}
 }
 

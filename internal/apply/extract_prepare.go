@@ -26,11 +26,38 @@ const (
 // the authored budget. The first phase starts from the captured repository; the
 // second from the verified candidate of the first.
 type extractStage struct {
-	structural CapturedPreparationAttempt
-	settings   organization.Settings
-	facts      organization.SettingsFacts
-	budget     ExecutionBudget
-	tree       snapshot.Tree
+	structural    CapturedPreparationAttempt
+	settings      organization.Settings
+	facts         organization.SettingsFacts
+	budget        ExecutionBudget
+	checkProfiles []checkProfileOffer
+	tree          snapshot.Tree
+}
+
+// checkProfileOffer is a check profile the Host offers: its name and what it
+// runs. A proposed check can name only these profiles.
+type checkProfileOffer struct{ Name, Runs string }
+
+// offeredCheckProfiles lists the check profiles of the Host that the start
+// prepared, in name order.
+func offeredCheckProfiles(prepared CapturedSettingsPreparation) []checkProfileOffer {
+	var offers []checkProfileOffer
+	for _, profile := range prepared.ProfileObservations() {
+		if _, ok := profile.Identity(); !ok || profile.Input().Namespace() != "checkProfiles" {
+			continue
+		}
+		observation := profile.Observation()
+		runs := ""
+		switch {
+		case observation.CheckImage != nil:
+			runs = observation.CheckImage.Executable.Path
+		case len(observation.Files) > 0:
+			runs = observation.Files[0].Location.Path.String()
+		}
+		offers = append(offers, checkProfileOffer{Name: profile.Input().Name(), Runs: runs})
+	}
+	slices.SortFunc(offers, func(a, b checkProfileOffer) int { return strings.Compare(a.Name, b.Name) })
+	return offers
 }
 
 // newExtractStart validates a preparation made by CaptureExtract as the start of
@@ -63,7 +90,7 @@ func newExtractStart(prepared CapturedSettingsAttempt) (extractStage, error) {
 	if !structural.files.layout.Declared() || len(structural.files.layout.Roots()) == 0 {
 		return extractStage{}, fmt.Errorf("%w: .markitect/execution.yaml declares no artifact roots under layout.roots", ErrNotExtractable)
 	}
-	return extractStage{structural: structural, settings: settings, facts: facts, budget: budget, tree: structural.Model().inputs.Raw.Census}, nil
+	return extractStage{structural: structural, settings: settings, facts: facts, budget: budget, checkProfiles: offeredCheckProfiles(prepared.Settings()), tree: structural.Model().inputs.Raw.Census}, nil
 }
 
 // requireEmptyModel refuses a local model that already holds Definitions.
@@ -96,7 +123,7 @@ func (s extractStage) next(candidate snapshot.Tree) (extractStage, error) {
 	if err != nil {
 		return extractStage{}, err
 	}
-	return extractStage{structural: structural, settings: settings, facts: s.facts, budget: s.budget, tree: candidate}, nil
+	return extractStage{structural: structural, settings: settings, facts: s.facts, budget: s.budget, checkProfiles: s.checkProfiles, tree: candidate}, nil
 }
 
 // rebindStructural prepares the structure of a tree the way the capture
