@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/apply-execute-first-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's accepted execute-first Apply sequence and documentation-only authority while distinguishing the unchanged implementation.
   - path: "docs/concepts/sources/three-starting-situations-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
