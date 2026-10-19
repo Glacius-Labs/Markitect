@@ -65,38 +65,28 @@ func decodeExecution(compiled model.Result, raw RawInputs) executionDecoding {
 	}
 	root := executionField{node: document.Content[0]}
 	d.restricted(root)
-	fields := d.object(root, "apiVersion", "strategy", "limits", "assignment", "completionReserve", "defaults", "packages", "scope", "checks", "acceptance")
+	fields := d.object(root, "apiVersion", "strategy", "budget", "profiles", "instructions", "packages", "layout", "scope", "checks")
 	r.authored.APIVersion, _ = d.text(d.required(fields, root, "apiVersion"), false)
 	if r.authored.APIVersion.Source.File != "" && r.authored.APIVersion.Value != "markitect.execution/v1" {
 		d.issue(model.Failed, "execution.version", fields["apiVersion"], "Unsupported execution apiVersion.")
 	}
 	r.authored.Strategy, _ = d.text(d.required(fields, root, "strategy"), false)
-	if r.authored.Strategy.Source.File != "" && r.authored.Strategy.Value != "recursive-apply-v1" {
+	if r.authored.Strategy.Source.File != "" && r.authored.Strategy.Value != "shared-workspace-v1" {
 		d.issue(model.Failed, "execution.strategy", fields["strategy"], "Unsupported execution strategy.")
 	}
-	r.authored.Limits = d.limits(d.required(fields, root, "limits"))
-	r.authored.Assignment = d.assignment(d.required(fields, root, "assignment"))
-	r.authored.CompletionReserve = d.reserve(d.required(fields, root, "completionReserve"))
-	r.authored.Defaults = d.defaults(d.required(fields, root, "defaults"))
+	r.authored.Budget = d.budget(d.required(fields, root, "budget"))
+	r.authored.Defaults.Execute, r.authored.Defaults.Verify = d.roles(fields, root, true)
 	if field, found := fields["packages"]; found {
 		r.authored.Packages = d.packages(field)
+	}
+	if field, found := fields["layout"]; found {
+		r.authored.Layout = d.layout(field, compiled)
 	}
 	if field, found := fields["scope"]; found {
 		r.authored.Scope = d.scope(field)
 	}
 	if field, found := fields["checks"]; found {
 		r.authored.Checks = d.checks(field)
-	}
-	if field, found := fields["acceptance"]; found {
-		values := d.object(field, "ownerApproval")
-		if selection, found := values["ownerApproval"]; found {
-			if approval, ok := d.strings(selection); ok {
-				for _, name := range approval.Value {
-					d.localPackage(selection, name)
-				}
-				r.authored.OwnerApproval = &approval
-			}
-		}
 	}
 	slices.SortFunc(r.diagnostics, func(a, b ExecutionDiagnostic) int {
 		if n := strings.Compare(a.Source.Field, b.Source.Field); n != 0 {

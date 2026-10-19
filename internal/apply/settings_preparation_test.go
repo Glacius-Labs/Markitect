@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"reflect"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -91,7 +92,7 @@ func TestM1HostSettingsUsesActualFileCheckAndProductDefaultsParents(t *testing.T
 		t.Fatalf("M1 host settings: %v %s %+v; files=%+v defaults=%+v", err, result.Status(), result.Diagnostics(), files.Diagnostics(), defaults.Diagnostics())
 	}
 	root, ok := settings.Manager(".")
-	if !ok || root.RejectionLimit.Value != 3 || root.RejectionLimit.Source != defaults.ProductSource() && root.RejectionLimit.Source.File != defaults.ProductSource().File || root.Manager.Profile.Value.Name != "library-agent" || root.Manager.Profile.Value.Identity == "" {
+	if !ok || len(root.Execute.InstructionSources) != 1 || root.Execute.InstructionSources[0].File != defaults.ProductSource().File || root.Execute.Profile.Value.Name != "library-agent" || root.Execute.Profile.Value.Identity == "" {
 		t.Fatalf("actual resolution/default provenance lost: %+v", root)
 	}
 	declaration := checks[0].Declaration()
@@ -126,5 +127,25 @@ func TestM1HostSettingsUsesActualFileCheckAndProductDefaultsParents(t *testing.T
 		if err != nil || prepared.Status() != model.Passed || !available || !reflect.DeepEqual(ps, settings) || !reflect.DeepEqual(prepared.FileCheck(), pf) || !reflect.DeepEqual(prepared.Defaults(), pd) || prepared.FileCheck().RegistryPreparation().Model().Inputs().Revision != revision {
 			t.Fatalf("preview binding: %v %+v", err, prepared.Diagnostics())
 		}
+	}
+}
+
+func TestHostSettingsExposesTheAuthoredBudgetOnlyWithResolvedSettings(t *testing.T) {
+	selection, raw := hostSettingsInputs(t)
+	m := registryModel(t, selection, raw)
+	agent, check := hostPorts(t)
+	result, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
+	budget, ok := result.Budget()
+	if err != nil || !ok || result.Status() != model.Passed {
+		t.Fatalf("budget unavailable: %v %s %+v", err, result.Status(), result.Diagnostics())
+	}
+	if budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Rounds.Value != 4 || budget.Rounds.Source.Field != "/budget/rounds" || budget.Rounds.Source.File != ".markitect/execution.yaml" {
+		t.Fatalf("budget or its provenance changed: %+v", budget)
+	}
+	bad := apply.ProductStrategyDefaults()
+	bad.Bytes = nil
+	refused, _ := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(bad), agent, check)
+	if _, ok := refused.Budget(); ok {
+		t.Fatal("a refused preparation exposed a budget")
 	}
 }

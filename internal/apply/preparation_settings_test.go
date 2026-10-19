@@ -154,7 +154,7 @@ func TestPreparationSettingsM1ClosesRepoAndHostInputsWithinOneSharedBound(t *tes
 					settings, ok := prepared.Settings()
 					root, exists := settings.Manager(".")
 					checks, checkOK := prepared.Checks()
-					if !ok || !exists || !checkOK || len(checks) != 1 || root.Manager.Profile.Value.Identity == "" || len(root.Manager.Instructions) != 3 || root.Manager.Instructions[0].Value.ID != "ops/one.md" || !reflect.DeepEqual(root.Manager.Instructions[0].Value.Bytes, root.Manager.Instructions[2].Value.Bytes) {
+					if !ok || !exists || !checkOK || len(checks) != 1 || root.Execute.Profile.Value.Identity == "" || len(root.Execute.Instructions) != 3 || root.Execute.Instructions[0].Value.ID != "ops/one.md" || !reflect.DeepEqual(root.Execute.Instructions[0].Value.Bytes, root.Execute.Instructions[2].Value.Bytes) {
 						t.Fatal("real static settings/profile selection or project repeats missing")
 					}
 				}

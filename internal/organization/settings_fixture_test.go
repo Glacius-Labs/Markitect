@@ -3,7 +3,6 @@ package organization_test
 import (
 	"crypto/sha256"
 	"testing"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -23,22 +22,6 @@ func settingPointer[T any](value T, field string) *organization.Setting[T] {
 	return &result
 }
 
-func directory(t *testing.T, name string) snapshot.DirectoryBoundary {
-	t.Helper()
-	if name == "." {
-		return snapshot.RootDirectory()
-	}
-	path, err := snapshot.NewPath(name)
-	if err != nil {
-		t.Fatal(err)
-	}
-	boundary, err := snapshot.DirectoryAt(path)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return boundary
-}
-
 func instruction(id string, bytes []byte) organization.InstructionFact {
 	return organization.InstructionFact{
 		ID: id, Bytes: bytes,
@@ -50,19 +33,12 @@ func settingsFixture(t *testing.T) organization.SettingsFacts {
 	t.Helper()
 	return organization.SettingsFacts{
 		Defaults: organization.SettingsDefaults{
-			Manager: organization.RoleDefaults{
-				Profile: setting("writer", "/defaults/profiles/manager"), Instructions: setting([]string{"style"}, "/defaults/instructions/manager"),
+			Execute: organization.RoleDefaults{
+				Profile: setting("writer", "/profiles/execute"), Instructions: setting([]string{"style"}, "/instructions/execute"),
 			},
-			Reviewer: organization.RoleDefaults{
-				Profile: setting("critic", "/defaults/profiles/reviewer"), Instructions: setting([]string{"review"}, "/defaults/instructions/reviewer"),
+			Verify: organization.RoleDefaults{
+				Profile: setting("critic", "/profiles/verify"), Instructions: setting([]string{"review"}, "/instructions/verify"),
 			},
-			StepTimeout: setting(5*time.Minute, "/defaults/stepTimeout"), RejectionLimit: setting(2, "/defaults/rejectionLimit"),
-			CreationRoots:        setting([]snapshot.DirectoryBoundary{directory(t, "real")}, "/defaults/creationRoots"),
-			BatchNoChangeReviews: setting(false, "/defaults/batchNoChangeReviews"),
-		},
-		Ceilings: organization.SettingsCeilings{
-			StepTimeout: setting(10*time.Minute, "/limits/maxStepTimeout"), RejectionLimit: setting(3, "/limits/maxRejectionLimit"),
-			CreationRoots: setting([]snapshot.DirectoryBoundary{directory(t, "real"), directory(t, "docs")}, "/limits/creationRoots"),
 		},
 		Profiles: []organization.ProfileFact{
 			{Name: "writer", Identity: "prepared-writer-v1", Source: settingSource("operator-profiles.yaml", "/agentProfiles/writer")},

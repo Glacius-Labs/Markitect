@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"maps"
 	"reflect"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -76,64 +75,6 @@ func (v settingsValidation) catalogs(facts SettingsFacts) (map[string]ProfileFac
 		instructions[instruction.ID] = instruction
 	}
 	return profiles, instructions, nil
-}
-
-func (v settingsValidation) ceilingFacts(ceilings SettingsCeilings) error {
-	if err := v.field(ceilings.StepTimeout.Source, ceilings.StepTimeout.Value); err != nil {
-		return err
-	}
-	if err := v.field(ceilings.RejectionLimit.Source, ceilings.RejectionLimit.Value); err != nil {
-		return err
-	}
-	if ceilings.StepTimeout.Value <= 0 || ceilings.RejectionLimit.Value <= 0 {
-		return fmt.Errorf("project step-timeout and rejection-limit ceilings must be positive")
-	}
-	return v.roots(ceilings.CreationRoots)
-}
-
-func (v settingsValidation) roots(roots Setting[[]snapshot.DirectoryBoundary]) error {
-	if err := v.field(roots.Source, append([]snapshot.DirectoryBoundary{}, roots.Value...)); err != nil {
-		return err
-	}
-	seen := make(map[snapshot.DirectoryBoundary]bool, len(roots.Value))
-	for _, root := range roots.Value {
-		if root.String() == "" {
-			return fmt.Errorf("zero creation directory boundary")
-		}
-		if seen[root] {
-			return fmt.Errorf("duplicate creation directory boundary %q", root.String())
-		}
-		seen[root] = true
-	}
-	return nil
-}
-
-func (v settingsValidation) selection(timeout Setting[time.Duration], rejectionLimit Setting[int], roots Setting[[]snapshot.DirectoryBoundary], ceilings SettingsCeilings) error {
-	if err := v.field(timeout.Source, timeout.Value); err != nil {
-		return err
-	}
-	if err := v.field(rejectionLimit.Source, rejectionLimit.Value); err != nil {
-		return err
-	}
-	if timeout.Value <= 0 || timeout.Value > ceilings.StepTimeout.Value || rejectionLimit.Value <= 0 || rejectionLimit.Value > ceilings.RejectionLimit.Value {
-		return fmt.Errorf("step timeout and rejection limit must be positive and within project ceilings")
-	}
-	if err := v.roots(roots); err != nil {
-		return err
-	}
-	for _, root := range roots.Value {
-		allowed := false
-		for _, ceiling := range ceilings.CreationRoots.Value {
-			if ceiling.ContainsDirectory(root) {
-				allowed = true
-				break
-			}
-		}
-		if !allowed {
-			return fmt.Errorf("creation directory %q lies outside project ceilings", root.String())
-		}
-	}
-	return nil
 }
 
 func (v settingsValidation) role(defaults RoleDefaults, override RoleOverride, profiles map[string]ProfileFact, instructions map[string]InstructionFact) (RoleSettings, error) {

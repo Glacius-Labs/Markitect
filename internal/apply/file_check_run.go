@@ -32,7 +32,7 @@ func (c *fileChecker) issue(status model.Status, code string, path snapshot.Path
 }
 
 func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs, execution executionDecoding) fileCheck {
-	r := fileCheck{status: parent.Status()}
+	r := fileCheck{status: parent.Status(), layout: execution.layout}
 	c := fileChecker{result: &r, raw: raw, inputs: make(map[snapshot.Path]realization.Classification), protections: make(map[string]bool)}
 	if compiled.Status != model.Passed {
 		if compiled.Status == model.Failed {
@@ -58,7 +58,7 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 		return cmp.Or(cmp.Compare(a.Path().String(), b.Path().String()), cmp.Compare(a.Class(), b.Class()))
 	})
 	if parent.Status() == model.Passed {
-		accounting := realization.AccountFiles(compiled, raw.Census, parent.registry, r.classifications)
+		accounting := realization.AccountFiles(compiled, raw.Census, parent.registry, r.classifications, execution.layout)
 		r.accounting = &accounting
 		if accounting.Status() == realization.AccountingIncomplete {
 			r.observe(model.NotCompleted)

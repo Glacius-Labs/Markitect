@@ -107,11 +107,15 @@ func (a Accounting) Artifacts(id model.Identity) []snapshot.Path { return slices
 // from the caller's fixed capture. Source provenance is not a physical path map.
 // The complete compiled Result must pass before Package/Definition absence is
 // authoritative. No package is inferred from Definitions or imported inventories.
-func AccountFiles(compiled model.Result, tree snapshot.Tree, registry Registry, classifications []Classification) Accounting {
-	return accountFiles(inventoryFromResult(compiled), tree, registry, classifications)
+//
+// A declared Layout additionally requires every registration to sit in the
+// registry shard of the owner the layout assigns to its path
+// (registry.outside_area). The zero Layout adds no ownership rule.
+func AccountFiles(compiled model.Result, tree snapshot.Tree, registry Registry, classifications []Classification, layout Layout) Accounting {
+	return accountFiles(inventoryFromResult(compiled), tree, registry, classifications, layout)
 }
 
-func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registry, classifications []Classification) Accounting {
+func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registry, classifications []Classification, layout Layout) Accounting {
 	result := Accounting{status: Accounted, tree: tree.Digest(), links: map[model.Identity][]snapshot.Path{}}
 	add := func(code string, path snapshot.Path, owner Owner, definition model.Identity, message string) {
 		result.findings = append(result.findings, Finding{code, path, owner, definition, message})
@@ -164,6 +168,12 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 					add("registry.dangling_basis", path, entry.owner, basis, "The Definition basis does not resolve in the supplied compiled model set.")
 					ok = false
 				}
+			}
+		}
+		if layout.declared {
+			if expected := layout.OwnerOf(path); expected != entry.owner {
+				add("registry.outside_area", path, entry.owner, model.Identity{}, fmt.Sprintf("The path lies in the area of %s, not in the area of the registering %s; it belongs in that owner's registry shard.", expected.label(), entry.owner.label()))
+				ok = false
 			}
 		}
 		valid[path] = ok

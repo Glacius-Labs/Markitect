@@ -12,78 +12,26 @@ artifacts:
     form: code
     realizes: [product/realization/artifact-accounting]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/assessment.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/assessment_test.go"
-    form: test
-    realizes: [product/realization/artifact-accounting]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/realization/candidate.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/candidate_record.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Records immutable bounded candidates and historical local census observations.
-  - path: "internal/realization/candidate_record_test.go"
-    form: test
-    realizes: [product/realization/artifact-accounting]
-    why: Tests historical roundtrips and distinguishing record refusal boundaries.
-  - path: "internal/realization/candidate_record_wire.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Encodes closed canonical candidate facts and reconstructs them through shared invariants.
-  - path: "internal/realization/candidate_test.go"
-    form: test
-    realizes: [product/realization/artifact-accounting]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/realization/capture.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/census.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/census_test.go"
-    form: test
-    realizes: [product/realization/artifact-accounting]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/realization/replay.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Composes accepted deliveries onto the run's aggregate by replaying owned deltas (core rule D2).
-  - path: "internal/realization/replay_test.go"
-    form: test
-    realizes: [product/realization/artifact-accounting]
-    why: Checks replay across versions and its refusals for changed content, records, ownership and inventory.
   - path: "internal/realization/doc.go"
     form: code
     realizes: [product/realization/artifact-accounting]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/layout.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Fixes the persistent ownership layout, validates it and answers who owns a path.
+  - path: "internal/realization/layout_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Checks the deepest-owner rule, layout refusals including letter-case ambiguity and the registration-in-owner-shard rule.
   - path: "internal/realization/model.go"
     form: code
     realizes: [product/realization/artifact-accounting]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/path_claims.go"
+  - path: "internal/realization/protection.go"
     form: code
     realizes: [product/realization/artifact-accounting]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/path_claims_test.go"
-    form: test
-    realizes: [product/realization/artifact-accounting]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/realization/path_facts.go"
-    form: code
-    realizes: [product/realization/artifact-accounting]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/realization/path_facts_test.go"
-    form: test
-    realizes: [product/realization/artifact-accounting]
-    why: Tests the stated responsibility and retains negative boundaries.
   - path: "internal/realization/registry.go"
     form: code
     realizes: [product/realization/artifact-accounting]

@@ -11,7 +11,7 @@ import (
 )
 
 func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T) {
-	for _, tc := range []string{"missing product", "invalid product", "ceiling", "explicit declarations"} {
+	for _, tc := range []string{"missing product", "invalid product", "explicit declarations"} {
 		t.Run(tc, func(t *testing.T) {
 			selection, raw := hostSettingsInputs(t)
 			input := apply.ProductStrategyDefaults()
@@ -22,10 +22,8 @@ func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T)
 				want = model.NotCompleted
 			case "invalid product":
 				input.Bytes = []byte("invalid: true")
-			case "ceiling":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(defaultsAbsentExecution(t), "maxRejectionLimit: 3", "maxRejectionLimit: 2", 1))
 			case "explicit declarations":
-				content := strings.Replace(defaultsAbsentExecution(t), "  profiles:", "  rejectionLimit: 2\n  batchNoChangeReviews: false\n  instructions: {manager: [], reviewer: []}\n  profiles:", 1)
+				content := strings.Replace(defaultsAbsentExecution(t), "profiles:\n  execute", "instructions: {execute: [], verify: []}\nprofiles:\n  execute", 1)
 				rewriteFileCheckSource(t, &raw, &raw.Execution[0], content)
 				want = model.Passed
 			}
@@ -40,8 +38,8 @@ func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T)
 			if available {
 				root, _ := settings.Manager(".")
 				original, _ := m.DecodeExecution().Document()
-				if root.RejectionLimit != *original.Defaults.RejectionLimit || root.BatchNoChangeReviews != *original.Defaults.BatchNoChangeReviews || len(root.Manager.InstructionSources) != 1 || root.Manager.InstructionSources[0] != original.Defaults.Manager.Instructions.Source {
-					t.Fatal("explicit false/empty/round selection lost authored source")
+				if len(root.Execute.InstructionSources) != 1 || root.Execute.InstructionSources[0] != original.Defaults.Execute.Instructions.Source {
+					t.Fatal("explicit empty instruction selection lost authored source")
 				}
 			}
 		})

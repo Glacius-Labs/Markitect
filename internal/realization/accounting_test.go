@@ -76,7 +76,7 @@ func TestAccountsLibraryAndGenericFilesWithoutInferringOwnership(t *testing.T) {
 		classified(t, "model/library.yaml", realization.CanonicalInput),
 		classified(t, ".markitect/registry/registry.yaml", realization.MarkitectInput),
 	}
-	report := realization.AccountFiles(compiled, files, registrations, classes)
+	report := realization.AccountFiles(compiled, files, registrations, classes, realization.Layout{})
 	if report.Status() != realization.Accounted || len(report.Findings()) != 0 || report.TreeID() != files.Digest() {
 		t.Fatalf("accounting: %+v", report.Findings())
 	}
@@ -113,20 +113,20 @@ func TestAccountsLibraryAndGenericFilesWithoutInferringOwnership(t *testing.T) {
 
 func TestEmptyLocalPackagesAndExplicitRootAreOwnersButImportsAreNot(t *testing.T) {
 	for _, o := range []realization.Owner{owner(t, "empty"), owner(t, "empty/leaf"), realization.RootOwner()} {
-		report := realization.AccountFiles(compiledFacts(), fileTree(t, "shared/config.txt"), registry(t, registration(t, o, artifact(t, "shared/config.txt", callable, borrow))), nil)
+		report := realization.AccountFiles(compiledFacts(), fileTree(t, "shared/config.txt"), registry(t, registration(t, o, artifact(t, "shared/config.txt", callable, borrow))), nil, realization.Layout{})
 		if report.Status() != realization.Accounted {
 			t.Fatalf("supplied owner rejected: %+v", report.Findings())
 		}
 	}
 	for _, name := range []string{"foreign", "foreign/empty", "missing"} {
-		report := realization.AccountFiles(compiledFacts(), fileTree(t, "a"), registry(t, registration(t, owner(t, name), artifact(t, "a", borrow))), nil)
+		report := realization.AccountFiles(compiledFacts(), fileTree(t, "a"), registry(t, registration(t, owner(t, name), artifact(t, "a", borrow))), nil, realization.Layout{})
 		if report.Status() != realization.AccountingInvalid || !reflect.DeepEqual(findingCodes(report), []string{"registry.unknown_owner"}) || len(report.Artifacts(borrow)) != 0 {
 			t.Fatalf("owner %q: %+v", name, report.Findings())
 		}
 	}
 	// An imported Definition can be cited; it does not make its Package an owner.
 	id := model.Identity{Package: "foreign", ID: "Vocabulary"}
-	report := realization.AccountFiles(compiledFacts(), fileTree(t, "a"), registry(t, registration(t, owner(t, "library"), artifact(t, "a", id))), nil)
+	report := realization.AccountFiles(compiledFacts(), fileTree(t, "a"), registry(t, registration(t, owner(t, "library"), artifact(t, "a", id))), nil, realization.Layout{})
 	if report.Status() != realization.Accounted || len(report.Artifacts(id)) != 1 {
 		t.Fatal(report.Findings())
 	}
@@ -147,10 +147,10 @@ func TestMissingDanglingConflictingAndUnexplainedFilesBlockAccounting(t *testing
 		classified(t, "duplicate", realization.IgnoredFile),
 	}
 	files := fileTree(t, "present.go", "protected.yaml", "ignored.go", "duplicate", "unexplained.txt")
-	first := realization.AccountFiles(compiledFacts(), files, registry(t, registrations...), classes)
+	first := realization.AccountFiles(compiledFacts(), files, registry(t, registrations...), classes, realization.Layout{})
 	slices.Reverse(registrations)
 	slices.Reverse(classes)
-	second := realization.AccountFiles(compiledFacts(), files, registry(t, registrations...), classes)
+	second := realization.AccountFiles(compiledFacts(), files, registry(t, registrations...), classes, realization.Layout{})
 	want := []string{"classification.duplicate", "classification.missing_file", "file.conflicting_classification", "file.conflicting_classification", "file.unexplained", "registry.dangling_basis", "registry.missing_file"}
 	if first.Status() != realization.AccountingInvalid || !reflect.DeepEqual(findingCodes(first), want) || !reflect.DeepEqual(first.Findings(), second.Findings()) {
 		t.Fatalf("findings: %+v / %+v", first.Findings(), second.Findings())
@@ -173,7 +173,7 @@ func TestIncompleteModelDoesNotMeanAuthoritativelyEmptyInventory(t *testing.T) {
 		compiled.Models[0].Definitions = nil
 		files := fileTree(t, "a")
 		reg := registry(t, registration(t, owner(t, "lending"), artifact(t, "a", borrow)))
-		report := realization.AccountFiles(compiled, files, reg, nil)
+		report := realization.AccountFiles(compiled, files, reg, nil, realization.Layout{})
 		wantStatus := realization.AccountingIncomplete
 		if status == model.Failed {
 			wantStatus = realization.AccountingInvalid
@@ -182,7 +182,7 @@ func TestIncompleteModelDoesNotMeanAuthoritativelyEmptyInventory(t *testing.T) {
 			t.Fatalf("model %q: %+v", status, report.Findings())
 		}
 		// Known independent file errors survive unavailable model resolution.
-		report = realization.AccountFiles(compiled, snapshot.Tree{}, reg, nil)
+		report = realization.AccountFiles(compiled, snapshot.Tree{}, reg, nil, realization.Layout{})
 		if report.Status() != realization.AccountingInvalid || !reflect.DeepEqual(findingCodes(report), []string{"model.unavailable", "registry.missing_file"}) {
 			t.Fatal(report.Findings())
 		}
@@ -190,7 +190,7 @@ func TestIncompleteModelDoesNotMeanAuthoritativelyEmptyInventory(t *testing.T) {
 	compiled := compiledFacts()
 	compiled.Models[0].Status = model.NotCompleted
 	compiled.Models[0].Packages = nil
-	report := realization.AccountFiles(compiled, fileTree(t, "a"), registry(t, registration(t, owner(t, "lending"), artifact(t, "a", borrow))), nil)
+	report := realization.AccountFiles(compiled, fileTree(t, "a"), registry(t, registration(t, owner(t, "lending"), artifact(t, "a", borrow))), nil, realization.Layout{})
 	if report.Status() == realization.Accounted || slices.Contains(findingCodes(report), "registry.unknown_owner") {
 		t.Fatal("unavailable own model was interpreted as empty")
 	}
@@ -198,7 +198,7 @@ func TestIncompleteModelDoesNotMeanAuthoritativelyEmptyInventory(t *testing.T) {
 
 func TestIgnoringFilesCannotSupplyDefinitionRealization(t *testing.T) {
 	compiled := compiledFacts()
-	report := realization.AccountFiles(compiled, fileTree(t, "ignored.go", ".markitect/state/control"), realization.Registry{}, []realization.Classification{classified(t, "ignored.go", realization.IgnoredFile)})
+	report := realization.AccountFiles(compiled, fileTree(t, "ignored.go", ".markitect/state/control"), realization.Registry{}, []realization.Classification{classified(t, "ignored.go", realization.IgnoredFile)}, realization.Layout{})
 	// All files have structural accounting; no Definition realization is claimed.
 	if report.Status() != realization.Accounted || len(report.Artifacts(borrow)) != 0 || len(report.Artifacts(callable)) != 0 {
 		t.Fatal("ignore fabricated realization")
@@ -242,11 +242,11 @@ func TestContradictoryPublicModelFactsCannotPass(t *testing.T) {
 	} {
 		compiled := compiledFacts()
 		change(&compiled)
-		if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil); report.Status() == realization.Accounted {
+		if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil, realization.Layout{}); report.Status() == realization.Accounted {
 			t.Fatal("contradictory facts claimed accounting success")
 		}
 	}
-	if report := realization.AccountFiles(compiledFacts(), snapshot.Tree{}, realization.Registry{}, []realization.Classification{{}}); report.Status() != realization.AccountingInvalid {
+	if report := realization.AccountFiles(compiledFacts(), snapshot.Tree{}, realization.Registry{}, []realization.Classification{{}}, realization.Layout{}); report.Status() != realization.AccountingInvalid {
 		t.Fatal("zero classification accepted")
 	}
 }
@@ -260,25 +260,25 @@ func TestGenericAccountingAndAuthoritativeEmptyInventory(t *testing.T) {
 	}}}
 	reg := registry(t, registration(t, owner(t, "engine"), artifact(t, "source/Endpoint.go", id)))
 	files := fileTree(t, "source/Endpoint.go")
-	first := realization.AccountFiles(compiled, files, reg, nil)
+	first := realization.AccountFiles(compiled, files, reg, nil, realization.Layout{})
 	slices.Reverse(compiled.Models[0].Packages)
-	second := realization.AccountFiles(compiled, files, reg, nil)
+	second := realization.AccountFiles(compiled, files, reg, nil, realization.Layout{})
 	if first.Status() != realization.Accounted || !reflect.DeepEqual(first.Files(), second.Files()) || len(first.Artifacts(id)) != 1 {
 		t.Fatal("generic project accounting depends on library names or inventory order")
 	}
 	compiled.Models[0].Packages = nil
 	compiled.Models[0].Definitions = nil
-	if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil); report.Status() != realization.Accounted {
+	if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil, realization.Layout{}); report.Status() != realization.Accounted {
 		t.Fatal("a Passed empty inventory was not authoritative")
 	}
 	compiled.Models[0].Status = model.NotCompleted
-	if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil); report.Status() != realization.AccountingIncomplete {
+	if report := realization.AccountFiles(compiled, snapshot.Tree{}, realization.Registry{}, nil, realization.Layout{}); report.Status() != realization.AccountingIncomplete {
 		t.Fatal("an unavailable inventory was treated as an authoritative empty set")
 	}
 }
 
 func TestOperationalStateExclusionHasAnExactBoundary(t *testing.T) {
-	report := realization.AccountFiles(compiledFacts(), fileTree(t, ".markitect/statex/control"), realization.Registry{}, nil)
+	report := realization.AccountFiles(compiledFacts(), fileTree(t, ".markitect/statex/control"), realization.Registry{}, nil, realization.Layout{})
 	if report.Status() != realization.AccountingInvalid || !reflect.DeepEqual(findingCodes(report), []string{"file.unexplained"}) {
 		t.Fatal("a neighboring ordinary path was silently excluded as operational state")
 	}

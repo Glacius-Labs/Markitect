@@ -52,7 +52,7 @@ func TestPreparationSettingsDistinctAcquisitionPreservesHostAndProjectPolicy(t *
 	}
 	settings, _ := prepared.Settings().Settings()
 	root, _ := settings.Manager(".")
-	if len(root.Manager.Instructions) != 3 || !reflect.DeepEqual(root.Manager.Instructions[0].Value.Bytes, projectFile.File.Bytes()) {
+	if len(root.Execute.Instructions) != 3 || !reflect.DeepEqual(root.Execute.Instructions[0].Value.Bytes, projectFile.File.Bytes()) {
 		t.Fatal("Host bytes replaced project instruction facts")
 	}
 }
@@ -116,11 +116,11 @@ func TestPreparationSettingsKeepsFinalParentsAndCopiesAllAttemptViews(t *testing
 	inputFiles[0] = apply.SourceFile{}
 	settings, _ := prepared.Settings().Settings()
 	root, _ := settings.Manager(".")
-	root.Manager.Instructions[0].Value.Bytes[0] ^= 1
+	root.Execute.Instructions[0].Value.Bytes[0] ^= 1
 	final, _ := result.Prepared()
 	finalSettings, _ := final.Settings().Settings()
 	finalRoot, _ := finalSettings.Manager(".")
-	if result.Request().Selection.Dependencies[0].Boundary == "" || result.Attempts()[0].Structural().Model().Inputs().Guard == "" || !reflect.DeepEqual(final.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || result.Attempts()[0].Settings().RequiredInstructions()[0] != host || final.Settings().ProfileObservations()[0].Observation().Files[0].Location.Boundary == "mutated" || final.Settings().ProfileObservations()[0].Observation().Inventories[0].Files[0].Size == observation.Inventories[0].Files[0].Size || final.Settings().ProfileObservations()[0].Observation().Instructions[0] != host || final.Settings().ProfileObservations()[0].Input().Inline().Content[0].Value == "mutated" || reflect.DeepEqual(root.Manager.Instructions[0].Value.Bytes, finalRoot.Manager.Instructions[0].Value.Bytes) {
+	if result.Request().Selection.Dependencies[0].Boundary == "" || result.Attempts()[0].Structural().Model().Inputs().Guard == "" || !reflect.DeepEqual(final.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || result.Attempts()[0].Settings().RequiredInstructions()[0] != host || final.Settings().ProfileObservations()[0].Observation().Files[0].Location.Boundary == "mutated" || final.Settings().ProfileObservations()[0].Observation().Inventories[0].Files[0].Size == observation.Inventories[0].Files[0].Size || final.Settings().ProfileObservations()[0].Observation().Instructions[0] != host || final.Settings().ProfileObservations()[0].Input().Inline().Content[0].Value == "mutated" || reflect.DeepEqual(root.Execute.Instructions[0].Value.Bytes, finalRoot.Execute.Instructions[0].Value.Bytes) {
 		t.Fatal("caller mutation escaped a copied settings result/attempt view")
 	}
 }
@@ -174,14 +174,14 @@ func TestPreparationSettingsPreviewCopiesAndSourceRefusalRemainVisible(t *testin
 		product.Bytes[0] ^= 1
 		settings, _ := prepared.Settings().Settings()
 		root, _ := settings.Manager(".")
-		root.Manager.Instructions[0].Value.Bytes[0] ^= 1
+		root.Execute.Instructions[0].Value.Bytes[0] ^= 1
 		profiles := prepared.Settings().ProfileObservations()
 		observation := profiles[0].Observation()
 		observation.Instructions[0] = apply.SourceLocation{}
 		final, _ := result.Prepared()
 		finalSettings, _ := final.Settings().Settings()
 		finalRoot, _ := finalSettings.Manager(".")
-		if result.Request().Selection.Dependencies[0].Boundary == "" || result.Attempts()[0].Structural().Model().Inputs().Revision != fixtureHead || !reflect.DeepEqual(final.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || final.Settings().ProfileObservations()[0].Observation().Instructions[0] != host || reflect.DeepEqual(root.Manager.Instructions[0].Value.Bytes, finalRoot.Manager.Instructions[0].Value.Bytes) {
+		if result.Request().Selection.Dependencies[0].Boundary == "" || result.Attempts()[0].Structural().Model().Inputs().Revision != fixtureHead || !reflect.DeepEqual(final.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || final.Settings().ProfileObservations()[0].Observation().Instructions[0] != host || reflect.DeepEqual(root.Execute.Instructions[0].Value.Bytes, finalRoot.Execute.Instructions[0].Value.Bytes) {
 			t.Fatal("preview copy/binding escaped")
 		}
 	}

@@ -256,19 +256,19 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 
 func documentationInstructionRefs(e apply.AuthoredExecution) []string {
 	var result []string
-	if e.Defaults.Manager.Instructions != nil {
-		result = append(result, e.Defaults.Manager.Instructions.Value...)
+	if e.Defaults.Execute.Instructions != nil {
+		result = append(result, e.Defaults.Execute.Instructions.Value...)
 	}
-	if e.Defaults.Reviewer.Instructions != nil {
-		result = append(result, e.Defaults.Reviewer.Instructions.Value...)
+	if e.Defaults.Verify.Instructions != nil {
+		result = append(result, e.Defaults.Verify.Instructions.Value...)
 	}
 	if e.Packages != nil {
 		for _, override := range e.Packages.Value {
-			if override.Manager.Instructions != nil {
-				result = append(result, override.Manager.Instructions.Value...)
+			if override.Execute.Instructions != nil {
+				result = append(result, override.Execute.Instructions.Value...)
 			}
-			if override.Reviewer.Instructions != nil {
-				result = append(result, override.Reviewer.Instructions.Value...)
+			if override.Verify.Instructions != nil {
+				result = append(result, override.Verify.Instructions.Value...)
 			}
 		}
 	}

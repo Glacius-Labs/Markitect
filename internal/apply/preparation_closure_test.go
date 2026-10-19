@@ -15,8 +15,8 @@ import (
 
 func preparationInstructions(t *testing.T, raw *apply.RawInputs) {
 	t.Helper()
-	content := strings.Replace(documentedExecution(t), "  profiles:", "  instructions: {manager: [ops/one.md, ops/two.md, ops/one.md], reviewer: [ops/three.md]}\n  profiles:", 1)
-	content = strings.Replace(content, "    stepTimeout: 8m", "    instructions: {manager: [ops/four.md], reviewer: [ops/five.md, ops/one.md]}\n    stepTimeout: 8m", 1)
+	content := strings.Replace(documentedExecution(t), "profiles:\n  execute", "instructions: {execute: [ops/one.md, ops/two.md, ops/one.md], verify: [ops/three.md]}\nprofiles:\n  execute", 1)
+	content = strings.Replace(content, "    profiles: {verify: library-agent}", "    instructions: {execute: [ops/four.md], verify: [ops/five.md, ops/one.md]}\n    profiles: {verify: library-agent}", 1)
 	rewriteFileCheckSource(t, raw, &raw.Execution[0], content)
 	for _, name := range []string{"ops/one.md", "ops/two.md", "ops/three.md", "ops/four.md", "ops/five.md"} {
 		censusFile(t, raw, name, snapshot.Executable, []byte("Actual project instruction.\r\n"))
@@ -62,7 +62,7 @@ func TestPreparationDerivesEveryFileOnceWithoutResolvingExplicitBoundaries(t *te
 		}
 	}
 	authored, _ := prepared.Execution().Document()
-	if !reflect.DeepEqual(authored.Defaults.Manager.Instructions.Value, []string{"ops/one.md", "ops/two.md", "ops/one.md"}) || !reflect.DeepEqual(authored.Packages.Value[0].Reviewer.Instructions.Value, []string{"ops/five.md", "ops/one.md"}) {
+	if !reflect.DeepEqual(authored.Defaults.Execute.Instructions.Value, []string{"ops/one.md", "ops/two.md", "ops/one.md"}) || !reflect.DeepEqual(authored.Packages.Value[0].Verify.Instructions.Value, []string{"ops/five.md", "ops/one.md"}) {
 		t.Fatal("authored order/repeats were repaired")
 	}
 	if !reflect.DeepEqual(prepared.Model().Inputs().Raw.Execution[0].File.Bytes(), actual.Execution[0].File.Bytes()) || prepared.Model().Inputs().Raw.Instructions[1].File.Mode() != snapshot.Executable {
@@ -104,7 +104,7 @@ func TestPreparationStopsWhenSecondExecutionChangesClosure(t *testing.T) {
 				t.Fatal("moving closure exposed complete preparation")
 			}
 			first, second := result.Attempts()[0], result.Attempts()[1]
-			if first.Execution().Partial().Defaults.Manager.Instructions == nil || reflect.DeepEqual(first.Model().Inputs().Raw.Execution[0].File.Bytes(), second.Model().Inputs().Raw.Execution[0].File.Bytes()) {
+			if first.Execution().Partial().Defaults.Execute.Instructions == nil || reflect.DeepEqual(first.Model().Inputs().Raw.Execution[0].File.Bytes(), second.Model().Inputs().Raw.Execution[0].File.Bytes()) {
 				t.Fatal("attempts lost distinct original observations")
 			}
 		})
@@ -154,11 +154,11 @@ func TestPreparationRetainsKnownFailureAndActualAccounting(t *testing.T) {
 			selection, raw := fileCheckInputs(t)
 			switch invalid {
 			case "execution":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "recursive-apply-v1", "unknown", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "shared-workspace-v1", "unknown", 1))
 			case "ignore":
 				fileCheckSource(t, &selection, &raw, "ignore", ".markitect/ignore.yaml", snapshot.Regular, "unknown: true\n", true)
 			case "instruction":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "  profiles:", "  instructions: {manager: [ops/absent.md]}\n  profiles:", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "profiles:\n  execute", "instructions: {execute: [ops/absent.md]}\nprofiles:\n  execute", 1))
 			case "unexplained":
 				censusFile(t, &raw, "unexplained.txt", snapshot.Regular, []byte("actual unowned file"))
 			case "registry":
@@ -224,7 +224,7 @@ func TestPreparationClosesKnownSourcesBesideInvalidExecutionOrRegistry(t *testin
 				preparationInstructions(t, &actual)
 				fileCheckSource(t, &selection, &actual, "ignore", ".markitect/ignore.yaml", snapshot.Regular, emptyFilePolicy, false)
 				if invalid == "execution" {
-					rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(string(actual.Execution[0].File.Bytes()), "recursive-apply-v1", "unknown", 1))
+					rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(string(actual.Execution[0].File.Bytes()), "shared-workspace-v1", "unknown", 1))
 				} else {
 					rewriteFileCheckSource(t, &actual, &actual.Registry[0], "unknown: true\n")
 				}
