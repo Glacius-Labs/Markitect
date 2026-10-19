@@ -46,10 +46,10 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/snapshot", "internal/model", false},
 		{"internal/organization", "internal/model", true},
 		{"internal/realization", "internal/snapshot", true},
-		{"internal/run", "internal/model", true},
+		{"internal/run", "internal/model", false},
 		{"internal/run", "internal/snapshot", true},
-		{"internal/run", "internal/organization", true},
-		{"internal/run", "internal/realization", true},
+		{"internal/run", "internal/organization", false},
+		{"internal/run", "internal/realization", false},
 		{"internal/run", "internal/apply", false},
 		{"internal/run", "internal/adapters/gitrepo", false},
 		{"internal/run", "internal/adapters/checks", false},
@@ -106,7 +106,6 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", false},
 		{"internal/adapters/codexappserver", "internal/tooling/source", false},
 		{"internal/bootstrap", "internal/adapters/container", true},
-		{"internal/bootstrap", "internal/adapters/journal", true},
 		{"internal/bootstrap", "internal/adapters/claudecode", true},
 		{"internal/bootstrap", "internal/model", true},
 		{"internal/bootstrap", "internal/snapshot", true},
@@ -232,49 +231,6 @@ func TestClaudeProfileImportsAcrossPlatforms(t *testing.T) {
 	}
 }
 
-func TestJournalFixtureEdgesStayTestOnly(t *testing.T) {
-	for _, tc := range []struct {
-		to               string
-		production, test bool
-	}{
-		{"internal/apply", true, true}, {"internal/run", true, true},
-		{"internal/model", false, true}, {"internal/snapshot", false, true}, {"internal/testkit", false, true},
-		{"internal/adapters/gitrepo", false, false}, {"internal/adapters/container", false, false},
-		{"internal/organization", false, false}, {"internal/adapters/unknown", false, false},
-	} {
-		for _, test := range []bool{false, true} {
-			allowed := tc.production
-			if test {
-				allowed = tc.test
-			}
-			if got := Check([]Edge{{From: "internal/adapters/journal", To: tc.to, Test: test}}); (len(got) == 0) != allowed {
-				t.Errorf("journal -> %s test=%v: %v", tc.to, test, got)
-			}
-		}
-	}
-	for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
-		t.Run(file, func(t *testing.T) {
-			root := t.TempDir()
-			writeFixture(t, root, map[string]string{
-				"README.md": "# Owner\n", CodeMapSource: "packages:\n" + mapEntry("internal/model", "apply-model") + mapEntry("internal/adapters/journal", "apply-adapter"),
-				"internal/model/model.go":           "package model\n",
-				"internal/adapters/journal/" + file: "package journal\nimport _ \"" + ModulePath + "internal/model\"\n",
-			})
-			got, err := CheckRepository(root)
-			if err != nil {
-				t.Fatal(err)
-			}
-			want := 0
-			if !strings.HasSuffix(file, "_test.go") {
-				want = 1
-			}
-			if len(got) != want {
-				t.Fatal("platform classification bypassed test-only boundary", got)
-			}
-		})
-	}
-}
-
 func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 	// Bootstrap composes actual services using model limits/status and snapshot
 	// check values; unrelated responsibilities keep their separate boundaries.
@@ -283,7 +239,7 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 		production, test bool
 	}{
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
-		{"internal/adapters/journal", true, true}, {"internal/model", true, true},
+		{"internal/model", true, true},
 		{"internal/adapters/claudecode", true, true},
 		{"internal/snapshot", true, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
 		{"internal/organization", false, false}, {"internal/realization", false, false},
@@ -300,7 +256,6 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 		}
 	}
 	for _, producer := range []struct{ path, layer, pkg string }{
-		{"internal/adapters/journal", "apply-adapter", "journal"},
 		{"internal/adapters/container", "apply-adapter", "container"},
 		{"internal/adapters/claudecode", "apply-adapter", "claudecode"},
 		{"internal/model", "apply-model", "model"},

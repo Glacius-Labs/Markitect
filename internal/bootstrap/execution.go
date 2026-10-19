@@ -44,8 +44,11 @@ type applyPorts struct {
 	Owner      runport.Owner
 	Evidence   *fileEvidence
 	Publisher  apply.Publisher
+	Control    apply.ControlCheck
 	Harvest    harvestLimits
-	Clock      func() time.Time
+	// Deadline is the operator's absolute wall-clock limit; zero means none.
+	Deadline time.Time
+	Clock    func() time.Time
 }
 
 // Execute prepares the committed repository, composes the ports and runs the
@@ -74,7 +77,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		report.Status = prepared.Status()
 		return report, err
 	}
-	ports, err := s.ports(cfg, request.RunConfig, prepared)
+	ports, err := s.ports(cfg, request.RunConfig, prepared, lock)
 	if err != nil {
 		return report, err
 	}
@@ -91,20 +94,33 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		}
 		err = errors.Join(err, ports.Evidence.Close())
 	}()
-	outcome, receipt, err := s.reconcileAndPublish(ctx, prepared, cfg, ports)
-	if outcome.Status != "" {
-		report.Run = cli.NewRunReport(ports.RunID, outcome)
+	result, err := s.reconcileAndPublish(ctx, request.Selection, prepared, cfg, ports)
+	if result.Outcome.Status != "" {
+		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 	}
-	report.Publication = receipt
-	report.Status = cli.ApplyStatus(outcome, receipt, err)
+	report.Publication = result.Receipt
+	report.RetainedWork = result.RetainedWork
+	report.Status = cli.ApplyStatus(result.Outcome, result.Receipt, err)
 	return report, err
 }
 
-// reconcileAndPublish is the seam of the Apply use case: it runs the Manager
-// team over the captured repository and publishes a verified candidate. Its
-// wiring belongs to the next increment.
-func (s *executionService) reconcileAndPublish(context.Context, apply.CapturedSettingsResult, runConfig, applyPorts) (runport.Outcome, *apply.PublicationReceipt, error) {
-	return runport.Outcome{}, nil, errors.New("the Apply use case is not wired yet")
+// reconcileAndPublish runs the Apply use case over the captured preparation with
+// the composed ports.
+func (s *executionService) reconcileAndPublish(ctx context.Context, selection apply.InputSelection, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ReconcileResult, error) {
+	prepared, ok := captured.Prepared()
+	if !ok {
+		return apply.ReconcileResult{}, errors.New("complete captured settings are required")
+	}
+	return apply.Reconcile(ctx, apply.ReconcileRequest{
+		RunID: ports.RunID, Prepared: prepared, Selection: selection,
+		OwnerRequest: cfg.OwnerRequest, OwnerDecisions: cfg.OwnerDecisions, Deadline: ports.Deadline,
+		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
+		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
+			return executionCheck(selected, cfg)
+		},
+		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
+		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock,
+	})
 }
 
 // answer records the owner's answer for the Apply running on the configured
@@ -154,7 +170,7 @@ func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild
 // ports composes the concrete adapters from one complete capture. Every
 // selected profile is validated against the explicit run engine before any
 // adapter is constructed.
-func (s *executionService) ports(cfg runConfig, configPath string, prepared apply.CapturedSettingsResult) (applyPorts, error) {
+func (s *executionService) ports(cfg runConfig, configPath string, prepared apply.CapturedSettingsResult, lock *stateLock) (applyPorts, error) {
 	a, ok := prepared.Prepared()
 	if !ok {
 		return applyPorts{}, errors.New("complete captured settings are required")
@@ -199,7 +215,7 @@ func (s *executionService) ports(cfg runConfig, configPath string, prepared appl
 		return applyPorts{}, err
 	}
 	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Owner: owner, Evidence: evidence,
-		Publisher: s.repository, Harvest: cfg.Harvest, Clock: time.Now}, nil
+		Publisher: s.repository, Control: lock, Harvest: cfg.Harvest, Deadline: cfg.deadline(), Clock: time.Now}, nil
 }
 
 // newAgents builds one adapter per provider that a selected profile uses and
@@ -222,9 +238,17 @@ func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg r
 		}
 		switch input.Section() {
 		case "codexAppServer":
-			codexProfiles[input.Name()], err = codexappserver.ProfileFromPrepared(profile)
+			var p codexappserver.Profile
+			if p, err = codexappserver.ProfileFromPrepared(profile); err == nil {
+				err = credentialMapped(cfg, p.CredentialRef, "codex-app-server")
+			}
+			codexProfiles[input.Name()] = p
 		case "claudeCode":
-			claudeProfiles[input.Name()], err = claudecode.ProfileFromPrepared(profile)
+			var p claudecode.Profile
+			if p, err = claudecode.ProfileFromPrepared(profile); err == nil {
+				err = credentialMapped(cfg, p.CredentialRef, "claude-code")
+			}
+			claudeProfiles[input.Name()] = p
 		default:
 			err = errors.New("selected Agent profile has no supported execution adapter")
 		}
@@ -252,6 +276,15 @@ func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg r
 		}
 	}
 	return newAgentsRouter(routes), nil
+}
+
+// credentialMapped requires the explicit run configuration to map the profile's
+// exact credential reference to a credential of the profile's provider.
+func credentialMapped(cfg runConfig, ref, provider string) error {
+	if source, found := cfg.Credentials[ref]; !found || source.Provider != provider {
+		return errors.New("prepared Agent has no exact explicit credential mapping")
+	}
+	return nil
 }
 
 func executionCheck(selected apply.CheckSelection, cfg runConfig) (runport.CheckRequest, error) {

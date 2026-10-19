@@ -6,9 +6,11 @@ The repository uses one Go module. Packages are organized by concrete responsibi
 
 Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Apply owns preparation and consumer ports; adapters implement concrete acquisition and metadata protocols. Bootstrap constructs actual services. Product and maintenance commands remain thin entrypoints with separate composition.
 
-The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and owns the frame transport of `internal/agentd/frame` with agentd. The concrete Codex and Claude session adapters may consume the frame DTOs exposed by that container API while implementing `run.Agents`. Each provider adapter keeps its own protocol handling and cannot import the other provider or agentd execution. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
+The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and owns the frame transport of `internal/agentd/frame` with agentd. The concrete Codex and Claude turn adapters may consume the frame DTOs exposed by that container API while implementing `run.Agents`. Each provider adapter keeps its own protocol handling and cannot import the other provider or agentd execution. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
 
 Run owns the reconciliation engine and the consumer ports `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence` ([contract](../design/canonical-model/manager-apply-runtime.md)). It keeps its state in memory, records only through the `Evidence` port, and has no SQL, repository acquisition, provider protocol or public execution path. Apply prepares its configuration from one complete capture and publishes through its own `Publisher` port. Bootstrap supplies the concrete adapters and the file-based owner channel and evidence under the operator's state directory.
+
+Bootstrap's Host-side ports of one Apply are a file evidence directory, a file owner channel, an Agents router over the two turn adapters and an exclusive lock per state directory.
 
 The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../../internal/adapters/claudecode/README.md) metadata preparers use narrow image readers backed by the container adapter. Bootstrap injects their factories; only a selected source-bound profile supplies the engine executable and immutable image ID. Preparation consumes Apply's profile ports and pure model, organization and snapshot values. It inspects the image and copies its build metadata from a created, never started container. It starts no Session or provider and observes no schema inventory.
 
@@ -18,17 +20,17 @@ The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../..
 | --- | --- |
 | Model, snapshot | No other Markitect responsibility |
 | Organization, realization | Model, snapshot |
-| Run | Model, snapshot, organization, realization |
+| Run | Snapshot |
 | Apply | Model, snapshot, organization, realization, run |
 | Model view | Apply, model, snapshot |
 | Repository, workspace and publication adapter | Apply, Run, required pure values and container API |
-| Codex metadata and session adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
-| Claude metadata and session adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
+| Codex metadata and turn adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
+| Claude metadata and turn adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
 | Check metadata and execution adapter | Apply, model, organization, snapshot, Run and container API |
 | Container adapter | Agent frame protocol |
 | Session helper (agentd) | Agent frame protocol |
 | Agent frame protocol | No other Markitect responsibility |
-| CLI adapter | Apply, pure report values, model view, build metadata and licenses |
+| CLI adapter | Apply, Run report values, pure report values, model view, build metadata and licenses |
 | Document adapter | Model view and reviewed guarded-write API |
 | Product bootstrap | Its actual services and adapters |
 | Product command | Product bootstrap |

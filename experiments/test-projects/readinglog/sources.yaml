@@ -82,7 +82,7 @@ copiedInputs:
     sourceDigest: sha256:6a10ef1af13cc01f7e040796aacb8ecfbd5a619522fbfcebe81f40c646b4e6ab
   - source: experiments/test-projects/library-r2/project/.markitect/execution.yaml
     target: template/.markitect/execution.yaml
-    sourceDigest: sha256:d6fb58a6e25770e1f172a11d002e65813e524960706f4dadd96f0afaf6007db3
+    sourceDigest: sha256:8042c5132fb3e06972b362348e205b6f379c6e1d50fad3950f188c7c1f91a526
 dependencyLockSource:
   source: experiments/test-projects/library-r2/project/.markitect/model-lock.yaml
   sourceDigest: sha256:924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5

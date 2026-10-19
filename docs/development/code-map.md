@@ -18,10 +18,10 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-snapshot` | Pure immutable repository tree values. | `apply-snapshot` | 1 |
 | `apply-organization` | Pure Manager topology, context selection and settings. | `apply-organization` | 1 |
 | `apply-realization` | Pure ownership, accounting and candidate rules. | `apply-realization` | 1 |
-| `apply-run` | Fixed run bindings, assignment budgets and confirmed journal transitions. | `apply-run` | 1 |
+| `apply-run` | Recursive reconciliation of the Manager team over ports for Agents, workspaces, checks, owner and evidence. | `apply-run` | 1 |
 | `apply-usecase` | Read-only preparation through consumer-owned ports. | `apply-usecase` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
-| `apply-adapter` | Concrete repository, journal, container engine, profile metadata and document I/O. | `apply-adapter` | 8 |
+| `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 7 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
 | `apply-command` | Thin entrypoint to product composition. | `apply-command` | 1 |
 | `agent-protocol` | Frame protocol between the Orchestrator and the session helper. | `agent-protocol` | 1 |
@@ -57,17 +57,17 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 |---|---|---|
 | `internal/realization` | Pure ownership, accounting and candidate rules. | [docs/development/modules.md](modules.md) |
 
-## Run admission
+## Run engine
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/run` | Fixed run bindings, assignment budgets and confirmed journal transitions. | [docs/development/modules.md](modules.md) |
+| `internal/run` | Recursive reconciliation engine over ports for Agents, workspaces, checks, owner and evidence. | [docs/development/modules.md](modules.md) |
 
 ## Preparation
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/apply` | Read-only preparation through consumer-owned ports. | [docs/development/modules.md](modules.md) |
+| `internal/apply` | Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication. | [docs/development/modules.md](modules.md) |
 
 ## Model view
 
@@ -80,19 +80,18 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/adapters/checks` | Check profile metadata and bounded container execution. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/claudecode` | Claude Code stream protocol and step session adaptation through the container runtime. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
-| `internal/adapters/cli` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/codexappserver` | Prepares Codex image metadata and implements step sessions through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
+| `internal/adapters/claudecode` | Claude Code stream protocol and one-turn Agent adaptation through the container runtime. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
+| `internal/adapters/cli` | Command parsing and JSON reports for preparation, Apply and owner answers. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/codexappserver` | Prepares Codex image metadata and implements one-turn Agents through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Repository capture, workspace volumes and guarded publication. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/journal` | Repository control and fenced durable SQLite journal storage. | [internal/adapters/journal/README.md](../../internal/adapters/journal/README.md) |
 
 ## Composition
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Constructs actual services and their adapters. | [docs/development/modules.md](modules.md) |
+| `internal/bootstrap` | Constructs actual services and adapters; owns the Agents router, file evidence, file owner channel and state lock. | [docs/development/modules.md](modules.md) |
 
 ## Product command
 

@@ -3,10 +3,7 @@ package gitrepo
 import (
 	"bytes"
 	"context"
-	"os"
-	"path/filepath"
 	"reflect"
-	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
@@ -36,29 +33,32 @@ func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, st
 		repo.Write(name, fileSeamInstruction(name))
 		selection.Instructions = append(selection.Instructions, selected(name))
 	}
-	doc, err := os.ReadFile(filepath.Join("..", "..", "..", "docs", "design", "canonical-model", "manager-apply-configuration.md"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, block, found := bytes.Cut(doc, []byte("```yaml"))
-	if !found {
-		t.Fatal("documented execution fixture is missing")
-	}
-	_, block, found = bytes.Cut(block, []byte("\n"))
-	content, _, closed := bytes.Cut(block, []byte("```"))
-	if !found || !closed {
-		t.Fatal("documented execution fixture is not closed")
-	}
-	execution := string(content)
-	for _, edit := range [][2]string{
-		{"  profiles:", "  instructions: {manager: [ops/manager.md, ops/reviewer.md, ops/manager.md], reviewer: [ops/reviewer.md]}\n  profiles:"},
-		{"    stepTimeout: 8m", "    instructions: {manager: [ops/lending.md], reviewer: [ops/manager.md, ops/reviewer.md]}\n    stepTimeout: 8m"},
-	} {
-		if strings.Count(execution, edit[0]) != 1 {
-			t.Fatal("documented execution fixture marker changed")
-		}
-		execution = strings.Replace(execution, edit[0], edit[1], 1)
-	}
+	execution := `apiVersion: markitect.execution/v1
+strategy: shared-workspace-v1
+budget:
+  executionTime: 25m
+  turnTimeout: 10m
+  agentTurns: 120
+  rounds: 4
+profiles:
+  execute: library-agent
+  verify: library-agent
+instructions:
+  execute: [ops/manager.md, ops/reviewer.md, ops/manager.md]
+  verify: [ops/reviewer.md]
+packages:
+  lending:
+    instructions:
+      execute: [ops/lending.md]
+      verify: [ops/manager.md, ops/reviewer.md]
+checks:
+  - id: project-tests
+    profile: library-tests
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/callable-interface
+    timeout: 2m
+`
 	repo.Write(".markitect/execution.yaml", execution)
 	repo.Write(".markitect/ignore.yaml", fileSeamIgnore)
 	repo.Write(seamRootShard, seamRootYAML+"  - path: real/library.go\r\n    form: code\r\n    realizes: [library/library]\r\n    why: Library entry fixture.\r\n")

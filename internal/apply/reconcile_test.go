@@ -1,0 +1,275 @@
+package apply_test
+
+import (
+	"context"
+	"errors"
+	"slices"
+	"strings"
+	"sync"
+	"testing"
+	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+)
+
+func checkRequest(apply.CheckSelection) (run.CheckRequest, error) {
+	directory, err := snapshot.DirectoryAt(path0("realization"))
+	if err != nil {
+		return run.CheckRequest{}, err
+	}
+	return run.CheckRequest{
+		ImageID: "sha256:" + strings.Repeat("a", 64), Executable: "/usr/local/go/bin/go", Args: []string{"test", "./..."},
+		Directory: directory, Limits: run.CheckLimits{MilliCPUs: 1000, MemoryBytes: 1 << 30, Processes: 64},
+		Timeout: time.Minute, MaxOutputBytes: 1 << 20,
+	}, nil
+}
+
+func path0(name string) snapshot.Path {
+	p, err := snapshot.NewPath(name)
+	if err != nil {
+		panic(err)
+	}
+	return p
+}
+
+func layoutRequest(t *testing.T) (apply.ReconcileRequest, snapshot.Tree) {
+	t.Helper()
+	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
+	libraryLayoutFiles(t, &selection, &raw)
+	attempt := preparedAttempt(t, selection, raw)
+	return apply.ReconcileRequest{
+		RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, OwnerRequest: "Realize the model.",
+		OwnerDecisions: []string{"Use euro."}, MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest,
+	}, attempt.Structural().Model().Inputs().Raw.Census
+}
+
+func TestReconcileConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
+	req, start := layoutRequest(t)
+	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	cfg, err := apply.BuildReconcileConfig(req, now)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if cfg.RunID != "run-1" || cfg.OwnerRequest != "Realize the model." || !slices.Equal(cfg.OwnerDecisions, []string{"Use euro."}) || cfg.MaxEntries != 1000 || cfg.MaxBytes != 1<<20 || !cfg.Start.Equal(start) {
+		t.Fatalf("run inputs changed: %+v", cfg)
+	}
+	if cfg.Team[0].Path != "." || cfg.Team[0].Parent != "" || !strings.Contains(cfg.Team[0].Role, "integration of the whole project") {
+		t.Fatalf("Root is not first: %+v", cfg.Team[0])
+	}
+	seen := map[string]run.Manager{}
+	var paths []string
+	for _, m := range cfg.Team {
+		if m.Parent != "" {
+			if _, ok := seen[m.Parent]; !ok {
+				t.Fatalf("%s listed before its parent %s", m.Path, m.Parent)
+			}
+		}
+		if m.ExecuteProfile != "library-agent" || m.VerifyProfile != "library-agent" || m.Brief == "" || m.Role == "" {
+			t.Fatalf("incomplete Manager: %+v", m)
+		}
+		seen[m.Path] = m
+		paths = append(paths, m.Path)
+	}
+	for _, want := range []string{"lending", "lending/reminders", "library"} {
+		if !slices.Contains(paths, want) {
+			t.Fatalf("team %v lacks %s", paths, want)
+		}
+	}
+	if !slices.Contains(seen["lending"].Children, "lending/reminders") || seen["lending/reminders"].Parent != "lending" {
+		t.Fatal("hierarchy lost")
+	}
+	brief := seen["lending/reminders"].Brief
+	for _, want := range []string{"Package lending/reminders", ".markitect/registry/lending/reminders/registry.yaml", "apiVersion: markitect.registry/v1", "one of code, test, doc, build, config", "/work/.markitect", "lending/reminders/assess-overdue", "Required checks", "project-tests: /usr/local/go/bin/go test ./..."} {
+		if !strings.Contains(brief, want) {
+			t.Errorf("brief lacks %q:\n%s", want, brief)
+		}
+	}
+	if !strings.Contains(seen["."].Brief, "You are the Manager of Root") || !strings.Contains(seen["."].Brief, ".markitect/registry/registry.yaml") {
+		t.Errorf("Root brief: %s", seen["."].Brief)
+	}
+	if len(cfg.Checks) != 1 || cfg.Checks[0].Name != "project-tests" || cfg.Checks[0].Owner != "." || cfg.Checks[0].RequiredBy != "library/callable-interface" {
+		t.Fatalf("checks: %+v", cfg.Checks)
+	}
+	if cfg.Budget.TurnTimeout != 10*time.Minute || cfg.Budget.AgentTurns != 120 || cfg.Budget.Rounds != 4 || !cfg.Budget.Deadline.Equal(now.Add(25*time.Minute)) {
+		t.Fatalf("budget: %+v", cfg.Budget)
+	}
+	if cfg.OwnerOf(path(t, "realization/lending/borrow.go")) != "lending" || cfg.OwnerOf(path(t, "realization/go.mod")) != "." {
+		t.Fatal("ownership is not the layout's")
+	}
+	if got := cfg.Account(start); len(got) != 0 {
+		t.Fatalf("the captured start is not accounted: %+v", got)
+	}
+	extra := change(t, start, map[string]*string{"realization/lending/new.go": text("package lending\n")})
+	findings := cfg.Account(extra)
+	if len(findings) != 1 || findings[0].Owner != "lending" || findings[0].RaisedBy != run.MarkitectFinding || !findings[0].Blocking || findings[0].Obligation == "" || !strings.Contains(findings[0].Observed, "realization/lending/new.go") {
+		t.Fatalf("unregistered file: %+v", findings)
+	}
+}
+
+func TestReconcileDeadlineIsTheEarlierOfBudgetAndOperatorLimit(t *testing.T) {
+	req, _ := layoutRequest(t)
+	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	for _, tc := range []struct {
+		name     string
+		deadline time.Time
+		want     time.Time
+	}{
+		{"none", time.Time{}, now.Add(25 * time.Minute)},
+		{"earlier", now.Add(10 * time.Minute), now.Add(10 * time.Minute)},
+		{"later", now.Add(2 * time.Hour), now.Add(25 * time.Minute)},
+	} {
+		req.Deadline = tc.deadline
+		cfg, err := apply.BuildReconcileConfig(req, now)
+		if err != nil || !cfg.Budget.Deadline.Equal(tc.want) {
+			t.Errorf("%s: %v %v", tc.name, cfg.Budget.Deadline, err)
+		}
+	}
+}
+
+func TestReconcileConfigRefusesAnUnusableCheckRequest(t *testing.T) {
+	req, _ := layoutRequest(t)
+	req.CheckRequest = func(apply.CheckSelection) (run.CheckRequest, error) {
+		return run.CheckRequest{}, errors.New("not a container check")
+	}
+	if _, err := apply.BuildReconcileConfig(req, time.Now()); err == nil || !strings.Contains(err.Error(), "project-tests") {
+		t.Fatalf("%v", err)
+	}
+}
+
+type fakePublisher struct {
+	preflight, publish error
+	receipt            apply.PublicationReceipt
+	requests           []apply.PublicationRequest
+}
+
+func (p *fakePublisher) Preflight(_ context.Context, r apply.PublicationRequest, _ apply.ControlCheck) (apply.PublicationPermit, error) {
+	p.requests = append(p.requests, r)
+	return apply.PublicationPermit{Request: r, Token: "t"}, p.preflight
+}
+
+func (p *fakePublisher) Publish(context.Context, apply.PublicationPermit, apply.ControlCheck) (apply.PublicationReceipt, error) {
+	return p.receipt, p.publish
+}
+
+func (p *fakePublisher) Inspect(context.Context, apply.PublicationRequest) (apply.PublicationReceipt, error) {
+	return apply.PublicationReceipt{}, nil
+}
+
+func TestPublishBindsTheCaptureGuardAndMapsDefiniteRefusals(t *testing.T) {
+	req, start := layoutRequest(t)
+	guard := req.Prepared.Structural().Model().Inputs().Guard
+	changes := snapshot.Compare(start, change(t, start, map[string]*string{"realization/lending/borrow.go": text("package lending // changed\n")}))
+	for _, tc := range []struct {
+		name      string
+		publisher *fakePublisher
+		outcome   apply.PublicationOutcome
+		wantErr   bool
+		noReceipt bool
+	}{
+		{"applied", &fakePublisher{receipt: apply.PublicationReceipt{ID: "run-1", Outcome: apply.PublicationApplied}}, apply.PublicationApplied, false, false},
+		{"stale", &fakePublisher{preflight: apply.ErrCaptureChanged}, apply.PublicationStale, false, false},
+		{"unpublishable", &fakePublisher{preflight: apply.ErrUnpublishable}, apply.PublicationFailed, false, false},
+		{"preflight error", &fakePublisher{preflight: errors.New("disk")}, "", true, true},
+		{"partial with error", &fakePublisher{receipt: apply.PublicationReceipt{ID: "run-1", Outcome: apply.PublicationPartial}, publish: errors.New("write")}, apply.PublicationPartial, true, false},
+		{"error without receipt", &fakePublisher{publish: errors.New("write")}, "", true, true},
+	} {
+		req.Publisher = tc.publisher
+		receipt, err := apply.PublishChanges(context.Background(), req, changes)
+		if (err != nil) != tc.wantErr || (receipt == nil) != tc.noReceipt || receipt != nil && receipt.Outcome != tc.outcome {
+			t.Errorf("%s: %+v %v", tc.name, receipt, err)
+		}
+		if r := tc.publisher.requests[0]; r.Guard != guard || r.Repository != "/repo" || r.Run != "run-1" || r.ID != "run-1" || len(r.Changes) != 1 {
+			t.Errorf("%s: publication request %+v", tc.name, r)
+		}
+	}
+}
+
+// fakeWorkspaces materializes in memory and records closes.
+type fakeWorkspaces struct {
+	mu     sync.Mutex
+	open   map[run.WorkspaceID]bool
+	closed []run.WorkspaceID
+}
+
+func (w *fakeWorkspaces) Materialize(_ context.Context, spec run.WorkspaceSpec) (run.WorkspaceObservation, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if w.open == nil {
+		w.open = map[run.WorkspaceID]bool{}
+	}
+	w.open[spec.ID] = true
+	return run.WorkspaceObservation{ID: spec.ID, Volume: "vol-" + string(spec.ID), Tree: spec.Tree.Digest()}, nil
+}
+
+func (w *fakeWorkspaces) Harvest(context.Context, run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	return run.WorkspaceHarvest{}, errors.New("not used")
+}
+
+func (w *fakeWorkspaces) Peek(_ context.Context, r run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if !w.open[r.ID] {
+		return run.WorkspaceHarvest{}, errors.New("no such volume")
+	}
+	return run.WorkspaceHarvest{ID: r.ID}, nil
+}
+
+func (w *fakeWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	delete(w.open, id)
+	w.closed = append(w.closed, id)
+	return run.WorkspaceObservation{ID: id, Closed: true}, nil
+}
+
+type memoryEvidence struct {
+	mu     sync.Mutex
+	events []run.Event
+}
+
+func (e *memoryEvidence) Record(ev run.Event) error {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	e.events = append(e.events, ev)
+	return nil
+}
+
+func (e *memoryEvidence) Transcript(string) string { return "" }
+
+type failingRunner struct{}
+
+func (failingRunner) Run(context.Context, run.CheckRequest) (run.CheckReceipt, error) {
+	return run.CheckReceipt{}, errors.New("no container engine")
+}
+
+// failingAgents makes every turn fail, so the run ends without a verified candidate.
+type failingAgents struct{}
+
+func (failingAgents) Run(context.Context, run.Turn, run.ToolHandler) (run.TurnResult, error) {
+	return run.TurnResult{Stopped: true}, errors.New("provider unavailable")
+}
+
+func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testing.T) {
+	req, _ := layoutRequest(t)
+	workspaces := &fakeWorkspaces{}
+	publisher := &fakePublisher{}
+	req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = failingAgents{}, workspaces, failingRunner{}, &memoryEvidence{}, publisher
+	result, err := apply.Reconcile(context.Background(), req)
+	if result.Outcome.Status == "" || result.Outcome.Status == run.Verified || result.Receipt != nil || len(publisher.requests) != 0 {
+		t.Fatalf("an unverified run published or has no outcome: %+v %v", result, err)
+	}
+	// The shared work volume is either kept and reported, or the run closed it itself.
+	if result.RetainedWork == "" && !slices.Contains(workspaces.closed, "run-1-work") {
+		t.Fatalf("work volume neither retained nor closed by the run: %v", workspaces.closed)
+	}
+	if result.RetainedWork != "" && result.RetainedWork != "run-1-work" {
+		t.Fatalf("retained work names %q", result.RetainedWork)
+	}
+	for _, home := range result.Outcome.Homes {
+		if !slices.Contains(workspaces.closed, run.WorkspaceID(home)) {
+			t.Errorf("home %s was not removed", home)
+		}
+	}
+}

@@ -38,6 +38,7 @@ type ApplyReport struct {
 	Preparation       any                       `json:"preparation,omitempty"`
 	Run               *RunReport                `json:"run,omitempty"`
 	Publication       *apply.PublicationReceipt `json:"publication,omitempty"`
+	RetainedWork      string                    `json:"retainedWork,omitempty"`
 	EvidenceDirectory string                    `json:"evidenceDirectory,omitempty"`
 	Error             string                    `json:"error,omitempty"`
 }

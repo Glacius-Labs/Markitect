@@ -25,6 +25,29 @@ func (s *smoke) version() error {
 
 // libraryPreparation consumes the unchanged normative Library sources through
 // the packaged product. It creates no implementation, provider or Apply record.
+// libraryExecution is the smoke's own execution settings of the Library project.
+const libraryExecution = `apiVersion: markitect.execution/v1
+strategy: shared-workspace-v1
+budget:
+  executionTime: 25m
+  turnTimeout: 10m
+  agentTurns: 120
+  rounds: 4
+profiles:
+  execute: library-agent
+  verify: library-agent
+packages:
+  lending:
+    profiles: {verify: library-agent}
+checks:
+  - id: project-tests
+    profile: library-tests
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/callable-interface
+    timeout: 2m
+`
+
 // The only M2 change is the specified five-to-three model edit in a temp repo.
 func (s *smoke) libraryPreparation() error {
 	repo, err := s.gitRepo("library-preparation", "codex/source-smoke")
@@ -41,22 +64,7 @@ func (s *smoke) libraryPreparation() error {
 			return err
 		}
 	}
-	document, err := os.ReadFile(filepath.Join(base, "manager-apply-configuration.md"))
-	if err != nil {
-		return err
-	}
-	_, text, found := strings.Cut(string(document), "```yaml\n")
-	if !found { // A Windows checkout may retain CRLF; preserve YAML bytes.
-		_, text, found = strings.Cut(string(document), "```yaml\r\n")
-	}
-	if !found {
-		return fmt.Errorf("documented execution fixture missing")
-	}
-	execution, _, found := strings.Cut(text, "```")
-	if !found {
-		return fmt.Errorf("execution fixture is unclosed")
-	}
-	if err := os.WriteFile(filepath.Join(repo, ".markitect", "execution.yaml"), []byte(execution), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(repo, ".markitect", "execution.yaml"), []byte(libraryExecution), 0644); err != nil {
 		return err
 	}
 	if _, err := s.run(repo, nil, "git", "add", "."); err != nil {
@@ -197,6 +205,23 @@ func (s *smoke) libraryPreparation() error {
 	}
 	if err := requireAbsent(s.work, "never-created"); err != nil {
 		return err
+	}
+	// A configuration of the removed sequential Apply (formatVersion 1) is refused
+	// as failed before the repository is acquired, the lock is taken or any
+	// container engine or provider is started.
+	oldConfig := filepath.Join(s.work, "old-run.json")
+	state := filepath.Join(s.work, "never-created-state")
+	if err := os.WriteFile(oldConfig, []byte(fmt.Sprintf(`{"formatVersion":1,"stateDirectory":%q,"allocation":{"runs":1}}`, state)), 0644); err != nil {
+		return err
+	}
+	out, err = s.run(repo, nil, s.tool("markitect"), "apply", "--repo", filepath.Join(s.work, "never-created"), "--host-profile", host, "--run-config", oldConfig)
+	if err == nil || !strings.Contains(out, `"status": "failed"`) || !strings.Contains(out, "formatVersion 2") {
+		return fmt.Errorf("Apply accepted an invalid run configuration: %s", tail(out))
+	}
+	for _, name := range []string{"never-created", "never-created-state"} {
+		if err := requireAbsent(s.work, name); err != nil {
+			return err
+		}
 	}
 	return nil
 }

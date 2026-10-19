@@ -127,7 +127,7 @@ func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
 					resolved, ok := settings.Settings()
 					root, found := resolved.Manager(".")
 					checks, checked := settings.Checks()
-					if !ok || !found || !checked || len(checks) != 1 || root.Manager.Profile.Value.Identity == "" {
+					if !ok || !found || !checked || len(checks) != 1 || root.Execute.Profile.Value.Identity == "" {
 						t.Fatal("actual static settings/check selections missing")
 					}
 					assertGitSettingsRoles(t, resolved)
@@ -186,7 +186,7 @@ func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
 				if mode == "capture" {
 					resolved, _ := settings.Settings()
 					root, _ := resolved.Manager(".")
-					if len(root.Manager.Instructions) != 3 || !bytes.Equal(root.Manager.Instructions[0].Value.Bytes, []byte(fileSeamInstruction("ops/manager.md"))) || !reflect.DeepEqual(root.Manager.Instructions[0], root.Manager.Instructions[2]) {
+					if len(root.Execute.Instructions) != 3 || !bytes.Equal(root.Execute.Instructions[0].Value.Bytes, []byte(fileSeamInstruction("ops/manager.md"))) || !reflect.DeepEqual(root.Execute.Instructions[0], root.Execute.Instructions[2]) {
 						t.Fatal("Host instructions replaced project facts or authored repeats")
 					}
 				}
@@ -261,7 +261,7 @@ func assertGitSettingsRoles(t *testing.T, settings organization.Settings) {
 		for _, role := range []struct {
 			actual []organization.Setting[organization.InstructionFact]
 			want   []string
-		}{{resolved.Manager.Instructions, expected.manager}, {resolved.Reviewer.Instructions, expected.reviewer}} {
+		}{{resolved.Execute.Instructions, expected.manager}, {resolved.Verify.Instructions, expected.reviewer}} {
 			var ids []string
 			for _, instruction := range role.actual {
 				ids = append(ids, instruction.Value.ID)
