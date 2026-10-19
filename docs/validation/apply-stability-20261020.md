@@ -34,13 +34,13 @@ Total time covers the whole scenario, including preparation, both Applies of a t
 | RA-Q3 | `7005a4bd` (#518) | no bound owner decisions | model defect: boundary gap (due date after 9999-12-31), run ended | 0 | 177 s | – |
 | RA-N3 | `7005a4bd` (#518) | conforming stand (RA-H4's A2) | Verified, no change | 1 | 346 s | m2 12/12 |
 | RA-R5 | `7005a4bd` (#518) | drift: limit bug + unregistered file | Verified | 1 | 373 s | 12/12 |
-| RA-H4, RA-H5 | `7005a4bd` (#518) | M1 → A2, two runs in parallel | both Applies Verified | 2+1, 1+1 | 1202 s, 990 s | 12/12, 12/12 |
-| RA-H6 | `7005a4bd` (#518) | M1 → A2, parallel | A1 Verified; A2 Incomplete at the shared deadline after three blocking placement findings (led to #520) | 1, 1 | 1516 s | A1 12/12 |
+| RA-H4, RA-H5 | `7005a4bd` (#518) | M1 → A2, each in parallel with RA-H6 | both Applies Verified | 2+1, 1+1 | 1202 s, 990 s | 12/12, 12/12 |
+| RA-H6 | `7005a4bd` (#518) | M1 → A2, in parallel with RA-H4 and then RA-H5 | A1 Verified; A2 Incomplete at the shared deadline after three blocking placement findings (led to #520) | 1, 1 | 1516 s | A1 12/12 |
 | **RA-H7, RA-H8, RA-H9** | `4cf58479` (#520) | M1 → A2, sequential | **both Applies Verified, one round each, no blocking finding** | 1+1 each | 1064, 1043, 1017 s | 12/12, 12/12 each |
 | **RA-S1 (Sonnet)** | `4cf58479` (#520) | M1 → A2 | both Applies Verified, one round each | 1+1 | 604 s | 12/12, 12/12 |
 | **RA-R6** | `4cf58479` (#520) | drift: limit bug + unregistered file | Verified; only the two drifted files changed | 1 | 341 s | 12/12 |
 
-In each two-Apply run, A2 assessed under the m1 profile failed the limit cases (10/12), as expected, because the published behavior followed the model change.
+In each completed two-Apply run, A2 assessed under the m1 profile failed the limit cases (10/12), as expected, because the published behavior followed the model change.
 
 ## Remaining limits
 
