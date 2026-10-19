@@ -2,6 +2,14 @@
 
 Status: accepted direction, 17 October 2026 ([DEC-044](../../concepts/register.md#dec-044-commands-reuse-the-manager-organization), [owner discussion](../../concepts/sources/commands-extract-optimize-20261017.md)). This document owns the later command semantics and the Extract and Optimize workflows. It records no executable command registration, model-writing runtime or completed Verify capability. The [current operations guide](../../project-operations.md) owns availability. Apply remains the first delivery target; this documentation adds no implementation queue and does not change the frozen Apply core.
 
+## Apply and Extract are the two directional processes
+
+The owner clarified [DEC-057](../../concepts/register.md#dec-057-three-fundamental-starting-situations) on 19 October 2026: the [three starting situations](../../vision.md#three-starting-situations) use two processes, **Apply: Model -> Artifacts** and **Extract: Artifacts -> Model** ([owner source](../../concepts/sources/three-starting-situations-20261019.md#owner-selects-apply-and-extract)).
+
+Apply covers both an initial realization with no artifacts and reconciliation of existing artifacts. Their different starting states do not require separate Build or Reconcile processes or commands. Root-owned foundations, recursive construction, integration and verification remain part of Apply. Extract develops a model candidate from existing artifacts through review, integration, owner clarification and read-only Verify; adoption describes its purpose for an existing project.
+
+These are the two processes for those starting situations. Assessment and maintenance operations below retain their stated objectives and authority; this clarification neither removes their names nor limits the CLI to two verbs. It adds no executable Extract registration or runtime capability.
+
 ## One organization and different instructions
 
 Use the existing Manager organization, compiled context, independent review, findings, correction and parent integration. The operation supplies one static instruction, propagated unchanged through the tree. Each Manager concentrates on its own responsibility because it receives its own model and artifact context. Parents integrate their own work and direct children's results. They do not rewrite the operation for children or choose which required Manager participates.
@@ -14,7 +22,7 @@ The names below express user goals, not a new CLI schema. Reuse the process with
 
 | Operation | Change target | Instruction and result |
 | --- | --- | --- |
-| Apply | Artifacts | Reconcile the complete responsibility with the current canonical model, including unchanged intent. Correct deviations or return a justified reviewed no-change result. Valid realization can stay as it is. |
+| Apply | Artifacts | Realize the current canonical model across the complete responsibility, whether artifacts are absent or already exist. Create missing artifacts and reconcile existing ones, including unchanged-intent repair and the existing removal rules, or return a justified reviewed no-change result. Valid realization can stay as it is. |
 | Cleanup | Artifacts | Look for useful cleanup in each area while preserving the applicable requirements and permitted freedom. Deliver a reviewed improvement or justified no-op. |
 | Bughunt | Artifacts | Search for bugs against the model and fix them through review and integration. Never change the model to excuse faulty artifacts. |
 | Refactor | Artifacts | Look through the tree for better structure within the existing obligations. Preserve behavior and contracts. |
