@@ -107,6 +107,7 @@ The engine records `write.observed` for files of a Manager that changed although
 ## Known limits
 
 - Technical write enforcement exists only for Managers whose Execute turns carry an enforced write plan (read-only base with writable mounts); without one a Manager can write another Manager's files in the shared tree and the engine can only observe and account for the result.
+- A Root-owned file exception inside another Manager's area cannot be written by Root under enforced ownership, because that area is mounted read-only and a single file cannot be mounted writable; keep such files outside other areas.
 - No restore of an interrupted run. The deadline, SIGTERM or a crash ends the run Incomplete with its evidence; a new Apply starts again from the committed repository, not from the incomplete shared tree.
 - Every round verifies the whole team again; unchanged areas are not skipped.
 - Shared-tree scalability, native provider message behavior under load and real-provider cost are unproven.
