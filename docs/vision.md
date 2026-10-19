@@ -108,7 +108,7 @@ Both Apply starting states use **prepare -> Execute and integration from Root do
 
 This is Apply with no existing artifacts. Managers build the project. Root starts by preparing the root-owned project skeleton and shared prerequisites. Its children build their areas on those foundations, and their children do the same recursively. Each Manager supplies the foundations its children need within its own responsibility; it does not implement their areas for them. Results are integrated upward, with each parent responsible for its own work and the interaction of its children's results.
 
-This is a dependency order for construction, not a new globally sequential scheduling rule. Areas whose prerequisites are available can progress under the agreed Manager process. The model need not prescribe every file or implementation step: it states the intended meaning, structure and deliberate constraints, leaving the agreed realization freedom. An unresolved intent question returns to the owner through Root.
+This is a dependency order for construction, not a new globally sequential scheduling rule. Areas whose prerequisites are available can progress under the agreed Manager process. The model need not prescribe every file or implementation step: it states the intended meaning, structure and deliberate constraints, leaving the agreed realization freedom. An unresolved intent question returns to the owner through Root, as a model defect that ends the Apply.
 
 This makes the existing [start-from-model direction](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) explicit at the product level. The [Library walkthrough](design/canonical-model/manager-apply-library-flow.md#first-apply-m1-to-a1) owns the bounded first-Apply example.
 
