@@ -42,6 +42,14 @@ After their parent-supplied foundations are available, independent siblings may 
 
 Results are integrated upward through the same tree. Once Execute and integration are complete, capture one immutable candidate and run the independent whole-tree Verify round, with children assessed before parents. These are dependencies within the accepted Execute-first Apply, not new runtime implementation or a choice to omit required Managers.
 
+### Existing foundations during Execute
+
+With existing artifacts, the parent first assesses the current foundation within Execute, before its children begin realization. Compare the applicable current model, the actual files/interfaces and the known model-based needs of the direct children. Read the relevant implementation and use suitable development checks where useful; an old availability message or a green build alone does not establish that the foundation still meets the required contract. This is local reconciliation work, not an initial independent Verify round or a separate case-2 process ([owner acceptance](../../concepts/sources/apply-execute-first-20261019.md#owner-confirms-existing-foundation-assessment)).
+
+Preserve a foundation that still fits. Correct or supplement a deficient one within the parent's ownership, or coordinate its actual owner through the tree, before dependent child work starts. State the concrete usable basis and relevant changes in ordinary parent/child communication. Unsettled intent goes upward to Root and the owner; it is not silently filled in or rewritten to match the artifacts. Existing files do not authorize skipping a required Manager, and an unchanged result needs no artificial edit.
+
+This assessment can miss a dependency. A child that discovers an overlooked gap reports it to its parent; the responsible owner supplies the correction. If a foundation changes after dependent work has begun, the parent informs the affected children and coordinates reassessment of that work against the changed basis before integration completes. The earlier availability statement is no longer sufficient for the changed contract. No new approval record or fine-grained verification-reuse mechanism is introduced: integrate upward, capture the complete candidate and independently Verify the whole tree as usual.
+
 ### Start from the model without prepared implementation
 
 The next library demonstration must start with the accepted model and necessary execution controls, but no application artifacts or prepared internal APIs. Runtime profiles, declared artifact roots/exceptions and bound owner decisions are setup inputs; they must not hide an application skeleton, internal signatures, shared domain types or stub implementations. Missing realization is work for Execute, not a structural accounting failure for nonexistent files.
