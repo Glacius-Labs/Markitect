@@ -139,10 +139,13 @@ func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, map[str
 	switch turn.Kind {
 	case run.ExecuteTurn:
 	case run.VerifyTurn:
-		if !turn.ReadOnly || turn.Resume != "" {
+		if !turn.ReadOnly || turn.Resume != "" || writable(turn.Mounts) {
 			return Profile{}, nil, ErrSession
 		}
 	default:
+		return Profile{}, nil, ErrSession
+	}
+	if !validMounts(turn.Mounts) {
 		return Profile{}, nil, ErrSession
 	}
 	offered := map[string]bool{}
@@ -179,7 +182,7 @@ func (t *turnRun) exchange(ctx context.Context, res *run.TurnResult) error {
 	}
 	// Even a failed container creation can leave runtime effects.
 	t.attempted = true
-	peer, err := t.agents.start(ctx, turnSpec(t.name, t.turn.Workspace, t.turn.Home, t.turn.ReadOnly, t.profile))
+	peer, err := t.agents.start(ctx, turnSpec(t.name, t.turn, t.profile))
 	if err != nil {
 		return t.safe(err)
 	}

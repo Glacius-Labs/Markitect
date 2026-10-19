@@ -21,10 +21,12 @@ var (
 	userPattern        = regexp.MustCompile(`^([1-9][0-9]{0,9}):([1-9][0-9]{0,9})$`)
 )
 
-// Mount gives a container one named volume.
+// Mount gives a container one named volume, or with Subpath one directory of
+// it. A Subpath directory must exist in the volume when the container starts.
 type Mount struct {
 	Volume   string
 	Target   string
+	Subpath  string
 	ReadOnly bool
 	// NoCopy prevents Docker from populating an empty volume with files from
 	// the image at Target. Use it when the volume already represents exact bytes.
@@ -118,6 +120,12 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 		}
 		targets[m.Target] = true
 		mount := "type=volume,src=" + m.Volume + ",dst=" + m.Target
+		if m.Subpath != "" {
+			if !ValidSubpath(m.Subpath) {
+				return nil, fmt.Errorf("volume subpath %q is not a plain relative path", m.Subpath)
+			}
+			mount += ",volume-subpath=" + m.Subpath
+		}
 		if m.NoCopy {
 			mount += ",volume-nocopy"
 		}
@@ -131,6 +139,16 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 	}
 	args = append(args, "--entrypoint", entry[0], s.Image)
 	return append(args, entry[1:]...), nil
+}
+
+// ValidSubpath reports whether p is a clean relative path inside a volume: not
+// empty, not ".", no "..", no empty or backslash-separated elements and nothing
+// that could add engine mount options.
+func ValidSubpath(p string) bool {
+	if p == "" || p == "." || p == ".." || strings.HasPrefix(p, "../") || path.IsAbs(p) || path.Clean(p) != p {
+		return false
+	}
+	return !strings.ContainsAny(p, `\,=`+"\x00\n\r")
 }
 
 func labelArgs(labels map[string]string) ([]string, error) {
