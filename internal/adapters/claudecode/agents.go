@@ -226,12 +226,14 @@ func writable(mounts []run.PathMount) bool {
 	return slices.ContainsFunc(mounts, func(m run.PathMount) bool { return m.Writable })
 }
 
-// turnTools returns the builtin tools a turn may use: a read-only workspace
-// takes away the tools that exist to change files.
+// turnTools returns the builtin tools a turn may use: a verify turn, or a turn
+// that can write nowhere in its workspace, loses the tools that exist to change
+// files. An Execute turn with a read-only base and writable mounts keeps them.
 func turnTools(turn run.Turn, profile Profile) []string {
+	cannotWrite := turn.Kind == run.VerifyTurn || turn.ReadOnly && !writable(turn.Mounts)
 	var builtin []string
 	for _, name := range profile.Session.BuiltinTools {
-		if !turn.ReadOnly || name != "Write" && name != "Edit" {
+		if !cannotWrite || name != "Write" && name != "Edit" {
 			builtin = append(builtin, name)
 		}
 	}

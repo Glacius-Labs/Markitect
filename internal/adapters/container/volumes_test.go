@@ -102,3 +102,34 @@ func TestVolumeMountCensusRequiresCompleteEntries(t *testing.T) {
 		})
 	}
 }
+
+func TestRequireVolumeSubpathsNeedsDockerServer26(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		step engineStep
+		ok   bool
+	}{
+		{"docker 29", engineStep{Out: "29.0.1\n"}, true},
+		{"docker 26", engineStep{Out: "26.0.0\n"}, true},
+		{"release candidate of 27", engineStep{Out: "27.0.0-rc.1\n"}, true},
+		{"docker 25", engineStep{Out: "25.0.5\n"}, false},
+		{"docker 20", engineStep{Out: "20.10.24\n"}, false},
+		{"not understood", engineStep{Out: "podman\n"}, false},
+		{"empty", engineStep{}, false},
+		{"command failed", engineStep{Code: 1, Err: "daemon not running"}, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			e, calls := fakeCommandEngine(t, tc.step)
+			err := e.RequireVolumeSubpaths(context.Background())
+			if (err == nil) != tc.ok {
+				t.Fatalf("err = %v, want ok %v", err, tc.ok)
+			}
+			if got := calls(); len(got) != 1 || strings.Join(got[0], " ") != "version --format {{.Server.Version}}" {
+				t.Fatalf("calls %q", got)
+			}
+			if err != nil && !strings.Contains(err.Error(), "26") && tc.name != "command failed" {
+				t.Fatalf("message must name the required version: %v", err)
+			}
+		})
+	}
+}

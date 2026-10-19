@@ -191,7 +191,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 		// tell Root to register a file that no Manager may own.
 		unowned := layout.declared && !layout.HasOwner(path) && !statePath(path) && len(classified) == 0
 		if unowned {
-			add("layout.no_owner", path, RootOwner(), model.Identity{}, "The file lies in a subdirectory of an artifact root that no Package directory or persistent layout exception covers, so no Manager owns it; the subdirectory needs an owning Package directory or a persistent layout exception.")
+			add("layout.no_owner", path, RootOwner(), model.Identity{}, "The file lies in a subdirectory of an artifact root that no Package directory or persistent layout exception covers, so no Manager owns it: the layout needs an exception for it in .markitect/execution.yaml, or the file must move.")
 		}
 		switch {
 		case statePath(path):

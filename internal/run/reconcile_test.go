@@ -842,11 +842,16 @@ func TestBuildOrderStartsChildrenAfterTheFirstTurnOfABuildingParent(t *testing.T
 	if len(waits) != 2 || waits["lending"] != "." || waits["lending/reminders"] != "lending" {
 		t.Fatalf("build.wait events %v", waits)
 	}
+	first := map[string]bool{}
 	for _, tr := range f.agents.turnsOf(ExecuteTurn) {
+		if first[tr.Manager] {
+			continue // later turns only carry new items
+		}
+		first[tr.Manager] = true
 		prompt := f.agents.prompt(tr.ID)
 		switch tr.Manager {
 		case ".":
-			contains(t, "Root prompt", prompt, "Your area holds no artifacts yet", "project skeleton")
+			contains(t, "Root prompt", prompt, "Your area holds no artifacts yet", "project skeleton", "Build start: your children wait until this turn ends")
 		case "library":
 			if strings.Contains(prompt, "no artifacts yet") {
 				t.Errorf("a non-building Manager is told its area is empty:\n%s", prompt)
@@ -857,13 +862,27 @@ func TestBuildOrderStartsChildrenAfterTheFirstTurnOfABuildingParent(t *testing.T
 	}
 }
 
-func TestBuildingParentWithoutWorkDoesNotBlockItsChildren(t *testing.T) {
+func TestBuildingParentsAreSeededAndStartWhileTheInitialVerifyRuns(t *testing.T) {
 	f := newFixture(t)
-	f.cfg.Team[0].Building, f.cfg.Team[1].Building = true, true
+	f.cfg.Team[0].Building, f.cfg.Team[1].Building, f.cfg.Team[2].Building = true, true, true
+	rootStarted := make(chan struct{})
+	var once sync.Once
+	var mu sync.Mutex
+	var log []string
+	note := func(s string) { mu.Lock(); log = append(log, s); mu.Unlock() }
 	f.agents.script = func(c *call) error {
-		if c.is(1, "lending", VerifyTurn) {
-			c.assess(false, []fnd{finding("lending", "lending is built", true)})
-			return nil
+		switch {
+		case c.is(1, "lending/reminders", VerifyTurn):
+			// The deepest Verify runs first; Root's Execute turn must not wait for
+			// Root's own Verify, which runs last.
+			if err := c.wait(rootStarted); err != nil {
+				return err
+			}
+		case c.turn.Kind == ExecuteTurn:
+			note("start:" + c.turn.Manager)
+			if c.turn.Manager == "." {
+				once.Do(func() { close(rootStarted) })
+			}
 		}
 		return c.defaultScript()
 	}
@@ -871,14 +890,15 @@ func TestBuildingParentWithoutWorkDoesNotBlockItsChildren(t *testing.T) {
 	if out.Status != Verified {
 		t.Fatalf("%s %s", out.Status, out.Reason)
 	}
-	var executed []string
-	for _, tr := range out.Turns {
-		if tr.Kind == ExecuteTurn {
-			executed = append(executed, tr.Manager)
-		}
+	mu.Lock()
+	defer mu.Unlock()
+	// Every findingless building parent with building children ran its seeded
+	// turn, in parent-before-child order; the leaf has nothing to do.
+	if !slices.Equal(log, []string{"start:.", "start:lending"}) {
+		t.Fatalf("execute turns %v", log)
 	}
-	if !slices.Equal(executed, []string{"lending"}) {
-		t.Fatalf("execute turns %v", executed)
+	for _, tr := range f.agents.turnsOf(ExecuteTurn) {
+		contains(t, tr.Manager+" prompt", f.agents.prompt(tr.ID), "Build start: your children wait until this turn ends")
 	}
 }
 
@@ -916,5 +936,17 @@ func TestBuildOrderEndsWhenTheParentsFirstTurnFails(t *testing.T) {
 	}
 	if n["."] != 2 || n["lending"] != 1 {
 		t.Fatalf("execute turns %v", n)
+	}
+}
+
+func TestWriteNoteNamesReadOnlyMountsAndTheWritableOverlaysInsideThem(t *testing.T) {
+	root := WritePlan{Enforced: true, Base: true, Mounts: []PathMount{
+		{Path: ".markitect"}, {Path: ".markitect/registry", Writable: true}, {Path: ".markitect/registry/lending"}, {Path: "realization/lending"},
+	}}
+	contains(t, "Root note", writeNote(root),
+		"read-only and a write there fails: .markitect, .markitect/registry/lending, realization/lending",
+		"Writable again within them: .markitect/registry")
+	if got := writeNote(WritePlan{Enforced: true, Base: true, Mounts: []PathMount{{Path: "a"}}}); strings.Contains(got, "Writable again") {
+		t.Errorf("no writable overlay to name: %q", got)
 	}
 }

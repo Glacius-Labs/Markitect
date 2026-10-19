@@ -35,12 +35,15 @@ and publishes a verified candidate; this package never publishes and never commi
    effect: clean relative paths below `/work`, no `.`, no duplicates, none naming a file of the
    start stand, each before the mounts of its descendants.
    A Manager with `Building` (build from the model) does not start its first Execute turn
-   while its parent is `Building`, has not ended its first Execute turn of the run (in any way)
-   and is running, has undelivered items or has not yet reported its round 1 Verify. A parent
-   without work never blocks its children. Siblings and other areas stay parallel. The wait is
-   recorded once per Manager as `build.wait` with the parent, and the first Execute prompt of a
-   building Manager says that its area holds no artifacts yet. Reconcile runs (`Building` false)
-   are not ordered.
+   while its parent is `Building` and has not ended its first Execute turn of the run (finished,
+   waiting or failed) and is not disabled. So that every such parent has a first turn, round 1
+   seeds each `Building` Manager that has a `Building` child with one initial Execute item
+   (prepare the foundations the children need within its own area, for Root the project
+   skeleton and shared prerequisites, then coordinate): it starts at once, in parallel with the
+   initial Verify, and a parent waiting for a child ends its turn with `finish` waiting, which
+   counts as ended. Siblings and other areas stay parallel. The wait is recorded once per
+   Manager as `build.wait` with the parent, and the first Execute prompt of a building Manager
+   says that its area holds no artifacts yet. Reconcile runs (`Building` false) are not ordered.
 5. The phase is quiescent when no Execute turn runs, no Manager has undelivered items and
    no owner question waits. The shared volume is then harvested (`Workspaces.Harvest`
    itself refuses to call a volume complete while a container mounts it) and the tree
@@ -68,7 +71,8 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
 
 A Manager's Execute turns get the mandate, its brief, contacts, owner decisions, the
 shared-tree note (with an enforced plan: outside its writable areas `/work` is read-only, a
-write there fails, scratch output goes under `/tmp`) and its items until one of them finished without error; later turns
+write there fails, scratch output goes under `/tmp`; for a writable base it lists the
+read-only mounts and the writable overlays nested inside them) and its items until one of them finished without error; later turns
 resume the conversation and get only new items. A turn that fails after its container
 stopped gets one retry with a note and the items it consumed again, even when the adapter
 reported a conversation; the second consecutive failure stops scheduling that Manager. An item that restates a finding lapses once
