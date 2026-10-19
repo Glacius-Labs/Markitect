@@ -70,3 +70,21 @@ The owner accepted the walkthrough and requested documentation:
 > Ja, halte den Ablauf für Fall 3 mit Extract so in den Docs fest: erste Struktur aus den Artefakten ableiten, Manager daraus bilden und das Modell interaktiv mit dem Nutzer und Verify verfeinern. Weiterhin keine Implementierung.
 
 Recorder's interpretation: this clarifies DEC-057's case 3 and the existing DEC-044 Extract design. It authorizes documentation only, not an Extract command/runtime, a provisional Manager-rebuild protocol, new model language, fixture or application changes, provider runs, demonstrations or releases. Earlier owner quotations and evidence retain their original scope.
+
+## Owner confirms structure changes between Extract rounds
+
+Recorder's note: subsequent discussion in the same thread **Workflow** on 19 October 2026. The owner asked how the provisional Manager structure changes when new responsibilities or incorrect boundaries emerge, still without implementation.
+
+Recorder's summary of the assistant proposal, not verbatim owner text:
+
+- Keep the provisional Manager structure stable within one Extract round. Record evidence-backed proposals for new responsibilities or changed boundaries; parents coordinate cross-area changes instead of Managers taking over each other's work.
+- Review and integrate structural corrections between rounds, then derive the next Manager tree and contexts from the complete revised candidate. This candidate transition is distinct from final adoption of the model. Meaning-preserving corrections within the grant do not require separate owner approval each time; unresolved intended meaning or authority goes through Root to the owner.
+- Carry model knowledge, sources, reference and identity mappings, proposed accounting, known deviations, findings and open questions fully into the new responsibilities, with their original status and bindings. Preserve historical conversations and assessments; an earlier positive result does not automatically approve a changed candidate. Keep the assignment's existing authority boundaries.
+- A separately describable Reminders responsibility can be proposed beneath Lending for the next round. A mistaken placement beneath Catalog can be corrected through Root. Model responsibility does not have to mirror code folders, and correcting it does not require moving application files.
+- Review and assess the complete revised candidate against the unchanged artifact basis. Exact technical transition, staging, interruption, recovery and Manager-rebuild protocols remain future design.
+
+The owner accepted the rule and requested documentation:
+
+> Ja, halte das so in den Docs fest: Managerstruktur innerhalb einer Extract-Runde stabil halten, Strukturänderungen zwischen Runden übernehmen und Erkenntnisse, Referenzen sowie offene Fragen vollständig mitführen. Weiterhin keine Implementierung.
+
+Recorder's interpretation: this refines the accepted Extract workflow and DEC-057 without authorizing implementation, a new runtime state machine, canonical-model changes, artifact repair or provider runs. It does not require final human adoption of the model at every provisional round transition. Earlier source statements retain their original scope.

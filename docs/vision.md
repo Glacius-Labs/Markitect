@@ -126,6 +126,8 @@ This is Extract, the reverse direction Artifacts -> Model. Start from a fixed ex
 
 The cycle is **derive first structure -> form provisional Managers -> develop, review and integrate the model with owner clarification -> read-only Verify against existing artifacts -> refine the candidate and Verify again**. Model review judges the proposal's source support and useful description; Verify judges the unchanged artifacts against the exact candidate. Observed behavior, proposed intent, accepted decisions and unresolved questions remain distinct. The [Extract workflow](design/canonical-model/commands.md#extract-the-existing-stand) owns the detailed source, review and refinement boundaries.
 
+Keep the provisional Manager structure stable within each Extract round. Review and integrate structural corrections between rounds, carrying all findings, source and model references, and open questions to the resulting responsibilities. The [round-transition workflow](design/canonical-model/commands.md#keep-the-structure-stable-within-each-extract-round) preserves their status and traceability; an earlier positive assessment does not automatically approve the revised candidate.
+
 Existing artifacts stay unchanged during model derivation. A confirmed realization defect remains a defect against the justified model; rewriting intent to obtain a green Verify would defeat adoption. Known deviations and evidence gaps stay visible. Adopting a sound model with recorded deviations is distinct from passing Verify; subsequent authorized artifact repair is case 2.
 
 ### One organization, explicit scope
