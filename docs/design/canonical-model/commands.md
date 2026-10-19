@@ -128,6 +128,8 @@ Verify can pass against a shallow model. The normal Extract review therefore als
 
 The owner's [completion clarification](../../concepts/sources/commands-extract-optimize-20261017.md#model-adoption-with-known-realization-deviations) replaces the earlier requirement that Verify must report conformity before Extract can finish. A reviewed model proposal may be adopted while the existing realization has known deviations. Successful model preparation and existing-artifact conformity are separate judgments.
 
+The owner [confirmed the completion criteria](../../concepts/sources/three-starting-situations-20261019.md#owner-confirms-extract-completion-criteria) in the workflow discussion on 19 October 2026: essential unresolved model questions block completion; known, evidenced artifact defects do not by themselves. Model completion, the actual Verify result and later repair remain separate.
+
 Completion for the selected scope requires:
 
 - A structurally valid, independently reviewed and integrated model candidate with adequate detail, supported intended meaning and explained proposed artifact accounting.
@@ -135,7 +137,21 @@ Completion for the selected scope requires:
 - Each known realization deviation identified by its applicable Definition, source/candidate binding, evidence and reason. Unsupported suspicions or insufficiently assessable behavior are not relabeled as known deviations to close the work.
 - No unresolved material question or evidence gap that prevents a sound model, adequate coverage of the selected scope or the classification of a reported deviation.
 
-Report partial scope honestly. The owner reviews and commits the chosen model and accounting through the normal adoption boundary, with known deviations retained in the handoff. Adoption neither changes a nonconforming Verify result to a pass nor accepts defective artifacts as correct. Do not weaken or delete a justified model rule, hide a finding, or change existing code, tests or documentation to manufacture conformity during Extract. Resolving a model question may refine the candidate; correcting an existing realization remains a separately authorized artifact operation.
+Each Manager accounts for the essential meaning and structure of its responsibility, its source basis and proposed artifact assignments. Parents also resolve shared terms, boundaries, relationships and cross-area rules through integration and independent model review. Root assesses completion for the whole selected scope only after these local and integrated results are available. A necessary structure correction follows the stable-round rule and the revised candidate receives review and assessment before completion is claimed. Conforming Verify alone does not establish adequate model depth.
+
+The practical question for an open point is: **Does it prevent us from supporting the model or its assessment for the selected scope?** Unsettled intended rules, missing essential responsibilities or relationships, and evidence gaps preventing a sound assessment block the affected scope. Root takes unresolved intent to the owner with sources, alternatives and consequences; clear authoritative intent needs no redundant decision. A question does not become immaterial because answering it is difficult. A later feature or improvement proposal can remain open without blocking the current scope when it introduces no unresolved obligation or assessment gap there; retain its proposal status rather than silently accepting or discarding it.
+
+Report partial scope honestly, including remaining questions, exclusions and dependencies. A completed area does not establish completion of another area or an unresolved interaction between them. Budget exhaustion or no useful progress leaves an explicit incomplete result with retained work and questions; stopping work is not successful completion.
+
+Root's readable completion account distinguishes these judgments; they are not new runtime status fields:
+
+| Judgment | What the owner sees |
+| --- | --- |
+| Model completion | The examined scope, whether the reviewed and integrated candidate is ready for adoption, and any material blockers or remaining nonblocking proposals. |
+| Verify result | The actual conformity, nonconformity or insufficiently assessable result against the exact candidate and fixed artifacts, with supported deviations and evidence gaps visible. |
+| Later repair | Known artifact defects retained for separately authorized Apply against the adopted model. No repair or successful repair verification is implied by model completion. |
+
+The owner reviews and commits the chosen model and accounting through the normal adoption boundary, with known deviations retained in the handoff. Adoption neither changes a nonconforming Verify result to a pass nor accepts defective artifacts as correct. Do not weaken or delete a justified model rule, hide a finding, or change existing code, tests or documentation to manufacture conformity during Extract. Resolving a model question may refine the candidate; correcting an existing realization remains a separately authorized artifact operation.
 
 For the library example, an honest result can say: "Model proposal reviewed and ready for owner adoption. The existing realization admits a sixth loan against the five-loan rule; this deviation is retained. No material intent question remains. No artifact repair was performed." A later Apply can repair that deviation against the adopted model. Model adoption alone does not establish that the repair was executed or verified.
 

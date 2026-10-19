@@ -128,7 +128,7 @@ The cycle is **derive first structure -> form provisional Managers -> develop, r
 
 Keep the provisional Manager structure stable within each Extract round. Review and integrate structural corrections between rounds, carrying all findings, source and model references, and open questions to the resulting responsibilities. The [round-transition workflow](design/canonical-model/commands.md#keep-the-structure-stable-within-each-extract-round) preserves their status and traceability; an earlier positive assessment does not automatically approve the revised candidate.
 
-Existing artifacts stay unchanged during model derivation. A confirmed realization defect remains a defect against the justified model; rewriting intent to obtain a green Verify would defeat adoption. Known deviations and evidence gaps stay visible. Adopting a sound model with recorded deviations is distinct from passing Verify; subsequent authorized artifact repair is case 2.
+Existing artifacts stay unchanged during model derivation. A confirmed realization defect remains a defect against the justified model; rewriting intent to obtain a green Verify would defeat adoption. Essential unresolved model questions or evidence gaps preventing a sound model or assessment block completion for the affected scope. Known, evidenced artifact defects do not by themselves block a sound, reviewed model's readiness for adoption. Root reports [model completion, the actual Verify result and later repair separately](design/canonical-model/commands.md#completion-and-adoption-with-known-deviations), with remaining scope and questions visible. Subsequent authorized artifact repair is case 2.
 
 ### One organization, explicit scope
 
