@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 )
@@ -55,7 +56,7 @@ func (e *engine) scheduleLocked() {
 			continue
 		}
 		e.pruneLocked(m)
-		if len(m.items) == 0 {
+		if len(m.items) == 0 || e.buildWaitLocked(m) {
 			continue
 		}
 		// Keep room for the Verify round that follows this turn. An early turn
@@ -77,10 +78,41 @@ func (e *engine) scheduleLocked() {
 		m.running, m.ran, m.execUsed = true, true, true
 		ts := &turnState{m: m, kind: ExecuteTurn, id: fmt.Sprintf("%s-r%d-%s-x%d", e.cfg.RunID, e.execRound, m.slug, m.execCount), round: e.execRound}
 		turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "")}
+		if m.Write.Enforced {
+			turn.ReadOnly, turn.Mounts = !m.Write.Base, slices.Clone(m.Write.Mounts)
+		}
 		e.running++
 		e.wg.Add(1)
 		go e.executeTurn(m, ts, turn)
 	}
+}
+
+// buildWaitLocked reports whether the Manager's first Execute turn must wait
+// for its parent (starting situation 1, build from the model): both are
+// building, the parent has not ended its first Execute turn and is running or
+// has work. A parent without work never blocks its children. The wait is
+// recorded once.
+func (e *engine) buildWaitLocked(m *mgr) bool {
+	if !m.Building || m.execCount > 0 || m.Parent == "" {
+		return false
+	}
+	p := e.byPath[m.Parent]
+	if !p.Building || p.execEnded {
+		return false
+	}
+	e.pruneLocked(p)
+	// While the open round 1 Verify of the parent has not reported, it may still
+	// get work: its findings only exist after that turn. It never waits for
+	// Execute, so this cannot deadlock.
+	pending := !e.inPhase && e.rs != nil && !e.rs.assessed[p.Path]
+	if !p.running && len(p.items) == 0 && !pending {
+		return false
+	}
+	if !m.buildWaited {
+		m.buildWaited = true
+		_ = e.record(Event{Kind: "build.wait", Manager: m.Path, Round: e.execRound, Data: map[string]any{"parent": p.Path}})
+	}
+	return true
 }
 
 func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
@@ -88,7 +120,7 @@ func (e *engine) executeTurn(m *mgr, ts *turnState, turn Turn) {
 	res, err := e.runTurn(ts, turn, e.executeHandler(m, ts))
 	e.mu.Lock()
 	defer e.mu.Unlock()
-	m.running = false
+	m.running, m.execEnded = false, true
 	e.running--
 	if res.Conversation != "" {
 		m.conversation = res.Conversation

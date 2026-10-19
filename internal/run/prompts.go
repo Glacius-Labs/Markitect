@@ -49,6 +49,43 @@ func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
 	list(b, "Owner decisions (fixed for this run):", e.cfg.OwnerDecisions)
 }
 
+// buildNote tells a Manager of a build-from-the-model run that its area is
+// empty.
+func buildNote(m *mgr) string {
+	if m.Parent == "" {
+		return "Your area holds no artifacts yet: you build it from the model, starting with the project skeleton and the shared prerequisites your children build on."
+	}
+	return "Your area holds no artifacts yet: you build it from the model, on the foundations your parent supplies."
+}
+
+// writeNote states what an enforced write plan makes read-only in /work. An
+// unenforced plan, or one that restricts nothing, needs no note.
+func writeNote(plan WritePlan) string {
+	var writable, readOnly []string
+	for _, mount := range plan.Mounts {
+		if mount.Writable {
+			writable = append(writable, mount.Path)
+		} else {
+			readOnly = append(readOnly, mount.Path)
+		}
+	}
+	switch {
+	case !plan.Enforced:
+		return ""
+	case !plan.Base && len(writable) == 0:
+		return "Nothing in /work is writable for you: it is read-only and a write there fails. "
+	case !plan.Base:
+		note := "Outside your writable areas /work is read-only and a write there fails. Your writable areas: " + strings.Join(writable, ", ") + ". "
+		if len(readOnly) > 0 {
+			note += "Read-only even within them: " + strings.Join(readOnly, ", ") + ". "
+		}
+		return note
+	case len(readOnly) > 0:
+		return "These areas of /work are read-only and a write there fails: " + strings.Join(readOnly, ", ") + ". "
+	}
+	return ""
+}
+
 func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string {
 	var b strings.Builder
 	if !first {
@@ -70,7 +107,10 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)
-	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact.\n")
+	if m.Building {
+		b.WriteString("\n" + buildNote(m) + "\n")
+	}
+	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. " + writeNote(m.Write) + "Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact.\n")
 	list(&b, "Items:", items)
 	b.WriteString("\nWork on them. Use send to coordinate through your parent and children. Call finish when you are done or waiting.\n")
 	return b.String()

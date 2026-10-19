@@ -715,3 +715,206 @@ func TestWritesOutsideTheRunningManagersAreObserved(t *testing.T) {
 		t.Fatalf("observations %+v", obs)
 	}
 }
+
+// ownFindingInRoundOne makes every Manager's first Verify raise one blocking
+// finding for itself, so every Manager gets an Execute turn.
+func (c *call) ownFindingInRoundOne() bool {
+	if c.turn.Kind != VerifyTurn || c.round() != 1 {
+		return false
+	}
+	c.assess(false, []fnd{finding(c.turn.Manager, "own obligation of "+c.turn.Manager, true)})
+	return true
+}
+
+func TestEnforcedWritePlansSetMountsAndReadOnlyPerExecuteTurn(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.Team[0].Write = WritePlan{Enforced: true, Mounts: []PathMount{{Path: "tools", Writable: true}}}
+	f.cfg.Team[1].Write = WritePlan{Enforced: true, Base: true, Mounts: []PathMount{{Path: "lending/reminders", Writable: false}}}
+	f.cfg.Team[2].Write = WritePlan{Enforced: true, Mounts: []PathMount{{Path: "lending/reminders", Writable: true}}}
+	// An unenforced plan keeps the fully writable workspace and adds no directory.
+	f.cfg.Team[3].Write = WritePlan{Mounts: []PathMount{{Path: "ignored", Writable: true}}}
+	files := map[string]string{".": "tools/gen.go", "lending": "lending/n.go", "lending/reminders": "lending/reminders/n.go", "library": "library/n.go"}
+	f.agents.script = func(c *call) error {
+		if c.ownFindingInRoundOne() {
+			return nil
+		}
+		if c.turn.Kind == ExecuteTurn {
+			c.write(files[c.turn.Manager], "x")
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified || countKind(out, ExecuteTurn) != 4 {
+		t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
+	}
+	want := map[string]struct {
+		readOnly bool
+		mounts   []PathMount
+		note     string
+	}{
+		".":                 {true, []PathMount{{Path: "tools", Writable: true}}, "Outside your writable areas /work is read-only and a write there fails. Your writable areas: tools."},
+		"lending":           {false, []PathMount{{Path: "lending/reminders"}}, "These areas of /work are read-only and a write there fails: lending/reminders."},
+		"lending/reminders": {true, []PathMount{{Path: "lending/reminders", Writable: true}}, "Your writable areas: lending/reminders."},
+		"library":           {false, nil, ""},
+	}
+	for _, tr := range f.agents.turnsOf(ExecuteTurn) {
+		w := want[tr.Manager]
+		if tr.ReadOnly != w.readOnly || !slices.Equal(tr.Mounts, w.mounts) {
+			t.Errorf("%s: read-only %t mounts %v, want %t %v", tr.Manager, tr.ReadOnly, tr.Mounts, w.readOnly, w.mounts)
+		}
+		if w.note != "" {
+			contains(t, tr.Manager+" prompt", tr.Prompt, w.note, "/tmp")
+		} else if strings.Contains(tr.Prompt, "read-only") {
+			t.Errorf("unenforced prompt mentions read-only:\n%s", tr.Prompt)
+		}
+	}
+	for _, tr := range f.agents.turnsOf(VerifyTurn) {
+		if !tr.ReadOnly || len(tr.Mounts) != 0 {
+			t.Errorf("verify turn %s: read-only %t mounts %v", tr.ID, tr.ReadOnly, tr.Mounts)
+		}
+	}
+	if got := f.ws.dirs["run1-work"]; !slices.Equal(got, []string{"lending/reminders", "tools"}) {
+		t.Errorf("work volume directories %v", got)
+	}
+	for _, id := range []WorkspaceID{"run1-c0", "run1-c1"} {
+		if got := f.ws.dirs[id]; len(got) != 0 {
+			t.Errorf("candidate volume %s has directories %v", id, got)
+		}
+	}
+}
+
+func TestBuildOrderStartsChildrenAfterTheFirstTurnOfABuildingParent(t *testing.T) {
+	f := newFixture(t)
+	for _, i := range []int{0, 1, 2} { // library is not ordered behind anyone
+		f.cfg.Team[i].Building = true
+	}
+	var mu sync.Mutex
+	var log []string
+	note := func(s string) { mu.Lock(); log = append(log, s); mu.Unlock() }
+	libStarted := make(chan struct{})
+	f.agents.script = func(c *call) error {
+		if c.ownFindingInRoundOne() {
+			return nil
+		}
+		if c.turn.Kind != ExecuteTurn {
+			return c.defaultScript()
+		}
+		m := c.turn.Manager
+		note("start:" + m)
+		defer note("end:" + m)
+		switch m {
+		case "library":
+			close(libStarted)
+		case ".":
+			// The unordered sibling works while Root still builds the foundations.
+			if err := c.wait(libStarted); err != nil {
+				return err
+			}
+			time.Sleep(30 * time.Millisecond)
+		case "lending":
+			time.Sleep(30 * time.Millisecond)
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	before := func(a, b string) {
+		t.Helper()
+		if i, j := slices.Index(log, a), slices.Index(log, b); i < 0 || j < 0 || i > j {
+			t.Errorf("%s must come before %s: %v", a, b, log)
+		}
+	}
+	before("start:library", "end:.")
+	before("end:.", "start:lending")
+	before("end:lending", "start:lending/reminders")
+	waits := map[string]any{}
+	for _, w := range f.ev.kinds("build.wait") {
+		if _, dup := waits[w.Manager]; dup {
+			t.Errorf("wait of %s recorded twice", w.Manager)
+		}
+		data, _ := w.Data.(map[string]any)
+		waits[w.Manager] = data["parent"]
+	}
+	if len(waits) != 2 || waits["lending"] != "." || waits["lending/reminders"] != "lending" {
+		t.Fatalf("build.wait events %v", waits)
+	}
+	for _, tr := range f.agents.turnsOf(ExecuteTurn) {
+		prompt := f.agents.prompt(tr.ID)
+		switch tr.Manager {
+		case ".":
+			contains(t, "Root prompt", prompt, "Your area holds no artifacts yet", "project skeleton")
+		case "library":
+			if strings.Contains(prompt, "no artifacts yet") {
+				t.Errorf("a non-building Manager is told its area is empty:\n%s", prompt)
+			}
+		default:
+			contains(t, tr.Manager+" prompt", prompt, "Your area holds no artifacts yet", "foundations your parent supplies")
+		}
+	}
+}
+
+func TestBuildingParentWithoutWorkDoesNotBlockItsChildren(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.Team[0].Building, f.cfg.Team[1].Building = true, true
+	f.agents.script = func(c *call) error {
+		if c.is(1, "lending", VerifyTurn) {
+			c.assess(false, []fnd{finding("lending", "lending is built", true)})
+			return nil
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	var executed []string
+	for _, tr := range out.Turns {
+		if tr.Kind == ExecuteTurn {
+			executed = append(executed, tr.Manager)
+		}
+	}
+	if !slices.Equal(executed, []string{"lending"}) {
+		t.Fatalf("execute turns %v", executed)
+	}
+}
+
+func TestBuildOrderEndsWhenTheParentsFirstTurnFails(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.Team[0].Building, f.cfg.Team[1].Building = true, true
+	var rootFailed atomic.Bool
+	f.agents.script = func(c *call) error {
+		if c.ownFindingInRoundOne() {
+			return nil
+		}
+		switch {
+		case c.turn.Kind == ExecuteTurn && c.turn.Manager == ".":
+			if !rootFailed.Load() {
+				time.Sleep(30 * time.Millisecond)
+				rootFailed.Store(true)
+				return errTest
+			}
+		case c.turn.Kind == ExecuteTurn && c.turn.Manager == "lending":
+			if !rootFailed.Load() {
+				t.Error("lending started before the first turn of its building parent ended")
+			}
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	n := map[string]int{}
+	for _, tr := range out.Turns {
+		if tr.Kind == ExecuteTurn {
+			n[tr.Manager]++
+		}
+	}
+	if n["."] != 2 || n["lending"] != 1 {
+		t.Fatalf("execute turns %v", n)
+	}
+}
