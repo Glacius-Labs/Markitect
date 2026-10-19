@@ -272,6 +272,13 @@ func (e *Engine) RequireVolumeSubpaths(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	return RequireSubpathVersion(version)
+}
+
+// RequireSubpathVersion refuses a server version that cannot mount a directory
+// of a volume. It is RequireVolumeSubpaths for a caller that has read the
+// version already.
+func RequireSubpathVersion(version string) error {
 	digits, _, _ := strings.Cut(version, ".")
 	major, err := strconv.Atoi(digits)
 	if err != nil || major < 0 {

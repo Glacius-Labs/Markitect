@@ -16,10 +16,9 @@ import (
 )
 
 // Defaults of the setup flags. The engine default is the conventional Linux
-// Docker path; the model and effort are the owner's cheapest working choice.
+// Docker path. The product has no default model: the owner chooses it.
 const (
 	defaultSetupEngine = "/usr/bin/docker"
-	defaultSetupModel  = "claude-haiku-5-5"
 	defaultSetupEffort = "high"
 )
 
@@ -99,7 +98,7 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 	host := flags.String("host", "", "absolute Host directory to prepare")
 	image := flags.String("image", "", "runtime image reference")
 	credential := flags.String("credential", "", "absolute path of the private Claude runtime token file")
-	agentModel := flags.String("agent-model", defaultSetupModel, "model of every Agent profile")
+	agentModel := flags.String("agent-model", "", "model of every Agent profile (required)")
 	effort := flags.String("effort", defaultSetupEffort, "effort of every Agent profile")
 	engine := flags.String("engine", defaultSetupEngine, "absolute container engine executable")
 	store := flags.String("store", "", "store label (default: the model id)")
@@ -118,8 +117,8 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 		}
 		return 2
 	}
-	if flags.NArg() != 0 || *host == "" || *image == "" || *credential == "" {
-		fmt.Fprintln(stderr, "setup requires --host, --image and --credential; see help")
+	if flags.NArg() != 0 || *host == "" || *image == "" || *credential == "" || *agentModel == "" {
+		fmt.Fprintln(stderr, "setup requires --host, --image, --credential and --agent-model; see help")
 		return 2
 	}
 	for _, path := range []string{*host, *credential, *engine} {

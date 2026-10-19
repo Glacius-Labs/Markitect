@@ -31,10 +31,10 @@ const setupSentinel = "SENTINEL-TOKEN-0123456789-do-not-copy"
 // setupFake is the controlled engine: it records what setup asks and answers
 // with fixed image metadata. Nothing here starts a container.
 type setupFake struct {
-	paths   []string
-	refs    []string
-	version string
-	subpath error
+	paths        []string
+	refs         []string
+	version      string
+	versionCalls int
 }
 
 const setupMetadata = "codex=codex-cli 0.162.0\nclaude=2.1.301 (Claude Code)\ncodexSchema=" + bootstrapSchema + "\nagentd=agentd-setup-test\n"
@@ -55,24 +55,19 @@ func (f *setupFake) ObserveImageFileWithRequiredPaths(_ context.Context, id, fil
 	}
 	return container.ImageFileObservation{SHA256: sha256.Sum256([]byte("go")), Size: 2}, nil
 }
-func (f *setupFake) RequireVolumeSubpaths(context.Context) error { return f.subpath }
 func (f *setupFake) ServerVersion(context.Context) (string, error) {
+	f.versionCalls++
 	return f.version, nil
 }
 
-func installSetupFake(t *testing.T) *setupFake {
-	t.Helper()
-	fake := &setupFake{version: "27.3.1"}
-	previous := newSetupEngine
-	newSetupEngine = func(path string) (setupEngine, error) {
-		fake.paths = append(fake.paths, path)
-		return fake, nil
-	}
-	t.Cleanup(func() { newSetupEngine = previous })
-	return fake
+// engine is the engine factory that setup receives.
+func (f *setupFake) engine(path string) (setupEngine, error) {
+	f.paths = append(f.paths, path)
+	return f, nil
 }
 
 type setupFixture struct {
+	fake   *setupFake
 	repo   *testkit.Repo
 	host   string
 	token  string
@@ -84,18 +79,24 @@ func newSetupFixture(t *testing.T) setupFixture {
 	t.Helper()
 	repo := productFixture(t)
 	root := testkit.TempDir(t)
-	f := setupFixture{repo: repo, host: filepath.Join(root, "host"), token: filepath.Join(root, "token"), engine: filepath.Join(root, "docker")}
+	f := setupFixture{fake: &setupFake{version: "27.3.1"}, repo: repo, host: filepath.Join(root, "host"), token: filepath.Join(root, "token"), engine: filepath.Join(root, "docker")}
 	if err := os.WriteFile(f.token, []byte(setupSentinel), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	f.args = []string{"setup", "--repo", repo.Dir, "--host", f.host, "--image", "markitect-runtime:setup-test", "--credential", f.token, "--engine", f.engine, "--check", "go=/usr/local/go/bin/go"}
+	f.args = []string{"setup", "--repo", repo.Dir, "--host", f.host, "--image", "markitect-runtime:setup-test", "--credential", f.token, "--engine", f.engine, "--agent-model", "claude-haiku-5-5", "--check", "go=/usr/local/go/bin/go"}
 	return f
 }
 
 func (f setupFixture) run(t *testing.T, extra ...string) (code int, stdout, stderr string) {
 	t.Helper()
+	repository, err := gitrepo.New(gitrepo.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	preparation := apply.NewPreparationService(apply.NewModelService(repository, repository))
+	command := cli.New(preparation, nil, nil, repository, nil, nil, nil).WithSetup(newSetup(preparation, f.fake.engine).Setup)
 	var out, errout bytes.Buffer
-	code = Run(context.Background(), append(slices.Clone(f.args), extra...), &out, &errout)
+	code = command.Run(context.Background(), append(slices.Clone(f.args), extra...), &out, &errout)
 	return code, out.String(), errout.String()
 }
 
@@ -144,8 +145,8 @@ func mustPath(t *testing.T, s string) snapshot.Path {
 }
 
 func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
-	fake := installSetupFake(t)
 	f := newSetupFixture(t)
+	fake := f.fake
 
 	code, out, errout := f.run(t)
 	if code != 0 {
@@ -154,7 +155,7 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 	if strings.Contains(out, setupSentinel) || strings.Contains(errout, setupSentinel) {
 		t.Fatal("the credential bytes reached the output")
 	}
-	if len(fake.paths) != 1 || fake.paths[0] != f.engine || len(fake.refs) == 0 || fake.refs[0] != "markitect-runtime:setup-test" {
+	if fake.versionCalls != 1 || len(fake.paths) != 1 || fake.paths[0] != f.engine || len(fake.refs) == 0 || fake.refs[0] != "markitect-runtime:setup-test" {
 		t.Fatalf("engine or image reference not used as given: %v %v", fake.paths, fake.refs)
 	}
 	report := decodeSetupReport(t, out)
@@ -275,7 +276,6 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 }
 
 func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
-	installSetupFake(t)
 	f := newSetupFixture(t)
 	if code, out, errout := f.run(t); code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
@@ -390,11 +390,10 @@ func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
 }
 
 func TestSetupRefusesAnEngineWithoutVolumeSubpaths(t *testing.T) {
-	fake := installSetupFake(t)
-	fake.subpath = errors.New("Docker 25 is too old")
 	f := newSetupFixture(t)
+	f.fake.version = "25.0.5"
 	code, out, _ := f.run(t)
-	if code != 3 || !strings.Contains(out, "too old") {
+	if code != 3 || !strings.Contains(out, "require Docker 26") {
 		t.Fatalf("exit %d: %s", code, out)
 	}
 	if _, err := os.Stat(f.host); !os.IsNotExist(err) {
@@ -403,7 +402,6 @@ func TestSetupRefusesAnEngineWithoutVolumeSubpaths(t *testing.T) {
 }
 
 func TestSetupWritesOwnerDecisionsAndDeadlineOnlyWhenGiven(t *testing.T) {
-	installSetupFake(t)
 	f := newSetupFixture(t)
 	code, out, errout := f.run(t, "--request", "Apply the model.", "--decision", "Use euro.", "--decision", "No tabs.", "--deadline", "2030-01-02T03:04:05Z", "--store", "setup-store")
 	if code != 0 {
@@ -475,7 +473,6 @@ func replaceArg(args []string, from, to string) []string {
 }
 
 func TestSetupSelectsEveryProfileOfTheDefaultsAndPackageOverrides(t *testing.T) {
-	installSetupFake(t)
 	f := newSetupFixture(t)
 	execution, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "execution.yaml"))
 	if err != nil {
@@ -498,5 +495,41 @@ func TestSetupSelectsEveryProfileOfTheDefaultsAndPackageOverrides(t *testing.T) 
 	host, err := os.ReadFile(filepath.Join(f.host, "host.yaml"))
 	if err != nil || strings.Count(string(host), "claudeCode:") != 2 || strings.Count(string(host), "container:") != 1 {
 		t.Fatalf("%v\n%s", err, host)
+	}
+}
+
+func TestSetupRewritesOnlyTheFileWhoseBytesChange(t *testing.T) {
+	f := newSetupFixture(t)
+	code, out, errout := f.run(t)
+	if code != 0 {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
+	}
+	first := decodeSetupReport(t, out)
+	hostPath, configPath := filepath.Join(f.host, "host.yaml"), filepath.Join(f.host, "run.json")
+	oldHost, err := os.ReadFile(hostPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	oldConfig, err := os.ReadFile(configPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The model appears in host.yaml only, so only that file may change.
+	code, out, errout = f.run(t, "--agent-model", "claude-sonnet-5-5")
+	if code != 0 {
+		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
+	}
+	second := decodeSetupReport(t, out)
+	newHost, err := os.ReadFile(hostPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sum := sha256.Sum256(newHost)
+	if len(second.Files) != 2 || second.Files[0].Action != "written" || second.Files[0].SHA256 != hex.EncodeToString(sum[:]) || second.Files[0].SHA256 == first.Files[0].SHA256 || !bytes.Contains(newHost, []byte("model: claude-sonnet-5-5")) || bytes.Equal(newHost, oldHost) {
+		t.Fatalf("host.yaml was not rewritten with the new model: %+v", second.Files)
+	}
+	newConfig, err := os.ReadFile(configPath)
+	if err != nil || second.Files[1].Action != "unchanged" || second.Files[1].SHA256 != first.Files[1].SHA256 || !bytes.Equal(newConfig, oldConfig) {
+		t.Fatalf("run.json changed without a change of its inputs: %v %+v", err, second.Files)
 	}
 }

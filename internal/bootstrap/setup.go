@@ -26,17 +26,16 @@ const (
 
 // setupEngine is everything setup asks of the container engine: image
 // resolution and never-started image reads for the metadata preparation, the
-// engine's version and its volume-subpath support. *container.Engine implements
-// it; tests supply controlled fakes.
+// engine's version. *container.Engine implements it; tests supply controlled
+// fakes.
 type setupEngine interface {
 	claudecode.ImageReader
 	checks.ImageReader
-	RequireVolumeSubpaths(context.Context) error
 	ServerVersion(context.Context) (string, error)
 }
 
-// newSetupEngine binds the explicit engine executable.
-var newSetupEngine = func(path string) (setupEngine, error) { return container.NewEngine(path) }
+// containerSetupEngine binds the explicit engine executable.
+func containerSetupEngine(path string) (setupEngine, error) { return container.NewEngine(path) }
 
 // setupRefusal marks a known refusal of the invocation, as opposed to an
 // incomplete observation.
@@ -51,10 +50,11 @@ func refuse(format string, args ...any) error { return setupRefusal{fmt.Errorf(f
 // the engine adapter; it starts no container and reads no credential.
 type setupService struct {
 	preparation *apply.PreparationService
+	newEngine   func(path string) (setupEngine, error)
 }
 
-func newSetup(preparation *apply.PreparationService) *setupService {
-	return &setupService{preparation: preparation}
+func newSetup(preparation *apply.PreparationService, newEngine func(path string) (setupEngine, error)) *setupService {
+	return &setupService{preparation: preparation, newEngine: newEngine}
 }
 
 // Setup observes the engine and image, composes host.yaml and run.json, checks
@@ -69,17 +69,14 @@ func (s *setupService) Setup(ctx context.Context, request cli.SetupRequest) (rep
 			report.Status = model.Failed
 		}
 	}()
-	if s == nil || s.preparation == nil {
+	if s == nil || s.preparation == nil || s.newEngine == nil {
 		return report, errors.New("concrete setup composition is unavailable")
 	}
 	repository := request.Selection.Repository
 	if err := checkOutsideRepository(request.Host, repository, "the Host directory"); err != nil {
 		return report, err
 	}
-	stateDirectory := filepath.Join(request.Host, setupStateDir)
-	if err := checkStateOutsideRepository(stateDirectory, repository); err != nil {
-		return report, refuse("%v", err)
-	}
+	stateDirectory := filepath.Join(request.Host, setupStateDir) // inside the Host directory, so outside the repository as well
 	if err := checkCredentialFile(request.Credential, repository); err != nil {
 		return report, err
 	}
@@ -107,15 +104,15 @@ func (s *setupService) Setup(ctx context.Context, request cli.SetupRequest) (rep
 		return report, refuse("the store label %q is not a plain name; pass --store", store)
 	}
 
-	engine, err := newSetupEngine(request.Engine)
+	engine, err := s.newEngine(request.Engine)
 	if err != nil {
-		return report, err
-	}
-	if err := engine.RequireVolumeSubpaths(ctx); err != nil {
 		return report, err
 	}
 	engineVersion, err := engine.ServerVersion(ctx)
 	if err != nil {
+		return report, err
+	}
+	if err := container.RequireSubpathVersion(engineVersion); err != nil {
 		return report, err
 	}
 	observed, err := claudecode.ObserveRuntime(ctx, engine, request.Image)

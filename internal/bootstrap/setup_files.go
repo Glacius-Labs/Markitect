@@ -5,11 +5,9 @@ import (
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
-	"fmt"
 	"os"
 	"path/filepath"
 	"runtime"
-	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/claudecode"
@@ -52,13 +50,10 @@ func composeHostProfile(request cli.SetupRequest, selected selection, observed c
 		document.AgentProfiles[name] = map[string]claudecode.HostSection{"claudeCode": agent}
 	}
 	for _, name := range selected.checks {
-		section, err := checks.ContainerHostProfile{EngineExecutable: request.Engine, Profile: checks.ContainerProfile{
+		section := checks.ContainerHostProfile{EngineExecutable: request.Engine, Profile: checks.ContainerProfile{
 			ImageID: observed.ImageID, Executable: request.Checks[name],
 			Limits: runport.CheckLimits{MilliCPUs: 2000, MemoryBytes: 4 << 30, Processes: 1024}, MaxOutputBytes: 1 << 20,
 		}}.Section()
-		if err != nil {
-			return nil, fmt.Errorf("check profile %q: %w", name, err)
-		}
 		document.CheckProfiles[name] = map[string]checks.ContainerHostSection{"container": section}
 	}
 	var out bytes.Buffer
@@ -183,15 +178,8 @@ func observeSetupFile(path string) ([]byte, error) {
 	if err != nil {
 		return nil, err
 	}
-	if !info.Mode().IsRegular() || info.Size() > maxSetupFileBytes || strings.ContainsRune(path, 0) {
+	if !info.Mode().IsRegular() || info.Size() > maxSetupFileBytes {
 		return nil, refuse("%s exists and is not a regular file of plausible size", path)
 	}
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return nil, err
-	}
-	if data == nil {
-		data = []byte{}
-	}
-	return data, nil
+	return os.ReadFile(path)
 }

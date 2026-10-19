@@ -12,6 +12,10 @@ const defaultOwnerRequest = "Reconcile the repository with its canonical model."
 // runtime token; run.json maps it to the credential file.
 const setupCredentialRef = "markitect-claude-token"
 
+// runConfigDocument and workspaceHelperDocument exist beside runConfig because
+// container.ContainerSpec has no JSON tags and runConfig cannot omit the
+// optional keys ownerDecisions and deadline.
+//
 // runConfigDocument is the formatVersion 2 run configuration as setup writes
 // it. Its field names are those of the decoder's closed contract; the optional
 // ownerDecisions and deadline are omitted when absent, because the decoder

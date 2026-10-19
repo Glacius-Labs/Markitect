@@ -69,7 +69,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   extract [options]        derive a model candidate from the existing artifacts
   answer <question> --text ANSWER --run-config PATH
                             answer a question of the running Apply
-  setup --host DIR --image REF --credential FILE [options]
+  setup --host DIR --image REF --credential FILE --agent-model M [options]
                             prepare a Host directory with host.yaml and run.json
   version | licenses | help
 
@@ -130,7 +130,7 @@ setup options:
   --credential FILE        absolute private Claude runtime token file; checked, never read
   --check PROFILE=EXECUTABLE  absolute executable in the image for each check profile;
                            repeat, one per profile the project selects
-  --agent-model M          model of every Agent profile (default claude-haiku-5-5)
+  --agent-model M          model of every Agent profile, required (for example claude-haiku-5-5)
   --effort E               low, medium or high (default high)
   --engine PATH            container engine executable (default /usr/bin/docker)
   --store LABEL            repository identity and store label (default: the model id)

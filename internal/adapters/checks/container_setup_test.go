@@ -22,10 +22,7 @@ func setupContainerProfile(engine string) ContainerHostProfile {
 func TestContainerHostSectionRoundTripsThroughTheMetadataDecoder(t *testing.T) {
 	engine := filepath.Join(testkit.TempDir(t), "engine")
 	want := setupContainerProfile(engine)
-	section, err := want.Section()
-	if err != nil {
-		t.Fatal(err)
-	}
+	section := want.Section()
 	text, err := yaml.Marshal(section)
 	if err != nil {
 		t.Fatal(err)
@@ -46,24 +43,5 @@ func TestContainerHostSectionRoundTripsThroughTheMetadataDecoder(t *testing.T) {
 	wantProfile.ArgumentPrefix, wantProfile.Env = []string{}, []string{}
 	if !reflect.DeepEqual(got, wantProfile) {
 		t.Fatalf("decoded %+v\nwant %+v", got, wantProfile)
-	}
-}
-
-func TestContainerHostSectionRefusesInvalidProfiles(t *testing.T) {
-	engine := filepath.Join(testkit.TempDir(t), "engine")
-	for name, change := range map[string]func(*ContainerHostProfile){
-		"engine":     func(p *ContainerHostProfile) { p.EngineExecutable = "docker" },
-		"image":      func(p *ContainerHostProfile) { p.Profile.ImageID = "go:latest" },
-		"executable": func(p *ContainerHostProfile) { p.Profile.Executable = "go" },
-		"unclean":    func(p *ContainerHostProfile) { p.Profile.Executable = "/usr/../bin/go" },
-		"limits":     func(p *ContainerHostProfile) { p.Profile.Limits.Processes = 0 },
-		"output":     func(p *ContainerHostProfile) { p.Profile.MaxOutputBytes = 0 },
-		"env":        func(p *ContainerHostProfile) { p.Profile.Env = []string{"NOEQUALS"} },
-	} {
-		p := setupContainerProfile(engine)
-		change(&p)
-		if _, err := p.Section(); err == nil {
-			t.Errorf("%s accepted", name)
-		}
 	}
 }

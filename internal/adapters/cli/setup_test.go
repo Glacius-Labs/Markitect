@@ -15,7 +15,7 @@ func setupArgs(t *testing.T) (host, credential string, args []string) {
 	t.Helper()
 	root := t.TempDir()
 	host, credential = filepath.Join(root, "host"), filepath.Join(root, "token")
-	return host, credential, []string{"setup", "--repo", filepath.Join(root, "repo"), "--host", host, "--image", "runtime:1", "--credential", credential, "--engine", filepath.Join(root, "docker")}
+	return host, credential, []string{"setup", "--repo", filepath.Join(root, "repo"), "--host", host, "--image", "runtime:1", "--credential", credential, "--engine", filepath.Join(root, "docker"), "--agent-model", "claude-haiku-5-5"}
 }
 
 func runSetup(c *Command, args ...string) (code int, stdout, stderr string) {
@@ -55,7 +55,8 @@ func TestSetupRefusesInvalidInvocationsBeforeAnyEffect(t *testing.T) {
 		return SetupReport{}, nil
 	})
 	for name, bad := range map[string][]string{
-		"no host":          {"setup", "--image", "i", "--credential", "/abs"},
+		"no host":          {"setup", "--image", "i", "--credential", "/abs", "--agent-model", "m"},
+		"no model":         withoutFlag(args, "--agent-model"),
 		"relative host":    append(append([]string{}, args...), "--host", "relative"),
 		"relative token":   append(append([]string{}, args...), "--credential", "token"),
 		"relative engine":  append(append([]string{}, args...), "--engine", "docker"),
@@ -97,4 +98,16 @@ func TestApplyCommandQuotesOnlyWhatTheShellNeeds(t *testing.T) {
 	if !strings.Contains(custom, "--model m/model.yaml --dependency /d/model.yaml") || !strings.Contains(custom, "h x/host.yaml") || strings.Count(custom, "h x") != 2 || strings.Contains(custom, "--host-profile /h x") {
 		t.Fatal(custom)
 	}
+}
+
+func withoutFlag(args []string, flag string) []string {
+	var out []string
+	for i := 0; i < len(args); i++ {
+		if args[i] == flag {
+			i++
+			continue
+		}
+		out = append(out, args[i])
+	}
+	return out
 }
