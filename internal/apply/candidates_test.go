@@ -518,7 +518,7 @@ func TestCandidatesWithoutLayoutEnforceNothing(t *testing.T) {
 }
 
 func TestCandidatesMountOnlyDirectoryExceptions(t *testing.T) {
-	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML+"    - path: realization/lending/Makefile\n      kind: file\n      owner: library\n      reason: The library build file lives with lending.\n"))
+	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML+"    - path: realization/lending/Makefile\n      kind: file\n      owner: .\n      reason: The build file lives with lending.\n"))
 	libraryLayoutFiles(t, &selection, &raw)
 	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
 	if err != nil {
@@ -533,7 +533,7 @@ func TestCandidatesMountOnlyDirectoryExceptions(t *testing.T) {
 			}
 		}
 	}
-	if owner := candidates.OwnerOf(path(t, "realization/lending/Makefile")); owner != "library" {
+	if owner := candidates.OwnerOf(path(t, "realization/lending/Makefile")); owner != "." {
 		t.Errorf("owner of the file exception %q", owner)
 	}
 }

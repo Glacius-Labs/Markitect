@@ -149,7 +149,7 @@ func TestExecutionLayoutRefusals(t *testing.T) {
 }
 
 func TestExecutionLayoutExceptionKind(t *testing.T) {
-	result := executionResult(t, withLayout(t, libraryLayoutYAML+"    - path: realization/lending/Makefile\n      kind: file\n      owner: library\n      reason: The Makefile is shared.\n"))
+	result := executionResult(t, withLayout(t, libraryLayoutYAML+"    - path: realization/lending/Makefile\n      kind: file\n      owner: .\n      reason: The Makefile is shared.\n"))
 	document, ok := result.Document()
 	if !ok || document.Layout == nil || len(document.Layout.Exceptions) != 2 {
 		t.Fatalf("layout failed: %s %+v", result.Status(), result.Diagnostics())
@@ -161,8 +161,19 @@ func TestExecutionLayoutExceptionKind(t *testing.T) {
 		t.Errorf("kind or its source changed: %+v", kind)
 	}
 	for _, kind := range []string{"directory", "file"} {
-		if executionResult(t, withLayout(t, "layout:\n  roots: []\n  exceptions:\n    - {path: realization/a, kind: "+kind+", owner: library, reason: Why.}\n")).Status() == model.Failed {
+		if executionResult(t, withLayout(t, "layout:\n  roots: []\n  exceptions:\n    - {path: realization/a, kind: "+kind+", owner: ., reason: Why.}\n")).Status() == model.Failed {
 			t.Errorf("kind %s refused", kind)
+		}
+	}
+	// A Package cannot own a file exception: under a layout its base is read-only
+	// and a file cannot be mounted. Preparation refuses it; a directory is fine.
+	refused := executionResult(t, withLayout(t, "layout:\n  roots: []\n  exceptions:\n    - {path: realization/a, kind: file, owner: library, reason: Why.}\n"))
+	if _, ok := refused.Document(); ok || refused.Status() != model.Failed || !executionDiagnostic(refused.Diagnostics(), "execution.layout") {
+		t.Errorf("a file exception owned by a Package was accepted: %s %+v", refused.Status(), refused.Diagnostics())
+	}
+	for _, d := range refused.Diagnostics() {
+		if !strings.Contains(d.Message, "only Root can own a file exception") || !strings.Contains(d.Message, "use a directory exception") {
+			t.Errorf("unclear diagnostic %q", d.Message)
 		}
 	}
 	for _, kind := range []string{"folder", "''", "[file]"} {

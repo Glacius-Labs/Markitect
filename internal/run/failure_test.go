@@ -222,13 +222,21 @@ func TestTurnAndRoundBudgetsEndIncomplete(t *testing.T) {
 			case c.is(1, "lending", VerifyTurn):
 				c.assess(false, []fnd{finding("lending", "b", true)})
 				return nil
+			case c.is(2, "library", VerifyTurn):
+				c.assess(false, nil) // keeps its finding open
+				return nil
 			}
 			return c.defaultScript()
 		}
 		out := f.run()
-		// Four Execute and four Verify turns, then room for one repair turn only.
-		if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || len(out.Turns) != 9 || countKind(out, ExecuteTurn) != 5 {
+		// Round 1 takes eight turns. The repair phase has room for one Execute turn
+		// beside a whole Verify round: lending repairs, the library is refused, round
+		// 2 verifies and is not green, and no further Execute turn fits.
+		if out.Status != Incomplete || !strings.Contains(out.Reason, "budget") || len(out.Turns) != 13 || countKind(out, ExecuteTurn) != 5 || len(out.Rounds) != 2 || f.ws.harvests != 2 {
 			t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
+		}
+		if executeTurnsOf(out, "lending", 2) != 1 || executeTurnsOf(out, "library", 2) != 0 || f.ev.count("execute.budget_limit") != 2 {
+			t.Fatalf("%v %d limit events", turnIDs(out), f.ev.count("execute.budget_limit"))
 		}
 	})
 	t.Run("rounds end without green", func(t *testing.T) {
@@ -266,7 +274,7 @@ func TestTurnAndRoundBudgetsEndIncomplete(t *testing.T) {
 	})
 }
 
-func TestExecuteTurnsKeepRoomForTheClosingVerifyRound(t *testing.T) {
+func TestBudgetLimitLeadsToCaptureAndVerifyNotToAHalt(t *testing.T) {
 	f := newFixture(t)
 	f.agents.quiet = true
 	f.cfg.Budget.AgentTurns = 10
@@ -284,8 +292,44 @@ func TestExecuteTurnsKeepRoomForTheClosingVerifyRound(t *testing.T) {
 		return c.defaultScript()
 	}
 	out := f.run()
-	if out.Status != Incomplete || !strings.Contains(out.Reason, "cannot cover another Execute turn and a closing Verify round") || len(out.Turns) != 6 || countKind(out, VerifyTurn) != 0 || f.ws.harvests != 0 {
+	// The refused turns' pending items do not keep the phase open: the stand is
+	// captured and the reserved turns run the Verify round, which is green.
+	if out.Status != Verified || countKind(out, ExecuteTurn) != 6 || countKind(out, VerifyTurn) != 4 || f.ws.harvests != 1 || len(out.Rounds) != 1 || !out.Rounds[0].Green {
 		t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
+	}
+	if limits := f.ev.kinds("execute.budget_limit"); len(limits) != 1 || limits[0].Round != 1 {
+		t.Fatalf("budget limit events %+v", limits)
+	}
+}
+
+func TestReserveKeepsTheFirstTurnOfAnUnreleasedChild(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.Budget.AgentTurns = 8
+	libraryReported := make(chan struct{})
+	f.ev.onRecord = func(e Event) {
+		if e.Kind == "child.report" && e.Manager == "library" {
+			close(libraryReported)
+		}
+	}
+	f.agents.script = func(c *call) error {
+		if c.is(1, "lending", ExecuteTurn) {
+			// Lending's first turn runs until the library's report reached Root, so
+			// that lending/reminders is not released yet.
+			if err := c.wait(libraryReported); err != nil {
+				return err
+			}
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	// The library's report would give Root a second turn, which would take the
+	// budget of lending/reminders' first turn: it is refused, and the run stays
+	// within eight turns and is Verified.
+	if out.Status != Verified || executeTurnsOf(out, ".", 1) != 1 || executeTurnsOf(out, "lending/reminders", 1) != 1 || countKind(out, VerifyTurn) != 4 {
+		t.Fatalf("%s %s %v", out.Status, out.Reason, turnIDs(out))
+	}
+	if limits := f.ev.kinds("execute.budget_limit"); len(limits) != 1 || limits[0].Manager != "." {
+		t.Fatalf("budget limit events %+v", limits)
 	}
 }
 

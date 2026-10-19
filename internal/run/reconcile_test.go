@@ -238,7 +238,7 @@ func TestChildrenStartAfterTheirParentsFirstTurnAndSiblingsRunInParallel(t *test
 	// The initial item tells a parent to supply its children's foundation and a
 	// child that its parent's foundation is in place; queued messages follow it.
 	rootPrompt := f.agents.prompt("run1-r1-root-x1")
-	contains(t, "Root prompt", rootPrompt, mandate, "Carry out your responsibility now", "Your children start when this turn ends", "first supply, within your own area, the foundation they need")
+	contains(t, "Root prompt", rootPrompt, mandate, "Carry out your responsibility now", "Your children start when this turn ends", "First establish, within your own area, the foundation they need", "assess it against the model and your children's known needs", "the concrete basis they can use")
 	if strings.Contains(rootPrompt, "Your parent's foundation") {
 		t.Errorf("Root has no parent:\n%s", rootPrompt)
 	}
@@ -377,10 +377,14 @@ func TestFindingsDriveParallelRepairCaptureAndGreen(t *testing.T) {
 			t.Errorf("candidate lacks %s", p)
 		}
 	}
-	// The repair phase runs the two owners only: the library finished without a
-	// finish call and reminders waited, so neither reported done to a parent.
-	if executeTurnsOf(out, "library", 2) != 1 || executeTurnsOf(out, "lending/reminders", 2) != 1 || executeTurnsOf(out, "lending", 2) != 0 || executeTurnsOf(out, ".", 2) != 0 {
+	// The repair phase runs the two owners and Root: the library ended without a
+	// finish call, which counts as done and reports to Root, while reminders
+	// waited and reported nothing to lending.
+	if executeTurnsOf(out, "library", 2) != 1 || executeTurnsOf(out, "lending/reminders", 2) != 1 || executeTurnsOf(out, "lending", 2) != 0 || executeTurnsOf(out, ".", 2) != 1 {
 		t.Fatalf("turns %v", turnIDs(out))
+	}
+	if prompt := f.agents.prompt("run1-r2-root-x5"); !strings.Contains(prompt, "library (program) reports done: no summary was given") {
+		t.Errorf("Root's repair prompt %q", prompt)
 	}
 	if len(out.Rounds) != 2 || out.Rounds[0].Green || !out.Rounds[1].Green {
 		t.Fatalf("rounds %+v", out.Rounds)
@@ -410,6 +414,10 @@ func TestFindingsDriveParallelRepairCaptureAndGreen(t *testing.T) {
 				t.Errorf("first turn %+v", tr)
 			}
 		case strings.HasPrefix(tr.ID, "run1-r2-"):
+			if tr.Manager == "." {
+				contains(t, "Root's report prompt", tr.Prompt, "You continue", "reports done")
+				continue
+			}
 			contains(t, "repair prompt", tr.Prompt, "You continue", "Finding F")
 			if !strings.HasSuffix(tr.ID, "-x2") {
 				t.Errorf("repair turn %+v", tr)
@@ -992,5 +1000,25 @@ func TestWriteNoteNamesReadOnlyMountsAndTheWritableOverlaysInsideThem(t *testing
 		"Writable again within them: .markitect/registry")
 	if got := writeNote(WritePlan{Enforced: true, Base: true, Mounts: []PathMount{{Path: "a"}}}); strings.Contains(got, "Writable again") {
 		t.Errorf("no writable overlay to name: %q", got)
+	}
+}
+
+func TestChildTurnWithoutFinishReportsDoneToItsParent(t *testing.T) {
+	f := newFixture(t)
+	f.agents.quiet = true
+	f.agents.script = func(c *call) error {
+		if c.is(1, "lending/reminders", ExecuteTurn) {
+			return nil // no finish call
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	contains(t, "lending's report prompt", f.agents.prompt("run1-r1-lending-x2"), "Your child lending/reminders (overdue notices) reports done: no summary was given")
+	reports := f.ev.kinds("child.report")
+	if len(reports) != 1 || reports[0].Manager != "lending/reminders" {
+		t.Fatalf("child.report events %+v", reports)
 	}
 }
