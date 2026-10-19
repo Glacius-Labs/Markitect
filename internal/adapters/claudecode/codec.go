@@ -1,5 +1,5 @@
 // Package claudecode contains the selected Claude Code 2.1.301 wire codec
-// and an admitted single-step container session adapter.
+// and its use by the run.Agents turn adapter.
 package claudecode
 
 import (

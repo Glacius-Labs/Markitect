@@ -3,7 +3,7 @@ artifacts:
   - path: "internal/adapters/claudecode/README.md"
     form: doc
     realizes: [product/ports-and-adapters]
-    why: Documents the selected pinned Claude wire shapes, provenance and source-only evidence limits.
+    why: Documents the turn adapter, the selected pinned Claude wire shapes, provenance and source-only evidence limits.
   - path: "internal/adapters/claudecode/metadata.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
@@ -28,14 +28,6 @@ artifacts:
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
     why: Distinguishes malformed metadata, closed fields and captured-only instruction requests.
-  - path: "internal/adapters/claudecode/execution_profile.go"
-    form: code
-    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
-    why: Projects complete prepared Claude settings into the existing session payload with the actual read-only tool intersection.
-  - path: "internal/adapters/claudecode/execution_profile_test.go"
-    form: test
-    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
-    why: Distinguishes source and provider binding, explicit settings and read-only projection without mutating the writing profile.
   - path: "internal/adapters/claudecode/codec.go"
     form: code
     realizes: [product/ports-and-adapters]
@@ -48,26 +40,30 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Distinguishes framing limits, identity preservation, control acknowledgments and independent result statuses.
-  - path: "internal/adapters/claudecode/session.go"
+  - path: "internal/adapters/claudecode/profile.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Validates the closed Claude Profile and projects complete prepared settings into it.
+  - path: "internal/adapters/claudecode/profile_test.go"
+    form: test
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Distinguishes source and provider binding, explicit settings and strict profile validation.
+  - path: "internal/adapters/claudecode/agents.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Implements admitted single-step Claude readiness, acknowledged transport and actual exit observation through the existing runtime.
-  - path: "internal/adapters/claudecode/session_profile.go"
-    form: code
-    realizes: [product/ports-and-adapters]
-    why: Validates exact admitted Claude profile and tool bytes and resolves only an explicit dedicated runtime token.
-  - path: "internal/adapters/claudecode/session_step.go"
-    form: code
-    realizes: [product/ports-and-adapters]
-    why: Binds actual init identity and the exclusive single-step channel, returns acknowledged Host answers and projects only the admitted step's catalogue.
-  - path: "internal/adapters/claudecode/session_test.go"
+    why: Implements run.Agents: one Claude turn per container with Host tool answers, usage and an observed stop.
+  - path: "internal/adapters/claudecode/agents_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: Distinguishes fake lifecycle, native versus adapter identity, permits, append failures, no replay, credentials and stop uncertainty.
-  - path: "internal/adapters/claudecode/session_smoke_test.go"
+    why: Distinguishes fake turn spec, invocation, tool round trips, timeout, cancellation, uncertain stop and validation.
+  - path: "internal/adapters/claudecode/transcript.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Writes the redacted JSON Lines turn transcript and keeps the runtime token out of every output.
+  - path: "internal/adapters/claudecode/agents_smoke_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: Prepares an explicitly opted-in actual Session adapter smoke with source-bound inputs, acknowledged Host calls, manager continuity and fresh read-only review; runtime evidence remains unexecuted.
+    why: Prepares an explicitly opted-in real read-only turn with one Host tool; runtime evidence remains unexecuted.
   - path: "internal/adapters/codexappserver/README.md"
     form: doc
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]

@@ -2,7 +2,7 @@ package claudecode
 
 import (
 	"context"
-	"encoding/json"
+	"math"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -57,29 +57,20 @@ func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
 	if prepared.Observation().Contract.Version != 1 || prepared.Observation().Status != model.Passed || len(prepared.Observation().Instructions) != 2 {
 		t.Fatal(prepared.Observation())
 	}
-	want := SessionProfile{Version: 1, Model: "explicitly-selected-model", Effort: "high", SystemPrompt: "Literal ${NO_EXPANSION}\n", BuiltinTools: []string{"Read", "Write"}, Store: "explicit-store", CPUs: 1.5, MemoryBytes: 2147483648, Pids: 192, TmpBytes: 2097152, Network: ""}
-	wantPayload, err := NewSessionProfile(want)
-	if err != nil {
-		t.Fatal(err)
-	}
+	want := Profile{ImageID: fixtureImage, CredentialRef: "exact-runtime-credential", MaxWireBytes: 1 << 20, Session: SessionProfile{Version: 1, Model: "explicitly-selected-model", Effort: "high", SystemPrompt: "Literal ${NO_EXPANSION}\n", BuiltinTools: []string{"Read", "Write"}, Store: "explicit-store", CPUs: 1.5, MemoryBytes: 2147483648, Pids: 192, TmpBytes: 2097152, Network: ""}}
 	calls := append([]string(nil), fake.calls...)
-	payload, credential, wire, err := SessionProfileFromPrepared(prepared, false)
-	if err != nil || payload.Ref() != wantPayload.Ref() || string(payload.Bytes()) != string(wantPayload.Bytes()) || credential != "exact-runtime-credential" || wire != 1<<20 {
-		t.Fatalf("projection: %v %s %q %d", err, payload.Bytes(), credential, wire)
-	}
-	var actual SessionProfile
-	if err := json.Unmarshal(payload.Bytes(), &actual); err != nil || !reflect.DeepEqual(actual, want) {
-		t.Fatalf("constructor roundtrip: %v %+v", err, actual)
+	got, err := ProfileFromPrepared(prepared)
+	if err != nil || !reflect.DeepEqual(got, want) {
+		t.Fatalf("projection: %v %+v", err, got)
 	}
 	// Projection has no runtime/resolver seam and never revisits the fake reader.
 	if !reflect.DeepEqual(fake.calls, calls) {
 		t.Fatal("projection repeated acquisition", fake.calls)
 	}
-	copyBytes := payload.Bytes()
-	copyBytes[0] = '!'
-	again, _, _, err := SessionProfileFromPrepared(prepared, false)
-	if err != nil || again.Ref() != wantPayload.Ref() {
-		t.Fatal("returned bytes changed captured settings", err)
+	got.Session.BuiltinTools[0] = "changed"
+	again, err := ProfileFromPrepared(prepared)
+	if err != nil || !reflect.DeepEqual(again, want) {
+		t.Fatal("returned values changed captured settings", err)
 	}
 }
 
@@ -100,14 +91,14 @@ func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
 	cached := prepare(changed, captureProfile(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
 		return first.Observation(), nil
 	}))
-	if _, _, _, err := SessionProfileFromPrepared(cached, false); err == nil {
+	if _, err := ProfileFromPrepared(cached); err == nil {
 		t.Fatal("accepted another source request's metadata")
 	}
 }
 
 func TestExecutionProfileRefusesIncompleteOrForeignEvidence(t *testing.T) {
 	engine := filepath.Join(t.TempDir(), "engine")
-	if _, _, _, err := SessionProfileFromPrepared(apply.PreparedProfile{}, false); err == nil {
+	if _, err := ProfileFromPrepared(apply.PreparedProfile{}); err == nil {
 		t.Fatal("accepted missing prepared profile")
 	}
 	for _, scenario := range []string{"contract", "provider", "image", "CLI", "agentd", "schema", "instructions", "incomplete", "binding"} {
@@ -138,7 +129,7 @@ func TestExecutionProfileRefusesIncompleteOrForeignEvidence(t *testing.T) {
 				return o, err
 			})
 			prepared := preparedExecution(t, executionHostProfile(engine), port)
-			if payload, credential, wire, err := SessionProfileFromPrepared(prepared, false); err == nil || payload.Valid() || credential != "" || wire != 0 {
+			if got, err := ProfileFromPrepared(prepared); err == nil || !reflect.DeepEqual(got, Profile{}) {
 				t.Fatalf("accepted %s evidence or leaked partial projection: %v", scenario, err)
 			}
 		})
@@ -153,7 +144,7 @@ func TestExecutionProfileInvalidSettingsRefuseBeforeImageAcquisition(t *testing.
 		{"missing model", "  model: explicitly-selected-model\n", ""},
 		{"missing tools", "  builtinTools: [Read, Write]\n", ""},
 		{"duplicate tools", "builtinTools: [Read, Write]", "builtinTools: [Read, Read]"},
-		{"unknown tool", "builtinTools: [Read, Write]", "builtinTools: [Bash]"},
+		{"unknown tool", "builtinTools: [Read, Write]", "builtinTools: [Task]"},
 		{"unsupported host version", "profileVersion: 1", "profileVersion: 3"},
 		{"invalid effort", "effort: high", "effort: max"},
 		{"wire too large", "maxWireBytes: 1048576", "maxWireBytes: 1048577"},
@@ -172,38 +163,70 @@ func TestExecutionProfileInvalidSettingsRefuseBeforeImageAcquisition(t *testing.
 			if prepared.Observation().Status != model.Failed || calls != 0 {
 				t.Fatal("invalid execution settings reached image reader", calls, prepared.Observation())
 			}
-			if _, _, _, err := SessionProfileFromPrepared(prepared, false); err == nil {
+			if _, err := ProfileFromPrepared(prepared); err == nil {
 				t.Fatal("projected invalid execution settings")
 			}
 		})
 	}
 }
 
-func TestReadOnlyProjectionIntersectsConfiguredToolsWithoutMutation(t *testing.T) {
+func TestProfileProjectsAnyDistinctBuiltinSubsetAndEffort(t *testing.T) {
 	for _, tc := range []struct {
-		configured       string
-		writing, reading []string
+		tools  string
+		effort string
+		want   []string
 	}{
-		{"[Read, Write]", []string{"Read", "Write"}, []string{"Read"}},
-		{"[Write]", []string{"Write"}, []string{}},
-		{"[]", []string{}, []string{}},
+		{"[Read, Write, Edit, Glob, Grep, Bash]", "low", []string{"Read", "Write", "Edit", "Glob", "Grep", "Bash"}},
+		{"[Bash, Grep]", "medium", []string{"Bash", "Grep"}},
+		{"[]", "high", []string{}},
 	} {
-		t.Run(tc.configured, func(t *testing.T) {
-			inline := strings.Replace(imageProfile(filepath.Join(t.TempDir(), "engine")), "[Read, Write]", tc.configured, 1)
-			prepared := preparedExecution(t, inline, imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}))
-			for _, readOnly := range []bool{false, true, false} {
-				payload, _, _, err := SessionProfileFromPrepared(prepared, readOnly)
-				var got SessionProfile
-				if err != nil || json.Unmarshal(payload.Bytes(), &got) != nil {
-					t.Fatal(err)
-				}
-				want := tc.writing
-				if readOnly {
-					want = tc.reading
-				}
-				if !reflect.DeepEqual(got.BuiltinTools, want) {
-					t.Fatalf("readOnly=%v got %v want %v", readOnly, got.BuiltinTools, want)
-				}
+		t.Run(tc.tools, func(t *testing.T) {
+			inline := strings.Replace(imageProfile(filepath.Join(t.TempDir(), "engine")), "builtinTools: [Read, Write]", "builtinTools: "+tc.tools, 1)
+			inline = strings.Replace(inline, "effort: high", "effort: "+tc.effort, 1)
+			got, err := ProfileFromPrepared(preparedExecution(t, inline, imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)})))
+			if err != nil || !reflect.DeepEqual(got.Session.BuiltinTools, tc.want) || got.Session.Effort != tc.effort {
+				t.Fatalf("got %+v: %v", got.Session, err)
+			}
+		})
+	}
+}
+
+func validProfile() Profile {
+	return Profile{ImageID: fixtureImage, CredentialRef: "ref", MaxWireBytes: 1 << 20, Session: SessionProfile{Version: 1, Model: "m", Effort: "high",
+		SystemPrompt: "Use the Host instruction.", BuiltinTools: []string{"Read", "Write", "Edit"}, Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}}
+}
+
+func TestProfileValidationIsStrict(t *testing.T) {
+	if err := validProfile().validate(); err != nil {
+		t.Fatal(err)
+	}
+	for name, mutate := range map[string]func(*Profile){
+		"image tag":       func(p *Profile) { p.ImageID = "runtime:latest" },
+		"credential":      func(p *Profile) { p.CredentialRef = "" },
+		"wire zero":       func(p *Profile) { p.MaxWireBytes = 0 },
+		"wire large":      func(p *Profile) { p.MaxWireBytes = maxLineBytes + 1 },
+		"version":         func(p *Profile) { p.Session.Version = 0 },
+		"model":           func(p *Profile) { p.Session.Model = " " },
+		"model utf8":      func(p *Profile) { p.Session.Model = string([]byte{0xff}) },
+		"effort":          func(p *Profile) { p.Session.Effort = "max" },
+		"effort empty":    func(p *Profile) { p.Session.Effort = "" },
+		"system prompt":   func(p *Profile) { p.Session.SystemPrompt = "\t" },
+		"absent builtins": func(p *Profile) { p.Session.BuiltinTools = nil },
+		"unknown builtin": func(p *Profile) { p.Session.BuiltinTools = []string{"WebFetch"} },
+		"duplicate":       func(p *Profile) { p.Session.BuiltinTools = []string{"Bash", "Bash"} },
+		"store":           func(p *Profile) { p.Session.Store = "" },
+		"cpus":            func(p *Profile) { p.Session.CPUs = math.NaN() },
+		"memory":          func(p *Profile) { p.Session.MemoryBytes = 0 },
+		"pids":            func(p *Profile) { p.Session.Pids = 0 },
+		"tmp":             func(p *Profile) { p.Session.TmpBytes = 0 },
+		"host network":    func(p *Profile) { p.Session.Network = "host" },
+		"network name":    func(p *Profile) { p.Session.Network = "-bad" },
+	} {
+		t.Run(name, func(t *testing.T) {
+			p := validProfile()
+			mutate(&p)
+			if err := p.validate(); err == nil {
+				t.Fatal("accepted")
 			}
 		})
 	}
@@ -240,7 +263,7 @@ func TestClaudeSectionIsRequiredBeforeAcquisitionAndProjection(t *testing.T) {
 	if _, ok := prepared.Identity(); !ok {
 		t.Fatal("expected complete foreign evidence", prepared.Observation())
 	}
-	if _, _, _, err := SessionProfileFromPrepared(prepared, true); err == nil {
+	if _, err := ProfileFromPrepared(prepared); err == nil {
 		t.Fatal("projected a foreign section")
 	}
 }
