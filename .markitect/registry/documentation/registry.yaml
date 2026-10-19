@@ -1764,6 +1764,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/recursive-apply-demonstration-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the evidence and final assessment of the recursive Apply implementation and its real library demonstration.
   - path: "docs/validation/runtime-capabilities-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
