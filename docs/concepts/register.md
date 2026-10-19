@@ -74,6 +74,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implemented (PR #472) |
 | [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implemented |
 | [DEC-061](#dec-061-what-an-extracted-model-contains) | Decision | What an extracted model contains | Accepted; implemented |
+| [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Accepted; implemented |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -732,6 +733,13 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Binding versus realization choice:** A statement is binding when it is observable at the project's boundary (its interfaces, inputs and outputs, and the behavior a user or caller can see) or when the artifacts document it explicitly as intended (for example a README rule or a recorded decision). Internal structure, names, wiring, data structures and the order of internal steps are realization choices unless the artifacts document them as intended. The model can name such a choice as free, but does not make it binding.
 - **Proposed checks:** Extract may propose required checks derived from documented build and test commands. They are a proposal for the owner's adoption and are not active before it.
 - **Consequence:** These criteria guide authoring and the independent model review alike. They refine [DEC-057](#dec-057-three-fundamental-starting-situations)'s Extract without changing its process, completion or adoption boundary.
+
+### DEC-062 Start-stand drift is the owner's first work
+
+- **Status:** Accepted, owner, 19 October 2026, after a drift scenario stopped in preparation ([verbatim owner source](sources/start-stand-drift-20261019.md)). Implemented in Apply's preparation and engine ([runtime contract](../design/canonical-model/manager-apply-runtime.md#candidate-accounting-and-protected-inputs)).
+- **Decision:** Accounting drift of the committed starting stand that a Manager can repair in its own area and registry shard no longer refuses Apply under a declared layout, which names that Manager. Without a layout no Manager owns such a file, and preparation still refuses. Examples are a file that no shard registers, a registration of a missing file or of an unknown Definition, and a registration outside the registrant's area. Each finding reaches the owning Manager as part of its first Execute work, as DEC-058's "correct deviations within its authority" says. The usual whole-candidate Verify then confirms the repair.
+- **Still refused:** control faults that no Manager can repair: an invalid or unreadable registry or layout, changed protected inputs, and a file that no Manager owns under the persistent layout (`layout.no_owner`). Only the owner changes the layout, and removing such a file is no repair. A Git-ignored untracked file is local to its developer rather than drift of the committed project; it still needs an entry in `.markitect/ignore.yaml`.
+- **Supersedes:** the concept's "Preflight blocks on missing/duplicate registrations" for Apply. `markitect check` and Extract keep their own rules.
 
 ## Promises
 

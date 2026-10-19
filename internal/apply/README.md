@@ -10,8 +10,12 @@ the model, decodes the registry shards and `.markitect/execution.yaml`, accounts
 every file, applies the product defaults and resolves the Execute and Verify
 profiles of every Manager. `Passed` is static preparation only: it starts no
 session, runs no check and claims no runtime readiness. Accounting must pass
-before any Agent starts. Previews have the same stages without a publication
-guard.
+before any Agent starts, except for repairable drift of committed files under a
+declared layout (`file.unexplained`, `registry.missing_file`,
+`registry.dangling_basis`, `registry.outside_area`; DEC-062): Apply passes those
+findings of the start stand to their owners as `run.Config.StartFindings`.
+`Capture` (used by `markitect check`) and previews stay strict. Previews have the
+same stages without a publication guard.
 
 ## Execution settings
 

@@ -16,7 +16,10 @@ and publishes a verified candidate; this package never publishes and never commi
 
 Every Apply runs the same order (DEC-058): Execute and integration first, then fresh Verify
 of one captured candidate. There is no Verify, check or `Account` before the first Execute
-turn and no separate route for absent or unchanged artifacts.
+turn and no separate route for absent or unchanged artifacts. `Config.StartFindings` carries
+the start stand's accounting drift that preparation tolerated (DEC-062): each becomes a
+blocking `markitect` finding of round 0 that reaches its owner behind the initial item and
+closes when round 1 starts, like every structural finding.
 
 1. The shared working tree `<RunID>-work` is materialized from `Start`, created with the union
    of the mount paths of all enforced write plans as empty directories. Candidates are

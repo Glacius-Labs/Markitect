@@ -165,6 +165,13 @@ type Evidence interface {
 // already answered (the structure phase of an Extract). Every first Execute
 // prompt and every Verify prompt shows them with the run's own answers, and new
 // questions continue their numbering, so an identity is never asked twice.
+//
+// StartFindings are structural findings of the start stand, such as a file that
+// no shard registers: drift that the owner repairs in its own area (DEC-062).
+// Each becomes a blocking markitect finding of round 0 that reaches its owner
+// with the initial item; like every structural finding it holds only for the
+// stand it was observed on and is closed when round 1 starts, where Account
+// observes the candidate afresh.
 type Config struct {
 	RunID          string
 	Team           []Manager
@@ -192,6 +199,7 @@ type Config struct {
 	// ResolveDefinition may be called concurrently, from several Managers' assess
 	// handlers at the same time, so it must be safe for concurrent use.
 	ResolveDefinition func(snapshot.Tree, string) bool
+	StartFindings     []Finding
 }
 
 // Status is the result of a run.
