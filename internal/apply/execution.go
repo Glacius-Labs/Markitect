@@ -6,48 +6,40 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// ExecutionLimits are declared project ceilings, not allocated or consumed
-// budgets. Each Setting names the original file/content/field that supplied it.
-type ExecutionLimits struct {
-	MaxRuns              organization.Setting[int64]
-	MaxSessionStarts     organization.Setting[int64]
-	MaxSteps             organization.Setting[int64]
-	MaxExecutionTime     organization.Setting[time.Duration]
-	MaxStepTimeout       organization.Setting[time.Duration]
-	HostOperationTimeout organization.Setting[time.Duration]
-	MaxRejectionLimit    organization.Setting[int]
-	MaxContextBytes      organization.Setting[int64]
-	MaxSessionSteps      organization.Setting[int64]
-	MaxTransientRetries  organization.Setting[int64]
-	CreationRoots        organization.Setting[[]snapshot.DirectoryBoundary]
-}
-
-// AssignmentDefaults are authored defaults only, never an actual assignment.
-type AssignmentDefaults struct {
-	Runs          organization.Setting[int64]
-	SessionStarts organization.Setting[int64]
-	Steps         organization.Setting[int64]
+// ExecutionBudget is the authored bound of one Apply run: ExecutionTime is the
+// wall clock of the whole Apply, TurnTimeout bounds one Agent turn, AgentTurns
+// counts Execute and Verify turns and Rounds counts Verify rounds including the
+// initial Verify. Each Setting names the original file/content/field.
+type ExecutionBudget struct {
 	ExecutionTime organization.Setting[time.Duration]
-}
-
-type CompletionReserveDeclaration struct {
-	SessionStarts organization.Setting[int64]
-	Steps         organization.Setting[int64]
-	ExecutionTime organization.Setting[time.Duration]
+	TurnTimeout   organization.Setting[time.Duration]
+	AgentTurns    organization.Setting[int]
+	Rounds        organization.Setting[int]
 }
 
 // ExecutionDefaults retains absent instructions as nil. RoleOverride supplies
 // actual declared profile/list facts without inventing resolved ProfileFacts.
 type ExecutionDefaults struct {
-	Manager              organization.RoleOverride
-	Reviewer             organization.RoleOverride
-	StepTimeout          organization.Setting[time.Duration]
-	RejectionLimit       *organization.Setting[int]
-	CreationRoots        organization.Setting[[]snapshot.DirectoryBoundary]
-	BatchNoChangeReviews *organization.Setting[bool]
+	Execute organization.RoleOverride
+	Verify  organization.RoleOverride
+}
+
+// ExecutionLayoutException is one authored explicit ownership exception.
+type ExecutionLayoutException struct {
+	Path   organization.Setting[snapshot.Path]
+	Owner  organization.Setting[string]
+	Reason organization.Setting[string]
+}
+
+// ExecutionLayout is the authored persistent artifact layout: mirrored roots
+// and explicit exceptions. It is absent when the project declares none.
+type ExecutionLayout struct {
+	Roots      organization.Setting[[]snapshot.DirectoryBoundary]
+	Exceptions []ExecutionLayoutException
 }
 
 // ExecutionCheck describes literal project configuration, not a prepared check
@@ -65,16 +57,14 @@ type ExecutionCheck struct {
 // retained, even where later configuration resolution defines a default.
 // In partial observations a zero Setting has no successfully decoded value.
 type AuthoredExecution struct {
-	APIVersion        organization.Setting[string]
-	Strategy          organization.Setting[string]
-	Limits            ExecutionLimits
-	Assignment        AssignmentDefaults
-	CompletionReserve CompletionReserveDeclaration
-	Defaults          ExecutionDefaults
-	Packages          *organization.Setting[[]organization.PackageOverride]
-	Scope             *organization.Setting[[]organization.Setting[organization.ScopeRule]]
-	Checks            *organization.Setting[[]ExecutionCheck]
-	OwnerApproval     *organization.Setting[[]string]
+	APIVersion organization.Setting[string]
+	Strategy   organization.Setting[string]
+	Budget     ExecutionBudget
+	Defaults   ExecutionDefaults
+	Packages   *organization.Setting[[]organization.PackageOverride]
+	Layout     *ExecutionLayout
+	Scope      *organization.Setting[[]organization.Setting[organization.ScopeRule]]
+	Checks     *organization.Setting[[]ExecutionCheck]
 }
 
 type ExecutionDiagnostic struct {
@@ -87,6 +77,7 @@ type ExecutionDiagnostic struct {
 type executionDecoding struct {
 	status      model.Status
 	authored    AuthoredExecution
+	layout      realization.Layout // Validated against the model; zero when none is declared.
 	diagnostics []ExecutionDiagnostic
 }
 

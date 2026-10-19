@@ -104,14 +104,6 @@ artifacts:
     form: test
     realizes: [product/organization/delegated-context]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/settings_selections.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/settings_selections_test.go"
-    form: test
-    realizes: [product/organization/delegated-context]
-    why: Tests the stated responsibility and retains negative boundaries.
   - path: "internal/organization/settings_test.go"
     form: test
     realizes: [product/organization/delegated-context]

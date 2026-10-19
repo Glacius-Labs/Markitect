@@ -51,10 +51,10 @@ func observedPreparationClosure(raw RawInputs, registry []snapshot.Path, executi
 	if _, found := raw.Census.Lookup(ignore); found {
 		closure.ignore = []snapshot.Path{ignore}
 	}
-	lists := []*organization.Setting[[]string]{execution.Defaults.Manager.Instructions, execution.Defaults.Reviewer.Instructions}
+	lists := []*organization.Setting[[]string]{execution.Defaults.Execute.Instructions, execution.Defaults.Verify.Instructions}
 	if execution.Packages != nil {
 		for _, override := range execution.Packages.Value {
-			lists = append(lists, override.Manager.Instructions, override.Reviewer.Instructions)
+			lists = append(lists, override.Execute.Instructions, override.Verify.Instructions)
 		}
 	}
 	seen := make(map[snapshot.Path]bool)

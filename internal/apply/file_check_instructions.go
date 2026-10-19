@@ -17,10 +17,10 @@ func (c *fileChecker) instructions(execution AuthoredExecution) {
 		}
 		selected[source.RepositoryPath] = sameCensusFile(c.raw.Census, source.RepositoryPath.String(), source.File)
 	}
-	lists := []*organization.Setting[[]string]{execution.Defaults.Manager.Instructions, execution.Defaults.Reviewer.Instructions}
+	lists := []*organization.Setting[[]string]{execution.Defaults.Execute.Instructions, execution.Defaults.Verify.Instructions}
 	if execution.Packages != nil {
 		for _, override := range execution.Packages.Value {
-			lists = append(lists, override.Manager.Instructions, override.Reviewer.Instructions)
+			lists = append(lists, override.Execute.Instructions, override.Verify.Instructions)
 		}
 	}
 	for _, list := range lists {

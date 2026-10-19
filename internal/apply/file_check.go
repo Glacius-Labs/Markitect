@@ -20,6 +20,7 @@ type fileCheck struct {
 	accounting      *realization.Accounting
 	classifications []realization.Classification
 	protections     []realization.Protection
+	layout          realization.Layout
 	diagnostics     []FileCheckDiagnostic
 }
 
@@ -55,6 +56,15 @@ func (r fileCheck) Protections() ([]realization.Protection, bool) {
 		return nil, false
 	}
 	return slices.Clone(r.protections), true
+}
+
+// Layout returns the project's validated persistent artifact layout after
+// success, or false when the project declares none.
+func (r fileCheck) Layout() (realization.Layout, bool) {
+	if r.Status() != model.Passed || !r.layout.Declared() {
+		return realization.Layout{}, false
+	}
+	return r.layout, true
 }
 
 // Diagnostics orders by file, field, code and message, then nil position before

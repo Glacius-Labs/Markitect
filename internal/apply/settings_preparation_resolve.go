@@ -76,13 +76,13 @@ func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults 
 	}
 	declarations, complete := defaults.Declarations()
 	if complete {
-		refs := []organization.Setting[string]{declarations.Defaults.Manager.Profile, declarations.Defaults.Reviewer.Profile}
+		refs := []organization.Setting[string]{declarations.Defaults.Execute.Profile, declarations.Defaults.Verify.Profile}
 		for _, override := range declarations.Overrides {
-			if override.Manager.Profile != nil {
-				refs = append(refs, *override.Manager.Profile)
+			if override.Execute.Profile != nil {
+				refs = append(refs, *override.Execute.Profile)
 			}
-			if override.Reviewer.Profile != nil {
-				refs = append(refs, *override.Reviewer.Profile)
+			if override.Verify.Profile != nil {
+				refs = append(refs, *override.Verify.Profile)
 			}
 		}
 		for _, ref := range refs {
@@ -99,14 +99,15 @@ func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults 
 			resolveErr = instructionErr
 		}
 		var settings organization.Settings
-		settingsFacts := organization.SettingsFacts{Defaults: declarations.Defaults, Overrides: declarations.Overrides, Ceilings: declarations.Ceilings, Profiles: profileFacts, Instructions: facts}
+		settingsFacts := organization.SettingsFacts{Defaults: declarations.Defaults, Overrides: declarations.Overrides, Profiles: profileFacts, Instructions: facts}
 		if resolveErr == nil {
 			settings, resolveErr = organization.ResolveSettings(topology, settingsFacts)
 		}
 		if resolveErr != nil {
 			r.issue(model.Failed, "resolution", organization.SettingSource{}, resolveErr.Error())
 		} else {
-			r.settings, r.facts = &settings, &settingsFacts
+			budget := execution.authored.Budget
+			r.settings, r.facts, r.budget = &settings, &settingsFacts, &budget
 		}
 	}
 	// Check declarations are retained exactly, with no second inheritance,

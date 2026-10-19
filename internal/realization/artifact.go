@@ -40,6 +40,14 @@ func (o Owner) Package() (string, bool) { return o.packageName, !o.root && o.pac
 
 func (o Owner) valid() bool { return o.root || o.packageName != "" }
 
+// label names the responsibility in diagnostics.
+func (o Owner) label() string {
+	if o.root {
+		return "Root"
+	}
+	return fmt.Sprintf("Manager %q", o.packageName)
+}
+
 // Form is the declared artifact form, independent of its extension or location.
 type Form string
 

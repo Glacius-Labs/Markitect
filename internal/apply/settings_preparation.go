@@ -26,6 +26,7 @@ type hostSettingsPreparation struct {
 	status         model.Status
 	settings       *organization.Settings
 	facts          *organization.SettingsFacts
+	budget         *ExecutionBudget
 	checks         []CheckSelection
 	checksComplete bool
 	profiles       []PreparedProfile
@@ -58,6 +59,15 @@ func (r hostSettingsPreparation) SettingsFacts() (organization.SettingsFacts, bo
 	f.Profiles = slices.Clone(f.Profiles)
 	f.Instructions = slices.Clone(f.Instructions)
 	return f, true
+}
+
+// Budget returns the authored bounds of the run, available together with the
+// resolved Settings.
+func (r hostSettingsPreparation) Budget() (ExecutionBudget, bool) {
+	if r.budget == nil {
+		return ExecutionBudget{}, false
+	}
+	return *r.budget, true
 }
 func (r hostSettingsPreparation) Checks() ([]CheckSelection, bool) {
 	if !r.checksComplete {

@@ -6,11 +6,9 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -229,35 +227,5 @@ func TestAgentImageRetainsUnreadyPartialObservationAndOwnsCopies(t *testing.T) {
 	}
 	if got, _ := complete.ProfileObservations()[0].Identity(); got != identity {
 		t.Fatal("immutable comparison identity changed through an alias")
-	}
-}
-
-func TestAgentImageProfileBindsAndRestoresThroughExistingRUNCodec(t *testing.T) {
-	selection, actual, host := settingsServiceInputs(t)
-	selection = completeSettingsServiceSelection(t, selection, host)
-	source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
-		return captured(preparationObservation(t, request.Selection, actual)), nil
-	}}
-	agent := rawHostAgentPort(func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
-		o := imageObservation(t, apply.AgentImageCodexAppServer)
-		o.InputBinding = input.Binding()
-		return o, nil
-	})
-	_, checks := hostPorts(t)
-	prepared, err := apply.NewPreparationService(apply.NewModelService(source, nil)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, checks)
-	if err != nil {
-		t.Fatal(err)
-	}
-	facts := runBindingHost(t)
-	binding, err := prepared.BindRun(facts)
-	if err != nil {
-		t.Fatal("image identity did not flow through actual captured binding", err)
-	}
-	c, _ := run.NewCoordinator(facts.RepositoryIdentity)
-	j := &controlJournal{}
-	controlCommit(t, c, j, run.PrepareCommand("image-prepare", "assignment", "run", "", time.Date(2026, 10, 17, 9, 0, 0, 0, time.UTC), binding))
-	restored, err := run.Restore(context.Background(), j, facts.RepositoryIdentity, controlOptions.RestoreLimits)
-	if err != nil || restored.Current() != c.Current() || restored.Current().Basis != binding.Ref() {
-		t.Fatal("new profile identity required a RUN wire change", err)
 	}
 }

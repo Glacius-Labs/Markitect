@@ -2,7 +2,6 @@ package apply
 
 import (
 	"cmp"
-	"fmt"
 	"slices"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -14,10 +13,8 @@ import (
 // remain exact authored overrides, with no ancestor inheritance. This is not
 // organization.Settings, acquired profile facts or runtime readiness.
 type DeclarativeSettings struct {
-	Defaults      organization.SettingsDefaults
-	Overrides     []organization.PackageOverride
-	Ceilings      organization.SettingsCeilings
-	OwnerApproval organization.Setting[[]string]
+	Defaults  organization.SettingsDefaults
+	Overrides []organization.PackageOverride
 }
 
 type settingsPreparation struct {
@@ -80,32 +77,26 @@ type PreviewDefaultsPreparation struct {
 func (r PreviewDefaultsPreparation) Execution() PreviewExecutionDecoding { return r.stage }
 
 func (e CapturedExecutionDecoding) PrepareDefaults(input StrategyDefaultsInput) CapturedDefaultsPreparation {
-	return CapturedDefaultsPreparation{settingsPreparation: prepareStrategySettings(e.executionDecoding, e.stage.compiled, input), stage: e}
+	return CapturedDefaultsPreparation{settingsPreparation: prepareStrategySettings(e.executionDecoding, input), stage: e}
 }
 
 func (e PreviewExecutionDecoding) PrepareDefaults(input StrategyDefaultsInput) PreviewDefaultsPreparation {
-	return PreviewDefaultsPreparation{settingsPreparation: prepareStrategySettings(e.executionDecoding, e.stage.compiled, input), stage: e}
+	return PreviewDefaultsPreparation{settingsPreparation: prepareStrategySettings(e.executionDecoding, input), stage: e}
 }
 
 func strategySettingsValues(effective AuthoredExecution) DeclarativeSettings {
 	e := cloneExecution(effective)
-	r := DeclarativeSettings{
-		Defaults: organization.SettingsDefaults{
-			Manager:     organization.RoleDefaults{Profile: *e.Defaults.Manager.Profile, Instructions: *e.Defaults.Manager.Instructions},
-			Reviewer:    organization.RoleDefaults{Profile: *e.Defaults.Reviewer.Profile, Instructions: *e.Defaults.Reviewer.Instructions},
-			StepTimeout: e.Defaults.StepTimeout, RejectionLimit: *e.Defaults.RejectionLimit,
-			CreationRoots: e.Defaults.CreationRoots, BatchNoChangeReviews: *e.Defaults.BatchNoChangeReviews,
-		},
-		Ceilings:      organization.SettingsCeilings{StepTimeout: e.Limits.MaxStepTimeout, RejectionLimit: e.Limits.MaxRejectionLimit, CreationRoots: e.Limits.CreationRoots},
-		OwnerApproval: *e.OwnerApproval,
-	}
+	r := DeclarativeSettings{Defaults: organization.SettingsDefaults{
+		Execute: organization.RoleDefaults{Profile: *e.Defaults.Execute.Profile, Instructions: *e.Defaults.Execute.Instructions},
+		Verify:  organization.RoleDefaults{Profile: *e.Defaults.Verify.Profile, Instructions: *e.Defaults.Verify.Instructions},
+	}}
 	if e.Packages != nil {
 		r.Overrides = e.Packages.Value
 	}
 	return r
 }
 
-func prepareStrategySettings(parent executionDecoding, compiled model.Result, input StrategyDefaultsInput) (r settingsPreparation) {
+func prepareStrategySettings(parent executionDecoding, input StrategyDefaultsInput) (r settingsPreparation) {
 	r = settingsPreparation{status: parent.Status(), product: decodeStrategyDefaults(input)}
 	r.diagnostics = slices.Clone(r.product.diagnostics)
 	for _, diagnostic := range parent.Diagnostics() {
@@ -135,35 +126,11 @@ func prepareStrategySettings(parent executionDecoding, compiled model.Result, in
 	}
 	r.effective = cloneExecution(parent.authored)
 	e := &r.effective
-	if e.Defaults.RejectionLimit == nil {
-		e.Defaults.RejectionLimit = executionPointer(&r.product.rejectionLimit)
+	if e.Defaults.Execute.Instructions == nil {
+		e.Defaults.Execute.Instructions = executionListPointer(&r.product.execute)
 	}
-	if e.Defaults.Manager.Instructions == nil {
-		e.Defaults.Manager.Instructions = executionListPointer(&r.product.manager)
-	}
-	if e.Defaults.Reviewer.Instructions == nil {
-		e.Defaults.Reviewer.Instructions = executionListPointer(&r.product.reviewer)
-	}
-	if e.Defaults.BatchNoChangeReviews == nil {
-		e.Defaults.BatchNoChangeReviews = executionPointer(&r.product.batch)
-	}
-	if e.OwnerApproval == nil {
-		e.OwnerApproval = executionListPointer(&r.product.approval)
-	}
-	topology, err := organization.BuildTopology(compiled)
-	if err == nil {
-		values := strategySettingsValues(r.effective)
-		err = organization.ValidateSettingsSelections(topology, values.Defaults, values.Overrides, values.Ceilings)
-		for _, name := range values.OwnerApproval.Value {
-			if _, found := topology.Manager(name); !found {
-				r.status = model.Failed
-				r.diagnostics = append(r.diagnostics, StrategyDefaultsDiagnostic{Code: "settings.owner_approval_package", Source: values.OwnerApproval.Source, Message: fmt.Sprintf("Unknown or imported owner-approval Package %q.", name)})
-			}
-		}
-	}
-	if err != nil {
-		r.status = model.Failed
-		r.diagnostics = append(r.diagnostics, StrategyDefaultsDiagnostic{Code: "settings.selections", Message: err.Error()})
+	if e.Defaults.Verify.Instructions == nil {
+		e.Defaults.Verify.Instructions = executionListPointer(&r.product.verify)
 	}
 	return r
 }
