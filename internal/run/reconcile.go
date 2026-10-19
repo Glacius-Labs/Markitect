@@ -137,6 +137,13 @@ type Evidence interface {
 // shards, registrations outside the registering Manager's area and changed
 // protected inputs. OwnerOf returns the Manager that owns a path under the
 // project's persistent layout. Owner may be nil when no human can answer.
+//
+// The same cycle serves both directional processes. Apply leaves Mandate and
+// VerifyGuidance empty and gets the artifact-reconciliation texts; Extract,
+// which writes a model candidate from fixed artifacts, supplies its own
+// mandate and its own guidance on what blocks in Verify. CheckTool offers
+// Execute turns the Host tool "check": it observes the shared working tree
+// without pausing the writers and returns Account's findings for that tree.
 type Config struct {
 	RunID          string
 	Team           []Manager
@@ -155,6 +162,9 @@ type Config struct {
 	Owner          Owner
 	Evidence       Evidence
 	Clock          func() time.Time
+	Mandate        string
+	VerifyGuidance string
+	CheckTool      bool
 }
 
 // Status is the result of a run.
