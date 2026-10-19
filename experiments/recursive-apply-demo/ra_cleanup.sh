@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 # Stop every container of the demonstration and record what was still alive.
-# Volumes holding retained work stay for evidence; ra_volumes.sh removes them later.
+# Volumes holding retained work stay for evidence; remove them with docker volume rm.
 # Usage: ra_cleanup.sh ATTEMPT_DIR
 ATTEMPT="$1"
 {
