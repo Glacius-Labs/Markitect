@@ -239,7 +239,7 @@ func TestChildrenStartAfterTheirParentsFirstTurnAndSiblingsRunInParallel(t *test
 	// The initial item tells a parent to supply its children's foundation and a
 	// child that its parent's foundation is in place; queued messages follow it.
 	rootPrompt := f.agents.prompt("run1-r1-root-x1")
-	contains(t, "Root prompt", rootPrompt, mandate, "Carry out your responsibility now", "Your children start when this turn ends", "First establish, within your own area, the foundation they need", "assess it against your obligations and your children's known needs", "the concrete basis they can use")
+	contains(t, "Root prompt", rootPrompt, mandate, "Carry out your responsibility now", "Your children start when this turn ends", "First establish, within your own area, the foundation they need: project scaffolding", "never a realization of their Definitions", "decide that its owner provides it in a part the others can use", "assess it against your obligations and your children's known needs", "the concrete basis they can use")
 	if strings.Contains(rootPrompt, "Your parent's foundation") {
 		t.Errorf("Root has no parent:\n%s", rootPrompt)
 	}
