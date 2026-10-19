@@ -1,6 +1,6 @@
 # Container runtime adapter
 
-This package is the Host's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. The [rebuild plan](../../../docs/design/canonical-model/manager-apply-rebuild-plan.md#container-runtime) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
+This package is the Host's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. The [rebuild plan](../../../docs/history/apply-design-before-dec-056/manager-apply-rebuild-plan.md#container-runtime) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
 
 ## API
 

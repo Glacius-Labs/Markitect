@@ -1,6 +1,8 @@
 # Core protocol of the first Apply
 
-> **Historical, 19 October 2026:** [manager-apply-runtime.md](manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
+> **Moved to history:** this is the Apply design before [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), kept for its decisions and failed attempts. The current owners are [manager-apply-concept.md](../../design/canonical-model/manager-apply-concept.md) (intent) and [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) (implemented contract); see the [folder README](README.md).
+
+> **Historical, 19 October 2026:** [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
 
 This contract owns the core of Apply:
 - the step lifecycle;
@@ -11,7 +13,7 @@ This contract owns the core of Apply:
 - deliveries and composition;
 - the run while it waits.
 
-Other documents cite these rules by ID instead of restating them. The [concept](manager-apply-concept.md) owns purpose, roles and review responsibilities. The [execution contract](manager-apply-execution.md) owns budget, admission accounting, rejection counting, finding states and the run state machine. The [port contracts](manager-apply-port-contracts.md) own the Go interfaces and their values.
+Other documents cite these rules by ID instead of restating them. The [concept](../../design/canonical-model/manager-apply-concept.md) owns purpose, roles and review responsibilities. The [execution contract](manager-apply-execution.md) owns budget, admission accounting, rejection counting, finding states and the run state machine. The [port contracts](manager-apply-port-contracts.md) own the Go interfaces and their values.
 
 Status: target for the first Apply. The owner decisions behind S6, T10, M2, D3 and W2 are recorded in [DEC-041](../../concepts/register.md#dec-041-core-protocol-choices). The other rules complete the frozen concept ([DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs)) within [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process).
 
@@ -189,5 +191,5 @@ That is about 3N + 3P steps. For library M1 (N = 6, P = 2) it is 24. For 15 Pack
 
 ## Not settled here
 
-- **Computed scope:** the concept's [computed scope](manager-apply-concept.md#toward-computed-scope) gives Managers outside the scope no task. That conflicts with DEC-039's complete participation. The [architecture review](apply-architecture-review-20261017.md#f4-complete-participation-costs-a-lot-and-does-not-scale-yet) proposes reuse verified by the Orchestrator instead. It is a later extension and needs an owner decision.
-- **Integration census:** a disposition for every explicit cross-Package reference in the integration review of its lowest common ancestor ([review F5](apply-architecture-review-20261017.md#f5-the-validation-cannot-yet-show-the-promised-benefit)). This is a proposal for after the first Package runs.
+- **Computed scope:** the concept's [computed scope](../../design/canonical-model/manager-apply-concept.md#toward-computed-scope) gives Managers outside the scope no task. That conflicts with DEC-039's complete participation. The [architecture review](../../design/canonical-model/apply-architecture-review-20261017.md#f4-complete-participation-costs-a-lot-and-does-not-scale-yet) proposes reuse verified by the Orchestrator instead. It is a later extension and needs an owner decision.
+- **Integration census:** a disposition for every explicit cross-Package reference in the integration review of its lowest common ancestor ([review F5](../../design/canonical-model/apply-architecture-review-20261017.md#f5-the-validation-cannot-yet-show-the-promised-benefit)). This is a proposal for after the first Package runs.

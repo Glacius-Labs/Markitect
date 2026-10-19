@@ -84,7 +84,7 @@ The owner selected:
 
 > Ja, Zurückweisungen separat begrenzen
 
-The [execution contract](../../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction) records this selected rule. Successful limited deliveries do not consume or replenish the rejection allowance; local and integration review remain distinct purposes. This supersedes the earlier submission-count design, not the finite assignment budget or mandatory evidence. Technical implementation and real Apply proof remain separate work.
+The [execution contract](../../history/apply-design-before-dec-056/manager-apply-execution.md#admission-amendments-and-finite-correction) records this selected rule. Successful limited deliveries do not consume or replenish the rejection allowance; local and integration review remain distinct purposes. This supersedes the earlier submission-count design, not the finite assignment budget or mandatory evidence. Technical implementation and real Apply proof remain separate work.
 
 ## Working bases and session continuity
 

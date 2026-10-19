@@ -14,7 +14,7 @@ The owner asked to keep all ideas and variants of the Manager discussion as a no
 | Variant | Intended behavior | Status |
 | --- | --- | --- |
 | Manager implements | The Manager implements and organizes review and integration. | Selected; named reviewers and dispute-only arbitration now accepted by [DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults), implementation pending |
-| Named review team and arbiter | Per-project role model/effort/instructions and exact Package overrides; bounded independent dispute resolution. | Selected target; owned by [configuration](manager-apply-configuration.md) and [execution](manager-apply-execution.md#review-conflicts-and-arbitration) |
+| Named review team and arbiter | Per-project role model/effort/instructions and exact Package overrides; bounded independent dispute resolution. | Selected target; owned by [configuration](../../history/apply-design-before-dec-056/manager-apply-configuration.md) and [execution](../../history/apply-design-before-dec-056/manager-apply-execution.md#review-conflicts-and-arbitration) |
 | Implementer and reviewer | Agents alternate implementation and review until the reviewer is satisfied. | Later strategy |
 | Reviewer per Definition | Reviewers examine the realization of individual Definitions. | Later strategy |
 | Teams at the leaves | Only the lowest Managers have executing teams; higher Managers integrate and coordinate. | Later strategy |
@@ -79,7 +79,7 @@ The consolidation of 16 October 2026 replaced these earlier proposals with simpl
 
 | Earlier proposal | First-version rule |
 | --- | --- |
-| Bounded budget allocations per Manager, reallocated by the root, with an illustrative 60-step split. The owner asked to keep the budget model including bounded allocations ([source](../../concepts/sources/working-day-discussion-20261016.md#preserve-the-shared-budget-model)). | The Orchestrator accounts once per assignment; one completion-reserve rule protects reviews and checks ([execution](manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Allocations can return if real runs show the need. |
+| Bounded budget allocations per Manager, reallocated by the root, with an illustrative 60-step split. The owner asked to keep the budget model including bounded allocations ([source](../../concepts/sources/working-day-discussion-20261016.md#preserve-the-shared-budget-model)). | The Orchestrator accounts once per assignment; one completion-reserve rule protects reviews and checks ([execution](../../history/apply-design-before-dec-056/manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Allocations can return if real runs show the need. |
 | An optional absolute delivery deadline that keeps running while work waits. | No deadline; caps on active execution time remain. |
 | One assignment commissioned for both stages of the two-Apply demonstration. | Each Apply invocation is its own assignment; further runs within an assignment are continuations. |
 | A separate final verifier Agent. | The Orchestrator's deterministic final evidence check; the root's fresh integration review is the semantic review of the whole. |
