@@ -1,0 +1,30 @@
+apiVersion: markitect.execution/v1
+strategy: shared-workspace-v1
+budget:
+  executionTime: 20m
+  turnTimeout: 8m
+  agentTurns: 90
+  rounds: 4
+profiles:
+  execute: library-agent
+  verify: library-agent
+packages: {}
+layout:
+  roots: [realization]
+  exceptions:
+    - path: realization/cmd/library
+      owner: library
+      reason: library/callable-interface fixes the executable at realization/cmd/library.
+checks:
+  - id: project-tests
+    profile: library-go
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/realization
+    timeout: 3m
+  - id: library-oracle
+    profile: library-oracle
+    directory: realization
+    args: []
+    requiredBy: library/callable-interface
+    timeout: 3m

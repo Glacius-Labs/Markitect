@@ -1,5 +1,73 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "experiments/recursive-apply-demo/README.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Explains the real library demonstration harness and its timed and untimed steps."
+  - path: "experiments/recursive-apply-demo/analyze.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Summarizes one Apply's evidence: rounds, turns, parallelism, findings and usage."
+  - path: "experiments/recursive-apply-demo/library-execution.yaml"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: "Declares the library target's layout, budget, profiles and required checks for the demonstration."
+  - path: "experiments/recursive-apply-demo/nochange_apply.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs the separate no-change Apply on the accepted A2 outside the timed demonstration."
+  - path: "experiments/recursive-apply-demo/oracle/Dockerfile"
+    form: build
+    realizes: [examples/independent-oracles]
+    why: "Builds the check image that runs the independent library oracle outside every Agent's write area."
+  - path: "experiments/recursive-apply-demo/oracle/check.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: "Runs the independent library oracle as a required Apply check on the candidate's realization."
+  - path: "experiments/recursive-apply-demo/owner-decisions.json"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: "Holds the two owner decisions bound with every demonstration run."
+  - path: "experiments/recursive-apply-demo/ra_assess.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: "Assesses the published A1 and A2 with the independent oracle after the timed run."
+  - path: "experiments/recursive-apply-demo/ra_bind.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Binds an attempt to one build with Sonnet Host profiles, check profiles, token file and frozen scripts."
+  - path: "experiments/recursive-apply-demo/ra_build.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Builds the runtime, project and oracle images and the CLI from one exact commit."
+  - path: "experiments/recursive-apply-demo/ra_cleanup.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Stops every remaining demonstration container within the hard limit."
+  - path: "experiments/recursive-apply-demo/ra_demo.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Enforces the hard wall-clock limit of the timed demonstration outside every prompt."
+  - path: "experiments/recursive-apply-demo/ra_inner.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Projects the target, runs both Applies and performs the owner's commit and model change between them."
+  - path: "experiments/recursive-apply-demo/ra_project.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Creates the model-only Library M1 target repository."
+  - path: "experiments/recursive-apply-demo/ra_runconfig.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Writes each Apply's run configuration with bound owner decisions and the shared deadline."
+  - path: "experiments/recursive-apply-demo/smoke_apply.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs one Apply with a short deadline as a plumbing smoke outside the timed demonstration."
+  - path: "experiments/recursive-apply-demo/writes.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Approximates which areas each Manager wrote, from Execute transcripts."
   - path: "internal/run/agents.go"
     form: code
     realizes: [product/run/confirmed-run-history]
