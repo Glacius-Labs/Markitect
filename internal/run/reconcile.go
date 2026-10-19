@@ -18,6 +18,10 @@ var ErrInvalid = errors.New("invalid reconciliation configuration")
 // its applicable model obligations with provenance, its owned artifact areas,
 // its registry shard and the required checks. The engine adds the mandate,
 // contacts, owner decisions, findings, messages and check results itself.
+// Write is the Manager's write plan for Execute turns. Building marks a Manager
+// whose area holds no artifacts at the start (starting situation 1, build from
+// the model): its first Execute turn waits for the first Execute turn of a
+// building parent, which supplies the foundations; other areas are not ordered.
 type Manager struct {
 	Path           string
 	Parent         string
@@ -26,6 +30,26 @@ type Manager struct {
 	Brief          string
 	ExecuteProfile string
 	VerifyProfile  string
+	Write          WritePlan
+	Building       bool
+}
+
+// WritePlan is where an Execute turn of one Manager may write in the shared
+// working tree. Without Enforced the whole tree is writable and ownership is
+// trusted (no declared layout). With Enforced, Base says whether the whole tree
+// is writable before the Mounts, which then overlay it in order, parents
+// before their descendants. Every mount path is an existing directory of the
+// shared tree; the engine creates them before the first Execute turn.
+type WritePlan struct {
+	Enforced bool
+	Base     bool
+	Mounts   []PathMount
+}
+
+// PathMount overlays one directory of the shared tree, relative to /work.
+type PathMount struct {
+	Path     string `json:"path"`
+	Writable bool   `json:"writable"`
 }
 
 // Check is one required check of the project. Request is complete except for

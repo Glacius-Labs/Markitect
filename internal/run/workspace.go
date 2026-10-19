@@ -40,11 +40,13 @@ type Workspaces interface {
 	Close(context.Context, WorkspaceID) (WorkspaceObservation, error)
 }
 
-// WorkspaceSpec names a new workspace and its exact content: the current
-// accepted aggregate plus the Manager's own unaccepted changes.
+// WorkspaceSpec names a new workspace and its exact content. Directories are
+// relative directory paths created empty in addition to the tree, such as the
+// mount points of write plans; empty directories are not part of a harvest.
 type WorkspaceSpec struct {
-	ID   WorkspaceID
-	Tree snapshot.Tree
+	ID          WorkspaceID
+	Tree        snapshot.Tree
+	Directories []string
 }
 
 // Valid reports whether the spec names a workspace. An empty tree is valid.
