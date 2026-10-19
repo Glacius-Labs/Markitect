@@ -1,5 +1,7 @@
 # Playground contract for two real library Applies
 
+> **Design supersession, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) selects a simpler strategy. Start with the [current Apply concept and implementation handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026). Conflicting private-workspace, delivery, expectations, reviewer-roster and rejection-counter mechanics below describe the earlier design; do not implement them for compatibility. Existing source/schema support and historical evidence retain their actual status. Revise this technical owner coherently when implementing the new strategy.
+
 This contract owns the external experiment for gates P02 and P10 of the [acceptance gates](manager-apply-implementation-plan.md): frozen inputs, the actual product invocation, immutable capture of A1 and A2, independent evaluation and the report.
 
 ## Three responsibilities

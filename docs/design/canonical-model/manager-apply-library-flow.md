@@ -1,5 +1,68 @@
 # Library Apply propagation and integration
 
+## Current library walkthrough
+
+**Status, 19 October 2026:** agreed conceptual workflow under [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), documentation and independent review only. The [current Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the behavior. No runtime change or new Apply is demonstrated here. The earlier walkthrough below is a superseded reference.
+
+### Fixed team and mandate
+
+Use the existing model hierarchy, without silently making Library the parent of the other areas:
+
+```text
+Root
+├── library
+├── members
+├── catalog
+└── lending
+    └── reminders
+```
+
+| Manager | Own responsibility |
+| --- | --- |
+| Root | Shared artifact-root files such as `realization/go.mod`, shared prerequisites, coordination of its four children and whole-library integration. |
+| library | JSON Lines boundary, validation/responses, program composition and usage, including explicitly assigned `realization/cmd/library` and its own implementation/test/doc areas. |
+| members | Registration, identity, status and suspension, with tests and docs. |
+| catalog | Copy registration, lookup and availability, with tests and docs. |
+| lending | Loans, borrowing eligibility/limit, return and due dates; integration of Reminders. |
+| reminders | Read-only overdue assessment using the lending interface, with tests and docs. |
+
+These are durable areas, not file lists invented on each Apply. Library's cross-area realization obligation still applies; Root coordinates the sibling implementations. Preserve the actual callable contract: module at `realization/go.mod`, executable at `realization/cmd/library`, standard-library Go, JSON Lines, process-local state and required commands from `realization/`. The mirrored layout supports explicit exceptions for that entry point and colocated Go tests. Moving shared-module ownership from Library to Root is deliberate; registry links still cite `library/callable-interface`. No UI, network service, database or live migration is added.
+
+Each Manager receives its applicable model, owned area and direct contacts, plus the same mandate:
+
+> Compare your artifacts with the bound model. Preserve correct realization and report concrete deviations. In Execute, correct your files and registry and coordinate dependencies through your parent and children. In fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly.
+
+All six Managers assess their responsibility; unchanged areas give a concise assessment without a separate no-change acceptance transaction. Use Luna for runtime Agent roles, including Verify, in the next library demonstration unless the owner changes that choice. The later implementation author's use of Claude does not change that runtime model choice.
+
+### First Apply: M1 to A1
+
+1. Preflight binds M1, controls, owner decisions and budget and checks complete accounting/ownership. Existing artifacts must be registered; recognized model/control inputs remain protected separately.
+2. Fresh Verify sessions inspect the immutable starting stand. A missing implementation produces concrete work, not an expectations matrix. Preserve valid artifacts. Independent Execute work need not wait for every initial assessment.
+3. All owners Execute in one shared working tree. Root supplies module/shared prerequisites; Library composes the program; domain Managers implement their own behavior, tests, docs and registry entries. Lending coordinates Reminders. No merge, parent workspace update or reviewed `limited` delivery is required before development can proceed.
+4. Lending needs membership status: it asks Root, which discusses the contract with Members and relays the answer. Reminders asks Lending for loan-query needs. The parent names the supplied interface/files and readiness. An unresolved policy travels upward; only Root asks the human. Do not duplicate shared types to bypass a dependency.
+5. Before closing Verify, writers and their subprocesses quiesce. Capture A1-C1 once. Fresh Verify sessions and required checks use that immutable stand; Execute stays paused and check outputs go to scratch.
+6. Independent branches verify in parallel. Reminders assesses its area; Lending assesses lending and their interaction. Library assesses its boundary/composition. Root inspects its own obligations and interaction of all four children using actual artifacts and their assessments. Parent acceptance waits for relevant child results. Fresh Verify also gives Root's own changes an independent perspective.
+7. A year-`0000` acceptance defect goes through Root → Lending → Reminders as needed. Missing integrated suspension evidence required by `library/realization` goes to Library's owned app tests. Owners repair in Execute, then A1-C2 gets a new whole closing Verify round. Preferred extra test depth is advisory; absent model-required evidence blocks.
+8. Close only when all six areas have current assessments, blocking findings have current closure evidence, and mandatory build/test plus the independent library oracle pass on the same stand. Guarded publication/read-back delivers those exact bytes as A1. Human acceptance and any later commit follow project policy; a commit alone is not evidence that a human reviewed or approved the result. Apply does not commit, merge or release.
+
+If the initial stand already conforms and stays byte-identical, complete the required independent assessment/checks without an artificial Execute round. Verify conversations always start fresh; Execute conversations may retain working context. There is no second permanent Reviewer Manager tree.
+
+### Second Apply: M2 to A2
+
+Change only model `lending/loan-policy` from five to three open loans against actual A1, with no manual artifact repairs between Applies. Bind the new model and start fresh assessments throughout the fixed team.
+
+Lending corrects policy, tests and documentation. Unchanged areas assess without manufacturing edits. Other owners change artifacts only where actual obligations require it. Root coordinates and reviews; it does not edit Lending's files. Above-limit loan fixtures prove only modeled process-local behavior, not live migration.
+
+Quiesce, capture A2-C1, run fresh recursive closing Verify and mandatory checks/oracle, and publish/read back the accepted bytes. Findings return the owners to Execute within the finite budget. Record elapsed time, usage, actual billing when available, human interventions and limits; subscription token usage does not establish monetary cost.
+
+### Evidence and implementation handoff
+
+The earlier external Luna experiment achieved both Applies using separate writer copies, prearranged interfaces and external orchestration. It did not test this shared-tree strategy. The later Claude implementation should start with the concept's [handoff and supersession map](manager-apply-concept.md#implementation-handoff-and-supersession), demonstrate actual quiescence/snapshot capture and parent-only communication, and preserve findings across fresh reviews. It must not inherit the old delivery/state protocol for compatibility.
+
+## Earlier walkthrough reference
+
+The text below predates DEC-056 and preserves old links and examples. Its conflicting ownership, delivery, workspace and review mechanics do not govern the new strategy.
+
 This walkthrough applies the [fixed Manager process](manager-apply-concept.md#tasks-and-delegation) to [M1](library-example/README.md). It replaces the earlier root-planned order and parent-authored prompts under [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). The exchanges explain the owner-confirmed local planning and limited-delivery process, not an implemented scheduler or a real successful Apply. Successful deliveries consume shared execution capacity but no rejection allowance; exact technical bindings must enforce the selected process.
 
 ## Starting point

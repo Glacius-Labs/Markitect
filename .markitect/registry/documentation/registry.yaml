@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/recursive-apply-simplification-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves owner wording, accepted simplification direction and the documentation-only handoff authority for the later Claude implementation session.
   - path: "docs/concepts/sources/model-migrations-20261017.md"
     form: doc
     realizes: [documentation/current-guidance]
