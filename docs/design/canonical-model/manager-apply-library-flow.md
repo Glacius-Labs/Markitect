@@ -2,7 +2,7 @@
 
 ## Current library walkthrough
 
-**Status, 19 October 2026:** agreed conceptual workflow under [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), amended by [DEC-058](../../concepts/register.md#dec-058-apply-always-executes-before-independent-verify) to start every Apply with Execute and integration, followed by independent Verify. The [current Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the target behavior. This update changes documentation only; the [implemented runtime contract](manager-apply-runtime.md) still records the earlier initial-Verify order. No runtime change or new Apply is demonstrated here. The earlier walkthrough below is a superseded reference.
+**Status, 19 October 2026:** agreed conceptual workflow under [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), amended by [DEC-058](../../concepts/register.md#dec-058-apply-always-executes-before-independent-verify) to start every Apply with Execute and integration, followed by independent Verify. The [current Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the target behavior. The [implemented runtime contract](manager-apply-runtime.md) describes the implementation, and the [repeated demonstrations](../../validation/recursive-apply-repetitions-20261019.md) record real runs of this walkthrough. The earlier walkthrough below is a superseded reference.
 
 ### Fixed team and mandate
 
