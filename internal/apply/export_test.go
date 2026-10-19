@@ -18,8 +18,11 @@ func PublishChanges(ctx context.Context, req ReconcileRequest, changes []snapsho
 	return publish(ctx, req, changes)
 }
 
-// OriginalText exposes the quoted original of a protected input.
-func OriginalText(before snapshot.Entry, code string) string { return originalText(before, code) }
+// OriginalText exposes the quoted original of a protected input; quoted is
+// the candidate's running total of quoted bytes.
+func OriginalText(before snapshot.Entry, code string, quoted *int) string {
+	return originalText(before, code, quoted)
+}
 
 // Conclude exposes the publication and cleanup step that follows a run.
 func Conclude(ctx context.Context, req ReconcileRequest, start snapshot.Tree, outcome run.Outcome, runErr error) (ReconcileResult, error) {

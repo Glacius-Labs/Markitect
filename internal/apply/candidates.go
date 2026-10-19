@@ -224,6 +224,7 @@ func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, messa
 // shards are the exception: the Managers maintain them.
 func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
+	quoted := 0
 	check := func(path snapshot.Path, before, after snapshot.Entry, hadBefore, hasAfter bool) {
 		if name := path.String(); strings.HasPrefix(name, registryDirectory) || strings.HasPrefix(name, ".markitect/state/") || strings.HasPrefix(name, ".git/") {
 			return
@@ -242,7 +243,7 @@ func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 		default:
 			return
 		}
-		findings = append(findings, CandidateFinding{Owner: c.OwnerOf(path), Code: code, Path: path.String(), Message: "The canonical or Markitect control input was " + what + "; Managers cannot change the model or project controls. Restore it, and ask the owner through Root if the intent must change." + originalText(before, code)})
+		findings = append(findings, CandidateFinding{Owner: c.OwnerOf(path), Code: code, Path: path.String(), Message: "The canonical or Markitect control input was " + what + "; Managers cannot change the model or project controls. Restore it, and ask the owner through Root if the intent must change." + originalText(before, code, &quoted)})
 	}
 	for _, before := range c.start.Entries() {
 		after, found := tree.Lookup(before.Path())
@@ -256,19 +257,25 @@ func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 	return findings
 }
 
-// maxOriginalText is the largest original protected input a finding quotes.
-const maxOriginalText = 8 << 10
+// maxOriginalText is the largest original protected input a finding quotes;
+// maxQuotedTotal bounds all quotes of one candidate, so a large deletion cannot
+// flood the owner's prompt.
+const (
+	maxOriginalText = 8 << 10
+	maxQuotedTotal  = 32 << 10
+)
 
 // originalText states the start content of a changed or deleted protected input,
 // so the owner can restore the exact bytes without access to the start stand: the
-// text itself when it is valid UTF-8 of at most maxOriginalText bytes, else its
-// SHA-256 and size.
-func originalText(before snapshot.Entry, code string) string {
+// text itself when it is valid UTF-8 of at most maxOriginalText bytes and the
+// candidate's quotes stay within maxQuotedTotal, else its SHA-256 and size.
+func originalText(before snapshot.Entry, code string, quoted *int) string {
 	if code == "input.added" {
 		return ""
 	}
 	content := before.Bytes()
-	if len(content) <= maxOriginalText && utf8.Valid(content) {
+	if len(content) <= maxOriginalText && *quoted+len(content) <= maxQuotedTotal && utf8.Valid(content) {
+		*quoted += len(content)
 		return fmt.Sprintf(" Original content, exactly %d bytes, between the BEGIN and END lines (the line breaks around it are not part of it):\nBEGIN\n%s\nEND", len(content), content)
 	}
 	return fmt.Sprintf(" The original content is %d bytes with SHA-256 %s.", len(content), before.ContentID())

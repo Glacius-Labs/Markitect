@@ -342,14 +342,24 @@ func TestCandidatesProtectedFindingsQuoteTheOriginal(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		got := apply.OriginalText(entry, "input.changed")
+		quoted := 0
+		got := apply.OriginalText(entry, "input.changed", &quoted)
 		if strings.Contains(got, "BEGIN") || !strings.Contains(got, entry.ContentID().String()) || !strings.Contains(got, strconv.Itoa(len(content))) {
 			t.Errorf("%s: want size and SHA-256 only, got %q", name, got)
 		}
 	}
 	entry, _ := snapshot.NewEntry(path(t, "x"), snapshot.Regular, large[:8<<10])
-	if got := apply.OriginalText(entry, "input.deleted"); !strings.Contains(got, "BEGIN") {
+	quoted := 0
+	if got := apply.OriginalText(entry, "input.deleted", &quoted); !strings.Contains(got, "BEGIN") {
 		t.Errorf("an input of exactly 8 KiB must be quoted, got a digest")
+	}
+	// All quotes of one candidate stay within 32 KiB: four 8 KiB originals are
+	// quoted, the fifth gets its digest.
+	for i := 2; i <= 5; i++ {
+		got := apply.OriginalText(entry, "input.deleted", &quoted)
+		if strings.Contains(got, "BEGIN") != (i <= 4) {
+			t.Errorf("original %d: quoted %v with %d bytes quoted before", i, strings.Contains(got, "BEGIN"), quoted)
+		}
 	}
 }
 

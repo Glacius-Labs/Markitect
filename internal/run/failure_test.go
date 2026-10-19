@@ -453,6 +453,14 @@ func TestPortErrors(t *testing.T) {
 			t.Fatalf("%v %s %s", err, out.Status, out.Reason)
 		}
 	})
+	t.Run("a failed work materialization closes the work volume", func(t *testing.T) {
+		f := newFixture(t)
+		f.ws.matErrFor = map[WorkspaceID]error{"run1-work": errTest}
+		out, err := Reconcile(context.Background(), f.cfg)
+		if !errors.Is(err, errTest) || out.Status != Failed || !f.ws.isClosed("run1-c0") || !f.ws.isClosed("run1-work") {
+			t.Fatalf("%v %s c0 closed %v work closed %v", err, out.Status, f.ws.isClosed("run1-c0"), f.ws.isClosed("run1-work"))
+		}
+	})
 	t.Run("a check that cannot run is a failed check", func(t *testing.T) {
 		f := newFixture(t)
 		f.addCheck("unit", "library")

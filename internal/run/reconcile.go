@@ -149,9 +149,11 @@ const (
 
 // Outcome is the run's result. Candidate is the verified stand and is set only
 // when Status is Verified; it equals Start when nothing needed to change. The
-// engine closes every candidate volume itself, but never the shared work volume
-// "<RunID>-work": after Reconcile returns, in every outcome, the caller owns it
-// and decides to close it or keep it as retained work.
+// engine closes every candidate volume itself. Once the shared work volume
+// "<RunID>-work" holds the start stand, the engine never closes it: after
+// Reconcile returns, in every outcome, the caller owns it and decides to close it
+// or keep it as retained work. A work volume whose materialization failed is
+// closed by the engine.
 type Outcome struct {
 	Status    Status
 	Reason    string

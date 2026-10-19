@@ -446,6 +446,7 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	shared, ok := e.materialize(work, cfg.Start)
 	if !ok {
 		e.closeVolume(cand.id)
+		e.closeVolume(work)
 		return e.incomplete("")
 	}
 	e.work = shared.volume

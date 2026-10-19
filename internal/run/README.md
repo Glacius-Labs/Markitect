@@ -15,9 +15,10 @@ and publishes a verified candidate; this package never publishes and never commi
 
 1. Candidate 0 is the start stand, materialized read-only as `<RunID>-c0`; the shared
    working tree is `<RunID>-work`. Later candidates are `<RunID>-c<N>`. Candidate volumes
-   close after their round. The engine never closes the shared volume: after `Reconcile`
-   returns, in every outcome, the caller owns it and closes it after a successful
-   publication or keeps it as retained work.
+   close after their round. Once the shared volume holds the start stand, the engine never
+   closes it: after `Reconcile` returns, in every outcome, the caller owns it and closes it
+   after a successful publication or keeps it as retained work. A shared volume whose
+   materialization failed is closed by the engine.
 2. A round runs `Account` and all required checks on the candidate (checks in parallel),
    then one fresh Verify turn per Manager, children before parents, independent branches
    in parallel. A parent starts when all its children's Verify turns of the round ended.

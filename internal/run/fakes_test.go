@@ -59,6 +59,8 @@ type fakeWS struct {
 	uncertain bool
 	extra     []string
 	matErr    error
+	// matErrFor fails only the materialization of these workspaces.
+	matErrFor map[WorkspaceID]error
 }
 
 type fakeVol struct {
@@ -77,6 +79,9 @@ func (w *fakeWS) Materialize(_ context.Context, s WorkspaceSpec) (WorkspaceObser
 	defer w.mu.Unlock()
 	if w.matErr != nil {
 		return WorkspaceObservation{}, w.matErr
+	}
+	if err := w.matErrFor[s.ID]; err != nil {
+		return WorkspaceObservation{}, err
 	}
 	if !nameRE.MatchString(string(s.ID)) {
 		w.t.Errorf("workspace ID %q is not a valid name", s.ID)

@@ -71,7 +71,7 @@ func (e *engine) scheduleLocked() {
 			}
 			return
 		}
-		items, first := m.items, !m.executed
+		items, first := m.items, !m.executed || m.conversation == ""
 		m.items, m.consumed = nil, items
 		m.execCount++
 		m.running, m.ran, m.execUsed = true, true, true
