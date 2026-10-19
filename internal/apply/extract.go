@@ -129,21 +129,24 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	modelOutcome, runErr := run.Reconcile(ctx, cfg)
 	result.Model = &modelOutcome
 	phase.cleanup(ctx, modelOutcome, "model")
-	modelWork := retainedWork(context.WithoutCancel(ctx), phase.reconcile())
-	if modelWork == "" {
-		return keepStructure(runErr)
-	}
-	closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
 	if modelOutcome.Status != run.Verified || runErr != nil {
+		// A model phase that never held its own work volume leaves the structure
+		// as the only result.
+		modelWork := retainedWork(context.WithoutCancel(ctx), phase.reconcile())
+		if modelWork == "" {
+			return keepStructure(runErr)
+		}
+		closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
 		result.RetainedWork = modelWork
 		return result, runErr
 	}
+	closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
 	changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
 	if err := requireModelChangesOnly(changes); err != nil {
 		// Account blocks every such candidate, so this is a defect, not an
 		// incomplete run.
 		modelOutcome.Status, modelOutcome.Reason = run.Failed, err.Error()
-		result.RetainedWork = modelWork
+		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
 		return result, err
 	}
 	reconcile := phase.reconcile()
