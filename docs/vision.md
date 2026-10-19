@@ -87,17 +87,24 @@ Markitect lets humans program the shape and rules of software development instea
 
 ## Three starting situations
 
-These are the three fundamental starting situations for working with Markitect, accepted by the owner on 19 October 2026 ([DEC-057](concepts/register.md#dec-057-three-fundamental-starting-situations), [owner discussion](concepts/sources/three-starting-situations-20261019.md)). They describe the high-level product workflow, not three implemented commands or a new implementation assignment. The model describes intended meaning and structure; artifacts realize it.
+There are **three starting situations, but only two processes: Apply and Extract**, accepted by the owner on 19 October 2026 ([DEC-057](concepts/register.md#dec-057-three-fundamental-starting-situations), [process naming decision](concepts/sources/three-starting-situations-20261019.md#owner-selects-apply-and-extract)). The model describes intended meaning and structure; artifacts realize it.
 
-| Situation | Typical use | Direction of work |
+| Process | Direction | Goal |
 |---|---|---|
-| 1. Model exists; artifacts do not | Start a new project by modeling it first. | Build the realization from the model. |
-| 2. Model and artifacts exist | Normal ongoing development and maintenance. | Reconcile the realization with the model. |
-| 3. Artifacts exist; model does not | Adopt Markitect for an existing project. | Derive and refine the model from the existing realization, interactively with the owner. |
+| Apply | Model -> Artifacts | Bring artifacts into agreement with the accepted model, whether they must first be created or already exist. |
+| Extract | Artifacts -> Model | Develop a reviewed model candidate of the existing project's meaning and structure for owner adoption, through derivation, integration, owner clarification and iterative Verify. |
+
+| Situation | Typical use | Process |
+|---|---|---|
+| 1. Model exists; artifacts do not | Start a new project by modeling it first. | Apply creates the realization. |
+| 2. Model and artifacts exist | Normal ongoing development and maintenance. | Apply reconciles the realization. |
+| 3. Artifacts exist; model does not | Adopt Markitect for an existing project. | Extract derives and refines the model interactively with the owner. |
+
+Building a new project and reconciling an existing one are starting states of Apply, not separate processes or commands. These names describe the high-level direction of work; they establish neither executable availability nor a new implementation assignment.
 
 ### 1. Build from the model
 
-Managers build the project. Root starts by preparing the root-owned project skeleton and shared prerequisites. Its children build their areas on those foundations, and their children do the same recursively. Each Manager supplies the foundations its children need within its own responsibility; it does not implement their areas for them. Results are integrated upward, with each parent responsible for its own work and the interaction of its children's results.
+This is Apply with no existing artifacts. Managers build the project. Root starts by preparing the root-owned project skeleton and shared prerequisites. Its children build their areas on those foundations, and their children do the same recursively. Each Manager supplies the foundations its children need within its own responsibility; it does not implement their areas for them. Results are integrated upward, with each parent responsible for its own work and the interaction of its children's results.
 
 This is a dependency order for construction, not a new globally sequential scheduling rule. Areas whose prerequisites are available can progress under the agreed Manager process. The model need not prescribe every file or implementation step: it states the intended meaning, structure and deliberate constraints, leaving the agreed realization freedom. An unresolved intent question returns to the owner through Root.
 
@@ -105,13 +112,13 @@ This makes the existing [start-from-model direction](concepts/register.md#dec-05
 
 ### 2. Reconcile model and artifacts
 
-This is the normal working state. Managers reconcile their responsibilities with the current accepted model, integrate their children and verify the result through the agreed Apply process. A model change supplies new intent; a bug or other realization deviation can require repair against the unchanged model. A repair does not need an invented model edit.
+This is the same Apply process with existing artifacts, the normal working state. Missing artifacts are created, existing artifacts are assessed and updated where required, and artifacts with no remaining justified model basis are removed under the existing reconciliation rules. Managers reconcile their responsibilities with the current accepted model, integrate their children and verify the result. A model change supplies new intent; a bug or other realization deviation can require repair against the unchanged model. A repair does not need an invented model edit.
 
 Parents assess their children's actual results and interactions. If children make contradictory claims during Apply or Verify, the parent investigates and resolves the conflict within the accepted intent and delegated freedom. Unsettled meaning or a decision outside that authority returns to the owner through Root. Read-only Verify reports the existing stand; authorized Apply performs the artifact reconciliation. The [command design](design/canonical-model/commands.md#one-organization-and-different-instructions) owns that distinction.
 
 ### 3. Derive the model from existing artifacts
 
-Adoption works in the reverse direction: Managers examine the existing artifacts, propose the meaning and structure of their areas, and integrate the model upward. Parents reconcile shared concepts, boundaries, relationships and contradictory child statements. The process is interactive with the owner, especially where sources conflict or intended meaning cannot be established. Questions reach the owner through Root in understandable terms; the owner need not inspect YAML to decide them.
+This is Extract, the reverse direction Artifacts -> Model. Managers examine the existing artifacts, propose the meaning and structure of their areas, and integrate the model upward. Parents reconcile shared concepts, boundaries, relationships and contradictory child statements. The process is interactive with the owner, especially where sources conflict or intended meaning cannot be established. Questions reach the owner through Root in understandable terms; the owner need not inspect YAML to decide them. Adoption is the purpose of this starting situation; Extract names the process.
 
 The cycle is **derive model -> review and integrate -> read-only Verify against existing artifacts -> clarify with the owner and refine the model -> Verify again**. It aims for a model and realization that agree for the named adoption scope. Observed behavior, proposed intent, accepted decisions and unresolved questions remain distinct. The [Extract workflow](design/canonical-model/commands.md#extract-the-existing-stand) owns the detailed source, review and refinement boundaries.
 
@@ -119,7 +126,7 @@ Existing artifacts stay unchanged during model derivation. A confirmed realizati
 
 ### One organization, explicit scope
 
-The three situations reuse the recursive Manager organization. Cases 1 and 2 change artifacts against a model; case 3 prepares model changes from artifacts. Similar coordination does not merge those write authorities. The cases can coexist in different areas of one project, so every assessment names its scope. An empty project with neither model nor artifacts enters case 1 once an initial model has been developed and accepted.
+Apply and Extract reuse the recursive Manager organization. Apply covers cases 1 and 2 and changes artifacts against the accepted model. Extract covers case 3 and prepares model changes from existing artifacts. For Apply, the accepted model is the specification; for Extract, artifacts supply evidence for proposed intent, with unresolved meaning clarified by the owner. Similar coordination does not merge those write authorities. The cases can coexist in different areas of one project, so every assessment names its scope. An empty project with neither model nor artifacts enters case 1 once an initial model has been developed and accepted.
 
 The [current workflow](project-workflow.md), [delivery plan](implementation-plan.md) and actual validation records own availability and evidence. This high-level account adds no Extract runtime, new lifecycle protocol, provider run or implementation queue.
 

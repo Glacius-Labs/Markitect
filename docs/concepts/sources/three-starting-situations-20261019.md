@@ -40,3 +40,15 @@ The existing [Extract design](../../design/canonical-model/commands.md#extract-t
 > Halte das schonmal so fest im Repo in den docs. Diese 3 Fälle sind elementar und high level die Themen die hier relevant sind.
 
 Recorder's interpretation: this accepts the discussed high-level account for documentation. It does not dispatch implementation, change the running Apply assignment, introduce model-writing rights into artifact Apply or authorize provider runs, studies or releases. The earlier discussion explicitly requested no implementation.
+
+## Owner selects Apply and Extract
+
+Recorder's note: subsequent discussion in the same thread, now titled **Workflow**, on 19 October 2026. The earlier source text above retains its original wording and scope.
+
+> Noch besser wäre es natürlich wenn wir Aufbau und Abgleich nicht unterscheiden müssten und einfach nur Apply hätten als: Model => Artifacts. Entsprechend dann den Command zurück: Artifacts => Model (Name fehlt noch)
+
+Recorder's summary of the assistant proposal: use Apply for both initial construction and ongoing reconciliation, and Extract for the reverse direction. Apply makes artifacts agree with accepted intent. Extract derives and reviews proposed intent from artifacts, clarifies contradictions with the owner and retains known realization defects. This reuses the name already present in the command design; it does not propose replacing the existing command surface with only two verbs.
+
+> Dann halten wir Apply und Extract so fest. Aktualisiere die Docs entsprechend: drei Ausgangssituationen, aber nur zwei Prozesse.
+
+Recorder's interpretation: this accepts the names and mapping. Cases 1 and 2 are starting states of Apply; case 3 uses Extract. The earlier Build, Reconcile and Adopt descriptions identify situations and purposes rather than three separate process names. This documentation-only clarification preserves the existing direction, ownership, review, Verify and write-authority boundaries and adds no implementation assignment.
