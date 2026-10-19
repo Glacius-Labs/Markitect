@@ -176,7 +176,7 @@ func overview(id, body string, imports ...string) string {
 // proposal for the library: five Packages, one overview Definition each.
 func proposedStructure() map[string]string {
 	return map[string]string{
-		".markitect/model/library/library.yaml":             overview("library", "The whole small library as one program that offers members, copies and lending."),
+		".markitect/model/library/library.yaml":             strings.Replace(overview("library", "The whole small library as one program that offers members, copies and lending."), "id: library\n", "id: library\ntitle: Small library\n", 1),
 		".markitect/model/members/members.yaml":             overview("members", "Registered members and their status."),
 		".markitect/model/catalog/catalog.yaml":             overview("catalog", "Physical copies of books and their availability."),
 		".markitect/model/lending/lending.yaml":             overview("lending", "Loans of copies to members."),

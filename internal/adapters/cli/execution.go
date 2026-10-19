@@ -207,6 +207,8 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		if emit(report) != 0 {
 			return 3
 		}
+		// The account is the last thing the command writes to stderr.
+		io.WriteString(stderr, RenderExtractAccount(report))
 		return exitStatus(report.Status, err)
 	}
 	report, err := c.apply(ctx, ApplyRequest{Selection: selection, RunConfig: *config})
