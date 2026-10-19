@@ -42,6 +42,7 @@ func layoutRequest(t *testing.T) (apply.ReconcileRequest, snapshot.Tree) {
 	return apply.ReconcileRequest{
 		RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, OwnerRequest: "Realize the model.",
 		OwnerDecisions: []string{"Use euro."}, MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest,
+		RequireVolumeSubpaths: func(context.Context) error { return nil },
 	}, attempt.Structural().Model().Inputs().Raw.Census
 }
 
@@ -301,6 +302,30 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 
 // TestReconcileClosesTheWorkVolumeOnlyAfterPublication covers a verified outcome:
 // the shared work volume is the verified work, so it goes only once published.
+func TestReconcileRefusesEnforcedOwnershipOnAnEngineWithoutVolumeSubpaths(t *testing.T) {
+	workspaces := &fakeWorkspaces{}
+	for name, tc := range map[string]struct {
+		check func(context.Context) error
+		want  string
+	}{
+		"old engine":      {func(context.Context) error { return errors.New("Docker server 25.0.0; need 26") }, "Docker server 25.0.0"},
+		"no engine check": {nil, "check for them is required"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			req, _ := layoutRequest(t)
+			req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = failingAgents{}, workspaces, failingRunner{}, &memoryEvidence{}, &fakePublisher{}
+			req.RequireVolumeSubpaths = tc.check
+			_, err := apply.Reconcile(context.Background(), req)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("err = %v, want %q", err, tc.want)
+			}
+			if len(workspaces.open) != 0 || len(workspaces.closed) != 0 {
+				t.Fatalf("the run started before the engine check: %v %v", workspaces.open, workspaces.closed)
+			}
+		})
+	}
+}
+
 func TestReconcileClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
 	req, start := layoutRequest(t)
 	candidate := change(t, start, map[string]*string{"realization/lending/borrow.go": text("package lending // changed\n")})
@@ -337,5 +362,58 @@ func TestReconcileClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
 				t.Fatalf("retained work %q, want %q", result.RetainedWork, wantRetained)
 			}
 		})
+	}
+}
+
+func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
+	req, _ := layoutRequest(t)
+	cfg, err := apply.BuildReconcileConfig(req, time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	team := map[string]run.Manager{}
+	for _, m := range cfg.Team {
+		team[m.Path] = m
+		if !m.Write.Enforced {
+			t.Errorf("%s: write plan %+v is not enforced", m.Path, m.Write)
+		}
+		if !strings.Contains(m.Brief, "Only these areas and your registry shard are writable in /work; everything else is read-only.") {
+			t.Errorf("%s brief lacks the write statement:\n%s", m.Path, m.Brief)
+		}
+	}
+	if !team["."].Write.Base || team["lending"].Write.Base {
+		t.Fatalf("write bases: root %+v lending %+v", team["."].Write, team["lending"].Write)
+	}
+	const children = "Your children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations."
+	const own = "Your own Definitions are yours to realize in your area. Your parent coordinates; it cannot take them over or waive them."
+	for manager, wantChildren := range map[string][]string{
+		".":                 {"- lending\n  areas: realization/lending/** except realization/lending/reminders/**\n  Definition lending/", "- library\n  areas: realization/library/**; realization/cmd/library/**\n  Definition library/"},
+		"lending":           {"- lending/reminders\n  areas: realization/lending/reminders/**\n  Definition lending/reminders/assess-overdue: "},
+		"library":           nil,
+		"lending/reminders": nil,
+	} {
+		brief := team[manager].Brief
+		if has := strings.Contains(brief, children); has != (wantChildren != nil) {
+			t.Errorf("%s: children statement present = %v", manager, has)
+		}
+		for _, want := range wantChildren {
+			if !strings.Contains(brief, want) {
+				t.Errorf("%s brief lacks %q:\n%s", manager, want, brief)
+			}
+		}
+		if has := strings.Contains(brief, own); has != (manager != ".") {
+			t.Errorf("%s: own-Definitions statement present = %v", manager, has)
+		}
+	}
+	root := team["."].Brief
+	if !strings.Contains(root, "files directly in realization/ such as realization/go.mod") ||
+		!strings.Contains(root, "(owned by library)") || !strings.Contains(root, "required by check project-tests; realized by library, integrated and verified by you") {
+		t.Errorf("Root brief:\n%s", root)
+	}
+	if strings.Contains(team["lending"].Brief, "integrated and verified by you") {
+		t.Errorf("only Root integrates the checks' Definitions:\n%s", team["lending"].Brief)
+	}
+	if !strings.Contains(team["lending/reminders"].Brief, "(owned by lending)") {
+		t.Errorf("an included Definition does not show its owner:\n%s", team["lending/reminders"].Brief)
 	}
 }

@@ -12,14 +12,16 @@ Linux (the record used WSL Ubuntu) with Docker, Go and Python 3 on `PATH`, and a
 
 | Step | Script | Timed |
 | --- | --- | --- |
-| Build the runtime, project Go and oracle check images and the CLI from one commit | `ra_build.sh SHA BUILD_DIR` | no |
+| Build the runtime and project Go images and the CLI from one commit | `ra_build.sh SHA BUILD_DIR` | no |
 | Bind an attempt: Host profiles (Sonnet `claude-sonnet-5-5`, high effort, for every Execute and Verify turn), check profiles, token file, frozen scripts and their digests | `ra_bind.sh BUILD_DIR ATTEMPT_DIR` | no |
 | Run the demonstration under `timeout` (27.5 min, then cleanup within 30 min) | `ATTEMPT_DIR/frozen/ra_demo.sh ATTEMPT_DIR SRC_DIR` | yes |
-| Rerun the library oracle on A1 and A2 in the hardened assessment harness | `ra_assess.sh ATTEMPT_DIR` | no |
+| Afterwards, outside the process and the limit: the independent library oracle assesses the published A1 and A2 (`ra_demo.sh` calls it) | `ra_assess.sh ATTEMPT_DIR` | no |
 | Summarize evidence; approximate write attribution from transcripts | `analyze.py STATE_DIR REPORT_JSON`, `writes.py STATE_DIR...` | no |
 
 `ra_demo.sh` calls `ra_inner.sh`, which projects the target (`ra_project.sh`: M1 model, dependencies and `library-execution.yaml` only), writes each run configuration (`ra_runconfig.py`, with the bound `owner-decisions.json` and an absolute deadline), runs both Applies and makes the scripted owner commits between them. `ra_cleanup.sh` stops every remaining container. `smoke_apply.sh` (one Apply with a short deadline) and `nochange_apply.sh` (Apply again on the published A2, committed by the script) are separate checks, not part of the timed run.
 
-## Project controls and the oracle check
+## Project controls and the oracle
 
-`library-execution.yaml` declares the persistent layout (root `realization`, exception `realization/cmd/library` → `library`), the budget (20 minutes per Apply) and two required checks: `go test ./...` and the library oracle. The oracle runs as a check image built from `oracle/` and the evaluator files of `experiments/library-playground`, outside every Agent's write area. `oracle/check.py` selects the m1 or m2 profile from the bound loan policy in the candidate. It prints the pass count, failing case IDs, up to 2000 characters of `go build` output and short oracle errors, never the expected values. The Agents see this output as check results.
+`library-execution.yaml` declares the persistent layout (root `realization`, exception `realization/cmd/library` → `library`), the budget (20 minutes per Apply) and two required checks: `go build ./cmd/library` and `go test ./...`. With the layout, ownership is enforced: each Execute turn can write only its own areas and registry shard.
+
+The independent library oracle of `experiments/library-playground` is not part of the Apply ([DEC-059](../../docs/concepts/register.md#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle)). It observes once after each Apply, through `ra_assess.sh` and the hardened assessment harness of `experiments/runtime-baseline`, and its results never reach the Agents. The [first record](../../docs/validation/recursive-apply-demonstration-20261019.md) ran it as a required check; that setup is retired.

@@ -61,7 +61,7 @@ func (t *turnRun) credential(ctx context.Context, c RuntimeCredential) ([]string
 }
 
 func (t *turnRun) credentialSpec(action string) container.ContainerSpec {
-	spec := turnSpec(t.name, t.turn.Workspace, t.turn.Home, false, t.profile)
+	spec := turnSpec(t.name, t.turn, t.profile)
 	spec.Name += "-auth-" + action
 	spec.Workdir = "/home/agent"
 	spec.Mounts = []container.Mount{{Volume: t.turn.Home, Target: "/home/agent"}}

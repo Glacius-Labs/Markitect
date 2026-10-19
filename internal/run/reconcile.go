@@ -18,6 +18,11 @@ var ErrInvalid = errors.New("invalid reconciliation configuration")
 // its applicable model obligations with provenance, its owned artifact areas,
 // its registry shard and the required checks. The engine adds the mandate,
 // contacts, owner decisions, findings, messages and check results itself.
+// Write is the Manager's write plan for Execute turns. Every Manager takes part
+// in every Apply in the same order: Root starts its first Execute turn at once,
+// every other Manager once its parent's first Execute turn has ended (or the
+// parent is disabled), so a parent supplies the foundation its children need
+// first.
 type Manager struct {
 	Path           string
 	Parent         string
@@ -26,6 +31,25 @@ type Manager struct {
 	Brief          string
 	ExecuteProfile string
 	VerifyProfile  string
+	Write          WritePlan
+}
+
+// WritePlan is where an Execute turn of one Manager may write in the shared
+// working tree. Without Enforced the whole tree is writable and ownership is
+// trusted (no declared layout). With Enforced, Base says whether the whole tree
+// is writable before the Mounts, which then overlay it in order, parents
+// before their descendants. Every mount path is an existing directory of the
+// shared tree; the engine creates them before the first Execute turn.
+type WritePlan struct {
+	Enforced bool
+	Base     bool
+	Mounts   []PathMount
+}
+
+// PathMount overlays one directory of the shared tree, relative to /work.
+type PathMount struct {
+	Path     string `json:"path"`
+	Writable bool   `json:"writable"`
 }
 
 // Check is one required check of the project. Request is complete except for
@@ -40,8 +64,8 @@ type Check struct {
 
 // Budget bounds one run. Deadline is absolute: at that time the engine stops
 // every running turn and check and finishes Incomplete. AgentTurns counts
-// Execute and Verify turns; Rounds counts Verify rounds, including the initial
-// Verify of the starting stand.
+// Execute and Verify turns; Rounds counts Verify rounds, each preceded by one
+// Execute phase.
 type Budget struct {
 	Deadline    time.Time
 	TurnTimeout time.Duration
@@ -148,7 +172,7 @@ const (
 )
 
 // Outcome is the run's result. Candidate is the verified stand and is set only
-// when Status is Verified; it equals Start when nothing needed to change. The
+// when Status is Verified; it equals Start when Execute changed nothing. The
 // engine closes every candidate volume itself. Once the shared work volume
 // "<RunID>-work" holds the start stand, the engine never closes it: after
 // Reconcile returns, in every outcome, the caller owns it and decides to close it
@@ -166,7 +190,8 @@ type Outcome struct {
 	Homes     []string
 }
 
-// Round is one Verify round over one immutable candidate.
+// Round is one Verify round over one immutable candidate. The Execute phase
+// before it carries the same number.
 type Round struct {
 	Number      int           `json:"number"`
 	Tree        string        `json:"tree"`
@@ -208,13 +233,15 @@ type TurnRecord struct {
 	Reason  string    `json:"reason,omitempty"`
 }
 
-// Reconcile runs the cycle of the current Apply concept: fresh Verify of the
-// starting stand, parallel Execute in one shared working tree, observed
-// quiescence and one immutable candidate per closing Verify round, fresh
-// recursive Verify with the required checks on that candidate, and repair
-// through the owners until a round is green or the budget ends. The shared
-// work volume "<RunID>-work" belongs to the caller once Reconcile returns, in
-// every outcome, including Verified.
+// Reconcile runs the cycle of the current Apply concept (DEC-058): Execute in
+// one shared working tree starting at Root, where every other Manager starts
+// when its parent's first turn has ended and results are reported upward;
+// observed quiescence and one immutable candidate; fresh recursive Verify with
+// the required checks on that candidate; and repair through the owners with a
+// new candidate and a new whole Verify round until a round is green or the
+// budget ends. There is no Verify before the first Execute. The shared work
+// volume "<RunID>-work" belongs to the caller once Reconcile returns, in every
+// outcome, including Verified.
 func Reconcile(ctx context.Context, cfg Config) (Outcome, error) {
 	return reconcile(ctx, cfg)
 }

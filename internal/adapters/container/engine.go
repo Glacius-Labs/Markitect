@@ -13,6 +13,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"strconv"
 	"strings"
 	"sync"
 )
@@ -248,6 +249,30 @@ func (e *Engine) ImageID(ctx context.Context, ref string) (string, error) {
 		return "", fmt.Errorf("engine reported image ID %q", id)
 	}
 	return id, nil
+}
+
+// minSubpathServerMajor is the first Docker server version that mounts a
+// directory of a named volume (volume-subpath).
+const minSubpathServerMajor = 26
+
+// RequireVolumeSubpaths refuses an engine whose server cannot mount a directory
+// of a volume (Mount.Subpath): Docker 26 or newer. It asks the engine for its
+// server version and refuses an unreadable answer.
+func (e *Engine) RequireVolumeSubpaths(ctx context.Context) error {
+	out, err := e.output(ctx, "version", "--format", "{{.Server.Version}}")
+	if err != nil {
+		return fmt.Errorf("the container engine's server version could not be read: %w", err)
+	}
+	version := strings.TrimSpace(string(out))
+	digits, _, _ := strings.Cut(version, ".")
+	major, err := strconv.Atoi(digits)
+	if err != nil || major < 0 {
+		return fmt.Errorf("the container engine reports the server version %q, which is not understood; volume subpath mounts need Docker %d or newer", version, minSubpathServerMajor)
+	}
+	if major < minSubpathServerMajor {
+		return fmt.Errorf("the container engine is Docker server %s; volume subpath mounts, which enforced ownership needs, require Docker %d or newer", version, minSubpathServerMajor)
+	}
+	return nil
 }
 
 // ReadImageFile copies one regular file out of an image without running it:

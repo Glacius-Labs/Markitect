@@ -12,8 +12,11 @@
 // that natural-language obligations have been satisfied.
 //
 // A Layout is the project's persistent ownership map: artifact roots that mirror
-// the model hierarchy plus explicit exceptions, deepest mapping wins, everything
-// else belongs to Root. It is validated against the local Package inventory
+// the model hierarchy plus explicit exceptions, deepest mapping wins. Root owns
+// the files directly in an artifact root and every file outside the roots; a
+// file in an unmapped subdirectory of a root has no owner, which accounting
+// reports as layout.no_owner to Root. An exception declares whether its path is
+// a file or, by default, a directory; only directories are areas. It is validated against the local Package inventory
 // before any work starts, including letter-case ambiguity for case-insensitive
 // platforms. When a Layout is declared, accounting additionally requires every
 // registration to sit in the registry shard of its path's owner; without one the

@@ -12,8 +12,8 @@ import (
 
 // ExecutionBudget is the authored bound of one Apply run: ExecutionTime is the
 // wall clock of the whole Apply, TurnTimeout bounds one Agent turn, AgentTurns
-// counts Execute and Verify turns and Rounds counts Verify rounds including the
-// initial Verify. Each Setting names the original file/content/field.
+// counts Execute and Verify turns and Rounds counts Verify rounds, each after an
+// Execute phase. Each Setting names the original file/content/field.
 type ExecutionBudget struct {
 	ExecutionTime organization.Setting[time.Duration]
 	TurnTimeout   organization.Setting[time.Duration]
@@ -28,9 +28,12 @@ type ExecutionDefaults struct {
 	Verify  organization.RoleOverride
 }
 
-// ExecutionLayoutException is one authored explicit ownership exception.
+// ExecutionLayoutException is one authored explicit ownership exception. Kind
+// is the optional declared kind of the path, "directory" (the default when
+// absent) or "file"; a zero Kind is absent.
 type ExecutionLayoutException struct {
 	Path   organization.Setting[snapshot.Path]
+	Kind   organization.Setting[string]
 	Owner  organization.Setting[string]
 	Reason organization.Setting[string]
 }
