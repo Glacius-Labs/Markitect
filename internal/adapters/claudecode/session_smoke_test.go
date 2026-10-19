@@ -247,8 +247,8 @@ func TestAdmittedSessionAdapterSmoke(t *testing.T) {
 	if strictValue(raw, &profile) != nil {
 		t.Fatal("invalid closed SessionProfile source")
 	}
-	if profile.Model != "claude-haiku-5-5" || profile.Effort != "high" || len(profile.BuiltinTools) != 1 || profile.BuiltinTools[0] != "Read" {
-		t.Fatal("smoke requires explicitly selected Claude Haiku/high profile with only Read builtin")
+	if profile.Model != "claude-sonnet-5-5" || profile.Effort != "high" || len(profile.BuiltinTools) != 1 || profile.BuiltinTools[0] != "Read" {
+		t.Fatal("smoke requires explicitly selected Claude Sonnet/high profile with only Read builtin")
 	}
 	profilePayload := sessionSmokePayload(t, "application/vnd.markitect.claude-session-profile+json", raw)
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)

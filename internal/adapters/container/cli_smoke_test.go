@@ -136,12 +136,12 @@ func credentialEnv(names ...string) []string {
 	return env
 }
 
-// The owner-selected models for real probes: Codex Luna and Claude Haiku,
+// The owner-selected models for real probes: Codex Luna and Claude Sonnet,
 // both with high effort.
 const (
 	codexModel  = "gpt-6-luna"
 	codexEffort = "high"
-	claudeModel = "claude-haiku-5-5"
+	claudeModel = "claude-sonnet-5-5"
 )
 
 // codexCredential prepares a session's provider home for a real Codex turn.
