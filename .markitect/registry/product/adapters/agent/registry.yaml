@@ -91,7 +91,7 @@ artifacts:
   - path: "internal/adapters/codexappserver/execution_profile.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
-    why: Projects only complete source-bound Codex v3 Host settings into the existing admitted session payload and explicit credential reference and transport limit.
+    why: Projects only complete source-bound Codex v3 Host settings and the observed image into a turn Profile.
   - path: "internal/adapters/codexappserver/execution_profile_test.go"
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
@@ -116,31 +116,31 @@ artifacts:
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata]
     why: Checks actual Apply image evidence, immutable identity, acquisition failures and factory boundaries with fake readers.
-  - path: "internal/adapters/codexappserver/session.go"
+  - path: "internal/adapters/codexappserver/agents.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Implements admitted one-step session identity, acknowledged transport, read-only inspection limits and observed stop through the existing container runtime.
-  - path: "internal/adapters/codexappserver/session_credential.go"
+    why: Implements the run.Agents turn adapter, one container per turn with handshake, thread start or resume, Host tool answers, usage and observed stop.
+  - path: "internal/adapters/codexappserver/agents_credential.go"
     form: code
     realizes: [product/ports-and-adapters]
     why: Installs only an explicitly resolved dedicated runtime login without refresh authority and preserves cleanup uncertainty.
-  - path: "internal/adapters/codexappserver/session_credential_test.go"
+  - path: "internal/adapters/codexappserver/agents_credential_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: Distinguishes exact provider-home login installation, refresh-token exclusion, actual-exit cleanup and retained credential uncertainty with fake helpers.
-  - path: "internal/adapters/codexappserver/session_profile.go"
+    why: Distinguishes exact provider-home login installation, refresh-token exclusion, actual-exit cleanup, retained credential uncertainty and secret redaction with fake helpers.
+  - path: "internal/adapters/codexappserver/profile.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Binds the closed execution profile, exact tool catalogue and explicit runtime credential resolver to admitted session payloads.
-  - path: "internal/adapters/codexappserver/session_step.go"
+    why: Defines the per-profile turn settings, the explicit runtime credential resolver and the container and provider command a turn runs with.
+  - path: "internal/adapters/codexappserver/transcript.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Runs one admitted Codex turn with exact thread and call correlation, recorded Host outcomes, and proposes no outcome from final text.
-  - path: "internal/adapters/codexappserver/session_test.go"
+    why: Writes the redacted JSON Lines transcript of a turn as evidence and reports a transcript that lost lines.
+  - path: "internal/adapters/codexappserver/agents_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: Exercises complete fake-runtime session behavior and distinguishes acknowledgement, partial-write, callback, identity, cancellation and inspection failure boundaries.
-  - path: "internal/adapters/codexappserver/session_smoke_test.go"
+    why: Exercises complete fake-runtime turns and distinguishes resume, read-only mounts, refusals, foreign calls, provider failure, timeout, cancellation and unobserved stop.
+  - path: "internal/adapters/codexappserver/agents_smoke_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: Prepares an explicitly opted-in actual Session adapter smoke with source-bound inputs, acknowledged Host calls, manager continuity and fresh read-only review; runtime evidence remains unexecuted.
+    why: Prepares an explicitly opted-in actual turn adapter smoke with source-bound inputs, Host tool answers, Execute resume continuity and a fresh read-only Verify turn; runtime evidence remains unexecuted.

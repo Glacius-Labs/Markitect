@@ -6,16 +6,15 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// SessionProfileFromPrepared projects captured v3 Host settings after complete
+// ProfileFromPrepared projects captured v3 Host settings after complete
 // static preparation. It performs no acquisition, credential resolution or
-// runtime call. The caller binds the returned values and observed image ID into
-// its admitted SessionPlan; static preparation grants no execution authority.
-func SessionProfileFromPrepared(prepared apply.PreparedProfile) (profile run.Payload, credentialRef string, maxWireBytes int64, err error) {
-	refuse := func(reason string) (run.Payload, string, int64, error) {
-		return run.Payload{}, "", 0, fmt.Errorf("%w: %s", ErrSession, reason)
+// runtime call; static preparation grants no execution authority. The image is
+// the one observed during preparation.
+func ProfileFromPrepared(prepared apply.PreparedProfile) (Profile, error) {
+	refuse := func(reason string) (Profile, error) {
+		return Profile{}, fmt.Errorf("%w: %s", ErrSession, reason)
 	}
 	input, observation := prepared.Input(), prepared.Observation()
 	if _, ok := prepared.Identity(); !ok || observation.Status != model.Passed || input.Namespace() != "agentProfiles" || input.Binding() == (apply.ProfileBinding{}) || observation.InputBinding != input.Binding() {
@@ -33,9 +32,9 @@ func SessionProfileFromPrepared(prepared apply.PreparedProfile) (profile run.Pay
 	if observation.Contract != (apply.ProfileContract{Name: "markitect.codex-app-server.image-metadata", Version: 3}) || image == nil || image.Provider != apply.AgentImageCodexAppServer || image.ImageID != config.imageID || image.Metadata.Path != runtimeMetadataPath || image.CLIVersion != supportedCodexVersion || image.AgentdVersion != config.agentd || image.RecordedCodexSchemaDigest != config.schema || !slices.Equal(observation.Instructions, config.instructions) {
 		return refuse("prepared Codex contract, image or instruction binding differs from captured configuration")
 	}
-	profile, err = NewSessionProfile(config.session)
-	if err != nil {
-		return run.Payload{}, "", 0, err
+	profile := Profile{ImageID: image.ImageID, CredentialRef: config.credentialRef, MaxWireBytes: config.maxWireBytes, Session: config.session}
+	if err := validateProfile(profile); err != nil {
+		return Profile{}, err
 	}
-	return profile, config.credentialRef, config.maxWireBytes, nil
+	return profile, nil
 }

@@ -22,15 +22,18 @@ type runtimeLogin struct {
 	LastRefresh *string `json:"last_refresh"`
 }
 
-func (e *sessionEntry) credential(ctx context.Context, c RuntimeCredential, helper RuntimeHelper) ([]string, error) {
+// credential validates the resolved credential, remembers its secrets for
+// redaction and returns the provider environment. A dedicated login is
+// installed into the provider home by a hardened helper first.
+func (t *turnRun) credential(ctx context.Context, c RuntimeCredential) ([]string, error) {
 	if c.Mode == "api-key" {
 		if c.APIKey == "" || c.RuntimeLogin != nil || strings.ContainsAny(c.APIKey, "\r\n\x00") {
 			return nil, ErrSession
 		}
-		e.secrets = [][]byte{[]byte(c.APIKey)}
+		t.secrets = [][]byte{[]byte(c.APIKey)}
 		return []string{"CODEX_HOME=/home/agent/.codex", "OPENAI_API_KEY=" + c.APIKey}, nil
 	}
-	if c.Mode != "dedicated-runtime-login" || c.APIKey != "" || len(c.RuntimeLogin) > maxProtocolMessage || helper == nil {
+	if c.Mode != "dedicated-runtime-login" || c.APIKey != "" || len(c.RuntimeLogin) > maxProtocolMessage || t.agents.helper == nil {
 		return nil, ErrSession
 	}
 	var login runtimeLogin
@@ -39,7 +42,7 @@ func (e *sessionEntry) credential(ctx context.Context, c RuntimeCredential, help
 	}
 	for _, secret := range []string{login.Tokens.Access, login.Tokens.ID, login.Tokens.Refresh} {
 		if secret != "" {
-			e.secrets = append(e.secrets, []byte(secret))
+			t.secrets = append(t.secrets, []byte(secret))
 		}
 	}
 	login.Tokens.Refresh = ""
@@ -49,32 +52,32 @@ func (e *sessionEntry) credential(ctx context.Context, c RuntimeCredential, help
 	}
 	// Mark a possible installation before the helper runs: a partial helper
 	// failure may still leave an access token in the retained provider home.
-	e.runtimeAttempted = true
-	e.loginInstalled = true
+	t.loginInstalled = true
 	write := []string{"/bin/sh", "-c", "mkdir -p /home/agent/.codex && umask 077 && rm -f /home/agent/.codex/auth.json && cat > /home/agent/.codex/auth.json"}
-	if err = helper(ctx, e.credentialSpec("issue"), write, bytes.NewReader(data), io.Discard); err != nil {
-		return nil, e.safe(err)
+	if err = t.agents.helper(ctx, t.credentialSpec("issue"), write, bytes.NewReader(data), io.Discard); err != nil {
+		return nil, t.safe(err)
 	}
 	return []string{"CODEX_HOME=/home/agent/.codex"}, nil
 }
 
-func (e *sessionEntry) credentialSpec(action string) container.ContainerSpec {
-	spec := sessionSpec(e.plan, e.profile)
+func (t *turnRun) credentialSpec(action string) container.ContainerSpec {
+	spec := turnSpec(t.name, t.turn.Workspace, t.turn.Home, false, t.profile)
 	spec.Name += "-auth-" + action
 	spec.Workdir = "/home/agent"
-	spec.Mounts = []container.Mount{{Volume: e.plan.ProviderHome, Target: "/home/agent"}}
+	spec.Mounts = []container.Mount{{Volume: t.turn.Home, Target: "/home/agent"}}
 	return spec
 }
-func (e *sessionEntry) removeCredential(ctx context.Context, helper RuntimeHelper) error {
-	if !e.loginInstalled {
+
+func (t *turnRun) removeCredential(ctx context.Context) error {
+	if !t.loginInstalled {
 		return nil
 	}
-	if helper == nil {
+	if t.agents.helper == nil {
 		return ErrSession
 	}
-	if err := helper(ctx, e.credentialSpec("remove"), []string{"/bin/rm", "-f", "/home/agent/.codex/auth.json"}, nil, io.Discard); err != nil {
-		return e.safe(err)
+	if err := t.agents.helper(ctx, t.credentialSpec("remove"), []string{"/bin/rm", "-f", "/home/agent/.codex/auth.json"}, nil, io.Discard); err != nil {
+		return t.safe(err)
 	}
-	e.loginInstalled = false
+	t.loginInstalled = false
 	return nil
 }

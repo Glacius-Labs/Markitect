@@ -2,7 +2,6 @@ package codexappserver
 
 import (
 	"context"
-	"encoding/json"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -58,28 +57,14 @@ func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
 		t.Fatal(prepared.Observation())
 	}
 	want := SessionProfile{Version: 1, Model: "explicitly-selected-model", Effort: "high", BaseInstructions: "Literal ${NO_EXPANSION}\n", DeveloperInstructions: "", Store: "explicit-store", CPUs: 1.5, MemoryBytes: 2147483648, Pids: 192, TmpBytes: 2097152, Network: ""}
-	wantPayload, err := NewSessionProfile(want)
-	if err != nil {
-		t.Fatal(err)
-	}
 	calls := append([]string(nil), fake.calls...)
-	payload, credential, wire, err := SessionProfileFromPrepared(prepared)
-	if err != nil || payload.Ref() != wantPayload.Ref() || string(payload.Bytes()) != string(wantPayload.Bytes()) || credential != "exact-runtime-credential" || wire != 1<<20 {
-		t.Fatalf("projection: %v %s %q %d", err, payload.Bytes(), credential, wire)
-	}
-	var actual SessionProfile
-	if err := json.Unmarshal(payload.Bytes(), &actual); err != nil || !reflect.DeepEqual(actual, want) {
-		t.Fatalf("constructor roundtrip: %v %+v", err, actual)
+	profile, err := ProfileFromPrepared(prepared)
+	if err != nil || !reflect.DeepEqual(profile, Profile{ImageID: fixtureImage, CredentialRef: "exact-runtime-credential", MaxWireBytes: 1 << 20, Session: want}) {
+		t.Fatalf("projection: %v %+v", err, profile)
 	}
 	// Projection has no runtime/resolver seam and never revisits the fake reader.
 	if !reflect.DeepEqual(fake.calls, calls) {
 		t.Fatal("projection repeated acquisition", fake.calls)
-	}
-	copyBytes := payload.Bytes()
-	copyBytes[0] = '!'
-	again, _, _, err := SessionProfileFromPrepared(prepared)
-	if err != nil || again.Ref() != wantPayload.Ref() {
-		t.Fatal("returned bytes changed captured settings", err)
 	}
 }
 
@@ -100,7 +85,7 @@ func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
 	cached := prepare(changed, captureProfile(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
 		return first.Observation(), nil
 	}))
-	if _, _, _, err := SessionProfileFromPrepared(cached); err == nil {
+	if _, err := ProfileFromPrepared(cached); err == nil {
 		t.Fatal("accepted another source request's metadata")
 	}
 }
@@ -108,10 +93,10 @@ func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
 func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *testing.T) {
 	engine := filepath.Join(t.TempDir(), "engine")
 	v2 := preparedExecution(t, imageProfile(engine), imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}))
-	if _, _, _, err := SessionProfileFromPrepared(v2); err == nil || !strings.Contains(err.Error(), "metadata-only") {
+	if _, err := ProfileFromPrepared(v2); err == nil || !strings.Contains(err.Error(), "metadata-only") {
 		t.Fatal("v2 invented execution settings", err)
 	}
-	if _, _, _, err := SessionProfileFromPrepared(apply.PreparedProfile{}); err == nil {
+	if _, err := ProfileFromPrepared(apply.PreparedProfile{}); err == nil {
 		t.Fatal("accepted missing prepared profile")
 	}
 	for _, scenario := range []string{"contract", "provider", "image", "CLI", "agentd", "schema", "instructions", "incomplete"} {
@@ -140,7 +125,7 @@ func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *te
 				return o, err
 			})
 			prepared := preparedExecution(t, executionHostProfile(engine), port)
-			if payload, credential, wire, err := SessionProfileFromPrepared(prepared); err == nil || payload.Valid() || credential != "" || wire != 0 {
+			if profile, err := ProfileFromPrepared(prepared); err == nil || profile != (Profile{}) {
 				t.Fatalf("accepted %s evidence or leaked partial projection: %v", scenario, err)
 			}
 		})
@@ -170,7 +155,7 @@ func TestExecutionProfileInvalidSettingsRefuseBeforeImageAcquisition(t *testing.
 			if prepared.Observation().Status != model.Failed || calls != 0 {
 				t.Fatal("invalid execution settings reached image reader", calls, prepared.Observation())
 			}
-			if _, _, _, err := SessionProfileFromPrepared(prepared); err == nil {
+			if _, err := ProfileFromPrepared(prepared); err == nil {
 				t.Fatal("projected invalid execution settings")
 			}
 		})
