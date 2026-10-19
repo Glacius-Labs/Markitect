@@ -1,20 +1,27 @@
-# Delivery plan: a usable Apply
+# Delivery plan: finish the Apply and Extract evidence
 
-This is the delivery and coordination owner. It names the current target, the work streams with their write scopes, and the integration rules. Chats and PRs hold progress and evidence; there is no status file, backlog or dashboard. The plan that led to the first reliable Apply, with its A1 to A6 queue and zones, remains in [Git at Main f15ea723](https://github.com/Glacius-Labs/Markitect/blob/f15ea723d519d541c7122568b078cbd49bd00cf1/docs/implementation-plan.md).
+This is the delivery and coordination owner. It names the current target, the work streams with their write scopes, and the integration rules. The GitHub milestone issues hold the bounded work and dependencies; chats and PRs hold progress and evidence. Do not create a second status file or dashboard. The plan that led to the first reliable Apply, with its A1 to A6 queue and zones, remains in [Git at Main f15ea723](https://github.com/Glacius-Labs/Markitect/blob/f15ea723d519d541c7122568b078cbd49bd00cf1/docs/implementation-plan.md).
 
 ## Where we are
 
-Status, 19 October 2026 (Main `f15ea723`):
+The original implementation baseline was Main `f15ea723`; later integrated changes and their exact runtime evidence stay bound to their delivery PRs and reports.
 
 - Main holds the recursive Apply of [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) with execute-first ([DEC-058](concepts/register.md#dec-058-apply-always-executes-before-independent-verify)), enforced ownership and the outside oracle ([DEC-059](concepts/register.md#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle)) and the owner-realizes rule ([DEC-060](concepts/register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters)), plus a first bounded Extract. The [runtime contract](design/canonical-model/manager-apply-runtime.md) describes what is implemented.
 - Three timed library demonstrations verified both Applies in one Verify round each ([record](validation/recursive-apply-repetitions-20261019.md)). The first Extract runs work as a mechanism; the extracted model is not yet adoptable as binding intent ([record](validation/library-extract-20261019.md)).
-- Not yet established: Apply without the demonstration harness, a repair of injected drift under an unchanged model, a real owner question, an interrupted run, a second example, a release and owner acceptance.
+- The current task is to finish and assess the bounded evidence below. An integrated implementation, a successful source check and owner acceptance remain distinct.
 
 ## Target and baseline
 
-**Next milestone: Apply without the harness.** An owner prepares the Host once and then runs `markitect apply` and `markitect extract` on their own repository with product commands only. Today the scripts of the [library demonstration](../experiments/recursive-apply-demo/README.md) build the images, bind the Host profile and write the run configuration; that becomes product.
+**Current scope, owner direction of 19 October 2026: finish the Apply and Extract evidence before widening scope** ([original instruction](concepts/sources/coordinator-assignment-20261019.md#checkpoint-evidence-first)). Only [Apply #492](https://github.com/Glacius-Labs/Markitect/issues/492) and [Extract #495](https://github.com/Glacius-Labs/Markitect/issues/495) are active delivery objectives.
 
-The milestone is demonstrated on the [Roombook](../experiments/test-projects/roombook/README.md) (empty start, case 1) and [Readinglog](../experiments/test-projects/readinglog/README.md) (existing application, case 2) change series, run through product commands only, including a real owner question and an interrupted run. Each Apply is assessed afterwards by an independent oracle outside the process, as in [DEC-059](concepts/register.md#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle). A release follows only with explicit owner authority.
+- **Apply:** show a model change, repair of drift with unchanged intent, a justified owner question with the answer taken over, and budget/deadline/interruption outcomes with visible Incomplete, retained evidence/work and the supported clean restart. Confirm guarded publication, read-back and unchanged protected inputs. Reuse existing successful cases and state any remaining proof on the final integrated build.
+- **Extract:** finish the already-running comparison on fixed old/new builds. Assess missing project/delivery obligations, incidental implementation choices made binding, and wrong or unnecessary escalations. A no-change round trip alone does not establish model quality. Report improvement only where the comparison demonstrates it.
+
+Preserve running attempts, evidence and completed candidates. Change only what fixes an observed gap of these proofs. Do not add roles, review stages, process architecture or a new test matrix for hypothetical later needs. Do not multiply similar runs without a concrete unanswered question. Keep source checks, real-run evidence, Main integration and owner acceptance separate.
+
+Finish each bounded series with a short result: what passed, failed or remains unproved; the exact builds; and the smallest justified correction, if any. A negative or inconclusive result ends that series too; it does not automatically start a redesign or more runs. After both reports are assessed, the owner selects the next scope. This is the current scope decision under the existing working method, not another permanent approval round or runtime mechanism.
+
+**Later candidates, not an automatically advancing queue:** Apply without the harness and the `--host` entry, the Roombook/Readinglog change series, self-model and standard library, an Extract adoption product and between-round structure changes, new Skills/UI, delegated model maintenance, release and marketing. Their issues remain blocked by #492 and #495. Finished PRs and fixtures retain their state; their completion starts no follow-up work.
 
 The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) stays the language baseline. Compatibility is not required: obsolete product paths, formats, tests and documents are deleted together ([DEC-032](concepts/register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)).
 
@@ -22,23 +29,15 @@ The [canonical language v1](design/canonical-model/minimal-language/language-con
 
 <a id="architect-and-coordinator"></a>
 
-Three sessions work in parallel. This continues the owner's [division of 17 October 2026](concepts/sources/architecture-review-20261017.md#division-of-work) ("Konzept und Herzstück" for the core, "die Dinge aussenrum" for the Coordinator). On 19 October 2026 the owner [assigned the Coordinator everything around the core and selected the milestone above](concepts/sources/coordinator-assignment-20261019.md). The write scopes below are the sessions' agreement within that assignment; the owner can change them. Each session owns its write scope; anything outside it goes through the owning session.
+Three sessions work in parallel. This continues the owner's [division of 17 October 2026](concepts/sources/architecture-review-20261017.md#division-of-work) ("Konzept und Herzstück" for the core, "die Dinge aussenrum" for the Coordinator). On 19 October 2026 the owner [assigned the Coordinator everything around the core and originally selected Apply without the harness](concepts/sources/coordinator-assignment-20261019.md). The later [scope decision](#target-and-baseline) now takes priority. The write scopes below are the sessions' agreement within that assignment; the owner can change them. Each session owns its write scope; anything outside it goes through the owning session.
 
 | Stream | Write scope | Next |
 | --- | --- | --- |
-| **Apply core** | `internal/run/`, `internal/apply/` except Extract, `internal/realization/`, `internal/organization/`, the `apply` wiring in the CLI and bootstrap, the [runtime contract](design/canonical-model/manager-apply-runtime.md) except its Extract section, the run and apply guides | Library scenarios on a frozen build: baseline, repair of injected drift with an unchanged model, a real owner question, budget and deadline end, abort. Engine fixes for the observed waste and rough edges. |
-| **Extract** | `internal/apply/extract*.go`, the Extract sections of the runtime contract and the [command design](design/canonical-model/commands.md), the Extract harness scripts, the register entry for the Extract concept decisions | Project-level obligations, intent versus realization choice, proposed checks, a readable adoption subject and the handoff of known deviations to Apply. |
-| **Coordinator (around the core)** | This plan, the vision, workflow and operations guides, the CLI and bootstrap outside the `apply` wiring, Host setup, `packaging/`, the adapters below the ports, `experiments/test-projects/`, the self-model, release tooling and repository hygiene | See the sequence below. |
+| **Apply core** | `internal/run/`, `internal/apply/` except Extract, `internal/realization/`, `internal/organization/`, the `apply` wiring in the CLI and bootstrap, the [runtime contract](design/canonical-model/manager-apply-runtime.md) except its Extract section, the run and apply guides | Finish and assess #492 on frozen builds: reuse existing successes, complete the missing owner-question and budget/deadline/interruption/restart evidence, and fix only observed blockers. |
+| **Extract** | `internal/apply/extract*.go`, the Extract sections of the runtime contract and the [command design](design/canonical-model/commands.md), the Extract harness scripts, the register entry for the Extract concept decisions | Finish the existing fixed-build comparison and report #495 against the three known defect classes. Separate adoption/handoff products and structure changes stay deferred. |
+| **Coordinator (around the core)** | This plan, the vision, workflow and operations guides, the CLI and bootstrap outside the `apply` wiring, Host setup, `packaging/`, the adapters below the ports, `experiments/test-projects/`, the self-model, release tooling and repository hygiene | Support only an observed blocker of #492/#495; preserve existing candidates. The former sequence below is deferred. |
 
-The Coordinator's sequence:
-
-1. **Cleanup.** This plan, superseded design documents to [history](history/README.md), stale status lines, merged worktrees and branches.
-2. **Runtime image.** Python 3 in the base image for the Agents' scripting, and a C toolchain in the Go example image so that `go test -race` works.
-3. **Host setup.** A product command that builds and binds the images and writes today's Host profile and run configuration, so that `apply` and `extract` need no harness. It produces the existing formats and changes none of them.
-4. **Evidence.** Roombook and Readinglog through product commands only, with their oracles.
-5. **Self-model.** Adopt the accepted [preparation-to-publication proposal](design/canonical-model/reconciliation-model-proposal.md) into `.markitect/`.
-6. **Standard library.** Implement the selected [standard-library design](design/canonical-model/README.md#standard-library-design).
-7. **Release and marketing,** after the milestone and with explicit owner authority.
+The Coordinator's earlier sequence (cleanup, runtime image, Host setup, broader examples, self-model, standard library and release/marketing) is retained in [the original assignment](concepts/sources/coordinator-assignment-20261019.md). It does not dispatch the next item during this checkpoint. Existing work and ownership are preserved; a preparation optimization such as #491/#506 is not a prerequisite for the two proofs.
 
 ## How we work
 
