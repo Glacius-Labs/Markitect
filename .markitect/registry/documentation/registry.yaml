@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/recursive-apply-implementation-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's implementation dispatch for DEC-056, the Sonnet runtime model choice and the bounds of the library demonstration.
   - path: "docs/concepts/sources/recursive-apply-simplification-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
