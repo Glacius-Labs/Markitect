@@ -126,7 +126,7 @@ func TestOwnerAnswerRefusesOversizedOrNonTextFiles(t *testing.T) {
 
 func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T) {
 	state := filepath.Join(testkit.TempDir(t), "state")
-	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no Apply is running") {
+	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no run is running") {
 		t.Fatalf("answer without a running Apply: %v", err)
 	}
 	if _, err := os.Stat(state); !os.IsNotExist(err) {
@@ -143,7 +143,7 @@ func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T)
 		t.Fatal(err)
 	}
 	// The question file of a finished Apply is not answered: nobody holds the state.
-	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no Apply is running") {
+	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no run is running") {
 		t.Fatalf("answer after the Apply ended: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(state, "answers", "q1.txt")); !os.IsNotExist(err) {

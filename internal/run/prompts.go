@@ -86,7 +86,7 @@ func initialItem(m *mgr) string {
 		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")
 	}
 	if len(m.Children) > 0 {
-		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: where none exists, create it; where one exists, assess it against your obligations and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
+		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: project scaffolding such as the module and build files, never a realization of their Definitions. Where none exists, create it; where one exists, assess it against your obligations and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. When several children need a rule or type that one of them owns, decide that its owner provides it in a part the others can use without a dependency cycle. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
 	}
 	return b.String()
 }
