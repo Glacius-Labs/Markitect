@@ -35,11 +35,10 @@ func (c *fileChecker) issue(status model.Status, code string, path snapshot.Path
 // owning Manager repairs within its own area and registry shard, when they
 // concern a committed file under a declared layout; without a layout no Manager
 // owns an unexplained file, so nobody could repair it. A file that no Manager
-// owns under the layout
-// (layout.no_owner) is not among them: only the owner can change the persistent
-// layout, and removing such files is no repair. Neither is a Git-ignored
-// untracked file, which is local to its developer and needs an entry in
-// .markitect/ignore.yaml.
+// owns under the layout (layout.no_owner) is not among them: only the owner can
+// change the persistent layout, and removing such files is no repair. Neither is
+// a Git-ignored untracked file, which is local to its developer and needs an
+// entry in .markitect/ignore.yaml.
 var repairableDrift = map[string]bool{
 	"file.unexplained":        true,
 	"registry.missing_file":   true,
