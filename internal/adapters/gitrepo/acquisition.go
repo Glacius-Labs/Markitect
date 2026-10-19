@@ -63,7 +63,7 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 		var treeErr error
 		a.raw.Census, treeErr = snapshot.NewTree(a.census)
 		err = errors.Join(err, treeErr)
-		if a.git != nil && a.revision == "" {
+		if a.git != nil && a.committed {
 			for _, file := range a.census {
 				if entry, tracked := a.git.tree[file.Path().String()]; !tracked || entry.kind == "tree" {
 					a.raw.Untracked = append(a.raw.Untracked, file.Path())

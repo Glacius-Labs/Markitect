@@ -409,8 +409,8 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 	if _, err := apply.NewCandidates(apply.CapturedSettingsAttempt{}); !errors.Is(err, apply.ErrCandidatesUnavailable) {
 		t.Fatalf("zero preparation accepted: %v", err)
 	}
-	prepare := func(t *testing.T, stray string, untracked ...string) apply.CapturedSettingsResult {
-		selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
+	service := func(t *testing.T, execution, stray string, untracked ...string) (*apply.PreparationService, apply.InputSelection) {
+		selection, raw := executionInputs(t, execution)
 		libraryLayoutFiles(t, &selection, &raw)
 		censusFile(t, &raw, stray, snapshot.Regular, []byte("package stray\n"))
 		for _, p := range untracked {
@@ -420,9 +420,16 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 		source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
 			return captured(preparationObservation(t, request.Selection, raw)), nil
 		}}
+		return apply.NewPreparationService(apply.NewModelService(source, nil)), selection
+	}
+	prepareWith := func(t *testing.T, execution, stray string, untracked ...string) apply.CapturedSettingsResult {
+		s, selection := service(t, execution, stray, untracked...)
 		agent, check := hostPorts(t)
-		result, _ := apply.NewPreparationService(apply.NewModelService(source, nil)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
+		result, _ := s.CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 		return result
+	}
+	prepare := func(t *testing.T, stray string, untracked ...string) apply.CapturedSettingsResult {
+		return prepareWith(t, withLayout(t, libraryLayoutYAML), stray, untracked...)
 	}
 	// DEC-062: an unregistered file that a Manager owns is drift its owner repairs;
 	// the start is prepared and its accounting names the owner.
@@ -451,6 +458,17 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 	result = prepare(t, "realization/stray.go", "realization/stray.go")
 	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
 		t.Fatal("an untracked unexplained start file passed preparation")
+	}
+	// Without a declared layout no Manager owns the file, so nobody could repair it.
+	result = prepareWith(t, documentedExecution(t), "realization/stray.go")
+	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
+		t.Fatal("unexplained start drift passed preparation without a layout")
+	}
+	// Strict structural preparation (markitect check) keeps refusing the same drift.
+	s, selection := service(t, withLayout(t, libraryLayoutYAML), "realization/stray.go")
+	strict, _ := s.Capture(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	if strict.Status() == model.Passed {
+		t.Fatal("strict preparation accepted an unregistered file")
 	}
 }
 

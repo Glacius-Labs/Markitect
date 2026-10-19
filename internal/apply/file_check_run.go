@@ -33,7 +33,9 @@ func (c *fileChecker) issue(status model.Status, code string, path snapshot.Path
 
 // repairableDrift lists the accounting findings of a start stand that the
 // owning Manager repairs within its own area and registry shard, when they
-// concern a committed file. A file that no Manager owns under the layout
+// concern a committed file under a declared layout; without a layout no Manager
+// owns an unexplained file, so nobody could repair it. A file that no Manager
+// owns under the layout
 // (layout.no_owner) is not among them: only the owner can change the persistent
 // layout, and removing such files is no repair. Neither is a Git-ignored
 // untracked file, which is local to its developer and needs an entry in
@@ -84,8 +86,17 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 			r.observe(model.NotCompleted)
 		}
 		if accounting.Status() == realization.AccountingInvalid {
+			// Drift is repairable only where the declared layout names its owner and
+			// the file is committed.
+			untracked := make(map[snapshot.Path]bool, len(raw.Untracked))
+			for _, p := range raw.Untracked {
+				untracked[p] = true
+			}
+			repairable := func(f realization.Finding) bool {
+				return startDrift && execution.layout.Declared() && repairableDrift[f.Code] && !untracked[f.Path]
+			}
 			for _, finding := range accounting.Findings() {
-				if extract && (finding.Code == "file.unexplained" || finding.Code == "layout.no_owner") || startDrift && repairableDrift[finding.Code] && !slices.Contains(raw.Untracked, finding.Path) {
+				if extract && (finding.Code == "file.unexplained" || finding.Code == "layout.no_owner") || repairable(finding) {
 					continue
 				}
 				// Missing observations can still explain otherwise-unclassified files.

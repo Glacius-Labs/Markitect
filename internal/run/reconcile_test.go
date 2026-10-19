@@ -1,6 +1,7 @@
 package run
 
 import (
+	"fmt"
 	"slices"
 	"strings"
 	"sync"
@@ -1142,6 +1143,22 @@ func TestStartFindingsAreTheOwnersFirstWork(t *testing.T) {
 	}
 	if len(out.Findings) != 2 {
 		t.Fatalf("findings %+v", out.Findings)
+	}
+}
+
+func TestManyStartFindingsOfOneKindBecomeOne(t *testing.T) {
+	var many []Finding
+	for i := range maxListedNames + 5 {
+		many = append(many, Finding{Owner: "library", Obligation: "file.unexplained", Observed: fmt.Sprintf("library/vendor/f%02d.go is not registered", i)})
+	}
+	few := Finding{Owner: "library", Obligation: "registry.missing_file", Observed: "library/gone.go is registered but absent"}
+	got := groupedStart(append(many, few))
+	if len(got) != 2 || got[1] != few {
+		t.Fatalf("grouped %+v", got)
+	}
+	contains(t, "merged finding", got[0].Observed, fmt.Sprintf("%d findings of this kind; the first %d:", maxListedNames+5, maxListedNames), "library/vendor/f00.go", fmt.Sprintf("library/vendor/f%02d.go", maxListedNames-1))
+	if strings.Contains(got[0].Observed, fmt.Sprintf("f%02d.go", maxListedNames)) || got[0].Owner != "library" || got[0].Obligation != "file.unexplained" {
+		t.Fatalf("merged finding %+v", got[0])
 	}
 }
 
