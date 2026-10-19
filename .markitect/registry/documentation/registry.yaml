@@ -1780,6 +1780,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/recursive-apply-repetitions-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the evidence and assessment of three repeated library demonstrations after execute-first and enforced responsibilities."
   - path: "docs/validation/recursive-apply-demonstration-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
