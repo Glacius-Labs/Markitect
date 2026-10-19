@@ -26,11 +26,38 @@ const (
 // the authored budget. The first phase starts from the captured repository; the
 // second from the verified candidate of the first.
 type extractStage struct {
-	structural CapturedPreparationAttempt
-	settings   organization.Settings
-	facts      organization.SettingsFacts
-	budget     ExecutionBudget
-	tree       snapshot.Tree
+	structural    CapturedPreparationAttempt
+	settings      organization.Settings
+	facts         organization.SettingsFacts
+	budget        ExecutionBudget
+	checkProfiles []checkProfileOffer
+	tree          snapshot.Tree
+}
+
+// checkProfileOffer is a check profile the Host offers: its name and what it
+// runs. A proposed check can name only these profiles.
+type checkProfileOffer struct{ Name, Runs string }
+
+// offeredCheckProfiles lists the check profiles of the Host that the start
+// prepared, in name order.
+func offeredCheckProfiles(prepared CapturedSettingsPreparation) []checkProfileOffer {
+	var offers []checkProfileOffer
+	for _, profile := range prepared.ProfileObservations() {
+		if _, ok := profile.Identity(); !ok || profile.Input().Namespace() != "checkProfiles" {
+			continue
+		}
+		observation := profile.Observation()
+		runs := ""
+		switch {
+		case observation.CheckImage != nil:
+			runs = observation.CheckImage.Executable.Path
+		case len(observation.Files) > 0:
+			runs = observation.Files[0].Location.Path.String()
+		}
+		offers = append(offers, checkProfileOffer{Name: profile.Input().Name(), Runs: runs})
+	}
+	slices.SortFunc(offers, func(a, b checkProfileOffer) int { return strings.Compare(a.Name, b.Name) })
+	return offers
 }
 
 // newExtractStart validates a preparation made by CaptureExtract as the start of
@@ -63,7 +90,7 @@ func newExtractStart(prepared CapturedSettingsAttempt) (extractStage, error) {
 	if !structural.files.layout.Declared() || len(structural.files.layout.Roots()) == 0 {
 		return extractStage{}, fmt.Errorf("%w: .markitect/execution.yaml declares no artifact roots under layout.roots", ErrNotExtractable)
 	}
-	return extractStage{structural: structural, settings: settings, facts: facts, budget: budget, tree: structural.Model().inputs.Raw.Census}, nil
+	return extractStage{structural: structural, settings: settings, facts: facts, budget: budget, checkProfiles: offeredCheckProfiles(prepared.Settings()), tree: structural.Model().inputs.Raw.Census}, nil
 }
 
 // requireEmptyModel refuses a local model that already holds Definitions.
@@ -80,7 +107,7 @@ func requireEmptyModel(compiled model.Result) error {
 // same capture with the candidate's model, layout and registry, and the same
 // settings resolved for the candidate's Manager tree.
 func (s extractStage) next(candidate snapshot.Tree) (extractStage, error) {
-	structural := rebindStructural(s.structural.Model(), candidate, true)
+	structural := rebindStructural(s.structural.Model(), candidate, extractStructure)
 	for name, status := range map[string]model.Status{"model": structural.Model().compiled.Status, "registry": structural.registry.Status(), "files": structural.files.Status(), "execution": structural.execution.Status(), "contexts": structural.contexts.Status()} {
 		if status != model.Passed {
 			return extractStage{}, fmt.Errorf("the structure candidate does not prepare (%s %s)", name, status)
@@ -96,7 +123,7 @@ func (s extractStage) next(candidate snapshot.Tree) (extractStage, error) {
 	if err != nil {
 		return extractStage{}, err
 	}
-	return extractStage{structural: structural, settings: settings, facts: s.facts, budget: s.budget, tree: candidate}, nil
+	return extractStage{structural: structural, settings: settings, facts: s.facts, budget: s.budget, checkProfiles: s.checkProfiles, tree: candidate}, nil
 }
 
 // rebindStructural prepares the structure of a tree the way the capture
@@ -104,8 +131,10 @@ func (s extractStage) next(candidate snapshot.Tree) (extractStage, error) {
 // registry shards and the other repository-local inputs are read from the tree,
 // everything that lies outside the repository stays as captured. It is a pure
 // function of its arguments and shares no mutable state, so concurrent callers
-// are safe.
-func rebindStructural(start CapturedModel, tree snapshot.Tree, extract bool) CapturedPreparationAttempt {
+// are safe. The phase says which phase's candidate the tree is: while the
+// structure is proposed, artifacts without an owner or registration are still
+// expected; in the model phase they block.
+func rebindStructural(start CapturedModel, tree snapshot.Tree, phase extractPhase) CapturedPreparationAttempt {
 	raw := cloneRaw(start.inputs.Raw)
 	raw.Census = tree
 	raw.Local = rebindModelSource(raw.Local, tree)
@@ -119,7 +148,7 @@ func rebindStructural(start CapturedModel, tree snapshot.Tree, extract bool) Cap
 			raw.Registry = append(raw.Registry, SourceFile{Location: SourceLocation{Boundary: repository, Path: entry.Path()}, File: entry, RepositoryPath: entry.Path()})
 		}
 	}
-	stage := CapturedModel{request: start.request, inputs: CapturedInputs{Raw: raw, Head: start.inputs.Head, Guard: start.inputs.Guard}, limits: start.limits, extract: extract}
+	stage := CapturedModel{request: start.request, inputs: CapturedInputs{Raw: raw, Head: start.inputs.Head, Guard: start.inputs.Guard}, limits: start.limits, extract: phase == extractStructure}
 	stage.compiled = compileModel(raw, start.limits)
 	registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 	return CapturedPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts()}

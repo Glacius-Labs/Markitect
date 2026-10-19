@@ -48,10 +48,23 @@ type ExtractRequest struct {
 // RetainedWork names the shared work volume that was kept: a phase did not
 // verify, or the verified model was not published.
 type ExtractResult struct {
-	Structure    run.Outcome
-	Model        *run.Outcome
-	Receipt      *PublicationReceipt
-	RetainedWork string
+	Structure run.Outcome
+	Model     *run.Outcome
+	Receipt   *PublicationReceipt
+	// ProposedChecks are the checks of a verified model's execution document that
+	// the start did not have: a proposal for the owner's adoption, never run.
+	ProposedChecks []ProposedCheck
+	RetainedWork   string
+}
+
+// ProposedCheck is one required check the structure phase proposed. Timeout is
+// written as the execution document writes durations, for example "2m".
+type ProposedCheck struct {
+	ID        string   `json:"id"`
+	Profile   string   `json:"profile"`
+	Directory string   `json:"directory"`
+	Args      []string `json:"args"`
+	Timeout   string   `json:"timeout"`
 }
 
 // Extract develops a model candidate from the existing artifacts in two phases
@@ -68,17 +81,10 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	if err != nil {
 		return result, err
 	}
-	if req.RequireVolumeSubpaths == nil {
-		return result, errors.New("enforced ownership runs as volume subpath mounts: a container engine check for them is required")
+	if err := requireVolumeSubpaths(ctx, req.RequireVolumeSubpaths); err != nil {
+		return result, err
 	}
-	if err := req.RequireVolumeSubpaths(ctx); err != nil {
-		return result, fmt.Errorf("enforced ownership cannot run: %w", err)
-	}
-	now := req.now()
-	deadline := now.Add(start.budget.ExecutionTime.Value)
-	if !req.Deadline.IsZero() && req.Deadline.Before(deadline) {
-		deadline = req.Deadline
-	}
+	deadline := runDeadline(req.now(), start.budget.ExecutionTime.Value, req.Deadline)
 
 	// The structure phase may use at most half of the agent turns, so the model
 	// phase always keeps the rest; each phase needs one Execute and one Verify
@@ -91,23 +97,24 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	if err != nil {
 		return result, err
 	}
-	structurePhase := req.phase("structure")
+	structurePhase := req.phase(extractStructure)
 	cfg, err := structurePhase.config(structure, start, deadline, structureTurns)
 	if err != nil {
 		return result, err
 	}
 	outcome, runErr := run.Reconcile(ctx, cfg)
 	result.Structure = outcome
-	structurePhase.cleanup(ctx, outcome, "structure")
+	structurePhase.ports().removeHomes(ctx, outcome.Homes)
+	structurePhase.record(outcome)
 	if outcome.Status != run.Verified || runErr != nil {
-		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), structurePhase.reconcile())
+		result.RetainedWork = structurePhase.ports().retainedWork(ctx)
 		return result, runErr
 	}
 	// Until the model phase holds its own start, the verified structure is only
 	// in the structure phase's work volume: keep it when the model phase cannot
 	// be prepared or started.
 	keepStructure := func(err error) (ExtractResult, error) {
-		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), structurePhase.reconcile())
+		result.RetainedWork = structurePhase.ports().retainedWork(ctx)
 		return result, err
 	}
 	next, err := start.next(outcome.Candidate)
@@ -118,7 +125,7 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	if err != nil {
 		return keepStructure(err)
 	}
-	phase := req.phase("model")
+	phase := req.phase(extractModel)
 	cfg, err = phase.config(model, next, deadline, start.budget.AgentTurns.Value-len(outcome.Turns))
 	if err != nil {
 		return keepStructure(err)
@@ -128,37 +135,73 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	cfg.Questions = outcome.Questions
 	modelOutcome, runErr := run.Reconcile(ctx, cfg)
 	result.Model = &modelOutcome
-	phase.cleanup(ctx, modelOutcome, "model")
-	if modelOutcome.Status != run.Verified || runErr != nil {
+	phase.ports().removeHomes(ctx, modelOutcome.Homes)
+	phase.record(modelOutcome)
+	verified := modelOutcome.Status == run.Verified && runErr == nil
+	if verified {
+		// The model phase holds its own start; the structure's volume has no use left.
+		structurePhase.ports().closeWork(ctx)
+	}
+	// The homes are removed above, before the phase is recorded; conclude must
+	// not remove them again.
+	concluded := modelOutcome
+	concluded.Homes = nil
+	receipt, retained, err := phase.ports().conclude(ctx, concluded, runErr, func(ctx context.Context) (*PublicationReceipt, error) {
+		result.ProposedChecks = proposedChecks(start, modelOutcome.Candidate)
+		changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
+		if err := requireModelChangesOnly(changes); err != nil {
+			// Account blocks every such candidate, so this is a defect, not an
+			// incomplete run.
+			modelOutcome.Status, modelOutcome.Reason = run.Failed, err.Error()
+			return nil, err
+		}
+		return publish(ctx, req.Publisher, req.Control, newPublicationRequest(req.RunID, req.Selection, req.Prepared, changes))
+	})
+	result.Receipt, result.RetainedWork = receipt, retained
+	if !verified {
 		// A model phase that never held its own work volume leaves the structure
 		// as the only result.
-		modelWork := retainedWork(context.WithoutCancel(ctx), phase.reconcile())
-		if modelWork == "" {
+		if retained == "" {
 			return keepStructure(runErr)
 		}
-		closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
-		result.RetainedWork = modelWork
-		return result, runErr
-	}
-	closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
-	changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
-	if err := requireModelChangesOnly(changes); err != nil {
-		// Account blocks every such candidate, so this is a defect, not an
-		// incomplete run.
-		modelOutcome.Status, modelOutcome.Reason = run.Failed, err.Error()
-		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
-		return result, err
-	}
-	reconcile := phase.reconcile()
-	reconcile.RunID = req.RunID
-	receipt, err := publish(ctx, reconcile, changes)
-	result.Receipt = receipt
-	if err == nil && receipt != nil && (receipt.Outcome == PublicationApplied || receipt.Outcome == PublicationNoChange) {
-		closeVolume(context.WithoutCancel(ctx), phase.reconcile(), phase.reconcile().workVolume())
-	} else {
-		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
+		structurePhase.ports().closeWork(ctx)
 	}
 	return result, err
+}
+
+// proposedChecks lists the checks of the candidate's execution document that the
+// start's document does not declare.
+func proposedChecks(start extractStage, candidate snapshot.Tree) []ProposedCheck {
+	declared := func(structural CapturedPreparationAttempt) []ExecutionCheck {
+		if checks := structural.execution.authored.Checks; checks != nil {
+			return checks.Value
+		}
+		return nil
+	}
+	known := make(map[string]bool)
+	for _, check := range declared(start.structural) {
+		known[check.ID.Value] = true
+	}
+	proposed := []ProposedCheck{}
+	for _, check := range declared(rebindStructural(start.structural.Model(), candidate, extractModel)) {
+		if !known[check.ID.Value] {
+			proposed = append(proposed, ProposedCheck{ID: check.ID.Value, Profile: check.Profile.Value, Directory: check.Directory.Value.String(), Args: slices.Clone(check.Args.Value), Timeout: durationText(check.Timeout.Value)})
+		}
+	}
+	return proposed
+}
+
+// durationText writes a duration without the zero units that time.Duration
+// prints, so that 2 minutes read "2m" as in an execution document.
+func durationText(d time.Duration) string {
+	text := d.String()
+	if strings.HasSuffix(text, "m0s") {
+		text = strings.TrimSuffix(text, "0s")
+	}
+	if strings.HasSuffix(text, "h0m") {
+		text = strings.TrimSuffix(text, "0m")
+	}
+	return text
 }
 
 // requireModelChangesOnly refuses to publish anything but the model, the
@@ -173,16 +216,48 @@ func requireModelChangesOnly(changes []snapshot.Change) error {
 	return nil
 }
 
-// ExtractDeviations returns the open non-blocking findings that record an
-// artifact deviating from a justified model statement.
-func ExtractDeviations(findings []run.Finding) []run.Finding {
-	var deviations []run.Finding
+// ArtifactDeviation is one Definition that artifacts deviate from: the owners,
+// the raising Managers and the observed texts of its open artifact findings.
+type ArtifactDeviation struct {
+	Definition string   `json:"definition"`
+	Owners     []string `json:"owners"`
+	RaisedBy   []string `json:"raisedBy"`
+	Observed   []string `json:"observed"`
+}
+
+// ExtractDeviations groups the open findings with the subject artifact by the
+// Definition they name, in Definition order: an artifact that deviates from a
+// statement documented intent justifies, which the model phase reports instead
+// of changing the model.
+func ExtractDeviations(findings []run.Finding) []ArtifactDeviation {
+	byDefinition := map[string]*ArtifactDeviation{}
+	var deviations []*ArtifactDeviation
 	for _, f := range findings {
-		if !f.Blocking && !f.Closed && strings.HasPrefix(strings.ToLower(strings.TrimSpace(f.Obligation)), strings.ToLower(RealizationDeviation)) {
-			deviations = append(deviations, f)
+		if f.Subject != "artifact" || f.Closed {
+			continue
+		}
+		d := byDefinition[f.Definition]
+		if d == nil {
+			d = &ArtifactDeviation{Definition: f.Definition}
+			byDefinition[f.Definition] = d
+			deviations = append(deviations, d)
+		}
+		d.Observed = append(d.Observed, f.Observed)
+		if !slices.Contains(d.Owners, f.Owner) {
+			d.Owners = append(d.Owners, f.Owner)
+		}
+		if !slices.Contains(d.RaisedBy, f.RaisedBy) {
+			d.RaisedBy = append(d.RaisedBy, f.RaisedBy)
 		}
 	}
-	return deviations
+	slices.SortFunc(deviations, func(x, y *ArtifactDeviation) int { return strings.Compare(x.Definition, y.Definition) })
+	out := make([]ArtifactDeviation, len(deviations))
+	for i, d := range deviations {
+		slices.Sort(d.Owners)
+		slices.Sort(d.RaisedBy)
+		out[i] = *d
+	}
+	return out
 }
 
 func (r ExtractRequest) now() time.Time {
@@ -197,27 +272,24 @@ func (r ExtractRequest) now() time.Time {
 type extractPhaseRun struct {
 	req   ExtractRequest
 	runID string
+	phase extractPhaseDescriptor
 }
 
-func (r ExtractRequest) phase(name string) extractPhaseRun {
-	return extractPhaseRun{req: r, runID: r.RunID + "-" + name}
+func (r ExtractRequest) phase(p extractPhase) extractPhaseRun {
+	d := p.descriptor()
+	return extractPhaseRun{req: r, runID: r.RunID + "-" + d.name, phase: d}
 }
 
-// reconcile returns the request the shared Apply helpers (home removal, volume
-// closing and retention) use for this phase.
-func (p extractPhaseRun) reconcile() ReconcileRequest {
+// ports returns what the shared helpers (home removal, volume closing,
+// retention and the run's ending) need of this phase's run.
+func (p extractPhaseRun) ports() runPorts {
 	r := p.req
-	return ReconcileRequest{RunID: p.runID, Prepared: r.Prepared, Selection: r.Selection, MaxEntries: r.MaxEntries, MaxBytes: r.MaxBytes,
-		Workspaces: r.Workspaces, Evidence: r.Evidence, Publisher: r.Publisher, Control: r.Control, Clock: r.Clock, RemoveHome: r.RemoveHome}
+	return runPorts{runID: p.runID, workspaces: r.Workspaces, evidence: r.Evidence, clock: r.Clock, removeHome: r.RemoveHome, maxEntries: r.MaxEntries, maxBytes: r.MaxBytes}
 }
 
-// cleanup removes the turns' provider homes and records the phase's outcome.
-func (p extractPhaseRun) cleanup(ctx context.Context, outcome run.Outcome, name string) {
-	cleanup := context.WithoutCancel(ctx)
-	for _, home := range outcome.Homes {
-		removeHome(cleanup, p.reconcile(), home)
-	}
-	_ = p.req.Evidence.Record(run.Event{At: p.req.now(), Kind: "extract.phase", Data: map[string]any{"phase": name, "status": outcome.Status, "reason": outcome.Reason, "rounds": len(outcome.Rounds), "turns": len(outcome.Turns)}})
+// record records the phase's outcome.
+func (p extractPhaseRun) record(outcome run.Outcome) {
+	_ = p.req.Evidence.Record(run.Event{At: p.req.now(), Kind: "extract.phase", Data: map[string]any{"phase": p.phase.name, "status": outcome.Status, "reason": outcome.Reason, "rounds": len(outcome.Rounds), "turns": len(outcome.Turns)}})
 }
 
 // config builds the engine configuration of one phase from its start.
@@ -226,50 +298,63 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 	if err != nil {
 		return run.Config{}, err
 	}
-	mandate, guidance := structureMandate, structureVerifyGuidance
-	if accounting.phase == extractModel {
-		mandate, guidance = modelMandate, modelVerifyGuidance
-	}
 	r := p.req
-	return run.Config{
+	cfg := run.Config{
 		RunID: p.runID, Team: team, Start: stage.tree, OwnerRequest: r.OwnerRequest, OwnerDecisions: r.OwnerDecisions,
 		Account:    func(tree snapshot.Tree) []run.Finding { return accountFindings(accounting.Account(tree)) },
 		OwnerOf:    accounting.OwnerOf,
 		Budget:     run.Budget{Deadline: deadline, TurnTimeout: stage.budget.TurnTimeout.Value, AgentTurns: agentTurns, Rounds: stage.budget.Rounds.Value},
 		MaxEntries: r.MaxEntries, MaxBytes: r.MaxBytes,
 		Agents: r.Agents, Workspaces: r.Workspaces, Owner: r.Owner, Evidence: r.Evidence, Clock: r.Clock,
-		Mandate: mandate, VerifyGuidance: guidance, CheckTool: true,
-	}, nil
+		Mandate: p.phase.mandate, VerifyGuidance: p.phase.verifyGuidance, CheckTool: true,
+	}
+	if accounting.phase == extractModel {
+		// The artifacts are fixed evidence of the model phase: a deviation of an
+		// artifact is reported against a Definition of the candidate, not repaired.
+		cfg.ArtifactFindingsAdvisory, cfg.ResolveDefinition = true, accounting.definitionResolver()
+	}
+	return cfg, nil
 }
 
 // team lists the Managers of the phase, Root first and every parent before its
 // children: Root alone in the structure phase, the proposed tree in the model
 // phase.
 func (a extractAccounting) team(stage extractStage) ([]run.Manager, error) {
+	if a.phase == extractStructure {
+		return a.structureTeam(stage)
+	}
+	return a.modelTeam(stage)
+}
+
+// structureTeam is Root alone, with the Brief of the structure phase.
+func (a extractAccounting) structureTeam(stage extractStage) ([]run.Manager, error) {
+	structural := stage.structural
+	root, ok := stage.settings.Manager(organization.Root)
+	if !ok {
+		return nil, errors.New("Root has no resolved settings")
+	}
+	layout := structural.files.layout
+	var dependencies []string
+	for _, dependency := range structural.Model().inputs.Raw.Dependencies {
+		if area := dependency.RepositoryArea; area.String() != "" {
+			dependencies = append(dependencies, area.String())
+		}
+	}
+	slices.Sort(dependencies)
+	var roots []string
+	for _, r := range layout.Roots() {
+		roots = append(roots, r.String())
+	}
+	brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().compiled), Settings: root, Checks: a.declaredChecks(), CheckProfiles: stage.checkProfiles})
+	return []run.Manager{{Path: organization.Root, Role: "proposes the first model structure of the whole project", Brief: brief,
+		ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: a.WritePlan(organization.Root)}}, nil
+}
+
+// modelTeam is the Manager tree of the proposed topology, each with the Brief of
+// the model phase.
+func (a extractAccounting) modelTeam(stage extractStage) ([]run.Manager, error) {
 	structural := stage.structural
 	compiled := structural.Model().compiled
-	checks := a.declaredChecks()
-	if a.phase == extractStructure {
-		root, ok := stage.settings.Manager(organization.Root)
-		if !ok {
-			return nil, errors.New("Root has no resolved settings")
-		}
-		layout := structural.files.layout
-		var dependencies []string
-		for _, dependency := range structural.Model().inputs.Raw.Dependencies {
-			if area := dependency.RepositoryArea; area.String() != "" {
-				dependencies = append(dependencies, area.String())
-			}
-		}
-		slices.Sort(dependencies)
-		var roots []string
-		for _, r := range layout.Roots() {
-			roots = append(roots, r.String())
-		}
-		brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(compiled), Settings: root, Checks: checks})
-		return []run.Manager{{Path: organization.Root, Role: "proposes the first model structure of the whole project", Brief: brief,
-			ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: a.WritePlan(organization.Root)}}, nil
-	}
 	topology, err := organization.BuildTopology(compiled)
 	if err != nil {
 		return nil, err
@@ -278,15 +363,8 @@ func (a extractAccounting) team(stage extractStage) ([]run.Manager, error) {
 	if !ok {
 		return nil, errors.New("complete context selections are required")
 	}
-	selectionOf := func(path string) (selection organization.ContextSelection) {
-		for _, candidate := range selections {
-			if candidate.Package() == path {
-				selection = candidate
-			}
-		}
-		return selection
-	}
 	kinds := vocabularyOf(compiled)
+	checks := a.declaredChecks()
 	artifacts := artifactPaths(stage.tree)
 	var team []run.Manager
 	for _, manager := range topology.Managers() {
@@ -294,17 +372,8 @@ func (a extractAccounting) team(stage extractStage) ([]run.Manager, error) {
 		if !ok {
 			return nil, fmt.Errorf("manager %q has no resolved settings", manager.Package)
 		}
-		selection := selectionOf(manager.Package)
-		var children []briefChild
-		for _, child := range manager.Children {
-			entry := briefChild{Path: child, Areas: a.base.Areas(child)}
-			for _, definition := range selectionOf(child).Definitions() {
-				if definition.Definition.Identity.Package == child {
-					entry.Definitions = append(entry.Definitions, identityText(definition.Definition.Identity)+": "+definitionTitle(definition.Definition))
-				}
-			}
-			children = append(children, entry)
-		}
+		selection := selectionOf(selections, manager.Package)
+		children := briefChildren(manager, topology.Managers(), selections, a.base.Areas)
 		var files []string
 		for _, p := range artifacts {
 			if a.base.OwnerOf(p) == manager.Package {

@@ -2,7 +2,9 @@
 # Create a case-3 target: the published library realization of an earlier
 # demonstration without any model or registry, plus the imported vocabulary, a
 # structural manifest and lock with no local Definitions, and the Extract
-# execution controls. Nothing of the original model's intent is copied.
+# execution controls. Nothing of the original model's intent is copied. A
+# source repository may carry its own extract-execution.yaml (for example a
+# tighter budget); otherwise the harness default applies.
 # Usage: ra_extract_project.sh SOURCE_REPO SRC TARGET
 set -euo pipefail
 SOURCE="$1"
@@ -23,7 +25,9 @@ dependencies:
   markitect-core: "1.0.0"
   software-basics: "0.1.0"
 YAML
-install -m 0644 "$DEMO/extract-execution.yaml" "$TARGET/.markitect/execution.yaml"
+EXECUTION="$DEMO/extract-execution.yaml"
+[ -f "$SOURCE/extract-execution.yaml" ] && EXECUTION="$SOURCE/extract-execution.yaml"
+install -m 0644 "$EXECUTION" "$TARGET/.markitect/execution.yaml"
 # Git tracks no empty directory; a placeholder keeps the empty model root.
 mkdir -p "$TARGET/.markitect/model" && : > "$TARGET/.markitect/model/.gitkeep"
 cd "$TARGET"

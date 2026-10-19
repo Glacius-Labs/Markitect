@@ -108,7 +108,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 // preparation passed, and only one run holds a state directory at a time.
 func (s *executionService) Extract(ctx context.Context, request cli.ExtractRequest) (report cli.ExtractReport, err error) {
 	report.FormatVersion, report.Operation, report.Status = 1, "extract", model.NotCompleted
-	report.Deviations, report.OpenQuestions = []runport.Finding{}, []runport.Question{}
+	report.Deviations, report.OpenQuestions = []apply.ArtifactDeviation{}, []runport.Question{}
 	session, failed, err := s.open(ctx, request.Selection.Repository, request.RunConfig)
 	if err != nil {
 		if failed {

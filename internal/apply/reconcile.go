@@ -69,39 +69,49 @@ func Reconcile(ctx context.Context, req ReconcileRequest) (ReconcileResult, erro
 		return ReconcileResult{}, err
 	}
 	if slices.ContainsFunc(cfg.Team, func(m run.Manager) bool { return m.Write.Enforced }) {
-		if req.RequireVolumeSubpaths == nil {
-			return ReconcileResult{}, errors.New("enforced ownership runs as volume subpath mounts: a container engine check for them is required")
-		}
-		if err := req.RequireVolumeSubpaths(ctx); err != nil {
-			return ReconcileResult{}, fmt.Errorf("enforced ownership cannot run: %w", err)
+		if err := requireVolumeSubpaths(ctx, req.RequireVolumeSubpaths); err != nil {
+			return ReconcileResult{}, err
 		}
 	}
 	outcome, runErr := run.Reconcile(ctx, cfg)
-	return conclude(ctx, req, cfg.Start, outcome, runErr)
+	return req.conclude(ctx, cfg.Start, outcome, runErr)
 }
 
-// conclude publishes a verified outcome and cleans up. The turns' homes are of
-// no later use. The shared work volume is closed only once the verified
-// candidate is published (applied or no change); after a run that did not
-// verify, or any other receipt or a publication error, it is kept and reported.
-func conclude(ctx context.Context, req ReconcileRequest, start snapshot.Tree, outcome run.Outcome, runErr error) (ReconcileResult, error) {
+// requireVolumeSubpaths runs the container engine's check that it mounts a
+// directory of a volume, which enforced write plans need; the check is required.
+func requireVolumeSubpaths(ctx context.Context, check func(context.Context) error) error {
+	if check == nil {
+		return errors.New("enforced ownership runs as volume subpath mounts: a container engine check for them is required")
+	}
+	if err := check(ctx); err != nil {
+		return fmt.Errorf("enforced ownership cannot run: %w", err)
+	}
+	return nil
+}
+
+// runDeadline is the run's absolute deadline: the project's execution time
+// from now, or the operator's earlier deadline when one is set.
+func runDeadline(now time.Time, budget time.Duration, operator time.Time) time.Time {
+	deadline := now.Add(budget)
+	if !operator.IsZero() && operator.Before(deadline) {
+		return operator
+	}
+	return deadline
+}
+
+// conclude publishes a verified outcome and cleans up.
+func (r ReconcileRequest) conclude(ctx context.Context, start snapshot.Tree, outcome run.Outcome, runErr error) (ReconcileResult, error) {
 	result := ReconcileResult{Outcome: outcome}
-	cleanup := context.WithoutCancel(ctx)
-	for _, home := range outcome.Homes {
-		removeHome(cleanup, req, home)
-	}
-	if outcome.Status != run.Verified || runErr != nil {
-		result.RetainedWork = retainedWork(cleanup, req)
-		return result, runErr
-	}
-	receipt, err := publish(ctx, req, snapshot.Compare(start, outcome.Candidate))
-	result.Receipt = receipt
-	if err == nil && receipt != nil && (receipt.Outcome == PublicationApplied || receipt.Outcome == PublicationNoChange) {
-		closeVolume(cleanup, req, req.workVolume())
-	} else {
-		result.RetainedWork = retainedWork(cleanup, req)
-	}
+	var err error
+	result.Receipt, result.RetainedWork, err = r.ports().conclude(ctx, outcome, runErr, func(ctx context.Context) (*PublicationReceipt, error) {
+		return r.publishChanges(ctx, snapshot.Compare(start, outcome.Candidate))
+	})
 	return result, err
+}
+
+// publishChanges publishes the verified candidate's changes of this run.
+func (r ReconcileRequest) publishChanges(ctx context.Context, changes []snapshot.Change) (*PublicationReceipt, error) {
+	return publish(ctx, r.Publisher, r.Control, newPublicationRequest(r.RunID, r.Selection, r.Prepared, changes))
 }
 
 func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
@@ -160,46 +170,14 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		}
 		required = append(required, requiredDefinition{Definition: definition, Checks: requiredChecks[id]})
 	}
-	selectionOf := func(path string) (selection organization.ContextSelection) {
-		for _, candidate := range selections {
-			if candidate.Package() == path {
-				selection = candidate
-			}
-		}
-		return selection
-	}
-	ownDefinitions := func(path string) (own []string) {
-		for _, definition := range selectionOf(path).Definitions() {
-			if definition.Definition.Identity.Package == path {
-				own = append(own, identityText(definition.Definition.Identity)+": "+definitionTitle(definition.Definition))
-			}
-		}
-		return own
-	}
-	childrenOf := map[string][]string{}
-	for _, manager := range topology.Managers() {
-		childrenOf[manager.Package] = manager.Children
-	}
 	var team []run.Manager
 	for _, manager := range topology.Managers() {
 		managerSettings, ok := settings.Manager(manager.Package)
 		if !ok {
 			return run.Config{}, fmt.Errorf("manager %q has no resolved settings", manager.Package)
 		}
-		selection := selectionOf(manager.Package)
-		var children []briefChild
-		for _, path := range manager.Children {
-			child := briefChild{Path: path, Areas: candidates.Areas(path), Definitions: ownDefinitions(path)}
-			var below func(string)
-			below = func(parent string) {
-				for _, d := range childrenOf[parent] {
-					child.Below = append(child.Below, briefDescendant{Path: d, Parent: parent, Areas: candidates.Areas(d), Definitions: ownDefinitions(d)})
-					below(d)
-				}
-			}
-			below(path)
-			children = append(children, child)
-		}
+		selection := selectionOf(selections, manager.Package)
+		children := briefChildren(manager, topology.Managers(), selections, candidates.Areas)
 		write := candidates.WritePlan(manager.Package)
 		var manageRequired []requiredDefinition
 		if !slices.ContainsFunc(selection.Definitions(), func(d organization.ContextDefinition) bool { return d.Definition.Identity.Package == manager.Package }) {
@@ -217,10 +195,7 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		}
 		team = append(team, member)
 	}
-	deadline := now.Add(budget.ExecutionTime.Value)
-	if !req.Deadline.IsZero() && req.Deadline.Before(deadline) {
-		deadline = req.Deadline
-	}
+	deadline := runDeadline(now, budget.ExecutionTime.Value, req.Deadline)
 	start := prepared.Structural().Model().Inputs().Raw.Census
 	cfg := run.Config{
 		RunID: req.RunID, Team: team, Start: start,
@@ -266,12 +241,17 @@ func accountFindings(findings []CandidateFinding) []run.Finding {
 	return out
 }
 
+// newPublicationRequest is the publication of a run's verified changes against
+// the capture's source guard. run is the run identity the receipt carries.
+func newPublicationRequest(run string, selection InputSelection, prepared CapturedSettingsAttempt, changes []snapshot.Change) PublicationRequest {
+	inputs := prepared.Structural().Model().Inputs()
+	return PublicationRequest{ID: PublicationID(run), Run: run, Repository: selection.Repository, Guard: inputs.Guard, Changes: changes}
+}
+
 // publish publishes the verified candidate's changes. A stale source or a change
 // set the target cannot represent is a definite receipt without any write.
-func publish(ctx context.Context, req ReconcileRequest, changes []snapshot.Change) (*PublicationReceipt, error) {
-	inputs := req.Prepared.Structural().Model().Inputs()
-	request := PublicationRequest{ID: PublicationID(req.RunID), Run: req.RunID, Repository: req.Selection.Repository, Guard: inputs.Guard, Changes: changes}
-	permit, err := req.Publisher.Preflight(ctx, request, req.Control)
+func publish(ctx context.Context, publisher Publisher, control ControlCheck, request PublicationRequest) (*PublicationReceipt, error) {
+	permit, err := publisher.Preflight(ctx, request, control)
 	switch {
 	case errors.Is(err, ErrCaptureChanged):
 		return &PublicationReceipt{ID: request.ID, Outcome: PublicationStale, Reason: err.Error()}, nil
@@ -280,7 +260,7 @@ func publish(ctx context.Context, req ReconcileRequest, changes []snapshot.Chang
 	case err != nil:
 		return nil, fmt.Errorf("publication preflight: %w", err)
 	}
-	receipt, err := req.Publisher.Publish(ctx, permit, req.Control)
+	receipt, err := publisher.Publish(ctx, permit, control)
 	if receipt.ID == "" && receipt.Outcome == "" {
 		return nil, err
 	}
@@ -294,37 +274,84 @@ func (r ReconcileRequest) now() time.Time {
 	return r.Clock()
 }
 
-func (r ReconcileRequest) workVolume() string { return r.RunID + "-work" }
+// runPorts is what ending one run needs: the ports that hold its work volume
+// "<runID>-work", its evidence and its provider homes. The Apply request and
+// each phase of an Extract provide one.
+type runPorts struct {
+	runID      string
+	workspaces run.Workspaces
+	evidence   run.Evidence
+	clock      func() time.Time
+	removeHome func(context.Context, string) error
+	maxEntries int
+	maxBytes   int64
+}
 
-func closeVolume(ctx context.Context, req ReconcileRequest, volume string) {
-	observation, err := req.Workspaces.Close(ctx, run.WorkspaceID(volume))
+func (r ReconcileRequest) ports() runPorts {
+	return runPorts{runID: r.RunID, workspaces: r.Workspaces, evidence: r.Evidence, clock: r.Clock, removeHome: r.RemoveHome, maxEntries: r.MaxEntries, maxBytes: r.MaxBytes}
+}
+
+func (p runPorts) now() time.Time {
+	if p.clock == nil {
+		return time.Now()
+	}
+	return p.clock()
+}
+
+func (p runPorts) workVolume() string { return p.runID + "-work" }
+
+// conclude ends a run after run.Reconcile. The turns' homes are of no later
+// use. A verified outcome is published by publishVerified, and the shared work
+// volume is closed only once that published (applied or no change); after a run
+// that did not verify, or any other receipt or a publication error, the volume
+// is kept and named as retained work. Cleanup survives a cancelled context.
+func (p runPorts) conclude(ctx context.Context, outcome run.Outcome, runErr error, publishVerified func(context.Context) (*PublicationReceipt, error)) (receipt *PublicationReceipt, retained string, err error) {
+	p.removeHomes(ctx, outcome.Homes)
+	if outcome.Status != run.Verified || runErr != nil {
+		return nil, p.retainedWork(ctx), runErr
+	}
+	receipt, err = publishVerified(ctx)
+	if err == nil && receipt != nil && (receipt.Outcome == PublicationApplied || receipt.Outcome == PublicationNoChange) {
+		p.closeWork(ctx)
+	} else {
+		retained = p.retainedWork(ctx)
+	}
+	return receipt, retained, err
+}
+
+// closeWork closes the shared work volume and records the observation.
+func (p runPorts) closeWork(ctx context.Context) {
+	volume := p.workVolume()
+	observation, err := p.workspaces.Close(context.WithoutCancel(ctx), run.WorkspaceID(volume))
 	data := map[string]any{"workspace": volume, "closed": observation.Closed, "uncertain": observation.Uncertain}
 	if err != nil {
 		data["error"] = err.Error()
 	}
-	_ = req.Evidence.Record(run.Event{At: req.now(), Kind: "workspace.close", Data: data})
+	_ = p.evidence.Record(run.Event{At: p.now(), Kind: "workspace.close", Data: data})
 }
 
-// removeHome deletes a provider home and records the observation.
-func removeHome(ctx context.Context, req ReconcileRequest, home string) {
-	if req.RemoveHome == nil {
+// removeHomes deletes the provider homes and records each observation.
+func (p runPorts) removeHomes(ctx context.Context, homes []string) {
+	if p.removeHome == nil {
 		return
 	}
-	data := map[string]any{"home": home, "removed": true}
-	if err := req.RemoveHome(ctx, home); err != nil {
-		data["removed"], data["error"] = false, err.Error()
+	for _, home := range homes {
+		data := map[string]any{"home": home, "removed": true}
+		if err := p.removeHome(context.WithoutCancel(ctx), home); err != nil {
+			data["removed"], data["error"] = false, err.Error()
+		}
+		_ = p.evidence.Record(run.Event{At: p.now(), Kind: "home.remove", Data: data})
 	}
-	_ = req.Evidence.Record(run.Event{At: req.now(), Kind: "home.remove", Data: data})
 }
 
 // retainedWork returns the name of the run's shared work volume when it still
 // exists, so the work can be inspected or published again. The run closes it
 // itself when it ended before the volume held anything.
-func retainedWork(ctx context.Context, req ReconcileRequest) string {
-	id := run.WorkspaceID(req.workVolume())
-	probe, cancel := context.WithTimeout(ctx, time.Minute)
+func (p runPorts) retainedWork(ctx context.Context) string {
+	id := run.WorkspaceID(p.workVolume())
+	probe, cancel := context.WithTimeout(context.WithoutCancel(ctx), time.Minute)
 	defer cancel()
-	if _, err := req.Workspaces.Peek(probe, run.HarvestRequest{ID: id, MaxEntries: req.MaxEntries, MaxBytes: req.MaxBytes}); err != nil {
+	if _, err := p.workspaces.Peek(probe, run.HarvestRequest{ID: id, MaxEntries: p.maxEntries, MaxBytes: p.maxBytes}); err != nil {
 		return ""
 	}
 	return string(id)

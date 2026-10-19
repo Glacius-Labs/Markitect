@@ -8,6 +8,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Summarizes one Apply's evidence: rounds, turns, parallelism, findings and usage."
+  - path: "experiments/recursive-apply-demo/extract-checklist.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Fixes the rubric an independent assessor scores an extracted library model with, including the seeded and conflict expectations."
   - path: "experiments/recursive-apply-demo/extract-execution.yaml"
     form: config
     realizes: [product/run/confirmed-run-history]
@@ -39,7 +43,7 @@ artifacts:
   - path: "experiments/recursive-apply-demo/ra_cleanup.sh"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: "Stops every remaining demonstration container within the hard limit."
+    why: "Stops the remaining containers of the attempt's own store label within the hard limit."
   - path: "experiments/recursive-apply-demo/ra_demo.sh"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -47,7 +51,7 @@ artifacts:
   - path: "experiments/recursive-apply-demo/ra_extract.sh"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: "Runs the timed library Extract, the scripted adoption and the round-trip Apply."
+    why: "Runs the timed library Extract with the scripted owner, the scripted adoption and, optionally, the rebuild from the extracted model judged by the oracle."
   - path: "experiments/recursive-apply-demo/ra_extract_project.sh"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -64,6 +68,22 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Writes each Apply's run configuration with bound owner decisions and the shared deadline."
+  - path: "experiments/recursive-apply-demo/rx_collect.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Summarizes Extract attempts: phases, rounds, Verify depth, questions, deviations, model size, rebuild and oracle."
+  - path: "experiments/recursive-apply-demo/rx_owner.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Answers an Extract's owner questions by script and logs them, so the owner channel is exercised in real runs."
+  - path: "experiments/recursive-apply-demo/rx_rebuild_project.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Projects a case-1 target from an adopted Extract, so Apply can rebuild the realization from the extracted model alone."
+  - path: "experiments/recursive-apply-demo/rx_seed.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Plants known defects and source conflicts in a library realization, each with an expected Extract outcome."
   - path: "experiments/recursive-apply-demo/smoke_apply.sh"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -140,6 +160,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks the custom mandate and Verify guidance, the unchanged Apply texts and the check tool.
+  - path: "internal/run/artifact_findings_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks the assess schema with and without artifact findings, their refusals and that an artifact finding is stored non-blocking.
   - path: "internal/run/failure_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

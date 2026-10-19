@@ -251,6 +251,8 @@ func validate(cfg Config) error {
 		return bad("Agents, Workspaces and Evidence are required")
 	case len(cfg.Checks) > 0 && cfg.Runner == nil:
 		return bad("checks need a Runner")
+	case cfg.ArtifactFindingsAdvisory && cfg.ResolveDefinition == nil:
+		return bad("ArtifactFindingsAdvisory needs ResolveDefinition")
 	}
 	last := 0
 	for _, q := range cfg.Questions {

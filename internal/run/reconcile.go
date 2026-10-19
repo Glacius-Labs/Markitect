@@ -89,6 +89,11 @@ type Finding struct {
 	Closed       bool   `json:"closed"`
 	ClosedRound  int    `json:"closedRound,omitempty"`
 	ClosedReason string `json:"closedReason,omitempty"`
+	// Subject and Definition are set only on findings of a run with
+	// Config.ArtifactFindingsAdvisory: Subject is "artifact" or "model", and
+	// Definition names the Definition an artifact finding deviates from.
+	Subject    string `json:"subject,omitempty"`
+	Definition string `json:"definition,omitempty"`
 }
 
 // MarkitectFinding is the RaisedBy value of findings the engine observes itself.
@@ -146,6 +151,16 @@ type Evidence interface {
 // without pausing the writers and returns Account's findings for that tree;
 // Account is then called concurrently with itself and with the writers' work.
 //
+// ArtifactFindingsAdvisory changes what a Verify finding is (Extract's model
+// phase): every finding of an assess call states its subject, "artifact" (an
+// artifact does not conform to the model) or "model" (the model itself is
+// defective). An artifact finding names the Definition it deviates from, which
+// ResolveDefinition must confirm on the candidate, and is stored non-blocking
+// whatever the reviewer says, because the artifacts are fixed evidence there.
+// A model finding keeps the reviewer's blocking flag. Without the option the
+// assess tool and its behavior are unchanged; the option requires
+// ResolveDefinition.
+//
 // Questions are earlier questions of the same owner channel that the owner
 // already answered (the structure phase of an Extract). Every first Execute
 // prompt and every Verify prompt shows them with the run's own answers, and new
@@ -179,7 +194,12 @@ type Config struct {
 	VerifyGuidance string
 	CheckTool      bool
 	Questions      []Question
-	StartFindings  []Finding
+
+	ArtifactFindingsAdvisory bool
+	// ResolveDefinition may be called concurrently, from several Managers' assess
+	// handlers at the same time, so it must be safe for concurrent use.
+	ResolveDefinition func(snapshot.Tree, string) bool
+	StartFindings     []Finding
 }
 
 // Status is the result of a run.

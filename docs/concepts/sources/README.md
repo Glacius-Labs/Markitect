@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [What an extracted model contains](extract-model-content-20261019.md) | Direct owner decision, 19 October 2026 | A project Package owns project-wide obligations, binding means observable at the boundary or documented, Extract may propose checks for adoption; start of the Extract reliability plan |
 | [Coordinator assignment and next milestone](coordinator-assignment-20261019.md) | Direct owner instruction and selected options, 19 October 2026 | The Coordinator realizes and refines everything around the core; next milestone Apply without the harness, shown on Roombook and Readinglog; work split by topic |
 | [Execute-first Apply](apply-execute-first-20261019.md) | Direct owner discussion and documentation-only acceptances, 19 October 2026 | Execute from Root; parents establish needed foundations or assess and preserve/correct existing ones before child realization; upward integration and subsequent independent Verify without a separate starting route |
 | [Three starting situations](three-starting-situations-20261019.md) | Direct owner discussion and documentation instructions, 19 October 2026 | Three situations and two processes; stable Extract rounds with complete carryover; essential model questions block completion, evidenced artifact defects do not by themselves; adopt model and registry together, carry defects into regular Apply and confirm repair through independent Verify |

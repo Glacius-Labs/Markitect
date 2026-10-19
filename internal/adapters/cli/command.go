@@ -112,10 +112,12 @@ extract options:
   layout roots and checks. Phase one proposes the Packages and layout
   exceptions, phase two derives the model of every Package and registers the
   artifacts. Artifacts are never changed or published; a verified model is
-  published as the changed .markitect model, registry and layout files. The
-  JSON report lists model completion, the final Verify result, the realization
-  deviations, open owner questions, per-phase rounds, turns and usage and the
-  publication. Questions are answered with the answer command.
+  published as the changed .markitect model, registry shards and
+  execution.yaml (layout exceptions and proposed checks). The JSON report lists
+  model completion, the final Verify result, the realization deviations per
+  Definition (artifact findings), the proposedChecks, open owner questions,
+  per-phase rounds, turns and usage and the publication. Questions are
+  answered with the answer command.
 
 answer options:
   --text ANSWER            the owner's answer, required

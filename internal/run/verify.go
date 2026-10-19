@@ -167,7 +167,7 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 		ts := &turnState{m: m, kind: VerifyTurn, id: fmt.Sprintf("%s-r%d-%s-v%d", e.cfg.RunID, rs.n, m.slug, attempt), round: rs.n}
 		prompt := e.verifyPromptLocked(m, rs, attempt > 1)
 		e.mu.Unlock()
-		res, err := e.runTurn(ts, Turn{Profile: m.VerifyProfile, Workspace: rs.volume, ReadOnly: true, Home: m.verifyHome, Prompt: prompt, Tools: verifyTools()}, e.assessHandler(m, rs, ts))
+		res, err := e.runTurn(ts, Turn{Profile: m.VerifyProfile, Workspace: rs.volume, ReadOnly: true, Home: m.verifyHome, Prompt: prompt, Tools: verifyTools(e.cfg.ArtifactFindingsAdvisory)}, e.assessHandler(m, rs, ts))
 		e.mu.Lock()
 		e.applyReportLocked(m, rs, ts)
 		reported := rs.assessed[m.Path]
@@ -191,16 +191,22 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 	}
 }
 
+// assessedFinding is one finding of an assess call. Subject and Definition
+// are only accepted when Config.ArtifactFindingsAdvisory is set.
+type assessedFinding struct {
+	Owner      string `json:"owner"`
+	Obligation string `json:"obligation"`
+	Observed   string `json:"observed"`
+	Blocking   *bool  `json:"blocking"`
+	Subject    string `json:"subject"`
+	Definition string `json:"definition"`
+}
+
 type assessment struct {
-	Summary   string `json:"summary"`
-	Satisfied *bool  `json:"satisfied"`
-	Findings  []struct {
-		Owner      string `json:"owner"`
-		Obligation string `json:"obligation"`
-		Observed   string `json:"observed"`
-		Blocking   *bool  `json:"blocking"`
-	} `json:"findings"`
-	Closed []struct {
+	Summary   string            `json:"summary"`
+	Satisfied *bool             `json:"satisfied"`
+	Findings  []assessedFinding `json:"findings"`
+	Closed    []struct {
 		ID     string `json:"id"`
 		Reason string `json:"reason"`
 	} `json:"closed"`
@@ -223,11 +229,21 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 		if name != toolAssess {
 			return refuse("Unknown tool %q; in Verify only %q is available.", name, toolAssess)
 		}
-		e.mu.Lock()
-		defer e.mu.Unlock()
 		var in assessment
 		if err := decodeStrict(args, &in); err != nil {
 			return refuse("%v", err)
+		}
+		if !e.cfg.ArtifactFindingsAdvisory {
+			// The fields do not exist for this run: refuse them as decodeStrict
+			// refuses any unknown field.
+			for _, f := range in.Findings {
+				switch {
+				case f.Subject != "":
+					return refuse("the arguments are not valid: json: unknown field %q", "subject")
+				case f.Definition != "":
+					return refuse("the arguments are not valid: json: unknown field %q", "definition")
+				}
+			}
 		}
 		summary, err := toolText("summary", in.Summary)
 		if err != nil {
@@ -239,6 +255,11 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 		if len(in.Findings) > maxToolFindings || len(in.Closed) > maxToolFindings {
 			return refuse("At most %d findings and %d closures per report.", maxToolFindings, maxToolFindings)
 		}
+		// Resolving a Definition compiles the candidate's model, so it runs
+		// before the engine lock is taken.
+		known := e.resolveDefinitions(rs, in.Findings)
+		e.mu.Lock()
+		defer e.mu.Unlock()
 		var adds []Finding
 		blocking := 0
 		for i, f := range in.Findings {
@@ -256,8 +277,27 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 			if err != nil {
 				return refuse("%v", err)
 			}
-			adds = append(adds, Finding{Owner: f.Owner, RaisedBy: m.Path, Obligation: obligation, Observed: observed, Blocking: *f.Blocking})
-			if *f.Blocking {
+			add := Finding{Owner: f.Owner, RaisedBy: m.Path, Obligation: obligation, Observed: observed, Blocking: *f.Blocking}
+			if e.cfg.ArtifactFindingsAdvisory {
+				switch f.Subject {
+				case subjectModel:
+					add.Subject = subjectModel
+				case subjectArtifact:
+					if strings.TrimSpace(f.Definition) == "" {
+						return refuse("findings[%d]: definition is required when subject is %q.", i, subjectArtifact)
+					}
+					if !known[f.Definition] {
+						return refuse("findings[%d]: %q is not a Definition of the candidate model.", i, f.Definition)
+					}
+					// An artifact that deviates from the model is reported, never
+					// repaired by the model's Managers, so it cannot block.
+					add.Subject, add.Definition, add.Blocking = subjectArtifact, f.Definition, false
+				default:
+					return refuse("findings[%d]: subject must be %q or %q.", i, subjectArtifact, subjectModel)
+				}
+			}
+			adds = append(adds, add)
+			if add.Blocking {
 				blocking++
 			}
 		}
@@ -296,6 +336,22 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 		}
 		return ToolAnswer{Text: "Assessment recorded. A later assess call in this turn replaces it."}
 	}
+}
+
+// resolveDefinitions reports, for the Definition identity of each artifact
+// finding of a report, whether the candidate's model holds it. It is empty
+// unless Config.ArtifactFindingsAdvisory is set.
+func (e *engine) resolveDefinitions(rs *roundState, findings []assessedFinding) map[string]bool {
+	known := map[string]bool{}
+	if !e.cfg.ArtifactFindingsAdvisory {
+		return known
+	}
+	for _, f := range findings {
+		if _, done := known[f.Definition]; f.Subject == subjectArtifact && strings.TrimSpace(f.Definition) != "" && !done {
+			known[f.Definition] = e.cfg.ResolveDefinition(rs.tree, f.Definition)
+		}
+	}
+	return known
 }
 
 // applyReportLocked applies the last valid report of a Verify turn when the
