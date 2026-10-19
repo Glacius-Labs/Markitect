@@ -10,7 +10,7 @@ body: >-
   Execute in parallel on one shared mutable working tree within persistent ownership, without private writer branches or per-turn accepted-delta replay.
   Before closing Verify, observe quiescence of writers and their subprocesses and capture one complete immutable candidate; uncertainty prevents publication.
   Pause Execute throughout closing Verify, run fresh recursive assessments and required checks on the same stand, and keep check outputs outside that stand.
-  Concrete model violations, absent model-required evidence and failed mandatory closing checks block; additional preferred test depth is advisory.
+  Concrete model violations, absent model-required evidence and failed mandatory closing checks block; a Definition rebuilt outside its owner's artifacts or a change outside a Manager's area is such a violation; additional preferred test depth is advisory.
   Keep unresolved findings visible until independently closed on the current candidate.
   Correct through the responsible owners and repeat closing Verify on a new candidate; initially prefer whole-tree reassessment over fine-grained invalidation.
   No-change needs assessed responsibility, not a separate delivery transaction.

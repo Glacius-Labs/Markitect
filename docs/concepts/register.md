@@ -68,10 +68,11 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Accepted |
 | [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count) | Decision | A rejection that finds fewer gaps does not count | Accepted |
 | [DEC-055](#dec-055-a-submission-must-pass-its-required-checks) | Decision | A submission must pass its required checks | Accepted |
-| [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted direction; implementation pending |
+| [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted; implemented (PR #463) |
 | [DEC-057](#dec-057-three-fundamental-starting-situations) | Clarification | Three starting situations, two processes: Apply and Extract | Accepted high-level direction; documentation only |
-| [DEC-058](#dec-058-apply-always-executes-before-independent-verify) | Decision | Apply always executes before independent Verify | Accepted; implemented on branch |
-| [DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implementation on branch |
+| [DEC-058](#dec-058-apply-always-executes-before-independent-verify) | Decision | Apply always executes before independent Verify | Accepted; implemented (PR #472) |
+| [DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implemented (PR #472) |
+| [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implementation on branch |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -699,7 +700,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-058 Apply always executes before independent Verify
 
-- **Status:** Accepted direction, owner, 19 October 2026 ([discussion and explicit documentation-only instruction](sources/apply-execute-first-20261019.md)). No implementation is part of this decision. The owner then dispatched the implementation in the Claude session ([DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle)); it is implemented on branch `dev/enforced-ownership-build-order`, pending review, CI and a new demonstration.
+- **Status:** Accepted direction, owner, 19 October 2026 ([discussion and explicit documentation-only instruction](sources/apply-execute-first-20261019.md)). No implementation is part of this decision. The owner then dispatched the implementation in the Claude session ([DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle)); it is implemented and merged (PR #472) and demonstrated three times ([record](../validation/recursive-apply-repetitions-20261019.md)).
 - **Decision:** Every Apply uses prepare -> Execute and integration -> capture one immutable candidate -> independent Verify -> correction or guarded publication. There is no initial Verify and no special route for case 1. Structural model, ownership and source-accounting preparation remain before execution.
 - **Execute:** Each Manager examines its available artifacts against the model as part of reconciliation, preserves valid realization, creates missing artifacts and corrects deviations within its authority. The initial mandate supplies work without fabricated missing-artifact findings. Even an already conforming area participates; Execute requires assessment, not an edit.
 - **Root and recursion:** Apply enters at Root and work proceeds through the existing fixed parent/child hierarchy, with results integrated upward. The owner [clarified the start rule](sources/apply-execute-first-20261019.md#owner-confirms-parent-foundations-before-child-work): a parent first provides the concrete foundation its children need, then their realization begins. An already suitable foundation can be preserved. Siblings may progress in parallel after their needed foundations are available; further dependencies remain parent-coordinated. Parents finish after child integration, so this is not a requirement to complete all parent work before children start, a Root-authored file plan, selective participation or a transfer of child ownership.
@@ -709,10 +710,18 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-059 Enforced responsibilities, build start and an outside oracle
 
-- **Status:** Accepted, owner, 19 October 2026, after the first real library demonstration ([verbatim owner source](sources/ownership-build-order-oracle-20261019.md), [validation record](../validation/recursive-apply-demonstration-20261019.md)). Implementation on branch `dev/enforced-ownership-build-order`, pending review, CI and a new demonstration.
+- **Status:** Accepted, owner, 19 October 2026, after the first real library demonstration ([verbatim owner source](sources/ownership-build-order-oracle-20261019.md), [validation record](../validation/recursive-apply-demonstration-20261019.md)). Implemented and merged (PR #472); demonstrated three times ([record](../validation/recursive-apply-repetitions-20261019.md)).
 - **Responsibilities:** A parent must not take over its children's work or tell them they need do nothing. Under a declared layout, ownership is now enforced in the shared working tree: an Execute turn may write only its own areas and registry shard; everything else, including protected inputs and the children's areas, is read-only. Root owns the files directly in an artifact root and every file outside the roots; a subdirectory of an artifact root needs an owning Package directory or a persistent exception. Briefs name each child's areas and Definitions and the parent's role (supply foundations, coordinate, integrate). This amends DEC-056's "initially trust, enforce later" for projects with a declared layout; without a layout ownership stays trusted.
 - **Build start:** Superseded within the same day by [DEC-058](#dec-058-apply-always-executes-before-independent-verify)'s single process, which the owner chose to implement right away: every Apply starts at Root, each child begins when its parent's first Execute turn has supplied the foundation, and there is no special route for areas without artifacts.
 - **Oracle:** The independent library oracle observes once after each Apply, outside the process. It is no longer a required check and gives the Agents no feedback.
+
+
+### DEC-060 Owners realize, others use; parents settle cross-area matters
+
+- **Status:** Accepted, owner, 19 October 2026, after the [three repeated demonstrations](../validation/recursive-apply-repetitions-20261019.md) ([verbatim owner source](sources/owner-realizes-others-use-20261019.md)). Implementation on branch `dev/owner-realizes-others-use`.
+- **Decision:** A Definition is realized by the artifacts of the Manager that owns it. Other areas use that realization rather than rebuilding it, and no Manager touches anything outside its own area. Cross-area matters between children are settled by their parent: it decides which child's realization provides a shared rule or interface and coordinates the others to use it.
+- **Verification:** A realization of another area's Definition outside its owner's artifacts, or a change outside the Manager's own area, is a concrete model violation and therefore a blocking finding. The parent's fresh Verify of its children's interaction is responsible for detecting it.
+- **Fallback:** A prior planning round to prevent such duplication is named as an option if this rule alone does not suffice. It is not adopted.
 
 ## Promises
 
