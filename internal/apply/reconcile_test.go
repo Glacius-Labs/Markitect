@@ -271,6 +271,11 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 	workspaces := &fakeWorkspaces{}
 	publisher := &fakePublisher{}
 	req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = failingAgents{}, workspaces, failingRunner{}, &memoryEvidence{}, publisher
+	var removed []string
+	req.RemoveHome = func(_ context.Context, home string) error {
+		removed = append(removed, home)
+		return nil
+	}
 	result, err := apply.Reconcile(context.Background(), req)
 	if result.Outcome.Status == "" || result.Outcome.Status == run.Verified || result.Receipt != nil || len(publisher.requests) != 0 {
 		t.Fatalf("an unverified run published or has no outcome: %+v %v", result, err)
@@ -282,9 +287,14 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 	if result.RetainedWork != "" && result.RetainedWork != "run-1-work" {
 		t.Fatalf("retained work names %q", result.RetainedWork)
 	}
+	// Homes are runtime volumes the Agents adapters mount by name, not
+	// Workspaces; the Host's RemoveHome deletes them.
+	if len(result.Outcome.Homes) == 0 || !slices.Equal(removed, result.Outcome.Homes) {
+		t.Fatalf("homes %v, removed %v", result.Outcome.Homes, removed)
+	}
 	for _, home := range result.Outcome.Homes {
-		if !slices.Contains(workspaces.closed, run.WorkspaceID(home)) {
-			t.Errorf("home %s was not removed", home)
+		if slices.Contains(workspaces.closed, run.WorkspaceID(home)) {
+			t.Errorf("home %s was closed as a workspace", home)
 		}
 	}
 }

@@ -40,6 +40,9 @@ type ReconcileRequest struct {
 	Publisher  Publisher
 	Control    ControlCheck
 	Clock      func() time.Time
+	// RemoveHome deletes one provider-home volume a turn used. The homes are
+	// runtime volumes the Agents adapters mount by name, not Workspaces.
+	RemoveHome func(context.Context, string) error
 }
 
 // ReconcileResult reports the run and, for a verified candidate, its
@@ -72,7 +75,7 @@ func conclude(ctx context.Context, req ReconcileRequest, start snapshot.Tree, ou
 	result := ReconcileResult{Outcome: outcome}
 	cleanup := context.WithoutCancel(ctx)
 	for _, home := range outcome.Homes {
-		closeVolume(cleanup, req, home)
+		removeHome(cleanup, req, home)
 	}
 	if outcome.Status != run.Verified || runErr != nil {
 		result.RetainedWork = retainedWork(cleanup, req)
@@ -249,6 +252,18 @@ func closeVolume(ctx context.Context, req ReconcileRequest, volume string) {
 		data["error"] = err.Error()
 	}
 	_ = req.Evidence.Record(run.Event{At: req.now(), Kind: "workspace.close", Data: data})
+}
+
+// removeHome deletes a provider home and records the observation.
+func removeHome(ctx context.Context, req ReconcileRequest, home string) {
+	if req.RemoveHome == nil {
+		return
+	}
+	data := map[string]any{"home": home, "removed": true}
+	if err := req.RemoveHome(ctx, home); err != nil {
+		data["removed"], data["error"] = false, err.Error()
+	}
+	_ = req.Evidence.Record(run.Event{At: req.now(), Kind: "home.remove", Data: data})
 }
 
 // retainedWork returns the name of the run's shared work volume when it still
