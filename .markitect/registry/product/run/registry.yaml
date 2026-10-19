@@ -80,6 +80,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: Schedules parallel Execute turns in the shared tree, routes messages along parent and child contacts and polls the owner's answers.
+  - path: "internal/run/checktool.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Serves the optional Execute tool check, which peeks the shared tree and answers with the accounting findings, the caller's first.
   - path: "internal/run/turn.go"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -120,6 +124,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Checks Verify order, parallel Execute, routing, owner questions, open findings, checks and observed writes.
+  - path: "internal/run/directions_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks the custom mandate and Verify guidance, the unchanged Apply texts and the check tool.
   - path: "internal/run/failure_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

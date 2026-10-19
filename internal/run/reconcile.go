@@ -143,7 +143,8 @@ type Evidence interface {
 // which writes a model candidate from fixed artifacts, supplies its own
 // mandate and its own guidance on what blocks in Verify. CheckTool offers
 // Execute turns the Host tool "check": it observes the shared working tree
-// without pausing the writers and returns Account's findings for that tree.
+// without pausing the writers and returns Account's findings for that tree;
+// Account is then called concurrently with itself and with the writers' work.
 type Config struct {
 	RunID          string
 	Team           []Manager

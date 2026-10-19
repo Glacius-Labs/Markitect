@@ -90,6 +90,21 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
   `owner`; anything else is refused with the allowed contacts. An answer also returns the
   caller's new undelivered items. `finish {status: done|waiting, summary}` ends the turn;
   a turn that ends without it counts as done. Without an `Owner`, a question is refused.
+- Execute, only with `Config.CheckTool`: `check {scope?}` peeks the shared volume through
+  `Workspaces.Peek` (writers keep running), runs `Account` on the peeked tree and answers with
+  the findings as compact text, the calling Manager's first and then the number of others
+  (`scope: "all"` lists them). It is advice; candidates still come only from Harvest. An
+  uncertain or incomplete peek is refused with the reason, which is not a failure of the run.
+  The first Execute prompt mentions it only when offered; Verify turns never get it. Each use is
+  recorded as `check.requested` with the Manager and the counts. `Account` must be safe to call
+  concurrently.
+
+## Directions
+
+The same cycle serves Apply and Extract. `Config.Mandate`, when set, replaces the Apply mandate
+in every Execute and Verify prompt; `Config.VerifyGuidance`, when set, replaces the Apply
+sentences that define what blocks in the Verify prompt ("Blocking means ..." through the parent
+instruction). Empty fields keep the Apply texts unchanged. The initial Execute items stay the same.
 
 A Manager's Execute turns get the mandate, its brief, contacts, owner decisions, the
 shared-tree note (with an enforced plan: outside its writable areas `/work` is read-only, a
@@ -127,5 +142,5 @@ supplies.
 `reconcile.go` and `agents.go` hold the contract, `workspace.go` and `checks.go` the
 consumer-owned ports. `engine.go` validates, drives rounds and captures; `verify.go` runs
 Verify rounds and the findings; `execute.go` schedules Execute, releases children and routes
-messages; `turn.go`, `tools.go` and `prompts.go` hold turn handling, tool schemas and prompts. Tests
+messages; `checktool.go` serves the check tool; `turn.go`, `tools.go` and `prompts.go` hold turn handling, tool schemas and prompts. Tests
 use scripted fakes for every port and run with `-race`.
