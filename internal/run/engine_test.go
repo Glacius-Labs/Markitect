@@ -263,6 +263,50 @@ func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
 	}
 }
 
+// A rejection that finds fewer gaps than the last one shows convergence and
+// does not count toward the limit, here two; a rejection without fewer gaps
+// counts (DEC-054).
+func TestARejectionWithFewerGapsDoesNotCount(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	reject := func(n int) []action {
+		findings := ""
+		for i := 0; i < n; i++ {
+			if i > 0 {
+				findings += ","
+			}
+			findings += `{"severity":"blocking","definitions":["lending/Item"],"grounds":"A gap remains.","requestedEvidence":"A test."}`
+		}
+		args := `{"verdict":"changes_requested","summary":"Gaps remain.","evidence":[],"cases":[{"name":"item","assessment":"evidenced","grounds":"Checked."}],"resolutions":[],"findings":[` + findings + `]}`
+		return []action{{Tool: run.ToolSubmitReview, Args: args, Want: run.ToolOK}}
+	}
+	agent := func(s agentStep) []action {
+		if s.Manager != "lending" || s.Phase != run.PhaseReviewerCandidate {
+			return happyAgent(s)
+		}
+		switch s.Attempt {
+		case 0:
+			return reject(3)
+		case 1:
+			return reject(2)
+		case 2:
+			return reject(1)
+		}
+		var open []string
+		for _, i := range h.c.Issues("lending") {
+			if i.Kind == "finding" && i.Severity == "blocking" && i.State == "open" {
+				open = append(open, i.ID)
+			}
+		}
+		return []action{{Tool: run.ToolSubmitReview, Args: passArgs(open...), Want: run.ToolOK}}
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if lending := h.task("lending"); h.c.Current().State != run.Verifying || len(lending.Deliveries) != 1 || lending.Rejections["local"] != 0 {
+		t.Fatal("a converging Manager was stopped by the rejection limit", h.c.Current(), lending)
+	}
+}
+
 // An accepted delivery restarts the count, so a Manager that converges on
 // each delivery is not stopped by rejections of earlier deliveries; the limit
 // here is two (DEC-050).
