@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/reconciliation-model-proposal.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the accepted preparation-to-publication self-model proposal, explicit relationships and preservation boundaries without changing canonical Definitions or implementation.
   - path: "docs/design/modeling-skill-guidance.md"
     form: doc
     realizes: [documentation/current-guidance]
