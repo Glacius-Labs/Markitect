@@ -29,7 +29,7 @@ refinements:
     choice: Use realization as the CLI working directory and expose the standard-library unittest discovery command for portable preparation.
 templateDerivations:
   - target: template/.markitect/execution.yaml
-    change: Adapt illustrative profile names, remove the Library Package override, and bind the Python test command to roombook/interface.
+    change: Adapt illustrative profile names, remove the Library Package override, bind the Python test command to roombook/interface, set a budget for one Apply (20 minutes, 8-minute turns, 60 Agent turns, 4 rounds), use the python-tests check profile, and declare the persistent layout with the artifact root realization and one directory exception giving realization to the roombook Package.
 copiedInputs:
   - source: experiments/test-projects/library-r2/project/.markitect/dependencies/core/model/markitect/core/kind.yaml
     target: template/.markitect/dependencies/core/model/markitect/core/kind.yaml

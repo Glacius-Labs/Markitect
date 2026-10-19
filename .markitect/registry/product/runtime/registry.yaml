@@ -176,3 +176,11 @@ artifacts:
     form: build
     realizes: [product/runtime/container-runtime]
     why: Builds the example Go project runtime image on the base image.
+  - path: "packaging/runtime/examples/python/Dockerfile"
+    form: build
+    realizes: [product/runtime/container-runtime]
+    why: Builds the example Python project runtime image on the base image.
+  - path: "packaging/runtime/examples/python/Dockerfile.dockerignore"
+    form: build
+    realizes: [product/runtime/container-runtime]
+    why: Builds the example Python project runtime image on the base image.

@@ -20,11 +20,13 @@ The owner accepted one previously unspecified domain boundary for this new fixtu
 
 The fixture also fixes a delivery boundary for portable preparation: invoke `python -B app.py --db PATH COMMAND ...` from `realization/`, and run `python -B -m unittest discover -s tests` there. Internal source/test organization remains free within that standard-library entry point; no production framework is prescribed. Code, meaningful tests, run/test instructions, data/failure behavior and the concurrent-writer limitation remain required.
 
-The shared [execution file](template/.markitect/execution.yaml) is derived from the integrated Library r2 preparation example with Roombook profile names and the declared Python test command. Its finite settings and profile names are illustrative; they establish no installed Host profile, sufficient budget, runtime capability or execution authority. Core and Software inputs live once under `template/.markitect/dependencies/` with their original identities, versions and digests. No initial artifact registry is needed because there are no realization artifacts; register exact files when authored.
+The shared [execution file](template/.markitect/execution.yaml) is derived from the integrated Library r2 preparation example with Roombook profile names and the declared Python test command. Its budget (20 minutes in total, 8-minute turns, 60 Agent turns, 4 rounds) is sized for one Apply of one snapshot. The check profile `python-tests` is meant for the [Python runtime image](../../../packaging/runtime/README.md); its Host profile names the image's small wrapper `/opt/markitect/bin/python` as executable (a regular file in a small directory; the Agents use the `python` and `python3` links), and the command is `-B -m unittest discover -s tests`. Profile names and settings establish no installed Host profile, runtime capability or execution authority.
+
+**Ownership layout.** The delivery boundary puts `app.py` and `tests/` directly in `realization/`, and under a layout the files directly in an artifact root belong to Root. The file declares the artifact root `realization` and one directory exception that gives the whole root to the `roombook` Package, so the domain Package realizes the application and tests while Root coordinates and writes no domain logic. Under that layout the Package sees both `realization/roombook/**` and `realization/**` as its areas; `app.py` and `tests/` live directly in `realization/`, not in a `roombook` subdirectory. A mirrored `realization/roombook/` directory with a Root-owned entry point and a second exception for `tests/` was rejected as more structure than a single-Package project needs. Core and Software inputs live once under `template/.markitect/dependencies/` with their original identities, versions and digests. No initial artifact registry is needed because there are no realization artifacts; register exact files when authored.
 
 ## Materialize the current packet
 
-Include template controls/dependencies and exactly one selected canonical snapshot. Exclude this guide, `sources.yaml`, `sources/`, all later snapshots, hidden expectations and evaluator answers. The ordinary documentation actor receives exactly the same current intended meaning and the same explicitly selected initial artifact state.
+Include template controls/dependencies and exactly one selected canonical snapshot. Exclude this guide, `sources.yaml`, `sources/`, `oracle/`, all later snapshots, hidden expectations and evaluator answers. The ordinary documentation actor receives exactly the same current intended meaning and the same explicitly selected initial artifact state.
 
 For a fresh initial repository, from a Markitect checkout in PowerShell:
 
@@ -49,3 +51,13 @@ Inspect actual model digests, selected Definitions, source provenance and contex
 For an **isolated paired task**, freeze identical initial artifact bytes for both arms of that pair. The first task can use this empty realization. A later task needing existing code must bind a separately selected common starting implementation; this source fixture supplies no completed extension or gold result.
 
 For a **longitudinal sequence**, share the empty initial state only at the first stage. Later, replace only current manifest/lock/Definition sources with the next snapshot and continue each arm's own actual prior code, tests, documentation and registry. Do not recopy the template or reset to a gold implementation; accumulated drift remains an outcome. A separate harness owns any axes, run configuration and independent expectations. These files prepare source requirements and authorize no provider, Apply or study runs.
+
+## Assess a realization
+
+The [oracle](oracle/oracle.py) is a black-box assessor outside every actor packet: it never feeds back into Agents and runs only after an Apply. It drives the realized CLI through `python -B app.py --db PATH COMMAND ...` from `realization/` and prints a JSON report with a pass or fail per check, each citing the Definitions it checks. Checks are cumulative and follow the Definitions of the snapshot and the recorded owner choices; error wording and internal organization stay free.
+
+```text
+python -B experiments/test-projects/roombook/oracle/oracle.py --realization PATH/TO/realization --stage 1|2|3 [--python CMD]
+```
+
+Its [discrimination self-check](oracle/selfcheck.py) verifies that every cited Definition exists, that silent, always-error, empty and crashing command lines fail, and, for a reference or mutants supplied from outside the repository, that the reference passes every stage and each mutant fails a check. The repository holds no reference solution.

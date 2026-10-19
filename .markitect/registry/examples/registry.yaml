@@ -212,6 +212,10 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Binds every copied Library r2 input to its upstream path, full source revision and original blob digest, with explicit derivations.
+  - path: "experiments/test-projects/oracle_kit.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Shares the black-box harness, report format and discrimination self-check of the Roombook and Readinglog oracles.
   - path: "experiments/test-projects/readinglog/README.md"
     form: doc
     realizes: [examples/independent-oracles]
@@ -524,10 +528,34 @@ artifacts:
     form: doc
     realizes: [examples/independent-oracles]
     why: Gives one coding Agent a neutral instruction to restore the actual existing Readinglog application to the selected visible baseline requirements.
+  - path: "experiments/test-projects/readinglog/oracle/checks.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Holds the Readinglog checks, each citing the Definitions it assesses, for independent assessment after an Apply.
+  - path: "experiments/test-projects/readinglog/oracle/oracle.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Assesses a Readinglog realization per snapshot stage and reports pass or fail per check as JSON.
+  - path: "experiments/test-projects/readinglog/oracle/selfcheck.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Shows that the Readinglog oracle discriminates through citations, degenerate command lines, an external reference and mutants.
   - path: "experiments/test-projects/roombook/README.md"
     form: doc
     realizes: [examples/independent-oracles]
     why: Documents complete Roombook requirement snapshots, explicit refinements, empty initial realization and selected actor-packet boundaries.
+  - path: "experiments/test-projects/roombook/oracle/checks.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Holds the Roombook checks, each citing the Definitions it assesses, for independent assessment after an Apply.
+  - path: "experiments/test-projects/roombook/oracle/oracle.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Assesses a Roombook realization per snapshot stage and reports pass or fail per check as JSON.
+  - path: "experiments/test-projects/roombook/oracle/selfcheck.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Shows that the Roombook oracle discriminates through citations, degenerate command lines, an external reference and mutants.
   - path: "experiments/test-projects/roombook/snapshots/01-book-list/model-lock.yaml"
     form: config
     realizes: [examples/independent-oracles]
