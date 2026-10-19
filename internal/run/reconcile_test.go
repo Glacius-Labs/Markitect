@@ -1110,3 +1110,79 @@ func TestChildTurnWithoutFinishReportsDoneToItsParent(t *testing.T) {
 		t.Fatalf("child.report events %+v", reports)
 	}
 }
+
+func TestToolsStayUsableAfterFinishAndTheLastFinishCounts(t *testing.T) {
+	f := newFixture(t)
+	f.agents.quiet = true
+	f.agents.script = func(c *call) error {
+		if c.is(1, "lending/reminders", ExecuteTurn) && c.turn.Resume == "" {
+			if a := c.finish("done"); a.Refused {
+				t.Errorf("finish refused: %s", a.Text)
+			}
+			if a := c.send("parent", "a note after finish"); a.Refused {
+				t.Errorf("send after finish refused: %s", a.Text)
+			}
+			// The last call counts: waiting reports nothing to the parent.
+			if a := c.finish("waiting"); a.Refused {
+				t.Errorf("second finish refused: %s", a.Text)
+			}
+			return nil
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified {
+		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+	for _, r := range f.ev.kinds("child.report") {
+		if r.Manager == "lending/reminders" {
+			t.Errorf("a turn that last finished waiting reported done: %+v", r)
+		}
+	}
+	contains(t, "lending's prompt", f.agents.prompt("run1-r1-lending-x2"), "Message from your child lending/reminders (overdue notices): a note after finish")
+}
+
+func TestAssessKeepsTheLastValidReportOfTheTurn(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is(1, "library", VerifyTurn):
+			if a := c.assess(false, []fnd{finding("library", "first", true)}); a.Refused {
+				t.Errorf("assess refused: %s", a.Text)
+			}
+			// An invalid call later in the turn leaves the valid report in place.
+			if a := c.tool(toolAssess, map[string]any{"summary": "s", "satisfied": true, "extra": 1}); !a.Refused {
+				t.Errorf("invalid assess accepted: %+v", a)
+			}
+			return nil
+		case c.is(2, "library", VerifyTurn):
+			open := c.myOpen()
+			if len(open) != 1 {
+				t.Fatalf("open findings of library %v", open)
+			}
+			c.assess(true, nil, open...)
+			// The replacing report keeps the finding open: the closure above is not applied.
+			if a := c.assess(false, nil); a.Refused || !strings.Contains(a.Text, "replaces") {
+				t.Errorf("replacing assess %+v", a)
+			}
+			return nil
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified || len(out.Rounds) != 3 || out.Rounds[1].Green {
+		t.Fatalf("%s %s rounds %+v", out.Status, out.Reason, out.Rounds)
+	}
+	var first Finding
+	for _, fd := range out.Findings {
+		if fd.Obligation == "first" {
+			first = fd
+		}
+	}
+	if first.RaisedBy != "library" || first.Round != 1 || !first.Closed || first.ClosedRound != 3 {
+		t.Fatalf("finding %+v", first)
+	}
+	if n := f.ev.count("assessment"); n != 4*3 {
+		t.Errorf("%d assessment events, want one per Manager and round", n)
+	}
+}
