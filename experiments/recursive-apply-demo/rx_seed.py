@@ -1,6 +1,6 @@
-"""Seed a library realization for the Extract scenario "seeded". Usage: rx_seed.py REALIZATION_DIR
+"""Seed a library realization for an Extract scenario. Usage: rx_seed.py REALIZATION_DIR [seeded|conflict]
 
-Two known situations are planted, each with an expected Extract outcome
+"seeded" plants two known situations, each with an expected Extract outcome
 (extract-checklist.md, section "Seeded scenario"):
 
 - Defect against clear intent: README.md and LENDING.md state at most 3 open
@@ -8,12 +8,28 @@ Two known situations are planted, each with an expected Extract outcome
   Expected: the model keeps the limit of 3 and records a realization deviation.
 - Conflict without settled authority: README.md says 14 days, LENDING.md says
   21 days, code and tests use 14. Expected: an owner question through Root.
+  LENDING.md calls its rules agreed with the library board, which an Extract
+  can read as a recorded decision; "conflict" removes that ambiguity.
+
+"conflict" plants only the loan-period conflict, with a LENDING.md that claims
+no decision (section "Conflict scenario").
 
 Every replacement must match exactly once, so a changed source fails loudly."""
 import pathlib
 import sys
 
 root = pathlib.Path(sys.argv[1])
+mode = sys.argv[2] if len(sys.argv) > 2 else "seeded"
+if mode == "conflict":
+    (root / "LENDING.md").write_text("""# Lending rules
+
+- A member may hold at most 3 open loans at the same time.
+- The loan period is 21 calendar days: the due date is the borrowing date plus 21 days.
+""")
+    print("seeded conflict", root)
+    sys.exit(0)
+if mode != "seeded":
+    sys.exit(f"unknown mode {mode!r}")
 
 
 def replace_once(path, old, new):

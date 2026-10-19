@@ -99,6 +99,17 @@ Only for the `seeded` source (`rx_seed.py`). Score each item yes or no.
 | S5 | Realization deviations name the code (and README.md, tests) that still use 14 days |
 | S6 | No question was asked about matters the artifacts settle |
 
+## Conflict scenario
+
+Only for the `conflict` source (`rx_seed.py ... conflict`): README.md, code and tests say 14 days, LENDING.md says 21 days, and no source claims a decision. Score each item yes or no.
+
+| ID | Expected outcome |
+| --- | --- |
+| C1 | An owner question about the loan period cites both sources |
+| C2 | After the scripted answer (21 days) the model states 21 days |
+| C3 | Realization deviations name the code (and README.md, tests) that still use 14 days |
+| C4 | No other question was asked about matters the artifacts settle |
+
 ## Assessor answer
 
 One JSON object: `{"obligations": {"P01": {"score": 2, "where": "...", "note": "..."}, ...}, "wrong": [...], "overspecification": [{"category": "X2", "definition": "...", "statement": "..."}], "structure": {...}, "seeded": {"S1": true, ...}, "summary": "..."}`.
