@@ -48,3 +48,20 @@ The owner accepted the clarification and requested documentation:
 > Ja, halte das so in den Docs fest: Eltern schaffen zuerst die benötigte Grundlage, dann beginnen ihre Kinder. Ergebnisse werden nach oben integriert und anschließend unabhängig verifiziert. Weiterhin keine Implementierung.
 
 Recorder's interpretation: this makes the parent-before-child start dependency explicit within DEC-058's single Apply process. An existing suitable foundation can be preserved; no artificial edit, initial Verify, special bootstrap process, per-file approval or new readiness schema is introduced. The documentation preserves the distinction between accepted target and unchanged implementation and grants no runtime, test, settings, canonical-model or fixture changes.
+
+## Owner confirms existing foundation assessment
+
+Recorder's note: subsequent case-2 discussion in the same thread on 19 October 2026. The owner asked how Apply works with existing artifacts and how parents determine whether their foundations still fit.
+
+Recorder's summary of the assistant walkthrough, not verbatim owner text:
+
+- Parents compare the current model, actual files and interfaces, and known requirements of their direct children within Execute. They preserve a matching foundation or coordinate its owner's correction or supplementation before dependent child realization begins, then identify the concrete available basis.
+- In the illustrative five-to-three loan-limit change, Root can preserve its still-suitable Go module. Lending assesses whether its existing loan-query contract still supports Reminders, preserves it when suitable and communicates its availability before Reminders begins. A policy limit change does not automatically require an interface change.
+- All required Managers reconcile their responsibilities, including unchanged areas. Children's later observations can reveal a missed dependency; parents coordinate owner corrections and inform affected children when a basis already in use changes. Upward integration and subsequent independent Verify of one complete immutable candidate remain required.
+- Existing artifacts change the work performed inside Execute, not the common Apply process or its order. Local parent assessment is not a prior independent Verify and cannot alone establish the correctness of the final integrated candidate.
+
+The owner accepted the case-2 walkthrough and requested documentation:
+
+> Ja, halte auch den Ablauf für Fall 2 so in den Docs fest: Eltern prüfen bestehende Grundlagen im Execute und erhalten oder korrigieren sie, bevor ihre Kinder beginnen. Weiterhin keine Implementierung.
+
+Recorder's interpretation: this clarifies how DEC-058 applies to an existing realization, preserving the previously accepted parent-before-child start, ownership, integration, independent Verify and documentation-only boundary. No runtime, test, settings, canonical-model or fixture change is authorized here.

@@ -4,7 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
-| [Execute-first Apply](apply-execute-first-20261019.md) | Direct owner discussion and documentation-only acceptances, 19 October 2026 | Execute from Root with parent foundations before child realization, upward integration and subsequent independent Verify; no initial Verify or case-1 special route |
+| [Execute-first Apply](apply-execute-first-20261019.md) | Direct owner discussion and documentation-only acceptances, 19 October 2026 | Execute from Root; parents establish needed foundations or assess and preserve/correct existing ones before child realization; upward integration and subsequent independent Verify without a separate starting route |
 | [Three starting situations](three-starting-situations-20261019.md) | Direct owner discussion and documentation instructions, 19 October 2026 | Three starting situations and two processes: Apply for model-to-artifact work, including initial construction and reconciliation; Extract for interactive artifact-to-model derivation |
 | [Recursive Apply implementation dispatch](recursive-apply-implementation-20261019.md) | Direct owner dispatch, 19 October 2026 | Implementation authority for DEC-056, Sonnet for all Agent roles instead of Luna, no Codex inference, and the 30-minute bound of the library demonstration |
 | [Recursive Apply simplification](recursive-apply-simplification-20261019.md) | Direct owner discussion, 19 October 2026 | Permanent ownership, parent-child communication, fresh recursive Verify, shared working tree, and documentation-only handoff for a later Claude implementation |
