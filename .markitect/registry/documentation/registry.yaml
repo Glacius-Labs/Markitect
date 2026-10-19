@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/three-starting-situations-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves owner wording and documentation acceptance for the three fundamental project workflows without assigning implementation work.
   - path: "docs/concepts/sources/recursive-apply-simplification-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
