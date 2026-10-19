@@ -29,3 +29,22 @@ Recorder's summary of the subsequent assistant proposal, not verbatim owner text
 Recorder's interpretation and assistant clarification: the phase order is explicitly accepted. Starting at Root and proceeding through direct parent/child relationships describes the entry and coordination of the existing permanent organization, with integration and child assessment leading back upward. It does not grant Root a choice to omit required Managers, require all parent work to finish before a child begins, or select a new detailed scheduler. Only Root asks the human; owners retain their artifacts and the canonical model stays protected.
 
 The accepted change amends DEC-056's initial-Verify sequence. Runtime, tests, execution settings, fixtures and the canonical self-model still describe that earlier implementation and remain unchanged by this documentation task. This instruction authorizes no implementation, provider run, demonstration, release or migration.
+
+## Owner confirms parent foundations before child work
+
+Recorder's note: subsequent discussion in the same thread on 19 October 2026. The owner challenged the earlier assistant wording that independent child work need not wait for all parent work:
+
+> Warte, ich denke Kinder sollten immer auf ihre Eltern warten, sonst bauen sie auf keiner Grundlage auf oder?
+
+Recorder's summary of the assistant clarification and case-1 walkthrough, not verbatim owner text:
+
+- The parent first provides the actual foundation its direct children need and communicates what is available; only then does their realization begin. A promised future foundation is insufficient.
+- Root supplies the common root-owned basis, such as the Library's Go module. Siblings may then work in parallel where their further dependencies permit it. Missing sibling interfaces are still supplied by their actual owners through parent coordination.
+- Lending similarly provides its own loan-query foundation before Reminders begins. Managers keep their own artifact ownership; parents do not prebuild child-owned stubs or implementations.
+- Parent completion includes integration of child results. Children therefore wait for the needed foundation, not the parent's final integrated completion. Results lead upward; subsequent independent Verify examines the complete immutable candidate, children before parents.
+
+The owner accepted the clarification and requested documentation:
+
+> Ja, halte das so in den Docs fest: Eltern schaffen zuerst die benötigte Grundlage, dann beginnen ihre Kinder. Ergebnisse werden nach oben integriert und anschließend unabhängig verifiziert. Weiterhin keine Implementierung.
+
+Recorder's interpretation: this makes the parent-before-child start dependency explicit within DEC-058's single Apply process. An existing suitable foundation can be preserved; no artificial edit, initial Verify, special bootstrap process, per-file approval or new readiness schema is introduced. The documentation preserves the distinction between accepted target and unchanged implementation and grants no runtime, test, settings, canonical-model or fixture changes.
