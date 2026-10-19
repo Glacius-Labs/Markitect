@@ -41,6 +41,7 @@ type Command struct {
 	apply       ApplyFunc
 	answer      AnswerFunc
 	extract     ExtractFunc
+	setup       SetupFunc
 }
 
 func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc, answer AnswerFunc) *Command {
@@ -68,6 +69,8 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   extract [options]        derive a model candidate from the existing artifacts
   answer <question> --text ANSWER --run-config PATH
                             answer a question of the running Apply
+  setup --host DIR --image REF --credential FILE --agent-model M [options]
+                            prepare a Host directory with host.yaml and run.json
   version | licenses | help
 
 Common options:
@@ -120,6 +123,26 @@ answer options:
   Writes the answer for a question the running Apply asked (it prints the
   question to stderr) and reports the file it wrote. An answer is final.
 
+setup options:
+  --host DIR               absolute Host directory, outside the repository; created
+                           private and holding host.yaml, run.json and state/
+  --image REF              runtime image; its ID and metadata are observed, never started
+  --credential FILE        absolute private Claude runtime token file; checked, never read
+  --check PROFILE=EXECUTABLE  absolute executable in the image for each check profile;
+                           repeat, one per profile the project selects
+  --agent-model M          model of every Agent profile, required (for example claude-haiku-5-5)
+  --effort E               low, medium or high (default high)
+  --engine PATH            container engine executable (default /usr/bin/docker)
+  --store LABEL            repository identity and store label (default: the model id)
+  --request TEXT           owner request (default: a neutral sentence)
+  --decision TEXT          owner decision; repeat
+  --deadline RFC3339       absolute UTC wall-clock limit, ending in Z
+  --repo, --model and repeated --dependency select the project as for check.
+  Setup reads the profile names from the working draft, writes the two files
+  deterministically (unchanged files stay) and prints the files with their
+  SHA-256, the bound identities and the exact apply command. It refuses while an
+  Apply holds the state directory.
+
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.
 `
@@ -151,6 +174,9 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 			return 3
 		}
 		return 0
+	}
+	if verb == "setup" {
+		return c.setupVerb(ctx, args[1:], stdout, stderr, emit)
 	}
 	if verb == "apply" || verb == "answer" || verb == "extract" {
 		return c.execution(ctx, verb, args[1:], stdout, stderr, emit)

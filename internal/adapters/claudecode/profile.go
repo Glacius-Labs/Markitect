@@ -32,17 +32,17 @@ type Profile struct {
 // SessionProfile is the closed provider and container configuration, separate
 // from the static image-metadata profile.
 type SessionProfile struct {
-	Version      int      `json:"version"`
-	Model        string   `json:"model"`
-	Effort       string   `json:"effort"`
-	SystemPrompt string   `json:"systemPrompt"`
-	BuiltinTools []string `json:"builtinTools"`
-	Store        string   `json:"store"`
-	CPUs         float64  `json:"cpus"`
-	MemoryBytes  int64    `json:"memoryBytes"`
-	Pids         int      `json:"pids"`
-	TmpBytes     int64    `json:"tmpBytes"`
-	Network      string   `json:"network"`
+	Version      int      `json:"version" yaml:"version"`
+	Model        string   `json:"model" yaml:"model"`
+	Effort       string   `json:"effort" yaml:"effort"`
+	SystemPrompt string   `json:"systemPrompt" yaml:"systemPrompt"`
+	BuiltinTools []string `json:"builtinTools" yaml:"builtinTools"`
+	Store        string   `json:"store" yaml:"store"`
+	CPUs         float64  `json:"cpus" yaml:"cpus"`
+	MemoryBytes  int64    `json:"memoryBytes" yaml:"memoryBytes"`
+	Pids         int      `json:"pids" yaml:"pids"`
+	TmpBytes     int64    `json:"tmpBytes" yaml:"tmpBytes"`
+	Network      string   `json:"network" yaml:"network"`
 }
 
 var (
