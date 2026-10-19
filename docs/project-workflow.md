@@ -44,7 +44,7 @@ It reads which Agent profiles and check profiles the project selects from the wo
 
 The Host directory must be outside the repository. Setup creates it private and writes `host.yaml` (every Agent profile as a Claude Code profile with the required `--agent-model` (there is no default model) and `--effort`, default `high`; every check profile as a container check on the image) and `run.json` (the [invocation configuration](#invocation-configuration), with `state/` in the same directory). Before writing, it decodes `run.json` as `apply` does and runs `host.yaml` through the settings and metadata preparation of `check --metadata --host-profile`. Optional `--store`, `--request`, `--decision` (repeatable), `--deadline` and `--engine` fill the remaining fields; `--model` and `--dependency` select the project as for `check`.
 
-The JSON report lists the bound image ID, agentd and Claude Code versions and engine version, both files with their SHA-256 and whether each was `written` or `unchanged`, and the exact `apply` command to run next. Running setup again with the same inputs changes nothing. It refuses while an Apply holds the state directory.
+The JSON report lists the bound image ID, agentd and Claude Code versions and engine version, both files with their SHA-256 and whether each was `written` or `unchanged`, and the exact `apply` command to run next. Running setup again with the same inputs changes nothing. It refuses while an Apply holds the state directory. `productBuild` carries the Git revision only for a binary built with `go build` in a checkout; `go run` writes the plain version, so bind frozen runs with a built binary.
 
 ## Execute, verify, and apply
 

@@ -275,6 +275,15 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 	}
 }
 
+func TestRunComposesSetup(t *testing.T) {
+	// Without the composition the verb would be unavailable (exit 3); a
+	// composed setup refuses the incomplete invocation as usage (exit 2).
+	var out, errout bytes.Buffer
+	if code := Run(context.Background(), []string{"setup"}, &out, &errout); code != 2 {
+		t.Fatalf("Run(setup)=%d want=2\nstdout=%s\nstderr=%s", code, out.String(), errout.String())
+	}
+}
+
 func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
 	f := newSetupFixture(t)
 	if code, out, errout := f.run(t); code != 0 {
@@ -309,6 +318,15 @@ func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
 			t.Fatalf("exit %d: %s", code, out)
 		}
 		unchanged("unused check")
+	})
+	t.Run("relative check executable", func(t *testing.T) {
+		g := f
+		g.args = replaceArg(f.args, "go=/usr/local/go/bin/go", "go=bin/go")
+		code, out, _ := g.run(t, "--agent-model", "claude-sonnet-5-5")
+		if code != 1 || !strings.Contains(out, "error") {
+			t.Fatalf("exit %d: %s", code, out)
+		}
+		unchanged("relative check executable")
 	})
 	t.Run("invalid effort", func(t *testing.T) {
 		code, out, _ := f.run(t, "--effort", "max")
