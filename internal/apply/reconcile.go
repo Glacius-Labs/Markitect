@@ -211,6 +211,9 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		// Execute turns can see the accounting of the shared tree, such as a shard
 		// that does not parse or an unregistered file, before Verify does.
 		CheckTool: true,
+		// Root ends the run with a model defect instead of repairing the model
+		// (DEC-063).
+		DefectTool: true,
 	}
 	return cfg, nil
 }

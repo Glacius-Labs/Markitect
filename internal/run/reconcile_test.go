@@ -704,6 +704,70 @@ func TestOwnerQuestionWithoutOwnerIsRefused(t *testing.T) {
 	}
 }
 
+func TestRootEndsTheRunWithAModelDefect(t *testing.T) {
+	toolNames := func(turn Turn) (names []string) {
+		for _, tool := range turn.Tools {
+			names = append(names, tool.Name)
+		}
+		return names
+	}
+	t.Run("offered to Root only", func(t *testing.T) {
+		f := newFixture(t)
+		f.cfg.DefectTool = true
+		f.agents.script = func(c *call) error {
+			if c.turn.Kind == ExecuteTurn {
+				offered := slices.Contains(toolNames(c.turn), toolDefect)
+				if offered != (c.turn.Manager == ".") {
+					t.Errorf("%s: model_defect offered = %v", c.turn.ID, offered)
+				}
+				if c.turn.Manager == "library" {
+					if a := c.tool(toolDefect, map[string]any{"text": "x"}); !a.Refused || !strings.Contains(a.Text, "Unknown tool") {
+						t.Errorf("a child reported a model defect: %+v", a)
+					}
+				}
+			}
+			return c.defaultScript()
+		}
+		if out := f.run(); out.Status != Verified {
+			t.Fatalf("%s %s", out.Status, out.Reason)
+		}
+	})
+	t.Run("not offered without the option", func(t *testing.T) {
+		f := newFixture(t)
+		f.agents.script = func(c *call) error {
+			if slices.Contains(toolNames(c.turn), toolDefect) {
+				t.Errorf("%s: model_defect offered without DefectTool", c.turn.ID)
+			}
+			return c.defaultScript()
+		}
+		f.run()
+	})
+	t.Run("the report ends the run", func(t *testing.T) {
+		f := newFixture(t)
+		f.cfg.DefectTool = true
+		f.agents.script = func(c *call) error {
+			if c.is(1, ".", ExecuteTurn) {
+				contains(t, "Root's prompt", c.turn.Prompt, "a defect of the model itself goes to the tool model_defect")
+				if a := c.tool(toolDefect, map[string]any{"text": "lending/loan-policy says four and five"}); a.Refused {
+					t.Errorf("model defect refused: %s", a.Text)
+				}
+				return nil
+			}
+			return c.defaultScript()
+		}
+		out := f.run()
+		if out.Status != Incomplete || out.Reason != ModelDefectReason+"lending/loan-policy says four and five" {
+			t.Fatalf("%s %q", out.Status, out.Reason)
+		}
+		if len(out.Rounds) != 0 || countKind(out, VerifyTurn) != 0 || f.ws.harvests != 0 {
+			t.Fatalf("the run went on after the report: %v", turnIDs(out))
+		}
+		if events := f.ev.kinds("model.defect"); len(events) != 1 || events[0].Manager != "." {
+			t.Fatalf("model.defect events %+v", events)
+		}
+	})
+}
+
 func TestUnansweredOwnerQuestionKeepsTheRunIncomplete(t *testing.T) {
 	f := newFixture(t)
 	f.cfg.Budget.Deadline = time.Now().Add(400 * time.Millisecond)

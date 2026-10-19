@@ -75,7 +75,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implemented |
 | [DEC-061](#dec-061-what-an-extracted-model-contains) | Decision | What an extracted model contains | Accepted; implemented |
 | [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Accepted; implemented |
-| [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate) | Decision | The model is authoritative; defects escalate | Accepted; implementation pending |
+| [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate) | Decision | The model is authoritative; defects escalate | Accepted; implemented |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -744,7 +744,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-063 The model is authoritative; defects escalate
 
-- **Status:** Accepted, owner, 19 October 2026, after the contradiction and owner-question scenarios of the Apply evidence ([verbatim owner source](sources/model-defects-escalate-20261019.md)). Implementation pending; it follows the Apply evidence report ([#492](https://github.com/Glacius-Labs/Markitect/issues/492)).
+- **Status:** Accepted, owner, 19 October 2026, after the contradiction and owner-question scenarios of the Apply evidence ([verbatim owner source](sources/model-defects-escalate-20261019.md)). Implemented after the Apply evidence report ([#492](https://github.com/Glacius-Labs/Markitect/issues/492)): the Apply mandate states the rule, and Root's tool `model_defect` ends the run ([runtime contract](../design/canonical-model/manager-apply-runtime.md#reconcile-cycle)).
 - **Decision:** Apply never repairs the model. What the model states always holds, and no answer may contradict it. A Manager that cannot settle a matter within the model escalates it to its parent. The parent settles it when the model allows, for example which child realizes a shared rule, a tool or environment question, or an internal technical choice. Otherwise it escalates further, up to Root.
 - **At Root:** A model defect is reported to the owner and ends the run at once, visibly Incomplete with a model-defect report. A model defect is a model that contradicts itself, or a gap that changes behavior at the project boundary. Nothing is published, the work is retained, the owner corrects the model, and a new Apply follows. No run-only answer settles a model defect. A matter that is no model defect but cannot be settled in the tree becomes an owner question, and the run continues with an answer that stays within the model.
 - **No escalation:** A gap without effect at the project boundary is realization freedom ([DEC-061](#dec-061-what-an-extracted-model-contains)'s boundary criterion). The Manager decides it and documents the choice.
