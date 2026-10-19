@@ -719,7 +719,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-060 Owners realize, others use; parents settle cross-area matters
 
-- **Status:** Accepted, owner, 19 October 2026, after the [three repeated demonstrations](../validation/recursive-apply-repetitions-20261019.md) ([verbatim owner source](sources/owner-realizes-others-use-20261019.md)). Implemented in the Briefs, the Verify guidance and the self-model, merged together with the first Extract.
+- **Status:** Accepted, owner, 19 October 2026, after the [three repeated demonstrations](../validation/recursive-apply-repetitions-20261019.md) ([verbatim owner source](sources/owner-realizes-others-use-20261019.md)). Implemented in the Briefs, the Verify guidance and the self-model, together with the first Extract.
 - **Decision:** A Definition is realized by the artifacts of the Manager that owns it. Other areas use that realization rather than rebuilding it, and no Manager touches anything outside its own area. Cross-area matters between children are settled by their parent: it decides which child's realization provides a shared rule or interface and coordinates the others to use it.
 - **Verification:** A realization of another area's Definition outside its owner's artifacts, or a change outside the Manager's own area, is a concrete model violation and therefore a blocking finding. The parent's fresh Verify of its children's interaction is responsible for detecting it.
 - **Fallback:** A prior planning round to prevent such duplication is named as an option if this rule alone does not suffice. It is not adopted.

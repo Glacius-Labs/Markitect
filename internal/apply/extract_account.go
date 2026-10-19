@@ -81,7 +81,8 @@ func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
 		findings = slices.Compact(findings)
 	}()
 	// Every candidate is guarded, whatever else fails to prepare.
-	findings = append(findings, a.guard(tree)...)
+	guarded := a.guard(tree)
+	findings = append(findings, guarded...)
 	structural := rebindStructural(a.start.structural.Model(), tree, a.phase == extractStructure)
 	compiled := structural.Model().compiled
 	if compiled.Status != model.Passed {
@@ -113,7 +114,7 @@ func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
 		a.accountStructure(structural, topology, add)
 		return findings
 	}
-	a.accountModel(structural, tree, &findings, add)
+	a.accountModel(structural, tree, guarded, &findings, add)
 	return findings
 }
 
@@ -146,7 +147,7 @@ func (a extractAccounting) accountStructure(structural CapturedPreparationAttemp
 // accountModel accounts the model phase: the Package inventory of the start is
 // kept, and every file is explained, registered in its owner's shard and linked
 // to existing Definitions of the candidate model.
-func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, tree snapshot.Tree, findings *[]CandidateFinding, add func(owner, code, name, message string)) {
+func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, tree snapshot.Tree, guarded []CandidateFinding, findings *[]CandidateFinding, add func(owner, code, name, message string)) {
 	candidate := packageNames(structural.Model().compiled)
 	for _, name := range candidate {
 		if !slices.Contains(a.packages, name) {
@@ -163,7 +164,9 @@ func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, t
 		add(organization.Root, "model.topology", "", err.Error())
 		return
 	}
-	c.guard = func(snapshot.Tree) []CandidateFinding { return nil } // Account guarded the tree already
+	// The guard's findings are in findings already; Account's compaction drops
+	// the repeat, and Candidates uses their paths to suppress file.unexplained.
+	c.guard = func(snapshot.Tree) []CandidateFinding { return guarded }
 	*findings = append(*findings, c.Account(tree)...)
 }
 

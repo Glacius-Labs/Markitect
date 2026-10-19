@@ -20,6 +20,7 @@ type memoryWorkspaces struct {
 	files  map[string]map[string]string // volume -> path -> content
 	ids    map[run.WorkspaceID]string
 	closed []run.WorkspaceID
+	refuse run.WorkspaceID // Materialize fails for this volume
 }
 
 func newMemoryWorkspaces() *memoryWorkspaces {
@@ -29,6 +30,9 @@ func newMemoryWorkspaces() *memoryWorkspaces {
 func (w *memoryWorkspaces) Materialize(_ context.Context, spec run.WorkspaceSpec) (run.WorkspaceObservation, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	if spec.ID == w.refuse {
+		return run.WorkspaceObservation{}, errors.New("no space left on device")
+	}
 	volume := "vol-" + string(spec.ID)
 	w.files[volume], w.ids[spec.ID] = map[string]string{}, volume
 	for _, e := range spec.Tree.Entries() {
@@ -72,6 +76,7 @@ func (w *memoryWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.Wor
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.closed = append(w.closed, id)
+	delete(w.ids, id)
 	return run.WorkspaceObservation{ID: id, Closed: true}, nil
 }
 
@@ -303,5 +308,17 @@ func TestExtractStopsAfterAnUnverifiedStructurePhaseAndKeepsItsWork(t *testing.T
 	}
 	if !blocked {
 		t.Errorf("findings %+v", result.Structure.Findings)
+	}
+}
+
+func TestExtractKeepsTheStructureWhenTheModelPhaseCannotStart(t *testing.T) {
+	req, _, workspaces, publisher, _, _, _ := bothPhases(t)
+	workspaces.refuse = "x-1-model-work"
+	result, err := apply.Extract(context.Background(), req)
+	if err == nil || result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status != run.Failed {
+		t.Fatalf("err %v, structure %s, model %+v", err, result.Structure.Status, result.Model)
+	}
+	if result.RetainedWork != "x-1-structure-work" || slices.Contains(workspaces.closed, "x-1-structure-work") || len(publisher.requests) != 0 {
+		t.Fatalf("retained %q closed %v", result.RetainedWork, workspaces.closed)
 	}
 }

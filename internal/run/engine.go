@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -248,12 +249,25 @@ func validate(cfg Config) error {
 	case len(cfg.Checks) > 0 && cfg.Runner == nil:
 		return bad("checks need a Runner")
 	}
-	for i, q := range cfg.Questions {
-		if q.ID != fmt.Sprintf("Q%d", i+1) || !q.Answered {
-			return bad("earlier question %d must be the answered question Q%d", i+1, i+1)
+	last := 0
+	for _, q := range cfg.Questions {
+		n := questionNumber(q.ID)
+		if n <= last || !q.Answered {
+			return bad("earlier question %q must be answered and numbered after Q%d", q.ID, last)
 		}
+		last = n
 	}
 	return nil
+}
+
+// questionNumber returns n of a question identity "Qn" (n >= 1), or 0. A refused
+// question keeps its number, so earlier questions may have gaps.
+func questionNumber(id string) int {
+	n, err := strconv.Atoi(strings.TrimPrefix(id, "Q"))
+	if err != nil || n < 1 || id != fmt.Sprintf("Q%d", n) {
+		return 0
+	}
+	return n
 }
 
 // validatePlan checks the mounts of an enforced write plan: clean relative
@@ -321,7 +335,9 @@ func newEngine(parent context.Context, cfg Config) *engine {
 	for _, q := range cfg.Questions {
 		e.questions = append(e.questions, &q)
 	}
-	e.nextQuest = len(cfg.Questions)
+	if len(cfg.Questions) > 0 {
+		e.nextQuest = questionNumber(cfg.Questions[len(cfg.Questions)-1].ID)
+	}
 	for _, m := range cfg.Team {
 		slug := slugOf(m.Path)
 		x := &mgr{Manager: m, slug: slug, execHome: cfg.RunID + "-" + slug + "-x", verifyHome: cfg.RunID + "-" + slug + "-v"}

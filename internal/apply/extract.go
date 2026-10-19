@@ -103,8 +103,9 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), structurePhase.reconcile())
 		return result, runErr
 	}
-	// Until the model phase starts, the verified structure is only in its work
-	// volume: keep it when the model phase cannot be prepared.
+	// Until the model phase holds its own start, the verified structure is only
+	// in the structure phase's work volume: keep it when the model phase cannot
+	// be prepared or started.
 	keepStructure := func(err error) (ExtractResult, error) {
 		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), structurePhase.reconcile())
 		return result, err
@@ -125,12 +126,16 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	// Both phases share the owner channel: the model phase knows the structure
 	// phase's answers and continues its question numbering.
 	cfg.Questions = outcome.Questions
-	closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
 	modelOutcome, runErr := run.Reconcile(ctx, cfg)
 	result.Model = &modelOutcome
 	phase.cleanup(ctx, modelOutcome, "model")
+	modelWork := retainedWork(context.WithoutCancel(ctx), phase.reconcile())
+	if modelWork == "" {
+		return keepStructure(runErr)
+	}
+	closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
 	if modelOutcome.Status != run.Verified || runErr != nil {
-		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
+		result.RetainedWork = modelWork
 		return result, runErr
 	}
 	changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
@@ -138,7 +143,7 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 		// Account blocks every such candidate, so this is a defect, not an
 		// incomplete run.
 		modelOutcome.Status, modelOutcome.Reason = run.Failed, err.Error()
-		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
+		result.RetainedWork = modelWork
 		return result, err
 	}
 	reconcile := phase.reconcile()

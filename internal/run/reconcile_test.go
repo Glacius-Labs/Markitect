@@ -685,14 +685,15 @@ func TestOwnerThatCannotBeReachedRefusesTheQuestion(t *testing.T) {
 
 func TestEarlierAnsweredQuestionsContinueTheOwnerChannel(t *testing.T) {
 	f := newFixture(t)
-	f.cfg.Questions = []Question{{ID: "Q1", Text: "which loan limit?", Answer: "three", Answered: true}}
+	// Q1 was refused in the earlier run and kept its number.
+	f.cfg.Questions = []Question{{ID: "Q2", Text: "which loan limit?", Answer: "three", Answered: true}}
 	f.agents.script = func(c *call) error {
 		switch {
 		case c.is(1, ".", ExecuteTurn) && c.turn.Resume == "":
 			contains(t, "root execute prompt", c.turn.Prompt, "Answered owner questions", "which loan limit?", "Answer: three")
 			a := c.send("owner", "which loan period?")
-			contains(t, "ask answer", a.Text, "Q2")
-			time.AfterFunc(60*time.Millisecond, func() { f.owner.answer("Q2", "fourteen days") })
+			contains(t, "ask answer", a.Text, "Q3")
+			time.AfterFunc(60*time.Millisecond, func() { f.owner.answer("Q3", "fourteen days") })
 			c.finish("waiting")
 			return nil
 		case c.is(1, ".", VerifyTurn):
@@ -701,10 +702,10 @@ func TestEarlierAnsweredQuestionsContinueTheOwnerChannel(t *testing.T) {
 		return c.defaultScript()
 	}
 	out := f.run()
-	if out.Status != Verified || len(out.Questions) != 2 || out.Questions[1].ID != "Q2" || !out.Questions[1].Answered {
+	if out.Status != Verified || len(out.Questions) != 2 || out.Questions[1].ID != "Q3" || !out.Questions[1].Answered {
 		t.Fatalf("%s %s %+v", out.Status, out.Reason, out.Questions)
 	}
-	if asked := f.owner.questions(); len(asked) != 1 || asked[0].ID != "Q2" {
+	if asked := f.owner.questions(); len(asked) != 1 || asked[0].ID != "Q3" {
 		t.Fatalf("the owner was asked %+v", asked)
 	}
 }
