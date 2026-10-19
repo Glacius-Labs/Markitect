@@ -75,6 +75,12 @@ The deterministic component prepares and supplies contexts, starts sessions, exp
 
 Managers decide how to investigate and repair within their responsibility. The runtime does not prescribe per-case test plans, per-file reservations, separate reply turns, delivery purposes/scopes, rejection-counter resets or progress exceptions. A blocked parent-child relationship remains visible; budget and completion constraints cannot be waived by an Agent.
 
+### First-demonstration scope
+
+The owner confirmed after independent concept review on 19 October 2026: **no additional Fork, team or Skill functionality for the first end-to-end demonstration.** Assess their usefulness later against concrete observed bottlenecks, rather than adding them as anticipated optimizations. The already agreed Manager responsibilities, parallel Execute and fresh Verify remain the baseline; this adds no new product roles, helper lifecycle or acceptance requirement.
+
+This confirmation leaves Claude's running implementation assignment unchanged. It does not prohibit existing development tools already allowed by that assignment, authorize extra experiments or require implementing the later departmental/Fork/Skill proposal. The [verbatim confirmation](../../concepts/sources/recursive-apply-simplification-20261019.md#first-demonstration-scope-after-independent-review) records the boundary.
+
 ### Implementation handoff and supersession
 
 The later Claude session should start with this section, the [current library walkthrough](manager-apply-library-flow.md#current-library-walkthrough), [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), the canonical self-model and the repository's normal contribution instructions. This documentation session does not authorize or perform runtime implementation, further provider runs, releases, merges of implementation work or human acceptance of generated artifacts. A separate owner dispatch will authorize that work.
