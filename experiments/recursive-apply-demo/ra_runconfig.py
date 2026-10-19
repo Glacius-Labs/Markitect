@@ -21,7 +21,6 @@ config = {
     "repositoryIdentity": "ra-library-" + attempt.name,
     "productBuild": sha,
     "ownerRequest": request,
-    "ownerDecisions": decisions,
     "stateDirectory": str(attempt / ("state-" + label)),
     "deadline": deadline,
     "engineExecutable": "/usr/bin/docker",
@@ -30,6 +29,8 @@ config = {
     "harvest": {"maxEntries": 50000, "maxBytes": 268435456},
     "credentials": {"ra-claude-token": {"provider": "claude-code", "mode": "dedicated-runtime-token", "path": str(attempt / "secret" / "claude-token")}},
 }
+if decisions:
+    config["ownerDecisions"] = decisions
 target = attempt / ("run-config-" + label + ".json")
 target.write_text(json.dumps(config, indent=1))
 print(target)
