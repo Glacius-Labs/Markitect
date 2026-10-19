@@ -1,6 +1,7 @@
 package run
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -238,7 +239,7 @@ func (e *Engine) Verify(ctx context.Context, target snapshot.Tree, required []Re
 		}
 		req := check.Request
 		req.Tree, req.ID = target, CheckID(fmt.Sprintf("%s-%s-%d", req.ID, c.Current().ID, c.Revision()))
-		cmd, err := c.PrepareCheckCommand(e.meta("prepare-check"), check.Name, req, e.checkReservation(req))
+		cmd, err := c.PrepareCheckCommand(e.meta("prepare-check"), check.Name, req, e.checkReservation(req, Assessment))
 		if err != nil {
 			return nil, err
 		}
@@ -268,8 +269,9 @@ func (e *Engine) passedOn(name string, tree snapshot.TreeID) (CheckID, bool) {
 }
 
 // checkReservation holds a check's timeout plus the container's start and stop.
-func (e *Engine) checkReservation(req CheckRequest) Reservation {
-	return Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: Assessment, Maximum: req.Timeout + e.cfg.Limits.StartTimeout + e.cfg.Limits.StopTimeout}
+// A check of a writing step is writing work; any other is assessment.
+func (e *Engine) checkReservation(req CheckRequest, purpose Purpose) Reservation {
+	return Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: purpose, Maximum: req.Timeout + e.cfg.Limits.StartTimeout + e.cfg.Limits.StopTimeout}
 }
 
 // runCheck admits one check, runs it and records its receipt. An uncertain
@@ -861,7 +863,11 @@ func (e *Engine) tools(s *stepRun) ToolHandler {
 				if reason := e.formMismatch(s); reason != "" {
 					return refuse(reason)
 				}
-				if reason := e.preflight(ctx, s, call.Tool, args); reason != "" {
+				reason, err := e.preflight(ctx, s, call, args)
+				if err != nil {
+					return ToolOutcome{}, err
+				}
+				if reason != "" {
 					return refuse(reason)
 				}
 			}
@@ -967,17 +973,7 @@ func (e *Engine) reviewCheck(ctx context.Context, s *stepRun, call ToolCall, arg
 		names := slices.Sorted(maps.Keys(e.cfg.ReviewChecks))
 		return refuse(fmt.Sprintf("%q is not a configured check; the configured checks are %s", in.Check, strings.Join(names, ", ")))
 	}
-	req.Tree, req.ID = s.version.tree, CheckID(fmt.Sprintf("%s-%s-%s", req.ID, call.Step, call.Call))
-	reservation := e.checkReservation(req)
-	if left := s.deadline.Sub(e.cfg.Clock()); reservation.Maximum > left {
-		return refuse(fmt.Sprintf("the check needs up to %s, and the step has %s left", reservation.Maximum, left.Round(time.Second)))
-	}
-	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), s.manager, in.Check, req, reservation)
-	if err != nil {
-		return refuse(err.Error())
-	}
-	receipt, elapsed, err := e.runCheck(ctx, admit, req)
-	s.checked += elapsed
+	receipt, req, err := e.stepCheck(ctx, s, call, in.Check, req, s.version.tree)
 	if errors.Is(err, errNotAdmitted) {
 		return refuse(err.Error())
 	}
@@ -996,6 +992,29 @@ func (e *Engine) reviewCheck(ctx context.Context, s *stepRun, call ToolCall, arg
 }
 
 const reviewCheckOutput = 16 << 10
+
+// stepCheck runs a configured check of the step's Manager on tree within the
+// step's remaining time and charges the time to the check, not the step. A
+// check that does not fit or that the Coordinator refuses ran nowhere and
+// returns errNotAdmitted with the reason.
+func (e *Engine) stepCheck(ctx context.Context, s *stepRun, call ToolCall, name string, req CheckRequest, tree snapshot.Tree) (CheckReceipt, CheckRequest, error) {
+	req.Tree, req.ID = tree, CheckID(fmt.Sprintf("%s-%s-%s", req.ID, call.Step, call.Call))
+	purpose := Assessment
+	if s.phase.writing() {
+		purpose = Writing
+	}
+	reservation := e.checkReservation(req, purpose)
+	if left := s.deadline.Sub(e.cfg.Clock()); reservation.Maximum > left {
+		return CheckReceipt{}, req, fmt.Errorf("%w: the check needs up to %s, and the step has %s left", errNotAdmitted, reservation.Maximum, left.Round(time.Second))
+	}
+	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), s.manager, name, req, reservation)
+	if err != nil {
+		return CheckReceipt{}, req, fmt.Errorf("%w: %w", errNotAdmitted, err)
+	}
+	receipt, elapsed, err := e.runCheck(ctx, admit, req)
+	s.checked += elapsed
+	return receipt, req, err
+}
 
 // registrable checks a proposed registry record before it is accepted: its
 // Definitions exist in the compiled model, and its path is registered to the
@@ -1020,28 +1039,65 @@ func (e *Engine) registrable(s *stepRun, record realization.Registration) error 
 }
 
 // preflight tells the Agent before its outcome why the step's changes would
-// not be captured, or why a limited delivery would deliver nothing. It
-// observes the running workspace, which is advisory: when the observation is
-// not complete it stays silent, and the conclusion remains authoritative.
-func (e *Engine) preflight(ctx context.Context, s *stepRun, tool string, args []byte) string {
+// not be captured, why a limited delivery would deliver nothing, or which
+// required check fails on them. It observes the running workspace, which is
+// advisory: when the observation is not complete, or a check does not fit the
+// step, it stays silent, and the conclusion and the review remain authoritative.
+func (e *Engine) preflight(ctx context.Context, s *stepRun, call ToolCall, args []byte) (string, error) {
 	peek, err := e.cfg.Workspaces.Peek(ctx, HarvestRequest{ID: s.workspace, MaxEntries: e.cfg.Limits.HarvestEntries, MaxBytes: e.cfg.Limits.HarvestBytes})
 	if err != nil || !peek.Complete() {
-		return ""
+		return "", nil
 	}
 	changed, proposes := !peek.Tree.Equal(s.version.tree), e.proposes(s)
 	if changed || proposes {
 		if _, err := e.capture(s, peek.Tree); err != nil {
-			return "these changes cannot be captured: " + err.Error() + "; correct them first"
+			return "these changes cannot be captured: " + err.Error() + "; correct them first", nil
 		}
 	}
-	if tool != ToolSubmit || changed || proposes {
-		return ""
+	if call.Tool != ToolSubmit {
+		return "", nil
 	}
-	if task, ok := e.cfg.Coordinator.Task(s.manager); ok && emptyLimited(task, args) {
-		return emptyLimitedReason
+	if !changed && !proposes {
+		if task, ok := e.cfg.Coordinator.Task(s.manager); ok && emptyLimited(task, args) {
+			return emptyLimitedReason, nil
+		}
 	}
-	return ""
+	return e.requiredChecksFail(ctx, s, call, peek.Tree)
 }
+
+// requiredChecksFail runs the basis's required checks that are configured for
+// the step on the observed tree and names the first that fails with the end of
+// its output. A review passes only when they pass (core rule T8), so a
+// submission that fails one cannot be accepted. A check that does not fit the
+// step or is not admitted stays silent.
+func (e *Engine) requiredChecksFail(ctx context.Context, s *stepRun, call ToolCall, tree snapshot.Tree) (string, error) {
+	if e.cfg.Checks == nil {
+		return "", nil
+	}
+	for _, name := range e.cfg.Coordinator.RequiredChecks() {
+		req, ok := e.cfg.ReviewChecks[name]
+		if !ok {
+			continue
+		}
+		receipt, req, err := e.stepCheck(ctx, s, call, name, req, tree)
+		if errors.Is(err, errNotAdmitted) {
+			continue
+		}
+		if err != nil {
+			return "", err
+		}
+		if !receipt.Passed(req) {
+			output := receipt.Output
+			if len(output) > gateCheckOutput {
+				output = output[len(output)-gateCheckOutput:]
+			}
+			return fmt.Sprintf("the required check %s fails on these files; submit once it passes: %s", name, bytes.TrimSpace(output)), nil
+		}
+	}
+	return "", nil
+}
+
+const gateCheckOutput = 8 << 10
 
 const emptyLimitedReason = "a limited delivery needs changed files; with nothing to deliver, submit complete or wait"
 

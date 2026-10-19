@@ -303,7 +303,7 @@ func (s *stateValue) applyVerification(c Command) error {
 		if _, exists := s.checks[c.Check.ID]; exists || w.ID != c.Check.ID || w.Name != c.Check.Name || w.Tree != c.Check.Tree || !s.checkAdmissible(c.Check) {
 			return ErrState
 		}
-		if c.Reservation.Kind != ProjectCheck || c.Reservation.Purpose != Assessment || c.Reservation.Maximum < w.Timeout {
+		if c.Reservation.Kind != ProjectCheck || c.Reservation.Purpose != s.checkPurpose(c.Check) || c.Reservation.Maximum < w.Timeout {
 			return ErrInvalid
 		}
 		if err := s.reserve(c.Reservation); err != nil {
@@ -412,15 +412,31 @@ func (s *stateValue) applyVerification(c Command) error {
 	return nil
 }
 
+// checkPurpose is the budget purpose of a check: writing work while the task
+// runs a writing step, assessment for a review and the aggregate's verification.
+func (s stateValue) checkPurpose(k CheckRecord) Purpose {
+	if t, ok := s.tasks[k.Task]; ok && t.Phase.writing() {
+		return Writing
+	}
+	return Assessment
+}
+
 // checkAdmissible admits the aggregate's required checks while the run is
-// Verifying and nothing else is open, and a review's check while that review's
-// candidate step runs, on its frozen candidate, one check at a time.
+// Verifying and nothing else is open, a review's check while that review's
+// candidate step runs, on its frozen candidate, and a writing step's check on
+// any tree while the step runs, one check at a time.
 func (s stateValue) checkAdmissible(k CheckRecord) bool {
 	if k.Task == "" {
 		return s.current.State == Verifying && !s.hasOpen()
 	}
 	t, ok := s.tasks[k.Task]
-	if !ok || s.current.State != Running || t.Phase != PhaseReviewerCandidate || t.Step == "" || s.sessions[t.Session].Plan.Candidate != k.Tree {
+	if !ok || s.current.State != Running || t.Step == "" {
+		return false
+	}
+	switch {
+	case t.Phase.writing():
+	case t.Phase == PhaseReviewerCandidate && s.sessions[t.Session].Plan.Candidate == k.Tree:
+	default:
 		return false
 	}
 	for _, id := range s.checkOrder {

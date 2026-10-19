@@ -73,7 +73,7 @@ type Reservation struct {
 func (r Reservation) valid() bool {
 	return identifier(r.ID) && (r.Purpose == Writing || r.Purpose == Assessment || r.Purpose == Preparation) && r.Maximum > 0 &&
 		(r.Kind == SessionStart || r.Kind == AgentStep || r.Kind == ProjectCheck || r.Kind == ToolProcess) &&
-		(r.Kind != ProjectCheck || r.Purpose == Assessment)
+		(r.Kind != ProjectCheck || r.Purpose == Assessment || r.Purpose == Writing)
 }
 
 type InvocationState string

@@ -43,7 +43,7 @@ func TestCodecRejectsCanonicalBytesWithInvalidValueShapes(t *testing.T) {
 		"unknown purpose":            {reserved.Batch(), func(c *run.Command) { c.Reservation.Purpose = "unknown" }},
 		"zero maximum":               {reserved.Batch(), func(c *run.Command) { c.Reservation.Maximum = 0 }},
 		"negative maximum":           {reserved.Batch(), func(c *run.Command) { c.Reservation.Maximum = -1 }},
-		"writing project check":      {reserved.Batch(), func(c *run.Command) { c.Reservation.Kind = run.ProjectCheck; c.Reservation.Purpose = run.Writing }},
+		"preparation project check":  {reserved.Batch(), func(c *run.Command) { c.Reservation.Kind = run.ProjectCheck; c.Reservation.Purpose = run.Preparation }},
 		"whitespace media":           {prepared.Batch(), func(c *run.Command) { c.Basis.MediaType = " \t" }},
 		"missing encoding":           {prepared.Batch(), func(c *run.Command) { c.Basis.Encoding = "" }},
 		"whitespace encoding":        {prepared.Batch(), func(c *run.Command) { c.Basis.Encoding = " \t" }},
