@@ -1026,7 +1026,7 @@ func (e *Engine) preflight(ctx context.Context, s *stepRun, tool string, args []
 	changed, proposes := !peek.Tree.Equal(s.version.tree), e.proposes(s)
 	if changed || proposes {
 		if _, err := e.capture(s, peek.Tree); err != nil {
-			return "these changes cannot be captured: " + err.Error() + "; remove or reserve and register the file before you submit"
+			return "these changes cannot be captured: " + err.Error() + "; correct this before you submit"
 		}
 	}
 	if tool != ToolSubmit || changed || proposes {

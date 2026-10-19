@@ -23,7 +23,8 @@ type WorkspaceID string
 // tree is advisory, the Host only uses it to tell the Agent before the outcome
 // why its changes would not be captured, and a candidate still comes only from
 // Harvest after the step's container stopped. Close is idempotent and reports
-// Closed for an absent volume. Every result reports actual observations, also when an error is returned.
+// Closed for an absent volume. Every result reports actual observations, also
+// when an error is returned.
 //
 // Observation follows Git's view of files: a regular file is Executable
 // exactly when its owner execute bit is set, other permission bits are
