@@ -2,12 +2,22 @@ package run
 
 import "encoding/json"
 
-// Host tool names. Execute turns send and finish; Verify turns assess.
+// Host tool names. Execute turns send and finish, and check when Config offers
+// it; Verify turns assess.
 const (
 	toolSend   = "send"
 	toolFinish = "finish"
+	toolCheck  = "check"
 	toolAssess = "assess"
 )
+
+const checkSchema = `{
+  "type": "object",
+  "additionalProperties": false,
+  "properties": {
+    "scope": {"type": "string", "enum": ["own", "all"], "description": "own (default): your findings in full and the number of others. all: the findings of other Managers too."}
+  }
+}`
 
 const sendSchema = `{
   "type": "object",
@@ -65,15 +75,19 @@ const assessSchema = `{
   }
 }`
 
-func executeTools(root bool) []ToolSpec {
+func executeTools(root, check bool) []ToolSpec {
 	to := "Send a message to your parent (to \"parent\") or to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
 	if root {
 		to = "Send a message to a direct child (to its path) or ask the human owner (to \"owner\"). Other recipients are refused. The answer returns what has arrived for you."
 	}
-	return []ToolSpec{
+	tools := []ToolSpec{
 		{Name: toolSend, Description: to, InputSchema: json.RawMessage(sendSchema)},
 		{Name: toolFinish, Description: "End your turn. Call it once when you have done what the items ask.", InputSchema: json.RawMessage(finishSchema)},
 	}
+	if check {
+		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Check the current shared working tree: returns the findings of the project's accounting, yours first. Other Managers may still be writing, so the answer is advice; an uncertain observation is refused with the reason.", InputSchema: json.RawMessage(checkSchema)})
+	}
+	return tools
 }
 
 func verifyTools() []ToolSpec {

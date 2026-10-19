@@ -58,8 +58,10 @@ type fakeWS struct {
 	harvests  int
 	uncertain bool
 	extra     []string
-	dirs      map[WorkspaceID][]string
-	matErr    error
+	// peekUncertain makes Peek uncertain.
+	peekUncertain bool
+	dirs          map[WorkspaceID][]string
+	matErr        error
 	// matErrFor fails only the materialization of these workspaces.
 	matErrFor map[WorkspaceID]error
 }
@@ -120,8 +122,20 @@ func (w *fakeWS) Harvest(_ context.Context, r HarvestRequest) (WorkspaceHarvest,
 	return h, nil
 }
 
-func (w *fakeWS) Peek(ctx context.Context, r HarvestRequest) (WorkspaceHarvest, error) {
-	return w.Harvest(ctx, r)
+// Peek returns the current volume content, also while a writer mounts it. It is
+// uncertain only when peekUncertain is set.
+func (w *fakeWS) Peek(_ context.Context, r HarvestRequest) (WorkspaceHarvest, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	v := w.vols[r.ID]
+	if v == nil {
+		return WorkspaceHarvest{}, errors.New("no such volume")
+	}
+	h := WorkspaceHarvest{ID: r.ID, Tree: w.tree(v), Uncertain: w.peekUncertain}
+	if h.Uncertain {
+		h.Reason = "the volume changed while it was observed"
+	}
+	return h, nil
 }
 
 func (w *fakeWS) Close(_ context.Context, id WorkspaceID) (WorkspaceObservation, error) {
