@@ -214,7 +214,9 @@ func (s *executionService) reconcileAndPublish(ctx context.Context, selection ap
 		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
 			return executionCheck(selected, cfg)
 		},
-		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
+		// Apply asks the owner nothing mid-run: Root ends the run with a model
+		// defect instead (DEC-063).
+		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Evidence: ports.Evidence,
 		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
 	})
 }

@@ -35,7 +35,6 @@ type ReconcileRequest struct {
 	Agents     run.Agents
 	Workspaces run.Workspaces
 	Runner     run.Checks
-	Owner      run.Owner
 	Evidence   run.Evidence
 	Publisher  Publisher
 	Control    ControlCheck
@@ -207,7 +206,7 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		OwnerOf:       candidates.OwnerOf,
 		Budget:        run.Budget{Deadline: deadline, TurnTimeout: budget.TurnTimeout.Value, AgentTurns: budget.AgentTurns.Value, Rounds: budget.Rounds.Value},
 		MaxEntries:    req.MaxEntries, MaxBytes: req.MaxBytes,
-		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Owner: req.Owner, Evidence: req.Evidence, Clock: req.Clock,
+		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Evidence: req.Evidence, Clock: req.Clock,
 		// Execute turns can see the accounting of the shared tree, such as a shard
 		// that does not parse or an unregistered file, before Verify does.
 		CheckTool: true,

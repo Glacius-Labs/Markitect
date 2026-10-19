@@ -743,11 +743,23 @@ func TestRootEndsTheRunWithAModelDefect(t *testing.T) {
 		f.run()
 	})
 	t.Run("the report ends the run", func(t *testing.T) {
+		// As in Apply: no owner channel, the model defect is Root's only way out.
 		f := newFixture(t)
-		f.cfg.DefectTool = true
+		f.cfg.DefectTool, f.cfg.Owner = true, nil
 		f.agents.script = func(c *call) error {
 			if c.is(1, ".", ExecuteTurn) {
-				contains(t, "Root's prompt", c.turn.Prompt, "a defect of the model itself goes to the tool model_defect")
+				contains(t, "Root's prompt", c.turn.Prompt, "A defect of the model itself goes to the owner only through the tool model_defect, which ends the run.")
+				if strings.Contains(c.turn.Prompt, "owner (the human") {
+					t.Error("Root's contacts offer the owner without an owner channel")
+				}
+				for _, tool := range c.turn.Tools {
+					if tool.Name == toolSend && strings.Contains(tool.Description, "owner") {
+						t.Errorf("send offers the owner: %s", tool.Description)
+					}
+				}
+				if a := c.send("owner", "which limit?"); !a.Refused || !strings.Contains(a.Text, "model_defect") {
+					t.Errorf("a question to the owner was not refused towards model_defect: %+v", a)
+				}
 				if a := c.tool(toolDefect, map[string]any{"text": "lending/loan-policy says four and five"}); a.Refused {
 					t.Errorf("model defect refused: %s", a.Text)
 				}
