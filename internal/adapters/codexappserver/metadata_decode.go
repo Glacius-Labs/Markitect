@@ -97,7 +97,7 @@ func (p *preparation) decodeSession(n *yaml.Node) SessionProfile {
 	p.scalar(fields["memoryBytes"], "/session/memoryBytes", &s.MemoryBytes, "!!int")
 	p.scalar(fields["pids"], "/session/pids", &s.Pids, "!!int")
 	p.scalar(fields["tmpBytes"], "/session/tmpBytes", &s.TmpBytes, "!!int")
-	if _, err := NewSessionProfile(s); err != nil {
+	if err := validateSessionProfile(s); err != nil {
 		p.issue(model.Failed, "session", "/session", "Session settings do not satisfy the Codex SessionProfile v1 contract.")
 	}
 	return s
