@@ -40,7 +40,7 @@ func (r settingsPreparation) ProductInput() StrategyDefaultsInput {
 func (r settingsPreparation) ProductSource() organization.SettingSource { return r.product.source }
 
 // Declarations exposes complete declarative selections only after their source
-// and project ceilings passed. No profile or instruction content is resolved.
+// and organization validation passed. No profile or instruction content is resolved.
 func (r settingsPreparation) Declarations() (DeclarativeSettings, bool) {
 	if r.Status() != model.Passed {
 		return DeclarativeSettings{}, false

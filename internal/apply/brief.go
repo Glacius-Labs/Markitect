@@ -2,6 +2,7 @@ package apply
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -16,6 +17,13 @@ type briefCheck struct {
 	RequiredBy string
 }
 
+// requiredDefinition is a compiled Definition that required checks name as the
+// reason they exist, with the names of those checks.
+type requiredDefinition struct {
+	Definition model.Definition
+	Checks     []string
+}
+
 // briefInput is everything one Manager's standing Brief states. The engine adds
 // the mandate, contacts, findings, messages and check results itself.
 type briefInput struct {
@@ -25,6 +33,11 @@ type briefInput struct {
 	Areas     []string
 	Shard     string
 	Checks    []briefCheck
+	// Required lists the Definitions behind the required checks. It is only set for
+	// a Manager whose selection holds none of its own Definitions (Root), which
+	// would otherwise never see what the whole-project checks and the shared
+	// files it owns are for.
+	Required []requiredDefinition
 }
 
 func identityText(id model.Identity) string { return id.Package + "/" + id.ID }
@@ -72,15 +85,27 @@ func renderBrief(in briefInput) string {
 	for _, area := range in.Areas {
 		fmt.Fprintf(&b, "- %s\n", area)
 	}
+	definitions := in.Selection.Definitions()
 	example := "package/id"
-	if definitions := in.Selection.Definitions(); len(definitions) > 0 {
+	switch {
+	case len(definitions) > 0:
 		example = identityText(definitions[0].Definition.Identity)
+	case len(in.Required) > 0:
+		example = identityText(in.Required[0].Definition.Identity)
 	}
 	fmt.Fprintf(&b, "\nRegistry\nEvery file you create is registered by you in your registry shard %s, in the same change; a file that is not registered there is unexplained and blocks the candidate. Entries use this shape:\n\napiVersion: markitect.registry/v1\nartifacts:\n  - path: path/of/the/file/from/the/repository/root\n    form: code   # one of code, test, doc, build, config\n    realizes: [%s]   # existing Definition identities\n    why: One sentence on what the file contributes.\n\n", in.Shard, example)
 	b.WriteString("Protected intent\nThe canonical model under /work/.markitect is the binding intent. Read it; never change it.\n\n")
 
 	b.WriteString("Model obligations\nYour own Definitions are your obligations. Included Definitions describe contracts of other areas: rely on their owners' realization, coordinated through your parent or children, instead of realizing them again in your area.\n")
-	definitions := in.Selection.Definitions()
+	requiredBy := make(map[model.Identity][]string)
+	for _, required := range in.Required {
+		requiredBy[required.Definition.Identity] = required.Checks
+		if !slices.ContainsFunc(definitions, func(d organization.ContextDefinition) bool {
+			return d.Definition.Identity == required.Definition.Identity
+		}) {
+			definitions = append(definitions, organization.ContextDefinition{Definition: required.Definition})
+		}
+	}
 	if len(definitions) == 0 {
 		b.WriteString("This Manager has no Definitions of its own and none are included.\n")
 	}
@@ -91,7 +116,7 @@ func renderBrief(in briefInput) string {
 			b.WriteString("\nIncluded Definitions (context from other Packages)\n")
 			wroteIncluded = true
 		}
-		writeDefinition(&b, definition, own)
+		writeDefinition(&b, definition, own, requiredBy[definition.Definition.Identity])
 	}
 
 	b.WriteString("\nRequired checks\n")
@@ -111,7 +136,7 @@ func renderBrief(in briefInput) string {
 	return b.String()
 }
 
-func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own bool) {
+func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own bool, requiredBy []string) {
 	d := c.Definition
 	fmt.Fprintf(b, "\n%s (%s): %s\n", identityText(d.Identity), identityText(d.Kind), definitionTitle(d))
 	if strings.TrimSpace(d.Body) != "" {
@@ -123,6 +148,9 @@ func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own b
 	if !own {
 		for _, reason := range c.Reasons {
 			fmt.Fprintf(b, "  included because: %s\n", reasonText(reason))
+		}
+		for _, check := range requiredBy {
+			fmt.Fprintf(b, "  included because: required by check %s\n", check)
 		}
 	}
 }

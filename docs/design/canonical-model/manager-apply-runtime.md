@@ -8,7 +8,7 @@ Status: implemented on the branch, pending independent review, hosted CI and own
 
 The team is permanent and derived, not planned: Root (`.`) and one Manager per local Package, with parents from the model hierarchy. Every Manager takes part in every Verify round. `run.Config` lists Root first and every parent before its children.
 
-Apply renders each Manager's Brief from the captured model: the applicable obligations with provenance, its owned artifact areas, its registry shard and the required checks. Own Definitions are the Manager's obligations; included Definitions describe other areas' contracts, which it uses through their owners instead of realizing them again. The engine adds the mandate, contacts, owner request and decisions, findings, messages and check results. A Manager runs with its Execute and Verify profile from the project's settings; Execute and Verify use separate provider homes and Verify never resumes.
+Apply renders each Manager's Brief from the captured model: the applicable obligations with provenance, its owned artifact areas, its registry shard and the required checks. Own Definitions are the Manager's obligations; included Definitions describe other areas' contracts, which it uses through their owners instead of realizing them again. A Manager with no Definitions of its own (Root) additionally receives the Definitions the required checks name in `requiredBy`, with the reason "required by check <name>", so it sees what the whole-project checks and the shared files it owns are for. The engine adds the mandate, contacts, owner request and decisions, findings, messages and check results. A Manager runs with its Execute and Verify profile from the project's settings; Execute and Verify use separate provider homes and Verify never resumes.
 
 ## Ownership and registry shards
 
@@ -18,7 +18,7 @@ Each Manager creates files in its area and registers them itself in its own shar
 
 ## Candidate accounting and protected inputs
 
-`apply.Candidates.Account` runs on every candidate before Verify. Its blocking findings each name the Manager that must act: an unexplained or duplicate file, an invalid or unknown shard, a registration outside the registering Manager's area, and any canonical or control input that changed, vanished or appeared. Shards are the one writable control input. Preparation runs the same accounting on the start stand before any Agent starts. Structural findings hold for exactly the candidate they were observed on.
+`apply.Candidates.Account` runs on every candidate before Verify. Its blocking findings each name the Manager that must act: an unexplained or duplicate file, an invalid or unknown shard, a registration outside the registering Manager's area, and any canonical or control input that changed, vanished or appeared. A changed or deleted protected input quotes its original content when that is at most 8 KiB of UTF-8 text (otherwise its SHA-256 and size), so the owner can restore the exact bytes. Without a declared layout an unexplained new file is addressed to Root, which coordinates but does not own it: the Manager that created the file registers it in its own shard, and Root finds out who that is through its children. Shards are the one writable control input. Preparation runs the same accounting on the start stand before any Agent starts. Structural findings hold for exactly the candidate they were observed on.
 
 ## Reconcile cycle
 
@@ -62,7 +62,7 @@ The first Execute turn of a Manager gets mandate, Brief, contacts, owner decisio
 
 ## Configuration
 
-`.markitect/execution.yaml` (`apiVersion: markitect.execution/v1`, `strategy: shared-workspace-v1`) is closed. Its fields are `budget {executionTime, turnTimeout, agentTurns, rounds}`, `profiles {execute, verify}`, `instructions`, per-Package `packages` overrides, optional `layout {roots, exceptions}` and `checks` (id, profile, directory, args, `requiredBy`, timeout). The [apply guide](../../../internal/apply/README.md#execution-settings) shows the shape and the embedded product defaults.
+`.markitect/execution.yaml` (`apiVersion: markitect.execution/v1`, `strategy: shared-workspace-v1`) is closed. Its fields are `budget {executionTime, turnTimeout, agentTurns, rounds}`, `profiles {execute, verify}`, `instructions`, per-Package `packages` overrides, optional `layout {roots, exceptions}`, optional `scope` (modeled scope selectors `{kind, property}` that add Definitions to a Manager's context) and `checks` (id, profile, directory, args, `requiredBy`, timeout). The [apply guide](../../../internal/apply/README.md#execution-settings) shows the shape and the embedded product defaults.
 
 The run configuration is a separate closed JSON file (`formatVersion` 2) with the explicit invocation facts: `repositoryIdentity`, `productBuild`, `ownerRequest`, optional `ownerDecisions`, `stateDirectory`, `engineExecutable`, `workspaceHelper`, `harvest {maxEntries, maxBytes}`, optional `deadline` (RFC 3339, UTC) and `credentials`. It adds no project settings or profile defaults.
 
@@ -83,7 +83,7 @@ Event kinds: `run.start`, `round.start`, `check`, `assessment`, `finding.raised`
 
 ## Publication and read-back
 
-Only a Verified outcome is published, as the exact verified candidate against the committed source captured at the start. The publisher refuses a source that changed since capture and a change set the target cannot represent, writes the changes and reads every path back. Multi-file publication is not atomic; a partial write stays visible and is reported. The command reports `Passed` only for an applied or unchanged read-back. Apply never commits, merges or pushes. Human acceptance and a later commit follow project policy.
+Only a Verified outcome is published, as the exact verified candidate against the committed source captured at the start. The publisher refuses a source that changed since capture and a change set the target cannot represent, writes the changes and reads every path back. Multi-file publication is not atomic; a partial write stays visible and is reported. Apply closes the shared work volume only after an applied or unchanged receipt; after any other receipt or a publication error it keeps the verified work and reports it as retained. The command reports `Passed` only for an applied or unchanged read-back. Apply never commits, merges or pushes. Human acceptance and a later commit follow project policy.
 
 ## Trusted and enforced
 

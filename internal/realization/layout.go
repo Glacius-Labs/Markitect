@@ -96,9 +96,10 @@ func NewLayout(compiled model.Result, roots []snapshot.DirectoryBoundary, except
 	return layout, nil
 }
 
-// caseCollision refuses distinct directory spellings that fold to one lower-case
-// location, among every roots, exception path and mirrored Package directory
-// and each of their ancestor directories.
+// caseCollision refuses distinct directory spellings that share one model name
+// collision key, among every root, exception path and mirrored Package directory
+// and each of their ancestor directories. A spelling without a key (invalid
+// UTF-8) is refused.
 func (l Layout) caseCollision() error {
 	folded := make(map[string]string)
 	var paths []string
@@ -118,7 +119,10 @@ func (l Layout) caseCollision() error {
 				continue
 			}
 			prefix := path[:end]
-			key := strings.ToLower(prefix)
+			key, ok := model.NameCollisionKey(prefix)
+			if !ok {
+				return fmt.Errorf("%w: %q is not valid UTF-8 and has no collision key", ErrInvalidLayout, prefix)
+			}
 			if previous, found := folded[key]; found && previous != prefix {
 				return fmt.Errorf("%w: %q and %q differ only by letter case and are ambiguous on case-insensitive platforms", ErrInvalidLayout, previous, prefix)
 			}
@@ -189,6 +193,9 @@ func (l Layout) Describe(owner Owner, tree snapshot.Tree) []string {
 	for _, root := range l.roots {
 		if isPackage {
 			base := root + "/" + packageName
+			if exception, found := l.exceptionAt(base); found && exception.Owner != owner {
+				continue
+			}
 			var excluded []string
 			for name := range l.packages {
 				if parent, _ := splitLast(name); parent == packageName {
@@ -213,14 +220,14 @@ func (l Layout) Describe(owner Owner, tree snapshot.Tree) []string {
 	}
 	for _, exception := range l.exceptions {
 		name := exception.Path.String()
-		if exception.Owner != owner || isPackage && l.mirrors(name, packageName) {
+		if exception.Owner != owner || isPackage && l.mirrors(name+"/", packageName) {
 			continue
 		}
 		if _, isFile := tree.Lookup(exception.Path); isFile {
 			areas = append(areas, name)
 			continue
 		}
-		areas = append(areas, area(name, l.foreignInside(name, owner, tree, nil)))
+		areas = append(areas, area(name, l.foreignInside(name, owner, tree, l.mirroredInside(name, owner))))
 	}
 	if owner.IsRoot() {
 		areas = append(areas, "every other file of the repository outside the roots and exceptions")
@@ -259,6 +266,32 @@ func (l Layout) foreignInside(dir string, owner Owner, tree snapshot.Tree, exclu
 		}
 	}
 	return excluded
+}
+
+// mirroredInside lists the mirrored Package directories strictly inside dir
+// that another owner holds; an exception directory does not cover them.
+func (l Layout) mirroredInside(dir string, owner Owner) []string {
+	var excluded []string
+	for _, root := range l.roots {
+		for name := range l.packages {
+			mirrored := root + "/" + name
+			probe, err := snapshot.NewPath(mirrored + "/x")
+			if strings.HasPrefix(mirrored, dir+"/") && err == nil && l.OwnerOf(probe) != owner {
+				excluded = append(excluded, mirrored+"/**")
+			}
+		}
+	}
+	return excluded
+}
+
+// exceptionAt returns the exception on exactly this path.
+func (l Layout) exceptionAt(path string) (LayoutException, bool) {
+	for _, exception := range l.exceptions {
+		if exception.Path.String() == path {
+			return exception, true
+		}
+	}
+	return LayoutException{}, false
 }
 
 // mirrors reports whether name lies inside the mirrored directory of the Package.

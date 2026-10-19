@@ -5,6 +5,7 @@ import (
 	"errors"
 	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 
@@ -310,6 +311,48 @@ func TestCandidatesProtectedInputsAreNotManagerWork(t *testing.T) {
 	}
 }
 
+func TestCandidatesProtectedFindingsQuoteTheOriginal(t *testing.T) {
+	candidates, start := layoutCandidates(t)
+	execution, _ := start.Lookup(path(t, ".markitect/execution.yaml"))
+	for name, test := range map[string]struct {
+		changes map[string]*string
+		quoted  bool
+	}{
+		"changed": {map[string]*string{".markitect/execution.yaml": text("changed\n")}, true},
+		"deleted": {map[string]*string{".markitect/execution.yaml": nil}, true},
+		"added":   {map[string]*string{".markitect/model/new.yaml": text("id: x\n")}, false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			findings := candidates.Account(change(t, start, test.changes))
+			if len(findings) != 1 {
+				t.Fatalf("findings %v", summary(findings))
+			}
+			if got := strings.Contains(findings[0].Message, "BEGIN\n"+string(execution.Bytes())+"\nEND"); got != test.quoted {
+				t.Fatalf("original quoted = %v, want %v: %q", got, test.quoted, findings[0].Message)
+			}
+		})
+	}
+	large := make([]byte, 8<<10+1)
+	for i := range large {
+		large[i] = 'a'
+	}
+	binary := []byte{0xff, 0xfe}
+	for name, content := range map[string][]byte{"too large": large, "not UTF-8": binary} {
+		entry, err := snapshot.NewEntry(path(t, "x"), snapshot.Regular, content)
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := apply.OriginalText(entry, "input.changed")
+		if strings.Contains(got, "BEGIN") || !strings.Contains(got, entry.ContentID().String()) || !strings.Contains(got, strconv.Itoa(len(content))) {
+			t.Errorf("%s: want size and SHA-256 only, got %q", name, got)
+		}
+	}
+	entry, _ := snapshot.NewEntry(path(t, "x"), snapshot.Regular, large[:8<<10])
+	if got := apply.OriginalText(entry, "input.deleted"); !strings.Contains(got, "BEGIN") {
+		t.Errorf("an input of exactly 8 KiB must be quoted, got a digest")
+	}
+}
+
 func TestCandidatesWithoutLayoutKeepShardOwnership(t *testing.T) {
 	selection, raw := fileCheckInputs(t)
 	attempt := preparedAttempt(t, selection, raw)
@@ -340,8 +383,14 @@ func TestCandidatesWithoutLayoutKeepShardOwnership(t *testing.T) {
 		t.Fatalf("registration in own shard refused: %v", summary(findings))
 	}
 	unregistered := change(t, start, map[string]*string{"realization/extra.go": text("package x\n")})
-	if got, want := summary(candidates.Account(unregistered)), []string{". file.unexplained realization/extra.go"}; !reflect.DeepEqual(got, want) {
+	findings := candidates.Account(unregistered)
+	if got, want := summary(findings), []string{". file.unexplained realization/extra.go"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("findings %q, want %q", got, want)
+	}
+	// Root is the addressee but not the owner: the creator registers in its own shard.
+	message := findings[0].Message
+	if strings.Contains(message, "its owner") || !strings.Contains(message, "created this file registers it in its own registry shard") || !strings.Contains(message, "asks its children") {
+		t.Fatalf("undeclared message invites an ownership transfer: %q", message)
 	}
 }
 

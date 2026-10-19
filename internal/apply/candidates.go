@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
@@ -241,7 +242,7 @@ func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 		default:
 			return
 		}
-		findings = append(findings, CandidateFinding{Owner: c.OwnerOf(path), Code: code, Path: path.String(), Message: "The canonical or Markitect control input was " + what + "; Managers cannot change the model or project controls. Restore it, and ask the owner through Root if the intent must change."})
+		findings = append(findings, CandidateFinding{Owner: c.OwnerOf(path), Code: code, Path: path.String(), Message: "The canonical or Markitect control input was " + what + "; Managers cannot change the model or project controls. Restore it, and ask the owner through Root if the intent must change." + originalText(before, code)})
 	}
 	for _, before := range c.start.Entries() {
 		after, found := tree.Lookup(before.Path())
@@ -253,6 +254,24 @@ func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 		}
 	}
 	return findings
+}
+
+// maxOriginalText is the largest original protected input a finding quotes.
+const maxOriginalText = 8 << 10
+
+// originalText states the start content of a changed or deleted protected input,
+// so the owner can restore the exact bytes without access to the start stand: the
+// text itself when it is valid UTF-8 of at most maxOriginalText bytes, else its
+// SHA-256 and size.
+func originalText(before snapshot.Entry, code string) string {
+	if code == "input.added" {
+		return ""
+	}
+	content := before.Bytes()
+	if len(content) <= maxOriginalText && utf8.Valid(content) {
+		return fmt.Sprintf(" Original content, exactly %d bytes, between the BEGIN and END lines (the line breaks around it are not part of it):\nBEGIN\n%s\nEND", len(content), content)
+	}
+	return fmt.Sprintf(" The original content is %d bytes with SHA-256 %s.", len(content), before.ContentID())
 }
 
 // findingOwner names the Manager that must fix an accounting finding: the
@@ -275,6 +294,11 @@ func (c Candidates) findingMessage(finding realization.Finding) string {
 		return finding.Message
 	}
 	owner := c.OwnerOf(finding.Path)
+	if !c.layout.Declared() && owner == organization.Root {
+		// No declared layout: nothing says who made the file, and Root owns only what
+		// it registers itself. Root coordinates and finds the creator through its children.
+		return finding.Message + " The Manager that created this file registers it in its own registry shard (" + registryDirectory + "<package>/registry.yaml, or " + c.Shard(organization.Root) + " for a shared file); Root asks its children who created it and does not take the file over."
+	}
 	return fmt.Sprintf("%s Register it in the shard of its owner %q: %s.", finding.Message, owner, c.Shard(owner))
 }
 

@@ -4,9 +4,11 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -41,8 +43,9 @@ type ReconcileRequest struct {
 }
 
 // ReconcileResult reports the run and, for a verified candidate, its
-// publication. RetainedWork names the shared work volume that was kept because
-// the run did not verify; it holds the incomplete work for inspection.
+// publication. RetainedWork names the shared work volume that was kept: the run
+// did not verify, or the verified candidate was not published; it holds the
+// work for inspection and a repeated publication.
 type ReconcileResult struct {
 	Outcome      run.Outcome
 	Receipt      *PublicationReceipt
@@ -58,22 +61,30 @@ func Reconcile(ctx context.Context, req ReconcileRequest) (ReconcileResult, erro
 		return ReconcileResult{}, err
 	}
 	outcome, runErr := run.Reconcile(ctx, cfg)
+	return conclude(ctx, req, cfg.Start, outcome, runErr)
+}
+
+// conclude publishes a verified outcome and cleans up. The turns' homes are of
+// no later use. The shared work volume is closed only once the verified
+// candidate is published (applied or no change); after a run that did not
+// verify, or any other receipt or a publication error, it is kept and reported.
+func conclude(ctx context.Context, req ReconcileRequest, start snapshot.Tree, outcome run.Outcome, runErr error) (ReconcileResult, error) {
 	result := ReconcileResult{Outcome: outcome}
-	// The turns' homes are of no later use; the shared work volume of a run that
-	// did not verify is kept for inspection.
 	cleanup := context.WithoutCancel(ctx)
 	for _, home := range outcome.Homes {
 		closeVolume(cleanup, req, home)
 	}
-	if outcome.Status != run.Verified {
+	if outcome.Status != run.Verified || runErr != nil {
 		result.RetainedWork = retainedWork(cleanup, req)
 		return result, runErr
 	}
-	if runErr != nil {
-		return result, runErr
-	}
-	receipt, err := publish(ctx, req, snapshot.Compare(cfg.Start, outcome.Candidate))
+	receipt, err := publish(ctx, req, snapshot.Compare(start, outcome.Candidate))
 	result.Receipt = receipt
+	if err == nil && receipt != nil && (receipt.Outcome == PublicationApplied || receipt.Outcome == PublicationNoChange) {
+		closeVolume(cleanup, req, req.workVolume())
+	} else {
+		result.RetainedWork = retainedWork(cleanup, req)
+	}
 	return result, err
 }
 
@@ -105,6 +116,8 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 	}
 	var checks []run.Check
 	var briefChecks []briefCheck
+	var requiredIDs []model.Identity
+	requiredChecks := make(map[model.Identity][]string)
 	for _, check := range selected {
 		request, err := req.CheckRequest(check)
 		if err != nil {
@@ -114,9 +127,22 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		requiredBy := ""
 		if declaration.RequiredBy != nil {
 			requiredBy = identityText(declaration.RequiredBy.Value)
+			id := declaration.RequiredBy.Value
+			if _, seen := requiredChecks[id]; !seen {
+				requiredIDs = append(requiredIDs, id)
+			}
+			requiredChecks[id] = append(requiredChecks[id], declaration.ID.Value)
 		}
 		checks = append(checks, run.Check{Name: declaration.ID.Value, RequiredBy: requiredBy, Owner: organization.Root, Request: request})
 		briefChecks = append(briefChecks, briefCheck{Name: declaration.ID.Value, Command: strings.Join(append([]string{request.Executable}, request.Args...), " "), Directory: request.Directory.String(), RequiredBy: requiredBy})
+	}
+	var required []requiredDefinition
+	for _, id := range requiredIDs {
+		definition, found := compiledDefinition(prepared.Structural().Model().compiled, id)
+		if !found {
+			return run.Config{}, fmt.Errorf("check %q is required by %s, which the compiled model does not define", requiredChecks[id][0], identityText(id))
+		}
+		required = append(required, requiredDefinition{Definition: definition, Checks: requiredChecks[id]})
 	}
 	var team []run.Manager
 	for _, manager := range topology.Managers() {
@@ -130,13 +156,17 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 				selection = candidate
 			}
 		}
+		var manageRequired []requiredDefinition
+		if !slices.ContainsFunc(selection.Definitions(), func(d organization.ContextDefinition) bool { return d.Definition.Identity.Package == manager.Package }) {
+			manageRequired = required
+		}
 		member := run.Manager{
 			Path: manager.Package, Parent: manager.Parent, Children: manager.Children,
 			Role:           managerRole(manager, selection),
 			ExecuteProfile: managerSettings.Execute.Profile.Value.Name,
 			VerifyProfile:  managerSettings.Verify.Profile.Value.Name,
 			Brief: renderBrief(briefInput{Manager: manager, Selection: selection, Settings: managerSettings,
-				Areas: candidates.Areas(manager.Package), Shard: candidates.Shard(manager.Package), Checks: briefChecks}),
+				Areas: candidates.Areas(manager.Package), Shard: candidates.Shard(manager.Package), Checks: briefChecks, Required: manageRequired}),
 		}
 		team = append(team, member)
 	}
@@ -154,6 +184,18 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Owner: req.Owner, Evidence: req.Evidence, Clock: req.Clock,
 	}
 	return cfg, nil
+}
+
+// compiledDefinition returns the exact compiled Definition of an identity.
+func compiledDefinition(compiled model.Result, id model.Identity) (model.Definition, bool) {
+	for _, owner := range compiled.Models {
+		for _, definition := range owner.Definitions {
+			if definition.Identity == id {
+				return definition, true
+			}
+		}
+	}
+	return model.Definition{}, false
 }
 
 // accountFindings maps structural candidate findings to blocking run findings
@@ -198,6 +240,8 @@ func (r ReconcileRequest) now() time.Time {
 	return r.Clock()
 }
 
+func (r ReconcileRequest) workVolume() string { return r.RunID + "-work" }
+
 func closeVolume(ctx context.Context, req ReconcileRequest, volume string) {
 	observation, err := req.Workspaces.Close(ctx, run.WorkspaceID(volume))
 	data := map[string]any{"workspace": volume, "closed": observation.Closed, "uncertain": observation.Uncertain}
@@ -208,10 +252,10 @@ func closeVolume(ctx context.Context, req ReconcileRequest, volume string) {
 }
 
 // retainedWork returns the name of the run's shared work volume when it still
-// exists, so the incomplete work can be inspected. The run closes it itself when
-// it ended before the volume held anything.
+// exists, so the work can be inspected or published again. The run closes it
+// itself when it ended before the volume held anything.
 func retainedWork(ctx context.Context, req ReconcileRequest) string {
-	id := run.WorkspaceID(req.RunID + "-work")
+	id := run.WorkspaceID(req.workVolume())
 	probe, cancel := context.WithTimeout(ctx, time.Minute)
 	defer cancel()
 	if _, err := req.Workspaces.Peek(probe, run.HarvestRequest{ID: id, MaxEntries: req.MaxEntries, MaxBytes: req.MaxBytes}); err != nil {

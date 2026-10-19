@@ -139,6 +139,7 @@ func TestLayoutRefusals(t *testing.T) {
 		"exception differs by case":   {roots: []string{"realization"}, exceptions: []realization.LayoutException{exception(t, "Realization/cmd", root)}},
 		"exceptions differ by case":   {exceptions: []realization.LayoutException{exception(t, "a/Cmd", root), exception(t, "a/cmd", root)}},
 		"exception vs mirrored dir":   {roots: []string{"realization"}, exceptions: []realization.LayoutException{exception(t, "realization/Lending/x", root)}},
+		"exceptions fold to one key":  {exceptions: []realization.LayoutException{exception(t, "a/Straße", root), exception(t, "a/STRASSE", root)}},
 		"exception differs in prefix": {roots: []string{"realization"}, exceptions: []realization.LayoutException{exception(t, "realization/LENDING", owner(t, "library"))}},
 	} {
 		t.Run(name, func(t *testing.T) {
@@ -238,5 +239,32 @@ func TestLayoutDescribesAreasForPrompts(t *testing.T) {
 	}
 	if got := carved.Describe(owner(t, "library"), files); !reflect.DeepEqual(got, []string{"realization/library/**", "realization/lending/Makefile"}) {
 		t.Errorf("exception file areas = %q", got)
+	}
+}
+
+func TestLayoutDescribesExceptionOnTheMirroredDirectoryForItsOwner(t *testing.T) {
+	layout, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{exception(t, "realization/lending", owner(t, "library"))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	tree := fileTree(t, "realization/lending/x.go")
+	if got := ownerName(layout.OwnerOf(path(t, "realization/lending/x.go"))); got != "library" {
+		t.Fatalf("owner of the mirrored directory's file = %q, want library", got)
+	}
+	for who, want := range map[string][]string{
+		"lending": nil,
+		"library": {"realization/library/**", "realization/lending/** except realization/lending/reminders/**"},
+	} {
+		if got := layout.Describe(owner(t, who), tree); !reflect.DeepEqual(got, want) {
+			t.Errorf("areas of %s = %q, want %q", who, got, want)
+		}
+	}
+	// An exception on its own mirrored directory is described once.
+	same, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{exception(t, "realization/lending", owner(t, "lending"))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, want := same.Describe(owner(t, "lending"), tree), []string{"realization/lending/** except realization/lending/reminders/**"}; !reflect.DeepEqual(got, want) {
+		t.Errorf("areas = %q, want %q", got, want)
 	}
 }
