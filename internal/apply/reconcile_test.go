@@ -339,3 +339,56 @@ func TestReconcileClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
 		})
 	}
 }
+
+func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
+	req, _ := layoutRequest(t)
+	cfg, err := apply.BuildReconcileConfig(req, time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC))
+	if err != nil {
+		t.Fatal(err)
+	}
+	team := map[string]run.Manager{}
+	for _, m := range cfg.Team {
+		team[m.Path] = m
+		if wantBuilding := m.Path == "catalog" || m.Path == "members"; !m.Write.Enforced || m.Building != wantBuilding {
+			t.Errorf("%s: write plan %+v building %v (only catalog and members hold no artifact)", m.Path, m.Write, m.Building)
+		}
+		if !strings.Contains(m.Brief, "Only these areas and your registry shard are writable in /work; everything else is read-only.") {
+			t.Errorf("%s brief lacks the write statement:\n%s", m.Path, m.Brief)
+		}
+	}
+	if !team["."].Write.Base || team["lending"].Write.Base {
+		t.Fatalf("write bases: root %+v lending %+v", team["."].Write, team["lending"].Write)
+	}
+	const children = "Your children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations."
+	const own = "Your own Definitions are yours to realize in your area. Your parent coordinates; it cannot take them over or waive them."
+	for manager, wantChildren := range map[string][]string{
+		".":                 {"- lending\n  areas: realization/lending/** except realization/lending/reminders/**\n  Definition lending/", "- library\n  areas: realization/library/**; realization/cmd/library/**\n  Definition library/"},
+		"lending":           {"- lending/reminders\n  areas: realization/lending/reminders/**\n  Definition lending/reminders/assess-overdue: "},
+		"library":           nil,
+		"lending/reminders": nil,
+	} {
+		brief := team[manager].Brief
+		if has := strings.Contains(brief, children); has != (wantChildren != nil) {
+			t.Errorf("%s: children statement present = %v", manager, has)
+		}
+		for _, want := range wantChildren {
+			if !strings.Contains(brief, want) {
+				t.Errorf("%s brief lacks %q:\n%s", manager, want, brief)
+			}
+		}
+		if has := strings.Contains(brief, own); has != (manager != ".") {
+			t.Errorf("%s: own-Definitions statement present = %v", manager, has)
+		}
+	}
+	root := team["."].Brief
+	if !strings.Contains(root, "files directly in realization/ such as realization/go.mod") ||
+		!strings.Contains(root, "(owned by library)") || !strings.Contains(root, "required by check project-tests; realized by library, integrated and verified by you") {
+		t.Errorf("Root brief:\n%s", root)
+	}
+	if strings.Contains(team["lending"].Brief, "integrated and verified by you") {
+		t.Errorf("only Root integrates the checks' Definitions:\n%s", team["lending"].Brief)
+	}
+	if !strings.Contains(team["lending/reminders"].Brief, "(owned by lending)") {
+		t.Errorf("an included Definition does not show its owner:\n%s", team["lending/reminders"].Brief)
+	}
+}
