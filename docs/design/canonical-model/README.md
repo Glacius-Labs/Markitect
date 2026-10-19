@@ -34,7 +34,7 @@ Read in this order:
 | [Implemented runtime contract](manager-apply-runtime.md) | The implemented technical contract: team, ownership, accounting, Reconcile cycle, Host tools, ports, configuration, evidence, publication and limits. |
 | [Core protocol](manager-apply-core.md) | Steps, the Manager task machine, Orchestrator tools, messages, issues, deliveries and composition, by rule ID. |
 | [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
-| [Extract workflow](commands.md#extract-the-existing-stand) | Case 3: derive a provisional structure from existing artifacts, form Managers, develop and integrate the model with owner clarification and read-only Verify; accepted design, not an implemented Extract runtime. |
+| [Extract workflow](commands.md#extract-the-existing-stand) | Case 3: derive provisional Managers from artifacts, develop and integrate the model with owner clarification and read-only Verify; [structure changes between stable rounds](commands.md#keep-the-structure-stable-within-each-extract-round) retain knowledge, references and open questions. Accepted design, not an implemented Extract runtime. |
 | [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
 | [Port contracts](manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |
 | [Configuration](manager-apply-configuration.md) | Execution inputs, override resolution, Orchestrator profiles, identities, mandates and questions. |
