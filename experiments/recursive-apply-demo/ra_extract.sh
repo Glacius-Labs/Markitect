@@ -17,7 +17,7 @@ T0=$(date +%s)
 echo "start_utc=$(date -u -d @$T0 +%FT%TZ) epoch=$T0" > "$ATTEMPT/timing.txt"
 bash "$ATTEMPT/frozen/ra_extract_project.sh" "$SOURCE" "$SRC" "$REPO" > "$ATTEMPT/out/baseline.txt" 2>&1 || exit 3
 DEADLINE=$(date -u -d @$((T0 + 1560)) +%FT%TZ)
-python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" x1 "$SHA" "$DEADLINE" > /dev/null
+python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" x1 "$SHA" "$DEADLINE" "Extract the model of the existing library artifacts." > /dev/null
 mark extract_start
 timeout --kill-after=45 1650 "$ATTEMPT/markitect" extract --repo "$REPO" \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
@@ -34,7 +34,7 @@ git -c user.name="Markitect demo owner" -c user.email="demo@markitect.invalid" a
 git -c user.name="Markitect demo owner" -c user.email="demo@markitect.invalid" commit --quiet -m "Adopt the extracted model candidate (scripted for evaluation)"
 echo "adopted_commit=$(git rev-parse HEAD)" >> "$ATTEMPT/timing.txt"
 cd - > /dev/null
-python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" r1 "$SHA" "$(date -u -d '+21 minutes' +%FT%TZ)" > /dev/null
+python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" r1 "$SHA" "$(date -u -d '+21 minutes' +%FT%TZ)" "Apply the committed Library model." > /dev/null
 mark roundtrip_start
 timeout --kill-after=45 1500 "$ATTEMPT/markitect" apply --repo "$REPO" --model .markitect/model.yaml \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \

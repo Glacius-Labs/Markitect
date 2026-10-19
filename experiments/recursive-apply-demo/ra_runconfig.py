@@ -1,17 +1,27 @@
-"""Write one Apply's run configuration. Usage: ra_runconfig.py ATTEMPT LABEL SHA DEADLINE_RFC3339"""
+"""Write one run configuration. Usage: ra_runconfig.py ATTEMPT LABEL SHA DEADLINE_RFC3339 [OWNER_REQUEST]
+
+Without OWNER_REQUEST the run applies the committed Library model with the bound
+owner decisions of the demonstration. With it the run gets that request and no
+owner decisions: Extract and its round trip must not see decisions that name
+the original model's Definitions."""
 import json
 import sys
 from pathlib import Path
 
 attempt, label, sha, deadline = Path(sys.argv[1]), sys.argv[2], sys.argv[3], sys.argv[4]
+if len(sys.argv) > 5:
+    request, decisions = sys.argv[5], []
+else:
+    request = "Apply the committed Library model."
+    decisions = json.loads((attempt / "frozen" / "owner-decisions.json").read_text())
 runtime = next(line.split(" ", 1)[0] for line in (attempt / "binding.txt").read_text().splitlines() if line.startswith("runtime_image="))
 runtime = runtime.split("=", 1)[1]
 config = {
     "formatVersion": 2,
     "repositoryIdentity": "ra-library-" + attempt.name,
     "productBuild": sha,
-    "ownerRequest": "Apply the committed Library model.",
-    "ownerDecisions": json.loads((attempt / "frozen" / "owner-decisions.json").read_text()),
+    "ownerRequest": request,
+    "ownerDecisions": decisions,
     "stateDirectory": str(attempt / ("state-" + label)),
     "deadline": deadline,
     "engineExecutable": "/usr/bin/docker",
