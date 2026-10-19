@@ -92,8 +92,9 @@ Only a Verified outcome is published, as the exact verified candidate against th
 
 | Enforced by the code | Trusted |
 | --- | --- |
-| Complete accounting of start stand and every candidate; protected inputs unchanged. | Managers write only their own area. |
-| Registration only in the owner's shard. | Managers create and change files only in their own area. |
+| Complete accounting of start stand and every candidate; protected inputs unchanged. | Without a declared layout: Managers write only their own area. |
+| Registration only in the owner's shard; under a layout, a file in an unmapped root subdirectory has no owner and blocks. | Files directly in an artifact root and file exceptions, which mounts cannot cover: only their owner writes them. |
+| Under a layout, each Execute turn's container can write only its own areas and registry shard; protected inputs and other areas are read-only mounts. | A parent supplies foundations and coordinates rather than realizing its children's Definitions in its own area. |
 | Quiescence observed by the container runtime before capture; verify only on an immutable read-only candidate; required checks on the same candidate. | Verify assessments and the Managers' judgment of obligations. |
 | Parent/child-only `send`, Root-only `owner`. | The model and the human own intent; Managers do not change it. |
 | Nothing publishes unless Verified, with evidence recorded. | |
