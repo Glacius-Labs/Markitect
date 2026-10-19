@@ -16,10 +16,8 @@ func defaultsExplicitExecution(t *testing.T) string {
 	t.Helper()
 	content := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
 	for _, edit := range [][2]string{
-		{"  rejectionLimit: 3", "  rejectionLimit: 2"},
-		{"  profiles:", "  instructions: {manager: [one.md, two.md, one.md], reviewer: []}\n  profiles:"},
-		{"packages:\n  lending:\n    stepTimeout: 8m", "packages:\n  lending:\n    profiles: {manager: unobserved-profile}\n    instructions: {manager: [third.md, one.md]}\n    stepTimeout: 8m\n    rejectionLimit: 3\n    creationRoots: [realization/lending]\n  '.':\n    stepTimeout: 9m\n  lending/reminders: {}"},
-		{"ownerApproval: []", "ownerApproval: [lending/reminders, ., lending]"},
+		{"profiles:\n  execute", "instructions: {execute: [one.md, two.md, one.md], verify: []}\nprofiles:\n  execute"},
+		{"packages:\n  lending:\n    profiles: {verify: library-agent}", "packages:\n  lending:\n    profiles: {execute: unobserved-profile}\n    instructions: {execute: [third.md, one.md]}\n  '.':\n    profiles: {verify: other-profile}\n  lending/reminders: {}"},
 	} {
 		if strings.Count(content, edit[0]) != 1 {
 			t.Fatal("explicit declaration fixture marker changed")
@@ -29,22 +27,22 @@ func defaultsExplicitExecution(t *testing.T) string {
 	return content
 }
 
-func TestDefaultsExplicitFalseEmptyListsAndExactOverridesKeepAuthoredSources(t *testing.T) {
+func TestDefaultsExplicitEmptyListsAndExactOverridesKeepAuthoredSources(t *testing.T) {
 	parent := executionResult(t, defaultsExplicitExecution(t))
 	before, _ := parent.Document()
 	prepared := parent.PrepareDefaults(apply.ProductStrategyDefaults())
 	values, ok := prepared.Declarations()
-	if !ok || prepared.Status() != model.Passed || values.Defaults.RejectionLimit != *before.Defaults.RejectionLimit || values.Defaults.BatchNoChangeReviews != *before.Defaults.BatchNoChangeReviews || !reflect.DeepEqual(values.Defaults.Reviewer.Instructions, *before.Defaults.Reviewer.Instructions) || !reflect.DeepEqual(values.OwnerApproval, *before.OwnerApproval) {
-		t.Fatalf("explicit false/empty/value declarations were replaced: %+v", prepared.Diagnostics())
+	if !ok || prepared.Status() != model.Passed || !reflect.DeepEqual(values.Defaults.Verify.Instructions, *before.Defaults.Verify.Instructions) {
+		t.Fatalf("explicit empty declarations were replaced: %+v", prepared.Diagnostics())
 	}
-	if values.Defaults.BatchNoChangeReviews.Value || values.Defaults.Reviewer.Instructions.Source.File != ".markitect/execution.yaml" || values.Defaults.Reviewer.Instructions.Source.Field != "/defaults/instructions/reviewer" || !reflect.DeepEqual(values.Defaults.Manager.Instructions.Value, []string{"one.md", "two.md", "one.md"}) {
+	if values.Defaults.Verify.Instructions.Source.File != ".markitect/execution.yaml" || values.Defaults.Verify.Instructions.Source.Field != "/instructions/verify" || !reflect.DeepEqual(values.Defaults.Execute.Instructions.Value, []string{"one.md", "two.md", "one.md"}) {
 		t.Fatal("explicit empty/repeated instructions lost their actual source")
 	}
-	if !reflect.DeepEqual(values.Overrides, before.Packages.Value) || len(values.Overrides) != 3 || values.Overrides[2].Package != "lending/reminders" || values.Overrides[2].StepTimeout != nil || values.Overrides[2].RejectionLimit != nil || values.Overrides[2].Manager.Profile != nil {
+	if !reflect.DeepEqual(values.Overrides, before.Packages.Value) || len(values.Overrides) != 3 || values.Overrides[2].Package != "lending/reminders" || values.Overrides[2].Execute.Profile != nil || values.Overrides[2].Verify.Profile != nil {
 		t.Fatal("exact override was changed or acquired ancestor declarations")
 	}
-	if values.Defaults.RejectionLimit.Value != 2 || values.Overrides[0].RejectionLimit.Value != 3 || values.Overrides[0].Manager.Profile.Value != "unobserved-profile" || len(parent.Model().Inputs().Raw.HostProfiles) != 0 || len(parent.Model().Inputs().Raw.Instructions) != 0 {
-		t.Fatal("project defaults became ceilings, or declarative names invented resolved profile/instruction facts")
+	if values.Overrides[0].Execute.Profile.Value != "unobserved-profile" || len(parent.Model().Inputs().Raw.HostProfiles) != 0 || len(parent.Model().Inputs().Raw.Instructions) != 0 {
+		t.Fatal("declarative names invented resolved profile/instruction facts")
 	}
 	if !reflect.DeepEqual(prepared.Execution().Partial(), before) {
 		t.Fatal("authored execution changed during default application")
@@ -95,19 +93,15 @@ func TestDefaultsOwnEveryInputDeclarationAndDiagnosticCopy(t *testing.T) {
 	returned := prepared.ProductInput()
 	returned.Bytes[0] ^= 1
 	changed, _ := prepared.Declarations()
-	changed.Defaults.Manager.Instructions.Value[0] = "changed.md"
-	changed.Defaults.CreationRoots.Value[0] = snapshot.RootDirectory()
-	changed.Ceilings.CreationRoots.Value[0] = snapshot.RootDirectory()
-	changed.Overrides[0].Manager.Profile.Value = "changed-profile"
-	changed.Overrides[0].Manager.Instructions.Value[0] = "changed-override.md"
-	changed.Overrides[0].CreationRoots.Value[0] = snapshot.RootDirectory()
-	changed.OwnerApproval.Value[0] = "changed-package"
+	changed.Defaults.Execute.Instructions.Value[0] = "changed.md"
+	changed.Overrides[0].Execute.Profile.Value = "changed-profile"
+	changed.Overrides[0].Execute.Instructions.Value[0] = "changed-override.md"
 	after, _ := prepared.Declarations()
 	if !reflect.DeepEqual(after, before) || string(prepared.ProductInput().Bytes) != original || prepared.ProductSource().ContentID != snapshot.ContentID(sha256.Sum256([]byte(original))) || !reflect.DeepEqual(prepared.Execution(), parent) {
 		t.Fatal("returned/input declaration data aliases the bound preparation")
 	}
 	invalid := apply.ProductStrategyDefaults()
-	invalid.Bytes = []byte(strings.Replace(string(invalid.Bytes), "rejectionLimit: 3", "rejectionLimit: null", 1))
+	invalid.Bytes = []byte(strings.Replace(string(invalid.Bytes), "execute: []", "execute: null", 1))
 	refused := parent.PrepareDefaults(invalid)
 	diagnostics := refused.Diagnostics()
 	originalDiagnostics := refused.Diagnostics()

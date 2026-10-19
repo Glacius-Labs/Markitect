@@ -1,10 +1,6 @@
 apiVersion: markitect.strategy-defaults/v1
-strategy: recursive-apply-v1
+strategy: shared-workspace-v1
 defaults:
-  rejectionLimit: 3
   instructions:
-    manager: []
-    reviewer: []
-  batchNoChangeReviews: false
-acceptance:
-  ownerApproval: []
+    execute: []
+    verify: []

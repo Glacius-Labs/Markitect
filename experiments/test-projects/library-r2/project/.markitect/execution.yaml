@@ -1,37 +1,14 @@
 apiVersion: markitect.execution/v1
-strategy: recursive-apply-v1
-limits:
-  maxRuns: 5
-  maxSessionStarts: 160
-  maxSteps: 320
-  maxExecutionTime: 16h
-  maxStepTimeout: 10m
-  hostOperationTimeout: 2m
-  maxRejectionLimit: 3
-  maxContextBytes: 400000
-  maxSessionSteps: 40
-  maxTransientRetries: 2
-  creationRoots: [realization]
-assignment:
-  runs: 3
-  sessionStarts: 80
-  steps: 160
+strategy: shared-workspace-v1
+budget:
   executionTime: 8h
-completionReserve:
-  sessionStarts: 24
-  steps: 40
-  executionTime: 2h
-defaults:
-  profiles:
-    manager: library-agent
-    reviewer: library-agent
-  rejectionLimit: 3
-  batchNoChangeReviews: false
-  stepTimeout: 10m
-  creationRoots: [realization]
-packages:
-  lending:
-    stepTimeout: 8m
+  turnTimeout: 10m
+  agentTurns: 160
+  rounds: 4
+profiles:
+  execute: library-agent
+  verify: library-agent
+packages: {}
 checks:
   - id: project-tests
     profile: library-tests
@@ -39,5 +16,3 @@ checks:
     args: [test, ./...]
     requiredBy: library/callable-interface
     timeout: 2m
-acceptance:
-  ownerApproval: []

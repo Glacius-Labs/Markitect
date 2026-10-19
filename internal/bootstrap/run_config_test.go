@@ -17,14 +17,11 @@ func runConfigFixture(t *testing.T) map[string]any {
 	t.Helper()
 	dir := testkit.TempDir(t)
 	return map[string]any{
-		"formatVersion": 1, "repositoryIdentity": "source-test-repository", "productBuild": "explicit-frozen-source-test-build", "ownerRequest": "Apply the current model.",
+		"formatVersion": 2, "repositoryIdentity": "source-test-repository", "productBuild": "explicit-frozen-source-test-build", "ownerRequest": "Apply the current model.",
 		"stateDirectory": filepath.Join(dir, "state"), "engineExecutable": filepath.Join(dir, "engine-not-read-during-parsing"),
-		"allocation":      map[string]any{"runs": 10, "sessionStarts": 1000, "steps": 2000, "executionTime": int64(time.Hour)},
-		"restoreLimits":   map[string]any{"pageSize": 256, "batches": 100000, "events": 1000000, "bytes": 256 << 20},
+		"harvest":         map[string]any{"maxEntries": 100000, "maxBytes": 64 << 20},
 		"workspaceHelper": map[string]any{"name": "source-test-helper", "image": "sha256:" + strings.Repeat("a", 64), "labels": map[string]any{"markitect.store": "explicit-source-test-store"}, "user": "1000:1000", "cpus": 1.5, "memoryBytes": 128 << 20, "pids": 32, "tmpBytes": 16 << 20, "network": ""},
-		"engineLimits": map[string]any{"startTimeout": int64(time.Second), "stopTimeout": int64(time.Second), "harvestEntries": 100000, "harvestBytes": 64 << 20,
-			"record": map[string]any{"encodedBytes": 16 << 20, "fileBytes": 16 << 20, "manifestEntries": 100000, "metadataRows": 100000}},
-		"credentials": map[string]any{"dedicated": map[string]any{"provider": "codex-app-server", "mode": "api-key", "path": filepath.Join(dir, "dedicated-credential-not-read")}},
+		"credentials":     map[string]any{"dedicated": map[string]any{"provider": "codex-app-server", "mode": "api-key", "path": filepath.Join(dir, "dedicated-credential-not-read")}},
 	}
 }
 
@@ -40,7 +37,7 @@ func configBytes(t *testing.T, document map[string]any) []byte {
 func TestRunConfigIsExplicitAndDoesNotReadReferencedCredentials(t *testing.T) {
 	document := runConfigFixture(t)
 	cfg, err := decodeRunConfig(configBytes(t, document))
-	if err != nil || cfg.ProductBuild != "explicit-frozen-source-test-build" || cfg.Allocation.ExecutionTime != time.Hour || cfg.WorkspaceHelper.Network != "" || cfg.WorkspaceHelper.Mounts != nil {
+	if err != nil || cfg.ProductBuild != "explicit-frozen-source-test-build" || cfg.Harvest != (harvestLimits{MaxEntries: 100000, MaxBytes: 64 << 20}) || cfg.WorkspaceHelper.Network != "" || cfg.WorkspaceHelper.Mounts != nil {
 		t.Fatalf("explicit producer values were not retained: %v", err)
 	}
 	// None of the referenced engine, state or credential paths exists. Only
@@ -71,6 +68,28 @@ func TestRunConfigRetainsOptionalOwnerDecisions(t *testing.T) {
 	}
 }
 
+func TestRunConfigDeadlineIsOptionalAbsoluteUTC(t *testing.T) {
+	document := runConfigFixture(t)
+	if cfg, err := decodeRunConfig(configBytes(t, document)); err != nil || !cfg.deadline().IsZero() {
+		t.Fatal("a run config without a deadline changed", err)
+	}
+	document["deadline"] = "2026-10-19T18:30:00Z"
+	cfg, err := decodeRunConfig(configBytes(t, document))
+	if err != nil || !cfg.deadline().Equal(time.Date(2026, 10, 19, 18, 30, 0, 0, time.UTC)) {
+		t.Fatal("the deadline was not retained", err)
+	}
+	for _, bad := range []any{"", "tomorrow", "2026-10-19", "2026-10-19T18:30:00", "2026-10-19T20:30:00+02:00", "2026-10-19T18:30:00+00:00", "0001-01-01T00:00:00Z", 1792434600} {
+		document["deadline"] = bad
+		if _, err := decodeRunConfig(configBytes(t, document)); !errors.Is(err, errRunConfig) {
+			t.Errorf("deadline %v accepted", bad)
+		}
+	}
+	document["deadline"] = nil
+	if _, err := decodeRunConfig(configBytes(t, document)); !errors.Is(err, errRunConfig) {
+		t.Error("null deadline accepted")
+	}
+}
+
 func TestRunConfigRefusesImplicitOrUnknownValues(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
@@ -78,18 +97,21 @@ func TestRunConfigRefusesImplicitOrUnknownValues(t *testing.T) {
 	}{
 		{"missing product assertion", func(m map[string]any) { delete(m, "productBuild") }},
 		{"empty product assertion", func(m map[string]any) { m["productBuild"] = "" }},
-		{"unknown version", func(m map[string]any) { m["formatVersion"] = 2 }},
+		{"old version", func(m map[string]any) { m["formatVersion"] = 1 }},
+		{"old allocation section", func(m map[string]any) { m["allocation"] = map[string]any{"runs": 1} }},
+		{"old restore limits", func(m map[string]any) { m["restoreLimits"] = map[string]any{"pageSize": 1} }},
+		{"old engine limits", func(m map[string]any) { m["engineLimits"] = map[string]any{"startTimeout": 1} }},
 		{"unknown field", func(m map[string]any) { m["fake-secret-must-not-leak"] = "secret" }},
 		{"relative state", func(m map[string]any) { m["stateDirectory"] = "state" }},
 		{"implicit network", func(m map[string]any) { delete(m["workspaceHelper"].(map[string]any), "network") }},
 		{"null network", func(m map[string]any) { m["workspaceHelper"].(map[string]any)["network"] = nil }},
 		{"mount injection", func(m map[string]any) { m["workspaceHelper"].(map[string]any)["mounts"] = []any{} }},
-		{"unbounded time", func(m map[string]any) { m["allocation"].(map[string]any)["executionTime"] = 0 }},
-		{"duration text", func(m map[string]any) { m["engineLimits"].(map[string]any)["startTimeout"] = "1s" }},
-		{"missing record limit", func(m map[string]any) {
-			delete(m["engineLimits"].(map[string]any)["record"].(map[string]any), "metadataRows")
-		}},
-		{"unknown record limit", func(m map[string]any) { m["engineLimits"].(map[string]any)["record"].(map[string]any)["default"] = 1 }},
+		{"missing harvest", func(m map[string]any) { delete(m, "harvest") }},
+		{"missing harvest bound", func(m map[string]any) { delete(m["harvest"].(map[string]any), "maxBytes") }},
+		{"unknown harvest field", func(m map[string]any) { m["harvest"].(map[string]any)["default"] = 1 }},
+		{"zero harvest entries", func(m map[string]any) { m["harvest"].(map[string]any)["maxEntries"] = 0 }},
+		{"unbounded harvest bytes", func(m map[string]any) { m["harvest"].(map[string]any)["maxBytes"] = int64(1) << 40 }},
+		{"text harvest bound", func(m map[string]any) { m["harvest"].(map[string]any)["maxBytes"] = "64MiB" }},
 		{"invalid credential provider", func(m map[string]any) {
 			m["credentials"].(map[string]any)["dedicated"].(map[string]any)["provider"] = "ambient"
 		}},
@@ -106,10 +128,10 @@ func TestRunConfigRefusesImplicitOrUnknownValues(t *testing.T) {
 	}
 	base := string(configBytes(t, runConfigFixture(t)))
 	for _, malformed := range []string{
-		strings.Replace(base, `"formatVersion":1`, `"formatVersion":1,"formatVersion":1`, 1),
-		strings.Replace(base, `"startTimeout":1000000000`, `"startTimeout":1000000000,"startTimeout":1`, 1),
+		strings.Replace(base, `"formatVersion":2`, `"formatVersion":2,"formatVersion":2`, 1),
+		strings.Replace(base, `"maxEntries":100000`, `"maxEntries":100000,"maxEntries":1`, 1),
 		strings.Replace(base, `"mode":"api-key"`, `"mode":"api-key","mode":"api-key"`, 1),
-		strings.Replace(base, `"runs":10`, `"runs":9223372036854775808`, 1),
+		strings.Replace(base, `"maxEntries":100000`, `"maxEntries":9223372036854775808`, 1),
 		base + `{}`, string([]byte{0xff}),
 	} {
 		if _, err := decodeRunConfig([]byte(malformed)); !errors.Is(err, errRunConfig) {

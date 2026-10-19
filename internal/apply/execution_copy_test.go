@@ -11,10 +11,9 @@ import (
 
 func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 	content := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
-	content = strings.Replace(content, "  profiles:\n", "  instructions: {manager: [one.md], reviewer: [two.md]}\n  profiles:\n", 1)
-	content = strings.Replace(content, "    stepTimeout: 8m", "    profiles: {manager: a, reviewer: b}\n    instructions: {manager: [three.md], reviewer: [four.md]}\n    stepTimeout: 8m\n    rejectionLimit: 2\n    creationRoots: [realization/lending]", 1)
-	content = strings.Replace(content, "checks:\n", "scope: [{kind: software/Rule, property: lending/maxOpenLoans}]\nchecks:\n", 1)
-	content = strings.Replace(content, "ownerApproval: []", "ownerApproval: [lending]", 1)
+	content = strings.Replace(content, "profiles:\n  execute", "instructions: {execute: [one.md], verify: [two.md]}\nprofiles:\n  execute", 1)
+	content = strings.Replace(content, "    profiles: {verify: library-agent}", "    profiles: {execute: a, verify: b}\n    instructions: {execute: [three.md], verify: [four.md]}", 1)
+	content = strings.Replace(content, "checks:\n", libraryLayoutYAML+"scope: [{kind: software/Rule, property: lending/maxOpenLoans}]\nchecks:\n", 1)
 	result := executionResult(t, content)
 	original, ok := result.Document()
 	if !ok {
@@ -23,23 +22,18 @@ func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 	// This stage preserves reference selections. Effective scope semantics belong
 	// to organization context selection, not to this decoding observation.
 	changed, _ := result.Document()
-	changed.Limits.CreationRoots.Value[0] = area(t, "other")
-	changed.Defaults.CreationRoots.Value[0] = area(t, "other")
-	changed.Defaults.Manager.Profile.Value = "changed"
-	changed.Defaults.Reviewer.Profile.Value = "changed"
-	changed.Defaults.Manager.Instructions.Value[0] = "changed"
-	changed.Defaults.Reviewer.Instructions.Value[0] = "changed"
-	changed.Defaults.RejectionLimit.Value = 99
-	changed.Defaults.BatchNoChangeReviews.Value = true
+	changed.Defaults.Execute.Profile.Value = "changed"
+	changed.Defaults.Verify.Profile.Value = "changed"
+	changed.Defaults.Execute.Instructions.Value[0] = "changed"
+	changed.Defaults.Verify.Instructions.Value[0] = "changed"
 	p := &changed.Packages.Value[0]
-	p.Manager.Profile.Value, p.Reviewer.Profile.Value = "changed", "changed"
-	p.Manager.Instructions.Value[0], p.Reviewer.Instructions.Value[0] = "changed", "changed"
-	p.StepTimeout.Value, p.RejectionLimit.Value = 99, 99
-	p.CreationRoots.Value[0] = area(t, "other")
+	p.Execute.Profile.Value, p.Verify.Profile.Value = "changed", "changed"
+	p.Execute.Instructions.Value[0], p.Verify.Instructions.Value[0] = "changed", "changed"
+	changed.Layout.Roots.Value[0] = area(t, "other")
+	changed.Layout.Exceptions[0].Owner.Value = "changed"
 	changed.Scope.Value[0].Value.Kind = model.Identity{Package: "other", ID: "other"}
 	changed.Checks.Value[0].Args.Value[0] = "changed"
 	changed.Checks.Value[0].RequiredBy.Value = model.Identity{Package: "other", ID: "other"}
-	changed.OwnerApproval.Value[0] = "changed"
 	if fresh, _ := result.Document(); !reflect.DeepEqual(fresh, original) {
 		t.Fatal("document accessor leaked nested mutable state")
 	}
@@ -57,7 +51,7 @@ func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 }
 
 func TestExecutionPartialDiagnosticsRemainIndependent(t *testing.T) {
-	content := strings.Replace(documentedExecution(t), "maxRuns: 5", "maxRuns: wrong", 1)
+	content := strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: wrong", 1)
 	result := executionResult(t, content)
 	before := result.Diagnostics()
 	changed := result.Diagnostics()
@@ -70,7 +64,7 @@ func TestExecutionPartialDiagnosticsRemainIndependent(t *testing.T) {
 	}
 	partial := result.Partial()
 	partial.Checks.Value[0].Args.Value[0] = "changed"
-	if result.Partial().Checks.Value[0].Args.Value[0] != "test" || result.Partial().Limits.MaxSteps.Value != 320 {
+	if result.Partial().Checks.Value[0].Args.Value[0] != "test" || result.Partial().Budget.Rounds.Value != 4 {
 		t.Fatal("partial known facts mutated or discarded")
 	}
 	var empty apply.CapturedExecutionDecoding

@@ -2,6 +2,8 @@
 
 > **Owner direction, 19 October 2026:** [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) and the [current concept / later Claude handoff](design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026) replace the conflicting sequential/private-workspace and delivery-review process below. This change documents intent only. Existing implementation assignments remain bounded to their sessions; the historical queue below is not a new dispatch or authority to interfere with active writers. Reconcile concrete delivery assignments in the later implementation session.
 
+> **Status, 19 October 2026:** The DEC-056 implementation is delivered on branch `dev/recursive-apply-simplified` (reconciliation engine, layout ownership and candidate accounting, simplified execution settings, real Agent turn adapters, bootstrap wiring, evidence, owner channel and guarded publication) and its [runtime contract](design/canonical-model/manager-apply-runtime.md) replaces the process below. It awaits independent complete-diff review, exact-head hosted CI, actual Main composition and owner acceptance; no real-provider run or two-Apply demonstration has been executed. The sequential task machine, deliveries, reviews, reservations, rejection counters, journal and SQLite adapter were deleted. The pre-DEC-056 text below, including the A1 to A6 queue, the zones table and the implementation sequence, is historical; the next dispatches are review and integration, then the demonstration under the owner's [dispatch bounds](concepts/sources/recursive-apply-implementation-20261019.md#demonstration-bounds).
+
 Date: 16 October 2026. This is the delivery and coordination owner, originally commissioned by the [owner](design/canonical-model/sources/manager-realization-20261016.md#polish-the-concept-and-start-the-coordinated-rebuild). It replaces the old waves, role queues, backlog and local dashboard. Old assignments do not carry execution authority into this rebuild.
 
 ## Target and baseline
@@ -10,7 +12,7 @@ Real Managers realize the small library M1 as A1; independent assessment examine
 
 The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) is the language baseline. The [Apply design map](design/canonical-model/README.md) routes technical contracts. The [acceptance gates](design/canonical-model/manager-apply-implementation-plan.md) and [removal map](design/canonical-model/manager-apply-rebuild-plan.md) are specifications, not separate live backlogs.
 
-Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing CLI/self-model remain executable until a coherent replacement cutover. The new design is not already implemented. Published releases and historical evidence keep their original identity.
+Starting product: Main `bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`. Its existing CLI/self-model remain executable until a coherent replacement cutover. The recursive design is implemented only on the branch named in the status note above. Published releases and historical evidence keep their original identity.
 
 ## Guiding decisions
 
@@ -71,15 +73,7 @@ The architect delivers this queue in order, in one or more pull requests each. T
 | A5 | The core parts of P07 to P09: every Manager of the tree, integration at every parent, messages and questions, aggregate verification and reports, then guarded publication through `markitect apply`. | The two-Apply demonstration |
 | A6 | Cleanup inside the architect's packages: remove the v1/v2 basis replay and `PassThrough`, give errors a reason, and split preparation out of `internal/apply`. | None |
 
-**Request to the Coordinator: the `apply` verb.** `apply.ControlledRun.Execute` runs the whole first Apply through the ports in `apply.ExecutionPorts` ([apply README](../internal/apply/README.md#execution)). The `markitect apply` verb and its composition in the bootstrap are the Coordinator's files. They need:
-- the captured settings preparation with metadata, `apply.ControlService.Open` on the journal adapter's control, and then `Execute`;
-- one `run.Sessions` that routes each session plan to the adapter of its role's profile (`ControlledRun.RoleProfile` names the prepared profile), with the credential resolver;
-- `Profile`, which builds each adapter's session profile payload from that prepared profile;
-- `CheckRequest`, which builds a `run.CheckRequest` from a configured check and its check profile;
-- the repository's `Workspaces`, the check runner and the GitRepo publisher;
-- a report of `ExecutionResult`: the run, every task, the issues including the open questions to the owner, the checks and the publication receipt;
-- an `answer` verb that calls `ControlledRun.Answer` and then `Execute` again;
-- in the GitRepo publisher, errors that wrap `apply.ErrCaptureChanged` for a changed source and `apply.ErrUnpublishable` for a change set the target cannot represent, as the Publisher port now names them.
+**The `apply` verb** is composed in the bootstrap on the ports of `run.Config` (see the [runtime contract](design/canonical-model/manager-apply-runtime.md#ports-and-adapters)): the captured settings preparation, the Agent adapters routed by profile, the repository's workspaces, the check runner, the file-based owner channel and evidence, and the guarded publisher. The earlier request for a journal control, `run.Sessions` routing and `ControlledRun` is obsolete.
 
 ### Branch names
 
@@ -98,7 +92,7 @@ Use an isolated managed worktree and a non-protected branch from the integrated 
 | APPLY-REALIZATION | `internal/realization/` | Architect session since 17 October 2026, see [above](#architect-and-coordinator). After MODEL/SNAPSHOT APIs: ownership, census, registry, claims, candidates and composition. No scheduler. |
 | APPLY-CUTOVER | CLI/bootstrap except the `apply` verb wiring, self-model, source/coverage/import gates, packaging/smoke, root module and current guidance | After deterministic foundation, read-only Apply preparation and repository capture. One owner switches the active product and deletes old compiler/project/runtime/API consumers. Apply stays explicitly unavailable until implemented. |
 | APPLY-RUN | `internal/run/` and consumer-owned Session/Workspace/Check/Journal ports | Architect session since 17 October 2026, see [above](#architect-and-coordinator). After foundation/cutover. One owner for task/review/finding/budget/lifecycle semantics. Establish executable ports before adapters. |
-| APPLY-JOURNAL | `internal/adapters/journal/` | After RUN/Apply control contracts. SQLite append/control/recovery; coordinator owns dependency pin. |
+| APPLY-JOURNAL | Retired | Deleted with the journal and its SQLite adapter by DEC-056; there is no journal. |
 | APPLY-RUNTIME | `internal/adapters/container/`, `internal/agentd/`, `cmd/markitect-agentd/`, `packaging/runtime/` | Below the session port; may start beside RUN. Container engine client, volumes, limits, the agentd session helper with its MCP bridge and stdio framing, and the pinned base image with both CLIs ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). No task, model or review semantics; real smoke needs finite authority. |
 | APPLY-AGENT | `internal/adapters/codexappserver/`, `internal/adapters/claudecode/` | Session adapters for Codex App Server and Claude Code on `run.Sessions`, after RUN's Session contract and APPLY-RUNTIME. Profile metadata comes from the runtime image through the engine, which preparation may query but never runs the image; the existing offline metadata preparer is replaced accordingly. Each adapter needs its bounded real handshake smoke; real smoke needs finite authority. |
 | APPLY-REPOSITORY | `internal/adapters/gitrepo/`, `internal/adapters/checks/` | Read-only capture follows the reviewed Apply Source/PreviewSource contracts before CUTOVER. A read-only CheckProfilePreparer may follow the Apply metadata port there; workspace creation on runtime volumes, check execution in containers and guarded publication follow the corresponding RUN/Apply contracts and APPLY-RUNTIME. |
@@ -148,7 +142,7 @@ APPLY-RUNTIME builds the container runtime below the session port; APPLY-AGENT b
 1. **Baseline and measurement:** integrate this concept/coordination reset, then dispatch BOOT, MODEL, SNAPSHOT and PLAY separately. The oracle needs no finished CLI; synthetic Apply bookkeeping is not a prerequisite for the pure compiler.
 2. **Deterministic foundation:** integrate BOOT, producer API slices and complete v1 conformance; then parallel ORG and REALIZATION. Implement all language constructs, not only M1. Bounded probe evidence remains separate.
 3. **Read-only preparation and product cutover:** establish Apply's Source/PreviewSource and metadata-preparation contracts, then model preparation, repository capture and closed-format profile metadata preparation for check/context (Agent profiles later read theirs from the runtime image). This metadata work does not prove runtime support. Switch CLI, self-model and build/coverage/import gates together; remove obsolete source/commands/tests. Keep Main buildable and explicit about unavailable execution.
-4. **Execution/adapters:** RUN establishes ports/reducer while RUNTIME builds the container runtime below the session port. JOURNAL, AGENT and REPOSITORY then work independently against them, without a second scheduler or ledger.
+4. **Execution/adapters:** RUN establishes ports/reducer while RUNTIME builds the container runtime below the session port. AGENT and REPOSITORY then work independently against them, without a second scheduler or ledger (the journal was later retired).
 5. **Realization:** one Package through work/review/rework, then root recursion, integration, complete evidence and guarded publication.
 6. **Demonstration:** freeze product/profile; real M1/R1 and independent A1 inspection; exact model-only M2 edit; real R2 on A1 and independent A2 inspection. Preserve all attempts.
 

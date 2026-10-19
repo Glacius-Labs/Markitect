@@ -2,7 +2,13 @@ package bootstrap
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
+	"fmt"
+	"io"
+	"path/filepath"
+	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
@@ -11,7 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
-	"github.com/Glacius-Labs/Markitect/internal/adapters/journal"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	runport "github.com/Glacius-Labs/Markitect/internal/run"
@@ -24,19 +29,36 @@ type executionService struct {
 	repository  *gitrepo.Repository
 	agents      apply.AgentProfilePreparer
 	checks      apply.CheckProfilePreparer
-	// A private source-test seam. Production always supplies productionPorts;
-	// an absent factory refuses rather than supplying success or fake ports.
-	ports func(runConfig, *apply.ControlledRun, apply.CapturedSettingsResult) (apply.ExecutionPorts, error)
+	stderr      io.Writer
 }
 
-func newExecution(preparation *apply.PreparationService, repository *gitrepo.Repository, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer) *executionService {
-	s := &executionService{preparation: preparation, repository: repository, agents: agents, checks: checks}
-	s.ports = s.productionPorts
-	return s
+func newExecution(preparation *apply.PreparationService, repository *gitrepo.Repository, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, stderr io.Writer) *executionService {
+	return &executionService{preparation: preparation, repository: repository, agents: agents, checks: checks, stderr: stderr}
 }
 
-func (s *executionService) Execute(ctx context.Context, request cli.ExecutionRequest) (report cli.ExecutionReport, err error) {
-	report.Status = model.NotCompleted
+// applyPorts is everything one Apply runs with: the concrete adapters, the
+// run's evidence and owner channel, and the explicit bounds of the invocation.
+type applyPorts struct {
+	RunID      string
+	Agents     runport.Agents
+	Workspaces runport.Workspaces
+	Checks     runport.Checks
+	Owner      runport.Owner
+	Evidence   *fileEvidence
+	Publisher  apply.Publisher
+	Control    apply.ControlCheck
+	RemoveHome func(context.Context, string) error
+	Harvest    harvestLimits
+	// Deadline is the operator's absolute wall-clock limit; zero means none.
+	Deadline time.Time
+	Clock    func() time.Time
+}
+
+// Execute prepares the committed repository, composes the ports and runs the
+// reconciliation. Nothing starts before preparation passed, and only one Apply
+// holds a state directory at a time.
+func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest) (report cli.ApplyReport, err error) {
+	report.FormatVersion, report.Operation, report.Status = 1, "apply", model.NotCompleted
 	cfg, err := loadRunConfig(ctx, request.RunConfig)
 	if err != nil {
 		if errors.Is(err, errRunConfig) {
@@ -44,13 +66,27 @@ func (s *executionService) Execute(ctx context.Context, request cli.ExecutionReq
 		}
 		return report, err
 	}
-	if s == nil || s.preparation == nil || s.repository == nil || s.ports == nil {
+	if s == nil || s.preparation == nil || s.repository == nil {
 		return report, errors.New("concrete execution composition is unavailable")
 	}
-	owner, err := runport.NewPayload("text/plain", "utf-8", []byte(cfg.OwnerRequest))
-	if err != nil {
+	if err := checkStateOutsideRepository(cfg.StateDirectory, request.Selection.Repository); err != nil {
 		report.Status = model.Failed
-		return report, errors.New("ownerRequest cannot form the bound UTF-8 owner input")
+		return report, err
+	}
+	lock, err := lockStateWithin(ctx, cfg.StateDirectory, startLockWait)
+	if err != nil {
+		return report, err
+	}
+	defer func() { err = errors.Join(err, lock.Release()) }()
+	// The owner channel opens before anything else so that no question or answer
+	// of an earlier Apply can reach this one.
+	runID, err := newRunID(time.Now())
+	if err != nil {
+		return report, err
+	}
+	owner, err := newFileOwner(cfg.StateDirectory, runID, request.RunConfig, s.stderr)
+	if err != nil {
+		return report, err
 	}
 	prepared, err := s.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
 	report.Preparation = capturedExecutionReport(prepared, cfg.ProductBuild)
@@ -58,67 +94,102 @@ func (s *executionService) Execute(ctx context.Context, request cli.ExecutionReq
 		report.Status = prepared.Status()
 		return report, err
 	}
-	opened, err := apply.NewControlService(s.repository, journal.New()).Open(ctx, prepared,
-		apply.RunBindingFacts{RepositoryIdentity: cfg.RepositoryIdentity, ProductBuild: cfg.ProductBuild, OwnerRequest: owner, OwnerDecisions: cfg.OwnerDecisions, Allocation: cfg.Allocation},
-		apply.ControlOptions{StateDirectory: cfg.StateDirectory, RestoreLimits: cfg.RestoreLimits})
-	report.Control = opened.Binding()
+	ports, err := s.ports(cfg, prepared, lock, runID, owner)
 	if err != nil {
 		return report, err
 	}
-	controlled, ok := opened.Controlled()
-	if !ok {
-		return report, errors.New("repository control did not return a live controlled run")
-	}
+	report.EvidenceDirectory = ports.Evidence.Dir()
 	defer func() {
-		if closeErr := controlled.Close(); closeErr != nil {
-			err = errors.Join(err, closeErr)
+		// The report file is the last evidence of the run; when it cannot be
+		// written the run cannot show what happened.
+		if err != nil {
+			report.Error = err.Error()
+		}
+		if writeErr := ports.Evidence.WriteReport(cli.ReportValue(report)); writeErr != nil {
+			err = errors.Join(err, writeErr)
 			report.Status = model.NotCompleted
 		}
+		err = errors.Join(err, ports.Evidence.Close())
 	}()
-	defer func() {
-		report.OpenQuestions = controlled.Coordinator().OwnerQuestions()
-		if report.Execution == nil {
-			// Actual restored observations remain visible when Answer or port
-			// construction refuses before Execute. No run is invented here.
-			current := controlled.Coordinator()
-			observed := apply.ExecutionResult{Run: current.Current(), Tasks: current.Tasks(), Checks: current.Checks()}
-			for _, task := range observed.Tasks {
-				observed.Issues = append(observed.Issues, current.Issues(task.Manager)...)
-			}
-			report.Execution = &observed
-		}
-	}()
-	ports, err := s.ports(cfg, controlled, prepared)
-	if err != nil {
-		return report, err
+	result, err := s.reconcileAndPublish(ctx, request.Selection, prepared, cfg, ports)
+	if result.Outcome.Status != "" {
+		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 	}
-	if request.Question != "" {
-		if controlled.Coordinator().Current().Basis != controlled.Basis().Ref() {
-			return report, errors.New("answer requires the original captured basis and run configuration")
-		}
-		if err := controlled.Answer(ctx, request.Question, request.Answer, ports.Clock); err != nil {
-			return report, err
-		}
-	}
-	result, err := controlled.Execute(ctx, ports)
-	report.Execution = &result
-	report.Status = executionStatus(result.Run, err)
+	report.Publication = result.Receipt
+	report.RetainedWork = result.RetainedWork
+	report.Status = cli.ApplyStatus(result.Outcome, result.Receipt, err)
 	return report, err
 }
 
-func executionStatus(observed runport.RunView, err error) model.Status {
-	if observed.State != runport.Finished {
-		return model.NotCompleted
+// reconcileAndPublish runs the Apply use case over the captured preparation with
+// the composed ports.
+func (s *executionService) reconcileAndPublish(ctx context.Context, selection apply.InputSelection, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ReconcileResult, error) {
+	prepared, ok := captured.Prepared()
+	if !ok {
+		return apply.ReconcileResult{}, errors.New("complete captured settings are required")
 	}
-	switch observed.Outcome {
-	case runport.Applied, runport.NoChange:
-		if err == nil {
-			return model.Passed
+	return apply.Reconcile(ctx, apply.ReconcileRequest{
+		RunID: ports.RunID, Prepared: prepared, Selection: selection,
+		OwnerRequest: cfg.OwnerRequest, OwnerDecisions: cfg.OwnerDecisions, Deadline: ports.Deadline,
+		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
+		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
+			return executionCheck(selected, cfg)
+		},
+		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
+		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome,
+	})
+}
+
+// checkStateOutsideRepository refuses a state directory inside the repository
+// or containing it: evidence and channel files must not become repository
+// content, and the state directory is not the repository's to own.
+func checkStateOutsideRepository(stateDirectory, repository string) error {
+	if repository == "" {
+		return errors.New("the repository root is required")
+	}
+	state, repo := resolvedPath(stateDirectory), resolvedPath(repository)
+	for _, pair := range [][2]string{{repo, state}, {state, repo}} {
+		if rel, err := filepath.Rel(pair[0], pair[1]); err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
+			return errors.New("the state directory must not overlap the repository: it is inside it or contains it")
 		}
-	case runport.Failed:
-		return model.Failed
 	}
-	return model.NotCompleted
+	return nil
+}
+
+// resolvedPath resolves symbolic links of the longest existing prefix, so a
+// link cannot hide an overlap; the missing rest is appended unchanged.
+func resolvedPath(path string) string {
+	path = filepath.Clean(path)
+	rest := ""
+	for {
+		if resolved, err := filepath.EvalSymlinks(path); err == nil {
+			return filepath.Join(resolved, rest)
+		}
+		parent := filepath.Dir(path)
+		if parent == path {
+			return filepath.Join(path, rest)
+		}
+		rest, path = filepath.Join(filepath.Base(path), rest), parent
+	}
+}
+
+// answer records the owner's answer for the Apply running on the configured
+// state directory.
+func answer(ctx context.Context, request cli.AnswerRequest) (cli.AnswerReport, error) {
+	report := cli.AnswerReport{Status: model.NotCompleted}
+	cfg, err := loadRunConfig(ctx, request.RunConfig)
+	if err != nil {
+		if errors.Is(err, errRunConfig) {
+			report.Status = model.Failed
+		}
+		return report, err
+	}
+	path, err := writeAnswer(cfg.StateDirectory, request.Question, request.Text)
+	if err != nil {
+		return report, err
+	}
+	report.Status, report.Path, report.Bytes = model.Passed, path, len(request.Text)
+	return report, nil
 }
 
 func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild string) any {
@@ -146,98 +217,116 @@ func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild
 	return map[string]any{"status": prepared.Status(), "productBuildAssertion": productBuild, "attempts": attempts}
 }
 
-func (s *executionService) productionPorts(cfg runConfig, controlled *apply.ControlledRun, prepared apply.CapturedSettingsResult) (apply.ExecutionPorts, error) {
+// ports composes the concrete adapters from one complete capture. Every
+// selected profile is validated against the explicit run engine before any
+// adapter is constructed.
+func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsResult, lock *stateLock, runID string, owner runport.Owner) (applyPorts, error) {
 	a, ok := prepared.Prepared()
 	if !ok {
-		return apply.ExecutionPorts{}, errors.New("complete captured settings are required")
-	}
-	for _, profile := range a.Settings().ProfileObservations() {
-		if profile.Input().Namespace() == "agentProfiles" {
-			if _, err := sessionProfile(profile, false, cfg); err != nil {
-				return apply.ExecutionPorts{}, err
-			}
-		}
+		return applyPorts{}, errors.New("complete captured settings are required")
 	}
 	selectedChecks, complete := a.Settings().Checks()
 	if !complete {
-		return apply.ExecutionPorts{}, errors.New("configured check selections are incomplete")
+		return applyPorts{}, errors.New("configured check selections are incomplete")
 	}
 	for _, selected := range selectedChecks {
 		if _, err := executionCheck(selected, cfg); err != nil {
-			return apply.ExecutionPorts{}, err
+			return applyPorts{}, err
 		}
 	}
 	engine, err := container.NewEngine(cfg.EngineExecutable)
 	if err != nil {
-		return apply.ExecutionPorts{}, err
+		return applyPorts{}, err
 	}
-	codexCredentials, claudeCredentials, err := newCredentialResolvers(cfg.Credentials)
+	agents, err := newAgents(engine, a.Settings().ProfileObservations(), cfg)
 	if err != nil {
-		return apply.ExecutionPorts{}, err
-	}
-	codex, err := codexappserver.NewSessions(engine, codexCredentials)
-	if err != nil {
-		return apply.ExecutionPorts{}, err
-	}
-	claude, err := claudecode.NewSessions(engine, claudeCredentials)
-	if err != nil {
-		return apply.ExecutionPorts{}, err
+		return applyPorts{}, err
 	}
 	helper := cfg.WorkspaceHelper
 	helper.Workdir = "/work"
 	workspaces, err := gitrepo.NewWorkspaces(engine, helper)
 	if err != nil {
-		return apply.ExecutionPorts{}, err
+		return applyPorts{}, err
 	}
 	checker, err := checks.NewRunner(engine, workspaces)
 	if err != nil {
-		return apply.ExecutionPorts{}, err
+		return applyPorts{}, err
 	}
-	return apply.ExecutionPorts{Sessions: NewSessionsRouter(codex, claude), Workspaces: workspaces, Checks: checker, Publisher: s.repository,
-		Clock: time.Now, Limits: cfg.EngineLimits,
-		Profile: func(request runport.ProfileRequest) (runport.SessionProfile, error) {
-			if request.Role != "manager" && request.Role != "reviewer" {
-				return runport.SessionProfile{}, errors.New("unsupported session role")
-			}
-			profile, err := controlled.RoleProfile(request.Manager, request.Role)
-			if err != nil {
-				return runport.SessionProfile{}, err
-			}
-			return sessionProfile(profile, request.ReadOnly, cfg)
-		},
-		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
-			return executionCheck(selected, cfg)
-		},
-	}, nil
+	evidence, err := newFileEvidence(cfg.StateDirectory, runID)
+	if err != nil {
+		return applyPorts{}, err
+	}
+	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Owner: owner, Evidence: evidence,
+		Publisher: s.repository, Control: lock, RemoveHome: engine.RemoveVolume, Harvest: cfg.Harvest, Deadline: cfg.deadline(), Clock: time.Now}, nil
 }
 
-func sessionProfile(prepared apply.PreparedProfile, readOnly bool, cfg runConfig) (runport.SessionProfile, error) {
-	if !profileEngine(prepared, cfg.EngineExecutable) {
-		return runport.SessionProfile{}, errors.New("prepared Agent engine differs from the explicit run engine")
-	}
-	var profile runport.Payload
-	var reference, provider string
-	var wire int64
-	var err error
-	switch prepared.Input().Section() {
-	case "codexAppServer":
-		provider = "codex-app-server"
-		profile, reference, wire, err = codexappserver.SessionProfileFromPrepared(prepared)
-	case "claudeCode":
-		provider = "claude-code"
-		profile, reference, wire, err = claudecode.SessionProfileFromPrepared(prepared, readOnly)
-	default:
-		err = errors.New("selected Agent profile has no supported execution adapter")
-	}
+// newAgents builds one adapter per provider that a selected profile uses and
+// routes each profile to its adapter. The adapters resolve credentials only
+// when a turn starts.
+func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg runConfig) (runport.Agents, error) {
+	codexCredentials, claudeCredentials, err := newCredentialResolvers(cfg.Credentials)
 	if err != nil {
-		return runport.SessionProfile{}, err
+		return nil, err
 	}
-	credential, found := cfg.Credentials[reference]
-	image := prepared.Observation().AgentImage
-	if !found || credential.Provider != provider || image == nil {
-		return runport.SessionProfile{}, errors.New("prepared Agent has no exact explicit credential mapping or image observation")
+	codexProfiles := map[string]codexappserver.Profile{}
+	claudeProfiles := map[string]claudecode.Profile{}
+	for _, profile := range observed {
+		input := profile.Input()
+		if input.Namespace() != "agentProfiles" {
+			continue
+		}
+		if !profileEngine(profile, cfg.EngineExecutable) {
+			return nil, errors.New("prepared Agent engine differs from the explicit run engine")
+		}
+		switch input.Section() {
+		case "codexAppServer":
+			var p codexappserver.Profile
+			if p, err = codexappserver.ProfileFromPrepared(profile); err == nil {
+				err = credentialMapped(cfg, p.CredentialRef, "codex-app-server")
+			}
+			codexProfiles[input.Name()] = p
+		case "claudeCode":
+			var p claudecode.Profile
+			if p, err = claudecode.ProfileFromPrepared(profile); err == nil {
+				err = credentialMapped(cfg, p.CredentialRef, "claude-code")
+			}
+			claudeProfiles[input.Name()] = p
+		default:
+			err = errors.New("selected Agent profile has no supported execution adapter")
+		}
+		if err != nil {
+			return nil, fmt.Errorf("agent profile %q: %w", input.Name(), err)
+		}
 	}
-	return runport.SessionProfile{ImageID: image.ImageID, CredentialRef: reference, Profile: profile, MaxWireBytes: wire}, nil
+	routes := map[string]runport.Agents{}
+	if len(codexProfiles) > 0 {
+		codex, err := codexappserver.NewAgents(engine, codexProfiles, codexCredentials)
+		if err != nil {
+			return nil, err
+		}
+		for name := range codexProfiles {
+			routes[name] = codex
+		}
+	}
+	if len(claudeProfiles) > 0 {
+		claude, err := claudecode.NewAgents(engine, claudeProfiles, claudeCredentials)
+		if err != nil {
+			return nil, err
+		}
+		for name := range claudeProfiles {
+			routes[name] = claude
+		}
+	}
+	return newAgentsRouter(routes), nil
+}
+
+// credentialMapped requires the explicit run configuration to map the profile's
+// exact credential reference to a credential of the profile's provider.
+func credentialMapped(cfg runConfig, ref, provider string) error {
+	if source, found := cfg.Credentials[ref]; !found || source.Provider != provider {
+		return errors.New("prepared Agent has no exact explicit credential mapping")
+	}
+	return nil
 }
 
 func executionCheck(selected apply.CheckSelection, cfg runConfig) (runport.CheckRequest, error) {
@@ -249,7 +338,17 @@ func executionCheck(selected apply.CheckSelection, cfg runConfig) (runport.Check
 	if err != nil {
 		return runport.CheckRequest{}, err
 	}
-	return profile.Request(selected.Declaration(), snapshot.Tree{}) // Core fills the admitted tree.
+	return profile.Request(selected.Declaration(), snapshot.Tree{}) // The engine fills the candidate tree.
+}
+
+// newRunID names one run: the start time makes evidence directories sort, the
+// random suffix keeps two Applies in the same second apart.
+func newRunID(now time.Time) (string, error) {
+	var suffix [4]byte
+	if _, err := rand.Read(suffix[:]); err != nil {
+		return "", err
+	}
+	return now.UTC().Format("20060102T150405Z") + "-" + hex.EncodeToString(suffix[:]), nil
 }
 
 // Only this already validated captured literal is needed for Host composition;

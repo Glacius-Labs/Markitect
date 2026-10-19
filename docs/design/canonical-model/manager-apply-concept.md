@@ -85,6 +85,8 @@ This confirmation leaves Claude's running implementation assignment unchanged. I
 
 The later Claude session should start with this section, the [current library walkthrough](manager-apply-library-flow.md#current-library-walkthrough), [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), the canonical self-model and the repository's normal contribution instructions. This documentation session does not authorize or perform runtime implementation, further provider runs, releases, merges of implementation work or human acceptance of generated artifacts. A separate owner dispatch will authorize that work.
 
+The owner dispatched that work, and it is implemented on branch `dev/recursive-apply-simplified` ([dispatch](../../concepts/sources/recursive-apply-implementation-20261019.md)), pending review, CI and owner acceptance. [manager-apply-runtime.md](manager-apply-runtime.md) is the implemented technical owner; this section remains the intent and supersession map.
+
 | Earlier mechanism | Current direction |
 | --- | --- |
 | Fixed responsibility hierarchy and artifact-only Apply | Retained; no per-run ownership discovery or AI-selected participation. |

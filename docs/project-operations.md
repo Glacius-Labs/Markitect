@@ -1,6 +1,6 @@
 # Project operations
 
-The current commands are `check`, `context`, `docs`, `version`, `licenses` and `help`. `apply` reports unavailable before acquisition or effects. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
+The current commands are `check`, `context`, `docs`, `apply`, `answer`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
 
 The later [command design](design/canonical-model/commands.md) records the accepted Verify, Extract, Optimize and other operation semantics. It does not add them to this executable surface or authorize their execution.
 
@@ -18,7 +18,11 @@ Metadata and settings are unrequested unless `--metadata` is selected. `--host-p
 
 The default manifest is `.markitect/model.yaml`. Repeated `--dependency` flags select required manifests. Repository-relative coordinates remain relative to the selected repository; absolute manifests establish explicit acquisition boundaries. `--revision` resolves a ref once through the repository port and preserves its full commit. Fixed acquisition never falls back to current external Orchestrator or dependency bytes.
 
-This increment has no MCP, automatic setup, provider session, workspace creation, executable check runner or artifact publication command. The old generation remains in [Git](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). [Provider adapters](provider-adapters.md) describes the metadata boundary.
+The CLI has no MCP server and no automatic setup. The old generation remains in [Git](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). [Provider adapters](provider-adapters.md) describes the metadata and runtime boundary.
+
+## Apply and answer
+
+`apply` needs a committed repository, an explicit absolute Host profile (`--host-profile`) and an explicit absolute run configuration (`--run-config`); without them it reports `not_completed` before acquisition. It starts real Agents in containers, runs the required checks, and publishes only a verified candidate; it never commits. Its JSON report names the evidence directory under the run configuration's state directory. `answer QUESTION_ID --text TEXT --run-config PATH` answers a question Root asked the running Apply. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns behavior, evidence and limits; the [workflow](project-workflow.md#execute-verify-and-apply) gives the sequence.
 
 ## Generated view and recovery
 

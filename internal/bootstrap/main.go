@@ -1,5 +1,5 @@
 // Package bootstrap constructs concrete adapters for the implemented product.
-// Metadata preparation never constructs a Session, Workspace or execution port.
+// Metadata preparation never constructs an Agent, Workspace or execution port.
 package bootstrap
 
 import (
@@ -32,6 +32,6 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(images), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReader)
-	execution := newExecution(preparation, repository, agents, checker)
-	return cli.New(preparation, agents, checker, repository, views, execution.Execute).Run(ctx, args, stdout, stderr)
+	execution := newExecution(preparation, repository, agents, checker, stderr)
+	return cli.New(preparation, agents, checker, repository, views, execution.Execute, answer).Run(ctx, args, stdout, stderr)
 }

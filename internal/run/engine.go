@@ -2,1231 +2,548 @@ package run
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"fmt"
-	"maps"
-	"slices"
+	"regexp"
 	"strings"
+	"sync"
 	"time"
-	"unicode"
-	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/model"
-	"github.com/Glacius-Labs/Markitect/internal/organization"
-	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const candidateRecordMedia = "application/vnd.markitect.candidate-record+json"
+var nameRE = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
-// SessionProfile is the Host profile a role's sessions run with.
-type SessionProfile struct {
-	ImageID, CredentialRef string
-	Profile                Payload
-	MaxWireBytes           int64
-}
+// ownerPollInterval is how often the engine asks the owner channel for answers.
+var ownerPollInterval = 3 * time.Second
 
-// EngineLimits bound one step's invocations and observations. A step's own
-// timeout is its Manager's bound stepTimeout.
-type EngineLimits struct {
-	StartTimeout, StopTimeout time.Duration
-	HarvestEntries            int
-	HarvestBytes              int64
-	Record                    realization.CandidateRecordLimits
-}
-
-// ProfileRequest asks for the session profile of one step: the Manager, the
-// role, the phase and whether its workspace is read-only, so that an adapter
-// offers only the tools the step may use.
-type ProfileRequest struct {
-	Manager, Role string
-	Phase         Phase
-	ReadOnly      bool
-}
-
-// EngineConfig supplies everything the engine needs from the application.
-type EngineConfig struct {
-	Coordinator *Coordinator
-	Journal     Journal
-	Sessions    Sessions
-	Workspaces  Workspaces
-	Checks      Checks
-	// ReviewChecks are the configured checks a candidate review may request,
-	// by name; their trees are filled in by the engine.
-	ReviewChecks map[string]CheckRequest
-	Preparation  StepPreparation
-	Profile      func(ProfileRequest) (SessionProfile, error)
-	Clock        func() time.Time
-	Limits       EngineLimits
-}
-
-// Engine drives a run's admitted steps through the ports, one at a time (core
-// rules S1 to S6, T4). It holds the Host-side facts the reducer does not keep:
-// the compiled model, every version of the run aggregate, the path
-// reservations and the registry records each task proposed. It decides
-// nothing the Coordinator has not admitted, and it stops at the first
-// uncertain or failed effect.
-type Engine struct {
-	cfg      EngineConfig
-	compiled model.Result
-	versions []realization.Aggregate
-}
-
-var (
-	errStep        = errors.New("step stopped before its conclusion")
-	errNotAdmitted = errors.New("the check was not admitted")
+const (
+	maxExecuteFailures = 2
+	maxVerifyAttempts  = 2
+	maxToolText        = 16 << 10
+	maxToolFindings    = 64
+	outputTail         = 8 << 10
+	maxListedPaths     = 40
+	maxListedNames     = 20
 )
 
-// NewEngine binds an engine to its run. It rebuilds the aggregate from the
-// captured source and the run's accepted deliveries (core rule D2).
-func NewEngine(ctx context.Context, cfg EngineConfig) (*Engine, error) {
-	if cfg.Coordinator == nil || cfg.Journal == nil || cfg.Sessions == nil || cfg.Workspaces == nil || cfg.Profile == nil || cfg.Clock == nil {
-		return nil, ErrInvalid
-	}
-	compiled := model.Compile(cfg.Preparation.Binding.ModelInput)
-	topology, err := organization.BuildTopology(compiled)
-	if err != nil {
-		return nil, err
-	}
-	settings, err := organization.ResolveSettings(topology, cfg.Preparation.Settings)
-	if err != nil {
-		return nil, err
-	}
-	areas, err := creationAreas(settings)
-	if err != nil {
-		return nil, err
-	}
-	in := cfg.Preparation.Binding
-	facts, err := realization.NewPathFacts(compiled, in.Registry, in.Census, areas, in.Protections)
-	if err != nil {
-		return nil, err
-	}
-	base, err := realization.NewCandidateBase(compiled, facts)
-	if err != nil {
-		return nil, err
-	}
-	aggregate, err := realization.NewAggregate(base)
-	if err != nil {
-		return nil, err
-	}
-	e := &Engine{cfg: cfg, compiled: compiled, versions: []realization.Aggregate{aggregate}}
-	var composed []Delivery
-	for _, t := range cfg.Coordinator.Tasks() {
-		for _, d := range t.Deliveries {
-			if d.Candidate != (BlobRef{}) {
-				composed = append(composed, d)
-			}
-		}
-	}
-	slices.SortFunc(composed, func(a, b Delivery) int { return compareUint(a.Aggregate, b.Aggregate) })
-	for _, d := range composed {
-		candidate, err := e.candidate(ctx, d.Candidate)
-		if err != nil {
-			return nil, err
-		}
-		next, ok := realization.ReplayDelivery(e.aggregate(), candidate).Aggregate()
-		if !ok || next.Version() != d.Aggregate {
-			return nil, ErrState
-		}
-		e.versions = append(e.versions, next)
-	}
-	if uint64(len(e.versions)-1) != cfg.Coordinator.AggregateVersion() {
-		return nil, ErrState
-	}
-	return e, nil
+// candidate is one immutable stand with its read-only volume.
+type candidate struct {
+	index  int
+	tree   snapshot.Tree
+	id     WorkspaceID
+	volume string
+	// unsupported lists the entries of the harvested shared tree that a tree
+	// cannot hold; the candidate cannot be green while they stand.
+	unsupported []string
 }
 
-func creationAreas(settings organization.Settings) ([]realization.CreationArea, error) {
-	var areas []realization.CreationArea
-	for _, m := range settings.Managers() {
-		owner, err := managerOwner(m.Package)
-		if err != nil {
-			return nil, err
-		}
-		for _, directory := range m.CreationRoots.Value {
-			area, err := realization.NewCreationArea(owner, directory)
-			if err != nil {
-				return nil, err
-			}
-			areas = append(areas, area)
-		}
-	}
-	return areas, nil
+// item is one undelivered piece of work for a Manager. finding is the ID of
+// the finding an item restates; such an item lapses once the finding is closed.
+type item struct {
+	text    string
+	finding string
 }
 
-func managerOwner(manager string) (realization.Owner, error) {
-	if manager == organization.Root {
-		return realization.RootOwner(), nil
-	}
-	return realization.PackageOwner(manager)
+// mgr is the engine's state of one Manager. Every field is guarded by engine.mu.
+type mgr struct {
+	Manager
+	slug         string
+	execHome     string
+	verifyHome   string
+	conversation string
+	items        []item
+	consumed     []item
+	running      bool
+	disabled     bool
+	failures     int
+	execCount    int
+	execUsed     bool
+	verifyUsed   bool
+	ran          bool
+	changed      []string
+
+	// executed is set by an Execute turn that finished without error; until
+	// then the Manager's turn carries the full mandate, even when a failed turn
+	// left a conversation behind.
+	executed bool
 }
 
-func (e *Engine) aggregate() realization.Aggregate { return e.versions[len(e.versions)-1] }
+type roundState struct {
+	n           int
+	tree        snapshot.Tree
+	volume      string
+	checks      []CheckResult
+	structural  []*Finding
+	assessments map[string]Assessment
+	assessed    map[string]bool
+	started     map[string]bool
+}
 
-// Aggregate returns the run's current accepted aggregate.
-func (e *Engine) Aggregate() realization.Aggregate { return e.aggregate() }
+type engine struct {
+	cfg    Config
+	ctx    context.Context
+	cancel context.CancelFunc
+	base   context.Context
 
-// Run advances the run until no step is admissible and then records why: the
-// root's completion leaves the run Verifying (core rule T13), an owner
-// question moves it to Waiting (core rule W1), and an incomplete task, a
-// budget that no longer fits the next step or a wait nothing can satisfy
-// finishes it Incomplete (core rules T12, T14). Waits that only a parent's
-// dispatch could resolve (core rule T12) end the run Incomplete in this
-// version.
-func (e *Engine) Run(ctx context.Context) error {
-	c := e.cfg.Coordinator
-	for {
-		advanced, err := e.Advance(ctx)
-		if errors.Is(err, ErrBudget) {
-			return e.finish(ctx, "the budget does not fit the next admissible step")
-		}
-		if _, failed := errors.AsType[stepFailure](err); failed {
-			continue // charged and concluded as failed; the budget bounds retries
-		}
-		if err != nil {
-			return err
-		}
-		if !advanced {
-			break
-		}
+	stopMu  sync.Mutex
+	reason  string
+	failure error
+
+	evMu  sync.Mutex
+	evErr error
+
+	mu          sync.Mutex
+	cond        *sync.Cond
+	wg          sync.WaitGroup
+	team        []*mgr
+	byPath      map[string]*mgr
+	findings    []*Finding
+	delivered   map[string]int
+	questions   []*Question
+	turns       []TurnRecord
+	usage       Usage
+	turnCount   int
+	rounds      []Round
+	rs          *roundState
+	execRound   int
+	work        string
+	executeOpen bool
+	inPhase     bool
+	closing     bool
+	running     int
+	polling     bool
+	nextFinding int
+	nextQuest   int
+}
+
+func slugOf(path string) string {
+	if path == "." {
+		return "root"
 	}
-	if c.Current().State != Running {
+	return strings.ReplaceAll(path, "/", "-")
+}
+
+func (e *engine) volumeID(suffix string) WorkspaceID { return WorkspaceID(e.cfg.RunID + "-" + suffix) }
+
+func validate(cfg Config) error {
+	bad := func(format string, args ...any) error {
+		return fmt.Errorf("%w: %s", ErrInvalid, fmt.Sprintf(format, args...))
+	}
+	checkName := func(what, name string) error {
+		if !nameRE.MatchString(name) {
+			return bad("%s %q is not a valid name", what, name)
+		}
 		return nil
 	}
-	var incomplete []string
-	for _, t := range c.Tasks() {
-		if t.State == TaskIncomplete {
-			incomplete = append(incomplete, t.Manager+": "+t.Reason)
-		}
-	}
-	var questions []string
-	for _, q := range c.OwnerQuestions() {
-		questions = append(questions, q.ID)
-	}
-	switch {
-	case len(incomplete) > 0:
-		return e.finish(ctx, "incomplete tasks: "+strings.Join(incomplete, "; "))
-	case len(questions) > 0:
-		return e.commit(ctx, Command{ID: e.meta("wait").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: WaitRun, Assignment: c.Current().Assignment, Run: c.Current().ID,
-			Reason: "open questions to the owner: " + strings.Join(questions, ", "), NextActor: addressedToOwner})
-	}
-	return e.finish(ctx, "no step is admissible and the remaining waits cannot be satisfied")
-}
-
-// RequiredCheck is one configured check that the published tree must pass.
-type RequiredCheck struct {
-	Name    string
-	Request CheckRequest
-}
-
-// Verify runs the required checks on the tree that publishing the aggregate
-// writes and returns the passing ones, which the final evidence check names.
-// A check that already passed on that tree in this run is not run again. A
-// failing check, or one the budget no longer fits, finishes the run Incomplete
-// with its receipts retained; correcting it through the Managers is not
-// supported yet.
-func (e *Engine) Verify(ctx context.Context, target snapshot.Tree, required []RequiredCheck) ([]CheckID, error) {
-	c := e.cfg.Coordinator
-	if c.Current().State != Verifying || len(required) > 0 && e.cfg.Checks == nil {
-		return nil, ErrState
-	}
-	var passed []CheckID
-	for _, check := range required {
-		if id, ok := e.passedOn(check.Name, target.Digest()); ok {
-			passed = append(passed, id)
-			continue
-		}
-		req := check.Request
-		req.Tree, req.ID = target, CheckID(fmt.Sprintf("%s-%s-%d", req.ID, c.Current().ID, c.Revision()))
-		cmd, err := c.PrepareCheckCommand(e.meta("prepare-check"), check.Name, req, e.checkReservation(req, Assessment))
-		if err != nil {
-			return nil, err
-		}
-		receipt, _, err := e.runCheck(ctx, cmd, req)
-		if errors.Is(err, ErrBudget) {
-			return nil, e.finish(ctx, "the budget does not fit the required check "+check.Name)
-		}
-		if err != nil {
-			return nil, err
-		}
-		if !receipt.Passed(req) {
-			return nil, e.finish(ctx, "the required check "+check.Name+" did not pass on the aggregate")
-		}
-		passed = append(passed, req.ID)
-	}
-	return passed, nil
-}
-
-// passedOn finds a verification check of the run that already passed on tree.
-func (e *Engine) passedOn(name string, tree snapshot.TreeID) (CheckID, bool) {
-	for _, v := range e.cfg.Coordinator.Checks() {
-		if v.Record.Task == "" && v.Record.Name == name && v.Record.Tree == tree && v.Passed {
-			return v.Record.ID, true
-		}
-	}
-	return "", false
-}
-
-// checkReservation holds a check's timeout plus the container's start and stop.
-// A check of a writing step is writing work; any other is assessment.
-func (e *Engine) checkReservation(req CheckRequest, purpose Purpose) Reservation {
-	return Reservation{ID: "check-" + string(req.ID), Kind: ProjectCheck, Purpose: purpose, Maximum: req.Timeout + e.cfg.Limits.StartTimeout + e.cfg.Limits.StopTimeout}
-}
-
-// runCheck admits one check, runs it and records its receipt. An uncertain
-// receipt leaves the run to reconciliation.
-// A check whose admission the reducer refuses ran nowhere and returns
-// errNotAdmitted with the refusal; it returns the time the check ran.
-func (e *Engine) runCheck(ctx context.Context, admit Command, req CheckRequest) (CheckReceipt, time.Duration, error) {
-	c := e.cfg.Coordinator
-	if err := e.commit(ctx, admit); err != nil {
-		if errors.Is(err, ErrUncertain) {
-			return CheckReceipt{}, 0, err
-		}
-		return CheckReceipt{}, 0, fmt.Errorf("%w: %w", errNotAdmitted, err)
-	}
-	began := e.cfg.Clock()
-	receipt, runErr := e.cfg.Checks.Run(ctx, req)
-	elapsed := e.cfg.Clock().Sub(began)
-	if receipt.ID == "" {
-		receipt.ID = req.ID
-	}
-	if runErr != nil && receipt.Reason == "" {
-		receipt.Reason = runErr.Error()
-	}
-	observed, err := c.ObserveCheckCommand(e.meta("observe-check"), receipt, elapsed)
-	if err != nil {
-		return receipt, elapsed, err
-	}
-	if err := e.commit(ctx, observed); err != nil {
-		return receipt, elapsed, err
-	}
-	if receipt.Uncertain {
-		return receipt, elapsed, errors.Join(errStep, runErr)
-	}
-	return receipt, elapsed, nil
-}
-
-func (e *Engine) finish(ctx context.Context, reason string) error {
-	c := e.cfg.Coordinator
-	return e.commit(ctx, Command{ID: e.meta("finish").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: FinishRun, Assignment: c.Current().Assignment, Run: c.Current().ID, Outcome: Incomplete, Reason: reason})
-}
-
-// stepVersion is the content a step's workspace starts from.
-type stepVersion struct {
-	tree     snapshot.Tree
-	registry realization.Registry
-}
-
-// stepFailure reports a step the Host could not finish but concluded as
-// failed (core rule T6): the run can continue with its next step.
-type stepFailure struct{ err error }
-
-func (f stepFailure) Error() string {
-	return "the step failed and was concluded as failed: " + f.err.Error()
-}
-func (f stepFailure) Unwrap() error { return f.err }
-
-// stepRun is the progress of one admitted step, which decides what the Host
-// must settle when the step cannot finish.
-type stepRun struct {
-	task         string
-	manager      string
-	workspace    WorkspaceID
-	phase        Phase
-	writes       bool
-	session      SessionID
-	plan         SessionPlan
-	version      stepVersion
-	openID       string
-	stepID       StepID
-	stepInvoke   string
-	channel      SessionIO
-	began        time.Time
-	openEnded    time.Time
-	stepBegan    time.Time
-	stepEnded    time.Time
-	deadline     time.Time
-	checked      time.Duration
-	pending      []Claim
-	opened       bool
-	openSettled  bool
-	stepPrepared bool
-	dispatched   bool
-	stepTerminal bool
-	stepSettled  bool
-}
-
-// Advance runs the run's next admissible step to its conclusion. It reports
-// false when nothing is admissible. A step the Host cannot finish is stopped,
-// its known effects are settled, and it concludes as failed (core rules S2,
-// T6); that error is a stepFailure. An effect whose end is not known leaves
-// the run to reconciliation.
-func (e *Engine) Advance(ctx context.Context) (bool, error) {
-	if err := e.recover(ctx); err != nil {
-		return true, err
-	}
-	c := e.cfg.Coordinator
-	item, ok := c.Next()
-	if !ok {
-		return false, nil
-	}
-	task, _ := c.Task(item.Manager)
-	version, err := e.stepVersion(ctx, task, item.Phase)
-	if err != nil {
-		return true, err
-	}
-	sid := SessionID(e.id("s", task.ID))
-	workspace := WorkspaceID(e.id("w", task.ID))
-	defer e.cfg.Workspaces.Close(context.WithoutCancel(ctx), workspace)
-	materialized, err := e.cfg.Workspaces.Materialize(ctx, WorkspaceSpec{ID: workspace, Tree: version.tree})
-	if err != nil || materialized.Uncertain || materialized.Tree != version.tree.Digest() {
-		return true, errors.Join(errStep, err)
-	}
-	role, _ := stepRole(item.Phase)
-	purpose := item.Purpose
-	profile, err := e.cfg.Profile(ProfileRequest{Manager: item.Manager, Role: role, Phase: item.Phase, ReadOnly: !item.Writes})
-	if err != nil {
-		return true, err
-	}
-	tools, err := ToolCatalog(item.Phase)
-	if err != nil {
-		return true, err
-	}
-	s := &stepRun{task: task.ID, manager: item.Manager, workspace: workspace, phase: item.Phase, writes: item.Writes, session: sid, version: version, openID: "open-" + string(sid)}
-	s.plan = SessionPlan{ID: sid, Role: role, Workspace: materialized.Volume, ProviderHome: item.Home, Resume: item.Resume, ImageID: profile.ImageID, CredentialRef: profile.CredentialRef,
-		Candidate: version.tree.Digest(), ReadOnly: !item.Writes, MaxWireBytes: profile.MaxWireBytes, Profile: profile.Profile.Ref(), Tools: tools.Ref()}
-	prepared, err := c.PrepareTaskSessionCommand(e.meta("prepare-session"), item, s.plan, Reservation{ID: s.openID, Kind: SessionStart, Purpose: purpose, Maximum: e.cfg.Limits.StartTimeout}, profile.Profile, tools)
-	if err != nil {
-		return true, err
-	}
-	if err := e.commit(ctx, prepared); err != nil {
-		return true, err
-	}
-	if err := e.drive(ctx, s, purpose, workspace); err != nil {
-		if abandonErr := e.abandon(ctx, s, err); abandonErr != nil {
-			return true, errors.Join(err, abandonErr)
-		}
-		if !s.opened {
-			return true, err // nothing was charged, so a retry would cost nothing
-		}
-		return true, stepFailure{err}
-	}
-	return true, nil
-}
-
-// drive runs one prepared session through its single step (core rule S1).
-func (e *Engine) drive(ctx context.Context, s *stepRun, purpose Purpose, workspace WorkspaceID) error {
-	c := e.cfg.Coordinator
-	channel, err := c.SessionChannel(e.cfg.Journal, s.session, e.tools(s))
-	if err != nil {
+	if err := checkName("run ID", cfg.RunID); err != nil {
 		return err
 	}
-	s.channel = channel
-	admission, err := c.SessionAdmission(ctx, e.cfg.Journal, s.session)
-	if err != nil {
+	if err := checkName("work volume", cfg.RunID+"-work"); err != nil {
 		return err
 	}
-	s.began = e.cfg.Clock()
-	s.opened = true
-	opened, err := e.cfg.Sessions.Open(ctx, admission, channel)
-	s.openEnded = e.cfg.Clock()
-	if err != nil || opened.Uncertain {
-		return errors.Join(errStep, err)
+	if len(cfg.Team) == 0 || cfg.Team[0].Path != "." || cfg.Team[0].Parent != "" {
+		return bad("the team must start with Root \".\" without a parent")
 	}
-	if err := e.settle(ctx, s.openID, s.began); err != nil {
-		return err
-	}
-	s.openSettled = true
-	quoted, err := e.quotes(ctx, s.manager)
-	if err != nil {
-		return err
-	}
-	s.stepID = StepID(e.id("step", s.task))
-	s.stepInvoke = "step-" + string(s.stepID)
-	prepStep, err := c.PrepareTaskStepCommand(e.meta("prepare-step"), StepPlan{Session: s.session, ID: s.stepID, SessionBinding: s.plan.Binding()}, Reservation{ID: s.stepInvoke, Kind: AgentStep, Purpose: purpose, Maximum: c.StepTimeout(s.manager)},
-		e.cfg.Preparation, StepFacts{Tree: s.version.tree, Registry: s.version.registry, Quoted: quoted})
-	if err != nil {
-		return err
-	}
-	if err := e.commit(ctx, prepStep); err != nil {
-		return err
-	}
-	s.stepPrepared = true
-	stepAdmission, err := c.StepAdmission(ctx, e.cfg.Journal, s.stepID)
-	if err != nil {
-		return err
-	}
-	s.stepBegan = e.cfg.Clock()
-	s.dispatched = true
-	// The Host ends the step before its reservation runs out, so that the
-	// adapter's cleanup stays inside it; the step's records are written even
-	// after its deadline (core rule S2).
-	deadline := c.StepTimeout(s.manager) - e.cfg.Limits.StopTimeout
-	if deadline <= 0 {
-		deadline = c.StepTimeout(s.manager) / 2
-	}
-	s.deadline = s.stepBegan.Add(deadline)
-	stepCtx, cancel := context.WithTimeout(ctx, deadline)
-	observed, err := e.cfg.Sessions.Step(stepCtx, stepAdmission, detached{channel})
-	cancel()
-	s.stepEnded = e.cfg.Clock()
-	if err != nil || observed.Uncertain || !observed.Terminal {
-		return errors.Join(errStep, err)
-	}
-	s.stepTerminal = true
-	// The review checks the step requested are charged as their own
-	// invocations, so the step's charge leaves their time out.
-	if err := e.settle(ctx, s.stepInvoke, s.stepBegan.Add(s.checked)); err != nil {
-		return err
-	}
-	s.stepSettled = true
-	if err := e.stop(ctx, s.session, channel, "the step ended"); err != nil {
-		return err
-	}
-	harvest, err := e.cfg.Workspaces.Harvest(ctx, HarvestRequest{ID: workspace, MaxEntries: e.cfg.Limits.HarvestEntries, MaxBytes: e.cfg.Limits.HarvestBytes})
-	if err != nil || !harvest.Complete() {
-		return errors.Join(errStep, err)
-	}
-	return e.conclude(ctx, s, harvest.Tree)
-}
-
-// detached records an adapter's observations even after the step's deadline
-// cancelled its provider work.
-type detached struct{ io SessionIO }
-
-func (d detached) Ready(ctx context.Context, r SessionReadiness) (AppendReceipt, error) {
-	return d.io.Ready(context.WithoutCancel(ctx), r)
-}
-func (d detached) Bind(ctx context.Context, o SessionObservation) (AppendReceipt, error) {
-	return d.io.Bind(context.WithoutCancel(ctx), o)
-}
-func (d detached) PrepareSend(ctx context.Context, p TransportPreparation) (SendPermit, error) {
-	return d.io.PrepareSend(context.WithoutCancel(ctx), p)
-}
-func (d detached) ObserveSend(ctx context.Context, o TransportObservation) (AppendReceipt, error) {
-	return d.io.ObserveSend(context.WithoutCancel(ctx), o)
-}
-func (d detached) Call(ctx context.Context, call ToolCall) (ToolResult, error) {
-	return d.io.Call(context.WithoutCancel(ctx), call)
-}
-func (d detached) ObserveStep(ctx context.Context, o StepObservation) (AppendReceipt, error) {
-	return d.io.ObserveStep(context.WithoutCancel(ctx), o)
-}
-func (d detached) ObserveStop(ctx context.Context, o StopObservation) (AppendReceipt, error) {
-	return d.io.ObserveStop(context.WithoutCancel(ctx), o)
-}
-
-func (e *Engine) stop(ctx context.Context, sid SessionID, channel SessionIO, reason string) error {
-	request, err := e.cfg.Coordinator.StopRequest(sid, reason)
-	if err != nil {
-		return err
-	}
-	request.Timeout = e.cfg.Limits.StopTimeout
-	observed, err := e.cfg.Sessions.Stop(ctx, request, channel)
-	if err != nil || !observed.Terminated {
-		return errors.Join(errStep, err)
-	}
-	return nil
-}
-
-// abandon ends a step the Host could not finish. It stops the container; a
-// confirmed stop ends all activity in it (core rule S2), so the start and the
-// step are settled as observed, an unstarted one is released, and a run that
-// an uncertain observation moved to Reconciling resumes. Without a confirmed
-// stop the effects are marked uncertain and stay for reconciliation.
-// Otherwise the step concludes as failed, as a fault of the Host.
-func (e *Engine) abandon(ctx context.Context, s *stepRun, cause error) error {
-	ctx = context.WithoutCancel(ctx)
-	c := e.cfg.Coordinator
-	if s.channel == nil {
-		channel, err := c.SessionChannel(e.cfg.Journal, s.session, RefuseTools)
-		if err != nil {
-			return err
+	index := map[string]int{}
+	slugs := map[string]string{}
+	for i, m := range cfg.Team {
+		if !identifier(m.Path) || m.Path != strings.TrimSpace(m.Path) || strings.ContainsAny(m.Path, "\\") {
+			return bad("manager path %q is invalid", m.Path)
 		}
-		s.channel = channel
-	}
-	var errs []error
-	if v, _ := c.Session(s.session); !v.Terminated {
-		if !s.opened {
-			// Nothing was started: the Host's own observation ends the session.
-			_, err := s.channel.ObserveStop(ctx, StopObservation{RecordMeta: e.meta("abandoned"), Terminated: true, Reason: "the Host never opened the session"})
-			errs = append(errs, err)
-		} else {
-			errs = append(errs, e.stop(ctx, s.session, s.channel, "the Host ended the step early"))
+		if _, dup := index[m.Path]; dup {
+			return bad("manager %q is listed twice", m.Path)
 		}
-	}
-	v, _ := c.Session(s.session)
-	stopped := v.Terminated && !v.Uncertain
-	// An invocation is charged until its port call returned; stopping the
-	// container afterwards is Host control work.
-	settle := func(kind, invocation, reason string, began, ended time.Time) {
-		cmd := Command{ID: fmt.Sprintf("%s-%s", kind, invocation), ObservedAt: e.cfg.Clock().UTC(), Kind: kind, Assignment: c.Current().Assignment, Run: c.Current().ID, Invocation: invocation, Reason: reason}
-		if kind == SettleInvocation {
-			cmd.Elapsed = ended.Sub(began)
+		index[m.Path] = i
+		slug := slugOf(m.Path)
+		if other, dup := slugs[slug]; dup {
+			return bad("managers %q and %q share the name %q", other, m.Path, slug)
 		}
-		errs = append(errs, e.commit(ctx, cmd))
-	}
-	switch {
-	case !s.opened:
-		settle(ReleaseUndispatched, s.openID, "the Host never opened the session", time.Time{}, time.Time{})
-	case !s.openSettled && stopped:
-		settle(SettleInvocation, s.openID, "the Host stopped the container after a failed start", s.began, s.openEnded)
-	case !s.openSettled:
-		settle(ObserveUncertain, s.openID, "the session's start is not known", time.Time{}, time.Time{})
-	}
-	switch {
-	case s.stepPrepared && !s.dispatched:
-		settle(ReleaseUndispatched, s.stepInvoke, "the Host never dispatched the step", time.Time{}, time.Time{})
-	case s.dispatched && !s.stepSettled && stopped:
-		settle(SettleInvocation, s.stepInvoke, "the Host stopped the container before the step ended", s.stepBegan.Add(s.checked), s.stepEnded)
-	case s.dispatched && !s.stepSettled:
-		settle(ObserveUncertain, s.stepInvoke, "the step's end is not known", time.Time{}, time.Time{})
-	}
-	if err := errors.Join(errs...); err != nil {
-		return err
-	}
-	if r := c.Current(); r.State == Reconciling && !r.StopRequested && stopped {
-		if c.Budget().Overrun {
-			// Every effect ended, but the run cannot continue (core rule T14).
-			return e.commit(ctx, Command{ID: e.meta("finish").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: FinishRun, Assignment: r.Assignment, Run: r.ID, Outcome: Incomplete,
-				Reason: "the failed step overran the budget"})
-		}
-		resume := Command{ID: e.meta("resume").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: ResumeRun, Assignment: r.Assignment, Run: r.ID}
-		if err := e.commit(ctx, resume); err != nil {
-			return err
-		}
-	}
-	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host could not finish the step: " + cause.Error(), HostFault: true})
-	if err != nil {
-		return err
-	}
-	return e.commit(ctx, cmd)
-}
-
-// recover concludes a step that an earlier error or process left bound to its
-// task, once its container is stopped and its effects have ended. A step whose
-// effects are still open needs reconciliation first.
-func (e *Engine) recover(ctx context.Context) error {
-	c := e.cfg.Coordinator
-	if c.Current().State != Running {
-		return nil // a finished or waiting run admits nothing to recover for
-	}
-	for _, t := range c.Tasks() {
-		if t.Session == "" {
-			continue
-		}
-		if v, _ := c.Session(t.Session); !v.Terminated {
-			channel, err := c.SessionChannel(e.cfg.Journal, t.Session, RefuseTools)
-			if err != nil {
-				return err
-			}
-			if err := e.stop(ctx, t.Session, channel, "the Host recovers the step"); err != nil {
+		slugs[slug] = m.Path
+		for _, name := range []string{cfg.RunID + "-r99999-" + slug + "-x99999", cfg.RunID + "-r99999-" + slug + "-v99999", cfg.RunID + "-" + slug + "-x", cfg.RunID + "-" + slug + "-v"} {
+			if err := checkName("generated name", name); err != nil {
 				return err
 			}
 		}
-		cmd, err := c.ConcludeStepCommand(e.meta("conclude"), t.Manager, StepResult{Aggregate: c.AggregateVersion(), Failure: "the Host lost the step before its conclusion", HostFault: true})
-		if err == nil {
-			err = e.commit(ctx, cmd)
+		if m.ExecuteProfile == "" || m.VerifyProfile == "" {
+			return bad("manager %q needs an Execute and a Verify profile", m.Path)
 		}
-		if err != nil {
-			return fmt.Errorf("the step of %s needs reconciliation: %w", t.Manager, err)
+		if i == 0 {
+			continue
 		}
-	}
-	return nil
-}
-
-// stepVersion builds the step's workspace content (core rules D3, T7): the
-// current aggregate plus the Manager's own unaccepted changes, nothing for the
-// expectations review, and the frozen candidate for the candidate review.
-func (e *Engine) stepVersion(ctx context.Context, task TaskView, phase Phase) (stepVersion, error) {
-	switch phase {
-	case PhaseReviewerExpectations:
-		tree, err := snapshot.NewTree(nil)
-		return stepVersion{tree: tree}, err
-	case PhaseReviewerCandidate:
-		if task.Submission.Candidate == (BlobRef{}) {
-			if task.Submission.Aggregate >= uint64(len(e.versions)) {
-				return stepVersion{}, ErrState
-			}
-			a := e.versions[task.Submission.Aggregate]
-			return stepVersion{a.Tree(), a.Registry()}, nil
+		if m.Parent == m.Path {
+			return bad("manager %q is its own parent", m.Path)
 		}
-		candidate, err := e.candidate(ctx, task.Submission.Candidate)
-		if err != nil {
-			return stepVersion{}, err
-		}
-		return stepVersion{candidate.Tree(), candidate.Registry()}, nil
-	}
-	a := e.aggregate()
-	if task.Own != (BlobRef{}) {
-		own, err := e.candidate(ctx, task.Own)
-		if err != nil {
-			return stepVersion{}, err
-		}
-		replayed, ok := realization.ReplayDelivery(a, own).Aggregate()
+		parent, ok := index[m.Parent]
 		if !ok {
-			return stepVersion{}, ErrState
+			return bad("manager %q has parent %q that is not listed before it", m.Path, m.Parent)
 		}
-		a = replayed
+		found := false
+		for _, c := range cfg.Team[parent].Children {
+			found = found || c == m.Path
+		}
+		if !found {
+			return bad("parent %q does not list child %q", m.Parent, m.Path)
+		}
 	}
-	return stepVersion{a.Tree(), a.Registry()}, nil
+	for _, m := range cfg.Team {
+		for _, c := range m.Children {
+			if c == m.Path {
+				return bad("manager %q is its own child", m.Path)
+			}
+			i, ok := index[c]
+			if !ok || cfg.Team[i].Parent != m.Path {
+				return bad("child %q of %q is not a listed manager with that parent", c, m.Path)
+			}
+		}
+	}
+	if err := checkName("candidate volume", cfg.RunID+"-c99999"); err != nil {
+		return err
+	}
+	names := map[string]bool{}
+	for _, c := range cfg.Checks {
+		if !nameRE.MatchString(c.Name) || names[c.Name] {
+			return bad("check name %q is invalid or repeated", c.Name)
+		}
+		names[c.Name] = true
+		if _, ok := index[c.Owner]; !ok {
+			return bad("check %q has unknown owner %q", c.Name, c.Owner)
+		}
+		req := c.Request
+		req.ID = CheckID(cfg.RunID + "-r99999-" + c.Name)
+		if !req.Valid() {
+			return bad("check %q has an incomplete request", c.Name)
+		}
+	}
+	b := cfg.Budget
+	if b.Deadline.IsZero() || b.TurnTimeout <= 0 || b.AgentTurns <= 0 || b.Rounds <= 0 {
+		return bad("the budget needs a deadline, a turn timeout, agent turns and rounds")
+	}
+	if !(HarvestRequest{ID: WorkspaceID(cfg.RunID + "-work"), MaxEntries: cfg.MaxEntries, MaxBytes: cfg.MaxBytes}).Valid() {
+		return bad("harvest bounds are outside the host ceilings")
+	}
+	switch {
+	case cfg.Account == nil || cfg.OwnerOf == nil:
+		return bad("Account and OwnerOf are required")
+	case cfg.Agents == nil || cfg.Workspaces == nil || cfg.Evidence == nil:
+		return bad("Agents, Workspaces and Evidence are required")
+	case len(cfg.Checks) > 0 && cfg.Runner == nil:
+		return bad("checks need a Runner")
+	}
+	return nil
 }
 
-func (e *Engine) candidate(ctx context.Context, ref BlobRef) (realization.Candidate, error) {
-	p, err := e.cfg.Journal.ReadBlob(ctx, ref)
-	if err != nil || p.Ref() != ref {
-		return realization.Candidate{}, ErrObservationLimit
+func newEngine(parent context.Context, cfg Config) *engine {
+	if cfg.Clock == nil {
+		cfg.Clock = time.Now
 	}
-	record, err := realization.DecodeCandidateRecord(p.Bytes(), e.cfg.Limits.Record)
+	ctx, cancel := context.WithDeadline(parent, cfg.Budget.Deadline)
+	e := &engine{cfg: cfg, ctx: ctx, cancel: cancel, base: context.WithoutCancel(parent), byPath: map[string]*mgr{}, delivered: map[string]int{}}
+	e.cond = sync.NewCond(&e.mu)
+	for _, m := range cfg.Team {
+		slug := slugOf(m.Path)
+		x := &mgr{Manager: m, slug: slug, execHome: cfg.RunID + "-" + slug + "-x", verifyHome: cfg.RunID + "-" + slug + "-v"}
+		e.team = append(e.team, x)
+		e.byPath[m.Path] = x
+	}
+	// Wake waiting loops when the run context ends.
+	context.AfterFunc(ctx, func() {
+		e.mu.Lock()
+		e.cond.Broadcast()
+		e.mu.Unlock()
+	})
+	return e
+}
+
+func (e *engine) now() time.Time { return e.cfg.Clock() }
+
+// halt stops the run with the first reason given and cancels all running work.
+func (e *engine) halt(reason string) {
+	e.stopMu.Lock()
+	if e.reason == "" {
+		e.reason = reason
+	}
+	e.stopMu.Unlock()
+	e.cancel()
+}
+
+// fail ends the run with a definite error of its inputs or ports.
+func (e *engine) fail(err error) {
+	e.stopMu.Lock()
+	if e.failure == nil {
+		e.failure = err
+	}
+	e.stopMu.Unlock()
+	e.halt(err.Error())
+}
+
+// portError reports a port failure unless the run was already stopped.
+func (e *engine) portError(what string, err error) {
+	if e.ctx.Err() != nil {
+		return
+	}
+	e.fail(fmt.Errorf("%s: %w", what, err))
+}
+
+func (e *engine) stopReason(fallback string) string {
+	e.stopMu.Lock()
+	defer e.stopMu.Unlock()
+	switch {
+	case e.reason != "":
+		return e.reason
+	case errors.Is(e.ctx.Err(), context.DeadlineExceeded):
+		return "the deadline was reached"
+	case e.ctx.Err() != nil:
+		return "the run was cancelled"
+	}
+	return fallback
+}
+
+// record appends one event to the evidence. A failure stops the run, and no
+// further event is attempted.
+func (e *engine) record(ev Event) error {
+	e.evMu.Lock()
+	defer e.evMu.Unlock()
+	if e.evErr != nil {
+		return e.evErr
+	}
+	if ev.At.IsZero() {
+		ev.At = e.now()
+	}
+	if err := e.cfg.Evidence.Record(ev); err != nil {
+		e.evErr = fmt.Errorf("evidence could not be recorded: %w", err)
+		e.halt(e.evErr.Error())
+		return e.evErr
+	}
+	return nil
+}
+
+func (e *engine) closeVolume(id WorkspaceID) {
+	obs, err := e.cfg.Workspaces.Close(e.base, id)
+	data := map[string]any{"workspace": id, "closed": obs.Closed, "uncertain": obs.Uncertain}
 	if err != nil {
-		return realization.Candidate{}, err
+		data["error"] = err.Error()
 	}
-	return record.Observation().Candidate(), nil
+	if obs.Reason != "" {
+		data["reason"] = obs.Reason
+	}
+	_ = e.record(Event{Kind: "workspace.close", Data: data})
 }
 
-func (e *Engine) quotes(ctx context.Context, manager string) ([]Payload, error) {
-	var out []Payload
-	for _, ref := range e.cfg.Coordinator.StepQuotes(manager) {
-		p, err := e.cfg.Journal.ReadBlob(ctx, ref)
-		if err != nil || p.Ref() != ref {
-			return nil, ErrObservationLimit
-		}
-		out = append(out, p)
+func (e *engine) materialize(id WorkspaceID, tree snapshot.Tree) (candidate, bool) {
+	obs, err := e.cfg.Workspaces.Materialize(e.ctx, WorkspaceSpec{ID: id, Tree: tree})
+	if err == nil && (obs.Uncertain || obs.Volume == "" || obs.Tree != tree.Digest()) {
+		err = fmt.Errorf("materialization was not confirmed: %s", obs.Reason)
+	}
+	if err != nil {
+		e.portError("materialize "+string(id), err)
+		return candidate{}, false
+	}
+	_ = e.record(Event{Kind: "workspace.materialize", Data: map[string]any{"workspace": id, "volume": obs.Volume, "tree": tree.Digest().String(), "entries": tree.EntryCount()}})
+	return candidate{tree: tree, id: id, volume: obs.Volume}, e.ctx.Err() == nil
+}
+
+// affordRound reports whether the turn budget still covers one complete Verify round.
+func (e *engine) affordRound() bool {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	return e.turnCount+len(e.team) <= e.cfg.Budget.AgentTurns
+}
+
+// reserveTurnLocked counts one turn when the budget leaves room for it and for
+// the following reserve turns.
+func (e *engine) reserveTurnLocked(reserve int) bool {
+	if e.turnCount+1+reserve > e.cfg.Budget.AgentTurns {
+		return false
+	}
+	e.turnCount++
+	return true
+}
+
+func reconcile(parent context.Context, cfg Config) (Outcome, error) {
+	if err := validate(cfg); err != nil {
+		return Outcome{Status: Failed, Reason: err.Error()}, err
+	}
+	e := newEngine(parent, cfg)
+	status, reason, tree := e.run()
+	e.mu.Lock()
+	e.closing = true
+	e.executeOpen = false
+	e.mu.Unlock()
+	e.cancel()
+	e.wg.Wait()
+
+	e.stopMu.Lock()
+	failure := e.failure
+	e.stopMu.Unlock()
+	switch {
+	case failure != nil:
+		status, reason, tree = Failed, failure.Error(), snapshot.Tree{}
+	case status == Verified && e.evidenceFailed() != nil:
+		status, reason, tree = Incomplete, e.evidenceFailed().Error(), snapshot.Tree{}
+	}
+	out := e.outcome(status, reason, tree)
+	if err := e.record(Event{Kind: "outcome", Data: map[string]any{"status": status, "reason": reason}}); err != nil && status == Verified {
+		out.Status, out.Reason, out.Candidate = Incomplete, err.Error(), snapshot.Tree{}
+	}
+	if out.Status == Failed {
+		return out, failure
 	}
 	return out, nil
 }
 
-// conclude records the step's S4 result and its outcome (core rules S4, T5,
-// T6, T8). A read-only step that changed files, or a write outside the
-// owner's claims, ends the step as failed, and a failed step's reservations
-// and registry proposals are undone. A candidate review that passes composes
-// the delivery onto the aggregate first (core rule D2); a refused composition
-// is a Host error that finishes the run Failed.
-func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tree) error {
-	c := e.cfg.Coordinator
-	task, _ := c.Task(s.manager)
-	result := StepResult{Aggregate: c.AggregateVersion()}
-	if ref, ok := c.OutcomeInput(s.manager); ok {
-		p, err := e.cfg.Journal.ReadBlob(ctx, ref)
-		if err != nil || p.Ref() != ref {
-			return ErrObservationLimit
-		}
-		result.Input = p
-	}
-	var composed realization.Aggregate
-	result.Changed = !observed.Equal(s.version.tree)
-	switch {
-	case !s.writes && result.Changed:
-		result.Failure = "a read-only step changed its workspace"
-	case s.writes && (result.Changed || s.phase != PhaseReply && e.proposes(s)):
-		// Registry proposals change the candidate even without file changes; a
-		// reply step offers no registry tool, so only its file changes count.
-		record, err := e.capture(s, observed)
-		if err != nil {
-			result.Failure = "the step's changes are outside its owner's claims: " + err.Error()
-			break
-		}
-		p, err := NewPayload(candidateRecordMedia, "utf-8", record.Bytes())
-		if err != nil {
-			return err
-		}
-		result.Candidate, result.Tree = p, observed.Digest()
-	case s.phase == PhaseReviewerCandidate && result.Input.Valid() && task.Submission.Candidate != (BlobRef{}):
-		verdict, err := c.ReviewVerdict(s.manager, result.Input)
-		if err != nil || verdict != VerdictAccept {
-			break
-		}
-		candidate, err := e.candidate(ctx, task.Submission.Candidate)
-		if err != nil {
-			return err
-		}
-		replay := realization.ReplayDelivery(e.aggregate(), candidate)
-		next, ok := replay.Aggregate()
-		if !ok {
-			reason := "the accepted delivery of " + s.manager + " cannot be composed: " + findingText(replay.Findings())
-			finish := Command{ID: e.meta("finish").ID, ObservedAt: e.cfg.Clock().UTC(), Kind: FinishRun, Assignment: c.Current().Assignment, Run: c.Current().ID, Outcome: Failed, Reason: reason}
-			return errors.Join(errors.New(reason), e.commit(ctx, finish))
-		}
-		composed, result.Aggregate, result.AggregateTree = next, next.Version(), next.Tree().Digest()
-	}
-	if result.Failure == "" && s.writes && s.phase != PhaseReply && !result.Candidate.Valid() {
-		if args, err := CallArguments(ToolSubmit, result.Input.Bytes()); err == nil && emptyLimited(task, args) {
-			result.Failure = emptyLimitedReason
-		}
-	}
-	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, result)
-	if err != nil {
-		return err
-	}
-	if err := e.commit(ctx, cmd); err != nil {
-		return err
-	}
-	if composed.Valid() {
-		e.versions = append(e.versions, composed)
-	}
-	return nil
+func (e *engine) evidenceFailed() error {
+	e.evMu.Lock()
+	defer e.evMu.Unlock()
+	return e.evErr
 }
 
-// capture checks the observed tree against the current aggregate and the
-// task's claims and proposed registry records (core rule S4).
-func (e *Engine) capture(s *stepRun, observed snapshot.Tree) (realization.CandidateRecord, error) {
-	owner, err := managerOwner(s.manager)
-	if err != nil {
-		return realization.CandidateRecord{}, err
+func (e *engine) outcome(status Status, reason string, tree snapshot.Tree) Outcome {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	out := Outcome{Status: status, Reason: reason, Candidate: tree, Turns: append([]TurnRecord(nil), e.turns...), Rounds: append([]Round(nil), e.rounds...), Usage: e.usage}
+	for _, f := range e.findings {
+		out.Findings = append(out.Findings, *f)
 	}
-	base := e.aggregate().CandidateBase()
-	claims, err := e.freshClaims(s)
-	if err != nil {
-		return realization.CandidateRecord{}, err
+	for _, q := range e.questions {
+		out.Questions = append(out.Questions, *q)
 	}
-	proposed, err := e.proposals(s.manager, s)
-	if err != nil {
-		return realization.CandidateRecord{}, err
+	for _, m := range e.team {
+		if m.execUsed {
+			out.Homes = append(out.Homes, m.execHome)
+		}
+		if m.verifyUsed {
+			out.Homes = append(out.Homes, m.verifyHome)
+		}
 	}
-	records := map[snapshot.Path]realization.Registration{}
-	for _, r := range base.Registry().Entries() {
-		records[r.Artifact().Path()] = r
+	return out
+}
+
+func (e *engine) incomplete(fallback string) (Status, string, snapshot.Tree) {
+	return Incomplete, e.stopReason(fallback), snapshot.Tree{}
+}
+
+// run drives the rounds. Every exit leaves no turn or check running except
+// Execute turns that reconcile waits for after cancelling the context.
+func (e *engine) run() (Status, string, snapshot.Tree) {
+	cfg := e.cfg
+	managers := make([]string, 0, len(e.team))
+	for _, m := range e.team {
+		managers = append(managers, m.Path)
 	}
-	for path, r := range proposed {
-		records[path] = r
+	if e.record(Event{Kind: "run.start", Data: map[string]any{"run": cfg.RunID, "managers": managers, "start": cfg.Start.Digest().String(), "agentTurns": cfg.Budget.AgentTurns, "rounds": cfg.Budget.Rounds, "deadline": cfg.Budget.Deadline}}) != nil {
+		return e.incomplete("")
 	}
-	var entries []realization.Registration
-	for _, r := range records {
-		entries = append(entries, r)
+	if !e.affordRound() {
+		return e.incomplete(fmt.Sprintf("the agent turn budget of %d does not cover one Verify round of %d managers", cfg.Budget.AgentTurns, len(e.team)))
 	}
-	registry, err := realization.NewRegistry(entries)
-	if err != nil {
-		return realization.CandidateRecord{}, err
-	}
-	result := realization.CaptureCandidate(base, owner, claims, observed, registry)
-	candidate, ok := result.Candidate()
+	cand, ok := e.materialize(e.volumeID("c0"), cfg.Start)
 	if !ok {
-		return realization.CandidateRecord{}, errors.New(findingText(result.Findings()))
+		e.closeVolume(e.volumeID("c0"))
+		return e.incomplete("")
 	}
-	return realization.NewCandidateRecord(e.compiled, candidate, nil, nil, e.cfg.Limits.Record)
-}
-
-// tools answers the Host tools of one step. Outcome tools are accepted once
-// per step, after the Coordinator's own check; reservations and registry
-// proposals take effect for the task; read supplies Definitions and the
-// step's files. Tools the core does not support yet are refused with a reason.
-func (e *Engine) tools(s *stepRun) ToolHandler {
-	manager, phase, version := s.manager, s.phase, s.version
-	answered := false
-	return func(ctx context.Context, call ToolCall, _ int64) (ToolOutcome, error) {
-		refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
-		ok := func(result any) (ToolOutcome, error) {
-			data, err := json.Marshal(result)
-			if err != nil {
-				return refuse("the result cannot be encoded")
-			}
-			return ToolOutcome{Status: ToolOK, Result: data}, nil
+	work := e.volumeID("work")
+	shared, ok := e.materialize(work, cfg.Start)
+	if !ok {
+		e.closeVolume(cand.id)
+		e.closeVolume(work)
+		return e.incomplete("")
+	}
+	e.work = shared.volume
+	for round := 1; ; round++ {
+		if round > 1 && !e.affordRound() {
+			e.closeVolume(cand.id)
+			return e.incomplete("the agent turn budget cannot cover another Verify round")
 		}
-		if !PhaseTool(phase, call.Tool) {
-			return refuse("this tool is not offered in the " + string(phase) + " phase")
+		green := e.verifyRound(round, cand)
+		e.closeVolume(cand.id)
+		if e.ctx.Err() != nil {
+			return e.incomplete("")
 		}
-		if call.Input.Redacted {
-			return refuse("redacted tool input cannot be evaluated")
+		if green {
+			return Verified, "", cand.tree
 		}
-		args, err := CallArguments(call.Tool, call.Input.Journal.Bytes())
-		if err != nil {
-			return refuse(err.Error())
+		if reason := e.disabledOwnerOpen(); reason != "" {
+			e.halt(reason)
+			return e.incomplete("")
 		}
-		if call.Tool == ToolSend {
-			// Messages take effect with the step's conclusion; a reply step
-			// ends with its one reply (core rules M1 to M5, T11).
-			if phase == PhaseReply && answered {
-				return refuse("a reply step sends one reply")
-			}
-			id, err := e.cfg.Coordinator.CheckSend(manager, args)
-			if err != nil {
-				return refuse(err.Error())
-			}
-			answered = answered || phase == PhaseReply
-			// In D2 and D4 the root ended its step after a question without an
-			// outcome, so the step failed and the question was dropped.
-			if note := sendNote(phase, args, id); note != "" {
-				return ok(map[string]string{"id": id, "note": note})
-			}
-			return ok(map[string]string{"id": id})
+		if round >= cfg.Budget.Rounds {
+			return e.incomplete(fmt.Sprintf("the round budget of %d ended without a green round", cfg.Budget.Rounds))
 		}
-		if OutcomeTool(phase, call.Tool) {
-			if answered {
-				return refuse("this step already has an outcome")
-			}
-			if err := e.cfg.Coordinator.CheckOutcome(manager, call.Tool, args); err != nil {
-				return refuse(err.Error())
-			}
-			if phase.writing() {
-				if reason := e.formMismatch(s); reason != "" {
-					return refuse(reason)
-				}
-				reason, err := e.preflight(ctx, s, call, args)
-				if err != nil {
-					return ToolOutcome{}, err
-				}
-				if reason != "" {
-					return refuse(reason)
-				}
-			}
-			answered = true
-			return ok(map[string]bool{"accepted": true})
+		e.executePhase()
+		if e.ctx.Err() != nil {
+			return e.incomplete("")
 		}
-		switch call.Tool {
-		case ToolRequestCheck:
-			return e.reviewCheck(ctx, s, call, args)
-		case ToolRead:
-			var in struct {
-				Ref string `json:"ref"`
-			}
-			if err := decodeArgs(args, &in); err != nil {
-				return refuse(err.Error())
-			}
-			return e.read(phase, version, in.Ref)
-		case ToolReservePath:
-			var in struct {
-				Path string `json:"path"`
-				Form string `json:"form"`
-			}
-			if err := decodeArgs(args, &in); err != nil {
-				return refuse(err.Error())
-			}
-			claim := Claim{Tool: ToolReservePath, Path: in.Path, Form: in.Form}
-			request, err := requestOf(manager, claim)
-			if err != nil {
-				return refuse(err.Error())
-			}
-			// Reserving a path again changes the form of one's own reservation.
-			claims, err := e.freshClaimsWithout(s, in.Path)
-			if err != nil {
-				return refuse(err.Error())
-			}
-			if _, decision := realization.ReserveNewPath(e.aggregate().PathFacts(), claims, request); decision.Status() != realization.PathAdmissible {
-				return refuse(findingText(decision.Findings()) + e.holderHint(s, in.Path))
-			}
-			s.pending = addClaims(s.pending, []Claim{claim})
-			return ok(map[string]bool{"reserved": true})
-		case ToolRegister:
-			var in struct {
-				Path     string   `json:"path"`
-				Form     string   `json:"form"`
-				Realizes []string `json:"realizes"`
-				Why      string   `json:"why"`
-			}
-			if err := decodeArgs(args, &in); err != nil {
-				return refuse(err.Error())
-			}
-			claim := Claim{Tool: ToolRegister, Path: in.Path, Form: in.Form, Realizes: in.Realizes, Why: in.Why}
-			record, err := registrationOf(manager, claim)
-			if err != nil {
-				return refuse(err.Error())
-			}
-			// A new file's record carries the form of its reservation (core rule S4).
-			if _, registered := e.aggregate().Registry().Lookup(record.Artifact().Path()); !registered {
-				if form, reserved := e.reservedForm(s, in.Path); reserved && form != in.Form {
-					return refuse(fmt.Sprintf("%s is reserved with form %s; register it with that form, or reserve it again with form %s first", in.Path, form, in.Form))
-				}
-			}
-			if err := e.registrable(s, record); err != nil {
-				return refuse(err.Error())
-			}
-			s.pending = addClaims(s.pending, []Claim{claim})
-			return ok(map[string]bool{"registered": true})
+		if reason := e.disabledOwnerOpen(); reason != "" {
+			e.halt(reason)
+			return e.incomplete("")
 		}
-		return refuse("the " + call.Tool + " tool is not available in this version of the core")
+		next, ok := e.capture(round, work, cand.tree)
+		if !ok {
+			return e.incomplete("")
+		}
+		cand = next
 	}
 }
 
-// sendNote reminds a Manager that sending does not end its step, with an
-// outcome that fits the phase.
-func sendNote(phase Phase, args []byte, id string) string {
-	var in sendInput
-	_ = decodeArgs(args, &in)
-	switch {
-	case phase.writing() && in.Kind == messageQuestion:
-		return fmt.Sprintf("The message is recorded with your step's outcome. Sending does not end your step: end it with exactly one outcome call, for example wait with {\"on\":[{\"kind\":\"reply\",\"ref\":%q}],\"reason\":\"Needs the answer.\"} if you need the answer first.", id)
-	case phase.writing():
-		return "The message is recorded with your step's outcome. Sending does not end your step: end it with exactly one outcome call, submit or wait."
+// capture harvests the quiescent shared tree into the next candidate.
+func (e *engine) capture(round int, work WorkspaceID, previous snapshot.Tree) (candidate, bool) {
+	h, err := e.cfg.Workspaces.Harvest(e.ctx, HarvestRequest{ID: work, MaxEntries: e.cfg.MaxEntries, MaxBytes: e.cfg.MaxBytes})
+	if err == nil && h.Uncertain {
+		err = fmt.Errorf("harvest is uncertain: %s", h.Reason)
+	}
+	if err != nil {
+		e.halt("capture of the shared tree is uncertain: " + err.Error())
+		return candidate{}, false
+	}
+	next, ok := e.materialize(e.volumeID(fmt.Sprintf("c%d", round)), h.Tree)
+	if !ok {
+		e.closeVolume(e.volumeID(fmt.Sprintf("c%d", round)))
+		return candidate{}, false
+	}
+	next.index, next.unsupported = round, h.Unsupported
+	e.observeWrites(round, previous, h.Tree)
+	_ = e.record(Event{Kind: "candidate", Round: round + 1, Data: map[string]any{"tree": h.Tree.Digest().String(), "workspace": next.id, "volume": next.volume, "entries": h.Tree.EntryCount(), "harvest": map[string]any{"uncertain": h.Uncertain, "unsupported": h.Unsupported, "reason": h.Reason}}})
+	if e.ctx.Err() != nil {
+		e.closeVolume(next.id)
+		return candidate{}, false
+	}
+	return next, true
+}
+
+// observeWrites records which owners' files changed although the owner ran no
+// Execute turn since the previous candidate. Managers are trusted; this is an
+// observation, not enforcement.
+func (e *engine) observeWrites(round int, before, after snapshot.Tree) {
+	changed := map[string][]string{}
+	for _, c := range snapshot.Compare(before, after) {
+		owner := e.cfg.OwnerOf(c.Path())
+		if _, ok := e.byPath[owner]; !ok {
+			owner = "."
+		}
+		changed[owner] = append(changed[owner], c.Path().String())
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	for _, m := range e.team {
+		m.changed = nil
+		if paths := changed[m.Path]; len(paths) > 0 && !m.ran {
+			m.changed = paths
+			_ = e.record(Event{Kind: "write.observed", Manager: m.Path, Round: round, Data: map[string]any{"paths": paths}})
+		}
+		m.ran = false
+	}
+}
+
+// disabledOwnerOpen names a reason when a Manager stopped by repeated failures
+// still owns an open blocking finding, which no later round can resolve.
+func (e *engine) disabledOwnerOpen() string {
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	for _, f := range e.findings {
+		if f.Blocking && !f.Closed && e.byPath[f.Owner].disabled {
+			return fmt.Sprintf("manager %q stopped after repeated failed turns while finding %s is open", f.Owner, f.ID)
+		}
 	}
 	return ""
-}
-
-// reviewCheck runs a configured check that a candidate review requests, within
-// the step's remaining time, on the
-// frozen candidate it reviews, and answers with the receipt's outcome and the
-// end of its output, which the review cites as evidence by the check's ID.
-func (e *Engine) reviewCheck(ctx context.Context, s *stepRun, call ToolCall, args []byte) (ToolOutcome, error) {
-	refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
-	if s.phase != PhaseReviewerCandidate {
-		return refuse("checks run on a submitted candidate during its review")
-	}
-	var in struct {
-		Check string `json:"check"`
-	}
-	if err := decodeArgs(args, &in); err != nil {
-		return refuse(err.Error())
-	}
-	req, ok := e.cfg.ReviewChecks[in.Check]
-	if !ok || e.cfg.Checks == nil {
-		names := slices.Sorted(maps.Keys(e.cfg.ReviewChecks))
-		return refuse(fmt.Sprintf("%q is not a configured check; the configured checks are %s", in.Check, strings.Join(names, ", ")))
-	}
-	receipt, req, err := e.stepCheck(ctx, s, call, in.Check, req, s.version.tree)
-	if errors.Is(err, errNotAdmitted) {
-		return refuse(err.Error())
-	}
-	if err != nil {
-		return ToolOutcome{}, err
-	}
-	output := receipt.Output
-	if len(output) > reviewCheckOutput {
-		output = output[len(output)-reviewCheckOutput:]
-	}
-	data, err := json.Marshal(map[string]any{"check": string(req.ID), "passed": receipt.Passed(req), "exitCode": receipt.ExitCode, "timedOut": receipt.TimedOut, "outputTail": string(output), "reason": receipt.Reason})
-	if err != nil {
-		return refuse("the receipt cannot be encoded")
-	}
-	return ToolOutcome{Status: ToolOK, Result: data}, nil
-}
-
-const reviewCheckOutput = 16 << 10
-
-// stepCheck runs a configured check of the step's Manager on tree within the
-// step's remaining time and charges the time to the check, not the step. A
-// check that does not fit or that the Coordinator refuses ran nowhere and
-// returns errNotAdmitted with the reason.
-func (e *Engine) stepCheck(ctx context.Context, s *stepRun, call ToolCall, name string, req CheckRequest, tree snapshot.Tree) (CheckReceipt, CheckRequest, error) {
-	req.Tree, req.ID = tree, CheckID(fmt.Sprintf("%s-%s-%s", req.ID, call.Step, call.Call))
-	purpose := Assessment
-	if s.phase.writing() {
-		purpose = Writing
-	}
-	reservation := e.checkReservation(req, purpose)
-	if left := s.deadline.Sub(e.cfg.Clock()); reservation.Maximum > left {
-		return CheckReceipt{}, req, fmt.Errorf("%w: the check needs up to %s, and the step has %s left", errNotAdmitted, reservation.Maximum, left.Round(time.Second))
-	}
-	admit, err := e.cfg.Coordinator.PrepareReviewCheckCommand(e.meta("prepare-check"), s.manager, name, req, reservation)
-	if err != nil {
-		return CheckReceipt{}, req, fmt.Errorf("%w: %w", errNotAdmitted, err)
-	}
-	receipt, elapsed, err := e.runCheck(ctx, admit, req)
-	s.checked += elapsed
-	return receipt, req, err
-}
-
-// registrable checks a proposed registry record before it is accepted: its
-// Definitions exist in the compiled model, and its path is registered to the
-// Manager or reserved by it.
-func (e *Engine) registrable(s *stepRun, record realization.Registration) error {
-	for _, id := range record.Artifact().Basis() {
-		if !e.defined(id) {
-			return fmt.Errorf("Definition %s/%s does not exist in the model", id.Package, id.ID)
-		}
-	}
-	path := record.Artifact().Path()
-	if current, ok := e.aggregate().Registry().Lookup(path); ok {
-		if current.Owner() != record.Owner() {
-			return fmt.Errorf("%s is registered to the Manager %s; you may use it but not change it", path, ownerManager(current.Owner()))
-		}
-		return nil
-	}
-	if !slices.ContainsFunc(e.claimsOf(s.manager, s), func(c Claim) bool { return c.Tool == ToolReservePath && c.Path == path.String() }) {
-		return fmt.Errorf("%s is neither registered to you nor reserved by you; reserve it first", path)
-	}
-	return nil
-}
-
-// preflight tells the Agent before its outcome why the step's changes would
-// not be captured, why a limited delivery would deliver nothing, or which
-// required check fails on them. It observes the running workspace, which is
-// advisory: when the observation is not complete, or a check does not fit the
-// step, it stays silent, and the conclusion and the review remain authoritative.
-func (e *Engine) preflight(ctx context.Context, s *stepRun, call ToolCall, args []byte) (string, error) {
-	peek, err := e.cfg.Workspaces.Peek(ctx, HarvestRequest{ID: s.workspace, MaxEntries: e.cfg.Limits.HarvestEntries, MaxBytes: e.cfg.Limits.HarvestBytes})
-	if err != nil || !peek.Complete() {
-		return "", nil
-	}
-	changed, proposes := !peek.Tree.Equal(s.version.tree), e.proposes(s)
-	if changed || proposes {
-		if _, err := e.capture(s, peek.Tree); err != nil {
-			return "these changes cannot be captured: " + err.Error() + "; correct them first", nil
-		}
-	}
-	if call.Tool != ToolSubmit {
-		return "", nil
-	}
-	if !changed && !proposes {
-		if task, ok := e.cfg.Coordinator.Task(s.manager); ok && emptyLimited(task, args) {
-			return emptyLimitedReason, nil
-		}
-	}
-	return e.requiredChecksFail(ctx, s, call, peek.Tree)
-}
-
-// requiredChecksFail runs the basis's required checks that are configured for
-// the step on the observed tree and names the first that fails with the end of
-// its output. A review passes only when they pass (core rule T8), so a
-// submission that fails one cannot be accepted. A check that does not fit the
-// step or is not admitted stays silent.
-func (e *Engine) requiredChecksFail(ctx context.Context, s *stepRun, call ToolCall, tree snapshot.Tree) (string, error) {
-	if e.cfg.Checks == nil {
-		return "", nil
-	}
-	for _, name := range e.cfg.Coordinator.RequiredChecks() {
-		req, ok := e.cfg.ReviewChecks[name]
-		if !ok {
-			continue
-		}
-		receipt, req, err := e.stepCheck(ctx, s, call, name, req, tree)
-		if errors.Is(err, errNotAdmitted) {
-			continue
-		}
-		if err != nil {
-			return "", err
-		}
-		if observedFailure(receipt, req) {
-			return fmt.Sprintf("the required check %s fails on these files; fix it, or wait for what it needs: %s", name, outputTail(receipt.Output, gateCheckOutput)), nil
-		}
-	}
-	return "", nil
-}
-
-// observedFailure reports whether the receipt shows the request's check ran to
-// a nonzero exit; a check that did not run, timed out or is uncertain shows
-// nothing about the files.
-func observedFailure(r CheckReceipt, req CheckRequest) bool {
-	return r.ID == req.ID && r.ImageID == req.ImageID && r.Tree == req.Tree.Digest() && r.Started && r.Exited && !r.TimedOut && !r.Uncertain && r.ExitCode != 0
-}
-
-// outputTail is the end of a check's output, at most limit bytes, as text a
-// tool refusal can carry: whole characters, without control characters other
-// than line breaks and tabs.
-func outputTail(output []byte, limit int) string {
-	if len(output) > limit {
-		output = output[len(output)-limit:]
-		for len(output) > 0 && !utf8.RuneStart(output[0]) {
-			output = output[1:]
-		}
-	}
-	clean := strings.Map(func(r rune) rune {
-		if unicode.IsControl(r) && r != '\n' && r != '\t' {
-			return -1
-		}
-		return r
-	}, strings.ToValidUTF8(string(output), ""))
-	return strings.TrimSpace(clean)
-}
-
-const gateCheckOutput = 8 << 10
-
-const emptyLimitedReason = "a limited delivery needs changed files; with nothing to deliver, submit complete or wait"
-
-// emptyLimited reports whether submit arguments name a limited delivery of a
-// task that holds no unaccepted own changes; with no file or registry change
-// in the step, such a delivery delivers nothing.
-func emptyLimited(task TaskView, args []byte) bool {
-	var in submitInput
-	return decodeArgs(args, &in) == nil && in.Scope == "limited" && task.Own == (BlobRef{})
-}
-
-// proposes reports whether the step's Manager has a registry proposal that
-// differs from the aggregate.
-func (e *Engine) proposes(s *stepRun) bool {
-	proposed, err := e.proposals(s.manager, s)
-	return err != nil || len(proposed) > 0
-}
-
-func (e *Engine) defined(id model.Identity) bool {
-	for _, m := range e.compiled.Models {
-		for _, d := range m.Definitions {
-			if d.Identity == id {
-				return true
-			}
-		}
-	}
-	return false
-}
-
-// read returns a Definition as package/id or a file of the step's version.
-// The expectations review reads Definitions only (core rule T7).
-func (e *Engine) read(phase Phase, version stepVersion, ref string) (ToolOutcome, error) {
-	refuse := func(reason string) (ToolOutcome, error) { return ToolOutcome{Status: ToolRefused, Reason: reason}, nil }
-	if id, ok := definitionIdentity(ref); ok && e.defined(id) {
-		for _, m := range e.compiled.Models {
-			for _, d := range m.Definitions {
-				if d.Identity == id {
-					data, err := json.Marshal(map[string]any{"definition": ref, "kind": d.Kind.Package + "/" + d.Kind.ID, "title": d.Title, "body": d.Body, "spec": d.Spec})
-					if err != nil {
-						return refuse("the Definition cannot be encoded")
-					}
-					return ToolOutcome{Status: ToolOK, Result: data}, nil
-				}
-			}
-		}
-	}
-	if phase == PhaseReviewerExpectations {
-		return refuse("before the candidate, read supplies Definitions only")
-	}
-	path, err := snapshot.NewPath(ref)
-	if err != nil {
-		return refuse("ref names neither a Definition as package/id nor a file path")
-	}
-	entry, found := version.tree.Lookup(path)
-	if !found {
-		return refuse("no Definition or file " + ref + " exists in this step's version")
-	}
-	result := map[string]any{"path": ref, "contentId": entry.ContentID().String(), "bytes": entry.ByteLength()}
-	if utf8.Valid(entry.Bytes()) {
-		result["text"] = string(entry.Bytes())
-	}
-	data, err := json.Marshal(result)
-	if err != nil {
-		return refuse("the file cannot be encoded")
-	}
-	return ToolOutcome{Status: ToolOK, Result: data}, nil
-}
-
-func findingText(findings []realization.Finding) string {
-	var parts []string
-	for _, f := range findings {
-		code := f.Code
-		if f.Path != (snapshot.Path{}) {
-			code += " (" + f.Path.String() + ")"
-		}
-		parts = append(parts, code+": "+f.Message)
-	}
-	return strings.Join(parts, "; ")
-}
-
-func definitionIdentity(s string) (model.Identity, bool) {
-	i := strings.LastIndex(s, "/")
-	if i <= 0 || i == len(s)-1 {
-		return model.Identity{}, false
-	}
-	return model.Identity{Package: s[:i], ID: s[i+1:]}, true
-}
-
-func (e *Engine) id(kind, task string) string {
-	return fmt.Sprintf("%s-%s-%d", kind, task[len(task)-12:], e.cfg.Coordinator.Revision())
-}
-
-func (e *Engine) meta(kind string) RecordMeta {
-	return RecordMeta{ID: fmt.Sprintf("%s-%d", kind, e.cfg.Coordinator.Revision()), ObservedAt: e.cfg.Clock().UTC()}
-}
-
-func (e *Engine) settle(ctx context.Context, invocation string, began time.Time) error {
-	c := Command{ID: fmt.Sprintf("settle-%s", invocation), ObservedAt: e.cfg.Clock().UTC(), Kind: SettleInvocation, Assignment: e.cfg.Coordinator.Current().Assignment, Run: e.cfg.Coordinator.Current().ID,
-		Invocation: invocation, Elapsed: e.cfg.Clock().Sub(began), Reason: "Host observed the invocation's end and elapsed duration"}
-	return e.commit(ctx, c)
-}
-
-func (e *Engine) commit(ctx context.Context, cmd Command) error {
-	p, err := e.cfg.Coordinator.Propose(cmd)
-	if err != nil {
-		return err
-	}
-	_, err = e.cfg.Coordinator.Commit(ctx, e.cfg.Journal, p)
-	return err
 }

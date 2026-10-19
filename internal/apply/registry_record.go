@@ -54,7 +54,7 @@ func (r *registryPreparation) decodeRecord(source snapshot.Path, node *yaml.Node
 		return realization.Registration{}, false
 	}
 	if _, found := census.Lookup(path); !found {
-		r.invalid(source, fields["path"], "registry.artifact_missing", "Registered artifact is absent from the bound Census.")
+		r.invalid(source, fields["path"], "registry.artifact_missing", fmt.Sprintf("Registered artifact %q is absent from the bound Census.", record.Path))
 		return realization.Registration{}, false
 	}
 	registration, err := realization.NewRegistration(owner, artifact)

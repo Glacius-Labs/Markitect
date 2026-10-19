@@ -1,6 +1,6 @@
 # Development
 
-Markitect is being rebuilt around canonical language v1 and delegated realization. Current source provides actual read-only preparation and a guarded generated model view. Apply and execution remain unavailable. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations.
+Markitect is being rebuilt around canonical language v1 and delegated realization. Current source provides actual read-only preparation, a guarded generated model view and the recursive Apply of [DEC-056](docs/concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) on branch `dev/recursive-apply-simplified`, pending review, CI and owner acceptance ([runtime contract](docs/design/canonical-model/manager-apply-runtime.md)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations.
 
 ## Ownership and layout
 
@@ -51,7 +51,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives actual Library M1/M2 preparation, static context, fixed-source refusals and unavailable Apply. It does not implement the Library or establish provider/Apply/release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives actual Library M1/M2 preparation, static context, fixed-source refusals and Apply's refusal of a missing or outdated invocation configuration before any acquisition. It starts no Agent or container, so it does not run an Apply, implement the Library or establish provider/Apply/release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 

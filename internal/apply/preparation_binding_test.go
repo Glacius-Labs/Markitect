@@ -264,8 +264,8 @@ func TestPreparationResultsCopyRequestsAndKeepOnlyFinalAcquisitionBinding(t *tes
 	}
 	copyInputs.Raw.Instructions[0] = apply.SourceFile{}
 	document := prepared.Execution().Partial()
-	document.Defaults.Manager.Instructions.Value[0] = "mutated"
-	if result.Request().Selection.Dependencies[0].Boundary == "" || result.Request().Selection.Execution[0].Boundary == "" || result.Attempts()[0].Model().Inputs().Guard != "actual-guard-1" || !reflect.DeepEqual(result.Attempts()[1].Execution().Partial().Defaults.Manager.Instructions.Value, []string{"ops/one.md", "ops/two.md", "ops/one.md"}) || changedEntry < 0 || reflect.DeepEqual(copyInputs.Raw.Local.Source.Entries[changedEntry].Bytes, prepared.Model().Inputs().Raw.Local.Source.Entries[changedEntry].Bytes) {
+	document.Defaults.Execute.Instructions.Value[0] = "mutated"
+	if result.Request().Selection.Dependencies[0].Boundary == "" || result.Request().Selection.Execution[0].Boundary == "" || result.Attempts()[0].Model().Inputs().Guard != "actual-guard-1" || !reflect.DeepEqual(result.Attempts()[1].Execution().Partial().Defaults.Execute.Instructions.Value, []string{"ops/one.md", "ops/two.md", "ops/one.md"}) || changedEntry < 0 || reflect.DeepEqual(copyInputs.Raw.Local.Source.Entries[changedEntry].Bytes, prepared.Model().Inputs().Raw.Local.Source.Entries[changedEntry].Bytes) {
 		t.Fatal("caller mutation escaped a copying accessor")
 	}
 }

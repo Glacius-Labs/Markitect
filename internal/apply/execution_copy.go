@@ -29,22 +29,21 @@ func executionRoleCopy(value organization.RoleOverride) organization.RoleOverrid
 }
 
 func cloneExecution(value AuthoredExecution) AuthoredExecution {
-	value.Limits.CreationRoots.Value = slices.Clone(value.Limits.CreationRoots.Value)
-	value.Defaults.Manager = executionRoleCopy(value.Defaults.Manager)
-	value.Defaults.Reviewer = executionRoleCopy(value.Defaults.Reviewer)
-	value.Defaults.BatchNoChangeReviews = executionPointer(value.Defaults.BatchNoChangeReviews)
-	value.Defaults.RejectionLimit = executionPointer(value.Defaults.RejectionLimit)
-	value.Defaults.CreationRoots.Value = slices.Clone(value.Defaults.CreationRoots.Value)
+	value.Defaults.Execute = executionRoleCopy(value.Defaults.Execute)
+	value.Defaults.Verify = executionRoleCopy(value.Defaults.Verify)
 	value.Packages = executionListPointer(value.Packages)
 	if value.Packages != nil {
 		for i := range value.Packages.Value {
 			p := &value.Packages.Value[i]
-			p.Manager = executionRoleCopy(p.Manager)
-			p.Reviewer = executionRoleCopy(p.Reviewer)
-			p.StepTimeout = executionPointer(p.StepTimeout)
-			p.RejectionLimit = executionPointer(p.RejectionLimit)
-			p.CreationRoots = executionListPointer(p.CreationRoots)
+			p.Execute = executionRoleCopy(p.Execute)
+			p.Verify = executionRoleCopy(p.Verify)
 		}
+	}
+	if value.Layout != nil {
+		layout := *value.Layout
+		layout.Roots.Value = slices.Clone(layout.Roots.Value)
+		layout.Exceptions = slices.Clone(layout.Exceptions)
+		value.Layout = &layout
 	}
 	value.Scope = executionListPointer(value.Scope)
 	value.Checks = executionListPointer(value.Checks)
@@ -54,6 +53,5 @@ func cloneExecution(value AuthoredExecution) AuthoredExecution {
 			value.Checks.Value[i].RequiredBy = executionPointer(value.Checks.Value[i].RequiredBy)
 		}
 	}
-	value.OwnerApproval = executionListPointer(value.OwnerApproval)
 	return value
 }

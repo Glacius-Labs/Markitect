@@ -10,6 +10,7 @@ import (
 	"regexp"
 	"slices"
 	"strings"
+	"time"
 	"unicode"
 	"unicode/utf8"
 
@@ -17,13 +18,15 @@ import (
 	runport "github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-var errRunConfig = errors.New("run configuration unavailable, incomplete or invalid; see the closed formatVersion 1 contract")
+var errRunConfig = errors.New("run configuration unavailable, incomplete or invalid; see the closed formatVersion 2 contract")
 var errRunConfigIO = errors.New("run configuration file could not be completely observed")
 
 // runConfig supplies explicit invocation assertions and concrete Host inputs.
-// It adds no project settings or profile defaults. Durations use integer
-// nanoseconds, matching the existing producer types. ProductBuild is the
+// It adds no project settings or profile defaults. ProductBuild is the
 // operator's assertion identifying the frozen build, not a verified source SHA.
+// Harvest bounds every observation of a shared working tree. Deadline is the
+// optional absolute wall-clock limit (RFC 3339, UTC) that the run must finish
+// before; the project's own budget still applies.
 type runConfig struct {
 	FormatVersion      int                         `json:"formatVersion"`
 	RepositoryIdentity string                      `json:"repositoryIdentity"`
@@ -31,12 +34,17 @@ type runConfig struct {
 	OwnerRequest       string                      `json:"ownerRequest"`
 	OwnerDecisions     []string                    `json:"ownerDecisions"`
 	StateDirectory     string                      `json:"stateDirectory"`
-	Allocation         runport.Capacity            `json:"allocation"`
-	RestoreLimits      runport.RestoreLimits       `json:"restoreLimits"`
 	EngineExecutable   string                      `json:"engineExecutable"`
 	WorkspaceHelper    container.ContainerSpec     `json:"workspaceHelper"`
-	EngineLimits       runport.EngineLimits        `json:"engineLimits"`
+	Harvest            harvestLimits               `json:"harvest"`
+	Deadline           string                      `json:"deadline,omitempty"`
 	Credentials        map[string]credentialSource `json:"credentials"`
+}
+
+// harvestLimits are the entry and byte bounds of one working-tree observation.
+type harvestLimits struct {
+	MaxEntries int   `json:"maxEntries"`
+	MaxBytes   int64 `json:"maxBytes"`
 }
 
 func loadRunConfig(ctx context.Context, path string) (runConfig, error) {
@@ -60,10 +68,10 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	if err != nil {
 		return runConfig{}, err
 	}
-	// ownerDecisions is the only optional field (DEC-053).
-	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "allocation", "restoreLimits", "engineExecutable", "workspaceHelper", "engineLimits", "credentials"}
+	// ownerDecisions (DEC-053) and deadline are the optional fields.
+	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "engineExecutable", "workspaceHelper", "harvest", "credentials"}
 	for key := range root {
-		if !slices.Contains(required, key) && key != "ownerDecisions" {
+		if !slices.Contains(required, key) && key != "ownerDecisions" && key != "deadline" {
 			return runConfig{}, errRunConfig
 		}
 	}
@@ -76,10 +84,8 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 		data json.RawMessage
 		keys []string
 	}{
-		{root["allocation"], []string{"runs", "sessionStarts", "steps", "executionTime"}},
-		{root["restoreLimits"], []string{"pageSize", "batches", "events", "bytes"}},
 		{root["workspaceHelper"], []string{"name", "image", "labels", "user", "cpus", "memoryBytes", "pids", "tmpBytes", "network"}},
-		{root["engineLimits"], []string{"startTimeout", "stopTimeout", "harvestEntries", "harvestBytes", "record"}},
+		{root["harvest"], []string{"maxEntries", "maxBytes"}},
 	} {
 		if _, err := runConfigObject(section.data, section.keys...); err != nil {
 			return runConfig{}, err
@@ -87,10 +93,6 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	}
 	helper, _ := runConfigObject(root["workspaceHelper"])
 	if _, err := runConfigObject(helper["labels"]); err != nil {
-		return runConfig{}, err
-	}
-	limits, _ := runConfigObject(root["engineLimits"])
-	if _, err := runConfigObject(limits["record"], "encodedBytes", "fileBytes", "manifestEntries", "metadataRows"); err != nil {
 		return runConfig{}, err
 	}
 	credentials, err := runConfigObject(root["credentials"])
@@ -103,7 +105,7 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 		}
 	}
 	var cfg runConfig
-	if json.Unmarshal(data, &cfg) != nil || !cfg.valid() {
+	if json.Unmarshal(data, &cfg) != nil || root["deadline"] != nil && cfg.Deadline == "" || !cfg.valid() {
 		return runConfig{}, errRunConfig
 	}
 	// Constructor validation performs no credential file I/O.
@@ -165,7 +167,7 @@ var (
 )
 
 func (c runConfig) valid() bool {
-	if c.FormatVersion != 1 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !utf8.ValidString(c.OwnerRequest) || strings.TrimSpace(c.OwnerRequest) == "" || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
+	if c.FormatVersion != 2 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !utf8.ValidString(c.OwnerRequest) || strings.TrimSpace(c.OwnerRequest) == "" || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
 		return false
 	}
 	if c.OwnerDecisions != nil && len(c.OwnerDecisions) == 0 || len(c.OwnerDecisions) > 64 || slices.ContainsFunc(c.OwnerDecisions, func(d string) bool {
@@ -173,11 +175,13 @@ func (c runConfig) valid() bool {
 	}) {
 		return false
 	}
-	a, r, e, h := c.Allocation, c.RestoreLimits, c.EngineLimits, c.WorkspaceHelper
-	if a.Runs <= 0 || a.SessionStarts <= 0 || a.Steps <= 0 || a.ExecutionTime <= 0 || r.PageSize == 0 || r.PageSize > 256 || r.Batches == 0 || r.Events == 0 || r.Bytes <= 0 || e.StartTimeout <= 0 || e.StopTimeout <= 0 || e.HarvestEntries <= 0 || e.HarvestBytes <= 0 {
-		return false
+	if c.Deadline != "" {
+		if t, err := time.Parse(time.RFC3339, c.Deadline); err != nil || !strings.HasSuffix(c.Deadline, "Z") || t.IsZero() {
+			return false
+		}
 	}
-	if e.Record.EncodedBytes <= 0 || e.Record.EncodedBytes > 64<<20 || e.Record.FileBytes <= 0 || e.Record.ManifestEntries <= 0 || e.Record.MetadataRows <= 0 {
+	h := c.WorkspaceHelper
+	if !(runport.HarvestRequest{ID: "harvest", MaxEntries: c.Harvest.MaxEntries, MaxBytes: c.Harvest.MaxBytes}).Valid() {
 		return false
 	}
 	if !runtimeName.MatchString(h.Name) || !runtimeImage.MatchString(h.Image) || !runtimeUser.MatchString(h.User) || h.CPUs <= 0 || math.IsNaN(h.CPUs) || math.IsInf(h.CPUs, 0) || h.MemoryBytes <= 0 || h.Pids <= 0 || h.TmpBytes <= 0 || h.Network == "host" || h.Network != "" && !runtimeName.MatchString(h.Network) || len(h.Labels) == 0 {
@@ -189,6 +193,12 @@ func (c runConfig) valid() bool {
 		}
 	}
 	return true
+}
+
+// deadline returns the configured wall-clock limit, or the zero time for none.
+func (c runConfig) deadline() time.Time {
+	t, _ := time.Parse(time.RFC3339, c.Deadline)
+	return t
 }
 
 func runConfigText(value string) bool {

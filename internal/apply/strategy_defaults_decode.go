@@ -39,7 +39,7 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 	}
 	root := configField{node: document.Content[0]}
 	d.restricted(root)
-	f := d.object(root, "apiVersion", "strategy", "defaults", "acceptance")
+	f := d.object(root, "apiVersion", "strategy", "defaults")
 	version := d.required(f, root, "apiVersion")
 	strategy := d.required(f, root, "strategy")
 	versionName, versionOK := d.text(version, false)
@@ -48,30 +48,29 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 		r.issue(model.NotCompleted, "strategy_defaults.profile_unknown", version, "This product defaults version is not supported.")
 		return r
 	}
-	if strategyOK && strategyName != "recursive-apply-v1" {
+	if strategyOK && strategyName != "shared-workspace-v1" {
 		r.issue(model.NotCompleted, "strategy_defaults.profile_unknown", strategy, "This product defaults strategy is not supported.")
 		return r
 	}
 	defaults := d.required(f, root, "defaults")
-	fields := d.object(defaults, "rejectionLimit", "instructions", "batchNoChangeReviews")
-	// Reuse existing positive-integer/list readers on the actual product bytes.
-	// Their temporary relative file coordinate is replaced by the product locator;
-	// content identity, field pointers and original positions remain unchanged.
+	if defaults.node == nil {
+		return r
+	}
+	fields := d.object(defaults, "instructions")
+	// Reuse the existing list reader on the actual product bytes. Its temporary
+	// relative file coordinate is replaced by the product locator; content
+	// identity, field pointers and original positions remain unchanged.
 	asset, _ := snapshot.NewPath("strategy_defaults.yaml")
 	entry, _ := snapshot.NewEntry(asset, snapshot.Regular, r.input.Bytes)
 	typed := executionDecoding{status: model.Passed}
 	reader := executionDecoder{result: &typed, source: SourceFile{File: entry, RepositoryPath: asset}}
-	if value, ok := reader.count(d.required(fields, defaults, "rejectionLimit")); ok {
-		value.Source.File = input.Source
-		r.rejectionLimit = value
-	}
 	instructions := d.required(fields, defaults, "instructions")
-	manager, reviewer := reader.roles(map[string]executionField{"instructions": instructions}, defaults, false)
+	execute, verify := reader.roles(map[string]executionField{"instructions": instructions}, defaults, false)
 	for _, role := range []struct {
 		name   string
 		value  *organization.Setting[[]string]
 		target *organization.Setting[[]string]
-	}{{"manager", manager.Instructions, &r.manager}, {"reviewer", reviewer.Instructions, &r.reviewer}} {
+	}{{"execute", execute.Instructions, &r.execute}, {"verify", verify.Instructions, &r.verify}} {
 		if role.value == nil {
 			r.issue(model.Failed, "strategy_defaults.role_instructions", configChild(instructions, role.name, nil), "Product defaults require a valid explicit instruction list for each role.")
 		} else {
@@ -79,27 +78,6 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 			value.Source.File = input.Source
 			*role.target = value
 		}
-	}
-	batch := d.required(fields, defaults, "batchNoChangeReviews")
-	if batch.node != nil {
-		if batch.node.Kind != yaml.ScalarNode || batch.node.Tag != "!!bool" {
-			r.issue(model.Failed, "strategy_defaults.boolean", batch, "Expected a literal boolean.")
-		} else {
-			var value bool
-			if err := batch.node.Decode(&value); err != nil {
-				r.issue(model.Failed, "strategy_defaults.boolean", batch, err.Error())
-			} else {
-				source := r.source
-				source.Field = batch.pointer
-				r.batch = organization.Setting[bool]{Value: value, Source: source}
-			}
-		}
-	}
-	acceptance := d.required(f, root, "acceptance")
-	accepted := d.object(acceptance, "ownerApproval")
-	if value, ok := reader.strings(d.required(accepted, acceptance, "ownerApproval")); ok {
-		value.Source.File = input.Source
-		r.approval = value
 	}
 	for _, diagnostic := range typed.diagnostics {
 		source := diagnostic.Source

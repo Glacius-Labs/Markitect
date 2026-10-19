@@ -187,7 +187,10 @@ func TestCloseRemovesAContainerThatDoesNotEnd(t *testing.T) {
 	done := make(chan error, 1)
 	go func() { done <- s.Close() }()
 	select {
-	case <-done:
+	case err := <-done:
+		if !errors.Is(err, ErrForcedClose) {
+			t.Fatalf("Close = %v, want ErrForcedClose", err)
+		}
 	case <-time.After(5 * time.Second):
 		t.Fatal("Close waited for a container that never ended")
 	}

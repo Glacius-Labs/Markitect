@@ -18,7 +18,7 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-**Current direction, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) and the [current Apply concept / Claude handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026) govern the simplified strategy: permanent responsibility, parallel shared-tree Execute and fresh recursive Verify on one immutable closing stand. Read the [current library walkthrough](manager-apply-library-flow.md#current-library-walkthrough) next. No runtime implementation is claimed.
+**Current direction, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) and the [current Apply concept / Claude handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026) govern the simplified strategy: permanent responsibility, parallel shared-tree Execute and fresh recursive Verify on one immutable closing stand. Read the [current library walkthrough](manager-apply-library-flow.md#current-library-walkthrough) next. The strategy is implemented on branch `dev/recursive-apply-simplified`, pending review, CI and owner acceptance; [manager-apply-runtime.md](manager-apply-runtime.md) owns its implemented technical contract. The older detailed documents below are historical.
 
 The detailed descriptions and terminology below preserve the preceding design. Their conflicting rules are superseded, including the old freeze; they are engineering inputs to revise rather than an additional implementation contract.
 
@@ -31,6 +31,7 @@ Read in this order:
 | Document | Owns |
 | --- | --- |
 | [Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) | Current recursive reconciliation cycle, permanent ownership, fresh verification and Claude implementation handoff. |
+| [Implemented runtime contract](manager-apply-runtime.md) | The implemented technical contract: team, ownership, accounting, Reconcile cycle, Host tools, ports, configuration, evidence, publication and limits. |
 | [Core protocol](manager-apply-core.md) | Steps, the Manager task machine, Orchestrator tools, messages, issues, deliveries and composition, by rule ID. |
 | [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
 | [Go architecture](manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |

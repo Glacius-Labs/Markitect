@@ -36,54 +36,6 @@ artifacts:
     form: test
     realizes: [product/organization/delegated-context]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/render.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/render_binding_test.go"
-    form: test
-    realizes: [product/organization/delegated-context]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/render_bytes_test.go"
-    form: test
-    realizes: [product/organization/delegated-context]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/render_context.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/render_directory.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/render_spec.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/render_templates.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/render_test.go"
-    form: test
-    realizes: [product/organization/delegated-context]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/render_validation.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/render_values_test.go"
-    form: test
-    realizes: [product/organization/delegated-context]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/render_views_test.go"
-    form: test
-    realizes: [product/organization/delegated-context]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/render_writer.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
   - path: "internal/organization/resolve_settings.go"
     form: code
     realizes: [product/organization/delegated-context]
@@ -101,14 +53,6 @@ artifacts:
     realizes: [product/organization/delegated-context]
     why: Tests the stated responsibility and retains negative boundaries.
   - path: "internal/organization/settings_refusal_test.go"
-    form: test
-    realizes: [product/organization/delegated-context]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/organization/settings_selections.go"
-    form: code
-    realizes: [product/organization/delegated-context]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/organization/settings_selections_test.go"
     form: test
     realizes: [product/organization/delegated-context]
     why: Tests the stated responsibility and retains negative boundaries.

@@ -3,27 +3,27 @@ artifacts:
   - path: "internal/adapters/cli/execution.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
-    why: Parses explicit Apply and owner-answer invocations and reports actual controlled execution observations without admitting previews as execution.
+    why: Parses explicit Apply and owner-answer invocations and reports the run, its publication receipt and its evidence directory without admitting previews as execution.
   - path: "internal/adapters/cli/execution_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
-    why: Verifies exact execution input selection, owner-answer arguments, preview refusals and preserved incomplete and failed statuses with a fake execution boundary.
+    why: Verifies exact Apply input selection, answer arguments, run reporting, preview refusals and that errors, unpublished runs and incomplete results never become success.
   - path: "internal/bootstrap/run_config.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
-    why: Decodes the closed explicit invocation configuration directly into existing Host and Core inputs without defaults or credential acquisition.
+    why: Decodes the closed explicit invocation configuration with its harvest bounds, helper resources and credential references without defaults or credential acquisition.
   - path: "internal/bootstrap/run_config_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
-    why: Verifies complete explicit invocation values, closed JSON objects, finite numeric limits and no referenced credential reads during parsing.
+    why: Verifies complete explicit invocation values, closed JSON objects, refused historical sections and no referenced credential reads during parsing.
   - path: "internal/bootstrap/execution.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
-    why: Composes captured settings, durable repository control, concrete container adapters and guarded publication through the actual ControlledRun Execute and Answer methods.
+    why: Composes captured settings, the exclusive state lock, concrete container adapters, evidence, the owner channel and guarded publication for one Apply, and records owner answers.
   - path: "internal/bootstrap/execution_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
-    why: Exercises actual controlled Execute, owner waiting, Answer and no-change publication through real Git and SQLite with fake sessions and workspaces.
+    why: Tests refusal before effects for invalid configurations and held state directories, the answer command and retained report evidence.
   - path: "internal/bootstrap/profile_router.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
@@ -76,14 +76,6 @@ artifacts:
     form: code
     realizes: [product/cli/honest-read-only-interface]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/bootstrap/session_router.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Routes exact admitted session profiles to configured provider adapters and preserves their observations and refusal boundaries.
-  - path: "internal/bootstrap/session_router_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Verifies sticky provider routing, retained failed-open routes, unchanged partial observations and refusal without fallback using fake session peers.
   - path: "internal/adapters/cli/command_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
@@ -92,11 +84,55 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Verifies actual consumer stages, source bindings and negative effect boundaries.
-  - path: "internal/bootstrap/control_integration_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Tests real Git preparation and SQLite control composition while preserving unavailable CLI Apply and effect-free previews.
   - path: "internal/bootstrap/documents_alias_windows_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Tests actual native-alias external-source write refusal and preserved target bytes through the composed product.
+  - path: "internal/bootstrap/state.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Defines the state directory layout, safe path elements and atomic exclusive or replacing file writes.
+  - path: "internal/bootstrap/lock.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Takes the exclusive operating-system lock that lets only one Apply run on a state directory.
+  - path: "internal/bootstrap/lock_unix.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Locks the state directory with a nonblocking flock.
+  - path: "internal/bootstrap/lock_windows.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Locks the state directory with a nonblocking exclusive file lock.
+  - path: "internal/bootstrap/lock_other.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses state locking on platforms without a supported native locking primitive.
+  - path: "internal/bootstrap/lock_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests one holder at a time, release, and independent state directories.
+  - path: "internal/bootstrap/evidence.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Appends and syncs every run event, names transcript paths and writes the final report under the run's evidence directory.
+  - path: "internal/bootstrap/evidence_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests whole synced events under concurrency, refusal after close, safe transcript paths, no overwritten runs and the atomic report.
+  - path: "internal/bootstrap/owner.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the owner channel as question and answer files in the state directory and writes final owner answers for the running Apply.
+  - path: "internal/bootstrap/owner_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests question publication, polling, refusal of unsafe identities and stale files, and final answers only for a running Apply and asked question.
+  - path: "internal/bootstrap/agents_router.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Routes each turn to the provider adapter of its profile and refuses unrouted profiles without fallback.
+  - path: "internal/bootstrap/agents_router_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies routing by profile, unchanged adapter results and refusal without fallback using fake Agents.

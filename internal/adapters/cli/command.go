@@ -1,5 +1,5 @@
-// Package cli presents preparation and controlled execution. It owns
-// command parsing and reports, not repository processes or execution policy.
+// Package cli presents preparation and Apply. It owns command parsing and
+// reports, not repository processes or execution policy.
 package cli
 
 import (
@@ -38,11 +38,12 @@ type Command struct {
 	checks      apply.CheckProfilePreparer
 	revisions   RevisionResolver
 	documents   Documents
-	execute     ExecuteFunc
+	apply       ApplyFunc
+	answer      AnswerFunc
 }
 
-func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, execute ExecuteFunc) *Command {
-	return &Command{preparation, agents, checks, revisions, documents, execute}
+func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc, answer AnswerFunc) *Command {
+	return &Command{preparation, agents, checks, revisions, documents, applyRun, answer}
 }
 
 type manifestList []string
@@ -50,13 +51,14 @@ type manifestList []string
 func (s *manifestList) String() string         { return fmt.Sprint([]string(*s)) }
 func (s *manifestList) Set(value string) error { *s = append(*s, value); return nil }
 
-const help = `Markitect: canonical v1 model, preparation and controlled Apply
+const help = `Markitect: canonical v1 model, preparation and recursive Apply
 
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply [options]          execute controlled artifact Apply from committed inputs
-  answer <question> [options]  record an owner answer and continue that Apply
+  apply [options]          reconcile the committed repository through the Manager team
+  answer <question> --text ANSWER --run-config PATH
+                            answer a question of the running Apply
   version | licenses | help
 
 Common options:
@@ -79,14 +81,22 @@ docs options:
   model/control/instruction sources remain preview-only because target
   disjointness has not been established.
 
-apply / answer options:
+apply options:
   --run-config PATH        explicit absolute closed JSON invocation configuration
   --host-profile PATH      explicit absolute versioned Host profile document
-  --text ANSWER            required for answer; reuse the original run-config
   --repo, --model and repeated --dependency select committed capture inputs.
-  Revision previews and --metadata are preparation options, not execution flags.
-  Configuration supplies explicit budgets, state storage, helper resources,
+  Revision previews and --metadata are preparation options, not apply flags.
+  Configuration supplies state storage, helper resources, harvest bounds,
   productBuild assertion and dedicated credential references. No ambient defaults.
+  The JSON report lists the preparation, the run (rounds, findings, questions,
+  turns, usage), the publication receipt and the evidence directory. Evidence is
+  kept under STATE/runs/RUN; only one Apply runs per state directory.
+
+answer options:
+  --text ANSWER            the owner's answer, required
+  --run-config PATH        the running Apply's configuration; selects its state directory
+  Writes the answer for a question the running Apply asked (it prints the
+  question to stderr) and reports the file it wrote. An answer is final.
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.

@@ -98,7 +98,7 @@ func TestHostInstructionsNeverExtendOldInputsAndFailedFileCheckStaysFailed(t *te
 
 func TestHostSettingsResolvesCapturedProjectInstructionsWithRepeats(t *testing.T) {
 	selection, raw := hostSettingsInputs(t)
-	content := strings.Replace(defaultsAbsentExecution(t), "  profiles:", "  instructions: {manager: [ops/one.md, ops/one.md], reviewer: []}\n  profiles:", 1)
+	content := strings.Replace(defaultsAbsentExecution(t), "profiles:\n  execute", "instructions: {execute: [ops/one.md, ops/one.md], verify: []}\nprofiles:\n  execute", 1)
 	rewriteFileCheckSource(t, &raw, &raw.Execution[0], content)
 	fileCheckSource(t, &selection, &raw, "instruction", "ops/one.md", snapshot.Regular, "Original instruction bytes.\r\n", true)
 	m := registryModel(t, selection, raw)
@@ -117,7 +117,7 @@ func TestHostSettingsResolvesCapturedProjectInstructionsWithRepeats(t *testing.T
 		t.Fatalf("captured instructions unresolved: %v %+v", err, result.Diagnostics())
 	}
 	root, _ := settings.Manager(".")
-	if len(root.Manager.Instructions) != 2 || !reflect.DeepEqual(root.Manager.Instructions[0], root.Manager.Instructions[1]) || string(root.Manager.Instructions[0].Value.Bytes) != "Original instruction bytes.\r\n" {
+	if len(root.Execute.Instructions) != 2 || !reflect.DeepEqual(root.Execute.Instructions[0], root.Execute.Instructions[1]) || string(root.Execute.Instructions[0].Value.Bytes) != "Original instruction bytes.\r\n" {
 		t.Fatal("instruction bytes or authored repeats lost")
 	}
 	if !reflect.DeepEqual(result.Defaults().Execution().Partial(), m.DecodeExecution().Partial()) {

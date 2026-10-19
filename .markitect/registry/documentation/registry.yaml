@@ -4,6 +4,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves owner wording and documentation acceptance for the three fundamental project workflows without assigning implementation work.
+  - path: "docs/concepts/sources/recursive-apply-implementation-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's implementation dispatch for DEC-056, the Sonnet runtime model choice and the bounds of the library demonstration.
   - path: "docs/concepts/sources/recursive-apply-simplification-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -512,6 +516,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "docs/design/canonical-model/manager-apply-runtime.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Owns the implemented technical contract of the recursive Apply.
   - path: "docs/design/canonical-model/manager-apply-configuration.md"
     form: doc
     realizes: [documentation/current-guidance]

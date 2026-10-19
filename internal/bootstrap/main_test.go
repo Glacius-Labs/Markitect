@@ -39,11 +39,11 @@ func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testin
 		t.Fatal(err)
 	}
 	text := strings.ReplaceAll(string(execution), "\r\n", "\n")
-	start, end := strings.Index(text, "\nchecks:\n"), strings.Index(text, "\nacceptance:\n")
-	if start < 0 || end <= start {
-		t.Fatal("fixture execution sections missing")
+	start := strings.Index(text, "\nchecks:\n")
+	if start < 0 {
+		t.Fatal("fixture execution checks missing")
 	}
-	repo.Write(".markitect/execution.yaml", text[:start]+"\nchecks: []"+text[end:])
+	repo.Write(".markitect/execution.yaml", text[:start]+"\nchecks: []\n")
 	engine := filepath.Join(t.TempDir(), "explicit-engine-not-executed")
 	host := filepath.Join(t.TempDir(), "host.yaml")
 	profile := fmt.Sprintf("apiVersion: markitect.host/v1\nagentProfiles:\n  markitect-agent:\n    codexAppServer:\n      profileVersion: 2\n      engineExecutable: %q\n      imageID: %s\n      agentdVersion: development\n      recordedCodexSchemaDigest: %s\n      instructions: []\ncheckProfiles: {}\n", engine, bootstrapImageID, bootstrapSchema)
@@ -245,7 +245,7 @@ func TestDocumentationCannotOverwriteAuthoredInstructionEvenWhenMissing(t *testi
 			if err != nil {
 				t.Fatal(err)
 			}
-			repo.Write(".markitect/execution.yaml", strings.Replace(string(data), "defaults:\n", "defaults:\n  instructions: {manager: [docs/markitect/project.md]}\n", 1))
+			repo.Write(".markitect/execution.yaml", strings.Replace(string(data), "packages:", "instructions:\n  execute: [docs/markitect/project.md]\npackages:", 1))
 			if missing {
 				if err := os.Remove(filepath.Join(repo.Dir, "docs", "markitect", "project.md")); err != nil {
 					t.Fatal(err)

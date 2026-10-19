@@ -18,7 +18,7 @@ This package is the Host's client of the container engine ([DEC-037](../../../do
 | `Engine.ObserveImageFileWithRequiredPaths(ctx, imageID, path, maxBytes, requiredDirectories, requiredRegularFiles)` | Also positively verifies the supplied directories and regular-file paths, including their directory ancestors, in the same never-started container. Unknown, absent, redirected or mismatched paths refuse the observation. |
 | `Session.StartProvider`, `WriteInput`, `CloseInput`, `Stdout` | The provider CLI's process and standard streams. Output is buffered up to 32 MiB, so control replies never wait for the reader. |
 | `Session.ToolCalls`, `Reply` | Host tool calls arriving over MCP through `markitect-agentd mcp`. `ToolCall.Meta` carries the provider's own call metadata. |
-| `Session.Census`, `Stop`, `Exited`, `Diagnostics`, `Close` | The container's processes, stop with grace, the observed exit, the tail of standard error, and the end of the connection. |
+| `Session.Census`, `Stop`, `Exited`, `Diagnostics`, `Close` | The container's processes, stop with grace, the observed exit, the tail of standard error, and the end of the connection. `Close` returns `ErrForcedClose` (joined with the engine process result) when the container did not end within the close timeout and had to be removed by force; a nil result means it ended by itself. |
 
 ## Image file observations
 

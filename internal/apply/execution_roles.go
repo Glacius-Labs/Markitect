@@ -1,23 +1,29 @@
 package apply
 
 import (
+	"fmt"
+
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/realization"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"go.yaml.in/yaml/v3"
 )
 
+// roles reads the optional-per-package or required-project `profiles` and
+// `instructions` selections of the Execute and Verify roles.
 func (d *executionDecoder) roles(fields map[string]executionField, parent executionField, requireProfiles bool) (organization.RoleOverride, organization.RoleOverride) {
-	manager, reviewer := organization.RoleOverride{}, organization.RoleOverride{}
+	execute, verify := organization.RoleOverride{}, organization.RoleOverride{}
 	profiles, present := fields["profiles"]
 	if requireProfiles && !present {
 		profiles = d.required(fields, parent, "profiles")
 	}
 	if present || requireProfiles && profiles.node != nil {
-		roles := d.object(profiles, "manager", "reviewer")
+		roles := d.object(profiles, "execute", "verify")
 		for _, role := range []struct {
 			name   string
 			target *organization.RoleOverride
-		}{{"manager", &manager}, {"reviewer", &reviewer}} {
+		}{{"execute", &execute}, {"verify", &verify}} {
 			field, found := roles[role.name]
 			if requireProfiles && !found {
 				field = d.required(roles, profiles, role.name)
@@ -30,11 +36,11 @@ func (d *executionDecoder) roles(fields map[string]executionField, parent execut
 		}
 	}
 	if instructions, found := fields["instructions"]; found {
-		roles := d.object(instructions, "manager", "reviewer")
+		roles := d.object(instructions, "execute", "verify")
 		for _, role := range []struct {
 			name   string
 			target *organization.RoleOverride
-		}{{"manager", &manager}, {"reviewer", &reviewer}} {
+		}{{"execute", &execute}, {"verify", &verify}} {
 			if field, found := roles[role.name]; found {
 				if value, ok := d.strings(field); ok {
 					valid := true
@@ -51,36 +57,7 @@ func (d *executionDecoder) roles(fields map[string]executionField, parent execut
 			}
 		}
 	}
-	return manager, reviewer
-}
-
-func (d *executionDecoder) defaults(field executionField) ExecutionDefaults {
-	r := ExecutionDefaults{}
-	if field.node == nil {
-		return r
-	}
-	f := d.object(field, "profiles", "instructions", "stepTimeout", "rejectionLimit", "creationRoots", "batchNoChangeReviews")
-	r.Manager, r.Reviewer = d.roles(f, field, true)
-	r.StepTimeout, _ = d.duration(d.required(f, field, "stepTimeout"))
-	if selected, found := f["rejectionLimit"]; found {
-		if value, ok := d.count(selected); ok {
-			r.RejectionLimit = &value
-		}
-	}
-	r.CreationRoots, _ = d.directories(d.required(f, field, "creationRoots"))
-	if selected, found := f["batchNoChangeReviews"]; found {
-		if selected.node.Kind != yaml.ScalarNode || selected.node.Tag != "!!bool" {
-			d.issue(model.Failed, "execution.boolean", selected, "batchNoChangeReviews must be a boolean.")
-		} else {
-			var value bool
-			if err := selected.node.Decode(&value); err != nil {
-				d.issue(model.Failed, "execution.boolean", selected, err.Error())
-			} else {
-				r.BatchNoChangeReviews = &organization.Setting[bool]{Value: value, Source: d.provenance(selected)}
-			}
-		}
-	}
-	return r
+	return execute, verify
 }
 
 func (d *executionDecoder) packages(field executionField) *organization.Setting[[]organization.PackageOverride] {
@@ -101,25 +78,66 @@ func (d *executionDecoder) packages(field executionField) *organization.Setting[
 			continue
 		}
 		d.localPackage(entry, name)
-		f := d.object(entry, "profiles", "instructions", "stepTimeout", "rejectionLimit", "creationRoots")
+		f := d.object(entry, "profiles", "instructions")
 		value := organization.PackageOverride{Package: name}
-		value.Manager, value.Reviewer = d.roles(f, entry, false)
-		if field, found := f["stepTimeout"]; found {
-			if setting, ok := d.duration(field); ok {
-				value.StepTimeout = &setting
-			}
-		}
-		if field, found := f["rejectionLimit"]; found {
-			if setting, ok := d.count(field); ok {
-				value.RejectionLimit = &setting
-			}
-		}
-		if field, found := f["creationRoots"]; found {
-			if setting, ok := d.directories(field); ok {
-				value.CreationRoots = &setting
-			}
-		}
+		value.Execute, value.Verify = d.roles(f, entry, false)
 		result.Value = append(result.Value, value)
 	}
+	return result
+}
+
+// layout decodes the optional persistent artifact layout and validates it
+// against the model's Package inventory, so a declared layout is complete or
+// the document is Failed.
+func (d *executionDecoder) layout(field executionField, compiled model.Result) *ExecutionLayout {
+	f := d.object(field, "roots", "exceptions")
+	if field.node.Kind != yaml.MappingNode {
+		return nil
+	}
+	before := len(d.result.diagnostics)
+	result := &ExecutionLayout{}
+	result.Roots, _ = d.directories(d.required(f, field, "roots"))
+	if exceptions, found := f["exceptions"]; found {
+		if exceptions.node.Kind != yaml.SequenceNode {
+			d.issue(model.Failed, "execution.list", exceptions, "layout exceptions must be a list.")
+		} else {
+			for i, node := range exceptions.node.Content {
+				entry := executionChild(exceptions, fmt.Sprint(i), node)
+				e := d.object(entry, "path", "owner", "reason")
+				var value ExecutionLayoutException
+				if text, ok := d.text(d.required(e, entry, "path"), false); ok {
+					path, err := snapshot.NewPath(text.Value)
+					if err != nil {
+						d.issue(model.Failed, "execution.layout_path", e["path"], err.Error())
+					} else {
+						value.Path = organization.Setting[snapshot.Path]{Value: path, Source: text.Source}
+					}
+				}
+				value.Owner, _ = d.text(d.required(e, entry, "owner"), false)
+				if value.Owner.Source.File != "" {
+					d.localPackage(e["owner"], value.Owner.Value)
+				}
+				value.Reason, _ = d.text(d.required(e, entry, "reason"), false)
+				result.Exceptions = append(result.Exceptions, value)
+			}
+		}
+	}
+	if len(d.result.diagnostics) != before {
+		return result
+	}
+	var exceptions []realization.LayoutException
+	for _, exception := range result.Exceptions {
+		owner := realization.RootOwner()
+		if exception.Owner.Value != organization.Root {
+			owner, _ = realization.PackageOwner(exception.Owner.Value)
+		}
+		exceptions = append(exceptions, realization.LayoutException{Path: exception.Path.Value, Owner: owner, Reason: exception.Reason.Value})
+	}
+	layout, err := realization.NewLayout(compiled, result.Roots.Value, exceptions)
+	if err != nil {
+		d.issue(model.Failed, "execution.layout", field, err.Error())
+		return result
+	}
+	d.result.layout = layout
 	return result
 }
