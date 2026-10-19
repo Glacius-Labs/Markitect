@@ -7,6 +7,28 @@ import (
 
 const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry. Coordinate dependencies and integration through your parent and children. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
 
+// blockingGuidance defines what blocks in Verify for Apply: the part of the
+// Verify prompt that Config.VerifyGuidance replaces.
+const blockingGuidance = "Blocking means a concrete model violation, absent evidence the model explicitly requires, or a failed required check, citing the obligation and the observed behavior or source evidence. A Definition realized outside its owner's artifacts (rebuilt in another area, including a parent's own area, instead of using the owner's realization) and a change outside a Manager's own area are model violations; as a parent, check how your children actually use each other's realizations."
+
+// checkNote tells an Execute turn about the check tool. It is part of the
+// prompt only when Config.CheckTool offers the tool.
+const checkNote = " The tool check reports the findings of the project's accounting on the current /work tree, yours first (scope \"all\" lists those of other Managers too). It observes while other Managers may still write, so use it as advice before you finish; the candidate is judged only after every Execute turn ended."
+
+func (e *engine) mandateText() string {
+	if e.cfg.Mandate != "" {
+		return e.cfg.Mandate
+	}
+	return mandate
+}
+
+func (e *engine) guidanceText() string {
+	if e.cfg.VerifyGuidance != "" {
+		return e.cfg.VerifyGuidance
+	}
+	return blockingGuidance
+}
+
 func label(m *mgr) string {
 	if m.Parent == "" {
 		return "Root (.)"
@@ -55,12 +77,12 @@ func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
 // child builds on the foundation its parent supplied.
 func initialItem(m *mgr) string {
 	var b strings.Builder
-	b.WriteString("Carry out your responsibility now: reconcile your artifacts with the bound model. No change is a legitimate result when your area already conforms.")
+	b.WriteString("Carry out your responsibility now, as the mandate above describes. No change is a legitimate result when your area already conforms.")
 	if m.Parent != "" {
 		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")
 	}
 	if len(m.Children) > 0 {
-		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: where none exists, create it; where one exists, assess it against the model and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
+		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: where none exists, create it; where one exists, assess it against your obligations and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
 	}
 	return b.String()
 }
@@ -97,6 +119,17 @@ func writeNote(plan WritePlan) string {
 	return ""
 }
 
+// answeredLocked lists the owner's answers known so far, earlier ones first.
+func (e *engine) answeredLocked() []string {
+	var answered []string
+	for _, q := range e.questions {
+		if q.Answered {
+			answered = append(answered, fmt.Sprintf("%s: %s\n  Answer: %s", q.ID, q.Text, q.Answer))
+		}
+	}
+	return answered
+}
+
 func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string {
 	var b strings.Builder
 	if !first {
@@ -105,8 +138,9 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 		b.WriteString("\nWork on them, then call finish.\n")
 		return b.String()
 	}
-	fmt.Fprintf(&b, "%s\n\nYou are %s in an Execute turn.\n", mandate, label(m))
+	fmt.Fprintf(&b, "%s\n\nYou are %s in an Execute turn.\n", e.mandateText(), label(m))
 	e.contextLocked(&b, m)
+	list(&b, "Answered owner questions:", e.answeredLocked())
 	var contacts []string
 	if m.Parent != "" {
 		contacts = append(contacts, "parent: "+contact(e.byPath[m.Parent]))
@@ -118,7 +152,11 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)
-	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. " + writeNote(m.Write) + "Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact.\n")
+	check := ""
+	if e.cfg.CheckTool {
+		check = checkNote
+	}
+	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. " + writeNote(m.Write) + "Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact." + check + "\n")
 	list(&b, "Items:", items)
 	b.WriteString("\nWork on them. Use send to coordinate through your parent and children. Call finish when you are done or waiting.\n")
 	return b.String()
@@ -126,12 +164,12 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 
 func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n\nYou are %s in a fresh Verify turn of round %d.\n", mandate, label(m), rs.n)
+	fmt.Fprintf(&b, "%s\n\nYou are %s in a fresh Verify turn of round %d.\n", e.mandateText(), label(m), rs.n)
 	if retry {
 		b.WriteString("Your previous Verify attempt ended without a valid assess call. Assess again.\n")
 	}
 	e.contextLocked(&b, m)
-	b.WriteString("\nThe candidate is mounted read-only at /work; write build or test output only under /tmp. Blocking means a concrete model violation, absent evidence the model explicitly requires, or a failed required check, citing the obligation and the observed behavior or source evidence. Preferred extra test depth is advisory: set blocking to false.\n")
+	b.WriteString("\nThe candidate is mounted read-only at /work; write build or test output only under /tmp. " + e.guidanceText() + " Preferred extra test depth is advisory: set blocking to false.\n")
 
 	var checks []string
 	for _, c := range rs.checks {
@@ -151,13 +189,7 @@ func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
 	}
 	list(&b, "Required checks on this candidate:", checks)
 
-	var answered []string
-	for _, q := range e.questions {
-		if q.Answered {
-			answered = append(answered, fmt.Sprintf("%s: %s\n  Answer: %s", q.ID, q.Text, q.Answer))
-		}
-	}
-	list(&b, "Answered owner questions:", answered)
+	list(&b, "Answered owner questions:", e.answeredLocked())
 
 	var structural, mine, addressed []string
 	for _, f := range rs.structural {

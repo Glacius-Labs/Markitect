@@ -1,8 +1,8 @@
 # Project operations
 
-The current commands are `check`, `context`, `docs`, `apply`, `answer`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
+The current commands are `check`, `context`, `docs`, `apply`, `extract`, `answer`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
 
-The later [command design](design/canonical-model/commands.md) records the accepted Verify, Extract, Optimize and other operation semantics. It does not add them to this executable surface or authorize their execution.
+The later [command design](design/canonical-model/commands.md) records the accepted Verify, Extract, Optimize and other operation semantics. Except for the first bounded `extract` below, it does not add them to this executable surface or authorize their execution.
 
 ## Structural and metadata stages
 

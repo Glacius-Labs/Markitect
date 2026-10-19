@@ -238,7 +238,7 @@ func TestChildrenStartAfterTheirParentsFirstTurnAndSiblingsRunInParallel(t *test
 	// The initial item tells a parent to supply its children's foundation and a
 	// child that its parent's foundation is in place; queued messages follow it.
 	rootPrompt := f.agents.prompt("run1-r1-root-x1")
-	contains(t, "Root prompt", rootPrompt, mandate, "Carry out your responsibility now", "Your children start when this turn ends", "First establish, within your own area, the foundation they need", "assess it against the model and your children's known needs", "the concrete basis they can use")
+	contains(t, "Root prompt", rootPrompt, mandate, "Carry out your responsibility now", "Your children start when this turn ends", "First establish, within your own area, the foundation they need", "assess it against your obligations and your children's known needs", "the concrete basis they can use")
 	if strings.Contains(rootPrompt, "Your parent's foundation") {
 		t.Errorf("Root has no parent:\n%s", rootPrompt)
 	}
@@ -680,6 +680,33 @@ func TestOwnerThatCannotBeReachedRefusesTheQuestion(t *testing.T) {
 	}
 	if out := f.run(); out.Status != Verified || len(out.Questions) != 0 {
 		t.Fatalf("%s %s", out.Status, out.Reason)
+	}
+}
+
+func TestEarlierAnsweredQuestionsContinueTheOwnerChannel(t *testing.T) {
+	f := newFixture(t)
+	// Q1 was refused in the earlier run and kept its number.
+	f.cfg.Questions = []Question{{ID: "Q2", Text: "which loan limit?", Answer: "three", Answered: true}}
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is(1, ".", ExecuteTurn) && c.turn.Resume == "":
+			contains(t, "root execute prompt", c.turn.Prompt, "Answered owner questions", "which loan limit?", "Answer: three")
+			a := c.send("owner", "which loan period?")
+			contains(t, "ask answer", a.Text, "Q3")
+			time.AfterFunc(60*time.Millisecond, func() { f.owner.answer("Q3", "fourteen days") })
+			c.finish("waiting")
+			return nil
+		case c.is(1, ".", VerifyTurn):
+			contains(t, "root verify prompt", c.turn.Prompt, "Answer: three", "Answer: fourteen days")
+		}
+		return c.defaultScript()
+	}
+	out := f.run()
+	if out.Status != Verified || len(out.Questions) != 2 || out.Questions[1].ID != "Q3" || !out.Questions[1].Answered {
+		t.Fatalf("%s %s %+v", out.Status, out.Reason, out.Questions)
+	}
+	if asked := f.owner.questions(); len(asked) != 1 || asked[0].ID != "Q3" {
+		t.Fatalf("the owner was asked %+v", asked)
 	}
 }
 

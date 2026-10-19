@@ -31,7 +31,11 @@ func (c *fileChecker) issue(status model.Status, code string, path snapshot.Path
 	c.result.observe(status)
 }
 
-func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs, execution executionDecoding) fileCheck {
+// checkFiles checks the files of one capture. With extract, an artifact that no
+// registry shard explains yet (file.unexplained) or that no Package or exception
+// covers yet (layout.no_owner) is not a failure: the Extract that follows
+// derives the model and the registration that account for it.
+func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs, execution executionDecoding, extract bool) fileCheck {
 	r := fileCheck{status: parent.Status(), layout: execution.layout}
 	c := fileChecker{result: &r, raw: raw, inputs: make(map[snapshot.Path]realization.Classification), protections: make(map[string]bool)}
 	if compiled.Status != model.Passed {
@@ -65,6 +69,9 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 		}
 		if accounting.Status() == realization.AccountingInvalid {
 			for _, finding := range accounting.Findings() {
+				if extract && (finding.Code == "file.unexplained" || finding.Code == "layout.no_owner") {
+					continue
+				}
 				// Missing observations can still explain otherwise-unclassified files.
 				// Keep the actual report, without turning that uncertainty into a
 				// known policy violation. Other observed conflicts remain failures.

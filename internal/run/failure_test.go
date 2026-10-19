@@ -639,6 +639,11 @@ func TestInvalidConfigurationIsRefusedBeforeAnyEffect(t *testing.T) {
 			c.Checks = []Check{{Name: "u", Owner: ".", Request: checkRequestFor(t)}}
 			c.Runner = nil
 		},
+		"earlier question open": func(c *Config) { c.Questions = []Question{{ID: "Q1", Text: "q"}} },
+		"earlier questions out of order": func(c *Config) {
+			c.Questions = []Question{{ID: "Q2", Text: "q", Answer: "a", Answered: true}, {ID: "Q1", Text: "q", Answer: "a", Answered: true}}
+		},
+		"earlier question malformed": func(c *Config) { c.Questions = []Question{{ID: "Q01", Text: "q", Answer: "a", Answered: true}} },
 	} {
 		t.Run(name, func(t *testing.T) {
 			f := newFixture(t)

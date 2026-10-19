@@ -88,7 +88,7 @@ func (e *engine) scheduleLocked() {
 		m.execCount++
 		m.running, m.ran, m.execUsed = true, true, true
 		ts := &turnState{m: m, kind: ExecuteTurn, id: fmt.Sprintf("%s-r%d-%s-x%d", e.cfg.RunID, e.execRound, m.slug, m.execCount), round: e.execRound}
-		turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "")}
+		turn := Turn{Profile: m.ExecuteProfile, Workspace: e.work, Home: m.execHome, Resume: m.conversation, Prompt: e.executePromptLocked(m, texts(items), first), Tools: executeTools(m.Parent == "", e.cfg.CheckTool)}
 		if m.Write.Enforced {
 			turn.ReadOnly, turn.Mounts = !m.Write.Base, slices.Clone(m.Write.Mounts)
 		}
@@ -205,6 +205,13 @@ func (e *engine) executeHandler(m *mgr, ts *turnState) ToolHandler {
 			return e.send(ctx, m, ts, args)
 		case toolFinish:
 			return e.finish(m, ts, args)
+		case toolCheck:
+			if e.cfg.CheckTool {
+				return e.check(ctx, m, ts, args)
+			}
+		}
+		if e.cfg.CheckTool {
+			return refuse("Unknown tool %q; in Execute %q, %q and %q are available.", name, toolSend, toolCheck, toolFinish)
 		}
 		return refuse("Unknown tool %q; in Execute %q and %q are available.", name, toolSend, toolFinish)
 	}

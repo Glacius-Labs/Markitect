@@ -40,10 +40,18 @@ type Command struct {
 	documents   Documents
 	apply       ApplyFunc
 	answer      AnswerFunc
+	extract     ExtractFunc
 }
 
 func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc, answer AnswerFunc) *Command {
-	return &Command{preparation, agents, checks, revisions, documents, applyRun, answer}
+	return &Command{preparation: preparation, agents: agents, checks: checks, revisions: revisions, documents: documents, apply: applyRun, answer: answer}
+}
+
+// WithExtract installs the Extract operation. Without it the command reports
+// that Extract is unavailable.
+func (c *Command) WithExtract(extract ExtractFunc) *Command {
+	c.extract = extract
+	return c
 }
 
 type manifestList []string
@@ -57,6 +65,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
   apply [options]          reconcile the committed repository through the Manager team
+  extract [options]        derive a model candidate from the existing artifacts
   answer <question> --text ANSWER --run-config PATH
                             answer a question of the running Apply
   version | licenses | help
@@ -91,6 +100,19 @@ apply options:
   The JSON report lists the preparation, the run (rounds, findings, questions,
   turns, usage), the publication receipt and the evidence directory. Evidence is
   kept under STATE/runs/RUN; only one Apply runs per state directory.
+
+extract options:
+  --run-config PATH, --host-profile PATH and repeated --dependency as for apply;
+  --repo selects the repository. There is no --model: the Host prepares the
+  structural manifest and lock .markitect/model.yaml with no local Definitions,
+  the imported vocabulary, and .markitect/execution.yaml with budget, profiles,
+  layout roots and checks. Phase one proposes the Packages and layout
+  exceptions, phase two derives the model of every Package and registers the
+  artifacts. Artifacts are never changed or published; a verified model is
+  published as the changed .markitect model, registry and layout files. The
+  JSON report lists model completion, the final Verify result, the realization
+  deviations, open owner questions, per-phase rounds, turns and usage and the
+  publication. Questions are answered with the answer command.
 
 answer options:
   --text ANSWER            the owner's answer, required
@@ -130,7 +152,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		}
 		return 0
 	}
-	if verb == "apply" || verb == "answer" {
+	if verb == "apply" || verb == "answer" || verb == "extract" {
 		return c.execution(ctx, verb, args[1:], stdout, stderr, emit)
 	}
 	if verb != "check" && verb != "context" && verb != "docs" {

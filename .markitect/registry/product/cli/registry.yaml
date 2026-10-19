@@ -8,6 +8,14 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Verifies exact Apply input selection, answer arguments, run reporting, preview refusals and that errors, unpublished runs and incomplete results never become success.
+  - path: "internal/adapters/cli/extract.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Parses the explicit Extract invocation without a --model flag and reports both phases, model completion, the Verify result, deviations, open questions and the publication.
+  - path: "internal/adapters/cli/extract_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies Extract argument parsing, refused invocations and that only a published verified model reports success.
   - path: "internal/bootstrap/run_config.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
