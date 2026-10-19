@@ -197,6 +197,12 @@ func TestRenderStatesTheTreePosition(t *testing.T) {
 	if !strings.Contains(text, `{"Manager":"a","Parent":".","DirectChildren":["a/child"]}`) || !strings.Contains(text, `{"Purpose":"local"}`) {
 		t.Fatal("the reviewer view lacks the tree position or the reviewed purpose")
 	}
+	// The reviewer learns what the local purpose covers, so that a task
+	// without local Definitions is not assessed against its children's
+	// behavior.
+	if !strings.Contains(text, "The local purpose covers only the LocalDefinitions and the task's own artifacts") {
+		t.Fatal("the reviewer view does not say what the local purpose covers")
+	}
 }
 
 // Every view states the task's complete local inventory, so that a reviewer
