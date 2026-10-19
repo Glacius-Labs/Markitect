@@ -42,9 +42,12 @@ type candidate struct {
 
 // item is one undelivered piece of work for a Manager. finding is the ID of
 // the finding an item restates; such an item lapses once the finding is closed.
+// report marks a child's done report, which alone does not start the parent's
+// turn while the parent's subtree still works.
 type item struct {
 	text    string
 	finding string
+	report  bool
 }
 
 // mgr is the engine's state of one Manager. Every field is guarded by engine.mu.
@@ -248,6 +251,8 @@ func validate(cfg Config) error {
 		return bad("Agents, Workspaces and Evidence are required")
 	case len(cfg.Checks) > 0 && cfg.Runner == nil:
 		return bad("checks need a Runner")
+	case cfg.ArtifactFindingsAdvisory && cfg.ResolveDefinition == nil:
+		return bad("ArtifactFindingsAdvisory needs ResolveDefinition")
 	}
 	last := 0
 	for _, q := range cfg.Questions {
@@ -538,6 +543,12 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 	e.work = shared.volume
 	e.mu.Lock()
 	e.execRound = 1
+	// The start stand's drift goes to its owners behind their initial item.
+	for _, f := range groupedStart(cfg.StartFindings) {
+		raised := e.structuralLocked(f, 0)
+		o := e.byPath[raised.Owner]
+		o.items = append(o.items, item{text: renderFinding(raised), finding: raised.ID})
+	}
 	e.releaseLocked(e.team[0], "the run started")
 	e.mu.Unlock()
 	previous := cfg.Start
@@ -575,6 +586,38 @@ func (e *engine) run() (Status, string, snapshot.Tree) {
 			return e.incomplete(fmt.Sprintf("the round budget of %d ended without a green round", cfg.Budget.Rounds))
 		}
 	}
+}
+
+// groupedStart keeps the start findings, except that more than maxListedNames
+// findings of one owner and obligation become one finding that counts them and
+// shows the first maxListedNames, so a large drift cannot flood a prompt.
+func groupedStart(findings []Finding) []Finding {
+	type key struct{ owner, obligation string }
+	var order []key
+	groups := map[key][]Finding{}
+	for _, f := range findings {
+		k := key{f.Owner, f.Obligation}
+		if groups[k] == nil {
+			order = append(order, k)
+		}
+		groups[k] = append(groups[k], f)
+	}
+	var out []Finding
+	for _, k := range order {
+		group := groups[k]
+		if len(group) <= maxListedNames {
+			out = append(out, group...)
+			continue
+		}
+		shown := make([]string, maxListedNames)
+		for i, f := range group[:maxListedNames] {
+			shown[i] = f.Observed
+		}
+		merged := group[0]
+		merged.Observed = fmt.Sprintf("%d findings of this kind; the first %d:\n- %s", len(group), maxListedNames, strings.Join(shown, "\n- "))
+		out = append(out, merged)
+	}
+	return out
 }
 
 // capture harvests the quiescent shared tree into the candidate of the round.

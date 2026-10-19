@@ -14,6 +14,7 @@ import (
 	"reflect"
 	"strconv"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 )
@@ -458,5 +459,259 @@ func TestImageArchivePreservesReadFailure(t *testing.T) {
 		if !errors.Is(err, failure) || got != (ImageFileObservation{}) {
 			t.Fatalf("observation=%+v err=%v", got, err)
 		}
+	}
+}
+
+func observationSteps(t *testing.T, dir string, kind byte, body string) []engineStep {
+	t.Helper()
+	return []engineStep{{Out: commandID}, {Out: imagePathHeader(t, dir, kind, "")},
+		{Out: string(imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, Size: int64(len(body))}, body, false))}, {}}
+}
+
+func removeCall() []string { return []string{"rm", "--force", "--volumes", commandID} }
+
+func TestObserveImageFileMemoizesIdenticalObservations(t *testing.T) {
+	e, calls := fakeCommandEngine(t, observationSteps(t, "/work", tar.TypeDir, "abc")...)
+	want := ImageFileObservation{SHA256: sha256.Sum256([]byte("abc")), Size: 3}
+	// Order and repetition of the required paths do not change the request.
+	for _, dirs := range [][]string{{"/work"}, {"/work", "/work"}} {
+		got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, dirs, nil)
+		if err != nil || got != want {
+			t.Fatalf("observation=%+v err=%v", got, err)
+		}
+	}
+	all := calls()
+	if len(all) != 4 || all[0][0] != "create" || !reflect.DeepEqual(all[1], []string{"cp", commandID + ":/work", "-"}) ||
+		!reflect.DeepEqual(all[2], []string{"cp", commandID + ":/check", "-"}) || !reflect.DeepEqual(all[3], removeCall()) {
+		t.Fatalf("two identical observations must run one engine sequence: %q", all)
+	}
+}
+
+func TestObserveImageFileMemoIsKeyedByTheExactRequest(t *testing.T) {
+	steps := observationSteps(t, "/work", tar.TypeDir, "abc")
+	steps = append(steps, observationSteps(t, "/work", tar.TypeDir, "abc")...)
+	steps = append(steps, observationSteps(t, "/work", tar.TypeDir, "abc")...)
+	steps = append(steps, observationSteps(t, "/work", tar.TypeReg, "abc")...)
+	e, calls := fakeCommandEngine(t, steps...)
+	ctx := context.Background()
+	if _, err := e.ObserveImageFileWithRequiredPaths(ctx, commandImage, "/check", 3, []string{"/work"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	// Another size bound, another image and another path set each observe again.
+	if _, err := e.ObserveImageFileWithRequiredPaths(ctx, commandImage, "/check", 4, []string{"/work"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	other := "sha256:" + strings.Repeat("c", 64)
+	if _, err := e.ObserveImageFileWithRequiredPaths(ctx, other, "/check", 3, []string{"/work"}, nil); err != nil {
+		t.Fatal(err)
+	}
+	// The same path as a file instead of a directory is a different requirement
+	// and must not be answered from the directory observation.
+	if _, err := e.ObserveImageFileWithRequiredPaths(ctx, commandImage, "/check", 3, nil, []string{"/work"}); err != nil {
+		t.Fatal(err)
+	}
+	if got := len(calls()); got != 16 {
+		t.Fatalf("engine calls=%d, want one full sequence per distinct request", got)
+	}
+}
+
+func TestObserveImageFileDoesNotRememberFailures(t *testing.T) {
+	steps := []engineStep{{Out: commandID}, {Code: 1, Err: "transient"}, {}}
+	steps = append(steps, observationSteps(t, "/work", tar.TypeDir, "abc")...)
+	e, calls := fakeCommandEngine(t, steps...)
+	if got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil); err == nil || got != (ImageFileObservation{}) {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil)
+	if err != nil || got.SHA256 != sha256.Sum256([]byte("abc")) || len(calls()) != 7 {
+		t.Fatalf("a failed observation must be retried: observation=%+v err=%v calls=%q", got, err, calls())
+	}
+	// And the success is remembered.
+	if _, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil); err != nil || len(calls()) != 7 {
+		t.Fatalf("err=%v calls=%q", err, calls())
+	}
+}
+
+func TestObserveImageFileDoesNotRememberCleanupFailure(t *testing.T) {
+	steps := observationSteps(t, "/work", tar.TypeDir, "abc")
+	steps[3] = engineStep{Code: 1, Err: "remove refused"}
+	steps = append(steps, observationSteps(t, "/work", tar.TypeDir, "abc")...)
+	e, calls := fakeCommandEngine(t, steps...)
+	if got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil); err == nil || got != (ImageFileObservation{}) {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	if got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil); err != nil || got.Size != 3 || len(calls()) != 8 {
+		t.Fatalf("observation=%+v err=%v calls=%d", got, err, len(calls()))
+	}
+}
+
+func TestObserveImageFileConcurrentIdenticalObservationsShareOne(t *testing.T) {
+	steps := observationSteps(t, "/work", tar.TypeDir, "abc")
+	steps[0].SleepMillis = 300
+	e, calls := fakeCommandEngine(t, steps...)
+	var wg sync.WaitGroup
+	results := make([]error, 4)
+	for i := range results {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			got, err := e.ObserveImageFileWithRequiredPaths(context.Background(), commandImage, "/check", 3, []string{"/work"}, nil)
+			if err == nil && got.Size != 3 {
+				err = errors.New("wrong observation")
+			}
+			results[i] = err
+		}()
+	}
+	wg.Wait()
+	for _, err := range results {
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	if got := len(calls()); got != 4 {
+		t.Fatalf("engine calls=%d, want one sequence for four identical concurrent observations", got)
+	}
+}
+
+func TestImageObservationMemoWaiterDoesNotInheritLeaderFailure(t *testing.T) {
+	var memo imageObservationMemo
+	release, started := make(chan struct{}), make(chan struct{})
+	runs := 0
+	var mu sync.Mutex
+	run := func(err error) func() (ImageFileObservation, error) {
+		return func() (ImageFileObservation, error) {
+			mu.Lock()
+			runs++
+			mu.Unlock()
+			if err != nil {
+				close(started)
+				<-release
+				return ImageFileObservation{}, err
+			}
+			return ImageFileObservation{Size: 7}, nil
+		}
+	}
+	leader := make(chan error, 1)
+	go func() {
+		_, err := memo.observe(context.Background(), "key", run(context.Canceled))
+		leader <- err
+	}()
+	<-started
+	waiter := make(chan ImageFileObservation, 1)
+	go func() {
+		got, _ := memo.observe(context.Background(), "key", run(nil))
+		waiter <- got
+	}()
+	// A waiter whose own context ends stops waiting without a result.
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if got, err := memo.observe(ctx, "key", run(nil)); !errors.Is(err, context.Canceled) || got != (ImageFileObservation{}) {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	close(release)
+	if err := <-leader; !errors.Is(err, context.Canceled) {
+		t.Fatalf("leader err=%v", err)
+	}
+	if got := <-waiter; got.Size != 7 {
+		t.Fatalf("waiter must run its own observation after the leader failed: %+v", got)
+	}
+	if got, err := memo.observe(context.Background(), "key", run(nil)); err != nil || got.Size != 7 {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	mu.Lock()
+	defer mu.Unlock()
+	if runs != 2 {
+		t.Fatalf("runs=%d, want the failed leader and one successful waiter", runs)
+	}
+}
+
+func TestObserveImageFileDoesNotReportItsOwnKillAsEngineFailure(t *testing.T) {
+	// The engine still has more to send when the observation refuses the first
+	// header and stops the copy on purpose.
+	wrong := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeSymlink, Linkname: "elsewhere"}, "", false)
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: string(wrong), LingerMillis: 20000}, engineStep{})
+	start := time.Now()
+	got, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
+	if err == nil || got != (ImageFileObservation{}) || !strings.Contains(err.Error(), "needs exactly regular file") {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	if strings.Contains(err.Error(), "killed") || strings.Contains(err.Error(), "container engine cp") {
+		t.Fatalf("our own stop leaked into the error: %v", err)
+	}
+	if time.Since(start) > 10*time.Second || len(calls()) != 3 {
+		t.Fatalf("copy was not stopped: elapsed=%s calls=%q", time.Since(start), calls())
+	}
+}
+
+func TestObserveImageFileStillReportsAnEngineCopyFailure(t *testing.T) {
+	// The engine failed by itself; nothing of ours stopped it.
+	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Code: 1, Err: "no such file"}, engineStep{})
+	_, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
+	if err == nil || !strings.Contains(err.Error(), "container engine cp") || !strings.Contains(err.Error(), "no such file") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestObserveImageFileKeepsTheEnginesOwnReasonWhenItStopsTheCopy(t *testing.T) {
+	wrong := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeSymlink, Linkname: "elsewhere"}, "", false)
+	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: string(wrong), Err: "no such file", LingerMillis: 20000}, engineStep{})
+	_, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
+	if err == nil || !strings.Contains(err.Error(), "needs exactly regular file") || !strings.Contains(err.Error(), "no such file") || strings.Contains(err.Error(), "killed") {
+		t.Fatalf("err=%v", err)
+	}
+}
+
+func TestObserveImageFileDoesNotReportCancellationKillAsEngineFailure(t *testing.T) {
+	// The archive is complete and valid; the engine process lingers, and the
+	// caller cancels while the observation waits for it to end.
+	valid := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeReg, Size: 3}, "abc", false)
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: string(valid), LingerMillis: 20000}, engineStep{})
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	time.AfterFunc(1500*time.Millisecond, cancel)
+	start := time.Now()
+	got, err := e.ObserveImageFile(ctx, commandImage, "/check", 100)
+	if !errors.Is(err, context.Canceled) || got != (ImageFileObservation{}) {
+		t.Fatalf("observation=%+v err=%v", got, err)
+	}
+	if strings.Contains(err.Error(), "killed") || strings.Contains(err.Error(), "container engine cp") || time.Since(start) > 10*time.Second || len(calls()) != 3 {
+		t.Fatalf("cancellation kill leaked: err=%v elapsed=%s calls=%q", err, time.Since(start), calls())
+	}
+}
+
+func TestImageObservationMemoPanicReleasesWaitersAndRemembersNothing(t *testing.T) {
+	var memo imageObservationMemo
+	release, started := make(chan struct{}), make(chan struct{})
+	leaderDone := make(chan any, 1)
+	go func() {
+		defer func() { leaderDone <- recover() }()
+		_, _ = memo.observe(context.Background(), "key", func() (ImageFileObservation, error) {
+			close(started)
+			<-release
+			panic("observation panicked")
+		})
+	}()
+	<-started
+	waiter := make(chan ImageFileObservation, 1)
+	go func() {
+		got, _ := memo.observe(context.Background(), "key", func() (ImageFileObservation, error) { return ImageFileObservation{Size: 9}, nil })
+		waiter <- got
+	}()
+	close(release)
+	if v := <-leaderDone; v == nil {
+		t.Fatal("panic was swallowed")
+	}
+	select {
+	case got := <-waiter:
+		if got.Size != 9 {
+			t.Fatalf("waiter observation=%+v", got)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("waiter stayed blocked after the leader panicked")
+	}
+	memo.mu.Lock()
+	defer memo.mu.Unlock()
+	if len(memo.running) != 0 || len(memo.done) != 1 {
+		t.Fatalf("running=%d done=%d", len(memo.running), len(memo.done))
 	}
 }

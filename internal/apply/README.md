@@ -10,8 +10,12 @@ the model, decodes the registry shards and `.markitect/execution.yaml`, accounts
 every file, applies the product defaults and resolves the Execute and Verify
 profiles of every Manager. `Passed` is static preparation only: it starts no
 session, runs no check and claims no runtime readiness. Accounting must pass
-before any Agent starts. Previews have the same stages without a publication
-guard.
+before any Agent starts, except for repairable drift of committed files under a
+declared layout (`file.unexplained`, `registry.missing_file`,
+`registry.dangling_basis`, `registry.outside_area`; DEC-062): Apply passes those
+findings of the start stand to their owners as `run.Config.StartFindings`.
+`Capture` (used by `markitect check`) and previews stay strict. Previews have the
+same stages without a publication guard.
 
 ## Execution settings
 
@@ -96,15 +100,23 @@ model): the same capture, compile, settings and profile preparation as
 artifacts that no Package covers yet (`layout.no_owner`) do not fail file checking.
 `Extract(ctx, ExtractRequest)` then runs two phases over `run.Reconcile`: a
 structure phase with Root alone, which proposes Packages with one overview
-Definition each and the layout exceptions they need, and a model phase with the
+Definition each, the layout exceptions they need and the checks the artifacts
+document (a proposal for the owner's adoption), and a model phase with the
 Manager tree of the verified proposal, which derives each Package's model and
 registers the artifacts. It refuses a start whose local model has Definitions or
 that declares no artifact roots, never changes an artifact, and publishes a
 verified model only as the changed `.markitect` model, registry and layout files.
 `extractAccounting` compiles each candidate tree from scratch (pure, safe for the
-engine's concurrent `check` calls) and gives each phase its write plan; the
-required checks are prepared but not run. `ExtractDeviations` selects the open
-non-blocking findings whose obligation starts with `RealizationDeviation`. The
+engine's concurrent `check` calls) and gives each phase its write plan; a
+proposed check must name a check profile the Host offers, and the required checks
+are prepared but not run. `ExtractResult.ProposedChecks` lists the proposed checks
+for the report. The model phase sets
+`run.Config.ArtifactFindingsAdvisory` with a `ResolveDefinition` that compiles the
+candidate's model (the identities of the latest tree are kept), so Verify reports an
+artifact that deviates from a justified statement as a non-blocking finding with
+subject `artifact` and its Definition. `ExtractDeviations` groups the open such
+findings into one `ArtifactDeviation` per Definition: its owners, raisers and
+observed texts. The
 [runtime contract](../../docs/design/canonical-model/manager-apply-runtime.md#extract-first-bounded-implementation)
 states the plans, accounting, budget and limits.
 

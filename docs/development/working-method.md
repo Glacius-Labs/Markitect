@@ -4,7 +4,7 @@ The owner adopted this working method on 17 October 2026 after the project-histo
 
 ## Start from the workflow
 
-Read the [delivery plan](../implementation-plan.md) for the current target, scope and dependencies. Keep one complete user workflow as the next reference point. For the first reliable Apply, that is the existing two-Apply library demonstration. The later working-day scenarios keep their own sequence and scope.
+Read the [delivery plan](../implementation-plan.md) for the current target, scope and dependencies. Keep one complete user workflow as the next reference point: the current target of the delivery plan. The later working-day scenarios keep their own sequence and scope.
 
 A useful change advances that workflow or resolves a concrete failure, missing accepted obligation or necessary blocked step. Implementation choices within the accepted design can proceed normally. A genuinely new decision follows the existing owner process. A confirmed defect can require a design correction; stability is an opportunity to learn from use, not a requirement to preserve a known wrong design.
 

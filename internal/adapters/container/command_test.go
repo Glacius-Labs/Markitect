@@ -22,6 +22,9 @@ type engineStep struct {
 	Code             int
 	SleepMillis      int
 	HoldStdoutMillis int
+	// LingerMillis keeps the process alive after its output, like a copy that
+	// has more to send than the consumer wants.
+	LingerMillis int
 }
 
 func TestMain(m *testing.M) {
@@ -79,6 +82,7 @@ func TestMain(m *testing.M) {
 		time.Sleep(time.Duration(step.SleepMillis) * time.Millisecond)
 		fmt.Fprint(os.Stdout, step.Out)
 		fmt.Fprint(os.Stderr, step.Err)
+		time.Sleep(time.Duration(step.LingerMillis) * time.Millisecond)
 		os.Exit(step.Code)
 	}
 	os.Exit(m.Run())

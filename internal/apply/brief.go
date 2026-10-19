@@ -25,9 +25,20 @@ type requiredDefinition struct {
 }
 
 // briefChild is one direct child of a Manager as its parent sees it: where it
-// works and which Definitions it must realize there.
+// works, which Definitions it must realize there and the Managers below it.
 type briefChild struct {
 	Path        string
+	Areas       []string
+	Definitions []string
+	// Below lists the child's descendants, parents before their children; they
+	// belong to the team and are coordinated by their own parents.
+	Below []briefDescendant
+}
+
+// briefDescendant is a Manager below a direct child.
+type briefDescendant struct {
+	Path        string
+	Parent      string
 	Areas       []string
 	Definitions []string
 }
@@ -54,6 +65,52 @@ type briefInput struct {
 }
 
 func identityText(id model.Identity) string { return id.Package + "/" + id.ID }
+
+// selectionOf returns the context selection of a Package, or the empty one.
+func selectionOf(selections []organization.ContextSelection, pkg string) (selection organization.ContextSelection) {
+	for _, candidate := range selections {
+		if candidate.Package() == pkg {
+			selection = candidate
+		}
+	}
+	return selection
+}
+
+// ownDefinitions lists the Definitions a Package itself defines, each with its
+// title, as its parent's Brief shows them.
+func ownDefinitions(selections []organization.ContextSelection, pkg string) (own []string) {
+	for _, definition := range selectionOf(selections, pkg).Definitions() {
+		if definition.Definition.Identity.Package == pkg {
+			own = append(own, identityText(definition.Definition.Identity)+": "+definitionTitle(definition.Definition))
+		}
+	}
+	return own
+}
+
+// briefChildren describes the direct children of a Manager for its Brief: where
+// each works, which Definitions it defines and the Managers below it, parents
+// before their children. managers is the whole topology; areas names the
+// artifact areas of a Package.
+func briefChildren(manager organization.Manager, managers []organization.Manager, selections []organization.ContextSelection, areas func(string) []string) []briefChild {
+	childrenOf := map[string][]string{}
+	for _, m := range managers {
+		childrenOf[m.Package] = m.Children
+	}
+	var children []briefChild
+	for _, path := range manager.Children {
+		child := briefChild{Path: path, Areas: areas(path), Definitions: ownDefinitions(selections, path)}
+		var below func(string)
+		below = func(parent string) {
+			for _, d := range childrenOf[parent] {
+				child.Below = append(child.Below, briefDescendant{Path: d, Parent: parent, Areas: areas(d), Definitions: ownDefinitions(selections, d)})
+				below(d)
+			}
+		}
+		below(path)
+		children = append(children, child)
+	}
+	return children
+}
 
 // managerRole is the short description of a Manager that its contacts see.
 func managerRole(manager organization.Manager, selection organization.ContextSelection) string {
@@ -115,7 +172,18 @@ func renderBrief(in briefInput) string {
 			for _, definition := range child.Definitions {
 				fmt.Fprintf(&b, "  Definition %s\n", definition)
 			}
+			for _, d := range child.Below {
+				areas := "none"
+				if len(d.Areas) > 0 {
+					areas = strings.Join(d.Areas, "; ")
+				}
+				fmt.Fprintf(&b, "  below it: %s, a child of %s, areas: %s\n", d.Path, d.Parent, areas)
+				for _, definition := range d.Definitions {
+					fmt.Fprintf(&b, "    Definition %s\n", definition)
+				}
+			}
 		}
+		b.WriteString("Every area listed here has its owner in the team; the Managers below your children are coordinated through their own parents.\n")
 	}
 	definitions := in.Selection.Definitions()
 	example := "package/id"

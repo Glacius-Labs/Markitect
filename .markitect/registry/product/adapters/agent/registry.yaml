@@ -140,3 +140,11 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Prepares an explicitly opted-in actual turn adapter smoke with source-bound inputs, Host tool answers, Execute resume continuity and a fresh read-only Verify turn; runtime evidence remains unexecuted.
+  - path: "internal/adapters/claudecode/setup.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Observes the runtime metadata of an image for Claude sessions and encodes a validated Claude profile as the closed Host section that the metadata decoder reads back.
+  - path: "internal/adapters/claudecode/setup_test.go"
+    form: test
+    realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
+    why: Round-trips the encoded Claude Host section through the metadata decoder and projection and verifies the image observation and refusal of invalid profiles.

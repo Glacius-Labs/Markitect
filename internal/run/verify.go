@@ -34,15 +34,7 @@ func (e *engine) verifyRound(n int, c candidate) bool {
 	e.mu.Lock()
 	rs.checks = results
 	for _, f := range structural {
-		f.Blocking, f.RaisedBy = true, MarkitectFinding
-		if _, ok := e.byPath[f.Owner]; !ok {
-			f.Observed = fmt.Sprintf("%s (reported for unknown owner %q)", f.Observed, f.Owner)
-			f.Owner = "."
-		}
-		if strings.TrimSpace(f.Obligation) == "" {
-			f.Obligation = "Every file is accounted for in the candidate"
-		}
-		rs.structural = append(rs.structural, e.addFindingLocked(f, n))
+		rs.structural = append(rs.structural, e.structuralLocked(f, n))
 	}
 	for _, f := range e.unsupportedFindings(c.unsupported) {
 		rs.structural = append(rs.structural, e.addFindingLocked(f, n))
@@ -175,16 +167,17 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 		ts := &turnState{m: m, kind: VerifyTurn, id: fmt.Sprintf("%s-r%d-%s-v%d", e.cfg.RunID, rs.n, m.slug, attempt), round: rs.n}
 		prompt := e.verifyPromptLocked(m, rs, attempt > 1)
 		e.mu.Unlock()
-		res, err := e.runTurn(ts, Turn{Profile: m.VerifyProfile, Workspace: rs.volume, ReadOnly: true, Home: m.verifyHome, Prompt: prompt, Tools: verifyTools()}, e.assessHandler(m, rs, ts))
+		res, err := e.runTurn(ts, Turn{Profile: m.VerifyProfile, Workspace: rs.volume, ReadOnly: true, Home: m.verifyHome, Prompt: prompt, Tools: verifyTools(e.cfg.ArtifactFindingsAdvisory)}, e.assessHandler(m, rs, ts))
+		e.mu.Lock()
+		e.applyReportLocked(m, rs, ts)
+		reported := rs.assessed[m.Path]
+		e.mu.Unlock()
 		if !res.Stopped {
 			return
 		}
 		if err != nil {
 			last = err
 		}
-		e.mu.Lock()
-		reported := rs.assessed[m.Path]
-		e.mu.Unlock()
 		if reported {
 			return
 		}
@@ -198,36 +191,59 @@ func (e *engine) verifyManager(m *mgr, rs *roundState) {
 	}
 }
 
+// assessedFinding is one finding of an assess call. Subject and Definition
+// are only accepted when Config.ArtifactFindingsAdvisory is set.
+type assessedFinding struct {
+	Owner      string `json:"owner"`
+	Obligation string `json:"obligation"`
+	Observed   string `json:"observed"`
+	Blocking   *bool  `json:"blocking"`
+	Subject    string `json:"subject"`
+	Definition string `json:"definition"`
+}
+
 type assessment struct {
-	Summary   string `json:"summary"`
-	Satisfied *bool  `json:"satisfied"`
-	Findings  []struct {
-		Owner      string `json:"owner"`
-		Obligation string `json:"obligation"`
-		Observed   string `json:"observed"`
-		Blocking   *bool  `json:"blocking"`
-	} `json:"findings"`
-	Closed []struct {
+	Summary   string            `json:"summary"`
+	Satisfied *bool             `json:"satisfied"`
+	Findings  []assessedFinding `json:"findings"`
+	Closed    []struct {
 		ID     string `json:"id"`
 		Reason string `json:"reason"`
 	} `json:"closed"`
 }
 
-// assessHandler serves the Verify tool. It applies a valid report at once and
-// refuses an invalid one with the reason so the Agent can retry.
+// report is a valid assessment of one Verify turn, kept until the turn ends.
+type report struct {
+	summary   string
+	satisfied bool
+	raised    []Finding
+	closing   map[string]string
+}
+
+// assessHandler serves the Verify tool. It keeps a valid report for the end of
+// the turn, where a later valid report replaces an earlier one, and refuses an
+// invalid one with the reason so the Agent can retry. Only the Manager's own
+// findings decide validity, and no other turn changes them while this one runs.
 func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandler {
 	return func(_ context.Context, name string, args json.RawMessage) ToolAnswer {
 		if name != toolAssess {
 			return refuse("Unknown tool %q; in Verify only %q is available.", name, toolAssess)
 		}
-		e.mu.Lock()
-		defer e.mu.Unlock()
-		if rs.assessed[m.Path] {
-			return refuse("You already reported your assessment of this candidate.")
-		}
 		var in assessment
 		if err := decodeStrict(args, &in); err != nil {
 			return refuse("%v", err)
+		}
+		if !e.cfg.ArtifactFindingsAdvisory {
+			// The fields do not exist for this run: refuse them as decodeStrict
+			// refuses any unknown field.
+			for _, f := range in.Findings {
+				switch {
+				case f.Subject != "":
+					return refuse("the arguments are not valid: json: unknown field %q", "subject")
+				case f.Definition != "":
+					return refuse("the arguments are not valid: json: unknown field %q", "definition")
+				}
+			}
 		}
 		summary, err := toolText("summary", in.Summary)
 		if err != nil {
@@ -239,11 +255,12 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 		if len(in.Findings) > maxToolFindings || len(in.Closed) > maxToolFindings {
 			return refuse("At most %d findings and %d closures per report.", maxToolFindings, maxToolFindings)
 		}
-		type raised struct {
-			owner, obligation, observed string
-			blocking                    bool
-		}
-		var adds []raised
+		// Resolving a Definition compiles the candidate's model, so it runs
+		// before the engine lock is taken.
+		known := e.resolveDefinitions(rs, in.Findings)
+		e.mu.Lock()
+		defer e.mu.Unlock()
+		var adds []Finding
 		blocking := 0
 		for i, f := range in.Findings {
 			if f.Blocking == nil {
@@ -260,8 +277,27 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 			if err != nil {
 				return refuse("%v", err)
 			}
-			adds = append(adds, raised{f.Owner, obligation, observed, *f.Blocking})
-			if *f.Blocking {
+			add := Finding{Owner: f.Owner, RaisedBy: m.Path, Obligation: obligation, Observed: observed, Blocking: *f.Blocking}
+			if e.cfg.ArtifactFindingsAdvisory {
+				switch f.Subject {
+				case subjectModel:
+					add.Subject = subjectModel
+				case subjectArtifact:
+					if strings.TrimSpace(f.Definition) == "" {
+						return refuse("findings[%d]: definition is required when subject is %q.", i, subjectArtifact)
+					}
+					if !known[f.Definition] {
+						return refuse("findings[%d]: %q is not a Definition of the candidate model.", i, f.Definition)
+					}
+					// An artifact that deviates from the model is reported, never
+					// repaired by the model's Managers, so it cannot block.
+					add.Subject, add.Definition, add.Blocking = subjectArtifact, f.Definition, false
+				default:
+					return refuse("findings[%d]: subject must be %q or %q.", i, subjectArtifact, subjectModel)
+				}
+			}
+			adds = append(adds, add)
+			if add.Blocking {
 				blocking++
 			}
 		}
@@ -292,22 +328,53 @@ func (e *engine) assessHandler(m *mgr, rs *roundState, ts *turnState) ToolHandle
 			return refuse("satisfied is false but none of your findings is blocking; raise the blocking finding or set satisfied to true.")
 		}
 
-		for _, id := range sortedKeys(closing) {
-			f := e.findingLocked(id)
-			f.Closed, f.ClosedRound, f.ClosedReason = true, rs.n, closing[id]
+		replaced := ts.report != nil
+		ts.report = &report{summary: summary, satisfied: *in.Satisfied, raised: adds, closing: closing}
+		ts.status = "assessed"
+		if replaced {
+			return ToolAnswer{Text: "Assessment recorded; it replaces your earlier one in this turn."}
+		}
+		return ToolAnswer{Text: "Assessment recorded. A later assess call in this turn replaces it."}
+	}
+}
+
+// resolveDefinitions reports, for the Definition identity of each artifact
+// finding of a report, whether the candidate's model holds it. It is empty
+// unless Config.ArtifactFindingsAdvisory is set.
+func (e *engine) resolveDefinitions(rs *roundState, findings []assessedFinding) map[string]bool {
+	known := map[string]bool{}
+	if !e.cfg.ArtifactFindingsAdvisory {
+		return known
+	}
+	for _, f := range findings {
+		if _, done := known[f.Definition]; f.Subject == subjectArtifact && strings.TrimSpace(f.Definition) != "" && !done {
+			known[f.Definition] = e.cfg.ResolveDefinition(rs.tree, f.Definition)
+		}
+	}
+	return known
+}
+
+// applyReportLocked applies the last valid report of a Verify turn when the
+// turn has ended: closures, new findings and the Manager's assessment.
+func (e *engine) applyReportLocked(m *mgr, rs *roundState, ts *turnState) {
+	r := ts.report
+	if r == nil || rs.assessed[m.Path] {
+		return
+	}
+	for _, id := range sortedKeys(r.closing) {
+		if f := e.findingLocked(id); f != nil && !f.Closed {
+			f.Closed, f.ClosedRound, f.ClosedReason = true, rs.n, r.closing[id]
 			_ = e.record(Event{Kind: "finding.closed", Manager: m.Path, Turn: ts.id, Round: rs.n, Data: *f})
 		}
-		for _, a := range adds {
-			e.addFindingLocked(Finding{Owner: a.owner, RaisedBy: m.Path, Obligation: a.obligation, Observed: a.observed, Blocking: a.blocking}, rs.n)
-		}
-		rs.assessed[m.Path] = true
-		rs.assessments[m.Path] = Assessment{Manager: m.Path, Turn: ts.id, Satisfied: *in.Satisfied, Summary: summary}
-		ts.status = "assessed"
-		_ = e.record(Event{Kind: "assessment", Manager: m.Path, Turn: ts.id, Round: rs.n, Data: rs.assessments[m.Path]})
-		e.deliverLocked(rs.n)
-		e.cond.Broadcast()
-		return ToolAnswer{Text: "Assessment recorded."}
 	}
+	for _, f := range r.raised {
+		e.addFindingLocked(f, rs.n)
+	}
+	rs.assessed[m.Path] = true
+	rs.assessments[m.Path] = Assessment{Manager: m.Path, Turn: ts.id, Satisfied: r.satisfied, Summary: r.summary}
+	_ = e.record(Event{Kind: "assessment", Manager: m.Path, Turn: ts.id, Round: rs.n, Data: rs.assessments[m.Path]})
+	e.deliverLocked(rs.n)
+	e.cond.Broadcast()
 }
 
 // within reports whether owner is the manager or one of its descendants.
@@ -327,6 +394,20 @@ func (e *engine) findingLocked(id string) *Finding {
 		}
 	}
 	return nil
+}
+
+// structuralLocked raises one structural finding of Account in the round as a
+// blocking markitect finding; an unknown owner is replaced by Root.
+func (e *engine) structuralLocked(f Finding, round int) *Finding {
+	f.Blocking, f.RaisedBy = true, MarkitectFinding
+	if _, ok := e.byPath[f.Owner]; !ok {
+		f.Observed = fmt.Sprintf("%s (reported for unknown owner %q)", f.Observed, f.Owner)
+		f.Owner = "."
+	}
+	if strings.TrimSpace(f.Obligation) == "" {
+		f.Obligation = "Every file is accounted for in the candidate"
+	}
+	return e.addFindingLocked(f, round)
 }
 
 func (e *engine) addFindingLocked(f Finding, round int) *Finding {

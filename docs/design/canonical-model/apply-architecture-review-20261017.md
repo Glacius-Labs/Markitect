@@ -18,14 +18,14 @@ The product idea and the target architecture are sound, and the Go dependency st
 - **Ownership:** one accountable owner per artifact, one writer at a time, and an overlap is an error.
 - **Reviews** record their expectations before they see the candidate.
 - **Definition census:** each Definition gets a disposition backed by evidence. The Host checks the final evidence.
-- **Code:** the real import graph matches the [Go architecture](manager-apply-go-architecture.md#dependency-direction-and-ports) and is enforced in CI. Interfaces are few and live with their consumers. The model compiler is pure. Core tests are fast.
+- **Code:** the real import graph matches the [Go architecture](../../history/apply-design-before-dec-056/manager-apply-go-architecture.md#dependency-direction-and-ports) and is enforced in CI. Interfaces are few and live with their consumers. The model compiler is pure. Core tests are fast.
 - **Delivery:** small PRs, a green Main (80 of 80 recent runs), and review that catches real defects.
 
 ## Findings
 
 ### F1 The core is unspecified and unbuilt while its periphery hardens
 
-- **The core is not specified.** The Manager message tool is "schema pending" ([port contracts](manager-apply-port-contracts.md#session-and-communication-port)). The concept still asks to "define and validate the technical message, readiness, delivery and counter bindings" ([concept](manager-apply-concept.md#remaining-process-detail-and-technical-boundary)). No document defines a task state machine.
+- **The core is not specified.** The Manager message tool is "schema pending" ([port contracts](../../history/apply-design-before-dec-056/manager-apply-port-contracts.md#session-and-communication-port)). The concept still asks to "define and validate the technical message, readiness, delivery and counter bindings" ([concept](manager-apply-concept.md#remaining-process-detail-and-technical-boundary)). No document defines a task state machine.
 - **The core is not built.** `internal/run` implements sessions, binding, budget and restore, but not task execution, review or integration.
 - **About 16% of production Go is unreachable from any command** (about 8k lines). This includes `adapters/journal`, the Claude Code codec, most of `run` and of `realization` composition, and context rendering.
 - **That code is fixed in place by unit tests** before one end-to-end loop has validated its contracts. `run.Sessions` has no implementation.
@@ -39,7 +39,7 @@ The product idea and the target architecture are sound, and the Go dependency st
 ### F2 The composition rules contradict each other
 
 - **The concept** says composition is a disjoint union because each file has one owner and one task writes at a time. An overlap stops the run ([concept](manager-apply-concept.md#apply-lifecycle)).
-- **The port contracts** say sequential writing does not establish a common base. A composition without a proven common base is refused and "never silently rebased" ([port contracts](manager-apply-port-contracts.md#candidate-workspace-port)). The [library walkthrough](manager-apply-library-flow.md#consuming-a-delivery-without-losing-local-work) says the same.
+- **The port contracts** say sequential writing does not establish a common base. A composition without a proven common base is refused and "never silently rebased" ([port contracts](../../history/apply-design-before-dec-056/manager-apply-port-contracts.md#candidate-workspace-port)). The [library walkthrough](manager-apply-library-flow.md#consuming-a-delivery-without-losing-local-work) says the same.
 - **After a limited delivery**, such as a skeleton, producer and consumer never share a base again. The port contracts require the producer to establish a common base or return the conflict. The walkthrough relies on an explicitly admitted basis advance. So the operation that every parent integration needs has no specified rule.
 
 **Recommendation:**
@@ -49,7 +49,7 @@ The product idea and the target architecture are sound, and the Go dependency st
 
 ### F3 The continuity machinery is accidental complexity for the first Apply
 
-The first version specifies a large runtime apparatus: conversation continuity across working-basis versions, quiescence proofs, write barriers, warm retention, eviction order and provider resume ([concept](manager-apply-concept.md#working-bases-and-conversation-continuity), [execution](manager-apply-execution.md#idle-execution-and-resumption)). Every writing Manager meets this, because Explore is read-only and a change of mounts needs a new environment. DEC-039 already says "where supported", and a warm limit of zero is allowed.
+The first version specifies a large runtime apparatus: conversation continuity across working-basis versions, quiescence proofs, write barriers, warm retention, eviction order and provider resume ([concept](manager-apply-concept.md#working-bases-and-conversation-continuity), [execution](../../history/apply-design-before-dec-056/manager-apply-execution.md#idle-execution-and-resumption)). Every writing Manager meets this, because Explore is read-only and a change of mounts needs a new environment. DEC-039 already says "where supported", and a warm limit of zero is allowed.
 
 **Recommendation:**
 - In the first version, every step runs in its own container, and that container stops when the step ends.
@@ -58,13 +58,13 @@ The first version specifies a large runtime apparatus: conversation continuity a
   - The conversation resumes from the retained provider home where that is supported. Otherwise the Host supplies an evidence-linked handoff.
 - Merge [#352](https://github.com/Glacius-Labs/Markitect/pull/352) showed after the basis revision that both CLIs can resume a conversation in a new container from the retained provider home ([record](../../validation/runtime-capabilities-20261017.md)). The step-bound form is therefore feasible.
 - Every step is then a charged session start, so starts equal steps. The start cap and the session counts in F4 must be read as step counts.
-- Proposal, for owner confirmation: while the run waits for the owner, no container runs, and the Host process may exit. The target verbs `answer` and `resume` ([verb table](manager-apply-go-architecture.md#source-layout)) then continue the run. The runtime record does not cover recovery after a Host crash, so this needs its own evidence.
+- Proposal, for owner confirmation: while the run waits for the owner, no container runs, and the Host process may exit. The target verbs `answer` and `resume` ([verb table](../../history/apply-design-before-dec-056/manager-apply-go-architecture.md#source-layout)) then continue the run. The runtime record does not cover recovery after a Host crash, so this needs its own evidence.
 - Warm retention can return when a real run shows the need.
 
 ### F4 Complete participation costs a lot and does not scale yet
 
 - **Cost per Apply for 15 Packages:**
-  - Preparation reserves `2 * (N + P)` session starts for reviews ([execution](manager-apply-execution.md#one-ledger-with-protected-completion-capacity)).
+  - Preparation reserves `2 * (N + P)` session starts for reviews ([execution](../../history/apply-design-before-dec-056/manager-apply-execution.md#one-ledger-with-protected-completion-capacity)).
   - With 16 Managers and 5 parents that is 42 reserved review starts plus 16 Explore sessions. The floor is about 58 sessions, even for a one-field change.
   - The estimate for a realistic Apply is about 70 to 90 sessions. A strong single-agent baseline would need 2 to 5.
 - **Cost of routing:** cross-area questions travel one tree edge at a time. A question from `lending/reminders` to `members` and its reply cost four intermediate Agent turns: lending, root, root and lending.

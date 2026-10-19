@@ -1,8 +1,10 @@
 # Port contracts for the first reliable Apply
 
-> **Historical, 19 October 2026:** [manager-apply-runtime.md](manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
+> **Moved to history:** this is the Apply design before [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), kept for its decisions and failed attempts. The current owners are [manager-apply-concept.md](../../design/canonical-model/manager-apply-concept.md) (intent) and [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) (implemented contract); see the [folder README](README.md).
 
-This contract owns the Go interfaces between the Apply core and its adapters, the values they exchange and their behavioral rules. The [Go architecture](manager-apply-go-architecture.md) owns package boundaries; the [library walkthrough](manager-apply-library-flow.md) shows these exchanges in sequence. Provider wire formats belong to the adapters.
+> **Historical, 19 October 2026:** [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
+
+This contract owns the Go interfaces between the Apply core and its adapters, the values they exchange and their behavioral rules. The [Go architecture](manager-apply-go-architecture.md) owns package boundaries; the [library walkthrough](../../design/canonical-model/manager-apply-library-flow.md) shows these exchanges in sequence. Provider wire formats belong to the adapters.
 
 ## Values, identities and ownership
 
@@ -72,7 +74,7 @@ A dependent task implements against a producer's result only once the Orchestrat
 
 `QuestionRef` binds identity and version. The application binds owner answers to that exact proposal; an Agent cannot assert owner authority. A context-only answer may continue the same run; changed intent ends the run Incomplete and needs a committed model edit and a continuation ([journal](manager-apply-journal.md#questions-answers-and-model-changes)).
 
-The illustrative `TaskSpec.Outcome` above is the static Orchestrator operation instruction, not parent-authored prose. Its model basis and complete scope are compiler-derived. Additional work messages remain separate and cannot redefine that mandate. Exact responsibility and prerequisite records must follow the remaining [process details](manager-apply-concept.md#remaining-process-detail-and-technical-boundary); existing provider Session contracts are not a Manager scheduler.
+The illustrative `TaskSpec.Outcome` above is the static Orchestrator operation instruction, not parent-authored prose. Its model basis and complete scope are compiler-derived. Additional work messages remain separate and cannot redefine that mandate. Exact responsibility and prerequisite records must follow the remaining [process details](../../design/canonical-model/manager-apply-concept.md#remaining-process-detail-and-technical-boundary); existing provider Session contracts are not a Manager scheduler.
 
 The confirmed process uses normal deliveries with limited scope while their Manager remains open. The technical representation binds Orchestrator acceptance ([D1](manager-apply-core.md#deliveries-and-composition)) separately from a reviewer pass. Do not invent a parallel receipt lifecycle or a budget reset for each limited delivery. Successful deliveries consume shared execution capacity and restart the rejection counter for their purpose ([DEC-050](../../concepts/register.md#dec-050-an-accepted-delivery-restarts-the-rejection-count)), whose identity is fixed per run, Manager and review purpose by the [execution contract](manager-apply-execution.md#admission-amendments-and-finite-correction). Exact counting, binding and recovery need implementation evidence.
 
@@ -285,6 +287,6 @@ The root is ordinary in this protocol. `apply` adds the final evidence check and
 
 ## Focused acceptance cases
 
-The [walkthrough's refusal cases](manager-apply-library-flow.md#concrete-refusal-cases) are the first controlled-adapter checks. Add durable recording before dispatch, unknown dispatch and publication recovery, registry and tree mismatch, protected-input drift, exact duplicates and immutable review subjects. Then prove session start, Orchestrator calls, step outcomes, conversation resume in a new container, fresh review and termination with the selected real executor, separately from the two real Applies.
+The [walkthrough's refusal cases](../../design/canonical-model/manager-apply-library-flow.md#concrete-refusal-cases) are the first controlled-adapter checks. Add durable recording before dispatch, unknown dispatch and publication recovery, registry and tree mismatch, protected-input drift, exact duplicates and immutable review subjects. Then prove session start, Orchestrator calls, step outcomes, conversation resume in a new container, fresh review and termination with the selected real executor, separately from the two real Applies.
 
 Interfaces belong to their consumers, and adapters return concrete types ([Go interface guidance](https://go.dev/wiki/CodeReviewComments#interfaces)). Effectful calls take `context.Context` first ([Go context](https://go.dev/blog/context)). Pure model, organization and realization functions need no port just to be testable.

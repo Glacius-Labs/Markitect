@@ -16,7 +16,10 @@ and publishes a verified candidate; this package never publishes and never commi
 
 Every Apply runs the same order (DEC-058): Execute and integration first, then fresh Verify
 of one captured candidate. There is no Verify, check or `Account` before the first Execute
-turn and no separate route for absent or unchanged artifacts.
+turn and no separate route for absent or unchanged artifacts. `Config.StartFindings` carries
+the start stand's accounting drift that preparation tolerated (DEC-062): each becomes a
+blocking `markitect` finding of round 0 that reaches its owner behind the initial item and
+closes when round 1 starts, like every structural finding.
 
 1. The shared working tree `<RunID>-work` is materialized from `Start`, created with the union
    of the mount paths of all enforced write plans as empty directories. Candidates are
@@ -42,7 +45,11 @@ turn and no separate route for absent or unchanged artifacts.
    (which counts as done), its summary goes to its direct parent as the item "Your child X
    reports done: ..." (`child.report`; without a call the text says that no summary was given),
    so the parent integrates its children's results. `waiting` reports nothing. Items that
-   arrive while the parent runs are batched into its next turn.
+   arrive while the parent runs are batched into its next turn. A parent whose items are only
+   such reports waits while a Manager below it runs or has items it can still receive, and then
+   integrates its quiet subtree in one turn; any other item starts it at once. Parents with only
+   reports are scheduled after every other Manager and after all their descendants, so a waiting
+   parent always has a descendant that runs.
 4. A Manager with `Write.Enforced` runs its Execute turns read-only unless `Write.Base`, with
    `Write.Mounts` overlaid; without it the whole tree is writable and ownership is trusted.
    Verify turns are always read-only without mounts. Mount paths are validated before any
@@ -82,18 +89,28 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
 
 ## Host tools
 
-- Verify: `assess {summary, satisfied, findings[{owner, obligation, observed, blocking}], closed[{id, reason}]}`,
-  once. A finding's owner is the reporting Manager or a descendant; closed IDs are open
-  findings it raised. An invalid call is refused with the reason and may be repeated. A turn
+- Verify: `assess {summary, satisfied, findings[{owner, obligation, observed, blocking}], closed[{id, reason}]}`.
+  A finding's owner is the reporting Manager or a descendant; closed IDs are open
+  findings it raised. An invalid call is refused with the reason and may be repeated. A valid
+  report is kept in the turn and applied when the turn ends; a later valid call replaces it. A turn
   that ends without a valid report is retried once with a fresh turn; then the run is Incomplete.
+  With `Config.ArtifactFindingsAdvisory` (Extract's model phase; it requires `Config.ResolveDefinition`)
+  every finding also carries `subject` (`artifact`: an artifact does not conform to the model;
+  `model`: the model itself is defective) and, for an artifact, `definition`, the identity of the
+  Definition it deviates from, which `ResolveDefinition` must confirm on the candidate. A report
+  without a valid subject, or an artifact finding without a resolvable Definition, is refused. An
+  artifact finding is stored non-blocking whatever the reviewer says; a model finding keeps the
+  reviewer's flag. `Finding.Subject` and `Finding.Definition` hold both. Without the option the
+  schema has no such fields and a call that sends them is refused as any unknown field.
 - Execute: `send {to, text}` where `to` is `parent`, a direct child path or, for Root only,
   `owner`; anything else is refused with the allowed contacts. An answer also returns the
-  caller's new undelivered items. `finish {status: done|waiting, summary}` ends the turn;
-  a turn that ends without it counts as done. Without an `Owner`, a question is refused.
+  caller's new undelivered items. `finish {status: done|waiting, summary}` records how the turn
+  ends (a later call replaces it; the turn ends when the provider stops and the tools stay usable
+  until then); a turn that ends without it counts as done. Without an `Owner`, a question is refused.
   Questions are numbered `Q1`, `Q2`, ... (within a run, a refused question keeps its number); `Config.Questions` hands a run the answered
   questions of an earlier run on the same owner channel, which the prompts show and whose
   numbering new questions continue.
-- Execute, only with `Config.CheckTool`: `check {scope?}` peeks the shared volume through
+- Execute, with `Config.CheckTool` (Apply and Extract set it): `check {scope?}` peeks the shared volume through
   `Workspaces.Peek` (writers keep running), runs `Account` on the peeked tree and answers with
   the findings as compact text, the calling Manager's first and then the number of others
   (`scope: "all"` lists them). It is advice; candidates still come only from Harvest. An

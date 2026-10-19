@@ -62,6 +62,12 @@ checks:
     timeout: 2m
 `
 
+// extractProposedCheck is a check the structure proposal may add, with the
+// profile it names.
+func extractProposedCheck(profile string) string {
+	return "  - id: project-vet\n    profile: " + profile + "\n    directory: realization\n    args: [vet, ./...]\n    timeout: 2m\n"
+}
+
 var extractArtifacts = map[string]string{
 	"README.md":                                    "Library\n",
 	"realization/go.mod":                           "module library\n",

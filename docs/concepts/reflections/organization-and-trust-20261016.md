@@ -45,7 +45,7 @@ An implementation prompt directs attention to the requested feature, and a PR re
 
 ### Local authority and escalation boundaries
 
-Delegated judgment needs relevant context, goals and binding constraints, authority within the area and criteria for involving others or escalating. The [mandate section](../../design/canonical-model/manager-apply-configuration.md#the-mandate-section) and the [escalation rules](desired-working-day-20261016.md#decision-authority-and-escalation) express them.
+Delegated judgment needs relevant context, goals and binding constraints, authority within the area and criteria for involving others or escalating. The [mandate section](../../history/apply-design-before-dec-056/manager-apply-configuration.md#the-mandate-section) and the [escalation rules](desired-working-day-20261016.md#decision-authority-and-escalation) express them.
 
 ### Leadership reports and process oversight
 

@@ -14,6 +14,7 @@ import (
 	"runtime"
 	"sort"
 	"strings"
+	"sync"
 	"syscall"
 	"time"
 )
@@ -67,6 +68,13 @@ func (e *Engine) ObserveImageFileWithRequiredPaths(ctx context.Context, imageID,
 	if err := ctx.Err(); err != nil {
 		return observation, err
 	}
+	return e.observations.observe(ctx, imageObservationKey(imageID, file, maxBytes, paths, expected), func() (ImageFileObservation, error) {
+		return e.observeImageFile(ctx, imageID, file, maxBytes, paths, expected)
+	})
+}
+
+// observeImageFile performs one complete, uncached observation.
+func (e *Engine) observeImageFile(ctx context.Context, imageID, file string, maxBytes int64, paths []string, expected map[string]byte) (observation ImageFileObservation, err error) {
 	cidDir, err := os.MkdirTemp("", "markitect-image-observation-")
 	if err != nil {
 		return observation, err
@@ -130,14 +138,102 @@ func (e *Engine) ObserveImageFileWithRequiredPaths(ctx context.Context, imageID,
 	stopRead := context.AfterFunc(ctx, func() { _ = stdout.Close() })
 	defer stopRead()
 	observation, err = observeImageArchive(stdout, path.Base(file), maxBytes)
+	var stopErr error
+	stopped := false
 	if err != nil {
 		// Stop a producer that could otherwise block writing an invalid archive.
 		_ = stdout.Close()
-		_ = cmd.Process.Kill()
+		stopErr, stopped = cmd.Process.Kill(), true
 	}
 	if waitErr := cmd.Wait(); waitErr != nil {
-		err = errors.Join(err, fmt.Errorf("container engine cp: %w: %s", waitErr, strings.TrimSpace(stderr.String())))
+		detail := strings.TrimSpace(stderr.String())
+		if ctx.Err() != nil {
+			// The context's own kill may have ended the process before ours;
+			// the exit status below still has to be that kill.
+			stopErr = nil
+		}
+		if (stopped || ctx.Err() != nil) && confirmedImageHeaderStop(stopErr, waitErr) {
+			// The kill was ours: the observation error already says why, and
+			// "signal: killed" would only look like an engine failure. What the
+			// engine itself said is kept, so a real cause is never lost.
+			if detail != "" {
+				err = errors.Join(err, fmt.Errorf("container engine cp reported: %s", detail))
+			}
+		} else {
+			err = errors.Join(err, fmt.Errorf("container engine cp: %w: %s", waitErr, detail))
+		}
 	}
+	return observation, err
+}
+
+// imageObservationMemo remembers complete successful observations for the life
+// of one Engine. An image ID names immutable content and the key names the exact
+// request, so a repeated request cannot differ. A failure is never remembered:
+// it may be cancellation, a transient engine fault or an uncertain cleanup.
+// Identical concurrent requests share one running observation.
+type imageObservationMemo struct {
+	mu      sync.Mutex
+	done    map[string]ImageFileObservation
+	running map[string]chan struct{}
+}
+
+func imageObservationKey(imageID, file string, maxBytes int64, paths []string, expected map[string]byte) string {
+	var key strings.Builder
+	fmt.Fprintf(&key, "%s\x00%s\x00%d", imageID, file, maxBytes)
+	for _, p := range paths {
+		fmt.Fprintf(&key, "\x00%s\x00%c", p, expected[p])
+	}
+	return key.String()
+}
+
+func (m *imageObservationMemo) observe(ctx context.Context, key string, run func() (ImageFileObservation, error)) (ImageFileObservation, error) {
+	for {
+		m.mu.Lock()
+		if observation, ok := m.done[key]; ok {
+			m.mu.Unlock()
+			return observation, nil
+		}
+		wait, running := m.running[key]
+		if !running {
+			if m.running == nil {
+				m.running = map[string]chan struct{}{}
+			}
+			wait = make(chan struct{})
+			m.running[key] = wait
+		}
+		m.mu.Unlock()
+		if running {
+			// Another caller observes this exact request. Its failure may be its own
+			// cancellation, so a failed request is retried here, not inherited.
+			select {
+			case <-wait:
+				continue
+			case <-ctx.Done():
+				return ImageFileObservation{}, ctx.Err()
+			}
+		}
+		return m.lead(key, wait, run)
+	}
+}
+
+// lead runs the observation this caller registered. The registration ends and
+// its waiters wake even when run panics; only a success is remembered.
+func (m *imageObservationMemo) lead(key string, wait chan struct{}, run func() (ImageFileObservation, error)) (observation ImageFileObservation, err error) {
+	failed := true
+	defer func() {
+		m.mu.Lock()
+		delete(m.running, key)
+		if !failed {
+			if m.done == nil {
+				m.done = map[string]ImageFileObservation{}
+			}
+			m.done[key] = observation
+		}
+		m.mu.Unlock()
+		close(wait)
+	}()
+	observation, err = run()
+	failed = err != nil
 	return observation, err
 }
 

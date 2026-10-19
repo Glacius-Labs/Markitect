@@ -109,7 +109,7 @@ Init installs or updates the six skills and short entrypoints for both clients f
 
 If no accepted model exists, the entrypoints state that gap rather than referring to a fictitious selected model or declaring the project ready for Apply. Technical integration may be complete while model adoption remains open. Setup alone starts no provider session or Apply and grants no additional execution authority.
 
-Existing configuration and applicable product defaults may supply omitted technical settings with their provenance. They do not resolve missing business intent, provider authorization or a monetary spending ceiling. The [configuration contract](canonical-model/manager-apply-configuration.md#strategy-defaults-and-their-sources) owns those defaults; Init does not introduce another set or silently widen existing grants.
+Existing configuration and applicable product defaults may supply omitted technical settings with their provenance. They do not resolve missing business intent, provider authorization or a monetary spending ceiling. The [configuration contract](../history/apply-design-before-dec-056/manager-apply-configuration.md#strategy-defaults-and-their-sources) owns those defaults; Init does not introduce another set or silently widen existing grants.
 
 #### Prepare and adopt the model through the coding agent
 
@@ -119,7 +119,7 @@ The agent examines relevant requirements, documentation, tests and code, propose
 
 The [source-grounded model-adoption workflow](canonical-model/commands.md#model-adoption-without-turning-defects-into-rules) owns the detailed procedure. Under its [accepted completion criterion](canonical-model/commands.md#completion-and-adoption-with-known-deviations), a reviewed model proposal may be adopted with adequately supported known realization deviations. Those findings remain visible, Verify keeps its actual result, and artifact repair is separate work; unresolved material intent or evidence gaps are not waived.
 
-The [first Apply after adoption](canonical-model/manager-apply-library-flow.md#first-apply-after-model-adoption) then reconciles the complete existing realization, preserving justified correct parts. Its [finding handoff](canonical-model/manager-apply-execution.md#extract-findings-at-the-first-apply) uses the existing issue structure with current applicability and evidence assessment; adoption supplies neither artifact approval nor authority to close those findings.
+The [first Apply after adoption](canonical-model/manager-apply-library-flow.md#first-apply-after-model-adoption) then reconciles the complete existing realization, preserving justified correct parts. Its [finding handoff](../history/apply-design-before-dec-056/manager-apply-execution.md#extract-findings-at-the-first-apply) uses the existing issue structure with current applicability and evidence assessment; adoption supplies neither artifact approval nor authority to close those findings.
 
 Adoption also needs explicit responsibility and exact file accounting under [DEC-006](../concepts/register.md#dec-006-every-file-is-covered-or-explicitly-ignored). The agent can prepare registry associations within authorized modeling choices; the owner need not approve every registry line. Unclear responsibility boundaries and genuine exceptions need a decision. Init must not ignore unknown files or invent ownership merely to produce a passing report. A registered file is accounted for, not thereby semantically correct.
 

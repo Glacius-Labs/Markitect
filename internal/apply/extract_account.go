@@ -7,6 +7,7 @@ import (
 	"reflect"
 	"slices"
 	"strings"
+	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
@@ -15,7 +16,14 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// extractPhase names the two phases of an Extract.
+// The names of the two phases of an Extract: the identity of a phase in run
+// identifiers, evidence and reports.
+const (
+	ExtractStructurePhase = "structure"
+	ExtractModelPhase     = "model"
+)
+
+// extractPhase identifies one of the two phases of an Extract.
 type extractPhase int
 
 const (
@@ -25,6 +33,19 @@ const (
 	// registers the artifacts; the Managers of the proposed tree work.
 	extractModel
 )
+
+// extractPhaseDescriptor is what distinguishes a phase besides its accounting:
+// its name, the mandate it hands the Agents and its Verify guidance.
+type extractPhaseDescriptor struct {
+	name, mandate, verifyGuidance string
+}
+
+var extractPhaseDescriptors = [...]extractPhaseDescriptor{
+	extractStructure: {ExtractStructurePhase, structureMandate, structureVerifyGuidance},
+	extractModel:     {ExtractModelPhase, modelMandate, modelVerifyGuidance},
+}
+
+func (p extractPhase) descriptor() extractPhaseDescriptor { return extractPhaseDescriptors[p] }
 
 // extractAccounting accounts the candidates of one Extract phase against that
 // phase's start. It holds only immutable values: Account compiles and checks
@@ -70,20 +91,23 @@ func (a extractAccounting) ownerOfName(name string) string {
 // in the model phase, accounts every file against the shards; in both phases
 // only the phase's own area may differ from the start.
 func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
+	findings := a.account(tree)
+	slices.SortFunc(findings, func(x, y CandidateFinding) int {
+		return cmp.Or(cmp.Compare(x.Owner, y.Owner), cmp.Compare(x.Path, y.Path), cmp.Compare(x.Code, y.Code), cmp.Compare(x.Message, y.Message))
+	})
+	return slices.Compact(findings)
+}
+
+// account collects the findings of a candidate tree, unsorted. Every path
+// returns the guard's findings exactly once.
+func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
 	add := func(owner, code, name, message string) {
 		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: name, Message: message})
 	}
-	defer func() {
-		slices.SortFunc(findings, func(x, y CandidateFinding) int {
-			return cmp.Or(cmp.Compare(x.Owner, y.Owner), cmp.Compare(x.Path, y.Path), cmp.Compare(x.Code, y.Code), cmp.Compare(x.Message, y.Message))
-		})
-		findings = slices.Compact(findings)
-	}()
 	// Every candidate is guarded, whatever else fails to prepare.
 	guarded := a.guard(tree)
-	findings = append(findings, guarded...)
-	structural := rebindStructural(a.start.structural.Model(), tree, a.phase == extractStructure)
+	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
 	compiled := structural.Model().compiled
 	if compiled.Status != model.Passed {
 		local := structural.Model().inputs.Raw.Local
@@ -97,25 +121,85 @@ func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
 		if len(compiled.Diagnostics) == 0 {
 			add(organization.Root, "model.not_passed", "", "The candidate model does not compile: its status is "+string(compiled.Status)+".")
 		}
-		return findings
+		return append(findings, guarded...)
 	}
 	for _, d := range structural.files.diagnostics {
-		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, positioned(d.Message, d.Position))
+		message := positioned(d.Message, d.Position)
+		if a.phase == extractStructure && d.Source.File == executionFile && strings.HasPrefix(d.Source.Field, "/checks") {
+			message += " " + a.offeredProfiles() // a defect of a proposed check
+		}
+		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, message)
 	}
 	if structural.execution.Status() != model.Passed {
-		return findings
+		return append(findings, guarded...)
+	}
+	if a.phase == extractStructure {
+		a.accountChecks(structural, add)
 	}
 	topology, err := organization.BuildTopology(compiled)
 	if err != nil {
 		add(organization.Root, "model.topology", "", err.Error())
-		return findings
+		return append(findings, guarded...)
 	}
 	if a.phase == extractStructure {
 		a.accountStructure(structural, topology, add)
-		return findings
+		return append(findings, guarded...)
 	}
-	a.accountModel(structural, tree, guarded, &findings, add)
-	return findings
+	return append(findings, a.accountModel(structural, tree, guarded)...)
+}
+
+// definitionResolver returns the function that tells whether a candidate tree's
+// model holds a Definition with the identity "package/ID". It compiles the
+// candidate once and keeps the identities of the latest tree, because the
+// engine asks for several Definitions of the same candidate; it is safe for
+// concurrent use.
+func (a extractAccounting) definitionResolver() func(snapshot.Tree, string) bool {
+	var mu sync.Mutex
+	var digest string
+	var known map[string]bool
+	return func(tree snapshot.Tree, identity string) bool {
+		mu.Lock()
+		defer mu.Unlock()
+		if d := tree.Digest().String(); known == nil || d != digest {
+			digest, known = d, map[string]bool{}
+			if compiled := rebindStructural(a.start.structural.Model(), tree, a.phase).Model().compiled; compiled.Status == model.Passed {
+				for _, owner := range compiled.Models {
+					if owner.Local {
+						for _, definition := range owner.Definitions {
+							known[identityText(definition.Identity)] = true
+						}
+					}
+				}
+			}
+		}
+		return known[identity]
+	}
+}
+
+// accountChecks reports each proposed check whose profile the Host does not
+// offer: the next phase could not prepare such a check.
+func (a extractAccounting) accountChecks(structural CapturedPreparationAttempt, add func(owner, code, name, message string)) {
+	declared := structural.execution.authored.Checks
+	if declared == nil {
+		return
+	}
+	for _, check := range declared.Value {
+		if !slices.ContainsFunc(a.start.checkProfiles, func(o checkProfileOffer) bool { return o.Name == check.Profile.Value }) {
+			add(organization.Root, "execution.check_profile_missing", executionFile, fmt.Sprintf("Check %q names the profile %q, which the Host does not offer. %s Name one of them in profile, or remove the check.", check.ID.Value, check.Profile.Value, a.offeredProfiles()))
+		}
+	}
+}
+
+// offeredProfiles states the check profiles the Host offers.
+func (a extractAccounting) offeredProfiles() string {
+	if len(a.start.checkProfiles) == 0 {
+		return "The Host offers no check profile."
+	}
+	names := make([]string, len(a.start.checkProfiles))
+	for i, o := range a.start.checkProfiles {
+		names[i] = o.Name
+	}
+	return "The Host offers the check profiles: " + strings.Join(names, ", ") + "."
 }
 
 // accountStructure checks the proposal of the structure phase: at least one
@@ -146,12 +230,17 @@ func (a extractAccounting) accountStructure(structural CapturedPreparationAttemp
 
 // accountModel accounts the model phase: the Package inventory of the start is
 // kept, and every file is explained, registered in its owner's shard and linked
-// to existing Definitions of the candidate model.
-func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, tree snapshot.Tree, guarded []CandidateFinding, findings *[]CandidateFinding, add func(owner, code, name, message string)) {
+// to existing Definitions of the candidate model. Its result holds the guard's
+// findings once.
+func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, tree snapshot.Tree, guarded []CandidateFinding) []CandidateFinding {
+	var findings []CandidateFinding
+	add := func(owner, code, name, message string) {
+		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: name, Message: message})
+	}
 	candidate := packageNames(structural.Model().compiled)
 	for _, name := range candidate {
 		if !slices.Contains(a.packages, name) {
-			add(modelPackageOf(a.packages, modelDirectory+name+"/x"), "model.structure_changed", modelDirectory+name, fmt.Sprintf("Package %q is new. The Manager tree is stable within an Extract round: describe the missing responsibility in your own Package and propose the new Package to Root as a finding for the next round.", name))
+			add(modelPackageOf(a.packages, modelDirectory+name+"/x"), "model.structure_changed", modelDirectory+name, fmt.Sprintf("Package %q is new; this phase keeps the proposed Packages. Describe the responsibility in your own Package and name the proposed Package in your summary.", name))
 		}
 	}
 	for _, name := range a.packages {
@@ -162,12 +251,12 @@ func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, t
 	c, err := newCandidates(structural, structural.files.classifications, nil, structural.registry.registry)
 	if err != nil {
 		add(organization.Root, "model.topology", "", err.Error())
-		return
+		return append(findings, guarded...)
 	}
-	// The guard's findings are in findings already; Account's compaction drops
-	// the repeat, and Candidates uses their paths to suppress file.unexplained.
+	// Candidates reports the guard's findings with its own, and uses their paths
+	// to suppress file.unexplained.
 	c.guard = func(snapshot.Tree) []CandidateFinding { return guarded }
-	*findings = append(*findings, c.Account(tree)...)
+	return append(findings, c.Account(tree)...)
 }
 
 func positioned(message string, position *model.Position) string {
@@ -177,10 +266,16 @@ func positioned(message string, position *model.Position) string {
 	return fmt.Sprintf("%s (line %d)", message, position.Line)
 }
 
+// exemptFromGuard names the paths Apply's protected-input accounting leaves
+// alone too: the Host's own state and the repository's git data are not inputs.
+func exemptFromGuard(name string) bool {
+	return strings.HasPrefix(name, ".markitect/state/") || strings.HasPrefix(name, ".git/")
+}
+
 // guard reports every change outside the phase's writable area: artifacts,
 // dependencies, manifest, lock and project configuration stay as captured. The
-// structure phase may write the model and the layout exceptions of the
-// execution document, the model phase the model and the registry shards.
+// structure phase may write the model and, in the execution document, the layout
+// exceptions and the checks, the model phase the model and the registry shards.
 func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
 	quoted := 0
@@ -198,18 +293,19 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 		if strings.HasPrefix(name, markitectDir) {
 			kind, rule = "The canonical or Markitect control input", "Managers cannot change the model's dependencies or the project controls."
 		}
-		message := fmt.Sprintf("%s was %s; %s Restore it, and ask the owner through Root if a change is really needed.", kind, what, rule) + originalText(before, code, &quoted)
+		message := fmt.Sprintf("%s was %s; %s Restore it.", kind, what, rule) + originalText(before, code, &quoted)
 		findings = append(findings, CandidateFinding{Owner: a.ownerOfName(name), Code: code, Path: name, Message: message})
 	}
 	for _, before := range a.start.tree.Entries() {
 		name := before.Path().String()
 		after, found := tree.Lookup(before.Path())
 		switch {
+		case exemptFromGuard(name):
 		case a.phase == extractStructure && name == executionFile:
 			if !found {
 				report(name, before, "input.deleted", "deleted")
-			} else if after != before && !equalBesidesLayoutExceptions(before.Bytes(), after.Bytes()) {
-				report(name, before, "input.changed", "changed beyond layout.exceptions")
+			} else if after != before && !equalBesidesProposals(before.Bytes(), after.Bytes()) {
+				report(name, before, "input.changed", "changed beyond layout.exceptions and checks")
 			}
 		case writable(name):
 		case !found:
@@ -220,30 +316,49 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	}
 	for _, after := range tree.Entries() {
 		name := after.Path().String()
-		if _, found := a.start.tree.Lookup(after.Path()); !found && !writable(name) {
+		if _, found := a.start.tree.Lookup(after.Path()); !found && !writable(name) && !exemptFromGuard(name) {
 			report(name, snapshot.Entry{}, "input.added", "added")
 		}
 	}
 	return findings
 }
 
-// equalBesidesLayoutExceptions reports whether two execution documents are
-// equal after layout.exceptions is removed from both. A document that does not
-// parse differs.
-func equalBesidesLayoutExceptions(before, after []byte) bool {
-	strip := func(data []byte) (map[string]any, bool) {
-		var document map[string]any
+// equalBesidesProposals reports whether the structure phase changed the
+// execution document only in the parts it may propose: layout.exceptions and
+// added checks. Every check of the start stays, as the identical entry; a
+// changed or removed owner-declared check is a change beyond the proposals, as
+// is any other difference. A document that does not parse differs.
+func equalBesidesProposals(before, after []byte) bool {
+	strip := func(data []byte) (document map[string]any, checks any, ok bool) {
 		if err := yaml.Unmarshal(data, &document); err != nil || document == nil {
-			return nil, false
+			return nil, nil, false
 		}
-		if layout, ok := document["layout"].(map[string]any); ok {
+		if layout, isMap := document["layout"].(map[string]any); isMap {
 			delete(layout, "exceptions")
 		}
-		return document, true
+		checks = document["checks"]
+		delete(document, "checks")
+		return document, checks, true
 	}
-	x, okX := strip(before)
-	y, okY := strip(after)
-	return okX && okY && reflect.DeepEqual(x, y)
+	x, startChecks, okX := strip(before)
+	y, candidateChecks, okY := strip(after)
+	if !okX || !okY || !reflect.DeepEqual(x, y) {
+		return false
+	}
+	if startChecks == nil {
+		return true
+	}
+	kept, _ := candidateChecks.([]any)
+	declared, isList := startChecks.([]any)
+	if !isList {
+		return reflect.DeepEqual(startChecks, candidateChecks)
+	}
+	for _, check := range declared {
+		if !slices.ContainsFunc(kept, func(candidate any) bool { return reflect.DeepEqual(check, candidate) }) {
+			return false
+		}
+	}
+	return true
 }
 
 // WritePlan returns where a Manager's Execute turns may write in the shared

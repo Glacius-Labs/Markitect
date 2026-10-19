@@ -16,6 +16,9 @@ else:
     decisions = json.loads((attempt / "frozen" / "owner-decisions.json").read_text())
 runtime = next(line.split(" ", 1)[0] for line in (attempt / "binding.txt").read_text().splitlines() if line.startswith("runtime_image="))
 runtime = runtime.split("=", 1)[1]
+# The workspace helper carries the same store label as the attempt's Agent containers.
+store = next((line.split(":", 1)[1].strip() for line in (attempt / "host" / "host.yaml").read_text().splitlines()
+              if line.strip().startswith("store:")), "ra-library")
 config = {
     "formatVersion": 2,
     "repositoryIdentity": "ra-library-" + attempt.name,
@@ -24,7 +27,7 @@ config = {
     "stateDirectory": str(attempt / ("state-" + label)),
     "deadline": deadline,
     "engineExecutable": "/usr/bin/docker",
-    "workspaceHelper": {"name": "ra-ws", "image": runtime, "labels": {"markitect.store": "ra-library"}, "user": "1000:1000",
+    "workspaceHelper": {"name": "ra-ws", "image": runtime, "labels": {"markitect.store": store}, "user": "1000:1000",
                         "cpus": 1, "memoryBytes": 536870912, "pids": 128, "tmpBytes": 134217728, "network": "none"},
     "harvest": {"maxEntries": 50000, "maxBytes": 268435456},
     "credentials": {"ra-claude-token": {"provider": "claude-code", "mode": "dedicated-runtime-token", "path": str(attempt / "secret" / "claude-token")}},

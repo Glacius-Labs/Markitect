@@ -18,6 +18,9 @@ type turnState struct {
 	status   string
 	summary  string
 	finished bool
+	// report is the last valid assessment of a Verify turn, applied when the
+	// turn ends.
+	report *report
 }
 
 // runTurn runs one Agent turn through the Agents port and records it. A turn

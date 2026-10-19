@@ -3,7 +3,9 @@ package apply_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"slices"
+	"strconv"
 	"strings"
 	"sync"
 	"testing"
@@ -90,9 +92,12 @@ func TestExtractRefusesBeforeAnyEffectWithoutVolumeSubpaths(t *testing.T) {
 	}
 }
 
-func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
+// extractAttemptWithTurns prepares the library case 3 with another agent-turn
+// budget in its execution document.
+func extractAttemptWithTurns(t *testing.T, turns int) apply.CapturedSettingsAttempt {
+	t.Helper()
 	selection, raw := extractInputs(t)
-	execution := strings.Replace(extractExecution, "agentTurns: 120", "agentTurns: 3", 1)
+	execution := strings.Replace(extractExecution, "agentTurns: 120", "agentTurns: "+strconv.Itoa(turns), 1)
 	entry, err := snapshot.NewEntry(path(t, ".markitect/execution.yaml"), snapshot.Regular, []byte(execution))
 	if err != nil {
 		t.Fatal(err)
@@ -107,8 +112,12 @@ func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
 		t.Fatal(err)
 	}
 	raw.Execution[0].File = entry
+	return prepareExtract(t, selection, raw)
+}
+
+func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
 	req := extractRequest(t)
-	req.Prepared = prepareExtract(t, selection, raw)
+	req.Prepared = extractAttemptWithTurns(t, 3)
 	workspaces := &fakeWorkspaces{}
 	req.Workspaces, req.Evidence, req.Agents = workspaces, &memoryEvidence{}, failingAgents{}
 	if _, err := apply.Extract(context.Background(), req); err == nil || !strings.Contains(err.Error(), "at least 4 agent turns") || len(workspaces.open) != 0 {
@@ -127,7 +136,7 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 	if !cfg.CheckTool || cfg.Mandate == "" || cfg.VerifyGuidance == "" || len(cfg.Checks) != 0 || !cfg.Start.Equal(extractStart(t)) {
 		t.Fatalf("config: tool %v mandate %d guidance %d checks %d", cfg.CheckTool, len(cfg.Mandate), len(cfg.VerifyGuidance), len(cfg.Checks))
 	}
-	if !strings.Contains(cfg.Mandate, "structure") || !strings.Contains(cfg.Mandate, "Folder names are clues, not authority") {
+	if !strings.Contains(cfg.Mandate, "structure") || !strings.Contains(cfg.Mandate, "Folder names are clues, not authority") || !strings.Contains(cfg.Mandate, "propose those commands as entries of checks in .markitect/execution.yaml; they apply only once the owner adopts the model.") {
 		t.Errorf("mandate: %s", cfg.Mandate)
 	}
 	want := run.WritePlan{Enforced: true, Base: false, Mounts: []run.PathMount{
@@ -139,8 +148,9 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 		t.Fatalf("write plan:\n got %+v\nwant %+v", got, want)
 	}
 	brief := cfg.Team[0].Brief
-	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization", "realization/lending/reminders: 2 file(s)", "layout.exceptions", "Software.Concept",
-		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them"} {
+	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization. They hold 8 artifact file(s); 1 more lie outside the roots.", "realization/lending/reminders: 2 file(s)", "the artifacts and the imported dependency models under .markitect/dependencies/core, .markitect/dependencies/software.", "layout.exceptions", "Software.Concept",
+		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them",
+		"layout.exceptions and checks of .markitect/execution.yaml", "The check profiles the Host offers", "- library-tests: runs program", "timeout: 2m"} {
 		if !strings.Contains(brief, w) {
 			t.Errorf("brief lacks %q:\n%s", w, brief)
 		}
@@ -225,6 +235,40 @@ func TestExtractStructureAccounting(t *testing.T) {
 	}
 }
 
+func TestExtractStructureAccountsProposedChecks(t *testing.T) {
+	cfg, err := apply.ExtractStructureConfig(extractRequest(t), extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	account := func(execution string) []run.Finding {
+		return cfg.Account(change(t, proposedTree(t, cfg.Start), map[string]*string{".markitect/execution.yaml": text(execution)}))
+	}
+	if got := account(extractExecutionProposed + extractProposedCheck("library-tests")); len(got) != 0 {
+		t.Fatalf("a check with an offered profile is not accounted: %+v", got)
+	}
+	for _, tc := range []struct {
+		name, execution, want string
+	}{
+		{"unknown profile", extractExecutionProposed + extractProposedCheck("no-such-profile"), `names the profile "no-such-profile", which the Host does not offer. The Host offers the check profiles: library-tests.`},
+		{"check that does not decode", extractExecutionProposed + "  - id: broken\n    profile: library-tests\n", "The Host offers the check profiles: library-tests."},
+		{"change elsewhere beside a check", strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1) + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
+		{"changed owner check", strings.Replace(extractExecutionProposed, "args: [test, ./...]", "args: [test, -run, Nothing, ./...]", 1), "changed beyond layout.exceptions and checks"},
+		{"removed owner check", strings.Replace(extractExecutionProposed, "checks:\n  - id: project-tests\n    profile: library-tests\n    directory: realization\n    args: [test, ./...]\n    timeout: 2m\n", "", 1) + "checks:\n" + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			findings := account(tc.execution)
+			if len(findings) == 0 {
+				t.Fatal("no finding")
+			}
+			for _, f := range findings {
+				if f.Owner != "." || !f.Blocking || !strings.Contains(f.Observed, tc.want) && !strings.Contains(f.Obligation, tc.want) {
+					t.Errorf("finding %+v lacks %q", f, tc.want)
+				}
+			}
+		})
+	}
+}
+
 func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 	req := extractRequest(t)
 	start := extractStart(t)
@@ -274,13 +318,13 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 	}
 	// Briefs.
 	root := team["."].Brief
-	for _, w := range []string{"Root in the model phase", ".markitect/registry/registry.yaml", "realization/go.mod", "README.md", "You have no model Package directory", "- lending\n  artifact areas: realization/lending/** except realization/lending/reminders/**", "Definition lending/lending: lending"} {
+	for _, w := range []string{"Root in the model phase", ".markitect/registry/registry.yaml", "realization/go.mod", "README.md", "You have no Package", "- lending\n  artifact areas: realization/lending/** except realization/lending/reminders/**", "Definition lending/lending: lending"} {
 		if !strings.Contains(root, w) {
 			t.Errorf("Root brief lacks %q:\n%s", w, root)
 		}
 	}
 	reminders := team["lending/reminders"].Brief
-	for _, w := range []string{"Package lending/reminders in the model phase", ".markitect/model/lending/reminders, writable", ".markitect/registry/lending/reminders/registry.yaml", "realization/lending/reminders/remind.go", "realization/lending/reminders/remind_test.go",
+	for _, w := range []string{"Package lending/reminders in the model phase", "Your Package directory is .markitect/model/lending/reminders;", ".markitect/registry/lending/reminders/registry.yaml", "realization/lending/reminders/remind.go", "realization/lending/reminders/remind_test.go",
 		"lending/reminders/reminders (software/Concept)", "realizes: [lending/reminders/reminders]", "[[Software.other-id]]", "Observed behavior is evidence, not intent", "project-tests"} {
 		if !strings.Contains(reminders, w) {
 			t.Errorf("reminders brief lacks %q:\n%s", w, reminders)
@@ -290,7 +334,7 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 		t.Errorf("a child lists its parent's artifacts:\n%s", reminders)
 	}
 	lending := team["lending"].Brief
-	for _, w := range []string{"- lending/reminders\n  artifact areas: realization/lending/reminders/**", "You integrate their results", "realization/lending/borrow.go"} {
+	for _, w := range []string{"- lending/reminders\n  artifact areas: realization/lending/reminders/**", "You integrate their results in your own Package", "realization/lending/borrow.go"} {
 		if !strings.Contains(lending, w) {
 			t.Errorf("lending brief lacks %q:\n%s", w, lending)
 		}
@@ -401,15 +445,113 @@ func TestExtractPublishesOnlyTheModel(t *testing.T) {
 	}
 }
 
-func TestExtractDeviationsAreOpenNonBlockingRealizationDeviations(t *testing.T) {
+func TestExtractDeviationsGroupOpenArtifactFindingsByDefinition(t *testing.T) {
 	findings := []run.Finding{
-		{ID: "f1", Obligation: "Realization deviation: lending/lending", Blocking: false},
-		{ID: "f2", Obligation: "realization deviation: members/members", Blocking: false, Closed: true},
-		{ID: "f3", Obligation: "Realization deviation: catalog/catalog", Blocking: true},
-		{ID: "f4", Obligation: "Missing statement", Blocking: false},
+		{ID: "f1", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "borrow.go admits a sixth loan."},
+		{ID: "f2", Owner: "members", RaisedBy: "members", Subject: "artifact", Definition: "members/members", Observed: "closed one", Closed: true},
+		{ID: "f3", Owner: "catalog", RaisedBy: "catalog", Subject: "model", Obligation: "Missing statement", Blocking: true},
+		{ID: "f4", Owner: "lending/reminders", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "remind.go counts 14 days."},
+		{ID: "f5", Owner: "catalog", RaisedBy: "library", Subject: "artifact", Definition: "catalog/catalog", Observed: "search.go ignores case."},
+		{ID: "f6", Owner: "lending", RaisedBy: "lending", Obligation: "Better wording"},
+		{ID: "f7", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "README.md says 14 days."},
 	}
 	got := apply.ExtractDeviations(findings)
-	if len(got) != 1 || got[0].ID != "f1" {
+	want := []apply.ArtifactDeviation{
+		{Definition: "catalog/catalog", Owners: []string{"catalog"}, RaisedBy: []string{"library"}, Observed: []string{"search.go ignores case."}},
+		{Definition: "lending/lending", Owners: []string{"lending", "lending/reminders"}, RaisedBy: []string{"lending"}, Observed: []string{"borrow.go admits a sixth loan.", "remind.go counts 14 days.", "README.md says 14 days."}},
+	}
+	if !reflect.DeepEqual(got, want) {
 		t.Fatalf("%+v", got)
+	}
+	if got := apply.ExtractDeviations(nil); len(got) != 0 {
+		t.Fatalf("%+v", got)
+	}
+}
+
+func TestExtractModelPhaseResolvesDefinitionsOfTheCandidate(t *testing.T) {
+	req := extractRequest(t)
+	start := extractStart(t)
+	proposed := proposedTree(t, start)
+	model, err := apply.ExtractModelConfig(req, proposed, extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !model.ArtifactFindingsAdvisory || model.ResolveDefinition == nil {
+		t.Fatalf("the model phase does not report artifact findings: %+v", model)
+	}
+	for id, want := range map[string]bool{"lending/lending": true, "lending/reminders/reminders": true, "lending/reminders": false, "lending/other": false, "other/lending": false, "": false} {
+		if got := model.ResolveDefinition(proposed, id); got != want {
+			t.Errorf("%q resolves %v", id, got)
+		}
+	}
+	// The identities are those of the tree that is asked about.
+	without := change(t, proposed, map[string]*string{".markitect/model/lending/lending.yaml": nil})
+	if model.ResolveDefinition(without, "lending/lending") || !model.ResolveDefinition(proposed, "lending/lending") {
+		t.Error("the resolver kept the identities of another tree")
+	}
+	structure, err := apply.ExtractStructureConfig(req, extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if structure.ArtifactFindingsAdvisory || structure.ResolveDefinition != nil {
+		t.Error("the structure phase reports artifact findings")
+	}
+}
+
+func TestExtractModelAccountingReportsEachFindingOnce(t *testing.T) {
+	req := extractRequest(t)
+	start := extractStart(t)
+	cfg, err := apply.ExtractModelConfig(req, proposedTree(t, start), extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct {
+		name    string
+		changes map[string]*string
+		want    []string
+	}{
+		{"changed artifact", map[string]*string{"realization/lending/borrow.go": text("package lending // edited\n")}, []string{"lending input.changed"}},
+		{"deleted artifact", map[string]*string{"realization/members/member.go": nil}, []string{". files.registry_not_passed", "members registry.artifact_missing", "members input.deleted"}},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			findings := cfg.Account(change(t, registeredModel(t, start), tc.changes))
+			for _, f := range findings {
+				if f.Owner == "" || f.Obligation == "" || f.Observed == "" {
+					t.Errorf("incomplete finding %+v", f)
+				}
+			}
+			if got := summarize(findings); !slices.Equal(got, tc.want) {
+				t.Errorf("findings:\n got %v\nwant %v", got, tc.want)
+			}
+		})
+	}
+}
+
+func TestExtractGuardLeavesTheHostStateAndGitDataAlone(t *testing.T) {
+	req := extractRequest(t)
+	start := extractStart(t)
+	structure, err := apply.ExtractStructureConfig(req, extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	model, err := apply.ExtractModelConfig(req, proposedTree(t, start), extractNow)
+	if err != nil {
+		t.Fatal(err)
+	}
+	state := map[string]*string{".markitect/state/runs/x.json": text("{}\n")}
+	git := map[string]*string{".git/HEAD": text("ref: refs/heads/main\n")}
+	if got := structure.Account(change(t, proposedTree(t, start), state)); len(got) != 0 {
+		t.Errorf("state in the structure phase: %+v", got)
+	}
+	if got := structure.Account(change(t, proposedTree(t, start), git)); len(got) != 0 {
+		t.Errorf("git data in the structure phase: %+v", got)
+	}
+	if got := model.Account(change(t, registeredModel(t, start), state)); len(got) != 0 {
+		t.Errorf("state in the model phase: %+v", got)
+	}
+	for _, f := range model.Account(change(t, registeredModel(t, start), git)) {
+		if strings.HasPrefix(f.Obligation, "input.") {
+			t.Errorf("git data is guarded in the model phase: %+v", f)
+		}
 	}
 }

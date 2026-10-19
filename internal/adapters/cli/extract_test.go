@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -80,7 +81,9 @@ func TestExtractReportShape(t *testing.T) {
 	modelOutcome := run.Outcome{Status: run.Verified,
 		Rounds: []run.Round{{Number: 1, Assessments: []run.Assessment{{Manager: ".", Satisfied: false}}}, {Number: 2, Green: true, Assessments: []run.Assessment{{Manager: ".", Satisfied: true, Summary: "fine"}, {Manager: "lending", Satisfied: true, Summary: "fine"}}}},
 		Findings: []run.Finding{
-			{ID: "f1", Owner: "lending", RaisedBy: "lending", Obligation: "Realization deviation: lending/loan-limit", Observed: "borrow.go admits a sixth loan.", Blocking: false},
+			{ID: "f1", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/loan-limit", Obligation: "At most five loans", Observed: "borrow.go admits a sixth loan.", Blocking: false},
+			{ID: "f4", Owner: "lending/reminders", RaisedBy: "lending", Subject: "artifact", Definition: "lending/loan-limit", Obligation: "At most five loans", Observed: "remind.go counts six.", Blocking: false},
+			{ID: "f5", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/closed", Obligation: "Closed", Observed: "x", Closed: true},
 			{ID: "f2", Owner: "lending", RaisedBy: "lending", Obligation: "Missing statement", Observed: "Refusal.", Blocking: true, Closed: true},
 			{ID: "f3", Owner: "lending", RaisedBy: "lending", Obligation: "Better wording", Observed: "x", Blocking: false},
 		},
@@ -88,7 +91,8 @@ func TestExtractReportShape(t *testing.T) {
 		Turns:     []run.TurnRecord{{ID: "t2", Manager: ".", Kind: run.VerifyTurn, Round: 2}}, Usage: run.Usage{InputTokens: 7},
 	}
 	receipt := &apply.PublicationReceipt{ID: "x-1", Outcome: apply.PublicationApplied}
-	result := apply.ExtractResult{Structure: structure, Model: &modelOutcome, Receipt: receipt}
+	proposed := []apply.ProposedCheck{{ID: "project-tests", Profile: "go-tests", Directory: "realization", Args: []string{"test", "./..."}}}
+	result := apply.ExtractResult{Structure: structure, Model: &modelOutcome, Receipt: receipt, ProposedChecks: proposed}
 	report := NewExtractReport("x-1", result)
 	report.FormatVersion, report.Operation, report.Status = 1, "extract", ExtractStatus(result, nil)
 	if report.Status != model.Passed || !report.ModelComplete || report.Structure.ID != "x-1-structure" || report.Model.ID != "x-1-model" || report.Model.Usage.InputTokens != 7 || report.Structure.Usage.InputTokens != 3 {
@@ -97,8 +101,11 @@ func TestExtractReportShape(t *testing.T) {
 	if report.Verify == nil || report.Verify.Round != 2 || !report.Verify.Green || len(report.Verify.Assessments) != 2 {
 		t.Fatalf("verify %+v", report.Verify)
 	}
-	if len(report.Deviations) != 1 || report.Deviations[0].ID != "f1" || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
+	if len(report.Deviations) != 1 || report.Deviations[0].Definition != "lending/loan-limit" || len(report.Deviations[0].Observed) != 2 || !slices.Equal(report.Deviations[0].Owners, []string{"lending", "lending/reminders"}) || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
 		t.Fatalf("deviations %+v questions %+v", report.Deviations, report.OpenQuestions)
+	}
+	if len(report.ProposedChecks) != 1 || report.ProposedChecks[0].ID != "project-tests" {
+		t.Fatalf("proposed checks %+v", report.ProposedChecks)
 	}
 	data, err := json.Marshal(ReportValue(report))
 	if err != nil {
@@ -108,14 +115,14 @@ func TestExtractReportShape(t *testing.T) {
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		t.Fatal(err)
 	}
-	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "openQuestions", "publication"} {
+	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "proposedChecks", "openQuestions", "publication"} {
 		if _, ok := decoded[key]; !ok {
 			t.Errorf("report lacks %q: %s", key, data)
 		}
 	}
 	// Lists are never null, even for an Extract that stopped in the first phase.
 	stopped := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Incomplete, Reason: "budget"}})
-	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.OpenQuestions == nil || stopped.Structure.Rounds == nil {
+	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.OpenQuestions == nil || stopped.Structure.Rounds == nil {
 		t.Fatalf("%+v", stopped)
 	}
 }
@@ -142,5 +149,23 @@ func TestExtractStatusIsPassedOnlyForAPublishedVerifiedModel(t *testing.T) {
 		if got := ExtractStatus(tc.result, tc.err); got != tc.want {
 			t.Errorf("%s: %s, want %s", tc.name, got, tc.want)
 		}
+	}
+}
+
+func TestExtractReportTakesOpenQuestionsFromTheFinalPhase(t *testing.T) {
+	asked := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	answered := run.Question{ID: "Q1", Text: "Structure?", Asked: asked, Answered: true, Answer: "yes"}
+	open := run.Question{ID: "Q2", Text: "Currency?", Asked: asked}
+	// The model phase carries the structure phase's questions: Q1 is reported once or not at all.
+	carried := NewExtractReport("x-1", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered}},
+		Model: &run.Outcome{Status: run.Incomplete, Questions: []run.Question{answered, open}}})
+	if len(carried.OpenQuestions) != 1 || carried.OpenQuestions[0].ID != "Q2" {
+		t.Errorf("questions %+v", carried.OpenQuestions)
+	}
+	// A model phase that never started has none of its own: the structure's stay.
+	unstarted := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered, open}},
+		Model: &run.Outcome{Status: run.Failed}})
+	if len(unstarted.OpenQuestions) != 1 || unstarted.OpenQuestions[0].ID != "Q2" {
+		t.Errorf("questions %+v", unstarted.OpenQuestions)
 	}
 }

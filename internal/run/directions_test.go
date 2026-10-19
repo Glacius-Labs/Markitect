@@ -39,7 +39,10 @@ func TestCustomMandateAndVerifyGuidanceReplaceTheApplyTexts(t *testing.T) {
 			contains(t, "Execute prompt", turn.Prompt, "Carry out your responsibility now")
 		case VerifyTurn:
 			verifies++
-			contains(t, "Verify prompt", turn.Prompt, f.cfg.VerifyGuidance+" Preferred extra test depth is advisory: set blocking to false.")
+			contains(t, "Verify prompt", turn.Prompt, "write build or test output only under /tmp. "+f.cfg.VerifyGuidance+"\n")
+			if strings.Contains(turn.Prompt, extraDepthNote) {
+				t.Errorf("Verify prompt of %s carries Apply's extra-depth sentence", turn.ID)
+			}
 			if strings.Contains(turn.Prompt, blockingGuidance) || strings.Contains(turn.Prompt, "Blocking means a concrete model violation") {
 				t.Errorf("Verify prompt of %s keeps the Apply guidance", turn.ID)
 			}
@@ -68,7 +71,7 @@ func TestEmptyMandateAndGuidanceKeepTheApplyTexts(t *testing.T) {
 				t.Errorf("Execute prompt of %s mentions the check tool", turn.ID)
 			}
 		case VerifyTurn:
-			contains(t, "Verify prompt", turn.Prompt, "write build or test output only under /tmp. "+blockingGuidance+" Preferred extra test depth is advisory: set blocking to false.\n")
+			contains(t, "Verify prompt", turn.Prompt, "write build or test output only under /tmp. "+blockingGuidance+" "+extraDepthNote+"\n")
 		}
 	}
 }

@@ -11,6 +11,10 @@ const mandate = "In Execute, compare your artifacts with the bound model, preser
 // Verify prompt that Config.VerifyGuidance replaces.
 const blockingGuidance = "Blocking means a concrete model violation, absent evidence the model explicitly requires, or a failed required check, citing the obligation and the observed behavior or source evidence. A Definition realized outside its owner's artifacts (rebuilt in another area, including a parent's own area, instead of using the owner's realization) and a change outside a Manager's own area are model violations; as a parent, check how your children actually use each other's realizations."
 
+// extraDepthNote closes Apply's Verify guidance: it belongs to that text and is
+// not appended to Config.VerifyGuidance.
+const extraDepthNote = "Preferred extra test depth is advisory: set blocking to false."
+
 // checkNote tells an Execute turn about the check tool. It is part of the
 // prompt only when Config.CheckTool offers the tool.
 const checkNote = " The tool check reports the findings of the project's accounting on the current /work tree, yours first (scope \"all\" lists those of other Managers too). It observes while other Managers may still write, so use it as advice before you finish; the candidate is judged only after every Execute turn ended."
@@ -26,7 +30,7 @@ func (e *engine) guidanceText() string {
 	if e.cfg.VerifyGuidance != "" {
 		return e.cfg.VerifyGuidance
 	}
-	return blockingGuidance
+	return blockingGuidance + " " + extraDepthNote
 }
 
 func label(m *mgr) string {
@@ -169,7 +173,7 @@ func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
 		b.WriteString("Your previous Verify attempt ended without a valid assess call. Assess again.\n")
 	}
 	e.contextLocked(&b, m)
-	b.WriteString("\nThe candidate is mounted read-only at /work; write build or test output only under /tmp. " + e.guidanceText() + " Preferred extra test depth is advisory: set blocking to false.\n")
+	b.WriteString("\nThe candidate is mounted read-only at /work; write build or test output only under /tmp. " + e.guidanceText() + "\n")
 
 	var checks []string
 	for _, c := range rs.checks {
@@ -224,6 +228,6 @@ func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
 		}
 		fmt.Fprintf(&b, "\nFiles of your area that changed since the previous candidate although you ran no Execute turn:\n- %s%s\n", strings.Join(shown, "\n- "), more)
 	}
-	b.WriteString("\nReport with the tool assess exactly once: summary, satisfied, findings (owner is you or one of your descendants) and closed. satisfied is true only when none of your own findings stays open and blocking.\n")
+	b.WriteString("\nWhen your assessment is complete, report it with the tool assess: summary, satisfied, findings (owner is you or one of your descendants) and closed. satisfied is true only when none of your own findings stays open and blocking. The last valid assess call of your turn counts.\n")
 	return b.String()
 }

@@ -28,7 +28,8 @@ const (
 // Engine runs the container engine's command line, such as Docker or a
 // compatible engine, from one absolute executable path.
 type Engine struct {
-	path string
+	path         string
+	observations imageObservationMemo
 }
 
 // NewEngine binds the engine executable. The path must be absolute and name
@@ -255,15 +256,30 @@ func (e *Engine) ImageID(ctx context.Context, ref string) (string, error) {
 // directory of a named volume (volume-subpath).
 const minSubpathServerMajor = 26
 
+// ServerVersion asks the engine for its server version.
+func (e *Engine) ServerVersion(ctx context.Context) (string, error) {
+	out, err := e.output(ctx, "version", "--format", "{{.Server.Version}}")
+	if err != nil {
+		return "", fmt.Errorf("the container engine's server version could not be read: %w", err)
+	}
+	return strings.TrimSpace(string(out)), nil
+}
+
 // RequireVolumeSubpaths refuses an engine whose server cannot mount a directory
 // of a volume (Mount.Subpath): Docker 26 or newer. It asks the engine for its
 // server version and refuses an unreadable answer.
 func (e *Engine) RequireVolumeSubpaths(ctx context.Context) error {
-	out, err := e.output(ctx, "version", "--format", "{{.Server.Version}}")
+	version, err := e.ServerVersion(ctx)
 	if err != nil {
-		return fmt.Errorf("the container engine's server version could not be read: %w", err)
+		return err
 	}
-	version := strings.TrimSpace(string(out))
+	return RequireSubpathVersion(version)
+}
+
+// RequireSubpathVersion refuses a server version that cannot mount a directory
+// of a volume. It is RequireVolumeSubpaths for a caller that has read the
+// version already.
+func RequireSubpathVersion(version string) error {
 	digits, _, _ := strings.Cut(version, ".")
 	major, err := strconv.Atoi(digits)
 	if err != nil || major < 0 {
