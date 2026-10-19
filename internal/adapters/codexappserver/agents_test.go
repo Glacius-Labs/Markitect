@@ -32,7 +32,13 @@ func (f *fakeStream) Read(p []byte) (int, error) {
 		select {
 		case f.pending = <-f.chunks:
 		case <-f.done:
-			return 0, io.EOF
+			// Lines emitted before the stream closed are still delivered;
+			// select alone would pick between them and EOF at random.
+			select {
+			case f.pending = <-f.chunks:
+			default:
+				return 0, io.EOF
+			}
 		}
 	}
 	n := copy(p, f.pending)
