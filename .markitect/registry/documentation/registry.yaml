@@ -44,6 +44,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the run evidence and the owner's authorization behind keeping recorded review cases for every delivery of a purpose.
+  - path: "docs/concepts/sources/submit-required-checks-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the run evidence and the owner's authorization behind refusing a submission whose required checks fail.
   - path: "docs/design/canonical-model/commands.md"
     form: doc
     realizes: [documentation/current-guidance]

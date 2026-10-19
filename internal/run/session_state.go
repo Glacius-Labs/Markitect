@@ -497,8 +497,9 @@ func (s *stateValue) reserve(r Reservation) error {
 			}
 		}
 	}
+	// A writing step's check runs inside the step, which holds the writing slot.
 	for _, i := range s.invocations {
-		if open(i) && i.Reservation.Purpose == Writing && r.Purpose == Writing {
+		if open(i) && i.Reservation.Purpose == Writing && r.Purpose == Writing && r.Kind != ProjectCheck {
 			return ErrState
 		}
 	}

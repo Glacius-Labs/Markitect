@@ -367,6 +367,13 @@ remaining time and the budget, or the call is refused and the review goes on;
 its time is charged once, as the check's own invocation, and the step's
 charge leaves it out. The candidate tree it runs on does not yet contain the
 regenerated registry shards that publication writes.
+
+A writing step's submit runs the required checks that are also configured
+checks on the peeked workspace first (`Engine.preflight`) and is refused with
+the end of the output when one fails. That check is admitted while the task
+runs a work or integrate step, on any tree, and charged as writing work; one
+that does not fit the step or the budget is skipped.
+
 `Engine.Verify` runs the required checks on the tree that publishing the
 aggregate writes, reuses a check that already passed on it, and finishes the
 run Incomplete when one fails or the budget no longer fits it.

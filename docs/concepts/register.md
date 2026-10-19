@@ -65,6 +65,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-052](#dec-052-implement-then-review-no-explore-phase) | Decision | Implement then review: no Explore phase | Accepted |
 | [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Accepted |
 | [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count) | Decision | A rejection that finds fewer gaps does not count | Accepted |
+| [DEC-055](#dec-055-a-submission-must-pass-its-required-checks) | Decision | A submission must pass its required checks | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -656,6 +657,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Cost:** Blocking findings that an earlier review raised and that stay open are not counted again, so a review that raises fewer new findings counts as progress. The finite shared execution budget bounds such a sequence.
 - **Scope:** Amends [DEC-050](#dec-050-an-accepted-delivery-restarts-the-rejection-count) and the execution contract. The limit, its default of three, its configuration, the review rules and the evidence requirements are unchanged. All work still consumes the finite shared execution budget, which bounds the total cost.
 - **Owners:** [execution contract](../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction).
+
+### DEC-055 A submission must pass its required checks
+
+- **Status:** Accepted, Architect under the owner's authorization, 19 October 2026 ([evidence and authorization](sources/submit-required-checks-20261019.md)).
+- **Decision:** When a work or integration step submits, the Host runs the run's required checks on the observed workspace before it answers the call. If one fails, the submit is refused with the check's output, and the Manager fixes the build within the step or waits for what it needs. The check is journaled and charged as writing work; it is skipped when it does not fit the step's remaining time or would need the completion reserve, and when it did not run to an observed result. A candidate review still runs its own checks, and only those count as review evidence.
+- **Reason:** A review passes only when the required checks pass (T8), so a candidate that fails them cannot be accepted. In R2-A1-12, `members` reached the rejection limit with three such candidates: twice the shared Go module did not exist yet, and once the project did not compile.
+- **Cost:** Each submit runs the required checks once more; in R2-A1-12 a check took about 10 seconds. A Manager that cannot make the checks pass alone has to wait for the file it needs or ask its owner, instead of submitting.
+- **Scope:** Amends S4 in the way [PR #457](https://github.com/Glacius-Labs/Markitect/pull/457) amended S4 for uncapturable changes. The review rules, the evidence requirements, the rejection limit and the checks' configuration are unchanged.
+- **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#steps), rule S4, and the [execution contract](../design/canonical-model/manager-apply-execution.md).
 
 ## Promises
 

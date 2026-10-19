@@ -302,6 +302,10 @@ func (s *stateValue) apply(c Command) error {
 		if s.basisVersion == 3 {
 			return ErrState
 		}
+		// Only a basis 3 task check is writing work inside its step.
+		if c.Reservation.Kind == ProjectCheck && c.Reservation.Purpose == Writing {
+			return ErrInvalid
+		}
 		if err := s.reserve(c.Reservation); err != nil {
 			return err
 		}

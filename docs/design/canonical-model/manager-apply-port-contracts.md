@@ -186,7 +186,7 @@ Observation follows Git's view of files. A regular file is executable exactly wh
 
 Workspaces are volumes of the container runtime. The adapter materializes and harvests them inside a helper container, so observation follows Linux file semantics. A session container mounts only its own workspace.
 
-Checks and reviews use frozen candidates, never a mutable workspace with the same name, and rejected candidates are stored with their evidence. Composition is a pure function in `realization` that checks the [D2](manager-apply-core.md#deliveries-and-composition) conditions and returns a fixed result. It never merges competing content or picks an owner.
+Checks and reviews use frozen candidates, never a mutable workspace with the same name (the Orchestrator's early check before a submit runs on an advisory observation of the running workspace and never becomes evidence), and rejected candidates are stored with their evidence. Composition is a pure function in `realization` that checks the [D2](manager-apply-core.md#deliveries-and-composition) conditions and returns a fixed result. It never merges competing content or picks an owner.
 
 ## Check execution port
 
@@ -214,7 +214,7 @@ A reviewer may request an allowed check. A missing artifact test becomes a findi
 - the combined output up to the limit, with a truncation mark;
 - any uncertainty, with its reason.
 
-A receipt passes only for exactly its request: same check, image and tree, with an observed zero exit that neither timed out nor is uncertain. A nonzero exit is a check failure, and a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run in a container from the check profile's image, on a disposable copy of the fixed candidate. An Agent saying "tests pass" is not a check receipt.
+A receipt passes only for exactly its request: same check, image and tree, with an observed zero exit that neither timed out nor is uncertain. A nonzero exit is a check failure, and a startup or observation failure is reported separately. Cancellation never turns an unknown process into a pass. Checks run in a container from the check profile's image, on a disposable copy of the fixed candidate or, for the early check before a submit, of the observed workspace. An Agent saying "tests pass" is not a check receipt.
 
 ## Durable journal port
 

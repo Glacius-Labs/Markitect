@@ -217,8 +217,16 @@ func TestExecuteRunsTheFirstApplyToItsPublication(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if checks.runs != 1 {
-		t.Fatal("the required check did not run once on the aggregate", checks.runs)
+	// Each submission also ran the required check as the Host's early gate for
+	// its Manager; only one check is the aggregate's own.
+	verifying := 0
+	for _, v := range result.Checks {
+		if v.Record.Task == "" {
+			verifying++
+		}
+	}
+	if verifying != 1 || checks.runs != len(result.Checks) {
+		t.Fatal("the required check did not run once on the aggregate", verifying, checks.runs, len(result.Checks))
 	}
 	if result.Run.State != run.Finished || result.Run.Outcome != run.NoChange {
 		t.Fatalf("run did not publish: %+v", result.Run)
@@ -257,8 +265,9 @@ func TestExecuteRetriesATransientPreflightError(t *testing.T) {
 		t.Fatalf("a transient refusal changed the run: %+v %v", result.Run, err)
 	}
 	publisher.failing = nil
+	checked := checks.runs
 	result, err = c.Execute(context.Background(), executionPorts(t, publisher, checks))
-	if err != nil || result.Run.State != run.Finished || result.Run.Outcome != run.NoChange || checks.runs != 1 {
+	if err != nil || result.Run.State != run.Finished || result.Run.Outcome != run.NoChange || checks.runs != checked {
 		t.Fatalf("the retry did not publish once checked: %+v %v checks=%d", result.Run, err, checks.runs)
 	}
 }
