@@ -42,6 +42,7 @@ func layoutRequest(t *testing.T) (apply.ReconcileRequest, snapshot.Tree) {
 	return apply.ReconcileRequest{
 		RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, OwnerRequest: "Realize the model.",
 		OwnerDecisions: []string{"Use euro."}, MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest,
+		RequireVolumeSubpaths: func(context.Context) error { return nil },
 	}, attempt.Structural().Model().Inputs().Raw.Census
 }
 
@@ -301,6 +302,30 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 
 // TestReconcileClosesTheWorkVolumeOnlyAfterPublication covers a verified outcome:
 // the shared work volume is the verified work, so it goes only once published.
+func TestReconcileRefusesEnforcedOwnershipOnAnEngineWithoutVolumeSubpaths(t *testing.T) {
+	workspaces := &fakeWorkspaces{}
+	for name, tc := range map[string]struct {
+		check func(context.Context) error
+		want  string
+	}{
+		"old engine":      {func(context.Context) error { return errors.New("Docker server 25.0.0; need 26") }, "Docker server 25.0.0"},
+		"no engine check": {nil, "check for them is required"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			req, _ := layoutRequest(t)
+			req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = failingAgents{}, workspaces, failingRunner{}, &memoryEvidence{}, &fakePublisher{}
+			req.RequireVolumeSubpaths = tc.check
+			_, err := apply.Reconcile(context.Background(), req)
+			if err == nil || !strings.Contains(err.Error(), tc.want) {
+				t.Fatalf("err = %v, want %q", err, tc.want)
+			}
+			if len(workspaces.open) != 0 || len(workspaces.closed) != 0 {
+				t.Fatalf("the run started before the engine check: %v %v", workspaces.open, workspaces.closed)
+			}
+		})
+	}
+}
+
 func TestReconcileClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
 	req, start := layoutRequest(t)
 	candidate := change(t, start, map[string]*string{"realization/lending/borrow.go": text("package lending // changed\n")})

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"reflect"
 	"slices"
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -313,6 +314,11 @@ func TestAccountingReportsFilesWithoutAnOwnerToRoot(t *testing.T) {
 	if want := []string{"layout.no_owner realization/cmd/other/main.go", "layout.no_owner realization/stray/x.go"}; !slices.Equal(got, want) || report.Status() != realization.AccountingInvalid {
 		t.Fatalf("findings %q status %v, want %q", got, report.Status(), want)
 	}
+	for _, finding := range report.Findings() {
+		if !strings.Contains(finding.Message, "the layout needs an exception") || !strings.Contains(finding.Message, "the file must move") {
+			t.Errorf("a start stand with unowned files must say how to resolve them: %q", finding.Message)
+		}
+	}
 	if links := report.Artifacts(callable); !slices.Equal(links, []snapshot.Path{path(t, "realization/go.mod")}) {
 		t.Fatalf("an unowned registration counted as a link: %v", links)
 	}
@@ -346,5 +352,52 @@ func TestLayoutAreasAreDirectoriesParentsFirst(t *testing.T) {
 	}
 	if want := []string{"realization/lending library", "realization/lending/reminders lending/reminders", "realization/library library"}; !slices.Equal(got, want) {
 		t.Fatalf("carved areas %q, want %q", got, want)
+	}
+}
+
+func TestLayoutExceptionKindDecidesFileOrDirectory(t *testing.T) {
+	file := realization.LayoutException{Path: path(t, "realization/lending/Makefile"), File: true, Owner: owner(t, "library"), Reason: "The Makefile is shared."}
+	layout, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A declared file is no area although the start tree does not hold it; the
+	// same exception without a kind is a directory and an area.
+	var got []string
+	for _, area := range layout.Areas(fileTree(t, "realization/go.mod")) {
+		got = append(got, area.Path.String())
+	}
+	if want := []string{"realization/lending", "realization/lending/reminders", "realization/library"}; !slices.Equal(got, want) {
+		t.Fatalf("areas with a declared file exception %q, want %q", got, want)
+	}
+	file.File = false
+	directory, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file})
+	if err != nil {
+		t.Fatal(err)
+	}
+	got = nil
+	for _, area := range directory.Areas(fileTree(t, "realization/go.mod")) {
+		got = append(got, area.Path.String())
+	}
+	if want := []string{"realization/lending", "realization/lending/Makefile", "realization/lending/reminders", "realization/library"}; !slices.Equal(got, want) {
+		t.Fatalf("areas with a directory exception %q, want %q", got, want)
+	}
+	// The declared file still owns its path and is described as a file.
+	if owner := layout.OwnerOf(path(t, "realization/lending/Makefile")); owner != file.Owner {
+		t.Fatalf("owner %v", owner)
+	}
+	want := []string{"realization/library/**", "realization/lending/Makefile"}
+	if got := layout.Describe(owner(t, "library"), fileTree(t, "realization/go.mod")); !slices.Equal(got, want) {
+		t.Fatalf("description %q, want %q", got, want)
+	}
+}
+
+func TestLayoutAreasSkipAMirroredDirectoryThatIsAFile(t *testing.T) {
+	var got []string
+	for _, area := range libraryLayout(t).Areas(fileTree(t, "realization/library", "realization/cmd/library/main.go")) {
+		got = append(got, area.Path.String())
+	}
+	if want := []string{"realization/cmd/library", "realization/lending", "realization/lending/reminders"}; !slices.Equal(got, want) {
+		t.Fatalf("areas %q, want %q", got, want)
 	}
 }

@@ -87,25 +87,28 @@ func (e *engine) scheduleLocked() {
 	}
 }
 
+// seedBuildingParentsLocked gives every building Manager that has a building
+// child one initial Execute item, so its first turn starts at once and does not
+// depend on a Verify finding: its children wait for that turn.
+func (e *engine) seedBuildingParentsLocked() {
+	for _, p := range e.team {
+		if p.Building && slices.ContainsFunc(p.Children, func(c string) bool { return e.byPath[c].Building }) {
+			p.items = append(p.items, item{text: buildSeed(p)})
+		}
+	}
+}
+
 // buildWaitLocked reports whether the Manager's first Execute turn must wait
 // for its parent (starting situation 1, build from the model): both are
-// building, the parent has not ended its first Execute turn and is running or
-// has work. A parent without work never blocks its children. The wait is
-// recorded once.
+// building and the parent, which every building parent with building children
+// starts at round start, has not ended its first Execute turn, whether it
+// finished, waited, failed or was disabled. The wait is recorded once.
 func (e *engine) buildWaitLocked(m *mgr) bool {
 	if !m.Building || m.execCount > 0 || m.Parent == "" {
 		return false
 	}
 	p := e.byPath[m.Parent]
-	if !p.Building || p.execEnded {
-		return false
-	}
-	e.pruneLocked(p)
-	// While the open round 1 Verify of the parent has not reported, it may still
-	// get work: its findings only exist after that turn. It never waits for
-	// Execute, so this cannot deadlock.
-	pending := !e.inPhase && e.rs != nil && !e.rs.assessed[p.Path]
-	if !p.running && len(p.items) == 0 && !pending {
+	if !p.Building || p.execEnded || p.disabled {
 		return false
 	}
 	if !m.buildWaited {

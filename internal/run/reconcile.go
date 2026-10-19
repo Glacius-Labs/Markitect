@@ -20,10 +20,10 @@ var ErrInvalid = errors.New("invalid reconciliation configuration")
 // contacts, owner decisions, findings, messages and check results itself.
 // Write is the Manager's write plan for Execute turns. Building marks a Manager
 // whose area holds no artifacts at the start (starting situation 1, build from
-// the model): its first Execute turn waits while a building parent has not
-// ended its first Execute turn and still has work, including its pending
-// initial Verify, so the parent supplies the foundations first; other areas
-// are not ordered.
+// the model): its first Execute turn waits until a building parent has ended
+// its first Execute turn (or is disabled), so the parent supplies the
+// foundations first; every building Manager with a building child is seeded
+// with that first turn at round start; other areas are not ordered.
 type Manager struct {
 	Path           string
 	Parent         string

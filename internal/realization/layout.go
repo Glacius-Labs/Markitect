@@ -15,10 +15,12 @@ var ErrInvalidLayout = errors.New("invalid realization layout")
 const markitectDirectory = ".markitect"
 
 // LayoutException maps an exact path, a file or a whole directory subtree, to
-// one owner regardless of the mirrored hierarchy. Owner is a local Package or
-// Root. Reason is the required persistent explanation.
+// one owner regardless of the mirrored hierarchy. File declares that the path
+// is a file; otherwise it is a directory. Owner is a local Package or Root.
+// Reason is the required persistent explanation.
 type LayoutException struct {
 	Path   snapshot.Path
+	File   bool
 	Owner  Owner
 	Reason string
 }
@@ -216,19 +218,22 @@ type Area struct {
 }
 
 // Areas returns the layout's directory areas, parents before descendants: every
-// mirrored Package directory under each root and every exception, except one on
-// a file of the tree, which cannot be an area. An exception on a mirrored
-// directory replaces the mirrored area. Root's files directly in a root are not
-// an area.
+// mirrored Package directory under each root and every directory exception.
+// A mirrored directory that is a file of the tree and an exception that is
+// declared a file or names a file of the tree are no areas. An exception on a
+// mirrored directory replaces the mirrored area. Root's files directly in a root
+// are not an area.
 func (l Layout) Areas(tree snapshot.Tree) []Area {
 	owners := make(map[string]Owner)
 	for _, root := range l.roots {
 		for name := range l.packages {
-			owners[root+"/"+name] = Owner{packageName: name}
+			if path, err := snapshot.NewPath(root + "/" + name); err == nil && !isFileIn(tree, path) {
+				owners[root+"/"+name] = Owner{packageName: name}
+			}
 		}
 	}
 	for _, exception := range l.exceptions {
-		if _, isFile := tree.Lookup(exception.Path); !isFile {
+		if !exception.File && !isFileIn(tree, exception.Path) {
 			owners[exception.Path.String()] = exception.Owner
 		}
 	}
@@ -284,7 +289,7 @@ func (l Layout) Describe(owner Owner, tree snapshot.Tree) []string {
 		if exception.Owner != owner || isPackage && l.mirrors(name+"/", packageName) {
 			continue
 		}
-		if _, isFile := tree.Lookup(exception.Path); isFile {
+		if exception.File || isFileIn(tree, exception.Path) {
 			areas = append(areas, name)
 			continue
 		}
@@ -294,6 +299,12 @@ func (l Layout) Describe(owner Owner, tree snapshot.Tree) []string {
 		areas = append(areas, "every file outside the artifact roots and exceptions")
 	}
 	return areas
+}
+
+// isFileIn reports whether the tree holds a file at path.
+func isFileIn(tree snapshot.Tree, path snapshot.Path) bool {
+	_, isFile := tree.Lookup(path)
+	return isFile
 }
 
 func area(dir string, excluded []string) string {
@@ -320,7 +331,7 @@ func (l Layout) foreignInside(dir string, owner Owner, tree snapshot.Tree, exclu
 		if covered {
 			continue
 		}
-		if _, isFile := tree.Lookup(exception.Path); isFile {
+		if exception.File || isFileIn(tree, exception.Path) {
 			excluded = append(excluded, name)
 		} else {
 			excluded = append(excluded, name+"/**")

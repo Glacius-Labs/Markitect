@@ -276,6 +276,36 @@ func TestVerifyTurnIsReadOnlyAndDropsWritingTools(t *testing.T) {
 	}
 }
 
+func TestWritingToolsFollowWhatTheTurnCanWrite(t *testing.T) {
+	for name, tc := range map[string]struct {
+		kind     run.TurnKind
+		readOnly bool
+		mounts   []run.PathMount
+		want     string
+	}{
+		"enforced execute: read-only base, writable mount": {run.ExecuteTurn, true, []run.PathMount{{Path: "lending", Writable: true}}, "Read,Write,Edit,Glob,Grep,Bash"},
+		"read-only base and only read-only mounts":         {run.ExecuteTurn, true, []run.PathMount{{Path: "lending"}}, "Read,Glob,Grep,Bash"},
+		"read-only base, no mounts":                        {run.ExecuteTurn, true, nil, "Read,Glob,Grep,Bash"},
+		"writable base":                                    {run.ExecuteTurn, false, []run.PathMount{{Path: "lending"}}, "Read,Write,Edit,Glob,Grep,Bash"},
+		"verify":                                           {run.VerifyTurn, true, nil, "Read,Glob,Grep,Bash"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			profile := validProfile()
+			profile.Session.BuiltinTools = []string{"Read", "Write", "Edit", "Glob", "Grep", "Bash"}
+			rt := newFakeRuntime()
+			h := newHarness(t, rt, profile)
+			turn := testTurn()
+			turn.Kind, turn.ReadOnly, turn.Mounts = tc.kind, tc.readOnly, tc.mounts
+			if _, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string))); err != nil {
+				t.Fatal(err)
+			}
+			if got := argAfter(rt.start.Argv, "--tools"); got != tc.want {
+				t.Fatalf("tools %q, want %q", got, tc.want)
+			}
+		})
+	}
+}
+
 func TestTurnMountsOverlayTheWorkspaceVolumeInOrder(t *testing.T) {
 	root := []run.PathMount{{Path: "lending"}, {Path: "library"}}
 	child := []run.PathMount{{Path: "lending", Writable: true}, {Path: "lending/reminders"}}

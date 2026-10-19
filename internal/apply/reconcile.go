@@ -43,6 +43,11 @@ type ReconcileRequest struct {
 	// RemoveHome deletes one provider-home volume a turn used. The homes are
 	// runtime volumes the Agents adapters mount by name, not Workspaces.
 	RemoveHome func(context.Context, string) error
+	// RequireVolumeSubpaths asks the container engine whether it mounts a
+	// directory of a volume. Reconcile calls it before any effect when a Manager's
+	// write plan is enforced, because the plan runs as such mounts; it is
+	// required then.
+	RequireVolumeSubpaths func(context.Context) error
 }
 
 // ReconcileResult reports the run and, for a verified candidate, its
@@ -62,6 +67,14 @@ func Reconcile(ctx context.Context, req ReconcileRequest) (ReconcileResult, erro
 	cfg, err := reconcileConfig(req, req.now())
 	if err != nil {
 		return ReconcileResult{}, err
+	}
+	if slices.ContainsFunc(cfg.Team, func(m run.Manager) bool { return m.Write.Enforced }) {
+		if req.RequireVolumeSubpaths == nil {
+			return ReconcileResult{}, errors.New("enforced ownership runs as volume subpath mounts: a container engine check for them is required")
+		}
+		if err := req.RequireVolumeSubpaths(ctx); err != nil {
+			return ReconcileResult{}, fmt.Errorf("enforced ownership cannot run: %w", err)
+		}
 	}
 	outcome, runErr := run.Reconcile(ctx, cfg)
 	return conclude(ctx, req, cfg.Start, outcome, runErr)

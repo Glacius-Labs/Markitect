@@ -26,6 +26,10 @@ func (e *engine) verifyRound(n int, c candidate) bool {
 		}
 	}
 	_ = e.record(Event{Kind: "round.start", Round: n, Data: map[string]any{"tree": c.tree.Digest().String(), "workspace": c.id}})
+	if e.executeOpen {
+		e.seedBuildingParentsLocked()
+		e.scheduleLocked()
+	}
 	e.mu.Unlock()
 
 	structural := e.cfg.Account(c.tree)

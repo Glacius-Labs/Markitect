@@ -127,14 +127,29 @@ func (c Candidates) Areas(manager string) []string {
 
 // Building reports whether no registered artifact of the captured start is owned
 // by the Manager: its area holds nothing yet (starting situation 1, build from
-// the model), so a building parent supplies the foundations first.
+// the model), so a building parent supplies the foundations first. Under a
+// declared layout Root's artifacts count only below an artifact root, where it
+// owns the files directly in the root; an artifact outside the roots (a
+// repository README, a CI file) does not make Root's build area non-empty.
 func (c Candidates) Building(manager string) bool {
 	for _, registration := range c.registry.Entries() {
-		if c.OwnerOf(registration.Artifact().Path()) == manager {
-			return false
+		path := registration.Artifact().Path()
+		if c.OwnerOf(path) != manager {
+			continue
 		}
+		if c.layout.Declared() && manager == organization.Root && !c.inArtifactRoot(path) {
+			continue
+		}
+		return false
 	}
 	return true
+}
+
+// inArtifactRoot reports whether path lies below an artifact root of the layout.
+func (c Candidates) inArtifactRoot(path snapshot.Path) bool {
+	return slices.ContainsFunc(c.layout.Roots(), func(root snapshot.DirectoryBoundary) bool {
+		return strings.HasPrefix(path.String(), root.String()+"/")
+	})
 }
 
 // WritePlan returns where a Manager's Execute turns may write in the shared
@@ -352,6 +367,11 @@ func (c Candidates) findingOwner(finding realization.Finding) string {
 }
 
 func (c Candidates) findingMessage(finding realization.Finding) string {
+	if finding.Code == "layout.no_owner" {
+		// Root cannot fix this by registering, and the layout lives in the protected
+		// execution.yaml that no Manager may change.
+		return "The file has no owner under the persistent layout: remove it, or ask the owner through Root for a layout exception."
+	}
 	if finding.Code != "file.unexplained" {
 		return finding.Message
 	}

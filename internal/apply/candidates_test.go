@@ -470,7 +470,7 @@ func TestCandidatesNoOwnerFilesBlockAndGoToRoot(t *testing.T) {
 	if got := summary(findings); !reflect.DeepEqual(got, want) {
 		t.Fatalf("findings %v, want %v", got, want)
 	}
-	if !strings.Contains(findings[1].Message, "owning Package directory or a persistent layout exception") {
+	if !strings.Contains(findings[1].Message, "remove it, or ask the owner through Root for a layout exception") {
 		t.Fatalf("message must say how to resolve it: %q", findings[1].Message)
 	}
 	if candidates.OwnerOf(path(t, "realization/cmd/other/main.go")) != "." {
@@ -534,5 +534,60 @@ func TestCandidatesBuildingManagersOwnNothingRegisteredAtTheStart(t *testing.T) 
 		if got := candidates.Building(manager); got != want {
 			t.Errorf("Building(%s) = %v, want %v", manager, got, want)
 		}
+	}
+}
+
+func TestCandidatesRootBuildsUntilItOwnsAnArtifactInAnArtifactRoot(t *testing.T) {
+	for name, tc := range map[string]struct {
+		artifact string
+		want     bool
+	}{
+		"an artifact outside the roots does not count": {"Makefile", true},
+		"an artifact directly in a root counts":        {"realization/go.mod", false},
+	} {
+		t.Run(name, func(t *testing.T) {
+			selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
+			censusFile(t, &raw, tc.artifact, snapshot.Regular, []byte("all:\n"))
+			registrySource(t, &selection, &raw, rootShard, shardYAML(shardEntry(tc.artifact, "build", "library/library")), true)
+			candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
+			if err != nil {
+				t.Fatal(err)
+			}
+			if got := candidates.Building("."); got != tc.want {
+				t.Errorf("Building(.) = %v, want %v", got, tc.want)
+			}
+		})
+	}
+	// Without a layout the old rule holds: any registered artifact of Root counts.
+	selection, raw := executionInputs(t, documentedExecution(t))
+	censusFile(t, &raw, "Makefile", snapshot.Regular, []byte("all:\n"))
+	registrySource(t, &selection, &raw, rootShard, shardYAML(shardEntry("Makefile", "build", "library/library")), true)
+	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if candidates.Building(".") {
+		t.Error("without a layout a registered artifact of Root ends its building")
+	}
+}
+
+func TestCandidatesMountOnlyDirectoryExceptions(t *testing.T) {
+	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML+"    - path: realization/lending/Makefile\n      kind: file\n      owner: library\n      reason: The library build file lives with lending.\n"))
+	libraryLayoutFiles(t, &selection, &raw)
+	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The file exception, which the start stand does not hold, is no directory to
+	// create or mount for anyone; its owner is still known.
+	for _, manager := range []string{".", "library", "lending", "lending/reminders"} {
+		for _, mount := range candidates.WritePlan(manager).Mounts {
+			if mount.Path == "realization/lending/Makefile" {
+				t.Errorf("%s mounts the file exception: %+v", manager, mount)
+			}
+		}
+	}
+	if owner := candidates.OwnerOf(path(t, "realization/lending/Makefile")); owner != "library" {
+		t.Errorf("owner of the file exception %q", owner)
 	}
 }

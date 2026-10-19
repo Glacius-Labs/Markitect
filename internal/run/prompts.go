@@ -58,6 +58,16 @@ func buildNote(m *mgr) string {
 	return "Your area holds no artifacts yet: you build it from the model, on the foundations your parent supplies."
 }
 
+// buildSeed is the initial Execute item of a building Manager with building
+// children, which wait for its first turn.
+func buildSeed(m *mgr) string {
+	foundations := "the foundations your children need"
+	if m.Parent == "" {
+		foundations = "the project skeleton and the shared prerequisites your children need"
+	}
+	return "Build start: your children wait until this turn ends. Within your own area prepare " + foundations + ", then coordinate your children with send. Their areas are theirs to build, not yours."
+}
+
 // writeNote states what an enforced write plan makes read-only in /work. An
 // unenforced plan, or one that restricts nothing, needs no note.
 func writeNote(plan WritePlan) string {
@@ -81,7 +91,11 @@ func writeNote(plan WritePlan) string {
 		}
 		return note
 	case len(readOnly) > 0:
-		return "These areas of /work are read-only and a write there fails: " + strings.Join(readOnly, ", ") + ". "
+		note := "These areas of /work are read-only and a write there fails: " + strings.Join(readOnly, ", ") + ". "
+		if len(writable) > 0 {
+			note += "Writable again within them: " + strings.Join(writable, ", ") + ". "
+		}
+		return note
 	}
 	return ""
 }

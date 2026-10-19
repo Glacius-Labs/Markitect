@@ -48,7 +48,10 @@ type applyPorts struct {
 	Publisher  apply.Publisher
 	Control    apply.ControlCheck
 	RemoveHome func(context.Context, string) error
-	Harvest    harvestLimits
+	// RequireVolumeSubpaths checks the container engine for volume subpath
+	// mounts, which enforced ownership needs.
+	RequireVolumeSubpaths func(context.Context) error
+	Harvest               harvestLimits
 	// Deadline is the operator's absolute wall-clock limit; zero means none.
 	Deadline time.Time
 	Clock    func() time.Time
@@ -136,7 +139,7 @@ func (s *executionService) reconcileAndPublish(ctx context.Context, selection ap
 			return executionCheck(selected, cfg)
 		},
 		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
-		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome,
+		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
 	})
 }
 
@@ -257,7 +260,7 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 		return applyPorts{}, err
 	}
 	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Owner: owner, Evidence: evidence,
-		Publisher: s.repository, Control: lock, RemoveHome: engine.RemoveVolume, Harvest: cfg.Harvest, Deadline: cfg.deadline(), Clock: time.Now}, nil
+		Publisher: s.repository, Control: lock, RemoveHome: engine.RemoveVolume, RequireVolumeSubpaths: engine.RequireVolumeSubpaths, Harvest: cfg.Harvest, Deadline: cfg.deadline(), Clock: time.Now}, nil
 }
 
 // newAgents builds one adapter per provider that a selected profile uses and

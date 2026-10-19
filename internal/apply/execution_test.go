@@ -147,3 +147,28 @@ func TestExecutionLayoutRefusals(t *testing.T) {
 		})
 	}
 }
+
+func TestExecutionLayoutExceptionKind(t *testing.T) {
+	result := executionResult(t, withLayout(t, libraryLayoutYAML+"    - path: realization/lending/Makefile\n      kind: file\n      owner: library\n      reason: The Makefile is shared.\n"))
+	document, ok := result.Document()
+	if !ok || document.Layout == nil || len(document.Layout.Exceptions) != 2 {
+		t.Fatalf("layout failed: %s %+v", result.Status(), result.Diagnostics())
+	}
+	if kind := document.Layout.Exceptions[0].Kind; kind.Value != "" || kind.Source.File != "" {
+		t.Errorf("an absent kind is retained as absent: %+v", kind)
+	}
+	if kind := document.Layout.Exceptions[1].Kind; kind.Value != "file" || kind.Source.Field != "/layout/exceptions/1/kind" {
+		t.Errorf("kind or its source changed: %+v", kind)
+	}
+	for _, kind := range []string{"directory", "file"} {
+		if executionResult(t, withLayout(t, "layout:\n  roots: []\n  exceptions:\n    - {path: realization/a, kind: "+kind+", owner: library, reason: Why.}\n")).Status() == model.Failed {
+			t.Errorf("kind %s refused", kind)
+		}
+	}
+	for _, kind := range []string{"folder", "''", "[file]"} {
+		result := executionResult(t, withLayout(t, "layout:\n  roots: []\n  exceptions:\n    - {path: realization/a, kind: "+kind+", owner: library, reason: Why.}\n"))
+		if _, ok := result.Document(); ok || result.Status() != model.Failed {
+			t.Errorf("kind %s accepted", kind)
+		}
+	}
+}

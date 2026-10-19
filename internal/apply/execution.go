@@ -28,9 +28,12 @@ type ExecutionDefaults struct {
 	Verify  organization.RoleOverride
 }
 
-// ExecutionLayoutException is one authored explicit ownership exception.
+// ExecutionLayoutException is one authored explicit ownership exception. Kind
+// is the optional declared kind of the path, "directory" (the default when
+// absent) or "file"; a zero Kind is absent.
 type ExecutionLayoutException struct {
 	Path   organization.Setting[snapshot.Path]
+	Kind   organization.Setting[string]
 	Owner  organization.Setting[string]
 	Reason organization.Setting[string]
 }
