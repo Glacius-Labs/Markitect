@@ -73,6 +73,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-058](#dec-058-apply-always-executes-before-independent-verify) | Decision | Apply always executes before independent Verify | Accepted; implemented (PR #472) |
 | [DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implemented (PR #472) |
 | [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implemented |
+| [DEC-061](#dec-061-what-an-extracted-model-contains) | Decision | What an extracted model contains | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -723,6 +724,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:** A Definition is realized by the artifacts of the Manager that owns it. Other areas use that realization rather than rebuilding it, and no Manager touches anything outside its own area. Cross-area matters between children are settled by their parent: it decides which child's realization provides a shared rule or interface and coordinates the others to use it.
 - **Verification:** A realization of another area's Definition outside its owner's artifacts, or a change outside the Manager's own area, is a concrete model violation and therefore a blocking finding. The parent's fresh Verify of its children's interaction is responsible for detecting it.
 - **Fallback:** A prior planning round to prevent such duplication is named as an option if this rule alone does not suffice. It is not adopted.
+
+### DEC-061 What an extracted model contains
+
+- **Status:** Accepted, owner, 19 October 2026, after the [first library Extract runs](../validation/library-extract-20261019.md) ([verbatim owner source](sources/extract-model-content-20261019.md)). Not yet implemented.
+- **Project Package:** Extract's structure phase always proposes one Package that owns the project as a whole: its purpose, scope and non-goals, the delivery obligations (for example tests and documentation) and the technical boundary (for example language, build and test commands, permitted dependencies). Its Manager states these obligations in the model phase. Language v1 forbids Definitions in the model root and Root has no Package, so these obligations need a named Package; it may be a dedicated Package or one that also owns other behavior.
+- **Binding versus realization choice:** A statement is binding when it is observable at the project's boundary (its interfaces, inputs and outputs, and the behavior a user or caller can see) or when the artifacts document it explicitly as intended (for example a README rule or a recorded decision). Internal structure, names, wiring, data structures and the order of internal steps are realization choices unless the artifacts document them as intended. The model can name such a choice as free, but does not make it binding.
+- **Proposed checks:** Extract may propose required checks derived from documented build and test commands. They are a proposal for the owner's adoption and are not active before it.
+- **Consequence:** These criteria guide authoring and the independent model review alike. They refine [DEC-057](#dec-057-three-fundamental-starting-situations)'s Extract without changing its process, completion or adoption boundary.
 
 ## Promises
 

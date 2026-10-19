@@ -1,13 +1,17 @@
 #!/usr/bin/env bash
-# Bind one demonstration attempt to a finished build: Host profiles (Claude
-# Sonnet for every Agent role), check profiles, the private runtime token file
-# and the frozen scripts. Never prints a credential.
+# Bind one demonstration attempt to a finished build: Host profiles (one Claude
+# model for every Agent role, Sonnet unless MARKITECT_AGENT_MODEL names
+# another), check profiles, the private runtime token file and the frozen
+# scripts. MARKITECT_STORE labels the attempt's containers (default
+# ra-library), so parallel sessions can clean up only their own. Never prints a
+# credential.
 # Usage: ra_bind.sh BUILD_DIR ATTEMPT_DIR
 set -euo pipefail
 BUILD="$1"
 ATTEMPT="$2"
 DEMO="$(cd "$(dirname "$0")" && pwd)"
-MODEL=claude-sonnet-5-5
+MODEL="${MARKITECT_AGENT_MODEL:-claude-sonnet-5-5}"
+STORE="${MARKITECT_STORE:-ra-library}"
 test ! -e "$ATTEMPT"
 mkdir -p "$ATTEMPT/host" "$ATTEMPT/secret" "$ATTEMPT/frozen"
 chmod 700 "$ATTEMPT/secret"
@@ -36,7 +40,7 @@ agentProfiles:
         effort: high
         systemPrompt: "You are a Markitect Manager agent in a team that reconciles a repository with its canonical model. Follow the turn input and report only through the offered Host tools. Never print or copy credentials. Use only the Go standard library for the realization."
         builtinTools: [Read, Write, Edit, Glob, Grep, Bash]
-        store: ra-library
+        store: $STORE
         cpus: 2
         memoryBytes: 4294967296
         pids: 1024
@@ -57,7 +61,7 @@ checkProfiles:
         processes: 1024
       maxOutputBytes: 1048576
 YAML
-cp "$DEMO"/ra_project.sh "$DEMO"/ra_demo.sh "$DEMO"/ra_inner.sh "$DEMO"/ra_cleanup.sh "$DEMO"/ra_assess.sh "$DEMO"/ra_extract_project.sh "$DEMO"/ra_extract.sh "$DEMO"/extract-execution.yaml "$DEMO"/ra_runconfig.py "$DEMO"/library-execution.yaml "$DEMO"/owner-decisions.json "$ATTEMPT/frozen/"
+cp "$DEMO"/ra_project.sh "$DEMO"/ra_demo.sh "$DEMO"/ra_inner.sh "$DEMO"/ra_cleanup.sh "$DEMO"/ra_assess.sh "$DEMO"/ra_extract_project.sh "$DEMO"/ra_extract.sh "$DEMO"/rx_owner.sh "$DEMO"/rx_rebuild_project.sh "$DEMO"/extract-execution.yaml "$DEMO"/ra_runconfig.py "$DEMO"/library-execution.yaml "$DEMO"/owner-decisions.json "$ATTEMPT/frozen/"
 {
   echo "product_sha=$SHA"
   echo "cli_sha256=$(sha256sum "$BUILD/markitect" | cut -d' ' -f1)"
