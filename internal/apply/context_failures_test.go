@@ -50,11 +50,11 @@ func TestStaticContextsRetainFailedAndIncompleteExecutionParents(t *testing.T) {
 		name, replacement string
 		status            model.Status
 	}{
-		{"known invalid", "maxRuns: 0", model.Failed},
-		{"tool range", "maxRuns: 184467440737095516160", model.NotCompleted},
+		{"known invalid", "agentTurns: 0", model.Failed},
+		{"tool range", "agentTurns: 184467440737095516160", model.NotCompleted},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			content := strings.Replace(documentedExecution(t), "maxRuns: 5", tc.replacement, 1)
+			content := strings.Replace(documentedExecution(t), "agentTurns: 120", tc.replacement, 1)
 			parent := executionResult(t, content)
 			result := parent.SelectContexts()
 			if got, ok := result.Selections(); ok || len(got) != 0 || result.Status() != tc.status || !reflect.DeepEqual(result.Execution().Diagnostics(), parent.Diagnostics()) || !reflect.DeepEqual(result.Execution().Model().Inputs(), parent.Model().Inputs()) {

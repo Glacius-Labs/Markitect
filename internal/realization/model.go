@@ -1,9 +1,6 @@
 package realization
 
 import (
-	"slices"
-	"strings"
-
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
@@ -72,43 +69,16 @@ func hasModelInconsistency(findings []Finding) bool {
 	return false
 }
 
-// modelInventory is the private structural projection shared by live compiler
-// consumers and historical records. It carries no compiler verdict of its own.
+// modelInventory is the private structural projection of a compiled result
+// used by accounting and layout validation. It carries no compiler verdict.
 type modelInventory struct {
-	models         []claimModelBasis
 	owners         map[string]bool
 	definitions    map[model.Identity]bool
-	local          map[model.Identity]bool
 	ready, invalid bool
 	findings       []Finding
 }
 
 func inventoryFromResult(result model.Result) modelInventory {
 	owners, definitions, ready, findings := accountingModel(result)
-	inventory := modelInventory{owners: owners, definitions: definitions, local: map[model.Identity]bool{}, ready: ready, invalid: result.Status == model.Failed || hasModelInconsistency(findings), findings: findings}
-	if !ready {
-		return inventory
-	}
-	for _, scope := range result.Models {
-		binding := claimModelBasis{id: scope.ID, digest: scope.Digest, local: scope.Local}
-		for _, pkg := range scope.Packages {
-			binding.packages = append(binding.packages, pkg.Name)
-		}
-		for _, definition := range scope.Definitions {
-			binding.definitions = append(binding.definitions, inventoryDefinition{definition.Identity, definition.ModelID})
-			if scope.Local {
-				inventory.local[definition.Identity] = true
-			}
-		}
-		slices.Sort(binding.packages)
-		slices.SortFunc(binding.definitions, func(a, b inventoryDefinition) int { return compareIdentity(a.identity, b.identity) })
-		inventory.models = append(inventory.models, binding)
-	}
-	slices.SortFunc(inventory.models, func(a, b claimModelBasis) int { return strings.Compare(a.id, b.id) })
-	return inventory
-}
-
-type inventoryDefinition struct {
-	identity model.Identity
-	modelID  string
+	return modelInventory{owners: owners, definitions: definitions, ready: ready, invalid: result.Status == model.Failed || hasModelInconsistency(findings), findings: findings}
 }

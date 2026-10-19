@@ -163,7 +163,7 @@ func (d *executionDecoder) directories(field executionField) (organization.Setti
 		return organization.Setting[[]snapshot.DirectoryBoundary]{}, false
 	}
 	if field.node.Kind != yaml.SequenceNode {
-		d.issue(model.Failed, "execution.list", field, "Expected a creation-root list.")
+		d.issue(model.Failed, "execution.list", field, "Expected a directory list.")
 		return organization.Setting[[]snapshot.DirectoryBoundary]{}, false
 	}
 	var values []snapshot.DirectoryBoundary

@@ -2,7 +2,6 @@ package organization
 
 import (
 	"slices"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -54,40 +53,20 @@ type RoleOverride struct {
 	Instructions *Setting[[]string]
 }
 
-// SettingsDefaults must supply every field, including empty instruction and
-// creation-root lists and false BatchNoChangeReviews. There are no built-ins.
+// SettingsDefaults must supply every field, including empty instruction lists.
+// There are no built-ins. Execute and Verify are the two Agent roles of every
+// Manager.
 type SettingsDefaults struct {
-	Manager              RoleDefaults
-	Reviewer             RoleDefaults
-	StepTimeout          Setting[time.Duration]
-	RejectionLimit       Setting[int]
-	CreationRoots        Setting[[]snapshot.DirectoryBoundary]
-	BatchNoChangeReviews Setting[bool]
+	Execute RoleDefaults
+	Verify  RoleDefaults
 }
 
-// PackageOverride addresses exactly one local Package or Root. An explicit
-// empty CreationRoots list replaces the default with no creation area.
-// Instructions append; profiles and the other fields replace independently.
-// There is deliberately no BatchNoChangeReviews override or role registry.
+// PackageOverride addresses exactly one local Package or Root. Instructions
+// append; profiles replace. There is deliberately no other override.
 type PackageOverride struct {
-	Package        string
-	Manager        RoleOverride
-	Reviewer       RoleOverride
-	StepTimeout    *Setting[time.Duration]
-	RejectionLimit *Setting[int]
-	CreationRoots  *Setting[[]snapshot.DirectoryBoundary]
-}
-
-// SettingsCeilings constrain every selection, including unused defaults.
-// Roots are lexical directory areas, not file entries or write permission.
-// A selected directory must be contained inclusively in an allowed directory;
-// real/sub and real equal the ceiling real, whereas real-other does not.
-// The explicit RootDirectory boundary is supported. No normalization, physical
-// existence, symlink resolution or artifact authority is implied.
-type SettingsCeilings struct {
-	StepTimeout    Setting[time.Duration]
-	RejectionLimit Setting[int]
-	CreationRoots  Setting[[]snapshot.DirectoryBoundary]
+	Package string
+	Execute RoleOverride
+	Verify  RoleOverride
 }
 
 // SettingsFacts is the complete explicit input to this small resolution slice.
@@ -99,7 +78,6 @@ type SettingsCeilings struct {
 type SettingsFacts struct {
 	Defaults     SettingsDefaults
 	Overrides    []PackageOverride
-	Ceilings     SettingsCeilings
 	Profiles     []ProfileFact
 	Instructions []InstructionFact
 }
@@ -116,37 +94,26 @@ type RoleSettings struct {
 }
 
 type ManagerSettings struct {
-	Package              string
-	Manager              RoleSettings
-	Reviewer             RoleSettings
-	StepTimeout          Setting[time.Duration]
-	RejectionLimit       Setting[int]
-	CreationRoots        Setting[[]snapshot.DirectoryBoundary]
-	BatchNoChangeReviews Setting[bool]
+	Package string
+	Execute RoleSettings
+	Verify  RoleSettings
 }
 
 // Settings is a fixed successful resolution for all slots of one Topology.
 // Its zero value is unusable and exposes no Manager settings. All returned
-// lists and instruction bytes are owned copies. Ceilings explain the bounds
-// on every Manager; provenance explains supplied facts, never authenticates
-// approval or copies canonical Definitions into execution settings.
+// lists and instruction bytes are owned copies. Provenance explains supplied
+// facts, never authenticates approval or copies canonical Definitions into
+// execution settings.
 type Settings struct {
 	configuration settingsValidation // Fixed validated assertions, including unused facts.
 	modelID       string
 	modelDigest   string
 	managers      []ManagerSettings
 	index         map[string]int
-	ceilings      SettingsCeilings
 }
 
 func (s Settings) ModelID() string     { return s.modelID }
 func (s Settings) ModelDigest() string { return s.modelDigest }
-
-func (s Settings) Ceilings() SettingsCeilings {
-	result := s.ceilings
-	result.CreationRoots.Value = slices.Clone(result.CreationRoots.Value)
-	return result
-}
 
 // Managers returns Root first, then exact UTF-8 Package order, as in Topology.
 func (s Settings) Managers() []ManagerSettings {
@@ -166,9 +133,8 @@ func (s Settings) Manager(packagePath string) (ManagerSettings, bool) {
 }
 
 func cloneManagerSettings(manager ManagerSettings) ManagerSettings {
-	manager.CreationRoots.Value = slices.Clone(manager.CreationRoots.Value)
-	manager.Manager = cloneRoleSettings(manager.Manager)
-	manager.Reviewer = cloneRoleSettings(manager.Reviewer)
+	manager.Execute = cloneRoleSettings(manager.Execute)
+	manager.Verify = cloneRoleSettings(manager.Verify)
 	return manager
 }
 

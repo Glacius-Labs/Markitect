@@ -1,0 +1,286 @@
+package realization
+
+import (
+	"errors"
+	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+)
+
+var ErrInvalidLayout = errors.New("invalid realization layout")
+
+const markitectDirectory = ".markitect"
+
+// LayoutException maps an exact path, a file or a whole directory subtree, to
+// one owner regardless of the mirrored hierarchy. Owner is a local Package or
+// Root. Reason is the required persistent explanation.
+type LayoutException struct {
+	Path   snapshot.Path
+	Owner  Owner
+	Reason string
+}
+
+// Layout is the project's persistent artifact ownership: artifact roots that
+// mirror the model hierarchy (root/lending/reminders/... belongs to the local
+// Package lending/reminders) plus explicit exceptions. The deepest mapping wins
+// and everything else belongs to Root. The zero Layout is "not declared": the
+// registry shards alone say who owns what. A Layout fixes lexical facts only;
+// it grants no write authority and observes no file.
+type Layout struct {
+	declared   bool
+	roots      []string
+	exceptions []LayoutException
+	packages   map[string]bool
+}
+
+// NewLayout validates the declared roots and exceptions against the local
+// Package inventory of the passed compiled model. It refuses a root that is
+// the repository root, repeated or nested; anything at or under .markitect;
+// an exception owner that is not Root or a local Package, a repeated exception
+// path or a missing reason; and any roots, exception paths or mirrored Package
+// directories whose directory spellings differ only by letter case, because
+// they would name one location on a case-insensitive platform.
+func NewLayout(compiled model.Result, roots []snapshot.DirectoryBoundary, exceptions []LayoutException) (Layout, error) {
+	inventory := inventoryFromResult(compiled)
+	if !inventory.ready {
+		return Layout{}, fmt.Errorf("%w: a complete passed compiled model with one local model is required", ErrInvalidLayout)
+	}
+	layout := Layout{declared: true, packages: inventory.owners}
+	for _, root := range roots {
+		name := root.String()
+		if name == "" || root.IsRoot() {
+			return Layout{}, fmt.Errorf("%w: an artifact root must be a directory below the repository root", ErrInvalidLayout)
+		}
+		if underMarkitect(name) {
+			return Layout{}, fmt.Errorf("%w: artifact root %q lies in %s", ErrInvalidLayout, name, markitectDirectory)
+		}
+		for _, other := range layout.roots {
+			if other == name {
+				return Layout{}, fmt.Errorf("%w: artifact root %q is repeated", ErrInvalidLayout, name)
+			}
+			if within(other, name) || within(name, other) {
+				return Layout{}, fmt.Errorf("%w: artifact roots %q and %q are nested", ErrInvalidLayout, other, name)
+			}
+		}
+		layout.roots = append(layout.roots, name)
+	}
+	slices.Sort(layout.roots)
+	seen := make(map[string]bool, len(exceptions))
+	for _, exception := range exceptions {
+		name := exception.Path.String()
+		switch {
+		case name == "":
+			return Layout{}, fmt.Errorf("%w: an exception requires a path", ErrInvalidLayout)
+		case underMarkitect(name):
+			return Layout{}, fmt.Errorf("%w: exception path %q lies in %s", ErrInvalidLayout, name, markitectDirectory)
+		case seen[name]:
+			return Layout{}, fmt.Errorf("%w: exception path %q is repeated", ErrInvalidLayout, name)
+		case !exception.Owner.valid():
+			return Layout{}, fmt.Errorf("%w: exception %q requires an owner", ErrInvalidLayout, name)
+		case strings.TrimSpace(exception.Reason) == "":
+			return Layout{}, fmt.Errorf("%w: exception %q requires a reason", ErrInvalidLayout, name)
+		}
+		if packageName, isPackage := exception.Owner.Package(); isPackage && !inventory.owners[packageName] {
+			return Layout{}, fmt.Errorf("%w: exception %q names %q, which is not a Manager of the model", ErrInvalidLayout, name, packageName)
+		}
+		seen[name] = true
+		layout.exceptions = append(layout.exceptions, exception)
+	}
+	slices.SortFunc(layout.exceptions, func(a, b LayoutException) int { return strings.Compare(a.Path.String(), b.Path.String()) })
+	if err := layout.caseCollision(); err != nil {
+		return Layout{}, err
+	}
+	return layout, nil
+}
+
+// caseCollision refuses distinct directory spellings that fold to one lower-case
+// location, among every roots, exception path and mirrored Package directory
+// and each of their ancestor directories.
+func (l Layout) caseCollision() error {
+	folded := make(map[string]string)
+	var paths []string
+	paths = append(paths, l.roots...)
+	for _, exception := range l.exceptions {
+		paths = append(paths, exception.Path.String())
+	}
+	for _, root := range l.roots {
+		for name := range l.packages {
+			paths = append(paths, root+"/"+name)
+		}
+	}
+	slices.Sort(paths)
+	for _, path := range paths {
+		for end := 0; end <= len(path); end++ {
+			if end != len(path) && path[end] != '/' {
+				continue
+			}
+			prefix := path[:end]
+			key := strings.ToLower(prefix)
+			if previous, found := folded[key]; found && previous != prefix {
+				return fmt.Errorf("%w: %q and %q differ only by letter case and are ambiguous on case-insensitive platforms", ErrInvalidLayout, previous, prefix)
+			}
+			folded[key] = prefix
+		}
+	}
+	return nil
+}
+
+// Declared reports whether the project declares a layout at all.
+func (l Layout) Declared() bool { return l.declared }
+
+func (l Layout) Roots() []snapshot.DirectoryBoundary {
+	var roots []snapshot.DirectoryBoundary
+	for _, root := range l.roots {
+		path, _ := snapshot.NewPath(root)
+		boundary, _ := snapshot.DirectoryAt(path)
+		roots = append(roots, boundary)
+	}
+	return roots
+}
+
+func (l Layout) Exceptions() []LayoutException { return slices.Clone(l.exceptions) }
+
+// OwnerOf returns the owner of an exact file path: the deepest exception whose
+// path is the file or a directory containing it, unless a mirrored Package
+// directory is deeper; otherwise the deepest local Package mirrored below the
+// path's artifact root; otherwise Root. An exception on the very directory of a
+// mirrored Package overrides it. Calling OwnerOf on an undeclared Layout returns
+// Root, because no path mapping exists.
+func (l Layout) OwnerOf(path snapshot.Path) Owner {
+	name := path.String()
+	var exception *LayoutException
+	for i := range l.exceptions {
+		candidate := &l.exceptions[i]
+		if within(candidate.Path.String(), name) && (exception == nil || depth(candidate.Path.String()) > depth(exception.Path.String())) {
+			exception = candidate
+		}
+	}
+	mirrored, mirroredDepth := Owner{}, 0
+	for _, root := range l.roots {
+		if !strings.HasPrefix(name, root+"/") {
+			continue
+		}
+		segments := strings.Split(name[len(root)+1:], "/")
+		for k := len(segments) - 1; k >= 1; k-- {
+			if candidate := strings.Join(segments[:k], "/"); l.packages[candidate] {
+				mirrored, mirroredDepth = Owner{packageName: candidate}, depth(root)+k
+				break
+			}
+		}
+	}
+	if exception != nil && depth(exception.Path.String()) >= mirroredDepth {
+		return exception.Owner
+	}
+	if mirroredDepth > 0 {
+		return mirrored
+	}
+	return RootOwner()
+}
+
+// Describe returns short human-readable descriptions of the areas owner owns
+// under this layout, for prompts. The tree only decides whether an exception
+// names a file or a directory and supplies an example of a shared file.
+func (l Layout) Describe(owner Owner, tree snapshot.Tree) []string {
+	var areas []string
+	packageName, isPackage := owner.Package()
+	for _, root := range l.roots {
+		if isPackage {
+			base := root + "/" + packageName
+			var excluded []string
+			for name := range l.packages {
+				if parent, _ := splitLast(name); parent == packageName {
+					excluded = append(excluded, root+"/"+name+"/**")
+				}
+			}
+			areas = append(areas, area(base, l.foreignInside(base, owner, tree, excluded)))
+			continue
+		}
+		shared := ""
+		for _, entry := range tree.Entries() {
+			if strings.HasPrefix(entry.Path().String(), root+"/") && l.OwnerOf(entry.Path()).IsRoot() {
+				shared = entry.Path().String()
+				break
+			}
+		}
+		if shared != "" {
+			areas = append(areas, fmt.Sprintf("shared files in %s/ such as %s", root, shared))
+		} else {
+			areas = append(areas, fmt.Sprintf("shared files in %s/ that no Package or exception area covers", root))
+		}
+	}
+	for _, exception := range l.exceptions {
+		name := exception.Path.String()
+		if exception.Owner != owner || isPackage && l.mirrors(name, packageName) {
+			continue
+		}
+		if _, isFile := tree.Lookup(exception.Path); isFile {
+			areas = append(areas, name)
+			continue
+		}
+		areas = append(areas, area(name, l.foreignInside(name, owner, tree, nil)))
+	}
+	if owner.IsRoot() {
+		areas = append(areas, "every other file of the repository outside the roots and exceptions")
+	}
+	return areas
+}
+
+func area(dir string, excluded []string) string {
+	description := dir + "/**"
+	if len(excluded) > 0 {
+		slices.Sort(excluded)
+		description += " except " + strings.Join(excluded, ", ")
+	}
+	return description
+}
+
+// foreignInside appends the exceptions of other owners strictly inside dir that
+// the already excluded areas do not cover.
+func (l Layout) foreignInside(dir string, owner Owner, tree snapshot.Tree, excluded []string) []string {
+	for _, exception := range l.exceptions {
+		name := exception.Path.String()
+		if exception.Owner == owner || !strings.HasPrefix(name, dir+"/") {
+			continue
+		}
+		covered := false
+		for _, other := range excluded {
+			covered = covered || strings.HasPrefix(name+"/", strings.TrimSuffix(other, "**"))
+		}
+		if covered {
+			continue
+		}
+		if _, isFile := tree.Lookup(exception.Path); isFile {
+			excluded = append(excluded, name)
+		} else {
+			excluded = append(excluded, name+"/**")
+		}
+	}
+	return excluded
+}
+
+// mirrors reports whether name lies inside the mirrored directory of the Package.
+func (l Layout) mirrors(name, packageName string) bool {
+	for _, root := range l.roots {
+		if strings.HasPrefix(name, root+"/"+packageName+"/") {
+			return true
+		}
+	}
+	return false
+}
+
+func splitLast(name string) (string, string) {
+	if slash := strings.LastIndexByte(name, '/'); slash >= 0 {
+		return name[:slash], name[slash+1:]
+	}
+	return "", name
+}
+
+// within reports whether name is dir itself or lies below it.
+func within(dir, name string) bool { return name == dir || strings.HasPrefix(name, dir+"/") }
+
+func depth(path string) int { return strings.Count(path, "/") + 1 }
+
+func underMarkitect(path string) bool { return within(markitectDirectory, path) }

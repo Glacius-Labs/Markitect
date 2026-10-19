@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const strategyDefaultsSource = "product:recursive-apply-v1/defaults.yaml"
+const strategyDefaultsSource = "product:shared-workspace-v1/defaults.yaml"
 
 //go:embed strategy_defaults.yaml
 var strategyDefaultsBytes []byte
@@ -37,15 +37,12 @@ type StrategyDefaultsDiagnostic struct {
 }
 
 type strategyDefaults struct {
-	status         model.Status
-	input          StrategyDefaultsInput
-	source         organization.SettingSource
-	rejectionLimit organization.Setting[int]
-	manager        organization.Setting[[]string]
-	reviewer       organization.Setting[[]string]
-	batch          organization.Setting[bool]
-	approval       organization.Setting[[]string]
-	diagnostics    []StrategyDefaultsDiagnostic
+	status      model.Status
+	input       StrategyDefaultsInput
+	source      organization.SettingSource
+	execute     organization.Setting[[]string]
+	verify      organization.Setting[[]string]
+	diagnostics []StrategyDefaultsDiagnostic
 }
 
 func (r *strategyDefaults) issue(status model.Status, code string, field configField, message string) {

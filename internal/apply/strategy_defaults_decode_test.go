@@ -12,7 +12,7 @@ import (
 func TestProductStrategyDefaultsDocumentBindsAcceptedEffects(t *testing.T) {
 	input := ProductStrategyDefaults()
 	decoded := decodeStrategyDefaults(input)
-	if decoded.status != model.Passed || len(decoded.diagnostics) != 0 || decoded.rejectionLimit.Value != 3 || len(decoded.manager.Value) != 0 || len(decoded.reviewer.Value) != 0 || decoded.batch.Value || len(decoded.approval.Value) != 0 {
+	if decoded.status != model.Passed || len(decoded.diagnostics) != 0 || len(decoded.execute.Value) != 0 || len(decoded.verify.Value) != 0 {
 		t.Fatalf("actual embedded product defaults failed: %+v", decoded)
 	}
 	id := snapshot.ContentID(sha256.Sum256(input.Bytes))
@@ -20,13 +20,10 @@ func TestProductStrategyDefaultsDocumentBindsAcceptedEffects(t *testing.T) {
 		source organization.SettingSource
 		path   string
 	}{
-		{decoded.rejectionLimit.Source, "/defaults/rejectionLimit"},
-		{decoded.manager.Source, "/defaults/instructions/manager"},
-		{decoded.reviewer.Source, "/defaults/instructions/reviewer"},
-		{decoded.batch.Source, "/defaults/batchNoChangeReviews"},
-		{decoded.approval.Source, "/acceptance/ownerApproval"},
+		{decoded.execute.Source, "/defaults/instructions/execute"},
+		{decoded.verify.Source, "/defaults/instructions/verify"},
 	} {
-		if field.source.File != "product:recursive-apply-v1/defaults.yaml" || field.source.ContentID != id || field.source.Field != field.path {
+		if field.source.File != "product:shared-workspace-v1/defaults.yaml" || field.source.ContentID != id || field.source.Field != field.path {
 			t.Fatalf("product field lost original byte digest or actual pointer: %+v", field.source)
 		}
 	}

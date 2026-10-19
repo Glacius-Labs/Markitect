@@ -22,20 +22,20 @@ func TestDefaultsRefuseMissingUnknownAndInvalidProductInputs(t *testing.T) {
 		{"unknown source", "", "", "strategy_defaults.source_unknown", "", model.NotCompleted},
 		{"observed empty", "", "", "strategy_defaults.yaml", "", model.Failed},
 		{"unknown version", "markitect.strategy-defaults/v1", "markitect.strategy-defaults/v2", "strategy_defaults.profile_unknown", "/apiVersion", model.NotCompleted},
-		{"unknown strategy", "recursive-apply-v1", "future-strategy", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
-		{"missing field", "  rejectionLimit: 3\n", "", "strategy_defaults.field_missing", "/defaults/rejectionLimit", model.Failed},
-		{"wrong type", "rejectionLimit: 3", "rejectionLimit: '3'", "strategy_defaults.integer", "/defaults/rejectionLimit", model.Failed},
-		{"old rejection setting key", "rejectionLimit: 3", "reviewRounds: 3", "strategy_defaults.unknown_key", "/defaults/reviewRounds", model.Failed},
-		{"nonpositive", "rejectionLimit: 3", "rejectionLimit: 0", "strategy_defaults.positive", "/defaults/rejectionLimit", model.Failed},
-		{"null", "rejectionLimit: 3", "rejectionLimit: null", "strategy_defaults.yaml_feature", "/defaults/rejectionLimit", model.Failed},
-		{"duplicate", "  rejectionLimit: 3", "  rejectionLimit: 3\n  rejectionLimit: 2", "strategy_defaults.duplicate_key", "/defaults/rejectionLimit", model.Failed},
+		{"unknown strategy", "shared-workspace-v1", "future-strategy", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
+		{"old strategy", "shared-workspace-v1", "recursive-apply-v1", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
+		{"missing defaults", "defaults:\n  instructions:\n    execute: []\n    verify: []\n", "", "strategy_defaults.field_missing", "/defaults", model.Failed},
+		{"old rejection setting", "defaults:", "defaults:\n  rejectionLimit: 3", "strategy_defaults.unknown_key", "/defaults/rejectionLimit", model.Failed},
+		{"old batch setting", "defaults:", "defaults:\n  batchNoChangeReviews: false", "strategy_defaults.unknown_key", "/defaults/batchNoChangeReviews", model.Failed},
+		{"old acceptance section", "defaults:", "acceptance: {ownerApproval: []}\ndefaults:", "strategy_defaults.unknown_key", "/acceptance", model.Failed},
+		{"null", "execute: []", "execute: null", "strategy_defaults.yaml_feature", "/defaults/instructions/execute", model.Failed},
+		{"duplicate", "    execute: []", "    execute: []\n    execute: []", "strategy_defaults.duplicate_key", "/defaults/instructions/execute", model.Failed},
 		{"unknown field", "defaults:", "unlimited: true\ndefaults:", "strategy_defaults.unknown_key", "/unlimited", model.Failed},
-		{"alias feature", "manager: []", "manager: &instructions []", "strategy_defaults.yaml_feature", "/defaults/instructions/manager", model.Failed},
-		{"empty instruction reference", "manager: []", "manager: ['']", "strategy_defaults.instruction_reference", "/defaults/instructions/manager", model.Failed},
-		{"missing role list", "    reviewer: []\n", "", "strategy_defaults.role_instructions", "/defaults/instructions/reviewer", model.Failed},
-		{"quoted boolean", "batchNoChangeReviews: false", "batchNoChangeReviews: 'false'", "strategy_defaults.boolean", "/defaults/batchNoChangeReviews", model.Failed},
+		{"old role", "execute: []", "manager: []", "strategy_defaults.unknown_key", "/defaults/instructions/manager", model.Failed},
+		{"alias feature", "execute: []", "execute: &instructions []", "strategy_defaults.yaml_feature", "/defaults/instructions/execute", model.Failed},
+		{"empty instruction reference", "execute: []", "execute: ['']", "strategy_defaults.instruction_reference", "/defaults/instructions/execute", model.Failed},
+		{"missing role list", "    verify: []\n", "", "strategy_defaults.role_instructions", "/defaults/instructions/verify", model.Failed},
 		{"extra document", "apiVersion:", "---\n{}\n---\napiVersion:", "strategy_defaults.documents", "", model.Failed},
-		{"unknown approval package", "ownerApproval: []", "ownerApproval: [not-a-local-package]", "settings.owner_approval_package", "/acceptance/ownerApproval", model.Failed},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			input := apply.ProductStrategyDefaults()
@@ -91,39 +91,9 @@ func TestDefaultsKnownInvalidProductSurvivesIncompleteExecutionParent(t *testing
 	if _, ok := result.Declarations(); ok || result.Status() != model.Failed || len(result.Diagnostics()) != 2 {
 		t.Fatalf("known product error was hidden by incomplete parent: %+v", result.Diagnostics())
 	}
-	parent := executionResult(t, strings.Replace(defaultsAbsentExecution(t), "strategy: recursive-apply-v1", "strategy: unsupported", 1))
+	parent := executionResult(t, strings.Replace(defaultsAbsentExecution(t), "strategy: shared-workspace-v1", "strategy: unsupported", 1))
 	result = parent.PrepareDefaults(apply.ProductStrategyDefaults())
 	if result.Status() != model.Failed || !reflect.DeepEqual(result.Execution().Diagnostics(), parent.Diagnostics()) || !reflect.DeepEqual(result.Execution().Partial(), parent.Partial()) {
 		t.Fatal("failed execution parent was replaced with product defaults")
-	}
-}
-
-func TestDefaultsValidateActualProjectCeilingsWithoutClamping(t *testing.T) {
-	base := defaultsAbsentExecution(t)
-	for _, tc := range []struct{ name, from, to string }{
-		{"product default exceeds project ceiling", "maxRejectionLimit: 3", "maxRejectionLimit: 2"},
-		{"authored rejection limit exceeds project ceiling", "  stepTimeout: 10m", "  rejectionLimit: 4\n  stepTimeout: 10m"},
-		{"override rejection limit exceeds project ceiling", "    stepTimeout: 8m", "    rejectionLimit: 4\n    stepTimeout: 8m"},
-		{"default time exceeds project", "  stepTimeout: 10m", "  stepTimeout: 11m"},
-		{"override time exceeds project", "    stepTimeout: 8m", "    stepTimeout: 11m"},
-		{"default roots exceed project", "  creationRoots: [realization]\npackages:", "  creationRoots: [outside]\npackages:"},
-		{"override roots exceed project", "    stepTimeout: 8m", "    creationRoots: [outside]\n    stepTimeout: 8m"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			if strings.Count(base, tc.from) != 1 {
-				t.Fatal("project ceiling fixture marker changed")
-			}
-			parent := executionResult(t, strings.Replace(base, tc.from, tc.to, 1))
-			if parent.Status() != model.Passed {
-				t.Fatalf("authored declaration did not reach real ceiling validation: %+v", parent.Diagnostics())
-			}
-			prepared := parent.PrepareDefaults(apply.ProductStrategyDefaults())
-			if _, ok := prepared.Declarations(); ok || prepared.Status() != model.Failed || len(prepared.Diagnostics()) != 1 || prepared.Diagnostics()[0].Code != "settings.selections" || !reflect.DeepEqual(prepared.Execution().Partial(), parent.Partial()) {
-				t.Fatalf("actual project ceiling was clamped or bypassed: %+v", prepared.Diagnostics())
-			}
-			if tc.name == "product default exceeds project ceiling" && (prepared.Execution().Partial().Defaults.RejectionLimit != nil || prepared.Execution().Partial().Limits.MaxRejectionLimit.Value != 2) {
-				t.Fatal("product default was forged into authored execution or project ceiling was changed")
-			}
-		})
 	}
 }

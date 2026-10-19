@@ -4,6 +4,14 @@ artifacts:
     form: doc
     realizes: [product/ports-and-adapters, product/apply/read-only-preparation]
     why: Documents captured preparation, the controlled state consumer and outstanding physical adapter obligations.
+  - path: "internal/apply/candidates.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Accounts candidate trees against the captured start, owner by owner, for the closing structural gate.
+  - path: "internal/apply/candidates_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Checks candidate ownership, areas and findings on the library layout, including a registration in the wrong shard.
   - path: "internal/apply/config_yaml.go"
     form: code
     realizes: [product/apply/read-only-preparation]
@@ -32,6 +40,14 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_budget.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_fixture_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Holds the documented execution settings that the decoding tests mutate.
   - path: "internal/apply/publisher.go"
     form: code
     realizes: [product/ports-and-adapters]
@@ -64,10 +80,6 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/apply/execution_caps.go"
-    form: code
-    realizes: [product/apply/read-only-preparation]
-    why: Implements the stated responsibility within its declared boundary.
   - path: "internal/apply/execution_contract_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
@@ -159,7 +171,7 @@ artifacts:
   - path: "internal/apply/host_profile_image_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
-    why: Checks truthful image metadata evidence, literal identity binding and existing RUN reconstruction without runtime readiness claims.
+    why: Checks truthful image metadata evidence and its literal identity binding without runtime readiness claims.
   - path: "internal/apply/host_profiles.go"
     form: code
     realizes: [product/apply/read-only-preparation]
