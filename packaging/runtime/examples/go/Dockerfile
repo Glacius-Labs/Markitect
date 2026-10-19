@@ -13,8 +13,12 @@ FROM golang:1.27.1-bookworm@sha256:69a7b9788769bec032d238959b61854e9ae87f57be902
 FROM ${BASE}
 COPY --from=go /usr/local/go /usr/local/go
 # Agent CLIs run commands in login shells, whose /etc/profile resets PATH;
-# links on the default PATH keep the toolchain reachable there too.
+# links on the default PATH keep the toolchain reachable there too. The C
+# toolchain enables cgo, which `go test -race` needs.
 USER root
+RUN apt-get update \
+ && apt-get install --yes --no-install-recommends gcc libc6-dev \
+ && rm -rf /var/lib/apt/lists/*
 RUN ln -s /usr/local/go/bin/go /usr/local/bin/go && ln -s /usr/local/go/bin/gofmt /usr/local/bin/gofmt
 USER 1000:1000
 ENV PATH=/usr/local/go/bin:${PATH} \
