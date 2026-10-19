@@ -15,7 +15,7 @@ func BuildReconcileConfig(req ReconcileRequest, now time.Time) (run.Config, erro
 }
 
 func PublishChanges(ctx context.Context, req ReconcileRequest, changes []snapshot.Change) (*PublicationReceipt, error) {
-	return publish(ctx, req, changes)
+	return req.publishChanges(ctx, changes)
 }
 
 // OriginalText exposes the quoted original of a protected input; quoted is
@@ -26,7 +26,7 @@ func OriginalText(before snapshot.Entry, code string, quoted *int) string {
 
 // Conclude exposes the publication and cleanup step that follows a run.
 func Conclude(ctx context.Context, req ReconcileRequest, start snapshot.Tree, outcome run.Outcome, runErr error) (ReconcileResult, error) {
-	return conclude(ctx, req, start, outcome, runErr)
+	return req.conclude(ctx, start, outcome, runErr)
 }
 
 // ExtractStructureConfig and ExtractModelConfig expose the engine configuration
