@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Coordinator assignment and next milestone](coordinator-assignment-20261019.md) | Direct owner instruction and selected options, 19 October 2026 | The Coordinator realizes and refines everything around the core; next milestone Apply without the harness, shown on Roombook and Readinglog; work split by topic |
 | [Execute-first Apply](apply-execute-first-20261019.md) | Direct owner discussion and documentation-only acceptances, 19 October 2026 | Execute from Root; parents establish needed foundations or assess and preserve/correct existing ones before child realization; upward integration and subsequent independent Verify without a separate starting route |
 | [Three starting situations](three-starting-situations-20261019.md) | Direct owner discussion and documentation instructions, 19 October 2026 | Three situations and two processes; stable Extract rounds with complete carryover; essential model questions block completion, evidenced artifact defects do not by themselves; adopt model and registry together, carry defects into regular Apply and confirm repair through independent Verify |
 | [Responsibilities, build start and the oracle](ownership-build-order-oracle-20261019.md) | Direct owner decisions, 19 October 2026 | No parent takeover of children's work, enforced ownership, Root-first build start, oracle only after each Apply |

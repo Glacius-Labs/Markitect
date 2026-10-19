@@ -22,7 +22,7 @@ The [canonical language v1](design/canonical-model/minimal-language/language-con
 
 <a id="architect-and-coordinator"></a>
 
-Three sessions work in parallel. This continues the owner's [division of 17 October 2026](concepts/sources/architecture-review-20261017.md#division-of-work) ("Konzept und Herzstück" for the core, "die Dinge aussenrum" for the Coordinator): on 19 October 2026 the owner gave the Coordinator "alles drumherum umzusetzten, zu refinen und zu implementieren" and the other two sessions Apply and Extract. The sessions agreed the write scopes below; they are an assignment, not an owner decision, and the owner can change them. Each session owns its write scope; anything outside it goes through the owning session.
+Three sessions work in parallel. This continues the owner's [division of 17 October 2026](concepts/sources/architecture-review-20261017.md#division-of-work) ("Konzept und Herzstück" for the core, "die Dinge aussenrum" for the Coordinator). On 19 October 2026 the owner [assigned the Coordinator everything around the core and selected the milestone above](concepts/sources/coordinator-assignment-20261019.md). The write scopes below are the sessions' agreement within that assignment; the owner can change them. Each session owns its write scope; anything outside it goes through the owning session.
 
 | Stream | Write scope | Next |
 | --- | --- | --- |
@@ -33,7 +33,7 @@ Three sessions work in parallel. This continues the owner's [division of 17 Octo
 The Coordinator's sequence:
 
 1. **Cleanup.** This plan, superseded design documents to [history](history/README.md), stale status lines, merged worktrees and branches.
-2. **Runtime image.** Python 3 in the base image and a C toolchain in the Go example image, both reported missing by the Apply core's analysis of the real runs.
+2. **Runtime image.** Python 3 in the base image and a C toolchain in the Go example image, so that `go test -race` works.
 3. **Host setup.** A product command that builds and binds the images and writes today's Host profile and run configuration, so that `apply` and `extract` need no harness. It produces the existing formats and changes none of them.
 4. **Evidence.** Roombook and Readinglog through product commands only, with their oracles.
 5. **Self-model.** Adopt the accepted [preparation-to-publication proposal](design/canonical-model/reconciliation-model-proposal.md) into `.markitect/`.
