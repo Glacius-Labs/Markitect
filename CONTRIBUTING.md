@@ -1,6 +1,6 @@
 # Development
 
-Markitect is being rebuilt around canonical language v1 and delegated realization. Current source provides actual read-only preparation, a guarded generated model view and the recursive Apply of [DEC-056](docs/concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) on branch `dev/recursive-apply-simplified`, pending review, CI and owner acceptance ([runtime contract](docs/design/canonical-model/manager-apply-runtime.md)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations.
+Markitect is being rebuilt around canonical language v1 and delegated realization. Current source provides actual read-only preparation, a guarded generated model view and the recursive Apply of [DEC-056](docs/concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) on branch `dev/recursive-apply-simplified`, pending review and owner acceptance ([runtime contract](docs/design/canonical-model/manager-apply-runtime.md)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations.
 
 ## Ownership and layout
 
@@ -12,7 +12,17 @@ The self-model is `.markitect/model.yaml`, its `model-lock.yaml` and Definition 
 
 ## Verify a change
 
-Use Git and Go from `go.mod`. Run meaningful local checks for the actual change; the commands below also define the repository-wide required CI gates. Follow the [delivery plan](docs/implementation-plan.md#integration) for background CI and direct delivery merges. Do not repeat unrelated full suites for unchanged source. Do not edit sources while a gate runs, and await each running Go process before another Go command in the same worktree.
+Use Git and Go from `go.mod`. Run meaningful local checks for the actual change. During development, automatic PR, Main-push and scheduled CI are paused; full CI remains available by manual dispatch and to the release workflow. Independent review and focused local checks are the default merge basis under the [delivery plan](docs/implementation-plan.md#integration). Do not repeat unrelated full suites for unchanged source. Do not edit sources while a gate runs, and await each running Go process before another Go command in the same worktree.
+
+For prose-only changes, check links in the changed pages with `python -B scripts/check-docs.py PATH...` and run `git diff --check`. Keep structural model/accounting preparation where required by [AGENTS.md](AGENTS.md). For code or control changes, run the relevant tests and validators; broaden validation when the changed contract or a concrete failure calls for it. Record actual results and limitations in the PR.
+
+The full pipeline retains Linux quality checks, the race detector and optional Windows validation. Request it explicitly when useful:
+
+```text
+gh workflow run ci.yaml --ref BRANCH -f windows=true
+```
+
+Manual CI is optional for ordinary development merges. When explicitly required for an assignment, assess its result on the exact reviewed head and resolve relevant failures before integration. The Flake report is also manual. Release-owned calls retain their full validation. The commands below remain available for local or full validation:
 
 ```text
 go mod verify
@@ -57,7 +67,7 @@ It packages and builds root-layout source, tests the standalone bootstrap and dr
 
 Verify checkout, branch, full SHA and dirty state before edits. Use the coordinator's exact integrated base and one assigned non-protected branch/worktree per writer. Preserve unrelated work; never stash across worktrees, reset it or force-push reviewed heads. Shared contracts and dependencies need explicit coordination.
 
-Before integration, obtain independent complete-diff review and resolve findings. Freeze the exact head and await its required CI in the background. The delivering chat merges directly with a merge commit and `--match-head-commit`; recompose only for conflicts or substantive overlap. Do not monitor Main CI or retrieve artifacts after each merge; respond to reported Main failures. Local checks do not replace required CI. Publication, provider runs, studies and owner acceptance need separate authority and evidence.
+Before integration, obtain independent complete-diff review, run relevant local checks and resolve findings. Freeze the exact reviewed head. The delivering chat merges directly with a merge commit and `--match-head-commit`, without waiting for hosted CI by default; recompose only for conflicts or substantive overlap and renew relevant review/checks after a changed candidate. If an assignment explicitly requires manual CI, bind it to that head and wait in the background. Preserve failed observations and distinguish local from hosted evidence. Publication, provider runs, studies and owner acceptance need separate authority and evidence.
 
 ## Historical Project/Domain contracts
 
