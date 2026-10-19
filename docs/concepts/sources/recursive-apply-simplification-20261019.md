@@ -56,6 +56,14 @@ The assistant recommended one shared writer working tree, optionally mounted by 
 
 Recorder's note: this records the accepted conceptual direction and the requested independent assessment. It is not an implementation dispatch to this session, an authorization to start more provider experiments, or runtime evidence for shared-workspace concurrency. The review's precise engineering recommendations remain labeled in the owning concept.
 
+## Default layout and model-only start
+
+Recorder's note: in a subsequent source-bound discussion of remaining risks and the empty-repository start, the owner confirmed the default and explicitly requested a handoff to Claude, whose implementation was already running.
+
+> Ja, die gespiegelte Modellstruktur sollte der Default sein, mit expliziten Ausnahmen. Halte das fest und gib Claude die Punkte mit, insbesondere den echten Start aus dem Modell ohne vorbereitete interne APIs.
+
+The owning concept and library walkthrough record the accepted clarification. The handoff also highlights stable stop/capture, preservation of blocking findings across fresh reviews and dependency coordination. Suggested later optimizations to initial empty-project Verify, repeated whole-tree Verify or parent message handling remain observation points, not newly adopted process changes. This documentation follow-up neither starts a provider run nor takes over Claude's implementation.
+
 ## First-demonstration scope after independent review
 
 Recorder's note: after the separate conceptual assessment of Managers as departments with Forks, Subagents and Skills, the owner gave this direct scope confirmation. The additional proposal remains outside the first demonstration; the existing implementation assignment is not revised.
