@@ -456,11 +456,32 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		s.addIssue(Issue{ID: id, Kind: issueQuestion, Severity: severityBlocking, Task: t.Slot.Package, To: addressedToOwner, Purpose: purpose, Request: in.Question, State: issueOpen, Raised: r.Step, Source: r.Input, At: revision})
 		t.State, t.Since, t.Waits = TaskBlocked, revision, []Wait{{Kind: waitOwner, Ref: id}}
 	case VerdictReject:
+		// A rejection that finds fewer gaps than the last one shows that the
+		// work converges, so it does not count toward the limit (DEC-054).
+		gaps := 0
+		for _, c := range in.Cases {
+			if c.Assessment == caseMissing {
+				gaps++
+			}
+		}
+		for _, f := range in.Findings {
+			if f.Severity == severityBlocking {
+				gaps++
+			}
+		}
+		last, rejected := t.Gaps[purpose]
+		t.Gaps = maps.Clone(t.Gaps)
+		if t.Gaps == nil {
+			t.Gaps = map[string]int{}
+		}
+		t.Gaps[purpose] = gaps
 		t.Rejections = maps.Clone(t.Rejections)
 		if t.Rejections == nil {
 			t.Rejections = map[string]int{}
 		}
-		t.Rejections[purpose]++
+		if !rejected || gaps >= last {
+			t.Rejections[purpose]++
+		}
 		t.Submission = Submission{}
 		// Findings about a descendant's artifacts reopen it; the reviewed
 		// Manager integrates again once its children are done (core rule T11).
@@ -474,7 +495,7 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		corrected := len(targets) > 0
 		switch {
 		case s.rejectionLimit(t.Slot.Package) <= t.Rejections[purpose]:
-			t.State, t.Reason = TaskIncomplete, fmt.Sprintf("the %s review rejected %d candidates, which reaches the rejection limit", purpose, t.Rejections[purpose])
+			t.State, t.Reason = TaskIncomplete, fmt.Sprintf("the %s review reached the rejection limit with %d counted rejections", purpose, t.Rejections[purpose])
 		case corrected:
 			t.State, t.Since, t.Waits = TaskBlocked, revision, []Wait{{Kind: waitChildren}}
 		default:
@@ -493,6 +514,10 @@ func (s *stateValue) concludeReview(r ConclusionRecord, t *taskValue, revision u
 		if t.Rejections[purpose] > 0 {
 			t.Rejections = maps.Clone(t.Rejections)
 			delete(t.Rejections, purpose)
+		}
+		if _, ok := t.Gaps[purpose]; ok {
+			t.Gaps = maps.Clone(t.Gaps)
+			delete(t.Gaps, purpose)
 		}
 		switch {
 		case scope == "limited":

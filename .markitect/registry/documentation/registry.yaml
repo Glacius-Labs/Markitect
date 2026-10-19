@@ -28,6 +28,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the run evidence and the owner's decision to drop the Explore phase and work as implement then review.
+  - path: "docs/concepts/sources/rejection-count-progress-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the run evidence and the owner's decision that a rejection with fewer gaps than the last one does not count.
   - path: "docs/concepts/sources/rejection-count-restart-20261018.md"
     form: doc
     realizes: [documentation/current-guidance]

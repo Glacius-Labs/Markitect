@@ -263,6 +263,108 @@ func TestRejectionLimitFinishesTheRunIncomplete(t *testing.T) {
 	}
 }
 
+// gapReview rejects with the recorded case assessed as given and n blocking
+// findings.
+func gapReview(assessment string, n int) []action {
+	findings := ""
+	for i := 0; i < n; i++ {
+		if i > 0 {
+			findings += ","
+		}
+		findings += `{"severity":"blocking","definitions":["lending/Item"],"grounds":"A gap remains.","requestedEvidence":"A test."}`
+	}
+	args := `{"verdict":"changes_requested","summary":"Gaps remain.","evidence":[],"cases":[{"name":"item","assessment":"` + assessment + `","grounds":"Checked."}],"resolutions":[],"findings":[` + findings + `]}`
+	return []action{{Tool: run.ToolSubmitReview, Args: args, Want: run.ToolOK}}
+}
+
+// passOpen passes and resolves every open blocking finding of a task.
+func passOpen(h *harness, manager string) []action {
+	var open []string
+	for _, i := range h.c.Issues(manager) {
+		if i.Kind == "finding" && i.Severity == "blocking" && i.State == "open" {
+			open = append(open, i.ID)
+		}
+	}
+	return []action{{Tool: run.ToolSubmitReview, Args: passArgs(open...), Want: run.ToolOK}}
+}
+
+// A rejection that finds fewer gaps than the last one shows convergence and
+// does not count toward the limit, here two; a rejection without fewer gaps
+// counts (DEC-054).
+func TestARejectionWithFewerGapsDoesNotCount(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	agent := func(s agentStep) []action {
+		if s.Manager != "lending" || s.Phase != run.PhaseReviewerCandidate {
+			return happyAgent(s)
+		}
+		if s.Attempt < 3 {
+			return gapReview("evidenced", 3-s.Attempt)
+		}
+		return passOpen(h, "lending")
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if lending := h.task("lending"); h.c.Current().State != run.Verifying || len(lending.Deliveries) != 1 || lending.Rejections["local"] != 0 {
+		t.Fatal("a converging Manager was stopped by the rejection limit", h.c.Current(), lending)
+	}
+}
+
+// A recorded case judged missing is a gap, so a review that finds the case
+// evidenced and raises the same number of findings shows progress (DEC-054).
+func TestAMissingCaseIsAGap(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	agent := func(s agentStep) []action {
+		if s.Manager != "lending" || s.Phase != run.PhaseReviewerCandidate {
+			return happyAgent(s)
+		}
+		switch s.Attempt {
+		case 0:
+			return gapReview("missing", 1)
+		case 1:
+			return gapReview("evidenced", 1)
+		}
+		return passOpen(h, "lending")
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	if lending := h.task("lending"); h.c.Current().State != run.Verifying || len(lending.Deliveries) != 1 {
+		t.Fatal("a review that found a missing case evidenced was counted", h.c.Current(), lending)
+	}
+}
+
+// An accepted delivery restarts the comparison with it: the first rejection
+// of the next delivery counts even with fewer gaps than a rejection before
+// the acceptance; the limit here is two (DEC-050, DEC-054).
+func TestAnAcceptedDeliveryRestartsTheGapComparison(t *testing.T) {
+	t.Parallel()
+	var h *harness
+	agent := func(s agentStep) []action {
+		switch {
+		case s.Manager == "lending" && s.Phase == run.PhaseWork && s.Attempt < 2:
+			content := []string{"package library\n\n// first\n", "package library\n\ntype Item struct{}\n"}[s.Attempt]
+			return []action{{Write: map[string]string{"out/library.go": content}, Tool: run.ToolSubmit, Args: submitArgs("local", "limited"), Want: run.ToolOK}}
+		case s.Manager == "lending" && s.Phase == run.PhaseReviewerCandidate:
+			switch s.Attempt {
+			case 0:
+				return gapReview("evidenced", 3)
+			case 1:
+				return passOpen(h, "lending")
+			}
+			return gapReview("evidenced", 1)
+		}
+		return happyAgent(s)
+	}
+	h = newHarness(t, true, agent)
+	runToEnd(t, h)
+	lending := h.task("lending")
+	// A rejection, the pass, then two counted rejections reach the limit.
+	if lending.State != run.TaskIncomplete || lending.Rejections["local"] != 2 || len(lending.Deliveries) != 1 || strings.Count(strings.Join(admitted(h), ","), "lending reviewer-candidate") != 4 {
+		t.Fatalf("the comparison survived the accepted delivery: %+v %v", lending, admitted(h))
+	}
+}
+
 // An accepted delivery restarts the count, so a Manager that converges on
 // each delivery is not stopped by rejections of earlier deliveries; the limit
 // here is two (DEC-050).

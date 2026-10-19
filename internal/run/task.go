@@ -72,13 +72,16 @@ type taskValue struct {
 	LocalDone    bool
 	Deliveries   []Delivery
 	Rejections   map[string]int
-	Reason       string
-	Failure      string
-	HostFault    bool
-	Withheld     string
-	Kept         map[string]reviewValue
-	Worked       uint64
-	Claims       []Claim
+	// Gaps is the number of missing cases and blocking findings of the last
+	// rejection per purpose (DEC-054).
+	Gaps      map[string]int
+	Reason    string
+	Failure   string
+	HostFault bool
+	Withheld  string
+	Kept      map[string]reviewValue
+	Worked    uint64
+	Claims    []Claim
 }
 
 // TaskView is the read-only projection of one Manager task.

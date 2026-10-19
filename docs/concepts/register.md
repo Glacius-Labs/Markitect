@@ -64,6 +64,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-051](#dec-051-agents-get-tasks-the-orchestrator-owns-the-process) | Decision | Agents get tasks; the Orchestrator owns the process | Accepted |
 | [DEC-052](#dec-052-implement-then-review-no-explore-phase) | Decision | Implement then review: no Explore phase | Accepted |
 | [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Accepted |
+| [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count) | Decision | A rejection that finds fewer gaps does not count | Accepted |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -619,6 +620,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Decision:** The rejection limit counts the rejections of a task's candidates for one purpose since the task's last accepted delivery for that purpose. An accepted delivery, limited or complete, restarts the count. The limit, its default of three and its configuration are unchanged.
 - **Reason:** The limit stops work that does not converge. An accepted delivery shows that the work converges. In R2-A1-08, `library` repaired each rejection and had its next candidate accepted, yet the third rejection over three deliveries ended the run Incomplete.
 - **Scope:** Amends the budget refinement of [DEC-039](#dec-039-deterministic-manager-process) and the execution contract. All work still consumes the finite shared execution budget, which bounds the total cost. A withheld pass is not an accepted delivery.
+- **Updated by [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count):** a rejection that finds fewer gaps than the last one does not count.
 - **Owners:** [execution contract](../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction).
 
 ### DEC-051 Agents get tasks; the Orchestrator owns the process
@@ -645,6 +647,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Reason:** In R2-A1-09 the run waited 54 minutes for the owner, on four questions about two topics. The root, `lending` and `library` asked about the same date boundary, because an answer reached only the task that asked.
 - **Scope:** Amends I2. Asking the owner, the Waiting state and the owner's authority are unchanged. A bound decision is the owner's own text; the Host neither infers nor matches decisions against questions. Each run binds its own decisions, so a continuation can carry decisions made after the earlier run; changing them ends an open run as stale.
 - **Owners:** [core protocol](../design/canonical-model/manager-apply-core.md#issues), rule I2, and the [run configuration](../project-workflow.md).
+
+### DEC-054 A rejection that finds fewer gaps does not count
+
+- **Status:** Accepted, owner, 19 October 2026 ([evidence and owner decision](sources/rejection-count-progress-20261019.md)).
+- **Decision:** A rejection's gaps are its recorded cases judged missing plus the blocking findings it raises. A rejection counts toward the rejection limit unless its gaps are fewer than those of the task's last rejection for the same purpose. The first rejection always counts. An accepted delivery restarts both the count and the comparison.
+- **Reason:** The limit stops work that does not converge, and fewer gaps show convergence. Two Luna runs, R2-A1-10 and R2-A1-11, ended Incomplete at the limit while the rejected Manager's gaps fell; in R2-A1-11 the third rejection found every recorded case evidenced and one blocking finding.
+- **Cost:** Blocking findings that an earlier review raised and that stay open are not counted again, so a review that raises fewer new findings counts as progress. The finite shared execution budget bounds such a sequence.
+- **Scope:** Amends [DEC-050](#dec-050-an-accepted-delivery-restarts-the-rejection-count) and the execution contract. The limit, its default of three, its configuration, the review rules and the evidence requirements are unchanged. All work still consumes the finite shared execution budget, which bounds the total cost.
+- **Owners:** [execution contract](../design/canonical-model/manager-apply-execution.md#admission-amendments-and-finite-correction).
 
 ## Promises
 
