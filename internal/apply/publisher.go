@@ -10,15 +10,17 @@ import (
 // ErrUnpublishable reports a change set that the target cannot represent, such
 // as case aliases or modes the repository does not track. Preflight reports a
 // source that changed since its capture with an error that wraps
-// ErrCaptureChanged. Any other error is not a definite refusal; apply retries
-// the publication later.
+// ErrCaptureChanged. Any other error is not a definite refusal.
 var ErrUnpublishable = errors.New("the change set cannot be published to the target")
+
+// ErrCaptureChanged reports a source that changed since its capture.
+var ErrCaptureChanged = errors.New("the captured source changed since its capture")
 
 // PublicationID is the Host identity of one publication.
 type PublicationID string
 
-// ControlCheck fences a publication to the live repository controller. A
-// ControlSession satisfies it.
+// ControlCheck fences a publication to the Apply that holds the repository's
+// state lock.
 type ControlCheck interface {
 	Check(context.Context) error
 }
