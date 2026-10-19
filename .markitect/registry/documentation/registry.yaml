@@ -16,6 +16,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves owner wording and documentation acceptance for the three fundamental project workflows without assigning implementation work.
+  - path: "docs/concepts/sources/extract-model-content-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the owner decision on what an extracted model contains: a project Package, the boundary criterion for binding statements and checks proposed for adoption."
   - path: "docs/concepts/sources/owner-realizes-others-use-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
