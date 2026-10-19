@@ -19,6 +19,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 - [Runtime capability probes — 17 October 2026](runtime-capabilities-20261017.md)
 - [Recursive Apply implementation and library demonstration — 19 October 2026](recursive-apply-demonstration-20261019.md)
 - [Recursive Apply after DEC-058 and DEC-059: three repeated demonstrations — 19 October 2026](recursive-apply-repetitions-20261019.md)
+- [Apply evidence on the library with Haiku — 19 October 2026](apply-evidence-haiku-20261019.md)
 - [Extract on the library: first real runs — 19 October 2026](library-extract-20261019.md)
 - [Public Classic Commerce entrypoint validation](classic-commerce-entrypoint.md)
 - [Standard operating model validation](standard-operating-model.md)
