@@ -33,7 +33,7 @@ Three sessions work in parallel. This continues the owner's [division of 17 Octo
 The Coordinator's sequence:
 
 1. **Cleanup.** This plan, superseded design documents to [history](history/README.md), stale status lines, merged worktrees and branches.
-2. **Runtime image.** Python 3 in the base image and a C toolchain in the Go example image, so that `go test -race` works.
+2. **Runtime image.** Python 3 in the base image for the Agents' scripting, and a C toolchain in the Go example image so that `go test -race` works.
 3. **Host setup.** A product command that builds and binds the images and writes today's Host profile and run configuration, so that `apply` and `extract` need no harness. It produces the existing formats and changes none of them.
 4. **Evidence.** Roombook and Readinglog through product commands only, with their oracles.
 5. **Self-model.** Adopt the accepted [preparation-to-publication proposal](design/canonical-model/reconciliation-model-proposal.md) into `.markitect/`.
