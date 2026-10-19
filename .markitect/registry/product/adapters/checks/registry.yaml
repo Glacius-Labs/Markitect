@@ -72,3 +72,11 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Defines an explicitly opted-in actual container Engine, repository Workspaces and Check Runner composition smoke with exact tree and image receipts, empty-volume copy-up challenges and observed disposable cleanup.
+  - path: "internal/adapters/checks/container_setup.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Encodes an explicit container check profile as the closed Host section that the container metadata decoder reads back.
+  - path: "internal/adapters/checks/container_setup_test.go"
+    form: test
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: Round-trips the encoded container Host section through the metadata decoder and projection and verifies refusal of invalid profiles.

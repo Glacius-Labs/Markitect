@@ -8,6 +8,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Records accepted modeling-skill guidance, authority boundaries and teaching examples while preserving the documentation-only scope and existing skill split.
+  - path: "docs/concepts/sources/coordinator-assignment-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's assignment of the work around the core to the Coordinator and the selected next milestone, examples and work split of the delivery plan.
   - path: "docs/concepts/sources/apply-execute-first-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -536,10 +540,14 @@ artifacts:
     form: config
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/design/canonical-model/manager-apply-core.md"
+  - path: "docs/history/apply-design-before-dec-056/manager-apply-core.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Owns the core protocol of the first Apply by rule ID.
+    why: Preserves the superseded core protocol of the first Apply by rule ID as pre-DEC-056 history.
+  - path: "docs/history/apply-design-before-dec-056/README.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Explains that the earlier Apply design documents are superseded by the concept and runtime contract and kept as history.
   - path: "docs/design/canonical-model/manager-apply-concept.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -548,15 +556,15 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Owns the implemented technical contract of the recursive Apply.
-  - path: "docs/design/canonical-model/manager-apply-configuration.md"
+  - path: "docs/history/apply-design-before-dec-056/manager-apply-configuration.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/design/canonical-model/manager-apply-execution.md"
+  - path: "docs/history/apply-design-before-dec-056/manager-apply-execution.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/design/canonical-model/manager-apply-go-architecture.md"
+  - path: "docs/history/apply-design-before-dec-056/manager-apply-go-architecture.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
@@ -564,7 +572,7 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/design/canonical-model/manager-apply-journal.md"
+  - path: "docs/history/apply-design-before-dec-056/manager-apply-journal.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
@@ -576,11 +584,11 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/design/canonical-model/manager-apply-port-contracts.md"
+  - path: "docs/history/apply-design-before-dec-056/manager-apply-port-contracts.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
-  - path: "docs/design/canonical-model/manager-apply-rebuild-plan.md"
+  - path: "docs/history/apply-design-before-dec-056/manager-apply-rebuild-plan.md"
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.

@@ -4,7 +4,7 @@ Every Markitect Agent session and project check runs in its own Linux container 
 
 - the session helper `markitect-agentd`, built from this repository;
 - Codex `0.162.0` and Claude Code `2.1.301`, pinned in the [Dockerfile](Dockerfile);
-- Git and CA certificates.
+- Git, Python 3 and CA certificates.
 
 Build it from the repository root; the [ignore file](Dockerfile.dockerignore) sends only the agentd sources to the engine:
 
@@ -22,7 +22,7 @@ docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 | Metadata | `/opt/markitect/runtime.env` records the Codex and Claude Code versions, the digest of the generated Codex App Server schemas and the agentd build. Preparation copies it out of a created, never started container. |
 | Identity | The Host names an image by its engine image ID (`sha256:...`), which also exists for local builds. |
 
-A project builds its own image `FROM` this one and adds the toolchain its checks need. The [Go example](examples/go/Dockerfile) adds Go for projects such as the library example and keeps Go's caches in the provider home. It also links `go` and `gofmt` into `/usr/local/bin`, because the Agent CLIs run commands in login shells, whose `/etc/profile` resets `PATH`. A project image keeps the entrypoint, the user and the two mount points.
+A project builds its own image `FROM` this one and adds the toolchain its checks need. The [Go example](examples/go/Dockerfile) adds Go and a C toolchain for projects such as the library example, so cgo and `go test -race` work, and keeps Go's caches and temporary build files in the provider home, so the bounded `/tmp` does not limit builds. The image sets this environment itself, so check profiles need no `env` for Go. It also links `go` and `gofmt` into `/usr/local/bin`, because the Agent CLIs run commands in login shells, whose `/etc/profile` resets `PATH`. A project image keeps the entrypoint, the user and the two mount points.
 
 ## Session facilities
 

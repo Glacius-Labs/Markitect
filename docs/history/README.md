@@ -10,6 +10,7 @@ This directory preserves dated roadmap context and its original references. Thes
 - [Engineering constitution of the v0.13 line — 10 October 2026](engineering-constitution-v0.13-20261010.md): the constitution's earlier text, scoped to the Project/Domain line and the canonical alpha (ARCH-10).
 - [Modules guide of the earlier line — 10 October 2026](development-modules-legacy-sections-20261010.md): the earlier responsibility map and compatibility sections of the Modules guide (ARCH-10).
 - [Operating methodology — 11 October 2026](operating-methodology-20261011.md): the earlier method page; its current parts moved into the [vision](../vision.md#the-delegated-method).
+- [Apply design before DEC-056 — 19 October 2026](apply-design-before-dec-056/README.md): the earlier core protocol, execution, configuration, port, journal, Go architecture and rebuild documents, superseded by the recursive-reconciliation concept and the implemented runtime contract.
 
 Records may link to files that were removed later; read them at release v0.14.1 or in git history.
 

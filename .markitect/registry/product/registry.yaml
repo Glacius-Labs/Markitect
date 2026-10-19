@@ -4,3 +4,7 @@ artifacts:
     form: code
     realizes: [product/ports-and-adapters]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/buildinfo/version_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Verifies that the build identity adds the embedded VCS revision and marks a modified tree.

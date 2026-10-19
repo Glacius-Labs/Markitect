@@ -133,3 +133,26 @@ func TestRequireVolumeSubpathsNeedsDockerServer26(t *testing.T) {
 		})
 	}
 }
+
+func TestServerVersionReadsTheTrimmedVersionOnce(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: "27.3.1\n"})
+	version, err := e.ServerVersion(context.Background())
+	if err != nil || version != "27.3.1" {
+		t.Fatalf("version=%q err=%v", version, err)
+	}
+	if got := calls(); len(got) != 1 || strings.Join(got[0], " ") != "version --format {{.Server.Version}}" {
+		t.Fatalf("calls %q", got)
+	}
+	e, _ = fakeCommandEngine(t, engineStep{Code: 1, Err: "daemon not running"})
+	if _, err := e.ServerVersion(context.Background()); err == nil || !strings.Contains(err.Error(), "server version could not be read") {
+		t.Fatalf("err = %v", err)
+	}
+}
+
+func TestRequireSubpathVersionJudgesAGivenVersion(t *testing.T) {
+	for version, ok := range map[string]bool{"26.0.0": true, "29.1.2": true, "25.0.5": false, "podman": false, "": false} {
+		if err := RequireSubpathVersion(version); (err == nil) != ok {
+			t.Errorf("%q: %v", version, err)
+		}
+	}
+}

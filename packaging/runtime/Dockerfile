@@ -20,7 +20,7 @@ FROM node:22-bookworm-slim@sha256:c3de60bf2f9dd0ac6370e6117950ff62d6e339527e7472
 ARG CODEX_VERSION=0.162.0
 ARG CLAUDE_CODE_VERSION=2.1.301
 RUN apt-get update \
- && apt-get install --yes --no-install-recommends ca-certificates git \
+ && apt-get install --yes --no-install-recommends ca-certificates git python3 \
  && rm -rf /var/lib/apt/lists/*
 RUN npm install --global --no-fund --no-audit \
       "@openai/codex@${CODEX_VERSION}" "@anthropic-ai/claude-code@${CLAUDE_CODE_VERSION}" \

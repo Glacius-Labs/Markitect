@@ -1,6 +1,8 @@
 # Journal and continuation contracts for Apply
 
-> **Historical, 19 October 2026:** [manager-apply-runtime.md](manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
+> **Moved to history:** this is the Apply design before [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), kept for its decisions and failed attempts. The current owners are [manager-apply-concept.md](../../design/canonical-model/manager-apply-concept.md) (intent) and [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) (implemented contract); see the [folder README](README.md).
+
+> **Historical, 19 October 2026:** [manager-apply-runtime.md](../../design/canonical-model/manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.
 
 This contract owns the recorded facts, their storage and atomic append, questions and answers, and continuation runs. The [execution contract](manager-apply-execution.md) owns what transitions mean; the [configuration](manager-apply-configuration.md) owns the inputs.
 
@@ -170,7 +172,7 @@ The continuation repeats all required reviews, checks and integration and the fi
 
 ## Library traces
 
-**Two model versions.** R1 binds M1, produces reviewed A1 and finishes Applied. The owner changes only `loan-policy.spec.maxOpenLoans` from five to three and starts a new Apply. R2 binds M2 and the actual A1; lending adapts admission, other areas can deliver justified no-change results, and all required assessments run before A2 is published. The [Playground](manager-apply-playground.md) owns the independent evidence.
+**Two model versions.** R1 binds M1, produces reviewed A1 and finishes Applied. The owner changes only `loan-policy.spec.maxOpenLoans` from five to three and starts a new Apply. R2 binds M2 and the actual A1; lending adapts admission, other areas can deliver justified no-change results, and all required assessments run before A2 is published. The [Playground](../../design/canonical-model/manager-apply-playground.md) owns the independent evidence.
 
 **A missing decision during work.** A deliberately inconsistent future draft both preserves existing loans and requires all holdings to fit a lowered limit; this is not M1 or M2. Lending raises question Q1 version 1 with the conflicting passages and an exact correction that keeps the structured policy as the numeric authority. It goes to the owner through the application ([M4](manager-apply-core.md#messages)), and the owner accepts. The journal separates answer received, run finished Incomplete awaiting the model change, edit committed, model revision observed and continuation started. Lending's unfinished candidate is retained and assessed again; if no meaningful evidence fits the remaining budget, the run ends Incomplete.
 
