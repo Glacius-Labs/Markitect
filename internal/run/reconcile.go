@@ -145,6 +145,11 @@ type Evidence interface {
 // Execute turns the Host tool "check": it observes the shared working tree
 // without pausing the writers and returns Account's findings for that tree;
 // Account is then called concurrently with itself and with the writers' work.
+//
+// Questions are earlier questions of the same owner channel that the owner
+// already answered (the structure phase of an Extract). Every first Execute
+// prompt and every Verify prompt shows them with the run's own answers, and new
+// questions continue their numbering, so an identity is never asked twice.
 type Config struct {
 	RunID          string
 	Team           []Manager
@@ -166,6 +171,7 @@ type Config struct {
 	Mandate        string
 	VerifyGuidance string
 	CheckTool      bool
+	Questions      []Question
 }
 
 // Status is the result of a run.

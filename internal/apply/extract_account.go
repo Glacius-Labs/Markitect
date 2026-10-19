@@ -80,10 +80,11 @@ func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
 		})
 		findings = slices.Compact(findings)
 	}()
+	// Every candidate is guarded, whatever else fails to prepare.
+	findings = append(findings, a.guard(tree)...)
 	structural := rebindStructural(a.start.structural.Model(), tree, a.phase == extractStructure)
 	compiled := structural.Model().compiled
 	if compiled.Status != model.Passed {
-		findings = append(findings, a.guard(tree)...)
 		local := structural.Model().inputs.Raw.Local
 		for _, d := range compiled.Diagnostics {
 			name := d.Source.Path
@@ -96,9 +97,6 @@ func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
 			add(organization.Root, "model.not_passed", "", "The candidate model does not compile: its status is "+string(compiled.Status)+".")
 		}
 		return findings
-	}
-	if a.phase == extractStructure {
-		findings = append(findings, a.guard(tree)...)
 	}
 	for _, d := range structural.files.diagnostics {
 		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, positioned(d.Message, d.Position))
@@ -165,7 +163,7 @@ func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, t
 		add(organization.Root, "model.topology", "", err.Error())
 		return
 	}
-	c.guard = a.guard
+	c.guard = func(snapshot.Tree) []CandidateFinding { return nil } // Account guarded the tree already
 	*findings = append(*findings, c.Account(tree)...)
 }
 

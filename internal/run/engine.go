@@ -248,6 +248,11 @@ func validate(cfg Config) error {
 	case len(cfg.Checks) > 0 && cfg.Runner == nil:
 		return bad("checks need a Runner")
 	}
+	for i, q := range cfg.Questions {
+		if q.ID != fmt.Sprintf("Q%d", i+1) || !q.Answered {
+			return bad("earlier question %d must be the answered question Q%d", i+1, i+1)
+		}
+	}
 	return nil
 }
 
@@ -313,6 +318,10 @@ func newEngine(parent context.Context, cfg Config) *engine {
 	ctx, cancel := context.WithDeadline(parent, cfg.Budget.Deadline)
 	e := &engine{cfg: cfg, ctx: ctx, cancel: cancel, base: context.WithoutCancel(parent), byPath: map[string]*mgr{}, delivered: map[string]int{}}
 	e.cond = sync.NewCond(&e.mu)
+	for _, q := range cfg.Questions {
+		e.questions = append(e.questions, &q)
+	}
+	e.nextQuest = len(cfg.Questions)
 	for _, m := range cfg.Team {
 		slug := slugOf(m.Path)
 		x := &mgr{Manager: m, slug: slug, execHome: cfg.RunID + "-" + slug + "-x", verifyHome: cfg.RunID + "-" + slug + "-v"}

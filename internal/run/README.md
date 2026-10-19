@@ -90,6 +90,9 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
   `owner`; anything else is refused with the allowed contacts. An answer also returns the
   caller's new undelivered items. `finish {status: done|waiting, summary}` ends the turn;
   a turn that ends without it counts as done. Without an `Owner`, a question is refused.
+  Questions are numbered `Q1`, `Q2`, ...; `Config.Questions` hands a run the answered
+  questions of an earlier run on the same owner channel, which the prompts show and whose
+  numbering new questions continue.
 - Execute, only with `Config.CheckTool`: `check {scope?}` peeks the shared volume through
   `Workspaces.Peek` (writers keep running), runs `Account` on the peeked tree and answers with
   the findings as compact text, the calling Manager's first and then the number of others

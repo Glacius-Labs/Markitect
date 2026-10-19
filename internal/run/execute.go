@@ -210,6 +210,9 @@ func (e *engine) executeHandler(m *mgr, ts *turnState) ToolHandler {
 				return e.check(ctx, m, ts, args)
 			}
 		}
+		if e.cfg.CheckTool {
+			return refuse("Unknown tool %q; in Execute %q, %q and %q are available.", name, toolSend, toolCheck, toolFinish)
+		}
 		return refuse("Unknown tool %q; in Execute %q and %q are available.", name, toolSend, toolFinish)
 	}
 }

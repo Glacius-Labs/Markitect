@@ -80,42 +80,52 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 		deadline = req.Deadline
 	}
 
+	// The structure phase may use at most half of the agent turns, so the model
+	// phase always keeps the rest; each phase needs one Execute and one Verify
+	// turn of Root at least.
+	structureTurns := start.budget.AgentTurns.Value / 2
+	if structureTurns < 2 {
+		return result, fmt.Errorf("an Extract needs at least 4 agent turns, the project allows %d", start.budget.AgentTurns.Value)
+	}
 	structure, err := newExtractAccounting(extractStructure, start)
 	if err != nil {
 		return result, err
 	}
-	phase := req.phase("structure")
-	cfg, err := phase.config(structure, start, deadline, start.budget.AgentTurns.Value)
+	structurePhase := req.phase("structure")
+	cfg, err := structurePhase.config(structure, start, deadline, structureTurns)
 	if err != nil {
 		return result, err
 	}
 	outcome, runErr := run.Reconcile(ctx, cfg)
 	result.Structure = outcome
-	phase.cleanup(ctx, outcome, "structure")
+	structurePhase.cleanup(ctx, outcome, "structure")
 	if outcome.Status != run.Verified || runErr != nil {
-		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
+		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), structurePhase.reconcile())
 		return result, runErr
 	}
-	closeVolume(context.WithoutCancel(ctx), phase.reconcile(), phase.reconcile().workVolume())
-
+	// Until the model phase starts, the verified structure is only in its work
+	// volume: keep it when the model phase cannot be prepared.
+	keepStructure := func(err error) (ExtractResult, error) {
+		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), structurePhase.reconcile())
+		return result, err
+	}
 	next, err := start.next(outcome.Candidate)
 	if err != nil {
-		return result, err
+		return keepStructure(err)
 	}
 	model, err := newExtractAccounting(extractModel, next)
 	if err != nil {
-		return result, err
+		return keepStructure(err)
 	}
-	phase = req.phase("model")
-	remaining := start.budget.AgentTurns.Value - len(outcome.Turns)
-	if remaining < 1 {
-		result.Model = &run.Outcome{Status: run.Incomplete, Reason: "the agent-turn budget was spent by the structure phase"}
-		return result, nil
-	}
-	cfg, err = phase.config(model, next, deadline, remaining)
+	phase := req.phase("model")
+	cfg, err = phase.config(model, next, deadline, start.budget.AgentTurns.Value-len(outcome.Turns))
 	if err != nil {
-		return result, err
+		return keepStructure(err)
 	}
+	// Both phases share the owner channel: the model phase knows the structure
+	// phase's answers and continues its question numbering.
+	cfg.Questions = outcome.Questions
+	closeVolume(context.WithoutCancel(ctx), structurePhase.reconcile(), structurePhase.reconcile().workVolume())
 	modelOutcome, runErr := run.Reconcile(ctx, cfg)
 	result.Model = &modelOutcome
 	phase.cleanup(ctx, modelOutcome, "model")
@@ -125,6 +135,9 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	}
 	changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
 	if err := requireModelChangesOnly(changes); err != nil {
+		// Account blocks every such candidate, so this is a defect, not an
+		// incomplete run.
+		modelOutcome.Status, modelOutcome.Reason = run.Failed, err.Error()
 		result.RetainedWork = retainedWork(context.WithoutCancel(ctx), phase.reconcile())
 		return result, err
 	}

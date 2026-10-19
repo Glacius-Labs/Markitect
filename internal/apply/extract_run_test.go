@@ -84,14 +84,37 @@ func (w *memoryWorkspaces) write(volume string, files map[string]string) {
 }
 
 // scriptedAgents writes each Manager's files in its first Execute turn, then
-// finishes; every Verify turn is satisfied, and a Manager can raise findings.
+// finishes; every Verify turn is satisfied, and a Manager can raise findings
+// and ask the owner in its first Execute turn of a phase.
 type scriptedAgents struct {
 	ws       *memoryWorkspaces
 	writes   map[string]map[string]string // turn-ID phase/manager key -> files
 	findings map[string][]map[string]any
+	asks     map[string]string
 	mu       sync.Mutex
 	turns    []run.Turn
 	enforced map[string]bool
+}
+
+// answeringOwner answers every question at once and refuses an identity it was
+// already asked.
+type answeringOwner struct {
+	mu    sync.Mutex
+	asked []run.Question
+}
+
+func (o *answeringOwner) Ask(_ context.Context, q run.Question) error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	if slices.ContainsFunc(o.asked, func(a run.Question) bool { return a.ID == q.ID }) {
+		return errors.New("question " + q.ID + " exists already")
+	}
+	o.asked = append(o.asked, q)
+	return nil
+}
+
+func (o *answeringOwner) Answer(_ context.Context, id string) (string, bool, error) {
+	return "answer to " + id, true, nil
 }
 
 func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
@@ -104,6 +127,9 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		tools(ctx, name, data)
 	}
 	if turn.Kind == run.ExecuteTurn {
+		if question := a.asks[key]; question != "" && turn.Resume == "" {
+			call("send", map[string]any{"to": "owner", "text": question})
+		}
 		a.ws.write(turn.Workspace, a.writes[key])
 		call("finish", map[string]any{"status": "done", "summary": "Described " + turn.Manager + "."})
 	} else {
@@ -112,7 +138,10 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 	return run.TurnResult{Conversation: "c-" + turn.Manager, Usage: run.Usage{InputTokens: 10, OutputTokens: 5}, Stopped: true}, nil
 }
 
-func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
+// bothPhases scripts an Extract whose two phases both verify: Root writes the
+// structure proposal, then every Manager registers the artifacts of its area.
+func bothPhases(t *testing.T) (apply.ExtractRequest, *scriptedAgents, *memoryWorkspaces, *fakePublisher, snapshot.Tree, snapshot.Tree, snapshot.Tree) {
+	t.Helper()
 	req := extractRequest(t)
 	start := extractStart(t)
 	complete := registeredModel(t, start)
@@ -141,9 +170,15 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		agents.writes["x-1-model "+owner] = diff(proposed, complete, func(name string) bool { return name == shard })
 	}
 	publisher := &fakePublisher{receipt: apply.PublicationReceipt{ID: "x-1", Outcome: apply.PublicationApplied}}
+	req.Agents, req.Workspaces, req.Evidence, req.Publisher = agents, workspaces, &memoryEvidence{}, publisher
+	return req, agents, workspaces, publisher, start, proposed, complete
+}
+
+func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
+	req, agents, workspaces, publisher, start, proposed, complete := bothPhases(t)
 	evidence := &memoryEvidence{}
 	var removed []string
-	req.Agents, req.Workspaces, req.Evidence, req.Publisher = agents, workspaces, evidence, publisher
+	req.Evidence = evidence
 	req.RemoveHome = func(_ context.Context, home string) error {
 		removed = append(removed, home)
 		return nil
@@ -204,13 +239,47 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		t.Errorf("verify prompt lacks the Extract guidance:\n%s", modelVerify.Prompt)
 	}
 	phases := 0
+	var turnBudgets []any
 	for _, e := range evidence.events {
 		if e.Kind == "extract.phase" {
 			phases++
 		}
+		if e.Kind == "run.start" {
+			turnBudgets = append(turnBudgets, e.Data.(map[string]any)["agentTurns"])
+		}
 	}
 	if phases != 2 {
 		t.Errorf("phase events: %d", phases)
+	}
+	// The structure phase gets half of the 120 agent turns; the model phase the rest it left.
+	if len(turnBudgets) != 2 || turnBudgets[0] != 60 || turnBudgets[1] != 118 {
+		t.Errorf("agent-turn budgets of the phases: %v", turnBudgets)
+	}
+}
+
+func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
+	req, agents, _, _, _, _, _ := bothPhases(t)
+	agents.asks = map[string]string{"x-1-structure .": "Is the reminders area part of lending?", "x-1-model .": "Is go.mod part of the library?"}
+	owner := &answeringOwner{}
+	req.Owner = owner
+	result, err := apply.Extract(context.Background(), req)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if result.Model == nil || result.Model.Status != run.Verified {
+		t.Fatalf("structure %s %s; model %+v", result.Structure.Status, result.Structure.Reason, result.Model)
+	}
+	if len(owner.asked) != 2 || owner.asked[0].ID != "Q1" || owner.asked[1].ID != "Q2" || owner.asked[1].Text != "Is go.mod part of the library?" {
+		t.Fatalf("the owner was asked %+v", owner.asked)
+	}
+	if questions := result.Model.Questions; len(questions) != 2 || questions[0].Answer != "answer to Q1" || !questions[1].Answered {
+		t.Fatalf("model-phase questions %+v", questions)
+	}
+	for _, turn := range agents.turns {
+		if turn.Manager == "." && turn.Kind == run.ExecuteTurn && strings.HasPrefix(turn.ID, "x-1-model") && turn.Resume == "" &&
+			!(strings.Contains(turn.Prompt, "Q1: Is the reminders area part of lending?") && strings.Contains(turn.Prompt, "Answer: answer to Q1")) {
+			t.Errorf("the model phase does not show the structure phase's answer:\n%s", turn.Prompt)
+		}
 	}
 }
 

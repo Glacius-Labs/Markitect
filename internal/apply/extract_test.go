@@ -90,6 +90,32 @@ func TestExtractRefusesBeforeAnyEffectWithoutVolumeSubpaths(t *testing.T) {
 	}
 }
 
+func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
+	selection, raw := extractInputs(t)
+	execution := strings.Replace(extractExecution, "agentTurns: 120", "agentTurns: 3", 1)
+	entry, err := snapshot.NewEntry(path(t, ".markitect/execution.yaml"), snapshot.Regular, []byte(execution))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var census []snapshot.Entry
+	for _, e := range raw.Census.Entries() {
+		if e.Path() != entry.Path() {
+			census = append(census, e)
+		}
+	}
+	if raw.Census, err = snapshot.NewTree(append(census, entry)); err != nil {
+		t.Fatal(err)
+	}
+	raw.Execution[0].File = entry
+	req := extractRequest(t)
+	req.Prepared = prepareExtract(t, selection, raw)
+	workspaces := &fakeWorkspaces{}
+	req.Workspaces, req.Evidence, req.Agents = workspaces, &memoryEvidence{}, failingAgents{}
+	if _, err := apply.Extract(context.Background(), req); err == nil || !strings.Contains(err.Error(), "at least 4 agent turns") || len(workspaces.open) != 0 {
+		t.Fatalf("err = %v", err)
+	}
+}
+
 func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 	cfg, err := apply.ExtractStructureConfig(extractRequest(t), extractNow)
 	if err != nil {
@@ -311,6 +337,7 @@ func TestExtractModelAccounting(t *testing.T) {
 		{"changed artifact", map[string]*string{"realization/lending/borrow.go": text("package lending // edited\n")}, "lending input.changed"},
 		{"deleted artifact", map[string]*string{"realization/members/member.go": nil}, "members input.deleted"},
 		{"changed execution document", map[string]*string{".markitect/execution.yaml": text(extractExecution)}, ". input.changed"},
+		{"invalid execution document", map[string]*string{".markitect/execution.yaml": text("apiVersion: nothing\n")}, ". input.changed"},
 		{"changed dependency", map[string]*string{".markitect/dependencies/core/model.yaml": text("id: core\n")}, ". input.changed"},
 		{"uncompilable Definition", map[string]*string{".markitect/model/members/members.yaml": text("id: members\nkind: Software.Concept\n")}, "members model."},
 		{"unresolved link", map[string]*string{".markitect/model/members/members.yaml": text(overview("members", "Members, see [[Lending.nothing]]."))}, "members model."},

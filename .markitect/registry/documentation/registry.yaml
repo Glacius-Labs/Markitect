@@ -1784,6 +1784,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/library-extract-20261019.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the evidence and assessment of the first real Extract runs on the library."
   - path: "docs/validation/recursive-apply-repetitions-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]

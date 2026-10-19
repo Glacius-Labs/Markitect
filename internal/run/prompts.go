@@ -119,6 +119,17 @@ func writeNote(plan WritePlan) string {
 	return ""
 }
 
+// answeredLocked lists the owner's answers known so far, earlier ones first.
+func (e *engine) answeredLocked() []string {
+	var answered []string
+	for _, q := range e.questions {
+		if q.Answered {
+			answered = append(answered, fmt.Sprintf("%s: %s\n  Answer: %s", q.ID, q.Text, q.Answer))
+		}
+	}
+	return answered
+}
+
 func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string {
 	var b strings.Builder
 	if !first {
@@ -129,6 +140,7 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 	}
 	fmt.Fprintf(&b, "%s\n\nYou are %s in an Execute turn.\n", e.mandateText(), label(m))
 	e.contextLocked(&b, m)
+	list(&b, "Answered owner questions:", e.answeredLocked())
 	var contacts []string
 	if m.Parent != "" {
 		contacts = append(contacts, "parent: "+contact(e.byPath[m.Parent]))
@@ -177,13 +189,7 @@ func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
 	}
 	list(&b, "Required checks on this candidate:", checks)
 
-	var answered []string
-	for _, q := range e.questions {
-		if q.Answered {
-			answered = append(answered, fmt.Sprintf("%s: %s\n  Answer: %s", q.ID, q.Text, q.Answer))
-		}
-	}
-	list(&b, "Answered owner questions:", answered)
+	list(&b, "Answered owner questions:", e.answeredLocked())
 
 	var structural, mine, addressed []string
 	for _, f := range rs.structural {
