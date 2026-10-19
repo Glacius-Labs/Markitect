@@ -749,6 +749,11 @@ func (e *Engine) conclude(ctx context.Context, s *stepRun, observed snapshot.Tre
 		}
 		composed, result.Aggregate, result.AggregateTree = next, next.Version(), next.Tree().Digest()
 	}
+	if result.Failure == "" && s.writes && s.phase != PhaseReply && !result.Candidate.Valid() {
+		if args, err := CallArguments(ToolSubmit, result.Input.Bytes()); err == nil && emptyLimited(task, args) {
+			result.Failure = emptyLimitedReason
+		}
+	}
 	cmd, err := c.ConcludeStepCommand(e.meta("conclude"), s.manager, result)
 	if err != nil {
 		return err
@@ -1026,18 +1031,26 @@ func (e *Engine) preflight(ctx context.Context, s *stepRun, tool string, args []
 	changed, proposes := !peek.Tree.Equal(s.version.tree), e.proposes(s)
 	if changed || proposes {
 		if _, err := e.capture(s, peek.Tree); err != nil {
-			return "these changes cannot be captured: " + err.Error() + "; correct this before you submit"
+			return "these changes cannot be captured: " + err.Error() + "; correct them first"
 		}
 	}
 	if tool != ToolSubmit || changed || proposes {
 		return ""
 	}
-	var in submitInput
-	task, ok := e.cfg.Coordinator.Task(s.manager)
-	if decodeArgs(args, &in) != nil || !ok || in.Scope != "limited" || task.Own != (BlobRef{}) {
-		return ""
+	if task, ok := e.cfg.Coordinator.Task(s.manager); ok && emptyLimited(task, args) {
+		return emptyLimitedReason
 	}
-	return "a limited delivery needs changed files; with nothing to deliver, submit complete or wait"
+	return ""
+}
+
+const emptyLimitedReason = "a limited delivery needs changed files; with nothing to deliver, submit complete or wait"
+
+// emptyLimited reports whether submit arguments name a limited delivery of a
+// task that holds no unaccepted own changes; with no file or registry change
+// in the step, such a delivery delivers nothing.
+func emptyLimited(task TaskView, args []byte) bool {
+	var in submitInput
+	return decodeArgs(args, &in) == nil && in.Scope == "limited" && task.Own == (BlobRef{})
 }
 
 // proposes reports whether the step's Manager has a registry proposal that

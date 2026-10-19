@@ -49,7 +49,7 @@ Each Manager of the topology has exactly one task per run. The Orchestrator crea
 **Admission and step outcomes**
 - **T4** One admission queue holds all admissible steps: review steps and work steps. The Orchestrator admits the item that became admissible first. Ties break first in favor of reply steps, so that a question is answered before the asking step's submission is reviewed ([DEC-049](../../concepts/register.md#dec-049-review-cases-are-recorded-before-the-work-they-assess)), then by Manager-path order, then by kind: review, work. Agents cannot set priorities.
 - **T5** A work step ends with exactly one outcome:
-  - `submit`, with a purpose (`local` or `integration`) and a scope (`limited` or `complete`). A no-change result is a `complete` submission without changes; it is reviewed like any other.
+  - `submit`, with a purpose (`local` or `integration`) and a scope (`limited` or `complete`). A no-change result is a `complete` submission without changes; it is reviewed like any other. A `limited` submission must deliver changed files, a registry change or the task's own unaccepted changes; otherwise the step fails with that reason.
   - `wait`, naming what the task waits for.
 - **T6** A step without a valid outcome is recorded as failed and stays charged. The task returns to `ready`. An uncertain step goes through S2 first.
 

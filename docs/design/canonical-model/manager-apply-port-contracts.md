@@ -171,15 +171,16 @@ type Workspaces interface {
 | `WorkspaceSpec` | Orchestrator workspace ID and the exact tree: the current aggregate plus the Manager's own unaccepted changes. |
 | `WorkspaceObservation` | ID, the runtime volume that a session plan mounts, the identity of the content read back after materialization, whether the volume is closed, and any uncertainty with its reason. |
 | `HarvestRequest` | Workspace ID and the entry and byte limits of one observation. |
-| `WorkspaceHarvest` | The complete observed tree after the step's container stopped. Entries that a tree cannot represent are listed by name instead of being dropped. An observation that hit a limit is uncertain. |
+| `WorkspaceHarvest` | The complete observed tree after the step's container stopped; `Peek` returns the same shape while the volume is mounted. Entries that a tree cannot represent are listed by name instead of being dropped. An observation that hit a limit is uncertain. |
 
 The Orchestrator owns claims and decisions, and the adapter only observes files. `run` compares a harvest with the step's start tree, checks owned and reserved paths and protected inputs, and records the result. A later claim never authorizes an earlier unauthorized write. `run` stores harvested candidates as payloads in the Orchestrator's private journal store.
 
 Recovery rests on three rules:
 - `Materialize` refuses an existing ID, so it never overwrites content that was not harvested.
 - `Harvest` is uncertain while any container still mounts the volume.
-- `Peek` observes the workspace like `Harvest` but while its step may still write. Its tree is advisory: the Orchestrator only uses it to tell the Manager before an outcome why its changes would not be captured, and a candidate still comes only from `Harvest` after the step's container stopped.
 - `Close` is idempotent and reports an absent volume as closed.
+
+`Peek` observes the workspace like `Harvest` but while its step may still write. Its tree is advisory: the Orchestrator uses it before an outcome to refuse a call whose changes would not be captured or whose limited delivery would deliver nothing, and a candidate still comes only from `Harvest` after the step's container stopped.
 
 Observation follows Git's view of files. A regular file is executable exactly when its owner execute bit is set, other permission bits are ignored, and empty directories are ignored. Only non-regular entries and names that a snapshot path rejects are unsupported. A harvest excludes exactly what the repository census excludes: Git administration and `.markitect/state`.
 

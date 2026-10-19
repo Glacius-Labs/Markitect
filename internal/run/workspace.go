@@ -20,9 +20,10 @@ type WorkspaceID string
 // that was not harvested. Harvest observes the complete tree after the step's
 // container stopped; while any container still mounts the volume, it reports
 // Uncertain. Peek observes the workspace while its step may still write; its
-// tree is advisory, the Host only uses it to tell the Agent before the outcome
-// why its changes would not be captured, and a candidate still comes only from
-// Harvest after the step's container stopped. Close is idempotent and reports
+// tree is advisory, the Host only uses it before an outcome to refuse a call
+// whose changes would not be captured or whose limited delivery would deliver
+// nothing, and a candidate still comes only from Harvest after the step's
+// container stopped. Close is idempotent and reports
 // Closed for an absent volume. Every result reports actual observations, also
 // when an error is returned.
 //

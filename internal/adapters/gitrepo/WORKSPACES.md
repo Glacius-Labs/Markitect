@@ -62,6 +62,11 @@ Invalid snapshot paths are also reported. Invalid UTF-8 names use `bytes:` plus
 their exact hexadecimal path bytes. Unsupported entries do not stop the census
 or disappear from the result. The Host decides what the observation means.
 
+`Peek` takes the same census while the step may still write: it skips the two
+unmounted-volume checks and keeps the ownership and existence checks, and the
+helper still mounts the volume read-only. Its tree is advisory; only `Harvest`
+after the step's container stopped can yield a candidate.
+
 ## Close and evidence
 
 `Close` reports an observed absent volume as closed, including repeat calls.
