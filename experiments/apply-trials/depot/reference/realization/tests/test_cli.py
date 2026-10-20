@@ -56,6 +56,22 @@ class CommandLineTests(unittest.TestCase):
         self.assertEqual(self.ok("items")["items"][0],
                          {"sku": "BOL-006", "name": "Bolt", "reorderPoint": 5, "onHand": 4, "reserved": 0, "available": 4})
 
+    def test_cancel_and_list_orders_through_the_command_line(self):
+        self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")
+        self.ok("receive", "--sku", "BOL-006", "--qty", "10")
+        self.ok("place-order", "--line", "BOL-006:4")
+        self.ok("place-order", "--line", "BOL-006:6")
+        self.assertEqual(self.ok("cancel-order", "--id", "1"),
+                         {"id": 1, "status": "cancelled", "lines": [{"sku": "BOL-006", "qty": 4}]})
+        self.assertEqual(self.ok("cancel-order", "--id", "1")["status"], "cancelled")
+        self.ok("fulfil-order", "--id", "2")
+        self.refused("cancel-order", "--id", "2")
+        self.refused("cancel-order", "--id", "3")
+        self.assertEqual([order["id"] for order in self.ok("orders", "--status", "cancelled")["orders"]], [1])
+        self.assertEqual([order["id"] for order in self.ok("orders", "--status", "fulfilled")["orders"]], [2])
+        self.assertEqual(self.ok("orders", "--status", "open"), {"orders": []})
+        self.assertEqual(self.ok("items")["items"][0]["onHand"], 4)
+
     def test_refusals_leave_the_file_unchanged(self):
         self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")
         self.ok("receive", "--sku", "BOL-006", "--qty", "3")
