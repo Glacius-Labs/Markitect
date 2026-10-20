@@ -37,11 +37,13 @@ def row(attempt):
     behavior = a.get("behavior") or {}
     faults = a.get("faults") or []
     findings = report.get("findings") or []
+    # DEC-064 reports Passes; earlier Applies reported Verify rounds.
+    steps = [p for p in report.get("passes") or [] if p.get("review")] or report.get("rounds") or []
     return {
         "attempt": attempt.name, "case": a["case"], "expected": a["expected"], "lanes": binding.get("lanes"),
         "met": a["outcome"].get("met"), "defectNamed": a["outcome"].get("defectNamed"),
         "run": report.get("runStatus"), "publication": report.get("publication"),
-        "rounds": len(report.get("rounds") or []), "green": [r["green"] for r in report.get("rounds") or []],
+        "rounds": len(steps), "green": [s["verdict"] == "satisfied" if "verdict" in s else s.get("green") for s in steps],
         "turns": report.get("turns"), "engine": report.get("engineSeconds"), "wall": int(timing.get("wall_seconds", 0) or 0),
         "behavior": "%s/%s" % ((behavior.get("summary") or {}).get("passed"), (behavior.get("summary") or {}).get("total"))
                     if behavior else "-",

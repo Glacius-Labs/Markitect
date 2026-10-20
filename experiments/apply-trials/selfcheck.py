@@ -203,9 +203,10 @@ STRICT_ACCOUNTING_FAILS = {"D-R": [("file.unexplained", "realization/reports/vie
                                    ("registry.outside_area", "realization/reports/views.py")]}
 
 
-def fake_report(path, run_status, publication, reason="", questions=(), error=""):
-    """A minimal Apply report; RUN_STATUS None leaves out the run, as a refused preparation does."""
-    report = {"formatVersion": 1, "operation": "apply", "status": "passed" if publication else "failed", "error": error}
+def fake_report(path, run_status, publication, reason="", questions=(), status=None, preparation="passed"):
+    """A minimal Apply report; RUN_STATUS None leaves out the run, as a failed preparation does."""
+    report = {"formatVersion": 1, "operation": "apply", "status": status or ("passed" if publication else "failed"),
+              "preparation": {"status": preparation, "attempts": [{"fileDiagnostics": []}]}}
     if run_status:
         report["run"] = {"id": "r", "status": run_status, "reason": reason, "passes": [], "findings": [],
                          "questions": [{"from": ".", "to": "user", "text": text, "answered": False} for text in questions],
@@ -226,10 +227,14 @@ def check_assessor(project, python, report):
             if case.expected == REFUSED:
                 repo = folder / case.id
                 materialize(case.id, repo)
-                error = "file check: registry.outside_area " + " ".join(group[0] for group in case.defect_terms)
-                judged = assess.assess(case.id, repo, fake_report(folder / "refused.json", None, None, error=error), python)
-                report.expect(judged["outcome"]["met"] and judged["outcome"]["defectNamed"],
+                # The refused report as Apply writes it: failed in preparation, no run, no findings named.
+                judged = assess.assess(case.id, repo, fake_report(folder / "refused.json", None, None,
+                                                                  preparation="failed"), python)
+                report.expect(judged["outcome"]["met"] is True and judged["outcome"]["defectNamed"] is False,
                               "%s: a refused start is not judged as met: %s" % (case.id, judged["outcome"]))
+                judged = assess.assess(case.id, repo, fake_report(folder / "stopped.json", None, None,
+                                                                  status="not_completed"), python)
+                report.expect(judged["outcome"]["met"] is False, "%s: a start that never prepared counts as refused" % case.id)
                 judged = assess.assess(case.id, repo, fake_report(folder / "ran.json", "verified", "applied"), python)
                 report.expect(judged["outcome"]["met"] is False, "%s: a run that started counts as refused" % case.id)
             elif case.faults:

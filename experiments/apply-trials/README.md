@@ -53,7 +53,7 @@ Each failure class is first tested alone on stockroom; D-M combines several clas
 | S-F | A second Apply on a Verified, committed result changes nothing? | previous result | Verified, `no_change` |
 | D-N | The conforming six-Manager stand stays unchanged? | reference | Verified, `no_change` |
 | D-M | Five faults in five areas (behavior, a passing wrong test, a README error, a rule rebuilt outside its owner, a fault the tests catch) repaired by their owners? | reference with faults | Verified, applied, all five repaired |
-| D-R | A file registered in another Manager's shard at the start: refused before any work? | reference with the registration fault | Refused by the strict start check, nothing changed |
+| D-R | A file registered in another Manager's shard at the start: refused before any work? | reference with the registration fault | Refused by the strict start check: the report fails in its preparation and holds no run; nothing changed |
 | D-G | Model-only Apply of the six-Manager project, shared rules realized once by their owners? | model only | Verified, applied |
 | D-F | Follow-up no-change on a Verified depot result? | previous result | Verified, `no_change` |
 | W*D*-N, -M*k*, -G | How do no-change cost, repair of *k* distributed faults and model-only Apply scale with the number and nesting of Managers? | reference, reference with faults, model only | `no_change`; applied with all faults repaired; applied |
@@ -96,7 +96,7 @@ A lane file lists `CASE ATTEMPT [FROM_ATTEMPT] [PREVIOUS_REALIZATION]` per line,
 
 ## What to record
 
-`assess.py` reports per run: whether the expected outcome was met; the oracle result; per fault whether it is repaired and whether a test now fails when the fault returns (required for a test that asserted the wrong behavior); the artifact checks; every changed path grouped by owner, with protected inputs and changes outside the fault files and allowed paths listed separately; rounds with their checks, turns, engine seconds and cost; and every finding with owner, raiser and text. The evaluator then decides which findings were false, whether a model-defect report names the right defect and nothing else, which repairs were made through the owner's realization, and records human interventions and wall time. Keep each run's evidence outside the repository, as the demonstration harness does.
+`assess.py` reports per run: whether the expected outcome was met; the oracle result; per fault whether it is repaired and whether a test now fails when the fault returns (required for a test that asserted the wrong behavior); the artifact checks; every changed path grouped by owner, with protected inputs and changes outside the fault files and allowed paths listed separately; the Passes with their verdicts and checks (Verify rounds before DEC-064), questions to the user, problems, turns, engine seconds and cost; and every finding with owner, raiser and text. The evaluator then decides which findings were false, whether a model-defect report names the right defect and nothing else, which repairs were made through the owner's realization, and records human interventions and wall time. Keep each run's evidence outside the repository, as the demonstration harness does.
 
 ## Order of a new series
 

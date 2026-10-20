@@ -7,7 +7,7 @@ the working tree holds whatever Apply published. The assessment compares the
 outcome with the expectation, runs the case's oracle profile on the result,
 decides per fault whether it was repaired and whether a test now guards it,
 runs the case's artifact checks, lists every change outside the faults and
-the case's allowed paths, and summarizes rounds, findings, turns and time
+the case's allowed paths, and summarizes passes (rounds before DEC-064), findings, turns and time
 from the Apply report. False findings, the content of a model-defect report
 and human interventions stay the evaluator's judgment; the report lists the
 material for it. Operator material: never part of an Agent's repository.
@@ -225,9 +225,15 @@ def summarize_report(report):
     ends = [parse_time(turn.get("ended")) for turn in turns]
     starts, ends = [t for t in starts if t], [t for t in ends if t]
     findings = run.get("findings") or []
+    preparation = report.get("preparation") or {}
+    diagnostics = [item for attempt in preparation.get("attempts") or [] for key, items in attempt.items()
+                   if key.endswith("Diagnostics") for item in items or []]
     return {
         "status": report.get("status"), "runStatus": run.get("status"), "reason": run.get("reason", ""),
-        "error": report.get("error", ""),
+        "error": report.get("error", ""), "preparationStatus": preparation.get("status"),
+        "preparation": " ".join([attempt.get("error", "") for attempt in preparation.get("attempts") or []]
+                                + ["%s %s %s" % (item.get("Code", ""), (item.get("Source") or {}).get("File", ""),
+                                                 item.get("Message", "")) for item in diagnostics])[:2000],
         "publication": (report.get("publication") or {}).get("Outcome"), "retainedWork": report.get("retainedWork", ""),
         "rounds": [{"number": item.get("number"), "green": item.get("green"),
                     "checks": {check.get("name"): check.get("passed") for check in item.get("checks") or []}}
@@ -245,7 +251,8 @@ def summarize_report(report):
         "engineSeconds": round((max(ends) - min(starts)).total_seconds()) if starts and ends else None,
         "costUSD": round((run.get("usage") or {}).get("costUSD", 0.0), 2),
         "findings": [{"id": item.get("id"), "owner": item.get("owner"), "raisedBy": item.get("raisedBy"),
-                      "blocking": item.get("blocking"), "closed": item.get("closed"), "round": item.get("round"),
+                      "blocking": item.get("blocking"), "closed": item.get("closed"),
+                      "pass": item.get("pass", item.get("round")),
                       "obligation": (item.get("obligation") or "")[:300], "observed": (item.get("observed") or "")[:300]}
                      for item in findings],
     }
@@ -268,12 +275,14 @@ def judge_outcome(case, summary, changed):
         quiet = summary["publication"] in (None, "") and not changed
         stopped = summary["runStatus"] in ("incomplete", "failed") and summary["reason"].startswith(DEFECT_REASONS)
         asked = any(question["to"] == "user" for question in summary.get("questions") or [])
-        refused = not summary.get("runStatus") and not any((summary.get("turns") or {}).values())
+        # A refused start fails its preparation and creates no run; a missing run alone can also be a
+        # runtime, lock or run-config failure.
+        refused = summary["status"] == "failed" and summary["preparationStatus"] == "failed" and not summary["runStatus"]
         met = quiet and {DEFECT: stopped, GAP: stopped or asked, REFUSED: refused}[expected]
     detail = "run %s, publication %s, %d changed paths" % (summary["runStatus"], summary["publication"], len(changed))
     result = {"met": met, "detail": detail}
     if expected in (DEFECT, GAP, REFUSED):
-        text = " ".join([summary["reason"], summary.get("error") or ""]
+        text = " ".join([summary["reason"], summary.get("error") or "", summary["preparation"]]
                         + [question["text"] for question in summary.get("questions") or [] if question["to"] == "user"]).lower()
         named = [[term for term in group if term.lower() in text] for group in case.defect_terms]
         result["defectNamed"] = all(named) if case.defect_terms else None

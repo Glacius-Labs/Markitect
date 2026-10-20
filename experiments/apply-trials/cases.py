@@ -197,7 +197,7 @@ STOCKROOM = (
     Case("S-N", "stockroom", 1, "Conforming reference stays unchanged",
          "Does Apply leave a conforming, complete stand unchanged and verify it in one round?",
          snapshot="s1", start="reference", expected=UNCHANGED, profile="s1",
-         measure=("files changed (expected none)", "rounds", "blocking findings (expected none)", "turns", "time")),
+         measure=("files changed (expected none)", "passes", "blocking findings (expected none)", "turns", "time")),
     Case("S-D", "stockroom", 1, "Behavior drift under the unchanged model",
          "Does Apply repair two code faults, one that the project tests catch and one that only the model "
          "reveals, and change nothing else?",
@@ -218,7 +218,7 @@ STOCKROOM = (
          "(module structure, data file organization, test layout) without escalating it?",
          snapshot="s1", start="model-only", expected=APPLIED, profile="s1",
          allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
-         measure=("model_defect raised for an internal choice (expected none)", "rounds", "turns", "time",
+         measure=("Root stop or user question for an internal choice (expected none)", "passes", "turns", "time",
                   "registry complete (markitect check)"),
          notes="The minimal pair of S-Q: identical start and model except the issue shortfall rule."),
     Case("S-Q", "stockroom", 1, "Behavior-relevant model gap",
@@ -227,7 +227,7 @@ STOCKROOM = (
          snapshot="s1", start="model-only", expected=GAP, model_edits=GAP_EDITS,
          defect_terms=(("issue",), ("on hand", "on-hand", "onhand", "exceed", "more than", "negative",
                                      "insufficient", "shortfall")),
-         measure=("model_defect raised and naming the issue shortfall", "time to the report",
+         measure=("Root stop or user question naming the issue shortfall", "time to the report",
                   "other points reported as defects (false escalations)", "work retained, nothing published"),
          notes="The edits remove the refusal and state no arithmetic for a shortfall; 'never negative' stays, "
                "so refusing the request and issuing only what is on hand both fit the remaining model and "
@@ -238,21 +238,21 @@ STOCKROOM = (
          snapshot="s1", start="reference", expected=DEFECT, model_edits=CONTRADICTION_EDITS,
          defect_terms=(("sku",), ("case-sensitive", "case sensitive", "uppercase", "upper-case", "upper case",
                                    "lowercase", "lower case")),
-         measure=("model_defect raised and naming item and inputs", "time to the report",
+         measure=("Root stop naming item and inputs", "time to the report",
                   "artifacts changed in the retained work", "nothing published")),
     Case("S-XG", "stockroom", 1, "Contradiction inside the model, model-only start",
          "Does Apply report the S-X contradiction when no existing artifact follows either side?",
          snapshot="s1", start="model-only", expected=DEFECT, model_edits=CONTRADICTION_EDITS,
          defect_terms=(("sku",), ("case-sensitive", "case sensitive", "uppercase", "upper-case", "upper case",
                                    "lowercase", "lower case")),
-         measure=("model_defect raised", "time to the report", "nothing published"),
+         measure=("Root stop", "time to the report", "nothing published"),
          notes="Start variant of S-X: separates detection from the anchoring effect of existing artifacts."),
     Case("S-QV", "stockroom", 1, "Model gap without a natural default",
          "Does Apply report a missing value (the maximum name length is referred to but never given) instead of "
          "choosing one?",
          snapshot="s1", start="model-only", expected=GAP, model_edits=VALUE_GAP_EDITS,
          defect_terms=(("name",), ("length", "maximum", "limit", "characters")),
-         measure=("model_defect raised and naming the missing name length", "value chosen when not reported",
+         measure=("Root stop or user question naming the missing name length", "value chosen when not reported",
                   "time to the report"),
          notes="Second gap type beside S-Q: no refusal-like default suggests itself, so a choice is visibly "
                "invented."),
@@ -261,7 +261,7 @@ STOCKROOM = (
          snapshot="s1", start="reference", expected=GAP, model_edits=GAP_EDITS,
          defect_terms=(("issue",), ("on hand", "on-hand", "onhand", "exceed", "more than", "negative",
                                      "insufficient", "shortfall")),
-         measure=("model_defect raised", "time to the report", "nothing published", "changes in retained work"),
+         measure=("Root stop or user question", "time to the report", "nothing published", "changes in retained work"),
          notes="Start variant of S-Q: a dormant gap that the artifacts happen to fill."),
     Case("S-O", "stockroom", 1, "Valid but unnecessary restrictions",
          "Does Apply realize three valid overspecified statements (a fixed error text, a fixed data file "
@@ -277,13 +277,13 @@ STOCKROOM = (
          "stays usable) on the realization an earlier Apply produced?",
          snapshot="s2", start="previous", expected=APPLIED, profile="s2",
          allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "readme-s2"),
-         measure=("all s2 checks including upgrade", "unchanged behavior retained", "files changed", "rounds"),
+         measure=("all s2 checks including upgrade", "unchanged behavior retained", "files changed", "passes"),
          notes="Primary form: --from-repo with the committed result of S-G. Without it the reference stands "
                "in for the previous result (controlled form)."),
     Case("S-F", "stockroom", 1, "Follow-up Apply on a conforming result",
          "Does a second Apply on the committed result of a Verified Apply change nothing?",
          snapshot="", start="previous", expected=UNCHANGED,
-         measure=("files changed (expected none)", "rounds", "blocking findings"),
+         measure=("files changed (expected none)", "passes", "blocking findings"),
          notes="Requires --from-repo; the profile is that of the model found in the repository."),
 )
 
@@ -297,7 +297,7 @@ VIEWS_ENTRY = ("  - path: realization/reports/views.py\n"
 M1_REGISTRY = Fault(
     "m1", "catalog/reports", "accounting",
     "the reports module is registered in the catalog shard instead of the reports shard "
-    "(a registration outside the registrant's area; repairable start-stand drift under DEC-062)",
+    "(a registration outside the registrant's area; the strict start check refuses it under DEC-064)",
     (Edit(".markitect/registry/reports/registry.yaml", VIEWS_ENTRY, ""),
      Edit(".markitect/registry/catalog/registry.yaml",
           "    why: Tests SKU normalization, the SKU format and adding items.\n",
@@ -369,7 +369,7 @@ DEPOT = (
     Case("D-N", "depot", 2, "Conforming multi-Package reference stays unchanged",
          "Does Apply leave a conforming stand with five Managers and cross-area rules unchanged?",
          snapshot="d1", start="reference", expected=UNCHANGED, profile="d1",
-         measure=("files changed (expected none)", "rounds", "blocking findings (expected none)", "turns", "time")),
+         measure=("files changed (expected none)", "passes", "blocking findings (expected none)", "turns", "time")),
     Case("D-M", "depot", 2, "Inconsistencies distributed over several responsibilities",
          "Does Apply find and repair five faults of different kinds in five areas, each through its owner, "
          "including a rule rebuilt outside its owner and a test that asserts wrong behavior, and change nothing "
@@ -386,22 +386,23 @@ DEPOT = (
                "held the registration fault m1, which now refuses the start and is case D-R."),
     Case("D-R", "depot", 2, "Registration in the wrong shard at the start",
          "Does Apply refuse a start whose registry places a file in another Manager's shard, before any Agent "
-         "work, and name the path and the shard?",
+         "work?",
          snapshot="d1", start="reference", expected=REFUSED, faults=(M1_REGISTRY,), static=("registry-owner",),
          defect_terms=(("realization/reports/views.py",), ("outside", "area", "shard", "registr")),
-         measure=("refused before any Agent turn", "the refusal names the path and the shard", "nothing changed"),
+         measure=("refused before any Agent turn", "whether the report names the path and the shard",
+                  "nothing changed"),
          notes="DEC-064's strict File check replaced DEC-062, under which this start stand was repaired as drift."),
     Case("D-G", "depot", 2, "Model-only Apply of the multi-Package project",
          "Can Apply build the five-Manager realization from the model alone, with shared rules realized once "
          "by their owners and used by the others?",
          snapshot="d1", start="model-only", expected=APPLIED, profile="d1",
          allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
-         measure=("availability and SKU rules realized once by their owners", "model_defect for an internal "
-                  "choice (expected none)", "rounds", "turns", "time", "registry complete (markitect check)")),
+         measure=("availability and SKU rules realized once by their owners", "Root stop or user question "
+                  "for an internal choice (expected none)", "passes", "turns", "time", "registry complete (markitect check)")),
     Case("D-F", "depot", 2, "Follow-up Apply on a conforming multi-Package result",
          "Does a second Apply on the committed result of a Verified depot Apply change nothing?",
          snapshot="", start="previous", expected=UNCHANGED,
-         measure=("files changed (expected none)", "rounds", "blocking findings"),
+         measure=("files changed (expected none)", "passes", "blocking findings"),
          notes="Requires --from-repo with the result of D-M or D-G."),
 )
 
@@ -431,7 +432,7 @@ def fleet_cases():
         found.append(Case(prefix + "-N", project, 3, "Conforming fleet stand, " + size,
                           "Does Apply leave a conforming stand of %s unchanged, and what does it cost?" % size,
                           snapshot="f1", start="reference", expected=UNCHANGED, profile="f1",
-                          measure=("files changed (expected none)", "rounds", "turns", "time")))
+                          measure=("files changed (expected none)", "passes", "turns", "time")))
         for count in fault_counts:
             found.append(Case("%s-M%d" % (prefix, count), project, 3,
                               "%d distributed fault%s, %s" % (count, "" if count == 1 else "s", size),
@@ -441,7 +442,7 @@ def fleet_cases():
                               faults=tuple(fleet_fault(project, index) for index in range(count)),
                               allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*",
                                        ".markitect/registry/*"),
-                              measure=("faults repaired", "changes outside the faulty ledgers", "rounds", "turns",
+                              measure=("faults repaired", "changes outside the faulty ledgers", "passes", "turns",
                                        "time")))
         if model_only:
             found.append(Case(prefix + "-G", project, 3, "Model-only Apply, " + size,
@@ -449,7 +450,7 @@ def fleet_cases():
                               snapshot="f1", start="model-only", expected=APPLIED, profile="f1",
                               allowed=("realization/**", ".markitect/registry/**"),
                               static=("readme-commands", "tests-present"),
-                              measure=("checks passed", "rounds", "turns", "time", "registry complete")))
+                              measure=("checks passed", "passes", "turns", "time", "registry complete")))
     return tuple(found)
 
 
@@ -467,7 +468,7 @@ def thorough_cases():
                           "Does Apply leave a conforming stand of %s unchanged when its tests already cover every "
                           "modeled boundary?" % size,
                           snapshot="f1", start="reference", expected=UNCHANGED, profile="f1",
-                          measure=("files changed (expected none)", "test files changed", "rounds", "turns", "time")))
+                          measure=("files changed (expected none)", "test files changed", "passes", "turns", "time")))
     return tuple(found)
 
 
@@ -500,8 +501,8 @@ def expectation(case):
     if case.expected == UNCHANGED:
         return "Verified, publication `no_change`; no file changes; the oracle profile passes on the stand."
     if case.expected == REFUSED:
-        return ("Refused before any Agent turn by the strict start check, nothing changed; the refusal names the "
-                "registration.")
+        return ("Refused before any Agent turn: the report fails in its preparation and holds no run; nothing "
+                "changed. `markitect check` on the start stand shows the exact findings.")
     if case.expected == GAP:
         return ("Root ends the run over the model or asks the user about the gap (DEC-064); nothing published, the "
                 "working tree unchanged. Before DEC-064 the expectation was the `model_defect` stop.")
