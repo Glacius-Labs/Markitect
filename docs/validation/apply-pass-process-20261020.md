@@ -105,4 +105,6 @@ The frozen candidate source `0a40316f95b58d04d53e8f3762a62c449cc70201` passed th
 
 ## Concept disposition after owner assessment
 
+The implementation and bounded evaluation of the adopted refinement are recorded in the [hardening report](apply-hardening-20261020.md).
+
 The owner has adopted the [evidence-driven hardening refinement](../design/canonical-model/manager-apply-workflow.md#evidence-driven-hardening-adopted-20-october-2026) and requested the [new Claude implementation/retest handoff](../development/claude-apply-hardening-handoff-20261020.md). This follows the assessment-only checkpoint recorded above. PR #536's fields/tests are reusable partial work, not the complete adopted solution; new receipts and active counterexample/parent assessment still need implementation and real evaluation. All earlier source and Run results retain their exact original bindings. The workflow's disposition table assesses every previous proposal, distinguishing existing guards, accepted corrections, conditional batching, rejected blanket budget exemption, unchanged model default and the S-Q clarification rule. No new provider Run is reported here.
