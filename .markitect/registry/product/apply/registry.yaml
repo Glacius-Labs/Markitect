@@ -16,6 +16,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Tests the organization, briefs, checks, budget deadline, gates and write plans of the run configuration, publication refusals and an unverified run with fake ports.
+  - path: "internal/apply/compose_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks that work Passes repeat or restart only at an earlier purpose their own findings name and never skip a forward Pass.
   - path: "internal/apply/export_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
