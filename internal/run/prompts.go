@@ -8,7 +8,7 @@ import (
 
 // modelAuthority is the quality duty every Manager and reviewer carries: the
 // bound model is binding intent, never theirs to repair.
-const modelAuthority = "The bound model always holds. A choice it leaves open inside your responsibility is yours to make and document. What you cannot settle within the model goes to your parent; no answer overrides the model."
+const modelAuthority = "The bound model always holds. An implementation choice it leaves open inside your responsibility is yours to make and document. What you cannot settle within the model goes to your parent; no answer overrides the model."
 
 func labelOf(m *mgr) string {
 	if m.Parent == "" {
