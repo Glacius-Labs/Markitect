@@ -218,4 +218,4 @@ Corrections `fcd0fb54` and `488a582d` were made after the series and are unevalu
 
 1. A4, to test the public-choice correction, since a question must reach the owner;
 2. A2, to measure Verify cost after the owner-judgment correction;
-3. the Haiku pass the owner named, V1, V2 and A1, only if A4 routes the question.
+3. the Haiku pass the owner named, V1, V2 and A1, once Sonnet works, read here as once A4 routes the question.
