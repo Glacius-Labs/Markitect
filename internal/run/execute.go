@@ -162,7 +162,7 @@ func (e *engine) releaseLocked(m *mgr, why string) {
 		return
 	}
 	m.released = true
-	m.items = append([]item{{text: initialItem(m)}}, m.items...)
+	m.items = append([]item{{text: initialItem(m, e.cfg.Mandate != "")}}, m.items...)
 	data := map[string]any{"why": why}
 	if m.Parent != "" {
 		data["parent"] = m.Parent

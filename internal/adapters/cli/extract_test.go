@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -14,6 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
@@ -167,5 +169,192 @@ func TestExtractReportTakesOpenQuestionsFromTheFinalPhase(t *testing.T) {
 		Model: &run.Outcome{Status: run.Failed}})
 	if len(unstarted.OpenQuestions) != 1 || unstarted.OpenQuestions[0].ID != "Q2" {
 		t.Errorf("questions %+v", unstarted.OpenQuestions)
+	}
+}
+
+// libraryExtract scripts the result of an Extract of the small library: a
+// verified, published model with one realization deviation and one proposed
+// check.
+func libraryExtract(t *testing.T) apply.ExtractResult {
+	t.Helper()
+	asked := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+	var published []apply.PublishedPath
+	for _, name := range []string{".markitect/execution.yaml", ".markitect/model/library/library.yaml", ".markitect/registry/registry.yaml"} {
+		path, err := snapshot.NewPath(name)
+		if err != nil {
+			t.Fatal(err)
+		}
+		published = append(published, apply.PublishedPath{Path: path, State: apply.PathAfter})
+	}
+	var assessments []run.Assessment
+	for _, m := range []string{".", "catalog", "lending", "lending/reminders", "library", "members"} {
+		assessments = append(assessments, run.Assessment{Manager: m, Satisfied: true, Summary: "fine"})
+	}
+	return apply.ExtractResult{
+		Structure: run.Outcome{Status: run.Verified, Rounds: []run.Round{{Number: 1, Green: true}}},
+		Model: &run.Outcome{Status: run.Verified,
+			Rounds: []run.Round{{Number: 1}, {Number: 2, Green: true, Assessments: assessments}},
+			Findings: []run.Finding{
+				{ID: "f1", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only checked when a loan is renewed.", Blocking: false},
+				{ID: "f2", Owner: "members", RaisedBy: "members", Subject: "model", Observed: "The status wording could be tighter.", Blocking: false},
+				{ID: "f3", Owner: "catalog", RaisedBy: "catalog", Subject: "model", Observed: "Fixed.", Closed: true},
+			},
+			Questions: []run.Question{{ID: "Q1", Text: "Which currency do fines use?", Asked: asked, Answered: true, Answer: "euro"}},
+		},
+		Receipt:        &apply.PublicationReceipt{ID: "x-1", Outcome: apply.PublicationApplied, Paths: published},
+		ProposedChecks: []apply.ProposedCheck{{ID: "project-vet", Profile: "go-tests", Directory: "realization", Args: []string{"vet", "./..."}, Timeout: "2m"}},
+		Packages:       []apply.ExtractedPackage{{Path: "catalog"}, {Path: "lending"}, {Path: "lending/reminders"}, {Path: "library", Title: "Small library"}, {Path: "members"}},
+	}
+}
+
+func accountOf(result apply.ExtractResult, err error, evidence string) string {
+	report := NewExtractReport("x-1", result)
+	report.Status, report.EvidenceDirectory = ExtractStatus(result, err), evidence
+	if err != nil {
+		report.Error = err.Error()
+	}
+	return RenderExtractAccount(report)
+}
+
+const libraryAccount = `Model complete and published.
+
+Packages (5)
+  catalog
+  lending
+  lending/reminders
+  library            Small library
+  members
+
+Owner questions (1)
+  Q1 Which currency do fines use? -> euro
+
+Realization deviates from the model (1)
+  lending/lending (owners: lending)
+    borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only chec...
+
+Proposed checks (1)
+  project-vet: vet ./... in realization
+
+Verify (round 2)
+  satisfied: ., catalog, lending, lending/reminders, library, members
+  open advisory findings: 1
+
+Publication: applied, 3 files changed
+Evidence: /state/x-1
+
+Next: review and commit .markitect/model, .markitect/registry and
+  .markitect/execution.yaml to adopt the model. Extract commits nothing.
+`
+
+func TestRenderExtractAccount(t *testing.T) {
+	library := libraryExtract(t)
+	asked := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
+
+	incomplete := libraryExtract(t)
+	incomplete.Receipt, incomplete.ProposedChecks, incomplete.Packages = nil, nil, nil
+	incomplete.Model.Status, incomplete.Model.Reason = run.Incomplete, "owner question Q2 is still open"
+	incomplete.Model.Rounds = []run.Round{{Number: 1, Assessments: []run.Assessment{{Manager: ".", Satisfied: true}, {Manager: "lending", Satisfied: false}}}}
+	incomplete.Model.Questions = append(incomplete.Model.Questions, run.Question{ID: "Q2", Text: "May a member hold a reserved copy?", Asked: asked})
+	incomplete.RetainedWork = "x-1-model-work"
+
+	stale := libraryExtract(t)
+	stale.Receipt = &apply.PublicationReceipt{ID: "x-1", Outcome: apply.PublicationStale, Reason: "the repository changed", Paths: slices.Clone(library.Receipt.Paths)}
+	for i := range stale.Receipt.Paths {
+		stale.Receipt.Paths[i].State = apply.PathBefore
+	}
+
+	failed := apply.ExtractResult{Structure: run.Outcome{Status: run.Failed, Reason: "the agent port broke"}}
+
+	many := libraryExtract(t)
+	for i := range 20 {
+		many.Packages = append(many.Packages, apply.ExtractedPackage{Path: fmt.Sprintf("extra/p%02d", i)})
+		many.Model.Findings = append(many.Model.Findings, run.Finding{ID: fmt.Sprintf("d%d", i), Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: fmt.Sprintf("lending/d%02d", i), Observed: "x"})
+	}
+
+	for _, tc := range []struct {
+		name     string
+		result   apply.ExtractResult
+		err      error
+		evidence string
+		want     []string // lines in this order
+		absent   []string
+	}{
+		{"complete", library, nil, "/state/x-1", []string{
+			"Model complete and published.", "Packages (5)", "  library            Small library", "Owner questions (1)", "  Q1 Which currency do fines use? -> euro",
+			"Realization deviates from the model (1)", "  lending/lending (owners: lending)", "    borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only chec...",
+			"Proposed checks (1)", "  project-vet: vet ./... in realization", "Verify (round 2)", "  satisfied: ., catalog, lending, lending/reminders, library, members", "  open advisory findings: 1",
+			"Publication: applied, 3 files changed", "Evidence: /state/x-1", "Next: review and commit .markitect/model, .markitect/registry and", "  .markitect/execution.yaml to adopt the model. Extract commits nothing.",
+		}, []string{"not satisfied", "Retained work"}},
+		{"incomplete", incomplete, nil, "/state/x-1", []string{
+			"Model incomplete: owner question Q2 is still open.", "Owner questions (2)", "  Q2 May a member hold a reserved copy? -> unanswered",
+			"Verify (round 1)", "  satisfied: .", "  not satisfied: lending", "Publication: none", "Retained work: x-1-model-work (kept for inspection)", "Evidence: /state/x-1",
+		}, []string{"Next:", "Packages", "Proposed checks"}},
+		{"verified but stale", stale, nil, "", []string{
+			"Model incomplete: the verified model was not published (stale: the repository changed).", "Publication: stale, 0 of 3 files written: the repository changed",
+		}, []string{"Next:", "Evidence"}},
+		{"failed", failed, errors.New("agent port: closed"), "", []string{
+			"Extract failed: structure phase: the agent port broke; agent port: closed.", "Verify: no round finished", "Publication: none",
+		}, []string{"Next:", "Owner questions", "Realization deviations"}},
+		{"capped lists", many, nil, "", []string{"Packages (25)", "  and 13 more", "Realization deviates from the model (21)", "  and 16 more"}, nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			account := accountOf(tc.result, tc.err, tc.evidence)
+			lines := strings.Split(strings.TrimSuffix(account, "\n"), "\n")
+			next := 0
+			for _, want := range tc.want {
+				for next < len(lines) && lines[next] != want {
+					next++
+				}
+				if next == len(lines) {
+					t.Fatalf("line %q is missing or out of order in:\n%s", want, account)
+				}
+			}
+			for _, absent := range tc.absent {
+				if strings.Contains(account, absent) {
+					t.Errorf("account contains %q:\n%s", absent, account)
+				}
+			}
+			if !strings.HasSuffix(account, "\n") || strings.Contains(account, "\x1b") {
+				t.Errorf("account must be plain text ending in a newline: %q", account)
+			}
+		})
+	}
+
+	if got := accountOf(library, nil, "/state/x-1"); got != libraryAccount {
+		t.Errorf("library account changed:\n%s", got)
+	}
+	if n := strings.Count(libraryAccount, "\n"); n > 40 {
+		t.Errorf("the library account has %d lines", n)
+	}
+}
+
+func TestExtractPrintsTheAccountToStderrAndKeepsStdoutJSON(t *testing.T) {
+	dir := t.TempDir()
+	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	result := libraryExtract(t)
+	var report ExtractReport
+	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
+		report = NewExtractReport("x-1", result)
+		report.Status, report.EvidenceDirectory = model.Passed, "/state/x-1"
+		return report, nil
+	})
+	var out, stderr bytes.Buffer
+	if code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--host-profile", host, "--run-config", config}, &out, &stderr); code != 0 {
+		t.Fatalf("code %d: %s", code, stderr.String())
+	}
+	// stdout is exactly the JSON report, which does not carry the account's data.
+	report.FormatVersion, report.Operation = 1, "extract"
+	var want bytes.Buffer
+	encoder := json.NewEncoder(&want)
+	encoder.SetIndent("", "  ")
+	if err := encoder.Encode(ReportValue(report)); err != nil {
+		t.Fatal(err)
+	}
+	if out.String() != want.String() || strings.Contains(out.String(), "Small library") {
+		t.Errorf("stdout changed:\n%s", out.String())
+	}
+	// stderr ends with the account, after everything else the command wrote.
+	if !strings.HasSuffix(stderr.String(), RenderExtractAccount(report)) || !strings.HasPrefix(stderr.String(), "Model complete and published.\n") {
+		t.Errorf("stderr:\n%s", stderr.String())
 	}
 }

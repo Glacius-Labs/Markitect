@@ -1,6 +1,7 @@
 package apply
 
 import (
+	"cmp"
 	"context"
 	"errors"
 	"fmt"
@@ -8,6 +9,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -54,7 +56,18 @@ type ExtractResult struct {
 	// ProposedChecks are the checks of a verified model's execution document that
 	// the start did not have: a proposal for the owner's adoption, never run.
 	ProposedChecks []ProposedCheck
-	RetainedWork   string
+	// Packages are the Packages of a verified model, for the owner's account of
+	// the result.
+	Packages     []ExtractedPackage
+	RetainedWork string
+}
+
+// ExtractedPackage is one Package of the verified model: its path below
+// .markitect/model and the title of its overview Definition, empty when it has
+// none.
+type ExtractedPackage struct {
+	Path  string
+	Title string
 }
 
 // ProposedCheck is one required check the structure phase proposed. Timeout is
@@ -148,6 +161,7 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	concluded.Homes = nil
 	receipt, retained, err := phase.ports().conclude(ctx, concluded, runErr, func(ctx context.Context) (*PublicationReceipt, error) {
 		result.ProposedChecks = proposedChecks(start, modelOutcome.Candidate)
+		result.Packages = extractedPackages(start, modelOutcome.Candidate)
 		changes := snapshot.Compare(start.tree, modelOutcome.Candidate)
 		if err := requireModelChangesOnly(changes); err != nil {
 			// Account blocks every such candidate, so this is a defect, not an
@@ -189,6 +203,47 @@ func proposedChecks(start extractStage, candidate snapshot.Tree) []ProposedCheck
 		}
 	}
 	return proposed
+}
+
+// extractedPackages lists the Packages of the candidate's model in path order,
+// each with the title of its overview Definition: the Definition of the
+// vocabulary's overview Kind, else the first one the Package has.
+func extractedPackages(start extractStage, candidate snapshot.Tree) []ExtractedPackage {
+	compiled := rebindStructural(start.structural.Model(), candidate, extractModel).Model().compiled
+	if compiled.Status != model.Passed {
+		return nil
+	}
+	overview, _ := overviewKind(vocabularyOf(compiled))
+	rank := func(d model.Definition) int {
+		if d.Kind == overview {
+			return 0
+		}
+		return 1
+	}
+	var packages []ExtractedPackage
+	for _, owner := range compiled.Models {
+		if !owner.Local {
+			continue
+		}
+		for _, pkg := range owner.Packages {
+			var chosen *model.Definition
+			for i, d := range owner.Definitions {
+				if d.Identity.Package != pkg.Name {
+					continue
+				}
+				if chosen == nil || cmp.Or(cmp.Compare(rank(d), rank(*chosen)), cmp.Compare(d.Identity.ID, chosen.Identity.ID)) < 0 {
+					chosen = &owner.Definitions[i]
+				}
+			}
+			entry := ExtractedPackage{Path: pkg.Name}
+			if chosen != nil && chosen.Title != nil {
+				entry.Title = *chosen.Title
+			}
+			packages = append(packages, entry)
+		}
+	}
+	slices.SortFunc(packages, func(a, b ExtractedPackage) int { return strings.Compare(a.Path, b.Path) })
+	return packages
 }
 
 // durationText writes a duration without the zero units that time.Duration

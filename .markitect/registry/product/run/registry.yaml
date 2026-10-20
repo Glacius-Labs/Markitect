@@ -12,6 +12,10 @@ artifacts:
     form: doc
     realizes: [product/run/confirmed-run-history]
     why: "Fixes the rubric an independent assessor scores an extracted library model with, including the seeded and conflict expectations."
+  - path: "experiments/recursive-apply-demo/extract-checklist-readinglog.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Fixes the rubric for the second Extract project, Readinglog, marking reference obligations its two files cannot show."
   - path: "experiments/recursive-apply-demo/extract-execution.yaml"
     form: config
     realizes: [product/run/confirmed-run-history]
@@ -76,6 +80,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Answers an Extract's owner questions by script and logs them, so the owner channel is exercised in real runs."
+  - path: "experiments/recursive-apply-demo/rx_python_profile.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Switches a bound attempt to the Python example runtime image and offers a Python check profile, for the Readinglog Extract runs."
   - path: "experiments/recursive-apply-demo/rx_rebuild_project.sh"
     form: code
     realizes: [product/run/confirmed-run-history]

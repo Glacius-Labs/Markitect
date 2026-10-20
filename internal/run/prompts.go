@@ -78,9 +78,21 @@ func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
 // initialItem is the first Execute item of every Manager: it starts the
 // Manager's own reconciliation work without a finding. A parent first supplies
 // the foundation its children need, because they start when its turn ends; a
-// child builds on the foundation its parent supplied.
-func initialItem(m *mgr) string {
+// child builds on the foundation its parent supplied. A process with its own
+// mandate (Config.Mandate, such as Extract) writes no artifacts, so its parents
+// pass on the basis of their area instead of laying artifact scaffolding.
+func initialItem(m *mgr, directed bool) string {
 	var b strings.Builder
+	if directed {
+		b.WriteString("Carry out your responsibility now, as the mandate above describes.")
+		if m.Parent != "" {
+			b.WriteString(" Your parent's messages to you tell you the basis it has established. Build on it.")
+		}
+		if len(m.Children) > 0 {
+			b.WriteString(" Your children start when this turn ends. First establish the basis they need from your area, such as the shared terms and boundaries they build on, and tell them with send. Their areas are theirs, not yours.")
+		}
+		return b.String()
+	}
 	b.WriteString("Carry out your responsibility now, as the mandate above describes. No change is a legitimate result when your area already conforms.")
 	if m.Parent != "" {
 		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")

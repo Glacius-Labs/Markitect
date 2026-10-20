@@ -1804,6 +1804,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/extract-round2-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the second Extract improvement round: each defect and change, and the final confirmation on the library and Readinglog."
   - path: "docs/validation/library-extract-comparison-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]

@@ -206,6 +206,18 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	if len(result.ProposedChecks) != 0 {
 		t.Errorf("no check was proposed: %+v", result.ProposedChecks)
 	}
+	// The account lists the Packages of the verified model in path order, with the
+	// title of the overview Definition when it has one.
+	var packages []string
+	for _, p := range result.Packages {
+		packages = append(packages, p.Path)
+		if want := map[string]string{"library": "Small library"}[p.Path]; p.Title != want {
+			t.Errorf("title of %s: %q, want %q", p.Path, p.Title, want)
+		}
+	}
+	if want := []string{"catalog", "lending", "lending/reminders", "library", "members"}; !slices.Equal(packages, want) {
+		t.Errorf("packages %v, want %v", packages, want)
+	}
 	// The reviewer called the artifact finding blocking; it is stored advisory and
 	// the model verified anyway.
 	deviations := apply.ExtractDeviations(result.Model.Findings)

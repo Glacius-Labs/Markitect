@@ -37,6 +37,11 @@ func TestCustomMandateAndVerifyGuidanceReplaceTheApplyTexts(t *testing.T) {
 		case ExecuteTurn:
 			executes++
 			contains(t, "Execute prompt", turn.Prompt, "Carry out your responsibility now")
+			for _, apply := range []string{"project scaffolding", "No change is a legitimate result"} {
+				if strings.Contains(turn.Prompt, apply) {
+					t.Errorf("Execute prompt of %s carries Apply's initial item: %q", turn.ID, apply)
+				}
+			}
 		case VerifyTurn:
 			verifies++
 			contains(t, "Verify prompt", turn.Prompt, "write build or test output only under /tmp. "+f.cfg.VerifyGuidance+"\n")
