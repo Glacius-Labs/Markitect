@@ -77,6 +77,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Superseded by DEC-064; removed from the implementation |
 | [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate) | Decision | The model is authoritative; defects escalate | Amended by DEC-064; model authority retained |
 | [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Base integrated; evidence-driven hardening adopted, implementation and new evidence pending |
+| [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) | Decision | Work through the cockpit: agent-proposed model changes and configuration | Accepted by the owner; implementation started |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -781,6 +782,14 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Supersession:** Supersedes DEC-062, the blanket question ban/boundary-gap rule in DEC-063, competing-name compatibility in DEC-042, earlier restrictive layout choices, planning only as a fallback, implicit Turn completion and conflicting discussion variants. Retains model authority, owner realization, fixed inputs, observed stop, finite limits, exact candidate checks, outside oracles and guarded publication. See the workflow's explicit preservation table.
 - **Delivery:** The [new Claude hardening handoff](../development/claude-apply-hardening-handoff-20261020.md) prepares the owner-started bounded implementation/retest assignment. The [earlier implementation handoff](../development/claude-apply-implementation-handoff-20261020.md) retains its historical scope. The owner requested Main integration of this concept, not integration of draft PR #536's partial code; preparing the handoff starts no Claude/provider session or release. Shared Extract behavior remains protected, and historical results retain their original bindings.
 
+### DEC-065 Work through the cockpit: agent-proposed model changes and configuration
+
+- **Status:** Accepted by the owner, 20 October 2026 ([verbatim source and choices](sources/cockpit-commission-20261020.md#working-through-the-cockpit)). Implementation started in the cockpit stream; nothing is established yet.
+- **Decision:** The owner works on the project through the cockpit. A prompt in the cockpit goes to a Claude or Codex Agent session that proposes a change to the canonical model; the Agent and Manager team configuration in `.markitect/execution.yaml` is edited through the cockpit as well.
+- **Boundaries:** Every change is a proposal: the cockpit runs the Model check and the File check on it, shows its difference and writes it only after the owner's explicit acceptance, through Apply's guarded publication with read-back, without committing. The owner remains the author of intent; an Agent proposes, it never changes the model on its own. Agents run in Linux containers through the existing Runtime adapters and profiles ([DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers)) and write only the model and registry of their session's workspace. Each prompt is a provider turn whose usage is shown. Accepting a change starts no Apply.
+- **Not adopted:** Government and delegated model maintenance ([IDEA-002](#idea-002-government-delegated-model-maintenance)), a personal AI beyond these sessions, approval reuse, and starting or stopping Apply from the cockpit.
+- **Behavior owner:** the [cockpit concept](../design/cockpit.md#working-through-the-cockpit). Related: [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent), whose chat-driven model adjustment this adopts in this bounded form, and [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing).
+
 ## Promises
 
 These are the target outcomes Markitect is built to deliver. Each has the status **Target**: it is to be validated under [DEC-009](#dec-009-the-central-evaluation-question), and none is an established result. Sources are the [owner description](sources/owner-product-description-20261009.md) and the [confirmed summary](sources/idea-review-20261010.md#summary-confirmed-by-the-owner).
@@ -1073,7 +1082,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 ### IDEA-015 Cockpit with a conversational personal agent
 
-- **Status:** Owner idea (Ideas `IDEA-20261009-018`; Concepts C34). Part of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization).
+- **Status:** Owner idea (Ideas `IDEA-20261009-018`; Concepts C34). Part of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization). Its model adjustment through a cockpit chat is adopted in bounded form by [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) (20 October 2026); search and a personal agent remain parked.
 - **Idea:** A cockpit with a chat interface, connected to an AI agent. The agent can search the system for the user, adjust the model, or show the user directly what interests them in the cockpit.
 - **Provisional boundary (attribution unclear; treat as a proposal until the owner confirms it):**
   - Chat and cockpit refer to the same model, decisions and evidence.

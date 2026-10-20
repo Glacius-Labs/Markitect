@@ -102,7 +102,23 @@ Use local delivery by default. Access to transcripts must respect existing redac
 
 The owner assigned design and implementation to Claude. The [handoff](../development/claude-cockpit-handoff-20261020.md) is intended for a new explicit bounded assignment, not automatic resumption of an ended Claude session. Read and reconcile the current stabilization plan and shared-file reservations before writing. New provider series, unbounded spending, releases and deployments are not included.
 
-Conversational model editing, personal AI, Government, approval reuse and gamification remain later extensions. The cockpit commission does not silently adopt them. The [working method](../development/working-method.md) still requires a complete usable workflow before unrelated expansion.
+Personal AI, Government, approval reuse and gamification remain later extensions. Model editing through the cockpit was a later extension too until the owner adopted it in bounded form ([DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); the next section owns it. The [working method](../development/working-method.md) still requires a complete usable workflow before unrelated expansion.
+
+## Working through the cockpit
+
+**Owner decision, 20 October 2026:** the owner wants to work on the project through the cockpit: adjust the model by prompts that go to Claude or Codex, and configure the Agent teams ([source](../concepts/sources/cockpit-commission-20261020.md#working-through-the-cockpit), [DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)).
+
+**Observation and design response:** the cockpit already shows what Apply did with the model; changing the model and the team setup still meant leaving it for an editor and a terminal. Both changes become proposals with one acceptance path, so the owner reviews the actual difference and its checks before anything is written.
+
+**One proposal path.** A proposal is a changed stand of the project's `.markitect` inputs against a captured working tree. The cockpit runs the Model check and the File check on it, shows the changed files and the changed Definitions, and offers acceptance only when both pass. Acceptance writes the exact change through Apply's guarded publication: the captured source must be unchanged, every written path is read back, nothing is committed, and no Apply may hold the state directory meanwhile. Discarding writes nothing. Accepting starts no Apply; the owner starts Apply separately.
+
+**Configuration.** The execution settings' budget, profiles, per-Package overrides and team (roles, profiles, write rights, instructions, helper limit) are edited in a form. The form produces the changed `.markitect/execution.yaml`; product decoding and the structural check judge it as they judge a hand-edited file.
+
+**Model sessions.** A prompt starts or continues an Agent session on a workspace materialized from the captured working tree. The session runs through the existing Runtime adapters in a Linux container with the Execute profile and its provider, model and limits ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)); its write plan permits only `.markitect/model/` and `.markitect/registry/`. Follow-up prompts continue the same provider conversation. The Agent receives the language contract's essentials, the current model and the request; it can run the checks on its live workspace and must submit its proposal with a summary. Each prompt is one provider turn whose usage and transcript are retained as session evidence under the state directory and shown. The Agent proposes; it never decides intent, and a model it judges contradictory is reported, not repaired silently.
+
+**Boundaries:** no Government or delegated maintenance, no automatic Apply, no start or stop of Apply from the cockpit, no change to Runtime profiles, credentials or the run configuration (`markitect setup` owns them), and no change to Apply semantics. Every session needs a configured Runtime profile; spending happens only when the owner sends a prompt.
+
+**Delivery:** 4. configuration proposals through the form and the shared acceptance path; 5. Agent model sessions in containers. Each slice records source checks, UI behavior and real or demonstrated use separately.
 
 ## Acceptance
 

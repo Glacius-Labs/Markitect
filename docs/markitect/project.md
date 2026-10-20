@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:c5799dd6ecb7baa54130af9604385a6ce2ae4d1125e08db3696540c15f5c6b08`.
+Canonical model digest: `sha256:4d65b224c92d268fad570feb9e8b17718e54b7a58c0e503ac0a7a6d8b13d4ef3`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -169,6 +169,12 @@ Acquire explicitly selected model and control inputs through consumer-owned port
 Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cli/honest-read-only-interface.yaml` (original bytes `sha256:c89e18fbcd585cc136a12645feebc774c917b82904fe33001a68a1461d8293dc`).
 
 Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. Apply, answer and extract act only with an explicit Runtime profile and run configuration and report the actual run status, Passes, findings, questions, publication, Run outcome and retained work; an answer binds to the exact run and question that asked. Usage, known failure and incomplete work have distinct exit statuses.
+
+### product/cockpit/accepted-proposals
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/accepted-proposals.yaml` (original bytes `sha256:582c4acfb58e2a96ea9e5c3640a1720d6bd5c975e4e28ec78bfd5be39ff901e8`).
+
+Changes to the canonical model and to the execution settings made through the cockpit are proposals against a captured working tree: the Model check and the File check judge each proposal, the owner sees its changed files and Definitions, and only the owner's explicit acceptance of a proposal whose checks pass writes it, through Apply's guarded publication with read-back, without committing, while no Apply holds the state directory. The execution settings' budget, profiles, per-Package overrides and team are edited through a form whose result is judged like a hand-edited file. A model proposal comes from an Agent session the owner prompts: it runs through the Runtime adapters in a Linux container with the Execute profile, may write only the model and registry of its own workspace, continues its provider conversation across the owner's prompts, retains its prompts, usage and transcript as evidence, and proposes without deciding intent. Accepting a proposal starts no Apply; the cockpit starts and stops no Apply and changes no Runtime profile, credential or run configuration.
 
 ### product/cockpit/observed-run-inspection
 
