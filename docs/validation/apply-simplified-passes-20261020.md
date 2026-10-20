@@ -87,6 +87,8 @@ The packet trees of all three freezes are byte-identical, so the inputs are equi
 - **Remaining budget, in this order:** A2 on C2 against A2-b (confounded by `922ab2f6`'s receipt change, named as such), then A3 without a reference.
 - **Excluded:** later reference commits such as `fcd0fb54`, which no provider run evaluated.
 
+**Correction before any Implement ran (C1′).** The review of C2 found a gap in C1's merged Implement mandate. It had dropped the Plan mandate's sentence "Existing artifacts and tests that already meet an obligation are its evidence as they are", which the reference's Plan Pass carries on `8b5040ff` as a counterweight to optional changes. C1′ restores that sentence and changes nothing else. A1 and A2 run on C1′. V1 and V2 use only the unchanged Verify mandate, so they are equally valid on C1 and C1′.
+
 **Expected outcomes** (the reference manifest's):
 
 - V1: a genuine, owner-bound finding of the hyphen-name refusal with receipts; no clean Verify.
