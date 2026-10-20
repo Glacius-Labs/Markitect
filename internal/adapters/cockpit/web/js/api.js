@@ -2,7 +2,9 @@
 // through the owner channel the answer command uses, observeProject runs the
 // repository's structural preparation again, proposeSettings makes a checked
 // proposal without writing, and decide accepts (writes through Apply's
-// guarded publication) or discards one. Nothing here starts or stops a run.
+// guarded publication) or discards one. startSession and promptSession each
+// start one provider turn of a model session; closeSession ends it. Nothing
+// here starts or stops a run.
 
 async function request(path, init = {}) {
   const res = await fetch(path, { ...init, headers: { Accept: "application/json", ...init.headers } });
@@ -34,6 +36,18 @@ export const api = {
   proposals: () => get("/api/proposals"),
   proposal: (id) => get(`/api/proposals/${enc(id)}`),
   decide: (id, decision) => request(`/api/proposals/${enc(id)}/${decision}`, { method: "POST", headers: { "X-Markitect-Cockpit": decision } }),
+  sessions: () => get("/api/sessions"),
+  startSession: (prompt) => request("/api/sessions", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "start" },
+    body: JSON.stringify({ prompt }),
+  }),
+  promptSession: (id, prompt) => request(`/api/sessions/${enc(id)}/prompt`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "prompt" },
+    body: JSON.stringify({ prompt }),
+  }),
+  closeSession: (id) => request(`/api/sessions/${enc(id)}/close`, { method: "POST", headers: { "X-Markitect-Cockpit": "close" } }),
   answer: (run, question, text) => request(`/api/runs/${enc(run)}/questions/${enc(question)}/answer`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "answer" },

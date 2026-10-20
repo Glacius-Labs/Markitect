@@ -20,6 +20,13 @@ type Authoring interface {
 	Proposal(string) (authoring.Proposal, bool)
 	Accept(context.Context, string) (authoring.Proposal, error)
 	Discard(string) (authoring.Proposal, error)
+
+	SessionsAvailable() bool
+	Sessions() []authoring.Session
+	Session(string) (authoring.Session, bool)
+	StartSession(context.Context, string) (authoring.Session, error)
+	PromptSession(string, string) (authoring.Session, error)
+	CloseSession(context.Context, string) (authoring.Session, error)
 }
 
 func (s *Server) authoringOrRefuse(w http.ResponseWriter) bool {
@@ -122,6 +129,107 @@ func proposalStatus(err error) int {
 		return http.StatusConflict
 	case errors.Is(err, authoring.ErrNoChange), errors.Is(err, authoring.ErrOutOfScope):
 		return http.StatusBadRequest
+	}
+	return http.StatusInternalServerError
+}
+
+func (s *Server) handleSessions(w http.ResponseWriter, r *http.Request) {
+	if !s.authoringOrRefuse(w) {
+		return
+	}
+	writeJSON(w, struct {
+		Available bool                `json:"available"`
+		Sessions  []authoring.Session `json:"sessions"`
+	}{s.authoring.SessionsAvailable(), s.authoring.Sessions()})
+}
+
+func (s *Server) handleSession(w http.ResponseWriter, r *http.Request) {
+	if !s.authoringOrRefuse(w) {
+		return
+	}
+	session, ok := s.authoring.Session(r.PathValue("id"))
+	if !ok {
+		http.Error(w, "no session "+r.PathValue("id"), http.StatusNotFound)
+		return
+	}
+	writeJSON(w, session)
+}
+
+// promptOf reads the owner's prompt from the cockpit's own JSON request.
+func (s *Server) promptOf(w http.ResponseWriter, r *http.Request, purpose string) (string, bool) {
+	if !s.authoringOrRefuse(w) || !s.ownRequest(w, r, purpose) {
+		return "", false
+	}
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, "a prompt is a JSON request", http.StatusForbidden)
+		return "", false
+	}
+	var body struct {
+		Prompt string `json:"prompt"`
+	}
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&body); err != nil || dec.More() {
+		http.Error(w, "the prompt is not a JSON object with prompt", http.StatusBadRequest)
+		return "", false
+	}
+	return body.Prompt, true
+}
+
+// handleStartSession starts a model session: it captures the source and
+// starts the first provider turn with the owner's prompt.
+func (s *Server) handleStartSession(w http.ResponseWriter, r *http.Request) {
+	prompt, ok := s.promptOf(w, r, "start")
+	if !ok {
+		return
+	}
+	session, err := s.authoring.StartSession(r.Context(), prompt)
+	if err != nil {
+		http.Error(w, err.Error(), sessionStatus(err))
+		return
+	}
+	writeJSON(w, session)
+}
+
+func (s *Server) handlePromptSession(w http.ResponseWriter, r *http.Request) {
+	prompt, ok := s.promptOf(w, r, "prompt")
+	if !ok {
+		return
+	}
+	session, err := s.authoring.PromptSession(r.PathValue("id"), prompt)
+	if err != nil {
+		http.Error(w, err.Error(), sessionStatus(err))
+		return
+	}
+	writeJSON(w, session)
+}
+
+func (s *Server) handleCloseSession(w http.ResponseWriter, r *http.Request) {
+	if !s.authoringOrRefuse(w) || !s.ownRequest(w, r, "close") {
+		return
+	}
+	if _, ok := s.authoring.Session(r.PathValue("id")); !ok {
+		http.Error(w, "no session "+r.PathValue("id"), http.StatusNotFound)
+		return
+	}
+	session, err := s.authoring.CloseSession(context.WithoutCancel(r.Context()), r.PathValue("id"))
+	if err != nil && session.State != authoring.Closed {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+	writeJSON(w, session)
+}
+
+func sessionStatus(err error) int {
+	switch {
+	case errors.Is(err, authoring.ErrNoSessions):
+		return http.StatusNotImplemented
+	case errors.Is(err, authoring.ErrSessionOpen), errors.Is(err, authoring.ErrBusy), errors.Is(err, authoring.ErrLimit), errors.Is(err, authoring.ErrNotClean), errors.Is(err, authoring.ErrSessionClosed):
+		return http.StatusConflict
+	case errors.Is(err, authoring.ErrPrompt):
+		return http.StatusBadRequest
+	case errors.Is(err, authoring.ErrNoSession):
+		return http.StatusNotFound
 	}
 	return http.StatusInternalServerError
 }

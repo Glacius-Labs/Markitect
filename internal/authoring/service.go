@@ -42,11 +42,16 @@ type Service struct {
 	order     []string
 	next      int
 	last      *stand // the latest capture, reused by a proposal from its head
+
+	openSession  SessionOpener
+	sessions     map[string]*session
+	sessionOrder []string
+	sessionNext  int
 }
 
 // New returns a Service for the repository at the given location.
 func New(repository string, capture Capturer, publisher apply.Publisher, lock Locker) *Service {
-	return &Service{repository: repository, capture: capture, publisher: publisher, lock: lock, now: time.Now, proposals: map[string]*proposal{}}
+	return &Service{repository: repository, capture: capture, publisher: publisher, lock: lock, now: time.Now, proposals: map[string]*proposal{}, sessions: map[string]*session{}}
 }
 
 // Proposal is what the owner reviews: the changed files with their
@@ -56,6 +61,8 @@ type Proposal struct {
 	ID      string     `json:"id"`
 	Kind    string     `json:"kind"`
 	Title   string     `json:"title"`
+	Session string     `json:"session,omitempty"`
+	Summary string     `json:"summary,omitempty"`
 	Created time.Time  `json:"created"`
 	Head    string     `json:"head"`
 	Changes []FileDiff `json:"changes"`
@@ -156,9 +163,12 @@ func (s *Service) standFrom(ctx context.Context, head string) (stand, error) {
 	return s.stand(ctx)
 }
 
-// propose checks a changed stand and keeps it as a proposal. allowed limits
-// the paths the proposal may change; anything else is refused.
-func (s *Service) propose(st stand, kind, title string, proposed snapshot.Tree, allowed func(string) bool) (Proposal, error) {
+// propose checks a changed stand and keeps it as a proposal described by
+// made (kind, title and, from a model session, the session and the Agent's
+// summary). allowed limits the paths the proposal may change; anything else
+// is refused.
+func (s *Service) propose(st stand, made Proposal, proposed snapshot.Tree, allowed func(string) bool) (Proposal, error) {
+	kind := made.Kind
 	changes := snapshot.Compare(st.tree, proposed)
 	if len(changes) == 0 {
 		return Proposal{}, ErrNoChange
@@ -170,7 +180,8 @@ func (s *Service) propose(st stand, kind, title string, proposed snapshot.Tree, 
 	}
 	checked := apply.CheckProposal(st.attempt, proposed)
 	p := &proposal{start: st.attempt, changes: changes}
-	p.Kind, p.Title, p.Created, p.Head, p.State = kind, title, s.now().UTC(), st.head, Proposed
+	p.Kind, p.Title, p.Session, p.Summary = made.Kind, made.Title, made.Session, made.Summary
+	p.Created, p.Head, p.State = s.now().UTC(), st.head, Proposed
 	p.Check = Check{Status: string(checked.Status), Findings: checked.Findings}
 	if p.Check.Findings == nil {
 		p.Check.Findings = []apply.ProposalFinding{}

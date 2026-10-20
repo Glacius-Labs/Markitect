@@ -1,7 +1,11 @@
 package apply
 
 import (
+	"errors"
+	"time"
+
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -104,4 +108,33 @@ func proposalClosure(a CapturedPreparationAttempt, tree snapshot.Tree) (RawInput
 	raw.Instructions = add(raw.Instructions, closure.instructions)
 	raw.Ignore = add(raw.Ignore, closure.ignore)
 	return raw, missing
+}
+
+// SessionBasis is what a model session of the cockpit starts from: the
+// structural preparation its proposals are checked against, Root's Execute
+// profile, which runs the session's turns, and the execution budget's turn
+// timeout and Agent-turn limit, which bound one turn and the whole session.
+type SessionBasis struct {
+	Attempt     CapturedPreparationAttempt
+	Profile     string
+	TurnTimeout time.Duration
+	Turns       int
+}
+
+// SessionBasisOf reads the basis of a model session from a passed capture
+// with its settings.
+func SessionBasisOf(a CapturedSettingsAttempt) (SessionBasis, error) {
+	settings, ok := a.Settings().Settings()
+	if !ok {
+		return SessionBasis{}, errors.New("resolved settings are required")
+	}
+	root, ok := settings.Manager(organization.Root)
+	if !ok {
+		return SessionBasis{}, errors.New("Root has no resolved settings")
+	}
+	budget, ok := a.Settings().Budget()
+	if !ok {
+		return SessionBasis{}, errors.New("the execution budget is required")
+	}
+	return SessionBasis{Attempt: a.Structural(), Profile: root.Execute.Profile.Value.Name, TurnTimeout: budget.TurnTimeout.Value, Turns: budget.AgentTurns.Value}, nil
 }

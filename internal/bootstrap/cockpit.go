@@ -9,6 +9,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cockpit"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/authoring"
@@ -17,15 +18,19 @@ import (
 )
 
 // cockpitService serves the cockpit over the selected state directories. A run
-// configuration contributes its state directory; nothing else of it is used.
-// Live views probe the state lock the way the answer command does, and an
-// owner's answer goes through that command's owner channel operation. With a
-// repository, the cockpit also observes the project and makes proposals for
-// its .markitect inputs, published through the repository's guarded
-// publisher while every observed state directory is locked.
+// configuration contributes its state directory and, with a Runtime profile,
+// the container engine, workspace helper, credentials and harvest limits of
+// model sessions. Live views probe the state lock the way the answer command
+// does, and an owner's answer goes through that command's owner channel
+// operation. With a repository, the cockpit also observes the project and
+// makes proposals for its .markitect inputs, published through the
+// repository's guarded publisher while every observed state directory is
+// locked.
 type cockpitService struct {
 	preparation *apply.PreparationService
 	repository  *gitrepo.Repository
+	agents      apply.AgentProfilePreparer
+	checks      apply.CheckProfilePreparer
 }
 
 func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, ready func(url string)) error {
@@ -65,6 +70,9 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 			return c.project(ctx, repository)
 		}
 		proposals = c.authoring(repository, states, fence)
+		if request.RunConfig != "" && request.RuntimeProfile != "" {
+			proposals.WithSessions(c.sessionOpener(repository, request.RunConfig, request.RuntimeProfile))
+		}
 		cfg.Authoring = proposals
 	}
 	server, err := cockpit.New(cfg)
@@ -73,6 +81,9 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 	}
 	err = server.Serve(ctx, request.Listen, ready)
 	if proposals != nil {
+		// A stopping cockpit ends its model sessions and lets a started
+		// publication finish.
+		err = errors.Join(err, proposals.CloseSessions(context.Background()))
 		proposals.Wait()
 	}
 	return err
@@ -193,5 +204,64 @@ func (s stateLocks) Check(ctx context.Context) error {
 func (s stateLocks) release() {
 	for _, l := range s {
 		_ = l.Release()
+	}
+}
+
+// sessionOpener captures the committed source with its settings and the
+// Runtime profile, as an Apply does, and composes a model session's ports from
+// the run configuration: the container engine, the Agents of the prepared
+// profiles with their mapped credentials, and the workspace helper. Session
+// evidence goes to the run configuration's state directory.
+func (c cockpitService) sessionOpener(repository, runConfig, runtimeProfile string) authoring.SessionOpener {
+	return func(ctx context.Context) (authoring.SessionStart, error) {
+		cfg, err := loadRunConfig(ctx, runConfig)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		if err := checkStateOutsideRepository(cfg.StateDirectory, repository); err != nil {
+			return authoring.SessionStart{}, err
+		}
+		selection, err := repositorySelection(repository)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		profile, err := snapshot.NewPath(filepath.Base(runtimeProfile))
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(runtimeProfile), Path: profile}}
+		prepared, err := c.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: selection}, model.Limits{}, c.agents, c.checks)
+		if errors.Is(err, gitrepo.ErrDirty) {
+			return authoring.SessionStart{}, fmt.Errorf("%w (%v)", authoring.ErrNotClean, err)
+		}
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		a, ok := prepared.Prepared()
+		if prepared.Status() != model.Passed || !ok {
+			return authoring.SessionStart{}, fmt.Errorf("the committed source with the Runtime profile does not pass preparation (%s); run markitect check and markitect setup", prepared.Status())
+		}
+		basis, err := apply.SessionBasisOf(a)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		engine, err := container.NewEngine(cfg.EngineExecutable)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		agents, err := newAgents(engine, a.Settings().ProfileObservations(), cfg)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		helper := cfg.WorkspaceHelper
+		helper.Workdir = "/work"
+		workspaces, err := gitrepo.NewWorkspaces(engine, helper)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		return authoring.SessionStart{Basis: basis, Ports: authoring.SessionPorts{
+			Agents: agents, Workspaces: workspaces, RemoveVolume: engine.RemoveVolume, RequireVolumeSubpaths: engine.RequireVolumeSubpaths,
+			MaxEntries: cfg.Harvest.MaxEntries, MaxBytes: cfg.Harvest.MaxBytes, Evidence: cfg.StateDirectory,
+		}}, nil
 	}
 }

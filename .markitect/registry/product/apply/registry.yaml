@@ -415,4 +415,4 @@ artifacts:
   - path: "internal/apply/proposal.go"
     form: code
     realizes: [product/cockpit/accepted-proposals]
-    why: "Prepares a proposed tree against a captured start as markitect check prepares the repository and reports every finding with its stage and location."
+    why: "Prepares a proposed tree against a captured start as markitect check prepares the repository, reports every finding with its stage and location, and reads a model session's basis from a passed capture with settings."

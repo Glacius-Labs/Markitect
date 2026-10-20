@@ -11,12 +11,14 @@ import (
 
 // CockpitRequest selects what the cockpit observes: state directories named
 // directly or through a run configuration, the repository whose identity it
-// shows, and its loopback listen address.
+// shows, and its loopback listen address. A run configuration together with
+// a Runtime profile enables model sessions.
 type CockpitRequest struct {
-	States     []string
-	RunConfig  string
-	Repository string
-	Listen     string
+	States         []string
+	RunConfig      string
+	RuntimeProfile string
+	Repository     string
+	Listen         string
 }
 
 // CockpitFunc serves the cockpit until ctx ends. ready receives the address
@@ -40,6 +42,7 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 	var states manifestList
 	flags.Var(&states, "state", "state directory to observe; repeat")
 	config := flags.String("run-config", "", "run configuration whose state directory to observe")
+	runtimeProfile := flags.String("runtime-profile", "", "Runtime profile that enables model sessions with --run-config")
 	listen := flags.String("listen", "", "loopback address to listen on")
 	repo := flags.String("repo", ".", "repository to observe and propose settings for")
 	if err := flags.Parse(args); err != nil {
@@ -57,7 +60,11 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 		fmt.Fprintln(stderr, "--run-config requires an explicit absolute native path")
 		return 2
 	}
-	request := CockpitRequest{States: states, RunConfig: *config, Repository: *repo, Listen: *listen}
+	if *runtimeProfile != "" && (*config == "" || !filepath.IsAbs(*runtimeProfile) || filepath.Clean(*runtimeProfile) != *runtimeProfile) {
+		fmt.Fprintln(stderr, "--runtime-profile requires --run-config and an explicit absolute native path")
+		return 2
+	}
+	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Repository: *repo, Listen: *listen}
 	err := c.cockpit(ctx, request, func(url string) {
 		emit(map[string]any{"operation": "cockpit", "status": "serving", "url": url})
 	})

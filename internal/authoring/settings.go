@@ -123,7 +123,7 @@ func (s *Service) ProposeSettings(ctx context.Context, edit Settings) (Proposal,
 	if err != nil {
 		return Proposal{}, err
 	}
-	return s.propose(st, "configuration", "Execution settings", tree, func(path string) bool { return path == ExecutionPath })
+	return s.propose(st, Proposal{Kind: "configuration", Title: "Execution settings"}, tree, func(path string) bool { return path == ExecutionPath })
 }
 
 func lookup(tree snapshot.Tree, name string) ([]byte, error) {

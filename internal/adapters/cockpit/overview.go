@@ -102,7 +102,8 @@ func (s *Server) writeProject(w http.ResponseWriter, refresh bool) {
 		States     []string     `json:"states"`
 		Answers    bool         `json:"answers"`
 		Proposals  bool         `json:"proposals"`
-	}{p, observing, s.project.observe != nil, s.stateDirs(), s.answer != nil, s.authoring != nil})
+		Sessions   bool         `json:"sessions"`
+	}{p, observing, s.project.observe != nil, s.stateDirs(), s.answer != nil, s.authoring != nil, s.authoring != nil && s.authoring.SessionsAvailable()})
 }
 
 func (s *Server) stateDirs() []string {

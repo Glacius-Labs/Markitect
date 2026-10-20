@@ -37,8 +37,9 @@ export function renderRuns(app) {
       if (!live()) return;
       answers = Boolean(project.value?.answers);
       const authoring = Boolean(project.value?.proposals);
+      const sessions = Boolean(project.value?.sessions);
       renderProject(sections.project, project, () => refresh(true));
-      renderActions(sections.actions, answers, authoring);
+      renderActions(sections.actions, answers, authoring, sessions);
       if (authoring) settled(api.proposals()).then((proposals) => live() && renderProposals(sections.proposals, proposals));
       else clear(sections.proposals);
       settled(api.questions()).then((questions) => live() && renderQuestions(sections.questions, questions, answers));
@@ -128,8 +129,9 @@ function renderQuestions(section, result, answers) {
 }
 
 function renderProposals(section, result) {
-  clear(section).append(h("div", { class: "projecthead" }, h("h2", { id: "h-proposals" }, "Settings and proposals"),
-    h("a", { class: "btn", href: "#/settings" }, "Change the execution settings")));
+  clear(section).append(h("div", { class: "projecthead" }, h("h2", { id: "h-proposals" }, "Settings, model and proposals"),
+    h("a", { class: "btn", href: "#/settings" }, "Change the execution settings"),
+    h("a", { class: "btn", href: "#/model" }, "Change the model by prompt")));
   if (result.status !== "fulfilled") return section.append(h("p", { role: "alert" }, `The proposals are not readable: ${result.reason.message}`));
   section.append(proposalList(result.value));
 }
@@ -171,13 +173,15 @@ function usage(u) {
   return h("div", { class: "faint" }, `${u.providerTurns} provider steps${cost}`);
 }
 
-function renderActions(section, answers, authoring) {
+function renderActions(section, answers, authoring, sessions) {
   clear(section).append(h("h2", { id: "h-actions" }, "What the cockpit can do"),
     h("dl", { class: "facts" },
       h("dt", {}, "Answer an owner question"),
       h("dd", {}, answers ? "Available above while a running run waits for the answer. It writes through the same owner channel as markitect answer; the run records the answer when it reads it." : "Not configured in this cockpit."),
       h("dt", {}, "Change the execution settings"),
       h("dd", {}, authoring ? "Budget, role profiles, per-Package profiles and team, as a proposal: the structural check judges it, you review the difference, and only your acceptance writes .markitect/execution.yaml. Nothing is committed and no Apply starts." : "Needs the cockpit to be started with --repo PATH."),
+      h("dt", {}, "Change the model by prompt"),
+      h("dd", {}, sessions ? "A model session: your prompt goes to an Agent of Root's Execute profile in a container, which may change only .markitect/model and .markitect/registry of its own copy and proposes. Each prompt is one provider turn within the execution budget's turn timeout and Agent-turn limit; only a proposal you accept writes anything." : "Needs the cockpit to be started with --run-config PATH and --runtime-profile PATH."),
       h("dt", {}, "Start an Apply"),
       h("dd", {}, "Not offered. Start it with markitect apply --run-config PATH --runtime-profile PATH; it appears here while it runs. Starting from the cockpit would start provider work; whether it should is an owner decision that has not been made."),
       h("dt", {}, "Stop a run"),
