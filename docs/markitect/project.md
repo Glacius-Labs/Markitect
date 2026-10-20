@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:7df87d2038e110a1e9f102ef2c628bcda292806054a602280c022ea5d7a234ed`.
+Canonical model digest: `sha256:cd61522f638eb3c05dda8917bf2737063117be62d19ef5980e281b2e03a61cda`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -169,6 +169,18 @@ Acquire explicitly selected model and control inputs through consumer-owned port
 Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cli/honest-read-only-interface.yaml` (original bytes `sha256:c89e18fbcd585cc136a12645feebc774c917b82904fe33001a68a1461d8293dc`).
 
 Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. Apply, answer and extract act only with an explicit Runtime profile and run configuration and report the actual run status, Passes, findings, questions, publication, Run outcome and retained work; an answer binds to the exact run and question that asked. Usage, known failure and incomplete work have distinct exit statuses.
+
+### product/cockpit/accepted-proposals
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/accepted-proposals.yaml` (original bytes `sha256:b1f3229b9c63d56e01e1ea8468c8bd04a8d0916beaf633a78035441b803fedee`).
+
+Changes to the canonical model and to the execution settings made through the cockpit are proposals against the captured committed source: the Model check and the File check judge each proposal, the owner sees its changed files and Definitions, and only the owner's explicit acceptance of a proposal whose checks pass writes it, through Apply's guarded publication with read-back, without committing, while no Apply holds an observed state directory. A publication that is not applied leaves the proposal unaccepted and shows every path's read-back state. The execution settings' budget, role profiles, per-Package profile overrides and team are edited through a form whose result is judged like a hand-edited file; ownership, the top-level and per-Package instructions, scope and checks stay as written. A model proposal comes from an Agent session the owner prompts: it runs through the Runtime adapters in a Linux container with the Execute profile, may write only the model and registry of its own workspace, continues its provider conversation across the owner's prompts, takes a provider turn only for an owner's prompt within the execution budget's turn timeout and Agent-turn limit, retains its prompts, usage and transcript as evidence, never writes the owner's working tree, and reports a model it finds contradictory instead of repairing it. Accepting a proposal starts no Apply; the cockpit starts and stops no Apply and changes no Runtime profile, credential or run configuration.
+
+### product/cockpit/observed-run-inspection
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/observed-run-inspection.yaml` (original bytes `sha256:29290969397b97b424beaed7c215e7f3fe220ccb74a14eb19f4d5ee87db0599b`).
+
+Present runs only through their recorded evidence under the state directory: the events, transcripts and report of each run, read as consistent prefixes up to an explicit record boundary; nothing recorded after the boundary reaches its view, and the report appears only at the final boundary. Show the organization, current work, recorded waits with the records and participants they name, exchanges with their direction and their author (an Agent, the Orchestrator or the owner channel), Passes, candidates, checks, findings, questions and the publication's read-back as recorded. Never infer a delivery, a reading, a correlation, a success or an authority the record does not establish; show outdated waits, missing outcomes or reports, unreadable or unknown records and absent bindings as limitations. Live observation adds newly recorded evidence without duplicates or gaps, keeps the run's current state and the link's health apart from the recorded boundary, and keeps a boundary the user chose until the user returns to live. The cockpit entry shows the project's bound model and source as structural preparation observes them, the running runs, the owner questions and the run history with outcomes and publications. Its only action is an owner's answer to an open question that a running run waits for, written after an explicit confirmation through the owner channel the answer command uses; a written answer is shown as written, not as recorded, until the run records it, and an answer clarifies within the model without changing it. Starting and stopping runs are not offered; reading, replay, pause, selection and reconnection start, stop, repair and publish nothing, and the view serves only the local machine.
 
 ### product/documents/guarded-model-view
 

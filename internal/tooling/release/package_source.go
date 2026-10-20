@@ -77,7 +77,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		if ext != ".go" && !embeddedNotices(rel) && rel != embeddedStrategyDefaultsPath && !sourceTestData(rel) {
+		if ext != ".go" && !embeddedNotices(rel) && rel != embeddedStrategyDefaultsPath && !embeddedCockpitWeb(rel) && !sourceTestData(rel) {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)
@@ -163,7 +163,7 @@ func appendRegularFile(moduleDir, relative string, files *[]sourceFile, required
 func normalizeTextSource(name string, data []byte) ([]byte, error) {
 	base := strings.ToLower(filepath.Base(name))
 	ext := strings.ToLower(filepath.Ext(base))
-	isText := base == "go.mod" || base == "go.sum" || base == "license" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml"
+	isText := base == "go.mod" || base == "go.sum" || base == "license" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml" || embeddedCockpitWeb(name)
 	if !isText {
 		return data, nil
 	}
@@ -196,4 +196,19 @@ func requireRealDirectory(dir string) error {
 
 func embeddedNotices(name string) bool {
 	return name == embeddedNoticesPath
+}
+
+const embeddedCockpitWebDir = "internal/adapters/cockpit/web/"
+
+// embeddedCockpitWeb selects the cockpit's page, style and script files, which
+// its Go package embeds and serves.
+func embeddedCockpitWeb(name string) bool {
+	if !strings.HasPrefix(name, embeddedCockpitWebDir) {
+		return false
+	}
+	switch strings.ToLower(filepath.Ext(name)) {
+	case ".html", ".css", ".js":
+		return true
+	}
+	return false
 }

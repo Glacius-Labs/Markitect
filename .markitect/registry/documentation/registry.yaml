@@ -1860,6 +1860,22 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/cockpit-entry-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    why: "Records the cockpit entry and owner answer slice: checks, a demonstration with a re-fed run and the owner channel, and what remains unproved."
+  - path: "docs/validation/cockpit-configuration-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/accepted-proposals]
+    why: "Records the cockpit's configuration proposal slice: checks, a demonstration on a scratch clone and what remains unproved."
+  - path: "docs/validation/cockpit-live-observation-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    why: "Records the cockpit's live observation slice: checks, a demonstration with re-fed recorded evidence and what remains unproved."
+  - path: "docs/validation/cockpit-run-inspector-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    why: "Records the cockpit's first slice on recorded runs: checks, UI behavior, real history inspection, the outdated-wait producer limitation and what remains unproved."
   - path: "docs/validation/apply-stability-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]

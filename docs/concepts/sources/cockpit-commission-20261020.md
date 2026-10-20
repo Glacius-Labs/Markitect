@@ -29,3 +29,16 @@ Recorder context: the assistant proposed a project entry point connected to Run 
 Interpretation: this authorizes integrating the [cockpit concept](../../design/cockpit.md) and [Claude handoff](../../development/claude-cockpit-handoff-20261020.md) as documentation. It does not ask this chat to implement the product UI, start Claude, resume an old session or run providers. The requested Claude prompt supplies the later explicit assignment. The scoped cockpit direction refines the former broad deferral; it does not dispatch the other parked Government/personal-AI ideas or replace Apply's current behavioral owner.
 
 Source reconciliation for the documentation: the originating checkout was on an older design branch. Fresh Main at `8eedb5385e03683d454a705ad7cdd9a3c589f299` contains the DEC-064 Pass implementation and current file-based runtime evidence. The concept therefore follows Plan/Prepare/Implement and independent Verify, Orchestrator/Runtime vocabulary and the actual read boundary, rather than turning the synthetic example's Explore/local-review phases or historical SQLite proposal into a new product contract.
+
+## Working through the cockpit
+
+Source: the owner's direct message and option choices to Claude Code in the cockpit implementation session (Claude Code session `40a900e8`), 20 October 2026, after the run inspector, live observation and cockpit entry were merged (Main `7cf8647e`). The quotation is verbatim.
+
+> Idealerweise würden wir das Model über das Cockpit anpassen können durch Prompts, die dann direkt an die claude oder Codex cli gehen. Ausserdem sollten dann auch die Agenten Teams konfiguriert etc werden können. So könnten wir über das Cockpit arbeiten.
+
+Recorder context: Claude answered that this is feasible, that the concept so far kept conversational model editing as a later extension and the delivery plan prioritizes Apply stabilization, and proposed configuration through forms first and agent-proposed model changes second, with the owner accepting every change. It named two guardrails: Agents run in Linux containers per DEC-037 rather than through the CLI on the host, and every session costs provider budget and needs the owner's approval with a limit („Freigabe samt Limit“). Claude asked two questions with fixed options. The owner chose:
+
+- When to start: „Jetzt beginnen (Empfehlung)“, described as recording the decision in the concept and delivering team and execution configuration without an Agent first, then model proposals by an Agent, while the Apply hardening stream continues independently.
+- Where the Agents run: „Container (Empfehlung)“, described as through the existing Claude and Codex adapters in Linux containers ([DEC-037](../register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)) with Runtime profile and budget.
+
+Interpretation: this adopts the [cockpit concept's](../../design/cockpit.md#working-through-the-cockpit) working-surface slices recorded as [DEC-065](../register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration). It does not adopt Government, delegated model maintenance, a personal AI beyond these sessions, an automatic Apply after a change, or a provider turn without the owner's prompt and the configured budget limits.

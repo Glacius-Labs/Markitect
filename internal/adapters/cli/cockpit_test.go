@@ -1,0 +1,71 @@
+package cli
+
+import (
+	"bytes"
+	"context"
+	"errors"
+	"path/filepath"
+	"slices"
+	"strings"
+	"testing"
+)
+
+func TestCockpitPassesItsSelectionAndReportsWhereItServes(t *testing.T) {
+	var got CockpitRequest
+	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, ready func(string)) error {
+		got = r
+		ready("http://127.0.0.1:7341/")
+		return nil
+	})
+	var out, errout bytes.Buffer
+	config := filepath.Join(t.TempDir(), "run.json")
+	args := []string{"cockpit", "--state", "a", "--state", "b", "--run-config", config, "--listen", "127.0.0.1:9000"}
+	if code := c.Run(context.Background(), args, &out, &errout); code != 0 {
+		t.Fatalf("%d: %s %s", code, out.String(), errout.String())
+	}
+	if !slices.Equal(got.States, []string{"a", "b"}) || got.RunConfig != config || got.Listen != "127.0.0.1:9000" {
+		t.Fatalf("request = %+v", got)
+	}
+	if !strings.Contains(out.String(), `"url": "http://127.0.0.1:7341/"`) || !strings.Contains(out.String(), `"serving"`) {
+		t.Fatal(out.String())
+	}
+}
+
+func TestCockpitRefusesIncompleteSelectionsAndReportsFailures(t *testing.T) {
+	calls := 0
+	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(context.Context, CockpitRequest, func(string)) error {
+		calls++
+		return errors.New("listen address is not a loopback address")
+	})
+	for _, args := range [][]string{{"cockpit"}, {"cockpit", "--run-config", "relative.json"}, {"cockpit", "--state", "a", "extra"}} {
+		var out, errout bytes.Buffer
+		if code := c.Run(context.Background(), args, &out, &errout); code != 2 {
+			t.Fatalf("%v = %d", args, code)
+		}
+	}
+	if calls != 0 {
+		t.Fatal("an incomplete selection reached the cockpit")
+	}
+	var out, errout bytes.Buffer
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 || !strings.Contains(out.String(), "loopback") {
+		t.Fatalf("%d %s", code, out.String())
+	}
+	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 {
+		t.Fatalf("an unconfigured cockpit = %d", code)
+	}
+}
+
+func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
+	var got CockpitRequest
+	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+		got = r
+		return nil
+	})
+	var out, errout bytes.Buffer
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 0 || got.Repository != "." {
+		t.Fatalf("%d: repository %q", code, got.Repository)
+	}
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a", "--repo", "other"}, &out, &errout); code != 0 || got.Repository != "other" {
+		t.Fatalf("%d: repository %q", code, got.Repository)
+	}
+}
