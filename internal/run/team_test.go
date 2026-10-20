@@ -100,7 +100,7 @@ func TestManagerTurnsMountHelperSubsetsReadOnly(t *testing.T) {
 	}
 	m.stage = stageDelegated
 	if readOnly, mounts := e.mountsLocked(m); !readOnly || len(mounts) != 0 {
-		t.Errorf("a delegating parent's area stays writable: %v %+v", readOnly, mounts)
+		t.Errorf("a delegating parent's area is read-only: %v %+v", readOnly, mounts)
 	}
 }
 
