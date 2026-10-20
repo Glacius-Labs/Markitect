@@ -2,7 +2,7 @@
 
 This register records Markitect's long-term vision, product-level decisions, clarifications, endorsed directions, promises, assumptions, concepts, future enhancements, ideas and open questions. Each entry has a status and an origin. "Owner" means Markitect's product owner. The [concept record guide](README.md) defines entry types, statuses and the rules for changing entries. The [vision](../vision.md) presents the thesis these entries support. Earlier collections from the Concepts and Ideas chats are preserved in the [sources](sources/README.md) and mapped [below](#imported-collections).
 
-**Current Apply reading:** [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) amends conflicting process choices in DEC-036, DEC-039 to DEC-041, DEC-043 and DEC-045 to DEC-055. [DEC-058](#dec-058-apply-always-executes-before-independent-verify) subsequently replaces DEC-056's initial Verify with Execute and integration first for every Apply. Dated entries remain historical decision records. The [current Apply concept](../design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the accepted target and remaining engineering details; the runtime contract still records the preceding implemented sequence. Documentation is not implementation evidence.
+**Current Apply reading:** [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) and the [accepted workflow](../design/canonical-model/manager-apply-workflow.md) now own the target: strict checks, Plan/Prepare/Implement, separate independent Verify, explicit states/events, tree-routed questions and local teams. It refines DEC-056/058, supersedes DEC-062 and amends DEC-063 and conflicting naming/layout choices. Dated entries retain their original decisions and evidence. The [Claude handoff](../development/claude-apply-implementation-handoff-20261020.md) prepares implementation; the runtime contract and canonical self-model still describe earlier implemented behavior. Adoption is not implementation or runtime evidence.
 
 ## Index
 
@@ -74,8 +74,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implemented (PR #472) |
 | [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implemented |
 | [DEC-061](#dec-061-what-an-extracted-model-contains) | Decision | What an extracted model contains | Accepted; implemented |
-| [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Accepted; implemented |
-| [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate) | Decision | The model is authoritative; defects escalate | Accepted; implemented |
+| [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Superseded by DEC-064; earlier behavior implemented |
+| [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate) | Decision | The model is authoritative; defects escalate | Amended by DEC-064; model authority retained |
+| [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Accepted; implementation prepared |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -551,6 +552,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-042 Orchestrator names the deterministic coordination component
 
+**Current disposition, 20 October 2026:** DEC-064 retains Orchestrator and removes the earlier allowance for competing current code/config/CLI names; literal hosts and history retain their meaning.
+
 - **Status:** Accepted, owner, 17 October 2026 ([source](sources/orchestrator-terminology-20261017.md#owner-instruction)).
 - **Statement:** Use **Orchestrator** for Markitect's deterministic coordination component previously called Host. The Manager responsibilities and the accepted process are unchanged.
 - **Boundary:** Update current documentation and its generated sources. Keep historical sources and literal quotations unchanged. Existing API identifiers, wire/configuration fields and CLI options keep their implemented names; this decision does not dispatch an implementation rename or alter the ongoing Apply work. A host machine remains a host machine.
@@ -679,6 +682,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-056 Recursive reconciliation with a shared workspace
 
+**Current disposition, 20 October 2026:** DEC-058 removed initial Verify; DEC-064 now specifies the accepted common Pass mechanism and Execute decomposition. Read the current workflow before implementing this dated entry.
+
 - **Status:** Accepted direction, owner, 19 October 2026 ([verbatim owner source](sources/recursive-apply-simplification-20261019.md)). Implemented under the owner's [implementation dispatch](sources/recursive-apply-implementation-20261019.md) and merged (PR #463); pending owner acceptance. The implemented technical contract is [manager-apply-runtime.md](../design/canonical-model/manager-apply-runtime.md); real library runs are recorded in the [demonstration](../validation/recursive-apply-demonstration-20261019.md) and the [repetitions](../validation/recursive-apply-repetitions-20261019.md).
 - **Decision:** Keep the permanent recursive Manager organization. Define ownership before Apply through persistent artifact areas with mirrored model structure as the default, explicit persistent exceptions and deepest-owner responsibility. Resolve those areas even before artifact directories exist. Managers create/register their own files in per-area registry shards. Initially trust write boundaries and observe violations; technical ownership enforcement is future work. All communication is strictly parent/child, and only Root asks the human.
 - **Start-from-model clarification (owner, 19 October 2026):** The next library demonstration starts without application artifacts or prepared internal APIs. Necessary execution controls and explicit model contracts remain inputs. Root supplies root-owned shared prerequisites; Managers create their own interfaces/artifacts and coordinate dependencies through the tree. No external cross-area skeleton or stub/API preparation may hide this work. See the [owner confirmation](sources/recursive-apply-simplification-20261019.md#default-layout-and-model-only-start) and [library walkthrough](../design/canonical-model/manager-apply-library-flow.md#first-apply-m1-to-a1).
@@ -715,12 +720,16 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-059 Enforced responsibilities, build start and an outside oracle
 
+**Current disposition, 20 October 2026:** DEC-064 preserves enforcement and the outside oracle while replacing the mirrored/default and Root-only exact-file restrictions with explicit most-specific directory/file ownership for all Managers.
+
 - **Status:** Accepted, owner, 19 October 2026, after the first real library demonstration ([verbatim owner source](sources/ownership-build-order-oracle-20261019.md), [validation record](../validation/recursive-apply-demonstration-20261019.md)). Implemented and merged (PR #472); demonstrated three times ([record](../validation/recursive-apply-repetitions-20261019.md)).
 - **Responsibilities:** A parent must not take over its children's work or tell them they need do nothing. Under a declared layout, ownership is now enforced in the shared working tree: an Execute turn may write only its own areas and registry shard; everything else, including protected inputs and the children's areas, is read-only. Root owns the files directly in an artifact root and every file outside the roots; a subdirectory of an artifact root needs an owning Package directory or a persistent exception. Briefs name each child's areas and Definitions and the parent's role (supply foundations, coordinate, integrate). This amends DEC-056's "initially trust, enforce later" for projects with a declared layout; without a layout ownership stays trusted.
 - **Build start:** Superseded within the same day by [DEC-058](#dec-058-apply-always-executes-before-independent-verify)'s single process, which the owner chose to implement right away: every Apply starts at Root, each child begins when its parent's first Execute turn has supplied the foundation, and there is no special route for areas without artifacts.
 - **Oracle:** The independent library oracle observes once after each Apply, outside the process. It is no longer a required check and gives the Agents no feedback.
 
 ### DEC-060 Owners realize, others use; parents settle cross-area matters
+
+**Current disposition, 20 October 2026:** DEC-064 preserves owner realization and parent coordination; its concrete Plan Pass replaces the planning-only-as-fallback choice below.
 
 - **Status:** Accepted, owner, 19 October 2026, after the [three repeated demonstrations](../validation/recursive-apply-repetitions-20261019.md) ([verbatim owner source](sources/owner-realizes-others-use-20261019.md)). Implemented in the Briefs, the Verify guidance and the self-model, together with the first Extract.
 - **Decision:** A Definition is realized by the artifacts of the Manager that owns it. Other areas use that realization rather than rebuilding it, and no Manager touches anything outside its own area. Cross-area matters between children are settled by their parent: it decides which child's realization provides a shared rule or interface and coordinates the others to use it.
@@ -738,6 +747,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-062 Start-stand drift is the owner's first work
 
+**Current disposition, 20 October 2026:** Superseded by DEC-064: initial File check is strictly blocking and does not admit accounting repair work. Historical drift runs below remain evidence for the former contract.
+
 - **Status:** Accepted, owner, 19 October 2026, after a drift scenario stopped in preparation ([verbatim owner source](sources/start-stand-drift-20261019.md)). Implemented in Apply's preparation and engine ([runtime contract](../design/canonical-model/manager-apply-runtime.md#candidate-accounting-and-protected-inputs)).
 - **Decision:** Accounting drift of the committed starting stand that a Manager can repair in its own area and registry shard no longer refuses Apply under a declared layout, which names that Manager. Without a layout no Manager owns such a file, and preparation still refuses. Examples are a file that no shard registers, a registration of a missing file or of an unknown Definition, and a registration outside the registrant's area. Each finding reaches the owning Manager as part of its first Execute work, as DEC-058's "correct deviations within its authority" says. The usual whole-candidate Verify then confirms the repair.
 - **Still refused:** control faults that no Manager can repair: an invalid or unreadable registry or layout, changed protected inputs, and a file that no Manager owns under the persistent layout (`layout.no_owner`). Only the owner changes the layout, and removing such a file is no repair. A Git-ignored untracked file is local to its developer rather than drift of the committed project; it still needs an entry in `.markitect/ignore.yaml`.
@@ -745,12 +756,26 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-063 The model is authoritative; defects escalate
 
+**Current disposition, 20 October 2026:** Amended by DEC-064: questions and compatible clarification may proceed through parents to the user. Actual model error/contradiction still requires Root to stop. The blanket question ban and automatic boundary-underspecification refusal below are historical.
+
 - **Status:** Accepted, owner, 19 October 2026, after the contradiction and owner-question scenarios of the Apply evidence ([verbatim owner source](sources/model-defects-escalate-20261019.md)). Implemented after the Apply evidence report ([#492](https://github.com/Glacius-Labs/Markitect/issues/492)): the Apply mandate states the rule, and Root's tool `model_defect` ends the run ([runtime contract](../design/canonical-model/manager-apply-runtime.md#reconcile-cycle)).
 - **Decision:** Apply never repairs the model. What the model states always holds, and no answer may contradict it. A Manager that cannot settle a matter within the model escalates it to its parent. The parent settles it when the model allows, for example which child realizes a shared rule, a tool or environment question, or an internal technical choice. Otherwise it escalates further, up to Root.
 - **At Root:** A model defect is reported to the owner and ends the run at once, visibly Incomplete with a model-defect report. A model defect is a model that contradicts itself, or a gap that changes behavior at the project boundary. Nothing is published, the work is retained, the owner corrects the model, and a new Apply follows. No run-only answer settles a model defect.
 - **No owner questions in Apply (owner, 19 October 2026, [same source](sources/model-defects-escalate-20261019.md#follow-up-one-way-out)):** In the scenario RA-Q2, Root recognized a boundary gap but asked it as an ordinary owner question and continued with the answer. The owner therefore chose one way out: Apply asks the owner nothing mid-run. Whatever Root cannot settle within the model and the bound owner decisions is reported with the model-defect report, and the run ends. Extract keeps its owner questions.
 - **No escalation:** A gap without effect at the project boundary is realization freedom ([DEC-061](#dec-061-what-an-extracted-model-contains)'s boundary criterion). The Manager decides it and documents the choice.
 - **Amends:** Owner questions of [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) and run-wide owner decisions of [DEC-053](#dec-053-owner-decisions-bind-the-whole-run). Bound owner decisions remain for decisions within the model and no longer settle a contradiction or a boundary gap of the model. Mid-run owner questions no longer exist in Apply.
+
+### DEC-064 Checked recursive Apply passes and Manager teams
+
+- **Status:** Accepted by the owner, 20 October 2026; implementation handoff prepared locally, no runtime change or new provider evidence. [Verbatim adoption and conversation](sources/terminology-and-file-accounting-20261020.md#owner-adoption-and-implementation-preparation).
+- **Behavior owner:** [Apply workflow and recursive Manager passes](../design/canonical-model/manager-apply-workflow.md). Apply is the complete workflow; Execute groups Plan, Prepare and Implement; Verify is an independent separate Pass afterward. All use one parent-first recursive mechanism with explicit basis acceptance, child work, bidirectional tree questions and upward integration.
+- **Strict gates:** Model check and separate File check block before work and at accepted Pass boundaries. No automatic model/accounting repair or initial drift exception remains. New owned files may be created during work, but validly registered/covered before accepted basis/completion. Registered semantic artifact defects remain normal owner work.
+- **Ownership:** Flexible repository layouts, repository-relative local registries, whole-directory and exact-file selectors, most-specific unambiguous ownership, enforced per-Agent container writes and project-wide reads. Managers author only their own shards; the Orchestrator alone produces the checked read-only versioned global view.
+- **Results and communication:** Ready/Working/Waiting/Done scheduling; Problem as a structured report/event; separate Pass verdict and Success/Failed/Incomplete Run outcome. A Turn ending is never completion. Questions travel only between direct parent/child Managers; Root may ask the invoking AI/user. No answer overrides the model; Root aborts actual model errors/contradictions.
+- **Completeness:** Every required Manager has its own concrete plan and realization, with parents reviewing fit and integrating rather than taking over child responsibilities. Fresh candidate-bound Verify retains genuine findings until independently closed. Correction uses the needed ordinary work Passes and complete fresh Verify. Clean means no unresolved genuine finding, followed by guarded Publish/read-back.
+- **Tools and teams:** Small lookup/check/send/report methods, escalation through the parent, reusable method Skills and a standard Manager/Worker/independent-Reviewer template with configurable specialists. Helpers add no owners, global write authority or cross-tree channels.
+- **Supersession:** Supersedes DEC-062, the blanket question ban/boundary-gap rule in DEC-063, competing-name compatibility in DEC-042, earlier restrictive layout choices, planning only as a fallback, implicit Turn completion and conflicting discussion variants. Retains model authority, owner realization, fixed inputs, observed stop, finite limits, exact candidate checks, outside oracles and guarded publication. See the workflow's explicit preservation table.
+- **Delivery:** The [Claude handoff](../development/claude-apply-implementation-handoff-20261020.md) defines code seams, sequence, acceptance scenarios and evidence. This preparation starts no Claude/provider session, release or Main merge. Shared Extract behavior must remain intact; historical reports are not rewritten as evidence for this design.
 
 ## Promises
 

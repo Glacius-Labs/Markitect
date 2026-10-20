@@ -1,5 +1,7 @@
 # Library Apply propagation and integration
 
+**Dated prior design:** [DEC-064 and the accepted workflow](manager-apply-workflow.md) supersede conflicting process rules here. The [Claude handoff](../../development/claude-apply-implementation-handoff-20261020.md) owns the new assignment and acceptance cases. Preserve this page's earlier sequence/evidence; do not treat it as the current target.
+
 ## Current library walkthrough
 
 **Status, 19 October 2026:** agreed conceptual workflow under [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), amended by [DEC-058](../../concepts/register.md#dec-058-apply-always-executes-before-independent-verify) to start every Apply with Execute and integration, followed by independent Verify. The [current Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the target behavior. The [implemented runtime contract](manager-apply-runtime.md) describes the implementation, and the [repeated demonstrations](../../validation/recursive-apply-repetitions-20261019.md) record real runs of this walkthrough. The earlier walkthrough below is a superseded reference.

@@ -1,9 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
-  - path: "docs/design/canonical-model/apply-passes-discussion-20261020.md"
+  - path: "docs/development/claude-apply-implementation-handoff-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Elaborates the owner's local Apply discussion into a proposed recursive Pass contract, lifecycle, concrete Plan/Prepare/Implement behavior and minimal tools/Skills, preserving accepted and unimplemented boundaries.
+    why: Prepares the bounded Claude assignment for the accepted Apply concept with code seams, migration order, behavioral acceptance cases, evidence limits and a copyable startup prompt.
+  - path: "docs/design/canonical-model/manager-apply-workflow.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Owns the accepted recursive Apply workflow, strict checks, ownership, Passes, results, tools and Manager teams while distinguishing the target from implementation evidence.
   - path: "docs/concepts/sources/terminology-and-file-accounting-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
