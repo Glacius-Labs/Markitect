@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry. Coordinate dependencies and integration through your parent and children. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
+const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry; change nothing that already conforms, and leave out improvements the model does not require. Coordinate dependencies and integration through your parent and children. The model always holds and is never yours to repair: a contradiction in it, or a gap that changes behavior at the project boundary, goes to your parent instead of being decided by you; a choice it leaves open inside the project is yours. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
 
 // blockingGuidance defines what blocks in Verify for Apply: the part of the
 // Verify prompt that Config.VerifyGuidance replaces.
@@ -86,7 +86,7 @@ func initialItem(m *mgr) string {
 		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")
 	}
 	if len(m.Children) > 0 {
-		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: where none exists, create it; where one exists, assess it against your obligations and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
+		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: project scaffolding such as the module and build files, never a realization of their Definitions. Where none exists, create it; where one exists, assess it against your obligations and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. When several children need a rule or type that one of them owns, decide that its owner provides it in a part the others can use without a dependency cycle. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
 	}
 	return b.String()
 }
@@ -152,10 +152,13 @@ func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string 
 	for _, c := range m.Children {
 		contacts = append(contacts, "child: "+contact(e.byPath[c]))
 	}
-	if m.Parent == "" {
+	if m.Parent == "" && e.cfg.Owner != nil {
 		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
 	}
 	list(&b, "Your contacts for the tool send:", contacts)
+	if m.Parent == "" && e.cfg.DefectTool {
+		b.WriteString("\nWhat the model and the owner decisions settle, you decide within the tree. A defect of the model itself goes to the owner only through the tool model_defect, which ends the run.\n")
+	}
 	check := ""
 	if e.cfg.CheckTool {
 		check = checkNote

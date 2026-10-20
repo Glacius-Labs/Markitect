@@ -3,13 +3,24 @@ package run
 import "encoding/json"
 
 // Host tool names. Execute turns send and finish, and check when Config offers
-// it; Verify turns assess.
+// it; Root's Execute turns also model_defect when Config offers it; Verify turns
+// assess.
 const (
 	toolSend   = "send"
 	toolFinish = "finish"
 	toolCheck  = "check"
+	toolDefect = "model_defect"
 	toolAssess = "assess"
 )
+
+const defectSchema = `{
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["text"],
+  "properties": {
+    "text": {"type": "string", "description": "The defect: the statements of the model that contradict each other, or the behavior at the project boundary the model leaves undecided, naming the Definitions concerned."}
+  }
+}`
 
 const checkSchema = `{
   "type": "object",
@@ -124,11 +135,17 @@ const assessSchemaSubjects = `{
   }
 }`
 
-func executeTools(root, check bool) []ToolSpec {
+// executeTools lists the Execute tools of a Manager: owner says that Root can
+// ask the human through send (Config.Owner), defect that Root reports model
+// defects (Config.DefectTool).
+func executeTools(root, owner, check, defect bool) []ToolSpec {
 	to := "Send a message to your parent (to \"parent\") or to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
 	finish := "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts. The summary of done reaches your parent, so it needs no separate message."
 	if root {
-		to = "Send a message to a direct child (to its path) or ask the human owner (to \"owner\"). Other recipients are refused. The answer returns what has arrived for you."
+		to = "Send a message to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
+		if owner {
+			to = "Send a message to a direct child (to its path) or ask the human owner (to \"owner\"). Other recipients are refused. The answer returns what has arrived for you."
+		}
 		finish = "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts."
 	}
 	tools := []ToolSpec{
@@ -137,6 +154,9 @@ func executeTools(root, check bool) []ToolSpec {
 	}
 	if check {
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Check the current shared working tree: returns the findings of the project's accounting, yours first. Other Managers may still be writing, so the answer is advice; an uncertain observation is refused with the reason.", InputSchema: json.RawMessage(checkSchema)})
+	}
+	if root && defect {
+		tools = append(tools, ToolSpec{Name: toolDefect, Description: "Report a defect of the model itself to the owner: statements that contradict each other, or a gap that changes behavior at the project boundary. The run ends at once without publishing anything; the owner corrects the model and starts a new Apply. A decision the model leaves open inside the project is no defect.", InputSchema: json.RawMessage(defectSchema)})
 	}
 	return tools
 }

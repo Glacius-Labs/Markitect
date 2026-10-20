@@ -177,6 +177,30 @@ func workspaceAdapter(t *testing.T) (*Workspaces, *workspaceFake) {
 	}
 	return w, f
 }
+func TestWorkspaceHelperNamesDifferAcrossAdaptersWithTheSameHelper(t *testing.T) {
+	// Two processes with the same Host configuration each start their
+	// sequence at 1; the workspace part keeps their helper names apart.
+	tree := workspaceTree(t, workspaceEntry(t, "a", snapshot.Regular, "a"))
+	first, firstFake := workspaceAdapter(t)
+	second, secondFake := workspaceAdapter(t)
+	if _, err := first.Materialize(context.Background(), run.WorkspaceSpec{ID: "run-a-work", Tree: tree}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := second.Materialize(context.Background(), run.WorkspaceSpec{ID: "run-b-work", Tree: tree}); err != nil {
+		t.Fatal(err)
+	}
+	names := make(map[string]bool)
+	for _, spec := range append(slices.Clone(firstFake.helpers), secondFake.helpers...) {
+		if names[spec.Name] || !strings.HasPrefix(spec.Name, "host-workspace-") {
+			t.Fatalf("helper name %q repeats or lost its prefix", spec.Name)
+		}
+		names[spec.Name] = true
+	}
+	if len(names) < 2 {
+		t.Fatal("no helpers observed")
+	}
+}
+
 func TestWorkspaceMaterializesExactArchiveAndReadback(t *testing.T) {
 	w, f := workspaceAdapter(t)
 	tree := workspaceTree(t, workspaceEntry(t, "lib/λ [a].go", snapshot.Regular, "\x00\xff\r\n"), workspaceEntry(t, "bin/run", snapshot.Executable, "#!/bin/sh\n"), workspaceEntry(t, "empty", snapshot.Regular, ""))

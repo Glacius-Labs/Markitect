@@ -106,10 +106,15 @@ tool refuses a report whose `satisfied` contradicts the raiser's open blocking f
   `owner`; anything else is refused with the allowed contacts. An answer also returns the
   caller's new undelivered items. `finish {status: done|waiting, summary}` records how the turn
   ends (a later call replaces it; the turn ends when the provider stops and the tools stay usable
-  until then); a turn that ends without it counts as done. Without an `Owner`, a question is refused.
+  until then); a turn that ends without it counts as done. Without an `Owner` (Apply passes none),
+  Root's `send` does not offer `owner` and a question is refused, with a pointer to `model_defect`
+  when `Config.DefectTool` is set.
   Questions are numbered `Q1`, `Q2`, ... (within a run, a refused question keeps its number); `Config.Questions` hands a run the answered
   questions of an earlier run on the same owner channel, which the prompts show and whose
   numbering new questions continue.
+- Execute, Root only, with `Config.DefectTool` (Apply sets it): `model_defect {text}` reports a
+  defect of the model itself (DEC-063), records `model.defect` and ends the run at once,
+  Incomplete with the reason `ModelDefectReason` plus the report; nothing is published.
 - Execute, with `Config.CheckTool` (Apply and Extract set it): `check {scope?}` peeks the shared volume through
   `Workspaces.Peek` (writers keep running), runs `Account` on the peeked tree and answers with
   the findings as compact text, the calling Manager's first and then the number of others

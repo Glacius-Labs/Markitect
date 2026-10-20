@@ -172,6 +172,12 @@ type Evidence interface {
 // with the initial item; like every structural finding it holds only for the
 // stand it was observed on and is closed when round 1 starts, where Account
 // observes the candidate afresh.
+//
+// DefectTool offers Root's Execute turns the Host tool "model_defect" (DEC-063):
+// Root reports a defect of the model itself, a contradiction or a gap that
+// changes behavior at the project boundary, and the run ends at once Incomplete
+// with ModelDefectReason and the report as its reason. Apply sets it; Extract,
+// which writes the model, does not.
 type Config struct {
 	RunID          string
 	Team           []Manager
@@ -200,7 +206,12 @@ type Config struct {
 	// handlers at the same time, so it must be safe for concurrent use.
 	ResolveDefinition func(snapshot.Tree, string) bool
 	StartFindings     []Finding
+	DefectTool        bool
 }
+
+// ModelDefectReason begins the Incomplete reason of a run that Root ended with a
+// model defect report; the report follows it.
+const ModelDefectReason = "model defect reported by Root: "
 
 // Status is the result of a run.
 type Status string
@@ -209,8 +220,9 @@ const (
 	// Verified: every Manager assessed the same immutable candidate in a fresh
 	// Verify, no blocking finding is open and every required check passed on it.
 	Verified Status = "verified"
-	// Incomplete: the budget ended, an owner question stayed open, or
-	// quiescence, capture or evidence was uncertain. Nothing may be published.
+	// Incomplete: the budget ended, an owner question stayed open, Root reported a
+	// model defect, or quiescence, capture or evidence was uncertain. Nothing may
+	// be published.
 	Incomplete Status = "incomplete"
 	// Failed: a definite error of the run's inputs or ports.
 	Failed Status = "failed"

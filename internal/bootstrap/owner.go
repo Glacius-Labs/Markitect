@@ -14,13 +14,13 @@ import (
 	runport "github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// fileOwner is the human's channel of one Apply. Ask publishes Root's question
-// as <state>/questions/<id>.json and prints one line to stderr; the human
+// fileOwner is the human's channel of one run; only Extract asks through it.
+// Ask publishes Root's question as <state>/questions/<id>.json and prints one line to stderr; the human
 // answers with `markitect answer`, which writes <state>/answers/<id>.txt, and
-// Answer polls that file. The channel opens right after the Apply took the
-// state lock: it removes the question and answer files of earlier Applies and
+// Answer polls that file. The channel opens right after the run took the
+// state lock: it removes the question and answer files of earlier runs and
 // records its run in <state>/current-run, so a question file exists only while
-// its Apply asked it and an answer can only reach the Apply that is waiting for
+// its run asked it and an answer can only reach the run that is waiting for
 // it. Only files the channel owns are removed: .json files in questions and .txt
 // files in answers.
 type fileOwner struct {
@@ -94,9 +94,9 @@ func (o *fileOwner) Answer(_ context.Context, id string) (string, bool, error) {
 	return string(data), true, nil
 }
 
-// writeAnswer records the owner's answer to a question of the Apply that holds
-// the state directory. The Apply is observed without creating anything and
-// without taking the lock; the question must carry the run the Apply recorded
+// writeAnswer records the owner's answer to a question of the run that holds
+// the state directory. The run is observed without creating anything and
+// without taking the lock; the question must carry the identity the run recorded
 // in <state>/current-run. An answer is final: it is written once, atomically.
 func writeAnswer(stateDirectory, id, text string) (string, error) {
 	if !stateName.MatchString(id) {
@@ -110,11 +110,11 @@ func writeAnswer(stateDirectory, id, text string) (string, error) {
 		return "", err
 	}
 	if !held {
-		return "", errors.New("no Apply is running on this state directory")
+		return "", errors.New("no run is running on this state directory")
 	}
 	question, err := os.ReadFile(filepath.Join(stateDirectory, questionsDir, id+".json"))
 	if errors.Is(err, os.ErrNotExist) {
-		return "", fmt.Errorf("the running Apply has not asked question %s", id)
+		return "", fmt.Errorf("the current run has not asked question %s", id)
 	}
 	if err != nil {
 		return "", err
@@ -128,7 +128,7 @@ func writeAnswer(stateDirectory, id, text string) (string, error) {
 	}
 	runID := strings.TrimSpace(string(current))
 	if json.Unmarshal(question, &asked) != nil || runID == "" || asked.Run != runID {
-		return "", fmt.Errorf("question %s does not belong to the running Apply", id)
+		return "", fmt.Errorf("question %s does not belong to the current run", id)
 	}
 	path := filepath.Join(stateDirectory, answersDir, id+".txt")
 	if err := writeStateFile(path, []byte(text), false); err != nil {

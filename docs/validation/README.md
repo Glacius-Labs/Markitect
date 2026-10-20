@@ -20,6 +20,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 - [Recursive Apply implementation and library demonstration — 19 October 2026](recursive-apply-demonstration-20261019.md)
 - [Recursive Apply after DEC-058 and DEC-059: three repeated demonstrations — 19 October 2026](recursive-apply-repetitions-20261019.md)
 - [Apply evidence on the library with Haiku — 19 October 2026](apply-evidence-haiku-20261019.md)
+- [Apply stability after the #492 findings — 19 and 20 October 2026](apply-stability-20261020.md)
 - [Extract on the library: first real runs — 19 October 2026](library-extract-20261019.md)
 - [Extract on the library: old/new comparison — 19 October 2026](library-extract-comparison-20261019.md)
 - [Extract round 2: stability on two projects — 20 October 2026](extract-round2-20261020.md)
