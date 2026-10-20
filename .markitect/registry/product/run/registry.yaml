@@ -12,6 +12,10 @@ artifacts:
     form: doc
     realizes: [product/run/confirmed-run-history]
     why: "Fixes the rubric an independent assessor scores an extracted library model with, including the seeded and conflict expectations."
+  - path: "experiments/recursive-apply-demo/extract-checklist-readinglog.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Fixes the rubric for the second Extract project, Readinglog, marking reference obligations its two files cannot show."
   - path: "experiments/recursive-apply-demo/extract-execution.yaml"
     form: config
     realizes: [product/run/confirmed-run-history]
