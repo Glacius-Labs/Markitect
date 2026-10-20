@@ -308,3 +308,9 @@ The preparation was recomposed with integrated Main `a0928a1b7a95ebbc23836e5a5f4
 > Und bringe deine Dinge auf main
 
 Recorder's disposition: the accepted behavior is refined into one explicit base process and shared result envelope, rather than four phase-specific control flows. The same process handles Root, parents and leaves, work and independent assessment, returned proposals and repeated correction purposes. Parent acceptance precedes child Done; submitted proposals wake parents so review cannot deadlock on completion. Pass identity, sealing and aggregate verdict are separate from local lifecycle and provider exit. The handoff now starts from Main after the requested integration, whose actual review, merge SHA and read-back belong in the delivering chat/PR. Product implementation and provider Runs remain separate future work.
+
+## Owner adoption: three implementation clarifications
+
+> Halte die drei Präzisierungen im Konzept fest, bringe sie auf Main und gib mir einen kurzen Ergänzungsprompt für die laufende Claude-Session.
+
+Recorder's disposition: the owner accepts the three clarifications from the subsequent concept audit: distinguish immutable model/lock/ownership/execution/ignore/authority inputs from mutable local registry metadata; admit permitted read-only message handling for a released Manager even while its productive dependencies remain blocked; and allow explicit fresh independent disproof of an erroneous finding on the unchanged candidate, retaining its evidence and resolution. These refine DEC-064's existing process, not a second lifecycle or a relaxation of deterministic gates and genuine findings. A sealed Verify result remains immutable; a replacement assessment uses a new complete Verify Pass. The accepted workflow owns the rules, and the handoff supplies the corresponding behavioral scenarios. This documentation change does not modify the running Claude implementation or start a provider Run.
