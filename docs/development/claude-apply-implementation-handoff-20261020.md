@@ -1,5 +1,7 @@
 # Claude handoff: checked recursive Apply passes
 
+**Historical assignment:** the base implementation merged in PR #530. For the next owner-started session use the [Apply hardening handoff](claude-apply-hardening-handoff-20261020.md); this document preserves the earlier assignment and grants no new Run.
+
 **Prepared assignment, 20 October 2026.** The owner adopted the complete discussed workflow and requested preparation for a Claude implementation session. The [accepted workflow](../design/canonical-model/manager-apply-workflow.md) is the behavior owner; [DEC-064](../concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams) records supersession. This handoff makes that assignment concrete. No implementation session or provider Run has been started by preparing it.
 
 ## Start and authority

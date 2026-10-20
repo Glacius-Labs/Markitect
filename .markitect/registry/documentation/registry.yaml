@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/development/claude-apply-hardening-handoff-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares the owner-started bounded Apply hardening assignment, dispositions of prior proposals, frozen faulty/conforming controls and finite Haiku retest prompt without starting a session.
   - path: "docs/design/cockpit.md"
     form: doc
     realizes: [documentation/current-guidance]

@@ -37,7 +37,7 @@ At the final boundary the views of the verified runs give the outcome, the Run o
 
 The record of a waiting Manager can be outdated. `recordStateLocked` records a change only when the state or the wait text differs from the Manager's fields, but the release and dependency paths set the new wait text into those fields first. A changed wait with an unchanged Waiting state is therefore not recorded. In D-N Sonnet, orders was released at record 322 after Root's basis was accepted, yet its last recorded wait still names Root's basis; its accepted plan needs the results of catalog and stock. In D-N Haiku, orders still shows a wait for catalog's result after catalog's result was accepted at record 526; its plan also needs stock's result, which never came.
 
-The inspector does not present such a wait as current. It marks it outdated, names the record that fulfilled it and lists the unaccepted dependencies of the accepted plan instead, and lists the limitation among the gaps. Correcting the producer is Apply core work; it bears on the wait analysis of #532.
+The inspector does not present such a wait as current. It marks it outdated, names the record that fulfilled it and lists the unaccepted dependencies of the accepted plan instead, and lists the limitation among the gaps. Correcting the producer belongs to the [Apply hardening stream](../development/claude-apply-hardening-handoff-20261020.md), whose precise dependencies and event-driven waits cover this path; it bears on the wait analysis of #532.
 
 ## Checks and UI behavior
 
