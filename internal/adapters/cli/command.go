@@ -65,10 +65,10 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply [options]          reconcile the committed repository through the Manager team
+  apply [options]          realize the bound model: Plan, Prepare, Implement, Verify
   extract [options]        derive a model candidate from the existing artifacts
-  answer <question> --text ANSWER --run-config PATH
-                            answer a question of the running Apply
+  answer <question> --run RUN --text ANSWER --run-config PATH
+                            answer a question of the running Apply or Extract
   setup --runtime DIR --image REF --credential FILE --agent-model M [options]
                             prepare a Runtime directory with runtime.yaml and run.json
   version | licenses | help
@@ -100,30 +100,35 @@ apply options:
   Revision previews and --metadata are preparation options, not apply flags.
   Configuration supplies state storage, helper resources, harvest bounds,
   productBuild assertion and dedicated credential references. No ambient defaults.
-  The JSON report lists the preparation, the run (rounds, findings, questions,
-  turns, usage), the publication receipt and the evidence directory. Evidence is
-  kept under STATE/runs/RUN; only one Apply runs per state directory.
+  The JSON report lists the preparation, the run (passes with each Manager's
+  state, basis, result and verdict; findings, questions, problems, turns,
+  usage), the publication receipt, the Run outcome (success, failed or
+  incomplete) and the evidence directory. Evidence is kept under
+  STATE/runs/RUN; only one run holds a state directory. Root's questions to the
+  invoking AI are printed to stderr and answered with the answer command.
 
 extract options:
   --run-config PATH, --runtime-profile PATH and repeated --dependency as for apply;
   --repo selects the repository. There is no --model: the Orchestrator prepares the
   structural manifest and lock .markitect/model.yaml with no local Definitions,
   the imported vocabulary, and .markitect/execution.yaml with budget, profiles,
-  layout roots and checks. Phase one proposes the Packages and layout
-  exceptions, phase two derives the model of every Package and registers the
-  artifacts. Artifacts are never changed or published; a verified model is
-  published as the changed .markitect model, registry shards and
-  execution.yaml (layout exceptions and proposed checks). The JSON report lists
-  model completion, the final Verify result, the realization deviations per
-  Definition (artifact findings), the proposedChecks, open owner questions,
-  per-phase rounds, turns and usage and the publication. Questions are
-  answered with the answer command.
+  ownership areas of the artifacts and checks. Phase one proposes the Packages
+  and their ownership areas, phase two derives the model of every Package and
+  registers the artifacts. Artifacts are never changed or published; a verified
+  model is published as the changed .markitect model, registry shards and
+  execution.yaml (ownership and proposed checks). The JSON report lists model
+  completion, the final Verify Pass, the realization deviations per Definition
+  (artifact findings), the proposedChecks, open questions, per-phase passes,
+  turns and usage and the publication. Questions are answered with the answer
+  command.
 
 answer options:
-  --text ANSWER            the owner's answer, required
-  --run-config PATH        the running Apply's configuration; selects its state directory
-  Writes the answer for a question the running Apply asked (it prints the
-  question to stderr) and reports the file it wrote. An answer is final.
+  --run RUN                identity of the run that asked, required
+  --text ANSWER            the answer, required
+  --run-config PATH        the running run's configuration; selects its state directory
+  Writes the answer for a question the running run asked (it prints the
+  question with its run identity to stderr) and reports the file it wrote. A
+  question of another run or one that lapsed is refused. An answer is final.
 
 setup options:
   --runtime DIR            absolute Runtime directory, outside the repository; created

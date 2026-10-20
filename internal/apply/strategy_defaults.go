@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const strategyDefaultsSource = "product:shared-workspace-v1/defaults.yaml"
+const strategyDefaultsSource = "product:recursive-passes-v1/defaults.yaml"
 
 //go:embed strategy_defaults.yaml
 var strategyDefaultsBytes []byte
@@ -42,6 +42,7 @@ type strategyDefaults struct {
 	source      organization.SettingSource
 	execute     organization.Setting[[]string]
 	verify      organization.Setting[[]string]
+	team        ExecutionTeam
 	diagnostics []StrategyDefaultsDiagnostic
 }
 

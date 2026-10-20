@@ -35,14 +35,16 @@ const (
 )
 
 // extractPhaseDescriptor is what distinguishes a phase besides its accounting:
-// its name, the mandate it hands the Agents and its Verify guidance.
+// its name, which is also the purpose of its work Pass, the mandate it hands the
+// Agents, its Verify guidance and whether artifact findings are advisory.
 type extractPhaseDescriptor struct {
 	name, mandate, verifyGuidance string
+	advisory                      bool
 }
 
 var extractPhaseDescriptors = [...]extractPhaseDescriptor{
-	extractStructure: {ExtractStructurePhase, structureMandate, structureVerifyGuidance},
-	extractModel:     {ExtractModelPhase, modelMandate, modelVerifyGuidance},
+	extractStructure: {ExtractStructurePhase, structureMandate, structureVerifyGuidance, false},
+	extractModel:     {ExtractModelPhase, modelMandate, modelVerifyGuidance, true},
 }
 
 func (p extractPhase) descriptor() extractPhaseDescriptor { return extractPhaseDescriptors[p] }
@@ -218,13 +220,13 @@ func (a extractAccounting) accountStructure(structural CapturedPreparationAttemp
 	layout := structural.files.layout
 	byDirectory := make(map[string][]string)
 	for _, p := range artifactPaths(a.start.tree) {
-		if !layout.HasOwner(p) {
+		if _, owned := layout.OwnerOf(p); !owned {
 			byDirectory[path.Dir(p.String())] = append(byDirectory[path.Dir(p.String())], p.String())
 		}
 	}
 	for dir, files := range byDirectory {
 		shown := files[:min(len(files), 3)]
-		add(organization.Root, "layout.no_owner", dir, fmt.Sprintf("%d artifact file(s) in %s have no owner under the layout (for example %s). Propose a Package whose path mirrors the directory below its artifact root, or add a layout exception for the directory to layout.exceptions of .markitect/execution.yaml with the owning Package and a reason.", len(files), dir, strings.Join(shown, ", ")))
+		add(organization.Root, "layout.no_owner", dir, fmt.Sprintf("%d artifact file(s) in %s have no owner (for example %s). Add an ownership area for the directory or the files to ownership of .markitect/execution.yaml with the owning Package and a reason.", len(files), dir, strings.Join(shown, ", ")))
 	}
 }
 
@@ -274,8 +276,8 @@ func exemptFromGuard(name string) bool {
 
 // guard reports every change outside the phase's writable area: artifacts,
 // dependencies, manifest, lock and project configuration stay as captured. The
-// structure phase may write the model and, in the execution document, the layout
-// exceptions and the checks, the model phase the model and the registry shards.
+// structure phase may write the model and, in the execution document, the
+// ownership and the checks, the model phase the model and the registry shards.
 func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
 	quoted := 0
@@ -305,7 +307,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 			if !found {
 				report(name, before, "input.deleted", "deleted")
 			} else if after != before && !equalBesidesProposals(before.Bytes(), after.Bytes()) {
-				report(name, before, "input.changed", "changed beyond layout.exceptions and checks")
+				report(name, before, "input.changed", "changed beyond ownership and checks")
 			}
 		case writable(name):
 		case !found:
@@ -324,7 +326,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 }
 
 // equalBesidesProposals reports whether the structure phase changed the
-// execution document only in the parts it may propose: layout.exceptions and
+// execution document only in the parts it may propose: the ownership and
 // added checks. Every check of the start stays, as the identical entry; a
 // changed or removed owner-declared check is a change beyond the proposals, as
 // is any other difference. A document that does not parse differs.
@@ -333,9 +335,7 @@ func equalBesidesProposals(before, after []byte) bool {
 		if err := yaml.Unmarshal(data, &document); err != nil || document == nil {
 			return nil, nil, false
 		}
-		if layout, isMap := document["layout"].(map[string]any); isMap {
-			delete(layout, "exceptions")
-		}
+		delete(document, "ownership")
 		checks = document["checks"]
 		delete(document, "checks")
 		return document, checks, true
@@ -361,35 +361,32 @@ func equalBesidesProposals(before, after []byte) bool {
 	return true
 }
 
-// WritePlan returns where a Manager's Execute turns may write in the shared
-// working tree. Every plan starts read-only. The structure phase's Root writes
-// .markitect except the dependency models and the artifact roots, which are
-// read-only mounts (the manifest, the lock and the execution document are files
-// that a mount cannot cover; accounting guards them). In the model phase every
+// WritePlan returns where a Manager's work turns may write in the shared
+// working tree. Every plan starts read-only and the artifacts stay read-only.
+// The structure phase's Root writes .markitect except the dependency models,
+// which are read-only mounts (the manifest, the lock and the execution document
+// are files the guard protects beyond the proposals). In the model phase every
 // Manager writes only its own Package's model directory and its registry shard,
 // minus its descendants' directories.
-func (a extractAccounting) WritePlan(manager string) run.WritePlan {
+func (a extractAccounting) WritePlan(manager string) (run.WritePlan, error) {
 	if a.phase == extractStructure {
-		return a.structurePlan()
+		return a.structurePlan(), nil
 	}
-	regions := []writeRegion{{strings.TrimSuffix(registryDirectory, "/"), organization.Root}}
+	regions := []region{{path: strings.TrimSuffix(registryDirectory, "/"), owner: organization.Root}}
 	for _, name := range a.packages {
-		regions = append(regions, writeRegion{registryDirectory + name, name}, writeRegion{strings.TrimSuffix(modelDirectory, "/") + "/" + name, name})
+		regions = append(regions, region{path: registryDirectory + name, owner: name}, region{path: strings.TrimSuffix(modelDirectory, "/") + "/" + name, owner: name})
 	}
-	return regionPlan(manager, false, regions)
+	return planOf(manager, false, regions, a.start.tree)
 }
 
 func (a extractAccounting) structurePlan() run.WritePlan {
-	plan := run.WritePlan{Enforced: true, Mounts: []run.PathMount{{Path: strings.TrimSuffix(markitectDir, "/"), Writable: true}}}
+	plan := run.WritePlan{Mounts: []run.PathMount{{Path: strings.TrimSuffix(markitectDir, "/"), Writable: true}}}
 	raw := a.start.structural.Model().inputs.Raw
 	var readOnly []string
 	for _, dependency := range raw.Dependencies {
 		if area := dependency.RepositoryArea; area.String() != "" && !area.IsRoot() {
 			readOnly = append(readOnly, area.String())
 		}
-	}
-	for _, root := range a.base.layout.Roots() {
-		readOnly = append(readOnly, root.String())
 	}
 	slices.Sort(readOnly)
 	for _, name := range slices.Compact(readOnly) {
@@ -400,4 +397,40 @@ func (a extractAccounting) structurePlan() run.WritePlan {
 		}
 	}
 	return plan
+}
+
+// ModelCheck runs the Model check on a candidate tree of the phase.
+func (a extractAccounting) ModelCheck(tree snapshot.Tree) []CandidateFinding {
+	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
+	checked := structural.Model().checked
+	if checked.Status == model.Passed {
+		return nil
+	}
+	var findings []CandidateFinding
+	local := structural.Model().inputs.Raw.Local
+	for _, d := range checked.Diagnostics {
+		name := d.Source.Path
+		if d.Source.Origin == local.Source.Origin && !local.RepositoryArea.IsRoot() {
+			name = local.RepositoryArea.String() + "/" + name
+		}
+		findings = append(findings, CandidateFinding{Owner: a.ownerOfName(name), Code: "model." + d.Code, Path: name, Message: positioned(d.Message, d.Position)})
+	}
+	if len(findings) == 0 {
+		findings = append(findings, CandidateFinding{Owner: organization.Root, Code: "model.not_passed", Message: "The candidate model does not pass the Model check: its status is " + string(checked.Status) + "."})
+	}
+	return findings
+}
+
+// RegistryView assembles the derived registry view of a candidate tree of the
+// phase against the candidate's own model and ownership.
+func (a extractAccounting) RegistryView(tree snapshot.Tree) run.RegistryView {
+	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
+	if structural.Model().checked.Status != model.Passed {
+		return run.RegistryView{Shards: map[string]string{}}
+	}
+	c, err := newCandidates(structural, structural.files.classifications, nil, structural.registry.registry)
+	if err != nil {
+		return run.RegistryView{Shards: map[string]string{}}
+	}
+	return c.RegistryView(tree)
 }

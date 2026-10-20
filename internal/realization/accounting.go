@@ -108,11 +108,16 @@ func (a Accounting) Artifacts(id model.Identity) []snapshot.Path { return slices
 // The complete checked Result must pass before Package/Definition absence is
 // authoritative. No package is inferred from Definitions or imported inventories.
 //
-// A declared Layout additionally requires every registration to sit in the
-// registry shard of the owner the layout assigns to its path
-// (registry.outside_area) and reports every file without an owner, in an
-// unmapped subdirectory of an artifact root, as layout.no_owner addressed to
-// Root. The zero Layout adds no ownership rule.
+// Every observed file is classified exactly once: a protected input, an
+// explicitly ignored file or a registered artifact. A directory entry covers
+// the eligible files below it, those that are neither inputs nor ignored, and
+// the most specific covering entry registers a file. With a declared Layout an
+// entry registers only files its registrant owns: an exact entry for another
+// owner's file and a directory entry at a directory its registrant does not own
+// are registry.outside_area, another owner's files below a directory entry are
+// excluded from it, and a file no area covers is layout.no_owner addressed to
+// Root. A directory entry that registers no file is registry.missing_file. The
+// zero Layout adds no ownership rule: the most specific entry decides.
 func AccountFiles(checked model.Result, tree snapshot.Tree, registry Registry, classifications []Classification, layout Layout) Accounting {
 	return accountFiles(inventoryFromResult(checked), tree, registry, classifications, layout)
 }
@@ -147,18 +152,20 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			add("classification.missing_file", path, Owner{}, model.Identity{}, "The classified file is absent from the supplied tree.")
 		}
 	}
-	valid := map[snapshot.Path]bool{}
+	valid := map[string]bool{}
 	for _, entry := range registry.entries {
 		artifact := entry.artifact
 		path := artifact.path
 		ok := ready
-		if _, found := tree.Lookup(path); !found {
-			add("registry.missing_file", path, entry.owner, model.Identity{}, "The registered artifact is absent from the supplied tree.")
-			ok = false
-		}
-		if len(classes[path]) > 0 {
-			add("file.conflicting_classification", path, entry.owner, model.Identity{}, "A registered artifact is also a protected input or ignored file.")
-			ok = false
+		if !artifact.directory {
+			if _, found := tree.Lookup(path); !found {
+				add("registry.missing_file", path, entry.owner, model.Identity{}, "The registered artifact is absent from the supplied tree.")
+				ok = false
+			}
+			if len(classes[path]) > 0 {
+				add("file.conflicting_classification", path, entry.owner, model.Identity{}, "A registered artifact is also a protected input or ignored file.")
+				ok = false
+			}
 		}
 		if ready {
 			if name, packageOwner := entry.owner.Package(); packageOwner && !packages[name] {
@@ -173,44 +180,69 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 		}
 		if layout.declared {
-			ok = ok && layout.HasOwner(path)
-			if expected := layout.OwnerOf(path); expected != entry.owner {
-				add("registry.outside_area", path, entry.owner, model.Identity{}, fmt.Sprintf("The path lies in the area of %s, not in the area of the registering %s; it belongs in that owner's registry shard.", expected.label(), entry.owner.label()))
+			var expected Owner
+			var owned bool
+			if artifact.directory {
+				expected, owned = layout.DirectoryOwner(path.String())
+			} else {
+				expected, owned = layout.OwnerOf(path)
+			}
+			switch {
+			case !owned:
+				add("registry.outside_area", path, entry.owner, model.Identity{}, fmt.Sprintf("No declared area owns %s, so no Manager may register it.", artifact.Selector()))
+				ok = false
+			case expected != entry.owner:
+				add("registry.outside_area", path, entry.owner, model.Identity{}, fmt.Sprintf("%s lies in the area of %s, not of the registering %s; it belongs in that owner's registry shard.", artifact.Selector(), expected.label(), entry.owner.label()))
 				ok = false
 			}
 		}
-		valid[path] = ok
+		valid[artifact.Selector()] = ok
 	}
+	registered := map[string]int{}
 	for _, entry := range tree.Entries() {
 		path := entry.Path()
 		file := File{entry: entry, class: UnexplainedFile}
-		registration, registered := registry.Lookup(path)
-		file.registration, file.registered = registration, registered
 		classified := classes[path]
-		// A file without an owner is reported once as such; "unexplained" would only
-		// tell Root to register a file that no Manager may own.
-		unowned := layout.declared && !layout.HasOwner(path) && !statePath(path) && len(classified) == 0
-		if unowned {
-			add("layout.no_owner", path, RootOwner(), model.Identity{}, "The file lies in a subdirectory of an artifact root that no Package directory or persistent layout exception covers, so no Manager owns it: the layout needs an exception for it in .markitect/execution.yaml, or the file must move.")
+		state := statePath(path)
+		owner, owned := layout.OwnerOf(path)
+		_, exact := registry.Lookup(path)
+		if !state && len(classified) == 0 {
+			for _, candidate := range registry.Covering(path) {
+				if layout.declared && (!owned || candidate.owner != owner) {
+					// Another owner's entry neither explains nor takes the file.
+					continue
+				}
+				file.registration, file.registered = candidate, true
+				break
+			}
 		}
 		switch {
-		case statePath(path):
+		case state:
 			file.class, file.why = OperationalState, "Markitect operational state is outside realization."
-		case len(classified) > 1 || registered && len(classified) > 0:
+		case len(classified) > 1 || exact && len(classified) > 0:
 			file.class = ConflictingFile
-		case registered:
-			file.class, file.why = RegisteredArtifact, registration.artifact.why
-			if valid[path] {
-				for _, id := range registration.artifact.basis {
+		case file.registered:
+			artifact := file.registration.artifact
+			file.class, file.why = RegisteredArtifact, artifact.why
+			registered[artifact.Selector()]++
+			if valid[artifact.Selector()] {
+				for _, id := range artifact.basis {
 					result.links[id] = append(result.links[id], path)
 				}
 			}
 		case len(classified) == 1:
 			file.class, file.why = classified[0].class, classified[0].why
-		case !unowned:
+		case layout.declared && !owned:
+			add("layout.no_owner", path, RootOwner(), model.Identity{}, "No declared area owns the file, so no Manager may keep it: the ownership in .markitect/execution.yaml needs an area for it, or the file must go.")
+		default:
 			add("file.unexplained", path, Owner{}, model.Identity{}, "The file is neither a registered artifact, a protected input nor explicitly ignored.")
 		}
 		result.files = append(result.files, file)
+	}
+	for _, entry := range registry.entries {
+		if entry.artifact.directory && registered[entry.artifact.Selector()] == 0 && valid[entry.artifact.Selector()] {
+			add("registry.missing_file", entry.artifact.path, entry.owner, model.Identity{}, "The registered directory holds no artifact of its registrant.")
+		}
 	}
 	slices.SortFunc(result.findings, compareFinding)
 	return result

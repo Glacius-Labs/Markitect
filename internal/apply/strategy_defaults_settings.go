@@ -90,6 +90,12 @@ func strategySettingsValues(effective AuthoredExecution) DeclarativeSettings {
 		Execute: organization.RoleDefaults{Profile: *e.Defaults.Execute.Profile, Instructions: *e.Defaults.Execute.Instructions},
 		Verify:  organization.RoleDefaults{Profile: *e.Defaults.Verify.Profile, Instructions: *e.Defaults.Verify.Instructions},
 	}}
+	if e.Team != nil {
+		r.Defaults.Team.MaxHelpers = e.Team.MaxHelpers
+		for _, h := range e.Team.Helpers {
+			r.Defaults.Team.Helpers = append(r.Defaults.Team.Helpers, organization.HelperDefaults{Role: h.Role, Writes: h.Writes, Profile: h.Profile, Instructions: h.Instructions})
+		}
+	}
 	if e.Packages != nil {
 		r.Overrides = e.Packages.Value
 	}
@@ -131,6 +137,10 @@ func prepareStrategySettings(parent executionDecoding, input StrategyDefaultsInp
 	}
 	if e.Defaults.Verify.Instructions == nil {
 		e.Defaults.Verify.Instructions = executionListPointer(&r.product.verify)
+	}
+	if e.Team == nil {
+		product := cloneExecution(AuthoredExecution{Team: &r.product.team})
+		e.Team = product.Team
 	}
 	return r
 }

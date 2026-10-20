@@ -93,7 +93,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		}
 		err = errors.Join(err, ports.Evidence.Close())
 	}()
-	result, err := s.reconcileAndPublish(ctx, request.Selection, prepared, session.cfg, ports)
+	result, err := s.applyAndPublish(ctx, request.Selection, prepared, session.cfg, ports)
 	if result.Outcome.Status != "" {
 		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 	}
@@ -200,23 +200,22 @@ func (s *executionService) open(ctx context.Context, repository, runConfigPath s
 	return runSession{cfg: cfg, lock: lock, owner: owner, runID: runID}, false, nil
 }
 
-// reconcileAndPublish runs the Apply use case over the captured preparation with
-// the composed ports.
-func (s *executionService) reconcileAndPublish(ctx context.Context, selection apply.InputSelection, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ReconcileResult, error) {
+// applyAndPublish runs the Apply use case over the captured preparation with
+// the composed ports. Root's questions reach the invoking AI through the run's
+// owner channel.
+func (s *executionService) applyAndPublish(ctx context.Context, selection apply.InputSelection, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ApplyResult, error) {
 	prepared, ok := captured.Prepared()
 	if !ok {
-		return apply.ReconcileResult{}, errors.New("complete captured settings are required")
+		return apply.ApplyResult{}, errors.New("complete captured settings are required")
 	}
-	return apply.Reconcile(ctx, apply.ReconcileRequest{
+	return apply.Apply(ctx, apply.ApplyRequest{
 		RunID: ports.RunID, Prepared: prepared, Selection: selection,
 		OwnerRequest: cfg.OwnerRequest, OwnerDecisions: cfg.OwnerDecisions, Deadline: ports.Deadline,
 		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
 		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
 			return executionCheck(selected, cfg)
 		},
-		// Apply asks the owner nothing mid-run: Root ends the run with a model
-		// defect instead (DEC-063).
-		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Evidence: ports.Evidence,
+		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
 		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
 	})
 }
@@ -265,7 +264,7 @@ func answer(ctx context.Context, request cli.AnswerRequest) (cli.AnswerReport, e
 		}
 		return report, err
 	}
-	path, err := writeAnswer(cfg.StateDirectory, request.Question, request.Text)
+	path, err := writeAnswer(cfg.StateDirectory, request.Run, request.Question, request.Text)
 	if err != nil {
 		return report, err
 	}

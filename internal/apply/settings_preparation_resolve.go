@@ -77,6 +77,11 @@ func prepareRuntimeSettings(ctx context.Context, fileStatus model.Status, defaul
 	declarations, complete := defaults.Declarations()
 	if complete {
 		refs := []organization.Setting[string]{declarations.Defaults.Execute.Profile, declarations.Defaults.Verify.Profile}
+		for _, h := range declarations.Defaults.Team.Helpers {
+			if h.Profile != nil {
+				refs = append(refs, *h.Profile)
+			}
+		}
 		for _, override := range declarations.Overrides {
 			if override.Execute.Profile != nil {
 				refs = append(refs, *override.Execute.Profile)

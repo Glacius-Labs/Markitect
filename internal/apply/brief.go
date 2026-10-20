@@ -52,16 +52,30 @@ type briefInput struct {
 	Areas     []string
 	Shard     string
 	Checks    []briefCheck
-	// Required lists the Definitions behind the required checks. It is only set for
-	// a Manager whose selection holds none of its own Definitions (Root), which
-	// would otherwise never see what the whole-project checks and the shared
-	// files it owns are for.
+	// Required lists the Definitions behind the required checks and Project the
+	// inventory of every local Definition with its owner. Both are set for Root,
+	// which coordinates the whole model and receives its project and boundary
+	// obligations explicitly, attributed to their actual owners.
 	Required []requiredDefinition
+	Project  []string
 	// Children are the Manager's direct children, in team order.
 	Children []briefChild
-	// Enforced says that the run mounts only the Manager's areas and shard
-	// writable; everything else of /work is read-only.
-	Enforced bool
+}
+
+// projectObligations lists every local Definition of the checked model with
+// its kind, title and owning Package, in identity order.
+func projectObligations(checked model.Result) []string {
+	var out []string
+	for _, owner := range checked.Models {
+		if !owner.Local {
+			continue
+		}
+		for _, d := range owner.Definitions {
+			out = append(out, fmt.Sprintf("%s (%s): %s, owned by %s", identityText(d.Identity), identityText(d.Kind), definitionTitle(d), d.Identity.Package))
+		}
+	}
+	slices.Sort(out)
+	return out
 }
 
 func identityText(id model.Identity) string { return id.Package + "/" + id.ID }
@@ -155,9 +169,7 @@ func renderBrief(in briefInput) string {
 	for _, area := range in.Areas {
 		fmt.Fprintf(&b, "- %s\n", area)
 	}
-	if in.Enforced {
-		b.WriteString("Only these areas and your registry shard are writable in /work; everything else is read-only.\n")
-	}
+	b.WriteString("Only these areas and your local registry are writable in your work turns; everything else in /work is read-only. Ask look_up for the owner of any path.\n")
 	if len(in.Children) > 0 {
 		b.WriteString("\nYour children\nYour children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations. Cross-area matters between them are yours to settle: decide which child's realization provides a shared rule or interface, and have the others use it instead of rebuilding it.\n")
 		for _, child := range in.Children {
@@ -193,8 +205,15 @@ func renderBrief(in briefInput) string {
 	case len(in.Required) > 0:
 		example = identityText(in.Required[0].Definition.Identity)
 	}
-	fmt.Fprintf(&b, "\nRegistry\nEvery file you create is registered by you in your registry shard %s, in the same change; a file that is not registered there is unexplained and blocks the candidate. %s\n\n", in.Shard, registryShape(example))
-	b.WriteString("Protected intent\nThe canonical model under /work/.markitect is the binding intent. Read it; never change it.\n\n")
+	fmt.Fprintf(&b, "\nRegistry\nYour local registry %s explains what your artifacts realize. Register every file you create, or a directory holding it, there in the same change; a file that is not registered is unexplained and blocks your submission. %s\n\n", in.Shard, registryShape(example))
+	b.WriteString("Protected intent\nThe canonical model, its locks, the ownership, the execution settings and the ignore policy under /work/.markitect are fixed authority inputs. Read them; never change them.\n\n")
+	if len(in.Project) > 0 {
+		b.WriteString("Project obligations\nYou coordinate the whole model. Every Definition below is realized by its owner; you supply the shared foundations you own, integrate your children's results and keep the project boundary coherent. Use look_up for any Definition's full text.\n")
+		for _, line := range in.Project {
+			fmt.Fprintf(&b, "- %s\n", line)
+		}
+		b.WriteString("\n")
+	}
 
 	b.WriteString("Model obligations\nYour own Definitions are your obligations. Included Definitions describe contracts of other areas: rely on their owners' realization, coordinated through your parent or children, instead of realizing them again in your area.\n")
 	requiredBy := make(map[model.Identity][]string)
@@ -252,7 +271,7 @@ func renderBrief(in briefInput) string {
 
 // registryShape shows the entries of a registry shard.
 func registryShape(example string) string {
-	return fmt.Sprintf("Entries use this shape:\n\napiVersion: markitect.registry/v1\nartifacts:\n  - path: path/of/the/file/from/the/repository/root\n    form: code   # one of code, test, doc, build, config\n    realizes: [%s]   # existing Definition identities\n    why: One sentence on what the file contributes.", example)
+	return fmt.Sprintf("Entries use this shape:\n\napiVersion: markitect.registry/v1\nartifacts:\n  - path: path/of/the/file/from/the/repository/root   # or a directory ending in / for the files below it that you own\n    form: code   # one of code, test, doc, build, config\n    realizes: [%s]   # existing Definition identities\n    why: One sentence on what it contributes.", example)
 }
 
 func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own bool, reader organization.Manager, requiredBy []string) {

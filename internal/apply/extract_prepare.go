@@ -63,7 +63,7 @@ func offeredCheckProfiles(prepared CapturedSettingsPreparation) []checkProfileOf
 // newExtractStart validates a preparation made by CaptureExtract as the start of
 // an Extract. The artifacts are unregistered and the local model has no
 // Definitions yet; a model that already describes the project is Apply's input.
-// The project declares its artifact roots in the persistent layout.
+// The project declares the ownership of its artifacts.
 func newExtractStart(prepared CapturedSettingsAttempt) (extractStage, error) {
 	if prepared.Settings().Status() != model.Passed {
 		return extractStage{}, fmt.Errorf("%w: the preparation did not pass", ErrNotExtractable)
@@ -87,8 +87,8 @@ func newExtractStart(prepared CapturedSettingsAttempt) (extractStage, error) {
 	if err := requireEmptyModel(structural.Model().checked); err != nil {
 		return extractStage{}, err
 	}
-	if !structural.files.layout.Declared() || len(structural.files.layout.Roots()) == 0 {
-		return extractStage{}, fmt.Errorf("%w: .markitect/execution.yaml declares no artifact roots under layout.roots", ErrNotExtractable)
+	if !structural.files.layout.Declared() || len(structural.files.layout.Areas()) == 0 {
+		return extractStage{}, fmt.Errorf("%w: .markitect/execution.yaml declares no ownership areas for the artifacts", ErrNotExtractable)
 	}
 	return extractStage{structural: structural, settings: settings, facts: facts, budget: budget, checkProfiles: offeredCheckProfiles(prepared.Settings()), tree: structural.Model().inputs.Raw.Census}, nil
 }

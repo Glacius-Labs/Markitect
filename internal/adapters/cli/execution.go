@@ -21,20 +21,26 @@ type ApplyRequest struct {
 	RunConfig string
 }
 
-// AnswerRequest carries the owner's answer to one open question of a running
-// Apply. RunConfig selects the state directory that Apply uses.
+// AnswerRequest carries the answer of the invoking AI to one open question of
+// a running Apply or Extract. Run binds it to that exact run; RunConfig selects
+// the state directory the run uses.
 type AnswerRequest struct {
 	Question  string
+	Run       string
 	Text      string
 	RunConfig string
 }
 
 // ApplyReport projects the observations of one Apply: the preparation, the
-// reconciliation run, the publication and where the evidence is kept.
+// run with its Passes, the publication and where the evidence is kept. Outcome
+// is the Run outcome: success only for a clean Verify with an applied or
+// no-change publication and read-back, failed for a definite rejection,
+// incomplete otherwise.
 type ApplyReport struct {
 	FormatVersion     int                       `json:"formatVersion"`
 	Operation         string                    `json:"operation"`
 	Status            model.Status              `json:"status"`
+	Outcome           string                    `json:"outcome,omitempty"`
 	Preparation       any                       `json:"preparation,omitempty"`
 	Run               *RunReport                `json:"run,omitempty"`
 	Publication       *apply.PublicationReceipt `json:"publication,omitempty"`
@@ -48,18 +54,22 @@ type RunReport struct {
 	ID        string           `json:"id"`
 	Status    run.Status       `json:"status"`
 	Reason    string           `json:"reason,omitempty"`
-	Rounds    []run.Round      `json:"rounds"`
+	Passes    []run.PassRecord `json:"passes"`
 	Findings  []run.Finding    `json:"findings"`
 	Questions []run.Question   `json:"questions"`
+	Problems  []run.Problem    `json:"problems"`
 	Turns     []run.TurnRecord `json:"turns"`
 	Usage     run.Usage        `json:"usage"`
 }
 
 // NewRunReport projects an outcome. Lists are never null.
 func NewRunReport(id string, outcome run.Outcome) *RunReport {
-	r := &RunReport{ID: id, Status: outcome.Status, Reason: outcome.Reason, Rounds: outcome.Rounds, Findings: outcome.Findings, Questions: outcome.Questions, Turns: outcome.Turns, Usage: outcome.Usage}
-	if r.Rounds == nil {
-		r.Rounds = []run.Round{}
+	r := &RunReport{ID: id, Status: outcome.Status, Reason: outcome.Reason, Passes: outcome.Passes, Findings: outcome.Findings, Questions: outcome.Questions, Problems: outcome.Problems, Turns: outcome.Turns, Usage: outcome.Usage}
+	if r.Passes == nil {
+		r.Passes = []run.PassRecord{}
+	}
+	if r.Problems == nil {
+		r.Problems = []run.Problem{}
 	}
 	if r.Findings == nil {
 		r.Findings = []run.Finding{}
@@ -99,6 +109,18 @@ func ApplyStatus(outcome run.Outcome, receipt *apply.PublicationReceipt, err err
 	return model.NotCompleted
 }
 
+// RunOutcome names the Run outcome of a command status: success, failed or
+// incomplete.
+func RunOutcome(status model.Status) string {
+	switch status {
+	case model.Passed:
+		return "success"
+	case model.Failed:
+		return "failed"
+	}
+	return "incomplete"
+}
+
 // AnswerReport states what the answer command wrote.
 type AnswerReport struct {
 	FormatVersion int          `json:"formatVersion"`
@@ -126,11 +148,12 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 	question := ""
 	if verb == "answer" {
 		if len(args) == 0 || args[0] == "" || args[0][0] == '-' {
-			fmt.Fprintln(stderr, "answer requires one open owner-question identity")
+			fmt.Fprintln(stderr, "answer requires one open question identity")
 			return 2
 		}
 		question, args = args[0], args[1:]
 	}
+	var runID string
 	flags := flag.NewFlagSet(verb, flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	config := flags.String("run-config", "", "explicit absolute invocation configuration")
@@ -146,7 +169,8 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		flags.StringVar(&runtimeProfile, "runtime-profile", "", "explicit absolute Runtime profile document")
 		flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
 	} else {
-		flags.StringVar(&text, "text", "", "owner answer text")
+		flags.StringVar(&text, "text", "", "answer text")
+		flags.StringVar(&runID, "run", "", "identity of the run that asked")
 	}
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -155,7 +179,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		}
 		return 2
 	}
-	if flags.NArg() != 0 || verb == "answer" && text == "" {
+	if flags.NArg() != 0 || verb == "answer" && (text == "" || runID == "") {
 		fmt.Fprintln(stderr, "invalid execution arguments; see help")
 		return 2
 	}
@@ -167,7 +191,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		return 2
 	}
 	if verb == "answer" {
-		report, err := c.answer(ctx, AnswerRequest{Question: question, Text: text, RunConfig: *config})
+		report, err := c.answer(ctx, AnswerRequest{Question: question, Run: runID, Text: text, RunConfig: *config})
 		report.FormatVersion, report.Operation, report.Question = 1, verb, question
 		if err != nil {
 			report.Error = err.Error()
@@ -216,6 +240,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 	if err != nil {
 		report.Error = err.Error()
 	}
+	report.Outcome = RunOutcome(report.Status)
 	if emit(report) != 0 {
 		return 3
 	}

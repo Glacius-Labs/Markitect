@@ -44,6 +44,10 @@ func ResolveSettings(topology Topology, facts SettingsFacts) (Settings, error) {
 		if err != nil {
 			return Settings{}, fmt.Errorf("Manager %q verify role: %w", slot.Package, err)
 		}
+		manager.Helpers, manager.MaxHelpers, err = validation.team(defaults.Team, manager.Execute, profiles, instructions)
+		if err != nil {
+			return Settings{}, fmt.Errorf("Manager %q team: %w", slot.Package, err)
+		}
 		result.index[slot.Package] = len(result.managers)
 		result.managers = append(result.managers, cloneManagerSettings(manager))
 	}

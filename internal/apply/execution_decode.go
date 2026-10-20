@@ -14,6 +14,10 @@ import (
 
 const executionPath = ".markitect/execution.yaml"
 
+// executionStrategy names the strategy this build implements: one recursive
+// Pass process for Plan, Prepare, Implement and Verify.
+const executionStrategy = "recursive-passes-v1"
+
 func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {
 	r := executionDecoding{status: model.Passed}
 	d := executionDecoder{result: &r}
@@ -65,13 +69,13 @@ func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {
 	}
 	root := executionField{node: document.Content[0]}
 	d.restricted(root)
-	fields := d.object(root, "apiVersion", "strategy", "budget", "profiles", "instructions", "packages", "layout", "scope", "checks")
+	fields := d.object(root, "apiVersion", "strategy", "budget", "profiles", "instructions", "packages", "ownership", "team", "scope", "checks")
 	r.authored.APIVersion, _ = d.text(d.required(fields, root, "apiVersion"), false)
 	if r.authored.APIVersion.Source.File != "" && r.authored.APIVersion.Value != "markitect.execution/v1" {
 		d.issue(model.Failed, "execution.version", fields["apiVersion"], "Unsupported execution apiVersion.")
 	}
 	r.authored.Strategy, _ = d.text(d.required(fields, root, "strategy"), false)
-	if r.authored.Strategy.Source.File != "" && r.authored.Strategy.Value != "shared-workspace-v1" {
+	if r.authored.Strategy.Source.File != "" && r.authored.Strategy.Value != executionStrategy {
 		d.issue(model.Failed, "execution.strategy", fields["strategy"], "Unsupported execution strategy.")
 	}
 	r.authored.Budget = d.budget(d.required(fields, root, "budget"))
@@ -79,8 +83,11 @@ func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {
 	if field, found := fields["packages"]; found {
 		r.authored.Packages = d.packages(field)
 	}
-	if field, found := fields["layout"]; found {
-		r.authored.Layout = d.layout(field, checked)
+	if field, found := fields["ownership"]; found {
+		r.authored.Ownership = d.ownership(field, checked)
+	}
+	if field, found := fields["team"]; found {
+		r.authored.Team = d.team(field)
 	}
 	if field, found := fields["scope"]; found {
 		r.authored.Scope = d.scope(field)

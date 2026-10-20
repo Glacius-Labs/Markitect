@@ -169,8 +169,10 @@ func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, []frame
 		return bad("a tool handler is required")
 	case !volumeName.MatchString(turn.ID) || !volumeName.MatchString(turn.Workspace) || !volumeName.MatchString(turn.Home) || turn.Workspace == turn.Home:
 		return bad("turn ID, workspace and home must be distinct plain engine names")
-	case turn.Kind != run.ExecuteTurn && turn.Kind != run.VerifyTurn, turn.Kind == run.VerifyTurn && (!turn.ReadOnly || turn.Resume != ""):
-		return bad("a verify turn is read-only and never resumes")
+	case turn.Kind != run.ExecuteTurn && turn.Kind != run.VerifyTurn, turn.Kind == run.VerifyTurn && !turn.ReadOnly:
+		// A verify turn may continue only its own reviewer's conversation of the
+		// same review Pass; the Orchestrator gives every review Pass fresh homes.
+		return bad("a verify turn is read-only")
 	case strings.TrimSpace(turn.Prompt) == "" || turn.Timeout < 0:
 		return bad("a prompt and a non-negative timeout are required")
 	case !validMounts(turn.Mounts) || turn.Kind == run.VerifyTurn && writable(turn.Mounts):

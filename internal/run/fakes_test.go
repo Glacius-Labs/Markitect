@@ -45,36 +45,33 @@ func treeOf(t testing.TB, files map[string]string) snapshot.Tree {
 	return tree
 }
 
-// fakeWS keeps volumes in memory. A volume mounted by a running fake turn
-// makes Harvest uncertain, like the real port.
+// fakeWS keeps volumes in memory. A volume mounted writable by a running fake
+// turn makes Harvest uncertain, like the real port.
 type fakeWS struct {
-	t         testing.TB
-	mu        sync.Mutex
-	vols      map[WorkspaceID]*fakeVol
-	byName    map[string]*fakeVol
-	mounted   map[string]int
-	order     []string
-	closed    []WorkspaceID
-	harvests  int
-	uncertain bool
-	extra     []string
-	// peekUncertain makes Peek uncertain.
+	t             testing.TB
+	mu            sync.Mutex
+	vols          map[WorkspaceID]*fakeVol
+	byName        map[string]*fakeVol
+	mounted       map[string]int
+	order         []string
+	closed        []WorkspaceID
+	harvests      int
+	peeks         int
+	uncertain     bool
+	extra         []string
 	peekUncertain bool
 	dirs          map[WorkspaceID][]string
 	matErr        error
-	// matErrFor fails only the materialization of these workspaces.
-	matErrFor map[WorkspaceID]error
 }
 
 type fakeVol struct {
-	id     WorkspaceID
-	name   string
-	files  map[string]string
-	closed bool
+	id    WorkspaceID
+	name  string
+	files map[string]string
 }
 
 func newFakeWS(t testing.TB) *fakeWS {
-	return &fakeWS{t: t, vols: map[WorkspaceID]*fakeVol{}, byName: map[string]*fakeVol{}, mounted: map[string]int{}}
+	return &fakeWS{t: t, vols: map[WorkspaceID]*fakeVol{}, byName: map[string]*fakeVol{}, mounted: map[string]int{}, dirs: map[WorkspaceID][]string{}}
 }
 
 func (w *fakeWS) Materialize(_ context.Context, s WorkspaceSpec) (WorkspaceObservation, error) {
@@ -82,9 +79,6 @@ func (w *fakeWS) Materialize(_ context.Context, s WorkspaceSpec) (WorkspaceObser
 	defer w.mu.Unlock()
 	if w.matErr != nil {
 		return WorkspaceObservation{}, w.matErr
-	}
-	if err := w.matErrFor[s.ID]; err != nil {
-		return WorkspaceObservation{}, err
 	}
 	if !nameRE.MatchString(string(s.ID)) {
 		w.t.Errorf("workspace ID %q is not a valid name", s.ID)
@@ -97,15 +91,12 @@ func (w *fakeWS) Materialize(_ context.Context, s WorkspaceSpec) (WorkspaceObser
 		v.files[e.Path().String()] = string(e.Bytes())
 	}
 	w.vols[s.ID], w.byName[v.name] = v, v
-	if w.dirs == nil {
-		w.dirs = map[WorkspaceID][]string{}
-	}
 	w.dirs[s.ID] = s.Directories
 	w.order = append(w.order, string(s.ID))
 	return WorkspaceObservation{ID: s.ID, Volume: v.name, Tree: s.Tree.Digest()}, nil
 }
 
-func (w *fakeWS) tree(v *fakeVol) snapshot.Tree { return treeOf(w.t, v.files) }
+func (w *fakeWS) treeLocked(v *fakeVol) snapshot.Tree { return treeOf(w.t, v.files) }
 
 func (w *fakeWS) Harvest(_ context.Context, r HarvestRequest) (WorkspaceHarvest, error) {
 	w.mu.Lock()
@@ -115,23 +106,22 @@ func (w *fakeWS) Harvest(_ context.Context, r HarvestRequest) (WorkspaceHarvest,
 	if v == nil {
 		return WorkspaceHarvest{}, errors.New("no such volume")
 	}
-	h := WorkspaceHarvest{ID: r.ID, Tree: w.tree(v), Unsupported: w.extra, Uncertain: w.uncertain || w.mounted[v.name] > 0}
+	h := WorkspaceHarvest{ID: r.ID, Tree: w.treeLocked(v), Unsupported: w.extra, Uncertain: w.uncertain || w.mounted[v.name] > 0}
 	if h.Uncertain {
 		h.Reason = "volume is mounted or limits were hit"
 	}
 	return h, nil
 }
 
-// Peek returns the current volume content, also while a writer mounts it. It is
-// uncertain only when peekUncertain is set.
 func (w *fakeWS) Peek(_ context.Context, r HarvestRequest) (WorkspaceHarvest, error) {
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	w.peeks++
 	v := w.vols[r.ID]
 	if v == nil {
 		return WorkspaceHarvest{}, errors.New("no such volume")
 	}
-	h := WorkspaceHarvest{ID: r.ID, Tree: w.tree(v), Uncertain: w.peekUncertain}
+	h := WorkspaceHarvest{ID: r.ID, Tree: w.treeLocked(v), Unsupported: w.extra, Uncertain: w.peekUncertain}
 	if h.Uncertain {
 		h.Reason = "the volume changed while it was observed"
 	}
@@ -142,16 +132,7 @@ func (w *fakeWS) Close(_ context.Context, id WorkspaceID) (WorkspaceObservation,
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	w.closed = append(w.closed, id)
-	if v := w.vols[id]; v != nil {
-		v.closed = true
-	}
 	return WorkspaceObservation{ID: id, Closed: true}, nil
-}
-
-func (w *fakeWS) setExtra(names ...string) {
-	w.mu.Lock()
-	w.extra = names
-	w.mu.Unlock()
 }
 
 func (w *fakeWS) mount(name string, delta int) {
@@ -166,6 +147,19 @@ func (w *fakeWS) write(name, path, content string) {
 	w.byName[name].files[path] = content
 }
 
+func (w *fakeWS) remove(name, path string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	delete(w.byName[name].files, path)
+}
+
+func (w *fakeWS) file(id WorkspaceID, path string) (string, bool) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	content, ok := w.vols[id].files[path]
+	return content, ok
+}
+
 func (w *fakeWS) isClosed(id WorkspaceID) bool {
 	w.mu.Lock()
 	defer w.mu.Unlock()
@@ -173,21 +167,16 @@ func (w *fakeWS) isClosed(id WorkspaceID) bool {
 }
 
 // fakeAgents runs scripted turns. The script calls the tool handler like a
-// provider would.
+// provider would; without a script every turn follows the protocol.
 type fakeAgents struct {
-	t         testing.TB
-	ws        *fakeWS
-	mu        sync.Mutex
-	script    func(*call) error
-	turns     []Turn
-	active    int
-	maxActive int
-	prompts   map[string]string
-	// noConversation makes Execute turns report no resumable conversation.
-	noConversation bool
-	// quiet makes the default script finish Execute turns as waiting, so that no
-	// child reports done to its parent and the number of Execute turns is exact.
-	quiet bool
+	t           testing.TB
+	ws          *fakeWS
+	obligations map[string][]string
+	mu          sync.Mutex
+	script      func(*call) error
+	turns       []Turn
+	active      int
+	maxActive   int
 }
 
 type call struct {
@@ -197,22 +186,25 @@ type call struct {
 	h      ToolHandler
 	ag     *fakeAgents
 	noStop bool
+	// conversation overrides the resumable conversation the turn reports.
+	conversation *string
+	// decided lists the proposals the script already decided in this turn.
+	decided map[string]bool
 }
 
 func (a *fakeAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnResult, error) {
 	if !nameRE.MatchString(turn.ID) || !nameRE.MatchString(turn.Home) || turn.Profile == "" || turn.Timeout <= 0 || len(turn.Tools) == 0 || turn.Workspace == "" {
 		a.t.Errorf("incomplete turn %+v", turn)
 	}
+	if turn.Kind == VerifyTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m PathMount) bool { return m.Writable })) {
+		a.t.Errorf("verify turn %s can write", turn.ID)
+	}
 	a.mu.Lock()
 	a.turns = append(a.turns, turn)
-	if a.prompts == nil {
-		a.prompts = map[string]string{}
-	}
-	a.prompts[turn.ID] = turn.Prompt
 	a.active++
 	a.maxActive = max(a.maxActive, a.active)
 	a.mu.Unlock()
-	writes := turn.Kind == ExecuteTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m PathMount) bool { return m.Writable }))
+	writes := !turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m PathMount) bool { return m.Writable })
 	if writes {
 		a.ws.mount(turn.Workspace, 1)
 	}
@@ -221,7 +213,7 @@ func (a *fakeAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnRes
 	if a.script != nil {
 		err = a.script(c)
 	} else {
-		err = c.defaultScript()
+		c.protocol()
 	}
 	if writes {
 		a.ws.mount(turn.Workspace, -1)
@@ -230,43 +222,30 @@ func (a *fakeAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnRes
 	a.active--
 	a.mu.Unlock()
 	res := TurnResult{Stopped: !c.noStop, Started: time.Now(), Ended: time.Now(), Usage: Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}}
-	if turn.Kind == ExecuteTurn && !a.noConversation {
-		res.Conversation = turn.Resume
-		if res.Conversation == "" {
-			res.Conversation = "conv-" + turn.ID
-		}
+	res.Conversation = turn.Resume
+	if res.Conversation == "" {
+		res.Conversation = "conv-" + turn.ID
+	}
+	if c.conversation != nil {
+		res.Conversation = *c.conversation
 	}
 	return res, err
 }
 
-func (a *fakeAgents) turnsOf(kind TurnKind) []Turn {
+func (a *fakeAgents) all() []Turn {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+	return slices.Clone(a.turns)
+}
+
+func (a *fakeAgents) turnsOf(manager string) []Turn {
 	var out []Turn
-	for _, t := range a.turns {
-		if t.Kind == kind {
+	for _, t := range a.all() {
+		if t.Manager == manager {
 			out = append(out, t)
 		}
 	}
 	return out
-}
-
-func (a *fakeAgents) prompt(id string) string {
-	a.mu.Lock()
-	defer a.mu.Unlock()
-	return a.prompts[id]
-}
-
-func (c *call) round() int {
-	var n int
-	rest := strings.TrimPrefix(c.turn.ID, "run1-r")
-	fmt.Sscanf(rest, "%d", &n)
-	return n
-}
-
-// is reports whether the turn is the given Manager's turn kind in the round.
-func (c *call) is(round int, manager string, kind TurnKind) bool {
-	return c.round() == round && c.turn.Manager == manager && c.turn.Kind == kind
 }
 
 func (c *call) tool(name string, args any) ToolAnswer {
@@ -274,15 +253,214 @@ func (c *call) tool(name string, args any) ToolAnswer {
 	if err != nil {
 		c.t.Fatal(err)
 	}
-	return c.h(c.ctx, name, raw)
+	a := c.h(c.ctx, name, raw)
+	// Remember what this turn already decided or answered, so that the
+	// protocol does not act on its prompt's stale list again.
+	var in struct{ Kind, Proposal, About string }
+	if !a.Refused && json.Unmarshal(raw, &in) == nil {
+		if c.decided == nil {
+			c.decided = map[string]bool{}
+		}
+		switch {
+		case name == toolReport && (in.Kind == kindAccept || in.Kind == kindReturn):
+			c.decided[in.Proposal] = true
+		case name == toolSend && in.Kind == sendAnswer:
+			c.decided[in.About] = true
+		}
+	}
+	return a
+}
+
+// must calls a tool and fails the test when it is refused.
+func (c *call) must(name string, args any) ToolAnswer {
+	a := c.tool(name, args)
+	if a.Refused {
+		c.t.Errorf("turn %s: %s %v refused: %s", c.turn.ID, name, args, a.Text)
+	}
+	return a
+}
+
+// pass returns the Pass identity of the turn, "p1" for run1-p1-root-m1.
+func (c *call) pass() string {
+	rest := strings.TrimPrefix(c.turn.ID, "run1-")
+	p, _, _ := strings.Cut(rest, "-")
+	return p
+}
+
+func (c *call) is(pass, manager string) bool { return c.pass() == pass && c.turn.Manager == manager }
+
+// now is the task line of the turn's prompt.
+func (c *call) now() string {
+	_, rest, _ := strings.Cut(c.turn.Prompt, "\nNow: ")
+	line, _, _ := strings.Cut(rest, "\n")
+	return line
+}
+
+func (c *call) planning() bool {
+	for _, tool := range c.turn.Tools {
+		if tool.Name == toolReport {
+			var s struct {
+				Properties map[string]any `json:"properties"`
+			}
+			if err := json.Unmarshal(tool.InputSchema, &s); err != nil {
+				c.t.Fatal(err)
+			}
+			_, ok := s.Properties["plan"]
+			return ok
+		}
+	}
+	return false
+}
+
+func (c *call) helper() bool {
+	return !slices.ContainsFunc(c.turn.Tools, func(t ToolSpec) bool { return t.Name == toolSend })
+}
+
+var (
+	decideRE = regexp.MustCompile(`- decide (P\d+),`)
+	answerRE = regexp.MustCompile(`- answer (Q\d+) from`)
+	raisedRE = regexp.MustCompile(`Finding (F\d+) \[`)
+)
+
+func (c *call) pendingDecisions() []string {
+	var ids []string
+	for _, m := range decideRE.FindAllStringSubmatch(c.turn.Prompt, -1) {
+		ids = append(ids, m[1])
+	}
+	return ids
+}
+
+func (c *call) pendingQuestions() []string {
+	var ids []string
+	for _, m := range answerRE.FindAllStringSubmatch(c.turn.Prompt, -1) {
+		ids = append(ids, m[1])
+	}
+	return ids
+}
+
+// earlierRaised lists the findings the review prompt shows as raised by this
+// reviewer in earlier Passes.
+func (c *call) earlierRaised() []string {
+	_, rest, ok := strings.Cut(c.turn.Prompt, "Open findings you raised in earlier Passes")
+	if !ok {
+		return nil
+	}
+	section, _, _ := strings.Cut(rest, "\n\n")
+	var ids []string
+	for _, m := range raisedRE.FindAllStringSubmatch(section, -1) {
+		ids = append(ids, m[1])
+	}
+	return ids
+}
+
+func (c *call) coverage() []map[string]any {
+	var out []map[string]any
+	for _, id := range c.ag.obligations[c.turn.Manager] {
+		out = append(out, map[string]any{"definition": id, "status": coverDone, "note": "covered by the work of " + c.turn.Manager})
+	}
+	return out
+}
+
+func samplePlan() map[string]any {
+	return map[string]any{"approach": "do the own part", "artifacts": []string{}, "inputs": []any{}, "outputs": []any{}, "dependencies": []any{}, "order": "basis first", "blockers": []string{}, "assumptions": []string{}}
+}
+
+// envelope builds a basis or result report with full coverage.
+func (c *call) envelope(kind string, extra map[string]any) map[string]any {
+	args := map[string]any{"kind": kind, "summary": kind + " of " + c.turn.Manager, "obligations": c.coverage()}
+	if c.planning() {
+		args["plan"] = samplePlan()
+	}
+	if kind == kindResult {
+		args["verdict"] = string(Satisfied)
+	}
+	for k, v := range extra {
+		args[k] = v
+	}
+	return args
+}
+
+func (c *call) basis(extra map[string]any) ToolAnswer {
+	return c.tool(toolReport, c.envelope(kindBasis, extra))
+}
+
+func (c *call) result(extra map[string]any) ToolAnswer {
+	return c.tool(toolReport, c.envelope(kindResult, extra))
+}
+
+func (c *call) accept(id string) ToolAnswer {
+	return c.tool(toolReport, map[string]any{"kind": kindAccept, "proposal": id})
+}
+
+func (c *call) send(to, kind, text, about string) ToolAnswer {
+	args := map[string]any{"to": to, "kind": kind, "text": text}
+	if about != "" {
+		args["about"] = about
+	}
+	return c.tool(toolSend, args)
+}
+
+// protocol follows the base process: decide the children's proposals and
+// answer the questions waiting for this Manager, then submit the basis or the
+// complete result its stage asks for. A reviewer closes the findings it raised
+// earlier. A helper reports its task done.
+func (c *call) protocol() {
+	if c.helper() {
+		c.must(toolReport, map[string]any{"summary": "did the task"})
+		return
+	}
+	for _, id := range c.pendingDecisions() {
+		if !c.decided[id] {
+			c.must(toolReport, map[string]any{"kind": kindAccept, "proposal": id})
+		}
+	}
+	for _, q := range c.pendingQuestions() {
+		if !c.decided[q] {
+			c.answerQuestion(q)
+		}
+	}
+	now := c.now()
+	switch {
+	case strings.HasPrefix(now, "work on your own contribution"):
+		extra := map[string]any{}
+		if raised := c.earlierRaised(); len(raised) > 0 {
+			var closed []map[string]string
+			for _, id := range raised {
+				closed = append(closed, map[string]string{"id": id, "reason": "resolved on this candidate"})
+			}
+			extra["closed"] = closed
+		}
+		c.must(toolReport, c.envelope(kindBasis, extra))
+	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
+		// A genuine finding within the responsibility keeps the verdict at
+		// needs_correction.
+		if a := c.result(nil); a.Refused && strings.Contains(a.Text, "stay open") {
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+		} else if a.Refused {
+			c.t.Errorf("turn %s: result refused: %s", c.turn.ID, a.Text)
+		}
+	}
+}
+
+// answerQuestion answers a question addressed to this Manager, to its asker.
+func (c *call) answerQuestion(id string) {
+	re := regexp.MustCompile(`Question ` + id + ` from your (?:parent|child) ([^ ]+)`)
+	from := "parent"
+	if m := re.FindStringSubmatch(c.turn.Prompt); m != nil {
+		from = m[1]
+		if strings.Contains(c.turn.Prompt, "Question "+id+" from your parent") {
+			from = "parent"
+		}
+	}
+	c.must(toolSend, map[string]any{"to": from, "kind": sendAnswer, "text": "answer to " + id, "about": id})
 }
 
 // writable reports whether the turn's mounts allow a write to path: the base
-// mount first, then each mount in order overrides it for its directory.
+// mount first, then each mount in order overrides it for its directory or file.
 func writable(turn Turn, path string) bool {
 	ok := !turn.ReadOnly
 	for _, m := range turn.Mounts {
-		if path == m.Path || strings.HasPrefix(path, m.Path+"/") {
+		if path == m.Path || !m.File && strings.HasPrefix(path, m.Path+"/") {
 			ok = m.Writable
 		}
 	}
@@ -292,66 +470,9 @@ func writable(turn Turn, path string) bool {
 func (c *call) write(path, content string) {
 	if !writable(c.turn, path) {
 		c.t.Errorf("turn %s writes %s, which is read-only for it", c.turn.ID, path)
+		return
 	}
 	c.ag.ws.write(c.turn.Workspace, path, content)
-}
-
-type fnd map[string]any
-
-func finding(owner, obligation string, blocking bool) fnd {
-	return fnd{"owner": owner, "obligation": obligation, "observed": "observed " + obligation, "blocking": blocking}
-}
-
-func (c *call) assess(satisfied bool, findings []fnd, closed ...string) ToolAnswer {
-	var cl []map[string]string
-	for _, id := range closed {
-		cl = append(cl, map[string]string{"id": id, "reason": "resolved"})
-	}
-	return c.tool(toolAssess, map[string]any{"summary": "assessed " + c.turn.Manager, "satisfied": satisfied, "findings": findings, "closed": cl})
-}
-
-func (c *call) finish(status string) ToolAnswer {
-	return c.tool(toolFinish, map[string]any{"status": status, "summary": "did something"})
-}
-
-func (c *call) send(to, text string) ToolAnswer {
-	return c.tool(toolSend, map[string]any{"to": to, "text": text})
-}
-
-var idRE = regexp.MustCompile(`Finding (F\d+) \[`)
-
-// myOpen lists the open findings the Verify prompt shows as raised by this Manager.
-func (c *call) myOpen() []string {
-	_, rest, ok := strings.Cut(c.turn.Prompt, "Open findings you raised earlier")
-	if !ok {
-		return nil
-	}
-	section, _, _ := strings.Cut(rest, "\n\n")
-	var ids []string
-	for _, m := range idRE.FindAllStringSubmatch(section, -1) {
-		ids = append(ids, m[1])
-	}
-	return ids
-}
-
-// defaultScript assesses satisfied and closes every finding the Manager raised
-// earlier, or finishes an Execute turn as done (as waiting when the agents are
-// quiet).
-func (c *call) defaultScript() error {
-	if c.turn.Kind == VerifyTurn {
-		if a := c.assess(true, nil, c.myOpen()...); a.Refused {
-			c.t.Errorf("assess refused: %s", a.Text)
-		}
-		return nil
-	}
-	status := "done"
-	if c.ag.quiet {
-		status = "waiting"
-	}
-	if a := c.finish(status); a.Refused {
-		c.t.Errorf("finish refused: %s", a.Text)
-	}
-	return nil
 }
 
 func (c *call) wait(ch <-chan struct{}) error {
@@ -366,7 +487,7 @@ func (c *call) wait(ch <-chan struct{}) error {
 	}
 }
 
-// fakeChecks passes unless fail names the check.
+// fakeChecks passes unless fail decides otherwise.
 type fakeChecks struct {
 	mu   sync.Mutex
 	reqs []CheckRequest
@@ -385,10 +506,11 @@ func (f *fakeChecks) Run(_ context.Context, r CheckRequest) (CheckReceipt, error
 	return CheckReceipt{ID: r.ID, ImageID: r.ImageID, Tree: r.Tree.Digest(), Started: true, Exited: true}, nil
 }
 
-func failing(name string, rounds ...int) func(CheckRequest) (CheckReceipt, error, bool) {
+// failingIn fails the named check in the given Passes.
+func failingIn(name string, passes ...string) func(CheckRequest) (CheckReceipt, error, bool) {
 	return func(r CheckRequest) (CheckReceipt, error, bool) {
-		for _, n := range rounds {
-			if string(r.ID) == fmt.Sprintf("run1-r%d-%s", n, name) {
+		for _, p := range passes {
+			if string(r.ID) == fmt.Sprintf("run1-%s-%s", p, name) {
 				return CheckReceipt{ID: r.ID, ImageID: r.ImageID, Tree: r.Tree.Digest(), Started: true, Exited: true, ExitCode: 1, Output: []byte("FAIL: boom")}, nil, true
 			}
 		}
@@ -397,10 +519,11 @@ func failing(name string, rounds ...int) func(CheckRequest) (CheckReceipt, error
 }
 
 type fakeOwner struct {
-	mu      sync.Mutex
-	asked   []Question
-	answers map[string]string
-	askErr  error
+	mu        sync.Mutex
+	asked     []Question
+	answers   map[string]string
+	withdrawn []string
+	askErr    error
 }
 
 func (o *fakeOwner) Ask(_ context.Context, q Question) error {
@@ -420,6 +543,13 @@ func (o *fakeOwner) Answer(_ context.Context, id string) (string, bool, error) {
 	return a, ok, nil
 }
 
+func (o *fakeOwner) Withdraw(_ context.Context, id string) error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.withdrawn = append(o.withdrawn, id)
+	return nil
+}
+
 func (o *fakeOwner) answer(id, text string) {
 	o.mu.Lock()
 	defer o.mu.Unlock()
@@ -436,27 +566,22 @@ func (o *fakeOwner) questions() []Question {
 }
 
 type recEvidence struct {
-	mu        sync.Mutex
-	events    []Event
-	failAfter int
-	failKind  string
-	onRecord  func(Event)
+	mu       sync.Mutex
+	events   []Event
+	failKind string
 }
 
 func (r *recEvidence) Record(e Event) error {
 	r.mu.Lock()
 	defer r.mu.Unlock()
-	if r.failKind != "" && e.Kind == r.failKind || r.failAfter > 0 && len(r.events) >= r.failAfter {
+	if r.failKind != "" && e.Kind == r.failKind {
 		return errors.New("disk full")
 	}
 	r.events = append(r.events, e)
-	if r.onRecord != nil {
-		r.onRecord(e)
-	}
 	return nil
 }
 
-func (r *recEvidence) Transcript(turn string) string { return "" }
+func (r *recEvidence) Transcript(string) string { return "" }
 
 func (r *recEvidence) kinds(kind string) []Event {
 	r.mu.Lock()
@@ -470,7 +595,24 @@ func (r *recEvidence) kinds(kind string) []Event {
 	return out
 }
 
-func (r *recEvidence) count(kind string) int { return len(r.kinds(kind)) }
+// index returns the position of the first event matching kind, manager and,
+// when given, a data field value; -1 when none.
+func (r *recEvidence) index(kind, manager string, field string, value any) int {
+	r.mu.Lock()
+	defer r.mu.Unlock()
+	for i, e := range r.events {
+		if e.Kind != kind || manager != "" && e.Manager != manager {
+			continue
+		}
+		if field == "" {
+			return i
+		}
+		if data, ok := e.Data.(map[string]any); ok && data[field] == value {
+			return i
+		}
+	}
+	return -1
+}
 
 type fixture struct {
 	t      *testing.T
@@ -484,35 +626,58 @@ type fixture struct {
 
 var teamPaths = []string{".", "lending", "lending/reminders", "library"}
 
+// ownerByPrefix is the fixture's ownership: the deepest Manager whose path
+// prefixes the file, and Root for every other file.
+func ownerByPrefix(p snapshot.Path) string {
+	best := "."
+	for _, m := range teamPaths[1:] {
+		if strings.HasPrefix(p.String(), m+"/") && len(m) > len(best) {
+			best = m
+		}
+	}
+	return best
+}
+
 func newFixture(t *testing.T) *fixture {
 	t.Helper()
 	ws := newFakeWS(t)
-	f := &fixture{t: t, ws: ws, agents: &fakeAgents{t: t, ws: ws}, checks: &fakeChecks{}, owner: &fakeOwner{}, ev: &recEvidence{}}
+	obligations := map[string][]string{"lending": {"lending/borrow"}, "lending/reminders": {"lending/reminders/notice"}, "library": {"library/interface"}}
+	f := &fixture{t: t, ws: ws, agents: &fakeAgents{t: t, ws: ws, obligations: obligations}, checks: &fakeChecks{}, owner: &fakeOwner{}, ev: &recEvidence{}}
+	plan := func(dirs ...string) WritePlan {
+		var mounts []PathMount
+		for _, d := range dirs {
+			writable := !strings.HasPrefix(d, "!")
+			mounts = append(mounts, PathMount{Path: strings.TrimPrefix(d, "!"), Writable: writable})
+		}
+		return WritePlan{Mounts: mounts}
+	}
 	team := []Manager{
-		{Path: ".", Children: []string{"lending", "library"}, Role: "whole library", Brief: "Root brief.", ExecuteProfile: "exec", VerifyProfile: "ver"},
-		{Path: "lending", Parent: ".", Children: []string{"lending/reminders"}, Role: "loans", Brief: "Lending brief.", ExecuteProfile: "exec", VerifyProfile: "ver"},
-		{Path: "lending/reminders", Parent: "lending", Role: "overdue notices", Brief: "Reminders brief.", ExecuteProfile: "exec", VerifyProfile: "ver"},
-		{Path: "library", Parent: ".", Role: "program", Brief: "Library brief.", ExecuteProfile: "exec", VerifyProfile: "ver"},
+		{Path: ".", Children: []string{"lending", "library"}, Role: "whole library", Brief: "Root brief.", ExecuteProfile: "exec", VerifyProfile: "ver",
+			Write: WritePlan{Base: true, Mounts: []PathMount{{Path: "lending"}, {Path: "library"}}}},
+		{Path: "lending", Parent: ".", Children: []string{"lending/reminders"}, Role: "loans", Brief: "Lending brief.", Obligations: obligations["lending"], ExecuteProfile: "exec", VerifyProfile: "ver",
+			Write: plan("lending", "!lending/reminders")},
+		{Path: "lending/reminders", Parent: "lending", Role: "overdue notices", Brief: "Reminders brief.", Obligations: obligations["lending/reminders"], ExecuteProfile: "exec", VerifyProfile: "ver",
+			Write: plan("lending/reminders")},
+		{Path: "library", Parent: ".", Role: "program", Brief: "Library brief.", Obligations: obligations["library"], ExecuteProfile: "exec", VerifyProfile: "ver",
+			Write: plan("library")},
+	}
+	definitions := map[string]ModelDefinition{
+		"lending/borrow":           {ID: "lending/borrow", Owner: "lending", Text: "Borrow a copy."},
+		"lending/reminders/notice": {ID: "lending/reminders/notice", Owner: "lending/reminders", Text: "Notice overdue loans."},
+		"library/interface":        {ID: "library/interface", Owner: "library", Text: "One program."},
 	}
 	f.cfg = Config{
-		RunID: "run1",
-		Team:  team,
-		Start: treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "a", "lending/l.go": "l", "lending/reminders/r.go": "r"}),
-		Account: func(snapshot.Tree) []Finding {
-			return nil
-		},
-		OwnerOf: func(p snapshot.Path) string {
-			best := "."
-			for _, m := range teamPaths[1:] {
-				if strings.HasPrefix(p.String(), m+"/") && len(m) > len(best) {
-					best = m
-				}
-			}
-			return best
-		},
+		RunID:          "run1",
+		Team:           team,
+		Start:          treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "a", "lending/l.go": "l", "lending/reminders/r.go": "r"}),
+		ModelCheck:     func(snapshot.Tree) []Finding { return nil },
+		FileCheck:      func(snapshot.Tree) []Finding { return nil },
+		OwnerOf:        ownerByPrefix,
+		Registry:       func(snapshot.Tree) RegistryView { return RegistryView{Shards: map[string]string{}} },
+		Definition:     func(id string) (ModelDefinition, bool) { d, ok := definitions[id]; return d, ok },
 		OwnerRequest:   "Realize the model.",
 		OwnerDecisions: []string{"Decision: three loans."},
-		Budget:         Budget{Deadline: time.Now().Add(20 * time.Second), TurnTimeout: time.Minute, AgentTurns: 100, Rounds: 6},
+		Budget:         Budget{Deadline: time.Now().Add(20 * time.Second), TurnTimeout: time.Minute, AgentTurns: 400, Passes: 12},
 		MaxEntries:     1000,
 		MaxBytes:       1 << 20,
 		Agents:         f.agents,
@@ -525,8 +690,7 @@ func newFixture(t *testing.T) *fixture {
 }
 
 func (f *fixture) addCheck(name, owner string) {
-	req := checkRequestFor(f.t)
-	f.cfg.Checks = append(f.cfg.Checks, Check{Name: name, RequiredBy: "library/realization", Owner: owner, Request: req})
+	f.cfg.Checks = append(f.cfg.Checks, Check{Name: name, RequiredBy: "library/interface", Owner: owner, Request: checkRequestFor(f.t)})
 }
 
 func checkRequestFor(t testing.TB) CheckRequest {
@@ -538,20 +702,42 @@ func checkRequestFor(t testing.TB) CheckRequest {
 		Limits: CheckLimits{MilliCPUs: 1000, MemoryBytes: 1 << 30, Processes: 64}, Timeout: time.Minute, MaxOutputBytes: 1 << 16}
 }
 
-func (f *fixture) run() Outcome {
+var corrections = []Purpose{Plan, Prepare, Implement}
+
+func planSpec() PassSpec {
+	return PassSpec{Purpose: Plan, Mandate: "Plan your own obligations.", Plans: true, Corrections: corrections}
+}
+
+func prepareSpec() PassSpec {
+	return PassSpec{Purpose: Prepare, Mandate: "Prepare your foundation.", Writes: true, Corrections: corrections}
+}
+
+func implementSpec() PassSpec {
+	return PassSpec{Purpose: Implement, Mandate: "Realize your obligations.", Writes: true, Corrections: corrections}
+}
+
+func verifySpec() PassSpec {
+	return PassSpec{Purpose: Verify, Mandate: "Assess the candidate.", Review: true, Guidance: "A genuine finding is a model violation.", Corrections: corrections}
+}
+
+// open starts a run of the fixture.
+func (f *fixture) open() *Run {
 	f.t.Helper()
-	out, err := Reconcile(context.Background(), f.cfg)
+	r, err := Open(context.Background(), f.cfg)
+	if err != nil {
+		f.t.Fatalf("open: %v", err)
+	}
+	return r
+}
+
+// finish ends a run and checks the invariants of every outcome: every turn
+// ended and was observed, and no fake container still runs.
+func (f *fixture) finish(r *Run, reason string) Outcome {
+	f.t.Helper()
+	out, err := r.Finish(reason)
 	if err != nil && out.Status != Failed {
 		f.t.Fatalf("unexpected error %v with status %s", err, out.Status)
 	}
-	f.assertEnded(out)
-	return out
-}
-
-// assertEnded checks the invariants every outcome has: all turns ended and
-// were observed stopped, and no fake container still runs.
-func (f *fixture) assertEnded(out Outcome) {
-	f.t.Helper()
 	f.agents.mu.Lock()
 	active := f.agents.active
 	f.agents.mu.Unlock()
@@ -563,6 +749,22 @@ func (f *fixture) assertEnded(out Outcome) {
 			f.t.Errorf("turn %s has no end", tr.ID)
 		}
 	}
+	return out
+}
+
+// apply runs Plan, Prepare, Implement and Verify once.
+func (f *fixture) apply() (Outcome, []PassResult) {
+	f.t.Helper()
+	r := f.open()
+	var results []PassResult
+	for _, spec := range []PassSpec{planSpec(), prepareSpec(), implementSpec(), verifySpec()} {
+		res := r.Pass(spec)
+		results = append(results, res)
+		if res.Stopped {
+			break
+		}
+	}
+	return f.finish(r, "the forward Passes ended"), results
 }
 
 func turnIDs(out Outcome) []string {
@@ -571,25 +773,4 @@ func turnIDs(out Outcome) []string {
 		ids = append(ids, t.ID)
 	}
 	return ids
-}
-
-// executeTurnsOf counts the Execute turns of a Manager, from the given round on.
-func executeTurnsOf(out Outcome, manager string, fromRound int) int {
-	n := 0
-	for _, t := range out.Turns {
-		if t.Kind == ExecuteTurn && t.Manager == manager && t.Round >= fromRound {
-			n++
-		}
-	}
-	return n
-}
-
-func countKind(out Outcome, kind TurnKind) int {
-	n := 0
-	for _, t := range out.Turns {
-		if t.Kind == kind {
-			n++
-		}
-	}
-	return n
 }

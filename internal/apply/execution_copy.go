@@ -39,11 +39,15 @@ func cloneExecution(value AuthoredExecution) AuthoredExecution {
 			p.Verify = executionRoleCopy(p.Verify)
 		}
 	}
-	if value.Layout != nil {
-		layout := *value.Layout
-		layout.Roots.Value = slices.Clone(layout.Roots.Value)
-		layout.Exceptions = slices.Clone(layout.Exceptions)
-		value.Layout = &layout
+	value.Ownership = executionListPointer(value.Ownership)
+	if value.Team != nil {
+		team := *value.Team
+		team.Helpers = slices.Clone(team.Helpers)
+		for i := range team.Helpers {
+			team.Helpers[i].Profile = executionPointer(team.Helpers[i].Profile)
+			team.Helpers[i].Instructions = executionListPointer(team.Helpers[i].Instructions)
+		}
+		value.Team = &team
 	}
 	value.Scope = executionListPointer(value.Scope)
 	value.Checks = executionListPointer(value.Checks)

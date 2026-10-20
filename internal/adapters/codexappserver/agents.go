@@ -139,7 +139,9 @@ func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, map[str
 	switch turn.Kind {
 	case run.ExecuteTurn:
 	case run.VerifyTurn:
-		if !turn.ReadOnly || turn.Resume != "" || writable(turn.Mounts) {
+		// A verify turn may continue only its own reviewer's conversation of the
+		// same review Pass; the Orchestrator gives every review Pass fresh homes.
+		if !turn.ReadOnly || writable(turn.Mounts) {
 			return Profile{}, nil, ErrSession
 		}
 	default:

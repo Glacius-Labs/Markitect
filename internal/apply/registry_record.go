@@ -43,17 +43,25 @@ func (r *registryPreparation) decodeRecord(source snapshot.Path, node *yaml.Node
 	if len(r.diagnostics) != before {
 		return realization.Registration{}, false
 	}
-	path, err := snapshot.NewPath(record.Path)
+	// An entry is an exact repository-relative file or a directory ending in
+	// "/" that covers its registrant's eligible files below it.
+	name, directory := strings.CutSuffix(record.Path, "/")
+	path, err := snapshot.NewPath(name)
 	if err != nil {
 		r.invalid(source, fields["path"], "registry.artifact_path", err.Error())
 		return realization.Registration{}, false
 	}
-	artifact, err := realization.NewArtifact(path, realization.Form(record.Form), basis, record.Why)
+	var artifact realization.Artifact
+	if directory {
+		artifact, err = realization.NewDirectoryArtifact(path, realization.Form(record.Form), basis, record.Why)
+	} else {
+		artifact, err = realization.NewArtifact(path, realization.Form(record.Form), basis, record.Why)
+	}
 	if err != nil {
 		r.invalid(source, node, "registry.artifact", err.Error())
 		return realization.Registration{}, false
 	}
-	if _, found := census.Lookup(path); !found {
+	if _, found := census.Lookup(path); !directory && !found {
 		r.invalid(source, fields["path"], "registry.artifact_missing", fmt.Sprintf("Registered artifact %q is absent from the bound Census.", record.Path))
 		return realization.Registration{}, false
 	}

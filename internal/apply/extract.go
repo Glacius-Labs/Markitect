@@ -40,8 +40,8 @@ type ExtractRequest struct {
 	// RemoveHome deletes one provider-home volume a turn used.
 	RemoveHome func(context.Context, string) error
 	// RequireVolumeSubpaths asks the container engine whether it mounts a
-	// directory of a volume. Both phases run with enforced write plans, which are
-	// such mounts, so it is required.
+	// directory or file of a volume. Both phases run with enforced write plans,
+	// which are such mounts, so it is required.
 	RequireVolumeSubpaths func(context.Context) error
 }
 
@@ -81,13 +81,13 @@ type ProposedCheck struct {
 }
 
 // Extract develops a model candidate from the existing artifacts in two phases
-// over the same engine as Apply. Phase one: Root alone proposes the Packages
-// with an overview Definition each and the layout exceptions they need. Phase
-// two: the Manager tree of the verified proposal derives the model of every
-// Package and registers the artifacts. A Verified second phase is published
-// through the guarded Publisher as the changed .markitect model, registry and
-// layout files; an artifact is never published and never changed. It never
-// commits.
+// over the same Pass process as Apply, each a work Pass with its own mandate
+// followed by independent Verify. Phase one: Root alone proposes the Packages
+// with an overview Definition each and the ownership areas they need. Phase two:
+// the Manager tree of the verified proposal derives the model of every Package
+// and registers the artifacts. A Verified second phase is published through the
+// guarded Publisher as the changed .markitect model, registry and ownership
+// files; an artifact is never published and never changed. It never commits.
 func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	var result ExtractResult
 	start, err := newExtractStart(req.Prepared)
@@ -100,11 +100,11 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	deadline := runDeadline(req.now(), start.budget.ExecutionTime.Value, req.Deadline)
 
 	// The structure phase may use at most half of the agent turns, so the model
-	// phase always keeps the rest; each phase needs one Execute and one Verify
-	// turn of Root at least.
+	// phase always keeps the rest; each phase needs at least a basis and a result
+	// of Root in its work Pass and in its Verify.
 	structureTurns := start.budget.AgentTurns.Value / 2
-	if structureTurns < 2 {
-		return result, fmt.Errorf("an Extract needs at least 4 agent turns, the project allows %d", start.budget.AgentTurns.Value)
+	if structureTurns < 4 {
+		return result, fmt.Errorf("an Extract needs at least 8 agent turns, the project allows %d", start.budget.AgentTurns.Value)
 	}
 	structure, err := newExtractAccounting(extractStructure, start)
 	if err != nil {
@@ -115,7 +115,7 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	if err != nil {
 		return result, err
 	}
-	outcome, runErr := run.Reconcile(ctx, cfg)
+	outcome, runErr := structurePhase.run(ctx, cfg)
 	result.Structure = outcome
 	structurePhase.ports().removeHomes(ctx, outcome.Homes)
 	structurePhase.record(outcome)
@@ -145,8 +145,12 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	}
 	// Both phases share the owner channel: the model phase knows the structure
 	// phase's answers and continues its question numbering.
-	cfg.Questions = outcome.Questions
-	modelOutcome, runErr := run.Reconcile(ctx, cfg)
+	for _, q := range outcome.Questions {
+		if q.To == run.User && q.Answered {
+			cfg.Questions = append(cfg.Questions, q)
+		}
+	}
+	modelOutcome, runErr := phase.run(ctx, cfg)
 	result.Model = &modelOutcome
 	phase.ports().removeHomes(ctx, modelOutcome.Homes)
 	phase.record(modelOutcome)
@@ -344,7 +348,21 @@ func (p extractPhaseRun) ports() runPorts {
 
 // record records the phase's outcome.
 func (p extractPhaseRun) record(outcome run.Outcome) {
-	_ = p.req.Evidence.Record(run.Event{At: p.req.now(), Kind: "extract.phase", Data: map[string]any{"phase": p.phase.name, "status": outcome.Status, "reason": outcome.Reason, "rounds": len(outcome.Rounds), "turns": len(outcome.Turns)}})
+	_ = p.req.Evidence.Record(run.Event{At: p.req.now(), Kind: "extract.phase", Data: map[string]any{"phase": p.phase.name, "status": outcome.Status, "reason": outcome.Reason, "passes": len(outcome.Passes), "turns": len(outcome.Turns)}})
+}
+
+// run runs the phase through the shared Pass process: its work Pass, then
+// independent Verify, with correction and reassessment as Apply composes them.
+func (p extractPhaseRun) run(ctx context.Context, cfg run.Config) (run.Outcome, error) {
+	r, err := run.Open(ctx, cfg)
+	if err != nil {
+		return run.Outcome{Status: run.Failed, Reason: err.Error()}, err
+	}
+	purpose := run.Purpose(p.phase.name)
+	corrections := []run.Purpose{purpose}
+	work := run.PassSpec{Purpose: purpose, Mandate: p.phase.mandate, Writes: true, Corrections: corrections}
+	review := run.PassSpec{Purpose: run.Verify, Mandate: extractVerifyMandate, Review: true, Guidance: p.phase.verifyGuidance, Corrections: corrections, ArtifactFindingsAdvisory: p.phase.advisory}
+	return r.Finish(compose(r, []run.PassSpec{work}, review))
 }
 
 // config builds the engine configuration of one phase from its start.
@@ -356,17 +374,19 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 	r := p.req
 	cfg := run.Config{
 		RunID: p.runID, Team: team, Start: stage.tree, OwnerRequest: r.OwnerRequest, OwnerDecisions: r.OwnerDecisions,
-		Account:    func(tree snapshot.Tree) []run.Finding { return accountFindings(accounting.Account(tree)) },
+		ModelCheck: func(tree snapshot.Tree) []run.Finding { return gateFindings(accounting.ModelCheck(tree)) },
+		FileCheck:  func(tree snapshot.Tree) []run.Finding { return gateFindings(accounting.Account(tree)) },
 		OwnerOf:    accounting.OwnerOf,
-		Budget:     run.Budget{Deadline: deadline, TurnTimeout: stage.budget.TurnTimeout.Value, AgentTurns: agentTurns, Rounds: stage.budget.Rounds.Value},
+		Registry:   accounting.RegistryView,
+		Definition: definitionLookup(stage.structural.Model().checked),
+		Budget:     run.Budget{Deadline: deadline, TurnTimeout: stage.budget.TurnTimeout.Value, AgentTurns: agentTurns, Passes: stage.budget.Passes.Value},
 		MaxEntries: r.MaxEntries, MaxBytes: r.MaxBytes,
 		Agents: r.Agents, Workspaces: r.Workspaces, Owner: r.Owner, Evidence: r.Evidence, Clock: r.Clock,
-		Mandate: p.phase.mandate, VerifyGuidance: p.phase.verifyGuidance, CheckTool: true,
 	}
 	if accounting.phase == extractModel {
 		// The artifacts are fixed evidence of the model phase: a deviation of an
 		// artifact is reported against a Definition of the candidate, not repaired.
-		cfg.ArtifactFindingsAdvisory, cfg.ResolveDefinition = true, accounting.definitionResolver()
+		cfg.ResolveDefinition = accounting.definitionResolver()
 	}
 	return cfg, nil
 }
@@ -388,7 +408,6 @@ func (a extractAccounting) structureTeam(stage extractStage) ([]run.Manager, err
 	if !ok {
 		return nil, errors.New("Root has no resolved settings")
 	}
-	layout := structural.files.layout
 	var dependencies []string
 	for _, dependency := range structural.Model().inputs.Raw.Dependencies {
 		if area := dependency.RepositoryArea; area.String() != "" {
@@ -396,13 +415,13 @@ func (a extractAccounting) structureTeam(stage extractStage) ([]run.Manager, err
 		}
 	}
 	slices.Sort(dependencies)
-	var roots []string
-	for _, r := range layout.Roots() {
-		roots = append(roots, r.String())
+	brief := renderStructureBrief(structureBriefInput{Areas: structural.files.layout.Areas(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().checked), Settings: root, Checks: a.declaredChecks(), CheckProfiles: stage.checkProfiles})
+	write, err := a.WritePlan(organization.Root)
+	if err != nil {
+		return nil, err
 	}
-	brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().checked), Settings: root, Checks: a.declaredChecks(), CheckProfiles: stage.checkProfiles})
 	return []run.Manager{{Path: organization.Root, Role: "proposes the first model structure of the whole project", Brief: brief,
-		ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: a.WritePlan(organization.Root)}}, nil
+		ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: write}}, nil
 }
 
 // modelTeam is the Manager tree of the proposed topology, each with the Brief of
@@ -435,12 +454,16 @@ func (a extractAccounting) modelTeam(stage extractStage) ([]run.Manager, error) 
 				files = append(files, p.String())
 			}
 		}
+		write, err := a.WritePlan(manager.Package)
+		if err != nil {
+			return nil, err
+		}
 		team = append(team, run.Manager{
 			Path: manager.Package, Parent: manager.Parent, Children: manager.Children,
 			Role: managerRole(manager, selection), ExecuteProfile: settings.Execute.Profile.Value.Name, VerifyProfile: settings.Verify.Profile.Value.Name,
 			Brief: renderModelBrief(modelBriefInput{Manager: manager, Selection: selection, Settings: settings, Areas: a.base.Areas(manager.Package), Files: files,
 				Shard: a.base.Shard(manager.Package), Children: children, Kinds: kinds, Checks: checks}),
-			Write: a.WritePlan(manager.Package),
+			Write: write,
 		})
 	}
 	return team, nil
