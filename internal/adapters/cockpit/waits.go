@@ -39,7 +39,7 @@ func classifyWaits(v *View) {
 	for i := range v.Managers {
 		if w := v.Managers[i].Wait; w != nil {
 			classify(w, &v.Managers[i], byPath, questions)
-			outdated(w, &v.Managers[i], byPath, questions, proposals)
+			outdated(w, &v.Managers[i], byPath, proposals)
 		}
 	}
 	for i := range v.Managers {
@@ -85,8 +85,6 @@ func classify(w *Wait, m *ManagerView, byPath map[string]*ManagerView, questions
 		if q, ok := questions[t]; ok {
 			w.On = []string{participant(q.To)}
 		}
-	case t == run.User:
-		w.Kind, w.On = "contact", []string{nodeUser}
 	case byPath[t] != nil:
 		w.Kind, w.On = "contact", []string{t}
 	default:
@@ -95,11 +93,14 @@ func classify(w *Wait, m *ManagerView, byPath map[string]*ManagerView, questions
 }
 
 // outdated marks a recorded wait whose named condition the record shows
-// fulfilled after the wait began. The Orchestrator records a state change but
-// not a changed wait text while a Manager stays Waiting, so such a wait is the
-// last wording, not the current reason. What still blocks it is then read from
-// the record only: the unaccepted dependencies of its accepted plan.
-func outdated(w *Wait, m *ManagerView, byPath map[string]*ManagerView, questions map[string]QuestionView, proposals map[string]ProposalView) {
+// fulfilled after the wait began. Before a Manager's productive work starts,
+// the Orchestrator stores a new wait (its release, then each unmet declared
+// dependency) before comparing it with the recorded one, so a change that
+// leaves the Manager Waiting is not recorded. Such a wait is the last wording,
+// not the current reason. What still blocks the Manager is then read from the
+// record only: the unaccepted dependencies of its accepted plan. Waits for a
+// decision or an answer end with a recorded state change and need no check.
+func outdated(w *Wait, m *ManagerView, byPath map[string]*ManagerView, proposals map[string]ProposalView) {
 	accepted := func(owner, stage string) int {
 		o := byPath[owner]
 		if o == nil {
@@ -123,20 +124,6 @@ func outdated(w *Wait, m *ManagerView, byPath map[string]*ManagerView, questions
 		}
 		if seq := accepted(w.On[0], stage); seq > w.Since {
 			w.Outdated = fmt.Sprintf("The %s of %s it names was accepted at record %d.", stage, nodeLabel(w.On[0]), seq)
-		}
-	case "decision":
-		if pr, ok := proposals[strings.TrimPrefix(w.Refs[0], "proposal:")]; ok && pr.DecSeq > w.Since {
-			w.Outdated = fmt.Sprintf("%s was %s at record %d.", pr.ID, pr.Status, pr.DecSeq)
-		}
-	case "answer":
-		if q, ok := questions[w.Text]; ok && q.Status != "open" {
-			seq := q.AnsweredSeq
-			if q.Status == "lapsed" {
-				seq = q.LapsedSeq
-			}
-			if seq > w.Since {
-				w.Outdated = fmt.Sprintf("%s was %s at record %d.", q.ID, q.Status, seq)
-			}
 		}
 	}
 	if w.Outdated == "" {
@@ -370,6 +357,10 @@ func statusSentence(v *View) Sentence {
 		return Sentence{{Text: "The run started; no Pass has started yet."}}
 	}
 	pv := v.Passes[len(v.Passes)-1]
+	if pv.StartSeq == 0 {
+		// A Verify Pass's candidate and checks are recorded before it starts.
+		return Sentence{{Text: "Pass "}, {Text: pv.ID, Ref: "pass:" + pv.ID}, {Text: " is being prepared: its candidate is captured and its required checks run before it starts."}}
+	}
 	s := Sentence{{Text: passName(pv) + " Pass "}, {Text: pv.ID, Ref: "pass:" + pv.ID}}
 	if pv.Sealed {
 		s = append(s, Segment{Text: " was sealed " + pv.Verdict + "."})

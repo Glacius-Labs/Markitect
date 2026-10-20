@@ -590,7 +590,7 @@ func (p *projector) gaps(v View, src Source) []Gap {
 	}
 	for _, m := range v.Managers {
 		if m.Wait != nil && m.Wait.Outdated != "" {
-			out = append(out, Gap{Code: "wait.unrecorded", Text: "The Orchestrator records a Manager's state changes but not a changed wait while the state stays Waiting. Waits whose named condition the record shows fulfilled are marked outdated; their current reason is not recorded."})
+			out = append(out, Gap{Code: "wait.unrecorded", Text: "Before a Manager's productive work starts, the Orchestrator does not record a changed wait that leaves it Waiting: after its release or after one declared dependency is met. Such waits are marked outdated; their current reason is not recorded."})
 			break
 		}
 	}

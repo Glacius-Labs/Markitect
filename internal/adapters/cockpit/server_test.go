@@ -138,6 +138,10 @@ func TestEmbeddedPageReferencesExistingFiles(t *testing.T) {
 		if err != nil || entry.IsDir() {
 			return err
 		}
+		// Source packaging carries only these kinds of cockpit web files.
+		if ext := path.Ext(name); ext != ".html" && ext != ".css" && ext != ".js" {
+			t.Errorf("%s is embedded but source packaging omits %s files", name, ext)
+		}
 		data, err := fs.ReadFile(webFiles, name)
 		if err != nil {
 			return err

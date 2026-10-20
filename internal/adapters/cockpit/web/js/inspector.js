@@ -199,10 +199,15 @@ export class Inspector {
     }
   }
 
+  // latestActor is the Manager that acted in the latest work or exchange
+  // record; Orchestrator and owner actions select nobody.
   latestActor(seq) {
+    const managers = new Set(this.view?.managers.map((m) => m.path));
     for (let i = seq - 1; i >= 0; i--) {
       const e = this.entries[i];
-      if (e.class === "work" || e.class === "exchange") return e.link && !e.link.from.startsWith("@") ? e.link.from : e.manager;
+      if (e.class !== "work" && e.class !== "exchange") continue;
+      const actor = e.link ? e.link.from : e.manager;
+      if (managers.has(actor)) return actor;
     }
     return null;
   }

@@ -283,6 +283,9 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, Project(l.id, records, n, src, report))
 }
 
+// handleEntries lists the record's entries for navigation: the scrubber, the
+// timeline and the event lists. The page shows only those up to its boundary;
+// views, details and transcripts are bound to the boundary on the server.
 func (s *Server) handleEntries(w http.ResponseWriter, r *http.Request) {
 	l, ok := s.runLog(w, r)
 	if !ok {
@@ -336,9 +339,16 @@ func (s *Server) handleTranscript(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "no turn "+turn+" started up to this boundary", http.StatusNotFound)
 		return
 	}
+	// The cut is the latest recorded time up to the boundary; an unreadable
+	// record has none.
 	var until time.Time
-	if n < len(records) && n > 0 {
-		until = records[n-1].At
+	if n < len(records) {
+		for i := n - 1; i >= 0 && until.IsZero(); i-- {
+			until = records[i].At
+		}
+		if until.IsZero() {
+			until = time.Unix(0, 0)
+		}
 	}
 	data, err := readBounded(filepath.Join(l.dir, "transcripts", turn+".jsonl"), maxTranscriptBytes)
 	if errors.Is(err, os.ErrNotExist) {

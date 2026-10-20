@@ -198,6 +198,8 @@ func embeddedNotices(name string) bool {
 	return name == embeddedNoticesPath
 }
 
+const embeddedCockpitWebDir = "internal/adapters/cockpit/web/"
+
 // embeddedCockpitWeb selects the cockpit's page, style and script files, which
 // its Go package embeds and serves.
 func embeddedCockpitWeb(name string) bool {
@@ -210,5 +212,3 @@ func embeddedCockpitWeb(name string) bool {
 	}
 	return false
 }
-
-const embeddedCockpitWebDir = "internal/adapters/cockpit/web/"

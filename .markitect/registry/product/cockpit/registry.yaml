@@ -112,3 +112,7 @@ artifacts:
     form: test
     realizes: [product/cockpit/observed-run-inspection]
     why: "Verifies the cockpit command's selection, its refusals before serving and that failures and an unconfigured cockpit never report success."
+  - path: "internal/adapters/cockpit/contract_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads the run engine's source and fails when a data key or envelope field the projection decodes is no longer recorded."
