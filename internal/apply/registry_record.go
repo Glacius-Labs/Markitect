@@ -34,7 +34,7 @@ func (r *registryPreparation) decodeRecord(source snapshot.Path, node *yaml.Node
 			}
 			identity := model.Identity{Package: link.Value[:i], ID: link.Value[i+1:]}
 			if !identities[identity] {
-				r.invalid(source, link, "registry.definition_missing", fmt.Sprintf("Definition %q is absent from the complete compiled model set.", link.Value))
+				r.invalid(source, link, "registry.definition_missing", fmt.Sprintf("Definition %q is absent from the complete checked model set.", link.Value))
 			}
 			basis = append(basis, identity)
 		}

@@ -135,7 +135,7 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 	if !ok {
 		return run.Config{}, errors.New("configured check selections are incomplete")
 	}
-	topology, err := organization.BuildTopology(prepared.Structural().Model().compiled)
+	topology, err := organization.BuildTopology(prepared.Structural().Model().checked)
 	if err != nil {
 		return run.Config{}, err
 	}
@@ -163,9 +163,9 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 	}
 	var required []requiredDefinition
 	for _, id := range requiredIDs {
-		definition, found := compiledDefinition(prepared.Structural().Model().compiled, id)
+		definition, found := checkedDefinition(prepared.Structural().Model().checked, id)
 		if !found {
-			return run.Config{}, fmt.Errorf("check %q is required by %s, which the compiled model does not define", requiredChecks[id][0], identityText(id))
+			return run.Config{}, fmt.Errorf("check %q is required by %s, which the checked model does not define", requiredChecks[id][0], identityText(id))
 		}
 		required = append(required, requiredDefinition{Definition: definition, Checks: requiredChecks[id]})
 	}
@@ -217,9 +217,9 @@ func reconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
 	return cfg, nil
 }
 
-// compiledDefinition returns the exact compiled Definition of an identity.
-func compiledDefinition(compiled model.Result, id model.Identity) (model.Definition, bool) {
-	for _, owner := range compiled.Models {
+// checkedDefinition returns the exact checked Definition of an identity.
+func checkedDefinition(checked model.Result, id model.Identity) (model.Definition, bool) {
+	for _, owner := range checked.Models {
 		for _, definition := range owner.Definitions {
 			if definition.Identity == id {
 				return definition, true

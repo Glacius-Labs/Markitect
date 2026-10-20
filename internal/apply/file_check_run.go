@@ -52,11 +52,11 @@ var repairableDrift = map[string]bool{
 // derives the model and the registration that account for it. With startDrift,
 // repairable drift is not a failure either: the Apply that follows hands it to
 // the owning Manager (DEC-062).
-func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs, execution executionDecoding, extract, startDrift bool) fileCheck {
+func checkFiles(parent registryPreparation, checked model.Result, raw RawInputs, execution executionDecoding, extract, startDrift bool) fileCheck {
 	r := fileCheck{status: parent.Status(), layout: execution.layout}
 	c := fileChecker{result: &r, raw: raw, inputs: make(map[snapshot.Path]realization.Classification), protections: make(map[string]bool)}
-	if compiled.Status != model.Passed {
-		if compiled.Status == model.Failed {
+	if checked.Status != model.Passed {
+		if checked.Status == model.Failed {
 			r.observe(model.Failed)
 		}
 		c.issue(r.Status(), "files.model_not_passed", snapshot.Path{}, "", nil, "File checking requires the exact passed model parent.")
@@ -69,7 +69,7 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 	for _, diagnostic := range execution.diagnostics {
 		r.diagnostics = append(r.diagnostics, FileCheckDiagnostic(diagnostic))
 	}
-	c.sourceInputs(compiled.Limits)
+	c.sourceInputs(checked.Limits)
 	c.instructions(execution.authored)
 	c.ignore()
 	for _, classification := range c.inputs {
@@ -79,7 +79,7 @@ func checkFiles(parent registryPreparation, compiled model.Result, raw RawInputs
 		return cmp.Or(cmp.Compare(a.Path().String(), b.Path().String()), cmp.Compare(a.Class(), b.Class()))
 	})
 	if parent.Status() == model.Passed {
-		accounting := realization.AccountFiles(compiled, raw.Census, parent.registry, r.classifications, execution.layout)
+		accounting := realization.AccountFiles(checked, raw.Census, parent.registry, r.classifications, execution.layout)
 		r.accounting = &accounting
 		if accounting.Status() == realization.AccountingIncomplete {
 			r.observe(model.NotCompleted)

@@ -197,7 +197,7 @@ func TestExtractStructureAccounting(t *testing.T) {
 		changes map[string]*string
 		want    string // "owner obligation path"
 	}{
-		{"uncompilable model", map[string]*string{".markitect/model/library/library.yaml": text("id: library\nkind: Software.Concept\nbody:  \nspec: {}\n")}, ". model."},
+		{"model failing Model check", map[string]*string{".markitect/model/library/library.yaml": text("id: library\nkind: Software.Concept\nbody:  \nspec: {}\n")}, ". model."},
 		{"unresolved kind", map[string]*string{".markitect/model/library/library.yaml": text(overview("library", "Library.")[:0] + "id: library\nkind: Nope.Concept\nbody: x\nspec: {}\n")}, ". model."},
 		{"package without Definition", map[string]*string{".markitect/model/lending/lending.yaml": nil, ".markitect/model/lending/reminders/reminders.yaml": text(overview("reminders", "Overdue notices."))}, ". model.empty_package"},
 		{"artifact without owner", map[string]*string{".markitect/model/members/members.yaml": nil, ".markitect/model/catalog/catalog.yaml": nil, ".markitect/model/library/library.yaml": nil, ".markitect/model/lending/lending.yaml": nil, ".markitect/model/lending/reminders/reminders.yaml": text(overview("reminders", "Overdue notices.")), ".markitect/execution.yaml": text(extractExecution)}, ". layout.no_owner"},
@@ -383,7 +383,7 @@ func TestExtractModelAccounting(t *testing.T) {
 		{"changed execution document", map[string]*string{".markitect/execution.yaml": text(extractExecution)}, ". input.changed"},
 		{"invalid execution document", map[string]*string{".markitect/execution.yaml": text("apiVersion: nothing\n")}, ". input.changed"},
 		{"changed dependency", map[string]*string{".markitect/dependencies/core/model.yaml": text("id: core\n")}, ". input.changed"},
-		{"uncompilable Definition", map[string]*string{".markitect/model/members/members.yaml": text("id: members\nkind: Software.Concept\n")}, "members model."},
+		{"Definition failing Model check", map[string]*string{".markitect/model/members/members.yaml": text("id: members\nkind: Software.Concept\n")}, "members model."},
 		{"unresolved link", map[string]*string{".markitect/model/members/members.yaml": text(overview("members", "Members, see [[Lending.nothing]]."))}, "members model."},
 		{"new Package", map[string]*string{".markitect/model/lending/loans/loans.yaml": text(overview("loans", "Loans."))}, "lending model.structure_changed"},
 		{"Package removed", map[string]*string{".markitect/model/lending/reminders/reminders.yaml": nil}, ". model.structure_changed"},

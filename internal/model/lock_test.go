@@ -36,9 +36,9 @@ func requireNoPublicContent(t *testing.T, model ModelResult) {
 	}
 }
 
-func requireCompiled(t *testing.T, input Input) Result {
+func requireChecked(t *testing.T, input Input) Result {
 	t.Helper()
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Passed {
 		t.Fatalf("valid input failed: status=%s diagnostics=%+v", got.Status, got.Diagnostics)
 	}
@@ -87,7 +87,7 @@ func TestLockClosedFormatAndExactContentBinding(t *testing.T) {
 			input := singleValueInput("string", "0", "1", "", "{}")
 			input.Root = withLock(input.Root, tt.text, true)
 			original := bytes.Clone(input.Root.Entries[len(input.Root.Entries)-1].Bytes)
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || tt.code != "" && !hasDiagnostic(got, tt.code) {
 				t.Fatalf("want %s: status=%s diagnostics=%+v", tt.code, got.Status, got.Diagnostics)
 			}
@@ -100,7 +100,7 @@ func TestLockClosedFormatAndExactContentBinding(t *testing.T) {
 	for _, version := range []string{"latest", "*", "^1.0", ">=1.0", "a_b", "1..0", "u\u0308ber", "Release"} {
 		input := singleValueInput("string", "0", "1", "", "{}")
 		input.Root = withLock(input.Root, strings.Replace(good, "'1.0'", "'"+version+"'", 1), true)
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != Failed {
 			t.Fatalf("invalid lock version accepted: %q", version)
 		}
@@ -111,7 +111,7 @@ func TestEntryLockFailureDoesNotInvalidateIndependentDependency(t *testing.T) {
 	for _, text := range []string{"", strings.Replace(coreLockText(), core10Digest, "sha256:"+strings.Repeat("a", 64), 1), "invalid: ["} {
 		input := singleValueInput("string", "0", "1", "", "{}")
 		input.Root = withLock(input.Root, text, text != "")
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != Failed {
 			t.Fatalf("invalid root lock accepted: %+v", got.Diagnostics)
 		}
@@ -122,7 +122,7 @@ func TestEntryLockFailureDoesNotInvalidateIndependentDependency(t *testing.T) {
 	}
 	input := singleValueInput("string", "0", "1", "", "{}")
 	input.Root.Entries[3].Bytes = []byte("id: [")
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || got.Models[1].Status != Passed || got.Models[1].Digest != core10Digest {
 		t.Fatal("consumer YAML failure poisoned independently valid dependency")
 	}
@@ -131,15 +131,15 @@ func TestEntryLockFailureDoesNotInvalidateIndependentDependency(t *testing.T) {
 func TestDependencySidecarsNeverReplaceTheEntryLock(t *testing.T) {
 	input := singleValueInput("string", "0", "1", "", "{}")
 	input.Dependencies[0] = withLock(input.Dependencies[0], "formatVersion: 999\nmodels: {arbitrary: {version: '1.0', digest: wrong}}", true)
-	requireCompiled(t, input)
+	requireChecked(t, input)
 	input.Root = withLock(input.Root, "", false)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "lock.missing") {
 		t.Fatal("dependency sidecar replaced missing root lock")
 	}
 	input.Root = withLock(input.Root, coreLockText(), true)
 	input.Dependencies[0] = withLock(input.Dependencies[0], "value: [", true)
-	got = Compile(input)
+	got = Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "yaml.syntax") {
 		t.Fatal("ignored dependency sidecar swallowed a known loader error")
 	}
@@ -149,9 +149,9 @@ func TestDependencySidecarsNeverReplaceTheEntryLock(t *testing.T) {
 
 func TestNoExternalDependenciesStillRequireExplicitEmptyLock(t *testing.T) {
 	input := Input{Root: completeCoreSource()}
-	requireCompiled(t, input)
+	requireChecked(t, input)
 	input.Root = withLock(input.Root, "", false)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "lock.missing") {
 		t.Fatal("empty lock was silently generated")
 	}
@@ -162,7 +162,7 @@ func TestLockKnownFormatFailureSurvivesContentRefusal(t *testing.T) {
 	input := singleValueInput("string", "0", "1", "", "{}")
 	input.Limits.BodyBytes = 4
 	input.Root = withLock(input.Root, "formatVersion: 2\nmodels: {}", true)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "lock.format") || !hasDiagnostic(got, "limit.body_bytes") {
 		t.Fatalf("known lock error erased by content refusal: %+v", got.Diagnostics)
 	}
@@ -181,7 +181,7 @@ func TestLockKnownManifestFactsSurviveDefinitionInventoryRefusal(t *testing.T) {
 		input.Limits.YAMLDepth = 4
 		input.Dependencies[0].Entries = append(input.Dependencies[0].Entries, Entry{Path: "model/unavailable/pending.yaml", Kind: Regular, Bytes: []byte("spec: {a: {b: {c: {d: value}}}}")})
 		input.Root = withLock(input.Root, tt.text, true)
-		got := Compile(input)
+		got := Check(input)
 		if !hasDiagnostic(got, "limit.yaml_depth") {
 			t.Fatal("fixture did not refuse definition inventory")
 		}
@@ -203,7 +203,7 @@ func TestLockKnownDigestFailureSurvivesAnotherUnknownManifest(t *testing.T) {
 	input.Dependencies = append(input.Dependencies, SourceModel{Origin: "mystery", ManifestPath: "model.yaml", Entries: []Entry{{Path: "model.yaml", Kind: Regular, Bytes: []byte("a: {b: {c: {d: {e: value}}}}")}}})
 	text := strings.Replace(coreLockText(), core10Digest, "sha256:"+strings.Repeat("f", 64), 1) + "  mystery: {version: '1.0', digest: 'sha256:" + strings.Repeat("1", 64) + "'}\n"
 	input.Root = withLock(input.Root, text, true)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "lock.digest_mismatch") || !hasDiagnostic(got, "limit.yaml_depth") || hasDiagnostic(got, "dependency.missing") {
 		t.Fatalf("known digest failure lost beside unknown metadata: %+v", got.Diagnostics)
 	}
@@ -219,7 +219,7 @@ func TestLockUnknownClosureDoesNotCompareUnrelatedSuppliedRows(t *testing.T) {
 		input.Dependencies = append(input.Dependencies, unrelated, SourceModel{Origin: "mystery", ManifestPath: "model.yaml", Entries: []Entry{{Path: "model.yaml", Kind: Regular, Bytes: []byte("a: {b: {c: {d: {e: value}}}}")}}})
 		text := coreLockText() + "  mystery: {version: '1.0', digest: 'sha256:" + strings.Repeat("1", 64) + "'}\n  " + id + ": {version: '9.9', digest: 'sha256:" + strings.Repeat("f", 64) + "'}\n"
 		input.Root = withLock(input.Root, text, true)
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != NotCompleted || !hasDiagnostic(got, "limit.yaml_depth") || hasDiagnostic(got, "lock.extra") || hasDiagnostic(got, "lock.model_spelling") || hasDiagnostic(got, "lock.version_mismatch") || hasDiagnostic(got, "lock.digest_mismatch") {
 			t.Fatalf("unknown closure invented a mismatch against unrelated %q: %+v", id, got.Diagnostics)
 		}
@@ -231,7 +231,7 @@ func TestLockWrongSpellingSelfRequirementIsNeverExternal(t *testing.T) {
 	input := singleValueInput("string", "0", "1", "", "{}")
 	input.Root.Entries[0].Bytes = bytes.Replace(input.Root.Entries[0].Bytes, []byte("id: project"), []byte("id: straße"), 1)
 	input.Root.Entries[0].Bytes = bytes.Replace(input.Root.Entries[0].Bytes, []byte("{markitect-core: '1.0'}"), []byte("{markitect-core: '1.0', strasse: '1.0'}"), 1)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "dependency.spelling") || hasDiagnostic(got, "lock.missing_model") {
 		t.Fatalf("local-root equivalent became a missing external lock model: %+v", got.Diagnostics)
 	}
@@ -260,9 +260,9 @@ func TestRootLockBindsTransitiveDiamondExactlyOnce(t *testing.T) {
 		text += fmt.Sprintf("  %s: {version: '1.0', digest: '%s'}\n", id, digests[id])
 	}
 	input.Root = withLock(input.Root, text, true)
-	requireCompiled(t, input)
+	requireChecked(t, input)
 	input.Root = withLock(input.Root, strings.Replace(text, fmt.Sprintf("  shared: {version: '1.0', digest: '%s'}\n", digests["shared"]), "", 1), true)
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "lock.missing_model") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "lock.missing_model") {
 		t.Fatalf("transitive model omitted from root table: %+v", got.Diagnostics)
 	}
 }
@@ -277,7 +277,7 @@ func TestLockExactUnicodeAndLiteralVersionLabels(t *testing.T) {
 		expected := strings.Replace(canonicalCoreVector, `"version":"1.0.0"`, `"version":"`+version+`"`, 1)
 		digest := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(expected)))
 		input.Root = withLock(input.Root, "formatVersion: 1\nmodels:\n  markitect-core: {version: '"+version+"', digest: '"+digest+"'}", true)
-		requireCompiled(t, input)
+		requireChecked(t, input)
 	}
 	input := singleValueInput("string", "0", "1", "", "{}")
 	model := bindingSource("文档", "1.0", "{markitect-core: '1.0'}", contractDefinition("文档/record.yaml", "Record", "Core.Kind", "{}"))
@@ -285,5 +285,5 @@ func TestLockExactUnicodeAndLiteralVersionLabels(t *testing.T) {
 	input.Root.Entries[0].Bytes = bytes.Replace(input.Root.Entries[0].Bytes, []byte("{markitect-core: '1.0'}"), []byte("{markitect-core: '1.0', 文档: '1.0'}"), 1)
 	input.Dependencies = append(input.Dependencies, model)
 	input.Root = withLock(input.Root, coreLockText()+"  文档: {version: '1.0', digest: '"+digest+"'}", true)
-	requireCompiled(t, input)
+	requireChecked(t, input)
 }

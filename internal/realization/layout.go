@@ -42,16 +42,16 @@ type Layout struct {
 }
 
 // NewLayout validates the declared roots and exceptions against the local
-// Package inventory of the passed compiled model. It refuses a root that is
+// Package inventory of the passed checked model. It refuses a root that is
 // the repository root, repeated or nested; anything at or under .markitect;
 // an exception owner that is not Root or a local Package, a file exception
 // owned by a Package, a repeated exception path or a missing reason; and any roots, exception paths or mirrored Package
 // directories whose directory spellings differ only by letter case, because
 // they would name one location on a case-insensitive platform.
-func NewLayout(compiled model.Result, roots []snapshot.DirectoryBoundary, exceptions []LayoutException) (Layout, error) {
-	inventory := inventoryFromResult(compiled)
+func NewLayout(checked model.Result, roots []snapshot.DirectoryBoundary, exceptions []LayoutException) (Layout, error) {
+	inventory := inventoryFromResult(checked)
 	if !inventory.ready {
-		return Layout{}, fmt.Errorf("%w: a complete passed compiled model with one local model is required", ErrInvalidLayout)
+		return Layout{}, fmt.Errorf("%w: a complete passed checked model with one local model is required", ErrInvalidLayout)
 	}
 	layout := Layout{declared: true, packages: inventory.owners}
 	for _, root := range roots {

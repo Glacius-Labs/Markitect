@@ -114,14 +114,14 @@ func TestExplicitExternalSourcesAreCurrentObservationsAndFixedPreviewRefuses(t *
 	r := adapter(t)
 	service := apply.NewModelService(r, r)
 	actual, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || actual.Compilation().Status != model.Passed {
-		t.Fatalf("external capture: %v %+v", err, actual.Compilation())
+	if err != nil || actual.Checked().Status != model.Passed {
+		t.Fatalf("external capture: %v %+v", err, actual.Checked())
 	}
 	if actual.Inputs().Raw.Dependencies[0].RepositoryArea.String() != "" || actual.Inputs().Raw.HostProfiles[0].RepositoryPath.String() != "" || !bytes.Equal(actual.Inputs().Raw.HostProfiles[0].File.Bytes(), []byte("\x00external\xff\r\n")) {
 		t.Fatal("external observation was rebound to repository or changed")
 	}
 	working, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || working.Compilation().Status != model.Passed {
+	if err != nil || working.Checked().Status != model.Passed {
 		t.Fatalf("external working: %v", err)
 	}
 	refused, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
@@ -149,7 +149,7 @@ func TestFixedRevisionUsesHistoricalDirectoriesAndRejectsSelectors(t *testing.T)
 	r := adapter(t)
 	service := apply.NewModelService(r, r)
 	fixed, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
-	if err != nil || fixed.Compilation().Status != model.Passed {
+	if err != nil || fixed.Checked().Status != model.Passed {
 		t.Fatalf("historical root required today's directory: %v", err)
 	}
 	for _, revision := range []string{"HEAD", head[:12], strings.ToUpper(head), "--help", strings.Repeat("0", len(head))} {

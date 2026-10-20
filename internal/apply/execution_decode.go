@@ -14,10 +14,10 @@ import (
 
 const executionPath = ".markitect/execution.yaml"
 
-func decodeExecution(compiled model.Result, raw RawInputs) executionDecoding {
+func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {
 	r := executionDecoding{status: model.Passed}
 	d := executionDecoder{result: &r}
-	if compiled.Status != model.Passed {
+	if checked.Status != model.Passed {
 		d.issue(model.NotCompleted, "execution.model_not_passed", executionField{}, "Execution decoding requires a passed bound model stage.")
 		return r
 	}
@@ -39,13 +39,13 @@ func decodeExecution(compiled model.Result, raw RawInputs) executionDecoding {
 		return r
 	}
 	var err error
-	d.topology, err = organization.BuildTopology(compiled)
+	d.topology, err = organization.BuildTopology(checked)
 	if err != nil {
 		d.issue(model.Failed, "execution.model_invalid", executionField{}, err.Error())
 		return r
 	}
 	d.definitions = make(map[model.Identity]bool)
-	for _, result := range compiled.Models {
+	for _, result := range checked.Models {
 		for _, definition := range result.Definitions {
 			d.definitions[definition.Identity] = true
 		}
@@ -80,7 +80,7 @@ func decodeExecution(compiled model.Result, raw RawInputs) executionDecoding {
 		r.authored.Packages = d.packages(field)
 	}
 	if field, found := fields["layout"]; found {
-		r.authored.Layout = d.layout(field, compiled)
+		r.authored.Layout = d.layout(field, checked)
 	}
 	if field, found := fields["scope"]; found {
 		r.authored.Scope = d.scope(field)
@@ -118,7 +118,7 @@ func (d *executionDecoder) identity(field executionField) (organization.Setting[
 	}
 	identity := model.Identity{Package: text.Value[:i], ID: text.Value[i+1:]}
 	if !d.definitions[identity] {
-		d.issue(model.Failed, "execution.definition_missing", field, "Definition is absent from the complete compiled model set.")
+		d.issue(model.Failed, "execution.definition_missing", field, "Definition is absent from the complete checked model set.")
 		return organization.Setting[model.Identity]{}, false
 	}
 	return organization.Setting[model.Identity]{Value: identity, Source: text.Source}, true

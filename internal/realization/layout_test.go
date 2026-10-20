@@ -167,7 +167,7 @@ func TestLayoutRefusals(t *testing.T) {
 }
 
 func TestAccountingRequiresRegistrationsInTheirAreaShard(t *testing.T) {
-	compiled := layoutFacts()
+	checked := layoutFacts()
 	files := fileTree(t, "realization/lending/reminders/x.go", "realization/go.mod", "realization/cmd/library/main.go")
 	layout := libraryLayout(t)
 	right := registry(t,
@@ -175,7 +175,7 @@ func TestAccountingRequiresRegistrationsInTheirAreaShard(t *testing.T) {
 		registration(t, realization.RootOwner(), artifact(t, "realization/go.mod", callable)),
 		registration(t, owner(t, "library"), artifact(t, "realization/cmd/library/main.go", callable)),
 	)
-	if report := realization.AccountFiles(compiled, files, right, nil, layout); report.Status() != realization.Accounted || len(report.Findings()) != 0 {
+	if report := realization.AccountFiles(checked, files, right, nil, layout); report.Status() != realization.Accounted || len(report.Findings()) != 0 {
 		t.Fatalf("correct shards refused: %+v", report.Findings())
 	}
 	wrong := registry(t,
@@ -183,7 +183,7 @@ func TestAccountingRequiresRegistrationsInTheirAreaShard(t *testing.T) {
 		registration(t, realization.RootOwner(), artifact(t, "realization/go.mod", callable)),
 		registration(t, owner(t, "lending"), artifact(t, "realization/cmd/library/main.go", callable)),
 	)
-	report := realization.AccountFiles(compiled, files, wrong, nil, layout)
+	report := realization.AccountFiles(checked, files, wrong, nil, layout)
 	if report.Status() != realization.AccountingInvalid {
 		t.Fatal("registrations outside the owner's area accepted")
 	}
@@ -204,7 +204,7 @@ func TestAccountingRequiresRegistrationsInTheirAreaShard(t *testing.T) {
 		t.Fatalf("an out-of-area registration still counted as a link: %v", got)
 	}
 	// Without a declared layout the shard alone decides, as before.
-	if report := realization.AccountFiles(compiled, files, wrong, nil, realization.Layout{}); report.Status() != realization.Accounted {
+	if report := realization.AccountFiles(checked, files, wrong, nil, realization.Layout{}); report.Status() != realization.Accounted {
 		t.Fatalf("undeclared layout rejected a registration: %+v", report.Findings())
 	}
 }

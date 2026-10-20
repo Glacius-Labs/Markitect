@@ -28,7 +28,7 @@ func NewPreparationService(models *ModelService) *PreparationService {
 }
 
 // Each attempt retains its actual acquisition, error and bound stage reports,
-// including incomplete Accounting. A failed acquisition is never compiled.
+// including incomplete Accounting. A failed acquisition is never checked.
 type CapturedPreparationAttempt struct {
 	stage     CapturedModel
 	registry  CapturedRegistryPreparation

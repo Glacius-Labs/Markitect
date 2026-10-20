@@ -11,7 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
 
-func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults settingsPreparation, compiled model.Result, raw RawInputs, execution executionDecoding, sameParent bool, agents AgentProfilePreparer, checks CheckProfilePreparer) (r hostSettingsPreparation, err error) {
+func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults settingsPreparation, checked model.Result, raw RawInputs, execution executionDecoding, sameParent bool, agents AgentProfilePreparer, checks CheckProfilePreparer) (r hostSettingsPreparation, err error) {
 	r.status = hostStatus(fileStatus, defaults.Status())
 	defer func() {
 		slices.SortFunc(r.diagnostics, func(a, b HostProfileDiagnostic) int {
@@ -94,7 +94,7 @@ func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults 
 	}
 	if agentStatus == model.Passed && complete {
 		facts, instructionErr := hostProjectInstructions(raw)
-		topology, resolveErr := organization.BuildTopology(compiled)
+		topology, resolveErr := organization.BuildTopology(checked)
 		if resolveErr == nil {
 			resolveErr = instructionErr
 		}

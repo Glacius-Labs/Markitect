@@ -131,8 +131,8 @@ type PreviewExecutionDecoding struct {
 func (r PreviewExecutionDecoding) Model() PreviewedModel { return r.stage }
 
 func (m CapturedModel) DecodeExecution() CapturedExecutionDecoding {
-	return CapturedExecutionDecoding{executionDecoding: decodeExecution(m.compiled, m.inputs.Raw), stage: m}
+	return CapturedExecutionDecoding{executionDecoding: decodeExecution(m.checked, m.inputs.Raw), stage: m}
 }
 func (m PreviewedModel) DecodeExecution() PreviewExecutionDecoding {
-	return PreviewExecutionDecoding{executionDecoding: decodeExecution(m.compiled, m.inputs.Raw), stage: m}
+	return PreviewExecutionDecoding{executionDecoding: decodeExecution(m.checked, m.inputs.Raw), stage: m}
 }

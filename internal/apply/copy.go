@@ -51,9 +51,9 @@ func cloneDiagnostics(value []model.Diagnostic) []model.Diagnostic {
 	return value
 }
 
-// model.Value and snapshot values are immutable. Compiler report containers
+// model.Value and snapshot values are immutable. Model check report containers
 // and optional spans/titles remain mutable public Go values.
-func cloneCompilation(value model.Result) model.Result {
+func cloneChecked(value model.Result) model.Result {
 	value.Diagnostics = cloneDiagnostics(value.Diagnostics)
 	value.Models = slices.Clone(value.Models)
 	for i := range value.Models {

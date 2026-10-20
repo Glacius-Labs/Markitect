@@ -122,14 +122,14 @@ func (r PreviewSettingsPreparation) Defaults() PreviewDefaultsPreparation { retu
 // complete Model/Raw/Request/Guard parent. No free execution or model is accepted.
 func (p CapturedFileCheck) PrepareSettings(ctx context.Context, defaults CapturedDefaultsPreparation, agents AgentProfilePreparer, checks CheckProfilePreparer) (CapturedSettingsPreparation, error) {
 	m := p.stage.stage
-	r, err := prepareHostSettings(ctx, p.Status(), defaults.settingsPreparation, m.compiled, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
+	r, err := prepareHostSettings(ctx, p.Status(), defaults.settingsPreparation, m.checked, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
 	return CapturedSettingsPreparation{hostSettingsPreparation: r, parent: p, defaults: defaults}, err
 }
 
 // Preview retains its own working/fixed revision and never acquires a guard.
 func (p PreviewFileCheck) PrepareSettings(ctx context.Context, defaults PreviewDefaultsPreparation, agents AgentProfilePreparer, checks CheckProfilePreparer) (PreviewSettingsPreparation, error) {
 	m := p.stage.stage
-	r, err := prepareHostSettings(ctx, p.Status(), defaults.settingsPreparation, m.compiled, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
+	r, err := prepareHostSettings(ctx, p.Status(), defaults.settingsPreparation, m.checked, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
 	return PreviewSettingsPreparation{hostSettingsPreparation: r, parent: p, defaults: defaults}, err
 }
 

@@ -53,7 +53,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 				port := &recordingPreparationGit{repository: adapter(t)}
 				service := apply.NewPreparationService(apply.NewModelService(port, port))
 				var raw apply.RawInputs
-				var compiled model.Result
+				var checked model.Result
 				var execution apply.AuthoredExecution
 				var accounting realization.Accounting
 				var contexts []organization.ContextSelection
@@ -80,7 +80,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 					if !reflect.DeepEqual(prepared.Files().RegistryPreparation().Model().Inputs(), last) || !reflect.DeepEqual(prepared.Contexts().Execution().Model().Inputs(), last) {
 						t.Fatal("bound file/context stages changed the final capture")
 					}
-					raw, compiled = last.Raw, prepared.Model().Compilation()
+					raw, checked = last.Raw, prepared.Model().Checked()
 					execution, _ = prepared.Execution().Document()
 					accounting, _ = prepared.Files().Accounting()
 					contexts, _ = prepared.Contexts().Selections()
@@ -112,7 +112,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 					if !reflect.DeepEqual(prepared.Files().RegistryPreparation().Model().Inputs(), last) || !reflect.DeepEqual(prepared.Contexts().Execution().Model().Inputs(), last) {
 						t.Fatal("bound file/context stages changed the final preview")
 					}
-					raw, compiled = last.Raw, prepared.Model().Compilation()
+					raw, checked = last.Raw, prepared.Model().Checked()
 					execution, _ = prepared.Execution().Document()
 					accounting, _ = prepared.Files().Accounting()
 					contexts, _ = prepared.Contexts().Selections()
@@ -120,8 +120,8 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 						assertOriginalPreparationGap(t, port.previews[0].Raw, raw)
 					}
 				}
-				if compiled.Status != model.Passed || len(compiled.Models) != 3 || !compiled.Models[0].Local || len(compiled.Models[0].Definitions) != 22 || accounting.Status() != realization.Accounted || accounting.TreeID() != raw.Census.Digest() || len(accounting.Files()) != len(raw.Census.Entries()) || len(accounting.Findings()) != 0 {
-					t.Fatal("actual M1/Vocabulary/Core compilation or complete Census accounting missing")
+				if checked.Status != model.Passed || len(checked.Models) != 3 || !checked.Models[0].Local || len(checked.Models[0].Definitions) != 22 || accounting.Status() != realization.Accounted || accounting.TreeID() != raw.Census.Digest() || len(accounting.Files()) != len(raw.Census.Entries()) || len(accounting.Findings()) != 0 {
+					t.Fatal("actual M1/Vocabulary/Core Model check or complete Census accounting missing")
 				}
 				if raw.Local.Selection != selection.Local || !reflect.DeepEqual([]apply.ModelSelection{raw.Dependencies[0].Selection, raw.Dependencies[1].Selection}, selection.Dependencies) {
 					t.Fatal("explicit model/dependency boundaries changed")
@@ -133,7 +133,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 				var packages []string
 				for _, selected := range contexts {
 					packages = append(packages, selected.Package())
-					if selected.ModelDigest() != compiled.Models[0].Digest || selected.ModelID() != compiled.Models[0].ID {
+					if selected.ModelDigest() != checked.Models[0].Digest || selected.ModelID() != checked.Models[0].ID {
 						t.Fatal("static context lost its actual model binding")
 					}
 					if selected.Package() == "lending" {

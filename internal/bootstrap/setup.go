@@ -190,7 +190,7 @@ func (s *setupService) selectedProfiles(ctx context.Context, selected apply.Inpu
 	slices.Sort(names.agents)
 	slices.Sort(names.checks)
 	id := ""
-	for _, m := range attempt.Model().Compilation().Models {
+	for _, m := range attempt.Model().Checked().Models {
 		if m.Local {
 			id = m.ID
 		}

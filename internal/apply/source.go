@@ -20,7 +20,7 @@ import (
 // roots without following redirects, establish physically distinct, non-nested
 // model roots, and capture every selected input and the complete census.
 // Dirty tracked files and non-ignored untracked files refuse Capture. Known
-// observations must be returned even on error. Compilation proves none of
+// observations must be returned even on error. Model check proves none of
 // these acquisition facts. One repository adapter implements both source ports
 // using the same acquisition mechanism.
 // If InspectManifest supplies no Root, return a ManifestPreflightError carrying

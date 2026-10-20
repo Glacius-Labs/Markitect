@@ -11,8 +11,8 @@ import (
 )
 
 func TestContextStructuredOccurrencesOptionalNestedContractsAndUnusedForeign(t *testing.T) {
-	compiled := compileFixture(t, richContextInput(t))
-	selection := requireContext(t, compiled, "a", scopeSelector())
+	checked := checkFixture(t, richContextInput(t))
+	selection := requireContext(t, checked, "a", scopeSelector())
 	neighbor, _ := selection.Definition(contextID("b", "near"))
 	var occurrences []string
 	for _, reason := range neighbor.Reasons {
@@ -39,7 +39,7 @@ func TestContextStructuredOccurrencesOptionalNestedContractsAndUnusedForeign(t *
 		t.Fatalf("nested direct local incoming lost: %+v", incoming)
 	}
 	for _, selected := range selection.Definitions() {
-		original := findCompiledDefinition(t, &compiled, selected.Definition.Identity)
+		original := findCheckedDefinition(t, &checked, selected.Definition.Identity)
 		if !reflect.DeepEqual(selected.Definition, *original) {
 			t.Errorf("selected content/coordinates changed: %+v", original.Identity)
 		}
@@ -47,7 +47,7 @@ func TestContextStructuredOccurrencesOptionalNestedContractsAndUnusedForeign(t *
 }
 
 func TestContextModeledScopeIsExplicitLocalAndExact(t *testing.T) {
-	compiled := compileFixture(t, richContextInput(t))
+	checked := checkFixture(t, richContextInput(t))
 	for _, test := range []struct {
 		pkg        string
 		ancestor   bool
@@ -58,7 +58,7 @@ func TestContextModeledScopeIsExplicitLocalAndExact(t *testing.T) {
 		{"aother", false, true, true}, {"empty", false, false, false}, {"software", false, false, false}, {"é/子", false, false, true},
 	} {
 		t.Run(test.pkg, func(t *testing.T) {
-			selection := requireContext(t, compiled, test.pkg, scopeSelector())
+			selection := requireContext(t, checked, test.pkg, scopeSelector())
 			global, found := selection.Definition(contextID("rules", "global"))
 			if !found || len(global.Reasons) != 1 || global.Reasons[0].Kind != organization.ModeledScope || global.Reasons[0].ScopePackage != "." || global.Reasons[0].At != "/spec/covers/0" || *global.Reasons[0].Policy != scopeSelector().Source {
 				t.Fatalf("global scope or field/policy source lost: %+v", global)
@@ -87,33 +87,33 @@ func TestContextModeledScopeIsExplicitLocalAndExact(t *testing.T) {
 			}
 		})
 	}
-	if _, err := organization.SelectContext(compiled, "e\u0301/子", nil); err == nil {
+	if _, err := organization.SelectContext(checked, "e\u0301/子", nil); err == nil {
 		t.Fatal("Manager lookup normalized a nonexact Unicode spelling")
 	}
 }
 
 func TestContextOwnPathOrderAndInputEnumerationDeterminism(t *testing.T) {
-	compiled := compileFixture(t, richContextInput(t))
+	checked := checkFixture(t, richContextInput(t))
 	// Physical filenames are presentation provenance: own ordering follows them,
 	// not identity order. This does not change canonical addresses or content.
-	findCompiledDefinition(t, &compiled, contextID("a", "own")).Source.Path = "model/a/z.yaml"
-	findCompiledDefinition(t, &compiled, contextID("a", "z-other")).Source.Path = "model/a/a.yaml"
-	want := requireContext(t, compiled, "a", scopeSelector())
+	findCheckedDefinition(t, &checked, contextID("a", "own")).Source.Path = "model/a/z.yaml"
+	findCheckedDefinition(t, &checked, contextID("a", "z-other")).Source.Path = "model/a/a.yaml"
+	want := requireContext(t, checked, "a", scopeSelector())
 	entries := want.Definitions()
 	if entries[0].Definition.Identity.ID != "z-other" || entries[1].Definition.Identity.ID != "own" {
 		t.Fatal("own Definitions not in stable exact source-path order")
 	}
-	slices.Reverse(compiled.Models)
-	for i := range compiled.Models {
-		slices.Reverse(compiled.Models[i].Definitions)
-		slices.Reverse(compiled.Models[i].Packages)
-		for j := range compiled.Models[i].Definitions {
-			definition := &compiled.Models[i].Definitions[j]
+	slices.Reverse(checked.Models)
+	for i := range checked.Models {
+		slices.Reverse(checked.Models[i].Definitions)
+		slices.Reverse(checked.Models[i].Packages)
+		for j := range checked.Models[i].Definitions {
+			definition := &checked.Models[i].Definitions[j]
 			definition.Spec = slices.Clone(definition.Spec)
 			slices.Reverse(definition.Spec)
 		}
 	}
-	got := requireContext(t, compiled, "a", scopeSelector())
+	got := requireContext(t, checked, "a", scopeSelector())
 	// Original spec ordering is preserved, so compare deterministic identities
 	// and inclusion reasons independently of that deliberately changed source IR.
 	for i, entry := range got.Definitions() {
@@ -124,11 +124,11 @@ func TestContextOwnPathOrderAndInputEnumerationDeterminism(t *testing.T) {
 }
 
 func TestContextCopiesAllMutableDefinitionAndReasonViews(t *testing.T) {
-	compiled := compileFixture(t, richContextInput(t))
+	checked := checkFixture(t, richContextInput(t))
 	selector := scopeSelector()
-	selection := requireContext(t, compiled, "a", selector)
+	selection := requireContext(t, checked, "a", selector)
 	want := selection.Definitions()
-	original := findCompiledDefinition(t, &compiled, contextID("a", "own"))
+	original := findCheckedDefinition(t, &checked, contextID("a", "own"))
 	*original.Title = "changed"
 	original.Spec[0].Name = "changed"
 	*original.BodyLinks[0].Display = "changed"
@@ -179,7 +179,7 @@ func TestContextScopeScalarAndDefaultPropertyName(t *testing.T) {
 		}
 		if strings.HasPrefix(entry.Path, "model/rules/") || entry.Path == "model/unused/foreign.yaml" {
 			// Local global rule exercises scalar selection. All other local
-			// optional scope fields are absent to keep the compiler fixture valid.
+			// optional scope fields are absent to keep the Model check fixture valid.
 			if entry.Path == "model/rules/global.yaml" {
 				entry.Bytes = []byte(strings.ReplaceAll(string(entry.Bytes), "covers: ['.']", "applies: '.'"))
 			} else {
@@ -192,8 +192,8 @@ func TestContextScopeScalarAndDefaultPropertyName(t *testing.T) {
 	// scalar producer contract, while remaining outside local scope selection.
 	foreign := &input.Dependencies[len(input.Dependencies)-1].Entries[1]
 	foreign.Bytes = []byte(strings.ReplaceAll(string(foreign.Bytes), "covers: ['.']", "applies: '.'"))
-	compiled := compileFixture(t, input)
-	selection := requireContext(t, compiled, "empty", scopeSelector())
+	checked := checkFixture(t, input)
+	selection := requireContext(t, checked, "empty", scopeSelector())
 	rule, found := selection.Definition(contextID("rules", "global"))
 	if !found || rule.Reasons[0].At != "/spec/applies" || rule.Reasons[0].ScopePackage != "." {
 		t.Fatalf("single/default-name scope selection lost: %+v", rule)

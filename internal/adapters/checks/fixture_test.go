@@ -130,8 +130,8 @@ func m1SectionParents(t *testing.T, section, process string) (apply.CapturedFile
 	raw.HostProfiles = []apply.SourceFile{{Location: location, File: fixtureEntry(t, "host.yaml", []byte(host))}}
 	selection.HostProfiles = []apply.SourceLocation{location}
 	m, err := apply.NewModelService(fixtureSource{raw}, nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || m.Compilation().Status != model.Passed {
-		t.Fatalf("M1 model: %v %+v", err, m.Compilation().Diagnostics)
+	if err != nil || m.Checked().Status != model.Passed {
+		t.Fatalf("M1 model: %v %+v", err, m.Checked().Diagnostics)
 	}
 	files := m.PrepareRegistry().CheckFiles()
 	defaults := m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults())

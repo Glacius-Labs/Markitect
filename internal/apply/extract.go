@@ -209,11 +209,11 @@ func proposedChecks(start extractStage, candidate snapshot.Tree) []ProposedCheck
 // each with the title of its overview Definition: the Definition of the
 // vocabulary's overview Kind, else the first one the Package has.
 func extractedPackages(start extractStage, candidate snapshot.Tree) []ExtractedPackage {
-	compiled := rebindStructural(start.structural.Model(), candidate, extractModel).Model().compiled
-	if compiled.Status != model.Passed {
+	checked := rebindStructural(start.structural.Model(), candidate, extractModel).Model().checked
+	if checked.Status != model.Passed {
 		return nil
 	}
-	overview, _ := overviewKind(vocabularyOf(compiled))
+	overview, _ := overviewKind(vocabularyOf(checked))
 	rank := func(d model.Definition) int {
 		if d.Kind == overview {
 			return 0
@@ -221,7 +221,7 @@ func extractedPackages(start extractStage, candidate snapshot.Tree) []ExtractedP
 		return 1
 	}
 	var packages []ExtractedPackage
-	for _, owner := range compiled.Models {
+	for _, owner := range checked.Models {
 		if !owner.Local {
 			continue
 		}
@@ -400,7 +400,7 @@ func (a extractAccounting) structureTeam(stage extractStage) ([]run.Manager, err
 	for _, r := range layout.Roots() {
 		roots = append(roots, r.String())
 	}
-	brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().compiled), Settings: root, Checks: a.declaredChecks(), CheckProfiles: stage.checkProfiles})
+	brief := renderStructureBrief(structureBriefInput{Roots: roots, Exceptions: layout.Exceptions(), Dependencies: dependencies, Artifacts: artifactPaths(stage.tree), Kinds: vocabularyOf(structural.Model().checked), Settings: root, Checks: a.declaredChecks(), CheckProfiles: stage.checkProfiles})
 	return []run.Manager{{Path: organization.Root, Role: "proposes the first model structure of the whole project", Brief: brief,
 		ExecuteProfile: root.Execute.Profile.Value.Name, VerifyProfile: root.Verify.Profile.Value.Name, Write: a.WritePlan(organization.Root)}}, nil
 }
@@ -409,8 +409,8 @@ func (a extractAccounting) structureTeam(stage extractStage) ([]run.Manager, err
 // the model phase.
 func (a extractAccounting) modelTeam(stage extractStage) ([]run.Manager, error) {
 	structural := stage.structural
-	compiled := structural.Model().compiled
-	topology, err := organization.BuildTopology(compiled)
+	checked := structural.Model().checked
+	topology, err := organization.BuildTopology(checked)
 	if err != nil {
 		return nil, err
 	}
@@ -418,7 +418,7 @@ func (a extractAccounting) modelTeam(stage extractStage) ([]run.Manager, error) 
 	if !ok {
 		return nil, errors.New("complete context selections are required")
 	}
-	kinds := vocabularyOf(compiled)
+	kinds := vocabularyOf(checked)
 	checks := a.declaredChecks()
 	artifacts := artifactPaths(stage.tree)
 	var team []run.Manager

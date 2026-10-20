@@ -105,7 +105,7 @@ func (a Accounting) Artifacts(id model.Identity) []snapshot.Path { return slices
 // AccountFiles checks explicit facts without discovering policy or assigning
 // owners. Classifications must cover exact canonical/Markitect inputs and ignores
 // from the caller's fixed capture. Source provenance is not a physical path map.
-// The complete compiled Result must pass before Package/Definition absence is
+// The complete checked Result must pass before Package/Definition absence is
 // authoritative. No package is inferred from Definitions or imported inventories.
 //
 // A declared Layout additionally requires every registration to sit in the
@@ -113,8 +113,8 @@ func (a Accounting) Artifacts(id model.Identity) []snapshot.Path { return slices
 // (registry.outside_area) and reports every file without an owner, in an
 // unmapped subdirectory of an artifact root, as layout.no_owner addressed to
 // Root. The zero Layout adds no ownership rule.
-func AccountFiles(compiled model.Result, tree snapshot.Tree, registry Registry, classifications []Classification, layout Layout) Accounting {
-	return accountFiles(inventoryFromResult(compiled), tree, registry, classifications, layout)
+func AccountFiles(checked model.Result, tree snapshot.Tree, registry Registry, classifications []Classification, layout Layout) Accounting {
+	return accountFiles(inventoryFromResult(checked), tree, registry, classifications, layout)
 }
 
 func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registry, classifications []Classification, layout Layout) Accounting {
@@ -167,7 +167,7 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 			for _, basis := range artifact.basis {
 				if !definitions[basis] {
-					add("registry.dangling_basis", path, entry.owner, basis, "The Definition basis does not resolve in the supplied compiled model set.")
+					add("registry.dangling_basis", path, entry.owner, basis, "The Definition basis does not resolve in the supplied checked model set.")
 					ok = false
 				}
 			}

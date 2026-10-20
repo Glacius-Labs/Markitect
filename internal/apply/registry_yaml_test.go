@@ -52,8 +52,8 @@ func TestRegistryRejectsExpandedCustomTags(t *testing.T) {
 			}
 
 			stage, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-			if err != nil || stage.Compilation().Status != model.Passed {
-				t.Fatalf("model fixture failed: %v %+v", err, stage.Compilation())
+			if err != nil || stage.Checked().Status != model.Passed {
+				t.Fatalf("model fixture failed: %v %+v", err, stage.Checked())
 			}
 			prepared := stage.PrepareRegistry()
 			registry, available := prepared.Registry()

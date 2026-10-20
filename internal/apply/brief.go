@@ -17,7 +17,7 @@ type briefCheck struct {
 	RequiredBy string
 }
 
-// requiredDefinition is a compiled Definition that required checks name as the
+// requiredDefinition is a checked Definition that required checks name as the
 // reason they exist, with the names of those checks.
 type requiredDefinition struct {
 	Definition model.Definition

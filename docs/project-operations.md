@@ -6,13 +6,13 @@ The later [command design](design/canonical-model/commands.md) records the accep
 
 ## Structural and metadata stages
 
-`check --repo PATH` calls actual PreparationService with an explicit canonical v1 manifest and dependencies. Reports retain each acquisition attempt and actual compiler, execution, registry, file-accounting and context-selection statuses. Failed or incomplete acquisition cannot become an empty passing model.
+`check --repo PATH` calls actual PreparationService with an explicit canonical v1 manifest and dependencies. Reports retain each acquisition attempt and actual Model check, execution, registry, file-accounting and context-selection statuses. Failed or incomplete acquisition cannot become an empty passing model.
 
 Metadata and settings are unrequested unless `--metadata` is selected. `--host-profile` names an explicit absolute Orchestrator document; no environment or provider discovery substitutes for it. Agent and Check adapters parse selected executable/schema/profile bytes only. Product defaults come from their embedded versioned source, and effective settings retain provenance. Reports neither start a process nor establish execution readiness.
 
 ## Why a Definition is in context
 
-`context <package> --repo PATH` selects one local Package, including intermediate or empty Packages from the compiler inventory; `.` selects the ordinary root. It reports actual Definition content, resolved values, provenance and inclusion reasons. Imported Packages are not local Managers. It creates no task prompt, mandate, run, budget or evidence record.
+`context <package> --repo PATH` selects one local Package, including intermediate or empty Packages from the Model check inventory; `.` selects the ordinary root. It reports actual Definition content, resolved values, provenance and inclusion reasons. Imported Packages are not local Managers. It creates no task prompt, mandate, run, budget or evidence record.
 
 ## CLI, setup and current roots
 
@@ -26,7 +26,7 @@ The CLI has no MCP server and no automatic setup. The old generation remains in 
 
 ## Generated view and recovery
 
-`docs` renders actual compiled v1 Definitions to `docs/markitect/project.md`. Its content digest identifies rendered bytes; its preview digest also binds sources and the observed target. Write with `--write --expect PREVIEW_DIGEST` after reviewing that preview. The writer checks the source/target plan under an independent guard, refuses protected inputs and historical writes, reads back actual bytes and retains completed paths after partial failure. Do not infer a filesystem transaction or artifact Apply.
+`docs` renders actual checked v1 Definitions to `docs/markitect/project.md`. Its content digest identifies rendered bytes; its preview digest also binds sources and the observed target. Write with `--write --expect PREVIEW_DIGEST` after reviewing that preview. The writer checks the source/target plan under an independent guard, refuses protected inputs and historical writes, reads back actual bytes and retains completed paths after partial failure. Do not infer a filesystem transaction or artifact Apply.
 
 Documentation previews may include explicitly selected external sources. For this increment, `docs --write` requires every acquired model, control and instruction source to have an actual repository binding. Otherwise it returns `not_completed` before effects because target disjointness has not been established. Repository-bound dependencies remain writable; an external source is not silently reclassified or followed through an alternate native spelling.
 

@@ -48,7 +48,7 @@ var extractPhaseDescriptors = [...]extractPhaseDescriptor{
 func (p extractPhase) descriptor() extractPhaseDescriptor { return extractPhaseDescriptors[p] }
 
 // extractAccounting accounts the candidates of one Extract phase against that
-// phase's start. It holds only immutable values: Account compiles and checks
+// phase's start. It holds only immutable values: Account runs the Model check and file checks on
 // the tree it is given from scratch, so concurrent calls (the engine's check
 // tool calls it from several Execute turns) are safe.
 type extractAccounting struct {
@@ -64,7 +64,7 @@ func newExtractAccounting(phase extractPhase, start extractStage) (extractAccoun
 	if err != nil {
 		return extractAccounting{}, err
 	}
-	return extractAccounting{phase: phase, start: start, base: base, packages: packageNames(structural.Model().compiled)}, nil
+	return extractAccounting{phase: phase, start: start, base: base, packages: packageNames(structural.Model().checked)}, nil
 }
 
 // OwnerOf returns the Manager that owns a path: in the structure phase Root; in
@@ -87,7 +87,7 @@ func (a extractAccounting) ownerOfName(name string) string {
 }
 
 // Account returns the blocking findings of a candidate tree of the phase. It
-// compiles the candidate model, checks the layout and the Package inventory and,
+// runs the Model check on the candidate model, checks the layout and the Package inventory and,
 // in the model phase, accounts every file against the shards; in both phases
 // only the phase's own area may differ from the start.
 func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
@@ -108,18 +108,18 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 	// Every candidate is guarded, whatever else fails to prepare.
 	guarded := a.guard(tree)
 	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
-	compiled := structural.Model().compiled
-	if compiled.Status != model.Passed {
+	checked := structural.Model().checked
+	if checked.Status != model.Passed {
 		local := structural.Model().inputs.Raw.Local
-		for _, d := range compiled.Diagnostics {
+		for _, d := range checked.Diagnostics {
 			name := d.Source.Path
 			if d.Source.Origin == local.Source.Origin && !local.RepositoryArea.IsRoot() {
-				name = local.RepositoryArea.String() + "/" + name // the compiler's paths are relative to the model's boundary
+				name = local.RepositoryArea.String() + "/" + name // the Model check's paths are relative to the model's boundary
 			}
 			add(a.ownerOfName(name), "model."+d.Code, name, positioned(d.Message, d.Position))
 		}
-		if len(compiled.Diagnostics) == 0 {
-			add(organization.Root, "model.not_passed", "", "The candidate model does not compile: its status is "+string(compiled.Status)+".")
+		if len(checked.Diagnostics) == 0 {
+			add(organization.Root, "model.not_passed", "", "The candidate model does not pass the Model check: its status is "+string(checked.Status)+".")
 		}
 		return append(findings, guarded...)
 	}
@@ -136,7 +136,7 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 	if a.phase == extractStructure {
 		a.accountChecks(structural, add)
 	}
-	topology, err := organization.BuildTopology(compiled)
+	topology, err := organization.BuildTopology(checked)
 	if err != nil {
 		add(organization.Root, "model.topology", "", err.Error())
 		return append(findings, guarded...)
@@ -149,7 +149,7 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 }
 
 // definitionResolver returns the function that tells whether a candidate tree's
-// model holds a Definition with the identity "package/ID". It compiles the
+// model holds a Definition with the identity "package/ID". It runs the Model check on the
 // candidate once and keeps the identities of the latest tree, because the
 // engine asks for several Definitions of the same candidate; it is safe for
 // concurrent use.
@@ -162,8 +162,8 @@ func (a extractAccounting) definitionResolver() func(snapshot.Tree, string) bool
 		defer mu.Unlock()
 		if d := tree.Digest().String(); known == nil || d != digest {
 			digest, known = d, map[string]bool{}
-			if compiled := rebindStructural(a.start.structural.Model(), tree, a.phase).Model().compiled; compiled.Status == model.Passed {
-				for _, owner := range compiled.Models {
+			if checked := rebindStructural(a.start.structural.Model(), tree, a.phase).Model().checked; checked.Status == model.Passed {
+				for _, owner := range checked.Models {
 					if owner.Local {
 						for _, definition := range owner.Definitions {
 							known[identityText(definition.Identity)] = true
@@ -237,7 +237,7 @@ func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, t
 	add := func(owner, code, name, message string) {
 		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: name, Message: message})
 	}
-	candidate := packageNames(structural.Model().compiled)
+	candidate := packageNames(structural.Model().checked)
 	for _, name := range candidate {
 		if !slices.Contains(a.packages, name) {
 			add(modelPackageOf(a.packages, modelDirectory+name+"/x"), "model.structure_changed", modelDirectory+name, fmt.Sprintf("Package %q is new; this phase keeps the proposed Packages. Describe the responsibility in your own Package and name the proposed Package in your summary.", name))

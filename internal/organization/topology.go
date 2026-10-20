@@ -1,4 +1,4 @@
-// Package organization derives local Manager organization from compiled model
+// Package organization derives local Manager organization from checked model
 // values and resolves explicitly supplied execution settings. It performs no
 // acquisition or execution.
 package organization
@@ -39,7 +39,7 @@ func (m Manager) PassThrough() bool {
 	return m.Package != "" && m.Package != Root && !m.HasLocalWork() && len(m.Children) == 1
 }
 
-// Topology binds the complete local Manager tree to the compiler's model ID
+// Topology binds the complete local Manager tree to the Model check's model ID
 // and canonical content digest. Empty Packages affect this tree but remain
 // outside that digest. A zero Topology has no Manager slots.
 type Topology struct {
@@ -71,20 +71,20 @@ func (t Topology) Manager(packagePath string) (Manager, bool) {
 	return cloneManager(t.managers[i]), true
 }
 
-// BuildTopology consumes a successful compiler result. The caller owns
+// BuildTopology consumes a successful Model check result. The caller owns
 // acceptance of that result; this function does not authenticate approval.
 // The selected local ModelResult supplies the complete own Package inventory,
 // including empty leaves and intermediate Packages. Missing inventory is an
 // error, never reconstructed from Definitions or physical source paths.
 // Coordinate coverage is independent of content validity and is not a gate.
 // On error the returned Topology is zero and exposes no partial Manager tree.
-func BuildTopology(compiled model.Result) (Topology, error) {
-	if compiled.Status != model.Passed {
-		return Topology{}, fmt.Errorf("topology requires a passed compiler result, got %q", compiled.Status)
+func BuildTopology(checked model.Result) (Topology, error) {
+	if checked.Status != model.Passed {
+		return Topology{}, fmt.Errorf("topology requires a passed Model check result, got %q", checked.Status)
 	}
 	var local *model.ModelResult
-	for i := range compiled.Models {
-		candidate := &compiled.Models[i]
+	for i := range checked.Models {
+		candidate := &checked.Models[i]
 		if candidate.Local {
 			if local != nil {
 				return Topology{}, fmt.Errorf("topology requires exactly one local model")
@@ -120,7 +120,7 @@ func BuildTopology(compiled model.Result) (Topology, error) {
 		manager := &topology.managers[i]
 		parent, found := topology.index[manager.Parent]
 		if !found {
-			return Topology{}, fmt.Errorf("local Package %q is missing parent %q in compiler inventory", manager.Package, manager.Parent)
+			return Topology{}, fmt.Errorf("local Package %q is missing parent %q in Model check inventory", manager.Package, manager.Parent)
 		}
 		topology.managers[parent].Children = append(topology.managers[parent].Children, manager.Package)
 	}
@@ -150,7 +150,7 @@ func cloneManager(manager Manager) Manager {
 	return manager
 }
 
-// The compiler owns language name validity. These checks only reject shapes
+// The Model check owns language name validity. These checks only reject shapes
 // that cannot form exact Package ancestry; they never normalize a spelling.
 func packagePath(name string) bool {
 	if name == "" || strings.ContainsAny(name, "\\:\x00") {

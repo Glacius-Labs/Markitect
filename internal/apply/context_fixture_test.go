@@ -11,7 +11,7 @@ import (
 
 const contextScope = "scope: [{kind: policy/ScopedRule, property: policy/appliesTo}]\n"
 
-// Extend actual M1 sources and compile them normally; no constructed compiler
+// Extend actual M1 sources and check them normally; no constructed Model check
 // results, context facts or runtime identities stand in for the bound sources.
 func scopedContextInputs(t *testing.T, target, scope string) (apply.InputSelection, apply.RawInputs) {
 	t.Helper()

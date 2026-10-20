@@ -38,7 +38,7 @@ type CandidateFinding struct {
 // themselves are valid; and no canonical or control input changed. It starts no
 // work, writes nothing and publishes nothing.
 type Candidates struct {
-	compiled        model.Result
+	checked         model.Result
 	start           snapshot.Tree
 	topology        organization.Topology
 	registry        realization.Registry
@@ -51,7 +51,7 @@ type Candidates struct {
 }
 
 // NewCandidates binds candidate accounting to one passed preparation: its
-// compiled model, captured start tree and registry, classifications, protected
+// checked model, captured start tree and registry, classifications, protected
 // inputs and declared layout. Nothing is read from the host.
 func NewCandidates(prepared CapturedSettingsAttempt) (Candidates, error) {
 	if prepared.Settings().Status() != model.Passed {
@@ -72,11 +72,11 @@ func NewCandidates(prepared CapturedSettingsAttempt) (Candidates, error) {
 // complete sets the caller has already obtained.
 func newCandidates(structural CapturedPreparationAttempt, classifications []realization.Classification, protections []realization.Protection, registry realization.Registry) (Candidates, error) {
 	stage := structural.Model()
-	topology, err := organization.BuildTopology(stage.compiled)
+	topology, err := organization.BuildTopology(stage.checked)
 	if err != nil {
 		return Candidates{}, fmt.Errorf("candidate accounting: %w", err)
 	}
-	c := Candidates{compiled: stage.compiled, start: stage.inputs.Raw.Census, topology: topology, registry: registry, protections: protections}
+	c := Candidates{checked: stage.checked, start: stage.inputs.Raw.Census, topology: topology, registry: registry, protections: protections}
 	c.layout = structural.files.layout
 	// The start shards are replaced by the candidate's own: a Manager may add,
 	// change or remove its shard.
@@ -203,7 +203,7 @@ func (c Candidates) Account(tree snapshot.Tree) []CandidateFinding {
 		findings = append(findings, finding)
 	}
 	if registry != nil {
-		accounting := realization.AccountFiles(c.compiled, tree, *registry, append(slices.Clone(c.classifications), classifications...), c.layout)
+		accounting := realization.AccountFiles(c.checked, tree, *registry, append(slices.Clone(c.classifications), classifications...), c.layout)
 		for _, finding := range accounting.Findings() {
 			path := finding.Path.String()
 			if changed[path] && (finding.Code == "file.unexplained" || finding.Code == "classification.missing_file") {
@@ -247,7 +247,7 @@ func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, messa
 			add(organization.Root, "registry.unknown_owner", path.String(), "Registry shard belongs to a Package outside the current local inventory.")
 			continue
 		}
-		for _, value := range decoded.decodeRegistry(SourceFile{File: entry, RepositoryPath: path}, owner, c.compiled, tree) {
+		for _, value := range decoded.decodeRegistry(SourceFile{File: entry, RepositoryPath: path}, owner, c.checked, tree) {
 			registrations = append(registrations, registration{name, value})
 		}
 	}

@@ -89,7 +89,7 @@ func (d *executionDecoder) packages(field executionField) *organization.Setting[
 // layout decodes the optional persistent artifact layout and validates it
 // against the model's Package inventory, so a declared layout is complete or
 // the document is Failed.
-func (d *executionDecoder) layout(field executionField, compiled model.Result) *ExecutionLayout {
+func (d *executionDecoder) layout(field executionField, checked model.Result) *ExecutionLayout {
 	f := d.object(field, "roots", "exceptions")
 	if field.node.Kind != yaml.MappingNode {
 		return nil
@@ -142,7 +142,7 @@ func (d *executionDecoder) layout(field executionField, compiled model.Result) *
 		}
 		exceptions = append(exceptions, realization.LayoutException{Path: exception.Path.Value, File: exception.Kind.Value == "file", Owner: owner, Reason: exception.Reason.Value})
 	}
-	layout, err := realization.NewLayout(compiled, result.Roots.Value, exceptions)
+	layout, err := realization.NewLayout(checked, result.Roots.Value, exceptions)
 	if err != nil {
 		d.issue(model.Failed, "execution.layout", field, err.Error())
 		return result

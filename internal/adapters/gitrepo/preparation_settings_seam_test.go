@@ -198,7 +198,7 @@ func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
 func assertGitCapturedSettingsAttempt(t *testing.T, attempt apply.CapturedSettingsAttempt, request apply.CaptureRequest, inputs apply.CapturedInputs) {
 	t.Helper()
 	structural := attempt.Structural()
-	if attempt.Error() != nil || !reflect.DeepEqual(structural.Model().Request(), request) || !reflect.DeepEqual(structural.Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Settings().FileCheck(), structural.Files()) || !reflect.DeepEqual(attempt.Settings().Defaults(), attempt.Defaults()) || !reflect.DeepEqual(attempt.Defaults().Execution().Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || structural.Model().Compilation().Status != model.Passed || len(structural.Model().Compilation().Models) != 3 {
+	if attempt.Error() != nil || !reflect.DeepEqual(structural.Model().Request(), request) || !reflect.DeepEqual(structural.Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Settings().FileCheck(), structural.Files()) || !reflect.DeepEqual(attempt.Settings().Defaults(), attempt.Defaults()) || !reflect.DeepEqual(attempt.Defaults().Execution().Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || structural.Model().Checked().Status != model.Passed || len(structural.Model().Checked().Models) != 3 {
 		t.Fatal("attempt changed original Source/Raw/guard/defaults/settings reports")
 	}
 }

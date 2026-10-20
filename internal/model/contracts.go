@@ -32,7 +32,7 @@ type contractResult struct {
 	findings      []identityFinding
 }
 
-type contractCompiler struct {
+type contractChecker struct {
 	scopes []sourceScope
 	index  map[Identity][]definitionAddress
 	kinds  map[definitionAddress]*Identity
@@ -40,7 +40,7 @@ type contractCompiler struct {
 }
 
 func checkContracts(scopes []sourceScope, graph dependencyGraph, bindings authorBindings) contractResult {
-	c := contractCompiler{scopes: scopes, index: map[Identity][]definitionAddress{}, kinds: map[definitionAddress]*Identity{}, result: contractResult{
+	c := contractChecker{scopes: scopes, index: map[Identity][]definitionAddress{}, kinds: map[definitionAddress]*Identity{}, result: contractResult{
 		status: append([]Status(nil), bindings.status...), names: make([]Status, len(scopes)),
 		definitions: map[Identity]*definitionContract{},
 	}}
@@ -126,11 +126,11 @@ func checkContracts(scopes []sourceScope, graph dependencyGraph, bindings author
 	return c.result
 }
 
-func (c *contractCompiler) definition(a definitionAddress) sourceDefinition {
+func (c *contractChecker) definition(a definitionAddress) sourceDefinition {
 	return c.scopes[a.model].definitions[a.definition]
 }
 
-func (c *contractCompiler) finding(a definitionAddress, code, message string, at Value) {
+func (c *contractChecker) finding(a definitionAddress, code, message string, at Value) {
 	definition := c.definition(a)
 	if contract := c.result.definitions[definition.identity]; contract != nil {
 		contract.status = Failed
@@ -141,7 +141,7 @@ func (c *contractCompiler) finding(a definitionAddress, code, message string, at
 	}})
 }
 
-func (c *contractCompiler) classify(a definitionAddress) *definitionContract {
+func (c *contractChecker) classify(a definitionAddress) *definitionContract {
 	d := c.definition(a)
 	contract := &definitionContract{status: Passed}
 	kindID := c.kinds[a]
@@ -185,7 +185,7 @@ func (c *contractCompiler) classify(a definitionAddress) *definitionContract {
 	return contract
 }
 
-func (c *contractCompiler) kindOf(id Identity) *Identity {
+func (c *contractChecker) kindOf(id Identity) *Identity {
 	candidates := c.index[identityKey(id)]
 	if len(candidates) != 1 || c.definition(candidates[0]).identity != id {
 		return nil
@@ -193,7 +193,7 @@ func (c *contractCompiler) kindOf(id Identity) *Identity {
 	return c.kinds[candidates[0]]
 }
 
-func (c *contractCompiler) closed(a definitionAddress, value Value, allowed ...string) bool {
+func (c *contractChecker) closed(a definitionAddress, value Value, allowed ...string) bool {
 	valid := true
 	for _, field := range value.fields {
 		found := false
@@ -208,7 +208,7 @@ func (c *contractCompiler) closed(a definitionAddress, value Value, allowed ...s
 	return valid
 }
 
-func (c *contractCompiler) reference(a definitionAddress, value Value, expected Identity, status *Status) *Identity {
+func (c *contractChecker) reference(a definitionAddress, value Value, expected Identity, status *Status) *Identity {
 	if value.kind != StringValue || !validAuthorReference(value.text) {
 		c.finding(a, "contract.reference", "A contract reference must be a complete valid author reference string.", value)
 		*status = Failed
@@ -238,7 +238,7 @@ func (c *contractCompiler) reference(a definitionAddress, value Value, expected 
 	return &id
 }
 
-func (c *contractCompiler) propertyList(a definitionAddress, spec Value, status *Status) []Identity {
+func (c *contractChecker) propertyList(a definitionAddress, spec Value, status *Status) []Identity {
 	value, present := lookup(spec, "properties")
 	if !present {
 		return nil
@@ -265,7 +265,7 @@ func (c *contractCompiler) propertyList(a definitionAddress, spec Value, status 
 	return fields
 }
 
-func (c *contractCompiler) property(a definitionAddress, spec Value, status *Status) *propertyContract {
+func (c *contractChecker) property(a definitionAddress, spec Value, status *Status) *propertyContract {
 	if !c.closed(a, spec, "name", "type", "minCount", "maxCount", "values", "target", "properties") {
 		*status = Failed
 	}
@@ -333,7 +333,7 @@ func (c *contractCompiler) property(a definitionAddress, spec Value, status *Sta
 	return p
 }
 
-func (c *contractCompiler) checkFieldNames() {
+func (c *contractChecker) checkFieldNames() {
 	for model, scope := range c.scopes {
 		for index, d := range scope.definitions {
 			contract := c.result.definitions[d.identity]

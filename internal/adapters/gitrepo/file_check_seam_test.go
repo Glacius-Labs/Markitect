@@ -70,8 +70,8 @@ func TestM1GitFileCheckAccountsCompleteCaptureAndPreviews(t *testing.T) {
 	r := adapter(t)
 	service := apply.NewModelService(r, r)
 	stage, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || stage.Compilation().Status != model.Passed || len(stage.Compilation().Models) != 3 {
-		t.Fatalf("actual M1/Vocabulary/Core capture failed: %v %+v", err, stage.Compilation().Diagnostics)
+	if err != nil || stage.Checked().Status != model.Passed || len(stage.Checked().Models) != 3 {
+		t.Fatalf("actual M1/Vocabulary/Core capture failed: %v %+v", err, stage.Checked().Diagnostics)
 	}
 	parent := stage.PrepareRegistry()
 	checked := parent.CheckFiles()

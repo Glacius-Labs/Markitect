@@ -25,9 +25,9 @@ type Owner struct {
 func RootOwner() Owner { return Owner{root: true} }
 
 // PackageOwner preserves an explicit Package spelling. This checks only the
-// relative representation; accounting checks membership in the compiler's
+// relative representation; accounting checks membership in the Model check's
 // authoritative local Package inventory, including empty/intermediate Packages.
-// It does not reproduce the compiler's naming, Unicode or ownership rules.
+// It does not reproduce the Model check's naming, Unicode or ownership rules.
 func PackageOwner(name string) (Owner, error) {
 	if _, err := snapshot.NewPath(name); err != nil {
 		return Owner{}, fmt.Errorf("%w: %q", ErrInvalidOwner, name)
@@ -70,7 +70,7 @@ type Artifact struct {
 
 // NewArtifact fixes the supplied values. Basis is a set of complete model
 // identities: repeated links fail, order is irrelevant, and target existence is
-// checked later against compiled model values. Why is preserved without rewriting.
+// checked later against checked model values. Why is preserved without rewriting.
 func NewArtifact(path snapshot.Path, form Form, basis []model.Identity, why string) (Artifact, error) {
 	invalid := func(reason string) (Artifact, error) {
 		return Artifact{}, fmt.Errorf("%w: %q: %s", ErrInvalidArtifact, path, reason)

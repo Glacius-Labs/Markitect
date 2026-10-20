@@ -1,12 +1,12 @@
 # Architecture
 
-Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 compilation and read-only preparation, a separately guarded generated view and the recursive Apply of [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) (with DEC-058 to DEC-060) plus a first Extract, pending owner acceptance. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
+Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 Model check and read-only preparation, a separately guarded generated view and the recursive Apply of [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) (with DEC-058 to DEC-060) plus a first Extract, pending owner acceptance. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
 
 ## Product flow
 
 `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService → consumer-owned repository/profile ports`.
 
-The repository adapter captures actual sources. ModelService compiles only complete acquired inputs. PreparationService composes actual model, registry, complete file accounting, execution declarations and static context selection. Optional metadata/settings preparation uses explicit Orchestrator sources and actual profile adapters. The CLI presents those reports without inventing run records or execution readiness.
+The repository adapter captures actual sources. ModelService checks only complete acquired inputs. PreparationService composes actual model, registry, complete file accounting, execution declarations and static context selection. Optional metadata/settings preparation uses explicit Orchestrator sources and actual profile adapters. The CLI presents those reports without inventing run records or execution readiness.
 
 Generated views use `internal/modeldocs` and its document-writer port, implemented by `internal/adapters/documents`. Their guard is independent of Apply publication.
 
@@ -22,7 +22,7 @@ All maintained Go packages use one root module. [The code map](development/code-
 
 | Responsibility | Packages | Direction |
 | --- | --- | --- |
-| Canonical language values/compiler | `internal/model` | No other Markitect responsibility |
+| Canonical language values/Model check | `internal/model` | No other Markitect responsibility |
 | Fixed path/file/tree values | `internal/snapshot` | No other Markitect responsibility |
 | Topology, exact settings and context | `internal/organization` | Model and snapshot |
 | Ownership layout, accounting and candidates | `internal/realization` | Model and snapshot |

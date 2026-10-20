@@ -10,7 +10,7 @@ import (
 // kind or id. Category-specific ID/Property rules use resolved Core types in
 // the contract phase. The lexical union here already rules
 // out punctuation, non-NFC names and invalid XID spellings for every category.
-func (c *sourceCompiler) definitionNames(v Value, e Entry) {
+func (c *sourceChecker) definitionNames(v Value, e Entry) {
 	if id, present := lookup(v, "id"); present && id.kind == StringValue && !validLocalName(id.text) {
 		c.problem("name.definition", "id must be an NFC local name in a v1 Definition naming category.", e, positionPointer(id.position))
 	}
@@ -63,7 +63,7 @@ func validAuthorReference(s string) bool {
 	return validLocalName(s)
 }
 
-func (c *sourceCompiler) objectFieldNames(v Value, e Entry) {
+func (c *sourceChecker) objectFieldNames(v Value, e Entry) {
 	switch v.kind {
 	case ObjectValue:
 		for _, field := range v.fields {
@@ -79,7 +79,7 @@ func (c *sourceCompiler) objectFieldNames(v Value, e Entry) {
 	}
 }
 
-func (c *sourceCompiler) manifestNames(v Value, e Entry) {
+func (c *sourceChecker) manifestNames(v Value, e Entry) {
 	if id, present := lookup(v, "id"); present && id.kind == StringValue && !validModelLabel(id.text, false) {
 		c.problem("name.model_label", "Model ID must use NFC lowercase Unicode label sections.", e, positionPointer(id.position))
 	}
@@ -101,7 +101,7 @@ func (c *sourceCompiler) manifestNames(v Value, e Entry) {
 	}
 }
 
-func (c *sourceCompiler) treeNames(entries map[string]Entry, root string) {
+func (c *sourceChecker) treeNames(entries map[string]Entry, root string) {
 	directories := map[string]Entry{}
 	var files []Entry
 	lockPath := joinPath(parent(c.model.ManifestPath), "model-lock.yaml")

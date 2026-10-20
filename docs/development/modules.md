@@ -1,6 +1,6 @@
 # Modules and static composition
 
-The repository uses one Go module. Packages are organized by concrete responsibility and consumer-owned ports. There is no active legacy product layer or second compiler. [Architecture](../architecture.md) explains behavior; the generated [code map](code-map.md) inventories actual packages.
+The repository uses one Go module. Packages are organized by concrete responsibility and consumer-owned ports. There is no active legacy product layer or second Model check. [Architecture](../architecture.md) explains behavior; the generated [code map](code-map.md) inventories actual packages.
 
 ## Go capability packages
 

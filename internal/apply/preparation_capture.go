@@ -26,7 +26,7 @@ func (s *PreparationService) capturePreparation(ctx context.Context, request Cap
 		registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 		structural := CapturedPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts(), err: err}
 		attempt := CapturedSettingsAttempt{structural: structural, err: err}
-		r.status = structuralPreparationStatus(stage.compiled.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
+		r.status = structuralPreparationStatus(stage.checked.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
 		if err != nil {
 			r.attempts = append(r.attempts, attempt)
 			r.status = acquisitionPreparationStatus(err)
@@ -83,7 +83,7 @@ func (s *PreparationService) previewPreparation(ctx context.Context, request Pre
 		registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 		structural := PreviewPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts(), err: err}
 		attempt := PreviewSettingsAttempt{structural: structural, err: err}
-		r.status = structuralPreparationStatus(stage.compiled.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
+		r.status = structuralPreparationStatus(stage.checked.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
 		if err != nil {
 			r.attempts = append(r.attempts, attempt)
 			r.status = acquisitionPreparationStatus(err)

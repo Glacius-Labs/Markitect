@@ -127,8 +127,8 @@ func consumeProfileAt(t *testing.T, inline string, instructions []apply.SourceFi
 		selection.Instructions = append(selection.Instructions, instruction.Location)
 	}
 	m, err := apply.NewModelService(fixtureSource{raw}, nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || m.Compilation().Status != model.Passed {
-		t.Fatalf("M1 source: %v %+v", err, m.Compilation())
+	if err != nil || m.Checked().Status != model.Passed {
+		t.Fatalf("M1 source: %v %+v", err, m.Checked())
 	}
 	prepared, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), port, nil)
 	if err != nil {

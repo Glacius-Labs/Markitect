@@ -49,7 +49,7 @@ func TestM1GitSettingsPreparationIgnoredCensusAndRealExternalFixedRefusal(t *tes
 				if _, ok := result.Prepared(); ok {
 					t.Fatal("unsafe fixed preview exposed complete Settings preparation")
 				}
-				if !reflect.DeepEqual(attempt.Structural().Model().Request(), port.previewRequests[0]) || !reflect.DeepEqual(inputs, port.previews[0]) || inputs.Head != head || inputs.Revision != historical || attempt.Error() != err || attempt.Structural().Error() != err || attempt.Structural().Model().Compilation().Status != model.NotCompleted {
+				if !reflect.DeepEqual(attempt.Structural().Model().Request(), port.previewRequests[0]) || !reflect.DeepEqual(inputs, port.previews[0]) || inputs.Head != head || inputs.Revision != historical || attempt.Error() != err || attempt.Structural().Error() != err || attempt.Structural().Model().Checked().Status != model.NotCompleted {
 					t.Fatal("real Git refusal discarded its partial observation or fixed binding")
 				}
 				if len(inputs.Raw.Local.Files.Entries()) == 0 || len(inputs.Raw.Dependencies) != 2 || len(inputs.Raw.Execution) != 1 || !bytes.Equal(inputs.Raw.Execution[0].File.Bytes(), originalExecution) || len(inputs.Raw.HostProfiles) != 1 || inputs.Raw.HostProfiles[0].Location != full.HostProfiles[0] || len(inputs.Raw.HostProfiles[0].File.Bytes()) != 0 || len(inputs.Raw.Instructions) != 0 {

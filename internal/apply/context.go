@@ -63,20 +63,20 @@ type PreviewContextSelections struct {
 func (r PreviewContextSelections) Execution() PreviewExecutionDecoding { return r.stage }
 
 func (e CapturedExecutionDecoding) SelectContexts() CapturedContextSelections {
-	return CapturedContextSelections{contextSelections: selectContexts(e.executionDecoding, e.stage.compiled), stage: e}
+	return CapturedContextSelections{contextSelections: selectContexts(e.executionDecoding, e.stage.checked), stage: e}
 }
 
 func (e PreviewExecutionDecoding) SelectContexts() PreviewContextSelections {
-	return PreviewContextSelections{contextSelections: selectContexts(e.executionDecoding, e.stage.compiled), stage: e}
+	return PreviewContextSelections{contextSelections: selectContexts(e.executionDecoding, e.stage.checked), stage: e}
 }
 
-func selectContexts(execution executionDecoding, compiled model.Result) contextSelections {
+func selectContexts(execution executionDecoding, checked model.Result) contextSelections {
 	r := contextSelections{status: execution.Status()}
 	if r.status != model.Passed {
 		r.diagnostics = []ContextSelectionDiagnostic{{Code: "context.execution_not_passed", Message: "Static context selection requires a passed bound execution decode."}}
 		return r
 	}
-	topology, err := organization.BuildTopology(compiled)
+	topology, err := organization.BuildTopology(checked)
 	if err != nil {
 		r.status = model.Failed
 		r.diagnostics = []ContextSelectionDiagnostic{{Code: "context.topology", Message: err.Error()}}
@@ -88,7 +88,7 @@ func selectContexts(execution executionDecoding, compiled model.Result) contextS
 	}
 	var selections []organization.ContextSelection
 	for _, manager := range topology.Managers() {
-		selection, err := organization.SelectContext(compiled, manager.Package, scope)
+		selection, err := organization.SelectContext(checked, manager.Package, scope)
 		if err != nil {
 			r.status = model.Failed
 			r.diagnostics = append(r.diagnostics, ContextSelectionDiagnostic{Code: "context.selection", Package: manager.Package, Message: err.Error()})

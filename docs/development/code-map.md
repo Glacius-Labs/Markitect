@@ -14,7 +14,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Layer | Meaning | Import gate layers | Packages |
 |---|---|---|---|
-| `apply-model` | Pure canonical v1 compiler over explicit bytes. | `apply-model` | 1 |
+| `apply-model` | Pure canonical v1 Model check over explicit bytes. | `apply-model` | 1 |
 | `apply-snapshot` | Pure immutable repository tree values. | `apply-snapshot` | 1 |
 | `apply-organization` | Pure Manager topology, context selection and settings. | `apply-organization` | 1 |
 | `apply-realization` | Pure ownership, accounting and candidate rules. | `apply-realization` | 1 |
@@ -37,7 +37,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/model` | Pure canonical v1 compiler over explicit bytes. | [docs/development/modules.md](modules.md) |
+| `internal/model` | Pure canonical v1 Model check over explicit bytes. | [docs/development/modules.md](modules.md) |
 
 ## Snapshots
 

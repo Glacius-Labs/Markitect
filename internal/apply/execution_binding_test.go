@@ -41,8 +41,8 @@ func TestExecutionRequiresExactlyOneActualProjectSource(t *testing.T) {
 	}
 }
 
-func TestExecutionCannotBypassParentSourceDriftOrUnfinishedCompilation(t *testing.T) {
-	for _, name := range []string{"bytes", "mode", "compiler limit", "unavailable dependency"} {
+func TestExecutionCannotBypassParentSourceDriftOrUnfinishedCheck(t *testing.T) {
+	for _, name := range []string{"bytes", "mode", "Model check limit", "unavailable dependency"} {
 		t.Run(name, func(t *testing.T) {
 			selection, raw := executionInputs(t, documentedExecution(t))
 			limits := model.Limits{}
@@ -59,7 +59,7 @@ func TestExecutionCannotBypassParentSourceDriftOrUnfinishedCompilation(t *testin
 					t.Fatal(err)
 				}
 				raw.Execution[0].File = entry
-			case "compiler limit":
+			case "Model check limit":
 				limits.Entries = 1
 			case "unavailable dependency":
 				selection.Dependencies, raw.Dependencies = nil, nil
@@ -68,7 +68,7 @@ func TestExecutionCannotBypassParentSourceDriftOrUnfinishedCompilation(t *testin
 			if (name == "bytes" || name == "mode") && !errors.Is(err, apply.ErrIncompleteInputs) {
 				t.Fatalf("source drift escaped acquisition: %v", err)
 			}
-			if stage.Compilation().Status == model.Passed {
+			if stage.Checked().Status == model.Passed {
 				t.Fatal("incomplete parent unexpectedly passed")
 			}
 			result := stage.DecodeExecution()

@@ -23,11 +23,11 @@ type vocabularyKind struct {
 	Spec     []model.Field
 }
 
-// vocabularyOf lists the Kinds the compiled model's dependencies define, apart
+// vocabularyOf lists the Kinds the checked model's dependencies define, apart
 // from the fixed core, in identity order.
-func vocabularyOf(compiled model.Result) []vocabularyKind {
+func vocabularyOf(checked model.Result) []vocabularyKind {
 	var kinds []vocabularyKind
-	for _, owner := range compiled.Models {
+	for _, owner := range checked.Models {
 		for _, d := range owner.Definitions {
 			if d.Kind == coreKind && d.Identity.Package != coreKind.Package {
 				kinds = append(kinds, vocabularyKind{Identity: d.Identity, Title: definitionTitle(d), Body: strings.Join(strings.Fields(d.Body), " "), Spec: d.Spec})

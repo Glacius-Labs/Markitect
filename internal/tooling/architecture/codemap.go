@@ -34,7 +34,7 @@ type MapLayer struct {
 
 // Layers is ordered; code-map entries follow this order, then their path.
 var Layers = []MapLayer{
-	{"apply-model", "Canonical model", "Pure canonical v1 compiler over explicit bytes.", []string{"apply-model"}},
+	{"apply-model", "Canonical model", "Pure canonical v1 Model check over explicit bytes.", []string{"apply-model"}},
 	{"apply-snapshot", "Snapshots", "Pure immutable repository tree values.", []string{"apply-snapshot"}},
 	{"apply-organization", "Organization", "Pure Manager topology, context selection and settings.", []string{"apply-organization"}},
 	{"apply-realization", "Realization", "Pure ownership, accounting and candidate rules.", []string{"apply-realization"}},

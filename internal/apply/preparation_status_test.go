@@ -35,7 +35,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 						// Retain the selected file's actual bytes and location, but no
 						// repository binding. Such an instruction observation cannot
 						// satisfy the authored repository ref. The ModelService can
-						// compile; FileCheck still reports instruction_uncaptured.
+						// check the model; FileCheck still reports instruction_uncaptured.
 						raw.Instructions[0].RepositoryPath = snapshot.Path{}
 					}
 					return raw
@@ -67,7 +67,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 					firstExecution, secondExecution = first.Execution().Partial(), second.Execution().Partial()
 					firstDiagnostics, secondDiagnostics = first.Files().Diagnostics(), second.Files().Diagnostics()
 					firstStatus, secondStatus = first.Execution().Status(), second.Execution().Status()
-					if second.Error() != nil || second.Model().Compilation().Status != model.Passed || second.Model().Inputs().Guard != "actual-guard-2" || first.Model().Inputs().Guard != "actual-guard-1" {
+					if second.Error() != nil || second.Model().Checked().Status != model.Passed || second.Model().Inputs().Guard != "actual-guard-2" || first.Model().Inputs().Guard != "actual-guard-1" {
 						t.Fatal("acquisition error or old guard obscured the actual second stage")
 					}
 					if _, ok := result.Prepared(); ok {
@@ -88,7 +88,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 					firstExecution, secondExecution = first.Execution().Partial(), second.Execution().Partial()
 					firstDiagnostics, secondDiagnostics = first.Files().Diagnostics(), second.Files().Diagnostics()
 					firstStatus, secondStatus = first.Execution().Status(), second.Execution().Status()
-					if second.Error() != nil || second.Model().Compilation().Status != model.Passed || second.Model().Request().Revision != request.Revision || first.Model().Request().Revision != request.Revision {
+					if second.Error() != nil || second.Model().Checked().Status != model.Passed || second.Model().Request().Revision != request.Revision || first.Model().Request().Revision != request.Revision {
 						t.Fatal("acquisition error or changed revision obscured the actual second stage")
 					}
 					if _, ok := result.Prepared(); ok {

@@ -1,7 +1,7 @@
 packages:
   - path: internal/model
     layer: apply-model
-    purpose: Pure canonical v1 compiler over explicit bytes.
+    purpose: Pure canonical v1 Model check over explicit bytes.
     doc: docs/development/modules.md
   - path: internal/snapshot
     layer: apply-snapshot

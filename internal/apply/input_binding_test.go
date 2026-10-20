@@ -60,8 +60,8 @@ func TestExactOriginalTreesModesCoordinatesAndSelectedSourcesSurvive(t *testing.
 	// selection; only explicit coordinates bind it to the repository census.
 	raw.Local.Source.Origin = "opaque-origin:outside/../not-a-location"
 	result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || result.Compilation().Status != model.Passed {
-		t.Fatalf("%v %+v", err, result.Compilation())
+	if err != nil || result.Checked().Status != model.Passed {
+		t.Fatalf("%v %+v", err, result.Checked())
 	}
 	got := result.Inputs()
 	if !reflect.DeepEqual(got.Raw, raw) || got.Raw.Census.Digest() != raw.Census.Digest() {
@@ -75,7 +75,7 @@ func TestExactOriginalTreesModesCoordinatesAndSelectedSourcesSurvive(t *testing.
 	}
 }
 
-func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.T) {
+func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCheck(t *testing.T) {
 	for _, kind := range []string{"execution missing", "registry missing", "ignore missing", "host missing", "instruction missing", "extra input", "input location", "input path", "input bytes", "input mode", "input repo path", "execution repo coordinate missing", "registry repo coordinate missing", "ignore repo coordinate missing", "dependency bytes", "local bytes"} {
 		t.Run(kind, func(t *testing.T) {
 			selection, raw := libraryInputs(t)
@@ -128,8 +128,8 @@ func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.
 				}
 			}
 			result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-			if !errors.Is(err, apply.ErrIncompleteInputs) || result.Compilation().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs().Raw, raw) {
-				t.Fatalf("%v %+v", err, result.Compilation())
+			if !errors.Is(err, apply.ErrIncompleteInputs) || result.Checked().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs().Raw, raw) {
+				t.Fatalf("%v %+v", err, result.Checked())
 			}
 		})
 	}
@@ -142,10 +142,10 @@ func TestPackageInventoryComesFromActualModelDirectoryEntries(t *testing.T) {
 		return apply.PreviewedInputs{Raw: raw, Head: fixtureHead}, nil
 	}}
 	result, err := apply.NewModelService(nil, source).PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || result.Compilation().Status != model.Passed {
-		t.Fatalf("%v %+v", err, result.Compilation())
+	if err != nil || result.Checked().Status != model.Passed {
+		t.Fatalf("%v %+v", err, result.Checked())
 	}
-	local := result.Compilation().Models[0]
+	local := result.Checked().Models[0]
 	found := make(map[string]bool)
 	for _, pkg := range local.Packages {
 		found[pkg.Name] = true

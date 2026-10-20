@@ -84,7 +84,7 @@ func newExtractStart(prepared CapturedSettingsAttempt) (extractStage, error) {
 	if !structural.Model().extract {
 		return extractStage{}, fmt.Errorf("%w: it was not prepared for Extract", ErrNotExtractable)
 	}
-	if err := requireEmptyModel(structural.Model().compiled); err != nil {
+	if err := requireEmptyModel(structural.Model().checked); err != nil {
 		return extractStage{}, err
 	}
 	if !structural.files.layout.Declared() || len(structural.files.layout.Roots()) == 0 {
@@ -94,8 +94,8 @@ func newExtractStart(prepared CapturedSettingsAttempt) (extractStage, error) {
 }
 
 // requireEmptyModel refuses a local model that already holds Definitions.
-func requireEmptyModel(compiled model.Result) error {
-	for _, owner := range compiled.Models {
+func requireEmptyModel(checked model.Result) error {
+	for _, owner := range checked.Models {
 		if owner.Local && len(owner.Definitions) > 0 {
 			return fmt.Errorf("%w: the local model already has %d Definitions; use Apply", ErrNotExtractable, len(owner.Definitions))
 		}
@@ -108,12 +108,12 @@ func requireEmptyModel(compiled model.Result) error {
 // settings resolved for the candidate's Manager tree.
 func (s extractStage) next(candidate snapshot.Tree) (extractStage, error) {
 	structural := rebindStructural(s.structural.Model(), candidate, extractStructure)
-	for name, status := range map[string]model.Status{"model": structural.Model().compiled.Status, "registry": structural.registry.Status(), "files": structural.files.Status(), "execution": structural.execution.Status(), "contexts": structural.contexts.Status()} {
+	for name, status := range map[string]model.Status{"model": structural.Model().checked.Status, "registry": structural.registry.Status(), "files": structural.files.Status(), "execution": structural.execution.Status(), "contexts": structural.contexts.Status()} {
 		if status != model.Passed {
 			return extractStage{}, fmt.Errorf("the structure candidate does not prepare (%s %s)", name, status)
 		}
 	}
-	topology, err := organization.BuildTopology(structural.Model().compiled)
+	topology, err := organization.BuildTopology(structural.Model().checked)
 	if err != nil {
 		return extractStage{}, err
 	}
@@ -149,7 +149,7 @@ func rebindStructural(start CapturedModel, tree snapshot.Tree, phase extractPhas
 		}
 	}
 	stage := CapturedModel{request: start.request, inputs: CapturedInputs{Raw: raw, Head: start.inputs.Head, Guard: start.inputs.Guard}, limits: start.limits, extract: phase == extractStructure}
-	stage.compiled = compileModel(raw, start.limits)
+	stage.checked = checkModel(raw, start.limits)
 	registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 	return CapturedPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts()}
 }
@@ -224,10 +224,10 @@ func artifactPaths(tree snapshot.Tree) []snapshot.Path {
 	return paths
 }
 
-// packageNames lists the local Packages of a compiled model.
-func packageNames(compiled model.Result) []string {
+// packageNames lists the local Packages of a checked model.
+func packageNames(checked model.Result) []string {
 	var names []string
-	for _, owner := range compiled.Models {
+	for _, owner := range checked.Models {
 		if owner.Local {
 			for _, p := range owner.Packages {
 				names = append(names, p.Name)

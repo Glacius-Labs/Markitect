@@ -277,10 +277,10 @@ func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild
 	attempts := []any{}
 	for _, attempt := range prepared.Attempts() {
 		structural := attempt.Structural()
-		compiled := structural.Model().Compilation()
+		checked := structural.Model().Checked()
 		entry := map[string]any{
 			"head":        structural.Model().Inputs().Head,
-			"modelStatus": compiled.Status, "modelDiagnostics": compiled.Diagnostics,
+			"modelStatus": checked.Status, "modelDiagnostics": checked.Diagnostics,
 			"executionDiagnostics": structural.Execution().Diagnostics(),
 			"registryDiagnostics":  structural.Registry().Diagnostics(),
 			"fileDiagnostics":      structural.Files().Diagnostics(),

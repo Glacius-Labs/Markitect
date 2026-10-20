@@ -23,7 +23,7 @@ func privateValues(input Input) valueResult {
 
 func requireValuesPassed(t *testing.T, input Input) Value {
 	t.Helper()
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("valid concrete values rejected: %+v", got)
 	}
@@ -92,7 +92,7 @@ func TestConcreteValueTypesWithoutCoercion(t *testing.T) {
 		{"object cannot be text", "object", "", "text"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Compile(singleValueInput(tt.valueType, "1", "1", tt.extra, "{field: "+tt.literal+"}"))
+			got := Check(singleValueInput(tt.valueType, "1", "1", tt.extra, "{field: "+tt.literal+"}"))
 			if got.Status != Failed || !hasDiagnostic(got, "value.type") {
 				t.Fatalf("coercion accepted: %+v", got)
 			}
@@ -112,7 +112,7 @@ func TestValueCardinalityAndListShapes(t *testing.T) {
 		{"huge minimum is not truncated", "99999999999999999999999999", "-1", "{field: []}", "value.cardinality"},
 	} {
 		t.Run(tt.name, func(t *testing.T) {
-			got := Compile(singleValueInput("string", tt.min, tt.max, "", tt.spec))
+			got := Check(singleValueInput("string", tt.min, tt.max, "", tt.spec))
 			if got.Status != Failed || !hasDiagnostic(got, tt.code) {
 				t.Fatalf("want %s: %+v", tt.code, got)
 			}
@@ -173,7 +173,7 @@ func TestNestedDefaultsVisitOnlyExistingFiniteObjects(t *testing.T) {
 		{"{node: {required: true, node: {required: 'false'}}}", "value.type"},
 		{"{rows: [text]}", "value.type"},
 	} {
-		got := Compile(nestedValueInput(tt.spec))
+		got := Check(nestedValueInput(tt.spec))
 		if got.Status != Failed || !hasDiagnostic(got, tt.code) {
 			t.Fatalf("nested %s was not checked: %+v", tt.code, got)
 		}
@@ -182,11 +182,11 @@ func TestNestedDefaultsVisitOnlyExistingFiniteObjects(t *testing.T) {
 
 func TestClosedFieldsAndExactDeclaredSpelling(t *testing.T) {
 	input := singleValueInput("string", "0", "1", ", name: displayName", "{displayname: a}")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "value.field_spelling") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "value.field_spelling") {
 		t.Fatalf("casefold matched spelling was accepted: %+v", got)
 	}
 	input.Root.Entries[3] = contractDefinition("feature/item.yaml", "item", "Record", "{field: a}")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "value.unknown_field") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "value.unknown_field") {
 		t.Fatalf("Property ID incorrectly replaced its explicit field name: %+v", got)
 	}
 }
@@ -262,13 +262,13 @@ func TestOrdinaryPropertiesStringAndNestedListDefaults(t *testing.T) {
 
 func TestValueReportsAreEnumerationIndependent(t *testing.T) {
 	input := nestedValueInput("{node: {required: 'true'}, rows: [text]}")
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "value.type") {
 		t.Fatal("negative control did not fail")
 	}
 	slices.Reverse(input.Dependencies)
 	slices.Reverse(input.Root.Entries)
-	if reordered := Compile(input); !reflect.DeepEqual(got, reordered) {
+	if reordered := Check(input); !reflect.DeepEqual(got, reordered) {
 		t.Fatalf("enumeration affected diagnostics: %+v / %+v", got, reordered)
 	}
 	for _, diagnostic := range got.Diagnostics {

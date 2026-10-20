@@ -1,7 +1,7 @@
-// Package model compiles explicitly supplied canonical model sources.
+// Package model checks explicitly supplied canonical model sources.
 // It performs no filesystem, repository, process or provider operations.
 //
-// Compile validates canonical v1 content, the entry lock, and model-digest/1
+// Check validates canonical v1 content, the entry lock, and model-digest/1
 // bytes. Exact body-link coordinate coverage is a separate tool profile.
 package model
 
@@ -39,7 +39,7 @@ type Entry struct {
 // the caller must establish physically distinct, non-nested model roots and
 // complete, exactly spelled directories/files. Forbidden redirects in the
 // relative root path, model tree, manifest and lock must be reported without
-// following them. Compile checks the supplied relative paths/entries;
+// following them. Check verifies the supplied relative paths/entries;
 // opaque origins are not physical-root evidence and are never interpreted as
 // filesystem paths.
 type SourceModel struct {
@@ -132,7 +132,7 @@ type Result struct {
 // passed. A passed scope's Packages is its complete own directory inventory in
 // exact UTF-8 name order; an empty list is authoritative only with Status == Passed.
 // Only Input.Root has an entry-lock obligation. For a supplied dependency,
-// lock=passed means no separate sidecar is required in this Compile; its own
+// lock=passed means no separate sidecar is required in this Model check; its own
 // content may pass independently beside an invalid consumer or entry lock.
 // Provided sidecars never replace the entry lock; their known loader errors
 // remain diagnostics. Result.Status aggregates the complete supplied input.
@@ -160,7 +160,7 @@ type Package struct {
 	Source Source
 }
 
-// Definition is the compiled, resolved language value, independent of paths,
+// Definition is the checked, resolved language value, independent of paths,
 // author reference spelling and source ordering. Body remains unchanged.
 type Definition struct {
 	Identity  Identity
@@ -174,7 +174,7 @@ type Definition struct {
 }
 
 // Field uses the effective contract field name, not the Property's address.
-// Compiler output orders fields by their exact UTF-8 names.
+// Model check output orders fields by their exact UTF-8 names.
 type Field struct {
 	Name  string
 	Value Value

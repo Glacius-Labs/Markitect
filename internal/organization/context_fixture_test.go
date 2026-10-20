@@ -59,12 +59,12 @@ func scopeSelector() organization.Setting[organization.ScopeRule] {
 	return setting(organization.ScopeRule{Kind: contextID("types", "Rule"), Property: contextID("types", "applies")}, "/scope/0")
 }
 
-func findCompiledDefinition(t *testing.T, compiled *model.Result, id model.Identity) *model.Definition {
+func findCheckedDefinition(t *testing.T, checked *model.Result, id model.Identity) *model.Definition {
 	t.Helper()
-	for i := range compiled.Models {
-		for j := range compiled.Models[i].Definitions {
-			if compiled.Models[i].Definitions[j].Identity == id {
-				return &compiled.Models[i].Definitions[j]
+	for i := range checked.Models {
+		for j := range checked.Models[i].Definitions {
+			if checked.Models[i].Definitions[j].Identity == id {
+				return &checked.Models[i].Definitions[j]
 			}
 		}
 	}

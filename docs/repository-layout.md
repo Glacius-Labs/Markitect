@@ -33,7 +33,7 @@ Markitect has one root Go module:
 cmd/markitect/                 product entrypoint
 cmd/markitect-release/         independent release maintenance entrypoint
 cmd/markitect-check-*/         repository gate entrypoints
-internal/model/               canonical v1 compiler
+internal/model/               canonical v1 Model check
 internal/snapshot/            pure fixed tree values
 internal/organization/        pure topology/context/settings
 internal/realization/         pure ownership/accounting/candidates
