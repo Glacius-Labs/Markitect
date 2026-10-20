@@ -5,7 +5,8 @@ id: accepted-proposals
 kind: Vocab.Rule
 body: >-
   Changes to the canonical model and to the execution settings made through the cockpit are proposals against a captured working tree: the Model check and the File check judge each proposal, the owner sees its changed files and Definitions, and only the owner's explicit acceptance of a proposal whose checks pass writes it, through Apply's guarded publication with read-back, without committing, while no Apply holds the state directory.
-  The execution settings' budget, profiles, per-Package overrides and team are edited through a form whose result is judged like a hand-edited file.
-  A model proposal comes from an Agent session the owner prompts: it runs through the Runtime adapters in a Linux container with the Execute profile, may write only the model and registry of its own workspace, continues its provider conversation across the owner's prompts, retains its prompts, usage and transcript as evidence, and proposes without deciding intent.
+  A publication that is not applied leaves the proposal unaccepted and shows every path's read-back state.
+  The execution settings' budget, profiles, per-Package overrides and team are edited through a form whose result is judged like a hand-edited file; ownership, instructions, scope and checks stay as written.
+  A model proposal comes from an Agent session the owner prompts: it runs through the Runtime adapters in a Linux container with the Execute profile, may write only the model and registry of its own workspace, continues its provider conversation across the owner's prompts, takes a provider turn only for an owner's prompt within the execution budget's turn timeout and Agent-turn limit, retains its prompts, usage and transcript as evidence, never writes the owner's working tree, and reports a model it finds contradictory instead of repairing it.
   Accepting a proposal starts no Apply; the cockpit starts and stops no Apply and changes no Runtime profile, credential or run configuration.
 spec: {}

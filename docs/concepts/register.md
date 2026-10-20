@@ -12,7 +12,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 | ID | Type | Title | Status |
 |---|---|---|---|
-| [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; scoped cockpit concept and Claude handoff commissioned 20 October 2026; broader extensions deferred |
+| [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; scoped cockpit concept and Claude handoff commissioned 20 October 2026; working through the cockpit adopted ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); broader extensions deferred |
 | [DEC-001](#dec-001-delegated-realization-is-central-to-the-product) | Decision | Delegated realization is central to the product | Accepted |
 | [DEC-002](#dec-002-trust-is-measured-against-todays-practice) | Decision | Trust is measured against today's practice | Accepted |
 | [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) | Decision | The compiler is a borrowed concept | Accepted |
@@ -105,7 +105,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [IDEA-012](#idea-012-visualize-the-governed-realm) | Idea | Visualize the governed realm | Owner idea; parked |
 | [IDEA-013](#idea-013-gamification) | Idea | Gamification | Owner idea; parked |
 | [IDEA-014](#idea-014-shared-evidence-bound-events) | Idea | Shared evidence-bound events | Proposed by the product chat; parked |
-| [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) | Idea | Cockpit with a conversational personal agent | Owner idea; parked |
+| [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent) | Idea | Cockpit with a conversational personal agent | Owner idea; model adjustment through the cockpit adopted in bounded form ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); the rest parked |
 | [IDEA-016](#idea-016-optional-offline-claim-and-evidence-classifier) | Idea | Optional offline claim and evidence classifier | Proposed (research R01) |
 | [IDEA-017](#idea-017-operational-check-through-the-managers) | Idea | Operational check through the Managers | Owner idea; deferred |
 
@@ -113,7 +113,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### VIS-001 Cockpit, personal AI and autonomous project organization
 
-- **Status:** Owner statement of 9 October 2026, relayed by the product chat together with the owner's commission of the Government evaluation ([source](sources/concepts-chat-20261009/government-evaluation-mandate-20261009.md)). The owner commissioned a scoped cockpit concept and Claude handoff on 20 October 2026 ([source](sources/cockpit-commission-20261020.md)); broader extensions retain the [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) deferral.
+- **Status:** Owner statement of 9 October 2026, relayed by the product chat together with the owner's commission of the Government evaluation ([source](sources/concepts-chat-20261009/government-evaluation-mandate-20261009.md)). The owner commissioned a scoped cockpit concept and Claude handoff on 20 October 2026 ([source](sources/cockpit-commission-20261020.md)); On 20 October 2026 the owner also adopted working through the cockpit in bounded form ([DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration)); broader extensions retain the [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) deferral.
 - **Scoped commission, 20 October 2026:** the [cockpit concept](../design/cockpit.md) records a local project/Run surface with Manager organization, causal waits, timeline, details, replay, messages and animated directional arrows. Claude owns its implementation and visual design through the [handoff](../development/claude-cockpit-handoff-20261020.md). This Main delivery documents the direction; it starts no implementation session or provider run and does not adopt personal AI, Government or a new Apply process.
 - **Statement:** The big vision includes a cockpit plus a personal AI, and an autonomous project organization („Cockpit plus persönliche AI und autonome Projektorganisation“).
 - **Owner, 16 October 2026:** the desired working life is to model, develop ideas and concepts and set rules, and to know reliably that the organization realizes them cleanly and consistently, develops features, finds and fixes bugs and keeps the project tidy („Ich möchte meine Zeit damit verbringen, zu modellieren, Ideen und Konzepte auszuarbeiten, Regeln aufzustellen.“; [source](sources/organization-and-trust-20261016.md#desired-working-life)). The [working-day reflection](reflections/desired-working-day-20261016.md) develops it.
@@ -228,7 +228,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-011 Detailed planning of future ideas waits
 
-- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). For Government, [DEC-019](#dec-019-government-code-starts-after-wave-2) supersedes these conditions. The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
+- **Status:** Accepted, owner, 9 October 2026 ([planning boundary](sources/concepts-chat-20261009/discussion-boundaries-20261009.md)). For Government, [DEC-019](#dec-019-government-code-starts-after-wave-2) supersedes these conditions. For working through the cockpit, [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) lifts the hold in bounded form. The owner's wording is in `USER-20261009-01`. The product chat restated the hold in the notes it attached to `-02`, `-03`, `-04` and `-06`.
 - **Statement:**
   - The owner wants to discuss Markitect as if it were finished. Topics:
     - how it can be used;
@@ -784,9 +784,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-065 Work through the cockpit: agent-proposed model changes and configuration
 
-- **Status:** Accepted by the owner, 20 October 2026 ([verbatim source and choices](sources/cockpit-commission-20261020.md#working-through-the-cockpit)). Implementation started in the cockpit stream; nothing is established yet.
+- **Status:** Accepted by the owner, 20 October 2026 ([verbatim source and choices](sources/cockpit-commission-20261020.md#working-through-the-cockpit)). It lifts the [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) planning hold for this bounded slice only. Implementation started in the cockpit stream; nothing is established yet.
 - **Decision:** The owner works on the project through the cockpit. A prompt in the cockpit goes to a Claude or Codex Agent session that proposes a change to the canonical model; the Agent and Manager team configuration in `.markitect/execution.yaml` is edited through the cockpit as well.
-- **Boundaries:** Every change is a proposal: the cockpit runs the Model check and the File check on it, shows its difference and writes it only after the owner's explicit acceptance, through Apply's guarded publication with read-back, without committing. The owner remains the author of intent; an Agent proposes, it never changes the model on its own. Agents run in Linux containers through the existing Runtime adapters and profiles ([DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers)) and write only the model and registry of their session's workspace. Each prompt is a provider turn whose usage is shown. Accepting a change starts no Apply.
+- **Boundaries:** Every change is a checked proposal that only the owner's explicit acceptance writes, without committing and without starting Apply; the owner remains the author of intent. Agent sessions run in Linux containers through the existing Runtime adapters ([DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers)), write only the model and registry of their own workspace, and spend provider turns only on the owner's prompts, within the execution budget's turn timeout per prompt and its Agent-turn limit per session. The [concept](../design/cockpit.md#working-through-the-cockpit) owns the details.
 - **Not adopted:** Government and delegated model maintenance ([IDEA-002](#idea-002-government-delegated-model-maintenance)), a personal AI beyond these sessions, approval reuse, and starting or stopping Apply from the cockpit.
 - **Behavior owner:** the [cockpit concept](../design/cockpit.md#working-through-the-cockpit). Related: [IDEA-015](#idea-015-cockpit-with-a-conversational-personal-agent), whose chat-driven model adjustment this adopts in this bounded form, and [ENH-004](#enh-004-per-role-agent-configuration-and-model-mixing).
 
@@ -1082,7 +1082,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 ### IDEA-015 Cockpit with a conversational personal agent
 
-- **Status:** Owner idea (Ideas `IDEA-20261009-018`; Concepts C34). Part of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization). Its model adjustment through a cockpit chat is adopted in bounded form by [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) (20 October 2026); search and a personal agent remain parked.
+- **Status:** Owner idea (Ideas `IDEA-20261009-018`; Concepts C34). Part of [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization). Its model adjustment through a cockpit chat is adopted in bounded form by [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) (20 October 2026); search, a personal agent and showing the user directly what interests them remain parked.
 - **Idea:** A cockpit with a chat interface, connected to an AI agent. The agent can search the system for the user, adjust the model, or show the user directly what interests them in the cockpit.
 - **Provisional boundary (attribution unclear; treat as a proposal until the owner confirms it):**
   - Chat and cockpit refer to the same model, decisions and evidence.
