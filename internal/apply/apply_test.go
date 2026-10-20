@@ -323,6 +323,46 @@ func TestApplyPublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testing.T)
 	}
 }
 
+// recordingAgents fails every turn after recording its kind.
+type recordingAgents struct {
+	mu    sync.Mutex
+	kinds []run.TurnKind
+}
+
+func (a *recordingAgents) Run(_ context.Context, turn run.Turn, _ run.ToolHandler) (run.TurnResult, error) {
+	a.mu.Lock()
+	a.kinds = append(a.kinds, turn.Kind)
+	a.mu.Unlock()
+	return run.TurnResult{Stopped: true}, errors.New("provider unavailable")
+}
+
+// The evaluation entry runs only the independent Verify on the captured stand:
+// every turn is a fresh read-only reviewer, nothing is published, and the
+// shared work volume and the homes are removed.
+func TestVerifyCapturedRunsOnlyAReviewAndNeverPublishes(t *testing.T) {
+	req, _ := layoutRequest(t)
+	workspaces, agents, publisher := &fakeWorkspaces{}, &recordingAgents{}, &fakePublisher{}
+	req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = agents, workspaces, failingRunner{}, &memoryEvidence{}, publisher
+	var removed []string
+	req.RemoveHome = func(_ context.Context, home string) error {
+		removed = append(removed, home)
+		return nil
+	}
+	result, err := apply.VerifyCaptured(context.Background(), req)
+	if result.Outcome.Status == "" || result.Outcome.Status == run.Verified || result.Receipt != nil || len(publisher.requests) != 0 {
+		t.Fatalf("outcome %+v, err %v", result, err)
+	}
+	if len(agents.kinds) == 0 || slices.ContainsFunc(agents.kinds, func(k run.TurnKind) bool { return k != run.VerifyTurn }) {
+		t.Fatalf("turn kinds %v", agents.kinds)
+	}
+	if len(result.Outcome.Passes) != 1 || result.Outcome.Passes[0].Purpose != run.Verify {
+		t.Fatalf("passes %+v", result.Outcome.Passes)
+	}
+	if !slices.Contains(workspaces.closed, "run-1-work") || !slices.Equal(removed, result.Outcome.Homes) {
+		t.Fatalf("closed %v, removed %v of %v", workspaces.closed, removed, result.Outcome.Homes)
+	}
+}
+
 func TestApplyRefusesEnforcedOwnershipOnAnEngineWithoutVolumeSubpaths(t *testing.T) {
 	workspaces := &fakeWorkspaces{}
 	for name, tc := range map[string]struct {

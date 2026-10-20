@@ -1,6 +1,7 @@
 package apply
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -71,5 +72,26 @@ func TestEarliestNamesTheFirstWorkPurposeInPassOrder(t *testing.T) {
 				t.Errorf("earliest(%v, fallback %d) = %d; want %d", c.corrections, c.fallback, got, c.want)
 			}
 		})
+	}
+}
+
+// The shared review method and envelope serve two authorities: Apply derives
+// its expectations from the bound model, Extract from the fixed artifacts and
+// their documented intent, where the proposal is never evidence for itself
+// (carried over from draft PR #536 and adapted to the receipt contract).
+func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
+	if mandate := applyVerify().Mandate; !strings.Contains(mandate, "against the bound model") || !strings.Contains(mandate, "probes with the tool check") {
+		t.Fatalf("Apply review lacks its bound-model expectations or probes: %s", mandate)
+	}
+	// A public behavior the model leaves open is asked, not defaulted (A4 of
+	// the hardening evaluation picked an unstated name maximum of 80).
+	if !strings.Contains(applyWork()[0].Mandate, "no implementation choice") || !strings.Contains(rootModelDuty, "ask the user with the concrete alternatives") {
+		t.Fatal("Apply lets a Manager settle a public behavior the model leaves open")
+	}
+	for _, phase := range []string{ExtractStructurePhase, ExtractModelPhase} {
+		_, mandate, _, _ := ExtractPhaseTexts(phase)
+		if !strings.Contains(mandate, "fixed artifacts and their documented intent") || !strings.Contains(mandate, "never evidence for itself") || strings.Contains(mandate, "bound model") {
+			t.Fatalf("Extract %s has circular or Apply review authority: %s", phase, mandate)
+		}
 	}
 }

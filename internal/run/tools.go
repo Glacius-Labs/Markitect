@@ -57,6 +57,7 @@ func reportSchema(spec PassSpec) schema {
 		"observed":   str("The observed behavior or source evidence."),
 		"blocking":   schema{"type": "boolean", "description": "true for a genuine finding: a model violation, a missing required realization or evidence, a failed required check. false for an optional note."},
 		"correction": schema{"type": "string", "enum": corrections, "description": "The earliest kind of work its correction needs; the last one is the default."},
+		"receipts":   strs("Probe receipts (R...) that show it; a genuine finding citing an adverse receipt disposes of that receipt as a violation."),
 	}
 	required := []string{"owner", "obligation", "observed", "blocking"}
 	if spec.ArtifactFindingsAdvisory {
@@ -66,9 +67,10 @@ func reportSchema(spec PassSpec) schema {
 	}
 	properties := schema{
 		"kind": schema{"type": "string", "enum": []string{kindProgress, kindWait, kindBasis, kindResult, kindAccept, kindReturn, kindReopen, kindRevise, kindProblem},
-			"description": "progress: you continue in a later turn. wait: you need the named answer or child first. basis: what your children need from you before they start. result: your complete integrated result. accept or return: your decision on a child's proposal. reopen: return a child's accepted result. revise: change your accepted basis. problem: record a classified problem."},
+			"description": "progress: you continue in a later turn. wait: you need the named answer, child or another Manager's accepted basis or result first. basis: what your children need from you before they start. result: your complete integrated result. accept or return: your decision on a child's proposal. reopen: return a child's accepted result. revise: change your accepted basis. problem: record a classified problem."},
 		"summary":  str("progress, basis, result: what you did, what it provides and what is still open."),
-		"for":      str("wait: the question ID you asked or the path of a child."),
+		"for":      str("wait: the question ID you asked, the path of a child, or the path of another Manager whose accepted basis or result you need first; you are woken when it is accepted."),
+		"stage":    schema{"type": "string", "enum": []string{stageNameBasis, stageNameResult}, "description": "wait for another Manager: its accepted basis or (default) result."},
 		"proposal": str("accept, return: the proposal ID (P...) of your child."),
 		"child":    str("reopen: the path of the child."),
 		"reason":   str("return, reopen, revise, wait: why."),
@@ -76,6 +78,13 @@ func reportSchema(spec PassSpec) schema {
 			"definition": str("Identity of one of your own Definitions."),
 			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverNotApplicable, coverOpen}},
 			"note":       str("How it is met and with which evidence; required for not_applicable and open, and for every entry of a plan."),
+			"evidence": schema{"type": "array", "description": evidenceText(spec), "items": object(nil, schema{
+				"claim":     str("source: the distinct claim of the Definition, with the case or input class it covers. A receipt brings its own claim."),
+				"receipt":   str("Executed behavior: your passing probe receipt (R...) of the tool check for this Definition, run on the stand of this submission; each receipt supports one claim."),
+				"source":    str("Inspected source instead: the repository-relative file."),
+				"location":  str("source: the inspected location, such as a function or lines."),
+				"reasoning": str("source: why the inspected text establishes the claim, and why executing it is not applicable."),
+			})},
 		})},
 		"artifacts": strs("basis, result: your own artifacts this contribution created, changed or preserved (repository-relative paths)."),
 		"evidence":  strs("basis, result: the checks, tests and observations that support it."),
@@ -96,6 +105,13 @@ func reportSchema(spec PassSpec) schema {
 			"id":       str("ID of the finding."),
 			"reason":   str("Why it is erroneous."),
 			"evidence": str("The evidence on this candidate."),
+		})}
+		properties["dispositions"] = schema{"type": "array", "description": "basis, result: dispositions of adverse probe receipts (failed or error) on this candidate within your responsibility. A violation is not listed here: cite the receipt in a genuine finding instead.", "items": object([]string{"receipt", "as"}, schema{
+			"receipt":  str("ID of the adverse receipt (R...)."),
+			"as":       schema{"type": "string", "enum": []string{DisposedExpectationError, DisposedRerun}, "description": "expectation_error: the probe's expectation or assertion was wrong, not the candidate (failed receipts). rerun: a Runtime error replaced by a passing exact repetition of its probe (probe.rerun), which also disposes of its erring repetitions."},
+			"reason":   str("expectation_error: why the expectation or assertion was wrong, derived from the model."),
+			"evidence": str("expectation_error: the evidence of the disproof, such as the Definition text and a corrected receipt."),
+			"rerun":    str("rerun: the passing receipt that repeated it with probe.rerun."),
 		})}
 	}
 	if spec.Plans {
@@ -138,12 +154,42 @@ var escalateSchema = object([]string{"category", "text"}, schema{
 
 var lookUpSchema = object([]string{"topic"}, schema{
 	"topic":   schema{"type": "string", "enum": lookUpTopics},
-	"id":      str("definition: the Definition identity. method: the method's name."),
+	"id":      str("definition: the Definition identity. method: the method's name. probe: the receipt (R...)."),
 	"path":    str("owner, registry: a repository-relative path."),
 	"manager": str("plan, basis: a Manager path; default yourself (plan) or your parent (basis)."),
 })
 
-var checkSchema = object(nil, schema{
+// evidenceText describes the evidence items of a coverage entry for one Pass.
+func evidenceText(spec PassSpec) string {
+	if spec.Review {
+		return "Required for done and preserved: per distinct claim, a passing probe receipt on this candidate or an inspected source location; a suite total alone is no coverage. Adverse receipts cannot support a claim."
+	}
+	return "Optional: per claim, a passing probe receipt run on the stand you submit, or an inspected source location."
+}
+
+// checkSchema is the schema of check: the File check of the caller's area in a
+// Pass with writes, or one behavioral probe.
+func checkSchema(spec PassSpec) schema {
+	properties := schema{
+		"probe": object(nil, schema{
+			"rerun":      str("Instead of a new probe: an error receipt (R...) of this candidate whose exact probe runs again; give nothing else."),
+			"obligation": str("New probe: the Definition whose claim it assesses, yours or one of your descendants'. A new probe gives obligation, claim, expected, check, path, content and args."),
+			"claim":      str("The distinct claim, with the case or input class, derived from the model."),
+			"expected":   str("The outcome the model requires, stated before the probe runs."),
+			"check":      str("The required check whose execution profile (image, executable, environment, limits) runs the probe."),
+			"path":       str("Where the probe file is placed, relative to that check's directory; it must not exist in the stand."),
+			"content":    str("The probe file: its assertions exit 0 when the expected outcome is observed, nonzero otherwise. An expected refusal of the application passes when the probe asserts it."),
+			"args":       strs("Arguments after the profile's fixed arguments, such as the probe file to run."),
+			"proposal":   str("Optional, Pass with writes: the checked proposal (P...) of one of your children to probe its submitted stand."),
+		}),
+	}
+	if spec.Writes {
+		properties["scope"] = schema{"type": "string", "enum": []string{"own", "all"}, "description": "File check: own (default): your findings in full and the number of others. all: the findings of other Managers too."}
+	}
+	return object(nil, properties)
+}
+
+var fileCheckSchema = object(nil, schema{
 	"scope": schema{"type": "string", "enum": []string{"own", "all"}, "description": "own (default): your findings in full and the number of others. all: the findings of other Managers too."},
 })
 
@@ -171,10 +217,15 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 		{Name: toolReport, Description: "Report to the Orchestrator: progress, a named wait, your basis or complete result, a decision on a child's proposal, a reopened child result, a revised basis or a problem. End every turn in which you work on your own contribution with one.", InputSchema: raw(reportSchema(spec))},
 		{Name: toolSend, Description: sendText, InputSchema: raw(sendSchema)},
 		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent (Root: to the user) as a question.", InputSchema: raw(escalateSchema)},
-		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
-	if spec.Writes {
-		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your current area against the accepted stand: unregistered or wrongly registered files, invalid registry entries, missing owners. Advice while you work.", InputSchema: raw(checkSchema)})
+	switch probes := e.probesAvailable(); {
+	case spec.Writes && probes:
+		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Without probe: File check of your current area against the accepted stand (unregistered or wrongly registered files, invalid registry entries, missing owners), advice while you work. With probe: run one behavioral probe file in its own container on a stable stand and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
+	case spec.Writes:
+		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your current area against the accepted stand: unregistered or wrongly registered files, invalid registry entries, missing owners. Advice while you work.", InputSchema: raw(fileCheckSchema)})
+	case probes:
+		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Run one behavioral probe file in its own container on the stand of this Pass and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
 	}
 	if len(m.Helpers) > 0 {
 		tools = append(tools, ToolSpec{Name: toolDelegate, Description: "Delegate a bounded task to one of your helper roles; it runs in its own container after this turn and reports its result to you.", InputSchema: raw(delegateSchema)})
@@ -188,7 +239,7 @@ func helperTools(writes bool) []ToolSpec {
 		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, plans and bases, findings, checks.", InputSchema: raw(lookUpSchema)},
 	}
 	if writes {
-		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your Manager's current area against the accepted stand.", InputSchema: raw(checkSchema)})
+		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your Manager's current area against the accepted stand.", InputSchema: raw(fileCheckSchema)})
 	}
 	return tools
 }

@@ -1105,6 +1105,13 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 - **Clarification (owner):** „Die Logs meinte ich eher als eine Art check oder doctor oder sowas über die Manager. Nicht Erfahrungsbezogen“.
 - **Developed in:** the [experience reflection](reflections/experience-without-implicit-rules-20261016.md#operational-check-through-the-managers), and planned in the [north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions). It extends [IDEA-010](#idea-010-monitoring-logs-and-data-collection).
 
+### IDEA-018 Reuse Manager working containers
+
+- **Status:** Owner-requested deferred proposal, 20 October 2026. The order is recorded; technical design, implementation and benefit remain unproved.
+- **Idea:** Reuse one Manager working container across its Turns within an Apply Run instead of creating one per Turn. Preserve enforceable activity-specific rights, stopped writers, separate helpers/checks and fresh independent Verify reviewers; rights-driven replacement, recovery and disposal need an explicit design.
+- **Sequence:** Finish and assess the current reference/simplified-process tests, then change the selected baseline's container lifecycle, then perform a bounded matched retest. Do not alter the ongoing comparison or combine both changes in one claimed result.
+- **Source and owner:** [Owner instruction](sources/terminology-and-file-accounting-20261020.md#owner-sequencing-manager-container-reuse), [Apply proposal](../design/canonical-model/manager-apply-workflow.md#deferred-proposal-reuse-manager-working-containers), [delivery sequence](../implementation-plan.md#container-reuse-after-the-current-evaluation).
+
 ## Imported collections
 
 On 9 October 2026 two chats collected the owner's ideas outside this record:
