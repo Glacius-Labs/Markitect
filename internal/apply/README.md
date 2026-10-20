@@ -91,8 +91,10 @@ work volume is closed only after an applied or unchanged receipt and kept as
 of its execution profile's own arguments to `run`, so a probe can reuse that profile with
 its own arguments.
 
-The mandates ask Plan for distinct claims, input classes and the needed dependency stage;
-Implement to wait for another Manager's result instead of reporting progress; and Verify
+The mandates ask Plan for the needed dependency stage and to keep existing conforming
+artifacts as their own evidence; Implement to test the changes it makes rather than add
+coverage of conforming behavior, and to wait for another Manager's result instead of
+reporting progress; and Verify
 to derive claims and permitted counterexamples from the bound model first, probe them at
 the public interface and cite receipts or inspected sources for their claims, with parents
 challenging their children's assertions.
