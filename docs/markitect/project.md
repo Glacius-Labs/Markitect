@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:75685b4425808d996d7f7bde0450917368406aa84e8d441bebc8ea6be35b8aed`.
+Canonical model digest: `sha256:69bcffcfdd8da4ee9293a2d1c28572c4872c4c57f0afb670a63054c1504b8b75`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -169,6 +169,12 @@ Acquire explicitly selected model and control inputs through consumer-owned port
 Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cli/honest-read-only-interface.yaml` (original bytes `sha256:c89e18fbcd585cc136a12645feebc774c917b82904fe33001a68a1461d8293dc`).
 
 Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. Apply, answer and extract act only with an explicit Runtime profile and run configuration and report the actual run status, Passes, findings, questions, publication, Run outcome and retained work; an answer binds to the exact run and question that asked. Usage, known failure and incomplete work have distinct exit statuses.
+
+### product/cockpit/observed-run-inspection
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/observed-run-inspection.yaml` (original bytes `sha256:d31c0fcf7d2de03bf231b129af226a50c5691b33be410a96f00fef2647cf26ed`).
+
+Present runs only through their recorded evidence under the state directory: the events, transcripts and report of each run, read as consistent prefixes up to an explicit record boundary; nothing recorded after the boundary reaches its view, and the report appears only at the final boundary. Show the organization, current work, recorded waits with the records and participants they name, exchanges with their direction and their author (an Agent, the Orchestrator or the owner channel), Passes, candidates, checks, findings, questions and the publication's read-back as recorded. Never infer a delivery, a reading, a correlation, a success or an authority the record does not establish; show outdated waits, missing outcomes or reports, unreadable or unknown records and absent bindings as limitations. Reading, replay, pause, selection and reconnection start, answer, stop, repair and publish nothing, and the view serves only the local machine.
 
 ### product/documents/guarded-model-view
 

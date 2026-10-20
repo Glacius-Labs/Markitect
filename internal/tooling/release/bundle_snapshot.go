@@ -103,7 +103,7 @@ func includeSourceTreeFile(name string) bool {
 	if !sourceRoot(name) || hasExcludedSourceDirectory(name) {
 		return false
 	}
-	return strings.EqualFold(path.Ext(name), ".go") || embeddedNotices(name) || name == embeddedStrategyDefaultsPath || sourceTestData(name)
+	return strings.EqualFold(path.Ext(name), ".go") || embeddedNotices(name) || name == embeddedStrategyDefaultsPath || embeddedCockpitWeb(name) || sourceTestData(name)
 }
 
 func validateSnapshotModuleLayout(files []sourceFile) error {

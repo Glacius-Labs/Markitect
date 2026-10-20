@@ -27,6 +27,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 - [Apply and Extract closeout — 20 October 2026](apply-extract-closeout-20261020.md)
 - [Apply trial series with Haiku — 20 October 2026](apply-trials-haiku-20261020.md)
 - [Apply Pass process trials — 20 October 2026](apply-pass-process-20261020.md)
+- [Cockpit run inspector on recorded runs — 20 October 2026](cockpit-run-inspector-20261020.md)
 - [Public Classic Commerce entrypoint validation](classic-commerce-entrypoint.md)
 - [Standard operating model validation](standard-operating-model.md)
 
