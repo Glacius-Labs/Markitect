@@ -219,6 +219,16 @@ def _(env, p):
             fail("the malformed data file was changed")
 
 
+@check("missing-directory", ALL, ["stockroom/storage", "stockroom/interface"],
+       "A missing data directory is not created: changes fail and queries are empty")
+def _(env, p):
+    env.db = env.root / "absent" / "stock.json"
+    expect_equal(listing(env), [], "list without the data directory")
+    add(env, "BOL-006", "Bolt", refuse=True)
+    if (env.root / "absent").exists():
+        fail("the missing data directory was created")
+
+
 @check("usage-errors", ALL, ["stockroom/interface"], "Command-line errors use the error object and exit 2")
 def _(env, p):
     for args in (["receive", "--sku", "BOL-006"], ["move", "--sku", "BOL-006"], ["list", "--bogus"], [],
@@ -328,11 +338,17 @@ CONSTANTS = {"MAX_QUANTITY": 1000, "MAX_ON_HAND": 9999, "MAX_NAME_LENGTH": 60}
 
 
 def module_constants(path):
+    """Top-level integer constants, assigned plainly or with an annotation."""
     values = {}
     for node in ast.parse(path.read_text(encoding="utf-8")).body:
-        if isinstance(node, ast.Assign) and len(node.targets) == 1 and isinstance(node.targets[0], ast.Name):
-            if isinstance(node.value, ast.Constant) and type(node.value.value) is int:
-                values[node.targets[0].id] = node.value.value
+        if isinstance(node, ast.Assign) and len(node.targets) == 1:
+            target = node.targets[0]
+        elif isinstance(node, ast.AnnAssign):
+            target = node.target
+        else:
+            continue
+        if isinstance(target, ast.Name) and isinstance(node.value, ast.Constant) and type(node.value.value) is int:
+            values[target.id] = node.value.value
     return values
 
 
@@ -350,7 +366,7 @@ def _(env, p):
         shutil.copytree(env.realization, copy, ignore=shutil.ignore_patterns("__pycache__"))
         text = (copy / "limits.py").read_text(encoding="utf-8")
         for name, value in {"MAX_QUANTITY": 7, "MAX_ON_HAND": 20, "MAX_NAME_LENGTH": 5}.items():
-            text, count = re.subn(r"(?m)^%s\s*=\s*\d+" % name, "%s = %d" % (name, value), text)
+            text, count = re.subn(r"(?m)^(%s(?:\s*:\s*int)?\s*=\s*)[0-9][0-9_]*" % name, r"\g<1>%d" % value, text)
             if count != 1:
                 fail("limits.py must assign %s exactly once" % name)
         (copy / "limits.py").write_text(text, encoding="utf-8")

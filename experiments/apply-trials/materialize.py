@@ -180,7 +180,7 @@ def materialize(case_id, target, from_repo=None):
     if case_id not in CASES:
         raise PacketError("unknown case %s; known: %s" % (case_id, ", ".join(CASES)))
     case = CASES[case_id]
-    target = Path(target)
+    target = Path(target).resolve()
     if target.exists():
         raise PacketError("%s already exists" % target)
     accepted = []

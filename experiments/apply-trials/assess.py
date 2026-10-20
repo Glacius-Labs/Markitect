@@ -143,6 +143,14 @@ def static_config_consistent(realization, case):
     return "limits.json disagrees with the model: %s" % wrong if wrong else ""
 
 
+def static_readme_limits(realization, case):
+    """The README does not point at a limits file the realization no longer has (S-O moves the limits)."""
+    text = read(realization, "README.md") or ""
+    if "limits.json" in text and not (Path(realization) / "limits.json").is_file():
+        return "the README still refers to limits.json, which the realization no longer has"
+    return ""
+
+
 def static_registry_owner(realization, case):
     """The reports module is registered by the reports shard and by no other shard (depot fault m1)."""
     shards = Path(realization).parent / ".markitect" / "registry"
@@ -158,6 +166,7 @@ STATIC = {
     "readme-s2": static_readme_s2,
     "tests-present": static_tests_present,
     "config-consistent": static_config_consistent,
+    "readme-limits": static_readme_limits,
     "registry-owner": static_registry_owner,
 }
 
@@ -278,7 +287,9 @@ def assess(case_id, repo, report_path=None, python=None, previous=None):
         if previous is None and case.start == "previous" and case.snapshot and (start / "realization" / "app.py").is_file():
             previous = start / "realization"
         behavior = oracle.assess(case.project, profile, realization, python, previous)
-    result["behavior"] = {"passed": behavior["summary"]["failed"] == 0, "summary": behavior["summary"],
+    summary_counts = behavior["summary"]
+    result["behavior"] = {"passed": summary_counts["failed"] == 0 and summary_counts["skipped"] == 0,
+                          "summary": summary_counts,
                           "failed": {item["id"]: item["detail"] for item in behavior["checks"] if item["status"] == "fail"},
                           "skipped": {item["id"]: item["detail"] for item in behavior["checks"] if item["status"] == "skip"}}
     status = {item["id"]: item["status"] for item in behavior["checks"]}

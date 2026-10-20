@@ -5,7 +5,9 @@ id: storage
 kind: Software.Rule
 body: |-
   [[system]] keeps its data as durable UTF-8 JSON in the file named by --db. A
-  missing file is empty data. Malformed existing data fails clearly through
+  missing file is empty data. The directory that holds the file is not created:
+  when it does not exist, a changing command fails through [[interface]] and a
+  query returns the empty result. Malformed existing data fails clearly through
   [[interface]] and is not overwritten. A successful change commits by atomic
   replacement of the file, and a later process using the same file observes
   it. A failed command leaves the file unchanged, and queries never write it.

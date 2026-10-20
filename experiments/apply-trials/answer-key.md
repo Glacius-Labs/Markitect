@@ -118,7 +118,7 @@ a4:
 - **Question:** Can Apply build the complete realization from the model alone, deciding every internal choice (module structure, data file organization, test layout) without escalating it?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
-- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `s1`.
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `s1`.
 - **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
 - **Artifact checks:** `readme-commands`, `tests-present`
 - **Record:** model_defect raised for an internal choice (expected none); rounds; turns; time; registry complete (markitect check)
@@ -130,22 +130,26 @@ a4:
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
 - **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
-- **Defect named:** the report mentions one term of each group: issue; on hand, on-hand, onhand, stock, exceed, more than, negative, insufficient, shortfall, available
+- **Defect named:** the report mentions one term of each group: issue; on hand, on-hand, onhand, exceed, more than, negative, insufficient, shortfall
 - **Record:** model_defect raised and naming the issue shortfall; time to the report; other points reported as defects (false escalations); work retained, nothing published
-- **Notes:** The edits remove only the refusal; 'never negative' stays, so refuse and partial issue both fit the remaining model and differ at the boundary.
+- **Notes:** The edits remove the refusal and state no arithmetic for a shortfall; 'never negative' stays, so refusing the request and issuing only what is on hand both fit the remaining model and differ at the boundary.
 
 Model edits:
 
 ```diff
 --- .markitect/model/stockroom/issue.yaml
+-  At [[interface]], `issue --sku SKU --qty N` subtracts N from the on-hand
+-  quantity of the existing [[item]] with that normalized SKU, commits the change
 -  through [[storage]] and returns the updated record. An invalid or unknown SKU,
 -  an invalid quantity under [[inputs]] or a quantity above the current on-hand
 -  quantity under [[stock-limits]] is refused with stored data unchanged. Other
 -  items are not changed.
-+  through [[storage]] and returns the updated record. The on-hand quantity
-+  stays within [[stock-limits]]. An invalid or unknown SKU or an invalid
-+  quantity under [[inputs]] is refused with stored data unchanged. Other items
-+  are not changed.
++  At [[interface]], `issue --sku SKU --qty N` records an issue of goods for the
++  existing [[item]] with that normalized SKU: its on-hand quantity goes down by
++  the units issued and stays within [[stock-limits]]. The command commits the
++  change through [[storage]] and returns the updated record. An invalid or
++  unknown SKU or an invalid quantity under [[inputs]] is refused with stored
++  data unchanged. Other items are not changed.
 ```
 
 ```diff
@@ -164,7 +168,7 @@ Model edits:
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, the known-correct reference realization and its registry
 - **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
-- **Defect named:** the report mentions one term of each group: sku; case, uppercase, upper-case, lowercase
+- **Defect named:** the report mentions one term of each group: sku; case-sensitive, case sensitive, uppercase, upper-case, upper case, lowercase, lower case
 - **Record:** model_defect raised and naming item and inputs; time to the report; artifacts changed in the retained work; nothing published
 
 Model edits:
@@ -185,8 +189,9 @@ Model edits:
 - **Question:** Does Apply realize three valid overspecified statements (a fixed error text, a fixed data file format, a prescribed limits module) without relaxing or escalating them?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, the known-correct reference realization and its registry
-- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `o`.
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `o`.
 - **Not counted as unnecessary:** `realization/**`, `.markitect/registry/stockroom/registry.yaml`
+- **Artifact checks:** `readme-limits`
 - **Record:** each restriction met; any restriction relaxed or reported as a defect; advisory remarks on the restrictions (allowed, not blocking); base behavior intact
 - **Notes:** The restrictions are consistent with the rest of the model; questioning their purpose is a separate modeling finding, not Apply's decision.
 
@@ -207,9 +212,10 @@ Model edits:
 -  consistent with the [[item]] records.
 +  The file holds one JSON object whose keys are the normalized SKUs in
 +  ascending code-point order; each value is an object with exactly the fields
-+  name and onHand, in that order. The file is written with an indentation of
-+  two spaces, non-ASCII characters unescaped, line feeds as line ends and one
-+  final line feed.
++  name and onHand, in that order. The file is written with one member per line,
++  an indentation of two spaces per level, a colon and one space between each key
++  and its value, non-ASCII characters unescaped, line feeds as line ends and
++  one final line feed.
 ```
 
 ```diff
@@ -228,7 +234,7 @@ Model edits:
 - **Question:** Does Apply realize the 0.2.0 change (quantity limit 500, reorder points, list --low, 0.1.0 data stays usable) on the realization an earlier Apply produced?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s2`, the committed result of an earlier Apply (`--from-repo`)
-- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `s2`.
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `s2`.
 - **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
 - **Artifact checks:** `readme-commands`, `readme-s2`
 - **Record:** all s2 checks including upgrade; unchanged behavior retained; files changed; rounds
@@ -257,7 +263,7 @@ Model edits:
 - **Project and level:** depot, level 2
 - **Start:** snapshot `d1`, the known-correct reference realization and its registry
 - **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1`.
-- **Not counted as unnecessary:** `realization/**/test_*.py`, `realization/tests/**`, `.markitect/registry/**`
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
 - **Artifact checks:** `readme-commands`, `readme-facts`, `registry-owner`
 - **Record:** each fault repaired; m2 repaired by using the orders rule rather than a corrected copy; m5 regression test required; which Manager changed which area; rounds and the round in which each fault closed; false findings; turns; time
 - **Notes:** Combines the isolated classes of S-D and S-A with accounting drift and a DEC-060 duplication. The start fails strict `markitect check` accounting on purpose (m1); Apply treats it as start-stand drift.
@@ -365,7 +371,7 @@ m6:
 - **Question:** Can Apply build the five-Manager realization from the model alone, with shared rules realized once by their owners and used by the others?
 - **Project and level:** depot, level 2
 - **Start:** snapshot `d1`, model, dependencies and execution settings only; no realization or registry
-- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1`.
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `d1`.
 - **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
 - **Artifact checks:** `readme-commands`, `tests-present`
 - **Record:** availability and SKU rules realized once by their owners; model_defect for an internal choice (expected none); rounds; turns; time; registry complete (markitect check)

@@ -38,7 +38,7 @@ Every successful command prints one JSON object and exits with 0. Invalid input,
 
 ## Data file
 
-All data is kept as UTF-8 JSON in the one file given by `--db`. A missing file means an empty depot. Each changing command replaces the file atomically, so a later run sees all of its changes; the queries never write the file. A malformed file is reported and left as it is. The tool assumes one writer at a time: two processes changing the same file concurrently can lose an update.
+All data is kept as UTF-8 JSON in the one file given by `--db`. A missing file means an empty depot. The file's directory is not created: without it, changes fail and the queries show an empty depot. Each changing command replaces the file atomically, so a later run sees all of its changes; the queries never write the file. A malformed file is reported and left as it is. The tool assumes one writer at a time: two processes changing the same file concurrently can lose an update.
 
 ## Code and tests
 

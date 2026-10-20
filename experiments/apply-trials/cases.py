@@ -66,14 +66,18 @@ SR = ".markitect/model/stockroom/"
 
 GAP_EDITS = (
     Edit(SR + "issue.yaml",
+         "  At [[interface]], `issue --sku SKU --qty N` subtracts N from the on-hand\n"
+         "  quantity of the existing [[item]] with that normalized SKU, commits the change\n"
          "  through [[storage]] and returns the updated record. An invalid or unknown SKU,\n"
          "  an invalid quantity under [[inputs]] or a quantity above the current on-hand\n"
          "  quantity under [[stock-limits]] is refused with stored data unchanged. Other\n"
          "  items are not changed.\n",
-         "  through [[storage]] and returns the updated record. The on-hand quantity\n"
-         "  stays within [[stock-limits]]. An invalid or unknown SKU or an invalid\n"
-         "  quantity under [[inputs]] is refused with stored data unchanged. Other items\n"
-         "  are not changed.\n"),
+         "  At [[interface]], `issue --sku SKU --qty N` records an issue of goods for the\n"
+         "  existing [[item]] with that normalized SKU: its on-hand quantity goes down by\n"
+         "  the units issued and stays within [[stock-limits]]. The command commits the\n"
+         "  change through [[storage]] and returns the updated record. An invalid or\n"
+         "  unknown SKU or an invalid quantity under [[inputs]] is refused with stored\n"
+         "  data unchanged. Other items are not changed.\n"),
     Edit(SR + "stock-limits.yaml",
          "  9999 is allowed. An [[issue]] of more than the current on-hand quantity is\n"
          "  refused; issuing exactly the on-hand quantity is allowed and leaves 0. A\n"
@@ -106,9 +110,10 @@ OVERSPEC_EDITS = (
          "  consistent with the [[item]] records.",
          "  The file holds one JSON object whose keys are the normalized SKUs in\n"
          "  ascending code-point order; each value is an object with exactly the fields\n"
-         "  name and onHand, in that order. The file is written with an indentation of\n"
-         "  two spaces, non-ASCII characters unescaped, line feeds as line ends and one\n"
-         "  final line feed."),
+         "  name and onHand, in that order. The file is written with one member per line,\n"
+         "  an indentation of two spaces per level, a colon and one space between each key\n"
+         "  and its value, non-ASCII characters unescaped, line feeds as line ends and\n"
+         "  one final line feed."),
     Edit(SR + "realization.yaml",
          "  guarantees for concurrent independent writers. Internal organization is free\n"
          "  within the Python standard-library command and test boundary.",
@@ -210,24 +215,26 @@ STOCKROOM = (
          "Does Apply report a gap that changes boundary behavior (what issue does when more is requested than "
          "is on hand) instead of deciding it?",
          snapshot="s1", start="model-only", expected=DEFECT, model_edits=GAP_EDITS,
-         defect_terms=(("issue",), ("on hand", "on-hand", "onhand", "stock", "exceed", "more than", "negative",
-                                     "insufficient", "shortfall", "available")),
+         defect_terms=(("issue",), ("on hand", "on-hand", "onhand", "exceed", "more than", "negative",
+                                     "insufficient", "shortfall")),
          measure=("model_defect raised and naming the issue shortfall", "time to the report",
                   "other points reported as defects (false escalations)", "work retained, nothing published"),
-         notes="The edits remove only the refusal; 'never negative' stays, so refuse and partial issue both "
-               "fit the remaining model and differ at the boundary."),
+         notes="The edits remove the refusal and state no arithmetic for a shortfall; 'never negative' stays, "
+               "so refusing the request and issuing only what is on hand both fit the remaining model and "
+               "differ at the boundary."),
     Case("S-X", "stockroom", 1, "Contradiction inside the model",
          "Does Apply report two Definitions that contradict each other (SKU case) and end without publication, "
          "although the existing artifacts follow one of them?",
          snapshot="s1", start="reference", expected=DEFECT, model_edits=CONTRADICTION_EDITS,
-         defect_terms=(("sku",), ("case", "uppercase", "upper-case", "lowercase")),
+         defect_terms=(("sku",), ("case-sensitive", "case sensitive", "uppercase", "upper-case", "upper case",
+                                   "lowercase", "lower case")),
          measure=("model_defect raised and naming item and inputs", "time to the report",
                   "artifacts changed in the retained work", "nothing published")),
     Case("S-O", "stockroom", 1, "Valid but unnecessary restrictions",
          "Does Apply realize three valid overspecified statements (a fixed error text, a fixed data file "
          "format, a prescribed limits module) without relaxing or escalating them?",
          snapshot="s1", start="reference", expected=APPLIED, profile="o", model_edits=OVERSPEC_EDITS,
-         allowed=("realization/**", ".markitect/registry/stockroom/registry.yaml"),
+         allowed=("realization/**", ".markitect/registry/stockroom/registry.yaml"), static=("readme-limits",),
          measure=("each restriction met", "any restriction relaxed or reported as a defect",
                   "advisory remarks on the restrictions (allowed, not blocking)", "base behavior intact"),
          notes="The restrictions are consistent with the rest of the model; questioning their purpose is a "
@@ -336,7 +343,8 @@ DEPOT = (
          "nothing else?",
          snapshot="d1", start="reference", expected=APPLIED, profile="d1",
          faults=(M1_REGISTRY, M2_DUPLICATE, M3_PARTIAL, M4_DOC, M5_CAP, M6_TRIM),
-         allowed=("realization/**/test_*.py", "realization/tests/**", ".markitect/registry/**"),
+         # fnmatch's * also crosses "/", so these globs cover test modules at any depth.
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
          static=("readme-commands", "readme-facts", "registry-owner"),
          measure=("each fault repaired", "m2 repaired by using the orders rule rather than a corrected copy",
                   "m5 regression test required", "which Manager changed which area", "rounds and the round "
@@ -375,13 +383,17 @@ PROJECTS = {
 
 CASES = {case.id: case for case in STOCKROOM + DEPOT}
 
-EXPECTATIONS = {
-    APPLIED: "Verified in the Apply report, publication `applied`; the oracle profile passes on the published "
-             "realization; every fault is repaired; no change outside the fault files and the allowed paths.",
-    UNCHANGED: "Verified, publication `no_change`; no file changes; the oracle profile passes on the stand.",
-    DEFECT: "Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the "
-            "work retained; the report names the defect.",
-}
+def expectation(case):
+    if case.expected == APPLIED:
+        return ("Verified in the Apply report, publication `applied`; the oracle profile passes on the published "
+                "realization; " + ("every fault is repaired; no change outside the fault files and the allowed paths."
+                                   if case.faults else "no change outside the allowed paths."))
+    if case.expected == UNCHANGED:
+        return "Verified, publication `no_change`; no file changes; the oracle profile passes on the stand."
+    return ("Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work "
+            "retained; the report names the defect.")
+
+
 STARTS = {"model-only": "model, dependencies and execution settings only; no realization or registry",
           "reference": "the known-correct reference realization and its registry",
           "previous": "the committed result of an earlier Apply (`--from-repo`)"}
@@ -405,7 +417,7 @@ def markdown():
                 "- **Project and level:** %s, level %d" % (case.project, case.level),
                 "- **Start:** %s%s" % ("snapshot `%s`, " % case.snapshot if case.snapshot else "the model in the "
                                        "repository, ", STARTS[case.start]),
-                "- **Expected:** " + EXPECTATIONS[case.expected]
+                "- **Expected:** " + expectation(case)
                 + (" Oracle profile `%s`." % case.profile if case.profile else ""),
                 ]
         if case.defect_terms:

@@ -10,6 +10,7 @@ drops the Go sentence from the system prompt, appends the check profile
 `python-tests` with that image's interpreter wrapper and records the change in
 binding.txt. Like rx_python_profile.py it grants no execution authority.
 """
+import hashlib
 import sys
 from pathlib import Path
 
@@ -49,6 +50,7 @@ def main(argv):
     with open(attempt / "binding.txt", "a", encoding="utf-8") as binding:
         binding.write("host_profile_note=trial profiles: project-agent on %s (Python example image), Go sentence "
                       "removed from the system prompt, python-tests check profile appended after binding\n" % image)
+        binding.write("host_profile_sha256_after_rebind=%s\n" % hashlib.sha256(host.read_bytes()).hexdigest())
     print(host)
     return 0
 

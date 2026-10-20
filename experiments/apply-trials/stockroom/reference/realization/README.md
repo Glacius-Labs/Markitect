@@ -34,7 +34,7 @@ Every successful command prints one JSON object and exits with 0. Invalid input,
 
 ## Data file
 
-The data is kept as UTF-8 JSON in the file given by `--db`. A missing file means no items. Each change replaces the file atomically, so a later run sees it; `list` never writes the file. A malformed file is reported and left as it is. The tool assumes one writer at a time: two processes changing the same file concurrently can lose an update.
+The data is kept as UTF-8 JSON in the file given by `--db`. A missing file means no items. The file's directory is not created: without it, changes fail and `list` shows no items. Each change replaces the file atomically, so a later run sees it; `list` never writes the file. A malformed file is reported and left as it is. The tool assumes one writer at a time: two processes changing the same file concurrently can lose an update.
 
 ## Tests
 

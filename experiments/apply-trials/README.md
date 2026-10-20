@@ -2,7 +2,9 @@
 
 Prepared cases for later real Apply runs, each answering one question about where Apply works reliably and which kinds of error it detects, repairs or correctly escalates. This directory is preparation for [#523](https://github.com/Glacius-Labs/Markitect/issues/523): fixtures, an answer key, independent checks and small helpers. It starts no Agent or provider, changes no Apply behavior and records no Apply result. Its self-check shows that the fixtures are consistent and that the checks discriminate; it does not show how Apply behaves.
 
-**Everything here is operator material.** The models, realizations and faults are deliberate trial material, not product definitions. Agents receive only a packet: a fresh Git repository built by `materialize.py` with the case's model, the shared dependencies, the execution settings and, where the case has one, a realization and registry. The answer key, the checks, the validation overlays and this guide never enter a packet, and `materialize.py` refuses a packet that names them.
+**Everything here is operator material.** The models, realizations and faults are deliberate trial material, not product definitions. Agents receive only a packet: a fresh Git repository built by `materialize.py` with the case's model, the shared dependencies, the execution settings and, where the case has one, a realization and registry. The answer key, the checks, the validation overlays and this guide are never copied into a packet. As a guard, `materialize.py` refuses a packet with a top-level path other than `.markitect` and `realization`, or with a file or commit message that uses trial words such as fault, oracle or a case id.
+
+Unlike Roombook and Readinglog, this directory holds known-correct reference realizations. That is deliberate: most cases start from a correct stand, so the reference is the starting input of their packets. For S-G and D-G the reference is also one correct answer, and the `s2` and `o` validation overlays are correct answers for S-C and S-O; none of them enters those cases' packets, and the executing Agents never see this repository.
 
 ## Contents
 

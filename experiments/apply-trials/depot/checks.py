@@ -285,6 +285,16 @@ def _(env, p):
             fail("the malformed data file was changed")
 
 
+@check("missing-directory", D1, ["depot/storage", "depot/interface"],
+       "A missing data directory is not created: changes fail and queries are empty")
+def _(env, p):
+    env.db = env.root / "absent" / "depot.json"
+    expect_equal(items(env), [], "items without the data directory")
+    add(env, "BOL-006", "Bolt", refuse=True)
+    if (env.root / "absent").exists():
+        fail("the missing data directory was created")
+
+
 @check("usage-errors", D1, ["depot/interface"], "Command-line errors use the error object and exit 2")
 def _(env, p):
     for args in (["receive", "--sku", "BOL-006"], ["ship", "--id", "1"], ["items", "--bogus"], [], ["place-order"],
