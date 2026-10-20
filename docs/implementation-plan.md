@@ -11,32 +11,34 @@ The original implementation baseline was Main `f15ea723`; later integrated chang
 
 ## Target and baseline
 
-**Destination, accepted by the owner on 20 October 2026: a usable owner pilot** ([roadmap](https://github.com/Glacius-Labs/Markitect/issues/501#issuecomment-6284960943), [source](concepts/sources/coordinator-assignment-20261019.md#accepted-pilot-roadmap-20-october-2026)). The next cross-milestone target is a reproducibly installable, versioned pilot build that the owner can use in an existing project while development continues. Apply is the critical path. A dependable Extract is strongly desired in parallel; an explicitly reviewed model is the fallback for a first Apply-only pilot.
+**Destination, accepted by the owner on 20 October 2026: a usable owner pilot** ([roadmap](https://github.com/Glacius-Labs/Markitect/issues/501#issuecomment-6284960943), [source](concepts/sources/coordinator-assignment-20261019.md#accepted-pilot-roadmap-20-october-2026)). The next cross-milestone delivery target is a reproducibly installable, versioned pilot build that the owner can use in an existing project while Markitect development continues. Apply is the critical path; dependable Extract is strongly desired in parallel. The owner may start an Apply-only pilot with an explicitly reviewed model if Extract is not ready.
 
-The accepted sequence. Each step starts only with its own bounded assignment.
+The sequence and priorities below follow the comment's wording; the comment governs.
 
-1. Assess and close the current evidence: [Apply #492](https://github.com/Glacius-Labs/Markitect/issues/492) (closed by the [closing record](validation/apply-extract-closeout-20261020.md)), the read-only process explanation [#524](https://github.com/Glacius-Labs/Markitect/issues/524) and the trial-case preparation [#523](https://github.com/Glacius-Labs/Markitect/issues/523).
-2. Reach a clean, coherent source, documentation and operation baseline. Refine the process only from concrete findings. Run selected prepared trials to establish a supported scope: model-only realization, model changes, unchanged-model drift, complexity and distributed inconsistency, honest model-defect stops and preserved conforming areas. No unlimited matrix or redesign loop.
-3. In a bounded parallel Extract stream: existing repository → reviewable model proposal → owner correction and adoption → conforming `no_change` Apply → a genuine model change (#496, #499). The closed comparison [#495](https://github.com/Glacius-Labs/Markitect/issues/495) alone does not establish this.
-4. A comfortable owner path: setup, modeling, Apply, progress and results, failure handling (#500, #501). Skills, Agents or UI come only for demonstrated friction (#502).
-5. A pinned pilot build and its setup path (#503), on the owner's actual project selected early, validated with one real change carried forward from its existing state.
+1. Assess and close the current evidence: [#492](https://github.com/Glacius-Labs/Markitect/issues/492) completes the canonical Library decisions and one frozen-build M1 → A1 → M2 → A2 → no-change workflow ([closing record](validation/apply-extract-closeout-20261020.md)). [#524](https://github.com/Glacius-Labs/Markitect/issues/524) explains the current process and discusses simplification candidates read-only. [#523](https://github.com/Glacius-Labs/Markitect/issues/523) prepares external trial cases only.
+2. Reach a clean, coherent source, documentation and operation baseline. Apply any process refinement only when concrete findings justify it, preserve required properties, and check the affected workflow. Run selected prepared trials to establish a supported scope: model-only realization, actual model changes, unchanged-model drift, complexity and distributed inconsistency, honest model-defect stops, and preserved conforming areas. Do not start an unlimited matrix or redesign loop.
+3. In a bounded parallel Extract stream, complete the workflow existing repository → reviewable model proposal → owner correction and adoption → conforming no-change Apply → genuine model change. Reuse #496 and #499; the completed comparison [#495](https://github.com/Glacius-Labs/Markitect/issues/495) alone does not establish this outcome.
+4. Make the complete owner path comfortable: setup, modeling, Apply, progress and results, and failure handling. Reuse #500 and #501. Choose Skills, Agents or UI under #502 for demonstrated user friction; no comprehensive UI is a prerequisite for first use.
+5. Prepare and verify a pinned pilot build and its setup path with #503. Select the owner's actual project early, assess its language, runtime, size and model needs, and validate one real change carried forward from its existing state. Record corrections, intervention, failures and remaining limits. The owner deliberately updates the pilot version while core development continues separately.
 
 Milestone priorities:
 
-- **M1:** the modeling foundations the selected pilot needs, not every proposed standard-library Kind.
-- **M2:** dependable Apply within the demonstrated scope.
-- **M3:** onboarding through Extract when it is ready, with reviewed model authoring as the fallback.
-- **M4:** a complete usable workflow and a reproducible pilot setup.
-- **M5:** delegated model maintenance after initial real use.
+- **M1** supplies the modeling foundations needed by the selected pilot project; finishing every proposed standard-library Kind is not a blanket pilot prerequisite.
+- **M2** supplies dependable Apply within the demonstrated supported scope.
+- **M3** supplies reliable onboarding through Extract when ready; reviewed model authoring is the explicit fallback for the first pilot.
+- **M4** supplies a complete usable workflow and reproducible pilot setup.
+- **M5**, delegated model maintenance, follows initial real use.
 
-**Current execution scope:** only #492 (closure), #523 (preparation only) and #524 (read-only discussion). The destination and its order start no provider series, process change, implementation stream or release. The next bounded assignment is selected from those three outcomes.
+The older full-workflow dependencies in #501 remain the broader roadmap context. They do not require all Extract capability or all example series before a deliberately bounded Apply-only pilot; the exact pilot criteria are reconciled when the project is selected. Source checks, real runtime and behavior evidence, packaging and owner acceptance stay distinct.
+
+**Current execution scope:** only #492, #523 and #524 are in progress. The accepted destination and ordering do not start broader provider series, process changes, a new implementation stream or public release. The next bounded assignment is selected from the three outcomes.
 
 Where the evidence stands, in short (details and builds in the [closing record](validation/apply-extract-closeout-20261020.md)):
 
 - **Apply:** a model change, drift repair and a repeated Apply with `no_change` are shown on the final Apply code, on one library example with Claude Haiku. A model defect that ends the run, budget, deadline, interruption and restart are shown only on earlier builds. Other projects and other agent families are unproved.
 - **Extract:** two projects complete reliably, and Extract asks only necessary questions. The library models are not adoptable without owner correction: they bind internal wiring, mostly miss the test-coverage obligation and keep policy values as prose. Adoption, the handoff of deviations to Apply and a round trip on an existing repository are not implemented or unproved. The round-2 clarification of DEC-061 awaits the owner's confirmation.
 
-Preserve attempts, evidence, retained work volumes and completed candidates. Keep source checks, real-run evidence, Main integration and owner acceptance separate. The other milestone issues stay blocked until a bounded assignment selects them in the accepted order. Their older dependency texts are context; they do not require all Extract capability or all example series before a bounded Apply-only pilot. Finished PRs and fixtures retain their state; their completion starts no follow-up work.
+Preserve attempts, evidence, retained work volumes and completed candidates. Keep source checks, real-run evidence, Main integration and owner acceptance separate. The other milestone issues stay blocked until a bounded assignment selects them. Finished PRs and fixtures retain their state; their completion starts no follow-up work.
 
 The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) stays the language baseline. Compatibility is not required: obsolete product paths, formats, tests and documents are deleted together ([DEC-032](concepts/register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)).
 
@@ -52,7 +54,7 @@ On 20 October 2026 the owner ended the Apply core, Extract and Coordinator sessi
 | **Trial-case preparation ([#523](https://github.com/Glacius-Labs/Markitect/issues/523))** | `experiments/apply-trials/`, its entries in the examples registry shard and its catalog rows in the experiment guides | Trial cases and independent oracles only; it runs no Apply and no provider. |
 | **Process review ([#524](https://github.com/Glacius-Labs/Markitect/issues/524))** | Read-only, in the owner's chat | Explains the current Apply workflow and assesses simplification candidates. |
 
-Further process changes and larger measurement series are selected afterwards from these results. The accepted roadmap replaces the Coordinator's earlier sequence (cleanup, runtime image, Host setup, broader examples, self-model, standard library and release/marketing), which remains in [the prior delivery plan](https://github.com/Glacius-Labs/Markitect/blob/30bc6e87e0e7cf26df7f290003b7941d3d375df4/docs/implementation-plan.md#work-streams).
+Further process changes and larger measurement series are selected afterwards from these results. The Coordinator's earlier sequence (cleanup, runtime image, Host setup, broader examples, self-model, standard library and release/marketing) remains in [the prior delivery plan](https://github.com/Glacius-Labs/Markitect/blob/30bc6e87e0e7cf26df7f290003b7941d3d375df4/docs/implementation-plan.md#work-streams) and dispatches nothing.
 
 ## How we work
 
