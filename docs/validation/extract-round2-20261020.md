@@ -1,6 +1,6 @@
 # Extract round 2: stability on two projects — 20 October 2026
 
-**Scope:** the second improvement round after the [old/new comparison](library-extract-comparison-20261019.md). The owner asked to improve Extract until it is stable and usable. This record covers every change of the round, the defect it fixed, and the final confirmation on build `143327ec`, on the library and on a second project, Readinglog. These are real runs in WSL with Sonnet `claude-sonnet-5-5`, high effort, for every Execute and Verify turn. Source checks, Main integration and owner acceptance are reported separately at the end. Hosted CI was not run.
+**Scope:** the second improvement round after the [old/new comparison](library-extract-comparison-20261019.md). The owner asked to improve Extract until it is stable and usable. This record covers every change of the round, the defect it fixed, the final confirmation on build `143327ec`, on the library and on a second project, Readinglog, and a shorter confirmation on the shipped head `cde139c4` (`143327ec` plus a Main merge and a neutral initial item for Extract parents). These are real runs in WSL with Sonnet `claude-sonnet-5-5`, high effort, for every Execute and Verify turn. Source checks, Main integration and owner acceptance are reported separately at the end. Hosted CI was not run.
 
 ## Result
 
@@ -17,6 +17,11 @@ The final build completed every run (9 of 9). The assessor found no statement in
 | Rebuild from the extracted model passes the oracle | 3 of 3 | 2 of 2 | 3 of 3 |
 | Readinglog score, of 32 | — | — | 29 and 29 |
 
+- **Shipped head (`cde139c4`):**
+  - The run set: 3 library runs (plain, seeded, conflict) and 1 Readinglog run, all completed.
+  - Library scores were 81, 77 and 74. Readinglog scored 28 of 32. The plain run's rebuild passed the oracle 12/12, and every question was the necessary one.
+  - One statement contradicts the reference. RXY-3 declares free the id echo for lines with trailing data or repeated member names, which reference and code fix to null.
+  - Main's DEC-063 work had told every parent to lay project scaffolding such as the module and build files. Extract writes no artifacts, so a process with its own mandate now gets a neutral initial item. Apply's item is unchanged; the Apply session reviewed this.
 - **Project obligations:**
   - "Internals are free" (P14) is now stated, at least partly, in every final model. In round 1 it scored 0 in 5 of 6 models.
   - P09 (code, tests and documentation agree with the model) scored 0 in no final model, against 3 of 6 in round 1.
@@ -60,6 +65,7 @@ Readinglog is the supplied Python 3 add/list application of `experiments/test-pr
 
 ## Remaining weaknesses
 
+- **Binding versus free is a trade-off.** Binding too little declared list order and storage format free (Readinglog, fixed). Binding too much fixed refusal precedence and identifier formats (fixed). RXY-3 still freed a part of the contract. The criterion now names the contract callers rely on, but agents apply it with judgment, and one of the last ten library and Readinglog runs erred toward freedom.
 - **Internal wiring stays binding.** Every model still binds some internal wiring as intent: catalog availability operations, snapshots, the views between areas. Reviewers do not block it reliably. Some models also bind a concurrency claim.
 - **Test coverage obligations:** "What the tests must cover" is missing in most final library models.
 - **Duplicated use cases:** the library wire layer often restates every domain use case.
@@ -77,6 +83,7 @@ The bench, the scenarios, the scripted owner and the library rubric are those of
 | RXH | `5cc66a78` | 4 library runs, 3 of them assessed |
 | RXZ | `143327ec` (final) | 7 library runs |
 | RXZR | `143327ec` (final) | 2 Readinglog runs |
+| RXY, RXYR | `cde139c4` (shipped head) | 3 library runs and 1 Readinglog run |
 
 The rebuild of RXH-1 failed in the harness and was rerun after the harness fix; it passed the oracle 12/12. The samples are small and no significance is claimed.
 
