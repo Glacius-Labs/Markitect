@@ -331,7 +331,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     result = assess(args.case, args.repo, args.report, python_command(args.python),
                     Path(args.previous).resolve() if args.previous else None)
-    text = json.dumps(result, indent=2, ensure_ascii=False)
+    text = json.dumps(result, indent=2)  # ASCII escapes: details can quote undecodable test input
     print(text)
     if args.output:
         Path(args.output).write_text(text + "\n", encoding="utf-8")

@@ -339,7 +339,7 @@ def main(argv=None):
         check_assessor(project, python, report)
         check_longitudinal(project, python, report)
     print(json.dumps({"facts": facts, "problems": report.problems, "passed": not report.problems},
-                     indent=2, ensure_ascii=False))
+                     indent=2))
     return 0 if not report.problems else 1
 
 

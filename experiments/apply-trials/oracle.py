@@ -54,7 +54,7 @@ def main(argv=None):
     parser.add_argument("--output", help="also write the JSON report to this file")
     args = parser.parse_args(argv)
     report = assess(args.project, args.profile, args.realization, python_command(args.python), args.previous)
-    text = json.dumps(report, indent=2, ensure_ascii=False)
+    text = json.dumps(report, indent=2)  # ASCII escapes: details can quote undecodable test input
     print(text)
     if args.output:
         Path(args.output).write_text(text + "\n", encoding="utf-8")
