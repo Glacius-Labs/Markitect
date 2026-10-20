@@ -2,6 +2,8 @@
 
 Markitect is model-first development with delegated realization. People maintain a canonical model of the project's intended world. Markitect compiles it, derives affected responsibilities and files, and realizes it through a permanent team of recursive Managers: parallel Execute in one shared working tree, fresh recursive Verify of one immutable candidate and guarded Apply. Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence.
 
+**Accepted target update, 20 October 2026:** before Apply implementation, read [DEC-064](docs/concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), the [accepted workflow](docs/design/canonical-model/manager-apply-workflow.md) and [Claude handoff](docs/development/claude-apply-implementation-handoff-20261020.md). The runtime instructions below describe the inspected earlier implementation, including old configuration names and the question ban. They are not exceptions to the new target. Update them together with code and the canonical self-model, never claim adoption alone implements the target.
+
 ## Every task
 
 1. Read the [working method](docs/development/working-method.md), current [delivery plan](docs/implementation-plan.md) and bounded assignment. Use an isolated worktree from its integrated base and a non-protected branch with a scope prefix such as `dev/`, `fix/` or `docs/`. Verify path, branch, full SHA and local changes before writing. Preserve other sessions' work.
