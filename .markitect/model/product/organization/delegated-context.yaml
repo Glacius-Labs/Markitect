@@ -12,7 +12,8 @@ body: >-
   Answers clarify within the model and never override it; Root ends the Run when it judges the model erroneous or contradictory.
   A Manager may delegate bounded tasks to configured helper roles, each in its own container with read access to the whole stand and write access only to an explicit subset of its own area that no other writer holds; helpers report to their Manager only, gain no ownership and complete nothing by finishing.
   Reviewers are fresh, read-only and independent of the authors; the Orchestrator records their findings, and no author can hide them.
-  Derive technical risks and suitable evidence from the model and the realization without a mandatory advance expectations phase.
+  Derive risks, distinct claims and model-permitted counterexamples within the same Pass; record source-derived expectations before their probes, inspect the actual evidence and return unsupported success claims without a separate expectations Pass.
+  Choose implementation details within declared freedom; route an unresolved material public policy through the parent to the invoking AI or user rather than inferring authority from existing artifacts or a plausible default; an unanswered valid clarification remains unfinished, while Root aborts actual model errors or contradictions.
   Preserve intent; changed policy or a necessary missing canonical link needs a separate model decision.
   Prompts state each role's task, inputs and answer format; they never become a second owner of binding project rules or of the process.
 spec: {}
