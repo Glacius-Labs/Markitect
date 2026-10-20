@@ -21,7 +21,8 @@ export function renderProposal(app, id) {
     if (!main.isConnected) return;
     // A publication in progress is read again until it has its receipt.
     clearTimeout(poll);
-    if (p.state === "publishing") poll = setTimeout(() => api.proposal(p.id).then((q) => draw(q, q.state === "publishing" ? null : ".outcome.big"), () => {}), 2000);
+    // A failed read keeps the last state and tries again.
+    if (p.state === "publishing") poll = setTimeout(() => api.proposal(p.id).then((q) => draw(q, q.state === "publishing" ? null : ".outcome.big"), () => draw(p)), 2000);
     append(clear(main), [top(`Proposal ${p.id}: ${p.title}`), proposalBody(p, draw)]);
     if (focus) main.querySelector(focus)?.focus();
   };

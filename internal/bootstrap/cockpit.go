@@ -37,6 +37,14 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 		}
 		states = append(states, cfg.StateDirectory)
 	}
+	// The server and the fence name every state directory by its absolute path.
+	for i, dir := range states {
+		abs, err := filepath.Abs(dir)
+		if err != nil {
+			return err
+		}
+		states[i] = abs
+	}
 	fence := &fencedStates{held: map[string]bool{}}
 	// While the cockpit itself holds a state lock to publish a proposal, no
 	// Apply holds it: the lock probe would otherwise report a run as running.
@@ -145,12 +153,16 @@ func (c cockpitService) authoring(repository string, states []string, fence *fen
 		}
 		return captured, err
 	}
+	// The fence is marked before the locks are taken and cleared after they
+	// are released, so the cockpit's own probe never sees its lock as a run.
 	lock := func(ctx context.Context) (apply.ControlCheck, func(), error) {
 		var held stateLocks
+		fence.set(states, true)
 		for _, dir := range states {
 			l, err := lockStateWithin(ctx, dir, startLockWait)
 			if err != nil {
 				held.release()
+				fence.set(states, false)
 				if errors.Is(err, errStateLocked) {
 					return nil, nil, fmt.Errorf("an Apply holds the state directory %s; accept after it ends", dir)
 				}
@@ -158,10 +170,9 @@ func (c cockpitService) authoring(repository string, states []string, fence *fen
 			}
 			held = append(held, l)
 		}
-		fence.set(states, true)
 		return held, func() {
-			fence.set(states, false)
 			held.release()
+			fence.set(states, false)
 		}, nil
 	}
 	return authoring.New(repository, capture, c.repository, lock)
