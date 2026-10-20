@@ -1860,6 +1860,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/apply-simplified-passes-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Reports the experimental comparison of an Apply without global Plan and Prepare Passes against the hardening reference on the same frozen inputs.
   - path: "docs/validation/apply-stability-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]

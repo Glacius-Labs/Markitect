@@ -181,6 +181,7 @@ func (e *engine) withdrawLocked(ts *turnState, why string) {
 // are delivered again and, after repeated failures, the Manager is stopped. A
 // required Manager that cannot work ends the run Incomplete.
 func (e *engine) turnFailedLocked(m *member, ts *turnState, err error) {
+	m.stale = ""
 	e.withdrawLocked(ts, "the turn failed")
 	m.failures++
 	if m.failures >= maxTurnFailures {
@@ -204,9 +205,17 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	p := m.p
 	if m.stage == stageStart {
 		// Its work was reset while the turn ran: nothing of the turn stands.
+		m.stale = ""
 		e.withdrawLocked(ts, "its Manager's work was reset during the turn")
 		e.recordStateLocked(m, "its turn ended after a reset")
 		return
+	}
+	// What its result built on changed while the turn ran: its submission does
+	// not stand, but the turn reported and is no empty turn.
+	stale := m.stale != ""
+	if stale {
+		e.withdrawLocked(ts, m.stale)
+		m.stale = ""
 	}
 	submitted := false
 	if pr := ts.proposal; pr != nil && pr.status == proposalSubmitted {
@@ -243,7 +252,8 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 			if pr := acceptedOf(p.byPath[on.manager], on.stage); pr != nil {
 				// It was accepted while the turn ran: nothing is left to wait for.
 				m.waitFor = ""
-				m.items = append(m.items, item{text: e.renderAcceptedLocked(pr) + "\nThe submission you waited for is accepted; continue your work."})
+				note := e.bindWaitLocked(m, *on, pr)
+				m.items = append(m.items, item{text: e.renderAcceptedLocked(pr) + "\nThe submission you waited for is accepted; continue your work." + note})
 			} else {
 				m.waitOn = on
 			}
@@ -268,9 +278,9 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 			demands = append(demands, d)
 		}
 	}
-	handled := submitted || ts.wait != "" || ts.progress != "" && !repeated || len(ts.delegations) > 0 || ts.revised || ts.decided
+	handled := submitted || stale || ts.wait != "" || ts.progress != "" && !repeated || len(ts.delegations) > 0 || ts.revised || ts.decided
 	switch {
-	case ts.wait != "" || submitted && len(demands) == 0:
+	case ts.wait != "" || stale || submitted && len(demands) == 0:
 		m.empty = 0
 	case len(demands) > 0:
 		// A turn that decided some of what it was shown still has the rest

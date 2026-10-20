@@ -15,7 +15,7 @@ import (
 const executionPath = ".markitect/execution.yaml"
 
 // executionStrategy names the strategy this build implements: one recursive
-// Pass process for Plan, Prepare, Implement and Verify.
+// Pass process for Implement and Verify.
 const executionStrategy = "recursive-passes-v1"
 
 func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {

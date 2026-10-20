@@ -7,11 +7,39 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
+// staged is a sequence of three work Passes for the shared composition, which
+// Apply no longer uses but a workflow of several work purposes may.
+func staged() []run.PassSpec {
+	return []run.PassSpec{{Purpose: run.Plan}, {Purpose: run.Prepare}, {Purpose: run.Implement}}
+}
+
+// Apply runs one Implement, in which every Manager plans and prepares its own
+// part, before independent Verify; every correction is a new Implement.
+func TestApplyRunsImplementThenVerify(t *testing.T) {
+	work, review := applyWork(), applyVerify()
+	if len(work) != 1 || work[0].Purpose != run.Implement || !work[0].Writes || work[0].Plans {
+		t.Fatalf("work Passes %+v", work)
+	}
+	for _, spec := range []run.PassSpec{work[0], review} {
+		if len(spec.Corrections) != 1 || spec.Corrections[0] != run.Implement {
+			t.Errorf("%s corrections %v", spec.Purpose, spec.Corrections)
+		}
+	}
+	if review.Purpose != run.Verify || !review.Review {
+		t.Errorf("review %+v", review)
+	}
+	for _, duty := range []string{"First settle your own approach", "Your basis is what your children need from you before they start", "Never plan or realize your children's", "this records the dependency"} {
+		if !strings.Contains(work[0].Mandate, duty) {
+			t.Errorf("the Implement mandate lacks %q", duty)
+		}
+	}
+}
+
 // followWork picks the work Pass after a sealed one: its own open findings repeat
 // it or restart at an earlier purpose, but a later purpose they name comes in
 // order, so no forward Pass is skipped.
 func TestFollowWorkNeverSkipsAForwardPass(t *testing.T) {
-	work := applyWork()
+	work := staged()
 	const plan, prepare, implement = 0, 1, 2
 	cases := []struct {
 		name        string
@@ -51,7 +79,7 @@ func TestFollowWorkNeverSkipsAForwardPass(t *testing.T) {
 // earliest returns the index of the first work purpose in Pass order that the
 // corrections name, whatever order they come in, and the fallback otherwise.
 func TestEarliestNamesTheFirstWorkPurposeInPassOrder(t *testing.T) {
-	work := applyWork()
+	work := staged()
 	cases := []struct {
 		name        string
 		corrections []run.Purpose

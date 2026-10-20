@@ -28,6 +28,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 - [Apply trial series with Haiku — 20 October 2026](apply-trials-haiku-20261020.md)
 - [Apply Pass process trials — 20 October 2026](apply-pass-process-20261020.md)
 - [Apply hardening — 20 October 2026](apply-hardening-20261020.md)
+- [Simplified Apply workflow comparison — 20 October 2026](apply-simplified-passes-20261020.md) (experimental branch)
 - [Public Classic Commerce entrypoint validation](classic-commerce-entrypoint.md)
 - [Standard operating model validation](standard-operating-model.md)
 

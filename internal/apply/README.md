@@ -27,7 +27,7 @@ budget:
   executionTime: 60m   # whole run wall clock
   turnTimeout: 8m      # one Agent turn
   agentTurns: 220      # every turn of Managers, reviewers and helpers
-  passes: 10           # Plan, Prepare, Implement, Verify and every repetition
+  passes: 10           # Implement, Verify and every repetition
 profiles: {execute: library-agent, verify: library-agent}
 instructions: {execute: [], verify: []}   # optional project instruction files
 packages: {}           # exact per-Package overrides of profiles and instructions
@@ -80,9 +80,9 @@ in the start stand is refused with `ErrUnsupportedOwnership`.
 
 `Apply(ctx, ApplyRequest)` binds the organization (Briefs, own obligations, write plans,
 helpers), the required checks, the gates, the owner channel and the budget, requires the
-container engine's volume-subpath support, and composes the Passes on `run`: Plan,
-Prepare and Implement, then Verify; a Pass that needs correction restarts the work at the
-earliest purpose its findings name and a fresh complete Verify follows; a Verify that only
+container engine's volume-subpath support, and composes the Passes on `run`: Implement,
+in which every Manager plans and prepares its own part, then Verify; a Verify that needs
+correction starts a new Implement and a fresh complete Verify follows; a Verify that only
 fresh disputes or disproofs awaiting an independent assessment keep from being clean is
 repeated on the unchanged candidate. Only a
 Verified outcome is published, through the guarded `Publisher` with read-back; the shared
@@ -91,8 +91,10 @@ work volume is closed only after an applied or unchanged receipt and kept as
 of its execution profile's own arguments to `run`, so a probe can reuse that profile with
 its own arguments.
 
-The mandates ask Plan for distinct claims, input classes and the needed dependency stage;
-Implement to wait for another Manager's result instead of reporting progress; and Verify
+The mandates ask Implement for each Manager's own approach first (distinct claims, input
+classes, interfaces, needs and outputs), a basis that holds the approach and the
+foundation its children build on, and a wait report for every other Manager's basis or
+result its work needs, which records that dependency; and Verify
 to derive claims and permitted counterexamples from the bound model first, probe them at
 the public interface and cite receipts or inspected sources for their claims, with parents
 challenging their children's assertions.

@@ -11,7 +11,7 @@ artifacts:
   - path: "internal/apply/apply.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Binds the run from one passed capture, composes Plan, Prepare, Implement and Verify with corrections and reassessment, and publishes a verified candidate through the guarded Publisher.
+    why: Binds the run from one passed capture, composes Implement and Verify with corrections and reassessment, and publishes a verified candidate through the guarded Publisher.
   - path: "internal/apply/apply_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
@@ -19,7 +19,7 @@ artifacts:
   - path: "internal/apply/compose_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks that work Passes repeat or restart only at an earlier purpose their own findings name and never skip a forward Pass.
+    why: Checks that Apply runs Implement before Verify with Implement as its only correction, and that staged work Passes repeat or restart only at an earlier purpose their own findings name and never skip a forward Pass.
   - path: "internal/apply/export_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

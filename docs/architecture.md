@@ -1,6 +1,6 @@
 # Architecture
 
-Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), Plan, Prepare, Implement and Verify as one recursive Pass process, plus a first Extract on the same process, pending provider evidence and owner acceptance. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
+Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), Implement and Verify as one recursive Pass process (an experimental comparison branch; Main runs Plan, Prepare, Implement and Verify), plus a first Extract on the same process, pending provider evidence and owner acceptance. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
 
 ## Product flow
 
