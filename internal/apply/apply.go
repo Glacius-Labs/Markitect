@@ -64,19 +64,19 @@ type ApplyResult struct {
 // mandate, effects, payload and acceptance differ.
 var applyCorrections = []run.Purpose{run.Plan, run.Prepare, run.Implement}
 
-const planMandate = "Plan your own responsibility concretely: for each of your own obligations the method and the intended evidence; your own artifacts and interfaces; the inputs you need with their owners; the outputs you provide and to whom; the order and start conditions of your work; your dependencies on other Managers in the Prepare and Implement Passes; blockers and assumptions that need clarification. As a parent, also plan how you coordinate your children and integrate their results. Do not plan your children's obligations: they plan their own, and you review their plans for complete responsibilities, compatible interfaces, sound dependencies and fit. Your basis is what your children plan against: as Root, the project constraints, responsibility boundaries and coordination questions; as a parent, your own approach and the contracts you offer. The project is read-only in this Pass; plans are evidence of the run, not files. Your result is your complete plan, integrated with your children's accepted plans: an own obligation is done when its method and evidence are planned. Nothing is implemented in this Pass; a defect of the existing artifacts is planned work for the later Passes, recorded in your plan, never a reason to hold or return a plan. Existing artifacts and tests that already meet an obligation are its evidence as they are: plan a change only for an observed model violation or a realization or evidence the model requires and the artifacts lack, and keep optional hardening as a note."
+const planMandate = "Plan your own responsibility concretely: for each of your own obligations the method and the intended evidence, including its distinct claims, the permitted and rejected input classes and the public-boundary checks that would show it; your own artifacts and interfaces; the inputs you need with their owners; the outputs you provide and to whom; the order and start conditions of your work; your dependencies on other Managers in the Prepare and Implement Passes, each on the accepted basis when its contract suffices and on the complete result only when you cannot start without the finished realization; the other Managers' results your own complete result integrates; blockers and assumptions that need clarification. As a parent, also plan how you coordinate your children and integrate their results. Do not plan your children's obligations: they plan their own, and you review their plans for complete responsibilities, compatible interfaces, sound dependencies and fit. Your basis is what your children plan against: as Root, the project constraints, responsibility boundaries and coordination questions; as a parent, your own approach and the contracts you offer. The project is read-only in this Pass; plans are evidence of the run, not files. Your result is your complete plan, integrated with your children's accepted plans: an own obligation is done when its method and evidence are planned. Nothing is implemented in this Pass; a defect of the existing artifacts is planned work for the later Passes, recorded in your plan, never a reason to hold or return a plan. Existing artifacts and tests that already meet an obligation are its evidence as they are: plan a change only for an observed model violation or a realization or evidence the model requires and the artifacts lack, and keep optional hardening as a note."
 
 const prepareMandate = "Supply the usable foundation that your own obligations and accepted plan require before implementation: interfaces, configuration, build basis, documentation or test scaffolding in your own area, following the project's conventions. Preserve an existing foundation that already fits. Your basis is the foundation your children build on. Register every new or changed file, or a directory holding them, in your local registry in the same change. Never realize your children's or another area's obligations; scaffolding is no behavioral realization, and final behavioral tests need not pass yet. Your result is your complete foundation, integrated with your children's: an own obligation is done when the foundation it needs is in place; its behavior follows in the Implement Pass."
 
-const implementMandate = "Realize every applicable own obligation in your own area: code, tests, documentation and configuration, using other owners' realizations through their contracts instead of rebuilding them. Preserve what already conforms; no change is a valid result for a conforming area. Change only what an observed model violation or a missing required realization or evidence needs; optional hardening the model does not require stays a note, not a change. Keep your local registry exact. Your basis is what your children need from your own realization; your complete result covers every own obligation with its artifacts and evidence, after you integrated your children's accepted results and their interactions. Run the project's build and tests yourself."
+const implementMandate = "Realize every applicable own obligation in your own area: code, tests, documentation and configuration, using other owners' realizations through their contracts instead of rebuilding them. Preserve what already conforms; no change is a valid result for a conforming area. Change only what an observed model violation or a missing required realization or evidence needs; optional hardening the model does not require stays a note, not a change. Keep your local registry exact. Your basis is what your children need from your own realization; your complete result covers every own obligation with its artifacts and evidence, after you integrated your children's accepted results and their interactions. Run the project's build and tests yourself; prefer tests and probes that discriminate the required behavior at the public interface. When your work needs another Manager's result that is not accepted yet, report wait for that Manager instead of progress."
 
-const verifyMandate = "Assess the immutable candidate independently. Your basis is your own assessment of your own obligations' realization and evidence, plus the review context your children's reviewers need; your result integrates your children's assessments and the cross-area correctness of their interaction. Raise every genuine finding with its owner, the obligation, the observed evidence and the earliest kind of correction it needs, and reassess the findings you raised earlier."
+const verifyMandate = "Assess the immutable candidate independently against the bound model. Before you read the implementation or its tests, derive from the model the distinct claims of each own obligation, the freedom it leaves and the plausible counterexamples it permits: unusual permitted inputs, rejected inputs, exact boundaries, state changes and interactions with other areas. Then try to falsify each material claim through the public interface, including parsing, persistence and integration, not only through internal functions: run such cases as probes with the tool check, each stating its claim and the outcome the model requires, so that the Orchestrator keeps the receipt. Cover every done or preserved own obligation claim by claim with a passing receipt on this candidate, or with an inspected source location and its reasoning where execution does not apply; a passing suite or an author's summary covers no claim by itself. An adverse receipt is a genuine finding when it shows a violation; dispose of it with the model's reason only when your own expectation or assertion was wrong. Your basis is your own assessment plus the review context your children's reviewers need; your result integrates your children's assessments and the cross-area correctness of their interaction: read their receipts and assertions, ask which plausible violation could still pass them, probe the interactions yourself and return an unsupported claim to its reviewer. Raise every genuine finding with its owner, the obligation, the observed evidence and the earliest kind of correction it needs, and reassess the findings you raised earlier. Never invent a finding or demand optional work; a concrete question about a required claim that you cannot settle goes to your parent."
 
 // rootModelDuty is Root's own duty in an Apply: the bound model is fixed, so a
 // model Root judges erroneous or contradictory ends the run.
 const rootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run: never ask the user to change or override it; clarifying what it leaves open is allowed."
 
-const verifyGuidance = "A genuine finding is an observed model violation, a missing required realization or evidence item, or a failed required check; cite the obligation and the observed behavior or source. A Definition realized outside its owner's artifacts, or a change outside a Manager's own area, is a model violation; as a parent, check how your children actually use each other's realizations. Optional improvements the model does not require are notes: set blocking to false, and never soften a genuine finding into a note. When another reviewer, below you or about your own responsibility, raised a finding you independently judge erroneous, dispute it with reason and evidence; it stays open until a fresh review of its responsibility disposes of it."
+const verifyGuidance = "A genuine finding is an observed model violation, a missing required realization or evidence item, or a failed required check; cite the obligation and the observed behavior or source. A Definition realized outside its owner's artifacts, or a change outside a Manager's own area, is a model violation; as a parent, check how your children actually use each other's realizations and whether their receipts and assertions cover the claims and public boundaries, and return an unsupported success claim to its reviewer. A missing required realization or evidence item is genuine; doubt alone is not. Optional improvements the model does not require are notes: set blocking to false, and never soften a genuine finding into a note. When another reviewer, below you or about your own responsibility, raised a finding you independently judge erroneous, dispute it with reason and evidence; it stays open until a fresh review of its responsibility disposes of it."
 
 func applyWork() []run.PassSpec {
 	return []run.PassSpec{
@@ -112,6 +112,36 @@ func Apply(ctx context.Context, req ApplyRequest) (ApplyResult, error) {
 	reason := compose(r, applyWork(), applyVerify())
 	outcome, runErr := r.Finish(reason)
 	return req.conclude(ctx, cfg.Start, outcome, runErr)
+}
+
+// VerifyCaptured runs only the independent Verify Pass of the one Pass process
+// on the captured stand, with the same Briefs, checks, ownership, gates and
+// budget as Apply but without Execute and without publication. It is the
+// evaluation entry for assessing an immutable known stand through the existing
+// Pass API (whether fresh reviewers detect a known fault or accept a
+// conforming stand); no Command uses it. The shared work volume and the
+// provider homes are removed afterwards.
+func VerifyCaptured(ctx context.Context, req ApplyRequest) (ApplyResult, error) {
+	cfg, err := applyConfig(req, req.now())
+	if err != nil {
+		return ApplyResult{}, err
+	}
+	if err := requireVolumeSubpaths(ctx, req.RequireVolumeSubpaths); err != nil {
+		return ApplyResult{}, err
+	}
+	r, err := run.Open(ctx, cfg)
+	if err != nil {
+		return ApplyResult{}, err
+	}
+	reason := ""
+	if res := r.Pass(applyVerify()); !res.Stopped && res.Verdict != run.Satisfied {
+		reason = "the independent Verify of the captured stand needs correction"
+	}
+	outcome, runErr := r.Finish(reason)
+	ports := req.ports()
+	ports.removeHomes(ctx, outcome.Homes)
+	ports.closeWork(ctx)
+	return ApplyResult{Outcome: outcome}, runErr
 }
 
 // compose runs the work Passes in order and then the review, as the shared
@@ -254,7 +284,14 @@ func applyConfig(req ApplyRequest, now time.Time) (run.Config, error) {
 			}
 			requiredChecks[id] = append(requiredChecks[id], declaration.ID.Value)
 		}
-		checks = append(checks, run.Check{Name: declaration.ID.Value, RequiredBy: requiredBy, Owner: organization.Root, Request: request})
+		// The project's arguments follow the execution profile's own; a probe
+		// keeps the profile's and replaces the project's.
+		project := declaration.Args.Value
+		profileArgs := len(request.Args) - len(project)
+		if profileArgs < 0 || !slices.Equal(request.Args[profileArgs:], project) {
+			return run.Config{}, fmt.Errorf("check %q: its request does not end with the declared arguments", declaration.ID.Value)
+		}
+		checks = append(checks, run.Check{Name: declaration.ID.Value, RequiredBy: requiredBy, Owner: organization.Root, Request: request, ProfileArgs: profileArgs})
 		briefChecks = append(briefChecks, briefCheck{Name: declaration.ID.Value, Command: strings.Join(append([]string{request.Executable}, request.Args...), " "), Directory: request.Directory.String(), RequiredBy: requiredBy})
 	}
 	var required []requiredDefinition

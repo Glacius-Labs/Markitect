@@ -71,13 +71,18 @@ type member struct {
 	state State
 	// waiting names what a Waiting member waits for.
 	waiting string
-	// waitFor is the dependency its last wait report named; it is cleared when
+	// waitFor is the dependency its last wait report named and waitOn the
+	// accepted submission of another Manager it names; both are cleared when
 	// new work arrives.
-	waitFor  string
-	items    []item
-	consumed []item
-	running  bool
-	checking bool
+	waitFor string
+	waitOn  *waitTarget
+	// progressed holds its progress summaries in this Pass: a repeated one
+	// is no progress.
+	progressed []string
+	items      []item
+	consumed   []item
+	running    bool
+	checking   bool
 	// pending is its submitted basis or result until it is decided.
 	pending       *proposal
 	basis, result *proposal
@@ -465,7 +470,7 @@ func (e *engine) recordStateLocked(m *member, why string) {
 // deliverLocked adds an item for a Manager of the current Pass and wakes it.
 func (e *engine) deliverLocked(m *member, it item) {
 	m.items = append(m.items, it)
-	m.waitFor = ""
+	m.waitFor, m.waitOn = "", nil
 	e.recordStateLocked(m, "new work arrived")
 	e.cond.Broadcast()
 }
@@ -562,6 +567,12 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 		kind = "result.accepted"
 	}
 	_ = e.record(Event{Kind: kind, Pass: p.id, Manager: m.Path, Data: map[string]any{"proposal": pr.id, "by": by, "stand": p.accepted.Digest().String(), "registryShards": view.Shards, "registrations": len(view.Registrations)}})
+	// Wake exactly the Managers that wait for this acceptance.
+	for _, x := range p.members {
+		if x.waitOn != nil && x.waitOn.manager == m.Path && x.waitOn.stage == pr.kind {
+			e.deliverLocked(x, item{text: e.renderAcceptedLocked(pr) + "\nThe submission you waited for is accepted; continue your work."})
+		}
+	}
 	switch pr.kind {
 	case kindBasis:
 		m.basis = pr
@@ -696,7 +707,7 @@ func (e *engine) resetLocked(z *member, why string) {
 		}
 	}
 	z.pending, z.basis, z.result = nil, nil, nil
-	z.stage, z.waitFor = stageStart, ""
+	z.stage, z.waitFor, z.waitOn = stageStart, "", nil
 	z.items = []item{{text: "Your earlier work in this Pass was reset because " + why + ". Re-establish your basis against the current accepted stand."}}
 	if hadBasis {
 		e.invalidateConsumersLocked(z, true, why)
@@ -772,6 +783,11 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 			if !c.Passed {
 				return NeedsCorrection
 			}
+		}
+		// An adverse probe receipt on the candidate stays adverse evidence until
+		// an independent disposition, whatever the reports cited.
+		if len(e.undisposedLocked(p.tree.Digest().String(), ".", "", nil, nil)) > 0 {
+			return NeedsCorrection
 		}
 	}
 	return Satisfied

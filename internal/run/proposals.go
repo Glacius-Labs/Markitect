@@ -68,11 +68,12 @@ type proposal struct {
 	decidedBy string
 	reason    string
 	submitted time.Time
-	// raised, closing and disputes are the submission's finding effects; they
-	// take effect only when the proposal is accepted.
-	raised   []Finding
-	closing  map[string]closure
-	disputes map[string]Dispute
+	// raised, closing, disputes and dispositions are the submission's finding
+	// and probe effects; they take effect only when the proposal is accepted.
+	raised       []Finding
+	closing      map[string]closure
+	disputes     map[string]Dispute
+	dispositions map[string]ProbeDisposition
 }
 
 // envelope is the shared result envelope. Plan is the purpose payload of a
@@ -91,11 +92,13 @@ type envelope struct {
 	Children    []string   `json:"children,omitempty"`
 }
 
-// coverage is the status of one own obligation.
+// coverage is the status of one own obligation with the evidence items that
+// support its claims.
 type coverage struct {
-	Definition string `json:"definition"`
-	Status     string `json:"status"`
-	Note       string `json:"note,omitempty"`
+	Definition string         `json:"definition"`
+	Status     string         `json:"status"`
+	Note       string         `json:"note,omitempty"`
+	Evidence   []evidenceItem `json:"evidence,omitempty"`
 }
 
 // plan is the payload of a planning Pass: the Manager's own concrete approach.
@@ -130,13 +133,14 @@ type dependency struct {
 }
 
 type findingIn struct {
-	Owner      string `json:"owner"`
-	Obligation string `json:"obligation"`
-	Observed   string `json:"observed"`
-	Blocking   *bool  `json:"blocking"`
-	Correction string `json:"correction"`
-	Subject    string `json:"subject"`
-	Definition string `json:"definition"`
+	Owner      string   `json:"owner"`
+	Obligation string   `json:"obligation"`
+	Observed   string   `json:"observed"`
+	Blocking   *bool    `json:"blocking"`
+	Correction string   `json:"correction"`
+	Subject    string   `json:"subject"`
+	Definition string   `json:"definition"`
+	Receipts   []string `json:"receipts"`
 }
 
 type closeIn struct {
@@ -158,31 +162,33 @@ type closure struct {
 }
 
 type reportIn struct {
-	Kind        string      `json:"kind"`
-	Summary     string      `json:"summary"`
-	For         string      `json:"for"`
-	Proposal    string      `json:"proposal"`
-	Child       string      `json:"child"`
-	Reason      string      `json:"reason"`
-	Obligations []coverage  `json:"obligations"`
-	Plan        *plan       `json:"plan"`
-	Artifacts   []string    `json:"artifacts"`
-	Evidence    []string    `json:"evidence"`
-	Verdict     string      `json:"verdict"`
-	Findings    []findingIn `json:"findings"`
-	Closed      []closeIn   `json:"closed"`
-	Disputed    []disputeIn `json:"disputed"`
-	Category    string      `json:"category"`
-	Text        string      `json:"text"`
-	Abort       bool        `json:"abort"`
+	Kind         string          `json:"kind"`
+	Summary      string          `json:"summary"`
+	For          string          `json:"for"`
+	Proposal     string          `json:"proposal"`
+	Child        string          `json:"child"`
+	Reason       string          `json:"reason"`
+	Obligations  []coverage      `json:"obligations"`
+	Plan         *plan           `json:"plan"`
+	Artifacts    []string        `json:"artifacts"`
+	Evidence     []string        `json:"evidence"`
+	Verdict      string          `json:"verdict"`
+	Findings     []findingIn     `json:"findings"`
+	Closed       []closeIn       `json:"closed"`
+	Disputed     []disputeIn     `json:"disputed"`
+	Dispositions []dispositionIn `json:"dispositions"`
+	Stage        string          `json:"stage"`
+	Category     string          `json:"category"`
+	Text         string          `json:"text"`
+	Abort        bool            `json:"abort"`
 }
 
 // fields lists the fields a report kind may carry besides kind.
 var reportFields = map[string][]string{
 	kindProgress: {"summary"},
-	kindWait:     {"for", "reason"},
-	kindBasis:    {"summary", "obligations", "plan", "artifacts", "evidence", "findings", "closed", "disputed"},
-	kindResult:   {"summary", "obligations", "plan", "artifacts", "evidence", "verdict", "findings", "closed", "disputed"},
+	kindWait:     {"for", "reason", "stage"},
+	kindBasis:    {"summary", "obligations", "plan", "artifacts", "evidence", "findings", "closed", "disputed", "dispositions"},
+	kindResult:   {"summary", "obligations", "plan", "artifacts", "evidence", "verdict", "findings", "closed", "disputed", "dispositions"},
 	kindAccept:   {"proposal"},
 	kindReturn:   {"proposal", "reason"},
 	kindReopen:   {"child", "reason"},
@@ -211,6 +217,8 @@ func (in reportIn) present() []string {
 	add("findings", in.Findings != nil)
 	add("closed", in.Closed != nil)
 	add("disputed", in.Disputed != nil)
+	add("dispositions", in.Dispositions != nil)
+	add("stage", in.Stage != "")
 	add("category", in.Category != "")
 	add("text", in.Text != "")
 	add("abort", in.Abort)
@@ -279,18 +287,106 @@ func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswe
 	return ToolAnswer{Text: "Progress recorded. You continue in your next turn."}
 }
 
+// reportWait records a named wait: an open question of the Manager, a child
+// that is not Done, or the accepted basis or result of another Manager of the
+// Pass. A wait on another Manager wakes the waiter when that submission is
+// accepted; nothing else re-queues it. A wait that closes a cycle with the
+// declared dependencies and the parent-first order can never be satisfied: it
+// ends the run Incomplete at once, naming the cycle.
 func (e *engine) reportWait(m *member, ts *turnState, in reportIn) ToolAnswer {
 	what := strings.TrimSpace(in.For)
+	stage := strings.TrimSpace(in.Stage)
+	var on *waitTarget
 	if q := e.questionLocked(what); q != nil {
-		if q.From != m.Path || q.Answered || q.Lapsed {
+		if q.From != m.Path || q.Answered || q.Lapsed || stage != "" {
 			return refuse("%s is not an open question of yours.", what)
 		}
-	} else if c, ok := m.p.byPath[what]; !ok || !slices.Contains(m.Children, what) || c.stage == stageDone {
-		return refuse("for names an open question you asked (Q...) or a child that is not Done.")
+	} else if c, ok := m.p.byPath[what]; ok && slices.Contains(m.Children, what) && stage == "" {
+		if c.stage == stageDone {
+			return refuse("%s is Done.", what)
+		}
+	} else if ok && what != m.Path {
+		if stage == "" {
+			stage = stageNameResult
+		}
+		if stage != stageNameBasis && stage != stageNameResult {
+			return refuse("stage must be basis or result.")
+		}
+		if stage == stageNameBasis && c.basis != nil || stage == stageNameResult && c.result != nil {
+			return refuse("The %s of %s is already accepted; look_up topic basis or plan, read its artifacts and continue.", stage, what)
+		}
+		on = &waitTarget{manager: what, stage: stage}
+		if cycle := e.waitCycleLocked(m, *on); cycle != "" {
+			reason := fmt.Sprintf("the wait of %s for the %s of %s can never be satisfied: %s", m.Path, stage, what, cycle)
+			e.addProblemLocked(Problem{Manager: m.Path, Category: "dependency", Text: reason})
+			e.halt(reason)
+			return ToolAnswer{Text: "Recorded. This wait closes a dependency cycle that no Manager can resolve in this Pass, so the run ends now as incomplete."}
+		}
+	} else {
+		return refuse("for names an open question you asked (Q...), a child that is not Done, or another Manager whose accepted basis or result (stage) you need first.")
 	}
-	ts.wait = what
-	_ = e.record(Event{Kind: "report.wait", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"for": what, "reason": strings.TrimSpace(in.Reason)}})
+	ts.wait, ts.waitOn = what, on
+	data := map[string]any{"for": what, "reason": strings.TrimSpace(in.Reason)}
+	if on != nil {
+		data["stage"] = on.stage
+	}
+	_ = e.record(Event{Kind: "report.wait", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: data})
+	if on != nil {
+		return ToolAnswer{Text: fmt.Sprintf("Recorded: you wait for the accepted %s of %s. You are woken when it is accepted or other work for you arrives.", on.stage, what)}
+	}
 	return ToolAnswer{Text: "Recorded: you wait for " + what + ". You are woken when work for you arrives."}
+}
+
+// waitTarget is an accepted submission a Manager waits for.
+type waitTarget struct {
+	manager string
+	stage   string
+}
+
+// waitCycleLocked reports the cycle a new wait of m would close: the edges of
+// the accepted plans' dependencies for this purpose, the parent-first and
+// integration order and every Manager's recorded wait, without the events that
+// are already accepted.
+func (e *engine) waitCycleLocked(m *member, on waitTarget) string {
+	p := m.p
+	plans := map[string]*plan{}
+	if !p.spec.Plans {
+		for path, pr := range e.plans {
+			if pr != nil && pr.env.Plan != nil {
+				plans[path] = pr.env.Plan
+			}
+		}
+	}
+	edges := dependencyEdges(e.team, p.spec.Purpose, plans)
+	done := func(n depNode) bool {
+		x := p.byPath[n.manager]
+		switch n.event {
+		case eventStart:
+			return x.stage > stageBlocked
+		case eventBasis:
+			return x.basis != nil
+		}
+		return x.result != nil
+	}
+	waiter := func(x *member) depNode {
+		if x.stage >= stageDelegated {
+			return depNode{x.Path, eventResult}
+		}
+		return depNode{x.Path, eventBasis}
+	}
+	for _, x := range p.members {
+		if x.waitOn != nil {
+			edges[waiter(x)] = append(edges[waiter(x)], depNode{x.waitOn.manager, eventOf(x.waitOn.stage)})
+		}
+	}
+	from := waiter(m)
+	edges[from] = append(edges[from], depNode{on.manager, eventOf(on.stage)})
+	for n := range edges {
+		if done(n) {
+			delete(edges, n)
+		}
+	}
+	return describeCycle(findCycle(e.team, edges, &from))
 }
 
 // submit validates and records a basis or a complete result. It is checked
@@ -320,6 +416,17 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 	if env.Obligations, err = e.coverageOf(m, in); err != nil {
 		return refuse("%v", err)
 	}
+	raised, err := e.findingsOf(m, in.Findings)
+	if err != nil {
+		return refuse("%v", err)
+	}
+	dispositions, err := e.dispositionsOf(m, in.Dispositions)
+	if err != nil {
+		return refuse("%v", err)
+	}
+	if err := e.adverseConsistent(m, in.Kind, Verdict(in.Verdict), env.Obligations, raised, dispositions); err != nil {
+		return refuse("%v", err)
+	}
 	if p.spec.Plans {
 		if in.Plan == nil {
 			return refuse("plan is required in this Pass.")
@@ -340,10 +447,6 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 			return refuse("%v", err)
 		}
 		env.Evidence = append(env.Evidence, text)
-	}
-	raised, err := e.findingsOf(m, in.Findings)
-	if err != nil {
-		return refuse("%v", err)
 	}
 	closing, err := e.closuresOf(m, in.Closed)
 	if err != nil {
@@ -380,11 +483,11 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 	}
 	e.nextProposal++
 	pr := &proposal{id: fmt.Sprintf("P%d", e.nextProposal), kind: in.Kind, member: m, env: env, status: proposalSubmitted, submitted: e.now(),
-		raised: raised, closing: closing, disputes: disputes}
+		raised: raised, closing: closing, disputes: disputes, dispositions: dispositions}
 	p.proposals = append(p.proposals, pr)
 	ts.proposal = pr
 	_ = e.record(Event{Kind: "proposal.submitted", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"proposal": pr.id, "kind": pr.kind, "purpose": p.spec.Purpose, "envelope": env,
-		"findings": raised, "closed": slices.Sorted(mapKeys(closing)), "disputed": slices.Sorted(mapKeys(disputes))}})
+		"findings": raised, "closed": slices.Sorted(mapKeys(closing)), "disputed": slices.Sorted(mapKeys(disputes)), "dispositions": dispositions}})
 	text := fmt.Sprintf("Submitted %s %s. It is checked when this turn ends", in.Kind, pr.id)
 	if m.Parent != "" {
 		text += " and then decided by your parent"
@@ -422,7 +525,15 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 				return nil, err
 			}
 		}
-		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note})
+		claimed := c.Status == coverDone || c.Status == coverPreserved
+		if m.p.spec.Review && claimed && len(c.Evidence) == 0 {
+			return nil, fmt.Errorf("obligations[%d]: %s in a review needs evidence for %s: per claim a probe receipt of the tool check or an inspected source location with reasoning; a suite total alone is no coverage", i, c.Status, c.Definition)
+		}
+		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p))
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Evidence: evidence})
 	}
 	if in.Kind == kindResult {
 		var missing []string
@@ -436,6 +547,51 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 		}
 	}
 	return out, nil
+}
+
+// boundStandLocked is the stand a submission of the Pass is bound to when it is
+// submitted: the candidate of a review, the unchanged accepted stand of a Pass
+// without writes, or nil in a Pass with writes, whose submission is bound to its
+// checked stand after its writers stopped.
+func (e *engine) boundStandLocked(p *pass) *snapshot.Tree {
+	switch {
+	case p.spec.Review:
+		return &p.tree
+	case !p.spec.Writes:
+		return &p.accepted
+	}
+	return nil
+}
+
+// adverseConsistent refuses a review submission that claims what its own
+// adverse probe receipts contradict: an obligation covered as done or
+// preserved while a receipt of the submitter for it on this candidate failed
+// or erred without a disposition, or a satisfied result while any adverse
+// receipt within its responsibility has none. The submission's own findings
+// and dispositions count.
+func (e *engine) adverseConsistent(m *member, kind string, verdict Verdict, obligations []coverage, raised []Finding, dispositions map[string]ProbeDisposition) error {
+	if !m.p.spec.Review {
+		return nil
+	}
+	open := e.undisposedLocked(m.p.tree.Digest().String(), m.Path, m.p.id, dispositions, raised)
+	for _, c := range obligations {
+		if c.Status != coverDone && c.Status != coverPreserved {
+			continue
+		}
+		for _, r := range open {
+			if r.Requester == m.Path && r.Obligation == c.Definition {
+				return fmt.Errorf("%s is %s, but your receipt %s for it %s and has no disposition: cite it in a genuine finding, dispose of it, or cover the obligation as open", c.Definition, c.Status, r.ID, describeOutcome(r))
+			}
+		}
+	}
+	if kind == kindResult && verdict == Satisfied && len(open) > 0 {
+		var ids []string
+		for _, r := range open {
+			ids = append(ids, fmt.Sprintf("%s (%s, %s)", r.ID, r.Requester, r.Outcome))
+		}
+		return fmt.Errorf("verdict satisfied, but adverse probe receipts within your responsibility on this candidate have no disposition: %s", strings.Join(ids, ", "))
+	}
+	return nil
 }
 
 // checkPlan validates a plan payload: a concrete approach and dependencies,
@@ -507,75 +663,114 @@ func (e *engine) planCycleLocked(m *member, candidate *plan) string {
 		}
 	}
 	for _, purpose := range m.p.spec.Corrections {
-		type node struct {
-			manager string
-			event   int // 0 start, 1 basis, 2 result
+		if cycle := findCycle(e.team, dependencyEdges(e.team, purpose, plans), nil); cycle != nil {
+			return fmt.Sprintf("in %s: %s", purpose, describeCycle(cycle))
 		}
-		edges := map[node][]node{}
-		for _, x := range e.team {
-			start, basis, result := node{x.Path, 0}, node{x.Path, 1}, node{x.Path, 2}
-			edges[basis] = append(edges[basis], start)
-			edges[result] = append(edges[result], basis)
-			for _, c := range x.Children {
-				edges[result] = append(edges[result], node{c, 2})
-			}
-			if x.Parent != "" {
-				edges[start] = append(edges[start], node{x.Parent, 1})
-			}
-			if pl := plans[x.Path]; pl != nil {
-				for _, d := range pl.Dependencies {
-					if d.Pass == purpose {
-						ev := 1
-						if d.Stage == stageNameResult {
-							ev = 2
-						}
-						edges[start] = append(edges[start], node{d.Owner, ev})
-					}
-				}
-			}
+	}
+	return ""
+}
+
+// Events of a Manager in one Pass, in the order the base process reaches them.
+const (
+	eventStart = iota
+	eventBasis
+	eventResult
+)
+
+// depNode is one event of one Manager in a Pass.
+type depNode struct {
+	manager string
+	event   int
+}
+
+func eventOf(stage string) int {
+	if stage == stageNameResult {
+		return eventResult
+	}
+	return eventBasis
+}
+
+// dependencyEdges returns what each event needs in a Pass of the purpose: a
+// basis follows the start, a result follows the basis and every child's result,
+// a child starts after its parent's basis, and every declared dependency of the
+// plans precedes its Manager's start.
+func dependencyEdges(team []*mgr, purpose Purpose, plans map[string]*plan) map[depNode][]depNode {
+	edges := map[depNode][]depNode{}
+	for _, x := range team {
+		start, basis, result := depNode{x.Path, eventStart}, depNode{x.Path, eventBasis}, depNode{x.Path, eventResult}
+		edges[basis] = append(edges[basis], start)
+		edges[result] = append(edges[result], basis)
+		for _, c := range x.Children {
+			edges[result] = append(edges[result], depNode{c, eventResult})
 		}
-		const (
-			white = iota
-			grey
-			black
-		)
-		color := map[node]int{}
-		var path []node
-		var found []node
-		var visit func(n node) bool
-		visit = func(n node) bool {
-			color[n] = grey
-			path = append(path, n)
-			for _, next := range edges[n] {
-				switch color[next] {
-				case grey:
-					i := slices.Index(path, next)
-					found = slices.Clone(path[i:])
-					return true
-				case white:
-					if visit(next) {
-						return true
-					}
-				}
-			}
-			path = path[:len(path)-1]
-			color[n] = black
-			return false
+		if x.Parent != "" {
+			edges[start] = append(edges[start], depNode{x.Parent, eventBasis})
 		}
-		for _, x := range e.team {
-			for ev := 0; ev < 3; ev++ {
-				if n := (node{x.Path, ev}); color[n] == white && visit(n) {
-					names := []string{"start", "basis", "result"}
-					var parts []string
-					for _, f := range found {
-						parts = append(parts, f.manager+" "+names[f.event])
-					}
-					return fmt.Sprintf("in %s: %s", purpose, strings.Join(parts, " needs "))
+		if pl := plans[x.Path]; pl != nil {
+			for _, d := range pl.Dependencies {
+				if d.Pass == purpose {
+					edges[start] = append(edges[start], depNode{d.Owner, eventOf(d.Stage)})
 				}
 			}
 		}
 	}
-	return ""
+	return edges
+}
+
+// findCycle returns a cycle of the edges: one through from when it is given,
+// any otherwise.
+func findCycle(team []*mgr, edges map[depNode][]depNode, from *depNode) []depNode {
+	const (
+		white = iota
+		grey
+		black
+	)
+	color := map[depNode]int{}
+	var path, found []depNode
+	var visit func(n depNode) bool
+	visit = func(n depNode) bool {
+		color[n] = grey
+		path = append(path, n)
+		for _, next := range edges[n] {
+			switch color[next] {
+			case grey:
+				i := slices.Index(path, next)
+				if from == nil || slices.Contains(path[i:], *from) {
+					found = slices.Clone(path[i:])
+					return true
+				}
+			case white:
+				if visit(next) {
+					return true
+				}
+			}
+		}
+		path = path[:len(path)-1]
+		color[n] = black
+		return false
+	}
+	if from != nil {
+		visit(*from)
+		return found
+	}
+	for _, x := range team {
+		for ev := eventStart; ev <= eventResult; ev++ {
+			if n := (depNode{x.Path, ev}); color[n] == white && visit(n) {
+				return found
+			}
+		}
+	}
+	return nil
+}
+
+// describeCycle names the events of a cycle, or is empty for none.
+func describeCycle(cycle []depNode) string {
+	names := []string{"start", "basis", "result"}
+	var parts []string
+	for _, n := range cycle {
+		parts = append(parts, n.manager+" "+names[n.event])
+	}
+	return strings.Join(parts, " needs ")
 }
 
 // artifactsOf validates the artifact references of a submission: in a work
@@ -622,6 +817,9 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 			return nil, err
 		}
 		add := Finding{Owner: f.Owner, RaisedBy: m.Path, Obligation: obligation, Observed: observed, Blocking: *f.Blocking, Correction: spec.defaultCorrection()}
+		if add.Receipts, err = e.receiptsOf(m, fmt.Sprintf("findings[%d]", i), f.Receipts); err != nil {
+			return nil, err
+		}
 		if f.Correction != "" {
 			if !slices.Contains(spec.Corrections, Purpose(f.Correction)) {
 				return nil, fmt.Errorf("findings[%d]: correction must be one of %v", i, spec.Corrections)
@@ -736,8 +934,8 @@ func (e *engine) disputesOf(m *member, in []disputeIn) (map[string]Dispute, erro
 	return disputes, nil
 }
 
-// reassess reports whether only fresh disputes keep the last review from being
-// clean.
+// reassess reports whether only fresh disputes and disproofs that await an
+// independent assessment keep the last review from being clean.
 func (e *engine) reassess() bool {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -760,6 +958,12 @@ func (e *engine) reassess() bool {
 		}
 		open++
 		if !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
+			return false
+		}
+	}
+	for _, r := range e.undisposedLocked(p.tree.Digest().String(), ".", "", nil, nil) {
+		open++
+		if r.Disposition == nil || !r.Disposition.Pending || r.Disposition.Pass != p.id {
 			return false
 		}
 	}
@@ -887,9 +1091,13 @@ func (e *engine) problem(m *member, ts *turnState, in reportIn) ToolAnswer {
 // invalidated before its acceptance changes no finding.
 func (e *engine) takeEffectsLocked(pr *proposal) {
 	m, p := pr.member, pr.member.p
+	var recorded []*Finding
 	for _, f := range pr.raised {
-		pr.env.Findings = append(pr.env.Findings, e.addFindingLocked(f).ID)
+		x := e.addFindingLocked(f)
+		recorded = append(recorded, x)
+		pr.env.Findings = append(pr.env.Findings, x.ID)
 	}
+	e.takeDispositionsLocked(pr, recorded)
 	for _, id := range slices.Sorted(mapKeys(pr.closing)) {
 		f, c := e.findingLocked(id), pr.closing[id]
 		if f == nil || f.Closed {
@@ -908,7 +1116,7 @@ func (e *engine) takeEffectsLocked(pr *proposal) {
 		pr.env.Disputed = append(pr.env.Disputed, id)
 		_ = e.record(Event{Kind: "finding.disputed", Pass: p.id, Manager: m.Path, Data: *f})
 	}
-	pr.raised, pr.closing, pr.disputes = nil, nil, nil
+	pr.raised, pr.closing, pr.disputes, pr.dispositions = nil, nil, nil, nil
 }
 
 // checkSubmission is the technical gate of a submission in a work Pass with
@@ -943,6 +1151,9 @@ func (e *engine) checkSubmission(pr *proposal) {
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()
+	if err == nil && len(findings) == 0 && pr.status == proposalSubmitted {
+		findings = e.bindEvidence(pr, composite)
+	}
 	m.checking = false
 	m.p.checking--
 	if e.ctx.Err() != nil || pr.status != proposalSubmitted || m.pending != pr {

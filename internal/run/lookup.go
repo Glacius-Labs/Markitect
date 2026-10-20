@@ -12,7 +12,7 @@ import (
 )
 
 // Look-up topics.
-var lookUpTopics = []string{"definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions", "method"}
+var lookUpTopics = []string{"definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions", "probe", "method"}
 
 // lookUp serves the tool look_up: structural facts from the Orchestrator's
 // state with their source and stand, so Managers ask deterministic tools for
@@ -62,6 +62,14 @@ func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
 	defer e.mu.Unlock()
 	p := m.p
 	switch in.Topic {
+	case "probe":
+		r := e.receiptLocked(strings.TrimSpace(in.ID))
+		if r == nil {
+			return refuse("id names a probe receipt (R...) of this run.")
+		}
+		var b strings.Builder
+		writeReceipt(&b, r, true)
+		return ToolAnswer{Text: strings.TrimRight(b.String(), "\n")}
 	case "registry":
 		view := e.cfg.Registry(p.accepted)
 		path := strings.TrimSpace(in.Path)
@@ -149,6 +157,10 @@ func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
 			if r := e.lastCheckLocked(c.Name); r != nil {
 				line += fmt.Sprintf(": last result passed=%t", r.Passed)
 			}
+			if e.probesAvailable() {
+				prefix := strings.Join(append([]string{c.Request.Executable}, c.Request.Args[:c.ProfileArgs]...), " ")
+				line += fmt.Sprintf("\n  A probe with check %q runs `%s ARGS` in %s with your probe file placed there, without network, on a disposable copy.", c.Name, prefix, c.Request.Directory)
+			}
 			lines = append(lines, line)
 		}
 		if len(lines) == 0 {
@@ -204,21 +216,32 @@ func mapKeys[V any](m map[string]V) func(func(string) bool) {
 	}
 }
 
-// check serves the tool check: it observes the shared work volume while other
-// writers keep running, File checks the composition of the accepted stand
-// with the caller's own live area and answers with the findings. It is advice:
-// only the Orchestrator's check after the caller's writers stopped gates a
-// submission.
+// check serves the tool check. With a probe it runs one behavioral probe and
+// answers with its receipt. Otherwise it observes the shared work volume while
+// other writers keep running, File checks the composition of the accepted stand
+// with the caller's own live area and answers with the findings. The File check
+// is advice: only the Orchestrator's check after the caller's writers stopped
+// gates a submission.
 func (e *engine) check(ctx context.Context, m *member, ts *turnState, args json.RawMessage) ToolAnswer {
 	var in struct {
-		Scope string `json:"scope"`
+		Scope string   `json:"scope"`
+		Probe *probeIn `json:"probe"`
 	}
 	if trimmed := bytes.TrimSpace(args); len(trimmed) > 0 && string(trimmed) != "null" {
 		if err := decodeStrict(args, &in); err != nil {
 			return refuse("%v", err)
 		}
 	}
-	if in.Scope != "" && in.Scope != "own" && in.Scope != "all" {
+	switch {
+	case in.Probe != nil && in.Scope != "":
+		return refuse("check runs either a probe or the File check of a scope, not both.")
+	case in.Probe != nil && ts.h != nil:
+		return refuse("A helper runs no probes; report what to probe to your Manager.")
+	case in.Probe != nil:
+		return e.probe(ctx, m, ts, *in.Probe)
+	case !m.p.spec.Writes:
+		return refuse("This Pass has no File check of your area; give a probe.")
+	case in.Scope != "" && in.Scope != "own" && in.Scope != "all":
 		return refuse("scope must be \"own\" or \"all\".")
 	}
 	h, err := e.cfg.Workspaces.Peek(ctx, HarvestRequest{ID: e.workID, MaxEntries: e.cfg.MaxEntries, MaxBytes: e.cfg.MaxBytes})

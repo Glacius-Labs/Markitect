@@ -160,6 +160,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Defines the consumer-owned Checks port and what a check receipt establishes."
+  - path: "internal/run/probes.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs behavioral probes through the check port on stable stands, keeps every receipt, binds cited evidence to its stand and enforces independent dispositions of adverse receipts."
   - path: "internal/run/workspace_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
@@ -200,6 +204,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: "Checks that look_up answers Definitions with their owners, path owners, states, accepted plans and bases and the method guidance."
+  - path: "internal/run/probes_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Discriminates bound and retained receipts, stale and fabricated evidence, adverse receipts that need a finding or an independent disproof, Root's pending disproof and Runtime errors from the earlier unbound evidence."
   - path: "internal/run/README.md"
     form: doc
     realizes: [product/run/confirmed-run-history]

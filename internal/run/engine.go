@@ -69,6 +69,7 @@ type engine struct {
 	findings  []*Finding
 	questions []*Question
 	problems  []*Problem
+	receipts  []*ProbeReceipt
 	turns     []TurnRecord
 	usage     Usage
 	turnCount int
@@ -87,7 +88,7 @@ type engine struct {
 	closing  bool
 	polling  bool
 
-	nextFinding, nextQuestion, nextProposal, nextProblem int
+	nextFinding, nextQuestion, nextProposal, nextProblem, nextReceipt int
 }
 
 func slugOf(path string) string {
@@ -200,6 +201,9 @@ func validate(cfg Config) error {
 		req.ID = CheckID(cfg.RunID + "-p9999-" + c.Name)
 		if !req.Valid() {
 			return bad("check %q has an incomplete request", c.Name)
+		}
+		if c.ProfileArgs < 0 || c.ProfileArgs > len(req.Args) {
+			return bad("check %q has %d profile arguments of %d", c.Name, c.ProfileArgs, len(req.Args))
 		}
 	}
 	b := cfg.Budget
@@ -510,6 +514,9 @@ func (e *engine) outcome(status Status, reason string, tree snapshot.Tree) Outco
 	}
 	for _, p := range e.problems {
 		out.Problems = append(out.Problems, *p)
+	}
+	for _, r := range e.receipts {
+		out.Probes = append(out.Probes, *r)
 	}
 	return out
 }

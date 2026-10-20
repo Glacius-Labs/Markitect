@@ -69,6 +69,7 @@ func writeEnvelope(b *strings.Builder, env envelope, findings func(string) *Find
 			line += " (" + c.Note + ")"
 		}
 		b.WriteString(strings.ReplaceAll(line, "\n", "\n    ") + "\n")
+		writeEvidence(b, c.Evidence)
 	}
 	if pl := env.Plan; pl != nil {
 		writePlan(b, pl)
@@ -142,6 +143,24 @@ func (e *engine) renderProposalLocked(pr *proposal) string {
 	for _, id := range slices.Sorted(mapKeys(pr.disputes)) {
 		d := pr.disputes[id]
 		fmt.Fprintf(&b, "  Disputes %s: %s\n    Evidence: %s\n", id, d.Reason, d.Evidence)
+	}
+	for _, id := range slices.Sorted(mapKeys(pr.dispositions)) {
+		d := pr.dispositions[id]
+		if d.As == DisposedRerun {
+			fmt.Fprintf(&b, "  Disposes of the adverse receipt %s: replaced by the passing rerun %s\n", id, d.Rerun)
+			continue
+		}
+		fmt.Fprintf(&b, "  Disposes of the adverse receipt %s as an erroneous expectation: %s\n    Evidence: %s\n", id, d.Reason, d.Evidence)
+	}
+	// Every probe the child ran in this Pass, whatever its report cites, so
+	// that the parent judges the actual assertions and the adverse ones too.
+	if probes := e.probesOfLocked(pr.member.Path, pr.member.p.id); len(probes) > 0 {
+		b.WriteString("  Probes it ran in this Pass (judge their assertions: which plausible violation could still pass them?):\n")
+		for _, r := range probes {
+			var rb strings.Builder
+			writeReceipt(&rb, r, false)
+			fmt.Fprintf(&b, "    %s\n", strings.ReplaceAll(strings.TrimRight(rb.String(), "\n"), "\n", "\n    "))
+		}
 	}
 	return strings.TrimRight(b.String(), "\n")
 }
@@ -323,6 +342,22 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 		}
 		list(b, "Open findings you raised in earlier Passes: reassess each; close one as resolved when this candidate corrects it, or as disproved with evidence when it was erroneous:", mine)
 		list(b, "Other open findings within your responsibility:", within)
+		var current, earlier []string
+		candidate := p.tree.Digest().String()
+		for _, r := range e.receipts {
+			if !r.adverse() || r.disposed() || !e.within(r.Requester, m.Path) {
+				continue
+			}
+			var rb strings.Builder
+			writeReceipt(&rb, r, false)
+			if r.Stand == candidate {
+				current = append(current, strings.TrimRight(rb.String(), "\n"))
+			} else if r.Requester == m.Path && len(earlier) < maxListed {
+				earlier = append(earlier, strings.TrimRight(rb.String(), "\n"))
+			}
+		}
+		list(b, "Adverse probe receipts on this candidate within your responsibility that still need an independent disposition: cite one in a genuine finding when it shows a violation, or dispose of it with reason and evidence:", current)
+		list(b, "Adverse probe receipts of your responsibility on earlier candidates (context: assess their claims again on this candidate):", earlier)
 	} else {
 		var mine []string
 		for _, f := range e.findings {

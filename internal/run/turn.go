@@ -22,6 +22,7 @@ type turnState struct {
 	reports     []string
 	proposal    *proposal
 	wait        string
+	waitOn      *waitTarget
 	progress    string
 	decided     bool
 	revised     bool
@@ -34,6 +35,31 @@ type turnState struct {
 	// blocked says that the turn started while the Manager's productive work
 	// was blocked: a communication-only turn.
 	blocked bool
+	// mode is what the turn was admitted for (TurnRecord.Mode).
+	mode string
+	// probes counts the probes the turn ran.
+	probes int
+}
+
+// acceptedOf returns a Manager's accepted basis or result of its Pass.
+func acceptedOf(m *member, stage string) *proposal {
+	if stage == stageNameResult {
+		return m.result
+	}
+	return m.basis
+}
+
+// turnMode names what a Manager's next turn is admitted for.
+func turnMode(m *member) string {
+	switch {
+	case m.p.spec.Review:
+		return "review"
+	case m.stage == stageBlocked:
+		return "communication"
+	case m.stage == stageOwn || m.stage == stageIntegrate:
+		return "work"
+	}
+	return "coordination"
 }
 
 // startTurnLocked starts a turn of a Manager that delivers all its items.
@@ -70,7 +96,7 @@ func (e *engine) startTurnLocked(m *member) {
 		role, kind, profile, home, resume, letter = "reviewer", VerifyTurn, m.VerifyProfile, m.reviewHome, m.reviewConversation, "r"
 		standing = m.reviewConversation == ""
 	}
-	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked}
+	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked, mode: turnMode(m)}
 	readOnly, mounts := e.mountsLocked(m)
 	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}
@@ -208,10 +234,26 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	}
 	if ts.wait != "" {
 		m.waitFor = ts.wait
+		if on := ts.waitOn; on != nil {
+			m.waitFor = fmt.Sprintf("the accepted %s of %s", on.stage, on.manager)
+			if pr := acceptedOf(p.byPath[on.manager], on.stage); pr != nil {
+				// It was accepted while the turn ran: nothing is left to wait for.
+				m.waitFor = ""
+				m.items = append(m.items, item{text: e.renderAcceptedLocked(pr) + "\nThe submission you waited for is accepted; continue your work."})
+			} else {
+				m.waitOn = on
+			}
+		}
 	}
 	working := m.stage == stageOwn || m.stage == stageIntegrate
+	// A progress summary the Manager already reported in this Pass is no
+	// progress: it is not continued automatically and counts as an empty turn.
+	repeated := ts.progress != "" && slices.Contains(m.progressed, ts.progress)
+	if ts.progress != "" && !repeated {
+		m.progressed = append(m.progressed, ts.progress)
+	}
 	// A Manager whose helpers still work continues when their results arrive.
-	if ts.progress != "" && working && !submitted && len(m.helpers) == 0 {
+	if ts.progress != "" && !repeated && working && !submitted && len(m.helpers) == 0 {
 		m.items = append(m.items, item{text: "Continue your work: " + ts.progress})
 	}
 	// Only what the turn was shown can be left open by it; what arrived while it
@@ -222,10 +264,13 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 			demands = append(demands, d)
 		}
 	}
-	handled := submitted || ts.wait != "" || ts.progress != "" || len(ts.delegations) > 0 || ts.revised || ts.decided
+	handled := submitted || ts.wait != "" || ts.progress != "" && !repeated || len(ts.delegations) > 0 || ts.revised || ts.decided
 	switch {
 	case ts.wait != "" || submitted && len(demands) == 0:
 		m.empty = 0
+	case repeated && working && !handled:
+		m.empty++
+		m.items = append(m.items, item{text: "Your progress report repeats an earlier one of this Pass, so it shows no progress. If you cannot continue before another Manager's basis or result is accepted, report wait for that Manager; if you need a decision, ask your parent; otherwise submit."})
 	case len(demands) > 0:
 		// A turn that decided some of what it was shown still has the rest
 		// before it; only a turn that decided nothing counts as empty.
@@ -244,7 +289,7 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 		if m.stage == stageIntegrate {
 			next = "your complete result"
 		}
-		m.items = append(m.items, item{text: fmt.Sprintf("Your turn ended without a report. Continue and end the turn with report: progress when you continue later, wait when you need a named answer or child, or %s.", next)})
+		m.items = append(m.items, item{text: fmt.Sprintf("Your turn ended without a report. Continue and end the turn with report: progress when you continue later, wait when you need a named answer, child or another Manager's accepted basis or result, or %s.", next)})
 	default:
 		m.empty = 0
 	}
@@ -293,16 +338,16 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	turn.ID, turn.Manager, turn.Timeout = ts.id, manager, e.cfg.Budget.TurnTimeout
 	turn.Transcript = e.cfg.Evidence.Transcript(ts.id)
 	started := e.now()
-	_ = e.record(Event{Kind: "turn.start", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": turn.Kind, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "mounts": turn.Mounts, "home": turn.Home, "resume": turn.Resume}})
+	_ = e.record(Event{Kind: "turn.start", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": turn.Kind, "mode": ts.mode, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "mounts": turn.Mounts, "home": turn.Home, "resume": turn.Resume}})
 	if e.ctx.Err() != nil {
 		e.mu.Lock()
-		e.turns = append(e.turns, TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Started: started, Ended: e.now(), Stopped: true, Reason: "the run stopped before the turn started"})
+		e.turns = append(e.turns, TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Started: started, Ended: e.now(), Stopped: true, Reason: "the run stopped before the turn started"})
 		e.mu.Unlock()
 		return TurnResult{Stopped: true}, e.ctx.Err()
 	}
 	res, err := e.cfg.Agents.Run(e.ctx, turn, handler)
 	e.mu.Lock()
-	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Reports: slices.Clone(ts.reports), Reason: res.Reason}
+	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Reports: slices.Clone(ts.reports), Reason: res.Reason}
 	if rec.Started.IsZero() {
 		rec.Started = started
 	}
@@ -314,7 +359,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	}
 	e.turns = append(e.turns, rec)
 	e.usage = e.usage.Add(res.Usage)
-	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "usage": rec.Usage, "stopped": rec.Stopped, "reports": rec.Reports, "reason": rec.Reason, "conversation": res.Conversation}})
+	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "mode": rec.Mode, "usage": rec.Usage, "stopped": rec.Stopped, "reports": rec.Reports, "probes": ts.probes, "reason": rec.Reason, "conversation": res.Conversation}})
 	e.mu.Unlock()
 	if !res.Stopped {
 		e.halt(fmt.Sprintf("turn %s ended without an observed container stop; quiescence is uncertain", ts.id))
@@ -335,7 +380,7 @@ func (e *engine) memberHandler(m *member, ts *turnState) ToolHandler {
 		case toolLookUp:
 			return e.lookUp(m, args)
 		case toolCheck:
-			if m.p.spec.Writes {
+			if m.p.spec.Writes || e.probesAvailable() {
 				return e.check(ctx, m, ts, args)
 			}
 		case toolDelegate:

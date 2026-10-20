@@ -51,20 +51,24 @@ type ApplyReport struct {
 
 // RunReport is the run's outcome without the candidate's bytes.
 type RunReport struct {
-	ID        string           `json:"id"`
-	Status    run.Status       `json:"status"`
-	Reason    string           `json:"reason,omitempty"`
-	Passes    []run.PassRecord `json:"passes"`
-	Findings  []run.Finding    `json:"findings"`
-	Questions []run.Question   `json:"questions"`
-	Problems  []run.Problem    `json:"problems"`
-	Turns     []run.TurnRecord `json:"turns"`
-	Usage     run.Usage        `json:"usage"`
+	ID        string             `json:"id"`
+	Status    run.Status         `json:"status"`
+	Reason    string             `json:"reason,omitempty"`
+	Passes    []run.PassRecord   `json:"passes"`
+	Findings  []run.Finding      `json:"findings"`
+	Questions []run.Question     `json:"questions"`
+	Problems  []run.Problem      `json:"problems"`
+	Turns     []run.TurnRecord   `json:"turns"`
+	Probes    []run.ProbeReceipt `json:"probes"`
+	Usage     run.Usage          `json:"usage"`
 }
 
 // NewRunReport projects an outcome. Lists are never null.
 func NewRunReport(id string, outcome run.Outcome) *RunReport {
-	r := &RunReport{ID: id, Status: outcome.Status, Reason: outcome.Reason, Passes: outcome.Passes, Findings: outcome.Findings, Questions: outcome.Questions, Problems: outcome.Problems, Turns: outcome.Turns, Usage: outcome.Usage}
+	r := &RunReport{ID: id, Status: outcome.Status, Reason: outcome.Reason, Passes: outcome.Passes, Findings: outcome.Findings, Questions: outcome.Questions, Problems: outcome.Problems, Turns: outcome.Turns, Probes: outcome.Probes, Usage: outcome.Usage}
+	if r.Probes == nil {
+		r.Probes = []run.ProbeReceipt{}
+	}
 	if r.Passes == nil {
 		r.Passes = []run.PassRecord{}
 	}

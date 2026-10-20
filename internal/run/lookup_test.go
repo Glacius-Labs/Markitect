@@ -55,7 +55,7 @@ func TestLookUpAnswersStructuralFactsAndMethods(t *testing.T) {
 		"state":      "Pass p2 (prepare)",
 		"plan":       "Accepted plan",
 		"basis":      "Accepted basis",
-		"method":     "Derive what the model requires",
+		"method":     "authority of this run",
 		"bad method": "id names a method",
 	} {
 		if !strings.Contains(answers[key], want) {

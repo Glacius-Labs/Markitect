@@ -83,10 +83,24 @@ helpers), the required checks, the gates, the owner channel and the budget, requ
 container engine's volume-subpath support, and composes the Passes on `run`: Plan,
 Prepare and Implement, then Verify; a Pass that needs correction restarts the work at the
 earliest purpose its findings name and a fresh complete Verify follows; a Verify that only
-fresh disputes keep from being clean is repeated on the unchanged candidate. Only a
+fresh disputes or disproofs awaiting an independent assessment keep from being clean is
+repeated on the unchanged candidate. Only a
 Verified outcome is published, through the guarded `Publisher` with read-back; the shared
 work volume is closed only after an applied or unchanged receipt and kept as
-`RetainedWork` otherwise. Apply never commits.
+`RetainedWork` otherwise. Apply never commits. Each required check also passes the number
+of its execution profile's own arguments to `run`, so a probe can reuse that profile with
+its own arguments.
+
+The mandates ask Plan for distinct claims, input classes and the needed dependency stage;
+Implement to wait for another Manager's result instead of reporting progress; and Verify
+to derive claims and permitted counterexamples from the bound model first, probe them at
+the public interface and cite a receipt or inspected source per claim, with parents
+challenging their children's assertions.
+
+`VerifyCaptured(ctx, ApplyRequest)` runs only the independent Verify of the captured stand
+with the same configuration and never publishes. It is the evaluation entry for assessing
+a known stand through the Pass process; no Command uses it, and the grant-gated
+`TestVerifyEvaluationHarness` in `internal/bootstrap` drives it with the real adapters.
 
 Each Brief lists the Manager's own Definitions, included ones with their owners, its
 areas and local registry with its entry shape (exact files or directories), the required

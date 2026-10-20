@@ -65,16 +65,27 @@ and the File check; any failure ends the run Failed without a repair Pass.
 
 States per Pass are `ready`, `working`, `waiting` and `done`, recorded as
 `manager.state_changed` with the stage and what a Manager waits for. A turn that ends
-without the report its work needs gets a note and counts as empty; repeated empty turns,
-repeated failed turns and a turn without an observed container stop end the run
-Incomplete. A wait that nothing can resolve ends it Incomplete with the named waits.
+without the report its work needs gets a note and counts as empty; so does a turn whose
+only report repeats an earlier progress summary of the Pass, which is not continued
+automatically. Repeated empty turns, repeated failed turns and a turn without an observed
+container stop end the run Incomplete. A wait that nothing can resolve ends it Incomplete
+with the named waits.
+
+`report kind wait` names an own open question, a child, or the accepted basis or result
+(`stage`) of any other Manager of the Pass. Only an actual event wakes a waiting Manager:
+the accepted submission it named, an answer, a message or a decision it must make; an
+unchanged wait starts no turn. A wait on another Manager that closes a cycle with the
+accepted plans' dependencies and the parent-first and integration order can never be
+satisfied, so it ends the run Incomplete at once with the cycle as a `dependency`
+problem. Every turn records its `mode`: `work`, `communication` (blocked), `coordination`
+(decisions and answers after the basis), `review` or `helper`.
 
 ## Envelope and verdicts
 
 `report kind basis|result` carries the shared envelope: summary, obligation coverage
-(`done`, `preserved`, `not_applicable`, `open`, with notes), the purpose payload (`plan`
-in a planning Pass; `artifacts` and `evidence` otherwise), findings, closures, disputes and,
-for a result, the verdict. A result covers every own obligation; a verdict contradicting
+(`done`, `preserved`, `not_applicable`, `open`, with notes and evidence items), the purpose
+payload (`plan` in a planning Pass; `artifacts` and `evidence` otherwise), findings,
+closures, disputes, dispositions of adverse probe receipts and, for a result, the verdict. A result covers every own obligation; a verdict contradicting
 the open genuine findings within the responsibility is refused; a result is refused while
 the Manager's own question is unanswered. Plans are validated (approach, method and
 evidence per obligation, owners of inputs and outputs, dependencies without a cycle with
@@ -82,7 +93,7 @@ the parent-first order).
 
 A Pass verdict is `satisfied` when Root's integrated result is satisfied and no genuine
 finding of the kind the Pass judges is open; a review also needs every required check
-passing on its candidate. In every Pass no accepted result may leave an own obligation
+passing on its candidate and every adverse probe receipt on it disposed of independently. In every Pass no accepted result may leave an own obligation
 `open`. A
 child's `needs_correction` rests on an open finding, so a finding its raiser closes later
 no longer holds the Pass back. `PassResult.Corrections` names the correction purposes of
@@ -103,14 +114,52 @@ complete Verify on the same candidate. Failed required checks are Orchestrator f
 that hold for their candidate and cannot be disputed. Work-Pass findings close through a
 later work Pass of their raiser.
 
+## Probe receipts and evidence
+
+`check` with a `probe` runs one behavioral probe file through the `Checks` port with the
+execution profile of a required check: the profile's image, executable, fixed arguments,
+environment and limits, the caller's arguments, no network and a disposable copy. The probe
+names its obligation (own or a descendant's), claim and expected outcome; they are recorded
+(`probe.requested`) before it runs. It runs on a stable stand: the candidate in a review,
+the accepted stand in a Pass without writes, a child's checked proposal, or in a Pass with
+writes the caller's live area composed with the accepted stand. The file is added to that
+stand in the check's directory and never replaces a project file. The Orchestrator keeps
+the receipt (`probe.receipt`, `Outcome.Probes`): the binding, the probe bytes and digest,
+the invocation and what the Runtime observed. Its outcome is the probe's own assertion
+verdict: `passed` for an observed zero exit of exactly that request, `failed` for an
+observed nonzero exit, `error` for everything else (not started, timed out, uncertain or
+mismatched), which never counts as a pass or as an expected refusal. A helper runs no
+probe; `look_up topic probe` returns a whole receipt.
+
+A coverage entry's evidence items cite per claim either a receipt (the caller's own, for
+that Definition, passed) or an inspected source file with location and reasoning. In a
+review every `done` or `preserved` obligation needs at least one item; a suite total is no
+item. Items bind to the stand of the submission: the candidate or the unchanged accepted
+stand at once, in a Pass with writes the checked stand after the writers stopped, where a
+receipt of another stand returns the submission to its owner. A parent's proposal view
+shows the child's evidence and every probe it ran in the Pass, adverse ones included.
+
+An adverse receipt on a review's candidate blocks until it is disposed of: a genuine
+finding that cites it (a violation), a reasoned `expectation_error` for a failed assertion,
+or a `rerun` that replaces an `error` by a later passing receipt of the same claim on the
+same stand. A failed assertion is never disposed of by running it again. Dispositions take
+effect with their submission's acceptance; a parent's acceptance is the independent
+assessment of a child's own disproof. Root's disproof of its own receipt in the same Pass
+awaits a fresh review: the Pass verdict needs correction and `Reassess` runs a new Verify of
+the unchanged candidate, whose Root reviewer confirms it or raises a finding. A done claim
+with an undisposed adverse receipt of its own and a satisfied result with one within the
+responsibility are refused.
+
 ## Tools
 
 `report` (above), `send` (question, answer or information to the direct parent or a child;
 Root also to `user`; answers travel back the same edge, forwarded exchanges correlate with
 `about`), `escalate` (a classified problem as a question to the parent, Root's to the user),
 `look_up` (Definitions, owners, the derived registry view, states, plans, bases, findings,
-checks, questions and the method guidance of `methods.go`), `check` (advisory File check of the caller's live area composed with the
-accepted stand, write Passes) and `delegate` (a bounded task for a configured helper role).
+checks, probe receipts, questions and the method guidance of `methods.go`), `check`
+(advisory File check of the caller's live area composed with the accepted stand in write
+Passes, or a probe when the project declares a check) and `delegate` (a bounded task for a
+configured helper role).
 Helpers run one turn each in their own container with their own home, read the whole
 stand, write only their delegated, existing, disjoint subset of the Manager's area and
 report to their Manager only; while they work their subset is read-only for the Manager.
@@ -130,5 +179,6 @@ read-only base; every other turn is read-only. Turn identities are
 consumer-owned ports. `engine.go` validates and ends the run; `pass.go` holds the base
 process; `proposals.go` the `report` tool, envelopes and technical checks; `messages.go`
 routing and the owner channel; `helpers.go` delegation; `review.go` candidates and checks;
-`lookup.go` the look-up and check tools; `methods.go` the method guidance; `turn.go`, `tools.go` and `prompts.go` turns, tool
+`lookup.go` the look-up and check tools; `probes.go` probes, receipts, evidence binding and
+dispositions; `methods.go` the method guidance; `turn.go`, `tools.go` and `prompts.go` turns, tool
 schemas and prompts. Tests use scripted fakes for every port.

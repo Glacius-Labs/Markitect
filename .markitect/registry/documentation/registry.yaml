@@ -1856,6 +1856,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/apply-hardening-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/validation/apply-stability-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
