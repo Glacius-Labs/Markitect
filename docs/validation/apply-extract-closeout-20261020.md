@@ -4,7 +4,8 @@
 
 ## Verdict
 
-RUN_VERDICT
+- **Apply:** on the final Apply code, one example (the library) and Claude Haiku, the whole sequence held in one bounded run without any bound owner decision. M1 → A1, the owner's one model change, M2 → A2, and a repeated Apply that left A2 unchanged (`no_change`). Drift repair holds on the same Apply code (RA-R6). A model defect that ends the run, budget, deadline, interruption and restart were shown only on earlier builds. Other projects and other agent families are unproved.
+- **Extract:** stable as a mechanism on two projects, and it asks only the necessary questions. The extracted models are not adoptable without owner correction, and no round trip on the original repository has been run.
 
 Both series are closed. A closed series records its result; it is not owner acceptance and starts no follow-up work.
 
@@ -27,9 +28,9 @@ Main `0c28097c` differs from `4cf58479` only in Extract: a separate initial item
 
 | Obligation | Result | Runs and build | On the final Apply code |
 | --- | --- | --- | --- |
-| Model change M1 → A1 → M2 → A2 | passed, both Applies in one Verify round, oracle 12/12 | RA-H7, RA-H8, RA-H9 (Haiku), RA-S1 (Sonnet) on `4cf58479`; RA-F1 on `1f5cc074` | yes |
+| Model change M1 → A1 → M2 → A2 | passed, oracle 12/12 for A1 and A2; one Verify round per Apply, except two for RA-F1's A1 | RA-H7, RA-H8, RA-H9 (Haiku), RA-S1 (Sonnet) on `4cf58479`; RA-F1 on `1f5cc074` | yes |
 | Behavior and accounting drift under an unchanged model | passed, only the drifted files changed | RA-R6 on `4cf58479`; earlier RA-R2 to RA-R5 | yes |
-| A conforming stand stays unchanged | failed on `7ed41975` (RA-N2 added tests), passed on `7005a4bd` (RA-N3) | RA-F1N on `1f5cc074` | NOCHANGE_FINAL |
+| A conforming stand stays unchanged | failed on `7ed41975` (RA-N2 added tests), passed on `7005a4bd` (RA-N3) | RA-F1N on `1f5cc074`: passed | yes |
 | A model defect ends the run without publication | passed: contradiction (RA-C2, RA-C3) and boundary gap (RA-Q3) ended within 71 to 177 s | `6e759baa`, `7005a4bd` | no; not repeated after #520 |
 | Budget, deadline, interruption and restart | passed: Incomplete, nothing published, work and evidence retained, a new Apply verified | RA-B1, RA-A1 on `4bedd20b`; RA-H1 on `f15ea723`; RA-C1 on `5e16af2b`; RA-H6 on `7005a4bd` | no; the run engine changed afterwards (#515, #518, #520) |
 | Protected inputs, enforced ownership, immutable Verify, guarded publication with read-back | passed in every published run | all builds | yes |
@@ -71,7 +72,32 @@ The decision file is deleted and the harness binds no owner decisions. The run-s
 
 ## Confirmation run
 
-RUN_SECTION
+One bounded run. Its sequence, limits and profile were fixed before the start, and it was not repeated.
+
+| Item | Value |
+| --- | --- |
+| Product build | `1f5cc074`: the product code of Main `0c28097c` plus the Library model and harness change above. CLI sha256 `04086ed1…`, runtime image `sha256:fd00efd2…`, Go agent and check image `sha256:244528a5…`, Claude Code 2.1.301 |
+| Model | Library M1 of that commit, digest `sha256:33e4a0fe…`; M2 is M1 with only `maxOpenLoans` 5 → 3 |
+| Agents | Claude Haiku `claude-haiku-5-5`, high effort, for every Execute and Verify turn; all 66 turns report that model. Host profile sha256 `299a41ca…` |
+| Run configuration | owner request "Apply the committed Library model.", no `ownerDecisions`, the attempt's own container labels |
+| Limits | RA-F1: 30 minutes wall clock including cleanup, engine deadline after 26 minutes; per Apply 20 minutes, 90 agent turns, 4 rounds, 8 minutes per turn. RA-F1N: deadline after 20 minutes, hard stop after 21 |
+| Oracle | `ra_assess.sh` after RA-F1, outside the process and its limit, with no feedback to the Agents |
+
+| Step | Outcome | Rounds | Time | Turns (Execute + Verify) | Publication | Oracle |
+| --- | --- | --- | --- | --- | --- | --- |
+| A1 (M1, empty start) | Verified | 2 | 759 s | 18 + 12 | applied, 28 paths read back | m1 12/12 |
+| A2 (M2 on the actual A1) | Verified | 1 | 371 s | 11 + 6 | applied, 5 paths read back | m2 12/12; under m1 10/12 |
+| RA-F1N (A2 committed unchanged, M2 again) | Verified | 1 | 359 s | 13 + 6 | `no_change` | tree identical to A2 |
+
+RA-F1 took 1130 s of its 1800 s.
+
+- **A1's second round:** Verify raised two blocking findings under DEC-060. Lending decided copy availability itself instead of using catalog's rule. Round 2 repaired that through catalog's realization. RA-H7 to RA-H9 needed one round, so the round count varies between runs.
+- **Effect of the model change:** from M1 to M2 only `loan-policy` changed. A2 changed the limit constant from 5 to 3, the tests and README that state it, and the lending registry shard. Under the m1 profile, A2 fails exactly the two fourth-loan cases (`E04-admission`, `paired-fourth-loan`), so the behavior followed the model.
+- **The former decisions as model content:** no run asked about them, bound them or reported a model defect. The oracle's unknown-field and envelope cases passed for A1 and A2. A2 limits due dates to 9999-12-31 in `realization/lending/date.go`; the oracle has no case for it.
+- **No-change:** every area took part in Execute, Verify was green in its first round, and the publication was `no_change`. The working tree, the artifacts and the registry stayed byte-identical to A2: no changed entries and no differing file. Verify recorded three advisory findings: a status rule realized in `library` instead of `members`, and the registry attribution of the shared date rule. They do not block, and no area changed for them.
+- **Protected inputs, publication and read-back:** the model, dependencies, lock and execution controls stayed unchanged apart from the owner's one policy change. Both publications touched only `realization/` and `.markitect/registry/`, and every path read back in its published state. No container or work volume of the run remained.
+- **Human intervention:** none during the runs. The scripted owner made the three commits: take A1, change the limit, take A2. A first detached start of the driver ended before binding and created nothing; the same driver was then started unchanged.
+- **Not covered by this run:** a model defect, budget, deadline and interruption on this build.
 
 ## Evidence kinds, kept apart
 
@@ -82,4 +108,4 @@ RUN_SECTION
 
 ## Next step
 
-NEXT_STEP
+Recommendation, not started. After the owner's process review, run the prepared trial cases once, as one small fixed series on the final build with the same Haiku profile. The series should include the model-defect stop and one interruption with a fresh restart, which closes the two gaps on the final Apply code. It should also include the first project beyond the library. Select process changes only from failures of that series. For Extract, the owner first confirms or corrects the DEC-061 clarification; the next Extract evidence would be the round trip on an original repository (#499).
