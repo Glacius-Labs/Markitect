@@ -1,0 +1,24 @@
+apiVersion: markitect.execution/v1
+strategy: shared-workspace-v1
+budget:
+  executionTime: 30m
+  turnTimeout: 10m
+  agentTurns: 120
+  rounds: 4
+profiles:
+  execute: project-agent
+  verify: project-agent
+packages: {}
+layout:
+  roots: [realization]
+  exceptions:
+    - path: realization
+      owner: depot
+      reason: The fixed delivery boundary puts app.py, README.md and the end-to-end tests directly in realization/, which Root would otherwise own; the project Package realizes them, and each domain Package keeps its mirrored directory.
+checks:
+  - id: project-tests
+    profile: python-tests
+    directory: realization
+    args: [-B, -m, unittest, discover, -s, ., -p, "test_*.py"]
+    requiredBy: depot/interface
+    timeout: 3m

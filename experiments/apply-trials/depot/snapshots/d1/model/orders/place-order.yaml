@@ -1,0 +1,20 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+  - package: catalog
+    as: Catalog
+id: place-order
+kind: Software.UseCase
+body: |-
+  At [[Depot.interface]], `place-order --line SKU:QTY [--line SKU:QTY ...]`
+  takes one to ten lines. A line is split at its first colon: the part before
+  it is a SKU under [[Catalog.sku]] that must name an existing item, the part
+  after it a quantity under [[Depot.inputs]]. The request is admitted only when
+  every line is valid, no item appears twice and every line's quantity is at
+  most the item's available quantity under [[availability]]. Then it creates
+  one open [[order]] with the next id and the lines in the given order, commits
+  it through [[Depot.storage]] and returns the order record. Otherwise the whole
+  request is refused: no order is created and stored data stays unchanged.
+spec: {}

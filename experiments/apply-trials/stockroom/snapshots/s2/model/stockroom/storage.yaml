@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+id: storage
+kind: Software.Rule
+body: |-
+  [[system]] keeps its data as durable UTF-8 JSON in the file named by --db. A
+  missing file is empty data. Malformed existing data fails clearly through
+  [[interface]] and is not overwritten. A successful change commits by atomic
+  replacement of the file, and a later process using the same file observes
+  it. A failed command leaves the file unchanged, and queries never write it.
+  The organization of the JSON inside the file is an implementation choice
+  consistent with the [[item]] records. A data file written by the realization
+  of model version 0.1.0 stays usable with all its items, SKUs, names and
+  on-hand quantities; its items have reorder point 0. Concurrent independent writers
+  are outside this contract; [[realization]] documents that limitation.
+spec: {}

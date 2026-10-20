@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+  - package: orders
+    as: Orders
+id: limits
+kind: Software.Rule
+body: |-
+  An [[on-hand]] quantity is never negative and never exceeds 9999. A
+  [[receive]] that would raise it above 9999 is refused; reaching exactly 9999
+  is allowed. [[Orders.availability]] keeps every fulfilment within the stock
+  on hand. A refusal fails through [[Depot.interface]] and leaves stored data
+  unchanged under [[Depot.storage]].
+spec: {}

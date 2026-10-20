@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+id: item
+kind: Software.Concept
+body: |-
+  An item of [[Depot.system]] has a SKU, a name and a reorder point.
+  [[add-item]] creates it; afterwards it never changes and is never deleted.
+  The SKU identifies the item: at most one item exists per SKU under [[sku]].
+  The name is a descriptive label and need not be unique. The reorder point is
+  the available quantity below which the item should be reordered. The catalog
+  record is a JSON object with exactly sku (string), name (string) and
+  reorderPoint (integer).
+spec: {}
