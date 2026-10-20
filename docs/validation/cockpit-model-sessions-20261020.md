@@ -1,6 +1,6 @@
 # Cockpit model sessions — 20 October 2026
 
-**Scope:** the fifth slice of the [cockpit](../design/cockpit.md#working-through-the-cockpit), adopted by the owner as [DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration): an Agent session that proposes model changes on the owner's prompts, implemented in [authoring](../../internal/authoring/README.md#model-sessions) and the [cockpit adapter](../../internal/adapters/cockpit/README.md#model-sessions). It reuses the [configuration proposals](cockpit-configuration-20261020.md) path. No provider turn and no container ran for this record.
+**Scope:** the fifth slice of the [cockpit](../design/cockpit.md#working-through-the-cockpit), adopted by the owner as [DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration): an Agent session that proposes model changes on the owner's prompts, implemented in [authoring](../../internal/authoring/README.md#model-sessions) and the [cockpit adapter](../../internal/adapters/cockpit/README.md#model-sessions). It reuses the [configuration proposals](cockpit-configuration-20261020.md) path. One real session ran with the owner's approval of a bounded test (at most two prompts, a repository copy).
 
 ## What was built
 
@@ -12,7 +12,14 @@
 
 ## Demonstration
 
-Only synthetic. In headless Chrome, the model page ran against a scripted session interface injected into the page (no Agent, no container, no provider): the two-step start with its cost note, the working state with polling, an answered turn with a check, a submitted proposal, usage and the Agent's text, a follow-up prompt, closing, and at 390 px in dark mode no horizontal scroll. No browser console errors were logged. Its usage figures were invented by the script and prove nothing about a provider.
+**Real session (owner-approved test, 20 October 2026).** In WSL Ubuntu with Docker 29.4.1, a Linux build of this branch served the cockpit over a clone of the stockroom trial project at its committed head `e5b369a`, selected with its two dependency models, and the Runtime profile of that trial with its Agent model set to `claude-sonnet-5-5` (Claude Code adapter, existing agent image and dedicated runtime token). The turns were started through the cockpit's interface while the owner watched the page.
+
+- Prompt 1, "Lower the highest allowed on-hand quantity of an item from 9999 to 5000.": the turn ran about 25 seconds. The Agent called `check` (passed, one changed file) and `submit`; proposal `model-1` changed only `.markitect/model/stockroom/stock-limits.yaml`, the three statements of 9999 to 5000, with a passed check and no finding. In its final text the Agent noted, without changing them, that the realization files still state 9999. The container's end was observed.
+- Prompt 2 asked which Definitions state the limit, without a change: the conversation was resumed, the Agent answered through `answer` (`stock-limits` states it; `receive` and `item` refer to it) and made no proposal.
+- The provider reported 12 provider steps and an estimated 0.13 USD for both turns.
+- Accepting `model-1` through the cockpit published it with the outcome `applied` and the read-back state `after`; the clone's working tree held exactly that change, uncommitted, and `markitect check` passed on it. Closing the session left no volume or container of the session. Its evidence: `events.jsonl` (session start, two prompts and turn starts, the tool uses, the proposal, two turn ends, close) and one transcript per turn.
+
+**Synthetic page check.** In headless Chrome, the model page ran against a scripted session interface injected into the page (no Agent, no container, no provider): the two-step start with its cost note, the working state with polling, an answered turn with a check, a submitted proposal, usage and the Agent's text, a follow-up prompt, closing, and at 390 px in dark mode no horizontal scroll. No browser console errors were logged. Its usage figures were invented by the script and prove nothing about a provider.
 
 ## Checks
 
@@ -22,4 +29,4 @@ The independent review required releasing the workspace after a failed materiali
 
 ## Not established
 
-A real session: an Agent of a Runtime profile in a container answering a prompt, its transcript, usage and proposal, and the owner's acceptance of a model proposal. That needs a provider turn, which the owner starts with a prompt. Owner use of the page is unassessed.
+Sessions with Codex, with a larger model or a longer conversation, a halted session or a cut-off turn in a real container, and the owner's own use of the page. The test session ran one small change on a trial project; it says nothing about the quality of larger model changes.
