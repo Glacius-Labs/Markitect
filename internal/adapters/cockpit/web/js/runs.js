@@ -36,7 +36,7 @@ export function renderRuns(app) {
     settled(observe ? api.observeProject() : api.project()).then((project) => {
       if (!live()) return;
       answers = Boolean(project.value?.answers);
-      const authoring = Boolean(project.value?.configured);
+      const authoring = Boolean(project.value?.proposals);
       renderProject(sections.project, project, () => refresh(true));
       renderActions(sections.actions, answers, authoring);
       if (authoring) settled(api.proposals()).then((proposals) => live() && renderProposals(sections.proposals, proposals));

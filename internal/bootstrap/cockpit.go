@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"path/filepath"
+	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cockpit"
@@ -36,7 +37,17 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 		}
 		states = append(states, cfg.StateDirectory)
 	}
-	cfg := cockpit.Config{States: states, Liveness: stateHeld, Answer: writeAnswer}
+	fence := &fencedStates{held: map[string]bool{}}
+	// While the cockpit itself holds a state lock to publish a proposal, no
+	// Apply holds it: the lock probe would otherwise report a run as running.
+	liveness := func(dir string) (bool, error) {
+		if fence.has(dir) {
+			return false, nil
+		}
+		return stateHeld(dir)
+	}
+	cfg := cockpit.Config{States: states, Liveness: liveness, Answer: writeAnswer}
+	var proposals *authoring.Service
 	if request.Repository != "" {
 		repository, err := filepath.Abs(request.Repository)
 		if err != nil {
@@ -45,13 +56,42 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 		cfg.Project = func(ctx context.Context) (cockpit.ProjectInfo, error) {
 			return c.project(ctx, repository)
 		}
-		cfg.Authoring = c.authoring(repository, states)
+		proposals = c.authoring(repository, states, fence)
+		cfg.Authoring = proposals
 	}
 	server, err := cockpit.New(cfg)
 	if err != nil {
 		return err
 	}
-	return server.Serve(ctx, request.Listen, ready)
+	err = server.Serve(ctx, request.Listen, ready)
+	if proposals != nil {
+		proposals.Wait()
+	}
+	return err
+}
+
+// fencedStates are the state directories the cockpit holds to publish.
+type fencedStates struct {
+	mu   sync.Mutex
+	held map[string]bool
+}
+
+func (f *fencedStates) has(dir string) bool {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	return f.held[dir]
+}
+
+func (f *fencedStates) set(dirs []string, held bool) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	for _, dir := range dirs {
+		if held {
+			f.held[dir] = true
+		} else {
+			delete(f.held, dir)
+		}
+	}
 }
 
 func repositorySelection(repository string) (apply.InputSelection, error) {
@@ -91,8 +131,9 @@ func (c cockpitService) project(ctx context.Context, repository string) (cockpit
 // authoring composes the proposal service: the committed capture Apply uses,
 // the repository's guarded publisher, and a fence that holds the lock of every
 // observed state directory, so no Apply observed here runs while an accepted
-// proposal is written.
-func (c cockpitService) authoring(repository string, states []string) *authoring.Service {
+// proposal is written. An Apply started meanwhile refuses as if another Apply
+// held its directory; the publication takes seconds.
+func (c cockpitService) authoring(repository string, states []string, fence *fencedStates) *authoring.Service {
 	capture := func(ctx context.Context) (apply.CapturedPreparation, error) {
 		selection, err := repositorySelection(repository)
 		if err != nil {
@@ -117,7 +158,11 @@ func (c cockpitService) authoring(repository string, states []string) *authoring
 			}
 			held = append(held, l)
 		}
-		return held, held.release, nil
+		fence.set(states, true)
+		return held, func() {
+			fence.set(states, false)
+			held.release()
+		}, nil
 	}
 	return authoring.New(repository, capture, c.repository, lock)
 }

@@ -16,8 +16,12 @@ export function renderProposal(app, id) {
   const main = h("main", { id: "main", class: "runs authoring" });
   app.append(main);
   main.append(top(`Proposal ${id}`), h("p", { class: "lead", role: "status" }, "Reading the proposal…"));
+  let poll = null;
   const draw = (p, focus) => {
     if (!main.isConnected) return;
+    // A publication in progress is read again until it has its receipt.
+    clearTimeout(poll);
+    if (p.state === "publishing") poll = setTimeout(() => api.proposal(p.id).then((q) => draw(q, q.state === "publishing" ? null : ".outcome.big"), () => {}), 2000);
     append(clear(main), [top(`Proposal ${p.id}: ${p.title}`), proposalBody(p, draw)]);
     if (focus) main.querySelector(focus)?.focus();
   };
@@ -160,10 +164,11 @@ function after(p) {
   return h("p", {}, h("a", { href: "#/" }, "Back to the cockpit"));
 }
 
-// proposalList is the entry's short list of this cockpit's proposals.
+// proposalList is the entry's short list of this cockpit's proposals, newest
+// first.
 export function proposalList(proposals) {
   if (!proposals.length) return h("p", { class: "muted" }, "No proposal yet in this cockpit.");
-  return h("ul", { class: "proplist" }, [...proposals].reverse().map((p) => h("li", {},
+  return h("ul", { class: "proplist" }, proposals.map((p) => h("li", {},
     h("span", { class: `outcome ${stateClass[p.state] || ""}` }, h("span", { class: "lamp" })),
     h("a", { href: `#/proposal/${encodeURIComponent(p.id)}` }, `${p.id}: ${p.title}`),
     h("span", { class: "muted" }, ` ${stateWords[p.state] || p.state}, made ${when(p.created)}`))));

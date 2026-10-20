@@ -40,9 +40,9 @@ type Config struct {
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
-// of the configured state directories. Apart from an owner's answer through
-// the configured owner channel, no request starts, answers, stops, repairs or
-// publishes anything.
+// of the configured state directories. It writes only an owner's answer
+// through the configured owner channel and an accepted proposal through the
+// configured authoring service; no request starts, stops or repairs a run.
 type Server struct {
 	states    []*stateDirectory
 	liveness  Liveness

@@ -109,3 +109,43 @@ func TestDiffLinesCutsUnchangedRuns(t *testing.T) {
 		t.Fatalf("gaps = %d and %d, want 7 and 6", lines[0].Gap, lines[len(lines)-1].Gap)
 	}
 }
+
+// A field the owner did not change keeps its text: comments and block style of
+// the team and of a Package's profiles survive an edit elsewhere.
+func TestEditSettingsKeepsUnchangedFieldsVerbatim(t *testing.T) {
+	doc := `apiVersion: markitect.execution/v1
+strategy: recursive-passes-v1
+budget:
+  executionTime: 25m
+  turnTimeout: 10m
+  agentTurns: 120
+  passes: 12
+profiles:
+  execute: project-agent
+  verify: project-agent
+packages:
+  lending:
+    profiles:
+      execute: fast-agent # the quick one
+team:
+  # one writer at a time
+  maxHelpers: 1
+  helpers:
+    - role: worker
+      writes: true
+      instructions: []
+`
+	settings, err := readSettings([]byte(doc))
+	if err != nil {
+		t.Fatal(err)
+	}
+	same, err := editSettings([]byte(doc), settings)
+	if err != nil || string(same) != doc {
+		t.Fatalf("an unchanged edit rewrites the document:\n%s %v", same, err)
+	}
+	settings.Budget.Passes = 9
+	out, err := editSettings([]byte(doc), settings)
+	if err != nil || string(out) != strings.Replace(doc, "passes: 12", "passes: 9", 1) {
+		t.Fatalf("a budget edit changes more than the budget:\n%s %v", out, err)
+	}
+}

@@ -35,6 +35,9 @@ export function refusal(err) {
   if (/uncommitted|not clean|dirty/i.test(text)) {
     return `The working tree differs from its commit. A proposal starts from the committed source, so commit or set aside the open changes first. (${text})`;
   }
+  if (/changed since the settings were read/.test(text)) {
+    return "The committed source changed since this form was read. Reload the page to edit the current settings; edits made here would otherwise undo what was committed.";
+  }
   if (/without a repository|--repo/.test(text)) return "Proposals need the cockpit to be started in a repository: markitect cockpit --repo PATH.";
   return text;
 }
@@ -54,6 +57,12 @@ function settingsForm(committed, s) {
     status);
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
+    const whole = [...form.querySelectorAll("input[type=number]")].find((i) => !/^\d+$/.test(i.value.trim()));
+    if (whole) {
+      status.textContent = `${whole.labels?.[0]?.textContent || "This field"} needs a whole number.`;
+      whole.focus();
+      return;
+    }
     submit.disabled = true;
     status.textContent = "Making the proposal and running the structural check on it…";
     try {
@@ -72,11 +81,13 @@ function settingsForm(committed, s) {
 
 function reset(form, committed) {
   draft = { head: committed.head, settings: structuredClone(committed) };
-  form.replaceWith(settingsForm(committed, draft.settings));
+  const next = settingsForm(committed, draft.settings);
+  form.replaceWith(next);
+  next.querySelector("input")?.focus();
 }
 
-// field is one labelled input bound to obj[key]. Numbers stay numbers; an
-// invalid entry is passed on as it is, so the check names it.
+// field is one labelled input bound to obj[key]. Numbers stay numbers; the
+// form refuses to propose a number field that is not a whole number.
 function field(labelText, obj, key, { type = "text", hint, placeholder, id } = {}) {
   id = id || `f-${Math.random().toString(36).slice(2, 9)}`;
   const input = h("input", { id, type, value: obj[key] ?? "", placeholder, inputmode: type === "number" ? "numeric" : undefined, min: type === "number" ? 0 : undefined, "aria-describedby": hint ? `${id}-hint` : undefined });
@@ -152,7 +163,7 @@ function team(s, committed) {
   const body = h("div", {});
   const own = h("input", { type: "radio", name: "team", id: "team-own", checked: Boolean(s.team) });
   const product = h("input", { type: "radio", name: "team", id: "team-default", checked: !s.team });
-  const draw = () => {
+  const draw = (focus) => {
     clear(body);
     if (!s.team) {
       body.append(h("p", { class: "note" }, "Every Manager works with the product's default team. Choosing an own team replaces it."));
@@ -162,11 +173,12 @@ function team(s, committed) {
     body.append(h("div", { class: "grid4" }, field("Active helpers at most", s.team, "maxHelpers", { type: "number", hint: "at least 1 when there are helper roles" })));
     const list = h("ol", { class: "helpers" });
     s.team.helpers.forEach((helper, i) => list.append(helperRow(s.team, helper, i, draw)));
-    body.append(list, h("button", { class: "btn", type: "button", onclick: () => {
+    body.append(list, h("button", { class: "btn addhelper", type: "button", onclick: () => {
       s.team.helpers.push({ role: "", profile: "", writes: false, instructions: [] });
       draw();
       body.querySelector(".helpers li:last-child input")?.focus();
     } }, "Add a helper role"));
+    if (focus) body.querySelector(focus)?.focus();
     body.append(h("p", { class: "note" }, "A role name uses lowercase letters, digits and hyphens; manager and reviewer are reserved. A helper without a profile uses the Execute profile. Instructions are repository paths of instruction files, separated by commas."));
   };
   own.addEventListener("change", () => {
@@ -198,6 +210,6 @@ function helperRow(t, helper, i, redraw) {
     h("div", { class: "field check" }, writes, h("label", { for: `${id}-writes` }, "Writes files")),
     h("button", { class: "btn", type: "button", "aria-label": `Remove helper role ${helper.role || i + 1}`, onclick: () => {
       t.helpers.splice(i, 1);
-      redraw();
+      redraw(".addhelper");
     } }, "Remove"));
 }

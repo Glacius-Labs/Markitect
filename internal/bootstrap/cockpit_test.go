@@ -23,7 +23,7 @@ func authoringFixture(t *testing.T) (*testkit.Repo, string, *authoring.Service) 
 	}
 	state := testkit.TempDir(t)
 	preparation := apply.NewPreparationService(apply.NewModelService(repository, repository))
-	return repo, state, cockpitService{preparation: preparation, repository: repository}.authoring(repo.Dir, []string{state})
+	return repo, state, cockpitService{preparation: preparation, repository: repository}.authoring(repo.Dir, []string{state}, &fencedStates{held: map[string]bool{}})
 }
 
 func TestCockpitPublishesAnAcceptedSettingsProposalUnderTheStateLock(t *testing.T) {
@@ -144,5 +144,48 @@ func TestCockpitRefusesAProposalWhoseSourceChangedSinceItWasMade(t *testing.T) {
 	after, err := os.ReadFile(filepath.Join(repo.Dir, ".markitect", "execution.yaml"))
 	if err != nil || string(after) != string(before) {
 		t.Fatalf("a stale proposal changed the working tree: %v", err)
+	}
+}
+
+// A helper instruction the committed source holds but nothing referenced yet
+// is read from the proposed tree, as markitect check reads it.
+func TestCockpitChecksNewlyReferencedInstructions(t *testing.T) {
+	ctx := context.Background()
+	repo, _, service := authoringFixture(t)
+	repo.Write("docs/worker.md", "worker instructions\n")
+	repo.Commit("add worker instructions")
+	settings, err := service.Settings(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	settings.Team = &authoring.Team{MaxHelpers: 1, Helpers: []authoring.Helper{{Role: "worker", Writes: true, Instructions: []string{"docs/worker.md"}}}}
+	proposal, err := service.ProposeSettings(ctx, settings)
+	if err != nil || proposal.Check.Status != "passed" {
+		t.Fatalf("proposal = %+v, %v", proposal.Check, err)
+	}
+	settings.Team.Helpers[0].Instructions = []string{"docs/absent.md"}
+	proposal, err = service.ProposeSettings(ctx, settings)
+	if err != nil || proposal.Check.Status == "passed" {
+		t.Fatalf("a missing instruction file passes: %+v, %v", proposal.Check, err)
+	}
+}
+
+// Settings read before a commit are not applied to the newer source, which
+// could undo what was committed.
+func TestCockpitRefusesSettingsReadFromAnEarlierHead(t *testing.T) {
+	ctx := context.Background()
+	repo, _, service := authoringFixture(t)
+	settings, err := service.Settings(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo.Write("notes.md", "committed after the settings were read\n")
+	repo.Commit("move the head")
+	if _, err := service.Settings(ctx); err != nil {
+		t.Fatal(err)
+	}
+	settings.Budget.Passes = 9
+	if _, err := service.ProposeSettings(ctx, settings); !errors.Is(err, authoring.ErrMoved) {
+		t.Fatalf("settings from the earlier head = %v, want ErrMoved", err)
 	}
 }

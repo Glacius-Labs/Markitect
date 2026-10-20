@@ -30,9 +30,15 @@ func (c ProposalCheck) Attempt() CapturedPreparationAttempt { return c.attempt }
 // CheckProposal prepares a proposed tree against a captured start. The inputs
 // outside the repository, such as dependency models, stay as captured. Extract
 // rebinds its model-phase candidates exactly so; nothing else of Extract
-// applies.
+// applies. Like the capture's second pass, the instruction and ignore files
+// the proposed tree newly references are read from it and prepared once more.
 func CheckProposal(start CapturedPreparationAttempt, tree snapshot.Tree) ProposalCheck {
-	a := rebindStructural(start.Model(), tree, extractModel)
+	base := start.Model()
+	a := rebindStructural(base, tree, extractModel)
+	if raw, missing := proposalClosure(a, tree); missing {
+		base.inputs.Raw = raw
+		a = rebindStructural(base, tree, extractModel)
+	}
 	c := ProposalCheck{attempt: a, Status: structuralPreparationStatus(a.stage.checked.Status, a.registry.Status(), a.files.Status(), a.execution.Status(), a.contexts.Status())}
 	// A later stage can repeat an earlier stage's diagnostic; it is reported
 	// once, under the stage that found it first.
@@ -71,4 +77,31 @@ func CheckProposal(start CapturedPreparationAttempt, tree snapshot.Tree) Proposa
 		add("context", d.Code, d.Package, d.Message)
 	}
 	return c
+}
+
+// proposalClosure adds the instruction and ignore files the prepared stand
+// references but did not read, when the proposed tree holds them.
+func proposalClosure(a CapturedPreparationAttempt, tree snapshot.Tree) (RawInputs, bool) {
+	raw := cloneRaw(a.stage.inputs.Raw)
+	closure := observedPreparationClosure(raw, a.registry.Discovered(), a.execution.Partial())
+	repository := a.stage.request.Selection.Repository
+	missing := false
+	add := func(files []SourceFile, required []snapshot.Path) []SourceFile {
+		seen := make(map[snapshot.Path]bool)
+		for _, f := range files {
+			seen[f.RepositoryPath] = true
+		}
+		for _, path := range required {
+			entry, found := tree.Lookup(path)
+			if seen[path] || !found {
+				continue
+			}
+			seen[path], missing = true, true
+			files = append(files, SourceFile{Location: SourceLocation{Boundary: repository, Path: path}, File: entry, RepositoryPath: path})
+		}
+		return files
+	}
+	raw.Instructions = add(raw.Instructions, closure.instructions)
+	raw.Ignore = add(raw.Ignore, closure.ignore)
+	return raw, missing
 }

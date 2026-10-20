@@ -184,3 +184,7 @@ artifacts:
     form: test
     realizes: [product/cockpit/accepted-proposals]
     why: "Verifies on a repository that an accepted settings proposal is written under the state lock with read-back and is not committed, and that neither a proposal failing its check nor one whose source changed since is written."
+  - path: "internal/authoring/service_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that only an applied or no-change publication accepts a proposal, that partial, unknown and stale ones fail with their receipt, that a fenced one stays open and that an unchecked one is never published."

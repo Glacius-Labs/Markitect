@@ -35,6 +35,8 @@ type Service struct {
 	lock       Locker
 	now        func() time.Time
 
+	publishing sync.WaitGroup // started publications
+
 	mu        sync.Mutex
 	proposals map[string]*proposal
 	order     []string
@@ -64,12 +66,13 @@ type Proposal struct {
 	Decided time.Time  `json:"decided,omitzero"`
 }
 
-// Proposal states.
+// Proposal states. Publishing lasts while an accepted proposal is written.
 const (
-	Proposed  = "proposed"
-	Accepted  = "accepted"
-	Discarded = "discarded"
-	Failed    = "failed"
+	Proposed   = "proposed"
+	Publishing = "publishing"
+	Accepted   = "accepted"
+	Discarded  = "discarded"
+	Failed     = "failed"
 )
 
 // Check is the structural check of a proposed stand.
@@ -116,6 +119,13 @@ const standReuse = 15 * time.Minute
 // wraps it.
 var ErrNotClean = errors.New("the working tree has uncommitted changes; commit them before proposing")
 
+// ErrNoChange reports a proposal that changes nothing; ErrOutOfScope one that
+// changes a path its producer may not change.
+var (
+	ErrNoChange   = errors.New("the proposal changes nothing")
+	ErrOutOfScope = errors.New("the proposal changes a path it may not change")
+)
+
 func (s *Service) stand(ctx context.Context) (stand, error) {
 	captured, err := s.capture(ctx)
 	if err != nil {
@@ -151,11 +161,11 @@ func (s *Service) standFrom(ctx context.Context, head string) (stand, error) {
 func (s *Service) propose(st stand, kind, title string, proposed snapshot.Tree, allowed func(string) bool) (Proposal, error) {
 	changes := snapshot.Compare(st.tree, proposed)
 	if len(changes) == 0 {
-		return Proposal{}, errors.New("the proposal changes nothing")
+		return Proposal{}, ErrNoChange
 	}
 	for _, c := range changes {
 		if !allowed(c.Path().String()) {
-			return Proposal{}, fmt.Errorf("a %s proposal may not change %s", kind, c.Path())
+			return Proposal{}, fmt.Errorf("%w: a %s proposal may not change %s", ErrOutOfScope, kind, c.Path())
 		}
 	}
 	checked := apply.CheckProposal(st.attempt, proposed)
@@ -176,6 +186,10 @@ func (s *Service) propose(st stand, kind, title string, proposed snapshot.Tree, 
 	s.order = append(s.order, p.ID)
 	return p.Proposal, nil
 }
+
+// Wait returns when every started publication has its receipt, so a cockpit
+// that stops does not cut a write short.
+func (s *Service) Wait() { s.publishing.Wait() }
 
 // Proposals lists the proposals, newest first.
 func (s *Service) Proposals() []Proposal {
@@ -232,8 +246,10 @@ func (s *Service) Accept(ctx context.Context, id string) (Proposal, error) {
 		s.mu.Unlock()
 		return p.Proposal, fmt.Errorf("proposal %s does not pass the check (%s); it cannot be accepted", id, p.Check.Status)
 	}
-	p.State = "publishing"
+	p.State = Publishing
+	s.publishing.Add(1)
 	s.mu.Unlock()
+	defer s.publishing.Done()
 
 	receipt, started, err := s.publish(ctx, p)
 	s.mu.Lock()

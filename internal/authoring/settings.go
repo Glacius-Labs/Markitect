@@ -17,9 +17,10 @@ import (
 const ExecutionPath = ".markitect/execution.yaml"
 
 // Settings are the parts of the execution settings the cockpit edits: the
-// budget, the default profiles, the per-Package profile overrides and the
-// team. Everything else of the document (ownership, instructions, scope,
-// checks) is kept as it is. Packages lists the local Packages of the model.
+// budget, the role profiles, the per-Package profile overrides and the team.
+// Everything else of the document (ownership, top-level and per-Package
+// instructions, scope, checks) is kept as it is. Head is the committed source
+// the settings were read from. Packages lists the local Packages of the model.
 type Settings struct {
 	Head      string            `json:"head"`
 	Budget    Budget            `json:"budget"`
@@ -67,6 +68,10 @@ type Helper struct {
 	Instructions []string `json:"instructions,omitempty" yaml:"instructions"`
 }
 
+// ErrMoved reports settings edited from a committed source that is no longer
+// the head: applying them could revert what was committed since.
+var ErrMoved = errors.New("the committed source changed since the settings were read; read them again")
+
 // ErrNoExecution reports a project without execution settings.
 var ErrNoExecution = errors.New("the project has no " + ExecutionPath)
 
@@ -97,11 +102,14 @@ func (s *Service) Settings(ctx context.Context) (Settings, error) {
 
 // ProposeSettings makes a proposal that changes only the execution settings
 // document to the given settings, from the capture of the head they were read
-// from when it is recent.
+// from when it is recent. Settings read from another head are refused.
 func (s *Service) ProposeSettings(ctx context.Context, edit Settings) (Proposal, error) {
 	st, err := s.standFrom(ctx, edit.Head)
 	if err != nil {
 		return Proposal{}, err
+	}
+	if edit.Head != st.head {
+		return Proposal{}, fmt.Errorf("%w (read at %.12s, now %.12s)", ErrMoved, edit.Head, st.head)
 	}
 	content, err := lookup(st.tree, ExecutionPath)
 	if err != nil {
@@ -160,9 +168,14 @@ func readSettings(content []byte) (Settings, error) {
 	return settings, nil
 }
 
-// editSettings changes the edited fields in the document's node tree, so the
-// comments, order and every other field stay as they were.
+// editSettings changes the fields whose value differs from the document's in
+// its node tree, so unchanged fields keep their text, comments and style and
+// every other field stays as it was. A changed team is written anew.
 func editSettings(content []byte, edit Settings) ([]byte, error) {
+	current, err := readSettings(content)
+	if err != nil {
+		return nil, err
+	}
 	var doc yaml.Node
 	if err := yaml.Unmarshal(content, &doc); err != nil {
 		return nil, fmt.Errorf("%s is not readable YAML: %w", ExecutionPath, err)
@@ -171,18 +184,24 @@ func editSettings(content []byte, edit Settings) ([]byte, error) {
 		return nil, fmt.Errorf("%s is not a mapping", ExecutionPath)
 	}
 	root := doc.Content[0]
-	budget := child(root, "budget")
-	setScalar(budget, "executionTime", edit.Budget.ExecutionTime, "!!str")
-	setScalar(budget, "turnTimeout", edit.Budget.TurnTimeout, "!!str")
-	setScalar(budget, "agentTurns", strconv.Itoa(edit.Budget.AgentTurns), "!!int")
-	setScalar(budget, "passes", strconv.Itoa(edit.Budget.Passes), "!!int")
-	profiles := child(root, "profiles")
-	setScalar(profiles, "execute", edit.Profiles.Execute, "!!str")
-	setScalar(profiles, "verify", edit.Profiles.Verify, "!!str")
-	editOverrides(root, edit.Overrides)
-	if edit.Team == nil {
+	for _, f := range []struct{ section, key, before, after, tag string }{
+		{"budget", "executionTime", current.Budget.ExecutionTime, edit.Budget.ExecutionTime, "!!str"},
+		{"budget", "turnTimeout", current.Budget.TurnTimeout, edit.Budget.TurnTimeout, "!!str"},
+		{"budget", "agentTurns", strconv.Itoa(current.Budget.AgentTurns), strconv.Itoa(edit.Budget.AgentTurns), "!!int"},
+		{"budget", "passes", strconv.Itoa(current.Budget.Passes), strconv.Itoa(edit.Budget.Passes), "!!int"},
+		{"profiles", "execute", current.Profiles.Execute, edit.Profiles.Execute, "!!str"},
+		{"profiles", "verify", current.Profiles.Verify, edit.Profiles.Verify, "!!str"},
+	} {
+		if f.before != f.after {
+			setScalar(child(root, f.section), f.key, f.after, f.tag)
+		}
+	}
+	editOverrides(root, current.Overrides, edit.Overrides)
+	switch {
+	case sameTeam(current.Team, edit.Team):
+	case edit.Team == nil:
 		remove(root, "team")
-	} else {
+	default:
 		set(root, "team", teamNode(*edit.Team))
 	}
 	var out bytes.Buffer
@@ -197,14 +216,36 @@ func editSettings(content []byte, edit Settings) ([]byte, error) {
 	return out.Bytes(), nil
 }
 
+// sameTeam says whether two teams declare the same helpers.
+func sameTeam(a, b *Team) bool {
+	if a == nil || b == nil {
+		return a == nil && b == nil
+	}
+	if a.MaxHelpers != b.MaxHelpers || len(a.Helpers) != len(b.Helpers) {
+		return false
+	}
+	for i, x := range a.Helpers {
+		y := b.Helpers[i]
+		if x.Role != y.Role || x.Profile != y.Profile || x.Writes != y.Writes || !slices.Equal(x.Instructions, y.Instructions) {
+			return false
+		}
+	}
+	return true
+}
+
 // editOverrides sets the profile overrides of the listed Packages and removes
-// those of every other Package; a Package entry left empty is removed.
-func editOverrides(root *yaml.Node, overrides []PackageProfiles) {
+// those of every other Package; an entry whose overrides are unchanged is left
+// as it is, and a Package entry left empty is removed.
+func editOverrides(root *yaml.Node, current, overrides []PackageProfiles) {
 	wanted := map[string]PackageProfiles{}
 	for _, o := range overrides {
 		if o.Package != "" && (o.Execute != "" || o.Verify != "") {
 			wanted[o.Package] = o
 		}
+	}
+	have := map[string]PackageProfiles{}
+	for _, o := range current {
+		have[o.Package] = o
 	}
 	packages := value(root, "packages")
 	if packages == nil {
@@ -217,15 +258,14 @@ func editOverrides(root *yaml.Node, overrides []PackageProfiles) {
 	if packages.Kind != yaml.MappingNode {
 		return
 	}
-	packages.Style = 0
 	for i := 0; i+1 < len(packages.Content); i += 2 {
 		name, entry := packages.Content[i].Value, packages.Content[i+1]
-		o, ok := wanted[name]
+		o := wanted[name]
 		delete(wanted, name)
-		if entry.Kind != yaml.MappingNode {
+		if entry.Kind != yaml.MappingNode || o.Execute == have[name].Execute && o.Verify == have[name].Verify {
 			continue
 		}
-		if !ok {
+		if o.Execute == "" && o.Verify == "" {
 			remove(entry, "profiles")
 		} else {
 			setProfiles(entry, o)
@@ -240,6 +280,9 @@ func editOverrides(root *yaml.Node, overrides []PackageProfiles) {
 		names = append(names, name)
 	}
 	slices.Sort(names)
+	if len(names) > 0 {
+		packages.Style = 0
+	}
 	for _, name := range names {
 		entry := &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map"}
 		setProfiles(entry, wanted[name])
@@ -250,9 +293,14 @@ func editOverrides(root *yaml.Node, overrides []PackageProfiles) {
 	}
 }
 
+// setProfiles sets one Package's profile overrides in place; a new profiles
+// mapping is written in flow style.
 func setProfiles(entry *yaml.Node, o PackageProfiles) {
-	profiles := child(entry, "profiles")
-	profiles.Style = yaml.FlowStyle
+	profiles := value(entry, "profiles")
+	if profiles == nil || profiles.Kind != yaml.MappingNode {
+		profiles = &yaml.Node{Kind: yaml.MappingNode, Tag: "!!map", Style: yaml.FlowStyle}
+		set(entry, "profiles", profiles)
+	}
 	for _, role := range []struct{ key, value string }{{"execute", o.Execute}, {"verify", o.Verify}} {
 		if role.value == "" {
 			remove(profiles, role.key)

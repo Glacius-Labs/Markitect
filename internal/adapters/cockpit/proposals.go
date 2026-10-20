@@ -118,10 +118,10 @@ func (s *Server) handleDecide(w http.ResponseWriter, r *http.Request) {
 
 func proposalStatus(err error) int {
 	switch {
-	case errors.Is(err, authoring.ErrNotClean), errors.Is(err, authoring.ErrNoExecution):
+	case errors.Is(err, authoring.ErrNotClean), errors.Is(err, authoring.ErrNoExecution), errors.Is(err, authoring.ErrMoved):
 		return http.StatusConflict
-	case strings.Contains(err.Error(), "changes nothing"), strings.Contains(err.Error(), "may not change"):
+	case errors.Is(err, authoring.ErrNoChange), errors.Is(err, authoring.ErrOutOfScope):
 		return http.StatusBadRequest
 	}
-	return http.StatusUnprocessableEntity
+	return http.StatusInternalServerError
 }
