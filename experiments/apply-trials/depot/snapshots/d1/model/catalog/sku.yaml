@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+id: sku
+kind: Software.Rule
+body: |-
+  Wherever a command of [[Depot.system]] takes a SKU, including the lines of an
+  order, the SKU is trimmed of surrounding whitespace and converted to
+  uppercase; the result must be exactly three letters A-Z, a hyphen and three
+  digits 0-9, for example ABC-123. Two SKUs with the same normalized value
+  denote the same [[item]], and every record shows the normalized SKU. A SKU
+  that is malformed, or that names no item where an existing item is required,
+  fails through [[Depot.interface]] with stored data unchanged.
+spec: {}

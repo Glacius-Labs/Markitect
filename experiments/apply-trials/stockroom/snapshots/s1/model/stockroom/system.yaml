@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+id: system
+kind: Software.Concept
+body: |-
+  A small local stock-keeping CLI for one operator. It registers [[item|items]]
+  with [[add-item]], records goods received with [[receive]] and goods issued
+  with [[issue]], and shows the current stock with [[list]]. [[inputs]],
+  [[stock-limits]], [[storage]] and [[interface]] govern every command.
+  [[realization]] requires code, meaningful tests and usage documentation.
+  Use the Python 3.13 standard library, with no service, network or package
+  installation. There are no prices, locations, orders, reservations, users,
+  renaming or deletion of items.
+spec: {}

@@ -1836,6 +1836,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: "Preserves the second Apply iteration after the #492 findings and its stability series."
+  - path: "docs/validation/apply-extract-closeout-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Closes the Apply and Extract evidence series: status per obligation and build, and the final confirmation run with no-change."
   - path: "docs/validation/recursive-apply-demonstration-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]

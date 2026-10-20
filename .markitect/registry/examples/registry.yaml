@@ -8,6 +8,406 @@ artifacts:
     form: doc
     realizes: [examples/independent-oracles]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "experiments/apply-trials/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Guides the operator through the Apply trial cases, their packet boundary, self-check, later run and assessment.
+  - path: "experiments/apply-trials/answer-key.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Lists every deliberate trial fault and expected Apply outcome as operator material generated from cases.py.
+  - path: "experiments/apply-trials/assess.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Judges an Apply trial result against its case for outcome, behavior, faults, regression tests, scope and report.
+  - path: "experiments/apply-trials/bind_profiles.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Adapts an attempt bound by the demonstration harness to the trial projects' profile names and Python image.
+  - path: "experiments/apply-trials/cases.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Defines each Apply trial case with its exact model and artifact edits, expectation and checks, outside every packet.
+  - path: "experiments/apply-trials/depot/checks.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Holds the depot black-box checks per expectation profile, each citing the Definitions it observes.
+  - path: "experiments/apply-trials/depot/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the depot trial packets' layout, budget, profile names and Python test command.
+  - path: "experiments/apply-trials/depot/reference/realization/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/app.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/catalog/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/catalog/items.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/catalog/test_items.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/depot/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/depot/errors.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/depot/inputs.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/depot/store.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/orders/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/orders/orderbook.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/orders/test_orders.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/reports/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/reports/test_views.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/reports/views.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/stock/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/stock/ledger.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/stock/test_ledger.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/tests/__init__.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/realization/tests/test_cli.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct depot reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/depot/reference/registry/catalog/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Registers the depot reference realization in the catalog shard of the trial packets.
+  - path: "experiments/apply-trials/depot/reference/registry/depot/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Registers the depot reference realization in the depot shard of the trial packets.
+  - path: "experiments/apply-trials/depot/reference/registry/orders/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Registers the depot reference realization in the orders shard of the trial packets.
+  - path: "experiments/apply-trials/depot/reference/registry/reports/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Registers the depot reference realization in the reports shard of the trial packets.
+  - path: "experiments/apply-trials/depot/reference/registry/stock/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Registers the depot reference realization in the stock shard of the trial packets.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Locks the Core and Software inputs of the depot trial snapshot d1.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Names the depot trial snapshot d1 and its pinned dependencies.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/catalog/add-item.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines catalog/add-item in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/catalog/item.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines catalog/item in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/catalog/sku.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines catalog/sku in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/depot/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines depot/inputs in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/depot/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines depot/interface in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/depot/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines depot/realization in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/depot/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines depot/storage in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/depot/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines depot/system in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/orders/availability.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines orders/availability in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/orders/cancel-order.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines orders/cancel-order in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/orders/fulfil-order.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines orders/fulfil-order in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/orders/list-orders.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines orders/list-orders in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/orders/order.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines orders/order in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/orders/place-order.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines orders/place-order in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/reports/reorder.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines reports/reorder in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/reports/stock-view.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines reports/stock-view in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/stock/limits.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stock/limits in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/stock/on-hand.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stock/on-hand in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/depot/snapshots/d1/model/stock/receive.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stock/receive in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/materialize.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Builds and audits the packet of one Apply trial case without any operator material.
+  - path: "experiments/apply-trials/oracle.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Assesses a trial realization against one expectation profile and reports each check as JSON.
+  - path: "experiments/apply-trials/selfcheck.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Shows locally that the trial fixtures are consistent and that their checks discriminate every fault and profile.
+  - path: "experiments/apply-trials/stockroom/checks.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Holds the stockroom black-box checks per expectation profile, each citing the Definitions it observes.
+  - path: "experiments/apply-trials/stockroom/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the stockroom trial packets' layout, budget, profile names and Python test command.
+  - path: "experiments/apply-trials/stockroom/reference/realization/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct stockroom reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/stockroom/reference/realization/app.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct stockroom reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/stockroom/reference/realization/limits.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct stockroom reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/stockroom/reference/realization/stockroom.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct stockroom reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/stockroom/reference/realization/store.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct stockroom reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/stockroom/reference/realization/tests/test_cli.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct stockroom reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/stockroom/reference/realization/tests/test_rules.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct stockroom reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/stockroom/reference/registry/stockroom/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Registers the stockroom reference realization in the stockroom shard of the trial packets.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Locks the Core and Software inputs of the stockroom trial snapshot s1.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Names the stockroom trial snapshot s1 and its pinned dependencies.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/add-item.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/add-item in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/inputs in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/interface in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/issue.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/issue in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/item.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/item in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/list in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/realization in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/receive.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/receive in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/stock-limits.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/stock-limits in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/storage in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s1/model/stockroom/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/system in the stockroom trial snapshot s1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Locks the Core and Software inputs of the stockroom trial snapshot s2.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Names the stockroom trial snapshot s2 and its pinned dependencies.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/add-item.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/add-item in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/inputs in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/interface in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/issue.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/issue in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/item.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/item in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/list.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/list in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/realization in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/receive.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/receive in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/stock-limits.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/stock-limits in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/storage in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/snapshots/s2/model/stockroom/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Defines stockroom/system in the stockroom trial snapshot s2; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/stockroom/validation/o/app.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the o profile only to validate the stockroom checks; operator material, never part of a packet.
+  - path: "experiments/apply-trials/stockroom/validation/o/limits.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the o profile only to validate the stockroom checks; operator material, never part of a packet.
+  - path: "experiments/apply-trials/stockroom/validation/o/stockroom.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the o profile only to validate the stockroom checks; operator material, never part of a packet.
+  - path: "experiments/apply-trials/stockroom/validation/o/store.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the o profile only to validate the stockroom checks; operator material, never part of a packet.
+  - path: "experiments/apply-trials/stockroom/validation/s2/app.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the s2 profile only to validate the stockroom checks; operator material, never part of a packet.
+  - path: "experiments/apply-trials/stockroom/validation/s2/stockroom.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the s2 profile only to validate the stockroom checks; operator material, never part of a packet.
+  - path: "experiments/apply-trials/stockroom/validation/s2/store.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the s2 profile only to validate the stockroom checks; operator material, never part of a packet.
+  - path: "experiments/apply-trials/trial_kit.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Registers profile-based black-box trial checks on the shared test-project oracle helpers.
   - path: "experiments/library-playground/README.md"
     form: doc
     realizes: [examples/independent-oracles]

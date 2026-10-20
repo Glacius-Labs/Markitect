@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: catalog
+    as: Catalog
+id: inputs
+kind: Software.Rule
+body: |-
+  These input rules apply to every command of [[system]]; SKUs follow
+  [[Catalog.sku]]. A number is written as one or more ASCII decimal digits,
+  with no sign, whitespace, fraction or exponent; leading zeros do not change
+  its value. A quantity is such a number from 1 to 500. A reorder point is such
+  a number from 0 to 9999. An order id is such a number of at least 1. A name
+  is trimmed of surrounding whitespace and must then be nonempty and at most 60
+  characters, counted as Unicode code points. Invalid input fails through
+  [[interface]] and leaves stored data unchanged under [[storage]].
+spec: {}

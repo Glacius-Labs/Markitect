@@ -1,0 +1,34 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/README.md
+    form: doc
+    realizes: [depot/realization, depot/interface, depot/inputs, depot/storage, catalog/sku, orders/availability]
+    why: Documents every command, the inputs and rules, the output, the data file and the single-writer limitation.
+  - path: realization/app.py
+    form: code
+    realizes: [depot/interface, depot/storage]
+    why: Parses the command line, dispatches each command to its part, commits changes once and writes the result or error object.
+  - path: realization/depot/__init__.py
+    form: code
+    realizes: [depot/system]
+    why: Makes the project foundations an importable package.
+  - path: realization/depot/errors.py
+    form: code
+    realizes: [depot/interface]
+    why: Defines the refusal that every part raises and the command line turns into the error object.
+  - path: realization/depot/inputs.py
+    form: code
+    realizes: [depot/inputs]
+    why: Parses the shared numbers, quantities, reorder points, order ids and names.
+  - path: realization/depot/store.py
+    form: code
+    realizes: [depot/storage]
+    why: Reads the one data file, has each part validate its section and replaces the file atomically.
+  - path: realization/tests/__init__.py
+    form: test
+    realizes: [depot/interface]
+    why: Makes the end-to-end tests an importable package for test discovery.
+  - path: realization/tests/test_cli.py
+    form: test
+    realizes: [depot/interface, depot/storage]
+    why: Exercises the command line end to end across processes, including refusals that leave the file unchanged.

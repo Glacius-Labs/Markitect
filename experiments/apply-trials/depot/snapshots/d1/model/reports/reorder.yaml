@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+  - package: catalog
+    as: Catalog
+  - package: orders
+    as: Orders
+id: reorder
+kind: Software.UseCase
+body: |-
+  At [[Depot.interface]], `reorder` returns an object whose items field holds
+  one entry for every [[Catalog.item]] whose available quantity under
+  [[Orders.availability]] is below its reorder point. An entry is a JSON object
+  with exactly sku, name, available, reorderPoint and shortfall, where shortfall
+  is the reorder point minus the available quantity. Entries are sorted by
+  shortfall, largest first, then by SKU in ascending code-point order. A
+  missing data file is an empty result under [[Depot.storage]]. The query never
+  changes stored data.
+spec: {}
