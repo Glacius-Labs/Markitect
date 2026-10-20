@@ -10,6 +10,10 @@ import (
 // bound model is binding intent, never theirs to repair.
 const modelAuthority = "The bound model always holds. A choice it leaves open inside your responsibility is yours to make and document. What you cannot settle within the model goes to your parent; no answer overrides the model."
 
+// rootModelDuty is Root's own duty for a defective model: the run ends, since
+// no answer within the run can change the model.
+const rootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run, so ask the user only about what the model leaves open."
+
 func labelOf(m *mgr) string {
 	if m.Parent == "" {
 		return "Root (.)"
@@ -256,6 +260,9 @@ func (e *engine) standingLocked(b *strings.Builder, m *member) {
 		list(b, fmt.Sprintf("Your helper roles for delegate (at most %d at a time):", m.MaxHelpers), roles)
 	}
 	b.WriteString("\n" + modelAuthority + " " + methodIndex() + "\n")
+	if m.Parent == "" && !m.p.spec.Review {
+		b.WriteString(rootModelDuty + "\n")
+	}
 }
 
 // assignmentLocked renders the Pass assignment: purpose and mandate, the sealed
