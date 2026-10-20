@@ -14,9 +14,9 @@ class StoreError(Exception):
 
 def load(path):
     path = Path(path)
-    if not path.exists():
-        return {}
     try:
+        if not path.exists():
+            return {}
         document = json.loads(path.read_bytes().decode("utf-8"))
         if not isinstance(document, dict):
             raise ValueError("expected an object keyed by SKU")
@@ -30,7 +30,7 @@ def load(path):
                 raise ValueError("invalid on-hand quantity")
             data[sku] = {"name": item["name"], "onHand": item["onHand"]}
         return data
-    except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, stockroom.StockError) as error:
+    except (OSError, ValueError, TypeError, KeyError, RecursionError, stockroom.StockError) as error:
         raise StoreError("the data file %s cannot be read: %s" % (path, error)) from None
 
 

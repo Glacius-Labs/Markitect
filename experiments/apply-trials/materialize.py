@@ -48,8 +48,16 @@ def git(repo, *args, check=True):
     return done.stdout
 
 
+def project_root(project):
+    """A hand-written project directory, or the generated directory of a fleet project."""
+    if project.startswith("fleet-"):
+        import fleet
+        return fleet.project_dir(project)
+    return HERE / project
+
+
 def project_dir(case):
-    return HERE / case.project
+    return project_root(case.project)
 
 
 def apply_edits(root, edits, label):

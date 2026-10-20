@@ -49,13 +49,23 @@ def run(args):
     return record
 
 
+def attach_names(argv):
+    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""
+    attached, tokens = [], iter(argv)
+    for token in tokens:
+        value = next(tokens, None) if token == "--name" else None
+        attached.append(token if value is None else "--name=" + value)
+    return attached
+
+
 def main(argv=None):
     try:
-        result = run(build_parser().parse_args(argv))
+        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))
     except (UsageError, stockroom.StockError, store.StoreError) as error:
-        print(json.dumps({"error": str(error)}, ensure_ascii=False))
+        print(json.dumps({"error": str(error)}))
         return 2
-    print(json.dumps(result, ensure_ascii=False))
+    # ASCII escapes keep every output writable whatever the stdout encoding; the JSON value is the same.
+    print(json.dumps(result))
     return 0
 
 

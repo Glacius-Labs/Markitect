@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import Checks, Env, Skip, expect_equal, fail  # noqa: E402
+from trial_kit import Checks, Env, Skip, expect_equal, fail, no_crash, unusable_change, unusable_query  # noqa: E402
 
 PROFILES = {
     "s1": {"snapshot": "s1", "maxQty": 1000, "reorder": False},
@@ -110,6 +110,7 @@ def _(env, p):
 def _(env, p):
     expect_equal(add(env, "AAA-001", "é" * 60)["name"], "é" * 60, "60 non-ASCII code points")
     expect_equal(add(env, "AAA-002", "  " + "x" * 60 + "  ")["name"], "x" * 60, "60 characters after trimming")
+    expect_equal(add(env, "AAA-004", "-Bolt")["name"], "-Bolt", "a name that starts with a hyphen")
     for name in ("", "   ", "x" * 61, "é" * 61):
         add(env, "AAA-003", name, refuse=True)
 
@@ -227,6 +228,20 @@ def _(env, p):
     add(env, "BOL-006", "Bolt", refuse=True)
     if (env.root / "absent").exists():
         fail("the missing data directory was created")
+
+
+@check("edge-robustness", ALL, ["stockroom/interface", "stockroom/inputs", "stockroom/storage"],
+       "Extreme inputs fail through the error object, never with a crash")
+def _(env, p):
+    add(env, "BOL-006", "Bolt")
+    receive(env, "BOL-006", "9" * 5000, refuse=True)
+    expect_equal(receive(env, "BOL-006", "0" * 5000 + "7")["onHand"], 7, "receive 5000 leading zeros and 7")
+    no_crash(env, "add-item", "--sku", "NUT-010", "--name", "Nut \udcff")  # undecodable byte: the model is silent
+    listing(env)
+    env.write_db("[" * 100000)
+    env.refuse("list")
+    unusable_query(env, "list")
+    unusable_change(env, "add-item", "--sku", "BOL-006", "--name", "Bolt")
 
 
 @check("usage-errors", ALL, ["stockroom/interface"], "Command-line errors use the error object and exit 2")

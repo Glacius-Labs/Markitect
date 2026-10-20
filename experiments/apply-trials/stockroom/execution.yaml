@@ -1,20 +1,21 @@
 apiVersion: markitect.execution/v1
-strategy: shared-workspace-v1
+strategy: recursive-passes-v1
 budget:
-  executionTime: 20m
+  executionTime: 40m
   turnTimeout: 8m
-  agentTurns: 60
-  rounds: 4
+  agentTurns: 120
+  passes: 12
 profiles:
   execute: project-agent
   verify: project-agent
 packages: {}
-layout:
-  roots: [realization]
-  exceptions:
-    - path: realization
-      owner: stockroom
-      reason: The fixed delivery boundary puts app.py, README.md and tests/ directly in realization/, which Root would otherwise own; the single domain Package realizes them and Root keeps only coordination.
+ownership:
+  - path: ./
+    owner: .
+    reason: Root coordinates and owns the files outside the delivery directory.
+  - path: realization/
+    owner: stockroom
+    reason: The fixed delivery boundary puts app.py, README.md and tests/ directly in realization/; the single domain Package realizes them and Root keeps only coordination.
 checks:
   - id: project-tests
     profile: python-tests

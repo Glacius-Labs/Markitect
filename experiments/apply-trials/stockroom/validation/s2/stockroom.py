@@ -19,15 +19,16 @@ def normalize_sku(text):
 
 def parse_name(text):
     name = text.strip()
-    if not name or len(name) > MAX_NAME_LENGTH:
+    if not name or len(name) > MAX_NAME_LENGTH or any(0xD800 <= ord(char) <= 0xDFFF for char in name):
         raise StockError("invalid name")
     return name
 
 
 def parse_number(text, low, high, label):
-    if not DIGITS.fullmatch(text) or not low <= int(text) <= high:
+    digits = text.lstrip("0") or "0"
+    if not DIGITS.fullmatch(text) or len(digits) > 9 or not low <= int(digits) <= high:
         raise StockError("the %s must be a whole number from %d to %d" % (label, low, high))
-    return int(text)
+    return int(digits)
 
 
 def record(data, sku):

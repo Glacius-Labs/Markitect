@@ -2,7 +2,7 @@ apiVersion: markitect.registry/v1
 artifacts:
   - path: realization/README.md
     form: doc
-    realizes: [depot/realization, depot/interface, depot/inputs, depot/storage, catalog/sku, orders/availability]
+    realizes: [depot/realization, depot/interface, depot/inputs, depot/storage]
     why: Documents every command, the inputs and rules, the output, the data file and the single-writer limitation.
   - path: realization/app.py
     form: code
