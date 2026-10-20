@@ -32,6 +32,10 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Tests refusal before effects for invalid configurations and held state directories, the answer command and retained report evidence.
+  - path: "internal/bootstrap/verify_evaluation_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Grant-gated evaluation harness that runs only the independent Verify of a captured stand through the real preparation and adapters, without a Command or publication.
   - path: "internal/bootstrap/profile_router.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]

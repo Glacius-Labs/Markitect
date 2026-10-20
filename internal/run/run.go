@@ -79,12 +79,16 @@ type PathMount struct {
 
 // Check is one required check of the project. Request is complete except for
 // its ID and Tree, which the Orchestrator sets for each candidate. A failed
-// check is a genuine finding addressed to Owner.
+// check is a genuine finding addressed to Owner. ProfileArgs is the number of
+// leading Request.Args that belong to the check's execution profile: a probe
+// run with this check's profile keeps them and replaces the project arguments
+// with its own.
 type Check struct {
-	Name       string
-	RequiredBy string
-	Owner      string
-	Request    CheckRequest
+	Name        string
+	RequiredBy  string
+	Owner       string
+	Request     CheckRequest
+	ProfileArgs int
 }
 
 // Budget bounds one run. Deadline is absolute: at that time the Orchestrator
@@ -147,6 +151,8 @@ type Finding struct {
 	// names the Definition an artifact finding deviates from.
 	Subject    string `json:"subject,omitempty"`
 	Definition string `json:"definition,omitempty"`
+	// Receipts are the probe receipts the finding cites as its evidence.
+	Receipts []string `json:"receipts,omitempty"`
 }
 
 // Dispute is one explicit independent objection to a finding: the reviewer that
@@ -356,7 +362,8 @@ const (
 // when Status is Verified. The Orchestrator closes candidate volumes itself.
 // Once the shared work volume "<RunID>-work" holds the start stand, it never
 // closes it: after Finish, the caller owns it and closes it or keeps it as
-// retained work.
+// retained work. Probes are every probe receipt of the run, adverse ones
+// included, whatever the reports cited.
 type Outcome struct {
 	Status    Status
 	Reason    string
@@ -366,6 +373,7 @@ type Outcome struct {
 	Questions []Question
 	Problems  []Problem
 	Turns     []TurnRecord
+	Probes    []ProbeReceipt
 	Usage     Usage
 	Homes     []string
 }
@@ -404,13 +412,18 @@ type CheckResult struct {
 }
 
 // TurnRecord is one Agent turn as the Orchestrator observed it. Role is
-// "manager", "reviewer" or a helper role.
+// "manager", "reviewer" or a helper role. Mode is what the turn was admitted
+// for: "work" on the Manager's own basis or result, "communication" while its
+// productive work was blocked, "coordination" for decisions and answers after
+// its basis, "review" in an independent review and "helper" for a delegated
+// task.
 type TurnRecord struct {
 	ID      string    `json:"id"`
 	Manager string    `json:"manager"`
 	Role    string    `json:"role"`
 	Pass    string    `json:"pass"`
 	Kind    TurnKind  `json:"kind"`
+	Mode    string    `json:"mode"`
 	Started time.Time `json:"started"`
 	Ended   time.Time `json:"ended"`
 	Usage   Usage     `json:"usage"`

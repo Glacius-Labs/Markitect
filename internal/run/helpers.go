@@ -172,7 +172,7 @@ func (e *engine) startHelpersLocked(p *pass) {
 			}
 			id := fmt.Sprintf("%s-%s-%s-%s", e.cfg.RunID, p.id, m.slug, h.id)
 			home := id + "-home"
-			ts := &turnState{m: m, h: h, id: id, role: h.role.Role, kind: kind}
+			ts := &turnState{m: m, h: h, id: id, role: h.role.Role, kind: kind, mode: "helper"}
 			turn := Turn{Kind: kind, Profile: h.role.Profile, Workspace: p.volume, ReadOnly: true, Mounts: helperMounts(m.Write, h.paths), Home: home,
 				Prompt: e.helperPromptLocked(h), Tools: helperTools(len(h.paths) > 0)}
 			e.useHomeLocked(home)

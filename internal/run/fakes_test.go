@@ -353,10 +353,18 @@ func (c *call) earlierRaised() []string {
 	return ids
 }
 
+// sourceOf is a start-stand file each fixture Manager owns, which a review
+// cites as inspected source.
+var sourceOf = map[string]string{"lending": "lending/l.go", "lending/reminders": "lending/reminders/r.go", "library": "library/a.go"}
+
 func (c *call) coverage() []map[string]any {
 	var out []map[string]any
 	for _, id := range c.ag.obligations[c.turn.Manager] {
-		out = append(out, map[string]any{"definition": id, "status": coverDone, "note": "covered by the work of " + c.turn.Manager})
+		entry := map[string]any{"definition": id, "status": coverDone, "note": "covered by the work of " + c.turn.Manager}
+		if c.turn.Kind == VerifyTurn {
+			entry["evidence"] = []map[string]string{{"claim": "the fixture contract of " + id, "source": sourceOf[c.turn.Manager], "location": "whole file", "reasoning": "the fixture realizes it by contract"}}
+		}
+		out = append(out, entry)
 	}
 	return out
 }

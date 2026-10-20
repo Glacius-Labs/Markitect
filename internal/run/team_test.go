@@ -337,3 +337,160 @@ func TestStaleReportsOfASealedPassAreRefused(t *testing.T) {
 		t.Errorf("passes %s %s, stale answer %q", out.Passes[0].ID, out.Passes[1].ID, staleAnswer)
 	}
 }
+
+// The existing cycle guard includes the implicit parent-first and integration
+// edges, which the Haiku Depot trace needed (regression carried over from draft
+// PR #536): a result needs every child's result without a declared dependency.
+func TestPlanRejectsImplicitIntegrationCycles(t *testing.T) {
+	for _, tc := range []struct {
+		name, manager, owner, stage string
+		refused                     bool
+	}{
+		{"parent result", "lending/reminders", "lending", "result", true},
+		{"ancestor result", "lending/reminders", ".", "result", true},
+		{"descendant basis", "lending", "lending/reminders", "basis", true},
+		{"descendant result", "lending", "lending/reminders", "result", true},
+		{"parent basis", "lending/reminders", "lending", "basis", false},
+		{"ancestor basis", "lending/reminders", ".", "basis", false},
+		{"other branch result", "library", "lending", "result", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t)
+			var mu sync.Mutex
+			attempted := false
+			f.agents.script = func(c *call) error {
+				mu.Lock()
+				defer mu.Unlock()
+				if !attempted && c.turn.Manager == tc.manager && strings.HasPrefix(c.now(), "work on") {
+					attempted = true
+					pl := samplePlan()
+					pl["dependencies"] = []any{map[string]any{"owner": tc.owner, "need": "required contract", "pass": "implement", "stage": tc.stage}}
+					a := c.basis(map[string]any{"plan": pl})
+					if a.Refused != tc.refused || tc.refused && !strings.Contains(a.Text, "cycle") {
+						t.Errorf("dependency admitted/refused incorrectly: %+v", a)
+					}
+					if !a.Refused {
+						return nil
+					}
+				}
+				c.protocol()
+				return nil
+			}
+			r := f.open()
+			res := r.Pass(planSpec())
+			out := f.finish(r, "bounded Plan regression")
+			if !attempted || res.Stopped {
+				t.Fatalf("attempted %v, stopped %v: %s", attempted, res.Stopped, out.Reason)
+			}
+		})
+	}
+}
+
+// A Manager that needs another Manager's accepted result first waits for it:
+// no turn of it starts while that result is missing, and its acceptance wakes it
+// with the accepted submission. Old behavior: only a question or a child could
+// be waited for, so the Haiku Depot integrator reported the same progress for 45
+// turns, each re-queued at once.
+func TestWaitForAnotherManagerWakesOnItsAcceptance(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	var waited ToolAnswer
+	woken := false
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") && waited.Text == "" {
+			waited = c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "reason": "the program integrates the lending result"})
+			return nil
+		}
+		if c.turn.Manager == "library" && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted") {
+			woken = true
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(implementSpec())
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != Satisfied || !woken || !strings.Contains(waited.Text, "accepted result of lending") {
+		t.Fatalf("stopped %v, verdict %s, woken %v, wait %q: %s", res.Stopped, res.Verdict, woken, waited.Text, out.Reason)
+	}
+	waitAt := f.ev.index("report.wait", "library", "", nil)
+	acceptedAt := f.ev.index("result.accepted", "lending", "", nil)
+	if waitAt < 0 || acceptedAt < waitAt {
+		t.Fatalf("wait %d, lending result %d", waitAt, acceptedAt)
+	}
+	f.ev.mu.Lock()
+	defer f.ev.mu.Unlock()
+	for _, ev := range f.ev.events[waitAt:acceptedAt] {
+		if ev.Kind == "turn.start" && ev.Manager == "library" {
+			t.Errorf("library worked while its wait was unchanged: %+v", ev)
+		}
+	}
+}
+
+// A wait that closes a cycle with the accepted plans' dependencies could never
+// be satisfied: it is refused with the cycle named, so the Manager submits what
+// does not need it first and the Pass completes. Before, nothing named such a
+// wait and the Haiku Depot run spent its turns on it.
+func TestWaitThatClosesACycleIsRefused(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	var refused ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.planning() && c.turn.Manager == "library" && (strings.HasPrefix(c.now(), "work on") || strings.HasPrefix(c.now(), "submit")) {
+			pl := samplePlan()
+			pl["dependencies"] = []any{map[string]any{"owner": "lending", "need": "the loan result", "pass": "implement", "stage": "result"}}
+			kind := kindBasis
+			if strings.HasPrefix(c.now(), "submit") {
+				kind = kindResult
+			}
+			c.must(toolReport, c.envelope(kind, map[string]any{"plan": pl}))
+			return nil
+		}
+		if !c.planning() && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on") && refused.Text == "" {
+			refused = c.tool(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "result"})
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(planSpec())
+	res := r.Pass(implementSpec())
+	out := f.finish(r, "")
+	if !refused.Refused || !strings.Contains(refused.Text, "library start needs lending result") {
+		t.Fatalf("the cyclic wait was not refused with its cycle: %+v", refused)
+	}
+	if res.Stopped || res.Verdict != Satisfied {
+		t.Fatalf("stopped %v, verdict %s: %s", res.Stopped, res.Verdict, out.Reason)
+	}
+}
+
+// A progress report that repeats an earlier one of the Pass is no progress: it
+// is not continued automatically, and repeated it ends the run Incomplete within
+// the empty-turn limit instead of spending the turn budget.
+func TestRepeatedProgressIsNoProgress(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Manager == "library" && (strings.HasPrefix(c.now(), "work on") || strings.Contains(c.turn.Prompt, "repeats an earlier one")) {
+			c.must(toolReport, map[string]any{"kind": kindProgress, "summary": "still integrating the parts"})
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(implementSpec())
+	out := f.finish(r, "")
+	if !res.Stopped || out.Status != Incomplete || !strings.Contains(out.Reason, "without the report its work needs") {
+		t.Fatalf("stopped %v, status %s: %s", res.Stopped, out.Status, out.Reason)
+	}
+	if n := len(f.agents.turnsOf("library")); n != maxEmptyTurns+2 {
+		t.Errorf("library ran %d turns", n)
+	}
+}
