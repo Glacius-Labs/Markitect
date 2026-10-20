@@ -1,5 +1,7 @@
 # Design records
 
+The owner-commissioned [cockpit concept](cockpit.md) connects project orientation, Apply observation, causal messages, independent evidence and a [Claude implementation handoff](../development/claude-cockpit-handoff-20261020.md). It is a concept, not an implemented UI or another Apply process.
+
 This directory contains decisions, proposals, assessments, experiments, and design evidence from different stages of Markitect. A file's presence here does not make it a supported contract or current implementation. For current product behavior use [Architecture](../architecture.md), the [Project workflow](../project-workflow.md); for source plans use the [roadmap](../implementation-plan.md). Each record owns its own date, scope, and stated status.
 
 Earlier Project/Domain designs and modeling exercises are routed through the [historical design section](../history/README.md#earlier-design-exercises). Their original documents and fixtures keep their paths and recorded scope.

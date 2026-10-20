@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/cockpit.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner-commissioned cockpit concept and evidence-bound views while keeping implementation and later extensions distinct.
+  - path: "docs/development/claude-cockpit-handoff-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares Claude's bounded cockpit implementation and design assignment with current Apply semantics, observation seams, acceptance and a startup prompt.
+  - path: "docs/concepts/sources/cockpit-commission-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's cockpit visualization requests, Claude assignment and documentation delivery authority verbatim with labelled recorder context.
   - path: "docs/development/claude-apply-implementation-handoff-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
