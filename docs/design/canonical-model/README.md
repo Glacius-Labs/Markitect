@@ -18,68 +18,25 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-**Current direction, 19 October 2026:** [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace), amended by [DEC-058](../../concepts/register.md#dec-058-apply-always-executes-before-independent-verify), and the [current Apply concept / Claude handoff](manager-apply-concept.md#current-agreed-concept--19-october-2026) govern the simplified strategy: permanent responsibility, Execute and integration starting at Root, then fresh recursive Verify on one immutable candidate. Every Apply uses that order; there is no initial Verify or case-1 special route. Read the [current library walkthrough](manager-apply-library-flow.md#current-library-walkthrough) next. DEC-058 is documentation only; [manager-apply-runtime.md](manager-apply-runtime.md) still records the earlier implemented initial-Verify sequence. The older detailed documents (core protocol, execution, configuration, ports, journal, Go architecture, rebuild plan) are historical and now live in [Apply design before DEC-056](../../history/apply-design-before-dec-056/README.md).
-
-The detailed descriptions and terminology in the historical documents preserve the preceding design. Their conflicting rules are superseded, including the old freeze; they are engineering inputs to revise rather than an additional implementation contract.
-
-Historical basis before DEC-056: the rebuild was commissioned in [DEC-024](../../concepts/register.md#dec-024-first-reliable-apply-rebuild-and-coordinated-start), with [DEC-025 to DEC-037](../../concepts/register.md#dec-025-package-managers-organize-realization) and [DEC-039](../../concepts/register.md#dec-039-deterministic-manager-process). DEC-039 described the earlier fixed process and rejection counting; DEC-056 replaces those conflicting mechanics. DEC-037 retains the Linux/container boundary without requiring private writer copies or per-turn workspace reconstruction. Producer packages refine exact Go names and versioned schemas in review within those decisions. These documents describe target behavior; implementation pull requests establish which parts work. Historical source comparisons retain their stated revision and are not live status. A change of intent goes to its owning document, not into a parallel note.
-
-[DEC-043](../../concepts/register.md#dec-043-project-teams-review-arbitration-and-product-defaults) adds the owner-accepted project team/defaults target: start at [configuration](../../history/apply-design-before-dec-056/manager-apply-configuration.md#project-execution-file), then [conflict arbitration](../../history/apply-design-before-dec-056/manager-apply-execution.md#review-conflicts-and-arbitration). This records the earlier team-roster target; DEC-056 no longer requires that machinery for the simplified strategy. It is not evidence that current decoders or execution implement either target.
-
-Read in this order:
+**Current accepted target, 20 October 2026:** [Apply workflow and recursive Manager passes](manager-apply-workflow.md), adopted in [DEC-064](../../concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), is the behavioral owner. Read it first, then the [Claude implementation handoff](../../development/claude-apply-implementation-handoff-20261020.md). Execute contains Plan, Prepare and Implement; independent Verify is a separate Pass. Strict Model/File gates, checked local registry composition, explicit lifecycle/events, tree-routed questions and bounded configurable Manager teams are accepted. These decisions are not yet implemented by the inspected Main baseline.
 
 | Document | Owns |
 | --- | --- |
-| [Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) | Current recursive reconciliation cycle, permanent ownership, fresh verification and Claude implementation handoff. |
-| [Implemented runtime contract](manager-apply-runtime.md) | The implemented technical contract: team, ownership, accounting, Reconcile cycle, Host tools, ports, configuration, evidence, publication and limits. |
-| [Library delegation walkthrough](manager-apply-library-flow.md) | The order of exchanges in one Apply of M1 and the first refusal cases. |
-| [Extract workflow](commands.md#extract-the-existing-stand) | Case 3: derive provisional Managers from artifacts, develop and integrate the model with owner clarification and read-only Verify; [structure changes between stable rounds](commands.md#keep-the-structure-stable-within-each-extract-round) retain knowledge, references and open questions. Accepted design, not an implemented Extract runtime. |
-| [Playground](manager-apply-playground.md) | The external two-Apply experiment and its independent assessment. |
-| [Acceptance gates](manager-apply-implementation-plan.md) | What each delivery step must prove. |
-| [Library M1](library-example/README.md) | The example model, including its [callable interface](library-example/m1/model/library/callable-interface.yaml), and the [independent expectations](library-example/evaluation-contract.md). |
-| [North star](manager-realization-north-star.md) | Ideas and variants that were not selected, later operations and open questions. |
+| [Accepted Apply workflow](manager-apply-workflow.md) | Current behavior, vocabulary, common Pass mechanism, ownership, questions, results, tools, teams and supersession. |
+| [Claude implementation handoff](../../development/claude-apply-implementation-handoff-20261020.md) | Bounded assignment, source map, delivery sequence, acceptance scenarios and evidence requirements. |
+| [Implemented runtime contract](manager-apply-runtime.md) | Earlier implemented behavior and limits. Old names and differing rules are not exceptions to the accepted target. |
+| [Prior Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) | Dated 19 October direction and earlier design history; superseded where DEC-064 differs. |
+| [Prior Library walkthrough](manager-apply-library-flow.md#current-library-walkthrough) | Earlier exchange sequence; the accepted workflow now contains the updated target walkthrough. |
+| [Extract workflow](commands.md#extract-the-existing-stand) | Extract's separately owned target, including [stable-round structure changes](commands.md#keep-the-structure-stable-within-each-extract-round). Shared engine refactoring must preserve its distinct authority. |
+| [Closing evidence](../../validation/apply-extract-closeout-20261020.md) | Build-bound observed results and unproved properties; not evidence for DEC-064. |
+| [Playground](manager-apply-playground.md) | External two-Apply experiment and independent assessment. |
+| [Earlier acceptance gates](manager-apply-implementation-plan.md) | Prior delivery gates; the new handoff supplies the changed acceptance cases. |
+| [Library M1](library-example/README.md) | Example model and [outside evaluation contract](library-example/evaluation-contract.md). |
+| [North star](manager-realization-north-star.md) | Remaining unselected ideas and later extensions; DEC-064 adopts the conversation's Manager-team direction. |
 
-Superseded by DEC-056 and kept as history in [Apply design before DEC-056](../../history/apply-design-before-dec-056/README.md), for their decisions and failed attempts:
+Earlier detailed protocols and their failed attempts remain in [Apply design before DEC-056](../../history/apply-design-before-dec-056/README.md). DEC-056 replaced their conflicting mechanics; DEC-058 made every Apply Execute-first; DEC-064 now refines that sequence and supersedes the initial-accounting and owner-question exceptions. Historical records retain their original wording. They cannot override the current target or dispatch new work.
 
-| Document | Earlier role |
-| --- | --- |
-| [Core protocol](../../history/apply-design-before-dec-056/manager-apply-core.md) | Steps, the Manager task machine, Orchestrator tools, messages, issues, deliveries and composition, by rule ID. |
-| [Go architecture](../../history/apply-design-before-dec-056/manager-apply-go-architecture.md) | Target packages, responsibilities and dependency direction. |
-| [Port contracts](../../history/apply-design-before-dec-056/manager-apply-port-contracts.md) | Interfaces between the core and its adapters and the values they exchange. |
-| [Configuration](../../history/apply-design-before-dec-056/manager-apply-configuration.md) | Execution inputs, override resolution, Orchestrator profiles, identities, mandates and questions. |
-| [Execution](../../history/apply-design-before-dec-056/manager-apply-execution.md) | Budget and admission, blocking findings, dependencies, rejection limits, idle policy, run states and outcomes. |
-| [Journal](../../history/apply-design-before-dec-056/manager-apply-journal.md) | Durable records and storage, the controller lock, answers and continuation runs. |
-| [Rebuild plan](../../history/apply-design-before-dec-056/manager-apply-rebuild-plan.md) | The container runtime, the Codex and Claude Code session adapters, and what happens to the current source. |
-
-Historically, [DEC-040](../../concepts/register.md#dec-040-concept-freeze-until-the-core-runs) froze the earlier design, with DEC-043 as an exception at that time. [DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) is the later owner-authorized change for the simplified Apply direction; the earlier freeze does not prohibit implementing that direction after a separate owner dispatch. The [architecture review of 17 October 2026](apply-architecture-review-20261017.md) remains a dated assessment of the previous design, not the current contract.
-
-Implementations identify the supported part of this target and its evidence. An intentional deviation changes the owning contract in the same pull request; partial implementation does not silently redefine the target. Record shapes, event tags and Go signatures in the design are illustrative unless explicitly identified as executable fixtures; the behavioral requirements remain binding. Exact implemented formats belong to the versioned contracts in source.
-
-| Term | Meaning |
-| --- | --- |
-| Orchestrator | Markitect's deterministic orchestration: preparation, scheduling, validation, records and guarded writes. |
-| Manager | The logical owner of one local Package's realization. The root is also an ordinary Manager, with a runtime identity but no canonical root Package. It coordinates the whole model and its aggregate integration, and may write only its owned artifacts and authorized new paths. |
-| Assignment | One owner request with its caps; it links its runs. |
-| Run | One Apply over fixed inputs, from Prepared to one Finished outcome. |
-| Continuation | A further run of the same assignment after a run finished without completing it. |
-| Run resume | Reopening the same unfinished run after an interruption; reconcile first and retain its captured run inputs. Provider conversation resume is a separate, capability-bound operation. |
-| Task | One Manager responsibility within a run. |
-| Attempt | One submission within a task. |
-| Rejection | One rejected submission, counted per run, Manager and review purpose since the last accepted delivery for that purpose. |
-| Execution session | One bound execution environment with fixed profile, mounts and authority ceiling. Starting a replacement consumes budget. |
-| Conversation | Provider dialogue whose identity may survive a proven execution-session replacement; otherwise use an explicit handoff. |
-| Step | One admitted Agent turn bound to an exact workspace version, supplied inputs and permitted effects. |
-| Working basis | The accepted aggregate current at a step's admission, plus the Manager's own unaccepted changes ([D3](../../history/apply-design-before-dec-056/manager-apply-core.md#deliveries-and-composition)). Each step records the aggregate version it saw. |
-| Candidate | An immutable artifact tree with its registry revision. |
-| Delivery | An Orchestrator-accepted candidate with reviewed scope and exact evidence. It can supply a prerequisite while its producer's remaining responsibility stays open. |
-| Finding | A recorded concern, blocking or advisory, that only an independent review resolves. |
-| Registry | The record of which Manager owns each artifact and which Definitions it realizes. |
-| Mandate | The section of a context package that states responsibility, freedom, authority and limits. |
-| Final evidence check | The Orchestrator's deterministic check that all required evidence is current before publication. |
-
-**Terminology:** Orchestrator is the current name for the deterministic component previously called Host ([DEC-042](../../concepts/register.md#dec-042-orchestrator-names-the-deterministic-coordination-component)). Managers retain their existing responsibilities. This is a naming change only. Historical records and literal quotations keep their original wording. Existing API identifiers, wire/configuration fields and CLI options such as `--host-profile` are unchanged; ordinary host machines are still called hosts.
-
-The [delivery plan](../../implementation-plan.md) owns packages, order and dispatch. The [owner discussion](sources/manager-realization-20261016.md) and the supplied [concept assessment](sources/concept-assessment-20261016.txt) and [refinements](sources/concept-refinements-20261016.txt) are the sources; the refinements are part of the concept. The [working-day reflections](../../concepts/reflections/README.md) describe the intended use and later acceptance scenarios.
+Concrete Go signatures, event identifiers and versioned formats are implementation choices within the accepted behavioral requirements. The [delivery plan](../../implementation-plan.md) owns assignments and shared-file coordination. Implementation, local validation, actual runtime evidence, Main composition and human acceptance remain separate.
 
 ## Self-model refinement
 
