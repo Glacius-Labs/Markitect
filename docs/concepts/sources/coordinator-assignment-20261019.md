@@ -64,3 +64,19 @@ Recorder's note: posted on the owner's account in [#501](https://github.com/Glac
 > Only #492, #523 and #524 are currently in progress. This accepted destination and ordering do not start broader provider series, process changes, a new implementation stream or public release. Select the next bounded assignment from the three outcomes.
 
 The five-step sequence and the milestone priorities M1 to M5 stand in the linked comment; the [delivery plan](../../implementation-plan.md#target-and-baseline) carries them.
+
+## Apply Pass stabilization first, 20 October 2026
+
+Recorder's note: verbatim owner instruction in the Codex Big Picture conversation after Main `780dccb7eda4f10e70d1f5513f5e43bd031346b1` (#530) and the source-bound assessment of its first real Pass-process runs:
+
+> Passe Plan und Issues entsprechend an. Jetzt erst die konkreten Schwächen bei Apply und die Nachweise auf dem neuen Kern abschließen, bevor wir weiter ausbauen.
+
+Recorder's interpretation of the referenced assessment: prioritize the Verified depot result that retained a genuine defect, optional changes and missing conforming no-change evidence, unnecessary dependency/wait overhead, and bounded integrated-build evidence after correcting the independent trial references and DEC-064 expectations. Earlier Library and Extract reports retain their build scope. The pilot remains the destination; wider Extract, UX, release and other expansion wait for this checkpoint. Preserve running candidates and evidence, and use the [owning delivery plan](../../implementation-plan.md#current-checkpoint-concrete-apply-corrections-and-new-core-evidence) and existing issues rather than another status document.
+
+## Assessment and concept refinement, 20 October 2026
+
+Recorder's note: the owner then corrected the live-session status in the same Big Picture conversation. The Apply findings remain recorded, but no continuing Claude writer or implementation start may be inferred:
+
+> Die Claude Sessions sind bereits beendet. Wir werten gerade aus und verfeinern das Konzept
+
+The [delivery plan](../../implementation-plan.md#current-checkpoint-concrete-apply-corrections-and-new-core-evidence) records assessment and concept refinement as the current phase. Existing candidates and evidence are preserved for that discussion; implementation and runs require a later bounded assignment.
