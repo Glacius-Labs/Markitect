@@ -16,7 +16,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import Checks, Env, Skip, expect_equal, fail, unusable_change, unusable_query  # noqa: E402
+from trial_kit import (Checks, Env, Skip, ascii_output, expect_equal, fail, unusable_change,  # noqa: E402
+                       unusable_query)
 
 PROFILES = {
     "s1": {"snapshot": "s1", "maxQty": 1000, "reorder": False},
@@ -234,7 +235,10 @@ def _(env, p):
 def _(env, p):
     add(env, "BOL-006", "Bolt")
     receive(env, "BOL-006", "9" * 5000, refuse=True)
+    expect_equal(receive(env, "BOL-006", "0" * 5000 + "7")["onHand"], 7, "receive 5000 leading zeros and 7")
     add(env, "NUT-010", "Nut \udcff", refuse=True)
+    expect_equal(ascii_output(env, "add-item", "--sku", "CAF-001", "--name", "Café")["name"], "Café",
+                 "a non-ASCII name with an ASCII-only stdout")
     env.write_db("[" * 100000)
     env.refuse("list")
     unusable_query(env, "list")

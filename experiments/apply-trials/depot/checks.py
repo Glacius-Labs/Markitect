@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import Checks, expect_equal, fail, unusable_change, unusable_query  # noqa: E402
+from trial_kit import Checks, ascii_output, expect_equal, fail, unusable_change, unusable_query  # noqa: E402
 
 CHECKS = Checks("depot", {"d1": {"snapshot": "d1"}})
 D1 = ["d1"]
@@ -300,9 +300,12 @@ def _(env, p):
 def _(env, p):
     add(env, "BOL-006", "Bolt")
     receive(env, "BOL-006", "9" * 5000, refuse=True)
+    expect_equal(receive(env, "BOL-006", "0" * 5000 + "7")["onHand"], 7, "receive 5000 leading zeros and 7")
     by_id(env, "fulfil-order", "9" * 5000, refuse=True)
     place(env, "BOL-006:" + "9" * 5000, refuse=True)
     add(env, "NUT-010", "Nut \udcff", refuse=True)
+    expect_equal(ascii_output(env, "add-item", "--sku", "CAF-001", "--name", "Café")["name"], "Café",
+                 "a non-ASCII name with an ASCII-only stdout")
     env.write_db("[" * 100000)
     env.refuse("items")
     unusable_query(env, "items")

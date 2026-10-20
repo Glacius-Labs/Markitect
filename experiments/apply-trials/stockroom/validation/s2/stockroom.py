@@ -25,9 +25,10 @@ def parse_name(text):
 
 
 def parse_number(text, low, high, label):
-    if not DIGITS.fullmatch(text) or len(text.lstrip("0")) > 9 or not low <= int(text) <= high:
+    digits = text.lstrip("0") or "0"
+    if not DIGITS.fullmatch(text) or len(digits) > 9 or not low <= int(digits) <= high:
         raise StockError("the %s must be a whole number from %d to %d" % (label, low, high))
-    return int(text)
+    return int(digits)
 
 
 def record(data, sku):

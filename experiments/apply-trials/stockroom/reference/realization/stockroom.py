@@ -38,7 +38,8 @@ def parse_name(text):
 def parse_quantity(text):
     if not DIGITS.fullmatch(text):
         raise StockError("invalid quantity %r: expected a whole number written in digits" % text)
-    quantity = int(text) if len(text.lstrip("0")) <= 9 else LIMITS["maxQuantity"] + 1
+    digits = text.lstrip("0") or "0"  # leading zeros do not change the value
+    quantity = int(digits) if len(digits) <= 9 else LIMITS["maxQuantity"] + 1
     if not 1 <= quantity <= LIMITS["maxQuantity"]:
         raise StockError("the quantity must be from 1 to %d" % LIMITS["maxQuantity"])
     return quantity

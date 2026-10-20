@@ -12,9 +12,10 @@ MAX_NAME_LENGTH = 60
 def number(text, low, high, label):
     if not DIGITS.fullmatch(text):
         raise Refusal("%s must be a whole number written in digits, got %r" % (label, text))
-    if len(text.lstrip("0")) > 18:
+    digits = text.lstrip("0") or "0"  # leading zeros do not change the value
+    if len(digits) > 18:
         raise Refusal("%s is too large" % label)
-    value = int(text)
+    value = int(digits)
     if value < low or (high is not None and value > high):
         bound = "from %d to %d" % (low, high) if high is not None else "at least %d" % low
         raise Refusal("%s must be %s, got %d" % (label, bound, value))

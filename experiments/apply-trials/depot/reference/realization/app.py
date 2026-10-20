@@ -75,10 +75,10 @@ def main(argv=None):
     try:
         result = run(build_parser().parse_args(argv))
     except (UsageError, Refusal, store.StoreError) as error:
-        # ASCII escapes keep the error object writable even for undecodable command-line bytes.
         print(json.dumps({"error": str(error)}))
         return 2
-    print(json.dumps(result, ensure_ascii=False))
+    # ASCII escapes keep every output writable whatever the stdout encoding; the JSON value is the same.
+    print(json.dumps(result))
     return 0
 
 

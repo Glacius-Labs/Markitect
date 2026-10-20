@@ -366,6 +366,56 @@ DEPOT = (
          notes="Requires --from-repo with the result of D-M or D-G."),
 )
 
+# -- fleet: generated projects of varying width and depth --------------------------------------
+
+import fleet  # noqa: E402  (the generator only; it imports nothing from here)
+
+# (width, depth, faulty ledger counts, model-only start)
+FLEET_PLAN = ((1, 1, (1,), True), (2, 1, (2,), False), (4, 1, (1, 4), True), (8, 1, (1, 4, 8), True),
+              (4, 2, (4,), False), (4, 3, (4,), True))
+
+
+def fleet_fault(project, index):
+    kind, path, old, new, summary = fleet.fault_edit(project, index)
+    resource = fleet.ledgers(project)[index][0]
+    return Fault("%s%d" % (kind, index + 1), fleet.ledgers(project)[index][1], "behavior",
+                 summary + "; the ledger's own tests do not cover it", (Edit(path, old, new),),
+                 detected_by=("ledger-" + resource,))
+
+
+def fleet_cases():
+    found = []
+    for width, depth, fault_counts, model_only in FLEET_PLAN:
+        project = "fleet-w%d-d%d" % (width, depth)
+        size = "%d ledger%s at depth %d (%d Managers)" % (width, "" if width == 1 else "s", depth, fleet.managers(project))
+        prefix = "W%dD%d" % (width, depth)
+        found.append(Case(prefix + "-N", project, 3, "Conforming fleet stand, " + size,
+                          "Does Apply leave a conforming stand of %s unchanged, and what does it cost?" % size,
+                          snapshot="f1", start="reference", expected=UNCHANGED, profile="f1",
+                          measure=("files changed (expected none)", "rounds", "turns", "time")))
+        for count in fault_counts:
+            found.append(Case("%s-M%d" % (prefix, count), project, 3,
+                              "%d distributed fault%s, %s" % (count, "" if count == 1 else "s", size),
+                              "Does Apply find and repair %d fault%s that only the model reveals, each in another "
+                              "ledger's area, in a project of %s?" % (count, "" if count == 1 else "s", size),
+                              snapshot="f1", start="reference", expected=APPLIED, profile="f1",
+                              faults=tuple(fleet_fault(project, index) for index in range(count)),
+                              allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*",
+                                       ".markitect/registry/*"),
+                              measure=("faults repaired", "changes outside the faulty ledgers", "rounds", "turns",
+                                       "time")))
+        if model_only:
+            found.append(Case(prefix + "-G", project, 3, "Model-only Apply, " + size,
+                              "Can Apply build %s from the model alone?" % size,
+                              snapshot="f1", start="model-only", expected=APPLIED, profile="f1",
+                              allowed=("realization/**", ".markitect/registry/**"),
+                              static=("readme-commands", "tests-present"),
+                              measure=("checks passed", "rounds", "turns", "time", "registry complete")))
+    return tuple(found)
+
+
+FLEET = fleet_cases()
+
 # The checks the reference realization fails under a changed or variant profile: they are exactly the
 # expectations that distinguish the new intent from the realized one.
 SHIFTS = {
@@ -380,8 +430,11 @@ PROJECTS = {
     "stockroom": {"profile": "s1", "packages": ("stockroom",), "exception": "stockroom"},
     "depot": {"profile": "d1", "packages": ("depot", "catalog", "stock", "orders", "reports"), "exception": "depot"},
 }
+for _width, _depth, _counts, _model_only in FLEET_PLAN:
+    _project = "fleet-w%d-d%d" % (_width, _depth)
+    PROJECTS[_project] = {"profile": "f1", "packages": fleet.packages(_project), "exception": "hub"}
 
-CASES = {case.id: case for case in STOCKROOM + DEPOT}
+CASES = {case.id: case for case in STOCKROOM + DEPOT + FLEET}
 
 def expectation(case):
     if case.expected == APPLIED:

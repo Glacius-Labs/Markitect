@@ -55,7 +55,7 @@ def main(argv=None):
     except (UsageError, stockroom.StockError, store.StoreError) as error:
         print(json.dumps({"error": str(error)}))
         return 2
-    print(json.dumps(result, ensure_ascii=False))
+    print(json.dumps(result))
     return 0
 
 

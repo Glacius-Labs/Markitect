@@ -35,7 +35,12 @@ from trial_kit import python_command  # noqa: E402
 TEST_COMMANDS = {
     "stockroom": ["-B", "-m", "unittest", "discover", "-s", "tests"],
     "depot": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
+    "fleet": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
 }
+
+
+def test_command(project):
+    return TEST_COMMANDS["fleet" if project.startswith("fleet-") else project]
 TEST_TIMEOUT = 300
 
 
@@ -73,15 +78,13 @@ def matches(path, patterns):
 
 
 def owner_of(project, path):
-    """The Manager whose area holds PATH under the project's layout (Root for everything outside it)."""
+    """The Manager whose area holds PATH under the project's layout (the deepest Package; Root outside it)."""
     layout = PROJECTS[project]
-    parts = path.split("/")
-    if parts[0] == "realization":
-        if len(parts) > 2 and parts[1] in layout["packages"]:
-            return parts[1]
-        return layout["exception"]
-    if parts[:2] == [".markitect", "registry"] and len(parts) > 3 and parts[2] in layout["packages"]:
-        return parts[2]
+    for base, fallback in (("realization/", layout["exception"]), (".markitect/registry/", ".")):
+        if path.startswith(base):
+            rest = path[len(base):]
+            owners = [package for package in layout["packages"] if rest.startswith(package + "/")]
+            return max(owners, key=len) if owners else fallback
     return "."
 
 
@@ -103,17 +106,22 @@ def static_readme_commands(realization, case):
     text = read(realization, "README.md")
     if text is None:
         return "realization/README.md does not exist"
-    words = {"stockroom": ("add-item", "receive", "issue", "list", "--sku", "--name", "--qty"),
-             "depot": ("add-item", "receive", "place-order", "fulfil-order", "cancel-order", "orders", "items",
-                       "reorder", "--line", "--status")}[case.project]
+    if case.project.startswith("fleet-"):
+        import fleet
+        words = ("credit", "debit", "balances", "totals", "--account", "--amount") + tuple(
+            r for r, *_ in fleet.ledgers(case.project))
+    else:
+        words = {"stockroom": ("add-item", "receive", "issue", "list", "--sku", "--name", "--qty"),
+                 "depot": ("add-item", "receive", "place-order", "fulfil-order", "cancel-order", "orders", "items",
+                           "reorder", "--line", "--status")}[case.project]
     missing = [word for word in words if word not in text]
     return "the README does not mention %s" % missing if missing else ""
 
 
 def static_readme_facts(realization, case):
     text = read(realization, "README.md") or ""
-    present = {"stockroom": ("--qty", "onHand"), "depot": ("fulfil-order",)}[case.project]
-    absent = {"stockroom": ("--quantity", "on_hand"), "depot": ("fulfill-order",)}[case.project]
+    present = {"stockroom": ("--qty", "onHand"), "depot": ("fulfil-order",)}.get(case.project, ())
+    absent = {"stockroom": ("--quantity", "on_hand"), "depot": ("fulfill-order",)}.get(case.project, ())
     problems = ["missing %r" % word for word in present if word not in text]
     problems += ["still documents %r" % word for word in absent if word in text]
     return "; ".join(problems)
@@ -178,7 +186,7 @@ def run_static(names, realization, case):
 # -- tests ---------------------------------------------------------------------------
 
 def run_tests(realization, project, python):
-    done = subprocess.run([*python, *TEST_COMMANDS[project]], cwd=realization, capture_output=True, text=True,
+    done = subprocess.run([*python, *test_command(project)], cwd=realization, capture_output=True, text=True,
                           encoding="utf-8", errors="replace", timeout=TEST_TIMEOUT)
     return done.returncode == 0, (done.stdout + done.stderr)[-1500:]
 

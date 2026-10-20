@@ -26,9 +26,10 @@ def parse_name(text):
 
 
 def parse_quantity(text):
-    if not DIGITS.fullmatch(text) or len(text.lstrip("0")) > 9 or not 1 <= int(text) <= MAX_QUANTITY:
+    digits = text.lstrip("0") or "0"
+    if not DIGITS.fullmatch(text) or len(digits) > 9 or not 1 <= int(digits) <= MAX_QUANTITY:
         raise StockError("invalid quantity %r" % text)
-    return int(text)
+    return int(digits)
 
 
 def record(data, sku):

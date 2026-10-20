@@ -1,6 +1,6 @@
 """Assess one trial realization against one expectation profile; see README.md.
 
-    python -B oracle.py --project stockroom|depot --profile NAME --realization PATH/TO/realization
+    python -B oracle.py --project stockroom|depot|fleet-w<W>-d<D> --profile NAME --realization PATH/TO/realization
                         [--previous PATH/TO/previous/realization] [--python CMD] [--output FILE]
 
 Prints a JSON report with pass, fail or skip per check and exits 0 only when
@@ -21,6 +21,9 @@ PROJECTS = ("stockroom", "depot")
 
 
 def load_checks(project):
+    if project.startswith("fleet-"):
+        import fleet_checks
+        return fleet_checks.build(project)
     spec = importlib.util.spec_from_file_location(project + "_checks", HERE / project / "checks.py")
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -43,7 +46,7 @@ def assess(project, profile, realization, python=None, previous=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--project", choices=PROJECTS, required=True)
+    parser.add_argument("--project", required=True, help="stockroom, depot or a generated fleet-w<W>-d<D>")
     parser.add_argument("--profile", required=True)
     parser.add_argument("--realization", required=True)
     parser.add_argument("--previous", help="realization of the previous model version, for upgrade checks")

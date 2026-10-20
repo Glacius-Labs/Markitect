@@ -32,7 +32,7 @@ sys.path.insert(0, str(HERE.parent / "test-projects"))
 import assess  # noqa: E402
 import oracle  # noqa: E402
 from cases import CASES, DEFECT, PROJECTS, SHIFTS, Edit, markdown  # noqa: E402
-from materialize import apply_edits, materialize  # noqa: E402
+from materialize import apply_edits, materialize, project_root  # noqa: E402
 from oracle_kit import DEGENERATE  # noqa: E402
 from trial_kit import python_command  # noqa: E402
 
@@ -56,11 +56,11 @@ class Report:
 def build(project, root, faults=(), overlay=None, remove=()):
     """A packet-shaped folder ROOT holding the reference realization and registry with overlays and faults."""
     root = Path(root)
-    shutil.copytree(HERE / project / "reference" / "realization", root / "realization",
+    shutil.copytree(project_root(project) / "reference" / "realization", root / "realization",
                     ignore=shutil.ignore_patterns("__pycache__"))
-    shutil.copytree(HERE / project / "reference" / "registry", root / ".markitect" / "registry")
+    shutil.copytree(project_root(project) / "reference" / "registry", root / ".markitect" / "registry")
     if overlay:
-        for path in (HERE / project / overlay).iterdir():
+        for path in (project_root(project) / overlay).iterdir():
             shutil.copyfile(path, root / "realization" / path.name)
     for name in remove:
         (root / "realization" / name).unlink()
@@ -71,7 +71,7 @@ def build(project, root, faults=(), overlay=None, remove=()):
 
 def reference_file(project, path):
     """The reference source of a packet path: realization/... or .markitect/registry/..."""
-    reference = HERE / project / "reference"
+    reference = project_root(project) / "reference"
     if path.startswith(".markitect/registry/"):
         return reference / "registry" / path[len(".markitect/registry/"):]
     return reference / path
@@ -85,7 +85,7 @@ def failing(project, profile, realization, python, previous=None):
 def check_citations(project, report):
     checks = oracle.load_checks(project)
     for profile, parameters in checks.profiles.items():
-        model = HERE / project / "snapshots" / parameters["snapshot"] / "model"
+        model = project_root(project) / "snapshots" / parameters["snapshot"] / "model"
         known = {path.relative_to(model).with_suffix("").as_posix() for path in model.rglob("*.yaml")}
         for item in checks.selected(profile):
             for definition in item["definitions"]:
@@ -136,8 +136,8 @@ def check_faults(project, python, report):
                 bad, _ = failing(project, case.profile, realization, python)
                 report.expect(bad == set(fault.detected_by), "%s %s fails %s, declared %s"
                               % (case.id, fault.id, sorted(bad), sorted(fault.detected_by)))
-                static = {name for name, problem in assess.run_static(sorted(set(assess.STATIC)), realization, case).items()
-                          if problem and name in set(case.static) | set(fault.static)}
+                relevant = sorted(set(case.static) | {name for other in case.faults for name in other.static})
+                static = {name for name, problem in assess.run_static(relevant, realization, case).items() if problem}
                 report.expect(static == set(fault.static), "%s %s fails artifact checks %s, declared %s"
                               % (case.id, fault.id, sorted(static), sorted(fault.static)))
                 passed, _ = assess.run_tests(realization, project, python)
@@ -178,7 +178,7 @@ def check_packets(project, markitect, report):
                 continue
             entry = {"files": made["files"], "head": made["head"][:12]}
             if markitect:
-                for command in (["check"], ["context", project]):
+                for command in (["check"], ["context", PROJECTS[project]["exception"]]):
                     done = subprocess.run([markitect, *command, "--repo", str(target), "--revision", "HEAD", *MODEL_ARGS],
                                           capture_output=True, text=True, encoding="utf-8")
                     try:

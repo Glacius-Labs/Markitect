@@ -385,6 +385,481 @@ m6:
 - **Record:** files changed (expected none); rounds; blocking findings
 - **Notes:** Requires --from-repo with the result of D-M or D-G.
 
+## W1D1-N: Conforming fleet stand, 1 ledger at depth 1 (3 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 1 ledger at depth 1 (3 Managers) unchanged, and what does it cost?
+- **Project and level:** fleet-w1-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); rounds; turns; time
+
+## W1D1-M1: 1 distributed fault, 1 ledger at depth 1 (3 Managers)
+
+- **Question:** Does Apply find and repair 1 fault that only the model reveals, each in another ledger's area, in a project of 1 ledger at depth 1 (3 Managers)?
+- **Project and level:** fleet-w1-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+## W1D1-G: Model-only Apply, 1 ledger at depth 1 (3 Managers)
+
+- **Question:** Can Apply build 1 ledger at depth 1 (3 Managers) from the model alone?
+- **Project and level:** fleet-w1-d1, level 3
+- **Start:** snapshot `f1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** checks passed; rounds; turns; time; registry complete
+
+## W2D1-N: Conforming fleet stand, 2 ledgers at depth 1 (4 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 2 ledgers at depth 1 (4 Managers) unchanged, and what does it cost?
+- **Project and level:** fleet-w2-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); rounds; turns; time
+
+## W2D1-M2: 2 distributed faults, 2 ledgers at depth 1 (4 Managers)
+
+- **Question:** Does Apply find and repair 2 faults that only the model reveals, each in another ledger's area, in a project of 2 ledgers at depth 1 (4 Managers)?
+- **Project and level:** fleet-w2-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+| floor2 | iron | behavior | debit lets iron fall one below its floor; the ledger's own tests do not cover it | `ledger-iron` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor2:
+
+```diff
+--- realization/iron/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+## W4D1-N: Conforming fleet stand, 4 ledgers at depth 1 (6 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 4 ledgers at depth 1 (6 Managers) unchanged, and what does it cost?
+- **Project and level:** fleet-w4-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); rounds; turns; time
+
+## W4D1-M1: 1 distributed fault, 4 ledgers at depth 1 (6 Managers)
+
+- **Question:** Does Apply find and repair 1 fault that only the model reveals, each in another ledger's area, in a project of 4 ledgers at depth 1 (6 Managers)?
+- **Project and level:** fleet-w4-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+## W4D1-M4: 4 distributed faults, 4 ledgers at depth 1 (6 Managers)
+
+- **Question:** Does Apply find and repair 4 faults that only the model reveals, each in another ledger's area, in a project of 4 ledgers at depth 1 (6 Managers)?
+- **Project and level:** fleet-w4-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+| floor2 | iron | behavior | debit lets iron fall one below its floor; the ledger's own tests do not cover it | `ledger-iron` | no | informative |
+| order3 | salt | behavior | balances of salt are sorted by balance instead of name; the ledger's own tests do not cover it | `ledger-salt` | no | informative |
+| cap4 | wool | behavior | credit refuses reaching exactly the cap of wool; the ledger's own tests do not cover it | `ledger-wool` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor2:
+
+```diff
+--- realization/iron/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+order3:
+
+```diff
+--- realization/salt/ledger.py
+-    return [record(section, name) for name in sorted(section)]
++    return [record(section, name) for name in sorted(section, key=section.get)]
+```
+
+cap4:
+
+```diff
+--- realization/wool/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+## W4D1-G: Model-only Apply, 4 ledgers at depth 1 (6 Managers)
+
+- **Question:** Can Apply build 4 ledgers at depth 1 (6 Managers) from the model alone?
+- **Project and level:** fleet-w4-d1, level 3
+- **Start:** snapshot `f1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** checks passed; rounds; turns; time; registry complete
+
+## W8D1-N: Conforming fleet stand, 8 ledgers at depth 1 (10 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 8 ledgers at depth 1 (10 Managers) unchanged, and what does it cost?
+- **Project and level:** fleet-w8-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); rounds; turns; time
+
+## W8D1-M1: 1 distributed fault, 8 ledgers at depth 1 (10 Managers)
+
+- **Question:** Does Apply find and repair 1 fault that only the model reveals, each in another ledger's area, in a project of 8 ledgers at depth 1 (10 Managers)?
+- **Project and level:** fleet-w8-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+## W8D1-M4: 4 distributed faults, 8 ledgers at depth 1 (10 Managers)
+
+- **Question:** Does Apply find and repair 4 faults that only the model reveals, each in another ledger's area, in a project of 8 ledgers at depth 1 (10 Managers)?
+- **Project and level:** fleet-w8-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+| floor2 | iron | behavior | debit lets iron fall one below its floor; the ledger's own tests do not cover it | `ledger-iron` | no | informative |
+| order3 | salt | behavior | balances of salt are sorted by balance instead of name; the ledger's own tests do not cover it | `ledger-salt` | no | informative |
+| cap4 | wool | behavior | credit refuses reaching exactly the cap of wool; the ledger's own tests do not cover it | `ledger-wool` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor2:
+
+```diff
+--- realization/iron/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+order3:
+
+```diff
+--- realization/salt/ledger.py
+-    return [record(section, name) for name in sorted(section)]
++    return [record(section, name) for name in sorted(section, key=section.get)]
+```
+
+cap4:
+
+```diff
+--- realization/wool/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+## W8D1-M8: 8 distributed faults, 8 ledgers at depth 1 (10 Managers)
+
+- **Question:** Does Apply find and repair 8 faults that only the model reveals, each in another ledger's area, in a project of 8 ledgers at depth 1 (10 Managers)?
+- **Project and level:** fleet-w8-d1, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+| floor2 | iron | behavior | debit lets iron fall one below its floor; the ledger's own tests do not cover it | `ledger-iron` | no | informative |
+| order3 | salt | behavior | balances of salt are sorted by balance instead of name; the ledger's own tests do not cover it | `ledger-salt` | no | informative |
+| cap4 | wool | behavior | credit refuses reaching exactly the cap of wool; the ledger's own tests do not cover it | `ledger-wool` | no | informative |
+| floor5 | clay | behavior | debit lets clay fall one below its floor; the ledger's own tests do not cover it | `ledger-clay` | no | informative |
+| order6 | rope | behavior | balances of rope are sorted by balance instead of name; the ledger's own tests do not cover it | `ledger-rope` | no | informative |
+| cap7 | wax | behavior | credit refuses reaching exactly the cap of wax; the ledger's own tests do not cover it | `ledger-wax` | no | informative |
+| floor8 | tea | behavior | debit lets tea fall one below its floor; the ledger's own tests do not cover it | `ledger-tea` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor2:
+
+```diff
+--- realization/iron/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+order3:
+
+```diff
+--- realization/salt/ledger.py
+-    return [record(section, name) for name in sorted(section)]
++    return [record(section, name) for name in sorted(section, key=section.get)]
+```
+
+cap4:
+
+```diff
+--- realization/wool/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor5:
+
+```diff
+--- realization/clay/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+order6:
+
+```diff
+--- realization/rope/ledger.py
+-    return [record(section, name) for name in sorted(section)]
++    return [record(section, name) for name in sorted(section, key=section.get)]
+```
+
+cap7:
+
+```diff
+--- realization/wax/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor8:
+
+```diff
+--- realization/tea/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+## W8D1-G: Model-only Apply, 8 ledgers at depth 1 (10 Managers)
+
+- **Question:** Can Apply build 8 ledgers at depth 1 (10 Managers) from the model alone?
+- **Project and level:** fleet-w8-d1, level 3
+- **Start:** snapshot `f1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** checks passed; rounds; turns; time; registry complete
+
+## W4D2-N: Conforming fleet stand, 4 ledgers at depth 2 (7 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 4 ledgers at depth 2 (7 Managers) unchanged, and what does it cost?
+- **Project and level:** fleet-w4-d2, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); rounds; turns; time
+
+## W4D2-M4: 4 distributed faults, 4 ledgers at depth 2 (7 Managers)
+
+- **Question:** Does Apply find and repair 4 faults that only the model reveals, each in another ledger's area, in a project of 4 ledgers at depth 2 (7 Managers)?
+- **Project and level:** fleet-w4-d2, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | ledgers/wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+| floor2 | ledgers/iron | behavior | debit lets iron fall one below its floor; the ledger's own tests do not cover it | `ledger-iron` | no | informative |
+| order3 | ledgers/salt | behavior | balances of salt are sorted by balance instead of name; the ledger's own tests do not cover it | `ledger-salt` | no | informative |
+| cap4 | ledgers/wool | behavior | credit refuses reaching exactly the cap of wool; the ledger's own tests do not cover it | `ledger-wool` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/ledgers/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor2:
+
+```diff
+--- realization/ledgers/iron/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+order3:
+
+```diff
+--- realization/ledgers/salt/ledger.py
+-    return [record(section, name) for name in sorted(section)]
++    return [record(section, name) for name in sorted(section, key=section.get)]
+```
+
+cap4:
+
+```diff
+--- realization/ledgers/wool/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+## W4D3-N: Conforming fleet stand, 4 ledgers at depth 3 (8 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 4 ledgers at depth 3 (8 Managers) unchanged, and what does it cost?
+- **Project and level:** fleet-w4-d3, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); rounds; turns; time
+
+## W4D3-M4: 4 distributed faults, 4 ledgers at depth 3 (8 Managers)
+
+- **Question:** Does Apply find and repair 4 faults that only the model reveals, each in another ledger's area, in a project of 4 ledgers at depth 3 (8 Managers)?
+- **Project and level:** fleet-w4-d3, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** faults repaired; changes outside the faulty ledgers; rounds; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| cap1 | ledgers/books/wood | behavior | credit refuses reaching exactly the cap of wood; the ledger's own tests do not cover it | `ledger-wood` | no | informative |
+| floor2 | ledgers/books/iron | behavior | debit lets iron fall one below its floor; the ledger's own tests do not cover it | `ledger-iron` | no | informative |
+| order3 | ledgers/books/salt | behavior | balances of salt are sorted by balance instead of name; the ledger's own tests do not cover it | `ledger-salt` | no | informative |
+| cap4 | ledgers/books/wool | behavior | credit refuses reaching exactly the cap of wool; the ledger's own tests do not cover it | `ledger-wool` | no | informative |
+
+Fault edits:
+
+cap1:
+
+```diff
+--- realization/ledgers/books/wood/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+floor2:
+
+```diff
+--- realization/ledgers/books/iron/ledger.py
+-    if section[name] - amount < FLOOR:
++    if section[name] - amount < FLOOR - 1:
+```
+
+order3:
+
+```diff
+--- realization/ledgers/books/salt/ledger.py
+-    return [record(section, name) for name in sorted(section)]
++    return [record(section, name) for name in sorted(section, key=section.get)]
+```
+
+cap4:
+
+```diff
+--- realization/ledgers/books/wool/ledger.py
+-    if balance + amount > CAP:
++    if balance + amount >= CAP:
+```
+
+## W4D3-G: Model-only Apply, 4 ledgers at depth 3 (8 Managers)
+
+- **Question:** Can Apply build 4 ledgers at depth 3 (8 Managers) from the model alone?
+- **Project and level:** fleet-w4-d3, level 3
+- **Start:** snapshot `f1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `f1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** checks passed; rounds; turns; time; registry complete
+
 ## Profile shifts
 
 The reference realization fails exactly these checks under a changed or variant profile:
