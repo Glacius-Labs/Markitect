@@ -6,15 +6,14 @@
 
 With Sonnet, the new evidence mechanics did what the Depot false success needed. Fresh reviewers found the hyphen-name defect on their own from `depot/inputs`, with Orchestrator receipts. They raised it as a genuine finding and gave no clean Verify on the faulty stand. On the conforming stand they gave a clean Verify with no fabricated work, and a full Apply repaired the defect and confirmed the repair with a fresh Verify.
 
-Three weaknesses showed up and were each corrected once, but their corrections are evidenced by at most one run:
+Four weaknesses showed up and were each corrected once:
 
-- **Probe cost under load:** a Runtime bound and tight limits made the first V1 attempt fail.
-- **Overreach:** the evidence wording in the Plan mandate produced 757 lines of optional tests on a conforming stand. A second run after the correction published no change.
-- **Root's self-disproofs:** these could chain into seven Verify Passes.
+- **Probe cost under load:** a Runtime bound and tight limits made the first V1 attempt fail. One later run per case confirms the correction.
+- **Overreach:** the evidence wording in the Plan mandate produced 757 lines of optional tests on a conforming stand. One run after the correction published no change.
+- **Root's self-disproofs:** these chained into seven Verify Passes. No run followed the correction.
+- **Silent public default:** on a model-only start with an unstated name maximum, the Manager chose 80 and nobody asked the owner. That discriminator stays failed; the prompt correction made afterwards is unevaluated.
 
-One discriminator stays failed. On a model-only start with an unstated name maximum, the Manager chose 80 and nobody asked the owner. The prompt correction made afterwards is unevaluated.
-
-Nine cases ran in 13,133 s of charged time. Provider cost estimates sum to about $49. A3 and A6 were displaced, and Haiku stays unrun.
+Nine evaluation runs of seven cases (V1 and A2 ran twice) used 13,134 s of charged time. Provider cost estimates sum to about $49. A3 and A6 were displaced, and Haiku stays unrun.
 
 ## Controls validated before the change
 
@@ -49,19 +48,29 @@ Branch `dev/apply-hardening`; the final source head is named in the PR. The chan
 
 ## Source checks
 
-Every evaluated candidate and the final head passed the following:
+Each evaluated candidate (`be89162f`, `8b5040ff`, `e9643e4e`, `922ab2f6`) passed, before its first case:
 
 - `go test ./...` on Windows and in WSL Ubuntu (Go 1.27.1, disposable clone);
 - `go test -race ./internal/run ./internal/apply` in the candidate's Go runtime image;
 - vet, build, `go mod verify`, the architecture and module gates, and `markitect check` on both the working tree and `--revision HEAD`;
 - the documentation link check.
 
-An independent complete-diff reviewer found:
+The final head's own results, after merging current Main, are recorded in the PR.
 
-- eight defects in the first candidate, and two more in the fixes: vacuous reruns, claims not bound to receipts, dispositions surviving a reopen, rerun unreachable through the tool schema, chained and out-of-responsibility rerun expansion, repeated-progress ordering, and cyclic waits ending the run;
-- two refinements in the Runtime correction.
+An independent complete-diff reviewer found eight defects in the first candidate:
 
-All were fixed with discriminating tests. The reviewer then reviewed each later correction and found no remaining defect.
+- vacuous reruns;
+- claims not bound to receipts;
+- dispositions surviving a reopen;
+- repeated-progress ordering;
+- cyclic waits ending the run;
+- a Runtime error had no honest exit except a rerun with character-identical claim text;
+- unexecutable or killed probes classified as failed assertions;
+- live-stand receipts going stale whenever another area is accepted (kept as an accepted cost).
+
+It found three more in the fixes: the tool schema made reruns unreachable, erring repetitions stacked up, and rerun expansion reached outside the disposer's responsibility. It also suggested two refinements to the Runtime correction, a qualifier to the overreach correction, and the removal of a Verify rule from the routing correction that could stall reviewers.
+
+All findings were fixed with discriminating tests or are listed under gaps. The two low edge cases the reviewer left open for `922ab2f6` are listed there.
 
 ## Evaluation manifest
 
@@ -135,6 +144,8 @@ The correction is the Runtime row above. This attempt displaced A6.
 - Outside checks on the publication: oracle d1 21/21, name checker 8/8, own tests 127 (from 26).
 - Changed: `app.py` (the repair), the README, five registries, eight test files, and an unrequested clamp of `available` in `orders/orderbook.py`. That is 15 files and 861 added lines, mostly optional tests.
 
+**Findings and changes per run.** No false genuine finding was raised in any run; every genuine finding named a real model violation (the hyphen-name refusal in V1 attempt 2 and A1, `--help` exiting 0 in A4). Unjustified changes: A1's `available` clamp and extra tests, A2's nine paths, and A4's unasked maximum of 80. Every applied publication (A1, A2, A4, A5) carried a receipt with each path read back after writing; A2's second run published `no_change`.
+
 **A2.** Verified with one clean Verify, but published 9 paths and 757 added lines: new unit tests, two README clarifications and an internal catalog refactor. No finding asked for any of it, and the model's "meaningful automated tests" were already met by the 26 reference tests.
 
 The accepted plans said "unit tests for distinct claims that lack evidence". This traces to this stream's Plan mandate (from #536), which asked for distinct claims, input classes and public-boundary checks as intended evidence. Correction `b976d8f0`/`e9643e4e`, plus a review qualifier, keeps conforming artifacts as their own evidence and leaves claim coverage to Verify's probes. Its recheck displaced A3.
@@ -199,7 +210,9 @@ Corrections `fcd0fb54` and `488a582d` were made after the series and are unevalu
 - a violation label stays on a receipt after its finding is disproved;
 - a deliberate probe exit of 128 or above is classified as an error;
 - an unresolved question does not by itself block a clean verdict;
-- a text guard test for the authority wording.
+- a text guard test for the authority wording;
+- a child disposition that is voided after it replaced Root's pending one leaves the receipt plainly undisposed, so the Reassess shortcut is lost (safe direction);
+- Root probing a child's claim after the child is Done needs a reopen, which also invalidates the child's consumers.
 
 **Recommended next evidence**, using the same frozen kit and limits:
 
