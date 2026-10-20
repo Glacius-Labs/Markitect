@@ -324,6 +324,22 @@ After discussing why the implementation starts a new Agent container for every T
 
 Recorder's disposition: record the target of one reusable Manager working container within an Apply Run as a later proposal. Complete and assess the current reference/simplified-workflow comparison first, then change the selected baseline's container lifecycle, then retest. The [Apply proposal](../../design/canonical-model/manager-apply-workflow.md#deferred-proposal-reuse-manager-working-containers) records the technical questions and unchanged isolation/acceptance guarantees; [IDEA-018](../register.md#idea-018-reuse-manager-working-containers) and the [delivery plan](../../implementation-plan.md#container-reuse-after-the-current-evaluation) keep it discoverable. Documentation integration changes no runtime, model rule or current evaluation and grants no additional provider budget. Fresh Verify reviewers and isolated checks are not collapsed into the retained author environment.
 
+## Owner sequencing: Apply hardening follow-up
+
+After the hardening report (PR #547) recommended rerunning A4 and A2 and then a Haiku pass, the owner first agreed and asked about A4's expectation:
+
+> Das sollten wir so machen. Allerdings weiß ich nicht ob wir bei A4 tatsächlich wollen, dass der Manager es nicht selbst entscheidet und eskaliert. Wieso erwarten wir das hier?
+
+The answer: S-QV's model refers to a maximum name length but never states it, so the chosen value changes which names the public CLI refuses; under DEC-063 as amended by DEC-064 a gap with effect at the project boundary belongs to the owner, while a gap without such effect stays realization freedom. The owner confirmed:
+
+> Verstanden, dann hast du hier Recht. Das ist eine Lücke im Modell. Dann sollten wir machen, was du vorschlägst.
+
+The response then pointed out that the probe change would alter the reference runtime now, and the reruns would start Runs before the [container-reuse sequence](#owner-sequencing-manager-container-reuse) selects a baseline. It proposed to run nothing now, to bring the probe change with the container-lifecycle change after the baseline selection, and to include A4, A2 and then Haiku in the matched retest. The owner agreed:
+
+> Ja dann machen wir es so
+
+Recorder's disposition: A4's expectation stands: a public value the model refers to but does not state is a model gap that reaches the owner as a question, not a silent Manager choice; as the handoff says, a valid gap is not an automatic model-error abort. The hardening follow-up joins the container-reuse sequence in the [delivery plan](../../implementation-plan.md#container-reuse-after-the-current-evaluation). This record starts no implementation or Run and grants no provider budget.
+
 ## Owner adoption: evidence-driven Apply hardening
 
 After discussing draft PR #536, the owner asked how to prevent reviewers from filling the new fields while still missing the same defect, and proposed making Managers suspicious of unsupported success. The response proposed active counterexample search, expectations derived from authority independently of existing assertions, tool-recorded observations, parent assessment of the actual evidence, and faulty/conforming evaluation controls. It explicitly rejected finding quotas and kept concrete unresolved conformity questions blocking.
