@@ -78,9 +78,9 @@ func reportSchema(spec PassSpec) schema {
 			"definition": str("Identity of one of your own Definitions."),
 			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverNotApplicable, coverOpen}},
 			"note":       str("How it is met and with which evidence; required for not_applicable and open, and for every entry of a plan."),
-			"evidence": schema{"type": "array", "description": evidenceText(spec), "items": object([]string{"claim"}, schema{
-				"claim":     str("One distinct claim of the Definition, with the case or input class it covers."),
-				"receipt":   str("Executed behavior: your passing probe receipt (R...) of the tool check for this Definition, run on the stand of this submission."),
+			"evidence": schema{"type": "array", "description": evidenceText(spec), "items": object(nil, schema{
+				"claim":     str("source: the distinct claim of the Definition, with the case or input class it covers. A receipt brings its own claim."),
+				"receipt":   str("Executed behavior: your passing probe receipt (R...) of the tool check for this Definition, run on the stand of this submission; each receipt supports one claim."),
 				"source":    str("Inspected source instead: the repository-relative file."),
 				"location":  str("source: the inspected location, such as a function or lines."),
 				"reasoning": str("source: why the inspected text establishes the claim, and why executing it is not applicable."),

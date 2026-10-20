@@ -74,25 +74,27 @@ type ProbeReceipt struct {
 	Proposal  string `json:"proposal,omitempty"`
 	// Stand is the digest of the stand probed; Tree the digest of the tree that
 	// ran: the stand plus the probe file at Path.
-	Stand         string    `json:"stand"`
-	Tree          string    `json:"tree"`
-	Path          string    `json:"path"`
-	Content       string    `json:"content"`
-	ContentDigest string    `json:"contentDigest"`
-	ImageID       string    `json:"imageID"`
-	Executable    string    `json:"executable"`
-	Args          []string  `json:"args"`
-	Directory     string    `json:"directory"`
-	Started       bool      `json:"started"`
-	Exited        bool      `json:"exited"`
-	ExitCode      int       `json:"exitCode"`
-	TimedOut      bool      `json:"timedOut"`
-	Uncertain     bool      `json:"uncertain"`
-	Output        string    `json:"output,omitempty"`
-	Truncated     bool      `json:"truncated,omitempty"`
-	Reason        string    `json:"reason,omitempty"`
-	Outcome       string    `json:"outcome"`
-	At            time.Time `json:"at"`
+	Stand         string   `json:"stand"`
+	Tree          string   `json:"tree"`
+	Path          string   `json:"path"`
+	Content       string   `json:"content"`
+	ContentDigest string   `json:"contentDigest"`
+	ImageID       string   `json:"imageID"`
+	Executable    string   `json:"executable"`
+	Args          []string `json:"args"`
+	Directory     string   `json:"directory"`
+	Started       bool     `json:"started"`
+	Exited        bool     `json:"exited"`
+	ExitCode      int      `json:"exitCode"`
+	TimedOut      bool     `json:"timedOut"`
+	Uncertain     bool     `json:"uncertain"`
+	Output        string   `json:"output,omitempty"`
+	Truncated     bool     `json:"truncated,omitempty"`
+	Reason        string   `json:"reason,omitempty"`
+	Outcome       string   `json:"outcome"`
+	// Rerun names the error receipt whose exact probe this one repeats.
+	Rerun string    `json:"rerun,omitempty"`
+	At    time.Time `json:"at"`
 	// Disposition is the accepted disposition of an adverse receipt.
 	Disposition *ProbeDisposition `json:"disposition,omitempty"`
 }
@@ -127,6 +129,20 @@ type probeIn struct {
 	Content    string   `json:"content"`
 	Args       []string `json:"args"`
 	Proposal   string   `json:"proposal"`
+	Rerun      string   `json:"rerun"`
+}
+
+// probeSpec is a validated probe: what runs and what it claims.
+type probeSpec struct {
+	definition ModelDefinition
+	claim      string
+	expected   string
+	check      *Check
+	path       snapshot.Path
+	content    string
+	args       []string
+	proposal   string
+	rerun      string
 }
 
 // evidenceItem supports one claim of an obligation's coverage: a probe receipt
@@ -167,28 +183,78 @@ func (e *engine) receiptLocked(id string) *ProbeReceipt {
 // probe serves check with a probe: it binds the declared claim and expectation
 // before anything runs, places the probe file on a stable stand, runs it in its
 // own container with the execution profile of a required check and records the
-// receipt, whatever its outcome.
+// receipt, whatever its outcome. A rerun repeats exactly the probe of an error
+// receipt on the same candidate, so that a passing rerun can replace an error
+// of the Runtime but never a different, weaker probe.
 func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn) ToolAnswer {
 	if !e.probesAvailable() {
 		return refuse("No probe can run: the project declares no check whose execution profile could run it. Use source inspection instead.")
 	}
+	var spec probeSpec
+	var why string
+	if strings.TrimSpace(in.Rerun) != "" {
+		spec, why = e.rerunSpec(m, in)
+	} else {
+		spec, why = e.probeSpecOf(m, in)
+	}
+	if why != "" {
+		return refuse("%s", why)
+	}
+	return e.runProbe(ctx, m, ts, spec)
+}
+
+// rerunSpec is the exact probe of an error receipt, for a review of the same
+// candidate.
+func (e *engine) rerunSpec(m *member, in probeIn) (probeSpec, string) {
+	if in.Obligation != "" || in.Claim != "" || in.Expected != "" || in.Check != "" || in.Path != "" || in.Content != "" || in.Args != nil || in.Proposal != "" {
+		return probeSpec{}, "A rerun repeats a receipt's probe exactly; give only probe.rerun."
+	}
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	r := e.receiptLocked(strings.TrimSpace(in.Rerun))
+	switch {
+	case r == nil:
+		return probeSpec{}, fmt.Sprintf("probe.rerun %q is no probe receipt of this run.", in.Rerun)
+	case r.Outcome != ProbeError:
+		return probeSpec{}, fmt.Sprintf("%s %s; only a Runtime error is run again. A failing assertion is disposed of by a finding or a reasoned expectation_error.", r.ID, describeOutcome(r))
+	case !m.p.spec.Review || r.Stand != m.p.tree.Digest().String():
+		return probeSpec{}, fmt.Sprintf("%s ran on another stand; a rerun repeats it on the same candidate in a review.", r.ID)
+	case !e.within(r.Requester, m.Path):
+		return probeSpec{}, fmt.Sprintf("%s was requested by %s, outside your responsibility.", r.ID, r.Requester)
+	}
+	d, _ := e.cfg.Definition(r.Obligation)
+	var chk *Check
+	for i := range e.cfg.Checks {
+		if e.cfg.Checks[i].Name == r.Check {
+			chk = &e.cfg.Checks[i]
+		}
+	}
+	path, err := snapshot.NewPath(r.Path)
+	if chk == nil || err != nil || len(r.Args) < chk.ProfileArgs {
+		return probeSpec{}, fmt.Sprintf("%s cannot be repeated.", r.ID)
+	}
+	return probeSpec{definition: d, claim: r.Claim, expected: r.Expected, check: chk, path: path, content: r.Content, args: slices.Clone(r.Args[chk.ProfileArgs:]), rerun: r.ID}, ""
+}
+
+// probeSpecOf validates a new probe.
+func (e *engine) probeSpecOf(m *member, in probeIn) (probeSpec, string) {
 	claim, err := toolText("probe.claim", in.Claim)
 	if err != nil {
-		return refuse("%v", err)
+		return probeSpec{}, err.Error()
 	}
 	expected, err := toolText("probe.expected", in.Expected)
 	if err != nil {
-		return refuse("%v", err)
+		return probeSpec{}, err.Error()
 	}
 	d, ok := e.cfg.Definition(strings.TrimSpace(in.Obligation))
 	if !ok {
-		return refuse("probe.obligation %q is no Definition of the bound model.", in.Obligation)
+		return probeSpec{}, fmt.Sprintf("probe.obligation %q is no Definition of the bound model.", in.Obligation)
 	}
 	e.mu.Lock()
 	within := e.within(d.Owner, m.Path)
 	e.mu.Unlock()
 	if !within {
-		return refuse("probe.obligation %s is owned by %s, outside your responsibility; probe your own obligations or those of your descendants.", d.ID, d.Owner)
+		return probeSpec{}, fmt.Sprintf("probe.obligation %s is owned by %s, outside your responsibility; probe your own obligations or those of your descendants.", d.ID, d.Owner)
 	}
 	var chk *Check
 	for i := range e.cfg.Checks {
@@ -201,22 +267,22 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 		for _, c := range e.cfg.Checks {
 			names = append(names, c.Name)
 		}
-		return refuse("probe.check names the required check whose execution profile runs the probe: one of %s.", strings.Join(names, ", "))
+		return probeSpec{}, fmt.Sprintf("probe.check names the required check whose execution profile runs the probe: one of %s.", strings.Join(names, ", "))
 	}
 	if in.Content == "" || len(in.Content) > maxProbeBytes || !utf8.ValidString(in.Content) || strings.ContainsRune(in.Content, 0) {
-		return refuse("probe.content must be non-empty text of at most %d bytes.", maxProbeBytes)
+		return probeSpec{}, fmt.Sprintf("probe.content must be non-empty text of at most %d bytes.", maxProbeBytes)
 	}
 	if len(in.Args) > maxProbeArgs {
-		return refuse("probe.args holds at most %d arguments.", maxProbeArgs)
+		return probeSpec{}, fmt.Sprintf("probe.args holds at most %d arguments.", maxProbeArgs)
 	}
 	for i, arg := range in.Args {
 		if !utf8.ValidString(arg) || strings.ContainsRune(arg, 0) {
-			return refuse("probe.args[%d] is not valid text.", i)
+			return probeSpec{}, fmt.Sprintf("probe.args[%d] is not valid text.", i)
 		}
 	}
 	rel, err := snapshot.NewPath(strings.TrimSpace(in.Path))
 	if err != nil {
-		return refuse("probe.path must be a clean relative path below the check's directory %s.", chk.Request.Directory)
+		return probeSpec{}, fmt.Sprintf("probe.path must be a clean relative path below the check's directory %s.", chk.Request.Directory)
 	}
 	full := rel.String()
 	if !chk.Request.Directory.IsRoot() {
@@ -224,8 +290,15 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 	}
 	path, err := snapshot.NewPath(full)
 	if err != nil {
-		return refuse("probe.path %q does not name a file below %s.", in.Path, chk.Request.Directory)
+		return probeSpec{}, fmt.Sprintf("probe.path %q does not name a file below %s.", in.Path, chk.Request.Directory)
 	}
+	return probeSpec{definition: d, claim: claim, expected: expected, check: chk, path: path, content: in.Content, args: in.Args, proposal: strings.TrimSpace(in.Proposal)}, ""
+}
+
+// runProbe places a validated probe on its stand, runs it and records the
+// receipt.
+func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec probeSpec) ToolAnswer {
+	d, chk, path := spec.definition, spec.check, spec.path
 	e.mu.Lock()
 	if ts.probes >= maxProbesPerTurn {
 		e.mu.Unlock()
@@ -236,7 +309,7 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 		e.mu.Unlock()
 		return refuse("This turn belongs to %s, which no longer runs probes.", p.id)
 	}
-	stand, kind, proposalID, why := e.probeStandLocked(m, strings.TrimSpace(in.Proposal))
+	stand, kind, proposalID, why := e.probeStandLocked(m, spec.proposal)
 	e.mu.Unlock()
 	if why != "" {
 		return refuse("%s", why)
@@ -251,7 +324,7 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 	if _, exists := stand.Lookup(path); exists {
 		return refuse("%s exists in the stand; a probe never replaces a project file. Choose another probe.path.", path)
 	}
-	entry, err := snapshot.NewEntry(path, snapshot.Regular, []byte(in.Content))
+	entry, err := snapshot.NewEntry(path, snapshot.Regular, []byte(spec.content))
 	if err != nil {
 		return refuse("probe.path: %v", err)
 	}
@@ -259,21 +332,21 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 	if err != nil {
 		return refuse("probe.path %s cannot be added to the stand: %v", path, err)
 	}
-	sum := sha256.Sum256([]byte(in.Content))
+	sum := sha256.Sum256([]byte(spec.content))
 	e.mu.Lock()
 	ts.probes++
 	e.nextReceipt++
-	r := &ProbeReceipt{ID: fmt.Sprintf("R%d", e.nextReceipt), Pass: p.id, Requester: m.Path, Turn: ts.id, Obligation: d.ID, Claim: claim, Expected: expected,
+	r := &ProbeReceipt{ID: fmt.Sprintf("R%d", e.nextReceipt), Pass: p.id, Requester: m.Path, Turn: ts.id, Obligation: d.ID, Claim: spec.claim, Expected: spec.expected,
 		Check: chk.Name, StandKind: kind, Proposal: proposalID, Stand: stand.Digest().String(), Tree: tree.Digest().String(), Path: path.String(),
-		Content: in.Content, ContentDigest: hex.EncodeToString(sum[:]), Directory: chk.Request.Directory.String()}
+		Content: spec.content, ContentDigest: hex.EncodeToString(sum[:]), Directory: chk.Request.Directory.String(), Rerun: spec.rerun}
 	req := chk.Request
 	req.ID = CheckID(fmt.Sprintf("%s-%s-%s", e.cfg.RunID, p.id, strings.ToLower(r.ID)))
 	req.Tree = tree
-	req.Args = append(slices.Clone(req.Args[:chk.ProfileArgs]), in.Args...)
+	req.Args = append(slices.Clone(req.Args[:chk.ProfileArgs]), spec.args...)
 	r.ImageID, r.Executable, r.Args = req.ImageID, req.Executable, req.Args
 	// The claim and expectation are on record before the probe runs.
 	_ = e.record(Event{Kind: "probe.requested", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"id": r.ID, "obligation": r.Obligation, "claim": r.Claim, "expected": r.Expected,
-		"check": r.Check, "standKind": r.StandKind, "proposal": r.Proposal, "stand": r.Stand, "path": r.Path, "contentDigest": r.ContentDigest, "args": r.Args}})
+		"check": r.Check, "standKind": r.StandKind, "proposal": r.Proposal, "stand": r.Stand, "path": r.Path, "contentDigest": r.ContentDigest, "args": r.Args, "rerun": r.Rerun}})
 	e.mu.Unlock()
 	rec, runErr := e.cfg.Runner.Run(ctx, req)
 	e.mu.Lock()
@@ -287,6 +360,9 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 		r.Reason = strings.TrimSpace(r.Reason + " " + runErr.Error())
 	}
 	r.Outcome = probeOutcome(rec, runErr, req)
+	if r.Outcome == ProbeError && r.Reason == "" {
+		r.Reason = fmt.Sprintf("the probe did not run to its assertions (exit %d)", r.ExitCode)
+	}
 	e.receipts = append(e.receipts, r)
 	_ = e.record(Event{Kind: "probe.receipt", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: *r})
 	var b strings.Builder
@@ -301,7 +377,7 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 		fmt.Fprintf(&b, "\nOutput:\n%s", r.Output)
 	}
 	if r.Outcome != ProbePassed && p.spec.Review {
-		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report: as expectation_error with reason and evidence when your expectation or assertion was wrong, or as rerun of an error by a later passing receipt of the same claim.")
+		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. Without a passing rerun the claim lacks its evidence: cover it as open with a genuine finding for the missing evidence.")
 	}
 	return ToolAnswer{Text: b.String()}
 }
@@ -359,13 +435,15 @@ func (e *engine) liveStand(ctx context.Context, m *member) (snapshot.Tree, strin
 
 // probeOutcome classifies a receipt: passed only for an observed zero exit of
 // exactly this request; failed for an observed nonzero exit of exactly this
-// request; error otherwise.
+// request from the probe's own assertions; error otherwise, including an exit
+// that says the probe could not be executed (126, 127) or was killed by a
+// signal (128 and above), such as for exhausted memory.
 func probeOutcome(rec CheckReceipt, err error, req CheckRequest) string {
 	match := rec.ID == req.ID && rec.ImageID == req.ImageID && rec.Tree == req.Tree.Digest()
 	switch {
 	case err == nil && rec.Passed(req):
 		return ProbePassed
-	case err == nil && match && rec.Started && rec.Exited && !rec.TimedOut && !rec.Uncertain:
+	case err == nil && match && rec.Started && rec.Exited && !rec.TimedOut && !rec.Uncertain && rec.ExitCode != 126 && rec.ExitCode != 127 && rec.ExitCode < 128:
 		return ProbeFailed
 	}
 	return ProbeError
@@ -392,19 +470,15 @@ func short(digest string) string { return digest[:min(12, len(digest))] }
 // submission is bound to; stand is empty in a Pass with writes, whose stand is
 // known only after the submitter's writers stopped (bindEvidence completes the
 // check then). A source names a file and the inspected location with the
-// reasoning; inference alone is no item.
-func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree) ([]evidenceItem, error) {
+// reasoning; inference alone is no item. A receipt item takes its claim from
+// the receipt, and one receipt supports one item of a submission (cited).
+func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, cited map[string]bool) ([]evidenceItem, error) {
 	if len(c.Evidence) > maxToolItems {
 		return nil, fmt.Errorf("obligations[%d]: at most %d evidence items", i, maxToolItems)
 	}
 	var out []evidenceItem
 	for j, item := range c.Evidence {
 		name := fmt.Sprintf("obligations[%d].evidence[%d]", i, j)
-		claim, err := toolText(name+".claim", item.Claim)
-		if err != nil {
-			return nil, err
-		}
-		item.Claim = claim
 		switch {
 		case item.Receipt != "" && item.Source != "":
 			return nil, fmt.Errorf("%s cites either a receipt or a source, not both", name)
@@ -421,10 +495,18 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree) 
 				return nil, fmt.Errorf("%s: %s %s; an adverse receipt cannot support %s", name, r.ID, describeOutcome(r), c.Status)
 			case stand != nil && r.Stand != stand.Digest().String():
 				return nil, fmt.Errorf("%s: %s ran on the stand %s, not on %s; a stale receipt supports nothing here", name, r.ID, short(r.Stand), short(stand.Digest().String()))
+			case cited[r.ID]:
+				return nil, fmt.Errorf("%s: %s is already cited for another claim; one receipt supports one claim", name, r.ID)
 			}
-			item.Receipt, item.Source, item.Location, item.Reasoning = r.ID, "", "", ""
+			cited[r.ID] = true
+			item.Claim, item.Receipt, item.Source, item.Location, item.Reasoning = r.Claim, r.ID, "", "", ""
 			item.Stand = r.Stand
 		case item.Source != "":
+			claim, err := toolText(name+".claim", item.Claim)
+			if err != nil {
+				return nil, err
+			}
+			item.Claim = claim
 			path, err := snapshot.NewPath(strings.TrimSpace(item.Source))
 			if err != nil {
 				return nil, fmt.Errorf("%s.source must be a repository-relative file path", name)
@@ -537,8 +619,8 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 				return nil, fmt.Errorf("%s: %s failed its assertion; a failing assertion is disposed of by a finding or a reasoned expectation_error, never by running it again", name, r.ID)
 			}
 			later := e.receiptLocked(strings.TrimSpace(d.Rerun))
-			if later == nil || later.Outcome != ProbePassed || later.Stand != r.Stand || later.Obligation != r.Obligation || later.Claim != r.Claim || later.Expected != r.Expected || !e.within(later.Requester, m.Path) || later.At.Before(r.At) {
-				return nil, fmt.Errorf("%s: rerun names a later passing receipt within your responsibility with the same obligation, claim and expectation on the same stand", name)
+			if later == nil || later.Rerun != r.ID || later.Outcome != ProbePassed || later.Stand != r.Stand {
+				return nil, fmt.Errorf("%s: rerun names a passing receipt that repeated %s exactly (probe.rerun) on the same candidate", name, r.ID)
 			}
 			x.Rerun = later.ID
 		default:
@@ -618,6 +700,19 @@ func (e *engine) takeDispositionsLocked(pr *proposal, findings []*Finding) {
 		d := pr.dispositions[id]
 		d.Proposal = pr.id
 		set(r, d)
+	}
+}
+
+// voidDispositionsLocked withdraws the expectation-error and rerun
+// dispositions an accepted submission made once that submission is reopened or
+// invalidated: they unblocked adverse receipts on its authority, which no longer
+// stands. A violation stays with its recorded finding.
+func (e *engine) voidDispositionsLocked(pr *proposal, why string) {
+	for _, r := range e.receipts {
+		if d := r.Disposition; d != nil && d.Proposal == pr.id && d.As != DisposedViolation {
+			r.Disposition = nil
+			_ = e.record(Event{Kind: "probe.disposed", Pass: pr.member.p.id, Manager: d.By, Data: map[string]any{"receipt": r.ID, "voided": d, "why": why}})
+		}
 	}
 }
 

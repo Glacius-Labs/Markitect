@@ -72,7 +72,13 @@ func (s *executionService) evaluateVerify(ctx context.Context, request cli.Apply
 	if result.Outcome.Status != "" {
 		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 	}
-	report.Status = cli.ApplyStatus(result.Outcome, &apply.PublicationReceipt{Outcome: apply.PublicationNoChange}, err)
+	// Nothing is published: a clean independent Verify passes the evaluation.
+	switch {
+	case result.Outcome.Status == runport.Failed:
+		report.Status = model.Failed
+	case result.Outcome.Status == runport.Verified && err == nil:
+		report.Status = model.Passed
+	}
 	return report, err
 }
 

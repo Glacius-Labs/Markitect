@@ -75,9 +75,9 @@ with the named waits.
 (`stage`) of any other Manager of the Pass. Only an actual event wakes a waiting Manager:
 the accepted submission it named, an answer, a message or a decision it must make; an
 unchanged wait starts no turn. A wait on another Manager that closes a cycle with the
-accepted plans' dependencies and the parent-first and integration order can never be
-satisfied, so it ends the run Incomplete at once with the cycle as a `dependency`
-problem. Every turn records its `mode`: `work`, `communication` (blocked), `coordination`
+accepted plans' dependencies and the parent-first and integration order could never be
+satisfied, so it is refused with the cycle named; the Manager submits first what does not
+need it or asks its parent, and a Pass that still cannot advance ends as stalled. Every turn records its `mode`: `work`, `communication` (blocked), `coordination`
 (decisions and answers after the basis), `review` or `helper`.
 
 ## Envelope and verdicts
@@ -127,23 +127,28 @@ stand in the check's directory and never replaces a project file. The Orchestrat
 the receipt (`probe.receipt`, `Outcome.Probes`): the binding, the probe bytes and digest,
 the invocation and what the Runtime observed. Its outcome is the probe's own assertion
 verdict: `passed` for an observed zero exit of exactly that request, `failed` for an
-observed nonzero exit, `error` for everything else (not started, timed out, uncertain or
-mismatched), which never counts as a pass or as an expected refusal. A helper runs no
-probe; `look_up topic probe` returns a whole receipt.
+observed nonzero exit of the probe's own assertions, `error` for everything else (not
+started, timed out, uncertain, mismatched, not executable with exit 126 or 127, or killed
+by a signal with exit 128 or above), which never counts as a pass or as an expected
+refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
+A helper runs no probe; `look_up topic probe` returns a whole receipt.
 
-A coverage entry's evidence items cite per claim either a receipt (the caller's own, for
-that Definition, passed) or an inspected source file with location and reasoning. In a
-review every `done` or `preserved` obligation needs at least one item; a suite total is no
-item. Items bind to the stand of the submission: the candidate or the unchanged accepted
+A coverage entry's evidence items each support one claim: a receipt (the caller's own,
+for that Definition, passed), which brings its own claim and supports one item of a
+submission, or an inspected source file with claim, location and reasoning. In a review
+every `done` or `preserved` obligation needs at least one item; a suite total is no item,
+and whether the items cover the Definition's claims is the parent's judgment. Items bind to the stand of the submission: the candidate or the unchanged accepted
 stand at once, in a Pass with writes the checked stand after the writers stopped, where a
 receipt of another stand returns the submission to its owner. A parent's proposal view
 shows the child's evidence and every probe it ran in the Pass, adverse ones included.
 
 An adverse receipt on a review's candidate blocks until it is disposed of: a genuine
 finding that cites it (a violation), a reasoned `expectation_error` for a failed assertion,
-or a `rerun` that replaces an `error` by a later passing receipt of the same claim on the
-same stand. A failed assertion is never disposed of by running it again. Dispositions take
-effect with their submission's acceptance; a parent's acceptance is the independent
+or a `rerun` that replaces an `error` by a passing exact rerun of it. A failed assertion is
+never disposed of by running it again; an error without a passing rerun leaves its claim
+without evidence, an open obligation with a genuine finding. Dispositions take effect with
+their submission's acceptance, and an expectation-error or rerun disposition falls when
+that submission is reopened or invalidated; a parent's acceptance is the independent
 assessment of a child's own disproof. Root's disproof of its own receipt in the same Pass
 awaits a fresh review: the Pass verdict needs correction and `Reassess` runs a new Verify of
 the unchanged candidate, whose Root reviewer confirms it or raises a finding. A done claim

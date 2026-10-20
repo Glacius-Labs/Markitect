@@ -94,7 +94,7 @@ its own arguments.
 The mandates ask Plan for distinct claims, input classes and the needed dependency stage;
 Implement to wait for another Manager's result instead of reporting progress; and Verify
 to derive claims and permitted counterexamples from the bound model first, probe them at
-the public interface and cite a receipt or inspected source per claim, with parents
+the public interface and cite receipts or inspected sources for their claims, with parents
 challenging their children's assertions.
 
 `VerifyCaptured(ctx, ApplyRequest)` runs only the independent Verify of the captured stand

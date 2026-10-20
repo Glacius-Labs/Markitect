@@ -429,12 +429,14 @@ func TestWaitForAnotherManagerWakesOnItsAcceptance(t *testing.T) {
 	}
 }
 
-// A wait that closes a cycle with the accepted plans' dependencies can never be
-// satisfied in the Pass: the run ends Incomplete at once with the cycle named,
-// instead of spending Turns until a limit.
-func TestWaitThatClosesACycleEndsTheRunAtOnce(t *testing.T) {
+// A wait that closes a cycle with the accepted plans' dependencies could never
+// be satisfied: it is refused with the cycle named, so the Manager submits what
+// does not need it first and the Pass completes. Before, nothing named such a
+// wait and the Haiku Depot run spent its turns on it.
+func TestWaitThatClosesACycleIsRefused(t *testing.T) {
 	f := newFixture(t)
 	var mu sync.Mutex
+	var refused ToolAnswer
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
@@ -448,9 +450,8 @@ func TestWaitThatClosesACycleEndsTheRunAtOnce(t *testing.T) {
 			c.must(toolReport, c.envelope(kind, map[string]any{"plan": pl}))
 			return nil
 		}
-		if !c.planning() && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on") {
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "result"})
-			return nil
+		if !c.planning() && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on") && refused.Text == "" {
+			refused = c.tool(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "result"})
 		}
 		c.protocol()
 		return nil
@@ -459,20 +460,11 @@ func TestWaitThatClosesACycleEndsTheRunAtOnce(t *testing.T) {
 	r.Pass(planSpec())
 	res := r.Pass(implementSpec())
 	out := f.finish(r, "")
-	if !res.Stopped || out.Status != Incomplete || !strings.Contains(out.Reason, "can never be satisfied") || !strings.Contains(out.Reason, "library start needs lending result") {
-		t.Fatalf("stopped %v, status %s: %s", res.Stopped, out.Status, out.Reason)
+	if !refused.Refused || !strings.Contains(refused.Text, "library start needs lending result") {
+		t.Fatalf("the cyclic wait was not refused with its cycle: %+v", refused)
 	}
-	implement := 0
-	for _, turn := range f.agents.turnsOf("lending") {
-		if strings.Contains(turn.ID, "-p2-") {
-			implement++
-		}
-	}
-	if implement != 1 {
-		t.Errorf("lending ran %d Implement turns", implement)
-	}
-	if len(out.Problems) == 0 || out.Problems[len(out.Problems)-1].Category != "dependency" {
-		t.Errorf("problems %+v", out.Problems)
+	if res.Stopped || res.Verdict != Satisfied {
+		t.Fatalf("stopped %v, verdict %s: %s", res.Stopped, res.Verdict, out.Reason)
 	}
 }
 

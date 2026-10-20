@@ -350,7 +350,7 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 			}
 			var rb strings.Builder
 			writeReceipt(&rb, r, false)
-			if r.Stand == candidate {
+			if r.Stand == candidate && len(current) < maxListed {
 				current = append(current, strings.TrimRight(rb.String(), "\n"))
 			} else if r.Requester == m.Path && len(earlier) < maxListed {
 				earlier = append(earlier, strings.TrimRight(rb.String(), "\n"))

@@ -291,8 +291,9 @@ func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswe
 // that is not Done, or the accepted basis or result of another Manager of the
 // Pass. A wait on another Manager wakes the waiter when that submission is
 // accepted; nothing else re-queues it. A wait that closes a cycle with the
-// declared dependencies and the parent-first order can never be satisfied: it
-// ends the run Incomplete at once, naming the cycle.
+// declared dependencies and the parent-first order could never be satisfied: it
+// is refused with the cycle, so the Manager can submit what does not need it
+// first or ask its parent; a Pass that still cannot advance ends as stalled.
 func (e *engine) reportWait(m *member, ts *turnState, in reportIn) ToolAnswer {
 	what := strings.TrimSpace(in.For)
 	stage := strings.TrimSpace(in.Stage)
@@ -317,10 +318,7 @@ func (e *engine) reportWait(m *member, ts *turnState, in reportIn) ToolAnswer {
 		}
 		on = &waitTarget{manager: what, stage: stage}
 		if cycle := e.waitCycleLocked(m, *on); cycle != "" {
-			reason := fmt.Sprintf("the wait of %s for the %s of %s can never be satisfied: %s", m.Path, stage, what, cycle)
-			e.addProblemLocked(Problem{Manager: m.Path, Category: "dependency", Text: reason})
-			e.halt(reason)
-			return ToolAnswer{Text: "Recorded. This wait closes a dependency cycle that no Manager can resolve in this Pass, so the run ends now as incomplete."}
+			return refuse("This wait could never be satisfied, because it closes a cycle: %s. Submit first what does not need it, such as your basis, or ask your parent.", cycle)
 		}
 	} else {
 		return refuse("for names an open question you asked (Q...), a child that is not Done, or another Manager whose accepted basis or result (stage) you need first.")
@@ -500,7 +498,7 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 // A complete result covers every own obligation; a planning Pass needs the
 // method and intended evidence of each covered obligation.
 func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
-	seen := map[string]bool{}
+	seen, cited := map[string]bool{}, map[string]bool{}
 	var out []coverage
 	for i, c := range in.Obligations {
 		if !slices.Contains(m.Obligations, c.Definition) {
@@ -529,7 +527,7 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 		if m.p.spec.Review && claimed && len(c.Evidence) == 0 {
 			return nil, fmt.Errorf("obligations[%d]: %s in a review needs evidence for %s: per claim a probe receipt of the tool check or an inspected source location with reasoning; a suite total alone is no coverage", i, c.Status, c.Definition)
 		}
-		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p))
+		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p), cited)
 		if err != nil {
 			return nil, err
 		}

@@ -649,6 +649,7 @@ func (e *engine) reopenLocked(parent, child *member, reason string) {
 	child.stage = stageIntegrate
 	parent.stage = stageDelegated
 	_ = e.record(Event{Kind: "result.reopened", Pass: child.p.id, Manager: child.Path, Data: map[string]any{"proposal": old.id, "by": parent.Path, "reason": reason}})
+	e.voidDispositionsLocked(old, "its result was reopened")
 	e.invalidateConsumersLocked(child, false, fmt.Sprintf("the result %s of %s was reopened", old.id, child.Path))
 	e.deliverLocked(child, item{text: fmt.Sprintf("Your parent reopened your accepted result %s: %s", old.id, reason)})
 	e.recordStateLocked(parent, "reopened a child result")
@@ -664,6 +665,7 @@ func (e *engine) reviseLocked(m *member, reason string) {
 	m.basis = nil
 	m.stage = stageOwn
 	_ = e.record(Event{Kind: "basis.invalidated", Pass: m.p.id, Manager: m.Path, Data: map[string]any{"proposal": old.id, "reason": reason}})
+	e.voidDispositionsLocked(old, "its basis was revised")
 	e.invalidateConsumersLocked(m, true, fmt.Sprintf("%s revises its basis %s: %s", m.Path, old.id, reason))
 	e.deliverLocked(m, item{text: fmt.Sprintf("You revise your accepted basis %s (%s). Rework it and submit the revised basis; your children and dependents wait for it.", old.id, reason)})
 	e.scheduleLocked()
@@ -704,6 +706,7 @@ func (e *engine) resetLocked(z *member, why string) {
 		if pr != nil && pr.status != proposalInvalidated {
 			pr.status = proposalInvalidated
 			_ = e.record(Event{Kind: "proposal.invalidated", Pass: z.p.id, Manager: z.Path, Data: map[string]any{"proposal": pr.id, "why": why}})
+			e.voidDispositionsLocked(pr, why)
 		}
 	}
 	z.pending, z.basis, z.result = nil, nil, nil
@@ -745,6 +748,7 @@ func (e *engine) unsettleParentLocked(z *member, why string) {
 		parent.result = nil
 		parent.stage = stageDelegated
 		_ = e.record(Event{Kind: "result.reopened", Pass: z.p.id, Manager: parent.Path, Data: map[string]any{"proposal": old.id, "by": "markitect", "reason": why}})
+		e.voidDispositionsLocked(old, why)
 		e.invalidateConsumersLocked(parent, false, why)
 		e.unsettleParentLocked(parent, why)
 	default:

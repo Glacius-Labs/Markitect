@@ -234,7 +234,7 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	}
 	if ts.wait != "" {
 		m.waitFor = ts.wait
-		if on := ts.waitOn; on != nil {
+		if on := ts.waitOn; on != nil && !submitted {
 			m.waitFor = fmt.Sprintf("the accepted %s of %s", on.stage, on.manager)
 			if pr := acceptedOf(p.byPath[on.manager], on.stage); pr != nil {
 				// It was accepted while the turn ran: nothing is left to wait for.
@@ -253,7 +253,7 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 		m.progressed = append(m.progressed, ts.progress)
 	}
 	// A Manager whose helpers still work continues when their results arrive.
-	if ts.progress != "" && !repeated && working && !submitted && len(m.helpers) == 0 {
+	if ts.progress != "" && !repeated && ts.wait == "" && working && !submitted && len(m.helpers) == 0 {
 		m.items = append(m.items, item{text: "Continue your work: " + ts.progress})
 	}
 	// Only what the turn was shown can be left open by it; what arrived while it
@@ -268,9 +268,6 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	switch {
 	case ts.wait != "" || submitted && len(demands) == 0:
 		m.empty = 0
-	case repeated && working && !handled:
-		m.empty++
-		m.items = append(m.items, item{text: "Your progress report repeats an earlier one of this Pass, so it shows no progress. If you cannot continue before another Manager's basis or result is accepted, report wait for that Manager; if you need a decision, ask your parent; otherwise submit."})
 	case len(demands) > 0:
 		// A turn that decided some of what it was shown still has the rest
 		// before it; only a turn that decided nothing counts as empty.
@@ -283,6 +280,9 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	case working && !handled && len(m.helpers) > 0:
 		// Its helpers report to it; their results start its next turn.
 		m.empty = 0
+	case repeated && working && !handled:
+		m.empty++
+		m.items = append(m.items, item{text: "Your progress report repeats an earlier one of this Pass, so it shows no progress. If you cannot continue before another Manager's basis or result is accepted, report wait for that Manager; if you need a decision, ask your parent; otherwise submit."})
 	case working && !handled:
 		m.empty++
 		next := "your basis"

@@ -276,22 +276,113 @@ func TestExpectationErrorsNeedAnIndependentAssessment(t *testing.T) {
 }
 
 // A Runtime error is no assertion: it neither passes nor shows the expected
-// refusal, it cannot be explained away as an expectation error, and only a later
-// passing receipt of the same claim on the same stand replaces it.
-func TestProbeErrorsStayUnresolvedUntilARerunPasses(t *testing.T) {
+// refusal, it cannot be explained away as an expectation error, and only an
+// exact rerun of the same probe (probe.rerun) that passes on the same candidate
+// replaces it; a different probe under the same claim cannot. An exit that says
+// the probe could not be executed is an error too, not a failed assertion.
+// Before the review fix, any later passing receipt with the same claim text
+// disposed of an error.
+func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 	f := probeFixture(t)
+	var runs sync.Map
+	f.checks.fail = func(r CheckRequest) (CheckReceipt, error, bool) {
+		if !probeIDRE.MatchString(string(r.ID)) {
+			return CheckReceipt{}, nil, false
+		}
+		rec := CheckReceipt{ID: r.ID, ImageID: r.ImageID, Tree: r.Tree.Digest(), Started: true, Exited: true}
+		for _, e := range r.Tree.Entries() {
+			switch string(e.Bytes()) {
+			case "FLAKY":
+				// The first run of the probe times out; an exact rerun passes.
+				if n, _ := runs.LoadOrStore("flaky", 0); n.(int) == 0 {
+					runs.Store("flaky", 1)
+					rec.Exited, rec.TimedOut, rec.Uncertain = false, true, true
+				}
+			case "NOEXEC":
+				rec.ExitCode = 127
+			}
+		}
+		return rec, nil, true
+	}
 	var mu sync.Mutex
-	var asExpectation, otherClaim ToolAnswer
+	var asExpectation, otherProbe, rerunNew, noexec ToolAnswer
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
-			hung := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_slow.py", "HANG")))
+			hung := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_slow.py", "FLAKY")))
 			asExpectation = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedExpectationError, "reason": "slow", "evidence": "none"}}}))
-			other := receiptOf(t, c.must(toolCheck, probe("library/interface", "another claim", "probe_other.py", "PASS")))
-			otherClaim = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": other}}}))
-			again := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_slow2.py", "PASS")))
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": again}}}))
+			weaker := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_weak.py", "PASS")))
+			otherProbe = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": weaker}}}))
+			rerunNew = c.tool(toolCheck, map[string]any{"probe": map[string]any{"rerun": weaker}})
+			noexec = c.must(toolCheck, probe("library/interface", "a missing interpreter", "probe_noexec.py", "NOEXEC"))
+			again := receiptOf(t, c.must(toolCheck, map[string]any{"probe": map[string]any{"rerun": hung}}))
+			noexecID := receiptRE.FindStringSubmatch(noexec.Text)[1]
+			noexecAgain := receiptOf(t, c.must(toolCheck, map[string]any{"probe": map[string]any{"rerun": noexecID}}))
+			finding := genuine("library", "library/interface")
+			finding["observed"], finding["receipts"] = "the probe cannot be executed, so the claim has no evidence", []string{noexecID, noexecAgain}
+			cov := c.coverage()
+			cov[0]["status"], cov[0]["note"] = coverOpen, "the claim lacks evidence"
+			delete(cov[0], "evidence")
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov, "findings": []any{finding},
+				"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": again}}}))
+			return nil
+		}
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit") {
+			cov := c.coverage()
+			cov[0]["status"], cov[0]["note"] = coverOpen, "the claim lacks evidence"
+			delete(cov[0], "evidence")
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection)}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	res := r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if res.Verdict != NeedsCorrection || out.Status == Verified {
+		t.Fatalf("verdict %s, status %s: %s", res.Verdict, out.Status, out.Reason)
+	}
+	byID := map[string]ProbeReceipt{}
+	for _, p := range out.Probes {
+		byID[p.ID] = p
+	}
+	if p := byID["R1"]; p.Outcome != ProbeError || p.Disposition == nil || p.Disposition.As != DisposedRerun || byID[p.Disposition.Rerun].Rerun != "R1" || byID[p.Disposition.Rerun].ContentDigest != p.ContentDigest {
+		t.Errorf("error receipt %+v replaced by %+v", p, byID[p.Disposition.Rerun])
+	}
+	if p := byID["R3"]; p.Outcome != ProbeError || !strings.Contains(p.Reason, "exit 127") {
+		t.Errorf("an unexecutable probe counted as an assertion: %+v", p)
+	}
+	if !asExpectation.Refused || !strings.Contains(asExpectation.Text, "error of the Runtime") {
+		t.Errorf("a Runtime error was explained away: %+v", asExpectation)
+	}
+	if !otherProbe.Refused {
+		t.Errorf("a different probe under the same claim replaced the error: %+v", otherProbe)
+	}
+	if !rerunNew.Refused || !strings.Contains(rerunNew.Text, "only a Runtime error is run again") {
+		t.Errorf("a passing receipt was run again: %+v", rerunNew)
+	}
+}
+
+// Evidence binds claims to receipts: a receipt item carries the receipt's own
+// claim, and one receipt cannot be cited for two claims. Before the review fix
+// one trivial passing receipt could be cited under every claim.
+func TestOneReceiptSupportsOneClaim(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var twice ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
+			id := receiptOf(t, c.must(toolCheck, probe("library/interface", "an ordinary name is stored", "probe_names.py", "PASS")))
+			cov := c.coverage()
+			cov[0]["evidence"] = []map[string]string{{"claim": "every input class", "receipt": id}, {"claim": "the hyphen name", "receipt": id}}
+			twice = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
+			cov[0]["evidence"] = []map[string]string{{"claim": "every input class", "receipt": id}}
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
 			return nil
 		}
 		c.protocol()
@@ -300,18 +391,78 @@ func TestProbeErrorsStayUnresolvedUntilARerunPasses(t *testing.T) {
 	r := f.open()
 	r.Pass(implementSpec())
 	r.Pass(verifySpec())
+	f.finish(r, "")
+	if !twice.Refused || !strings.Contains(twice.Text, "one receipt supports one claim") {
+		t.Errorf("one receipt supported two claims: %+v", twice)
+	}
+	var claims []string
+	for _, ev := range f.ev.kinds("proposal.submitted") {
+		if ev.Manager != "library" || ev.Pass != "p2" {
+			continue
+		}
+		env := ev.Data.(map[string]any)["envelope"].(envelope)
+		for _, c := range env.Obligations {
+			for _, item := range c.Evidence {
+				claims = append(claims, item.Claim)
+			}
+		}
+	}
+	if !slices.Contains(claims, "an ordinary name is stored") || slices.Contains(claims, "every input class") {
+		t.Errorf("evidence claims %q are not the receipt's", claims)
+	}
+}
+
+// A disposition stands on the submission that made it: when the parent reopens
+// that result, an expectation-error disproof falls with it and the receipt
+// blocks again until a new accepted submission disposes of it. Before the
+// review fix the disposition survived the reopening.
+func TestDispositionsFallWithTheirReopenedSubmission(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var receipt string
+	reopened, rejected := false, ToolAnswer{}
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		review := c.turn.Kind == VerifyTurn
+		switch {
+		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "an exit code", "probe_exit.py", "FAIL")))
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": []map[string]any{{"definition": "library/interface", "status": coverOpen, "note": "assessed in the result"}}}))
+			return nil
+		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit") && !reopened:
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError, "reason": "the model fixes no exit code", "evidence": "library/interface"}}}))
+			return nil
+		case review && c.turn.Manager == "library" && strings.Contains(c.turn.Prompt, "reopened your accepted result"):
+			rejected = c.result(nil)
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError, "reason": "the model fixes no exit code; checked again", "evidence": "library/interface"}}}))
+			return nil
+		case review && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && !reopened:
+			reopened = true
+			c.must(toolReport, map[string]any{"kind": kindReopen, "child": "library", "reason": "the disproof needs a second look"})
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	res := r.Pass(verifySpec())
 	out := f.finish(r, "")
-	if out.Status != Verified {
-		t.Fatalf("status %s: %s", out.Status, out.Reason)
+	if !reopened || res.Verdict != Satisfied || out.Status != Verified {
+		t.Fatalf("reopened %v, verdict %s, status %s: %s", reopened, res.Verdict, out.Status, out.Reason)
 	}
-	if out.Probes[0].Outcome != ProbeError || out.Probes[0].Disposition == nil || out.Probes[0].Disposition.As != DisposedRerun {
-		t.Errorf("error receipt %+v", out.Probes[0])
+	if !rejected.Refused || !strings.Contains(rejected.Text, "no disposition") {
+		t.Errorf("the reopened result's disposition still counted: %+v", rejected)
 	}
-	if !asExpectation.Refused || !strings.Contains(asExpectation.Text, "error of the Runtime") {
-		t.Errorf("a Runtime error was explained away: %+v", asExpectation)
+	voided := false
+	for _, ev := range f.ev.kinds("probe.disposed") {
+		if _, ok := ev.Data.(map[string]any)["voided"]; ok {
+			voided = true
+		}
 	}
-	if !otherClaim.Refused {
-		t.Errorf("a passing receipt of another claim replaced the error: %+v", otherClaim)
+	if !voided || out.Probes[0].Disposition == nil || !strings.Contains(out.Probes[0].Disposition.Reason, "checked again") {
+		t.Errorf("voided %v, disposition %+v", voided, out.Probes[0].Disposition)
 	}
 }
 
