@@ -559,13 +559,17 @@ func (e *engine) addFindingLocked(f Finding) *Finding {
 }
 
 // corrections returns the distinct correction purposes of the open genuine
-// findings, of those raised in the Pass with the given ID when it is not empty.
-func (e *engine) corrections(pass string) []Purpose {
+// findings; with work, only of the findings of work Passes that work Passes
+// judge and close.
+func (e *engine) corrections(work bool) []Purpose {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	var out []Purpose
 	for _, f := range e.findings {
-		if f.Blocking && !f.Closed && f.Correction != "" && (pass == "" || f.Pass == pass) && !slices.Contains(out, f.Correction) {
+		if work && (f.Review || f.RaisedBy == MarkitectFinding) {
+			continue
+		}
+		if f.Blocking && !f.Closed && f.Correction != "" && !slices.Contains(out, f.Correction) {
 			out = append(out, f.Correction)
 		}
 	}

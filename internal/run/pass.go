@@ -753,6 +753,11 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 		if m.Parent == "" && (m.result == nil || m.result.env.Verdict != Satisfied) {
 			return NeedsCorrection
 		}
+		// An accepted result that leaves an own obligation open needs
+		// correction, whatever finding it rests on.
+		if m.result != nil && slices.ContainsFunc(m.result.env.Obligations, func(c coverage) bool { return c.Status == coverOpen }) {
+			return NeedsCorrection
+		}
 	}
 	for _, f := range e.findings {
 		if f.Blocking && !f.Closed && (p.spec.Review || !f.Review && f.RaisedBy != MarkitectFinding) {
@@ -846,7 +851,7 @@ func (e *engine) seal(p *pass) PassResult {
 	if candidate != "" {
 		e.closeVolume(candidate)
 	}
-	return PassResult{Record: record, Verdict: record.Verdict, Corrections: e.corrections(p.id)}
+	return PassResult{Record: record, Verdict: record.Verdict, Corrections: e.corrections(!p.spec.Review)}
 }
 
 // gate runs the Model check and the File check on a whole stand and ends the

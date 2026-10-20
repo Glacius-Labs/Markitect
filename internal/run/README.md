@@ -82,9 +82,11 @@ the parent-first order).
 
 A Pass verdict is `satisfied` when Root's integrated result is satisfied and no genuine
 finding of the kind the Pass judges is open; a review also needs every required check
-passing on its candidate. A child's `needs_correction` rests on an open finding, so a
-finding its raiser closes later no longer holds the Pass back. `PassResult.Corrections`
-names the correction purposes of the open genuine findings raised in that Pass.
+passing on its candidate, and no accepted result may leave an own obligation `open`. A
+child's `needs_correction` rests on an open finding, so a finding its raiser closes later
+no longer holds the Pass back. `PassResult.Corrections` names the correction purposes of
+the open genuine findings that kind of Pass judges: work findings after a work Pass, all
+after a review.
 
 ## Findings
 

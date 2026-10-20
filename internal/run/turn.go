@@ -31,6 +31,9 @@ type turnState struct {
 	demands []string
 	// helperSummary is a helper's reported result.
 	helperSummary string
+	// blocked says that the turn started while the Manager's productive work
+	// was blocked: a communication-only turn.
+	blocked bool
 }
 
 // startTurnLocked starts a turn of a Manager that delivers all its items.
@@ -67,7 +70,7 @@ func (e *engine) startTurnLocked(m *member) {
 		role, kind, profile, home, resume, letter = "reviewer", VerifyTurn, m.VerifyProfile, m.reviewHome, m.reviewConversation, "r"
 		standing = m.reviewConversation == ""
 	}
-	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m)}
+	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked}
 	readOnly, mounts := e.mountsLocked(m)
 	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}

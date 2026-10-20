@@ -92,7 +92,7 @@ func (e *engine) send(ctx context.Context, m *member, ts *turnState, args json.R
 		_ = e.record(Event{Kind: "message", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"from": m.Path, "to": to, "text": text}})
 		e.deliverLocked(target, item{kind: itemMessage, text: fmt.Sprintf("Message from %s: %s", relation(m.mgr, target.mgr), text)})
 		e.scheduleLocked()
-		return ToolAnswer{Text: "Sent to " + to + "." + e.takeItemsLocked(m)}
+		return ToolAnswer{Text: "Sent to " + to + "." + e.takeItemsLocked(m, ts)}
 	}
 	e.mu.Unlock()
 	return refuse("kind must be question, answer or info.")
@@ -126,7 +126,7 @@ func (e *engine) ask(ctx context.Context, m *member, ts *turnState, to, text, ab
 		target := m.p.byPath[to]
 		e.deliverLocked(target, item{kind: itemMessage, text: fmt.Sprintf("Question %s from %s: %s\n  Answer it with send kind answer, about %s; or ask your own contact first with about %s.", q.ID, relation(m.mgr, target.mgr), text, q.ID, q.ID)})
 		e.scheduleLocked()
-		answer := fmt.Sprintf("Asked %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m))
+		answer := fmt.Sprintf("Asked %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m, ts))
 		e.mu.Unlock()
 		return ToolAnswer{Text: answer}, q.ID
 	}
@@ -143,7 +143,7 @@ func (e *engine) ask(ctx context.Context, m *member, ts *turnState, to, text, ab
 		e.wg.Add(1)
 		go e.pollOwner()
 	}
-	return ToolAnswer{Text: fmt.Sprintf("Asked the user %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m))}, q.ID
+	return ToolAnswer{Text: fmt.Sprintf("Asked the user %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m, ts))}, q.ID
 }
 
 // answerLocked records an answer to an open question addressed to the sender;
@@ -163,7 +163,7 @@ func (e *engine) answerLocked(m *member, ts *turnState, to, text, about string) 
 	asker := e.cur.byPath[q.From]
 	e.deliverLocked(asker, item{kind: itemMessage, text: fmt.Sprintf("Answer to your question %s (%q) from %s: %s", q.ID, q.Text, relation(m.mgr, asker.mgr), text)})
 	e.scheduleLocked()
-	return ToolAnswer{Text: "Answered " + q.ID + "." + e.takeItemsLocked(m)}
+	return ToolAnswer{Text: "Answered " + q.ID + "." + e.takeItemsLocked(m, ts)}
 }
 
 // escalate serves the tool escalate: a classified problem and the decision the
@@ -203,12 +203,12 @@ func (e *engine) escalate(ctx context.Context, m *member, ts *turnState, args js
 
 // takeItemsLocked returns a Manager's undelivered items as tool answer text
 // and counts them as delivered.
-func (e *engine) takeItemsLocked(m *member) string {
+func (e *engine) takeItemsLocked(m *member, ts *turnState) string {
 	e.pruneLocked(m)
-	// The assignment and, while productive work is blocked, the findings to
+	// The assignment and, in a turn that started blocked, the findings to
 	// correct stay for the turn that does the work.
 	stays := func(it item) bool {
-		return it.kind == itemAssignment || m.stage == stageBlocked && it.kind == itemFinding
+		return it.kind == itemAssignment || ts.blocked && it.kind == itemFinding
 	}
 	var texts []string
 	var taken []item

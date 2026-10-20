@@ -72,7 +72,7 @@ const implementMandate = "Realize every applicable own obligation in your own ar
 
 const verifyMandate = "Assess the immutable candidate independently. Your basis is your own assessment of your own obligations' realization and evidence, plus the review context your children's reviewers need; your result integrates your children's assessments and the cross-area correctness of their interaction. Raise every genuine finding with its owner, the obligation, the observed evidence and the earliest kind of correction it needs, and reassess the findings you raised earlier."
 
-const verifyGuidance = "A genuine finding is an observed model violation, a missing required realization or evidence item, or a failed required check; cite the obligation and the observed behavior or source. A Definition realized outside its owner's artifacts, or a change outside a Manager's own area, is a model violation; as a parent, check how your children actually use each other's realizations. Optional improvements the model does not require are notes: set blocking to false, and never soften a genuine finding into a note. When a reviewer below you raised a finding you independently judge erroneous, dispute it with reason and evidence; it stays open until a fresh review of its responsibility disposes of it."
+const verifyGuidance = "A genuine finding is an observed model violation, a missing required realization or evidence item, or a failed required check; cite the obligation and the observed behavior or source. A Definition realized outside its owner's artifacts, or a change outside a Manager's own area, is a model violation; as a parent, check how your children actually use each other's realizations. Optional improvements the model does not require are notes: set blocking to false, and never soften a genuine finding into a note. When another reviewer, below you or about your own responsibility, raised a finding you independently judge erroneous, dispute it with reason and evidence; it stays open until a fresh review of its responsibility disposes of it."
 
 func applyWork() []run.PassSpec {
 	return []run.PassSpec{
@@ -111,9 +111,10 @@ func Apply(ctx context.Context, req ApplyRequest) (ApplyResult, error) {
 }
 
 // compose runs the work Passes in order and then the review, as the shared
-// workflow of Apply and Extract. A work Pass's own open findings repeat it or
-// restart the work at an earlier purpose they name; a later purpose they name
-// comes in order, so no forward Pass is skipped. A review that needs correction
+// workflow of Apply and Extract. The open work findings after a work Pass
+// repeat it or restart the work at an earlier purpose they name; a later
+// purpose they name comes in order, so no forward Pass is skipped and no review
+// starts while a work finding is open. A review that needs correction
 // restarts the work at the earliest purpose its open findings name, after any
 // reassessment of disputed findings on the unchanged candidate; a clean review
 // ends the run verified. The Pass budget bounds every repetition. The reason
@@ -140,8 +141,8 @@ func compose(r *run.Run, work []run.PassSpec, review run.PassSpec) string {
 }
 
 // followWork returns the index of the work Pass after the sealed work Pass at
-// index current: the earliest purpose up to current that its own open findings
-// name, otherwise the next one.
+// index current: the earliest purpose up to current that the open work
+// findings name, otherwise the next one.
 func followWork(work []run.PassSpec, current int, res run.PassResult) int {
 	if res.Verdict == run.NeedsCorrection {
 		if i := earliest(work, res.Corrections, current+1); i <= current {

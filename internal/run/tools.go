@@ -92,7 +92,7 @@ func reportSchema(spec PassSpec) schema {
 		"abort":    schema{"type": "boolean", "description": "problem, Root only, category model: the model is erroneous or contradictory; the run ends without publishing."},
 	}
 	if spec.Review {
-		properties["disputed"] = schema{"type": "array", "description": "basis, result: open genuine findings raised by reviewers below you that you independently judge erroneous; they stay open until a fresh review of their responsibility disposes of them.", "items": object([]string{"id", "reason", "evidence"}, schema{
+		properties["disputed"] = schema{"type": "array", "description": "basis, result: open genuine review findings raised by another reviewer, below you or about your own responsibility, that you independently judge erroneous; they stay open until a fresh review of their responsibility disposes of them.", "items": object([]string{"id", "reason", "evidence"}, schema{
 			"id":       str("ID of the finding."),
 			"reason":   str("Why it is erroneous."),
 			"evidence": str("The evidence on this candidate."),

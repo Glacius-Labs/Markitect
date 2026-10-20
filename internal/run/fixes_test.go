@@ -688,3 +688,71 @@ func TestClosureWithoutEvidenceIsRefused(t *testing.T) {
 		t.Errorf("stopped %v, verdict %s, F1 %+v", res.Stopped, res.Verdict, f1)
 	}
 }
+
+// An accepted result that leaves an own obligation open keeps the Pass at
+// needs_correction even when the finding its verdict rested on is closed.
+func TestOpenCoverageKeepsThePassAtNeedsCorrection(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.is("p1", "lending") && strings.HasPrefix(c.now(), "work on"):
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			return nil
+		case c.is("p2", "lending/reminders") && strings.HasPrefix(c.now(), "submit your complete result"):
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection),
+				"obligations": []any{map[string]any{"definition": "lending/reminders/notice", "status": coverOpen, "note": "the notice timing is not realized yet"}}}))
+			return nil
+		case c.is("p2", "lending") && strings.HasPrefix(c.now(), "integrate"):
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"closed": []any{map[string]any{"id": "F1", "reason": "looks done", "evidence": "lending/reminders/r.go on this stand"}}}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	second := r.Pass(implementSpec())
+	out := f.finish(r, "")
+	if second.Stopped || !out.Findings[0].Closed || second.Verdict != NeedsCorrection {
+		t.Fatalf("stopped %v, F1 closed %v, verdict %s: an open obligation was sealed clean", second.Stopped, out.Findings[0].Closed, second.Verdict)
+	}
+}
+
+// After a work Pass the open findings of work Passes route the work, whichever
+// Pass raised them; a review finding waiting for the next review does not.
+func TestWorkPassCorrectionsAreTheOpenWorkFindings(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		switch {
+		case c.turn.Kind != VerifyTurn && c.is("p1", "lending") && strings.HasPrefix(c.now(), "work on"):
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			return nil
+		case c.turn.Kind == VerifyTurn && c.is("p2", ".") && strings.HasPrefix(c.now(), "work on"):
+			finding := genuine("library", "library/interface")
+			finding["correction"] = string(Plan)
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{finding}}))
+			return nil
+		case c.turn.Kind == VerifyTurn && c.is("p2", ".") && strings.HasPrefix(c.now(), "integrate"):
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	first := r.Pass(implementSpec())
+	review := r.Pass(verifySpec())
+	third := r.Pass(implementSpec())
+	f.finish(r, "")
+	if first.Stopped || review.Stopped || third.Stopped {
+		t.Fatal("a Pass stopped")
+	}
+	if !slices.Equal(review.Corrections, []Purpose{Implement, Plan}) && !slices.Equal(review.Corrections, []Purpose{Plan, Implement}) {
+		t.Errorf("review corrections %v, want the open work and review findings", review.Corrections)
+	}
+	// F1 of p1 is still open and raised nothing new in p3: it repeats the work;
+	// the review's plan finding waits for the next review.
+	if third.Verdict != NeedsCorrection || !slices.Equal(third.Corrections, []Purpose{Implement}) {
+		t.Errorf("third Pass %s, corrections %v", third.Verdict, third.Corrections)
+	}
+}
