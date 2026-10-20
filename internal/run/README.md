@@ -144,7 +144,9 @@ shows the child's evidence and every probe it ran in the Pass, adverse ones incl
 
 An adverse receipt on a review's candidate blocks until it is disposed of: a genuine
 finding that cites it (a violation), a reasoned `expectation_error` for a failed assertion,
-or a `rerun` that replaces an `error` by a passing exact rerun of it. A failed assertion is
+or a `rerun` that replaces an `error` by a passing exact rerun of it (a repetition always
+repeats the original probe, and one passing repetition also disposes of the repetitions
+that erred). A failed assertion is
 never disposed of by running it again; an error without a passing rerun leaves its claim
 without evidence, an open obligation with a genuine finding. Dispositions take effect with
 their submission's acceptance, and an expectation-error or rerun disposition falls when

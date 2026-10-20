@@ -212,6 +212,11 @@ func (e *engine) rerunSpec(m *member, in probeIn) (probeSpec, string) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	r := e.receiptLocked(strings.TrimSpace(in.Rerun))
+	if r != nil && r.Rerun != "" {
+		// Every repetition repeats the original probe, so that one passing
+		// repetition disposes of the original and its failed repetitions.
+		r = e.receiptLocked(r.Rerun)
+	}
 	switch {
 	case r == nil:
 		return probeSpec{}, fmt.Sprintf("probe.rerun %q is no probe receipt of this run.", in.Rerun)
@@ -593,7 +598,7 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			return nil, fmt.Errorf("%s: %s is already disposed of", name, r.ID)
 		case r.Disposition != nil && r.Requester == m.Path && r.Pass == m.p.id:
 			return nil, fmt.Errorf("%s: your disproof of %s awaits an independent assessment in a later review", name, r.ID)
-		case out[r.ID].As != "":
+		case out[r.ID].As != "" && out[r.ID].Rerun == "":
 			return nil, fmt.Errorf("%s: %s is listed twice", name, r.ID)
 		}
 		x := ProbeDisposition{As: d.As, By: m.Path, Pass: m.p.id}
@@ -618,11 +623,22 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			if r.Outcome != ProbeError {
 				return nil, fmt.Errorf("%s: %s failed its assertion; a failing assertion is disposed of by a finding or a reasoned expectation_error, never by running it again", name, r.ID)
 			}
+			root := r.ID
+			if r.Rerun != "" {
+				root = r.Rerun
+			}
 			later := e.receiptLocked(strings.TrimSpace(d.Rerun))
-			if later == nil || later.Rerun != r.ID || later.Outcome != ProbePassed || later.Stand != r.Stand {
-				return nil, fmt.Errorf("%s: rerun names a passing receipt that repeated %s exactly (probe.rerun) on the same candidate", name, r.ID)
+			if later == nil || later.Rerun != root || later.Outcome != ProbePassed || later.Stand != r.Stand {
+				return nil, fmt.Errorf("%s: rerun names a passing receipt that repeated %s exactly (probe.rerun) on the same candidate", name, root)
 			}
 			x.Rerun = later.ID
+			// The passing repetition disposes of the original probe and of
+			// every repetition of it that erred.
+			for _, y := range e.receipts {
+				if (y.ID == root || y.Rerun == root) && y.Outcome == ProbeError && y.Stand == r.Stand && y.Disposition == nil && y.ID != r.ID {
+					out[y.ID] = x
+				}
+			}
 		default:
 			return nil, fmt.Errorf("%s.as must be %q or %q; a violation is disposed of by a genuine finding that cites the receipt", name, DisposedExpectationError, DisposedRerun)
 		}

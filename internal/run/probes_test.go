@@ -1,6 +1,7 @@
 package run
 
 import (
+	"encoding/json"
 	"regexp"
 	"slices"
 	"strings"
@@ -293,9 +294,10 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 		for _, e := range r.Tree.Entries() {
 			switch string(e.Bytes()) {
 			case "FLAKY":
-				// The first run of the probe times out; an exact rerun passes.
-				if n, _ := runs.LoadOrStore("flaky", 0); n.(int) == 0 {
-					runs.Store("flaky", 1)
+				// The first two runs of the probe time out; the third passes.
+				n, _ := runs.LoadOrStore("flaky", 0)
+				runs.Store("flaky", n.(int)+1)
+				if n.(int) < 2 {
 					rec.Exited, rec.TimedOut, rec.Uncertain = false, true, true
 				}
 			case "NOEXEC":
@@ -306,18 +308,21 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 	}
 	var mu sync.Mutex
 	var asExpectation, otherProbe, rerunNew, noexec ToolAnswer
+	var hung, erred, passed, noexecID string
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
-			hung := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_slow.py", "FLAKY")))
+			hung = receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_slow.py", "FLAKY")))
 			asExpectation = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedExpectationError, "reason": "slow", "evidence": "none"}}}))
 			weaker := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_weak.py", "PASS")))
 			otherProbe = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": weaker}}}))
 			rerunNew = c.tool(toolCheck, map[string]any{"probe": map[string]any{"rerun": weaker}})
 			noexec = c.must(toolCheck, probe("library/interface", "a missing interpreter", "probe_noexec.py", "NOEXEC"))
-			again := receiptOf(t, c.must(toolCheck, map[string]any{"probe": map[string]any{"rerun": hung}}))
-			noexecID := receiptRE.FindStringSubmatch(noexec.Text)[1]
+			erred = receiptOf(t, c.must(toolCheck, map[string]any{"probe": map[string]any{"rerun": hung}}))
+			// A repetition of a repetition repeats the original probe.
+			passed = receiptOf(t, c.must(toolCheck, map[string]any{"probe": map[string]any{"rerun": erred}}))
+			noexecID = receiptRE.FindStringSubmatch(noexec.Text)[1]
 			noexecAgain := receiptOf(t, c.must(toolCheck, map[string]any{"probe": map[string]any{"rerun": noexecID}}))
 			finding := genuine("library", "library/interface")
 			finding["observed"], finding["receipts"] = "the probe cannot be executed, so the claim has no evidence", []string{noexecID, noexecAgain}
@@ -325,7 +330,7 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 			cov[0]["status"], cov[0]["note"] = coverOpen, "the claim lacks evidence"
 			delete(cov[0], "evidence")
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov, "findings": []any{finding},
-				"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": again}}}))
+				"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": passed}}}))
 			return nil
 		}
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit") {
@@ -349,11 +354,37 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 	for _, p := range out.Probes {
 		byID[p.ID] = p
 	}
-	if p := byID["R1"]; p.Outcome != ProbeError || p.Disposition == nil || p.Disposition.As != DisposedRerun || byID[p.Disposition.Rerun].Rerun != "R1" || byID[p.Disposition.Rerun].ContentDigest != p.ContentDigest {
-		t.Errorf("error receipt %+v replaced by %+v", p, byID[p.Disposition.Rerun])
+	for _, id := range []string{hung, erred} {
+		if p := byID[id]; p.Outcome != ProbeError || p.Disposition == nil || p.Disposition.As != DisposedRerun || p.Disposition.Rerun != passed {
+			t.Errorf("error receipt %+v is not disposed of by %s", p, passed)
+		}
 	}
-	if p := byID["R3"]; p.Outcome != ProbeError || !strings.Contains(p.Reason, "exit 127") {
+	if p := byID[passed]; p.Outcome != ProbePassed || p.Rerun != hung || p.ContentDigest != byID[hung].ContentDigest || !slices.Equal(p.Args, byID[hung].Args) {
+		t.Errorf("the rerun %+v is not the exact probe of %s", p, hung)
+	}
+	if p := byID[noexecID]; p.Outcome != ProbeError || !strings.Contains(p.Reason, "exit 127") {
 		t.Errorf("an unexecutable probe counted as an assertion: %+v", p)
+	}
+	// The provider's schema admits a rerun on its own.
+	var schemaOf struct {
+		Properties struct {
+			Probe struct {
+				Required   []string       `json:"required"`
+				Properties map[string]any `json:"properties"`
+			} `json:"probe"`
+		} `json:"properties"`
+	}
+	for _, turn := range f.agents.all() {
+		for _, tool := range turn.Tools {
+			if tool.Name == toolCheck && turn.Kind == VerifyTurn {
+				if err := json.Unmarshal(tool.InputSchema, &schemaOf); err != nil {
+					t.Fatal(err)
+				}
+			}
+		}
+	}
+	if _, ok := schemaOf.Properties.Probe.Properties["rerun"]; !ok || len(schemaOf.Properties.Probe.Required) > 0 {
+		t.Errorf("the check schema does not admit a rerun alone: %+v", schemaOf.Properties.Probe)
 	}
 	if !asExpectation.Refused || !strings.Contains(asExpectation.Text, "error of the Runtime") {
 		t.Errorf("a Runtime error was explained away: %+v", asExpectation)

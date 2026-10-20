@@ -108,10 +108,10 @@ func reportSchema(spec PassSpec) schema {
 		})}
 		properties["dispositions"] = schema{"type": "array", "description": "basis, result: dispositions of adverse probe receipts (failed or error) on this candidate within your responsibility. A violation is not listed here: cite the receipt in a genuine finding instead.", "items": object([]string{"receipt", "as"}, schema{
 			"receipt":  str("ID of the adverse receipt (R...)."),
-			"as":       schema{"type": "string", "enum": []string{DisposedExpectationError, DisposedRerun}, "description": "expectation_error: the probe's expectation or assertion was wrong, not the candidate (failed receipts). rerun: a Runtime error replaced by a later passing receipt of the same claim (error receipts)."},
+			"as":       schema{"type": "string", "enum": []string{DisposedExpectationError, DisposedRerun}, "description": "expectation_error: the probe's expectation or assertion was wrong, not the candidate (failed receipts). rerun: a Runtime error replaced by a passing exact repetition of its probe (probe.rerun), which also disposes of its erring repetitions."},
 			"reason":   str("expectation_error: why the expectation or assertion was wrong, derived from the model."),
 			"evidence": str("expectation_error: the evidence of the disproof, such as the Definition text and a corrected receipt."),
-			"rerun":    str("rerun: the later passing receipt."),
+			"rerun":    str("rerun: the passing receipt that repeated it with probe.rerun."),
 		})}
 	}
 	if spec.Plans {
@@ -171,8 +171,9 @@ func evidenceText(spec PassSpec) string {
 // Pass with writes, or one behavioral probe.
 func checkSchema(spec PassSpec) schema {
 	properties := schema{
-		"probe": object([]string{"obligation", "claim", "expected", "check", "path", "content", "args"}, schema{
-			"obligation": str("The Definition whose claim the probe assesses: yours or one of your descendants'."),
+		"probe": object(nil, schema{
+			"rerun":      str("Instead of a new probe: an error receipt (R...) of this candidate whose exact probe runs again; give nothing else."),
+			"obligation": str("New probe: the Definition whose claim it assesses, yours or one of your descendants'. A new probe gives obligation, claim, expected, check, path, content and args."),
 			"claim":      str("The distinct claim, with the case or input class, derived from the model."),
 			"expected":   str("The outcome the model requires, stated before the probe runs."),
 			"check":      str("The required check whose execution profile (image, executable, environment, limits) runs the probe."),
