@@ -71,7 +71,7 @@
     "library-example/m1/model/catalog/copy.yaml": "4cc9b2977c373e62a0cb8c3e2647922787c5781ac8a8a4c622eafcb8f8de2c9f",
     "library-example/m1/model/catalog/inspect-copy.yaml": "61d6e997d219273f8d0cb5ed9fd2311cbfeef19f3ee8401d3cef6c6278148e94",
     "library-example/m1/model/catalog/register-copy.yaml": "18853c15d22a48c819d537c84014add5cd450ed6b87ac4c305b8cfb9135a736a",
-    "library-example/m1/model/lending/borrow.yaml": "0f3f0ccb1297510d2af07fa11d9a6cafbc5435f628018b0180a4d9541f9bdee7",
+    "library-example/m1/model/lending/borrow.yaml": "c5d3cfdb0a3ac3dec59bf47e83b34f94700694bfaaeb9a150a6321b7ac9c81c7",
     "library-example/m1/model/lending/inspect-loans.yaml": "786e9e7bc60adc3169e3188d3743a557cdb4d5d8d05288678dd2f0341069c279",
     "library-example/m1/model/lending/lending-policy.yaml": "49658acf774af44d50ecf16d0f340cd72f530e091f4c91a41a4983332c012abf",
     "library-example/m1/model/lending/loan-period-days.yaml": "ce544e4365a46297d5ca7148becb26b9e837092945eac22642053685b7f1a1ea",
@@ -80,7 +80,7 @@
     "library-example/m1/model/lending/max-open-loans.yaml": "18fd715adc0ad09bfb92be05020280b79cfb6e71ab185dd245afdbb626dc53e2",
     "library-example/m1/model/lending/reminders/assess-overdue.yaml": "557ff2f91d3f59bf309b63f70ab3565bedae57a2948edb1185c9593fbd26adc3",
     "library-example/m1/model/lending/return.yaml": "09ad182ae3fbf369531c796a0dac75d0cff8c289c2635a6c8e8712a5f40c6135",
-    "library-example/m1/model/library/callable-interface.yaml": "9f9fd1b241718f71a0e48cd4e3b9e084b437761f84f8d9d04edffd0b2154981e",
+    "library-example/m1/model/library/callable-interface.yaml": "f63edf6ac04295a60b8605a159bf950f55fa5c3073c6a5581489cf6b0da76bef",
     "library-example/m1/model/library/inputs.yaml": "d27b83be442bd2ac8901bd6a67ed8fd10efcbf78bd41a04fe3a6a3f542e7f33e",
     "library-example/m1/model/library/library.yaml": "ba864c03d0601ae57fee84eb296a4bea4b0ff9d9f57015ab277092fbc1e3946e",
     "library-example/m1/model/library/realization.yaml": "66924a78dc0cf6ce52f0d8950bfb6a6e5c9d67ff2dc2320921ff065236a65353",
@@ -120,7 +120,7 @@
     "minimal-language/exchange-example/root_path_probes.py": "0b14e258e177929b707ca7a5d18715a5c8b14d1570b673d97eb9ef93cdc18133",
     "minimal-language/exchange-example/root_paths.py": "1bec4dba6a6dd1789c61a3bac191163dd68510dd294140f1638fa130395146e7",
     "minimal-language/exchange-example/verify.py": "a7f1e3a935d458ce2efb3bb0d97d8f7473c6ac09493f401f78959514b8d60ca5",
-    "minimal-language/language-contract.md": "30c97f44d78eb7fc131cd8a40ae6a39564ae6e42e990ef0ba873d91b91b51aa1"
+    "minimal-language/language-contract.md": "d6d5271068ac57d886d7be197d6c390f94599507d5bf2a1d4e3d1208bf580725"
   },
   "localDefinitions": 22,
   "localPackages": [
@@ -146,7 +146,7 @@
   "markdownItVersion": "4.0.0",
   "modelDigests": {
     "markitect-core": "sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1",
-    "small-library": "sha256:ccb97556a0f3036665e07c50d93cea959c86c8fdd69a9724310f7186114de18a",
+    "small-library": "sha256:33e4a0fef73534ca93a3a6b4c9e68bb568fd5c59c0fead4016e34347f435e025",
     "software-basics": "sha256:d380a8edf06ac1525dcf57dbb5921087374abc8adb34595d98c0313b49c806b0"
   },
   "pyYamlVersion": "6.0.3",
