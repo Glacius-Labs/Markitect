@@ -205,18 +205,24 @@ func (e *engine) escalate(ctx context.Context, m *member, ts *turnState, args js
 // and counts them as delivered.
 func (e *engine) takeItemsLocked(m *member) string {
 	e.pruneLocked(m)
+	// The assignment and, while productive work is blocked, the findings to
+	// correct stay for the turn that does the work.
+	stays := func(it item) bool {
+		return it.kind == itemAssignment || m.stage == stageBlocked && it.kind == itemFinding
+	}
 	var texts []string
+	var taken []item
 	for _, it := range m.items {
-		if it.kind == itemAssignment {
-			continue
+		if !stays(it) {
+			texts = append(texts, it.text)
+			taken = append(taken, it)
 		}
-		texts = append(texts, it.text)
 	}
 	if len(texts) == 0 {
 		return " No new items for you."
 	}
-	m.consumed = append(m.consumed, m.items...)
-	m.items = slices.DeleteFunc(m.items, func(it item) bool { return it.kind != itemAssignment })
+	m.consumed = append(m.consumed, taken...)
+	m.items = slices.DeleteFunc(m.items, func(it item) bool { return !stays(it) })
 	var b strings.Builder
 	list(&b, "New items for you:", texts)
 	return " " + b.String()

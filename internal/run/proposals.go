@@ -68,6 +68,11 @@ type proposal struct {
 	decidedBy string
 	reason    string
 	submitted time.Time
+	// raised, closing and disputes are the submission's finding effects; they
+	// take effect only when the proposal is accepted.
+	raised   []Finding
+	closing  map[string]closure
+	disputes map[string]Dispute
 }
 
 // envelope is the shared result envelope. Plan is the purpose payload of a
@@ -364,22 +369,6 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 	} else if in.Verdict != "" {
 		return refuse("verdict belongs to a complete result.")
 	}
-	for _, f := range raised {
-		env.Findings = append(env.Findings, e.addFindingLocked(f).ID)
-	}
-	for _, id := range slices.Sorted(mapKeys(closing)) {
-		f := e.findingLocked(id)
-		c := closing[id]
-		f.Closed, f.ClosedPass, f.ClosedReason, f.ClosedAs, f.ClosedEvidence = true, p.id, c.reason, c.as, c.evidence
-		env.Closed = append(env.Closed, id)
-		_ = e.record(Event{Kind: "finding.closed", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: *f})
-	}
-	for _, id := range slices.Sorted(mapKeys(disputes)) {
-		f := e.findingLocked(id)
-		f.Disputes = append(f.Disputes, disputes[id])
-		env.Disputed = append(env.Disputed, id)
-		_ = e.record(Event{Kind: "finding.disputed", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: *f})
-	}
 	if in.Kind == kindResult {
 		for _, c := range m.Children {
 			if r := p.byPath[c].result; r != nil {
@@ -388,10 +377,12 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		}
 	}
 	e.nextProposal++
-	pr := &proposal{id: fmt.Sprintf("P%d", e.nextProposal), kind: in.Kind, member: m, env: env, status: proposalSubmitted, submitted: e.now()}
+	pr := &proposal{id: fmt.Sprintf("P%d", e.nextProposal), kind: in.Kind, member: m, env: env, status: proposalSubmitted, submitted: e.now(),
+		raised: raised, closing: closing, disputes: disputes}
 	p.proposals = append(p.proposals, pr)
 	ts.proposal = pr
-	_ = e.record(Event{Kind: "proposal.submitted", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"proposal": pr.id, "kind": pr.kind, "purpose": p.spec.Purpose, "envelope": env}})
+	_ = e.record(Event{Kind: "proposal.submitted", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"proposal": pr.id, "kind": pr.kind, "purpose": p.spec.Purpose, "envelope": env,
+		"findings": raised, "closed": slices.Sorted(mapKeys(closing)), "disputed": slices.Sorted(mapKeys(disputes))}})
 	text := fmt.Sprintf("Submitted %s %s. It is checked when this turn ends", in.Kind, pr.id)
 	if m.Parent != "" {
 		text += " and then decided by your parent"
@@ -694,23 +685,19 @@ func (e *engine) closuresOf(m *member, in []closeIn) (map[string]closure, error)
 			return nil, fmt.Errorf("closed[%d].as must be %q or %q", i, ClosedResolved, ClosedDisproved)
 		case as == ClosedResolved && unchanged:
 			return nil, fmt.Errorf("closed[%d]: %q was raised on this unchanged candidate, so it cannot be resolved here; close it as disproved with evidence only if it is erroneous", i, c.ID)
-		case as == ClosedDisproved:
-			if evidence, err = toolText(fmt.Sprintf("closed[%d].evidence", i), c.Evidence); err != nil {
-				return nil, fmt.Errorf("%v: a disproof states its evidence", err)
-			}
-		case c.Evidence != "":
-			if evidence, err = toolText(fmt.Sprintf("closed[%d].evidence", i), c.Evidence); err != nil {
-				return nil, err
-			}
+		}
+		if evidence, err = toolText(fmt.Sprintf("closed[%d].evidence", i), c.Evidence); err != nil {
+			return nil, fmt.Errorf("%v: a closure states its evidence", err)
 		}
 		closing[c.ID] = closure{reason: reason, as: as, evidence: evidence}
 	}
 	return closing, nil
 }
 
-// disputesOf validates disputes: in a review, an ancestor reviewer may object
-// explicitly, with reason and evidence, to an open genuine finding raised below
-// it, once per candidate. A failed required check cannot be disputed.
+// disputesOf validates disputes: in a review, a reviewer other than the raiser
+// whose responsibility holds the raiser or the finding's owner may object
+// explicitly, with reason and evidence, to an open genuine review finding, once
+// per candidate. A failed required check cannot be disputed.
 func (e *engine) disputesOf(m *member, in []disputeIn) (map[string]Dispute, error) {
 	if len(in) > 0 && !m.p.spec.Review {
 		return nil, errors.New("disputed belongs to an independent review")
@@ -723,12 +710,14 @@ func (e *engine) disputesOf(m *member, in []disputeIn) (map[string]Dispute, erro
 	for i, d := range in {
 		f := e.findingLocked(d.ID)
 		switch {
-		case f == nil || f.Closed || !f.Blocking:
-			return nil, fmt.Errorf("disputed[%d]: %q is no open genuine finding", i, d.ID)
+		case f == nil || f.Closed || !f.Blocking || !f.Review:
+			return nil, fmt.Errorf("disputed[%d]: %q is no open genuine review finding", i, d.ID)
 		case f.RaisedBy == MarkitectFinding:
 			return nil, fmt.Errorf("disputed[%d]: %q is a failed required check; only a passing check on a candidate closes it", i, d.ID)
-		case f.RaisedBy == m.Path || !e.within(f.RaisedBy, m.Path):
-			return nil, fmt.Errorf("disputed[%d]: %q was not raised by a reviewer below you", i, d.ID)
+		case f.RaisedBy == m.Path:
+			return nil, fmt.Errorf("disputed[%d]: you raised %q; close it as disproved with evidence instead", i, d.ID)
+		case !e.within(f.RaisedBy, m.Path) && !e.within(f.Owner, m.Path):
+			return nil, fmt.Errorf("disputed[%d]: neither the raiser nor the owner of %q is within your responsibility", i, d.ID)
 		case slices.ContainsFunc(f.Disputes, func(x Dispute) bool { return x.Candidate == candidate }) || disputes[d.ID].By != "":
 			return nil, fmt.Errorf("disputed[%d]: %q is already disputed on this candidate", i, d.ID)
 		}
@@ -889,6 +878,35 @@ func (e *engine) problem(m *member, ts *turnState, in reportIn) ToolAnswer {
 		return ToolAnswer{Text: "Recorded. The run ends now without publishing anything."}
 	}
 	return ToolAnswer{Text: "Problem recorded. Escalate it with the tool escalate when your parent must decide."}
+}
+
+// takeEffectsLocked records the findings, closures and disputes of an accepted
+// proposal. A proposal that is returned, fails its check, is withdrawn or
+// invalidated before its acceptance changes no finding.
+func (e *engine) takeEffectsLocked(pr *proposal) {
+	m, p := pr.member, pr.member.p
+	for _, f := range pr.raised {
+		pr.env.Findings = append(pr.env.Findings, e.addFindingLocked(f).ID)
+	}
+	for _, id := range slices.Sorted(mapKeys(pr.closing)) {
+		f, c := e.findingLocked(id), pr.closing[id]
+		if f == nil || f.Closed {
+			continue
+		}
+		f.Closed, f.ClosedPass, f.ClosedReason, f.ClosedAs, f.ClosedEvidence = true, p.id, c.reason, c.as, c.evidence
+		pr.env.Closed = append(pr.env.Closed, id)
+		_ = e.record(Event{Kind: "finding.closed", Pass: p.id, Manager: m.Path, Data: *f})
+	}
+	for _, id := range slices.Sorted(mapKeys(pr.disputes)) {
+		f := e.findingLocked(id)
+		if f == nil || f.Closed {
+			continue
+		}
+		f.Disputes = append(f.Disputes, pr.disputes[id])
+		pr.env.Disputed = append(pr.env.Disputed, id)
+		_ = e.record(Event{Kind: "finding.disputed", Pass: p.id, Manager: m.Path, Data: *f})
+	}
+	pr.raised, pr.closing, pr.disputes = nil, nil, nil
 }
 
 // checkSubmission is the technical gate of a submission in a work Pass with

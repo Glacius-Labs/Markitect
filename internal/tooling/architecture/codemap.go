@@ -38,7 +38,7 @@ var Layers = []MapLayer{
 	{"apply-snapshot", "Snapshots", "Pure immutable repository tree values.", []string{"apply-snapshot"}},
 	{"apply-organization", "Organization", "Pure Manager topology, context selection and settings.", []string{"apply-organization"}},
 	{"apply-realization", "Realization", "Pure ownership, accounting and candidate rules.", []string{"apply-realization"}},
-	{"apply-run", "Run engine", "Recursive reconciliation of the Manager team over ports for Agents, workspaces, checks, owner and evidence.", []string{"apply-run"}},
+	{"apply-run", "Run engine", "Recursive Pass process of the Manager team, run by the Orchestrator over ports for Agents, workspaces, checks, owner and evidence.", []string{"apply-run"}},
 	{"apply-usecase", "Preparation", "Read-only preparation through consumer-owned ports.", []string{"apply-usecase"}},
 	{"model-view", "Model view", "Deterministic readable view and reviewed source-bound write plan.", []string{"model-view"}},
 	{"apply-adapter", "Adapters", "Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O.", []string{"apply-adapter"}},

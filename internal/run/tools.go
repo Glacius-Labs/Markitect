@@ -81,11 +81,11 @@ func reportSchema(spec PassSpec) schema {
 		"evidence":  strs("basis, result: the checks, tests and observations that support it."),
 		"verdict":   schema{"type": "string", "enum": []string{string(Satisfied), string(NeedsCorrection)}, "description": "result: satisfied when its objective is met; needs_correction when a genuine finding names required corrective work."},
 		"findings":  schema{"type": "array", "items": object(required, finding), "description": "basis, result: findings within your responsibility."},
-		"closed": schema{"type": "array", "description": "basis, result: open findings you raised in an earlier Pass that are resolved or disproved now.", "items": object([]string{"id", "reason"}, schema{
+		"closed": schema{"type": "array", "description": "basis, result: open findings you raised in an earlier Pass that are resolved or disproved now.", "items": object([]string{"id", "reason", "evidence"}, schema{
 			"id":       str("ID of an open finding you raised earlier."),
 			"reason":   str("Why it is closed."),
 			"as":       schema{"type": "string", "enum": []string{ClosedResolved, ClosedDisproved}, "description": "resolved (default): the candidate corrects it. disproved: it was erroneous; required on an unchanged candidate."},
-			"evidence": str("The evidence; required for disproved."),
+			"evidence": str("The observed evidence of the resolution or disproof."),
 		})},
 		"category": schema{"type": "string", "enum": problemCategories, "description": "problem: its category."},
 		"text":     str("problem: the problem."),

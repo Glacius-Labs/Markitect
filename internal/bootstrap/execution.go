@@ -58,7 +58,7 @@ type applyPorts struct {
 }
 
 // Execute prepares the committed repository, composes the ports and runs the
-// reconciliation. Nothing starts before preparation passed, and only one Apply
+// Apply. Nothing starts before preparation passed, and only one Apply
 // holds a state directory at a time.
 func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest) (report cli.ApplyReport, err error) {
 	report.FormatVersion, report.Operation, report.Status = 1, "apply", model.NotCompleted

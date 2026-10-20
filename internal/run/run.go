@@ -437,6 +437,9 @@ type PassResult struct {
 	Record  PassRecord
 	Verdict Verdict
 	Stopped bool
+	// Corrections are the correction purposes of the open genuine findings
+	// raised in this Pass.
+	Corrections []Purpose
 }
 
 // Run is one bound run of the Orchestrator. Open binds it and holds the shared
@@ -471,7 +474,7 @@ func (r *Run) Reassess() bool { return r.e.reassess() }
 
 // Corrections returns the correction purposes the open genuine findings name,
 // so the caller chooses the earliest necessary work Pass.
-func (r *Run) Corrections() []Purpose { return r.e.corrections() }
+func (r *Run) Corrections() []Purpose { return r.e.corrections("") }
 
 // Finish ends the run: it waits for every turn and check, records the outcome
 // and returns it. reason explains an unverified run that did not stop by

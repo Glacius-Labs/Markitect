@@ -19,7 +19,7 @@ import (
 // The Agent profiles of a Runtime profile are generic: one Claude Code session per turn
 // with constant resources and a product prompt that carries no project rules.
 const (
-	setupSystemPrompt = "You are a Markitect Manager agent in a team that reconciles a repository with its canonical model. Follow the turn input and report only through the offered Orchestrator tools. Never print or copy credentials."
+	setupSystemPrompt = "You are a Markitect Manager agent in a team that applies a repository's canonical model. Follow the turn input and report only through the offered Orchestrator tools. Never print or copy credentials."
 	maxSetupFileBytes = 4 << 20
 )
 

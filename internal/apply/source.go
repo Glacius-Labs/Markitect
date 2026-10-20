@@ -1,4 +1,4 @@
-// Package apply prepares fixed inputs for artifact reconciliation. This first
+// Package apply prepares fixed inputs for Apply. This first
 // model stage performs no repository I/O, execution or publication itself.
 package apply
 
@@ -122,8 +122,7 @@ type SourceFile struct {
 // input coordinates remain explicit. No classification or decoding is inferred
 // from these bytes. Untracked lists, for Capture only, the Census paths that the
 // HEAD tree does not hold: exactly the Git-ignored untracked files. Previews
-// leave it empty. Only committed files can be drift that a Manager repairs
-// (DEC-062).
+// leave it empty. File checking stays strict about every census file.
 type RawInputs struct {
 	Census          snapshot.Tree
 	Untracked       []snapshot.Path

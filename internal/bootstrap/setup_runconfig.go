@@ -6,7 +6,7 @@ import (
 )
 
 // defaultOwnerRequest is the neutral owner request when none is given.
-const defaultOwnerRequest = "Reconcile the repository with its canonical model."
+const defaultOwnerRequest = "Apply the committed model."
 
 // setupCredentialRef is the reference that setup's Agent profiles use for the
 // runtime token; run.json maps it to the credential file.

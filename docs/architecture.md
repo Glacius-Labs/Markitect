@@ -26,7 +26,7 @@ All maintained Go packages use one root module. [The code map](development/code-
 | Fixed path/file/tree values | `internal/snapshot` | No other Markitect responsibility |
 | Topology, exact settings and context | `internal/organization` | Model and snapshot |
 | Ownership layout, accounting and candidates | `internal/realization` | Model and snapshot |
-| Reconciliation engine | `internal/run` | Model, snapshot, organization and realization; no I/O |
+| Orchestrator (Pass engine) | `internal/run` | Model, snapshot, organization and realization; no I/O |
 | Read-only preparation and consumer ports | `internal/apply` | Pure responsibilities |
 | Generated model view/write plan | `internal/modeldocs` | Apply, model and snapshot |
 | Physical/protocol adapters | Explicit `internal/adapters/*` packages | Their actual inward consumers; no general sibling privilege |

@@ -555,6 +555,7 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 	}
 	pr.status, pr.decidedBy = proposalAccepted, by
 	m.pending = nil
+	e.takeEffectsLocked(pr)
 	view := e.cfg.Registry(p.accepted)
 	kind := "basis.accepted"
 	if pr.kind == kindResult {
@@ -566,7 +567,7 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 		m.basis = pr
 		if len(m.Children) == 0 {
 			m.stage = stageIntegrate
-			e.deliverLocked(m, item{text: fmt.Sprintf("Your basis %s is accepted. You have no children: complete your own contribution for this Pass and submit your complete result.", pr.id)})
+			e.deliverLocked(m, item{text: fmt.Sprintf("Your basis %s is accepted. You have no children: complete your own contribution of this %s Pass and submit your complete result as its mandate defines it.", pr.id, p.spec.Purpose)})
 		} else {
 			m.stage = stageDelegated
 			e.recordStateLocked(m, "basis accepted")
@@ -745,8 +746,11 @@ func (e *engine) unsettleParentLocked(z *member, why string) {
 // result is satisfied and no genuine finding of the kind the Pass judges stays
 // open; a review also needs every required check passing on its candidate.
 func (e *engine) verdictLocked(p *pass) Verdict {
+	// Root's result integrates the whole tree. A child's needs_correction rests
+	// on an open genuine finding, which the findings below decide, so a finding
+	// its raiser closed after the child's result no longer holds the Pass back.
 	for _, m := range p.members {
-		if m.result == nil || m.result.env.Verdict != Satisfied {
+		if m.Parent == "" && (m.result == nil || m.result.env.Verdict != Satisfied) {
 			return NeedsCorrection
 		}
 	}
@@ -842,7 +846,7 @@ func (e *engine) seal(p *pass) PassResult {
 	if candidate != "" {
 		e.closeVolume(candidate)
 	}
-	return PassResult{Record: record, Verdict: record.Verdict}
+	return PassResult{Record: record, Verdict: record.Verdict, Corrections: e.corrections(p.id)}
 }
 
 // gate runs the Model check and the File check on a whole stand and ends the

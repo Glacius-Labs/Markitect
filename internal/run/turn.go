@@ -207,7 +207,8 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 		m.waitFor = ts.wait
 	}
 	working := m.stage == stageOwn || m.stage == stageIntegrate
-	if ts.progress != "" && working && !submitted {
+	// A Manager whose helpers still work continues when their results arrive.
+	if ts.progress != "" && working && !submitted && len(m.helpers) == 0 {
 		m.items = append(m.items, item{text: "Continue your work: " + ts.progress})
 	}
 	// Only what the turn was shown can be left open by it; what arrived while it
@@ -222,6 +223,18 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	switch {
 	case ts.wait != "" || submitted && len(demands) == 0:
 		m.empty = 0
+	case len(demands) > 0:
+		// A turn that decided some of what it was shown still has the rest
+		// before it; only a turn that decided nothing counts as empty.
+		if ts.decided {
+			m.empty = 0
+		} else {
+			m.empty++
+		}
+		m.items = append(m.items, item{text: "Still open for you: " + strings.Join(demands, "; ") + ". Decide or answer them, or report wait for what you need first."})
+	case working && !handled && len(m.helpers) > 0:
+		// Its helpers report to it; their results start its next turn.
+		m.empty = 0
 	case working && !handled:
 		m.empty++
 		next := "your basis"
@@ -229,9 +242,6 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 			next = "your complete result"
 		}
 		m.items = append(m.items, item{text: fmt.Sprintf("Your turn ended without a report. Continue and end the turn with report: progress when you continue later, wait when you need a named answer or child, or %s.", next)})
-	case len(demands) > 0 && !ts.decided:
-		m.empty++
-		m.items = append(m.items, item{text: "Still open for you: " + strings.Join(demands, "; ") + ". Decide or answer them, or report wait for what you need first."})
 	default:
 		m.empty = 0
 	}

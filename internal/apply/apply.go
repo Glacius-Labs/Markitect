@@ -64,9 +64,9 @@ type ApplyResult struct {
 // mandate, effects, payload and acceptance differ.
 var applyCorrections = []run.Purpose{run.Plan, run.Prepare, run.Implement}
 
-const planMandate = "Plan your own responsibility concretely: for each of your own obligations the method and the intended evidence; your own artifacts and interfaces; the inputs you need with their owners; the outputs you provide and to whom; the order and start conditions of your work; your dependencies on other Managers in the Prepare and Implement Passes; blockers and assumptions that need clarification. As a parent, also plan how you coordinate your children and integrate their results. Do not plan your children's obligations: they plan their own, and you review their plans for complete responsibilities, compatible interfaces, sound dependencies and fit. Your basis is what your children plan against: as Root, the project constraints, responsibility boundaries and coordination questions; as a parent, your own approach and the contracts you offer. The project is read-only in this Pass; plans are evidence of the run, not files."
+const planMandate = "Plan your own responsibility concretely: for each of your own obligations the method and the intended evidence; your own artifacts and interfaces; the inputs you need with their owners; the outputs you provide and to whom; the order and start conditions of your work; your dependencies on other Managers in the Prepare and Implement Passes; blockers and assumptions that need clarification. As a parent, also plan how you coordinate your children and integrate their results. Do not plan your children's obligations: they plan their own, and you review their plans for complete responsibilities, compatible interfaces, sound dependencies and fit. Your basis is what your children plan against: as Root, the project constraints, responsibility boundaries and coordination questions; as a parent, your own approach and the contracts you offer. The project is read-only in this Pass; plans are evidence of the run, not files. Your result is your complete plan, integrated with your children's accepted plans: an own obligation is done when its method and evidence are planned. Nothing is implemented in this Pass; a defect of the existing artifacts is planned work for the later Passes, recorded in your plan, never a reason to hold or return a plan."
 
-const prepareMandate = "Supply the usable foundation that your own obligations and accepted plan require before implementation: interfaces, configuration, build basis, documentation or test scaffolding in your own area, following the project's conventions. Preserve an existing foundation that already fits. Your basis is the foundation your children build on. Register every new or changed file, or a directory holding them, in your local registry in the same change. Never realize your children's or another area's obligations; scaffolding is no behavioral realization, and final behavioral tests need not pass yet."
+const prepareMandate = "Supply the usable foundation that your own obligations and accepted plan require before implementation: interfaces, configuration, build basis, documentation or test scaffolding in your own area, following the project's conventions. Preserve an existing foundation that already fits. Your basis is the foundation your children build on. Register every new or changed file, or a directory holding them, in your local registry in the same change. Never realize your children's or another area's obligations; scaffolding is no behavioral realization, and final behavioral tests need not pass yet. Your result is your complete foundation, integrated with your children's: an own obligation is done when the foundation it needs is in place; its behavior follows in the Implement Pass."
 
 const implementMandate = "Realize every applicable own obligation in your own area: code, tests, documentation and configuration, using other owners' realizations through their contracts instead of rebuilding them. Preserve what already conforms; no change is a valid result for a conforming area. Keep your local registry exact. Your basis is what your children need from your own realization; your complete result covers every own obligation with its artifacts and evidence, after you integrated your children's accepted results and their interactions. Run the project's build and tests yourself."
 
@@ -111,12 +111,13 @@ func Apply(ctx context.Context, req ApplyRequest) (ApplyResult, error) {
 }
 
 // compose runs the work Passes in order and then the review, as the shared
-// workflow of Apply and Extract: a work Pass whose verdict needs correction
-// restarts the work at the earliest purpose its findings name; a review that
-// needs correction does the same after any reassessment of disputed findings
-// on the unchanged candidate; a clean review ends the run verified. The Pass
-// budget bounds every repetition. The reason explains an unverified end that
-// the run did not stop by itself.
+// workflow of Apply and Extract. A work Pass's own open findings repeat it or
+// restart the work at an earlier purpose they name; a later purpose they name
+// comes in order, so no forward Pass is skipped. A review that needs correction
+// restarts the work at the earliest purpose its open findings name, after any
+// reassessment of disputed findings on the unchanged candidate; a clean review
+// ends the run verified. The Pass budget bounds every repetition. The reason
+// explains an unverified end that the run did not stop by itself.
 func compose(r *run.Run, work []run.PassSpec, review run.PassSpec) string {
 	next := 0
 	for {
@@ -125,11 +126,7 @@ func compose(r *run.Run, work []run.PassSpec, review run.PassSpec) string {
 			if res.Stopped {
 				return ""
 			}
-			if res.Verdict == run.NeedsCorrection {
-				next = earliest(work, r.Corrections(), next)
-				continue
-			}
-			next++
+			next = followWork(work, next, res)
 		}
 		res := r.Pass(review)
 		for !res.Stopped && res.Verdict == run.NeedsCorrection && r.Reassess() {
@@ -140,6 +137,18 @@ func compose(r *run.Run, work []run.PassSpec, review run.PassSpec) string {
 		}
 		next = earliest(work, r.Corrections(), len(work)-1)
 	}
+}
+
+// followWork returns the index of the work Pass after the sealed work Pass at
+// index current: the earliest purpose up to current that its own open findings
+// name, otherwise the next one.
+func followWork(work []run.PassSpec, current int, res run.PassResult) int {
+	if res.Verdict == run.NeedsCorrection {
+		if i := earliest(work, res.Corrections, current+1); i <= current {
+			return i
+		}
+	}
+	return current + 1
 }
 
 // earliest returns the index of the earliest work purpose the corrections

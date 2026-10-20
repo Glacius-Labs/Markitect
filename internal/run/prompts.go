@@ -2,6 +2,7 @@ package run
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
@@ -128,6 +129,20 @@ func (e *engine) renderProposalLocked(pr *proposal) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Your child %s submitted its %s %s for your decision: report kind accept or return with proposal %s.\n", contactOf(pr.member.mgr), pr.kind, pr.id, pr.id)
 	writeEnvelope(&b, pr.env, e.findingLocked)
+	// Its finding effects take effect only with your acceptance.
+	for i := range pr.raised {
+		f := pr.raised[i]
+		f.ID, f.Pass = "(proposed)", pr.member.p.id
+		fmt.Fprintf(&b, "  %s\n", strings.ReplaceAll(renderFinding(&f), "\n", "\n  "))
+	}
+	for _, id := range slices.Sorted(mapKeys(pr.closing)) {
+		c := pr.closing[id]
+		fmt.Fprintf(&b, "  Closes %s as %s: %s\n    Evidence: %s\n", id, c.as, c.reason, c.evidence)
+	}
+	for _, id := range slices.Sorted(mapKeys(pr.disputes)) {
+		d := pr.disputes[id]
+		fmt.Fprintf(&b, "  Disputes %s: %s\n    Evidence: %s\n", id, d.Reason, d.Evidence)
+	}
 	return strings.TrimRight(b.String(), "\n")
 }
 
@@ -194,7 +209,10 @@ func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, 
 		texts = append(texts, it.text)
 	}
 	b.WriteString("\nNow: " + e.taskLocked(m) + "\n")
-	if !p.spec.Review {
+	switch {
+	case !p.spec.Review && !p.spec.Writes:
+		fmt.Fprintf(&b, "In the %s Pass /work is read-only for every Manager: nobody writes a project file in it, and your result is complete without one. Write scratch files under /tmp.\n", p.spec.Purpose)
+	case !p.spec.Review:
 		b.WriteString(writeNote(readOnly, mounts) + "\n")
 	}
 	list(&b, "Waiting for your decision or answer:", e.demandsLocked(m))
@@ -329,7 +347,7 @@ func (e *engine) taskLocked(m *member) string {
 				results = append(results, fmt.Sprintf("%s by %s: %s (verdict %s)", r.id, c, r.env.Summary, r.env.Verdict))
 			}
 		}
-		text := "submit your complete result (report kind result) with every own obligation covered and your verdict."
+		text := fmt.Sprintf("submit your complete result of this %s Pass (report kind result) as its mandate defines it, with every own obligation covered and your verdict.", m.p.spec.Purpose)
 		if len(results) > 0 {
 			text = "integrate your children's accepted results with your own contribution and the interactions between them, then " + text + " Accepted child results: " + strings.Join(results, "; ") + "."
 		}

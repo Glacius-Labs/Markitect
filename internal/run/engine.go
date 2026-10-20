@@ -559,13 +559,13 @@ func (e *engine) addFindingLocked(f Finding) *Finding {
 }
 
 // corrections returns the distinct correction purposes of the open genuine
-// findings.
-func (e *engine) corrections() []Purpose {
+// findings, of those raised in the Pass with the given ID when it is not empty.
+func (e *engine) corrections(pass string) []Purpose {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	var out []Purpose
 	for _, f := range e.findings {
-		if f.Blocking && !f.Closed && f.Correction != "" && !slices.Contains(out, f.Correction) {
+		if f.Blocking && !f.Closed && f.Correction != "" && (pass == "" || f.Pass == pass) && !slices.Contains(out, f.Correction) {
 			out = append(out, f.Correction)
 		}
 	}

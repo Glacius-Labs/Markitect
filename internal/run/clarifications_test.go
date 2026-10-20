@@ -151,7 +151,7 @@ func TestFalseFindingIsDisprovedOnTheUnchangedCandidate(t *testing.T) {
 	f := newFixture(t)
 	f.addCheck("unit", ".")
 	var mu sync.Mutex
-	var resolvedRefusal, authorDispute, checkDispute string
+	var resolvedRefusal, raiserDispute string
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
@@ -163,11 +163,12 @@ func TestFalseFindingIsDisprovedOnTheUnchangedCandidate(t *testing.T) {
 		case c.pass() == "p2" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on"):
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
 			return nil
+		case c.pass() == "p2" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "integrate"):
+			// Its raiser disproves a finding in a later review, never disputes it.
+			raiserDispute = c.result(map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "fine", "evidence": "x"}}}).Text
 		case c.pass() == "p2" && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on"):
-			// The finding's owner is not an ancestor of its raiser: no dispute.
-			authorDispute = c.basis(map[string]any{"disputed": []any{map[string]any{"id": "F1", "reason": "fine", "evidence": "x"}}}).Text
-		case c.pass() == "p2" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "the notice is sent on the due date, as lending/reminders/notice states", "evidence": "lending/reminders/r.go sends it at the due date; its test covers it"}}}))
+			// The independent reviewer of the finding's owner disputes it.
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"disputed": []any{map[string]any{"id": "F1", "reason": "the notice is sent on the due date, as lending/reminders/notice states", "evidence": "lending/reminders/r.go sends it at the due date; its test covers it"}}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on"):
 			resolvedRefusal = c.basis(map[string]any{"closed": []any{map[string]any{"id": "F1", "reason": "fixed"}}}).Text
@@ -195,16 +196,15 @@ func TestFalseFindingIsDisprovedOnTheUnchangedCandidate(t *testing.T) {
 		t.Errorf("passes %+v / %+v", out.Passes[1], out.Passes[2])
 	}
 	f1 := out.Findings[0]
-	if !f1.Closed || f1.ClosedAs != ClosedDisproved || f1.ClosedEvidence == "" || f1.ClosedPass != "p3" || len(f1.Disputes) != 1 || f1.Disputes[0].By != "." || f1.Candidate == "" {
+	if !f1.Closed || f1.ClosedAs != ClosedDisproved || f1.ClosedEvidence == "" || f1.ClosedPass != "p3" || len(f1.Disputes) != 1 || f1.Disputes[0].By != "lending/reminders" || f1.Candidate == "" {
 		t.Errorf("F1 %+v", f1)
 	}
-	if !strings.Contains(resolvedRefusal, "unchanged candidate") || !strings.Contains(authorDispute, "not raised by a reviewer below you") {
-		t.Errorf("refusals %q / %q", resolvedRefusal, authorDispute)
+	if !strings.Contains(resolvedRefusal, "unchanged candidate") || !strings.Contains(raiserDispute, "you raised") {
+		t.Errorf("refusals %q / %q", resolvedRefusal, raiserDispute)
 	}
 	if len(out.Candidate.Entries()) == 0 || !out.Candidate.Equal(f.cfg.Start) {
 		t.Errorf("an artifact changed")
 	}
-	_ = checkDispute
 }
 
 // A failed required check cannot be disputed away, and a disputed finding the

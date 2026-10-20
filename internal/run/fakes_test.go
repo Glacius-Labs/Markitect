@@ -426,7 +426,7 @@ func (c *call) protocol() {
 		if raised := c.earlierRaised(); len(raised) > 0 {
 			var closed []map[string]string
 			for _, id := range raised {
-				closed = append(closed, map[string]string{"id": id, "reason": "resolved on this candidate"})
+				closed = append(closed, map[string]string{"id": id, "reason": "resolved on this candidate", "evidence": "the corrected source on this candidate"})
 			}
 			extra["closed"] = closed
 		}
