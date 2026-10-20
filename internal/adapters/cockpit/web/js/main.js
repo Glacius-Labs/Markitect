@@ -1,47 +1,68 @@
-// Routing between the cockpit entry, the run inspector, the execution settings,
-// a proposal and the model session. The address keeps the run, the pinned boundary and the
-// selection, so a view can be reopened.
+// Routing between the places of the cockpit. The address keeps the place and
+// its selection — a run with its pinned boundary, a Definition, a proposal —
+// so a view can be reopened.
 
-import { renderRuns } from "./runs.js";
+import { show } from "./shell.js";
 import { Inspector } from "./inspector.js";
+import { renderOverview } from "./overview.js";
+import { renderModelView } from "./modelview.js";
+import { renderSession } from "./session.js";
+import { renderProposals } from "./proposals.js";
+import { renderRuns } from "./runs.js";
 import { renderSettings } from "./settings.js";
-import { renderProposal } from "./proposal.js";
-import { renderModel } from "./model.js";
 
 const app = document.getElementById("app");
-let current = null;
+let inspector = null;
 
 export function parseRoute() {
   const hash = location.hash.replace(/^#/, "") || "/";
   const [path, query = ""] = hash.split("?");
   const params = new URLSearchParams(query);
-  const m = path.match(/^\/run\/([^/]+)$/);
-  if (m) return { page: "run", run: decodeURIComponent(m[1]), at: params.get("at"), sel: params.get("sel") };
-  if (path === "/settings") return { page: "settings" };
-  if (path === "/model") return { page: "model" };
-  const p = path.match(/^\/proposal\/([^/]+)$/);
-  if (p) return { page: "proposal", id: decodeURIComponent(p[1]) };
-  return { page: "runs" };
+  const parts = path.split("/").filter(Boolean).map(decodeURIComponent);
+  switch (parts[0]) {
+    case "run": return parts[1] ? { page: "run", run: parts[1], at: params.get("at"), sel: params.get("sel") } : { page: "runs" };
+    case "runs": return { page: "runs" };
+    case "model": return { page: "model", pkg: params.get("pkg"), id: params.get("def"), q: params.get("q") };
+    case "session": return { page: "session" };
+    case "proposals": return { page: "proposals" };
+    case "proposal": return { page: "proposals", id: parts[1] };
+    case "settings": return { page: "settings" };
+    default: return { page: "overview" };
+  }
 }
 
 function route() {
   const r = parseRoute();
-  if (r.page === "run") {
-    if (current && current.run === r.run) {
-      current.follow(r);
-      return;
-    }
-    current?.destroy();
-    current = new Inspector(app, r.run, r);
+  if (r.page === "run" && inspector && inspector.run === r.run) {
+    inspector.follow(r);
     return;
   }
-  current?.destroy();
-  current = null;
-  if (r.page === "settings") renderSettings(app);
-  else if (r.page === "proposal") renderProposal(app, r.id);
-  else if (r.page === "model") renderModel(app);
-  else renderRuns(app);
-  window.scrollTo(0, 0);
+  inspector?.destroy();
+  inspector = null;
+  switch (r.page) {
+    case "run": {
+      const content = show(app, { page: "runs", crumbs: [{ text: "Runs", href: "#/runs" }, { text: r.run }], fill: true });
+      inspector = new Inspector(content, r.run, r);
+      break;
+    }
+    case "runs":
+      renderRuns(show(app, { page: "runs", crumbs: [{ text: "Runs" }] }));
+      break;
+    case "model":
+      renderModelView(show(app, { page: "model", crumbs: [{ text: "Model", href: "#/model" }, ...(r.id ? [{ text: `${r.pkg}/${r.id}` }] : [])], fill: true }), r);
+      break;
+    case "session":
+      renderSession(show(app, { page: "session", crumbs: [{ text: "Session" }], fill: true }));
+      break;
+    case "proposals":
+      renderProposals(show(app, { page: "proposals", crumbs: [{ text: "Proposals", href: "#/proposals" }, ...(r.id ? [{ text: r.id }] : [])], fill: true }), r.id);
+      break;
+    case "settings":
+      renderSettings(show(app, { page: "settings", crumbs: [{ text: "Settings" }] }));
+      break;
+    default:
+      renderOverview(show(app, { page: "overview", crumbs: [{ text: "Overview" }] }));
+  }
 }
 
 window.addEventListener("hashchange", route);

@@ -132,8 +132,27 @@ func (c cockpitService) project(ctx context.Context, selection apply.InputSelect
 	}
 	final := attempts[len(attempts)-1]
 	info.Head = final.Model().Inputs().Head
+	checked := final.Model().Checked()
+	if len(checked.Models) > 0 {
+		info.Model = cockpitModel(checked, final.Registry().Records(), final.Registry().Status())
+		for _, scope := range checked.Models {
+			if scope.Local {
+				info.Definitions = len(scope.Definitions)
+			}
+		}
+	}
+	// The overview counts the model's own Packages, as the model browser does.
+	packages := -1
+	for _, scope := range checked.Models {
+		if scope.Local {
+			packages = len(scope.Packages)
+		}
+	}
 	if selections, complete := final.Contexts().Selections(); complete {
 		info.Packages = len(selections)
+		if packages >= 0 {
+			info.Packages = packages
+		}
 		if len(selections) > 0 {
 			info.ModelID, info.ModelDigest = selections[0].ModelID(), selections[0].ModelDigest()
 		}

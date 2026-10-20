@@ -127,6 +127,7 @@ func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/project", s.handleProject)
 	mux.HandleFunc("POST /api/project/observe", s.handleObserve)
+	mux.HandleFunc("GET /api/model", s.handleModel)
 	mux.HandleFunc("GET /api/questions", s.handleQuestions)
 	mux.HandleFunc("POST /api/runs/{run}/questions/{question}/answer", s.handleAnswer)
 	mux.HandleFunc("GET /api/settings", s.handleSettings)
