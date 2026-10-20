@@ -344,7 +344,17 @@ The owner then suggested a further option in case the gap keeps causing trouble:
 
 > Man könnte Modelllücken auch durch einen weiteren Verify Step vorher erkennen lassen, welcher vorher einen Durchlauf startet um das Modell zu prüfen. Als Idee falls das weiterhin Probleme bereitet
 
-Recorder's disposition: recorded as an owner suggestion under [ENH-002](../register.md#enh-002-model-quality-linter-and-metrics), whose accepted direction already includes AI-assisted findings that a model is incomplete. The response suggested placing such a check before Apply, as an owner-started model check or in the cockpit, where the owner accepts model changes, because [DEC-052](../register.md#dec-052-implement-then-review-no-explore-phase) leaves Apply without an Explore or intake step; it would use the same boundary criterion so that deliberate freedom is not turned into questions. It becomes a candidate only if the matched retest's A4 still fails. Nothing is adopted or implemented.
+Recorder's disposition: recorded as an owner suggestion under [ENH-002](../register.md#enh-002-model-quality-linter-and-metrics), whose accepted direction already includes AI-assisted findings that a model is incomplete. The response suggested placing such a check before Apply, as an owner-started model check or in the cockpit, where the owner accepts model changes, because [DEC-052](../register.md#dec-052-implement-then-review-no-explore-phase) leaves Apply without an Explore or intake step; it would use the same boundary criterion so that deliberate freedom is not turned into questions. It was to become a candidate only if the matched retest's A4 still failed; the disposition below supersedes that condition. Nothing is adopted or implemented.
+
+The owner then reported that the simplified-workflow comparison showed the same behavior:
+
+> Der einfache Lauf hat wohl dasselbe Problem
+
+Its A4 (run `20261020T211052Z-f08d3eb3`, product `205bf524`, Sonnet; evidence in the comparison session's WSL directory `/home/user/mk-simplified-eval/runs/A4-b`, outside the repository) was verified and published with a name maximum of 100 and no owner question; the reference series had chosen 80. The public-choice correction (`fcd0fb54`, `488a582d`) came after the reference series, and the simplified builds `205bf524`, `5cd22e58` and `e814c373` do not contain it. The response concluded that the silent choice does not depend on the workflow and proposed to run the gap check beside A4 in the matched retest, as one short model-only run on S-QV's model without realization, instead of waiting for A4 to fail again. The owner agreed:
+
+> Ja das machen wir so
+
+Recorder's disposition: the matched retest includes that gap-check trial beside A4, so one retest shows whether the correction suffices or the check is needed. The trial needs a minimal check prepared for the retest; its form and placement are settled then. This adopts no product feature and grants no provider budget.
 
 ## Owner adoption: evidence-driven Apply hardening
 
