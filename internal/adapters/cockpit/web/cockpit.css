@@ -2,9 +2,9 @@
    precise, technical. An ink ground, ice as the scarce accent that marks
    intent (focus, action, selection), hairlines instead of shadows, machined
    edges with no curves, uppercase micro-labels and mono coordinate stamps.
-   Status colors stay quiet. Text an Agent wrote is framed and labelled as
-   the Agent's, so authored communication never reads like a fact the
-   cockpit established. The run inspector below keeps its own track diagram
+   Status colors stay quiet. Text an Agent wrote (.prose) carries an ice
+   hairline, so authored communication never reads like a fact the cockpit
+   established; the owner's own text does not. The run inspector below keeps its own track diagram
    and draws from the same tokens. */
 
 :root {
@@ -20,7 +20,7 @@
   --ink: #ececec;
   --body: #dadada;
   --ink-2: #9aa0a6;
-  --ink-3: #6f7479;
+  --ink-3: #8c9196;
   --desk-ink: #dadada;
   --desk-muted: #8c9196;
   /* Lines */
@@ -33,7 +33,7 @@
   --ice-bright: #c9dff6;
   --ice-deep: #7ab1e0;
   --ice-wash: rgb(171 209 243 / 0.08);
-  --coordinate: #6d8090;
+  --coordinate: #8aa0b2;
   /* State: ice for work in progress, quiet status colors otherwise */
   --work: #abd1f3;
   --work-soft: #2b3640;
@@ -88,7 +88,8 @@ a:hover { color: var(--ice-bright); }
 .skip:focus { top: 8px; }
 .boot { padding: 24px; color: var(--ink-2); }
 
-.prose { font-family: var(--prose); font-size: var(--s1); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--body); }
+.prose { font-family: var(--prose); font-size: var(--s1); line-height: 1.6; white-space: pre-wrap; overflow-wrap: anywhere; color: var(--body); border-left: 1px solid var(--rule-ice); padding-left: 12px; }
+.ownerprompt .prose, .composer .prose { border-left: 0; padding-left: 0; }
 .digest { font-family: var(--digest); font-size: var(--s-1); overflow-wrap: anywhere; }
 .muted { color: var(--ink-2); }
 .faint { color: var(--ink-3); }
@@ -151,7 +152,7 @@ input[type="checkbox"], input[type="radio"] { width: 15px; height: 15px; margin:
 
 /* Corner registration ticks: four hairline crosses that frame a plate. */
 .ticked { position: relative; }
-.ticks, .ticks::before, .ticks::after { pointer-events: none; }
+.ticks { position: absolute; inset: 0; pointer-events: none; }
 .ticks i { position: absolute; width: 14px; height: 14px; }
 .ticks i::before, .ticks i::after { content: ""; position: absolute; background: var(--rule-ice); }
 .ticks i::before { left: 0; right: 0; top: 50%; height: 1px; }

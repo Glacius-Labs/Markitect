@@ -99,7 +99,7 @@ function drawSession(section, s) {
   const cls = open.state === "working" || open.state === "preparing" ? "st-working" : open.state === "halted" ? "st-fail" : "st-waiting";
   append(body, [
     h("p", { class: `outcome ${cls}`, style: { margin: "0 0 10px" } }, h("span", { class: "lamp" }), open.state),
-    last ? h("p", { class: "prose", style: { margin: "0 0 10px" } }, last.prompt.length > 220 ? `${last.prompt.slice(0, 219)}…` : last.prompt) : null,
+    last ? h("p", { style: { margin: "0 0 10px", overflowWrap: "anywhere" } }, last.prompt.length > 220 ? `${last.prompt.slice(0, 219)}…` : last.prompt) : null,
     h("p", { class: "note", style: { margin: 0 } }, open.state === "preparing" ? "Preparing the source and the workspace." : `${open.turns.length} of ${open.maxTurns} Agent turns; profile ${open.profile}.`)]);
 }
 
