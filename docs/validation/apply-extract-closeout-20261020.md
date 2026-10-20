@@ -18,7 +18,7 @@ Both series are closed. A closed series records its result; it is not owner acce
 | `35c2659c`, `5e16af2b`, `4bedd20b` | #486 before and after review, Main | older |
 | `7ed41975` | Main after #506–#510 | older |
 | `6e759baa` | #515 (DEC-063 tool) | older |
-| `7005a4bd` | #518 (no owner questions) | one sentence older: the parent's initial item before #520 |
+| `7005a4bd` | #518 (no owner questions) | the parent's initial item before #520 (one sentence changed, one added) |
 | `4cf58479` | #520 (parents lay scaffolding) | same for Apply |
 | `1f5cc074` | this record's run: Main `0c28097c` plus the Library model and harness change below | identical product code |
 
@@ -29,19 +29,19 @@ Main `0c28097c` differs from `4cf58479` only in Extract: a separate initial item
 | Obligation | Result | Runs and build | On the final Apply code |
 | --- | --- | --- | --- |
 | Model change M1 → A1 → M2 → A2 | passed, oracle 12/12 for A1 and A2; one Verify round per Apply, except two for RA-F1's A1 | RA-H7, RA-H8, RA-H9 (Haiku), RA-S1 (Sonnet) on `4cf58479`; RA-F1 on `1f5cc074` | yes |
-| Behavior and accounting drift under an unchanged model | passed, only the drifted files changed | RA-R6 on `4cf58479`; earlier RA-R2 to RA-R5 | yes |
+| Behavior and accounting drift under an unchanged model | passed; RA-R4 and RA-R6 changed only the drifted files, RA-R3 also changed areas beyond the drift | RA-R6 on `4cf58479`; earlier RA-R2 to RA-R5 | yes |
 | A conforming stand stays unchanged | failed on `7ed41975` (RA-N2 added tests), passed on `7005a4bd` (RA-N3) | RA-F1N on `1f5cc074`: passed | yes |
 | A model defect ends the run without publication | passed: contradiction (RA-C2, RA-C3) and boundary gap (RA-Q3) ended within 71 to 177 s | `6e759baa`, `7005a4bd` | no; not repeated after #520 |
-| Budget, deadline, interruption and restart | passed: Incomplete, nothing published, work and evidence retained, a new Apply verified | RA-B1, RA-A1 on `4bedd20b`; RA-H1 on `f15ea723`; RA-C1 on `5e16af2b`; RA-H6 on `7005a4bd` | no; the run engine changed afterwards (#515, #518, #520) |
+| Budget, deadline, interruption and restart | passed: Incomplete, nothing published, work and evidence retained, a new Apply verified | RA-B1, RA-A1 on `4bedd20b`; RA-H1 on `f15ea723`; RA-C1 on `5e16af2b`; RA-H6 on `7005a4bd` | no; RA-H6 ran before #520, the others before #515 |
 | Protected inputs, enforced ownership, immutable Verify, guarded publication with read-back | passed in every published run | all builds | yes |
 
-**Replaced requirements.** #492's "genuine owner question with an applied answer" no longer applies: [DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate) and its follow-up (#518) let Apply ask the owner nothing; a contradiction or a boundary gap ends the run with a model-defect report. RA-C1's continuation and RA-Q2's question are therefore failures of the old target, not evidence for the new one. Bound owner decisions ([DEC-053](../concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)) remain only for decisions within the model; the two that the demonstrations bound are boundary decisions and are now part of the Library model (below). [DEC-062](../concepts/register.md#dec-062-start-stand-drift-is-the-owners-first-work) replaced the refusal of committed accounting drift in preparation. The supported restart is a new Apply from the committed repository; journal restore is not required.
+**Replaced requirements.** #492's "genuine intent question with an applied answer" ("Exercise a genuine owner question and answer") no longer applies: [DEC-063](../concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate) and its follow-up (#518) let Apply ask the owner nothing; a contradiction or a boundary gap ends the run with a model-defect report. RA-C1's continuation and RA-Q2's question met that old target (RA-C1 partly). Under the new target both are failures, and neither is evidence for it. Bound owner decisions ([DEC-053](../concepts/register.md#dec-053-owner-decisions-bind-the-whole-run)) remain only for decisions within the model; the two that the demonstrations bound are boundary decisions and are now part of the Library model (below). [DEC-062](../concepts/register.md#dec-062-start-stand-drift-is-the-owners-first-work) replaced the refusal of committed accounting drift in preparation. The supported restart is a new Apply from the committed repository; journal restore is not required.
 
 **Remaining limits.**
 - One example and one agent family: the library, Claude Haiku (and one Sonnet run). Roombook and Readinglog Apply series are deferred (#493, #494).
-- Under parallel load on one machine Haiku slowed down enough that RA-H6 missed its deadline. Sequential two-Apply runs took 17 to 18 minutes.
+- Under parallel load on one machine Haiku slowed down enough that RA-H6 missed its deadline. Sequential two-Apply runs took 17 to 19 minutes (RA-H7 to RA-H9, RA-F1).
 - Verify is a review by the same model family. It caught real defects (an accepted empty request id in RA-H4) but saw a misplaced shared rule in RA-H6 only in A2.
-- A late cross-area repair (DEC-060) was expensive with Haiku (RA-C1). Since #520 no final run needed one, so its cost is not measured again.
+- A late cross-area repair (DEC-060) was expensive with Haiku (RA-C1), when a module had to move between areas. Since #520 no final run needed such a move. RA-F1's second A1 round repaired a DEC-060 finding inside lending, which now uses catalog's rule. The cost of a move is not measured again.
 - The runs use the experiment harness and an explicit run configuration; the `--host` entry and Apply without the harness are deferred (#500).
 
 ## Extract: status
@@ -57,7 +57,7 @@ Main `0c28097c` differs from `4cf58479` only in Extract: a separate initial item
 
 The [comparison](library-extract-comparison-20261019.md) and [round 2](extract-round2-20261020.md) hold the details. What this does not establish:
 
-- **Not adoptable without correction.** Every extracted model still needs the owner to remove bound internal wiring, add the test-coverage obligation and decide policy values that stay prose. The round-2 clarification of [DEC-061](../concepts/register.md#dec-061-what-an-extracted-model-contains) is pending the owner's confirmation.
+- **Not adoptable without correction.** Every final library model binds some internal wiring as intent, 6 of 7 miss what the tests must cover, and policy values stay prose rather than a structured policy Kind. The owner has to correct these before adoption. The two final Readinglog models each carry one small imprecision (RXZR-1, RXZR-2). The round-2 clarification of [DEC-061](../concepts/register.md#dec-061-what-an-extracted-model-contains) is pending the owner's confirmation.
 - **No unchanged Apply on the original repository.** Each rebuild projects an empty case-1 target from the adopted model and rebuilds the realization. No run adopted an extracted model next to the original artifacts and showed that Apply then changes nothing. That round trip, the readable adoption subject and the handoff of known deviations to Apply are not implemented or not run (#496, #499).
 - **Extract limits:** the deadline path was shown once in the model phase (RXT-1, `cc89d18b`). An unanswered question at the end, an interruption and the budget in the structure phase are not shown (#497). Structure changes between rounds are not implemented (#498).
 
@@ -68,7 +68,7 @@ The library demonstrations bound two owner decisions with every run (`experiment
 - [library/callable-interface](../design/canonical-model/library-example/m1/model/library/callable-interface.yaml): an otherwise valid request of a known operation that carries an unknown field, or a field whose name differs from a stated one only in case, returns `invalidRequest`, not a refusal. A missing, `null`, wrongly typed or invalid required argument is a refusal. A missing `args`, or one that is not an object, is an invalid envelope.
 - [lending/borrow](../design/canonical-model/library-example/m1/model/lending/borrow.yaml): a borrow whose due date would fall after 9999-12-31 is refused with no loan and no state change; a due date is never clamped, wrapped or given a year after 9999.
 
-The decision file is deleted and the harness binds no owner decisions. The run-specific sentence of the first decision ("A recorded review case or finding that requires refused for these cases is contradicted by this decision") addressed the retired review process and is not model content.
+The decision file is deleted and the harness binds no owner decisions. An open wording point stays in the model as run. `library/inputs` says in general that missing required inputs are refused, while the interface now names a missing `args` an invalid envelope (`invalidRequest`). The decision settles this as `invalidRequest`, and no run reported a defect. A qualifier in the interface, and a link from `borrow` to the interface's date range, would make it explicit; both were left for a later model edit so that the merged model is the one the confirmation run used. The run-specific sentence of the first decision ("A recorded review case or finding that requires refused for these cases is contradicted by this decision") addressed the retired review process and is not model content.
 
 ## Confirmation run
 
@@ -108,4 +108,4 @@ RA-F1 took 1130 s of its 1800 s.
 
 ## Next step
 
-Recommendation, not started. After the owner's process review, run the prepared trial cases once, as one small fixed series on the final build with the same Haiku profile. The series should include the model-defect stop and one interruption with a fresh restart, which closes the two gaps on the final Apply code. It should also include the first project beyond the library. Select process changes only from failures of that series. For Extract, the owner first confirms or corrects the DEC-061 clarification; the next Extract evidence would be the round trip on an original repository (#499).
+Recommendation, not started, within step 2 of the [accepted pilot roadmap](../implementation-plan.md#target-and-baseline). After the process review (#524), run the prepared trial cases (#523) once, as one small fixed series on the final build with the same Haiku profile. The series should include the model-defect stop and one interruption with a fresh restart, which closes the two gaps on the final Apply code. It should also include the first project beyond the library. Select process changes only from failures of that series. For Extract, the owner first confirms or corrects the DEC-061 clarification; the next Extract evidence would be the round trip on an original repository (#499).

@@ -1,4 +1,4 @@
-# Delivery plan: the evidence checkpoint is closed
+# Delivery plan: toward a usable owner pilot
 
 This is the delivery and coordination owner. It names the current target, the work streams with their write scopes, and the integration rules. The GitHub milestone issues hold the bounded work and dependencies; chats and PRs hold progress and evidence. Do not create a second status file or dashboard. The plan that led to the first reliable Apply, with its A1 to A6 queue and zones, remains in [Git at Main f15ea723](https://github.com/Glacius-Labs/Markitect/blob/f15ea723d519d541c7122568b078cbd49bd00cf1/docs/implementation-plan.md).
 
@@ -11,16 +11,32 @@ The original implementation baseline was Main `f15ea723`; later integrated chang
 
 ## Target and baseline
 
-**Checkpoint closed, 20 October 2026; the owner selects the next scope.** The owner's direction of 19 October 2026 limited delivery to the Apply and Extract evidence ([original instruction](concepts/sources/coordinator-assignment-20261019.md#checkpoint-evidence-first)): [Apply #492](https://github.com/Glacius-Labs/Markitect/issues/492) and [Extract #495](https://github.com/Glacius-Labs/Markitect/issues/495). Both series are closed by the [closing record](validation/apply-extract-closeout-20261020.md); closing a series records its result, not its acceptance. Further process changes and larger measurement series are selected afterwards from these results, the prepared trial cases and the owner's separate review of the Apply process ([division of 20 October 2026](concepts/sources/coordinator-assignment-20261019.md#closeout-and-division-20-october-2026)).
+**Destination, accepted by the owner on 20 October 2026: a usable owner pilot** ([roadmap](https://github.com/Glacius-Labs/Markitect/issues/501#issuecomment-6284960943), [source](concepts/sources/coordinator-assignment-20261019.md#accepted-pilot-roadmap-20-october-2026)). The next cross-milestone target is a reproducibly installable, versioned pilot build that the owner can use in an existing project while development continues. Apply is the critical path. A dependable Extract is strongly desired in parallel; an explicitly reviewed model is the fallback for a first Apply-only pilot.
 
-What the next scope decision starts from, in short (details and builds in the record):
+The accepted sequence. Each step starts only with its own bounded assignment.
 
-- **Apply:** on the final Apply code, one library example and Claude Haiku, a model change, drift repair and a repeated Apply with `no_change` are shown. A model defect that ends the run, budget, deadline, interruption and restart are shown only on earlier builds. Other projects and other agent families are unproved.
-- **Extract:** two projects complete reliably and ask only necessary questions. The extracted models are not yet adoptable without owner correction: they bind internal wiring, miss test-coverage obligations and keep policy values as prose. Adoption, the handoff of deviations to Apply and a round trip on an existing repository are not implemented or unproved. The round-2 clarification of DEC-061 awaits the owner's confirmation.
+1. Assess and close the current evidence: [Apply #492](https://github.com/Glacius-Labs/Markitect/issues/492) (closed by the [closing record](validation/apply-extract-closeout-20261020.md)), the read-only process explanation [#524](https://github.com/Glacius-Labs/Markitect/issues/524) and the trial-case preparation [#523](https://github.com/Glacius-Labs/Markitect/issues/523).
+2. Reach a clean, coherent source, documentation and operation baseline. Refine the process only from concrete findings. Run selected prepared trials to establish a supported scope: model-only realization, model changes, unchanged-model drift, complexity and distributed inconsistency, honest model-defect stops and preserved conforming areas. No unlimited matrix or redesign loop.
+3. In a bounded parallel Extract stream: existing repository → reviewable model proposal → owner correction and adoption → conforming `no_change` Apply → a genuine model change (#496, #499). The closed comparison [#495](https://github.com/Glacius-Labs/Markitect/issues/495) alone does not establish this.
+4. A comfortable owner path: setup, modeling, Apply, progress and results, failure handling (#500, #501). Skills, Agents or UI come only for demonstrated friction (#502).
+5. A pinned pilot build and its setup path (#503), on the owner's actual project selected early, validated with one real change carried forward from its existing state.
 
-Preserve attempts, evidence, retained work volumes and completed candidates. Do not add roles, review stages, process architecture or a new test matrix without a selected scope. Keep source checks, real-run evidence, Main integration and owner acceptance separate. This is the current scope state under the existing working method, not another permanent approval round or runtime mechanism.
+Milestone priorities:
 
-**Later candidates, not an automatically advancing queue:** Apply without the harness and the `--host` entry, the Roombook/Readinglog change series, self-model and standard library, an Extract adoption product and between-round structure changes, new Skills/UI, delegated model maintenance, release and marketing. Their issues stay blocked until the owner's next scope decision. Finished PRs and fixtures retain their state; their completion starts no follow-up work.
+- **M1:** the modeling foundations the selected pilot needs, not every proposed standard-library Kind.
+- **M2:** dependable Apply within the demonstrated scope.
+- **M3:** onboarding through Extract when it is ready, with reviewed model authoring as the fallback.
+- **M4:** a complete usable workflow and a reproducible pilot setup.
+- **M5:** delegated model maintenance after initial real use.
+
+**Current execution scope:** only #492 (closure), #523 (preparation only) and #524 (read-only discussion). The destination and its order start no provider series, process change, implementation stream or release. The next bounded assignment is selected from those three outcomes.
+
+Where the evidence stands, in short (details and builds in the [closing record](validation/apply-extract-closeout-20261020.md)):
+
+- **Apply:** a model change, drift repair and a repeated Apply with `no_change` are shown on the final Apply code, on one library example with Claude Haiku. A model defect that ends the run, budget, deadline, interruption and restart are shown only on earlier builds. Other projects and other agent families are unproved.
+- **Extract:** two projects complete reliably, and Extract asks only necessary questions. The library models are not adoptable without owner correction: they bind internal wiring, mostly miss the test-coverage obligation and keep policy values as prose. Adoption, the handoff of deviations to Apply and a round trip on an existing repository are not implemented or unproved. The round-2 clarification of DEC-061 awaits the owner's confirmation.
+
+Preserve attempts, evidence, retained work volumes and completed candidates. Keep source checks, real-run evidence, Main integration and owner acceptance separate. The other milestone issues stay blocked until a bounded assignment selects them in the accepted order. Their older dependency texts are context; they do not require all Extract capability or all example series before a bounded Apply-only pilot. Finished PRs and fixtures retain their state; their completion starts no follow-up work.
 
 The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) stays the language baseline. Compatibility is not required: obsolete product paths, formats, tests and documents are deleted together ([DEC-032](concepts/register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)).
 
@@ -28,15 +44,15 @@ The [canonical language v1](design/canonical-model/minimal-language/language-con
 
 <a id="architect-and-coordinator"></a>
 
-On 20 October 2026 the owner ended the Apply core, Extract and Coordinator sessions of the checkpoint and [divided the remaining work](concepts/sources/coordinator-assignment-20261019.md#closeout-and-division-20-october-2026) as below. The earlier division of 17 and 19 October, with the three streams' write scopes, is retained in [the plan at Main 0c28097c](https://github.com/Glacius-Labs/Markitect/blob/0c28097c030bc5d031b501002bc85634cd66a4c8/docs/implementation-plan.md#work-streams). Each session owns its write scope; anything outside it goes through the owning session. The product code has no active writer until the next scope decision names one.
+On 20 October 2026 the owner ended the Apply core, Extract and Coordinator sessions of the checkpoint and [divided the remaining work](concepts/sources/coordinator-assignment-20261019.md#closeout-and-division-20-october-2026) as below. The earlier division of 17 and 19 October, with the three streams' write scopes, is retained in [the plan at Main 0c28097c](https://github.com/Glacius-Labs/Markitect/blob/0c28097c030bc5d031b501002bc85634cd66a4c8/docs/implementation-plan.md#work-streams). Each session owns its write scope; anything outside it goes through the owning session. The product code has no active writer until a bounded assignment names one.
 
-| Stream | Write scope | Next |
+| Stream | Write scope | Task |
 | --- | --- | --- |
-| **Closeout** | This plan, #492, #495 and notes on their follow-up issues, the [closing record](validation/apply-extract-closeout-20261020.md), the Library example model and its demonstration harness `experiments/recursive-apply-demo/` | Done with the closing record and one bounded confirmation run; no further runs. |
-| **Trial-case preparation** | `experiments/apply-trials/`, its entries in the examples registry shard and its catalog rows in the experiment guides | Prepares the extended trial setup only; it runs no Apply and no provider. |
-| **Process review** | The owner, separately | The owner reviews the current Apply process as a whole. |
+| **Closeout (#492)** | This plan, the issue texts of #492, #495 and their follow-ups, the [closing record](validation/apply-extract-closeout-20261020.md), the Library example model and its demonstration harness `experiments/recursive-apply-demo/` | The closing record, one bounded confirmation run and the issue reconciliation; no further runs. |
+| **Trial-case preparation ([#523](https://github.com/Glacius-Labs/Markitect/issues/523))** | `experiments/apply-trials/`, its entries in the examples registry shard and its catalog rows in the experiment guides | Trial cases and independent oracles only; it runs no Apply and no provider. |
+| **Process review ([#524](https://github.com/Glacius-Labs/Markitect/issues/524))** | Read-only, in the owner's chat | Explains the current Apply workflow and assesses simplification candidates. |
 
-Further process changes and larger measurement series are selected afterwards from these results. The Coordinator's earlier sequence (cleanup, runtime image, Host setup, broader examples, self-model, standard library and release/marketing) remains in [the prior delivery plan](https://github.com/Glacius-Labs/Markitect/blob/30bc6e87e0e7cf26df7f290003b7941d3d375df4/docs/implementation-plan.md#work-streams) and dispatches nothing.
+Further process changes and larger measurement series are selected afterwards from these results. The accepted roadmap replaces the Coordinator's earlier sequence (cleanup, runtime image, Host setup, broader examples, self-model, standard library and release/marketing), which remains in [the prior delivery plan](https://github.com/Glacius-Labs/Markitect/blob/30bc6e87e0e7cf26df7f290003b7941d3d375df4/docs/implementation-plan.md#work-streams).
 
 ## How we work
 
@@ -46,7 +62,7 @@ The owner-adopted [working method](development/working-method.md) applies: learn
 
 Each session owns its scope, its pull requests and its merges. Implementation work runs in an isolated worktree from the integrated base, with one bounded task, owned paths and acceptance criteria. Sessions coordinate directly; actual state, candidate SHAs, reviews and results live in each chat and PR.
 
-**Shared files** have one writer at a time and are announced to the other sessions before an edit: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside a stream's own packages, the architecture and module gates and the code map. The run configuration, `.markitect/execution.yaml` and the Host profile formats change only after notice to the owner of Host setup, because Host setup produces them. Port changes belong to the owner of the Apply core.
+**Shared files** have one writer at a time and are announced to the other sessions before an edit: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside a stream's own packages, the architecture and module gates and the code map. The run configuration, `.markitect/execution.yaml` and the Host profile formats change only within an assignment that names their writer, because Host setup produces them. Port changes likewise need an assignment for the Apply core.
 
 ### Branch names
 
