@@ -130,6 +130,9 @@ export class Inspector {
   }
 
   onReplaced() {
+    if (this.replaced) return;
+    this.replaced = true;
+    this.live?.close("replaced");
     this.following = false;
     this.playback.pause("pause");
     this.accountEl.prepend(h("p", { role: "alert", class: "st-fail" }, "The events file was replaced while it was observed. The view keeps what it read; reload the page to read the new file from its start."));

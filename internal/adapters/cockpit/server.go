@@ -24,18 +24,25 @@ var webFiles embed.FS
 const DefaultListen = "127.0.0.1:7341"
 
 // Config selects the state directories the cockpit observes. The cockpit only
-// reads them; Liveness, when set, probes whether an Apply holds one.
+// reads them; Liveness, when set, probes whether an Apply holds one. Project
+// observes the repository's identity. Answer, when set, is the owner
+// channel's answer operation, the cockpit's only action.
 type Config struct {
 	States   []string
 	Liveness Liveness
+	Project  ProjectObserver
+	Answer   Answerer
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
-// of the configured state directories. No request starts, answers, repairs or
+// of the configured state directories. Apart from an owner's answer through
+// the configured owner channel, no request starts, answers, stops, repairs or
 // publishes anything.
 type Server struct {
 	states   []*stateDirectory
 	liveness Liveness
+	project  projectCache
+	answer   Answerer
 	poll     time.Duration
 	host     string
 	web      fs.FS
@@ -46,7 +53,7 @@ func New(cfg Config) (*Server, error) {
 	if len(cfg.States) == 0 {
 		return nil, errors.New("the cockpit needs at least one state directory")
 	}
-	s := &Server{liveness: cfg.Liveness, poll: 400 * time.Millisecond}
+	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, poll: 400 * time.Millisecond}
 	seen := map[string]bool{}
 	for _, dir := range cfg.States {
 		abs, err := filepath.Abs(dir)
@@ -112,6 +119,9 @@ func (s *Server) Serve(ctx context.Context, listen string, ready func(url string
 // Handler is the cockpit's HTTP interface.
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
+	mux.HandleFunc("GET /api/project", s.handleProject)
+	mux.HandleFunc("GET /api/questions", s.handleQuestions)
+	mux.HandleFunc("POST /api/runs/{run}/questions/{question}/answer", s.handleAnswer)
 	mux.HandleFunc("GET /api/runs", s.handleRuns)
 	mux.HandleFunc("GET /api/runs/{run}/view", s.handleView)
 	mux.HandleFunc("GET /api/runs/{run}/entries", s.handleEntries)
@@ -161,18 +171,22 @@ func (s *Server) admitHost(host string) bool {
 
 // RunSummary is one run in the run list: what its record says so far.
 type RunSummary struct {
-	ID          string    `json:"id"`
-	State       string    `json:"state"`
-	Current     bool      `json:"current"`
-	Started     time.Time `json:"started,omitzero"`
-	Last        time.Time `json:"last,omitzero"`
-	Records     int       `json:"records"`
-	Managers    int       `json:"managers"`
-	Passes      int       `json:"passes"`
-	Outcome     string    `json:"outcome,omitempty"`
-	RunOutcome  string    `json:"runOutcome,omitempty"`
-	Publication string    `json:"publication,omitempty"`
-	Error       string    `json:"error,omitempty"`
+	ID          string     `json:"id"`
+	State       string     `json:"state"`
+	Current     bool       `json:"current"`
+	Started     time.Time  `json:"started,omitzero"`
+	Last        time.Time  `json:"last,omitzero"`
+	Records     int        `json:"records"`
+	Managers    int        `json:"managers"`
+	Passes      int        `json:"passes"`
+	Outcome     string     `json:"outcome,omitempty"`
+	RunOutcome  string     `json:"runOutcome,omitempty"`
+	Publication string     `json:"publication,omitempty"`
+	Reason      string     `json:"reason,omitempty"`
+	Head        string     `json:"head,omitempty"`
+	Health      *Health    `json:"health,omitempty"`
+	Account     []Sentence `json:"account,omitempty"`
+	Error       string     `json:"error,omitempty"`
 }
 
 func (s *Server) handleRuns(w http.ResponseWriter, r *http.Request) {
@@ -184,20 +198,30 @@ func (s *Server) handleRuns(w http.ResponseWriter, r *http.Request) {
 			continue
 		}
 		for _, entry := range runs {
-			out = append(out, summarize(st, entry))
+			out = append(out, s.summarize(st, entry))
 		}
 	}
 	sort.SliceStable(out, func(i, j int) bool { return out[i].ID > out[j].ID })
 	writeJSON(w, out)
 }
 
-func summarize(st *stateDirectory, entry RunEntry) RunSummary {
+// summarize states what a run's record says so far. A run without a report
+// also gets its current health and, while it runs, the account of its latest
+// boundary.
+func (s *Server) summarize(st *stateDirectory, entry RunEntry) RunSummary {
 	sum := RunSummary{ID: entry.ID, State: entry.State, Current: entry.Current}
 	l := st.log(entry.ID)
 	if _, err := l.refresh(); err != nil {
 		sum.Error = err.Error()
 	}
-	records, _, report := l.snapshot()
+	records, src, report := l.snapshot()
+	if report == nil {
+		h := s.health(st, l, records, src, report)
+		sum.Health = &h
+		if h.Run == "running" || h.Run == "finishing" {
+			sum.Account = Project(l.id, records, len(records), src, report).Account
+		}
+	}
 	sum.Records = len(records)
 	for _, rec := range records {
 		switch rec.Kind {
@@ -213,16 +237,17 @@ func summarize(st *stateDirectory, entry RunEntry) RunSummary {
 		case "outcome":
 			var d struct {
 				Status string `json:"status"`
+				Reason string `json:"reason"`
 			}
 			_ = json.Unmarshal(rec.Data, &d)
-			sum.Outcome = d.Status
+			sum.Outcome, sum.Reason = d.Status, d.Reason
 		}
 		if !rec.At.IsZero() {
 			sum.Last = rec.At
 		}
 	}
 	if report != nil {
-		sum.RunOutcome = report.Outcome
+		sum.RunOutcome, sum.Head = report.Outcome, report.Head
 		if report.Publication != nil {
 			sum.Publication = report.Publication.Outcome
 		}

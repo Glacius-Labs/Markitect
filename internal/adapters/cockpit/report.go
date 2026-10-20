@@ -10,6 +10,7 @@ import (
 // is written once when the run ends; its absence during a run is no failure.
 type Report struct {
 	Operation   string       `json:"operation"`
+	Head        string       `json:"head,omitempty"`
 	Status      string       `json:"status"`
 	Outcome     string       `json:"outcome"`
 	Derived     bool         `json:"derived,omitempty"`
@@ -59,11 +60,20 @@ func decodeReport(data []byte) (*Report, error) {
 		} `json:"publication"`
 		RetainedWork string `json:"retainedWork"`
 		Error        string `json:"error"`
+		Preparation  struct {
+			Attempts []struct {
+				Head string `json:"head"`
+			} `json:"attempts"`
+		} `json:"preparation"`
 	}
 	if err := json.Unmarshal(data, &raw); err != nil {
 		return nil, err
 	}
 	r := &Report{Operation: raw.Operation, Status: raw.Status, Outcome: raw.Outcome, Run: raw.Run, Retained: raw.RetainedWork, Error: raw.Error}
+	// The last preparation attempt is the one the run was bound to.
+	if attempts := raw.Preparation.Attempts; len(attempts) > 0 {
+		r.Head = attempts[len(attempts)-1].Head
+	}
 	if r.Outcome == "" {
 		// Reports of earlier builds carry only the command status; its mapping
 		// to the Run outcome is the CLI's (passed success, failed failed,

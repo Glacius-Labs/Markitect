@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:727cb7a0b365184f22ea8c5831028d4706a5ee545c347e09493247e10114977c`.
+Canonical model digest: `sha256:c5799dd6ecb7baa54130af9604385a6ce2ae4d1125e08db3696540c15f5c6b08`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -172,9 +172,9 @@ Expose check and context over actual PreparationService reports, with structural
 
 ### product/cockpit/observed-run-inspection
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/observed-run-inspection.yaml` (original bytes `sha256:30a9e958972645059bc2b15b65836f3faeb1241a9483c890b06f22f5c9b10a0a`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/observed-run-inspection.yaml` (original bytes `sha256:29290969397b97b424beaed7c215e7f3fe220ccb74a14eb19f4d5ee87db0599b`).
 
-Present runs only through their recorded evidence under the state directory: the events, transcripts and report of each run, read as consistent prefixes up to an explicit record boundary; nothing recorded after the boundary reaches its view, and the report appears only at the final boundary. Show the organization, current work, recorded waits with the records and participants they name, exchanges with their direction and their author (an Agent, the Orchestrator or the owner channel), Passes, candidates, checks, findings, questions and the publication's read-back as recorded. Never infer a delivery, a reading, a correlation, a success or an authority the record does not establish; show outdated waits, missing outcomes or reports, unreadable or unknown records and absent bindings as limitations. Live observation adds newly recorded evidence without duplicates or gaps, keeps the run's current state and the link's health apart from the recorded boundary, and keeps a boundary the user chose until the user returns to live. Reading, replay, pause, selection and reconnection start, answer, stop, repair and publish nothing, and the view serves only the local machine.
+Present runs only through their recorded evidence under the state directory: the events, transcripts and report of each run, read as consistent prefixes up to an explicit record boundary; nothing recorded after the boundary reaches its view, and the report appears only at the final boundary. Show the organization, current work, recorded waits with the records and participants they name, exchanges with their direction and their author (an Agent, the Orchestrator or the owner channel), Passes, candidates, checks, findings, questions and the publication's read-back as recorded. Never infer a delivery, a reading, a correlation, a success or an authority the record does not establish; show outdated waits, missing outcomes or reports, unreadable or unknown records and absent bindings as limitations. Live observation adds newly recorded evidence without duplicates or gaps, keeps the run's current state and the link's health apart from the recorded boundary, and keeps a boundary the user chose until the user returns to live. The cockpit entry shows the project's bound model and source as structural preparation observes them, the running runs, the owner questions and the run history with outcomes and publications. Its only action is an owner's answer to an open question that a running run waits for, written after an explicit confirmation through the owner channel the answer command uses; a written answer is shown as written, not as recorded, until the run records it, and an answer clarifies within the model without changing it. Starting and stopping runs are not offered; reading, replay, pause, selection and reconnection start, stop, repair and publish nothing, and the view serves only the local machine.
 
 ### product/documents/guarded-model-view
 

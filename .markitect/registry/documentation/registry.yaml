@@ -1856,6 +1856,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/cockpit-entry-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    why: "Records the cockpit entry and owner answer slice: checks, a demonstration with a re-fed run and the owner channel, and what remains unproved."
   - path: "docs/validation/cockpit-live-observation-20261020.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]

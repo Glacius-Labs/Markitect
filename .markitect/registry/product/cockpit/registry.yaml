@@ -35,7 +35,7 @@ artifacts:
   - path: "internal/adapters/cockpit/server.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Serves the embedded page and the GET-only read interface on a loopback address and refuses requests addressed to other hosts."
+    why: "Serves the embedded page, the read interface and the owner-answer route on a loopback address and refuses requests addressed to other hosts."
   - path: "internal/adapters/cockpit/README.md"
     form: doc
     realizes: [product/cockpit/observed-run-inspection]
@@ -71,7 +71,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/api.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Calls only the cockpit's GET read interface."
+    why: "Calls the cockpit's read interface and, for an owner's answer, its one write route with the cockpit's request header."
   - path: "internal/adapters/cockpit/web/js/dom.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -79,7 +79,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/runs.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Lists the recorded runs with their recorded outcome, publication and organization size."
+    why: "Renders the cockpit entry: project identity, running runs, owner questions, run history with outcomes and the actions the cockpit offers or does not."
   - path: "internal/adapters/cockpit/web/js/playback.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -103,11 +103,11 @@ artifacts:
   - path: "internal/adapters/cli/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Parses the cockpit command's state directories, run configuration and listen address and reports where the cockpit serves."
+    why: "Parses the cockpit command's state directories, run configuration, repository and listen address and reports where the cockpit serves."
   - path: "internal/bootstrap/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Composes the cockpit over the selected state directories, taking only the state directory from a run configuration."
+    why: "Composes the cockpit over the selected state directories with the state lock probe, the answer command's owner channel and structural preparation of the repository."
   - path: "internal/adapters/cli/cockpit_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
@@ -128,3 +128,15 @@ artifacts:
     form: code
     realizes: [product/cockpit/observed-run-inspection]
     why: "Holds the live link: appended records, health, reconnection and staleness, without any effect on the run."
+  - path: "internal/adapters/cockpit/overview.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Observes the project in the background, lists owner questions with the owner channel's state and writes an owner's answer only for a question a running run waits for."
+  - path: "internal/adapters/cockpit/overview_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies that answers reach the owner channel only for a waiting question and only through the cockpit's own request, refusals for runs that do not run and withdrawn or answered questions, the owner question list and the background project observation."
+  - path: "internal/adapters/cockpit/web/js/answer.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Offers the two-step owner answer form and reports a written answer as written, not as recorded by the run."
