@@ -217,5 +217,6 @@ Corrections `fcd0fb54` and `488a582d` were made after the series and are unevalu
 **Next evidence.** The owner placed these steps in the [container-reuse sequence](../implementation-plan.md#container-reuse-after-the-current-evaluation) instead of running them on this candidate now. After the workflow baseline is selected, the read-only candidate mount for probes comes with the container-lifecycle change, if that baseline keeps probes. The matched retest then includes:
 
 1. A4, to test the public-choice correction, since a question must reach the owner;
-2. A2, to measure Verify cost after the owner-judgment correction;
-3. the Haiku pass the owner named, V1, V2 and A1, once Sonnet works, read here as once A4 routes the question.
+2. beside A4, one short model-only trial of the owner's suggested gap check on S-QV's model ([ENH-002](../concepts/register.md#enh-002-model-quality-linter-and-metrics)), because the simplified workflow's A4 also chose a value silently;
+3. A2, to measure Verify cost after the owner-judgment correction;
+4. the Haiku pass the owner named, V1, V2 and A1, once Sonnet works, read here as once A4 routes the question.
