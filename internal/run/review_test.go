@@ -193,6 +193,67 @@ func TestVerdictMustMatchTheOpenFindings(t *testing.T) {
 	}
 }
 
+// A child's reviewer reports satisfied on a corrected candidate while the
+// finding its ancestor raised there is still open: only that ancestor closes
+// it, in its result after the child's. Before the fix the child's satisfied was
+// refused, so it had to report needs_correction for a conforming area (observed
+// in the simplified-workflow comparison's A2, where Root then waited on the user
+// instead of closing its finding).
+func TestChildReportsSatisfiedWhileItsAncestorsFindingAwaitsTheAncestor(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	verifies := 0
+	var childSatisfied ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		review := c.turn.Kind == VerifyTurn
+		switch {
+		case review && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on your own contribution"):
+			verifies++
+			var extra map[string]any
+			if verifies == 1 {
+				extra = map[string]any{"findings": []any{genuine("library", "library/interface")}}
+			}
+			// Root's basis precedes its assessment of the correction.
+			c.must(toolReport, c.envelope(kindBasis, extra))
+			return nil
+		case review && verifies == 1 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			return nil
+		case review && verifies == 2 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit"):
+			if childSatisfied = c.result(nil); childSatisfied.Refused {
+				c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			}
+			return nil
+		case review && verifies == 2 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"closed": []any{map[string]string{"id": "F1", "reason": "the corrected interface conforms", "evidence": "library/a.go on this candidate"}}}))
+			return nil
+		case !review && verifies == 1 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			c.write("library/a.go", "a corrected")
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	for _, spec := range []PassSpec{implementSpec(), verifySpec(), implementSpec(), verifySpec()} {
+		if res := r.Pass(spec); res.Stopped {
+			t.Fatalf("stopped in %s", spec.Purpose)
+		}
+	}
+	out := f.finish(r, "")
+	if out.Status != Verified {
+		t.Fatalf("status %s: %s", out.Status, out.Reason)
+	}
+	if childSatisfied.Refused {
+		t.Errorf("the child's satisfied was refused: %s", childSatisfied.Text)
+	}
+	f1 := out.Findings[0]
+	if !f1.Closed || f1.RaisedBy != "." || f1.ClosedPass != "p4" {
+		t.Errorf("F1 %+v; want it closed by Root in p4", f1)
+	}
+}
+
 // A work Pass's exit gate is strict: the captured stand must be exactly the
 // accepted stand and pass the Model check and the File check; a failure ends
 // the run Failed, without a repair Pass.

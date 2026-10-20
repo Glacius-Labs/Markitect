@@ -39,8 +39,9 @@ const (
 
 // Dispositions of an adverse probe receipt (failed or error). A violation is a
 // genuine finding that cites the receipt; an expectation error is a reasoned
-// disproof of the probe's own expectation or assertion; a rerun replaces an
-// error receipt by a later passing receipt of the same claim on the same stand.
+// disproof of the probe itself, its expectation, assertion or execution, not of
+// the candidate; a rerun replaces an error receipt by a later passing receipt of
+// the same claim on the same stand.
 const (
 	DisposedViolation        = "violation"
 	DisposedExpectationError = "expectation_error"
@@ -402,7 +403,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		fmt.Fprintf(&b, "\nOutput:\n%s", r.Output)
 	}
 	if r.Outcome != ProbePassed && p.spec.Review {
-		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. Without a passing rerun the claim lacks its evidence: cover it as open with a genuine finding for the missing evidence.")
+		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. An error the probe caused itself, such as a probe too large for the check's time limit, is an expectation_error with reason and evidence; cover its claim with other evidence. An error that points at the candidate, such as a hang, is a genuine finding.")
 	}
 	return ToolAnswer{Text: b.String()}
 }
@@ -624,16 +625,16 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 		x := ProbeDisposition{As: d.As, By: m.Path, Pass: m.p.id}
 		switch d.As {
 		case DisposedExpectationError:
-			if r.Outcome != ProbeFailed {
-				return nil, fmt.Errorf("%s: %s is an error of the Runtime, not an assertion; it stays unresolved unless a later passing receipt of the same claim replaces it (as rerun)", name, r.ID)
-			}
+			// A failed assertion or an error the probe caused itself, such as a
+			// probe too large for the check's time limit, which no exact rerun can
+			// pass. The same independent assessment decides it.
 			reason, err := toolText(name+".reason", d.Reason)
 			if err != nil {
 				return nil, err
 			}
 			evidence, err := toolText(name+".evidence", d.Evidence)
 			if err != nil {
-				return nil, fmt.Errorf("%v: a disproof states the evidence that the expectation or assertion was wrong", err)
+				return nil, fmt.Errorf("%v: a disproof states the evidence that the probe, not the candidate, was wrong", err)
 			}
 			x.Reason, x.Evidence = reason, evidence
 			// Root's disproof of its own expectation in the same Pass has no

@@ -341,7 +341,7 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 			}
 		}
 		list(b, "Open findings you raised in earlier Passes: reassess each; close one as resolved when this candidate corrects it, or as disproved with evidence when it was erroneous:", mine)
-		list(b, "Other open findings within your responsibility:", within)
+		list(b, "Other open findings within your responsibility; the Manager that raised one closes it, and one raised by an ancestor is closed after your result, so it does not keep you from reporting satisfied when your own assessment is clean:", within)
 		var current, earlier []string
 		candidate := p.tree.Digest().String()
 		for _, r := range e.receipts {

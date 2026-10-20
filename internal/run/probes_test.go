@@ -278,10 +278,10 @@ func TestExpectationErrorsNeedAnIndependentAssessment(t *testing.T) {
 }
 
 // A Runtime error is no assertion: it neither passes nor shows the expected
-// refusal, it cannot be explained away as an expectation error, and only an
-// exact rerun of the same probe (probe.rerun) that passes on the same candidate
-// replaces it; a different probe under the same claim cannot. An exit that says
-// the probe could not be executed is an error too, not a failed assertion.
+// refusal, and only an exact rerun of the same probe (probe.rerun) that passes
+// on the same candidate replaces it as a rerun; a different probe under the
+// same claim cannot. An exit that says the probe could not be executed is an
+// error too, not a failed assertion.
 // Before the review fix, any later passing receipt with the same claim text
 // disposed of an error.
 func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
@@ -308,14 +308,13 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 		return rec, nil, true
 	}
 	var mu sync.Mutex
-	var asExpectation, otherProbe, rerunNew, noexec ToolAnswer
+	var otherProbe, rerunNew, noexec ToolAnswer
 	var hung, erred, passed, noexecID string
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
 			hung = receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_slow.py", "FLAKY")))
-			asExpectation = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedExpectationError, "reason": "slow", "evidence": "none"}}}))
 			weaker := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_weak.py", "PASS")))
 			otherProbe = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": weaker}}}))
 			rerunNew = c.tool(toolCheck, map[string]any{"probe": map[string]any{"rerun": weaker}})
@@ -387,14 +386,79 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 	if _, ok := schemaOf.Properties.Probe.Properties["rerun"]; !ok || len(schemaOf.Properties.Probe.Required) > 0 {
 		t.Errorf("the check schema does not admit a rerun alone: %+v", schemaOf.Properties.Probe)
 	}
-	if !asExpectation.Refused || !strings.Contains(asExpectation.Text, "error of the Runtime") {
-		t.Errorf("a Runtime error was explained away: %+v", asExpectation)
-	}
 	if !otherProbe.Refused {
 		t.Errorf("a different probe under the same claim replaced the error: %+v", otherProbe)
 	}
 	if !rerunNew.Refused || !strings.Contains(rerunNew.Text, "only a Runtime error is run again") {
 		t.Errorf("a passing receipt was run again: %+v", rerunNew)
+	}
+}
+
+// A probe too large for the check's time limit errs on every exact rerun, so no
+// rerun can dispose of it. The probe caused the error, not the candidate: it is
+// disposed of as an expectation error under the same independent assessment as
+// a failed assertion, by the parent for a child's probe and by a fresh Root
+// reviewer for Root's own. Before the fix such an error could be disposed of only
+// by a passing rerun or a finding against a conforming candidate (observed in
+// the simplified-workflow comparison's A2, where mutation probes timed out).
+func TestAProbeErrorTheProbeCausedNeedsAnIndependentAssessment(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var parentSaw bool
+	var childDisposal, rootDisposal ToolAnswer
+	verifies := 0
+	tooLarge := func(receipt string) map[string]any {
+		return map[string]any{"receipt": receipt, "as": DisposedExpectationError, "reason": "the mutation probe runs the whole suite per mutant and exceeds the check's time limit",
+			"evidence": "the narrower probe of the same claim passes on this candidate"}
+	}
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		review := c.turn.Kind == VerifyTurn
+		if review && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on") {
+			verifies++
+		}
+		switch {
+		case review && verifies == 1 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			slow := receiptOf(t, c.must(toolCheck, probe("library/interface", "every mutant is caught", "probe_mutants.py", "HANG")))
+			narrow := receiptOf(t, c.must(toolCheck, probe("library/interface", "the boundary mutant is caught", "probe_boundary.py", "PASS")))
+			childDisposal = c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, narrow), "dispositions": []any{tooLarge(slow)}}))
+			return nil
+		case review && verifies == 1 && c.turn.Manager == "." && proposalOf(c, kindBasis, "library") != "":
+			parentSaw = strings.Contains(c.turn.Prompt, "as an erroneous expectation") && strings.Contains(c.turn.Prompt, "HANG")
+		case review && verifies == 1 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on"):
+			own := receiptOf(t, c.must(toolCheck, probe("library/interface", "every cross-area mutant is caught", "probe_cross.py", "HANG")))
+			rootDisposal = c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{tooLarge(own)}}))
+			return nil
+		case review && verifies == 2 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on"):
+			var pending []any
+			for _, m := range listedReceiptRE.FindAllStringSubmatch(c.turn.Prompt, -1) {
+				pending = append(pending, tooLarge(m[1]))
+			}
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": pending}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	first := r.Pass(verifySpec())
+	if first.Verdict != NeedsCorrection || !r.Reassess() {
+		t.Fatalf("Root's own disposal made the review clean: verdict %s, reassess %v", first.Verdict, r.Reassess())
+	}
+	second := r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if second.Verdict != Satisfied || out.Status != Verified {
+		t.Fatalf("second verdict %s, status %s: %s", second.Verdict, out.Status, out.Reason)
+	}
+	if childDisposal.Refused || rootDisposal.Refused || !parentSaw {
+		t.Errorf("child %+v, Root %+v, parent saw %v", childDisposal, rootDisposal, parentSaw)
+	}
+	for _, p := range out.Probes {
+		if p.Outcome == ProbeError && (p.Disposition == nil || p.Disposition.Pending || p.Disposition.As != DisposedExpectationError) {
+			t.Errorf("error receipt %s disposition %+v", p.ID, p.Disposition)
+		}
 	}
 }
 

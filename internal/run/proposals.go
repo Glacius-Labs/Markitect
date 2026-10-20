@@ -971,29 +971,36 @@ func (e *engine) reassess() bool {
 // verdictConsistent refuses a result verdict that contradicts the open genuine
 // findings within the submitter's responsibility after this submission: a
 // review counts every genuine finding, a work Pass the findings of work Passes.
+// A finding an ancestor raised is closed only by that ancestor, whose report
+// follows this result, so it supports needs_correction but does not refuse
+// satisfied; it holds back the Pass verdict until its raiser closes it.
 func (e *engine) verdictConsistent(m *member, env envelope, raised []Finding, closing map[string]closure) error {
 	review := m.p.spec.Review
-	open := 0
-	counts := func(f *Finding) bool {
-		return f.Blocking && e.within(f.Owner, m.Path) && (review || !f.Review && f.RaisedBy != MarkitectFinding)
+	own, inherited := 0, 0
+	count := func(f *Finding) {
+		switch {
+		case !f.Blocking || !e.within(f.Owner, m.Path) || !review && (f.Review || f.RaisedBy == MarkitectFinding):
+		case f.RaisedBy == MarkitectFinding || e.within(f.RaisedBy, m.Path):
+			own++
+		default:
+			inherited++
+		}
 	}
 	for _, f := range e.findings {
-		if !f.Closed && closing[f.ID].reason == "" && counts(f) {
-			open++
+		if !f.Closed && closing[f.ID].reason == "" {
+			count(f)
 		}
 	}
 	for i := range raised {
-		if counts(&raised[i]) {
-			open++
-		}
+		count(&raised[i])
 	}
 	hasOpenCoverage := slices.ContainsFunc(env.Obligations, func(c coverage) bool { return c.Status == coverOpen })
 	switch {
-	case env.Verdict == Satisfied && open > 0:
-		return fmt.Errorf("verdict satisfied, but %d genuine finding(s) within your responsibility stay open; close those you raised with a reason or report needs_correction", open)
+	case env.Verdict == Satisfied && own > 0:
+		return fmt.Errorf("verdict satisfied, but %d genuine finding(s) raised within your responsibility stay open; close those you raised with a reason or report needs_correction", own)
 	case env.Verdict == Satisfied && hasOpenCoverage:
 		return fmt.Errorf("verdict satisfied, but an own obligation is open; complete it or report needs_correction with a finding")
-	case env.Verdict == NeedsCorrection && open == 0:
+	case env.Verdict == NeedsCorrection && own+inherited == 0:
 		return fmt.Errorf("verdict needs_correction, but no genuine finding within your responsibility is open; raise the finding that names the required correction")
 	}
 	return nil
