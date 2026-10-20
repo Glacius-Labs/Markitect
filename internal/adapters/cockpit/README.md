@@ -1,15 +1,15 @@
 # Cockpit adapter
 
-`markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the first slices of the [cockpit concept](../../../docs/design/cockpit.md): the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay, and live observation of a running Apply through the same projections. The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
+`markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the [cockpit concept](../../../docs/design/cockpit.md) in three slices: the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay; live observation of a running Apply through the same projections; and the cockpit entry with the project, running runs, owner questions, run history and the owner's answer. The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
 
 ```text
-markitect cockpit --state DIR [--state DIR ...] [--listen 127.0.0.1:7341]
-markitect cockpit --run-config PATH
+markitect cockpit --state DIR [--state DIR ...] [--repo .] [--listen 127.0.0.1:7341]
+markitect cockpit --run-config PATH [--repo .]
 ```
 
 ## Read boundary
 
-The cockpit reads `<state>/runs/<runID>/events.jsonl`, `report.json` and `transcripts/<turn>.jsonl`, nothing else, and writes nothing. A request never starts, answers, stops, repairs or publishes anything; the HTTP interface accepts only `GET`.
+The cockpit reads `<state>/runs/<runID>/events.jsonl`, `report.json` and `transcripts/<turn>.jsonl`, the owner channel's `questions/` and `answers/` and `current-run`. Its one write is an owner's answer (see below). Every other route accepts only `GET`; no request starts, stops, repairs or publishes anything.
 
 - **Consistent prefix.** Only complete lines are records. A trailing partial line is reported as a tail. A line that does not decode keeps its line number (its `seq`) and shows as unreadable, so later sequence numbers never shift. An append is read incrementally when the file keeps its identity and length and continues its last 64 consumed bytes; otherwise the file is read again from its start and, if it no longer begins with the consumed history, counted as replaced. An in-place rewrite of earlier bytes that keeps the identity and the last consumed bytes is not detected; the producer only appends.
 - **Boundary.** A view is the projection of the first `seq` records (`/api/runs/{run}/view?at=N`). Nothing after record N reaches it: a later answer, verdict, outcome or report stays hidden. The report appears only at the final boundary. Details (`/detail?ref=...&at=N`) and transcripts (`/transcript?turn=...&at=N`, cut at the boundary's recorded time) obey the same boundary. `/entries` lists the whole record for navigation; the page shows its entries only up to the boundary.
@@ -22,6 +22,14 @@ The cockpit reads `<state>/runs/<runID>/events.jsonl`, `report.json` and `transc
 Health is the current observation, kept apart from the recorded boundary. A written report means the run ended. Otherwise bootstrap's state lock probe, the one `markitect answer` uses, and `current-run` decide: this run holds the directory (running, or finishing once its outcome is recorded), another run holds it, or nobody does (ended without a report). A failed probe is unknown. The probe takes the lock for an instant when nobody holds it, which the brief retries of a starting Apply and of `markitect setup` absorb, and runs at most once per two seconds and state directory. Health can be briefly behind: within the probe interval after a run starts, or while a crashed run's `current-run` remains and another process holds the lock. A written report is announced by health, not by a record, so the page reads its final view again when the run state changes; the stream closes once the report is written.
 
 The page follows new records while the boundary is at the latest record. Pausing, selecting, scrubbing or stepping back pins the boundary; the page then counts newer records and offers an explicit return to live. Playing from a pinned boundary replays the record at the chosen speed and follows the run once it reaches the latest record. A lost link, its reconnection and a stale link (no contact for longer than the health interval) are shown with the run state of the last contact; changes of the link and of the run state are announced to assistive technology, the running seconds are not. Nothing here starts, stops or answers a run.
+
+## Cockpit entry and the owner's answer
+
+The entry page shows the project as structural preparation of the repository (`--repo`, default `.`) observes it in the background, bounded to two minutes: model, canonical model digest, source head, Packages and the check status. Observing again is a POST with the cockpit's own request header. The run history shows the provider steps and cost a report states; without a report, usage is unknown. Below it: the runs that hold their state directory now with their current account, the owner questions, the run history with outcome, reason, publication and source head, and which actions the cockpit offers.
+
+An owner question is Root's question to the user in the record. It is answerable while its run is running, the record shows it open, the owner channel publishes its question file and no answer file exists. Answering takes two steps, review and confirmation; drafts survive redraws and new records. The page posts to `/api/runs/{run}/questions/{id}/answer` with a JSON body and the cockpit's own request header, which a cross-site form cannot send; a foreign `Origin` or host is refused. The server checks the question again and calls bootstrap's `writeAnswer`, the function behind `markitect answer`, which accepts only an open question of the run that holds the state directory, once. The page reports the answer file it wrote; the question shows as answered only when the run records the answer. An answer clarifies within the model and cannot change it.
+
+Starting and stopping runs are not offered. An Apply is started with `markitect apply`; starting it from the cockpit would start provider work and needs its own decision. No stop command exists: interrupting the `markitect apply` process ends the run incomplete with its evidence.
 
 ## Projection
 

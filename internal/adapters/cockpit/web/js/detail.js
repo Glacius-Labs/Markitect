@@ -5,6 +5,8 @@
 
 import { h, clear, clock, since, label, stateWord, shortDigest, duration } from "./dom.js";
 import { activity } from "./diagram.js";
+import { api } from "./api.js";
+import { answerForm } from "./answer.js";
 
 export function renderDetail(aside, ctx) {
   const token = (aside._token = (aside._token || 0) + 1);
@@ -272,6 +274,24 @@ function question(c) {
   const servedBy = view.questions.filter((x) => x.about === q.id);
   if (servedBy.length) section(c, "Forwarded as", h("p", {}, servedBy.map((x, i) => [i ? ", " : "", r(`question:${x.id}`, `${x.id} to ${label(x.to === "user" ? "@user" : x.to)}`)])));
   c.body.append(h("p", { class: "note" }, "The record shows the send and the answer; whether and when the recipient read the question is not recorded."));
+  if (toUser && q.status === "open" && c.boundary >= c.entries.length) ownerAnswer(c, q);
+}
+
+// ownerAnswer offers the answer form at the latest boundary when the owner
+// channel says the run waits for this answer, and says why not otherwise.
+function ownerAnswer(c, q) {
+  const slot = h("div", {});
+  c.body.append(h("h3", {}, "Owner answer"), slot);
+  api.questions().then((all) => {
+    const oq = all.find((x) => x.run === c.view.run.id && x.id === q.id);
+    if (!oq) {
+      slot.append(h("p", { class: "note" }, "The owner channel has no record of this question."));
+    } else if (oq.answerable) {
+      slot.append(answerForm(oq.run, oq.id));
+    } else {
+      slot.append(h("p", { class: "note" }, `Not answerable now: ${oq.why}.`));
+    }
+  }).catch((err) => slot.append(h("p", { class: "note" }, `The owner channel is not readable: ${err.message}`)));
 }
 
 // ---------- Turn ----------

@@ -10,11 +10,13 @@ import (
 )
 
 // CockpitRequest selects what the cockpit observes: state directories named
-// directly or through a run configuration, and its loopback listen address.
+// directly or through a run configuration, the repository whose identity it
+// shows, and its loopback listen address.
 type CockpitRequest struct {
-	States    []string
-	RunConfig string
-	Listen    string
+	States     []string
+	RunConfig  string
+	Repository string
+	Listen     string
 }
 
 // CockpitFunc serves the cockpit until ctx ends. ready receives the address
@@ -39,6 +41,7 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 	flags.Var(&states, "state", "state directory to observe; repeat")
 	config := flags.String("run-config", "", "run configuration whose state directory to observe")
 	listen := flags.String("listen", "", "loopback address to listen on")
+	repo := flags.String("repo", ".", "repository whose model and source identity to show")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			io.WriteString(stdout, help)
@@ -54,7 +57,7 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 		fmt.Fprintln(stderr, "--run-config requires an explicit absolute native path")
 		return 2
 	}
-	request := CockpitRequest{States: states, RunConfig: *config, Listen: *listen}
+	request := CockpitRequest{States: states, RunConfig: *config, Repository: *repo, Listen: *listen}
 	err := c.cockpit(ctx, request, func(url string) {
 		emit(map[string]any{"operation": "cockpit", "status": "serving", "url": url})
 	})

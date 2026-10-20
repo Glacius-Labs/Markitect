@@ -12,6 +12,7 @@ import { Diagram } from "./diagram.js";
 import { Timeline } from "./timeline.js";
 import { renderDetail } from "./detail.js";
 import { LiveLink } from "./live.js";
+import { answerInProgress } from "./answer.js";
 
 const HIDDEN_BY_DEFAULT = new Set(["state", "runtime"]);
 
@@ -130,6 +131,9 @@ export class Inspector {
   }
 
   onReplaced() {
+    if (this.replaced) return;
+    this.replaced = true;
+    this.live?.close("replaced");
     this.following = false;
     this.playback.pause("pause");
     this.accountEl.prepend(h("p", { role: "alert", class: "st-fail" }, "The events file was replaced while it was observed. The view keeps what it read; reload the page to read the new file from its start."));
@@ -316,6 +320,8 @@ export class Inspector {
     this.markLists();
     this.renderMarks();
     const now = performance.now();
+    // New records never redraw the details under an answer being written.
+    if (answerInProgress(this.asideEl)) return;
     if (!this.playback.playing || !this.lastDetail || now - this.lastDetail > 700) {
       this.lastDetail = now;
       this.renderAside();

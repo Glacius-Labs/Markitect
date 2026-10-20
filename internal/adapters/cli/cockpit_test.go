@@ -54,3 +54,18 @@ func TestCockpitRefusesIncompleteSelectionsAndReportsFailures(t *testing.T) {
 		t.Fatalf("an unconfigured cockpit = %d", code)
 	}
 }
+
+func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
+	var got CockpitRequest
+	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+		got = r
+		return nil
+	})
+	var out, errout bytes.Buffer
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 0 || got.Repository != "." {
+		t.Fatalf("%d: repository %q", code, got.Repository)
+	}
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a", "--repo", "other"}, &out, &errout); code != 0 || got.Repository != "other" {
+		t.Fatalf("%d: repository %q", code, got.Repository)
+	}
+}

@@ -159,6 +159,28 @@ a { color: var(--work); }
   .runtable td { border: 0; padding: 2px 12px; }
 }
 
+/* ---------- Cockpit entry ---------- */
+.band { margin: 0 0 28px; }
+.band h2 { font-size: var(--s3); font-weight: 600; margin: 0 0 8px; }
+.projecthead { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 8px; }
+.projecthead h1 { margin: 0; }
+.facts { display: grid; grid-template-columns: max-content 1fr; gap: 6px 16px; margin: 0; max-width: 90ch; }
+.facts dt { color: var(--ink-2); }
+.facts dd { margin: 0; overflow-wrap: anywhere; }
+.nowcard, .qcard { background: var(--plate); border: 1px solid var(--rule); border-left: 6px solid var(--work); padding: 10px 14px; margin: 0 0 10px; max-width: 110ch; }
+.nowcard h3, .qcard h3 { font-size: var(--s1); margin: 0 0 4px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.nowcard p { margin: 2px 0; }
+.qcard { border-left-color: var(--rule); }
+.qcard.waiting { border-left-color: var(--owner); }
+.answer { margin-top: 10px; display: grid; gap: 6px; max-width: 80ch; }
+.answer label { font-weight: 600; }
+.answer textarea { font: var(--s1)/1.5 var(--prose); padding: 8px; border: 1px solid var(--ink-3); border-radius: 4px; background: var(--panel); color: var(--ink); resize: vertical; }
+.answer textarea[readonly] { background: var(--plate-2); }
+.answer .actions { display: flex; gap: 8px; }
+.btn.primary-text { background: var(--owner); border-color: var(--owner); color: #fff; }
+.written { border-left: 3px solid var(--done); padding-left: 10px; }
+.qcard details summary { cursor: pointer; color: var(--ink-2); }
+
 /* ---------- Run inspector ---------- */
 .inspector {
   height: 100vh;
