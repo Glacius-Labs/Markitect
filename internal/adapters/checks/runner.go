@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"path"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
@@ -20,6 +21,11 @@ import (
 type CommandRuntime interface {
 	RunCommand(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error)
 }
+
+// closeBound bounds the closure of each disposable volume after a check. A
+// container engine under the load of a whole Manager team took longer than ten
+// seconds to remove a volume, which made otherwise observed probes uncertain.
+const closeBound = 45 * time.Second
 
 // Runner executes allowed checks on fresh, verified workspace copies. It keeps
 // no task or review state; run decides what the resulting receipt establishes.
@@ -91,10 +97,25 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	defer func() {
 		operationErr := limited.Err()
 		cancel()
-		for _, identity := range identities {
-			cleanup, stop := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
-			closed, closeErr := r.workspaces.Close(cleanup, identity)
-			stop()
+		// The volumes close concurrently, so cleanup takes at most one bound.
+		type closure struct {
+			observed run.WorkspaceObservation
+			err      error
+		}
+		closures := make([]closure, len(identities))
+		var wg sync.WaitGroup
+		for i, identity := range identities {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				cleanup, stop := context.WithTimeout(context.WithoutCancel(ctx), closeBound)
+				defer stop()
+				closures[i].observed, closures[i].err = r.workspaces.Close(cleanup, identity)
+			}()
+		}
+		wg.Wait()
+		for i, identity := range identities {
+			closed, closeErr := closures[i].observed, closures[i].err
 			if closeErr != nil || closed.ID != identity || !closed.Closed || closed.Uncertain {
 				receipt.Uncertain = true
 				failure := fmt.Errorf("disposable check workspace %s closure unconfirmed: %s", identity, closed.Reason)

@@ -71,13 +71,18 @@ type member struct {
 	state State
 	// waiting names what a Waiting member waits for.
 	waiting string
-	// waitFor is the dependency its last wait report named; it is cleared when
+	// waitFor is the dependency its last wait report named and waitOn the
+	// accepted submission of another Manager it names; both are cleared when
 	// new work arrives.
-	waitFor  string
-	items    []item
-	consumed []item
-	running  bool
-	checking bool
+	waitFor string
+	waitOn  *waitTarget
+	// progressed holds its progress summaries in this Pass: a repeated one
+	// is no progress.
+	progressed []string
+	items      []item
+	consumed   []item
+	running    bool
+	checking   bool
 	// pending is its submitted basis or result until it is decided.
 	pending       *proposal
 	basis, result *proposal
@@ -465,7 +470,7 @@ func (e *engine) recordStateLocked(m *member, why string) {
 // deliverLocked adds an item for a Manager of the current Pass and wakes it.
 func (e *engine) deliverLocked(m *member, it item) {
 	m.items = append(m.items, it)
-	m.waitFor = ""
+	m.waitFor, m.waitOn = "", nil
 	e.recordStateLocked(m, "new work arrived")
 	e.cond.Broadcast()
 }
@@ -562,6 +567,12 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 		kind = "result.accepted"
 	}
 	_ = e.record(Event{Kind: kind, Pass: p.id, Manager: m.Path, Data: map[string]any{"proposal": pr.id, "by": by, "stand": p.accepted.Digest().String(), "registryShards": view.Shards, "registrations": len(view.Registrations)}})
+	// Wake exactly the Managers that wait for this acceptance.
+	for _, x := range p.members {
+		if x.waitOn != nil && x.waitOn.manager == m.Path && x.waitOn.stage == pr.kind {
+			e.deliverLocked(x, item{text: e.renderAcceptedLocked(pr) + "\nThe submission you waited for is accepted; continue your work."})
+		}
+	}
 	switch pr.kind {
 	case kindBasis:
 		m.basis = pr
@@ -638,6 +649,7 @@ func (e *engine) reopenLocked(parent, child *member, reason string) {
 	child.stage = stageIntegrate
 	parent.stage = stageDelegated
 	_ = e.record(Event{Kind: "result.reopened", Pass: child.p.id, Manager: child.Path, Data: map[string]any{"proposal": old.id, "by": parent.Path, "reason": reason}})
+	e.voidDispositionsLocked(old, "its result was reopened")
 	e.invalidateConsumersLocked(child, false, fmt.Sprintf("the result %s of %s was reopened", old.id, child.Path))
 	e.deliverLocked(child, item{text: fmt.Sprintf("Your parent reopened your accepted result %s: %s", old.id, reason)})
 	e.recordStateLocked(parent, "reopened a child result")
@@ -653,6 +665,7 @@ func (e *engine) reviseLocked(m *member, reason string) {
 	m.basis = nil
 	m.stage = stageOwn
 	_ = e.record(Event{Kind: "basis.invalidated", Pass: m.p.id, Manager: m.Path, Data: map[string]any{"proposal": old.id, "reason": reason}})
+	e.voidDispositionsLocked(old, "its basis was revised")
 	e.invalidateConsumersLocked(m, true, fmt.Sprintf("%s revises its basis %s: %s", m.Path, old.id, reason))
 	e.deliverLocked(m, item{text: fmt.Sprintf("You revise your accepted basis %s (%s). Rework it and submit the revised basis; your children and dependents wait for it.", old.id, reason)})
 	e.scheduleLocked()
@@ -693,10 +706,11 @@ func (e *engine) resetLocked(z *member, why string) {
 		if pr != nil && pr.status != proposalInvalidated {
 			pr.status = proposalInvalidated
 			_ = e.record(Event{Kind: "proposal.invalidated", Pass: z.p.id, Manager: z.Path, Data: map[string]any{"proposal": pr.id, "why": why}})
+			e.voidDispositionsLocked(pr, why)
 		}
 	}
 	z.pending, z.basis, z.result = nil, nil, nil
-	z.stage, z.waitFor = stageStart, ""
+	z.stage, z.waitFor, z.waitOn = stageStart, "", nil
 	z.items = []item{{text: "Your earlier work in this Pass was reset because " + why + ". Re-establish your basis against the current accepted stand."}}
 	if hadBasis {
 		e.invalidateConsumersLocked(z, true, why)
@@ -734,6 +748,7 @@ func (e *engine) unsettleParentLocked(z *member, why string) {
 		parent.result = nil
 		parent.stage = stageDelegated
 		_ = e.record(Event{Kind: "result.reopened", Pass: z.p.id, Manager: parent.Path, Data: map[string]any{"proposal": old.id, "by": "markitect", "reason": why}})
+		e.voidDispositionsLocked(old, why)
 		e.invalidateConsumersLocked(parent, false, why)
 		e.unsettleParentLocked(parent, why)
 	default:
@@ -772,6 +787,11 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 			if !c.Passed {
 				return NeedsCorrection
 			}
+		}
+		// An adverse probe receipt on the candidate stays adverse evidence until
+		// an independent disposition, whatever the reports cited.
+		if len(e.undisposedLocked(p.tree.Digest().String(), ".", "", nil, nil)) > 0 {
+			return NeedsCorrection
 		}
 	}
 	return Satisfied
