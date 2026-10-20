@@ -106,8 +106,8 @@ artifacts:
     why: "Parses the cockpit command's state directories, run configuration, repository and listen address and reports where the cockpit serves."
   - path: "internal/bootstrap/cockpit.go"
     form: code
-    realizes: [product/cockpit/observed-run-inspection]
-    why: "Composes the cockpit over the selected state directories with the state lock probe, the answer command's owner channel and structural preparation of the repository."
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/accepted-proposals]
+    why: "Composes the cockpit over the selected state directories with the state lock probe, the answer command's owner channel, structural preparation of the repository and the proposal service fenced by every observed state lock."
   - path: "internal/adapters/cli/cockpit_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
@@ -140,3 +140,47 @@ artifacts:
     form: code
     realizes: [product/cockpit/observed-run-inspection]
     why: "Offers the two-step owner answer form and reports a written answer as written, not as recorded by the run."
+  - path: "internal/adapters/cockpit/proposals.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Serves the execution settings, makes settings proposals and accepts or discards a proposal, writing only through the cockpit's own JSON request."
+  - path: "internal/adapters/cockpit/proposals_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that proposals need a repository, that writes need the cockpit's own JSON request, and that a fenced or partly applied acceptance is never reported as accepted."
+  - path: "internal/adapters/cockpit/web/js/settings.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Offers the execution settings form whose result is a proposal: budget, role profiles, per-Package profile overrides and team."
+  - path: "internal/adapters/cockpit/web/js/proposal.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Shows a proposal's structural check, line difference and publication receipt and offers the two-step acceptance only for a passed check."
+  - path: "internal/authoring/README.md"
+    form: doc
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Documents the one proposal path from capture through check, review and the owner's decision, and the execution settings the form edits."
+  - path: "internal/authoring/service.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Makes proposals from the committed capture, keeps them for the cockpit and publishes an accepted one under the state fence through Apply's guarded publisher."
+  - path: "internal/authoring/settings.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Reads the committed execution settings and changes only their budget, role profiles, per-Package profile overrides and team in the YAML node tree."
+  - path: "internal/authoring/diff.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Computes each changed file's line difference with cut context for review."
+  - path: "internal/authoring/settings_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that a settings edit changes only the edited fields and keeps comments, order and every other field."
+  - path: "internal/authoring/diff_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies line differences, cut context and added, removed and unchanged files."
+  - path: "internal/bootstrap/cockpit_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies on a repository that an accepted settings proposal is written under the state lock with read-back and is not committed, and that neither a proposal failing its check nor one whose source changed since is written."

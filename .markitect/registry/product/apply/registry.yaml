@@ -412,3 +412,7 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/proposal.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Prepares a proposed tree against a captured start as markitect check prepares the repository and reports every finding with its stage and location."

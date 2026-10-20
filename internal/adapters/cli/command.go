@@ -156,13 +156,15 @@ setup options:
 cockpit options:
   --state DIR              state directory whose runs to observe; repeat
   --run-config PATH        observe the state directory of this run configuration
-  --repo PATH              repository whose model and source identity to show (default .)
+  --repo PATH              repository to observe and propose settings for (default .)
   --listen ADDR            loopback address (default 127.0.0.1:7341)
   Serves a local web view of the recorded and running runs until interrupted.
-  It reads the evidence under STATE/runs. Its one action is an owner's answer
-  to an open question of a running run, through the same owner channel as the
-  answer command; it starts, stops and publishes nothing, and replay, pause or
-  reconnect never affect a run.
+  It reads the evidence under STATE/runs. It writes only an owner's answer to
+  an open question of a running run, through the same owner channel as the
+  answer command, and an execution settings proposal the owner accepted after
+  its structural check passed, through Apply's guarded publication while no
+  observed Apply runs; it commits nothing, starts and stops no run, and replay,
+  pause or reconnect never affect a run.
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.
