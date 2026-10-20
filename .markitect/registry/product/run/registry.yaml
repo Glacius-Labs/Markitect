@@ -28,10 +28,6 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Runs the separate no-change Apply on the accepted A2 outside the timed demonstration."
-  - path: "experiments/recursive-apply-demo/owner-decisions.json"
-    form: config
-    realizes: [product/run/confirmed-run-history]
-    why: "Holds the two owner decisions bound with every demonstration run."
   - path: "experiments/recursive-apply-demo/ra_assess.sh"
     form: code
     realizes: [examples/independent-oracles]
@@ -71,7 +67,7 @@ artifacts:
   - path: "experiments/recursive-apply-demo/ra_runconfig.py"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: "Writes each Apply's run configuration with bound owner decisions and the shared deadline."
+    why: "Writes each Apply's run configuration with the owner request and the shared deadline."
   - path: "experiments/recursive-apply-demo/rx_collect.py"
     form: code
     realizes: [product/run/confirmed-run-history]
