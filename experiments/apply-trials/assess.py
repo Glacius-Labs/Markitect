@@ -232,6 +232,7 @@ def summarize_report(report):
         "rounds": [{"number": item.get("number"), "green": item.get("green"),
                     "checks": {check.get("name"): check.get("passed") for check in item.get("checks") or []}}
                    for item in run.get("rounds") or []],
+        "passes": len(run.get("passes") or []),
         "turns": {kind: sum(1 for turn in turns if turn.get("kind") == kind) for kind in ("execute", "verify")},
         "engineSeconds": round((max(ends) - min(starts)).total_seconds()) if starts and ends else None,
         "costUSD": round((run.get("usage") or {}).get("costUSD", 0.0), 2),
@@ -240,6 +241,11 @@ def summarize_report(report):
                       "obligation": (item.get("obligation") or "")[:300], "observed": (item.get("observed") or "")[:300]}
                      for item in findings],
     }
+
+
+# How Root ends a run over a model defect: the model_defect tool (DEC-063, Incomplete) or the
+# Root abort of the pass process (DEC-064, Failed).
+DEFECT_REASONS = ("model defect reported by Root", "Root judged the model erroneous or contradictory")
 
 
 def judge_outcome(case, summary, changed):
@@ -251,7 +257,7 @@ def judge_outcome(case, summary, changed):
     elif expected == UNCHANGED:
         met = summary["runStatus"] == "verified" and summary["publication"] == "no_change" and not changed
     else:
-        met = (summary["runStatus"] == "incomplete" and summary["reason"].startswith("model defect reported by Root")
+        met = (summary["runStatus"] in ("incomplete", "failed") and summary["reason"].startswith(DEFECT_REASONS)
                and summary["publication"] in (None, "") and not changed)
     detail = "run %s, publication %s, %d changed paths" % (summary["runStatus"], summary["publication"], len(changed))
     result = {"met": met, "detail": detail}

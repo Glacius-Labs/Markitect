@@ -1832,6 +1832,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: "Closes the Apply and Extract evidence series: status per obligation and build, and the final confirmation run with no-change."
+  - path: "docs/validation/apply-trials-haiku-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the first real series of the Apply trial cases with Haiku, its findings and its limits."
   - path: "docs/validation/recursive-apply-demonstration-20261019.md"
     form: doc
     realizes: [documentation/current-guidance]

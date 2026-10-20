@@ -1,6 +1,6 @@
 # Apply trial cases
 
-Prepared cases for later real Apply runs, each answering one question about where Apply works reliably and which kinds of error it detects, repairs or correctly escalates. This directory is preparation for [#523](https://github.com/Glacius-Labs/Markitect/issues/523): fixtures, an answer key, independent checks and small helpers. It starts no Agent or provider, changes no Apply behavior and records no Apply result. Its self-check shows that the fixtures are consistent and that the checks discriminate; it does not show how Apply behaves.
+Trial cases for real Apply runs, each answering one question about where Apply works reliably and which kinds of error it detects, repairs or correctly escalates ([#523](https://github.com/Glacius-Labs/Markitect/issues/523)): fixtures, an answer key, independent checks and small run helpers. The self-check shows that the fixtures are consistent and that the checks discriminate; it does not show how Apply behaves. The first real series with Haiku is recorded in [docs/validation](../../docs/validation/apply-trials-haiku-20261020.md).
 
 **Everything here is operator material.** The models, realizations and faults are deliberate trial material, not product definitions. Agents receive only a packet: a fresh Git repository built by `materialize.py` with the case's model, the shared dependencies, the execution settings and, where the case has one, a realization and registry. The answer key, the checks, the validation overlays and this guide are never copied into a packet. As a guard, `materialize.py` refuses a packet with a top-level path other than `.markitect` and `realization`, or with a file or commit message that uses trial words such as fault, oracle or a case id.
 
@@ -20,8 +20,9 @@ Unlike Roombook and Readinglog, this directory holds known-correct reference rea
 | [assess.py](assess.py) | Judges one result against its case: outcome, behavior, each fault, regression tests, artifact checks, changes by owner, findings, turns and time. |
 | [selfcheck.py](selfcheck.py) | The local self-check described below. |
 | [bind_profiles.py](bind_profiles.py) | Gives an attempt bound by the existing demonstration harness the trial projects' profile names and the Python image. |
+| [run/](run/) | Build, run, re-assess and collect real trial runs (see Run cases). |
 
-## Two projects, two levels
+## Projects and levels
 
 Complexity is set by rules, dependencies and responsibility boundaries, not by size.
 
@@ -67,37 +68,26 @@ It shows that every cited Definition exists; that each reference passes its prof
 
 The checks execute the realization they assess. Run them on the trial host, not on a machine whose files the realization must not reach.
 
-## Run a case later
+## Run cases
 
-Real runs need the owner's grant, credentials and a selected order; the commands below were not executed in this preparation. They reuse the [demonstration harness](../recursive-apply-demo/README.md) in WSL Ubuntu with Docker; `SRC` is the harness's source checkout of the build commit and `TAG` its first twelve characters.
+The [run/](run/) scripts drive real runs with the [demonstration harness](../recursive-apply-demo/README.md) in WSL Ubuntu with Docker; they need the owner's grant and a dedicated Claude runtime token (`MARKITECT_RUNTIME_ENV`). They were used for the [series of 20 October 2026](../../docs/validation/apply-trials-haiku-20261020.md).
 
 ```text
-experiments/recursive-apply-demo/ra_build.sh SHA BUILD
-docker build -f packaging/runtime/examples/python/Dockerfile --build-arg BASE=markitect-runtime:ra-TAG -t markitect-runtime-python:ra-TAG SRC
-MARKITECT_STORE=trial-CASE experiments/recursive-apply-demo/ra_bind.sh BUILD ATTEMPT
-python3 experiments/apply-trials/bind_profiles.py ATTEMPT "$(docker image inspect --format '{{.Id}}' markitect-runtime-python:ra-TAG)"
-python3 -B experiments/apply-trials/materialize.py CASE ATTEMPT/repo [--from-repo EARLIER_ATTEMPT/repo]
-python3 ATTEMPT/frozen/ra_runconfig.py ATTEMPT LABEL SHA DEADLINE "Apply the committed model."
-ATTEMPT/markitect apply --repo ATTEMPT/repo --model .markitect/model.yaml \
-  --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile ATTEMPT/host/host.yaml --run-config ATTEMPT/run-config-LABEL.json > ATTEMPT/out/apply-LABEL.json
-bash ATTEMPT/frozen/ra_cleanup.sh ATTEMPT
-python3 -B experiments/apply-trials/assess.py CASE --repo ATTEMPT/repo --report ATTEMPT/out/apply-LABEL.json --output ATTEMPT/out/assess-LABEL.json
+MARKITECT_SOURCE_REPO=CHECKOUT bash experiments/apply-trials/run/build.sh SHA        # CLI, runtime and Python images
+TRIALS_SRC=EXPERIMENTS_DIR LANES=3 bash experiments/apply-trials/run/lane.sh BUILD LANE_FILE
+bash experiments/apply-trials/run/reassess.sh BUILD EXPERIMENTS_DIR [PREFIX]       # one yardstick for all runs
+python3 experiments/apply-trials/run/collect.py [PREFIX] [--aggregate]
 ```
 
-Pass the neutral owner request `Apply the committed model.` explicitly: the harness default names the Library. Give the deadline the project's `executionTime` (20 minutes for stockroom, 30 for depot) plus a margin. `--from-repo` copies the earlier repository with its uncommitted publication, commits that publication as accepted, then applies the case's model; the earlier repository stays untouched. For S-F and D-F with an `s2` model, pass `--previous` with a 0.1.0 realization to `assess.py` so the upgrade check runs.
+A lane file lists `CASE ATTEMPT [FROM_ATTEMPT] [PREVIOUS_REALIZATION]` per line, for example `S-C TR-SC-1 TR-SG-1`. `run_case.sh` binds an attempt with `ra_bind.sh` and `bind_profiles.py`, freezes the trial setup into it, materializes the packet, writes a run configuration with the neutral owner request `Apply the committed model.` and a neutral repository identity, runs `markitect apply` within the project's `executionTime`, cleans up the attempt's containers and assesses the result inside the Python image, so Agent-written code never runs on the host. Each attempt gets its own container store label (`tr-<attempt>`). `--from-repo` copies an earlier repository with its uncommitted publication, commits that publication as accepted, then applies the case's model; the earlier repository stays untouched. For S-F and D-F after a model change, pass the 0.1.0 realization as `PREVIOUS_REALIZATION` so the upgrade check runs.
 
 ## What to record
 
 `assess.py` reports per run: whether the expected outcome was met; the oracle result; per fault whether it is repaired and whether a test now fails when the fault returns (required for a test that asserted the wrong behavior); the artifact checks; every changed path grouped by owner, with protected inputs and changes outside the fault files and allowed paths listed separately; rounds with their checks, turns, engine seconds and cost; and every finding with owner, raiser and text. The evaluator then decides which findings were false, whether a model-defect report names the right defect and nothing else, which repairs were made through the owner's realization, and records human interventions and wall time. Keep each run's evidence outside the repository, as the demonstration harness does.
 
-## Recommended order
+## Order of a new series
 
-1. **S-N first:** the smallest complete run. It checks the trial wiring (Python image, profile names, check command, publication) against a known-good stand and gives the baseline of unnecessary changes. A failure here invalidates the other cases' setup, not Apply.
-2. **S-D, then S-A:** isolated drift classes with exact expectations.
-3. **S-X, then S-G with S-Q:** escalation; S-X and S-Q end within minutes when Apply behaves as intended.
-4. **S-O, then S-C on S-G's result, then S-F.**
-5. **D-N, D-M, then D-G and D-F:** the complex level only after the isolated classes are understood.
+Start with S-N: the smallest complete run, it checks the wiring against a known-good stand. Then the isolated classes (S-D, S-A, S-X, S-XG, S-QV, S-Q, S-O, S-G with S-C and S-F), then depot, then fleet. The cases whose expectation was not met on 20 October (S-Q, S-QR, the no-change stands) are the ones where a process change should show first.
 
 ## Limits
 
@@ -105,4 +95,4 @@ Pass the neutral owner request `Apply the committed model.` explicitly: the harn
 - Detecting false findings and judging a model-defect report stay manual; `assess.py` lists the material and matches defect terms as an aid only.
 - A regression test counts as present only when the repaired text of the fault is found unchanged; a restructured repair reports `not-applicable` and needs reading.
 - The S-Q gap and the S-O restrictions encode the expectations of DEC-063 and this assignment; a real run may show that the owner reads a case differently, which is a finding about the case.
-- `bind_profiles.py` was tested on the Host profile text that `ra_bind.sh` writes, not with Docker; the run commands above were not executed.
+- Hand-written references are only as conforming as their author made them: the first runs found five edge failures in them (see the record). A conforming stand with thin tests also invites test additions.
