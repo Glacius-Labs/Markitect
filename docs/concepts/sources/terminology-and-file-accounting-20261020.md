@@ -316,6 +316,14 @@ Recorder's disposition: the accepted behavior is refined into one explicit base 
 Recorder's disposition: the owner accepts the three clarifications from the subsequent concept audit: distinguish immutable model/lock/ownership/execution/ignore/authority inputs from mutable local registry metadata; admit permitted read-only message handling for a released Manager even while its productive dependencies remain blocked; and allow explicit fresh independent disproof of an erroneous finding on the unchanged candidate, retaining its evidence and resolution. These refine DEC-064's existing process, not a second lifecycle or a relaxation of deterministic gates and genuine findings. A sealed Verify result remains immutable; a replacement assessment uses a new complete Verify Pass. The accepted workflow owns the rules, and the handoff supplies the corresponding behavioral scenarios. This documentation change does not modify the running Claude implementation or start a provider Run.
 
 
+## Owner sequencing: Manager container reuse
+
+After discussing why the implementation starts a new Agent container for every Turn, the owner requested a deferred proposal and an explicit order:
+
+> Kannst du das Container Thema als Vorschlag für später festhalten und auf main bringen? Erst wollen wir die Tests abschließen und evaluieren. Dann auf einen Container umstellen und dann nochmal testen.
+
+Recorder's disposition: record the target of one reusable Manager working container within an Apply Run as a later proposal. Complete and assess the current reference/simplified-workflow comparison first, then change the selected baseline's container lifecycle, then retest. The [Apply proposal](../../design/canonical-model/manager-apply-workflow.md#deferred-proposal-reuse-manager-working-containers) records the technical questions and unchanged isolation/acceptance guarantees; [IDEA-018](../register.md#idea-018-reuse-manager-working-containers) and the [delivery plan](../../implementation-plan.md#container-reuse-after-the-current-evaluation) keep it discoverable. Documentation integration changes no runtime, model rule or current evaluation and grants no additional provider budget. Fresh Verify reviewers and isolated checks are not collapsed into the retained author environment.
+
 ## Owner adoption: evidence-driven Apply hardening
 
 After discussing draft PR #536, the owner asked how to prevent reviewers from filling the new fields while still missing the same defect, and proposed making Managers suspicious of unsupported success. The response proposed active counterexample search, expectations derived from authority independently of existing assertions, tool-recorded observations, parent assessment of the actual evidence, and faulty/conforming evaluation controls. It explicitly rejected finding quotas and kept concrete unresolved conformity questions blocking.

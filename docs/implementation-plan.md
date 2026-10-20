@@ -46,6 +46,10 @@ M1 supplies the modeling foundations needed by that project, not a blanket requi
 
 The [canonical language v1](design/canonical-model/minimal-language/language-contract.md) remains the language baseline. Compatibility is not required: obsolete product paths, formats, tests and documents are removed together ([DEC-032](concepts/register.md#dec-032-quality-simplicity-and-stability-over-effort-and-compatibility)).
 
+## Container reuse after the current evaluation
+
+**Owner sequence, 20 October 2026:** first finish and evaluate the current reference and simplified Apply tests; then change toward one reusable working container per Manager within a Run; then test again. The [deferred proposal](design/canonical-model/manager-apply-workflow.md#deferred-proposal-reuse-manager-working-containers) owns the rationale, safety requirements and matched before/after evidence; [IDEA-018](concepts/register.md#idea-018-reuse-manager-working-containers) and the [owner source](concepts/sources/terminology-and-file-accounting-20261020.md#owner-sequencing-manager-container-reuse) preserve its status. Select the workflow baseline from the current assessment before changing its container lifecycle. Fresh independent Verify reviewers and isolated checks remain separate. This note changes no active candidate or Run and starts no additional implementation, session or provider series; the follow-up's finite evaluation scope is set after assessment.
+
 ## Work streams
 
 <a id="architect-and-coordinator"></a>
