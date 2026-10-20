@@ -26,6 +26,7 @@ var sourceRoots = []string{
 	"internal/buildinfo",
 	"internal/agentd",
 	"internal/adapters/cli",
+	"internal/adapters/cockpit",
 	"internal/adapters/documents",
 	"internal/adapters/gitrepo",
 	"internal/adapters/codexappserver",

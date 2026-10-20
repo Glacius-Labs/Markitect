@@ -1,0 +1,118 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/adapters/cockpit/evidence.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads a state directory's run evidence as consistent prefixes of complete lines, keeps unreadable lines in place and detects replaced files and partial tails without writing anything."
+  - path: "internal/adapters/cockpit/report.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Decodes the run report's outcome and publication read-back and marks an outcome mapped from an earlier report's command status."
+  - path: "internal/adapters/cockpit/view.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Defines the boundary-bound view of a run: Passes, Managers, waits, turns, spans, proposals, findings, questions, problems and limitations."
+  - path: "internal/adapters/cockpit/project.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Projects exactly the records up to a boundary into the view, derives the organization from Package paths and lists what the record does not establish."
+  - path: "internal/adapters/cockpit/waits.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads the Orchestrator's recorded waits, names what they depend on, follows their causes and marks waits the record shows fulfilled as outdated."
+  - path: "internal/adapters/cockpit/entries.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Describes every record for the timeline and marks exchanges with direction and Agent, submission, Orchestrator or owner channel without claiming delivery."
+  - path: "internal/adapters/cockpit/detail.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Selects the complete records that concern one reference up to the boundary."
+  - path: "internal/adapters/cockpit/transcript.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Presents a turn's recorded provider stream cut at the boundary's recorded time, bounded and with unreadable lines counted."
+  - path: "internal/adapters/cockpit/server.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Serves the embedded page and the GET-only read interface on a loopback address and refuses requests addressed to other hosts."
+  - path: "internal/adapters/cockpit/README.md"
+    form: doc
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Documents the cockpit's read boundary, projection, limitations and browser interaction."
+  - path: "internal/adapters/cockpit/fixture_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Builds synthetic run records in the run engine's event shapes for the cockpit tests; they describe no real run."
+  - path: "internal/adapters/cockpit/project_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies boundary isolation, correction with fresh Verify on a changed candidate, parallel work, routed questions, lapses, outdated waits, no-change and interrupted runs."
+  - path: "internal/adapters/cockpit/evidence_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies partial tails, appended and replaced event files, late reports, mapped earlier outcomes and run listing."
+  - path: "internal/adapters/cockpit/server_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies bounded views, entries and transcripts, refused foreign hosts and non-GET methods, and loopback-only listening."
+  - path: "internal/adapters/cockpit/web/index.html"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Is the cockpit page shell that loads only same-origin styles and modules."
+  - path: "internal/adapters/cockpit/web/cockpit.css"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Defines the cockpit's light and dark presentation, state lamps, exchange channels, responsive layout and reduced motion."
+  - path: "internal/adapters/cockpit/web/js/main.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Routes between the run list and the run inspector and keeps run, boundary and selection in the address."
+  - path: "internal/adapters/cockpit/web/js/api.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Calls only the cockpit's GET read interface."
+  - path: "internal/adapters/cockpit/web/js/dom.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Builds DOM and SVG nodes with text nodes only, so recorded Agent text is never interpreted as markup."
+  - path: "internal/adapters/cockpit/web/js/runs.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Lists the recorded runs with their recorded outcome, publication and organization size."
+  - path: "internal/adapters/cockpit/web/js/playback.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Moves a presentation boundary through the record with play, pause and speed; it never reaches the run."
+  - path: "internal/adapters/cockpit/web/js/inspector.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Composes the run inspector: boundary views, account, Pass rail, lists, transport, keyboard control, selection that pauses replay and the transcript dialog."
+  - path: "internal/adapters/cockpit/web/js/diagram.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Draws the organization as a track diagram with recorded exchanges as directional arrows that pause with replay, a still form for reduced motion and a list for narrow windows."
+  - path: "internal/adapters/cockpit/web/js/timeline.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Draws one time axis with Pass bands, state spans, turns and exchange, finding and check marks up to the boundary."
+  - path: "internal/adapters/cockpit/web/js/detail.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Renders the selected Manager, wait cause, proposal, finding, question, turn, Pass, check, problem, message or run outcome as recorded."
+  - path: "internal/adapters/cli/cockpit.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Parses the cockpit command's state directories, run configuration and listen address and reports where the cockpit serves."
+  - path: "internal/bootstrap/cockpit.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Composes the cockpit over the selected state directories, taking only the state directory from a run configuration."
+  - path: "internal/adapters/cli/cockpit_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies the cockpit command's selection, its refusals before serving and that failures and an unconfigured cockpit never report success."
+  - path: "internal/adapters/cockpit/contract_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads the run engine's source and fails when a data key or envelope field the projection decodes is no longer recorded."

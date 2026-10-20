@@ -39,6 +39,10 @@ packages:
     layer: apply-adapter
     purpose: Command parsing and JSON reports for preparation, Apply and owner answers.
     doc: docs/development/modules.md
+  - path: internal/adapters/cockpit
+    layer: apply-adapter
+    purpose: Local read-only web cockpit over recorded run evidence, with boundary-bound projections, replay and transcripts.
+    doc: internal/adapters/cockpit/README.md
   - path: internal/adapters/codexappserver
     layer: apply-adapter
     purpose: Prepares Codex image metadata and implements one-turn Agents through the container runtime.

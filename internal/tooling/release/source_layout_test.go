@@ -22,6 +22,9 @@ func rootLayoutFixture(t *testing.T) string {
 		"internal/tooling/release/install/install.go": "package releaseinstall\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
 		"internal/apply/strategy_defaults.yaml":       "exact defaults\r\n",
+		"internal/adapters/cockpit/server.go":         "package cockpit\n",
+		"internal/adapters/cockpit/web/index.html":    "<!doctype html>\n",
+		"internal/adapters/cockpit/web/js/main.js":    "export {};\n",
 	} {
 		writeLayoutFile(t, root, name, content)
 	}
@@ -33,6 +36,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 	writeLayoutFile(t, root, "internal/model/vendor/ignored.go", "package ignored\n")
 	writeLayoutFile(t, root, "internal/model/vendor.go", "package model\n")
 	writeLayoutFile(t, root, "internal/model/notes.txt", "omit non-runtime text\n")
+	writeLayoutFile(t, root, "internal/adapters/cockpit/web/notes.txt", "omit unserved text\n")
 	fixed := fixedSourceSnapshot(t, root)
 	live, _, err := Package(root, "1.2.3")
 	if err != nil {
@@ -54,12 +58,12 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/run/engine.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig", "internal/apply/strategy_defaults.yaml"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/run/engine.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig", "internal/apply/strategy_defaults.yaml", "internal/adapters/cockpit/web/index.html", "internal/adapters/cockpit/web/js/main.js"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}
 	}
-	for _, name := range []string{"internal/model/vendor/ignored.go", "internal/model/notes.txt"} {
+	for _, name := range []string{"internal/model/vendor/ignored.go", "internal/model/notes.txt", "internal/adapters/cockpit/web/notes.txt"} {
 		if _, ok := contents[name]; ok {
 			t.Errorf("included %s", name)
 		}
