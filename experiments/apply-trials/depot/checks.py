@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import Checks, expect_equal, fail  # noqa: E402
+from trial_kit import Checks, expect_equal, fail, no_crash, unusable_change, unusable_query  # noqa: E402
 
 CHECKS = Checks("depot", {"d1": {"snapshot": "d1"}})
 D1 = ["d1"]
@@ -100,6 +100,7 @@ def _(env, p):
     for point in ("-1", "10000", "x", "1.5", "", " 3"):
         add(env, "NUT-010", "Nut", point, refuse=True)
     expect_equal(add(env, "NUT-010", "é" * 60, "9999")["reorderPoint"], 9999, "60 code points, point 9999")
+    expect_equal(add(env, "CAP-001", "-Cap")["name"], "-Cap", "a name that starts with a hyphen")
 
 
 @check("receive-record", D1, ["stock/receive", "stock/on-hand", "catalog/sku", "depot/inputs"],
@@ -293,6 +294,22 @@ def _(env, p):
     add(env, "BOL-006", "Bolt", refuse=True)
     if (env.root / "absent").exists():
         fail("the missing data directory was created")
+
+
+@check("edge-robustness", D1, ["depot/interface", "depot/inputs", "depot/storage"],
+       "Extreme inputs fail through the error object, never with a crash")
+def _(env, p):
+    add(env, "BOL-006", "Bolt")
+    receive(env, "BOL-006", "9" * 5000, refuse=True)
+    expect_equal(receive(env, "BOL-006", "0" * 5000 + "7")["onHand"], 7, "receive 5000 leading zeros and 7")
+    by_id(env, "fulfil-order", "9" * 5000, refuse=True)
+    place(env, "BOL-006:" + "9" * 5000, refuse=True)
+    no_crash(env, "add-item", "--sku", "NUT-010", "--name", "Nut \udcff")  # undecodable byte: the model is silent
+    items(env)
+    env.write_db("[" * 100000)
+    env.refuse("items")
+    unusable_query(env, "items")
+    unusable_change(env, "add-item", "--sku", "BOL-006", "--name", "Bolt")
 
 
 @check("usage-errors", D1, ["depot/interface"], "Command-line errors use the error object and exit 2")

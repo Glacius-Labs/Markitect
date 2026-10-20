@@ -6,7 +6,7 @@ artifacts:
     why: Documents the commands, inputs, limits, output, data file and the single-writer limitation.
   - path: realization/app.py
     form: code
-    realizes: [stockroom/interface, stockroom/add-item, stockroom/receive, stockroom/issue, stockroom/list]
+    realizes: [stockroom/system, stockroom/interface, stockroom/add-item, stockroom/receive, stockroom/issue, stockroom/list]
     why: Parses the command line, runs one command and writes the JSON result or error object with its exit code.
   - path: realization/limits.json
     form: config

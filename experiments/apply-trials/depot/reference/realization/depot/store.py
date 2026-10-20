@@ -25,9 +25,9 @@ def empty():
 def load(path):
     """Read and validate the data; a missing file is empty data."""
     path = Path(path)
-    if not path.exists():
-        return empty()
     try:
+        if not path.exists():
+            return empty()
         state = json.loads(path.read_bytes().decode("utf-8"))
         if not isinstance(state, dict) or set(state) != {"items", "stock", "orders"}:
             raise ValueError("expected an object with items, stock and orders")
@@ -35,7 +35,7 @@ def load(path):
         ledger.validate(state["stock"], state["items"])
         orderbook.validate(state["orders"], state["items"])
         return state
-    except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, Refusal) as error:
+    except (OSError, ValueError, TypeError, KeyError, RecursionError, Refusal) as error:
         raise StoreError("the data file %s cannot be read: %s" % (path, error)) from None
 
 

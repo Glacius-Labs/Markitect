@@ -7,7 +7,7 @@ the working tree holds whatever Apply published. The assessment compares the
 outcome with the expectation, runs the case's oracle profile on the result,
 decides per fault whether it was repaired and whether a test now guards it,
 runs the case's artifact checks, lists every change outside the faults and
-the case's allowed paths, and summarizes rounds, findings, turns and time
+the case's allowed paths, and summarizes passes (rounds before DEC-064), findings, turns and time
 from the Apply report. False findings, the content of a model-defect report
 and human interventions stay the evaluator's judgment; the report lists the
 material for it. Operator material: never part of an Agent's repository.
@@ -28,14 +28,19 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import oracle  # noqa: E402
-from cases import APPLIED, CASES, DEFECT, PROJECTS, UNCHANGED  # noqa: E402
+from cases import APPLIED, CASES, DEFECT, GAP, PROJECTS, REFUSED, UNCHANGED  # noqa: E402
 from materialize import GIT, model_case  # noqa: E402
 from trial_kit import python_command  # noqa: E402
 
 TEST_COMMANDS = {
     "stockroom": ["-B", "-m", "unittest", "discover", "-s", "tests"],
     "depot": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
+    "fleet": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
 }
+
+
+def test_command(project):
+    return TEST_COMMANDS["fleet" if project.startswith("fleet-") else project]
 TEST_TIMEOUT = 300
 
 
@@ -73,15 +78,13 @@ def matches(path, patterns):
 
 
 def owner_of(project, path):
-    """The Manager whose area holds PATH under the project's layout (Root for everything outside it)."""
+    """The Manager whose area holds PATH under the project's layout (the deepest Package; Root outside it)."""
     layout = PROJECTS[project]
-    parts = path.split("/")
-    if parts[0] == "realization":
-        if len(parts) > 2 and parts[1] in layout["packages"]:
-            return parts[1]
-        return layout["exception"]
-    if parts[:2] == [".markitect", "registry"] and len(parts) > 3 and parts[2] in layout["packages"]:
-        return parts[2]
+    for base, fallback in (("realization/", layout["exception"]), (".markitect/registry/", ".")):
+        if path.startswith(base):
+            rest = path[len(base):]
+            owners = [package for package in layout["packages"] if rest.startswith(package + "/")]
+            return max(owners, key=len) if owners else fallback
     return "."
 
 
@@ -103,17 +106,22 @@ def static_readme_commands(realization, case):
     text = read(realization, "README.md")
     if text is None:
         return "realization/README.md does not exist"
-    words = {"stockroom": ("add-item", "receive", "issue", "list", "--sku", "--name", "--qty"),
-             "depot": ("add-item", "receive", "place-order", "fulfil-order", "cancel-order", "orders", "items",
-                       "reorder", "--line", "--status")}[case.project]
+    if case.project.startswith("fleet-"):
+        import fleet
+        words = ("credit", "debit", "balances", "totals", "--account", "--amount") + tuple(
+            r for r, *_ in fleet.ledgers(case.project))
+    else:
+        words = {"stockroom": ("add-item", "receive", "issue", "list", "--sku", "--name", "--qty"),
+                 "depot": ("add-item", "receive", "place-order", "fulfil-order", "cancel-order", "orders", "items",
+                           "reorder", "--line", "--status")}[case.project]
     missing = [word for word in words if word not in text]
     return "the README does not mention %s" % missing if missing else ""
 
 
 def static_readme_facts(realization, case):
     text = read(realization, "README.md") or ""
-    present = {"stockroom": ("--qty", "onHand"), "depot": ("fulfil-order",)}[case.project]
-    absent = {"stockroom": ("--quantity", "on_hand"), "depot": ("fulfill-order",)}[case.project]
+    present = {"stockroom": ("--qty", "onHand"), "depot": ("fulfil-order",)}.get(case.project, ())
+    absent = {"stockroom": ("--quantity", "on_hand"), "depot": ("fulfill-order",)}.get(case.project, ())
     problems = ["missing %r" % word for word in present if word not in text]
     problems += ["still documents %r" % word for word in absent if word in text]
     return "; ".join(problems)
@@ -178,7 +186,7 @@ def run_static(names, realization, case):
 # -- tests ---------------------------------------------------------------------------
 
 def run_tests(realization, project, python):
-    done = subprocess.run([*python, *TEST_COMMANDS[project]], cwd=realization, capture_output=True, text=True,
+    done = subprocess.run([*python, *test_command(project)], cwd=realization, capture_output=True, text=True,
                           encoding="utf-8", errors="replace", timeout=TEST_TIMEOUT)
     return done.returncode == 0, (done.stdout + done.stderr)[-1500:]
 
@@ -217,21 +225,42 @@ def summarize_report(report):
     ends = [parse_time(turn.get("ended")) for turn in turns]
     starts, ends = [t for t in starts if t], [t for t in ends if t]
     findings = run.get("findings") or []
+    preparation = report.get("preparation") or {}
+    diagnostics = [item for attempt in preparation.get("attempts") or [] for key, items in attempt.items()
+                   if key.endswith("Diagnostics") for item in items or []]
     return {
         "status": report.get("status"), "runStatus": run.get("status"), "reason": run.get("reason", ""),
-        "error": report.get("error", ""),
+        "error": report.get("error", ""), "preparationStatus": preparation.get("status"),
+        "preparation": " ".join([attempt.get("error", "") for attempt in preparation.get("attempts") or []]
+                                + ["%s %s %s" % (item.get("Code", ""), (item.get("Source") or {}).get("File", ""),
+                                                 item.get("Message", "")) for item in diagnostics])[:2000],
         "publication": (report.get("publication") or {}).get("Outcome"), "retainedWork": report.get("retainedWork", ""),
         "rounds": [{"number": item.get("number"), "green": item.get("green"),
                     "checks": {check.get("name"): check.get("passed") for check in item.get("checks") or []}}
                    for item in run.get("rounds") or []],
-        "turns": {kind: sum(1 for turn in turns if turn.get("kind") == kind) for kind in ("execute", "verify")},
+        "passes": [{"id": item.get("id"), "purpose": item.get("purpose"), "review": item.get("review"),
+                    "verdict": item.get("verdict"), "checks": {check.get("name"): check.get("passed")
+                                                              for check in item.get("checks") or []}}
+                   for item in run.get("passes") or []],
+        "questions": [{"from": item.get("from"), "to": item.get("to"), "answered": item.get("answered"),
+                       "text": (item.get("text") or "")[:400]} for item in run.get("questions") or []],
+        "problems": [{"manager": item.get("manager"), "category": item.get("category"), "abort": item.get("abort"),
+                      "text": (item.get("text") or "")[:400]} for item in run.get("problems") or []],
+        "turns": {kind: sum(1 for turn in turns if turn.get("kind") == kind)
+                  for kind in sorted({turn.get("kind") for turn in turns if turn.get("kind")})},
         "engineSeconds": round((max(ends) - min(starts)).total_seconds()) if starts and ends else None,
         "costUSD": round((run.get("usage") or {}).get("costUSD", 0.0), 2),
         "findings": [{"id": item.get("id"), "owner": item.get("owner"), "raisedBy": item.get("raisedBy"),
-                      "blocking": item.get("blocking"), "closed": item.get("closed"), "round": item.get("round"),
+                      "blocking": item.get("blocking"), "closed": item.get("closed"),
+                      "pass": item.get("pass", item.get("round")),
                       "obligation": (item.get("obligation") or "")[:300], "observed": (item.get("observed") or "")[:300]}
                      for item in findings],
     }
+
+
+# How Root ends a run over a model defect: the model_defect tool (DEC-063, Incomplete) or the
+# Root abort of the pass process (DEC-064, Failed).
+DEFECT_REASONS = ("model defect reported by Root", "Root judged the model erroneous or contradictory")
 
 
 def judge_outcome(case, summary, changed):
@@ -243,13 +272,19 @@ def judge_outcome(case, summary, changed):
     elif expected == UNCHANGED:
         met = summary["runStatus"] == "verified" and summary["publication"] == "no_change" and not changed
     else:
-        met = (summary["runStatus"] == "incomplete" and summary["reason"].startswith("model defect reported by Root")
-               and summary["publication"] in (None, "") and not changed)
+        quiet = summary["publication"] in (None, "") and not changed
+        stopped = summary["runStatus"] in ("incomplete", "failed") and summary["reason"].startswith(DEFECT_REASONS)
+        asked = any(question["to"] == "user" for question in summary.get("questions") or [])
+        # A refused start fails its preparation and creates no run; a missing run alone can also be a
+        # runtime, lock or run-config failure.
+        refused = summary["status"] == "failed" and summary["preparationStatus"] == "failed" and not summary["runStatus"]
+        met = quiet and {DEFECT: stopped, GAP: stopped or asked, REFUSED: refused}[expected]
     detail = "run %s, publication %s, %d changed paths" % (summary["runStatus"], summary["publication"], len(changed))
     result = {"met": met, "detail": detail}
-    if expected == DEFECT:
-        reason = summary["reason"].lower()
-        named = [[term for term in group if term in reason] for group in case.defect_terms]
+    if expected in (DEFECT, GAP, REFUSED):
+        text = " ".join([summary["reason"], summary.get("error") or "", summary["preparation"]]
+                        + [question["text"] for question in summary.get("questions") or [] if question["to"] == "user"]).lower()
+        named = [[term for term in group if term.lower() in text] for group in case.defect_terms]
         result["defectNamed"] = all(named) if case.defect_terms else None
         result["defectTerms"] = named
     return result
@@ -323,7 +358,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     result = assess(args.case, args.repo, args.report, python_command(args.python),
                     Path(args.previous).resolve() if args.previous else None)
-    text = json.dumps(result, indent=2, ensure_ascii=False)
+    text = json.dumps(result, indent=2)  # ASCII escapes: details can quote undecodable test input
     print(text)
     if args.output:
         Path(args.output).write_text(text + "\n", encoding="utf-8")

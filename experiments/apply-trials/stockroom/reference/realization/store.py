@@ -14,12 +14,12 @@ class StoreError(Exception):
 def load(path):
     """Read the data as a dict from SKU to {"name", "onHand"}; a missing file is empty data."""
     path = Path(path)
-    if not path.exists():
-        return {}
     try:
+        if not path.exists():
+            return {}
         document = json.loads(path.read_bytes().decode("utf-8"))
         return from_document(document)
-    except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, stockroom.StockError) as error:
+    except (OSError, ValueError, TypeError, KeyError, RecursionError, stockroom.StockError) as error:
         raise StoreError("the data file %s cannot be read: %s" % (path, error)) from None
 
 

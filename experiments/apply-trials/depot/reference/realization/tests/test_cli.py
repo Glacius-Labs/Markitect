@@ -26,12 +26,18 @@ class CommandLineTests(unittest.TestCase):
         self.assertEqual(code, 0, result)
         return result
 
+    def stored(self):
+        try:
+            return self.db.read_bytes()
+        except OSError:  # missing, or a path the system cannot use
+            return None
+
     def refused(self, *args):
-        before = self.db.read_bytes() if self.db.exists() else None
+        before = self.stored()
         code, result = self.run_app(*args)
         self.assertEqual(code, 2)
         self.assertEqual(list(result), ["error"])
-        self.assertEqual(self.db.read_bytes() if self.db.exists() else None, before)
+        self.assertEqual(self.stored(), before)
 
     def test_empty_depot(self):
         self.assertEqual(self.ok("items"), {"items": []})
@@ -49,6 +55,22 @@ class CommandLineTests(unittest.TestCase):
         self.assertEqual(self.ok("fulfil-order", "--id", "1")["status"], "fulfilled")
         self.assertEqual(self.ok("items")["items"][0],
                          {"sku": "BOL-006", "name": "Bolt", "reorderPoint": 5, "onHand": 4, "reserved": 0, "available": 4})
+
+    def test_cancel_and_list_orders_through_the_command_line(self):
+        self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")
+        self.ok("receive", "--sku", "BOL-006", "--qty", "10")
+        self.ok("place-order", "--line", "BOL-006:4")
+        self.ok("place-order", "--line", "BOL-006:6")
+        self.assertEqual(self.ok("cancel-order", "--id", "1"),
+                         {"id": 1, "status": "cancelled", "lines": [{"sku": "BOL-006", "qty": 4}]})
+        self.assertEqual(self.ok("cancel-order", "--id", "1")["status"], "cancelled")
+        self.ok("fulfil-order", "--id", "2")
+        self.refused("cancel-order", "--id", "2")
+        self.refused("cancel-order", "--id", "3")
+        self.assertEqual([order["id"] for order in self.ok("orders", "--status", "cancelled")["orders"]], [1])
+        self.assertEqual([order["id"] for order in self.ok("orders", "--status", "fulfilled")["orders"]], [2])
+        self.assertEqual(self.ok("orders", "--status", "open"), {"orders": []})
+        self.assertEqual(self.ok("items")["items"][0]["onHand"], 4)
 
     def test_refusals_leave_the_file_unchanged(self):
         self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")
@@ -69,6 +91,19 @@ class CommandLineTests(unittest.TestCase):
         self.refused("items")
         self.refused("add-item", "--sku", "BOL-006", "--name", "Bolt")
         self.assertEqual(self.db.read_text(encoding="utf-8"), "[]")
+
+    def test_extreme_inputs_fail_without_a_crash(self):
+        self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")
+        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
+        self.refused("receive", "--sku", "BOL-006", "--qty", "9" * 5000)
+        self.refused("fulfil-order", "--id", "9" * 5000)
+        self.refused("add-item", "--sku", "NUT-010", "--name", "Nut \udcff")
+        self.db.write_text("[" * 100000, encoding="utf-8")
+        self.refused("items")
+        self.db = Path(self.folder.name) / ("x" * 5000 + ".json")
+        code, result = self.run_app("items")  # an unusable path may read as missing data or fail cleanly
+        self.assertIn((code, list(result)), [(0, ["items"]), (2, ["error"])])
+        self.refused("add-item", "--sku", "BOL-006", "--name", "Bolt")
 
 
 if __name__ == "__main__":

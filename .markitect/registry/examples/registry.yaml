@@ -220,6 +220,14 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Defines stock/receive in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/fleet.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Generates the fleet trial projects of a given width and depth with model, reference, registry and faults.
+  - path: "experiments/apply-trials/fleet_checks.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Builds the black-box checks of a generated fleet project from its parameters, one per ledger.
   - path: "experiments/apply-trials/materialize.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -228,6 +236,30 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Assesses a trial realization against one expectation profile and reports each check as JSON.
+  - path: "experiments/apply-trials/run/build.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Builds the CLI, runtime images and Python example image of one commit for trial runs.
+  - path: "experiments/apply-trials/run/collect.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Summarizes trial attempts per run and per case from their assessments.
+  - path: "experiments/apply-trials/run/lane.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Runs trial cases one after another with a frozen copy of the run script per attempt.
+  - path: "experiments/apply-trials/run/patch_runconfig.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Gives a trial run configuration a neutral repository identity.
+  - path: "experiments/apply-trials/run/reassess.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Re-assesses finished trial attempts with one setup so that all results share the same checks.
+  - path: "experiments/apply-trials/run/run_case.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Runs one trial case end to end and assesses the result inside the Python image.
   - path: "experiments/apply-trials/selfcheck.py"
     form: code
     realizes: [examples/independent-oracles]

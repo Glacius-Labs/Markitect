@@ -13,9 +13,9 @@ class StoreError(Exception):
 
 def load(path):
     path = Path(path)
-    if not path.exists():
-        return {}
     try:
+        if not path.exists():
+            return {}
         document = json.loads(path.read_bytes().decode("utf-8"))
         if not isinstance(document, dict) or set(document) != {"items"} or not isinstance(document["items"], list):
             raise ValueError("expected an object with an items array")
@@ -32,7 +32,7 @@ def load(path):
                 raise ValueError("invalid reorder point")
             data[sku] = {"name": item["name"], "onHand": item["onHand"], "reorderPoint": point}
         return data
-    except (OSError, UnicodeDecodeError, ValueError, TypeError, KeyError, stockroom.StockError) as error:
+    except (OSError, ValueError, TypeError, KeyError, RecursionError, stockroom.StockError) as error:
         raise StoreError("the data file %s cannot be read: %s" % (path, error)) from None
 
 
