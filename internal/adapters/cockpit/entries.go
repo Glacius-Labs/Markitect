@@ -11,6 +11,7 @@ import (
 // one-line text, the detail it refers to and, for an exchange, its link.
 type Entry struct {
 	Seq     int       `json:"seq"`
+	Mark    string    `json:"mark"`
 	At      time.Time `json:"at,omitzero"`
 	Kind    string    `json:"kind"`
 	Pass    string    `json:"pass,omitempty"`
@@ -44,7 +45,7 @@ func Entries(records []Record) []Entry {
 }
 
 func entry(r Record) Entry {
-	e := Entry{Seq: r.Seq, At: r.At, Kind: r.Kind, Pass: r.Pass, Manager: r.Manager, Turn: r.Turn}
+	e := Entry{Seq: r.Seq, Mark: r.Mark, At: r.At, Kind: r.Kind, Pass: r.Pass, Manager: r.Manager, Turn: r.Turn}
 	if r.Invalid != "" {
 		e.Class, e.Text, e.Kind = "unreadable", "Unreadable record: "+r.Invalid, "unreadable"
 		return e

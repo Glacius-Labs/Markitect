@@ -9,6 +9,7 @@ export const TOKEN_SECONDS = 0.9;
 const COMPRESS = 8; // recorded seconds per playback second at 1x
 const MAX_GAP = 1.6; // playback seconds a quiet period takes at most
 const MIN_STEP = 0.35; // playback seconds a visible step takes at least
+const MAX_LAG = 3; // playback seconds a live view may trail the latest record
 
 const quiet = new Set(["state", "runtime"]);
 
@@ -52,6 +53,31 @@ export class Playback {
   play() {
     if (this.playing) return;
     if (this.boundary >= this.entries.length) this.seek(0);
+    this.advance("end", false);
+  }
+
+  // resume replays from the current boundary to the latest record of a live
+  // run, at the chosen speed, and then follows it.
+  resume() {
+    if (this.playing || this.boundary >= this.entries.length) return;
+    this.advance("caught-up", false);
+  }
+
+  // catchUp moves a following live view to the latest record without
+  // restarting and without trailing far behind it.
+  catchUp() {
+    if (this.playing || this.boundary >= this.entries.length) return;
+    this.advance("caught-up", true);
+  }
+
+  // bound turns a running replay into following: older records are passed
+  // over rather than animated late.
+  bound() {
+    this.catching = true;
+  }
+
+  advance(endReason, bounded) {
+    this.catching = bounded;
     this.playing = true;
     this.last = performance.now();
     const step = (now) => {
@@ -59,6 +85,10 @@ export class Playback {
       const dt = Math.min(0.25, (now - this.last) / 1000);
       this.last = now;
       this.t += dt * this.speed;
+      // Following a live run never trails far behind: older records are
+      // passed over rather than animated late.
+      const latest = this.times[this.times.length - 1];
+      if (this.catching && latest - this.t > MAX_LAG) this.t = latest - MAX_LAG;
       let b = this.boundary;
       while (b < this.entries.length && this.times[b] <= this.t) b++;
       if (b !== this.boundary) {
@@ -66,7 +96,7 @@ export class Playback {
         this.onBoundary(b, "play");
       }
       if (this.boundary >= this.entries.length && this.t > this.times[this.times.length - 1] + TOKEN_SECONDS) {
-        this.pause("end");
+        this.pause(endReason);
         return;
       }
       this.frame = requestAnimationFrame(step);

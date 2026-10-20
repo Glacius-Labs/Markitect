@@ -1,6 +1,7 @@
 package cockpit
 
 import (
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"testing"
@@ -116,5 +117,141 @@ func bump(t *testing.T, path string) {
 	later := time.Now().Add(time.Duration(len(path)) * time.Second)
 	if err := os.Chtimes(path, later, later); err != nil {
 		t.Fatal(err)
+	}
+}
+
+func TestRunLogReadsAnAppendIncrementallyAndAReplacementAgain(t *testing.T) {
+	s, _ := library(t)
+	lines := splitLines(s.lines())
+	state := t.TempDir()
+	dir := filepath.Join(state, "runs", "r1")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "events.jsonl")
+	join := func(ls [][]byte) []byte {
+		var data []byte
+		for _, line := range ls {
+			data = append(append(data, line...), '\n')
+		}
+		return data
+	}
+	if err := os.WriteFile(path, join(lines[:10]), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	l := newRunLog(state, "r1")
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(join(lines[10:20])); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	bump(t, path)
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, src, _ := l.snapshot()
+	if len(records) != 20 || src.Replaced != 0 || src.EventDigest != hexSum(join(lines[:20])) {
+		t.Fatalf("an append continues the history: %d records, %+v", len(records), src)
+	}
+
+	other := append(join(lines[1:2]), join(lines[:25])...)
+	replacement := filepath.Join(dir, "events.new")
+	if err := os.WriteFile(replacement, other, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(replacement, path); err != nil {
+		t.Fatal(err)
+	}
+	bump(t, path)
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, src, _ = l.snapshot()
+	if src.Replaced != 1 || len(records) != 26 || src.EventDigest != hexSum(other) {
+		t.Fatalf("a renamed-in file with another beginning is read again: %d records, %+v", len(records), src)
+	}
+}
+
+func hexSum(data []byte) string {
+	return hex.EncodeToString(sum(data))
+}
+
+func TestRunLogReadsAgainWhenTheSameFileNoLongerContinuesItsSeam(t *testing.T) {
+	s, _ := library(t)
+	lines := splitLines(s.lines())
+	state := t.TempDir()
+	dir := filepath.Join(state, "runs", "r1")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "events.jsonl")
+	var first []byte
+	for _, line := range lines[:6] {
+		first = append(append(first, line...), '\n')
+	}
+	if err := os.WriteFile(path, first, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	l := newRunLog(state, "r1")
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	// Rewrite the same file in place with a different history that is longer.
+	var other []byte
+	for _, line := range lines[10:20] {
+		other = append(append(other, line...), '\n')
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.WriteAt(other, 0); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	bump(t, path)
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, src, _ := l.snapshot()
+	if src.Replaced != 1 || len(records) != 10 || records[0].Kind != decodeRecord(1, lines[10]).Kind {
+		t.Fatalf("an in-place rewrite that breaks the seam is a replacement: %d records, %+v", len(records), src)
+	}
+}
+
+func TestRunLogPairsAReportOnlyWithTheCompleteRecord(t *testing.T) {
+	s, _ := library(t)
+	state := s.writeRun("r1", nil)
+	l := newRunLog(state, "r1")
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	// The producer appends its last record and then writes the report; one
+	// refresh after both must hold the record whenever it holds the report.
+	path := filepath.Join(state, "runs", "r1", "events.jsonl")
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.WriteString(`{"at":"2026-10-20T13:00:00Z","kind":"home.remove","data":{}}` + "\n"); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	bump(t, path)
+	if err := os.WriteFile(filepath.Join(state, "runs", "r1", "report.json"), mustJSON(t, applyReport("success", "applied")), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, _, report := l.snapshot()
+	if report == nil || records[len(records)-1].Kind != "home.remove" {
+		t.Fatalf("report %v with last record %s", report != nil, records[len(records)-1].Kind)
 	}
 }

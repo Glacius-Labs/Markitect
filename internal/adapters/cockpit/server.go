@@ -23,20 +23,22 @@ var webFiles embed.FS
 // DefaultListen is the loopback address the cockpit listens on by default.
 const DefaultListen = "127.0.0.1:7341"
 
-// Config selects the state directories the cockpit observes and its loopback
-// listen address. The cockpit only reads them.
+// Config selects the state directories the cockpit observes. The cockpit only
+// reads them; Liveness, when set, probes whether an Apply holds one.
 type Config struct {
-	States []string
-	Listen string
+	States   []string
+	Liveness Liveness
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
 // of the configured state directories. No request starts, answers, repairs or
 // publishes anything.
 type Server struct {
-	states []*stateDirectory
-	host   string
-	web    fs.FS
+	states   []*stateDirectory
+	liveness Liveness
+	poll     time.Duration
+	host     string
+	web      fs.FS
 }
 
 // New checks the configuration. Every state directory must exist.
@@ -44,7 +46,7 @@ func New(cfg Config) (*Server, error) {
 	if len(cfg.States) == 0 {
 		return nil, errors.New("the cockpit needs at least one state directory")
 	}
-	s := &Server{}
+	s := &Server{liveness: cfg.Liveness, poll: 400 * time.Millisecond}
 	seen := map[string]bool{}
 	for _, dir := range cfg.States {
 		abs, err := filepath.Abs(dir)
@@ -89,7 +91,8 @@ func (s *Server) Serve(ctx context.Context, listen string, ready func(url string
 		return err
 	}
 	s.host = ln.Addr().String()
-	srv := &http.Server{Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second}
+	// Requests end with ctx, so open live streams do not hold up the exit.
+	srv := &http.Server{Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second, BaseContext: func(net.Listener) context.Context { return ctx }}
 	errs := make(chan error, 1)
 	go func() { errs <- srv.Serve(ln) }()
 	if ready != nil {
@@ -114,6 +117,7 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/runs/{run}/entries", s.handleEntries)
 	mux.HandleFunc("GET /api/runs/{run}/detail", s.handleDetail)
 	mux.HandleFunc("GET /api/runs/{run}/transcript", s.handleTranscript)
+	mux.HandleFunc("GET /api/runs/{run}/stream", s.handleStream)
 	files := http.FileServerFS(s.web)
 	mux.Handle("GET /", files)
 	return s.guard(mux)
@@ -226,31 +230,31 @@ func summarize(st *stateDirectory, entry RunEntry) RunSummary {
 	return sum
 }
 
-// runLog finds a run by identity in the configured state directories and
+// findRun finds a run by identity in the configured state directories and
 // reads what was appended to its evidence.
-func (s *Server) runLog(w http.ResponseWriter, r *http.Request) (*runLog, bool) {
+func (s *Server) findRun(w http.ResponseWriter, r *http.Request) (*stateDirectory, *runLog, bool) {
 	id := r.PathValue("run")
 	if !safeName.MatchString(id) {
 		http.Error(w, "not a run identity", http.StatusBadRequest)
-		return nil, false
+		return nil, nil, false
 	}
 	var found *stateDirectory
 	for _, st := range s.states {
 		if _, err := os.Stat(filepath.Join(st.dir, "runs", id, "events.jsonl")); err == nil {
 			if found != nil {
 				http.Error(w, "run "+id+" exists in more than one state directory", http.StatusConflict)
-				return nil, false
+				return nil, nil, false
 			}
 			found = st
 		}
 	}
 	if found == nil {
 		http.Error(w, "no run "+id+" in the observed state directories", http.StatusNotFound)
-		return nil, false
+		return nil, nil, false
 	}
 	l := found.log(id)
 	_, _ = l.refresh() // a failed read stays visible as the source's error
-	return l, true
+	return found, l, true
 }
 
 // boundary reads the at parameter: a record count, or every record without it.
@@ -270,7 +274,7 @@ func boundary(r *http.Request, total int) (int, error) {
 }
 
 func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
-	l, ok := s.runLog(w, r)
+	_, l, ok := s.findRun(w, r)
 	if !ok {
 		return
 	}
@@ -287,14 +291,15 @@ func (s *Server) handleView(w http.ResponseWriter, r *http.Request) {
 // timeline and the event lists. The page shows only those up to its boundary;
 // views, details and transcripts are bound to the boundary on the server.
 func (s *Server) handleEntries(w http.ResponseWriter, r *http.Request) {
-	l, ok := s.runLog(w, r)
+	_, l, ok := s.findRun(w, r)
 	if !ok {
 		return
 	}
 	records, src, _ := l.snapshot()
 	after, _ := strconv.Atoi(r.URL.Query().Get("after"))
 	if after < 0 || after > len(records) {
-		after = 0
+		http.Error(w, "after lies beyond the record; read it again from its start", http.StatusConflict)
+		return
 	}
 	writeJSON(w, struct {
 		Source  Source  `json:"source"`
@@ -303,7 +308,7 @@ func (s *Server) handleEntries(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleDetail(w http.ResponseWriter, r *http.Request) {
-	l, ok := s.runLog(w, r)
+	_, l, ok := s.findRun(w, r)
 	if !ok {
 		return
 	}
@@ -317,7 +322,7 @@ func (s *Server) handleDetail(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleTranscript(w http.ResponseWriter, r *http.Request) {
-	l, ok := s.runLog(w, r)
+	_, l, ok := s.findRun(w, r)
 	if !ok {
 		return
 	}

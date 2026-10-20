@@ -1,6 +1,6 @@
 # Cockpit adapter
 
-`markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the first slice of the [cockpit concept](../../../docs/design/cockpit.md): the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay. The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
+`markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the first slices of the [cockpit concept](../../../docs/design/cockpit.md): the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay, and live observation of a running Apply through the same projections. The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
 
 ```text
 markitect cockpit --state DIR [--state DIR ...] [--listen 127.0.0.1:7341]
@@ -11,9 +11,17 @@ markitect cockpit --run-config PATH
 
 The cockpit reads `<state>/runs/<runID>/events.jsonl`, `report.json` and `transcripts/<turn>.jsonl`, nothing else, and writes nothing. A request never starts, answers, stops, repairs or publishes anything; the HTTP interface accepts only `GET`.
 
-- **Consistent prefix.** Only complete lines are records. A trailing partial line is reported as a tail. A line that does not decode keeps its line number (its `seq`) and shows as unreadable, so later sequence numbers never shift. A file that no longer starts with the bytes read before counts as replaced and is read again from its start, never spliced.
+- **Consistent prefix.** Only complete lines are records. A trailing partial line is reported as a tail. A line that does not decode keeps its line number (its `seq`) and shows as unreadable, so later sequence numbers never shift. An append is read incrementally when the file keeps its identity and length and continues its last 64 consumed bytes; otherwise the file is read again from its start and, if it no longer begins with the consumed history, counted as replaced. An in-place rewrite of earlier bytes that keeps the identity and the last consumed bytes is not detected; the producer only appends.
 - **Boundary.** A view is the projection of the first `seq` records (`/api/runs/{run}/view?at=N`). Nothing after record N reaches it: a later answer, verdict, outcome or report stays hidden. The report appears only at the final boundary. Details (`/detail?ref=...&at=N`) and transcripts (`/transcript?turn=...&at=N`, cut at the boundary's recorded time) obey the same boundary. `/entries` lists the whole record for navigation; the page shows its entries only up to the boundary.
 - **Local only.** The server listens on a loopback address and admits only requests addressed to it, so another site cannot read evidence through a rebound host name. Pages load no external resources.
+
+## Live observation
+
+`/api/runs/{run}/stream` sends server-sent events over the same projections: `entries` with the records appended after the client's last one (the event id is that record's `seq` and its mark, a digest prefix of its line), `health` every two seconds, and `replaced` when the events file no longer holds the client's history, after which the stream ends. A reconnecting browser sends `Last-Event-ID` and receives exactly the records after it; a different record at that position, also from a replacement while the browser was away, ends the stream as replaced. The page applies deliveries one at a time, trims an overlap and refills a gap through `/entries`, so it always holds one complete prefix.
+
+Health is the current observation, kept apart from the recorded boundary. A written report means the run ended. Otherwise bootstrap's state lock probe, the one `markitect answer` uses, and `current-run` decide: this run holds the directory (running, or finishing once its outcome is recorded), another run holds it, or nobody does (ended without a report). A failed probe is unknown. The probe takes the lock for an instant when nobody holds it, which the brief retries of a starting Apply and of `markitect setup` absorb, and runs at most once per two seconds and state directory. Health can be briefly behind: within the probe interval after a run starts, or while a crashed run's `current-run` remains and another process holds the lock. A written report is announced by health, not by a record, so the page reads its final view again when the run state changes; the stream closes once the report is written.
+
+The page follows new records while the boundary is at the latest record. Pausing, selecting, scrubbing or stepping back pins the boundary; the page then counts newer records and offers an explicit return to live. Playing from a pinned boundary replays the record at the chosen speed and follows the run once it reaches the latest record. A lost link, its reconnection and a stale link (no contact for longer than the health interval) are shown with the run state of the last contact; changes of the link and of the run state are announced to assistive technology, the running seconds are not. Nothing here starts, stops or answers a run.
 
 ## Projection
 

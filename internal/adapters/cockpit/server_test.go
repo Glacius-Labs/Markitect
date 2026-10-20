@@ -159,3 +159,11 @@ func TestEmbeddedPageReferencesExistingFiles(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+func TestEntriesRefusePositionsBeyondTheRecord(t *testing.T) {
+	s, _ := library(t)
+	_, h := serve(t, s.writeRun("20261020T120000Z-aaaa", nil))
+	if rec := get(t, h, "", "/api/runs/20261020T120000Z-aaaa/entries?after=100000", nil); rec.Code != http.StatusConflict {
+		t.Fatalf("entries after the end = %d, want a conflict rather than the whole record again", rec.Code)
+	}
+}
