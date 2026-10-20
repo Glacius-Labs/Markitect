@@ -881,6 +881,7 @@ These entries record agreed or endorsed direction. Recording an enhancement does
   Output is findings and recommendations, including AI-assisted ones. They are not hard gates by default ([DEC-005](#dec-005-model-granularity-is-the-authors-responsibility)).
 - **Historical work item:** IDEA-03 in the [backlog](https://github.com/Glacius-Labs/Markitect/blob/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310/docs/work-items/backlog.yaml).
 - **Design link (16 October 2026):** model lint is planned on registry signals ([north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).
+- **Owner suggestion (20 October 2026):** a separate check pass before Apply that reviews the model for gaps, for example a referenced public value the model never states, as in the hardening evaluation's A4. It is a candidate only if the matched retest's A4 still fails; it would run before Apply rather than as an Apply intake step ([DEC-052](#dec-052-implement-then-review-no-explore-phase)) and keep [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate)'s boundary criterion. Not adopted ([source](sources/terminology-and-file-accounting-20261020.md#owner-sequencing-apply-hardening-follow-up)).
 
 ### ENH-003 Test-to-statement binding and test review
 

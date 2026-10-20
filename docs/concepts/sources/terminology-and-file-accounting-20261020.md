@@ -340,6 +340,12 @@ The response then pointed out that the probe change would alter the reference ru
 
 Recorder's disposition: A4's expectation stands: a public value the model refers to but does not state is a model gap that reaches the owner as a question, not a silent Manager choice; as the handoff says, a valid gap is not an automatic model-error abort. The hardening follow-up joins the container-reuse sequence in the [delivery plan](../../implementation-plan.md#container-reuse-after-the-current-evaluation). This record starts no implementation or Run and grants no provider budget.
 
+The owner then suggested a further option in case the gap keeps causing trouble:
+
+> Man könnte Modelllücken auch durch einen weiteren Verify Step vorher erkennen lassen, welcher vorher einen Durchlauf startet um das Modell zu prüfen. Als Idee falls das weiterhin Probleme bereitet
+
+Recorder's disposition: recorded as an owner suggestion under [ENH-002](../register.md#enh-002-model-quality-linter-and-metrics), whose accepted direction already includes AI-assisted findings that a model is incomplete. The response suggested placing such a check before Apply, as an owner-started model check or in the cockpit, where the owner accepts model changes, because [DEC-052](../register.md#dec-052-implement-then-review-no-explore-phase) leaves Apply without an Explore or intake step; it would use the same boundary criterion so that deliberate freedom is not turned into questions. It becomes a candidate only if the matched retest's A4 still fails. Nothing is adopted or implemented.
+
 ## Owner adoption: evidence-driven Apply hardening
 
 After discussing draft PR #536, the owner asked how to prevent reviewers from filling the new fields while still missing the same defect, and proposed making Managers suspicious of unsupported success. The response proposed active counterexample search, expectations derived from authority independently of existing assertions, tool-recorded observations, parent assessment of the actual evidence, and faulty/conforming evaluation controls. It explicitly rejected finding quotas and kept concrete unresolved conformity questions blocking.
