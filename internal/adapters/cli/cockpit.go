@@ -41,7 +41,7 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 	flags.Var(&states, "state", "state directory to observe; repeat")
 	config := flags.String("run-config", "", "run configuration whose state directory to observe")
 	listen := flags.String("listen", "", "loopback address to listen on")
-	repo := flags.String("repo", ".", "repository whose model and source identity to show")
+	repo := flags.String("repo", ".", "repository to observe and propose settings for")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			io.WriteString(stdout, help)

@@ -34,20 +34,24 @@ type Config struct {
 	Liveness Liveness
 	Project  ProjectObserver
 	Answer   Answerer
+	// Authoring, when set, makes and decides proposals for the project's
+	// .markitect inputs.
+	Authoring Authoring
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
-// of the configured state directories. Apart from an owner's answer through
-// the configured owner channel, no request starts, answers, stops, repairs or
-// publishes anything.
+// of the configured state directories. It writes only an owner's answer
+// through the configured owner channel and an accepted proposal through the
+// configured authoring service; no request starts, stops or repairs a run.
 type Server struct {
-	states   []*stateDirectory
-	liveness Liveness
-	project  projectCache
-	answer   Answerer
-	poll     time.Duration
-	host     string
-	web      fs.FS
+	states    []*stateDirectory
+	liveness  Liveness
+	project   projectCache
+	answer    Answerer
+	authoring Authoring
+	poll      time.Duration
+	host      string
+	web       fs.FS
 }
 
 // New checks the configuration. Every state directory must exist.
@@ -55,7 +59,7 @@ func New(cfg Config) (*Server, error) {
 	if len(cfg.States) == 0 {
 		return nil, errors.New("the cockpit needs at least one state directory")
 	}
-	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, poll: 400 * time.Millisecond}
+	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, authoring: cfg.Authoring, poll: 400 * time.Millisecond}
 	seen := map[string]bool{}
 	for _, dir := range cfg.States {
 		abs, err := filepath.Abs(dir)
@@ -125,6 +129,11 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("POST /api/project/observe", s.handleObserve)
 	mux.HandleFunc("GET /api/questions", s.handleQuestions)
 	mux.HandleFunc("POST /api/runs/{run}/questions/{question}/answer", s.handleAnswer)
+	mux.HandleFunc("GET /api/settings", s.handleSettings)
+	mux.HandleFunc("POST /api/proposals/settings", s.handleProposeSettings)
+	mux.HandleFunc("GET /api/proposals", s.handleProposals)
+	mux.HandleFunc("GET /api/proposals/{id}", s.handleProposal)
+	mux.HandleFunc("POST /api/proposals/{id}/{decision}", s.handleDecide)
 	mux.HandleFunc("GET /api/runs", s.handleRuns)
 	mux.HandleFunc("GET /api/runs/{run}/view", s.handleView)
 	mux.HandleFunc("GET /api/runs/{run}/entries", s.handleEntries)

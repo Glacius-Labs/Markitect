@@ -23,6 +23,10 @@ packages:
     layer: apply-usecase
     purpose: Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication.
     doc: docs/development/modules.md
+  - path: internal/authoring
+    layer: apply-usecase
+    purpose: Owner proposals for the project's .markitect inputs, checked like the repository and published only on acceptance.
+    doc: internal/authoring/README.md
   - path: internal/modeldocs
     layer: model-view
     purpose: Deterministic readable view and reviewed source-bound write plan.

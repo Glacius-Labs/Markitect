@@ -1,7 +1,8 @@
 // The cockpit's interface. Every GET reads. answer writes an owner's answer
-// through the owner channel the answer command uses, and observeProject runs
-// the repository's structural preparation again; nothing here can start, stop
-// or publish anything.
+// through the owner channel the answer command uses, observeProject runs the
+// repository's structural preparation again, proposeSettings makes a checked
+// proposal without writing, and decide accepts (writes through Apply's
+// guarded publication) or discards one. Nothing here starts or stops a run.
 
 async function request(path, init = {}) {
   const res = await fetch(path, { ...init, headers: { Accept: "application/json", ...init.headers } });
@@ -24,6 +25,15 @@ export const api = {
   entries: (run, after = 0) => get(`/api/runs/${enc(run)}/entries?after=${after}`),
   detail: (run, ref, at) => get(`/api/runs/${enc(run)}/detail?ref=${enc(ref)}&at=${at}`),
   transcript: (run, turn, at) => get(`/api/runs/${enc(run)}/transcript?turn=${enc(turn)}&at=${at}`),
+  settings: () => get("/api/settings"),
+  proposeSettings: (settings) => request("/api/proposals/settings", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "propose" },
+    body: JSON.stringify(settings),
+  }),
+  proposals: () => get("/api/proposals"),
+  proposal: (id) => get(`/api/proposals/${enc(id)}`),
+  decide: (id, decision) => request(`/api/proposals/${enc(id)}/${decision}`, { method: "POST", headers: { "X-Markitect-Cockpit": decision } }),
   answer: (run, question, text) => request(`/api/runs/${enc(run)}/questions/${enc(question)}/answer`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "answer" },

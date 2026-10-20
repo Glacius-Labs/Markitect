@@ -19,7 +19,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-organization` | Pure Manager topology, context selection and settings. | `apply-organization` | 1 |
 | `apply-realization` | Pure ownership, accounting and candidate rules. | `apply-realization` | 1 |
 | `apply-run` | Recursive Pass process of the Manager team, run by the Orchestrator over ports for Agents, workspaces, checks, owner and evidence. | `apply-run` | 1 |
-| `apply-usecase` | Read-only preparation through consumer-owned ports. | `apply-usecase` | 1 |
+| `apply-usecase` | Read-only preparation through consumer-owned ports. | `apply-usecase` | 2 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
 | `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 8 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
@@ -68,6 +68,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/apply` | Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication. | [docs/development/modules.md](modules.md) |
+| `internal/authoring` | Owner proposals for the project's .markitect inputs, checked like the repository and published only on acceptance. | [internal/authoring/README.md](../../internal/authoring/README.md) |
 
 ## Model view
 
