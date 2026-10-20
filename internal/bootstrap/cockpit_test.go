@@ -23,7 +23,11 @@ func authoringFixture(t *testing.T) (*testkit.Repo, string, *authoring.Service) 
 	}
 	state := testkit.TempDir(t)
 	preparation := apply.NewPreparationService(apply.NewModelService(repository, repository))
-	return repo, state, cockpitService{preparation: preparation, repository: repository}.authoring(repo.Dir, []string{state}, &fencedStates{held: map[string]bool{}})
+	selection, err := repositorySelection(repo.Dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return repo, state, cockpitService{preparation: preparation, repository: repository}.authoring(selection, []string{state}, &fencedStates{held: map[string]bool{}})
 }
 
 func TestCockpitPublishesAnAcceptedSettingsProposalUnderTheStateLock(t *testing.T) {

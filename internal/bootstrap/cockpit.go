@@ -9,6 +9,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cockpit"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/authoring"
@@ -17,15 +18,19 @@ import (
 )
 
 // cockpitService serves the cockpit over the selected state directories. A run
-// configuration contributes its state directory; nothing else of it is used.
-// Live views probe the state lock the way the answer command does, and an
-// owner's answer goes through that command's owner channel operation. With a
-// repository, the cockpit also observes the project and makes proposals for
-// its .markitect inputs, published through the repository's guarded
-// publisher while every observed state directory is locked.
+// configuration contributes its state directory and, with a Runtime profile,
+// the container engine, workspace helper, credentials and harvest limits of
+// model sessions. Live views probe the state lock the way the answer command
+// does, and an owner's answer goes through that command's owner channel
+// operation. With a repository, the cockpit also observes the project and
+// makes proposals for its .markitect inputs, published through the
+// repository's guarded publisher while every observed state directory is
+// locked.
 type cockpitService struct {
 	preparation *apply.PreparationService
 	repository  *gitrepo.Repository
+	agents      apply.AgentProfilePreparer
+	checks      apply.CheckProfilePreparer
 }
 
 func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, ready func(url string)) error {
@@ -56,15 +61,14 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 	}
 	cfg := cockpit.Config{States: states, Liveness: liveness, Answer: writeAnswer}
 	var proposals *authoring.Service
-	if request.Repository != "" {
-		repository, err := filepath.Abs(request.Repository)
-		if err != nil {
-			return err
-		}
+	if selection := request.Selection; selection.Repository != "" {
 		cfg.Project = func(ctx context.Context) (cockpit.ProjectInfo, error) {
-			return c.project(ctx, repository)
+			return c.project(ctx, selection)
 		}
-		proposals = c.authoring(repository, states, fence)
+		proposals = c.authoring(selection, states, fence)
+		if request.RunConfig != "" && request.RuntimeProfile != "" {
+			proposals.WithSessions(c.sessionOpener(selection, request.RunConfig, request.RuntimeProfile))
+		}
 		cfg.Authoring = proposals
 	}
 	server, err := cockpit.New(cfg)
@@ -73,6 +77,9 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 	}
 	err = server.Serve(ctx, request.Listen, ready)
 	if proposals != nil {
+		// A stopping cockpit ends its model sessions and lets a started
+		// publication finish.
+		err = errors.Join(err, proposals.CloseSessions(context.Background()))
 		proposals.Wait()
 	}
 	return err
@@ -102,6 +109,8 @@ func (f *fencedStates) set(dirs []string, held bool) {
 	}
 }
 
+// repositorySelection selects a repository's own model at the default manifest
+// and no dependency.
 func repositorySelection(repository string) (apply.InputSelection, error) {
 	manifest, err := snapshot.NewPath(".markitect/model.yaml")
 	if err != nil {
@@ -113,12 +122,8 @@ func repositorySelection(repository string) (apply.InputSelection, error) {
 // project observes the repository's identity by structural preparation of its
 // working tree, as markitect check does: model, canonical digest, head and
 // Packages. It writes nothing.
-func (c cockpitService) project(ctx context.Context, repository string) (cockpit.ProjectInfo, error) {
-	info := cockpit.ProjectInfo{Repository: repository}
-	selection, err := repositorySelection(repository)
-	if err != nil {
-		return info, err
-	}
+func (c cockpitService) project(ctx context.Context, selection apply.InputSelection) (cockpit.ProjectInfo, error) {
+	info := cockpit.ProjectInfo{Repository: selection.Repository}
 	result, err := c.preparation.Preview(ctx, apply.PreviewRequest{Selection: selection}, model.Limits{})
 	info.Status = string(result.Status())
 	attempts := result.Attempts()
@@ -141,12 +146,8 @@ func (c cockpitService) project(ctx context.Context, repository string) (cockpit
 // observed state directory, so no Apply observed here runs while an accepted
 // proposal is written. An Apply started meanwhile refuses as if another Apply
 // held its directory; the publication takes seconds.
-func (c cockpitService) authoring(repository string, states []string, fence *fencedStates) *authoring.Service {
+func (c cockpitService) authoring(selection apply.InputSelection, states []string, fence *fencedStates) *authoring.Service {
 	capture := func(ctx context.Context) (apply.CapturedPreparation, error) {
-		selection, err := repositorySelection(repository)
-		if err != nil {
-			return apply.CapturedPreparation{}, err
-		}
 		captured, err := c.preparation.Capture(ctx, apply.CaptureRequest{Selection: selection}, model.Limits{})
 		if errors.Is(err, gitrepo.ErrDirty) {
 			err = fmt.Errorf("%w (%v)", authoring.ErrNotClean, err)
@@ -175,7 +176,7 @@ func (c cockpitService) authoring(repository string, states []string, fence *fen
 			fence.set(states, false)
 		}, nil
 	}
-	return authoring.New(repository, capture, c.repository, lock)
+	return authoring.New(selection.Repository, capture, c.repository, lock)
 }
 
 // stateLocks fences a publication to the holder of every lock.
@@ -193,5 +194,61 @@ func (s stateLocks) Check(ctx context.Context) error {
 func (s stateLocks) release() {
 	for _, l := range s {
 		_ = l.Release()
+	}
+}
+
+// sessionOpener captures the committed source with its settings and the
+// Runtime profile, as an Apply does, and composes a model session's ports from
+// the run configuration: the container engine, the Agents of the prepared
+// profiles with their mapped credentials, and the workspace helper. Session
+// evidence goes to the run configuration's state directory.
+func (c cockpitService) sessionOpener(base apply.InputSelection, runConfig, runtimeProfile string) authoring.SessionOpener {
+	return func(ctx context.Context) (authoring.SessionStart, error) {
+		cfg, err := loadRunConfig(ctx, runConfig)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		if err := checkStateOutsideRepository(cfg.StateDirectory, base.Repository); err != nil {
+			return authoring.SessionStart{}, err
+		}
+		selection := base
+		profile, err := snapshot.NewPath(filepath.Base(runtimeProfile))
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(runtimeProfile), Path: profile}}
+		prepared, err := c.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: selection}, model.Limits{}, c.agents, c.checks)
+		if errors.Is(err, gitrepo.ErrDirty) {
+			return authoring.SessionStart{}, fmt.Errorf("%w (%v)", authoring.ErrNotClean, err)
+		}
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		a, ok := prepared.Prepared()
+		if prepared.Status() != model.Passed || !ok {
+			return authoring.SessionStart{}, fmt.Errorf("the committed source with the Runtime profile does not pass preparation (%s); run markitect check and markitect setup", prepared.Status())
+		}
+		basis, err := apply.SessionBasisOf(a)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		engine, err := container.NewEngine(cfg.EngineExecutable)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		agents, err := newAgents(engine, a.Settings().ProfileObservations(), cfg)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		helper := cfg.WorkspaceHelper
+		helper.Workdir = "/work"
+		workspaces, err := gitrepo.NewWorkspaces(engine, helper)
+		if err != nil {
+			return authoring.SessionStart{}, err
+		}
+		return authoring.SessionStart{Basis: basis, Ports: authoring.SessionPorts{
+			Agents: agents, Workspaces: workspaces, RemoveVolume: engine.RemoveVolume, RequireVolumeSubpaths: engine.RequireVolumeSubpaths,
+			MaxEntries: cfg.Harvest.MaxEntries, MaxBytes: cfg.Harvest.MaxBytes, Evidence: cfg.StateDirectory,
+		}}, nil
 	}
 }

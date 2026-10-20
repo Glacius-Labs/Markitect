@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -62,10 +63,34 @@ func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
 		return nil
 	})
 	var out, errout bytes.Buffer
-	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 0 || got.Repository != "." {
-		t.Fatalf("%d: repository %q", code, got.Repository)
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
 	}
-	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a", "--repo", "other"}, &out, &errout); code != 0 || got.Repository != "other" {
-		t.Fatalf("%d: repository %q", code, got.Repository)
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 0 || got.Selection.Repository != wd {
+		t.Fatalf("%d: repository %q", code, got.Selection.Repository)
+	}
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a", "--repo", "other"}, &out, &errout); code != 0 || got.Selection.Repository != filepath.Join(wd, "other") {
+		t.Fatalf("%d: repository %q", code, got.Selection.Repository)
+	}
+}
+
+func TestCockpitSelectsTheModelAndDependenciesAsCheckDoes(t *testing.T) {
+	var got CockpitRequest
+	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+		got = r
+		return nil
+	})
+	var out, errout bytes.Buffer
+	args := []string{"cockpit", "--state", "a", "--repo", "project", "--dependency", ".markitect/dependencies/core/model.yaml", "--dependency", ".markitect/dependencies/software/model.yaml"}
+	if code := c.Run(context.Background(), args, &out, &errout); code != 0 {
+		t.Fatalf("%d: %s", code, errout.String())
+	}
+	if !filepath.IsAbs(got.Selection.Repository) || filepath.Base(got.Selection.Repository) != "project" || got.Selection.Local.ManifestPath.String() != ".markitect/model.yaml" ||
+		len(got.Selection.Dependencies) != 2 || got.Selection.Dependencies[1].ManifestPath.String() != ".markitect/dependencies/software/model.yaml" {
+		t.Fatalf("selection = %+v", got.Selection)
+	}
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a", "--dependency", "../outside.yaml"}, &out, &errout); code != 2 {
+		t.Fatalf("an invalid dependency = %d", code)
 	}
 }

@@ -15,10 +15,13 @@ import (
 
 // fakeAuthoring records what reached the proposal service.
 type fakeAuthoring struct {
-	proposed []authoring.Settings
-	decided  []string
-	settings error
-	accept   func(id string) (authoring.Proposal, error)
+	proposed   []authoring.Settings
+	decided    []string
+	settings   error
+	accept     func(id string) (authoring.Proposal, error)
+	sessionsOn bool
+	sessionErr error
+	prompts    []string
 }
 
 func (f *fakeAuthoring) Settings(context.Context) (authoring.Settings, error) {
@@ -159,5 +162,77 @@ func TestSettingsRefusalsKeepTheirReason(t *testing.T) {
 	h := authoringServer(t, fake)
 	if rec := getLocal(h, "/api/settings"); rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "uncommitted changes") {
 		t.Fatalf("settings on a dirty tree = %d %s", rec.Code, rec.Body)
+	}
+}
+
+func (f *fakeAuthoring) SessionsAvailable() bool       { return f.sessionsOn }
+func (f *fakeAuthoring) Sessions() []authoring.Session { return nil }
+func (f *fakeAuthoring) Session(id string) (authoring.Session, bool) {
+	return authoring.Session{ID: id, State: authoring.Waiting}, id == "model-1"
+}
+func (f *fakeAuthoring) StartSession(_ context.Context, prompt string) (authoring.Session, error) {
+	if !f.sessionsOn {
+		return authoring.Session{}, authoring.ErrNoSessions
+	}
+	f.prompts = append(f.prompts, prompt)
+	return authoring.Session{ID: "model-1", State: authoring.Working}, f.sessionErr
+}
+func (f *fakeAuthoring) PromptSession(id, prompt string) (authoring.Session, error) {
+	f.prompts = append(f.prompts, id+": "+prompt)
+	return authoring.Session{ID: id, State: authoring.Working}, f.sessionErr
+}
+func (f *fakeAuthoring) CloseSession(_ context.Context, id string) (authoring.Session, error) {
+	f.decided = append(f.decided, "close "+id)
+	return authoring.Session{ID: id, State: authoring.Closed}, nil
+}
+
+func TestSessionRequestsNeedTheCockpitsOwnJSONRequest(t *testing.T) {
+	fake := &fakeAuthoring{sessionsOn: true}
+	h := authoringServer(t, fake)
+	for name, rec := range map[string]*httptest.ResponseRecorder{
+		"start without header": post(h, local, "", "", "/api/sessions", `{"prompt":"x"}`),
+		"start as prompt":      post(h, local, "", "prompt", "/api/sessions", `{"prompt":"x"}`),
+		"foreign origin":       post(h, local, "http://evil.example", "start", "/api/sessions", `{"prompt":"x"}`),
+		"prompt as start":      post(h, local, "", "start", "/api/sessions/model-1/prompt", `{"prompt":"x"}`),
+		"close without header": post(h, local, "", "", "/api/sessions/model-1/close", ``),
+	} {
+		if rec.Code != http.StatusForbidden {
+			t.Errorf("%s = %d, want 403", name, rec.Code)
+		}
+	}
+	for body, want := range map[string]int{`{"prompt":"x","extra":1}`: http.StatusBadRequest, `{"text":"x"}`: http.StatusBadRequest, `{} {}`: http.StatusBadRequest} {
+		if rec := post(h, local, "", "start", "/api/sessions", body); rec.Code != want {
+			t.Errorf("body %s = %d, want %d", body, rec.Code, want)
+		}
+	}
+	if len(fake.prompts) != 0 || len(fake.decided) != 0 {
+		t.Fatalf("refused requests reached the service: %v %v", fake.prompts, fake.decided)
+	}
+	if rec := post(h, local, "", "start", "/api/sessions", `{"prompt":"Rename the Rule."}`); rec.Code != http.StatusOK {
+		t.Fatalf("start = %d %s", rec.Code, rec.Body)
+	}
+	if rec := post(h, local, "", "prompt", "/api/sessions/model-1/prompt", `{"prompt":"And its title."}`); rec.Code != http.StatusOK {
+		t.Fatalf("prompt = %d %s", rec.Code, rec.Body)
+	}
+	if rec := post(h, local, "", "close", "/api/sessions/model-9/close", ``); rec.Code != http.StatusNotFound {
+		t.Fatalf("closing an unknown session = %d", rec.Code)
+	}
+	if rec := post(h, local, "", "close", "/api/sessions/model-1/close", ``); rec.Code != http.StatusOK {
+		t.Fatalf("close = %d %s", rec.Code, rec.Body)
+	}
+	if strings.Join(fake.prompts, "|") != "Rename the Rule.|model-1: And its title." || len(fake.decided) != 1 {
+		t.Fatalf("service saw %v %v", fake.prompts, fake.decided)
+	}
+}
+
+func TestSessionRefusalsMapToTheirStatus(t *testing.T) {
+	if rec := post(authoringServer(t, &fakeAuthoring{}), local, "", "start", "/api/sessions", `{"prompt":"x"}`); rec.Code != http.StatusNotImplemented {
+		t.Errorf("start without a Runtime profile = %d", rec.Code)
+	}
+	for err, want := range map[error]int{authoring.ErrBusy: http.StatusConflict, authoring.ErrLimit: http.StatusConflict, authoring.ErrSessionOpen: http.StatusConflict, authoring.ErrPrompt: http.StatusBadRequest} {
+		h := authoringServer(t, &fakeAuthoring{sessionsOn: true, sessionErr: err})
+		if rec := post(h, local, "", "prompt", "/api/sessions/model-1/prompt", `{"prompt":"x"}`); rec.Code != want {
+			t.Errorf("%v = %d, want %d", err, rec.Code, want)
+		}
 	}
 }

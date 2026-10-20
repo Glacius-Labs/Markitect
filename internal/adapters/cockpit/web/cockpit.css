@@ -241,6 +241,18 @@ a.btn { text-decoration: none; color: var(--ink); }
 .diff tr.gap td { color: var(--ink-3); font-family: var(--ui); font-style: italic; padding: 2px 12px; background: var(--plate-2); }
 .authoring .facts { margin-bottom: 20px; }
 .decide { border-top: 2px solid var(--ink); padding-top: 12px; }
+.conversation { list-style: none; margin: 0; padding: 0; display: grid; gap: 14px; max-width: 110ch; }
+.exchange { display: grid; gap: 8px; }
+.exchange .who { display: block; font-weight: 600; font-size: var(--s0); color: var(--ink-2); margin-bottom: 2px; }
+.ownerprompt { border-left: 4px solid var(--owner); padding: 4px 0 4px 12px; }
+.agentturn { background: var(--plate); border: 1px solid var(--rule); border-left: 4px solid var(--work); padding: 8px 12px; display: grid; gap: 6px; }
+.agentturn p { margin: 0; }
+.tooluse { font-size: var(--s0); }
+.composer { display: grid; gap: 6px; max-width: 90ch; }
+.composer label { font-weight: 600; }
+.composer textarea { font: var(--s1)/1.5 var(--prose); padding: 8px; border: 1px solid var(--ink-3); border-radius: 4px; background: var(--panel); color: var(--ink); resize: vertical; }
+.composer textarea[readonly] { background: var(--plate-2); }
+.composer .actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .decide .note { max-width: 90ch; }
 @media (max-width: 700px) {
   .helper { grid-template-columns: 1fr 1fr; }

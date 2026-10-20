@@ -103,7 +103,7 @@ artifacts:
   - path: "internal/adapters/cli/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Parses the cockpit command's state directories, run configuration, repository and listen address and reports where the cockpit serves."
+    why: "Parses the cockpit command's state directories, run configuration, Runtime profile, repository with its model and dependency models, and listen address and reports where the cockpit serves."
   - path: "internal/bootstrap/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/accepted-proposals]
@@ -188,3 +188,19 @@ artifacts:
     form: test
     realizes: [product/cockpit/accepted-proposals]
     why: "Verifies that only an applied or no-change publication accepts a proposal, that partial, unknown and stale ones fail with their receipt, that a fenced one stays open and that an unchecked one is never published."
+  - path: "internal/authoring/session.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Runs model sessions: an Agent of Root's Execute profile works on a workspace of the committed source with only the model and registry writable, answers its check and submit tools, continues its conversation across the owner's prompts within the turn timeout and Agent-turn limit, and records its evidence."
+  - path: "internal/bootstrap/cockpit_session_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies on a repository that a model session's turn has only the model and registry writable, that its check and submit answer from the workspace and propose only model changes, that prompts resume the conversation within the limit and that closing stops a working turn and releases the workspace."
+  - path: "internal/adapters/cockpit/web/js/model.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Offers the model session: a deliberate start, the owner's prompts and the Agent's answers as its own text, tool uses, proposals, limits and reported usage, and closing."
+  - path: "internal/authoring/session_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that a session states its turn timeout in the execution settings' notation."
