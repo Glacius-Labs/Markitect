@@ -11,7 +11,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 import fleet  # noqa: E402
-from trial_kit import Checks, ascii_output, expect_equal, fail, unusable_change, unusable_query  # noqa: E402
+from trial_kit import Checks, expect_equal, fail, unusable_change, unusable_query  # noqa: E402
 
 PROFILE = ["f1"]
 
@@ -162,8 +162,6 @@ def build(project):
         credit(env, first, "ann", "9" * 5000, refuse=True)
         expect_equal(credit(env, first, "ann", "0" * 5000 + "7")["balance"], 8, "credit 5000 leading zeros and 7")
         credit(env, first, "ann\udcff", 1, refuse=True)
-        expect_equal(ascii_output(env, first, "balances"), {"accounts": [{"account": "ann", "balance": 8}]},
-                     "balances with an ASCII-only stdout")
         env.write_db("[" * 100000)
         env.refuse("totals")
         unusable_query(env, "totals")

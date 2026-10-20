@@ -17,8 +17,6 @@ sys.path.insert(0, str(HERE))
 
 from trial_kit import python_command  # noqa: E402
 
-PROJECTS = ("stockroom", "depot")
-
 
 def load_checks(project):
     if project.startswith("fleet-"):

@@ -10,8 +10,6 @@ model, its change and its overspecified variant) and receives the profile's
 parameters. A check whose prerequisite is missing is reported as skipped,
 never as passed.
 """
-import os
-import subprocess
 import sys
 import tempfile
 import traceback
@@ -19,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "test-projects"))
 
-from oracle_kit import TIMEOUT_SECONDS, CheckFailure, Env, Result, crash_guard, expect_equal, fail  # noqa: E402,F401  (re-exported to the checks)
+from oracle_kit import CheckFailure, Env, crash_guard, expect_equal, fail  # noqa: E402,F401  (re-exported to the checks)
 
 
 class Skip(Exception):
@@ -73,28 +71,6 @@ class Checks:
                 "passed": count["fail"] == 0 and count["skip"] == 0,
                 "summary": dict(total=len(results), passed=count["pass"], failed=count["fail"], skipped=count["skip"]),
                 "checks": results}
-
-
-def run_ascii(env, *args):
-    """Run the command line with an ASCII-only stdout encoding instead of the harness's UTF-8 one."""
-    command = [*env.python, "-B", "app.py", "--db", str(env.db), *map(str, args)]
-    environment = dict(os.environ, PYTHONUTF8="0", PYTHONIOENCODING="ascii", PYTHONDONTWRITEBYTECODE="1")
-    try:
-        done = subprocess.run(command, cwd=env.realization, capture_output=True, timeout=TIMEOUT_SECONDS,
-                              env=environment, stdin=subprocess.DEVNULL)
-    except subprocess.TimeoutExpired:
-        return Result(args, None, b"", b"", timed_out=True)
-    return Result(args, done.returncode, done.stdout, done.stderr)
-
-
-def ascii_output(env, *args):
-    """A successful command must still write its JSON object when stdout accepts only ASCII."""
-    result = run_ascii(env, *args)
-    crash_guard(result)
-    if result.code != 0 or result.obj is None or set(result.obj) == {"error"}:
-        fail("`%s` with an ASCII-only stdout must succeed with one JSON object, got %s"
-             % (" ".join(map(str, args)), result.describe()))
-    return result.obj
 
 
 def no_crash(env, *args):

@@ -61,10 +61,10 @@ Expectation rules, as stated by DEC-063 and the trial assignment: a conforming s
 From the repository root, with Python 3.13 and Git:
 
 ```text
-python -B experiments/apply-trials/selfcheck.py [--project stockroom|depot] [--markitect PATH/TO/markitect]
+python -B experiments/apply-trials/selfcheck.py [--project stockroom|depot|fleet-w<W>-d<D>[-t] ...] [--markitect PATH/TO/markitect]
 ```
 
-It shows that every cited Definition exists; that each reference passes its profile and its own tests and each validation overlay passes its changed profile; that degenerate command lines fail; that each fault alone fails exactly its declared checks (and the reference tests exactly when declared) and a case's faults together fail exactly their union; that the reference fails exactly the declared checks of the `s2` and `o` profiles; that every case materializes and passes the leak audit and, with `--markitect`, `markitect check` and `context` at `HEAD` (D-M fails strict accounting with exactly its `registry.outside_area` finding, which Apply treats as start-stand drift under DEC-062); that the assessor judges unrepaired, partly and fully repaired starts, unchanged stands and model-defect reports correctly; that S-G → S-C → S-F and D-G → D-F chain through `--from-repo`; and that `answer-key.md` is current. A full run takes about eight minutes.
+It shows that every cited Definition exists; that each reference passes its profile and its own tests and each validation overlay passes its changed profile; that degenerate command lines fail; that each fault alone fails exactly its declared checks (and the reference tests exactly when declared) and a case's faults together fail exactly their union; that the reference fails exactly the declared checks of the `s2` and `o` profiles; that every case materializes and passes the leak audit and, with `--markitect`, `markitect check` and `context` at `HEAD` (D-M fails strict accounting with exactly its `registry.outside_area` finding, which Apply treats as start-stand drift under DEC-062); that the assessor judges unrepaired, partly and fully repaired starts, unchanged stands and model-defect reports correctly; that S-G → S-C → S-F and D-G → D-F chain through `--from-repo`; and that `answer-key.md` is current. A full run of all projects takes about an hour on Windows; one project takes a few minutes.
 
 The checks execute the realization they assess. Run them on the trial host, not on a machine whose files the realization must not reach.
 

@@ -17,7 +17,7 @@ while read -r CASE NAME FROM PREV; do
   cp "$HERE/run_case.sh" "$WORK/.run_case.$NAME.sh"
   cp "$HERE/patch_runconfig.py" "$WORK/patch_runconfig.py"
   echo "start $NAME $CASE $(date -u +%FT%TZ)"
-  bash "$WORK/.run_case.$NAME.sh" "$BUILD" "$CASE" "$ATTEMPT" "$FROMREPO" "$PREVIOUS" > "$WORK/$NAME.log" 2>&1
+  bash "$WORK/.run_case.$NAME.sh" "$BUILD" "$CASE" "$ATTEMPT" "$FROMREPO" "$PREVIOUS" < /dev/null > "$WORK/$NAME.log" 2>&1
   mv "$WORK/.run_case.$NAME.sh" "$ATTEMPT/run_case.frozen.sh" 2>/dev/null
   echo "done  $NAME $(tr '\n' ' ' < "$WORK/$NAME.log" | tail -c 300)"
 done < "$LANE"

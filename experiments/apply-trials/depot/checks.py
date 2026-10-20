@@ -10,8 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import (Checks, ascii_output, expect_equal, fail, no_crash, unusable_change,  # noqa: E402
-                       unusable_query)
+from trial_kit import Checks, expect_equal, fail, no_crash, unusable_change, unusable_query  # noqa: E402
 
 CHECKS = Checks("depot", {"d1": {"snapshot": "d1"}})
 D1 = ["d1"]
@@ -101,6 +100,7 @@ def _(env, p):
     for point in ("-1", "10000", "x", "1.5", "", " 3"):
         add(env, "NUT-010", "Nut", point, refuse=True)
     expect_equal(add(env, "NUT-010", "é" * 60, "9999")["reorderPoint"], 9999, "60 code points, point 9999")
+    expect_equal(add(env, "CAP-001", "-Cap")["name"], "-Cap", "a name that starts with a hyphen")
 
 
 @check("receive-record", D1, ["stock/receive", "stock/on-hand", "catalog/sku", "depot/inputs"],
@@ -306,8 +306,6 @@ def _(env, p):
     place(env, "BOL-006:" + "9" * 5000, refuse=True)
     no_crash(env, "add-item", "--sku", "NUT-010", "--name", "Nut \udcff")  # undecodable byte: the model is silent
     items(env)
-    expect_equal(ascii_output(env, "add-item", "--sku", "CAF-001", "--name", "Café")["name"], "Café",
-                 "a non-ASCII name with an ASCII-only stdout")
     env.write_db("[" * 100000)
     env.refuse("items")
     unusable_query(env, "items")

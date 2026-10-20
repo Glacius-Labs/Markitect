@@ -11,6 +11,7 @@ cache outside the repository; it is operator material like the rest of this
 directory.
 """
 import hashlib
+import os
 import re
 import shutil
 import tempfile
@@ -730,7 +731,6 @@ def generate(project, target):
     target = Path(target)
     snapshot = target / "snapshots" / "f1"
     write(snapshot / "model", model_files(project))
-    width, depth = parse(project)
     write(snapshot, {"model.yaml": "formatVersion: 1\nid: %s\nversion: 0.1.0\nroot: model\ndependencies:\n"
                                    "  markitect-core: \"1.0.0\"\n  software-basics: \"0.1.0\"\n" % "ledgers"})
     shutil.copyfile(HERE / "stockroom" / "snapshots" / "s1" / "model-lock.yaml", snapshot / "model-lock.yaml")
@@ -740,8 +740,9 @@ def generate(project, target):
     return target
 
 
-# The cache key is taken once, at import, so it always matches the code that generates.
-GENERATOR_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:12]
+# The cache key is taken once, at import, so it always matches the code that generates; it also covers the
+# lock file the generator copies.
+GENERATOR_DIGEST = hashlib.sha256(Path(__file__).read_bytes() + (HERE / "stockroom" / "snapshots" / "s1" / "model-lock.yaml").read_bytes()).hexdigest()[:12]
 
 
 def project_dir(project):
@@ -749,7 +750,7 @@ def project_dir(project):
     parse(project)
     target = Path(tempfile.gettempdir()) / "markitect-apply-trials" / ("%s-%s" % (project, GENERATOR_DIGEST))
     if not (target / ".complete").is_file():
-        staging = target.with_name(target.name + ".tmp-%d" % __import__("os").getpid())
+        staging = target.with_name(target.name + ".tmp-%d" % os.getpid())
         if staging.exists():
             shutil.rmtree(staging)
         generate(project, staging)

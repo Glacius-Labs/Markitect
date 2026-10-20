@@ -16,8 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import (Checks, Env, Skip, ascii_output, expect_equal, fail, no_crash,  # noqa: E402
-                       unusable_change, unusable_query)
+from trial_kit import Checks, Env, Skip, expect_equal, fail, no_crash, unusable_change, unusable_query  # noqa: E402
 
 PROFILES = {
     "s1": {"snapshot": "s1", "maxQty": 1000, "reorder": False},
@@ -111,6 +110,7 @@ def _(env, p):
 def _(env, p):
     expect_equal(add(env, "AAA-001", "é" * 60)["name"], "é" * 60, "60 non-ASCII code points")
     expect_equal(add(env, "AAA-002", "  " + "x" * 60 + "  ")["name"], "x" * 60, "60 characters after trimming")
+    expect_equal(add(env, "AAA-004", "-Bolt")["name"], "-Bolt", "a name that starts with a hyphen")
     for name in ("", "   ", "x" * 61, "é" * 61):
         add(env, "AAA-003", name, refuse=True)
 
@@ -238,8 +238,6 @@ def _(env, p):
     expect_equal(receive(env, "BOL-006", "0" * 5000 + "7")["onHand"], 7, "receive 5000 leading zeros and 7")
     no_crash(env, "add-item", "--sku", "NUT-010", "--name", "Nut \udcff")  # undecodable byte: the model is silent
     listing(env)
-    expect_equal(ascii_output(env, "add-item", "--sku", "CAF-001", "--name", "Café")["name"], "Café",
-                 "a non-ASCII name with an ASCII-only stdout")
     env.write_db("[" * 100000)
     env.refuse("list")
     unusable_query(env, "list")

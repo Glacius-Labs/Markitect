@@ -94,6 +94,7 @@ class CommandLineTests(unittest.TestCase):
 
     def test_extreme_inputs_fail_without_a_crash(self):
         self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")
+        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
         self.refused("receive", "--sku", "BOL-006", "--qty", "9" * 5000)
         self.refused("fulfil-order", "--id", "9" * 5000)
         self.refused("add-item", "--sku", "NUT-010", "--name", "Nut \udcff")

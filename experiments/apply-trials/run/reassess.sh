@@ -13,5 +13,6 @@ for A in "$WORK"/${3:-T}*/; do
   docker run --rm --entrypoint "" --network none -u 1000:1000 -e HOME=/tmp -v "$WORK:$WORK" -v "$EXP:$EXP:ro" -w "$EXP" "$PYIMG" \
     python3 -B assess.py "$CASE" --repo "$A/repo" --report "$A/out/apply.json" ${PREV:+--previous "$PREV"} \
     --output "$A/out/assess-final.json" > /dev/null 2> "$A/out/assess-final.stderr"
-  echo "$(basename "$A") $CASE exit=$?"
+  rc=$?
+  echo "$(basename "$A") $CASE exit=$rc"
 done

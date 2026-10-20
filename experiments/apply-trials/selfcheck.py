@@ -1,6 +1,6 @@
 """Local self-check of the Apply trial fixtures and their independent checks; see README.md.
 
-    python -B selfcheck.py [--project stockroom|depot] [--markitect PATH] [--python CMD]
+    python -B selfcheck.py [--project NAME ...] [--markitect PATH] [--python CMD]
 
 Shows, without any Agent or provider:
 1. every Definition a check cites exists in its profile's model;
