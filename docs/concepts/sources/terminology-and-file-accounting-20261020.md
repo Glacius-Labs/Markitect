@@ -346,6 +346,16 @@ The owner then suggested a further option in case the gap keeps causing trouble:
 
 Recorder's disposition: recorded as an owner suggestion under [ENH-002](../register.md#enh-002-model-quality-linter-and-metrics), whose accepted direction already includes AI-assisted findings that a model is incomplete. The response suggested placing such a check before Apply, as an owner-started model check or in the cockpit, where the owner accepts model changes, because [DEC-052](../register.md#dec-052-implement-then-review-no-explore-phase) leaves Apply without an Explore or intake step; it would use the same boundary criterion so that deliberate freedom is not turned into questions. It becomes a candidate only if the matched retest's A4 still fails. Nothing is adopted or implemented.
 
+The owner then reported that the simplified-workflow comparison showed the same behavior:
+
+> Der einfache Lauf hat wohl dasselbe Problem
+
+Its A4 (run `20261020T211052Z-f08d3eb3`, product `205bf524`, Sonnet) was verified and published with a name maximum of 100 and no owner question; the reference series had chosen 80. Neither build contained the public-choice correction made after the reference series. The response concluded that the silent choice does not depend on the workflow and proposed to run the gap check beside A4 in the matched retest, as one short model-only run on S-QV's model without realization, instead of waiting for A4 to fail again. The owner agreed:
+
+> Ja das machen wir so
+
+Recorder's disposition: the matched retest includes that gap-check trial beside A4, so one retest shows whether the correction suffices or the check is needed. The trial needs a minimal check prepared for the retest; its form and placement are settled then. This adopts no product feature and grants no provider budget.
+
 ## Owner adoption: evidence-driven Apply hardening
 
 After discussing draft PR #536, the owner asked how to prevent reviewers from filling the new fields while still missing the same defect, and proposed making Managers suspicious of unsupported success. The response proposed active counterexample search, expectations derived from authority independently of existing assertions, tool-recorded observations, parent assessment of the actual evidence, and faulty/conforming evaluation controls. It explicitly rejected finding quotas and kept concrete unresolved conformity questions blocking.
