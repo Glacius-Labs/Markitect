@@ -302,6 +302,8 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		return refuse("You already submitted %s in this turn.", ts.proposal.id)
 	case len(ts.delegations) > 0 || len(m.helpers) > 0:
 		return refuse("Your helpers are still working; submit after their results reached you.")
+	case ts.blocked:
+		return refuse("This turn started while your own work was blocked, so it only answers what is asked of you; your work starts in your next turn.")
 	case in.Kind == kindBasis && m.stage != stageOwn:
 		return refuse("A basis is submitted while you work on your own contribution; you are at %s.", m.stage)
 	case in.Kind == kindResult && m.stage != stageIntegrate:

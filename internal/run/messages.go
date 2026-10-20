@@ -205,10 +205,10 @@ func (e *engine) escalate(ctx context.Context, m *member, ts *turnState, args js
 // and counts them as delivered.
 func (e *engine) takeItemsLocked(m *member, ts *turnState) string {
 	e.pruneLocked(m)
-	// The assignment and, in a turn that started blocked, the findings to
-	// correct stay for the turn that does the work.
+	// The assignment and, in a turn that started blocked, everything but
+	// messages stays for the turn that does the work.
 	stays := func(it item) bool {
-		return it.kind == itemAssignment || ts.blocked && it.kind == itemFinding
+		return it.kind == itemAssignment || ts.blocked && it.kind != itemMessage
 	}
 	var texts []string
 	var taken []item

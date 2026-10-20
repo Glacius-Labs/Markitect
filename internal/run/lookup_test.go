@@ -33,17 +33,19 @@ func TestLookUpAnswersStructuralFactsAndMethods(t *testing.T) {
 		c.protocol()
 		return nil
 	}
+	const rootDuty = "As Root you end the run for a defective model."
+	f.cfg.RootGuidance = rootDuty
 	r := f.open()
 	r.Pass(planSpec())
 	r.Pass(prepareSpec())
 	f.finish(r, "")
 	// The standing context of a fresh conversation names the methods.
-	if first := f.agents.turnsOf("lending")[0]; !strings.Contains(first.Prompt, "Method guidance with look_up topic method") || strings.Contains(first.Prompt, rootModelDuty) {
-		t.Errorf("the standing context does not name the methods, or a child carries Root's duty:\n%s", first.Prompt)
+	if first := f.agents.turnsOf("lending")[0]; !strings.Contains(first.Prompt, "Method guidance with look_up topic method") || strings.Contains(first.Prompt, rootDuty) {
+		t.Errorf("the standing context does not name the methods, or a child carries Root's guidance:\n%s", first.Prompt)
 	}
-	// Root's standing context carries its duty to end the run for a defective model.
-	if first := f.agents.turnsOf(".")[0]; !strings.Contains(first.Prompt, rootModelDuty) {
-		t.Errorf("Root's standing context lacks its model duty:\n%s", first.Prompt)
+	// Root's standing context carries the Root guidance of the run.
+	if first := f.agents.turnsOf(".")[0]; !strings.Contains(first.Prompt, rootDuty) {
+		t.Errorf("Root's standing context lacks its guidance:\n%s", first.Prompt)
 	}
 	for key, want := range map[string]string{
 		"own":        "your own obligation",

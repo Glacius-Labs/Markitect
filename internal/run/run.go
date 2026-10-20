@@ -288,22 +288,25 @@ type Config struct {
 	Start          snapshot.Tree
 	OwnerRequest   string
 	OwnerDecisions []string
-	Checks         []Check
-	ModelCheck     func(snapshot.Tree) []Finding
-	FileCheck      func(snapshot.Tree) []Finding
-	OwnerOf        func(snapshot.Path) string
-	Registry       func(snapshot.Tree) RegistryView
-	Definition     func(id string) (ModelDefinition, bool)
-	Budget         Budget
-	MaxEntries     int
-	MaxBytes       int64
-	Agents         Agents
-	Workspaces     Workspaces
-	Runner         Checks
-	Owner          Owner
-	Evidence       Evidence
-	Clock          func() time.Time
-	Questions      []Question
+	// RootGuidance is Root's own standing duty in the work Passes of this kind
+	// of run, such as ending an Apply for a defective model.
+	RootGuidance string
+	Checks       []Check
+	ModelCheck   func(snapshot.Tree) []Finding
+	FileCheck    func(snapshot.Tree) []Finding
+	OwnerOf      func(snapshot.Path) string
+	Registry     func(snapshot.Tree) RegistryView
+	Definition   func(id string) (ModelDefinition, bool)
+	Budget       Budget
+	MaxEntries   int
+	MaxBytes     int64
+	Agents       Agents
+	Workspaces   Workspaces
+	Runner       Checks
+	Owner        Owner
+	Evidence     Evidence
+	Clock        func() time.Time
+	Questions    []Question
 
 	ResolveDefinition func(snapshot.Tree, string) bool
 }

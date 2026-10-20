@@ -72,6 +72,10 @@ const implementMandate = "Realize every applicable own obligation in your own ar
 
 const verifyMandate = "Assess the immutable candidate independently. Your basis is your own assessment of your own obligations' realization and evidence, plus the review context your children's reviewers need; your result integrates your children's assessments and the cross-area correctness of their interaction. Raise every genuine finding with its owner, the obligation, the observed evidence and the earliest kind of correction it needs, and reassess the findings you raised earlier."
 
+// rootModelDuty is Root's own duty in an Apply: the bound model is fixed, so a
+// model Root judges erroneous or contradictory ends the run.
+const rootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run: never ask the user to change or override it; clarifying what it leaves open is allowed."
+
 const verifyGuidance = "A genuine finding is an observed model violation, a missing required realization or evidence item, or a failed required check; cite the obligation and the observed behavior or source. A Definition realized outside its owner's artifacts, or a change outside a Manager's own area, is a model violation; as a parent, check how your children actually use each other's realizations. Optional improvements the model does not require are notes: set blocking to false, and never soften a genuine finding into a note. When another reviewer, below you or about your own responsibility, raised a finding you independently judge erroneous, dispute it with reason and evidence; it stays open until a fresh review of its responsibility disposes of it."
 
 func applyWork() []run.PassSpec {
@@ -299,7 +303,7 @@ func applyConfig(req ApplyRequest, now time.Time) (run.Config, error) {
 	deadline := runDeadline(now, budget.ExecutionTime.Value, req.Deadline)
 	cfg := run.Config{
 		RunID: req.RunID, Team: team, Start: prepared.Structural().Model().Inputs().Raw.Census,
-		OwnerRequest: req.OwnerRequest, OwnerDecisions: req.OwnerDecisions, Checks: checks,
+		OwnerRequest: req.OwnerRequest, OwnerDecisions: req.OwnerDecisions, RootGuidance: rootModelDuty, Checks: checks,
 		ModelCheck: func(tree snapshot.Tree) []run.Finding { return gateFindings(candidates.ModelCheck(tree)) },
 		FileCheck:  func(tree snapshot.Tree) []run.Finding { return gateFindings(candidates.Account(tree)) },
 		OwnerOf:    candidates.OwnerOf,
