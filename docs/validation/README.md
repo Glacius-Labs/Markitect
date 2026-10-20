@@ -24,6 +24,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 - [Extract on the library: first real runs — 19 October 2026](library-extract-20261019.md)
 - [Extract on the library: old/new comparison — 19 October 2026](library-extract-comparison-20261019.md)
 - [Extract round 2: stability on two projects — 20 October 2026](extract-round2-20261020.md)
+- [Apply and Extract closeout with the final confirmation run — 20 October 2026](apply-extract-closeout-20261020.md)
 - [Public Classic Commerce entrypoint validation](classic-commerce-entrypoint.md)
 - [Standard operating model validation](standard-operating-model.md)
 

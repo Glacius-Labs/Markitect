@@ -32,3 +32,25 @@ Recorder's note: the owner gave the following instruction in the Codex roadmap c
 Recorder's interpretation of the referenced assessment: it called for Apply evidence covering model change, unchanged-intent drift repair, a justified owner question, and budget/deadline/interruption with retained evidence and the supported restart. For Extract, it called for completing the running fixed-build comparison on missing project obligations, incidental implementation choices made binding, and incorrect or unnecessary escalation. A no-change round trip alone does not establish extracted-model quality.
 
 Recorder's note: the current [delivery scope](../../implementation-plan.md#target-and-baseline) applies this instruction through existing issues #492 and #495. The outcome reports may be negative or inconclusive; they do not automatically authorize a larger process, more experiments or the deferred expansion queue. This records the current scope decision, not another permanent approval institution.
+
+## Closeout and division, 20 October 2026
+
+Recorder's note: verbatim owner statements from the assignment of the closeout session on 20 October 2026, after Main `0c28097c`. They end the previous Apply, Extract and Coordinator sessions' streams for this checkpoint and set the [current division](../../implementation-plan.md#work-streams).
+
+> Die bisherigen Claude-Sessions sind beendet. Du übernimmst einen begrenzten Abschlussauftrag. Parallel bereitet eine andere Session zusätzliche Versuchsfälle vor; ich untersuche separat den aktuellen Apply-Gesamtprozess.
+
+> Dokumentiere die aktuelle Aufteilung:
+> - Du schließt diese Nachweise und die Planungspflege ab.
+> - Eine andere Session bereitet ausschließlich den erweiterten Versuchsaufbau vor.
+> - Die Prozessdurchsicht erfolgt separat.
+> - Weitere Prozessänderungen und größere Messserien werden anschließend anhand der Ergebnisse ausgewählt.
+
+On the two owner decisions that the library demonstrations bound with each run:
+
+> Übernimm deren bereits entschiedene Bedeutung in die zuständigen Library-Modelldefinitionen […] Prüfe den genauen Wortlaut und die zuständigen Definitions vor der Änderung. Erfinde keine zusätzliche Fachentscheidung.
+
+> Kennzeichne die Serien als abgeschlossen, auch wenn ein Ergebnis negativ oder unvollständig ist.
+
+> Gib eine konkrete Empfehlung für den nächsten Schritt, beginne ihn aber nicht automatisch.
+
+Recorder's note: the assignment also asked for exactly one bounded confirmation run (M1 → A1, only `maxOpenLoans` 5 → 3, M2 → A2, then Apply again on the unchanged A2 with `no_change` expected) on one frozen build. Its result is the [closing record](../../validation/apply-extract-closeout-20261020.md).
