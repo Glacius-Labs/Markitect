@@ -97,6 +97,15 @@ def ascii_output(env, *args):
     return result.obj
 
 
+def no_crash(env, *args):
+    """A command the model neither requires nor forbids to succeed: it succeeds or fails cleanly, never crashes."""
+    result = env.run(*args)
+    crash_guard(result)
+    if result.obj is None or (result.code, set(result.obj) == {"error"}) not in ((0, False), (2, True)):
+        fail("`%s` must succeed or fail with the error object, got %s" % (" ".join(map(str, args)), result.describe()))
+    return result
+
+
 def unusable_query(env, *query):
     """Point env at a path the system cannot use; a query may read it as missing data or fail cleanly."""
     env.db = env.root / ("x" * 5000 + ".json")
