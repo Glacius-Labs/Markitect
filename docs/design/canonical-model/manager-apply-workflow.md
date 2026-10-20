@@ -80,12 +80,12 @@ New artifacts may appear during Prepare or Implement. Their effective owner must
 
 ### Safe acceptance while other Managers work
 
-To accept a Manager's basis or completion:
+The common technical gate for a Manager's basis or completion is:
 
 1. Stop or exclude its writers from the submitted owned scope and local registry; observe the actual stop and capture stable versions.
 2. Check those owned files and the local shard together, including consistency with current ownership and other accepted shards.
 3. Assemble a coherent derived view from the checked versions and bind the accepted report to it.
-4. Record the accepted event, then release dependent work.
+4. Bind the checked submission to its direct parent's semantic acceptance where applicable, then record the accepted event and release dependent work. Root has no parent; the Orchestrator validates its basis/result against the declared Pass requirements.
 
 Managers never race to rewrite a global registry. Disjoint scopes may continue in parallel; an assembled view identifies accepted versions and must not claim to represent other Managers' unfinished live edits. A changed accepted basis invalidates its consumers explicitly. At each Pass boundary, quiesce writers, capture the whole stand and perform full Model check and File check. Final Verify and Publish use one immutable complete candidate, not a mixture of live versions. An uncertain writer stop prevents capture or a replacement writer.
 
@@ -101,13 +101,13 @@ For every Manager, including Root and leaves, the order is:
 
 1. **Receive:** bind the Pass mandate, own obligations, current inputs, dependencies and authority. Root starts after the Pass entry gates; every other Manager starts only against its accepted parent basis and required dependencies.
 2. **Work locally:** perform the required own contribution and produce the basis children need for this purpose. This is a plan in Plan, a usable foundation in Prepare, own realization in Implement, and own assessment plus review context in Verify.
-3. **Offer the basis:** submit an explicit semantic report. The Orchestrator checks the stable submitted scope and registry, result binding and declared prerequisites. Only its acceptance releases dependent children. In a read-only Pass the same gate checks the unchanged project bindings and the evidence result; no artificial project file is required.
+3. **Offer the basis:** submit an explicit semantic report. The Orchestrator checks the stable submitted scope and registry, result binding and declared prerequisites. For every non-Root Manager, the direct parent must also accept the basis semantically for its purpose and fit; its decision refers to that exact checked proposal. Only both acceptances allow the Orchestrator to release dependent children. Root's basis has no superior reviewer and is validated against the declared Pass requirements. In a read-only Pass the same gate checks the unchanged project bindings and the evidence result; no artificial project file is required.
 4. **Delegate and remain available:** release eligible direct children with their mandates and the accepted basis. While they work, handle questions, route dependencies and inspect incoming proposals. A leaf follows this same step with an empty child set; it does not use a separate execution route.
 5. **Review and integrate:** examine each direct child's proposed result for its purpose and fit. Return incomplete or incompatible work to that child within the current Pass; never do its work instead. Accept complete child results, then integrate their actual results, cross-child interactions and the own contribution.
 6. **Offer the complete result:** submit the integrated responsibility with evidence and references to accepted child results. For a non-Root Manager, the Orchestrator validates the submission and notifies the parent for semantic acceptance. The parent accepts or returns it; only accepted complete work becomes Done. Root has no parent: its complete aggregate is accepted by the Orchestrator against the declared Pass requirements, not by inventing a superior Manager.
 7. **Close the Pass:** once the entire required tree is accepted and no required proposal, question or dependency remains pending, the Orchestrator performs the whole-stand exit gates, seals the aggregate result and emits the Pass result. Closure is bound to the accepted versions and ordered events; a concurrent invalidation cannot be lost behind a stale success. The Apply workflow, outside the recursive process, chooses the next Pass or finishes the Run.
 
-A submitted child result wakes its parent for review even while other children are working. The child waits on named parent acceptance; the parent must not wait for that child to be Done before reading its proposal. This prevents a completion/review deadlock without adding a PendingReview lifecycle state. Result submission, technical validation, semantic acceptance and Done are distinct observations.
+A submitted child basis or complete-result proposal wakes its parent for review even while other children are working. The child waits on named parent acceptance; the parent must not wait for that child to be Done before reading either proposal. Basis acceptance permits that child's own subtree to start but does not make the child Done. A rejected basis returns to its owner within the current Pass and cannot release descendants. This prevents a completion/review deadlock without adding a PendingReview lifecycle state. Submission, technical validation, semantic acceptance and Done are distinct observations.
 
 An accepted own basis is not completion of the subtree. No Turn ending implicitly starts children. A parent does not plan or implement a child's responsibility. Every Manager may implement its own artifacts, whether it has children or not. All required responsibilities use the same result schema; agreement means coherent accepted results, not identical prose or manufactured consensus.
 
@@ -124,7 +124,7 @@ Dependencies are explicit and observable. Accepted prerequisites and resource li
 | Implement | Own realization and the accepted basis needed by children | Child realizations, obligation coverage and actual integration | Owned writes |
 | Verify | Own independent assessment and review context for the immutable candidate | Child assessments, retained findings and cross-area correctness | Read-only, fresh reviewers |
 
-The parent reviews a child's complete result in every purpose. This is the same integration responsibility, not an extra independent Verify after each local task. In Verify the executing roles themselves are independent reviewers; accepting a complete assessment must preserve its genuine findings. A negative assessment is not rejected merely to force a positive verdict. Completion of own basis still precedes child work; the final integrated result can only exist afterward. If child information requires revising an accepted basis, explicitly invalidate affected consumers and re-establish their prerequisites through this same process.
+The parent reviews a child's basis and complete result in every purpose. This is the same integration responsibility, not an extra independent Verify after each local task. In Verify the executing roles themselves are independent reviewers; accepting a complete assessment must preserve its genuine findings. A negative assessment is not rejected merely to force a positive verdict. Completion and acceptance of own basis still precede child work; the final integrated result can only exist afterward. If child information requires revising an accepted basis, explicitly invalidate affected consumers and re-establish technical and parent semantic acceptance through this same process.
 
 ### Shared result and Pass identity
 
@@ -151,7 +151,7 @@ Root initially becomes Ready; children initially wait for their declared basis. 
 
 **Problem is a structured report/event, not a fifth scheduling state.** Agents classify problems and decide whether to resolve them locally or escalate to their direct parent. A model problem is one category; Root's model-error decision has the mandatory abort consequence. A deterministic failure retains its blocking force regardless of an Agent's classification.
 
-Semantic reports cover progress, a named wait/question, a basis proposal, a completion proposal and a problem. They identify the actual result, obligations, input stand, evidence and needed action. Agents propose; the Orchestrator validates and accepts state changes. There is no unconditional Agent `set_state(Done)`.
+Semantic reports cover progress, a named wait/question, a basis proposal, a completion proposal, a parent's acceptance/return decision on an exact child proposal, and a problem. They identify the actual result, obligations, input stand, evidence and needed action. Agents propose; the Orchestrator validates and accepts state changes. There is no unconditional Agent `set_state(Done)`.
 
 Technical Turn results record provider exit, timeout, cancellation and stop certainty separately. Normal exit without a valid report is incomplete work, not implicit Done. No semantic state transition proves a container stopped.
 
