@@ -70,6 +70,12 @@ export class Playback {
     this.advance("caught-up", true);
   }
 
+  // bound turns a running replay into following: older records are passed
+  // over rather than animated late.
+  bound() {
+    this.catching = true;
+  }
+
   advance(endReason, bounded) {
     this.catching = bounded;
     this.playing = true;

@@ -224,3 +224,34 @@ func TestRunLogReadsAgainWhenTheSameFileNoLongerContinuesItsSeam(t *testing.T) {
 		t.Fatalf("an in-place rewrite that breaks the seam is a replacement: %d records, %+v", len(records), src)
 	}
 }
+
+func TestRunLogPairsAReportOnlyWithTheCompleteRecord(t *testing.T) {
+	s, _ := library(t)
+	state := s.writeRun("r1", nil)
+	l := newRunLog(state, "r1")
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	// The producer appends its last record and then writes the report; one
+	// refresh after both must hold the record whenever it holds the report.
+	path := filepath.Join(state, "runs", "r1", "events.jsonl")
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.WriteString(`{"at":"2026-10-20T13:00:00Z","kind":"home.remove","data":{}}` + "\n"); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	bump(t, path)
+	if err := os.WriteFile(filepath.Join(state, "runs", "r1", "report.json"), mustJSON(t, applyReport("success", "applied")), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, _, report := l.snapshot()
+	if report == nil || records[len(records)-1].Kind != "home.remove" {
+		t.Fatalf("report %v with last record %s", report != nil, records[len(records)-1].Kind)
+	}
+}

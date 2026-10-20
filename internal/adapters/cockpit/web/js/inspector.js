@@ -89,7 +89,10 @@ export class Inspector {
   // queueEntries applies deliveries one at a time, so a refill cannot overlap
   // another delivery.
   queueEntries(p) {
-    this.pending = (this.pending || Promise.resolve()).then(() => this.onEntries(p)).catch(() => {});
+    this.pending = (this.pending || Promise.resolve()).then(() => this.onEntries(p)).catch((err) => {
+      // A refill beyond the record means the history changed under the view.
+      if (/beyond the record/.test(err.message)) this.onReplaced();
+    });
   }
 
   // onEntries appends records the live link delivered. A delivery that
@@ -135,7 +138,8 @@ export class Inspector {
 
   returnToLive() {
     this.following = true;
-    if (this.boundary < this.entries.length) this.playback.catchUp();
+    if (this.playback.playing) this.playback.bound();
+    else if (this.boundary < this.entries.length) this.playback.catchUp();
     this.renderLive();
     announce("Following the run again.");
   }

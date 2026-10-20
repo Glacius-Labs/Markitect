@@ -112,8 +112,10 @@ func (l *runLog) refresh() (bool, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
 	l.readAt = time.Now().UTC()
-	events, err := l.refreshEventsLocked()
+	// The report is written after the last record, so reading it first and the
+	// events after it never pairs a report with an incomplete record.
 	report, rerr := l.refreshReportLocked()
+	events, err := l.refreshEventsLocked()
 	l.err = errors.Join(err, rerr)
 	return events || report, l.err
 }
