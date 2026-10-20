@@ -25,9 +25,9 @@ type Owner struct {
 func RootOwner() Owner { return Owner{root: true} }
 
 // PackageOwner preserves an explicit Package spelling. This checks only the
-// relative representation; accounting checks membership in the compiler's
+// relative representation; accounting checks membership in the Model check's
 // authoritative local Package inventory, including empty/intermediate Packages.
-// It does not reproduce the compiler's naming, Unicode or ownership rules.
+// It does not reproduce the Model check's naming, Unicode or ownership rules.
 func PackageOwner(name string) (Owner, error) {
 	if _, err := snapshot.NewPath(name); err != nil {
 		return Owner{}, fmt.Errorf("%w: %q", ErrInvalidOwner, name)
@@ -59,18 +59,21 @@ const (
 	Config Form = "config"
 )
 
-// Artifact is a fixed exact file path and its explained model basis.
-// Its zero value is invalid. It grants no write authority.
+// Artifact is a fixed registry entry and its explained model basis: an exact
+// file path or, with directory, a directory whose observed eligible files of the
+// registrant it covers. Its zero value is invalid. It grants no write authority
+// and no ownership of future paths.
 type Artifact struct {
-	path  snapshot.Path
-	form  Form
-	basis []model.Identity
-	why   string
+	path      snapshot.Path
+	directory bool
+	form      Form
+	basis     []model.Identity
+	why       string
 }
 
 // NewArtifact fixes the supplied values. Basis is a set of complete model
 // identities: repeated links fail, order is irrelevant, and target existence is
-// checked later against compiled model values. Why is preserved without rewriting.
+// checked later against checked model values. Why is preserved without rewriting.
 func NewArtifact(path snapshot.Path, form Form, basis []model.Identity, why string) (Artifact, error) {
 	invalid := func(reason string) (Artifact, error) {
 		return Artifact{}, fmt.Errorf("%w: %q: %s", ErrInvalidArtifact, path, reason)
@@ -99,10 +102,40 @@ func NewArtifact(path snapshot.Path, form Form, basis []model.Identity, why stri
 	return Artifact{path: path, form: form, basis: basis, why: why}, nil
 }
 
+// NewDirectoryArtifact fixes a directory entry: it covers every observed
+// eligible file below path that its registrant owns, unless a more specific
+// entry or another owner's area takes it.
+func NewDirectoryArtifact(path snapshot.Path, form Form, basis []model.Identity, why string) (Artifact, error) {
+	if path.String() == markitectDirectory || strings.HasPrefix(path.String(), markitectDirectory+"/") {
+		return Artifact{}, fmt.Errorf("%w: %q: a directory entry cannot cover Markitect inputs", ErrInvalidArtifact, path)
+	}
+	artifact, err := NewArtifact(path, form, basis, why)
+	artifact.directory = err == nil
+	return artifact, err
+}
+
 func (a Artifact) Path() snapshot.Path     { return a.path }
+func (a Artifact) Directory() bool         { return a.directory }
 func (a Artifact) Form() Form              { return a.form }
 func (a Artifact) Basis() []model.Identity { return slices.Clone(a.basis) }
 func (a Artifact) Why() string             { return a.why }
+
+// Selector writes the entry as it is declared: the exact path, or the
+// directory path ending in "/".
+func (a Artifact) Selector() string {
+	if a.directory {
+		return a.path.String() + "/"
+	}
+	return a.path.String()
+}
+
+// Covers reports whether the entry covers the exact file path.
+func (a Artifact) Covers(path snapshot.Path) bool {
+	if a.directory {
+		return strings.HasPrefix(path.String(), a.path.String()+"/")
+	}
+	return a.path == path
+}
 
 func compareIdentity(a, b model.Identity) int {
 	if c := strings.Compare(a.Package, b.Package); c != 0 {

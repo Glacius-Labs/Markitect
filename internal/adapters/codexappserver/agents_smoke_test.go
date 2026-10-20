@@ -172,7 +172,7 @@ func TestAgentsSmoke(t *testing.T) {
 			t.Fatalf("actual turn %s failed or did not observe the end of its container: %v stopped=%v", id, err, res.Stopped)
 		}
 		if len(summaries) != 1 || !strings.Contains(summaries[0], artifact) || recall && !strings.Contains(summaries[0], conversation) {
-			t.Fatalf("turn %s did not report the expected file contents or recalled token through the Host tool", id)
+			t.Fatalf("turn %s did not report the expected file contents or recalled token through the Orchestrator tool", id)
 		}
 		if resume != "" && res.Conversation != resume {
 			t.Fatal("new-container resume changed the actual conversation identity")

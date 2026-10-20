@@ -8,7 +8,7 @@ import (
 )
 
 // Settings attempts retain each actual structural acquisition and its own
-// product defaults and static Host preparation. Error includes metadata-port
+// product defaults and static Runtime preparation. Error includes metadata-port
 // errors; Structural().Error() retains the original source error separately.
 type CapturedSettingsAttempt struct {
 	structural CapturedPreparationAttempt
@@ -57,8 +57,8 @@ func (r CapturedSettingsResult) Prepared() (CapturedSettingsAttempt, bool) {
 }
 
 // PreviewSettingsResult retains only working/fixed preview parents, without a
-// guard. External Host locations keep the selected source port's explicit fixed
-// revision refusal; this service never mixes today's Host bytes into history.
+// guard. External Runtime locations keep the selected source port's explicit fixed
+// revision refusal; this service never mixes today's Runtime bytes into history.
 type PreviewSettingsResult struct {
 	request  PreviewRequest
 	attempts []PreviewSettingsAttempt
@@ -78,17 +78,16 @@ func (r PreviewSettingsResult) Prepared() (PreviewSettingsAttempt, bool) {
 	return r.attempts[len(r.attempts)-1], true
 }
 
-// CaptureSettings shares Capture's single two-acquisition bound. Static Host
+// CaptureSettings shares Capture's single two-acquisition bound. Static Runtime
 // observations run before the first closure decision, including beside an
 // incomplete FileCheck. Named instruction needs join the same full recapture;
 // missing metadata alone never retries. Product defaults are actual build bytes.
 // A recovered earlier metadata error remains in its original attempt; the
 // returned error describes the final attempt, closure refusal or cancellation.
-// It prepares the start of an Apply: accounting drift that the owning Manager
-// can repair (an unexplained file, a registration of a missing file, of an
-// unknown Definition or outside the registrant's area) does not fail file
-// checking; the run hands it to that Manager (DEC-062). A file that no Manager
-// owns under the layout still fails it.
+// It prepares the start of an Apply: the initial File check is strict, so every
+// accounting finding (an unexplained file, a registration of a missing file, of
+// an unknown Definition or outside the registrant's area) fails preparation and
+// no run starts to repair it (DEC-064).
 func (s *PreparationService) CaptureSettings(ctx context.Context, request CaptureRequest, limits model.Limits, agents AgentProfilePreparer, checks CheckProfilePreparer) (CapturedSettingsResult, error) {
 	return s.capturePreparation(ctx, request, limits, &preparationSettingsPorts{agents: agents, checks: checks})
 }

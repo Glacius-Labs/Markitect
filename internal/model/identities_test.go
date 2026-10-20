@@ -12,7 +12,7 @@ func TestExactDefinitionIdentityDoesNotIncludeFilename(t *testing.T) {
 		Path: "model/feature/renamed.yaml", Kind: Regular,
 		Bytes: []byte("id: item\nkind: Example\nbody: Another declaration.\nspec: {}"),
 	})
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !slices.ContainsFunc(got.Diagnostics, func(d Diagnostic) bool {
 		return d.Code == "name.definition_collision" && d.Source.Path == "model/feature/renamed.yaml"
 	}) {
@@ -25,7 +25,7 @@ func TestExactDefinitionIdentityDoesNotIncludeFilename(t *testing.T) {
 		t.Fatal("partial identity check exposed validated IR or canonical evidence")
 	}
 	slices.Reverse(input.Root.Entries)
-	if reversed := Compile(input); !reflect.DeepEqual(got, reversed) {
+	if reversed := Check(input); !reflect.DeepEqual(got, reversed) {
 		t.Fatalf("declaration enumeration changed the identity report: %+v / %+v", got, reversed)
 	}
 }
@@ -36,7 +36,7 @@ func TestLocalIdentityBelongsOnlyToImmediatePackage(t *testing.T) {
 		Entry{Path: "model/feature/child/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: item\nbody: Child package.\nspec: {}")},
 		Entry{Path: "model/other/item.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: item\nbody: Other package.\nspec: {}")},
 	)
-	got := Compile(input)
+	got := Check(input)
 	if !onlyLaterStageFailures(got) {
 		t.Fatalf("separate Package identities were conflated: %+v", got)
 	}
@@ -52,7 +52,7 @@ func TestRootDefinitionsCannotAcquireAnEmptyPackageIdentity(t *testing.T) {
 		Path: "model/another.yaml", Kind: Regular,
 		Bytes: []byte("id: item\nkind: Example\nbody: Also root level.\nspec: {}"),
 	})
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || slices.ContainsFunc(got.Diagnostics, func(d Diagnostic) bool {
 		return d.Code == "name.definition_collision"
 	}) {
@@ -70,7 +70,7 @@ func dependencySource(id, origin, pkg, definitionID string) SourceModel {
 func TestPopulatedPackageHasOneModelOwnerEvenWithDistinctLocalIDs(t *testing.T) {
 	input := sourceInput()
 	input.Dependencies = []SourceModel{dependencySource("vocabulary", "dependency", "feature", "another")}
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || len(got.Models) != 2 {
 		t.Fatalf("shared Package ownership accepted: %+v", got)
 	}
@@ -92,7 +92,7 @@ func TestSharedIntermediateAndEmptyPackagesDoNotClaimGlobalOwnership(t *testing.
 		dependencySource("second", "dependency-b", "feature/sibling", "item"),
 	}
 	input.Dependencies[1].Entries = append(input.Dependencies[1].Entries, Entry{Path: "model/feature/child", Kind: Directory})
-	got := Compile(input)
+	got := Check(input)
 	if !onlyLaterStageFailures(got) {
 		t.Fatalf("empty/intermediate Package claimed foreign Definitions: %+v", got)
 	}
@@ -104,12 +104,12 @@ func TestSuppliedModelIdentityIsUniqueAndOrderIndependent(t *testing.T) {
 		dependencySource("same-model", "dependency-a", "a", "item"),
 		dependencySource("same-model", "dependency-b", "b", "other"),
 	}
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "name.model_collision") {
 		t.Fatalf("duplicate model ID disappeared: %+v", got)
 	}
 	slices.Reverse(input.Dependencies)
-	if reversed := Compile(input); !reflect.DeepEqual(got, reversed) {
+	if reversed := Check(input); !reflect.DeepEqual(got, reversed) {
 		t.Fatalf("dependency enumeration selected a winner: %+v / %+v", got, reversed)
 	}
 }

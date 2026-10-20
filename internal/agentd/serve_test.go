@@ -145,7 +145,7 @@ func shortSocketPath(t *testing.T) string {
 }
 
 // abandonCall starts a tool call through a bridge and kills the bridge
-// before the Host answers, as a CLI does when it cancels a turn.
+// before the Orchestrator answers, as a CLI does when it cancels a turn.
 func abandonCall() int {
 	bridge := exec.Command(os.Args[0])
 	bridge.Env = append(os.Environ(), "AGENTD_TEST_PROVIDER=bridge")
@@ -192,17 +192,17 @@ func (s *syncBuffer) String() string {
 
 func newHarness(t *testing.T) *harness {
 	t.Helper()
-	hostR, hostW := io.Pipe()
+	orchestratorR, orchestratorW := io.Pipe()
 	agentR, agentW := io.Pipe()
 	h := &harness{
 		t:      t,
 		socket: shortSocketPath(t),
-		toAgnt: hostW,
+		toAgnt: orchestratorW,
 		frames: make(chan frame.Frame, 64),
 		served: make(chan error, 1),
 	}
 	go func() {
-		h.served <- agentd.Serve(context.Background(), hostR, agentW, agentd.Config{Version: "test", SocketPath: h.socket, StopGrace: 2 * time.Second})
+		h.served <- agentd.Serve(context.Background(), orchestratorR, agentW, agentd.Config{Version: "test", SocketPath: h.socket, StopGrace: 2 * time.Second})
 		_ = agentW.Close()
 	}()
 	go func() {
@@ -219,11 +219,11 @@ func newHarness(t *testing.T) *harness {
 		}
 	}()
 	t.Cleanup(func() {
-		_ = hostW.Close()
+		_ = orchestratorW.Close()
 		select {
 		case <-h.served:
 		case <-time.After(10 * time.Second):
-			t.Error("agentd did not end after the Host closed")
+			t.Error("agentd did not end after the Orchestrator closed")
 		}
 	})
 	hello := h.control(frame.TypeHello)
@@ -325,7 +325,7 @@ func TestProviderStreamsRelayAndExit(t *testing.T) {
 	}
 }
 
-func TestToolCallReachesTheHostThroughTheBridge(t *testing.T) {
+func TestToolCallReachesTheOrchestratorThroughTheBridge(t *testing.T) {
 	h := newHarness(t)
 	h.start("client", submitWork)
 	var call frame.ToolCall
@@ -351,7 +351,7 @@ func TestToolCallReachesTheHostThroughTheBridge(t *testing.T) {
 	h.control(frame.TypeExited)
 }
 
-func TestUnknownToolNeverReachesTheHost(t *testing.T) {
+func TestUnknownToolNeverReachesTheOrchestrator(t *testing.T) {
 	h := newHarness(t)
 	h.start("client-unknown", submitWork)
 	var out strings.Builder
@@ -391,7 +391,7 @@ func TestUnstartableProviderIsReportedNotFatal(t *testing.T) {
 	}
 }
 
-func TestHostProtocolViolationsEndTheSession(t *testing.T) {
+func TestOrchestratorProtocolViolationsEndTheSession(t *testing.T) {
 	cases := map[string]func(h *harness){
 		"input before start": func(h *harness) {
 			h.send(frame.Frame{Channel: frame.ProviderIn, Payload: []byte("x")})
@@ -426,7 +426,7 @@ func TestHostProtocolViolationsEndTheSession(t *testing.T) {
 	}
 }
 
-func TestHostDisconnectStopsTheProvider(t *testing.T) {
+func TestOrchestratorDisconnectStopsTheProvider(t *testing.T) {
 	h := newHarness(t)
 	h.start("sleep")
 	_ = h.toAgnt.Close()
@@ -437,7 +437,7 @@ func TestHostDisconnectStopsTheProvider(t *testing.T) {
 		}
 		h.served <- err
 	case <-time.After(10 * time.Second):
-		t.Fatal("agentd kept running after the Host disconnected")
+		t.Fatal("agentd kept running after the Orchestrator disconnected")
 	}
 }
 
@@ -477,7 +477,7 @@ func TestProviderNotReadingInputCannotBlockStop(t *testing.T) {
 	h.control(frame.TypeExited)
 }
 
-func TestProviderNotReadingInputCannotBlockTheHostLeaving(t *testing.T) {
+func TestProviderNotReadingInputCannotBlockTheOrchestratorLeaving(t *testing.T) {
 	h := newHarness(t)
 	h.start("deaf")
 	chunk := make([]byte, frame.MaxPayload)
@@ -492,7 +492,7 @@ func TestProviderNotReadingInputCannotBlockTheHostLeaving(t *testing.T) {
 		}
 		h.served <- err
 	case <-time.After(10 * time.Second):
-		t.Fatal("agentd kept running after the Host left")
+		t.Fatal("agentd kept running after the Orchestrator left")
 	}
 }
 

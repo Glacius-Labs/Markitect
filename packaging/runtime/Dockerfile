@@ -4,7 +4,7 @@
 #   docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 #
 # A project builds its own image FROM this one and adds its toolchain. The
-# Host names the resulting image by its engine image ID.
+# Orchestrator names the resulting image by its engine image ID.
 
 FROM golang:1.27.1-bookworm@sha256:69a7b9788769bec032d238959b61854e9ae87f57be9029ec04e9885fabf99195 AS agentd
 WORKDIR /src
@@ -32,7 +32,7 @@ COPY --from=agentd /out/markitect-agentd /usr/local/bin/markitect-agentd
 RUN mkdir -p /home/agent /work && chown 1000:1000 /home/agent /work
 
 # Record what preparation binds: the CLI versions, the generated Codex App
-# Server schema digest and the agentd build. The Host copies this file out of
+# Server schema digest and the agentd build. The Orchestrator copies this file out of
 # a created, never started container.
 RUN set -eu; \
     mkdir -p /opt/markitect/codex-schema; \

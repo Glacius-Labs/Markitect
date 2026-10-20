@@ -29,15 +29,15 @@ func TestPreparationDerivesEveryFileOnceWithoutResolvingExplicitBoundaries(t *te
 	fileCheckSource(t, &selection, &actual, "ignore", ".markitect/ignore.yaml", snapshot.Executable, emptyFilePolicy, false)
 	// Keep an already captured opaque registry locator and all model boundaries.
 	selection.Registry = selection.Registry[:1]
-	// A Host instruction with the same spelling cannot satisfy a project ref.
-	external := apply.SourceLocation{Boundary: "explicit-host-root", Path: path(t, "ops/one.md")}
-	entry, err := snapshot.NewEntry(external.Path, snapshot.Regular, []byte("Distinct Host bytes"))
+	// A Runtime instruction with the same spelling cannot satisfy a project ref.
+	external := apply.SourceLocation{Boundary: "explicit-runtime-root", Path: path(t, "ops/one.md")}
+	entry, err := snapshot.NewEntry(external.Path, snapshot.Regular, []byte("Distinct Runtime bytes"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	selection.HostProfiles = []apply.SourceLocation{external}
+	selection.RuntimeProfiles = []apply.SourceLocation{external}
 	selection.Instructions = []apply.SourceLocation{external}
-	actual.HostProfiles = []apply.SourceFile{{Location: external, File: entry}}
+	actual.RuntimeProfiles = []apply.SourceFile{{Location: external, File: entry}}
 	actual.Instructions = []apply.SourceFile{{Location: external, File: entry}}
 	var requests []apply.CaptureRequest
 	source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
@@ -50,8 +50,8 @@ func TestPreparationDerivesEveryFileOnceWithoutResolvingExplicitBoundaries(t *te
 		t.Fatalf("closure: %s %v %+v", result.Status(), err, result.Attempts()[len(result.Attempts())-1].Files().Diagnostics())
 	}
 	got := requests[1].Selection
-	if got.Repository != selection.Repository || got.Local != selection.Local || !reflect.DeepEqual(got.Dependencies, selection.Dependencies) || !reflect.DeepEqual(got.HostProfiles, selection.HostProfiles) || got.Registry[0] != selection.Registry[0] || got.Instructions[0] != external {
-		t.Fatal("explicit model, dependency, Host or opaque repository locations changed")
+	if got.Repository != selection.Repository || got.Local != selection.Local || !reflect.DeepEqual(got.Dependencies, selection.Dependencies) || !reflect.DeepEqual(got.RuntimeProfiles, selection.RuntimeProfiles) || got.Registry[0] != selection.Registry[0] || got.Instructions[0] != external {
+		t.Fatal("explicit model, dependency, Runtime or opaque repository locations changed")
 	}
 	if len(got.Registry) != 2 || len(got.Ignore) != 1 || len(got.Instructions) != 6 {
 		t.Fatalf("closure file count: %+v", got)
@@ -154,7 +154,7 @@ func TestPreparationRetainsKnownFailureAndActualAccounting(t *testing.T) {
 			selection, raw := fileCheckInputs(t)
 			switch invalid {
 			case "execution":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "shared-workspace-v1", "unknown", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "recursive-passes-v1", "unknown", 1))
 			case "ignore":
 				fileCheckSource(t, &selection, &raw, "ignore", ".markitect/ignore.yaml", snapshot.Regular, "unknown: true\n", true)
 			case "instruction":
@@ -224,7 +224,7 @@ func TestPreparationClosesKnownSourcesBesideInvalidExecutionOrRegistry(t *testin
 				preparationInstructions(t, &actual)
 				fileCheckSource(t, &selection, &actual, "ignore", ".markitect/ignore.yaml", snapshot.Regular, emptyFilePolicy, false)
 				if invalid == "execution" {
-					rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(string(actual.Execution[0].File.Bytes()), "shared-workspace-v1", "unknown", 1))
+					rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(string(actual.Execution[0].File.Bytes()), "recursive-passes-v1", "unknown", 1))
 				} else {
 					rewriteFileCheckSource(t, &actual, &actual.Registry[0], "unknown: true\n")
 				}

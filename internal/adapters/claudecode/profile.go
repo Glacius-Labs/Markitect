@@ -19,9 +19,9 @@ import (
 
 var ErrSession = errors.New("Claude turn refused or incomplete")
 
-// Profile is one closed Host Agent profile: the immutable image, the exact
+// Profile is one closed Agent profile of the Runtime profile: the immutable image, the exact
 // credential reference, the wire limit and the explicit provider settings. No
-// field is inferred from the Host environment.
+// field is inferred from the Orchestrator environment.
 type Profile struct {
 	ImageID       string
 	CredentialRef string
@@ -79,7 +79,7 @@ func validateSessionProfile(profile SessionProfile) error {
 	return nil
 }
 
-// ProfileFromPrepared projects captured Claude v1 Host settings after complete
+// ProfileFromPrepared projects captured Claude v1 Runtime settings after complete
 // static preparation. It performs no acquisition, credential resolution or
 // runtime call; static preparation grants no execution authority.
 func ProfileFromPrepared(prepared apply.PreparedProfile) (Profile, error) {
@@ -106,7 +106,7 @@ func ProfileFromPrepared(prepared apply.PreparedProfile) (Profile, error) {
 	return profile, nil
 }
 
-// RuntimeCredential is resolved by the Host from exactly CredentialRef.
+// RuntimeCredential is resolved by the Orchestrator from exactly CredentialRef.
 // Token must be a long-lived dedicated runtime Claude token, never desktop auth.
 type RuntimeCredential struct{ Token string }
 type CredentialResolver func(context.Context, string) (RuntimeCredential, error)

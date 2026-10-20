@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// extractManifest is the Host-prepared structural manifest of an Extract; the
+// extractManifest is the Orchestrator-prepared structural manifest of an Extract; the
 // command has no --model flag.
 const extractManifest = ".markitect/model.yaml"
 
@@ -47,11 +47,12 @@ type ExtractReport struct {
 	Packages []apply.ExtractedPackage `json:"-"`
 }
 
-// VerifyReport is the last Verify round of the model phase.
+// VerifyReport is the last Verify Pass of the model phase: its identity, its
+// verdict and each Manager's participation.
 type VerifyReport struct {
-	Round       int              `json:"round"`
-	Green       bool             `json:"green"`
-	Assessments []run.Assessment `json:"assessments"`
+	Pass     string              `json:"pass"`
+	Verdict  run.Verdict         `json:"verdict"`
+	Managers []run.ManagerRecord `json:"managers"`
 }
 
 // NewExtractReport projects the result of an Extract with the run identity. Lists
@@ -72,9 +73,10 @@ func NewExtractReport(id string, result apply.ExtractResult) ExtractReport {
 		}
 		r.ModelComplete = result.Model.Status == run.Verified
 		r.Deviations = append(r.Deviations, apply.ExtractDeviations(result.Model.Findings)...)
-		if rounds := result.Model.Rounds; len(rounds) > 0 {
-			last := rounds[len(rounds)-1]
-			r.Verify = &VerifyReport{Round: last.Number, Green: last.Green, Assessments: last.Assessments}
+		for _, p := range result.Model.Passes {
+			if p.Review {
+				r.Verify = &VerifyReport{Pass: p.ID, Verdict: p.Verdict, Managers: p.Managers}
+			}
 		}
 	}
 	r.ProposedChecks = append(r.ProposedChecks, result.ProposedChecks...)
@@ -191,17 +193,17 @@ func RenderExtractAccount(r ExtractReport) string {
 
 	line("")
 	if r.Verify == nil {
-		line("Verify: no round finished")
+		line("Verify: no Pass finished")
 	} else {
 		var satisfied, open []string
-		for _, a := range r.Verify.Assessments {
-			if a.Satisfied {
+		for _, a := range r.Verify.Managers {
+			if a.Verdict == run.Satisfied {
 				satisfied = append(satisfied, a.Manager)
 			} else {
 				open = append(open, a.Manager)
 			}
 		}
-		line("Verify (round %d)", r.Verify.Round)
+		line("Verify (Pass %s, verdict %s)", r.Verify.Pass, r.Verify.Verdict)
 		if len(satisfied) > 0 {
 			line("  satisfied: %s", managerList(satisfied))
 		}

@@ -105,9 +105,9 @@ func (c *Command) prepare(ctx context.Context, request apply.PreviewRequest, ope
 }
 
 func attemptReport(a apply.PreviewPreparationAttempt) map[string]any {
-	compiled := a.Model().Compilation()
+	checked := a.Model().Checked()
 	var models []any
-	for _, m := range compiled.Models {
+	for _, m := range checked.Models {
 		models = append(models, map[string]any{"id": m.ID, "local": m.Local, "status": m.Status, "source": m.Manifest, "canonicalModelDigest": m.Digest, "packages": m.Packages, "definitions": len(m.Definitions), "phases": m.Phases})
 	}
 	files := a.Files()
@@ -124,7 +124,7 @@ func attemptReport(a apply.PreviewPreparationAttempt) map[string]any {
 		}
 		accounting = map[string]any{"available": true, "status": report.Status(), "treeDigest": report.TreeID().String(), "files": entries, "findings": report.Findings()}
 	}
-	r := map[string]any{"model": map[string]any{"status": compiled.Status, "coordinates": compiled.Coordinates, "models": models, "diagnostics": compiled.Diagnostics}, "execution": map[string]any{"status": a.Execution().Status(), "declarations": a.Execution().Partial(), "diagnostics": a.Execution().Diagnostics()}, "registry": map[string]any{"status": a.Registry().Status(), "discovered": a.Registry().Discovered(), "records": a.Registry().Records(), "diagnostics": a.Registry().Diagnostics()}, "files": map[string]any{"status": files.Status(), "accounting": accounting, "diagnostics": files.Diagnostics()}, "selection": map[string]any{"status": a.Contexts().Status(), "diagnostics": a.Contexts().Diagnostics()}}
+	r := map[string]any{"model": map[string]any{"status": checked.Status, "coordinates": checked.Coordinates, "models": models, "diagnostics": checked.Diagnostics}, "execution": map[string]any{"status": a.Execution().Status(), "declarations": a.Execution().Partial(), "diagnostics": a.Execution().Diagnostics()}, "registry": map[string]any{"status": a.Registry().Status(), "discovered": a.Registry().Discovered(), "records": a.Registry().Records(), "diagnostics": a.Registry().Diagnostics()}, "files": map[string]any{"status": files.Status(), "accounting": accounting, "diagnostics": files.Diagnostics()}, "selection": map[string]any{"status": a.Contexts().Status(), "diagnostics": a.Contexts().Diagnostics()}}
 	if a.Error() != nil {
 		r["error"] = a.Error().Error()
 	}

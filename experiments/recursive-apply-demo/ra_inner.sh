@@ -14,7 +14,7 @@ apply_once() {
   mark "${label}_start"
   "$ATTEMPT/markitect" apply --repo "$REPO" --model .markitect/model.yaml \
     --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-    --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-$label.json" \
+    --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-$label.json" \
     > "$ATTEMPT/out/apply-$label.json" 2> "$ATTEMPT/out/apply-$label.stderr"
   local code=$?
   mark "${label}_end"

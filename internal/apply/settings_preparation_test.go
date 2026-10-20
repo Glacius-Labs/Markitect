@@ -12,7 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const testHostDocument = `apiVersion: markitect.host/v1
+const testRuntimeDocument = `apiVersion: markitect.runtime/v1
 agentProfiles:
   library-agent:
     codexAppServer: {profileVersion: 1}
@@ -23,17 +23,17 @@ checkProfiles:
 
 // These controlled ports are test-only metadata evidence. They start no process
 // and make no claim about the actual Codex/process validation contracts.
-type hostAgentPort func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
+type runtimeAgentPort func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
 
-func (p hostAgentPort) PrepareAgentProfile(c context.Context, i apply.ProfileInput) (apply.ProfileObservation, error) {
+func (p runtimeAgentPort) PrepareAgentProfile(c context.Context, i apply.ProfileInput) (apply.ProfileObservation, error) {
 	o, err := p(c, i)
 	o.InputBinding = i.Binding()
 	return o, err
 }
 
-type hostCheckPort func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
+type runtimeCheckPort func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
 
-func (p hostCheckPort) PrepareCheckProfile(c context.Context, i apply.ProfileInput) (apply.ProfileObservation, error) {
+func (p runtimeCheckPort) PrepareCheckProfile(c context.Context, i apply.ProfileInput) (apply.ProfileObservation, error) {
 	o, err := p(c, i)
 	o.InputBinding = i.Binding()
 	return o, err
@@ -51,7 +51,7 @@ func testObservation(t *testing.T, agent bool) apply.ProfileObservation {
 	}
 	return o
 }
-func hostPorts(t *testing.T) (hostAgentPort, hostCheckPort) {
+func runtimePorts(t *testing.T) (runtimeAgentPort, runtimeCheckPort) {
 	t.Helper()
 	return func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
 			return testObservation(t, true), nil
@@ -60,36 +60,36 @@ func hostPorts(t *testing.T) (hostAgentPort, hostCheckPort) {
 		}
 }
 
-func addHostDocument(t *testing.T, selection *apply.InputSelection, raw *apply.RawInputs, document string) {
+func addRuntimeDocument(t *testing.T, selection *apply.InputSelection, raw *apply.RawInputs, document string) {
 	t.Helper()
-	location := apply.SourceLocation{Boundary: "explicit-host-boundary", Path: path(t, "profiles/host.yaml")}
+	location := apply.SourceLocation{Boundary: "explicit-runtime-boundary", Path: path(t, "profiles/runtime.yaml")}
 	file, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte(document))
 	if err != nil {
 		t.Fatal(err)
 	}
-	selection.HostProfiles = []apply.SourceLocation{location}
-	raw.HostProfiles = []apply.SourceFile{{Location: location, File: file}}
+	selection.RuntimeProfiles = []apply.SourceLocation{location}
+	raw.RuntimeProfiles = []apply.SourceFile{{Location: location, File: file}}
 }
 
-func hostSettingsInputs(t *testing.T) (apply.InputSelection, apply.RawInputs) {
+func runtimeSettingsInputs(t *testing.T) (apply.InputSelection, apply.RawInputs) {
 	t.Helper()
 	selection, raw := fileCheckInputs(t)
 	rewriteFileCheckSource(t, &raw, &raw.Execution[0], defaultsAbsentExecution(t))
-	addHostDocument(t, &selection, &raw, testHostDocument)
+	addRuntimeDocument(t, &selection, &raw, testRuntimeDocument)
 	return selection, raw
 }
 
-func TestM1HostSettingsUsesActualFileCheckAndProductDefaultsParents(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+func TestM1RuntimeSettingsUsesActualFileCheckAndProductDefaultsParents(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
 	files := m.PrepareRegistry().CheckFiles()
 	defaults := m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults())
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	result, err := files.PrepareSettings(context.Background(), defaults, agent, check)
 	settings, ok := result.Settings()
 	checks, checksOK := result.Checks()
 	if err != nil || result.Status() != model.Passed || !ok || !checksOK || len(checks) != 1 || len(result.Diagnostics()) != 0 {
-		t.Fatalf("M1 host settings: %v %s %+v; files=%+v defaults=%+v", err, result.Status(), result.Diagnostics(), files.Diagnostics(), defaults.Diagnostics())
+		t.Fatalf("M1 runtime settings: %v %s %+v; files=%+v defaults=%+v", err, result.Status(), result.Diagnostics(), files.Diagnostics(), defaults.Diagnostics())
 	}
 	root, ok := settings.Manager(".")
 	if !ok || len(root.Execute.InstructionSources) != 1 || root.Execute.InstructionSources[0].File != defaults.ProductSource().File || root.Execute.Profile.Value.Name != "library-agent" || root.Execute.Profile.Value.Identity == "" {
@@ -105,8 +105,8 @@ func TestM1HostSettingsUsesActualFileCheckAndProductDefaultsParents(t *testing.T
 	}
 	for _, profile := range result.ProfileObservations() {
 		input := profile.Input()
-		if input.Document() != raw.HostProfiles[0] || input.Location() != raw.HostProfiles[0].Location || input.Inline() == nil || profile.Source().ContentID != raw.HostProfiles[0].File.ContentID() || profile.Source().Field != input.Field() {
-			t.Fatal("actual host bytes/field binding lost")
+		if input.Document() != raw.RuntimeProfiles[0] || input.Location() != raw.RuntimeProfiles[0].Location || input.Inline() == nil || profile.Source().ContentID != raw.RuntimeProfiles[0].File.ContentID() || profile.Source().Field != input.Field() {
+			t.Fatal("actual runtime bytes/field binding lost")
 		}
 		if _, ok := profile.Identity(); !ok {
 			t.Fatal("passed metadata identity missing")
@@ -130,16 +130,16 @@ func TestM1HostSettingsUsesActualFileCheckAndProductDefaultsParents(t *testing.T
 	}
 }
 
-func TestHostSettingsExposesTheAuthoredBudgetOnlyWithResolvedSettings(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+func TestRuntimeSettingsExposesTheAuthoredBudgetOnlyWithResolvedSettings(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	result, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
 	budget, ok := result.Budget()
 	if err != nil || !ok || result.Status() != model.Passed {
 		t.Fatalf("budget unavailable: %v %s %+v", err, result.Status(), result.Diagnostics())
 	}
-	if budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Rounds.Value != 4 || budget.Rounds.Source.Field != "/budget/rounds" || budget.Rounds.Source.File != ".markitect/execution.yaml" {
+	if budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Passes.Value != 12 || budget.Passes.Source.Field != "/budget/passes" || budget.Passes.Source.File != ".markitect/execution.yaml" {
 		t.Fatalf("budget or its provenance changed: %+v", budget)
 	}
 	bad := apply.ProductStrategyDefaults()

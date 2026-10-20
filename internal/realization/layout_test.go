@@ -2,14 +2,12 @@ package realization_test
 
 import (
 	"errors"
-	"reflect"
 	"slices"
 	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
-	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 func layoutFacts() model.Result {
@@ -22,35 +20,30 @@ func layoutFacts() model.Result {
 	}}}
 }
 
-func directoryOf(t *testing.T, name string) snapshot.DirectoryBoundary {
-	t.Helper()
-	if name == "." {
-		return snapshot.RootDirectory()
+func dir(name string, who realization.Owner) realization.Area {
+	if name == "./" {
+		return realization.Area{Directory: true, Owner: who}
 	}
-	boundary, err := snapshot.DirectoryAt(path(t, name))
-	if err != nil {
-		t.Fatal(err)
-	}
-	return boundary
+	return realization.Area{Path: strings.TrimSuffix(name, "/"), Directory: true, Owner: who}
 }
 
-func roots(t *testing.T, names ...string) []snapshot.DirectoryBoundary {
-	t.Helper()
-	var result []snapshot.DirectoryBoundary
-	for _, name := range names {
-		result = append(result, directoryOf(t, name))
-	}
-	return result
+func exactFile(name string, who realization.Owner) realization.Area {
+	return realization.Area{Path: name, Owner: who}
 }
 
-func exception(t *testing.T, name string, who realization.Owner) realization.LayoutException {
-	t.Helper()
-	return realization.LayoutException{Path: path(t, name), Owner: who, Reason: "The callable interface fixes the location."}
-}
-
+// libraryLayout: Root owns the realization directory, each Package its own
+// directory, library additionally the exact build file in Root's directory
+// and Root an exact file inside lending's directory.
 func libraryLayout(t *testing.T) realization.Layout {
 	t.Helper()
-	layout, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{exception(t, "realization/cmd/library", owner(t, "library"))})
+	layout, err := realization.NewLayout(layoutFacts(), []realization.Area{
+		dir("realization/", realization.RootOwner()),
+		dir("realization/lending/", owner(t, "lending")),
+		dir("realization/lending/reminders/", owner(t, "lending/reminders")),
+		dir("realization/cmd/library/", owner(t, "library")),
+		exactFile("realization/lending/Makefile", realization.RootOwner()),
+		exactFile("realization/go.mod", owner(t, "library")),
+	})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -65,351 +58,174 @@ func ownerName(o realization.Owner) string {
 	return name
 }
 
-func TestLayoutOwnershipDeepestMappingWins(t *testing.T) {
+// The most specific area owns a path: exact files over directories, deeper
+// directories over shallower ones, for every Manager; uncovered paths have no
+// owner.
+func TestOwnershipTheMostSpecificAreaWins(t *testing.T) {
 	layout := libraryLayout(t)
-	for path_, want := range map[string]string{
-		"realization/lending/borrow.go":             "lending",
-		"realization/lending/internal/deep/x.go":    "lending",
-		"realization/lending/reminders/x.go":        "lending/reminders",
-		"realization/lending/reminders/a/b/test.go": "lending/reminders",
-		"realization/library/library.go":            "library",
-		"realization/cmd/library/main.go":           "library",
-		"realization/cmd/library":                   "library",
-		"realization/cmd/other/main.go":             ".",
-		"realization/go.mod":                        ".",
-		"realization/lending":                       ".",
-		"realization/unknown/x.go":                  ".",
-		"realizationx/lending/x.go":                 ".",
-		"docs/guide.md":                             ".",
-		"lending/x.go":                              ".",
-	} {
-		if got := ownerName(layout.OwnerOf(path(t, path_))); got != want {
-			t.Errorf("owner of %s = %q, want %q", path_, got, want)
+	cases := map[string]string{
+		"realization/README.md":                  ".",
+		"realization/go.mod":                     "library",
+		"realization/lending/loan.go":            "lending",
+		"realization/lending/Makefile":           ".",
+		"realization/lending/reminders/x.go":     "lending/reminders",
+		"realization/lending/reminders/a/b.go":   "lending/reminders",
+		"realization/cmd/library/main.go":        "library",
+		"realization/cmd/other/main.go":          ".",
+		"realization/lending/remindersx/file.go": "lending",
+	}
+	for name, want := range cases {
+		got, ok := layout.OwnerOf(path(t, name))
+		if !ok || ownerName(got) != want {
+			t.Errorf("%s: owner %q (%v), want %q", name, ownerName(got), ok, want)
 		}
 	}
-	if !layout.Declared() || (realization.Layout{}).Declared() {
-		t.Fatal("declared state wrong")
+	if _, ok := layout.OwnerOf(path(t, "README.md")); ok {
+		t.Errorf("a path outside every area has an owner")
 	}
-	if got := ownerName((realization.Layout{}).OwnerOf(path(t, "realization/lending/x.go"))); got != "." {
-		t.Fatalf("undeclared layout must fall back to Root, got %q", got)
+	if got, ok := layout.DirectoryOwner("realization/lending/reminders/new"); !ok || ownerName(got) != "lending/reminders" {
+		t.Errorf("directory owner %q", ownerName(got))
+	}
+	if got, _ := layout.DirectoryOwner("realization"); ownerName(got) != "." {
+		t.Errorf("directory owner of the root directory %q", ownerName(got))
+	}
+	whole, err := realization.NewLayout(layoutFacts(), []realization.Area{dir("./", realization.RootOwner()), dir("src/lending/", owner(t, "lending"))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if got, ok := whole.OwnerOf(path(t, "README.md")); !ok || !got.IsRoot() {
+		t.Errorf("an explicit broad Root area owns every other path")
+	}
+	if got, _ := whole.OwnerOf(path(t, "src/lending/x.go")); ownerName(got) != "lending" {
+		t.Errorf("a broad Root area absorbed another Manager's domain")
 	}
 }
 
-func TestLayoutExceptionAgainstMirroredDepth(t *testing.T) {
-	layout, err := realization.NewLayout(layoutFacts(), roots(t, "realization", "docs"), []realization.LayoutException{
-		exception(t, "realization/lending/reminders/generated", owner(t, "lending")),
-		exception(t, "realization/lending", realization.RootOwner()),
-		exception(t, "docs/lending/api.md", owner(t, "library")),
+func TestOwnershipRefusals(t *testing.T) {
+	cases := map[string][]realization.Area{
+		"under .markitect":        {dir(".markitect/registry/", realization.RootOwner())},
+		"under .git":              {exactFile(".git/config", realization.RootOwner())},
+		"unknown owner":           {dir("src/", realization.Owner{})},
+		"not a Manager":           {dir("src/", owner(t, "catalog"))},
+		"equal specificity":       {dir("src/", realization.RootOwner()), dir("src/", owner(t, "lending"))},
+		"file and directory":      {dir("src/a/", realization.RootOwner()), exactFile("src/a", owner(t, "lending"))},
+		"below an exact file":     {exactFile("src/a", realization.RootOwner()), exactFile("src/a/b", owner(t, "lending"))},
+		"letter case":             {dir("src/Lending/", realization.RootOwner()), dir("src/lending/", owner(t, "lending"))},
+		"exact file without path": {{Owner: realization.RootOwner()}},
+	}
+	for name, areas := range cases {
+		if _, err := realization.NewLayout(layoutFacts(), areas); !errors.Is(err, realization.ErrInvalidLayout) {
+			t.Errorf("%s: %v", name, err)
+		}
+	}
+}
+
+func TestOwnershipDescribesAreasWithForeignExclusions(t *testing.T) {
+	layout := libraryLayout(t)
+	root := layout.Describe(realization.RootOwner())
+	want := []string{"realization/ except realization/cmd/library/ (Manager \"library\"), realization/go.mod (Manager \"library\"), realization/lending/ (Manager \"lending\")", "realization/lending/Makefile"}
+	if !slices.Equal(root, want) {
+		t.Errorf("Root areas\n%q\nwant\n%q", root, want)
+	}
+	lending := layout.Describe(owner(t, "lending"))
+	if len(lending) != 1 || !strings.Contains(lending[0], "realization/lending/reminders/ (Manager \"lending/reminders\")") || !strings.Contains(lending[0], "realization/lending/Makefile (Root)") {
+		t.Errorf("lending areas %q", lending)
+	}
+}
+
+// Accounting under declared ownership: a directory entry registers its
+// registrant's files below it, an exact entry is more specific, other owners'
+// files are excluded, and wrong owners and uncovered files block.
+func TestAccountingExpandsDirectoryEntriesWithinOwnership(t *testing.T) {
+	layout := libraryLayout(t)
+	tree := fileTree(t, "realization/README.md", "realization/go.mod", "realization/lending/loan.go", "realization/lending/loan_test.go",
+		"realization/lending/Makefile", "realization/lending/reminders/notice.go", "realization/cmd/library/main.go")
+	lending := owner(t, "lending")
+	entries := []realization.Registration{
+		registration(t, realization.RootOwner(), artifact(t, "realization/README.md", callable)),
+		registration(t, realization.RootOwner(), artifact(t, "realization/lending/Makefile", borrow)),
+		registration(t, owner(t, "library"), artifact(t, "realization/go.mod", callable)),
+		registration(t, owner(t, "library"), directoryArtifact(t, "realization/cmd/library", callable)),
+		registration(t, lending, directoryArtifact(t, "realization/lending", borrow)),
+		registration(t, lending, artifactForm(t, "realization/lending/loan_test.go", realization.Test, borrow)),
+		registration(t, owner(t, "lending/reminders"), directoryArtifact(t, "realization/lending/reminders", borrow)),
+	}
+	registry, err := realization.NewRegistry(entries)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := realization.AccountFiles(layoutFacts(), tree, registry, nil, layout)
+	if report.Status() != realization.Accounted {
+		t.Fatalf("findings %+v", report.Findings())
+	}
+	forms := map[string]string{}
+	for _, f := range report.Files() {
+		r, ok := f.Registration()
+		if !ok {
+			t.Fatalf("%s unregistered", f.Entry().Path())
+		}
+		forms[f.Entry().Path().String()] = ownerName(r.Owner()) + " " + string(r.Artifact().Form()) + " " + r.Artifact().Selector()
+	}
+	if forms["realization/lending/loan_test.go"] != "lending test realization/lending/loan_test.go" || forms["realization/lending/loan.go"] != "lending code realization/lending/" ||
+		forms["realization/lending/Makefile"] != ". code realization/lending/Makefile" || forms["realization/lending/reminders/notice.go"] != "lending/reminders code realization/lending/reminders/" {
+		t.Errorf("effective registrations %v", forms)
+	}
+	if got := report.Artifacts(borrow); !slices.Contains(got, path(t, "realization/lending/loan.go")) || !slices.Contains(got, path(t, "realization/lending/reminders/notice.go")) {
+		t.Errorf("borrow artifacts %v", got)
+	}
+}
+
+func TestAccountingBlocksWrongOwnersEmptyDirectoriesAndUncoveredFiles(t *testing.T) {
+	layout := libraryLayout(t)
+	tree := fileTree(t, "realization/lending/loan.go", "realization/lending/reminders/notice.go", "docs/notes.md", "realization/cmd/library/main.go")
+	lending := owner(t, "lending")
+	registry, err := realization.NewRegistry([]realization.Registration{
+		registration(t, lending, directoryArtifact(t, "realization/lending", borrow)),
+		// lending's broad entry does not take its child's file, and its exact entry
+		// of the child's file is a wrong-owner registration.
+		registration(t, lending, artifact(t, "realization/lending/reminders/notice.go", borrow)),
+		// A directory entry at a directory another Manager owns.
+		registration(t, lending, directoryArtifact(t, "realization/cmd", borrow)),
+		// A directory entry that registers nothing.
+		registration(t, owner(t, "library"), directoryArtifact(t, "realization/cmd/library/empty", callable)),
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	for path_, want := range map[string]string{
-		"realization/lending/reminders/generated/g.go": "lending", // deeper exception beats the mirrored match
-		"realization/lending/reminders/x.go":           "lending/reminders",
-		"realization/lending/borrow.go":                ".", // an exception on the mirrored directory overrides it
-		"docs/lending/api.md":                          "library",
-		"docs/lending/other.md":                        "lending",
-		"docs/library/readme.md":                       "library",
-	} {
-		if got := ownerName(layout.OwnerOf(path(t, path_))); got != want {
-			t.Errorf("owner of %s = %q, want %q", path_, got, want)
-		}
+	report := realization.AccountFiles(layoutFacts(), tree, registry, nil, layout)
+	codes := findingCodes(report)
+	want := []string{"file.unexplained", "file.unexplained", "layout.no_owner", "registry.missing_file", "registry.outside_area", "registry.outside_area"}
+	if !slices.Equal(codes, want) {
+		t.Fatalf("codes %v, want %v: %+v", codes, want, report.Findings())
 	}
 }
 
-func TestLayoutRefusals(t *testing.T) {
-	root := realization.RootOwner()
-	for name, test := range map[string]struct {
-		roots      []string
-		exceptions []realization.LayoutException
-	}{
-		"repository root as root":     {roots: []string{"."}},
-		"repeated root":               {roots: []string{"realization", "realization"}},
-		"nested roots":                {roots: []string{"realization", "realization/lending"}},
-		"root in markitect":           {roots: []string{".markitect/area"}},
-		"root markitect itself":       {roots: []string{".markitect"}},
-		"exception in markitect":      {exceptions: []realization.LayoutException{exception(t, ".markitect/model/x", root)}},
-		"exception markitect itself":  {exceptions: []realization.LayoutException{exception(t, ".markitect", root)}},
-		"repeated exception":          {exceptions: []realization.LayoutException{exception(t, "a/b", root), exception(t, "a/b", owner(t, "library"))}},
-		"unknown owner":               {exceptions: []realization.LayoutException{exception(t, "a/b", owner(t, "missing"))}},
-		"zero owner":                  {exceptions: []realization.LayoutException{exception(t, "a/b", realization.Owner{})}},
-		"missing reason":              {exceptions: []realization.LayoutException{{Path: path(t, "a/b"), Owner: root}}},
-		"zero exception path":         {exceptions: []realization.LayoutException{{Owner: root, Reason: "Why."}}},
-		"roots differing by case":     {roots: []string{"realization", "Realization"}},
-		"exception differs by case":   {roots: []string{"realization"}, exceptions: []realization.LayoutException{exception(t, "Realization/cmd", root)}},
-		"exceptions differ by case":   {exceptions: []realization.LayoutException{exception(t, "a/Cmd", root), exception(t, "a/cmd", root)}},
-		"exception vs mirrored dir":   {roots: []string{"realization"}, exceptions: []realization.LayoutException{exception(t, "realization/Lending/x", root)}},
-		"exceptions fold to one key":  {exceptions: []realization.LayoutException{exception(t, "a/Straße", root), exception(t, "a/STRASSE", root)}},
-		"exception differs in prefix": {roots: []string{"realization"}, exceptions: []realization.LayoutException{exception(t, "realization/LENDING", owner(t, "library"))}},
-	} {
-		t.Run(name, func(t *testing.T) {
-			layout, err := realization.NewLayout(layoutFacts(), roots(t, test.roots...), test.exceptions)
-			if !errors.Is(err, realization.ErrInvalidLayout) {
-				t.Fatalf("layout accepted or wrong error: %v", err)
+// Without declared ownership the most specific entry decides, and a protected
+// input below a directory entry stays an input.
+func TestAccountingWithoutOwnershipUsesTheMostSpecificEntry(t *testing.T) {
+	tree := fileTree(t, "src/a.go", "src/b.go", "src/cfg.yaml")
+	registry, err := realization.NewRegistry([]realization.Registration{
+		registration(t, owner(t, "lending"), directoryArtifact(t, "src", borrow)),
+		registration(t, owner(t, "library"), artifact(t, "src/b.go", callable)),
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	report := realization.AccountFiles(checkedFacts(), tree, registry, []realization.Classification{classified(t, "src/cfg.yaml", realization.MarkitectInput)}, realization.Layout{})
+	if report.Status() != realization.Accounted {
+		t.Fatalf("findings %+v", report.Findings())
+	}
+	for _, f := range report.Files() {
+		r, _ := f.Registration()
+		switch f.Entry().Path().String() {
+		case "src/b.go":
+			if ownerName(r.Owner()) != "library" {
+				t.Errorf("b.go registered by %s", ownerName(r.Owner()))
 			}
-			if layout.Declared() {
-				t.Fatal("refusal returned a usable layout")
+		case "src/cfg.yaml":
+			if f.Class() != realization.MarkitectInput {
+				t.Errorf("a directory entry took over a protected input")
 			}
-		})
-	}
-	if _, err := realization.NewLayout(model.Result{}, roots(t, "realization"), nil); !errors.Is(err, realization.ErrInvalidLayout) {
-		t.Fatalf("layout over an unavailable model accepted: %v", err)
-	}
-	// The same spelling twice as an exception on a mirrored directory is not a
-	// case collision; neither are roots without exceptions.
-	if _, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{exception(t, "realization/lending", realization.RootOwner())}); err != nil {
-		t.Fatalf("exception on the exact mirrored directory refused: %v", err)
-	}
-	if _, err := realization.NewLayout(layoutFacts(), nil, nil); err != nil {
-		t.Fatalf("empty declared layout refused: %v", err)
-	}
-}
-
-func TestAccountingRequiresRegistrationsInTheirAreaShard(t *testing.T) {
-	compiled := layoutFacts()
-	files := fileTree(t, "realization/lending/reminders/x.go", "realization/go.mod", "realization/cmd/library/main.go")
-	layout := libraryLayout(t)
-	right := registry(t,
-		registration(t, owner(t, "lending/reminders"), artifact(t, "realization/lending/reminders/x.go", borrow)),
-		registration(t, realization.RootOwner(), artifact(t, "realization/go.mod", callable)),
-		registration(t, owner(t, "library"), artifact(t, "realization/cmd/library/main.go", callable)),
-	)
-	if report := realization.AccountFiles(compiled, files, right, nil, layout); report.Status() != realization.Accounted || len(report.Findings()) != 0 {
-		t.Fatalf("correct shards refused: %+v", report.Findings())
-	}
-	wrong := registry(t,
-		registration(t, owner(t, "lending"), artifact(t, "realization/lending/reminders/x.go", borrow)),
-		registration(t, realization.RootOwner(), artifact(t, "realization/go.mod", callable)),
-		registration(t, owner(t, "lending"), artifact(t, "realization/cmd/library/main.go", callable)),
-	)
-	report := realization.AccountFiles(compiled, files, wrong, nil, layout)
-	if report.Status() != realization.AccountingInvalid {
-		t.Fatal("registrations outside the owner's area accepted")
-	}
-	var outside []string
-	for _, finding := range report.Findings() {
-		if finding.Code != "registry.outside_area" {
-			t.Errorf("unexpected finding %+v", finding)
 		}
-		if got, _ := finding.Owner.Package(); got != "lending" || finding.Message == "" {
-			t.Errorf("finding must name the registering Manager and the actual owner: %+v", finding)
-		}
-		outside = append(outside, finding.Path.String())
-	}
-	if want := []string{"realization/cmd/library/main.go", "realization/lending/reminders/x.go"}; !slices.Equal(outside, want) {
-		t.Fatalf("findings at %q, want %q", outside, want)
-	}
-	if got := report.Artifacts(borrow); len(got) != 0 {
-		t.Fatalf("an out-of-area registration still counted as a link: %v", got)
-	}
-	// Without a declared layout the shard alone decides, as before.
-	if report := realization.AccountFiles(compiled, files, wrong, nil, realization.Layout{}); report.Status() != realization.Accounted {
-		t.Fatalf("undeclared layout rejected a registration: %+v", report.Findings())
-	}
-}
-
-func TestLayoutDescribesAreasForPrompts(t *testing.T) {
-	layout := libraryLayout(t)
-	tree := fileTree(t, "realization/go.mod", "realization/cmd/library/main.go", "realization/lending/x.go", "realization/lending/reminders/y.go")
-	for who, want := range map[string][]string{
-		"lending":           {"realization/lending/** except realization/lending/reminders/**"},
-		"lending/reminders": {"realization/lending/reminders/**"},
-		"library":           {"realization/library/**", "realization/cmd/library/**"},
-		".":                 {"files directly in realization/ such as realization/go.mod", "every file outside the artifact roots and exceptions"},
-	} {
-		o := realization.RootOwner()
-		if who != "." {
-			o = owner(t, who)
-		}
-		if got := layout.Describe(o, tree); !reflect.DeepEqual(got, want) {
-			t.Errorf("areas of %s = %q, want %q", who, got, want)
-		}
-	}
-	carved, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{
-		exception(t, "realization/lending/vendored", realization.RootOwner()),
-		exception(t, "realization/lending/Makefile", owner(t, "library")),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	files := fileTree(t, "realization/lending/Makefile")
-	want := []string{"realization/lending/** except realization/lending/Makefile, realization/lending/reminders/**, realization/lending/vendored/**"}
-	if got := carved.Describe(owner(t, "lending"), files); !reflect.DeepEqual(got, want) {
-		t.Errorf("carved areas = %q, want %q", got, want)
-	}
-	if got := carved.Describe(owner(t, "library"), files); !reflect.DeepEqual(got, []string{"realization/library/**", "realization/lending/Makefile"}) {
-		t.Errorf("exception file areas = %q", got)
-	}
-}
-
-func TestLayoutDescribesExceptionOnTheMirroredDirectoryForItsOwner(t *testing.T) {
-	layout, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{exception(t, "realization/lending", owner(t, "library"))})
-	if err != nil {
-		t.Fatal(err)
-	}
-	tree := fileTree(t, "realization/lending/x.go")
-	if got := ownerName(layout.OwnerOf(path(t, "realization/lending/x.go"))); got != "library" {
-		t.Fatalf("owner of the mirrored directory's file = %q, want library", got)
-	}
-	for who, want := range map[string][]string{
-		"lending": nil,
-		"library": {"realization/library/**", "realization/lending/** except realization/lending/reminders/**"},
-	} {
-		if got := layout.Describe(owner(t, who), tree); !reflect.DeepEqual(got, want) {
-			t.Errorf("areas of %s = %q, want %q", who, got, want)
-		}
-	}
-	// An exception on its own mirrored directory is described once.
-	same, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{exception(t, "realization/lending", owner(t, "lending"))})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if got, want := same.Describe(owner(t, "lending"), tree), []string{"realization/lending/** except realization/lending/reminders/**"}; !reflect.DeepEqual(got, want) {
-		t.Errorf("areas = %q, want %q", got, want)
-	}
-}
-
-func TestLayoutFilesInUnmappedRootSubdirectoriesHaveNoOwner(t *testing.T) {
-	layout := libraryLayout(t)
-	for path_, want := range map[string]bool{
-		"realization/go.mod":              true, // directly in the root: Root
-		"realization/lending/borrow.go":   true,
-		"realization/cmd/library/main.go": true, // exception
-		"realization/cmd/other/main.go":   false,
-		"realization/cmd/main.go":         false,
-		"realization/unknown/x.go":        false,
-		"realization/lending":             true, // a file named like a Package, directly in the root
-		"docs/guide.md":                   true, // outside the roots
-		"realizationx/a/b.go":             true,
-	} {
-		if got := layout.HasOwner(path(t, path_)); got != want {
-			t.Errorf("HasOwner(%s) = %v, want %v", path_, got, want)
-		}
-		if got := ownerName(layout.OwnerOf(path(t, path_))); !want && got != "." {
-			t.Errorf("owner of the unowned %s = %q, Root must resolve it", path_, got)
-		}
-	}
-	if !(realization.Layout{}).HasOwner(path(t, "realization/unknown/x.go")) {
-		t.Fatal("an undeclared layout reports an unowned file")
-	}
-}
-
-func TestAccountingReportsFilesWithoutAnOwnerToRoot(t *testing.T) {
-	files := fileTree(t, "realization/go.mod", "realization/cmd/other/main.go", "realization/stray/x.go", "realization/stray/ignored.txt")
-	root := realization.RootOwner()
-	classifications := []realization.Classification{classified(t, "realization/stray/ignored.txt", realization.IgnoredFile)}
-	registered := registry(t,
-		registration(t, root, artifact(t, "realization/go.mod", callable)),
-		registration(t, root, artifact(t, "realization/cmd/other/main.go", callable)))
-	report := realization.AccountFiles(layoutFacts(), files, registered, classifications, libraryLayout(t))
-	var got []string
-	for _, finding := range report.Findings() {
-		if !finding.Owner.IsRoot() || finding.Message == "" {
-			t.Errorf("finding must be addressed to Root with a message: %+v", finding)
-		}
-		got = append(got, finding.Code+" "+finding.Path.String())
-	}
-	// A registered or unregistered file is reported once as unowned, never as unexplained.
-	if want := []string{"layout.no_owner realization/cmd/other/main.go", "layout.no_owner realization/stray/x.go"}; !slices.Equal(got, want) || report.Status() != realization.AccountingInvalid {
-		t.Fatalf("findings %q status %v, want %q", got, report.Status(), want)
-	}
-	for _, finding := range report.Findings() {
-		if !strings.Contains(finding.Message, "the layout needs an exception") || !strings.Contains(finding.Message, "the file must move") {
-			t.Errorf("a start stand with unowned files must say how to resolve them: %q", finding.Message)
-		}
-	}
-	if links := report.Artifacts(callable); !slices.Equal(links, []snapshot.Path{path(t, "realization/go.mod")}) {
-		t.Fatalf("an unowned registration counted as a link: %v", links)
-	}
-	// Without a declared layout nothing changes.
-	if report := realization.AccountFiles(layoutFacts(), files, registered, classifications, realization.Layout{}); len(report.Findings()) != 1 || report.Findings()[0].Code != "file.unexplained" {
-		t.Fatalf("undeclared layout: %+v", report.Findings())
-	}
-}
-
-func TestLayoutAreasAreDirectoriesParentsFirst(t *testing.T) {
-	layout := libraryLayout(t)
-	var got []string
-	for _, area := range layout.Areas(fileTree(t, "realization/go.mod", "realization/cmd/library/main.go")) {
-		got = append(got, area.Path.String()+" "+ownerName(area.Owner))
-	}
-	want := []string{"realization/cmd/library library", "realization/lending lending", "realization/lending/reminders lending/reminders", "realization/library library"}
-	if !slices.Equal(got, want) {
-		t.Fatalf("areas %q, want %q", got, want)
-	}
-	// An exception on a file is no area; one on a mirrored directory replaces it.
-	carved, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{
-		exception(t, "realization/lending/Makefile", owner(t, "library")),
-		exception(t, "realization/lending", owner(t, "library")),
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	got = nil
-	for _, area := range carved.Areas(fileTree(t, "realization/lending/Makefile")) {
-		got = append(got, area.Path.String()+" "+ownerName(area.Owner))
-	}
-	if want := []string{"realization/lending library", "realization/lending/reminders lending/reminders", "realization/library library"}; !slices.Equal(got, want) {
-		t.Fatalf("carved areas %q, want %q", got, want)
-	}
-}
-
-func TestLayoutExceptionKindDecidesFileOrDirectory(t *testing.T) {
-	file := realization.LayoutException{Path: path(t, "realization/lending/Makefile"), File: true, Owner: realization.RootOwner(), Reason: "The Makefile is shared."}
-	layout, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file})
-	if err != nil {
-		t.Fatal(err)
-	}
-	// A declared file is no area although the start tree does not hold it; the
-	// same exception without a kind is a directory and an area.
-	var got []string
-	for _, area := range layout.Areas(fileTree(t, "realization/go.mod")) {
-		got = append(got, area.Path.String())
-	}
-	if want := []string{"realization/lending", "realization/lending/reminders", "realization/library"}; !slices.Equal(got, want) {
-		t.Fatalf("areas with a declared file exception %q, want %q", got, want)
-	}
-	file.File = false
-	directory, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file})
-	if err != nil {
-		t.Fatal(err)
-	}
-	got = nil
-	for _, area := range directory.Areas(fileTree(t, "realization/go.mod")) {
-		got = append(got, area.Path.String())
-	}
-	if want := []string{"realization/lending", "realization/lending/Makefile", "realization/lending/reminders", "realization/library"}; !slices.Equal(got, want) {
-		t.Fatalf("areas with a directory exception %q, want %q", got, want)
-	}
-	// The declared file still owns its path and is described as a file.
-	if owner := layout.OwnerOf(path(t, "realization/lending/Makefile")); owner != file.Owner {
-		t.Fatalf("owner %v", owner)
-	}
-	want := []string{"files directly in realization/ such as realization/go.mod", "realization/lending/Makefile", "every file outside the artifact roots and exceptions"}
-	if got := layout.Describe(realization.RootOwner(), fileTree(t, "realization/go.mod")); !slices.Equal(got, want) {
-		t.Fatalf("description %q, want %q", got, want)
-	}
-}
-
-func TestLayoutRefusesAFileExceptionOwnedByAPackage(t *testing.T) {
-	file := realization.LayoutException{Path: path(t, "realization/lending/Makefile"), File: true, Owner: owner(t, "library"), Reason: "The Makefile is shared."}
-	_, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file})
-	if !errors.Is(err, realization.ErrInvalidLayout) || !strings.Contains(err.Error(), "only Root can own a file exception") || !strings.Contains(err.Error(), "use a directory exception") {
-		t.Fatalf("a Package-owned file exception was accepted or unclear: %v", err)
-	}
-	file.File = false
-	if _, err := realization.NewLayout(layoutFacts(), roots(t, "realization"), []realization.LayoutException{file}); err != nil {
-		t.Fatalf("the same exception as a directory refused: %v", err)
-	}
-}
-
-func TestLayoutAreasSkipAMirroredDirectoryThatIsAFile(t *testing.T) {
-	var got []string
-	for _, area := range libraryLayout(t).Areas(fileTree(t, "realization/library", "realization/cmd/library/main.go")) {
-		got = append(got, area.Path.String())
-	}
-	if want := []string{"realization/cmd/library", "realization/lending", "realization/lending/reminders"}; !slices.Equal(got, want) {
-		t.Fatalf("areas %q, want %q", got, want)
 	}
 }

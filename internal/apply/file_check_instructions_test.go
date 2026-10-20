@@ -48,8 +48,8 @@ func TestFileCheckDoesNotResolveProjectInstructionsFromExternalLocators(t *testi
 	}
 	selection.Instructions = []apply.SourceLocation{location}
 	raw.Instructions = []apply.SourceFile{{Location: location, File: entry}}
-	selection.HostProfiles = []apply.SourceLocation{location}
-	raw.HostProfiles = []apply.SourceFile{{Location: location, File: entry}}
+	selection.RuntimeProfiles = []apply.SourceLocation{location}
+	raw.RuntimeProfiles = []apply.SourceFile{{Location: location, File: entry}}
 	result := checkedFiles(t, selection, raw)
 	if result.Status() != model.Passed {
 		t.Fatalf("external sources gained phantom Census coordinates: %+v", result.Diagnostics())

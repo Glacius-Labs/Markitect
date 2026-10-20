@@ -4,18 +4,15 @@ imports:
 id: delegated-context
 kind: Vocab.Rule
 body: >-
-  Derive one ordinary Root and one Manager per local canonical Package from authoritative compiled facts.
-  Keep responsibilities and artifact-area mappings persistent across Applies, with a mirrored model hierarchy as the default layout and explicit persistent project exceptions.
-  Supply the same reconciliation mandate with separately compiled applicable model obligations, provenance, fixed owner decisions and direct-parent/child roles and contacts.
-  Every local Manager, including empty and intermediate Packages, assesses its responsibility; do not select participants by AI relevance.
-  Managers communicate only with their direct parent and children; only Root escalates to the human.
-  Include required cross-area contracts without granting additional contacts, write ownership or inferred missing model links.
-  A Manager realizes, coordinates and integrates its area and reviews it in fresh Verify conversations without the author's dialogue.
-  A parent supplies the foundations its children need within its own area, coordinates and integrates them; it never implements their areas or releases them from their obligations.
-  A Definition is realized by its owner's artifacts; other areas use that realization instead of rebuilding it, and no Manager touches anything outside its area. The parent settles cross-area matters between its children.
-  Children begin after their parent's first Execute turn supplied the needed foundation; siblings then proceed in parallel.
-  Parents inspect their own obligations and actual child interaction rather than merely collecting green reports.
-  Derive technical risks and suitable evidence from the model and realization without a mandatory advance expectations phase or per-case ledger.
+  Derive one ordinary Root and one Manager per local canonical Package from authoritative checked facts; every required Manager, including empty and intermediate Packages, takes part in every Pass, and no Agent prunes the tree or selects participants by relevance.
+  Give each Manager its own obligations with provenance, labeled foreign context with its owners, its owned areas and local registry, the accepted plans and bases it builds on, the required checks and its team; Root receives the project and boundary obligations explicitly, attributed to their actual owners.
+  Every Manager plans and realizes its own obligations; a parent supplies its own foundation, reviews its children's plans, bases and results for complete responsibilities and fit, returns gaps to their owner and integrates their accepted results; it never does a child's work or releases a child from its obligations.
+  A Definition is realized by its owner's artifacts; other areas use that realization instead of rebuilding it, and the parent settles cross-area matters between its children.
+  Managers communicate only along direct parent and child edges, in both directions, with correlated questions; a cross-branch exchange travels through the common ancestor and back; only Root asks the AI that invoked Markitect, which may consult the user.
+  Answers clarify within the model and never override it; Root ends the Run when it judges the model erroneous or contradictory.
+  A Manager may delegate bounded tasks to configured helper roles, each in its own container with read access to the whole stand and write access only to an explicit subset of its own area that no other writer holds; helpers report to their Manager only, gain no ownership and complete nothing by finishing.
+  Reviewers are fresh, read-only and independent of the authors; the Orchestrator records their findings, and no author can hide them.
+  Derive technical risks and suitable evidence from the model and the realization without a mandatory advance expectations phase.
   Preserve intent; changed policy or a necessary missing canonical link needs a separate model decision.
-  Per-area prompts explain responsibility and work but never become a second owner of binding project rules.
+  Prompts state each role's task, inputs and answer format; they never become a second owner of binding project rules or of the process.
 spec: {}

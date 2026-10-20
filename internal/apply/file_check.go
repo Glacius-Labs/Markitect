@@ -96,9 +96,9 @@ func (r PreviewFileCheck) RegistryPreparation() PreviewRegistryPreparation { ret
 
 func (r CapturedRegistryPreparation) CheckFiles() CapturedFileCheck {
 	execution := r.stage.DecodeExecution()
-	return CapturedFileCheck{fileCheck: checkFiles(r.registryPreparation, r.stage.compiled, r.stage.inputs.Raw, execution.executionDecoding, r.stage.extract, r.stage.startDrift), stage: r}
+	return CapturedFileCheck{fileCheck: checkFiles(r.registryPreparation, r.stage.checked, r.stage.inputs.Raw, execution.executionDecoding, r.stage.extract), stage: r}
 }
 func (r PreviewRegistryPreparation) CheckFiles() PreviewFileCheck {
 	execution := r.stage.DecodeExecution()
-	return PreviewFileCheck{fileCheck: checkFiles(r.registryPreparation, r.stage.compiled, r.stage.inputs.Raw, execution.executionDecoding, false, false), stage: r}
+	return PreviewFileCheck{fileCheck: checkFiles(r.registryPreparation, r.stage.checked, r.stage.inputs.Raw, execution.executionDecoding, false), stage: r}
 }

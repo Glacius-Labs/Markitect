@@ -17,7 +17,7 @@ type RuntimeObservation struct {
 // ObserveRuntime resolves an image reference to its immutable engine image ID
 // and reads the runtime metadata the image records, without starting it. It
 // refuses an image that does not record the supported Claude Code version, so
-// a Host profile written from the observation passes metadata preparation.
+// a Runtime profile written from the observation passes metadata preparation.
 func ObserveRuntime(ctx context.Context, reader ImageReader, ref string) (RuntimeObservation, error) {
 	if reader == nil {
 		return RuntimeObservation{}, errors.New("an image reader is required")
@@ -51,9 +51,9 @@ func ObserveRuntime(ctx context.Context, reader ImageReader, ref string) (Runtim
 	return RuntimeObservation{ImageID: imageID, AgentdVersion: values["agentd"], CLIVersion: values["claude"]}, nil
 }
 
-// HostProfile is the explicit content of one Claude Code Host profile. Setup
+// RuntimeProfile is the explicit content of one Claude Code Runtime profile. Setup
 // writes it into the closed section that the metadata decoder reads back.
-type HostProfile struct {
+type RuntimeProfile struct {
 	EngineExecutable string
 	ImageID          string
 	AgentdVersion    string
@@ -62,37 +62,37 @@ type HostProfile struct {
 	Session          SessionProfile
 }
 
-// HostInstruction names one captured instruction file of a profile.
-type HostInstruction struct {
+// RuntimeInstruction names one captured instruction file of a profile.
+type RuntimeInstruction struct {
 	Boundary string `yaml:"boundary"`
 	Path     string `yaml:"path"`
 }
 
-// HostSection is the closed `claudeCode` section of a Host document in the
+// RuntimeSection is the closed `claudeCode` section of a Runtime profile document in the
 // field order and spelling of the decoder. It has no instruction files.
-type HostSection struct {
-	ProfileVersion   int               `yaml:"profileVersion"`
-	EngineExecutable string            `yaml:"engineExecutable"`
-	ImageID          string            `yaml:"imageID"`
-	AgentdVersion    string            `yaml:"agentdVersion"`
-	Instructions     []HostInstruction `yaml:"instructions"`
-	CredentialRef    string            `yaml:"credentialRef"`
-	MaxWireBytes     int64             `yaml:"maxWireBytes"`
-	Session          SessionProfile    `yaml:"session"`
+type RuntimeSection struct {
+	ProfileVersion   int                  `yaml:"profileVersion"`
+	EngineExecutable string               `yaml:"engineExecutable"`
+	ImageID          string               `yaml:"imageID"`
+	AgentdVersion    string               `yaml:"agentdVersion"`
+	Instructions     []RuntimeInstruction `yaml:"instructions"`
+	CredentialRef    string               `yaml:"credentialRef"`
+	MaxWireBytes     int64                `yaml:"maxWireBytes"`
+	Session          SessionProfile       `yaml:"session"`
 }
 
-// Section validates the profile as the adapter will and returns its Host
+// Section validates the profile as the adapter will and returns its Runtime
 // document section. It performs no engine, image or credential access.
-func (p HostProfile) Section() (HostSection, error) {
+func (p RuntimeProfile) Section() (RuntimeSection, error) {
 	if !literal(p.EngineExecutable) || !literal(p.AgentdVersion) || !literal(p.CredentialRef) {
-		return HostSection{}, fmt.Errorf("%w: engine, agentd version and credential reference must be nonempty literals", ErrSession)
+		return RuntimeSection{}, fmt.Errorf("%w: engine, agentd version and credential reference must be nonempty literals", ErrSession)
 	}
 	profile := Profile{ImageID: p.ImageID, CredentialRef: p.CredentialRef, MaxWireBytes: p.MaxWireBytes, Session: p.Session}
 	if err := profile.validate(); err != nil {
-		return HostSection{}, err
+		return RuntimeSection{}, err
 	}
-	return HostSection{
+	return RuntimeSection{
 		ProfileVersion: 1, EngineExecutable: p.EngineExecutable, ImageID: p.ImageID, AgentdVersion: p.AgentdVersion,
-		Instructions: []HostInstruction{}, CredentialRef: p.CredentialRef, MaxWireBytes: p.MaxWireBytes, Session: p.Session,
+		Instructions: []RuntimeInstruction{}, CredentialRef: p.CredentialRef, MaxWireBytes: p.MaxWireBytes, Session: p.Session,
 	}, nil
 }

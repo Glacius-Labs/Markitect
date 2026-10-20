@@ -14,11 +14,11 @@ import (
 
 // All five selected source classes carry original bytes, modes and exact
 // acquisition coordinates. Repository membership is explicit, not inferred
-// from SourceModel.Origin or an external Host source's location spelling.
+// from SourceModel.Origin or an external Runtime profile source's location spelling.
 func withSelectedSources(t *testing.T, selection *apply.InputSelection, raw *apply.RawInputs) {
 	t.Helper()
 	files := raw.Census.Entries()
-	for i, name := range []string{"execution", "registry", "ignore", "host-profile", "instructions"} {
+	for i, name := range []string{"execution", "registry", "ignore", "runtime-profile", "instructions"} {
 		location := apply.SourceLocation{Boundary: "explicit-source-boundary", Path: path(t, name+".data")}
 		file, err := snapshot.NewEntry(location.Path, snapshot.Executable, []byte("original\r\n"+name+"\x00"))
 		if err != nil {
@@ -41,7 +41,7 @@ func withSelectedSources(t *testing.T, selection *apply.InputSelection, raw *app
 		case 2:
 			selection.Ignore, raw.Ignore = []apply.SourceLocation{location}, []apply.SourceFile{source}
 		case 3:
-			selection.HostProfiles, raw.HostProfiles = []apply.SourceLocation{location}, []apply.SourceFile{source}
+			selection.RuntimeProfiles, raw.RuntimeProfiles = []apply.SourceLocation{location}, []apply.SourceFile{source}
 		case 4:
 			selection.Instructions, raw.Instructions = []apply.SourceLocation{location}, []apply.SourceFile{source}
 		}
@@ -60,14 +60,14 @@ func TestExactOriginalTreesModesCoordinatesAndSelectedSourcesSurvive(t *testing.
 	// selection; only explicit coordinates bind it to the repository census.
 	raw.Local.Source.Origin = "opaque-origin:outside/../not-a-location"
 	result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || result.Compilation().Status != model.Passed {
-		t.Fatalf("%v %+v", err, result.Compilation())
+	if err != nil || result.Checked().Status != model.Passed {
+		t.Fatalf("%v %+v", err, result.Checked())
 	}
 	got := result.Inputs()
 	if !reflect.DeepEqual(got.Raw, raw) || got.Raw.Census.Digest() != raw.Census.Digest() {
 		t.Fatal("acquisition was normalized or rebound")
 	}
-	for _, file := range []apply.SourceFile{got.Raw.Execution[0], got.Raw.Registry[0], got.Raw.Ignore[0], got.Raw.HostProfiles[0], got.Raw.Instructions[0]} {
+	for _, file := range []apply.SourceFile{got.Raw.Execution[0], got.Raw.Registry[0], got.Raw.Ignore[0], got.Raw.RuntimeProfiles[0], got.Raw.Instructions[0]} {
 		want := snapshot.ContentID(sha256.Sum256([]byte("original\r\n" + file.Location.Path.String()[:len(file.Location.Path.String())-5] + "\x00")))
 		if file.File.Mode() != snapshot.Executable || file.File.ContentID() != want {
 			t.Fatal("mode or original content changed")
@@ -75,8 +75,8 @@ func TestExactOriginalTreesModesCoordinatesAndSelectedSourcesSurvive(t *testing.
 	}
 }
 
-func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.T) {
-	for _, kind := range []string{"execution missing", "registry missing", "ignore missing", "host missing", "instruction missing", "extra input", "input location", "input path", "input bytes", "input mode", "input repo path", "execution repo coordinate missing", "registry repo coordinate missing", "ignore repo coordinate missing", "dependency bytes", "local bytes"} {
+func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCheck(t *testing.T) {
+	for _, kind := range []string{"execution missing", "registry missing", "ignore missing", "runtime missing", "instruction missing", "extra input", "input location", "input path", "input bytes", "input mode", "input repo path", "execution repo coordinate missing", "registry repo coordinate missing", "ignore repo coordinate missing", "dependency bytes", "local bytes"} {
 		t.Run(kind, func(t *testing.T) {
 			selection, raw := libraryInputs(t)
 			withSelectedSources(t, &selection, &raw)
@@ -87,8 +87,8 @@ func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.
 				raw.Registry = nil
 			case "ignore missing":
 				raw.Ignore = nil
-			case "host missing":
-				raw.HostProfiles = nil
+			case "runtime missing":
+				raw.RuntimeProfiles = nil
 			case "instruction missing":
 				raw.Instructions = nil
 			case "extra input":
@@ -128,8 +128,8 @@ func TestSelectedInputAndDependencyByteMismatchesRefuseBeforeCompile(t *testing.
 				}
 			}
 			result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-			if !errors.Is(err, apply.ErrIncompleteInputs) || result.Compilation().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs().Raw, raw) {
-				t.Fatalf("%v %+v", err, result.Compilation())
+			if !errors.Is(err, apply.ErrIncompleteInputs) || result.Checked().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs().Raw, raw) {
+				t.Fatalf("%v %+v", err, result.Checked())
 			}
 		})
 	}
@@ -142,10 +142,10 @@ func TestPackageInventoryComesFromActualModelDirectoryEntries(t *testing.T) {
 		return apply.PreviewedInputs{Raw: raw, Head: fixtureHead}, nil
 	}}
 	result, err := apply.NewModelService(nil, source).PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || result.Compilation().Status != model.Passed {
-		t.Fatalf("%v %+v", err, result.Compilation())
+	if err != nil || result.Checked().Status != model.Passed {
+		t.Fatalf("%v %+v", err, result.Checked())
 	}
-	local := result.Compilation().Models[0]
+	local := result.Checked().Models[0]
 	found := make(map[string]bool)
 	for _, pkg := range local.Packages {
 		found[pkg.Name] = true

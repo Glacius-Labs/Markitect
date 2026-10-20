@@ -23,7 +23,7 @@ const (
 // within the close timeout and was removed by force.
 var ErrForcedClose = errors.New("the container did not end within the close timeout and was removed by force")
 
-// Session is the Host side of one agentd connection. Provider output is
+// Session is the Orchestrator side of one agentd connection. Provider output is
 // buffered up to a bound, so control replies such as a census or the exit
 // never wait for the consumer. Tool calls arrive on a short queue; the
 // provider waits for their replies.
@@ -93,7 +93,7 @@ func newSession(ctx context.Context, in io.WriteCloser, out io.Reader, wait func
 		return nil, abandon(ctx.Err())
 	}
 	if hello.Protocol != frame.ProtocolVersion {
-		return nil, abandon(fmt.Errorf("agentd speaks frame protocol %d, the Host %d", hello.Protocol, frame.ProtocolVersion))
+		return nil, abandon(fmt.Errorf("agentd speaks frame protocol %d, the Orchestrator %d", hello.Protocol, frame.ProtocolVersion))
 	}
 	s := &Session{
 		in: in, hello: hello, wait: wait, kill: kill, closeTimeout: closeTimeout,
@@ -228,7 +228,7 @@ func (s *Session) StartProvider(ctx context.Context, req frame.Start) (frame.Sta
 }
 
 // Census returns the processes running in the container besides agentd and
-// its init. It is a snapshot for a quiescence judgment: the Host decides
+// its init. It is a snapshot for a quiescence judgment: the Orchestrator decides
 // which of the listed processes, if any, may remain.
 func (s *Session) Census(ctx context.Context) ([]frame.Process, error) {
 	r, err := s.request(ctx, frame.ControlMessage{Type: frame.TypeCensus, Census: &frame.Census{}}, "census")
@@ -264,7 +264,7 @@ func (s *Session) CloseInput() error {
 	return s.write(frame.Frame{Channel: frame.ProviderIn})
 }
 
-// ToolCalls delivers the provider's Host tool calls. It closes when the
+// ToolCalls delivers the provider's Orchestrator tool calls. It closes when the
 // connection ends.
 func (s *Session) ToolCalls() <-chan frame.ToolCall { return s.tools }
 

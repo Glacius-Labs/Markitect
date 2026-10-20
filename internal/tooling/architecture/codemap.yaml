@@ -1,7 +1,7 @@
 packages:
   - path: internal/model
     layer: apply-model
-    purpose: Pure canonical v1 compiler over explicit bytes.
+    purpose: Pure canonical v1 Model check over explicit bytes.
     doc: docs/development/modules.md
   - path: internal/snapshot
     layer: apply-snapshot
@@ -17,7 +17,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/run
     layer: apply-run
-    purpose: Recursive reconciliation engine over ports for Agents, workspaces, checks, owner and evidence.
+    purpose: Orchestrator for the recursive Pass process over ports for Agents, workspaces, checks, owner and evidence.
     doc: docs/development/modules.md
   - path: internal/apply
     layer: apply-usecase

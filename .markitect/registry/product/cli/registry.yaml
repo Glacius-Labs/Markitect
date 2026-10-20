@@ -159,7 +159,7 @@ artifacts:
   - path: "internal/bootstrap/setup_files.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
-    why: Composes the Host profile document, checks the credential path without reading it and writes the private Host files under the state lock without replacing identical bytes.
+    why: Composes the Runtime profile document, checks the credential path without reading it and writes the private Runtime files under the state lock without replacing identical bytes.
   - path: "internal/bootstrap/setup_runconfig.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]

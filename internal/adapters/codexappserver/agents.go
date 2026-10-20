@@ -32,7 +32,7 @@ type Agents struct {
 	stopTimeout time.Duration
 }
 
-// NewAgents runs turns in containers of engine. profiles maps the Host profile
+// NewAgents runs turns in containers of engine. profiles maps the Runtime profile
 // names a Turn refers to.
 func NewAgents(engine *container.Engine, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
 	if engine == nil {
@@ -47,7 +47,7 @@ func NewAgents(engine *container.Engine, profiles map[string]Profile, credential
 	}, engine.RunHelper, profiles, credentials)
 }
 
-// NewAgentsWithRuntime permits a Host-supplied runtime peer. Production peers
+// NewAgentsWithRuntime permits an Orchestrator-supplied runtime peer. Production peers
 // must preserve Engine.Start and Session's exit semantics.
 func NewAgentsWithRuntime(start RuntimeStarter, helper RuntimeHelper, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
 	if start == nil || credentials == nil {
@@ -130,7 +130,7 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 	return res, t.finish(ctx, &res, err)
 }
 
-// admit checks the turn against the Host profile before anything runs.
+// admit checks the turn against the Runtime profile before anything runs.
 func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, map[string]bool, error) {
 	profile, ok := a.profiles[turn.Profile]
 	if !ok || handler == nil || !volumeName.MatchString(turn.ID) || len(turn.ID) > 100 || !volumeName.MatchString(turn.Workspace) || !volumeName.MatchString(turn.Home) || turn.Workspace == turn.Home || turn.Timeout < 0 {
@@ -139,7 +139,9 @@ func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, map[str
 	switch turn.Kind {
 	case run.ExecuteTurn:
 	case run.VerifyTurn:
-		if !turn.ReadOnly || turn.Resume != "" || writable(turn.Mounts) {
+		// A verify turn may continue only its own reviewer's conversation of the
+		// same review Pass; the Orchestrator gives every review Pass fresh homes.
+		if !turn.ReadOnly || writable(turn.Mounts) {
 			return Profile{}, nil, ErrSession
 		}
 	default:
@@ -403,7 +405,7 @@ func (t *turnRun) notification(m Message) error {
 	return nil
 }
 
-// answer serves one Host tool call through the handler. A refusal is a tool
+// answer serves one Orchestrator tool call through the handler. A refusal is a tool
 // error for the provider, not a failure of the turn.
 func (t *turnRun) answer(ctx context.Context, call frame.ToolCall) error {
 	var meta struct {

@@ -44,7 +44,7 @@ func TestManifestFailureRetainsActualResultAndNeverReadsDefinitions(t *testing.T
 					result, e := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
 					err = e
 					raw = result.Inputs().Raw
-					status = result.Compilation().Status
+					status = result.Checked().Status
 					if result.Inputs().Guard != "" || result.Inputs().Head != head {
 						t.Fatal("refusal issued guard or discarded observed HEAD")
 					}
@@ -56,7 +56,7 @@ func TestManifestFailureRetainsActualResultAndNeverReadsDefinitions(t *testing.T
 					result, e := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: revision}, model.Limits{})
 					err = e
 					raw = result.Inputs().Raw
-					status = result.Compilation().Status
+					status = result.Checked().Status
 				}
 				var failure *apply.ManifestPreflightError
 				if !errors.As(err, &failure) || status != model.NotCompleted {
@@ -159,8 +159,8 @@ func TestWorkingEmptyModelDirectoriesAreExplicitAndCannotBecomeCapture(t *testin
 	}
 	r := adapter(t)
 	working, err := apply.NewModelService(r, r).PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || working.Compilation().Status != model.Passed {
-		t.Fatalf("working empty dirs: %v %+v", err, working.Compilation())
+	if err != nil || working.Checked().Status != model.Passed {
+		t.Fatalf("working empty dirs: %v %+v", err, working.Checked())
 	}
 	var dirs []string
 	for _, entry := range working.Inputs().Raw.Local.Source.Entries {

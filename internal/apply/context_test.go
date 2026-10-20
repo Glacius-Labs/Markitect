@@ -65,9 +65,9 @@ func TestM1StaticContextSelectionsRetainActualModelAndExecution(t *testing.T) {
 	if !found || !hasContextReason(useCase, organization.KindContract, borrowID, "/kind") {
 		t.Fatal("bound imported Kind contract lost")
 	}
-	compiled := parent.Model().Compilation()
+	checked := parent.Model().Checked()
 	for _, selected := range contexts {
-		if selected.ModelID() != compiled.Models[0].ID || selected.ModelDigest() != compiled.Models[0].Digest {
+		if selected.ModelID() != checked.Models[0].ID || selected.ModelDigest() != checked.Models[0].Digest {
 			t.Fatal("selection/model binding changed")
 		}
 	}

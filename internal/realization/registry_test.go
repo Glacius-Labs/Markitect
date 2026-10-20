@@ -38,6 +38,24 @@ func artifact(t *testing.T, name string, basis ...model.Identity) realization.Ar
 	return a
 }
 
+func artifactForm(t *testing.T, name string, form realization.Form, basis ...model.Identity) realization.Artifact {
+	t.Helper()
+	a, err := realization.NewArtifact(path(t, name), form, basis, "Explains the model basis.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return a
+}
+
+func directoryArtifact(t *testing.T, name string, basis ...model.Identity) realization.Artifact {
+	t.Helper()
+	a, err := realization.NewDirectoryArtifact(path(t, name), realization.Code, basis, "Explains the model basis of the directory.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	return a
+}
+
 func registration(t *testing.T, o realization.Owner, a realization.Artifact) realization.Registration {
 	t.Helper()
 	r, err := realization.NewRegistration(o, a)

@@ -22,10 +22,10 @@ func TestActualLibraryCaptureAndBothPreviews(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	compiled := captured.Compilation()
+	checked := captured.Checked()
 	inputs := captured.Inputs()
-	if compiled.Status != model.Passed || len(compiled.Models) != 3 || compiled.Models[0].ID != "small-library" || inputs.Head != head || inputs.Guard == "" {
-		t.Fatalf("actual capture/compilation failed: %+v %+v", inputs, compiled)
+	if checked.Status != model.Passed || len(checked.Models) != 3 || checked.Models[0].ID != "small-library" || inputs.Head != head || inputs.Guard == "" {
+		t.Fatalf("actual capture/Model check failed: %+v %+v", inputs, checked)
 	}
 	if inputs.Raw.Local.RepositoryArea.String() != "inputs/local" || inputs.Raw.Dependencies[0].RepositoryArea.String() != "inputs/vocabulary" || inputs.Raw.Dependencies[1].RepositoryArea.String() != "inputs/core" {
 		t.Fatal("missing explicit model census coordinates")
@@ -46,12 +46,12 @@ func TestActualLibraryCaptureAndBothPreviews(t *testing.T) {
 		t.Fatal("selected source bytes changed")
 	}
 	working, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || working.Compilation().Status != model.Passed {
-		t.Fatalf("working: %v %+v", err, working.Compilation())
+	if err != nil || working.Checked().Status != model.Passed {
+		t.Fatalf("working: %v %+v", err, working.Checked())
 	}
 	fixed, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
-	if err != nil || fixed.Compilation().Status != model.Passed {
-		t.Fatalf("fixed: %v %+v", err, fixed.Compilation())
+	if err != nil || fixed.Checked().Status != model.Passed {
+		t.Fatalf("fixed: %v %+v", err, fixed.Checked())
 	}
 	if fixed.Inputs().Revision != head || working.Inputs().Revision != "" {
 		t.Fatal("preview revision substitution")

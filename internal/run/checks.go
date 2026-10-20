@@ -8,7 +8,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// CheckID is the Host identity of one check run.
+// CheckID is the Orchestrator's identity of one check run.
 type CheckID string
 
 // Checks runs one allowed project check on an exact tree, in its own container

@@ -279,6 +279,19 @@ func TestRunResumesOnlyTheNamedThread(t *testing.T) {
 	}
 }
 
+func TestRunVerifyTurnMayResumeItsThreadAndStaysReadOnly(t *testing.T) {
+	turn := testTurn()
+	turn.Kind, turn.ReadOnly, turn.Resume = run.VerifyTurn, true, string(codecThreadID)
+	rt := newRuntime()
+	res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
+	if err != nil || res.Conversation != turn.Resume || !strings.Contains(rt.writes[2], `"method":"thread/resume"`) {
+		t.Fatalf("a resuming verify turn failed: %+v %v %q", res, err, rt.writes)
+	}
+	if m := rt.spec.Mounts[0]; m.Target != "/work" || !m.ReadOnly || rt.spec.Mounts[1].ReadOnly {
+		t.Fatalf("the resumed verify turn can write the workspace: %+v", rt.spec.Mounts)
+	}
+}
+
 func TestRunVerifyTurnMountsReadOnly(t *testing.T) {
 	turn := testTurn()
 	turn.Kind, turn.ReadOnly = run.VerifyTurn, true
@@ -337,13 +350,13 @@ func TestRunRefusalIsAToolErrorNotATurnFailure(t *testing.T) {
 	rt := newRuntime()
 	rt.useTool = true
 	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), func(context.Context, string, json.RawMessage) run.ToolAnswer {
-		return run.ToolAnswer{Text: "Host refused this call", Refused: true}
+		return run.ToolAnswer{Text: "Orchestrator refused this call", Refused: true}
 	})
 	var result struct {
 		Content []struct{ Text string }
 		IsError bool
 	}
-	if err != nil || json.Unmarshal(rt.replies[0].Result, &result) != nil || !result.IsError || result.Content[0].Text != "Host refused this call" || res.Reason != "provider turn completed" {
+	if err != nil || json.Unmarshal(rt.replies[0].Result, &result) != nil || !result.IsError || result.Content[0].Text != "Orchestrator refused this call" || res.Reason != "provider turn completed" {
 		t.Fatalf("%+v %v %+v", res, err, rt.replies)
 	}
 }
@@ -479,24 +492,24 @@ func TestRunStartFailureBeforeAndAfterContainerCreation(t *testing.T) {
 
 func TestRunRefusesInvalidTurnsBeforeStartingAnything(t *testing.T) {
 	for name, change := range map[string]func(*run.Turn){
-		"unknown profile":     func(t *run.Turn) { t.Profile = "other" },
-		"bad id":              func(t *run.Turn) { t.ID = "a/b" },
-		"bad workspace":       func(t *run.Turn) { t.Workspace = "" },
-		"same volume":         func(t *run.Turn) { t.Home = t.Workspace },
-		"negative timeout":    func(t *run.Turn) { t.Timeout = -1 },
-		"unknown kind":        func(t *run.Turn) { t.Kind = "other" },
-		"writable verify":     func(t *run.Turn) { t.Kind = run.VerifyTurn },
-		"resuming verify":     func(t *run.Turn) { t.Kind, t.ReadOnly, t.Resume = run.VerifyTurn, true, "thread" },
-		"duplicate tool":      func(t *run.Turn) { t.Tools = append(t.Tools, t.Tools[0]) },
-		"tool without text":   func(t *run.Turn) { t.Tools[0].Description = " " },
-		"tool schema":         func(t *run.Turn) { t.Tools[0].InputSchema = json.RawMessage(`[]`) },
-		"relative transcript": func(t *run.Turn) { t.Transcript = "turn.jsonl" },
-		"mount path escapes":  func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "../lending", Writable: true}} },
-		"mount path absolute": func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "/lending"}} },
-		"mount path unclean":  func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "lending/./reminders"}} },
-		"mount path empty":    func(t *run.Turn) { t.Mounts = []run.PathMount{{}} },
-		"mount option inject": func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a,readonly=false"}} },
-		"mount path twice":    func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a"}, {Path: "a", Writable: true}} },
+		"unknown profile":          func(t *run.Turn) { t.Profile = "other" },
+		"bad id":                   func(t *run.Turn) { t.ID = "a/b" },
+		"bad workspace":            func(t *run.Turn) { t.Workspace = "" },
+		"same volume":              func(t *run.Turn) { t.Home = t.Workspace },
+		"negative timeout":         func(t *run.Turn) { t.Timeout = -1 },
+		"unknown kind":             func(t *run.Turn) { t.Kind = "other" },
+		"writable verify":          func(t *run.Turn) { t.Kind = run.VerifyTurn },
+		"writable resuming verify": func(t *run.Turn) { t.Kind, t.Resume = run.VerifyTurn, "thread" },
+		"duplicate tool":           func(t *run.Turn) { t.Tools = append(t.Tools, t.Tools[0]) },
+		"tool without text":        func(t *run.Turn) { t.Tools[0].Description = " " },
+		"tool schema":              func(t *run.Turn) { t.Tools[0].InputSchema = json.RawMessage(`[]`) },
+		"relative transcript":      func(t *run.Turn) { t.Transcript = "turn.jsonl" },
+		"mount path escapes":       func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "../lending", Writable: true}} },
+		"mount path absolute":      func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "/lending"}} },
+		"mount path unclean":       func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "lending/./reminders"}} },
+		"mount path empty":         func(t *run.Turn) { t.Mounts = []run.PathMount{{}} },
+		"mount option inject":      func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a,readonly=false"}} },
+		"mount path twice":         func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a"}, {Path: "a", Writable: true}} },
 		"verify writable mount": func(t *run.Turn) {
 			t.Kind, t.ReadOnly, t.Mounts = run.VerifyTurn, true, []run.PathMount{{Path: "lending", Writable: true}}
 		},

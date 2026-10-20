@@ -16,7 +16,7 @@ import (
 )
 
 // This opt-in is deliberately separate from all generic runtime smoke settings.
-// Preparing or compiling this source does not authorize executing the smoke.
+// Preparing or checking this source does not authorize executing the smoke.
 func TestCheckWorkspaceRuntimeSmoke(t *testing.T) {
 	if os.Getenv("MARKITECT_CHECK_WORKSPACE_SMOKE") != "run-check-workspace-smoke" {
 		t.Skip("requires the separately authorized Check+Workspace runtime smoke opt-in; see README.md")

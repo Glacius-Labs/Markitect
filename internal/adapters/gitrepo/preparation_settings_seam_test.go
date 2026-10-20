@@ -17,7 +17,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
-const gitSettingsHostDocument = `apiVersion: markitect.host/v1
+const gitSettingsRuntimeDocument = `apiVersion: markitect.runtime/v1
 agentProfiles:
   library-agent:
     codexAppServer: {profileVersion: 1}
@@ -25,13 +25,13 @@ checkProfiles:
   library-tests:
     process: {profileVersion: 1}
 `
-const gitSettingsHostInstruction = "\xef\xbb\xbfExplicit external Host guidance.\r\n"
+const gitSettingsRuntimeInstruction = "\xef\xbb\xbfExplicit external Runtime guidance.\r\n"
 
 func gitSettingsFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, string, apply.SourceLocation) {
 	t.Helper()
 	repo, selection, head := fileCheckSeamFixture(t)
 	external := testkit.TempDir(t)
-	for name, content := range map[string]string{"host.yaml": gitSettingsHostDocument, "ops/manager.md": gitSettingsHostInstruction} {
+	for name, content := range map[string]string{"runtime.yaml": gitSettingsRuntimeDocument, "ops/manager.md": gitSettingsRuntimeInstruction} {
 		file := filepath.Join(external, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(file), 0o755); err != nil {
 			t.Fatal(err)
@@ -40,9 +40,9 @@ func gitSettingsFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, stri
 			t.Fatal(err)
 		}
 	}
-	selection.HostProfiles = []apply.SourceLocation{{Boundary: external, Path: fixturePath(t, "host.yaml")}}
-	host := apply.SourceLocation{Boundary: external, Path: fixturePath(t, "ops/manager.md")}
-	return repo, selection, head, host
+	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: external, Path: fixturePath(t, "runtime.yaml")}}
+	runtimeLocation := apply.SourceLocation{Boundary: external, Path: fixturePath(t, "ops/manager.md")}
+	return repo, selection, head, runtimeLocation
 }
 
 // Only these metadata observations are controlled. Source inputs and ProfileInput
@@ -76,10 +76,10 @@ func (p *gitSettingsMetadataPorts) PrepareCheckProfile(_ context.Context, input 
 	return p.observation(input, false), nil
 }
 
-func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
-	_, full, head, host := gitSettingsFixture(t)
+func TestM1GitSettingsPreparationSharesRepoAndRuntimeClosure(t *testing.T) {
+	_, full, head, runtimeLocation := gitSettingsFixture(t)
 	project := apply.SourceLocation{Boundary: full.Repository, Path: fixturePath(t, "ops/manager.md")}
-	policy := []apply.SourceLocation{project, host, host, project}
+	policy := []apply.SourceLocation{project, runtimeLocation, runtimeLocation, project}
 	for _, complete := range []bool{false, true} {
 		name := "derived"
 		if complete {
@@ -90,7 +90,7 @@ func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
 				selection := full
 				wantCalls := 2
 				if complete {
-					selection.Instructions = append(append([]apply.SourceLocation(nil), full.Instructions...), host)
+					selection.Instructions = append(append([]apply.SourceLocation(nil), full.Instructions...), runtimeLocation)
 					wantCalls = 1
 				} else {
 					selection.Execution, selection.Registry, selection.Ignore, selection.Instructions = nil, nil, nil, nil
@@ -140,7 +140,7 @@ func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
 					result, err := service.PreviewSettings(context.Background(), request, model.Limits{}, metadata, metadata)
 					prepared, ok := result.Prepared()
 					if err != nil || !ok || result.Status() != model.Passed || len(port.previews) != wantCalls || len(result.Attempts()) != wantCalls || !reflect.DeepEqual(result.Request(), request) {
-						t.Fatalf("actual external Host working preview failed: %s %v", result.Status(), err)
+						t.Fatalf("actual external Runtime working preview failed: %s %v", result.Status(), err)
 					}
 					if complete && !reflect.DeepEqual(port.previewRequests[0], request) {
 						t.Fatal("complete explicit preview changed")
@@ -177,17 +177,17 @@ func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
 				if !complete {
 					assertOriginalPreparationGap(t, first, last)
 					if len(firstNeeds) != 2 || len(metadata.agents[0].Instructions()) != 0 {
-						t.Fatal("first metadata observation did not expose both project and external Host needs")
+						t.Fatal("first metadata observation did not expose both project and external Runtime needs")
 					}
 				} else if len(firstNeeds) != 0 {
-					t.Fatal("complete first input invented missing Host instructions")
+					t.Fatal("complete first input invented missing Runtime instructions")
 				}
-				assertGitSettingsInputSeparation(t, last, host, observation[0])
+				assertGitSettingsInputSeparation(t, last, runtimeLocation, observation[0])
 				if mode == "capture" {
 					resolved, _ := settings.Settings()
 					root, _ := resolved.Manager(".")
 					if len(root.Execute.Instructions) != 3 || !bytes.Equal(root.Execute.Instructions[0].Value.Bytes, []byte(fileSeamInstruction("ops/manager.md"))) || !reflect.DeepEqual(root.Execute.Instructions[0], root.Execute.Instructions[2]) {
-						t.Fatal("Host instructions replaced project facts or authored repeats")
+						t.Fatal("Runtime instructions replaced project facts or authored repeats")
 					}
 				}
 			})
@@ -198,18 +198,18 @@ func TestM1GitSettingsPreparationSharesRepoAndHostClosure(t *testing.T) {
 func assertGitCapturedSettingsAttempt(t *testing.T, attempt apply.CapturedSettingsAttempt, request apply.CaptureRequest, inputs apply.CapturedInputs) {
 	t.Helper()
 	structural := attempt.Structural()
-	if attempt.Error() != nil || !reflect.DeepEqual(structural.Model().Request(), request) || !reflect.DeepEqual(structural.Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Settings().FileCheck(), structural.Files()) || !reflect.DeepEqual(attempt.Settings().Defaults(), attempt.Defaults()) || !reflect.DeepEqual(attempt.Defaults().Execution().Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || structural.Model().Compilation().Status != model.Passed || len(structural.Model().Compilation().Models) != 3 {
+	if attempt.Error() != nil || !reflect.DeepEqual(structural.Model().Request(), request) || !reflect.DeepEqual(structural.Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Settings().FileCheck(), structural.Files()) || !reflect.DeepEqual(attempt.Settings().Defaults(), attempt.Defaults()) || !reflect.DeepEqual(attempt.Defaults().Execution().Model().Inputs(), inputs) || !reflect.DeepEqual(attempt.Defaults().ProductInput(), apply.ProductStrategyDefaults()) || structural.Model().Checked().Status != model.Passed || len(structural.Model().Checked().Models) != 3 {
 		t.Fatal("attempt changed original Source/Raw/guard/defaults/settings reports")
 	}
 }
 
-func assertGitSettingsInputSeparation(t *testing.T, raw apply.RawInputs, host apply.SourceLocation, profile apply.PreparedProfile) {
+func assertGitSettingsInputSeparation(t *testing.T, raw apply.RawInputs, runtimeLocation apply.SourceLocation, profile apply.PreparedProfile) {
 	t.Helper()
-	if len(raw.Instructions) != 4 || len(raw.HostProfiles) != 1 || raw.HostProfiles[0].RepositoryPath.String() != "" || !bytes.Equal(raw.HostProfiles[0].File.Bytes(), []byte(gitSettingsHostDocument)) {
-		t.Fatal("explicit external Host document or distinct instruction acquisition missing")
+	if len(raw.Instructions) != 4 || len(raw.RuntimeProfiles) != 1 || raw.RuntimeProfiles[0].RepositoryPath.String() != "" || !bytes.Equal(raw.RuntimeProfiles[0].File.Bytes(), []byte(gitSettingsRuntimeDocument)) {
+		t.Fatal("explicit external Runtime profile document or distinct instruction acquisition missing")
 	}
-	if profile.Input().Document() != raw.HostProfiles[0] || !reflect.DeepEqual(profile.Input().Instructions(), raw.Instructions) || profile.Observation().InputBinding != profile.Input().Binding() || profile.Input().Namespace() != "agentProfiles" || profile.Input().Name() != "library-agent" || profile.Input().Field() != "/agentProfiles/library-agent/codexAppServer" || profile.Input().Inline() == nil {
-		t.Fatal("actual ProfileInput was not bound to acquired Host/Instruction bytes")
+	if profile.Input().Document() != raw.RuntimeProfiles[0] || !reflect.DeepEqual(profile.Input().Instructions(), raw.Instructions) || profile.Observation().InputBinding != profile.Input().Binding() || profile.Input().Namespace() != "agentProfiles" || profile.Input().Name() != "library-agent" || profile.Input().Field() != "/agentProfiles/library-agent/codexAppServer" || profile.Input().Inline() == nil {
+		t.Fatal("actual ProfileInput was not bound to acquired Runtime/Instruction bytes")
 	}
 	projectRaw := raw
 	projectRaw.Instructions = nil
@@ -219,9 +219,9 @@ func assertGitSettingsInputSeparation(t *testing.T, raw apply.RawInputs, host ap
 			t.Fatal("derived instruction location captured twice")
 		}
 		seen[file.Location] = true
-		if file.Location == host {
-			if file.RepositoryPath.String() != "" || !bytes.Equal(file.File.Bytes(), []byte(gitSettingsHostInstruction)) {
-				t.Fatal("external Host gained repo coordinates or project bytes")
+		if file.Location == runtimeLocation {
+			if file.RepositoryPath.String() != "" || !bytes.Equal(file.File.Bytes(), []byte(gitSettingsRuntimeInstruction)) {
+				t.Fatal("external Runtime gained repo coordinates or project bytes")
 			}
 		} else {
 			projectRaw.Instructions = append(projectRaw.Instructions, file)
@@ -229,19 +229,19 @@ func assertGitSettingsInputSeparation(t *testing.T, raw apply.RawInputs, host ap
 	}
 	assertPreparationFileClosure(t, projectRaw)
 	projectFile, found := raw.Census.Lookup(fixturePath(t, "ops/manager.md"))
-	if !found || !bytes.Equal(projectFile.Bytes(), []byte(fileSeamInstruction("ops/manager.md"))) || bytes.Equal(projectFile.Bytes(), []byte(gitSettingsHostInstruction)) {
-		t.Fatal("Host bytes entered the repository Census")
+	if !found || !bytes.Equal(projectFile.Bytes(), []byte(fileSeamInstruction("ops/manager.md"))) || bytes.Equal(projectFile.Bytes(), []byte(gitSettingsRuntimeInstruction)) {
+		t.Fatal("Runtime bytes entered the repository Census")
 	}
 	// Compare the literal ordered policy against the actual acquired locations;
-	// the repository and Host location share Path but have different boundaries.
+	// the repository and Runtime location share Path but have different boundaries.
 	var repoLocation apply.SourceLocation
 	for _, file := range projectRaw.Instructions {
 		if file.RepositoryPath.String() == "ops/manager.md" {
 			repoLocation = file.Location
 		}
 	}
-	if !reflect.DeepEqual(profile.Observation().Instructions, []apply.SourceLocation{repoLocation, host, host, repoLocation}) {
-		t.Fatal("Host policy order/repeats/coordinates changed")
+	if !reflect.DeepEqual(profile.Observation().Instructions, []apply.SourceLocation{repoLocation, runtimeLocation, runtimeLocation, repoLocation}) {
+		t.Fatal("Runtime policy order/repeats/coordinates changed")
 	}
 }
 
@@ -266,7 +266,7 @@ func assertGitSettingsRoles(t *testing.T, settings organization.Settings) {
 			for _, instruction := range role.actual {
 				ids = append(ids, instruction.Value.ID)
 				if !bytes.Equal(instruction.Value.Bytes, []byte(fileSeamInstruction(instruction.Value.ID))) {
-					t.Fatal("external Host bytes became project instruction facts")
+					t.Fatal("external Runtime bytes became project instruction facts")
 				}
 			}
 			if !reflect.DeepEqual(ids, role.want) {

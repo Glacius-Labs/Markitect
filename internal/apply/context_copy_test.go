@@ -12,7 +12,7 @@ func TestStaticContextAccessorsKeepOwnedCopies(t *testing.T) {
 	selection, raw := scopedContextInputs(t, "lending", contextScope)
 	result := registryModel(t, selection, raw).DecodeExecution().SelectContexts()
 	expectedDefinitions := make(map[model.Identity]model.Definition)
-	for _, owner := range result.Execution().Model().Compilation().Models {
+	for _, owner := range result.Execution().Model().Checked().Models {
 		for _, definition := range owner.Definitions {
 			expectedDefinitions[definition.Identity] = definition
 		}
@@ -55,7 +55,7 @@ func TestStaticContextAccessorsKeepOwnedCopies(t *testing.T) {
 	}
 	for _, definition := range lending.Definitions() {
 		if !reflect.DeepEqual(definition.Definition, expectedDefinitions[definition.Definition.Identity]) {
-			t.Fatal("context content changed from independent parent compilation")
+			t.Fatal("context content changed from independent parent Model check")
 		}
 	}
 	freshGlobal, _ := lending.Definition(contextID("rules", "global"))

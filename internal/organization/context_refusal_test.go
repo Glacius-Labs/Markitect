@@ -20,8 +20,8 @@ func assertZeroContext(t *testing.T, selection organization.ContextSelection) {
 	}
 }
 
-func cloneContextResult(compiled model.Result) model.Result {
-	result := copyResult(compiled)
+func cloneContextResult(checked model.Result) model.Result {
+	result := copyResult(checked)
 	for i := range result.Models {
 		for j := range result.Models[i].Definitions {
 			definition := &result.Models[i].Definitions[j]
@@ -33,7 +33,7 @@ func cloneContextResult(compiled model.Result) model.Result {
 }
 
 func TestContextRefusesInvalidOrInconsistentRequiredFacts(t *testing.T) {
-	baseline := compileFixture(t, richContextInput(t))
+	baseline := checkFixture(t, richContextInput(t))
 	for _, status := range []model.Status{"", model.Failed, model.NotCompleted} {
 		result := cloneContextResult(baseline)
 		result.Status = status // The local model itself remains Passed.
@@ -52,36 +52,36 @@ func TestContextRefusesInvalidOrInconsistentRequiredFacts(t *testing.T) {
 		{"missing owner digest", func(r *model.Result) { r.Models[1].Digest = "" }},
 		{"duplicate model owner", func(r *model.Result) { r.Models = append(r.Models, r.Models[1]) }},
 		{"duplicate unused global identity", func(r *model.Result) {
-			r.Models[0].Definitions = append(r.Models[0].Definitions, *findCompiledDefinition(t, r, contextID("types", "note")))
+			r.Models[0].Definitions = append(r.Models[0].Definitions, *findCheckedDefinition(t, r, contextID("types", "note")))
 		}},
-		{"mismatched Definition owner", func(r *model.Result) { findCompiledDefinition(t, r, contextID("b", "near")).ModelID = "other" }},
-		{"empty Definition identity", func(r *model.Result) { findCompiledDefinition(t, r, contextID("b", "near")).Identity.ID = "" }},
-		{"missing selected source path", func(r *model.Result) { findCompiledDefinition(t, r, contextID("b", "near")).Source.Path = "" }},
-		{"missing selected source digest", func(r *model.Result) { findCompiledDefinition(t, r, contextID("b", "near")).Source.Digest = "" }},
+		{"mismatched Definition owner", func(r *model.Result) { findCheckedDefinition(t, r, contextID("b", "near")).ModelID = "other" }},
+		{"empty Definition identity", func(r *model.Result) { findCheckedDefinition(t, r, contextID("b", "near")).Identity.ID = "" }},
+		{"missing selected source path", func(r *model.Result) { findCheckedDefinition(t, r, contextID("b", "near")).Source.Path = "" }},
+		{"missing selected source digest", func(r *model.Result) { findCheckedDefinition(t, r, contextID("b", "near")).Source.Digest = "" }},
 		{"missing body target", func(r *model.Result) {
-			findCompiledDefinition(t, r, contextID("a", "own")).BodyLinks[0].Target = contextID("missing", "target")
+			findCheckedDefinition(t, r, contextID("a", "own")).BodyLinks[0].Target = contextID("missing", "target")
 		}},
 		{"missing kind target", func(r *model.Result) {
-			findCompiledDefinition(t, r, contextID("a", "own")).Kind = contextID("missing", "Kind")
+			findCheckedDefinition(t, r, contextID("a", "own")).Kind = contextID("missing", "Kind")
 		}},
 		{"kind target is not Kind", func(r *model.Result) {
-			findCompiledDefinition(t, r, contextID("a", "own")).Kind = contextID("types", "note")
+			findCheckedDefinition(t, r, contextID("a", "own")).Kind = contextID("types", "note")
 		}},
 		{"missing optional Property target", func(r *model.Result) {
-			findCompiledDefinition(t, r, contextID("types", "unused")).Identity.ID = "changed"
+			findCheckedDefinition(t, r, contextID("types", "unused")).Identity.ID = "changed"
 		}},
 		{"Property target is not Property", func(r *model.Result) {
-			findCompiledDefinition(t, r, contextID("types", "unused")).Kind = contextID("types", "Record")
+			findCheckedDefinition(t, r, contextID("types", "unused")).Kind = contextID("types", "Record")
 		}},
-		{"zero compiled spec value", func(r *model.Result) {
-			findCompiledDefinition(t, r, contextID("a", "own")).Spec[0].Value = model.Value{}
+		{"zero checked spec value", func(r *model.Result) {
+			findCheckedDefinition(t, r, contextID("a", "own")).Spec[0].Value = model.Value{}
 		}},
 		{"duplicate used metadata field", func(r *model.Result) {
-			d := findCompiledDefinition(t, r, contextID("types", "Record"))
+			d := findCheckedDefinition(t, r, contextID("types", "Record"))
 			d.Spec = append(d.Spec, d.Spec[0])
 		}},
 		{"scope cardinality contradiction", func(r *model.Result) {
-			global := findCompiledDefinition(t, r, contextID("rules", "global"))
+			global := findCheckedDefinition(t, r, contextID("rules", "global"))
 			items, _ := global.Spec[0].Value.Items()
 			global.Spec[0].Value = items[0]
 		}},
@@ -106,7 +106,7 @@ func TestContextRefusesInvalidOrInconsistentRequiredFacts(t *testing.T) {
 }
 
 func TestContextRefusesInvalidScopeSelectorsAndPaths(t *testing.T) {
-	compiled := compileFixture(t, richContextInput(t))
+	checked := checkFixture(t, richContextInput(t))
 	for _, test := range []struct {
 		name   string
 		mutate func(*organization.Setting[organization.ScopeRule])
@@ -124,14 +124,14 @@ func TestContextRefusesInvalidScopeSelectorsAndPaths(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			selector := scopeSelector()
 			test.mutate(&selector)
-			selection, err := organization.SelectContext(compiled, "a", []organization.Setting[organization.ScopeRule]{selector})
+			selection, err := organization.SelectContext(checked, "a", []organization.Setting[organization.ScopeRule]{selector})
 			if err == nil {
 				t.Fatal("invalid selector unexpectedly accepted")
 			}
 			assertZeroContext(t, selection)
 		})
 	}
-	selection, err := organization.SelectContext(compiled, "a", []organization.Setting[organization.ScopeRule]{scopeSelector(), scopeSelector()})
+	selection, err := organization.SelectContext(checked, "a", []organization.Setting[organization.ScopeRule]{scopeSelector(), scopeSelector()})
 	if err == nil {
 		t.Fatal("duplicate selector accepted")
 	}
@@ -146,9 +146,9 @@ func TestContextRefusesInvalidScopeSelectorsAndPaths(t *testing.T) {
 				}
 			}
 			// Canonical string values do not acquire Package semantics in the
-			// compiler. Only the explicit organization scope selector applies it.
-			compiled := compileFixture(t, input)
-			selection, err := organization.SelectContext(compiled, "empty", []organization.Setting[organization.ScopeRule]{scopeSelector()})
+			// Model check. Only the explicit organization scope selector applies it.
+			checked := checkFixture(t, input)
+			selection, err := organization.SelectContext(checked, "empty", []organization.Setting[organization.ScopeRule]{scopeSelector()})
 			if err == nil {
 				t.Fatal("invalid scope path hidden by an unrelated selected Manager")
 			}
@@ -158,13 +158,13 @@ func TestContextRefusesInvalidScopeSelectorsAndPaths(t *testing.T) {
 }
 
 func TestContextCoordinateCoverageDoesNotBecomeContentGate(t *testing.T) {
-	compiled := compileFixture(t, richContextInput(t))
-	compiled.Coordinates = model.NotCompleted
-	definition := findCompiledDefinition(t, &compiled, contextID("a", "own"))
+	checked := checkFixture(t, richContextInput(t))
+	checked.Coordinates = model.NotCompleted
+	definition := findCheckedDefinition(t, &checked, contextID("a", "own"))
 	for i := range definition.BodyLinks {
 		definition.BodyLinks[i].Coordinates = nil
 	}
-	selection := requireContext(t, compiled, "a")
+	selection := requireContext(t, checked, "a")
 	selected, _ := selection.Definition(definition.Identity)
 	if !reflect.DeepEqual(selected.Definition, *definition) {
 		t.Fatal("unavailable spans were invented or original content changed")

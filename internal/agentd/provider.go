@@ -16,14 +16,14 @@ const (
 	// streams after the provider itself exited, for example when a grandchild
 	// still holds them open. The process group is killed right afterwards.
 	waitDelay = time.Second
-	// maxInputBacklog bounds Host input waiting for a provider that is not
-	// reading, so the Host connection is never blocked by provider input.
+	// maxInputBacklog bounds Orchestrator input waiting for a provider that is not
+	// reading, so the Orchestrator connection is never blocked by provider input.
 	maxInputBacklog = 64 << 20
 )
 
 // provider is the running provider CLI. Its standard input is fed by its own
 // goroutine, so a provider that stops reading never holds back stop
-// requests, tool replies or the end of the Host connection.
+// requests, tool replies or the end of the Orchestrator connection.
 type provider struct {
 	cmd   *exec.Cmd
 	stdin io.WriteCloser
@@ -40,7 +40,7 @@ type provider struct {
 }
 
 // startProvider starts cmd. The caller holds out's lock, so no provider
-// output can reach the Host before the caller's started report.
+// output can reach the Orchestrator before the caller's started report.
 func startProvider(cmd *exec.Cmd, out *frameWriter) (*provider, error) {
 	stdin, err := cmd.StdinPipe()
 	if err != nil {
@@ -70,7 +70,7 @@ func startProvider(cmd *exec.Cmd, out *frameWriter) (*provider, error) {
 
 func (p *provider) pid() int { return p.cmd.Process.Pid }
 
-// write queues Host bytes for the provider's standard input. An empty
+// write queues Orchestrator bytes for the provider's standard input. An empty
 // payload ends the input once everything queued before it was written.
 // Input after the provider exited is dropped; its exit report follows.
 func (p *provider) write(b []byte) error {
@@ -80,7 +80,7 @@ func (p *provider) write(b []byte) error {
 		if len(b) == 0 {
 			return nil
 		}
-		return errors.New("provider input arrived after the Host ended it")
+		return errors.New("provider input arrived after the Orchestrator ended it")
 	}
 	if len(b) == 0 {
 		p.inClosed = true
@@ -102,7 +102,7 @@ func (p *provider) write(b []byte) error {
 }
 
 // pumpInput writes queued input in order. A write error means the provider
-// stopped reading or exited; that is an observation, never a Host error.
+// stopped reading or exited; that is an observation, never an Orchestrator error.
 func (p *provider) pumpInput() {
 	defer p.stdin.Close()
 	for {

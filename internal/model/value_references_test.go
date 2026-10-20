@@ -47,7 +47,7 @@ func TestDataReferencesResolveBeforeCheckingActualKind(t *testing.T) {
 		{"{kindLink: peer}", "value.reference_kind"},
 	} {
 		input := referenceValueInput(tt.spec)
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != Failed || !hasDiagnostic(got, tt.code) {
 			t.Fatalf("want %s: %+v", tt.code, got)
 		}
@@ -63,18 +63,18 @@ func TestDataReferenceFileContextAndNoExpectedTypeFiltering(t *testing.T) {
 	requireValuesPassed(t, input)
 	// The import and alias in item do not leak into peer.
 	input.Root.Entries[7] = contractDefinition("feature/peer.yaml", "peer", "Record", "{link: Refs.peer}")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "binding.alias_missing") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "binding.alias_missing") {
 		t.Fatalf("data reference borrowed another file's imports: %+v", got)
 	}
 	input.Root.Entries[7] = contractDefinition("feature/peer.yaml", "peer", "Alternate", "{}")
 	input.Root.Entries[6] = addFileImport(contractDefinition("feature/item.yaml", "item", "Record", "{link: peer}"), "foreign", "Refs")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "binding.reference_ambiguous") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "binding.reference_ambiguous") {
 		t.Fatalf("expected Kind filtered out the wrong local candidate: %+v", got)
 	}
 	input.Root.Entries[6] = addFileImport(contractDefinition("feature/item.yaml", "item", "Record", "{link: Refs.peer}"), "foreign", "Refs")
 	requireValuesPassed(t, input)
 	input.Root.Entries[6] = contractDefinition("feature/item.yaml", "item", "Record", "{link: foreign/peer}")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "binding.package_not_visible") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "binding.package_not_visible") {
 		t.Fatalf("full foreign address bypassed file import: %+v", got)
 	}
 }
@@ -95,14 +95,14 @@ func TestValueErrorsVersusUnrelatedOrRelevantUnknownInventory(t *testing.T) {
 	} {
 		input := referenceValueInput(tt.spec)
 		addIncompleteModel(&input)
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != Failed || !hasDiagnostic(got, tt.code) || !hasDiagnostic(got, "limit.yaml_depth") {
 			t.Fatalf("known value error lost beside a separate limit: %+v", got)
 		}
 	}
 	input := referenceValueInput("{link: peer}")
 	addIncompleteModel(&input)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != NotCompleted || !hasDiagnostic(got, "limit.yaml_depth") || hasDiagnostic(got, "binding.reference_missing") || hasDiagnostic(got, "value.type") {
 		t.Fatalf("unknown inventory became false missing/type evidence: %+v", got)
 	}
@@ -113,7 +113,7 @@ func TestValueErrorsVersusUnrelatedOrRelevantUnknownInventory(t *testing.T) {
 	// the partial Kind's known subset is not a complete closed schema.
 	input.Root.Entries[1] = addFileImport(contractDefinition("feature/record.yaml", "Record", "Core.Kind", "{properties: [Unavailable.field]}"), "unavailable", "Unavailable")
 	input.Root.Entries[6] = contractDefinition("feature/item.yaml", "item", "feature/Record", "{extra: a}")
-	got = Compile(input)
+	got = Check(input)
 	if got.Status != NotCompleted || !hasDiagnostic(got, "limit.yaml_depth") || hasDiagnostic(got, "value.unknown_field") || hasDiagnostic(got, "binding.reference_missing") {
 		t.Fatalf("partial contract was treated as complete: %+v", got)
 	}
@@ -128,12 +128,12 @@ func TestNestedSchemaWithIncompleteFieldContractRemainsUnknown(t *testing.T) {
 	)
 	addIncompleteModel(&input)
 	input.Limits.YAMLDepth = 5
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != NotCompleted || !hasDiagnostic(got, "limit.yaml_depth") || hasDiagnostic(got, "value.unknown_field") || len(privateValues(input).specs) != 0 {
 		t.Fatalf("partially checked Property closed the object schema: %+v", got)
 	}
 	input.Root.Entries[4] = contractDefinition("feature/item.yaml", "item", "Record", "{box: {link: [42]}}")
-	got = Compile(input)
+	got = Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "value.reference") || !hasDiagnostic(got, "limit.yaml_depth") {
 		t.Fatalf("independent known reference type error was suppressed: %+v", got)
 	}

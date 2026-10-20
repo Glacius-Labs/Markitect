@@ -4,13 +4,13 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
-// accountingModel consumes the compiler's authoritative inventory. It does not
+// accountingModel consumes the Model check's authoritative inventory. It does not
 // parse source, revalidate v1 names, or infer Packages from Definition addresses.
 // Basic contradictions in the public supplied DTOs prevent a coverage claim.
 func accountingModel(result model.Result) (map[string]bool, map[model.Identity]bool, bool, []Finding) {
 	packages := map[string]bool{}
 	definitions := map[model.Identity]bool{}
-	unavailable := []Finding{{Code: "model.unavailable", Message: "A complete Passed compiled model set with one local model is required for owner and Definition resolution."}}
+	unavailable := []Finding{{Code: "model.unavailable", Message: "A complete Passed checked model set with one local model is required for owner and Definition resolution."}}
 	if result.Status != model.Passed {
 		return packages, definitions, false, unavailable
 	}
@@ -26,7 +26,7 @@ func accountingModel(result model.Result) (map[string]bool, map[model.Identity]b
 			return packages, definitions, false, unavailable
 		}
 		if scope.ID == "" || ids[scope.ID] {
-			problem("Compiled model identities are empty or repeated.", model.Identity{})
+			problem("Checked model identities are empty or repeated.", model.Identity{})
 		}
 		ids[scope.ID] = true
 		if scope.Local {
@@ -38,7 +38,7 @@ func accountingModel(result model.Result) (map[string]bool, map[model.Identity]b
 		for _, definition := range scope.Definitions {
 			id := definition.Identity
 			if id.Package == "" || id.ID == "" || definitions[id] || definition.ModelID != scope.ID {
-				problem("Compiled Definition identities or owning model facts are inconsistent.", id)
+				problem("Checked Definition identities or owning model facts are inconsistent.", id)
 			}
 			definitions[id] = true
 		}
@@ -69,8 +69,8 @@ func hasModelInconsistency(findings []Finding) bool {
 	return false
 }
 
-// modelInventory is the private structural projection of a compiled result
-// used by accounting and layout validation. It carries no compiler verdict.
+// modelInventory is the private structural projection of a checked result
+// used by accounting and layout validation. It carries no Model check verdict.
 type modelInventory struct {
 	owners         map[string]bool
 	definitions    map[model.Identity]bool

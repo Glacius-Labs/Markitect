@@ -42,16 +42,16 @@ func TestActualLibraryRootDotPreservesInventoryAndExcludesStateMarker(t *testing
 	r := adapter(t)
 	service := apply.NewModelService(r, r)
 	captured, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || captured.Compilation().Status != model.Passed {
-		t.Fatalf("root dot capture: %v %+v", err, captured.Compilation().Diagnostics)
+	if err != nil || captured.Checked().Status != model.Passed {
+		t.Fatalf("root dot capture: %v %+v", err, captured.Checked().Diagnostics)
 	}
 	working, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || working.Compilation().Status != model.Passed {
-		t.Fatalf("root dot working: %v %+v", err, working.Compilation().Diagnostics)
+	if err != nil || working.Checked().Status != model.Passed {
+		t.Fatalf("root dot working: %v %+v", err, working.Checked().Diagnostics)
 	}
 	fixed, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
-	if err != nil || fixed.Compilation().Status != model.Passed {
-		t.Fatalf("root dot fixed: %v %+v", err, fixed.Compilation().Diagnostics)
+	if err != nil || fixed.Checked().Status != model.Passed {
+		t.Fatalf("root dot fixed: %v %+v", err, fixed.Checked().Diagnostics)
 	}
 	for _, source := range []apply.ModelSource{captured.Inputs().Raw.Local, working.Inputs().Raw.Local, fixed.Inputs().Raw.Local} {
 		if !source.Root.IsRoot() || source.RepositoryArea.String() != ".markitect" {
@@ -63,7 +63,7 @@ func TestActualLibraryRootDotPreservesInventoryAndExcludesStateMarker(t *testing
 			}
 		}
 	}
-	if !reflect.DeepEqual(working.Inputs().Raw.Local.Source, fixed.Inputs().Raw.Local.Source) || !reflect.DeepEqual(working.Compilation().Models[0].Packages, fixed.Compilation().Models[0].Packages) {
+	if !reflect.DeepEqual(working.Inputs().Raw.Local.Source, fixed.Inputs().Raw.Local.Source) || !reflect.DeepEqual(working.Checked().Models[0].Packages, fixed.Checked().Models[0].Packages) {
 		t.Fatal("root dot Working/Fixed inventories differ")
 	}
 }

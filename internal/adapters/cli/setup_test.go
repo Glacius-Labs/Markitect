@@ -11,11 +11,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
-func setupArgs(t *testing.T) (host, credential string, args []string) {
+func setupArgs(t *testing.T) (runtimeDir, credential string, args []string) {
 	t.Helper()
 	root := t.TempDir()
-	host, credential = filepath.Join(root, "host"), filepath.Join(root, "token")
-	return host, credential, []string{"setup", "--repo", filepath.Join(root, "repo"), "--host", host, "--image", "runtime:1", "--credential", credential, "--engine", filepath.Join(root, "docker"), "--agent-model", "claude-haiku-5-5"}
+	runtimeDir, credential = filepath.Join(root, "runtime"), filepath.Join(root, "token")
+	return runtimeDir, credential, []string{"setup", "--repo", filepath.Join(root, "repo"), "--runtime", runtimeDir, "--image", "runtime:1", "--credential", credential, "--engine", filepath.Join(root, "docker"), "--agent-model", "claude-haiku-5-5"}
 }
 
 func runSetup(c *Command, args ...string) (code int, stdout, stderr string) {
@@ -25,22 +25,22 @@ func runSetup(c *Command, args ...string) (code int, stdout, stderr string) {
 }
 
 func TestSetupParsesFlagsAndReportsTheApplyCommand(t *testing.T) {
-	host, credential, args := setupArgs(t)
+	runtimeDir, credential, args := setupArgs(t)
 	var got SetupRequest
 	c := New(nil, nil, nil, nil, nil, nil, nil).WithSetup(func(_ context.Context, r SetupRequest) (SetupReport, error) {
 		got = r
-		return SetupReport{Status: model.Passed, Files: []SetupFile{{Path: filepath.Join(host, "host.yaml"), SHA256: "ab", Action: "written"}}}, nil
+		return SetupReport{Status: model.Passed, Files: []SetupFile{{Path: filepath.Join(runtimeDir, "runtime.yaml"), SHA256: "ab", Action: "written"}}}, nil
 	})
 	args = append(args, "--check", "go=/usr/local/go/bin/go", "--check", "lint=/bin/lint", "--decision", "A", "--decision", "B", "--deadline", "2030-01-01T00:00:00Z", "--store", "s", "--request", "R", "--dependency", "dep/model.yaml")
 	code, out, errout := runSetup(c, args...)
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
-	if got.Host != host || got.Credential != credential || got.Image != "runtime:1" || got.AgentModel != "claude-haiku-5-5" || got.Effort != "high" || !strings.HasSuffix(got.Engine, "docker") || got.Store != "s" || got.OwnerRequest != "R" || got.Deadline != "2030-01-01T00:00:00Z" || got.ProductBuild == "" ||
+	if got.RuntimeDir != runtimeDir || got.Credential != credential || got.Image != "runtime:1" || got.AgentModel != "claude-haiku-5-5" || got.Effort != "high" || !strings.HasSuffix(got.Engine, "docker") || got.Store != "s" || got.OwnerRequest != "R" || got.Deadline != "2030-01-01T00:00:00Z" || got.ProductBuild == "" ||
 		!reflect.DeepEqual(got.Checks, map[string]string{"go": "/usr/local/go/bin/go", "lint": "/bin/lint"}) || !reflect.DeepEqual(got.OwnerDecisions, []string{"A", "B"}) || len(got.Selection.Dependencies) != 1 || got.Selection.Local.ManifestPath.String() != ".markitect/model.yaml" {
 		t.Fatalf("%+v", got)
 	}
-	for _, want := range []string{`"operation": "setup"`, `"status": "passed"`, `"applyCommand"`, `--host-profile`, `--run-config`, `--dependency`, `"agentProfiles": []`} {
+	for _, want := range []string{`"operation": "setup"`, `"status": "passed"`, `"applyCommand"`, `--runtime-profile`, `--run-config`, `--dependency`, `"agentProfiles": []`} {
 		if !strings.Contains(out, want) {
 			t.Errorf("report lacks %s:\n%s", want, out)
 		}
@@ -55,16 +55,16 @@ func TestSetupRefusesInvalidInvocationsBeforeAnyEffect(t *testing.T) {
 		return SetupReport{}, nil
 	})
 	for name, bad := range map[string][]string{
-		"no host":          {"setup", "--image", "i", "--credential", "/abs", "--agent-model", "m"},
-		"no model":         withoutFlag(args, "--agent-model"),
-		"relative host":    append(append([]string{}, args...), "--host", "relative"),
-		"relative token":   append(append([]string{}, args...), "--credential", "token"),
-		"relative engine":  append(append([]string{}, args...), "--engine", "docker"),
-		"malformed check":  append(append([]string{}, args...), "--check", "go"),
-		"empty executable": append(append([]string{}, args...), "--check", "go="),
-		"duplicate check":  append(append([]string{}, args...), "--check", "go=/a", "--check", "go=/b"),
-		"stray argument":   append(append([]string{}, args...), "stray"),
-		"unknown flag":     append(append([]string{}, args...), "--unknown"),
+		"no runtime directory":       {"setup", "--image", "i", "--credential", "/abs", "--agent-model", "m"},
+		"no model":                   withoutFlag(args, "--agent-model"),
+		"relative runtime directory": append(append([]string{}, args...), "--runtime", "relative"),
+		"relative token":             append(append([]string{}, args...), "--credential", "token"),
+		"relative engine":            append(append([]string{}, args...), "--engine", "docker"),
+		"malformed check":            append(append([]string{}, args...), "--check", "go"),
+		"empty executable":           append(append([]string{}, args...), "--check", "go="),
+		"duplicate check":            append(append([]string{}, args...), "--check", "go=/a", "--check", "go=/b"),
+		"stray argument":             append(append([]string{}, args...), "stray"),
+		"unknown flag":               append(append([]string{}, args...), "--unknown"),
 	} {
 		if code, out, _ := runSetup(c, bad...); code != 2 || called {
 			t.Errorf("%s: exit %d called=%v %s", name, code, called, out)
@@ -90,12 +90,12 @@ func TestSetupExitCodesFollowTheReportStatus(t *testing.T) {
 }
 
 func TestApplyCommandQuotesOnlyWhatTheShellNeeds(t *testing.T) {
-	plain := applyCommand("/r", ".markitect/model.yaml", nil, "/h/host.yaml", "/h/run.json")
-	if plain != "markitect apply --repo /r --host-profile /h/host.yaml --run-config /h/run.json" {
+	plain := applyCommand("/r", ".markitect/model.yaml", nil, "/h/runtime.yaml", "/h/run.json")
+	if plain != "markitect apply --repo /r --runtime-profile /h/runtime.yaml --run-config /h/run.json" {
 		t.Fatal(plain)
 	}
-	custom := applyCommand("/r", "m/model.yaml", []string{"/d/model.yaml"}, "/h x/host.yaml", "/h x/run.json")
-	if !strings.Contains(custom, "--model m/model.yaml --dependency /d/model.yaml") || !strings.Contains(custom, "h x/host.yaml") || strings.Count(custom, "h x") != 2 || strings.Contains(custom, "--host-profile /h x") {
+	custom := applyCommand("/r", "m/model.yaml", []string{"/d/model.yaml"}, "/h x/runtime.yaml", "/h x/run.json")
+	if !strings.Contains(custom, "--model m/model.yaml --dependency /d/model.yaml") || !strings.Contains(custom, "h x/runtime.yaml") || strings.Count(custom, "h x") != 2 || strings.Contains(custom, "--runtime-profile /h x") {
 		t.Fatal(custom)
 	}
 }

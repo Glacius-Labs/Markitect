@@ -1,7 +1,7 @@
-// Package frame is the wire format between the Markitect Host and the
+// Package frame is the wire format between the Markitect Orchestrator and the
 // session helper markitect-agentd. One stdio connection carries several
 // channels as length-prefixed frames: control messages, the provider CLI's
-// own protocol bytes, its diagnostic output and Host tool calls.
+// own protocol bytes, its diagnostic output and Orchestrator tool calls.
 package frame
 
 import (
@@ -12,7 +12,7 @@ import (
 )
 
 // ProtocolVersion identifies this frame format and its control messages.
-// The Host and agentd refuse each other when their versions differ.
+// The Orchestrator and agentd refuse each other when their versions differ.
 const ProtocolVersion = 2
 
 // MaxPayload bounds one frame. Larger provider output is split by the writer.
@@ -24,13 +24,13 @@ type Channel byte
 const (
 	// Control carries one JSON control message per frame in both directions.
 	Control Channel = 'c'
-	// ProviderIn carries bytes from the Host to the provider's standard input.
+	// ProviderIn carries bytes from the Orchestrator to the provider's standard input.
 	ProviderIn Channel = 'i'
-	// ProviderOut carries bytes from the provider's standard output to the Host.
+	// ProviderOut carries bytes from the provider's standard output to the Orchestrator.
 	ProviderOut Channel = 'o'
-	// ProviderErr carries bytes from the provider's standard error to the Host.
+	// ProviderErr carries bytes from the provider's standard error to the Orchestrator.
 	ProviderErr Channel = 'e'
-	// Tool carries one JSON ToolCall (agentd to Host) or ToolReply (Host to
+	// Tool carries one JSON ToolCall (agentd to Orchestrator) or ToolReply (Orchestrator to
 	// agentd) per frame.
 	Tool Channel = 't'
 )

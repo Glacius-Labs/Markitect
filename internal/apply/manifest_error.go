@@ -10,7 +10,7 @@ import (
 // or unfinished inspection, separately from physical acquisition errors. The
 // adapter returns it with known partial inputs when inspection supplies no Root;
 // it must not invent a root or capture Definitions before root preflight.
-// ModelService preserves the error and observations without calling Compile.
+// ModelService preserves the error and observations without calling Check.
 type ManifestPreflightError struct {
 	selection  ModelSelection
 	inspection model.ManifestResult

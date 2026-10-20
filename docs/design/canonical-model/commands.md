@@ -22,7 +22,7 @@ The names below express user goals, not a new CLI schema. Reuse the process with
 
 | Operation | Change target | Instruction and result |
 | --- | --- | --- |
-| Apply | Artifacts | Realize the current canonical model across the complete responsibility, whether artifacts are absent or already exist. Create missing artifacts and reconcile existing ones, including unchanged-intent repair and the existing removal rules, or return a justified reviewed no-change result. Valid realization can stay as it is. |
+| Apply | Artifacts | Realize the current canonical model across the complete responsibility, whether artifacts are absent or already exist. Create missing artifacts and update existing ones, including unchanged-intent repair and the existing removal rules, or return a justified reviewed no-change result. Valid realization can stay as it is. |
 | Cleanup | Artifacts | Look for useful cleanup in each area while preserving the applicable requirements and permitted freedom. Deliver a reviewed improvement or justified no-op. |
 | Bughunt | Artifacts | Search for bugs against the model and fix them through review and integration. Never change the model to excuse faulty artifacts. |
 | Refactor | Artifacts | Look through the tree for better structure within the existing obligations. Preserve behavior and contracts. |

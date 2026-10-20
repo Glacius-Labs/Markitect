@@ -10,15 +10,16 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// ExecutionBudget is the authored bound of one Apply run: ExecutionTime is the
-// wall clock of the whole Apply, TurnTimeout bounds one Agent turn, AgentTurns
-// counts Execute and Verify turns and Rounds counts Verify rounds, each after an
-// Execute phase. Each Setting names the original file/content/field.
+// ExecutionBudget is the authored bound of one run: ExecutionTime is the wall
+// clock of the whole run, TurnTimeout bounds one Agent turn, AgentTurns counts
+// every Agent turn of Managers, reviewers and helpers and Passes counts the
+// Passes of the run, forward and correction Passes and Verify alike. Each
+// Setting names the original file/content/field.
 type ExecutionBudget struct {
 	ExecutionTime organization.Setting[time.Duration]
 	TurnTimeout   organization.Setting[time.Duration]
 	AgentTurns    organization.Setting[int]
-	Rounds        organization.Setting[int]
+	Passes        organization.Setting[int]
 }
 
 // ExecutionDefaults retains absent instructions as nil. RoleOverride supplies
@@ -28,21 +29,29 @@ type ExecutionDefaults struct {
 	Verify  organization.RoleOverride
 }
 
-// ExecutionLayoutException is one authored explicit ownership exception. Kind
-// is the optional declared kind of the path, "directory" (the default when
-// absent) or "file"; a zero Kind is absent.
-type ExecutionLayoutException struct {
-	Path   organization.Setting[snapshot.Path]
-	Kind   organization.Setting[string]
+// ExecutionArea is one authored ownership area: Path is its selector, an exact
+// repository-relative file, a directory ending in "/" or "./" for the whole
+// repository. Reason is optional; a zero Setting is absent.
+type ExecutionArea struct {
+	Path   organization.Setting[string]
 	Owner  organization.Setting[string]
 	Reason organization.Setting[string]
 }
 
-// ExecutionLayout is the authored persistent artifact layout: mirrored roots
-// and explicit exceptions. It is absent when the project declares none.
-type ExecutionLayout struct {
-	Roots      organization.Setting[[]snapshot.DirectoryBoundary]
-	Exceptions []ExecutionLayoutException
+// ExecutionHelper is one authored helper role of every Manager's team. A nil
+// Profile means the Manager's own Execute profile; Instructions are optional.
+type ExecutionHelper struct {
+	Role         organization.Setting[string]
+	Profile      *organization.Setting[string]
+	Writes       organization.Setting[bool]
+	Instructions *organization.Setting[[]string]
+}
+
+// ExecutionTeam is the authored local team template: the helper roles every
+// Manager may instantiate and how many may be active for one Manager at once.
+type ExecutionTeam struct {
+	MaxHelpers organization.Setting[int]
+	Helpers    []ExecutionHelper
 }
 
 // ExecutionCheck describes literal project configuration, not a prepared check
@@ -65,7 +74,8 @@ type AuthoredExecution struct {
 	Budget     ExecutionBudget
 	Defaults   ExecutionDefaults
 	Packages   *organization.Setting[[]organization.PackageOverride]
-	Layout     *ExecutionLayout
+	Ownership  *organization.Setting[[]ExecutionArea]
+	Team       *ExecutionTeam
 	Scope      *organization.Setting[[]organization.Setting[organization.ScopeRule]]
 	Checks     *organization.Setting[[]ExecutionCheck]
 }
@@ -80,7 +90,7 @@ type ExecutionDiagnostic struct {
 type executionDecoding struct {
 	status      model.Status
 	authored    AuthoredExecution
-	layout      realization.Layout // Validated against the model; zero when none is declared.
+	layout      realization.Layout // Validated against the model; zero when no ownership is declared.
 	diagnostics []ExecutionDiagnostic
 }
 
@@ -131,8 +141,8 @@ type PreviewExecutionDecoding struct {
 func (r PreviewExecutionDecoding) Model() PreviewedModel { return r.stage }
 
 func (m CapturedModel) DecodeExecution() CapturedExecutionDecoding {
-	return CapturedExecutionDecoding{executionDecoding: decodeExecution(m.compiled, m.inputs.Raw), stage: m}
+	return CapturedExecutionDecoding{executionDecoding: decodeExecution(m.checked, m.inputs.Raw), stage: m}
 }
 func (m PreviewedModel) DecodeExecution() PreviewExecutionDecoding {
-	return PreviewExecutionDecoding{executionDecoding: decodeExecution(m.compiled, m.inputs.Raw), stage: m}
+	return PreviewExecutionDecoding{executionDecoding: decodeExecution(m.checked, m.inputs.Raw), stage: m}
 }

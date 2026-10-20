@@ -26,7 +26,7 @@ func cloneModelInput(input Input) Input {
 
 func TestCanonicalSyntheticGoldenAndPublicTypedIR(t *testing.T) {
 	input := singleValueInput("string", "0", "1", "", "{field: text}")
-	got := requireCompiled(t, input)
+	got := requireChecked(t, input)
 	// Independently authored expected model-digest/1 tree, not a round-trip of
 	// the encoder. Fixed Core bytes are separately checked against §8.3's vector.
 	wanted := `{"format":"markitect-model-digest/1","model":{"dependencies":{"markitect-core":"1.0"},"formatVersion":1,"id":"project"},"packages":{"feature":{"Record":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","markitect/core","Kind"],"spec":{"properties":["list",[["reference","feature","field"]]]}},"field":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","markitect/core","Property"],"spec":{"maxCount":["integer","1"],"minCount":["integer","0"],"name":["string","field"],"type":["enum","string"]}},"item":{"body":"Contract fixture.","bodyLinks":[],"kind":["reference","feature","Record"],"spec":{"field":["string","text"]}}}}}`
@@ -46,7 +46,7 @@ func TestCanonicalSyntheticGoldenAndPublicTypedIR(t *testing.T) {
 
 func TestCanonicalSourceAndAuthorReferenceInvariance(t *testing.T) {
 	input := referenceValueInput("{link: peer, links: [peer, item, peer], kindLink: Core.Kind}")
-	baseline := requireCompiled(t, input).Models[0]
+	baseline := requireChecked(t, input).Models[0]
 	for _, tt := range []struct {
 		name   string
 		change func(*Input)
@@ -91,7 +91,7 @@ func TestCanonicalSourceAndAuthorReferenceInvariance(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			trial := cloneModelInput(input)
 			tt.change(&trial)
-			got := requireCompiled(t, trial).Models[0]
+			got := requireChecked(t, trial).Models[0]
 			if !bytes.Equal(baseline.Canonical, got.Canonical) || baseline.Digest != got.Digest {
 				t.Fatal("equivalent selected content changed canonical bytes")
 			}
@@ -102,8 +102,8 @@ func TestCanonicalSourceAndAuthorReferenceInvariance(t *testing.T) {
 		if typeName == "reference" {
 			extra = ", target: Record"
 		}
-		a := requireCompiled(t, singleValueInput(typeName, "0", "-1", extra, "{}")).Models[0]
-		b := requireCompiled(t, singleValueInput(typeName, "0", "-1", extra, "{field: []}")).Models[0]
+		a := requireChecked(t, singleValueInput(typeName, "0", "-1", extra, "{}")).Models[0]
+		b := requireChecked(t, singleValueInput(typeName, "0", "-1", extra, "{field: []}")).Models[0]
 		if !bytes.Equal(a.Canonical, b.Canonical) {
 			t.Fatalf("missing/empty optional %s list differ", typeName)
 		}
@@ -112,7 +112,7 @@ func TestCanonicalSourceAndAuthorReferenceInvariance(t *testing.T) {
 
 func TestCanonicalTextValueOrderAndPresenceSensitivity(t *testing.T) {
 	input := singleValueInput("string", "0", "-1", "", "{field: [a, b, a]}")
-	baseline := requireCompiled(t, input).Models[0]
+	baseline := requireChecked(t, input).Models[0]
 	for _, tt := range []struct {
 		name   string
 		change func(*Input)
@@ -132,14 +132,14 @@ func TestCanonicalTextValueOrderAndPresenceSensitivity(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			trial := cloneModelInput(input)
 			tt.change(&trial)
-			got := requireCompiled(t, trial).Models[0]
+			got := requireChecked(t, trial).Models[0]
 			if bytes.Equal(baseline.Canonical, got.Canonical) || baseline.Digest == got.Digest {
 				t.Fatal("meaningful content change did not change bytes/digest")
 			}
 		})
 	}
-	a := requireCompiled(t, singleValueInput("string", "1", "1", "", "{field: \"u\\u0308\"}")).Models[0]
-	b := requireCompiled(t, singleValueInput("string", "1", "1", "", "{field: ü}")).Models[0]
+	a := requireChecked(t, singleValueInput("string", "1", "1", "", "{field: \"u\\u0308\"}")).Models[0]
+	b := requireChecked(t, singleValueInput("string", "1", "1", "", "{field: ü}")).Models[0]
 	if bytes.Equal(a.Canonical, b.Canonical) {
 		t.Fatal("ordinary Unicode text was normalized")
 	}
@@ -151,9 +151,9 @@ func TestCanonicalBodyLinkTargetsBindUnchangedBody(t *testing.T) {
 		input.Root.Entries = append(input.Root.Entries, addFileImport(contractDefinition(pkg+"/peer.yaml", "peer", "feature/Record", "{}"), "feature", "Feature"))
 	}
 	input.Root.Entries[6] = withBody(addFileImport(input.Root.Entries[6], "first", "Refs"), "'[[Refs.peer]] [[Refs.peer]]'")
-	a := requireCompiled(t, input).Models[0]
+	a := requireChecked(t, input).Models[0]
 	input.Root.Entries[6].Bytes = bytes.Replace(input.Root.Entries[6].Bytes, []byte("package: first"), []byte("package: second"), 1)
-	b := requireCompiled(t, input).Models[0]
+	b := requireChecked(t, input).Models[0]
 	if bytes.Equal(a.Canonical, b.Canonical) || a.Digest == b.Digest {
 		t.Fatal("same authored body lost changed resolved link targets")
 	}
@@ -174,10 +174,10 @@ func TestForeignContentDigestsAndLockBytesAreExcluded(t *testing.T) {
 		input.Dependencies = append(input.Dependencies[:1], support)
 	}
 	bind()
-	a := requireCompiled(t, input).Models[0]
+	a := requireChecked(t, input).Models[0]
 	support.Entries[1] = withBody(support.Entries[1], "'Changed foreign description.'")
 	bind()
-	b := requireCompiled(t, input).Models[0]
+	b := requireChecked(t, input).Models[0]
 	if !bytes.Equal(a.Canonical, b.Canonical) || a.Digest != b.Digest {
 		t.Fatal("foreign content digest or lock bytes leaked into own projection")
 	}
@@ -186,11 +186,11 @@ func TestForeignContentDigestsAndLockBytesAreExcluded(t *testing.T) {
 func TestUnavailableCoordinatesDoNotBlockPublicCanonicalContent(t *testing.T) {
 	input := referenceValueInput("{}")
 	input.Root.Entries[6] = withBody(input.Root.Entries[6], "'[[peer]]'")
-	baseline := requireCompiled(t, input)
+	baseline := requireChecked(t, input)
 	var scopes []sourceScope
 	var sources []ModelResult
 	for _, model := range append([]SourceModel{input.Root}, input.Dependencies...) {
-		result, _, scope := compileSource(model, DefaultLimits())
+		result, _, scope := checkSource(model, DefaultLimits())
 		scopes = append(scopes, scope)
 		sources = append(sources, result)
 	}
@@ -219,14 +219,14 @@ func TestUnavailableCoordinatesDoNotBlockPublicCanonicalContent(t *testing.T) {
 func TestCanonicalReportsAreEnumerationIndependentAndInputsUnchanged(t *testing.T) {
 	input := referenceValueInput("{link: peer}")
 	original := cloneModelInput(input)
-	a := requireCompiled(t, input)
+	a := requireChecked(t, input)
 	if !reflect.DeepEqual(input, original) {
-		t.Fatal("compile changed input source bytes")
+		t.Fatal("Model check changed input source bytes")
 	}
 	slices.Reverse(input.Root.Entries)
 	slices.Reverse(input.Dependencies)
-	b := requireCompiled(t, input)
+	b := requireChecked(t, input)
 	if !reflect.DeepEqual(a, b) {
-		t.Fatal("source enumeration changed full compiled result")
+		t.Fatal("source enumeration changed full checked result")
 	}
 }

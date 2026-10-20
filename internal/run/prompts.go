@@ -2,45 +2,22 @@ package run
 
 import (
 	"fmt"
+	"slices"
 	"strings"
 )
 
-const mandate = "In Execute, compare your artifacts with the bound model, preserve correct realization, create missing artifacts and correct deviations within your files and registry; change nothing that already conforms, and leave out improvements the model does not require. Coordinate dependencies and integration through your parent and children. The model always holds and is never yours to repair: a contradiction in it, or a gap that changes behavior at the project boundary, goes to your parent instead of being decided by you; a choice it leaves open inside the project is yours. In the subsequent fresh Verify, assess the immutable stand and the interaction of your children. Report scope, findings, checks and unresolved questions. Do not change intent, write another owner's files or contact another branch directly."
+// modelAuthority is the quality duty every Manager and reviewer carries: the
+// bound model is binding intent, never theirs to repair.
+const modelAuthority = "The bound model always holds. A choice it leaves open inside your responsibility is yours to make and document. What you cannot settle within the model goes to your parent; no answer overrides the model."
 
-// blockingGuidance defines what blocks in Verify for Apply: the part of the
-// Verify prompt that Config.VerifyGuidance replaces.
-const blockingGuidance = "Blocking means a concrete model violation, absent evidence the model explicitly requires, or a failed required check, citing the obligation and the observed behavior or source evidence. A Definition realized outside its owner's artifacts (rebuilt in another area, including a parent's own area, instead of using the owner's realization) and a change outside a Manager's own area are model violations; as a parent, check how your children actually use each other's realizations."
-
-// extraDepthNote closes Apply's Verify guidance: it belongs to that text and is
-// not appended to Config.VerifyGuidance.
-const extraDepthNote = "Preferred extra test depth is advisory: set blocking to false."
-
-// checkNote tells an Execute turn about the check tool. It is part of the
-// prompt only when Config.CheckTool offers the tool.
-const checkNote = " The tool check reports the findings of the project's accounting on the current /work tree, yours first (scope \"all\" lists those of other Managers too). It observes while other Managers may still write, so use it as advice before you finish; the candidate is judged only after every Execute turn ended."
-
-func (e *engine) mandateText() string {
-	if e.cfg.Mandate != "" {
-		return e.cfg.Mandate
-	}
-	return mandate
-}
-
-func (e *engine) guidanceText() string {
-	if e.cfg.VerifyGuidance != "" {
-		return e.cfg.VerifyGuidance
-	}
-	return blockingGuidance + " " + extraDepthNote
-}
-
-func label(m *mgr) string {
+func labelOf(m *mgr) string {
 	if m.Parent == "" {
 		return "Root (.)"
 	}
-	return fmt.Sprintf("Manager %s", m.Path)
+	return "Manager " + m.Path
 }
 
-func contact(m *mgr) string {
+func contactOf(m *mgr) string {
 	if m.Role == "" {
 		return m.Path
 	}
@@ -48,24 +25,207 @@ func contact(m *mgr) string {
 }
 
 func renderFinding(f *Finding) string {
-	kind := "advisory"
+	kind := "note"
 	if f.Blocking {
-		kind = "blocking"
+		kind = "genuine"
 	}
-	return fmt.Sprintf("Finding %s [%s], owner %s, raised by %s in round %d.\n  Obligation: %s\n  Observed: %s", f.ID, kind, f.Owner, f.RaisedBy, f.Round, f.Obligation, f.Observed)
+	text := fmt.Sprintf("Finding %s [%s], owner %s, raised by %s in %s", f.ID, kind, f.Owner, f.RaisedBy, f.Pass)
+	if f.Blocking && f.Correction != "" {
+		text += ", correction " + string(f.Correction)
+	}
+	if f.Subject != "" {
+		text += ", subject " + f.Subject
+		if f.Definition != "" {
+			text += " " + f.Definition
+		}
+	}
+	text = fmt.Sprintf("%s.\n  Obligation: %s\n  Observed: %s", text, f.Obligation, f.Observed)
+	for _, d := range f.Disputes {
+		text += fmt.Sprintf("\n  Disputed by %s in %s: %s\n    Evidence: %s", d.By, d.Pass, d.Reason, d.Evidence)
+	}
+	return text
 }
 
 func list(b *strings.Builder, title string, lines []string) {
 	if len(lines) == 0 {
 		return
 	}
-	fmt.Fprintf(b, "\n%s\n", title)
+	if title != "" {
+		fmt.Fprintf(b, "\n%s\n", title)
+	} else {
+		b.WriteString("\n")
+	}
 	for _, l := range lines {
 		fmt.Fprintf(b, "- %s\n", strings.ReplaceAll(l, "\n", "\n  "))
 	}
 }
 
-func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
+// writeEnvelope renders the content of a submission.
+func writeEnvelope(b *strings.Builder, env envelope, findings func(string) *Finding) {
+	fmt.Fprintf(b, "  Summary: %s\n", env.Summary)
+	for _, c := range env.Obligations {
+		line := fmt.Sprintf("  Obligation %s: %s", c.Definition, c.Status)
+		if c.Note != "" {
+			line += " (" + c.Note + ")"
+		}
+		b.WriteString(strings.ReplaceAll(line, "\n", "\n    ") + "\n")
+	}
+	if pl := env.Plan; pl != nil {
+		writePlan(b, pl)
+	}
+	if len(env.Artifacts) > 0 {
+		fmt.Fprintf(b, "  Artifacts: %s\n", strings.Join(env.Artifacts, ", "))
+	}
+	for _, ev := range env.Evidence {
+		fmt.Fprintf(b, "  Evidence: %s\n", ev)
+	}
+	if env.Verdict != "" {
+		fmt.Fprintf(b, "  Verdict: %s\n", env.Verdict)
+	}
+	for _, id := range env.Findings {
+		if f := findings(id); f != nil {
+			fmt.Fprintf(b, "  %s\n", strings.ReplaceAll(renderFinding(f), "\n", "\n  "))
+		}
+	}
+	if len(env.Closed) > 0 {
+		fmt.Fprintf(b, "  Closed findings: %s\n", strings.Join(env.Closed, ", "))
+	}
+	if len(env.Disputed) > 0 {
+		fmt.Fprintf(b, "  Disputed findings: %s\n", strings.Join(env.Disputed, ", "))
+	}
+	if len(env.Children) > 0 {
+		fmt.Fprintf(b, "  Integrates the accepted child results %s\n", strings.Join(env.Children, ", "))
+	}
+}
+
+func writePlan(b *strings.Builder, pl *plan) {
+	fmt.Fprintf(b, "  Approach: %s\n", pl.Approach)
+	if len(pl.Artifacts) > 0 {
+		fmt.Fprintf(b, "  Planned artifacts: %s\n", strings.Join(pl.Artifacts, ", "))
+	}
+	for _, in := range pl.Inputs {
+		fmt.Fprintf(b, "  Needs from %s: %s\n", in.Owner, in.Need)
+	}
+	for _, out := range pl.Outputs {
+		fmt.Fprintf(b, "  Provides to %s: %s\n", strings.Join(out.Consumers, ", "), out.Provides)
+	}
+	for _, d := range pl.Dependencies {
+		fmt.Fprintf(b, "  In %s, starts after the accepted %s of %s: %s\n", d.Pass, d.Stage, d.Owner, d.Need)
+	}
+	if pl.Order != "" {
+		fmt.Fprintf(b, "  Order: %s\n", pl.Order)
+	}
+	for _, x := range pl.Blockers {
+		fmt.Fprintf(b, "  Blocker: %s\n", x)
+	}
+	for _, x := range pl.Assumptions {
+		fmt.Fprintf(b, "  Assumption: %s\n", x)
+	}
+}
+
+// renderProposal is the item a parent receives to decide a child's checked
+// submission.
+func (e *engine) renderProposalLocked(pr *proposal) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Your child %s submitted its %s %s for your decision: report kind accept or return with proposal %s.\n", contactOf(pr.member.mgr), pr.kind, pr.id, pr.id)
+	writeEnvelope(&b, pr.env, e.findingLocked)
+	// Its finding effects take effect only with your acceptance.
+	for i := range pr.raised {
+		f := pr.raised[i]
+		f.ID, f.Pass = "(proposed)", pr.member.p.id
+		fmt.Fprintf(&b, "  %s\n", strings.ReplaceAll(renderFinding(&f), "\n", "\n  "))
+	}
+	for _, id := range slices.Sorted(mapKeys(pr.closing)) {
+		c := pr.closing[id]
+		fmt.Fprintf(&b, "  Closes %s as %s: %s\n    Evidence: %s\n", id, c.as, c.reason, c.evidence)
+	}
+	for _, id := range slices.Sorted(mapKeys(pr.disputes)) {
+		d := pr.disputes[id]
+		fmt.Fprintf(&b, "  Disputes %s: %s\n    Evidence: %s\n", id, d.Reason, d.Evidence)
+	}
+	return strings.TrimRight(b.String(), "\n")
+}
+
+// renderAccepted renders an accepted submission for its consumers.
+func (e *engine) renderAcceptedLocked(pr *proposal) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Accepted %s %s of %s:\n", pr.kind, pr.id, pr.member.Path)
+	writeEnvelope(&b, pr.env, e.findingLocked)
+	return strings.TrimRight(b.String(), "\n")
+}
+
+func renderPlan(manager string, pr *proposal) string {
+	var b strings.Builder
+	fmt.Fprintf(&b, "Accepted plan %s of %s (%s):\n", pr.id, manager, pr.member.p.id)
+	writePlan(&b, pr.env.Plan)
+	return strings.TrimRight(b.String(), "\n")
+}
+
+// writeNote states where a turn may write in /work.
+func writeNote(readOnly bool, mounts []PathMount) string {
+	scratch := " Write build output and other scratch files under /tmp: everything left under /work is captured and must be accounted."
+	var writable, protected []string
+	for _, mount := range mounts {
+		if mount.Writable {
+			writable = append(writable, mount.Path)
+		} else {
+			protected = append(protected, mount.Path)
+		}
+	}
+	switch {
+	case readOnly && len(writable) == 0:
+		return "In this turn /work is read-only." + scratch
+	case readOnly:
+		note := "Outside these paths /work is read-only for you and a write there fails: " + strings.Join(writable, ", ") + "."
+		if len(protected) > 0 {
+			note += " Read-only even within them: " + strings.Join(protected, ", ") + "."
+		}
+		return note + scratch
+	case len(protected) > 0:
+		note := "These paths of /work are read-only for you and a write there fails: " + strings.Join(protected, ", ") + "."
+		if len(writable) > 0 {
+			note += " Writable again within them: " + strings.Join(writable, ", ") + "."
+		}
+		return note + scratch
+	}
+	return "You may write in /work." + scratch
+}
+
+// promptLocked renders one turn of a Manager or reviewer: its standing context
+// when the conversation is fresh, its Pass assignment when delivered, the
+// current task, what waits for its decision and its new items.
+func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, mounts []PathMount) string {
+	p := m.p
+	var b strings.Builder
+	if standing {
+		e.standingLocked(&b, m)
+	}
+	var texts []string
+	for _, it := range items {
+		if it.kind == itemAssignment {
+			e.assignmentLocked(&b, m)
+			continue
+		}
+		texts = append(texts, it.text)
+	}
+	b.WriteString("\nNow: " + e.taskLocked(m) + "\n")
+	switch {
+	case !p.spec.Review && !p.spec.Writes:
+		fmt.Fprintf(&b, "In the %s Pass /work is read-only for every Manager: nobody writes a project file in it, and your result is complete without one. Write scratch files under /tmp.\n", p.spec.Purpose)
+	case !p.spec.Review:
+		b.WriteString(writeNote(readOnly, mounts) + "\n")
+	}
+	list(&b, "Waiting for your decision or answer:", e.demandsLocked(m))
+	list(&b, "Items:", texts)
+	return b.String()
+}
+
+func (e *engine) standingLocked(b *strings.Builder, m *member) {
+	if m.p.spec.Review {
+		fmt.Fprintf(b, "You are the independent reviewer of the responsibility of %s. You assess an immutable candidate read-only, in a fresh context without the authors' conversation.\n", labelOf(m.mgr))
+	} else {
+		fmt.Fprintf(b, "You are %s.\n", labelOf(m.mgr))
+	}
 	if m.Brief != "" {
 		fmt.Fprintf(b, "\n%s\n", strings.TrimSpace(m.Brief))
 	}
@@ -73,176 +233,167 @@ func (e *engine) contextLocked(b *strings.Builder, m *mgr) {
 		fmt.Fprintf(b, "\nOwner request: %s\n", strings.TrimSpace(e.cfg.OwnerRequest))
 	}
 	list(b, "Owner decisions (fixed for this run):", e.cfg.OwnerDecisions)
-}
-
-// initialItem is the first Execute item of every Manager: it starts the
-// Manager's own reconciliation work without a finding. A parent first supplies
-// the foundation its children need, because they start when its turn ends; a
-// child builds on the foundation its parent supplied. A process with its own
-// mandate (Config.Mandate, such as Extract) writes no artifacts, so its parents
-// pass on the basis of their area instead of laying artifact scaffolding.
-func initialItem(m *mgr, directed bool) string {
-	var b strings.Builder
-	if directed {
-		b.WriteString("Carry out your responsibility now, as the mandate above describes.")
-		if m.Parent != "" {
-			b.WriteString(" Your parent's messages to you tell you the basis it has established. Build on it.")
-		}
-		if len(m.Children) > 0 {
-			b.WriteString(" Your children start when this turn ends. First establish the basis they need from your area, such as the shared terms and boundaries they build on, and tell them with send. Their areas are theirs, not yours.")
-		}
-		return b.String()
-	}
-	b.WriteString("Carry out your responsibility now, as the mandate above describes. No change is a legitimate result when your area already conforms.")
-	if m.Parent != "" {
-		b.WriteString(" Your parent's foundation is in place; its messages to you tell you what is available. Build on it.")
-	}
-	if len(m.Children) > 0 {
-		b.WriteString(" Your children start when this turn ends. First establish, within your own area, the foundation they need: project scaffolding such as the module and build files, never a realization of their Definitions. Where none exists, create it; where one exists, assess it against your obligations and your children's known needs, preserve it when it fits, and correct or supplement it within your own area (or coordinate its owner) before they begin. When several children need a rule or type that one of them owns, decide that its owner provides it in a part the others can use without a dependency cycle. Then tell them with send the concrete basis they can use. Their areas are theirs to realize, not yours.")
-	}
-	return b.String()
-}
-
-// writeNote states what an enforced write plan makes read-only in /work. An
-// unenforced plan, or one that restricts nothing, needs no note.
-func writeNote(plan WritePlan) string {
-	var writable, readOnly []string
-	for _, mount := range plan.Mounts {
-		if mount.Writable {
-			writable = append(writable, mount.Path)
-		} else {
-			readOnly = append(readOnly, mount.Path)
-		}
-	}
-	switch {
-	case !plan.Enforced:
-		return ""
-	case !plan.Base && len(writable) == 0:
-		return "Nothing in /work is writable for you: it is read-only and a write there fails. "
-	case !plan.Base:
-		note := "Outside your writable areas /work is read-only and a write there fails. Your writable areas: " + strings.Join(writable, ", ") + ". "
-		if len(readOnly) > 0 {
-			note += "Read-only even within them: " + strings.Join(readOnly, ", ") + ". "
-		}
-		return note
-	case len(readOnly) > 0:
-		note := "These areas of /work are read-only and a write there fails: " + strings.Join(readOnly, ", ") + ". "
-		if len(writable) > 0 {
-			note += "Writable again within them: " + strings.Join(writable, ", ") + ". "
-		}
-		return note
-	}
-	return ""
-}
-
-// answeredLocked lists the owner's answers known so far, earlier ones first.
-func (e *engine) answeredLocked() []string {
-	var answered []string
-	for _, q := range e.questions {
-		if q.Answered {
-			answered = append(answered, fmt.Sprintf("%s: %s\n  Answer: %s", q.ID, q.Text, q.Answer))
-		}
-	}
-	return answered
-}
-
-func (e *engine) executePromptLocked(m *mgr, items []string, first bool) string {
-	var b strings.Builder
-	if !first {
-		b.WriteString("You continue your Execute work. These items arrived since your last turn.\n")
-		list(&b, "Items:", items)
-		b.WriteString("\nWork on them, then call finish.\n")
-		return b.String()
-	}
-	fmt.Fprintf(&b, "%s\n\nYou are %s in an Execute turn.\n", e.mandateText(), label(m))
-	e.contextLocked(&b, m)
-	list(&b, "Answered owner questions:", e.answeredLocked())
 	var contacts []string
 	if m.Parent != "" {
-		contacts = append(contacts, "parent: "+contact(e.byPath[m.Parent]))
+		contacts = append(contacts, "parent: "+contactOf(e.byPath[m.Parent]))
 	}
 	for _, c := range m.Children {
-		contacts = append(contacts, "child: "+contact(e.byPath[c]))
+		contacts = append(contacts, "child: "+contactOf(e.byPath[c]))
 	}
 	if m.Parent == "" && e.cfg.Owner != nil {
-		contacts = append(contacts, "owner (the human; ask only what the owner decisions do not settle)")
+		contacts = append(contacts, "user: the AI that invoked Markitect, which can consult the user")
 	}
-	list(&b, "Your contacts for the tool send:", contacts)
-	if m.Parent == "" && e.cfg.DefectTool {
-		b.WriteString("\nWhat the model and the owner decisions settle, you decide within the tree. A defect of the model itself goes to the owner only through the tool model_defect, which ends the run.\n")
+	list(b, "Your contacts for send:", contacts)
+	if len(m.Helpers) > 0 {
+		var roles []string
+		for _, h := range m.Helpers {
+			mode := "read-only"
+			if h.Writes {
+				mode = "may change a delegated subset of your area"
+			}
+			roles = append(roles, fmt.Sprintf("%s (%s)", h.Role, mode))
+		}
+		list(b, fmt.Sprintf("Your helper roles for delegate (at most %d at a time):", m.MaxHelpers), roles)
 	}
-	check := ""
-	if e.cfg.CheckTool {
-		check = checkNote
+	b.WriteString("\n" + modelAuthority + " " + methodIndex() + "\n")
+	if m.Parent == "" && !m.p.spec.Review && e.cfg.RootGuidance != "" {
+		b.WriteString(strings.TrimSpace(e.cfg.RootGuidance) + "\n")
 	}
-	b.WriteString("\nThe shared working tree is /work. Other Managers work in it at the same time: change only your own area and your registry shard. " + writeNote(m.Write) + "Run the project's build and tests yourself. Write binaries, coverage files and other scratch output outside /work, for example under /tmp: everything left under /work is captured and must be an accounted artifact." + check + "\n")
-	list(&b, "Items:", items)
-	b.WriteString("\nWork on them. Use send to coordinate through your parent and children. Call finish when you are done or waiting.\n")
-	return b.String()
 }
 
-func (e *engine) verifyPromptLocked(m *mgr, rs *roundState, retry bool) string {
-	var b strings.Builder
-	fmt.Fprintf(&b, "%s\n\nYou are %s in a fresh Verify turn of round %d.\n", e.mandateText(), label(m), rs.n)
-	if retry {
-		b.WriteString("Your previous Verify attempt ended without a valid assess call. Assess again.\n")
+// assignmentLocked renders the Pass assignment: purpose and mandate, the sealed
+// result of the previous Pass, the accepted plans and bases this Manager builds
+// on and, in a review, the candidate's checks and the findings to reassess.
+func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
+	p := m.p
+	fmt.Fprintf(b, "\nPass %s: %s\n%s\n", p.id, p.spec.Purpose, strings.TrimSpace(p.spec.Mandate))
+	if p.spec.Review {
+		fmt.Fprintf(b, "%s\n", strings.TrimSpace(p.spec.Guidance))
 	}
-	e.contextLocked(&b, m)
-	b.WriteString("\nThe candidate is mounted read-only at /work; write build or test output only under /tmp. " + e.guidanceText() + "\n")
-
-	var checks []string
-	for _, c := range rs.checks {
-		switch {
-		case c.Passed:
-			checks = append(checks, c.Name+": passed")
-		default:
-			line := fmt.Sprintf("%s: FAILED, exit code %d", c.Name, c.ExitCode)
-			if c.Reason != "" {
-				line += ", " + c.Reason
-			}
-			if c.Output != "" {
-				line += "\n" + c.Output
+	if p.number > 1 {
+		prev := e.passes[p.number-2]
+		fmt.Fprintf(b, "The previous Pass %s (%s) was sealed with the verdict %s.\n", prev.id, prev.spec.Purpose, prev.verdict)
+	}
+	if !p.spec.Plans {
+		if pr := e.plans[m.Path]; pr != nil && pr.env.Plan != nil && !p.spec.Review {
+			b.WriteString("\n" + renderPlan(m.Path, pr) + "\n")
+		}
+	}
+	if m.Parent != "" {
+		if parent := p.byPath[m.Parent]; parent.basis != nil {
+			b.WriteString("\nYour parent's " + e.renderAcceptedLocked(parent.basis) + "\n")
+		}
+	}
+	for _, d := range e.dependenciesLocked(m) {
+		y := p.byPath[d.Owner]
+		pr := y.basis
+		if d.Stage == stageNameResult {
+			pr = y.result
+		}
+		if pr != nil {
+			b.WriteString("\nYour dependency: " + e.renderAcceptedLocked(pr) + "\n")
+		}
+	}
+	if p.spec.Review {
+		var checks []string
+		for _, c := range p.checks {
+			line := c.Name + ": passed"
+			if !c.Passed {
+				line = fmt.Sprintf("%s: FAILED, exit code %d", c.Name, c.ExitCode)
+				if c.Reason != "" {
+					line += ", " + c.Reason
+				}
+				if c.Output != "" {
+					line += "\n" + c.Output
+				}
 			}
 			checks = append(checks, line)
 		}
+		b.WriteString("\nThe candidate passed the Model check and the File check.\n")
+		list(b, "Required checks on this candidate:", checks)
+		var mine, within []string
+		for _, f := range e.findings {
+			switch {
+			case f.Closed:
+			case f.RaisedBy == m.Path && f.Review:
+				mine = append(mine, renderFinding(f))
+			case e.within(f.Owner, m.Path):
+				within = append(within, renderFinding(f))
+			}
+		}
+		list(b, "Open findings you raised in earlier Passes: reassess each; close one as resolved when this candidate corrects it, or as disproved with evidence when it was erroneous:", mine)
+		list(b, "Other open findings within your responsibility:", within)
+	} else {
+		var mine []string
+		for _, f := range e.findings {
+			if !f.Closed && !f.Review && f.RaisedBy == m.Path && f.Pass != p.id {
+				mine = append(mine, renderFinding(f))
+			}
+		}
+		list(b, "Open findings you raised in earlier work Passes: close each with reason and evidence in your basis or result once it is resolved:", mine)
 	}
-	list(&b, "Required checks on this candidate:", checks)
+	var answered []string
+	for _, q := range e.questions {
+		if q.To == User && q.Answered {
+			answered = append(answered, fmt.Sprintf("%s: %s\n  Answer: %s", q.ID, q.Text, q.Answer))
+		}
+	}
+	list(b, "Answered user questions of this run:", answered)
+}
 
-	list(&b, "Answered owner questions:", e.answeredLocked())
+// taskLocked states what the Manager is to do in its current stage.
+func (e *engine) taskLocked(m *member) string {
+	switch m.stage {
+	case stageBlocked:
+		return fmt.Sprintf("your own work waits for %s. Until then answer what is asked of you; your project access is read-only.", m.waiting)
+	case stageOwn:
+		if len(m.Children) == 0 {
+			return "work on your own contribution and submit it as your basis (report kind basis)."
+		}
+		return "work on your own contribution and submit your basis (report kind basis): what your children need from you before they start. Do not do their work."
+	case stageIntegrate:
+		var results []string
+		for _, c := range m.Children {
+			if r := m.p.byPath[c].result; r != nil {
+				results = append(results, fmt.Sprintf("%s by %s: %s (verdict %s)", r.id, c, r.env.Summary, r.env.Verdict))
+			}
+		}
+		text := fmt.Sprintf("submit your complete result of this %s Pass (report kind result) as its mandate defines it, with every own obligation covered and your verdict.", m.p.spec.Purpose)
+		if len(results) > 0 {
+			text = "integrate your children's accepted results with your own contribution and the interactions between them, then " + text + " Accepted child results: " + strings.Join(results, "; ") + "."
+		}
+		return text
+	case stageBasis, stageResult:
+		return fmt.Sprintf("your %s %s awaits its decision; answer what is asked of you.", m.pending.kind, m.pending.id)
+	case stageDelegated:
+		return "your children work on your accepted basis; decide their proposals and answer their questions."
+	case stageDone:
+		return "your complete result is accepted; answer what is asked of you."
+	}
+	return "wait until your work starts."
+}
 
-	var structural, mine, addressed []string
-	for _, f := range rs.structural {
-		if f.Owner == m.Path {
-			structural = append(structural, renderFinding(f))
-		}
+// helperPromptLocked renders the single turn of a helper.
+func (e *engine) helperPromptLocked(h *helperRun) string {
+	m := h.m
+	var b strings.Builder
+	fmt.Fprintf(&b, "You are a %s helper of %s in Pass %s (%s). You work for your Manager only and report your result to it.\n", h.role.Role, labelOf(m.mgr), m.p.id, m.p.spec.Purpose)
+	if strings.TrimSpace(h.role.Instructions) != "" {
+		fmt.Fprintf(&b, "\n%s\n", strings.TrimSpace(h.role.Instructions))
 	}
-	for _, f := range e.findings {
-		switch {
-		case f.Closed || f.RaisedBy == MarkitectFinding:
-		case f.RaisedBy == m.Path:
-			mine = append(mine, renderFinding(f))
-		case f.Owner == m.Path:
-			addressed = append(addressed, renderFinding(f))
-		}
+	if m.Brief != "" {
+		fmt.Fprintf(&b, "\nYour Manager's responsibility:\n%s\n", strings.TrimSpace(m.Brief))
 	}
-	list(&b, "Structural findings of your area on this candidate (they hold for this candidate only):", structural)
-	var children []string
-	for _, c := range m.Children {
-		if a, ok := rs.assessments[c]; ok {
-			children = append(children, fmt.Sprintf("%s, satisfied %t: %s", c, a.Satisfied, a.Summary))
-		}
+	fmt.Fprintf(&b, "\nTask: %s\n", h.task)
+	var paths []string
+	for _, p := range h.paths {
+		paths = append(paths, p.Path)
 	}
-	list(&b, "Assessments of your children in this round:", children)
-	list(&b, "Open findings you raised earlier; close one with a reason only when it is resolved on this candidate:", mine)
-	list(&b, "Open findings addressed to you:", addressed)
-	if len(m.changed) > 0 {
-		shown := m.changed
-		more := ""
-		if len(shown) > maxListedPaths {
-			shown, more = shown[:maxListedPaths], fmt.Sprintf("\n- and %d more", len(m.changed)-maxListedPaths)
-		}
-		fmt.Fprintf(&b, "\nFiles of your area that changed since the previous candidate although you ran no Execute turn:\n- %s%s\n", strings.Join(shown, "\n- "), more)
+	if len(paths) == 0 {
+		b.WriteString("You may read the whole project; /work is read-only for you.\n")
+	} else {
+		fmt.Fprintf(&b, "You may read the whole project and change only %s; the registry stays with your Manager.\n", strings.Join(paths, ", "))
 	}
-	b.WriteString("\nWhen your assessment is complete, report it with the tool assess: summary, satisfied, findings (owner is you or one of your descendants) and closed. satisfied is true only when none of your own findings stays open and blocking. The last valid assess call of your turn counts.\n")
+	b.WriteString(modelAuthority + " " + methodIndex() + "\nWhen your task is done, report your result with the tool report.\n")
 	return b.String()
 }

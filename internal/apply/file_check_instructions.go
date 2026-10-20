@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
-	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -17,12 +16,7 @@ func (c *fileChecker) instructions(execution AuthoredExecution) {
 		}
 		selected[source.RepositoryPath] = sameCensusFile(c.raw.Census, source.RepositoryPath.String(), source.File)
 	}
-	lists := []*organization.Setting[[]string]{execution.Defaults.Execute.Instructions, execution.Defaults.Verify.Instructions}
-	if execution.Packages != nil {
-		for _, override := range execution.Packages.Value {
-			lists = append(lists, override.Execute.Instructions, override.Verify.Instructions)
-		}
-	}
+	lists := instructionLists(execution)
 	for _, list := range lists {
 		if list == nil {
 			continue

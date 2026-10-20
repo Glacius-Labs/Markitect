@@ -13,8 +13,8 @@ var (
 	ErrIncompleteInputs  = errors.New("model preparation inputs incomplete or mismatched")
 )
 
-// ModelService acquires and compiles model bytes only. Passed means language
-// validation on the supplied bytes; it is not a complete Check, Context or Apply.
+// ModelService acquires and checks model bytes only. Passed means language
+// validation on the supplied bytes; it is not a complete Model check, Context or Apply.
 type ModelService struct {
 	source  Source
 	preview PreviewSource
@@ -24,20 +24,16 @@ func NewModelService(source Source, preview PreviewSource) *ModelService {
 	return &ModelService{source: source, preview: preview}
 }
 
-// CapturedModel retains a fixed committed acquisition and compiler result.
-// Accessors return copies. The zero value has no successful compilation.
+// CapturedModel retains a fixed committed acquisition and Model check result.
+// Accessors return copies. The zero value has no successful Model check.
 type CapturedModel struct {
-	request  CaptureRequest
-	inputs   CapturedInputs
-	compiled model.Result
-	limits   model.Limits
+	request CaptureRequest
+	inputs  CapturedInputs
+	checked model.Result
+	limits  model.Limits
 	// extract marks the start of an Extract: the artifacts are not registered yet,
 	// which file checking tolerates.
 	extract bool
-	// startDrift marks the start of an Apply: accounting drift that the owning
-	// Manager can repair in its own area and shard does not fail file checking;
-	// the run hands it to that Manager as its first work (DEC-062).
-	startDrift bool
 }
 
 func (m CapturedModel) Request() CaptureRequest {
@@ -48,15 +44,15 @@ func (m CapturedModel) Inputs() CapturedInputs {
 	result.Raw = cloneRaw(result.Raw)
 	return result
 }
-func (m CapturedModel) Compilation() model.Result     { return cloneCompilation(m.compiled) }
+func (m CapturedModel) Checked() model.Result         { return cloneChecked(m.checked) }
 func (m CapturedModel) RequestedLimits() model.Limits { return m.limits }
 
 // PreviewedModel intentionally exposes no publication guard or Capture result.
 type PreviewedModel struct {
-	request  PreviewRequest
-	inputs   PreviewedInputs
-	compiled model.Result
-	limits   model.Limits
+	request PreviewRequest
+	inputs  PreviewedInputs
+	checked model.Result
+	limits  model.Limits
 }
 
 func (m PreviewedModel) Request() PreviewRequest {
@@ -69,14 +65,14 @@ func (m PreviewedModel) Inputs() PreviewedInputs {
 	result.Raw = cloneRaw(result.Raw)
 	return result
 }
-func (m PreviewedModel) Compilation() model.Result     { return cloneCompilation(m.compiled) }
+func (m PreviewedModel) Checked() model.Result         { return cloneChecked(m.checked) }
 func (m PreviewedModel) RequestedLimits() model.Limits { return m.limits }
 
-// CaptureModel returns acquisition errors separately from compiler diagnostics.
-// An errored or incomplete acquisition is never compiled into a passing model;
+// CaptureModel returns acquisition errors separately from Model check diagnostics.
+// An errored or incomplete acquisition is never checked into a passing model;
 // its actual partial observations and selected request remain available.
 func (s *ModelService) CaptureModel(ctx context.Context, request CaptureRequest, limits model.Limits) (CapturedModel, error) {
-	result := CapturedModel{request: CaptureRequest{cloneSelection(request.Selection)}, compiled: model.Result{Status: model.NotCompleted}, limits: limits}
+	result := CapturedModel{request: CaptureRequest{cloneSelection(request.Selection)}, checked: model.Result{Status: model.NotCompleted}, limits: limits}
 	if s == nil || s.source == nil {
 		return result, ErrSourceUnavailable
 	}
@@ -98,13 +94,13 @@ func (s *ModelService) CaptureModel(ctx context.Context, request CaptureRequest,
 	if err := validateSelection(result.request.Selection, observed.Raw); err != nil {
 		return result, err
 	}
-	result.compiled = compileModel(observed.Raw, limits)
+	result.checked = checkModel(observed.Raw, limits)
 	return result, nil
 }
 
 func (s *ModelService) PreviewModel(ctx context.Context, request PreviewRequest, limits model.Limits) (PreviewedModel, error) {
 	request.Selection = cloneSelection(request.Selection)
-	result := PreviewedModel{request: request, compiled: model.Result{Status: model.NotCompleted}, limits: limits}
+	result := PreviewedModel{request: request, checked: model.Result{Status: model.NotCompleted}, limits: limits}
 	if s == nil || s.preview == nil {
 		return result, ErrSourceUnavailable
 	}
@@ -128,16 +124,16 @@ func (s *ModelService) PreviewModel(ctx context.Context, request PreviewRequest,
 	if err := validateSelection(result.request.Selection, observed.Raw); err != nil {
 		return result, err
 	}
-	result.compiled = compileModel(observed.Raw, limits)
+	result.checked = checkModel(observed.Raw, limits)
 	return result, nil
 }
 
-func compileModel(raw RawInputs, limits model.Limits) model.Result {
+func checkModel(raw RawInputs, limits model.Limits) model.Result {
 	input := model.Input{Root: raw.Local.Source, Limits: limits}
 	for _, dependency := range raw.Dependencies {
 		input.Dependencies = append(input.Dependencies, dependency.Source)
 	}
-	return model.Compile(input)
+	return model.Check(input)
 }
 
 // These are completeness/binding checks, not physical acquisition proof.
@@ -170,7 +166,7 @@ func validateSelection(selection InputSelection, raw RawInputs) error {
 		repositoryLocal bool
 	}{
 		{selection.Execution, raw.Execution, true}, {selection.Registry, raw.Registry, true}, {selection.Ignore, raw.Ignore, true},
-		{selection.HostProfiles, raw.HostProfiles, false}, {selection.Instructions, raw.Instructions, false},
+		{selection.RuntimeProfiles, raw.RuntimeProfiles, false}, {selection.Instructions, raw.Instructions, false},
 	} {
 		if len(group.selected) != len(group.actual) {
 			return invalid("selected input observations missing")

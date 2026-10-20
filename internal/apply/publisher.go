@@ -16,7 +16,7 @@ var ErrUnpublishable = errors.New("the change set cannot be published to the tar
 // ErrCaptureChanged reports a source that changed since its capture.
 var ErrCaptureChanged = errors.New("the captured source changed since its capture")
 
-// PublicationID is the Host identity of one publication.
+// PublicationID is the Orchestrator identity of one publication.
 type PublicationID string
 
 // ControlCheck fences a publication to the Apply that holds the repository's

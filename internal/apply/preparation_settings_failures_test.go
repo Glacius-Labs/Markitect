@@ -11,14 +11,14 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
-func completeSettingsServiceSelection(t *testing.T, selection apply.InputSelection, host apply.SourceLocation) apply.InputSelection {
+func completeSettingsServiceSelection(t *testing.T, selection apply.InputSelection, runtimeLocation apply.SourceLocation) apply.InputSelection {
 	t.Helper()
 	selection.Ignore = []apply.SourceLocation{{Boundary: selection.Repository, Path: path(t, ".markitect/ignore.yaml")}}
 	selection.Instructions = nil
 	for _, name := range []string{"ops/one.md", "ops/two.md", "ops/three.md", "ops/four.md", "ops/five.md"} {
 		selection.Instructions = append(selection.Instructions, apply.SourceLocation{Boundary: selection.Repository, Path: path(t, name)})
 	}
-	selection.Instructions = append(selection.Instructions, host)
+	selection.Instructions = append(selection.Instructions, runtimeLocation)
 	return selection
 }
 
@@ -27,7 +27,7 @@ func TestPreparationSettingsSecondNeedsRetainCurrentFailureAndStop(t *testing.T)
 		for _, currentFailure := range []bool{false, true} {
 			for _, preview := range []bool{false, true} {
 				t.Run(fmt.Sprintf("changed=%v/currentFailure=%v/preview=%v", changed, currentFailure, preview), func(t *testing.T) {
-					selection, actual, host := settingsServiceInputs(t)
+					selection, actual, runtimeLocation := settingsServiceInputs(t)
 					calls, metadata := 0, 0
 					partialError := errors.New("second actual metadata error beside instruction need")
 					observe := func(selected apply.InputSelection) apply.RawInputs {
@@ -45,22 +45,22 @@ func TestPreparationSettingsSecondNeedsRetainCurrentFailureAndStop(t *testing.T)
 							return apply.PreviewedInputs{Raw: observe(r.Selection), Head: fixtureHead, Revision: r.Revision}, nil
 						},
 					}
-					agent := hostAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
+					agent := runtimeAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
 						metadata++
 						o := testObservation(t, true)
-						o.RequiredInstructions = []apply.SourceLocation{host}
+						o.RequiredInstructions = []apply.SourceLocation{runtimeLocation}
 						if metadata == 1 || currentFailure {
 							o.Status = model.Failed
 						}
 						if metadata == 2 && changed {
-							o.RequiredInstructions = []apply.SourceLocation{{Boundary: "new-explicit-host", Path: path(t, "new.md")}}
+							o.RequiredInstructions = []apply.SourceLocation{{Boundary: "new-explicit-runtime", Path: path(t, "new.md")}}
 						}
 						if metadata == 2 {
 							return o, partialError
 						}
 						return o, nil
 					})
-					_, check := hostPorts(t)
+					_, check := runtimePorts(t)
 					service := apply.NewPreparationService(apply.NewModelService(source, source))
 					var status, firstStatus, lastStatus model.Status
 					var required []apply.SourceLocation
@@ -104,17 +104,17 @@ func TestPreparationSettingsSecondNeedsRetainCurrentFailureAndStop(t *testing.T)
 }
 
 func TestPreparationSettingsMissingMetadataDoesNotRecaptureClosedInputs(t *testing.T) {
-	selection, actual, host := settingsServiceInputs(t)
-	selection = completeSettingsServiceSelection(t, selection, host)
+	selection, actual, runtimeLocation := settingsServiceInputs(t)
+	selection = completeSettingsServiceSelection(t, selection, runtimeLocation)
 	calls := 0
 	source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
 		calls++
 		return captured(preparationObservation(t, request.Selection, actual)), nil
 	}}
-	agent := hostAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
-		return apply.ProfileObservation{Status: model.NotCompleted, Diagnostics: []apply.HostProfileDiagnostic{{Code: "controlled.metadata_unavailable", Message: "Executable/schema metadata unavailable."}}}, nil
+	agent := runtimeAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
+		return apply.ProfileObservation{Status: model.NotCompleted, Diagnostics: []apply.RuntimeProfileDiagnostic{{Code: "controlled.metadata_unavailable", Message: "Executable/schema metadata unavailable."}}}, nil
 	})
-	_, check := hostPorts(t)
+	_, check := runtimePorts(t)
 	result, err := apply.NewPreparationService(apply.NewModelService(source, nil)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 	if err != nil || result.Status() != model.NotCompleted || calls != 1 || len(result.Attempts()) != 1 || len(result.Attempts()[0].Settings().RequiredInstructions()) != 0 {
 		t.Fatal("metadata uncertainty caused an unrelated source retry")
@@ -135,7 +135,7 @@ func TestPreparationSettingsPreservesPartialSourceAndMetadataErrors(t *testing.T
 	for _, kind := range []string{"source", "metadata", "known-invalid-metadata", "cancel"} {
 		for _, preview := range []bool{false, true} {
 			t.Run(fmt.Sprintf("%s/preview=%v", kind, preview), func(t *testing.T) {
-				selection, actual, host := settingsServiceInputs(t)
+				selection, actual, runtimeLocation := settingsServiceInputs(t)
 				ctx, cancel := context.WithCancel(context.Background())
 				defer cancel()
 				failure := errors.New("actual partial observation failure")
@@ -160,9 +160,9 @@ func TestPreparationSettingsPreservesPartialSourceAndMetadataErrors(t *testing.T
 						return apply.PreviewedInputs{Raw: raw, Head: fixtureHead, Revision: r.Revision}, err
 					},
 				}
-				agent := hostAgentPort(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+				agent := runtimeAgentPort(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 					metadata++
-					o, _ := settingsServiceAgent(t, host)(ctx, input)
+					o, _ := settingsServiceAgent(t, runtimeLocation)(ctx, input)
 					if kind == "cancel" {
 						cancel()
 						return o, context.Canceled
@@ -176,7 +176,7 @@ func TestPreparationSettingsPreservesPartialSourceAndMetadataErrors(t *testing.T
 					}
 					return o, nil
 				})
-				_, check := hostPorts(t)
+				_, check := runtimePorts(t)
 				service := apply.NewPreparationService(apply.NewModelService(source, source))
 				var status model.Status
 				var err, retained error
@@ -214,7 +214,7 @@ func TestPreparationSettingsPreservesPartialSourceAndMetadataErrors(t *testing.T
 				if kind == "cancel" {
 					failure, wantCalls, wantMetadata = context.Canceled, 1, 1
 				}
-				if !errors.Is(err, failure) || retained != err || status != want || calls != wantCalls || metadata != wantMetadata || !reflect.DeepEqual(raw, observed) || len(required) != 1 || required[0] != host {
+				if !errors.Is(err, failure) || retained != err || status != want || calls != wantCalls || metadata != wantMetadata || !reflect.DeepEqual(raw, observed) || len(required) != 1 || required[0] != runtimeLocation {
 					t.Fatalf("partial acquisition/error lost: %s %v calls=%d metadata=%d", status, err, calls, metadata)
 				}
 				if kind != "source" && len(profiles) == 0 {
@@ -228,7 +228,7 @@ func TestPreparationSettingsPreservesPartialSourceAndMetadataErrors(t *testing.T
 func TestPreparationSettingsClosesKnownSourcesBesideFirstMetadataError(t *testing.T) {
 	for _, preview := range []bool{false, true} {
 		t.Run(fmt.Sprint("preview=", preview), func(t *testing.T) {
-			selection, actual, host := settingsServiceInputs(t)
+			selection, actual, runtimeLocation := settingsServiceInputs(t)
 			selection.Registry = nil
 			calls, metadata := 0, 0
 			failure := errors.New("first actual partial metadata error")
@@ -244,17 +244,17 @@ func TestPreparationSettingsClosesKnownSourcesBesideFirstMetadataError(t *testin
 					return apply.PreviewedInputs{Raw: observe(request.Selection), Head: fixtureHead, Revision: request.Revision}, nil
 				},
 			}
-			agent := hostAgentPort(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+			agent := runtimeAgentPort(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 				metadata++
-				o, _ := settingsServiceAgent(t, host)(ctx, input)
+				o, _ := settingsServiceAgent(t, runtimeLocation)(ctx, input)
 				if metadata == 1 {
 					o.Status = model.Failed
-					o.Diagnostics = append(o.Diagnostics, apply.HostProfileDiagnostic{Code: "controlled.first_metadata_error", Message: failure.Error()})
+					o.Diagnostics = append(o.Diagnostics, apply.RuntimeProfileDiagnostic{Code: "controlled.first_metadata_error", Message: failure.Error()})
 					return o, failure
 				}
 				return o, nil
 			})
-			_, check := hostPorts(t)
+			_, check := runtimePorts(t)
 			service := apply.NewPreparationService(apply.NewModelService(source, source))
 			var status model.Status
 			var err, firstError error

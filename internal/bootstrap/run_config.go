@@ -21,7 +21,7 @@ import (
 var errRunConfig = errors.New("run configuration unavailable, incomplete or invalid; see the closed formatVersion 2 contract")
 var errRunConfigIO = errors.New("run configuration file could not be completely observed")
 
-// runConfig supplies explicit invocation assertions and concrete Host inputs.
+// runConfig supplies explicit invocation assertions and concrete Runtime inputs.
 // It adds no project settings or profile defaults. ProductBuild is the
 // operator's assertion identifying the frozen build, not a verified source SHA.
 // Harvest bounds every observation of a shared working tree. Deadline is the

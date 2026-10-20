@@ -41,7 +41,7 @@ func TestDefaultsExplicitEmptyListsAndExactOverridesKeepAuthoredSources(t *testi
 	if !reflect.DeepEqual(values.Overrides, before.Packages.Value) || len(values.Overrides) != 3 || values.Overrides[2].Package != "lending/reminders" || values.Overrides[2].Execute.Profile != nil || values.Overrides[2].Verify.Profile != nil {
 		t.Fatal("exact override was changed or acquired ancestor declarations")
 	}
-	if values.Overrides[0].Execute.Profile.Value != "unobserved-profile" || len(parent.Model().Inputs().Raw.HostProfiles) != 0 || len(parent.Model().Inputs().Raw.Instructions) != 0 {
+	if values.Overrides[0].Execute.Profile.Value != "unobserved-profile" || len(parent.Model().Inputs().Raw.RuntimeProfiles) != 0 || len(parent.Model().Inputs().Raw.Instructions) != 0 {
 		t.Fatal("declarative names invented resolved profile/instruction facts")
 	}
 	if !reflect.DeepEqual(prepared.Execution().Partial(), before) {

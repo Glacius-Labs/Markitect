@@ -17,10 +17,10 @@ func settingsServiceInputs(t *testing.T) (apply.InputSelection, apply.RawInputs,
 	selection, raw := fileCheckInputs(t)
 	preparationInstructions(t, &raw)
 	fileCheckSource(t, &selection, &raw, "ignore", ".markitect/ignore.yaml", snapshot.Regular, emptyFilePolicy, false)
-	addHostDocument(t, &selection, &raw, testHostDocument)
+	addRuntimeDocument(t, &selection, &raw, testRuntimeDocument)
 	// The same spelling as a project instruction deliberately names other bytes.
-	location := apply.SourceLocation{Boundary: "explicit-external-host", Path: path(t, "ops/one.md")}
-	entry, err := snapshot.NewEntry(location.Path, snapshot.Executable, []byte("Original external Host instructions.\r\n"))
+	location := apply.SourceLocation{Boundary: "explicit-external-runtime", Path: path(t, "ops/one.md")}
+	entry, err := snapshot.NewEntry(location.Path, snapshot.Executable, []byte("Original external Runtime instructions.\r\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -30,7 +30,7 @@ func settingsServiceInputs(t *testing.T) (apply.InputSelection, apply.RawInputs,
 
 // Metadata remains controlled static evidence. This port never resolves a
 // missing instruction itself; it requests a whole new acquisition instead.
-func settingsServiceAgent(t *testing.T, location apply.SourceLocation) hostAgentPort {
+func settingsServiceAgent(t *testing.T, location apply.SourceLocation) runtimeAgentPort {
 	t.Helper()
 	return func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 		o := testObservation(t, true)
@@ -55,13 +55,13 @@ func assertSettingsServiceAttempt(t *testing.T, structural apply.CapturedPrepara
 	}
 }
 
-func TestPreparationSettingsM1ClosesRepoAndHostInputsWithinOneSharedBound(t *testing.T) {
+func TestPreparationSettingsM1ClosesRepoAndRuntimeInputsWithinOneSharedBound(t *testing.T) {
 	for _, complete := range []bool{false, true} {
 		for _, mode := range []string{"capture", "working", "fixed"} {
 			t.Run(fmt.Sprintf("complete=%v/%s", complete, mode), func(t *testing.T) {
-				selection, actual, host := settingsServiceInputs(t)
+				selection, actual, runtimeLocation := settingsServiceInputs(t)
 				if complete {
-					selection = completeSettingsServiceSelection(t, selection, host)
+					selection = completeSettingsServiceSelection(t, selection, runtimeLocation)
 				} else {
 					selection.Registry = nil
 				}
@@ -84,7 +84,7 @@ func TestPreparationSettingsM1ClosesRepoAndHostInputsWithinOneSharedBound(t *tes
 						return input, nil
 					},
 				}
-				_, check := hostPorts(t)
+				_, check := runtimePorts(t)
 				service := apply.NewPreparationService(apply.NewModelService(source, source))
 				wantCalls := 1
 				if !complete {
@@ -97,7 +97,7 @@ func TestPreparationSettingsM1ClosesRepoAndHostInputsWithinOneSharedBound(t *tes
 				var accounting realization.Accounting
 				if mode == "capture" {
 					request := apply.CaptureRequest{Selection: selection}
-					result, err := service.CaptureSettings(context.Background(), request, model.Limits{}, settingsServiceAgent(t, host), check)
+					result, err := service.CaptureSettings(context.Background(), request, model.Limits{}, settingsServiceAgent(t, runtimeLocation), check)
 					last, ok := result.Prepared()
 					if err != nil || !ok || result.Status() != model.Passed || len(result.Attempts()) != wantCalls || len(captures) != wantCalls || !reflect.DeepEqual(result.Request(), request) {
 						t.Fatalf("combined M1 preparation: %s %v %+v", result.Status(), err, result.Attempts())
@@ -120,7 +120,7 @@ func TestPreparationSettingsM1ClosesRepoAndHostInputsWithinOneSharedBound(t *tes
 					if mode == "fixed" {
 						request.Revision = fixtureHead
 					}
-					result, err := service.PreviewSettings(context.Background(), request, model.Limits{}, settingsServiceAgent(t, host), check)
+					result, err := service.PreviewSettings(context.Background(), request, model.Limits{}, settingsServiceAgent(t, runtimeLocation), check)
 					last, ok := result.Prepared()
 					if err != nil || !ok || result.Status() != model.Passed || len(result.Attempts()) != wantCalls || len(previews) != wantCalls || !reflect.DeepEqual(result.Request(), request) {
 						t.Fatalf("combined M1 preview: %s %v", result.Status(), err)
@@ -144,8 +144,8 @@ func TestPreparationSettingsM1ClosesRepoAndHostInputsWithinOneSharedBound(t *tes
 				if settingsStatus != model.Passed || accounting.Status() != realization.Accounted || len(raw.Registry) != 2 || len(raw.Ignore) != 1 || len(raw.Instructions) != 6 {
 					t.Fatal("joint closure or real accounting incomplete")
 				}
-				if !complete && (len(firstRequired) != 1 || firstRequired[0] != host) {
-					t.Fatal("first attempt lost new Host acquisition need")
+				if !complete && (len(firstRequired) != 1 || firstRequired[0] != runtimeLocation) {
+					t.Fatal("first attempt lost new Runtime acquisition need")
 				}
 				if complete && len(firstRequired) != 0 {
 					t.Fatal("complete initial selection invented a recapture need")
@@ -164,8 +164,8 @@ func TestPreparationSettingsM1ClosesRepoAndHostInputsWithinOneSharedBound(t *tes
 						t.Fatal("derived input selected more than once")
 					}
 					seen[source.Location] = true
-					if source.Location == host && source.RepositoryPath.String() != "" {
-						t.Fatal("Host instruction acquired project coordinates")
+					if source.Location == runtimeLocation && source.RepositoryPath.String() != "" {
+						t.Fatal("Runtime instruction acquired project coordinates")
 					}
 				}
 			})

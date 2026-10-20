@@ -29,7 +29,7 @@ session:
   network: ''
 `
 
-func executionHostProfile(engine string) string { return imageProfile(engine) }
+func executionRuntimeProfile(engine string) string { return imageProfile(engine) }
 
 func preparedExecution(t *testing.T, inline string, port apply.AgentProfilePreparer) apply.PreparedProfile {
 	t.Helper()
@@ -41,7 +41,7 @@ func preparedExecution(t *testing.T, inline string, port apply.AgentProfilePrepa
 }
 
 func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
-	inline := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
+	inline := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
 	location := apply.SourceLocation{Boundary: "captured", Path: testPath(t, "instruction.md")}
 	entry, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte("Render this separately, once.\n"))
 	if err != nil {
@@ -75,8 +75,8 @@ func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
 }
 
 func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
-	inline := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
-	boundary := filepath.Join(t.TempDir(), "same-host")
+	inline := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
+	boundary := filepath.Join(t.TempDir(), "same-runtime")
 	prepare := func(text string, port apply.AgentProfilePreparer) apply.PreparedProfile {
 		return consumeProfileAt(t, text, nil, port, boundary).ProfileObservations()[0]
 	}
@@ -128,7 +128,7 @@ func TestExecutionProfileRefusesIncompleteOrForeignEvidence(t *testing.T) {
 				}
 				return o, err
 			})
-			prepared := preparedExecution(t, executionHostProfile(engine), port)
+			prepared := preparedExecution(t, executionRuntimeProfile(engine), port)
 			if got, err := ProfileFromPrepared(prepared); err == nil || !reflect.DeepEqual(got, Profile{}) {
 				t.Fatalf("accepted %s evidence or leaked partial projection: %v", scenario, err)
 			}
@@ -137,7 +137,7 @@ func TestExecutionProfileRefusesIncompleteOrForeignEvidence(t *testing.T) {
 }
 
 func TestExecutionProfileInvalidSettingsRefuseBeforeImageAcquisition(t *testing.T) {
-	base := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
+	base := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
 	for _, tc := range []struct{ name, from, to string }{
 		{"missing credential", "credentialRef: exact-runtime-credential\n", ""},
 		{"metadata only", executionSettings, ""},
@@ -145,7 +145,7 @@ func TestExecutionProfileInvalidSettingsRefuseBeforeImageAcquisition(t *testing.
 		{"missing tools", "  builtinTools: [Read, Write]\n", ""},
 		{"duplicate tools", "builtinTools: [Read, Write]", "builtinTools: [Read, Read]"},
 		{"unknown tool", "builtinTools: [Read, Write]", "builtinTools: [Task]"},
-		{"unsupported host version", "profileVersion: 1", "profileVersion: 3"},
+		{"unsupported runtime version", "profileVersion: 1", "profileVersion: 3"},
 		{"invalid effort", "effort: high", "effort: max"},
 		{"wire too large", "maxWireBytes: 1048576", "maxWireBytes: 1048577"},
 		{"wire zero", "maxWireBytes: 1048576", "maxWireBytes: 0"},
@@ -193,7 +193,7 @@ func TestProfileProjectsAnyDistinctBuiltinSubsetAndEffort(t *testing.T) {
 
 func validProfile() Profile {
 	return Profile{ImageID: fixtureImage, CredentialRef: "ref", MaxWireBytes: 1 << 20, Session: SessionProfile{Version: 1, Model: "m", Effort: "high",
-		SystemPrompt: "Use the Host instruction.", BuiltinTools: []string{"Read", "Write", "Edit"}, Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}}
+		SystemPrompt: "Use the Runtime instruction.", BuiltinTools: []string{"Read", "Write", "Edit"}, Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}}
 }
 
 func TestProfileValidationIsStrict(t *testing.T) {
@@ -243,7 +243,7 @@ func TestClaudeSectionIsRequiredBeforeAcquisitionAndProjection(t *testing.T) {
 	result := consumeProfileSection(t, inline, nil, captureProfile(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 		foreign = input
 		return reader.PrepareAgentProfile(ctx, input)
-	}), filepath.Join(t.TempDir(), "host"), "codexAppServer")
+	}), filepath.Join(t.TempDir(), "runtime"), "codexAppServer")
 	if calls != 0 || len(result.ProfileObservations()) != 1 || result.ProfileObservations()[0].Observation().Status != model.Failed {
 		t.Fatal("foreign section reached image reader", calls)
 	}
@@ -258,7 +258,7 @@ func TestClaudeSectionIsRequiredBeforeAcquisitionAndProjection(t *testing.T) {
 			AgentImage: &apply.AgentImageObservation{Provider: apply.AgentImageCodexAppServer, ImageID: fixtureImage,
 				Metadata:   apply.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID{1}, Size: 1},
 				CLIVersion: supportedClaudeVersion, AgentdVersion: "development", RecordedCodexSchemaDigest: fixtureSchema}}, nil
-	}), filepath.Join(t.TempDir(), "host"), "codexAppServer")
+	}), filepath.Join(t.TempDir(), "runtime"), "codexAppServer")
 	prepared := result.ProfileObservations()[0]
 	if _, ok := prepared.Identity(); !ok {
 		t.Fatal("expected complete foreign evidence", prepared.Observation())

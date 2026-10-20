@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-func (c *sourceCompiler) acquireLock(entries map[string]Entry) {
+func (c *sourceChecker) acquireLock(entries map[string]Entry) {
 	path := joinPath(parent(c.model.ManifestPath), "model-lock.yaml")
 	c.scope.lock = sourceLock{entry: Entry{Path: path}, status: NotCompleted}
 	entry, present := entries[path]

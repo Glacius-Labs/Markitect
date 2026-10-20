@@ -146,7 +146,10 @@ func TestAnswerWritesForTheRunningApplyOfTheConfiguredStateDirectory(t *testing.
 	if err := owner.Ask(context.Background(), runport.Question{ID: "q1", Text: "Which currency?"}); err != nil {
 		t.Fatal(err)
 	}
-	report, err := answer(context.Background(), cli.AnswerRequest{Question: "q1", Text: "Euro.", RunConfig: config})
+	if report, err := answer(context.Background(), cli.AnswerRequest{Question: "q1", Run: "run-0", Text: "Euro.", RunConfig: config}); err == nil || report.Status == model.Passed {
+		t.Fatalf("an answer naming another run was written: %+v %v", report, err)
+	}
+	report, err := answer(context.Background(), cli.AnswerRequest{Question: "q1", Run: "run-1", Text: "Euro.", RunConfig: config})
 	if err != nil || report.Status != model.Passed || report.Path != filepath.Join(state, "answers", "q1.txt") || report.Bytes != len("Euro.") {
 		t.Fatalf("%+v %v", report, err)
 	}

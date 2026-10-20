@@ -76,7 +76,7 @@ func TestImageMetadataUsesSelectedConfigurationAndWholeActualBytes(t *testing.T)
 
 func TestApplyRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.T) {
 	inline := imageProfile(filepath.Join(t.TempDir(), "engine"))
-	boundary := filepath.Join(t.TempDir(), "same-host")
+	boundary := filepath.Join(t.TempDir(), "same-runtime")
 	identity := func(data string) string {
 		prepared := consumeProfileAt(t, inline, nil, imagesPreparer(&fakeImages{data: []byte(data)}), boundary)
 		profiles := prepared.ProfileObservations()

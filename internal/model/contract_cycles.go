@@ -2,7 +2,7 @@ package model
 
 // Only mandatory object-field edges participate. Neither ordinary references
 // nor optional edges require recursive value expansion.
-func (c *contractCompiler) checkObjectCycles() {
+func (c *contractChecker) checkObjectCycles() {
 	var nodes []Identity
 	indices := map[Identity]int{}
 	var addresses []definitionAddress

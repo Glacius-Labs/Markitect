@@ -1,8 +1,8 @@
 // Package agentd is the session helper that runs inside every Agent
-// container. It starts the provider CLI on the Host's request, relays the
-// provider's standard streams, serves the Host tool catalogue to the CLI as
+// container. It starts the provider CLI on the Orchestrator's request, relays the
+// provider's standard streams, serves the Orchestrator tool catalogue to the CLI as
 // an MCP server on a Unix socket, and reports the provider's exit. It adds no
-// policy: the Host decides every tool call.
+// policy: the Orchestrator decides every tool call.
 package agentd
 
 import (
@@ -29,15 +29,15 @@ type Config struct {
 	Version string
 	// SocketPath is the Unix socket for MCP bridges.
 	SocketPath string
-	// StopGrace bounds the polite stop when the Host connection closes.
+	// StopGrace bounds the polite stop when the Orchestrator connection closes.
 	StopGrace time.Duration
 }
 
-// Serve runs one session over the Host connection. It returns nil when the
-// Host closes the connection cleanly and the provider, if started, has been
-// stopped. A Host protocol violation returns an error after stopping the
+// Serve runs one session over the Orchestrator connection. It returns nil when the
+// Orchestrator closes the connection cleanly and the provider, if started, has been
+// stopped. An Orchestrator protocol violation returns an error after stopping the
 // provider, so the container ends instead of guessing.
-func Serve(ctx context.Context, host io.Reader, out io.Writer, cfg Config) error {
+func Serve(ctx context.Context, orchestrator io.Reader, out io.Writer, cfg Config) error {
 	if cfg.SocketPath == "" {
 		cfg.SocketPath = DefaultSocketPath
 	}
@@ -53,7 +53,7 @@ func Serve(ctx context.Context, host io.Reader, out io.Writer, cfg Config) error
 	readErr := make(chan error, 1)
 	go func() {
 		for {
-			f, err := frame.Read(host)
+			f, err := frame.Read(orchestrator)
 			if err != nil {
 				readErr <- err
 				return
@@ -69,7 +69,7 @@ func Serve(ctx context.Context, host io.Reader, out io.Writer, cfg Config) error
 			if errors.Is(err, io.EOF) {
 				return nil
 			}
-			return fmt.Errorf("read Host frame: %w", err)
+			return fmt.Errorf("read Orchestrator frame: %w", err)
 		case f := <-frames:
 			if err := s.handle(f); err != nil {
 				_ = s.sendControl(frame.ControlMessage{Type: frame.TypeFailure, Failure: &frame.Failure{Message: err.Error()}})
@@ -110,7 +110,7 @@ func (s *server) handle(f frame.Frame) error {
 		case frame.TypeCensus:
 			return s.census(c.Request)
 		default:
-			return fmt.Errorf("the Host may not send a %q message", c.Type)
+			return fmt.Errorf("the Orchestrator may not send a %q message", c.Type)
 		}
 	case frame.ProviderIn:
 		p := s.current()
@@ -125,7 +125,7 @@ func (s *server) handle(f frame.Frame) error {
 		}
 		return s.deliver(r)
 	default:
-		return fmt.Errorf("the Host may not send on the %s channel", f.Channel)
+		return fmt.Errorf("the Orchestrator may not send on the %s channel", f.Channel)
 	}
 }
 
@@ -171,7 +171,7 @@ func (s *server) start(request uint64, req frame.Start) error {
 	p, err := startProvider(cmd, s.out)
 	if err != nil {
 		s.out.mu.Unlock()
-		// A refused start is reported to the Host as an observation, not a
+		// A refused start is reported to the Orchestrator as an observation, not a
 		// protocol violation; the session stays open for inspection.
 		return s.sendControl(frame.ControlMessage{Type: frame.TypeFailure, Request: request, Failure: &frame.Failure{Message: "start provider: " + err.Error()}})
 	}
@@ -227,7 +227,7 @@ func (s *server) deliver(r frame.ToolReply) error {
 	return nil
 }
 
-// call forwards one tool call to the Host and waits for its reply, the
+// call forwards one tool call to the Orchestrator and waits for its reply, the
 // bridge's departure (done) or the session's end.
 func (s *server) call(done <-chan struct{}, name string, args, meta []byte) (frame.ToolReply, error) {
 	s.mu.Lock()

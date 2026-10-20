@@ -171,14 +171,14 @@ func workspaceTree(t *testing.T, entries ...snapshot.Entry) snapshot.Tree {
 func workspaceAdapter(t *testing.T) (*Workspaces, *workspaceFake) {
 	t.Helper()
 	f := &workspaceFake{volumes: make(map[string]container.VolumeObservation), trees: make(map[string]snapshot.Tree)}
-	w, err := NewWorkspaces(f, container.ContainerSpec{Name: "host", Image: "sha256:" + strings.Repeat("a", 64), User: "1000:1000", Labels: map[string]string{"markitect.store": "store"}, CPUs: 1, MemoryBytes: 1 << 28, Pids: 32, TmpBytes: 1 << 20, Network: "none"})
+	w, err := NewWorkspaces(f, container.ContainerSpec{Name: "runtime", Image: "sha256:" + strings.Repeat("a", 64), User: "1000:1000", Labels: map[string]string{"markitect.store": "store"}, CPUs: 1, MemoryBytes: 1 << 28, Pids: 32, TmpBytes: 1 << 20, Network: "none"})
 	if err != nil {
 		t.Fatal(err)
 	}
 	return w, f
 }
 func TestWorkspaceHelperNamesDifferAcrossAdaptersWithTheSameHelper(t *testing.T) {
-	// Two processes with the same Host configuration each start their
+	// Two processes with the same Runtime configuration each start their
 	// sequence at 1; the workspace part keeps their helper names apart.
 	tree := workspaceTree(t, workspaceEntry(t, "a", snapshot.Regular, "a"))
 	first, firstFake := workspaceAdapter(t)
@@ -191,7 +191,7 @@ func TestWorkspaceHelperNamesDifferAcrossAdaptersWithTheSameHelper(t *testing.T)
 	}
 	names := make(map[string]bool)
 	for _, spec := range append(slices.Clone(firstFake.helpers), secondFake.helpers...) {
-		if names[spec.Name] || !strings.HasPrefix(spec.Name, "host-workspace-") {
+		if names[spec.Name] || !strings.HasPrefix(spec.Name, "runtime-workspace-") {
 			t.Fatalf("helper name %q repeats or lost its prefix", spec.Name)
 		}
 		names[spec.Name] = true

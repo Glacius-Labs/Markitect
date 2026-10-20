@@ -64,7 +64,7 @@ type OwnershipFact struct {
 	OwnerID string
 }
 
-// CheckFact is an explicit Host-supplied check identity and the exact scalar
+// CheckFact is an explicit Orchestrator-supplied check identity and the exact scalar
 // text expected at one configured YAML location. It is not a parsed command.
 type CheckFact struct {
 	Name      string
@@ -193,7 +193,7 @@ func Check(input Input) (Report, error) {
 			report.CheckReferencesChecked++
 			literal, ok := facts[expected.Name]
 			if !ok {
-				report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.check-fact.missing", expected.Name, expected.YAMLPath, "no explicit Host-supplied check fact matches this configured reference"))
+				report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.check-fact.missing", expected.Name, expected.YAMLPath, "no explicit Orchestrator-supplied check fact matches this configured reference"))
 				continue
 			}
 			actual, err := scalarAtYAMLPointer(root, expected.YAMLPath)
@@ -202,7 +202,7 @@ func Check(input Input) (Report, error) {
 				continue
 			}
 			if actual != literal {
-				report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.check-reference.mismatch", expected.Name, expected.YAMLPath, "YAML scalar differs from the exact Host-supplied literal reference"))
+				report.Findings = append(report.Findings, pipelineFinding(pipeline, "pipelines.check-reference.mismatch", expected.Name, expected.YAMLPath, "YAML scalar differs from the exact Orchestrator-supplied literal reference"))
 			}
 		}
 	}

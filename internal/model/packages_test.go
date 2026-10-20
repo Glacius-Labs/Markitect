@@ -21,7 +21,7 @@ func requirePackages(t *testing.T, model ModelResult, root string, names ...stri
 
 func TestPackagesOwnDirectoriesAndExactProvenance(t *testing.T) {
 	input := singleValueInput("string", "0", "1", "", "{}")
-	baseline := requireCompiled(t, input)
+	baseline := requireChecked(t, input)
 	input.Root.Origin = "opaque:local/source"
 	input.Root.Entries = append(input.Root.Entries,
 		Entry{Path: "model/empty/leaf", Kind: Directory},
@@ -35,7 +35,7 @@ func TestPackagesOwnDirectoriesAndExactProvenance(t *testing.T) {
 	// change that dependency's locked content or open any import binding.
 	input.Dependencies[0].Entries = append(input.Dependencies[0].Entries, Entry{Path: "model/empty/external", Kind: Directory})
 	before := cloneModelInput(input)
-	got := requireCompiled(t, input)
+	got := requireChecked(t, input)
 	requirePackages(t, got.Models[0], "model", "empty", "empty/leaf", "feature", "notes", "notes/child", "überweisung", "文档")
 	requirePackages(t, got.Models[1], "model", "empty", "empty/external", "markitect", "markitect/core")
 	for index, model := range got.Models {
@@ -44,12 +44,12 @@ func TestPackagesOwnDirectoriesAndExactProvenance(t *testing.T) {
 		}
 	}
 	if !reflect.DeepEqual(input, before) {
-		t.Fatal("Compile changed acquired input")
+		t.Fatal("Model check changed acquired input")
 	}
 	slices.Reverse(input.Root.Entries)
 	slices.Reverse(input.Dependencies[0].Entries)
-	if reversed := requireCompiled(t, input); !reflect.DeepEqual(got, reversed) {
-		t.Fatal("source enumeration changed package inventory or compilation result")
+	if reversed := requireChecked(t, input); !reflect.DeepEqual(got, reversed) {
+		t.Fatal("source enumeration changed package inventory or Model check result")
 	}
 }
 
@@ -60,7 +60,7 @@ func TestPackagesSelectedRootAndAcquisitionBoundary(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			input := singleValueInput("string", "0", "1", "", "{}")
-			baseline := requireCompiled(t, input).Models[0]
+			baseline := requireChecked(t, input).Models[0]
 			rootPath := tt.prefix
 			if tt.root != "." {
 				rootPath += tt.root
@@ -78,7 +78,7 @@ func TestPackagesSelectedRootAndAcquisitionBoundary(t *testing.T) {
 				}
 			}
 			input.Root.Entries = append(input.Root.Entries, Entry{Path: joinPath(strings.TrimSuffix(rootPath, "/"), "empty/leaf"), Kind: Directory})
-			got := requireCompiled(t, input).Models[0]
+			got := requireChecked(t, input).Models[0]
 			requirePackages(t, got, strings.TrimSuffix(rootPath, "/"), "empty", "empty/leaf", "feature")
 			if !bytes.Equal(got.Canonical, baseline.Canonical) || got.Digest != baseline.Digest {
 				t.Fatal("selected root or manifest location changed canonical content")
@@ -90,13 +90,13 @@ func TestPackagesSelectedRootAndAcquisitionBoundary(t *testing.T) {
 func TestPackagesPassedEmptyInventoryIsAuthoritative(t *testing.T) {
 	input := coreModelInput()
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model", Kind: Directory})
-	baseline := requireCompiled(t, input).Models[0]
+	baseline := requireChecked(t, input).Models[0]
 	requirePackages(t, baseline, "model")
 	if len(baseline.Definitions) != 0 || len(baseline.Canonical) == 0 || baseline.Digest == "" {
 		t.Fatal("empty local model did not publish its complete canonical result")
 	}
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/empty/leaf", Kind: Directory})
-	got := requireCompiled(t, input).Models[0]
+	got := requireChecked(t, input).Models[0]
 	requirePackages(t, got, "model", "empty", "empty/leaf")
 	if len(got.Definitions) != 0 || !bytes.Equal(got.Canonical, baseline.Canonical) || got.Digest != baseline.Digest {
 		t.Fatal("empty local packages changed Definitions or canonical content")
@@ -138,7 +138,7 @@ func TestPackagesWithheldForFailedModels(t *testing.T) {
 			input := singleValueInput("string", "0", "1", "", "{}")
 			input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/empty/leaf", Kind: Directory})
 			tt.change(&input)
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || got.Models[0].Status != Failed || !hasDiagnostic(got, tt.code) {
 				t.Fatalf("expected known %s failure: status=%s diagnostics=%+v", tt.code, got.Status, got.Diagnostics)
 			}
@@ -174,7 +174,7 @@ func TestPackagesWithheldForIncompleteModels(t *testing.T) {
 			input := singleValueInput("string", "0", "1", "", "{}")
 			input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/empty/leaf", Kind: Directory})
 			tt.change(&input)
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != NotCompleted || !hasDiagnostic(got, tt.code) {
 				t.Fatalf("expected incomplete %s proof: status=%s diagnostics=%+v", tt.code, got.Status, got.Diagnostics)
 			}

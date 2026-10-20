@@ -20,7 +20,7 @@ import (
 
 func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	var observed ExtractRequest
 	calls := 0
 	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(_ context.Context, request ExtractRequest) (ExtractReport, error) {
@@ -29,9 +29,9 @@ func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 		return ExtractReport{Status: model.NotCompleted}, nil
 	})
 	var out, stderr bytes.Buffer
-	code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--dependency", ".markitect/dependencies/core/model.yaml", "--dependency", ".markitect/dependencies/software/model.yaml", "--host-profile", host, "--run-config", config}, &out, &stderr)
+	code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--dependency", ".markitect/dependencies/core/model.yaml", "--dependency", ".markitect/dependencies/software/model.yaml", "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr)
 	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || observed.Selection.Local.ManifestPath.String() != ".markitect/model.yaml" || observed.Selection.Local.Boundary != "." ||
-		len(observed.Selection.Dependencies) != 2 || observed.Selection.Dependencies[1].ManifestPath.String() != ".markitect/dependencies/software/model.yaml" || len(observed.Selection.HostProfiles) != 1 || observed.Selection.HostProfiles[0].Boundary != dir {
+		len(observed.Selection.Dependencies) != 2 || observed.Selection.Dependencies[1].ManifestPath.String() != ".markitect/dependencies/software/model.yaml" || len(observed.Selection.RuntimeProfiles) != 1 || observed.Selection.RuntimeProfiles[0].Boundary != dir {
 		t.Fatalf("extract arguments changed: code=%d calls=%d request=%+v stderr=%s", code, calls, observed, stderr.String())
 	}
 	var report struct {
@@ -46,7 +46,7 @@ func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 
 func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	calls := 0
 	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
 		calls++
@@ -54,13 +54,13 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	})
 	for _, args := range [][]string{
 		{"extract"}, {"extract", "--repo", "absent"},
-		{"extract", "--run-config", "relative.json", "--host-profile", host},
+		{"extract", "--run-config", "relative.json", "--runtime-profile", runtimeProfile},
 		{"extract", "--run-config", config},
-		{"extract", "--run-config", config, "--host-profile", "relative.yaml"},
+		{"extract", "--run-config", config, "--runtime-profile", "relative.yaml"},
 		// There is no --model flag: the manifest path is fixed.
-		{"extract", "--run-config", config, "--host-profile", host, "--model", ".markitect/model.yaml"},
-		{"extract", "--run-config", config, "--host-profile", host, "--revision", "HEAD"},
-		{"extract", "--run-config", config, "--host-profile", host, "--text", "x"},
+		{"extract", "--run-config", config, "--runtime-profile", runtimeProfile, "--model", ".markitect/model.yaml"},
+		{"extract", "--run-config", config, "--runtime-profile", runtimeProfile, "--revision", "HEAD"},
+		{"extract", "--run-config", config, "--runtime-profile", runtimeProfile, "--text", "x"},
 	} {
 		var out, stderr bytes.Buffer
 		if code := c.Run(context.Background(), args, &out, &stderr); code == 0 {
@@ -72,16 +72,20 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	}
 	// Without the operation installed, Extract is unavailable.
 	var out, stderr bytes.Buffer
-	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--host-profile", host}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
+	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--runtime-profile", runtimeProfile}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
 		t.Fatalf("%d %s", code, out.String())
 	}
 }
 
 func TestExtractReportShape(t *testing.T) {
 	started := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-	structure := run.Outcome{Status: run.Verified, Rounds: []run.Round{{Number: 1, Green: true}}, Turns: []run.TurnRecord{{ID: "t1", Manager: ".", Kind: run.ExecuteTurn, Round: 1}}, Usage: run.Usage{InputTokens: 3}}
+	structure := run.Outcome{Status: run.Verified, Passes: []run.PassRecord{{ID: "structure-1", Purpose: "structure", Verdict: run.Satisfied, Sealed: true}, {ID: "verify-2", Purpose: run.Verify, Review: true, Verdict: run.Satisfied, Sealed: true}}, Turns: []run.TurnRecord{{ID: "t1", Manager: ".", Kind: run.ExecuteTurn, Pass: "structure-1"}}, Usage: run.Usage{InputTokens: 3}}
 	modelOutcome := run.Outcome{Status: run.Verified,
-		Rounds: []run.Round{{Number: 1, Assessments: []run.Assessment{{Manager: ".", Satisfied: false}}}, {Number: 2, Green: true, Assessments: []run.Assessment{{Manager: ".", Satisfied: true, Summary: "fine"}, {Manager: "lending", Satisfied: true, Summary: "fine"}}}},
+		Passes: []run.PassRecord{
+			{ID: "model-1", Purpose: "model", Verdict: run.Satisfied, Sealed: true},
+			{ID: "verify-2", Purpose: run.Verify, Review: true, Verdict: run.NeedsCorrection, Sealed: true, Managers: []run.ManagerRecord{{Manager: ".", State: run.Done, Verdict: run.NeedsCorrection}}},
+			{ID: "model-3", Purpose: "model", Verdict: run.Satisfied, Sealed: true},
+			{ID: "verify-4", Purpose: run.Verify, Review: true, Verdict: run.Satisfied, Sealed: true, Managers: []run.ManagerRecord{{Manager: ".", State: run.Done, Verdict: run.Satisfied, Summary: "fine"}, {Manager: "lending", State: run.Done, Verdict: run.Satisfied, Summary: "fine"}}}},
 		Findings: []run.Finding{
 			{ID: "f1", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/loan-limit", Obligation: "At most five loans", Observed: "borrow.go admits a sixth loan.", Blocking: false},
 			{ID: "f4", Owner: "lending/reminders", RaisedBy: "lending", Subject: "artifact", Definition: "lending/loan-limit", Obligation: "At most five loans", Observed: "remind.go counts six.", Blocking: false},
@@ -90,7 +94,7 @@ func TestExtractReportShape(t *testing.T) {
 			{ID: "f3", Owner: "lending", RaisedBy: "lending", Obligation: "Better wording", Observed: "x", Blocking: false},
 		},
 		Questions: []run.Question{{ID: "q1", Text: "Which currency?", Asked: started}, {ID: "q2", Text: "Answered.", Asked: started, Answered: true, Answer: "euro"}},
-		Turns:     []run.TurnRecord{{ID: "t2", Manager: ".", Kind: run.VerifyTurn, Round: 2}}, Usage: run.Usage{InputTokens: 7},
+		Turns:     []run.TurnRecord{{ID: "t2", Manager: ".", Kind: run.VerifyTurn, Pass: "verify-4"}}, Usage: run.Usage{InputTokens: 7},
 	}
 	receipt := &apply.PublicationReceipt{ID: "x-1", Outcome: apply.PublicationApplied}
 	proposed := []apply.ProposedCheck{{ID: "project-tests", Profile: "go-tests", Directory: "realization", Args: []string{"test", "./..."}}}
@@ -100,7 +104,7 @@ func TestExtractReportShape(t *testing.T) {
 	if report.Status != model.Passed || !report.ModelComplete || report.Structure.ID != "x-1-structure" || report.Model.ID != "x-1-model" || report.Model.Usage.InputTokens != 7 || report.Structure.Usage.InputTokens != 3 {
 		t.Fatalf("%+v", report)
 	}
-	if report.Verify == nil || report.Verify.Round != 2 || !report.Verify.Green || len(report.Verify.Assessments) != 2 {
+	if report.Verify == nil || report.Verify.Pass != "verify-4" || report.Verify.Verdict != run.Satisfied || len(report.Verify.Managers) != 2 {
 		t.Fatalf("verify %+v", report.Verify)
 	}
 	if len(report.Deviations) != 1 || report.Deviations[0].Definition != "lending/loan-limit" || len(report.Deviations[0].Observed) != 2 || !slices.Equal(report.Deviations[0].Owners, []string{"lending", "lending/reminders"}) || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
@@ -124,7 +128,7 @@ func TestExtractReportShape(t *testing.T) {
 	}
 	// Lists are never null, even for an Extract that stopped in the first phase.
 	stopped := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Incomplete, Reason: "budget"}})
-	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.OpenQuestions == nil || stopped.Structure.Rounds == nil {
+	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.OpenQuestions == nil || stopped.Structure.Passes == nil || stopped.Structure.Problems == nil {
 		t.Fatalf("%+v", stopped)
 	}
 }
@@ -186,14 +190,14 @@ func libraryExtract(t *testing.T) apply.ExtractResult {
 		}
 		published = append(published, apply.PublishedPath{Path: path, State: apply.PathAfter})
 	}
-	var assessments []run.Assessment
+	var managers []run.ManagerRecord
 	for _, m := range []string{".", "catalog", "lending", "lending/reminders", "library", "members"} {
-		assessments = append(assessments, run.Assessment{Manager: m, Satisfied: true, Summary: "fine"})
+		managers = append(managers, run.ManagerRecord{Manager: m, State: run.Done, Verdict: run.Satisfied, Summary: "fine"})
 	}
 	return apply.ExtractResult{
-		Structure: run.Outcome{Status: run.Verified, Rounds: []run.Round{{Number: 1, Green: true}}},
+		Structure: run.Outcome{Status: run.Verified, Passes: []run.PassRecord{{ID: "verify-2", Purpose: run.Verify, Review: true, Verdict: run.Satisfied, Sealed: true}}},
 		Model: &run.Outcome{Status: run.Verified,
-			Rounds: []run.Round{{Number: 1}, {Number: 2, Green: true, Assessments: assessments}},
+			Passes: []run.PassRecord{{ID: "verify-1", Purpose: run.Verify, Review: true}, {ID: "verify-2", Purpose: run.Verify, Review: true, Verdict: run.Satisfied, Sealed: true, Managers: managers}},
 			Findings: []run.Finding{
 				{ID: "f1", Owner: "lending", RaisedBy: "lending", Subject: "artifact", Definition: "lending/lending", Observed: "borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only checked when a loan is renewed.", Blocking: false},
 				{ID: "f2", Owner: "members", RaisedBy: "members", Subject: "model", Observed: "The status wording could be tighter.", Blocking: false},
@@ -235,7 +239,7 @@ Realization deviates from the model (1)
 Proposed checks (1)
   project-vet: vet ./... in realization
 
-Verify (round 2)
+Verify (Pass verify-2, verdict satisfied)
   satisfied: ., catalog, lending, lending/reminders, library, members
   open advisory findings: 1
 
@@ -253,7 +257,7 @@ func TestRenderExtractAccount(t *testing.T) {
 	incomplete := libraryExtract(t)
 	incomplete.Receipt, incomplete.ProposedChecks, incomplete.Packages = nil, nil, nil
 	incomplete.Model.Status, incomplete.Model.Reason = run.Incomplete, "owner question Q2 is still open"
-	incomplete.Model.Rounds = []run.Round{{Number: 1, Assessments: []run.Assessment{{Manager: ".", Satisfied: true}, {Manager: "lending", Satisfied: false}}}}
+	incomplete.Model.Passes = []run.PassRecord{{ID: "verify-1", Purpose: run.Verify, Review: true, Verdict: run.NeedsCorrection, Managers: []run.ManagerRecord{{Manager: ".", State: run.Done, Verdict: run.Satisfied}, {Manager: "lending", State: run.Done, Verdict: run.NeedsCorrection}}}}
 	incomplete.Model.Questions = append(incomplete.Model.Questions, run.Question{ID: "Q2", Text: "May a member hold a reserved copy?", Asked: asked})
 	incomplete.RetainedWork = "x-1-model-work"
 
@@ -282,18 +286,18 @@ func TestRenderExtractAccount(t *testing.T) {
 		{"complete", library, nil, "/state/x-1", []string{
 			"Model complete and published.", "Packages (5)", "  library            Small library", "Owner questions (1)", "  Q1 Which currency do fines use? -> euro",
 			"Realization deviates from the model (1)", "  lending/lending (owners: lending)", "    borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only chec...",
-			"Proposed checks (1)", "  project-vet: vet ./... in realization", "Verify (round 2)", "  satisfied: ., catalog, lending, lending/reminders, library, members", "  open advisory findings: 1",
+			"Proposed checks (1)", "  project-vet: vet ./... in realization", "Verify (Pass verify-2, verdict satisfied)", "  satisfied: ., catalog, lending, lending/reminders, library, members", "  open advisory findings: 1",
 			"Publication: applied, 3 files changed", "Evidence: /state/x-1", "Next: review and commit .markitect/model, .markitect/registry and", "  .markitect/execution.yaml to adopt the model. Extract commits nothing.",
 		}, []string{"not satisfied", "Retained work"}},
 		{"incomplete", incomplete, nil, "/state/x-1", []string{
 			"Model incomplete: owner question Q2 is still open.", "Owner questions (2)", "  Q2 May a member hold a reserved copy? -> unanswered",
-			"Verify (round 1)", "  satisfied: .", "  not satisfied: lending", "Publication: none", "Retained work: x-1-model-work (kept for inspection)", "Evidence: /state/x-1",
+			"Verify (Pass verify-1, verdict needs_correction)", "  satisfied: .", "  not satisfied: lending", "Publication: none", "Retained work: x-1-model-work (kept for inspection)", "Evidence: /state/x-1",
 		}, []string{"Next:", "Packages", "Proposed checks"}},
 		{"verified but stale", stale, nil, "", []string{
 			"Model incomplete: the verified model was not published (stale: the repository changed).", "Publication: stale, 0 of 3 files written: the repository changed",
 		}, []string{"Next:", "Evidence"}},
 		{"failed", failed, errors.New("agent port: closed"), "", []string{
-			"Extract failed: structure phase: the agent port broke; agent port: closed.", "Verify: no round finished", "Publication: none",
+			"Extract failed: structure phase: the agent port broke; agent port: closed.", "Verify: no Pass finished", "Publication: none",
 		}, []string{"Next:", "Owner questions", "Realization deviations"}},
 		{"capped lists", many, nil, "", []string{"Packages (25)", "  and 13 more", "Realization deviates from the model (21)", "  and 16 more"}, nil},
 	} {
@@ -330,7 +334,7 @@ func TestRenderExtractAccount(t *testing.T) {
 
 func TestExtractPrintsTheAccountToStderrAndKeepsStdoutJSON(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	result := libraryExtract(t)
 	var report ExtractReport
 	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
@@ -339,7 +343,7 @@ func TestExtractPrintsTheAccountToStderrAndKeepsStdoutJSON(t *testing.T) {
 		return report, nil
 	})
 	var out, stderr bytes.Buffer
-	if code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--host-profile", host, "--run-config", config}, &out, &stderr); code != 0 {
+	if code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr); code != 0 {
 		t.Fatalf("code %d: %s", code, stderr.String())
 	}
 	// stdout is exactly the JSON report, which does not carry the account's data.

@@ -26,7 +26,7 @@ var (
 	numberPattern  = regexp.MustCompile(`^(-?(0|[1-9][0-9]*))(?:\.([0-9]+))?(?:[eE]([+-]?[0-9]+))?$`)
 )
 
-// parseYAML reads the strict YAML value profile into the compiler's typed IR.
+// parseYAML reads the strict YAML value profile into the Model check's typed IR.
 // completed is false only when the supplied recursion budget is exceeded.
 func parseYAML(data []byte, depthLimit int) (Value, []yamlProblem, bool) {
 	if !utf8.Valid(data) {

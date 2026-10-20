@@ -62,7 +62,7 @@ func Check(options Options) (Report, error) {
 
 func checkPrepared(prepared apply.PreviewPreparationAttempt, options Options) (Report, error) {
 	inputs := prepared.Model().Inputs()
-	compiled := prepared.Model().Compilation()
+	checked := prepared.Model().Checked()
 	registry, ok := prepared.Registry().Registry()
 	if !ok {
 		return Report{}, errors.New("prepared registry unavailable")
@@ -70,7 +70,7 @@ func checkPrepared(prepared apply.PreviewPreparationAttempt, options Options) (R
 	owners := []string{"."}
 	modelDigest := ""
 	var checkFacts []pipelines.CheckFact
-	for _, m := range compiled.Models {
+	for _, m := range checked.Models {
 		if !m.Local {
 			continue
 		}

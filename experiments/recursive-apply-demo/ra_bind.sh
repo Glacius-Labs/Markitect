@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Bind one demonstration attempt to a finished build: Host profiles (one Claude
+# Bind one demonstration attempt to a finished build: Runtime profiles (one Claude
 # model for every Agent role, Sonnet unless MARKITECT_AGENT_MODEL names
 # another), check profiles, the private runtime token file and the frozen
 # scripts. MARKITECT_STORE labels the attempt's containers (default
@@ -23,7 +23,7 @@ AGENTD=$(grep '^agentd=' "$BUILD/runtime.env" | cut -d= -f2)
 ( umask 077; set -a; . "${MARKITECT_RUNTIME_ENV:-$HOME/.markitect/runtime.env}"; set +a; printf '%s' "$CLAUDE_CODE_OAUTH_TOKEN" > "$ATTEMPT/secret/claude-token" )
 test -s "$ATTEMPT/secret/claude-token"
 cat > "$ATTEMPT/host/host.yaml" <<YAML
-apiVersion: markitect.host/v1
+apiVersion: markitect.runtime/v1
 agentProfiles:
   library-agent:
     claudeCode:
@@ -38,7 +38,7 @@ agentProfiles:
         version: 1
         model: $MODEL
         effort: high
-        systemPrompt: "You are a Markitect Manager agent in a team that reconciles a repository with its canonical model. Follow the turn input and report only through the offered Host tools. Never print or copy credentials. Use only the Go standard library for the realization."
+        systemPrompt: "You are a Markitect Manager agent in a team that applies a repository's canonical model. Follow the turn input and report only through the offered Orchestrator tools. Never print or copy credentials. Use only the Go standard library for the realization."
         builtinTools: [Read, Write, Edit, Glob, Grep, Bash]
         store: $STORE
         cpus: 2

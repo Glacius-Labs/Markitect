@@ -28,7 +28,7 @@ func mutateRaw(raw apply.RawInputs) {
 	raw.Execution[0].Location.Boundary = "mutation"
 	raw.Registry[0].Location.Boundary = "mutation"
 	raw.Ignore[0].Location.Boundary = "mutation"
-	raw.HostProfiles[0].Location.Boundary = "mutation"
+	raw.RuntimeProfiles[0].Location.Boundary = "mutation"
 	raw.Instructions[0].Location.Boundary = "mutation"
 }
 
@@ -37,7 +37,7 @@ func mutateSelection(selection apply.InputSelection) {
 	selection.Execution[0].Boundary = "mutation"
 	selection.Registry[0].Boundary = "mutation"
 	selection.Ignore[0].Boundary = "mutation"
-	selection.HostProfiles[0].Boundary = "mutation"
+	selection.RuntimeProfiles[0].Boundary = "mutation"
 	selection.Instructions[0].Boundary = "mutation"
 }
 
@@ -59,21 +59,21 @@ func TestAcquisitionAndRequestSlicesAreIsolatedAcrossBothPorts(t *testing.T) {
 			service := apply.NewModelService(source, source)
 			var inputs func() apply.RawInputs
 			var request func() apply.InputSelection
-			var compile func() model.Result
+			var check func() model.Result
 			if preview {
 				result, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
 				if err != nil {
 					t.Fatal(err)
 				}
-				inputs, request, compile = func() apply.RawInputs { return result.Inputs().Raw }, func() apply.InputSelection { return result.Request().Selection }, result.Compilation
+				inputs, request, check = func() apply.RawInputs { return result.Inputs().Raw }, func() apply.InputSelection { return result.Request().Selection }, result.Checked
 			} else {
 				result, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
 				if err != nil {
 					t.Fatal(err)
 				}
-				inputs, request, compile = func() apply.RawInputs { return result.Inputs().Raw }, func() apply.InputSelection { return result.Request().Selection }, result.Compilation
+				inputs, request, check = func() apply.RawInputs { return result.Inputs().Raw }, func() apply.InputSelection { return result.Request().Selection }, result.Checked
 			}
-			beforeInputs, beforeRequest, beforeCompile := inputs(), request(), compile()
+			beforeInputs, beforeRequest, beforeCheck := inputs(), request(), check()
 			if !reflect.DeepEqual(beforeRequest, selection) {
 				t.Fatal("port mutated retained request or caller")
 			}
@@ -81,14 +81,14 @@ func TestAcquisitionAndRequestSlicesAreIsolatedAcrossBothPorts(t *testing.T) {
 			mutateSelection(selection)
 			mutateRaw(inputs())
 			mutateSelection(request())
-			if !reflect.DeepEqual(inputs(), beforeInputs) || !reflect.DeepEqual(request(), beforeRequest) || !reflect.DeepEqual(compile(), beforeCompile) {
+			if !reflect.DeepEqual(inputs(), beforeInputs) || !reflect.DeepEqual(request(), beforeRequest) || !reflect.DeepEqual(check(), beforeCheck) {
 				t.Fatal("input/request alias crossed immutable result boundary")
 			}
 		})
 	}
 }
 
-func TestCompilerResultsCopyNestedContainersAndOptionalSpans(t *testing.T) {
+func TestModelCheckResultsCopyNestedContainersAndOptionalSpans(t *testing.T) {
 	selection, raw := libraryInputs(t)
 	for i := range raw.Local.Source.Entries {
 		entry := &raw.Local.Source.Entries[i]
@@ -100,10 +100,10 @@ func TestCompilerResultsCopyNestedContainersAndOptionalSpans(t *testing.T) {
 	}
 	refreshLocalFiles(t, &raw)
 	result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || result.Compilation().Status != model.Passed {
-		t.Fatalf("%v %+v", err, result.Compilation())
+	if err != nil || result.Checked().Status != model.Passed {
+		t.Fatalf("%v %+v", err, result.Checked())
 	}
-	before, changed := result.Compilation(), result.Compilation()
+	before, changed := result.Checked(), result.Checked()
 	changed.Models[0].Canonical[0] = '!'
 	changed.Models[0].Phases[0].Name = "mutation"
 	changed.Models[0].Packages[0].Name = "mutation"
@@ -139,12 +139,12 @@ func TestCompilerResultsCopyNestedContainersAndOptionalSpans(t *testing.T) {
 	if titles == 0 || displays == 0 || bodies == 0 || sources == 0 || specs == 0 {
 		t.Fatalf("copy fixture did not exercise nested fields: %d/%d/%d/%d/%d", titles, displays, bodies, sources, specs)
 	}
-	if !reflect.DeepEqual(before, result.Compilation()) {
-		t.Fatal("compiler report alias escaped")
+	if !reflect.DeepEqual(before, result.Checked()) {
+		t.Fatal("Model check report alias escaped")
 	}
 }
 
-func TestCompilerDiagnosticPositionsAreCopied(t *testing.T) {
+func TestModelCheckDiagnosticPositionsAreCopied(t *testing.T) {
 	selection, raw := libraryInputs(t)
 	for i := range raw.Local.Source.Entries {
 		if strings.HasSuffix(raw.Local.Source.Entries[i].Path, "/borrow.yaml") {
@@ -153,10 +153,10 @@ func TestCompilerDiagnosticPositionsAreCopied(t *testing.T) {
 	}
 	refreshLocalFiles(t, &raw)
 	result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || result.Compilation().Status != model.Failed {
-		t.Fatal("failure fixture did not compile")
+	if err != nil || result.Checked().Status != model.Failed {
+		t.Fatal("failure fixture did not pass the Model check")
 	}
-	before, changed := result.Compilation(), result.Compilation()
+	before, changed := result.Checked(), result.Checked()
 	positions := 0
 	for i := range changed.Diagnostics {
 		changed.Diagnostics[i].Message = "mutation"
@@ -165,7 +165,7 @@ func TestCompilerDiagnosticPositionsAreCopied(t *testing.T) {
 			positions++
 		}
 	}
-	if positions == 0 || !reflect.DeepEqual(before, result.Compilation()) {
+	if positions == 0 || !reflect.DeepEqual(before, result.Checked()) {
 		t.Fatal("diagnostic position alias escaped or was not tested")
 	}
 }

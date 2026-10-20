@@ -1836,6 +1836,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: "Preserves the bounded Apply evidence of #492 on the library with Haiku and its open findings."
+  - path: "docs/validation/apply-pass-process-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/validation/apply-stability-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]

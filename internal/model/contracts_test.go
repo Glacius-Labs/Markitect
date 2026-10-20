@@ -13,7 +13,7 @@ func contractDefinition(path, id, kind, spec string) Entry {
 
 func TestFullPrescribedCoreCompletesEveryPhase(t *testing.T) {
 	input := Input{Root: completeCoreSource()}
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Passed || len(got.Diagnostics) != 0 || len(got.Models) != 1 {
 		t.Fatalf("prescribed nine-file Core rejected: %+v", got)
 	}
@@ -34,7 +34,7 @@ func TestFullPrescribedCoreCompletesEveryPhase(t *testing.T) {
 		t.Fatal("contract check produced full IR or canonical evidence")
 	}
 	slices.Reverse(input.Root.Entries)
-	if reversed := Compile(input); !reflect.DeepEqual(got, reversed) {
+	if reversed := Check(input); !reflect.DeepEqual(got, reversed) {
 		t.Fatalf("Core report depends on entry order: %+v / %+v", got, reversed)
 	}
 }
@@ -67,7 +67,7 @@ func TestCoreComparesEffectiveContent(t *testing.T) {
 		}
 		entry.Bytes = []byte(text)
 	}
-	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
+	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("equivalent effective Core rejected: %+v", got)
 	}
 }
@@ -96,7 +96,7 @@ func TestFixedCoreRejectsContentReplacements(t *testing.T) {
 					entry.Bytes = []byte(text)
 				}
 			}
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || !hasDiagnostic(got, tt.code) {
 				t.Fatalf("Core replacement accepted; want %s: %+v", tt.code, got)
 			}
@@ -111,7 +111,7 @@ func TestDerivedContractsAndOrdinaryPropertiesField(t *testing.T) {
 		contractDefinition("vocabulary/nested.yaml", "nested", "Core.Property", "{type: object, minCount: 0, maxCount: -1, properties: [displayName, nested]}"),
 		contractDefinition("vocabulary/item.yaml", "item", "Catalog", "{properties: [Core.name, Core.name]}"),
 	)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "core_and_contracts") != Passed || phaseStatus(got.Models[0], "values_and_references") != Passed {
 		t.Fatalf("contracts or ordinary data field misinterpreted: %+v", got)
 	}
@@ -147,7 +147,7 @@ func TestContractMetadataAndTargetTypes(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			input := coreModelInput(contractDefinition("feature/example.yaml", "Example", "Core.Kind", "{}"), contractDefinition("feature/test.yaml", tt.id, tt.kind, tt.spec))
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || !hasDiagnostic(got, tt.code) {
 				t.Fatalf("want %s: %+v", tt.code, got)
 			}
@@ -161,11 +161,11 @@ func TestContractFieldNameCollisionsAndFullDefaultIDs(t *testing.T) {
 		contractDefinition("feature/name.yaml", "displayName", "Core.Property", "{type: string, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/other.yaml", "other", "Core.Property", "{name: displayName, type: string, minCount: 0, maxCount: 1}"),
 	)
-	if got := Compile(input); !hasDiagnostic(got, "contract.field_collision") {
+	if got := Check(input); !hasDiagnostic(got, "contract.field_collision") {
 		t.Fatalf("effective field collision not detected: %+v", got)
 	}
 	input.Root.Entries[3] = contractDefinition("feature/other.yaml", "other", "Core.Property", "{name: different, type: string, minCount: 0, maxCount: 1}")
-	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
+	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("full local default ID was shortened or otherwise changed: %+v", got)
 	}
 }
@@ -186,7 +186,7 @@ func TestMandatoryObjectCyclesAndOptionalTermination(t *testing.T) {
 				contractDefinition("feature/a.yaml", "a", "Core.Property", "{type: object, minCount: "+tt.aMin+", maxCount: "+tt.aMax+", properties: [b]}"),
 				contractDefinition("feature/b.yaml", "b", "Core.Property", "{type: object, minCount: "+tt.bMin+", maxCount: 1, properties: [a]}"),
 			)
-			got := Compile(input)
+			got := Check(input)
 			if tt.fail {
 				if got.Status != Failed || !hasDiagnostic(got, "contract.object_cycle") {
 					t.Fatalf("unused impossible object contract accepted: %+v", got)
@@ -202,26 +202,26 @@ func TestCoreDefinitionSetAndUnusedImports(t *testing.T) {
 	t.Run("missing", func(t *testing.T) {
 		input := Input{Root: completeCoreSource()}
 		input.Root.Entries = slices.DeleteFunc(input.Root.Entries, func(e Entry) bool { return strings.HasSuffix(e.Path, "/name.yaml") })
-		if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "core.missing") {
+		if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "core.missing") {
 			t.Fatalf("missing prescribed Core definition accepted: %+v", got)
 		}
 	})
 	t.Run("extra", func(t *testing.T) {
 		input := Input{Root: completeCoreSource()}
 		input.Root.Entries = append(input.Root.Entries, bindingDefinition("markitect/core/extra.yaml", "Extra", "Kind", ""))
-		if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "core.definition_set") {
+		if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "core.definition_set") {
 			t.Fatalf("extra Core definition accepted: %+v", got)
 		}
 	})
 	t.Run("two supplied cores", func(t *testing.T) {
 		input := Input{Root: completeCoreSource(), Dependencies: []SourceModel{completeCoreSource()}}
 		input.Dependencies[0].Origin = "second-core"
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != Failed || !hasDiagnostic(got, "core.definition_set") {
 			t.Fatalf("duplicate Core owner accepted: %+v", got)
 		}
 		slices.Reverse(input.Dependencies[0].Entries)
-		if reordered := Compile(input); !reflect.DeepEqual(got, reordered) {
+		if reordered := Check(input); !reflect.DeepEqual(got, reordered) {
 			t.Fatalf("Core candidate order selected an owner: %+v / %+v", got, reordered)
 		}
 	})
@@ -234,7 +234,7 @@ func TestCoreDefinitionSetAndUnusedImports(t *testing.T) {
 			}
 		}
 		input.Root.Entries = append(input.Root.Entries, contractDefinition("unused/aux.yaml", "Aux", "Core.Kind", "{}"))
-		if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
+		if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 			t.Fatalf("valid unused import changed effective Core content: %+v", got)
 		}
 	})
@@ -246,11 +246,11 @@ func TestLocalKindAndPropertyNamesDoNotInstallMetaOperators(t *testing.T) {
 		contractDefinition("feature/property.yaml", "Property", "Core.Kind", "{}"),
 		contractDefinition("feature/item.yaml", "item", "feature/Property", "{}"),
 	)
-	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
+	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("local Property name granted meta semantics: %+v", got)
 	}
 	input.Root.Entries[3] = contractDefinition("feature/item.yaml", "camelName", "feature/Kind", "{properties: [Missing]}")
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "name.category") || hasDiagnostic(got, "binding.reference_missing") || hasDiagnostic(got, "contract.reference_target") {
 		t.Fatalf("local Kind name changed concrete category or interpreted ordinary properties: %+v", got)
 	}
@@ -261,7 +261,7 @@ func TestLargeCountsAndExactEnumStrings(t *testing.T) {
 		contractDefinition("feature/large.yaml", "large", "Core.Property", "{type: string, minCount: 999999999999999999999999999999999999999999, maxCount: -1}"),
 		contractDefinition("feature/values.yaml", "choices", "Core.Property", "{type: enum, minCount: 0, maxCount: 0, values: ['', a, A, 'ü', ü]}"),
 	)
-	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
+	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("counts were bounded or enum text was normalized/casefolded: %+v", got)
 	}
 }
@@ -280,7 +280,7 @@ func TestKnownContractErrorsSurviveUnrelatedResourceRefusal(t *testing.T) {
 			input.Dependencies = append(input.Dependencies, bindingSource("incomplete", "1.0", "{}", Entry{
 				Path: "model/other/partial.yaml", Kind: Regular, Bytes: []byte("spec: {a: {b: {c: {d: text}}}}"),
 			}))
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || !hasDiagnostic(got, tt.code) || !hasDiagnostic(got, "limit.yaml_depth") {
 				t.Fatalf("known error was hidden by independent limit: %+v", got)
 			}
@@ -294,7 +294,7 @@ func TestResolvedUnicodeCategoriesAndEffectiveFieldCollisions(t *testing.T) {
 		contractDefinition("feature/größe.yaml", "größe", "Core.Property", "{type: integer, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/größe-٢.yaml", "größe-٢", "文档", "{größe: 2}"),
 	)
-	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "names_and_unicode") != Passed {
+	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "names_and_unicode") != Passed {
 		t.Fatalf("resolved Unicode categories were rejected: %+v", got)
 	}
 	input = coreModelInput(
@@ -302,7 +302,7 @@ func TestResolvedUnicodeCategoriesAndEffectiveFieldCollisions(t *testing.T) {
 		contractDefinition("feature/one.yaml", "one", "Core.Property", "{name: straße, type: string, minCount: 0, maxCount: 1}"),
 		contractDefinition("feature/two.yaml", "two", "Core.Property", "{name: strasse, type: string, minCount: 0, maxCount: 1}"),
 	)
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "contract.field_collision") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "contract.field_collision") {
 		t.Fatalf("Unicode effective field collision was not detected: %+v", got)
 	}
 }

@@ -6,7 +6,7 @@ Product snapshot values, repository acquisition, canonical model digests and mai
 
 `internal/snapshot` provides immutable exact repository-relative paths, modes, entries, content identities and fixed trees. Construction rejects invalid spellings and collisions. Deterministic comparisons operate on supplied values without Git or filesystem I/O. A tree digest and file content identity are not canonical model digests.
 
-`internal/model` compiles supplied canonical sources and produces model digests with source provenance. `internal/organization` and `internal/realization` consume these pure facts. Neither compiler nor deterministic values infer physical repository identity or authorize a write.
+`internal/model` checks supplied canonical sources and produces model digests with source provenance. `internal/organization` and `internal/realization` consume these pure facts. Neither the Model check nor deterministic values infer physical repository identity or authorize a write.
 
 ## Adapter and use-case ownership
 
@@ -34,4 +34,4 @@ Earlier snapshot encodings and audits retain their original scope in [the preced
 
 ## Security and verification limits
 
-Physical identity, exact source spellings, redirect refusal, bytes and finite acquisition budgets are adapter obligations. Pure compilation establishes none of them. A passed preparation report does not establish a real session, check execution, verified candidate, operating-system sandbox or Apply readiness. Document writes use a separate source/target-bound guard and retain actual partial effects on failure.
+Physical identity, exact source spellings, redirect refusal, bytes and finite acquisition budgets are adapter obligations. The pure Model check establishes none of them. A passed preparation report does not establish a real session, check execution, verified candidate, operating-system sandbox or Apply readiness. Document writes use a separate source/target-bound guard and retain actual partial effects on failure.

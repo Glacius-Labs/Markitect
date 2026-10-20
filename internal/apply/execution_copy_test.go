@@ -13,7 +13,7 @@ func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 	content := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
 	content = strings.Replace(content, "profiles:\n  execute", "instructions: {execute: [one.md], verify: [two.md]}\nprofiles:\n  execute", 1)
 	content = strings.Replace(content, "    profiles: {verify: library-agent}", "    profiles: {execute: a, verify: b}\n    instructions: {execute: [three.md], verify: [four.md]}", 1)
-	content = strings.Replace(content, "checks:\n", libraryLayoutYAML+"scope: [{kind: software/Rule, property: lending/maxOpenLoans}]\nchecks:\n", 1)
+	content = strings.Replace(content, "checks:\n", libraryOwnershipYAML+libraryTeamYAML+"scope: [{kind: software/Rule, property: lending/maxOpenLoans}]\nchecks:\n", 1)
 	result := executionResult(t, content)
 	original, ok := result.Document()
 	if !ok {
@@ -29,8 +29,11 @@ func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 	p := &changed.Packages.Value[0]
 	p.Execute.Profile.Value, p.Verify.Profile.Value = "changed", "changed"
 	p.Execute.Instructions.Value[0], p.Verify.Instructions.Value[0] = "changed", "changed"
-	changed.Layout.Roots.Value[0] = area(t, "other")
-	changed.Layout.Exceptions[0].Owner.Value = "changed"
+	changed.Ownership.Value[0].Path.Value = "changed/"
+	changed.Ownership.Value[4].Owner.Value = "changed"
+	changed.Team.Helpers[0].Instructions.Value[0] = "changed"
+	changed.Team.Helpers[0].Profile.Value = "changed"
+	changed.Team.Helpers[1].Writes.Value = false
 	changed.Scope.Value[0].Value.Kind = model.Identity{Package: "other", ID: "other"}
 	changed.Checks.Value[0].Args.Value[0] = "changed"
 	changed.Checks.Value[0].RequiredBy.Value = model.Identity{Package: "other", ID: "other"}
@@ -64,7 +67,7 @@ func TestExecutionPartialDiagnosticsRemainIndependent(t *testing.T) {
 	}
 	partial := result.Partial()
 	partial.Checks.Value[0].Args.Value[0] = "changed"
-	if result.Partial().Checks.Value[0].Args.Value[0] != "test" || result.Partial().Budget.Rounds.Value != 4 {
+	if result.Partial().Checks.Value[0].Args.Value[0] != "test" || result.Partial().Budget.Passes.Value != 12 {
 		t.Fatal("partial known facts mutated or discarded")
 	}
 	var empty apply.CapturedExecutionDecoding

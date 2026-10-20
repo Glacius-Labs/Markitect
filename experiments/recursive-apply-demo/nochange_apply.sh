@@ -20,7 +20,7 @@ python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" n1 "$SHA" "$DEADLINE" > /de
 start=$(date +%s)
 timeout --kill-after=30 1260 "$ATTEMPT/markitect" apply --repo "$ATTEMPT/repo" --model .markitect/model.yaml \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-n1.json" \
+  --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-n1.json" \
   > "$ATTEMPT/out/apply-n1.json" 2> "$ATTEMPT/out/apply-n1.stderr"
 echo "apply exit=$? seconds=$(( $(date +%s) - start ))"
 bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" | grep containers
@@ -32,8 +32,13 @@ python3 - "$ATTEMPT/out/apply-n1.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
 r = d.get("run") or {}
+if "passes" not in r:
+    sys.exit("no run.passes in the Apply report: " + str(d.get("error") or d.get("status")))
 print("status", d.get("status"), "run", r.get("status"), "publication", (d.get("publication") or {}).get("Outcome"), "retained", d.get("retainedWork"))
 print("turns", len(r.get("turns") or []), {k: sum(1 for t in r["turns"] if t["kind"] == k) for k in ("execute", "verify")})
-print("rounds", [(x["number"], x["green"]) for x in r.get("rounds") or []], "findings", len(r.get("findings") or []))
+for x in r["passes"]:
+    n = sum(1 for t in r["turns"] if t["pass"] == x["id"])
+    print(" pass", x["id"], x["purpose"], "review" if x["review"] else "work", "verdict", x.get("verdict"), "sealed", x["sealed"], "turns", n, [(c["name"], c["passed"]) for c in x.get("checks") or []])
+print("findings", len(r.get("findings") or []))
 print("usage", r.get("usage"))
 PY

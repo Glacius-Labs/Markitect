@@ -11,7 +11,7 @@ func cloneSelection(value InputSelection) InputSelection {
 	value.Execution = slices.Clone(value.Execution)
 	value.Registry = slices.Clone(value.Registry)
 	value.Ignore = slices.Clone(value.Ignore)
-	value.HostProfiles = slices.Clone(value.HostProfiles)
+	value.RuntimeProfiles = slices.Clone(value.RuntimeProfiles)
 	value.Instructions = slices.Clone(value.Instructions)
 	return value
 }
@@ -25,7 +25,6 @@ func cloneSource(value model.SourceModel) model.SourceModel {
 }
 
 func cloneRaw(value RawInputs) RawInputs {
-	value.Untracked = slices.Clone(value.Untracked)
 	value.Local.Source = cloneSource(value.Local.Source)
 	value.Dependencies = slices.Clone(value.Dependencies)
 	for i := range value.Dependencies {
@@ -34,7 +33,7 @@ func cloneRaw(value RawInputs) RawInputs {
 	value.Execution = slices.Clone(value.Execution)
 	value.Registry = slices.Clone(value.Registry)
 	value.Ignore = slices.Clone(value.Ignore)
-	value.HostProfiles = slices.Clone(value.HostProfiles)
+	value.RuntimeProfiles = slices.Clone(value.RuntimeProfiles)
 	value.Instructions = slices.Clone(value.Instructions)
 	return value
 }
@@ -51,9 +50,9 @@ func cloneDiagnostics(value []model.Diagnostic) []model.Diagnostic {
 	return value
 }
 
-// model.Value and snapshot values are immutable. Compiler report containers
+// model.Value and snapshot values are immutable. Model check report containers
 // and optional spans/titles remain mutable public Go values.
-func cloneCompilation(value model.Result) model.Result {
+func cloneChecked(value model.Result) model.Result {
 	value.Diagnostics = cloneDiagnostics(value.Diagnostics)
 	value.Models = slices.Clone(value.Models)
 	for i := range value.Models {

@@ -16,7 +16,7 @@ type contextBuilder struct {
 	queue    []model.Identity
 }
 
-// SelectContext consumes only an overall Passed compiler result. An isolated
+// SelectContext consumes only an overall Passed Model check result. An isolated
 // passed root beside an overall Failed/NotCompleted supplied set is insufficient:
 // only the overall proof establishes unique populated-Package/Definition owners
 // across all supplied models. The exact global identity index locates already
@@ -28,8 +28,8 @@ type contextBuilder struct {
 // further business edges never expand the selection. Scope is local and explicit.
 // Coordinates are optional provenance, not a content-success gate. No source is
 // acquired or parsed, no context is rendered, and every error returns zero.
-func SelectContext(compiled model.Result, packagePath string, scope []Setting[ScopeRule]) (ContextSelection, error) {
-	topology, err := BuildTopology(compiled)
+func SelectContext(checked model.Result, packagePath string, scope []Setting[ScopeRule]) (ContextSelection, error) {
+	topology, err := BuildTopology(checked)
 	if err != nil {
 		return ContextSelection{}, err
 	}
@@ -39,7 +39,7 @@ func SelectContext(compiled model.Result, packagePath string, scope []Setting[Sc
 	b := contextBuilder{index: make(map[model.Identity]ContextDefinition), selected: make(map[model.Identity]ContextDefinition)}
 	var local []model.Definition
 	owners := make(map[string]bool)
-	for _, owner := range compiled.Models {
+	for _, owner := range checked.Models {
 		if owner.Status != model.Passed || owner.ID == "" || owner.Digest == "" || owners[owner.ID] {
 			return ContextSelection{}, fmt.Errorf("inconsistent passed model owner %q", owner.ID)
 		}
@@ -167,7 +167,7 @@ func walkContextEdges(d model.Definition, visit func(model.Identity, string) err
 			}
 		case model.StringValue, model.EnumValue, model.BooleanValue, model.IntegerValue, model.NumberValue:
 		default:
-			return fmt.Errorf("invalid compiled value in %+v at %s", d.Identity, at)
+			return fmt.Errorf("invalid checked value in %+v at %s", d.Identity, at)
 		}
 		return nil
 	}

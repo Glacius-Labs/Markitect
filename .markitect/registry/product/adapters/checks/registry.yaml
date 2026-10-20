@@ -75,8 +75,8 @@ artifacts:
   - path: "internal/adapters/checks/container_setup.go"
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
-    why: Encodes an explicit container check profile as the closed Host section that the container metadata decoder reads back.
+    why: Encodes an explicit container check profile as the closed Runtime section that the container metadata decoder reads back.
   - path: "internal/adapters/checks/container_setup_test.go"
     form: test
     realizes: [product/adapters/checks/closed-check-metadata]
-    why: Round-trips the encoded container Host section through the metadata decoder and projection and verifies refusal of invalid profiles.
+    why: Round-trips the encoded container Runtime section through the metadata decoder and projection and verifies refusal of invalid profiles.

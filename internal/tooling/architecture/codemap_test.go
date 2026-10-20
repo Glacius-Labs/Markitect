@@ -164,12 +164,12 @@ func TestParseCodeMapIsStrict(t *testing.T) {
 
 func TestRenderCodeMapLinksFromPageDirectory(t *testing.T) {
 	page := string(RenderCodeMap(CodeMap{Packages: []MappedPackage{
-		{Path: "internal/model", Layer: "apply-model", Purpose: "Compiles.", Doc: "docs/architecture.md#go"},
+		{Path: "internal/model", Layer: "apply-model", Purpose: "Checks.", Doc: "docs/architecture.md#go"},
 		{Path: "cmd/markitect", Layer: "apply-command", Purpose: "Runs.", Doc: "CONTRIBUTING.md"},
 		{Path: "internal/tooling/release", Layer: "maintenance", Purpose: "Builds.", Doc: "docs/development/modules.md"},
 	}}))
 	for _, want := range []string{
-		"| `internal/model` | Compiles. | [docs/architecture.md](../architecture.md#go) |",
+		"| `internal/model` | Checks. | [docs/architecture.md](../architecture.md#go) |",
 		"| `cmd/markitect` | Runs. | [CONTRIBUTING.md](../../CONTRIBUTING.md) |",
 		"| `internal/tooling/release` | Builds. | [docs/development/modules.md](modules.md) |",
 		"[codemap.yaml](../../internal/tooling/architecture/codemap.yaml)",

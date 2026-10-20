@@ -22,7 +22,7 @@ func (c CheckSelection) Declaration() ExecutionCheck {
 }
 func (c CheckSelection) Profile() PreparedProfile { return clonePreparedProfile(c.profile) }
 
-type hostSettingsPreparation struct {
+type runtimeSettingsPreparation struct {
 	status         model.Status
 	settings       *organization.Settings
 	facts          *organization.SettingsFacts
@@ -31,18 +31,18 @@ type hostSettingsPreparation struct {
 	checksComplete bool
 	profiles       []PreparedProfile
 	required       []SourceLocation
-	diagnostics    []HostProfileDiagnostic
+	diagnostics    []RuntimeProfileDiagnostic
 }
 
 // Status describes static preparation only, never runtime readiness. Parent
 // failures dominate incomplete observations; partial evidence remains available.
-func (r hostSettingsPreparation) Status() model.Status {
+func (r runtimeSettingsPreparation) Status() model.Status {
 	if r.status == "" {
 		return model.NotCompleted
 	}
 	return r.status
 }
-func (r hostSettingsPreparation) Settings() (organization.Settings, bool) {
+func (r runtimeSettingsPreparation) Settings() (organization.Settings, bool) {
 	if r.settings == nil {
 		return organization.Settings{}, false
 	}
@@ -50,7 +50,7 @@ func (r hostSettingsPreparation) Settings() (organization.Settings, bool) {
 }
 
 // SettingsFacts returns the facts the settings were resolved from.
-func (r hostSettingsPreparation) SettingsFacts() (organization.SettingsFacts, bool) {
+func (r runtimeSettingsPreparation) SettingsFacts() (organization.SettingsFacts, bool) {
 	if r.facts == nil {
 		return organization.SettingsFacts{}, false
 	}
@@ -63,13 +63,13 @@ func (r hostSettingsPreparation) SettingsFacts() (organization.SettingsFacts, bo
 
 // Budget returns the authored bounds of the run, available together with the
 // resolved Settings.
-func (r hostSettingsPreparation) Budget() (ExecutionBudget, bool) {
+func (r runtimeSettingsPreparation) Budget() (ExecutionBudget, bool) {
 	if r.budget == nil {
 		return ExecutionBudget{}, false
 	}
 	return *r.budget, true
 }
-func (r hostSettingsPreparation) Checks() ([]CheckSelection, bool) {
+func (r runtimeSettingsPreparation) Checks() ([]CheckSelection, bool) {
 	if !r.checksComplete {
 		return nil, false
 	}
@@ -80,18 +80,18 @@ func (r hostSettingsPreparation) Checks() ([]CheckSelection, bool) {
 	}
 	return result, true
 }
-func (r hostSettingsPreparation) ProfileObservations() []PreparedProfile {
+func (r runtimeSettingsPreparation) ProfileObservations() []PreparedProfile {
 	result := slices.Clone(r.profiles)
 	for i := range result {
 		result[i] = clonePreparedProfile(result[i])
 	}
 	return result
 }
-func (r hostSettingsPreparation) RequiredInstructions() []SourceLocation {
+func (r runtimeSettingsPreparation) RequiredInstructions() []SourceLocation {
 	return slices.Clone(r.required)
 }
-func (r hostSettingsPreparation) Diagnostics() []HostProfileDiagnostic {
-	return cloneHostDiagnostics(r.diagnostics)
+func (r runtimeSettingsPreparation) Diagnostics() []RuntimeProfileDiagnostic {
+	return cloneRuntimeDiagnostics(r.diagnostics)
 }
 
 func clonePreparedProfile(p PreparedProfile) PreparedProfile {
@@ -101,7 +101,7 @@ func clonePreparedProfile(p PreparedProfile) PreparedProfile {
 }
 
 type CapturedSettingsPreparation struct {
-	hostSettingsPreparation
+	runtimeSettingsPreparation
 	parent   CapturedFileCheck
 	defaults CapturedDefaultsPreparation
 }
@@ -110,7 +110,7 @@ func (r CapturedSettingsPreparation) FileCheck() CapturedFileCheck          { re
 func (r CapturedSettingsPreparation) Defaults() CapturedDefaultsPreparation { return r.defaults }
 
 type PreviewSettingsPreparation struct {
-	hostSettingsPreparation
+	runtimeSettingsPreparation
 	parent   PreviewFileCheck
 	defaults PreviewDefaultsPreparation
 }
@@ -122,18 +122,18 @@ func (r PreviewSettingsPreparation) Defaults() PreviewDefaultsPreparation { retu
 // complete Model/Raw/Request/Guard parent. No free execution or model is accepted.
 func (p CapturedFileCheck) PrepareSettings(ctx context.Context, defaults CapturedDefaultsPreparation, agents AgentProfilePreparer, checks CheckProfilePreparer) (CapturedSettingsPreparation, error) {
 	m := p.stage.stage
-	r, err := prepareHostSettings(ctx, p.Status(), defaults.settingsPreparation, m.compiled, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
-	return CapturedSettingsPreparation{hostSettingsPreparation: r, parent: p, defaults: defaults}, err
+	r, err := prepareRuntimeSettings(ctx, p.Status(), defaults.settingsPreparation, m.checked, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
+	return CapturedSettingsPreparation{runtimeSettingsPreparation: r, parent: p, defaults: defaults}, err
 }
 
 // Preview retains its own working/fixed revision and never acquires a guard.
 func (p PreviewFileCheck) PrepareSettings(ctx context.Context, defaults PreviewDefaultsPreparation, agents AgentProfilePreparer, checks CheckProfilePreparer) (PreviewSettingsPreparation, error) {
 	m := p.stage.stage
-	r, err := prepareHostSettings(ctx, p.Status(), defaults.settingsPreparation, m.compiled, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
-	return PreviewSettingsPreparation{hostSettingsPreparation: r, parent: p, defaults: defaults}, err
+	r, err := prepareRuntimeSettings(ctx, p.Status(), defaults.settingsPreparation, m.checked, m.inputs.Raw, m.DecodeExecution().executionDecoding, reflect.DeepEqual(m, defaults.stage.stage), agents, checks)
+	return PreviewSettingsPreparation{runtimeSettingsPreparation: r, parent: p, defaults: defaults}, err
 }
 
-func hostStatus(a, b model.Status) model.Status {
+func runtimeStatus(a, b model.Status) model.Status {
 	if a == model.Failed || b == model.Failed {
 		return model.Failed
 	}
@@ -143,7 +143,7 @@ func hostStatus(a, b model.Status) model.Status {
 	return model.Passed
 }
 
-func (r *hostSettingsPreparation) issue(status model.Status, code string, source organization.SettingSource, message string) {
-	r.status = hostStatus(r.Status(), status)
-	r.diagnostics = append(r.diagnostics, HostProfileDiagnostic{Code: "settings." + code, Source: source, Message: message})
+func (r *runtimeSettingsPreparation) issue(status model.Status, code string, source organization.SettingSource, message string) {
+	r.status = runtimeStatus(r.Status(), status)
+	r.diagnostics = append(r.diagnostics, RuntimeProfileDiagnostic{Code: "settings." + code, Source: source, Message: message})
 }

@@ -2,6 +2,8 @@ package apply
 
 import (
 	"fmt"
+	"regexp"
+	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
@@ -86,67 +88,132 @@ func (d *executionDecoder) packages(field executionField) *organization.Setting[
 	return result
 }
 
-// layout decodes the optional persistent artifact layout and validates it
-// against the model's Package inventory, so a declared layout is complete or
+// ownership decodes the optional persistent ownership areas and validates them
+// against the model's Package inventory, so declared ownership is complete or
 // the document is Failed.
-func (d *executionDecoder) layout(field executionField, compiled model.Result) *ExecutionLayout {
-	f := d.object(field, "roots", "exceptions")
-	if field.node.Kind != yaml.MappingNode {
+func (d *executionDecoder) ownership(field executionField, checked model.Result) *organization.Setting[[]ExecutionArea] {
+	if field.node == nil {
+		return nil
+	}
+	if field.node.Kind != yaml.SequenceNode {
+		d.issue(model.Failed, "execution.list", field, "ownership must be a list of areas.")
 		return nil
 	}
 	before := len(d.result.diagnostics)
-	result := &ExecutionLayout{}
-	result.Roots, _ = d.directories(d.required(f, field, "roots"))
-	if exceptions, found := f["exceptions"]; found {
-		if exceptions.node.Kind != yaml.SequenceNode {
-			d.issue(model.Failed, "execution.list", exceptions, "layout exceptions must be a list.")
-		} else {
-			for i, node := range exceptions.node.Content {
-				entry := executionChild(exceptions, fmt.Sprint(i), node)
-				e := d.object(entry, "path", "kind", "owner", "reason")
-				var value ExecutionLayoutException
-				if text, ok := d.text(d.required(e, entry, "path"), false); ok {
-					path, err := snapshot.NewPath(text.Value)
-					if err != nil {
-						d.issue(model.Failed, "execution.layout_path", e["path"], err.Error())
-					} else {
-						value.Path = organization.Setting[snapshot.Path]{Value: path, Source: text.Source}
-					}
-				}
-				if kind, found := e["kind"]; found {
-					if text, ok := d.text(kind, false); ok {
-						if text.Value != "file" && text.Value != "directory" {
-							d.issue(model.Failed, "execution.layout_kind", kind, "an exception kind must be file or directory.")
-						} else {
-							value.Kind = text
-						}
-					}
-				}
-				value.Owner, _ = d.text(d.required(e, entry, "owner"), false)
-				if value.Owner.Source.File != "" {
-					d.localPackage(e["owner"], value.Owner.Value)
-				}
-				value.Reason, _ = d.text(d.required(e, entry, "reason"), false)
-				result.Exceptions = append(result.Exceptions, value)
+	result := &organization.Setting[[]ExecutionArea]{Source: d.provenance(field)}
+	var areas []realization.Area
+	for i, node := range field.node.Content {
+		entry := executionChild(field, fmt.Sprint(i), node)
+		e := d.object(entry, "path", "owner", "reason")
+		var value ExecutionArea
+		var area realization.Area
+		if text, ok := d.text(d.required(e, entry, "path"), false); ok {
+			value.Path = text
+			selector, err := areaSelector(text.Value)
+			if err != nil {
+				d.issue(model.Failed, "execution.ownership_path", e["path"], err.Error())
+			}
+			area = selector
+		}
+		value.Owner, _ = d.text(d.required(e, entry, "owner"), false)
+		if value.Owner.Source.File != "" {
+			d.localPackage(e["owner"], value.Owner.Value)
+			area.Owner = realization.RootOwner()
+			if value.Owner.Value != organization.Root {
+				area.Owner, _ = realization.PackageOwner(value.Owner.Value)
 			}
 		}
+		if reason, found := e["reason"]; found {
+			value.Reason, _ = d.text(reason, false)
+			area.Reason = value.Reason.Value
+		}
+		result.Value = append(result.Value, value)
+		areas = append(areas, area)
 	}
 	if len(d.result.diagnostics) != before {
 		return result
 	}
-	var exceptions []realization.LayoutException
-	for _, exception := range result.Exceptions {
-		owner := realization.RootOwner()
-		if exception.Owner.Value != organization.Root {
-			owner, _ = realization.PackageOwner(exception.Owner.Value)
-		}
-		exceptions = append(exceptions, realization.LayoutException{Path: exception.Path.Value, File: exception.Kind.Value == "file", Owner: owner, Reason: exception.Reason.Value})
-	}
-	layout, err := realization.NewLayout(compiled, result.Roots.Value, exceptions)
+	layout, err := realization.NewLayout(checked, areas)
 	if err != nil {
-		d.issue(model.Failed, "execution.layout", field, err.Error())
+		d.issue(model.Failed, "execution.ownership", field, err.Error())
 		return result
 	}
 	d.result.layout = layout
 	return result
+}
+
+// areaSelector reads an ownership selector: an exact repository-relative file,
+// a directory ending in "/", or "./" for the whole repository.
+func areaSelector(text string) (realization.Area, error) {
+	if text == "./" {
+		return realization.Area{Directory: true}, nil
+	}
+	name, directory := strings.CutSuffix(text, "/")
+	if _, err := snapshot.NewPath(name); err != nil {
+		return realization.Area{}, fmt.Errorf("%q is not an exact repository-relative file, a directory ending in \"/\" or \"./\": %v", text, err)
+	}
+	return realization.Area{Path: name, Directory: directory}, nil
+}
+
+// team decodes the optional local team template: the helper roles and the
+// bound on active helpers per Manager.
+func (d *executionDecoder) team(field executionField) *ExecutionTeam {
+	f := d.object(field, "maxHelpers", "helpers")
+	if field.node == nil || field.node.Kind != yaml.MappingNode {
+		return nil
+	}
+	result := &ExecutionTeam{}
+	result.MaxHelpers, _ = d.count(d.required(f, field, "maxHelpers"))
+	helpers := d.required(f, field, "helpers")
+	if helpers.node == nil {
+		return result
+	}
+	if helpers.node.Kind != yaml.SequenceNode {
+		d.issue(model.Failed, "execution.list", helpers, "team helpers must be a list, [] when empty.")
+		return result
+	}
+	seen := map[string]bool{}
+	for i, node := range helpers.node.Content {
+		entry := executionChild(helpers, fmt.Sprint(i), node)
+		e := d.object(entry, "role", "profile", "writes", "instructions")
+		var value ExecutionHelper
+		if role, ok := d.text(d.required(e, entry, "role"), false); ok {
+			if !helperRoleName.MatchString(role.Value) || role.Value == "manager" || role.Value == "reviewer" || seen[role.Value] {
+				d.issue(model.Failed, "execution.helper_role", e["role"], "A helper role is a unique lower-case name other than manager and reviewer.")
+			}
+			seen[role.Value] = true
+			value.Role = role
+		}
+		if profile, found := e["profile"]; found {
+			if text, ok := d.text(profile, false); ok {
+				value.Profile = &text
+			}
+		}
+		value.Writes, _ = d.boolean(d.required(e, entry, "writes"))
+		if instructions, found := e["instructions"]; found {
+			if list, ok := d.strings(instructions); ok {
+				value.Instructions = &list
+			}
+		}
+		result.Helpers = append(result.Helpers, value)
+	}
+	return result
+}
+
+var helperRoleName = regexp.MustCompile(`^[a-z][a-z0-9-]{0,39}$`)
+
+func (d *executionDecoder) boolean(field executionField) (organization.Setting[bool], bool) {
+	if field.node == nil {
+		return organization.Setting[bool]{}, false
+	}
+	if field.node.Kind != yaml.ScalarNode || field.node.Tag != "!!bool" {
+		d.issue(model.Failed, "execution.boolean", field, "Expected true or false.")
+		return organization.Setting[bool]{}, false
+	}
+	var value bool
+	if err := field.node.Decode(&value); err != nil {
+		d.issue(model.Failed, "execution.boolean", field, "Expected true or false.")
+		return organization.Setting[bool]{}, false
+	}
+	return organization.Setting[bool]{Value: value, Source: d.provenance(field)}, true
 }

@@ -12,7 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-func executionHostProfile(engine string) string {
+func executionRuntimeProfile(engine string) string {
 	return strings.Replace(imageProfile(engine), "profileVersion: 2", "profileVersion: 3", 1) + `credentialRef: exact-runtime-credential
 maxWireBytes: 1048576
 session:
@@ -40,7 +40,7 @@ func preparedExecution(t *testing.T, inline string, port apply.AgentProfilePrepa
 }
 
 func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
-	inline := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
+	inline := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
 	location := apply.SourceLocation{Boundary: "captured", Path: testPath(t, "instruction.md")}
 	entry, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte("Render this separately, once.\n"))
 	if err != nil {
@@ -69,8 +69,8 @@ func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
 }
 
 func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
-	inline := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
-	boundary := filepath.Join(t.TempDir(), "same-host")
+	inline := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
+	boundary := filepath.Join(t.TempDir(), "same-runtime")
 	prepare := func(text string, port apply.AgentProfilePreparer) apply.PreparedProfile {
 		return consumeProfileAt(t, text, nil, port, boundary).ProfileObservations()[0]
 	}
@@ -124,7 +124,7 @@ func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *te
 				}
 				return o, err
 			})
-			prepared := preparedExecution(t, executionHostProfile(engine), port)
+			prepared := preparedExecution(t, executionRuntimeProfile(engine), port)
 			if profile, err := ProfileFromPrepared(prepared); err == nil || profile != (Profile{}) {
 				t.Fatalf("accepted %s evidence or leaked partial projection: %v", scenario, err)
 			}
@@ -133,7 +133,7 @@ func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *te
 }
 
 func TestExecutionProfileInvalidSettingsRefuseBeforeImageAcquisition(t *testing.T) {
-	base := executionHostProfile(filepath.Join(t.TempDir(), "engine"))
+	base := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
 	for _, tc := range []struct{ name, from, to string }{
 		{"missing credential", "credentialRef: exact-runtime-credential\n", ""},
 		{"missing model", "  model: explicitly-selected-model\n", ""},

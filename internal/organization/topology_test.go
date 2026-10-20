@@ -26,7 +26,7 @@ func refs(pkg string, ids ...string) []model.Identity {
 	return result
 }
 
-func TestLibraryShapedCompiledTopology(t *testing.T) {
+func TestLibraryShapedCheckedTopology(t *testing.T) {
 	input := localFixture(t, map[string][]string{
 		"catalog":           {"copy", "availability"},
 		"lending":           {"return", "loan", "borrow"},
@@ -34,8 +34,8 @@ func TestLibraryShapedCompiledTopology(t *testing.T) {
 		"library":           {"realization", "library", "callable-interface"},
 		"members":           {"member", "eligibility"},
 	}, "empty")
-	compiled := compileFixture(t, input)
-	topology := requireTopology(t, compiled)
+	checked := checkFixture(t, input)
+	topology := requireTopology(t, checked)
 	want := []organization.Manager{
 		{Package: ".", Children: []string{"catalog", "empty", "lending", "library", "members"}},
 		{Package: "catalog", Parent: ".", Definitions: refs("catalog", "availability", "copy")},
@@ -48,7 +48,7 @@ func TestLibraryShapedCompiledTopology(t *testing.T) {
 	if got := topology.Managers(); !reflect.DeepEqual(got, want) {
 		t.Fatalf("local topology:\n got %+v\nwant %+v", got, want)
 	}
-	if topology.ModelID() != compiled.Models[0].ID || topology.ModelDigest() != compiled.Models[0].Digest {
+	if topology.ModelID() != checked.Models[0].ID || topology.ModelDigest() != checked.Models[0].Digest {
 		t.Fatal("topology lost its local model binding")
 	}
 	for _, foreign := range []string{"markitect", "markitect/core", "software"} {
@@ -75,7 +75,7 @@ func TestIntermediatePackagesAndExactPassThrough(t *testing.T) {
 		"local":       {"item"},
 		"local/child": {"item"},
 	}, "a/b/empty", "a/b/empty/deep")
-	topology := requireTopology(t, compileFixture(t, input))
+	topology := requireTopology(t, checkFixture(t, input))
 	for _, test := range []struct {
 		path, parent           string
 		children               []string
@@ -99,8 +99,8 @@ func TestIntermediatePackagesAndExactPassThrough(t *testing.T) {
 
 func TestRootIsOrdinaryButNeverAPassThroughPackage(t *testing.T) {
 	for _, directories := range [][]string{nil, {"one"}, {"one/two/three"}} {
-		compiled := compileFixture(t, localFixture(t, nil, directories...))
-		topology := requireTopology(t, compiled)
+		checked := checkFixture(t, localFixture(t, nil, directories...))
+		topology := requireTopology(t, checked)
 		root, found := topology.Manager(organization.Root)
 		if !found || root.Parent != "" || root.HasLocalWork() || root.PassThrough() || len(root.Definitions) != 0 {
 			t.Fatalf("invalid ordinary root: %+v", root)
@@ -113,14 +113,14 @@ func TestRootIsOrdinaryButNeverAPassThroughPackage(t *testing.T) {
 
 func TestTopologyDoesNotDependOnEnumerationOrPhysicalSources(t *testing.T) {
 	input := localFixture(t, map[string][]string{"z": {"second", "first"}, "a/child": {"item"}}, "empty")
-	compiled := compileFixture(t, input)
-	want := requireTopology(t, compiled)
+	checked := checkFixture(t, input)
+	want := requireTopology(t, checked)
 	slices.Reverse(input.Root.Entries)
 	slices.Reverse(input.Dependencies)
-	if got := requireTopology(t, compileFixture(t, input)); !reflect.DeepEqual(got.Managers(), want.Managers()) {
+	if got := requireTopology(t, checkFixture(t, input)); !reflect.DeepEqual(got.Managers(), want.Managers()) {
 		t.Fatal("source enumeration changed topology")
 	}
-	shuffled := copyResult(compiled)
+	shuffled := copyResult(checked)
 	slices.Reverse(shuffled.Models)
 	for i := range shuffled.Models {
 		slices.Reverse(shuffled.Models[i].Packages)
@@ -135,13 +135,13 @@ func TestTopologyDoesNotDependOnEnumerationOrPhysicalSources(t *testing.T) {
 	before := copyResult(shuffled)
 	got := requireTopology(t, shuffled)
 	if !reflect.DeepEqual(got.Managers(), want.Managers()) || got.ModelDigest() != want.ModelDigest() || !reflect.DeepEqual(shuffled, before) {
-		t.Fatal("topology depends on order/provenance or mutates compiler output")
+		t.Fatal("topology depends on order/provenance or mutates Model check output")
 	}
 }
 
 func TestTopologyOwnsItsCollections(t *testing.T) {
-	compiled := compileFixture(t, localFixture(t, map[string][]string{"feature": {"first", "second"}, "feature/child": {"item"}}))
-	topology := requireTopology(t, compiled)
+	checked := checkFixture(t, localFixture(t, map[string][]string{"feature": {"first", "second"}, "feature/child": {"item"}}))
+	topology := requireTopology(t, checked)
 	want := topology.Managers()
 	all := topology.Managers()
 	all[0].Children[0] = "changed"
@@ -149,8 +149,8 @@ func TestTopologyOwnsItsCollections(t *testing.T) {
 	manager, _ := topology.Manager("feature")
 	manager.Children[0] = "changed"
 	manager.Definitions[0].ID = "changed"
-	compiled.Models[0].Packages[0].Name = "changed"
-	compiled.Models[0].Definitions[0].Identity.ID = "changed"
+	checked.Models[0].Packages[0].Name = "changed"
+	checked.Models[0].Definitions[0].Identity.ID = "changed"
 	if !reflect.DeepEqual(topology.Managers(), want) {
 		t.Fatal("caller collection mutations changed the topology")
 	}
@@ -161,9 +161,9 @@ func TestTopologyOwnsItsCollections(t *testing.T) {
 
 func TestEmptyPackageChangesTopologyWithoutChangingCanonicalDigest(t *testing.T) {
 	input := localFixture(t, map[string][]string{"feature": {"item"}})
-	before := requireTopology(t, compileFixture(t, input))
+	before := requireTopology(t, checkFixture(t, input))
 	input.Root.Entries = append(slices.Clone(input.Root.Entries), model.Entry{Path: "model/empty", Kind: model.Directory})
-	after := requireTopology(t, compileFixture(t, input))
+	after := requireTopology(t, checkFixture(t, input))
 	if before.ModelDigest() != after.ModelDigest() {
 		t.Fatal("an empty Package changed the canonical model digest")
 	}
@@ -180,10 +180,10 @@ func TestEmptyPackageChangesTopologyWithoutChangingCanonicalDigest(t *testing.T)
 }
 
 func TestExactUnicodePathsAndLocallyEmptyImportedSpelling(t *testing.T) {
-	compiled := compileFixture(t, localFixture(t, map[string][]string{
+	checked := checkFixture(t, localFixture(t, map[string][]string{
 		"é/子": {"ö"}, "z": {"item"},
 	}, "software"))
-	topology := requireTopology(t, compiled)
+	topology := requireTopology(t, checked)
 	var paths []string
 	for _, manager := range topology.Managers() {
 		paths = append(paths, manager.Package)
@@ -206,8 +206,8 @@ func TestExactUnicodePathsAndLocallyEmptyImportedSpelling(t *testing.T) {
 	}
 }
 
-func TestUnsuccessfulCompilerResultsNeverBecomeEmptyTopologies(t *testing.T) {
-	passed := compileFixture(t, localFixture(t, nil, "empty"))
+func TestUnsuccessfulModelCheckResultsNeverBecomeEmptyTopologies(t *testing.T) {
+	passed := checkFixture(t, localFixture(t, nil, "empty"))
 	for _, status := range []model.Status{"", model.Failed, model.NotCompleted} {
 		for _, localOnly := range []bool{false, true} {
 			result := copyResult(passed)
@@ -227,7 +227,7 @@ func TestUnsuccessfulCompilerResultsNeverBecomeEmptyTopologies(t *testing.T) {
 }
 
 func TestInconsistentPassedInputsAreRefusedRatherThanCompleted(t *testing.T) {
-	baseline := compileFixture(t, localFixture(t, map[string][]string{"a/b": {"item"}}))
+	baseline := checkFixture(t, localFixture(t, map[string][]string{"a/b": {"item"}}))
 	for _, mutate := range []func(*model.Result){
 		func(r *model.Result) { r.Models = nil },
 		func(r *model.Result) { r.Models[0].Local = false },

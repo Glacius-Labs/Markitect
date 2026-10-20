@@ -71,7 +71,7 @@ func (r *registryPreparation) text(source snapshot.Path, fields map[string]*yaml
 	return node.Value
 }
 
-func (r *registryPreparation) decodeRegistry(source SourceFile, owner realization.Owner, compiled model.Result, census snapshot.Tree) []realization.Registration {
+func (r *registryPreparation) decodeRegistry(source SourceFile, owner realization.Owner, checked model.Result, census snapshot.Tree) []realization.Registration {
 	path := source.RepositoryPath
 	decoder := yaml.NewDecoder(bytes.NewReader(source.File.Bytes()))
 	var document yaml.Node
@@ -99,7 +99,7 @@ func (r *registryPreparation) decodeRegistry(source SourceFile, owner realizatio
 		return nil
 	}
 	identities := make(map[model.Identity]bool)
-	for _, modelResult := range compiled.Models {
+	for _, modelResult := range checked.Models {
 		for _, definition := range modelResult.Definitions {
 			identities[definition.Identity] = true
 		}

@@ -68,11 +68,11 @@ artifacts:
     form: test
     realizes: [product/model/language-v1]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/model/compile.go"
+  - path: "internal/model/check.go"
     form: code
     realizes: [product/model/language-v1]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/model/compile_test.go"
+  - path: "internal/model/check_test.go"
     form: test
     realizes: [product/model/language-v1]
     why: Tests the stated responsibility and retains negative boundaries.

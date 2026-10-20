@@ -22,9 +22,16 @@ func TestDefaultsRefuseMissingUnknownAndInvalidProductInputs(t *testing.T) {
 		{"unknown source", "", "", "strategy_defaults.source_unknown", "", model.NotCompleted},
 		{"observed empty", "", "", "strategy_defaults.yaml", "", model.Failed},
 		{"unknown version", "markitect.strategy-defaults/v1", "markitect.strategy-defaults/v2", "strategy_defaults.profile_unknown", "/apiVersion", model.NotCompleted},
-		{"unknown strategy", "shared-workspace-v1", "future-strategy", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
-		{"old strategy", "shared-workspace-v1", "recursive-apply-v1", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
-		{"missing defaults", "defaults:\n  instructions:\n    execute: []\n    verify: []\n", "", "strategy_defaults.field_missing", "/defaults", model.Failed},
+		{"unknown strategy", "recursive-passes-v1", "future-strategy", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
+		{"old strategy", "recursive-passes-v1", "recursive-apply-v1", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
+		{"missing defaults", "", "", "strategy_defaults.field_missing", "/defaults", model.Failed},
+		{"missing team", "", "", "strategy_defaults.field_missing", "/defaults/team", model.Failed},
+		{"missing maxHelpers", "    maxHelpers: 1\n", "", "strategy_defaults.field_missing", "/defaults/team/maxHelpers", model.Failed},
+		{"helper role manager", "role: worker", "role: manager", "strategy_defaults.helper_role", "/defaults/team/helpers/0/role", model.Failed},
+		{"helper role not a name", "role: worker", "role: Worker", "strategy_defaults.helper_role", "/defaults/team/helpers/0/role", model.Failed},
+		{"helper writes not a boolean", "writes: true", "writes: 'yes'", "strategy_defaults.boolean", "/defaults/team/helpers/0/writes", model.Failed},
+		{"helper without writes", "        writes: true\n", "", "strategy_defaults.field_missing", "/defaults/team/helpers/0/writes", model.Failed},
+		{"helpers not a list", "    helpers:\n      - role: worker\n        writes: true\n", "    helpers: worker\n", "strategy_defaults.list", "/defaults/team/helpers", model.Failed},
 		{"old rejection setting", "defaults:", "defaults:\n  rejectionLimit: 3", "strategy_defaults.unknown_key", "/defaults/rejectionLimit", model.Failed},
 		{"old batch setting", "defaults:", "defaults:\n  batchNoChangeReviews: false", "strategy_defaults.unknown_key", "/defaults/batchNoChangeReviews", model.Failed},
 		{"old acceptance section", "defaults:", "acceptance: {ownerApproval: []}\ndefaults:", "strategy_defaults.unknown_key", "/acceptance", model.Failed},
@@ -40,6 +47,12 @@ func TestDefaultsRefuseMissingUnknownAndInvalidProductInputs(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			input := apply.ProductStrategyDefaults()
 			switch tc.name {
+			case "missing defaults":
+				text := string(input.Bytes)
+				input.Bytes = []byte(text[:strings.Index(text, "defaults:")])
+			case "missing team":
+				text := string(input.Bytes)
+				input.Bytes = []byte(text[:strings.Index(text, "  # The standard local team")])
 			case "missing":
 				input.Bytes = nil
 			case "unknown source":
@@ -91,7 +104,7 @@ func TestDefaultsKnownInvalidProductSurvivesIncompleteExecutionParent(t *testing
 	if _, ok := result.Declarations(); ok || result.Status() != model.Failed || len(result.Diagnostics()) != 2 {
 		t.Fatalf("known product error was hidden by incomplete parent: %+v", result.Diagnostics())
 	}
-	parent := executionResult(t, strings.Replace(defaultsAbsentExecution(t), "strategy: shared-workspace-v1", "strategy: unsupported", 1))
+	parent := executionResult(t, strings.Replace(defaultsAbsentExecution(t), "strategy: recursive-passes-v1", "strategy: unsupported", 1))
 	result = parent.PrepareDefaults(apply.ProductStrategyDefaults())
 	if result.Status() != model.Failed || !reflect.DeepEqual(result.Execution().Diagnostics(), parent.Diagnostics()) || !reflect.DeepEqual(result.Execution().Partial(), parent.Partial()) {
 		t.Fatal("failed execution parent was replaced with product defaults")

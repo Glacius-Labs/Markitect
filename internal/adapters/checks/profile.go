@@ -57,7 +57,7 @@ func (p MetadataPreparer) PrepareCheckProfile(ctx context.Context, input apply.P
 		if node != nil && node.Line > 0 {
 			position = &model.Position{Line: node.Line, Column: node.Column}
 		}
-		o.Diagnostics = append(o.Diagnostics, apply.HostProfileDiagnostic{Code: "process." + code, Source: source, Position: position, Message: message})
+		o.Diagnostics = append(o.Diagnostics, apply.RuntimeProfileDiagnostic{Code: "process." + code, Source: source, Position: position, Message: message})
 	}
 	if err := ctx.Err(); err != nil {
 		issue("cancelled", "", err.Error(), nil)

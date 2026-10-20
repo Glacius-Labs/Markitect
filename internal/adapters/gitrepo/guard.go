@@ -41,7 +41,7 @@ func (a *acquisition) guard() apply.PublicationGuard {
 		}
 		write(s.Files.Digest().String())
 	}
-	for _, group := range [][]apply.SourceFile{a.raw.Execution, a.raw.Registry, a.raw.Ignore, a.raw.HostProfiles, a.raw.Instructions} {
+	for _, group := range [][]apply.SourceFile{a.raw.Execution, a.raw.Registry, a.raw.Ignore, a.raw.RuntimeProfiles, a.raw.Instructions} {
 		write(strconv.Itoa(len(group)))
 		for _, file := range group {
 			write(file.Location.Boundary)

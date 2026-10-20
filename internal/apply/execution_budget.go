@@ -5,10 +5,10 @@ func (d *executionDecoder) budget(field executionField) ExecutionBudget {
 	if field.node == nil {
 		return r
 	}
-	f := d.object(field, "executionTime", "turnTimeout", "agentTurns", "rounds")
+	f := d.object(field, "executionTime", "turnTimeout", "agentTurns", "passes")
 	r.ExecutionTime, _ = d.duration(d.required(f, field, "executionTime"))
 	r.TurnTimeout, _ = d.duration(d.required(f, field, "turnTimeout"))
 	r.AgentTurns, _ = d.count(d.required(f, field, "agentTurns"))
-	r.Rounds, _ = d.count(d.required(f, field, "rounds"))
+	r.Passes, _ = d.count(d.required(f, field, "passes"))
 	return r
 }

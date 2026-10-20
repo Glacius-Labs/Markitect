@@ -25,13 +25,13 @@ func registryOwner(path snapshot.Path) (realization.Owner, error) {
 	return realization.Owner{}, fmt.Errorf("not a registry shard path: %q", p)
 }
 
-func prepareRegistry(compiled model.Result, raw RawInputs) registryPreparation {
+func prepareRegistry(checked model.Result, raw RawInputs) registryPreparation {
 	r := registryPreparation{status: model.Passed}
-	if compiled.Status != model.Passed {
+	if checked.Status != model.Passed {
 		r.add(model.NotCompleted, "registry.model_not_passed", snapshot.Path{}, nil, "Registry preparation requires a passed bound model stage.")
 		return r
 	}
-	topology, err := organization.BuildTopology(compiled)
+	topology, err := organization.BuildTopology(checked)
 	if err != nil {
 		r.add(model.Failed, "registry.model_invalid", snapshot.Path{}, nil, err.Error())
 		return r
@@ -83,7 +83,7 @@ func prepareRegistry(compiled model.Result, raw RawInputs) registryPreparation {
 			r.add(model.Failed, "registry.source_mismatch", path, nil, "Registry source bytes/mode differ from Census.")
 			continue
 		}
-		registrations = append(registrations, r.decodeRegistry(source, owner, compiled, raw.Census)...)
+		registrations = append(registrations, r.decodeRegistry(source, owner, checked, raw.Census)...)
 	}
 	for _, path := range r.discovered {
 		if !seen[path] {
