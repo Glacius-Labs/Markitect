@@ -408,7 +408,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		fmt.Fprintf(&b, "\nOutput:\n%s", r.Output)
 	}
 	if r.Outcome != ProbePassed && p.spec.Review {
-		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. An error within the probe's own execution, such as a probe too large for the check's time limit, is an expectation_error with reason, evidence and a passing receipt of the same obligation on this candidate; a timeout can also be a hang of the candidate, so that passing probe must establish the claim itself. An error that points at the candidate, such as a hang, is a genuine finding.")
+		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. An error within the probe's own execution, such as a probe too large for the check's time limit, is an expectation_error with reason, evidence and a passing receipt of the same obligation on this candidate; a timeout or a kill can also be a hang or crash of the candidate, so that passing probe must establish the claim itself. An error that points at the candidate, such as a hang, is a genuine finding.")
 	}
 	return ToolAnswer{Text: b.String()}
 }
@@ -662,7 +662,7 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			x.Pending = r.Requester == m.Path && r.Pass == m.p.id && m.Parent == ""
 			if r.Outcome == ProbeError {
 				for _, y := range e.erringRepetitionsLocked(r, m.Path) {
-					if !listed[y.ID] {
+					if !listed[y.ID] && probeCaused(y) {
 						out[y.ID] = x
 					}
 				}

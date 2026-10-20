@@ -151,7 +151,14 @@ func (e *engine) renderProposalLocked(pr *proposal) string {
 			continue
 		}
 		if d.Passing != "" {
-			fmt.Fprintf(&b, "  Disposes of the error receipt %s as caused by the probe, not the candidate (a timeout can also be a hang; the passing receipt %s must establish the claim): %s\n    Evidence: %s\n", id, d.Passing, d.Reason, d.Evidence)
+			var erred, passing string
+			if r := e.receiptLocked(id); r != nil {
+				erred = r.Claim
+			}
+			if r := e.receiptLocked(d.Passing); r != nil {
+				passing = r.Claim
+			}
+			fmt.Fprintf(&b, "  Disposes of the error receipt %s (claim: %s) as caused by the probe, not the candidate; a timeout or a kill can also be a hang or crash of the candidate, so judge whether the passing receipt %s (claim: %s) establishes that claim: %s\n    Evidence: %s\n", id, erred, d.Passing, passing, d.Reason, d.Evidence)
 			continue
 		}
 		fmt.Fprintf(&b, "  Disposes of the adverse receipt %s as an erroneous expectation: %s\n    Evidence: %s\n", id, d.Reason, d.Evidence)
@@ -349,7 +356,7 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 		}
 		list(b, "Open findings you raised in earlier Passes: reassess each; close one as resolved when this candidate corrects it, or as disproved with evidence when it was erroneous:", mine)
 		list(b, "Other open findings raised within your responsibility; they keep your result from being satisfied until they are closed:", within)
-		list(b, "Open findings an ancestor raised within your responsibility; that ancestor closes them after your result. Report satisfied only when this candidate corrects each of them; otherwise report needs_correction, or dispute one you judge erroneous:", inherited)
+		list(b, "Open findings an ancestor raised within your responsibility; that ancestor closes them after your result. Report satisfied only when this candidate corrects each of them; otherwise report needs_correction, or dispute a review finding you judge erroneous:", inherited)
 		var current, earlier []string
 		candidate := p.tree.Digest().String()
 		for _, r := range e.receipts {

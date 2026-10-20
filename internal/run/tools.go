@@ -108,7 +108,7 @@ func reportSchema(spec PassSpec) schema {
 		})}
 		properties["dispositions"] = schema{"type": "array", "description": "basis, result: dispositions of adverse probe receipts (failed or error) on this candidate within your responsibility. A violation is not listed here: cite the receipt in a genuine finding instead.", "items": object([]string{"receipt", "as"}, schema{
 			"receipt":  str("ID of the adverse receipt (R...)."),
-			"as":       schema{"type": "string", "enum": []string{DisposedExpectationError, DisposedRerun}, "description": "expectation_error: the probe itself was wrong, not the candidate: its expectation or assertion (failed), or its execution, such as a probe too large for the check's time limit (error). rerun: a Runtime error replaced by a passing exact repetition of its probe (probe.rerun), which also disposes of its erring repetitions."},
+			"as":       schema{"type": "string", "enum": []string{DisposedExpectationError, DisposedRerun}, "description": "expectation_error: the probe itself was wrong, not the candidate: its expectation or assertion (failed), or its execution, such as a probe too large for the check's time limit (error, which also names passing). rerun: a Runtime error replaced by a passing exact repetition of its probe (probe.rerun), which also disposes of its erring repetitions."},
 			"reason":   str("expectation_error: why the probe, not the candidate, was wrong, derived from the model."),
 			"evidence": str("expectation_error: the evidence of the disproof, such as the Definition text and a corrected or narrower passing receipt."),
 			"rerun":    str("rerun: the passing receipt that repeated it with probe.rerun."),
