@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 	"unicode/utf8"
 )
 
@@ -37,8 +38,10 @@ type turnState struct {
 	blocked bool
 	// mode is what the turn was admitted for (TurnRecord.Mode).
 	mode string
-	// probes counts the probes the turn ran.
-	probes int
+	// probes counts the probes the turn ran; deadline is when its timeout ends
+	// it at the latest.
+	probes   int
+	deadline time.Time
 }
 
 // acceptedOf returns a Manager's accepted basis or result of its Pass.
@@ -96,7 +99,8 @@ func (e *engine) startTurnLocked(m *member) {
 		role, kind, profile, home, resume, letter = "reviewer", VerifyTurn, m.VerifyProfile, m.reviewHome, m.reviewConversation, "r"
 		standing = m.reviewConversation == ""
 	}
-	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked, mode: turnMode(m)}
+	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked, mode: turnMode(m),
+		deadline: e.now().Add(e.cfg.Budget.TurnTimeout)}
 	readOnly, mounts := e.mountsLocked(m)
 	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}

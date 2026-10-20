@@ -121,8 +121,8 @@ The request timeout bounds materialization and command execution. Runtime
 observations supply the actual image, start, exit and combined bounded output.
 Nonzero exit remains a known failed check. Lost observation, cancellation or an
 unconfirmed image cannot become a passing receipt. Cleanup runs with its own
-bounded context after cancellation; failed or uncertain closure is reported as
-uncertainty and an error even when the command exited zero.
+bounded context of 45 seconds per volume after cancellation; failed or uncertain
+closure is reported as uncertainty and an error even when the command exited zero.
 
 Source tests exercise the port composition with controlled runtime/workspace
 observations. The runtime and workspace packages own their concrete engine and

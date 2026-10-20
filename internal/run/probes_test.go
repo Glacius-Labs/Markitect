@@ -7,6 +7,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 )
 
 var probeIDRE = regexp.MustCompile(`-r\d+$`)
@@ -564,5 +565,47 @@ func TestStaleReceiptsSupportNothing(t *testing.T) {
 	}
 	if accepted != 1 {
 		t.Errorf("library's basis with an unchanged live receipt was accepted %d times", accepted)
+	}
+}
+
+// A probe keeps time for the turn's report: late in a turn it is refused
+// instead of running into the turn's timeout, which would fail the whole turn
+// (as in the first V1 evaluation, where slow probes timed out reviewer turns).
+func TestProbeKeepsTimeForTheTurnsReport(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var offset time.Duration
+	base := time.Now()
+	f.cfg.Clock = func() time.Time {
+		mu.Lock()
+		defer mu.Unlock()
+		return base.Add(offset)
+	}
+	var late, early ToolAnswer
+	f.agents.script = func(c *call) error {
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") && late.Text == "" {
+			mu.Lock()
+			offset += c.turn.Timeout - c.turn.Timeout/8
+			mu.Unlock()
+			late = c.tool(toolCheck, probe("library/interface", "a late claim", "probe_late.py", "PASS"))
+			mu.Lock()
+			offset = 0
+			mu.Unlock()
+		}
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") && early.Text == "" && late.Text != "" {
+			early = c.tool(toolCheck, probe("library/interface", "an early claim", "probe_early.py", "PASS"))
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	r.Pass(verifySpec())
+	f.finish(r, "")
+	if !late.Refused || !strings.Contains(late.Text, "Too little of this turn is left") {
+		t.Errorf("a probe ran into the end of its turn: %+v", late)
+	}
+	if early.Refused || !strings.Contains(early.Text, "after 0 seconds") {
+		t.Errorf("a probe with time left was refused: %+v", early)
 	}
 }

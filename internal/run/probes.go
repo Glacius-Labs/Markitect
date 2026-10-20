@@ -309,6 +309,14 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		e.mu.Unlock()
 		return refuse("At most %d probes run in one turn.", maxProbesPerTurn)
 	}
+	// A probe ends before the turn's deadline with time left for the report:
+	// a turn killed by its timeout would lose its work, not only the probe.
+	reserve, least := e.cfg.Budget.TurnTimeout/5, e.cfg.Budget.TurnTimeout/10
+	left := ts.deadline.Sub(e.now()) - reserve
+	if !ts.deadline.IsZero() && left < least {
+		e.mu.Unlock()
+		return refuse("Too little of this turn is left for a probe (they take a minute or more when the Runtime is busy). Report what you have, with progress if you continue, and probe in your next turn.")
+	}
 	p := m.p
 	if p != e.cur || p.sealed {
 		e.mu.Unlock()
@@ -353,6 +361,12 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 	_ = e.record(Event{Kind: "probe.requested", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"id": r.ID, "obligation": r.Obligation, "claim": r.Claim, "expected": r.Expected,
 		"check": r.Check, "standKind": r.StandKind, "proposal": r.Proposal, "stand": r.Stand, "path": r.Path, "contentDigest": r.ContentDigest, "args": r.Args, "rerun": r.Rerun}})
 	e.mu.Unlock()
+	began := e.now()
+	if !ts.deadline.IsZero() {
+		var cancel context.CancelFunc
+		ctx, cancel = context.WithTimeout(ctx, left)
+		defer cancel()
+	}
 	rec, runErr := e.cfg.Runner.Run(ctx, req)
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -371,7 +385,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 	e.receipts = append(e.receipts, r)
 	_ = e.record(Event{Kind: "probe.receipt", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: *r})
 	var b strings.Builder
-	fmt.Fprintf(&b, "Receipt %s: %s.", r.ID, describeOutcome(r))
+	fmt.Fprintf(&b, "Receipt %s: %s, after %d seconds.", r.ID, describeOutcome(r), int(r.At.Sub(began).Seconds()))
 	switch kind {
 	case standLive:
 		fmt.Fprintf(&b, " It ran on your live area composed with the accepted stand (%s); it supports your submission only if your area is unchanged when you submit.", short(r.Stand))

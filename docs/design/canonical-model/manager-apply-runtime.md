@@ -146,7 +146,7 @@ Both phases share the owner channel and the deadline; the structure phase may us
 ## Known limits
 
 - Provider evidence covers few small projects and runs per build; reliability, cost, turn budgets and the usefulness of helpers are not established. The example budgets are unvalidated starting values.
-- Probes need a declared check whose profile can run them; without one, reviews cite inspected sources only. A probe runs synchronously inside its tool call; a parent can probe a child's checked proposal but not its unsubmitted work. Joint submission of a basis and a complete result is not implemented (deferred; see the hardening report).
+- Probes need a declared check whose profile can run them; without one, reviews cite inspected sources only. A probe runs synchronously inside its tool call and only while its turn keeps time for the report; a parent can probe a child's checked proposal but not its unsubmitted work. Joint submission of a basis and a complete result is not implemented (deferred; see the hardening report).
 - An exact-file area owned apart from its directory's owner must exist in the start stand; its owner can change it but not delete or create it.
 - Dependencies are enforced only as declared in accepted plans; undeclared needs travel as questions.
 - No restore of an interrupted run; a new Apply starts again from the committed repository.

@@ -21,6 +21,11 @@ type CommandRuntime interface {
 	RunCommand(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error)
 }
 
+// closeBound bounds the closure of each disposable volume after a check. A
+// container engine under the load of a whole Manager team took longer than ten
+// seconds to remove a volume, which made otherwise observed probes uncertain.
+const closeBound = 45 * time.Second
+
 // Runner executes allowed checks on fresh, verified workspace copies. It keeps
 // no task or review state; run decides what the resulting receipt establishes.
 type Runner struct {
@@ -92,7 +97,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		operationErr := limited.Err()
 		cancel()
 		for _, identity := range identities {
-			cleanup, stop := context.WithTimeout(context.WithoutCancel(ctx), 10*time.Second)
+			cleanup, stop := context.WithTimeout(context.WithoutCancel(ctx), closeBound)
 			closed, closeErr := r.workspaces.Close(cleanup, identity)
 			stop()
 			if closeErr != nil || closed.ID != identity || !closed.Closed || closed.Uncertain {

@@ -131,6 +131,9 @@ observed nonzero exit of the probe's own assertions, `error` for everything else
 started, timed out, uncertain, mismatched, not executable with exit 126 or 127, or killed
 by a signal with exit 128 or above), which never counts as a pass or as an expected
 refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
+A probe runs only while its turn keeps a fifth of its timeout for the report, and it ends
+before that point; late in a turn it is refused rather than letting the timeout fail the
+turn.
 A helper runs no probe; `look_up topic probe` returns a whole receipt.
 
 A coverage entry's evidence items each support one claim: a receipt (the caller's own,
