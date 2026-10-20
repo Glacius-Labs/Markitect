@@ -4,7 +4,7 @@
 
 ## Result
 
-The final build completed every run (9 of 9). None of the extracted models states anything that contradicts the reference. Every owner question was the necessary one. On the second project, Python with no documentation, the model has the same shape as the human one.
+The final build completed every run (9 of 9). The assessor found no statement in them that contradicts the reference; two Readinglog models have small imprecisions against the code (see below). Every owner question was the necessary one. On the second project, Python with no documentation, the model has the same shape as the human one.
 
 | | Old (`f15ea723`) | Round 1 (`cc89d18b`) | Final (`143327ec`) |
 | --- | --- | --- | --- |
@@ -21,6 +21,7 @@ The final build completed every run (9 of 9). None of the extracted models state
   - "Internals are free" (P14) is now stated, at least partly, in every final model. In round 1 it scored 0 in 5 of 6 models.
   - P09 (code, tests and documentation agree with the model) scored 0 in no final model, against 3 of 6 in round 1.
   - P07 (what the tests must cover) regressed. It scored 0 in 6 of 7 final models, against none in round 1.
+- **Score:** the mean fell from 79 to 77 mainly through P07 and through order bindings that the library reference leaves free (I09, R20, R21).
 - **Over-specification** rose again from round 1's 22. Part of the rise is intended: the order in which data was added is now binding, because callers rely on it, and the library reference leaves it free. The largest remaining category is internal wiring that mirrors the Go packages (X2, 9–14 per model).
 - **Owner questions:** the necessary question was always asked. RXZ-2 also sent the owner a note about a defect the documents settle; the assessor did not count it as a question.
 - **Readable account:** every run ends with a short summary on standard error. It lists the Packages, questions and answers, deviations per Definition, proposed checks, the Verify result, the publication and the adoption step.
@@ -33,7 +34,7 @@ Each change fixed a defect observed in a run. Defects that a text change alone d
 | --- | --- | --- |
 | `0c959bdd` | Unnecessary questions about points the code settles (RXB-6, RXF-2, RXF-3); "internals are free" never fully stated | Ask only about conflicting sources; Verify blocks a point left open that the artifacts settle; the project Package states the choices it leaves free |
 | `4e0580e2` | The owner received only JSON | A readable account on standard error; the JSON on standard output is unchanged |
-| `7d93b546` | Two of four round-2 plain runs declared the "source layout" free and so freed the documented entry point (RXG-1, RXG-4) | Only internal code structure and design are free; documented paths, commands and entry points stay binding |
+| `7d93b546` | Both completed round-2 plain runs declared the "source layout" free (the third, RXG-7, ended Incomplete) and so freed the documented entry point (RXG-1, RXG-4) | Only internal code structure and design are free; documented paths, commands and entry points stay binding |
 | `82d37dd5` | Three runs ended Incomplete in a registration loop (RXF-7, RXG-6, RXG-7). A dedicated project Package had no artifacts, Root registered the README and go.mod, and the Package's reviewer kept asking for registrations it could not make. The text fix of #514 did not remove the loop. | The Package that owns the project also owns the files directly in the artifact root, through a directory exception for that root; deeper Package directories keep their owners |
 | `5cc66a78` | On Readinglog the models declared list order and the stored JSON format free, and proposed Packages that own no files (RXR-1, RXR-2) | Observable behavior callers rely on stays binding unless the artifacts show it is open; every Package owns artifacts or has children |
 | `143327ec` | `5cc66a78` over-bound incidental observable details: refusal precedence, distinguishable wording, identifier formats (RXH-1 to RXH-3, 37–38 over-specifications) | The binding part is the contract callers rely on, including the order in which data was added; message wording and detail, generated identifier formats, which failure is reported when several apply and field order are free unless the artifacts fix them |

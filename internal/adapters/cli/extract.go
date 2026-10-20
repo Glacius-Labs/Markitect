@@ -220,7 +220,7 @@ func RenderExtractAccount(r ExtractReport) string {
 		line("Evidence: %s", r.EvidenceDirectory)
 	}
 
-	if r.Status == model.Passed {
+	if r.Status == model.Passed && (r.Publication == nil || r.Publication.Outcome != apply.PublicationNoChange) {
 		line("")
 		line("Next: review and commit .markitect/model, .markitect/registry and")
 		line("  .markitect/execution.yaml to adopt the model. Extract commits nothing.")
