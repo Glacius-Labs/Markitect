@@ -344,7 +344,7 @@ The owner then suggested a further option in case the gap keeps causing trouble:
 
 > Man könnte Modelllücken auch durch einen weiteren Verify Step vorher erkennen lassen, welcher vorher einen Durchlauf startet um das Modell zu prüfen. Als Idee falls das weiterhin Probleme bereitet
 
-Recorder's disposition: recorded as an owner suggestion under [ENH-002](../register.md#enh-002-model-quality-linter-and-metrics), whose accepted direction already includes AI-assisted findings that a model is incomplete. The response suggested placing such a check before Apply, as an owner-started model check or in the cockpit's model proposals, because [DEC-052](../register.md#dec-052-implement-then-review-no-explore-phase) removed intake review from Apply; it would use the same boundary criterion so that deliberate freedom is not turned into questions. It becomes a candidate only if the matched retest's A4 still fails. Nothing is adopted or implemented.
+Recorder's disposition: recorded as an owner suggestion under [ENH-002](../register.md#enh-002-model-quality-linter-and-metrics), whose accepted direction already includes AI-assisted findings that a model is incomplete. The response suggested placing such a check before Apply, as an owner-started model check or in the cockpit, where the owner accepts model changes, because [DEC-052](../register.md#dec-052-implement-then-review-no-explore-phase) leaves Apply without an Explore or intake step; it would use the same boundary criterion so that deliberate freedom is not turned into questions. It becomes a candidate only if the matched retest's A4 still fails. Nothing is adopted or implemented.
 
 ## Owner adoption: evidence-driven Apply hardening
 
