@@ -6,6 +6,7 @@ Use this map to find the product guide or the document that owns a decision or s
 
 | If you want to… | Start here |
 |---|---|
+| Design or implement the local cockpit and Apply Run inspector | [Cockpit concept](design/cockpit.md), [Claude cockpit handoff](development/claude-cockpit-handoff-20261020.md), and [owner commission](concepts/sources/cockpit-commission-20261020.md) |
 | Choose Apply or Extract for a new project, ongoing work or adoption of an existing project | [Three starting situations, two processes](vision.md#three-starting-situations) |
 | Implement or review the accepted Apply refinement | [Accepted workflow](design/canonical-model/manager-apply-workflow.md), [new Claude hardening handoff](development/claude-apply-hardening-handoff-20261020.md), [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), then the [implemented base runtime contract](design/canonical-model/manager-apply-runtime.md) |
 | Inspect current canonical v1 preparation | [Project workflow](project-workflow.md), [Project operations](project-operations.md), and the [self-model](../.markitect/README.md) |

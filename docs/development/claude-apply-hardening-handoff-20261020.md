@@ -16,6 +16,8 @@ One writer owns required changes in existing Run/Apply, realization/ownership ch
 
 Include directly affected self-model, local registries, official generated views, current guides, meaningful tests, selected existing trial cases/oracles and minimal evaluation-harness support. This assignment explicitly owns necessary shared Apply/Run/tool/CLI/bootstrap seams; inspect live reservations and coordinate an actual overlap before writing. It reserves no unrelated scope and overrides no active writer. Register new artifacts exactly. Distinguish adopted intent from behavior not implemented yet.
 
+Main also contains the separately commissioned [cockpit handoff](claude-cockpit-handoff-20261020.md). It observes Apply and does not redefine execution semantics. This hardening assignment implements no UI; inspect actual producer/reader reservations before changing shared Run evidence/tool contracts and coordinate an overlap with a started cockpit writer rather than independently freezing conflicting schemas. Preserve both concepts and any unrelated UI work.
+
 ## Implement in evidence order
 
 1. **Validate controls.** Audit preserved Depot false-success and blocked Haiku traces. Validate PR #537's integrated name-reference/oracle corrections and DEC-064 adaptation before claiming preservation; correct only a demonstrated remaining gap. Independently check conforming, faulty and partial-repair variants. Inspect S-Q's linked semantics; its label is not authority. Inspect the current cycle/admission guard before adding another mechanism.

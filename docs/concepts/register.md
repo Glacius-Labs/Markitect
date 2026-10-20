@@ -12,7 +12,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 | ID | Type | Title | Status |
 |---|---|---|---|
-| [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; planning deferred |
+| [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization) | Vision | Cockpit, personal AI and autonomous project organization | Owner statement; scoped cockpit concept and Claude handoff commissioned 20 October 2026; broader extensions deferred |
 | [DEC-001](#dec-001-delegated-realization-is-central-to-the-product) | Decision | Delegated realization is central to the product | Accepted |
 | [DEC-002](#dec-002-trust-is-measured-against-todays-practice) | Decision | Trust is measured against today's practice | Accepted |
 | [DEC-003](#dec-003-the-compiler-is-a-borrowed-concept) | Decision | The compiler is a borrowed concept | Accepted |
@@ -112,7 +112,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### VIS-001 Cockpit, personal AI and autonomous project organization
 
-- **Status:** Owner statement of 9 October 2026, relayed by the product chat together with the owner's commission of the Government evaluation ([source](sources/concepts-chat-20261009/government-evaluation-mandate-20261009.md)). Detailed planning is deferred ([DEC-011](#dec-011-detailed-planning-of-future-ideas-waits)).
+- **Status:** Owner statement of 9 October 2026, relayed by the product chat together with the owner's commission of the Government evaluation ([source](sources/concepts-chat-20261009/government-evaluation-mandate-20261009.md)). The owner commissioned a scoped cockpit concept and Claude handoff on 20 October 2026 ([source](sources/cockpit-commission-20261020.md)); broader extensions retain the [DEC-011](#dec-011-detailed-planning-of-future-ideas-waits) deferral.
+- **Scoped commission, 20 October 2026:** the [cockpit concept](../design/cockpit.md) records a local project/Run surface with Manager organization, causal waits, timeline, details, replay, messages and animated directional arrows. Claude owns its implementation and visual design through the [handoff](../development/claude-cockpit-handoff-20261020.md). This Main delivery documents the direction; it starts no implementation session or provider run and does not adopt personal AI, Government or a new Apply process.
 - **Statement:** The big vision includes a cockpit plus a personal AI, and an autonomous project organization („Cockpit plus persönliche AI und autonome Projektorganisation“).
 - **Owner, 16 October 2026:** the desired working life is to model, develop ideas and concepts and set rules, and to know reliably that the organization realizes them cleanly and consistently, develops features, finds and fixes bugs and keeps the project tidy („Ich möchte meine Zeit damit verbringen, zu modellieren, Ideen und Konzepte auszuarbeiten, Regeln aufzustellen.“; [source](sources/organization-and-trust-20261016.md#desired-working-life)). The [working-day reflection](reflections/desired-working-day-20261016.md) develops it.
 - **Related:**
