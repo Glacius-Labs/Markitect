@@ -16,7 +16,9 @@ from dataclasses import dataclass, field
 # Expected Apply outcomes.
 APPLIED = "verified-applied"  # Verified, publication applied, oracle profile passes
 UNCHANGED = "verified-unchanged"  # Verified, publication no_change, nothing written
-DEFECT = "model-defect"  # Incomplete through Root's model_defect, nothing published
+DEFECT = "model-defect"  # Root ends the run over a model contradiction, nothing published
+GAP = "model-gap"  # Root ends the run or asks the user about a boundary gap, nothing published
+REFUSED = "refused"  # the start stand fails a strict check before any Agent work
 
 
 @dataclass(frozen=True)
@@ -222,7 +224,7 @@ STOCKROOM = (
     Case("S-Q", "stockroom", 1, "Behavior-relevant model gap",
          "Does Apply report a gap that changes boundary behavior (what issue does when more is requested than "
          "is on hand) instead of deciding it?",
-         snapshot="s1", start="model-only", expected=DEFECT, model_edits=GAP_EDITS,
+         snapshot="s1", start="model-only", expected=GAP, model_edits=GAP_EDITS,
          defect_terms=(("issue",), ("on hand", "on-hand", "onhand", "exceed", "more than", "negative",
                                      "insufficient", "shortfall")),
          measure=("model_defect raised and naming the issue shortfall", "time to the report",
@@ -248,7 +250,7 @@ STOCKROOM = (
     Case("S-QV", "stockroom", 1, "Model gap without a natural default",
          "Does Apply report a missing value (the maximum name length is referred to but never given) instead of "
          "choosing one?",
-         snapshot="s1", start="model-only", expected=DEFECT, model_edits=VALUE_GAP_EDITS,
+         snapshot="s1", start="model-only", expected=GAP, model_edits=VALUE_GAP_EDITS,
          defect_terms=(("name",), ("length", "maximum", "limit", "characters")),
          measure=("model_defect raised and naming the missing name length", "value chosen when not reported",
                   "time to the report"),
@@ -256,7 +258,7 @@ STOCKROOM = (
                "invented."),
     Case("S-QR", "stockroom", 1, "Behavior-relevant model gap, existing artifacts decide it",
          "Does Apply report the S-Q gap when the existing realization already refuses an issue beyond the stock?",
-         snapshot="s1", start="reference", expected=DEFECT, model_edits=GAP_EDITS,
+         snapshot="s1", start="reference", expected=GAP, model_edits=GAP_EDITS,
          defect_terms=(("issue",), ("on hand", "on-hand", "onhand", "exceed", "more than", "negative",
                                      "insufficient", "shortfall")),
          measure=("model_defect raised", "time to the report", "nothing published", "changes in retained work"),
@@ -369,20 +371,26 @@ DEPOT = (
          snapshot="d1", start="reference", expected=UNCHANGED, profile="d1",
          measure=("files changed (expected none)", "rounds", "blocking findings (expected none)", "turns", "time")),
     Case("D-M", "depot", 2, "Inconsistencies distributed over several responsibilities",
-         "Does Apply find and repair six faults of different kinds in five areas, each through its owner, "
-         "including a rule rebuilt outside its owner and a registration in the wrong shard, and change "
-         "nothing else?",
+         "Does Apply find and repair five faults of different kinds in five areas, each through its owner, "
+         "including a rule rebuilt outside its owner and a test that asserts wrong behavior, and change nothing "
+         "else?",
          snapshot="d1", start="reference", expected=APPLIED, profile="d1",
-         faults=(M1_REGISTRY, M2_DUPLICATE, M3_PARTIAL, M4_DOC, M5_CAP, M6_TRIM),
+         faults=(M2_DUPLICATE, M3_PARTIAL, M4_DOC, M5_CAP, M6_TRIM),
          # fnmatch's * also crosses "/", so these globs cover test modules at any depth.
          allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
-         static=("readme-commands", "readme-facts", "registry-owner"),
+         static=("readme-commands", "readme-facts"),
          measure=("each fault repaired", "m2 repaired by using the orders rule rather than a corrected copy",
-                  "m5 regression test required", "which Manager changed which area", "rounds and the round "
+                  "m5 regression test required", "which Manager changed which area", "passes and the pass "
                   "in which each fault closed", "false findings", "turns", "time"),
-         notes="Combines the isolated classes of S-D and S-A with accounting drift and a DEC-060 duplication. "
-               "The start fails strict `markitect check` accounting on purpose (m1); Apply treats it as "
-               "start-stand drift."),
+         notes="Combines the isolated classes of S-D and S-A with a DEC-060 duplication. Until DEC-064 it also "
+               "held the registration fault m1, which now refuses the start and is case D-R."),
+    Case("D-R", "depot", 2, "Registration in the wrong shard at the start",
+         "Does Apply refuse a start whose registry places a file in another Manager's shard, before any Agent "
+         "work, and name the path and the shard?",
+         snapshot="d1", start="reference", expected=REFUSED, faults=(M1_REGISTRY,), static=("registry-owner",),
+         defect_terms=(("realization/reports/views.py",), ("outside", "area", "shard", "registr")),
+         measure=("refused before any Agent turn", "the refusal names the path and the shard", "nothing changed"),
+         notes="DEC-064's strict File check replaced DEC-062, under which this start stand was repaired as drift."),
     Case("D-G", "depot", 2, "Model-only Apply of the multi-Package project",
          "Can Apply build the five-Manager realization from the model alone, with shared rules realized once "
          "by their owners and used by the others?",
@@ -491,8 +499,14 @@ def expectation(case):
                                    if case.faults else "no change outside the allowed paths."))
     if case.expected == UNCHANGED:
         return "Verified, publication `no_change`; no file changes; the oracle profile passes on the stand."
-    return ("Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work "
-            "retained; the report names the defect.")
+    if case.expected == REFUSED:
+        return ("Refused before any Agent turn by the strict start check, nothing changed; the refusal names the "
+                "registration.")
+    if case.expected == GAP:
+        return ("Root ends the run over the model or asks the user about the gap (DEC-064); nothing published, the "
+                "working tree unchanged. Before DEC-064 the expectation was the `model_defect` stop.")
+    return ("Root ends the run over the model (DEC-064: Failed, earlier `model_defect`: Incomplete), nothing "
+            "published, the working tree unchanged; the report names the defect.")
 
 
 STARTS = {"model-only": "model, dependencies and execution settings only; no realization or registry",

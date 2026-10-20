@@ -31,7 +31,7 @@ sys.path.insert(0, str(HERE.parent / "test-projects"))
 
 import assess  # noqa: E402
 import oracle  # noqa: E402
-from cases import CASES, DEFECT, PROJECTS, SHIFTS, Edit, markdown  # noqa: E402
+from cases import CASES, DEFECT, GAP, PROJECTS, REFUSED, SHIFTS, Edit, markdown  # noqa: E402
 from materialize import apply_edits, materialize, project_root  # noqa: E402
 from oracle_kit import DEGENERATE  # noqa: E402
 from trial_kit import python_command  # noqa: E402
@@ -133,7 +133,7 @@ def check_faults(project, python, report):
         for fault in case.faults:
             with tempfile.TemporaryDirectory(prefix="trial-fault-") as folder:
                 realization = build(project, folder, faults=[fault])
-                bad, _ = failing(project, case.profile, realization, python)
+                bad, _ = failing(project, case.profile or PROJECTS[project]["profile"], realization, python)
                 report.expect(bad == set(fault.detected_by), "%s %s fails %s, declared %s"
                               % (case.id, fault.id, sorted(bad), sorted(fault.detected_by)))
                 relevant = sorted(set(case.static) | {name for other in case.faults for name in other.static})
@@ -147,7 +147,7 @@ def check_faults(project, python, report):
                 found["%s %s" % (case.id, fault.id)] = sorted(bad) + sorted(static) + (["tests"] if not passed else [])
         with tempfile.TemporaryDirectory(prefix="trial-fault-") as folder:
             realization = build(project, folder, faults=case.faults)
-            bad, _ = failing(project, case.profile, realization, python)
+            bad, _ = failing(project, case.profile or PROJECTS[project]["profile"], realization, python)
             report.expect(bad == union, "%s all faults fail %s, declared %s" % (case.id, sorted(bad), sorted(union)))
     report.facts["faults"] = found
 
@@ -197,15 +197,19 @@ def check_packets(project, markitect, report):
     report.facts["packets"] = packets
 
 
-# Cases whose start stand fails strict accounting on purpose, with exactly these findings; Apply treats
-# them as repairable start-stand drift (DEC-062).
-STRICT_ACCOUNTING_FAILS = {"D-M": [("registry.outside_area", "realization/reports/views.py")]}
+# Cases whose start stand fails strict accounting on purpose, with exactly these findings; Apply refuses
+# them before any work (DEC-064).
+STRICT_ACCOUNTING_FAILS = {"D-R": [("file.unexplained", "realization/reports/views.py"),
+                                   ("registry.outside_area", "realization/reports/views.py")]}
 
 
-def fake_report(path, run_status, publication, reason=""):
-    report = {"formatVersion": 1, "operation": "apply", "status": "passed" if publication else "failed",
-              "run": {"id": "r", "status": run_status, "reason": reason, "rounds": [], "findings": [],
-                      "questions": [], "turns": [], "usage": {}}}
+def fake_report(path, run_status, publication, reason="", questions=(), error=""):
+    """A minimal Apply report; RUN_STATUS None leaves out the run, as a refused preparation does."""
+    report = {"formatVersion": 1, "operation": "apply", "status": "passed" if publication else "failed", "error": error}
+    if run_status:
+        report["run"] = {"id": "r", "status": run_status, "reason": reason, "passes": [], "findings": [],
+                         "questions": [{"from": ".", "to": "user", "text": text, "answered": False} for text in questions],
+                         "problems": [], "turns": [], "usage": {}}
     if publication:
         report["publication"] = {"Outcome": publication}
     Path(path).write_text(json.dumps(report), encoding="utf-8")
@@ -219,7 +223,16 @@ def check_assessor(project, python, report):
         for case in CASES.values():
             if case.project != project:
                 continue
-            if case.faults:
+            if case.expected == REFUSED:
+                repo = folder / case.id
+                materialize(case.id, repo)
+                error = "file check: registry.outside_area " + " ".join(group[0] for group in case.defect_terms)
+                judged = assess.assess(case.id, repo, fake_report(folder / "refused.json", None, None, error=error), python)
+                report.expect(judged["outcome"]["met"] and judged["outcome"]["defectNamed"],
+                              "%s: a refused start is not judged as met: %s" % (case.id, judged["outcome"]))
+                judged = assess.assess(case.id, repo, fake_report(folder / "ran.json", "verified", "applied"), python)
+                report.expect(judged["outcome"]["met"] is False, "%s: a run that started counts as refused" % case.id)
+            elif case.faults:
                 repo = folder / case.id
                 materialize(case.id, repo)
                 start = assess.assess(case.id, repo, None, python)
@@ -250,15 +263,23 @@ def check_assessor(project, python, report):
                 report.expect(not missing, "%s: required regression tests not found in the reference: %s" % (case.id, missing))
                 report.facts["assess " + case.id] = {
                     "partial": repaired, "regression": {item["id"]: item["regressionTest"]["status"] for item in full["faults"]}}
-            elif case.expected == DEFECT and case.start == "reference":
+            elif case.expected in (DEFECT, GAP) and case.start == "reference":
                 repo = folder / case.id
                 materialize(case.id, repo)
-                reason = "model defect reported by Root: " + " ".join(group[0] for group in case.defect_terms)
-                judged = assess.assess(case.id, repo, fake_report(folder / "defect.json", "incomplete", None, reason), python)
-                report.expect(judged["outcome"]["met"] and judged["outcome"]["defectNamed"],
-                              "%s: a model-defect report is not judged as met: %s" % (case.id, judged["outcome"]))
+                terms = " ".join(group[0] for group in case.defect_terms)
+                for name, status, reason in (("old", "incomplete", "model defect reported by Root: "),
+                                             ("new", "failed", "Root judged the model erroneous or contradictory: ")):
+                    judged = assess.assess(case.id, repo, fake_report(folder / (name + ".json"), status, None, reason + terms),
+                                           python)
+                    report.expect(judged["outcome"]["met"] and judged["outcome"]["defectNamed"],
+                                  "%s: the %s model-defect ending is not judged as met: %s" % (case.id, name, judged["outcome"]))
+                asked = assess.assess(case.id, repo, fake_report(folder / "asked.json", "incomplete", None, "deadline",
+                                                                 questions=[terms]), python)
+                report.expect(asked["outcome"]["met"] is (case.expected == GAP),
+                              "%s: a question to the user is judged %s" % (case.id, asked["outcome"]))
                 (repo / "realization" / "README.md").write_text("changed\n", encoding="utf-8")
-                judged = assess.assess(case.id, repo, fake_report(folder / "defect.json", "incomplete", None, reason), python)
+                judged = assess.assess(case.id, repo, fake_report(folder / "defect.json", "failed", None,
+                                                                  "Root judged the model erroneous or contradictory: x"), python)
                 report.expect(judged["outcome"]["met"] is False, "%s: a changed tree after a defect counts as met" % case.id)
             elif case.id.endswith("-N"):
                 repo = folder / case.id

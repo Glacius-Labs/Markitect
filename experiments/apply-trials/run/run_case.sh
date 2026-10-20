@@ -38,7 +38,7 @@ start=$(date +%s)
 echo "started=$(date -u +%FT%TZ)" > "$ATTEMPT/timing.txt"
 timeout --kill-after=30 $(( (MIN + 6) * 60 )) "$ATTEMPT/markitect" apply --repo "$ATTEMPT/repo" --model .markitect/model.yaml \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-run.json" \
+  --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-run.json" \
   > "$ATTEMPT/out/apply.json" 2> "$ATTEMPT/out/apply.stderr"
 code=$?
 echo "apply_exit=$code wall_seconds=$(( $(date +%s) - start )) ended=$(date -u +%FT%TZ)" >> "$ATTEMPT/timing.txt"

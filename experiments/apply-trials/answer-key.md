@@ -129,7 +129,7 @@ a4:
 - **Question:** Does Apply report a gap that changes boundary behavior (what issue does when more is requested than is on hand) instead of deciding it?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
-- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Expected:** Root ends the run over the model or asks the user about the gap (DEC-064); nothing published, the working tree unchanged. Before DEC-064 the expectation was the `model_defect` stop.
 - **Defect named:** the report mentions one term of each group: issue; on hand, on-hand, onhand, exceed, more than, negative, insufficient, shortfall
 - **Record:** model_defect raised and naming the issue shortfall; time to the report; other points reported as defects (false escalations); work retained, nothing published
 - **Notes:** The edits remove the refusal and state no arithmetic for a shortfall; 'never negative' stays, so refusing the request and issuing only what is on hand both fit the remaining model and differ at the boundary.
@@ -167,7 +167,7 @@ Model edits:
 - **Question:** Does Apply report two Definitions that contradict each other (SKU case) and end without publication, although the existing artifacts follow one of them?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, the known-correct reference realization and its registry
-- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Expected:** Root ends the run over the model (DEC-064: Failed, earlier `model_defect`: Incomplete), nothing published, the working tree unchanged; the report names the defect.
 - **Defect named:** the report mentions one term of each group: sku; case-sensitive, case sensitive, uppercase, upper-case, upper case, lowercase, lower case
 - **Record:** model_defect raised and naming item and inputs; time to the report; artifacts changed in the retained work; nothing published
 
@@ -189,7 +189,7 @@ Model edits:
 - **Question:** Does Apply report the S-X contradiction when no existing artifact follows either side?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
-- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Expected:** Root ends the run over the model (DEC-064: Failed, earlier `model_defect`: Incomplete), nothing published, the working tree unchanged; the report names the defect.
 - **Defect named:** the report mentions one term of each group: sku; case-sensitive, case sensitive, uppercase, upper-case, upper case, lowercase, lower case
 - **Record:** model_defect raised; time to the report; nothing published
 - **Notes:** Start variant of S-X: separates detection from the anchoring effect of existing artifacts.
@@ -212,7 +212,7 @@ Model edits:
 - **Question:** Does Apply report a missing value (the maximum name length is referred to but never given) instead of choosing one?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
-- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Expected:** Root ends the run over the model or asks the user about the gap (DEC-064); nothing published, the working tree unchanged. Before DEC-064 the expectation was the `model_defect` stop.
 - **Defect named:** the report mentions one term of each group: name; length, maximum, limit, characters
 - **Record:** model_defect raised and naming the missing name length; value chosen when not reported; time to the report
 - **Notes:** Second gap type beside S-Q: no refusal-like default suggests itself, so a choice is visibly invented.
@@ -232,7 +232,7 @@ Model edits:
 - **Question:** Does Apply report the S-Q gap when the existing realization already refuses an issue beyond the stock?
 - **Project and level:** stockroom, level 1
 - **Start:** snapshot `s1`, the known-correct reference realization and its registry
-- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Expected:** Root ends the run over the model or asks the user about the gap (DEC-064); nothing published, the working tree unchanged. Before DEC-064 the expectation was the `model_defect` stop.
 - **Defect named:** the report mentions one term of each group: issue; on hand, on-hand, onhand, exceed, more than, negative, insufficient, shortfall
 - **Record:** model_defect raised; time to the report; nothing published; changes in retained work
 - **Notes:** Start variant of S-Q: a dormant gap that the artifacts happen to fill.
@@ -340,18 +340,17 @@ Model edits:
 
 ## D-M: Inconsistencies distributed over several responsibilities
 
-- **Question:** Does Apply find and repair six faults of different kinds in five areas, each through its owner, including a rule rebuilt outside its owner and a registration in the wrong shard, and change nothing else?
+- **Question:** Does Apply find and repair five faults of different kinds in five areas, each through its owner, including a rule rebuilt outside its owner and a test that asserts wrong behavior, and change nothing else?
 - **Project and level:** depot, level 2
 - **Start:** snapshot `d1`, the known-correct reference realization and its registry
 - **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1`.
 - **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
-- **Artifact checks:** `readme-commands`, `readme-facts`, `registry-owner`
-- **Record:** each fault repaired; m2 repaired by using the orders rule rather than a corrected copy; m5 regression test required; which Manager changed which area; rounds and the round in which each fault closed; false findings; turns; time
-- **Notes:** Combines the isolated classes of S-D and S-A with accounting drift and a DEC-060 duplication. The start fails strict `markitect check` accounting on purpose (m1); Apply treats it as start-stand drift.
+- **Artifact checks:** `readme-commands`, `readme-facts`
+- **Record:** each fault repaired; m2 repaired by using the orders rule rather than a corrected copy; m5 regression test required; which Manager changed which area; passes and the pass in which each fault closed; false findings; turns; time
+- **Notes:** Combines the isolated classes of S-D and S-A with a DEC-060 duplication. Until DEC-064 it also held the registration fault m1, which now refuses the start and is case D-R.
 
 | Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
 | --- | --- | --- | --- | --- | --- | --- |
-| m1 | catalog/reports | accounting | the reports module is registered in the catalog shard instead of the reports shard (a registration outside the registrant's area; repairable start-stand drift under DEC-062) | `registry-owner` | no | informative |
 | m2 | reports | duplication | the reorder report rebuilds the availability rule of orders in its own code and counts the lines of fulfilled and cancelled orders as reserved; its tests use open orders only | `reorder-report` | no | informative |
 | m3 | orders | behavior | place-order drops the lines that do not fit instead of refusing the whole order; the tests cover single-line refusals only | `place-order-atomic` | no | informative |
 | m4 | depot | doc | the README documents the command fulfill-order, while the model and the code use fulfil-order | `readme-commands`, `readme-facts` | no | informative |
@@ -359,26 +358,6 @@ Model edits:
 | m6 | catalog | behavior | the shared SKU rule no longer trims, so padded SKUs fail in every part; the catalog tests catch it | `add-item-record`, `receive-record`, `place-order-record` | yes | informative |
 
 Fault edits:
-
-m1:
-
-```diff
---- .markitect/registry/reports/registry.yaml
--  - path: realization/reports/views.py
--    form: code
--    realizes: [reports/stock-view, reports/reorder]
--    why: Builds the stock view and the reorder report from the catalog, stock and availability of the orders.
-```
-
-```diff
---- .markitect/registry/catalog/registry.yaml
--    why: Tests SKU normalization, the SKU format and adding items.
-+    why: Tests SKU normalization, the SKU format and adding items.
-+  - path: realization/reports/views.py
-+    form: code
-+    realizes: [reports/stock-view, reports/reorder]
-+    why: Builds the stock view and the reorder report from the catalog, stock and availability of the orders.
-```
 
 m2:
 
@@ -445,6 +424,43 @@ m6:
 --- realization/catalog/items.py
 -    sku = text.strip().upper()
 +    sku = text.upper()
+```
+
+## D-R: Registration in the wrong shard at the start
+
+- **Question:** Does Apply refuse a start whose registry places a file in another Manager's shard, before any Agent work, and name the path and the shard?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Refused before any Agent turn by the strict start check, nothing changed; the refusal names the registration.
+- **Defect named:** the report mentions one term of each group: realization/reports/views.py; outside, area, shard, registr
+- **Artifact checks:** `registry-owner`
+- **Record:** refused before any Agent turn; the refusal names the path and the shard; nothing changed
+- **Notes:** DEC-064's strict File check replaced DEC-062, under which this start stand was repaired as drift.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| m1 | catalog/reports | accounting | the reports module is registered in the catalog shard instead of the reports shard (a registration outside the registrant's area; repairable start-stand drift under DEC-062) | `registry-owner` | no | informative |
+
+Fault edits:
+
+m1:
+
+```diff
+--- .markitect/registry/reports/registry.yaml
+-  - path: realization/reports/views.py
+-    form: code
+-    realizes: [reports/stock-view, reports/reorder]
+-    why: Builds the stock view and the reorder report from the catalog, stock and availability of the orders.
+```
+
+```diff
+--- .markitect/registry/catalog/registry.yaml
+-    why: Tests SKU normalization, the SKU format and adding items.
++    why: Tests SKU normalization, the SKU format and adding items.
++  - path: realization/reports/views.py
++    form: code
++    realizes: [reports/stock-view, reports/reorder]
++    why: Builds the stock view and the reorder report from the catalog, stock and availability of the orders.
 ```
 
 ## D-G: Model-only Apply of the multi-Package project

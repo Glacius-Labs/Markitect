@@ -26,7 +26,7 @@ Unlike Roombook and Readinglog, this directory holds known-correct reference rea
 
 Complexity is set by rules, dependencies and responsibility boundaries, not by size.
 
-- **stockroom (level 1):** one Package and Root, 11 Definitions, four commands. Rules: SKU normalization, quantity and name limits, stock limits, list order, one atomic data file. No rule crosses a responsibility boundary. Python 3.13 standard library, `python -B app.py --db PATH COMMAND`, layout exception `realization` → `stockroom` as in Roombook and Readinglog.
+- **stockroom (level 1):** one Package and Root, 11 Definitions, four commands. Rules: SKU normalization, quantity and name limits, stock limits, list order, one atomic data file. No rule crosses a responsibility boundary. Python 3.13 standard library, `python -B app.py --db PATH COMMAND`, ownership `realization/` → `stockroom` as in Roombook and Readinglog.
 - **depot (level 2):** five Packages and Root (six Managers), 19 Definitions, eight commands. The SKU rule of `catalog` is used by `stock`, `orders` and `reports`; the availability rule of `orders` (on hand minus open reservations) is used by order admission and both reports; the stock limit of `stock` must hold under fulfilment; every command commits all parts' changes in one atomic file write owned by `depot`. Each domain Package owns `realization/<package>/` with its tests; `depot` owns `app.py`, the README, the end-to-end tests and the shared foundations.
 
 - **fleet (level 3, generated):** [fleet.py](fleet.py) generates `fleet-w<W>-d<D>`: a `hub` Package (command line, shared inputs, one data file, a cross-ledger `totals` report) and W ledger Packages, each with its own cap, maximum amount and overdraft, nested under D-1 group Packages. Per-ledger rules stay the same size, so W and D vary only the number of Managers, Definitions, files and integration boundaries. The project directory is generated deterministically into a cache outside the repository; [fleet_checks.py](fleet_checks.py) builds its checks, one per ledger plus the shared ones. The plan in `cases.py` runs widths 1, 2, 4 and 8 at depth 1 and width 4 at depths 2 and 3, each with a conforming stand, 1 to W faults in different ledgers (cap, floor or order, none covered by the ledgers' own tests) and, for some sizes, a model-only start.
@@ -42,19 +42,32 @@ Each failure class is first tested alone on stockroom; D-M combines several clas
 | S-N | A conforming stand stays unchanged? | reference | Verified, `no_change` |
 | S-D | Two code faults under the unchanged model, one caught by the project tests and one only by the model, repaired with nothing else changed? | reference with faults | Verified, applied, both repaired |
 | S-A | Code, tests, README and configuration contradict each other, including a passing test of wrong behavior: resolved toward the model? | reference with faults | Verified, applied, all four repaired, the wrong test corrected |
-| S-G | Model-only Apply: built from the model alone, internal choices decided without escalation? | model only | Verified, applied, no `model_defect` |
-| S-Q | A gap that changes boundary behavior (what `issue` does beyond the stock) reported instead of decided? Minimal pair of S-G. | model only | `model_defect`, nothing published |
-| S-X | Two Definitions contradict each other (SKU case) while the artifacts follow one: reported? | reference | `model_defect`, nothing published |
+| S-G | Model-only Apply: built from the model alone, internal choices decided without escalation? | model only | Verified, applied, no model stop or question |
+| S-Q | A gap that changes boundary behavior (what `issue` does beyond the stock) raised instead of decided? Minimal pair of S-G. | model only | Root stops or asks the user; nothing published |
+| S-QR | The S-Q gap while the existing code already refuses: raised? | reference | Root stops or asks the user; nothing published |
+| S-QV | A value the model refers to but never gives (the maximum name length): raised? | model only | Root stops or asks the user; nothing published |
+| S-X | Two Definitions contradict each other (SKU case) while the artifacts follow one: reported? | reference | Root stops the run over the model; nothing published |
+| S-XG | The S-X contradiction without any artifact: reported? | model only | Root stops the run over the model; nothing published |
 | S-O | Three valid but unnecessary restrictions (fixed error text, fixed file format, prescribed limits module) realized without relaxing or escalating them? | reference | Verified, applied, all restrictions met |
 | S-C | The model change 0.1.0 → 0.2.0 (limit 500, reorder points, `list --low`, old data stays usable) realized on the actual result of S-G? | previous result | Verified, applied |
 | S-F | A second Apply on a Verified, committed result changes nothing? | previous result | Verified, `no_change` |
 | D-N | The conforming six-Manager stand stays unchanged? | reference | Verified, `no_change` |
-| D-M | Six faults in five areas (behavior, a passing wrong test, a README error, a rule rebuilt outside its owner, a registration in the wrong shard, a fault the tests catch) repaired by their owners? | reference with faults | Verified, applied, all six repaired |
+| D-M | Five faults in five areas (behavior, a passing wrong test, a README error, a rule rebuilt outside its owner, a fault the tests catch) repaired by their owners? | reference with faults | Verified, applied, all five repaired |
+| D-R | A file registered in another Manager's shard at the start: refused before any work? | reference with the registration fault | Refused by the strict start check, nothing changed |
 | D-G | Model-only Apply of the six-Manager project, shared rules realized once by their owners? | model only | Verified, applied |
 | D-F | Follow-up no-change on a Verified depot result? | previous result | Verified, `no_change` |
 | W*D*-N, -M*k*, -G | How do no-change cost, repair of *k* distributed faults and model-only Apply scale with the number and nesting of Managers? | reference, reference with faults, model only | `no_change`; applied with all faults repaired; applied |
 
-Expectation rules, as stated by DEC-063 and the trial assignment: a conforming stand stays unchanged; repairable artifact drift is repaired against the unchanged model; internal design freedom is decided within the model; a behavior-relevant gap or a contradiction in the model ends the run through Root's `model_defect` without publication; a valid overspecified statement is realized and not relaxed, and its usefulness is a separate modeling question.
+Expectation rules, as stated by DEC-064 and the trial assignment:
+- A conforming stand stays unchanged.
+- Artifact defects of registered files are repaired against the unchanged model by their owners.
+- Accounting faults of the start stand are refused before any work.
+- Internal design freedom is decided within the model.
+- A contradiction in the model ends the run through Root without publication.
+- A behavior-relevant gap ends the run the same way, or Root asks the user, who can only fill it without overriding the model.
+- A valid overspecified statement is realized and not relaxed; its usefulness is a separate modeling question.
+
+Before DEC-064, the expectation for gaps was the `model_defect` stop of DEC-063, and D-M also held the registration fault that D-R now holds alone.
 
 ## Self-check
 
@@ -64,7 +77,7 @@ From the repository root, with Python 3.13 and Git:
 python -B experiments/apply-trials/selfcheck.py [--project stockroom|depot|fleet-w<W>-d<D>[-t] ...] [--markitect PATH/TO/markitect]
 ```
 
-It shows that every cited Definition exists; that each reference passes its profile and its own tests and each validation overlay passes its changed profile; that degenerate command lines fail; that each fault alone fails exactly its declared checks (and the reference tests exactly when declared) and a case's faults together fail exactly their union; that the reference fails exactly the declared checks of the `s2` and `o` profiles; that every case materializes and passes the leak audit and, with `--markitect`, `markitect check` and `context` at `HEAD` (D-M fails strict accounting with exactly its `registry.outside_area` finding, which Apply treats as start-stand drift under DEC-062); that the assessor judges unrepaired, partly and fully repaired starts, unchanged stands and model-defect reports correctly; that S-G → S-C → S-F and D-G → D-F chain through `--from-repo`; and that `answer-key.md` is current. A full run of all projects takes about an hour on Windows; one project takes a few minutes.
+It shows that every cited Definition exists; that each reference passes its profile and its own tests and each validation overlay passes its changed profile; that degenerate command lines fail; that each fault alone fails exactly its declared checks (and the reference tests exactly when declared) and a case's faults together fail exactly their union; that the reference fails exactly the declared checks of the `s2` and `o` profiles; that every case materializes and passes the leak audit and, with `--markitect`, `markitect check` and `context` at `HEAD` (D-R fails strict accounting with exactly its `file.unexplained` and `registry.outside_area` findings, which Apply refuses before any work under DEC-064); that the assessor judges unrepaired, partly and fully repaired starts, unchanged stands and model-defect reports correctly; that S-G → S-C → S-F and D-G → D-F chain through `--from-repo`; and that `answer-key.md` is current. A full run of all projects takes about an hour on Windows; one project takes a few minutes.
 
 The checks execute the realization they assess. Run them on the trial host, not on a machine whose files the realization must not reach.
 
@@ -94,5 +107,5 @@ Start with S-N: the smallest complete run, it checks the wiring against a known-
 - The checks execute agent-written code on the trial host; they are black-box, so an internal choice is judged only where the model binds it (`limits-module` in S-O).
 - Detecting false findings and judging a model-defect report stay manual; `assess.py` lists the material and matches defect terms as an aid only.
 - A regression test counts as present only when the repaired text of the fault is found unchanged; a restructured repair reports `not-applicable` and needs reading.
-- The S-Q gap and the S-O restrictions encode the expectations of DEC-063 and this assignment; a real run may show that the owner reads a case differently, which is a finding about the case.
+- The gap and overspecification cases encode the expectations of DEC-064 and this assignment; a real run may show that the owner reads a case differently, which is a finding about the case.
 - Hand-written references are only as conforming as their author made them: the first runs found five edge failures in them (see the record). A conforming stand with thin tests also invites test additions.

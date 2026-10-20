@@ -28,7 +28,7 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import oracle  # noqa: E402
-from cases import APPLIED, CASES, DEFECT, PROJECTS, UNCHANGED  # noqa: E402
+from cases import APPLIED, CASES, DEFECT, GAP, PROJECTS, REFUSED, UNCHANGED  # noqa: E402
 from materialize import GIT, model_case  # noqa: E402
 from trial_kit import python_command  # noqa: E402
 
@@ -232,8 +232,16 @@ def summarize_report(report):
         "rounds": [{"number": item.get("number"), "green": item.get("green"),
                     "checks": {check.get("name"): check.get("passed") for check in item.get("checks") or []}}
                    for item in run.get("rounds") or []],
-        "passes": len(run.get("passes") or []),
-        "turns": {kind: sum(1 for turn in turns if turn.get("kind") == kind) for kind in ("execute", "verify")},
+        "passes": [{"id": item.get("id"), "purpose": item.get("purpose"), "review": item.get("review"),
+                    "verdict": item.get("verdict"), "checks": {check.get("name"): check.get("passed")
+                                                              for check in item.get("checks") or []}}
+                   for item in run.get("passes") or []],
+        "questions": [{"from": item.get("from"), "to": item.get("to"), "answered": item.get("answered"),
+                       "text": (item.get("text") or "")[:400]} for item in run.get("questions") or []],
+        "problems": [{"manager": item.get("manager"), "category": item.get("category"), "abort": item.get("abort"),
+                      "text": (item.get("text") or "")[:400]} for item in run.get("problems") or []],
+        "turns": {kind: sum(1 for turn in turns if turn.get("kind") == kind)
+                  for kind in sorted({turn.get("kind") for turn in turns if turn.get("kind")})},
         "engineSeconds": round((max(ends) - min(starts)).total_seconds()) if starts and ends else None,
         "costUSD": round((run.get("usage") or {}).get("costUSD", 0.0), 2),
         "findings": [{"id": item.get("id"), "owner": item.get("owner"), "raisedBy": item.get("raisedBy"),
@@ -257,13 +265,17 @@ def judge_outcome(case, summary, changed):
     elif expected == UNCHANGED:
         met = summary["runStatus"] == "verified" and summary["publication"] == "no_change" and not changed
     else:
-        met = (summary["runStatus"] in ("incomplete", "failed") and summary["reason"].startswith(DEFECT_REASONS)
-               and summary["publication"] in (None, "") and not changed)
+        quiet = summary["publication"] in (None, "") and not changed
+        stopped = summary["runStatus"] in ("incomplete", "failed") and summary["reason"].startswith(DEFECT_REASONS)
+        asked = any(question["to"] == "user" for question in summary.get("questions") or [])
+        refused = not summary.get("runStatus") and not any((summary.get("turns") or {}).values())
+        met = quiet and {DEFECT: stopped, GAP: stopped or asked, REFUSED: refused}[expected]
     detail = "run %s, publication %s, %d changed paths" % (summary["runStatus"], summary["publication"], len(changed))
     result = {"met": met, "detail": detail}
-    if expected == DEFECT:
-        reason = summary["reason"].lower()
-        named = [[term for term in group if term in reason] for group in case.defect_terms]
+    if expected in (DEFECT, GAP, REFUSED):
+        text = " ".join([summary["reason"], summary.get("error") or ""]
+                        + [question["text"] for question in summary.get("questions") or [] if question["to"] == "user"]).lower()
+        named = [[term for term in group if term.lower() in text] for group in case.defect_terms]
         result["defectNamed"] = all(named) if case.defect_terms else None
         result["defectTerms"] = named
     return result

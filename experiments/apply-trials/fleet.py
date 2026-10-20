@@ -187,14 +187,17 @@ def model_files(project):
 
 def execution(project):
     count = managers(project)
+    ownership = ["  - path: ./", "    owner: .", "    reason: Root coordinates and owns the files outside the delivery directory.",
+                 "  - path: realization/", "    owner: hub",
+                 "    reason: The fixed delivery boundary puts app.py, README.md and the end-to-end tests directly in "
+                 "realization/; the hub Package realizes them and its shared parts in realization/hub/."]
+    for package in groups(project) + [path for _, path, *_ in ledgers(project)]:
+        ownership += ["  - path: realization/%s/" % package, "    owner: " + package]
     return "\n".join([
-        "apiVersion: markitect.execution/v1", "strategy: shared-workspace-v1", "budget:",
-        "  executionTime: %dm" % (10 + 2 * count), "  turnTimeout: 8m", "  agentTurns: %d" % (16 * count),
-        "  rounds: 4", "profiles:", "  execute: project-agent", "  verify: project-agent", "packages: {}",
-        "layout:", "  roots: [realization]", "  exceptions:", "    - path: realization", "      owner: hub",
-        "      reason: The fixed delivery boundary puts app.py, README.md and the end-to-end tests directly in "
-        "realization/, which Root would otherwise own; the hub Package realizes them, and each ledger and group "
-        "Package keeps its mirrored directory.",
+        "apiVersion: markitect.execution/v1", "strategy: recursive-passes-v1", "budget:",
+        "  executionTime: %dm" % (20 + 4 * count), "  turnTimeout: 8m", "  agentTurns: %d" % (25 * count),
+        "  passes: 12", "profiles:", "  execute: project-agent", "  verify: project-agent", "packages: {}",
+        "ownership:"] + ownership + [
         "checks:", "  - id: project-tests", "    profile: python-tests", "    directory: realization",
         "    args: [-B, -m, unittest, discover, -s, ., -p, \"test_*.py\"]", "    requiredBy: hub/interface",
         "    timeout: 3m", ""])
