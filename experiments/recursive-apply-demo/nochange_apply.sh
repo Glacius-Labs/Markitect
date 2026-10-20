@@ -32,8 +32,13 @@ python3 - "$ATTEMPT/out/apply-n1.json" <<'PY'
 import json, sys
 d = json.load(open(sys.argv[1]))
 r = d.get("run") or {}
+if "passes" not in r:
+    sys.exit("no run.passes in the Apply report: " + str(d.get("error") or d.get("status")))
 print("status", d.get("status"), "run", r.get("status"), "publication", (d.get("publication") or {}).get("Outcome"), "retained", d.get("retainedWork"))
 print("turns", len(r.get("turns") or []), {k: sum(1 for t in r["turns"] if t["kind"] == k) for k in ("execute", "verify")})
-print("rounds", [(x["number"], x["green"]) for x in r.get("rounds") or []], "findings", len(r.get("findings") or []))
+for x in r["passes"]:
+    n = sum(1 for t in r["turns"] if t["pass"] == x["id"])
+    print(" pass", x["id"], x["purpose"], "review" if x["review"] else "work", "verdict", x.get("verdict"), "sealed", x["sealed"], "turns", n, [(c["name"], c["passed"]) for c in x.get("checks") or []])
+print("findings", len(r.get("findings") or []))
 print("usage", r.get("usage"))
 PY

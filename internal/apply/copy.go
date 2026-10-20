@@ -25,7 +25,6 @@ func cloneSource(value model.SourceModel) model.SourceModel {
 }
 
 func cloneRaw(value RawInputs) RawInputs {
-	value.Untracked = slices.Clone(value.Untracked)
 	value.Local.Source = cloneSource(value.Local.Source)
 	value.Dependencies = slices.Clone(value.Dependencies)
 	for i := range value.Dependencies {

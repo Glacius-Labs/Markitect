@@ -32,12 +32,18 @@ def deviation(f):
 
 
 def phase(p):
+    """One Extract phase's run report, summarized per Pass. An absent phase is None."""
+    if not p:
+        return None
+    if "passes" not in p:
+        sys.exit("a phase report has no 'passes' field; it is not a recursive-passes report")
     turns = p.get("turns", [])
     verify = [seconds(t) for t in turns if t["kind"] == "verify"]
-    rounds = p.get("rounds", [])
+    passes = [{"id": q["id"], "purpose": q["purpose"], "review": q["review"], "verdict": q.get("verdict"), "sealed": q["sealed"],
+               "checks": [(c["name"], c["passed"]) for c in q.get("checks") or []],
+               "turns": sum(1 for t in turns if t["pass"] == q["id"])} for q in p["passes"]]
     return {
-        "rounds": len(rounds),
-        "green": [r.get("green") for r in rounds],
+        "passes": passes,
         "execute_turns": sum(t["kind"] == "execute" for t in turns),
         "verify_turns": len(verify),
         "verify_seconds_median": round(statistics.median(verify)) if verify else None,
@@ -67,7 +73,7 @@ for arg in sys.argv[1:]:
     if rep.is_file() and rep.stat().st_size:
         x = json.loads(rep.read_text())
         row.update({"status": x.get("status"), "modelComplete": x.get("modelComplete"),
-                    "structure": phase(x.get("structure", {})), "model": phase(x.get("model", {})),
+                    "structure": phase(x.get("structure")), "model": phase(x.get("model")),
                     "deviations": [deviation(f) for f in x.get("deviations", [])],
                     "openQuestions": len(x.get("openQuestions", []))})
     owner = a / "out" / "owner.log"
@@ -81,9 +87,11 @@ for arg in sys.argv[1:]:
     b1 = a / "out" / "apply-b1.json"
     if b1.is_file() and b1.stat().st_size:
         b = json.loads(b1.read_text())
-        run = b.get("run", {})
+        run = b.get("run")
+        if run is not None and "passes" not in run:
+            sys.exit(f"{b1}: the run report has no 'passes' field; it is not a recursive-passes report")
         row["rebuild"] = {"status": b.get("status"), "publication": (b.get("publication") or {}).get("Outcome"),
-                          "rounds": len(run.get("rounds", [])) if isinstance(run, dict) else None,
+                          "passes": [(q["purpose"], q.get("verdict"), q["sealed"]) for q in run["passes"]] if run else None,
                           "seconds": int(timing["rebuild_end"]) - int(timing["rebuild_start"]) if "rebuild_end" in timing else None}
     oracle = a / "assess-rebuild" / "summary.json"
     if oracle.is_file() and oracle.stat().st_size:

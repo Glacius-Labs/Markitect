@@ -416,21 +416,18 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 	if _, err := apply.NewCandidates(apply.CapturedSettingsAttempt{}); !errors.Is(err, apply.ErrCandidatesUnavailable) {
 		t.Fatalf("zero preparation accepted: %v", err)
 	}
-	service := func(t *testing.T, execution, stray string, untracked ...string) (*apply.PreparationService, apply.InputSelection) {
+	service := func(t *testing.T, execution, stray string) (*apply.PreparationService, apply.InputSelection) {
 		selection, raw := executionInputs(t, execution)
 		libraryLayoutFiles(t, &selection, &raw)
 		censusFile(t, &raw, stray, snapshot.Regular, []byte("package stray\n"))
-		for _, p := range untracked {
-			raw.Untracked = append(raw.Untracked, path(t, p))
-		}
 		addRuntimeDocument(t, &selection, &raw, testRuntimeDocument)
 		source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
 			return captured(preparationObservation(t, request.Selection, raw)), nil
 		}}
 		return apply.NewPreparationService(apply.NewModelService(source, nil)), selection
 	}
-	prepareWith := func(t *testing.T, execution, stray string, untracked ...string) apply.CapturedSettingsResult {
-		s, selection := service(t, execution, stray, untracked...)
+	prepareWith := func(t *testing.T, execution, stray string) apply.CapturedSettingsResult {
+		s, selection := service(t, execution, stray)
 		agent, check := runtimePorts(t)
 		result, _ := s.CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 		return result
@@ -454,13 +451,8 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 			}
 		})
 	}
-	// A Git-ignored untracked file is local to its developer, not part of the project.
-	result := prepareWith(t, withOwnership(t, libraryOwnershipYAML), "realization/stray.go", "realization/stray.go")
-	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
-		t.Fatal("an untracked unexplained start file passed preparation")
-	}
 	// Without declared ownership the same file fails too.
-	result = prepareWith(t, documentedExecution(t), "realization/stray.go")
+	result := prepareWith(t, documentedExecution(t), "realization/stray.go")
 	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
 		t.Fatal("an unexplained start file passed preparation without ownership")
 	}

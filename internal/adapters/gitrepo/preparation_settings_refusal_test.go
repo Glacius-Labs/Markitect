@@ -118,18 +118,6 @@ func TestM1GitSettingsPreparationIgnoredCensusAndRealExternalFixedRefusal(t *tes
 					t.Fatal("ordinary Gitignore concealed actual Census bytes")
 				}
 			}
-			// Capture names exactly the Git-ignored untracked files; previews name none.
-			var untracked []string
-			for _, p := range last.Untracked {
-				untracked = append(untracked, p.String())
-			}
-			var wantUntracked []string
-			if mode == "capture" {
-				wantUntracked = []string{today}
-			}
-			if !reflect.DeepEqual(untracked, wantUntracked) {
-				t.Fatalf("untracked %q, want %q", untracked, wantUntracked)
-			}
 			findings := accounting.Findings()
 			if status != model.Failed || accounting.Status() != realization.AccountingInvalid || len(findings) != 1 || findings[0].Code != "file.unexplained" || findings[0].Path.String() != today || fileSeamAccounted(t, accounting, today).Class() != realization.UnexplainedFile || len(metadata.agents) != 2 || len(metadata.checks) != 2 {
 				t.Fatalf("actual ordinary ignored file did not prevent Passed: %s %+v", status, findings)

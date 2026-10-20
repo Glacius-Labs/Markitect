@@ -490,7 +490,7 @@ func replaceArg(args []string, from, to string) []string {
 	return out
 }
 
-func TestSetupSelectsEveryProfileOfTheDefaultsAndPackageOverrides(t *testing.T) {
+func TestSetupSelectsEveryProfileOfTheDefaultsTeamAndPackageOverrides(t *testing.T) {
 	f := newSetupFixture(t)
 	execution, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "execution.yaml"))
 	if err != nil {
@@ -500,18 +500,23 @@ func TestSetupSelectsEveryProfileOfTheDefaultsAndPackageOverrides(t *testing.T) 
 	if !strings.Contains(text, "packages: {}") {
 		t.Fatal("fixture execution declarations changed")
 	}
-	f.repo.Write(".markitect/execution.yaml", strings.Replace(text, "packages: {}", "packages:\n  product/cli:\n    profiles: {verify: second-agent}", 1))
-	f.repo.Commit("select a second Agent profile for one Package")
+	if strings.Contains(text, "\nteam:") {
+		t.Fatal("fixture execution declarations changed")
+	}
+	text = strings.Replace(text, "packages: {}", "packages:\n  product/cli:\n    profiles: {verify: second-agent}", 1)
+	text += "team:\n  maxHelpers: 1\n  helpers:\n    - role: architect\n      profile: helper-agent\n      writes: false\n"
+	f.repo.Write(".markitect/execution.yaml", text)
+	f.repo.Commit("select a second Agent profile for one Package and a helper profile")
 	code, out, errout := f.run(t)
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
 	report := decodeSetupReport(t, out)
-	if !slices.Equal(report.AgentProfiles, []string{"markitect-agent", "second-agent"}) || !slices.Equal(report.CheckProfiles, []string{"go"}) {
+	if !slices.Equal(report.AgentProfiles, []string{"helper-agent", "markitect-agent", "second-agent"}) || !slices.Equal(report.CheckProfiles, []string{"go"}) {
 		t.Fatalf("%+v", report)
 	}
 	profile, err := os.ReadFile(filepath.Join(f.runtimeDir, "runtime.yaml"))
-	if err != nil || strings.Count(string(profile), "claudeCode:") != 2 || strings.Count(string(profile), "container:") != 1 {
+	if err != nil || strings.Count(string(profile), "claudeCode:") != 3 || strings.Count(string(profile), "container:") != 1 {
 		t.Fatalf("%v\n%s", err, profile)
 	}
 }

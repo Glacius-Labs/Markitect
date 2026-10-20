@@ -80,17 +80,21 @@ the Manager's own question is unanswered. Plans are validated (approach, method 
 evidence per obligation, owners of inputs and outputs, dependencies without a cycle with
 the parent-first order).
 
-A Pass verdict is `satisfied` when every result is satisfied and no genuine finding of the
-kind the Pass judges is open; a review also needs every required check passing on its
-candidate.
+A Pass verdict is `satisfied` when Root's integrated result is satisfied and no genuine
+finding of the kind the Pass judges is open; a review also needs every required check
+passing on its candidate. A child's `needs_correction` rests on an open finding, so a
+finding its raiser closes later no longer holds the Pass back. `PassResult.Corrections`
+names the correction purposes of the open genuine findings raised in that Pass.
 
 ## Findings
 
-A finding has one owner (the raiser or a descendant) and one raiser. Findings are recorded
-when submitted and cannot be withdrawn. A review finding is bound to its candidate; it
-closes only through a later review submission of its raising responsibility: `resolved` on
-a changed candidate, or `disproved` with evidence on the unchanged one. An ancestor
-reviewer may dispute it once per candidate with reason and evidence; when only fresh
+A finding has one owner (the raiser or a descendant) and one raiser. A submission's
+findings, closures and disputes take effect when it is accepted and are then never
+withdrawn. A review finding is bound to its candidate; it closes only through a later
+review submission of its raising responsibility, with reason and evidence: `resolved` on
+a changed candidate, or `disproved` on the unchanged one. Another reviewer whose
+responsibility holds its raiser or owner may dispute it once per candidate with reason and
+evidence; when only fresh
 disputes keep a review from being clean, `Reassess` is true and the caller runs a new
 complete Verify on the same candidate. Failed required checks are Orchestrator findings
 that hold for their candidate and cannot be disputed. Work-Pass findings close through a

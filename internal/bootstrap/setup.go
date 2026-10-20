@@ -174,6 +174,11 @@ func (s *setupService) selectedProfiles(ctx context.Context, selected apply.Inpu
 	}
 	add(&names.agents, declarations.Defaults.Execute.Profile.Value)
 	add(&names.agents, declarations.Defaults.Verify.Profile.Value)
+	for _, helper := range declarations.Defaults.Team.Helpers {
+		if helper.Profile != nil {
+			add(&names.agents, helper.Profile.Value)
+		}
+	}
 	for _, override := range declarations.Overrides {
 		if profile := override.Execute.Profile; profile != nil {
 			add(&names.agents, profile.Value)

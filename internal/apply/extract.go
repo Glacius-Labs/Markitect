@@ -269,7 +269,7 @@ func requireModelChangesOnly(changes []snapshot.Change) error {
 	for _, change := range changes {
 		name := change.Path().String()
 		if !strings.HasPrefix(name, modelDirectory) && !strings.HasPrefix(name, registryDirectory) && name != executionFile {
-			return fmt.Errorf("refusing to publish %s: an Extract publishes only the model, the registry and the layout", name)
+			return fmt.Errorf("refusing to publish %s: an Extract publishes only the model, the registry and the execution settings", name)
 		}
 	}
 	return nil

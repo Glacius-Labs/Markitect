@@ -38,7 +38,7 @@ agentProfiles:
         version: 1
         model: $MODEL
         effort: high
-        systemPrompt: "You are a Markitect Manager agent in a team that reconciles a repository with its canonical model. Follow the turn input and report only through the offered Orchestrator tools. Never print or copy credentials. Use only the Go standard library for the realization."
+        systemPrompt: "You are a Markitect Manager agent in a team that applies a repository's canonical model. Follow the turn input and report only through the offered Orchestrator tools. Never print or copy credentials. Use only the Go standard library for the realization."
         builtinTools: [Read, Write, Edit, Glob, Grep, Bash]
         store: $STORE
         cpus: 2
