@@ -52,7 +52,37 @@ The engine's `Plans` capability and the `plan`/`prepare` purposes stay as generi
 
 ## Frozen comparison plan
 
-FROZEN_PLAN
+Frozen on 20 October 2026, 17:45Z, before any provider work of this session. It was agreed with the hardening session, which ran the reference on the same inputs. Evaluation directory: `/home/user/mk-simplified-eval/` in WSL Ubuntu, container label prefix `cmp-`.
+
+| Binding | Value |
+| --- | --- |
+| Candidate | `e814c373251b9198e20b2edc87e9255f40c3c1f8`; CLI SHA-256 `2229cb89…44717`, Verify harness `3a32d3e5…3f5` (built from the candidate) |
+| Reference | `8b5040ff294018dbd9d3c9d3c52742013106a980`, the hardening session's reviewed and gated evaluation candidate |
+| Images | the reference build's own: runtime `sha256:3d773344…de394`, agent `sha256:fc865635…7aa`, Python example `sha256:81a0f8bc…32f`. Claude Code 2.1.301, agentd `development`. The candidate changes no image content. Its own rebuild had different IDs (npm layer not cached) and is kept under tags `-own`. |
+| Model | `claude-sonnet-5-5`, effort high, every Execute and Verify role, the existing dedicated runtime token |
+| Inputs | the reference's frozen kit copied verbatim: kit digest `973a1413…4d3c`, manifest `208e907b…fa4d`, packets V1 `49c7a616`, V2 `f8173a9c`, A1 `8660dc87`, A2 `876a9940`, A3 `551e34e4`, A4 (S-QV) `59280816`, A7 `95d55288`; scripted A4 owner answer `85b73b90…4c0` with neutral answers to every other question; the A5 model change "at most the maximum name length" → "at most 40 characters" |
+| Oracles | `check_public_names.py` `14150f13…f03b` (8 cases), `probe_name_max.py` `6821248c…5baa`, the kit's `oracle.py`, `assess.py`, the project's own tests |
+| Case limits | taken over unchanged from the reference (owner instruction of 20 October): Verify 60 min, 120 Turns, 1 Pass; Apply 120 min, 400 Turns, 12 Passes; S-X 30 min; every Turn at most 20 min |
+| Series limits | at most 9 provider-backed cases and 4 h summed charged time, first Agent dispatch to outcome. Repetitions and any Haiku case count. |
+| Harness | the reference scripts with only paths, label prefix and one addition changed. The addition: the series remainder can shorten, never lengthen, a case's deadline, and such a cut is recorded. |
+
+**Order and rules.** V1, V2, A1, A2, A4, A7, A3, then A5 from this session's own A4 publication (never from the reference's). A6 is not planned; the reference displaced it too.
+
+- A case starts only while at least 30 minutes of the series remain. A cut by the series remainder is recorded as series exhaustion, not as a workflow result.
+- Cases run one at a time and never while a reference case runs on the shared Docker engine.
+- No repetition until green. A failed case keeps its result, and a documented infrastructure repeat counts as a case.
+- **Haiku stays unrun.** The reference has no Haiku case on this build, and the owner made Haiku conditional on Sonnet working.
+
+**Expected outcomes** (the reference manifest's):
+
+- V1: a genuine, owner-bound finding of the hyphen-name refusal with receipts; no clean Verify.
+- V2: clean, no fabricated mandatory work.
+- A1: the fault repaired; d1 oracle 21/21 and name checker 8/8; fresh Verify; findings closed.
+- A2: no-change publication.
+- A3: both faults repaired; s1 21/21.
+- A4: the question routed to Root and the user; the scripted answer permits completion; s1 21/21.
+- A5: exactly the public change; name maximum N=40 10/10; s1 without its hard-coded name rule 20/20.
+- A7: Root reports the model error; the run ends Failed without publication.
 
 ## Results
 
