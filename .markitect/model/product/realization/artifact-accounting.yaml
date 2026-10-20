@@ -4,13 +4,12 @@ imports:
 id: artifact-accounting
 kind: Vocab.Rule
 body: >-
-  Account for every observed regular file as a protected input, exact registered artifact or exact explained ignore.
-  Bind each artifact to one persistent responsibility and existing model Definitions with reasons.
-  Derive ownership from the deepest unambiguous Manager area in the declared artifact layout, with mirrored model hierarchy as the default and explicit persistent exceptions.
-  Shared root artifacts belong to Root unless explicitly mapped otherwise; a requiring Definition supplies semantic links rather than silently changing the path owner.
-  Each Manager can create and register files within its area without per-file reservations, and maintains its own registry shard for aggregation.
-  Reject missing or duplicate accounting and ambiguous ownership before Apply and at the final candidate, including new files.
-  With a declared layout, enforce writing ownership in the shared working tree: Execute writes only its own areas and registry shard, everything else is read-only; Root owns files directly in artifact roots, and a root subdirectory needs an owning Package directory or a persistent exception.
-  Without a layout, trust writing ownership and observe violations without claiming technical enforcement or complete writer attribution from a shared diff.
+  Account for every observed regular file exactly once as a validated Markitect input, a registered artifact or an explicitly ignored file; Markitect inputs are the immutable authority inputs and the owner-writable local registries, and neither may be registered or ignored as an artifact.
+  Ownership is the declared set of repository-relative directory and exact-file areas, each owned by Root or one local Package; the most specific area owns a path, equal specificity and files without an owner fail, and a broad area never absorbs a more specific one.
+  Each Manager maintains only its own local registry of exact-file or directory entries with Definition links, forms and reasons; a directory entry covers only its registrant's eligible files below it, the most specific entry registers a file, and no file has two effective registrations.
+  Missing paths, unexplained artifacts, dangling links, duplicate accounting, wrong-owner registrations and changed authority inputs block, with machine-readable diagnostics addressed to the Manager that must act.
+  Only the Orchestrator assembles the read-only derived registry view, from checked local versions, and records which versions it includes.
+  Enforce writing ownership in every Agent's container: its own areas and its own registry writable, protected inputs and other owners' areas, deeper directories and exact files read-only; refuse an ownership shape that mounts cannot enforce instead of trusting prompts.
+  Accept a basis or result only after the File check of the submitter's stable area composed with the accepted stand, so disjoint Managers work and finish concurrently without a mixed live view.
   Candidates preserve source identity and observed findings; pure accounting values do not schedule or publish work.
 spec: {}

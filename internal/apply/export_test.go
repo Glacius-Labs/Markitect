@@ -8,13 +8,13 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// BuildReconcileConfig and PublishChanges expose the use case's steps to the
+// BuildApplyConfig and PublishChanges expose the use case's steps to the
 // external tests.
-func BuildReconcileConfig(req ReconcileRequest, now time.Time) (run.Config, error) {
-	return reconcileConfig(req, now)
+func BuildApplyConfig(req ApplyRequest, now time.Time) (run.Config, error) {
+	return applyConfig(req, now)
 }
 
-func PublishChanges(ctx context.Context, req ReconcileRequest, changes []snapshot.Change) (*PublicationReceipt, error) {
+func PublishChanges(ctx context.Context, req ApplyRequest, changes []snapshot.Change) (*PublicationReceipt, error) {
 	return req.publishChanges(ctx, changes)
 }
 
@@ -25,7 +25,7 @@ func OriginalText(before snapshot.Entry, code string, quoted *int) string {
 }
 
 // Conclude exposes the publication and cleanup step that follows a run.
-func Conclude(ctx context.Context, req ReconcileRequest, start snapshot.Tree, outcome run.Outcome, runErr error) (ReconcileResult, error) {
+func Conclude(ctx context.Context, req ApplyRequest, start snapshot.Tree, outcome run.Outcome, runErr error) (ApplyResult, error) {
 	return req.conclude(ctx, start, outcome, runErr)
 }
 
@@ -63,4 +63,16 @@ func ExtractModelConfig(req ExtractRequest, candidate snapshot.Tree, now time.Ti
 // RequireModelChangesOnly exposes the publication filter of an Extract.
 func RequireModelChangesOnly(changes []snapshot.Change) error {
 	return requireModelChangesOnly(changes)
+}
+
+// ExtractPhaseTexts exposes what an Extract phase hands its Agents: the mandate
+// of its work Pass, the mandate and the guidance of its Verify Pass, and whether
+// the Verify Pass reports artifact findings as advisory.
+func ExtractPhaseTexts(phase string) (mandate, verifyMandate, verifyGuidance string, advisory bool) {
+	for _, p := range []extractPhase{extractStructure, extractModel} {
+		if d := p.descriptor(); d.name == phase {
+			return d.mandate, extractVerifyMandate, d.verifyGuidance, d.advisory
+		}
+	}
+	panic("unknown Extract phase " + phase)
 }

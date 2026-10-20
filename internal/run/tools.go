@@ -138,7 +138,7 @@ var escalateSchema = object([]string{"category", "text"}, schema{
 
 var lookUpSchema = object([]string{"topic"}, schema{
 	"topic":   schema{"type": "string", "enum": lookUpTopics},
-	"id":      str("definition: the Definition identity."),
+	"id":      str("definition: the Definition identity. method: the method's name."),
 	"path":    str("owner, registry: a repository-relative path."),
 	"manager": str("plan, basis: a Manager path; default yourself (plan) or your parent (basis)."),
 })
@@ -171,7 +171,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 		{Name: toolReport, Description: "Report to the Orchestrator: progress, a named wait, your basis or complete result, a decision on a child's proposal, a reopened child result, a revised basis or a problem. End every turn in which you work on your own contribution with one.", InputSchema: raw(reportSchema(spec))},
 		{Name: toolSend, Description: sendText, InputSchema: raw(sendSchema)},
 		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent (Root: to the user) as a question.", InputSchema: raw(escalateSchema)},
-		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks and your questions.", InputSchema: raw(lookUpSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
 	if spec.Writes {
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your current area against the accepted stand: unregistered or wrongly registered files, invalid registry entries, missing owners. Advice while you work.", InputSchema: raw(checkSchema)})

@@ -20,7 +20,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 				selection, actual := fileCheckInputs(t)
 				preparationInstructions(t, &actual)
 				validExecution := string(actual.Execution[0].File.Bytes())
-				rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(validExecution, "shared-workspace-v1", "unknown", 1))
+				rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(validExecution, "recursive-passes-v1", "unknown", 1))
 				calls := 0
 				observe := func(selected apply.InputSelection) apply.RawInputs {
 					calls++
@@ -105,7 +105,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 				if firstExecution.Strategy.Value != "unknown" || len(firstDiagnostics) == 0 || len(secondDiagnostics) == 0 {
 					t.Fatal("original attempts or reports replaced")
 				}
-				if currentFailure && secondExecution.Strategy.Value != "unknown" || !currentFailure && secondExecution.Strategy.Value != "shared-workspace-v1" {
+				if currentFailure && secondExecution.Strategy.Value != "unknown" || !currentFailure && secondExecution.Strategy.Value != "recursive-passes-v1" {
 					t.Fatal("second current execution replaced by an old observation")
 				}
 				uncaptured := false

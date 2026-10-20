@@ -918,7 +918,7 @@ func (e *engine) checkSubmission(pr *proposal) {
 		if composite, err = overlay(accepted, h.Tree, m.Path, e.cfg.OwnerOf); err != nil {
 			findings = append(findings, Finding{Owner: m.Path, Obligation: "your area composes with the accepted stand", Observed: err.Error()})
 		} else if len(findings) == 0 {
-			findings = e.cfg.FileCheck(composite)
+			findings = ownFindings(e.cfg.FileCheck(composite), m.Path)
 		}
 	}
 	e.mu.Lock()
@@ -936,6 +936,14 @@ func (e *engine) checkSubmission(pr *proposal) {
 	}
 	pr.composite = composite
 	e.checkedLocked(pr)
+}
+
+// ownFindings keeps the findings a submitter must resolve: those addressed to
+// it. Every other owner's state in the composition is its accepted version or
+// work that owner still has to submit; the whole stand is checked at the Pass's
+// exit.
+func ownFindings(findings []Finding, owner string) []Finding {
+	return slices.DeleteFunc(findings, func(f Finding) bool { return f.Owner != owner })
 }
 
 // peek observes the shared work volume, retrying a briefly uncertain

@@ -362,6 +362,27 @@ func TestResumeAcceptsAndRecordsADifferentConversation(t *testing.T) {
 	}
 }
 
+func TestVerifyTurnMayResumeItsReviewersConversationAndStaysReadOnly(t *testing.T) {
+	rt := newFakeRuntime()
+	h := newHarness(t, rt, validProfile())
+	turn := testTurn()
+	turn.Kind, turn.ReadOnly, turn.Resume = run.VerifyTurn, true, "reviewer-conversation"
+	if _, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string))); err != nil || argAfter(rt.start.Argv, "--resume") != "reviewer-conversation" {
+		t.Fatalf("a resuming verify turn was refused: %v %q", err, rt.start.Argv)
+	}
+	for _, m := range rt.spec.Mounts {
+		if m.Target == "/work" && !m.ReadOnly {
+			t.Fatalf("the resumed verify turn can write the workspace: %+v", rt.spec.Mounts)
+		}
+	}
+	// Resuming never lifts the read-only requirement.
+	turn.ReadOnly = false
+	h = newHarness(t, newFakeRuntime(), validProfile())
+	if _, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string))); err == nil || h.starts != 0 {
+		t.Fatalf("a writable resuming verify turn started: %v starts=%d", err, h.starts)
+	}
+}
+
 func TestRefusedAnswerIsAToolError(t *testing.T) {
 	rt := newFakeRuntime()
 	rt.calls = []frame.ToolCall{{ID: 4, Name: "report", Arguments: json.RawMessage(`{}`)}, {ID: 5, Name: "nope", Arguments: json.RawMessage(`{}`)}}
@@ -560,7 +581,6 @@ func TestInvalidTurnsFailBeforeAnyContainerStarts(t *testing.T) {
 	for name, mutate := range map[string]func(*run.Turn){
 		"unknown profile":        func(t *run.Turn) { t.Profile = "other" },
 		"verify not read-only":   func(t *run.Turn) { t.Kind = run.VerifyTurn },
-		"verify resumes":         func(t *run.Turn) { t.Kind, t.ReadOnly, t.Resume = run.VerifyTurn, true, "x" },
 		"unknown kind":           func(t *run.Turn) { t.Kind = "other" },
 		"bad ID":                 func(t *run.Turn) { t.ID = "-bad" },
 		"same volumes":           func(t *run.Turn) { t.Home = t.Workspace },

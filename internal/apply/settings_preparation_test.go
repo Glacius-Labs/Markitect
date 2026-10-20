@@ -139,7 +139,7 @@ func TestRuntimeSettingsExposesTheAuthoredBudgetOnlyWithResolvedSettings(t *test
 	if err != nil || !ok || result.Status() != model.Passed {
 		t.Fatalf("budget unavailable: %v %s %+v", err, result.Status(), result.Diagnostics())
 	}
-	if budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Rounds.Value != 4 || budget.Rounds.Source.Field != "/budget/rounds" || budget.Rounds.Source.File != ".markitect/execution.yaml" {
+	if budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Passes.Value != 12 || budget.Passes.Source.Field != "/budget/passes" || budget.Passes.Source.File != ".markitect/execution.yaml" {
 		t.Fatalf("budget or its provenance changed: %+v", budget)
 	}
 	bad := apply.ProductStrategyDefaults()

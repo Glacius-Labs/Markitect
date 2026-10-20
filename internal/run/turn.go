@@ -26,6 +26,9 @@ type turnState struct {
 	decided     bool
 	revised     bool
 	delegations []*helperRun
+	// demands are the decisions and answers the turn's prompt asked for; only
+	// those count as left open when the turn ends.
+	demands []string
 	// helperSummary is a helper's reported result.
 	helperSummary string
 }
@@ -64,7 +67,7 @@ func (e *engine) startTurnLocked(m *member) {
 		role, kind, profile, home, resume, letter = "reviewer", VerifyTurn, m.VerifyProfile, m.reviewHome, m.reviewConversation, "r"
 		standing = m.reviewConversation == ""
 	}
-	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind}
+	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m)}
 	readOnly, mounts := e.mountsLocked(m)
 	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}
@@ -207,7 +210,14 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	if ts.progress != "" && working && !submitted {
 		m.items = append(m.items, item{text: "Continue your work: " + ts.progress})
 	}
-	demands := e.demandsLocked(m)
+	// Only what the turn was shown can be left open by it; what arrived while it
+	// ran reaches its next turn.
+	var demands []string
+	for _, d := range e.demandsLocked(m) {
+		if slices.Contains(ts.demands, d) {
+			demands = append(demands, d)
+		}
+	}
 	handled := submitted || ts.wait != "" || ts.progress != "" || len(ts.delegations) > 0 || ts.revised || ts.decided
 	switch {
 	case ts.wait != "" || submitted && len(demands) == 0:

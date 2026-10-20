@@ -542,7 +542,7 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 		if err == nil && composite.Digest() != pr.composite.Digest() {
 			// Another submission was accepted since the check: check the
 			// composition with the current accepted stand again.
-			if findings := e.cfg.FileCheck(composite); len(findings) > 0 {
+			if findings := ownFindings(e.cfg.FileCheck(composite), m.Path); len(findings) > 0 {
 				e.technicalReturnLocked(pr, findings)
 				return
 			}

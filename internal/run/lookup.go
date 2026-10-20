@@ -12,7 +12,7 @@ import (
 )
 
 // Look-up topics.
-var lookUpTopics = []string{"definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions"}
+var lookUpTopics = []string{"definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions", "method"}
 
 // lookUp serves the tool look_up: structural facts from the Orchestrator's
 // state with their source and stand, so Managers ask deterministic tools for
@@ -31,6 +31,12 @@ func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
 		return refuse("topic must be one of %s.", strings.Join(lookUpTopics, ", "))
 	}
 	switch in.Topic {
+	case "method":
+		text, ok := methods[strings.TrimSpace(in.ID)]
+		if !ok {
+			return refuse("id names a method: one of %s.", strings.Join(methodNames(), ", "))
+		}
+		return ToolAnswer{Text: text}
 	case "definition":
 		d, ok := e.cfg.Definition(strings.TrimSpace(in.ID))
 		if !ok {

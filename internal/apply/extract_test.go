@@ -48,7 +48,7 @@ func TestExtractPreparationAcceptsUnregisteredArtifactsApplyRefuses(t *testing.T
 func TestExtractRefusesAStartThatIsNotCase3(t *testing.T) {
 	// A model with Definitions is Apply's input.
 	selection, raw := libraryInputs(t)
-	censusFile(t, &raw, ".markitect/execution.yaml", snapshot.Regular, []byte(strings.Replace(documentedExecution(t), "checks:\n", "layout:\n  roots: [realization]\nchecks:\n", 1)))
+	censusFile(t, &raw, ".markitect/execution.yaml", snapshot.Regular, []byte(strings.Replace(documentedExecution(t), "checks:\n", "ownership:\n  - {path: realization/, owner: .}\nchecks:\n", 1)))
 	entry, _ := raw.Census.Lookup(path(t, ".markitect/execution.yaml"))
 	selection.Execution = []apply.SourceLocation{{Boundary: selection.Repository, Path: entry.Path()}}
 	raw.Execution = []apply.SourceFile{{Location: selection.Execution[0], File: entry, RepositoryPath: entry.Path()}}
@@ -60,21 +60,31 @@ func TestExtractRefusesAStartThatIsNotCase3(t *testing.T) {
 	if !errors.Is(err, apply.ErrNotExtractable) || !strings.Contains(err.Error(), "22 Definitions") || len(workspaces.open) != 0 {
 		t.Fatalf("a model with Definitions started an Extract: %v", err)
 	}
-	// A project without a layout has no declared artifact roots.
-	selection, raw = extractInputs(t)
-	var changed []snapshot.Entry
-	for _, e := range raw.Census.Entries() {
-		if e.Path().String() == ".markitect/execution.yaml" {
-			e, _ = snapshot.NewEntry(e.Path(), e.Mode(), []byte(strings.Replace(extractExecution, "layout:\n  roots: [realization]\n", "", 1)))
+	// A project that declares no ownership areas, or an empty list, has no owners
+	// for the artifacts.
+	for name, replacement := range map[string]string{
+		"no ownership":    "",
+		"empty ownership": "ownership: []\n",
+	} {
+		selection, raw = extractInputs(t)
+		var changed []snapshot.Entry
+		for _, e := range raw.Census.Entries() {
+			if e.Path().String() == ".markitect/execution.yaml" {
+				document := strings.Replace(extractExecution, "ownership:\n  - path: README.md\n    owner: .\n  - path: realization/\n    owner: .\n", replacement, 1)
+				if document == extractExecution {
+					t.Fatal("the fixture's ownership was not replaced")
+				}
+				e, _ = snapshot.NewEntry(e.Path(), e.Mode(), []byte(document))
+			}
+			changed = append(changed, e)
 		}
-		changed = append(changed, e)
-	}
-	raw.Census, _ = snapshot.NewTree(changed)
-	entry, _ = raw.Census.Lookup(path(t, ".markitect/execution.yaml"))
-	raw.Execution[0].File = entry
-	attempt = prepareExtract(t, selection, raw)
-	if _, err := apply.Extract(context.Background(), apply.ExtractRequest{RunID: "x-1", Prepared: attempt, RequireVolumeSubpaths: func(context.Context) error { return nil }}); !errors.Is(err, apply.ErrNotExtractable) || !strings.Contains(err.Error(), "layout.roots") {
-		t.Fatalf("a project without artifact roots started an Extract: %v", err)
+		raw.Census, _ = snapshot.NewTree(changed)
+		entry, _ = raw.Census.Lookup(path(t, ".markitect/execution.yaml"))
+		raw.Execution[0].File = entry
+		attempt = prepareExtract(t, selection, raw)
+		if _, err := apply.Extract(context.Background(), apply.ExtractRequest{RunID: "x-1", Prepared: attempt, RequireVolumeSubpaths: func(context.Context) error { return nil }}); !errors.Is(err, apply.ErrNotExtractable) || !strings.Contains(err.Error(), "no ownership areas") {
+			t.Fatalf("%s: a project without ownership started an Extract: %v", name, err)
+		}
 	}
 }
 
@@ -120,7 +130,7 @@ func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
 	req.Prepared = extractAttemptWithTurns(t, 3)
 	workspaces := &fakeWorkspaces{}
 	req.Workspaces, req.Evidence, req.Agents = workspaces, &memoryEvidence{}, failingAgents{}
-	if _, err := apply.Extract(context.Background(), req); err == nil || !strings.Contains(err.Error(), "at least 4 agent turns") || len(workspaces.open) != 0 {
+	if _, err := apply.Extract(context.Background(), req); err == nil || !strings.Contains(err.Error(), "at least 8 agent turns") || len(workspaces.open) != 0 {
 		t.Fatalf("err = %v", err)
 	}
 }
@@ -133,24 +143,32 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 	if len(cfg.Team) != 1 || cfg.Team[0].Path != "." || cfg.Team[0].Parent != "" || len(cfg.Team[0].Children) != 0 || cfg.RunID != "x-1-structure" {
 		t.Fatalf("the structure phase is Root alone: %+v", cfg.Team)
 	}
-	if !cfg.CheckTool || cfg.Mandate == "" || cfg.VerifyGuidance == "" || len(cfg.Checks) != 0 || !cfg.Start.Equal(extractStart(t)) {
-		t.Fatalf("config: tool %v mandate %d guidance %d checks %d", cfg.CheckTool, len(cfg.Mandate), len(cfg.VerifyGuidance), len(cfg.Checks))
+	if len(cfg.Checks) != 0 || !cfg.Start.Equal(extractStart(t)) || cfg.ModelCheck == nil || cfg.FileCheck == nil || cfg.Registry == nil || cfg.Definition == nil || cfg.ResolveDefinition != nil {
+		t.Fatalf("config: checks %d, gates %v %v %v %v, resolver %v", len(cfg.Checks), cfg.ModelCheck != nil, cfg.FileCheck != nil, cfg.Registry != nil, cfg.Definition != nil, cfg.ResolveDefinition != nil)
 	}
-	if !strings.Contains(cfg.Mandate, "structure") || !strings.Contains(cfg.Mandate, "Folder names are clues, not authority") || !strings.Contains(cfg.Mandate, "propose those commands as entries of checks in .markitect/execution.yaml; they apply only once the owner adopts the model.") {
-		t.Errorf("mandate: %s", cfg.Mandate)
+	mandate, verifyMandate, guidance, advisory := apply.ExtractPhaseTexts(apply.ExtractStructurePhase)
+	if !strings.Contains(mandate, "structure") || !strings.Contains(mandate, "Folder names are clues, not authority") || !strings.Contains(mandate, "propose those commands as entries of checks in .markitect/execution.yaml; they apply only once the owner adopts the model.") ||
+		!strings.Contains(mandate, "as areas in ownership of .markitect/execution.yaml") || strings.Contains(mandate, "layout") {
+		t.Errorf("mandate: %s", mandate)
 	}
-	want := run.WritePlan{Enforced: true, Base: false, Mounts: []run.PathMount{
+	if verifyMandate == "" || !strings.Contains(guidance, "an ownership area that maps artifacts to a Package whose responsibility they do not evidence") || advisory {
+		t.Errorf("the structure review: %q %q advisory %v", verifyMandate, guidance, advisory)
+	}
+	// Every plan is enforced; the artifacts stay read-only because the base is.
+	want := run.WritePlan{Base: false, Mounts: []run.PathMount{
 		{Path: ".markitect", Writable: true},
 		{Path: ".markitect/dependencies/core"}, {Path: ".markitect/dependencies/software"},
-		{Path: "realization"},
 	}}
-	if got := cfg.Team[0].Write; !slices.Equal(got.Mounts, want.Mounts) || got.Enforced != want.Enforced || got.Base != want.Base {
+	if got := cfg.Team[0].Write; !slices.Equal(got.Mounts, want.Mounts) || got.Base != want.Base {
 		t.Fatalf("write plan:\n got %+v\nwant %+v", got, want)
 	}
+	if len(cfg.Team[0].Helpers) != 0 || cfg.Team[0].MaxHelpers != 0 {
+		t.Errorf("the structure phase delegates nothing: %+v", cfg.Team[0].Helpers)
+	}
 	brief := cfg.Team[0].Brief
-	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization. They hold 8 artifact file(s); 1 more lie outside the roots.", "realization/lending/reminders: 2 file(s)", "the artifacts and the imported dependency models under .markitect/dependencies/core, .markitect/dependencies/software.", "layout.exceptions", "Software.Concept",
+	for _, w := range []string{"structure phase of an Extract", "The project holds 9 artifact file(s).", "realization/lending/reminders: 2 file(s)", "the artifacts and the imported dependency models under .markitect/dependencies/core, .markitect/dependencies/software.", "ownership", "The areas declared now", "- README.md -> Root", "- realization/ -> Root", "Software.Concept",
 		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them",
-		"layout.exceptions and checks of .markitect/execution.yaml", "The check profiles the Runtime offers", "- library-tests: runs program", "timeout: 2m"} {
+		"ownership and checks of .markitect/execution.yaml", "The check profiles the Runtime offers", "- library-tests: runs program", "timeout: 2m"} {
 		if !strings.Contains(brief, w) {
 			t.Errorf("brief lacks %q:\n%s", w, brief)
 		}
@@ -159,7 +177,7 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 		t.Errorf("the brief leaks model content:\n%s", brief)
 	}
 	// Account is a pure function of the tree: no Definition, no Package yet.
-	got := cfg.Account(cfg.Start)
+	got := cfg.FileCheck(cfg.Start)
 	codes := summarize(got)
 	if !slices.Contains(codes, ". model.no_package") {
 		t.Errorf("the start has no proposal: %v", codes)
@@ -189,7 +207,7 @@ func TestExtractStructureAccounting(t *testing.T) {
 		t.Fatal(err)
 	}
 	start := cfg.Start
-	if got := cfg.Account(proposedTree(t, start)); len(got) != 0 {
+	if got := cfg.FileCheck(proposedTree(t, start)); len(got) != 0 {
 		t.Fatalf("a complete proposal is not accounted: %+v", got)
 	}
 	for _, tc := range []struct {
@@ -200,19 +218,19 @@ func TestExtractStructureAccounting(t *testing.T) {
 		{"model failing Model check", map[string]*string{".markitect/model/library/library.yaml": text("id: library\nkind: Software.Concept\nbody:  \nspec: {}\n")}, ". model."},
 		{"unresolved kind", map[string]*string{".markitect/model/library/library.yaml": text(overview("library", "Library.")[:0] + "id: library\nkind: Nope.Concept\nbody: x\nspec: {}\n")}, ". model."},
 		{"package without Definition", map[string]*string{".markitect/model/lending/lending.yaml": nil, ".markitect/model/lending/reminders/reminders.yaml": text(overview("reminders", "Overdue notices."))}, ". model.empty_package"},
-		{"artifact without owner", map[string]*string{".markitect/model/members/members.yaml": nil, ".markitect/model/catalog/catalog.yaml": nil, ".markitect/model/library/library.yaml": nil, ".markitect/model/lending/lending.yaml": nil, ".markitect/model/lending/reminders/reminders.yaml": text(overview("reminders", "Overdue notices.")), ".markitect/execution.yaml": text(extractExecution)}, ". layout.no_owner"},
+		{"artifact without owner", map[string]*string{".markitect/model/members/members.yaml": nil, ".markitect/model/catalog/catalog.yaml": nil, ".markitect/model/library/library.yaml": nil, ".markitect/model/lending/lending.yaml": nil, ".markitect/model/lending/reminders/reminders.yaml": text(overview("reminders", "Overdue notices.")), ".markitect/execution.yaml": text(strings.Replace(extractExecution, "  - path: realization/\n    owner: .\n", "", 1))}, ". layout.no_owner"},
 		{"changed artifact", map[string]*string{"realization/lending/borrow.go": text("package lending // edited\n")}, ". input.changed"},
 		{"deleted artifact", map[string]*string{"realization/go.mod": nil}, ". input.deleted"},
 		{"new artifact", map[string]*string{"realization/members/new.go": text("package members\n")}, ". input.added"},
 		{"changed manifest", map[string]*string{".markitect/model.yaml": text("formatVersion: 1\nid: other\nversion: 1.0.0\nroot: model\ndependencies: {}\n")}, ". input.changed"},
 		{"changed dependency", map[string]*string{".markitect/dependencies/software/model/software/rule.yaml": text("id: Rule\n")}, ". input.changed"},
-		{"execution beyond the layout exceptions", map[string]*string{".markitect/execution.yaml": text(strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1))}, ". input.changed"},
-		{"execution without the layout", map[string]*string{".markitect/execution.yaml": text(strings.Replace(extractExecutionProposed, "layout:\n  roots: [realization]\n  exceptions:\n    - path: realization/cmd/library\n      owner: library\n      reason: The program entry belongs to the library responsibility.\n", "", 1))}, ". input.changed"},
+		{"execution beyond the ownership", map[string]*string{".markitect/execution.yaml": text(strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1))}, ". input.changed"},
+		{"execution without ownership", map[string]*string{".markitect/execution.yaml": text(strings.Replace(extractExecutionProposed, extractOwnershipProposed, "", 1))}, ". layout.no_owner"},
 		{"registry written in the structure phase", map[string]*string{rootShard: text(shardYAML())}, ". input.added"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			tree := change(t, proposedTree(t, start), tc.changes)
-			findings := cfg.Account(tree)
+			findings := cfg.FileCheck(tree)
 			if len(findings) == 0 {
 				t.Fatal("no finding")
 			}
@@ -229,7 +247,7 @@ func TestExtractStructureAccounting(t *testing.T) {
 		})
 	}
 	// A changed artifact quotes its original so that Root can restore it.
-	changed := cfg.Account(change(t, proposedTree(t, start), map[string]*string{"realization/lending/borrow.go": text("package lending // edited\n")}))
+	changed := cfg.FileCheck(change(t, proposedTree(t, start), map[string]*string{"realization/lending/borrow.go": text("package lending // edited\n")}))
 	if len(changed) != 1 || !strings.Contains(changed[0].Observed, "Original content") || !strings.Contains(changed[0].Observed, "package lending\n") || !strings.Contains(changed[0].Observed, "Extract never changes artifacts") {
 		t.Errorf("%+v", changed)
 	}
@@ -241,7 +259,7 @@ func TestExtractStructureAccountsProposedChecks(t *testing.T) {
 		t.Fatal(err)
 	}
 	account := func(execution string) []run.Finding {
-		return cfg.Account(change(t, proposedTree(t, cfg.Start), map[string]*string{".markitect/execution.yaml": text(execution)}))
+		return cfg.FileCheck(change(t, proposedTree(t, cfg.Start), map[string]*string{".markitect/execution.yaml": text(execution)}))
 	}
 	if got := account(extractExecutionProposed + extractProposedCheck("library-tests")); len(got) != 0 {
 		t.Fatalf("a check with an offered profile is not accounted: %+v", got)
@@ -251,9 +269,9 @@ func TestExtractStructureAccountsProposedChecks(t *testing.T) {
 	}{
 		{"unknown profile", extractExecutionProposed + extractProposedCheck("no-such-profile"), `names the profile "no-such-profile", which the Runtime does not offer. The Runtime offers the check profiles: library-tests.`},
 		{"check that does not decode", extractExecutionProposed + "  - id: broken\n    profile: library-tests\n", "The Runtime offers the check profiles: library-tests."},
-		{"change elsewhere beside a check", strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1) + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
-		{"changed owner check", strings.Replace(extractExecutionProposed, "args: [test, ./...]", "args: [test, -run, Nothing, ./...]", 1), "changed beyond layout.exceptions and checks"},
-		{"removed owner check", strings.Replace(extractExecutionProposed, "checks:\n  - id: project-tests\n    profile: library-tests\n    directory: realization\n    args: [test, ./...]\n    timeout: 2m\n", "", 1) + "checks:\n" + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
+		{"change elsewhere beside a check", strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1) + extractProposedCheck("library-tests"), "changed beyond ownership and checks"},
+		{"changed owner check", strings.Replace(extractExecutionProposed, "args: [test, ./...]", "args: [test, -run, Nothing, ./...]", 1), "changed beyond ownership and checks"},
+		{"removed owner check", strings.Replace(extractExecutionProposed, "checks:\n  - id: project-tests\n    profile: library-tests\n    directory: realization\n    args: [test, ./...]\n    timeout: 2m\n", "", 1) + "checks:\n" + extractProposedCheck("library-tests"), "changed beyond ownership and checks"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			findings := account(tc.execution)
@@ -276,8 +294,12 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.RunID != "x-1-model" || !cfg.CheckTool || cfg.Mandate == "" || cfg.VerifyGuidance == "" || len(cfg.Checks) != 0 {
+	if cfg.RunID != "x-1-model" || len(cfg.Checks) != 0 || cfg.ModelCheck == nil || cfg.FileCheck == nil || cfg.Registry == nil || cfg.Definition == nil {
 		t.Fatalf("config %+v", cfg)
+	}
+	mandate, verifyMandate, guidance, advisory := apply.ExtractPhaseTexts(apply.ExtractModelPhase)
+	if mandate == "" || verifyMandate == "" || !strings.Contains(guidance, "report it with subject artifact") || !advisory {
+		t.Errorf("the model phase texts: %q %q %q advisory %v", mandate, verifyMandate, guidance, advisory)
 	}
 	var paths []string
 	team := map[string]run.Manager{}
@@ -285,7 +307,7 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 		if m.Parent != "" && !slices.Contains(paths, m.Parent) {
 			t.Fatalf("%s listed before its parent %s", m.Path, m.Parent)
 		}
-		if m.ExecuteProfile != "library-agent" || m.VerifyProfile != "library-agent" || !m.Write.Enforced || m.Write.Base || m.Brief == "" || m.Role == "" {
+		if m.ExecuteProfile != "library-agent" || m.VerifyProfile != "library-agent" || m.Write.Base || m.Brief == "" || m.Role == "" {
 			t.Fatalf("incomplete Manager %+v", m)
 		}
 		paths = append(paths, m.Path)
@@ -318,7 +340,7 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 	}
 	// Briefs.
 	root := team["."].Brief
-	for _, w := range []string{"Root in the model phase", ".markitect/registry/registry.yaml", "realization/go.mod", "README.md", "You have no Package", "- lending\n  artifact areas: realization/lending/** except realization/lending/reminders/**", "Definition lending/lending: lending"} {
+	for _, w := range []string{"Root in the model phase", ".markitect/registry/registry.yaml", "realization/go.mod", "README.md", "You have no Package", "- lending\n  artifact areas: realization/lending/ except realization/lending/reminders/ (Manager \"lending/reminders\")", "Definition lending/lending: lending"} {
 		if !strings.Contains(root, w) {
 			t.Errorf("Root brief lacks %q:\n%s", w, root)
 		}
@@ -334,14 +356,14 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 		t.Errorf("a child lists its parent's artifacts:\n%s", reminders)
 	}
 	lending := team["lending"].Brief
-	for _, w := range []string{"- lending/reminders\n  artifact areas: realization/lending/reminders/**", "You integrate their results in your own Package", "realization/lending/borrow.go"} {
+	for _, w := range []string{"- lending/reminders\n  artifact areas: realization/lending/reminders/", "You integrate their results in your own Package", "realization/lending/borrow.go"} {
 		if !strings.Contains(lending, w) {
 			t.Errorf("lending brief lacks %q:\n%s", w, lending)
 		}
 	}
 	library := team["library"].Brief
 	if !strings.Contains(library, "realization/cmd/library/main.go") || !strings.Contains(library, "realization/library/library.go") {
-		t.Errorf("the layout exception is not in the library's areas:\n%s", library)
+		t.Errorf("the ownership area of the program entry is not in the library's areas:\n%s", library)
 	}
 	if cfg.OwnerOf(path(t, ".markitect/model/lending/reminders/reminders.yaml")) != "lending/reminders" ||
 		cfg.OwnerOf(path(t, ".markitect/model/lending/lending.yaml")) != "lending" ||
@@ -352,6 +374,12 @@ func TestExtractModelPhaseTeamIsTheProposedTopology(t *testing.T) {
 	}
 }
 
+// extractRemindersArea is the ownership area of the lending/reminders Package in
+// extractExecutionProposed.
+const extractRemindersArea = `  - path: realization/lending/reminders/
+    owner: lending/reminders
+`
+
 func TestExtractModelAccounting(t *testing.T) {
 	req := extractRequest(t)
 	start := extractStart(t)
@@ -361,11 +389,11 @@ func TestExtractModelAccounting(t *testing.T) {
 		t.Fatal(err)
 	}
 	complete := registeredModel(t, start)
-	if got := cfg.Account(complete); len(got) != 0 {
+	if got := cfg.FileCheck(complete); len(got) != 0 {
 		t.Fatalf("a complete registered model is not accounted: %+v", got)
 	}
 	// Unregistered artifacts are the owners' findings.
-	got := summarize(cfg.Account(proposed))
+	got := summarize(cfg.FileCheck(proposed))
 	for _, want := range []string{". file.unexplained", "catalog file.unexplained", "library file.unexplained", "lending file.unexplained", "lending/reminders file.unexplained", "members file.unexplained"} {
 		if !slices.Contains(got, want) {
 			t.Errorf("want %q in %v", want, got)
@@ -386,11 +414,15 @@ func TestExtractModelAccounting(t *testing.T) {
 		{"Definition failing Model check", map[string]*string{".markitect/model/members/members.yaml": text("id: members\nkind: Software.Concept\n")}, "members model."},
 		{"unresolved link", map[string]*string{".markitect/model/members/members.yaml": text(overview("members", "Members, see [[Lending.nothing]]."))}, "members model."},
 		{"new Package", map[string]*string{".markitect/model/lending/loans/loans.yaml": text(overview("loans", "Loans."))}, "lending model.structure_changed"},
-		{"Package removed", map[string]*string{".markitect/model/lending/reminders/reminders.yaml": nil}, ". model.structure_changed"},
+		// The execution document owns the artifacts of every Package: a Package
+		// that disappears while its ownership area stays leaves a document that
+		// names a Package the model no longer has.
+		{"Package removed while its area remains", map[string]*string{".markitect/model/lending/reminders/reminders.yaml": nil}, ". execution.package"},
+		{"Package removed with its area", map[string]*string{".markitect/model/lending/reminders/reminders.yaml": nil, ".markitect/execution.yaml": text(strings.Replace(extractExecutionProposed, extractRemindersArea, "", 1))}, ". model.structure_changed"},
 		{"new file in an unmapped directory", map[string]*string{"realization/other/x.go": text("package other\n")}, ". input.added"},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			findings := summarize(cfg.Account(change(t, registeredModel(t, start), tc.changes)))
+			findings := summarize(cfg.FileCheck(change(t, registeredModel(t, start), tc.changes)))
 			found := false
 			for _, line := range findings {
 				found = found || strings.HasPrefix(line, tc.want)
@@ -402,7 +434,7 @@ func TestExtractModelAccounting(t *testing.T) {
 	}
 	// A Manager may extend its own Package and shard: that is its work.
 	extended := change(t, complete, map[string]*string{".markitect/model/members/status.yaml": text(overview("status", "A member is active or suspended."))})
-	if got := cfg.Account(extended); len(got) != 0 {
+	if got := cfg.FileCheck(extended); len(got) != 0 {
 		t.Fatalf("a new Definition in an existing Package is not accounted: %+v", got)
 	}
 }
@@ -415,14 +447,14 @@ func TestExtractAccountIsSafeForConcurrentCalls(t *testing.T) {
 		t.Fatal(err)
 	}
 	trees := []snapshot.Tree{proposedTree(t, start), registeredModel(t, start)}
-	want := []int{len(cfg.Account(trees[0])), len(cfg.Account(trees[1]))}
+	want := []int{len(cfg.FileCheck(trees[0])), len(cfg.FileCheck(trees[1]))}
 	var wg sync.WaitGroup
 	for i := 0; i < 16; i++ {
 		wg.Add(1)
 		go func() {
 			defer wg.Done()
 			for j, tree := range trees {
-				if got := len(cfg.Account(tree)); got != want[j] {
+				if got := len(cfg.FileCheck(tree)); got != want[j] {
 					t.Errorf("tree %d: %d findings, want %d", j, got, want[j])
 				}
 			}
@@ -476,8 +508,8 @@ func TestExtractModelPhaseResolvesDefinitionsOfTheCandidate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !model.ArtifactFindingsAdvisory || model.ResolveDefinition == nil {
-		t.Fatalf("the model phase does not report artifact findings: %+v", model)
+	if _, _, _, advisory := apply.ExtractPhaseTexts(apply.ExtractModelPhase); !advisory || model.ResolveDefinition == nil {
+		t.Fatalf("the model phase does not report artifact findings: %v %+v", advisory, model)
 	}
 	for id, want := range map[string]bool{"lending/lending": true, "lending/reminders/reminders": true, "lending/reminders": false, "lending/other": false, "other/lending": false, "": false} {
 		if got := model.ResolveDefinition(proposed, id); got != want {
@@ -493,7 +525,7 @@ func TestExtractModelPhaseResolvesDefinitionsOfTheCandidate(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if structure.ArtifactFindingsAdvisory || structure.ResolveDefinition != nil {
+	if _, _, _, advisory := apply.ExtractPhaseTexts(apply.ExtractStructurePhase); advisory || structure.ResolveDefinition != nil {
 		t.Error("the structure phase reports artifact findings")
 	}
 }
@@ -514,7 +546,7 @@ func TestExtractModelAccountingReportsEachFindingOnce(t *testing.T) {
 		{"deleted artifact", map[string]*string{"realization/members/member.go": nil}, []string{". files.registry_not_passed", "members registry.artifact_missing", "members input.deleted"}},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			findings := cfg.Account(change(t, registeredModel(t, start), tc.changes))
+			findings := cfg.FileCheck(change(t, registeredModel(t, start), tc.changes))
 			for _, f := range findings {
 				if f.Owner == "" || f.Obligation == "" || f.Observed == "" {
 					t.Errorf("incomplete finding %+v", f)
@@ -540,16 +572,16 @@ func TestExtractGuardLeavesTheRuntimeStateAndGitDataAlone(t *testing.T) {
 	}
 	state := map[string]*string{".markitect/state/runs/x.json": text("{}\n")}
 	git := map[string]*string{".git/HEAD": text("ref: refs/heads/main\n")}
-	if got := structure.Account(change(t, proposedTree(t, start), state)); len(got) != 0 {
+	if got := structure.FileCheck(change(t, proposedTree(t, start), state)); len(got) != 0 {
 		t.Errorf("state in the structure phase: %+v", got)
 	}
-	if got := structure.Account(change(t, proposedTree(t, start), git)); len(got) != 0 {
+	if got := structure.FileCheck(change(t, proposedTree(t, start), git)); len(got) != 0 {
 		t.Errorf("git data in the structure phase: %+v", got)
 	}
-	if got := model.Account(change(t, registeredModel(t, start), state)); len(got) != 0 {
+	if got := model.FileCheck(change(t, registeredModel(t, start), state)); len(got) != 0 {
 		t.Errorf("state in the model phase: %+v", got)
 	}
-	for _, f := range model.Account(change(t, registeredModel(t, start), git)) {
+	for _, f := range model.FileCheck(change(t, registeredModel(t, start), git)) {
 		if strings.HasPrefix(f.Obligation, "input.") {
 			t.Errorf("git data is guarded in the model phase: %+v", f)
 		}

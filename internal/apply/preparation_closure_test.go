@@ -154,7 +154,7 @@ func TestPreparationRetainsKnownFailureAndActualAccounting(t *testing.T) {
 			selection, raw := fileCheckInputs(t)
 			switch invalid {
 			case "execution":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "shared-workspace-v1", "unknown", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "recursive-passes-v1", "unknown", 1))
 			case "ignore":
 				fileCheckSource(t, &selection, &raw, "ignore", ".markitect/ignore.yaml", snapshot.Regular, "unknown: true\n", true)
 			case "instruction":
@@ -224,7 +224,7 @@ func TestPreparationClosesKnownSourcesBesideInvalidExecutionOrRegistry(t *testin
 				preparationInstructions(t, &actual)
 				fileCheckSource(t, &selection, &actual, "ignore", ".markitect/ignore.yaml", snapshot.Regular, emptyFilePolicy, false)
 				if invalid == "execution" {
-					rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(string(actual.Execution[0].File.Bytes()), "shared-workspace-v1", "unknown", 1))
+					rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(string(actual.Execution[0].File.Bytes()), "recursive-passes-v1", "unknown", 1))
 				} else {
 					rewriteFileCheckSource(t, &actual, &actual.Registry[0], "unknown: true\n")
 				}

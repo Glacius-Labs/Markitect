@@ -13,20 +13,25 @@ import (
 )
 
 // extractExecution is the execution document of a project at the start of an
-// Extract: budget, profiles, the artifact roots and a check without requiredBy.
+// Extract: budget, profiles, the ownership of the artifacts as far as the
+// project knows it (the overview file and the artifact tree belong to Root) and
+// a check without requiredBy.
 const extractExecution = `apiVersion: markitect.execution/v1
-strategy: shared-workspace-v1
+strategy: recursive-passes-v1
 budget:
   executionTime: 25m
   turnTimeout: 10m
   agentTurns: 120
-  rounds: 4
+  passes: 12
 profiles:
   execute: library-agent
   verify: library-agent
 packages: {}
-layout:
-  roots: [realization]
+ownership:
+  - path: README.md
+    owner: .
+  - path: realization/
+    owner: .
 checks:
   - id: project-tests
     profile: library-tests
@@ -35,26 +40,42 @@ checks:
     timeout: 2m
 `
 
-// extractExecutionProposed is the same document with the exception the
-// structure proposal adds.
+// extractOwnershipProposed is the ownership the structure proposal declares:
+// each Package gets the directory of its artifacts.
+const extractOwnershipProposed = `ownership:
+  - path: README.md
+    owner: .
+  - path: realization/
+    owner: .
+  - path: realization/catalog/
+    owner: catalog
+  - path: realization/cmd/library/
+    owner: library
+    reason: The program entry belongs to the library responsibility.
+  - path: realization/lending/
+    owner: lending
+  - path: realization/lending/reminders/
+    owner: lending/reminders
+  - path: realization/library/
+    owner: library
+  - path: realization/members/
+    owner: members
+`
+
+// extractExecutionProposed is the same document with the ownership the
+// structure proposal adds: each Package gets the directory of its artifacts.
 const extractExecutionProposed = `apiVersion: markitect.execution/v1
-strategy: shared-workspace-v1
+strategy: recursive-passes-v1
 budget:
   executionTime: 25m
   turnTimeout: 10m
   agentTurns: 120
-  rounds: 4
+  passes: 12
 profiles:
   execute: library-agent
   verify: library-agent
 packages: {}
-layout:
-  roots: [realization]
-  exceptions:
-    - path: realization/cmd/library
-      owner: library
-      reason: The program entry belongs to the library responsibility.
-checks:
+` + extractOwnershipProposed + `checks:
   - id: project-tests
     profile: library-tests
     directory: realization

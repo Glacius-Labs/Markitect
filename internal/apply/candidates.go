@@ -256,7 +256,7 @@ func (c Candidates) account(tree snapshot.Tree) ([]CandidateFinding, *realizatio
 		report = &accounting
 		for _, finding := range accounting.Findings() {
 			path := finding.Path.String()
-			if changed[path] && (finding.Code == "file.unexplained" || finding.Code == "classification.missing_file") {
+			if changed[path] && (finding.Code == "file.unexplained" || finding.Code == "layout.no_owner" || finding.Code == "classification.missing_file") {
 				continue
 			}
 			add(c.findingOwner(finding), finding.Code, path, c.findingMessage(finding))

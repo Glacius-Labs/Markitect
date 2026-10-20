@@ -34,12 +34,12 @@ func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, st
 		selection.Instructions = append(selection.Instructions, selected(name))
 	}
 	execution := `apiVersion: markitect.execution/v1
-strategy: shared-workspace-v1
+strategy: recursive-passes-v1
 budget:
   executionTime: 25m
   turnTimeout: 10m
   agentTurns: 120
-  rounds: 4
+  passes: 12
 profiles:
   execute: library-agent
   verify: library-agent

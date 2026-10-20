@@ -1,137 +1,125 @@
-# Apply preparation and candidate accounting
+# Apply preparation, gates and composition
 
-Apply owns repository/profile preparation and the consumer ports. It performs no
-repository I/O itself: adapters supply the captured inputs.
+Apply owns repository/profile preparation, the deterministic gates of a run and the
+composition of its Passes. It performs no repository I/O itself: adapters supply the
+captured inputs and the ports.
 
 ## Preparation
 
-`PreparationService.CaptureSettings` captures the committed repository, compiles
-the model, decodes the registry shards and `.markitect/execution.yaml`, accounts
-every file, applies the product defaults and resolves the Execute and Verify
-profiles of every Manager. `Passed` is static preparation only: it starts no
-session, runs no check and claims no runtime readiness. Accounting must pass
-before any Agent starts, except for repairable drift of committed files under a
-declared layout (`file.unexplained`, `registry.missing_file`,
-`registry.dangling_basis`, `registry.outside_area`; DEC-062): Apply passes those
-findings of the start stand to their owners as `run.Config.StartFindings`.
-`Capture` (used by `markitect check`) and previews stay strict. Previews have the
-same stages without a publication guard.
+`PreparationService.CaptureSettings` captures the committed repository, runs the Model
+check, decodes the registry shards and `.markitect/execution.yaml`, accounts every file,
+applies the product defaults and resolves the Execute, Verify and helper profiles of every
+Manager. `Passed` is static preparation only: it starts no session, runs no check and
+claims no runtime readiness. File accounting is strict: every finding fails the
+preparation, and no start drift is left for a run to repair
+([DEC-064](../../docs/concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams)).
+`Capture` (used by `markitect check`) and previews have the same stages without a
+publication guard.
 
 ## Execution settings
 
 `.markitect/execution.yaml` (`apiVersion: markitect.execution/v1`, strategy
-`shared-workspace-v1`) is a closed document; unknown, duplicate or
+`recursive-passes-v1`) is a closed document; unknown, duplicate or
 representation-limited fields are refused with their exact source coordinates.
 
 ```yaml
 budget:
-  executionTime: 25m   # whole Apply wall clock
-  turnTimeout: 10m     # one Agent turn
-  agentTurns: 120      # Execute plus Verify turns
-  rounds: 4            # Verify rounds, each after an Execute phase
+  executionTime: 60m   # whole run wall clock
+  turnTimeout: 8m      # one Agent turn
+  agentTurns: 220      # every turn of Managers, reviewers and helpers
+  passes: 10           # Plan, Prepare, Implement, Verify and every repetition
 profiles: {execute: library-agent, verify: library-agent}
 instructions: {execute: [], verify: []}   # optional project instruction files
 packages: {}           # exact per-Package overrides of profiles and instructions
-layout:                # optional persistent ownership of artifact paths
-  roots: [realization]
-  exceptions:
-    - {path: realization/cmd/library, owner: library, reason: The callable interface fixes the location.}
-    # optional kind: file | directory (default directory); a file is never mounted:
-    # - {path: realization/lending/Makefile, kind: file, owner: ., reason: Shared build file.}
-scope: []              # optional modeled scope selectors [{kind, property}] that add Definitions to a Manager's context
+ownership:             # who may write what: exact files, directories ending in /, or ./
+  - {path: ./, owner: .}
+  - {path: realization/lending/, owner: lending}
+  - {path: realization/cmd/library/, owner: library, reason: The callable interface fixes the location.}
+  - {path: realization/go.mod, owner: library}   # an exact file inside Root's area
+team:                  # optional; replaces the product default team
+  maxHelpers: 2
+  helpers:
+    - {role: worker, writes: true}                       # the Manager's Execute profile
+    - {role: architect, profile: review-agent, writes: false, instructions: [docs/architect.md]}
+scope: []              # optional modeled scope selectors [{kind, property}]
 checks: []             # required checks (id, profile, directory, args, requiredBy, timeout)
 ```
 
-The product defaults (`strategy_defaults.yaml`, embedded) supply the empty
-instruction lists an authored file omits. Every value keeps its `Setting`
-provenance. After a successful preparation, `Settings()` holds the resolved
-per-Manager Execute and Verify profile and instructions, `Budget()` the authored
-budget, `Checks()` the required checks and `FileCheck().Layout()` the validated
-layout.
+The product defaults (`strategy_defaults.yaml`, embedded) supply the empty instruction
+lists an authored file omits and the standard team: one `worker` role with writes,
+bound to each Manager's Execute profile, at most one active helper. Every value keeps
+its `Setting` provenance. After a successful preparation, `Settings()` holds the resolved
+per-Manager roles and helpers, `Budget()` the authored budget, `Checks()` the required
+checks and `FileCheck().Layout()` the validated ownership.
 
-## Layout and ownership
+## Ownership
 
-Without a layout, the registry shards alone decide who owns a file. With one,
-`realization.Layout` assigns every path to a Manager (mirrored roots, explicit
-exceptions, deepest wins). Root owns the files directly in an artifact root and
-every file outside the roots; a file in an unmapped subdirectory of a root has
-no owner and is a blocking `layout.no_owner` finding addressed to Root: on a start stand
-the message says the layout needs an exception or the file must move; in a candidate it
-says to remove the file or ask the owner through Root for an exception, because Root
-cannot register its way out and `execution.yaml` is protected. An exception declares
-its `kind`, `directory` by default or `file`; only directory exceptions are areas that are
-created and mounted, a file exception (like a mirrored Package directory that is a file of
-the start stand) is left to accounting and trust. A file exception can only be owned by Root:
-a Package's base is read-only and a file cannot be mounted, so preparation refuses a file
-exception owned by a Package and asks for a directory exception. Accounting
-also requires every registration to sit in its owner's shard
-(`registry.outside_area`). An invalid
-layout (unknown owner, nested roots, anything under `.markitect`, spellings that
-differ only by letter case) fails preparation.
+`realization.Layout` holds the declared areas; the most specific area owns a path (an
+exact file above a directory, a deeper directory above a shallower one). Two areas on
+one path, a path declared both as a file and as a directory, anything under `.markitect`
+or `.git`, an owner that is no local Package and letter-case collisions fail the
+preparation. A file no area covers fails File check (`layout.no_owner`). Ownership is
+required for Apply; `markitect check` without it accounts by registrant only.
 
 ## Candidates
 
-`NewCandidates` binds one passed preparation. `Candidates.Account(tree)` returns
-the blocking structural findings of a candidate tree, each addressed to the
-Manager that must fix it (without a declared layout an unexplained new file goes
-to Root, which asks its children who created it; the creator registers it in its
-own shard): unexplained or duplicate files, invalid or unknown
-registry shards, registrations outside the registering Manager's area, and any
-canonical or control input that changed, vanished or appeared (a changed or
-deleted one quotes its original up to 8 KiB of UTF-8 text, else its SHA-256 and
-size). Registry shards
-are the exception: Managers maintain them. `OwnerOf`, `Shard` and `Areas` give
-the engine and the prompts the ownership facts. `WritePlan(manager)` returns the
-`run.WritePlan` of a Manager's Execute turns (zero without a layout; with one,
-the writable areas and registry shard mounted over a read-only or writable base,
-parents before descendants; a file exception cannot be mounted and stays trusted).
-An accounted candidate returns no
-findings. Trust, not enforcement: nothing here attributes a write to an Agent.
+`NewCandidates` binds one passed preparation and supplies the gates and facts of a run:
+`Account` is the File check of a stand (unexplained or duplicate files, invalid or
+unknown registry shards, entries outside their registrant's area, directory entries that
+register nothing, files without an owner and changed authority inputs, a changed or
+deleted one quoting its original up to 8 KiB of UTF-8 text), `ModelCheck` re-runs the
+Model check on the stand's model inputs and requires the bound model, `RegistryView`
+assembles the derived read-only registry view, `OwnerOf` returns the owner of any path
+("" for none), `Areas` and `Shard` describe a Manager's areas and local registry, and
+`WritePlan` returns the enforced `run.WritePlan` of a Manager: directory and exact-file
+overlays of its own areas and registry writable, `.markitect`, protected inputs and other
+owners' areas read-only. An exact-file area that needs its own overlay but does not exist
+in the start stand is refused with `ErrUnsupportedOwnership`.
 
-`ReconcileRequest.RequireVolumeSubpaths` asks the container engine, before any effect,
-whether it mounts a directory of a volume. `Reconcile` requires and calls it when any Manager's
-write plan is enforced, and refuses the run if it fails (Docker server 26 or newer).
+## Apply
+
+`Apply(ctx, ApplyRequest)` binds the organization (Briefs, own obligations, write plans,
+helpers), the required checks, the gates, the owner channel and the budget, requires the
+container engine's volume-subpath support, and composes the Passes on `run`: Plan,
+Prepare and Implement, then Verify; a Pass that needs correction restarts the work at the
+earliest purpose its findings name and a fresh complete Verify follows; a Verify that only
+fresh disputes keep from being clean is repeated on the unchanged candidate. Only a
+Verified outcome is published, through the guarded `Publisher` with read-back; the shared
+work volume is closed only after an applied or unchanged receipt and kept as
+`RetainedWork` otherwise. Apply never commits.
+
+Each Brief lists the Manager's own Definitions, included ones with their owners, its
+areas and local registry with its entry shape (exact files or directories), the required
+checks and its configured instructions. Root also receives the project obligations: every
+local Definition with its owner and the Definitions the required checks name. A parent's
+Brief names each child's areas and Definitions, the Managers below it and the role
+statement: children realize their own areas, the parent supplies its own foundation,
+coordinates and integrates but cannot take over or waive a child's obligations.
 
 ## Extract
 
 `PreparationService.CaptureExtract` prepares the start of an Extract (artifacts, no
-model): the same capture, compile, settings and profile preparation as
-`CaptureSettings`, except that unregistered artifacts (`file.unexplained`) and
-artifacts that no Package covers yet (`layout.no_owner`) do not fail file checking.
-`Extract(ctx, ExtractRequest)` then runs two phases over `run.Reconcile`: a
-structure phase with Root alone, which proposes Packages with one overview
-Definition each, the layout exceptions they need and the checks the artifacts
-document (a proposal for the owner's adoption), and a model phase with the
-Manager tree of the verified proposal, which derives each Package's model and
-registers the artifacts. It refuses a start whose local model has Definitions or
-that declares no artifact roots, never changes an artifact, and publishes a
-verified model only as the changed `.markitect` model, registry and layout files.
-`extractAccounting` compiles each candidate tree from scratch (pure, safe for the
-engine's concurrent `check` calls) and gives each phase its write plan; a
-proposed check must name a check profile the Runtime offers, and the required checks
-are prepared but not run. `ExtractResult.ProposedChecks` lists the proposed checks
-for the report. The model phase sets
-`run.Config.ArtifactFindingsAdvisory` with a `ResolveDefinition` that compiles the
-candidate's model (the identities of the latest tree are kept), so Verify reports an
-artifact that deviates from a justified statement as a non-blocking finding with
-subject `artifact` and its Definition. `ExtractDeviations` groups the open such
-findings into one `ArtifactDeviation` per Definition: its owners, raisers and
-observed texts. The
+model) like `CaptureSettings`, except that unregistered artifacts (`file.unexplained`) and
+artifacts that no area covers yet (`layout.no_owner`) do not fail file checking.
+`Extract(ctx, ExtractRequest)` then runs two phases on the shared composition: a
+structure phase with Root alone, which proposes Packages with one overview Definition each,
+the ownership areas they need and the checks the artifacts document (a proposal for the
+owner's adoption), and a model phase with the Manager tree of the verified proposal, which
+derives each Package's model and registers the artifacts. Each phase is a work Pass of its
+own purpose (`structure`, `model`) followed by Verify. It refuses a start whose local
+model has Definitions or that declares no ownership areas, never changes an artifact, and
+publishes a verified model only as the changed `.markitect` model, registry and
+`execution.yaml`. `extractAccounting` runs the Model check on each candidate tree from
+scratch (pure, safe for concurrent use) and gives each phase its write plan. The model
+phase's Verify sets `ArtifactFindingsAdvisory` with a `ResolveDefinition` that runs the
+Model check on the candidate, so an artifact that deviates from a justified statement is
+a non-blocking finding with subject `artifact` and its Definition. `ExtractDeviations`
+groups the open such findings into one `ArtifactDeviation` per Definition. The
 [runtime contract](../../docs/design/canonical-model/manager-apply-runtime.md#extract-first-bounded-implementation)
 states the plans, accounting, budget and limits.
 
 ## Publication
 
-`Publisher` preflights and publishes a verified tree against the captured source
-guard and reads the result back. Apply never commits. `Reconcile` closes the
-shared work volume only after an applied or unchanged receipt; otherwise it keeps
-the verified work and reports it in `RetainedWork`.
-
-Each Manager's Brief lists its own Definitions; Root has none, so it receives the
-Definitions that the required checks name in `requiredBy`, realized by their
-owners and integrated and verified by Root. Included Definitions show their
-owning Package. A Manager with children also gets each child's areas and own
-Definitions and the DEC-057 role statement: children realize their own areas, the
-parent supplies foundations within its own area, coordinates and integrates but
-cannot take over or waive a child's obligations. An enforced write plan is stated
-in the Brief.
+`Publisher` preflights and publishes a verified tree against the captured source guard
+and reads the result back. A stale source or a change set the target cannot represent is
+a definite receipt without any write; a partial write stays visible and unsuccessful.

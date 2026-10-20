@@ -28,6 +28,24 @@ func executionRoleCopy(value organization.RoleOverride) organization.RoleOverrid
 	return value
 }
 
+// instructionLists returns every authored instruction reference list: the
+// project's Execute and Verify lists, the Package overrides' and the team's
+// helper roles'.
+func instructionLists(execution AuthoredExecution) []*organization.Setting[[]string] {
+	lists := []*organization.Setting[[]string]{execution.Defaults.Execute.Instructions, execution.Defaults.Verify.Instructions}
+	if execution.Packages != nil {
+		for _, override := range execution.Packages.Value {
+			lists = append(lists, override.Execute.Instructions, override.Verify.Instructions)
+		}
+	}
+	if execution.Team != nil {
+		for _, helper := range execution.Team.Helpers {
+			lists = append(lists, helper.Instructions)
+		}
+	}
+	return lists
+}
+
 func cloneExecution(value AuthoredExecution) AuthoredExecution {
 	value.Defaults.Execute = executionRoleCopy(value.Defaults.Execute)
 	value.Defaults.Verify = executionRoleCopy(value.Defaults.Verify)

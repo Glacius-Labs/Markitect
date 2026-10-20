@@ -19,11 +19,11 @@ artifacts:
   - path: "experiments/recursive-apply-demo/extract-execution.yaml"
     form: config
     realizes: [product/run/confirmed-run-history]
-    why: "Declares the Extract run controls of the library case-3 target: layout root, budget and no required checks."
+    why: "Declares the Extract run controls of the library case-3 target: ownership of the artifacts, budget and no required checks."
   - path: "experiments/recursive-apply-demo/library-execution.yaml"
     form: config
     realizes: [product/run/confirmed-run-history]
-    why: "Declares the library target's layout, budget, profiles and required checks for the demonstration."
+    why: "Declares the library target's ownership, budget, profiles and required checks for the demonstration."
   - path: "experiments/recursive-apply-demo/nochange_apply.sh"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -99,80 +99,104 @@ artifacts:
   - path: "internal/run/agents.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Defines the Agents port, the Turn and tool contract and the usage a provider reports.
-  - path: "internal/run/reconcile.go"
+    why: "Defines the Agents port, the Turn and tool contract and the usage a provider reports."
+  - path: "internal/run/run.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Defines the reconciliation contract with Config, Manager, Check, Finding, Outcome and Reconcile.
+    why: "Defines the Run contract: Config, Manager, helpers, write plans, Pass specs, findings, questions, problems, outcomes and Open, Pass, Reassess, Corrections and Finish."
   - path: "internal/run/engine.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Validates the configuration, drives the rounds, captures candidates and owns the run's stop, evidence and volume handling.
-  - path: "internal/run/verify.go"
+    why: "Validates the configuration, opens and finishes the run and owns its stop, evidence, volumes and shared records."
+  - path: "internal/run/pass.go"
+    form: code
+    realizes: [product/run/confirmed-run-history, product/organization/delegated-context]
+    why: "Runs the one recursive base process of every Pass: stages and states, release, acceptance, returns, reopening, revision and invalidation, closure and the whole-stand exit gates."
+  - path: "internal/run/proposals.go"
+    form: code
+    realizes: [product/run/confirmed-run-history, product/realization/artifact-accounting]
+    why: "Serves the report tool: the shared result envelope with purpose payloads, coverage, plans, findings, closures and disputes, verdicts, parent decisions and the technical File check of a submitted area."
+  - path: "internal/run/messages.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: "Routes questions, answers and information along direct tree edges with correlation, escalates through the parent and connects Root to the invoking AI."
+  - path: "internal/run/helpers.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/realization/artifact-accounting]
+    why: "Delegates bounded tasks to helper roles with disjoint write subsets of their Manager's area and runs their turns."
+  - path: "internal/run/review.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Runs a Verify round with accounting, parallel required checks, fresh Verify turns children first, the assess tool and the open findings.
-  - path: "internal/run/execute.go"
+    why: "Binds a review Pass to one immutable candidate with the gates and the required checks."
+  - path: "internal/run/lookup.go"
     form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Schedules parallel Execute turns in the shared tree, routes messages along parent and child contacts and polls the owner's answers.
-  - path: "internal/run/checktool.go"
+    realizes: [product/run/confirmed-run-history, product/realization/artifact-accounting]
+    why: "Serves the look_up tool and the advisory check tool from the Orchestrator's state and the derived registry view."
+  - path: "internal/run/methods.go"
     form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Serves the optional Execute tool check, which peeks the shared tree and answers with the accounting findings, the caller's first.
+    realizes: [product/organization/delegated-context]
+    why: "Holds the reusable method guidance every role may look up: names in the standing context, details on request, granting no right."
   - path: "internal/run/turn.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Runs and records one Agent turn and checks tool arguments.
+    why: "Starts, mounts, runs and ends Manager and reviewer turns without implicit completion and checks tool arguments."
   - path: "internal/run/tools.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Defines the Host tool schemas of Execute and Verify turns.
+    why: "Defines the Orchestrator tool schemas, the report schema per Pass purpose and the tools of each role."
   - path: "internal/run/prompts.go"
     form: code
-    realizes: [product/run/confirmed-run-history]
-    why: Renders the mandate, the Execute and Verify prompts and the finding items.
+    realizes: [product/run/confirmed-run-history, product/organization/delegated-context]
+    why: "Renders the standing context, the Pass assignment, the task of each stage, proposals and helper prompts."
   - path: "internal/run/values.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Holds the shared validation helpers for identifiers, text and image identities.
+    why: "Holds the shared validation helpers for identifiers, text and image identities."
   - path: "internal/run/workspace.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Defines the consumer-owned Workspaces port that materializes, harvests and closes volumes.
+    why: "Defines the consumer-owned Workspaces port that materializes, harvests and closes volumes."
   - path: "internal/run/checks.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Defines the consumer-owned Checks port and what a check receipt establishes.
+    why: "Defines the consumer-owned Checks port and what a check receipt establishes."
   - path: "internal/run/workspace_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks the bounds of workspace requests and when a harvest is complete.
+    why: "Checks the bounds of workspace requests and when a harvest is complete."
   - path: "internal/run/checks_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks that check requests are complete and bounded and when a receipt passes.
+    why: "Checks that check requests are complete and bounded and when a receipt passes."
   - path: "internal/run/fakes_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Supplies scripted Agents, in-memory Workspaces, Checks, Owner and recording Evidence for reconciliation tests.
-  - path: "internal/run/reconcile_test.go"
+    why: "Supplies protocol-following scripted Agents, in-memory Workspaces, Checks, Owner and recording Evidence for the Pass tests."
+  - path: "internal/run/pass_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks Verify order, parallel Execute, routing, owner questions, open findings, checks and observed writes.
-  - path: "internal/run/directions_test.go"
+    why: "Checks the forward Passes on one base process, parent-first release, proposals waking parents, returns, no completion on a turn ending, coverage and the scoped submission gate."
+  - path: "internal/run/routing_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: "Checks tree-only and cross-branch questions, parent questions, the user channel, open questions blocking results, Root's model-error abort and orphaned waits."
+  - path: "internal/run/review_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks the custom mandate and Verify guidance, the unchanged Apply texts and the check tool.
-  - path: "internal/run/artifact_findings_test.go"
+    why: "Checks retained findings until independent closure, fresh reviewer homes, failed required checks, verdict consistency, strict exit gates and advisory artifact findings."
+  - path: "internal/run/team_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/realization/artifact-accounting]
+    why: "Checks helper write subsets and read-only overlays, plan dependencies as start conditions, basis revision and reopening, failed turns, unobserved stops, budgets and stale reports."
+  - path: "internal/run/clarifications_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks the assess schema with and without artifact findings, their refusals and that an artifact finding is stored non-blocking.
-  - path: "internal/run/failure_test.go"
+    why: "Checks read-only answers of blocked Managers, refused questions to unreleased Managers and the disproof of a false finding on the unchanged candidate in a new Verify."
+  - path: "internal/run/lookup_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks unobserved stops, incomplete capture, deadline, turn and round budgets, evidence failure and invalid configuration.
+    why: "Checks that look_up answers Definitions with their owners, path owners, states, accepted plans and bases and the method guidance."
   - path: "internal/run/README.md"
     form: doc
     realizes: [product/run/confirmed-run-history]
-    why: Documents the reconciliation engine, its ports, tools and stopping rules.
+    why: Documents the Orchestrator's one Pass process, its ports, tools, findings and stopping rules.

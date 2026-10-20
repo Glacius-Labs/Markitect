@@ -37,8 +37,8 @@ func shardEntry(path, form, realizes string) string {
 	return "  - path: " + path + "\n    form: " + form + "\n    realizes: [" + realizes + "]\n    why: Fixture artifact.\n"
 }
 
-// libraryLayoutFiles is a completely accounted library project under the layout
-// roots [realization] with the exception realization/cmd/library -> library.
+// libraryLayoutFiles is a completely accounted library project under the
+// ownership of libraryOwnershipYAML.
 func libraryLayoutFiles(t *testing.T, selection *apply.InputSelection, raw *apply.RawInputs) {
 	t.Helper()
 	for name, content := range map[string]string{
@@ -78,7 +78,7 @@ func preparedAttempt(t *testing.T, selection apply.InputSelection, raw apply.Raw
 
 func layoutCandidates(t *testing.T) (apply.Candidates, snapshot.Tree) {
 	t.Helper()
-	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
+	selection, raw := executionInputs(t, withOwnership(t, libraryOwnershipYAML))
 	libraryLayoutFiles(t, &selection, &raw)
 	attempt := preparedAttempt(t, selection, raw)
 	candidates, err := apply.NewCandidates(attempt)
@@ -139,7 +139,7 @@ func summary(findings []apply.CandidateFinding) []string {
 	return lines
 }
 
-func TestCandidatesLibraryLayoutOwnersShardsAndAreas(t *testing.T) {
+func TestCandidatesLibraryOwnershipOwnersShardsAndAreas(t *testing.T) {
 	candidates, start := layoutCandidates(t)
 	for name, want := range map[string]string{
 		"realization/go.mod":                      ".",
@@ -149,11 +149,12 @@ func TestCandidatesLibraryLayoutOwnersShardsAndAreas(t *testing.T) {
 		"realization/lending/reminders/x.go":      "lending/reminders",
 		"realization/lending/reminders/deep/y.go": "lending/reminders",
 		"realization/unknown/file.go":             ".",
-		"docs/guide.md":                           ".",
-		".markitect/execution.yaml":               ".",
-		rootShard:                                 ".",
-		lendingShard:                              "lending",
-		remindersShard:                            "lending/reminders",
+		// Nothing declares an owner for these: nobody owns them.
+		"docs/guide.md":             "",
+		".markitect/execution.yaml": "",
+		rootShard:                   ".",
+		lendingShard:                "lending",
+		remindersShard:              "lending/reminders",
 	} {
 		if got := candidates.OwnerOf(path(t, name)); got != want {
 			t.Errorf("owner of %s = %q, want %q", name, got, want)
@@ -167,10 +168,10 @@ func TestCandidatesLibraryLayoutOwnersShardsAndAreas(t *testing.T) {
 		}
 	}
 	for manager, want := range map[string][]string{
-		"lending":           {"realization/lending/** except realization/lending/reminders/**"},
-		"lending/reminders": {"realization/lending/reminders/**"},
-		"library":           {"realization/library/**", "realization/cmd/library/**"},
-		".":                 {"files directly in realization/ such as realization/go.mod", "every file outside the artifact roots and exceptions"},
+		"lending":           {`realization/lending/ except realization/lending/reminders/ (Manager "lending/reminders")`},
+		"lending/reminders": {"realization/lending/reminders/"},
+		"library":           {"realization/cmd/library/", "realization/library/"},
+		".":                 {`realization/ except realization/cmd/library/ (Manager "library"), realization/lending/ (Manager "lending"), realization/library/ (Manager "library")`},
 		"missing":           nil,
 	} {
 		if got := candidates.Areas(manager); !reflect.DeepEqual(got, want) {
@@ -212,18 +213,23 @@ func TestCandidatesAccountNewFilesAndRegistrationsByTheirOwner(t *testing.T) {
 			shardEntry("realization/lending/reminders/schedule.go", "code", "lending/borrow"))),
 	})
 	findings = candidates.Account(wrong)
-	if want := []string{"lending registry.outside_area realization/lending/reminders/schedule.go"}; !reflect.DeepEqual(summary(findings), want) {
+	// The registrant must fix its entry, and the file stays unexplained for its
+	// actual owner: another owner's entry neither explains nor takes a file.
+	if want := []string{"lending registry.outside_area realization/lending/reminders/schedule.go", "lending/reminders file.unexplained realization/lending/reminders/schedule.go"}; !reflect.DeepEqual(summary(findings), want) {
 		t.Fatalf("registration in the wrong shard: %v, want %v", summary(findings), want)
 	}
 	if !strings.Contains(findings[0].Message, `"lending/reminders"`) || !strings.Contains(findings[0].Message, `"lending"`) {
 		t.Fatalf("the message must name the actual owner and the registrant: %q", findings[0].Message)
+	}
+	if !strings.Contains(findings[1].Message, remindersShard) {
+		t.Fatalf("the owner must be told where to register the file: %q", findings[1].Message)
 	}
 	// Root registering a Package's file, and a Package registering the exception area of another.
 	crossed := change(t, start, map[string]*string{
 		rootShard:    text(shardYAML(shardEntry("realization/go.mod", "build", "library/library"), shardEntry("realization/cmd/library/main.go", "code", "library/callable-interface"))),
 		libraryShard: text(shardYAML(shardEntry("realization/library/library.go", "code", "library/library"))),
 	})
-	if got, want := summary(candidates.Account(crossed)), []string{". registry.outside_area realization/cmd/library/main.go"}; !reflect.DeepEqual(got, want) {
+	if got, want := summary(candidates.Account(crossed)), []string{". registry.outside_area realization/cmd/library/main.go", "library file.unexplained realization/cmd/library/main.go"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("exception area registered by Root: %v, want %v", got, want)
 	}
 }
@@ -260,7 +266,7 @@ func TestCandidatesRegistryFaultsGoToTheShardsManager(t *testing.T) {
 		},
 		"one path in two shards": {
 			map[string]*string{rootShard: text(shardYAML(shardEntry("realization/go.mod", "build", "library/library"), shardEntry("realization/lending/borrow.go", "code", "lending/borrow")))},
-			[]string{". registry.duplicate realization/lending/borrow.go", "lending registry.duplicate realization/lending/borrow.go", ". registry.outside_area realization/lending/borrow.go"},
+			[]string{". registry.duplicate realization/lending/borrow.go", "lending registry.duplicate realization/lending/borrow.go", ". registry.outside_area realization/lending/borrow.go", "lending file.unexplained realization/lending/borrow.go"},
 		},
 		"a Manager removes its shard": {
 			map[string]*string{remindersShard: nil},
@@ -364,7 +370,7 @@ func TestCandidatesProtectedFindingsQuoteTheOriginal(t *testing.T) {
 	}
 }
 
-func TestCandidatesWithoutLayoutKeepShardOwnership(t *testing.T) {
+func TestCandidatesWithoutOwnershipKeepShardOwnership(t *testing.T) {
 	selection, raw := fileCheckInputs(t)
 	attempt := preparedAttempt(t, selection, raw)
 	candidates, err := apply.NewCandidates(attempt)
@@ -373,7 +379,7 @@ func TestCandidatesWithoutLayoutKeepShardOwnership(t *testing.T) {
 	}
 	start := attempt.Structural().Model().Inputs().Raw.Census
 	for name, want := range map[string]string{
-		"realization/library.md": ".", "realization/lending.go": "lending", "realization/new.go": ".", lendingShard: "lending",
+		"realization/library.md": ".", "realization/lending.go": "lending", "realization/new.go": "", lendingShard: "lending",
 	} {
 		if got := candidates.OwnerOf(path(t, name)); got != want {
 			t.Errorf("owner of %s = %q, want %q", name, got, want)
@@ -385,7 +391,7 @@ func TestCandidatesWithoutLayoutKeepShardOwnership(t *testing.T) {
 	if findings := candidates.Account(start); len(findings) != 0 {
 		t.Fatalf("start refused: %v", summary(findings))
 	}
-	// Without a layout any Manager may register a new file in its own shard.
+	// Without declared ownership a Manager may register a new file in its own shard.
 	registered := change(t, start, map[string]*string{
 		"realization/extra.go": text("package x\n"),
 		lendingShard:           text(shardYAML(shardEntry("realization/lending.go", "code", "lending/borrow"), shardEntry("realization/extra.go", "code", "lending/borrow"))),
@@ -398,10 +404,11 @@ func TestCandidatesWithoutLayoutKeepShardOwnership(t *testing.T) {
 	if got, want := summary(findings), []string{". file.unexplained realization/extra.go"}; !reflect.DeepEqual(got, want) {
 		t.Fatalf("findings %q, want %q", got, want)
 	}
-	// Root is the addressee but not the owner: the creator registers in its own shard.
+	// Nobody owns the file: Root is the addressee, and the message does not
+	// invite an ownership transfer.
 	message := findings[0].Message
-	if strings.Contains(message, "its owner") || !strings.Contains(message, "created this file registers it in its own registry shard") || !strings.Contains(message, "asks its children") {
-		t.Fatalf("undeclared message invites an ownership transfer: %q", message)
+	if findings[0].Owner != "." || strings.Contains(message, "its owner") || !strings.Contains(message, "neither a registered artifact") {
+		t.Fatalf("message of an unowned file: %+v", findings[0])
 	}
 }
 
@@ -428,57 +435,66 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 		result, _ := s.CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 		return result
 	}
-	prepare := func(t *testing.T, stray string, untracked ...string) apply.CapturedSettingsResult {
-		return prepareWith(t, withLayout(t, libraryLayoutYAML), stray, untracked...)
+	// The initial File check is strict: a committed file that is not registered
+	// fails preparation for Apply, whoever would own it. There is no repairable
+	// start drift a Manager could fix during the run.
+	for name, stray := range map[string]string{
+		"a file a Package owns":           "realization/lending/stray.go",
+		"a file Root owns":                "realization/stray.go",
+		"a file in an unmapped directory": "realization/unmapped/stray.go",
+		"a file no area owns":             "docs/stray.md",
+	} {
+		t.Run(name, func(t *testing.T) {
+			result := prepareWith(t, withOwnership(t, libraryOwnershipYAML), stray)
+			if _, ok := result.Prepared(); ok || result.Status() == model.Passed || len(result.Attempts()) == 0 {
+				t.Fatalf("an unregistered start file passed preparation: %s", result.Status())
+			}
+			if _, err := apply.NewCandidates(result.Attempts()[len(result.Attempts())-1]); !errors.Is(err, apply.ErrCandidatesUnavailable) {
+				t.Fatalf("an unaccounted start was accepted: %v", err)
+			}
+		})
 	}
-	// DEC-062: an unregistered file that a Manager owns is drift its owner repairs;
-	// the start is prepared and its accounting names the owner.
-	result := prepare(t, "realization/stray.go")
-	attempt, ok := result.Prepared()
-	if !ok {
-		t.Fatalf("repairable start drift failed preparation: %s", result.Status())
-	}
-	candidates, err := apply.NewCandidates(attempt)
-	if err != nil {
-		t.Fatal(err)
-	}
-	start := attempt.Structural().Model().Inputs().Raw.Census
-	if got, want := summary(candidates.Account(start)), []string{". file.unexplained realization/stray.go"}; !reflect.DeepEqual(got, want) {
-		t.Fatalf("start findings %q, want %q", got, want)
-	}
-	// A file that no Manager owns under the layout is no drift a Manager can repair.
-	result = prepare(t, "realization/unmapped/stray.go")
-	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
-		t.Fatal("an ownerless start file passed preparation")
-	}
-	if _, err := apply.NewCandidates(result.Attempts()[len(result.Attempts())-1]); !errors.Is(err, apply.ErrCandidatesUnavailable) {
-		t.Fatalf("ownerless start accepted: %v", err)
-	}
-	// A Git-ignored untracked file is local to its developer, not drift of the project.
-	result = prepare(t, "realization/stray.go", "realization/stray.go")
+	// A Git-ignored untracked file is local to its developer, not part of the project.
+	result := prepareWith(t, withOwnership(t, libraryOwnershipYAML), "realization/stray.go", "realization/stray.go")
 	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
 		t.Fatal("an untracked unexplained start file passed preparation")
 	}
-	// Without a declared layout no Manager owns the file, so nobody could repair it.
+	// Without declared ownership the same file fails too.
 	result = prepareWith(t, documentedExecution(t), "realization/stray.go")
 	if len(result.Attempts()) == 0 || result.Status() == model.Passed {
-		t.Fatal("unexplained start drift passed preparation without a layout")
+		t.Fatal("an unexplained start file passed preparation without ownership")
 	}
-	// Strict structural preparation (markitect check) keeps refusing the same drift.
-	s, selection := service(t, withLayout(t, libraryLayoutYAML), "realization/stray.go")
+	// Strict structural preparation (markitect check) refuses the same file.
+	s, selection := service(t, withOwnership(t, libraryOwnershipYAML), "realization/stray.go")
 	strict, _ := s.Capture(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
 	if strict.Status() == model.Passed {
 		t.Fatal("strict preparation accepted an unregistered file")
 	}
 }
 
-func TestFileCheckAppliesTheDeclaredLayoutBeforeAnyWork(t *testing.T) {
-	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
+func TestFileCheckAppliesTheDeclaredOwnershipBeforeAnyWork(t *testing.T) {
+	selection, raw := executionInputs(t, withOwnership(t, libraryOwnershipYAML))
 	libraryLayoutFiles(t, &selection, &raw)
 	passed := checkedFiles(t, selection, raw)
 	layout, declared := passed.Layout()
-	if passed.Status() != model.Passed || !declared || layout.OwnerOf(path(t, "realization/cmd/library/main.go")).IsRoot() {
-		t.Fatalf("declared layout unavailable after success: %s %+v", passed.Status(), passed.Diagnostics())
+	if owner, owned := layout.OwnerOf(path(t, "realization/cmd/library/main.go")); passed.Status() != model.Passed || !declared || !owned || owner.IsRoot() {
+		t.Fatalf("declared ownership unavailable after success: %s %+v", passed.Status(), passed.Diagnostics())
+	}
+	// An unregistered committed file in a Manager's area fails the initial File
+	// check; its finding is addressed to the owner of the path.
+	stray := raw
+	censusFile(t, &stray, "realization/lending/stray.go", snapshot.Regular, []byte("package lending\n"))
+	unregistered := checkedFiles(t, selection, stray)
+	accounting, ran := unregistered.Accounting()
+	if unregistered.Status() != model.Failed || !ran {
+		t.Fatalf("an unregistered committed file passed the initial File check: %s %+v", unregistered.Status(), accounting.Findings())
+	}
+	found := false
+	for _, finding := range accounting.Findings() {
+		found = found || finding.Code == "file.unexplained" && finding.Path.String() == "realization/lending/stray.go"
+	}
+	if !found {
+		t.Fatalf("file.unexplained missing: %+v", accounting.Findings())
 	}
 	censusFile(t, &raw, "realization/lending/reminders/extra.go", snapshot.Regular, []byte("package reminders"))
 	wrongShard := shardYAML(shardEntry("realization/lending/borrow.go", "code", "lending/borrow"), shardEntry("realization/lending/reminders/extra.go", "code", "lending/reminders/assess-overdue"))
@@ -488,11 +504,11 @@ func TestFileCheckAppliesTheDeclaredLayoutBeforeAnyWork(t *testing.T) {
 		}
 	}
 	failed := checkedFiles(t, selection, raw)
-	accounting, ran := failed.Accounting()
+	accounting, ran = failed.Accounting()
 	if failed.Status() != model.Failed || !ran || len(accounting.Findings()) == 0 {
 		t.Fatalf("a registration outside its owner's shard passed preparation: %s %+v", failed.Status(), accounting.Findings())
 	}
-	found := false
+	found = false
 	for _, finding := range accounting.Findings() {
 		found = found || finding.Code == "registry.outside_area" && finding.Path.String() == "realization/lending/reminders/extra.go"
 	}
@@ -500,86 +516,203 @@ func TestFileCheckAppliesTheDeclaredLayoutBeforeAnyWork(t *testing.T) {
 		t.Fatalf("outside-area finding missing: %+v", accounting.Findings())
 	}
 	if _, available := failed.Layout(); available {
-		t.Fatal("a failed file check exposed its layout")
+		t.Fatal("a failed file check exposed its ownership")
 	}
 	selection, raw = fileCheckInputs(t)
 	if _, declared := checkedFiles(t, selection, raw).Layout(); declared {
-		t.Fatal("a project without a layout reported one")
+		t.Fatal("a project without ownership reported one")
 	}
 }
 
 func TestCandidatesNoOwnerFilesBlockAndGoToRoot(t *testing.T) {
 	candidates, start := layoutCandidates(t)
-	stray := change(t, start, map[string]*string{"realization/cmd/other/main.go": text("package main\n"), "realization/Makefile": text("all:\n")})
+	stray := change(t, start, map[string]*string{"docs/guide.md": text("# Guide\n"), "realization/Makefile": text("all:\n")})
 	findings := candidates.Account(stray)
-	want := []string{". file.unexplained realization/Makefile", ". layout.no_owner realization/cmd/other/main.go"}
+	want := []string{". layout.no_owner docs/guide.md", ". file.unexplained realization/Makefile"}
 	if got := summary(findings); !reflect.DeepEqual(got, want) {
 		t.Fatalf("findings %v, want %v", got, want)
 	}
-	if !strings.Contains(findings[1].Message, "remove it, or ask the owner through Root for a layout exception") {
-		t.Fatalf("message must say how to resolve it: %q", findings[1].Message)
+	if !strings.Contains(findings[0].Message, "needs an area for it, or the file must go") {
+		t.Fatalf("message must say how to resolve it: %q", findings[0].Message)
 	}
-	if candidates.OwnerOf(path(t, "realization/cmd/other/main.go")) != "." {
-		t.Fatal("Root must resolve a file without an owner")
+	if !strings.Contains(findings[1].Message, `Register it, or a directory holding it, in the local registry of its owner "."`) || !strings.Contains(findings[1].Message, rootShard) {
+		t.Fatalf("message must name the owner's shard: %q", findings[1].Message)
+	}
+	if candidates.OwnerOf(path(t, "docs/guide.md")) != "" {
+		t.Fatal("a file no area covers has an owner")
 	}
 }
 
-func TestCandidatesWritePlansOfTheLibraryLayout(t *testing.T) {
+func TestCandidatesWritePlansOfTheLibraryOwnership(t *testing.T) {
 	candidates, _ := layoutCandidates(t)
 	ro := func(p string) run.PathMount { return run.PathMount{Path: p, Writable: false} }
 	rw := func(p string) run.PathMount { return run.PathMount{Path: p, Writable: true} }
+	// Nothing declares a whole-repository area, so no Manager has a writable
+	// base: only the areas and the Manager's own registry shard are writable, and
+	// everything else, .markitect included, stays read-only without a mount.
 	for manager, want := range map[string]run.WritePlan{
-		".": {Enforced: true, Base: true, Mounts: []run.PathMount{
-			ro(".markitect"), rw(".markitect/registry"),
+		".": {Mounts: []run.PathMount{
+			rw(".markitect/registry"),
 			ro(".markitect/registry/catalog"), ro(".markitect/registry/lending"), ro(".markitect/registry/library"), ro(".markitect/registry/members"),
-			ro("realization/catalog"), ro("realization/cmd/library"), ro("realization/lending"), ro("realization/library"), ro("realization/members"),
+			rw("realization"), ro("realization/cmd/library"), ro("realization/lending"), ro("realization/library"),
 		}},
-		"library": {Enforced: true, Mounts: []run.PathMount{
+		"library": {Mounts: []run.PathMount{
 			rw(".markitect/registry/library"), rw("realization/cmd/library"), rw("realization/library"),
 		}},
-		"lending": {Enforced: true, Mounts: []run.PathMount{
+		"lending": {Mounts: []run.PathMount{
 			rw(".markitect/registry/lending"), ro(".markitect/registry/lending/reminders"),
 			rw("realization/lending"), ro("realization/lending/reminders"),
 		}},
-		"lending/reminders": {Enforced: true, Mounts: []run.PathMount{
+		"lending/reminders": {Mounts: []run.PathMount{
 			rw(".markitect/registry/lending/reminders"), rw("realization/lending/reminders"),
 		}},
 	} {
-		if got := candidates.WritePlan(manager); !reflect.DeepEqual(got, want) {
-			t.Errorf("write plan of %s:\n got %+v\nwant %+v", manager, got, want)
+		got, err := candidates.WritePlan(manager)
+		if err != nil || !reflect.DeepEqual(got, want) {
+			t.Errorf("write plan of %s: %v\n got %+v\nwant %+v", manager, err, got, want)
 		}
 	}
 }
 
-func TestCandidatesWithoutLayoutEnforceNothing(t *testing.T) {
+func TestCandidatesWithoutOwnershipRefuseEveryWritePlan(t *testing.T) {
 	selection, raw := executionInputs(t, documentedExecution(t))
 	libraryLayoutFiles(t, &selection, &raw)
 	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := candidates.WritePlan("lending"); !reflect.DeepEqual(got, run.WritePlan{}) {
-		t.Fatalf("an undeclared layout must not enforce: %+v", got)
+	for _, manager := range []string{".", "lending", "library"} {
+		if plan, err := candidates.WritePlan(manager); !errors.Is(err, apply.ErrUnsupportedOwnership) || !strings.Contains(err.Error(), "declares no ownership") || len(plan.Mounts) != 0 || plan.Base {
+			t.Errorf("%s: a project without declared ownership got a plan: %+v %v", manager, plan, err)
+		}
 	}
 }
 
-func TestCandidatesMountOnlyDirectoryExceptions(t *testing.T) {
-	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML+"    - path: realization/lending/Makefile\n      kind: file\n      owner: .\n      reason: The build file lives with lending.\n"))
+// foreignFileOwnership adds an exact file of Root inside the lending directory.
+const foreignFileOwnership = libraryOwnershipYAML + "  - path: realization/lending/Makefile\n    owner: .\n    reason: The build file lives with lending but belongs to Root.\n"
+
+func TestCandidatesMountAForeignExactFileInsideAManagersDirectory(t *testing.T) {
+	selection, raw := executionInputs(t, withOwnership(t, foreignFileOwnership))
+	libraryLayoutFiles(t, &selection, &raw)
+	censusFile(t, &raw, "realization/lending/Makefile", snapshot.Regular, []byte("all:\n"))
+	for i := range raw.Registry {
+		if raw.Registry[i].RepositoryPath.String() == rootShard {
+			rewriteFileCheckSource(t, &raw, &raw.Registry[i], shardYAML(shardEntry("realization/go.mod", "build", "library/library"), shardEntry("realization/lending/Makefile", "build", "library/library")))
+		}
+	}
+	attempt := preparedAttempt(t, selection, raw)
+	candidates, err := apply.NewCandidates(attempt)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if owner := candidates.OwnerOf(path(t, "realization/lending/Makefile")); owner != "." {
+		t.Errorf("owner of the exact file %q: the exact file is more specific than its directory", owner)
+	}
+	if owner := candidates.OwnerOf(path(t, "realization/lending/borrow.go")); owner != "lending" {
+		t.Errorf("owner of the directory's other files %q", owner)
+	}
+	// The directory's owner cannot write the foreign file, and the file's owner
+	// can write that one file inside a directory it otherwise only reads.
+	lending, err := candidates.WritePlan("lending")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := (run.PathMount{Path: "realization/lending/Makefile", Writable: false, File: true}); !slices.Contains(lending.Mounts, want) {
+		t.Errorf("lending can write the foreign exact file: %+v", lending.Mounts)
+	}
+	root, err := candidates.WritePlan(".")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if want := (run.PathMount{Path: "realization/lending/Makefile", Writable: true, File: true}); !slices.Contains(root.Mounts, want) {
+		t.Errorf("Root cannot write its exact file inside lending's directory: %+v", root.Mounts)
+	}
+	lendingDir := slices.Index(root.Mounts, run.PathMount{Path: "realization/lending"})
+	file := slices.Index(root.Mounts, run.PathMount{Path: "realization/lending/Makefile", Writable: true, File: true})
+	if lendingDir < 0 || file < lendingDir {
+		t.Errorf("a file mount must follow the read-only directory it lies in: %+v", root.Mounts)
+	}
+	// No other Manager needs the file mounted, and every directory mount stays a
+	// directory.
+	for _, manager := range []string{"library", "lending/reminders"} {
+		plan, err := candidates.WritePlan(manager)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, mount := range plan.Mounts {
+			if mount.Path == "realization/lending/Makefile" || mount.File {
+				t.Errorf("%s mounts a file it neither reads nor writes specially: %+v", manager, mount)
+			}
+		}
+	}
+	// The stand is accounted: the exact file is registered by its owner Root.
+	if findings := candidates.Account(attempt.Structural().Model().Inputs().Raw.Census); len(findings) != 0 {
+		t.Fatalf("the start with a foreign exact file is not accounted: %v", summary(findings))
+	}
+}
+
+func TestCandidatesRefuseAnExactFileAreaThatIsMissingInTheStartStand(t *testing.T) {
+	// The exact-file area names a file the start stand does not hold. It cannot
+	// be mounted, so the Managers that would need the mount are refused instead
+	// of left to trust; a directory area is created, a file is not.
+	selection, raw := executionInputs(t, withOwnership(t, foreignFileOwnership))
 	libraryLayoutFiles(t, &selection, &raw)
 	candidates, err := apply.NewCandidates(preparedAttempt(t, selection, raw))
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The file exception, which the start stand does not hold, is no directory to
-	// create or mount for anyone; its owner is still known.
-	for _, manager := range []string{".", "library", "lending", "lending/reminders"} {
-		for _, mount := range candidates.WritePlan(manager).Mounts {
-			if mount.Path == "realization/lending/Makefile" {
-				t.Errorf("%s mounts the file exception: %+v", manager, mount)
-			}
+	for _, manager := range []string{"lending", "."} {
+		_, err := candidates.WritePlan(manager)
+		if !errors.Is(err, apply.ErrUnsupportedOwnership) || !strings.Contains(err.Error(), "realization/lending/Makefile") || !strings.Contains(err.Error(), "does not exist in the start stand") {
+			t.Errorf("%s: a missing exact file was not refused: %v", manager, err)
 		}
 	}
-	if owner := candidates.OwnerOf(path(t, "realization/lending/Makefile")); owner != "." {
-		t.Errorf("owner of the file exception %q", owner)
+	// A Manager that never needs the mount is not affected.
+	if _, err := candidates.WritePlan("library"); err != nil {
+		t.Errorf("library does not touch the missing file: %v", err)
+	}
+}
+
+func TestCandidatesAccountDirectoryRegistrationsAndShowThemInTheRegistryView(t *testing.T) {
+	candidates, start := layoutCandidates(t)
+	// The reminders Manager registers its whole directory with one entry.
+	registered := change(t, start, map[string]*string{
+		remindersShard: text(shardYAML(shardEntry("realization/lending/reminders/", "code", "lending/reminders/assess-overdue"))),
+	})
+	if findings := candidates.Account(registered); len(findings) != 0 {
+		t.Fatalf("a directory registration was refused: %v", summary(findings))
+	}
+	// A file added below the registered directory is covered without a new entry.
+	grown := change(t, registered, map[string]*string{"realization/lending/reminders/schedule.go": text("package reminders\n")})
+	if findings := candidates.Account(grown); len(findings) != 0 {
+		t.Fatalf("a new file below a registered directory is unexplained: %v", summary(findings))
+	}
+	view := candidates.RegistryView(grown)
+	var entry []string
+	for _, registration := range view.Registrations {
+		if registration.Entry == "realization/lending/reminders/" {
+			entry = append(entry, registration.Path+" "+registration.Owner)
+		}
+	}
+	slices.Sort(entry)
+	if want := []string{"realization/lending/reminders/remind.go lending/reminders", "realization/lending/reminders/remind_test.go lending/reminders", "realization/lending/reminders/schedule.go lending/reminders"}; !slices.Equal(entry, want) {
+		t.Errorf("registry view of a directory entry: %q, want %q", entry, want)
+	}
+	if view.Shards[remindersShard] == "" || view.Shards[rootShard] == "" {
+		t.Errorf("the view lacks the shard versions: %v", view.Shards)
+	}
+	// A Package cannot register a directory that belongs to another Manager.
+	foreign := change(t, start, map[string]*string{
+		lendingShard: text(shardYAML(shardEntry("realization/lending/borrow.go", "code", "lending/borrow"), shardEntry("realization/lending/reminders/", "code", "lending/borrow"))),
+	})
+	if got := summary(candidates.Account(foreign)); !slices.Contains(got, "lending registry.outside_area realization/lending/reminders") {
+		t.Errorf("a foreign directory registration was accepted: %v", got)
+	}
+	// An entry for a directory without an eligible file of its registrant is dead.
+	dead := change(t, start, map[string]*string{
+		libraryShard: text(shardYAML(shardEntry("realization/library/library.go", "code", "library/library"), shardEntry("realization/cmd/library/main.go", "code", "library/callable-interface"), shardEntry("realization/library/empty/", "code", "library/library"))),
+	})
+	if got := summary(candidates.Account(dead)); !slices.Contains(got, "library registry.missing_file realization/library/empty") {
+		t.Errorf("a registration covering no file was accepted: %v", got)
 	}
 }

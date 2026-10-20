@@ -1,15 +1,16 @@
 apiVersion: markitect.execution/v1
-strategy: shared-workspace-v1
+strategy: recursive-passes-v1
 budget:
-  executionTime: 20m
+  executionTime: 40m
   turnTimeout: 8m
-  agentTurns: 120
-  rounds: 4
+  agentTurns: 160
+  passes: 6
 profiles:
   execute: library-agent
   verify: library-agent
 packages: {}
-layout:
-  roots: [realization]
-  exceptions: []
+ownership:
+  - path: realization/
+    owner: .
+    reason: Until the structure phase proposes Packages, Root holds every artifact.
 checks: []

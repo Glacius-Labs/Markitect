@@ -232,6 +232,10 @@ func accountFiles(inventory modelInventory, tree snapshot.Tree, registry Registr
 			}
 		case len(classified) == 1:
 			file.class, file.why = classified[0].class, classified[0].why
+		case layout.declared && !owned && within(markitectDirectory, path.String()):
+			// Nobody can own a path under .markitect: it holds only Markitect's
+			// inputs and the local registries.
+			add("file.unexplained", path, RootOwner(), model.Identity{}, "The file lies in .markitect, which holds only Markitect's inputs and the local registries and is no ownership area: remove it, or declare it in .markitect/ignore.yaml with a reason.")
 		case layout.declared && !owned:
 			add("layout.no_owner", path, RootOwner(), model.Identity{}, "No declared area owns the file, so no Manager may keep it: the ownership in .markitect/execution.yaml needs an area for it, or the file must go.")
 		default:

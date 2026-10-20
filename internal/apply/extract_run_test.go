@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"reflect"
+	"regexp"
 	"slices"
 	"strings"
 	"sync"
@@ -90,24 +91,30 @@ func (w *memoryWorkspaces) write(volume string, files map[string]string) {
 	}
 }
 
-// scriptedAgents writes each Manager's files in its first Execute turn, then
-// finishes; every Verify turn is satisfied, and a Manager can raise findings
-// and ask the owner in its first Execute turn of a phase.
+// scriptedAgents follows the Orchestrator's protocol for every Manager and
+// reviewer: it decides the proposals of its children, answers the questions
+// addressed to it, writes the scripted files in its first working turn, submits
+// its basis and then its complete result. A Manager can ask the user before it
+// writes, and a reviewer can raise findings with its result. A turn that is
+// refused a tool call fails the test, so the script cannot drift from the
+// engine's protocol unnoticed.
 type scriptedAgents struct {
+	t        *testing.T
 	ws       *memoryWorkspaces
-	writes   map[string]map[string]string // turn-ID phase/manager key -> files
-	findings map[string][]map[string]any
-	asks     map[string]string
+	writes   map[string]map[string]string // "<run> <manager>" -> files written in the first working turn
+	findings map[string][]map[string]any  // "<run> <manager>" -> findings a reviewer raises with its result
+	asks     map[string]string            // "<run> <manager>" -> a question to the user before it works
 	mu       sync.Mutex
 	turns    []run.Turn
-	enforced map[string]bool
+	asked    map[string]string // key -> the question ID the user was asked
 }
 
 // answeringOwner answers every question at once and refuses an identity it was
 // already asked.
 type answeringOwner struct {
-	mu    sync.Mutex
-	asked []run.Question
+	mu        sync.Mutex
+	asked     []run.Question
+	withdrawn []string
 }
 
 func (o *answeringOwner) Ask(_ context.Context, q run.Question) error {
@@ -124,25 +131,79 @@ func (o *answeringOwner) Answer(_ context.Context, id string) (string, bool, err
 	return "answer to " + id, true, nil
 }
 
+func (o *answeringOwner) Withdraw(_ context.Context, id string) error {
+	o.mu.Lock()
+	defer o.mu.Unlock()
+	o.withdrawn = append(o.withdrawn, id)
+	return nil
+}
+
+var (
+	scriptedRun = regexp.MustCompile(`^(x-1-(?:structure|model))-p\d+-`)
+	decideRE    = regexp.MustCompile(`- decide (P\d+),`)
+	answerRE    = regexp.MustCompile(`- answer (Q\d+) from`)
+	askedRE     = regexp.MustCompile(`Asked the user (Q\d+)\.`)
+)
+
 func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
 	a.mu.Lock()
 	a.turns = append(a.turns, turn)
 	a.mu.Unlock()
-	key := strings.SplitN(turn.ID, "-r", 2)[0] + " " + turn.Manager
-	call := func(name string, args any) {
+	if turn.Kind == run.VerifyTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m run.PathMount) bool { return m.Writable })) {
+		a.t.Errorf("verify turn %s can write", turn.ID)
+	}
+	key := scriptedRun.FindStringSubmatch(turn.ID)[1] + " " + turn.Manager
+	call := func(name string, args map[string]any) run.ToolAnswer {
 		data, _ := json.Marshal(args)
-		tools(ctx, name, data)
-	}
-	if turn.Kind == run.ExecuteTurn {
-		if question := a.asks[key]; question != "" && turn.Resume == "" {
-			call("send", map[string]any{"to": "owner", "text": question})
+		answer := tools(ctx, name, data)
+		if answer.Refused {
+			a.t.Errorf("turn %s: %s %v refused: %s", turn.ID, name, args, answer.Text)
 		}
-		a.ws.write(turn.Workspace, a.writes[key])
-		call("finish", map[string]any{"status": "done", "summary": "Described " + turn.Manager + "."})
-	} else {
-		call("assess", map[string]any{"summary": "The model matches the artifacts.", "satisfied": true, "findings": a.findings[key]})
+		return answer
 	}
-	return run.TurnResult{Conversation: "c-" + turn.Manager, Usage: run.Usage{InputTokens: 10, OutputTokens: 5}, Stopped: true}, nil
+	for _, m := range decideRE.FindAllStringSubmatch(turn.Prompt, -1) {
+		call("report", map[string]any{"kind": "accept", "proposal": m[1]})
+	}
+	for _, m := range answerRE.FindAllStringSubmatch(turn.Prompt, -1) {
+		// Nobody asks a Manager anything in these scripts but the Orchestrator's own forwards.
+		a.t.Errorf("turn %s: unexpected question %s", turn.ID, m[1])
+	}
+	_, rest, _ := strings.Cut(turn.Prompt, "\nNow: ")
+	now, _, _ := strings.Cut(rest, "\n")
+	switch {
+	case strings.HasPrefix(now, "work on your own contribution"):
+		if question := a.asks[key]; question != "" && turn.Kind == run.ExecuteTurn && a.asked[key] == "" {
+			answer := call("send", map[string]any{"to": "user", "kind": "question", "text": question})
+			id := askedRE.FindStringSubmatch(answer.Text)
+			if id == nil {
+				a.t.Errorf("turn %s: the question was not asked: %s", turn.ID, answer.Text)
+			} else {
+				a.mu.Lock()
+				a.asked[key] = id[1]
+				a.mu.Unlock()
+				call("report", map[string]any{"kind": "wait", "for": id[1], "reason": "the answer decides the boundary"})
+			}
+			break
+		}
+		if turn.Kind == run.ExecuteTurn {
+			a.ws.write(turn.Workspace, a.writes[key])
+		}
+		call("report", map[string]any{"kind": "basis", "summary": "Basis of " + turn.Manager + "."})
+	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
+		result := map[string]any{"kind": "result", "summary": "Described " + turn.Manager + ".", "verdict": "satisfied"}
+		if turn.Kind == run.VerifyTurn {
+			result["summary"] = "The model matches the artifacts."
+			if findings := a.findings[key]; len(findings) > 0 {
+				result["findings"] = findings
+			}
+		}
+		call("report", result)
+	}
+	conversation := turn.Resume
+	if conversation == "" {
+		conversation = "conv-" + turn.ID
+	}
+	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
 }
 
 // bothPhases scripts an Extract whose two phases both verify: Root writes the
@@ -164,7 +225,7 @@ func bothPhases(t *testing.T) (apply.ExtractRequest, *scriptedAgents, *memoryWor
 		return files
 	}
 	workspaces := newMemoryWorkspaces()
-	agents := &scriptedAgents{ws: workspaces, writes: map[string]map[string]string{
+	agents := &scriptedAgents{t: t, ws: workspaces, asked: map[string]string{}, writes: map[string]map[string]string{
 		"x-1-structure .": diff(start, proposed, func(string) bool { return true }),
 	}, findings: map[string][]map[string]any{
 		"x-1-model lending": {{"owner": "lending", "subject": "artifact", "definition": "lending/lending", "obligation": "Loans are limited", "observed": "borrow.go admits a sixth loan.", "blocking": true}},
@@ -200,8 +261,36 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	if !result.Structure.Candidate.Equal(proposed) || !result.Model.Candidate.Equal(complete) {
 		t.Fatal("the verified candidates are not the proposals the Agents wrote")
 	}
-	if len(result.Structure.Turns) != 2 || len(result.Model.Turns) < 12 || len(result.Structure.Rounds) != 1 || len(result.Model.Rounds) != 1 || result.Model.Usage.InputTokens != int64(10*len(result.Model.Turns)) {
-		t.Fatalf("turns %d/%d rounds %d/%d usage %+v", len(result.Structure.Turns), len(result.Model.Turns), len(result.Structure.Rounds), len(result.Model.Rounds), result.Model.Usage)
+	// Each phase is one work Pass of its own purpose and one independent Verify;
+	// every Manager takes two turns in each: its basis and its complete result.
+	if len(result.Structure.Passes) != 2 || len(result.Model.Passes) != 2 {
+		t.Fatalf("passes %d/%d", len(result.Structure.Passes), len(result.Model.Passes))
+	}
+	for i, tc := range []struct {
+		pass    run.PassRecord
+		purpose run.Purpose
+		review  bool
+	}{
+		{result.Structure.Passes[0], "structure", false}, {result.Structure.Passes[1], run.Verify, true},
+		{result.Model.Passes[0], "model", false}, {result.Model.Passes[1], run.Verify, true},
+	} {
+		if tc.pass.Purpose != tc.purpose || tc.pass.Review != tc.review || tc.pass.Verdict != run.Satisfied || !tc.pass.Sealed {
+			t.Errorf("pass %d: %+v", i, tc.pass)
+		}
+		for _, m := range tc.pass.Managers {
+			if m.State != run.Done || m.Verdict != run.Satisfied || m.Basis == "" || m.Result == "" {
+				t.Errorf("pass %d: Manager %s did not complete: %+v", i, m.Manager, m)
+			}
+		}
+	}
+	if len(result.Structure.Passes[0].Managers) != 1 || len(result.Model.Passes[0].Managers) != 6 {
+		t.Errorf("the structure phase is Root alone and the model phase the proposed tree: %d/%d", len(result.Structure.Passes[0].Managers), len(result.Model.Passes[0].Managers))
+	}
+	// Parents take further turns to decide their children's proposals, so the
+	// model phase has at least the two turns of each of its six Managers in both
+	// Passes.
+	if len(result.Structure.Turns) != 4 || len(result.Model.Turns) < 24 || result.Model.Usage.InputTokens != int64(10*len(result.Model.Turns)) {
+		t.Fatalf("turns %d/%d usage %+v", len(result.Structure.Turns), len(result.Model.Turns), result.Model.Usage)
 	}
 	if len(result.ProposedChecks) != 0 {
 		t.Errorf("no check was proposed: %+v", result.ProposedChecks)
@@ -253,10 +342,10 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	// The Brief reached the Agent of each phase with its mandate; a Verify turn never writes.
 	var structureExecute, modelVerify run.Turn
 	for _, turn := range agents.turns {
-		if turn.Manager == "." && turn.Kind == run.ExecuteTurn && strings.HasPrefix(turn.ID, "x-1-structure") {
+		if structureExecute.ID == "" && turn.Manager == "." && turn.Kind == run.ExecuteTurn && strings.HasPrefix(turn.ID, "x-1-structure") {
 			structureExecute = turn
 		}
-		if turn.Kind == run.VerifyTurn && strings.HasPrefix(turn.ID, "x-1-model") && turn.Manager == "lending" {
+		if modelVerify.ID == "" && turn.Kind == run.VerifyTurn && strings.HasPrefix(turn.ID, "x-1-model") && turn.Manager == "lending" {
 			modelVerify = turn
 		}
 	}
@@ -281,7 +370,7 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		t.Errorf("phase events: %d", phases)
 	}
 	// The structure phase gets half of the 120 agent turns; the model phase the rest it left.
-	if len(turnBudgets) != 2 || turnBudgets[0] != 60 || turnBudgets[1] != 118 {
+	if len(turnBudgets) != 2 || turnBudgets[0] != 60 || turnBudgets[1] != 120-len(result.Structure.Turns) {
 		t.Errorf("agent-turn budgets of the phases: %v", turnBudgets)
 	}
 }
@@ -342,10 +431,12 @@ func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
 func TestExtractStopsAfterAnUnverifiedStructurePhaseAndKeepsItsWork(t *testing.T) {
 	req := extractRequest(t)
 	workspaces := newMemoryWorkspaces()
-	agents := &scriptedAgents{ws: workspaces, writes: map[string]map[string]string{}}
+	agents := &scriptedAgents{t: t, ws: workspaces, asked: map[string]string{}, writes: map[string]map[string]string{}}
 	publisher := &fakePublisher{}
-	req.Agents, req.Workspaces, req.Evidence, req.Publisher = agents, workspaces, &memoryEvidence{}, publisher
-	// Root changes nothing: the candidate has no Package, accounting blocks every round.
+	evidence := &memoryEvidence{}
+	req.Agents, req.Workspaces, req.Evidence, req.Publisher = agents, workspaces, evidence, publisher
+	// Root changes nothing: the candidate has no Package, so the File check
+	// returns every basis it submits.
 	result, err := apply.Extract(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
@@ -353,12 +444,18 @@ func TestExtractStopsAfterAnUnverifiedStructurePhaseAndKeepsItsWork(t *testing.T
 	if result.Structure.Status != run.Incomplete || result.Model != nil || result.Receipt != nil || len(publisher.requests) != 0 || result.RetainedWork != "x-1-structure-work" {
 		t.Fatalf("%+v", result)
 	}
-	blocked := false
-	for _, f := range result.Structure.Findings {
-		blocked = blocked || f.Obligation == "model.no_package"
+	if result.Structure.Reason == "" || len(result.Structure.Passes) == 0 || result.Structure.Passes[0].Sealed {
+		t.Errorf("the unverified phase has no reason, or sealed a Pass nothing could accept: %+v", result.Structure)
 	}
-	if !blocked {
-		t.Errorf("findings %+v", result.Structure.Findings)
+	returned := false
+	for _, e := range evidence.events {
+		data, _ := e.Data.(map[string]any)
+		if lines, ok := data["findings"].([]string); ok && e.Kind == "proposal.checked" && data["passed"] == false {
+			returned = returned || slices.ContainsFunc(lines, func(line string) bool { return strings.Contains(line, "model.no_package") })
+		}
+	}
+	if !returned {
+		t.Errorf("no submission was returned for model.no_package: %d events", len(evidence.events))
 	}
 }
 
@@ -389,17 +486,18 @@ func TestExtractKeepsTheModelWorkWhenTheModelPhaseDoesNotVerify(t *testing.T) {
 	}
 }
 
-func TestExtractFailsWhenTheVerifiedCandidateChangesMoreThanTheModel(t *testing.T) {
+func TestExtractEndsTheModelPhaseWhenAnAgentLeavesAFileOutsideAnyArea(t *testing.T) {
 	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
-	// The Runtime's state is no guarded input, so accounting lets this candidate pass;
-	// only the publication filter refuses it.
-	agents.writes["x-1-model ."][".markitect/state/runs/x.json"] = "{}\n"
+	// The Runtime's state is no area of any Manager: a file there never enters
+	// an accepted stand, so the stand at the end of the Pass differs from it and
+	// the phase cannot publish.
+	agents.writes["x-1-model ."][".markitect/state/runs/x.json"] = "{}" + "\n"
 	result, err := apply.Extract(context.Background(), req)
-	if err == nil || !strings.Contains(err.Error(), "refusing to publish .markitect/state/runs/x.json") {
-		t.Fatalf("err = %v", err)
+	if err != nil {
+		t.Fatal(err)
 	}
-	if result.Model == nil || result.Model.Status != run.Failed || !strings.Contains(result.Model.Reason, "refusing to publish") {
-		t.Fatalf("model %+v", result.Model)
+	if result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status == run.Verified || !strings.Contains(result.Model.Reason, ".markitect/state/runs/x.json") {
+		t.Fatalf("structure %s; model %+v", result.Structure.Status, result.Model)
 	}
 	if result.RetainedWork != "x-1-model-work" || slices.Contains(workspaces.closed, "x-1-model-work") || result.Receipt != nil || len(publisher.requests) != 0 {
 		t.Fatalf("retained %q closed %v receipt %+v", result.RetainedWork, workspaces.closed, result.Receipt)
@@ -408,12 +506,13 @@ func TestExtractFailsWhenTheVerifiedCandidateChangesMoreThanTheModel(t *testing.
 
 func TestExtractKeepsTheStructureWhenTheModelPhaseHasTooFewTurns(t *testing.T) {
 	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
-	// 13 turns give the structure phase 6 and the model phase the 11 it has left
-	// after the structure phase's two; its six Managers need 12.
+	// 13 turns give the structure phase 6 and the model phase the 9 it has left
+	// after the structure phase's four; its six Managers need 12 for one Pass.
 	req.Prepared = extractAttemptWithTurns(t, 13)
 	agents.writes["x-1-structure ."][".markitect/execution.yaml"] = strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 13", 1)
 	result, err := apply.Extract(context.Background(), req)
-	if err != nil || result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status != run.Incomplete || !strings.Contains(result.Model.Reason, "agent turn budget of 11") {
+	if err != nil || result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status != run.Incomplete ||
+		!strings.Contains(result.Model.Reason, "agent turn budget of 9 does not cover a basis and a result of each of the 6 managers") {
 		t.Fatalf("err %v, structure %s, model %+v", err, result.Structure.Status, result.Model)
 	}
 	if result.RetainedWork != "x-1-structure-work" || slices.Contains(workspaces.closed, "x-1-structure-work") || result.Receipt != nil || len(publisher.requests) != 0 {

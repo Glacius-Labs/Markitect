@@ -34,22 +34,22 @@ func path0(name string) snapshot.Path {
 	return p
 }
 
-func layoutRequest(t *testing.T) (apply.ReconcileRequest, snapshot.Tree) {
+func layoutRequest(t *testing.T) (apply.ApplyRequest, snapshot.Tree) {
 	t.Helper()
-	selection, raw := executionInputs(t, withLayout(t, libraryLayoutYAML))
+	selection, raw := executionInputs(t, withOwnership(t, libraryOwnershipYAML))
 	libraryLayoutFiles(t, &selection, &raw)
 	attempt := preparedAttempt(t, selection, raw)
-	return apply.ReconcileRequest{
+	return apply.ApplyRequest{
 		RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, OwnerRequest: "Realize the model.",
 		OwnerDecisions: []string{"Use euro."}, MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest,
 		RequireVolumeSubpaths: func(context.Context) error { return nil },
 	}, attempt.Structural().Model().Inputs().Raw.Census
 }
 
-func TestReconcileConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
+func TestApplyConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
 	req, start := layoutRequest(t)
 	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-	cfg, err := apply.BuildReconcileConfig(req, now)
+	cfg, err := apply.BuildApplyConfig(req, now)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -82,7 +82,7 @@ func TestReconcileConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
 		t.Fatal("hierarchy lost")
 	}
 	brief := seen["lending/reminders"].Brief
-	for _, want := range []string{"Package lending/reminders", ".markitect/registry/lending/reminders/registry.yaml", "apiVersion: markitect.registry/v1", "one of code, test, doc, build, config", "/work/.markitect", "lending/reminders/assess-overdue", "Required checks", "project-tests: /usr/local/go/bin/go test ./..."} {
+	for _, want := range []string{"Package lending/reminders", ".markitect/registry/lending/reminders/registry.yaml", "apiVersion: markitect.registry/v1", "one of code, test, doc, build, config", "or a directory ending in / for the files below it that you own", "/work/.markitect", "lending/reminders/assess-overdue", "Required checks", "project-tests: /usr/local/go/bin/go test ./..."} {
 		if !strings.Contains(brief, want) {
 			t.Errorf("brief lacks %q:\n%s", want, brief)
 		}
@@ -104,27 +104,46 @@ func TestReconcileConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
 		if strings.Contains(seen[manager].Brief, "required by check") {
 			t.Errorf("%s has Definitions of its own and needs no check-required ones:\n%s", manager, seen[manager].Brief)
 		}
+		if strings.Contains(seen[manager].Brief, "Project obligations") {
+			t.Errorf("only Root receives the project obligations:\n%s", seen[manager].Brief)
+		}
 	}
 	if len(cfg.Checks) != 1 || cfg.Checks[0].Name != "project-tests" || cfg.Checks[0].Owner != "." || cfg.Checks[0].RequiredBy != "library/callable-interface" {
 		t.Fatalf("checks: %+v", cfg.Checks)
 	}
-	if cfg.Budget.TurnTimeout != 10*time.Minute || cfg.Budget.AgentTurns != 120 || cfg.Budget.Rounds != 4 || !cfg.Budget.Deadline.Equal(now.Add(25*time.Minute)) {
+	if cfg.Budget.TurnTimeout != 10*time.Minute || cfg.Budget.AgentTurns != 120 || cfg.Budget.Passes != 12 || !cfg.Budget.Deadline.Equal(now.Add(25*time.Minute)) {
 		t.Fatalf("budget: %+v", cfg.Budget)
 	}
-	if cfg.OwnerOf(path(t, "realization/lending/borrow.go")) != "lending" || cfg.OwnerOf(path(t, "realization/go.mod")) != "." {
-		t.Fatal("ownership is not the layout's")
+	if cfg.OwnerOf == nil || cfg.OwnerOf(path(t, "realization/lending/borrow.go")) != "lending" || cfg.OwnerOf(path(t, "realization/go.mod")) != "." || cfg.OwnerOf(path(t, "docs/guide.md")) != "" {
+		t.Fatal("ownership is not the declared one")
 	}
-	if got := cfg.Account(start); len(got) != 0 {
+	if cfg.ModelCheck == nil || cfg.FileCheck == nil || cfg.Registry == nil || cfg.Definition == nil {
+		t.Fatalf("a gate or lookup is missing: model %v file %v registry %v definition %v", cfg.ModelCheck != nil, cfg.FileCheck != nil, cfg.Registry != nil, cfg.Definition != nil)
+	}
+	if got := cfg.FileCheck(start); len(got) != 0 {
 		t.Fatalf("the captured start is not accounted: %+v", got)
 	}
+	if got := cfg.ModelCheck(start); len(got) != 0 {
+		t.Fatalf("the captured start does not pass the Model check: %+v", got)
+	}
 	extra := change(t, start, map[string]*string{"realization/lending/new.go": text("package lending\n")})
-	findings := cfg.Account(extra)
+	findings := cfg.FileCheck(extra)
 	if len(findings) != 1 || findings[0].Owner != "lending" || findings[0].RaisedBy != run.MarkitectFinding || !findings[0].Blocking || findings[0].Obligation == "" || !strings.Contains(findings[0].Observed, "realization/lending/new.go") {
 		t.Fatalf("unregistered file: %+v", findings)
 	}
+	view := cfg.Registry(start)
+	if len(view.Registrations) != 6 || view.Shards[rootShard] == "" {
+		t.Fatalf("registry view: %+v", view)
+	}
+	if definition, ok := cfg.Definition("lending/reminders/assess-overdue"); !ok || definition.Owner != "lending/reminders" || definition.Text == "" {
+		t.Fatalf("definition lookup: %+v %v", definition, ok)
+	}
+	if _, ok := cfg.Definition("lending/missing"); ok {
+		t.Fatal("look_up found a Definition the model lacks")
+	}
 }
 
-func TestReconcileDeadlineIsTheEarlierOfBudgetAndOperatorLimit(t *testing.T) {
+func TestApplyDeadlineIsTheEarlierOfBudgetAndOperatorLimit(t *testing.T) {
 	req, _ := layoutRequest(t)
 	now := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
 	for _, tc := range []struct {
@@ -137,19 +156,19 @@ func TestReconcileDeadlineIsTheEarlierOfBudgetAndOperatorLimit(t *testing.T) {
 		{"later", now.Add(2 * time.Hour), now.Add(25 * time.Minute)},
 	} {
 		req.Deadline = tc.deadline
-		cfg, err := apply.BuildReconcileConfig(req, now)
+		cfg, err := apply.BuildApplyConfig(req, now)
 		if err != nil || !cfg.Budget.Deadline.Equal(tc.want) {
 			t.Errorf("%s: %v %v", tc.name, cfg.Budget.Deadline, err)
 		}
 	}
 }
 
-func TestReconcileConfigRefusesAnUnusableCheckRequest(t *testing.T) {
+func TestApplyConfigRefusesAnUnusableCheckRequest(t *testing.T) {
 	req, _ := layoutRequest(t)
 	req.CheckRequest = func(apply.CheckSelection) (run.CheckRequest, error) {
 		return run.CheckRequest{}, errors.New("not a container check")
 	}
-	if _, err := apply.BuildReconcileConfig(req, time.Now()); err == nil || !strings.Contains(err.Error(), "project-tests") {
+	if _, err := apply.BuildApplyConfig(req, time.Now()); err == nil || !strings.Contains(err.Error(), "project-tests") {
 		t.Fatalf("%v", err)
 	}
 }
@@ -267,7 +286,7 @@ func (failingAgents) Run(context.Context, run.Turn, run.ToolHandler) (run.TurnRe
 	return run.TurnResult{Stopped: true}, errors.New("provider unavailable")
 }
 
-func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testing.T) {
+func TestApplyPublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testing.T) {
 	req, _ := layoutRequest(t)
 	workspaces := &fakeWorkspaces{}
 	publisher := &fakePublisher{}
@@ -277,7 +296,7 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 		removed = append(removed, home)
 		return nil
 	}
-	result, err := apply.Reconcile(context.Background(), req)
+	result, err := apply.Apply(context.Background(), req)
 	if result.Outcome.Status == "" || result.Outcome.Status == run.Verified || result.Receipt != nil || len(publisher.requests) != 0 {
 		t.Fatalf("an unverified run published or has no outcome: %+v %v", result, err)
 	}
@@ -300,9 +319,7 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 	}
 }
 
-// TestReconcileClosesTheWorkVolumeOnlyAfterPublication covers a verified outcome:
-// the shared work volume is the verified work, so it goes only once published.
-func TestReconcileRefusesEnforcedOwnershipOnAnEngineWithoutVolumeSubpaths(t *testing.T) {
+func TestApplyRefusesEnforcedOwnershipOnAnEngineWithoutVolumeSubpaths(t *testing.T) {
 	workspaces := &fakeWorkspaces{}
 	for name, tc := range map[string]struct {
 		check func(context.Context) error
@@ -315,7 +332,7 @@ func TestReconcileRefusesEnforcedOwnershipOnAnEngineWithoutVolumeSubpaths(t *tes
 			req, _ := layoutRequest(t)
 			req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = failingAgents{}, workspaces, failingRunner{}, &memoryEvidence{}, &fakePublisher{}
 			req.RequireVolumeSubpaths = tc.check
-			_, err := apply.Reconcile(context.Background(), req)
+			_, err := apply.Apply(context.Background(), req)
 			if err == nil || !strings.Contains(err.Error(), tc.want) {
 				t.Fatalf("err = %v, want %q", err, tc.want)
 			}
@@ -326,7 +343,9 @@ func TestReconcileRefusesEnforcedOwnershipOnAnEngineWithoutVolumeSubpaths(t *tes
 	}
 }
 
-func TestReconcileClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
+// TestApplyClosesTheWorkVolumeOnlyAfterPublication covers a verified outcome:
+// the shared work volume is the verified work, so it goes only once published.
+func TestApplyClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
 	req, start := layoutRequest(t)
 	candidate := change(t, start, map[string]*string{"realization/lending/borrow.go": text("package lending // changed\n")})
 	for _, tc := range []struct {
@@ -365,39 +384,49 @@ func TestReconcileClosesTheWorkVolumeOnlyAfterPublication(t *testing.T) {
 	}
 }
 
-func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
+func TestApplyConfigBriefsStateResponsibilitiesObligationsHelpersAndWritePlans(t *testing.T) {
 	req, _ := layoutRequest(t)
-	cfg, err := apply.BuildReconcileConfig(req, time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC))
+	cfg, err := apply.BuildApplyConfig(req, time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC))
 	if err != nil {
 		t.Fatal(err)
-	}
-	if !cfg.CheckTool || !cfg.DefectTool {
-		t.Errorf("Apply's Execute turns lack the check or model_defect tool: check %v, defect %v", cfg.CheckTool, cfg.DefectTool)
-	}
-	if len(cfg.StartFindings) != 0 {
-		t.Errorf("an accounted start stand has start findings %+v", cfg.StartFindings)
 	}
 	team := map[string]run.Manager{}
 	for _, m := range cfg.Team {
 		team[m.Path] = m
-		if !m.Write.Enforced {
-			t.Errorf("%s: write plan %+v is not enforced", m.Path, m.Write)
+		// Every plan is enforced: no Manager has a writable base without a
+		// whole-repository area.
+		if m.Write.Base {
+			t.Errorf("%s: write plan %+v has a writable base", m.Path, m.Write)
 		}
-		if !strings.Contains(m.Brief, "Only these areas and your registry shard are writable in /work; everything else is read-only.") {
+		if len(m.Write.Mounts) == 0 {
+			t.Errorf("%s: an empty write plan enforces nothing", m.Path)
+		}
+		if !strings.Contains(m.Brief, "Only these areas and your local registry are writable in your work turns; everything else in /work is read-only.") {
 			t.Errorf("%s brief lacks the write statement:\n%s", m.Path, m.Brief)
 		}
+		// The product default team: one writing worker on the Manager's own Execute profile.
+		if m.MaxHelpers != 1 || len(m.Helpers) != 1 || m.Helpers[0].Role != "worker" || !m.Helpers[0].Writes || m.Helpers[0].Profile != m.ExecuteProfile {
+			t.Errorf("%s: helper roles %+v max %d", m.Path, m.Helpers, m.MaxHelpers)
+		}
 	}
-	if !team["."].Write.Base || team["lending"].Write.Base {
-		t.Fatalf("write bases: root %+v lending %+v", team["."].Write, team["lending"].Write)
+	if !slices.Contains(team["lending/reminders"].Write.Mounts, run.PathMount{Path: "realization/lending/reminders", Writable: true}) ||
+		!slices.Contains(team["lending"].Write.Mounts, run.PathMount{Path: "realization/lending/reminders"}) ||
+		!slices.Contains(team["lending"].Write.Mounts, run.PathMount{Path: "realization/lending", Writable: true}) {
+		t.Fatalf("write plans do not follow the ownership: lending %+v reminders %+v", team["lending"].Write, team["lending/reminders"].Write)
+	}
+	// Obligations are the identities of each Manager's own Definitions; Root has
+	// none of its own.
+	if len(team["."].Obligations) != 0 || !slices.Contains(team["lending/reminders"].Obligations, "lending/reminders/assess-overdue") || !slices.Contains(team["library"].Obligations, "library/callable-interface") {
+		t.Errorf("obligations: root %v reminders %v library %v", team["."].Obligations, team["lending/reminders"].Obligations, team["library"].Obligations)
 	}
 	const children = "Your children realize their own Definitions in their areas. You supply the foundations they need within your own area, coordinate them and integrate their results; you do not implement their areas, and you cannot release them from their obligations."
 	const own = "Your own Definitions are yours to realize in your area. Your parent coordinates; it cannot take them over or waive them."
 	for manager, wantChildren := range map[string][]string{
-		".": {"- lending\n  areas: realization/lending/** except realization/lending/reminders/**\n  Definition lending/", "- library\n  areas: realization/library/**; realization/cmd/library/**\n  Definition library/",
+		".": {"- lending\n  areas: realization/lending/ except realization/lending/reminders/ (Manager \"lending/reminders\")\n  Definition lending/", "- library\n  areas: realization/cmd/library/; realization/library/\n  Definition library/",
 			// The Managers below a child are named, so no area looks unowned.
-			"  below it: lending/reminders, a child of lending, areas: realization/lending/reminders/**\n    Definition lending/reminders/assess-overdue: ",
+			"  below it: lending/reminders, a child of lending, areas: realization/lending/reminders/\n    Definition lending/reminders/assess-overdue: ",
 			"Every area listed here has its owner in the team"},
-		"lending":           {"- lending/reminders\n  areas: realization/lending/reminders/**\n  Definition lending/reminders/assess-overdue: "},
+		"lending":           {"- lending/reminders\n  areas: realization/lending/reminders/\n  Definition lending/reminders/assess-overdue: "},
 		"library":           nil,
 		"lending/reminders": nil,
 	} {
@@ -422,14 +451,53 @@ func TestReconcileConfigBriefsStateResponsibilitiesAndWritePlans(t *testing.T) {
 		}
 	}
 	root := team["."].Brief
-	if !strings.Contains(root, "files directly in realization/ such as realization/go.mod") ||
+	if !strings.Contains(root, `- realization/ except realization/cmd/library/ (Manager "library"), realization/lending/ (Manager "lending"), realization/library/ (Manager "library")`) ||
 		!strings.Contains(root, "(owned by library)") || !strings.Contains(root, "required by check project-tests; realized by library, integrated and verified by you") {
 		t.Errorf("Root brief:\n%s", root)
+	}
+	// Root coordinates the whole model: it receives every local Definition with its owner.
+	for _, want := range []string{"Project obligations", "You coordinate the whole model.", "- lending/reminders/assess-overdue (", ", owned by lending/reminders", ", owned by library"} {
+		if !strings.Contains(root, want) {
+			t.Errorf("Root brief lacks %q:\n%s", want, root)
+		}
 	}
 	if strings.Contains(team["lending"].Brief, "integrated and verified by you") {
 		t.Errorf("only Root integrates the checks' Definitions:\n%s", team["lending"].Brief)
 	}
 	if !strings.Contains(team["lending/reminders"].Brief, "(owned by lending)") {
 		t.Errorf("an included Definition does not show its owner:\n%s", team["lending/reminders"].Brief)
+	}
+}
+
+func TestApplyConfigRefusesWithoutDeclaredOwnership(t *testing.T) {
+	// A fully accounted project without an ownership section prepares, but Apply
+	// refuses to run it: no write plan can enforce who writes what.
+	selection, raw := executionInputs(t, documentedExecution(t))
+	libraryLayoutFiles(t, &selection, &raw)
+	attempt := preparedAttempt(t, selection, raw)
+	req := apply.ApplyRequest{RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, CheckRequest: checkRequest, RequireVolumeSubpaths: func(context.Context) error { return nil }}
+	if _, err := apply.BuildApplyConfig(req, time.Now()); !errors.Is(err, apply.ErrUnsupportedOwnership) || !strings.Contains(err.Error(), "declares no ownership") {
+		t.Fatalf("an Apply without declared ownership was configured: %v", err)
+	}
+	workspaces := &fakeWorkspaces{}
+	req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = failingAgents{}, workspaces, failingRunner{}, &memoryEvidence{}, &fakePublisher{}
+	result, err := apply.Apply(context.Background(), req)
+	if !errors.Is(err, apply.ErrUnsupportedOwnership) || result.Outcome.Status != "" || len(workspaces.open) != 0 || len(workspaces.closed) != 0 {
+		t.Fatalf("the run started without ownership: %+v %v %v %v", result.Outcome, err, workspaces.open, workspaces.closed)
+	}
+}
+
+func TestApplyConfigRefusesAnExactFileAreaThatDoesNotExistInTheStartStand(t *testing.T) {
+	selection, raw := executionInputs(t, withOwnership(t, foreignFileOwnership))
+	libraryLayoutFiles(t, &selection, &raw)
+	attempt := preparedAttempt(t, selection, raw)
+	req := apply.ApplyRequest{RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, CheckRequest: checkRequest, RequireVolumeSubpaths: func(context.Context) error { return nil }}
+	if _, err := apply.BuildApplyConfig(req, time.Now()); !errors.Is(err, apply.ErrUnsupportedOwnership) || !strings.Contains(err.Error(), "realization/lending/Makefile") {
+		t.Fatalf("an unmountable exact-file area was configured: %v", err)
+	}
+	workspaces := &fakeWorkspaces{}
+	req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = failingAgents{}, workspaces, failingRunner{}, &memoryEvidence{}, &fakePublisher{}
+	if _, err := apply.Apply(context.Background(), req); !errors.Is(err, apply.ErrUnsupportedOwnership) || len(workspaces.open) != 0 {
+		t.Fatalf("the run started with an unenforceable shape: %v %v", err, workspaces.open)
 	}
 }

@@ -74,6 +74,15 @@ func newExtractAccounting(phase extractPhase, start extractStage) (extractAccoun
 // owner the layout and the registry shards give it.
 func (a extractAccounting) OwnerOf(p snapshot.Path) string { return a.ownerOfName(p.String()) }
 
+// findingOwner names the Manager that must fix an observation about a path: its
+// owner, else Root, because a finding always has an addressee.
+func (a extractAccounting) findingOwner(name string) string {
+	if owner := a.ownerOfName(name); owner != "" {
+		return owner
+	}
+	return organization.Root
+}
+
 func (a extractAccounting) ownerOfName(name string) string {
 	if a.phase == extractStructure {
 		return organization.Root
@@ -118,7 +127,7 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 			if d.Source.Origin == local.Source.Origin && !local.RepositoryArea.IsRoot() {
 				name = local.RepositoryArea.String() + "/" + name // the Model check's paths are relative to the model's boundary
 			}
-			add(a.ownerOfName(name), "model."+d.Code, name, positioned(d.Message, d.Position))
+			add(a.findingOwner(name), "model."+d.Code, name, positioned(d.Message, d.Position))
 		}
 		if len(checked.Diagnostics) == 0 {
 			add(organization.Root, "model.not_passed", "", "The candidate model does not pass the Model check: its status is "+string(checked.Status)+".")
@@ -130,7 +139,7 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 		if a.phase == extractStructure && d.Source.File == executionFile && strings.HasPrefix(d.Source.Field, "/checks") {
 			message += " " + a.offeredProfiles() // a defect of a proposed check
 		}
-		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, message)
+		add(a.findingOwner(d.Source.File), d.Code, d.Source.File, message)
 	}
 	if structural.execution.Status() != model.Passed {
 		return append(findings, guarded...)
@@ -296,7 +305,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 			kind, rule = "The canonical or Markitect control input", "Managers cannot change the model's dependencies or the project controls."
 		}
 		message := fmt.Sprintf("%s was %s; %s Restore it.", kind, what, rule) + originalText(before, code, &quoted)
-		findings = append(findings, CandidateFinding{Owner: a.ownerOfName(name), Code: code, Path: name, Message: message})
+		findings = append(findings, CandidateFinding{Owner: a.findingOwner(name), Code: code, Path: name, Message: message})
 	}
 	for _, before := range a.start.tree.Entries() {
 		name := before.Path().String()
@@ -413,7 +422,7 @@ func (a extractAccounting) ModelCheck(tree snapshot.Tree) []CandidateFinding {
 		if d.Source.Origin == local.Source.Origin && !local.RepositoryArea.IsRoot() {
 			name = local.RepositoryArea.String() + "/" + name
 		}
-		findings = append(findings, CandidateFinding{Owner: a.ownerOfName(name), Code: "model." + d.Code, Path: name, Message: positioned(d.Message, d.Position)})
+		findings = append(findings, CandidateFinding{Owner: a.findingOwner(name), Code: "model." + d.Code, Path: name, Message: positioned(d.Message, d.Position)})
 	}
 	if len(findings) == 0 {
 		findings = append(findings, CandidateFinding{Owner: organization.Root, Code: "model.not_passed", Message: "The candidate model does not pass the Model check: its status is " + string(checked.Status) + "."})

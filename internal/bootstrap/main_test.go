@@ -210,7 +210,7 @@ func TestDocumentationBindsTargetAndModelAndReadsBackActualWrite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	repo.Write(rule, strings.Replace(string(data), "Compile the complete", "Compile the complete and precise", 1))
+	repo.Write(rule, strings.Replace(string(data), "Check the complete", "Check the complete and precise", 1))
 	invoke(t, repo.Dir, 1, "docs", "--write", "--expect", next.View.PreviewDigest)
 	current := docsPreview(t, repo.Dir)
 	if current.View.CanonicalModelDigest == first.View.CanonicalModelDigest || current.View.ContentDigest == first.View.ContentDigest {

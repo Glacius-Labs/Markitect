@@ -21,8 +21,8 @@ func TestExecutionRejectsClosedContractViolations(t *testing.T) {
 	base := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
 	for _, tc := range []struct{ name, from, to, code string }{
 		{"version", "markitect.execution/v1", "markitect.execution/v2", "execution.version"},
-		{"strategy", "shared-workspace-v1", "unreviewed", "execution.strategy"},
-		{"old strategy", "shared-workspace-v1", "recursive-apply-v1", "execution.strategy"},
+		{"strategy", "recursive-passes-v1", "unreviewed", "execution.strategy"},
+		{"old strategy", "recursive-passes-v1", "shared-workspace-v1", "execution.strategy"},
 		{"root option", "budget:", "disableReview: true\nbudget:", "execution.unknown_key"},
 		{"nested option", "agentTurns: 120", "agentTurns: 120\n  unlimited: true", "execution.unknown_key"},
 		{"old limits section", "budget:", "limits: {maxRuns: 5}\nbudget:", "execution.unknown_key"},
@@ -36,23 +36,24 @@ func TestExecutionRejectsClosedContractViolations(t *testing.T) {
 		{"null", "agentTurns: 120", "agentTurns: null", "execution.yaml_feature"},
 		{"implicit null", "agentTurns: 120", "agentTurns:", "execution.yaml_feature"},
 		{"anchor", "agentTurns: 120", "agentTurns: &cap 120", "execution.yaml_feature"},
-		{"alias", "agentTurns: 120\n  rounds: 4", "agentTurns: &cap 120\n  rounds: *cap", "execution.yaml_feature"},
+		{"alias", "agentTurns: 120\n  passes: 12", "agentTurns: &cap 120\n  passes: *cap", "execution.yaml_feature"},
 		{"custom tag", "agentTurns: 120", "agentTurns: !cap 120", "execution.yaml_feature"},
 		{"URI tag", "apiVersion:", "!<tag:example.org,2026:execution>\napiVersion:", "execution.yaml_feature"},
 		{"multiple documents", "apiVersion:", "---\n{}\n---\napiVersion:", "execution.documents"},
 		{"numeric key", "agentTurns: 120", "99: 120", "execution.key"},
-		{"missing budget", "budget:\n  executionTime: 25m\n  turnTimeout: 10m\n  agentTurns: 120\n  rounds: 4\n", "", "execution.field_missing"},
+		{"missing budget", "budget:\n  executionTime: 25m\n  turnTimeout: 10m\n  agentTurns: 120\n  passes: 12\n", "", "execution.field_missing"},
 		{"missing execution time", "  executionTime: 25m\n", "", "execution.field_missing"},
 		{"missing turn timeout", "  turnTimeout: 10m\n", "", "execution.field_missing"},
 		{"missing agent turns", "  agentTurns: 120\n", "", "execution.field_missing"},
-		{"missing rounds", "  rounds: 4\n", "", "execution.field_missing"},
+		{"missing passes", "  passes: 12\n", "", "execution.field_missing"},
+		{"old rounds budget", "passes: 12", "rounds: 4", "execution.unknown_key"},
 		{"missing profiles", "profiles:\n  execute: library-agent\n  verify: library-agent\n", "", "execution.field_missing"},
 		{"missing verify profile", "  verify: library-agent\npackages:", "packages:", "execution.field_missing"},
 		{"unknown package", "  lending:", "  missing:", "execution.package"},
 		{"imported package", "  lending:", "  software:", "execution.package"},
 		{"wildcard package", "  lending:", `  "lending/*":`, "execution.package"},
 		{"package option", "profiles: {verify: library-agent}", "profiles: {verify: library-agent}\n    stepTimeout: 8m", "execution.unknown_key"},
-		{"package budget", "profiles: {verify: library-agent}", "profiles: {verify: library-agent}\n    budget: {rounds: 2}", "execution.unknown_key"},
+		{"package budget", "profiles: {verify: library-agent}", "profiles: {verify: library-agent}\n    budget: {passes: 2}", "execution.unknown_key"},
 		{"unknown definition", "library/callable-interface", "library/no-such-definition", "execution.definition_missing"},
 		{"short definition", "library/callable-interface", "callable-interface", "execution.definition_address"},
 		{"directory escape", "directory: realization", "directory: ../escape", "execution.directory"},
@@ -88,12 +89,12 @@ func TestExecutionOptionalAbsenceAndExplicitEmptySelections(t *testing.T) {
 	omitted := base[:strings.Index(base, "packages:\n")]
 	result := executionResult(t, omitted)
 	document, ok := result.Document()
-	if !ok || document.Packages != nil || document.Layout != nil || document.Checks != nil || document.Scope != nil || document.Defaults.Execute.Instructions != nil {
+	if !ok || document.Packages != nil || document.Ownership != nil || document.Team != nil || document.Checks != nil || document.Scope != nil || document.Defaults.Execute.Instructions != nil {
 		t.Fatalf("absence lost or invented: %+v %+v", document, result.Diagnostics())
 	}
-	explicit := executionResult(t, omitted+"packages: {}\nscope: []\nchecks: []\nlayout: {roots: []}\n")
+	explicit := executionResult(t, omitted+"packages: {}\nscope: []\nchecks: []\nownership: []\nteam: {maxHelpers: 1, helpers: []}\n")
 	document, ok = explicit.Document()
-	if !ok || document.Packages == nil || document.Scope == nil || document.Checks == nil || document.Layout == nil {
+	if !ok || document.Packages == nil || document.Scope == nil || document.Checks == nil || document.Ownership == nil || document.Team == nil {
 		t.Fatalf("explicit empty selections lost: %+v", explicit.Diagnostics())
 	}
 }

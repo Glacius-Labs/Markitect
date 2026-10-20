@@ -237,7 +237,7 @@ func (e *engine) standingLocked(b *strings.Builder, m *member) {
 		}
 		list(b, fmt.Sprintf("Your helper roles for delegate (at most %d at a time):", m.MaxHelpers), roles)
 	}
-	b.WriteString("\n" + modelAuthority + "\n")
+	b.WriteString("\n" + modelAuthority + " " + methodIndex() + "\n")
 }
 
 // assignmentLocked renders the Pass assignment: purpose and mandate, the sealed
@@ -365,6 +365,6 @@ func (e *engine) helperPromptLocked(h *helperRun) string {
 	} else {
 		fmt.Fprintf(&b, "You may read the whole project and change only %s; the registry stays with your Manager.\n", strings.Join(paths, ", "))
 	}
-	b.WriteString(modelAuthority + "\nWhen your task is done, report your result with the tool report.\n")
+	b.WriteString(modelAuthority + " " + methodIndex() + "\nWhen your task is done, report your result with the tool report.\n")
 	return b.String()
 }

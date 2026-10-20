@@ -1,6 +1,6 @@
 # Architecture
 
-Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 Model check and read-only preparation, a separately guarded generated view and the recursive Apply of [DEC-056](concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace) (with DEC-058 to DEC-060) plus a first Extract, pending owner acceptance. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
+Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), Plan, Prepare, Implement and Verify as one recursive Pass process, plus a first Extract on the same process, pending provider evidence and owner acceptance. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
 
 ## Product flow
 
@@ -10,7 +10,7 @@ The repository adapter captures actual sources. ModelService checks only complet
 
 Generated views use `internal/modeldocs` and its document-writer port, implemented by `internal/adapters/documents`. Their guard is independent of Apply publication.
 
-`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `run.Reconcile` over `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file-based owner channel and evidence.
+`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `apply.Apply`, which composes the Passes of `run.Open`/`Pass`/`Finish` over `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file-based owner channel and evidence.
 
 ## Authority and evidence
 
@@ -56,7 +56,7 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 ## Runtime layer
 
-`internal/run` reconciles one bound run through its ports: fresh Verify of the start stand, parallel Execute of the Managers in one shared working tree, observed quiescence, one immutable candidate per closing Verify round and repair through the owners until a round is green or the budget ends. It performs no file, process or provider I/O and keeps no journal; a run is not restored after an interruption. Managers are trusted to write only their own area; the engine records observations and accounting rejects registrations outside it.
+`internal/run` is the Orchestrator of one bound run: it runs each Pass as the one recursive base process for every Manager (explicit basis, technical check of the stable submitted area, parent acceptance, children, integration, complete result), seals it after the whole-stand Model check and File check, and runs Verify with fresh reviewers on one immutable candidate whose findings stay open until independently closed. It performs no file, process or provider I/O and keeps no journal; a run is not restored after an interruption. Every Agent's container enforces its Manager's ownership through directory and exact-file overlays of the shared tree.
 
 The [container runtime](../internal/adapters/container/README.md) implements the isolation boundary ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session containers from an immutable engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Orchestrator tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex and Claude Code.
 

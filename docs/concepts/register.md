@@ -74,9 +74,9 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-059](#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) | Decision | Enforced responsibilities, build start and an outside oracle | Accepted; implemented (PR #472) |
 | [DEC-060](#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) | Decision | Owners realize, others use; parents settle cross-area matters | Accepted; implemented |
 | [DEC-061](#dec-061-what-an-extracted-model-contains) | Decision | What an extracted model contains | Accepted; implemented |
-| [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Superseded by DEC-064; earlier behavior implemented |
+| [DEC-062](#dec-062-start-stand-drift-is-the-owners-first-work) | Decision | Start-stand drift is the owner's first work | Superseded by DEC-064; removed from the implementation |
 | [DEC-063](#dec-063-the-model-is-authoritative-defects-escalate) | Decision | The model is authoritative; defects escalate | Amended by DEC-064; model authority retained |
-| [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Accepted; implementation prepared |
+| [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Accepted; implemented in source, runtime evidence pending |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -767,7 +767,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-064 Checked recursive Apply passes and Manager teams
 
-- **Status:** Accepted by the owner, 20 October 2026; implementation handoff prepared locally, no runtime change or new provider evidence. [Verbatim adoption and conversation](sources/terminology-and-file-accounting-20261020.md#owner-adoption-and-implementation-preparation).
+- **Status:** Accepted by the owner, 20 October 2026. [Verbatim adoption and conversation](sources/terminology-and-file-accounting-20261020.md#owner-adoption-and-implementation-preparation). Implemented in source on branch `dev/manager-pass-process` ([runtime contract](../design/canonical-model/manager-apply-runtime.md)); no provider Run, hosted CI or owner acceptance yet.
 - **Behavior owner:** [Apply workflow and recursive Manager passes](../design/canonical-model/manager-apply-workflow.md). Apply is the complete workflow; Execute groups Plan, Prepare and Implement; Verify is an independent separate Pass afterward. All use one parent-first recursive base process with a shared result envelope/lifecycle, explicit basis acceptance, child work, bidirectional tree questions, parent acceptance of proposals and upward integration. Repeated purposes have new Pass identities; no separate correction engine is introduced.
 - **Strict gates:** Model check and separate File check block before work and at accepted Pass boundaries. No automatic model/accounting repair or initial drift exception remains. New owned files may be created during work, but validly registered/covered before accepted basis/completion. Registered semantic artifact defects remain normal owner work.
 - **Ownership:** Flexible repository layouts, repository-relative local registries, whole-directory and exact-file selectors, most-specific unambiguous ownership, enforced per-Agent container writes and project-wide reads. Managers author only their own shards; the Orchestrator alone produces the checked read-only versioned global view.

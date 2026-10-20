@@ -44,11 +44,11 @@ func TestEvidenceKeepsEachEventWholeAndVisibleWhenRecordReturns(t *testing.T) {
 		t.Fatalf("evidence directory: %s", e.Dir())
 	}
 	at := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-	if err := e.Record(runport.Event{At: at, Kind: "round.started", Round: 1, Data: map[string]any{"tree": "t1"}}); err != nil {
+	if err := e.Record(runport.Event{At: at, Kind: "pass.started", Pass: "plan-1", Data: map[string]any{"tree": "t1"}}); err != nil {
 		t.Fatal(err)
 	}
 	// Each Record is on disk before it returns, so a second reader sees it now.
-	if events := readEvents(t, e); len(events) != 1 || events[0].Kind != "round.started" || !events[0].At.Equal(at) || events[0].Round != 1 {
+	if events := readEvents(t, e); len(events) != 1 || events[0].Kind != "pass.started" || !events[0].At.Equal(at) || events[0].Pass != "plan-1" {
 		t.Fatalf("event not visible after Record: %+v", events)
 	}
 	var wg sync.WaitGroup
