@@ -142,11 +142,11 @@ The correction is the Runtime row above. This attempt displaced A6.
 - The correction made every value-taking option take its next token. The second Verify closed F1–F4 as resolved.
 - That Verify still waited on two of Root's own expectation errors, and a third Verify confirmed them.
 - Outside checks on the publication: oracle d1 21/21, name checker 8/8, own tests 127 (from 26).
-- Changed: `app.py` (the repair), the README, five registries, eight test files, and an unrequested clamp of `available` in `orders/orderbook.py`. That is 15 files and 861 added lines, mostly optional tests.
+- Changed: `app.py` (the repair), the README, five registries, seven test files (two of them new), and an unrequested clamp of `available` in `orders/orderbook.py`. That is 15 paths, with 861 added lines in the 13 changed files plus the two new test modules, mostly optional tests.
 
-**Findings and changes per run.** No false genuine finding was raised in any run; every genuine finding named a real model violation (the hyphen-name refusal in V1 attempt 2 and A1, `--help` exiting 0 in A4). Unjustified changes: A1's `available` clamp and extra tests, A2's nine paths, and A4's unasked maximum of 80. Every applied publication (A1, A2, A4, A5) carried a receipt with each path read back after writing; A2's second run published `no_change`.
+**Findings and changes per run.** No false genuine finding was raised in any run; every genuine finding named a real model violation (the hyphen-name refusal in V1 attempt 2 and A1, `--help` exiting 0 in A4). Unjustified changes: A1's `available` clamp and extra tests, A2's eleven paths, and A4's unasked maximum of 80. Every applied publication (A1, A2, A4, A5) carried a receipt with each path read back after writing; A2's second run published `no_change`.
 
-**A2.** Verified with one clean Verify, but published 9 paths and 757 added lines: new unit tests, two README clarifications and an internal catalog refactor. No finding asked for any of it, and the model's "meaningful automated tests" were already met by the 26 reference tests.
+**A2.** Verified with one clean Verify, but published 11 paths: nine changed files with 757 added lines and two new test modules: new unit tests, two README clarifications and an internal catalog refactor. No finding asked for any of it, and the model's "meaningful automated tests" were already met by the 26 reference tests.
 
 The accepted plans said "unit tests for distinct claims that lack evidence". This traces to this stream's Plan mandate (from #536), which asked for distinct claims, input classes and public-boundary checks as intended evidence. Correction `b976d8f0`/`e9643e4e`, plus a review qualifier, keeps conforming artifacts as their own evidence and leaves claim coverage to Verify's probes. Its recheck displaced A3.
 
