@@ -214,10 +214,8 @@ Corrections `fcd0fb54` and `488a582d` were made after the series and are unevalu
 - a child disposition that is voided after it replaced Root's pending one leaves the receipt plainly undisposed, so the Reassess shortcut is lost (safe direction);
 - Root probing a child's claim after the child is Done needs a reopen, which also invalidates the child's consumers.
 
-**Recommended next evidence**, using the same frozen kit and limits:
+**Next evidence.** The owner placed these steps in the [container-reuse sequence](../implementation-plan.md#container-reuse-after-the-current-evaluation) instead of running them on this candidate now. After the workflow baseline is selected, the read-only candidate mount for probes comes with the container-lifecycle change, if that baseline keeps probes. The matched retest then includes:
 
-1. Rerun A4 to test the public-choice correction, since a question must reach the owner.
-2. Rerun A2 once to measure Verify cost after the owner-judgment correction.
-3. Then run the Haiku pass the owner named: V1, V2 and A1 first.
-
-Before any wider series, implement the read-only candidate mount for probes.
+1. A4, to test the public-choice correction, since a question must reach the owner;
+2. A2, to measure Verify cost after the owner-judgment correction;
+3. the Haiku pass the owner named, V1, V2 and A1, only if A4 routes the question.
