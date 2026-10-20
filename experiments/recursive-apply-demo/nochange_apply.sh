@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Separate check after the demonstration: Apply M2 again on the accepted A2
-# (no model change), on the final head. Expected: Verify only, no Execute,
-# no_change publication, provider homes removed.
+# (no model change), on the same build. Expected: Execute assesses and changes
+# nothing, Verify is green, no_change publication, provider homes removed.
 # Usage: nochange_apply.sh BUILD_DIR DEMO_ATTEMPT NEW_ATTEMPT
 set -uo pipefail
 BUILD="$1"; DEMO_ATTEMPT="$2"; ATTEMPT="$3"
