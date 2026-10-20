@@ -3,9 +3,11 @@
 `markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the [cockpit concept](../../../docs/design/cockpit.md) in five slices: the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay; live observation of a running Apply through the same projections; the cockpit entry with the project, running runs, owner questions, run history and the owner's answer; proposals for the execution settings; and model sessions in which an Agent proposes model changes on the owner's prompts ([working through the cockpit](../../../docs/design/cockpit.md#working-through-the-cockpit)). The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
 
 ```text
-markitect cockpit --state DIR [--state DIR ...] [--repo .] [--listen 127.0.0.1:7341]
-markitect cockpit --run-config PATH [--runtime-profile PATH] [--repo .]
+markitect cockpit --state DIR [--state DIR ...] [--repo .] [--model PATH] [--dependency PATH ...] [--listen 127.0.0.1:7341]
+markitect cockpit --run-config PATH [--runtime-profile PATH] [--repo .] [--model PATH] [--dependency PATH ...]
 ```
+
+`--model` and `--dependency` select the repository's model and its dependency models as `markitect check` and `markitect apply` select them; a project whose model imports dependency models needs them for its observation, its proposals and its model sessions.
 
 ## Read boundary
 

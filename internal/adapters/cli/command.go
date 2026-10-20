@@ -157,6 +157,8 @@ cockpit options:
   --state DIR              state directory whose runs to observe; repeat
   --run-config PATH        observe the state directory of this run configuration
   --repo PATH              repository to observe and propose settings for (default .)
+  --model PATH, --dependency PATH
+                           the model and dependency models, as for check
   --runtime-profile PATH   with --run-config: enable model sessions with this Runtime profile
   --listen ADDR            loopback address (default 127.0.0.1:7341)
   Serves a local web view of the recorded and running runs until interrupted.

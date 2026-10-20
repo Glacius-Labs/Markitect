@@ -7,17 +7,22 @@ import (
 	"fmt"
 	"io"
 	"path/filepath"
+
+	"github.com/Glacius-Labs/Markitect/internal/apply"
 )
 
 // CockpitRequest selects what the cockpit observes: state directories named
-// directly or through a run configuration, the repository whose identity it
-// shows, and its loopback listen address. A run configuration together with
-// a Runtime profile enables model sessions.
+// directly or through a run configuration, the repository with its model and
+// dependency models as check selects them, and its loopback listen address.
+// Repository is the --repo value as given; Selection carries its absolute
+// root. A run configuration together with a Runtime profile enables model
+// sessions.
 type CockpitRequest struct {
 	States         []string
 	RunConfig      string
 	RuntimeProfile string
 	Repository     string
+	Selection      apply.InputSelection
 	Listen         string
 }
 
@@ -45,6 +50,9 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 	runtimeProfile := flags.String("runtime-profile", "", "Runtime profile that enables model sessions with --run-config")
 	listen := flags.String("listen", "", "loopback address to listen on")
 	repo := flags.String("repo", ".", "repository to observe and propose settings for")
+	manifest := flags.String("model", ".markitect/model.yaml", "explicit model.yaml")
+	var dependencies manifestList
+	flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			io.WriteString(stdout, help)
@@ -64,8 +72,27 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 		fmt.Fprintln(stderr, "--runtime-profile requires --run-config and an explicit absolute native path")
 		return 2
 	}
-	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Repository: *repo, Listen: *listen}
-	err := c.cockpit(ctx, request, func(url string) {
+	root, err := filepath.Abs(*repo)
+	if err != nil {
+		fmt.Fprintln(stderr, err)
+		return 2
+	}
+	selection := apply.InputSelection{Repository: root}
+	selection.Local, err = selectManifest(root, *manifest)
+	for _, dependency := range dependencies {
+		if err != nil {
+			break
+		}
+		selected, e := selectManifest(root, dependency)
+		err = e
+		selection.Dependencies = append(selection.Dependencies, selected)
+	}
+	if err != nil {
+		fmt.Fprintln(stderr, "invalid explicit model selection")
+		return 2
+	}
+	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Repository: *repo, Selection: selection, Listen: *listen}
+	err = c.cockpit(ctx, request, func(url string) {
 		emit(map[string]any{"operation": "cockpit", "status": "serving", "url": url})
 	})
 	if err != nil {
