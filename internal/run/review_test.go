@@ -245,12 +245,70 @@ func TestChildReportsSatisfiedWhileItsAncestorsFindingAwaitsTheAncestor(t *testi
 	if out.Status != Verified {
 		t.Fatalf("status %s: %s", out.Status, out.Reason)
 	}
-	if childSatisfied.Refused {
-		t.Errorf("the child's satisfied was refused: %s", childSatisfied.Text)
+	if childSatisfied.Text == "" || childSatisfied.Refused {
+		t.Errorf("the child's satisfied in the second Verify was refused or never tried: %+v", childSatisfied)
 	}
 	f1 := out.Findings[0]
 	if !f1.Closed || f1.RaisedBy != "." || f1.ClosedPass != "p4" {
 		t.Errorf("F1 %+v; want it closed by Root in p4", f1)
+	}
+}
+
+// Only a finding an ancestor raised leaves a child free to report satisfied: a
+// finding raised within the submitter's responsibility, by itself or by a
+// descendant, still refuses it, and a finding an ancestor raised alone supports
+// needs_correction.
+func TestOnlyAnAncestorsFindingLeavesSatisfiedOpen(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	var leafSatisfied, parentSatisfied, inheritedNeeds ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Kind != VerifyTurn {
+			c.protocol()
+			return nil
+		}
+		switch {
+		case c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on your own contribution"):
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
+			return nil
+		case c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on your own contribution"):
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			return nil
+		case c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "submit"):
+			leafSatisfied = c.result(nil)
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			return nil
+		case c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "integrate"):
+			parentSatisfied = c.result(nil)
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			return nil
+		case c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit"):
+			inheritedNeeds = c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			return nil
+		case c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	res := r.Pass(verifySpec())
+	f.finish(r, "")
+	if res.Verdict != NeedsCorrection {
+		t.Fatalf("verdict %s", res.Verdict)
+	}
+	if !leafSatisfied.Refused || !strings.Contains(leafSatisfied.Text, "stay open") {
+		t.Errorf("an own open finding allowed satisfied: %+v", leafSatisfied)
+	}
+	if !parentSatisfied.Refused || !strings.Contains(parentSatisfied.Text, "stay open") {
+		t.Errorf("a descendant's open finding allowed satisfied: %+v", parentSatisfied)
+	}
+	if inheritedNeeds.Text == "" || inheritedNeeds.Refused {
+		t.Errorf("an ancestor's open finding did not support needs_correction: %+v", inheritedNeeds)
 	}
 }
 

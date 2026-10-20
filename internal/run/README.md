@@ -150,12 +150,15 @@ shows the child's evidence and every probe it ran in the Pass, adverse ones incl
 
 An adverse receipt on a review's candidate blocks until it is disposed of: a genuine
 finding that cites it (a violation), a reasoned `expectation_error` when the probe itself was
-wrong (a failed assertion, or an error the probe caused, such as exceeding the check's time limit),
+wrong (a failed assertion, or an error within the probe's own execution, such as an exceeded
+time limit, together with a passing receipt of the same obligation on the candidate),
 or a `rerun` that replaces an `error` by a passing exact rerun of it (a repetition always
 repeats the original probe, and one passing repetition also disposes of the repetitions
 that erred). A failed assertion is
-never disposed of by running it again; an error that points at the candidate, such as a hang,
-is a genuine finding. Dispositions take effect with
+never disposed of by running it again; an error outside the probe's own execution (not
+started or uncertain) only by a passing exact rerun; and an error that points at the
+candidate, such as a hang, is a genuine finding. One disposition of an error also disposes
+of the erring repetitions of its probe within the responsibility. Dispositions take effect with
 their submission's acceptance, and an expectation-error or rerun disposition falls when
 that submission is reopened or invalidated; a parent's acceptance is the independent
 assessment of a child's own disproof. The reviewer of an obligation's owner may also judge

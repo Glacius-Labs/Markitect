@@ -112,6 +112,7 @@ func reportSchema(spec PassSpec) schema {
 			"reason":   str("expectation_error: why the probe, not the candidate, was wrong, derived from the model."),
 			"evidence": str("expectation_error: the evidence of the disproof, such as the Definition text and a corrected or narrower passing receipt."),
 			"rerun":    str("rerun: the passing receipt that repeated it with probe.rerun."),
+			"passing":  str("expectation_error of an error receipt: a passing receipt of the same obligation on this candidate that establishes the claim without the erring probe."),
 		})}
 	}
 	if spec.Plans {

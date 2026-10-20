@@ -113,7 +113,11 @@ type ProbeDisposition struct {
 	Evidence string `json:"evidence,omitempty"`
 	Finding  string `json:"finding,omitempty"`
 	Rerun    string `json:"rerun,omitempty"`
-	Pending  bool   `json:"pending,omitempty"`
+	// Passing names, for an error disposed of as an expectation error, the
+	// passing receipt of the same obligation on the same stand that establishes
+	// the claim without the erring probe.
+	Passing string `json:"passing,omitempty"`
+	Pending bool   `json:"pending,omitempty"`
 }
 
 func (r *ProbeReceipt) adverse() bool { return r.Outcome != ProbePassed }
@@ -166,6 +170,7 @@ type dispositionIn struct {
 	Reason   string `json:"reason"`
 	Evidence string `json:"evidence"`
 	Rerun    string `json:"rerun"`
+	Passing  string `json:"passing"`
 }
 
 // probesAvailable reports whether a required check offers an execution profile
@@ -403,7 +408,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		fmt.Fprintf(&b, "\nOutput:\n%s", r.Output)
 	}
 	if r.Outcome != ProbePassed && p.spec.Review {
-		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. An error the probe caused itself, such as a probe too large for the check's time limit, is an expectation_error with reason and evidence; cover its claim with other evidence. An error that points at the candidate, such as a hang, is a genuine finding.")
+		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. An error within the probe's own execution, such as a probe too large for the check's time limit, is an expectation_error with reason, evidence and a passing receipt of the same obligation on this candidate; a timeout can also be a hang of the candidate, so that passing probe must establish the claim itself. An error that points at the candidate, such as a hang, is a genuine finding.")
 	}
 	return ToolAnswer{Text: b.String()}
 }
@@ -603,6 +608,7 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 	}
 	candidate := m.p.tree.Digest().String()
 	out := map[string]ProbeDisposition{}
+	listed := map[string]bool{}
 	for i, d := range in {
 		name := fmt.Sprintf("dispositions[%d]", i)
 		r := e.receiptLocked(strings.TrimSpace(d.Receipt))
@@ -619,15 +625,29 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			return nil, fmt.Errorf("%s: %s is already disposed of", name, r.ID)
 		case r.Disposition != nil && r.Requester == m.Path && r.Pass == m.p.id:
 			return nil, fmt.Errorf("%s: your disproof of %s awaits an independent assessment in a later review", name, r.ID)
-		case out[r.ID].As != "" && out[r.ID].Rerun == "":
+		case listed[r.ID]:
 			return nil, fmt.Errorf("%s: %s is listed twice", name, r.ID)
 		}
+		listed[r.ID] = true
 		x := ProbeDisposition{As: d.As, By: m.Path, Pass: m.p.id}
 		switch d.As {
 		case DisposedExpectationError:
-			// A failed assertion or an error the probe caused itself, such as a
-			// probe too large for the check's time limit, which no exact rerun can
-			// pass. The same independent assessment decides it.
+			// A failed assertion, or an error within the probe's own execution
+			// that no exact rerun passes, such as a probe too large for the
+			// check's time limit. A timeout also looks like a hang of the
+			// candidate, so an error names a passing receipt of the same
+			// obligation that establishes the claim without the erring probe.
+			// The same independent assessment decides both.
+			if r.Outcome == ProbeError {
+				if !probeCaused(r) {
+					return nil, fmt.Errorf("%s: %s erred outside the probe's own execution (%s); only a passing exact rerun (probe.rerun) disposes of it", name, r.ID, describeOutcome(r))
+				}
+				passing := e.receiptLocked(strings.TrimSpace(d.Passing))
+				if passing == nil || passing.Outcome != ProbePassed || passing.Stand != r.Stand || passing.Obligation != r.Obligation || !e.answersForLocked(passing, m.Path) {
+					return nil, fmt.Errorf("%s: an error disposed of as expectation_error names in passing a passing receipt of %s on this candidate that establishes the claim without the erring probe", name, r.Obligation)
+				}
+				x.Passing = passing.ID
+			}
 			reason, err := toolText(name+".reason", d.Reason)
 			if err != nil {
 				return nil, err
@@ -640,6 +660,13 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			// Root's disproof of its own expectation in the same Pass has no
 			// independent assessor yet.
 			x.Pending = r.Requester == m.Path && r.Pass == m.p.id && m.Parent == ""
+			if r.Outcome == ProbeError {
+				for _, y := range e.erringRepetitionsLocked(r, m.Path) {
+					if !listed[y.ID] {
+						out[y.ID] = x
+					}
+				}
+			}
 		case DisposedRerun:
 			if r.Outcome != ProbeError {
 				return nil, fmt.Errorf("%s: %s failed its assertion; a failing assertion is disposed of by a finding or a reasoned expectation_error, never by running it again", name, r.ID)
@@ -653,11 +680,8 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 				return nil, fmt.Errorf("%s: rerun names a passing receipt that repeated %s exactly (probe.rerun) on the same candidate", name, root)
 			}
 			x.Rerun = later.ID
-			// The passing repetition disposes of the original probe and of
-			// every repetition of it that erred within the responsibility;
-			// another requester's receipt stays for its own reviewer.
-			for _, y := range e.receipts {
-				if (y.ID == root || y.Rerun == root) && y.Outcome == ProbeError && y.Stand == r.Stand && y.Disposition == nil && y.ID != r.ID && e.answersForLocked(y, m.Path) {
+			for _, y := range e.erringRepetitionsLocked(r, m.Path) {
+				if !listed[y.ID] {
 					out[y.ID] = x
 				}
 			}
@@ -667,6 +691,32 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 		out[r.ID] = x
 	}
 	return out, nil
+}
+
+// probeCaused reports whether an error receipt ended within the probe's own
+// execution: it ran out of its time limit, or it exited saying it could not run
+// or was killed. Any other error is the Runtime's and only an exact rerun can
+// replace it.
+func probeCaused(r *ProbeReceipt) bool {
+	return r.Started && (r.TimedOut || r.Exited && (r.ExitCode == 126 || r.ExitCode == 127 || r.ExitCode >= 128))
+}
+
+// erringRepetitionsLocked lists the other erring, undisposed runs of r's
+// original probe on r's stand within the responsibility: one disposition of an
+// error disposes of its repetitions too, while another requester's receipt
+// stays for its own reviewer.
+func (e *engine) erringRepetitionsLocked(r *ProbeReceipt, responsibility string) []*ProbeReceipt {
+	root := r.ID
+	if r.Rerun != "" {
+		root = r.Rerun
+	}
+	var out []*ProbeReceipt
+	for _, y := range e.receipts {
+		if (y.ID == root || y.Rerun == root) && y.Outcome == ProbeError && y.Stand == r.Stand && y.Disposition == nil && y.ID != r.ID && e.answersForLocked(y, responsibility) {
+			out = append(out, y)
+		}
+	}
+	return out
 }
 
 // receiptsOf validates the receipts a finding cites.
