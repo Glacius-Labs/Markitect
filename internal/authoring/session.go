@@ -117,12 +117,22 @@ const (
 	maxToolText    = 4000
 )
 
-// The writable part of a session's workspace: the model and the registry.
-var sessionMounts = []run.PathMount{{Path: ".markitect/model", Writable: true}, {Path: ".markitect/registry", Writable: true}}
+// registryDir holds the registry shards; the model's own directory comes from
+// its manifest.
+const registryDir = ".markitect/registry"
 
-func sessionPath(path string) bool {
-	return strings.HasPrefix(path, ".markitect/model/") || strings.HasPrefix(path, ".markitect/registry/")
+// mounts are the writable part of a session's workspace: the model's
+// Definitions and the registry.
+func (b sessionBasis) mounts() []run.PathMount {
+	return []run.PathMount{{Path: b.ModelDir, Writable: true}, {Path: registryDir, Writable: true}}
 }
+
+// allowed says whether a proposal of the session may change a path.
+func (b sessionBasis) allowed(path string) bool {
+	return strings.HasPrefix(path, b.ModelDir+"/") || strings.HasPrefix(path, registryDir+"/")
+}
+
+type sessionBasis struct{ apply.SessionBasis }
 
 var sessionTools = []run.ToolSpec{
 	{Name: "check", Description: "Run the project's structural check (Model check, registry, File check, execution settings and context selection) on your workspace as it is now. It lists the changed files and every finding and changes nothing.",
@@ -139,11 +149,10 @@ type session struct {
 	start        SessionStart
 	volume, home string
 	conversation string
-	containers   bool // a turn observed a started container, so the home volume exists
-	cancel       context.CancelFunc
-	done         chan struct{} // closed when the current turn ended
-	prepared     chan struct{} // closed when StartSession finished
-	closed       chan struct{} // closed when the session is closed
+	cancel       context.CancelFunc // stops the preparation or the current turn
+	done         chan struct{}      // closed when the current turn ended
+	prepared     chan struct{}      // closed when StartSession finished
+	closed       chan struct{}      // closed when the session is closed
 	record       *sessionRecord
 }
 
@@ -203,8 +212,11 @@ func (s *Service) StartSession(ctx context.Context, prompt string) (Session, err
 	ss := &session{Session: Session{ID: id, State: Preparing, Turns: []SessionTurn{}}, prepared: make(chan struct{}), closed: make(chan struct{})}
 	s.sessions[id] = ss
 	s.sessionOrder = append(s.sessionOrder, id)
+	ctx, cancelPreparation := context.WithCancel(ctx)
+	ss.cancel = cancelPreparation
 	s.mu.Unlock()
 	defer close(ss.prepared)
+	defer cancelPreparation()
 
 	var record *sessionRecord
 	materialized := false
@@ -231,7 +243,7 @@ func (s *Service) StartSession(ctx context.Context, prompt string) (Session, err
 	if err != nil {
 		return fail(start.Ports, err)
 	}
-	if start.Basis.Turns < 1 || start.Basis.TurnTimeout <= 0 || start.Basis.Profile == "" {
+	if start.Basis.Turns < 1 || start.Basis.TurnTimeout <= 0 || start.Basis.Profile == "" || start.Basis.ModelDir == "" {
 		return fail(start.Ports, errors.New("the execution budget gives the session no Agent turn or no turn timeout"))
 	}
 	inputs := start.Basis.Attempt.Model().Inputs()
@@ -241,8 +253,9 @@ func (s *Service) StartSession(ctx context.Context, prompt string) (Session, err
 	if err := start.Ports.RequireVolumeSubpaths(ctx); err != nil {
 		return fail(start.Ports, err)
 	}
-	directories := make([]string, len(sessionMounts))
-	for i, m := range sessionMounts {
+	mounts := sessionBasis{start.Basis}.mounts()
+	directories := make([]string, len(mounts))
+	for i, m := range mounts {
 		directories[i] = m.Path
 	}
 	// A failed or uncertain materialization may still have created the
@@ -261,7 +274,7 @@ func (s *Service) StartSession(ctx context.Context, prompt string) (Session, err
 		s.mu.Unlock()
 		return fail(start.Ports, errors.New("the session was closed while it was prepared"))
 	}
-	ss.start, ss.volume, ss.home, ss.record = start, observed.Volume, id+"-home", record
+	ss.start, ss.volume, ss.home, ss.record, ss.cancel = start, observed.Volume, id+"-home", record, nil
 	ss.Created, ss.Head, ss.Profile = s.now().UTC(), inputs.Head, start.Basis.Profile
 	ss.TurnTimeout, ss.MaxTurns, ss.Evidence = shortDuration(start.Basis.TurnTimeout), start.Basis.Turns, record.dir
 	record.write("session.start", map[string]any{"head": ss.Head, "profile": ss.Profile, "turnTimeout": ss.TurnTimeout, "maxTurns": ss.MaxTurns, "workspace": ss.volume, "home": ss.home})
@@ -314,13 +327,17 @@ func (s *Service) CloseSession(ctx context.Context, id string) (Session, error) 
 		closed := ss.closed
 		s.mu.Unlock()
 		<-closed
-		return s.closedView(ss)
+		view, _ := s.Session(id)
+		return view, nil
 	case Preparing:
+		// The preparation is cancelled; StartSession releases what it made.
 		ss.State = Closing
+		ss.cancel()
 		prepared := ss.prepared
 		s.mu.Unlock()
 		<-prepared
-		return s.closedView(ss)
+		view, _ := s.Session(id)
+		return view, nil
 	}
 	ss.State = Closing
 	if ss.cancel != nil {
@@ -338,16 +355,11 @@ func (s *Service) CloseSession(ctx context.Context, id string) (Session, error) 
 	if observed, err := ports.Workspaces.Close(ctx, run.WorkspaceID(id+"-work")); err != nil || !observed.Closed {
 		errs = append(errs, errors.Join(err, fmt.Errorf("the workspace %s-work was not observed closed: %s", id, observed.Reason)))
 	}
-	s.mu.Lock()
-	containers := ss.containers
-	s.mu.Unlock()
+	// A home that no container used may not exist; as for Apply, a failed
+	// removal is recorded, not a failure of the close.
 	var homeErr error
 	if ports.RemoveVolume != nil {
 		homeErr = ports.RemoveVolume(ctx, ss.home)
-	}
-	// A home that no observed container used may never have been created.
-	if homeErr != nil && containers {
-		errs = append(errs, homeErr)
 	}
 
 	s.mu.Lock()
@@ -362,15 +374,6 @@ func (s *Service) CloseSession(ctx context.Context, id string) (Session, error) 
 	s.mu.Unlock()
 	close(ss.closed)
 	return view, err
-}
-
-func (s *Service) closedView(ss *session) (Session, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if ss.Error != "" {
-		return ss.view(), errors.New(ss.Error)
-	}
-	return ss.view(), nil
 }
 
 // CloseSessions closes every session that is not closed, as a stopping cockpit
@@ -411,8 +414,8 @@ func (s *Service) beginTurnLocked(ss *session, prompt string) Session {
 	ss.cancel, ss.done = cancel, done
 	request := run.Turn{
 		ID: turn.ID, Manager: ".", Kind: run.ExecuteTurn, Profile: ss.Profile,
-		Workspace: ss.volume, ReadOnly: true, Mounts: sessionMounts, Home: ss.home, Resume: ss.conversation,
-		Prompt: sessionPrompt(prompt, ss.start.Basis.Guide, n == 1), Tools: sessionTools, Timeout: ss.start.Basis.TurnTimeout,
+		Workspace: ss.volume, ReadOnly: true, Mounts: sessionBasis{ss.start.Basis}.mounts(), Home: ss.home, Resume: ss.conversation,
+		Prompt: sessionPrompt(prompt, ss.start.Basis, n == 1), Tools: sessionTools, Timeout: ss.start.Basis.TurnTimeout,
 		Transcript: filepath.Join(ss.record.dir, "transcripts", turn.ID+".jsonl"),
 	}
 	ss.record.write("prompt", map[string]any{"turn": turn.ID, "text": prompt})
@@ -444,9 +447,6 @@ func (s *Service) runTurn(ctx context.Context, cancel context.CancelFunc, done c
 	}
 	if result.Conversation != "" {
 		ss.conversation = result.Conversation
-	}
-	if !result.Started.IsZero() {
-		ss.containers = true
 	}
 	ss.Usage = ss.Usage.Add(result.Usage)
 	ss.record.write("turn.end", map[string]any{"turn": request.ID, "usage": result.Usage, "conversation": result.Conversation, "stopped": result.Stopped, "reason": t.Reason})
@@ -504,7 +504,7 @@ func (s *Service) sessionTool(ctx context.Context, ss *session, index int, name 
 		return run.ToolAnswer{Text: checkText(changes, apply.CheckProposal(ss.start.Basis.Attempt, harvest.Tree))}
 	}
 	st := stand{attempt: ss.start.Basis.Attempt, tree: inputs.Raw.Census, head: inputs.Head}
-	p, err := s.propose(st, Proposal{Kind: "model", Title: "Model change from session " + ss.ID, Session: ss.ID, Summary: text}, harvest.Tree, sessionPath)
+	p, err := s.propose(st, Proposal{Kind: "model", Title: "Model change from session " + ss.ID, Session: ss.ID, Summary: text}, harvest.Tree, sessionBasis{ss.start.Basis}.allowed)
 	if err != nil {
 		return run.ToolAnswer{Text: err.Error(), Refused: true}
 	}
@@ -564,16 +564,19 @@ func checkText(changes []snapshot.Change, c apply.ProposalCheck) string {
 
 // sessionPrompt states the task, the model's language and how to answer; a
 // later prompt continues the same conversation.
-func sessionPrompt(prompt, guide string, first bool) string {
+func sessionPrompt(prompt string, basis apply.SessionBasis, first bool) string {
+	writable := basis.ModelDir + "/ and " + registryDir + "/"
 	if !first {
-		return "The owner writes:\n\n" + prompt + "\n\nThe same rules apply: change only .markitect/model/ and .markitect/registry/, use check, submit a proposal when a change is ready, and use answer otherwise."
+		return "The owner writes:\n\n" + prompt + "\n\nThe same rules apply: change only " + writable + ", use check, submit a proposal when a change is ready, and use answer otherwise."
 	}
 	return `You work on the canonical model of the project in /work. The owner asks:
 
 ` + prompt + `
 
-Change only files under .markitect/model/ and .markitect/registry/; everything else in /work is read-only. The owner is the author of intent: change the model as the owner asks and do not decide open questions on the owner's behalf. If the model or the request is contradictory or unclear, say so instead of resolving it.
-` + guide + `
+Change only files under ` + writable + `; everything else in /work is read-only. The owner is the author of intent: change the model as the owner asks and do not decide open questions on the owner's behalf. If the model or the request is contradictory or unclear, say so instead of resolving it.
+` + basis.Guide + `
+The registry (` + registryDir + `/<package>/registry.yaml) lists the project's files: each entry names a path, its form, the Definitions it realizes and why. When you rename or remove a Definition, update the entries that name it; a new Definition needs no entry. The check reports entries that no longer resolve.
+
 Answer through the tools. Use check to see what the project's structural check reports for your workspace. When a change is ready, call submit with a summary for the owner that names what you changed and anything you found contradictory or unclear. If no change is needed or you need to know more, do not submit; call answer with what you found or need to know.`
 }
 

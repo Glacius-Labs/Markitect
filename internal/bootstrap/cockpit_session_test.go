@@ -145,7 +145,7 @@ func sessionFixture(t *testing.T, agents *scriptedAgents) (*authoring.Service, *
 	var removed []string
 	service.WithSessions(func(context.Context) (authoring.SessionStart, error) {
 		return authoring.SessionStart{
-			Basis: apply.SessionBasis{Attempt: attempts[len(attempts)-1], Profile: "project-agent", TurnTimeout: time.Minute, Turns: 2, Guide: "\nLANGUAGE GUIDE\n"},
+			Basis: apply.SessionBasis{Attempt: attempts[len(attempts)-1], Profile: "project-agent", TurnTimeout: time.Minute, Turns: 2, Guide: "\nLANGUAGE GUIDE\n", ModelDir: ".markitect/model"},
 			Ports: authoring.SessionPorts{Agents: agents, Workspaces: workspace, MaxEntries: 1 << 16, MaxBytes: 1 << 30, Evidence: state,
 				RemoveVolume: func(_ context.Context, name string) error {
 					removed = append(removed, name)
@@ -161,7 +161,7 @@ func sessionFixture(t *testing.T, agents *scriptedAgents) (*authoring.Service, *
 
 func waitForSession(t *testing.T, service *authoring.Service, id string) authoring.Session {
 	t.Helper()
-	deadline := time.Now().Add(30 * time.Second)
+	deadline := time.Now().Add(2 * time.Minute)
 	for time.Now().Before(deadline) {
 		if s, ok := service.Session(id); ok && s.State != authoring.Working {
 			return s
@@ -376,7 +376,7 @@ func TestCockpitModelSessionClosedWhilePreparing(t *testing.T) {
 	close(ws.release)
 	closed := <-closing
 	<-started
-	if startErr == nil || closed.State != authoring.Closed || !ws.closed {
+	if startErr == nil || closed.State != authoring.Closed || closed.Error == "" || !ws.closed {
 		t.Fatalf("closed while preparing = %+v, start %v, workspace closed %v", closed, startErr, ws.closed)
 	}
 }

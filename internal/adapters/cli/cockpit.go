@@ -14,14 +14,12 @@ import (
 // CockpitRequest selects what the cockpit observes: state directories named
 // directly or through a run configuration, the repository with its model and
 // dependency models as check selects them, and its loopback listen address.
-// Repository is the --repo value as given; Selection carries its absolute
-// root. A run configuration together with a Runtime profile enables model
+// A run configuration together with a Runtime profile enables model
 // sessions.
 type CockpitRequest struct {
 	States         []string
 	RunConfig      string
 	RuntimeProfile string
-	Repository     string
 	Selection      apply.InputSelection
 	Listen         string
 }
@@ -91,7 +89,7 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 		fmt.Fprintln(stderr, "invalid explicit model selection")
 		return 2
 	}
-	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Repository: *repo, Selection: selection, Listen: *listen}
+	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Selection: selection, Listen: *listen}
 	err = c.cockpit(ctx, request, func(url string) {
 		emit(map[string]any{"operation": "cockpit", "status": "serving", "url": url})
 	})

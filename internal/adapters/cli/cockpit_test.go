@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"slices"
 	"strings"
@@ -62,11 +63,15 @@ func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
 		return nil
 	})
 	var out, errout bytes.Buffer
-	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 0 || got.Repository != "." {
-		t.Fatalf("%d: repository %q", code, got.Repository)
+	wd, err := os.Getwd()
+	if err != nil {
+		t.Fatal(err)
 	}
-	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a", "--repo", "other"}, &out, &errout); code != 0 || got.Repository != "other" {
-		t.Fatalf("%d: repository %q", code, got.Repository)
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 0 || got.Selection.Repository != wd {
+		t.Fatalf("%d: repository %q", code, got.Selection.Repository)
+	}
+	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a", "--repo", "other"}, &out, &errout); code != 0 || got.Selection.Repository != filepath.Join(wd, "other") {
+		t.Fatalf("%d: repository %q", code, got.Selection.Repository)
 	}
 }
 

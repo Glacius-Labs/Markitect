@@ -24,6 +24,9 @@ func TestSessionBasisNamesRootsExecuteProfileBudgetAndLanguage(t *testing.T) {
 	if !strings.Contains(basis.Guide, "Writing Definitions (language v1)") || !strings.Contains(basis.Guide, "Kinds of the imported vocabulary") {
 		t.Fatalf("the basis lacks the language guide:\n%s", basis.Guide)
 	}
+	if basis.ModelDir != ".markitect/model" {
+		t.Fatalf("model directory = %q", basis.ModelDir)
+	}
 	if basis.Attempt.Model().Inputs().Head != attempt.Structural().Model().Inputs().Head {
 		t.Fatal("the basis is not the attempt's structural preparation")
 	}

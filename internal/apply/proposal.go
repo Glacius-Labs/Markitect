@@ -121,6 +121,7 @@ type SessionBasis struct {
 	TurnTimeout time.Duration
 	Turns       int
 	Guide       string // the language guide of the model's vocabulary, as Extract's Agents receive it
+	ModelDir    string // the repository directory of the local model's Definitions, such as .markitect/model
 }
 
 // SessionBasisOf reads the basis of a model session from a passed capture
@@ -138,7 +139,15 @@ func SessionBasisOf(a CapturedSettingsAttempt) (SessionBasis, error) {
 	if !ok {
 		return SessionBasis{}, errors.New("the execution budget is required")
 	}
+	local := a.Structural().Model().Inputs().Raw.Local
+	dir := local.Root.String()
+	if !local.RepositoryArea.IsRoot() {
+		dir = local.RepositoryArea.String() + "/" + dir
+	}
+	if dir == "" || dir == "." {
+		return SessionBasis{}, errors.New("the model's Definitions lie at the repository root; a model session could not limit its writes to them")
+	}
 	var guide strings.Builder
 	writeAuthoringGuide(&guide, vocabularyOf(a.Structural().Model().checked))
-	return SessionBasis{Attempt: a.Structural(), Profile: root.Execute.Profile.Value.Name, TurnTimeout: budget.TurnTimeout.Value, Turns: budget.AgentTurns.Value, Guide: guide.String()}, nil
+	return SessionBasis{Attempt: a.Structural(), Profile: root.Execute.Profile.Value.Name, TurnTimeout: budget.TurnTimeout.Value, Turns: budget.AgentTurns.Value, Guide: guide.String(), ModelDir: dir}, nil
 }
