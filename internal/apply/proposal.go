@@ -2,6 +2,7 @@ package apply
 
 import (
 	"errors"
+	"strings"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -119,6 +120,7 @@ type SessionBasis struct {
 	Profile     string
 	TurnTimeout time.Duration
 	Turns       int
+	Guide       string // the language guide of the model's vocabulary, as Extract's Agents receive it
 }
 
 // SessionBasisOf reads the basis of a model session from a passed capture
@@ -136,5 +138,7 @@ func SessionBasisOf(a CapturedSettingsAttempt) (SessionBasis, error) {
 	if !ok {
 		return SessionBasis{}, errors.New("the execution budget is required")
 	}
-	return SessionBasis{Attempt: a.Structural(), Profile: root.Execute.Profile.Value.Name, TurnTimeout: budget.TurnTimeout.Value, Turns: budget.AgentTurns.Value}, nil
+	var guide strings.Builder
+	writeAuthoringGuide(&guide, vocabularyOf(a.Structural().Model().checked))
+	return SessionBasis{Attempt: a.Structural(), Profile: root.Execute.Profile.Value.Name, TurnTimeout: budget.TurnTimeout.Value, Turns: budget.AgentTurns.Value, Guide: guide.String()}, nil
 }

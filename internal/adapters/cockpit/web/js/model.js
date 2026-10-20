@@ -10,8 +10,16 @@ import { h, clear, clock, duration, announce } from "./dom.js";
 import { top, refusal } from "./settings.js";
 
 const POLL_MS = 2000;
-const stateWords = { working: "Working on your prompt", waiting: "Waiting for your next prompt", closed: "Closed" };
-const stateClass = { working: "st-working", waiting: "st-waiting", closed: "st-none" };
+const stateWords = {
+  preparing: "Preparing: capturing the source and starting the workspace",
+  working: "Working on your prompt",
+  waiting: "Waiting for your next prompt",
+  halted: "Halted: takes no prompt; close it",
+  closing: "Closing",
+  closed: "Closed",
+};
+const stateClass = { preparing: "st-working", working: "st-working", waiting: "st-waiting", halted: "st-fail", closing: "st-none", closed: "st-none" };
+const active = (s) => s.state === "preparing" || s.state === "working" || s.state === "closing";
 let draft = ""; // the composer's text survives redraws and leaving the page
 
 export function renderModel(app) {
@@ -40,7 +48,7 @@ export function renderModel(app) {
         drawComposer(composer, list.available, current, refresh);
       }
       drawPast(past, list.sessions.filter((s) => s.state === "closed"));
-      if (current && current.state === "working") timer = setTimeout(refresh, POLL_MS);
+      if (current && active(current)) timer = setTimeout(refresh, POLL_MS);
     }, (err) => {
       if (!main.isConnected) return;
       clear(head).append(h("p", { role: "alert", class: "refusal" }, refusal(err)));
@@ -56,14 +64,19 @@ function drawHead(head, available, s) {
     head.append(h("p", { class: "lead" }, "Model sessions need the cockpit to be started with a run configuration and a Runtime profile: markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. They use the run configuration's container engine, workspace helper and credentials."));
     return;
   }
-  head.append(h("p", { class: "lead" }, "Your prompt goes to an Agent of Root's Execute profile in a container. It works on its own copy of the committed source, may change only .markitect/model and .markitect/registry, and proposes; you decide on every proposal. Each prompt is one provider turn."));
+  head.append(h("p", { class: "lead" }, "Your prompt goes to an Agent of Root's Execute profile in a container. It works on its own copy of the committed source, may change only .markitect/model and .markitect/registry, and proposes; you decide on every proposal. Each prompt is one Agent turn, which costs provider usage. A session's proposals start from its source: after you accept one, commit it and start a new session."));
   if (!s) return;
   const used = s.turns.length;
+  if (s.state === "preparing") {
+    head.append(h("p", { class: `outcome big ${stateClass.preparing}`, tabindex: -1 }, h("span", { class: "lamp" }), stateWords.preparing),
+      h("p", { class: "note" }, "The session's profile and limits are known once its source is prepared."));
+    return;
+  }
   head.append(h("p", { class: `outcome big ${stateClass[s.state] || ""}`, tabindex: -1 }, h("span", { class: "lamp" }), stateWords[s.state] || s.state),
     h("dl", { class: "facts" },
       h("dt", {}, "Session"), h("dd", {}, h("span", { class: "digest" }, s.id), ` from the committed source at `, h("span", { class: "digest" }, (s.head || "").slice(0, 12))),
       h("dt", {}, "Agent profile"), h("dd", {}, s.profile || "not yet known"),
-      h("dt", {}, "Limits"), h("dd", {}, `${used} of ${s.maxTurns} provider turns used; each turn at most ${s.turnTimeout}`),
+      h("dt", {}, "Limits"), h("dd", {}, `${used} of ${s.maxTurns} Agent turns used; each turn at most ${s.turnTimeout}`),
       h("dt", {}, "Reported usage"), h("dd", {}, usageText(s.usage)),
       s.evidence && [h("dt", {}, "Evidence"), h("dd", { class: "digest" }, s.evidence)],
       s.error && [h("dt", {}, "Problem"), h("dd", { class: "st-fail" }, s.error)]));
@@ -82,10 +95,11 @@ function drawConversation(section, s) {
     for (const id of t.proposals) {
       agent.append(h("p", {}, "Proposal ", h("a", { href: `#/proposal/${encodeURIComponent(id)}` }, id), ": review and decide on its own page."));
     }
+    for (const answer of t.answers || []) agent.append(h("div", { class: "prose agent" }, answer));
     if (t.ended) {
-      if (t.final) agent.append(h("div", { class: "prose agent" }, t.final));
-      agent.append(h("p", { class: "faint" }, `Turn ended ${clock(t.ended)} after ${duration(new Date(t.ended) - new Date(t.started))}; ${usageText(t.usage)}.`,
-        t.stopped || t.reason ? ` ${t.stopped ? "Stopped" : "Ended"}: ${t.reason || "no reason reported"}.` : ""));
+      if (t.final) agent.append(h("details", {}, h("summary", {}, "The Agent's final text"), h("div", { class: "prose agent" }, t.final)));
+      agent.append(h("p", { class: t.stopped ? "faint" : "st-fail" }, `Turn ended ${clock(t.ended)} after ${duration(new Date(t.ended) - new Date(t.started))}; ${usageText(t.usage)}. `,
+        t.stopped ? "The container's end was observed." : "The container's end was not observed.", t.reason ? ` Reported: ${t.reason}` : ""));
     } else {
       agent.append(h("p", { class: "st-working" }, `Working since ${clock(t.started)}.`));
     }
@@ -98,9 +112,9 @@ function drawConversation(section, s) {
 
 function drawComposer(section, available, s, refresh) {
   clear(section);
-  if (!available || (s && s.state === "working")) {
-    if (s) section.append(h("p", { class: "note" }, "You can write the next prompt when the Agent has answered."));
-    if (s) section.append(closeButton(s, refresh));
+  if (!available || (s && s.state !== "waiting")) {
+    if (s && (s.state === "working" || s.state === "preparing")) section.append(h("p", { class: "note" }, "You can write the next prompt when the Agent has answered."));
+    if (s && s.state !== "closing") section.append(closeButton(s, refresh));
     return;
   }
   const atLimit = s && s.turns.length >= s.maxTurns;
@@ -111,14 +125,14 @@ function drawComposer(section, available, s, refresh) {
   const status = h("p", { class: "note", role: "status", tabindex: -1 });
   const actions = h("div", { class: "actions" });
   section.append(h("label", { for: id }, s ? "Your next prompt" : "What should change in the model?"), text, actions, status);
-  if (atLimit) status.textContent = "The session used all its provider turns. Close it and start a new one.";
+  if (atLimit) status.textContent = "The session used all its Agent turns. Close it and start a new one.";
   const send = async (button) => {
     button.disabled = true;
     status.textContent = s ? "Sending…" : "Capturing the committed source, preparing it with the Runtime profile and starting the container. This takes a while.";
     try {
       const result = s ? await api.promptSession(s.id, text.value) : await api.startSession(text.value);
       draft = "";
-      announce(`Session ${result.id}: working on your prompt.`);
+      announce(`Session ${result.id}: ${stateWords[result.state] || result.state}.`);
       refresh();
     } catch (err) {
       button.disabled = false;
@@ -155,19 +169,19 @@ function drawComposer(section, available, s, refresh) {
     });
     start.addEventListener("click", () => send(start));
     clear(actions).append(start, back);
-    status.textContent = "This starts a container with an Agent of Root's Execute profile and one provider turn, which costs provider usage. Only a proposal you accept writes anything.";
+    status.textContent = "This starts a container with an Agent of Root's Execute profile for one Agent turn, which costs provider usage. Only a proposal you accept writes anything.";
     start.focus();
   });
   actions.append(review);
 }
 
 function closeButton(s, refresh) {
-  const button = h("button", { class: "btn", type: "button" }, s.state === "working" ? "Stop the turn and close the session" : "Close the session");
+  const button = h("button", { class: "btn", type: "button" }, s.state === "working" || s.state === "preparing" ? "Stop and close the session" : "Close the session");
   button.addEventListener("click", async () => {
     button.disabled = true;
     try {
-      await api.closeSession(s.id);
-      announce(`Session ${s.id} closed.`);
+      const closed = await api.closeSession(s.id);
+      announce(closed.error ? `Session ${s.id} closed with a problem: ${closed.error}` : `Session ${s.id} closed.`);
     } catch (err) {
       button.disabled = false;
       button.after(h("p", { class: "note", role: "alert" }, `Not closed: ${refusal(err)}`));
@@ -182,9 +196,14 @@ function drawPast(section, sessions) {
   clear(section);
   if (!sessions.length) return;
   section.append(h("h2", { id: "h-past" }, "Closed sessions"),
-    h("ul", { class: "proplist" }, sessions.map((s) => h("li", {},
-      h("span", { class: "digest" }, s.id),
-      h("span", { class: "muted" }, ` ${s.turns.length} turn${s.turns.length === 1 ? "" : "s"}, ${usageText(s.usage)}; proposals: ${s.turns.flatMap((t) => t.proposals).join(", ") || "none"}${s.error ? `; ${s.error}` : ""}`)))));
+    h("ul", { class: "proplist" }, sessions.map((s) => {
+      const proposals = s.turns.flatMap((t) => t.proposals);
+      return h("li", {},
+        h("span", { class: "digest" }, s.id),
+        h("span", { class: "muted" }, ` ${s.turns.length} turn${s.turns.length === 1 ? "" : "s"}, ${usageText(s.usage)}; proposals: `),
+        proposals.length ? proposals.map((id, i) => [i ? ", " : "", h("a", { href: `#/proposal/${encodeURIComponent(id)}` }, id)]) : h("span", { class: "muted" }, "none"),
+        s.error && h("span", { class: "st-fail" }, `; ${s.error}`));
+    })));
 }
 
 // usageText states what the provider reported; a zero report is not shown as

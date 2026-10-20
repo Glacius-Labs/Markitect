@@ -68,7 +68,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/apply` | Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication. | [docs/development/modules.md](modules.md) |
-| `internal/authoring` | Owner proposals for the project's .markitect inputs, checked like the repository and published only on acceptance. | [internal/authoring/README.md](../../internal/authoring/README.md) |
+| `internal/authoring` | Owner proposals for the project's .markitect inputs and the model sessions that make them, checked like the repository and published only on acceptance. | [internal/authoring/README.md](../../internal/authoring/README.md) |
 
 ## Model view
 

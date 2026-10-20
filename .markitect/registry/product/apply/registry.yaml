@@ -416,3 +416,7 @@ artifacts:
     form: code
     realizes: [product/cockpit/accepted-proposals]
     why: "Prepares a proposed tree against a captured start as markitect check prepares the repository, reports every finding with its stage and location, and reads a model session's basis from a passed capture with settings."
+  - path: "internal/apply/proposal_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that a model session's basis names Root's Execute profile, the execution budget's turn timeout and Agent-turn limit, and the language guide of the model's vocabulary."

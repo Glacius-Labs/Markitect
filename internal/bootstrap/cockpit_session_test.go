@@ -22,16 +22,26 @@ import (
 // sessionWorkspace is the session's workspace: the start tree with the
 // changes an Agent made, observed by Peek.
 type sessionWorkspace struct {
-	mu      sync.Mutex
-	tree    snapshot.Tree
-	spec    runport.WorkspaceSpec
-	closed  bool
-	removed []string
+	mu              sync.Mutex
+	tree            snapshot.Tree
+	spec            runport.WorkspaceSpec
+	closed          bool
+	removed         []string
+	failMaterialize error
+	materializing   chan struct{} // closed when Materialize starts, if set
+	release         chan struct{} // Materialize waits for it, if set
 }
 
 func (w *sessionWorkspace) Materialize(_ context.Context, spec runport.WorkspaceSpec) (runport.WorkspaceObservation, error) {
+	if w.materializing != nil {
+		close(w.materializing)
+		<-w.release
+	}
 	w.mu.Lock()
 	defer w.mu.Unlock()
+	if w.failMaterialize != nil {
+		return runport.WorkspaceObservation{}, w.failMaterialize
+	}
 	w.spec, w.tree = spec, spec.Tree
 	return runport.WorkspaceObservation{ID: spec.ID, Volume: string(spec.ID)}, nil
 }
@@ -135,7 +145,7 @@ func sessionFixture(t *testing.T, agents *scriptedAgents) (*authoring.Service, *
 	var removed []string
 	service.WithSessions(func(context.Context) (authoring.SessionStart, error) {
 		return authoring.SessionStart{
-			Basis: apply.SessionBasis{Attempt: attempts[len(attempts)-1], Profile: "project-agent", TurnTimeout: time.Minute, Turns: 2},
+			Basis: apply.SessionBasis{Attempt: attempts[len(attempts)-1], Profile: "project-agent", TurnTimeout: time.Minute, Turns: 2, Guide: "\nLANGUAGE GUIDE\n"},
 			Ports: authoring.SessionPorts{Agents: agents, Workspaces: workspace, MaxEntries: 1 << 16, MaxBytes: 1 << 30, Evidence: state,
 				RemoveVolume: func(_ context.Context, name string) error {
 					removed = append(removed, name)
@@ -172,7 +182,8 @@ func TestCockpitModelSessionProposesOnlyModelChanges(t *testing.T) {
 		workspace.write(t, sessionModelFile, strings.Replace(workspace.read(t, sessionModelFile), "spec: {}", "spec: {}\n# reviewed", 1))
 		check := tools(ctx, "check", json.RawMessage(`{}`))
 		submit := tools(ctx, "submit", json.RawMessage(`{"summary":"Marked the Rule as reviewed."}`))
-		return runport.TurnResult{Conversation: "conversation-1", Final: check.Text + "|" + submit.Text, Usage: runport.Usage{ProviderTurns: 1, InputTokens: 10}}, nil
+		answer := tools(ctx, "answer", json.RawMessage(`{"text":"One point is unclear."}`))
+		return runport.TurnResult{Conversation: "conversation-1", Final: check.Text + "|" + submit.Text + "|" + answer.Text, Usage: runport.Usage{ProviderTurns: 1, InputTokens: 10}, Started: time.Now(), Stopped: true}, nil
 	}
 	service, ws, state, _ := sessionFixture(t, agents)
 	workspace = ws
@@ -185,14 +196,14 @@ func TestCockpitModelSessionProposesOnlyModelChanges(t *testing.T) {
 	turn := agents.turns[0]
 	if turn.Kind != runport.ExecuteTurn || !turn.ReadOnly || len(turn.Mounts) != 2 || !turn.Mounts[0].Writable || turn.Mounts[0].Path != ".markitect/model" || turn.Mounts[1].Path != ".markitect/registry" ||
 		turn.Profile != "project-agent" || turn.Timeout != time.Minute || turn.Resume != "" || turn.Home == "" || turn.Workspace != s.ID+"-work" ||
-		turn.Transcript != filepath.Join(state, "sessions", s.ID, "transcripts", turn.ID+".jsonl") || !strings.Contains(turn.Prompt, "Mark the accepted-proposals Rule as reviewed.") {
+		turn.Transcript != filepath.Join(state, "sessions", s.ID, "transcripts", turn.ID+".jsonl") || !strings.Contains(turn.Prompt, "Mark the accepted-proposals Rule as reviewed.") || !strings.Contains(turn.Prompt, "LANGUAGE GUIDE") {
 		t.Fatalf("turn = %+v", turn)
 	}
 	if len(ws.spec.Directories) != 2 {
 		t.Fatalf("workspace spec = %+v", ws.spec.Directories)
 	}
 	got := s.Turns[0]
-	if s.State != authoring.Waiting || len(got.Tools) != 2 || got.Tools[0].Refused || !strings.Contains(got.Tools[0].Answer, "Structural check: passed") ||
+	if s.State != authoring.Waiting || len(got.Tools) != 3 || len(got.Answers) != 1 || got.Answers[0] != "One point is unclear." || !got.Stopped || got.Tools[0].Refused || !strings.Contains(got.Tools[0].Answer, "Structural check: passed") ||
 		!strings.Contains(got.Tools[0].Answer, "changed: "+sessionModelFile) || len(got.Proposals) != 1 || got.Usage.InputTokens != 10 || s.Usage.ProviderTurns != 1 {
 		t.Fatalf("session = %+v", s)
 	}
@@ -203,7 +214,7 @@ func TestCockpitModelSessionProposesOnlyModelChanges(t *testing.T) {
 
 	// The next prompt continues the conversation; the limit ends the session's prompts.
 	agents.script = func(ctx context.Context, turn runport.Turn, tools runport.ToolHandler) (runport.TurnResult, error) {
-		return runport.TurnResult{Conversation: "conversation-1", Final: "nothing to change"}, nil
+		return runport.TurnResult{Conversation: "conversation-1", Final: "nothing to change", Started: time.Now(), Stopped: true}, nil
 	}
 	if _, err := service.PromptSession(s.ID, "Anything else?"); err != nil {
 		t.Fatal(err)
@@ -227,7 +238,7 @@ func TestCockpitModelSessionProposesOnlyModelChanges(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, kind := range []string{"session.start", "prompt", "tool", "proposal", "turn.end", "session.close"} {
+	for _, kind := range []string{"session.start", "prompt", "turn.start", "tool", "proposal", "turn.end", "session.close"} {
 		if !strings.Contains(string(events), `"kind":"`+kind+`"`) {
 			t.Errorf("the session record lacks %s:\n%s", kind, events)
 		}
@@ -246,7 +257,7 @@ func TestCockpitModelSessionRefusesChangesOutsideTheModel(t *testing.T) {
 		if !answer.Refused || !bad.Refused || !unknown.Refused {
 			return runport.TurnResult{}, errors.New("an out-of-scope, empty or unknown tool call was accepted")
 		}
-		return runport.TurnResult{Final: answer.Text}, nil
+		return runport.TurnResult{Final: answer.Text, Started: time.Now(), Stopped: true}, nil
 	}
 	service, ws, _, _ := sessionFixture(t, agents)
 	workspace = ws
@@ -283,5 +294,127 @@ func TestCockpitModelSessionStopsAWorkingTurnWhenClosed(t *testing.T) {
 	}
 	if _, err := service.PromptSession(s.ID, "Hello?"); err == nil {
 		t.Fatal("a closed session took a prompt")
+	}
+}
+
+// A turn whose container end was not observed halts the session: no further
+// prompt may start a second container on the same workspace.
+func TestCockpitModelSessionHaltsWhenTheContainerEndIsNotObserved(t *testing.T) {
+	ctx := context.Background()
+	agents := &scriptedAgents{script: func(context.Context, runport.Turn, runport.ToolHandler) (runport.TurnResult, error) {
+		return runport.TurnResult{Started: time.Now(), Stopped: false, Reason: "the container did not stop"}, errors.New("stop not observed")
+	}}
+	service, ws, _, _ := sessionFixture(t, agents)
+	s, err := service.StartSession(ctx, "Change something.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	s = waitForSession(t, service, s.ID)
+	if s.State != authoring.Halted || s.Error == "" || s.Turns[0].Stopped {
+		t.Fatalf("session = %+v", s)
+	}
+	if _, err := service.PromptSession(s.ID, "Again?"); !errors.Is(err, authoring.ErrHalted) {
+		t.Fatalf("a prompt to a halted session = %v", err)
+	}
+	if closed, err := service.CloseSession(ctx, s.ID); err != nil || closed.State != authoring.Closed || !ws.closed {
+		t.Fatalf("close = %+v, %v", closed, err)
+	}
+}
+
+// A failed materialization closes what it may have created, and the session
+// ends with its reason in the record.
+func TestCockpitModelSessionReleasesAFailedWorkspace(t *testing.T) {
+	agents := &scriptedAgents{script: func(context.Context, runport.Turn, runport.ToolHandler) (runport.TurnResult, error) {
+		t.Error("no turn may run without a workspace")
+		return runport.TurnResult{}, nil
+	}}
+	service, ws, state, _ := sessionFixture(t, agents)
+	ws.failMaterialize = errors.New("disk full")
+	s, err := service.StartSession(context.Background(), "Change something.")
+	if err == nil || s.State != authoring.Closed || !ws.closed {
+		t.Fatalf("start on a failing workspace = %+v, %v (closed %v)", s, err, ws.closed)
+	}
+	events, readErr := os.ReadFile(filepath.Join(state, "sessions", s.ID, "events.jsonl"))
+	if readErr != nil || !strings.Contains(string(events), `"kind":"session.fail"`) {
+		t.Fatalf("the record of a failed start = %s, %v", events, readErr)
+	}
+	ws.failMaterialize = nil
+	agents.script = func(context.Context, runport.Turn, runport.ToolHandler) (runport.TurnResult, error) {
+		return runport.TurnResult{Started: time.Now(), Stopped: true}, nil
+	}
+	if _, err := service.StartSession(context.Background(), "Again."); err != nil {
+		t.Fatalf("a failed session still blocks a new one: %v", err)
+	}
+}
+
+// Closing while the session prepares ends it when the preparation ends, and
+// releases the workspace the preparation made.
+func TestCockpitModelSessionClosedWhilePreparing(t *testing.T) {
+	agents := &scriptedAgents{script: func(context.Context, runport.Turn, runport.ToolHandler) (runport.TurnResult, error) {
+		t.Error("no turn may run in a session closed while it prepared")
+		return runport.TurnResult{}, nil
+	}}
+	service, ws, _, _ := sessionFixture(t, agents)
+	ws.materializing = make(chan struct{})
+	ws.release = make(chan struct{})
+	started := make(chan struct{})
+	var startErr error
+	go func() {
+		defer close(started)
+		_, startErr = service.StartSession(context.Background(), "Change something.")
+	}()
+	<-ws.materializing
+	id := service.Sessions()[0].ID
+	closing := make(chan authoring.Session)
+	go func() {
+		s, _ := service.CloseSession(context.Background(), id)
+		closing <- s
+	}()
+	for s, _ := service.Session(id); s.State != authoring.Closing; s, _ = service.Session(id) {
+		time.Sleep(5 * time.Millisecond)
+	}
+	close(ws.release)
+	closed := <-closing
+	<-started
+	if startErr == nil || closed.State != authoring.Closed || !ws.closed {
+		t.Fatalf("closed while preparing = %+v, start %v, workspace closed %v", closed, startErr, ws.closed)
+	}
+}
+
+// While a close waits for the working turn to end, the session takes no
+// prompt, and the ending turn does not reopen it.
+func TestCockpitModelSessionTakesNoPromptWhileClosing(t *testing.T) {
+	ctx := context.Background()
+	started := make(chan struct{})
+	ending := make(chan struct{})
+	agents := &scriptedAgents{script: func(ctx context.Context, _ runport.Turn, _ runport.ToolHandler) (runport.TurnResult, error) {
+		close(started)
+		<-ctx.Done()
+		<-ending
+		return runport.TurnResult{Started: time.Now(), Stopped: true}, nil
+	}}
+	service, _, _, _ := sessionFixture(t, agents)
+	s, err := service.StartSession(ctx, "Work.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	<-started
+	closing := make(chan authoring.Session)
+	go func() {
+		closed, _ := service.CloseSession(ctx, s.ID)
+		closing <- closed
+	}()
+	for v, _ := service.Session(s.ID); v.State != authoring.Closing; v, _ = service.Session(s.ID) {
+		time.Sleep(5 * time.Millisecond)
+	}
+	if _, err := service.PromptSession(s.ID, "Sneak in."); !errors.Is(err, authoring.ErrSessionClosed) {
+		t.Fatalf("a prompt while closing = %v", err)
+	}
+	close(ending)
+	if closed := <-closing; closed.State != authoring.Closed || len(closed.Turns) != 1 {
+		t.Fatalf("closed = %+v", closed)
+	}
+	if v, _ := service.Session(s.ID); v.State != authoring.Closed {
+		t.Fatalf("the ended turn reopened the session: %s", v.State)
 	}
 }

@@ -25,7 +25,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/authoring
     layer: apply-usecase
-    purpose: Owner proposals for the project's .markitect inputs, checked like the repository and published only on acceptance.
+    purpose: Owner proposals for the project's .markitect inputs and the model sessions that make them, checked like the repository and published only on acceptance.
     doc: internal/authoring/README.md
   - path: internal/modeldocs
     layer: model-view

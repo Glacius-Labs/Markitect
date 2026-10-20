@@ -6,6 +6,7 @@ import (
 	"errors"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/authoring"
 )
@@ -183,7 +184,11 @@ func (s *Server) handleStartSession(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	session, err := s.authoring.StartSession(r.Context(), prompt)
+	// Preparing runs to its end when the page goes away, within a bound of
+	// its own; a closed tab does not abort it half-way.
+	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), sessionPreparation)
+	defer cancel()
+	session, err := s.authoring.StartSession(ctx, prompt)
 	if err != nil {
 		http.Error(w, err.Error(), sessionStatus(err))
 		return
@@ -220,11 +225,15 @@ func (s *Server) handleCloseSession(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, session)
 }
 
+// sessionPreparation bounds capturing the source and materializing a session's
+// workspace.
+const sessionPreparation = 10 * time.Minute
+
 func sessionStatus(err error) int {
 	switch {
 	case errors.Is(err, authoring.ErrNoSessions):
 		return http.StatusNotImplemented
-	case errors.Is(err, authoring.ErrSessionOpen), errors.Is(err, authoring.ErrBusy), errors.Is(err, authoring.ErrLimit), errors.Is(err, authoring.ErrNotClean), errors.Is(err, authoring.ErrSessionClosed):
+	case errors.Is(err, authoring.ErrSessionOpen), errors.Is(err, authoring.ErrBusy), errors.Is(err, authoring.ErrLimit), errors.Is(err, authoring.ErrHalted), errors.Is(err, authoring.ErrNotClean), errors.Is(err, authoring.ErrSessionClosed):
 		return http.StatusConflict
 	case errors.Is(err, authoring.ErrPrompt):
 		return http.StatusBadRequest
