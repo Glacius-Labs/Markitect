@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:9baa7a7f38f8203e861c46b933a45d733deb0015eaef9422fbd38a4b1dd52a08`.
+Canonical model digest: `sha256:0044d0f0a4e7444e81eb2ccdd39b31a90263f3c240a6fee9c50c21e56b7bea6d`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -172,9 +172,9 @@ Expose check and context over actual PreparationService reports, with structural
 
 ### product/cockpit/accepted-proposals
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/accepted-proposals.yaml` (original bytes `sha256:6847fe29c12349ec3985cd0df159511a904271ba30d16c8e3be860ad42628432`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/accepted-proposals.yaml` (original bytes `sha256:a06eac2cc82d5d1878a235a58f5e4dd84bae3716978db558a8728f1b95c0b04f`).
 
-Changes to the canonical model and to the execution settings made through the cockpit are proposals against a captured working tree: the Model check and the File check judge each proposal, the owner sees its changed files and Definitions, and only the owner's explicit acceptance of a proposal whose checks pass writes it, through Apply's guarded publication with read-back, without committing, while no Apply holds the state directory. A publication that is not applied leaves the proposal unaccepted and shows every path's read-back state. The execution settings' budget, profiles, per-Package overrides and team are edited through a form whose result is judged like a hand-edited file; ownership, instructions, scope and checks stay as written. A model proposal comes from an Agent session the owner prompts: it runs through the Runtime adapters in a Linux container with the Execute profile, may write only the model and registry of its own workspace, continues its provider conversation across the owner's prompts, takes a provider turn only for an owner's prompt within the execution budget's turn timeout and Agent-turn limit, retains its prompts, usage and transcript as evidence, never writes the owner's working tree, and reports a model it finds contradictory instead of repairing it. Accepting a proposal starts no Apply; the cockpit starts and stops no Apply and changes no Runtime profile, credential or run configuration.
+Changes to the canonical model and to the execution settings made through the cockpit are proposals against a captured working tree: the Model check and the File check judge each proposal, the owner sees its changed files and Definitions, and only the owner's explicit acceptance of a proposal whose checks pass writes it, through Apply's guarded publication with read-back, without committing, while no Apply holds an observed state directory. A publication that is not applied leaves the proposal unaccepted and shows every path's read-back state. The execution settings' budget, role profiles, per-Package profile overrides and team are edited through a form whose result is judged like a hand-edited file; ownership, the top-level and per-Package instructions, scope and checks stay as written. A model proposal comes from an Agent session the owner prompts: it runs through the Runtime adapters in a Linux container with the Execute profile, may write only the model and registry of its own workspace, continues its provider conversation across the owner's prompts, takes a provider turn only for an owner's prompt within the execution budget's turn timeout and Agent-turn limit, retains its prompts, usage and transcript as evidence, never writes the owner's working tree, and reports a model it finds contradictory instead of repairing it. Accepting a proposal starts no Apply; the cockpit starts and stops no Apply and changes no Runtime profile, credential or run configuration.
 
 ### product/cockpit/observed-run-inspection
 
