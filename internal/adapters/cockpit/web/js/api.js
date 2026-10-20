@@ -20,6 +20,7 @@ const enc = encodeURIComponent;
 
 export const api = {
   project: () => get("/api/project"),
+  model: () => get("/api/model"),
   observeProject: () => request("/api/project/observe", { method: "POST", headers: { "X-Markitect-Cockpit": "observe" } }),
   runs: () => get("/api/runs"),
   questions: () => get("/api/questions"),

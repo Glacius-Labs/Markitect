@@ -211,7 +211,7 @@ export class Inspector {
     };
     this.timeline = new Timeline(this.panels.timeline, { onSelect: (ref) => this.select(ref) });
     const lower = h("section", { class: "lower", "aria-label": "Timeline and record" }, tabs, h("div", { style: { minHeight: 0, display: "grid" } }, Object.values(this.panels)));
-    this.main = h("main", { id: "main", class: "work" }, this.stageEl, lower);
+    this.main = h("div", { class: "work" }, this.stageEl, lower);
     this.asideEl = h("aside", { class: "aside", "aria-label": "Details" });
     this.transportEl = h("footer", { class: "transport", "aria-label": "Replay" });
     this.root = h("div", { class: "inspector" }, this.headEl, this.railEl, this.accountEl, this.main, this.asideEl, this.transportEl);
@@ -351,7 +351,6 @@ export class Inspector {
     const cls = { success: "st-done", verified: "st-done", failed: "st-fail", incomplete: "st-waiting" }[outcome] || (outcome ? "" : "st-working");
     const text = rep ? `Run outcome: ${rep.outcome}` : st.outcome ? `Outcome recorded: ${st.outcome}` : v.boundary.final ? "No outcome recorded" : "In progress at this boundary";
     clear(this.headEl).append(
-      h("a", { class: "home", href: "#/" }, "Markitect cockpit"),
       h("span", { class: "runid" }, v.run.id),
       h("span", { class: "runmeta" }, `${v.managers.length} Manager${v.managers.length === 1 ? "" : "s"}, ${v.run.started ? `started ${when(v.run.started)}` : "not started"}`),
       h("span", { class: "spacer" }),

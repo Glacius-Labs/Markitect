@@ -35,7 +35,7 @@ artifacts:
   - path: "internal/adapters/cockpit/server.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Serves the embedded page, the read interface and the owner-answer route on a loopback address and refuses requests addressed to other hosts."
+    why: "Serves the embedded page, the read interface, the model view and the owner's write routes on a loopback address and refuses requests addressed to other hosts."
   - path: "internal/adapters/cockpit/README.md"
     form: doc
     realizes: [product/cockpit/observed-run-inspection]
@@ -63,15 +63,15 @@ artifacts:
   - path: "internal/adapters/cockpit/web/cockpit.css"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Defines the cockpit's light and dark presentation, state lamps, exchange channels, responsive layout and reduced motion."
+    why: "Defines the cockpit's presentation in the Glacius Labs design language: the desk rail, status bar, panels, split views, model browser, state lamps, exchange channels, responsive layout and reduced motion."
   - path: "internal/adapters/cockpit/web/js/main.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Routes between the run list and the run inspector and keeps run, boundary and selection in the address."
+    why: "Routes between the places of the cockpit and keeps the run, its boundary and selection, the Definition and the proposal in the address."
   - path: "internal/adapters/cockpit/web/js/api.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Calls the cockpit's read interface and, for an owner's answer, its one write route with the cockpit's request header."
+    why: "Calls the cockpit's read interface and its write routes, each with the cockpit's request header."
   - path: "internal/adapters/cockpit/web/js/dom.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -79,7 +79,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/runs.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Renders the cockpit entry: project identity, running runs, owner questions, run history with outcomes and the actions the cockpit offers or does not."
+    why: "Renders the run history with outcomes, publication, organization, source and reported usage, and states that the cockpit neither starts nor stops a run."
   - path: "internal/adapters/cockpit/web/js/playback.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -155,7 +155,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/proposal.js"
     form: code
     realizes: [product/cockpit/accepted-proposals]
-    why: "Shows a proposal's structural check, line difference and publication receipt and offers the two-step acceptance only for a passed check."
+    why: "Shows a proposal in any pane: its structural check, line difference, the Agent's summary and publication receipt, and offers the two-step acceptance only for a passed check."
   - path: "internal/authoring/README.md"
     form: doc
     realizes: [product/cockpit/accepted-proposals]
@@ -196,11 +196,47 @@ artifacts:
     form: test
     realizes: [product/cockpit/accepted-proposals]
     why: "Verifies on a repository that a model session's turn has only the model and registry writable, that its check and submit answer from the workspace and propose only model changes, that prompts resume the conversation within the limit and that closing stops a working turn and releases the workspace."
-  - path: "internal/adapters/cockpit/web/js/model.js"
+  - path: "internal/adapters/cockpit/web/js/session.js"
     form: code
     realizes: [product/cockpit/accepted-proposals]
-    why: "Offers the model session: a deliberate start, the owner's prompts and the Agent's answers as its own text, tool uses, proposals, limits and reported usage, and closing."
+    why: "Offers the model session as a split view: a deliberate start, the owner's prompts and the Agent's answers as its own text, tool uses, limits and reported usage on the left, the session's latest proposal with its decision on the right, and closing."
   - path: "internal/authoring/session_test.go"
     form: test
     realizes: [product/cockpit/accepted-proposals]
     why: "Verifies that a session states its turn timeout in the execution settings' notation."
+  - path: "internal/adapters/cockpit/modelview.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Defines the read-only model view of the project observation and serves it: model scopes, Packages, Definitions with body links and fields, and the registry."
+  - path: "internal/adapters/cockpit/modelview_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies that the model view is served from the project observation, refused without a repository and reported as pending while the observation runs."
+  - path: "internal/bootstrap/cockpit_model.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Turns the structural preparation's checked model and registry records into the cockpit's model view."
+  - path: "internal/adapters/cockpit/web/js/store.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads the project, runs, owner questions, proposals and sessions together while the page is visible and shares them with the desk rail, status bar and pages."
+  - path: "internal/adapters/cockpit/web/js/shell.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Frames the cockpit: the desk rail with the places of work and the lamps of their live state, the status bar with the place and the project's observed state, and the work surface."
+  - path: "internal/adapters/cockpit/web/js/overview.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Renders the overview: the project's observed state, the open model session, proposals waiting for a decision, running runs, owner questions with the answer form and the latest runs."
+  - path: "internal/adapters/cockpit/web/js/modelview.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Browses the checked model: Packages, their Definitions, a Definition's body with links to their targets, its fields, the registered files that realize it and the Definitions that link to it."
+  - path: "internal/adapters/cockpit/web/js/proposals.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Lists this cockpit's proposals beside the chosen one with its check, difference and the owner's decision."
+  - path: "internal/bootstrap/cockpit_model_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies that the model view links only the body text the model check located and keeps a body whose links are not located as text."
