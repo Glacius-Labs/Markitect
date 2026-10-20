@@ -633,9 +633,10 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			}
 			x.Rerun = later.ID
 			// The passing repetition disposes of the original probe and of
-			// every repetition of it that erred.
+			// every repetition of it that erred within the responsibility;
+			// another requester's receipt stays for its own reviewer.
 			for _, y := range e.receipts {
-				if (y.ID == root || y.Rerun == root) && y.Outcome == ProbeError && y.Stand == r.Stand && y.Disposition == nil && y.ID != r.ID {
+				if (y.ID == root || y.Rerun == root) && y.Outcome == ProbeError && y.Stand == r.Stand && y.Disposition == nil && y.ID != r.ID && e.within(y.Requester, m.Path) {
 					out[y.ID] = x
 				}
 			}
