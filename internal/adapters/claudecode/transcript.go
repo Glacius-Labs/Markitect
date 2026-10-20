@@ -42,7 +42,7 @@ type redactedError struct {
 func (e redactedError) Error() string { return e.text }
 func (e redactedError) Unwrap() error { return e.cause }
 
-// transcript writes the provider stream and the Host tool exchange as JSON Lines.
+// transcript writes the provider stream and the Orchestrator tool exchange as JSON Lines.
 // A nil transcript discards. It is used from one goroutine only.
 type transcript struct {
 	file *os.File

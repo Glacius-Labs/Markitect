@@ -21,8 +21,8 @@ func captureService(observed apply.CapturedInputs, failure error) *apply.ModelSe
 	return apply.NewModelService(source, nil)
 }
 
-// Synchronize deliberate compiler fixture edits with their raw file views.
-// Keep every source Entry, including duplicates, for the real compiler.
+// Synchronize deliberate Model check fixture edits with their raw file views.
+// Keep every source Entry, including duplicates, for the real Model check.
 func refreshLocalFiles(t *testing.T, raw *apply.RawInputs) {
 	t.Helper()
 	var files, census []snapshot.Entry
@@ -76,7 +76,7 @@ func hasDiagnostic(result model.Result, prefix string) bool {
 	return false
 }
 
-func TestLanguageFailureAndCompilerNotCompletedAreNotAcquisitionErrors(t *testing.T) {
+func TestLanguageFailureAndModelCheckNotCompletedAreNotAcquisitionErrors(t *testing.T) {
 	for _, kind := range []string{"syntax", "duplicate", "budget"} {
 		t.Run(kind, func(t *testing.T) {
 			selection, raw := libraryInputs(t)
@@ -97,12 +97,12 @@ func TestLanguageFailureAndCompilerNotCompletedAreNotAcquisitionErrors(t *testin
 				want, code = model.NotCompleted, "limit.entries"
 			}
 			result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, limits)
-			compiled := result.Compilation()
-			if err != nil || compiled.Status != want || !hasDiagnostic(compiled, code) {
-				t.Fatalf("%v %+v", err, compiled)
+			checked := result.Checked()
+			if err != nil || checked.Status != want || !hasDiagnostic(checked, code) {
+				t.Fatalf("%v %+v", err, checked)
 			}
 			if !reflect.DeepEqual(raw, result.Inputs().Raw) {
-				t.Fatal("original compiler input lost")
+				t.Fatal("original Model check input lost")
 			}
 		})
 	}
@@ -143,8 +143,8 @@ func TestIncompleteOrMismatchedCaptureCannotPassModel(t *testing.T) {
 				observation.Raw.Census, _ = snapshot.NewTree(entries)
 			}
 			result, err := captureService(observation, nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-			if !errors.Is(err, apply.ErrIncompleteInputs) || result.Compilation().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs(), observation) {
-				t.Fatalf("%v %+v", err, result.Compilation())
+			if !errors.Is(err, apply.ErrIncompleteInputs) || result.Checked().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs(), observation) {
+				t.Fatalf("%v %+v", err, result.Checked())
 			}
 		})
 	}
@@ -174,8 +174,8 @@ func TestPreviewErrorAndRevisionBindingRetainPartialObservations(t *testing.T) {
 				return observation, failure
 			}}
 			result, err := apply.NewModelService(nil, source).PreviewModel(context.Background(), request, model.Limits{})
-			if err == nil || result.Compilation().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs(), observation) {
-				t.Fatalf("%v %+v", err, result.Compilation())
+			if err == nil || result.Checked().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs(), observation) {
+				t.Fatalf("%v %+v", err, result.Checked())
 			}
 			if failure != nil && !errors.Is(err, failure) {
 				t.Fatal("port error replaced")
@@ -184,16 +184,16 @@ func TestPreviewErrorAndRevisionBindingRetainPartialObservations(t *testing.T) {
 	}
 }
 
-func TestMissingPortsAndCancellationNeverCompile(t *testing.T) {
+func TestMissingPortsAndCancellationNeverCheck(t *testing.T) {
 	selection, raw := libraryInputs(t)
 	request := apply.CaptureRequest{Selection: selection}
 	for _, service := range []*apply.ModelService{nil, apply.NewModelService(nil, nil)} {
 		result, err := service.CaptureModel(context.Background(), request, model.Limits{})
-		if !errors.Is(err, apply.ErrSourceUnavailable) || result.Compilation().Status != model.NotCompleted {
+		if !errors.Is(err, apply.ErrSourceUnavailable) || result.Checked().Status != model.NotCompleted {
 			t.Fatal(err)
 		}
 		preview, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-		if !errors.Is(err, apply.ErrSourceUnavailable) || preview.Compilation().Status != model.NotCompleted {
+		if !errors.Is(err, apply.ErrSourceUnavailable) || preview.Checked().Status != model.NotCompleted {
 			t.Fatal(err)
 		}
 	}
@@ -209,7 +209,7 @@ func TestMissingPortsAndCancellationNeverCompile(t *testing.T) {
 	}}
 	service := apply.NewModelService(source, nil)
 	result, err := service.CaptureModel(ctx, request, model.Limits{})
-	if !errors.Is(err, context.Canceled) || result.Inputs().Head != fixtureHead || result.Compilation().Status != model.NotCompleted {
+	if !errors.Is(err, context.Canceled) || result.Inputs().Head != fixtureHead || result.Checked().Status != model.NotCompleted {
 		t.Fatal("cancellation lost observations")
 	}
 	_, err = service.CaptureModel(ctx, request, model.Limits{})

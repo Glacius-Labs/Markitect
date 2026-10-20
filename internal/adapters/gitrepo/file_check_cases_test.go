@@ -16,8 +16,8 @@ func fileSeamCaptured(t *testing.T, selection apply.InputSelection) apply.Captur
 	t.Helper()
 	r := adapter(t)
 	stage, err := apply.NewModelService(r, r).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || stage.Compilation().Status != model.Passed {
-		t.Fatalf("real Git acquisition/model failed: %v %+v", err, stage.Compilation().Diagnostics)
+	if err != nil || stage.Checked().Status != model.Passed {
+		t.Fatalf("real Git acquisition/model failed: %v %+v", err, stage.Checked().Diagnostics)
 	}
 	prepared := stage.PrepareRegistry()
 	if prepared.Status() != model.Passed {

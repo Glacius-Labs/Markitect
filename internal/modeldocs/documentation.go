@@ -163,10 +163,10 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 			return p, m, false, e
 		}
 	}
-	compiled := m.Compilation()
-	p.Status = compiled.Status
-	p.Diagnostics = compiled.Diagnostics
-	if compiled.Status != model.Passed {
+	checked := m.Checked()
+	p.Status = checked.Status
+	p.Diagnostics = checked.Diagnostics
+	if checked.Status != model.Passed {
 		return p, m, false, nil
 	}
 	authored := m.DecodeExecution().Partial()
@@ -186,7 +186,7 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 			p.Sources = append(p.Sources, Source{Boundary: input.Selection.Boundary, Path: file.Path().String(), RepositoryPath: repoPath(input.RepositoryArea.String(), file.Path().String()), ContentDigest: file.ContentID().String(), Mode: file.Mode()})
 		}
 	}
-	for _, group := range [][]apply.SourceFile{raw.Execution, raw.Registry, raw.Ignore, raw.HostProfiles, raw.Instructions} {
+	for _, group := range [][]apply.SourceFile{raw.Execution, raw.Registry, raw.Ignore, raw.RuntimeProfiles, raw.Instructions} {
 		for _, file := range group {
 			if file.RepositoryPath.String() == ViewPath {
 				p.Status = model.Failed
@@ -210,12 +210,12 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 		}
 		return 0
 	})
-	for _, scope := range compiled.Models {
+	for _, scope := range checked.Models {
 		if scope.Local {
 			p.CanonicalModelDigest = scope.Digest
 		}
 	}
-	p.Markdown = render(compiled)
+	p.Markdown = render(checked)
 	p.ContentDigest = digest([]byte(p.Markdown))
 	if request.Revision != "" {
 		p.Target = Target{Path: ViewPath}
@@ -290,10 +290,10 @@ func repoPath(area, path string) string {
 func mustPath(path string) snapshot.Path { p, _ := snapshot.NewPath(path); return p }
 func digest(data []byte) string          { return fmt.Sprintf("sha256:%x", sha256.Sum256(data)) }
 
-func render(compiled model.Result) string {
+func render(checked model.Result) string {
 	var b bytes.Buffer
 	b.WriteString("# Canonical Markitect model\n\nGenerated from acquired canonical v1 source bytes. This view is not execution or acceptance evidence.\n")
-	for _, scope := range compiled.Models {
+	for _, scope := range checked.Models {
 		fmt.Fprintf(&b, "\n## %s\n\nCanonical model digest: `%s`.\n\nManifest: `%s` (original bytes `%s`).\n", scope.ID, scope.Digest, scope.Manifest.Path, scope.Manifest.Digest)
 		for _, definition := range scope.Definitions {
 			fmt.Fprintf(&b, "\n### %s/%s\n\nKind: `%s/%s`. Source: `%s` (original bytes `%s`).\n\n", definition.Identity.Package, definition.Identity.ID, definition.Kind.Package, definition.Kind.ID, definition.Source.Path, definition.Source.Digest)

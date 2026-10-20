@@ -26,7 +26,7 @@ const (
 )
 
 // ContextReason explains one inclusion. From/To identify the directed edge;
-// At is an RFC 6901 pointer in From's compiled Definition, not a guessed YAML
+// At is an RFC 6901 pointer in From's checked Definition, not a guessed YAML
 // coordinate. /bodyLinks/N identifies the original occurrence, including repeats.
 // Own uses the Definition itself and an empty At. Scope additionally records
 // the selecting configuration field and the modeled covering Package value.
@@ -39,7 +39,7 @@ type ContextReason struct {
 	ScopePackage string
 }
 
-// ContextDefinition is an original compiled Definition and every inclusion
+// ContextDefinition is an original checked Definition and every inclusion
 // reason. ModelDigest binds its owner, independently of the local model digest.
 // All model content remains read-only; selection conveys no artifact authority.
 type ContextDefinition struct {

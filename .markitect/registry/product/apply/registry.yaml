@@ -8,14 +8,18 @@ artifacts:
     form: code
     realizes: [product/organization/delegated-context]
     why: Renders each Manager's standing Brief from its context selection, areas, registry shard, required checks and configured instructions.
-  - path: "internal/apply/reconcile.go"
+  - path: "internal/apply/apply.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Builds the run configuration from one passed capture, runs the Manager team and publishes a verified candidate through the guarded Publisher.
-  - path: "internal/apply/reconcile_test.go"
+    why: Binds the run from one passed capture, composes Plan, Prepare, Implement and Verify with corrections and reassessment, and publishes a verified candidate through the guarded Publisher.
+  - path: "internal/apply/apply_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Tests the team, briefs, checks, budget deadline and accounting of the run configuration, publication refusals and an unverified run with fake ports.
+    why: Tests the organization, briefs, checks, budget deadline, gates and write plans of the run configuration, publication refusals and an unverified run with fake ports.
+  - path: "internal/apply/compose_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks that work Passes repeat or restart only at an earlier purpose their own findings name and never skip a forward Pass.
   - path: "internal/apply/export_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
@@ -100,7 +104,7 @@ artifacts:
     form: code
     realizes: [product/ports-and-adapters]
     why: Defines the consumer-owned Publisher port for guarded publication and read-back.
-  - path: "internal/apply/host_profiles_sections_test.go"
+  - path: "internal/apply/runtime_profiles_sections_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Checks that each profile selects one adapter section and binds the image evidence of that section.
@@ -216,31 +220,31 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/apply/host_profile_image_test.go"
+  - path: "internal/apply/runtime_profile_image_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Checks truthful image metadata evidence and its literal identity binding without runtime readiness claims.
-  - path: "internal/apply/host_profiles.go"
+  - path: "internal/apply/runtime_profiles.go"
     form: code
     realizes: [product/apply/read-only-preparation]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/apply/host_profiles_binding_test.go"
+  - path: "internal/apply/runtime_profiles_binding_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/apply/host_profiles_decode.go"
+  - path: "internal/apply/runtime_profiles_decode.go"
     form: code
     realizes: [product/apply/read-only-preparation]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/apply/host_profiles_observe.go"
+  - path: "internal/apply/runtime_profiles_observe.go"
     form: code
     realizes: [product/apply/read-only-preparation]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/apply/host_profiles_observe_test.go"
+  - path: "internal/apply/runtime_profiles_observe_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/apply/host_profiles_test.go"
+  - path: "internal/apply/runtime_profiles_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.

@@ -8,9 +8,9 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// Match the two raw representations without collapsing the compiler's source
+// Match the two raw representations without collapsing the Model check's source
 // slice: duplicate paths, redirects and malformed source entries still reach
-// Compile unchanged and receive its language diagnostics.
+// Check unchanged and receive its language diagnostics.
 func validateModelFiles(source ModelSource, census snapshot.Tree) error {
 	regular := make(map[string]bool)
 	for _, entry := range source.Source.Entries {
@@ -19,7 +19,7 @@ func validateModelFiles(source ModelSource, census snapshot.Tree) error {
 		}
 		p, err := snapshot.NewPath(entry.Path)
 		if err != nil {
-			continue // The compiler diagnoses malformed language input paths.
+			continue // The Model check diagnoses malformed language input paths.
 		}
 		file, found := source.Files.Lookup(p)
 		if !found || !bytes.Equal(file.Bytes(), entry.Bytes) {

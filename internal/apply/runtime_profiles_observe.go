@@ -25,7 +25,7 @@ const (
 	maxAgentImageLiteralBytes  = 4096
 )
 
-func hostPortMissing(port any) bool {
+func runtimePortMissing(port any) bool {
 	if port == nil {
 		return true
 	}
@@ -37,14 +37,14 @@ func hostPortMissing(port any) bool {
 	return false
 }
 
-func observeHostProfile(ctx context.Context, input ProfileInput, agents AgentProfilePreparer, checks CheckProfilePreparer) (PreparedProfile, error) {
+func observeRuntimeProfile(ctx context.Context, input ProfileInput, agents AgentProfilePreparer, checks CheckProfilePreparer) (PreparedProfile, error) {
 	p := PreparedProfile{input: input}
 	var err error
 	if err = ctx.Err(); err != nil {
 		p.observation.Status = model.NotCompleted
-	} else if input.namespace == "agentProfiles" && !hostPortMissing(agents) {
+	} else if input.namespace == "agentProfiles" && !runtimePortMissing(agents) {
 		p.observation, err = agents.PrepareAgentProfile(ctx, p.Input())
-	} else if input.namespace == "checkProfiles" && !hostPortMissing(checks) {
+	} else if input.namespace == "checkProfiles" && !runtimePortMissing(checks) {
 		p.observation, err = checks.PrepareCheckProfile(ctx, p.Input())
 	} else {
 		p.observation.Status = model.NotCompleted
@@ -74,7 +74,7 @@ func (p *PreparedProfile) problem(status model.Status, code, message string) {
 	if status == model.Failed || p.observation.Status != model.Failed {
 		p.observation.Status = status
 	}
-	p.observation.Diagnostics = append(p.observation.Diagnostics, HostProfileDiagnostic{Code: "host." + code, Source: p.Source(), Message: message})
+	p.observation.Diagnostics = append(p.observation.Diagnostics, RuntimeProfileDiagnostic{Code: "runtime." + code, Source: p.Source(), Message: message})
 }
 
 func (p *PreparedProfile) validateObservation() {
@@ -96,13 +96,13 @@ func (p *PreparedProfile) validateObservation() {
 		p.problem(model.Failed, "metadata_missing", "Passed requires executable metadata and agent schema inventories.")
 	}
 	if o.Status == model.Passed && !image && (p.input.section == "claudeCode" || p.input.section == "container") {
-		p.problem(model.Failed, "image_missing", "A claudeCode or container profile is bound to its image, not to Host files.")
+		p.problem(model.Failed, "image_missing", "A claudeCode or container profile is bound to its image, not to Runtime files.")
 	}
 	count := len(o.Files)
 	for _, inventory := range o.Inventories {
 		count += len(inventory.Files)
 	}
-	if count > maxProfileMetadataFiles || len(o.Inventories) > maxHostProfiles {
+	if count > maxProfileMetadataFiles || len(o.Inventories) > maxRuntimeProfiles {
 		p.problem(model.NotCompleted, "metadata_limit", "Metadata exceeds the finite preparation inventory limit.")
 		return
 	}
@@ -152,7 +152,7 @@ func (p *PreparedProfile) validateObservation() {
 		if location.Boundary == "" || location.Path.String() == "" {
 			p.problem(model.Failed, "instruction_location", "Required instruction must name an explicit boundary and path.")
 		}
-		p.problem(model.NotCompleted, "instruction_required", "Host instruction is required in a new complete acquisition; existing inputs are unchanged.")
+		p.problem(model.NotCompleted, "instruction_required", "Runtime instruction is required in a new complete acquisition; existing inputs are unchanged.")
 	}
 }
 
@@ -263,7 +263,7 @@ func (p PreparedProfile) instruction(location SourceLocation) (SourceFile, bool)
 	return found, ok
 }
 
-func hostHashText(h hash.Hash, text string) {
+func runtimeHashText(h hash.Hash, text string) {
 	var length [8]byte
 	binary.BigEndian.PutUint64(length[:], uint64(len(text)))
 	h.Write(length[:])
@@ -278,7 +278,7 @@ func (p ProfileInput) Binding() ProfileBinding {
 		return ProfileBinding{}
 	}
 	h := sha256.New()
-	text := func(value string) { hostHashText(h, value) }
+	text := func(value string) { runtimeHashText(h, value) }
 	source := func(value SourceFile) {
 		text(value.Location.Boundary)
 		text(value.Location.Path.String())
@@ -286,7 +286,7 @@ func (p ProfileInput) Binding() ProfileBinding {
 		text(value.File.ContentID().String())
 		text(fmt.Sprint(value.File.Mode()))
 	}
-	text("markitect.host-profile/request-v1")
+	text("markitect.runtime-profile/request-v1")
 	source(p.document)
 	text(p.namespace)
 	text(p.name)
@@ -302,7 +302,7 @@ func (p ProfileInput) Binding() ProfileBinding {
 
 func (p PreparedProfile) comparisonIdentity() string {
 	h := sha256.New()
-	text := func(value string) { hostHashText(h, value) }
+	text := func(value string) { runtimeHashText(h, value) }
 	location := func(value SourceLocation) { text(value.Boundary); text(value.Path.String()) }
 	metadata := func(value ProfileMetadataFile) {
 		location(value.Location)
@@ -318,12 +318,12 @@ func (p PreparedProfile) comparisonIdentity() string {
 	}
 	switch {
 	case p.observation.CheckImage != nil:
-		text("markitect.host-profile/static-check-image-v1")
+		text("markitect.runtime-profile/static-check-image-v1")
 	case p.observation.AgentImage == nil:
 		// Historical file/inventory identities retain their exact hash sequence.
-		text("markitect.host-profile/static-v1")
+		text("markitect.runtime-profile/static-v1")
 	default:
-		text("markitect.host-profile/static-image-v1")
+		text("markitect.runtime-profile/static-image-v1")
 	}
 	text(p.input.Binding().content.String())
 	source(p.input.document)

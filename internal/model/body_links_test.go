@@ -26,7 +26,7 @@ func TestBodyLinksBindEveryCategoryInOccurrenceOrder(t *testing.T) {
 	// CommonMark view and from the decoded literal display string.
 	input.Root.Entries[6].Bytes = bytes.ReplaceAll(input.Root.Entries[6].Bytes, []byte(`\\0`), []byte(`\0`))
 	original := bytes.Clone(input.Root.Entries[6].Bytes)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Passed || got.Coordinates != Passed || len(got.Diagnostics) != 0 || phaseStatus(got.Models[0], "body_links") != Passed {
 		t.Fatalf("valid body links rejected: %+v", got)
 	}
@@ -49,7 +49,7 @@ func TestBodyLinksBindEveryCategoryInOccurrenceOrder(t *testing.T) {
 	}
 	slices.Reverse(input.Root.Entries)
 	slices.Reverse(input.Dependencies)
-	if reordered := Compile(input); !reflect.DeepEqual(got, reordered) {
+	if reordered := Check(input); !reflect.DeepEqual(got, reordered) {
 		t.Fatal("body report depends on source enumeration")
 	}
 }
@@ -59,20 +59,20 @@ func TestBodyLinksUseOnlyTheirFileImports(t *testing.T) {
 	foreign := addFileImport(contractDefinition("foreign/peer.yaml", "peer", "feature/Record", "{}"), "feature", "Feature")
 	input.Root.Entries = append(input.Root.Entries, foreign)
 	input.Root.Entries[6] = withBody(addFileImport(input.Root.Entries[6], "foreign", "Refs"), "'[[Refs.peer]] [[foreign/peer]]'")
-	if got := Compile(input); got.Status != Passed || len(got.Diagnostics) != 0 {
+	if got := Check(input); got.Status != Passed || len(got.Diagnostics) != 0 {
 		t.Fatalf("explicit direct import not bound: %+v", got)
 	}
 	input.Root.Entries[7] = withBody(input.Root.Entries[7], "'[[Refs.peer]]'")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "binding.alias_missing") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "binding.alias_missing") {
 		t.Fatalf("body borrowed another file's alias: %+v", got)
 	}
 	input.Root.Entries[7] = withBody(contractDefinition("feature/peer.yaml", "peer", "Record", "{}"), "'[[foreign/peer]]'")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "binding.package_not_visible") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "binding.package_not_visible") {
 		t.Fatalf("full address bypassed file imports: %+v", got)
 	}
 	input.Root.Entries[7] = contractDefinition("feature/peer.yaml", "peer", "Record", "{}")
 	input.Root.Entries[6] = withBody(addFileImport(contractDefinition("feature/item.yaml", "item", "Record", "{}"), "foreign", "Refs"), "'[[peer]]'")
-	if got := Compile(input); got.Status != Failed || !hasDiagnostic(got, "binding.reference_ambiguous") {
+	if got := Check(input); got.Status != Failed || !hasDiagnostic(got, "binding.reference_ambiguous") {
 		t.Fatalf("body selected a winner among visible targets: %+v", got)
 	}
 }
@@ -86,7 +86,7 @@ func TestBodyFailureAndResourceRefusalRemainDistinct(t *testing.T) {
 		input := referenceValueInput("{}")
 		input.Root.Entries[6] = withBody(input.Root.Entries[6], tt.body)
 		addIncompleteModel(&input)
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != Failed || !hasDiagnostic(got, tt.code) || !hasDiagnostic(got, "limit.yaml_depth") {
 			t.Fatalf("known body error lost beside unrelated unknown inventory: %+v", got)
 		}
@@ -94,24 +94,24 @@ func TestBodyFailureAndResourceRefusalRemainDistinct(t *testing.T) {
 	input := referenceValueInput("{}")
 	addIncompleteModel(&input)
 	input.Root.Entries[6] = withBody(addFileImport(input.Root.Entries[6], "unavailable", "Unavailable"), "'[[Unavailable.absent]]'")
-	if got := Compile(input); got.Status != NotCompleted || hasDiagnostic(got, "binding.reference_missing") || got.Coordinates != NotCompleted {
+	if got := Check(input); got.Status != NotCompleted || hasDiagnostic(got, "binding.reference_missing") || got.Coordinates != NotCompleted {
 		t.Fatalf("incomplete imported inventory became false missing evidence: %+v", got)
 	}
 	input = referenceValueInput("{link: 42}")
 	input.Limits.BodyBytes = 4
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "value.reference") || !hasDiagnostic(got, "limit.body_bytes") {
 		t.Fatalf("Markdown refusal erased independent value failure: %+v", got)
 	}
 	input = referenceValueInput("{}")
 	input.Limits.MarkdownNesting = 4
 	input.Root.Entries[6] = withBody(input.Root.Entries[6], "'"+strings.Repeat("> ", 8)+"[[peer]]'")
-	if got := Compile(input); got.Status != NotCompleted || !hasDiagnostic(got, "limit.markdown_nesting") || phaseStatus(got.Models[0], "body_links") != NotCompleted {
+	if got := Check(input); got.Status != NotCompleted || !hasDiagnostic(got, "limit.markdown_nesting") || phaseStatus(got.Models[0], "body_links") != NotCompleted {
 		t.Fatalf("tool budget became a language failure: %+v", got)
 	}
 	for _, limits := range []Limits{{BodyBytes: -1}, {MarkdownNesting: -1}} {
 		input.Limits = limits
-		if got := Compile(input); got.Status != NotCompleted || !hasDiagnostic(got, "config.invalid_limit") {
+		if got := Check(input); got.Status != NotCompleted || !hasDiagnostic(got, "config.invalid_limit") {
 			t.Fatal("negative body budget was accepted")
 		}
 	}
@@ -119,7 +119,7 @@ func TestBodyFailureAndResourceRefusalRemainDistinct(t *testing.T) {
 		input = referenceValueInput("{}")
 		input.Limits.MarkdownNesting = 8
 		input.Root.Entries[6] = withBody(input.Root.Entries[6], "|\n  "+first+"\n\n  "+strings.Repeat("[label ", 9)+"text")
-		got := Compile(input)
+		got := Check(input)
 		code := "binding.reference_missing"
 		if first == "[[bad target]]" {
 			code = "body.syntax"
@@ -136,7 +136,7 @@ func TestBodyDependencyFailureReachesDependentPhase(t *testing.T) {
 	dependency := bindingSource("support", "1.0", "{markitect-core: '1.0'}",
 		withBody(contractDefinition("support/record.yaml", "Record", "Core.Kind", "{}"), "'[[broken'"))
 	input.Dependencies = append(input.Dependencies, dependency)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "body.syntax") || phaseStatus(got.Models[0], "body_links") != Failed || phaseStatus(got.Models[0], "values_and_references") != Passed {
 		t.Fatalf("dependency body failure failed to reach dependent: %+v", got)
 	}
@@ -165,7 +165,7 @@ func TestBodyCoordinatesAreIndependentOptionalMetadata(t *testing.T) {
 		t.Fatalf("missing YAML map changed content or erased occurrence: %+v / %+v", bodies, links)
 	}
 	input.Root.Entries[6] = withBody(contractDefinition("feature/item.yaml", "item", "Record", "{}"), "'[[absent]]'")
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || got.Coordinates != NotCompleted {
 		t.Fatal("unresolved content claimed complete coordinate profile")
 	}

@@ -29,7 +29,7 @@ func TestRunRequiresExplicitModuleConfigAndRejectsUnknownArguments(t *testing.T)
 	}
 }
 
-// This uses the real v1 compiler, repository capture and complete accounting.
+// This uses the real v1 Model check, repository capture and complete accounting.
 // A changed hook remains structurally accounted but fails its explicit byte pin.
 func TestRunChecksActualV1RegistryAndHistoricalCensus(t *testing.T) {
 	repo := testkit.NewRepo(t)

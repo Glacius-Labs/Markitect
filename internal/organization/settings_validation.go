@@ -106,3 +106,57 @@ func (v settingsValidation) role(defaults RoleDefaults, override RoleOverride, p
 	}
 	return result, nil
 }
+
+// team resolves the helper roles of one Manager: each binds its own profile or
+// the Manager's Execute profile, and its own instructions.
+func (v settingsValidation) team(team TeamDefaults, execute RoleSettings, profiles map[string]ProfileFact, instructions map[string]InstructionFact) ([]HelperSettings, int, error) {
+	if len(team.Helpers) == 0 {
+		return nil, 0, nil
+	}
+	if err := v.field(team.MaxHelpers.Source, team.MaxHelpers.Value); err != nil {
+		return nil, 0, err
+	}
+	if team.MaxHelpers.Value <= 0 {
+		return nil, 0, fmt.Errorf("a team with helper roles needs a positive maxHelpers")
+	}
+	seen := map[string]bool{}
+	var helpers []HelperSettings
+	for _, h := range team.Helpers {
+		if h.Role.Value == "" || h.Role.Value == "manager" || h.Role.Value == "reviewer" || seen[h.Role.Value] {
+			return nil, 0, fmt.Errorf("helper role %q is empty, reserved or repeated", h.Role.Value)
+		}
+		seen[h.Role.Value] = true
+		if err := v.field(h.Role.Source, h.Role.Value); err != nil {
+			return nil, 0, err
+		}
+		if err := v.field(h.Writes.Source, h.Writes.Value); err != nil {
+			return nil, 0, err
+		}
+		role := RoleSettings{Profile: execute.Profile}
+		if h.Profile != nil {
+			if err := v.field(h.Profile.Source, h.Profile.Value); err != nil {
+				return nil, 0, err
+			}
+			fact, found := profiles[h.Profile.Value]
+			if !found {
+				return nil, 0, fmt.Errorf("helper role %q: unresolved profile %q", h.Role.Value, h.Profile.Value)
+			}
+			role.Profile = Setting[ProfileFact]{Value: fact, Source: h.Profile.Source}
+		}
+		if h.Instructions != nil {
+			if err := v.field(h.Instructions.Source, append([]string{}, h.Instructions.Value...)); err != nil {
+				return nil, 0, err
+			}
+			role.InstructionSources = append(role.InstructionSources, h.Instructions.Source)
+			for _, id := range h.Instructions.Value {
+				instruction, found := instructions[id]
+				if !found {
+					return nil, 0, fmt.Errorf("helper role %q: unresolved instruction %q", h.Role.Value, id)
+				}
+				role.Instructions = append(role.Instructions, Setting[InstructionFact]{Value: instruction, Source: h.Instructions.Source})
+			}
+		}
+		helpers = append(helpers, HelperSettings{Role: h.Role.Value, Writes: h.Writes.Value, RoleSettings: role})
+	}
+	return helpers, team.MaxHelpers.Value, nil
+}

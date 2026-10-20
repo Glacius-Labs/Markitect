@@ -21,8 +21,8 @@ func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, st
 	t.Helper()
 	repo, selection, _ := registrySeamFixture(t)
 	// Replace the adapter-only opaque-input fixtures with actual authored inputs.
-	repo.Git("rm", "--", "config/execution.data", "config/registry.data", "config/ignore.data", "host/profile.data", "host/instruction.txt")
-	selection.HostProfiles = nil
+	repo.Git("rm", "--", "config/execution.data", "config/registry.data", "config/ignore.data", "runtime/profile.data", "runtime/instruction.txt")
+	selection.RuntimeProfiles = nil
 	selected := func(name string) apply.SourceLocation {
 		return apply.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, name)}
 	}
@@ -34,12 +34,12 @@ func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, st
 		selection.Instructions = append(selection.Instructions, selected(name))
 	}
 	execution := `apiVersion: markitect.execution/v1
-strategy: shared-workspace-v1
+strategy: recursive-passes-v1
 budget:
   executionTime: 25m
   turnTimeout: 10m
   agentTurns: 120
-  rounds: 4
+  passes: 12
 profiles:
   execute: library-agent
   verify: library-agent
@@ -70,8 +70,8 @@ func TestM1GitFileCheckAccountsCompleteCaptureAndPreviews(t *testing.T) {
 	r := adapter(t)
 	service := apply.NewModelService(r, r)
 	stage, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || stage.Compilation().Status != model.Passed || len(stage.Compilation().Models) != 3 {
-		t.Fatalf("actual M1/Vocabulary/Core capture failed: %v %+v", err, stage.Compilation().Diagnostics)
+	if err != nil || stage.Checked().Status != model.Passed || len(stage.Checked().Models) != 3 {
+		t.Fatalf("actual M1/Vocabulary/Core capture failed: %v %+v", err, stage.Checked().Diagnostics)
 	}
 	parent := stage.PrepareRegistry()
 	checked := parent.CheckFiles()

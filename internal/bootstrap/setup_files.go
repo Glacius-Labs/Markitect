@@ -16,26 +16,26 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// The Agent profiles of a Host are generic: one Claude Code session per turn
+// The Agent profiles of a Runtime profile are generic: one Claude Code session per turn
 // with constant resources and a product prompt that carries no project rules.
 const (
-	setupSystemPrompt = "You are a Markitect Manager agent in a team that reconciles a repository with its canonical model. Follow the turn input and report only through the offered Host tools. Never print or copy credentials."
+	setupSystemPrompt = "You are a Markitect Manager agent in a team that applies a repository's canonical model. Follow the turn input and report only through the offered Orchestrator tools. Never print or copy credentials."
 	maxSetupFileBytes = 4 << 20
 )
 
-// hostDocument is the Host profile document as setup writes it.
-type hostDocument struct {
-	APIVersion    string                                            `yaml:"apiVersion"`
-	AgentProfiles map[string]map[string]claudecode.HostSection      `yaml:"agentProfiles"`
-	CheckProfiles map[string]map[string]checks.ContainerHostSection `yaml:"checkProfiles"`
+// runtimeDocument is the Runtime profile document as setup writes it.
+type runtimeDocument struct {
+	APIVersion    string                                               `yaml:"apiVersion"`
+	AgentProfiles map[string]map[string]claudecode.RuntimeSection      `yaml:"agentProfiles"`
+	CheckProfiles map[string]map[string]checks.ContainerRuntimeSection `yaml:"checkProfiles"`
 }
 
-// composeHostProfile renders host.yaml: every selected Agent profile as a
+// composeRuntimeProfile renders runtime.yaml: every selected Agent profile as a
 // Claude Code profile and every selected check profile as a container check
 // profile on the observed image. The YAML encoding is deterministic.
-func composeHostProfile(request cli.SetupRequest, selected selection, observed claudecode.RuntimeObservation, store string) ([]byte, error) {
-	document := hostDocument{APIVersion: "markitect.host/v1", AgentProfiles: map[string]map[string]claudecode.HostSection{}, CheckProfiles: map[string]map[string]checks.ContainerHostSection{}}
-	agent, err := claudecode.HostProfile{
+func composeRuntimeProfile(request cli.SetupRequest, selected selection, observed claudecode.RuntimeObservation, store string) ([]byte, error) {
+	document := runtimeDocument{APIVersion: "markitect.runtime/v1", AgentProfiles: map[string]map[string]claudecode.RuntimeSection{}, CheckProfiles: map[string]map[string]checks.ContainerRuntimeSection{}}
+	agent, err := claudecode.RuntimeProfile{
 		EngineExecutable: request.Engine, ImageID: observed.ImageID, AgentdVersion: observed.AgentdVersion, CredentialRef: setupCredentialRef, MaxWireBytes: 1 << 20,
 		Session: claudecode.SessionProfile{
 			Version: 1, Model: request.AgentModel, Effort: request.Effort, SystemPrompt: setupSystemPrompt,
@@ -47,14 +47,14 @@ func composeHostProfile(request cli.SetupRequest, selected selection, observed c
 		return nil, err
 	}
 	for _, name := range selected.agents {
-		document.AgentProfiles[name] = map[string]claudecode.HostSection{"claudeCode": agent}
+		document.AgentProfiles[name] = map[string]claudecode.RuntimeSection{"claudeCode": agent}
 	}
 	for _, name := range selected.checks {
-		section := checks.ContainerHostProfile{EngineExecutable: request.Engine, Profile: checks.ContainerProfile{
+		section := checks.ContainerRuntimeProfile{EngineExecutable: request.Engine, Profile: checks.ContainerProfile{
 			ImageID: observed.ImageID, Executable: request.Checks[name],
 			Limits: runport.CheckLimits{MilliCPUs: 2000, MemoryBytes: 4 << 30, Processes: 1024}, MaxOutputBytes: 1 << 20,
 		}}.Section()
-		document.CheckProfiles[name] = map[string]checks.ContainerHostSection{"container": section}
+		document.CheckProfiles[name] = map[string]checks.ContainerRuntimeSection{"container": section}
 	}
 	var out bytes.Buffer
 	encoder := yaml.NewEncoder(&out)
@@ -124,22 +124,22 @@ type setupFile struct {
 	data []byte
 }
 
-// writeSetupFiles creates the private Host directory, takes the state
+// writeSetupFiles creates the private Runtime directory, takes the state
 // directory lock without waiting and writes every file that differs. A file
 // with identical bytes stays untouched and is reported as unchanged. The lock
-// is taken before any file is touched, so a running Apply leaves the Host as it
+// is taken before any file is touched, so a running Apply leaves the Runtime directory as it
 // is.
-func writeSetupFiles(host, stateDirectory string, files []setupFile) ([]cli.SetupFile, error) {
-	if err := os.MkdirAll(host, 0o700); err != nil {
+func writeSetupFiles(runtimeDir, stateDirectory string, files []setupFile) ([]cli.SetupFile, error) {
+	if err := os.MkdirAll(runtimeDir, 0o700); err != nil {
 		return nil, err
 	}
-	if info, err := os.Stat(host); err != nil || !info.IsDir() {
-		return nil, refuse("the Host path is not a directory")
+	if info, err := os.Stat(runtimeDir); err != nil || !info.IsDir() {
+		return nil, refuse("the Runtime path is not a directory")
 	}
 	lock, err := lockState(stateDirectory)
 	if err != nil {
 		if errors.Is(err, errStateLocked) {
-			return nil, errors.New("an Apply holds the Host's state directory; wait for it to finish")
+			return nil, errors.New("an Apply holds the state directory of the Runtime directory; wait for it to finish")
 		}
 		return nil, err
 	}
@@ -148,13 +148,13 @@ func writeSetupFiles(host, stateDirectory string, files []setupFile) ([]cli.Setu
 	// before it replaced another file.
 	existing := make([][]byte, len(files))
 	for i, file := range files {
-		if existing[i], err = observeSetupFile(filepath.Join(host, file.name)); err != nil {
+		if existing[i], err = observeSetupFile(filepath.Join(runtimeDir, file.name)); err != nil {
 			return nil, err
 		}
 	}
 	report := make([]cli.SetupFile, 0, len(files))
 	for i, file := range files {
-		path := filepath.Join(host, file.name)
+		path := filepath.Join(runtimeDir, file.name)
 		sum := sha256.Sum256(file.data)
 		entry := cli.SetupFile{Path: path, SHA256: hex.EncodeToString(sum[:]), Action: "unchanged"}
 		if existing[i] == nil || !bytes.Equal(existing[i], file.data) {

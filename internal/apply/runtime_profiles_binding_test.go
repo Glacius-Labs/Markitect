@@ -11,18 +11,19 @@ import (
 
 // Unlike the convenience controlled ports, this port intentionally preserves
 // the response's supplied binding, to test missing and cached request echoes.
-type rawHostAgentPort func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
+type rawRuntimeAgentPort func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
 
-func TestHostLegacyProfileIdentityRemainsLiteral(t *testing.T) {
-	// Measured on assigned base 0392cd2f before AgentImage existed. These literal
-	// identities are retained by historical v1/v2 RUN bindings, not rehashed.
+func TestRuntimeLegacyProfileIdentityRemainsLiteral(t *testing.T) {
+	// Measured before AgentImage existed and re-measured once for the DEC-064
+	// rename of the identity strings (markitect.runtime-profile/...). These literal
+	// identities stay fixed for the v1/v2 profile shapes, not rehashed.
 	want := map[string]string{
-		"agentProfiles": "sha256:a06f3be1ced8e898cdd5198f6da2dee9dbae7652b76f0a08314144fd890180df",
-		"checkProfiles": "sha256:887d4ab208cd0396378075cbfb70d4a12bcdca8e755ef9de3fefe191951d0f34",
+		"agentProfiles": "sha256:d9b00ff22bbdd37556fe70d5408a2f88ce394e5107107aa3af10a734d08a45bc",
+		"checkProfiles": "sha256:d96239b570deb5c28f5e22423d2ab4dc19a5dcf181d5f366d402a44f4cf1861a",
 	}
-	selection, raw := hostSettingsInputs(t)
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	result, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
 	if err != nil || result.Status() != model.Passed {
 		t.Fatalf("legacy profile fixture: %v", err)
@@ -38,14 +39,14 @@ func TestHostLegacyProfileIdentityRemainsLiteral(t *testing.T) {
 	}
 }
 
-func (p rawHostAgentPort) PrepareAgentProfile(c context.Context, i apply.ProfileInput) (apply.ProfileObservation, error) {
+func (p rawRuntimeAgentPort) PrepareAgentProfile(c context.Context, i apply.ProfileInput) (apply.ProfileObservation, error) {
 	return p(c, i)
 }
 
-func TestHostMetadataRejectsMissingOrOtherRequestsBinding(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+func TestRuntimeMetadataRejectsMissingOrOtherRequestsBinding(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	first, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
 	if err != nil || first.Status() != model.Passed {
 		t.Fatal("binding baseline failed")
@@ -54,13 +55,13 @@ func TestHostMetadataRejectsMissingOrOtherRequestsBinding(t *testing.T) {
 	for _, missing := range []bool{false, true} {
 		otherRaw := m.Inputs().Raw
 		otherSelection := m.Request().Selection
-		addHostDocument(t, &otherSelection, &otherRaw, "# Different exact request\n"+testHostDocument)
+		addRuntimeDocument(t, &otherSelection, &otherRaw, "# Different exact request\n"+testRuntimeDocument)
 		other := registryModel(t, otherSelection, otherRaw)
 		response := cached
 		if missing {
 			response.InputBinding = apply.ProfileBinding{}
 		}
-		port := rawHostAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) { return response, nil })
+		port := rawRuntimeAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) { return response, nil })
 		result, err := other.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), other.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), port, check)
 		if err != nil || result.Status() != model.Failed {
 			t.Fatalf("cached/missing echo accepted: %v %+v", err, result.Diagnostics())
@@ -74,12 +75,12 @@ func TestHostMetadataRejectsMissingOrOtherRequestsBinding(t *testing.T) {
 	}
 }
 
-func TestHostMetadataInventoryOrderIsCanonicalAndDeletionChangesIdentity(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+func TestRuntimeMetadataInventoryOrderIsCanonicalAndDeletionChangesIdentity(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
-	_, check := hostPorts(t)
+	_, check := runtimePorts(t)
 	prepare := func(reverse, remove bool) string {
-		port := hostAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
+		port := runtimeAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
 			o := testObservation(t, true)
 			o.Inventories[0].Files = append(o.Inventories[0].Files, testMetadata(t, "actual-schemas", "extra.json", "extra schema"))
 			o.Inventories = append(o.Inventories, apply.ProfileMetadataInventory{Boundary: "other-schemas", Files: []apply.ProfileMetadataFile{testMetadata(t, "other-schemas", "schema.json", "other schema")}})
@@ -108,8 +109,8 @@ func TestHostMetadataInventoryOrderIsCanonicalAndDeletionChangesIdentity(t *test
 	}
 }
 
-func TestHostMetadataRequiresExplicitContractNameAndPositiveVersion(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+func TestRuntimeMetadataRequiresExplicitContractNameAndPositiveVersion(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
 	for _, agent := range []bool{true, false} {
 		for _, contract := range []apply.ProfileContract{
@@ -118,7 +119,7 @@ func TestHostMetadataRequiresExplicitContractNameAndPositiveVersion(t *testing.T
 			{Name: "  ", Version: 1},
 			{Name: "literal-adapter-contract", Version: 42},
 		} {
-			a, c := hostPorts(t)
+			a, c := runtimePorts(t)
 			if agent {
 				a = func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
 					o := testObservation(t, true)

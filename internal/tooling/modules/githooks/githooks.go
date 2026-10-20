@@ -57,7 +57,7 @@ type OwnershipFact struct {
 }
 
 // Input contains only model facts, configured hook bytes, and explicit
-// ownership facts supplied by Host. It performs no I/O or execution.
+// ownership facts supplied by Orchestrator. It performs no I/O or execution.
 type Input struct {
 	Model     ModelFacts
 	Config    Config

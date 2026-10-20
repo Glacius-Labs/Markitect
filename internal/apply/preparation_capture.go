@@ -22,11 +22,10 @@ func (s *PreparationService) capturePreparation(ctx context.Context, request Cap
 		}
 		stage, err := models.CaptureModel(ctx, CaptureRequest{selection}, limits)
 		stage.extract = ports != nil && ports.extract
-		stage.startDrift = ports != nil && !ports.extract
 		registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 		structural := CapturedPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts(), err: err}
 		attempt := CapturedSettingsAttempt{structural: structural, err: err}
-		r.status = structuralPreparationStatus(stage.compiled.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
+		r.status = structuralPreparationStatus(stage.checked.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
 		if err != nil {
 			r.attempts = append(r.attempts, attempt)
 			r.status = acquisitionPreparationStatus(err)
@@ -39,7 +38,7 @@ func (s *PreparationService) capturePreparation(ctx context.Context, request Cap
 			attempt.settings, err = structural.files.PrepareSettings(ctx, attempt.defaults, ports.agents, ports.checks)
 			attempt.err = err
 			r.status = structuralPreparationStatus(r.status, attempt.settings.Status())
-			closure.host, required = observedPreparationHostClosure(attempt.settings.ProfileObservations())
+			closure.runtime, required = observedPreparationRuntimeClosure(attempt.settings.ProfileObservations())
 		}
 		r.attempts = append(r.attempts, attempt)
 		if err != nil {
@@ -83,7 +82,7 @@ func (s *PreparationService) previewPreparation(ctx context.Context, request Pre
 		registry, execution := stage.PrepareRegistry(), stage.DecodeExecution()
 		structural := PreviewPreparationAttempt{stage: stage, registry: registry, files: registry.CheckFiles(), execution: execution, contexts: execution.SelectContexts(), err: err}
 		attempt := PreviewSettingsAttempt{structural: structural, err: err}
-		r.status = structuralPreparationStatus(stage.compiled.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
+		r.status = structuralPreparationStatus(stage.checked.Status, registry.Status(), structural.files.Status(), execution.Status(), structural.contexts.Status())
 		if err != nil {
 			r.attempts = append(r.attempts, attempt)
 			r.status = acquisitionPreparationStatus(err)
@@ -96,7 +95,7 @@ func (s *PreparationService) previewPreparation(ctx context.Context, request Pre
 			attempt.settings, err = structural.files.PrepareSettings(ctx, attempt.defaults, ports.agents, ports.checks)
 			attempt.err = err
 			r.status = structuralPreparationStatus(r.status, attempt.settings.Status())
-			closure.host, required = observedPreparationHostClosure(attempt.settings.ProfileObservations())
+			closure.runtime, required = observedPreparationRuntimeClosure(attempt.settings.ProfileObservations())
 		}
 		r.attempts = append(r.attempts, attempt)
 		if err != nil {

@@ -37,13 +37,13 @@ func TestSettingsDefaultsCoverAllLocalManagers(t *testing.T) {
 }
 
 func TestSettingsForRootOnlyModelAndExactUnicodeOverrides(t *testing.T) {
-	rootOnly := requireTopology(t, compileFixture(t, localFixture(t, nil)))
+	rootOnly := requireTopology(t, checkFixture(t, localFixture(t, nil)))
 	facts := settingsFixture(t)
 	settings := requireSettings(t, rootOnly, facts)
 	if managers := settings.Managers(); len(managers) != 1 || managers[0].Package != "." {
 		t.Fatalf("explicit defaults did not resolve for the ordinary root alone: %+v", managers)
 	}
-	topology := requireTopology(t, compileFixture(t, localFixture(t, map[string][]string{"é/子": {"item"}}, "software")))
+	topology := requireTopology(t, checkFixture(t, localFixture(t, map[string][]string{"é/子": {"item"}}, "software")))
 	facts.Overrides = []organization.PackageOverride{
 		{Package: "é/子", Execute: organization.RoleOverride{Profile: settingPointer("alternate", "/packages/é~1子/profiles/execute")}},
 		{Package: "software", Verify: organization.RoleOverride{Profile: settingPointer("alternate", "/packages/software/profiles/verify")}},

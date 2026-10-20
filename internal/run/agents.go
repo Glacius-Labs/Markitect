@@ -9,40 +9,43 @@ import (
 // Agents runs one Agent turn. A turn is one fresh container from the turn
 // profile's image with Workspace mounted at /work (read-only when ReadOnly)
 // and Home mounted as the provider home, one provider conversation turn whose
-// single user message is Prompt, and the Host Tools served over MCP. Run
-// returns when the provider finished the turn, the Timeout passed or ctx
+// single user message is Prompt, and the Orchestrator tools served over MCP.
+// Run returns when the provider finished the turn, the Timeout passed or ctx
 // ended. In every case it stops the container before it returns and reports
 // in TurnResult.Stopped whether the end of the container, and with it of every
 // process the turn started, was observed. A partial TurnResult is returned
 // with an error. The handler answers each tool call; Run calls it serially
-// within one turn, while other turns may run concurrently.
+// within one turn, while other turns may run concurrently. A provider exit
+// ends a turn; it never establishes the completion of any work.
 type Agents interface {
 	Run(ctx context.Context, turn Turn, tools ToolHandler) (TurnResult, error)
 }
 
-// TurnKind separates realization work from fresh assessment.
+// TurnKind separates work of the Execute Passes from independent assessment.
 type TurnKind string
 
 const (
-	// ExecuteTurn may change the Manager's own files in the shared working tree
-	// and may continue the Manager's earlier Execute conversation.
+	// ExecuteTurn works in a Plan, Prepare or Implement Pass (or an Extract
+	// work Pass): it may change files where its mounts allow and may continue
+	// the Manager's earlier work conversation.
 	ExecuteTurn TurnKind = "execute"
-	// VerifyTurn assesses one immutable candidate read-only in a fresh
-	// conversation without the author's dialogue.
+	// VerifyTurn assesses one immutable candidate read-only. Its conversation
+	// is fresh for every review Pass and never contains an author's dialogue; it
+	// may continue only the same reviewer's conversation within that Pass.
 	VerifyTurn TurnKind = "verify"
 )
 
 // Turn is everything one Agent turn runs with. ID is unique within a run and
-// names the container. Profile names a Host Agent profile; the Agents
+// names the container. Profile names a Runtime Agent profile; the Agents
 // implementation resolves model, effort, system prompt, image, credential and
 // resource limits from it and chooses nothing itself. Resume names the provider
-// conversation an Execute turn continues; empty starts a fresh conversation.
-// A Verify turn never resumes. Transcript, when set, is an absolute Host path
-// where the implementation writes the provider stream with known secrets
-// redacted, as evidence for later inspection. Mounts overlay directories of
-// the same Workspace volume below /work after the base mount (read-only when
-// ReadOnly), in order: each is the volume's subpath Path mounted at
-// /work/Path, writable only when Writable says so.
+// conversation the turn continues; empty starts a fresh conversation.
+// Transcript, when set, is an absolute path where the implementation writes
+// the provider stream with known secrets redacted, as evidence for later
+// inspection. Mounts overlay directories or files of the same Workspace volume
+// below /work after the base mount (read-only when ReadOnly), in order: each is
+// the volume's subpath Path mounted at /work/Path, writable only when Writable
+// says so.
 type Turn struct {
 	ID         string
 	Manager    string
@@ -59,15 +62,16 @@ type Turn struct {
 	Transcript string
 }
 
-// ToolSpec is one Host tool offered to the provider. InputSchema is a JSON
-// Schema object.
+// ToolSpec is one Orchestrator tool offered to the provider. InputSchema is a
+// JSON Schema object.
 type ToolSpec struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	InputSchema json.RawMessage `json:"inputSchema"`
 }
 
-// ToolHandler answers one Host tool call with the call's JSON arguments.
+// ToolHandler answers one Orchestrator tool call with the call's JSON
+// arguments.
 type ToolHandler func(ctx context.Context, name string, arguments json.RawMessage) ToolAnswer
 
 // ToolAnswer is returned to the provider as the tool result. A refused answer

@@ -44,7 +44,7 @@ func preparationObservation(t *testing.T, selection apply.InputSelection, actual
 	raw.Registry = selectFiles(selection.Registry, actual.Registry)
 	raw.Ignore = selectFiles(selection.Ignore, actual.Ignore)
 	raw.Instructions = selectFiles(selection.Instructions, actual.Instructions)
-	raw.HostProfiles = selectFiles(selection.HostProfiles, actual.HostProfiles)
+	raw.RuntimeProfiles = selectFiles(selection.RuntimeProfiles, actual.RuntimeProfiles)
 	return raw
 }
 

@@ -49,7 +49,7 @@ func TestRuntimeCredentialResolversPreserveLiteralLoginAndToken(t *testing.T) {
 	dir := testkit.TempDir(t)
 	loginPath, tokenPath := filepath.Join(dir, "login.json"), filepath.Join(dir, "claude-token")
 	// This fake subscription login deliberately retains refresh: stripping the
-	// session copy belongs to the Codex adapter, never the Host source resolver.
+	// session copy belongs to the Codex adapter, never the Orchestrator source resolver.
 	login := []byte("{\n  \"auth_mode\":\"chatgpt\",\"OPENAI_API_KEY\":null,\"tokens\":{\"id_token\":\"fake-id\",\"access_token\":\"fake-access\",\"refresh_token\":\"fake-refresh\",\"account_id\":\"fake-account\"}\n}\n")
 	writeFakeCredential(t, loginPath, login)
 	writeFakeCredential(t, tokenPath, []byte("fake-dedicated-token"))
@@ -156,7 +156,7 @@ func TestRuntimeCredentialReadBoundsTypesAndSafeErrors(t *testing.T) {
 	if err != nil || !bytes.Equal(got.RuntimeLogin, data) {
 		t.Fatalf("whole file at the exact bound was not preserved: %v", err)
 	}
-	// The adapter owns JSON login semantics; the Host only preserves bytes.
+	// The adapter owns JSON login semantics; the Orchestrator only preserves bytes.
 	writeFakeCredential(t, path, []byte("fake"))
 	cancelled, cancel := context.WithCancel(context.Background())
 	cancel()

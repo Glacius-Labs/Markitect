@@ -20,7 +20,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 				selection, actual := fileCheckInputs(t)
 				preparationInstructions(t, &actual)
 				validExecution := string(actual.Execution[0].File.Bytes())
-				rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(validExecution, "shared-workspace-v1", "unknown", 1))
+				rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(validExecution, "recursive-passes-v1", "unknown", 1))
 				calls := 0
 				observe := func(selected apply.InputSelection) apply.RawInputs {
 					calls++
@@ -35,7 +35,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 						// Retain the selected file's actual bytes and location, but no
 						// repository binding. Such an instruction observation cannot
 						// satisfy the authored repository ref. The ModelService can
-						// compile; FileCheck still reports instruction_uncaptured.
+						// check the model; FileCheck still reports instruction_uncaptured.
 						raw.Instructions[0].RepositoryPath = snapshot.Path{}
 					}
 					return raw
@@ -67,7 +67,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 					firstExecution, secondExecution = first.Execution().Partial(), second.Execution().Partial()
 					firstDiagnostics, secondDiagnostics = first.Files().Diagnostics(), second.Files().Diagnostics()
 					firstStatus, secondStatus = first.Execution().Status(), second.Execution().Status()
-					if second.Error() != nil || second.Model().Compilation().Status != model.Passed || second.Model().Inputs().Guard != "actual-guard-2" || first.Model().Inputs().Guard != "actual-guard-1" {
+					if second.Error() != nil || second.Model().Checked().Status != model.Passed || second.Model().Inputs().Guard != "actual-guard-2" || first.Model().Inputs().Guard != "actual-guard-1" {
 						t.Fatal("acquisition error or old guard obscured the actual second stage")
 					}
 					if _, ok := result.Prepared(); ok {
@@ -88,7 +88,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 					firstExecution, secondExecution = first.Execution().Partial(), second.Execution().Partial()
 					firstDiagnostics, secondDiagnostics = first.Files().Diagnostics(), second.Files().Diagnostics()
 					firstStatus, secondStatus = first.Execution().Status(), second.Execution().Status()
-					if second.Error() != nil || second.Model().Compilation().Status != model.Passed || second.Model().Request().Revision != request.Revision || first.Model().Request().Revision != request.Revision {
+					if second.Error() != nil || second.Model().Checked().Status != model.Passed || second.Model().Request().Revision != request.Revision || first.Model().Request().Revision != request.Revision {
 						t.Fatal("acquisition error or changed revision obscured the actual second stage")
 					}
 					if _, ok := result.Prepared(); ok {
@@ -105,7 +105,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 				if firstExecution.Strategy.Value != "unknown" || len(firstDiagnostics) == 0 || len(secondDiagnostics) == 0 {
 					t.Fatal("original attempts or reports replaced")
 				}
-				if currentFailure && secondExecution.Strategy.Value != "unknown" || !currentFailure && secondExecution.Strategy.Value != "shared-workspace-v1" {
+				if currentFailure && secondExecution.Strategy.Value != "unknown" || !currentFailure && secondExecution.Strategy.Value != "recursive-passes-v1" {
 					t.Fatal("second current execution replaced by an old observation")
 				}
 				uncaptured := false

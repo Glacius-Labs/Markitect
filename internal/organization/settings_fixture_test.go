@@ -56,7 +56,7 @@ func settingsFixture(t *testing.T) organization.SettingsFacts {
 
 func settingsTopology(t *testing.T) organization.Topology {
 	t.Helper()
-	return requireTopology(t, compileFixture(t, localFixture(t, map[string][]string{
+	return requireTopology(t, checkFixture(t, localFixture(t, map[string][]string{
 		"lending": {"item"}, "lending/reminders": {"item"},
 	}, "empty", "software")))
 }

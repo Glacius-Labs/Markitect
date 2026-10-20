@@ -35,20 +35,22 @@ const (
 )
 
 // extractPhaseDescriptor is what distinguishes a phase besides its accounting:
-// its name, the mandate it hands the Agents and its Verify guidance.
+// its name, which is also the purpose of its work Pass, the mandate it hands the
+// Agents, its Verify guidance and whether artifact findings are advisory.
 type extractPhaseDescriptor struct {
 	name, mandate, verifyGuidance string
+	advisory                      bool
 }
 
 var extractPhaseDescriptors = [...]extractPhaseDescriptor{
-	extractStructure: {ExtractStructurePhase, structureMandate, structureVerifyGuidance},
-	extractModel:     {ExtractModelPhase, modelMandate, modelVerifyGuidance},
+	extractStructure: {ExtractStructurePhase, structureMandate, structureVerifyGuidance, false},
+	extractModel:     {ExtractModelPhase, modelMandate, modelVerifyGuidance, true},
 }
 
 func (p extractPhase) descriptor() extractPhaseDescriptor { return extractPhaseDescriptors[p] }
 
 // extractAccounting accounts the candidates of one Extract phase against that
-// phase's start. It holds only immutable values: Account compiles and checks
+// phase's start. It holds only immutable values: Account runs the Model check and file checks on
 // the tree it is given from scratch, so concurrent calls (the engine's check
 // tool calls it from several Execute turns) are safe.
 type extractAccounting struct {
@@ -64,13 +66,22 @@ func newExtractAccounting(phase extractPhase, start extractStage) (extractAccoun
 	if err != nil {
 		return extractAccounting{}, err
 	}
-	return extractAccounting{phase: phase, start: start, base: base, packages: packageNames(structural.Model().compiled)}, nil
+	return extractAccounting{phase: phase, start: start, base: base, packages: packageNames(structural.Model().checked)}, nil
 }
 
 // OwnerOf returns the Manager that owns a path: in the structure phase Root; in
 // the model phase the Package whose model directory holds the path, else the
 // owner the layout and the registry shards give it.
 func (a extractAccounting) OwnerOf(p snapshot.Path) string { return a.ownerOfName(p.String()) }
+
+// findingOwner names the Manager that must fix an observation about a path: its
+// owner, else Root, because a finding always has an addressee.
+func (a extractAccounting) findingOwner(name string) string {
+	if owner := a.ownerOfName(name); owner != "" {
+		return owner
+	}
+	return organization.Root
+}
 
 func (a extractAccounting) ownerOfName(name string) string {
 	if a.phase == extractStructure {
@@ -87,7 +98,7 @@ func (a extractAccounting) ownerOfName(name string) string {
 }
 
 // Account returns the blocking findings of a candidate tree of the phase. It
-// compiles the candidate model, checks the layout and the Package inventory and,
+// runs the Model check on the candidate model, checks the layout and the Package inventory and,
 // in the model phase, accounts every file against the shards; in both phases
 // only the phase's own area may differ from the start.
 func (a extractAccounting) Account(tree snapshot.Tree) []CandidateFinding {
@@ -108,18 +119,18 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 	// Every candidate is guarded, whatever else fails to prepare.
 	guarded := a.guard(tree)
 	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
-	compiled := structural.Model().compiled
-	if compiled.Status != model.Passed {
+	checked := structural.Model().checked
+	if checked.Status != model.Passed {
 		local := structural.Model().inputs.Raw.Local
-		for _, d := range compiled.Diagnostics {
+		for _, d := range checked.Diagnostics {
 			name := d.Source.Path
 			if d.Source.Origin == local.Source.Origin && !local.RepositoryArea.IsRoot() {
-				name = local.RepositoryArea.String() + "/" + name // the compiler's paths are relative to the model's boundary
+				name = local.RepositoryArea.String() + "/" + name // the Model check's paths are relative to the model's boundary
 			}
-			add(a.ownerOfName(name), "model."+d.Code, name, positioned(d.Message, d.Position))
+			add(a.findingOwner(name), "model."+d.Code, name, positioned(d.Message, d.Position))
 		}
-		if len(compiled.Diagnostics) == 0 {
-			add(organization.Root, "model.not_passed", "", "The candidate model does not compile: its status is "+string(compiled.Status)+".")
+		if len(checked.Diagnostics) == 0 {
+			add(organization.Root, "model.not_passed", "", "The candidate model does not pass the Model check: its status is "+string(checked.Status)+".")
 		}
 		return append(findings, guarded...)
 	}
@@ -128,7 +139,7 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 		if a.phase == extractStructure && d.Source.File == executionFile && strings.HasPrefix(d.Source.Field, "/checks") {
 			message += " " + a.offeredProfiles() // a defect of a proposed check
 		}
-		add(a.ownerOfName(d.Source.File), d.Code, d.Source.File, message)
+		add(a.findingOwner(d.Source.File), d.Code, d.Source.File, message)
 	}
 	if structural.execution.Status() != model.Passed {
 		return append(findings, guarded...)
@@ -136,7 +147,7 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 	if a.phase == extractStructure {
 		a.accountChecks(structural, add)
 	}
-	topology, err := organization.BuildTopology(compiled)
+	topology, err := organization.BuildTopology(checked)
 	if err != nil {
 		add(organization.Root, "model.topology", "", err.Error())
 		return append(findings, guarded...)
@@ -149,7 +160,7 @@ func (a extractAccounting) account(tree snapshot.Tree) []CandidateFinding {
 }
 
 // definitionResolver returns the function that tells whether a candidate tree's
-// model holds a Definition with the identity "package/ID". It compiles the
+// model holds a Definition with the identity "package/ID". It runs the Model check on the
 // candidate once and keeps the identities of the latest tree, because the
 // engine asks for several Definitions of the same candidate; it is safe for
 // concurrent use.
@@ -162,8 +173,8 @@ func (a extractAccounting) definitionResolver() func(snapshot.Tree, string) bool
 		defer mu.Unlock()
 		if d := tree.Digest().String(); known == nil || d != digest {
 			digest, known = d, map[string]bool{}
-			if compiled := rebindStructural(a.start.structural.Model(), tree, a.phase).Model().compiled; compiled.Status == model.Passed {
-				for _, owner := range compiled.Models {
+			if checked := rebindStructural(a.start.structural.Model(), tree, a.phase).Model().checked; checked.Status == model.Passed {
+				for _, owner := range checked.Models {
 					if owner.Local {
 						for _, definition := range owner.Definitions {
 							known[identityText(definition.Identity)] = true
@@ -176,7 +187,7 @@ func (a extractAccounting) definitionResolver() func(snapshot.Tree, string) bool
 	}
 }
 
-// accountChecks reports each proposed check whose profile the Host does not
+// accountChecks reports each proposed check whose profile the Runtime does not
 // offer: the next phase could not prepare such a check.
 func (a extractAccounting) accountChecks(structural CapturedPreparationAttempt, add func(owner, code, name, message string)) {
 	declared := structural.execution.authored.Checks
@@ -185,21 +196,21 @@ func (a extractAccounting) accountChecks(structural CapturedPreparationAttempt, 
 	}
 	for _, check := range declared.Value {
 		if !slices.ContainsFunc(a.start.checkProfiles, func(o checkProfileOffer) bool { return o.Name == check.Profile.Value }) {
-			add(organization.Root, "execution.check_profile_missing", executionFile, fmt.Sprintf("Check %q names the profile %q, which the Host does not offer. %s Name one of them in profile, or remove the check.", check.ID.Value, check.Profile.Value, a.offeredProfiles()))
+			add(organization.Root, "execution.check_profile_missing", executionFile, fmt.Sprintf("Check %q names the profile %q, which the Runtime does not offer. %s Name one of them in profile, or remove the check.", check.ID.Value, check.Profile.Value, a.offeredProfiles()))
 		}
 	}
 }
 
-// offeredProfiles states the check profiles the Host offers.
+// offeredProfiles states the check profiles the Runtime offers.
 func (a extractAccounting) offeredProfiles() string {
 	if len(a.start.checkProfiles) == 0 {
-		return "The Host offers no check profile."
+		return "The Runtime offers no check profile."
 	}
 	names := make([]string, len(a.start.checkProfiles))
 	for i, o := range a.start.checkProfiles {
 		names[i] = o.Name
 	}
-	return "The Host offers the check profiles: " + strings.Join(names, ", ") + "."
+	return "The Runtime offers the check profiles: " + strings.Join(names, ", ") + "."
 }
 
 // accountStructure checks the proposal of the structure phase: at least one
@@ -218,13 +229,13 @@ func (a extractAccounting) accountStructure(structural CapturedPreparationAttemp
 	layout := structural.files.layout
 	byDirectory := make(map[string][]string)
 	for _, p := range artifactPaths(a.start.tree) {
-		if !layout.HasOwner(p) {
+		if _, owned := layout.OwnerOf(p); !owned {
 			byDirectory[path.Dir(p.String())] = append(byDirectory[path.Dir(p.String())], p.String())
 		}
 	}
 	for dir, files := range byDirectory {
 		shown := files[:min(len(files), 3)]
-		add(organization.Root, "layout.no_owner", dir, fmt.Sprintf("%d artifact file(s) in %s have no owner under the layout (for example %s). Propose a Package whose path mirrors the directory below its artifact root, or add a layout exception for the directory to layout.exceptions of .markitect/execution.yaml with the owning Package and a reason.", len(files), dir, strings.Join(shown, ", ")))
+		add(organization.Root, "layout.no_owner", dir, fmt.Sprintf("%d artifact file(s) in %s have no owner (for example %s). Add an ownership area for the directory or the files to ownership of .markitect/execution.yaml with the owning Package and a reason.", len(files), dir, strings.Join(shown, ", ")))
 	}
 }
 
@@ -237,7 +248,7 @@ func (a extractAccounting) accountModel(structural CapturedPreparationAttempt, t
 	add := func(owner, code, name, message string) {
 		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: name, Message: message})
 	}
-	candidate := packageNames(structural.Model().compiled)
+	candidate := packageNames(structural.Model().checked)
 	for _, name := range candidate {
 		if !slices.Contains(a.packages, name) {
 			add(modelPackageOf(a.packages, modelDirectory+name+"/x"), "model.structure_changed", modelDirectory+name, fmt.Sprintf("Package %q is new; this phase keeps the proposed Packages. Describe the responsibility in your own Package and name the proposed Package in your summary.", name))
@@ -267,15 +278,15 @@ func positioned(message string, position *model.Position) string {
 }
 
 // exemptFromGuard names the paths Apply's protected-input accounting leaves
-// alone too: the Host's own state and the repository's git data are not inputs.
+// alone too: the Runtime's own state and the repository's git data are not inputs.
 func exemptFromGuard(name string) bool {
 	return strings.HasPrefix(name, ".markitect/state/") || strings.HasPrefix(name, ".git/")
 }
 
 // guard reports every change outside the phase's writable area: artifacts,
 // dependencies, manifest, lock and project configuration stay as captured. The
-// structure phase may write the model and, in the execution document, the layout
-// exceptions and the checks, the model phase the model and the registry shards.
+// structure phase may write the model and, in the execution document, the
+// ownership and the checks, the model phase the model and the registry shards.
 func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
 	quoted := 0
@@ -294,7 +305,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 			kind, rule = "The canonical or Markitect control input", "Managers cannot change the model's dependencies or the project controls."
 		}
 		message := fmt.Sprintf("%s was %s; %s Restore it.", kind, what, rule) + originalText(before, code, &quoted)
-		findings = append(findings, CandidateFinding{Owner: a.ownerOfName(name), Code: code, Path: name, Message: message})
+		findings = append(findings, CandidateFinding{Owner: a.findingOwner(name), Code: code, Path: name, Message: message})
 	}
 	for _, before := range a.start.tree.Entries() {
 		name := before.Path().String()
@@ -305,7 +316,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 			if !found {
 				report(name, before, "input.deleted", "deleted")
 			} else if after != before && !equalBesidesProposals(before.Bytes(), after.Bytes()) {
-				report(name, before, "input.changed", "changed beyond layout.exceptions and checks")
+				report(name, before, "input.changed", "changed beyond ownership and checks")
 			}
 		case writable(name):
 		case !found:
@@ -324,7 +335,7 @@ func (a extractAccounting) guard(tree snapshot.Tree) []CandidateFinding {
 }
 
 // equalBesidesProposals reports whether the structure phase changed the
-// execution document only in the parts it may propose: layout.exceptions and
+// execution document only in the parts it may propose: the ownership and
 // added checks. Every check of the start stays, as the identical entry; a
 // changed or removed owner-declared check is a change beyond the proposals, as
 // is any other difference. A document that does not parse differs.
@@ -333,9 +344,7 @@ func equalBesidesProposals(before, after []byte) bool {
 		if err := yaml.Unmarshal(data, &document); err != nil || document == nil {
 			return nil, nil, false
 		}
-		if layout, isMap := document["layout"].(map[string]any); isMap {
-			delete(layout, "exceptions")
-		}
+		delete(document, "ownership")
 		checks = document["checks"]
 		delete(document, "checks")
 		return document, checks, true
@@ -361,35 +370,32 @@ func equalBesidesProposals(before, after []byte) bool {
 	return true
 }
 
-// WritePlan returns where a Manager's Execute turns may write in the shared
-// working tree. Every plan starts read-only. The structure phase's Root writes
-// .markitect except the dependency models and the artifact roots, which are
-// read-only mounts (the manifest, the lock and the execution document are files
-// that a mount cannot cover; accounting guards them). In the model phase every
+// WritePlan returns where a Manager's work turns may write in the shared
+// working tree. Every plan starts read-only and the artifacts stay read-only.
+// The structure phase's Root writes .markitect except the dependency models,
+// which are read-only mounts (the manifest, the lock and the execution document
+// are files the guard protects beyond the proposals). In the model phase every
 // Manager writes only its own Package's model directory and its registry shard,
 // minus its descendants' directories.
-func (a extractAccounting) WritePlan(manager string) run.WritePlan {
+func (a extractAccounting) WritePlan(manager string) (run.WritePlan, error) {
 	if a.phase == extractStructure {
-		return a.structurePlan()
+		return a.structurePlan(), nil
 	}
-	regions := []writeRegion{{strings.TrimSuffix(registryDirectory, "/"), organization.Root}}
+	regions := []region{{path: strings.TrimSuffix(registryDirectory, "/"), owner: organization.Root}}
 	for _, name := range a.packages {
-		regions = append(regions, writeRegion{registryDirectory + name, name}, writeRegion{strings.TrimSuffix(modelDirectory, "/") + "/" + name, name})
+		regions = append(regions, region{path: registryDirectory + name, owner: name}, region{path: strings.TrimSuffix(modelDirectory, "/") + "/" + name, owner: name})
 	}
-	return regionPlan(manager, false, regions)
+	return planOf(manager, false, regions, a.start.tree)
 }
 
 func (a extractAccounting) structurePlan() run.WritePlan {
-	plan := run.WritePlan{Enforced: true, Mounts: []run.PathMount{{Path: strings.TrimSuffix(markitectDir, "/"), Writable: true}}}
+	plan := run.WritePlan{Mounts: []run.PathMount{{Path: strings.TrimSuffix(markitectDir, "/"), Writable: true}}}
 	raw := a.start.structural.Model().inputs.Raw
 	var readOnly []string
 	for _, dependency := range raw.Dependencies {
 		if area := dependency.RepositoryArea; area.String() != "" && !area.IsRoot() {
 			readOnly = append(readOnly, area.String())
 		}
-	}
-	for _, root := range a.base.layout.Roots() {
-		readOnly = append(readOnly, root.String())
 	}
 	slices.Sort(readOnly)
 	for _, name := range slices.Compact(readOnly) {
@@ -400,4 +406,40 @@ func (a extractAccounting) structurePlan() run.WritePlan {
 		}
 	}
 	return plan
+}
+
+// ModelCheck runs the Model check on a candidate tree of the phase.
+func (a extractAccounting) ModelCheck(tree snapshot.Tree) []CandidateFinding {
+	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
+	checked := structural.Model().checked
+	if checked.Status == model.Passed {
+		return nil
+	}
+	var findings []CandidateFinding
+	local := structural.Model().inputs.Raw.Local
+	for _, d := range checked.Diagnostics {
+		name := d.Source.Path
+		if d.Source.Origin == local.Source.Origin && !local.RepositoryArea.IsRoot() {
+			name = local.RepositoryArea.String() + "/" + name
+		}
+		findings = append(findings, CandidateFinding{Owner: a.findingOwner(name), Code: "model." + d.Code, Path: name, Message: positioned(d.Message, d.Position)})
+	}
+	if len(findings) == 0 {
+		findings = append(findings, CandidateFinding{Owner: organization.Root, Code: "model.not_passed", Message: "The candidate model does not pass the Model check: its status is " + string(checked.Status) + "."})
+	}
+	return findings
+}
+
+// RegistryView assembles the derived registry view of a candidate tree of the
+// phase against the candidate's own model and ownership.
+func (a extractAccounting) RegistryView(tree snapshot.Tree) run.RegistryView {
+	structural := rebindStructural(a.start.structural.Model(), tree, a.phase)
+	if structural.Model().checked.Status != model.Passed {
+		return run.RegistryView{Shards: map[string]string{}}
+	}
+	c, err := newCandidates(structural, structural.files.classifications, nil, structural.registry.registry)
+	if err != nil {
+		return run.RegistryView{Shards: map[string]string{}}
+	}
+	return c.RegistryView(tree)
 }

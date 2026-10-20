@@ -19,10 +19,14 @@ import (
 // accounting because it did not pass.
 var ErrCandidatesUnavailable = errors.New("candidate accounting requires a passed settings preparation")
 
-// CandidateFinding is one blocking structural observation on a candidate tree.
-// Owner is the Manager that must fix it: the owner of the path, the Manager of
-// a bad registry shard, or Root when nothing narrower applies. Path may be empty
-// for a model-level observation.
+// ErrUnsupportedOwnership reports an ownership shape the Runtime cannot
+// enforce: execution is refused rather than degraded to trust.
+var ErrUnsupportedOwnership = errors.New("the declared ownership cannot be enforced")
+
+// CandidateFinding is one blocking structural observation on a stand. Owner is
+// the Manager that must fix it: the owner of the path, the Manager of a bad
+// registry shard, or Root when nothing narrower applies. Path may be empty for
+// a model-level observation.
 type CandidateFinding struct {
 	Owner   string
 	Code    string
@@ -30,16 +34,17 @@ type CandidateFinding struct {
 	Message string
 }
 
-// Candidates accounts candidate trees of one Apply against its captured start.
-// It decides ownership for the run's team and checks, as the closing structural
-// gate before any Verify, that the candidate is completely accounted: every file
-// is a protected input, a registered artifact or an explained ignore; every
-// registration sits in the shard of the Manager that owns its path; the shards
-// themselves are valid; and no canonical or control input changed. It starts no
+// Candidates holds the deterministic gates and ownership facts of one run over
+// its captured start: the File check (every file is a protected input, a
+// registered artifact or an explained ignore; every registry entry lies in its
+// registrant's area; the local registries are valid; no canonical or control
+// input changed), the Model check of a stand, the owner of every path, the write
+// plans that enforce ownership and the derived registry view. It starts no
 // work, writes nothing and publishes nothing.
 type Candidates struct {
-	compiled        model.Result
-	start           snapshot.Tree
+	start           CapturedModel
+	checked         model.Result
+	tree            snapshot.Tree
 	topology        organization.Topology
 	registry        realization.Registry
 	classifications []realization.Classification
@@ -50,9 +55,9 @@ type Candidates struct {
 	guard func(snapshot.Tree) []CandidateFinding
 }
 
-// NewCandidates binds candidate accounting to one passed preparation: its
-// compiled model, captured start tree and registry, classifications, protected
-// inputs and declared layout. Nothing is read from the host.
+// NewCandidates binds the gates to one passed preparation: its checked model,
+// captured start tree and registry, classifications, protected inputs and
+// declared ownership. Nothing is read from the host.
 func NewCandidates(prepared CapturedSettingsAttempt) (Candidates, error) {
 	if prepared.Settings().Status() != model.Passed {
 		return Candidates{}, ErrCandidatesUnavailable
@@ -68,15 +73,15 @@ func NewCandidates(prepared CapturedSettingsAttempt) (Candidates, error) {
 	return newCandidates(structural, classifications, protections, registry)
 }
 
-// newCandidates binds candidate accounting to a structural preparation whose
-// complete sets the caller has already obtained.
+// newCandidates binds the gates to a structural preparation whose complete sets
+// the caller has already obtained.
 func newCandidates(structural CapturedPreparationAttempt, classifications []realization.Classification, protections []realization.Protection, registry realization.Registry) (Candidates, error) {
 	stage := structural.Model()
-	topology, err := organization.BuildTopology(stage.compiled)
+	topology, err := organization.BuildTopology(stage.checked)
 	if err != nil {
 		return Candidates{}, fmt.Errorf("candidate accounting: %w", err)
 	}
-	c := Candidates{compiled: stage.compiled, start: stage.inputs.Raw.Census, topology: topology, registry: registry, protections: protections}
+	c := Candidates{start: stage, checked: stage.checked, tree: stage.inputs.Raw.Census, topology: topology, registry: registry, protections: protections}
 	c.layout = structural.files.layout
 	// The start shards are replaced by the candidate's own: a Manager may add,
 	// change or remove its shard.
@@ -88,26 +93,28 @@ func newCandidates(structural CapturedPreparationAttempt, classifications []real
 	return c, nil
 }
 
-// OwnerOf returns the Manager that owns a path: Root is ".". A registry shard
-// belongs to its Manager. Under a declared layout the layout decides; without
-// one the path's registration in the captured start registry decides, and a new
-// or unregistered path belongs to Root. A file in an unmapped subdirectory of an
-// artifact root has no owner under the layout: OwnerOf returns Root, which must
-// resolve it, and accounting reports it as layout.no_owner.
+// OwnerOf returns the Manager that owns a path, Root as ".", or "" when
+// nothing owns it. A registry shard belongs to its Manager. Under declared
+// ownership the most specific area decides; without it the registrant of the
+// most specific entry in the captured start registry.
 func (c Candidates) OwnerOf(path snapshot.Path) string {
 	if owner, err := registryOwner(path); err == nil {
 		return ownerName(owner)
 	}
 	if c.layout.Declared() {
-		return ownerName(c.layout.OwnerOf(path))
+		owner, ok := c.layout.OwnerOf(path)
+		if !ok {
+			return ""
+		}
+		return ownerName(owner)
 	}
-	if registration, found := c.registry.Lookup(path); found {
-		return ownerName(registration.Owner())
+	if covering := c.registry.Covering(path); len(covering) > 0 {
+		return ownerName(covering[0].Owner())
 	}
-	return organization.Root
+	return ""
 }
 
-// Shard returns the repository path of the registry shard a Manager maintains.
+// Shard returns the repository path of the local registry a Manager maintains.
 func (c Candidates) Shard(manager string) string {
 	if manager == organization.Root {
 		return registryDirectory + "registry.yaml"
@@ -121,73 +128,114 @@ func (c Candidates) Areas(manager string) []string {
 	if _, found := c.topology.Manager(manager); !found {
 		return nil
 	}
-	owner := realization.RootOwner()
-	if manager != organization.Root {
-		owner, _ = realization.PackageOwner(manager)
+	if !c.layout.Declared() {
+		return []string{"the files it registers in " + c.Shard(manager)}
 	}
-	if c.layout.Declared() {
-		return c.layout.Describe(owner, c.start)
-	}
-	if manager == organization.Root {
-		return []string{"every file that no other Manager registered in its shard"}
-	}
-	return []string{"the files it registers in " + c.Shard(manager)}
+	return c.layout.Describe(ownerOf(manager))
 }
 
-// WritePlan returns where a Manager's Execute turns may write in the shared
-// working tree. Without a declared layout nothing is enforced and ownership is
-// trusted. With one, Root writes the whole tree except the protected inputs
-// under .markitect, the areas of every other Manager and their registry shards;
-// a Package writes only its own areas and its registry shard, minus the deeper
-// areas of its descendants. The mounts name directories, parents before their
-// descendants, and list only where the writability changes. An exception that
-// names a file of the start stand cannot be mounted: it stays with trust and
-// accounting, like the files directly in an artifact root.
-func (c Candidates) WritePlan(manager string) run.WritePlan {
-	if !c.layout.Declared() {
-		return run.WritePlan{}
+func ownerOf(manager string) realization.Owner {
+	if manager == organization.Root {
+		return realization.RootOwner()
 	}
-	regions := []writeRegion{{".markitect", ""}, {strings.TrimSuffix(registryDirectory, "/"), organization.Root}}
+	owner, _ := realization.PackageOwner(manager)
+	return owner
+}
+
+// region is a directory or exact file of the shared tree and the Manager that
+// holds it; an empty owner holds it for no Manager.
+type region struct {
+	path  string
+	owner string
+	file  bool
+}
+
+// WritePlan returns the enforced write plan of a Manager's turns: its own
+// areas and its local registry are writable; protected inputs, .markitect and
+// every other Manager's areas, including deeper ones inside its own, are
+// read-only. The mounts overlay only where writability changes, parents before
+// descendants. An exact-file area that needs its own mount must exist in the
+// start stand, because a file that does not exist cannot be mounted; such a
+// shape is refused instead of left to trust. Declared ownership is required.
+func (c Candidates) WritePlan(manager string) (run.WritePlan, error) {
+	if !c.layout.Declared() {
+		return run.WritePlan{}, fmt.Errorf("%w: .markitect/execution.yaml declares no ownership, so no write plan can enforce who writes what", ErrUnsupportedOwnership)
+	}
+	regions := []region{{path: ".markitect"}, {path: strings.TrimSuffix(registryDirectory, "/"), owner: organization.Root}}
 	for _, member := range c.topology.Managers() {
 		if member.Package != organization.Root {
-			regions = append(regions, writeRegion{registryDirectory + member.Package, member.Package})
+			regions = append(regions, region{path: registryDirectory + member.Package, owner: member.Package})
 		}
 	}
-	for _, area := range c.layout.Areas(c.start) {
-		regions = append(regions, writeRegion{area.Path.String(), ownerName(area.Owner)})
+	base := ""
+	for _, area := range c.layout.Areas() {
+		if area.Path == "" {
+			base = ownerName(area.Owner)
+			continue
+		}
+		regions = append(regions, region{path: area.Path, owner: ownerName(area.Owner), file: !area.Directory})
 	}
-	return regionPlan(manager, manager == organization.Root, regions)
+	for _, p := range c.protections {
+		if file, ok := p.File(); ok && !strings.HasPrefix(file.String(), ".markitect/") {
+			regions = append(regions, region{path: file.String(), file: true})
+		}
+		if dir, ok := p.Directory(); ok && !dir.IsRoot() && dir.String() != ".markitect" && !strings.HasPrefix(dir.String(), ".markitect/") && dir.String() != ".git" {
+			regions = append(regions, region{path: dir.String()})
+		}
+	}
+	return planOf(manager, base == manager, regions, c.tree)
 }
 
-// writeRegion is a directory of the shared tree and the Manager that holds it;
-// an empty owner holds it for no Manager.
-type writeRegion struct{ path, owner string }
-
-// regionPlan turns the regions into the write plan of one Manager: the base is
-// writable or not, and the mounts overlay only where the writability changes,
-// parents before their descendants.
-func regionPlan(manager string, base bool, regions []writeRegion) run.WritePlan {
-	slices.SortFunc(regions, func(a, b writeRegion) int { return cmp.Compare(a.path, b.path) })
-	plan := run.WritePlan{Enforced: true, Base: base}
+// planOf turns regions into the write plan of one Manager: the base is
+// writable or not, and the mounts overlay only where writability changes,
+// parents before their descendants. A region that needs a mount must exist in
+// the tree as the kind it is declared: a missing file cannot be mounted.
+func planOf(manager string, base bool, regions []region, tree snapshot.Tree) (run.WritePlan, error) {
+	slices.SortFunc(regions, func(a, b region) int { return cmp.Compare(a.path, b.path) })
+	regions = slices.Compact(regions)
+	plan := run.WritePlan{Base: base}
 	for i, r := range regions {
 		inherited := plan.Base
 		for j := i - 1; j >= 0; j-- {
-			if strings.HasPrefix(r.path, regions[j].path+"/") {
+			if !regions[j].file && strings.HasPrefix(r.path, regions[j].path+"/") {
 				inherited = regions[j].owner == manager
 				break
 			}
 		}
-		if writable := r.owner == manager; writable != inherited {
-			plan.Mounts = append(plan.Mounts, run.PathMount{Path: r.path, Writable: writable})
+		writable := r.owner == manager
+		if writable == inherited {
+			continue
 		}
+		_, isFile := tree.Lookup(mustPath(r.path))
+		switch {
+		case r.file && !isFile:
+			holder := "a read-only overlay"
+			if writable {
+				holder = "a writable overlay for its owner " + manager
+			}
+			return run.WritePlan{}, fmt.Errorf("%w: the exact file %s needs %s, but it does not exist in the start stand and a missing file cannot be mounted; commit the file first or assign its directory instead", ErrUnsupportedOwnership, r.path, holder)
+		case !r.file && isFile:
+			return run.WritePlan{}, fmt.Errorf("%w: the directory area %s/ is a file in the start stand", ErrUnsupportedOwnership, r.path)
+		}
+		plan.Mounts = append(plan.Mounts, run.PathMount{Path: r.path, Writable: writable, File: r.file})
 	}
-	return plan
+	return plan, nil
 }
 
-// Account returns the blocking findings of a candidate tree; an accounted
-// candidate returns an empty slice. Findings are ordered by Owner, Path, Code and
-// Message.
+func mustPath(name string) snapshot.Path {
+	path, _ := snapshot.NewPath(name)
+	return path
+}
+
+// Account returns the blocking findings of the File check of a stand; an
+// accounted stand returns an empty slice. Findings are ordered by Owner, Path,
+// Code and Message.
 func (c Candidates) Account(tree snapshot.Tree) []CandidateFinding {
+	findings, _ := c.account(tree)
+	return findings
+}
+
+func (c Candidates) account(tree snapshot.Tree) ([]CandidateFinding, *realization.Accounting) {
 	var findings []CandidateFinding
 	add := func(owner, code, path, message string) {
 		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: path, Message: message})
@@ -202,11 +250,13 @@ func (c Candidates) Account(tree snapshot.Tree) []CandidateFinding {
 		changed[finding.Path] = true
 		findings = append(findings, finding)
 	}
+	var report *realization.Accounting
 	if registry != nil {
-		accounting := realization.AccountFiles(c.compiled, tree, *registry, append(slices.Clone(c.classifications), classifications...), c.layout)
+		accounting := realization.AccountFiles(c.checked, tree, *registry, append(slices.Clone(c.classifications), classifications...), c.layout)
+		report = &accounting
 		for _, finding := range accounting.Findings() {
 			path := finding.Path.String()
-			if changed[path] && (finding.Code == "file.unexplained" || finding.Code == "classification.missing_file") {
+			if changed[path] && (finding.Code == "file.unexplained" || finding.Code == "layout.no_owner" || finding.Code == "classification.missing_file") {
 				continue
 			}
 			add(c.findingOwner(finding), finding.Code, path, c.findingMessage(finding))
@@ -215,10 +265,71 @@ func (c Candidates) Account(tree snapshot.Tree) []CandidateFinding {
 	slices.SortFunc(findings, func(a, b CandidateFinding) int {
 		return cmp.Or(cmp.Compare(a.Owner, b.Owner), cmp.Compare(a.Path, b.Path), cmp.Compare(a.Code, b.Code), cmp.Compare(a.Message, b.Message))
 	})
-	return slices.Compact(findings)
+	return slices.Compact(findings), report
 }
 
-// shards decodes the registry shards found in the candidate tree. Their invalid
+// RegistryView assembles the derived read-only view of a stand's local
+// registries: the version of every shard it includes and the effective
+// registration of every registered artifact.
+func (c Candidates) RegistryView(tree snapshot.Tree) run.RegistryView {
+	view := run.RegistryView{Shards: map[string]string{}}
+	for _, entry := range tree.Entries() {
+		if strings.HasPrefix(entry.Path().String(), registryDirectory) {
+			view.Shards[entry.Path().String()] = entry.ContentID().String()
+		}
+	}
+	_, report := c.account(tree)
+	if report == nil {
+		return view
+	}
+	for _, file := range report.Files() {
+		registration, ok := file.Registration()
+		if !ok || file.Class() != realization.RegisteredArtifact {
+			continue
+		}
+		var realizes []string
+		for _, id := range registration.Artifact().Basis() {
+			realizes = append(realizes, identityText(id))
+		}
+		view.Registrations = append(view.Registrations, run.Registration{Path: file.Entry().Path().String(), Owner: ownerName(registration.Owner()), Form: string(registration.Artifact().Form()), Realizes: realizes, Entry: registration.Artifact().Selector()})
+	}
+	return view
+}
+
+// ModelCheck runs the Model check on the model inputs of a stand: they must
+// check as passed and be the exact model the run is bound to.
+func (c Candidates) ModelCheck(tree snapshot.Tree) []CandidateFinding {
+	raw := cloneRaw(c.start.inputs.Raw)
+	raw.Census = tree
+	raw.Local = rebindModelSource(raw.Local, tree)
+	checked := checkModel(raw, c.start.limits)
+	switch {
+	case checked.Status != model.Passed:
+		var findings []CandidateFinding
+		for _, d := range checked.Diagnostics {
+			findings = append(findings, CandidateFinding{Owner: organization.Root, Code: "model." + d.Code, Path: d.Source.Path, Message: d.Message})
+		}
+		if len(findings) == 0 {
+			findings = append(findings, CandidateFinding{Owner: organization.Root, Code: "model.not_passed", Message: fmt.Sprintf("The Model check of the stand is %s.", checked.Status)})
+		}
+		return findings
+	case modelDigest(checked) != modelDigest(c.checked):
+		return []CandidateFinding{{Owner: organization.Root, Code: "model.changed", Message: "The stand's model is not the model the run is bound to."}}
+	}
+	return nil
+}
+
+// modelDigest identifies the checked local model.
+func modelDigest(checked model.Result) string {
+	for _, m := range checked.Models {
+		if m.Local {
+			return m.ID + "@" + m.Digest
+		}
+	}
+	return ""
+}
+
+// shards decodes the registry shards found in the stand. Their invalid
 // records, repeated registrations and layout faults are findings of the owning
 // Manager. A nil registry means accounting cannot continue.
 func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, message string)) (*realization.Registry, []realization.Classification) {
@@ -234,7 +345,7 @@ func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, messa
 		if !strings.HasPrefix(path.String(), registryDirectory) {
 			continue
 		}
-		if classification, err := realization.NewClassification(path, realization.MarkitectInput, "Registry shard maintained by its Manager."); err == nil {
+		if classification, err := realization.NewClassification(path, realization.MarkitectInput, "Local registry maintained by its Manager."); err == nil {
 			classifications = append(classifications, classification)
 		}
 		owner, err := registryOwner(path)
@@ -247,7 +358,7 @@ func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, messa
 			add(organization.Root, "registry.unknown_owner", path.String(), "Registry shard belongs to a Package outside the current local inventory.")
 			continue
 		}
-		for _, value := range decoded.decodeRegistry(SourceFile{File: entry, RepositoryPath: path}, owner, c.compiled, tree) {
+		for _, value := range decoded.decodeRegistry(SourceFile{File: entry, RepositoryPath: path}, owner, c.checked, tree) {
 			registrations = append(registrations, registration{name, value})
 		}
 	}
@@ -262,8 +373,8 @@ func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, messa
 		}
 		add(owner, diagnostic.Code, diagnostic.Source.String(), message)
 	}
-	// A path registered more than once is ambiguous. Every registrant must fix it;
-	// accounting continues with the first registration.
+	// One registry entry path registered more than once is ambiguous. Every
+	// registrant must fix it; accounting continues with the first one.
 	slices.SortStableFunc(registrations, func(a, b registration) int {
 		return cmp.Or(cmp.Compare(a.value.Artifact().Path().String(), b.value.Artifact().Path().String()), cmp.Compare(a.owner, b.owner))
 	})
@@ -271,8 +382,8 @@ func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, messa
 	for i, entry := range registrations {
 		path := entry.value.Artifact().Path()
 		if i > 0 && registrations[i-1].value.Artifact().Path() == path {
-			add(entry.owner, "registry.duplicate", path.String(), fmt.Sprintf("The artifact is also registered in the shard of %q; one path has exactly one owner.", registrations[i-1].owner))
-			add(registrations[i-1].owner, "registry.duplicate", path.String(), fmt.Sprintf("The artifact is also registered in the shard of %q; one path has exactly one owner.", entry.owner))
+			add(entry.owner, "registry.duplicate", path.String(), fmt.Sprintf("The path is also registered in the shard of %q; one path has exactly one registration.", registrations[i-1].owner))
+			add(registrations[i-1].owner, "registry.duplicate", path.String(), fmt.Sprintf("The path is also registered in the shard of %q; one path has exactly one registration.", entry.owner))
 			continue
 		}
 		unique = append(unique, entry.value)
@@ -286,7 +397,7 @@ func (c Candidates) shards(tree snapshot.Tree, add func(owner, code, path, messa
 }
 
 // protectedInputs reports every canonical or Markitect control input that the
-// candidate changed, deleted or newly added against the captured start. Registry
+// stand changed, deleted or newly added against the captured start. Registry
 // shards are the exception: the Managers maintain them.
 func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 	var findings []CandidateFinding
@@ -309,14 +420,18 @@ func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 		default:
 			return
 		}
-		findings = append(findings, CandidateFinding{Owner: c.OwnerOf(path), Code: code, Path: path.String(), Message: "The canonical or Markitect control input was " + what + "; Managers cannot change the model or project controls. Restore it, and ask the owner through Root if the intent must change." + originalText(before, code, &quoted)})
+		owner := c.OwnerOf(path)
+		if owner == "" {
+			owner = organization.Root
+		}
+		findings = append(findings, CandidateFinding{Owner: owner, Code: code, Path: path.String(), Message: "The canonical or Markitect control input was " + what + "; Managers cannot change the model or project controls. Restore it, and escalate through Root if the intent must change." + originalText(before, code, &quoted)})
 	}
-	for _, before := range c.start.Entries() {
+	for _, before := range c.tree.Entries() {
 		after, found := tree.Lookup(before.Path())
 		check(before.Path(), before, after, true, found)
 	}
 	for _, after := range tree.Entries() {
-		if _, found := c.start.Lookup(after.Path()); !found {
+		if _, found := c.tree.Lookup(after.Path()); !found {
 			check(after.Path(), snapshot.Entry{}, after, false, true)
 		}
 	}
@@ -324,7 +439,7 @@ func (c Candidates) protectedInputs(tree snapshot.Tree) []CandidateFinding {
 }
 
 // maxOriginalText is the largest original protected input a finding quotes;
-// maxQuotedTotal bounds all quotes of one candidate, so a large deletion cannot
+// maxQuotedTotal bounds all quotes of one stand, so a large deletion cannot
 // flood the owner's prompt.
 const (
 	maxOriginalText = 8 << 10
@@ -334,7 +449,7 @@ const (
 // originalText states the start content of a changed or deleted protected input,
 // so the owner can restore the exact bytes without access to the start stand: the
 // text itself when it is valid UTF-8 of at most maxOriginalText bytes and the
-// candidate's quotes stay within maxQuotedTotal, else its SHA-256 and size.
+// stand's quotes stay within maxQuotedTotal, else its SHA-256 and size.
 func originalText(before snapshot.Entry, code string, quoted *int) string {
 	if code == "input.added" {
 		return ""
@@ -348,7 +463,7 @@ func originalText(before snapshot.Entry, code string, quoted *int) string {
 }
 
 // findingOwner names the Manager that must fix an accounting finding: the
-// registering Manager when there is one, else the owner of the path.
+// registering Manager when there is one, else the owner of the path, else Root.
 func (c Candidates) findingOwner(finding realization.Finding) string {
 	if finding.Owner.IsRoot() {
 		return organization.Root
@@ -357,27 +472,22 @@ func (c Candidates) findingOwner(finding realization.Finding) string {
 		return name
 	}
 	if finding.Path.String() != "" {
-		return c.OwnerOf(finding.Path)
+		if owner := c.OwnerOf(finding.Path); owner != "" {
+			return owner
+		}
 	}
 	return organization.Root
 }
 
 func (c Candidates) findingMessage(finding realization.Finding) string {
-	if finding.Code == "layout.no_owner" {
-		// Root cannot fix this by registering, and the layout lives in the protected
-		// execution.yaml that no Manager may change.
-		return "The file has no owner under the persistent layout: remove it, or ask the owner through Root for a layout exception."
-	}
 	if finding.Code != "file.unexplained" {
 		return finding.Message
 	}
 	owner := c.OwnerOf(finding.Path)
-	if !c.layout.Declared() && owner == organization.Root {
-		// No declared layout: nothing says who made the file, and Root owns only what
-		// it registers itself. Root coordinates and finds the creator through its children.
-		return finding.Message + " The Manager that created this file registers it in its own registry shard (" + registryDirectory + "<package>/registry.yaml, or " + c.Shard(organization.Root) + " for a shared file); Root asks its children who created it and does not take the file over."
+	if owner == "" {
+		return finding.Message
 	}
-	return fmt.Sprintf("%s Register it in the shard of its owner %q: %s.", finding.Message, owner, c.Shard(owner))
+	return fmt.Sprintf("%s Register it, or a directory holding it, in the local registry of its owner %q: %s.", finding.Message, owner, c.Shard(owner))
 }
 
 func ownerName(owner realization.Owner) string {

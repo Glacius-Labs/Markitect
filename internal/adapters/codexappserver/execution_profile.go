@@ -8,7 +8,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
-// ProfileFromPrepared projects captured v3 Host settings after complete
+// ProfileFromPrepared projects captured v3 Runtime settings after complete
 // static preparation. It performs no acquisition, credential resolution or
 // runtime call; static preparation grants no execution authority. The image is
 // the one observed during preparation.

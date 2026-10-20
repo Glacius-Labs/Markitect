@@ -55,10 +55,29 @@ type RoleOverride struct {
 
 // SettingsDefaults must supply every field, including empty instruction lists.
 // There are no built-ins. Execute and Verify are the two Agent roles of every
-// Manager.
+// Manager: its own work and its fresh Verify reviewer. Team adds the helper
+// roles every Manager may instantiate for delegated tasks.
 type SettingsDefaults struct {
 	Execute RoleDefaults
 	Verify  RoleDefaults
+	Team    TeamDefaults
+}
+
+// TeamDefaults is the local team template of every Manager: its helper roles
+// and how many may be active for one Manager at once.
+type TeamDefaults struct {
+	MaxHelpers Setting[int]
+	Helpers    []HelperDefaults
+}
+
+// HelperDefaults is one helper role. A nil Profile binds the Manager's own
+// Execute profile; Writes says whether the role may receive a delegated write
+// subset of its Manager's area.
+type HelperDefaults struct {
+	Role         Setting[string]
+	Writes       Setting[bool]
+	Profile      *Setting[string]
+	Instructions *Setting[[]string]
 }
 
 // PackageOverride addresses exactly one local Package or Root. Instructions
@@ -93,10 +112,19 @@ type RoleSettings struct {
 	Instructions       []Setting[InstructionFact]
 }
 
+// HelperSettings is one resolved helper role of a Manager.
+type HelperSettings struct {
+	Role   string
+	Writes bool
+	RoleSettings
+}
+
 type ManagerSettings struct {
-	Package string
-	Execute RoleSettings
-	Verify  RoleSettings
+	Package    string
+	Execute    RoleSettings
+	Verify     RoleSettings
+	Helpers    []HelperSettings
+	MaxHelpers int
 }
 
 // Settings is a fixed successful resolution for all slots of one Topology.
@@ -135,6 +163,10 @@ func (s Settings) Manager(packagePath string) (ManagerSettings, bool) {
 func cloneManagerSettings(manager ManagerSettings) ManagerSettings {
 	manager.Execute = cloneRoleSettings(manager.Execute)
 	manager.Verify = cloneRoleSettings(manager.Verify)
+	manager.Helpers = slices.Clone(manager.Helpers)
+	for i := range manager.Helpers {
+		manager.Helpers[i].RoleSettings = cloneRoleSettings(manager.Helpers[i].RoleSettings)
+	}
 	return manager
 }
 

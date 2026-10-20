@@ -34,7 +34,7 @@ func TestOwnerAskPublishesTheQuestionAndPrintsOneLine(t *testing.T) {
 		t.Fatalf("question file: %s %v", data, err)
 	}
 	line := stderr.String()
-	if strings.Count(line, "\n") != 1 || !strings.HasSuffix(line, "\n") || !strings.Contains(line, "q1") || !strings.Contains(line, "Which currency should fines use?") || !strings.Contains(line, "markitect answer q1 --text ANSWER --run-config /abs/run.json") {
+	if strings.Count(line, "\n") != 1 || !strings.HasSuffix(line, "\n") || !strings.Contains(line, "q1") || !strings.Contains(line, "Which currency should fines use?") || !strings.Contains(line, "of run run-1") || !strings.Contains(line, "markitect answer q1 --run run-1 --text ANSWER --run-config /abs/run.json") {
 		t.Fatalf("stderr is not one useful line: %q", line)
 	}
 	if err := owner.Ask(context.Background(), runport.Question{ID: "q1", Text: "again"}); err == nil {
@@ -59,7 +59,7 @@ func TestOwnerAnswerPollsTheAnswerFileOfTheRunningApply(t *testing.T) {
 	if text, answered, err := owner.Answer(context.Background(), "q1"); err != nil || answered || text != "" {
 		t.Fatalf("unanswered question reported an answer: %q %v %v", text, answered, err)
 	}
-	path, err := writeAnswer(state, "q1", "Euro, with a trailing\nnewline.\n")
+	path, err := writeAnswer(state, "run-1", "q1", "Euro, with a trailing\nnewline.\n")
 	if err != nil || path != filepath.Join(state, "answers", "q1.txt") {
 		t.Fatalf("%s %v", path, err)
 	}
@@ -102,7 +102,7 @@ func TestOwnerChannelRemovesOnlyItsOwnFilesAndRefusesUnsafeIdentities(t *testing
 		if _, _, err := owner.Answer(context.Background(), unsafe); err == nil {
 			t.Errorf("Answer accepted %q", unsafe)
 		}
-		if _, err := writeAnswer(state, unsafe, "x"); err == nil {
+		if _, err := writeAnswer(state, "run-1", unsafe, "x"); err == nil {
 			t.Errorf("writeAnswer accepted %q", unsafe)
 		}
 	}
@@ -126,7 +126,7 @@ func TestOwnerAnswerRefusesOversizedOrNonTextFiles(t *testing.T) {
 
 func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T) {
 	state := filepath.Join(testkit.TempDir(t), "state")
-	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no run is running") {
+	if _, err := writeAnswer(state, "run-1", "q1", "x"); err == nil || !strings.Contains(err.Error(), "no run is running") {
 		t.Fatalf("answer without a running Apply: %v", err)
 	}
 	if _, err := os.Stat(state); !os.IsNotExist(err) {
@@ -143,7 +143,7 @@ func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T)
 		t.Fatal(err)
 	}
 	// The question file of a finished Apply is not answered: nobody holds the state.
-	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "no run is running") {
+	if _, err := writeAnswer(state, "run-1", "q1", "x"); err == nil || !strings.Contains(err.Error(), "no run is running") {
 		t.Fatalf("answer after the Apply ended: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(state, "answers", "q1.txt")); !os.IsNotExist(err) {
@@ -154,18 +154,18 @@ func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T)
 		t.Fatal(err)
 	}
 	defer lock.Release()
-	if _, err := writeAnswer(state, "q2", "x"); err == nil || !strings.Contains(err.Error(), "has not asked") {
+	if _, err := writeAnswer(state, "run-1", "q2", "x"); err == nil || !strings.Contains(err.Error(), "has not asked") {
 		t.Fatalf("answer to a question that was not asked: %v", err)
 	}
 	for _, bad := range []string{"", " \n\t", strings.Repeat("a", maxAnswerBytes+1), "a\x00b", string([]byte{0xff})} {
-		if _, err := writeAnswer(state, "q1", bad); err == nil {
+		if _, err := writeAnswer(state, "run-1", "q1", bad); err == nil {
 			t.Errorf("answer %q accepted", bad)
 		}
 	}
-	if _, err := writeAnswer(state, "q1", "first"); err != nil {
+	if _, err := writeAnswer(state, "run-1", "q1", "first"); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := writeAnswer(state, "q1", "second"); err == nil || !strings.Contains(err.Error(), "already answered") {
+	if _, err := writeAnswer(state, "run-1", "q1", "second"); err == nil || !strings.Contains(err.Error(), "already answered") {
 		t.Fatalf("an answer was replaced: %v", err)
 	}
 	if text, _, _ := owner.Answer(context.Background(), "q1"); text != "first" {
@@ -173,6 +173,64 @@ func TestWriteAnswerRequiresARunningApplyAnAskedQuestionAndIsFinal(t *testing.T)
 	}
 	if entries, _ := os.ReadDir(filepath.Join(state, "answers")); len(entries) != 1 {
 		t.Fatalf("stray answer files: %v", entries)
+	}
+}
+
+func TestWriteAnswerRefusesAnAnswerNamingAnotherRun(t *testing.T) {
+	state := testkit.TempDir(t)
+	owner, err := newFileOwner(state, "run-1", "/abs/run.json", &bytes.Buffer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	lock, err := lockState(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Release()
+	if err := owner.Ask(context.Background(), runport.Question{ID: "q1", Text: "Which?"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := writeAnswer(state, "run-0", "q1", "x"); err == nil || !strings.Contains(err.Error(), "belongs to run run-1, not to run run-0") {
+		t.Fatalf("an answer naming another run was accepted: %v", err)
+	}
+	if _, err := os.Stat(filepath.Join(state, "answers", "q1.txt")); !os.IsNotExist(err) {
+		t.Fatal("an answer for another run was written")
+	}
+	if _, err := writeAnswer(state, "run-1", "q1", "x"); err != nil {
+		t.Fatalf("the answer naming the running run failed: %v", err)
+	}
+}
+
+func TestOwnerWithdrawRemovesTheQuestionFileSoNoAnswerCanReachIt(t *testing.T) {
+	state := testkit.TempDir(t)
+	owner, err := newFileOwner(state, "run-1", "/abs/run.json", &bytes.Buffer{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	lock, err := lockState(state)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer lock.Release()
+	if err := owner.Ask(context.Background(), runport.Question{ID: "q1", Text: "Which?"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := owner.Withdraw(context.Background(), "q1"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(state, "questions", "q1.json")); !os.IsNotExist(err) {
+		t.Fatalf("the withdrawn question file remains: %v", err)
+	}
+	if _, err := writeAnswer(state, "run-1", "q1", "late"); err == nil || !strings.Contains(err.Error(), "has not asked") {
+		t.Fatalf("a late answer reached a withdrawn question: %v", err)
+	}
+	if err := owner.Withdraw(context.Background(), "q1"); err != nil {
+		t.Fatalf("withdrawing twice failed: %v", err)
+	}
+	for _, unsafe := range []string{"", "../q", "a/b"} {
+		if err := owner.Withdraw(context.Background(), unsafe); err == nil {
+			t.Errorf("Withdraw accepted %q", unsafe)
+		}
 	}
 }
 
@@ -195,7 +253,7 @@ func TestWriteAnswerRefusesAQuestionOfAnotherApply(t *testing.T) {
 		t.Fatal(err)
 	}
 	defer lock.Release()
-	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "has not asked") {
+	if _, err := writeAnswer(state, "run-2", "q1", "x"); err == nil || !strings.Contains(err.Error(), "has not asked") {
 		t.Fatalf("answer to a question of an earlier Apply: %v", err)
 	}
 	// A question file that recorded another run is not the running Apply's.
@@ -203,7 +261,7 @@ func TestWriteAnswerRefusesAQuestionOfAnotherApply(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(state, "questions", "q1.json"), stale, 0o600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := writeAnswer(state, "q1", "x"); err == nil || !strings.Contains(err.Error(), "does not belong") {
+	if _, err := writeAnswer(state, "run-2", "q1", "x"); err == nil || !strings.Contains(err.Error(), "does not belong") {
 		t.Fatalf("answer to a question of another run: %v", err)
 	}
 	if _, err := os.Stat(filepath.Join(state, "answers", "q1.txt")); !os.IsNotExist(err) {

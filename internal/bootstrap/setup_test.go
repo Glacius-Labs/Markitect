@@ -67,23 +67,23 @@ func (f *setupFake) engine(path string) (setupEngine, error) {
 }
 
 type setupFixture struct {
-	fake   *setupFake
-	repo   *testkit.Repo
-	host   string
-	token  string
-	engine string
-	args   []string
+	fake       *setupFake
+	repo       *testkit.Repo
+	runtimeDir string
+	token      string
+	engine     string
+	args       []string
 }
 
 func newSetupFixture(t *testing.T) setupFixture {
 	t.Helper()
 	repo := productFixture(t)
 	root := testkit.TempDir(t)
-	f := setupFixture{fake: &setupFake{version: "27.3.1"}, repo: repo, host: filepath.Join(root, "host"), token: filepath.Join(root, "token"), engine: filepath.Join(root, "docker")}
+	f := setupFixture{fake: &setupFake{version: "27.3.1"}, repo: repo, runtimeDir: filepath.Join(root, "runtime"), token: filepath.Join(root, "token"), engine: filepath.Join(root, "docker")}
 	if err := os.WriteFile(f.token, []byte(setupSentinel), 0o600); err != nil {
 		t.Fatal(err)
 	}
-	f.args = []string{"setup", "--repo", repo.Dir, "--host", f.host, "--image", "markitect-runtime:setup-test", "--credential", f.token, "--engine", f.engine, "--agent-model", "claude-haiku-5-5", "--check", "go=/usr/local/go/bin/go"}
+	f.args = []string{"setup", "--repo", repo.Dir, "--runtime", f.runtimeDir, "--image", "markitect-runtime:setup-test", "--credential", f.token, "--engine", f.engine, "--agent-model", "claude-haiku-5-5", "--check", "go=/usr/local/go/bin/go"}
 	return f
 }
 
@@ -144,7 +144,7 @@ func mustPath(t *testing.T, s string) snapshot.Path {
 	return p
 }
 
-func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
+func TestSetupPreparesARuntimeThatApplyAndCheckAccept(t *testing.T) {
 	f := newSetupFixture(t)
 	fake := f.fake
 
@@ -159,18 +159,18 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 		t.Fatalf("engine or image reference not used as given: %v %v", fake.paths, fake.refs)
 	}
 	report := decodeSetupReport(t, out)
-	hostPath, configPath := filepath.Join(f.host, "host.yaml"), filepath.Join(f.host, "run.json")
+	profilePath, configPath := filepath.Join(f.runtimeDir, "runtime.yaml"), filepath.Join(f.runtimeDir, "run.json")
 	if report.Status != "passed" || report.Bound.ImageID != bootstrapImageID || report.Bound.AgentdVersion != "agentd-setup-test" || report.Bound.CliVersion != "2.1.301 (Claude Code)" || report.Bound.EngineVersion != "27.3.1" {
 		t.Fatalf("bound identities: %+v", report)
 	}
-	if len(report.Files) != 2 || report.Files[0].Path != hostPath || report.Files[1].Path != configPath {
+	if len(report.Files) != 2 || report.Files[0].Path != profilePath || report.Files[1].Path != configPath {
 		t.Fatalf("files: %+v", report.Files)
 	}
-	want := "markitect apply --repo " + f.repo.Dir + " --host-profile " + hostPath + " --run-config " + configPath
+	want := "markitect apply --repo " + f.repo.Dir + " --runtime-profile " + profilePath + " --run-config " + configPath
 	if strings.NewReplacer("'", "", `"`, "").Replace(report.ApplyCommand) != want {
 		t.Fatalf("apply command %q want %q", report.ApplyCommand, want)
 	}
-	written := readTree(t, f.host)
+	written := readTree(t, f.runtimeDir)
 	for _, file := range report.Files {
 		sum := sha256.Sum256(written[file.Path])
 		if file.Action != "written" || file.SHA256 != hex.EncodeToString(sum[:]) {
@@ -183,7 +183,7 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 		}
 	}
 	if runtime.GOOS != "windows" {
-		for _, path := range []string{f.host, hostPath, configPath} {
+		for _, path := range []string{f.runtimeDir, profilePath, configPath} {
 			info, err := os.Stat(path)
 			if err != nil || info.Mode().Perm()&0o077 != 0 {
 				t.Fatalf("%s is not private: %v %v", path, info, err)
@@ -208,11 +208,11 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 	}
 	source := cfg.Credentials[setupCredentialRef]
 	store := cfg.WorkspaceHelper.Labels["markitect.store"]
-	if cfg.EngineExecutable != f.engine || cfg.StateDirectory != filepath.Join(f.host, "state") || cfg.WorkspaceHelper.Image != bootstrapImageID || source.Provider != "claude-code" || source.Mode != "dedicated-runtime-token" || source.Path != f.token || store == "" || cfg.RepositoryIdentity != store || cfg.ProductBuild == "" || cfg.OwnerRequest != defaultOwnerRequest {
+	if cfg.EngineExecutable != f.engine || cfg.StateDirectory != filepath.Join(f.runtimeDir, "state") || cfg.WorkspaceHelper.Image != bootstrapImageID || source.Provider != "claude-code" || source.Mode != "dedicated-runtime-token" || source.Path != f.token || store == "" || cfg.RepositoryIdentity != store || cfg.ProductBuild == "" || cfg.OwnerRequest != defaultOwnerRequest {
 		t.Fatalf("run configuration: %+v", cfg)
 	}
 
-	// check --metadata --host-profile passes and every Manager resolves the
+	// check --metadata --runtime-profile passes and every Manager resolves the
 	// profile with the requested model.
 	repository, err := gitrepo.New(gitrepo.Limits{})
 	if err != nil {
@@ -223,11 +223,11 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 	checker := checks.NewMetadataPreparer(func(checks.EngineConfig) (checks.ImageReader, error) { return fake, nil })
 	var checkOut, checkErr bytes.Buffer
 	command := cli.New(preparation, agents, checker, repository, nil, nil, nil)
-	if code := command.Run(context.Background(), []string{"check", "--repo", f.repo.Dir, "--metadata", "--host-profile", hostPath}, &checkOut, &checkErr); code != 0 {
+	if code := command.Run(context.Background(), []string{"check", "--repo", f.repo.Dir, "--metadata", "--runtime-profile", profilePath}, &checkOut, &checkErr); code != 0 {
 		t.Fatalf("check --metadata exit %d\n%s\n%s", code, checkOut.String(), checkErr.String())
 	}
 	selection := apply.InputSelection{Repository: f.repo.Dir, Local: apply.ModelSelection{Boundary: ".", ManifestPath: mustPath(t, ".markitect/model.yaml")}}
-	selection.HostProfiles = []apply.SourceLocation{{Boundary: f.host, Path: mustPath(t, "host.yaml")}}
+	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: f.runtimeDir, Path: mustPath(t, "runtime.yaml")}}
 	result, err := preparation.PreviewSettings(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{}, agents, checker)
 	attempt, ok := result.Prepared()
 	if err != nil || !ok {
@@ -268,7 +268,7 @@ func TestSetupPreparesAHostThatApplyAndCheckAccept(t *testing.T) {
 	if len(again.Files) != 2 || again.Files[0].Action != "unchanged" || again.Files[1].Action != "unchanged" || again.Files[0].SHA256 != report.Files[0].SHA256 || again.Files[1].SHA256 != report.Files[1].SHA256 {
 		t.Fatalf("second run: %+v", again.Files)
 	}
-	for path, data := range readTree(t, f.host) {
+	for path, data := range readTree(t, f.runtimeDir) {
 		if !bytes.Equal(data, written[path]) {
 			t.Fatalf("%s changed on an identical run", path)
 		}
@@ -289,10 +289,10 @@ func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
 	if code, out, errout := f.run(t); code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
-	before := readTree(t, f.host)
+	before := readTree(t, f.runtimeDir)
 	unchanged := func(name string) {
 		t.Helper()
-		after := readTree(t, f.host)
+		after := readTree(t, f.runtimeDir)
 		if len(after) != len(before) {
 			t.Fatalf("%s: files appeared or vanished", name)
 		}
@@ -336,7 +336,7 @@ func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
 		unchanged("invalid effort")
 	})
 	t.Run("held state lock", func(t *testing.T) {
-		held, err := lockState(filepath.Join(f.host, "state"))
+		held, err := lockState(filepath.Join(f.runtimeDir, "state"))
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -349,8 +349,8 @@ func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
 	})
 	t.Run("directory inside the repository", func(t *testing.T) {
 		g := f
-		inside := filepath.Join(f.repo.Dir, "host")
-		g.args = replaceArg(f.args, f.host, inside)
+		inside := filepath.Join(f.repo.Dir, "runtime")
+		g.args = replaceArg(f.args, f.runtimeDir, inside)
 		code, out, _ := g.run(t)
 		if code != 1 || !strings.Contains(out, "overlap") {
 			t.Fatalf("exit %d: %s", code, out)
@@ -361,7 +361,7 @@ func TestSetupRefusalsLeaveExistingFilesUntouched(t *testing.T) {
 	})
 	t.Run("directory containing the repository", func(t *testing.T) {
 		g := f
-		g.args = replaceArg(f.args, f.host, filepath.Dir(f.repo.Dir))
+		g.args = replaceArg(f.args, f.runtimeDir, filepath.Dir(f.repo.Dir))
 		if code, out, _ := g.run(t); code != 1 || !strings.Contains(out, "overlap") {
 			t.Fatalf("exit %d: %s", code, out)
 		}
@@ -414,8 +414,8 @@ func TestSetupRefusesAnEngineWithoutVolumeSubpaths(t *testing.T) {
 	if code != 3 || !strings.Contains(out, "require Docker 26") {
 		t.Fatalf("exit %d: %s", code, out)
 	}
-	if _, err := os.Stat(f.host); !os.IsNotExist(err) {
-		t.Fatal("a refused setup created the Host directory")
+	if _, err := os.Stat(f.runtimeDir); !os.IsNotExist(err) {
+		t.Fatal("a refused setup created the Runtime directory")
 	}
 }
 
@@ -425,7 +425,7 @@ func TestSetupWritesOwnerDecisionsAndDeadlineOnlyWhenGiven(t *testing.T) {
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
-	cfg, err := loadRunConfig(context.Background(), filepath.Join(f.host, "run.json"))
+	cfg, err := loadRunConfig(context.Background(), filepath.Join(f.runtimeDir, "run.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -433,7 +433,7 @@ func TestSetupWritesOwnerDecisionsAndDeadlineOnlyWhenGiven(t *testing.T) {
 		t.Fatalf("%+v", cfg)
 	}
 	// A deadline that is not UTC is refused before any file changes.
-	before := readTree(t, f.host)
+	before := readTree(t, f.runtimeDir)
 	if code, out, _ := f.run(t, "--deadline", "2030-01-02T03:04:05+02:00"); code != 1 {
 		t.Fatalf("exit %d: %s", code, out)
 	}
@@ -490,7 +490,7 @@ func replaceArg(args []string, from, to string) []string {
 	return out
 }
 
-func TestSetupSelectsEveryProfileOfTheDefaultsAndPackageOverrides(t *testing.T) {
+func TestSetupSelectsEveryProfileOfTheDefaultsTeamAndPackageOverrides(t *testing.T) {
 	f := newSetupFixture(t)
 	execution, err := os.ReadFile(filepath.Join(f.repo.Dir, ".markitect", "execution.yaml"))
 	if err != nil {
@@ -500,19 +500,24 @@ func TestSetupSelectsEveryProfileOfTheDefaultsAndPackageOverrides(t *testing.T) 
 	if !strings.Contains(text, "packages: {}") {
 		t.Fatal("fixture execution declarations changed")
 	}
-	f.repo.Write(".markitect/execution.yaml", strings.Replace(text, "packages: {}", "packages:\n  product/cli:\n    profiles: {verify: second-agent}", 1))
-	f.repo.Commit("select a second Agent profile for one Package")
+	if strings.Contains(text, "\nteam:") {
+		t.Fatal("fixture execution declarations changed")
+	}
+	text = strings.Replace(text, "packages: {}", "packages:\n  product/cli:\n    profiles: {verify: second-agent}", 1)
+	text += "team:\n  maxHelpers: 1\n  helpers:\n    - role: architect\n      profile: helper-agent\n      writes: false\n"
+	f.repo.Write(".markitect/execution.yaml", text)
+	f.repo.Commit("select a second Agent profile for one Package and a helper profile")
 	code, out, errout := f.run(t)
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
 	report := decodeSetupReport(t, out)
-	if !slices.Equal(report.AgentProfiles, []string{"markitect-agent", "second-agent"}) || !slices.Equal(report.CheckProfiles, []string{"go"}) {
+	if !slices.Equal(report.AgentProfiles, []string{"helper-agent", "markitect-agent", "second-agent"}) || !slices.Equal(report.CheckProfiles, []string{"go"}) {
 		t.Fatalf("%+v", report)
 	}
-	host, err := os.ReadFile(filepath.Join(f.host, "host.yaml"))
-	if err != nil || strings.Count(string(host), "claudeCode:") != 2 || strings.Count(string(host), "container:") != 1 {
-		t.Fatalf("%v\n%s", err, host)
+	profile, err := os.ReadFile(filepath.Join(f.runtimeDir, "runtime.yaml"))
+	if err != nil || strings.Count(string(profile), "claudeCode:") != 3 || strings.Count(string(profile), "container:") != 1 {
+		t.Fatalf("%v\n%s", err, profile)
 	}
 }
 
@@ -523,8 +528,8 @@ func TestSetupRewritesOnlyTheFileWhoseBytesChange(t *testing.T) {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
 	first := decodeSetupReport(t, out)
-	hostPath, configPath := filepath.Join(f.host, "host.yaml"), filepath.Join(f.host, "run.json")
-	oldHost, err := os.ReadFile(hostPath)
+	profilePath, configPath := filepath.Join(f.runtimeDir, "runtime.yaml"), filepath.Join(f.runtimeDir, "run.json")
+	oldProfile, err := os.ReadFile(profilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -532,19 +537,19 @@ func TestSetupRewritesOnlyTheFileWhoseBytesChange(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// The model appears in host.yaml only, so only that file may change.
+	// The model appears in runtime.yaml only, so only that file may change.
 	code, out, errout = f.run(t, "--agent-model", "claude-sonnet-5-5")
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
 	second := decodeSetupReport(t, out)
-	newHost, err := os.ReadFile(hostPath)
+	newProfile, err := os.ReadFile(profilePath)
 	if err != nil {
 		t.Fatal(err)
 	}
-	sum := sha256.Sum256(newHost)
-	if len(second.Files) != 2 || second.Files[0].Action != "written" || second.Files[0].SHA256 != hex.EncodeToString(sum[:]) || second.Files[0].SHA256 == first.Files[0].SHA256 || !bytes.Contains(newHost, []byte("model: claude-sonnet-5-5")) || bytes.Equal(newHost, oldHost) {
-		t.Fatalf("host.yaml was not rewritten with the new model: %+v", second.Files)
+	sum := sha256.Sum256(newProfile)
+	if len(second.Files) != 2 || second.Files[0].Action != "written" || second.Files[0].SHA256 != hex.EncodeToString(sum[:]) || second.Files[0].SHA256 == first.Files[0].SHA256 || !bytes.Contains(newProfile, []byte("model: claude-sonnet-5-5")) || bytes.Equal(newProfile, oldProfile) {
+		t.Fatalf("runtime.yaml was not rewritten with the new model: %+v", second.Files)
 	}
 	newConfig, err := os.ReadFile(configPath)
 	if err != nil || second.Files[1].Action != "unchanged" || second.Files[1].SHA256 != first.Files[1].SHA256 || !bytes.Equal(newConfig, oldConfig) {

@@ -29,9 +29,9 @@ func contextInput(t *testing.T) model.Input {
 	return input
 }
 
-func requireContext(t *testing.T, compiled model.Result, pkg string, scope ...organization.Setting[organization.ScopeRule]) organization.ContextSelection {
+func requireContext(t *testing.T, checked model.Result, pkg string, scope ...organization.Setting[organization.ScopeRule]) organization.ContextSelection {
 	t.Helper()
-	selection, err := organization.SelectContext(compiled, pkg, scope)
+	selection, err := organization.SelectContext(checked, pkg, scope)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -39,9 +39,9 @@ func requireContext(t *testing.T, compiled model.Result, pkg string, scope ...or
 }
 
 func TestContextDirectLinksAndContractsWithoutSecondBusinessHop(t *testing.T) {
-	compiled := compileFixture(t, contextInput(t))
-	selection := requireContext(t, compiled, "a")
-	if selection.Package() != "a" || selection.ModelID() != compiled.Models[0].ID || selection.ModelDigest() != compiled.Models[0].Digest {
+	checked := checkFixture(t, contextInput(t))
+	selection := requireContext(t, checked, "a")
+	if selection.Package() != "a" || selection.ModelID() != checked.Models[0].ID || selection.ModelDigest() != checked.Models[0].Digest {
 		t.Fatal("context lost its exact local model/Manager binding")
 	}
 	if first := selection.Definitions()[0]; first.Definition.Identity != contextID("a", "own") || first.Reasons[0].Kind != organization.OwnDefinition {
@@ -65,14 +65,14 @@ func TestContextDirectLinksAndContractsWithoutSecondBusinessHop(t *testing.T) {
 		t.Fatalf("bound imported Kind contract or reasons lost: %+v", contract)
 	}
 	for _, path := range []string{".", "empty", "software"} {
-		if got := requireContext(t, compiled, path); len(got.Definitions()) != 0 || got.Package() != path {
+		if got := requireContext(t, checked, path); len(got.Definitions()) != 0 || got.Package() != path {
 			t.Fatalf("root/empty local Package gained foreign or descendant content: %s %+v", path, got.Definitions())
 		}
 	}
-	// The exact compiled content, including original body and optional spans,
+	// The exact checked content, including original body and optional spans,
 	// is carried through without a rendering/prose interpretation phase.
 	own, _ := selection.Definition(contextID("a", "own"))
-	if !reflect.DeepEqual(own.Definition, compiled.Models[0].Definitions[0]) {
+	if !reflect.DeepEqual(own.Definition, checked.Models[0].Definitions[0]) {
 		t.Fatal("original own Definition changed")
 	}
 }

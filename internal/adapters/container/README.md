@@ -1,23 +1,23 @@
 # Container runtime adapter
 
-This package is the Host's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. The [rebuild plan](../../../docs/history/apply-design-before-dec-056/manager-apply-rebuild-plan.md#container-runtime) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
+This package is the Orchestrator's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. The [rebuild plan](../../../docs/history/apply-design-before-dec-056/manager-apply-rebuild-plan.md#container-runtime) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
 
 ## API
 
 | Call | Use |
 | --- | --- |
-| `NewEngine(path)` | Binds the absolute engine executable. The Host never searches PATH. |
+| `NewEngine(path)` | Binds the absolute engine executable. The Orchestrator never searches PATH. |
 | `Engine.Start(ctx, spec)` | Runs one session container with agentd and returns its `Session` after agentd's hello. |
 | `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `git`, `/usr/bin/tee`, `/bin/cat` or a project check. |
 | `Engine.RunCommand(ctx, spec, argv, env, maxOutputBytes)` | Runs a literal command with fixed environment additions, observes actual container start, terminal state and image, and retains bounded combined output with truncation. A known target nonzero exit is a result. |
 | `Engine.InspectVolume`, `VolumeMounts`, `CreateVolumeExclusive` | Observes volume labels and every container mounting the exact volume, and refuses adoption of preexisting volumes. Exclusive creation verifies a private random label after Docker's idempotent create; Docker provides no atomic exclusive-create primitive. |
 | `Engine.Pause` / `Engine.Unpause` | Freezes and resumes every process in a container; the write barrier for a workspace-basis transition. |
-| `Engine.CreateVolume`, `RemoveVolume`, `Containers`, `RemoveContainer` | Named, labeled volumes, and the label sweep for containers the Host no longer controls. |
+| `Engine.CreateVolume`, `RemoveVolume`, `Containers`, `RemoveContainer` | Named, labeled volumes, and the label sweep for containers the Orchestrator no longer controls. |
 | `Engine.ImageID`, `ReadImageFile` | Image identity and the image's recorded metadata, read without running the image. |
 | `Engine.ObserveImageFile(ctx, imageID, path, maxBytes)` | Verifies that executable ancestors are actual directories, then streams the complete regular image file into SHA-256 and actual size, up to an explicit bound of 512 MiB, without starting the image. |
 | `Engine.ObserveImageFileWithRequiredPaths(ctx, imageID, path, maxBytes, requiredDirectories, requiredRegularFiles)` | Also positively verifies the supplied directories and regular-file paths, including their directory ancestors, in the same never-started container. Unknown, absent, redirected or mismatched paths refuse the observation. |
 | `Session.StartProvider`, `WriteInput`, `CloseInput`, `Stdout` | The provider CLI's process and standard streams. Output is buffered up to 32 MiB, so control replies never wait for the reader. |
-| `Session.ToolCalls`, `Reply` | Host tool calls arriving over MCP through `markitect-agentd mcp`. `ToolCall.Meta` carries the provider's own call metadata. |
+| `Session.ToolCalls`, `Reply` | Orchestrator tool calls arriving over MCP through `markitect-agentd mcp`. `ToolCall.Meta` carries the provider's own call metadata. |
 | `Session.Census`, `Stop`, `Exited`, `Diagnostics`, `Close` | The container's processes, stop with grace, the observed exit, the tail of standard error, and the end of the connection. `Close` returns `ErrForcedClose` (joined with the engine process result) when the container did not end within the close timeout and had to be removed by force; a nil result means it ended by itself. |
 
 ## Image file observations
@@ -35,7 +35,7 @@ A directory probe costs the size of its subtree. Docker 29.4 builds the whole ar
 These rules come from real runs, recorded in the [handshake record](../../../docs/validation/runtime-handshake-20261017.md) and the [capability record](../../../docs/validation/runtime-capabilities-20261017.md).
 
 - **Codex runs with sandbox `danger-full-access`.** Its own sandbox cannot start in an unprivileged container. With `read-only` or `workspace-write`, every shell command fails, and the Agent may still report success. Read-only roles get read-only mounts instead.
-- **Host tools go through MCP.**
+- **Orchestrator tools go through MCP.**
   - Codex: `-c mcp_servers.markitect.command="/usr/local/bin/markitect-agentd"` and `-c mcp_servers.markitect.args=["mcp"]`, with the features `apps`, `memories`, `multi_agent`, `image_generation`, `browser_use` and `computer_use` disabled.
   - Claude Code: `--strict-mcp-config --mcp-config '{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/local/bin/markitect-agentd","args":["mcp"]}}}'`, an explicit `--tools` and `--allowedTools` list, and `--permission-mode dontAsk`.
   - [cli_smoke_test.go](cli_smoke_test.go) and [cli_continuity_test.go](cli_continuity_test.go) show complete invocations.

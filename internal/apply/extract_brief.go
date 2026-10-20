@@ -23,11 +23,11 @@ type vocabularyKind struct {
 	Spec     []model.Field
 }
 
-// vocabularyOf lists the Kinds the compiled model's dependencies define, apart
+// vocabularyOf lists the Kinds the checked model's dependencies define, apart
 // from the fixed core, in identity order.
-func vocabularyOf(compiled model.Result) []vocabularyKind {
+func vocabularyOf(checked model.Result) []vocabularyKind {
 	var kinds []vocabularyKind
-	for _, owner := range compiled.Models {
+	for _, owner := range checked.Models {
 		for _, d := range owner.Definitions {
 			if d.Kind == coreKind && d.Identity.Package != coreKind.Package {
 				kinds = append(kinds, vocabularyKind{Identity: d.Identity, Title: definitionTitle(d), Body: strings.Join(strings.Fields(d.Body), " "), Spec: d.Spec})
@@ -132,10 +132,10 @@ func writeProjectChecks(b *strings.Builder, checks []briefCheck) {
 	}
 }
 
-// writeCheckProfiles lists the check profiles the Host offers, so that a
+// writeCheckProfiles lists the check profiles the Runtime offers, so that a
 // proposed check can name one.
 func writeCheckProfiles(b *strings.Builder, offers []checkProfileOffer) {
-	b.WriteString("\nThe check profiles the Host offers (a check in checks of .markitect/execution.yaml names one)\n")
+	b.WriteString("\nThe check profiles the Runtime offers (a check in checks of .markitect/execution.yaml names one)\n")
 	if len(offers) == 0 {
 		b.WriteString("- none\n")
 	}
@@ -147,8 +147,7 @@ func writeCheckProfiles(b *strings.Builder, offers []checkProfileOffer) {
 
 // structureBriefInput is everything Root's Brief of the structure phase states.
 type structureBriefInput struct {
-	Roots         []string
-	Exceptions    []realization.LayoutException
+	Areas         []realization.Area
 	Dependencies  []string
 	Artifacts     []snapshot.Path
 	Kinds         []vocabularyKind
@@ -161,13 +160,7 @@ func renderStructureBrief(in structureBriefInput) string {
 	var b strings.Builder
 	b.WriteString("You are the Manager of Root in the structure phase of an Extract.\n\n")
 	b.WriteString("The existing artifacts (read-only evidence)\n")
-	underRoots := 0
-	for _, p := range in.Artifacts {
-		if slices.ContainsFunc(in.Roots, func(root string) bool { return p.String() == root || strings.HasPrefix(p.String(), root+"/") }) {
-			underRoots++
-		}
-	}
-	fmt.Fprintf(&b, "Artifact roots: %s. They hold %d artifact file(s); %d more lie outside the roots. Overview by directory:\n", strings.Join(in.Roots, ", "), underRoots, len(in.Artifacts)-underRoots)
+	fmt.Fprintf(&b, "The project holds %d artifact file(s). Overview by directory:\n", len(in.Artifacts))
 	lines, more := directorySummary(in.Artifacts, 60)
 	for _, line := range lines {
 		fmt.Fprintf(&b, "- %s\n", line)
@@ -176,20 +169,20 @@ func renderStructureBrief(in structureBriefInput) string {
 		b.WriteString("- and more directories: list them in /work\n")
 	}
 	b.WriteString("\nWhat you write\n")
-	b.WriteString("The Definitions of the proposed Packages under .markitect/model and layout.exceptions and checks of .markitect/execution.yaml. Everything else stays as it is: the model manifest and lock, the rest of the execution document, ignore.yaml, the artifacts and the imported dependency models")
+	b.WriteString("The Definitions of the proposed Packages under .markitect/model and ownership and checks of .markitect/execution.yaml. Everything else stays as it is: the model manifest and lock, the rest of the execution document, ignore.yaml, the artifacts and the imported dependency models")
 	if len(in.Dependencies) > 0 {
 		b.WriteString(" under " + strings.Join(in.Dependencies, ", "))
 	}
 	b.WriteString(".\n")
-	b.WriteString("\nThe layout\n")
-	fmt.Fprintf(&b, "Ownership of artifacts is the persistent layout of .markitect/execution.yaml: the artifact roots (%s) mirror the model hierarchy, so a file in %s/lending/reminders/ belongs to the Package lending/reminders (the deepest Package wins); the files directly in a root and every file outside the roots belong to Root. Every file in a subdirectory of a root needs a Package directory or an exception that covers it. A Package whose artifacts live in a directory of another name gets an exception, for example:\n\nlayout:\n  roots: [%s]\n  exceptions:\n    - {path: %s/some/directory, owner: some/package, reason: The artifacts there realize that Package.}\n\n", strings.Join(in.Roots, ", "), in.Roots[0], strings.Join(in.Roots, ", "), in.Roots[0])
-	if len(in.Exceptions) == 0 {
-		b.WriteString("There are no exceptions yet. Keep the roots as they are; add only exceptions (a directory or, with kind: file, a single file owned by Root).\n")
-	} else {
-		b.WriteString("Existing exceptions (keep them unless a better proposal needs a change):\n")
-		for _, e := range in.Exceptions {
-			fmt.Fprintf(&b, "- %s -> %s (%s)\n", e.Path, ownerLabel(e.Owner), e.Reason)
+	b.WriteString("\nThe ownership\n")
+	b.WriteString("Ownership of artifacts is the persistent ownership list of .markitect/execution.yaml: repository-relative areas, each a directory ending in \"/\" or an exact file, owned by Root (\".\") or a Package; the most specific area owns a path, so a Package's directory inside Root's directory belongs to the Package. Every artifact needs an owner. For example:\n\nownership:\n  - {path: src/, owner: ., reason: Project-level build files and documentation.}\n  - {path: src/lending/, owner: lending, reason: The artifacts there realize lending.}\n\n")
+	b.WriteString("The areas declared now (keep the ones a better proposal does not change):\n")
+	for _, area := range in.Areas {
+		line := fmt.Sprintf("- %s -> %s", area.Selector(), ownerLabel(area.Owner))
+		if area.Reason != "" {
+			line += " (" + area.Reason + ")"
 		}
+		b.WriteString(line + "\n")
 	}
 	_, kind := overviewKind(in.Kinds)
 	b.WriteString("\nThe overview Definition of each Package\n")

@@ -14,7 +14,7 @@ type valueResult struct {
 	findings []identityFinding
 }
 
-type valueCompiler struct {
+type valueChecker struct {
 	scopes           []sourceScope
 	contracts        contractResult
 	result           valueResult
@@ -32,7 +32,7 @@ type valueJob struct {
 }
 
 func checkValues(scopes []sourceScope, graph dependencyGraph, contracts contractResult) valueResult {
-	c := valueCompiler{scopes: scopes, contracts: contracts, propertyComplete: map[*propertyContract]bool{}, result: valueResult{
+	c := valueChecker{scopes: scopes, contracts: contracts, propertyComplete: map[*propertyContract]bool{}, result: valueResult{
 		status: append([]Status(nil), contracts.status...), specs: map[Identity]Value{},
 	}}
 	for _, definition := range contracts.definitions {
@@ -78,7 +78,7 @@ func checkValues(scopes []sourceScope, graph dependencyGraph, contracts contract
 	return c.result
 }
 
-func (c *valueCompiler) finding(a definitionAddress, code, path, message string, value Value) {
+func (c *valueChecker) finding(a definitionAddress, code, path, message string, value Value) {
 	definition := c.scopes[a.model].definitions[a.definition]
 	c.result.findings = append(c.result.findings, identityFinding{scope: a.model, diagnostic: Diagnostic{
 		Code: code, Message: path + ": " + message, Source: source(c.scopes[a.model].origin, definition.file), Position: positionPointer(value.position),
@@ -87,7 +87,7 @@ func (c *valueCompiler) finding(a definitionAddress, code, path, message string,
 
 // Jobs traverse actual finite values, never unfold an optional schema or follow
 // a reference's content. Even a caller-configured large depth uses no Go recursion.
-func (c *valueCompiler) spec(a definitionAddress, input Value, kind *definitionContract) (Value, Status) {
+func (c *valueChecker) spec(a definitionAddress, input Value, kind *definitionContract) (Value, Status) {
 	var output Value
 	status := kind.status
 	jobs := []valueJob{{mode: "object", input: input, output: &output, fields: kind.fields, complete: kind.status == Passed, path: "spec"}}
@@ -245,7 +245,7 @@ func (c *valueCompiler) spec(a definitionAddress, input Value, kind *definitionC
 	return output, status
 }
 
-func (c *valueCompiler) reference(a definitionAddress, job valueJob, expected *Identity) (Value, Status) {
+func (c *valueChecker) reference(a definitionAddress, job valueJob, expected *Identity) (Value, Status) {
 	if job.input.kind != StringValue || !validAuthorReference(job.input.text) {
 		c.finding(a, "value.reference", job.path, "a reference must be a valid author reference String.", job.input)
 		return Value{}, Failed

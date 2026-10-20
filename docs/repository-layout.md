@@ -17,7 +17,7 @@ Current source uses canonical language v1, explicit input selection and exact ar
 docs/markitect/project.md    official generated readable view
 ```
 
-Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Orchestrator profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
+Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Runtime profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
 
 Apply and Extract keep their state outside the repository, in the state directory of the run configuration: the lock, `runs/<runID>/` evidence, `current-run` and, for Extract, the owner question and answer files ([runtime contract](design/canonical-model/manager-apply-runtime.md#evidence-and-state)). There is no journal. Read-only preparation creates no run evidence.
 
@@ -33,7 +33,7 @@ Markitect has one root Go module:
 cmd/markitect/                 product entrypoint
 cmd/markitect-release/         independent release maintenance entrypoint
 cmd/markitect-check-*/         repository gate entrypoints
-internal/model/               canonical v1 compiler
+internal/model/               canonical v1 Model check
 internal/snapshot/            pure fixed tree values
 internal/organization/        pure topology/context/settings
 internal/realization/         pure ownership/accounting/candidates

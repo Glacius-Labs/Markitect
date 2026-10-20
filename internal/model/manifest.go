@@ -20,7 +20,7 @@ type ManifestInput struct {
 //
 // Passed does not establish root existence, physical spelling or separation,
 // redirect safety, a captured tree, dependency availability, a lock, complete
-// compilation, acquisition authority or permission to apply anything.
+// Model check, acquisition authority or permission to apply anything.
 type ManifestResult struct {
 	Status      Status
 	Source      Source
@@ -28,7 +28,7 @@ type ManifestResult struct {
 	Diagnostics []Diagnostic
 }
 
-// InspectManifest uses Compile's manifest decoder and lexical validation over
+// InspectManifest uses Check's manifest decoder and lexical validation over
 // explicitly supplied bytes. It reads no directory, dependency or lock and
 // neither repairs nor changes input bytes. Resource refusal is NotCompleted;
 // known manifest violations are Failed, including beside a decoding limit.
@@ -39,7 +39,7 @@ func InspectManifest(input ManifestInput) ManifestResult {
 		return r
 	}
 	limits := effectiveLimits(input.Limits)
-	c := sourceCompiler{model: SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath}, limits: limits}
+	c := sourceChecker{model: SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath}, limits: limits}
 	entry := Entry{Path: input.ManifestPath}
 	admitted := int64(len(input.Bytes)) <= limits.SourceBytes
 	if admitted {
@@ -64,7 +64,7 @@ func InspectManifest(input ManifestInput) ManifestResult {
 	return r
 }
 
-func (c *sourceCompiler) manifestPathValid(selected Entry) bool {
+func (c *sourceChecker) manifestPathValid(selected Entry) bool {
 	if !validPath(c.model.ManifestPath) || basename(c.model.ManifestPath) != "model.yaml" {
 		c.problem("input.manifest_path", "ManifestPath must explicitly select a relative model.yaml path.", selected, nil)
 		return false
@@ -72,10 +72,10 @@ func (c *sourceCompiler) manifestPathValid(selected Entry) bool {
 	return true
 }
 
-// Keep lexical validation and known metadata in one place. Compile continues
+// Keep lexical validation and known metadata in one place. Check continues
 // with its own root/tree/lock checks; inspection publishes only a valid Root.
 // Preserve known manifest facts even when later Definition capture is refused.
-func (c *sourceCompiler) readManifest(manifest Entry) (string, bool) {
+func (c *sourceChecker) readManifest(manifest Entry) (string, bool) {
 	v, valid := c.decode(manifest)
 	if !valid {
 		return "", false

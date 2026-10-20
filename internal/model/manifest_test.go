@@ -92,15 +92,15 @@ func TestInspectManifestRejectsLexicalAndRestrictedYAMLViolations(t *testing.T) 
 			if got.Status != Failed || got.Root != "" || !manifestDiagnostic(got, tt.code) || !bytes.Equal(input.Bytes, original) {
 				t.Fatalf("expected %s with no root: %+v", tt.code, got)
 			}
-			// These are the exact same lexical diagnostics Compile emits before
+			// These are the exact same lexical diagnostics Check emits before
 			// performing its additional root/tree/lock/complete-v1 checks.
-			_, compiledDiagnostics, _ := compileSource(SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath, Entries: []Entry{
+			_, checkedDiagnostics, _ := checkSource(SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath, Entries: []Entry{
 				{Path: input.ManifestPath, Kind: Regular, Bytes: input.Bytes},
 				{Path: "config/model", Kind: Directory},
 			}}, DefaultLimits())
 			for _, diagnostic := range got.Diagnostics {
-				if diagnostic.Source != got.Source || !slices.ContainsFunc(compiledDiagnostics, func(d Diagnostic) bool { return reflect.DeepEqual(d, diagnostic) }) {
-					t.Fatalf("inspection/Compile diagnostic source or meaning diverged: %+v / %+v", diagnostic, compiledDiagnostics)
+				if diagnostic.Source != got.Source || !slices.ContainsFunc(checkedDiagnostics, func(d Diagnostic) bool { return reflect.DeepEqual(d, diagnostic) }) {
+					t.Fatalf("inspection/Check diagnostic source or meaning diverged: %+v / %+v", diagnostic, checkedDiagnostics)
 				}
 			}
 		})
@@ -178,14 +178,14 @@ func TestInspectManifestPreservesDiagnosticCoordinates(t *testing.T) {
 	}
 }
 
-func TestInspectManifestDoesNotProveTreeLockOrCompleteCompilation(t *testing.T) {
+func TestInspectManifestDoesNotProveTreeLockOrCompleteCheck(t *testing.T) {
 	input := inspectionInput(strings.Replace(inspectionYAML, "root: model", "root: unavailable", 1))
 	if got := InspectManifest(input); got.Status != Passed || got.Root != "unavailable" {
 		t.Fatalf("lexical inspection attempted to acquire root: %+v", got)
 	}
-	compiled := Compile(Input{Root: SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath, Entries: []Entry{{Path: input.ManifestPath, Kind: Regular, Bytes: input.Bytes}}}})
-	if compiled.Status != Failed || !hasDiagnostic(compiled, "manifest.root_missing") {
-		t.Fatalf("Compile stopped checking actual supplied root: %+v", compiled)
+	checked := Check(Input{Root: SourceModel{Origin: input.Origin, ManifestPath: input.ManifestPath, Entries: []Entry{{Path: input.ManifestPath, Kind: Regular, Bytes: input.Bytes}}}})
+	if checked.Status != Failed || !hasDiagnostic(checked, "manifest.root_missing") {
+		t.Fatalf("Check stopped checking actual supplied root: %+v", checked)
 	}
 	complete := singleValueInput("string", "0", "1", "", "{}")
 	complete.Root = withLock(complete.Root, "", false)
@@ -193,9 +193,9 @@ func TestInspectManifestDoesNotProveTreeLockOrCompleteCompilation(t *testing.T) 
 	if got := InspectManifest(ManifestInput{Origin: complete.Root.Origin, ManifestPath: manifest.Path, Bytes: manifest.Bytes}); got.Status != Passed {
 		t.Fatalf("manifest inspector attempted the separate lock obligation: %+v", got)
 	}
-	compiled = Compile(complete)
-	if compiled.Status != Failed || !hasDiagnostic(compiled, "lock.missing") {
-		t.Fatalf("Compile lost its lock obligation after manifest refactor: %+v", compiled)
+	checked = Check(complete)
+	if checked.Status != Failed || !hasDiagnostic(checked, "lock.missing") {
+		t.Fatalf("Check lost its lock obligation after manifest refactor: %+v", checked)
 	}
 	if zero := (ManifestResult{}); zero.Status == Passed || zero.Root != "" {
 		t.Fatal("zero manifest result claims a usable root")

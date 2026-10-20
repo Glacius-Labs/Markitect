@@ -16,9 +16,9 @@ import (
 )
 
 // The CLI smoke repeats for every runtime image: both provider CLIs start in
-// the hardened container and connect to the Host tools through
+// the hardened container and connect to the Orchestrator tools through
 // `markitect-agentd mcp`. With a runtime credential the smoke also lets each
-// CLI change a file and call a Host tool.
+// CLI change a file and call an Orchestrator tool.
 //
 //	MARKITECT_TEST_ENGINE         absolute container engine path
 //	MARKITECT_TEST_RUNTIME_IMAGE  runtime image reference, for example markitect-runtime:dev
@@ -30,9 +30,9 @@ import (
 const submitPrompt = `Create the file hello.txt containing the single line "hello from markitect". ` +
 	`Then call the submit_work tool with a one-sentence summary. After the tool answers, reply with the delivery id it returned.`
 
-var hostTool = frame.ToolSpec{
+var orchestratorTool = frame.ToolSpec{
 	Name:        "submit_work",
-	Description: "Submit the finished delivery to the Markitect Host. Call exactly once when done.",
+	Description: "Submit the finished delivery to the Markitect Orchestrator. Call exactly once when done.",
 	InputSchema: json.RawMessage(`{"type":"object","properties":{"summary":{"type":"string"}},"required":["summary"]}`),
 }
 
@@ -118,10 +118,10 @@ func (r *runtimeSmoke) writeFile(name string, mounts []container.Mount, file, co
 	}
 }
 
-// answerTools replies to every Host tool call and counts them.
+// answerTools replies to every Orchestrator tool call and counts them.
 func answerTools(s *container.Session, calls chan<- frame.ToolCall) {
 	for call := range s.ToolCalls() {
-		_ = s.Reply(frame.ToolReply{ID: call.ID, Result: json.RawMessage(`{"content":[{"type":"text","text":"Host accepted the delivery as D-1."}]}`)})
+		_ = s.Reply(frame.ToolReply{ID: call.ID, Result: json.RawMessage(`{"content":[{"type":"text","text":"Orchestrator accepted the delivery as D-1."}]}`)})
 		calls <- call
 	}
 }
@@ -188,10 +188,10 @@ func codexArgs() []string {
 		"-c", `mcp_servers.markitect.args=["mcp"]`}
 }
 
-// startCodex starts the App Server, answers Host tools and initializes it.
+// startCodex starts the App Server, answers Orchestrator tools and initializes it.
 func startCodex(t *testing.T, r *runtimeSmoke, s *container.Session, env []string, calls chan frame.ToolCall) *jsonRPC {
 	t.Helper()
-	if _, err := s.StartProvider(r.ctx, frame.Start{Argv: codexArgs(), Dir: "/work", Env: env, Tools: []frame.ToolSpec{hostTool}}); err != nil {
+	if _, err := s.StartProvider(r.ctx, frame.Start{Argv: codexArgs(), Dir: "/work", Env: env, Tools: []frame.ToolSpec{orchestratorTool}}); err != nil {
 		t.Fatal(err)
 	}
 	go answerTools(s, calls)
@@ -231,7 +231,7 @@ func codexTurn(rpc *jsonRPC, threadID any, prompt string) string {
 	return text.String()
 }
 
-func TestRuntimeImageCodexReachesHostTools(t *testing.T) {
+func TestRuntimeImageCodexReachesOrchestratorTools(t *testing.T) {
 	r := newRuntimeSmoke(t)
 	mounts := r.volumes("codex")
 	env, credentialed := r.codexCredential("codex", mounts)
@@ -248,12 +248,12 @@ func TestRuntimeImageCodexReachesHostTools(t *testing.T) {
 			return false
 		}
 		if p["status"] == "failed" {
-			t.Fatalf("Host tool server failed: %v; diagnostics %q", p, s.Diagnostics())
+			t.Fatalf("Orchestrator tool server failed: %v; diagnostics %q", p, s.Diagnostics())
 		}
 		return p["status"] == "ready"
 	})
 	if !credentialed {
-		t.Log("Host tool server ready; no Codex credential, so no turn ran")
+		t.Log("Orchestrator tool server ready; no Codex credential, so no turn ran")
 		return
 	}
 	threadID := thread["result"].(map[string]any)["thread"].(map[string]any)["id"]
@@ -264,7 +264,7 @@ func TestRuntimeImageCodexReachesHostTools(t *testing.T) {
 	}
 }
 
-func TestRuntimeImageClaudeCodeReachesHostTools(t *testing.T) {
+func TestRuntimeImageClaudeCodeReachesOrchestratorTools(t *testing.T) {
 	r := newRuntimeSmoke(t)
 	mounts := r.volumes("claude")
 	s := r.start("claude", mounts)
@@ -275,7 +275,7 @@ func TestRuntimeImageClaudeCodeReachesHostTools(t *testing.T) {
 			"--strict-mcp-config", "--mcp-config", mcp, "--tools", "Read,Write",
 			"--allowedTools", "mcp__markitect__submit_work", "Read", "Write",
 			"--permission-mode", "dontAsk", "--no-session-persistence", "--model", claudeModel, "--effort", "high"},
-		Dir: "/work", Env: credentials, Tools: []frame.ToolSpec{hostTool},
+		Dir: "/work", Env: credentials, Tools: []frame.ToolSpec{orchestratorTool},
 	}); err != nil {
 		t.Fatal(err)
 	}
@@ -299,10 +299,10 @@ func TestRuntimeImageClaudeCodeReachesHostTools(t *testing.T) {
 			_ = json.Unmarshal(servers, &list)
 			connected = len(list) == 1 && list[0].Name == "markitect" && list[0].Status == "connected"
 			if !connected {
-				t.Fatalf("Host tool server not connected: %s; diagnostics %q", servers, s.Diagnostics())
+				t.Fatalf("Orchestrator tool server not connected: %s; diagnostics %q", servers, s.Diagnostics())
 			}
 			if len(credentials) == 0 {
-				t.Log("Host tool server connected; no Claude credential, so no turn ran")
+				t.Log("Orchestrator tool server connected; no Claude credential, so no turn ran")
 				return
 			}
 		}
@@ -330,7 +330,7 @@ func expectToolCall(t *testing.T, calls <-chan frame.ToolCall) {
 			t.Fatalf("tool call = %+v", call)
 		}
 	case <-time.After(10 * time.Second):
-		t.Fatal("the provider never called the Host tool")
+		t.Fatal("the provider never called the Orchestrator tool")
 	}
 }
 
@@ -373,8 +373,8 @@ func (c *jsonRPC) until(match func(map[string]any) bool) map[string]any {
 			continue
 		}
 		if id, isRequest := m["id"]; isRequest && m["method"] != nil {
-			// Refuse server requests such as approvals; the Host decides through its tools.
-			c.send(map[string]any{"id": id, "error": map[string]any{"code": -32601, "message": "refused by the smoke Host"}})
+			// Refuse server requests such as approvals; the Orchestrator decides through its tools.
+			c.send(map[string]any{"id": id, "error": map[string]any{"code": -32601, "message": "refused by the smoke Orchestrator"}})
 			continue
 		}
 		if match(m) {

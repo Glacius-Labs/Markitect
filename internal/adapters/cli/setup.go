@@ -26,7 +26,7 @@ const (
 // private token file; its bytes never enter a request or a report.
 type SetupRequest struct {
 	Selection      apply.InputSelection
-	Host           string
+	RuntimeDir     string
 	Image          string
 	Credential     string
 	Checks         map[string]string
@@ -42,7 +42,7 @@ type SetupRequest struct {
 	ProductBuild string
 }
 
-// SetupBound lists the identities that setup observed and wrote into the Host
+// SetupBound lists the identities that setup observed and wrote into the Runtime
 // files.
 type SetupBound struct {
 	ImageID       string `json:"imageID"`
@@ -95,7 +95,7 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 	flags.SetOutput(stderr)
 	repo := flags.String("repo", ".", "repository root")
 	manifest := flags.String("model", ".markitect/model.yaml", "explicit model.yaml")
-	host := flags.String("host", "", "absolute Host directory to prepare")
+	runtimeDir := flags.String("runtime", "", "absolute Runtime directory to prepare")
 	image := flags.String("image", "", "runtime image reference")
 	credential := flags.String("credential", "", "absolute path of the private Claude runtime token file")
 	agentModel := flags.String("agent-model", "", "model of every Agent profile (required)")
@@ -117,13 +117,13 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 		}
 		return 2
 	}
-	if flags.NArg() != 0 || *host == "" || *image == "" || *credential == "" || *agentModel == "" {
-		fmt.Fprintln(stderr, "setup requires --host, --image, --credential and --agent-model; see help")
+	if flags.NArg() != 0 || *runtimeDir == "" || *image == "" || *credential == "" || *agentModel == "" {
+		fmt.Fprintln(stderr, "setup requires --runtime, --image, --credential and --agent-model; see help")
 		return 2
 	}
-	for _, path := range []string{*host, *credential, *engine} {
+	for _, path := range []string{*runtimeDir, *credential, *engine} {
 		if !filepath.IsAbs(path) || filepath.Clean(path) != path {
-			fmt.Fprintln(stderr, "--host, --credential and --engine require explicit absolute native paths")
+			fmt.Fprintln(stderr, "--runtime, --credential and --engine require explicit absolute native paths")
 			return 2
 		}
 	}
@@ -156,7 +156,7 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 		return 2
 	}
 	report, err := c.setup(ctx, SetupRequest{
-		Selection: selection, Host: *host, Image: *image, Credential: *credential, Checks: checks,
+		Selection: selection, RuntimeDir: *runtimeDir, Image: *image, Credential: *credential, Checks: checks,
 		AgentModel: *agentModel, Effort: *effort, Engine: *engine, Store: *store, OwnerRequest: *ownerRequest,
 		OwnerDecisions: decisions, Deadline: *deadline, ProductBuild: buildinfo.Build(),
 	})
@@ -168,7 +168,7 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 	if err != nil {
 		report.Error = err.Error()
 	} else if report.Status == model.Passed {
-		report.ApplyCommand = applyCommand(root, *manifest, dependencies, filepath.Join(*host, "host.yaml"), filepath.Join(*host, "run.json"))
+		report.ApplyCommand = applyCommand(root, *manifest, dependencies, filepath.Join(*runtimeDir, "runtime.yaml"), filepath.Join(*runtimeDir, "run.json"))
 	}
 	if emit(report) != 0 {
 		return 3
@@ -184,7 +184,7 @@ func nonNil(values []string) []string {
 }
 
 // applyCommand is the exact apply invocation that uses the written files.
-func applyCommand(repo, manifest string, dependencies []string, hostProfile, runConfig string) string {
+func applyCommand(repo, manifest string, dependencies []string, runtimeProfile, runConfig string) string {
 	words := []string{"markitect", "apply", "--repo", repo}
 	if manifest != ".markitect/model.yaml" {
 		words = append(words, "--model", manifest)
@@ -192,7 +192,7 @@ func applyCommand(repo, manifest string, dependencies []string, hostProfile, run
 	for _, dependency := range dependencies {
 		words = append(words, "--dependency", dependency)
 	}
-	words = append(words, "--host-profile", hostProfile, "--run-config", runConfig)
+	words = append(words, "--runtime-profile", runtimeProfile, "--run-config", runConfig)
 	for i, word := range words {
 		if strings.ContainsAny(word, " \t\"'$`&;|<>()") {
 			words[i] = quoteWord(word)

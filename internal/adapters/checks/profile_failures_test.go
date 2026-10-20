@@ -73,7 +73,7 @@ func TestProcessProfileRejectsClosedFormatVersionsTypesAndPins(t *testing.T) {
 					found = true
 				}
 				if diagnostic.Source.ContentID != input.Document().File.ContentID() || !strings.HasPrefix(diagnostic.Source.Field, input.Field()) {
-					t.Fatal("format error lost actual Host source")
+					t.Fatal("format error lost actual Runtime profile source")
 				}
 			}
 			if !found {

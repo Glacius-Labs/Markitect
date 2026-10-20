@@ -12,15 +12,15 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-func TestHostNilPortsAndIncompleteMetadataNeverInventProfiles(t *testing.T) {
+func TestRuntimeNilPortsAndIncompleteMetadataNeverInventProfiles(t *testing.T) {
 	for _, tc := range []string{"nil", "typed nil", "zero observation", "missing executable", "missing schemas", "unknown status", "port error", "failed port with error", "cancelled", "duplicate file", "invalid mode", "inventory boundary", "duplicate inventory", "negative size", "zero digest", "required instruction", "unused failed profile"} {
 		t.Run(tc, func(t *testing.T) {
-			selection, raw := hostSettingsInputs(t)
+			selection, raw := runtimeSettingsInputs(t)
 			if tc == "unused failed profile" {
-				addHostDocument(t, &selection, &raw, strings.Replace(testHostDocument, "checkProfiles:", "  unused: {codexAppServer: {profileVersion: 1}}\ncheckProfiles:", 1))
+				addRuntimeDocument(t, &selection, &raw, strings.Replace(testRuntimeDocument, "checkProfiles:", "  unused: {codexAppServer: {profileVersion: 1}}\ncheckProfiles:", 1))
 			}
 			m := registryModel(t, selection, raw)
-			agent, check := hostPorts(t)
+			agent, check := runtimePorts(t)
 			observation := testObservation(t, true)
 			want := model.Failed
 			var portErr error
@@ -105,9 +105,9 @@ func TestHostNilPortsAndIncompleteMetadataNeverInventProfiles(t *testing.T) {
 	}
 }
 
-func TestHostComparisonIdentityBindsActualSourcesAndCompleteMetadataSets(t *testing.T) {
+func TestRuntimeComparisonIdentityBindsActualSourcesAndCompleteMetadataSets(t *testing.T) {
 	identity := func(change string) (string, string) {
-		selection, raw := hostSettingsInputs(t)
+		selection, raw := runtimeSettingsInputs(t)
 		observation := testObservation(t, true)
 		instruction := apply.SourceLocation{Boundary: "instruction-boundary", Path: path(t, "instruction.md")}
 		bytes := "instruction bytes"
@@ -122,13 +122,13 @@ func TestHostComparisonIdentityBindsActualSourcesAndCompleteMetadataSets(t *test
 		selection.Instructions = []apply.SourceLocation{instruction}
 		observation.Instructions = []apply.SourceLocation{instruction}
 		switch change {
-		case "host bytes":
-			addHostDocument(t, &selection, &raw, "# exact original source change\n"+testHostDocument)
-		case "host boundary":
-			selection.HostProfiles[0].Boundary += "other"
-			raw.HostProfiles[0].Location = selection.HostProfiles[0]
+		case "runtime bytes":
+			addRuntimeDocument(t, &selection, &raw, "# exact original source change\n"+testRuntimeDocument)
+		case "runtime boundary":
+			selection.RuntimeProfiles[0].Boundary += "other"
+			raw.RuntimeProfiles[0].Location = selection.RuntimeProfiles[0]
 		case "profile field":
-			addHostDocument(t, &selection, &raw, strings.Replace(testHostDocument, "library-agent:", "library~/agent:", 1))
+			addRuntimeDocument(t, &selection, &raw, strings.Replace(testRuntimeDocument, "library-agent:", "library~/agent:", 1))
 			rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.ReplaceAll(defaultsAbsentExecution(t), "library-agent", "library~/agent"))
 		case "contract":
 			observation.Contract.Name += "/different"
@@ -155,7 +155,7 @@ func TestHostComparisonIdentityBindsActualSourcesAndCompleteMetadataSets(t *test
 			observation.Instructions = nil
 		}
 		m := registryModel(t, selection, raw)
-		agent, check := hostPorts(t)
+		agent, check := runtimePorts(t)
 		agent = func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) { return observation, nil }
 		result, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
 		if err != nil || result.Status() != model.Passed {
@@ -172,23 +172,23 @@ func TestHostComparisonIdentityBindsActualSourcesAndCompleteMetadataSets(t *test
 		return id, p.Source().File
 	}
 	baseline, locator := identity("")
-	for _, change := range []string{"host bytes", "host boundary", "profile field", "contract", "contract version", "executable bytes", "executable location", "mode", "size", "schema bytes", "schema added", "schema deleted", "schema root", "instruction bytes", "instruction selection"} {
+	for _, change := range []string{"runtime bytes", "runtime boundary", "profile field", "contract", "contract version", "executable bytes", "executable location", "mode", "size", "schema bytes", "schema added", "schema deleted", "schema root", "instruction bytes", "instruction selection"} {
 		got, source := identity(change)
 		if got == baseline {
 			t.Fatalf("comparison identity omitted %s", change)
 		}
-		if change == "host boundary" && source == locator {
+		if change == "runtime boundary" && source == locator {
 			t.Fatal("different external boundary collided in SettingSource.File")
 		}
 	}
 }
 
-func TestHostPortInputsAndRetainedResultsOwnEveryMutableCopy(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+func TestRuntimePortInputsAndRetainedResultsOwnEveryMutableCopy(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	observation := testObservation(t, true)
-	observation.Diagnostics = []apply.HostProfileDiagnostic{{Code: "test.static_only", Position: &model.Position{Line: 1, Column: 2}, Message: "controlled metadata"}}
+	observation.Diagnostics = []apply.RuntimeProfileDiagnostic{{Code: "test.static_only", Position: &model.Position{Line: 1, Column: 2}, Message: "controlled metadata"}}
 	agent = func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 		first := input.Inline()
 		first.Content[1].Value = "changed"

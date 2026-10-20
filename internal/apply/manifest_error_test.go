@@ -56,7 +56,7 @@ func partialManifest(t *testing.T, incomplete bool) (apply.InputSelection, apply
 	return selection, raw, inspection
 }
 
-func TestManifestPreflightFailureRetainsActualInspectionWithoutFullCompilation(t *testing.T) {
+func TestManifestPreflightFailureRetainsActualInspectionWithoutFullCheck(t *testing.T) {
 	for _, incomplete := range []bool{false, true} {
 		for _, preview := range []bool{false, true} {
 			t.Run(fmt.Sprintf("incomplete=%v/preview=%v", incomplete, preview), func(t *testing.T) {
@@ -79,16 +79,16 @@ func TestManifestPreflightFailureRetainsActualInspectionWithoutFullCompilation(t
 				}
 				service := apply.NewModelService(source, source)
 				var actual apply.RawInputs
-				var compiled model.Result
+				var checked model.Result
 				var err error
 				if preview {
 					var result apply.PreviewedModel
 					result, err = service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: fixtureHead}, model.Limits{})
-					actual, compiled = result.Inputs().Raw, result.Compilation()
+					actual, checked = result.Inputs().Raw, result.Checked()
 				} else {
 					var result apply.CapturedModel
 					result, err = service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-					actual, compiled = result.Inputs().Raw, result.Compilation()
+					actual, checked = result.Inputs().Raw, result.Checked()
 				}
 				var observed *apply.ManifestPreflightError
 				if !errors.As(err, &observed) || observed.Selection() != selection.Local || !reflect.DeepEqual(observed.Inspection(), inspection) {
@@ -97,8 +97,8 @@ func TestManifestPreflightFailureRetainsActualInspectionWithoutFullCompilation(t
 				if !reflect.DeepEqual(actual, raw) || actual.Local.Root.String() != "" || len(actual.Local.Source.Entries) != 1 {
 					t.Fatal("partial manifest observations replaced or root invented")
 				}
-				if compiled.Status != model.NotCompleted || len(compiled.Models) != 0 || len(compiled.Diagnostics) != 0 {
-					t.Fatalf("partial acquisition was fully compiled: %+v", compiled)
+				if checked.Status != model.NotCompleted || len(checked.Models) != 0 || len(checked.Diagnostics) != 0 {
+					t.Fatalf("partial acquisition was fully checked: %+v", checked)
 				}
 			})
 		}
@@ -137,7 +137,7 @@ func TestPhysicalAcquisitionErrorIsDistinctFromManifestPreflight(t *testing.T) {
 	failure := &os.PathError{Op: "open", Path: "selected/acquisition/nested/model.yaml", Err: fs.ErrPermission}
 	result, err := captureService(apply.CapturedInputs{Raw: raw, Head: fixtureHead}, failure).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
 	var manifestError *apply.ManifestPreflightError
-	if !errors.Is(err, fs.ErrPermission) || errors.As(err, &manifestError) || result.Compilation().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs().Raw, raw) {
+	if !errors.Is(err, fs.ErrPermission) || errors.As(err, &manifestError) || result.Checked().Status != model.NotCompleted || !reflect.DeepEqual(result.Inputs().Raw, raw) {
 		t.Fatal("physical error was converted to language diagnosis or lost observations")
 	}
 }

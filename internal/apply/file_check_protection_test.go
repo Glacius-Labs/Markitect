@@ -68,7 +68,7 @@ func TestFileCheckAccountsOnlyDeclaredRootsInsideAcquisitionAreas(t *testing.T) 
 	for _, file := range dependency.Files.Entries() {
 		censusFile(t, &raw, "vendor/vocabulary/"+file.Path().String(), file.Mode(), file.Bytes())
 	}
-	fileCheckSource(t, &selection, &raw, "host", ".markitect/host.yaml", snapshot.Regular, "literal Host source, no decoder or readiness claim", true)
+	fileCheckSource(t, &selection, &raw, "runtime", ".markitect/runtime.yaml", snapshot.Regular, "literal Runtime profile source, no decoder or readiness claim", true)
 	fileCheckSource(t, &selection, &raw, "instruction", "ops/empty.md", snapshot.Regular, "", true)
 	censusFile(t, &raw, ".markitect/notes.txt", snapshot.Regular, []byte("not a model input"))
 	censusFile(t, &raw, "vendor/vocabulary/notes.txt", snapshot.Regular, []byte("not a dependency Definition"))

@@ -15,7 +15,7 @@ python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" s1 "$SHA" "$DEADLINE" > /de
 start=$(date +%s)
 timeout --kill-after=30 $(( MIN * 60 + 120 )) "$ATTEMPT/markitect" apply --repo "$ATTEMPT/repo" --model .markitect/model.yaml \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-s1.json" \
+  --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-s1.json" \
   > "$ATTEMPT/out/apply-s1.json" 2> "$ATTEMPT/out/apply-s1.stderr"
 echo "apply exit=$? seconds=$(( $(date +%s) - start ))"
 bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" | tail -3
@@ -25,11 +25,13 @@ import json, sys
 d = json.load(open(sys.argv[1]))
 print("status", d.get("status"), "error", d.get("error"))
 r = d.get("run") or {}
+if "passes" not in r:
+    sys.exit("no run.passes in the Apply report: " + str(d.get("error") or d.get("status")))
 print("run", r.get("status"), r.get("reason"))
 for t in r.get("turns") or []:
-    print(" turn", t["id"], t["kind"], t.get("status"), t.get("reason", "")[:120], round(t["usage"].get("costUSD", 0), 3))
-for x in r.get("rounds") or []:
-    print(" round", x["number"], "green", x["green"], [(c["name"], c["passed"]) for c in x["checks"]])
+    print(" turn", t["id"], t["pass"], t["kind"], "stopped" if t["stopped"] else "ended", t.get("reason", "")[:120], round(t["usage"].get("costUSD", 0), 3))
+for x in r["passes"]:
+    print(" pass", x["id"], x["purpose"], "review" if x["review"] else "work", "verdict", x.get("verdict"), "sealed", x["sealed"], [(c["name"], c["passed"]) for c in x.get("checks") or []])
 for f in r.get("findings") or []:
     print(" finding", f["id"], f["owner"], f["raisedBy"], f["blocking"], f["closed"], f["obligation"][:80])
 print("usage", r.get("usage"))

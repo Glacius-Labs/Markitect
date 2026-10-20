@@ -34,7 +34,7 @@ var turnSmokeFlags = struct {
 }
 
 // TestClaudeTurnSmoke runs one real read-only turn through NewAgents: a volume
-// holds one file, the agent reads it and reports its content through the Host
+// holds one file, the agent reads it and reports its content through the Orchestrator
 // tool. It runs only with its explicit flags and is not Apply or release proof.
 func TestClaudeTurnSmoke(t *testing.T) {
 	if !*turnSmokeFlags.enable {
@@ -109,7 +109,7 @@ func TestClaudeTurnSmoke(t *testing.T) {
 	var reported []string
 	turn := run.Turn{ID: name, Manager: "smoke", Kind: run.VerifyTurn, Profile: "smoke", Workspace: workspace, ReadOnly: true, Home: home,
 		Prompt: "Read /work/smoke.txt with your file-reading tool. Do not change any file. Then call the report tool exactly once with the exact file contents as text.",
-		Tools: []run.ToolSpec{{Name: "report", Description: "Report the exact contents of /work/smoke.txt to the Host.",
+		Tools: []run.ToolSpec{{Name: "report", Description: "Report the exact contents of /work/smoke.txt to the Orchestrator.",
 			InputSchema: json.RawMessage(`{"type":"object","properties":{"text":{"type":"string"}},"required":["text"],"additionalProperties":false}`)}},
 		Timeout: 4 * time.Minute, Transcript: filepath.Join(t.TempDir(), "turn.jsonl")}
 	result, err := agents.Run(ctx, turn, func(_ context.Context, tool string, args json.RawMessage) run.ToolAnswer {

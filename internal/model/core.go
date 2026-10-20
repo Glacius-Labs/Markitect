@@ -19,7 +19,7 @@ var fixedCore = map[string]fixedCoreDefinition{
 	"properties": {body: "Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts. Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.", valueType: "reference", min: "0", max: "-1", target: "Property"},
 }
 
-func (c *contractCompiler) checkCore() Status {
+func (c *contractChecker) checkCore() Status {
 	status := Passed
 	complete := true
 	counts := map[string]int{}

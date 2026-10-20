@@ -19,12 +19,12 @@ func TestUnicodeSourceNamesKeepTextAndPartialBoundary(t *testing.T) {
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/文档/item.yaml", Kind: Regular,
 		Bytes: []byte("id: 文档\nkind: 文档\nbody: text\nspec: {}")})
 	original := bytes.Clone(input.Root.Entries[1].Bytes)
-	got := Compile(input)
+	got := Check(input)
 	if !onlyLaterStageFailures(got) {
 		t.Fatalf("valid Unicode source spellings rejected: %+v", got)
 	}
 	if !bytes.Equal(original, input.Root.Entries[1].Bytes) {
-		t.Fatal("compiler rewrote author bytes")
+		t.Fatal("Model check rewrote author bytes")
 	}
 	for _, model := range got.Models {
 		if model.Status != Failed || len(model.Definitions) != 0 || len(model.Canonical) != 0 || model.Digest != "" {
@@ -90,7 +90,7 @@ func TestInvalidLexicalNames(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			input := sourceInput()
 			tt.edit(&input)
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || !hasDiagnostic(got, tt.code) {
 				t.Fatalf("expected %s: %+v", tt.code, got)
 			}
@@ -132,13 +132,13 @@ func TestUnicodeCollisionScopes(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			input := sourceInput()
 			tt.edit(&input)
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || !hasDiagnostic(got, tt.code) {
 				t.Fatalf("expected %s: %+v", tt.code, got)
 			}
 			slices.Reverse(input.Root.Entries)
 			slices.Reverse(input.Dependencies)
-			if permuted := Compile(input); !reflect.DeepEqual(got, permuted) {
+			if permuted := Check(input); !reflect.DeepEqual(got, permuted) {
 				t.Fatalf("input order changed Unicode collision diagnostics: %+v / %+v", got, permuted)
 			}
 		})
@@ -151,14 +151,14 @@ func TestGlobalUnicodePackagePrefixesExcludeEmptyTrees(t *testing.T) {
 	dependency := dependencySource("vocabulary", "dependency", "vocabulary", "item")
 	dependency.Entries = append(dependency.Entries, Entry{Path: "model/strasse/empty", Kind: Directory})
 	input.Dependencies = []SourceModel{dependency}
-	if got := Compile(input); !onlyLaterStageFailures(got) {
+	if got := Check(input); !onlyLaterStageFailures(got) {
 		t.Fatalf("empty foreign tree bound a global Package name: %+v", got)
 	}
 	input.Dependencies[0].Entries = append(input.Dependencies[0].Entries, Entry{
 		Path: "model/strasse/empty/another.yaml", Kind: Regular,
 		Bytes: []byte("id: another\nkind: Example\nbody: text\nspec: {}"),
 	})
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "name.package_collision") || got.Models[0].Status != Failed || got.Models[1].Status != Failed {
 		t.Fatalf("populated foreign tree did not bind its colliding prefix: %+v", got)
 	}
@@ -167,7 +167,7 @@ func TestGlobalUnicodePackagePrefixesExcludeEmptyTrees(t *testing.T) {
 func TestKeyNFCAndCasefoldDoNotSilentlySelectAnExactSubset(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries[1].Bytes = []byte("id: item\nID: second\nkind: Example\nbody: text\nspec: {u\u0308: text}")
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !hasDiagnostic(got, "name.key_collision") || !hasDiagnostic(got, "name.key_nfc") {
 		t.Fatalf("colliding/non-NFC keys were corrected or ignored: %+v", got)
 	}
@@ -183,7 +183,7 @@ func TestKindSpellingDoesNotGrantMetaCategoryPrivileges(t *testing.T) {
 	input.Root.Entries[1].Bytes = []byte("id: camelName\nkind: Kind\nbody: Category must follow resolution.\nspec: {}")
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/feature/kind.yaml", Kind: Regular,
 		Bytes: []byte("id: Kind\nkind: Kind\nbody: Ordinary local name, not the fixed Core.\nspec: {}")})
-	got := Compile(input)
+	got := Check(input)
 	if !onlyLaterStageFailures(got) || got.Models[0].Phases[2].Status != NotCompleted {
 		t.Fatalf("written kind was used as a resolved meta-identity: %+v", got)
 	}
@@ -195,9 +195,9 @@ func TestDuplicateCandidateProvenanceDoesNotMakeReportOrderUnstable(t *testing.T
 	second := dependencySource("same-model", "same-origin", "b", "second")
 	second.Entries[1].Bytes = append(second.Entries[1].Bytes, []byte("\nunknown: value\n")...)
 	input.Dependencies = []SourceModel{first, second}
-	got := Compile(input)
+	got := Check(input)
 	slices.Reverse(input.Dependencies)
-	if reordered := Compile(input); !reflect.DeepEqual(got, reordered) {
+	if reordered := Check(input); !reflect.DeepEqual(got, reordered) {
 		t.Fatalf("duplicate candidate provenance hid distinct phase reports: %+v / %+v", got, reordered)
 	}
 }

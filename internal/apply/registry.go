@@ -93,10 +93,10 @@ type PreviewRegistryPreparation struct {
 func (r PreviewRegistryPreparation) Model() PreviewedModel { return r.stage }
 
 func (m CapturedModel) PrepareRegistry() CapturedRegistryPreparation {
-	return CapturedRegistryPreparation{registryPreparation: prepareRegistry(m.compiled, m.inputs.Raw), stage: m}
+	return CapturedRegistryPreparation{registryPreparation: prepareRegistry(m.checked, m.inputs.Raw), stage: m}
 }
 func (m PreviewedModel) PrepareRegistry() PreviewRegistryPreparation {
-	return PreviewRegistryPreparation{registryPreparation: prepareRegistry(m.compiled, m.inputs.Raw), stage: m}
+	return PreviewRegistryPreparation{registryPreparation: prepareRegistry(m.checked, m.inputs.Raw), stage: m}
 }
 
 func (r *registryPreparation) add(status model.Status, code string, source snapshot.Path, position *model.Position, message string) {

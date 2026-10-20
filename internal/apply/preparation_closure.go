@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 
-	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -25,7 +24,7 @@ func initialPreparationSelection(original InputSelection) (InputSelection, error
 		}
 		seenModels[selected] = true
 	}
-	for _, group := range [][]SourceLocation{selection.Execution, selection.Registry, selection.Ignore, selection.HostProfiles, selection.Instructions} {
+	for _, group := range [][]SourceLocation{selection.Execution, selection.Registry, selection.Ignore, selection.RuntimeProfiles, selection.Instructions} {
 		seen := make(map[SourceLocation]bool)
 		for _, selected := range group {
 			if selected.Boundary == "" || selected.Path.String() == "" || seen[selected] {
@@ -42,7 +41,7 @@ func initialPreparationSelection(original InputSelection) (InputSelection, error
 
 type preparationClosure struct {
 	registry, ignore, instructions []snapshot.Path
-	host                           []SourceLocation
+	runtime                        []SourceLocation
 }
 
 func observedPreparationClosure(raw RawInputs, registry []snapshot.Path, execution AuthoredExecution) preparationClosure {
@@ -51,12 +50,7 @@ func observedPreparationClosure(raw RawInputs, registry []snapshot.Path, executi
 	if _, found := raw.Census.Lookup(ignore); found {
 		closure.ignore = []snapshot.Path{ignore}
 	}
-	lists := []*organization.Setting[[]string]{execution.Defaults.Execute.Instructions, execution.Defaults.Verify.Instructions}
-	if execution.Packages != nil {
-		for _, override := range execution.Packages.Value {
-			lists = append(lists, override.Execute.Instructions, override.Verify.Instructions)
-		}
-	}
+	lists := instructionLists(execution)
 	seen := make(map[snapshot.Path]bool)
 	for _, list := range lists {
 		if list == nil {
@@ -115,7 +109,7 @@ func (c preparationClosure) selectMissing(selection InputSelection, raw RawInput
 	for _, location := range selection.Instructions {
 		seen[location] = true
 	}
-	for _, location := range c.host {
+	for _, location := range c.runtime {
 		if !seen[location] {
 			selection.Instructions = append(selection.Instructions, location)
 			seen[location], missing = true, true
@@ -125,14 +119,14 @@ func (c preparationClosure) selectMissing(selection InputSelection, raw RawInput
 }
 
 func (c preparationClosure) equal(other preparationClosure) bool {
-	return samePreparationPaths(c.registry, other.registry) && samePreparationPaths(c.ignore, other.ignore) && samePreparationPaths(c.instructions, other.instructions) && samePreparationLocations(c.host, other.host)
+	return samePreparationPaths(c.registry, other.registry) && samePreparationPaths(c.ignore, other.ignore) && samePreparationPaths(c.instructions, other.instructions) && samePreparationLocations(c.runtime, other.runtime)
 }
 
-// The adapter owns Host policy and coordinates. Union complete selections with
+// The adapter owns Runtime policy and coordinates. Union complete selections with
 // explicit new-acquisition needs, never infer paths from provenance. Preserve
 // original ordered/repeated policy in each ProfileObservation; only file
 // acquisition is distinct. Invalid locations stay in the actual diagnostics.
-func observedPreparationHostClosure(profiles []PreparedProfile) ([]SourceLocation, bool) {
+func observedPreparationRuntimeClosure(profiles []PreparedProfile) ([]SourceLocation, bool) {
 	var locations []SourceLocation
 	seen := make(map[SourceLocation]bool)
 	required := false

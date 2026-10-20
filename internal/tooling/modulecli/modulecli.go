@@ -1,4 +1,4 @@
-// Package modulecli is the process-facing interface for explicit Host Module checks.
+// Package modulecli is the process-facing interface for explicit Orchestrator Module checks.
 package modulecli
 
 import (
@@ -11,7 +11,7 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-// Run dispatches one read-only Host Module check invocation.
+// Run dispatches one read-only Orchestrator Module check invocation.
 func Run(args []string, out, errout io.Writer) int {
 	flags := flag.NewFlagSet("markitect-check-modules", flag.ContinueOnError)
 	flags.SetOutput(errout)

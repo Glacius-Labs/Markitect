@@ -120,7 +120,7 @@ func TestPreparationPreservesPartialAcquisitionsAndCancellation(t *testing.T) {
 				var status model.Status
 				var lastRaw apply.RawInputs
 				var attempts int
-				var compiled model.Result
+				var checked model.Result
 				if preview {
 					result, failure := service.Preview(ctx, apply.PreviewRequest{Selection: selection, Revision: fixtureHead}, model.Limits{})
 					err, status, attempts = failure, result.Status(), len(result.Attempts())
@@ -128,7 +128,7 @@ func TestPreparationPreservesPartialAcquisitionsAndCancellation(t *testing.T) {
 						t.Fatal("errored preview prepared")
 					}
 					last := result.Attempts()[attempts-1]
-					lastRaw, compiled, retained = last.Model().Inputs().Raw, last.Model().Compilation(), last.Error()
+					lastRaw, checked, retained = last.Model().Inputs().Raw, last.Model().Checked(), last.Error()
 				} else {
 					result, failure := service.Capture(ctx, apply.CaptureRequest{Selection: selection}, model.Limits{})
 					err, status, attempts = failure, result.Status(), len(result.Attempts())
@@ -136,13 +136,13 @@ func TestPreparationPreservesPartialAcquisitionsAndCancellation(t *testing.T) {
 						t.Fatal("errored capture prepared")
 					}
 					last := result.Attempts()[attempts-1]
-					lastRaw, compiled, retained = last.Model().Inputs().Raw, last.Model().Compilation(), last.Error()
+					lastRaw, checked, retained = last.Model().Inputs().Raw, last.Model().Checked(), last.Error()
 				}
 				if failureAt == 1 {
 					failure = context.Canceled
 				}
 				wantAttempts := max(1, failureAt)
-				if !errors.Is(err, failure) || retained != err || status != model.NotCompleted || calls != failureAt || attempts != wantAttempts || compiled.Status != model.NotCompleted || len(compiled.Models) != 0 {
+				if !errors.Is(err, failure) || retained != err || status != model.NotCompleted || calls != failureAt || attempts != wantAttempts || checked.Status != model.NotCompleted || len(checked.Models) != 0 {
 					t.Fatalf("partial/error binding: %s %v calls=%d attempts=%d", status, err, calls, attempts)
 				}
 				if calls > 0 && !reflect.DeepEqual(lastRaw, observed) {
@@ -172,7 +172,7 @@ func TestPreparationRetainsActualManifestPreflightFailure(t *testing.T) {
 }
 
 func TestPreparationRejectsInvalidExplicitSelectionsWithoutRepair(t *testing.T) {
-	for _, invalid := range []string{"repository", "local", "dependency", "execution", "registry", "ignore", "host", "instruction", "path", "boundary"} {
+	for _, invalid := range []string{"repository", "local", "dependency", "execution", "registry", "ignore", "runtime", "instruction", "path", "boundary"} {
 		t.Run(invalid, func(t *testing.T) {
 			selection, actual := fileCheckInputs(t)
 			location := selection.Execution[0]
@@ -189,12 +189,12 @@ func TestPreparationRejectsInvalidExplicitSelectionsWithoutRepair(t *testing.T) 
 				selection.Registry = append(selection.Registry, selection.Registry[0])
 			case "ignore":
 				selection.Ignore = []apply.SourceLocation{location, location}
-			case "host":
-				selection.HostProfiles = []apply.SourceLocation{location, location}
+			case "runtime":
+				selection.RuntimeProfiles = []apply.SourceLocation{location, location}
 			case "instruction":
 				selection.Instructions = []apply.SourceLocation{location, location}
 			case "path":
-				selection.HostProfiles = []apply.SourceLocation{{Boundary: "host"}}
+				selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: "runtime"}}
 			case "boundary":
 				selection.Instructions = []apply.SourceLocation{{Path: location.Path}}
 			}
@@ -292,7 +292,7 @@ func TestPreparationDoesNotReplaceAnExplicitWrongExecutionSelection(t *testing.T
 	}
 }
 
-func TestPreparationKeepsCompilerFailureAndResourceLimitDistinct(t *testing.T) {
+func TestPreparationKeepsModelCheckFailureAndResourceLimitDistinct(t *testing.T) {
 	for _, limited := range []bool{false, true} {
 		selection, raw := fileCheckInputs(t)
 		limits := model.Limits{Entries: 1}
@@ -304,8 +304,8 @@ func TestPreparationKeepsCompilerFailureAndResourceLimitDistinct(t *testing.T) {
 		}
 		source := controlledSource{capture: func(context.Context, apply.CaptureRequest) (apply.CapturedInputs, error) { return captured(raw), nil }}
 		result, err := apply.NewPreparationService(apply.NewModelService(source, nil)).Capture(context.Background(), apply.CaptureRequest{Selection: selection}, limits)
-		if err != nil || result.Status() != want || len(result.Attempts()) != 1 || !hasDiagnostic(result.Attempts()[0].Model().Compilation(), code) || result.Attempts()[0].Model().RequestedLimits() != limits {
-			t.Fatalf("compiler status: %s %v", result.Status(), err)
+		if err != nil || result.Status() != want || len(result.Attempts()) != 1 || !hasDiagnostic(result.Attempts()[0].Model().Checked(), code) || result.Attempts()[0].Model().RequestedLimits() != limits {
+			t.Fatalf("Model check status: %s %v", result.Status(), err)
 		}
 	}
 }

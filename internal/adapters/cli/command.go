@@ -65,12 +65,12 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply [options]          reconcile the committed repository through the Manager team
+  apply [options]          realize the bound model: Plan, Prepare, Implement, Verify
   extract [options]        derive a model candidate from the existing artifacts
-  answer <question> --text ANSWER --run-config PATH
-                            answer a question of the running Apply
-  setup --host DIR --image REF --credential FILE --agent-model M [options]
-                            prepare a Host directory with host.yaml and run.json
+  answer <question> --run RUN --text ANSWER --run-config PATH
+                            answer a question of the running Apply or Extract
+  setup --runtime DIR --image REF --credential FILE --agent-model M [options]
+                            prepare a Runtime directory with runtime.yaml and run.json
   version | licenses | help
 
 Common options:
@@ -79,11 +79,11 @@ Common options:
   --dependency PATH        explicit dependency model.yaml; repeat as needed
   --revision REF           resolve once; inspect exactly that fixed commit
   --metadata               request static profile/settings metadata preparation
-  --host-profile PATH      explicit absolute Host profile DOCUMENT path
+  --runtime-profile PATH   explicit absolute Runtime profile document path
 
 Without --metadata, metadata and settings are not requested. A structural pass
 does not establish static profile metadata, rendered role context or runtime
-support. Fixed previews refuse unbound present-day external Host inputs.
+support. Fixed previews refuse unbound present-day external Runtime inputs.
 
 docs options:
   --write --expect PREVIEW_DIGEST
@@ -95,39 +95,44 @@ docs options:
 
 apply options:
   --run-config PATH        explicit absolute closed JSON invocation configuration
-  --host-profile PATH      explicit absolute versioned Host profile document
+  --runtime-profile PATH   explicit absolute versioned Runtime profile document
   --repo, --model and repeated --dependency select committed capture inputs.
   Revision previews and --metadata are preparation options, not apply flags.
   Configuration supplies state storage, helper resources, harvest bounds,
   productBuild assertion and dedicated credential references. No ambient defaults.
-  The JSON report lists the preparation, the run (rounds, findings, questions,
-  turns, usage), the publication receipt and the evidence directory. Evidence is
-  kept under STATE/runs/RUN; only one Apply runs per state directory.
+  The JSON report lists the preparation, the run (passes with each Manager's
+  state, basis, result and verdict; findings, questions, problems, turns,
+  usage), the publication receipt, the Run outcome (success, failed or
+  incomplete) and the evidence directory. Evidence is kept under
+  STATE/runs/RUN; only one run holds a state directory. Root's questions to the
+  invoking AI are printed to stderr and answered with the answer command.
 
 extract options:
-  --run-config PATH, --host-profile PATH and repeated --dependency as for apply;
-  --repo selects the repository. There is no --model: the Host prepares the
+  --run-config PATH, --runtime-profile PATH and repeated --dependency as for apply;
+  --repo selects the repository. There is no --model: the Orchestrator prepares the
   structural manifest and lock .markitect/model.yaml with no local Definitions,
   the imported vocabulary, and .markitect/execution.yaml with budget, profiles,
-  layout roots and checks. Phase one proposes the Packages and layout
-  exceptions, phase two derives the model of every Package and registers the
-  artifacts. Artifacts are never changed or published; a verified model is
-  published as the changed .markitect model, registry shards and
-  execution.yaml (layout exceptions and proposed checks). The JSON report lists
-  model completion, the final Verify result, the realization deviations per
-  Definition (artifact findings), the proposedChecks, open owner questions,
-  per-phase rounds, turns and usage and the publication. Questions are
-  answered with the answer command.
+  ownership areas of the artifacts and checks. Phase one proposes the Packages
+  and their ownership areas, phase two derives the model of every Package and
+  registers the artifacts. Artifacts are never changed or published; a verified
+  model is published as the changed .markitect model, registry shards and
+  execution.yaml (ownership and proposed checks). The JSON report lists model
+  completion, the final Verify Pass, the realization deviations per Definition
+  (artifact findings), the proposedChecks, open questions, per-phase passes,
+  turns and usage and the publication. Questions are answered with the answer
+  command.
 
 answer options:
-  --text ANSWER            the owner's answer, required
-  --run-config PATH        the running Apply's configuration; selects its state directory
-  Writes the answer for a question the running Apply asked (it prints the
-  question to stderr) and reports the file it wrote. An answer is final.
+  --run RUN                identity of the run that asked, required
+  --text ANSWER            the answer, required
+  --run-config PATH        the running run's configuration; selects its state directory
+  Writes the answer for a question the running run asked (it prints the
+  question with its run identity to stderr) and reports the file it wrote. A
+  question of another run or one that lapsed is refused. An answer is final.
 
 setup options:
-  --host DIR               absolute Host directory, outside the repository; created
-                           private and holding host.yaml, run.json and state/
+  --runtime DIR            absolute Runtime directory, outside the repository; created
+                           private and holding runtime.yaml, run.json and state/
   --image REF              runtime image; its ID and metadata are observed, never started
   --credential FILE        absolute private Claude runtime token file; checked, never read
   --check PROFILE=EXECUTABLE  absolute executable in the image for each check profile;
@@ -202,7 +207,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	manifest := flags.String("model", ".markitect/model.yaml", "explicit model.yaml")
 	revision := flags.String("revision", "", "explicit fixed revision")
 	metadata := flags.Bool("metadata", false, "request static metadata and settings")
-	host := flags.String("host-profile", "", "explicit absolute Host profile document path")
+	runtimeProfile := flags.String("runtime-profile", "", "explicit absolute Runtime profile document path")
 	write := flags.Bool("write", false, "write the guarded generated view")
 	expect := flags.String("expect", "", "expected source/target-bound previewDigest")
 	var dependencies manifestList
@@ -214,7 +219,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		}
 		return 2
 	}
-	if flags.NArg() != 0 || verb != "docs" && (*write || *expect != "") || verb == "docs" && *metadata || *host != "" && !*metadata && verb != "docs" || *write && *expect == "" || !*write && *expect != "" {
+	if flags.NArg() != 0 || verb != "docs" && (*write || *expect != "") || verb == "docs" && *metadata || *runtimeProfile != "" && !*metadata && verb != "docs" || *write && *expect == "" || !*write && *expect != "" {
 		fmt.Fprintln(stderr, "invalid option combination; see help")
 		return 2
 	}
@@ -235,13 +240,13 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 			selection.Dependencies = append(selection.Dependencies, selected)
 		}
 	}
-	if err == nil && *host != "" {
-		if !filepath.IsAbs(*host) || filepath.Clean(*host) != *host {
-			err = errors.New("--host-profile requires an explicit absolute native document path")
+	if err == nil && *runtimeProfile != "" {
+		if !filepath.IsAbs(*runtimeProfile) || filepath.Clean(*runtimeProfile) != *runtimeProfile {
+			err = errors.New("--runtime-profile requires an explicit absolute native document path")
 		} else {
 			var p snapshot.Path
-			p, err = snapshot.NewPath(filepath.Base(*host))
-			selection.HostProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(*host), Path: p}}
+			p, err = snapshot.NewPath(filepath.Base(*runtimeProfile))
+			selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(*runtimeProfile), Path: p}}
 		}
 	}
 	if err != nil {

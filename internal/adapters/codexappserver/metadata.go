@@ -43,7 +43,7 @@ func (p *preparation) issue(status model.Status, code, field, message string) {
 	}
 	doc := p.input.Document()
 	locator, _ := json.Marshal([2]string{doc.Location.Boundary, doc.Location.Path.String()})
-	p.out.Diagnostics = append(p.out.Diagnostics, apply.HostProfileDiagnostic{
+	p.out.Diagnostics = append(p.out.Diagnostics, apply.RuntimeProfileDiagnostic{
 		Code:    "codex_image." + code,
 		Source:  organization.SettingSource{File: "source:" + string(locator), ContentID: doc.File.ContentID(), Field: p.input.Field() + field},
 		Message: message,

@@ -11,16 +11,17 @@
 // identity or canonical digest. Reasons are required explanations, not evidence
 // that natural-language obligations have been satisfied.
 //
-// A Layout is the project's persistent ownership map: artifact roots that mirror
-// the model hierarchy plus explicit exceptions, deepest mapping wins. Root owns
-// the files directly in an artifact root and every file outside the roots; a
-// file in an unmapped subdirectory of a root has no owner, which accounting
-// reports as layout.no_owner to Root. An exception declares whether its path is
-// a file or, by default, a directory; only directories are areas. It is validated against the local Package inventory
-// before any work starts, including letter-case ambiguity for case-insensitive
-// platforms. When a Layout is declared, accounting additionally requires every
-// registration to sit in the registry shard of its path's owner; without one the
-// registry shards alone decide. A Layout grants no write authority.
+// A Layout is the project's declared persistent ownership: explicit
+// repository-relative directory and exact-file areas, each owned by Root or a
+// local Package. The most specific area owns a path; equal specificity and
+// paths no area covers are refused or reported as layout.no_owner to Root. It
+// is validated against the local Package inventory before any work starts,
+// including letter-case ambiguity for case-insensitive platforms. Registry
+// entries are exact files or directories; a directory entry covers the
+// eligible files below it that its registrant owns, and the most specific
+// entry registers a file. When ownership is declared, accounting requires every
+// entry to lie in its registrant's area; without it the registry shards alone
+// decide. A Layout grants no write authority.
 //
 // Registry storage belongs outside canonical Definition roots. Adapters supply
 // acquired registry records and exact protected/ignored input classifications;

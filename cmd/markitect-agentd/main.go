@@ -1,7 +1,7 @@
 // Command markitect-agentd is the session helper inside every Markitect
 // Agent container.
 //
-//	markitect-agentd serve [--socket PATH]   serve the Host on standard input and output
+//	markitect-agentd serve [--socket PATH]   serve the Orchestrator on standard input and output
 //	markitect-agentd mcp [--socket PATH]     bridge a CLI's stdio MCP client to serve
 //	markitect-agentd version                 print the build version
 package main

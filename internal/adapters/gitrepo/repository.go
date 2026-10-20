@@ -2,7 +2,7 @@
 // working-tree changes.
 // Relative acquisition boundaries are relative to the selected repository;
 // model paths remain exact, manifest-relative language values. No discovery,
-// compiler or provider operation is performed here. Workspace creation has its
+// Model check or provider operation is performed here. Workspace creation has its
 // own adapter contract; source capture remains read-only.
 package gitrepo
 

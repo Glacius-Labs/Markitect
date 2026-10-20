@@ -22,7 +22,7 @@ var (
 )
 
 // These identities have different meanings even when their strings coincide.
-// None is a Host step identity or evidence of an exactly bound provider step.
+// None is an Orchestrator step identity or evidence of an exactly bound provider step.
 type ControlRequestID string
 type RequestedSessionID string
 type ObservedSessionID string

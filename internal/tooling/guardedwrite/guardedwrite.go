@@ -31,7 +31,7 @@ type File struct {
 }
 
 // Capture binds selected working files to one repository identity,
-// branch and HEAD. Its exported fields are inspectable by Host callers; Apply
+// branch and HEAD. Its exported fields are inspectable by Orchestrator callers; Apply
 // rejects changes to the capture after CaptureFiles returns.
 type Capture struct {
 	Root     string
@@ -111,7 +111,7 @@ func CaptureFiles(root string, selectedPaths []string) (*Capture, error) {
 }
 
 // Apply applies only changes to paths selected by capture. It
-// acquires the same Host writer lock as other render/init/format operations,
+// acquires the same Orchestrator writer lock as other render/init/format operations,
 // then rechecks repository identity, branch, HEAD and captured bytes before
 // the first mutation and before each changed path.
 func Apply(root string, capture *Capture, changes []Change) (Result, error) {
@@ -120,8 +120,8 @@ func Apply(root string, capture *Capture, changes []Change) (Result, error) {
 
 // ApplyChecked is Apply with an additional caller-owned
 // read-only precondition. The callback runs under the shared writer lock after
-// Host rechecks Git identity and captured file state, and before any target is
-// changed. Host then rechecks those bindings again before the first mutation.
+// Orchestrator rechecks Git identity and captured file state, and before any target is
+// changed. Orchestrator then rechecks those bindings again before the first mutation.
 func ApplyChecked(root string, capture *Capture, changes []Change, validate func() error) (Result, error) {
 	return applyGuardedWrite(root, capture, changes, validate, nil)
 }
@@ -145,7 +145,7 @@ func applyGuardedWrite(root string, capture *Capture, changes []Change, validate
 func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Change, validate func() error, beforeTarget func(string) error, ordered bool, readback func(Result) error) (Result, error) {
 	result := Result{CompletedPaths: []string{}}
 	if capture == nil || capture.rootIdentity == nil || len(capture.seal) == 0 {
-		return result, errors.New("guarded apply requires an intact Host capture")
+		return result, errors.New("guarded apply requires an intact Orchestrator capture")
 	}
 	originalSeal := capture.seal
 	seal, err := guardedCaptureSeal(capture)

@@ -7,13 +7,13 @@ import (
 	"strings"
 )
 
-// Compile examines only the supplied bytes: source/YAML structure, pinned
+// Check examines only the supplied bytes: source/YAML structure, pinned
 // Unicode names, explicit model/author bindings, fixed Core/field contracts,
 // typed values, body links, the entry lock and exact model-digest/1 projection.
 // Each model result describes its own complete requirement closure; overall
 // status retains failures/unknowns across the supplied input. Coordinate
 // coverage remains separate from content validity and canonical bytes.
-func Compile(input Input) Result {
+func Check(input Input) Result {
 	r := Result{Status: NotCompleted, Coordinates: NotCompleted}
 	r.Limits = effectiveLimits(input.Limits)
 	if invalidLimits(input.Limits) {
@@ -45,7 +45,7 @@ func Compile(input Input) Result {
 	}
 	var scopes []sourceScope
 	for index, m := range models {
-		modelResult, diagnostics, scope := compileSource(m, r.Limits)
+		modelResult, diagnostics, scope := checkSource(m, r.Limits)
 		scopes = append(scopes, scope)
 		modelResult.Local = index == 0
 		r.Models = append(r.Models, modelResult)
@@ -139,7 +139,7 @@ func invalidLimits(l Limits) bool {
 	return l.SourceBytes < 0 || l.Entries < 0 || l.YAMLDepth < 0 || l.Models < 0 || l.BodyBytes < 0 || l.MarkdownNesting < 0
 }
 
-type sourceCompiler struct {
+type sourceChecker struct {
 	model        SourceModel
 	limits       Limits
 	diagnostics  []Diagnostic
@@ -152,8 +152,8 @@ type sourceCompiler struct {
 	scope        sourceScope
 }
 
-func compileSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sourceScope) {
-	c := sourceCompiler{model: m, limits: limits, scope: sourceScope{origin: m.Origin}}
+func checkSource(m SourceModel, limits Limits) (ModelResult, []Diagnostic, sourceScope) {
+	c := sourceChecker{model: m, limits: limits, scope: sourceScope{origin: m.Origin}}
 	r := ModelResult{Origin: m.Origin, Status: NotCompleted}
 	r.Phases = []Phase{
 		{Name: "source_structure", Status: NotCompleted},
@@ -221,7 +221,7 @@ func setPhaseStatus(model *ModelResult, name string, status Status) {
 	}
 }
 
-func (c *sourceCompiler) indexEntries() map[string]Entry {
+func (c *sourceChecker) indexEntries() map[string]Entry {
 	entries := make(map[string]Entry, len(c.model.Entries))
 	ordered := append([]Entry(nil), c.model.Entries...)
 	sort.Slice(ordered, func(i, j int) bool {
@@ -262,7 +262,7 @@ func (c *sourceCompiler) indexEntries() map[string]Entry {
 	return entries
 }
 
-func (c *sourceCompiler) definitions(entries map[string]Entry, root string) {
+func (c *sourceChecker) definitions(entries map[string]Entry, root string) {
 	c.treeNames(entries, root)
 	paths := make([]string, 0, len(entries))
 	for p := range entries {
@@ -303,7 +303,7 @@ func (c *sourceCompiler) definitions(entries map[string]Entry, root string) {
 	c.checkDefinitionIdentities()
 }
 
-func (c *sourceCompiler) decode(e Entry) (Value, bool) {
+func (c *sourceChecker) decode(e Entry) (Value, bool) {
 	v, problems, completed := parseYAML(e.Bytes, c.limits.YAMLDepth)
 	valid := completed
 	for _, p := range problems {
@@ -324,7 +324,7 @@ func (c *sourceCompiler) decode(e Entry) (Value, bool) {
 	return v, valid
 }
 
-func (c *sourceCompiler) envelope(v Value, e Entry) {
+func (c *sourceChecker) envelope(v Value, e Entry) {
 	c.closed(v, []string{"imports", "id", "kind", "body", "spec", "title"}, e)
 	c.requiredText(v, "id", e)
 	c.requiredText(v, "kind", e)
@@ -356,14 +356,14 @@ func (c *sourceCompiler) envelope(v Value, e Entry) {
 	}
 }
 
-func (c *sourceCompiler) formatVersion(v Value, e Entry) {
+func (c *sourceChecker) formatVersion(v Value, e Entry) {
 	f, present := lookup(v, "formatVersion")
 	if !present || f.kind != IntegerValue || f.text != "1" {
 		c.problem("manifest.format", "formatVersion must be the integer 1.", e, nil)
 	}
 }
 
-func (c *sourceCompiler) dependencies(v Value, e Entry) {
+func (c *sourceChecker) dependencies(v Value, e Entry) {
 	d, present := lookup(v, "dependencies")
 	if !present || d.kind != ObjectValue {
 		c.problem("manifest.dependencies", "dependencies is required and must be a mapping.", e, nil)
@@ -374,7 +374,7 @@ func (c *sourceCompiler) dependencies(v Value, e Entry) {
 	}
 }
 
-func (c *sourceCompiler) closed(v Value, allowed []string, e Entry) {
+func (c *sourceChecker) closed(v Value, allowed []string, e Entry) {
 	for _, field := range v.fields {
 		known := false
 		for _, key := range allowed {
@@ -386,7 +386,7 @@ func (c *sourceCompiler) closed(v Value, allowed []string, e Entry) {
 	}
 }
 
-func (c *sourceCompiler) requiredText(v Value, key string, e Entry) (string, bool) {
+func (c *sourceChecker) requiredText(v Value, key string, e Entry) (string, bool) {
 	f, present := lookup(v, key)
 	if !present {
 		c.problem("field.required", fmt.Sprintf("Required string field %q is missing.", key), e, nil)
@@ -395,7 +395,7 @@ func (c *sourceCompiler) requiredText(v Value, key string, e Entry) (string, boo
 	return c.nonemptyText(f, key, e)
 }
 
-func (c *sourceCompiler) nonemptyText(v Value, field string, e Entry) (string, bool) {
+func (c *sourceChecker) nonemptyText(v Value, field string, e Entry) (string, bool) {
 	if v.kind != StringValue || v.text == "" {
 		c.problem("field.nonempty_string", fmt.Sprintf("%s must be a nonempty string.", field), e, positionPointer(v.position))
 		return "", false
@@ -403,7 +403,7 @@ func (c *sourceCompiler) nonemptyText(v Value, field string, e Entry) (string, b
 	return v.text, true
 }
 
-func (c *sourceCompiler) problem(code, message string, e Entry, pos *Position) {
+func (c *sourceChecker) problem(code, message string, e Entry, pos *Position) {
 	c.failed = true
 	if strings.HasPrefix(code, "name.") {
 		c.namesFailed = true

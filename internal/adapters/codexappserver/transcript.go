@@ -9,7 +9,7 @@ import (
 )
 
 // transcript appends one JSON line per observed exchange of a turn: provider
-// output, Host writes and Host tool calls and answers, with known secrets
+// output, Orchestrator writes and Orchestrator tool calls and answers, with known secrets
 // redacted. A nil transcript records nothing.
 type transcript struct {
 	file   *os.File

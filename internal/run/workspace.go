@@ -6,21 +6,21 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// WorkspaceID is the Host identity of one step workspace; the runtime labels
-// the volume with it.
+// WorkspaceID is the Orchestrator's identity of one step workspace; the runtime
+// labels the volume with it.
 type WorkspaceID string
 
 // Workspaces materializes step workspaces on runtime volumes and observes them.
 // It knows no ownership, reviews or tasks: run decides what a workspace holds
 // (core rule D3) and what its observed change means (core rule S4), and run
-// stores harvested candidates as payloads in the Host's private journal store.
+// stores harvested candidates as payloads in the Orchestrator's private journal store.
 //
 // Materialize writes exactly the supplied tree into a new volume and reads it
 // back; it refuses an ID that already exists, so it never overwrites content
 // that was not harvested. Harvest observes the complete tree after the step's
 // container stopped; while any container still mounts the volume, it reports
 // Uncertain. Peek observes the workspace while its step may still write; its
-// tree is advisory, the Host only uses it before an outcome to refuse a call
+// tree is advisory, the Orchestrator only uses it before an outcome to refuse a call
 // whose changes would not be captured or whose limited delivery would deliver
 // nothing, and a candidate still comes only from Harvest after the step's
 // container stopped. Close is idempotent and reports
@@ -77,7 +77,7 @@ type HarvestRequest struct {
 }
 
 // Valid reports whether the request names a workspace and bounds the
-// observation within the Host's ceilings.
+// observation within the Orchestrator's ceilings.
 func (r HarvestRequest) Valid() bool {
 	return identifier(string(r.ID)) && r.MaxEntries > 0 && r.MaxEntries <= maxHarvestEntries && r.MaxBytes > 0 && r.MaxBytes <= maxHarvestBytes
 }

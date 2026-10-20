@@ -53,12 +53,12 @@ func TestRepositoryDependencyAreaBindsEveryFileToCensus(t *testing.T) {
 			result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
 			switch kind {
 			case "external", "named area", "repository root":
-				if err != nil || result.Compilation().Status != model.Passed {
-					t.Fatalf("valid dependency acquisition refused: %v %+v", err, result.Compilation())
+				if err != nil || result.Checked().Status != model.Passed {
+					t.Fatalf("valid dependency acquisition refused: %v %+v", err, result.Checked())
 				}
 			default:
-				if !errors.Is(err, apply.ErrIncompleteInputs) || result.Compilation().Status != model.NotCompleted {
-					t.Fatalf("dependency census mismatch accepted: %v %+v", err, result.Compilation())
+				if !errors.Is(err, apply.ErrIncompleteInputs) || result.Checked().Status != model.NotCompleted {
+					t.Fatalf("dependency census mismatch accepted: %v %+v", err, result.Checked())
 				}
 			}
 			if !reflect.DeepEqual(result.Inputs().Raw, raw) {
@@ -73,7 +73,7 @@ func TestLocalModelRepositoryAreaMayBeRoot(t *testing.T) {
 	raw.Local.RepositoryArea = snapshot.RootDirectory()
 	raw.Census = raw.Local.Files
 	result, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || result.Compilation().Status != model.Passed || !result.Inputs().Raw.Local.RepositoryArea.IsRoot() {
-		t.Fatalf("explicit root area lost: %v %+v", err, result.Compilation())
+	if err != nil || result.Checked().Status != model.Passed || !result.Inputs().Raw.Local.RepositoryArea.IsRoot() {
+		t.Fatalf("explicit root area lost: %v %+v", err, result.Checked())
 	}
 }

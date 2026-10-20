@@ -27,11 +27,11 @@ func TestEntryBudgetIncludesDirectoriesAcrossExternalModels(t *testing.T) {
 	}
 	service := apply.NewModelService(r, r)
 	baseline, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || baseline.Compilation().Status != model.Passed {
+	if err != nil || baseline.Checked().Status != model.Passed {
 		t.Fatalf("valid M1 capture within entry budget: %v", err)
 	}
 	preview, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || preview.Compilation().Status != model.Passed {
+	if err != nil || preview.Checked().Status != model.Passed {
 		t.Fatalf("valid M1 preview within entry budget: %v", err)
 	}
 	// Each separate model scan remains below 200 entries. Their combined
@@ -75,15 +75,15 @@ func TestEntryBudgetIncludesDirectoriesAcrossExternalModels(t *testing.T) {
 	}
 	t.Run("committed", func(t *testing.T) {
 		result, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-		if !errors.Is(err, ErrLimit) || result.Compilation().Status != model.NotCompleted || result.Inputs().Head != head || result.Inputs().Guard != "" {
-			t.Fatalf("aggregate model directories escaped budget: %v status=%s", err, result.Compilation().Status)
+		if !errors.Is(err, ErrLimit) || result.Checked().Status != model.NotCompleted || result.Inputs().Head != head || result.Inputs().Guard != "" {
+			t.Fatalf("aggregate model directories escaped budget: %v status=%s", err, result.Checked().Status)
 		}
 		assertPartial(result.Inputs().Raw)
 	})
 	t.Run("working", func(t *testing.T) {
 		result, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-		if !errors.Is(err, ErrLimit) || result.Compilation().Status != model.NotCompleted || result.Inputs().Head != head {
-			t.Fatalf("aggregate preview directories escaped budget: %v status=%s", err, result.Compilation().Status)
+		if !errors.Is(err, ErrLimit) || result.Checked().Status != model.NotCompleted || result.Inputs().Head != head {
+			t.Fatalf("aggregate preview directories escaped budget: %v status=%s", err, result.Checked().Status)
 		}
 		assertPartial(result.Inputs().Raw)
 	})

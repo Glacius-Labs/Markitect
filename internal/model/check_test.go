@@ -29,7 +29,7 @@ func emptyLockEntry() Entry {
 
 // Earlier acquisition/binding fixtures intentionally omit the prescribed Core
 // and include self-addresses. Their completed early phases must still succeed;
-// the public compiler now correctly rejects these as incomplete v1 sources.
+// the public Model check now correctly rejects these as incomplete v1 sources.
 func onlyLaterStageFailures(result Result) bool {
 	if result.Status != Failed || len(result.Diagnostics) == 0 {
 		return false
@@ -49,9 +49,9 @@ func onlyLaterStageFailures(result Result) bool {
 	return true
 }
 
-func TestPartialCompilerNeverClaimsConformance(t *testing.T) {
+func TestPartialModelCheckNeverClaimsConformance(t *testing.T) {
 	input := sourceInput()
-	got := Compile(input)
+	got := Check(input)
 	if !onlyLaterStageFailures(got) || got.Coordinates != Passed {
 		t.Fatalf("unexpected partial result: %+v", got)
 	}
@@ -91,7 +91,7 @@ func TestSourceDiagnosticsBindExactBytes(t *testing.T) {
 	input := sourceInput()
 	e := &input.Root.Entries[1]
 	e.Bytes = []byte("id: item\nkind: Example\nbody: '\u3000\u0085'\nspec: {}\n")
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || len(got.Diagnostics) != 1 || got.Diagnostics[0].Code != "definition.empty_body" {
 		t.Fatalf("expected the pinned White_Space failure: %+v", got)
 	}
@@ -136,7 +136,7 @@ func TestSourceViolations(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			input := sourceInput()
 			tt.edit(&input)
-			got := Compile(input)
+			got := Check(input)
 			if got.Status != Failed || !slices.ContainsFunc(got.Diagnostics, func(d Diagnostic) bool { return d.Code == tt.code }) {
 				t.Fatalf("expected %s: %+v", tt.code, got)
 			}
@@ -156,7 +156,7 @@ func TestManifestShape(t *testing.T) {
 	} {
 		input := sourceInput()
 		input.Root.Entries[0].Bytes = []byte(tt.yaml)
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != Failed || !slices.ContainsFunc(got.Diagnostics, func(d Diagnostic) bool { return d.Code == tt.code }) {
 			t.Fatalf("expected %s for %s: %+v", tt.code, tt.yaml, got)
 		}
@@ -171,7 +171,7 @@ func TestOnlyExplicitMetadataPathsAreExempt(t *testing.T) {
 		Entry{Path: "ignored/outside.yaml", Kind: Regular, Bytes: []byte("not: [valid")},
 		Entry{Path: "model/feature/notes.md", Kind: Regular, Bytes: []byte("not: [valid")},
 	)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed {
 		t.Fatalf("non-Definitions were treated as metadata: %+v", got)
 	}
@@ -186,7 +186,7 @@ func TestRootDotAndEmptyDirectories(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries[0].Bytes = []byte("formatVersion: 1\nid: example\nroot: .\ndependencies: {}")
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "empty", Kind: Directory})
-	got := Compile(input)
+	got := Check(input)
 	if !onlyLaterStageFailures(got) {
 		t.Fatalf("selected metadata must not create a root Package: %+v", got)
 	}
@@ -194,7 +194,7 @@ func TestRootDotAndEmptyDirectories(t *testing.T) {
 		{Path: "model.yaml", Kind: Regular, Bytes: []byte("formatVersion: 1\nid: example\nroot: model\ndependencies: {}")},
 		{Path: "model", Kind: Directory},
 	}
-	if got := Compile(input); !onlyLaterStageFailures(got) {
+	if got := Check(input); !onlyLaterStageFailures(got) {
 		t.Fatalf("explicit empty root rejected: %+v", got)
 	}
 }
@@ -203,7 +203,7 @@ func TestBudgetsDoNotBecomeLanguageFailures(t *testing.T) {
 	for _, limits := range []Limits{{SourceBytes: 1}, {Entries: 1}, {YAMLDepth: 1}, {Entries: -1}, {Models: -1}} {
 		input := sourceInput()
 		input.Limits = limits
-		got := Compile(input)
+		got := Check(input)
 		if got.Status != NotCompleted || len(got.Diagnostics) == 0 {
 			t.Fatalf("resource/config refusal misclassified: %+v", got)
 		}
@@ -215,11 +215,11 @@ func TestBudgetsDoNotBecomeLanguageFailures(t *testing.T) {
 	}
 }
 
-func TestModelCountIsBoundedBeforeCompilingEmptySources(t *testing.T) {
+func TestModelCountIsBoundedBeforeCheckingEmptySources(t *testing.T) {
 	input := sourceInput()
 	input.Limits.Models = 2
 	input.Dependencies = []SourceModel{{}, {}}
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != NotCompleted || len(got.Models) != 0 || len(got.Diagnostics) != 1 || got.Diagnostics[0].Code != "limit.models" || got.Limits.Models != 2 {
 		t.Fatalf("model admission exceeded its reported budget: %+v", got)
 	}
@@ -228,13 +228,13 @@ func TestModelCountIsBoundedBeforeCompilingEmptySources(t *testing.T) {
 func TestPhasesKeepSourceErrorsSeparateFromYAMLErrors(t *testing.T) {
 	input := sourceInput()
 	input.Root.Entries = append(input.Root.Entries, Entry{Path: "model/feature/link", Kind: Redirect})
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || got.Models[0].Phases[0].Status != Failed || got.Models[0].Phases[1].Status == Failed {
 		t.Fatalf("redirect was attributed to YAML rather than source structure: %+v", got)
 	}
 	input = sourceInput()
 	input.Root.Entries[1].Bytes = append(input.Root.Entries[1].Bytes, []byte("unknown: text\n")...)
-	got = Compile(input)
+	got = Check(input)
 	if got.Status != Failed || got.Models[0].Phases[0].Status != Passed || got.Models[0].Phases[1].Status != Failed {
 		t.Fatalf("envelope error was attributed to source structure: %+v", got)
 	}
@@ -247,7 +247,7 @@ func TestKnownErrorSurvivesLaterDepthRefusal(t *testing.T) {
 		Entry{Path: "model/feature/a.yaml", Kind: Regular, Bytes: []byte("id: item\nkind: Example\nbody: text\nspec: {}\nextra: value")},
 		Entry{Path: "model/feature/z.yaml", Kind: Regular, Bytes: []byte("id: deep\nkind: Example\nbody: text\nspec: {field: {nested: {deeper: x}}}")},
 	)
-	got := Compile(input)
+	got := Check(input)
 	if got.Status != Failed || !slices.ContainsFunc(got.Diagnostics, func(d Diagnostic) bool { return strings.HasPrefix(d.Code, "limit.") }) || !slices.ContainsFunc(got.Diagnostics, func(d Diagnostic) bool { return d.Code == "field.unknown" }) {
 		t.Fatalf("failed and incomplete evidence not retained together: %+v", got)
 	}
@@ -260,9 +260,9 @@ func TestInputOrderingDoesNotChangeDiagnostics(t *testing.T) {
 		Entry{Path: "model/feature/a.yaml", Kind: Regular, Bytes: []byte("id: a\nkind: Example\nbody: text\nspec: {}\nunknown: y")},
 		Entry{Path: "model/feature/item.yaml", Kind: Regular, Bytes: []byte("id: duplicate\nkind: Example\nbody: text\nspec: {}")},
 	)
-	first := Compile(input)
+	first := Check(input)
 	slices.Reverse(input.Root.Entries)
-	second := Compile(input)
+	second := Check(input)
 	if !reflect.DeepEqual(first, second) {
 		t.Fatalf("source enumeration changed the report:\n%+v\n%+v", first, second)
 	}

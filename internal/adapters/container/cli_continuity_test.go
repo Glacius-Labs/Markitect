@@ -34,7 +34,7 @@ func startClaude(t *testing.T, r *runtimeSmoke, s *container.Session, resume str
 	if resume != "" {
 		args = append(args, "--resume", resume)
 	}
-	if _, err := s.StartProvider(r.ctx, frame.Start{Argv: args, Dir: "/work", Env: credentialEnv("ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"), Tools: []frame.ToolSpec{hostTool}}); err != nil {
+	if _, err := s.StartProvider(r.ctx, frame.Start{Argv: args, Dir: "/work", Env: credentialEnv("ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN"), Tools: []frame.ToolSpec{orchestratorTool}}); err != nil {
 		t.Fatal(err)
 	}
 	go answerTools(s, make(chan frame.ToolCall, 16))
@@ -120,7 +120,7 @@ func TestClaudeSessionSeesAQuiescentBasisAdvance(t *testing.T) {
 	c := startClaude(t, r, s, "")
 	c.turn("Read the file basis.txt in the working directory if it exists and say what it contains, or say MISSING. Do not write files.")
 
-	// The Host waits for quiescence: only the provider's own processes remain.
+	// The Orchestrator waits for quiescence: only the provider's own processes remain.
 	deadline := time.Now().Add(15 * time.Second)
 	for {
 		processes, err := s.Census(r.ctx)
@@ -138,7 +138,7 @@ func TestClaudeSessionSeesAQuiescentBasisAdvance(t *testing.T) {
 	}
 
 	// The transition runs behind a write barrier: the session is frozen while
-	// the Host changes its workspace, then resumes.
+	// the Orchestrator changes its workspace, then resumes.
 	name := r.spec("advance", mounts).Name
 	if err := r.engine.Pause(r.ctx, name); err != nil {
 		t.Fatal(err)

@@ -11,8 +11,8 @@ import (
 
 func TestCodecEncodesSelectedPinnedRequests(t *testing.T) {
 	c := testCodec(t, 4096)
-	initialize, err := c.EncodeInitialize(stringID(t, "host-request"), ClientInfo{Name: "markitect", Version: "synthetic"})
-	if err != nil || string(initialize) != "{\"id\":\"host-request\",\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"markitect\",\"version\":\"synthetic\"}}}\n" {
+	initialize, err := c.EncodeInitialize(stringID(t, "orchestrator-request"), ClientInfo{Name: "markitect", Version: "synthetic"})
+	if err != nil || string(initialize) != "{\"id\":\"orchestrator-request\",\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"markitect\",\"version\":\"synthetic\"}}}\n" {
 		t.Fatalf("initialize: %s %v", initialize, err)
 	}
 	initialized, err := c.EncodeInitialized()
@@ -170,10 +170,10 @@ func TestCodecUnknownMessagesRemainVisibleWithoutExecutionOrSuccess(t *testing.T
 	}
 }
 
-func TestCodecObservedProviderHandlesAreNotRequestOrHostIDs(t *testing.T) {
-	m := codecMessage(t, `{"id":"host-open-request","result":{"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"configured-model","modelProvider":"openai","sandbox":{"type":"dangerFullAccess"},"thread":`+codecThread+`}}`)
-	r, err := m.ReadResponse(stringID(t, "host-open-request"), ThreadStart)
-	if err != nil || r.Thread != codecThreadID || string(r.Thread) == "host-open-request" {
+func TestCodecObservedProviderHandlesAreNotRequestOrOrchestratorIDs(t *testing.T) {
+	m := codecMessage(t, `{"id":"orchestrator-open-request","result":{"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"configured-model","modelProvider":"openai","sandbox":{"type":"dangerFullAccess"},"thread":`+codecThread+`}}`)
+	r, err := m.ReadResponse(stringID(t, "orchestrator-open-request"), ThreadStart)
+	if err != nil || r.Thread != codecThreadID || string(r.Thread) == "orchestrator-open-request" {
 		t.Fatal("provider identity invented", r, err)
 	}
 	n := codecMessage(t, `{"method":"thread/started","params":{"thread":`+codecThread+`}}`)

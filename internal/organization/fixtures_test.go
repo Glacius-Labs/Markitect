@@ -11,11 +11,11 @@ func emptyLock() model.Entry {
 	return model.Entry{Path: "model-lock.yaml", Kind: model.Regular, Bytes: []byte("formatVersion: 1\nmodels: {}\n")}
 }
 
-func compileFixture(t *testing.T, input model.Input) model.Result {
+func checkFixture(t *testing.T, input model.Input) model.Result {
 	t.Helper()
-	result := model.Compile(input)
+	result := model.Check(input)
 	if result.Status != model.Passed {
-		t.Fatalf("fixture did not compile: status=%s diagnostics=%+v", result.Status, result.Diagnostics)
+		t.Fatalf("fixture did not pass the Model check: status=%s diagnostics=%+v", result.Status, result.Diagnostics)
 	}
 	return result
 }
@@ -26,7 +26,7 @@ func compileFixture(t *testing.T, input model.Input) model.Result {
 func localFixture(t *testing.T, definitions map[string][]string, emptyDirectories ...string) model.Input {
 	t.Helper()
 	core := coreSource()
-	coreResult := compileFixture(t, model.Input{Root: core})
+	coreResult := checkFixture(t, model.Input{Root: core})
 	coreDigest := coreResult.Models[0].Digest
 	software := model.SourceModel{
 		Origin: "fixture/software", ManifestPath: "model.yaml",
@@ -36,7 +36,7 @@ func localFixture(t *testing.T, definitions map[string][]string, emptyDirectorie
 			{Path: "model-lock.yaml", Kind: model.Regular, Bytes: []byte(fmt.Sprintf("formatVersion: 1\nmodels:\n  markitect-core: {version: '1.0', digest: '%s'}\n", coreDigest))},
 		},
 	}
-	softwareResult := compileFixture(t, model.Input{Root: software, Dependencies: []model.SourceModel{core}})
+	softwareResult := checkFixture(t, model.Input{Root: software, Dependencies: []model.SourceModel{core}})
 	softwareDigest := softwareResult.Models[0].Digest
 	local := model.SourceModel{
 		Origin: "fixture/local", ManifestPath: "model.yaml",

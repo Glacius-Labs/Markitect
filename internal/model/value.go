@@ -16,7 +16,7 @@ const (
 
 // Decimal represents coefficient * 10^exponent exactly. Both members are
 // arbitrary-precision signed decimal integer strings; no binary floats occur.
-// Compiler output strips coefficient trailing zeros, with zero always (0, 0).
+// Model check output strips coefficient trailing zeros, with zero always (0, 0).
 type Decimal struct {
 	Coefficient string
 	Exponent    string

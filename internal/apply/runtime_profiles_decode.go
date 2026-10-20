@@ -11,63 +11,63 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-const maxHostDocumentBytes = 4 << 20
-const maxHostNodes = 100000
-const maxHostDepth = 64
-const maxHostProfiles = 1024
+const maxRuntimeDocumentBytes = 4 << 20
+const maxRuntimeNodes = 100000
+const maxRuntimeDepth = 64
+const maxRuntimeProfiles = 1024
 
-type hostEnvelope struct {
+type runtimeEnvelope struct {
 	status      model.Status
 	profiles    []ProfileInput
-	diagnostics []HostProfileDiagnostic
+	diagnostics []RuntimeProfileDiagnostic
 }
 
-func (h *hostEnvelope) issue(file SourceFile, status model.Status, code string, f configField, message string) {
+func (h *runtimeEnvelope) issue(file SourceFile, status model.Status, code string, f configField, message string) {
 	var position *model.Position
 	if f.node != nil && f.node.Line > 0 {
 		position = &model.Position{Line: f.node.Line, Column: f.node.Column}
 	}
-	h.diagnostics = append(h.diagnostics, HostProfileDiagnostic{Code: "host." + code, Source: hostSource(file, f.pointer), Position: position, Message: message})
+	h.diagnostics = append(h.diagnostics, RuntimeProfileDiagnostic{Code: "runtime." + code, Source: runtimeSource(file, f.pointer), Position: position, Message: message})
 	if status == model.Failed || h.status != model.Failed {
 		h.status = status
 	}
 }
 
-func decodeHost(raw RawInputs) hostEnvelope {
-	h := hostEnvelope{status: model.Passed}
-	if len(raw.HostProfiles) != 1 {
+func decodeRuntime(raw RawInputs) runtimeEnvelope {
+	h := runtimeEnvelope{status: model.Passed}
+	if len(raw.RuntimeProfiles) != 1 {
 		status := model.Failed
-		if len(raw.HostProfiles) == 0 {
+		if len(raw.RuntimeProfiles) == 0 {
 			status = model.NotCompleted
 		}
-		h.issue(SourceFile{}, status, "document_count", configField{}, "Exactly one explicitly captured Host document is required.")
+		h.issue(SourceFile{}, status, "document_count", configField{}, "Exactly one explicitly captured Runtime profile document is required.")
 		return h
 	}
-	file := raw.HostProfiles[0]
+	file := raw.RuntimeProfiles[0]
 	data := file.File.Bytes()
-	if len(data) > maxHostDocumentBytes {
-		h.issue(file, model.NotCompleted, "byte_limit", configField{}, "Host document exceeds the finite preparation byte limit.")
+	if len(data) > maxRuntimeDocumentBytes {
+		h.issue(file, model.NotCompleted, "byte_limit", configField{}, "Runtime profile document exceeds the finite preparation byte limit.")
 		return h
 	}
 	decoder := yaml.NewDecoder(bytes.NewReader(data))
 	var document yaml.Node
 	if err := decoder.Decode(&document); err != nil || len(document.Content) != 1 {
-		h.issue(file, model.Failed, "yaml", configField{}, "Expected one nonempty Host YAML document.")
+		h.issue(file, model.Failed, "yaml", configField{}, "Expected one nonempty Runtime profile YAML document.")
 		return h
 	}
 	var extra yaml.Node
 	if err := decoder.Decode(&extra); err != io.EOF {
-		h.issue(file, model.Failed, "documents", configField{}, "Host input must contain exactly one YAML document.")
+		h.issue(file, model.Failed, "documents", configField{}, "Runtime profile input must contain exactly one YAML document.")
 		return h
 	}
 	root := configField{node: document.Content[0]}
-	d := configYAML{name: "Host", title: "Host", issue: func(code string, f configField, message string) { h.issue(file, model.Failed, code, f, message) }}
+	d := configYAML{name: "Runtime profile", title: "Runtime profile", issue: func(code string, f configField, message string) { h.issue(file, model.Failed, code, f, message) }}
 	// Bound recursion before invoking configYAML's recursive restricted walk.
 	nodes := 0
 	var bounded func(*yaml.Node, int) bool
 	bounded = func(n *yaml.Node, depth int) bool {
 		nodes++
-		if nodes > maxHostNodes || depth > maxHostDepth {
+		if nodes > maxRuntimeNodes || depth > maxRuntimeDepth {
 			return false
 		}
 		for _, child := range n.Content {
@@ -78,7 +78,7 @@ func decodeHost(raw RawInputs) hostEnvelope {
 		return true
 	}
 	if !bounded(root.node, 0) {
-		h.issue(file, model.NotCompleted, "node_limit", root, "Host YAML exceeds finite node/depth limits.")
+		h.issue(file, model.NotCompleted, "node_limit", root, "Runtime profile YAML exceeds finite node/depth limits.")
 		return h
 	}
 	d.restricted(root)
@@ -87,13 +87,13 @@ func decodeHost(raw RawInputs) hostEnvelope {
 	var maps func(configField)
 	maps = func(f configField) {
 		if f.node.Style&yaml.TaggedStyle != 0 {
-			d.issue("yaml_tag", f, "Host YAML cannot use explicit tags.")
+			d.issue("yaml_tag", f, "Runtime profile YAML cannot use explicit tags.")
 		}
 		if f.node.Kind == yaml.MappingNode {
 			d.object(f)
 			for i := 0; i+1 < len(f.node.Content); i += 2 {
 				if f.node.Content[i].Style&yaml.TaggedStyle != 0 {
-					d.issue("yaml_tag", configChild(f, f.node.Content[i].Value, f.node.Content[i]), "Host YAML cannot use explicit key tags.")
+					d.issue("yaml_tag", configChild(f, f.node.Content[i].Value, f.node.Content[i]), "Runtime profile YAML cannot use explicit key tags.")
 				}
 				maps(configChild(f, f.node.Content[i].Value, f.node.Content[i+1]))
 			}
@@ -106,8 +106,8 @@ func decodeHost(raw RawInputs) hostEnvelope {
 	maps(root)
 	fields := d.object(root, "apiVersion", "agentProfiles", "checkProfiles")
 	version := d.required(fields, root, "apiVersion")
-	if value, ok := d.text(version, false); ok && value != "markitect.host/v1" {
-		d.issue("version", version, "Unsupported Host document version.")
+	if value, ok := d.text(version, false); ok && value != "markitect.runtime/v1" {
+		d.issue("version", version, "Unsupported Runtime profile document version.")
 	}
 	for _, ns := range []struct {
 		name     string
@@ -137,8 +137,8 @@ func decodeHost(raw RawInputs) hostEnvelope {
 			}
 		}
 	}
-	if len(h.profiles) > maxHostProfiles {
-		h.issue(file, model.NotCompleted, "profile_limit", root, "Host profile count exceeds the finite preparation limit.")
+	if len(h.profiles) > maxRuntimeProfiles {
+		h.issue(file, model.NotCompleted, "profile_limit", root, "Runtime profile count exceeds the finite preparation limit.")
 	}
 	// No partially decoded envelope is ever supplied to a port.
 	if h.status != model.Passed {

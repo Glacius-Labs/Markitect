@@ -42,8 +42,8 @@ func TestCaptureRegistrySeamPreparesActualCommittedRootAndLendingShards(t *testi
 	_, selection, head := registrySeamFixture(t)
 	r := adapter(t)
 	stage, err := apply.NewModelService(r, r).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || stage.Compilation().Status != model.Passed || len(stage.Compilation().Models) != 3 {
-		t.Fatalf("actual M1 model capture failed: %v %+v", err, stage.Compilation())
+	if err != nil || stage.Checked().Status != model.Passed || len(stage.Checked().Models) != 3 {
+		t.Fatalf("actual M1 model capture failed: %v %+v", err, stage.Checked())
 	}
 	prepared := stage.PrepareRegistry()
 	registry, available := prepared.Registry()
@@ -86,7 +86,7 @@ func TestCaptureRegistrySeamRetainsUnselectedCensusShardAsNotCompleted(t *testin
 	selection.Registry = selection.Registry[:1]
 	r := adapter(t)
 	stage, err := apply.NewModelService(r, r).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || stage.Compilation().Status != model.Passed {
+	if err != nil || stage.Checked().Status != model.Passed {
 		t.Fatalf("actual M1 model capture failed: %v", err)
 	}
 	prepared := stage.PrepareRegistry()
@@ -123,7 +123,7 @@ func TestCaptureRegistrySeamIgnoredUntrackedShardRemainsPreviewOnly(t *testing.T
 	t.Run("committed-selected", func(t *testing.T) {
 		stage, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
 		inputs := stage.Inputs()
-		if err == nil || stage.Compilation().Status != model.NotCompleted || inputs.Head != head || inputs.Guard != "" {
+		if err == nil || stage.Checked().Status != model.NotCompleted || inputs.Head != head || inputs.Guard != "" {
 			t.Fatalf("today's untracked shard became committed input: %v", err)
 		}
 		if len(inputs.Raw.Registry) != 2 || inputs.Raw.Registry[1].RepositoryPath.String() != seamChildShard || len(inputs.Raw.Registry[1].File.Bytes()) != 0 || len(inputs.Raw.Local.Files.Entries()) == 0 {
@@ -137,7 +137,7 @@ func TestCaptureRegistrySeamIgnoredUntrackedShardRemainsPreviewOnly(t *testing.T
 	})
 	t.Run("working", func(t *testing.T) {
 		stage, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-		if err != nil || stage.Compilation().Status != model.Passed {
+		if err != nil || stage.Checked().Status != model.Passed {
 			t.Fatalf("working model preview failed: %v", err)
 		}
 		prepared := stage.PrepareRegistry()
@@ -155,7 +155,7 @@ func TestCaptureRegistrySeamIgnoredUntrackedShardRemainsPreviewOnly(t *testing.T
 		historical := selection
 		historical.Registry = historical.Registry[:1]
 		stage, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: historical, Revision: head}, model.Limits{})
-		if err != nil || stage.Compilation().Status != model.Passed {
+		if err != nil || stage.Checked().Status != model.Passed {
 			t.Fatalf("fixed model preview failed: %v", err)
 		}
 		prepared := stage.PrepareRegistry()

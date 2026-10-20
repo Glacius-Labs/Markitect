@@ -48,7 +48,7 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 		r.issue(model.NotCompleted, "strategy_defaults.profile_unknown", version, "This product defaults version is not supported.")
 		return r
 	}
-	if strategyOK && strategyName != "shared-workspace-v1" {
+	if strategyOK && strategyName != executionStrategy {
 		r.issue(model.NotCompleted, "strategy_defaults.profile_unknown", strategy, "This product defaults strategy is not supported.")
 		return r
 	}
@@ -56,7 +56,7 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 	if defaults.node == nil {
 		return r
 	}
-	fields := d.object(defaults, "instructions")
+	fields := d.object(defaults, "instructions", "team")
 	// Reuse the existing list reader on the actual product bytes. Its temporary
 	// relative file coordinate is replaced by the product locator; content
 	// identity, field pointers and original positions remain unchanged.
@@ -79,6 +79,9 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 			*role.target = value
 		}
 	}
+	if team := reader.team(d.required(fields, defaults, "team")); team != nil {
+		r.team = *productSources(team, input.Source)
+	}
 	for _, diagnostic := range typed.diagnostics {
 		source := diagnostic.Source
 		source.File = input.Source
@@ -88,4 +91,21 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 		r.status = typed.Status()
 	}
 	return r
+}
+
+// productSources attributes a team decoded from the product document to the
+// product locator.
+func productSources(team *ExecutionTeam, source string) *ExecutionTeam {
+	team.MaxHelpers.Source.File = source
+	for i := range team.Helpers {
+		h := &team.Helpers[i]
+		h.Role.Source.File, h.Writes.Source.File = source, source
+		if h.Profile != nil {
+			h.Profile.Source.File = source
+		}
+		if h.Instructions != nil {
+			h.Instructions.Source.File = source
+		}
+	}
+	return team
 }

@@ -1,6 +1,6 @@
 # Modules and static composition
 
-The repository uses one Go module. Packages are organized by concrete responsibility and consumer-owned ports. There is no active legacy product layer or second compiler. [Architecture](../architecture.md) explains behavior; the generated [code map](code-map.md) inventories actual packages.
+The repository uses one Go module. Packages are organized by concrete responsibility and consumer-owned ports. There is no active legacy product layer or second Model check. [Architecture](../architecture.md) explains behavior; the generated [code map](code-map.md) inventories actual packages.
 
 ## Go capability packages
 
@@ -8,9 +8,9 @@ Pure model and snapshot packages consume supplied bytes and values. Organization
 
 The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and owns the frame transport of `internal/agentd/frame` with agentd. The concrete Codex and Claude turn adapters may consume the frame DTOs exposed by that container API while implementing `run.Agents`. Each provider adapter keeps its own protocol handling and cannot import the other provider or agentd execution. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
 
-Run owns the reconciliation engine and the consumer ports `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence` ([contract](../design/canonical-model/manager-apply-runtime.md)). It keeps its state in memory, records only through the `Evidence` port, and has no SQL, repository acquisition, provider protocol or public execution path. Apply prepares its configuration from one complete capture and publishes through its own `Publisher` port. Bootstrap supplies the concrete adapters and the file-based owner channel and evidence under the operator's state directory.
+Run owns the Orchestrator and the consumer ports `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence` ([contract](../design/canonical-model/manager-apply-runtime.md)). It keeps its state in memory, records only through the `Evidence` port, and has no SQL, repository acquisition, provider protocol or public execution path. Apply prepares its configuration from one complete capture and publishes through its own `Publisher` port. Bootstrap supplies the concrete adapters and the file-based owner channel and evidence under the operator's state directory.
 
-Bootstrap's Host-side ports of one Apply are a file evidence directory, a file owner channel, an Agents router over the two turn adapters and an exclusive lock per state directory.
+Bootstrap's Orchestrator-side ports of one Apply are a file evidence directory, a file owner channel, an Agents router over the two turn adapters and an exclusive lock per state directory.
 
 The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../../internal/adapters/claudecode/README.md) metadata preparers use narrow image readers backed by the container adapter. Bootstrap injects their factories; only a selected source-bound profile supplies the engine executable and immutable image ID. Preparation consumes Apply's profile ports and pure model, organization and snapshot values. It inspects the image and copies its build metadata from a created, never started container. It starts no Session or provider and observes no schema inventory.
 

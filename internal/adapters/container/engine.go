@@ -1,4 +1,4 @@
-// Package container is the Host's client of the container engine. It starts
+// Package container is the Orchestrator's client of the container engine. It starts
 // session containers that run markitect-agentd, carries the agentd frame
 // protocol over the container's standard streams, and manages the volumes
 // and images of the runtime. It knows no tasks, models or reviews.
@@ -33,7 +33,7 @@ type Engine struct {
 }
 
 // NewEngine binds the engine executable. The path must be absolute and name
-// a regular file; the Host never searches PATH for it.
+// a regular file; the Orchestrator never searches PATH for it.
 func NewEngine(path string) (*Engine, error) {
 	if !filepath.IsAbs(path) {
 		return nil, fmt.Errorf("container engine %q is not an absolute path", path)
@@ -204,7 +204,7 @@ func (e *Engine) Containers(ctx context.Context, key, value string) ([]string, e
 	return strings.Fields(string(out)), nil
 }
 
-// RemoveContainer stops and removes a container. The Host uses it to end
+// RemoveContainer stops and removes a container. The Orchestrator uses it to end
 // containers of its store that it no longer controls.
 func (e *Engine) RemoveContainer(ctx context.Context, name string) error {
 	if !namePattern.MatchString(name) {

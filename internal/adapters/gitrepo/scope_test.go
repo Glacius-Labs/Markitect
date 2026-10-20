@@ -106,22 +106,22 @@ func TestExplicitExternalSourcesAreCurrentObservationsAndFixedPreviewRefuses(t *
 	external := testkit.TempDir(t)
 	copyBoundary(t, selection.Dependencies[0].Boundary, external)
 	selection.Dependencies[0].Boundary = external
-	externalHost := testkit.TempDir(t)
-	if err := os.WriteFile(filepath.Join(externalHost, "profile.data"), []byte("\x00external\xff\r\n"), 0o644); err != nil {
+	externalRuntime := testkit.TempDir(t)
+	if err := os.WriteFile(filepath.Join(externalRuntime, "profile.data"), []byte("\x00external\xff\r\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	selection.HostProfiles = []apply.SourceLocation{{Boundary: externalHost, Path: fixturePath(t, "profile.data")}}
+	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: externalRuntime, Path: fixturePath(t, "profile.data")}}
 	r := adapter(t)
 	service := apply.NewModelService(r, r)
 	actual, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || actual.Compilation().Status != model.Passed {
-		t.Fatalf("external capture: %v %+v", err, actual.Compilation())
+	if err != nil || actual.Checked().Status != model.Passed {
+		t.Fatalf("external capture: %v %+v", err, actual.Checked())
 	}
-	if actual.Inputs().Raw.Dependencies[0].RepositoryArea.String() != "" || actual.Inputs().Raw.HostProfiles[0].RepositoryPath.String() != "" || !bytes.Equal(actual.Inputs().Raw.HostProfiles[0].File.Bytes(), []byte("\x00external\xff\r\n")) {
+	if actual.Inputs().Raw.Dependencies[0].RepositoryArea.String() != "" || actual.Inputs().Raw.RuntimeProfiles[0].RepositoryPath.String() != "" || !bytes.Equal(actual.Inputs().Raw.RuntimeProfiles[0].File.Bytes(), []byte("\x00external\xff\r\n")) {
 		t.Fatal("external observation was rebound to repository or changed")
 	}
 	working, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
-	if err != nil || working.Compilation().Status != model.Passed {
+	if err != nil || working.Checked().Status != model.Passed {
 		t.Fatalf("external working: %v", err)
 	}
 	refused, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
@@ -130,11 +130,11 @@ func TestExplicitExternalSourcesAreCurrentObservationsAndFixedPreviewRefuses(t *
 	}
 	selection.Dependencies[0].Boundary = filepath.Join(repo.Dir, "inputs", "vocabulary")
 	refused, err = r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
-	if !errors.Is(err, ErrUnsafe) || len(refused.Raw.HostProfiles) != 1 || refused.Raw.HostProfiles[0].Location.Boundary != externalHost {
-		t.Fatalf("external host selection lost on refusal: %v", err)
+	if !errors.Is(err, ErrUnsafe) || len(refused.Raw.RuntimeProfiles) != 1 || refused.Raw.RuntimeProfiles[0].Location.Boundary != externalRuntime {
+		t.Fatalf("external Runtime selection lost on refusal: %v", err)
 	}
-	selection.HostProfiles = []apply.SourceLocation{{Boundary: repo.Dir, Path: fixturePath(t, "host/profile.data")}}
-	selection.Execution[0].Boundary = externalHost
+	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: repo.Dir, Path: fixturePath(t, "runtime/profile.data")}}
+	selection.Execution[0].Boundary = externalRuntime
 	_, err = r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection})
 	if !errors.Is(err, ErrUnsafe) {
 		t.Fatal("external execution source accepted")
@@ -149,7 +149,7 @@ func TestFixedRevisionUsesHistoricalDirectoriesAndRejectsSelectors(t *testing.T)
 	r := adapter(t)
 	service := apply.NewModelService(r, r)
 	fixed, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
-	if err != nil || fixed.Compilation().Status != model.Passed {
+	if err != nil || fixed.Checked().Status != model.Passed {
 		t.Fatalf("historical root required today's directory: %v", err)
 	}
 	for _, revision := range []string{"HEAD", head[:12], strings.ToUpper(head), "--help", strings.Repeat("0", len(head))} {

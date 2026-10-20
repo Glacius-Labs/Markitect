@@ -82,12 +82,12 @@ func TestStaticContextsRetainFailedAndIncompleteExecutionParents(t *testing.T) {
 			selected.Dependencies, observed.Dependencies = nil, nil
 		}
 		stage, err := captureService(captured(observed), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selected}, limits)
-		if err != nil || stage.Compilation().Status == model.Passed {
-			t.Fatalf("fixture did not reach a nonpassing compiler: %v %+v", err, stage.Compilation())
+		if err != nil || stage.Checked().Status == model.Passed {
+			t.Fatalf("fixture did not reach a nonpassing Model check: %v %+v", err, stage.Checked())
 		}
 		result := stage.DecodeExecution().SelectContexts()
-		if got, ok := result.Selections(); ok || len(got) != 0 || result.Status() != model.NotCompleted || !reflect.DeepEqual(result.Execution().Model().Compilation(), stage.Compilation()) {
-			t.Fatal("nonpassing compiler result promoted or lost")
+		if got, ok := result.Selections(); ok || len(got) != 0 || result.Status() != model.NotCompleted || !reflect.DeepEqual(result.Execution().Model().Checked(), stage.Checked()) {
+			t.Fatal("nonpassing Model check result promoted or lost")
 		}
 	}
 }

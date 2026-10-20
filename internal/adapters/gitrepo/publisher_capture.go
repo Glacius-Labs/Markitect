@@ -28,7 +28,7 @@ func (r *Repository) rememberPublicationCapture(selection apply.InputSelection, 
 	selection.Execution = slices.Clone(selection.Execution)
 	selection.Registry = slices.Clone(selection.Registry)
 	selection.Ignore = slices.Clone(selection.Ignore)
-	selection.HostProfiles = slices.Clone(selection.HostProfiles)
+	selection.RuntimeProfiles = slices.Clone(selection.RuntimeProfiles)
 	selection.Instructions = slices.Clone(selection.Instructions)
 	r.publicationMu.Lock()
 	defer r.publicationMu.Unlock()
@@ -62,7 +62,7 @@ func publicationExternal(a *acquisition) string {
 	copy.raw.Execution = external(a.raw.Execution)
 	copy.raw.Registry = external(a.raw.Registry)
 	copy.raw.Ignore = external(a.raw.Ignore)
-	copy.raw.HostProfiles = external(a.raw.HostProfiles)
+	copy.raw.RuntimeProfiles = external(a.raw.RuntimeProfiles)
 	copy.raw.Instructions = external(a.raw.Instructions)
 	return string(copy.guard())
 }

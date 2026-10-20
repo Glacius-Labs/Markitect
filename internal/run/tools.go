@@ -2,169 +2,193 @@ package run
 
 import "encoding/json"
 
-// Host tool names. Execute turns send and finish, and check when Config offers
-// it; Root's Execute turns also model_defect when Config offers it; Verify turns
-// assess.
+// Orchestrator tool names: the small provider-neutral surface beside the
+// provider's own read, edit and shell tools.
 const (
-	toolSend   = "send"
-	toolFinish = "finish"
-	toolCheck  = "check"
-	toolDefect = "model_defect"
-	toolAssess = "assess"
+	toolReport   = "report"
+	toolSend     = "send"
+	toolEscalate = "escalate"
+	toolLookUp   = "look_up"
+	toolCheck    = "check"
+	toolDelegate = "delegate"
 )
 
-const defectSchema = `{
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["text"],
-  "properties": {
-    "text": {"type": "string", "description": "The defect: the statements of the model that contradict each other, or the behavior at the project boundary the model leaves undecided, naming the Definitions concerned."}
-  }
-}`
-
-const checkSchema = `{
-  "type": "object",
-  "additionalProperties": false,
-  "properties": {
-    "scope": {"type": "string", "enum": ["own", "all"], "description": "own (default): your findings in full and the number of others. all: the findings of other Managers too."}
-  }
-}`
-
-const sendSchema = `{
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["to", "text"],
-  "properties": {
-    "to": {"type": "string", "description": "A contact: \"parent\", the path of a direct child, or \"owner\" (Root only)."},
-    "text": {"type": "string", "description": "The message."}
-  }
-}`
-
-const finishSchema = `{
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["status", "summary"],
-  "properties": {
-    "status": {"type": "string", "enum": ["done", "waiting"], "description": "done: your work for these items is complete. waiting: you wait for an answer or for another Manager."},
-    "summary": {"type": "string", "description": "What you did and what is still open."}
-  }
-}`
-
-const assessSchema = `{
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["summary", "satisfied"],
-  "properties": {
-    "summary": {"type": "string", "description": "Checked scope, stand, findings and unresolved questions."},
-    "satisfied": {"type": "boolean", "description": "True only when none of your own findings stays open and blocking."},
-    "findings": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["owner", "obligation", "observed", "blocking"],
-        "properties": {
-          "owner": {"type": "string", "description": "Path of the Manager that must act: yourself or one of your descendants."},
-          "obligation": {"type": "string", "description": "The model obligation that is violated or lacks evidence."},
-          "observed": {"type": "string", "description": "The observed behavior or source evidence."},
-          "blocking": {"type": "boolean"}
-        }
-      }
-    },
-    "closed": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "reason"],
-        "properties": {
-          "id": {"type": "string", "description": "ID of an open finding you raised earlier."},
-          "reason": {"type": "string", "description": "Why it is resolved on this candidate."}
-        }
-      }
-    }
-  }
-}`
-
-// Finding subjects of an assess report when Config.ArtifactFindingsAdvisory is
-// set: an artifact that does not conform to the model, or a defect of the model.
+// Finding subjects of a review Pass with ArtifactFindingsAdvisory: an artifact
+// that does not conform to the model, or a defect of the model.
 const (
 	subjectArtifact = "artifact"
 	subjectModel    = "model"
 )
 
-// assessSchemaSubjects is the assess schema when Config.ArtifactFindingsAdvisory
-// is set: assessSchema with the two fields every finding needs. It is written out
-// so that a change of assessSchema's layout cannot silently break it; a test
-// parses both and checks the differences.
-const assessSchemaSubjects = `{
-  "type": "object",
-  "additionalProperties": false,
-  "required": ["summary", "satisfied"],
-  "properties": {
-    "summary": {"type": "string", "description": "Checked scope, stand, findings and unresolved questions."},
-    "satisfied": {"type": "boolean", "description": "True only when none of your own findings stays open and blocking."},
-    "findings": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["owner", "subject", "obligation", "observed", "blocking"],
-        "properties": {
-          "owner": {"type": "string", "description": "Path of the Manager that must act: yourself or one of your descendants."},
-          "obligation": {"type": "string", "description": "The model obligation that is violated or lacks evidence."},
-          "observed": {"type": "string", "description": "The observed behavior or source evidence."},
-          "blocking": {"type": "boolean"},
-          "subject": {"type": "string", "enum": ["artifact", "model"], "description": "artifact: an artifact does not conform to the model. model: the model itself is defective."},
-          "definition": {"type": "string", "description": "Required when subject is artifact: the identity of the Definition the artifact deviates from."}
-        }
-      }
-    },
-    "closed": {
-      "type": "array",
-      "items": {
-        "type": "object",
-        "additionalProperties": false,
-        "required": ["id", "reason"],
-        "properties": {
-          "id": {"type": "string", "description": "ID of an open finding you raised earlier."},
-          "reason": {"type": "string", "description": "Why it is resolved on this candidate."}
-        }
-      }
-    }
-  }
-}`
+type schema = map[string]any
 
-// executeTools lists the Execute tools of a Manager: owner says that Root can
-// ask the human through send (Config.Owner), defect that Root reports model
-// defects (Config.DefectTool).
-func executeTools(root, owner, check, defect bool) []ToolSpec {
-	to := "Send a message to your parent (to \"parent\") or to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
-	finish := "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts. The summary of done reaches your parent, so it needs no separate message."
-	if root {
-		to = "Send a message to a direct child (to its path). Other recipients are refused. The answer returns what has arrived for you."
-		if owner {
-			to = "Send a message to a direct child (to its path) or ask the human owner (to \"owner\"). Other recipients are refused. The answer returns what has arrived for you."
+func str(description string) schema { return schema{"type": "string", "description": description} }
+
+func strs(description string) schema {
+	return schema{"type": "array", "items": schema{"type": "string"}, "description": description}
+}
+
+func object(required []string, properties schema) schema {
+	o := schema{"type": "object", "additionalProperties": false, "properties": properties}
+	if len(required) > 0 {
+		o["required"] = required
+	}
+	return o
+}
+
+func raw(s schema) json.RawMessage {
+	b, err := json.Marshal(s)
+	if err != nil {
+		panic(err)
+	}
+	return b
+}
+
+// reportSchema is the schema of report for one Pass: the shared envelope with
+// the purpose payload of the Pass.
+func reportSchema(spec PassSpec) schema {
+	var corrections []string
+	for _, c := range spec.Corrections {
+		corrections = append(corrections, string(c))
+	}
+	finding := schema{
+		"owner":      str("Path of the Manager that must act: yourself or one of your descendants."),
+		"obligation": str("The model obligation that is violated or lacks evidence."),
+		"observed":   str("The observed behavior or source evidence."),
+		"blocking":   schema{"type": "boolean", "description": "true for a genuine finding: a model violation, a missing required realization or evidence, a failed required check. false for an optional note."},
+		"correction": schema{"type": "string", "enum": corrections, "description": "The earliest kind of work its correction needs; the last one is the default."},
+	}
+	required := []string{"owner", "obligation", "observed", "blocking"}
+	if spec.ArtifactFindingsAdvisory {
+		finding["subject"] = schema{"type": "string", "enum": []string{subjectArtifact, subjectModel}, "description": "artifact: an artifact does not conform to the model. model: the model itself is defective."}
+		finding["definition"] = str("Required when subject is artifact: the identity of the Definition the artifact deviates from.")
+		required = append(required, "subject")
+	}
+	properties := schema{
+		"kind": schema{"type": "string", "enum": []string{kindProgress, kindWait, kindBasis, kindResult, kindAccept, kindReturn, kindReopen, kindRevise, kindProblem},
+			"description": "progress: you continue in a later turn. wait: you need the named answer or child first. basis: what your children need from you before they start. result: your complete integrated result. accept or return: your decision on a child's proposal. reopen: return a child's accepted result. revise: change your accepted basis. problem: record a classified problem."},
+		"summary":  str("progress, basis, result: what you did, what it provides and what is still open."),
+		"for":      str("wait: the question ID you asked or the path of a child."),
+		"proposal": str("accept, return: the proposal ID (P...) of your child."),
+		"child":    str("reopen: the path of the child."),
+		"reason":   str("return, reopen, revise, wait: why."),
+		"obligations": schema{"type": "array", "description": "basis, result: your own obligations; a result covers every one.", "items": object([]string{"definition", "status"}, schema{
+			"definition": str("Identity of one of your own Definitions."),
+			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverNotApplicable, coverOpen}},
+			"note":       str("How it is met and with which evidence; required for not_applicable and open, and for every entry of a plan."),
+		})},
+		"artifacts": strs("basis, result: your own artifacts this contribution created, changed or preserved (repository-relative paths)."),
+		"evidence":  strs("basis, result: the checks, tests and observations that support it."),
+		"verdict":   schema{"type": "string", "enum": []string{string(Satisfied), string(NeedsCorrection)}, "description": "result: satisfied when its objective is met; needs_correction when a genuine finding names required corrective work."},
+		"findings":  schema{"type": "array", "items": object(required, finding), "description": "basis, result: findings within your responsibility."},
+		"closed": schema{"type": "array", "description": "basis, result: open findings you raised in an earlier Pass that are resolved or disproved now.", "items": object([]string{"id", "reason", "evidence"}, schema{
+			"id":       str("ID of an open finding you raised earlier."),
+			"reason":   str("Why it is closed."),
+			"as":       schema{"type": "string", "enum": []string{ClosedResolved, ClosedDisproved}, "description": "resolved (default): the candidate corrects it. disproved: it was erroneous; required on an unchanged candidate."},
+			"evidence": str("The observed evidence of the resolution or disproof."),
+		})},
+		"category": schema{"type": "string", "enum": problemCategories, "description": "problem: its category."},
+		"text":     str("problem: the problem."),
+		"abort":    schema{"type": "boolean", "description": "problem, Root only, category model: the model is erroneous or contradictory; the run ends without publishing."},
+	}
+	if spec.Review {
+		properties["disputed"] = schema{"type": "array", "description": "basis, result: open genuine review findings raised by another reviewer, below you or about your own responsibility, that you independently judge erroneous; they stay open until a fresh review of their responsibility disposes of them.", "items": object([]string{"id", "reason", "evidence"}, schema{
+			"id":       str("ID of the finding."),
+			"reason":   str("Why it is erroneous."),
+			"evidence": str("The evidence on this candidate."),
+		})}
+	}
+	if spec.Plans {
+		properties["plan"] = object([]string{"approach", "artifacts", "inputs", "outputs", "dependencies", "order", "blockers", "assumptions"}, schema{
+			"approach":  str("Your own concrete approach and, as a parent, how you orchestrate and integrate your children."),
+			"artifacts": strs("Your own planned artifacts or directories (repository-relative)."),
+			"inputs": schema{"type": "array", "items": object([]string{"need", "owner"}, schema{
+				"need":  str("What you need."),
+				"owner": str("The Manager that owns it."),
+			})},
+			"outputs": schema{"type": "array", "items": object([]string{"provides", "consumers"}, schema{
+				"provides":  str("What you provide."),
+				"consumers": strs("The Managers that use it."),
+			})},
+			"dependencies": schema{"type": "array", "description": "Start conditions: in the named Pass you start only after the owner's accepted basis or result.", "items": object([]string{"owner", "need", "pass", "stage"}, schema{
+				"owner": str("Another Manager."),
+				"need":  str("What you need from it."),
+				"pass":  str("The later Pass purpose it applies to."),
+				"stage": schema{"type": "string", "enum": []string{stageNameBasis, stageNameResult}},
+			})},
+			"order":       str("Ordering and start conditions of your work."),
+			"blockers":    strs("What blocks you."),
+			"assumptions": strs("Assumptions that need clarification."),
+		})
+	}
+	return object([]string{"kind"}, properties)
+}
+
+var sendSchema = object([]string{"to", "kind", "text"}, schema{
+	"to":    str("\"parent\", the path of a direct child, or for Root \"user\"."),
+	"kind":  schema{"type": "string", "enum": []string{sendQuestion, sendAnswer, sendInfo}},
+	"text":  str("The message."),
+	"about": str("answer: the question ID you answer. question: the question addressed to you that this one serves, when you forward an exchange."),
+})
+
+var escalateSchema = object([]string{"category", "text"}, schema{
+	"category": schema{"type": "string", "enum": problemCategories},
+	"text":     str("The problem and the decision you need."),
+})
+
+var lookUpSchema = object([]string{"topic"}, schema{
+	"topic":   schema{"type": "string", "enum": lookUpTopics},
+	"id":      str("definition: the Definition identity. method: the method's name."),
+	"path":    str("owner, registry: a repository-relative path."),
+	"manager": str("plan, basis: a Manager path; default yourself (plan) or your parent (basis)."),
+})
+
+var checkSchema = object(nil, schema{
+	"scope": schema{"type": "string", "enum": []string{"own", "all"}, "description": "own (default): your findings in full and the number of others. all: the findings of other Managers too."},
+})
+
+var delegateSchema = object([]string{"role", "task"}, schema{
+	"role":  str("One of your helper roles."),
+	"task":  str("The bounded task and the result you expect."),
+	"paths": strs("Existing files or directories of your own area the helper may change; omit for a read-only task."),
+})
+
+var helperReportSchema = object([]string{"summary"}, schema{
+	"summary": str("What you did, what you found and what is still open."),
+})
+
+// memberTools lists the tools of a Manager's or reviewer's turn.
+func (e *engine) memberTools(m *member) []ToolSpec {
+	spec := m.p.spec
+	sendText := "Send a question, an answer or information to your parent or a direct child; other Managers are reached through them."
+	if m.Parent == "" {
+		sendText = "Send a question, an answer or information to a direct child; other Managers are reached through them."
+		if e.cfg.Owner != nil {
+			sendText += " Ask the user (to \"user\") what the model and the bound decisions leave open."
 		}
-		finish = "Report how your turn ends: done or waiting, with a summary. Call it when you have done what the items ask; if you call it again, the last call counts."
 	}
 	tools := []ToolSpec{
-		{Name: toolSend, Description: to, InputSchema: json.RawMessage(sendSchema)},
-		{Name: toolFinish, Description: finish, InputSchema: json.RawMessage(finishSchema)},
+		{Name: toolReport, Description: "Report to the Orchestrator: progress, a named wait, your basis or complete result, a decision on a child's proposal, a reopened child result, a revised basis or a problem. End every turn in which you work on your own contribution with one.", InputSchema: raw(reportSchema(spec))},
+		{Name: toolSend, Description: sendText, InputSchema: raw(sendSchema)},
+		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent (Root: to the user) as a question.", InputSchema: raw(escalateSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
-	if check {
-		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Check the current shared working tree: returns the findings of the project's accounting, yours first. Other Managers may still be writing, so the answer is advice; an uncertain observation is refused with the reason.", InputSchema: json.RawMessage(checkSchema)})
+	if spec.Writes {
+		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your current area against the accepted stand: unregistered or wrongly registered files, invalid registry entries, missing owners. Advice while you work.", InputSchema: raw(checkSchema)})
 	}
-	if root && defect {
-		tools = append(tools, ToolSpec{Name: toolDefect, Description: "Report a defect of the model itself to the owner: statements that contradict each other, or a gap that changes behavior at the project boundary. The run ends at once without publishing anything; the owner corrects the model and starts a new Apply. A decision the model leaves open inside the project is no defect.", InputSchema: json.RawMessage(defectSchema)})
+	if len(m.Helpers) > 0 {
+		tools = append(tools, ToolSpec{Name: toolDelegate, Description: "Delegate a bounded task to one of your helper roles; it runs in its own container after this turn and reports its result to you.", InputSchema: raw(delegateSchema)})
 	}
 	return tools
 }
 
-func verifyTools(subjects bool) []ToolSpec {
-	schema := assessSchema
-	if subjects {
-		schema = assessSchemaSubjects
+func helperTools(writes bool) []ToolSpec {
+	tools := []ToolSpec{
+		{Name: toolReport, Description: "Report your result to your Manager when your task is done.", InputSchema: raw(helperReportSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, plans and bases, findings, checks.", InputSchema: raw(lookUpSchema)},
 	}
-	return []ToolSpec{{Name: toolAssess, Description: "Report your assessment of the candidate when your assessment is complete. An invalid call is refused with the reason; if you call it again, the last valid call counts.", InputSchema: json.RawMessage(schema)}}
+	if writes {
+		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your Manager's current area against the accepted stand.", InputSchema: raw(checkSchema)})
+	}
+	return tools
 }

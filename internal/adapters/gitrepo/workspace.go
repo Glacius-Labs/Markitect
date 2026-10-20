@@ -50,7 +50,7 @@ var _ WorkspaceRuntime = (*container.Engine)(nil)
 // NewWorkspaces binds the trusted helper image, numeric user and resource
 // limits. The engine validates the complete spec before starting a helper.
 // Mounts are supplied by this adapter; the helper gets only /work. Name and
-// Labels identify this Host store and must remain stable for this instance.
+// Labels identify this Runtime store and must remain stable for this instance.
 // Construction performs no engine or filesystem operation.
 func NewWorkspaces(runtime WorkspaceRuntime, helper container.ContainerSpec) (*Workspaces, error) {
 	if runtime == nil || helper.Name == "" || helper.Image == "" || len(helper.Labels) == 0 || len(helper.Mounts) != 0 {

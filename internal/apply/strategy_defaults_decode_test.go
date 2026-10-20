@@ -23,7 +23,7 @@ func TestProductStrategyDefaultsDocumentBindsAcceptedEffects(t *testing.T) {
 		{decoded.execute.Source, "/defaults/instructions/execute"},
 		{decoded.verify.Source, "/defaults/instructions/verify"},
 	} {
-		if field.source.File != "product:shared-workspace-v1/defaults.yaml" || field.source.ContentID != id || field.source.Field != field.path {
+		if field.source.File != "product:recursive-passes-v1/defaults.yaml" || field.source.ContentID != id || field.source.Field != field.path {
 			t.Fatalf("product field lost original byte digest or actual pointer: %+v", field.source)
 		}
 	}

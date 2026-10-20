@@ -1,4 +1,4 @@
-// Package apply prepares fixed inputs for artifact reconciliation. This first
+// Package apply prepares fixed inputs for Apply. This first
 // model stage performs no repository I/O, execution or publication itself.
 package apply
 
@@ -11,7 +11,7 @@ import (
 
 // Source captures repository-local model, execution, registry and ignore sources
 // from the current committed, clean HEAD. Explicitly external dependencies and
-// Host sources are current, exactly bound observations, not contents of HEAD.
+// Runtime profile sources are current, exactly bound observations, not contents of HEAD.
 // The complete actual repository census also includes Git-ignored untracked
 // files, subject only to RawInputs' census exclusions. Gitignore exempts untracked
 // files only from the clean-HEAD check, never from census observation.
@@ -20,7 +20,7 @@ import (
 // roots without following redirects, establish physically distinct, non-nested
 // model roots, and capture every selected input and the complete census.
 // Dirty tracked files and non-ignored untracked files refuse Capture. Known
-// observations must be returned even on error. Compilation proves none of
+// observations must be returned even on error. Model check proves none of
 // these acquisition facts. One repository adapter implements both source ports
 // using the same acquisition mechanism.
 // If InspectManifest supplies no Root, return a ManifestPreflightError carrying
@@ -48,7 +48,7 @@ type ModelSelection struct {
 }
 
 // SourceLocation names an explicit input within an acquisition boundary.
-// Host profiles and instructions may be outside the repository census.
+// Runtime profiles and instructions may be outside the repository census.
 type SourceLocation struct {
 	Boundary string
 	Path     snapshot.Path
@@ -58,16 +58,16 @@ type SourceLocation struct {
 // It selects sources, not decoded settings or provider wire configuration.
 // Execution, Registry and Ignore select repository-local committed inputs
 // (or their explicit preview counterparts); their observations must carry
-// RepositoryPath. HostProfiles and Instructions also allow external sources.
+// RepositoryPath. RuntimeProfiles and Instructions also allow external sources.
 type InputSelection struct {
-	Repository   string
-	Local        ModelSelection
-	Dependencies []ModelSelection
-	Execution    []SourceLocation
-	Registry     []SourceLocation
-	Ignore       []SourceLocation
-	HostProfiles []SourceLocation
-	Instructions []SourceLocation
+	Repository      string
+	Local           ModelSelection
+	Dependencies    []ModelSelection
+	Execution       []SourceLocation
+	Registry        []SourceLocation
+	Ignore          []SourceLocation
+	RuntimeProfiles []SourceLocation
+	Instructions    []SourceLocation
 }
 
 type CaptureRequest struct{ Selection InputSelection }
@@ -105,7 +105,7 @@ type ModelSource struct {
 
 // SourceFile retains the exact selected location, path, mode and original bytes.
 // RepositoryPath is required for a repository-local input and absent only for
-// external inputs, including safe Host sources. It supplies protection/accounting
+// external inputs, including safe Runtime profile sources. It supplies protection/accounting
 // coordinates without interpreting an opaque boundary or provenance string.
 type SourceFile struct {
 	Location       SourceLocation
@@ -120,20 +120,16 @@ type SourceFile struct {
 // technical Git administration; Gitignore supplies no other scan exclusion.
 // Each repository-local ModelSource supplies its own acquisition area. Other
 // input coordinates remain explicit. No classification or decoding is inferred
-// from these bytes. Untracked lists, for Capture only, the Census paths that the
-// HEAD tree does not hold: exactly the Git-ignored untracked files. Previews
-// leave it empty. Only committed files can be drift that a Manager repairs
-// (DEC-062).
+// from these bytes. File checking stays strict about every census file.
 type RawInputs struct {
-	Census       snapshot.Tree
-	Untracked    []snapshot.Path
-	Local        ModelSource
-	Dependencies []ModelSource
-	Execution    []SourceFile
-	Registry     []SourceFile
-	Ignore       []SourceFile
-	HostProfiles []SourceFile
-	Instructions []SourceFile
+	Census          snapshot.Tree
+	Local           ModelSource
+	Dependencies    []ModelSource
+	Execution       []SourceFile
+	Registry        []SourceFile
+	Ignore          []SourceFile
+	RuntimeProfiles []SourceFile
+	Instructions    []SourceFile
 }
 
 // CapturedInputs binds repository-local committed sources to HEAD; Raw also

@@ -8,7 +8,7 @@ import (
 // sourceScope is acquisition state, not validated IR. Identity checks must see
 // every declaration before resolution; a map must not silently choose one of
 // several definitions at the same address. Invalid/incomplete scopes are never
-// exposed as compiled Definitions.
+// exposed as checked Definitions.
 type sourceScope struct {
 	origin            string
 	modelID           string
@@ -129,7 +129,7 @@ type sourceDefinition struct {
 	references referenceContext
 }
 
-func (c *sourceCompiler) collectDefinition(value Value, file Entry, root string) {
+func (c *sourceChecker) collectDefinition(value Value, file Entry, root string) {
 	id, present := lookup(value, "id")
 	if !present || id.kind != StringValue || id.text == "" {
 		return
@@ -148,7 +148,7 @@ func (c *sourceCompiler) collectDefinition(value Value, file Entry, root string)
 
 // Keep all declarations, including colliding spellings: neither an exact
 // spelling nor a presumed category may select a winning subset for resolution.
-func (c *sourceCompiler) checkDefinitionIdentities() {
+func (c *sourceChecker) checkDefinitionIdentities() {
 	declarations := append([]sourceDefinition(nil), c.scope.definitions...)
 	sort.Slice(declarations, func(i, j int) bool {
 		a, b := declarations[i], declarations[j]

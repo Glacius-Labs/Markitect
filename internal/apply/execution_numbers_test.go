@@ -39,10 +39,10 @@ func TestExecutionRejectsNonpositiveAndNonintegerCaps(t *testing.T) {
 			}
 		})
 	}
-	selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "rounds: 4", "rounds: 0", 1))
+	selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "passes: 12", "passes: 0", 1))
 	result := registryModel(t, selection, raw).DecodeExecution()
 	if result.Status() != model.Failed || !executionDiagnostic(result.Diagnostics(), "execution.positive") {
-		t.Fatal("zero rounds invented an off switch")
+		t.Fatal("zero passes invented an off switch")
 	}
 }
 

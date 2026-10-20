@@ -56,8 +56,8 @@ func registryInputs(t *testing.T, captureChild bool) (apply.InputSelection, appl
 func registryModel(t *testing.T, selection apply.InputSelection, raw apply.RawInputs) apply.CapturedModel {
 	t.Helper()
 	stage, err := captureService(captured(raw), nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
-	if err != nil || stage.Compilation().Status != model.Passed {
-		t.Fatalf("bound model stage failed: %v %+v", err, stage.Compilation())
+	if err != nil || stage.Checked().Status != model.Passed {
+		t.Fatalf("bound model stage failed: %v %+v", err, stage.Checked())
 	}
 	return stage
 }

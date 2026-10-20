@@ -21,7 +21,7 @@ import (
 // builds markitect-agentd and the agentd test binary for Linux, packs both
 // into a scratch image, and runs them under the production hardening: the
 // test binary plays a CLI that starts `agentd mcp`-style bridges and calls a
-// Host tool. Set MARKITECT_TEST_ENGINE to the engine's absolute path to run it.
+// Orchestrator tool. Set MARKITECT_TEST_ENGINE to the engine's absolute path to run it.
 func TestRealEngineRunsAHardenedSession(t *testing.T) {
 	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
 	if enginePath == "" {
@@ -100,9 +100,9 @@ func TestRealEngineRunsAHardenedSession(t *testing.T) {
 	}
 }
 
-// TestRealEngineStopsAWritingSessionWhenTheHostLeaves shows that closing the
+// TestRealEngineStopsAWritingSessionWhenTheOrchestratorLeaves shows that closing the
 // connection ends the provider and removes the container.
-func TestRealEngineStopsAWritingSessionWhenTheHostLeaves(t *testing.T) {
+func TestRealEngineStopsAWritingSessionWhenTheOrchestratorLeaves(t *testing.T) {
 	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
 	if enginePath == "" {
 		t.Skip("set MARKITECT_TEST_ENGINE to an absolute container engine path")
@@ -131,7 +131,7 @@ func TestRealEngineStopsAWritingSessionWhenTheHostLeaves(t *testing.T) {
 	select {
 	case <-closed:
 	case <-ctx.Done():
-		t.Fatal("container kept running after the Host left")
+		t.Fatal("container kept running after the Orchestrator left")
 	}
 	if names, err := engine.Containers(ctx, "io.markitect.store", store); err != nil || len(names) != 0 {
 		t.Fatalf("containers after close = %v, %v", names, err)
@@ -344,5 +344,93 @@ func TestRealEnginePauseIsAWriteBarrier(t *testing.T) {
 	time.Sleep(500 * time.Millisecond)
 	if resumed := read(); resumed == frozen {
 		t.Fatalf("the provider did not resume after Unpause: still %s", resumed)
+	}
+}
+
+// TestRealEngineEnforcesFileAndDirectoryOverlays shows on the actual engine the
+// mount shapes ownership needs: a writable directory of a volume, a read-only
+// file of another owner inside it and a read-only deeper directory, and a
+// writable exact file inside a read-only directory. Writes through the
+// read-only overlays fail, the file cannot be removed or renamed, and a file
+// mount cannot create a missing file.
+func TestRealEngineEnforcesFileAndDirectoryOverlays(t *testing.T) {
+	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
+	if enginePath == "" {
+		t.Skip("set MARKITECT_TEST_ENGINE to an absolute container engine path")
+	}
+	engine, err := container.NewEngine(enginePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	if err := engine.RequireVolumeSubpaths(ctx); err != nil {
+		t.Fatal(err)
+	}
+	image := buildShellTestImage(ctx, t, enginePath)
+	store := fmt.Sprintf("test-%d", time.Now().UnixNano())
+	labels := map[string]string{"io.markitect.store": store}
+	work := "mk-" + store + "-work"
+	if err := engine.CreateVolume(ctx, work, labels); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = engine.RemoveVolume(context.Background(), work) })
+	base := container.ContainerSpec{
+		Name: "mk-" + store + "-seed", Image: image, Labels: labels, User: "1000:1000",
+		Mounts:  []container.Mount{{Volume: work, Target: "/work"}},
+		Workdir: "/work", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20, Network: "none",
+	}
+	run := func(spec container.ContainerSpec, script string) string {
+		var out strings.Builder
+		if err := engine.RunHelper(ctx, spec, []string{"/bin/sh", "-c", script}, nil, &out); err != nil {
+			t.Fatalf("helper: %v\n%s", err, out.String())
+		}
+		return out.String()
+	}
+	run(base, "mkdir -p /work/a/b && echo owned > /work/a/x.txt && echo dir > /work/a/b/f.txt")
+
+	writer := base
+	writer.Name = "mk-" + store + "-writer"
+	writer.Mounts = []container.Mount{
+		{Volume: work, Target: "/work", ReadOnly: true, NoCopy: true},
+		{Volume: work, Target: "/work/a", Subpath: "a", NoCopy: true},
+		{Volume: work, Target: "/work/a/b", Subpath: "a/b", ReadOnly: true, NoCopy: true},
+		{Volume: work, Target: "/work/a/x.txt", Subpath: "a/x.txt", ReadOnly: true, NoCopy: true},
+	}
+	got := run(writer, `
+try() { if sh -c "$2" 2>/dev/null; then echo "$1 allowed"; else echo "$1 refused"; fi; }
+try create-in-own "echo n > /work/a/new.txt"
+try write-foreign-file "echo x > /work/a/x.txt"
+try remove-foreign-file "rm /work/a/x.txt"
+try rename-foreign-file "mv /work/a/x.txt /work/a/y.txt"
+try write-deeper "echo x > /work/a/b/f.txt"
+try create-deeper "touch /work/a/b/g.txt"
+try write-base "touch /work/top.txt"
+`)
+	for _, want := range []string{"create-in-own allowed", "write-foreign-file refused", "remove-foreign-file refused", "rename-foreign-file refused", "write-deeper refused", "create-deeper refused", "write-base refused"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("writer: want %q in\n%s", want, got)
+		}
+	}
+
+	owner := base
+	owner.Name = "mk-" + store + "-owner"
+	owner.Mounts = []container.Mount{
+		{Volume: work, Target: "/work", ReadOnly: true, NoCopy: true},
+		{Volume: work, Target: "/work/a/x.txt", Subpath: "a/x.txt", NoCopy: true},
+	}
+	got = run(owner, `
+try() { if sh -c "$2" 2>/dev/null; then echo "$1 allowed"; else echo "$1 refused"; fi; }
+try write-own-file "echo changed > /work/a/x.txt"
+try create-beside "echo n > /work/a/z.txt"
+`)
+	for _, want := range []string{"write-own-file allowed", "create-beside refused"} {
+		if !strings.Contains(got, want) {
+			t.Errorf("exact-file owner: want %q in\n%s", want, got)
+		}
+	}
+	final := run(base, "cat /work/a/x.txt; ls /work/a")
+	if !strings.Contains(final, "changed") || strings.Contains(final, "y.txt") || strings.Contains(final, "z.txt") {
+		t.Errorf("final state:\n%s", final)
 	}
 }

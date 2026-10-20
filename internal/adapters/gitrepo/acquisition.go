@@ -63,13 +63,6 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 		var treeErr error
 		a.raw.Census, treeErr = snapshot.NewTree(a.census)
 		err = errors.Join(err, treeErr)
-		if a.git != nil && a.committed {
-			for _, file := range a.census {
-				if entry, tracked := a.git.tree[file.Path().String()]; !tracked || entry.kind == "tree" {
-					a.raw.Untracked = append(a.raw.Untracked, file.Path())
-				}
-			}
-		}
 		if a.git != nil {
 			if closeErr := a.git.finishBlobs(err == nil); err == nil {
 				err = closeErr
@@ -144,7 +137,7 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 		target    *[]apply.SourceFile
 		local     bool
 	}{
-		{selection.Execution, &a.raw.Execution, true}, {selection.Registry, &a.raw.Registry, true}, {selection.Ignore, &a.raw.Ignore, true}, {selection.HostProfiles, &a.raw.HostProfiles, false}, {selection.Instructions, &a.raw.Instructions, false},
+		{selection.Execution, &a.raw.Execution, true}, {selection.Registry, &a.raw.Registry, true}, {selection.Ignore, &a.raw.Ignore, true}, {selection.RuntimeProfiles, &a.raw.RuntimeProfiles, false}, {selection.Instructions, &a.raw.Instructions, false},
 	} {
 		if err = a.selectedFiles(group.locations, group.target, group.local); err != nil {
 			return a, err

@@ -22,7 +22,7 @@ var (
 )
 
 // RequestID preserves the protocol's distinct string and signed integer forms.
-// Its zero value is invalid. It is neither a Host identity nor a provider handle.
+// Its zero value is invalid. It is neither an Orchestrator identity nor a provider handle.
 type RequestID struct {
 	value   string
 	integer bool
@@ -66,7 +66,7 @@ type ClientInfo struct {
 }
 
 // ThreadStartParams is a selected stable subset, with no arbitrary config,
-// dynamic tools, native delegation, resume, credentials or Host authority.
+// dynamic tools, native delegation, resume, credentials or Orchestrator authority.
 // Both instruction strings are sent literally, including an explicit empty one.
 type ThreadStartParams struct {
 	Model                 string `json:"model"`
