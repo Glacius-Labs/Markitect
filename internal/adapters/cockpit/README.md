@@ -1,6 +1,6 @@
 # Cockpit adapter
 
-`markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the first slice of the [cockpit concept](../../../docs/design/cockpit.md): the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay. The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
+`markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the first slices of the [cockpit concept](../../../docs/design/cockpit.md): the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay, and live observation of a running Apply through the same projections. The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
 
 ```text
 markitect cockpit --state DIR [--state DIR ...] [--listen 127.0.0.1:7341]
@@ -14,6 +14,14 @@ The cockpit reads `<state>/runs/<runID>/events.jsonl`, `report.json` and `transc
 - **Consistent prefix.** Only complete lines are records. A trailing partial line is reported as a tail. A line that does not decode keeps its line number (its `seq`) and shows as unreadable, so later sequence numbers never shift. A file that no longer starts with the bytes read before counts as replaced and is read again from its start, never spliced.
 - **Boundary.** A view is the projection of the first `seq` records (`/api/runs/{run}/view?at=N`). Nothing after record N reaches it: a later answer, verdict, outcome or report stays hidden. The report appears only at the final boundary. Details (`/detail?ref=...&at=N`) and transcripts (`/transcript?turn=...&at=N`, cut at the boundary's recorded time) obey the same boundary. `/entries` lists the whole record for navigation; the page shows its entries only up to the boundary.
 - **Local only.** The server listens on a loopback address and admits only requests addressed to it, so another site cannot read evidence through a rebound host name. Pages load no external resources.
+
+## Live observation
+
+`/api/runs/{run}/stream` sends server-sent events over the same projections: `entries` with the records appended after the client's last one (the event id is the last record's `seq`), `health` every two seconds, and `replaced` when the events file no longer starts with what was read, after which the stream ends. A reconnecting browser sends `Last-Event-ID` and receives exactly the records after it; the page also trims an overlapping delivery and refills a gap through `/entries`, so it always holds one complete prefix.
+
+Health is the current observation, kept apart from the recorded boundary. A written report means the run ended. Otherwise bootstrap's state lock probe, the one `markitect answer` uses, and `current-run` decide: this run holds the directory (running, or finishing once its outcome is recorded), another run holds it, or nobody does (ended without a report). A failed probe is unknown. The probe takes the lock for an instant when nobody holds it, which a starting Apply's retry absorbs, and runs at most once per two seconds and state directory.
+
+The page follows new records while the boundary is at the latest record. Pausing, selecting, scrubbing or stepping back pins the boundary; the page then counts newer records and offers an explicit return to live. A lost link, its reconnection and a stale link (no contact for longer than the health interval) are shown with the run state of the last contact. Nothing here starts, stops or answers a run.
 
 ## Projection
 

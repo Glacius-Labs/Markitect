@@ -1,6 +1,7 @@
 package cockpit
 
 import (
+	"encoding/hex"
 	"os"
 	"path/filepath"
 	"testing"
@@ -117,4 +118,66 @@ func bump(t *testing.T, path string) {
 	if err := os.Chtimes(path, later, later); err != nil {
 		t.Fatal(err)
 	}
+}
+
+func TestRunLogReadsAnAppendIncrementallyAndAReplacementAgain(t *testing.T) {
+	s, _ := library(t)
+	lines := splitLines(s.lines())
+	state := t.TempDir()
+	dir := filepath.Join(state, "runs", "r1")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "events.jsonl")
+	join := func(ls [][]byte) []byte {
+		var data []byte
+		for _, line := range ls {
+			data = append(append(data, line...), '\n')
+		}
+		return data
+	}
+	if err := os.WriteFile(path, join(lines[:10]), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	l := newRunLog(state, "r1")
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	f, err := os.OpenFile(path, os.O_APPEND|os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Write(join(lines[10:20])); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	bump(t, path)
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, src, _ := l.snapshot()
+	if len(records) != 20 || src.Replaced != 0 || src.EventDigest != hexSum(join(lines[:20])) {
+		t.Fatalf("an append continues the history: %d records, %+v", len(records), src)
+	}
+
+	other := append(join(lines[1:2]), join(lines[:25])...)
+	replacement := filepath.Join(dir, "events.new")
+	if err := os.WriteFile(replacement, other, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(replacement, path); err != nil {
+		t.Fatal(err)
+	}
+	bump(t, path)
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, src, _ = l.snapshot()
+	if src.Replaced != 1 || len(records) != 26 || src.EventDigest != hexSum(other) {
+		t.Fatalf("a renamed-in file with another beginning is read again: %d records, %+v", len(records), src)
+	}
+}
+
+func hexSum(data []byte) string {
+	return hex.EncodeToString(sum(data))
 }

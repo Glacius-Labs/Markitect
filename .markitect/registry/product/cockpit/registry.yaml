@@ -3,7 +3,7 @@ artifacts:
   - path: "internal/adapters/cockpit/evidence.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads a state directory's run evidence as consistent prefixes of complete lines, keeps unreadable lines in place and detects replaced files and partial tails without writing anything."
+    why: "Reads a state directory's run evidence incrementally as consistent prefixes of complete lines, keeps unreadable lines in place and detects replaced files and partial tails without writing anything."
   - path: "internal/adapters/cockpit/report.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -116,3 +116,15 @@ artifacts:
     form: test
     realizes: [product/cockpit/observed-run-inspection]
     why: "Reads the run engine's source and fails when a data key or envelope field the projection decodes is no longer recorded."
+  - path: "internal/adapters/cockpit/live.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Streams appended records and the run's current health as server-sent events, resumes after the last record received and ends on a replaced events file."
+  - path: "internal/adapters/cockpit/live_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies appended records arrive once, a reconnect resumes after Last-Event-ID, a replaced file ends the stream, run health is classified from report, lock and current-run, and the lock probe is rate-limited."
+  - path: "internal/adapters/cockpit/web/js/live.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Holds the live link: appended records, health, reconnection and staleness, without any effect on the run."

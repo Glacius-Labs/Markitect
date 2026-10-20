@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"hash"
 	"io"
 	"os"
 	"path/filepath"
@@ -68,10 +69,11 @@ type runLog struct {
 	mu       sync.Mutex
 	records  []Record
 	consumed int64
-	digest   []byte // sha256 of the consumed bytes
+	hash     hash.Hash // sha256 over the consumed bytes
+	digest   []byte
+	last     []byte // the last consumed bytes, to check an append's seam
 	tail     int
-	size     int64
-	modified time.Time
+	file     os.FileInfo
 	replaced int
 	report   *Report
 	reportAt time.Time
@@ -80,7 +82,9 @@ type runLog struct {
 }
 
 func newRunLog(state, id string) *runLog {
-	return &runLog{state: state, id: id, dir: filepath.Join(state, "runs", id), digest: sum(nil)}
+	l := &runLog{state: state, id: id, dir: filepath.Join(state, "runs", id)}
+	l.reset()
+	return l
 }
 
 // snapshot returns the records read so far and the source identity they form.
@@ -95,9 +99,10 @@ func (l *runLog) snapshot() ([]Record, Source, *Report) {
 }
 
 // refresh reads what was appended since the last read. It reports whether the
-// records or the report changed. A file that no longer begins with the bytes
-// already consumed is a replaced source: the history is read again and the
-// replacement counted, never spliced onto the old records.
+// records or the report changed. A file that is no longer the same file, is
+// shorter than what was consumed or no longer continues the consumed bytes is
+// a replaced source: the history is read again and the replacement counted,
+// never spliced onto the old records.
 func (l *runLog) refresh() (bool, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -114,22 +119,36 @@ func (l *runLog) refreshEventsLocked() (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if info.Size() == l.size && info.ModTime().Equal(l.modified) {
+	if l.file != nil && info.Size() == l.file.Size() && info.ModTime().Equal(l.file.ModTime()) && os.SameFile(info, l.file) {
 		return false, nil
 	}
 	if info.Size() > maxEventBytes {
 		return false, fmt.Errorf("events.jsonl has %d bytes, more than the cockpit reads (%d)", info.Size(), maxEventBytes)
 	}
-	data, err := readBounded(path, maxEventBytes)
+	// The producer only appends. Reading from just before the consumed end
+	// checks the seam; anything else is read again from the start.
+	from := max(l.consumed-int64(len(l.last)), 0)
+	appended := l.file != nil && os.SameFile(info, l.file) && info.Size() >= l.consumed
+	data, err := readFrom(path, from)
+	if err == nil && appended && !bytes.HasPrefix(data, l.last) {
+		appended = false
+	}
+	if err == nil && !appended && l.consumed > 0 {
+		from = 0
+		data, err = readFrom(path, 0)
+	}
 	if err != nil {
 		return false, err
 	}
-	if int64(len(data)) < l.consumed || !bytes.Equal(sum(data[:l.consumed]), l.digest) {
-		// The file was replaced or truncated: read it again from the start.
-		l.records, l.consumed, l.digest, l.replaced = nil, 0, sum(nil), l.replaced+1
+	if !appended && l.consumed > 0 {
+		if int64(len(data)) < l.consumed || !bytes.Equal(sum(data[:l.consumed]), l.digest) {
+			l.records = nil
+			l.reset()
+			l.replaced++
+		}
 	}
-	l.size, l.modified = info.Size(), info.ModTime()
-	rest := data[l.consumed:]
+	l.file = info
+	rest := data[l.consumed-from:]
 	before := len(l.records)
 	for {
 		i := bytes.IndexByte(rest, '\n')
@@ -137,14 +156,45 @@ func (l *runLog) refreshEventsLocked() (bool, error) {
 			break
 		}
 		l.records = append(l.records, decodeRecord(len(l.records)+1, rest[:i]))
+		l.hash.Write(rest[:i+1])
 		l.consumed += int64(i + 1)
 		rest = rest[i+1:]
 	}
-	l.digest = sum(data[:l.consumed])
+	l.digest = l.hash.Sum(nil)
+	consumed := data[:int64(len(data))-int64(len(rest))]
+	l.last = append(l.last[:0], consumed[max(len(consumed)-seam, 0):]...)
 	tail := len(rest)
 	changed := len(l.records) != before || tail != l.tail
 	l.tail = tail
 	return changed, nil
+}
+
+// seam is how many consumed bytes an incremental read checks again.
+const seam = 64
+
+func (l *runLog) reset() {
+	l.consumed, l.hash, l.last = 0, sha256.New(), nil
+	l.digest = l.hash.Sum(nil)
+}
+
+// readFrom reads a file from an offset, bounded by maxEventBytes.
+func readFrom(path string, offset int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	if _, err := f.Seek(offset, io.SeekStart); err != nil {
+		return nil, err
+	}
+	data, err := io.ReadAll(io.LimitReader(f, maxEventBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if offset+int64(len(data)) > maxEventBytes {
+		return nil, fmt.Errorf("events.jsonl exceeds %d bytes", maxEventBytes)
+	}
+	return data, nil
 }
 
 func (l *runLog) refreshReportLocked() (bool, error) {
@@ -221,6 +271,10 @@ type stateDirectory struct {
 	dir  string
 	mu   sync.Mutex
 	runs map[string]*runLog
+
+	probedAt time.Time
+	heldNow  bool
+	probeErr error
 }
 
 // RunEntry is one run found in a state directory.

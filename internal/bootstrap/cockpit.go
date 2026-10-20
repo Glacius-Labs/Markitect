@@ -9,6 +9,7 @@ import (
 
 // cockpitCommand serves the cockpit over the selected state directories. A run
 // configuration contributes its state directory; nothing else of it is used.
+// Live views probe the state lock the way the answer command does.
 func cockpitCommand(ctx context.Context, request cli.CockpitRequest, ready func(url string)) error {
 	states := append([]string(nil), request.States...)
 	if request.RunConfig != "" {
@@ -18,7 +19,7 @@ func cockpitCommand(ctx context.Context, request cli.CockpitRequest, ready func(
 		}
 		states = append(states, cfg.StateDirectory)
 	}
-	server, err := cockpit.New(cockpit.Config{States: states})
+	server, err := cockpit.New(cockpit.Config{States: states, Liveness: stateHeld})
 	if err != nil {
 		return err
 	}

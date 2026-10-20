@@ -1,7 +1,9 @@
 // The run inspector: one recorded boundary at a time, with the organization,
 // the account, the timeline and the exchanges of exactly that boundary.
 // Playback moves the boundary through the record. Pausing it, selecting or
-// reconnecting only changes what is shown; it never reaches the run.
+// reconnecting only changes what is shown; it never reaches the run. While a
+// run is live the view follows new records until the user pins a boundary;
+// it then counts the newer records and offers an explicit return to live.
 
 import { api } from "./api.js";
 import { h, clear, icon, clock, since, label, announce, when } from "./dom.js";
@@ -9,6 +11,7 @@ import { Playback, SPEEDS } from "./playback.js";
 import { Diagram } from "./diagram.js";
 import { Timeline } from "./timeline.js";
 import { renderDetail } from "./detail.js";
+import { LiveLink } from "./live.js";
 
 const HIDDEN_BY_DEFAULT = new Set(["state", "runtime"]);
 
@@ -24,6 +27,8 @@ export class Inspector {
     this.tab = "timeline";
     this.hiddenClasses = new Set(HIDDEN_BY_DEFAULT);
     this.followActivity = false;
+    this.following = false;
+    this.live = null;
     this.reduced = matchMedia("(prefers-reduced-motion: reduce)");
     this.motion = !this.reduced.matches;
     this.playback = new Playback((b, why) => this.onBoundary(b, why));
@@ -37,6 +42,7 @@ export class Inspector {
 
   destroy() {
     this.dead = true;
+    this.live?.close();
     this.playback.destroy();
     cancelAnimationFrame(this.anim);
     document.removeEventListener("keydown", this.onKey);
@@ -63,6 +69,84 @@ export class Inspector {
     this.renderLists();
     const at = route.at === null || route.at === undefined ? this.entries.length : Number(route.at);
     this.playback.seek(Number.isFinite(at) ? at : this.entries.length);
+    this.following = this.boundary >= this.entries.length;
+    this.live = new LiveLink(this.run, this.entries.length, {
+      onEntries: (p) => this.onEntries(p),
+      onStatus: () => this.renderLive(),
+      onReplaced: () => this.onReplaced(),
+    });
+  }
+
+  // ---------- live ----------
+
+  isLive() {
+    const run = this.live?.health?.run;
+    return run === "running" || run === "finishing";
+  }
+
+  // onEntries appends records the live link delivered. A delivery that
+  // overlaps what is held is trimmed; one that would leave a gap is refilled
+  // from the read interface, so the held record stays one complete prefix.
+  async onEntries(p) {
+    let items;
+    if (p.from > this.entries.length + 1) {
+      items = (await api.entries(this.run, this.entries.length)).entries;
+    } else {
+      items = p.entries.slice(this.entries.length - p.from + 1);
+    }
+    if (!items.length || this.dead) return;
+    this.entries = this.entries.concat(items);
+    this.playback.setEntries(this.entries);
+    for (const [b, v] of this.views) if (v.boundary.final) this.views.delete(b);
+    this.appendRows(items);
+    this.range.max = String(this.entries.length);
+    if (this.following) this.playback.catchUp();
+    this.renderPosition();
+    this.renderLive();
+  }
+
+  onReplaced() {
+    this.following = false;
+    this.playback.pause("pause");
+    this.accountEl.prepend(h("p", { role: "alert", class: "st-fail" }, "The events file was replaced while it was observed. The view keeps what it read; reload the page to read the new file from its start."));
+    this.renderLive();
+  }
+
+  returnToLive() {
+    this.following = true;
+    if (this.boundary < this.entries.length) this.playback.catchUp();
+    this.renderLive();
+    announce("Following the run again.");
+  }
+
+  renderLive() {
+    if (!this.liveEl) return;
+    const l = this.live;
+    const health = l?.health;
+    const live = this.isLive();
+    const newer = this.entries.length - this.boundary;
+    const secs = (t) => Math.max(0, Math.round((Date.now() - t) / 1000));
+    let conn;
+    switch (l?.conn) {
+      case "connected": conn = l.stale() ? `no contact for ${secs(l.lastContact)} s; the shown data may be stale` : `connected, last contact ${secs(l.lastContact)} s ago`; break;
+      case "reconnecting": conn = `connection lost, reconnecting for ${secs(l.changed)} s`; break;
+      case "replaced": conn = "stopped: the events file was replaced"; break;
+      case "connecting": conn = "connecting"; break;
+      default: conn = "not connected";
+    }
+    const runText = {
+      running: "Run is running", finishing: "Run is finishing: outcome recorded, publication and report pending",
+      ended: "Run ended; its report is written", "ended-without-report": "Run ended without a report", unknown: "Run state unknown",
+    }[health?.run] || "Run state not observed yet";
+    const current = l?.conn === "connected" && !l.stale();
+    const cls = live ? (current ? "st-done" : "st-waiting") : "st-none";
+    const runSaid = current || !health ? runText : `At the last contact: ${runText.charAt(0).toLowerCase()}${runText.slice(1)}`;
+    const follow = live ? ` ${this.following ? "Following new records." : `Pinned at record ${this.boundary}${newer ? `, ${newer} newer` : ""}.`}` : "";
+    clear(this.liveEl).append(
+      h("span", { class: `outcome ${cls}` }, h("span", { class: "lamp" }), h("strong", {}, live ? "Live" : "Replay")),
+      h("span", { class: "muted", title: health?.why || "" }, `${runSaid}.${follow} Link ${conn}.`));
+    this.liveBtn.hidden = !live || this.following;
+    this.liveBtn.textContent = newer ? `Return to live (${newer} newer)` : "Return to live";
   }
 
   // ---------- structure ----------
@@ -71,6 +155,7 @@ export class Inspector {
     clear(this.app);
     document.title = `${this.run} – Markitect cockpit`;
     this.headEl = h("header", { class: "head" });
+    this.liveEl = h("span", { class: "mode", role: "status", title: "The current observation of the run, separate from the recorded boundary. Pausing or losing the link never affects the run." });
     this.railEl = h("nav", { class: "rail", "aria-label": "Passes" });
     this.accountEl = h("section", { class: "account", "aria-label": "Account at this boundary", "aria-live": "polite" });
     this.stageEl = h("div", { class: "stage" });
@@ -128,6 +213,7 @@ export class Inspector {
       this.drawExchanges();
     } }, "Motion");
     this.keysBtn = h("button", { class: "btn icon", "aria-label": "Keyboard shortcuts", "aria-expanded": "false", onclick: () => this.toggleKeys() }, "?");
+    this.liveBtn = h("button", { class: "btn", hidden: true, title: "Show the latest records and follow the run again", onclick: () => this.returnToLive() }, "Return to live");
     this.transportEl.append(
       h("div", { class: "group" },
         btn("start", "Go to the start (Home)", () => { pb.pause("seek"); pb.seek(0); }),
@@ -138,6 +224,7 @@ export class Inspector {
       this.speedSel,
       h("div", { class: "scrub" }, this.marks, this.range),
       this.posEl,
+      this.liveBtn,
       h("div", { class: "group" }, this.followBtn, this.motionBtn, this.keysBtn));
   }
 
@@ -145,6 +232,10 @@ export class Inspector {
 
   onBoundary(b, why) {
     this.boundary = b;
+    // A boundary the user chooses pins the view; reaching the latest record
+    // by choice or by playing on resumes following a live run.
+    if (why === "pause" || why === "select") this.following = false;
+    else if (why === "seek" || why === "scrub" || why === "end" || why === "caught-up") this.following = b >= this.entries.length;
     this.range.max = String(this.entries.length);
     this.range.value = String(b);
     this.updatePlayButton();
@@ -154,7 +245,8 @@ export class Inspector {
     this.fetchView();
     if (this.playback.playing) this.startAnimation();
     else this.drawExchanges();
-    if (why === "end") announce("Replay reached the end of the record.");
+    if (why === "end") announce(this.isLive() ? "Replay reached the latest record; following the run." : "Replay reached the end of the record.");
+    this.renderLive();
   }
 
   async fetchView() {
@@ -226,8 +318,9 @@ export class Inspector {
       h("span", { class: "runid" }, v.run.id),
       h("span", { class: "runmeta" }, `${v.managers.length} Manager${v.managers.length === 1 ? "" : "s"}, ${v.run.started ? `started ${when(v.run.started)}` : "not started"}`),
       h("span", { class: "spacer" }),
-      h("span", { class: `outcome ${cls}` }, h("span", { class: "lamp" }), text),
-      h("span", { class: "mode", title: "Replay shows the recorded boundary you choose. It never affects a run." }, h("strong", {}, "Replay"), h("span", { class: "muted" }, "of the record")));
+      h("span", { class: `outcome ${cls}`, title: "What the record shows at this boundary" }, h("span", { class: "lamp" }), text),
+      this.liveEl);
+    this.renderLive();
   }
 
   renderRail() {
@@ -256,6 +349,10 @@ export class Inspector {
 
   renderAccount() {
     clear(this.accountEl);
+    const v = this.view;
+    if (this.live?.health?.run === "ended-without-report" && v.boundary.final && !v.status.outcome) {
+      this.accountEl.append(h("p", { role: "alert", class: "st-fail" }, "The run is no longer running and its record ends without an outcome or report. What it did after the last record is unknown; work shown as running was running when the record ends."));
+    }
     for (const sentence of this.view.account) {
       this.accountEl.append(h("p", {}, sentence.map((seg) => seg.ref ? h("button", { class: "ref", onclick: () => this.select(seg.ref) }, seg.text) : seg.text)));
     }
@@ -268,18 +365,26 @@ export class Inspector {
     this.timeline.render(this.view, this.entries, this.boundary, { start: this.view.run.started || first, end: last || first }, this.selection);
   }
 
+  listRow(e) {
+    const li = h("li", { class: `c-${e.class}`, dataset: { seq: e.seq }, tabindex: -1 },
+      h("span", { class: "t" }, `${clock(e.at)}`),
+      h("span", { class: "x" }, e.link ? h("span", { class: `chan ch-${e.link.channel}` }, exchangeKind(e)) : null, e.text));
+    li.addEventListener("click", () => {
+      this.playback.pause("select");
+      this.playback.seek(e.seq);
+      this.select(e.ref, { keepPlaying: true });
+    });
+    return li;
+  }
+
+  appendRows(items) {
+    this.eventsList.append(...items.map((e) => this.listRow(e)));
+    this.exchangeList.append(...items.filter((e) => e.link || e.kind === "question.lapsed").map((e) => this.listRow(e)));
+    this.markLists();
+  }
+
   renderLists() {
-    const row = (e) => {
-      const li = h("li", { class: `c-${e.class}`, dataset: { seq: e.seq }, tabindex: -1 },
-        h("span", { class: "t" }, `${clock(e.at)}`),
-        h("span", { class: "x" }, e.link ? h("span", { class: `chan ch-${e.link.channel}` }, exchangeKind(e)) : null, e.text));
-      li.addEventListener("click", () => {
-        this.playback.pause("seek");
-        this.playback.seek(e.seq);
-        this.select(e.ref, { keepPlaying: true });
-      });
-      return li;
-    };
+    const row = (e) => this.listRow(e);
     const filters = h("div", { class: "filters", role: "group", "aria-label": "Shown record classes" },
       ["exchange", "work", "control", "evidence", "problem", "state", "runtime"].map((cls) => {
         const box = h("input", { type: "checkbox", checked: !this.hiddenClasses.has(cls) });
@@ -377,6 +482,8 @@ export class Inspector {
 
   togglePlay() {
     if (this.playback.playing) this.playback.pause("pause");
+    else if (this.isLive() && this.boundary >= this.entries.length) this.returnToLive();
+    else if (this.isLive()) this.playback.catchUp();
     else this.playback.play();
     this.updatePlayButton();
   }
