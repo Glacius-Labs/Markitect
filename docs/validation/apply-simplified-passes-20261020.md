@@ -73,6 +73,20 @@ Frozen on 20 October 2026, 17:45Z, before any provider work of this session. It 
 - No repetition until green. A failed case keeps its result, and a documented infrastructure repeat counts as a case.
 - **Haiku stays unrun.** The reference has no Haiku case on this build, and the owner made Haiku conditional on Sonnet working.
 
+**Amendment before the first provider run (20 October, about 20:10Z).** The reference series ended at that time and showed that its candidate moved during the series:
+
+- V1-b, V2, A1 and A2 ran on `8b5040ff`;
+- A2-b ran on `e9643e4e`, a mandate fix after A2 overreached;
+- A4, A5 and A7 ran on `922ab2f6`, which also lets the owner's reviewer judge an ancestor's adverse receipt;
+- A3 and A6 were not run.
+
+The packet trees of all three freezes are byte-identical, so the inputs are equivalent and only the builds differ. Each comparison therefore uses the reference's own base:
+
+- **C1** = `e814c373` (base `8b5040ff`) runs V1, V2, A1 and A2.
+- **C2** = the same simplification applied to `922ab2f601f12703b913663ebfe6d9c2bb01f9ee` runs A4, A7 and A5. C2 carries the reference's mandate fixes into the merged Implement mandate, word for word where the text corresponds, so that the comparison still varies only the workflow. C2 gets its own independent review and gates, built only in gaps between cases.
+- **Remaining budget, in this order:** A2 on C2 against A2-b (confounded by `922ab2f6`'s receipt change, named as such), then A3 without a reference.
+- **Excluded:** later reference commits such as `fcd0fb54`, which no provider run evaluated.
+
 **Expected outcomes** (the reference manifest's):
 
 - V1: a genuine, owner-bound finding of the hyphen-name refusal with receipts; no clean Verify.
