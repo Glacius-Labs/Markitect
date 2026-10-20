@@ -5,12 +5,14 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 	"time"
 )
 
 // Liveness reports whether an Apply holds a state directory's lock. Bootstrap
 // supplies the probe the answer command uses; it takes the lock for an instant
-// when nobody holds it, which a starting Apply's retry absorbs.
+// when nobody holds it, which the brief retries of a starting Apply and of
+// setup absorb.
 type Liveness func(stateDirectory string) (bool, error)
 
 // Health is the current observation of a run: the state of its evidence when
@@ -61,8 +63,8 @@ func (s *Server) health(st *stateDirectory, l *runLog, records []Record, src Sou
 // held probes the state lock at most once per probeInterval and state
 // directory, however many views observe it.
 func (st *stateDirectory) held(probe Liveness) (bool, error) {
-	st.mu.Lock()
-	defer st.mu.Unlock()
+	st.probe.Lock()
+	defer st.probe.Unlock()
 	if time.Since(st.probedAt) < probeInterval {
 		return st.heldNow, st.probeErr
 	}
@@ -74,11 +76,12 @@ func (st *stateDirectory) held(probe Liveness) (bool, error) {
 const probeInterval = 2 * time.Second
 
 // handleStream streams a run's evidence as server-sent events: "entries" with
-// the records after the client's last one (its id is the last record's seq),
-// "health" with the current observation, and "replaced" when the events file
-// no longer starts with what was read, after which the stream ends. A
+// the records after the client's last one (its id is that record's seq and
+// mark), "health" with the current observation, and "replaced" when the events
+// file no longer holds the client's history, after which the stream ends. A
 // reconnecting browser sends Last-Event-ID and receives exactly the records
-// after it: none twice, none skipped.
+// after it: none twice, none skipped; a different record at that position,
+// also one replaced while the client was away, ends the stream as replaced.
 func (s *Server) handleStream(w http.ResponseWriter, r *http.Request) {
 	st, l, ok := s.findRun(w, r)
 	if !ok {
@@ -89,24 +92,26 @@ func (s *Server) handleStream(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "streaming is not supported", http.StatusInternalServerError)
 		return
 	}
-	after, err := strconv.Atoi(r.Header.Get("Last-Event-ID"))
-	if err != nil {
-		after, err = strconv.Atoi(r.URL.Query().Get("after"))
+	position := r.Header.Get("Last-Event-ID")
+	if position == "" {
+		position = r.URL.Query().Get("after") + "." + r.URL.Query().Get("mark")
 	}
+	seqText, mark, _ := strings.Cut(position, ".")
+	after, err := strconv.Atoi(seqText)
 	if err != nil || after < 0 {
-		after = 0
+		after, mark = 0, ""
 	}
 	h := w.Header()
 	h.Set("Content-Type", "text/event-stream")
 	h.Set("Cache-Control", "no-store")
 	h.Set("X-Accel-Buffering", "no")
-	send := func(event string, id int, data any) bool {
+	send := func(event string, id any, data any) bool {
 		payload, err := json.Marshal(data)
 		if err != nil {
 			return false
 		}
-		if id > 0 {
-			_, err = fmt.Fprintf(w, "id: %d\n", id)
+		if id != 0 {
+			_, err = fmt.Fprintf(w, "id: %v\n", id)
 		}
 		if err == nil {
 			_, err = fmt.Fprintf(w, "event: %s\ndata: %s\n\n", event, payload)
@@ -115,8 +120,12 @@ func (s *Server) handleStream(w http.ResponseWriter, r *http.Request) {
 		return err == nil
 	}
 	_, _ = fmt.Fprintf(w, "retry: %d\n\n", reconnectDelay.Milliseconds())
-	_, src, _ := l.snapshot()
+	records, src, _ := l.snapshot()
 	replaced := src.Replaced
+	if after > 0 && after <= len(records) && records[after-1].Mark != mark {
+		send("replaced", 0, src)
+		return
+	}
 	ticker := time.NewTicker(s.poll)
 	defer ticker.Stop()
 	var lastHealth time.Time
@@ -128,7 +137,7 @@ func (s *Server) handleStream(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if len(records) > after {
-			if !send("entries", len(records), struct {
+			if !send("entries", fmt.Sprintf("%d.%s", len(records), records[len(records)-1].Mark), struct {
 				From    int     `json:"from"`
 				Source  Source  `json:"source"`
 				Entries []Entry `json:"entries"`

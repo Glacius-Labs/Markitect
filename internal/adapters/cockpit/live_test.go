@@ -9,7 +9,6 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
-	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -17,20 +16,20 @@ import (
 
 type sse struct {
 	event string
-	id    int
+	id    string
 	data  string
 }
 
 // stream opens the run's event stream and returns its events as they arrive.
-func stream(t *testing.T, base, run string, lastID int) (<-chan sse, context.CancelFunc) {
+func stream(t *testing.T, base, run string, lastID string) (<-chan sse, context.CancelFunc) {
 	t.Helper()
 	ctx, cancel := context.WithCancel(context.Background())
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, base+"/api/runs/"+run+"/stream?after=0", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
-	if lastID > 0 {
-		req.Header.Set("Last-Event-ID", strconv.Itoa(lastID))
+	if lastID != "" {
+		req.Header.Set("Last-Event-ID", lastID)
 	}
 	res, err := http.DefaultClient.Do(req)
 	if err != nil {
@@ -57,7 +56,7 @@ func stream(t *testing.T, base, run string, lastID int) (<-chan sse, context.Can
 			case strings.HasPrefix(line, "event: "):
 				cur.event = strings.TrimPrefix(line, "event: ")
 			case strings.HasPrefix(line, "id: "):
-				cur.id, _ = strconv.Atoi(strings.TrimPrefix(line, "id: "))
+				cur.id = strings.TrimPrefix(line, "id: ")
 			case strings.HasPrefix(line, "data: "):
 				cur.data = strings.TrimPrefix(line, "data: ")
 			}
@@ -121,35 +120,42 @@ func TestStreamDeliversAppendedRecordsOnceAndResumesAfterTheLastID(t *testing.T)
 	}
 	write(5)
 	base := liveServer(t, state, nil)
-	events, cancel := stream(t, base, "20261020T120000Z-live", 0)
+	events, cancel := stream(t, base, "20261020T120000Z-live", "")
 	var first entriesEvent
 	e := next(t, events, "entries")
-	if err := json.Unmarshal([]byte(e.data), &first); err != nil || first.From != 1 || len(first.Entries) != 5 || e.id != 5 {
-		t.Fatalf("first delivery = id %d %+v %v", e.id, first, err)
+	if err := json.Unmarshal([]byte(e.data), &first); err != nil || first.From != 1 || len(first.Entries) != 5 || e.id != "5."+first.Entries[4].Mark {
+		t.Fatalf("first delivery = id %s %+v %v", e.id, first, err)
 	}
 	write(9)
 	e = next(t, events, "entries")
 	var second entriesEvent
-	if err := json.Unmarshal([]byte(e.data), &second); err != nil || second.From != 6 || len(second.Entries) != 4 || second.Entries[0].Seq != 6 || e.id != 9 {
-		t.Fatalf("appended delivery = id %d %+v %v", e.id, second, err)
+	if err := json.Unmarshal([]byte(e.data), &second); err != nil || second.From != 6 || len(second.Entries) != 4 || second.Entries[0].Seq != 6 || !strings.HasPrefix(e.id, "9.") {
+		t.Fatalf("appended delivery = id %s %+v %v", e.id, second, err)
 	}
 	cancel()
+	last := e.id
 
 	write(12)
-	events, cancel = stream(t, base, "20261020T120000Z-live", 9)
-	defer cancel()
+	events, cancel = stream(t, base, "20261020T120000Z-live", last)
 	e = next(t, events, "entries")
 	var resumed entriesEvent
 	if err := json.Unmarshal([]byte(e.data), &resumed); err != nil || resumed.From != 10 || len(resumed.Entries) != 3 {
 		t.Fatalf("a reconnect resumes after Last-Event-ID: %+v %v", resumed, err)
 	}
+	cancel()
+
+	// A different record at the resume position: the file was replaced while
+	// the client was away, so its history cannot be continued.
+	events, cancel = stream(t, base, "20261020T120000Z-live", "9.0000000000000000")
+	defer cancel()
+	next(t, events, "replaced")
 }
 
 func TestStreamEndsWhenTheEventsFileIsReplaced(t *testing.T) {
 	s, _ := library(t)
 	state := s.writeRun("20261020T120000Z-live", nil)
 	base := liveServer(t, state, nil)
-	events, cancel := stream(t, base, "20261020T120000Z-live", 0)
+	events, cancel := stream(t, base, "20261020T120000Z-live", "")
 	defer cancel()
 	next(t, events, "entries")
 	path := filepath.Join(state, "runs", "20261020T120000Z-live", "events.jsonl")

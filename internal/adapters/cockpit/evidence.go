@@ -43,6 +43,9 @@ type Record struct {
 	Turn    string
 	Data    json.RawMessage
 	Invalid string
+	// Mark identifies the line's bytes, so a client resuming after this
+	// record can be told whether the history it holds is still this one.
+	Mark string
 }
 
 // Source identifies exactly what a view was projected from: the consumed bytes
@@ -99,10 +102,12 @@ func (l *runLog) snapshot() ([]Record, Source, *Report) {
 }
 
 // refresh reads what was appended since the last read. It reports whether the
-// records or the report changed. A file that is no longer the same file, is
-// shorter than what was consumed or no longer continues the consumed bytes is
-// a replaced source: the history is read again and the replacement counted,
-// never spliced onto the old records.
+// records or the report changed. An append is accepted when the file is the
+// same file, not shorter than what was consumed and continues the last
+// consumed bytes; otherwise the file is read again from its start and, unless
+// its beginning is the consumed history, counted as replaced and read as a new
+// history. An in-place rewrite of earlier bytes that keeps the file's identity
+// and its last consumed bytes is not detected; the producer only appends.
 func (l *runLog) refresh() (bool, error) {
 	l.mu.Lock()
 	defer l.mu.Unlock()
@@ -119,6 +124,9 @@ func (l *runLog) refreshEventsLocked() (bool, error) {
 	if err != nil {
 		return false, err
 	}
+	// Windows loads a file's identity lazily from its path; load it now, so a
+	// later comparison sees the file that was read, not the one at the path then.
+	os.SameFile(info, info)
 	if l.file != nil && info.Size() == l.file.Size() && info.ModTime().Equal(l.file.ModTime()) && os.SameFile(info, l.file) {
 		return false, nil
 	}
@@ -253,7 +261,7 @@ func decodeRecord(seq int, line []byte) Record {
 		Turn    string          `json:"turn"`
 		Data    json.RawMessage `json:"data"`
 	}
-	r := Record{Seq: seq}
+	r := Record{Seq: seq, Mark: hex.EncodeToString(sum(line)[:8])}
 	if err := json.Unmarshal(bytes.TrimSuffix(line, []byte("\r")), &raw); err != nil {
 		r.Invalid = err.Error()
 		return r
@@ -272,6 +280,7 @@ type stateDirectory struct {
 	mu   sync.Mutex
 	runs map[string]*runLog
 
+	probe    sync.Mutex
 	probedAt time.Time
 	heldNow  bool
 	probeErr error

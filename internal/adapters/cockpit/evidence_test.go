@@ -181,3 +181,46 @@ func TestRunLogReadsAnAppendIncrementallyAndAReplacementAgain(t *testing.T) {
 func hexSum(data []byte) string {
 	return hex.EncodeToString(sum(data))
 }
+
+func TestRunLogReadsAgainWhenTheSameFileNoLongerContinuesItsSeam(t *testing.T) {
+	s, _ := library(t)
+	lines := splitLines(s.lines())
+	state := t.TempDir()
+	dir := filepath.Join(state, "runs", "r1")
+	if err := os.MkdirAll(dir, 0o700); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(dir, "events.jsonl")
+	var first []byte
+	for _, line := range lines[:6] {
+		first = append(append(first, line...), '\n')
+	}
+	if err := os.WriteFile(path, first, 0o600); err != nil {
+		t.Fatal(err)
+	}
+	l := newRunLog(state, "r1")
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	// Rewrite the same file in place with a different history that is longer.
+	var other []byte
+	for _, line := range lines[10:20] {
+		other = append(append(other, line...), '\n')
+	}
+	f, err := os.OpenFile(path, os.O_WRONLY, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.WriteAt(other, 0); err != nil {
+		t.Fatal(err)
+	}
+	f.Close()
+	bump(t, path)
+	if _, err := l.refresh(); err != nil {
+		t.Fatal(err)
+	}
+	records, src, _ := l.snapshot()
+	if src.Replaced != 1 || len(records) != 10 || records[0].Kind != decodeRecord(1, lines[10]).Kind {
+		t.Fatalf("an in-place rewrite that breaks the seam is a replacement: %d records, %+v", len(records), src)
+	}
+}

@@ -2,6 +2,7 @@ package bootstrap
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -136,7 +137,9 @@ func writeSetupFiles(runtimeDir, stateDirectory string, files []setupFile) ([]cl
 	if info, err := os.Stat(runtimeDir); err != nil || !info.IsDir() {
 		return nil, refuse("the Runtime path is not a directory")
 	}
-	lock, err := lockState(stateDirectory)
+	// Like a starting Apply, setup absorbs the instant probe of markitect answer
+	// or the cockpit by retrying briefly.
+	lock, err := lockStateWithin(context.Background(), stateDirectory, startLockWait)
 	if err != nil {
 		if errors.Is(err, errStateLocked) {
 			return nil, errors.New("an Apply holds the state directory of the Runtime directory; wait for it to finish")

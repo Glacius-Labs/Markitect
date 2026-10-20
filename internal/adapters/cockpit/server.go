@@ -298,7 +298,8 @@ func (s *Server) handleEntries(w http.ResponseWriter, r *http.Request) {
 	records, src, _ := l.snapshot()
 	after, _ := strconv.Atoi(r.URL.Query().Get("after"))
 	if after < 0 || after > len(records) {
-		after = 0
+		http.Error(w, "after lies beyond the record; read it again from its start", http.StatusConflict)
+		return
 	}
 	writeJSON(w, struct {
 		Source  Source  `json:"source"`

@@ -70,9 +70,11 @@ export class Inspector {
     const at = route.at === null || route.at === undefined ? this.entries.length : Number(route.at);
     this.playback.seek(Number.isFinite(at) ? at : this.entries.length);
     this.following = this.boundary >= this.entries.length;
-    this.live = new LiveLink(this.run, this.entries.length, {
-      onEntries: (p) => this.onEntries(p),
+    this.live = new LiveLink(this.run, this.entries.length, this.entries.at(-1)?.mark, {
+      onEntries: (p) => this.queueEntries(p),
+      onHealth: (health, previous) => this.onHealth(health, previous),
       onStatus: () => this.renderLive(),
+      onConn: (conn) => announce({ connected: "Live link connected.", reconnecting: "Live link lost; reconnecting." }[conn] || ""),
       onReplaced: () => this.onReplaced(),
     });
   }
@@ -84,25 +86,44 @@ export class Inspector {
     return run === "running" || run === "finishing";
   }
 
+  // queueEntries applies deliveries one at a time, so a refill cannot overlap
+  // another delivery.
+  queueEntries(p) {
+    this.pending = (this.pending || Promise.resolve()).then(() => this.onEntries(p)).catch(() => {});
+  }
+
   // onEntries appends records the live link delivered. A delivery that
   // overlaps what is held is trimmed; one that would leave a gap is refilled
   // from the read interface, so the held record stays one complete prefix.
   async onEntries(p) {
-    let items;
+    let delivered = p;
     if (p.from > this.entries.length + 1) {
-      items = (await api.entries(this.run, this.entries.length)).entries;
-    } else {
-      items = p.entries.slice(this.entries.length - p.from + 1);
+      const res = await api.entries(this.run, this.entries.length);
+      delivered = { from: this.entries.length + 1, entries: res.entries };
     }
+    const items = delivered.entries.slice(this.entries.length - delivered.from + 1);
     if (!items.length || this.dead) return;
     this.entries = this.entries.concat(items);
     this.playback.setEntries(this.entries);
-    for (const [b, v] of this.views) if (v.boundary.final) this.views.delete(b);
     this.appendRows(items);
     this.range.max = String(this.entries.length);
     if (this.following) this.playback.catchUp();
     this.renderPosition();
     this.renderLive();
+  }
+
+  // onHealth reacts to what the record cannot announce itself: a report is
+  // written after the last record, so the final view is read again then.
+  onHealth(health, previous) {
+    const key = (x) => x && `${x.run}/${x.source.report}/${x.source.replaced}`;
+    if (key(health) !== key(previous)) {
+      if (previous) announce(`Run state: ${health.run.replaceAll("-", " ")}.`);
+      if (previous && this.boundary >= this.entries.length) {
+        this.refetch = true;
+        this.want = this.boundary;
+        this.fetchView();
+      }
+    }
   }
 
   onReplaced() {
@@ -131,6 +152,7 @@ export class Inspector {
       case "connected": conn = l.stale() ? `no contact for ${secs(l.lastContact)} s; the shown data may be stale` : `connected, last contact ${secs(l.lastContact)} s ago`; break;
       case "reconnecting": conn = `connection lost, reconnecting for ${secs(l.changed)} s`; break;
       case "replaced": conn = "stopped: the events file was replaced"; break;
+      case "ended": conn = "closed: the run's report is written"; break;
       case "connecting": conn = "connecting"; break;
       default: conn = "not connected";
     }
@@ -155,7 +177,7 @@ export class Inspector {
     clear(this.app);
     document.title = `${this.run} – Markitect cockpit`;
     this.headEl = h("header", { class: "head" });
-    this.liveEl = h("span", { class: "mode", role: "status", title: "The current observation of the run, separate from the recorded boundary. Pausing or losing the link never affects the run." });
+    this.liveEl = h("span", { class: "mode", "aria-live": "off", title: "The current observation of the run, separate from the recorded boundary. Pausing or losing the link never affects the run." });
     this.railEl = h("nav", { class: "rail", "aria-label": "Passes" });
     this.accountEl = h("section", { class: "account", "aria-label": "Account at this boundary", "aria-live": "polite" });
     this.stageEl = h("div", { class: "stage" });
@@ -251,7 +273,8 @@ export class Inspector {
 
   async fetchView() {
     if (this.fetching) return;
-    while (!this.dead && this.want !== undefined && this.view?.boundary.seq !== this.want) {
+    while (!this.dead && this.want !== undefined && (this.refetch || this.view?.boundary.seq !== this.want)) {
+      this.refetch = false;
       const b = this.want;
       let v = this.views.get(b);
       if (!v) {
@@ -264,8 +287,12 @@ export class Inspector {
           return;
         }
         this.fetching = false;
-        if (this.views.size > 300) this.views.delete(this.views.keys().next().value);
-        this.views.set(b, v);
+        // A final view changes when records or the report arrive; only earlier
+        // boundaries are fixed and cached.
+        if (!v.boundary.final) {
+          if (this.views.size > 300) this.views.delete(this.views.keys().next().value);
+          this.views.set(b, v);
+        }
       }
       if (this.want === b) this.show(v);
     }
@@ -384,7 +411,6 @@ export class Inspector {
   }
 
   renderLists() {
-    const row = (e) => this.listRow(e);
     const filters = h("div", { class: "filters", role: "group", "aria-label": "Shown record classes" },
       ["exchange", "work", "control", "evidence", "problem", "state", "runtime"].map((cls) => {
         const box = h("input", { type: "checkbox", checked: !this.hiddenClasses.has(cls) });
@@ -395,8 +421,8 @@ export class Inspector {
         });
         return h("label", {}, box, cls);
       }));
-    this.eventsList = h("ul", { class: "list", "aria-label": "Records up to the boundary" }, this.entries.map(row));
-    this.exchangeList = h("ul", { class: "list", "aria-label": "Exchanges up to the boundary" }, this.entries.filter((e) => e.link || e.kind === "question.lapsed").map(row));
+    this.eventsList = h("ul", { class: "list", "aria-label": "Records up to the boundary" }, this.entries.map((e) => this.listRow(e)));
+    this.exchangeList = h("ul", { class: "list", "aria-label": "Exchanges up to the boundary" }, this.entries.filter((e) => e.link || e.kind === "question.lapsed").map((e) => this.listRow(e)));
     clear(this.panels.events).append(filters, this.eventsList);
     clear(this.panels.exchanges).append(
       h("p", { class: "note", style: { padding: "6px 12px", margin: 0 } }, "Every exchange is a recorded send, answer or decision. Delivery into a turn and reading are not recorded."),
@@ -483,7 +509,7 @@ export class Inspector {
   togglePlay() {
     if (this.playback.playing) this.playback.pause("pause");
     else if (this.isLive() && this.boundary >= this.entries.length) this.returnToLive();
-    else if (this.isLive()) this.playback.catchUp();
+    else if (this.isLive()) this.playback.resume();
     else this.playback.play();
     this.updatePlayButton();
   }

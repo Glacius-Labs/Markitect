@@ -6,13 +6,15 @@
 const STALE_MS = 6000;
 
 export class LiveLink {
-  constructor(run, after, handlers) {
+  // after is the number of records held and mark the last one's mark, so the
+  // server can tell whether it still has the same history.
+  constructor(run, after, mark, handlers) {
     this.handlers = handlers;
     this.conn = "connecting";
     this.changed = Date.now();
     this.lastContact = 0;
     this.health = null;
-    this.source = new EventSource(`/api/runs/${encodeURIComponent(run)}/stream?after=${after}`);
+    this.source = new EventSource(`/api/runs/${encodeURIComponent(run)}/stream?after=${after}&mark=${encodeURIComponent(mark || "")}`);
     this.source.onopen = () => this.set("connected");
     this.source.onerror = () => this.set(this.source.readyState === EventSource.CLOSED ? "closed" : "reconnecting");
     this.source.addEventListener("entries", (ev) => {
@@ -21,8 +23,12 @@ export class LiveLink {
     });
     this.source.addEventListener("health", (ev) => {
       this.contact();
+      const previous = this.health;
       this.health = JSON.parse(ev.data);
+      this.handlers.onHealth?.(this.health, previous);
       this.handlers.onStatus();
+      // A written report ends the run; nothing more will be recorded.
+      if (this.health.run === "ended") this.close("ended");
     });
     this.source.addEventListener("replaced", (ev) => {
       this.contact();
@@ -36,6 +42,7 @@ export class LiveLink {
     if (conn === this.conn) return;
     this.conn = conn;
     this.changed = Date.now();
+    this.handlers.onConn?.(conn);
     this.handlers.onStatus();
   }
 

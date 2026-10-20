@@ -53,18 +53,25 @@ export class Playback {
   play() {
     if (this.playing) return;
     if (this.boundary >= this.entries.length) this.seek(0);
-    this.advance("end");
+    this.advance("end", false);
   }
 
-  // catchUp plays from the current boundary to the latest record without
-  // restarting: a live view following its run.
+  // resume replays from the current boundary to the latest record of a live
+  // run, at the chosen speed, and then follows it.
+  resume() {
+    if (this.playing || this.boundary >= this.entries.length) return;
+    this.advance("caught-up", false);
+  }
+
+  // catchUp moves a following live view to the latest record without
+  // restarting and without trailing far behind it.
   catchUp() {
     if (this.playing || this.boundary >= this.entries.length) return;
-    this.advance("caught-up");
+    this.advance("caught-up", true);
   }
 
-  advance(endReason) {
-    this.catching = endReason === "caught-up";
+  advance(endReason, bounded) {
+    this.catching = bounded;
     this.playing = true;
     this.last = performance.now();
     const step = (now) => {
