@@ -362,12 +362,15 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		"check": r.Check, "standKind": r.StandKind, "proposal": r.Proposal, "stand": r.Stand, "path": r.Path, "contentDigest": r.ContentDigest, "args": r.Args, "rerun": r.Rerun}})
 	e.mu.Unlock()
 	began := e.now()
+	probeCtx := ctx
 	if !ts.deadline.IsZero() {
+		// The cutoff is absolute: preparing the stand does not move it.
 		var cancel context.CancelFunc
-		ctx, cancel = context.WithTimeout(ctx, left)
+		probeCtx, cancel = context.WithTimeout(ctx, ts.deadline.Sub(began)-reserve)
 		defer cancel()
 	}
-	rec, runErr := e.cfg.Runner.Run(ctx, req)
+	rec, runErr := e.cfg.Runner.Run(probeCtx, req)
+	cut := probeCtx.Err() != nil && ctx.Err() == nil
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	r.Started, r.Exited, r.ExitCode, r.TimedOut, r.Uncertain = rec.Started, rec.Exited, rec.ExitCode, rec.TimedOut, rec.Uncertain
@@ -379,7 +382,10 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		r.Reason = strings.TrimSpace(r.Reason + " " + runErr.Error())
 	}
 	r.Outcome = probeOutcome(rec, runErr, req)
-	if r.Outcome == ProbeError && r.Reason == "" {
+	switch {
+	case r.Outcome == ProbeError && cut:
+		r.Reason = strings.TrimSpace("the probe was cut to keep time for the turn's report; " + r.Reason)
+	case r.Outcome == ProbeError && r.Reason == "":
 		r.Reason = fmt.Sprintf("the probe did not run to its assertions (exit %d)", r.ExitCode)
 	}
 	e.receipts = append(e.receipts, r)
