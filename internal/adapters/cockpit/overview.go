@@ -23,9 +23,12 @@ type ProjectInfo struct {
 	ModelDigest string    `json:"modelDigest,omitempty"`
 	Head        string    `json:"head,omitempty"`
 	Packages    int       `json:"packages"`
+	Definitions int       `json:"definitions"`
 	Status      string    `json:"status"`
 	Error       string    `json:"error,omitempty"`
 	ObservedAt  time.Time `json:"observedAt"`
+	// Model is served on its own route; the project summary stays small.
+	Model *ModelView `json:"-"`
 }
 
 // ProjectObserver prepares the project's identity. Bootstrap supplies the

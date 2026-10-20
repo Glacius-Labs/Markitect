@@ -132,6 +132,15 @@ func (c cockpitService) project(ctx context.Context, selection apply.InputSelect
 	}
 	final := attempts[len(attempts)-1]
 	info.Head = final.Model().Inputs().Head
+	checked := final.Model().Checked()
+	if len(checked.Models) > 0 {
+		info.Model = cockpitModel(checked, final.Registry().Records())
+		for _, scope := range checked.Models {
+			if scope.Local {
+				info.Definitions = len(scope.Definitions)
+			}
+		}
+	}
 	if selections, complete := final.Contexts().Selections(); complete {
 		info.Packages = len(selections)
 		if len(selections) > 0 {

@@ -193,3 +193,33 @@ func TestCockpitRefusesSettingsReadFromAnEarlierHead(t *testing.T) {
 		t.Fatalf("settings from the earlier head = %v, want ErrMoved", err)
 	}
 }
+
+func TestCockpitProjectCarriesTheCheckedModelAndRegistry(t *testing.T) {
+	repo := productFixture(t)
+	repository, err := gitrepo.New(gitrepo.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	selection, err := repositorySelection(repo.Dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	c := cockpitService{preparation: apply.NewPreparationService(apply.NewModelService(repository, repository)), repository: repository}
+	info, err := c.project(context.Background(), selection)
+	if err != nil || info.Model == nil || len(info.Model.Models) == 0 {
+		t.Fatalf("project = %+v, %v", info, err)
+	}
+	local := info.Model.Models[0]
+	if !local.Local || info.Definitions != len(local.Definitions) || info.Definitions == 0 || len(info.Model.Registry) == 0 {
+		t.Fatalf("local model %s: %d Definitions (summary %d), %d registry entries", local.ID, len(local.Definitions), info.Definitions, len(info.Model.Registry))
+	}
+	found := false
+	for _, d := range local.Definitions {
+		if d.Package+"/"+d.ID == "product/cockpit/accepted-proposals" {
+			found = d.Kind != "" && d.Body != "" && strings.HasSuffix(d.Source, "accepted-proposals.yaml")
+		}
+	}
+	if !found {
+		t.Fatal("the model view lacks product/cockpit/accepted-proposals with its kind, body and source")
+	}
+}

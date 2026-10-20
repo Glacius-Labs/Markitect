@@ -100,3 +100,26 @@ export function announce(text) {
   const el = document.getElementById("announce");
   if (el) el.textContent = text;
 }
+
+// navIcon draws the desk rail's outline icons.
+export function navIcon(name) {
+  const paths = {
+    overview: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+    model: "M5 4h5v5H5zM14 15h5v5h-5zM5 15h5v5H5zM7.5 9v6M10 17.5h4M10 6.5h6.5V15",
+    session: "M4 5h16v11H10l-5 4v-4H4z M8 9.5h8M8 12.5h5",
+    proposals: "M4 13l2.5-8h11L20 13v6H4zM4 13h5l1 2.5h4l1-2.5h5",
+    runs: "M3 8h18M3 16h18M7 5v14M12 5v14M17 5v14",
+    settings: "M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4",
+    menu: "M4 7h16M4 12h16M4 17h16",
+  };
+  return s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false" }, s("path", { d: paths[name] || "" }));
+}
+
+// brandMark is the cockpit's mark: a signal lamp on its post.
+export function brandMark() {
+  return s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false" },
+    s("rect", { x: 7, y: 2, width: 10, height: 15, rx: 5, fill: "none", stroke: "currentColor", "stroke-width": 1.6 }),
+    s("circle", { cx: 12, cy: 7, r: 2.2, fill: "#5db37e" }),
+    s("circle", { cx: 12, cy: 12.5, r: 2.2, fill: "none", stroke: "currentColor", "stroke-width": 1.2 }),
+    s("path", { d: "M12 17v5M8 22h8", stroke: "currentColor", "stroke-width": 1.6, fill: "none" }));
+}

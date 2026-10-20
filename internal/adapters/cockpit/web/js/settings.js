@@ -9,24 +9,22 @@ import { h, clear, announce } from "./dom.js";
 
 let draft = null; // { head, settings }
 
-export function renderSettings(app) {
-  document.title = "Execution settings – Markitect cockpit";
-  clear(app);
-  const main = h("main", { id: "main", class: "runs authoring" });
-  app.append(main);
-  main.append(top("Execution settings"), h("p", { class: "lead", role: "status" }, "Capturing the committed source and preparing it as markitect check does. On a large model this takes a while…"));
+export function renderSettings(content) {
+  const page = h("div", { class: "page narrow" });
+  content.append(page);
+  const head = h("div", { class: "pagehead" }, h("div", {},
+    h("h2", {}, "Execution settings"),
+    h("p", { class: "lead" }, "Budget, role profiles, per-Package profiles and the team below each Manager. Changing a value makes a proposal: the structural check judges the changed file, you review its difference, and only your acceptance writes it to the working tree. Nothing is committed and no Apply starts.")));
+  const body = h("div", {}, h("p", { class: "note", role: "status" }, "Capturing the committed source and preparing it as markitect check does. On a large model this takes a while…"));
+  page.append(head, body);
   api.settings().then((settings) => {
-    if (!main.isConnected) return;
+    if (!page.isConnected) return;
     if (!draft || draft.head !== settings.head) draft = { head: settings.head, settings: structuredClone(settings) };
-    clear(main).append(top("Execution settings"), settingsForm(settings, draft.settings));
+    clear(body).append(settingsForm(settings, draft.settings));
   }, (err) => {
-    if (!main.isConnected) return;
-    clear(main).append(top("Execution settings"), h("p", { role: "alert", class: "refusal" }, refusal(err)));
+    if (!page.isConnected) return;
+    clear(body).append(h("p", { role: "alert", class: "refusal" }, refusal(err)));
   });
-}
-
-export function top(title) {
-  return h("div", { class: "pagetop" }, h("a", { class: "home", href: "#/" }, "Markitect cockpit"), h("h1", {}, title));
 }
 
 // refusal explains a refused read or proposal in the owner's terms.
@@ -47,7 +45,6 @@ function settingsForm(committed, s) {
   const status = h("p", { class: "note", role: "status", tabindex: -1 });
   const submit = h("button", { class: "btn act", type: "submit" }, "Propose the change");
   form.append(
-    h("p", { class: "lead" }, "Changing a value here makes a proposal. The structural check judges the changed file, you review its difference, and only your acceptance writes it to the working tree. Nothing is committed and no Apply starts."),
     h("p", { class: "note" }, `From the committed source at `, h("span", { class: "digest" }, committed.head.slice(0, 12)), `, file .markitect/execution.yaml. Ownership, the top-level and per-Package instructions, scope and checks are not edited here; they stay as written.`),
     budget(s.budget),
     profiles(s.profiles),
