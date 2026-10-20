@@ -91,23 +91,52 @@ Managers never race to rewrite a global registry. Disjoint scopes may continue i
 
 ## One recursive Pass mechanism
 
-Plan, Prepare, Implement and Verify use the same organization and control mechanism with different mandates, write rights, result shapes and acceptance criteria. No general workflow language or additional permanent hierarchy is needed.
+Plan, Prepare, Implement and Verify are purposes of **one Pass process**, not four process implementations. Only the mandate, allowed effects, purpose-specific result payload and acceptance criteria vary. The result envelope, lifecycle, parent/child routing, scheduling, checks and acceptance mechanism are shared. No general workflow language or additional permanent hierarchy is needed.
 
 Every Pass declares its purpose, required participants, model/input binding, own obligations, relevant context, ownership, starting prerequisites, allowed effects, required results and checks, dependencies and finite limits. Context includes provenance and inclusion reasons. Root receives explicit project and boundary obligations attributed to their actual Definition owners; it does not discover its mandate only from Required checks' `requiredBy` links.
 
-For each parent, the order is:
+### The base process
 
-1. Work on its own contribution and provide the basis children need for this Pass.
-2. Submit that basis explicitly. The Orchestrator accepts it only after applicable checks and registry acceptance.
-3. Start the children whose prerequisites now hold. The parent waits and remains available for questions from above and below.
-4. Examine direct child results, return gaps to their owners and integrate the results and cross-child interactions.
-5. Submit its complete responsibility for acceptance upward. Root's accepted integrated result closes the recursive work.
+For every Manager, including Root and leaves, the order is:
+
+1. **Receive:** bind the Pass mandate, own obligations, current inputs, dependencies and authority. Root starts after the Pass entry gates; every other Manager starts only against its accepted parent basis and required dependencies.
+2. **Work locally:** perform the required own contribution and produce the basis children need for this purpose. This is a plan in Plan, a usable foundation in Prepare, own realization in Implement, and own assessment plus review context in Verify.
+3. **Offer the basis:** submit an explicit semantic report. The Orchestrator checks the stable submitted scope and registry, result binding and declared prerequisites. Only its acceptance releases dependent children. In a read-only Pass the same gate checks the unchanged project bindings and the evidence result; no artificial project file is required.
+4. **Delegate and remain available:** release eligible direct children with their mandates and the accepted basis. While they work, handle questions, route dependencies and inspect incoming proposals. A leaf follows this same step with an empty child set; it does not use a separate execution route.
+5. **Review and integrate:** examine each direct child's proposed result for its purpose and fit. Return incomplete or incompatible work to that child within the current Pass; never do its work instead. Accept complete child results, then integrate their actual results, cross-child interactions and the own contribution.
+6. **Offer the complete result:** submit the integrated responsibility with evidence and references to accepted child results. For a non-Root Manager, the Orchestrator validates the submission and notifies the parent for semantic acceptance. The parent accepts or returns it; only accepted complete work becomes Done. Root has no parent: its complete aggregate is accepted by the Orchestrator against the declared Pass requirements, not by inventing a superior Manager.
+7. **Close the Pass:** once the entire required tree is accepted and no required proposal, question or dependency remains pending, the Orchestrator performs the whole-stand exit gates, seals the aggregate result and emits the Pass result. Closure is bound to the accepted versions and ordered events; a concurrent invalidation cannot be lost behind a stale success. The Apply workflow, outside the recursive process, chooses the next Pass or finishes the Run.
+
+A submitted child result wakes its parent for review even while other children are working. The child waits on named parent acceptance; the parent must not wait for that child to be Done before reading its proposal. This prevents a completion/review deadlock without adding a PendingReview lifecycle state. Result submission, technical validation, semantic acceptance and Done are distinct observations.
 
 An accepted own basis is not completion of the subtree. No Turn ending implicitly starts children. A parent does not plan or implement a child's responsibility. Every Manager may implement its own artifacts, whether it has children or not. All required responsibilities use the same result schema; agreement means coherent accepted results, not identical prose or manufactured consensus.
 
 Children receive the Pass mandate, own applicable Definitions, labeled foreign context and owners, parent constraints and accepted foundations, owned write areas, local registry and derived view, relevant plans/dependencies, checks, tools, team profiles and remaining authority/limits. Model content and tool facts remain distinguishable from Agent suggestions.
 
 Dependencies are explicit and observable. Accepted prerequisites and resource limits determine dispatch. Managers reason about semantic fit; the Orchestrator enforces declared conditions and does not pretend to infer arbitrary program semantics. Cyclic or orphaned waits must become a visible problem, never an endless stream of empty polling Turns.
+
+### One contract, different purposes
+
+| Purpose | Own contribution before child release | What parents review and integrate | Project rights |
+| --- | --- | --- | --- |
+| Plan | Own concrete approach and coordination context | Child plans, interfaces, coverage, dependencies and the integrated approach | Read-only |
+| Prepare | Own usable and registered foundation | Child foundations and their actual usability together | Owned writes |
+| Implement | Own realization and the accepted basis needed by children | Child realizations, obligation coverage and actual integration | Owned writes |
+| Verify | Own independent assessment and review context for the immutable candidate | Child assessments, retained findings and cross-area correctness | Read-only, fresh reviewers |
+
+The parent reviews a child's complete result in every purpose. This is the same integration responsibility, not an extra independent Verify after each local task. In Verify the executing roles themselves are independent reviewers; accepting a complete assessment must preserve its genuine findings. A negative assessment is not rejected merely to force a positive verdict. Completion of own basis still precedes child work; the final integrated result can only exist afterward. If child information requires revising an accepted basis, explicitly invalidate affected consumers and re-establish their prerequisites through this same process.
+
+### Shared result and Pass identity
+
+Every basis/result uses one envelope: Run and Pass identity, purpose, Manager, bound input/basis version, own obligation coverage, purpose-specific payload, accepted child-result references, dependency/question/finding references and check/evidence references. A complete result adds its integrated verdict. Exact field names and Go types are implementation choices; purpose-specific payloads do not authorize distinct state machines.
+
+Use the same two substantive verdicts for every purpose: `Satisfied` means its stated objective is met; `NeedsCorrection` means the completed assessment/integration identifies required corrective work. Incomplete proposals stay work in the current Pass and are returned to their owners. Missing participation or an unresolved required question cannot be hidden behind either complete verdict. A failed deterministic gate is a Run failure, not a freely chosen NeedsCorrection result.
+
+Aggregate verdicts preserve required child findings and unresolved obligations; Root cannot waive them. After whole-Pass exit gates, all participants receive the same sealed Pass result and aggregate verdict. Their local payloads need not be identical. The whole-tree outcome is not inferred from a collection of provider exit codes or local Done states.
+
+Every repetition creates a new Pass identity, even when its purpose is again Implement or Verify. A sealed Pass result is immutable history. Managers receive a new assignment/state for the new Pass; earlier accepted evidence may support explicit preservation but cannot silently count as new participation. A return of a proposal before Pass closure is local revision within the same Pass, not an extra traversal. Reopening Done before closure explicitly invalidates the affected aggregate; after closure, correction uses a new Pass.
+
+Apply composes these Passes in the required order and chooses the earliest necessary correction purpose. If an approach changes, use Plan and the needed subsequent Prepare/Implement; a foundation change uses Prepare and needed Implement; a local behavior correction may need only Implement. Then run a new complete Verify. All required Managers participate in each selected Pass; unaffected owners may explicitly preserve a still-valid result. There is no special correction engine or implicit skip of a whole responsibility.
 
 ## States, reports and events
 
@@ -116,7 +145,7 @@ Dependencies are explicit and observable. Accepted prerequisites and resource li
 | Ready | Required start conditions hold and useful admitted work can be scheduled automatically. |
 | Working | A Turn is active or a submitted result is being checked. |
 | Waiting | A named answer, foundation, child result or other dependency is missing. The Manager can be woken by relevant work. |
-| Done | Its complete Pass responsibility, including child integration, has been accepted for a recorded stand. |
+| Done | Its complete Pass responsibility, including child integration and parent semantic acceptance where applicable, has been accepted for a recorded stand. |
 
 Root initially becomes Ready; children initially wait for their declared basis. Ready automatically triggers dispatch when resources and finite limits permit. One Manager has at most one active Turn. Waiting parents can ask children questions and answer their own parent or children; relevant incoming work makes them Ready. Valid progress may lead Working back to Ready. A concrete changed prerequisite or finding can explicitly reopen Done, retaining the old result as historical evidence.
 

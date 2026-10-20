@@ -4,9 +4,9 @@
 
 ## Start and authority
 
-The preparation branch is `docs/apply-terminology-notes`, in `C:\Users\Consiliari\.codex\worktrees\apply-terminology-notes\Markitect`. It includes integrated Main `a0928a1b7a95ebbc23836e5a5f472b29d233466e`, the preserved discussion commit `06ea1952` and the accepted concept/handoff changes. The preparation chat reports the final full commit SHA. Use the committed branch as the implementation base, not the unrelated original checkout at `C:\Users\Consiliari\Glacius Labs\Markitect`.
+The preparation branch is `docs/apply-terminology-notes`, in `C:\Users\Consiliari\.codex\worktrees\apply-terminology-notes\Markitect`. It was composed with Main `a0928a1b7a95ebbc23836e5a5f472b29d233466e` and preserves the pre-adoption discussion in `06ea1952`. The owner then requested integration on Main. The preparation chat/PR reports the actual integration SHA; a document describing this request is not evidence of a completed merge.
 
-On starting Claude, verify the actual source commit, clean state and ancestry; inspect any subsequent Main changes before composing them. Create a separate implementation worktree and non-protected branch, for example `dev/checked-apply-passes`. Do not reset, stash or reuse another session's dirty checkout. Read `AGENTS.md`, the working method, current delivery plan, model, accepted workflow and this handoff. Run actual `markitect check` and `context product`; choose the owning model Packages before writing. The documentation Package owns this preparation, not all future runtime changes.
+After integration, start Claude from the fetched Main containing DEC-064 and the polished base process, not from an older concept branch. Verify the actual source commit, clean state and ancestry; inspect subsequent Main changes before composing them. Create a separate implementation worktree and non-protected branch, for example `dev/checked-apply-passes`. Do not reset, stash or reuse another session's dirty checkout, including the original checkout at `C:\Users\Consiliari\Glacius Labs\Markitect`. Read `AGENTS.md`, the working method, current delivery plan, model, accepted workflow and this handoff. Run actual `markitect check` and `context product`; choose the owning model Packages before writing. The documentation Package owns this preparation, not all future runtime changes.
 
 The accepted product decisions do not need another design-approval round. Choose concrete Go types, wire identifiers and storage within them, preserving simple boundaries. Complete the implementation and its relevant checks; report a real external authority/capability blocker honestly. A new product rule, spending authority, release or model contradiction still requires its proper decision.
 
@@ -17,6 +17,8 @@ This is one bounded Apply implementation assignment, not an Extract redesign, br
 `markitect apply` performs strict Model check and File check, then Plan → Prepare → Implement through one common recursive Pass mechanism, then fresh independent Verify of one immutable candidate. Genuine findings return to the necessary normal work Passes; clean Verify reaches guarded Publish/read-back. The entire required Manager organization participates, with enforced local writes, tree-only questions, explicit lifecycle reports/events and configurable bounded local teams.
 
 There is no automatic repair of failed model/accounting gates, no implicit completion on Turn exit, no silent omission of model duties and no author acceptance substituting for independent Verify. No mandatory extra review after every phase or generic workflow framework is requested.
+
+The central implementation requirement is **one Pass process**, not a separate scheduler for each purpose. Follow the accepted workflow's base process: receive → own contribution → checked basis → children and routed questions → review/integrate child proposals → accepted complete result → whole-Pass gates and sealed result. Leaves use an empty child set. Parent review happens on submitted proposals before child Done, avoiding a review/completion deadlock. One shared result envelope/lifecycle carries purpose-specific payloads and Satisfied/NeedsCorrection verdicts. Each repeated purpose receives a new Pass identity; corrections reuse this process. Apply only composes Passes and selects the next purpose. Separate provider adapters or author/reviewer roles do not create separate control processes.
 
 ## Delivery sequence
 
@@ -66,6 +68,7 @@ Use meaningful behavior tests at the smallest boundary that proves each property
 | Directory ownership and registry expansion | Parent directory, child directory and exact-file overrides resolve identically in lookup, File check and actual write capability. Equal-specificity conflicts fail. Other owners' descendants and protected inputs cannot be registered or written through a broad directory entry. |
 | New files and parallel shards | New owned files are validly covered before accepted readiness/completion. Two disjoint Managers can finish concurrently without losing a shard update or claiming a mixed live global view. Later mandatory failed accounting blocks and stops; no auto-repair exception. |
 | Parent-first work | Children cannot start on a mere Turn exit, unverified registry edit or unaccepted basis. Parent can subsequently answer questions and integrate children. Pass completion requires every required Package, including empty/intermediate ones. |
+| One Pass process | Plan/Prepare/Implement/Verify and repeated correction instances use the same lifecycle, result envelope, proposal/parent acceptance and exit gates. A child proposal wakes a waiting parent before child Done; rejection returns work to its owner within that Pass. Leaves take the same path with no children. New Pass IDs cannot accept stale results from a sealed earlier Pass. |
 | Local concrete plans | Every Manager supplies a real own plan with obligations, method, evidence, inputs/outputs, owners and dependencies. Parent returns an incompatible child plan to that owner. No central plan silently substitutes for a missing child. |
 | States and events | Ready dispatches; Waiting wakes only for relevant work; Done requires accepted complete result. Duplicate/stale reports cannot advance work. A normal exit without a report, technical timeout and uncertain writer stop never become semantic success. |
 | Questions | Child→parent answers and parent→child questions work while waiting. A cross-branch exchange takes the ancestor route both ways; sibling/tool bypass is rejected. Root clarification can pause and continue the same valid Run; stale/unauthorized answers cannot. |
@@ -99,11 +102,12 @@ Report the implemented workflow and remaining limits against the accepted concep
 ```text
 Arbeite die akzeptierte Apply-Änderung vollständig aus und implementiere sie.
 
-Ausgangspunkt ist der lokal vorbereitete Branch docs/apply-terminology-notes:
-C:\Users\Consiliari\.codex\worktrees\apply-terminology-notes\Markitect
-Verifiziere dessen tatsächlichen Commit, sauberen Zustand und integrierte Basis.
-Erzeuge daraus einen eigenen Worktree auf dev/checked-apply-passes; bewahre alle
-anderen Sessions. Lies zuerst AGENTS.md, den aktuellen Delivery Plan,
+Arbeite im Repository C:\Users\Consiliari\Glacius Labs\Markitect.
+Hole den aktuellen Stand von origin/main und verifiziere, dass DEC-064 und
+der ausgearbeitete gemeinsame Pass-Grundprozess bereits integriert sind.
+Erzeuge daraus einen eigenen Worktree auf dev/checked-apply-passes; verifiziere
+Pfad, Branch, vollen SHA und sauberen Zustand. Bewahre alle anderen Sessions.
+Lies zuerst AGENTS.md, den Working Method und Delivery Plan,
 docs/concepts/register.md (DEC-064),
 docs/design/canonical-model/manager-apply-workflow.md und
 docs/development/claude-apply-implementation-handoff-20261020.md.
@@ -112,6 +116,13 @@ Diese Produktentscheidungen sind übernommen. Setze Konzept, kanonisches Modell,
 Code, Tools, Konfiguration, Tests und aktive Dokumentation konsistent um.
 Nutze den Handoff als abgegrenzten Auftrag mit Prüfszenarien. Wähle technische
 Details selbst innerhalb des Konzepts; frage nicht erneut nach dessen Freigabe.
+Implementiere genau einen rekursiven Pass-Grundprozess für Plan, Prepare,
+Implement und Verify: eigene Arbeit, geprüfte Basis, Kinder starten, Rückfragen,
+Kinderergebnisse prüfen und integrieren, vollständiges Ergebnis annehmen,
+gemeinsame Abschlussgates. Nur Auftrag, Rechte, Payload und Abnahmekriterien
+variieren. Keine vier separaten Engines und kein Sonderprozess für Korrekturen.
+Kind-Proposals wecken den Elternmanager vor Kind-Done; Wiederholungen haben
+neue Pass-IDs. Fertigmeldungen und Verdicts bleiben getrennt.
 Keine automatische Reparatur fehlgeschlagener Model-/File-check-Gates.
 Keine konkurrierenden Compile-/Reconcile-/Controller-Host-Begriffe.
 Keine implizite Fertigmeldung durch Turn-Ende. Keine ausgelassenen Pflichten.
