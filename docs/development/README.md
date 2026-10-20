@@ -4,7 +4,7 @@ Start engineering work through [AGENTS.md](../../AGENTS.md), the [working method
 
 | Document | Owns |
 |---|---|
-| [Claude Apply implementation handoff](claude-apply-implementation-handoff-20261020.md) | Prepared assignment for accepted DEC-064: recursive Passes, strict checks, ownership, lifecycle, questions, tools and local teams; implementation and runtime evidence remain to be delivered |
+| [Claude Apply hardening handoff](claude-apply-hardening-handoff-20261020.md) | New owner-started assignment: active counterexample review, tool-produced receipts, previous-proposal dispositions, preserved candidates and a finite Haiku retest; the [earlier implementation handoff](claude-apply-implementation-handoff-20261020.md) is historical |
 | [Working method](working-method.md) | Apply the owner-adopted practice of explicit learning, complete workflows, focused design review and short milestone accounts; canonical intent lives in the linked repository Rule |
 | [Documentation maintenance](documentation.md) | Placement, navigation, canonical owners and evidence preservation |
 | [Shared contracts](shared-contracts.md) | Version-bound seams and coordinator-owned changes; distinguish historical contracts from current project operations |
