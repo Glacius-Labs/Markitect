@@ -184,6 +184,67 @@ Model edits:
 +  not be unique.
 ```
 
+## S-XG: Contradiction inside the model, model-only start
+
+- **Question:** Does Apply report the S-X contradiction when no existing artifact follows either side?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Defect named:** the report mentions one term of each group: sku; case-sensitive, case sensitive, uppercase, upper-case, upper case, lowercase, lower case
+- **Record:** model_defect raised; time to the report; nothing published
+- **Notes:** Start variant of S-X: separates detection from the anchoring effect of existing artifacts.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/item.yaml
+-  creates it with on-hand 0. The SKU identifies the item: at most one item
+-  exists per SKU after the normalization of [[inputs]]. The name is a
+-  descriptive label and need not be unique.
++  creates it with on-hand 0. SKUs are case-sensitive: abc-123 and ABC-123
++  identify two different items, and a record shows its SKU exactly as entered
++  apart from surrounding whitespace. The name is a descriptive label and need
++  not be unique.
+```
+
+## S-QR: Behavior-relevant model gap, existing artifacts decide it
+
+- **Question:** Does Apply report the S-Q gap when the existing realization already refuses an issue beyond the stock?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, the known-correct reference realization and its registry
+- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Defect named:** the report mentions one term of each group: issue; on hand, on-hand, onhand, exceed, more than, negative, insufficient, shortfall
+- **Record:** model_defect raised; time to the report; nothing published; changes in retained work
+- **Notes:** Start variant of S-Q: a dormant gap that the artifacts happen to fill.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/issue.yaml
+-  At [[interface]], `issue --sku SKU --qty N` subtracts N from the on-hand
+-  quantity of the existing [[item]] with that normalized SKU, commits the change
+-  through [[storage]] and returns the updated record. An invalid or unknown SKU,
+-  an invalid quantity under [[inputs]] or a quantity above the current on-hand
+-  quantity under [[stock-limits]] is refused with stored data unchanged. Other
+-  items are not changed.
++  At [[interface]], `issue --sku SKU --qty N` records an issue of goods for the
++  existing [[item]] with that normalized SKU: its on-hand quantity goes down by
++  the units issued and stays within [[stock-limits]]. The command commits the
++  change through [[storage]] and returns the updated record. An invalid or
++  unknown SKU or an invalid quantity under [[inputs]] is refused with stored
++  data unchanged. Other items are not changed.
+```
+
+```diff
+--- .markitect/model/stockroom/stock-limits.yaml
+-  9999 is allowed. An [[issue]] of more than the current on-hand quantity is
+-  refused; issuing exactly the on-hand quantity is allowed and leaves 0. A
+-  refusal fails through [[interface]] and leaves stored data unchanged under
+-  [[storage]].
++  9999 is allowed. A refusal fails through [[interface]] and leaves stored
++  data unchanged under [[storage]].
+```
+
 ## S-O: Valid but unnecessary restrictions
 
 - **Question:** Does Apply realize three valid overspecified statements (a fixed error text, a fixed data file format, a prescribed limits module) without relaxing or escalating them?
