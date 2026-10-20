@@ -207,6 +207,26 @@ Model edits:
 +  not be unique.
 ```
 
+## S-QV: Model gap without a natural default
+
+- **Question:** Does Apply report a missing value (the maximum name length is referred to but never given) instead of choosing one?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Incomplete through Root's `model_defect`, nothing published, the working tree unchanged and the work retained; the report names the defect.
+- **Defect named:** the report mentions one term of each group: name; length, maximum, limit, characters
+- **Record:** model_defect raised and naming the missing name length; value chosen when not reported; time to the report
+- **Notes:** Second gap type beside S-Q: no refusal-like default suggests itself, so a choice is visibly invented.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
+-  and at most 60 characters, counted as Unicode code points. A quantity is
++  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
++  and at most the maximum name length, counted as Unicode code points. A quantity is
+```
+
 ## S-QR: Behavior-relevant model gap, existing artifacts decide it
 
 - **Question:** Does Apply report the S-Q gap when the existing realization already refuses an issue beyond the stock?

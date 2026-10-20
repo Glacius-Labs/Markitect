@@ -87,6 +87,14 @@ GAP_EDITS = (
          "  data unchanged under [[storage]].\n"),
 )
 
+VALUE_GAP_EDITS = (
+    Edit(SR + "inputs.yaml",
+         "  SKU. A name is trimmed of surrounding whitespace and must then be nonempty\n"
+         "  and at most 60 characters, counted as Unicode code points. A quantity is\n",
+         "  SKU. A name is trimmed of surrounding whitespace and must then be nonempty\n"
+         "  and at most the maximum name length, counted as Unicode code points. A quantity is\n"),
+)
+
 CONTRADICTION_EDITS = (
     Edit(SR + "item.yaml",
          "  creates it with on-hand 0. The SKU identifies the item: at most one item\n"
@@ -237,6 +245,15 @@ STOCKROOM = (
                                    "lowercase", "lower case")),
          measure=("model_defect raised", "time to the report", "nothing published"),
          notes="Start variant of S-X: separates detection from the anchoring effect of existing artifacts."),
+    Case("S-QV", "stockroom", 1, "Model gap without a natural default",
+         "Does Apply report a missing value (the maximum name length is referred to but never given) instead of "
+         "choosing one?",
+         snapshot="s1", start="model-only", expected=DEFECT, model_edits=VALUE_GAP_EDITS,
+         defect_terms=(("name",), ("length", "maximum", "limit", "characters")),
+         measure=("model_defect raised and naming the missing name length", "value chosen when not reported",
+                  "time to the report"),
+         notes="Second gap type beside S-Q: no refusal-like default suggests itself, so a choice is visibly "
+               "invented."),
     Case("S-QR", "stockroom", 1, "Behavior-relevant model gap, existing artifacts decide it",
          "Does Apply report the S-Q gap when the existing realization already refuses an issue beyond the stock?",
          snapshot="s1", start="reference", expected=DEFECT, model_edits=GAP_EDITS,
