@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/design/canonical-model/apply-passes-discussion-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Elaborates the owner's local Apply discussion into a proposed recursive Pass contract, lifecycle, concrete Plan/Prepare/Implement behavior and minimal tools/Skills, preserving accepted and unimplemented boundaries.
+  - path: "docs/concepts/sources/terminology-and-file-accounting-20261020.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's accepted terminology and removal of competing Compile/Reconcile code names, strict initial file-accounting decision and supersession of the repairable-start exception, with fixed-source observations and no runtime change.
   - path: "docs/design/canonical-model/reconciliation-model-proposal.md"
     form: doc
     realizes: [documentation/current-guidance]

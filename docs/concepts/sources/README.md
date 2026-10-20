@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Terminology and file accounting discussion](terminology-and-file-accounting-20261020.md) | Direct owner instructions, decisions and proposals, 20 October 2026; local record | Strict checks, terminology, local registries and checked readiness; model-bound questions allowed through parents to the initiating AI, Root aborts model errors; reliability-first workflow, recursive passes, simple results and tools discussed; no implementation or integration |
 | [The model is authoritative; defects escalate](model-defects-escalate-20261019.md) | Direct owner decision, 19 October 2026 | Apply never repairs the model; unsettled matters escalate through the tree with the model binding; a model defect ends the run with a report to the owner |
 | [What an extracted model contains](extract-model-content-20261019.md) | Direct owner decision, 19 October 2026 | A project Package owns project-wide obligations, binding means observable at the boundary or documented, Extract may propose checks for adoption; start of the Extract reliability plan |
 | [Coordinator assignment and next milestone](coordinator-assignment-20261019.md) | Direct owner instruction and selected options, 19 October 2026 | The Coordinator realizes and refines everything around the core; next milestone Apply without the harness, shown on Roombook and Readinglog; work split by topic |

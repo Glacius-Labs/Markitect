@@ -28,6 +28,8 @@ Historical basis before DEC-056: the rebuild was commissioned in [DEC-024](../..
 
 Read in this order:
 
+**Local discussion draft, 20 October 2026:** [Apply passes, results and tools](apply-passes-discussion-20261020.md) elaborates the owner's current conversation. It separates locally accepted directions from proposed Pass/state/tool contracts and changes no integrated runtime or canonical model.
+
 | Document | Owns |
 | --- | --- |
 | [Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) | Current recursive reconciliation cycle, permanent ownership, fresh verification and Claude implementation handoff. |
