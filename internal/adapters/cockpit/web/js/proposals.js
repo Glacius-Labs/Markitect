@@ -13,7 +13,7 @@ export function renderProposals(content, selected) {
   const detail = h("div", { class: "pane" });
   content.append(h("div", { class: "master" }, listPane, detail));
   const listBody = h("div", {});
-  const tabs = h("div", { class: "tabs", role: "group", "aria-label": "Show" });
+  const tabs = h("div", { class: "seg", role: "group", "aria-label": "Show" });
   const head = h("div", { class: "panehead" }, h("h2", {}, "Proposals"), h("div", { class: "actions" }, tabs));
   listPane.append(head, listBody);
   const drawTabs = () => {
@@ -26,13 +26,13 @@ export function renderProposals(content, selected) {
   const drawList = (s) => {
     clear(listBody);
     if (s.errors.proposals) {
-      listBody.append(h("p", { class: "empty" }, h("strong", {}, "Not available"), "Proposals need the cockpit to be started with --repo."));
+      listBody.append(h("p", { class: "void" }, h("strong", {}, "Not available"), "Proposals need the cockpit to be started with --repo."));
       return;
     }
     const all = s.data.proposals || [];
     const shown = filter === "open" ? all.filter((p) => p.state === "proposed" || p.state === "publishing") : all;
     if (!shown.length) {
-      listBody.append(h("p", { class: "empty" }, h("strong", {}, filter === "open" ? "Nothing waits for a decision" : "No proposal yet"),
+      listBody.append(h("p", { class: "void" }, h("strong", {}, filter === "open" ? "Nothing waits for a decision" : "No proposal yet"),
         "Proposals come from the ", h("a", { href: "#/settings" }, "settings form"), " and from ", h("a", { href: "#/session" }, "model sessions"), ". They live as long as this cockpit."));
       return;
     }
@@ -52,7 +52,7 @@ export function renderProposals(content, selected) {
   else refreshState();
 
   if (!selected) {
-    detail.append(h("div", { class: "panebody" }, h("p", { class: "empty" }, h("strong", {}, "Choose a proposal"), "Its check, its difference and your decision appear here.")));
+    detail.append(h("div", { class: "panebody" }, h("p", { class: "void" }, h("strong", {}, "Choose a proposal"), "Its check, its difference and your decision appear here.")));
     return;
   }
   const body = h("div", { class: "panebody" });

@@ -37,7 +37,13 @@ export const store = {
       (err) => { this.errors[name] = err; },
     ))).then(() => {
       this.inflight = null;
-      for (const fn of this.listeners) fn(this);
+      for (const fn of this.listeners) {
+        try {
+          fn(this);
+        } catch (err) {
+          console.error(err);
+        }
+      }
     });
     return this.inflight;
   },

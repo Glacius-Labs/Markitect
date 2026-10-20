@@ -4,7 +4,7 @@
 // and the latest runs. Only answering a question writes anything here.
 
 import { api } from "./api.js";
-import { h, clear, when, shortDigest } from "./dom.js";
+import { h, clear, append, when, shortDigest, ticks } from "./dom.js";
 import { store } from "./store.js";
 import { answerForm, answerInProgress } from "./answer.js";
 import { refreshState } from "./shell.js";
@@ -14,7 +14,7 @@ import { runRows } from "./runs.js";
 export function renderOverview(content) {
   const page = h("div", { class: "page" });
   content.append(page);
-  const project = h("section", { class: "panel", "aria-labelledby": "ov-project" });
+  const project = h("section", { class: "panel ticked", "aria-labelledby": "ov-project" });
   const session = h("section", { class: "panel", "aria-labelledby": "ov-session" });
   const proposals = h("section", { class: "panel", "aria-labelledby": "ov-proposals" });
   const now = h("section", { class: "panel", "aria-labelledby": "ov-now" });
@@ -40,7 +40,7 @@ function head(id, title, more) {
 }
 
 function notReadable(section, id, title, err) {
-  clear(section).append(head(id, title), h("p", { class: "empty", role: "alert" }, `Not readable: ${err.message}`));
+  clear(section).append(head(id, title), h("p", { class: "void", role: "alert" }, `Not readable: ${err.message}`));
 }
 
 function drawProject(section, s) {
@@ -54,22 +54,25 @@ function drawProject(section, s) {
     try { await api.observeProject(); } catch { /* the panel shows the next state */ }
     refreshState();
   });
-  clear(section).append(head("ov-project", p?.modelID ? `Project ${p.modelID}` : "Project", part?.configured ? observe : null));
+  clear(section).append(ticks(), head("ov-project", p?.modelID ? `Project ${p.modelID}` : "Project", part?.configured ? observe : null));
   const body = h("div", { class: "body" });
   section.append(body);
   if (!part?.configured) {
-    body.append(h("p", { class: "empty" }, h("strong", {}, "No repository"), "The cockpit was started without --repo; only the runs of the observed state directories are shown."));
+    body.append(h("p", { class: "void" }, h("strong", {}, "No repository"), "The cockpit was started without --repo; only the runs of the observed state directories are shown."));
     return;
   }
   if (!p) {
-    body.append(h("p", { class: "empty", role: "status" }, h("strong", {}, "Observing the repository"), "The structural preparation of the working tree runs; on a large model this takes a while."));
+    body.append(h("p", { class: "void", role: "status" }, h("strong", {}, "Observing the repository"), "The structural preparation of the working tree runs; on a large model this takes a while."));
     return;
   }
   const ok = p.status === "passed";
+  // Counts exist only where the observation checked a model; otherwise they
+  // are unknown, not zero.
+  const counted = Boolean(p.modelDigest);
   body.append(
     h("div", { class: "stat" },
-      h("div", {}, h("b", {}, String(p.packages)), h("span", {}, "Packages")),
-      h("div", {}, h("b", {}, String(p.definitions)), h("span", {}, "Definitions")),
+      h("div", {}, h("b", {}, counted ? String(p.packages) : "–"), h("span", {}, "Packages")),
+      h("div", {}, h("b", {}, counted ? String(p.definitions) : "–"), h("span", {}, "Definitions")),
       h("div", {}, h("b", { class: ok ? "st-done" : "st-fail" }, ok ? "passed" : p.status || "not completed"), h("span", {}, "Structural check"))),
     h("dl", { class: "facts", style: { marginTop: "14px" } },
       p.modelDigest ? [h("dt", {}, "Canonical model"), h("dd", {}, h("span", { class: "digest", title: p.modelDigest }, shortDigest(p.modelDigest)))] : null,
@@ -85,30 +88,30 @@ function drawSession(section, s) {
   const body = h("div", { class: "body" });
   section.append(body);
   if (s.errors.sessions || !s.sessionsAvailable) {
-    body.append(h("p", { class: "empty" }, h("strong", {}, "Not available"), "Model sessions need the cockpit to be started with --run-config and --runtime-profile."));
+    body.append(h("p", { class: "void" }, h("strong", {}, "Not available"), "Model sessions need the cockpit to be started with --run-config and --runtime-profile."));
     return;
   }
   if (!open) {
-    body.append(h("p", { class: "empty" }, h("strong", {}, "No open session"), "Change the model by prompt: an Agent works on its own copy and proposes; you decide."));
+    body.append(h("p", { class: "void" }, h("strong", {}, "No open session"), "Change the model by prompt: an Agent works on its own copy and proposes; you decide."));
     return;
   }
   const last = open.turns[open.turns.length - 1];
   const cls = open.state === "working" || open.state === "preparing" ? "st-working" : open.state === "halted" ? "st-fail" : "st-waiting";
-  body.append(
-    h("p", { class: `outcome ${cls}`, style: { margin: "0 0 8px" } }, h("span", { class: "lamp" }), h("strong", {}, open.state)),
-    last ? h("p", { class: "prose", style: { margin: "0 0 8px" } }, last.prompt.length > 220 ? `${last.prompt.slice(0, 219)}…` : last.prompt) : null,
-    h("p", { class: "note", style: { margin: 0 } }, `${open.turns.length} of ${open.maxTurns || "?"} Agent turns; profile ${open.profile || "not yet known"}.`));
+  append(body, [
+    h("p", { class: `outcome ${cls}`, style: { margin: "0 0 10px" } }, h("span", { class: "lamp" }), open.state),
+    last ? h("p", { class: "prose", style: { margin: "0 0 10px" } }, last.prompt.length > 220 ? `${last.prompt.slice(0, 219)}…` : last.prompt) : null,
+    h("p", { class: "note", style: { margin: 0 } }, open.state === "preparing" ? "Preparing the source and the workspace." : `${open.turns.length} of ${open.maxTurns} Agent turns; profile ${open.profile}.`)]);
 }
 
 function drawProposals(section, s) {
   const open = s.openProposals;
   clear(section).append(head("ov-proposals", "Proposals", h("a", { class: "more", href: "#/proposals" }, "All proposals")));
   if (s.errors.proposals) {
-    section.append(h("p", { class: "empty" }, h("strong", {}, "Not available"), "Proposals need the cockpit to be started with --repo."));
+    section.append(h("p", { class: "void" }, h("strong", {}, "Not available"), "Proposals need the cockpit to be started with --repo."));
     return;
   }
   if (!open.length) {
-    section.append(h("p", { class: "empty" }, h("strong", {}, "Nothing waits for a decision"), "Proposals come from the settings form and from model sessions."));
+    section.append(h("p", { class: "void" }, h("strong", {}, "Nothing waits for a decision"), "Proposals come from the settings form and from model sessions."));
     return;
   }
   section.append(h("ul", { class: "rows" }, open.slice(0, 6).map((p) => h("li", {},
@@ -121,10 +124,10 @@ function drawProposals(section, s) {
 
 function drawNow(section, s) {
   clear(section).append(head("ov-now", "Running now", h("a", { class: "more", href: "#/runs" }, "All runs")));
-  if (s.errors.runs) return section.append(h("p", { class: "empty", role: "alert" }, `The runs are not readable: ${s.errors.runs.message}`));
+  if (s.errors.runs) return section.append(h("p", { class: "void", role: "alert" }, `The runs are not readable: ${s.errors.runs.message}`));
   const live = s.liveRuns;
   if (!live.length) {
-    section.append(h("p", { class: "empty" }, h("strong", {}, "No run holds its state directory"), "A run started with markitect apply appears here while it runs. The cockpit never starts or stops one."));
+    section.append(h("p", { class: "void" }, h("strong", {}, "No run holds its state directory"), "A run started with markitect apply appears here while it runs. The cockpit never starts or stops one."));
     return;
   }
   section.append(h("ul", { class: "rows" }, live.map((r) => h("li", {},
@@ -138,11 +141,11 @@ function drawNow(section, s) {
 function drawQuestions(section, s) {
   if (answerInProgress(section)) return;
   clear(section).append(head("ov-questions", "Owner questions"));
-  if (s.errors.questions) return section.append(h("p", { class: "empty", role: "alert" }, `The questions are not readable: ${s.errors.questions.message}`));
+  if (s.errors.questions) return section.append(h("p", { class: "void", role: "alert" }, `The questions are not readable: ${s.errors.questions.message}`));
   const questions = s.data.questions || [];
   const answers = Boolean(s.data.project?.answers);
   if (!questions.length) {
-    section.append(h("p", { class: "empty" }, h("strong", {}, "No question"), "No run in the observed state directories has asked the owner a question."));
+    section.append(h("p", { class: "void" }, h("strong", {}, "No question"), "No run in the observed state directories has asked the owner a question."));
     return;
   }
   const waiting = questions.filter((q) => q.answerable);
@@ -164,7 +167,7 @@ function drawRecent(section, s) {
   if (s.errors.runs) return;
   const runs = (s.data.runs || []).slice(0, 6);
   if (!runs.length) {
-    section.append(h("p", { class: "empty" }, h("strong", {}, "No run evidence"), "Start the cockpit with the state directory of an Apply (--state DIR or --run-config PATH)."));
+    section.append(h("p", { class: "void" }, h("strong", {}, "No run evidence"), "Start the cockpit with the state directory of an Apply (--state DIR or --run-config PATH)."));
     return;
   }
   section.append(h("div", { class: "body flush" }, runRows(runs)));

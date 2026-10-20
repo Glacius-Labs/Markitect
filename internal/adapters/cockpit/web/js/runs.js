@@ -22,11 +22,11 @@ export function renderRuns(content) {
     if (!page.isConnected) return unsubscribe();
     clear(table);
     if (s.errors.runs) {
-      table.append(h("p", { class: "empty", role: "alert" }, `The runs are not readable: ${s.errors.runs.message}`));
+      table.append(h("p", { class: "void", role: "alert" }, `The runs are not readable: ${s.errors.runs.message}`));
       return;
     }
     const runs = s.data.runs || [];
-    table.append(runs.length ? runRows(runs) : h("p", { class: "empty" }, h("strong", {}, "No run evidence"), "Start the cockpit with the state directory of an Apply (--state DIR or --run-config PATH)."));
+    table.append(runs.length ? runRows(runs) : h("p", { class: "void" }, h("strong", {}, "No run evidence"), "Start the cockpit with the state directory of an Apply (--state DIR or --run-config PATH)."));
     const dirs = s.data.project?.states || [];
     clear(states).append("State directories observed: ", ...dirs.map((d, i) => [i ? ", " : "", h("span", { class: "digest", title: d }, shortPath(d))]).flat());
   };

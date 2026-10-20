@@ -115,11 +115,18 @@ export function navIcon(name) {
   return s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false" }, s("path", { d: paths[name] || "" }));
 }
 
-// brandMark is the cockpit's mark: a signal lamp on its post.
+// brandMark is the Glacius Labs mark: four shards around a still center.
 export function brandMark() {
-  return s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false" },
-    s("rect", { x: 7, y: 2, width: 10, height: 15, rx: 5, fill: "none", stroke: "currentColor", "stroke-width": 1.6 }),
-    s("circle", { cx: 12, cy: 7, r: 2.2, fill: "#5db37e" }),
-    s("circle", { cx: 12, cy: 12.5, r: 2.2, fill: "none", stroke: "currentColor", "stroke-width": 1.2 }),
-    s("path", { d: "M12 17v5M8 22h8", stroke: "currentColor", "stroke-width": 1.6, fill: "none" }));
+  const shard = (d) => s("path", { d });
+  return s("svg", { viewBox: "0 0 1700.5129 3315.7236", "aria-hidden": "true", focusable: "false", fill: "currentColor" },
+    s("g", { transform: "matrix(21.93579,0,0,21.93579,-7924.0595,-7116.4542)" },
+      shard("m 365.8093,385.37175 c 8.8944,-17.34602 17.7888,-34.69203 26.6832,-52.03805 -2.7795,15.7096 -5.559,31.4192 -8.3385,47.1288 -6.1149,1.63642 -12.2298,3.27283 -18.3447,4.90925 z"),
+      shard("m 434.1907,385.37175 c -8.8944,-17.34602 -17.7888,-34.69203 -26.6832,-52.03805 2.7795,15.7096 5.559,31.4192 8.3385,47.1288 6.1149,1.63642 12.2298,3.27283 18.3447,4.90925 z"),
+      shard("m 365.8093,414.62825 c 8.8944,17.34602 17.7888,34.69203 26.6832,52.03805 -2.7795,-15.7096 -5.559,-31.4192 -8.3385,-47.1288 -6.1149,-1.63642 -12.2298,-3.27283 -18.3447,-4.90925 z"),
+      shard("m 434.1907,414.62825 c -8.8944,17.34602 -17.7888,34.69203 -26.6832,52.03805 2.7795,-15.7096 5.559,-31.4192 8.3385,-47.1288 6.1149,-1.63642 12.2298,-3.27283 18.3447,-4.90925 z")));
+}
+
+// ticks draws corner registration ticks on a .ticked plate.
+export function ticks() {
+  return h("span", { class: "ticks", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("i"));
 }

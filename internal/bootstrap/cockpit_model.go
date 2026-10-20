@@ -12,8 +12,8 @@ import (
 
 // cockpitModel turns the checked model and the registry records of a
 // structural preparation into the cockpit's read-only model view.
-func cockpitModel(checked model.Result, records []apply.RegistryRecord) *cockpit.ModelView {
-	view := &cockpit.ModelView{Models: []cockpit.ModelScope{}, Registry: []cockpit.RegistryEntry{}}
+func cockpitModel(checked model.Result, records []apply.RegistryRecord, registryStatus model.Status) *cockpit.ModelView {
+	view := &cockpit.ModelView{Models: []cockpit.ModelScope{}, Registry: []cockpit.RegistryEntry{}, RegistryStatus: string(registryStatus)}
 	for _, scope := range checked.Models {
 		s := cockpit.ModelScope{ID: scope.ID, Digest: scope.Digest, Local: scope.Local, Status: string(scope.Status), Packages: []string{}, Definitions: []cockpit.DefinitionView{}}
 		for _, p := range scope.Packages {
@@ -30,6 +30,7 @@ func cockpitModel(checked model.Result, records []apply.RegistryRecord) *cockpit
 			for _, l := range d.BodyLinks {
 				v.Links = append(v.Links, cockpit.LinkView{Package: l.Target.Package, ID: l.Target.ID})
 			}
+			v.Segments = bodySegments(d.Body, d.BodyLinks)
 			for _, f := range d.Spec {
 				v.Spec = append(v.Spec, cockpit.FieldView{Name: f.Name, Value: valueText(f.Value)})
 			}
@@ -76,4 +77,39 @@ func valueText(v model.Value) string {
 		return "{" + strings.Join(out, ", ") + "}"
 	}
 	return ""
+}
+
+// bodySegments cuts a body at its links' located spans. The model check
+// locates each link in the decoded body; when a link has no location, or the
+// locations do not follow one another inside the body, the body stays one
+// text segment rather than guessing which text names which target.
+func bodySegments(body string, links []model.BodyLink) []cockpit.BodySegment {
+	whole := []cockpit.BodySegment{{Text: body}}
+	var out []cockpit.BodySegment
+	at := 0
+	for _, l := range links {
+		if l.Coordinates == nil || l.Coordinates.Body == nil {
+			return whole
+		}
+		start, end := l.Coordinates.Body.StartByte, l.Coordinates.Body.EndByte
+		if start < at || end <= start || end > len(body) {
+			return whole
+		}
+		if start > at {
+			out = append(out, cockpit.BodySegment{Text: body[at:start]})
+		}
+		shown := l.Target.ID
+		if l.Display != nil {
+			shown = *l.Display
+		}
+		out = append(out, cockpit.BodySegment{Text: shown, Link: &cockpit.LinkView{Package: l.Target.Package, ID: l.Target.ID}})
+		at = end
+	}
+	if at < len(body) {
+		out = append(out, cockpit.BodySegment{Text: body[at:]})
+	}
+	if out == nil {
+		return whole
+	}
+	return out
 }

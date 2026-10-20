@@ -20,7 +20,7 @@ export function parseRoute() {
   const params = new URLSearchParams(query);
   const parts = path.split("/").filter(Boolean).map(decodeURIComponent);
   switch (parts[0]) {
-    case "run": return { page: "run", run: parts[1], at: params.get("at"), sel: params.get("sel") };
+    case "run": return parts[1] ? { page: "run", run: parts[1], at: params.get("at"), sel: params.get("sel") } : { page: "runs" };
     case "runs": return { page: "runs" };
     case "model": return { page: "model", pkg: params.get("pkg"), id: params.get("def"), q: params.get("q") };
     case "session": return { page: "session" };

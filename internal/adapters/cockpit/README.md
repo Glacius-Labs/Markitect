@@ -36,7 +36,7 @@ The cockpit is one application with a desk rail of places — Overview, Model, S
 - **Runs:** the run history; a run opens in the inspector inside the workbench.
 - **Settings:** the execution settings form.
 
-Small windows turn the rail into a drawer and stack split views.
+Small windows turn the rail into a drawer and stack split views. The presentation follows the Glacius Labs design language: an ink ground, ice as the scarce accent, hairlines, machined edges, uppercase micro-labels and mono coordinates; DM Sans and JetBrains Mono are used where installed, and the page loads nothing from elsewhere.
 
 ## Cockpit entry and the owner's answer
 

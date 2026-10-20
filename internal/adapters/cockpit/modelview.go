@@ -8,6 +8,9 @@ import "net/http"
 type ModelView struct {
 	Models   []ModelScope    `json:"models"`
 	Registry []RegistryEntry `json:"registry"`
+	// RegistryStatus is the status of reading the registry; a registry that
+	// did not pass may list fewer files than the project has.
+	RegistryStatus string `json:"registryStatus"`
 }
 
 // ModelScope is one model of the selection: the local model or a dependency.
@@ -20,23 +23,32 @@ type ModelScope struct {
 	Definitions []DefinitionView `json:"definitions"`
 }
 
-// DefinitionView is one checked Definition. Links are the body's links in
-// their order of occurrence, so the n-th [[...]] of Body names Links[n].
+// DefinitionView is one checked Definition. Links are the targets of the
+// body's links. Segments are the body cut at the links the model check located:
+// text, and each link with its target and the text it shows. A body whose
+// links were not all located is one text segment.
 type DefinitionView struct {
-	Package string      `json:"package"`
-	ID      string      `json:"id"`
-	Kind    string      `json:"kind"`
-	Title   string      `json:"title,omitempty"`
-	Body    string      `json:"body"`
-	Source  string      `json:"source"`
-	Links   []LinkView  `json:"links"`
-	Spec    []FieldView `json:"spec"`
+	Package  string        `json:"package"`
+	ID       string        `json:"id"`
+	Kind     string        `json:"kind"`
+	Title    string        `json:"title,omitempty"`
+	Body     string        `json:"body"`
+	Source   string        `json:"source"`
+	Links    []LinkView    `json:"links"`
+	Segments []BodySegment `json:"segments"`
+	Spec     []FieldView   `json:"spec"`
 }
 
 // LinkView is the target of one body link.
 type LinkView struct {
 	Package string `json:"package"`
 	ID      string `json:"id"`
+}
+
+// BodySegment is a run of body text or one link with the text it shows.
+type BodySegment struct {
+	Text string    `json:"text"`
+	Link *LinkView `json:"link,omitempty"`
 }
 
 // FieldView is one spec field with its value as text.

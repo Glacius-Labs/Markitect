@@ -211,7 +211,7 @@ export class Inspector {
     };
     this.timeline = new Timeline(this.panels.timeline, { onSelect: (ref) => this.select(ref) });
     const lower = h("section", { class: "lower", "aria-label": "Timeline and record" }, tabs, h("div", { style: { minHeight: 0, display: "grid" } }, Object.values(this.panels)));
-    this.main = h("main", { id: "main", class: "work" }, this.stageEl, lower);
+    this.main = h("div", { class: "work" }, this.stageEl, lower);
     this.asideEl = h("aside", { class: "aside", "aria-label": "Details" });
     this.transportEl = h("footer", { class: "transport", "aria-label": "Replay" });
     this.root = h("div", { class: "inspector" }, this.headEl, this.railEl, this.accountEl, this.main, this.asideEl, this.transportEl);

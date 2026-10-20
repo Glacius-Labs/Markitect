@@ -5,7 +5,7 @@
 // proposals inbox and the model session both show it.
 
 import { api } from "./api.js";
-import { h, clear, append, when, announce } from "./dom.js";
+import { h, clear, append, when, announce, ticks } from "./dom.js";
 import { refusal } from "./settings.js";
 import { refreshState } from "./shell.js";
 
@@ -46,7 +46,7 @@ function proposalView(p, draw, compact) {
     h("div", { class: "block" },
       h("p", { class: `outcome big ${stateClass[p.state] || ""}`, tabindex: -1, style: { margin: 0 } }, h("span", { class: "lamp" }), stateWords[p.state] || p.state),
       h("dl", { class: "facts" },
-        h("dt", {}, "Proposal"), h("dd", {}, `${p.id}: ${p.title}`),
+        h("dt", {}, "Proposal"), h("dd", {}, h("span", { class: "coord" }, p.id), " ", p.title),
         h("dt", {}, "Made"), h("dd", {}, `${when(p.created)} from the committed source at `, h("span", { class: "digest" }, p.head.slice(0, 12))),
         p.decided && [h("dt", {}, "Decided"), h("dd", {}, when(p.decided))],
         h("dt", {}, "Changes"), h("dd", {}, p.changes.map((c) => `${c.path} ${c.action}`).join(", ")))),
@@ -98,7 +98,7 @@ function fileDiff(d) {
 }
 
 function decision(p, passed, draw) {
-  const section = h("section", { class: "decide", "aria-label": "Your decision" });
+  const section = h("section", { class: "decide ticked", "aria-label": "Your decision" }, ticks());
   const status = h("p", { class: "note", role: "status", tabindex: -1, style: { margin: 0 } });
   const actions = h("div", { class: "actions" });
   const paths = p.changes.map((c) => c.path).join(", ");
@@ -138,7 +138,7 @@ function decision(p, passed, draw) {
     write.focus();
   };
   choose();
-  section.append(h("h3", { style: { fontSize: "var(--s1)" } }, "Your decision"), actions, status);
+  section.append(h("h3", {}, "Your decision"), actions, status);
   return section;
 }
 

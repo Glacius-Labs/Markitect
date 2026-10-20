@@ -36,6 +36,7 @@ export function renderSession(content) {
   const side = h("div", {});
   right.append(side);
   let timer = null;
+  let shownHead = null;
   let shownComposer = null;
   let shownProposal = null;
   let stopProposal = null;
@@ -44,7 +45,13 @@ export function renderSession(content) {
     api.sessions().then((list) => {
       if (!left.isConnected) return stopProposal?.();
       const current = list.sessions.find((s) => s.state !== "closed") || null;
-      drawHead(head, current, refresh);
+      // The head and its close button are drawn again only when the state
+      // changes, so a pending close keeps its button and its message.
+      const headKey = current ? `${current.id}:${current.state}:${current.turns.length}:${current.error || ""}` : "none";
+      if (headKey !== shownHead) {
+        shownHead = headKey;
+        drawHead(head, current, refresh);
+      }
       drawConversation(conversation, list.available, current);
       const key = current ? `${current.id}:${current.state}:${current.turns.length}` : `none:${list.available}`;
       if (key !== shownComposer) {
@@ -82,18 +89,21 @@ function drawHead(head, s, refresh) {
   clear(head).append(h("h2", {}, "Model session"));
   if (!s) return;
   head.append(h("span", { class: `outcome ${stateClass[s.state] || ""}` }, h("span", { class: "lamp" }), stateWords[s.state] || s.state));
-  if (s.state !== "closing") head.append(h("div", { class: "actions" }, closeButton(s, refresh)));
+  const actions = h("div", { class: "actions" });
+  if (s.state !== "preparing") actions.append(h("span", { class: "coord", title: `Each turn at most ${s.turnTimeout}` }, `${s.turns.length}/${s.maxTurns} turns`));
+  if (s.state !== "closing") actions.append(closeButton(s, refresh));
+  head.append(actions);
 }
 
 function drawConversation(section, available, s) {
   clear(section);
   if (!available) {
-    section.append(h("p", { class: "empty" }, h("strong", {}, "Model sessions are not available"),
+    section.append(h("p", { class: "void" }, h("strong", {}, "Model sessions are not available"),
       "Start the cockpit with a run configuration and a Runtime profile: markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. Sessions use the run configuration's container engine, workspace helper and credentials."));
     return;
   }
   if (!s) {
-    section.append(h("div", { class: "empty", style: { maxWidth: "70ch" } },
+    section.append(h("div", { class: "void", style: { maxWidth: "70ch" } },
       h("strong", {}, "Change the model by prompt"),
       h("p", { style: { margin: "4px 0" } }, "Your prompt goes to an Agent of Root's Execute profile in a container. It works on its own copy of the committed source, may change only the model's Definitions and the registry, checks its work and proposes; you decide on every proposal on the right. Each prompt is one Agent turn, which costs provider usage."),
       h("p", { style: { margin: "4px 0" } }, "A session's proposals start from its source: after you accept one, commit it and start a new session.")));
@@ -102,6 +112,7 @@ function drawConversation(section, available, s) {
   if (s.state === "preparing") {
     section.append(h("p", { class: "note" }, "The session's profile and limits are known once its source is prepared."));
   }
+  if (s.error) section.append(h("p", { class: "refusal", role: "alert", style: { marginBottom: "18px" } }, s.error));
   const list = h("ol", { class: "conversation" });
   for (const t of s.turns) {
     const agent = h("div", { class: "agentturn" });
@@ -111,23 +122,23 @@ function drawConversation(section, available, s) {
     for (const id of t.proposals) {
       agent.append(h("p", {}, "Proposal ", h("a", { href: `#/proposal/${encodeURIComponent(id)}` }, id), " is shown on the right."));
     }
-    for (const answer of t.answers || []) agent.append(h("div", { class: "prose" }, answer));
+    for (const answer of t.answers || []) agent.append(h("div", { class: "prose agenttext" }, answer));
     if (t.ended) {
-      if (t.final) agent.append(h("details", {}, h("summary", { class: "note" }, "The Agent's final text"), h("div", { class: "prose" }, t.final)));
+      if (t.final) agent.append(h("details", {}, h("summary", { class: "note" }, "The Agent's final text"), h("div", { class: "prose agenttext" }, t.final)));
       agent.append(h("p", { class: `note ${t.stopped ? "" : "st-fail"}` }, `Turn ended ${clock(t.ended)} after ${duration(new Date(t.ended) - new Date(t.started))}; ${usageText(t.usage)}. `,
         t.stopped ? "The container's end was observed." : "The container's end was not observed.", t.reason ? ` Reported: ${t.reason}` : ""));
     } else {
       agent.append(h("p", { class: "st-working" }, `Working since ${clock(t.started)}.`));
     }
     list.append(h("li", { class: "msgpair" },
-      h("div", { class: "ownerprompt" }, h("span", { class: "who" }, "You"), h("div", { class: "prose" }, t.prompt)),
-      h("div", {}, h("span", { class: "who" }, "Agent"), agent)));
+      h("div", { class: "ownerprompt" }, h("span", { class: "who label" }, "You"), h("div", { class: "prose" }, t.prompt)),
+      h("div", {}, h("span", { class: "who label" }, `Agent, ${s.profile || "Root's Execute profile"}`), agent)));
   }
   section.append(list);
 }
 
 function drawSide(side, list, s) {
-  const body = h("div", { class: "panebody" });
+  const body = h("div", { class: `panebody${s ? "" : " blueprint"}`, style: s ? null : { minHeight: "100%" } });
   clear(side).append(h("div", { class: "panehead" }, h("h2", {}, s ? "Session" : "Sessions")), body);
   if (s && s.state !== "preparing") {
     body.append(h("dl", { class: "facts" },
@@ -148,7 +159,7 @@ function drawSide(side, list, s) {
   }
   const closed = (list.sessions || []).filter((x) => x.state === "closed");
   if (closed.length) {
-    body.append(h("h3", { style: { fontSize: "var(--s0)", color: "var(--ink-2)", margin: "18px 0 6px" } }, "Closed sessions"),
+    body.append(h("h3", { class: "label", style: { margin: "26px 0 8px" } }, "Closed sessions"),
       h("ul", { class: "rows" }, closed.map((x) => {
         const proposals = x.turns.flatMap((t) => t.proposals);
         return h("li", {}, h("div", { class: "row", style: { cursor: "default" } },

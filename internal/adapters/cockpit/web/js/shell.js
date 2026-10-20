@@ -35,12 +35,17 @@ function build(app) {
   const content = h("main", { id: "main", class: "content", tabindex: -1 });
   shellEl.append(
     h("aside", { class: "desk" },
-      h("a", { class: "brand", href: "#/" }, brandMark(), h("strong", {}, "Markitect"), h("span", {}, "cockpit")),
-      h("nav", { "aria-label": "Places" }, items),
+      h("a", { class: "brand", href: "#/" }, brandMark(), h("strong", {}, "Markitect"), h("span", { class: "coord" }, "Cockpit")),
+      h("nav", { "aria-label": "Places" }, h("div", { class: "label navlabel" }, "Workbench"), items),
       footer),
     h("header", { class: "topbar" }, menu, crumbs, statusbar),
     content);
   app.append(shellEl);
+  // The skip link moves focus to the work surface without changing the place.
+  document.querySelector(".skip")?.addEventListener("click", (e) => {
+    e.preventDefault();
+    content.focus();
+  });
   // A chosen place, a click beside the drawer or Escape closes the drawer on
   // small windows.
   const closeDrawer = () => {
@@ -109,19 +114,19 @@ function drawState(s) {
   const chips = [];
   const projectPart = s.data.project;
   if (projectPart && !projectPart.configured) {
-    chips.push(h("span", { class: "chip" }, "No repository"));
+    chips.push(h("span", { class: "pill" }, "No repository"));
   } else if (!p) {
-    chips.push(h("span", { class: "chip" }, h("span", { class: "lamp st-none" }), "Observing the repository"));
+    chips.push(h("span", { class: "pill" }, h("span", { class: "lamp st-none" }), "Observing the repository"));
   } else {
     const ok = p.status === "passed";
-    chips.push(h("a", { class: "chip", href: "#/model", title: p.error || "Structural check of the working tree" }, h("span", { class: `lamp ${ok ? "st-done" : "st-fail"}` }), "Check ", h("strong", {}, ok ? "passed" : p.status || "not completed")));
-    if (p.head) chips.push(h("span", { class: "chip optional", title: `Source head ${p.head}` }, "Head ", h("strong", { class: "digest" }, p.head.slice(0, 8))));
+    chips.push(h("a", { class: "pill", href: "#/model", title: p.error || "Structural check of the working tree" }, h("span", { class: `lamp ${ok ? "st-done" : "st-fail"}` }), "Check ", h("strong", {}, ok ? "passed" : p.status || "not completed")));
+    if (p.head) chips.push(h("span", { class: "pill", title: `Source head ${p.head}` }, "Head ", h("strong", { class: "digest" }, p.head.slice(0, 8))));
   }
   if (session) {
-    chips.push(h("a", { class: "chip", href: "#/session" }, h("span", { class: `lamp ${session.state === "working" || session.state === "preparing" ? "st-working" : session.state === "halted" ? "st-fail" : "st-waiting"}` }), "Session ", h("strong", {}, session.state)));
+    chips.push(h("a", { class: "pill", href: "#/session" }, h("span", { class: `lamp ${session.state === "working" || session.state === "preparing" ? "st-working" : session.state === "halted" ? "st-fail" : "st-waiting"}` }), "Session ", h("strong", {}, session.state)));
   }
-  if (live) chips.push(h("a", { class: "chip", href: "#/runs" }, h("span", { class: "lamp st-working" }), h("strong", {}, String(live)), live === 1 ? " run running" : " runs running"));
-  if (questions) chips.push(h("a", { class: "chip", href: "#/" }, h("span", { class: "lamp st-owner" }), h("strong", {}, String(questions)), questions === 1 ? " question waits" : " questions wait"));
+  if (live) chips.push(h("a", { class: "pill", href: "#/runs" }, h("span", { class: "lamp st-working" }), h("strong", {}, String(live)), live === 1 ? " run running" : " runs running"));
+  if (questions) chips.push(h("a", { class: "pill", href: "#/" }, h("span", { class: "lamp st-owner" }), h("strong", {}, String(questions)), questions === 1 ? " question waits" : " questions wait"));
   clear(statusbar).append(...chips);
 
   append(clear(footer), [

@@ -63,7 +63,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/cockpit.css"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Defines the cockpit's light and dark presentation: the desk rail, status bar, panels, split views, model browser, state lamps, exchange channels, responsive layout and reduced motion."
+    why: "Defines the cockpit's presentation in the Glacius Labs design language: the desk rail, status bar, panels, split views, model browser, state lamps, exchange channels, responsive layout and reduced motion."
   - path: "internal/adapters/cockpit/web/js/main.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -236,3 +236,7 @@ artifacts:
     form: code
     realizes: [product/cockpit/accepted-proposals]
     why: "Lists this cockpit's proposals beside the chosen one with its check, difference and the owner's decision."
+  - path: "internal/bootstrap/cockpit_model_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies that the model view links only the body text the model check located and keeps a body whose links are not located as text."
