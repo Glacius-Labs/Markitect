@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: catalog
+    as: Catalog
+  - package: stock
+    as: Stock
+id: availability
+kind: Software.Rule
+body: |-
+  The reserved quantity of a [[Catalog.item]] is the sum of the quantities of
+  its lines in open [[order|orders]]; lines of fulfilled and cancelled orders
+  reserve nothing. Its available quantity is its [[Stock.on-hand]] quantity
+  minus its reserved quantity and is never negative. [[place-order]] admits a
+  line only when its quantity is at most the item's available quantity, so a
+  fulfilment never takes more than is on hand.
+spec: {}

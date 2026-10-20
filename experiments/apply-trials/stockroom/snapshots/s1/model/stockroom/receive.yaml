@@ -1,0 +1,13 @@
+imports:
+  - package: software
+    as: Software
+id: receive
+kind: Software.UseCase
+body: |-
+  At [[interface]], `receive --sku SKU --qty N` adds N to the on-hand quantity
+  of the existing [[item]] with that normalized SKU, commits the change through
+  [[storage]] and returns the updated record. An invalid or unknown SKU, an
+  invalid quantity under [[inputs]] or a result above the limit of
+  [[stock-limits]] is refused with stored data unchanged. Other items are not
+  changed.
+spec: {}

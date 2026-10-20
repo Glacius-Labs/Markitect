@@ -1,0 +1,18 @@
+imports:
+  - package: software
+    as: Software
+id: inputs
+kind: Software.Rule
+body: |-
+  For every command of [[system]]: a SKU is trimmed of surrounding whitespace
+  and converted to uppercase; the result must be exactly three letters A-Z, a
+  hyphen and three digits 0-9, for example ABC-123. Two SKUs with the same
+  normalized value denote the same [[item]], and records show the normalized
+  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
+  and at most 60 characters, counted as Unicode code points. A quantity is
+  written as one or more ASCII decimal digits, with no sign, whitespace,
+  fraction or exponent; leading zeros do not change its value, which must be
+  from 1 to 500. A reorder point is written the same way and its value must be
+  from 0 to 9999. Invalid input fails through [[interface]] and leaves stored
+  data unchanged under [[storage]].
+spec: {}

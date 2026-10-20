@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+id: add-item
+kind: Software.UseCase
+body: |-
+  At [[Depot.interface]], `add-item --sku SKU --name NAME [--reorder N]` creates
+  one [[item]] with the normalized SKU of [[sku]], the name of [[Depot.inputs]]
+  and the given reorder point, or reorder point 0 when --reorder is omitted. It
+  commits the item through [[Depot.storage]] and returns its catalog record. An
+  invalid SKU, name or reorder point, or a SKU that already exists after
+  normalization, is refused with stored data unchanged.
+spec: {}

@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+id: realization
+kind: Software.Rule
+body: |-
+  Deliver working code, meaningful automated tests and a README in realization/
+  for [[system]] and every modeled command. Keep code, tests and documentation
+  consistent with [[item]], [[inputs]], [[stock-limits]], [[storage]] and
+  [[interface]]. The README documents how to run the commands and the tests,
+  the JSON output and error behavior, the persistent data file and the lack of
+  guarantees for concurrent independent writers. Internal organization is free
+  within the Python standard-library command and test boundary.
+spec: {}
