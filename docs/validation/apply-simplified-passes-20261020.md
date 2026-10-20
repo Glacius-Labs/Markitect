@@ -60,7 +60,7 @@ Frozen on 20 October 2026, 17:45Z, before any provider work of this session. It 
 | Reference | `8b5040ff294018dbd9d3c9d3c52742013106a980`, the hardening session's reviewed and gated evaluation candidate |
 | Images | the reference build's own: runtime `sha256:3d773344…de394`, agent `sha256:fc865635…7aa`, Python example `sha256:81a0f8bc…32f`. Claude Code 2.1.301, agentd `development`. The candidate changes no image content. Its own rebuild had different IDs (npm layer not cached) and is kept under tags `-own`. |
 | Model | `claude-sonnet-5-5`, effort high, every Execute and Verify role, the existing dedicated runtime token |
-| Inputs | the reference's frozen kit copied verbatim: kit digest `973a1413…4d3c`, manifest `208e907b…fa4d`, packets V1 `49c7a616`, V2 `f8173a9c`, A1 `8660dc87`, A2 `876a9940`, A3 `551e34e4`, A4 (S-QV) `59280816`, A7 `95d55288`; scripted A4 owner answer `85b73b90…4c0` with neutral answers to every other question; the A5 model change "at most the maximum name length" → "at most 40 characters" |
+| Inputs | the reference's frozen kit copied verbatim: kit digest `973a1413…4d3c` at the copy, manifest `208e907b…fa4d`. The attempts' bindings show `fde27e3e…da2c`, because the verification's own `git status` refreshed the packets' `.git/index` stat caches; packet heads, trees and every other file are identical. Packets V1 `49c7a616`, V2 `f8173a9c`, A1 `8660dc87`, A2 `876a9940`, A3 `551e34e4`, A4 (S-QV) `59280816`, A7 `95d55288`; scripted A4 owner answer `85b73b90…4c0` with neutral answers to every other question; the A5 model change "at most the maximum name length" → "at most 40 characters" |
 | Oracles | `check_public_names.py` `14150f13…f03b` (8 cases), `probe_name_max.py` `6821248c…5baa`, the kit's `oracle.py`, `assess.py`, the project's own tests |
 | Case limits | taken over unchanged from the reference (owner instruction of 20 October): Verify 60 min, 120 Turns, 1 Pass; Apply 120 min, 400 Turns, 12 Passes; S-X 30 min; every Turn at most 20 min |
 | Series limits | at most 9 provider-backed cases and 4 h summed charged time, first Agent dispatch to outcome. Repetitions and any Haiku case count. |
@@ -118,16 +118,16 @@ Every case: Sonnet 5.5, effort high, the same packet tree as its reference, one 
 | | simplified V2 `…202007Z-6c51bb38` | Verified, clean | met | 1 | 22 | 531 | 2.14 | – |
 | A1 faulty Depot (`8b5040ff` / C1′ `5cd22e58`) | reference A1 `…162456Z-1bd903a8` | Verified, applied | met: d1 21/21, names 8/8, 4 findings closed as resolved | 7 (plan, prepare, implement, verify NC, implement, verify NC, verify) | 157 (49/35/73) | 2,993 | 12.47 | 15, incl. 5 registry shards and 2 new test files |
 | | simplified A1 `…203032Z-bc713e26` | Verified, applied | met: Implement repaired the fault itself; d1 21/21, names 8/8, own tests 29 OK; fresh Verify clean | 2 (implement, verify) | 40 (12/7/21) | 514 | 3.13 | 3: the fix, its CLI test, one optional reports test file |
-| A2 conforming Depot | reference A2 `…171852Z-3bebd207` | Verified, **applied** | **not met**: 11 paths, 757 lines of optional tests and edits | 4 | 82 | 1,111 | 4.82 | 11 |
+| A2 conforming Depot | reference A2 `…171852Z-3bebd207` | Verified, **applied** | **not met**: 11 paths: 757 inserted lines of optional tests and edits in 9 tracked files plus 2 new test files | 4 | 82 | 1,111 | 4.82 | 11 |
 | | simplified A2 `…204135Z-d941c1a7` | Verified, **no change** | met: no-change receipt, d1 21/21, names 8/8 | 2 | 39 (12/5/22) | 978 | 2.84 | 0 |
 | A4 model-only Stockroom S-QV (`922ab2f6` / C2 `205bf524`) | reference A4 `…190322Z-cf17a253` | Verified, applied | **not met**: name maximum defaulted to 80 without a question; s1 20/21, name maximum 60 6/10, names checker fails | 6 | 36 (15/9/12) | 1,959 | 4.11 | new realization and registry |
-| | simplified A4 attempt 1 `…210017Z-f86d5de4` | Incomplete after 102 s | infrastructure: another session's `pkill -f markitect` interrupted the Orchestrator; the turn's container end was not observed, so the run correctly refused certainty | – | 2 | 102 | 0.03 | – |
+| | simplified A4 attempt 1 `…210017Z-f86d5de4` | Incomplete after 102 s | infrastructure: the run evidence shows the Orchestrator's context cancelled and the turn's container end not observed, so the run correctly refused certainty. The cockpit session confirmed and reproduced the cause: its `pkill -f "markitect cockpit"`, sent through PowerShell, lost its quotes and hit every markitect process. | – | 2 | 102 | 0.03 | – |
 | | simplified A4-b `…211052Z-f08d3eb3` | Verified, applied | **not met**: name maximum defaulted to 100 without a question; s1 20/21, name maximum 60 6/10, names checker fails. Verify found hyphen names and a 5000-digit quantity refused; the correction Implement repaired both; fresh Verify closed all 8 findings as resolved. | 4 (implement, verify NC, implement, verify) | 24 (8/4/12) | 1,418 | 2.64 | new realization and registry |
 | A5 owner sets maximum 40 (from each run's own A4) | reference A5 `…193650Z-b7461b2b` | Verified, applied | met: name maximum 40 10/10; s1 20/21 with only the hard-coded 60 rule failing, as expected | 4 | 24 | 1,014 | 1.44 | 3 |
 | | simplified A5 `…213643Z-d1e6fef1` | Verified, applied | met: identical oracle picture | 2 | 12 (3/3/6) | 566 | 1.08 | 3 (+7/−8) |
 | A7 S-X contradiction | reference A7 `…195432Z-641d73d5` | Failed: Root model error, nothing published | met | 0 | 3 | 73 | 0.15 | 0 |
 | | simplified A7 `…210909Z-a64eb400` | Failed: Root model error after stockroom's escalation, nothing published | met | 0 | 3 | 42 | 0.10 | 0 |
-| A2 conforming Depot on C2 (nearest reference A2-b on `e9643e4e`) | reference A2-b `…174632Z-5d2d7c76` | Verified, no change | met, after 7 Verify Passes that needed correction | 10 | 209 (36/21/152) | 3,978 | 20.31 | 0 |
+| A2 conforming Depot on C2 (nearest reference A2-b on `e9643e4e`) | reference A2-b `…174632Z-5d2d7c76` | Verified, no change | met, after 7 Verify Passes, 6 of them needing correction | 10 | 209 (36/21/152) | 3,978 | 20.31 | 0 |
 | | simplified A2-c2 `…215140Z-9f056e6c` | **Incomplete**: run deadline reached during the fifth Pass; nothing published | **not met**. The first Implement preserved the stand. Verify then demanded more test evidence and ended in a bookkeeping block; see below. | 5 (implement, verify NC, verify NC, implement, verify unsealed) | 159 (24/15/120) | 6,580 | 13.84 | none published; the unpublished correction added tests only |
 
 **Series totals.** Simplified: 9 cases (including the lost A4 attempt), 11,411 s charged, about $28.52 estimated. Reference: 9 cases, 13,133 s. A3, displaced here by the A4 infrastructure repeat, and A6 ran in neither series. Haiku did not run. No series cut occurred.
@@ -142,7 +142,7 @@ Every case: Sonnet 5.5, effort high, the same packet tree as its reference, one 
   - A2-c2 on C2: see below.
 - **Model gap (A4).** Both workflows default a materially open public value instead of routing it to the owner. The reference's later fix `fcd0fb54` targets that, independently of this workflow, and was not part of either evaluated build.
 - **Contradiction (A7).** Correct in both.
-- **Dependencies.** No provider run of either series needed a cross-Manager wait. The reference A1 had one wait; the simplified runs had neither waits nor bindings. The binding mechanism is therefore proved only by source tests: rebinding, reset, result-only reopening, the result gate and cycle refusal.
+- **Dependencies.** No work Pass of either series needed a cross-Manager wait. Waits between other Managers occurred only between reviewers in Verify (reference A1 one, simplified V1 two), where nothing binds. No run recorded a binding. The binding mechanism is therefore proved only by source tests: rebinding, reset, result-only reopening, the result gate and cycle refusal.
 - **Conflicts or omissions from the missing Plan and Prepare.** None observed: no File check or ownership failure, no stalled or cyclic dependency, no Manager missing from a Pass. The model-only A4-b produced a complete Stockroom in one Implement. Its only oracle failure, the defaulted name maximum, is shared with the reference.
 
 **A2 on C2.** The first Implement preserved the conforming Depot without any change, which confirms the preservation result of C1′ on the second base. The extra cost came from Verify, whose code C2 shares unchanged with the reference `922ab2f6`:
@@ -150,15 +150,15 @@ Every case: Sonnet 5.5, effort high, the same packet tree as its reference, one 
 1. **First Verify (p2).** Root disposed of one of its own adverse probes as an expectation error, which needs a fresh assessment.
 2. **Second Verify (p3).** The reviewers used mutation probes and judged the conforming tests insufficient as "meaningful tests for every modeled command". They raised 15 blocking findings, all missing test evidence; the program was correct.
 3. **Correction Implement (p4).** It added discriminating tests and changed no program code.
-4. **Third Verify (p5).** Two Verify bookkeeping issues blocked it:
+4. **Third Verify (p5).** It raised further genuine test-evidence findings (F16 by stock, with surviving mutants R90 and R101; F17 and F18), and two Verify bookkeeping issues blocked it:
    - a finding Root had raised in p3 kept the orders child from reporting satisfied, although Root's own rerun showed it resolved;
    - oversized mutation probes timed out at the 180 s check deadline and could only be disposed of by an impossible passing rerun.
 
-   Root escalated both to the user. This case has no owner channel, the same as the reference's A2, so Root could not submit and the run ended at its deadline.
+   Root escalated both to the user. This case has no owner channel, the same as the reference's A2, so Root could not submit and the run ended at its deadline. The outcome came about 10 minutes before the configured 23:51:40Z, for a reason not determined; WSL and Windows clocks agree afterwards. It had no effect, because the run was only waiting for an unanswered owner question.
 
 The reference session confirmed both issues as defects of the shared Verify engine. It fixed them on its own branch `fix/verify-finding-and-probe-deadlocks` (heads `b1283e25`, then `95396f08`). Neither fix is part of a candidate evaluated here.
 
-On C1, V2 and A2 judged the same stand clean. That variance in Verify's judgment of test adequacy, and its cost, are therefore not effects of the workflow change. The nearest reference, A2-b on `e9643e4e`, preserved the stand only after 7 Verify Passes needing correction and $20.31.
+On C1 and C1′, V2 and A2 judged the same stand clean. That variance in Verify's judgment of test adequacy, and its cost, are therefore not effects of the workflow change. The nearest reference, A2-b on `e9643e4e`, preserved the stand only after 7 Verify Passes, 6 of them needing correction, and $20.31.
 
 ## Assessment
 
