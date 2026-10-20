@@ -414,7 +414,25 @@ def fleet_cases():
     return tuple(found)
 
 
-FLEET = fleet_cases()
+# Thorough-test variants of conforming stands: do test additions on a conforming stand stop when the
+# tests already cover every modeled boundary?
+THOROUGH_PLAN = ((1, 1), (4, 1), (8, 1))
+
+
+def thorough_cases():
+    found = []
+    for width, depth in THOROUGH_PLAN:
+        project = "fleet-w%d-d%d-t" % (width, depth)
+        size = "%d ledger%s at depth %d (%d Managers)" % (width, "" if width == 1 else "s", depth, fleet.managers(project))
+        found.append(Case("W%dD%dT-N" % (width, depth), project, 3, "Conforming fleet stand with thorough tests, " + size,
+                          "Does Apply leave a conforming stand of %s unchanged when its tests already cover every "
+                          "modeled boundary?" % size,
+                          snapshot="f1", start="reference", expected=UNCHANGED, profile="f1",
+                          measure=("files changed (expected none)", "test files changed", "rounds", "turns", "time")))
+    return tuple(found)
+
+
+FLEET = fleet_cases() + thorough_cases()
 
 # The checks the reference realization fails under a changed or variant profile: they are exactly the
 # expectations that distinguish the new intent from the realized one.
@@ -430,8 +448,7 @@ PROJECTS = {
     "stockroom": {"profile": "s1", "packages": ("stockroom",), "exception": "stockroom"},
     "depot": {"profile": "d1", "packages": ("depot", "catalog", "stock", "orders", "reports"), "exception": "depot"},
 }
-for _width, _depth, _counts, _model_only in FLEET_PLAN:
-    _project = "fleet-w%d-d%d" % (_width, _depth)
+for _project in sorted({case.project for case in FLEET}):
     PROJECTS[_project] = {"profile": "f1", "packages": fleet.packages(_project), "exception": "hub"}
 
 CASES = {case.id: case for case in STOCKROOM + DEPOT + FLEET}

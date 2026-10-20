@@ -860,6 +860,30 @@ cap4:
 - **Artifact checks:** `readme-commands`, `tests-present`
 - **Record:** checks passed; rounds; turns; time; registry complete
 
+## W1D1T-N: Conforming fleet stand with thorough tests, 1 ledger at depth 1 (3 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 1 ledger at depth 1 (3 Managers) unchanged when its tests already cover every modeled boundary?
+- **Project and level:** fleet-w1-d1-t, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); test files changed; rounds; turns; time
+
+## W4D1T-N: Conforming fleet stand with thorough tests, 4 ledgers at depth 1 (6 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 4 ledgers at depth 1 (6 Managers) unchanged when its tests already cover every modeled boundary?
+- **Project and level:** fleet-w4-d1-t, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); test files changed; rounds; turns; time
+
+## W8D1T-N: Conforming fleet stand with thorough tests, 8 ledgers at depth 1 (10 Managers)
+
+- **Question:** Does Apply leave a conforming stand of 8 ledgers at depth 1 (10 Managers) unchanged when its tests already cover every modeled boundary?
+- **Project and level:** fleet-w8-d1-t, level 3
+- **Start:** snapshot `f1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
+- **Record:** files changed (expected none); test files changed; rounds; turns; time
+
 ## Profile shifts
 
 The reference realization fails exactly these checks under a changed or variant profile:

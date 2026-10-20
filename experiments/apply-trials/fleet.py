@@ -19,7 +19,7 @@ from pathlib import Path
 HERE = Path(__file__).resolve().parent
 RESOURCES = ("wood", "iron", "salt", "wool", "clay", "rope", "wax", "tea", "ink", "oil", "gold", "rice")
 GROUPS = ("ledgers", "books", "shelves", "rows")
-NAME = re.compile(r"fleet-w(\d+)-d(\d+)$")
+NAME = re.compile(r"fleet-w(\d+)-d(\d+)(-t)?$")
 FAULT_KINDS = ("cap", "floor", "order")
 
 
@@ -31,6 +31,11 @@ def parse(project):
     if not 1 <= width <= len(RESOURCES) or not 1 <= depth <= len(GROUPS) + 1:
         raise ValueError("unsupported fleet size: " + project)
     return width, depth
+
+
+def thorough(project):
+    """`-t` projects carry tests for every modeled boundary instead of the deliberately thin ones."""
+    return project.endswith("-t")
 
 
 def ledgers(project):
@@ -282,6 +287,79 @@ class LedgerTests(unittest.TestCase):
 if __name__ == "__main__":
     unittest.main()
 '''
+
+MAIN = '\n\n\nif __name__ == "__main__":'
+
+LEDGER_TEST_THOROUGH = '''
+
+    def test_credit_reaches_exactly_the_cap(self):
+        while self.state[ledger.RESOURCE].get("ann", 0) < ledger.CAP:
+            step = min(ledger.MAX_AMOUNT, ledger.CAP - self.state[ledger.RESOURCE].get("ann", 0))
+            ledger.credit(self.state, "ann", str(step))
+        self.assertEqual(self.state[ledger.RESOURCE]["ann"], ledger.CAP)
+        with self.assertRaises(Refusal):
+            ledger.credit(self.state, "ann", "1")
+        self.assertEqual(self.state[ledger.RESOURCE]["ann"], ledger.CAP)
+
+    def test_debit_reaches_exactly_the_floor(self):
+        ledger.credit(self.state, "bob", "10")
+        self.assertEqual(ledger.debit(self.state, "bob", str(10 - ledger.FLOOR))["balance"], ledger.FLOOR)
+        with self.assertRaises(Refusal):
+            ledger.debit(self.state, "bob", "1")
+        self.assertEqual(self.state[ledger.RESOURCE]["bob"], ledger.FLOOR)
+
+    def test_balances_follow_names_not_amounts(self):
+        ledger.credit(self.state, "dan", "5")
+        ledger.credit(self.state, "ann", "9")
+        self.assertEqual(ledger.balances(self.state),
+                         [{"account": "ann", "balance": 9}, {"account": "dan", "balance": 5}])
+
+    def test_inputs_are_checked(self):
+        for name, amount in (("Ann", "1"), ("", "1"), ("ann", "0"), ("ann", "-1"), ("ann", "1.0"), ("ann", " 1")):
+            with self.subTest(name=name, amount=amount), self.assertRaises(Refusal):
+                ledger.credit(self.state, name, amount)
+        self.assertEqual(self.state[ledger.RESOURCE], {})
+
+    def test_validate_refuses_out_of_range_data(self):
+        for section in ({"ann": ledger.CAP + 1}, {"ann": ledger.FLOOR - 1}, {"Ann": 1}, {"ann": "1"}, []):
+            with self.subTest(section=section), self.assertRaises((ValueError, Refusal)):
+                ledger.validate(section)'''
+
+CLI_TEST_THOROUGH = '''
+
+    def test_every_ledger_through_the_command_line(self):
+        resources = @RESOURCES@
+        for resource in resources:
+            self.assertEqual(self.ok(resource, "credit", "--account", "ann", "--amount", "3"),
+                             {"account": "ann", "balance": 3})
+            self.assertEqual(self.ok(resource, "debit", "--account", "ann", "--amount", "1")["balance"], 2)
+            self.assertEqual(self.ok(resource, "balances"), {"accounts": [{"account": "ann", "balance": 2}]})
+        self.assertEqual(self.ok("totals")["resources"],
+                         [{"resource": r, "accounts": 1, "sum": 2} for r in sorted(resources)])
+
+    def test_missing_file_and_directory(self):
+        resources = @RESOURCES@
+        self.assertEqual(self.ok("totals")["resources"],
+                         [{"resource": r, "accounts": 0, "sum": 0} for r in sorted(resources)])
+        self.assertIsNone(self.stored())
+        self.db = Path(self.folder.name) / "absent" / "ledgers.json"
+        self.assertEqual(self.ok(FIRST, "balances"), {"accounts": []})
+        self.refused(FIRST, "credit", "--account", "ann", "--amount", "1")
+        self.assertFalse(self.db.parent.exists())
+
+    def test_input_forms(self):
+        self.assertEqual(self.ok(FIRST, "credit", "--account", "  ann  ", "--amount", "0007"),
+                         {"account": "ann", "balance": 7})
+        for name in ("", "Ann", "an1", "a" * 21, "an n"):
+            self.refused(FIRST, "credit", "--account", name, "--amount", "1")
+        for amount in ("", "0", "+3", " 3", "1e2", "1.5", "-1"):
+            self.refused(FIRST, "credit", "--account", "ann", "--amount", amount)
+
+    def test_unknown_options_and_commands(self):
+        self.refused(FIRST, "balances", "--all")
+        self.refused("totals", "--all")
+        self.refused(FIRST)
+        self.refused("coal", "balances")'''
 
 ERRORS = '''"""The refusal that every part raises for invalid input or a violated rule."""
 
@@ -539,14 +617,19 @@ def reference_files(project):
     files["realization/hub/totals.py"] = TOTALS
     files["realization/app.py"] = APP
     files["realization/tests/__init__.py"] = '"""End-to-end tests of the command line."""\n'
-    files["realization/tests/test_cli.py"] = CLI_TEST.replace("@R@", entries[0][0])
+    cli_test, ledger_test = CLI_TEST, LEDGER_TEST
+    if thorough(project):
+        cli_test = cli_test.replace(MAIN, CLI_TEST_THOROUGH + MAIN)
+        ledger_test = ledger_test.replace(MAIN, LEDGER_TEST_THOROUGH + MAIN)
+    files["realization/tests/test_cli.py"] = (cli_test.replace("@R@", entries[0][0])
+                                              .replace("@RESOURCES@", repr([r for r, *_ in entries])))
     for group in groups(project):
         files["realization/%s/__init__.py" % group] = '"""A group of ledgers."""\n'
     for r, path, cap, top, floor in entries:
         files["realization/%s/__init__.py" % path] = '"""The %s ledger."""\n' % r
         files["realization/%s/ledger.py" % path] = (LEDGER.replace("@R@", r).replace("@CAP@", str(cap))
                                                      .replace("@TOP@", str(top)).replace("@FLOOR@", str(floor)))
-        files["realization/%s/test_ledger.py" % path] = LEDGER_TEST.replace("@MODULE@", module(path))
+        files["realization/%s/test_ledger.py" % path] = ledger_test.replace("@MODULE@", module(path))
     rows = []
     for r, path, cap, top, floor in entries:
         rows += ["| `%s credit --account NAME --amount N` | Adds N (1 to %d) to the account, creating it; the balance stays at most %d. |" % (r, top, cap),
@@ -657,11 +740,14 @@ def generate(project, target):
     return target
 
 
+# The cache key is taken once, at import, so it always matches the code that generates.
+GENERATOR_DIGEST = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:12]
+
+
 def project_dir(project):
     """The generated project directory, cached outside the repository by generator digest."""
     parse(project)
-    digest = hashlib.sha256(Path(__file__).read_bytes()).hexdigest()[:12]
-    target = Path(tempfile.gettempdir()) / "markitect-apply-trials" / ("%s-%s" % (project, digest))
+    target = Path(tempfile.gettempdir()) / "markitect-apply-trials" / ("%s-%s" % (project, GENERATOR_DIGEST))
     if not (target / ".complete").is_file():
         staging = target.with_name(target.name + ".tmp-%d" % __import__("os").getpid())
         if staging.exists():
