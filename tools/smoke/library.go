@@ -191,13 +191,13 @@ func (s *smoke) libraryPreparation() error {
 	if docs.View.Status != "passed" || docs.View.CanonicalModelDigest != m2 || docs.View.PreviewDigest == docs.View.ContentDigest || docs.View.ContentDigest == m2 {
 		return fmt.Errorf("documentation conflates source, output or model identities")
 	}
-	host := filepath.Join(s.work, "explicit-host.yaml")
-	if err := os.WriteFile(host, []byte("apiVersion: markitect.host/v1\nagentProfiles: {}\ncheckProfiles: {}\n"), 0644); err != nil {
+	runtimeProfile := filepath.Join(s.work, "explicit-runtime.yaml")
+	if err := os.WriteFile(runtimeProfile, []byte("apiVersion: markitect.runtime/v1\nagentProfiles: {}\ncheckProfiles: {}\n"), 0644); err != nil {
 		return err
 	}
-	out, err = invoke("check", "--metadata", "--revision", "HEAD", "--host-profile", host)
+	out, err = invoke("check", "--metadata", "--revision", "HEAD", "--runtime-profile", runtimeProfile)
 	if err == nil || !strings.Contains(out, "no revision binding for external boundary") {
-		return fmt.Errorf("fixed preview accepted current external Host bytes: %s", tail(out))
+		return fmt.Errorf("fixed preview accepted current external Runtime bytes: %s", tail(out))
 	}
 	out, err = s.run(repo, nil, s.tool("markitect"), "apply", "--repo", filepath.Join(s.work, "never-created"))
 	if err == nil || !strings.Contains(out, "not_completed") || !strings.Contains(out, "unavailable") {
@@ -214,7 +214,7 @@ func (s *smoke) libraryPreparation() error {
 	if err := os.WriteFile(oldConfig, []byte(fmt.Sprintf(`{"formatVersion":1,"stateDirectory":%q,"allocation":{"runs":1}}`, state)), 0644); err != nil {
 		return err
 	}
-	out, err = s.run(repo, nil, s.tool("markitect"), "apply", "--repo", filepath.Join(s.work, "never-created"), "--host-profile", host, "--run-config", oldConfig)
+	out, err = s.run(repo, nil, s.tool("markitect"), "apply", "--repo", filepath.Join(s.work, "never-created"), "--runtime-profile", runtimeProfile, "--run-config", oldConfig)
 	if err == nil || !strings.Contains(out, `"status": "failed"`) || !strings.Contains(out, "formatVersion 2") {
 		return fmt.Errorf("Apply accepted an invalid run configuration: %s", tail(out))
 	}

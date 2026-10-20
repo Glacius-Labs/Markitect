@@ -58,7 +58,7 @@ func libraryFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, string) 
 	}
 	selection.Local = selected("inputs/local")
 	selection.Dependencies = []apply.ModelSelection{selected("inputs/vocabulary"), selected("inputs/core")}
-	for i, p := range []string{"config/execution.data", "config/registry.data", "config/ignore.data", "host/profile.data", "host/instruction.txt"} {
+	for i, p := range []string{"config/execution.data", "config/registry.data", "config/ignore.data", "runtime/profile.data", "runtime/instruction.txt"} {
 		repo.Write(p, "\xef\xbb\xbforiginal\x00\r\n"+p)
 		location := apply.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, p)}
 		switch i {
@@ -69,7 +69,7 @@ func libraryFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, string) 
 		case 2:
 			selection.Ignore = []apply.SourceLocation{location}
 		case 3:
-			selection.HostProfiles = []apply.SourceLocation{location}
+			selection.RuntimeProfiles = []apply.SourceLocation{location}
 		case 4:
 			selection.Instructions = []apply.SourceLocation{location}
 		}

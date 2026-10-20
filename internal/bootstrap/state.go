@@ -8,7 +8,7 @@ import (
 )
 
 // The state directory holds everything one operator-visible Apply leaves on the
-// Host: the lock, the evidence of every run, and the owner channel files.
+// host machine: the lock, the evidence of every run, and the owner channel files.
 //
 //	<state>/apply.lock
 //	<state>/runs/<runID>/events.jsonl, transcripts/<turnID>.jsonl, report.json
@@ -25,7 +25,7 @@ const (
 )
 
 // stateName admits identifiers that are safe as one path element on every
-// supported Host. Run, turn and question identities come from the engine and
+// supported host. Run, turn and question identities come from the engine and
 // the operator; none of them may steer a path.
 var stateName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 

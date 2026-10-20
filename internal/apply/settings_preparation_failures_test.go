@@ -10,10 +10,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
-func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T) {
+func TestRuntimeSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T) {
 	for _, tc := range []string{"missing product", "invalid product", "explicit declarations"} {
 		t.Run(tc, func(t *testing.T) {
-			selection, raw := hostSettingsInputs(t)
+			selection, raw := runtimeSettingsInputs(t)
 			input := apply.ProductStrategyDefaults()
 			want := model.Failed
 			switch tc {
@@ -29,7 +29,7 @@ func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T)
 			}
 			m := registryModel(t, selection, raw)
 			defaults := m.DecodeExecution().PrepareDefaults(input)
-			agent, check := hostPorts(t)
+			agent, check := runtimePorts(t)
 			result, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), defaults, agent, check)
 			settings, available := result.Settings()
 			if err != nil || result.Status() != want || !reflect.DeepEqual(result.Defaults(), defaults) || available != (want == model.Passed) {
@@ -46,11 +46,11 @@ func TestHostSettingsKeepsDefaultsFailuresAndExactSelectionSources(t *testing.T)
 	}
 }
 
-func TestHostSettingsAdapterOwnsClosedInlineValidation(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
-	addHostDocument(t, &selection, &raw, strings.Replace(testHostDocument, "{profileVersion: 1}", "{profileVersion: 2, unknownAdapterField: true}", 1))
+func TestRuntimeSettingsAdapterOwnsClosedInlineValidation(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
+	addRuntimeDocument(t, &selection, &raw, strings.Replace(testRuntimeDocument, "{profileVersion: 1}", "{profileVersion: 2, unknownAdapterField: true}", 1))
 	m := registryModel(t, selection, raw)
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	calls := 0
 	agent = func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 		calls++
@@ -58,7 +58,7 @@ func TestHostSettingsAdapterOwnsClosedInlineValidation(t *testing.T) {
 		if input.Inline().Content[1].Value != "2" || input.Inline().Content[2].Value != "unknownAdapterField" {
 			t.Fatal("Apply rewrote adapter-owned inline input")
 		}
-		return apply.ProfileObservation{Status: model.Failed, Contract: apply.ProfileContract{Name: "controlled-closed-contract", Version: 1}, Diagnostics: []apply.HostProfileDiagnostic{{Code: "test.adapter_contract", Message: "Unsupported version and unknown adapter field."}}}, nil
+		return apply.ProfileObservation{Status: model.Failed, Contract: apply.ProfileContract{Name: "controlled-closed-contract", Version: 1}, Diagnostics: []apply.RuntimeProfileDiagnostic{{Code: "test.adapter_contract", Message: "Unsupported version and unknown adapter field."}}}, nil
 	}
 	result, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
 	if err != nil || calls != 1 || result.Status() != model.Failed {
@@ -66,10 +66,10 @@ func TestHostSettingsAdapterOwnsClosedInlineValidation(t *testing.T) {
 	}
 }
 
-func TestHostSettingsRetainsIndependentStaticComponentEvidence(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+func TestRuntimeSettingsRetainsIndependentStaticComponentEvidence(t *testing.T) {
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	for _, missingAgent := range []bool{false, true} {
 		var a apply.AgentProfilePreparer = agent
 		var c apply.CheckProfilePreparer = check

@@ -289,7 +289,7 @@ func TestReconcilePublishesNothingForAnUnverifiedRunAndRemovesItsHomes(t *testin
 		t.Fatalf("retained work names %q", result.RetainedWork)
 	}
 	// Homes are runtime volumes the Agents adapters mount by name, not
-	// Workspaces; the Host's RemoveHome deletes them.
+	// Workspaces; the Orchestrator's RemoveHome deletes them.
 	if len(result.Outcome.Homes) == 0 || !slices.Equal(removed, result.Outcome.Homes) {
 		t.Fatalf("homes %v, removed %v", result.Outcome.Homes, removed)
 	}

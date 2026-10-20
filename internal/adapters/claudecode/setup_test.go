@@ -13,8 +13,8 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-func setupHostProfile(engine string) HostProfile {
-	return HostProfile{
+func setupRuntimeProfile(engine string) RuntimeProfile {
+	return RuntimeProfile{
 		EngineExecutable: engine, ImageID: fixtureImage, AgentdVersion: "development", CredentialRef: "setup-token", MaxWireBytes: 1 << 20,
 		Session: SessionProfile{
 			Version: 1, Model: "claude-haiku-5-5", Effort: "high", SystemPrompt: "A generic: product prompt with \"quotes\" and ${NO_EXPANSION}.",
@@ -23,8 +23,8 @@ func setupHostProfile(engine string) HostProfile {
 	}
 }
 
-func TestHostSectionRoundTripsThroughTheMetadataDecoderAndProjection(t *testing.T) {
-	want := setupHostProfile(filepath.Join(t.TempDir(), "engine"))
+func TestRuntimeSectionRoundTripsThroughTheMetadataDecoderAndProjection(t *testing.T) {
+	want := setupRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
 	section, err := want.Section()
 	if err != nil {
 		t.Fatal(err)
@@ -58,19 +58,19 @@ func TestHostSectionRoundTripsThroughTheMetadataDecoderAndProjection(t *testing.
 	}
 }
 
-func TestHostSectionRefusesInvalidProfiles(t *testing.T) {
+func TestRuntimeSectionRefusesInvalidProfiles(t *testing.T) {
 	engine := filepath.Join(t.TempDir(), "engine")
-	for name, change := range map[string]func(*HostProfile){
-		"effort":     func(p *HostProfile) { p.Session.Effort = "max" },
-		"image":      func(p *HostProfile) { p.ImageID = "latest" },
-		"model":      func(p *HostProfile) { p.Session.Model = " " },
-		"store":      func(p *HostProfile) { p.Session.Store = "not a volume" },
-		"tool":       func(p *HostProfile) { p.Session.BuiltinTools = []string{"Task"} },
-		"credential": func(p *HostProfile) { p.CredentialRef = "" },
-		"agentd":     func(p *HostProfile) { p.AgentdVersion = "" },
-		"wire":       func(p *HostProfile) { p.MaxWireBytes = 0 },
+	for name, change := range map[string]func(*RuntimeProfile){
+		"effort":     func(p *RuntimeProfile) { p.Session.Effort = "max" },
+		"image":      func(p *RuntimeProfile) { p.ImageID = "latest" },
+		"model":      func(p *RuntimeProfile) { p.Session.Model = " " },
+		"store":      func(p *RuntimeProfile) { p.Session.Store = "not a volume" },
+		"tool":       func(p *RuntimeProfile) { p.Session.BuiltinTools = []string{"Task"} },
+		"credential": func(p *RuntimeProfile) { p.CredentialRef = "" },
+		"agentd":     func(p *RuntimeProfile) { p.AgentdVersion = "" },
+		"wire":       func(p *RuntimeProfile) { p.MaxWireBytes = 0 },
 	} {
-		p := setupHostProfile(engine)
+		p := setupRuntimeProfile(engine)
 		change(&p)
 		if _, err := p.Section(); err == nil {
 			t.Errorf("%s accepted", name)

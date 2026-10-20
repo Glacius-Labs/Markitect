@@ -11,7 +11,7 @@ func cloneSelection(value InputSelection) InputSelection {
 	value.Execution = slices.Clone(value.Execution)
 	value.Registry = slices.Clone(value.Registry)
 	value.Ignore = slices.Clone(value.Ignore)
-	value.HostProfiles = slices.Clone(value.HostProfiles)
+	value.RuntimeProfiles = slices.Clone(value.RuntimeProfiles)
 	value.Instructions = slices.Clone(value.Instructions)
 	return value
 }
@@ -34,7 +34,7 @@ func cloneRaw(value RawInputs) RawInputs {
 	value.Execution = slices.Clone(value.Execution)
 	value.Registry = slices.Clone(value.Registry)
 	value.Ignore = slices.Clone(value.Ignore)
-	value.HostProfiles = slices.Clone(value.HostProfiles)
+	value.RuntimeProfiles = slices.Clone(value.RuntimeProfiles)
 	value.Instructions = slices.Clone(value.Instructions)
 	return value
 }

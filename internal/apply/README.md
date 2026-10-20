@@ -108,7 +108,7 @@ that declares no artifact roots, never changes an artifact, and publishes a
 verified model only as the changed `.markitect` model, registry and layout files.
 `extractAccounting` compiles each candidate tree from scratch (pure, safe for the
 engine's concurrent `check` calls) and gives each phase its write plan; a
-proposed check must name a check profile the Host offers, and the required checks
+proposed check must name a check profile the Runtime offers, and the required checks
 are prepared but not run. `ExtractResult.ProposedChecks` lists the proposed checks
 for the report. The model phase sets
 `run.Config.ArtifactFindingsAdvisory` with a `ResolveDefinition` that compiles the

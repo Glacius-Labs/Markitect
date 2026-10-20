@@ -122,13 +122,13 @@ func m1SectionParents(t *testing.T, section, process string) (apply.CapturedFile
 		}
 	}
 	raw.Census = fixtureTree(t, census)
-	host := "apiVersion: markitect.host/v1\nagentProfiles:\n  library-agent: {codexAppServer: {profileVersion: 1}}\ncheckProfiles:\n  library-tests:\n    " + section + ":\n"
+	runtimeDoc := "apiVersion: markitect.runtime/v1\nagentProfiles:\n  library-agent: {codexAppServer: {profileVersion: 1}}\ncheckProfiles:\n  library-tests:\n    " + section + ":\n"
 	for _, line := range strings.Split(strings.TrimSuffix(process, "\n"), "\n") {
-		host += "      " + line + "\n"
+		runtimeDoc += "      " + line + "\n"
 	}
-	location := apply.SourceLocation{Boundary: "controlled-host-source", Path: fixturePath(t, "host.yaml")}
-	raw.HostProfiles = []apply.SourceFile{{Location: location, File: fixtureEntry(t, "host.yaml", []byte(host))}}
-	selection.HostProfiles = []apply.SourceLocation{location}
+	location := apply.SourceLocation{Boundary: "controlled-runtime-source", Path: fixturePath(t, "runtime.yaml")}
+	raw.RuntimeProfiles = []apply.SourceFile{{Location: location, File: fixtureEntry(t, "runtime.yaml", []byte(runtimeDoc))}}
+	selection.RuntimeProfiles = []apply.SourceLocation{location}
 	m, err := apply.NewModelService(fixtureSource{raw}, nil).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || m.Checked().Status != model.Passed {
 		t.Fatalf("M1 model: %v %+v", err, m.Checked().Diagnostics)

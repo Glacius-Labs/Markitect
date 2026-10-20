@@ -15,7 +15,7 @@ python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" s1 "$SHA" "$DEADLINE" > /de
 start=$(date +%s)
 timeout --kill-after=30 $(( MIN * 60 + 120 )) "$ATTEMPT/markitect" apply --repo "$ATTEMPT/repo" --model .markitect/model.yaml \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-s1.json" \
+  --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-s1.json" \
   > "$ATTEMPT/out/apply-s1.json" 2> "$ATTEMPT/out/apply-s1.stderr"
 echo "apply exit=$? seconds=$(( $(date +%s) - start ))"
 bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" | tail -3

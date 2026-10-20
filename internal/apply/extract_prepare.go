@@ -34,11 +34,11 @@ type extractStage struct {
 	tree          snapshot.Tree
 }
 
-// checkProfileOffer is a check profile the Host offers: its name and what it
+// checkProfileOffer is a check profile the Runtime offers: its name and what it
 // runs. A proposed check can name only these profiles.
 type checkProfileOffer struct{ Name, Runs string }
 
-// offeredCheckProfiles lists the check profiles of the Host that the start
+// offeredCheckProfiles lists the check profiles of the Runtime that the start
 // prepared, in name order.
 func offeredCheckProfiles(prepared CapturedSettingsPreparation) []checkProfileOffer {
 	var offers []checkProfileOffer

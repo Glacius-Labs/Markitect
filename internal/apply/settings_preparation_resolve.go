@@ -11,10 +11,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
 
-func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults settingsPreparation, checked model.Result, raw RawInputs, execution executionDecoding, sameParent bool, agents AgentProfilePreparer, checks CheckProfilePreparer) (r hostSettingsPreparation, err error) {
-	r.status = hostStatus(fileStatus, defaults.Status())
+func prepareRuntimeSettings(ctx context.Context, fileStatus model.Status, defaults settingsPreparation, checked model.Result, raw RawInputs, execution executionDecoding, sameParent bool, agents AgentProfilePreparer, checks CheckProfilePreparer) (r runtimeSettingsPreparation, err error) {
+	r.status = runtimeStatus(fileStatus, defaults.Status())
 	defer func() {
-		slices.SortFunc(r.diagnostics, func(a, b HostProfileDiagnostic) int {
+		slices.SortFunc(r.diagnostics, func(a, b RuntimeProfileDiagnostic) int {
 			ap, bp := model.Position{}, model.Position{}
 			if a.Position != nil {
 				ap = *a.Position
@@ -39,39 +39,39 @@ func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults 
 	if defaults.Status() != model.Passed {
 		r.issue(defaults.Status(), "defaults_not_passed", organization.SettingSource{}, "The bound declarative defaults have not passed; inspect Defaults diagnostics.")
 	}
-	host := decodeHost(raw)
-	r.status = hostStatus(r.status, host.status)
-	r.diagnostics = append(r.diagnostics, host.diagnostics...)
-	if host.status != model.Passed {
+	envelope := decodeRuntime(raw)
+	r.status = runtimeStatus(r.status, envelope.status)
+	r.diagnostics = append(r.diagnostics, envelope.diagnostics...)
+	if envelope.status != model.Passed {
 		return r, nil
 	}
-	baseStatus := hostStatus(hostStatus(fileStatus, defaults.Status()), execution.Status())
+	baseStatus := runtimeStatus(runtimeStatus(fileStatus, defaults.Status()), execution.Status())
 	agentStatus, checkStatus := baseStatus, baseStatus
 	agentNames := make(map[string]bool)
 	checkProfiles := make(map[string]PreparedProfile)
 	var profileFacts []organization.ProfileFact
-	for _, input := range host.profiles {
-		profile, portErr := observeHostProfile(ctx, input, agents, checks)
+	for _, input := range envelope.profiles {
+		profile, portErr := observeRuntimeProfile(ctx, input, agents, checks)
 		err = errors.Join(err, portErr)
 		r.profiles = append(r.profiles, profile)
 		r.diagnostics = append(r.diagnostics, profile.observation.Diagnostics...)
 		r.required = append(r.required, profile.observation.RequiredInstructions...)
-		r.status = hostStatus(r.status, profile.observation.Status)
+		r.status = runtimeStatus(r.status, profile.observation.Status)
 		if input.namespace == "agentProfiles" {
 			agentNames[input.name] = true
-			agentStatus = hostStatus(agentStatus, profile.observation.Status)
+			agentStatus = runtimeStatus(agentStatus, profile.observation.Status)
 			if identity, ok := profile.Identity(); ok {
 				profileFacts = append(profileFacts, organization.ProfileFact{Name: input.name, Identity: identity, Source: profile.Source()})
 			}
 		} else {
 			checkProfiles[input.name] = profile
-			checkStatus = hostStatus(checkStatus, profile.observation.Status)
+			checkStatus = runtimeStatus(checkStatus, profile.observation.Status)
 		}
 	}
 	if contextErr := ctx.Err(); contextErr != nil {
 		err = errors.Join(err, contextErr)
-		agentStatus = hostStatus(agentStatus, model.NotCompleted)
-		checkStatus = hostStatus(checkStatus, model.NotCompleted)
+		agentStatus = runtimeStatus(agentStatus, model.NotCompleted)
+		checkStatus = runtimeStatus(checkStatus, model.NotCompleted)
 		r.issue(model.NotCompleted, "cancelled", organization.SettingSource{}, contextErr.Error())
 	}
 	declarations, complete := defaults.Declarations()
@@ -93,7 +93,7 @@ func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults 
 		}
 	}
 	if agentStatus == model.Passed && complete {
-		facts, instructionErr := hostProjectInstructions(raw)
+		facts, instructionErr := runtimeProjectInstructions(raw)
 		topology, resolveErr := organization.BuildTopology(checked)
 		if resolveErr == nil {
 			resolveErr = instructionErr
@@ -129,18 +129,18 @@ func prepareHostSettings(ctx context.Context, fileStatus model.Status, defaults 
 	if checkStatus == model.Passed {
 		r.checks, r.checksComplete = selections, true
 	}
-	r.status = hostStatus(r.status, hostStatus(agentStatus, checkStatus))
+	r.status = runtimeStatus(r.status, runtimeStatus(agentStatus, checkStatus))
 	return r, err
 }
 
-func hostProjectInstructions(raw RawInputs) ([]organization.InstructionFact, error) {
+func runtimeProjectInstructions(raw RawInputs) ([]organization.InstructionFact, error) {
 	var facts []organization.InstructionFact
 	seen := make(map[string]SourceFile)
 	for _, file := range raw.Instructions {
 		id := file.RepositoryPath.String()
 		if id == "" {
 			continue
-		} // Host-only instructions remain adapter-owned.
+		} // Runtime-only instructions remain adapter-owned.
 		if prior, found := seen[id]; found {
 			if prior != file {
 				return nil, fmt.Errorf("Conflicting acquired instruction observations for %q.", id)
@@ -148,7 +148,7 @@ func hostProjectInstructions(raw RawInputs) ([]organization.InstructionFact, err
 			continue
 		}
 		seen[id] = file
-		facts = append(facts, organization.InstructionFact{ID: id, Source: hostSource(file, ""), Bytes: file.File.Bytes()})
+		facts = append(facts, organization.InstructionFact{ID: id, Source: runtimeSource(file, ""), Bytes: file.File.Bytes()})
 	}
 	return facts, nil
 }

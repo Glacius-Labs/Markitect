@@ -41,7 +41,7 @@ func NewAgents(engine *container.Engine, profiles map[string]Profile, credential
 	}, profiles, credentials)
 }
 
-// NewAgentsWithRuntime permits a Host-supplied runtime peer. Production peers
+// NewAgentsWithRuntime permits an Orchestrator-supplied runtime peer. Production peers
 // must preserve Engine.Start and Session's exit semantics.
 func NewAgentsWithRuntime(start RuntimeStarter, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
 	if start == nil || credentials == nil {
@@ -155,7 +155,7 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 }
 
 // admit resolves the turn's profile and validates everything that can be
-// checked before a container starts. It returns the Host tools in agentd form.
+// checked before a container starts. It returns the Orchestrator tools in agentd form.
 func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, []frame.ToolSpec, error) {
 	profile, ok := a.profiles[turn.Profile]
 	if !ok {
@@ -180,10 +180,10 @@ func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, []frame
 	seen := map[string]bool{}
 	for _, t := range turn.Tools {
 		if !volumeName.MatchString(t.Name) || seen[t.Name] || strings.TrimSpace(t.Description) == "" {
-			return bad("invalid or duplicate Host tool " + strconv.Quote(t.Name))
+			return bad("invalid or duplicate Orchestrator tool " + strconv.Quote(t.Name))
 		}
 		if _, err := object(t.InputSchema); err != nil {
-			return bad("Host tool " + strconv.Quote(t.Name) + " has no JSON object schema")
+			return bad("Orchestrator tool " + strconv.Quote(t.Name) + " has no JSON object schema")
 		}
 		seen[t.Name] = true
 		tools = append(tools, frame.ToolSpec{Name: t.Name, Description: t.Description, InputSchema: t.InputSchema})
@@ -421,13 +421,13 @@ func (c *conversation) read(events chan<- streamEvent) {
 	}
 }
 
-// answer hands one Host tool call to the handler and returns its answer to the
-// provider as an MCP text result, an error result when the Host refused.
+// answer hands one Orchestrator tool call to the handler and returns its answer to the
+// provider as an MCP text result, an error result when the Orchestrator refused.
 func (c *conversation) answer(ctx context.Context, call frame.ToolCall) error {
 	c.log.value("tool_call", call)
 	var reply frame.ToolReply
 	if !slices.ContainsFunc(c.tools, func(t frame.ToolSpec) bool { return t.Name == call.Name }) {
-		reply = frame.ToolReply{ID: call.ID, Error: &frame.ToolError{Code: -32601, Message: "unknown Host tool"}}
+		reply = frame.ToolReply{ID: call.ID, Error: &frame.ToolError{Code: -32601, Message: "unknown Orchestrator tool"}}
 	} else {
 		a := c.handler(ctx, call.Name, c.redact.bytes(call.Arguments))
 		if err := ctx.Err(); err != nil {

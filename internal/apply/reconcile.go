@@ -15,7 +15,7 @@ import (
 )
 
 // ReconcileRequest is everything one Apply runs with besides the captured
-// preparation: the invocation's explicit values and the Host's concrete ports.
+// preparation: the invocation's explicit values and the Orchestrator's concrete ports.
 // Selection is the capture's acquisition location, which publication uses.
 // Deadline, when set, is the operator's absolute wall-clock limit; the run's
 // own deadline is the earlier of it and the start plus the project's

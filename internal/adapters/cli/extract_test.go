@@ -20,7 +20,7 @@ import (
 
 func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	var observed ExtractRequest
 	calls := 0
 	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(_ context.Context, request ExtractRequest) (ExtractReport, error) {
@@ -29,9 +29,9 @@ func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 		return ExtractReport{Status: model.NotCompleted}, nil
 	})
 	var out, stderr bytes.Buffer
-	code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--dependency", ".markitect/dependencies/core/model.yaml", "--dependency", ".markitect/dependencies/software/model.yaml", "--host-profile", host, "--run-config", config}, &out, &stderr)
+	code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--dependency", ".markitect/dependencies/core/model.yaml", "--dependency", ".markitect/dependencies/software/model.yaml", "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr)
 	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || observed.Selection.Local.ManifestPath.String() != ".markitect/model.yaml" || observed.Selection.Local.Boundary != "." ||
-		len(observed.Selection.Dependencies) != 2 || observed.Selection.Dependencies[1].ManifestPath.String() != ".markitect/dependencies/software/model.yaml" || len(observed.Selection.HostProfiles) != 1 || observed.Selection.HostProfiles[0].Boundary != dir {
+		len(observed.Selection.Dependencies) != 2 || observed.Selection.Dependencies[1].ManifestPath.String() != ".markitect/dependencies/software/model.yaml" || len(observed.Selection.RuntimeProfiles) != 1 || observed.Selection.RuntimeProfiles[0].Boundary != dir {
 		t.Fatalf("extract arguments changed: code=%d calls=%d request=%+v stderr=%s", code, calls, observed, stderr.String())
 	}
 	var report struct {
@@ -46,7 +46,7 @@ func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 
 func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	calls := 0
 	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
 		calls++
@@ -54,13 +54,13 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	})
 	for _, args := range [][]string{
 		{"extract"}, {"extract", "--repo", "absent"},
-		{"extract", "--run-config", "relative.json", "--host-profile", host},
+		{"extract", "--run-config", "relative.json", "--runtime-profile", runtimeProfile},
 		{"extract", "--run-config", config},
-		{"extract", "--run-config", config, "--host-profile", "relative.yaml"},
+		{"extract", "--run-config", config, "--runtime-profile", "relative.yaml"},
 		// There is no --model flag: the manifest path is fixed.
-		{"extract", "--run-config", config, "--host-profile", host, "--model", ".markitect/model.yaml"},
-		{"extract", "--run-config", config, "--host-profile", host, "--revision", "HEAD"},
-		{"extract", "--run-config", config, "--host-profile", host, "--text", "x"},
+		{"extract", "--run-config", config, "--runtime-profile", runtimeProfile, "--model", ".markitect/model.yaml"},
+		{"extract", "--run-config", config, "--runtime-profile", runtimeProfile, "--revision", "HEAD"},
+		{"extract", "--run-config", config, "--runtime-profile", runtimeProfile, "--text", "x"},
 	} {
 		var out, stderr bytes.Buffer
 		if code := c.Run(context.Background(), args, &out, &stderr); code == 0 {
@@ -72,7 +72,7 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	}
 	// Without the operation installed, Extract is unavailable.
 	var out, stderr bytes.Buffer
-	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--host-profile", host}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
+	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--runtime-profile", runtimeProfile}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
 		t.Fatalf("%d %s", code, out.String())
 	}
 }
@@ -330,7 +330,7 @@ func TestRenderExtractAccount(t *testing.T) {
 
 func TestExtractPrintsTheAccountToStderrAndKeepsStdoutJSON(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	result := libraryExtract(t)
 	var report ExtractReport
 	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
@@ -339,7 +339,7 @@ func TestExtractPrintsTheAccountToStderrAndKeepsStdoutJSON(t *testing.T) {
 		return report, nil
 	})
 	var out, stderr bytes.Buffer
-	if code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--host-profile", host, "--run-config", config}, &out, &stderr); code != 0 {
+	if code := c.Run(context.Background(), []string{"extract", "--repo", dir, "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr); code != 0 {
 		t.Fatalf("code %d: %s", code, stderr.String())
 	}
 	// stdout is exactly the JSON report, which does not carry the account's data.

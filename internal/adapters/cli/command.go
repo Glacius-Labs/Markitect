@@ -69,8 +69,8 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   extract [options]        derive a model candidate from the existing artifacts
   answer <question> --text ANSWER --run-config PATH
                             answer a question of the running Apply
-  setup --host DIR --image REF --credential FILE --agent-model M [options]
-                            prepare a Host directory with host.yaml and run.json
+  setup --runtime DIR --image REF --credential FILE --agent-model M [options]
+                            prepare a Runtime directory with runtime.yaml and run.json
   version | licenses | help
 
 Common options:
@@ -79,11 +79,11 @@ Common options:
   --dependency PATH        explicit dependency model.yaml; repeat as needed
   --revision REF           resolve once; inspect exactly that fixed commit
   --metadata               request static profile/settings metadata preparation
-  --host-profile PATH      explicit absolute Host profile DOCUMENT path
+  --runtime-profile PATH   explicit absolute Runtime profile document path
 
 Without --metadata, metadata and settings are not requested. A structural pass
 does not establish static profile metadata, rendered role context or runtime
-support. Fixed previews refuse unbound present-day external Host inputs.
+support. Fixed previews refuse unbound present-day external Runtime inputs.
 
 docs options:
   --write --expect PREVIEW_DIGEST
@@ -95,7 +95,7 @@ docs options:
 
 apply options:
   --run-config PATH        explicit absolute closed JSON invocation configuration
-  --host-profile PATH      explicit absolute versioned Host profile document
+  --runtime-profile PATH   explicit absolute versioned Runtime profile document
   --repo, --model and repeated --dependency select committed capture inputs.
   Revision previews and --metadata are preparation options, not apply flags.
   Configuration supplies state storage, helper resources, harvest bounds,
@@ -105,8 +105,8 @@ apply options:
   kept under STATE/runs/RUN; only one Apply runs per state directory.
 
 extract options:
-  --run-config PATH, --host-profile PATH and repeated --dependency as for apply;
-  --repo selects the repository. There is no --model: the Host prepares the
+  --run-config PATH, --runtime-profile PATH and repeated --dependency as for apply;
+  --repo selects the repository. There is no --model: the Orchestrator prepares the
   structural manifest and lock .markitect/model.yaml with no local Definitions,
   the imported vocabulary, and .markitect/execution.yaml with budget, profiles,
   layout roots and checks. Phase one proposes the Packages and layout
@@ -126,8 +126,8 @@ answer options:
   question to stderr) and reports the file it wrote. An answer is final.
 
 setup options:
-  --host DIR               absolute Host directory, outside the repository; created
-                           private and holding host.yaml, run.json and state/
+  --runtime DIR            absolute Runtime directory, outside the repository; created
+                           private and holding runtime.yaml, run.json and state/
   --image REF              runtime image; its ID and metadata are observed, never started
   --credential FILE        absolute private Claude runtime token file; checked, never read
   --check PROFILE=EXECUTABLE  absolute executable in the image for each check profile;
@@ -202,7 +202,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	manifest := flags.String("model", ".markitect/model.yaml", "explicit model.yaml")
 	revision := flags.String("revision", "", "explicit fixed revision")
 	metadata := flags.Bool("metadata", false, "request static metadata and settings")
-	host := flags.String("host-profile", "", "explicit absolute Host profile document path")
+	runtimeProfile := flags.String("runtime-profile", "", "explicit absolute Runtime profile document path")
 	write := flags.Bool("write", false, "write the guarded generated view")
 	expect := flags.String("expect", "", "expected source/target-bound previewDigest")
 	var dependencies manifestList
@@ -214,7 +214,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		}
 		return 2
 	}
-	if flags.NArg() != 0 || verb != "docs" && (*write || *expect != "") || verb == "docs" && *metadata || *host != "" && !*metadata && verb != "docs" || *write && *expect == "" || !*write && *expect != "" {
+	if flags.NArg() != 0 || verb != "docs" && (*write || *expect != "") || verb == "docs" && *metadata || *runtimeProfile != "" && !*metadata && verb != "docs" || *write && *expect == "" || !*write && *expect != "" {
 		fmt.Fprintln(stderr, "invalid option combination; see help")
 		return 2
 	}
@@ -235,13 +235,13 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 			selection.Dependencies = append(selection.Dependencies, selected)
 		}
 	}
-	if err == nil && *host != "" {
-		if !filepath.IsAbs(*host) || filepath.Clean(*host) != *host {
-			err = errors.New("--host-profile requires an explicit absolute native document path")
+	if err == nil && *runtimeProfile != "" {
+		if !filepath.IsAbs(*runtimeProfile) || filepath.Clean(*runtimeProfile) != *runtimeProfile {
+			err = errors.New("--runtime-profile requires an explicit absolute native document path")
 		} else {
 			var p snapshot.Path
-			p, err = snapshot.NewPath(filepath.Base(*host))
-			selection.HostProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(*host), Path: p}}
+			p, err = snapshot.NewPath(filepath.Base(*runtimeProfile))
+			selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(*runtimeProfile), Path: p}}
 		}
 	}
 	if err != nil {

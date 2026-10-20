@@ -122,7 +122,7 @@ func (c *fileChecker) sourceInputs(limits model.Limits) {
 		}
 		c.protectDirectory(area, class, "Reserved Markitect registry or control area.")
 	}
-	for _, group := range [][]SourceFile{c.raw.Execution, c.raw.Registry, c.raw.Ignore, c.raw.HostProfiles, c.raw.Instructions} {
+	for _, group := range [][]SourceFile{c.raw.Execution, c.raw.Registry, c.raw.Ignore, c.raw.RuntimeProfiles, c.raw.Instructions} {
 		for _, source := range group {
 			if source.RepositoryPath.String() != "" {
 				c.protectFile(source.RepositoryPath, realization.MarkitectInput, "Explicitly captured Markitect input.")

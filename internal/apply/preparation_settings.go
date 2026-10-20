@@ -8,7 +8,7 @@ import (
 )
 
 // Settings attempts retain each actual structural acquisition and its own
-// product defaults and static Host preparation. Error includes metadata-port
+// product defaults and static Runtime preparation. Error includes metadata-port
 // errors; Structural().Error() retains the original source error separately.
 type CapturedSettingsAttempt struct {
 	structural CapturedPreparationAttempt
@@ -57,8 +57,8 @@ func (r CapturedSettingsResult) Prepared() (CapturedSettingsAttempt, bool) {
 }
 
 // PreviewSettingsResult retains only working/fixed preview parents, without a
-// guard. External Host locations keep the selected source port's explicit fixed
-// revision refusal; this service never mixes today's Host bytes into history.
+// guard. External Runtime locations keep the selected source port's explicit fixed
+// revision refusal; this service never mixes today's Runtime bytes into history.
 type PreviewSettingsResult struct {
 	request  PreviewRequest
 	attempts []PreviewSettingsAttempt
@@ -78,7 +78,7 @@ func (r PreviewSettingsResult) Prepared() (PreviewSettingsAttempt, bool) {
 	return r.attempts[len(r.attempts)-1], true
 }
 
-// CaptureSettings shares Capture's single two-acquisition bound. Static Host
+// CaptureSettings shares Capture's single two-acquisition bound. Static Runtime
 // observations run before the first closure decision, including beside an
 // incomplete FileCheck. Named instruction needs join the same full recapture;
 // missing metadata alone never retries. Product defaults are actual build bytes.

@@ -17,7 +17,7 @@ import (
 func imageObservation(t *testing.T, provider apply.AgentImageProvider) apply.ProfileObservation {
 	t.Helper()
 	raw := "codex=codex-cli 0.162.0\nclaude=2.1.301 (Claude Code)\ncodexSchema=sha256:" + strings.Repeat("a", 64) + "\nagentd=development\n"
-	metadata := testMetadata(t, "unused-host-coordinate", "runtime.env", raw)
+	metadata := testMetadata(t, "unused-runtime-coordinate", "runtime.env", raw)
 	image := &apply.AgentImageObservation{
 		Provider: provider, ImageID: "sha256:" + strings.Repeat("b", 64),
 		Metadata:   apply.AgentImageMetadataFile{Path: "/opt/markitect/runtime.env", ContentID: metadata.ContentID, Size: metadata.Size},
@@ -33,14 +33,14 @@ func imageObservation(t *testing.T, provider apply.AgentImageProvider) apply.Pro
 
 func prepareImageProfile(t *testing.T, observation apply.ProfileObservation, portErr error) (apply.CapturedSettingsPreparation, error) {
 	t.Helper()
-	selection, raw := hostSettingsInputs(t)
+	selection, raw := runtimeSettingsInputs(t)
 	if observation.AgentImage != nil && observation.AgentImage.Provider == apply.AgentImageClaudeCode {
 		// A Claude image belongs to a claudeCode section.
-		addHostDocument(t, &selection, &raw, strings.Replace(testHostDocument, "codexAppServer:", "claudeCode:", 1))
+		addRuntimeDocument(t, &selection, &raw, strings.Replace(testRuntimeDocument, "codexAppServer:", "claudeCode:", 1))
 	}
 	m := registryModel(t, selection, raw)
-	_, checks := hostPorts(t)
-	agent := rawHostAgentPort(func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+	_, checks := runtimePorts(t)
+	agent := rawRuntimeAgentPort(func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 		observation.InputBinding = input.Binding()
 		return observation, portErr
 	})
@@ -164,10 +164,10 @@ func TestAgentImageRejectsAmbiguousAndMalformedSuccessfulEvidence(t *testing.T) 
 }
 
 func TestAgentImageCannotBecomeCheckEvidenceOrEchoAnotherRequest(t *testing.T) {
-	selection, raw := hostSettingsInputs(t)
+	selection, raw := runtimeSettingsInputs(t)
 	m := registryModel(t, selection, raw)
-	agent, _ := hostPorts(t)
-	check := hostCheckPort(func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+	agent, _ := runtimePorts(t)
+	check := runtimeCheckPort(func(_ context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
 		return imageObservation(t, apply.AgentImageCodexAppServer), nil
 	})
 	prepared, err := m.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), m.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), agent, check)
@@ -181,14 +181,14 @@ func TestAgentImageCannotBecomeCheckEvidenceOrEchoAnotherRequest(t *testing.T) {
 	cached := first.ProfileObservations()[0].Observation()
 	for _, missing := range []bool{false, true} {
 		otherRaw, otherSelection := m.Inputs().Raw, m.Request().Selection
-		addHostDocument(t, &otherSelection, &otherRaw, "# Different request\n"+testHostDocument)
+		addRuntimeDocument(t, &otherSelection, &otherRaw, "# Different request\n"+testRuntimeDocument)
 		other := registryModel(t, otherSelection, otherRaw)
 		o := cached
 		if missing {
 			o.InputBinding = apply.ProfileBinding{}
 		}
-		_, checks := hostPorts(t)
-		port := rawHostAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) { return o, nil })
+		_, checks := runtimePorts(t)
+		port := rawRuntimeAgentPort(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) { return o, nil })
 		got, err := other.PrepareRegistry().CheckFiles().PrepareSettings(context.Background(), other.DecodeExecution().PrepareDefaults(apply.ProductStrategyDefaults()), port, checks)
 		if err != nil || got.Status() != model.Failed {
 			t.Fatal("image observation echoed a different or absent request", err)

@@ -63,11 +63,11 @@ func libraryLayoutFiles(t *testing.T, selection *apply.InputSelection, raw *appl
 
 func preparedAttempt(t *testing.T, selection apply.InputSelection, raw apply.RawInputs) apply.CapturedSettingsAttempt {
 	t.Helper()
-	addHostDocument(t, &selection, &raw, testHostDocument)
+	addRuntimeDocument(t, &selection, &raw, testRuntimeDocument)
 	source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
 		return captured(preparationObservation(t, request.Selection, raw)), nil
 	}}
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	result, err := apply.NewPreparationService(apply.NewModelService(source, nil)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 	attempt, ok := result.Prepared()
 	if err != nil || !ok {
@@ -416,7 +416,7 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 		for _, p := range untracked {
 			raw.Untracked = append(raw.Untracked, path(t, p))
 		}
-		addHostDocument(t, &selection, &raw, testHostDocument)
+		addRuntimeDocument(t, &selection, &raw, testRuntimeDocument)
 		source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
 			return captured(preparationObservation(t, request.Selection, raw)), nil
 		}}
@@ -424,7 +424,7 @@ func TestCandidatesRequireAPassedPreparation(t *testing.T) {
 	}
 	prepareWith := func(t *testing.T, execution, stray string, untracked ...string) apply.CapturedSettingsResult {
 		s, selection := service(t, execution, stray, untracked...)
-		agent, check := hostPorts(t)
+		agent, check := runtimePorts(t)
 		result, _ := s.CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 		return result
 	}

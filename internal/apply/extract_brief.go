@@ -132,10 +132,10 @@ func writeProjectChecks(b *strings.Builder, checks []briefCheck) {
 	}
 }
 
-// writeCheckProfiles lists the check profiles the Host offers, so that a
+// writeCheckProfiles lists the check profiles the Runtime offers, so that a
 // proposed check can name one.
 func writeCheckProfiles(b *strings.Builder, offers []checkProfileOffer) {
-	b.WriteString("\nThe check profiles the Host offers (a check in checks of .markitect/execution.yaml names one)\n")
+	b.WriteString("\nThe check profiles the Runtime offers (a check in checks of .markitect/execution.yaml names one)\n")
 	if len(offers) == 0 {
 		b.WriteString("- none\n")
 	}

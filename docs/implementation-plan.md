@@ -71,7 +71,7 @@ The owner-adopted [working method](development/working-method.md) applies: learn
 
 Each session owns its scope, its pull requests and its merges. Implementation work runs in an isolated worktree from the integrated base, with one bounded task, owned paths and acceptance criteria. Sessions coordinate directly; actual state, candidate SHAs, reviews and results live in each chat and PR.
 
-**Shared files** have one writer at a time and are announced to the other sessions before an edit: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside a stream's own packages, the architecture and module gates and the code map. The run configuration, `.markitect/execution.yaml` and the Host profile formats change only within an assignment that names their writer, because Host setup produces them. Port changes likewise need an assignment for the Apply core.
+**Shared files** have one writer at a time and are announced to the other sessions before an edit: `go.mod`, `internal/adapters/cli/command.go`, `internal/bootstrap/main.go`, the model and registry shards outside a stream's own packages, the architecture and module gates and the code map. The run configuration, `.markitect/execution.yaml` and the Runtime profile formats change only within an assignment that names their writer, because Host setup produces them. Port changes likewise need an assignment for the Apply core.
 
 ### Branch names
 

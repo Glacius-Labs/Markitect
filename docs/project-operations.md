@@ -8,7 +8,7 @@ The later [command design](design/canonical-model/commands.md) records the accep
 
 `check --repo PATH` calls actual PreparationService with an explicit canonical v1 manifest and dependencies. Reports retain each acquisition attempt and actual Model check, execution, registry, file-accounting and context-selection statuses. Failed or incomplete acquisition cannot become an empty passing model.
 
-Metadata and settings are unrequested unless `--metadata` is selected. `--host-profile` names an explicit absolute Orchestrator document; no environment or provider discovery substitutes for it. Agent and Check adapters parse selected executable/schema/profile bytes only. Product defaults come from their embedded versioned source, and effective settings retain provenance. Reports neither start a process nor establish execution readiness.
+Metadata and settings are unrequested unless `--metadata` is selected. `--runtime-profile` names an explicit absolute Runtime profile document; no environment or provider discovery substitutes for it. Agent and Check adapters parse selected executable/schema/profile bytes only. Product defaults come from their embedded versioned source, and effective settings retain provenance. Reports neither start a process nor establish execution readiness.
 
 ## Why a Definition is in context
 
@@ -16,13 +16,13 @@ Metadata and settings are unrequested unless `--metadata` is selected. `--host-p
 
 ## CLI, setup and current roots
 
-The default manifest is `.markitect/model.yaml`. Repeated `--dependency` flags select required manifests. Repository-relative coordinates remain relative to the selected repository; absolute manifests establish explicit acquisition boundaries. `--revision` resolves a ref once through the repository port and preserves its full commit. Fixed acquisition never falls back to current external Orchestrator or dependency bytes.
+The default manifest is `.markitect/model.yaml`. Repeated `--dependency` flags select required manifests. Repository-relative coordinates remain relative to the selected repository; absolute manifests establish explicit acquisition boundaries. `--revision` resolves a ref once through the repository port and preserves its full commit. Fixed acquisition never falls back to current external Runtime profile or dependency bytes.
 
 The CLI has no MCP server and no automatic setup. The old generation remains in [Git](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). [Provider adapters](provider-adapters.md) describes the metadata and runtime boundary.
 
 ## Apply and answer
 
-`apply` needs a committed repository, an explicit absolute Host profile (`--host-profile`) and an explicit absolute run configuration (`--run-config`); without them it reports `not_completed` before acquisition. It starts real Agents in containers, runs the required checks, and publishes only a verified candidate; it never commits. Its JSON report names the evidence directory under the run configuration's state directory. Apply asks the owner nothing mid-run; a model defect ends it Incomplete with a report ([DEC-063](concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)). `answer QUESTION_ID --text TEXT --run-config PATH` answers a question Root asked a running `extract`. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns behavior, evidence and limits; the [workflow](project-workflow.md#execute-verify-and-apply) gives the sequence.
+`apply` needs a committed repository, an explicit absolute Runtime profile (`--runtime-profile`) and an explicit absolute run configuration (`--run-config`); without them it reports `not_completed` before acquisition. It starts real Agents in containers, runs the required checks, and publishes only a verified candidate; it never commits. Its JSON report names the evidence directory under the run configuration's state directory. Apply asks the owner nothing mid-run; a model defect ends it Incomplete with a report ([DEC-063](concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)). `answer QUESTION_ID --text TEXT --run-config PATH` answers a question Root asked a running `extract`. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns behavior, evidence and limits; the [workflow](project-workflow.md#execute-verify-and-apply) gives the sequence.
 
 ## Generated view and recovery
 

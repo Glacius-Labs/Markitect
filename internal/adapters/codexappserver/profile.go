@@ -19,8 +19,8 @@ import (
 
 var ErrSession = errors.New("Codex turn refused or incomplete")
 
-// Profile is everything a turn needs from one captured Host Agent profile:
-// the immutable image, the opaque credential reference the Host resolves, the
+// Profile is everything a turn needs from one captured Agent profile of the Runtime profile:
+// the immutable image, the opaque credential reference the Orchestrator resolves, the
 // per-message wire limit and the explicit execution settings.
 type Profile struct {
 	ImageID       string
@@ -30,7 +30,7 @@ type Profile struct {
 }
 
 // SessionProfile is the closed execution profile, separate from the static
-// image-metadata profile. No field is inferred from the Host environment.
+// image-metadata profile. No field is inferred from the Orchestrator environment.
 type SessionProfile struct {
 	Version               int     `json:"version"`
 	Model                 string  `json:"model"`
@@ -59,7 +59,7 @@ func validateProfile(p Profile) error {
 	return validateSessionProfile(p.Session)
 }
 
-// RuntimeCredential is resolved by the Host from exactly CredentialRef. Mode is
+// RuntimeCredential is resolved by the Orchestrator from exactly CredentialRef. Mode is
 // api-key or dedicated-runtime-login. RuntimeLogin must originate from a
 // dedicated runtime login, never a desktop login. Its refresh token is removed
 // before a turn copy is installed; this adapter does not refresh credentials.

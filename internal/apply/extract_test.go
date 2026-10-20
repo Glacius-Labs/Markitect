@@ -35,7 +35,7 @@ func TestExtractPreparationAcceptsUnregisteredArtifactsApplyRefuses(t *testing.T
 	source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
 		return captured(preparationObservation(t, request.Selection, raw)), nil
 	}}
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	result, err := apply.NewPreparationService(apply.NewModelService(source, nil)).CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 	if result.Status() == model.Passed {
 		t.Fatalf("Apply prepared unregistered artifacts: %v", err)
@@ -52,7 +52,7 @@ func TestExtractRefusesAStartThatIsNotCase3(t *testing.T) {
 	entry, _ := raw.Census.Lookup(path(t, ".markitect/execution.yaml"))
 	selection.Execution = []apply.SourceLocation{{Boundary: selection.Repository, Path: entry.Path()}}
 	raw.Execution = []apply.SourceFile{{Location: selection.Execution[0], File: entry, RepositoryPath: entry.Path()}}
-	addHostDocument(t, &selection, &raw, testHostDocument)
+	addRuntimeDocument(t, &selection, &raw, testRuntimeDocument)
 	attempt := prepareExtract(t, selection, raw)
 	workspaces := &fakeWorkspaces{}
 	_, err := apply.Extract(context.Background(), apply.ExtractRequest{RunID: "x-1", Prepared: attempt, Workspaces: workspaces, Evidence: &memoryEvidence{},
@@ -150,7 +150,7 @@ func TestExtractStructurePhaseWritePlanAndBrief(t *testing.T) {
 	brief := cfg.Team[0].Brief
 	for _, w := range []string{"structure phase of an Extract", "Artifact roots: realization. They hold 8 artifact file(s); 1 more lie outside the roots.", "realization/lending/reminders: 2 file(s)", "the artifacts and the imported dependency models under .markitect/dependencies/core, .markitect/dependencies/software.", "layout.exceptions", "Software.Concept",
 		"software/Concept (use as Software.Concept)", "software/Rule", ".markitect/model/<package-path>/<id>.yaml", "[[Software.other-id]]", "declared checks of its artifacts", "project-tests", "Extract does not run them",
-		"layout.exceptions and checks of .markitect/execution.yaml", "The check profiles the Host offers", "- library-tests: runs program", "timeout: 2m"} {
+		"layout.exceptions and checks of .markitect/execution.yaml", "The check profiles the Runtime offers", "- library-tests: runs program", "timeout: 2m"} {
 		if !strings.Contains(brief, w) {
 			t.Errorf("brief lacks %q:\n%s", w, brief)
 		}
@@ -249,8 +249,8 @@ func TestExtractStructureAccountsProposedChecks(t *testing.T) {
 	for _, tc := range []struct {
 		name, execution, want string
 	}{
-		{"unknown profile", extractExecutionProposed + extractProposedCheck("no-such-profile"), `names the profile "no-such-profile", which the Host does not offer. The Host offers the check profiles: library-tests.`},
-		{"check that does not decode", extractExecutionProposed + "  - id: broken\n    profile: library-tests\n", "The Host offers the check profiles: library-tests."},
+		{"unknown profile", extractExecutionProposed + extractProposedCheck("no-such-profile"), `names the profile "no-such-profile", which the Runtime does not offer. The Runtime offers the check profiles: library-tests.`},
+		{"check that does not decode", extractExecutionProposed + "  - id: broken\n    profile: library-tests\n", "The Runtime offers the check profiles: library-tests."},
 		{"change elsewhere beside a check", strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 999", 1) + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
 		{"changed owner check", strings.Replace(extractExecutionProposed, "args: [test, ./...]", "args: [test, -run, Nothing, ./...]", 1), "changed beyond layout.exceptions and checks"},
 		{"removed owner check", strings.Replace(extractExecutionProposed, "checks:\n  - id: project-tests\n    profile: library-tests\n    directory: realization\n    args: [test, ./...]\n    timeout: 2m\n", "", 1) + "checks:\n" + extractProposedCheck("library-tests"), "changed beyond layout.exceptions and checks"},
@@ -527,7 +527,7 @@ func TestExtractModelAccountingReportsEachFindingOnce(t *testing.T) {
 	}
 }
 
-func TestExtractGuardLeavesTheHostStateAndGitDataAlone(t *testing.T) {
+func TestExtractGuardLeavesTheRuntimeStateAndGitDataAlone(t *testing.T) {
 	req := extractRequest(t)
 	start := extractStart(t)
 	structure, err := apply.ExtractStructureConfig(req, extractNow)

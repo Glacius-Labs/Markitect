@@ -17,7 +17,7 @@ import (
 
 func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	var observed ApplyRequest
 	calls := 0
 	c := New(nil, nil, nil, nil, nil, func(_ context.Context, request ApplyRequest) (ApplyReport, error) {
@@ -34,8 +34,8 @@ func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
 		return ApplyReport{Status: ApplyStatus(outcome, nil, nil), Run: NewRunReport("run-1", outcome), EvidenceDirectory: filepath.Join(dir, "runs", "run-1")}, nil
 	}, nil)
 	var out, stderr bytes.Buffer
-	code := c.Run(context.Background(), []string{"apply", "--repo", dir, "--model", ".markitect/model.yaml", "--dependency", "vendor/model.yaml", "--host-profile", host, "--run-config", config}, &out, &stderr)
-	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || len(observed.Selection.Dependencies) != 1 || observed.Selection.Dependencies[0].ManifestPath.String() != "vendor/model.yaml" || len(observed.Selection.HostProfiles) != 1 {
+	code := c.Run(context.Background(), []string{"apply", "--repo", dir, "--model", ".markitect/model.yaml", "--dependency", "vendor/model.yaml", "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr)
+	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || len(observed.Selection.Dependencies) != 1 || observed.Selection.Dependencies[0].ManifestPath.String() != "vendor/model.yaml" || len(observed.Selection.RuntimeProfiles) != 1 {
 		t.Fatalf("apply arguments changed: code=%d calls=%d stderr=%s", code, calls, stderr.String())
 	}
 	var report struct {
@@ -70,7 +70,7 @@ func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
 
 func TestApplyAndAnswerRefuseInvalidInvocationsWithoutDispatch(t *testing.T) {
 	dir := t.TempDir()
-	config, host := filepath.Join(dir, "run.json"), filepath.Join(dir, "host.yaml")
+	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	calls := 0
 	c := New(nil, nil, nil, nil, nil, func(context.Context, ApplyRequest) (ApplyReport, error) {
 		calls++
@@ -81,13 +81,13 @@ func TestApplyAndAnswerRefuseInvalidInvocationsWithoutDispatch(t *testing.T) {
 	})
 	for _, args := range [][]string{
 		{"apply"}, {"apply", "--repo", "absent"},
-		{"apply", "--run-config", "relative.json", "--host-profile", host},
-		{"apply", "--run-config", config, "--host-profile", host, "--revision", "HEAD"},
-		{"apply", "--run-config", config, "--host-profile", host, "--metadata"},
-		{"apply", "--run-config", config, "--host-profile", host, "--text", "x"},
+		{"apply", "--run-config", "relative.json", "--runtime-profile", runtimeProfile},
+		{"apply", "--run-config", config, "--runtime-profile", runtimeProfile, "--revision", "HEAD"},
+		{"apply", "--run-config", config, "--runtime-profile", runtimeProfile, "--metadata"},
+		{"apply", "--run-config", config, "--runtime-profile", runtimeProfile, "--text", "x"},
 		{"answer"}, {"answer", "q"}, {"answer", "q", "--run-config", config}, {"answer", "q", "--text", "x"},
 		{"answer", "q", "--text", "x", "--run-config", "relative.json"},
-		{"answer", "q", "--text", "x", "--run-config", config, "--host-profile", host},
+		{"answer", "q", "--text", "x", "--run-config", config, "--runtime-profile", runtimeProfile},
 		{"answer", "--text", "x", "--run-config", config},
 	} {
 		var out, stderr bytes.Buffer
@@ -165,7 +165,7 @@ func TestExecutionExitCodesFollowTheReportedStatus(t *testing.T) {
 			return ApplyReport{Status: tc.status}, tc.err
 		}, nil)
 		var out, stderr bytes.Buffer
-		if code := c.Run(context.Background(), []string{"apply", "--host-profile", filepath.Join(dir, "host.yaml"), "--run-config", filepath.Join(dir, "run.json")}, &out, &stderr); code != tc.code {
+		if code := c.Run(context.Background(), []string{"apply", "--runtime-profile", filepath.Join(dir, "runtime.yaml"), "--run-config", filepath.Join(dir, "run.json")}, &out, &stderr); code != tc.code {
 			t.Fatalf("status=%s err=%v code=%d", tc.status, tc.err, code)
 		}
 	}

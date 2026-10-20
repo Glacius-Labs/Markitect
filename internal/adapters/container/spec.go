@@ -41,7 +41,7 @@ type ContainerSpec struct {
 	Name string
 	// Image is the engine image ID, the content digest "sha256:...".
 	Image string
-	// Labels mark the container, at least with its Host store.
+	// Labels mark the container, at least with its Runtime store.
 	Labels map[string]string
 	// User is the numeric "uid:gid"; uid 0 and gid 0 are refused.
 	User string
@@ -79,7 +79,7 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 		return nil, fmt.Errorf("container %s needs positive CPU, memory, process and temporary-space limits", s.Name)
 	}
 	if len(s.Labels) == 0 {
-		return nil, fmt.Errorf("container %s needs at least its Host store label", s.Name)
+		return nil, fmt.Errorf("container %s needs at least its Runtime store label", s.Name)
 	}
 	if s.Network != "" && (!namePattern.MatchString(s.Network) || s.Network == "host") {
 		return nil, fmt.Errorf("network %q is not a plain isolated engine network", s.Network)

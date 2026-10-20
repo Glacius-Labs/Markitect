@@ -50,7 +50,7 @@ func (f *fakeStream) Read(p []byte) (int, error) {
 func (f *fakeStream) close() { f.once.Do(func() { close(f.done) }) }
 
 // fakeRuntime plays one provider: it acknowledges initialize, answers the
-// prompt with init, the scripted Host tool calls and a result.
+// prompt with init, the scripted Orchestrator tool calls and a result.
 type fakeRuntime struct {
 	mu      sync.Mutex
 	stream  *fakeStream
@@ -179,7 +179,7 @@ func newHarness(t *testing.T, rt *fakeRuntime, profile Profile) *harness {
 
 func testTurn() run.Turn {
 	return run.Turn{ID: "turn-1", Manager: "lending", Kind: run.ExecuteTurn, Profile: "claude", Workspace: "ws-volume", Home: "home-volume", Prompt: "Do the work.",
-		Tools: []run.ToolSpec{{Name: "report", Description: "Report to the Host", InputSchema: json.RawMessage(`{"type":"object"}`)}}}
+		Tools: []run.ToolSpec{{Name: "report", Description: "Report to the Orchestrator", InputSchema: json.RawMessage(`{"type":"object"}`)}}}
 }
 
 func argAfter(argv []string, flag string) string {
@@ -194,7 +194,7 @@ func argAfter(argv []string, flag string) string {
 func echoHandler(calls *[]string) run.ToolHandler {
 	return func(_ context.Context, name string, args json.RawMessage) run.ToolAnswer {
 		*calls = append(*calls, name+" "+string(args))
-		return run.ToolAnswer{Text: "host says ok"}
+		return run.ToolAnswer{Text: "orchestrator says ok"}
 	}
 }
 
@@ -216,7 +216,7 @@ func TestExecuteTurnSpecArgvEnvAndResult(t *testing.T) {
 	}
 	argv := rt.start.Argv
 	for flag, want := range map[string]string{"--tools": "Read,Write,Edit", "--allowedTools": "Read,Write,Edit,mcp__markitect__report", "--permission-mode": "dontAsk",
-		"--model": "m", "--effort": "high", "--setting-sources": "", "--system-prompt": "Use the Host instruction.", "--resume": "<absent>",
+		"--model": "m", "--effort": "high", "--setting-sources": "", "--system-prompt": "Use the Runtime instruction.", "--resume": "<absent>",
 		"--input-format": "stream-json", "--output-format": "stream-json", "--strict-mcp-config": argAfter(argv, "--strict-mcp-config")} {
 		if got := argAfter(argv, flag); got != want {
 			t.Errorf("%s = %q, want %q", flag, got, want)
@@ -238,7 +238,7 @@ func TestExecuteTurnSpecArgvEnvAndResult(t *testing.T) {
 		t.Fatalf("writes %q", rt.writes)
 	}
 	if !reflect.DeepEqual(seen, []string{`report {"x":1}`}) || len(rt.replies) != 1 || rt.replies[0].ID != 1 || rt.replies[0].Error != nil ||
-		string(rt.replies[0].Result) != `{"content":[{"type":"text","text":"host says ok"}],"isError":false}` {
+		string(rt.replies[0].Result) != `{"content":[{"type":"text","text":"orchestrator says ok"}],"isError":false}` {
 		t.Fatalf("tool round trip: %v %+v", seen, rt.replies)
 	}
 	want := run.Usage{Model: "claude-test-model", InputTokens: 11, OutputTokens: 22, CacheReadTokens: 33, CacheCreationTokens: 44, CostUSD: 0.25, ProviderTurns: 3}
@@ -433,7 +433,7 @@ func TestCancelStopsTheContainerAndReturnsPartialResult(t *testing.T) {
 	}
 }
 
-func TestCancelWhileAHostToolRuns(t *testing.T) {
+func TestCancelWhileAnOrchestratorToolRuns(t *testing.T) {
 	rt := newFakeRuntime()
 	rt.calls = []frame.ToolCall{{ID: 1, Name: "report", Arguments: json.RawMessage(`{}`)}}
 	h := newHarness(t, rt, validProfile())

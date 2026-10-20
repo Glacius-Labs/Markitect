@@ -12,14 +12,14 @@ import (
 	"go.yaml.in/yaml/v3"
 )
 
-func setupContainerProfile(engine string) ContainerHostProfile {
-	return ContainerHostProfile{EngineExecutable: engine, Profile: ContainerProfile{
+func setupContainerProfile(engine string) ContainerRuntimeProfile {
+	return ContainerRuntimeProfile{EngineExecutable: engine, Profile: ContainerProfile{
 		ImageID: checkImageID, Executable: "/usr/local/go/bin/go", ArgumentPrefix: nil, Env: nil,
 		Limits: run.CheckLimits{MilliCPUs: 2000, MemoryBytes: 4 << 30, Processes: 1024}, MaxOutputBytes: 1 << 20,
 	}}
 }
 
-func TestContainerHostSectionRoundTripsThroughTheMetadataDecoder(t *testing.T) {
+func TestContainerRuntimeSectionRoundTripsThroughTheMetadataDecoder(t *testing.T) {
 	engine := filepath.Join(testkit.TempDir(t), "engine")
 	want := setupContainerProfile(engine)
 	section := want.Section()

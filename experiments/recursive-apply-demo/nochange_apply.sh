@@ -20,7 +20,7 @@ python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" n1 "$SHA" "$DEADLINE" > /de
 start=$(date +%s)
 timeout --kill-after=30 1260 "$ATTEMPT/markitect" apply --repo "$ATTEMPT/repo" --model .markitect/model.yaml \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-n1.json" \
+  --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-n1.json" \
   > "$ATTEMPT/out/apply-n1.json" 2> "$ATTEMPT/out/apply-n1.stderr"
 echo "apply exit=$? seconds=$(( $(date +%s) - start ))"
 bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" | grep containers

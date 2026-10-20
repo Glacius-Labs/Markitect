@@ -25,7 +25,7 @@ type CheckProfilePreparer interface {
 	PrepareCheckProfile(context.Context, ProfileInput) (ProfileObservation, error)
 }
 
-// ProfileInput can only be produced from an acquired Host document by Apply.
+// ProfileInput can only be produced from an acquired Runtime profile document by Apply.
 // Section names the selected adapter section (codexAppServer or claudeCode
 // for an Agent, process or container for a check); Inline returns that
 // section, never a whole catalog to parse.
@@ -47,7 +47,7 @@ func (p ProfileInput) Namespace() string          { return p.namespace }
 func (p ProfileInput) Name() string               { return p.name }
 func (p ProfileInput) Section() string            { return p.section }
 func (p ProfileInput) Field() string              { return p.field }
-func (p ProfileInput) Inline() *yaml.Node         { return cloneHostNode(p.inline) }
+func (p ProfileInput) Inline() *yaml.Node         { return cloneRuntimeNode(p.inline) }
 func (p ProfileInput) Instructions() []SourceFile { return slices.Clone(p.instructions) }
 
 // ProfileMetadataFile records an observed regular file without retaining large
@@ -69,7 +69,7 @@ type ProfileMetadataInventory struct {
 	Files    []ProfileMetadataFile
 }
 
-type HostProfileDiagnostic struct {
+type RuntimeProfileDiagnostic struct {
 	Code     string
 	Source   organization.SettingSource
 	Position *model.Position
@@ -93,7 +93,7 @@ const (
 
 // AgentImageMetadataFile identifies actual whole bytes read from a regular file
 // inside ImageID. Path is an exact canonical absolute POSIX image path, not a
-// Host location or an instruction for Apply to read. It is independent of a
+// Runtime location or an instruction for Apply to read. It is independent of a
 // schema digest merely recorded in those bytes. Size is bounded to 1 MiB.
 type AgentImageMetadataFile struct {
 	Path      string
@@ -120,7 +120,7 @@ type AgentImageObservation struct {
 // CheckImageObservation binds a container check to its immutable engine image
 // ID and to the executable it runs: Executable identifies the actual whole
 // bytes of that regular file inside the image, by its canonical absolute POSIX
-// path. It is observed from the image, never from a Host file, and grants no
+// path. It is observed from the image, never from a Runtime file, and grants no
 // process or execution authority.
 type CheckImageObservation struct {
 	ImageID    string
@@ -147,7 +147,7 @@ type ProfileObservation struct {
 	Inventories          []ProfileMetadataInventory
 	Instructions         []SourceLocation
 	RequiredInstructions []SourceLocation
-	Diagnostics          []HostProfileDiagnostic
+	Diagnostics          []RuntimeProfileDiagnostic
 }
 
 // PreparedProfile retains partial port observations, even on error. Identity is
@@ -161,7 +161,7 @@ type PreparedProfile struct {
 
 func (p PreparedProfile) Input() ProfileInput {
 	r := p.input
-	r.inline = cloneHostNode(r.inline)
+	r.inline = cloneRuntimeNode(r.inline)
 	r.instructions = slices.Clone(r.instructions)
 	return r
 }
@@ -170,10 +170,10 @@ func (p PreparedProfile) Observation() ProfileObservation {
 }
 func (p PreparedProfile) Identity() (string, bool) { return p.identity, p.identity != "" }
 func (p PreparedProfile) Source() organization.SettingSource {
-	return hostSource(p.input.document, p.input.field)
+	return runtimeSource(p.input.document, p.input.field)
 }
 
-func hostSource(file SourceFile, field string) organization.SettingSource {
+func runtimeSource(file SourceFile, field string) organization.SettingSource {
 	if file.Location.Boundary == "" || file.Location.Path.String() == "" {
 		return organization.SettingSource{Field: field}
 	}
@@ -183,7 +183,7 @@ func hostSource(file SourceFile, field string) organization.SettingSource {
 	return organization.SettingSource{File: "source:" + string(locator), ContentID: file.File.ContentID(), Field: field}
 }
 
-func cloneHostNode(n *yaml.Node) *yaml.Node {
+func cloneRuntimeNode(n *yaml.Node) *yaml.Node {
 	if n == nil {
 		return nil
 	}
@@ -191,12 +191,12 @@ func cloneHostNode(n *yaml.Node) *yaml.Node {
 	r.Alias = nil // Only restricted, alias-free nodes may enter ProfileInput.
 	r.Content = make([]*yaml.Node, len(n.Content))
 	for i, child := range n.Content {
-		r.Content[i] = cloneHostNode(child)
+		r.Content[i] = cloneRuntimeNode(child)
 	}
 	return &r
 }
 
-func cloneHostDiagnostics(in []HostProfileDiagnostic) []HostProfileDiagnostic {
+func cloneRuntimeDiagnostics(in []RuntimeProfileDiagnostic) []RuntimeProfileDiagnostic {
 	r := slices.Clone(in)
 	for i := range r {
 		if r[i].Position != nil {
@@ -223,6 +223,6 @@ func cloneProfileObservation(o ProfileObservation) ProfileObservation {
 	}
 	o.Instructions = slices.Clone(o.Instructions)
 	o.RequiredInstructions = slices.Clone(o.RequiredInstructions)
-	o.Diagnostics = cloneHostDiagnostics(o.Diagnostics)
+	o.Diagnostics = cloneRuntimeDiagnostics(o.Diagnostics)
 	return o
 }

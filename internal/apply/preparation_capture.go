@@ -39,7 +39,7 @@ func (s *PreparationService) capturePreparation(ctx context.Context, request Cap
 			attempt.settings, err = structural.files.PrepareSettings(ctx, attempt.defaults, ports.agents, ports.checks)
 			attempt.err = err
 			r.status = structuralPreparationStatus(r.status, attempt.settings.Status())
-			closure.host, required = observedPreparationHostClosure(attempt.settings.ProfileObservations())
+			closure.runtime, required = observedPreparationRuntimeClosure(attempt.settings.ProfileObservations())
 		}
 		r.attempts = append(r.attempts, attempt)
 		if err != nil {
@@ -96,7 +96,7 @@ func (s *PreparationService) previewPreparation(ctx context.Context, request Pre
 			attempt.settings, err = structural.files.PrepareSettings(ctx, attempt.defaults, ports.agents, ports.checks)
 			attempt.err = err
 			r.status = structuralPreparationStatus(r.status, attempt.settings.Status())
-			closure.host, required = observedPreparationHostClosure(attempt.settings.ProfileObservations())
+			closure.runtime, required = observedPreparationRuntimeClosure(attempt.settings.ProfileObservations())
 		}
 		r.attempts = append(r.attempts, attempt)
 		if err != nil {

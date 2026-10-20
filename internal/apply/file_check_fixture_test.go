@@ -29,9 +29,9 @@ func fileCheckSource(t *testing.T, selection *apply.InputSelection, raw *apply.R
 	case "instruction":
 		selection.Instructions = append(selection.Instructions, location)
 		raw.Instructions = append(raw.Instructions, source)
-	case "host":
-		selection.HostProfiles = append(selection.HostProfiles, location)
-		raw.HostProfiles = append(raw.HostProfiles, source)
+	case "runtime":
+		selection.RuntimeProfiles = append(selection.RuntimeProfiles, location)
+		raw.RuntimeProfiles = append(raw.RuntimeProfiles, source)
 	default:
 		t.Fatal("unknown fixture source group")
 	}

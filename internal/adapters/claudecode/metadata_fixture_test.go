@@ -51,7 +51,7 @@ func profileInput(t *testing.T, inline string, instructions []apply.SourceFile) 
 
 func consumeProfile(t *testing.T, inline string, instructions []apply.SourceFile, port apply.AgentProfilePreparer) apply.CapturedSettingsPreparation {
 	t.Helper()
-	return consumeProfileAt(t, inline, instructions, port, filepath.Join(t.TempDir(), "host"))
+	return consumeProfileAt(t, inline, instructions, port, filepath.Join(t.TempDir(), "runtime"))
 }
 
 func consumeProfileAt(t *testing.T, inline string, instructions []apply.SourceFile, port apply.AgentProfilePreparer, boundary string) apply.CapturedSettingsPreparation {
@@ -113,18 +113,18 @@ func consumeProfileSection(t *testing.T, inline string, instructions []apply.Sou
 	if err != nil {
 		t.Fatal(err)
 	}
-	host := "apiVersion: markitect.host/v1\nagentProfiles:\n  library-agent:\n    " + section + ":\n"
+	runtimeDoc := "apiVersion: markitect.runtime/v1\nagentProfiles:\n  library-agent:\n    " + section + ":\n"
 	for _, line := range strings.Split(strings.TrimSuffix(inline, "\n"), "\n") {
-		host += "      " + line + "\n"
+		runtimeDoc += "      " + line + "\n"
 	}
-	host += "checkProfiles: {}\n"
+	runtimeDoc += "checkProfiles: {}\n"
 	location := apply.SourceLocation{Boundary: boundary, Path: testPath(t, "profiles.yaml")}
-	entry, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte(host))
+	entry, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte(runtimeDoc))
 	if err != nil {
 		t.Fatal(err)
 	}
-	raw.HostProfiles = []apply.SourceFile{{Location: location, File: entry}}
-	selection := apply.InputSelection{Repository: "controlled-M1-source", Local: raw.Local.Selection, HostProfiles: []apply.SourceLocation{location}}
+	raw.RuntimeProfiles = []apply.SourceFile{{Location: location, File: entry}}
+	selection := apply.InputSelection{Repository: "controlled-M1-source", Local: raw.Local.Selection, RuntimeProfiles: []apply.SourceLocation{location}}
 	for _, dependency := range raw.Dependencies {
 		selection.Dependencies = append(selection.Dependencies, dependency.Selection)
 	}

@@ -11,7 +11,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// ContainerProfile holds explicitly supplied Host execution values for a
+// ContainerProfile holds explicitly supplied Runtime execution values for a
 // selected check profile. It neither decodes nor certifies profile metadata.
 type ContainerProfile struct {
 	ImageID        string

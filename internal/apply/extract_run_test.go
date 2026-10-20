@@ -391,7 +391,7 @@ func TestExtractKeepsTheModelWorkWhenTheModelPhaseDoesNotVerify(t *testing.T) {
 
 func TestExtractFailsWhenTheVerifiedCandidateChangesMoreThanTheModel(t *testing.T) {
 	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
-	// The Host's state is no guarded input, so accounting lets this candidate pass;
+	// The Runtime's state is no guarded input, so accounting lets this candidate pass;
 	// only the publication filter refuses it.
 	agents.writes["x-1-model ."][".markitect/state/runs/x.json"] = "{}\n"
 	result, err := apply.Extract(context.Background(), req)

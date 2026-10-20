@@ -1,16 +1,16 @@
 # Check adapter
 
 `MetadataPreparer` observes closed static Check profiles. Its zero value retains
-the existing `process/v1` Host executable metadata format. Compose
+the existing `process/v1` Runtime profile executable metadata format. Compose
 `NewMetadataPreparer(NewEngineImageReaders().Reader)` for `container/v1`; the selected
 `ProfileInput.Section()` dispatches the adapter. Preparation does not run the
 executable or establish runtime capability.
 
-## Container Host profile
+## Container Runtime profile
 
-The selected Host check profile uses exactly one `container` section. Every
+The selected Runtime check profile uses exactly one `container` section. Every
 field below is required; empty prefix and environment lists must be explicit.
-The example engine path is a literal Windows path; other Hosts supply their
+The example engine path is a literal Windows path; other hosts supply their
 literal native absolute engine path.
 
 ```yaml
@@ -61,12 +61,12 @@ Complete executable observation is bounded to 512 MiB and retains the actual
 SHA-256 and positive size. Path-header observations establish presence and type;
 only the entire executable supplies file-content evidence. Failed observation,
 cancellation or failed cleanup cannot produce passing evidence. The executable
-is never read from a Host path, and the separate 1 MiB metadata reader is not
+is never read from a host path, and the separate 1 MiB metadata reader is not
 used for it.
 
 Passing preparation returns contract `markitect.container-check` version `1`,
 the exact input binding, and `CheckImage` evidence with image ID and executable
-path, actual whole-file digest and size. It supplies no Host file evidence.
+path, actual whole-file digest and size. It supplies no host file evidence.
 The source-bound configuration and this evidence participate in Apply's profile
 identity; they establish static metadata only.
 
@@ -77,14 +77,14 @@ captured prefix, environment and bounds into `ContainerProfile` without another
 observation. The application checks its engine composition against the captured
 `engineExecutable` and selects this profile for the declared check.
 
-`ContainerProfile.Request(check, tree)` projects explicit Host-supplied container
+`ContainerProfile.Request(check, tree)` projects explicit Runtime-supplied container
 values and an `apply.ExecutionCheck` into the existing `run.CheckRequest`. The
 caller selects the profile for `check.Profile` and supplies the actual immutable
 tree. The fixed argument prefix precedes literal project arguments; image,
 environment, limits, directory, timeout and check identity are retained exactly.
 The helper copies argument/environment slices and refuses incomplete or invalid
 requests before effects, using the request and runner's existing conditions.
-It supplies no defaults and does not inspect the Host environment.
+It supplies no defaults and does not inspect the Orchestrator environment.
 
 The pure value can also be supplied explicitly by an application; that alone
 does not establish an acquired profile binding. `process/v1` metadata does not

@@ -144,7 +144,7 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 		target    *[]apply.SourceFile
 		local     bool
 	}{
-		{selection.Execution, &a.raw.Execution, true}, {selection.Registry, &a.raw.Registry, true}, {selection.Ignore, &a.raw.Ignore, true}, {selection.HostProfiles, &a.raw.HostProfiles, false}, {selection.Instructions, &a.raw.Instructions, false},
+		{selection.Execution, &a.raw.Execution, true}, {selection.Registry, &a.raw.Registry, true}, {selection.Ignore, &a.raw.Ignore, true}, {selection.RuntimeProfiles, &a.raw.RuntimeProfiles, false}, {selection.Instructions, &a.raw.Instructions, false},
 	} {
 		if err = a.selectedFiles(group.locations, group.target, group.local); err != nil {
 			return a, err

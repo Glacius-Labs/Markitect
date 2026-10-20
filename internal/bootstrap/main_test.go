@@ -45,9 +45,9 @@ func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testin
 	}
 	repo.Write(".markitect/execution.yaml", text[:start]+"\nchecks: []\n")
 	engine := filepath.Join(t.TempDir(), "explicit-engine-not-executed")
-	host := filepath.Join(t.TempDir(), "host.yaml")
-	profile := fmt.Sprintf("apiVersion: markitect.host/v1\nagentProfiles:\n  markitect-agent:\n    codexAppServer:\n      profileVersion: 2\n      engineExecutable: %q\n      imageID: %s\n      agentdVersion: development\n      recordedCodexSchemaDigest: %s\n      instructions: []\ncheckProfiles: {}\n", engine, bootstrapImageID, bootstrapSchema)
-	if err := os.WriteFile(host, []byte(profile), 0600); err != nil {
+	runtimeProfile := filepath.Join(t.TempDir(), "runtime.yaml")
+	profile := fmt.Sprintf("apiVersion: markitect.runtime/v1\nagentProfiles:\n  markitect-agent:\n    codexAppServer:\n      profileVersion: 2\n      engineExecutable: %q\n      imageID: %s\n      agentdVersion: development\n      recordedCodexSchemaDigest: %s\n      instructions: []\ncheckProfiles: {}\n", engine, bootstrapImageID, bootstrapSchema)
+	if err := os.WriteFile(runtimeProfile, []byte(profile), 0600); err != nil {
 		t.Fatal(err)
 	}
 	reader := &bootstrapImageReader{}
@@ -63,7 +63,7 @@ func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testin
 	}
 	out.Reset()
 	errout.Reset()
-	code = run(context.Background(), []string{"check", "--repo", repo.Dir, "--metadata", "--host-profile", host}, &out, &errout, factory)
+	code = run(context.Background(), []string{"check", "--repo", repo.Dir, "--metadata", "--runtime-profile", runtimeProfile}, &out, &errout, factory)
 	if code != 0 {
 		t.Fatalf("metadata exit=%d stderr=%s output=%s", code, errout.String(), out.String())
 	}
@@ -84,7 +84,7 @@ func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testin
 	// engine path. There is no ambient executable or old metadata fallback.
 	out.Reset()
 	errout.Reset()
-	code = Run(context.Background(), []string{"check", "--repo", repo.Dir, "--metadata", "--host-profile", host}, &out, &errout)
+	code = Run(context.Background(), []string{"check", "--repo", repo.Dir, "--metadata", "--runtime-profile", runtimeProfile}, &out, &errout)
 	if code != 3 || !strings.Contains(out.String(), "codex_image.acquisition") {
 		t.Fatalf("production factory fallback: exit=%d stderr=%s", code, errout.String())
 	}
@@ -327,8 +327,8 @@ func moveFixtureCore(t *testing.T, repo *testkit.Repo, destination, rootDeclarat
 	return manifestPath
 }
 
-func TestExternalModelAndHostSourcesRemainPreviewOnly(t *testing.T) {
-	for _, kind := range []string{"dependency", "host"} {
+func TestExternalModelAndRuntimeSourcesRemainPreviewOnly(t *testing.T) {
+	for _, kind := range []string{"dependency", "runtime"} {
 		t.Run(kind, func(t *testing.T) {
 			repo := productFixture(t)
 			var options []string
@@ -336,11 +336,11 @@ func TestExternalModelAndHostSourcesRemainPreviewOnly(t *testing.T) {
 				manifest := moveFixtureCore(t, repo, t.TempDir(), "model")
 				options = []string{"--dependency", manifest}
 			} else {
-				host := filepath.Join(t.TempDir(), "host.yaml")
-				if err := os.WriteFile(host, []byte("apiVersion: markitect.host/v1\nagentProfiles: {}\ncheckProfiles: {}\n"), 0644); err != nil {
+				runtimeProfile := filepath.Join(t.TempDir(), "runtime.yaml")
+				if err := os.WriteFile(runtimeProfile, []byte("apiVersion: markitect.runtime/v1\nagentProfiles: {}\ncheckProfiles: {}\n"), 0644); err != nil {
 					t.Fatal(err)
 				}
-				options = []string{"--host-profile", host}
+				options = []string{"--runtime-profile", runtimeProfile}
 			}
 			preview := docsPreview(t, repo.Dir, options...)
 			args := append([]string{"docs", "--write", "--expect", preview.View.PreviewDigest}, options...)

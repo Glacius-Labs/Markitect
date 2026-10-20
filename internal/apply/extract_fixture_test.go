@@ -138,7 +138,7 @@ func extractInputs(t *testing.T) (apply.InputSelection, apply.RawInputs) {
 	selection.Execution = []apply.SourceLocation{{Boundary: selection.Repository, Path: path(t, ".markitect/execution.yaml")}}
 	entry, _ := raw.Census.Lookup(path(t, ".markitect/execution.yaml"))
 	raw.Execution = []apply.SourceFile{{Location: selection.Execution[0], File: entry, RepositoryPath: entry.Path()}}
-	addHostDocument(t, &selection, &raw, testHostDocument)
+	addRuntimeDocument(t, &selection, &raw, testRuntimeDocument)
 	return selection, raw
 }
 
@@ -154,7 +154,7 @@ func prepareExtract(t *testing.T, selection apply.InputSelection, raw apply.RawI
 	source := controlledSource{capture: func(_ context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
 		return captured(preparationObservation(t, request.Selection, raw)), nil
 	}}
-	agent, check := hostPorts(t)
+	agent, check := runtimePorts(t)
 	result, err := apply.NewPreparationService(apply.NewModelService(source, nil)).CaptureExtract(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, agent, check)
 	attempt, ok := result.Prepared()
 	if err != nil || !ok {

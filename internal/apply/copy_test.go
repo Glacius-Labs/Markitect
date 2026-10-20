@@ -28,7 +28,7 @@ func mutateRaw(raw apply.RawInputs) {
 	raw.Execution[0].Location.Boundary = "mutation"
 	raw.Registry[0].Location.Boundary = "mutation"
 	raw.Ignore[0].Location.Boundary = "mutation"
-	raw.HostProfiles[0].Location.Boundary = "mutation"
+	raw.RuntimeProfiles[0].Location.Boundary = "mutation"
 	raw.Instructions[0].Location.Boundary = "mutation"
 }
 
@@ -37,7 +37,7 @@ func mutateSelection(selection apply.InputSelection) {
 	selection.Execution[0].Boundary = "mutation"
 	selection.Registry[0].Boundary = "mutation"
 	selection.Ignore[0].Boundary = "mutation"
-	selection.HostProfiles[0].Boundary = "mutation"
+	selection.RuntimeProfiles[0].Boundary = "mutation"
 	selection.Instructions[0].Boundary = "mutation"
 }
 

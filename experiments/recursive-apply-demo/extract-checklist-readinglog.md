@@ -34,7 +34,7 @@ Score each yes or no.
 | --- | --- |
 | G1 | The structure gives the application and its tests (directly in `realization/`) a Package owner: a layout exception that maps `realization` to that Package, or an explicit Root ownership with registrations that link the Package's Definitions |
 | G2 | No owner question about a matter the code settles (there is no document, so no source conflict exists) |
-| G3 | A proposed check runs the Python tests with a profile the Host offers, or no check is proposed and the summary says why |
+| G3 | A proposed check runs the Python tests with a profile the Runtime offers, or no check is proposed and the summary says why |
 | G4 | No statement contradicts the code |
 
 ## Assessor answer

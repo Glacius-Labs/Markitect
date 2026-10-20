@@ -35,14 +35,14 @@ separately authorized recovery. No receipt is inferred from a failed inspect.
 
 Errors never cause automatic deletion. A failed write, incomplete readback,
 mount census failure or changed ownership leaves the volume retained and reports
-uncertainty. The returned volume identity permits the Host to retain the actual
+uncertainty. The returned volume identity permits the Orchestrator to retain the actual
 effect even when the tree could not be established.
 
 ## Harvest
 
 Before and after the helper, the engine observes all containers mounting the
 volume, including stopped containers and read-only mounts. Any mount or failed
-census makes the result uncertain. The Host must end the step's container before
+census makes the result uncertain. The Orchestrator must end the step's container before
 harvest and must not start another user of that volume during observation.
 These observations do not provide an engine-wide lock against unrelated clients.
 
@@ -61,7 +61,7 @@ semantic ownership rule filters files. Symlinks, devices, sockets and other
 nonregular entries are reported in `Unsupported`; their targets are never read.
 Invalid snapshot paths are also reported. Invalid UTF-8 names use `bytes:` plus
 their exact hexadecimal path bytes. Unsupported entries do not stop the census
-or disappear from the result. The Host decides what the observation means.
+or disappear from the result. The Orchestrator decides what the observation means.
 
 `Peek` takes the same census while the step may still write: it skips the two
 unmounted-volume checks and keeps the ownership and existence checks, and the
@@ -80,5 +80,5 @@ The source tests exercise exact tar data, mode and readback, unsupported census
 entries, budgets, mounted and replaced volumes, partial effects and close
 observations through fake runtime transports. They establish adapter behavior;
 they do not establish real Docker, helper-image, provider, Apply or release
-acceptance. The constructor is available for Host injection; this slice adds no
+acceptance. The constructor is available for Orchestrator injection; this slice adds no
 bootstrap or CLI wiring.

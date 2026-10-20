@@ -10,7 +10,7 @@ The container runtime runs every Agent session in its own Linux container ([DEC-
 
 Run owns the reconciliation engine and the consumer ports `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence` ([contract](../design/canonical-model/manager-apply-runtime.md)). It keeps its state in memory, records only through the `Evidence` port, and has no SQL, repository acquisition, provider protocol or public execution path. Apply prepares its configuration from one complete capture and publishes through its own `Publisher` port. Bootstrap supplies the concrete adapters and the file-based owner channel and evidence under the operator's state directory.
 
-Bootstrap's Host-side ports of one Apply are a file evidence directory, a file owner channel, an Agents router over the two turn adapters and an exclusive lock per state directory.
+Bootstrap's Orchestrator-side ports of one Apply are a file evidence directory, a file owner channel, an Agents router over the two turn adapters and an exclusive lock per state directory.
 
 The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../../internal/adapters/claudecode/README.md) metadata preparers use narrow image readers backed by the container adapter. Bootstrap injects their factories; only a selected source-bound profile supplies the engine executable and immutable image ID. Preparation consumes Apply's profile ports and pure model, organization and snapshot values. It inspects the image and copies its build metadata from a created, never started container. It starts no Session or provider and observes no schema inventory.
 

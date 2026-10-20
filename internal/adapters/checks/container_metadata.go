@@ -14,7 +14,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// EngineConfig is the engine executable selected by the captured Host section.
+// EngineConfig is the engine executable selected by the captured Runtime section.
 type EngineConfig struct{ Executable string }
 
 // ImageReader observes an immutable image without starting it. The file reader
@@ -75,7 +75,7 @@ func (p *containerPreparation) issue(status model.Status, code, field, message s
 	}
 	doc := p.input.Document()
 	locator, _ := json.Marshal([2]string{doc.Location.Boundary, doc.Location.Path.String()})
-	p.out.Diagnostics = append(p.out.Diagnostics, apply.HostProfileDiagnostic{
+	p.out.Diagnostics = append(p.out.Diagnostics, apply.RuntimeProfileDiagnostic{
 		Code:    "container_check." + code,
 		Source:  organization.SettingSource{File: "source:" + string(locator), ContentID: doc.File.ContentID(), Field: p.input.Field() + field},
 		Message: message,

@@ -15,7 +15,7 @@ import (
 )
 
 func TestM1GitSettingsPreparationIgnoredCensusAndRealExternalFixedRefusal(t *testing.T) {
-	repo, full, historical, host := gitSettingsFixture(t)
+	repo, full, historical, runtimeLocation := gitSettingsFixture(t)
 	originalExecution, err := os.ReadFile(filepath.Join(repo.Dir, ".markitect", "execution.yaml"))
 	if err != nil {
 		t.Fatal(err)
@@ -34,11 +34,11 @@ func TestM1GitSettingsPreparationIgnoredCensusAndRealExternalFixedRefusal(t *tes
 	for _, mode := range []string{"capture", "working", "fixed"} {
 		t.Run(mode, func(t *testing.T) {
 			port := &recordingPreparationGit{repository: adapter(t)}
-			metadata := &gitSettingsMetadataPorts{t: t, policy: []apply.SourceLocation{project, host, host, project}}
+			metadata := &gitSettingsMetadataPorts{t: t, policy: []apply.SourceLocation{project, runtimeLocation, runtimeLocation, project}}
 			service := apply.NewPreparationService(apply.NewModelService(port, port))
 			selection := full
 			if mode == "fixed" {
-				selection.Instructions = append(append([]apply.SourceLocation(nil), full.Instructions...), host)
+				selection.Instructions = append(append([]apply.SourceLocation(nil), full.Instructions...), runtimeLocation)
 				request := apply.PreviewRequest{Selection: selection, Revision: historical}
 				result, err := service.PreviewSettings(context.Background(), request, model.Limits{}, metadata, metadata)
 				if !errors.Is(err, ErrUnsafe) || result.Status() != model.NotCompleted || len(result.Attempts()) != 1 || len(port.previews) != 1 || len(port.captures) != 0 || !reflect.DeepEqual(result.Request(), request) {
@@ -52,8 +52,8 @@ func TestM1GitSettingsPreparationIgnoredCensusAndRealExternalFixedRefusal(t *tes
 				if !reflect.DeepEqual(attempt.Structural().Model().Request(), port.previewRequests[0]) || !reflect.DeepEqual(inputs, port.previews[0]) || inputs.Head != head || inputs.Revision != historical || attempt.Error() != err || attempt.Structural().Error() != err || attempt.Structural().Model().Checked().Status != model.NotCompleted {
 					t.Fatal("real Git refusal discarded its partial observation or fixed binding")
 				}
-				if len(inputs.Raw.Local.Files.Entries()) == 0 || len(inputs.Raw.Dependencies) != 2 || len(inputs.Raw.Execution) != 1 || !bytes.Equal(inputs.Raw.Execution[0].File.Bytes(), originalExecution) || len(inputs.Raw.HostProfiles) != 1 || inputs.Raw.HostProfiles[0].Location != full.HostProfiles[0] || len(inputs.Raw.HostProfiles[0].File.Bytes()) != 0 || len(inputs.Raw.Instructions) != 0 {
-					t.Fatal("refused historical preview imported today's execution, external Host or instruction bytes")
+				if len(inputs.Raw.Local.Files.Entries()) == 0 || len(inputs.Raw.Dependencies) != 2 || len(inputs.Raw.Execution) != 1 || !bytes.Equal(inputs.Raw.Execution[0].File.Bytes(), originalExecution) || len(inputs.Raw.RuntimeProfiles) != 1 || inputs.Raw.RuntimeProfiles[0].Location != full.RuntimeProfiles[0] || len(inputs.Raw.RuntimeProfiles[0].File.Bytes()) != 0 || len(inputs.Raw.Instructions) != 0 {
+					t.Fatal("refused historical preview imported today's execution, external Runtime or instruction bytes")
 				}
 				if _, found := inputs.Raw.Census.Lookup(fixturePath(t, today)); found {
 					t.Fatal("refused historical observation gained today's ignored file")

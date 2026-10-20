@@ -21,7 +21,7 @@ import (
 // builds markitect-agentd and the agentd test binary for Linux, packs both
 // into a scratch image, and runs them under the production hardening: the
 // test binary plays a CLI that starts `agentd mcp`-style bridges and calls a
-// Host tool. Set MARKITECT_TEST_ENGINE to the engine's absolute path to run it.
+// Orchestrator tool. Set MARKITECT_TEST_ENGINE to the engine's absolute path to run it.
 func TestRealEngineRunsAHardenedSession(t *testing.T) {
 	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
 	if enginePath == "" {
@@ -100,9 +100,9 @@ func TestRealEngineRunsAHardenedSession(t *testing.T) {
 	}
 }
 
-// TestRealEngineStopsAWritingSessionWhenTheHostLeaves shows that closing the
+// TestRealEngineStopsAWritingSessionWhenTheOrchestratorLeaves shows that closing the
 // connection ends the provider and removes the container.
-func TestRealEngineStopsAWritingSessionWhenTheHostLeaves(t *testing.T) {
+func TestRealEngineStopsAWritingSessionWhenTheOrchestratorLeaves(t *testing.T) {
 	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
 	if enginePath == "" {
 		t.Skip("set MARKITECT_TEST_ENGINE to an absolute container engine path")
@@ -131,7 +131,7 @@ func TestRealEngineStopsAWritingSessionWhenTheHostLeaves(t *testing.T) {
 	select {
 	case <-closed:
 	case <-ctx.Done():
-		t.Fatal("container kept running after the Host left")
+		t.Fatal("container kept running after the Orchestrator left")
 	}
 	if names, err := engine.Containers(ctx, "io.markitect.store", store); err != nil || len(names) != 0 {
 		t.Fatalf("containers after close = %v, %v", names, err)

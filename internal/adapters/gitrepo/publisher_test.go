@@ -53,8 +53,8 @@ func publicationFixture(t *testing.T) (*Repository, *testkit.Repo, apply.Publica
 	repo.Write("model.yaml", "formatVersion: 1\nid: publication-fixture\nroot: model\ndependencies: {}\n")
 	repo.Write("model/root.yaml", "id: root\nkind: Package\nbody: root\nspec: {}\n")
 	repo.Write(".gitignore", "ignored/\n.markitect/state/\n")
-	repo.Write("host/instruction.txt", "instruction\n")
-	selection := apply.InputSelection{Repository: repo.Dir, Local: apply.ModelSelection{Boundary: repo.Dir, ManifestPath: fixturePath(t, "model.yaml")}, Instructions: []apply.SourceLocation{{Boundary: repo.Dir, Path: fixturePath(t, "host/instruction.txt")}}}
+	repo.Write("runtime/instruction.txt", "instruction\n")
+	selection := apply.InputSelection{Repository: repo.Dir, Local: apply.ModelSelection{Boundary: repo.Dir, ManifestPath: fixturePath(t, "model.yaml")}, Instructions: []apply.SourceLocation{{Boundary: repo.Dir, Path: fixturePath(t, "runtime/instruction.txt")}}}
 	repo.Write("real/change.txt", "old\n")
 	repo.Write("real/delete.txt", "delete\n")
 	repo.Commit("Publication files")
@@ -180,7 +180,7 @@ func TestPublisherStaleGuardControllerAndFinalOutsideDrift(t *testing.T) {
 					}
 				}
 			case "external-before":
-				repo.Write("host/instruction.txt", "changed")
+				repo.Write("runtime/instruction.txt", "changed")
 			case "index-after":
 				r.observe = func(event, p string) {
 					if event == "publication-after-write" {

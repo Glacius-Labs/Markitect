@@ -170,7 +170,7 @@ func validateSelection(selection InputSelection, raw RawInputs) error {
 		repositoryLocal bool
 	}{
 		{selection.Execution, raw.Execution, true}, {selection.Registry, raw.Registry, true}, {selection.Ignore, raw.Ignore, true},
-		{selection.HostProfiles, raw.HostProfiles, false}, {selection.Instructions, raw.Instructions, false},
+		{selection.RuntimeProfiles, raw.RuntimeProfiles, false}, {selection.Instructions, raw.Instructions, false},
 	} {
 		if len(group.selected) != len(group.actual) {
 			return invalid("selected input observations missing")

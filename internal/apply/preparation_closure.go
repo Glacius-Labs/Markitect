@@ -25,7 +25,7 @@ func initialPreparationSelection(original InputSelection) (InputSelection, error
 		}
 		seenModels[selected] = true
 	}
-	for _, group := range [][]SourceLocation{selection.Execution, selection.Registry, selection.Ignore, selection.HostProfiles, selection.Instructions} {
+	for _, group := range [][]SourceLocation{selection.Execution, selection.Registry, selection.Ignore, selection.RuntimeProfiles, selection.Instructions} {
 		seen := make(map[SourceLocation]bool)
 		for _, selected := range group {
 			if selected.Boundary == "" || selected.Path.String() == "" || seen[selected] {
@@ -42,7 +42,7 @@ func initialPreparationSelection(original InputSelection) (InputSelection, error
 
 type preparationClosure struct {
 	registry, ignore, instructions []snapshot.Path
-	host                           []SourceLocation
+	runtime                        []SourceLocation
 }
 
 func observedPreparationClosure(raw RawInputs, registry []snapshot.Path, execution AuthoredExecution) preparationClosure {
@@ -115,7 +115,7 @@ func (c preparationClosure) selectMissing(selection InputSelection, raw RawInput
 	for _, location := range selection.Instructions {
 		seen[location] = true
 	}
-	for _, location := range c.host {
+	for _, location := range c.runtime {
 		if !seen[location] {
 			selection.Instructions = append(selection.Instructions, location)
 			seen[location], missing = true, true
@@ -125,14 +125,14 @@ func (c preparationClosure) selectMissing(selection InputSelection, raw RawInput
 }
 
 func (c preparationClosure) equal(other preparationClosure) bool {
-	return samePreparationPaths(c.registry, other.registry) && samePreparationPaths(c.ignore, other.ignore) && samePreparationPaths(c.instructions, other.instructions) && samePreparationLocations(c.host, other.host)
+	return samePreparationPaths(c.registry, other.registry) && samePreparationPaths(c.ignore, other.ignore) && samePreparationPaths(c.instructions, other.instructions) && samePreparationLocations(c.runtime, other.runtime)
 }
 
-// The adapter owns Host policy and coordinates. Union complete selections with
+// The adapter owns Runtime policy and coordinates. Union complete selections with
 // explicit new-acquisition needs, never infer paths from provenance. Preserve
 // original ordered/repeated policy in each ProfileObservation; only file
 // acquisition is distinct. Invalid locations stay in the actual diagnostics.
-func observedPreparationHostClosure(profiles []PreparedProfile) ([]SourceLocation, bool) {
+func observedPreparationRuntimeClosure(profiles []PreparedProfile) ([]SourceLocation, bool) {
 	var locations []SourceLocation
 	seen := make(map[SourceLocation]bool)
 	required := false

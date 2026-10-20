@@ -26,7 +26,7 @@ OWNER=$!
 mark extract_start
 timeout --kill-after=45 1650 "$ATTEMPT/markitect" extract --repo "$REPO" \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-x1.json" \
+  --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-x1.json" \
   > "$ATTEMPT/out/extract-x1.json" 2> "$ATTEMPT/out/extract-x1.stderr"
 echo "extract_exit=$?" >> "$ATTEMPT/timing.txt"
 mark extract_end
@@ -48,7 +48,7 @@ python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" b1 "$SHA" "$(date -u -d '+2
 mark rebuild_start
 timeout --kill-after=45 1650 "$ATTEMPT/markitect" apply --repo "$ATTEMPT/rebuild" --model .markitect/model.yaml \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
-  --host-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-b1.json" \
+  --runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-config-b1.json" \
   > "$ATTEMPT/out/apply-b1.json" 2> "$ATTEMPT/out/apply-b1.stderr"
 echo "rebuild_exit=$?" >> "$ATTEMPT/timing.txt"
 mark rebuild_end

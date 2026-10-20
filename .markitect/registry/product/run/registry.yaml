@@ -35,7 +35,7 @@ artifacts:
   - path: "experiments/recursive-apply-demo/ra_bind.sh"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: "Binds an attempt to one build with Sonnet Host profiles, check profiles, token file and frozen scripts."
+    why: "Binds an attempt to one build with Sonnet Runtime profiles, check profiles, token file and frozen scripts."
   - path: "experiments/recursive-apply-demo/ra_build.sh"
     form: code
     realizes: [product/run/confirmed-run-history]

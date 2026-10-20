@@ -172,7 +172,7 @@ func TestPreparationRetainsActualManifestPreflightFailure(t *testing.T) {
 }
 
 func TestPreparationRejectsInvalidExplicitSelectionsWithoutRepair(t *testing.T) {
-	for _, invalid := range []string{"repository", "local", "dependency", "execution", "registry", "ignore", "host", "instruction", "path", "boundary"} {
+	for _, invalid := range []string{"repository", "local", "dependency", "execution", "registry", "ignore", "runtime", "instruction", "path", "boundary"} {
 		t.Run(invalid, func(t *testing.T) {
 			selection, actual := fileCheckInputs(t)
 			location := selection.Execution[0]
@@ -189,12 +189,12 @@ func TestPreparationRejectsInvalidExplicitSelectionsWithoutRepair(t *testing.T) 
 				selection.Registry = append(selection.Registry, selection.Registry[0])
 			case "ignore":
 				selection.Ignore = []apply.SourceLocation{location, location}
-			case "host":
-				selection.HostProfiles = []apply.SourceLocation{location, location}
+			case "runtime":
+				selection.RuntimeProfiles = []apply.SourceLocation{location, location}
 			case "instruction":
 				selection.Instructions = []apply.SourceLocation{location, location}
 			case "path":
-				selection.HostProfiles = []apply.SourceLocation{{Boundary: "host"}}
+				selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: "runtime"}}
 			case "boundary":
 				selection.Instructions = []apply.SourceLocation{{Path: location.Path}}
 			}

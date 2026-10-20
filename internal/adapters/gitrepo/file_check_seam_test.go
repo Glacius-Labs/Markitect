@@ -21,8 +21,8 @@ func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, st
 	t.Helper()
 	repo, selection, _ := registrySeamFixture(t)
 	// Replace the adapter-only opaque-input fixtures with actual authored inputs.
-	repo.Git("rm", "--", "config/execution.data", "config/registry.data", "config/ignore.data", "host/profile.data", "host/instruction.txt")
-	selection.HostProfiles = nil
+	repo.Git("rm", "--", "config/execution.data", "config/registry.data", "config/ignore.data", "runtime/profile.data", "runtime/instruction.txt")
+	selection.RuntimeProfiles = nil
 	selected := func(name string) apply.SourceLocation {
 		return apply.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, name)}
 	}

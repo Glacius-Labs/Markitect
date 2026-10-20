@@ -134,7 +134,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 	flags := flag.NewFlagSet(verb, flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	config := flags.String("run-config", "", "explicit absolute invocation configuration")
-	var repo, manifest, host, text string
+	var repo, manifest, runtimeProfile, text string
 	var dependencies manifestList
 	if verb == "apply" || verb == "extract" {
 		flags.StringVar(&repo, "repo", ".", "repository root")
@@ -143,7 +143,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		} else {
 			manifest = extractManifest
 		}
-		flags.StringVar(&host, "host-profile", "", "explicit absolute Host profile document")
+		flags.StringVar(&runtimeProfile, "runtime-profile", "", "explicit absolute Runtime profile document")
 		flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
 	} else {
 		flags.StringVar(&text, "text", "", "owner answer text")
@@ -159,11 +159,11 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		fmt.Fprintln(stderr, "invalid execution arguments; see help")
 		return 2
 	}
-	if *config == "" || verb != "answer" && host == "" {
-		return incomplete("Execution is unavailable without explicit --run-config and --host-profile absolute paths.")
+	if *config == "" || verb != "answer" && runtimeProfile == "" {
+		return incomplete("Execution is unavailable without explicit --run-config and --runtime-profile absolute paths.")
 	}
-	if !filepath.IsAbs(*config) || filepath.Clean(*config) != *config || verb != "answer" && (!filepath.IsAbs(host) || filepath.Clean(host) != host) {
-		fmt.Fprintln(stderr, "--run-config and --host-profile require explicit absolute native paths")
+	if !filepath.IsAbs(*config) || filepath.Clean(*config) != *config || verb != "answer" && (!filepath.IsAbs(runtimeProfile) || filepath.Clean(runtimeProfile) != runtimeProfile) {
+		fmt.Fprintln(stderr, "--run-config and --runtime-profile require explicit absolute native paths")
 		return 2
 	}
 	if verb == "answer" {
@@ -192,12 +192,12 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		err = e
 		selection.Dependencies = append(selection.Dependencies, selected)
 	}
-	path, pathErr := snapshot.NewPath(filepath.Base(host))
+	path, pathErr := snapshot.NewPath(filepath.Base(runtimeProfile))
 	if err != nil || pathErr != nil {
-		fmt.Fprintln(stderr, "invalid explicit model or Host selection")
+		fmt.Fprintln(stderr, "invalid explicit model or Runtime profile selection")
 		return 2
 	}
-	selection.HostProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(host), Path: path}}
+	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(runtimeProfile), Path: path}}
 	if verb == "extract" {
 		report, err := c.extract(ctx, ExtractRequest{Selection: selection, RunConfig: *config})
 		report.FormatVersion, report.Operation = 1, verb

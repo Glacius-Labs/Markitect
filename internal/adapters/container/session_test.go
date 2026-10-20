@@ -15,15 +15,15 @@ import (
 // fakeAgentd plays agentd's side of one connection with the frame codec.
 type fakeAgentd struct {
 	t   *testing.T
-	in  io.Reader      // frames from the Host
-	out io.WriteCloser // frames to the Host
+	in  io.Reader      // frames from the Orchestrator
+	out io.WriteCloser // frames to the Orchestrator
 }
 
 func connect(t *testing.T, protocol int) (*Session, *fakeAgentd, error) {
 	t.Helper()
-	hostR, hostW := io.Pipe()
+	orchestratorR, orchestratorW := io.Pipe()
 	agentR, agentW := io.Pipe()
-	a := &fakeAgentd{t: t, in: hostR, out: agentW}
+	a := &fakeAgentd{t: t, in: orchestratorR, out: agentW}
 	ended := make(chan struct{})
 	go func() {
 		a.control(frame.ControlMessage{Type: frame.TypeHello, Hello: &frame.Hello{Protocol: protocol, Version: "fake"}})
@@ -32,7 +32,7 @@ func connect(t *testing.T, protocol int) (*Session, *fakeAgentd, error) {
 		close(ended)
 		return nil
 	}
-	s, err := newSession(context.Background(), hostW, agentR, func() error {
+	s, err := newSession(context.Background(), orchestratorW, agentR, func() error {
 		_ = agentW.Close()
 		return wait()
 	}, func() { _ = agentW.Close() })
@@ -54,7 +54,7 @@ func (a *fakeAgentd) control(c frame.ControlMessage) {
 	a.send(frame.Frame{Channel: frame.Control, Payload: payload})
 }
 
-// finish behaves like agentd after the Host closes the connection.
+// finish behaves like agentd after the Orchestrator closes the connection.
 func (a *fakeAgentd) finish() {
 	for {
 		if _, err := frame.Read(a.in); err != nil {
@@ -170,13 +170,13 @@ func TestEndedConnectionIsNotAnExit(t *testing.T) {
 }
 
 func TestCloseRemovesAContainerThatDoesNotEnd(t *testing.T) {
-	hostR, hostW := io.Pipe()
+	orchestratorR, orchestratorW := io.Pipe()
 	agentR, agentW := io.Pipe()
-	a := &fakeAgentd{t: t, in: hostR, out: agentW}
+	a := &fakeAgentd{t: t, in: orchestratorR, out: agentW}
 	go a.control(frame.ControlMessage{Type: frame.TypeHello, Hello: &frame.Hello{Protocol: frame.ProtocolVersion}})
-	go func() { _, _ = io.Copy(io.Discard, hostR) }() // ignores the Host closing
+	go func() { _, _ = io.Copy(io.Discard, orchestratorR) }() // ignores the Orchestrator closing
 	killed := make(chan struct{})
-	s, err := newSession(context.Background(), hostW, agentR, func() error { return nil }, func() {
+	s, err := newSession(context.Background(), orchestratorW, agentR, func() error { return nil }, func() {
 		close(killed)
 		_ = agentW.Close()
 	})

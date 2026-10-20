@@ -48,7 +48,7 @@ func (s *server) acceptBridges(l net.Listener) {
 }
 
 // serveBridge speaks MCP to one CLI-started bridge. Discovery is answered
-// locally from the Host's catalogue; every tools/call goes to the Host.
+// locally from the Orchestrator's catalogue; every tools/call goes to the Orchestrator.
 func (s *server) serveBridge(conn net.Conn) {
 	done := make(chan struct{})
 	var once sync.Once
@@ -149,7 +149,7 @@ func initializeResult(params json.RawMessage) json.RawMessage {
 	b, _ := json.Marshal(map[string]any{
 		"protocolVersion": version,
 		"capabilities":    map[string]any{"tools": map[string]any{}},
-		"serverInfo":      map[string]any{"name": "markitect-host", "version": "1"},
+		"serverInfo":      map[string]any{"name": "markitect", "version": "1"},
 	})
 	return b
 }

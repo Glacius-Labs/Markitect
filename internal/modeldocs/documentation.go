@@ -186,7 +186,7 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 			p.Sources = append(p.Sources, Source{Boundary: input.Selection.Boundary, Path: file.Path().String(), RepositoryPath: repoPath(input.RepositoryArea.String(), file.Path().String()), ContentDigest: file.ContentID().String(), Mode: file.Mode()})
 		}
 	}
-	for _, group := range [][]apply.SourceFile{raw.Execution, raw.Registry, raw.Ignore, raw.HostProfiles, raw.Instructions} {
+	for _, group := range [][]apply.SourceFile{raw.Execution, raw.Registry, raw.Ignore, raw.RuntimeProfiles, raw.Instructions} {
 		for _, file := range group {
 			if file.RepositoryPath.String() == ViewPath {
 				p.Status = model.Failed

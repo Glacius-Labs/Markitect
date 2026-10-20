@@ -28,7 +28,7 @@ func TestConfirmationDetectsSameSizeRewriteWithRestoredTimestamp(t *testing.T) {
 				if err := os.WriteFile(target, []byte("external bytes"), 0o644); err != nil {
 					t.Fatal(err)
 				}
-				selection.HostProfiles = []apply.SourceLocation{{Boundary: dir, Path: fixturePath(t, "profile.data")}}
+				selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: dir, Path: fixturePath(t, "profile.data")}}
 			case "external-model":
 				dir := testkit.TempDir(t)
 				copyBoundary(t, selection.Dependencies[0].Boundary, dir)

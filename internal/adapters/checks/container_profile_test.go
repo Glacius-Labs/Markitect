@@ -21,7 +21,7 @@ func containerProfileInputs(t *testing.T) (ContainerProfile, apply.ExecutionChec
 	}
 	check := apply.ExecutionCheck{
 		ID:      organization.Setting[string]{Value: string(want.ID)},
-		Profile: organization.Setting[string]{Value: "explicit-host-profile"},
+		Profile: organization.Setting[string]{Value: "explicit-runtime-profile"},
 	}
 	check.Directory.Value = want.Directory
 	check.Args.Value = append([]string(nil), want.Args[1:]...)

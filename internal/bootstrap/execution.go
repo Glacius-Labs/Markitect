@@ -432,7 +432,7 @@ func newRunID(now time.Time) (string, error) {
 	return now.UTC().Format("20060102T150405Z") + "-" + hex.EncodeToString(suffix[:]), nil
 }
 
-// Only this already validated captured literal is needed for Host composition;
+// Only this already validated captured literal is needed for Runtime profile composition;
 // provider/profile parsing remains entirely in its adapter.
 func profileEngine(prepared apply.PreparedProfile, want string) bool {
 	if _, complete := prepared.Identity(); !complete {

@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// extractManifest is the Host-prepared structural manifest of an Extract; the
+// extractManifest is the Orchestrator-prepared structural manifest of an Extract; the
 // command has no --model flag.
 const extractManifest = ".markitect/model.yaml"
 

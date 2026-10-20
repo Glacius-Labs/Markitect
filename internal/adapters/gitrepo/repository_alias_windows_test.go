@@ -45,7 +45,7 @@ func repositoryAliasSelection(t *testing.T, selection apply.InputSelection, orig
 	rewrite := func(boundary string) string {
 		rel, err := filepath.Rel(original, boundary)
 		if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
-			return boundary // Explicit external Host inputs remain external.
+			return boundary // Explicit external Runtime inputs remain external.
 		}
 		return filepath.Join(root, rel)
 	}
@@ -55,7 +55,7 @@ func repositoryAliasSelection(t *testing.T, selection apply.InputSelection, orig
 	for i := range selection.Dependencies {
 		selection.Dependencies[i].Boundary = rewrite(selection.Dependencies[i].Boundary)
 	}
-	for _, group := range []*[]apply.SourceLocation{&selection.Execution, &selection.Registry, &selection.Ignore, &selection.Instructions, &selection.HostProfiles} {
+	for _, group := range []*[]apply.SourceLocation{&selection.Execution, &selection.Registry, &selection.Ignore, &selection.Instructions, &selection.RuntimeProfiles} {
 		*group = append([]apply.SourceLocation(nil), (*group)...)
 		for i := range *group {
 			(*group)[i].Boundary = rewrite((*group)[i].Boundary)
@@ -146,8 +146,8 @@ func TestNativeRepositoryAliasKeepsExternalFixedBoundariesRefused(t *testing.T) 
 	r := adapter(t)
 	selection := repositoryAliasSelection(t, original, repo.Dir, alias)
 	result, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
-	if !errors.Is(err, ErrUnsafe) || len(result.Raw.HostProfiles) != 1 || len(result.Raw.HostProfiles[0].File.Bytes()) != 0 || result.Raw.HostProfiles[0].RepositoryPath.String() != "" {
-		t.Fatalf("external historical Host boundary was accepted: %v", err)
+	if !errors.Is(err, ErrUnsafe) || len(result.Raw.RuntimeProfiles) != 1 || len(result.Raw.RuntimeProfiles[0].File.Bytes()) != 0 || result.Raw.RuntimeProfiles[0].RepositoryPath.String() != "" {
+		t.Fatalf("external historical Runtime boundary was accepted: %v", err)
 	}
 	// A boundary under an unselected alias is not an inferred local coordinate.
 	selection = repositoryAliasSelection(t, original, repo.Dir, long)

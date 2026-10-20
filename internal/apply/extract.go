@@ -17,7 +17,7 @@ import (
 
 // ExtractRequest is everything one Extract runs with besides the captured
 // preparation (made by PreparationService.CaptureExtract): the invocation's
-// explicit values and the Host's concrete ports. Deadline, when set, is the
+// explicit values and the Orchestrator's concrete ports. Deadline, when set, is the
 // operator's absolute wall-clock limit; the run's own deadline is the earlier
 // of it and the start plus the project's executionTime, shared by both phases.
 type ExtractRequest struct {

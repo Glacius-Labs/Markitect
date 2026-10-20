@@ -176,7 +176,7 @@ func (a extractAccounting) definitionResolver() func(snapshot.Tree, string) bool
 	}
 }
 
-// accountChecks reports each proposed check whose profile the Host does not
+// accountChecks reports each proposed check whose profile the Runtime does not
 // offer: the next phase could not prepare such a check.
 func (a extractAccounting) accountChecks(structural CapturedPreparationAttempt, add func(owner, code, name, message string)) {
 	declared := structural.execution.authored.Checks
@@ -185,21 +185,21 @@ func (a extractAccounting) accountChecks(structural CapturedPreparationAttempt, 
 	}
 	for _, check := range declared.Value {
 		if !slices.ContainsFunc(a.start.checkProfiles, func(o checkProfileOffer) bool { return o.Name == check.Profile.Value }) {
-			add(organization.Root, "execution.check_profile_missing", executionFile, fmt.Sprintf("Check %q names the profile %q, which the Host does not offer. %s Name one of them in profile, or remove the check.", check.ID.Value, check.Profile.Value, a.offeredProfiles()))
+			add(organization.Root, "execution.check_profile_missing", executionFile, fmt.Sprintf("Check %q names the profile %q, which the Runtime does not offer. %s Name one of them in profile, or remove the check.", check.ID.Value, check.Profile.Value, a.offeredProfiles()))
 		}
 	}
 }
 
-// offeredProfiles states the check profiles the Host offers.
+// offeredProfiles states the check profiles the Runtime offers.
 func (a extractAccounting) offeredProfiles() string {
 	if len(a.start.checkProfiles) == 0 {
-		return "The Host offers no check profile."
+		return "The Runtime offers no check profile."
 	}
 	names := make([]string, len(a.start.checkProfiles))
 	for i, o := range a.start.checkProfiles {
 		names[i] = o.Name
 	}
-	return "The Host offers the check profiles: " + strings.Join(names, ", ") + "."
+	return "The Runtime offers the check profiles: " + strings.Join(names, ", ") + "."
 }
 
 // accountStructure checks the proposal of the structure phase: at least one
@@ -267,7 +267,7 @@ func positioned(message string, position *model.Position) string {
 }
 
 // exemptFromGuard names the paths Apply's protected-input accounting leaves
-// alone too: the Host's own state and the repository's git data are not inputs.
+// alone too: the Runtime's own state and the repository's git data are not inputs.
 func exemptFromGuard(name string) bool {
 	return strings.HasPrefix(name, ".markitect/state/") || strings.HasPrefix(name, ".git/")
 }

@@ -337,13 +337,13 @@ func TestRunRefusalIsAToolErrorNotATurnFailure(t *testing.T) {
 	rt := newRuntime()
 	rt.useTool = true
 	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), func(context.Context, string, json.RawMessage) run.ToolAnswer {
-		return run.ToolAnswer{Text: "Host refused this call", Refused: true}
+		return run.ToolAnswer{Text: "Orchestrator refused this call", Refused: true}
 	})
 	var result struct {
 		Content []struct{ Text string }
 		IsError bool
 	}
-	if err != nil || json.Unmarshal(rt.replies[0].Result, &result) != nil || !result.IsError || result.Content[0].Text != "Host refused this call" || res.Reason != "provider turn completed" {
+	if err != nil || json.Unmarshal(rt.replies[0].Result, &result) != nil || !result.IsError || result.Content[0].Text != "Orchestrator refused this call" || res.Reason != "provider turn completed" {
 		t.Fatalf("%+v %v %+v", res, err, rt.replies)
 	}
 }

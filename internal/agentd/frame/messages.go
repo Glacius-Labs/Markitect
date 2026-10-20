@@ -28,7 +28,7 @@ const (
 )
 
 // ControlMessage is one control message. Exactly the field named by Type is
-// set. Request numbers a Host request; agentd copies it into the reply
+// set. Request numbers an Orchestrator request; agentd copies it into the reply
 // (started, failure or census), and leaves it zero on messages it sends on
 // its own, such as hello, exited or a failure that ends the session.
 type ControlMessage struct {
@@ -49,9 +49,9 @@ type Hello struct {
 	Version  string `json:"version"`
 }
 
-// Start describes the provider process and the Host tools it may call.
+// Start describes the provider process and the Orchestrator tools it may call.
 // Env entries are KEY=VALUE pairs added to the provider's environment only;
-// they may carry the runtime credential, so the Host records this message
+// they may carry the runtime credential, so the Orchestrator records this message
 // with values redacted.
 type Start struct {
 	Argv  []string   `json:"argv"`
@@ -84,7 +84,7 @@ type Failure struct {
 }
 
 // Census lists the processes in the container other than agentd and the
-// container's init process. The Host sends an empty census as its request;
+// container's init process. The Orchestrator sends an empty census as its request;
 // agentd answers with the observed processes. A census is a snapshot: it
 // supports a quiescence judgment but cannot prevent a later process start.
 type Census struct {
@@ -102,14 +102,14 @@ type Process struct {
 	Command string `json:"command"`
 }
 
-// ToolSpec is one Host tool as offered to the provider through MCP.
+// ToolSpec is one Orchestrator tool as offered to the provider through MCP.
 type ToolSpec struct {
 	Name        string          `json:"name"`
 	Description string          `json:"description"`
 	InputSchema json.RawMessage `json:"inputSchema"`
 }
 
-// ToolCall is a provider's call of a Host tool. ID is assigned by agentd and
+// ToolCall is a provider's call of an Orchestrator tool. ID is assigned by agentd and
 // is unique per connection; Meta carries the provider's own call metadata.
 type ToolCall struct {
 	ID        uint64          `json:"id"`
