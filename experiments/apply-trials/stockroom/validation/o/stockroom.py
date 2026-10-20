@@ -20,13 +20,13 @@ def normalize_sku(text):
 
 def parse_name(text):
     name = text.strip()
-    if not name or len(name) > MAX_NAME_LENGTH:
+    if not name or len(name) > MAX_NAME_LENGTH or any(0xD800 <= ord(char) <= 0xDFFF for char in name):
         raise StockError("invalid name")
     return name
 
 
 def parse_quantity(text):
-    if not DIGITS.fullmatch(text) or not 1 <= int(text) <= MAX_QUANTITY:
+    if not DIGITS.fullmatch(text) or len(text.lstrip("0")) > 9 or not 1 <= int(text) <= MAX_QUANTITY:
         raise StockError("invalid quantity %r" % text)
     return int(text)
 

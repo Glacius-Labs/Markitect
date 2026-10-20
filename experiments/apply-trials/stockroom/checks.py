@@ -16,7 +16,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import Checks, Env, Skip, expect_equal, fail  # noqa: E402
+from trial_kit import Checks, Env, Skip, expect_equal, fail, unusable_change, unusable_query  # noqa: E402
 
 PROFILES = {
     "s1": {"snapshot": "s1", "maxQty": 1000, "reorder": False},
@@ -227,6 +227,18 @@ def _(env, p):
     add(env, "BOL-006", "Bolt", refuse=True)
     if (env.root / "absent").exists():
         fail("the missing data directory was created")
+
+
+@check("edge-robustness", ALL, ["stockroom/interface", "stockroom/inputs", "stockroom/storage"],
+       "Extreme inputs fail through the error object, never with a crash")
+def _(env, p):
+    add(env, "BOL-006", "Bolt")
+    receive(env, "BOL-006", "9" * 5000, refuse=True)
+    add(env, "NUT-010", "Nut \udcff", refuse=True)
+    env.write_db("[" * 100000)
+    env.refuse("list")
+    unusable_query(env, "list")
+    unusable_change(env, "add-item", "--sku", "BOL-006", "--name", "Bolt")
 
 
 @check("usage-errors", ALL, ["stockroom/interface"], "Command-line errors use the error object and exit 2")

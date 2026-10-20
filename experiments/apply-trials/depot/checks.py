@@ -10,7 +10,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
-from trial_kit import Checks, expect_equal, fail  # noqa: E402
+from trial_kit import Checks, expect_equal, fail, unusable_change, unusable_query  # noqa: E402
 
 CHECKS = Checks("depot", {"d1": {"snapshot": "d1"}})
 D1 = ["d1"]
@@ -293,6 +293,20 @@ def _(env, p):
     add(env, "BOL-006", "Bolt", refuse=True)
     if (env.root / "absent").exists():
         fail("the missing data directory was created")
+
+
+@check("edge-robustness", D1, ["depot/interface", "depot/inputs", "depot/storage"],
+       "Extreme inputs fail through the error object, never with a crash")
+def _(env, p):
+    add(env, "BOL-006", "Bolt")
+    receive(env, "BOL-006", "9" * 5000, refuse=True)
+    by_id(env, "fulfil-order", "9" * 5000, refuse=True)
+    place(env, "BOL-006:" + "9" * 5000, refuse=True)
+    add(env, "NUT-010", "Nut \udcff", refuse=True)
+    env.write_db("[" * 100000)
+    env.refuse("items")
+    unusable_query(env, "items")
+    unusable_change(env, "add-item", "--sku", "BOL-006", "--name", "Bolt")
 
 
 @check("usage-errors", D1, ["depot/interface"], "Command-line errors use the error object and exit 2")

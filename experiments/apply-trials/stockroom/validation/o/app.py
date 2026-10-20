@@ -53,7 +53,7 @@ def main(argv=None):
     try:
         result = run(build_parser().parse_args(argv))
     except (UsageError, stockroom.StockError, store.StoreError) as error:
-        print(json.dumps({"error": str(error)}, ensure_ascii=False))
+        print(json.dumps({"error": str(error)}))
         return 2
     print(json.dumps(result, ensure_ascii=False))
     return 0

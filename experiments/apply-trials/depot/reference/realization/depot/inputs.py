@@ -12,6 +12,8 @@ MAX_NAME_LENGTH = 60
 def number(text, low, high, label):
     if not DIGITS.fullmatch(text):
         raise Refusal("%s must be a whole number written in digits, got %r" % (label, text))
+    if len(text.lstrip("0")) > 18:
+        raise Refusal("%s is too large" % label)
     value = int(text)
     if value < low or (high is not None and value > high):
         bound = "from %d to %d" % (low, high) if high is not None else "at least %d" % low
@@ -37,4 +39,6 @@ def name(text):
         raise Refusal("the name must not be empty")
     if len(value) > MAX_NAME_LENGTH:
         raise Refusal("the name must have at most %d characters" % MAX_NAME_LENGTH)
+    if any(0xD800 <= ord(char) <= 0xDFFF for char in value):
+        raise Refusal("the name must be valid Unicode text")
     return value

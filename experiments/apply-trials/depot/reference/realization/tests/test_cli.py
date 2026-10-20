@@ -26,12 +26,18 @@ class CommandLineTests(unittest.TestCase):
         self.assertEqual(code, 0, result)
         return result
 
+    def stored(self):
+        try:
+            return self.db.read_bytes()
+        except OSError:  # missing, or a path the system cannot use
+            return None
+
     def refused(self, *args):
-        before = self.db.read_bytes() if self.db.exists() else None
+        before = self.stored()
         code, result = self.run_app(*args)
         self.assertEqual(code, 2)
         self.assertEqual(list(result), ["error"])
-        self.assertEqual(self.db.read_bytes() if self.db.exists() else None, before)
+        self.assertEqual(self.stored(), before)
 
     def test_empty_depot(self):
         self.assertEqual(self.ok("items"), {"items": []})
@@ -69,6 +75,18 @@ class CommandLineTests(unittest.TestCase):
         self.refused("items")
         self.refused("add-item", "--sku", "BOL-006", "--name", "Bolt")
         self.assertEqual(self.db.read_text(encoding="utf-8"), "[]")
+
+    def test_extreme_inputs_fail_without_a_crash(self):
+        self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")
+        self.refused("receive", "--sku", "BOL-006", "--qty", "9" * 5000)
+        self.refused("fulfil-order", "--id", "9" * 5000)
+        self.refused("add-item", "--sku", "NUT-010", "--name", "Nut \udcff")
+        self.db.write_text("[" * 100000, encoding="utf-8")
+        self.refused("items")
+        self.db = Path(self.folder.name) / ("x" * 5000 + ".json")
+        code, result = self.run_app("items")  # an unusable path may read as missing data or fail cleanly
+        self.assertIn((code, list(result)), [(0, ["items"]), (2, ["error"])])
+        self.refused("add-item", "--sku", "BOL-006", "--name", "Bolt")
 
 
 if __name__ == "__main__":

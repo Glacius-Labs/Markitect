@@ -17,7 +17,7 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "test-projects"))
 
-from oracle_kit import CheckFailure, Env, expect_equal, fail  # noqa: E402,F401  (re-exported to the checks)
+from oracle_kit import CheckFailure, Env, crash_guard, expect_equal, fail  # noqa: E402,F401  (re-exported to the checks)
 
 
 class Skip(Exception):
@@ -71,6 +71,25 @@ class Checks:
                 "passed": count["fail"] == 0 and count["skip"] == 0,
                 "summary": dict(total=len(results), passed=count["pass"], failed=count["fail"], skipped=count["skip"]),
                 "checks": results}
+
+
+def unusable_query(env, *query):
+    """Point env at a path the system cannot use; a query may read it as missing data or fail cleanly."""
+    env.db = env.root / ("x" * 5000 + ".json")
+    result = env.run(*query)
+    crash_guard(result)
+    if result.obj is None or (result.code, set(result.obj) == {"error"}) not in ((0, False), (2, True)):
+        fail("`%s` on an unusable data path must succeed or fail with the error object, got %s"
+             % (" ".join(query), result.describe()))
+
+
+def unusable_change(env, *change):
+    """On the unusable path of `unusable_query`, a change fails with the error object."""
+    result = env.run(*change)
+    crash_guard(result)
+    if result.code != 2 or result.obj is None or set(result.obj) != {"error"}:
+        fail("`%s` on an unusable data path must fail with the error object, got %s"
+             % (" ".join(change), result.describe()))
 
 
 def python_command(text):
