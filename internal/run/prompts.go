@@ -345,7 +345,7 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 		var current, earlier []string
 		candidate := p.tree.Digest().String()
 		for _, r := range e.receipts {
-			if !r.adverse() || r.disposed() || !e.within(r.Requester, m.Path) {
+			if !r.adverse() || r.disposed() || !e.answersForLocked(r, m.Path) {
 				continue
 			}
 			var rb strings.Builder
@@ -356,7 +356,7 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 				earlier = append(earlier, strings.TrimRight(rb.String(), "\n"))
 			}
 		}
-		list(b, "Adverse probe receipts on this candidate within your responsibility that still need an independent disposition: cite one in a genuine finding when it shows a violation, or dispose of it with reason and evidence:", current)
+		list(b, "Adverse probe receipts on this candidate within your responsibility, or by an ancestor about your obligations, that still need an independent disposition: cite one in a genuine finding when it shows a violation, or dispose of it with reason and evidence:", current)
 		list(b, "Adverse probe receipts of your responsibility on earlier candidates (context: assess their claims again on this candidate):", earlier)
 	} else {
 		var mine []string

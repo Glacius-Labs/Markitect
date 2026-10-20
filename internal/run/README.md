@@ -154,8 +154,10 @@ never disposed of by running it again; an error without a passing rerun leaves i
 without evidence, an open obligation with a genuine finding. Dispositions take effect with
 their submission's acceptance, and an expectation-error or rerun disposition falls when
 that submission is reopened or invalidated; a parent's acceptance is the independent
-assessment of a child's own disproof. Root's disproof of its own receipt in the same Pass
-awaits a fresh review: the Pass verdict needs correction and `Reassess` runs a new Verify of
+assessment of a child's own disproof. The reviewer of an obligation's owner may also judge
+an ancestor's adverse receipt about that obligation, as an independent context, so Root
+returns or reopens a child's proposal for its own failed probe of the child's claim.
+Root's disproof of its own receipt in the same Pass awaits a fresh review: the Pass verdict needs correction and `Reassess` runs a new Verify of
 the unchanged candidate, whose Root reviewer confirms it or raises a finding. A done claim
 with an undisposed adverse receipt of its own and a satisfied result with one within the
 responsibility are refused.

@@ -224,8 +224,8 @@ func (e *engine) rerunSpec(m *member, in probeIn) (probeSpec, string) {
 		return probeSpec{}, fmt.Sprintf("%s %s; only a Runtime error is run again. A failing assertion is disposed of by a finding or a reasoned expectation_error.", r.ID, describeOutcome(r))
 	case !m.p.spec.Review || r.Stand != m.p.tree.Digest().String():
 		return probeSpec{}, fmt.Sprintf("%s ran on another stand; a rerun repeats it on the same candidate in a review.", r.ID)
-	case !e.within(r.Requester, m.Path):
-		return probeSpec{}, fmt.Sprintf("%s was requested by %s, outside your responsibility.", r.ID, r.Requester)
+	case !e.answersForLocked(r, m.Path):
+		return probeSpec{}, fmt.Sprintf("%s was requested by %s about %s, both outside your responsibility.", r.ID, r.Requester, r.Obligation)
 	}
 	d, _ := e.cfg.Definition(r.Obligation)
 	var chk *Check
@@ -402,7 +402,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		fmt.Fprintf(&b, "\nOutput:\n%s", r.Output)
 	}
 	if r.Outcome != ProbePassed && p.spec.Review {
-		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. Without a passing rerun the claim lacks its evidence: cover it as open with a genuine finding for the missing evidence.")
+		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. Without a passing rerun the claim lacks its evidence: cover it as open with a genuine finding for the missing evidence.")
 	}
 	return ToolAnswer{Text: b.String()}
 }
@@ -612,8 +612,8 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			return nil, fmt.Errorf("%s: %s passed; only an adverse receipt needs a disposition", name, r.ID)
 		case r.Stand != candidate:
 			return nil, fmt.Errorf("%s: %s ran on another stand than this candidate", name, r.ID)
-		case !e.within(r.Requester, m.Path):
-			return nil, fmt.Errorf("%s: %s was requested by %s, outside your responsibility", name, r.ID, r.Requester)
+		case !e.answersForLocked(r, m.Path):
+			return nil, fmt.Errorf("%s: %s was requested by %s about %s, both outside your responsibility", name, r.ID, r.Requester, r.Obligation)
 		case r.disposed():
 			return nil, fmt.Errorf("%s: %s is already disposed of", name, r.ID)
 		case r.Disposition != nil && r.Requester == m.Path && r.Pass == m.p.id:
@@ -656,7 +656,7 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			// every repetition of it that erred within the responsibility;
 			// another requester's receipt stays for its own reviewer.
 			for _, y := range e.receipts {
-				if (y.ID == root || y.Rerun == root) && y.Outcome == ProbeError && y.Stand == r.Stand && y.Disposition == nil && y.ID != r.ID && e.within(y.Requester, m.Path) {
+				if (y.ID == root || y.Rerun == root) && y.Outcome == ProbeError && y.Stand == r.Stand && y.Disposition == nil && y.ID != r.ID && e.answersForLocked(y, m.Path) {
 					out[y.ID] = x
 				}
 			}
@@ -676,8 +676,8 @@ func (e *engine) receiptsOf(m *member, name string, ids []string) ([]string, err
 		switch {
 		case r == nil:
 			return nil, fmt.Errorf("%s.receipts[%d]: %q is no probe receipt of this run", name, j, id)
-		case !e.within(r.Requester, m.Path):
-			return nil, fmt.Errorf("%s.receipts[%d]: %s was requested by %s, outside your responsibility", name, j, r.ID, r.Requester)
+		case !e.answersForLocked(r, m.Path):
+			return nil, fmt.Errorf("%s.receipts[%d]: %s was requested by %s about %s, both outside your responsibility", name, j, r.ID, r.Requester, r.Obligation)
 		case m.p.spec.Review && r.Stand != m.p.tree.Digest().String():
 			return nil, fmt.Errorf("%s.receipts[%d]: %s ran on another stand than this candidate", name, j, r.ID)
 		case slices.Contains(out, r.ID):
@@ -686,6 +686,19 @@ func (e *engine) receiptsOf(m *member, name string, ids []string) ([]string, err
 		out = append(out, r.ID)
 	}
 	return out, nil
+}
+
+// answersForLocked reports whether a reviewer of a responsibility may dispose
+// of a receipt: it requested it, a Manager below it did, or the receipt assesses
+// an obligation of its responsibility. The last lets the owner's reviewer judge
+// an ancestor's failed probe of its own claim independently, so that Root's
+// probe of a child's obligation needs no further complete Verify.
+func (e *engine) answersForLocked(r *ProbeReceipt, responsibility string) bool {
+	if e.within(r.Requester, responsibility) {
+		return true
+	}
+	d, ok := e.cfg.Definition(r.Obligation)
+	return ok && e.within(d.Owner, responsibility)
 }
 
 // undisposedLocked lists the adverse receipts on a stand, requested within a

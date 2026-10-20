@@ -609,3 +609,48 @@ func TestProbeKeepsTimeForTheTurnsReport(t *testing.T) {
 		t.Errorf("a probe with time left was refused: %+v", early)
 	}
 }
+
+// Root's failed probe of a child's claim is judged by the child's reviewer, an
+// independent context: its disproof, accepted by Root, disposes of the receipt
+// in the same Verify. Before, only Root itself could dispose of it, as a
+// disproof awaiting a further complete Verify, and every fresh Root reviewer
+// that erred again started yet another one (seven Verify Passes in the A2-b
+// evaluation).
+func TestTheChildJudgesRootsFailedProbeOfItsClaim(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var receipt string
+	var listed bool
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		review := c.turn.Kind == VerifyTurn
+		switch {
+		case review && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on") && receipt == "":
+			receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "a cross-area call", "probe_cross.py", "FAIL")))
+			c.must(toolReport, c.envelope(kindBasis, nil))
+			return nil
+		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			listed = strings.Contains(c.turn.Prompt, "by an ancestor about your obligations") && strings.Contains(c.turn.Prompt, "Receipt "+receipt+" by .")
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError,
+				"reason": "the probe called a command the model does not define", "evidence": "library/interface names one program and no such command"}}}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	res := r.Pass(verifySpec())
+	reassess := r.Reassess()
+	out := f.finish(r, "")
+	if res.Verdict != Satisfied || reassess || out.Status != Verified {
+		t.Fatalf("verdict %s, reassess %v, status %s: %s", res.Verdict, reassess, out.Status, out.Reason)
+	}
+	if !listed {
+		t.Errorf("the child was not shown its ancestor's adverse receipt")
+	}
+	if d := out.Probes[0].Disposition; d == nil || d.By != "library" || d.Pending {
+		t.Errorf("disposition %+v", d)
+	}
+}
