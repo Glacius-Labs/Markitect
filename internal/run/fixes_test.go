@@ -283,9 +283,9 @@ func TestAcceptanceRechecksTheCompositeAgainstTheCurrentStand(t *testing.T) {
 
 // The Pass verdict follows Root's integrated result and the open findings. A
 // parent's finding on its child is fixed by the child in a later work Pass,
-// where the child still reports needs_correction because the finding is open;
-// once the raiser closed it in its result, that child's verdict no longer holds
-// the Pass back. Without the closure the Pass still needs correction.
+// where the child reports satisfied although the finding is still open: only
+// its raiser closes it, in its own later result. Without the closure the Pass
+// still needs correction. Before the fix the child's satisfied was refused.
 func TestPassVerdictFollowsRootResultAndOpenFindings(t *testing.T) {
 	for _, closes := range []bool{true, false} {
 		t.Run(fmt.Sprintf("raiser closes %v", closes), func(t *testing.T) {
@@ -320,8 +320,8 @@ func TestPassVerdictFollowsRootResultAndOpenFindings(t *testing.T) {
 					child = m
 				}
 			}
-			if child.Verdict != NeedsCorrection {
-				t.Errorf("the child reported %s although its finding was open", child.Verdict)
+			if child.Verdict != Satisfied {
+				t.Errorf("the child reported %s for its corrected work while its parent's finding awaited the parent", child.Verdict)
 			}
 			want := NeedsCorrection
 			if closes {

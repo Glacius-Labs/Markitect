@@ -95,8 +95,11 @@ A Pass verdict is `satisfied` when Root's integrated result is satisfied and no 
 finding of the kind the Pass judges is open; a review also needs every required check
 passing on its candidate and every adverse probe receipt on it disposed of independently. In every Pass no accepted result may leave an own obligation
 `open`. A
-child's `needs_correction` rests on an open finding, so a finding its raiser closes later
-no longer holds the Pass back. `PassResult.Corrections` names the correction purposes of
+result's `satisfied` is refused while a finding raised within its responsibility stays
+open, and its `needs_correction` rests on an open finding. A finding an ancestor raised is
+closed only in that ancestor's later report, so it does not refuse a child's `satisfied`;
+it holds the Pass back until its raiser closes it, and a child's `needs_correction` that
+rested on it no longer does once it is closed. `PassResult.Corrections` names the correction purposes of
 the open genuine findings that kind of Pass judges: work findings after a work Pass, all
 after a review.
 
@@ -146,12 +149,16 @@ receipt of another stand returns the submission to its owner. A parent's proposa
 shows the child's evidence and every probe it ran in the Pass, adverse ones included.
 
 An adverse receipt on a review's candidate blocks until it is disposed of: a genuine
-finding that cites it (a violation), a reasoned `expectation_error` for a failed assertion,
+finding that cites it (a violation), a reasoned `expectation_error` when the probe itself was
+wrong (a failed assertion, or an error within the probe's own execution, such as an exceeded
+time limit, together with a passing receipt of the same obligation on the candidate),
 or a `rerun` that replaces an `error` by a passing exact rerun of it (a repetition always
 repeats the original probe, and one passing repetition also disposes of the repetitions
 that erred). A failed assertion is
-never disposed of by running it again; an error without a passing rerun leaves its claim
-without evidence, an open obligation with a genuine finding. Dispositions take effect with
+never disposed of by running it again; an error outside the probe's own execution (not
+started or uncertain) only by a passing exact rerun; and an error that points at the
+candidate, such as a hang, is a genuine finding. One disposition of an error also disposes
+of the erring repetitions of its probe within the responsibility. Dispositions take effect with
 their submission's acceptance, and an expectation-error or rerun disposition falls when
 that submission is reopened or invalidated; a parent's acceptance is the independent
 assessment of a child's own disproof. The reviewer of an obligation's owner may also judge

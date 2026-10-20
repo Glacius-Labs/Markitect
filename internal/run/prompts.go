@@ -150,6 +150,17 @@ func (e *engine) renderProposalLocked(pr *proposal) string {
 			fmt.Fprintf(&b, "  Disposes of the adverse receipt %s: replaced by the passing rerun %s\n", id, d.Rerun)
 			continue
 		}
+		if d.Passing != "" {
+			var erred, passing string
+			if r := e.receiptLocked(id); r != nil {
+				erred = r.Claim
+			}
+			if r := e.receiptLocked(d.Passing); r != nil {
+				passing = r.Claim
+			}
+			fmt.Fprintf(&b, "  Disposes of the error receipt %s (claim: %s) as caused by the probe, not the candidate; a timeout or a kill can also be a hang or crash of the candidate, so judge whether the passing receipt %s (claim: %s) establishes that claim: %s\n    Evidence: %s\n", id, erred, d.Passing, passing, d.Reason, d.Evidence)
+			continue
+		}
 		fmt.Fprintf(&b, "  Disposes of the adverse receipt %s as an erroneous expectation: %s\n    Evidence: %s\n", id, d.Reason, d.Evidence)
 	}
 	// Every probe the child ran in this Pass, whatever its report cites, so
@@ -330,18 +341,22 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 		}
 		b.WriteString("\nThe candidate passed the Model check and the File check.\n")
 		list(b, "Required checks on this candidate:", checks)
-		var mine, within []string
+		var mine, within, inherited []string
 		for _, f := range e.findings {
 			switch {
 			case f.Closed:
 			case f.RaisedBy == m.Path && f.Review:
 				mine = append(mine, renderFinding(f))
-			case e.within(f.Owner, m.Path):
+			case !e.within(f.Owner, m.Path):
+			case f.RaisedBy == MarkitectFinding || e.within(f.RaisedBy, m.Path):
 				within = append(within, renderFinding(f))
+			default:
+				inherited = append(inherited, renderFinding(f))
 			}
 		}
 		list(b, "Open findings you raised in earlier Passes: reassess each; close one as resolved when this candidate corrects it, or as disproved with evidence when it was erroneous:", mine)
-		list(b, "Other open findings within your responsibility:", within)
+		list(b, "Other open findings raised within your responsibility; they keep your result from being satisfied until they are closed:", within)
+		list(b, "Open findings an ancestor raised within your responsibility; that ancestor closes them after your result. Report satisfied only when this candidate corrects each of them; otherwise report needs_correction, or dispute a review finding you judge erroneous:", inherited)
 		var current, earlier []string
 		candidate := p.tree.Digest().String()
 		for _, r := range e.receipts {
