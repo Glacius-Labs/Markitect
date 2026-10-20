@@ -356,7 +356,7 @@ func (c *call) earlierRaised() []string {
 func (c *call) coverage() []map[string]any {
 	var out []map[string]any
 	for _, id := range c.ag.obligations[c.turn.Manager] {
-		out = append(out, map[string]any{"definition": id, "status": coverDone, "note": "covered by the work of " + c.turn.Manager})
+		out = append(out, map[string]any{"definition": id, "status": coverDone, "note": "covered by the work of " + c.turn.Manager, "evidence": []observation{{Claim: "protocol fixture obligation", Method: "in-memory fixture inspection", Expected: "fixture contract", Observed: "fixture contract"}}})
 	}
 	return out
 }

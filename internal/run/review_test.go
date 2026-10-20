@@ -285,3 +285,59 @@ func TestAdvisoryArtifactFindingsNeverBlock(t *testing.T) {
 		t.Errorf("findings %+v", out.Findings)
 	}
 }
+
+// A suite total cannot replace evidence for a particular Definition. Both
+// basis and result claims are checked, and the parent receives the exact
+// observation it is asked to assess. This tests protocol admission, not the
+// semantic truth of the scripted observations.
+func TestReviewRequiresPerDefinitionObservations(t *testing.T) {
+	for _, status := range []string{coverDone, coverPreserved} {
+		t.Run(status, func(t *testing.T) {
+			f := newFixture(t)
+			var mu sync.Mutex
+			refusals, parentSaw := 0, false
+			f.agents.script = func(c *call) error {
+				mu.Lock()
+				defer mu.Unlock()
+				if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && (strings.HasPrefix(c.now(), "work on") || strings.HasPrefix(c.now(), "submit")) {
+					kind := kindBasis
+					if strings.HasPrefix(c.now(), "submit") {
+						kind = kindResult
+					}
+					cov := c.coverage()
+					cov[0]["status"] = status
+					delete(cov[0], "evidence")
+					args := c.envelope(kind, map[string]any{"obligations": cov, "evidence": []string{"51 tests passed"}})
+					if a := c.tool(toolReport, args); !a.Refused || !strings.Contains(a.Text, "requires evidence") {
+						t.Errorf("unsubstantiated claim admitted: %+v", a)
+					}
+					refusals++
+					for _, field := range []string{"claim", "method", "expected", "observed"} {
+						ev := map[string]string{"claim": "permitted unusual input reaches domain", "method": "public command with assertions", "expected": "accepted", "observed": "accepted"}
+						ev[field] = " "
+						cov[0]["evidence"] = []any{ev}
+						if a := c.tool(toolReport, args); !a.Refused || !strings.Contains(a.Text, field) {
+							t.Errorf("blank %s admitted: %+v", field, a)
+						}
+						refusals++
+					}
+					cov[0]["evidence"] = []observation{{Claim: "permitted unusual input reaches domain", Method: "public command with assertions", Expected: "accepted", Observed: "accepted"}}
+					c.must(toolReport, args)
+					return nil
+				}
+				if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && proposalOf(c, kindBasis, "library") != "" {
+					parentSaw = strings.Contains(c.turn.Prompt, "Claim: permitted unusual input reaches domain") && strings.Contains(c.turn.Prompt, "Method: public command with assertions") && strings.Contains(c.turn.Prompt, "Expected: accepted") && strings.Contains(c.turn.Prompt, "Observed: accepted")
+				}
+				c.protocol()
+				return nil
+			}
+			r := f.open()
+			r.Pass(implementSpec())
+			res := r.Pass(verifySpec())
+			out := f.finish(r, "")
+			if res.Stopped || out.Status != Verified || refusals != 10 || !parentSaw {
+				t.Fatalf("status %s, refused %d, parent saw evidence %v: %s", out.Status, refusals, parentSaw, out.Reason)
+			}
+		})
+	}
+}

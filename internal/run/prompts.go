@@ -69,6 +69,11 @@ func writeEnvelope(b *strings.Builder, env envelope, findings func(string) *Find
 			line += " (" + c.Note + ")"
 		}
 		b.WriteString(strings.ReplaceAll(line, "\n", "\n    ") + "\n")
+		for _, ev := range c.Evidence {
+			fmt.Fprintf(b, "    Claim: %s\n    Method: %s\n    Expected: %s\n    Observed: %s\n",
+				strings.ReplaceAll(ev.Claim, "\n", "\n      "), strings.ReplaceAll(ev.Method, "\n", "\n      "),
+				strings.ReplaceAll(ev.Expected, "\n", "\n      "), strings.ReplaceAll(ev.Observed, "\n", "\n      "))
+		}
 	}
 	if pl := env.Plan; pl != nil {
 		writePlan(b, pl)

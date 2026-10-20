@@ -93,9 +93,20 @@ type envelope struct {
 
 // coverage is the status of one own obligation.
 type coverage struct {
-	Definition string `json:"definition"`
-	Status     string `json:"status"`
-	Note       string `json:"note,omitempty"`
+	Definition string        `json:"definition"`
+	Status     string        `json:"status"`
+	Note       string        `json:"note,omitempty"`
+	Evidence   []observation `json:"evidence,omitempty"`
+}
+
+// observation binds an assessment to a specific claim and a reproducible
+// inspection. Validation checks the record, not the truth of its contents;
+// semantic acceptance remains the parent's independent responsibility.
+type observation struct {
+	Claim    string `json:"claim"`
+	Method   string `json:"method"`
+	Expected string `json:"expected"`
+	Observed string `json:"observed"`
 }
 
 // plan is the payload of a planning Pass: the Manager's own concrete approach.
@@ -422,7 +433,29 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 				return nil, err
 			}
 		}
-		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note})
+		if m.p.spec.Review && (c.Status == coverDone || c.Status == coverPreserved) && len(c.Evidence) == 0 {
+			return nil, fmt.Errorf("obligations[%d]: review status %s requires evidence for this Definition: claim, method, expected and observed; a passing suite alone is not coverage", i, c.Status)
+		}
+		if len(c.Evidence) > maxToolItems {
+			return nil, fmt.Errorf("obligations[%d]: at most %d evidence items", i, maxToolItems)
+		}
+		for j := range c.Evidence {
+			fields := []struct {
+				name  string
+				value *string
+			}{
+				{"claim", &c.Evidence[j].Claim}, {"method", &c.Evidence[j].Method},
+				{"expected", &c.Evidence[j].Expected}, {"observed", &c.Evidence[j].Observed},
+			}
+			for _, field := range fields {
+				text, err := toolText(fmt.Sprintf("obligations[%d].evidence[%d].%s", i, j, field.name), *field.value)
+				if err != nil {
+					return nil, err
+				}
+				*field.value = text
+			}
+		}
+		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Evidence: c.Evidence})
 	}
 	if in.Kind == kindResult {
 		var missing []string

@@ -76,6 +76,12 @@ func reportSchema(spec PassSpec) schema {
 			"definition": str("Identity of one of your own Definitions."),
 			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverNotApplicable, coverOpen}},
 			"note":       str("How it is met and with which evidence; required for not_applicable and open, and for every entry of a plan."),
+			"evidence": schema{"type": "array", "description": "Review: required for each done or preserved Definition. Cover its distinct claims and relevant input classes; a suite total alone does not establish coverage.", "items": object([]string{"claim", "method", "expected", "observed"}, schema{
+				"claim":    str("The precise claim and case or input class being assessed against this Pass's authoritative sources."),
+				"method":   str("Reproducible command and assertions, or exact source/test location inspected on this candidate."),
+				"expected": str("The result justified by this Pass's authoritative sources; Apply uses the bound model, Extract uses fixed artifacts and documented intent."),
+				"observed": str("The actual result or source observation, including relevant output; distinguish execution from source inspection."),
+			})},
 		})},
 		"artifacts": strs("basis, result: your own artifacts this contribution created, changed or preserved (repository-relative paths)."),
 		"evidence":  strs("basis, result: the checks, tests and observations that support it."),

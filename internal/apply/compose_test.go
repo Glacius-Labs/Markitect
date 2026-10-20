@@ -1,6 +1,7 @@
 package apply
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -71,5 +72,19 @@ func TestEarliestNamesTheFirstWorkPurposeInPassOrder(t *testing.T) {
 				t.Errorf("earliest(%v, fallback %d) = %d; want %d", c.corrections, c.fallback, got, c.want)
 			}
 		})
+	}
+}
+
+// The same observation envelope has different authoritative sources in the
+// two directions. An Extract reviewer must not use its proposal as proof.
+func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
+	if !strings.Contains(applyVerify().Mandate, "model-derived expected result") {
+		t.Fatal("Apply review lacks its bound-model expectations")
+	}
+	for _, phase := range []string{ExtractStructurePhase, ExtractModelPhase} {
+		_, mandate, _, _ := ExtractPhaseTexts(phase)
+		if !strings.Contains(mandate, "fixed artifacts and documented intent") || !strings.Contains(mandate, "never evidence for itself") || !strings.Contains(mandate, "per-Definition observations") {
+			t.Fatalf("Extract %s has circular or missing review authority: %s", phase, mandate)
+		}
 	}
 }

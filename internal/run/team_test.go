@@ -337,3 +337,50 @@ func TestStaleReportsOfASealedPassAreRefused(t *testing.T) {
 		t.Errorf("passes %s %s, stale answer %q", out.Passes[0].ID, out.Passes[1].ID, staleAnswer)
 	}
 }
+
+// Reproduces the Depot deadlock's implicit integration edges: a parent
+// result needs every child's result, even with no declared reverse dependency.
+func TestPlanRejectsImplicitIntegrationCycles(t *testing.T) {
+	for _, tc := range []struct {
+		name, manager, owner, stage string
+		refused                     bool
+	}{
+		{"parent result", "lending/reminders", "lending", "result", true},
+		{"ancestor result", "lending/reminders", ".", "result", true},
+		{"descendant basis", "lending", "lending/reminders", "basis", true},
+		{"descendant result", "lending", "lending/reminders", "result", true},
+		{"parent basis", "lending/reminders", "lending", "basis", false},
+		{"ancestor basis", "lending/reminders", ".", "basis", false},
+		{"other branch result", "library", "lending", "result", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t)
+			var mu sync.Mutex
+			attempted := false
+			f.agents.script = func(c *call) error {
+				mu.Lock()
+				defer mu.Unlock()
+				if !attempted && c.turn.Manager == tc.manager && strings.HasPrefix(c.now(), "work on") {
+					attempted = true
+					pl := samplePlan()
+					pl["dependencies"] = []any{map[string]any{"owner": tc.owner, "need": "required contract", "pass": "implement", "stage": tc.stage}}
+					a := c.basis(map[string]any{"plan": pl})
+					if a.Refused != tc.refused || tc.refused && !strings.Contains(a.Text, "cycle") {
+						t.Errorf("dependency admitted/refused incorrectly: %+v", a)
+					}
+					if !a.Refused {
+						return nil
+					}
+				}
+				c.protocol()
+				return nil
+			}
+			r := f.open()
+			res := r.Pass(planSpec())
+			out := f.finish(r, "bounded Plan regression")
+			if !attempted || res.Stopped {
+				t.Fatalf("attempted %v, stopped %v: %s", attempted, res.Stopped, out.Reason)
+			}
+		})
+	}
+}
