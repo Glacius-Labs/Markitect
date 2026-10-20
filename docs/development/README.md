@@ -4,6 +4,7 @@ Start engineering work through [AGENTS.md](../../AGENTS.md), the [working method
 
 | Document | Owns |
 |---|---|
+| [Claude cockpit implementation handoff](claude-cockpit-handoff-20261020.md) | Owner-commissioned local cockpit, current Apply observation seams, bounded delivery, design freedom and startup prompt; no UI implemented by the handoff |
 | [Claude Apply implementation handoff](claude-apply-implementation-handoff-20261020.md) | Prepared assignment for accepted DEC-064: recursive Passes, strict checks, ownership, lifecycle, questions, tools and local teams; implementation and runtime evidence remain to be delivered |
 | [Working method](working-method.md) | Apply the owner-adopted practice of explicit learning, complete workflows, focused design review and short milestone accounts; canonical intent lives in the linked repository Rule |
 | [Documentation maintenance](documentation.md) | Placement, navigation, canonical owners and evidence preservation |
