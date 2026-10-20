@@ -3,6 +3,7 @@ package cockpit
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -188,8 +189,68 @@ func TestProjectIsObservedOnceAndAgainOnRequest(t *testing.T) {
 	}
 	settle("/api/project")
 	settle("/api/project")
-	settle("/api/project?refresh=1")
+	if rec := post(h, "", "", "", "/api/project/observe", ""); rec.Code != http.StatusForbidden || calls != 1 {
+		t.Fatalf("an observation without the cockpit's request = %d, %d calls", rec.Code, calls)
+	}
+	if rec := post(h, "", "", "observe", "/api/project/observe", ""); rec.Code != http.StatusOK {
+		t.Fatalf("observe = %d", rec.Code)
+	}
+	settle("/api/project")
 	if calls != 2 || got.Project.ModelID != "markitect" || got.Answers {
 		t.Fatalf("project observed %d times: %+v", calls, got)
+	}
+}
+
+func TestAnswerRefusesMalformedRequestsWithoutWriting(t *testing.T) {
+	state, _ := ownerState(t)
+	var calls []answerCall
+	_, h := answering(t, state, true, &calls)
+	target := "/api/runs/" + ownerRun + "/questions/Q3/answer"
+	plain := httptest.NewRequest(http.MethodPost, target, strings.NewReader(`{"text":"Yes."}`))
+	plain.Header.Set("Content-Type", "text/plain")
+	plain.Header.Set(answerHeader, "answer")
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, plain)
+	if rec.Code != http.StatusForbidden {
+		t.Fatalf("a text/plain answer = %d", rec.Code)
+	}
+	for body, want := range map[string]int{
+		`{"text":"   "}`:                                           http.StatusBadRequest,
+		`{"text":"Yes.","extra":1}`:                                http.StatusBadRequest,
+		`{"text":"Yes."} {"text":""}`:                              http.StatusBadRequest,
+		`{"text":"` + strings.Repeat("x", maxAnswerBytes+1) + `"}`: http.StatusBadRequest,
+	} {
+		if rec := post(h, "", "", "answer", target, body); rec.Code != want {
+			t.Errorf("body %.40s = %d, want %d", body, rec.Code, want)
+		}
+	}
+	if len(calls) != 0 {
+		t.Fatalf("malformed answers reached the owner channel: %+v", calls)
+	}
+}
+
+func TestProjectObservationFailuresAreShown(t *testing.T) {
+	for name, observe := range map[string]ProjectObserver{
+		"error": func(context.Context) (ProjectInfo, error) {
+			return ProjectInfo{Status: "failed"}, errors.New("no model here")
+		},
+		"panic": func(context.Context) (ProjectInfo, error) { panic("broken preparation") },
+	} {
+		c := projectCache{observe: observe}
+		c.get(false)
+		var p *ProjectInfo
+		for i := 0; ; i++ {
+			var observing bool
+			if p, observing = c.get(false); p != nil && !observing {
+				break
+			}
+			if i == 200 {
+				t.Fatalf("%s: the observation never finished", name)
+			}
+			time.Sleep(5 * time.Millisecond)
+		}
+		if p.Error == "" {
+			t.Errorf("%s: the failure is not shown: %+v", name, p)
+		}
 	}
 }

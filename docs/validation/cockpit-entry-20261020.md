@@ -15,13 +15,15 @@ The cockpit served the S-N and Haiku D-N state directories and a new state direc
 
 - The entry showed the running feed with its account, Q2 as waiting for an answer and the Haiku D-N run's Q10 as not answerable because its report is written.
 - Entering a test answer, reviewing and confirming wrote `answers/Q2.txt` through `writeAnswer`; the page reported the written file without claiming the run had recorded it. The feeder read the answer file and continued; afterwards no question waited.
-- The project panel showed the observation in progress and then the model, digest, head and 24 Packages. The check status was failed at that time because the slice's new files were not yet registered; the record does not claim a passing check for that working tree.
+- The project panel showed the observation in progress and then the model, digest, head and 24 Packages. The check status was failed at that time because the slice's new files were not yet registered; the record does not claim a passing check for that working tree. Observed again at the committed head 9e1897ab, the check passed.
 
 No browser console errors were logged.
 
 ## Checks
 
-`go test` of the cockpit, CLI and bootstrap packages, `go vet`, `gofmt`, the architecture gate, `markitect check` and the guarded model view write passed locally on Windows. The tests cover answers reaching the injected owner channel only for a waiting question and only with the cockpit's request, refusals for a foreign host or origin, an unknown, lapsed, withdrawn or already answered question and a run that does not run, the owner question list, the background project observation and the CLI's repository default.
+`go test` of the cockpit, CLI and bootstrap packages, `go vet`, `gofmt`, the architecture gate, `markitect check` and the guarded model view write passed locally on Windows. The tests cover answers reaching the injected owner channel only for a waiting question and only with the cockpit's request, refusals for a foreign host or origin, a text/plain body, blank, oversized or malformed text, an unknown, lapsed, withdrawn or already answered question and a run that does not run, the owner question list, the background project observation behind its own request, its failures and panics, and the CLI's repository default.
+
+After the independent review: a draft answer survived two entry polls, the move to the run's inspector and new records arriving there; the owner question list projects each run's record once per change instead of on every poll.
 
 ## Not established
 

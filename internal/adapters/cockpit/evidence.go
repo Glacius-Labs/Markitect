@@ -82,6 +82,9 @@ type runLog struct {
 	reportAt time.Time
 	readAt   time.Time
 	err      error
+
+	questions    []QuestionView // the record's questions to the user
+	questionsKey string         // the event digest they were projected from
 }
 
 func newRunLog(state, id string) *runLog {

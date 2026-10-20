@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 )
 
 // ProjectInfo is the identity of the repository the cockpit was started in,
@@ -50,22 +52,49 @@ func (c *projectCache) get(refresh bool) (*ProjectInfo, bool) {
 	}
 	if (c.value == nil || refresh) && !c.observing {
 		c.observing = true
-		go func() {
-			p, err := c.observe(context.Background())
-			if err != nil {
-				p.Error = err.Error()
-			}
-			p.ObservedAt = time.Now().UTC()
-			c.mu.Lock()
-			c.value, c.observing = &p, false
-			c.mu.Unlock()
-		}()
+		go c.run()
 	}
 	return c.value, c.observing
 }
 
+// observeTimeout bounds one structural preparation of the repository.
+const observeTimeout = 2 * time.Minute
+
+func (c *projectCache) run() {
+	p := ProjectInfo{}
+	defer func() {
+		if r := recover(); r != nil {
+			p.Status, p.Error = "not_completed", fmt.Sprint("the observation failed: ", r)
+		}
+		p.ObservedAt = time.Now().UTC()
+		c.mu.Lock()
+		c.value, c.observing = &p, false
+		c.mu.Unlock()
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), observeTimeout)
+	defer cancel()
+	var err error
+	p, err = c.observe(ctx)
+	if err != nil {
+		p.Error = err.Error()
+	}
+}
+
 func (s *Server) handleProject(w http.ResponseWriter, r *http.Request) {
-	p, observing := s.project.get(r.URL.Query().Get("refresh") == "1")
+	s.writeProject(w, false)
+}
+
+// handleObserve runs the repository's structural preparation again. It is a
+// POST with the cockpit's own header, so another page cannot start one.
+func (s *Server) handleObserve(w http.ResponseWriter, r *http.Request) {
+	if !s.ownRequest(w, r, "observe") {
+		return
+	}
+	s.writeProject(w, true)
+}
+
+func (s *Server) writeProject(w http.ResponseWriter, refresh bool) {
+	p, observing := s.project.get(refresh)
 	writeJSON(w, struct {
 		Project    *ProjectInfo `json:"project"`
 		Observing  bool         `json:"observing"`
@@ -134,17 +163,18 @@ func (st *stateDirectory) ownerChannel(run string) (published, answered map[stri
 }
 
 // ownerQuestions lists the owner questions of one run: every question the
-// record shows Root asking the user, with the channel's current files.
+// record shows Root asking the user, with the channel's current files. The
+// record's questions are projected once per source state, not on every poll.
 func (s *Server) ownerQuestions(st *stateDirectory, l *runLog) []OwnerQuestion {
 	records, src, report := l.snapshot()
-	view := Project(l.id, records, len(records), src, report)
+	questions := l.userQuestions(records, src)
+	if len(questions) == 0 {
+		return nil
+	}
 	health := s.health(st, l, records, src, report)
 	published, answered := st.ownerChannel(l.id)
 	var out []OwnerQuestion
-	for _, q := range view.Questions {
-		if q.To != "user" {
-			continue
-		}
+	for _, q := range questions {
 		oq := OwnerQuestion{Run: l.id, ID: q.ID, Text: q.Text, Asked: q.Asked, Status: q.Status, Published: published[q.ID], AnswerFile: answered[q.ID], RunState: health.Run}
 		switch {
 		case q.Status != "open":
@@ -188,27 +218,63 @@ func (s *Server) handleQuestions(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, out)
 }
 
+// userQuestions returns the record's questions to the user, projected again
+// only when the consumed records changed.
+func (l *runLog) userQuestions(records []Record, src Source) []QuestionView {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	key := src.EventDigest
+	if l.questionsKey == key {
+		return l.questions
+	}
+	var out []QuestionView
+	for _, q := range Project(l.id, records, len(records), src, nil).Questions {
+		if q.To == "user" {
+			out = append(out, q)
+		}
+	}
+	l.questions, l.questionsKey = out, key
+	return out
+}
+
 // Answerer writes an answer to an owner question through the owner channel.
 // Bootstrap supplies the function the answer command uses: it accepts only an
 // open question of the run that holds the state directory, once, and returns
 // the answer file it wrote.
 type Answerer func(stateDirectory, run, question, text string) (string, error)
 
-// answerHeader must accompany an answer. A cross-site form cannot send it, and
-// a cross-site script cannot send it without a preflight the cockpit refuses.
+// answerHeader must accompany every write. A cross-site form cannot send it,
+// and a cross-site script cannot send it without a preflight the cockpit
+// refuses.
 const answerHeader = "X-Markitect-Cockpit"
+
+// ownRequest admits a write only from the cockpit's own page: its header with
+// the expected purpose and, when the browser names one, its own origin.
+func (s *Server) ownRequest(w http.ResponseWriter, r *http.Request, purpose string) bool {
+	if r.Header.Get(answerHeader) != purpose {
+		http.Error(w, "a write needs the cockpit's own request", http.StatusForbidden)
+		return false
+	}
+	if origin := r.Header.Get("Origin"); origin != "" && !s.admitHost(strings.TrimPrefix(origin, "http://")) {
+		http.Error(w, "foreign origin", http.StatusForbidden)
+		return false
+	}
+	return true
+}
+
+// maxAnswerBytes is the owner channel's limit for an answer.
+const maxAnswerBytes = 16 << 10
 
 func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 	if s.answer == nil {
 		http.Error(w, "answering is not configured", http.StatusNotImplemented)
 		return
 	}
-	if r.Header.Get(answerHeader) != "answer" || !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
-		http.Error(w, "an answer needs the cockpit's JSON request", http.StatusForbidden)
+	if !s.ownRequest(w, r, "answer") {
 		return
 	}
-	if origin := r.Header.Get("Origin"); origin != "" && !s.admitHost(strings.TrimPrefix(origin, "http://")) {
-		http.Error(w, "foreign origin", http.StatusForbidden)
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, "an answer is a JSON request", http.StatusForbidden)
 		return
 	}
 	st, l, ok := s.findRun(w, r)
@@ -219,8 +285,14 @@ func (s *Server) handleAnswer(w http.ResponseWriter, r *http.Request) {
 	var body struct {
 		Text string `json:"text"`
 	}
-	if err := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10)).Decode(&body); err != nil {
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 64<<10))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&body); err != nil || dec.More() {
 		http.Error(w, "the answer is not a JSON object with text", http.StatusBadRequest)
+		return
+	}
+	if strings.TrimSpace(body.Text) == "" || len(body.Text) > maxAnswerBytes || !utf8.ValidString(body.Text) || strings.ContainsRune(body.Text, 0) {
+		http.Error(w, fmt.Sprintf("an answer is non-blank UTF-8 text of at most %d bytes", maxAnswerBytes), http.StatusBadRequest)
 		return
 	}
 	var question *OwnerQuestion

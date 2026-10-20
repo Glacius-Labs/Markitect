@@ -1,6 +1,7 @@
-// The cockpit's interface. Every call but answer is a GET that reads. answer
-// writes an owner's answer through the owner channel the answer command uses;
-// nothing here can start, stop or publish anything.
+// The cockpit's interface. Every GET reads. answer writes an owner's answer
+// through the owner channel the answer command uses, and observeProject runs
+// the repository's structural preparation again; nothing here can start, stop
+// or publish anything.
 
 async function request(path, init = {}) {
   const res = await fetch(path, { ...init, headers: { Accept: "application/json", ...init.headers } });
@@ -15,7 +16,8 @@ const get = (path) => request(path);
 const enc = encodeURIComponent;
 
 export const api = {
-  project: (refresh = false) => get(`/api/project${refresh ? "?refresh=1" : ""}`),
+  project: () => get("/api/project"),
+  observeProject: () => request("/api/project/observe", { method: "POST", headers: { "X-Markitect-Cockpit": "observe" } }),
   runs: () => get("/api/runs"),
   questions: () => get("/api/questions"),
   view: (run, at) => get(`/api/runs/${enc(run)}/view${at === undefined ? "" : `?at=${at}`}`),

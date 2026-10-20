@@ -179,6 +179,7 @@ a { color: var(--work); }
 .answer .actions { display: flex; gap: 8px; }
 .btn.primary-text { background: var(--owner); border-color: var(--owner); color: #fff; }
 .written { border-left: 3px solid var(--done); padding-left: 10px; }
+.qcard details summary { cursor: pointer; color: var(--ink-2); }
 
 /* ---------- Run inspector ---------- */
 .inspector {

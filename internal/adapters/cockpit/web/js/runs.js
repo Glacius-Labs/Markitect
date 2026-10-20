@@ -4,7 +4,7 @@
 
 import { api } from "./api.js";
 import { h, clear, when, duration, shortDigest } from "./dom.js";
-import { answerForm } from "./answer.js";
+import { answerForm, answerInProgress } from "./answer.js";
 
 const outcomeClass = { success: "st-done", verified: "st-done", failed: "st-fail", incomplete: "st-waiting" };
 const POLL_MS = 3000;
@@ -27,10 +27,10 @@ export function renderRuns(app) {
   const settled = (promise) => promise.then((value) => ({ status: "fulfilled", value }), (reason) => ({ status: "rejected", reason }));
   // Each section renders as soon as its part arrives; the project's structural
   // check can take seconds and never holds up the runs.
-  const refresh = (refreshProject = false) => {
+  const refresh = (observe = false) => {
     if (stopped) return;
     const live = () => !stopped && main.isConnected;
-    settled(api.project(refreshProject)).then((project) => {
+    settled(observe ? api.observeProject() : api.project()).then((project) => {
       if (!live()) return;
       answers = Boolean(project.value?.answers);
       renderProject(sections.project, project, () => refresh(true));
@@ -99,7 +99,7 @@ function renderNow(section, result) {
 // renderQuestions lists the owner questions. While the owner writes an
 // answer, the section is not redrawn under the form.
 function renderQuestions(section, result, answers) {
-  if (section.querySelector(".answer textarea:focus, .answer textarea[readonly]")) return;
+  if (answerInProgress(section)) return;
   clear(section).append(h("h2", { id: "h-questions" }, "Owner questions"));
   if (result.status !== "fulfilled") return section.append(h("p", { role: "alert" }, `The questions are not readable: ${result.reason.message}`));
   const questions = result.value;
@@ -110,10 +110,12 @@ function renderQuestions(section, result, answers) {
   const waiting = questions.filter((q) => q.answerable).length;
   section.append(h("p", { class: "muted" }, waiting ? `${waiting} question${waiting === 1 ? " waits" : "s wait"} for an answer.` : "No question waits for an answer now."));
   for (const q of questions) {
+    // A question nobody can answer any more keeps its text one click away.
+    const text = h("div", { class: "prose quote agent" }, q.text);
     const card = h("article", { class: `qcard${q.answerable ? " waiting" : ""}` },
       h("h3", {}, `${q.id} of run `, h("a", { href: `#/run/${encodeURIComponent(q.run)}?sel=${encodeURIComponent(`question:${q.id}`)}` }, q.run)),
       h("p", { class: "muted" }, `Asked ${when(q.asked)}; ${q.status}. ${q.why.charAt(0).toUpperCase()}${q.why.slice(1)}.`),
-      h("div", { class: "prose quote agent" }, q.text));
+      q.answerable ? text : h("details", {}, h("summary", {}, "Question text"), text));
     if (q.answerable && answers) card.append(answerForm(q.run, q.id));
     section.append(card);
   }
@@ -141,11 +143,19 @@ function renderHistory(section, result) {
       h("td", {}, when(r.started), span && h("div", { class: "faint" }, span)),
       h("td", {}, outcome, r.publication && h("div", { class: "faint" }, `publication ${r.publication}`), r.reason && h("div", { class: "faint" }, r.reason.length > 140 ? `${r.reason.slice(0, 139)}…` : r.reason)),
       h("td", {}, `${r.managers} Manager${r.managers === 1 ? "" : "s"}`, h("div", { class: "faint" }, `${r.passes} Pass${r.passes === 1 ? "" : "es"}`), r.head && h("div", { class: "faint digest" }, `source ${r.head.slice(0, 12)}`)),
-      h("td", {}, `${r.records} records`, r.error && h("div", { class: "st-fail" }, r.error)));
+      h("td", {}, `${r.records} records`, usage(r.usage), r.error && h("div", { class: "st-fail" }, r.error)));
   });
   section.append(h("table", { class: "runtable" },
     h("thead", {}, h("tr", {}, h("th", {}, "Run"), h("th", {}, "Started"), h("th", {}, "Outcome"), h("th", {}, "Organization and source"), h("th", {}, "Record"))),
     h("tbody", {}, rows)));
+}
+
+// usage states what the report says about provider use; without a report it
+// is unknown, not zero.
+function usage(u) {
+  if (!u) return h("div", { class: "faint" }, "usage unknown");
+  const cost = u.costUSD ? `, ${u.costUSD.toFixed(2)} USD reported` : "";
+  return h("div", { class: "faint" }, `${u.providerTurns} provider steps${cost}`);
 }
 
 function renderActions(section, answers) {
@@ -154,7 +164,7 @@ function renderActions(section, answers) {
       h("dt", {}, "Answer an owner question"),
       h("dd", {}, answers ? "Available above while a running run waits for the answer. It writes through the same owner channel as markitect answer; the run records the answer when it reads it." : "Not configured in this cockpit."),
       h("dt", {}, "Start an Apply"),
-      h("dd", {}, "Not offered. Start it with markitect apply --run-config PATH --runtime-profile PATH; it appears here while it runs. Starting from the cockpit would start provider work and needs its own decision."),
+      h("dd", {}, "Not offered. Start it with markitect apply --run-config PATH --runtime-profile PATH; it appears here while it runs. Starting from the cockpit would start provider work; whether it should is an owner decision that has not been made."),
       h("dt", {}, "Stop a run"),
       h("dd", {}, "No stop command exists. Interrupting the markitect apply process ends the run incomplete with its evidence. Pausing a replay or a live view never stops a run.")));
 }

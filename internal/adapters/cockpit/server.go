@@ -15,6 +15,8 @@ import (
 	"strconv"
 	"strings"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
 //go:embed web
@@ -120,6 +122,7 @@ func (s *Server) Serve(ctx context.Context, listen string, ready func(url string
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /api/project", s.handleProject)
+	mux.HandleFunc("POST /api/project/observe", s.handleObserve)
 	mux.HandleFunc("GET /api/questions", s.handleQuestions)
 	mux.HandleFunc("POST /api/runs/{run}/questions/{question}/answer", s.handleAnswer)
 	mux.HandleFunc("GET /api/runs", s.handleRuns)
@@ -184,6 +187,7 @@ type RunSummary struct {
 	Publication string     `json:"publication,omitempty"`
 	Reason      string     `json:"reason,omitempty"`
 	Head        string     `json:"head,omitempty"`
+	Usage       *run.Usage `json:"usage,omitempty"`
 	Health      *Health    `json:"health,omitempty"`
 	Account     []Sentence `json:"account,omitempty"`
 	Error       string     `json:"error,omitempty"`
@@ -248,6 +252,10 @@ func (s *Server) summarize(st *stateDirectory, entry RunEntry) RunSummary {
 	}
 	if report != nil {
 		sum.RunOutcome, sum.Head = report.Outcome, report.Head
+		if report.Run != nil {
+			usage := report.Run.Usage
+			sum.Usage = &usage
+		}
 		if report.Publication != nil {
 			sum.Publication = report.Publication.Outcome
 		}
