@@ -10,6 +10,16 @@ Direct repaired A1 in two Passes with three published files versus staged's seve
 
 Session A first integrates the reviewed direct composition from #545 onto current Main, retaining #553 and later public-policy clarification. Do not merge the stale experiment wholesale or drop its dependency-binding fixes. Preserve staged on the same core for comparison, with one explicit, Run-bound strategy selection and common guarantees. `direct` and `staged` are the target strategy names, not a claim that today's CLI accepts them. Reuse the existing configuration owner, refuse unknown values, and document any schema migration. Update code, canonical self-model, generated views and active configuration/runtime guides together; retain historical reports. Do not create a generic workflow language or a second engine. Extract keeps its own composition and regression coverage.
 
+## Session A supplement: shared strategy selection
+
+The owner adopted the [strategy extension boundary](../design/canonical-model/manager-apply-workflow.md#strategy-boundary-and-future-extension) after the four sessions started. This supplements A's existing assignment:
+
+- Give direct/staged one small explicit selection/composition boundary. Tests and normal Apply use the same validated product path; do not substitute test-only direct/staged implementations. B/D's separately specified ordinary-Agent arm remains an evaluation comparator, not a selected product strategy.
+- Validate supported strategy/settings before Agent work, freeze effective values and implementation identity in the Run/evidence, and reject unknown values. Do not add a separate CLI override merely for this supplement; if one is later added it must resolve through the same preparation/binding.
+- Keep shared Run binding, deterministic Model/File entry checks, writer-stop proof, independent Verify, finding closure and publication guards outside strategy-specific policy. This creates no common Prepare Pass: direct keeps local planning/preparation in Implement; staged retains Plan/Prepare Passes. Both retain the common recursive Pass and current ownership. Provider/model and Docker/Kubernetes choices are separate configuration concerns.
+- Document where a future execution arrangement could differ from Package/file ownership without implementing that separation now. The later plan-plus-Agent strategy must preserve source coverage and shared acceptance. Implement only direct/staged today; do not accept a reserved single-Agent strategy name or create a generic plugin/workflow framework.
+- Add focused source tests for selection/refusal, evidence binding and both compositions using the shared gates. Integrate necessary self-model/configuration/documentation updates with A's code. Existing provider budgets and the owner's `START A TESTS` signal remain unchanged; this supplement is not that signal. B/C/D scopes remain unchanged.
+
 ## Four bounded sessions
 
 | Session | Owns | Dependencies and output |
