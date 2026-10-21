@@ -240,19 +240,26 @@ def summarize_report(report):
     starts, ends = [t for t in starts if t], [t for t in ends if t]
     findings = run.get("findings") or []
     preparation = report.get("preparation") or {}
-    diagnostics = [item for attempt in preparation.get("attempts") or [] for key, items in attempt.items()
-                   if key.endswith("Diagnostics") for item in items or []]
+    diagnostics = []
+    for index, attempt in enumerate(preparation.get("attempts") or []):
+        for key, items in attempt.items():
+            if key.endswith("Diagnostics") and items is not None:
+                # Registry diagnostics use a path string for Source; other producers use a source object.
+                # Retain the complete record, including unfamiliar shapes, rather than dropping errors.
+                for item in items if isinstance(items, list) else [items]:
+                    diagnostics.append({"attempt": index, "kind": key, "diagnostic": item})
     return {
-        "status": report.get("status"), "runStatus": run.get("status"), "reason": run.get("reason", ""),
+        "status": report.get("status"), "runStatus": run.get("status"), "reason": run.get("reason") or "",
         "error": report.get("error", ""), "preparationStatus": preparation.get("status"),
         "preparation": " ".join([attempt.get("error", "") for attempt in preparation.get("attempts") or []]
-                                + ["%s %s %s" % (item.get("Code", ""), (item.get("Source") or {}).get("File", ""),
-                                                 item.get("Message", "")) for item in diagnostics])[:2000],
+                                + [diagnostic_text(item["diagnostic"]) for item in diagnostics])[:2000],
+        "preparationDiagnostics": diagnostics,
         "publication": (report.get("publication") or {}).get("Outcome"), "retainedWork": report.get("retainedWork", ""),
         "rounds": [{"number": item.get("number"), "green": item.get("green"),
                     "checks": {check.get("name"): check.get("passed") for check in item.get("checks") or []}}
                    for item in run.get("rounds") or []],
         "passes": [{"id": item.get("id"), "purpose": item.get("purpose"), "review": item.get("review"), "tree": item.get("tree"),
+                    "sealed": item.get("sealed"), "managers": item.get("managers") or [],
                     "verdict": item.get("verdict"), "checks": {check.get("name"): check.get("passed")
                                                               for check in item.get("checks") or []}}
                    for item in run.get("passes") or []],
@@ -270,9 +277,61 @@ def summarize_report(report):
     }
 
 
-# How Root ends a run over a model defect: the model_defect tool (DEC-063, Incomplete) or the
-# Root abort of the pass process (DEC-064, Failed).
-DEFECT_REASONS = ("model defect reported by Root", "Root judged the model erroneous or contradictory")
+def diagnostic_text(item):
+    if not isinstance(item, dict):
+        return json.dumps(item, ensure_ascii=False)
+    source = item.get("Source") or ""
+    if isinstance(source, dict):
+        source = source.get("File", "")
+    return "%s %s %s" % (item.get("Code", ""), source, item.get("Message", ""))
+
+
+ASSESSMENT_REASON = "the model assessment confirmed a material model problem: "
+ASSESSMENT_PURPOSES = ("assess", "assessment", "model-assessment", "model_assessment")
+REALIZATION_PURPOSES = ("plan", "prepare", "implement")
+
+
+def model_stop(summary):
+    """Recognize producer conclusions with their structured evidence, never text tokens alone.
+
+    Assessment: run/pass.go seal/confirmedLocked. Legacy Root abort: proposals.go problem.
+    DEC-063's Incomplete model_defect ending is deliberately not a current closed-Run success.
+    """
+    reason = (summary.get("reason") or "").strip()
+    passes = summary.get("passes") or []
+    purposes = [str(item.get("purpose") or "").lower() for item in passes]
+    phase = ("realization" if any(p in REALIZATION_PURPOSES for p in purposes) else
+             "assessment" if any(p in ASSESSMENT_PURPOSES for p in purposes) else "unknown")
+    confirmed = []
+    records = {p.get("id"): p for p in passes if p.get("id")}
+    for p in passes:
+        root = any(m.get("manager") == "." and m.get("state") == "done" and m.get("result")
+                   and m.get("verdict") == "needs_correction" for m in p.get("managers") or [])
+        if not (p.get("id") and str(p.get("purpose") or "").lower() in ASSESSMENT_PURPOSES and p.get("sealed")
+                and p.get("review") and p.get("verdict") == "needs_correction" and p.get("tree") and root):
+            continue
+        for f in summary.get("findings") or []:
+            raised = records.get(f.get("pass"), {})
+            label = "%s [%s, %s] %s:" % (f.get("id"), f.get("owner"), f.get("correction"), f.get("obligation"))
+            if (f.get("id") and f.get("owner") and f.get("obligation") and f.get("observed")
+                    # A repeated assessment may confirm an earlier, still-open finding on this candidate.
+                    and raised.get("review") and raised.get("sealed") and raised.get("tree") == p["tree"]
+                    and f.get("candidate") == p["tree"] and f.get("review")
+                    and f.get("blocking") and not f.get("closed") and f.get("raisedBy") not in (None, "", "markitect")
+                    and f.get("kind") in (None, "model") and f.get("correction") in ("model_gap", "model_error")
+                    and not any(d.get("pass") == p.get("id") for d in f.get("disputes") or [])
+                    and label in reason):
+                confirmed.append(f)
+    problems = [p for p in summary.get("problems") or [] if p.get("manager") == "."
+                and p.get("category") == "model" and p.get("abort") and p.get("text")]
+    assessment = reason.startswith(ASSESSMENT_REASON) and bool(confirmed)
+    legacy = reason.startswith("Root judged the model erroneous or contradictory: ") and any(
+        reason == "Root judged the model erroneous or contradictory: " + p["text"] for p in problems)
+    terminal = (summary.get("status") == "failed" and summary.get("runStatus") == "failed"
+                and summary.get("preparationStatus") == "passed" and not summary.get("error"))
+    return {"stopped": terminal and (assessment or legacy), "phase": phase,
+            "text": " ".join([reason] + [f["observed"] for f in confirmed] + [p["text"] for p in problems]),
+            "corrections": sorted({f["correction"] for f in confirmed})}
 
 
 def judge_outcome(case, summary, changed):
@@ -285,12 +344,15 @@ def judge_outcome(case, summary, changed):
         met = summary["runStatus"] == "verified" and summary["publication"] == "no_change" and not changed
     else:
         quiet = summary["publication"] in (None, "") and not changed
-        stopped = summary["runStatus"] in ("incomplete", "failed") and summary["reason"].startswith(DEFECT_REASONS)
+        stop = model_stop(summary)
+        stopped = stop["stopped"]
+        if stop["corrections"]:
+            stopped = stopped and {DEFECT: "model_error", GAP: "model_gap", REFUSED: ""}[expected] in stop["corrections"]
         asked = any(question["to"] == "user" for question in summary.get("questions") or [])
         # A refused start fails its preparation and creates no run; a missing run alone can also be a
         # runtime, lock or run-config failure.
         refused = summary["status"] == "failed" and summary["preparationStatus"] == "failed" and not summary["runStatus"]
-        met = quiet and {DEFECT: stopped, GAP: stopped or asked, REFUSED: refused}[expected]
+        met = quiet and not asked and {DEFECT: stopped, GAP: stopped, REFUSED: refused}[expected]
     detail = "run %s, publication %s, %d changed paths" % (summary["runStatus"], summary["publication"], len(changed))
     result = {"met": met, "detail": detail}
     if expected in (DEFECT, GAP, REFUSED):
@@ -299,6 +361,8 @@ def judge_outcome(case, summary, changed):
         named = [[term for term in group if term.lower() in text] for group in case.defect_terms]
         result["defectNamed"] = all(named) if case.defect_terms else None
         result["defectTerms"] = named
+        if expected in (DEFECT, GAP) and case.defect_terms:
+            result["met"] = met and bool(result["defectNamed"])
     return result
 
 

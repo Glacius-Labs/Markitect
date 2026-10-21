@@ -40,13 +40,7 @@ from trial_kit import python_command  # noqa: E402
 
 MET, NOT_MET, INCOMPLETE = "met", "not_met", "incomplete"
 EPHEMERAL = re.compile(r"(^|/)__pycache__/|\.pyc$")
-# A Root-confirmed model stop: the run reason of DEC-064 on current Main or the model_gap and model_error
-# conclusions of the mandatory assessment (PR #560), or a model problem that aborted the Run. Free text that
-# merely mentions a model error is no model stop. A new wording needs a matching change here.
-ROOT_STOP_PREFIXES = ("Root judged the model erroneous or contradictory", "Root confirmed a model gap",
-                      "Root confirmed a model error", "the model assessment confirmed a material model problem: ")
-ASSESSMENT_PURPOSES = ("assess", "assessment", "model-assessment", "model_assessment")
-REALIZATION_PURPOSES = ("plan", "prepare", "implement")
+REALIZATION_PURPOSES = assess.REALIZATION_PURPOSES
 BLOCKER = re.compile(r"(?m)^\s*(?:[-*>]\s+)?[*_]{0,2}BLOCKER[*_]{0,2}\s*:\s*[*_]{0,2}\s*(.+?)\s*$")
 # Events that show a turn did work although it submitted no report.
 TURN_WORK = ("question.asked", "question.answered", "message", "proposal.submitted", "basis.accepted",
@@ -107,19 +101,7 @@ def text_names(text, groups):
 
 
 def model_stop(summary):
-    """{stopped, phase, text} of a Run that ended Failed on a Root-confirmed model gap or error."""
-    reason = (summary.get("reason") or "").strip()
-    problems = [item for item in summary.get("problems") or [] if item.get("category") == "model" and item.get("abort")]
-    stopped = summary.get("runStatus") == "failed" and (reason.startswith(ROOT_STOP_PREFIXES) or bool(problems))
-    purposes = [str(item.get("purpose") or "").lower() for item in summary.get("passes") or []]
-    if any(purpose in REALIZATION_PURPOSES for purpose in purposes):
-        phase = "realization"
-    elif any(purpose in ASSESSMENT_PURPOSES for purpose in purposes):
-        phase = "assessment"
-    else:
-        phase = "unknown"
-    text = " ".join([reason] + [item.get("text") or "" for item in problems])
-    return {"stopped": stopped, "phase": phase, "text": text[:2000]}
+    return assess.model_stop(summary)
 
 
 def blockers(final):
@@ -199,7 +181,7 @@ def outcome(scenario, arm, assessed, summary, final, earlier_run=None, run_id=No
         return (NOT_MET, FALSE_BLOCKER, reasons) if reasons else (MET, COMPLETED, [])
 
     if scenario.expect in STOPS:
-        if changed or published:
+        if changed or published or (markitect and summary["publication"] not in (None, "")):
             category = UNAUTHORIZED_PUBLICATION if stop["stopped"] else SILENT_INVENTION
             return NOT_MET, category, reasons + ["published or changed: %s" % changed[:6]]
         if markitect and summary["runStatus"] == "verified":
