@@ -3,6 +3,7 @@
     python3 -B -m unittest discover -s experiments/apply-trials -p night_run_test.py
 """
 import json
+import copy
 from pathlib import Path
 import signal
 import subprocess
@@ -15,6 +16,37 @@ import night_run as runner
 
 
 class SupervisorControls(unittest.TestCase):
+    def test_actual_profiles_match_authorized_provider_model_effort_image_and_store(self):
+        manifest = {'provider': {'model': 'gpt-6.1-sol', 'effort': 'high'},
+                    'images': {'agent': 'agent-image', 'oracle': 'check-image'}}
+        packet = {'store': 'owned'}
+        profile = {'apiVersion': 'markitect.runtime/v1', 'agentProfiles': {'all-roles': {'codexAppServer': {
+            'imageID': 'agent-image', 'engineExecutable': '/usr/bin/docker', 'credentialRef': 'dedicated-codex-runtime',
+            'session': {'model': 'gpt-6.1-sol', 'effort': 'high', 'store': 'owned'}}}},
+            'checkProfiles': {'tests': {'container': {'imageID': 'check-image', 'engineExecutable': '/usr/bin/docker'}}}}
+        with tempfile.TemporaryDirectory() as folder:
+            path = Path(folder) / 'profile.json'
+            path.write_text(json.dumps(profile))
+            runner.validate_profile(path, packet, manifest)
+            for key, value in (('model', 'another-model'), ('effort', 'low'), ('store', 'foreign')):
+                bad = copy.deepcopy(profile)
+                bad['agentProfiles']['all-roles']['codexAppServer']['session'][key] = value
+                path.write_text(json.dumps(bad))
+                with self.subTest(session=key), self.assertRaises(ValueError):
+                    runner.validate_profile(path, packet, manifest)
+            for key, value in (('imageID', 'another-image'), ('credentialRef', 'desktop-auth'), ('engineExecutable', '/other/engine')):
+                bad = copy.deepcopy(profile)
+                bad['agentProfiles']['all-roles']['codexAppServer'][key] = value
+                path.write_text(json.dumps(bad))
+                with self.subTest(provider=key), self.assertRaises(ValueError):
+                    runner.validate_profile(path, packet, manifest)
+            for field in ('agentProfiles', 'checkProfiles'):
+                bad = copy.deepcopy(profile)
+                bad[field]['extra'] = {'claudeCode': {}} if field == 'agentProfiles' else {'container': {'imageID': 'wrong-check-image'}}
+                path.write_text(json.dumps(bad))
+                with self.subTest(extra=field), self.assertRaises(ValueError):
+                    runner.validate_profile(path, packet, manifest)
+
     def test_reused_identity_never_receives_a_signal(self):
         with tempfile.TemporaryDirectory() as folder:
             registry = Path(folder) / 'groups'

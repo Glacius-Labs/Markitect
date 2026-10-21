@@ -81,6 +81,10 @@ stop/cleanup, and 270 minutes summed. Planned groups are hypotheses, not quotas.
 Only Codex App Server `gpt-6.1-sol/high` with dedicated
 `mk-codex-runtime-auth` is authorized, retaining at least 25 percent quota.
 Metadata preflight uses no generation. Root is the only productive writer.
+Frozen Runtime profiles use JSON encoding (a supported YAML subset); the runner
+checks every actual Agent entry's provider, model, effort, image, dedicated credential
+reference and owned store against the release, and check images against their frozen
+binding. It verifies the copied Runtime input again before dispatch.
 Fresh containers per Turn, independent reviewer Homes, immutable candidates,
 strict terminal/stop proof and fail-closed publication remain mandatory.
 

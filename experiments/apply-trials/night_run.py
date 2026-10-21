@@ -49,6 +49,28 @@ def host_elapsed(sample=None):
     require(sample['frequency'] == process_started_host['frequency'])
     return (sample['ticks'] - process_started_host['ticks']) / sample['frequency']
 
+
+def validate_profile(path, packet, manifest):
+    # JSON is a Runtime YAML subset. Bind the actual input without inventing
+    # another permissive YAML decoder or trusting manifest-side declarations.
+    profile = json.loads(Path(path).read_text(encoding='utf-8'))
+    require(profile['apiVersion'] == 'markitect.runtime/v1' and profile['agentProfiles'])
+    for agent in profile['agentProfiles'].values():
+        require(set(agent) == {'codexAppServer'}, 'every Agent role must use Codex App Server')
+        settings = agent['codexAppServer']
+        session = settings['session']
+        require(settings['imageID'] == manifest['images']['agent']
+                and settings['engineExecutable'] == '/usr/bin/docker'
+                and settings['credentialRef'] == 'dedicated-codex-runtime', 'actual provider image/credential binding differs')
+        require(session['model'] == manifest['provider']['model'] and session['effort'] == manifest['provider']['effort'],
+                'actual session model/effort differs from the authorized manifest')
+        require(session['store'] == packet['store'], 'actual Agent store differs from owned cleanup scope')
+    require(profile['checkProfiles'])
+    for check in profile['checkProfiles'].values():
+        require(set(check) == {'container'} and check['container']['imageID'] == manifest['images']['oracle']
+                and check['container']['engineExecutable'] == '/usr/bin/docker',
+                'actual check profile image differs from frozen binding')
+
 def validate(manifest_path, gate_path, files=True):
     m = json.loads(Path(manifest_path).read_text())
     g = json.loads(Path(gate_path).read_text())
@@ -85,6 +107,7 @@ def validate(manifest_path, gate_path, files=True):
         require(sha(Path(m['nightRoot']) / 'authority.json') == m['authoritySha256'])
         for p in m['packets']:
             require(sha(p['profile']) == p['profileSha256'])
+            validate_profile(p['profile'], p, m)
             for relative, digest in p['packet']['files'].items():
                 require(sha(Path(p['repo']) / relative) == digest)
         for relative, digest in m['sourceFiles'].items():
@@ -396,6 +419,8 @@ def main():
             shutil.copy2(Path(m['build']) / 'verify-harness', attempt / 'verify-harness')
         (attempt / 'host').mkdir()
         shutil.copy2(p['profile'], attempt / 'host/host.yaml')
+        require(sha(attempt / 'host/host.yaml') == p['profileSha256'], 'copied actual Runtime profile differs')
+        validate_profile(attempt / 'host/host.yaml', p, m)
         (attempt / 'binding.txt').write_text('runtime_image=' + m['images']['runtime'] + '\n')
         deadline = (started + dt.timedelta(seconds=m['ceilings']['providerDeadlineFromAttemptStartSeconds'])).strftime('%Y-%m-%dT%H:%M:%SZ')
         run([sys.executable, str(source / 'experiments/recursive-apply-demo/ra_runconfig.py'), str(attempt),
@@ -404,6 +429,11 @@ def main():
         config = json.loads(config_path.read_text())
         config['workDeadline'] = (started + dt.timedelta(seconds=m['ceilings']['workDeadlineFromAttemptStartSeconds'])).strftime('%Y-%m-%dT%H:%M:%SZ')
         config['repositoryIdentity'] = 'project-' + p['name'].lower()
+        # The shared helper's legacy YAML line scan cannot read JSON stores.
+        # Bind the actual workspace helper to the same owned cleanup namespace.
+        config['workspaceHelper']['labels'] = {'markitect.store': p['store']}
+        require(config['workspaceHelper']['image'] == m['images']['runtime']
+                and config['engineExecutable'] == '/usr/bin/docker', 'actual workspace Runtime binding differs')
         config['credentials'] = {'dedicated-codex-runtime': {
             'provider': 'codex-app-server', 'mode': 'dedicated-runtime-login', 'path': str(credential_path)}}
         write(config_path, config)
@@ -430,7 +460,9 @@ def main():
                     for effort in item['supportedReasoningEfforts']) for item in metadata['selected']))
         quota = (metadata['quota']['rateLimitsByLimitId'] or {}).get('codex') or metadata['quota']['rateLimits']
         require(quota is not None and quota['primary'] is not None and quota['rateLimitReachedType'] is None)
-        require(100 - quota['primary']['usedPercent'] >= m['provider']['minimumRemainingQuotaPercent'])
+        require(not quota.get('spendControlReached', False))
+        require(all(100 - window['usedPercent'] >= m['provider']['minimumRemainingQuotaPercent']
+                    for window in (quota.get('primary'), quota.get('secondary')) if window is not None))
         require(not run([docker, 'ps', '-aq', '--filter', 'name=^/' + p['store'] + '-metadata$'], capture_output=True, check=True).stdout.strip(),
                 'metadata container cessation/removal unconfirmed')
         write(attempt / 'readiness.json', {'manifestSha256': sha(manifest_path),
