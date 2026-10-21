@@ -50,8 +50,7 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 		}
 		e.mu.Unlock()
 		text := "Your standing context and current assignment of this run, from its bound inputs:\n" + b.String()
-		e.recordLookup(m, ts, "lookup.brief", map[string]any{"answer": textDigest(text), "bytes": len(text)})
-		return ToolAnswer{Text: text}
+		return e.recordLookup(m, ts, "lookup.brief", ToolAnswer{Text: text}, map[string]any{})
 	case "definition":
 		d, ok := e.cfg.Definition(strings.TrimSpace(in.ID))
 		if !ok {
@@ -62,8 +61,7 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 			label = "your own obligation"
 		}
 		text := fmt.Sprintf("%s (%s, bound model):\n%s", d.ID, label, d.Text)
-		e.recordLookup(m, ts, "lookup.definition", map[string]any{"id": d.ID, "owner": d.Owner, "answer": textDigest(text), "bytes": len(text)})
-		return ToolAnswer{Text: text}
+		return e.recordLookup(m, ts, "lookup.definition", ToolAnswer{Text: text}, map[string]any{"id": d.ID, "owner": d.Owner})
 	case "owner":
 		path, err := snapshot.NewPath(strings.TrimSuffix(strings.TrimSpace(in.Path), "/"))
 		if err != nil {
@@ -328,9 +326,17 @@ func listFindings(b *strings.Builder, title string, findings []Finding, withOwne
 	list(b, title, lines)
 }
 
-// recordLookup records a lookup of a turn with the digest of its answer; a
-// helper's carries its helper.
-func (e *engine) recordLookup(m *member, ts *turnState, kind string, data map[string]any) {
+// recordLookup records a lookup of a turn with the digest and size of the
+// answer as the Agents port receives it, refused when it exceeds the answer
+// bound, and returns that answer; a helper's carries its helper. A note an
+// adapter appends to it later appears only in the transcript.
+func (e *engine) recordLookup(m *member, ts *turnState, kind string, answer ToolAnswer, data map[string]any) ToolAnswer {
+	full := len(answer.Text)
+	answer = boundAnswer(answer)
+	data["answer"], data["bytes"] = textDigest(answer.Text), len(answer.Text)
+	if answer.Refused {
+		data["refused"], data["requested"] = true, full
+	}
 	turn := ""
 	if ts != nil {
 		turn = ts.id
@@ -339,4 +345,5 @@ func (e *engine) recordLookup(m *member, ts *turnState, kind string, data map[st
 		}
 	}
 	_ = e.record(Event{Kind: kind, Pass: m.p.id, Manager: m.Path, Turn: turn, Data: data})
+	return answer
 }

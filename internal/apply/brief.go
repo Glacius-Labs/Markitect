@@ -348,7 +348,7 @@ func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own b
 		}
 	}
 	if len(links) > 0 {
-		fmt.Fprintf(b, "  links: %s\n", strings.Join(links, "; "))
+		fmt.Fprintf(b, "  body links: %s\n", strings.Join(links, "; "))
 	}
 	for _, field := range d.Spec {
 		fmt.Fprintf(b, "  %s: %s\n", field.Name, valueText(field.Value))

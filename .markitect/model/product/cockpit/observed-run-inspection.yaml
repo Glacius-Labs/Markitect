@@ -10,5 +10,5 @@ body: >-
   Live observation adds newly recorded evidence without duplicates or gaps, keeps the run's current state and the link's health apart from the recorded boundary, and keeps a boundary the user chose until the user returns to live.
   The cockpit entry shows the project's bound model and source as structural preparation observes them, the running runs and the run history with outcomes and publications.
   A Run is closed: no question or answer crosses Root to the user, so the cockpit lists and answers no question of a run and no preloaded owner decision exists. A question to the user that an earlier run recorded is shown as recorded and cannot be answered.
-  Starting and stopping runs are not offered; reading, replay, pause, selection and reconnection start, stop, repair and publish nothing, and the view serves only the local machine.
+  Reading, replay, pause, selection and reconnection start, stop, repair and publish nothing, and the view serves only the local machine.
 spec: {}

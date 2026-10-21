@@ -134,7 +134,7 @@ a known stand through the Pass process; no Command uses it, and the grant-gated
 Each Brief lists the Manager's own Definitions, included ones with their owners, its
 areas and local registry with its entry shape (exact files or directories), the required
 checks and its configured instructions. A Definition is stated in full: its body, the
-body links as written with the identities they resolve to (`links:`) and every `spec`
+body links as written with the identities they resolve to (`body links:`) and every `spec`
 value exactly, decimals in plain notation; foreign ones also with their owner and inclusion
 reasons. The binding records the captured `head`, the owner `request`'s digest and per
 Manager `context`: the Brief's digest and which identities it states in full and which only

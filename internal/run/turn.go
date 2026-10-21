@@ -440,8 +440,27 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	return res, err
 }
 
+// MaxToolAnswer bounds one Orchestrator answer: a longer one is refused to the
+// Agent with its size rather than cut by a provider channel.
+const MaxToolAnswer = 256 << 10
+
+// boundAnswer refuses an answer above MaxToolAnswer.
+func boundAnswer(a ToolAnswer) ToolAnswer {
+	if len(a.Text) <= MaxToolAnswer {
+		return a
+	}
+	return refuse("The answer of %d bytes exceeds the %d bytes one answer carries and was not sent; ask for a narrower part, such as one Definition.", len(a.Text), MaxToolAnswer)
+}
+
 // memberHandler serves the tools of a Manager's or reviewer's turn.
 func (e *engine) memberHandler(m *member, ts *turnState) ToolHandler {
+	serve := e.memberTool(m, ts)
+	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
+		return boundAnswer(serve(ctx, name, args))
+	}
+}
+
+func (e *engine) memberTool(m *member, ts *turnState) ToolHandler {
 	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
 		switch name {
 		case toolReport:

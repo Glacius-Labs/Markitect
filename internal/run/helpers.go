@@ -233,6 +233,13 @@ func (e *engine) helperTurn(h *helperRun, ts *turnState, turn Turn) {
 // helperHandler serves the tools of a helper's turn: its result report, the
 // look-up and, with a write subset, the check of its accounting.
 func (e *engine) helperHandler(h *helperRun, ts *turnState) ToolHandler {
+	serve := e.helperTool(h, ts)
+	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
+		return boundAnswer(serve(ctx, name, args))
+	}
+}
+
+func (e *engine) helperTool(h *helperRun, ts *turnState) ToolHandler {
 	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
 		switch name {
 		case toolReport:
