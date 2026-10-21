@@ -472,6 +472,8 @@ func TestRealEngineGivesEveryTurnAFreshContainerWithItsHome(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
+		// A failed turn still ends its container before its volumes are removed.
+		t.Cleanup(func() { _ = s.Close() })
 		if _, err := s.StartProvider(ctx, frame.Start{Argv: []string{"/bin/sh", "-c", script}, Dir: "/work"}); err != nil {
 			t.Fatalf("start %s: %v %q", name, err, s.Diagnostics())
 		}
