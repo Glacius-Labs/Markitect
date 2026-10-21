@@ -1,5 +1,5 @@
 apiVersion: markitect.execution/v1
-strategy: recursive-passes-v1
+strategy: staged
 budget:
   executionTime: 30m
   turnTimeout: 8m

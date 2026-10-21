@@ -20,6 +20,10 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Judges an Apply trial result against its case for outcome, behavior, faults, regression tests, scope and report.
+  - path: "experiments/apply-trials/assessment-key.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Lists the hidden expected conclusions, residual ambiguities and validation of the model-only assessment controls.
   - path: "experiments/apply-trials/bind_profiles.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -584,10 +588,6 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Assesses a trial realization against one expectation profile and reports each check as JSON.
-  - path: "experiments/apply-trials/owner.py"
-    form: code
-    realizes: [examples/independent-oracles]
-    why: Plays the scripted test owner identically for every arm and logs each question, answer or withheld answer.
   - path: "experiments/apply-trials/plan_packet.py"
     form: code
     realizes: [examples/independent-oracles]

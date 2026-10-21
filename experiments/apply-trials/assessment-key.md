@@ -4,14 +4,19 @@ OPERATOR MATERIAL for Session C's model assessment trial of the [direct-runtime 
 
 ## Inputs
 
-Each control is the model-only packet of a trial case: `.markitect/` with the stockroom model, the shared Core and Software dependencies and the execution settings, no realization and no registry. Build it with `python -B materialize.py CASE TARGET`; [scenarios.lock.json](scenarios.lock.json) (`assessmentControls`) binds its commit, tree and file digests. The four controls differ only in `stockroom/inputs.yaml` and, for the contradiction, `stockroom/item.yaml`; the exact edits are in [answer-key.md](answer-key.md).
+Each control is the model-only packet of a trial case: `.markitect/` with the stockroom model, the shared Core and Software dependencies and the execution settings, no realization and no registry. Build it with `python -B materialize.py CASE TARGET`; [scenarios.lock.json](scenarios.lock.json) (`assessmentControls`) binds its commit, tree and file digests. The controls differ only in `stockroom/inputs.yaml` or `stockroom/item.yaml`; the exact edits are in [answer-key.md](answer-key.md).
+
+The conclusions follow the [current policy](../../docs/development/claude-direct-runtime-handoff-20261021.md#current-policy-supplement-mandatory-assessment-and-closed-runs) (PR #560): `accepted`, `model_gap` (a missing material decision) or `model_error` (a sourced contradiction); a Root-confirmed `model_gap` or `model_error` ends the Run Failed without publication, and nobody answers from outside it. Execution failure, an exhausted limit or missing evidence is `Incomplete`, never a detected gap.
 
 | Control | Case | Expected conclusion | Required finding | Not a finding |
 | --- | --- | --- | --- | --- |
 | MA-COMPLETE | S-G (s1) | `accepted` | none | anything about the name maximum (fixed at 60) |
-| MA-GAP | S-QV | `needs_clarification` | the maximum name length is referred to (`stockroom/inputs`) but never given; names the missing owner decision | a contradiction; any other material gap |
-| MA-FREE | S-FREE | `accepted` | none | asking for the name maximum: the model delegates it (40 to 120, stated in the README) |
-| MA-CONTRA | S-XG | `model_error` | `stockroom/item` makes SKUs case-sensitive while `stockroom/inputs` normalizes them to uppercase and identifies items by the normalized SKU; the same edit also conflicts with `stockroom/add-item`'s refusal of a SKU that exists after normalization | a clarification request instead of the error |
+| MA-GAP | S-QV | `model_gap` | the maximum name length is referred to (`stockroom/inputs`) but never given; names the missing decision | a contradiction; any other material gap |
+| MA-FREE | S-FREE | `accepted` | none | a gap about the name maximum: the model delegates it (40 to 120, stated in the README) |
+| MA-CONTRA | S-XG | `model_error` | `stockroom/item` makes SKUs case-sensitive while `stockroom/inputs` normalizes them to uppercase and identifies items by the normalized SKU; the same edit also conflicts with `stockroom/add-item`'s refusal of a SKU that exists after normalization | a gap instead of the error |
+| MA-NEAR | S-XNG | `accepted` | none | a contradiction about SKU case: `stockroom/item` says that differently cased SKUs name the same item after the normalization of `stockroom/inputs` |
+
+MA-COMPLETE, MA-GAP, MA-FREE and MA-CONTRA are the four controls of C's grant. MA-NEAR is the contradiction's counter-control, prepared beside MA-FREE as the gap's; running it is outside that grant.
 
 A finding counts as the required one when it names the source Definitions, both competing readings or the missing decision, and the consequence. Matching terms (an aid, not a verdict): gap — `name` and one of `length`, `maximum`, `limit`, `characters`; contradiction — `sku` and one of `case-sensitive`, `case sensitive`, `uppercase`, `upper case`, `lowercase`, `lower case`.
 
@@ -24,6 +29,8 @@ All four models share the interface, input and storage texts. An independent bli
 | M1 | `stockroom/interface` | Command-line edge cases: a repeated option, the `--sku=VALUE` form, abbreviated options, `--db` after the command, extra positional arguments. |
 | M2 | `stockroom/inputs` | Whether trimming and uppercasing follow Unicode or ASCII rules (for example a dotless `ı`, a leading no-break space). |
 | M3 | `stockroom/storage` | Which existing files count as malformed: a 0-byte file, or valid JSON that breaks an invariant such as an on-hand quantity above 9999. |
+| M4 | `stockroom/storage`, `stockroom/interface` | The exit code of a storage failure (malformed data, a missing directory), which the interface does not name a refusal. |
+| M5 | `stockroom/interface` | Output details beyond the one JSON object: stderr, key order, indentation, escaping of non-ASCII text, a final newline. |
 
 ## Invented requirements
 
@@ -31,8 +38,8 @@ Each of the following is free under the models and counts as an invented require
 
 ## Independent validation
 
-On 21 October 2026 a reviewer that had neither this key, cases.py nor the case names received the four control models together with the hall model under neutral names and classified each strictly on its text. It returned `needs_clarification` for S-QV (only the maximum name length, material), `accepted` for S-G and S-FREE (the delegation recognized as explicit freedom), and `model_error` for S-XG (item against inputs and against add-item). It reported M1 to M3 as minor for all of them. This shows that the controls carry the intended conclusions for one careful reader; it does not establish how an Agent team assesses them.
+On 21 October 2026 a reviewer that had neither this key, cases.py nor the case names received the four control models together with the hall model under neutral names and classified each strictly on its text (as accepted, needs clarification or model error, the vocabulary before #560). It returned a material gap for S-QV (only the maximum name length), `accepted` for S-G and S-FREE (the delegation recognized as explicit freedom), and `model_error` for S-XG (item against inputs and against add-item). It reported M1 to M3 as minor for all of them. A second blind review of the same kind classified the S-XNG model alone as `accepted`: it found no contradiction and no material gap, and reported M1 to M5 as minor. This shows that the controls carry the intended conclusions for one careful reader; it does not establish how an Agent team assesses them.
 
 ## Recording
 
-Record per attempt: the conclusion, every finding with its sources, whether the required finding is present, false alarms (material findings outside the required one, delegated or free choices, invented requirements), minor observations, disagreement within the team and owner effort. Execution failure, timeout or missing evidence is `Incomplete`, never acceptance or rejection of the model.
+Record per attempt: the conclusion, every finding with its sources, whether the required finding is present, false alarms (material findings outside the required one, delegated or free choices, invented requirements, a contradiction on MA-NEAR), minor observations, disagreement within the team and owner effort outside the Run. Execution failure, timeout or missing evidence is `Incomplete`, never acceptance or rejection of the model.

@@ -160,7 +160,7 @@ SCENARIOS = (
         process=("a Verify after the repair closes every genuine finding (record the Pass in which it closed)",
                  "whether Implement or a Verify found the defect first (A1 alone does not prove V1)"),
         stop=COMMON_STOP, limits=("unrequested test additions are recorded as scope, not as failure",),
-        sessions=("A", "D"), lineage="hardening A1"),
+        sessions=("A",), lineage="hardening A1"),
     Scenario(
         "A2", "D-N", PRESERVE,
         "Does a complete Apply preserve an independently conforming stand without optional changes?",
