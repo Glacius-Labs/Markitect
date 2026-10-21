@@ -53,7 +53,7 @@ Independent complete-diff review is required on that exact candidate before merg
 
 The actual embedded application displayed a checked one-local-Package fixture
 (`one-package-ui-fixture`, source `34628cb40e7f62cda05b42899456b6ed33cccd88`,
-with Core supplied by its pinned Markitect dependency) and Markitect's 22 local
+with Core supplied by its pinned Markitect dependency) and Markitect's 23 local
 Packages. Browse responsibility links, Package profile preselection and
 project-wide team focus worked without creating a proposal. Keyboard collapse,
 pan/zoom/Fit, 390/860/1440 px and an 860x400 window were exercised. The observed
