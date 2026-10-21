@@ -212,10 +212,6 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: "Checks that finding effects take effect only on acceptance, the acceptance re-check of a stale composite, the Pass verdict after a parent's closure or with open coverage, the routing by open work findings, partial decisions, helper waits, blocked findings across a send, dispute and closure rules."
-  - path: "internal/run/environments_test.go"
-    form: test
-    realizes: [product/run/confirmed-run-history, product/runtime/container-runtime]
-    why: "Checks the working environments the engine names, the instance evidence of turns and the release of reviewers' environments with their Pass and of all at the run's end."
   - path: "internal/run/lookup_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
