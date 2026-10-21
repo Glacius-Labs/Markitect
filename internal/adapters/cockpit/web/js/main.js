@@ -49,7 +49,18 @@ function modelHref(params) {
 function route() {
   const r = parseRoute();
   if (r.page !== "projects" && store.data.projects && !store.data.projects.current) {
-    location.replace("#/projects");
+    // The page may have been open before a project was: read the list again
+    // and lead to it only when it still states that none is open.
+    api.projects().then((view) => {
+      store.data.projects = view;
+      delete store.errors.projects;
+      if (view.current) {
+        store.refresh();
+        route();
+      } else {
+        location.replace("#/projects");
+      }
+    }, () => location.replace("#/projects"));
     return;
   }
   if (r.page === "run" && inspector && inspector.run === r.run) {

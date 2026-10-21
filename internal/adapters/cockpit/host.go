@@ -96,24 +96,38 @@ type HostConfig struct {
 // serves the page and the project list, and delegates every other API route
 // to the current project's Server, which stays single-project. Switching the
 // project is refused while the current one is busy.
+//
+// A write to the current project is admitted and counted under the host's
+// lock. A switch marks the project draining under the same lock, so no write
+// is admitted after the busy state was read, waits for the writes already
+// admitted and reads the busy state again before it swaps and closes.
 type Host struct {
 	cfg  HostConfig
 	ctx  context.Context
 	web  fs.FS
 	addr string
-	wg   sync.WaitGroup
+	// wg joins the switches and setups under way; Serve waits for them.
+	wg sync.WaitGroup
 
 	mu        sync.Mutex
+	idle      *sync.Cond // signalled when an admitted write ended
 	cur       *hostProject
 	switching bool
 	setting   bool // a setup is under way
+	closing   bool // Serve ended: no switch and no setup starts any more
 	openError string
 }
 
+// hostProject is the current project. The fields below the handler belong to
+// the host's lock.
 type hostProject struct {
 	entry   ProjectEntry
 	opened  OpenedProject
 	handler http.Handler
+
+	inflight  int  // admitted writes that did not end
+	draining  bool // a switch is under way: no write is admitted
+	settingUp bool // a setup rewrites its runtime files: no run or session starts
 }
 
 func (p *hostProject) close() error {
@@ -129,7 +143,9 @@ func NewHost(ctx context.Context, cfg HostConfig) (*Host, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &Host{cfg: cfg, ctx: ctx, web: web}, nil
+	h := &Host{cfg: cfg, ctx: ctx, web: web}
+	h.idle = sync.NewCond(&h.mu)
+	return h, nil
 }
 
 // hostError is a refusal with its status.
@@ -205,6 +221,11 @@ func (h *Host) Serve(ctx context.Context, listen string, ready func(url string))
 		h.mu.Unlock()
 		return h.Handler()
 	}, ready)
+	// A switch or a setup under way ends first, so the project closed here is
+	// the one that is current when they settled.
+	h.mu.Lock()
+	h.closing = true
+	h.mu.Unlock()
 	h.wg.Wait()
 	h.mu.Lock()
 	cur := h.cur
@@ -242,16 +263,56 @@ func (h *Host) Handler() http.Handler {
 	return guardHandler(mux, h.admit)
 }
 
-// delegate gives the request to the current project's Server.
+// delegate gives the request to the current project's Server. A write is
+// admitted only while the project is not draining for a switch, and a run or a
+// model session starts only while it is not being set up; an admitted write is
+// counted until it ends, which a switch waits for.
 func (h *Host) delegate(w http.ResponseWriter, r *http.Request) {
+	write := r.Method != http.MethodGet && r.Method != http.MethodHead
 	h.mu.Lock()
 	cur := h.cur
-	h.mu.Unlock()
-	if cur == nil {
+	switch {
+	case cur == nil:
+		h.mu.Unlock()
 		http.Error(w, "No project is open. Open one from the project list.", http.StatusConflict)
 		return
+	case write && cur.draining:
+		h.mu.Unlock()
+		http.Error(w, "The cockpit is switching projects; try again in a moment.", http.StatusConflict)
+		return
+	case write && cur.settingUp && startsWork(r):
+		h.mu.Unlock()
+		http.Error(w, "The project is being set up; start after the setup ended.", http.StatusConflict)
+		return
+	}
+	if write {
+		cur.inflight++
+	}
+	h.mu.Unlock()
+	if write {
+		defer func() {
+			h.mu.Lock()
+			cur.inflight--
+			h.idle.Broadcast()
+			h.mu.Unlock()
+		}()
 	}
 	cur.handler.ServeHTTP(w, r)
+}
+
+// startsWork is a request that starts a run or a model session or a turn of one.
+func startsWork(r *http.Request) bool {
+	p := r.URL.Path
+	return p == "/api/run-control/start" || p == "/api/sessions" || strings.HasPrefix(p, "/api/sessions/") && strings.HasSuffix(p, "/prompt")
+}
+
+// busyReasonLocked says why the project must not be left: a setup rewrites its
+// runtime files, or what its Server reports. The host's lock is held.
+func busyReasonLocked(p *hostProject) string {
+	if p.settingUp {
+		return "a setup is writing its runtime files; wait for it"
+	}
+	return p.opened.Server.Busy()
 }
 
 // ---------- the list ----------
@@ -294,6 +355,9 @@ func (h *Host) view() ProjectsView {
 	h.mu.Lock()
 	cur := h.cur
 	v.OpenError = h.openError
+	if cur != nil {
+		v.Busy = busyReasonLocked(cur)
+	}
 	h.mu.Unlock()
 	var list ProjectList
 	if h.cfg.Store == nil {
@@ -315,7 +379,6 @@ func (h *Host) view() ProjectsView {
 	if cur != nil {
 		saved, ok := list.Find(cur.entry.Name)
 		v.Current = &CurrentProject{ProjectEntry: normalize(cur.entry), SetUp: cur.entry.Runtime != "", Saved: ok && saved.Repository == cur.entry.Repository}
-		v.Busy = cur.opened.Server.Busy()
 	}
 	return v
 }
@@ -424,13 +487,14 @@ func (h *Host) handleRemove(w http.ResponseWriter, r *http.Request) {
 	}
 	name := r.PathValue("name")
 	h.mu.Lock()
-	cur := h.cur
+	reason := ""
+	if h.cur != nil && h.cur.entry.Name == name {
+		reason = busyReasonLocked(h.cur)
+	}
 	h.mu.Unlock()
-	if cur != nil && cur.entry.Name == name {
-		if reason := cur.opened.Server.Busy(); reason != "" {
-			http.Error(w, "The project is open and busy: "+reason, http.StatusConflict)
-			return
-		}
+	if reason != "" {
+		http.Error(w, "The project is open and busy: "+reason, http.StatusConflict)
+		return
 	}
 	// Only the entry goes; the repository and the runtime directory stay.
 	_, err := h.cfg.Store.Update(func(l *ProjectList) error {
@@ -543,6 +607,10 @@ func (h *Host) swap(entry ProjectEntry) (warning string, err error) {
 		return "", refuseWith(http.StatusNotImplemented, "this cockpit cannot open projects")
 	}
 	h.mu.Lock()
+	if h.closing {
+		h.mu.Unlock()
+		return "", refuseWith(http.StatusServiceUnavailable, "the cockpit is ending")
+	}
 	if h.switching {
 		h.mu.Unlock()
 		return "", refuseWith(http.StatusConflict, "another project is being opened; wait for it")
@@ -552,7 +620,9 @@ func (h *Host) swap(entry ProjectEntry) (warning string, err error) {
 		return "", err
 	}
 	h.switching = true
+	h.wg.Add(1) // admitted under the lock Serve takes before it waits
 	h.mu.Unlock()
+	defer h.wg.Done()
 	defer func() {
 		h.mu.Lock()
 		h.switching = false
@@ -563,15 +633,31 @@ func (h *Host) swap(entry ProjectEntry) (warning string, err error) {
 		return "", refuseWith(http.StatusUnprocessableEntity, "%v", err)
 	}
 	h.mu.Lock()
-	// The current project may have become busy while the new one was built.
-	if err := h.busyLocked(); err != nil {
-		h.mu.Unlock()
-		if opened.Close != nil {
-			_ = opened.Close()
-		}
-		return "", err
-	}
 	old := h.cur
+	if old != nil {
+		// No write is admitted from here on. The busy state is read, the
+		// writes admitted before are waited for, and it is read again: a
+		// write that started work meanwhile shows in it, and the project
+		// stays open and takes writes again.
+		old.draining = true
+		undo := func(err error) (string, error) {
+			old.draining = false
+			h.mu.Unlock()
+			if opened.Close != nil {
+				_ = opened.Close()
+			}
+			return "", err
+		}
+		if err := h.busyLocked(); err != nil {
+			return undo(err)
+		}
+		for old.inflight > 0 {
+			h.idle.Wait()
+		}
+		if err := h.busyLocked(); err != nil {
+			return undo(err)
+		}
+	}
 	h.cur = h.newProject(normalize(entry), opened)
 	h.openError = ""
 	h.mu.Unlock()
@@ -583,11 +669,12 @@ func (h *Host) swap(entry ProjectEntry) (warning string, err error) {
 	return "", nil
 }
 
+// busyLocked refuses while the current project is busy. The lock is held.
 func (h *Host) busyLocked() error {
 	if h.cur == nil {
 		return nil
 	}
-	if reason := h.cur.opened.Server.Busy(); reason != "" {
+	if reason := busyReasonLocked(h.cur); reason != "" {
 		return refuseWith(http.StatusConflict, "The project %s is busy and stays open: %s", h.cur.entry.Name, reason)
 	}
 	return nil
@@ -641,33 +728,62 @@ func (h *Host) handleSetup(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	// A project that is open and busy keeps its runtime files as they are.
+	// While the setup of the open project runs it is busy itself: no run and
+	// no session starts, and no switch happens. Writes admitted before are
+	// waited for and the busy state is read again, so a start that slipped in
+	// is seen.
 	h.mu.Lock()
-	cur := h.cur
+	if h.closing {
+		h.mu.Unlock()
+		http.Error(w, "the cockpit is ending", http.StatusServiceUnavailable)
+		return
+	}
 	if h.setting {
 		h.mu.Unlock()
 		http.Error(w, "another setup is under way; wait for it", http.StatusConflict)
 		return
 	}
-	if cur != nil && cur.entry.Name == entry.Name {
-		if reason := cur.opened.Server.Busy(); reason != "" {
+	var mine *hostProject
+	if h.cur != nil && h.cur.entry.Name == entry.Name {
+		mine = h.cur
+		if reason := busyReasonLocked(mine); reason != "" {
 			h.mu.Unlock()
 			http.Error(w, "The project is open and busy: "+reason, http.StatusConflict)
 			return
 		}
 	}
 	h.setting = true
-	h.wg.Add(1)
-	h.mu.Unlock()
+	h.wg.Add(1) // admitted under the lock Serve takes before it waits
 	defer func() {
 		h.mu.Lock()
 		h.setting = false
+		if mine != nil {
+			mine.settingUp = false
+		}
 		h.mu.Unlock()
 		h.wg.Done()
 	}()
+	if mine != nil {
+		mine.settingUp = true
+		for mine.inflight > 0 {
+			h.idle.Wait()
+		}
+		if reason := mine.opened.Server.Busy(); reason != "" {
+			h.mu.Unlock()
+			http.Error(w, "The project is open and busy: "+reason, http.StatusConflict)
+			return
+		}
+	}
+	h.mu.Unlock()
 	// Setup writes two files; it runs to its end even when the page goes away.
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(r.Context()), setupTimeout)
 	defer cancel()
 	result := h.cfg.Setup(ctx, in)
+	h.mu.Lock()
+	if mine != nil {
+		mine.settingUp = false // the files are written; the project may be reopened
+	}
+	h.mu.Unlock()
 	if result.AgentProfiles == nil {
 		result.AgentProfiles = []string{}
 	}

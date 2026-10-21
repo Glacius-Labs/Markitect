@@ -83,8 +83,10 @@ type projectsDocument struct {
 }
 
 // ProjectStore is the per-user project list in one JSON file. Every change
-// reads the file again and replaces it atomically, so another cockpit's
-// change is not lost to a stale copy and a crash leaves the old file.
+// reads the file again and replaces it atomically: a crash leaves the old
+// file, and a change another process made earlier is kept. There is no lock
+// between processes, so two changes made at the same instant by two
+// processes can still lose one of them.
 type ProjectStore struct {
 	path string
 	mu   sync.Mutex

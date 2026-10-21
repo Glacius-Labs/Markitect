@@ -283,11 +283,11 @@ artifacts:
   - path: "internal/adapters/cockpit/host.go"
     form: code
     realizes: [product/cockpit/desktop-app]
-    why: "Owns the cockpit's one HTTP handler and one swappable project: serves the page and the project routes, delegates every other API route to the current project's server or answers 409 without one, refuses to switch or remove the open project while it is busy, builds the new project before it closes the old one, and calls the function behind markitect setup for a project and stores its runtime on success."
+    why: "Owns the cockpit's one HTTP handler and one swappable project: serves the page and the project routes, delegates every other API route to the current project's server or answers 409 without one, refuses to switch or remove the open project while it is busy or being set up, admits and counts writes so that a switch drains them before it swaps and closes, builds the new project before it closes the old one, joins a switch and a setup under way when it ends, and calls the function behind markitect setup for a project and stores its runtime on success."
   - path: "internal/adapters/cockpit/host_test.go"
     form: test
     realizes: [product/cockpit/desktop-app]
-    why: "Verifies with fake projects that the host serves the page, answers 409 without a project, admits writes only with the cockpit's own header and origin, validates adds, delegates to the open project, remembers the last one, refuses switching and removing while a run, a model session or a publication is busy and allows it otherwise, keeps the open project when another cannot be built, keeps a project opened by flags, passes the form to an injected setup, shows its refusals as they are and closes the project when it ends."
+    why: "Verifies with fake projects that the host serves the page, answers 409 without a project, admits writes only with the cockpit's own header and origin, validates adds, delegates to the open project, remembers the last one, refuses switching and removing while a run, a model session, a publication or a setup is busy and allows it otherwise, drains admitted writes before a switch, waits for a switch when it ends, keeps the open project when another cannot be built, keeps a project opened by flags, passes the form to an injected setup, shows its refusals as they are and closes the project when it ends."
   - path: "internal/adapters/cockpit/busy.go"
     form: code
     realizes: [product/cockpit/desktop-app]

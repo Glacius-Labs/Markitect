@@ -7,6 +7,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -699,4 +700,191 @@ func TestServerWithoutStateDirectoriesNeedsARepository(t *testing.T) {
 	if get(t, srvReason.Handler(), "", "/api/run-control", &rc); rc.Available || rc.Reason != "set it up" {
 		t.Fatalf("run control = %+v", rc)
 	}
+}
+
+func TestHostSwitchWaitsForAdmittedWritesAndRefusesNewOnes(t *testing.T) {
+	f := newHostFixture(t)
+	f.add("alpha", f.repo("alpha"), "")
+	f.add("beta", f.repo("beta"), "")
+	f.open("alpha")
+	entered, release := make(chan struct{}), make(chan struct{})
+	f.auth["alpha"].accept = func(id string) (authoring.Proposal, error) {
+		close(entered)
+		<-release
+		return authoring.Proposal{ID: id, State: authoring.Accepted}, nil
+	}
+	accepted := make(chan *httptest.ResponseRecorder, 1)
+	go func() { accepted <- f.post("accept", "/api/proposals/configuration-1/accept", "") }()
+	<-entered
+	opened := make(chan *httptest.ResponseRecorder, 1)
+	go func() { opened <- f.open("beta") }()
+	// The switch drains: a new write is refused in its own words, reads go on.
+	waitFor(t, "the project to drain", func() bool {
+		rec := f.post("discard", "/api/proposals/configuration-1/discard", "")
+		return rec.Code == http.StatusConflict && strings.Contains(rec.Body.String(), "switching projects")
+	})
+	if rec := get(t, f.h, local, "/api/proposals", nil); rec.Code != http.StatusOK {
+		t.Fatalf("a read while draining = %d", rec.Code)
+	}
+	select {
+	case rec := <-opened:
+		t.Fatalf("the switch ended before the admitted write: %d", rec.Code)
+	case <-time.After(150 * time.Millisecond):
+	}
+	if len(f.names(&f.closed)) != 0 {
+		t.Fatal("the project closed under an admitted write")
+	}
+	close(release)
+	if rec := <-accepted; rec.Code != http.StatusOK {
+		t.Fatalf("the admitted write = %d %s", rec.Code, rec.Body)
+	}
+	if rec := <-opened; rec.Code != http.StatusOK {
+		t.Fatalf("switch = %d %s", rec.Code, rec.Body)
+	}
+	if got := f.names(&f.closed); len(got) != 1 || got[0] != "alpha" || f.view().Current.Name != "beta" {
+		t.Fatalf("closed %v, current %+v", got, f.view().Current)
+	}
+}
+
+func TestHostKeepsTheProjectWhenAnAdmittedWriteStartedWork(t *testing.T) {
+	f := newHostFixture(t)
+	f.add("alpha", f.repo("alpha"), "")
+	f.add("beta", f.repo("beta"), "")
+	f.open("alpha")
+	entered, release := make(chan struct{}), make(chan struct{})
+	f.auth["alpha"].accept = func(id string) (authoring.Proposal, error) {
+		close(entered)
+		<-release
+		f.auth["alpha"].set("", authoring.Publishing) // the write started a publication
+		return authoring.Proposal{ID: id, State: authoring.Publishing}, nil
+	}
+	go f.post("accept", "/api/proposals/configuration-1/accept", "")
+	<-entered
+	opened := make(chan *httptest.ResponseRecorder, 1)
+	go func() { opened <- f.open("beta") }()
+	waitFor(t, "the project to drain", func() bool {
+		return f.post("discard", "/api/proposals/configuration-1/discard", "").Code == http.StatusConflict
+	})
+	close(release)
+	if rec := <-opened; rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "busy") {
+		t.Fatalf("switch = %d %s", rec.Code, rec.Body)
+	}
+	f.auth["alpha"].set("", "")
+	// The project that was built for the refused switch is closed unused.
+	if f.view().Current.Name != "alpha" || slices.Contains(f.names(&f.closed), "alpha") {
+		t.Fatal("a refused switch changed the project")
+	}
+	if rec := f.post("discard", "/api/proposals/configuration-1/discard", ""); rec.Code != http.StatusOK {
+		t.Fatalf("the project takes writes again = %d %s", rec.Code, rec.Body)
+	}
+}
+
+func TestHostServeWaitsForASwitchUnderWayAndClosesWhatIsCurrentThen(t *testing.T) {
+	f := newHostFixture(t)
+	f.add("alpha", f.repo("alpha"), "")
+	f.add("beta", f.repo("beta"), "")
+	f.open("alpha")
+	gate := make(chan struct{})
+	build := f.host.cfg.Open
+	f.host.cfg.Open = func(ctx context.Context, entry ProjectEntry) (OpenedProject, error) {
+		if entry.Name == "beta" {
+			<-gate
+		}
+		return build(ctx, entry)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	ready := make(chan string, 1)
+	done := make(chan error, 1)
+	go func() { done <- f.host.Serve(ctx, "127.0.0.1:0", func(url string) { ready <- url }) }()
+	address := strings.TrimSuffix(strings.TrimPrefix(<-ready, "http://"), "/")
+	opened := make(chan *httptest.ResponseRecorder, 1)
+	go func() { opened <- post(f.h, address, "", "project-open", "/api/projects/beta/open", "") }()
+	waitFor(t, "the switch to start", func() bool {
+		f.host.mu.Lock()
+		defer f.host.mu.Unlock()
+		return f.host.switching
+	})
+	cancel()
+	select {
+	case <-done:
+		t.Fatal("Serve ended while a switch was under way")
+	case <-time.After(300 * time.Millisecond):
+	}
+	close(gate)
+	if rec := <-opened; rec.Code != http.StatusOK {
+		t.Fatalf("switch = %d %s", rec.Code, rec.Body)
+	}
+	select {
+	case err := <-done:
+		if err != nil {
+			t.Fatal(err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("Serve did not end")
+	}
+	got := f.names(&f.closed)
+	if len(got) != 2 || got[0] != "alpha" || got[1] != "beta" {
+		t.Fatalf("closed = %v: the old project closes in the switch, the new one when Serve ends", got)
+	}
+	// Nothing starts after the end.
+	if _, err := f.host.swap(ProjectEntry{Name: "alpha"}); err == nil {
+		t.Fatal("a switch started after Serve ended")
+	}
+}
+
+func TestHostSetupOfTheOpenProjectBlocksStartsAndSwitches(t *testing.T) {
+	f := newHostFixture(t)
+	fake := newFakeRun()
+	f.host.cfg.Open = func(ctx context.Context, entry ProjectEntry) (OpenedProject, error) {
+		state := t.TempDir()
+		runs := NewRunController(ctx, RunControlConfig{StateDir: state, Head: func(context.Context) (string, error) { return confirmedHead, nil },
+			Execute: fake.execute, Held: func() (string, error) { return "", nil }})
+		srv, err := New(Config{States: []string{state}, Runs: runs})
+		return OpenedProject{Server: srv, Close: func() error { runs.Wait(); return nil }}, err
+	}
+	f.add("alpha", f.repo("alpha"), "")
+	f.add("beta", f.repo("beta"), "")
+	f.open("alpha")
+	entered, release := make(chan struct{}), make(chan struct{})
+	f.host.cfg.Setup = func(context.Context, SetupInputs) SetupResult {
+		close(entered)
+		<-release
+		return SetupResult{Status: "failed", Error: "refused"}
+	}
+	abs := t.TempDir()
+	body, _ := json.Marshal(map[string]any{"runtimeDir": filepath.Join(abs, "rt"), "image": "img", "credential": filepath.Join(abs, "token"), "agentModel": "m", "engine": filepath.Join(abs, "docker")})
+	setup := make(chan *httptest.ResponseRecorder, 1)
+	go func() { setup <- f.post("project-setup", "/api/projects/alpha/setup", string(body)) }()
+	<-entered
+	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", startBody); rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "being set up") {
+		t.Fatalf("a start during the setup = %d %s", rec.Code, rec.Body)
+	}
+	if rec := f.post("start", "/api/sessions", `{"prompt":"x"}`); rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "being set up") {
+		t.Fatalf("a session during the setup = %d %s", rec.Code, rec.Body)
+	}
+	if rec := get(t, f.h, local, "/api/run-control", nil); rec.Code != http.StatusOK {
+		t.Fatalf("a read during the setup = %d", rec.Code)
+	}
+	if v := f.view(); !strings.Contains(v.Busy, "setup") {
+		t.Fatalf("busy = %q", v.Busy)
+	}
+	if rec := f.open("beta"); rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "setup") {
+		t.Fatalf("switch during the setup = %d %s", rec.Code, rec.Body)
+	}
+	if rec := f.post("project-remove", "/api/projects/alpha/remove", ""); rec.Code != http.StatusConflict {
+		t.Fatalf("remove during the setup = %d", rec.Code)
+	}
+	close(release)
+	if rec := <-setup; rec.Code != http.StatusOK {
+		t.Fatalf("setup = %d %s", rec.Code, rec.Body)
+	}
+	if v := f.view(); v.Busy != "" {
+		t.Fatalf("busy after the setup = %q", v.Busy)
+	}
+	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", startBody); rec.Code != http.StatusOK {
+		t.Fatalf("a start after the setup = %d %s", rec.Code, rec.Body)
+	}
+	<-fake.started
+	close(fake.release)
 }
