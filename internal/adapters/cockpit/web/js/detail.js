@@ -4,7 +4,7 @@
 // Orchestrator's record. Nothing here infers a delivery, a reading or a success.
 
 import { h, clear, clock, since, label, stateWord, shortDigest, duration } from "./dom.js";
-import { activity } from "./diagram.js";
+import { activity, managerUsage } from "./run-organization-facts.js";
 import { passTitle, passRef, plural, usageText, buildText, confirmsModelProblem } from "./runfacts.js";
 
 export function renderDetail(aside, ctx) {
@@ -264,6 +264,15 @@ function manager(c) {
     c.body.append(h("p", { class: "muted" }, act));
   }
   if (m.helpers?.length) section(c, "Helpers", h("ul", {}, m.helpers.map((x) => h("li", {}, `${x.role} ${x.id}`))));
+  const binding = view.run.binding?.managers?.find((bound) => bound.manager === m.path);
+  if (binding) {
+    section(c, "Recorded profiles and team", dl([
+      ["Execute", binding.execute?.profile || "not recorded"], ["Independent Verify", binding.verify?.profile || "not recorded"],
+      ["Active helpers at most", binding.maxHelpers == null ? "not recorded" : String(binding.maxHelpers)],
+    ]), h("ul", {}, (binding.helpers || []).map((helper) => h("li", {}, `${helper.role}: ${helper.profile || "profile not recorded"}, ${helper.writes ? "delegated writes" : "read-only"}`))));
+  } else c.body.append(h("p", { class: "note" }, "No profile/team binding recorded for this Manager; today's settings are not used."));
+  const usage = managerUsage(view.turns, m.path);
+  if (usage.turns) section(c, "Reported usage across Passes", h("p", {}, `${usage.turns} recorded Turns; usage on ${usage.reported}. ${usage.providerTurns > 0 ? `${usage.providerTurns} provider turns reported.` : "Provider-turn count not reported."} ${usage.costUSD > 0 ? `${usage.costUSD.toFixed(2)} USD reported.` : "Cost not reported."}`), h("p", {}, `Models reported: ${usage.models.join(", ") || "none"}`));
   const mine = view.proposals.filter((p) => p.manager === m.path && p.pass === view.current);
   section(c, "Submissions in this Pass", mine.length
     ? h("table", {}, h("tbody", {}, mine.map((p) => h("tr", {}, h("td", {}, r(`proposal:${p.id}`, p.id)), h("td", {}, p.kind), h("td", {}, statusText(p))))))
@@ -792,6 +801,11 @@ function record(c) {
 
 function owner(c) {
   const { view, r } = c;
+  if (!view.ownerChannel) {
+    title(c, "Owner", "Static project context outside the closed Run");
+    c.body.append(h("p", { class: "note" }, "The owner maintains the model and starts Runs outside execution. No question, answer or live external channel crosses Root during this Run."));
+    return;
+  }
   title(c, "Owner", "Recorded questions of earlier runs that Root asked the owner. A Run asks the owner nothing now; this cockpit answers none");
   const qs = view.questions.filter((q) => q.to === "user");
   section(c, "Questions", qs.length
@@ -803,6 +817,8 @@ function owner(c) {
 function orchestrator(c) {
   const { view, r } = c;
   title(c, "Orchestrator", "The deterministic controller: binds inputs, schedules turns, checks and accepts Root's submissions, routes exchanges, runs gates and checks");
+  const checks = view.run.binding?.checks;
+  if (checks) section(c, "Checks bound at run.start", checks.length ? h("ul", {}, checks.map((check) => h("li", {}, h("strong", {}, check.name), `: ${check.command}, ${check.timeout}${check.requiredBy ? `; required by ${check.requiredBy}` : ""}`))) : h("p", { class: "note" }, "No checks in the recorded binding."));
   const roots = view.proposals.filter((p) => p.manager === ".");
   section(c, "Decisions on Root's submissions", roots.length
     ? h("table", {}, h("tbody", {}, roots.map((p) => h("tr", {}, h("td", {}, r(`proposal:${p.id}`, p.id)), h("td", {}, `${p.kind}, ${p.pass}`), h("td", {}, p.status)))))

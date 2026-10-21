@@ -9,7 +9,7 @@ import { api } from "./api.js";
 import { h, clear, icon, clock, since, label, announce, when, duration } from "./dom.js";
 import { outcomeFacts, passTitle, publicationText, usageText, confirmsModelProblem } from "./runfacts.js";
 import { Playback, SPEEDS } from "./playback.js";
-import { Diagram } from "./diagram.js";
+import { RunOrganization } from "./run-organization.js";
 import { Timeline } from "./timeline.js";
 import { renderDetail } from "./detail.js";
 import { LiveLink } from "./live.js";
@@ -47,6 +47,7 @@ export class Inspector {
     this.dead = true;
     this.live?.close();
     this.playback.destroy();
+    this.diagram?.destroy();
     cancelAnimationFrame(this.anim);
     document.removeEventListener("keydown", this.onKey);
     window.removeEventListener("resize", this.onResize);
@@ -72,7 +73,7 @@ export class Inspector {
     this.renderLists();
     const at = route.at === null || route.at === undefined ? this.entries.length : Number(route.at);
     this.playback.seek(Number.isFinite(at) ? at : this.entries.length);
-    this.following = this.boundary >= this.entries.length;
+    this.following = !this.selection && (route.at === null || route.at === undefined) && this.boundary >= this.entries.length;
     this.live = new LiveLink(this.run, this.entries.length, this.entries.at(-1)?.mark, {
       onEntries: (p) => this.queueEntries(p),
       onHealth: (health, previous) => this.onHealth(health, previous),
@@ -211,7 +212,7 @@ export class Inspector {
       h("span", {}, h("i", { class: "l-orchestrator" }), "Orchestrator control"),
       this.legendOwner);
     this.stageEl.append(this.legend);
-    this.diagram = new Diagram(this.stageEl, { onSelect: (ref) => this.select(ref) });
+    this.diagram = new RunOrganization(this.stageEl, { onSelect: (ref) => this.select(ref) });
     this.diagram.setMotion(this.motion);
 
     this.tabButtons = {};
@@ -440,7 +441,7 @@ export class Inspector {
     li.addEventListener("click", () => {
       this.playback.pause("select");
       this.playback.seek(e.seq);
-      this.select(e.ref, { keepPlaying: true });
+      this.select(e.ref);
     });
     return li;
   }
@@ -523,6 +524,7 @@ export class Inspector {
 
   select(ref, opts = {}) {
     // A manual selection pins the presentation: replay pauses, the run does not.
+    if (!opts.keepPlaying) this.following = false;
     if (this.playback.playing && !opts.keepPlaying) {
       this.playback.pause("select");
       announce("Replay paused for the selection. The run is not affected.");
@@ -536,6 +538,7 @@ export class Inspector {
       this.lastDetail = performance.now();
       this.renderAside();
     }
+    this.renderLive();
   }
 
   setTab(id) {
@@ -553,6 +556,7 @@ export class Inspector {
     else if (this.isLive()) this.playback.resume();
     else this.playback.play();
     this.updatePlayButton();
+    if (this.playback.playing) this.startAnimation();
   }
 
   updatePlayButton() {
@@ -620,6 +624,7 @@ export class Inspector {
   }
 
   key(e) {
+    if (e.defaultPrevented) return;
     if (e.target.closest("input, select, textarea") && e.key !== "Escape") return;
     if (e.ctrlKey || e.metaKey || e.altKey) return;
     const pb = this.playback;

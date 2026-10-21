@@ -41,7 +41,8 @@ type View struct {
 	Bindings  []BindingView  `json:"bindings"`
 	// OwnerChannel says that the record holds owner-channel records (a
 	// question to the owner or an owner error) of an earlier run. A Run no
-	// longer has an owner channel, so the inspector draws the owner only then.
+	// longer has an owner channel; its owner card is static context, and
+	// only these historical exchanges may attach to it.
 	OwnerChannel bool  `json:"ownerChannel"`
 	Gaps         []Gap `json:"gaps"`
 }
@@ -66,8 +67,57 @@ type RunHead struct {
 	Build       string   `json:"build,omitempty"`
 	Source      string   `json:"source,omitempty"`
 	// ExecutionTime and TurnTimeout are the budget's durations as written.
-	ExecutionTime string `json:"executionTime,omitempty"`
-	TurnTimeout   string `json:"turnTimeout,omitempty"`
+	ExecutionTime string              `json:"executionTime,omitempty"`
+	TurnTimeout   string              `json:"turnTimeout,omitempty"`
+	Binding       *RecordedRunBinding `json:"binding,omitempty"`
+}
+
+// RecordedRunBinding is read from run.start, never from today's project.
+// Provider models exist only in reported Turn Usage, not these role bindings.
+type RecordedRunBinding struct {
+	Head        string   `json:"head"`
+	Strategy    string   `json:"strategy"`
+	Build       string   `json:"build"`
+	Work        []string `json:"work"`
+	Corrections []string `json:"corrections"`
+	Execution   string   `json:"execution"`
+	Defaults    string   `json:"defaults"`
+	Budget      struct {
+		ExecutionTime string `json:"executionTime"`
+		TurnTimeout   string `json:"turnTimeout"`
+	} `json:"budget"`
+	Managers []RecordedManagerBinding `json:"managers"`
+	Checks   []RecordedCheckBinding   `json:"checks"`
+}
+
+type RecordedManagerBinding struct {
+	Manager string                  `json:"manager"`
+	Execute RecordedRoleBinding     `json:"execute"`
+	Verify  RecordedRoleBinding     `json:"verify"`
+	Helpers []RecordedHelperBinding `json:"helpers"`
+	// Keep an absent historical limit distinct from recorded zero.
+	MaxHelpers *int            `json:"maxHelpers,omitempty"`
+	Context    ContextCoverage `json:"context"`
+}
+
+type RecordedRoleBinding struct {
+	Profile      string   `json:"profile"`
+	Identity     string   `json:"identity"`
+	Instructions []string `json:"instructions"`
+}
+
+type RecordedHelperBinding struct {
+	Role   string `json:"role"`
+	Writes bool   `json:"writes"`
+	RecordedRoleBinding
+}
+
+type RecordedCheckBinding struct {
+	Name       string `json:"name"`
+	RequiredBy string `json:"requiredBy,omitempty"`
+	Image      string `json:"image"`
+	Command    string `json:"command"`
+	Timeout    string `json:"timeout"`
 }
 
 // Boundary is the recorded position of the view. Total is the number of

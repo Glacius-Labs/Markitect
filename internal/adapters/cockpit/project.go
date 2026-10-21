@@ -131,45 +131,29 @@ func (p *projector) apply(r Record) {
 	switch r.Kind {
 	case "run.start":
 		d := decode[struct {
-			Run        string    `json:"run"`
-			Managers   []string  `json:"managers"`
-			Start      string    `json:"start"`
-			AgentTurns int       `json:"agentTurns"`
-			Passes     int       `json:"passes"`
-			Deadline   time.Time `json:"deadline"`
-			Binding    struct {
-				Head        string   `json:"head"`
-				Strategy    string   `json:"strategy"`
-				Build       string   `json:"build"`
-				Work        []string `json:"work"`
-				Corrections []string `json:"corrections"`
-				Budget      struct {
-					ExecutionTime string `json:"executionTime"`
-					TurnTimeout   string `json:"turnTimeout"`
-				} `json:"budget"`
-				Managers []struct {
-					Manager string `json:"manager"`
-					Context struct {
-						Brief     string   `json:"brief"`
-						Full      []string `json:"full"`
-						Reference []string `json:"reference"`
-					} `json:"context"`
-				} `json:"managers"`
-			} `json:"binding"`
+			Run        string              `json:"run"`
+			Managers   []string            `json:"managers"`
+			Start      string              `json:"start"`
+			AgentTurns int                 `json:"agentTurns"`
+			Passes     int                 `json:"passes"`
+			Deadline   time.Time           `json:"deadline"`
+			Binding    *RecordedRunBinding `json:"binding"`
 		}](p, r)
 		p.head.Started, p.head.Deadline, p.head.AgentTurns, p.head.Passes, p.head.Start = r.At, d.Deadline, d.AgentTurns, d.Passes, d.Start
-		b := d.Binding
-		p.head.Strategy, p.head.Build, p.head.Source, p.head.Work, p.head.Corrections = b.Strategy, b.Build, b.Head, b.Work, b.Corrections
-		p.head.ExecutionTime, p.head.TurnTimeout = b.Budget.ExecutionTime, b.Budget.TurnTimeout
 		for _, m := range d.Managers {
 			p.manager(m)
 		}
-		for _, m := range b.Managers {
-			c := m.Context
-			if c.Brief == "" && len(c.Full) == 0 && len(c.Reference) == 0 {
-				continue
+		p.head.Binding = d.Binding
+		if b := d.Binding; b != nil {
+			p.head.Strategy, p.head.Build, p.head.Source, p.head.Work, p.head.Corrections = b.Strategy, b.Build, b.Head, b.Work, b.Corrections
+			p.head.ExecutionTime, p.head.TurnTimeout = b.Budget.ExecutionTime, b.Budget.TurnTimeout
+			for _, m := range b.Managers {
+				c := m.Context
+				if c.Brief == "" && len(c.Full) == 0 && len(c.Reference) == 0 {
+					continue
+				}
+				p.contexts[m.Manager] = &ContextCoverage{Brief: c.Brief, Full: nonNil(c.Full), Reference: nonNil(c.Reference)}
 			}
-			p.contexts[m.Manager] = &ContextCoverage{Brief: c.Brief, Full: nonNil(c.Full), Reference: nonNil(c.Reference)}
 		}
 	case "pass.start":
 		d := decode[struct {
