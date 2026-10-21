@@ -111,7 +111,7 @@ func (e *engine) startTurnLocked(m *member) {
 		items = append([]item{{kind: itemAssignment}}, items...)
 	}
 	readOnly, mounts := e.mountsLocked(m)
-	turn := Turn{Environment: home, Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
+	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}
 	e.useHomeLocked(home)
 	e.recordStateLocked(m, "a turn started")
@@ -410,7 +410,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	turn.ID, turn.Manager, turn.Timeout = ts.id, manager, e.cfg.Budget.TurnTimeout
 	turn.Transcript = e.cfg.Evidence.Transcript(ts.id)
 	started := e.now()
-	_ = e.record(Event{Kind: "turn.start", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": turn.Kind, "mode": ts.mode, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "mounts": turn.Mounts, "home": turn.Home, "environment": turn.Environment, "resume": turn.Resume,
+	_ = e.record(Event{Kind: "turn.start", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": turn.Kind, "mode": ts.mode, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "mounts": turn.Mounts, "home": turn.Home, "resume": turn.Resume,
 		"context": ts.context, "prompt": textDigest(turn.Prompt), "promptBytes": len(turn.Prompt)}})
 	if e.ctx.Err() != nil {
 		e.mu.Lock()
@@ -420,7 +420,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	}
 	res, err := e.cfg.Agents.Run(e.ctx, turn, handler)
 	e.mu.Lock()
-	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Context: ts.context, Compacted: res.Compacted, Instance: res.Instance, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Reports: slices.Clone(ts.reports), Reason: res.Reason}
+	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Context: ts.context, Compacted: res.Compacted, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Reports: slices.Clone(ts.reports), Reason: res.Reason}
 	if rec.Started.IsZero() {
 		rec.Started = started
 	}
@@ -432,7 +432,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	}
 	e.turns = append(e.turns, rec)
 	e.usage = e.usage.Add(res.Usage)
-	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "mode": rec.Mode, "usage": rec.Usage, "stopped": rec.Stopped, "reports": rec.Reports, "probes": ts.probes, "reason": rec.Reason, "conversation": res.Conversation, "compacted": res.Compacted, "instance": res.Instance}})
+	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "mode": rec.Mode, "usage": rec.Usage, "stopped": rec.Stopped, "reports": rec.Reports, "probes": ts.probes, "reason": rec.Reason, "conversation": res.Conversation, "compacted": res.Compacted}})
 	e.mu.Unlock()
 	if !res.Stopped {
 		e.halt(fmt.Sprintf("turn %s ended without an observed container stop; quiescence is uncertain", ts.id))

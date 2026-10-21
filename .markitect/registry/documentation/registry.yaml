@@ -1912,6 +1912,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: "Records the cockpit's start and stop of an Apply: checks with an injected execution function, a synthetic page demonstration and what remains unproved without a real run."
+  - path: "docs/validation/session-a-b0-b1-runs-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/runtime/container-runtime]
+    why: "Records Session A's B0/B1 provider attempts bound to their actual builds, images and kit, with the B1 capture defect, the failed external scoring and the retained evidence."
   - path: "docs/validation/cockpit-projects-20261021.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]

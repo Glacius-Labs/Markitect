@@ -100,8 +100,6 @@ type Process struct {
 	PGID    int    `json:"pgid"`
 	State   string `json:"state"`
 	Command string `json:"command"`
-	// Threads is the number of threads of the process when the census knows it.
-	Threads int `json:"threads,omitempty"`
 }
 
 // ToolSpec is one Orchestrator tool as offered to the provider through MCP.

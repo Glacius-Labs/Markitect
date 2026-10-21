@@ -16,12 +16,3 @@ func TestParseStatKeepsCommandsWithSpacesAndParentheses(t *testing.T) {
 		}
 	}
 }
-
-// The thread count is field 20 of a full stat line.
-func TestParseStatReadsTheThreadCount(t *testing.T) {
-	line := "42 (sh) Z 7 42 42 0 -1 4194560 0 0 0 0 0 0 0 0 20 0 3 0 1234 0 0"
-	p, err := parseStat(line)
-	if err != nil || p.State != "Z" || p.Threads != 3 {
-		t.Fatalf("parsed %+v %v", p, err)
-	}
-}
