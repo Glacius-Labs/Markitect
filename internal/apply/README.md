@@ -132,7 +132,11 @@ a known stand through the Pass process; no Command uses it, and the grant-gated
 
 Each Brief lists the Manager's own Definitions, included ones with their owners, its
 areas and local registry with its entry shape (exact files or directories), the required
-checks and its configured instructions. Root also receives the project obligations: every
+checks and its configured instructions. A Definition is stated in full: its body, the
+resolved identities of its body links (`links to:`) and every `spec` value; foreign ones
+also with their owner and inclusion reasons. The binding's per-Manager `context` records the
+Brief's digest and which identities it states in full and which only by reference (Root's
+project inventory). Root also receives the project obligations: every
 local Definition with its owner and the Definitions the required checks name. A parent's
 Brief names each child's areas and Definitions, the Managers below it and the role
 statement: children realize their own areas, the parent supplies its own foundation,

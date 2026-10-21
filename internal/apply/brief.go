@@ -1,6 +1,7 @@
 package apply
 
 import (
+	"crypto/sha256"
 	"fmt"
 	"slices"
 	"strings"
@@ -56,8 +57,9 @@ type briefInput struct {
 	// inventory of every local Definition with its owner. Both are set for Root,
 	// which coordinates the whole model and receives its project and boundary
 	// obligations explicitly, attributed to their actual owners.
-	Required []requiredDefinition
-	Project  []string
+	Required   []requiredDefinition
+	Project    []string
+	ProjectIDs []string
 	// Children are the Manager's direct children, in team order.
 	Children []briefChild
 }
@@ -76,6 +78,42 @@ func projectObligations(checked model.Result) []string {
 	}
 	slices.Sort(out)
 	return out
+}
+
+// projectIdentities lists the identities of the project inventory in the
+// order of projectObligations' entries' identities.
+func projectIdentities(checked model.Result) []string {
+	var out []string
+	for _, owner := range checked.Models {
+		if owner.Local {
+			for _, d := range owner.Definitions {
+				out = append(out, identityText(d.Identity))
+			}
+		}
+	}
+	slices.Sort(out)
+	return out
+}
+
+// coverage is the context record of a rendered Brief: the Definitions it
+// states in full (the selection and, for Root, the Definitions of the required
+// checks) and the inventory entries it only lists.
+func (in briefInput) coverage(brief string) ContextBinding {
+	c := ContextBinding{Brief: "sha256:" + fmt.Sprintf("%x", sha256.Sum256([]byte(brief))), Full: []string{}, Reference: []string{}}
+	for _, d := range in.Selection.Definitions() {
+		c.Full = append(c.Full, identityText(d.Definition.Identity))
+	}
+	for _, r := range in.Required {
+		if id := identityText(r.Definition.Identity); !slices.Contains(c.Full, id) {
+			c.Full = append(c.Full, id)
+		}
+	}
+	for _, id := range in.ProjectIDs {
+		if !slices.Contains(c.Full, id) {
+			c.Reference = append(c.Reference, id)
+		}
+	}
+	return c
 }
 
 func identityText(id model.Identity) string { return id.Package + "/" + id.ID }
@@ -283,6 +321,17 @@ func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own b
 	b.WriteString("\n")
 	if strings.TrimSpace(d.Body) != "" {
 		fmt.Fprintf(b, "%s\n", strings.TrimSpace(d.Body))
+	}
+	// A body link names its target through the source's own import aliases;
+	// the resolved identities say which Definitions the text means.
+	var targets []string
+	for _, link := range d.BodyLinks {
+		if target := identityText(link.Target); !slices.Contains(targets, target) {
+			targets = append(targets, target)
+		}
+	}
+	if len(targets) > 0 {
+		fmt.Fprintf(b, "  links to: %s\n", strings.Join(targets, ", "))
 	}
 	for _, field := range d.Spec {
 		fmt.Fprintf(b, "  %s: %s\n", field.Name, valueText(field.Value))

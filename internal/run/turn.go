@@ -38,6 +38,9 @@ type turnState struct {
 	blocked bool
 	// mode is what the turn was admitted for (TurnRecord.Mode).
 	mode string
+	// context says how the turn received its standing context
+	// (TurnRecord.Context).
+	context string
 	// probes counts the probes the turn ran; deadline is when its timeout ends
 	// it at the latest.
 	probes   int
@@ -94,13 +97,13 @@ func (e *engine) startTurnLocked(m *member) {
 	p.running++
 	review := p.spec.Review
 	role, kind, profile, home, resume, letter := "manager", ExecuteTurn, m.ExecuteProfile, m.workHome, m.conversation, "m"
-	standing := !m.introduced || m.conversation == ""
+	standing := !m.introduced || m.conversation == "" || m.rehydrate
 	if review {
 		role, kind, profile, home, resume, letter = "reviewer", VerifyTurn, m.VerifyProfile, m.reviewHome, m.reviewConversation, "r"
-		standing = m.reviewConversation == ""
+		standing = m.reviewConversation == "" || m.reviewRehydrate
 	}
 	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked, mode: turnMode(m),
-		deadline: e.now().Add(e.cfg.Budget.TurnTimeout)}
+		deadline: e.now().Add(e.cfg.Budget.TurnTimeout), context: contextDelivery(standing, resume)}
 	readOnly, mounts := e.mountsLocked(m)
 	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}
@@ -147,6 +150,19 @@ func (e *engine) memberTurn(m *member, ts *turnState, turn Turn) {
 			m.conversation = res.Conversation
 		}
 	}
+	// A compacted or not continued conversation may have lost the standing
+	// context; one that received it again holds it.
+	lost := res.Compacted || turn.Resume != "" && res.Conversation != "" && res.Conversation != turn.Resume
+	switch {
+	case lost && m.p.spec.Review:
+		m.reviewRehydrate = true
+	case lost:
+		m.rehydrate = true
+	case err == nil && ts.context != contextHistory && m.p.spec.Review:
+		m.reviewRehydrate = false
+	case err == nil && ts.context != contextHistory:
+		m.rehydrate = false
+	}
 	if e.ctx.Err() != nil {
 		e.withdrawLocked(ts, "the run stopped")
 		e.recordStateLocked(m, "the run stopped")
@@ -165,6 +181,27 @@ func (e *engine) memberTurn(m *member, ts *turnState, turn Turn) {
 	m.failures = 0
 	e.turnEndedLocked(m, ts)
 	e.scheduleLocked()
+}
+
+// How a turn received the standing context of its Manager or reviewer.
+const (
+	// contextBrief: a fresh conversation, whose prompt carries it.
+	contextBrief = "brief"
+	// contextHistory: a continued conversation that received it earlier.
+	contextHistory = "history"
+	// contextRehydrated: a continued conversation that may have lost it, whose
+	// prompt carries it again.
+	contextRehydrated = "rehydrated"
+)
+
+func contextDelivery(standing bool, resume string) string {
+	switch {
+	case !standing:
+		return contextHistory
+	case resume != "":
+		return contextRehydrated
+	}
+	return contextBrief
 }
 
 // withdrawLocked discards what a turn submitted or delegated without effect.
@@ -352,7 +389,8 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	turn.ID, turn.Manager, turn.Timeout = ts.id, manager, e.cfg.Budget.TurnTimeout
 	turn.Transcript = e.cfg.Evidence.Transcript(ts.id)
 	started := e.now()
-	_ = e.record(Event{Kind: "turn.start", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": turn.Kind, "mode": ts.mode, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "mounts": turn.Mounts, "home": turn.Home, "resume": turn.Resume}})
+	_ = e.record(Event{Kind: "turn.start", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": turn.Kind, "mode": ts.mode, "profile": turn.Profile, "workspace": turn.Workspace, "readOnly": turn.ReadOnly, "mounts": turn.Mounts, "home": turn.Home, "resume": turn.Resume,
+		"context": ts.context, "prompt": textDigest(turn.Prompt), "promptBytes": len(turn.Prompt)}})
 	if e.ctx.Err() != nil {
 		e.mu.Lock()
 		e.turns = append(e.turns, TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Started: started, Ended: e.now(), Stopped: true, Reason: "the run stopped before the turn started"})
@@ -361,7 +399,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	}
 	res, err := e.cfg.Agents.Run(e.ctx, turn, handler)
 	e.mu.Lock()
-	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Reports: slices.Clone(ts.reports), Reason: res.Reason}
+	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Context: ts.context, Compacted: res.Compacted, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Reports: slices.Clone(ts.reports), Reason: res.Reason}
 	if rec.Started.IsZero() {
 		rec.Started = started
 	}
@@ -373,7 +411,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	}
 	e.turns = append(e.turns, rec)
 	e.usage = e.usage.Add(res.Usage)
-	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "mode": rec.Mode, "usage": rec.Usage, "stopped": rec.Stopped, "reports": rec.Reports, "probes": ts.probes, "reason": rec.Reason, "conversation": res.Conversation}})
+	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "mode": rec.Mode, "usage": rec.Usage, "stopped": rec.Stopped, "reports": rec.Reports, "probes": ts.probes, "reason": rec.Reason, "conversation": res.Conversation, "compacted": res.Compacted}})
 	e.mu.Unlock()
 	if !res.Stopped {
 		e.halt(fmt.Sprintf("turn %s ended without an observed container stop; quiescence is uncertain", ts.id))
@@ -392,7 +430,7 @@ func (e *engine) memberHandler(m *member, ts *turnState) ToolHandler {
 		case toolEscalate:
 			return e.escalate(ctx, m, ts, args)
 		case toolLookUp:
-			return e.lookUp(m, args)
+			return e.lookUp(m, ts, args)
 		case toolCheck:
 			if m.p.spec.Writes || e.probesAvailable() {
 				return e.check(ctx, m, ts, args)

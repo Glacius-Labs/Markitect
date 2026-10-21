@@ -23,7 +23,13 @@ ended. `Corrections()` names the correction purposes of the open genuine finding
 `Reassess()` says whether only fresh disputes keep the last review from being clean.
 `Finish(reason)` ends the run: `Verified` only when the last Pass was a clean review of
 one candidate, `Failed` for a definite rejection, `Incomplete` otherwise. After Finish the
-caller owns the work volume. `Config.Binding` is what the caller bound the run to besides
+caller owns the work volume. A turn's prompt carries the standing context (the Manager's or reviewer's Brief, contacts and
+owner request) when its conversation is new, or when the previous turn of that conversation
+reported a compaction (`TurnResult.Compacted`) or came back with another conversation than
+it resumed; otherwise it relies on the conversation's history. `TurnRecord.Context` and
+`turn.start` record which (`brief`, `rehydrated`, `history`) with the prompt's digest.
+`look_up brief` returns the standing context; `look_up definition` answers from the bound
+model and records `lookup.definition` with the answer's digest. `Config.Binding` is what the caller bound the run to besides
 the Config's own inputs, such as an Apply's strategy, effective settings and build:
 `run.start` records it as given, and the Orchestrator chooses nothing by it.
 

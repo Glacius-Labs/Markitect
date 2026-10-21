@@ -85,7 +85,10 @@ type ToolAnswer struct {
 // TurnResult is what the implementation observed. Conversation is the
 // provider conversation identity a later Execute turn may resume. Final is the
 // provider's final text; it carries no outcome, which arrives only through
-// tool calls. Stopped reports the observed end of the container.
+// tool calls. Stopped reports the observed end of the container. Compacted
+// reports that the provider observably compacted the conversation during the
+// turn, so earlier context such as the standing Brief may survive only in its
+// summary; a provider that hides compaction never sets it.
 type TurnResult struct {
 	Conversation string
 	Final        string
@@ -93,6 +96,7 @@ type TurnResult struct {
 	Started      time.Time
 	Ended        time.Time
 	Stopped      bool
+	Compacted    bool
 	Reason       string
 }
 

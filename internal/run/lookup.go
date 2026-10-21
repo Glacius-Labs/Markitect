@@ -12,12 +12,12 @@ import (
 )
 
 // Look-up topics.
-var lookUpTopics = []string{"definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions", "probe", "method"}
+var lookUpTopics = []string{"brief", "definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions", "probe", "method"}
 
 // lookUp serves the tool look_up: structural facts from the Orchestrator's
 // state with their source and stand, so Managers ask deterministic tools for
 // known facts and the tree for decisions.
-func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
+func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnswer {
 	var in struct {
 		Topic   string `json:"topic"`
 		ID      string `json:"id"`
@@ -37,6 +37,10 @@ func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
 			return refuse("id names a method: one of %s.", strings.Join(methodNames(), ", "))
 		}
 		return ToolAnswer{Text: text}
+	case "brief":
+		var b strings.Builder
+		e.standingLocked(&b, m)
+		return ToolAnswer{Text: "Your standing context of this run, from its bound inputs:\n" + b.String()}
 	case "definition":
 		d, ok := e.cfg.Definition(strings.TrimSpace(in.ID))
 		if !ok {
@@ -46,7 +50,13 @@ func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
 		if d.Owner == m.Path {
 			label = "your own obligation"
 		}
-		return ToolAnswer{Text: fmt.Sprintf("%s (%s, bound model):\n%s", d.ID, label, d.Text)}
+		text := fmt.Sprintf("%s (%s, bound model):\n%s", d.ID, label, d.Text)
+		turn := ""
+		if ts != nil {
+			turn = ts.id
+		}
+		_ = e.record(Event{Kind: "lookup.definition", Pass: m.p.id, Manager: m.Path, Turn: turn, Data: map[string]any{"id": d.ID, "owner": d.Owner, "answer": textDigest(text), "bytes": len(text)}})
+		return ToolAnswer{Text: text}
 	case "owner":
 		path, err := snapshot.NewPath(strings.TrimSuffix(strings.TrimSpace(in.Path), "/"))
 		if err != nil {

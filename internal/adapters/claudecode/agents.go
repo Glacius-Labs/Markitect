@@ -370,6 +370,8 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 				c.res.Conversation, c.res.Usage.Model = string(init.Session), initModel(m.Raw())
 			case AssistantMessage:
 				c.addStreamed(m.Raw())
+			case CompactBoundaryMessage:
+				c.res.Compacted = true
 			case ResultMessage:
 				return c.finish(m)
 			case UnsupportedRequest, RejectedMessage:

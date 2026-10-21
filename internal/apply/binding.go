@@ -16,6 +16,7 @@ import (
 // "verify-captured", which runs only the strategy's Verify.
 type RunBinding struct {
 	Entry       string           `json:"entry"`
+	Head        string           `json:"head"`
 	Strategy    Strategy         `json:"strategy"`
 	Work        []run.Purpose    `json:"work"`
 	Corrections []run.Purpose    `json:"corrections"`
@@ -36,13 +37,32 @@ type BudgetBinding struct {
 	Deadline      time.Time `json:"deadline"`
 }
 
-// ManagerBinding is one Manager's resolved roles and team.
+// ManagerBinding is one Manager's resolved roles, team and model context.
 type ManagerBinding struct {
 	Manager    string          `json:"manager"`
 	Execute    RoleBinding     `json:"execute"`
 	Verify     RoleBinding     `json:"verify"`
 	Helpers    []HelperBinding `json:"helpers"`
 	MaxHelpers int             `json:"maxHelpers"`
+	Context    ContextBinding  `json:"context"`
+}
+
+// ContextBinding is the coverage record of a Manager's standing Brief: its
+// digest, the Definitions it states in full and those it only lists for
+// reference (Root's project inventory), each by identity. Every other
+// Definition of the bound model is available through look_up. Whether a turn
+// delivered the Brief, or relied on its conversation, run evidence records per
+// turn.
+type ContextBinding struct {
+	Brief     string   `json:"brief"`
+	Full      []string `json:"full"`
+	Reference []string `json:"reference"`
+}
+
+// boundManager is one Manager's resolved settings with its context record.
+type boundManager struct {
+	settings organization.ManagerSettings
+	context  ContextBinding
 }
 
 // RoleBinding is a resolved profile with its prepared identity and the content
@@ -71,8 +91,8 @@ type CheckBinding struct {
 
 // bindRun records the effective values of one passed preparation and the bound
 // request.
-func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []organization.ManagerSettings, checks []run.Check) RunBinding {
-	b := RunBinding{Entry: entry, Strategy: strategy, Corrections: strategy.corrections(), Build: build,
+func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []boundManager, checks []run.Check) RunBinding {
+	b := RunBinding{Entry: entry, Head: prepared.Structural().Model().Inputs().Head, Strategy: strategy, Corrections: strategy.corrections(), Build: build,
 		Budget: BudgetBinding{ExecutionTime: budget.ExecutionTime.Value.String(), TurnTimeout: budget.TurnTimeout.Value.String(), AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value, Deadline: deadline.UTC()}}
 	for _, spec := range strategy.work() {
 		b.Work = append(b.Work, spec.Purpose)
@@ -83,8 +103,9 @@ func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, 
 	if source := prepared.Defaults().ProductSource(); source.File != "" {
 		b.Defaults = source.File + "@" + source.ContentID.String()
 	}
-	for _, m := range managers {
-		mb := ManagerBinding{Manager: m.Package, Execute: roleBinding(m.Execute), Verify: roleBinding(m.Verify), Helpers: []HelperBinding{}, MaxHelpers: m.MaxHelpers}
+	for _, bound := range managers {
+		m := bound.settings
+		mb := ManagerBinding{Manager: m.Package, Execute: roleBinding(m.Execute), Verify: roleBinding(m.Verify), Helpers: []HelperBinding{}, MaxHelpers: m.MaxHelpers, Context: bound.context}
 		for _, h := range m.Helpers {
 			mb.Helpers = append(mb.Helpers, HelperBinding{Role: h.Role, Writes: h.Writes, RoleBinding: roleBinding(h.RoleSettings)})
 		}

@@ -92,6 +92,10 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_delivery_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Checks the context chain against expectations read off the library model, with faulty variants, from selection through full and reference-only rendering and the coverage record to the prompts and lookups the Agents port receives in new, continued, rehydrated and fresh Verify contexts.
   - path: "internal/apply/context_test.go"
     form: test
     realizes: [product/apply/read-only-preparation]

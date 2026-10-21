@@ -249,7 +249,7 @@ func (e *engine) helperHandler(h *helperRun, ts *turnState) ToolHandler {
 			e.mu.Unlock()
 			return ToolAnswer{Text: "Recorded for your Manager. A later report in this turn replaces it."}
 		case toolLookUp:
-			return e.lookUp(h.m, args)
+			return e.lookUp(h.m, nil, args)
 		case toolCheck:
 			if len(h.paths) > 0 {
 				return e.check(ctx, h.m, ts, args)

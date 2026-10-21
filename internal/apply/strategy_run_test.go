@@ -21,14 +21,21 @@ import (
 // submits its basis (with a plan in a planning Pass) and its complete result
 // preserving each own obligation, and every reviewer cites an inspected source
 // for each own obligation. unstopped names a Manager whose first work turn
-// reports no observed stop of its writers. A refused tool call fails the test,
-// so the script cannot drift from the engine's protocol unnoticed.
+// reports no observed stop of its writers. lookups names the Definitions a
+// Manager looks up, with its Brief, in its first turn; their answers are kept.
+// compacted names Managers whose first work turn reports a compaction. A
+// refused tool call fails the test, so the script cannot drift from the
+// engine's protocol unnoticed.
 type preservingAgents struct {
 	t           *testing.T
 	obligations map[string][]string
 	unstopped   string
+	lookups     map[string][]string
+	compacted   map[string]bool
+	forgets     map[string]bool
 	mu          sync.Mutex
 	turns       []run.Turn
+	answers     map[string]string
 }
 
 func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
@@ -38,10 +45,35 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	if turn.Kind == run.VerifyTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m run.PathMount) bool { return m.Writable })) {
 		a.t.Errorf("verify turn %s can write", turn.ID)
 	}
-	call := func(name string, args map[string]any) {
+	call := func(name string, args map[string]any) string {
 		data, _ := json.Marshal(args)
-		if answer := tools(ctx, name, data); answer.Refused {
+		answer := tools(ctx, name, data)
+		if answer.Refused {
 			a.t.Errorf("turn %s: %s %v refused: %s", turn.ID, name, args, answer.Text)
+		}
+		return answer.Text
+	}
+	a.mu.Lock()
+	lookups := a.lookups[turn.Manager]
+	delete(a.lookups, turn.Manager)
+	compacted := a.compacted[turn.Manager] && turn.Kind == run.ExecuteTurn
+	if compacted {
+		delete(a.compacted, turn.Manager)
+	}
+	a.mu.Unlock()
+	if len(lookups) > 0 {
+		brief := call("look_up", map[string]any{"topic": "brief"})
+		a.mu.Lock()
+		if a.answers == nil {
+			a.answers = map[string]string{}
+		}
+		a.answers[turn.Manager+" brief"] = brief
+		a.mu.Unlock()
+		for _, id := range lookups {
+			text := call("look_up", map[string]any{"topic": "definition", "id": id})
+			a.mu.Lock()
+			a.answers[turn.Manager+" "+id] = text
+			a.mu.Unlock()
 		}
 	}
 	for _, m := range decideRE.FindAllStringSubmatch(turn.Prompt, -1) {
@@ -85,7 +117,15 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 		stopped, a.unstopped = false, ""
 		a.mu.Unlock()
 	}
-	return run.TurnResult{Conversation: "conv-" + turn.Manager, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: stopped}, nil
+	conversation := "conv-" + turn.Home
+	a.mu.Lock()
+	if a.forgets[turn.Manager] && turn.Kind == run.ExecuteTurn && turn.Resume != "" {
+		// The provider did not continue the conversation it was asked to.
+		delete(a.forgets, turn.Manager)
+		conversation = "lost-" + turn.Home
+	}
+	a.mu.Unlock()
+	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: stopped, Compacted: compacted}, nil
 }
 
 // passingRunner runs every check of a candidate successfully.

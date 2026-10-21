@@ -303,7 +303,7 @@ func applyConfig(req ApplyRequest, now time.Time, entry string) (run.Config, Run
 
 // runConfig is the run configuration of applyConfig with the resolved settings
 // of every Manager in team order.
-func runConfig(req ApplyRequest, now time.Time) (run.Config, []organization.ManagerSettings, error) {
+func runConfig(req ApplyRequest, now time.Time) (run.Config, []boundManager, error) {
 	if strings.TrimSpace(req.Build) == "" {
 		return run.Config{}, nil, errors.New("the implementation identity of the product build is required")
 	}
@@ -375,13 +375,12 @@ func runConfig(req ApplyRequest, now time.Time) (run.Config, []organization.Mana
 		required = append(required, requiredDefinition{Definition: definition, Checks: requiredChecks[id]})
 	}
 	var team []run.Manager
-	var managers []organization.ManagerSettings
+	var managers []boundManager
 	for _, manager := range topology.Managers() {
 		managerSettings, ok := settings.Manager(manager.Package)
 		if !ok {
 			return run.Config{}, nil, fmt.Errorf("manager %q has no resolved settings", manager.Package)
 		}
-		managers = append(managers, managerSettings)
 		write, err := candidates.WritePlan(manager.Package)
 		if err != nil {
 			return run.Config{}, nil, err
@@ -397,12 +396,14 @@ func runConfig(req ApplyRequest, now time.Time) (run.Config, []organization.Mana
 			Areas: candidates.Areas(manager.Package), Shard: candidates.Shard(manager.Package), Checks: briefChecks,
 			Children: briefChildren(manager, topology.Managers(), selections, candidates.Areas)}
 		if manager.Package == organization.Root {
-			input.Required, input.Project = required, projectObligations(checked)
+			input.Required, input.Project, input.ProjectIDs = required, projectObligations(checked), projectIdentities(checked)
 		}
+		brief := renderBrief(input)
+		managers = append(managers, boundManager{settings: managerSettings, context: input.coverage(brief)})
 		team = append(team, run.Manager{
 			Path: manager.Package, Parent: manager.Parent, Children: manager.Children,
 			Role:           managerRole(manager, selection),
-			Brief:          renderBrief(input),
+			Brief:          brief,
 			Obligations:    obligations,
 			ExecuteProfile: managerSettings.Execute.Profile.Value.Name,
 			VerifyProfile:  managerSettings.Verify.Profile.Value.Name,
