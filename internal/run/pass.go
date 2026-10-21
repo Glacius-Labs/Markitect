@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -992,8 +993,21 @@ func (e *engine) confirmedLocked(p *pass) []string {
 	var lines []string
 	for _, f := range e.findings {
 		if f.Blocking && !f.Closed && f.Kind != Suspected && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
-			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, clip(f.Observed, 400)))
+			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, shorten(f.Observed, 400)))
 		}
 	}
 	return lines
+}
+
+// shorten cuts a text for a reason to at most n bytes at a rune boundary and
+// marks the cut; the complete text stays in the run's record.
+func shorten(s string, n int) string {
+	if len(s) <= n {
+		return s
+	}
+	cut := n
+	for cut > 0 && !utf8.RuneStart(s[cut]) {
+		cut--
+	}
+	return s[:cut] + " [...]"
 }
