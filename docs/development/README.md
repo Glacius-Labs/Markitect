@@ -4,6 +4,7 @@ Start engineering work through [AGENTS.md](../../AGENTS.md), the [working method
 
 | Document | Owns |
 |---|---|
+| [Codex Apply conformance handoff](codex-apply-conformance-handoff-20261021.md) | Next owner-started bounded correction: material-condition evidence before Implement acceptance, parent integration, independently derived Verify coverage, adjudicated controls and a new finite targeted series; prior series is exhausted |
 | [Direct runtime and evaluation handoff](claude-direct-runtime-handoff-20261021.md) | Current owner-started sessions: provisional direct integration, reusable containers and targeted retest; small scenarios with a plan-plus-Agent comparison; mandatory model-assessment method and integration; closed-Run gap controls; later matched comparison |
 | [Claude Apply hardening handoff](claude-apply-hardening-handoff-20261020.md) | New owner-started assignment: active counterexample review, tool-produced receipts, previous-proposal dispositions, preserved candidates and a finite Haiku retest; the [earlier implementation handoff](claude-apply-implementation-handoff-20261020.md) is historical |
 | [Codex cockpit organization chart handoff](codex-cockpit-org-chart-handoff-20261021.md) | Owner-requested company-style organization chart: declared and resolved organization read model, chart component, Model area tab, run inspector on the chart, further cockpit work and startup prompt; no UI implemented by the handoff |
