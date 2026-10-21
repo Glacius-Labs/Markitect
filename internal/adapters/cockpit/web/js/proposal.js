@@ -44,7 +44,7 @@ function proposalView(p, draw, compact) {
   const passed = p.check.status === "passed";
   return [
     h("div", { class: "block" },
-      h("p", { class: `outcome big ${stateClass[p.state] || ""}`, tabindex: -1, style: { margin: 0 } }, h("span", { class: "lamp" }), stateWords[p.state] || p.state),
+      h("p", { class: `outcome big ${stateClass[p.state] || ""}`, tabindex: -1 }, h("span", { class: "lamp" }), stateWords[p.state] || p.state),
       h("dl", { class: "facts" },
         h("dt", {}, "Proposal"), h("dd", {}, h("span", { class: "coord" }, p.id), " ", p.title),
         h("dt", {}, "Made"), h("dd", {}, `${when(p.created)} from the committed source at `, h("span", { class: "digest" }, p.head.slice(0, 12))),
@@ -53,7 +53,7 @@ function proposalView(p, draw, compact) {
     receipt(p),
     p.state === "proposed" ? decision(p, passed, draw) : after(p, compact),
     p.summary && h("div", { class: "block" }, h("h3", {}, "The Agent's summary"),
-      h("p", { class: "note", style: { margin: 0 } }, "Written by the Agent of ", h("a", { href: "#/session" }, `session ${p.session}`), "; the difference and the check below are what the cockpit observed."),
+      h("p", { class: "note" }, "Written by the Agent of ", h("a", { href: "#/session" }, `session ${p.session}`), "; the difference and check below are what the cockpit observed."),
       h("div", { class: "prose quote agent" }, p.summary)),
     checkBlock(p.check),
     h("div", { class: "block" }, h("h3", {}, "Difference"), ...p.changes.map(fileDiff)),
@@ -64,7 +64,7 @@ function checkBlock(check) {
   const passed = check.status === "passed";
   const block = h("div", { class: "block" },
     h("h3", {}, "Structural check"),
-    h("p", { class: `outcome ${passed ? "st-done" : "st-fail"}`, style: { margin: 0 } }, h("span", { class: "lamp" }),
+    h("p", { class: `outcome ${passed ? "st-done" : "st-fail"}` }, h("span", { class: "lamp" }),
       passed ? "passed: Model check, registry, File check, execution settings and context selection accept the proposed tree" : `${check.status.replace("_", " ")}: the proposal cannot be accepted`));
   if (check.findings?.length) {
     block.append(h("ul", { class: "findings" }, check.findings.map((f) => h("li", {},
@@ -99,7 +99,7 @@ function fileDiff(d) {
 
 function decision(p, passed, draw) {
   const section = h("section", { class: "decide", "aria-label": "Your decision" });
-  const status = h("p", { class: "note", role: "status", tabindex: -1, style: { margin: 0 } });
+  const status = h("p", { class: "note", role: "status", tabindex: -1 });
   const actions = h("div", { class: "actions" });
   const paths = p.changes.map((c) => c.path).join(", ");
   const decide = async (what, buttons) => {
@@ -165,10 +165,10 @@ function readBack(state) {
 
 function after(p) {
   if (p.state === "accepted") {
-    return h("p", { class: "note", style: { margin: 0 } }, "The change is in the working tree, not committed. Commit it to make it the source of the next Apply and of the next proposal; until then the cockpit makes no new proposal.");
+    return h("p", { class: "note" }, "The change is in the working tree, not committed. Commit it to make it the source of the next Apply and of the next proposal; until then the cockpit makes no new proposal.");
   }
   if (p.state === "failed") {
-    return h("p", { class: "note", style: { margin: 0 } }, p.receipt && ["partial", "unknown"].includes(p.receipt.outcome)
+    return h("p", { class: "note" }, p.receipt && ["partial", "unknown"].includes(p.receipt.outcome)
       ? "The working tree may hold part of the change. Inspect the paths above before committing or proposing again."
       : "Nothing was written. Make the proposal again from the current committed source.");
   }
