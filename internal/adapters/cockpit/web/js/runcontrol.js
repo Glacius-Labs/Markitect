@@ -26,6 +26,7 @@ const ui = {
   stopBusy: false,
   stopMessage: "",
   focus: false, // move focus to the primary button after the next draw
+  focusHeading: false, // move focus to the card's heading after the next draw
 };
 const mounted = new Set();
 let watching = false;
@@ -83,6 +84,13 @@ function mount(el, render) {
     const focused = el.contains(document.activeElement) && document.activeElement !== el ? document.activeElement.textContent : null;
     render(clear(el));
     if (focused !== null) [...el.querySelectorAll("button")].find((b) => b.textContent === focused)?.focus();
+    if (ui.focusHeading) {
+      const heading = el.querySelector("h3[tabindex]");
+      if (heading) {
+        ui.focusHeading = false;
+        heading.focus();
+      }
+    }
     if (ui.focus) {
       const primary = el.querySelector("[data-primary]");
       if (primary) {
@@ -128,15 +136,24 @@ async function startRun() {
   ui.busy = true;
   ui.message = "";
   notify();
+  let changed = false;
   try {
-    await api.startRun();
+    await api.startRun(ui.facts.head);
     await refreshState();
     ui.step = "idle";
+    ui.focusHeading = true;
     announce("The run is starting.");
   } catch (err) {
     ui.message = `Not started: ${refusal(err)}`;
+    changed = /changed since the confirmation/.test(err.message || "");
   }
   ui.busy = false;
+  if (changed) {
+    // The confirmation is stale: read what a run would use now.
+    const message = ui.message;
+    openConfirmation();
+    ui.message = message;
+  }
   notify();
 }
 
@@ -178,7 +195,7 @@ export function runControlCard() {
   return mount(card, (el) => {
     const rc = store.data.runControl;
     const run = store.runStarted;
-    el.append(h("header", {}, h("h3", { id: "run-start" }, run ? "Run started here" : "Start a run")));
+    el.append(h("header", {}, h("h3", { id: "run-start", tabindex: "-1" }, run ? "Run started here" : "Start a run")));
     const body = h("div", { class: "body" });
     el.append(body);
     if (!rc) {
@@ -232,6 +249,19 @@ function drawStop(parent) {
       h("button", { class: "btn", type: "button", disabled: ui.stopBusy, onclick: cancelStop }, "Keep it running"))]);
 }
 
+// profileRows names Root's Execute profile with its model and, when other
+// Managers use other Execute profiles, each of those.
+function profileRows(profiles) {
+  const model = (p) => (p.model ? ` with model ${p.model}` : ", whose Runtime profile states no model");
+  const [root, ...others] = profiles;
+  const rows = [h("dt", {}, "Root's Execute profile"), h("dd", {}, root ? [root.name, h("span", { class: "note" }, model(root))] : "none resolved")];
+  if (others.length) {
+    rows.push(h("dt", {}, "Other Execute profiles"), h("dd", {}, others.map((p) => h("div", {}, p.name,
+      h("span", { class: "note" }, `${model(p)}; for ${p.managers.join(", ")}`)))));
+  }
+  return rows;
+}
+
 function lastRun(run) {
   const cls = outcomeClass[run.outcome] || "st-none";
   if (run.outcome === "refused") {
@@ -266,7 +296,7 @@ function drawConfirmation(body) {
       h("dt", {}, "Agent turns"), h("dd", {}, String(f.budget.agentTurns)),
       h("dt", {}, "Passes"), h("dd", {}, `up to ${f.budget.passes}`),
       h("dt", {}, "Deadline"), h("dd", {}, f.deadline ? (when(f.deadline) || f.deadline) : "none in the run configuration"),
-      h("dt", {}, "Execute Agent profile"), h("dd", {}, f.profile, f.model ? h("span", { class: "note" }, ` with model ${f.model}`) : null)),
+      ...profileRows(f.profiles || [])),
     h("p", { class: "note" }, "Starting runs the same Apply as markitect apply with the same checks, budget and publication. It spends provider usage, up to this budget. Ending the cockpit stops the run; closing the window does not."),
     ui.message ? h("p", { class: "refusal", role: "alert" }, ui.message) : null,
     h("div", { class: "actions" },

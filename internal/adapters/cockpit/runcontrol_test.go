@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
+	"net/http/httptest"
 	"os"
 	"path/filepath"
 	"strings"
@@ -49,19 +50,37 @@ type runFixture struct {
 	runs  *RunController
 	h     http.Handler
 	held  atomic.Value // string: the reason a start is refused
+	head  atomic.Value // string: the repository's committed HEAD
 	facts atomic.Int32
+	// gate, when set, holds the facts read until it is closed.
+	gate chan struct{}
+}
+
+const (
+	confirmedHead = "0123456789abcdef0123456789abcdef01234567"
+	startBody     = `{"head":"` + confirmedHead + `"}`
+)
+
+func (f *runFixture) start() *httptest.ResponseRecorder {
+	return post(f.h, local, "", "start-run", "/api/run-control/start", startBody)
 }
 
 func newRunFixture(t *testing.T, base context.Context) *runFixture {
 	t.Helper()
 	f := &runFixture{state: t.TempDir(), fake: newFakeRun()}
 	f.held.Store("")
+	f.head.Store(confirmedHead)
 	f.runs = NewRunController(base, RunControlConfig{
 		StateDir: f.state,
 		Facts: func(context.Context) (RunFacts, error) {
 			f.facts.Add(1)
-			return RunFacts{Budget: RunBudget{ExecutionTime: "25m", TurnTimeout: "5m", AgentTurns: 40, Passes: 3}, Profile: "execute", Model: "model-x"}, nil
+			if f.gate != nil {
+				<-f.gate
+			}
+			return RunFacts{Head: confirmedHead, Budget: RunBudget{ExecutionTime: "25m", TurnTimeout: "5m", AgentTurns: 40, Passes: 3},
+				Profiles: []RunProfile{{Name: "execute", Model: "model-x", Managers: []string{"."}}}}, nil
 		},
+		Head:    func(context.Context) (string, error) { return f.head.Load().(string), nil },
 		Execute: f.fake.execute,
 		Held:    func() (string, error) { return f.held.Load().(string), nil },
 	})
@@ -107,7 +126,7 @@ func TestRunControlStartsRunsAndStopCancelsItsContext(t *testing.T) {
 	if v := f.status(t); !v.Available || v.Run != nil {
 		t.Fatalf("before a start = %+v", v)
 	}
-	rec := post(f.h, local, "", "start-run", "/api/run-control/start", ``)
+	rec := f.start()
 	if rec.Code != http.StatusOK {
 		t.Fatalf("start = %d %s", rec.Code, rec.Body)
 	}
@@ -140,7 +159,7 @@ func TestRunControlStartsRunsAndStopCancelsItsContext(t *testing.T) {
 	}
 	// A new start replaces the result.
 	f.fake.result = RunResult{Outcome: "success"}
-	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", ``); rec.Code != http.StatusOK {
+	if rec := f.start(); rec.Code != http.StatusOK {
 		t.Fatalf("second start = %d %s", rec.Code, rec.Body)
 	}
 	<-f.fake.started
@@ -155,7 +174,7 @@ func TestRunControlStartsRunsAndStopCancelsItsContext(t *testing.T) {
 func TestRunControlRefusesWhileTheStateIsHeldOrARunIsActive(t *testing.T) {
 	f := newRunFixture(t, context.Background())
 	f.held.Store("an Apply holds the state directory")
-	rec := post(f.h, local, "", "start-run", "/api/run-control/start", ``)
+	rec := f.start()
 	if rec.Code != http.StatusConflict || f.fake.calls.Load() != 0 || !strings.Contains(rec.Body.String(), "an Apply holds the state directory") {
 		t.Fatalf("held start = %d %s, calls %d", rec.Code, rec.Body, f.fake.calls.Load())
 	}
@@ -164,11 +183,11 @@ func TestRunControlRefusesWhileTheStateIsHeldOrARunIsActive(t *testing.T) {
 	}
 
 	f.held.Store("")
-	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", ``); rec.Code != http.StatusOK {
+	if rec := f.start(); rec.Code != http.StatusOK {
 		t.Fatalf("start = %d %s", rec.Code, rec.Body)
 	}
 	<-f.fake.started
-	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", ``); rec.Code != http.StatusConflict || f.fake.calls.Load() != 1 {
+	if rec := f.start(); rec.Code != http.StatusConflict || f.fake.calls.Load() != 1 {
 		t.Fatalf("start while active = %d, calls %d", rec.Code, f.fake.calls.Load())
 	}
 	close(f.fake.release)
@@ -180,7 +199,7 @@ func TestRunControlShowsARefusalOfTheExecution(t *testing.T) {
 	f.name(t, "20261021T100000Z-refused")
 	f.fake.result = RunResult{Outcome: RunRefused, Error: "the working tree has uncommitted changes"}
 	close(f.fake.release)
-	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", ``); rec.Code != http.StatusOK {
+	if rec := f.start(); rec.Code != http.StatusOK {
 		t.Fatalf("start = %d", rec.Code)
 	}
 	waitFor(t, "the refusal", func() bool { return f.status(t).Run.State == RunEnded })
@@ -194,7 +213,7 @@ func TestRunControlEndsItsRunAndWaitsWhenTheCockpitStops(t *testing.T) {
 	f := newRunFixture(t, ctx)
 	f.fake.delay = 100 * time.Millisecond
 	f.fake.result = RunResult{Outcome: "incomplete", Error: "the run was cancelled"}
-	if _, err := f.runs.Start(); err != nil {
+	if _, err := f.runs.Start(context.Background(), f.head.Load().(string)); err != nil {
 		t.Fatal(err)
 	}
 	<-f.fake.started
@@ -206,7 +225,7 @@ func TestRunControlEndsItsRunAndWaitsWhenTheCockpitStops(t *testing.T) {
 	if st := f.runs.Status(); st == nil || st.State != RunEnded || st.Outcome != "incomplete" {
 		t.Fatalf("status after Wait = %+v", st)
 	}
-	if _, err := f.runs.Start(); err == nil || f.fake.calls.Load() != 1 {
+	if _, err := f.runs.Start(context.Background(), f.head.Load().(string)); err == nil || f.fake.calls.Load() != 1 {
 		t.Fatalf("a stopping cockpit started a run: %v", err)
 	}
 	// Waiting without a run returns at once.
@@ -216,12 +235,129 @@ func TestRunControlEndsItsRunAndWaitsWhenTheCockpitStops(t *testing.T) {
 func TestRunControlKeepsAPanickingExecutionFromHangingTheHandle(t *testing.T) {
 	f := newRunFixture(t, context.Background())
 	f.runs.cfg.Execute = func(context.Context) RunResult { panic("boom") }
-	if _, err := f.runs.Start(); err != nil {
+	if _, err := f.runs.Start(context.Background(), f.head.Load().(string)); err != nil {
 		t.Fatal(err)
 	}
 	f.runs.Wait()
 	if st := f.runs.Status(); st.State != RunEnded || !strings.Contains(st.Error, "boom") {
 		t.Fatalf("status = %+v", st)
+	}
+}
+
+func TestRunControlRefusesAStartWhoseConfirmationIsStale(t *testing.T) {
+	f := newRunFixture(t, context.Background())
+	f.head.Store("fedcba9876543210fedcba9876543210fedcba98")
+	rec := f.start()
+	if rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "committed source changed since the confirmation") || f.fake.calls.Load() != 0 {
+		t.Fatalf("a start with a stale head = %d %s, calls %d", rec.Code, rec.Body, f.fake.calls.Load())
+	}
+	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", `{}`); rec.Code != http.StatusConflict || f.fake.calls.Load() != 0 {
+		t.Fatalf("a start without a head = %d", rec.Code)
+	}
+	if rec := post(f.h, local, "", "start-run", "/api/run-control/start", `{"head":"x","other":1}`); rec.Code != http.StatusBadRequest {
+		t.Fatalf("a start with an unknown field = %d", rec.Code)
+	}
+	if f.status(t).Run != nil {
+		t.Fatal("a refused start left a run behind")
+	}
+	f.head.Store(confirmedHead)
+	if rec := f.start(); rec.Code != http.StatusOK {
+		t.Fatalf("a start with the current head = %d %s", rec.Code, rec.Body)
+	}
+	<-f.fake.started
+	close(f.fake.release)
+	f.runs.Wait()
+}
+
+func TestRunControlStartsNothingAfterWait(t *testing.T) {
+	f := newRunFixture(t, context.Background())
+	f.runs.Wait()
+	rec := f.start()
+	if rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "ending") || f.fake.calls.Load() != 0 {
+		t.Fatalf("a start after Wait = %d %s, calls %d", rec.Code, rec.Body, f.fake.calls.Load())
+	}
+}
+
+func TestRunControlShowsAStopBeforeEvidenceExistedAsAStop(t *testing.T) {
+	f := newRunFixture(t, context.Background())
+	// Execute refuses with no evidence once its context ended during
+	// preparation.
+	f.fake.result = RunResult{Outcome: RunRefused, Error: "context canceled"}
+	if rec := f.start(); rec.Code != http.StatusOK {
+		t.Fatalf("start = %d", rec.Code)
+	}
+	<-f.fake.started
+	if rec := post(f.h, local, "", "stop-run", "/api/run-control/stop", ``); rec.Code != http.StatusOK {
+		t.Fatalf("stop = %d", rec.Code)
+	}
+	waitFor(t, "the run to end", func() bool { return f.status(t).Run.State == RunEnded })
+	run := f.status(t).Run
+	if run.Outcome != "incomplete" || !strings.Contains(run.Error, "stopped before the run created evidence") || run.Run != "" || run.Report != "" {
+		t.Fatalf("stopped in preparation = %+v", run)
+	}
+}
+
+func TestRunControlNamesARunOnlyAfterTheLockWaitHasPassed(t *testing.T) {
+	f := newRunFixture(t, context.Background())
+	f.runs.cfg.AttributeAfter = 300 * time.Millisecond
+	f.name(t, "20261021T100000Z-old")
+	if rec := f.start(); rec.Code != http.StatusOK {
+		t.Fatalf("start = %d", rec.Code)
+	}
+	<-f.fake.started
+	// A foreign run that won the lock names itself at once; Execute has not
+	// refused yet, so the page must not take it for this cockpit's run.
+	f.name(t, "20261021T100001Z-foreign")
+	if run := f.status(t).Run; run.Run != "" || run.State != RunStarting {
+		t.Fatalf("a run named within the lock wait = %+v", run)
+	}
+	waitFor(t, "the run to be named", func() bool { return f.status(t).Run.Run != "" })
+	if run := f.status(t).Run; run.State != RunRunning || run.Run != "20261021T100001Z-foreign" {
+		t.Fatalf("after the lock wait = %+v", run)
+	}
+	close(f.fake.release)
+	f.runs.Wait()
+}
+
+func TestRunControlEndedRunIsNeverNamedFromCurrentRun(t *testing.T) {
+	f := newRunFixture(t, context.Background())
+	f.fake.result = RunResult{Outcome: RunRefused, Error: "another Apply holds this state directory"}
+	close(f.fake.release)
+	if rec := f.start(); rec.Code != http.StatusOK {
+		t.Fatalf("start = %d", rec.Code)
+	}
+	<-f.fake.started
+	f.name(t, "20261021T100001Z-foreign")
+	waitFor(t, "the refusal", func() bool { return f.status(t).Run.State == RunEnded })
+	if run := f.status(t).Run; run.Run != "" || run.Outcome != RunRefused {
+		t.Fatalf("a refused start shows the foreign run: %+v", run)
+	}
+}
+
+func TestRunControlSharesOneFactsReadBetweenConcurrentRequests(t *testing.T) {
+	f := newRunFixture(t, context.Background())
+	f.gate = make(chan struct{})
+	results := make(chan error, 3)
+	for i := 0; i < 3; i++ {
+		go func() {
+			_, err := f.runs.ReadFacts(context.Background())
+			results <- err
+		}()
+	}
+	waitFor(t, "the read to begin", func() bool { return f.facts.Load() >= 1 })
+	time.Sleep(50 * time.Millisecond)
+	close(f.gate)
+	for i := 0; i < 3; i++ {
+		if err := <-results; err != nil {
+			t.Fatal(err)
+		}
+	}
+	if f.facts.Load() != 1 {
+		t.Fatalf("three concurrent requests read the facts %d times", f.facts.Load())
+	}
+	// A later request reads again.
+	if _, err := f.runs.ReadFacts(context.Background()); err != nil || f.facts.Load() != 2 {
+		t.Fatalf("later read: %v, %d reads", err, f.facts.Load())
 	}
 }
 
@@ -234,7 +370,7 @@ func TestRunControlFactsAreReadOnlyWhenAskedFor(t *testing.T) {
 	}
 	var v runControlView
 	get(t, f.h, local, "/api/run-control?facts=1", &v)
-	if f.facts.Load() != 1 || v.Facts == nil || v.Facts.Budget.AgentTurns != 40 || v.Facts.Model != "model-x" || v.Facts.Profile != "execute" {
+	if f.facts.Load() != 1 || v.Facts == nil || v.Facts.Budget.AgentTurns != 40 || len(v.Facts.Profiles) != 1 || v.Facts.Profiles[0].Model != "model-x" || v.Facts.Profiles[0].Name != "execute" {
 		t.Fatalf("facts = %+v (%d reads)", v.Facts, f.facts.Load())
 	}
 }
@@ -242,9 +378,9 @@ func TestRunControlFactsAreReadOnlyWhenAskedFor(t *testing.T) {
 func TestRunControlWritesNeedTheCockpitsOwnRequest(t *testing.T) {
 	f := newRunFixture(t, context.Background())
 	for name, rec := range map[string]int{
-		"no header":      post(f.h, local, "", "", "/api/run-control/start", ``).Code,
-		"wrong purpose":  post(f.h, local, "", "start", "/api/run-control/start", ``).Code,
-		"foreign origin": post(f.h, local, "http://evil.example", "start-run", "/api/run-control/start", ``).Code,
+		"no header":      post(f.h, local, "", "", "/api/run-control/start", startBody).Code,
+		"wrong purpose":  post(f.h, local, "", "start", "/api/run-control/start", startBody).Code,
+		"foreign origin": post(f.h, local, "http://evil.example", "start-run", "/api/run-control/start", startBody).Code,
 		"stop no header": post(f.h, local, "", "", "/api/run-control/stop", ``).Code,
 		"stop as start":  post(f.h, local, "", "start-run", "/api/run-control/stop", ``).Code,
 	} {
@@ -252,7 +388,7 @@ func TestRunControlWritesNeedTheCockpitsOwnRequest(t *testing.T) {
 			t.Errorf("%s = %d, want 403", name, rec)
 		}
 	}
-	if rec := post(f.h, "evil.example", "", "start-run", "/api/run-control/start", ``); rec.Code != http.StatusMisdirectedRequest {
+	if rec := post(f.h, "evil.example", "", "start-run", "/api/run-control/start", startBody); rec.Code != http.StatusMisdirectedRequest {
 		t.Errorf("foreign host = %d", rec.Code)
 	}
 	if f.fake.calls.Load() != 0 {
@@ -265,7 +401,7 @@ func TestRunControlWritesNeedTheCockpitsOwnRequest(t *testing.T) {
 			t.Errorf("GET %s = %d", target, rec.Code)
 		}
 	}
-	if rec := post(f.h, local, "", "start-run", "/api/run-control", ``); rec.Code != http.StatusMethodNotAllowed {
+	if rec := post(f.h, local, "", "start-run", "/api/run-control", startBody); rec.Code != http.StatusMethodNotAllowed {
 		t.Errorf("POST /api/run-control = %d", rec.Code)
 	}
 	// Stopping without a run of this cockpit is refused, not ignored.

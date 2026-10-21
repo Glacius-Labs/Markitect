@@ -25,6 +25,12 @@ func (c cockpitService) runController(ctx context.Context, base apply.InputSelec
 		Facts: func(ctx context.Context) (cockpit.RunFacts, error) {
 			return c.runFacts(ctx, base, runConfigPath, runtimeProfile)
 		},
+		Head: func(ctx context.Context) (string, error) {
+			return c.repository.ResolveRevision(ctx, base.Repository, "HEAD")
+		},
+		// Execute refuses a state directory that a foreign run holds within
+		// its lock wait; after it, a run named in current-run is this one's.
+		AttributeAfter: startLockWait + time.Second,
 		Held: func() (string, error) {
 			if fence.has(stateDirectory) {
 				return "the cockpit is publishing an accepted proposal; start after it is written", nil
@@ -64,8 +70,9 @@ func runResult(report cli.ApplyReport, err error) cockpit.RunResult {
 }
 
 // runFacts reads what an Apply started now would run with: the committed
-// execution budget, the run configuration's deadline and Root's Execute Agent
-// profile with the model of its Runtime profile. It captures the committed
+// execution budget, the run configuration's deadline and the Execute Agent
+// profiles of the Managers, Root's first, each with the model its Runtime
+// profile states. It captures the committed
 // source with the Runtime profile as the Apply does and decodes with the
 // product's own readers.
 func (c cockpitService) runFacts(ctx context.Context, base apply.InputSelection, runConfigPath, runtimeProfile string) (cockpit.RunFacts, error) {
@@ -85,7 +92,6 @@ func (c cockpitService) runFacts(ctx context.Context, base apply.InputSelection,
 	if len(managers) == 0 {
 		return cockpit.RunFacts{}, errors.New("Root has no resolved settings")
 	}
-	root := managers[0]
 	facts := cockpit.RunFacts{
 		Head: a.Structural().Model().Inputs().Head,
 		Budget: cockpit.RunBudget{
@@ -93,29 +99,53 @@ func (c cockpitService) runFacts(ctx context.Context, base apply.InputSelection,
 			AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value,
 		},
 		Deadline: cfg.Deadline,
-		Profile:  root.Execute.Profile.Value.Name,
 	}
-	for _, profile := range a.Settings().ProfileObservations() {
+	index := map[string]int{}
+	for _, manager := range managers {
+		name := manager.Execute.Profile.Value.Name
+		i, seen := index[name]
+		if !seen {
+			i = len(facts.Profiles)
+			index[name] = i
+			facts.Profiles = append(facts.Profiles, cockpit.RunProfile{Name: name})
+		}
+		facts.Profiles[i].Managers = append(facts.Profiles[i].Managers, manager.Package)
+	}
+	for i, profile := range facts.Profiles {
+		model, err := executeProfileModel(a.Settings().ProfileObservations(), profile.Name)
+		if err != nil {
+			return cockpit.RunFacts{}, err
+		}
+		facts.Profiles[i].Model = model
+	}
+	return facts, nil
+}
+
+// executeProfileModel is the model the Runtime profile states for an Agent
+// profile, decoded as the adapters do for an Apply; empty when the profile
+// states none.
+func executeProfileModel(observed []apply.PreparedProfile, name string) (string, error) {
+	for _, profile := range observed {
 		input := profile.Input()
-		if input.Namespace() != "agentProfiles" || input.Name() != facts.Profile {
+		if input.Namespace() != "agentProfiles" || input.Name() != name {
 			continue
 		}
 		switch input.Section() {
 		case "claudeCode":
 			p, err := claudecode.ProfileFromPrepared(profile)
 			if err != nil {
-				return cockpit.RunFacts{}, fmt.Errorf("agent profile %q: %w", facts.Profile, err)
+				return "", fmt.Errorf("agent profile %q: %w", name, err)
 			}
-			facts.Model = p.Session.Model
+			return p.Session.Model, nil
 		case "codexAppServer":
 			p, err := codexappserver.ProfileFromPrepared(profile)
 			if err != nil {
-				return cockpit.RunFacts{}, fmt.Errorf("agent profile %q: %w", facts.Profile, err)
+				return "", fmt.Errorf("agent profile %q: %w", name, err)
 			}
-			facts.Model = p.Session.Model
+			return p.Session.Model, nil
 		}
 	}
-	return facts, nil
+	return "", nil
 }
 
 // durationText writes a duration in the notation of the execution settings,

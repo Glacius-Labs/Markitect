@@ -4,9 +4,12 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -42,9 +45,12 @@ type runControlFixture struct {
 	cancel   chan struct{} // closed when the execution's context ended
 }
 
-func newRunControlFixture(t *testing.T, ctx context.Context) *runControlFixture {
+func newRunControlFixture(t *testing.T, ctx context.Context, prepare ...func(*testing.T, setupFixture)) *runControlFixture {
 	t.Helper()
 	f := &runControlFixture{setup: newSetupFixture(t), fence: &fencedStates{held: map[string]bool{}}, started: make(chan struct{}, 2), cancel: make(chan struct{})}
+	for _, fn := range prepare {
+		fn(t, f.setup)
+	}
 	if code, out, errout := f.setup.run(t); code != 0 {
 		t.Fatalf("setup exit %d\n%s\n%s", code, out, errout)
 	}
@@ -87,8 +93,13 @@ func newRunControlFixture(t *testing.T, ctx context.Context) *runControlFixture 
 	return f
 }
 
-func (f *runControlFixture) call(method, target, purpose string) *httptest.ResponseRecorder {
-	req := httptest.NewRequest(method, target, nil)
+func (f *runControlFixture) call(method, target, purpose string, body ...string) *httptest.ResponseRecorder {
+	var reader io.Reader
+	if len(body) > 0 {
+		reader = strings.NewReader(body[0])
+	}
+	req := httptest.NewRequest(method, target, reader)
+	req.Header.Set("Content-Type", "application/json")
 	req.Host = cockpitHost
 	if purpose != "" {
 		req.Header.Set("X-Markitect-Cockpit", purpose)
@@ -96,6 +107,12 @@ func (f *runControlFixture) call(method, target, purpose string) *httptest.Respo
 	rec := httptest.NewRecorder()
 	f.handler.ServeHTTP(rec, req)
 	return rec
+}
+
+// start posts the start with the committed head of the repository, as a page
+// that read the confirmation at this head does.
+func (f *runControlFixture) start() *httptest.ResponseRecorder {
+	return f.call(http.MethodPost, "/api/run-control/start", "start-run", `{"head":"`+f.setup.repo.Git("rev-parse", "HEAD")+`"}`)
 }
 
 func (f *runControlFixture) view(t *testing.T, target string) (view struct {
@@ -122,7 +139,11 @@ func TestCockpitConfirmsTheBudgetTheDeadlineAndTheAgentProfileBeforeAStart(t *te
 	if !view.Available || facts == nil || view.FactsError != "" {
 		t.Fatalf("view = %+v", view)
 	}
-	if facts.Profile != "markitect-agent" || facts.Model != "claude-haiku-5-5" || facts.Budget.AgentTurns <= 0 || facts.Budget.Passes <= 0 ||
+	// The head of the confirmation is the one the start is checked against.
+	if head := f.setup.repo.Git("rev-parse", "HEAD"); facts.Head != head {
+		t.Fatalf("facts head %q, repository HEAD %q", facts.Head, head)
+	}
+	if len(facts.Profiles) != 1 || facts.Profiles[0].Name != "markitect-agent" || facts.Profiles[0].Model != "claude-haiku-5-5" || len(facts.Profiles[0].Managers) == 0 || facts.Profiles[0].Managers[0] != "." || facts.Budget.AgentTurns <= 0 || facts.Budget.Passes <= 0 ||
 		facts.Budget.ExecutionTime == "" || facts.Budget.TurnTimeout == "" || facts.Head == "" || facts.Deadline != "" {
 		t.Fatalf("facts = %+v", facts)
 	}
@@ -134,9 +155,46 @@ func TestCockpitConfirmsTheBudgetTheDeadlineAndTheAgentProfileBeforeAStart(t *te
 	}
 }
 
+func TestCockpitConfirmationListsEveryDistinctExecuteProfile(t *testing.T) {
+	f := newRunControlFixture(t, context.Background(), func(t *testing.T, setup setupFixture) {
+		execution, err := os.ReadFile(filepath.Join(setup.repo.Dir, ".markitect", "execution.yaml"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		text := strings.ReplaceAll(string(execution), "\r\n", "\n")
+		if !strings.Contains(text, "packages: {}") {
+			t.Fatal("fixture execution declarations changed")
+		}
+		setup.repo.Write(".markitect/execution.yaml", strings.Replace(text, "packages: {}", "packages:\n  product/cli:\n    profiles: {execute: second-agent}", 1))
+		setup.repo.Commit("select a second Execute profile for one Package")
+	})
+	facts := f.view(t, "/api/run-control?facts=1").Facts
+	if facts == nil || len(facts.Profiles) != 2 || facts.Profiles[0].Name != "markitect-agent" || facts.Profiles[1].Name != "second-agent" ||
+		!slices.Equal(facts.Profiles[1].Managers, []string{"product/cli"}) || facts.Profiles[1].Model != "claude-haiku-5-5" {
+		t.Fatalf("facts = %+v", facts)
+	}
+}
+
+func TestCockpitRefusesAStartAfterAnotherCommit(t *testing.T) {
+	f := newRunControlFixture(t, context.Background())
+	confirmed := f.setup.repo.Git("rev-parse", "HEAD")
+	f.setup.repo.Write("NOTES.md", "a later commit\n")
+	f.setup.repo.Commit("commit after the confirmation")
+	rec := f.call(http.MethodPost, "/api/run-control/start", "start-run", `{"head":"`+confirmed+`"}`)
+	if rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "committed source changed since the confirmation") {
+		t.Fatalf("start after a commit = %d %s", rec.Code, rec.Body)
+	}
+	f.mu.Lock()
+	calls := len(f.requests)
+	f.mu.Unlock()
+	if calls != 0 {
+		t.Fatal("a stale confirmation reached the execution")
+	}
+}
+
 func TestCockpitStartsTheSameApplyAndStopCancelsIt(t *testing.T) {
 	f := newRunControlFixture(t, context.Background())
-	if rec := f.call(http.MethodPost, "/api/run-control/start", "start-run"); rec.Code != http.StatusOK {
+	if rec := f.start(); rec.Code != http.StatusOK {
 		t.Fatalf("start = %d %s", rec.Code, rec.Body)
 	}
 	<-f.started
@@ -147,7 +205,7 @@ func TestCockpitStartsTheSameApplyAndStopCancelsIt(t *testing.T) {
 		len(request.Selection.RuntimeProfiles) != 1 || request.Selection.RuntimeProfiles[0].Boundary != f.setup.runtimeDir || request.Selection.RuntimeProfiles[0].Path != mustPath(t, "runtime.yaml") || request.Build != "test-build" {
 		t.Fatalf("the request differs from markitect apply's: %+v", request)
 	}
-	if rec := f.call(http.MethodPost, "/api/run-control/start", "start-run"); rec.Code != http.StatusConflict {
+	if rec := f.start(); rec.Code != http.StatusConflict {
 		t.Fatalf("a second start = %d", rec.Code)
 	}
 	if rec := f.call(http.MethodPost, "/api/run-control/stop", "stop-run"); rec.Code != http.StatusOK {
@@ -171,7 +229,7 @@ func TestCockpitRefusesToStartWhileTheStateIsHeld(t *testing.T) {
 	f := newRunControlFixture(t, context.Background())
 	// A proposal publication holds the state directory through the fence.
 	f.fence.set([]string{f.state}, true)
-	rec := f.call(http.MethodPost, "/api/run-control/start", "start-run")
+	rec := f.start()
 	if rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "publishing") {
 		t.Fatalf("start during a publication = %d %s", rec.Code, rec.Body)
 	}
@@ -181,7 +239,7 @@ func TestCockpitRefusesToStartWhileTheStateIsHeld(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	rec = f.call(http.MethodPost, "/api/run-control/start", "start-run")
+	rec = f.start()
 	if rec.Code != http.StatusConflict || !strings.Contains(rec.Body.String(), "an Apply holds the state directory") {
 		t.Fatalf("start while an Apply holds the state = %d %s", rec.Code, rec.Body)
 	}
@@ -199,7 +257,7 @@ func TestCockpitRefusesToStartWhileTheStateIsHeld(t *testing.T) {
 func TestCockpitServiceEndsItsRunWhenItStops(t *testing.T) {
 	ctx, stop := context.WithCancel(context.Background())
 	f := newRunControlFixture(t, ctx)
-	if _, err := f.runs.Start(); err != nil {
+	if _, err := f.runs.Start(context.Background(), f.setup.repo.Git("rev-parse", "HEAD")); err != nil {
 		t.Fatal(err)
 	}
 	<-f.started

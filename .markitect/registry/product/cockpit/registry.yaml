@@ -255,11 +255,11 @@ artifacts:
   - path: "internal/adapters/cockpit/runcontrol.go"
     form: code
     realizes: [product/cockpit/desktop-app]
-    why: "Holds the one run the cockpit starts in its own process: refuses a start while a run it started is active, something holds the state directory or the cockpit ends, cancels the run's context on stop, keeps the result until Execute returned, waits for it when the cockpit ends, and serves the run control routes with the cockpit's own request header."
+    why: "Holds the one run the cockpit starts in its own process: refuses a start while a run it started is active, something holds the state directory, the cockpit ends or the confirmation's head is stale, names a run only once it is attributable, shares concurrent fact reads, cancels the run's context on stop, keeps the result until Execute returned, waits for it when the cockpit ends, and serves the run control routes with the cockpit's own request header."
   - path: "internal/adapters/cockpit/runcontrol_test.go"
     form: test
     realizes: [product/cockpit/desktop-app]
-    why: "Verifies with an injected execution function that a start runs, a stop cancels its context and the result is kept, that a held state directory and an active run refuse a start, that a stopping cockpit cancels and waits, and that the routes admit only POST with the cockpit's own header, origin and host."
+    why: "Verifies with an injected execution function that a start runs, a stop cancels its context and the result is kept, that a held state directory, an active run, a stale head and a closed controller refuse a start, that a stop in preparation is a stop, that a foreign run is not taken for the cockpit's, that a stopping cockpit cancels and waits, and that the routes admit only POST with the cockpit's own header, origin and host."
   - path: "internal/adapters/cockpit/web/js/runcontrol.js"
     form: code
     realizes: [product/cockpit/desktop-app]
@@ -267,8 +267,8 @@ artifacts:
   - path: "internal/bootstrap/cockpit_run.go"
     form: code
     realizes: [product/cockpit/desktop-app]
-    why: "Composes the cockpit's run control from the execution function of markitect apply with the cockpit's own selection, run configuration and Runtime profile, probes the state lock and the publication fence before a start, and reads the confirmation facts with the product's settings and profile decoders."
+    why: "Composes the cockpit's run control from the execution function of markitect apply with the cockpit's own selection, run configuration and Runtime profile, probes the state lock and the publication fence and reads HEAD before a start, and reads the confirmation facts, including every distinct Execute profile, with the product's settings and profile decoders."
   - path: "internal/bootstrap/cockpit_run_test.go"
     form: test
     realizes: [product/cockpit/desktop-app]
-    why: "Verifies on a repository with a prepared Runtime that the confirmation facts come from the committed settings and Runtime profile, that a start passes Apply's inputs and a stop cancels it, that a held state directory or a publication refuses a start, and that a stopping cockpit ends its run."
+    why: "Verifies on a repository with a prepared Runtime that the confirmation facts come from the committed settings and Runtime profile, that a start passes Apply's inputs and a stop cancels it, that a held state directory, a publication or a later commit refuses a start, and that a stopping cockpit ends its run."

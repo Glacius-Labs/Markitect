@@ -2,10 +2,12 @@ package cockpit
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/http"
 	"path/filepath"
+	"strings"
 	"sync"
 	"time"
 )
@@ -18,8 +20,18 @@ type RunFacts struct {
 	Head     string    `json:"head,omitempty"`
 	Budget   RunBudget `json:"budget"`
 	Deadline string    `json:"deadline,omitempty"`
-	Profile  string    `json:"profile"`
-	Model    string    `json:"model,omitempty"`
+	// Profiles lists the distinct Execute Agent profiles of the Managers,
+	// Root's first.
+	Profiles []RunProfile `json:"profiles"`
+}
+
+// RunProfile is an Execute Agent profile with the model its Runtime profile
+// states, empty when it states none, and the Managers (Package paths, "." for
+// Root) that use it.
+type RunProfile struct {
+	Name     string   `json:"name"`
+	Model    string   `json:"model,omitempty"`
+	Managers []string `json:"managers"`
 }
 
 // RunBudget is the execution budget of the committed .markitect/execution.yaml.
@@ -44,11 +56,19 @@ type RunResult struct {
 // markitect apply runs, with the cockpit's own inputs; it returns when the
 // run ended and its report is written. Held reports why a start is refused
 // because something holds the state directory, or an empty reason.
+//
+// Head reads the repository's committed HEAD; a start must name the head its
+// confirmation was read from. AttributeAfter is how long a started run is not
+// named after current-run: Execute refuses a state directory that a foreign
+// run holds within its lock wait, so a current-run seen after that while
+// Execute still runs belongs to this run.
 type RunControlConfig struct {
-	StateDir string
-	Facts    func(context.Context) (RunFacts, error)
-	Execute  func(context.Context) RunResult
-	Held     func() (string, error)
+	StateDir       string
+	Facts          func(context.Context) (RunFacts, error)
+	Head           func(context.Context) (string, error)
+	Execute        func(context.Context) RunResult
+	Held           func() (string, error)
+	AttributeAfter time.Duration
 }
 
 // RunRefused is the outcome of an execution that refused before it created
@@ -85,6 +105,9 @@ var (
 	ErrNoActiveRun = errors.New("this cockpit has no active run to stop")
 	// ErrRunEnding refuses a start while the cockpit itself ends.
 	ErrRunEnding = errors.New("the cockpit is ending")
+	// ErrRunSource refuses a start whose confirmation was read from another
+	// committed head than the repository's now.
+	ErrRunSource = errors.New("the committed source changed since the confirmation; review it again")
 )
 
 // RunController starts and stops the one Apply this cockpit runs in its own
@@ -98,8 +121,18 @@ type RunController struct {
 	wg   sync.WaitGroup
 
 	mu     sync.Mutex
+	closed bool // Wait ran: no run starts any more
 	cancel context.CancelFunc
 	cur    *runHandle
+	facts  *factsCall
+}
+
+// factsCall is one read of the confirmation facts that concurrent requests
+// share.
+type factsCall struct {
+	done  chan struct{}
+	facts RunFacts
+	err   error
 }
 
 type runHandle struct {
@@ -121,10 +154,25 @@ func (c *RunController) current() string {
 // something holds the state directory. Execute's own lock remains the real
 // guard; the probe only gives the owner the reason at once. Whatever Execute
 // itself refuses, such as uncommitted changes, shows as the ended run's error.
-func (c *RunController) Start() (RunStatus, error) {
+func (c *RunController) Start(ctx context.Context, head string) (RunStatus, error) {
+	if head == "" {
+		return RunStatus{}, fmt.Errorf("%w: the start names no head", ErrRunSource)
+	}
+	// The head is read before the lock because it runs git. A commit between
+	// this read and Execute's own capture remains possible; Execute then runs
+	// the newer committed source.
+	if c.cfg.Head != nil {
+		now, err := c.cfg.Head(ctx)
+		if err != nil {
+			return RunStatus{}, fmt.Errorf("the committed head could not be read: %w", err)
+		}
+		if now != head {
+			return RunStatus{}, ErrRunSource
+		}
+	}
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if c.base.Err() != nil {
+	if c.closed || c.base.Err() != nil {
 		return RunStatus{}, ErrRunEnding
 	}
 	if c.cur != nil && c.cur.status.State != RunEnded {
@@ -137,14 +185,14 @@ func (c *RunController) Start() (RunStatus, error) {
 	if reason != "" {
 		return RunStatus{}, fmt.Errorf("%w: %s", ErrRunHeld, reason)
 	}
-	ctx, cancel := context.WithCancel(c.base)
+	runCtx, cancel := context.WithCancel(c.base)
 	h := &runHandle{status: RunStatus{State: RunStarting, Started: time.Now().UTC()}, before: c.current()}
 	c.cur, c.cancel = h, cancel
 	c.wg.Add(1)
 	go func() {
 		defer c.wg.Done()
 		defer cancel()
-		c.finish(h, c.execute(ctx))
+		c.finish(h, c.execute(runCtx))
 	}()
 	return c.statusLocked(), nil
 }
@@ -163,16 +211,17 @@ func (c *RunController) execute(ctx context.Context) (result RunResult) {
 func (c *RunController) finish(h *runHandle, result RunResult) {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-	if h.status.Run == "" {
-		if run := c.current(); run != "" && run != h.before {
-			h.status.Run = run
-		}
-	}
 	if result.Evidence != "" {
 		h.status.Run = filepath.Base(result.Evidence)
 		h.status.Report = filepath.Join(result.Evidence, "report.json")
 	} else if result.Outcome == RunRefused {
-		h.status.Run = "" // a refused run left no evidence to open
+		// No evidence exists to open. A stop before the run created any is a
+		// stop, not a refusal of the execution.
+		h.status.Run = ""
+		if h.stopped {
+			result.Outcome = "incomplete"
+			result.Error = "stopped before the run created evidence: nothing ran and no run evidence or report exists"
+		}
 	}
 	h.status.State, h.status.Ended = RunEnded, time.Now().UTC()
 	h.status.Outcome, h.status.Error = result.Outcome, result.Error
@@ -209,7 +258,7 @@ func (c *RunController) statusLocked() RunStatus {
 	if h.status.State == RunEnded {
 		return h.status
 	}
-	if h.status.Run == "" {
+	if h.status.Run == "" && time.Since(h.status.Started) >= c.cfg.AttributeAfter {
 		if run := c.current(); run != "" && run != h.before {
 			h.status.Run = run
 		}
@@ -230,12 +279,48 @@ func (c *RunController) statusLocked() RunStatus {
 // exits.
 func (c *RunController) Wait() {
 	c.mu.Lock()
+	c.closed = true
 	if c.cur != nil && c.cur.status.State != RunEnded {
 		c.cur.stopped = true
 		c.cancel()
 	}
 	c.mu.Unlock()
 	c.wg.Wait()
+}
+
+// ReadFacts reads the confirmation facts. Concurrent reads share one capture:
+// the first starts it, the others wait for its result.
+func (c *RunController) ReadFacts(ctx context.Context) (RunFacts, error) {
+	c.mu.Lock()
+	call := c.facts
+	if call == nil {
+		if c.closed || c.base.Err() != nil {
+			c.mu.Unlock()
+			return RunFacts{}, ErrRunEnding
+		}
+		call = &factsCall{done: make(chan struct{})}
+		c.facts = call
+		c.wg.Add(1)
+		go func() {
+			defer c.wg.Done()
+			// The capture belongs to no request, so a waiter that leaves does
+			// not cancel it for the others.
+			readCtx, cancel := context.WithTimeout(c.base, factsTimeout)
+			defer cancel()
+			call.facts, call.err = c.cfg.Facts(readCtx)
+			c.mu.Lock()
+			c.facts = nil
+			c.mu.Unlock()
+			close(call.done)
+		}()
+	}
+	c.mu.Unlock()
+	select {
+	case <-call.done:
+		return call.facts, call.err
+	case <-ctx.Done():
+		return RunFacts{}, ctx.Err()
+	}
 }
 
 // runControlView is the answer of GET /api/run-control.
@@ -264,9 +349,7 @@ func (s *Server) handleRunControl(w http.ResponseWriter, r *http.Request) {
 	}
 	view := runControlView{Available: true, Run: s.runs.Status()}
 	if r.URL.Query().Get("facts") == "1" {
-		ctx, cancel := context.WithTimeout(r.Context(), factsTimeout)
-		defer cancel()
-		facts, err := s.runs.cfg.Facts(ctx)
+		facts, err := s.runs.ReadFacts(r.Context())
 		if err != nil {
 			view.FactsError = err.Error()
 		} else {
@@ -290,10 +373,23 @@ func (s *Server) handleStartRun(w http.ResponseWriter, r *http.Request) {
 	if !s.runsOrRefuse(w) || !s.ownRequest(w, r, "start-run") {
 		return
 	}
-	status, err := s.runs.Start()
+	if !strings.HasPrefix(r.Header.Get("Content-Type"), "application/json") {
+		http.Error(w, "a start is a JSON request naming the head of its confirmation", http.StatusForbidden)
+		return
+	}
+	var body struct {
+		Head string `json:"head"`
+	}
+	dec := json.NewDecoder(http.MaxBytesReader(w, r.Body, 4<<10))
+	dec.DisallowUnknownFields()
+	if err := dec.Decode(&body); err != nil || dec.More() {
+		http.Error(w, "the start is not a JSON object with head", http.StatusBadRequest)
+		return
+	}
+	status, err := s.runs.Start(r.Context(), body.Head)
 	if err != nil {
 		code := http.StatusInternalServerError
-		if errors.Is(err, ErrRunActive) || errors.Is(err, ErrRunHeld) || errors.Is(err, ErrRunEnding) {
+		if errors.Is(err, ErrRunActive) || errors.Is(err, ErrRunHeld) || errors.Is(err, ErrRunEnding) || errors.Is(err, ErrRunSource) {
 			code = http.StatusConflict
 		}
 		http.Error(w, err.Error(), code)

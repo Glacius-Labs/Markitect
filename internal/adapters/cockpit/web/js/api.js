@@ -52,7 +52,12 @@ export const api = {
   }),
   closeSession: (id) => request(`/api/sessions/${enc(id)}/close`, { method: "POST", headers: { "X-Markitect-Cockpit": "close" } }),
   runControl: (facts = false) => get(`/api/run-control${facts ? "?facts=1" : ""}`),
-  startRun: () => request("/api/run-control/start", { method: "POST", headers: { "X-Markitect-Cockpit": "start-run" } }),
+  // startRun names the committed head the confirmation was read from.
+  startRun: (head) => request("/api/run-control/start", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "start-run" },
+    body: JSON.stringify({ head }),
+  }),
   stopRun: () => request("/api/run-control/stop", { method: "POST", headers: { "X-Markitect-Cockpit": "stop-run" } }),
   answer: (run, question, text) => request(`/api/runs/${enc(run)}/questions/${enc(question)}/answer`, {
     method: "POST",

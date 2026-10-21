@@ -16,6 +16,18 @@
 - The cockpit command passes the product build identity (`internal/adapters/cli/cockpit_test.go`).
 - `gofmt`, `go vet` and `go test` of the cockpit, bootstrap and CLI packages and of the architecture tests, `node --check` of every page module, `markitect check` on this repository and the documentation link check.
 
+## Review follow-up
+
+An independent review of the first version found no blocker; its points are addressed:
+
+- **Stale confirmation:** the start names the head of its confirmation and is refused when the committed HEAD differs. A tiny window between that check and `Execute`'s own capture remains.
+- **Shutdown:** `Wait` closes the controller, so no start follows it. A hung `Execute` keeps the cockpit from exiting after the first interrupt; a second interrupt ends the process without the run's report. This was not exercised with a real hang.
+- **Stop in preparation:** a stop before evidence exists ends incomplete with an explicit statement, not as a refusal.
+- **Attribution:** a run is named from `current-run` only after `Execute`'s lock wait has passed with `Execute` still running; an ended run is named only from its evidence. A foreign Apply that won the lock between the probe and `Execute` is therefore not shown as the cockpit's run. The remaining assumption is that `Execute` obtains the lock or refuses within the wait.
+- **Facts:** Root's Execute profile is named with its model, or with the statement that the Runtime profile states none, and distinct Execute profiles of other Managers (a per-Package override) are listed. Concurrent reads share one capture. After a start the focus moves to the card's heading.
+
+New tests cover a stale head (also on a repository with a later commit, where the facts head equals the repository HEAD), a closed controller, a stop in preparation, the attribution delay, a refused start never taking a foreign run, shared fact reads and the distinct profiles of a per-Package override.
+
 ## Page demonstration
 
 A cockpit built from this branch served a synthetic controller (a fake execution function that names a recorded run after two seconds and ends two seconds after its stop) and a recorded run, in headless Chrome driven over the debugging protocol. Observed: the card without a run; the confirmation with its facts after a short reading state and focus on *Start the run*; the starting state, then running with the run's link once it named itself; the stop confirmation with the sentence that the run ends incomplete, keeps evidence and report and restores nothing; the inspector of that run showing the same stop in its head and hiding it elsewhere; the stopping state; and the ended result with *Start a run* again. The console stayed empty. A redraw caused by a state change keeps the focused button. The first run of this demonstration found that a `null` child was drawn as the text "null"; the widgets now add children through the page's helper.
