@@ -1,8 +1,8 @@
-// The cockpit's shared observation: the project, the runs, the owner
-// questions, the proposals, the model sessions and the run this cockpit
-// started, read together every few seconds while the page is visible. The top
-// bar, the hub and the pages draw from it, so one poll serves them all. Every
-// part keeps its last answer or its error; nothing here writes.
+// The cockpit's shared observation: the project, the runs, the proposals, the
+// model sessions and the run this cockpit started, read together every few
+// seconds while the page is visible. The top bar, the hub and the pages draw
+// from it, so one poll serves them all. Every part keeps its last answer or its
+// error; nothing here writes.
 
 import { api } from "./api.js";
 
@@ -12,7 +12,6 @@ const parts = {
   projects: () => api.projects(),
   project: () => api.project(),
   runs: () => api.runs(),
-  questions: () => api.questions(),
   proposals: () => api.proposals(),
   sessions: () => api.sessions(),
   runControl: () => api.runControl(),
@@ -100,5 +99,4 @@ export const store = {
     const run = this.data.runControl?.run;
     return run && run.state !== "ended" ? run : null;
   },
-  get waitingQuestions() { return (this.data.questions || []).filter((q) => q.answerable); },
 };

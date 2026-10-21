@@ -266,8 +266,8 @@ func TestCockpitGuidedSetupCallsTheSetupFunctionWithTheProjectAndNoOwnerInputs(t
 		got.AgentModel != "m" || got.Effort != "low" || got.Engine != "/eng" || got.Checks["go"] != "/go" || got.Store != "lib" || got.Deadline != "2026-11-01T18:00:00Z" {
 		t.Fatalf("request = %+v", got)
 	}
-	if got.OwnerRequest != "" || len(got.OwnerDecisions) != 0 || got.ProductBuild != "test-build" {
-		t.Fatalf("the form sent owner inputs or no build: %+v", got)
+	if got.OwnerRequest != "" || got.ProductBuild != "test-build" {
+		t.Fatalf("the form sent an owner request or no build: %+v", got)
 	}
 }
 

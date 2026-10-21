@@ -175,7 +175,20 @@ type dispositionIn struct {
 
 // probesAvailable reports whether a required check offers an execution profile
 // that can run a probe.
-func (e *engine) probesAvailable() bool { return e.cfg.Runner != nil && len(e.cfg.Checks) > 0 }
+// probesAvailable reports whether a Pass offers probes: a check's execution
+// profile runs them, and a Model assessment judges no artifact.
+func (e *engine) probesAvailable(spec PassSpec) bool {
+	return !spec.Assesses && e.cfg.Runner != nil && len(e.cfg.Checks) > 0
+}
+
+// checksOf lists the required checks a review Pass runs on its candidate: none
+// in a Model assessment.
+func (e *engine) checksOf(spec PassSpec) []Check {
+	if spec.Assesses {
+		return nil
+	}
+	return e.cfg.Checks
+}
 
 func (e *engine) receiptLocked(id string) *ProbeReceipt {
 	for _, r := range e.receipts {
@@ -193,7 +206,7 @@ func (e *engine) receiptLocked(id string) *ProbeReceipt {
 // receipt on the same candidate, so that a passing rerun can replace an error
 // of the Runtime but never a different, weaker probe.
 func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn) ToolAnswer {
-	if !e.probesAvailable() {
+	if !e.probesAvailable(m.p.spec) {
 		return refuse("No probe can run: the project declares no check whose execution profile could run it. Use source inspection instead.")
 	}
 	var spec probeSpec

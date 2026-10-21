@@ -366,7 +366,7 @@ func TestALookupAnswersFromTheBoundModel(t *testing.T) {
 			t.Errorf("the check misses a %s", name)
 		}
 	}
-	if brief := agents.answers[reminders+" brief"]; !strings.Contains(brief, strings.TrimSpace(teamByPath(cfg)[reminders].Brief)) || !strings.Contains(brief, "\nPass p1: implement\n") {
+	if brief := agents.answers[reminders+" brief"]; !strings.Contains(brief, strings.TrimSpace(teamByPath(cfg)[reminders].Brief)) || !strings.Contains(brief, "\nPass p2: implement\n") {
 		t.Errorf("look_up brief does not return the Brief and assignment: %q", brief)
 	}
 	recorded := map[string]bool{}

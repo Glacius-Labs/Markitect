@@ -93,8 +93,7 @@ func manifestText(m apply.ModelSelection) string {
 
 // guidedSetup is the setup form's call of the function behind markitect
 // setup, with the project's repository, model and dependency models and the
-// product build the cockpit was started with. It adds no owner request and no
-// decisions.
+// product build the cockpit was started with. It adds no owner request.
 func (c cockpitService) guidedSetup(ctx context.Context, in cockpit.SetupInputs, build string) cockpit.SetupResult {
 	selection, err := cli.RepositorySelection(in.Project.Repository, in.Project.Model, in.Project.Dependencies)
 	if err != nil {

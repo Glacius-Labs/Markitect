@@ -39,15 +39,14 @@ type Command struct {
 	revisions   RevisionResolver
 	documents   Documents
 	apply       ApplyFunc
-	answer      AnswerFunc
 	extract     ExtractFunc
 	setup       SetupFunc
 	cockpit     CockpitFunc
 	window      WindowOpener
 }
 
-func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc, answer AnswerFunc) *Command {
-	return &Command{preparation: preparation, agents: agents, checks: checks, revisions: revisions, documents: documents, apply: applyRun, answer: answer}
+func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc) *Command {
+	return &Command{preparation: preparation, agents: agents, checks: checks, revisions: revisions, documents: documents, apply: applyRun}
 }
 
 // WithExtract installs the Extract operation. Without it the command reports
@@ -69,8 +68,6 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   docs [options]            preview a generated v1 model view
   apply [options]          realize the bound model: direct or staged work, then Verify
   extract [options]        derive a model candidate from the existing artifacts
-  answer <question> --run RUN --text ANSWER --run-config PATH
-                            answer a question of the running Apply or Extract
   setup --runtime DIR --image REF --credential FILE --agent-model M [options]
                             prepare a Runtime directory with runtime.yaml and run.json
   cockpit [--state DIR | --run-config PATH [--repo PATH]] [--listen ADDR] [--no-open]
@@ -108,8 +105,11 @@ apply options:
   state, basis, result and verdict; findings, questions, problems, turns,
   usage), the publication receipt, the Run outcome (success, failed or
   incomplete) and the evidence directory. Evidence is kept under
-  STATE/runs/RUN; only one run holds a state directory. Root's questions to the
-  invoking AI are printed to stderr and answered with the answer command.
+  STATE/runs/RUN; only one run holds a state directory. A Run is closed: no
+  question or answer crosses Root to the user or the invoking AI, and no
+  preloaded owner decision supplies model intent. A Run that needs a material
+  decision the model lacks ends failed without publication and reports it;
+  amend the model and start a new Run.
 
 extract options:
   --run-config PATH, --runtime-profile PATH and repeated --dependency as for apply;
@@ -123,16 +123,7 @@ extract options:
   execution.yaml (ownership and proposed checks). The JSON report lists model
   completion, the final Verify Pass, the realization deviations per Definition
   (artifact findings), the proposedChecks, open questions, per-phase passes,
-  turns and usage and the publication. Questions are answered with the answer
-  command.
-
-answer options:
-  --run RUN                identity of the run that asked, required
-  --text ANSWER            the answer, required
-  --run-config PATH        the running run's configuration; selects its state directory
-  Writes the answer for a question the running run asked (it prints the
-  question with its run identity to stderr) and reports the file it wrote. A
-  question of another run or one that lapsed is refused. An answer is final.
+  turns and usage and the publication. An Extract is closed like an Apply.
 
 setup options:
   --runtime DIR            absolute Runtime directory, outside the repository; created
@@ -146,7 +137,6 @@ setup options:
   --engine PATH            container engine executable (default /usr/bin/docker)
   --store LABEL            repository identity and store label (default: the model id)
   --request TEXT           owner request (default: a neutral sentence)
-  --decision TEXT          owner decision; repeat
   --deadline RFC3339       absolute UTC wall-clock limit, ending in Z
   --repo, --model and repeated --dependency select the project as for check.
   Setup reads the profile names from the working draft, writes the two files
@@ -166,11 +156,10 @@ cockpit options:
   --dependency, the cockpit opens the per-user project list (the last used
   project, if any) and sets projects up in its window.
   Serves a local web view of the recorded and running runs until interrupted.
-  It reads the evidence under STATE/runs. It writes only an owner's answer to
-  an open question of a running run, through the same owner channel as the
-  answer command, and a settings or model proposal the owner accepted after
-  its structural check passed, through Apply's guarded publication while no
-  observed Apply runs; it commits nothing, starts and stops no run, and replay,
+  It reads the evidence under STATE/runs. It writes only a settings or model
+  proposal the owner accepted after its structural check passed, through
+  Apply's guarded publication while no observed Apply runs; it answers no
+  question of a run, commits nothing, starts and stops no run, and replay,
   pause or reconnect never affect a run. With --runtime-profile, the owner's
   prompts start or continue a model session: an Agent of Root's Execute profile
   in a container that may change only .markitect/model and .markitect/registry
@@ -214,7 +203,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	if verb == "cockpit" {
 		return c.cockpitVerb(ctx, args[1:], stdout, stderr, emit)
 	}
-	if verb == "apply" || verb == "answer" || verb == "extract" {
+	if verb == "apply" || verb == "extract" {
 		return c.execution(ctx, verb, args[1:], stdout, stderr, emit)
 	}
 	if verb != "check" && verb != "context" && verb != "docs" {

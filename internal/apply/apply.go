@@ -21,27 +21,25 @@ import (
 // uses. Deadline, when set, is the operator's absolute wall-clock limit; the
 // run's own deadline is the earlier of it and the start plus the project's
 // executionTime. CheckRequest builds the complete request of one selected
-// check; the Orchestrator fills each candidate's tree. Owner is the channel to
-// the invoking AI that answers Root's questions; nil leaves Root without one.
+// check; the Orchestrator fills each candidate's tree. Nobody outside the
+// Manager tree answers during the run.
 // Build is the implementation identity of the product that runs the Apply,
 // such as its version and source revision; the Run binds it, and it is
 // required.
 type ApplyRequest struct {
-	RunID          string
-	Prepared       CapturedSettingsAttempt
-	Selection      InputSelection
-	OwnerRequest   string
-	OwnerDecisions []string
-	Deadline       time.Time
-	MaxEntries     int
-	MaxBytes       int64
-	CheckRequest   func(CheckSelection) (run.CheckRequest, error)
-	Build          string
+	RunID        string
+	Prepared     CapturedSettingsAttempt
+	Selection    InputSelection
+	OwnerRequest string
+	Deadline     time.Time
+	MaxEntries   int
+	MaxBytes     int64
+	CheckRequest func(CheckSelection) (run.CheckRequest, error)
+	Build        string
 
 	Agents     run.Agents
 	Workspaces run.Workspaces
 	Runner     run.Checks
-	Owner      run.Owner
 	Evidence   run.Evidence
 	Publisher  Publisher
 	Control    ControlCheck
@@ -95,7 +93,7 @@ func (s Strategy) corrections() []run.Purpose {
 	return []run.Purpose{run.Plan, run.Prepare, run.Implement}
 }
 
-const planMandate = "Plan your own responsibility concretely: for each of your own obligations the method and the intended evidence; your own artifacts and interfaces; the inputs you need with their owners; the outputs you provide and to whom; the order and start conditions of your work; your dependencies on other Managers in the Prepare and Implement Passes, each on the accepted basis when its contract suffices and on the complete result only when you cannot start without the finished realization; the other Managers' results your own complete result integrates; blockers and assumptions that need clarification. As a parent, also plan how you coordinate your children and integrate their results. Do not plan your children's obligations: they plan their own, and you review their plans for complete responsibilities, compatible interfaces, sound dependencies and fit, and for public values or behaviors they settled that the model does not state. A public behavior the complete linked model leaves materially open without delegating it, such as an unstated limit or the choice between a refusal and a partial fulfilment, is no implementation choice: never settle it by a conventional default; ask your parent with the concrete alternatives and their consequences, so that it reaches the user through Root. A value the model grants as freedom, or fixes by its wording, stays yours to decide and document. Your basis is what your children plan against: as Root, the project constraints, responsibility boundaries and coordination questions; as a parent, your own approach and the contracts you offer. The project is read-only in this Pass; plans are evidence of the run, not files. Your result is your complete plan, integrated with your children's accepted plans: an own obligation is done when its method and evidence are planned. Nothing is implemented in this Pass; a defect of the existing artifacts is planned work for the later Passes, recorded in your plan, never a reason to hold or return a plan. Existing artifacts and tests that already meet an obligation are its evidence as they are, and the independent Verify probes its claims itself: plan a change only for an observed model violation or a realization or evidence the model requires and the artifacts lack, and keep optional hardening and additional tests of conforming behavior as notes."
+const planMandate = "Plan your own responsibility concretely: for each of your own obligations the method and the intended evidence; your own artifacts and interfaces; the inputs you need with their owners; the outputs you provide and to whom; the order and start conditions of your work; your dependencies on other Managers in the Prepare and Implement Passes, each on the accepted basis when its contract suffices and on the complete result only when you cannot start without the finished realization; the other Managers' results your own complete result integrates; blockers and assumptions that need clarification. As a parent, also plan how you coordinate your children and integrate their results. Do not plan your children's obligations: they plan their own, and you review their plans for complete responsibilities, compatible interfaces, sound dependencies and fit, and for public values or behaviors they settled that the model does not state. A public behavior the complete linked model leaves materially open without delegating it, such as an unstated limit or the choice between a refusal and a partial fulfilment, is no implementation choice: never settle it by a conventional default; report it to your parent as a model problem with the concrete alternatives and their consequences: nobody answers during the run, Root ends it when it confirms the gap, and the model is corrected outside the run. A value the model grants as freedom, or fixes by its wording, stays yours to decide and document. Your basis is what your children plan against: as Root, the project constraints, responsibility boundaries and coordination questions; as a parent, your own approach and the contracts you offer. The project is read-only in this Pass; plans are evidence of the run, not files. Your result is your complete plan, integrated with your children's accepted plans: an own obligation is done when its method and evidence are planned. Nothing is implemented in this Pass; a defect of the existing artifacts is planned work for the later Passes, recorded in your plan, never a reason to hold or return a plan. Existing artifacts and tests that already meet an obligation are its evidence as they are, and the independent Verify probes its claims itself: plan a change only for an observed model violation or a realization or evidence the model requires and the artifacts lack, and keep optional hardening and additional tests of conforming behavior as notes."
 
 const prepareMandate = "Supply the usable foundation that your own obligations and accepted plan require before implementation: interfaces, configuration, build basis, documentation or test scaffolding in your own area, following the project's conventions. Preserve an existing foundation that already fits. Your basis is the foundation your children build on. Register every new or changed file, or a directory holding them, in your local registry in the same change. Never realize your children's or another area's obligations; scaffolding is no behavioral realization, and final behavioral tests need not pass yet. Your result is your complete foundation, integrated with your children's: an own obligation is done when the foundation it needs is in place; its behavior follows in the Implement Pass."
 
@@ -103,35 +101,28 @@ const implementMandate = "Realize every applicable own obligation in your own ar
 
 // directImplementMandate is Implement in the direct strategy: no Pass plans or
 // prepares for the tree, so every Manager settles and lays its own part here.
-const directImplementMandate = "Realize every applicable own obligation in your own area: code, tests, documentation and configuration. Planning and preparing your own part belong to this Pass; no separate Pass plans or prepares. First settle your own approach: for each own obligation the method and the intended evidence; your own artifacts and interfaces; what you need from other Managers and what you provide to whom; as a parent, how you coordinate and integrate your children. Existing artifacts and tests that already meet an obligation are its evidence as they are, and the independent Verify probes its claims itself. Your basis is what your children need from you before they start: your approach and the usable foundation and contracts in your own area that they build on, such as interfaces, configuration, build basis or test scaffolding, registered; submit it once it serves them instead of holding it back for your complete realization. A leaf's basis is its approach and what it has realized so far. Never plan or realize your children's or another area's obligations: they plan and realize their own, and you review each child's basis and result for complete responsibility, compatible interfaces, sound dependencies and fit, and for public values or behaviors they settled that the model does not state. A public behavior the complete linked model leaves materially open without delegating it, such as an unstated limit or the choice between a refusal and a partial fulfilment, is no implementation choice: never settle it by a conventional default; ask your parent with the concrete alternatives and their consequences, so that it reaches the user through Root, and realize what depends on it only once the value comes from the model or an answer. A value the model grants as freedom, or fixes by its wording, stays yours to decide and document. Use other owners' realizations through their contracts instead of rebuilding them. When your work needs another Manager's basis or result, report wait for that Manager with the stage you need: its basis when its contract suffices, its result only when you cannot continue without the finished realization; report wait instead of progress; when it is already accepted, this records the dependency and you continue your work. Preserve what already conforms; no change is a valid result for a conforming area. Change only what an observed model violation or a missing required realization or evidence needs; optional hardening the model does not require stays a note, not a change. Keep your local registry exact. Your complete result covers every own obligation with its artifacts and evidence, after you integrated your children's accepted results and their interactions. Run the project's build and tests yourself. A change you make comes with a test that discriminates it; tests that only add coverage of behavior that already conforms are optional notes, unless the model requires that evidence and the artifacts lack it, since the independent Verify probes the claims itself."
+const directImplementMandate = "Realize every applicable own obligation in your own area: code, tests, documentation and configuration. Planning and preparing your own part belong to this Pass; no separate Pass plans or prepares. First settle your own approach: for each own obligation the method and the intended evidence; your own artifacts and interfaces; what you need from other Managers and what you provide to whom; as a parent, how you coordinate and integrate your children. Existing artifacts and tests that already meet an obligation are its evidence as they are, and the independent Verify probes its claims itself. Your basis is what your children need from you before they start: your approach and the usable foundation and contracts in your own area that they build on, such as interfaces, configuration, build basis or test scaffolding, registered; submit it once it serves them instead of holding it back for your complete realization. A leaf's basis is its approach and what it has realized so far. Never plan or realize your children's or another area's obligations: they plan and realize their own, and you review each child's basis and result for complete responsibility, compatible interfaces, sound dependencies and fit, and for public values or behaviors they settled that the model does not state. A public behavior the complete linked model leaves materially open without delegating it, such as an unstated limit or the choice between a refusal and a partial fulfilment, is no implementation choice: never settle it by a conventional default; report it to your parent as a model problem with the concrete alternatives and their consequences, and realize nothing that depends on it: nobody answers during the run, Root ends it when it confirms the gap, and the model is corrected outside the run. A value the model grants as freedom, or fixes by its wording, stays yours to decide and document. Use other owners' realizations through their contracts instead of rebuilding them. When your work needs another Manager's basis or result, report wait for that Manager with the stage you need: its basis when its contract suffices, its result only when you cannot continue without the finished realization; report wait instead of progress; when it is already accepted, this records the dependency and you continue your work. Preserve what already conforms; no change is a valid result for a conforming area. Change only what an observed model violation or a missing required realization or evidence needs; optional hardening the model does not require stays a note, not a change. Keep your local registry exact. Your complete result covers every own obligation with its artifacts and evidence, after you integrated your children's accepted results and their interactions. Run the project's build and tests yourself. A change you make comes with a test that discriminates it; tests that only add coverage of behavior that already conforms are optional notes, unless the model requires that evidence and the artifacts lack it, since the independent Verify probes the claims itself."
 
 const verifyMandate = "Assess the immutable candidate independently against the bound model. Before you read the implementation or its tests, derive from the model the distinct claims of each own obligation, the freedom it leaves and the plausible counterexamples it permits: unusual permitted inputs, rejected inputs, exact boundaries, state changes and interactions with other areas. Then try to falsify each material claim through the public interface, including parsing, persistence and integration, not only through internal functions: run such cases as probes with the tool check, each stating its claim and the outcome the model requires, so that the Orchestrator keeps the receipt. Cover every done or preserved own obligation claim by claim with a passing receipt on this candidate, or with an inspected source location and its reasoning where execution does not apply; a passing suite or an author's summary covers no claim by itself. An adverse receipt is a genuine finding when it shows a violation; dispose of it with the model's reason only when your own probe was wrong: its expectation, its assertion, or its execution, such as a probe too large for the check's time limit, which also needs a passing probe of the same claim. Your basis is your own assessment plus the review context your children's reviewers need; your result integrates your children's assessments and the cross-area correctness of their interaction: read their receipts and assertions, ask which plausible violation could still pass them, probe the interactions yourself and return an unsupported claim to its reviewer. Raise every genuine finding with its owner, the obligation, the observed evidence and the earliest kind of correction it needs, and reassess the findings you raised earlier. Never invent a finding or demand optional work; a concrete question about a required claim that you cannot settle goes to your parent."
 
-// rootModelDuty is Root's own duty in an Apply: the bound model is fixed, so a
-// model Root judges erroneous or contradictory ends the run. Staged accepts a
-// plan that depends on a public choice only once the choice is settled; direct,
-// which has no plan, accepts no submission that depends on it before.
-const rootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run: never ask the user to change or override it. When the complete linked model leaves a public behavior materially open and does not delegate it, such as an unstated limit, ask the user with the concrete alternatives instead of letting a Manager pick a default, and accept a plan that depends on it only once the value comes from the model or an answer; an answer within the model lets the work continue."
-
-const directRootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run: never ask the user to change or override it. When the complete linked model leaves a public behavior materially open and does not delegate it, such as an unstated limit, ask the user with the concrete alternatives instead of letting a Manager pick a default, and accept a submission that depends on it only once the value comes from the model or an answer; an answer within the model lets the work continue."
+// rootModelDuty is Root's own duty in an Apply: the bound model is fixed and
+// nobody outside the tree answers during the run, so a model problem Root
+// confirms ends the run.
+const rootModelDuty = "As Root you end the run as soon as you confirm that the bound model is erroneous or contradictory, or leaves a public behavior materially open without delegating it, such as an unstated limit, instead of letting a Manager pick a default: report kind problem, category model, abort true, naming the Definitions concerned and the concrete alternatives or the contradiction. Nobody can change the model or answer a question from outside the tree during the run; the model is corrected outside it and a new run starts. A choice the model delegates, or a value its wording fixes, is no problem."
 
 // digest identifies the strategy's Pass declarations and Root duty.
 func (s Strategy) digest() string {
 	h := sha256.New()
-	for _, spec := range append(s.work(), s.verify()) {
-		fmt.Fprintf(h, "%q %q %q %v %v %v %v %v %q\n", spec.Purpose, spec.Mandate, spec.Guidance, spec.Writes, spec.Review, spec.Plans, spec.BindWaits, spec.ArtifactFindingsAdvisory, spec.Corrections)
+	for _, spec := range append(append([]run.PassSpec{assessSpec()}, s.work()...), s.verify()) {
+		fmt.Fprintf(h, "%q %q %q %v %v %v %v %v %v %q\n", spec.Purpose, spec.Mandate, spec.Guidance, spec.Writes, spec.Review, spec.Plans, spec.BindWaits, spec.ArtifactFindingsAdvisory, spec.Assesses, spec.Corrections)
 	}
 	fmt.Fprintf(h, "%q\n", s.rootDuty())
 	return fmt.Sprintf("sha256:%x", h.Sum(nil))
 }
 
-// rootDuty is Root's own standing duty in the strategy's work Passes.
-func (s Strategy) rootDuty() string {
-	if s == Direct {
-		return directRootModelDuty
-	}
-	return rootModelDuty
-}
+// rootDuty is Root's own standing duty in the strategy's work Passes; it is
+// the same in every strategy.
+func (s Strategy) rootDuty() string { return rootModelDuty }
 
 const verifyGuidance = "A genuine finding is an observed model violation, a missing required realization or evidence item, or a failed required check; cite the obligation and the observed behavior or source. A Definition realized outside its owner's artifacts, or a change outside a Manager's own area, is a model violation; as a parent, check how your children actually use each other's realizations and whether their receipts and assertions cover the claims and public boundaries, and return an unsupported success claim to its reviewer. A missing required realization or evidence item is genuine; doubt alone is not. Optional improvements the model does not require are notes: set blocking to false, and never soften a genuine finding into a note. When another reviewer, below you or about your own responsibility, raised a finding you independently judge erroneous, dispute it with reason and evidence; it stays open until a fresh review of its responsibility disposes of it."
 
@@ -153,7 +144,9 @@ func (s Strategy) verify() run.PassSpec {
 }
 
 // Apply realizes the bound model: after the strict Model check and File check
-// of the capture, it runs the bound strategy's work Passes through the one
+// of the capture and the Model assessment, which ends the run Failed when
+// Root confirms a material model problem, it runs the bound strategy's work
+// Passes through the one
 // recursive Pass process (Implement in direct; Plan, Prepare and Implement in
 // staged), then fresh independent Verify of the captured candidate. A genuine
 // finding returns to the earliest necessary work Pass and a complete fresh
@@ -172,7 +165,10 @@ func Apply(ctx context.Context, req ApplyRequest) (ApplyResult, error) {
 	if err != nil {
 		return ApplyResult{Binding: binding}, err
 	}
-	reason := compose(r, binding.Strategy.work(), binding.Strategy.verify())
+	released, reason := assess(r, assessSpec())
+	if released {
+		reason = compose(r, binding.Strategy.work(), binding.Strategy.verify())
+	}
 	outcome, runErr := r.Finish(reason)
 	result, err := req.conclude(ctx, cfg.Start, outcome, runErr)
 	result.Binding = binding
@@ -183,6 +179,7 @@ func Apply(ctx context.Context, req ApplyRequest) (ApplyResult, error) {
 const (
 	entryApply  = "apply"
 	entryVerify = "verify-captured"
+	entryAssess = "model-assessment"
 )
 
 // VerifyCaptured runs only the independent Verify Pass of the one Pass process
@@ -309,17 +306,21 @@ func (r ApplyRequest) publishChanges(ctx context.Context, changes []snapshot.Cha
 // organization with its Briefs, obligations, enforced write plans and team
 // roles, the required checks, the gates and the budget, and the RunBinding of
 // these effective values with the implementation identity, which run.start
-// records. Apply and VerifyCaptured, in tests and in the product, bind only
-// through it. An unknown strategy, a missing build identity and undeclared or
+// records. Apply, VerifyCaptured and AssessCaptured, in tests and in the
+// product, bind only through it; the Model assessment alone runs no check. An
+// unknown strategy, a missing build identity and undeclared or
 // unenforceable ownership refuse the run before any effect.
 func applyConfig(req ApplyRequest, now time.Time, entry string) (run.Config, RunBinding, error) {
 	cfg, managers, err := runConfig(req, now)
 	if err != nil {
 		return run.Config{}, RunBinding{}, err
 	}
+	if entry == entryAssess {
+		cfg.Checks = nil
+	}
 	budget, _ := req.Prepared.Settings().Budget()
 	strategy, _ := req.Prepared.Settings().Strategy()
-	binding := bindRun(entry, req.Prepared, strings.Join(append([]string{req.OwnerRequest}, req.OwnerDecisions...), "\x00"), strategy, req.Build, budget, cfg.Budget.Deadline, managers, cfg.Checks)
+	binding := bindRun(entry, req.Prepared, req.OwnerRequest, strategy, req.Build, budget, cfg.Budget.Deadline, managers, cfg.Checks)
 	cfg.Binding = binding
 	return cfg, binding, nil
 }
@@ -438,7 +439,7 @@ func runConfig(req ApplyRequest, now time.Time) (run.Config, []boundManager, err
 	deadline := runDeadline(now, budget.ExecutionTime.Value, req.Deadline)
 	cfg := run.Config{
 		RunID: req.RunID, Team: team, Start: prepared.Structural().Model().Inputs().Raw.Census,
-		OwnerRequest: req.OwnerRequest, OwnerDecisions: req.OwnerDecisions, RootGuidance: strategy.rootDuty(), Checks: checks,
+		OwnerRequest: req.OwnerRequest, RootGuidance: strategy.rootDuty(), Checks: checks,
 		ModelCheck: func(tree snapshot.Tree) []run.Finding { return gateFindings(candidates.ModelCheck(tree)) },
 		FileCheck:  func(tree snapshot.Tree) []run.Finding { return gateFindings(candidates.Account(tree)) },
 		OwnerOf:    candidates.OwnerOf,
@@ -446,7 +447,7 @@ func runConfig(req ApplyRequest, now time.Time) (run.Config, []boundManager, err
 		Definition: definitionLookup(checked),
 		Budget:     run.Budget{Deadline: deadline, TurnTimeout: budget.TurnTimeout.Value, AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value},
 		MaxEntries: req.MaxEntries, MaxBytes: req.MaxBytes,
-		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Owner: req.Owner, Evidence: req.Evidence, Clock: req.Clock,
+		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Evidence: req.Evidence, Clock: req.Clock,
 	}
 	return cfg, managers, nil
 }

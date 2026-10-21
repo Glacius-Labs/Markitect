@@ -19,7 +19,7 @@ docs/markitect/project.md    official generated readable view
 
 Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Runtime profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
 
-Apply and Extract keep their state outside the repository, in the state directory of the run configuration: the lock, `runs/<runID>/` evidence, `current-run` and, for Extract, the owner question and answer files ([runtime contract](design/canonical-model/manager-apply-runtime.md#evidence-and-state)). There is no journal. Read-only preparation creates no run evidence.
+Apply and Extract keep their state outside the repository, in the state directory of the run configuration: the lock, `runs/<runID>/` evidence and `current-run` ([runtime contract](design/canonical-model/manager-apply-runtime.md#evidence-and-state)). There is no journal. Read-only preparation creates no run evidence.
 
 ## Ownership and boundaries
 

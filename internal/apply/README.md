@@ -84,9 +84,13 @@ in the start stand is refused with `ErrUnsupportedOwnership`.
 ## Apply
 
 `Apply(ctx, ApplyRequest)` binds the strategy, the organization (Briefs, own obligations,
-write plans, helpers), the required checks, the gates, the owner channel and the budget,
-requires the container engine's volume-subpath support, and composes the Passes on `run`.
-The strategy only selects the work Passes before Verify; ownership, gates, evidence, Verify
+write plans, helpers), the required checks, the gates and the budget, requires the container
+engine's volume-subpath support, and composes the Passes on `run`. Nobody outside the
+Manager tree answers during the run. Every Apply first runs the Model assessment of
+`assess.go` (Session C's method; a finding's correction names its class `model_error`,
+`model_gap` or `unclassified`): only an accepted assessment releases the work, and a model
+problem Root confirms ends the run Failed without publication. The strategy only selects the
+work Passes between the assessment and Verify; ownership, gates, evidence, Verify
 and publication are the same, and `run.start` and the report record it:
 
 - `direct`, the provisional baseline: Implement, in which every Manager settles its own
@@ -98,14 +102,15 @@ and publication are the same, and `run.start` and the report record it:
   are those of the accepted plans, and a correction restarts at the earliest purpose its
   findings name.
 
-`Apply` and `VerifyCaptured` bind through one `applyConfig`, which needs `ApplyRequest.Build`,
+`Apply`, `VerifyCaptured` and `AssessCaptured` (only the Model assessment, without checks or
+publication, the evaluation entry of the method's trial) bind through one `applyConfig`, which needs `ApplyRequest.Build`,
 the implementation identity of the running product, and returns a `RunBinding`: the entry,
-the strategy with its work sequence (none for `VerifyCaptured`), correction purposes and
-the `composition` digest of its Pass declarations and Root duty, the build, the content
+the strategy with its work sequence (led by `assess`; none for `VerifyCaptured`), correction
+purposes and the `composition` digest of the assessment, its Pass declarations and Root duty, the build, the content
 identities of the execution settings and product defaults, the budget and deadline, every
 Manager's resolved profiles, helpers and instructions, and the required checks. `run.start`
 records it and `ApplyResult.Binding` returns it for the report. Everything but the work
-Passes and Root's acceptance wording (a plan in `staged`, any submission in `direct`) is shared: entry and Pass-boundary gates, writer-stop proof, Verify, finding closure
+Passes is shared, Root's duty included: entry and Pass-boundary gates, writer-stop proof, Verify, finding closure
 and publication.
 
 A Pass that needs correction restarts the work as its strategy allows and a fresh complete
@@ -118,8 +123,8 @@ of its execution profile's own arguments to `run`, so a probe can reuse that pro
 its own arguments.
 
 The mandates ask Plan (staged) or Implement (direct) for the needed dependency stage, to
-keep existing conforming artifacts as their own evidence and to route a public behavior the
-model leaves open to the user through Root instead of defaulting it; Implement to test the
+keep existing conforming artifacts as their own evidence and to report a public behavior the
+model leaves open to their parent as a model problem instead of defaulting it; Implement to test the
 changes it makes rather than add coverage of conforming behavior, and to wait for another
 Manager's basis or result instead of reporting progress; and Verify
 to derive claims and permitted counterexamples from the bound model first, probe them at

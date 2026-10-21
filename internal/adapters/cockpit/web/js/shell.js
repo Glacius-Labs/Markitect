@@ -11,7 +11,7 @@ export const areas = [
   { id: "model", key: "1", href: "#/model", label: "Model", lead: "Browse the canonical model and change it by prompt in a session.",
     tabs: [{ id: "browse", href: "#/model", label: "Browse" }, { id: "session", href: "#/session", label: "Session" }] },
   { id: "runs", key: "2", href: "#/runs", label: "Runs", lead: "Follow a running Apply and replay recorded ones." },
-  { id: "decisions", key: "3", href: "#/decisions", label: "Decisions", lead: "Answer the questions of runs and decide on proposals." },
+  { id: "decisions", key: "3", href: "#/decisions", label: "Decisions", lead: "Decide on proposals." },
   { id: "settings", key: "4", href: "#/settings", label: "Settings", lead: "Budget, role profiles and team of an Apply. A change becomes a proposal." },
 ];
 
@@ -117,7 +117,7 @@ function drawState(s) {
   const p = s.project;
   const session = s.openSession;
   const live = s.liveRuns.length;
-  const waiting = s.waitingQuestions.length + s.proposalsToDecide.length;
+  const waiting = s.proposalsToDecide.length;
   const sessionTab = built.tabs.get("session");
   if (sessionTab) {
     sessionTab.querySelector(".lamp")?.remove();

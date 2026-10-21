@@ -39,7 +39,7 @@ func (s *executionService) evaluateVerify(ctx context.Context, request cli.Apply
 		report.Status = prepared.Status()
 		return report, err
 	}
-	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID, session.owner)
+	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID)
 	if err != nil {
 		return report, err
 	}
@@ -100,7 +100,7 @@ func TestVerifyEvaluationHarness(t *testing.T) {
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(codexappserver.NewEngineImageReader), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
-	execution := newExecution(preparation, repository, agents, checker, os.Stderr)
-	code := cli.New(preparation, agents, checker, repository, views, execution.evaluateVerify, answer).Run(context.Background(), args, os.Stdout, os.Stderr)
+	execution := newExecution(preparation, repository, agents, checker)
+	code := cli.New(preparation, agents, checker, repository, views, execution.evaluateVerify).Run(context.Background(), args, os.Stdout, os.Stderr)
 	fmt.Fprintf(os.Stderr, "verify evaluation exit %d\n", code)
 }

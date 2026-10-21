@@ -32,7 +32,6 @@ export function parseRoute() {
     case "session": return { page: "session" };
     case "decisions": case "proposals": return { page: "decisions" };
     case "proposal": return parts[1] ? { page: "decisions", item: { kind: "proposal", id: parts[1] } } : { page: "decisions" };
-    case "question": return parts[2] ? { page: "decisions", item: { kind: "question", run: parts[1], id: parts[2] } } : { page: "decisions" };
     case "settings": return { page: "settings" };
     case "projects": return { page: "projects", setup: params.get("setup") };
     default: return { page: "hub" };

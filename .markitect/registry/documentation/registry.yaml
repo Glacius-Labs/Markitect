@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/primary-goal-and-conformance-evaluation-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's primary-goal clarification and adoption of conformance evaluation refinements with bounded A-D coordination notes.
   - path: "docs/development/claude-direct-runtime-handoff-20261021.md"
     form: doc
     realizes: [documentation/current-guidance]

@@ -76,7 +76,7 @@ For the full explanation, read [Markitect in brief](docs/vision.md#markitect-in-
 
 **Markitect is under active development. Controlled Apply is exposed in current source; complete workflow validation is still in progress.**
 
-Current source supports the Model check, repository file accounting, context preparation and a guarded readable model view. Explicit Apply and Extract commands, with an owner Answer command for Extract's questions, compose the recursive Manager workflow (parallel Execute in one shared working tree, fresh recursive Verify of one candidate) with container sessions, workspaces, checks and guarded publication; no interrupted run is restored. They require complete Runtime profiles and an explicit invocation configuration; see the [project workflow](docs/project-workflow.md#execute-verify-and-apply).
+Current source supports the Model check, repository file accounting, context preparation and a guarded readable model view. Explicit Apply and Extract commands, compose the recursive Manager workflow (parallel Execute in one shared working tree, fresh recursive Verify of one candidate) with container sessions, workspaces, checks and guarded publication; no interrupted run is restored. They require complete Runtime profiles and an explicit invocation configuration; see the [project workflow](docs/project-workflow.md#execute-verify-and-apply).
 
 Real runtime probes and small single-agent library baselines have passed. They establish their [recorded scope](docs/validation/runtime-capabilities-20261017.md); they do not demonstrate the complete Manager organization or the two-Apply workflow.
 

@@ -21,18 +21,16 @@ import (
 // operator's absolute wall-clock limit; the run's own deadline is the earlier
 // of it and the start plus the project's executionTime, shared by both phases.
 type ExtractRequest struct {
-	RunID          string
-	Prepared       CapturedSettingsAttempt
-	Selection      InputSelection
-	OwnerRequest   string
-	OwnerDecisions []string
-	Deadline       time.Time
-	MaxEntries     int
-	MaxBytes       int64
+	RunID        string
+	Prepared     CapturedSettingsAttempt
+	Selection    InputSelection
+	OwnerRequest string
+	Deadline     time.Time
+	MaxEntries   int
+	MaxBytes     int64
 
 	Agents     run.Agents
 	Workspaces run.Workspaces
-	Owner      run.Owner
 	Evidence   run.Evidence
 	Publisher  Publisher
 	Control    ControlCheck
@@ -82,12 +80,17 @@ type ProposedCheck struct {
 
 // Extract develops a model candidate from the existing artifacts in two phases
 // over the same Pass process as Apply, each a work Pass with its own mandate
-// followed by independent Verify. Phase one: Root alone proposes the Packages
-// with an overview Definition each and the ownership areas they need. Phase two:
-// the Manager tree of the verified proposal derives the model of every Package
-// and registers the artifacts. A Verified second phase is published through the
-// guarded Publisher as the changed .markitect model, registry and ownership
-// files; an artifact is never published and never changed. It never commits.
+// followed by independent Verify. Phase one: Root alone first assesses the
+// mandate and the fixed inputs, then proposes the Packages with an overview
+// Definition each and the ownership areas they need. Phase two: the Manager
+// tree of the verified proposal derives the model of every Package and
+// registers the artifacts, and the verified candidate receives the Model
+// assessment. Nobody outside the tree answers: a material decision the
+// artifacts do not settle ends the run with the unaccepted draft retained, for
+// model authoring outside the run. A Verified second phase is published
+// through the guarded Publisher as the changed .markitect model, registry and
+// ownership files; an artifact is never published and never changed. It never
+// commits.
 func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	var result ExtractResult
 	start, err := newExtractStart(req.Prepared)
@@ -101,10 +104,10 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 
 	// The structure phase may use at most half of the agent turns, so the model
 	// phase always keeps the rest; each phase needs at least a basis and a result
-	// of Root in its work Pass and in its Verify.
+	// of Root in its Model assessment, its work Pass and its Verify.
 	structureTurns := start.budget.AgentTurns.Value / 2
-	if structureTurns < 4 {
-		return result, fmt.Errorf("an Extract needs at least 8 agent turns, the project allows %d", start.budget.AgentTurns.Value)
+	if structureTurns < 6 {
+		return result, fmt.Errorf("an Extract needs at least 12 agent turns, the project allows %d", start.budget.AgentTurns.Value)
 	}
 	structure, err := newExtractAccounting(extractStructure, start)
 	if err != nil {
@@ -142,13 +145,6 @@ func Extract(ctx context.Context, req ExtractRequest) (ExtractResult, error) {
 	cfg, err = phase.config(model, next, deadline, start.budget.AgentTurns.Value-len(outcome.Turns))
 	if err != nil {
 		return keepStructure(err)
-	}
-	// Both phases share the owner channel: the model phase knows the structure
-	// phase's answers and continues its question numbering.
-	for _, q := range outcome.Questions {
-		if q.To == run.User && q.Answered {
-			cfg.Questions = append(cfg.Questions, q)
-		}
 	}
 	modelOutcome, runErr := phase.run(ctx, cfg)
 	result.Model = &modelOutcome
@@ -353,6 +349,9 @@ func (p extractPhaseRun) record(outcome run.Outcome) {
 
 // run runs the phase through the shared Pass process: its work Pass, then
 // independent Verify, with correction and reassessment as Apply composes them.
+// The structure phase begins with the Model assessment of the mandate and the
+// fixed inputs; the model phase ends with the Model assessment of its verified
+// candidate, which is published only when that assessment accepts it.
 func (p extractPhaseRun) run(ctx context.Context, cfg run.Config) (run.Outcome, error) {
 	r, err := run.Open(ctx, cfg)
 	if err != nil {
@@ -362,7 +361,16 @@ func (p extractPhaseRun) run(ctx context.Context, cfg run.Config) (run.Outcome, 
 	corrections := []run.Purpose{purpose}
 	work := run.PassSpec{Purpose: purpose, Mandate: p.phase.mandate, Writes: true, Corrections: corrections}
 	review := run.PassSpec{Purpose: run.Verify, Mandate: extractVerifyMandate, Review: true, Guidance: p.phase.verifyGuidance, Corrections: corrections, ArtifactFindingsAdvisory: p.phase.advisory}
-	return r.Finish(compose(r, []run.PassSpec{work}, review))
+	if p.phase.name == ExtractStructurePhase {
+		if accepted, reason := assess(r, extractAssessSpec()); !accepted {
+			return r.Finish(reason)
+		}
+	}
+	reason := compose(r, []run.PassSpec{work}, review)
+	if reason == "" && p.phase.name == ExtractModelPhase {
+		_, reason = assess(r, assessSpec())
+	}
+	return r.Finish(reason)
 }
 
 // config builds the engine configuration of one phase from its start.
@@ -373,7 +381,7 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 	}
 	r := p.req
 	cfg := run.Config{
-		RunID: p.runID, Team: team, Start: stage.tree, OwnerRequest: r.OwnerRequest, OwnerDecisions: r.OwnerDecisions,
+		RunID: p.runID, Team: team, Start: stage.tree, OwnerRequest: r.OwnerRequest,
 		ModelCheck: func(tree snapshot.Tree) []run.Finding { return gateFindings(accounting.ModelCheck(tree)) },
 		FileCheck:  func(tree snapshot.Tree) []run.Finding { return gateFindings(accounting.Account(tree)) },
 		OwnerOf:    accounting.OwnerOf,
@@ -381,7 +389,7 @@ func (p extractPhaseRun) config(accounting extractAccounting, stage extractStage
 		Definition: definitionLookup(stage.structural.Model().checked),
 		Budget:     run.Budget{Deadline: deadline, TurnTimeout: stage.budget.TurnTimeout.Value, AgentTurns: agentTurns, Passes: stage.budget.Passes.Value},
 		MaxEntries: r.MaxEntries, MaxBytes: r.MaxBytes,
-		Agents: r.Agents, Workspaces: r.Workspaces, Owner: r.Owner, Evidence: r.Evidence, Clock: r.Clock,
+		Agents: r.Agents, Workspaces: r.Workspaces, Evidence: r.Evidence, Clock: r.Clock,
 	}
 	if accounting.phase == extractModel {
 		// The artifacts are fixed evidence of the model phase: a deviation of an

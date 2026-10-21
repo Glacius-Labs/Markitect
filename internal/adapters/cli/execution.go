@@ -24,16 +24,6 @@ type ApplyRequest struct {
 	Build     string
 }
 
-// AnswerRequest carries the answer of the invoking AI to one open question of
-// a running Apply or Extract. Run binds it to that exact run; RunConfig selects
-// the state directory the run uses.
-type AnswerRequest struct {
-	Question  string
-	Run       string
-	Text      string
-	RunConfig string
-}
-
 // ApplyReport projects the observations of one Apply: the preparation, the
 // run with its Passes, the publication and where the evidence is kept. Outcome
 // is the Run outcome: success only for a clean Verify with an applied or
@@ -129,19 +119,7 @@ func RunOutcome(status model.Status) string {
 	return "incomplete"
 }
 
-// AnswerReport states what the answer command wrote.
-type AnswerReport struct {
-	FormatVersion int          `json:"formatVersion"`
-	Operation     string       `json:"operation"`
-	Status        model.Status `json:"status"`
-	Question      string       `json:"question"`
-	Path          string       `json:"path,omitempty"`
-	Bytes         int          `json:"bytes,omitempty"`
-	Error         string       `json:"error,omitempty"`
-}
-
 type ApplyFunc func(context.Context, ApplyRequest) (ApplyReport, error)
-type AnswerFunc func(context.Context, AnswerRequest) (AnswerReport, error)
 
 func (c *Command) execution(ctx context.Context, verb string, args []string, stdout, stderr io.Writer, emit func(any) int) int {
 	incomplete := func(reason string) int {
@@ -150,36 +128,22 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		}
 		return 3
 	}
-	if verb == "apply" && c.apply == nil || verb == "answer" && c.answer == nil || verb == "extract" && c.extract == nil {
+	if verb == "apply" && c.apply == nil || verb == "extract" && c.extract == nil {
 		return incomplete("Execution is unavailable because its concrete execution/publication ports are not configured.")
 	}
-	question := ""
-	if verb == "answer" {
-		if len(args) == 0 || args[0] == "" || args[0][0] == '-' {
-			fmt.Fprintln(stderr, "answer requires one open question identity")
-			return 2
-		}
-		question, args = args[0], args[1:]
-	}
-	var runID string
 	flags := flag.NewFlagSet(verb, flag.ContinueOnError)
 	flags.SetOutput(stderr)
 	config := flags.String("run-config", "", "explicit absolute invocation configuration")
-	var repo, manifest, runtimeProfile, text string
+	var repo, manifest, runtimeProfile string
 	var dependencies manifestList
-	if verb == "apply" || verb == "extract" {
-		flags.StringVar(&repo, "repo", ".", "repository root")
-		if verb == "apply" {
-			flags.StringVar(&manifest, "model", ".markitect/model.yaml", "explicit model.yaml")
-		} else {
-			manifest = extractManifest
-		}
-		flags.StringVar(&runtimeProfile, "runtime-profile", "", "explicit absolute Runtime profile document")
-		flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
+	flags.StringVar(&repo, "repo", ".", "repository root")
+	if verb == "apply" {
+		flags.StringVar(&manifest, "model", ".markitect/model.yaml", "explicit model.yaml")
 	} else {
-		flags.StringVar(&text, "text", "", "answer text")
-		flags.StringVar(&runID, "run", "", "identity of the run that asked")
+		manifest = extractManifest
 	}
+	flags.StringVar(&runtimeProfile, "runtime-profile", "", "explicit absolute Runtime profile document")
+	flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
 			io.WriteString(stdout, help)
@@ -187,27 +151,16 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		}
 		return 2
 	}
-	if flags.NArg() != 0 || verb == "answer" && (text == "" || runID == "") {
+	if flags.NArg() != 0 {
 		fmt.Fprintln(stderr, "invalid execution arguments; see help")
 		return 2
 	}
-	if *config == "" || verb != "answer" && runtimeProfile == "" {
+	if *config == "" || runtimeProfile == "" {
 		return incomplete("Execution is unavailable without explicit --run-config and --runtime-profile absolute paths.")
 	}
-	if !filepath.IsAbs(*config) || filepath.Clean(*config) != *config || verb != "answer" && (!filepath.IsAbs(runtimeProfile) || filepath.Clean(runtimeProfile) != runtimeProfile) {
+	if !filepath.IsAbs(*config) || filepath.Clean(*config) != *config || !filepath.IsAbs(runtimeProfile) || filepath.Clean(runtimeProfile) != runtimeProfile {
 		fmt.Fprintln(stderr, "--run-config and --runtime-profile require explicit absolute native paths")
 		return 2
-	}
-	if verb == "answer" {
-		report, err := c.answer(ctx, AnswerRequest{Question: question, Run: runID, Text: text, RunConfig: *config})
-		report.FormatVersion, report.Operation, report.Question = 1, verb, question
-		if err != nil {
-			report.Error = err.Error()
-		}
-		if emit(report) != 0 {
-			return 3
-		}
-		return exitStatus(report.Status, err)
 	}
 	root, err := filepath.Abs(repo)
 	if err != nil {

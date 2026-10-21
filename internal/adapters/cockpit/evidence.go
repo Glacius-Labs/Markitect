@@ -24,7 +24,6 @@ const (
 	maxEventBytes      = 64 << 20
 	maxReportBytes     = 16 << 20
 	maxTranscriptBytes = 32 << 20
-	maxQuestionBytes   = 1 << 20
 )
 
 // safeName admits the run, turn and question identities the producer uses as
@@ -82,9 +81,6 @@ type runLog struct {
 	reportAt time.Time
 	readAt   time.Time
 	err      error
-
-	questions    []QuestionView // the record's questions to the user
-	questionsKey string         // the event digest they were projected from
 }
 
 func newRunLog(state, id string) *runLog {
@@ -299,8 +295,8 @@ type RunEntry struct {
 }
 
 // list finds the runs of the state directory: directories under runs/ with
-// an events.jsonl. current-run names the run that last opened the owner
-// channel; it does not by itself say that run is still running.
+// an events.jsonl. current-run names the run that last took the state
+// directory; it does not by itself say that run is still running.
 func (s *stateDirectory) list() ([]RunEntry, error) {
 	entries, err := os.ReadDir(filepath.Join(s.dir, "runs"))
 	if errors.Is(err, os.ErrNotExist) {

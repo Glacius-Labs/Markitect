@@ -27,14 +27,12 @@ const DefaultListen = "127.0.0.1:7341"
 
 // Config selects the state directories the cockpit observes. The cockpit only
 // reads them; Liveness, when set, probes whether an Apply holds one. Project
-// observes the repository's identity. Answer, when set, is the owner
-// channel's answer operation. Runs, when set, starts and stops the one Apply
-// this cockpit runs in its own process.
+// observes the repository's identity. Runs, when set, starts and stops the one
+// Apply this cockpit runs in its own process.
 type Config struct {
 	States   []string
 	Liveness Liveness
 	Project  ProjectObserver
-	Answer   Answerer
 	// Authoring, when set, makes and decides proposals for the project's
 	// .markitect inputs.
 	Authoring Authoring
@@ -45,16 +43,14 @@ type Config struct {
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
-// of the configured state directories. It writes an owner's answer through
-// the configured owner channel, an accepted proposal through the configured
-// authoring service, and starts and stops the one run its own controller
-// holds; no request repairs a run, and a run started elsewhere is only
-// observed.
+// of the configured state directories. It writes an accepted proposal through
+// the configured authoring service and starts and stops the one run its own
+// controller holds; no request repairs a run or answers a question of a run,
+// and a run started elsewhere is only observed.
 type Server struct {
 	states     []*stateDirectory
 	liveness   Liveness
 	project    projectCache
-	answer     Answerer
 	authoring  Authoring
 	runs       *RunController
 	runsReason string
@@ -68,7 +64,7 @@ func New(cfg Config) (*Server, error) {
 	if len(cfg.States) == 0 && cfg.Project == nil {
 		return nil, errors.New("the cockpit needs at least one state directory or a repository")
 	}
-	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, authoring: cfg.Authoring, runs: cfg.Runs, runsReason: cfg.RunsReason, poll: 400 * time.Millisecond}
+	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, authoring: cfg.Authoring, runs: cfg.Runs, runsReason: cfg.RunsReason, poll: 400 * time.Millisecond}
 	seen := map[string]bool{}
 	for _, dir := range cfg.States {
 		abs, err := filepath.Abs(dir)
@@ -147,8 +143,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/project", s.handleProject)
 	mux.HandleFunc("POST /api/project/observe", s.handleObserve)
 	mux.HandleFunc("GET /api/model", s.handleModel)
-	mux.HandleFunc("GET /api/questions", s.handleQuestions)
-	mux.HandleFunc("POST /api/runs/{run}/questions/{question}/answer", s.handleAnswer)
 	mux.HandleFunc("GET /api/settings", s.handleSettings)
 	mux.HandleFunc("POST /api/proposals/settings", s.handleProposeSettings)
 	mux.HandleFunc("GET /api/proposals", s.handleProposals)

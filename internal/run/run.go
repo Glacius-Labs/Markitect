@@ -11,13 +11,14 @@ import (
 // ErrInvalid reports a Config or Pass the Orchestrator cannot run.
 var ErrInvalid = errors.New("invalid run configuration")
 
-// Purpose names what one Pass is for. Apply runs the work purposes of its
-// strategy, Implement in direct and Plan, Prepare and Implement in staged, and
-// then Verify; Extract supplies its own work purposes. Every purpose uses the
-// same recursive base process.
+// Purpose names what one Pass is for. Apply first assesses the bound model,
+// then runs the work purposes of its strategy, Implement in direct and Plan,
+// Prepare and Implement in staged, and then Verify; Extract supplies its own
+// work purposes. Every purpose uses the same recursive base process.
 type Purpose string
 
 const (
+	Assess    Purpose = "assess"
 	Plan      Purpose = "plan"
 	Prepare   Purpose = "prepare"
 	Implement Purpose = "implement"
@@ -176,13 +177,9 @@ const (
 // itself.
 const MarkitectFinding = "markitect"
 
-// User is the recipient of Root's questions: the AI that invoked Markitect,
-// which can consult the user. It is not a Manager.
-const User = "user"
-
-// Question is one question along the Manager tree, or from Root to the user.
-// From and To are adjacent: parent and child, or Root and User. About names the
-// question this one serves when it forwards an exchange along the tree.
+// Question is one question along the Manager tree. From and To are adjacent:
+// parent and child. About names the question this one serves when it forwards
+// an exchange along the tree. Nobody outside the tree answers during a run.
 type Question struct {
 	ID         string    `json:"id"`
 	From       string    `json:"from"`
@@ -195,16 +192,6 @@ type Question struct {
 	Answered   bool      `json:"answered"`
 	Lapsed     bool      `json:"lapsed,omitempty"`
 	AnsweredAt time.Time `json:"answeredAt,omitzero"`
-}
-
-// Owner is the channel to the AI that invoked Markitect. Ask publishes Root's
-// question; Answer reports the answer once one exists; Withdraw removes a
-// question that lapsed unanswered. Work that does not depend on the answer
-// continues meanwhile.
-type Owner interface {
-	Ask(context.Context, Question) error
-	Answer(context.Context, string) (string, bool, error)
-	Withdraw(context.Context, string) error
 }
 
 // Problem is a structured report of a Manager: its category, its text and
@@ -284,21 +271,18 @@ type ModelDefinition struct {
 // assembles the derived registry view of a stand; Definition looks up a
 // Definition of the bound model.
 //
-// Owner may be nil when nobody can answer Root's questions. Questions are
-// earlier answered user questions of the same channel (Extract's first phase):
-// prompts show them and new questions continue their numbering.
-// ResolveDefinition confirms a Definition identity on a candidate for review
+// OwnerRequest is the invoking AI's request; nobody answers questions during
+// the run. ResolveDefinition confirms a Definition identity on a candidate for review
 // Passes with ArtifactFindingsAdvisory; it must be safe for concurrent use.
 // Binding is what the caller bound the run to besides these inputs, such as an
 // Apply's strategy, effective settings and implementation identity; run.start
 // records it as given and the Orchestrator chooses nothing by it.
 type Config struct {
-	RunID          string
-	Binding        any
-	Team           []Manager
-	Start          snapshot.Tree
-	OwnerRequest   string
-	OwnerDecisions []string
+	RunID        string
+	Binding      any
+	Team         []Manager
+	Start        snapshot.Tree
+	OwnerRequest string
 	// RootGuidance is Root's own standing duty in the work Passes of this kind
 	// of run, such as ending an Apply for a defective model.
 	RootGuidance string
@@ -314,10 +298,8 @@ type Config struct {
 	Agents       Agents
 	Workspaces   Workspaces
 	Runner       Checks
-	Owner        Owner
 	Evidence     Evidence
 	Clock        func() time.Time
-	Questions    []Question
 
 	ResolveDefinition func(snapshot.Tree, string) bool
 }
@@ -339,7 +321,14 @@ type Config struct {
 // a wait names, or that is already accepted when the wait is reported, is bound
 // to the waiter's work; its revision or reopening resets a waiter whose basis
 // built on it, for which it is a start condition of the restart, and returns a
-// waiter whose result alone built on it to its integration.
+// waiter whose result alone built on it to its integration. Assesses (review)
+// makes the review Pass the Model assessment of the bound model before any
+// realization: it runs no gate or required check on its candidate and offers
+// no probe, because the entry checks passed and a check judges artifacts, its satisfied seal verifies no candidate of its own (a
+// candidate verified just before it stays verified), and a seal that
+// needs correction with a confirmed finding (open, genuine, raised by the team
+// and not disputed in the Pass) ends the run Failed, since no Pass of the run
+// can correct the model.
 type PassSpec struct {
 	Purpose                  Purpose
 	Mandate                  string
@@ -350,6 +339,7 @@ type PassSpec struct {
 	Corrections              []Purpose
 	ArtifactFindingsAdvisory bool
 	BindWaits                bool
+	Assesses                 bool
 }
 
 // Status is the result of a run.
@@ -519,3 +509,7 @@ func (r *Run) Finish(reason string) (Outcome, error) { return r.e.finish(reason)
 // ModelErrorReason begins the Failed reason of a run that Root ended because it
 // judged the model erroneous or contradictory.
 const ModelErrorReason = "Root judged the model erroneous or contradictory: "
+
+// ModelAssessmentReason begins the Failed reason of a run whose Model
+// assessment sealed with a material model problem its Root confirmed.
+const ModelAssessmentReason = "the model assessment confirmed a material model problem: "

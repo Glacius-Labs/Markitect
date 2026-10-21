@@ -138,7 +138,7 @@ func outdated(w *Wait, m *ManagerView, byPath map[string]*ManagerView, proposals
 }
 
 func participant(path string) string {
-	if path == run.User {
+	if path == recordedUser {
 		return nodeUser
 	}
 	return path
@@ -307,7 +307,7 @@ func account(v *View) []Sentence {
 		out = append(out, append(s, Segment{Text: "."}))
 	}
 	for _, q := range v.Questions {
-		if q.To == run.User && q.Status == "open" {
+		if q.To == recordedUser && q.Status == "open" {
 			out = append(out, Sentence{{Text: "Root asked the owner "}, {Text: q.ID, Ref: "question:" + q.ID}, {Text: "; no answer is recorded."}})
 		}
 	}

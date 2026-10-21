@@ -1,6 +1,6 @@
 # Project operations
 
-The current commands are `check`, `context`, `docs`, `apply`, `extract`, `answer`, `setup`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
+The current commands are `check`, `context`, `docs`, `apply`, `extract`, `setup`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
 
 The later [command design](design/canonical-model/commands.md) records the accepted Verify, Extract, Optimize and other operation semantics. Except for the first bounded `extract` below, it does not add them to this executable surface or authorize their execution.
 
@@ -20,9 +20,9 @@ The default manifest is `.markitect/model.yaml`. Repeated `--dependency` flags s
 
 The CLI has no MCP server and no automatic setup. The old generation remains in [Git](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). [Provider adapters](provider-adapters.md) describes the metadata and runtime boundary.
 
-## Apply and answer
+## Apply
 
-`apply` needs a committed repository, an explicit absolute Runtime profile (`--runtime-profile`) and an explicit absolute run configuration (`--run-config`); without them it reports `not_completed` before acquisition. It starts real Agents in containers, runs the required checks, and publishes only a verified candidate; it never commits. Its JSON report names the evidence directory under the run configuration's state directory. Root may escalate a question to the owner during an `apply` or `extract`: the run prints it with its exact answer command on stderr and keeps waiting, and `answer QUESTION_ID --run RUN_ID --text TEXT --run-config PATH` answers it. A model Root judges erroneous or contradictory ends the run Failed without publication ([DEC-063](concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate)). The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns behavior, evidence and limits; the [workflow](project-workflow.md#execute-verify-and-apply) gives the sequence.
+`apply` needs a committed repository, an explicit absolute Runtime profile (`--runtime-profile`) and an explicit absolute run configuration (`--run-config`); without them it reports `not_completed` before acquisition. It starts real Agents in containers, runs the required checks, and publishes only a verified candidate; it never commits. Its JSON report names the evidence directory under the run configuration's state directory. A Run is closed: no question or answer crosses Root to the user or the invoking AI, there is no `answer` command and the run configuration accepts no owner decisions. A model that lacks a material decision or contradicts itself ends the run Failed without publication ([DEC-063](concepts/register.md#dec-063-the-model-is-authoritative-defects-escalate), [closed Runs](design/canonical-model/manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs)); amend the model and start a new run. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns behavior, evidence and limits; the [workflow](project-workflow.md#execute-verify-and-apply) gives the sequence.
 
 ## Generated view and recovery
 

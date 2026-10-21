@@ -156,6 +156,8 @@ func validateSpec(spec PassSpec) error {
 		return bad("pass %q needs a mandate", spec.Purpose)
 	case spec.Review && (spec.Writes || spec.Plans || spec.BindWaits):
 		return bad("a review Pass is read-only, plans nothing and binds no dependency")
+	case spec.Assesses && (!spec.Review || spec.ArtifactFindingsAdvisory):
+		return bad("a model assessment is a review Pass of the model, without artifact findings")
 	case spec.Review && strings.TrimSpace(spec.Guidance) == "":
 		return bad("a review Pass needs guidance on what a genuine finding is")
 	case !spec.Review && spec.ArtifactFindingsAdvisory:
@@ -287,11 +289,6 @@ func (e *engine) stalledLocked(p *pass) string {
 	}
 	for _, m := range p.members {
 		if m.running || m.checking || !m.disabled && e.runnableLocked(m) {
-			return ""
-		}
-	}
-	for _, q := range e.questions {
-		if q.To == User && !q.Answered && !q.Lapsed {
 			return ""
 		}
 	}
@@ -812,7 +809,7 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 		}
 	}
 	if p.spec.Review {
-		if len(p.checks) != len(e.cfg.Checks) {
+		if len(p.checks) != len(e.checksOf(p.spec)) {
 			return NeedsCorrection
 		}
 		for _, c := range p.checks {
@@ -867,14 +864,10 @@ func (e *engine) seal(p *pass) PassResult {
 	e.mu.Lock()
 	p.verdict = e.verdictLocked(p)
 	p.sealed, p.sealedOn = true, stand.Digest().String()
-	var lapsed []string
 	for _, q := range e.questions {
 		if q.Pass == p.id && !q.Answered && !q.Lapsed {
 			q.Lapsed = true
 			_ = e.record(Event{Kind: "question.lapsed", Pass: p.id, Manager: q.From, Data: *q})
-			if q.To == User {
-				lapsed = append(lapsed, q.ID)
-			}
 		}
 	}
 	e.stand = stand
@@ -885,19 +878,21 @@ func (e *engine) seal(p *pass) PassResult {
 		}
 	}
 	e.verified = nil
-	if p.spec.Review && p.verdict == Satisfied {
+	if p.spec.Review && p.verdict == Satisfied && (!p.spec.Assesses || e.verifiedBeforeLocked(p)) {
 		e.verified = &stand
+	}
+	if confirmed := e.confirmedLocked(p); p.spec.Assesses && p.verdict == NeedsCorrection && len(confirmed) > 0 {
+		// Root confirmed what its tree found: the bound model has a material
+		// problem, which no Pass of this run can correct. A Pass that only
+		// disputed findings keep from being clean is reassessed instead.
+		shown := confirmed[:min(len(confirmed), maxListedNames)]
+		e.reject(fmt.Sprintf("%s%s (%d confirmed)", ModelAssessmentReason, strings.Join(shown, "; "), len(confirmed)))
 	}
 	record := p.recordLocked()
 	_ = e.record(Event{Kind: "pass.sealed", Pass: p.id, Data: map[string]any{"purpose": p.spec.Purpose, "verdict": p.verdict, "tree": p.sealedOn, "managers": record.Managers}})
 	candidate := p.candidate
 	p.candidate = ""
 	e.mu.Unlock()
-	for _, id := range lapsed {
-		if err := e.cfg.Owner.Withdraw(e.base, id); err != nil {
-			_ = e.record(Event{Kind: "owner.error", Pass: p.id, Data: map[string]any{"question": id, "error": err.Error()}})
-		}
-	}
 	view := e.cfg.Registry(stand)
 	_ = e.record(Event{Kind: "registry.view", Pass: p.id, Data: view})
 	if candidate != "" {
@@ -958,4 +953,28 @@ func listNames(names []string) string {
 		text += fmt.Sprintf(" and %d more", len(names)-len(shown))
 	}
 	return text
+}
+
+// verifiedBeforeLocked reports whether a clean independent Verify of the same
+// stand precedes the Model assessment p with only Model assessments between
+// them: a clean assessment of a verified candidate keeps it verified.
+func (e *engine) verifiedBeforeLocked(p *pass) bool {
+	for i := p.number - 2; i >= 0; i-- {
+		if q := e.passes[i]; !q.spec.Assesses {
+			return q.spec.Review && q.verdict == Satisfied && q.sealedOn == p.sealedOn
+		}
+	}
+	return false
+}
+
+// confirmedLocked names the confirmed findings of a sealed Pass: open, genuine,
+// raised by the team and not disputed in it, each with its correction class.
+func (e *engine) confirmedLocked(p *pass) []string {
+	var lines []string
+	for _, f := range e.findings {
+		if f.Blocking && !f.Closed && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
+			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, clip(f.Observed, 400)))
+		}
+	}
+	return lines
 }
