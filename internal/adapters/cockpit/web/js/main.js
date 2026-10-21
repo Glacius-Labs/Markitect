@@ -1,13 +1,14 @@
-// Routing between the places of the cockpit. The address keeps the place and
-// its selection — a run with its pinned boundary, a Definition, a proposal —
-// so a view can be reopened.
+// Routing between the hub and the areas of the cockpit. The address keeps the
+// place and its selection — a run with its pinned boundary, a Definition, a
+// question or a proposal — so a view can be reopened. Escape leads from a
+// run or a Definition to its area and from an area to the hub.
 
 import { show } from "./shell.js";
 import { Inspector } from "./inspector.js";
-import { renderOverview } from "./overview.js";
+import { renderHub } from "./hub.js";
 import { renderModelView } from "./modelview.js";
 import { renderSession } from "./session.js";
-import { renderProposals } from "./proposals.js";
+import { renderDecisions } from "./decisions.js";
 import { renderRuns } from "./runs.js";
 import { renderSettings } from "./settings.js";
 
@@ -24,11 +25,19 @@ export function parseRoute() {
     case "runs": return { page: "runs" };
     case "model": return { page: "model", pkg: params.get("pkg"), id: params.get("def"), q: params.get("q") };
     case "session": return { page: "session" };
-    case "proposals": return { page: "proposals" };
-    case "proposal": return { page: "proposals", id: parts[1] };
+    case "decisions": case "proposals": return { page: "decisions" };
+    case "proposal": return parts[1] ? { page: "decisions", item: { kind: "proposal", id: parts[1] } } : { page: "decisions" };
+    case "question": return parts[2] ? { page: "decisions", item: { kind: "question", run: parts[1], id: parts[2] } } : { page: "decisions" };
     case "settings": return { page: "settings" };
-    default: return { page: "overview" };
+    default: return { page: "hub" };
   }
+}
+
+function modelHref(params) {
+  const q = new URLSearchParams();
+  for (const [k, v] of Object.entries(params)) if (v) q.set(k, v);
+  const text = q.toString();
+  return `#/model${text ? `?${text}` : ""}`;
 }
 
 function route() {
@@ -41,27 +50,33 @@ function route() {
   inspector = null;
   switch (r.page) {
     case "run": {
-      const content = show(app, { page: "runs", crumbs: [{ text: "Runs", href: "#/runs" }, { text: r.run }], fill: true });
+      const content = show(app, { area: "runs", trail: [{ text: r.run }], escape: "#/runs", fill: true });
       inspector = new Inspector(content, r.run, r);
       break;
     }
     case "runs":
-      renderRuns(show(app, { page: "runs", crumbs: [{ text: "Runs" }] }));
+      renderRuns(show(app, { area: "runs" }));
       break;
-    case "model":
-      renderModelView(show(app, { page: "model", crumbs: [{ text: "Model", href: "#/model" }, ...(r.id ? [{ text: `${r.pkg}/${r.id}` }] : [])], fill: true }), r);
+    case "model": {
+      const escape = r.id ? modelHref({ pkg: r.pkg, q: r.q }) : r.pkg ? modelHref({ q: r.q }) : null;
+      const trail = r.id ? [{ text: `${r.pkg}/${r.id}` }] : r.pkg ? [{ text: r.pkg }] : [];
+      renderModelView(show(app, { area: "model", tab: "browse", trail, escape, fill: true }), r);
       break;
+    }
     case "session":
-      renderSession(show(app, { page: "session", crumbs: [{ text: "Session" }], fill: true }));
+      renderSession(show(app, { area: "model", tab: "session", fill: true }));
       break;
-    case "proposals":
-      renderProposals(show(app, { page: "proposals", crumbs: [{ text: "Proposals", href: "#/proposals" }, ...(r.id ? [{ text: r.id }] : [])], fill: true }), r.id);
+    case "decisions": {
+      const item = r.item || null;
+      const trail = !item ? [] : [{ text: item.kind === "proposal" ? item.id : `${item.id} of ${item.run}` }];
+      renderDecisions(show(app, { area: "decisions", trail, fill: true }), item);
       break;
+    }
     case "settings":
-      renderSettings(show(app, { page: "settings", crumbs: [{ text: "Settings" }] }));
+      renderSettings(show(app, { area: "settings" }));
       break;
     default:
-      renderOverview(show(app, { page: "overview", crumbs: [{ text: "Overview" }] }));
+      renderHub(show(app, {}));
   }
 }
 

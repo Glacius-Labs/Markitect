@@ -69,7 +69,7 @@ export function renderSession(content) {
         }
         if (latest) {
           const body = h("div", { class: "panebody" });
-          clear(side).append(h("div", { class: "panehead" }, h("h2", {}, "Proposal"), h("div", { class: "actions" }, h("a", { class: "btn small", href: `#/proposal/${encodeURIComponent(latest)}` }, "Open in Proposals"))), body);
+          clear(side).append(h("div", { class: "panehead" }, h("h2", {}, "Proposal"), h("div", { class: "actions" }, h("a", { class: "btn small", href: `#/proposal/${encodeURIComponent(latest)}` }, "Open in Decisions"))), body);
           stopProposal = mountProposal(body, latest);
         } else {
           drawSide(side, list, current);
