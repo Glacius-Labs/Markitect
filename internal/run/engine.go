@@ -40,8 +40,11 @@ type mgr struct {
 	workHome     string
 	conversation string
 	// introduced is set once a work turn that carried the Manager's standing
-	// context ended without error.
+	// context ended without error. rehydrate says that its work conversation
+	// may have lost that context: the provider compacted it or did not continue
+	// it; the next work turn carries the standing context again.
 	introduced bool
+	rehydrate  bool
 	failures   int
 	disabled   bool
 }

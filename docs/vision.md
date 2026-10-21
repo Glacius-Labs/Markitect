@@ -41,6 +41,14 @@ These are [promises](concepts/register.md#promises), not established results.
 - Markitect's product owner has endorsed separating the method from any particular execution runtime. The accepted design puts Codex App Server and Claude Code behind provider-neutral session contracts, with each step in its own Linux container ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). The [delivery plan](implementation-plan.md), [provider guide](provider-adapters.md) and delivery PRs distinguish implemented components from a demonstrated Apply; a runtime probe or adapter test alone does not establish the Manager process. See [DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime).
 - [Common misreadings](#common-misreadings) lists the readings to avoid.
 
+## Primary goal and prerequisites
+
+The owner's [21 October clarification](concepts/sources/primary-goal-and-conformance-evaluation-20261021.md#owner-statement-primary-goal) makes the priority explicit: earn trust in Agents through structured, systematic realization and independent checking of the canonical model across **all project artifacts**. Nothing material should be overlooked or contradicted. Responsibility is divided by area; independent local review and parent integration/review must establish how the parts fit. Sustained consistency, uniformity and cleanliness are the resulting long-term project outcome. This clarifies the existing thesis; it does not establish achieved reliability or commission optional cleanup of conforming artifacts.
+
+Three prerequisites belong to that goal: the model can adequately express the intended software project; its structure and meaning can be assessed for consistency, completeness relative to explicit purpose, and uniformity; and people can maintain it comfortably, mainly through Agents and readable views. A self-consistent model cannot reveal an entirely omitted user need without that purpose or requirement being supplied. Readable progress and results should expose assessed scope, evidence and unresolved matters, rather than imply universal correctness through a green status alone.
+
+The [workflow](design/canonical-model/manager-apply-workflow.md#semantic-coverage-and-parent-integration) defines the semantic obligation; [measurement](measurement.md#evidence-for-the-primary-goal) defines discriminating evidence. Neither complete Definition IDs nor successful tests alone establish that every material condition is realized.
+
 ## The thesis
 
 > **Define the desired project world once. Reconcile its representations without losing intent.**

@@ -12,12 +12,12 @@ import (
 )
 
 // Look-up topics.
-var lookUpTopics = []string{"definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions", "probe", "method"}
+var lookUpTopics = []string{"brief", "definition", "owner", "registry", "state", "plan", "basis", "findings", "checks", "questions", "probe", "method"}
 
 // lookUp serves the tool look_up: structural facts from the Orchestrator's
 // state with their source and stand, so Managers ask deterministic tools for
 // known facts and the tree for decisions.
-func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
+func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnswer {
 	var in struct {
 		Topic   string `json:"topic"`
 		ID      string `json:"id"`
@@ -37,6 +37,20 @@ func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
 			return refuse("id names a method: one of %s.", strings.Join(methodNames(), ", "))
 		}
 		return ToolAnswer{Text: text}
+	case "brief":
+		// A helper's brief is the prompt of its one turn; a Manager's or
+		// reviewer's its standing context with the current Pass assignment.
+		var b strings.Builder
+		e.mu.Lock()
+		if ts != nil && ts.h != nil {
+			b.WriteString(ts.h.prompt)
+		} else {
+			e.standingLocked(&b, m)
+			e.assignmentLocked(&b, m)
+		}
+		e.mu.Unlock()
+		text := "Your standing context and current assignment of this run, from its bound inputs:\n" + b.String()
+		return e.recordLookup(m, ts, "lookup.brief", ToolAnswer{Text: text}, map[string]any{})
 	case "definition":
 		d, ok := e.cfg.Definition(strings.TrimSpace(in.ID))
 		if !ok {
@@ -46,7 +60,8 @@ func (e *engine) lookUp(m *member, args json.RawMessage) ToolAnswer {
 		if d.Owner == m.Path {
 			label = "your own obligation"
 		}
-		return ToolAnswer{Text: fmt.Sprintf("%s (%s, bound model):\n%s", d.ID, label, d.Text)}
+		text := fmt.Sprintf("%s (%s, bound model):\n%s", d.ID, label, d.Text)
+		return e.recordLookup(m, ts, "lookup.definition", ToolAnswer{Text: text}, map[string]any{"id": d.ID, "owner": d.Owner})
 	case "owner":
 		path, err := snapshot.NewPath(strings.TrimSuffix(strings.TrimSpace(in.Path), "/"))
 		if err != nil {
@@ -309,4 +324,26 @@ func listFindings(b *strings.Builder, title string, findings []Finding, withOwne
 		lines = append(lines, fmt.Sprintf("and %d more", len(findings)-len(lines)))
 	}
 	list(b, title, lines)
+}
+
+// recordLookup records a lookup of a turn with the digest and size of the
+// answer as the Agents port receives it, refused when it exceeds the answer
+// bound, and returns that answer; a helper's carries its helper. A note an
+// adapter appends to it later appears only in the transcript.
+func (e *engine) recordLookup(m *member, ts *turnState, kind string, answer ToolAnswer, data map[string]any) ToolAnswer {
+	full := len(answer.Text)
+	answer = boundAnswer(answer)
+	data["answer"], data["bytes"] = textDigest(answer.Text), len(answer.Text)
+	if answer.Refused {
+		data["refused"], data["requested"] = true, full
+	}
+	turn := ""
+	if ts != nil {
+		turn = ts.id
+		if ts.h != nil {
+			data["helper"] = ts.h.id
+		}
+	}
+	_ = e.record(Event{Kind: kind, Pass: m.p.id, Manager: m.Path, Turn: turn, Data: data})
+	return answer
 }

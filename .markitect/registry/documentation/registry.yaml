@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/primary-goal-and-conformance-evaluation-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's primary-goal clarification and adoption of conformance evaluation refinements with bounded A-D coordination notes.
   - path: "docs/development/claude-direct-runtime-handoff-20261021.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -10,7 +14,7 @@ artifacts:
     why: Prepares the owner-started bounded Apply hardening assignment, dispositions of prior proposals, frozen faulty/conforming controls and finite Haiku retest prompt without starting a session.
   - path: "docs/design/cockpit.md"
     form: doc
-    realizes: [documentation/current-guidance]
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: Records the owner-commissioned cockpit concept and evidence-bound views while keeping implementation and later extensions distinct.
   - path: "docs/development/claude-cockpit-handoff-20261020.md"
     form: doc
@@ -20,6 +24,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner's cockpit visualization requests, Claude assignment and documentation delivery authority verbatim with labelled recorder context.
+  - path: "docs/concepts/sources/cockpit-desktop-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: Preserves the owner's decision that the cockpit is Markitect's desktop app and starts and stops Apply, verbatim with labelled recorder context.
   - path: "docs/development/claude-apply-implementation-handoff-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1864,6 +1872,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "docs/validation/cockpit-window-notify-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: "Records the cockpit's app window, --no-open and notification slice: checks, what was exercised in a browser and what remains unproved."
   - path: "docs/validation/cockpit-entry-20261020.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
@@ -1884,6 +1896,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
     why: "Records the cockpit's rebuild as a hub with the areas Model, Runs, Decisions and Settings in modern cards, its keys, checks and a recorded demonstration."
+  - path: "docs/validation/cockpit-run-control-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: "Records the cockpit's start and stop of an Apply: checks with an injected execution function, a synthetic page demonstration and what remains unproved without a real run."
   - path: "docs/validation/cockpit-live-observation-20261020.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]

@@ -1,7 +1,9 @@
 package run
 
 import (
+	"crypto/sha256"
 	"encoding/hex"
+	"fmt"
 	"strings"
 	"unicode/utf8"
 )
@@ -21,4 +23,10 @@ func imageIdentity(s string) bool {
 	}
 	_, err := hex.DecodeString(s[7:])
 	return err == nil
+}
+
+// textDigest is the sha256 digest of a text an Agent received, for evidence
+// that ties the recorded payload to its transcript.
+func textDigest(text string) string {
+	return fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(text)))
 }

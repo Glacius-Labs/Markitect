@@ -1,18 +1,20 @@
 // The cockpit's shared observation: the project, the runs, the owner
-// questions, the proposals and the model sessions, read together every few
-// seconds while the page is visible. The top bar, the hub and the pages draw
-// from it, so one poll serves them all. Every part keeps its last
-// answer or its error; nothing here writes.
+// questions, the proposals, the model sessions and the run this cockpit
+// started, read together every few seconds while the page is visible. The top
+// bar, the hub and the pages draw from it, so one poll serves them all. Every
+// part keeps its last answer or its error; nothing here writes.
 
 import { api } from "./api.js";
 
 const POLL_MS = 4000;
+const notificationsAllowed = () => typeof Notification !== "undefined" && Notification.permission === "granted";
 const parts = {
   project: () => api.project(),
   runs: () => api.runs(),
   questions: () => api.questions(),
   proposals: () => api.proposals(),
   sessions: () => api.sessions(),
+  runControl: () => api.runControl(),
 };
 
 export const store = {
@@ -51,8 +53,11 @@ export const store = {
   start() {
     if (this.timer) return;
     this.refresh();
+    // A hidden window (minimized or covered) keeps polling when the owner
+    // allowed notifications, so that it can notify; the browser throttles
+    // the timer of a hidden page but still fires it.
     this.timer = setInterval(() => {
-      if (document.visibilityState === "visible") this.refresh();
+      if (document.visibilityState === "visible" || notificationsAllowed()) this.refresh();
     }, POLL_MS);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") this.refresh();
@@ -66,5 +71,10 @@ export const store = {
   get openProposals() { return (this.data.proposals || []).filter((p) => p.state === "proposed" || p.state === "publishing"); },
   get proposalsToDecide() { return (this.data.proposals || []).filter((p) => p.state === "proposed"); },
   get liveRuns() { return (this.data.runs || []).filter((r) => r.health && (r.health.run === "running" || r.health.run === "finishing")); },
+  // runStarted is the run this cockpit started while it is active.
+  get runStarted() {
+    const run = this.data.runControl?.run;
+    return run && run.state !== "ended" ? run : null;
+  },
   get waitingQuestions() { return (this.data.questions || []).filter((q) => q.answerable); },
 };
