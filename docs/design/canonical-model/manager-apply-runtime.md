@@ -39,6 +39,8 @@ Every turn of every Agent runs in a container with the shared tree at `/work`: a
 
 ## Working environments
 
+**Superseded target, pending source rollback (owner 21 October 2026):** [one container per Turn](manager-apply-workflow.md#per-turn-container-baseline) is now required. The section below describes the B1 implementation integrated by #572, not permission to continue its development. A must remove reuse-only lifecycle machinery and update this guide, adapters, canonical runtime Rule and generated view together. Keep Manager/conversation continuity, independent review, enforced rights and observed cessation. The [current handoff](../../development/claude-direct-runtime-handoff-20261021.md#container-decision-one-fresh-instance-per-turn) owns that migration; this documentation does not claim it is complete.
+
 <a id="working-environments"></a>
 
 A working environment belongs to one logical Manager conversation of one Run: the Orchestrator names one per Manager's work conversation (`<RunID>-<slug>-m`) and one per reviewer of each review Pass (`<RunID>-<pass>-<slug>-r`), and `run.Turn.Environment` carries the name; a helper's turn names none and runs in a fresh instance that ends with it. The Claude adapter keeps an environment's instance between its turns (`claudecode.Agents`; the Codex adapter ignores the name and starts a fresh container per turn):
