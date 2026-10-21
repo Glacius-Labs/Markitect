@@ -2,6 +2,8 @@
 
 Markitect's purpose is canonical model-first development with delegated realization. Current source exposes structural preparation, a guarded generated-model view and explicit controlled Apply, Extract and Answer commands. Apply composes recursive Managers (parallel Execute in one shared working tree, fresh recursive Verify of one immutable candidate), container sessions, candidate workspaces, container checks and guarded publication. Source availability does not establish provider readiness or successful complete realization; the [delivery plan](implementation-plan.md) and recorded validation evidence retain those separate scopes.
 
+**Accepted target, 21 October 2026:** [mandatory Model assessment and closed Runs](design/canonical-model/manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs) supersedes the interactive owner-answer target. The source/command descriptions below retain the earlier implementation until [Session A](development/claude-direct-runtime-handoff-20261021.md#current-policy-supplement-mandatory-assessment-and-closed-runs) migrates it with the self-model: internal tree questions remain, Root-confirmed material gaps/errors stop without publication, and corrected model input requires a new Run. All product strategies retain Managers. This documentation adds no implemented gate or runtime evidence.
+
 ## Connect and inspect
 
 Use Git with an existing commit and the root-layout CLI:

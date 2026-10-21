@@ -4,7 +4,7 @@ Start engineering work through [AGENTS.md](../../AGENTS.md), the [working method
 
 | Document | Owns |
 |---|---|
-| [Direct runtime and evaluation handoff](claude-direct-runtime-handoff-20261021.md) | Current owner-started sessions: provisional direct integration, reusable containers and targeted retest; small scenarios with a plan-plus-Agent comparison; model-assessment experiment; later matched comparison |
+| [Direct runtime and evaluation handoff](claude-direct-runtime-handoff-20261021.md) | Current owner-started sessions: provisional direct integration, reusable containers and targeted retest; small scenarios with a plan-plus-Agent comparison; mandatory model-assessment method and integration; closed-Run gap controls; later matched comparison |
 | [Claude Apply hardening handoff](claude-apply-hardening-handoff-20261020.md) | New owner-started assignment: active counterexample review, tool-produced receipts, previous-proposal dispositions, preserved candidates and a finite Haiku retest; the [earlier implementation handoff](claude-apply-implementation-handoff-20261020.md) is historical |
 | [Claude cockpit implementation handoff](claude-cockpit-handoff-20261020.md) | Owner-commissioned local cockpit, current Apply observation seams, bounded delivery, design freedom and startup prompt; no UI implemented by the handoff |
 | [Working method](working-method.md) | Apply the owner-adopted practice of explicit learning, complete workflows, focused design review and short milestone accounts; canonical intent lives in the linked repository Rule |
