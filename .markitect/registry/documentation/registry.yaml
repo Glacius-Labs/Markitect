@@ -1908,6 +1908,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: "Records the cockpit's project list and guided setup: checks with fake projects and a fake engine, a recorded page demonstration and what remains unproved without a real image, credential and run."
+  - path: "docs/validation/cockpit-polish-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: "Records the cockpit's presentation polish: shorter page leads with a collapsed explanation, the notification bell as an icon, the compact hub, the project cards, the single-column session start, consistent headers and empty states, checks, screenshots taken and what remains unestablished."
   - path: "docs/validation/cockpit-desktop-acceptance-20261021.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
