@@ -4,6 +4,14 @@
 
 **Implementation and refinement, 20 October 2026:** [PR #530](https://github.com/Glacius-Labs/Markitect/pull/530), Main `780dccb7`, implemented the base process. Its [first real-run report](../../validation/apply-pass-process-20261020.md) includes genuine repairs and a correction cycle, but also a Verified Depot result retaining a real defect, optional changes and a blocked Haiku run. The [runtime contract](manager-apply-runtime.md) describes that implemented baseline. The owner has adopted the [hardening refinement below](#evidence-driven-hardening-adopted-20-october-2026); the [hardening assignment](../../development/claude-apply-hardening-handoff-20261020.md) implements its receipt, evidence, disposition and waiting mechanics as described by the [runtime contract](manager-apply-runtime.md#probe-receipts), and its bounded evaluation is recorded in the [hardening report](../../validation/apply-hardening-20261020.md). That implementation supersedes draft [PR #536](https://github.com/Glacius-Labs/Markitect/pull/536), an incomplete candidate. The earlier implementation handoff and closing evidence retain their historical scope.
 
+## Provisional direct baseline, 21 October 2026
+
+**Owner decision:** use `direct` as the provisional baseline and retain `staged` as a comparison strategy ([source](../../concepts/sources/terminology-and-file-accounting-20261020.md#owner-selection-direct-and-next-experiments)). Direct runs Implement, then independent Verify, repeating Implement/Verify for genuine findings before guarded Publish/read-back. Managers plan and prepare their own areas inside Implement; parent-first checked basis release, child responsibility, tree communication and upward integration remain the same recursive Pass process. Staged retains explicit Plan, Prepare and Implement before Verify. Strategy changes composition, never ownership, gates, evidence or acceptance strength, and is selected explicitly and fixed for the Run. There is no evidence yet that staged is safer.
+
+This amendment governs the selected next implementation. Main at `0d301fdf` still has staged composition; draft #545 contains the direct experiment. The [new handoff](../../development/claude-direct-runtime-handoff-20261021.md) integrates the reviewed experiment with current shared fixes, then changes container lifecycle and retests. Code, self-model and active runtime guides must be migrated together. The Plan/Prepare descriptions and staged diagram below remain the comparison contract; they no longer require separate Plan/Prepare Passes in direct. Execute means the selected strategy's work composition. Both strategies use the same common mechanism and fresh Verify; there is no separate direct engine or generic workflow language.
+
+The owner's proposed model-quality team is prepared as a separate **Model assessment** experiment after deterministic Model check/File check and before realization. It distinguishes no unresolved issue found, a missing owner decision and a model error, with technical incompleteness separate. It does not replace either deterministic check or artifact Verify, and is not yet a mandatory Apply gate. The handoff owns its bounded trial and the small-scenario, ordinary-Agent and realistic-run comparison plan. Container portability to Kubernetes is a design requirement for the next slice, not a claim of a Kubernetes implementation.
+
 ## Purpose and vocabulary
 
 Apply realizes the complete bound model through accountable delegation, checked ownership, integration and independent assessment. Complete, faithful realization takes priority over minimizing effort or Turns. More Agents and more checks alone do not prove semantic correctness. The intended Haiku and Luna use must be evaluated through complete workflows, without weakening any gate for a cheaper provider.
@@ -16,7 +24,7 @@ Apply realizes the complete bound model through accountable delegation, checked 
 | Turn | One admitted provider work interval. Ending a Turn never establishes completion. |
 | Model check | Deterministic validation and resolution of the canonical model. |
 | File check | Separate deterministic validation of file accounting, Definition links and ownership. |
-| Execute | The group of Plan, Prepare and Implement Passes. It is part of Apply. |
+| Execute | The selected strategy's work composition: Implement in direct; Plan, Prepare and Implement in staged. Planning and preparation remain duties in both. |
 | Verify | A separate independent, read-only assessment Pass after Implement. |
 | Publish | Guarded application of the verified exact candidate and destination read-back. This does not commit, merge or push. |
 | Orchestrator | The deterministic controller that binds inputs, schedules work, accepts results, routes messages, checks evidence and controls publication. |
@@ -27,6 +35,8 @@ Apply realizes the complete bound model through accountable delegation, checked 
 Remove competing current operation names `Compile` and `Reconcile` from product commands, APIs, types, configuration, reports, tests and active documentation. Name the formal operation Model check and the full workflow Apply. A shared engine used by Extract is a neutral Pass engine, not an artifact-publishing Apply. Replace Host where it means the controller with Orchestrator; execution infrastructure uses Runtime. Literal machine hosts, provider-mandated fields, historical evidence and quotations retain their actual meaning. Ordinary language about a Go compiler is not a competing product operation. No compatibility aliases are required.
 
 ## Complete workflow
+
+The following shows staged. Direct uses `Model check -> File check -> Implement -> capture/checks -> Verify -> Publish`, with findings returning to Implement and fresh Verify. Local planning/preparation and the common recursive lifecycle apply within its Implement.
 
 ```mermaid
 flowchart TD
@@ -360,7 +370,7 @@ At minimum distinguish detection misses, false findings, unjustified changes, un
 
 ## Deferred proposal: reuse Manager working containers
 
-**Status: owner-requested later proposal, 20 October 2026.** The owner sets the order: finish and evaluate the current reference and simplified-workflow tests first; then change the container lifecycle; then test again ([source](../../concepts/sources/terminology-and-file-accounting-20261020.md#owner-sequencing-manager-container-reuse)). This records the follow-up without changing the active implementation, either comparison candidate or the accepted Pass workflow. [IDEA-018](../../concepts/register.md#idea-018-reuse-manager-working-containers) indexes it, and the [delivery plan](../../implementation-plan.md#container-reuse-after-the-current-evaluation) preserves the sequence.
+**Status: selected next slice, 21 October 2026; implementation and benefit unproved.** After assessing both series the owner selected direct and requested the container/retest handoff. The [new assignment](../../development/claude-direct-runtime-handoff-20261021.md) advances the earlier deferred proposal in the specified order ([original source](../../concepts/sources/terminology-and-file-accounting-20261020.md#owner-sequencing-manager-container-reuse)). [IDEA-018](../../concepts/register.md#idea-018-reuse-manager-working-containers) indexes it, and the [delivery plan](../../implementation-plan.md#container-reuse-after-the-current-evaluation) owns dispatch. The observation, guarantees and before/after separation below remain applicable; the older instruction to finish the comparison is now satisfied by its recorded assessment, not an obligation to rerun unproved cases before choosing a baseline.
 
 **Observation and challenged assumption.** The current Claude adapter creates a container for each Agent Turn and observes its stop before returning; its home volume and resumed conversation carry context across Turns. Mounts encode that Turn's write capabilities. Repeated starts therefore do not mean a new Manager, but they add lifecycle work. It has not been shown that every Turn needs a new container or that container starts dominate Apply time; probe copies, parent acceptance and repeated Verify also contribute. No saving is established by the short container lifetimes alone.
 

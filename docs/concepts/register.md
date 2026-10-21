@@ -769,6 +769,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-064 Checked recursive Apply passes and Manager teams
 
+**Provisional baseline amendment, owner 21 October 2026:** [direct is selected, staged retained for comparison](../design/canonical-model/manager-apply-workflow.md#provisional-direct-baseline-21-october-2026), with the same recursive Pass, strict gates and independent Verify. Direct performs planning/preparation within Implement; the explicit three-work-Pass composition below now describes staged. Runtime/self-model migration and container reuse follow the [new handoff](../development/claude-direct-runtime-handoff-20261021.md). This records a decision, not implemented selection syntax or new runtime evidence. The dated hardening preparation/status below remains historical; #547 and #553 contain its later implementation and fixes.
+
 **Hardening refinement, 20 October 2026:** the owner [adopted active counterexample assessment](sources/terminology-and-file-accounting-20261020.md#owner-adoption-evidence-driven-apply-hardening). The [owning workflow](../design/canonical-model/manager-apply-workflow.md#evidence-driven-hardening-adopted-20-october-2026) specifies independently recorded probe evidence, parent challenge, unresolved-policy escalation and the dispositions of all prior Claude proposals. This refines the same Pass engine. The new handoff is prepared; PR #536 remains an incomplete candidate, and no benefit is claimed for untested batching or Luna.
 
 - **Status:** Accepted by the owner, 20 October 2026. [Verbatim adoption and conversation](sources/terminology-and-file-accounting-20261020.md#owner-adoption-and-implementation-preparation). The base process merged in PR #530, Main `780dccb7`, with [first provider-run evidence](../validation/apply-pass-process-20261020.md) including known failures. The [runtime contract](../design/canonical-model/manager-apply-runtime.md) describes that baseline. The adopted hardening refinement still needs implementation and new evaluation; stable Apply, hosted CI and owner acceptance are not established by this concept preparation.
@@ -868,6 +870,8 @@ These entries record agreed or endorsed direction. Recording an enhancement does
 - **Design link (16 October 2026):** observed code dependencies are planned as input to the Optimizer, which proposes missing model links ([north star](../design/canonical-model/manager-realization-north-star.md#later-operations-and-extensions)).
 
 ### ENH-002 Model-quality linter and metrics
+
+**21 October 2026 preparation:** the owner proposes a team assessment after structural checks. The [new handoff's Session C](../development/claude-direct-runtime-handoff-20261021.md#session-c-model-assessment-before-realization) defines a bounded model-only experiment, including false-alarm controls for permitted freedom. It distinguishes Model assessment from deterministic Model check and keeps a mandatory product gate unadopted pending evidence.
 
 - **Status:** Accepted direction, owner, 10 October 2026.
 - **Direction:** Report signals that a model is too fine, too coarse or incomplete:
@@ -1108,9 +1112,9 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 ### IDEA-018 Reuse Manager working containers
 
-- **Status:** Owner-requested deferred proposal, 20 October 2026. The order is recorded; technical design, implementation and benefit remain unproved.
+- **Status:** Selected next slice, owner 21 October 2026, after assessment and provisional direct selection. The [new handoff](../development/claude-direct-runtime-handoff-20261021.md) prepares implementation and bounded retest with Kubernetes portability considered; implementation and benefit remain unproved.
 - **Idea:** Reuse one Manager working container across its Turns within an Apply Run instead of creating one per Turn. Preserve enforceable activity-specific rights, stopped writers, separate helpers/checks and fresh independent Verify reviewers; rights-driven replacement, recovery and disposal need an explicit design.
-- **Sequence:** Finish and assess the current reference/simplified-process tests, then change the selected baseline's container lifecycle, then perform a bounded matched retest. Do not alter the ongoing comparison or combine both changes in one claimed result.
+- **Sequence:** The reference/simplified series have been assessed and direct selected provisionally. Integrate and freeze that baseline with current shared fixes, then change its container lifecycle, then perform the bounded matched retest in the new handoff. Preserve the ended comparisons and do not combine workflow and lifecycle changes in one claimed improvement.
 - **Source and owner:** [Owner instruction](sources/terminology-and-file-accounting-20261020.md#owner-sequencing-manager-container-reuse), [Apply proposal](../design/canonical-model/manager-apply-workflow.md#deferred-proposal-reuse-manager-working-containers), [delivery sequence](../implementation-plan.md#container-reuse-after-the-current-evaluation).
 
 ## Imported collections

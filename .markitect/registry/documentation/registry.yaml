@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/development/claude-direct-runtime-handoff-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares bounded owner-started sessions for the provisional direct baseline, portable container reuse, discriminating scenarios, model assessment and matched evaluation without starting runs.
   - path: "docs/development/claude-apply-hardening-handoff-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
