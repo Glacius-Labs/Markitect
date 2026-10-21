@@ -1,44 +1,32 @@
-// The cockpit's frame: the desk rail with the places of work and the lamps
-// of their live state, the status bar with the page's place and the project's
-// observed state, and the work surface each page draws into.
+// The cockpit's frame: a hub and a few areas the owner enters and leaves. The
+// top bar says where the owner is — the hub, or an area with its tabs and the
+// item open in it — and carries the project's check and what waits for the
+// owner. Escape leads one level up; on the hub, the digits enter the areas.
 
-import { h, clear, append, navIcon, brandMark, shortDigest } from "./dom.js";
+import { h, clear, append, areaIcon, brandMark } from "./dom.js";
 import { store } from "./store.js";
 
-const places = [
-  { page: "overview", href: "#/", label: "Overview", icon: "overview" },
-  { page: "model", href: "#/model", label: "Model", icon: "model" },
-  { page: "session", href: "#/session", label: "Session", icon: "session" },
-  { page: "proposals", href: "#/proposals", label: "Proposals", icon: "proposals" },
-  { page: "runs", href: "#/runs", label: "Runs", icon: "runs" },
-  { page: "settings", href: "#/settings", label: "Settings", icon: "settings" },
+export const areas = [
+  { id: "model", key: "1", href: "#/model", label: "Model", lead: "Browse the canonical model and change it by prompt in a session.",
+    tabs: [{ id: "browse", href: "#/model", label: "Browse" }, { id: "session", href: "#/session", label: "Session" }] },
+  { id: "runs", key: "2", href: "#/runs", label: "Runs", lead: "Follow a running Apply and replay recorded ones." },
+  { id: "decisions", key: "3", href: "#/decisions", label: "Decisions", lead: "Answer the questions of runs and decide on proposals." },
+  { id: "settings", key: "4", href: "#/settings", label: "Settings", lead: "Budget, role profiles and team of an Apply. A change becomes a proposal." },
 ];
 
 let built = null;
+let up = null; // where Escape leads from the current place
 
 function build(app) {
   clear(app);
-  const signals = {};
-  const items = places.map((p) => {
-    signals[p.page] = h("span", { class: "signal" });
-    return h("a", { class: "navitem", href: p.href, dataset: { page: p.page } }, navIcon(p.icon), h("span", {}, p.label), signals[p.page]);
-  });
-  const footer = h("div", { class: "footer" });
-  const crumbs = h("div", { class: "crumbs" });
+  const where = h("div", { class: "where" });
   const statusbar = h("div", { class: "statusbar", "aria-label": "Project state" });
-  const shellEl = h("div", { class: "shell" });
-  const menu = h("button", { class: "btn quiet icon menu", type: "button", "aria-label": "Places", "aria-expanded": "false" }, navIcon("menu"));
-  menu.addEventListener("click", () => {
-    const open = shellEl.classList.toggle("open");
-    menu.setAttribute("aria-expanded", String(open));
-  });
   const content = h("main", { id: "main", class: "content", tabindex: -1 });
-  shellEl.append(
-    h("aside", { class: "desk" },
-      h("a", { class: "brand", href: "#/" }, brandMark(), h("strong", {}, "Markitect"), h("span", { class: "coord" }, "Cockpit")),
-      h("nav", { "aria-label": "Places" }, h("div", { class: "label navlabel" }, "Workbench"), items),
-      footer),
-    h("header", { class: "topbar" }, menu, crumbs, statusbar),
+  const topbar = h("header", { class: "topbar" });
+  const shellEl = h("div", { class: "shell" },
+    append(topbar, [
+      h("a", { class: "brand", href: "#/", title: "Hub" }, brandMark(), h("strong", {}, "Markitect"), h("span", { class: "sub" }, "Cockpit")),
+      where, statusbar]),
     content);
   app.append(shellEl);
   // The skip link moves focus to the work surface without changing the place.
@@ -46,91 +34,109 @@ function build(app) {
     e.preventDefault();
     content.focus();
   });
-  // A chosen place, a click beside the drawer or Escape closes the drawer on
-  // small windows.
-  const closeDrawer = () => {
-    shellEl.classList.remove("open");
-    menu.setAttribute("aria-expanded", "false");
-  };
-  shellEl.addEventListener("click", (e) => {
-    if (!shellEl.classList.contains("open")) return;
-    if (e.target.closest(".navitem, .brand") || !e.target.closest(".desk, .menu")) closeDrawer();
-  });
-  document.addEventListener("keydown", (e) => {
-    if (e.key === "Escape" && shellEl.classList.contains("open")) {
-      closeDrawer();
-      menu.focus();
+  // Pages handle their keys on the document first; what they leave reaches
+  // the frame here.
+  window.addEventListener("keydown", (e) => {
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.closest?.("input, textarea, select, [contenteditable]")) return;
+    if (e.key === "Escape" && up) {
+      location.hash = up;
+      return;
     }
+    const area = !up && areas.find((a) => a.key === e.key);
+    if (area) location.hash = area.href;
   });
-  built = { shellEl, items, signals, footer, crumbs, statusbar, content };
+  built = { topbar, where, statusbar, content, tabs: new Map(), place: null, trailEl: null, chips: null };
   store.subscribe(drawState);
   store.start();
   return built;
 }
 
-// show prepares the work surface for a page: the current place, the crumbs
-// and whether the page fills the surface (split views) or scrolls.
-export function show(app, { page, crumbs, fill = false, title }) {
+// show prepares the work surface for a place: the hub (no area) or an area
+// with its current tab and the trail of the item open in it. Escape leads to
+// escape, the hub by default. A page that fills the surface (split views)
+// gets no scrolling of its own.
+export function show(app, { area = null, tab = null, trail = [], escape = null, fill = false }) {
   const b = built || build(app);
-  for (const item of b.items) {
-    if (item.dataset.page === page) item.setAttribute("aria-current", "page");
-    else item.removeAttribute("aria-current");
+  const a = areas.find((x) => x.id === area) || null;
+  up = a ? escape || "#/" : null;
+  const place = `${area}/${tab}`;
+  const entering = place !== b.place;
+  if (entering) {
+    b.place = place;
+    b.topbar.classList.toggle("in-area", Boolean(a));
+    b.tabs.clear();
+    clear(b.where);
+    if (a) {
+      append(b.where, [
+        h("a", { class: "btn quiet small back", href: "#/", title: "Back to the hub", "aria-label": "Back to the hub" }, areaIcon("back"), h("span", {}, "Hub")),
+        h("span", { class: "divider", "aria-hidden": "true" }),
+        h("h1", { class: "areaname" }, h("a", { href: a.href }, emblem(a.id), h("span", { class: "areatext" }, a.label))),
+        a.tabs && h("nav", { class: "atabs", "aria-label": `${a.label} views` }, a.tabs.map((t) => {
+          const link = h("a", { class: "atab", href: t.href, "aria-current": t.id === tab ? "page" : null }, t.label);
+          b.tabs.set(t.id, link);
+          return link;
+        })),
+      ]);
+    }
+    b.trailEl = h("div", { class: "trail" });
+    b.where.append(b.trailEl);
   }
-  append(clear(b.crumbs), crumbs.map((c, i) => [
-    i ? h("span", { class: "sep", "aria-hidden": "true" }, "/") : null,
-    i === 0 && crumbs.length > 1 && c.href ? h("h1", {}, h("a", { href: c.href }, c.text)) : h(i === 0 ? "h1" : "span", { class: i ? "tail" : null }, c.text),
-  ]));
-  document.title = `${title || crumbs.map((c) => c.text).reverse().join(" – ")} – Markitect cockpit`;
-  b.content.className = `content${fill ? " fill" : ""}`;
+  append(clear(b.trailEl), trail.map((t) => [
+    h("span", { "aria-hidden": "true" }, "›"),
+    t.href ? h("a", { class: "item", href: t.href }, t.text) : h("span", { class: "item", title: t.text }, t.text)]));
+  document.title = `${trail.at(-1)?.text || a?.label || "Hub"} – Markitect cockpit`;
+  // A new place enters with a short fade; reduced motion turns it off.
+  b.content.className = `content${fill ? " fill" : ""}${entering ? " enter" : ""}`;
   clear(b.content);
   b.content.scrollTop = 0;
   drawState(store);
   return b.content;
 }
 
+// emblem is an area's icon on its accent.
+export function emblem(area) {
+  return h("span", { class: `emblem t-${area}` }, areaIcon(area));
+}
+
 export function refreshState() {
   return store.refresh();
 }
 
-function lampSignal(cls, text) {
-  return [h("span", { class: `lamp ${cls}` }), h("span", { class: "visually-hidden" }, text)];
+export function sessionClass(session) {
+  return session.state === "working" || session.state === "preparing" ? "st-working" : session.state === "halted" ? "st-fail" : "st-waiting";
 }
 
-// drawState puts the live state on the desk lamps and the status bar.
+// drawState puts the live state on the top bar: what waits for the owner, the
+// runs that run now, the check, and the lamp of an open session on its tab.
 function drawState(s) {
   if (!built) return;
-  const { signals, statusbar, footer } = built;
   const p = s.project;
   const session = s.openSession;
-  const proposals = s.openProposals.length;
   const live = s.liveRuns.length;
-  const questions = s.waitingQuestions.length;
-  append(clear(signals.overview), [questions ? h("span", { class: "count hot", title: `${questions} owner question${questions === 1 ? "" : "s"} waiting` }, String(questions)) : null]);
-  append(clear(signals.session), [session ? lampSignal(session.state === "working" || session.state === "preparing" ? "st-working" : session.state === "halted" ? "st-fail" : "st-waiting", `session ${session.state}`) : null]);
-  append(clear(signals.proposals), [proposals ? h("span", { class: "count", title: `${proposals} open proposal${proposals === 1 ? "" : "s"}` }, String(proposals)) : null]);
-  append(clear(signals.runs), [live ? lampSignal("st-working", `${live} running`) : null]);
-  append(clear(signals.model), [p && p.status !== "passed" ? lampSignal("st-fail", "check not passed") : null]);
-
+  const waiting = s.waitingQuestions.length + s.proposalsToDecide.length;
+  const sessionTab = built.tabs.get("session");
+  if (sessionTab) {
+    sessionTab.querySelector(".lamp")?.remove();
+    if (session) sessionTab.prepend(h("span", { class: `lamp ${sessionClass(session)}`, title: `Session ${session.state}` }));
+  }
   const chips = [];
+  if (waiting) chips.push(h("a", { class: "pill hot", href: "#/decisions" }, h("span", { class: "lamp st-owner" }), h("strong", {}, String(waiting)), waiting === 1 ? " waits for you" : " wait for you"));
+  if (live) chips.push(h("a", { class: "pill", href: "#/runs" }, h("span", { class: "lamp st-working" }), h("strong", {}, String(live)), live === 1 ? " run running" : " runs running"));
   const projectPart = s.data.project;
   if (projectPart && !projectPart.configured) {
     chips.push(h("span", { class: "pill" }, "No repository"));
   } else if (!p) {
-    chips.push(h("span", { class: "pill" }, h("span", { class: "lamp st-none" }), "Observing the repository"));
+    chips.push(h("span", { class: "pill" }, h("span", { class: "lamp st-none" }), "Observing"));
   } else {
     const ok = p.status === "passed";
     chips.push(h("a", { class: "pill", href: "#/model", title: p.error || "Structural check of the working tree" }, h("span", { class: `lamp ${ok ? "st-done" : "st-fail"}` }), "Check ", h("strong", {}, ok ? "passed" : p.status || "not completed")));
-    if (p.head) chips.push(h("span", { class: "pill", title: `Source head ${p.head}` }, "Head ", h("strong", { class: "digest" }, p.head.slice(0, 8))));
   }
-  if (session) {
-    chips.push(h("a", { class: "pill", href: "#/session" }, h("span", { class: `lamp ${session.state === "working" || session.state === "preparing" ? "st-working" : session.state === "halted" ? "st-fail" : "st-waiting"}` }), "Session ", h("strong", {}, session.state)));
+  // The chips are replaced only when they change, so focus on one survives a
+  // poll.
+  const sig = chips.map((c) => c.outerHTML).join("");
+  if (sig !== built.chips) {
+    built.chips = sig;
+    clear(built.statusbar).append(...chips);
   }
-  if (live) chips.push(h("a", { class: "pill", href: "#/runs" }, h("span", { class: "lamp st-working" }), h("strong", {}, String(live)), live === 1 ? " run running" : " runs running"));
-  if (questions) chips.push(h("a", { class: "pill", href: "#/" }, h("span", { class: "lamp st-owner" }), h("strong", {}, String(questions)), questions === 1 ? " question waits" : " questions wait"));
-  clear(statusbar).append(...chips);
-
-  append(clear(footer), [
-    p?.modelID ? h("span", {}, `Model ${p.modelID}`) : null,
-    p?.modelDigest ? h("span", { class: "digest", title: p.modelDigest }, shortDigest(p.modelDigest)) : null,
-    p?.repository ? h("span", { class: "digest", title: p.repository }, p.repository.split(/[\\/]/).slice(-2).join("/")) : null]);
 }

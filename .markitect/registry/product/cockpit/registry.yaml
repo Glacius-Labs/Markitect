@@ -63,11 +63,11 @@ artifacts:
   - path: "internal/adapters/cockpit/web/cockpit.css"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Defines the cockpit's presentation in the Glacius Labs design language: the desk rail, status bar, panels, split views, model browser, state lamps, exchange channels, responsive layout and reduced motion."
+    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar, the areas' accents, split views, model browser, state lamps, exchange channels, responsive layout and reduced motion."
   - path: "internal/adapters/cockpit/web/js/main.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Routes between the places of the cockpit and keeps the run, its boundary and selection, the Definition and the proposal in the address."
+    why: "Routes between the hub and the areas, keeps the run, its boundary and selection, the Definition, the question and the proposal in the address, and names where Escape leads."
   - path: "internal/adapters/cockpit/web/js/api.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -219,23 +219,23 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/store.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads the project, runs, owner questions, proposals and sessions together while the page is visible and shares them with the desk rail, status bar and pages."
+    why: "Reads the project, runs, owner questions, proposals and sessions together while the page is visible and shares them with the top bar, the hub and the pages."
   - path: "internal/adapters/cockpit/web/js/shell.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Frames the cockpit: the desk rail with the places of work and the lamps of their live state, the status bar with the place and the project's observed state, and the work surface."
-  - path: "internal/adapters/cockpit/web/js/overview.js"
+    why: "Frames the cockpit as a hub and areas: the top bar with the way back, the area, its tabs and the open item, what waits for the owner, running runs and the check, and the keys that enter and leave the areas."
+  - path: "internal/adapters/cockpit/web/js/hub.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Renders the overview: the project's observed state, the open model session, proposals waiting for a decision, running runs, owner questions with the answer form and the latest runs."
+    why: "Renders the hub: the project's observed state, the one next step that needs the owner, and the tiles of the areas with their live state."
   - path: "internal/adapters/cockpit/web/js/modelview.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
     why: "Browses the checked model: Packages, their Definitions, a Definition's body with links to their targets, its fields, the registered files that realize it and the Definitions that link to it."
-  - path: "internal/adapters/cockpit/web/js/proposals.js"
+  - path: "internal/adapters/cockpit/web/js/decisions.js"
     form: code
-    realizes: [product/cockpit/accepted-proposals]
-    why: "Lists this cockpit's proposals beside the chosen one with its check, difference and the owner's decision."
+    realizes: [product/cockpit/accepted-proposals, product/cockpit/observed-run-inspection]
+    why: "Lists the owner questions of runs and this cockpit's proposals beside the chosen one: a question with its answer form, a proposal with its check, difference and the owner's decision."
   - path: "internal/bootstrap/cockpit_model_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]

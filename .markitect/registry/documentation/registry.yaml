@@ -1880,6 +1880,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
     why: "Records the cockpit workbench: the desk rail, status bar, dashboard, model browser and split views, checks and a synthetic and recorded demonstration."
+  - path: "docs/validation/cockpit-areas-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    why: "Records the cockpit's rebuild as a hub with the areas Model, Runs, Decisions and Settings in modern cards, its keys, checks and a recorded demonstration."
   - path: "docs/validation/cockpit-live-observation-20261020.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]

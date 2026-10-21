@@ -2,10 +2,10 @@
 // owner's decision. Accepting is a deliberate two-step action; the cockpit
 // shows the publication's own receipt and never calls a proposal accepted
 // that the publication did not apply. The view mounts into any container: the
-// proposals inbox and the model session both show it.
+// decisions and the model session both show it.
 
 import { api } from "./api.js";
-import { h, clear, append, when, announce, ticks } from "./dom.js";
+import { h, clear, append, when, announce } from "./dom.js";
 import { refusal } from "./settings.js";
 import { refreshState } from "./shell.js";
 
@@ -98,7 +98,7 @@ function fileDiff(d) {
 }
 
 function decision(p, passed, draw) {
-  const section = h("section", { class: "decide ticked", "aria-label": "Your decision" }, ticks());
+  const section = h("section", { class: "decide", "aria-label": "Your decision" });
   const status = h("p", { class: "note", role: "status", tabindex: -1, style: { margin: 0 } });
   const actions = h("div", { class: "actions" });
   const paths = p.changes.map((c) => c.path).join(", ");

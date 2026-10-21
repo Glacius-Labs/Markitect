@@ -1,7 +1,7 @@
 // The cockpit's shared observation: the project, the runs, the owner
 // questions, the proposals and the model sessions, read together every few
-// seconds while the page is visible. The desk rail, the status bar and the
-// pages draw from it, so one poll serves them all. Every part keeps its last
+// seconds while the page is visible. The top bar, the hub and the pages draw
+// from it, so one poll serves them all. Every part keeps its last
 // answer or its error; nothing here writes.
 
 import { api } from "./api.js";
@@ -59,11 +59,12 @@ export const store = {
     });
   },
 
-  // Derived views the desk and the pages share.
+  // Derived views the frame and the pages share.
   get project() { return this.data.project?.project || null; },
   get openSession() { return (this.data.sessions?.sessions || []).find((s) => s.state !== "closed") || null; },
   get sessionsAvailable() { return Boolean(this.data.sessions?.available); },
   get openProposals() { return (this.data.proposals || []).filter((p) => p.state === "proposed" || p.state === "publishing"); },
+  get proposalsToDecide() { return (this.data.proposals || []).filter((p) => p.state === "proposed"); },
   get liveRuns() { return (this.data.runs || []).filter((r) => r.health && (r.health.run === "running" || r.health.run === "finishing")); },
   get waitingQuestions() { return (this.data.questions || []).filter((q) => q.answerable); },
 };
