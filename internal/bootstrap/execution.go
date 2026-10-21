@@ -66,7 +66,8 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		}
 		return report, err
 	}
-	defer func() { err = errors.Join(err, session.lock.Release()) }()
+	var evidence *fileEvidence
+	defer func() { err = finishApplyReport(&report, err, evidence, session.lock.Release) }()
 	prepared, err := s.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
 	report.Preparation = capturedExecutionReport(prepared, session.cfg.ProductBuild)
 	if prepared.Status() != model.Passed || err != nil {
@@ -78,18 +79,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		return report, err
 	}
 	report.EvidenceDirectory = ports.Evidence.Dir()
-	defer func() {
-		// The report file is the last evidence of the run; when it cannot be
-		// written the run cannot show what happened.
-		if err != nil {
-			report.Error = err.Error()
-		}
-		if writeErr := ports.Evidence.WriteReport(cli.ReportValue(report)); writeErr != nil {
-			err = errors.Join(err, writeErr)
-			report.Status = model.NotCompleted
-		}
-		err = errors.Join(err, ports.Evidence.Close())
-	}()
+	evidence = ports.Evidence
 	result, err := s.applyAndPublish(ctx, request, prepared, session.cfg, ports)
 	if result.Binding.Strategy != "" {
 		report.Binding = &result.Binding
@@ -101,6 +91,32 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 	report.RetainedWork = result.RetainedWork
 	report.Status = cli.ApplyStatus(result.Outcome, result.Receipt, err)
 	return report, err
+}
+
+// finishApplyReport includes event-log and lock failures before projecting the
+// final report. Its run-specific file can be written after the lock is released.
+// A definite rejection stays failed; a technical error cannot leave success.
+func finishApplyReport(report *cli.ApplyReport, err error, evidence *fileEvidence, releaseLock func() error) error {
+	if evidence != nil {
+		err = errors.Join(err, evidence.Close())
+	}
+	err = errors.Join(err, releaseLock())
+	fail := func(err error) {
+		report.Error = err.Error()
+		if report.Status != model.Failed {
+			report.Status = model.NotCompleted
+		}
+	}
+	if err != nil {
+		fail(err)
+	}
+	if evidence != nil {
+		if writeErr := evidence.WriteReport(cli.ReportValue(*report)); writeErr != nil {
+			err = errors.Join(err, writeErr)
+			fail(err)
+		}
+	}
+	return err
 }
 
 // Extract prepares the committed repository as the start of an Extract, composes

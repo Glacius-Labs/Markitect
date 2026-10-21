@@ -251,6 +251,104 @@ func TestApplyFileAndStdoutKeepTheSameOutcomeAndEvidence(t *testing.T) {
 	}
 }
 
+func TestApplyReportIncludesFinalizationFailures(t *testing.T) {
+	for _, tc := range []struct {
+		name                           string
+		status                         model.Status
+		closeErr, releaseErr, writeErr bool
+	}{
+		{"clean", model.Passed, false, false, false},
+		{"close", model.Passed, true, false, false},
+		{"release", model.Passed, false, true, false},
+		{"close_and_release", model.Passed, true, true, false},
+		{"write", model.Passed, false, false, true},
+		{"failed", model.Failed, false, false, false},
+		{"failed_with_close", model.Failed, true, false, false},
+		{"failed_with_write", model.Failed, false, false, true},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			e, err := newFileEvidence(testkit.TempDir(t), "run-1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer e.Close()
+			path := filepath.Join(e.Dir(), "report.json")
+			if tc.closeErr {
+				if err := e.events.Close(); err != nil {
+					t.Fatal(err)
+				}
+			}
+			if tc.writeErr {
+				if err := os.Mkdir(path, 0o700); err != nil {
+					t.Fatal(err)
+				}
+			}
+			runStatus := runport.Verified
+			receipt := &apply.PublicationReceipt{Outcome: apply.PublicationNoChange}
+			var runErr error
+			if tc.status == model.Failed {
+				runStatus, receipt, runErr = runport.Failed, nil, errors.New("model assessment rejected")
+			}
+			runReport := cli.NewRunReport("run-1", runport.Outcome{Status: runStatus, Reason: "original run reason"})
+			report := cli.ApplyReport{Status: tc.status, Run: runReport, Publication: receipt}
+			releaseErr := errors.New("release failed")
+			releases := 0
+			err = finishApplyReport(&report, runErr, e, func() error {
+				releases++
+				if e.events != nil {
+					t.Fatal("lock released before closing evidence")
+				}
+				if _, err := os.Stat(path); !tc.writeErr && !os.IsNotExist(err) {
+					t.Fatal("report written before lock release")
+				}
+				if tc.releaseErr {
+					return releaseErr
+				}
+				return nil
+			})
+			wantStatus := tc.status
+			if (tc.closeErr || tc.releaseErr || tc.writeErr) && wantStatus != model.Failed {
+				wantStatus = model.NotCompleted
+			}
+			if releases != 1 || report.Status != wantStatus || (err != nil) != (runErr != nil || tc.closeErr || tc.releaseErr || tc.writeErr) || (report.Error != "") != (err != nil) {
+				t.Fatalf("releases %d, report %+v, error %v", releases, report, err)
+			}
+			if tc.closeErr && !errors.Is(err, os.ErrClosed) || tc.releaseErr && !errors.Is(err, releaseErr) {
+				t.Fatalf("lost finalization error: %v", err)
+			}
+			if report.Run.Status != runStatus || report.Run.Reason != "original run reason" || report.Publication != receipt || receipt != nil && receipt.Outcome != apply.PublicationNoChange {
+				t.Fatalf("finalization changed execution evidence: %+v", report)
+			}
+			if !tc.writeErr {
+				data, err := os.ReadFile(path)
+				if err != nil {
+					t.Fatal(err)
+				}
+				var retained map[string]any
+				if err := json.Unmarshal(data, &retained); err != nil {
+					t.Fatal(err)
+				}
+				if retained["status"] != string(wantStatus) || retained["outcome"] != cli.RunOutcome(wantStatus) || report.Error != "" && retained["error"] != report.Error {
+					t.Fatalf("retained report missed finalization: %s", data)
+				}
+			}
+		})
+	}
+}
+
+func TestApplyFinalizationReleasesWithoutEvidence(t *testing.T) {
+	report := cli.ApplyReport{Status: model.Failed}
+	sourceErr, releaseErr := errors.New("preparation rejected"), errors.New("release failed")
+	releases := 0
+	err := finishApplyReport(&report, sourceErr, nil, func() error {
+		releases++
+		return releaseErr
+	})
+	if releases != 1 || !errors.Is(err, sourceErr) || !errors.Is(err, releaseErr) || report.Status != model.Failed || report.Error != err.Error() {
+		t.Fatalf("releases %d, report %+v, error %v", releases, report, err)
+	}
+}
+
 func TestAgentProfilesNeedAnExactCredentialMappingOfTheirProvider(t *testing.T) {
 	cfg := runConfig{Credentials: map[string]credentialSource{
 		"codex-ref":  {Provider: "codex-app-server", Mode: "api-key", Path: "/abs/codex"},
