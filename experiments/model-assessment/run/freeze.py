@@ -3,10 +3,12 @@
 Usage:
   freeze.py freeze SPEC FROZEN_DIR
   freeze.py verify FROZEN_DIR CONTROL
+  freeze.py ceilings FROZEN_DIR
 
 SPEC (JSON) names the built candidate, the experiments directory of the clean
-clone it was built from, and the controls:
-  {"build": BUILD_DIR, "kit": SOURCE_EXPERIMENTS_DIR,
+clone it was built from, the ledger of an earlier freeze of the same series if
+there is one (its attempts keep counting), and the controls:
+  {"build": BUILD_DIR, "kit": SOURCE_EXPERIMENTS_DIR, "ledgerFrom": EARLIER_LEDGER (optional),
    "controls": [{"id": ..., "packet": {"materialize": [ARGV...]} | {"repo": PATH, "head": SHA},
                  "expectation": {"expected": ..., "issue": {"definitions": [...], "terms": [REGEX...]},
                                  "freedom": {...}, "source": {...}}}]}
@@ -52,15 +54,27 @@ def definitions(packet):
 
 
 def body_of(text):
-    """The body of one Definition file: a literal or folded block, or a plain one-line value."""
+    """The body of one Definition file: a literal or folded block, or a plain or quoted one-line value.
+
+    A body this simple reader cannot take is refused rather than compared wrongly.
+    """
     lines = text.splitlines()
     for i, line in enumerate(lines):
         match = re.match(r"^body:\s*(.*)$", line)
         if not match:
             continue
         value = match.group(1).strip()
+        if value.startswith('"'):
+            try:
+                return json.loads(value)  # a one-line YAML double-quoted scalar uses JSON's escapes
+            except json.JSONDecodeError:
+                raise SystemExit(f"a double-quoted body this reader cannot take: {value[:60]}")
+        if value.startswith("'"):
+            if len(value) < 2 or not value.endswith("'"):
+                raise SystemExit(f"a single-quoted body this reader cannot take: {value[:60]}")
+            return value[1:-1].replace("''", "'")
         if value and value[0] not in "|>":
-            return value.strip("\"'")
+            return value
         block = []
         for next_line in lines[i + 1:]:
             if next_line.strip() and not next_line.startswith((" ", "\t")):
@@ -110,6 +124,22 @@ def kit_hashes(kit):
     return {p.relative_to(kit).as_posix(): sha(p) for p in sorted(kit.rglob("*")) if p.is_file()}
 
 
+def tracked(repo):
+    return [p for p in subprocess.run(["git", "-C", str(repo), "ls-files", "-z"], check=True, capture_output=True, text=True).stdout.split("\0") if p]
+
+
+def images(build_text):
+    """The container images the build recorded: (reference, image ID)."""
+    out = re.findall(r"^image (\S+) (sha256:[0-9a-f]{64})$", build_text, re.MULTILINE)
+    out += [(i, i) for i in re.findall(r"^python_image=(sha256:[0-9a-f]{64})$", build_text, re.MULTILINE)]
+    return out
+
+
+def image_id(reference):
+    done = subprocess.run(["docker", "image", "inspect", "--format", "{{.Id}}", reference], capture_output=True, text=True)
+    return done.stdout.strip() if done.returncode == 0 else ""
+
+
 def freeze(spec_path, frozen):
     spec = json.loads(Path(spec_path).read_text(encoding="utf-8"))
     build, kit = Path(spec["build"]).resolve(), Path(spec["kit"]).resolve()
@@ -153,10 +183,15 @@ def freeze(spec_path, frozen):
         hidden = dict(expectation, id=cid, definitions=definitions(packet), definitionTexts=definition_texts(packet))
         (frozen / "controls" / f"{cid}.json").write_text(json.dumps(hidden, indent=1), encoding="utf-8")
         manifest["controls"][cid] = {"packet": str(packet), "head": git(packet, "rev-parse", "HEAD"), "tree": git(packet, "rev-parse", "HEAD^{tree}"),
-                                     "files": {p: sha(packet / p) for p in git(packet, "ls-files").splitlines()},
+                                     "files": {p: sha(packet / p) for p in tracked(packet)},
                                      "check": status, "expectation": sha(frozen / "controls" / f"{cid}.json"), "source": source}
+    # The ceilings hold for the series, not for one freeze: a later freeze carries the earlier ledger.
+    ledger = Path(spec["ledgerFrom"]).read_text(encoding="utf-8") if spec.get("ledgerFrom") else ""
+    if " status=running " in ledger:
+        raise SystemExit("the earlier ledger has a running attempt: mark it abandoned first")
+    manifest["ledgerFrom"] = {"path": spec.get("ledgerFrom", ""), "sha256": hashlib.sha256(ledger.encode()).hexdigest()}
     (frozen / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
-    (frozen / "ledger.txt").write_text("", encoding="utf-8")
+    (frozen / "ledger.txt").write_text(ledger, encoding="utf-8")
     print(json.dumps({"frozen": str(frozen), "manifest": sha(frozen / "manifest.json"), "controls": ids}))
     return 0
 
@@ -178,10 +213,17 @@ def verify(frozen, control):
             problems.append(f"the {name} {path} is not the frozen one")
     actual = kit_hashes(frozen / "kit")
     problems += [f"kit file {p} changed or missing" for p, digest in manifest["kit"].items() if actual.get(p) != digest]
+    problems += [f"the image {ref} is not the built {iid}" for ref, iid in images(manifest["buildText"]) if image_id(ref) != iid]
     if git(packet, "rev-parse", "HEAD") != entry["head"] or git(packet, "rev-parse", "HEAD^{tree}") != entry["tree"] or git(packet, "status", "--porcelain"):
         problems.append(f"the packet {packet} is not the frozen commit")
     problems += [f"packet file {p} changed" for p, digest in entry["files"].items() if not (packet / p).is_file() or sha(packet / p) != digest]
     return problems
+
+
+def ceilings(frozen):
+    """The series ceilings of a freeze as shell words: attempts, summed seconds, seconds per attempt."""
+    c = json.loads((frozen / "manifest.json").read_text(encoding="utf-8"))["ceilings"]
+    return f"{c['attempts']} {c['summedSeconds']} {c['attemptSeconds']}"
 
 
 def main(argv):
@@ -192,6 +234,9 @@ def main(argv):
         for p in problems:
             print(p, file=sys.stderr)
         return 1 if problems else 0
+    if len(argv) == 3 and argv[1] == "ceilings":
+        print(ceilings(Path(argv[2]).resolve()))
+        return 0
     raise SystemExit(__doc__)
 
 

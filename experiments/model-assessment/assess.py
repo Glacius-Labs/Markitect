@@ -18,11 +18,13 @@ import re
 import sys
 from pathlib import Path
 
-ACCEPTED, GAP, ERROR, INCOMPLETE = "accepted", "model_gap", "model_error", "incomplete"
-CONCLUSIONS = (ACCEPTED, GAP, ERROR)
-PROBLEMS = (GAP, ERROR)
+ACCEPTED, GAP, ERROR, UNCLASSED, INCOMPLETE = "accepted", "model_gap", "model_error", "model_problem", "incomplete"
+CONCLUSIONS = (ACCEPTED, GAP, ERROR, UNCLASSED)
+PROBLEMS = (GAP, ERROR, UNCLASSED)
+CORRECTIONS = [ERROR, GAP, "unclassified"]
 MODEL_ERROR_REASON = "Root judged the model erroneous or contradictory: "
 PROBLEM_REASON = "the model assessment confirmed a material model problem"
+LIMIT = re.compile(r"deadline|budget|turn limit|pass limit|cancelled", re.IGNORECASE)
 NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$")
 
 
@@ -36,52 +38,73 @@ def preflight(declaration):
     for field in ("mandate", "guidance"):
         if not str(declaration.get(field, "")).strip():
             problems.append(field + " must not be empty")
-    if declaration.get("corrections") != [ERROR, GAP]:
-        problems.append("corrections must be exactly [model_error, model_gap]: the classes of a confirmed finding")
+    if declaration.get("corrections") != CORRECTIONS:
+        problems.append("corrections must be exactly [model_error, model_gap, unclassified]: the classes of a confirmed finding, with an omitted class visible")
     return problems
 
 
-def team_findings(run):
-    """The open genuine findings of the team; an Orchestrator finding is no model judgment."""
-    return [f for f in run.get("findings", []) if f.get("blocking") and not f.get("closed") and f.get("raisedBy") != "markitect"]
+def confirmed(run, pass_id):
+    """The team's open genuine findings the last Pass confirmed: none disputed in it.
+
+    An Orchestrator finding is no model judgment, and a finding Root disputed in
+    the sealed Pass is a dissent, not a confirmation.
+    """
+    return [f for f in run.get("findings", []) if f.get("blocking") and not f.get("closed") and f.get("raisedBy") != "markitect"
+            and not any(d.get("pass") == pass_id for d in f.get("disputes") or [])]
 
 
 def classify(report):
     """The assessment conclusion of one harness report.
 
-    accepted: the run verified, so the assessment Pass was clean, and the harness
-    reported no error. model_gap or model_error: Root's integrated result sealed
-    the Pass as needing correction for open genuine findings of the team, classed
-    by their correction (model_error when any is one); or, as a second route,
-    Root's model-error decision ended the run. Everything else is incomplete:
-    a technical end that is never an acceptance or a rejection of the model.
+    accepted: the run verified, so the assessment Pass sealed Satisfied, and the
+    harness reported no error. model_gap or model_error: Root's integrated result
+    sealed the Pass as needing correction for confirmed genuine findings of the
+    team, classed by their correction (model_error when any is one, model_gap
+    when any is one, model_problem when every class was omitted); or, as a
+    second route, Root's model-error decision ended the run (model_error unless
+    its text names model_gap). Everything else is incomplete and never an
+    acceptance or a rejection of the model: limit (a deadline or budget ended
+    unfinished work), unresolved (a sealed negative Pass without a confirmed
+    finding), technical or preparation.
     """
     run = report.get("run")
     if not run:
-        return {"conclusion": INCOMPLETE, "why": "no run: preparation " + str(report.get("status")), "status": None}
+        return {"conclusion": INCOMPLETE, "incomplete": "preparation", "why": "no run: preparation " + str(report.get("status")), "status": None}
     status, reason = run.get("status"), run.get("reason", "")
     aborts = [p for p in run.get("problems", []) if p.get("manager") == "." and p.get("abort") and p.get("category") == "model"]
-    open_team = team_findings(run)
     passes = run.get("passes", [])
     last = passes[-1] if passes else {}
-    out = {"status": status, "reason": reason, "openTeamFindings": len(open_team), "passes": len(passes),
+    found = confirmed(run, last.get("id"))
+    out = {"status": status, "reason": reason, "confirmedFindings": len(found), "passes": len(passes),
            "lastPassSealed": bool(last.get("sealed")), "lastVerdict": last.get("verdict", ""),
            "reportStatus": report.get("status"), "reportError": report.get("error", "")}
+    sealed_negative = status == "incomplete" and reason == PROBLEM_REASON and last.get("sealed") and last.get("verdict") == "needs_correction"
     if status == "failed" and aborts and reason.startswith(MODEL_ERROR_REASON):
         gap = re.search(r"\bmodel[_ ]gap\b", aborts[-1].get("text", ""), re.IGNORECASE)
         out.update(conclusion=GAP if gap else ERROR, route="abort", why="Root ended the assessment with a model-problem decision")
-    elif status == "verified" and report.get("status") == "passed" and not report.get("error"):
+    elif status == "verified" and last.get("sealed") and last.get("verdict") == "satisfied" and report.get("status") == "passed" and not report.get("error"):
         out.update(conclusion=ACCEPTED, route="result", why="clean assessment Pass")
-    elif status == "incomplete" and reason == PROBLEM_REASON and last.get("sealed") and last.get("verdict") == "needs_correction" and open_team:
-        error = any(f.get("correction") == ERROR for f in open_team)
-        out.update(conclusion=ERROR if error else GAP, route="result", why="Root's integrated result confirmed genuine findings")
+    elif sealed_negative and found:
+        classes = {f.get("correction") for f in found}
+        conclusion = ERROR if ERROR in classes else GAP if GAP in classes else UNCLASSED
+        out.update(conclusion=conclusion, route="result", classes=sorted(c or "" for c in classes), why="Root's integrated result confirmed genuine findings")
+    elif sealed_negative:
+        out.update(conclusion=INCOMPLETE, incomplete="unresolved", why="the sealed Pass needs correction without a confirmed finding")
     else:
-        out.update(conclusion=INCOMPLETE, why="the run ended %s before a conclusion: %s %s" % (status, reason, report.get("error", "")))
+        kind = "limit" if status == "incomplete" and LIMIT.search(reason) else "technical"
+        out.update(conclusion=INCOMPLETE, incomplete=kind, why="the run ended %s before a conclusion: %s %s" % (status, reason, report.get("error", "")))
     return out
 
 
 def signals(run):
-    """Everything the team raised that the owner reads to correct the model."""
+    """Everything the team raised that the owner reads to correct the model.
+
+    A blocking signal is one the conclusion rests on: a confirmed finding or
+    Root's model-error decision. A disputed finding is dissent, a note a
+    suggestion.
+    """
+    passes = run.get("passes", [])
+    found = {f.get("id") for f in confirmed(run, passes[-1].get("id") if passes else None)}
     out = []
     for p in run.get("problems", []):
         out.append({"kind": "model_decision" if p.get("abort") else "problem", "id": p.get("id"), "by": p.get("manager"),
@@ -89,9 +112,11 @@ def signals(run):
     for f in run.get("findings", []):
         if f.get("raisedBy") == "markitect":
             continue
-        out.append({"kind": "finding" if f.get("blocking") else "note", "id": f.get("id"), "by": f.get("raisedBy"),
-                    "owner": f.get("owner"), "class": f.get("correction", ""), "text": "%s: %s" % (f.get("obligation", ""), f.get("observed", "")),
-                    "blocking": bool(f.get("blocking")) and not f.get("closed"), "closed": bool(f.get("closed")),
+        kind = "note" if not f.get("blocking") else "finding" if f.get("id") in found else "closed" if f.get("closed") else "disputed"
+        out.append({"kind": kind, "id": f.get("id"), "by": f.get("raisedBy"), "owner": f.get("owner"), "pass": f.get("pass"),
+                    "class": f.get("correction", ""), "obligation": f.get("obligation", ""),
+                    "text": "%s: %s" % (f.get("obligation", ""), f.get("observed", "")),
+                    "blocking": f.get("id") in found, "closed": bool(f.get("closed")),
                     "closedAs": f.get("closedAs", ""), "disputes": len(f.get("disputes") or [])})
     return out
 
@@ -128,16 +153,24 @@ def load_report(text):
         ends = [i for i, line in enumerate(lines) if line.startswith("}")]
         if not starts or not ends or ends[-1] < starts[0]:
             return {}
-        return json.loads("\n".join(lines[starts[0]:ends[-1] + 1]))
+        try:
+            return json.loads("\n".join(lines[starts[0]:ends[-1] + 1]))
+        except json.JSONDecodeError:
+            # A killed harness leaves a truncated report: no run, so incomplete.
+            return {}
 
 
 def jsonl(path):
+    """The decodable lines of a JSON Lines file; a killed writer may leave a truncated last line."""
     if not path or not Path(path).is_file():
         return []
     out = []
-    for line in Path(path).read_text(encoding="utf-8").splitlines():
+    for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
         if line.strip():
-            out.append(json.loads(line))
+            try:
+                out.append(json.loads(line))
+            except json.JSONDecodeError:
+                continue
     return out
 
 
@@ -171,9 +204,16 @@ def process(events, run):
             if any(str(item.get("source", "")).startswith(".markitect/") for item in c.get("evidence") or []):
                 coverage["withModelSource"] += 1
     findings = [f for f in run.get("findings", []) if f.get("raisedBy") != "markitect"]
+    # A finding raised again in a later Pass on an obligation whose earlier finding was disproved.
+    disproved = {}
+    for f in findings:
+        if f.get("closedAs") == "disproved":
+            disproved.setdefault(f.get("obligation"), f.get("pass"))
+    reraised = [f.get("id") for f in findings if f.get("obligation") in disproved and str(f.get("pass")) > str(disproved[f.get("obligation")])]
     return {"returned": [{"manager": e.get("manager"), "by": e.get("data", {}).get("by"), "reason": e.get("data", {}).get("reason")} for e in returned],
             "disputes": sum(len(f.get("disputes") or []) for f in findings),
             "disproved": sum(f.get("closedAs") == "disproved" for f in findings),
+            "reraisedAfterDisproof": reraised,
             "internalQuestions": len([q for q in run.get("questions", []) if q.get("to") != "user"]),
             "acceptedResultCoverage": coverage}
 
@@ -215,17 +255,20 @@ def delivery(evidence, events, control):
     return out
 
 
-def user_question_attempts(evidence):
-    """Calls of send to the user, which a closed Run refuses; each is an attempted external question."""
+def user_question_attempts(evidence, events=()):
+    """Calls that a closed Run refuses as questions to the user: send to the user and Root's escalate."""
     attempts = []
     if not evidence:
         return attempts
+    root = {e.get("turn") for e in events if e.get("kind") == "turn.start" and e.get("manager") == "."}
     for path in sorted((Path(evidence) / "transcripts").glob("*.jsonl")):
         for line in jsonl(path):
             data = line.get("data") or {}
             arguments = data.get("arguments") or {}
-            if line.get("kind") == "tool_call" and data.get("name") == "send" and isinstance(arguments, dict) and arguments.get("to") == "user":
-                attempts.append({"turn": path.stem, "text": arguments.get("text", "")})
+            if line.get("kind") != "tool_call" or not isinstance(arguments, dict):
+                continue
+            if data.get("name") == "send" and arguments.get("to") == "user" or data.get("name") == "escalate" and path.stem in root:
+                attempts.append({"turn": path.stem, "tool": data.get("name"), "text": arguments.get("text", "")})
     return attempts
 
 
@@ -252,11 +295,11 @@ def score(report, classification, control, events=(), timing=None, evidence=None
     blocking = [s for s in raised if s["blocking"]]
     turns = run.get("turns", [])
     usage = run.get("usage", {})
-    asked = user_question_attempts(evidence)
+    asked = user_question_attempts(evidence, events)
     out = {"classification": classification, "signals": raised, "process": process(events, run),
            "delivery": delivery(evidence, events, control), "userQuestionAttempts": asked,
            "ownerEffort": {"confirmedFindings": len(blocking), "confirmedChars": sum(len(s["text"]) for s in blocking),
-                           "notes": sum(s["kind"] == "note" for s in raised)},
+                           "notes": sum(s["kind"] == "note" for s in raised), "disputedOpen": sum(s["kind"] == "disputed" for s in raised)},
            "cost": {"turns": len(turns), "costUSD": usage.get("costUSD"), "inputTokens": usage.get("inputTokens"),
                     "outputTokens": usage.get("outputTokens"), "wallSeconds": (timing or {}).get("wall_seconds")}}
     if not control:
@@ -343,6 +386,8 @@ def main(argv):
     control = json.loads(Path(args.control).read_text(encoding="utf-8")) if args.control else None
     evidence = args.evidence if args.evidence and Path(args.evidence).is_dir() else None
     events = jsonl(Path(evidence) / "events.jsonl") if evidence else []
+    if control and control.get("expected") not in (ACCEPTED, GAP, ERROR):
+        raise SystemExit("the control's expected conclusion must be accepted, model_gap or model_error")
     result = score(report, classify(report), control, events, timing_of(args.timing), evidence)
     Path(args.output).write_text(json.dumps(result, indent=1), encoding="utf-8")
     print(json.dumps({"conclusion": result["classification"]["conclusion"], "expectationMet": result.get("expectationMet")}))

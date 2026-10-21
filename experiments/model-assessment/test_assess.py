@@ -74,9 +74,32 @@ class Classification(unittest.TestCase):
             "harness error": harness_error,
             "preparation": {"status": "failed"},
         }
+        kinds = {"deadline": "limit", "an Orchestrator finding only": "unresolved", "unsealed": "technical", "other failure": "technical",
+                 "abort by a child": "technical", "harness error": "technical", "preparation": "preparation"}
         for name, r in cases.items():
             with self.subTest(name):
                 self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
+                self.assertEqual(assess.classify(r)["incomplete"], kinds[name])
+
+    def test_a_finding_root_disputed_in_the_sealed_pass_is_dissent_not_confirmation(self):
+        disputed = dict(finding("shop/inputs contradicts shop/list", cls="model_error", fid="F1", by="shop"), disputes=[{"by": ".", "pass": "p1"}])
+        r = confirmed(disputed, finding("The maximum length of shop/inputs is never stated.", fid="F2"))
+        c = assess.classify(r)
+        self.assertEqual((c["conclusion"], c["confirmedFindings"]), ("model_gap", 1))
+        s = assess.score(r, c, CONTRADICTION)
+        self.assertEqual([x["kind"] for x in s["signals"]], ["disputed", "finding"])
+        self.assertFalse(s["expectationMet"])
+        self.assertEqual(s["ownerEffort"]["disputedOpen"], 1)
+        only_disputed = confirmed(disputed)
+        self.assertEqual(assess.classify(only_disputed)["incomplete"], "unresolved")
+
+    def test_an_omitted_class_stays_visible(self):
+        r = confirmed(finding("The maximum length of shop/inputs is never stated.", cls="unclassified"))
+        c = assess.classify(r)
+        self.assertEqual((c["conclusion"], c["classes"]), ("model_problem", ["unclassified"]))
+        s = assess.score(r, c, GAP)
+        self.assertTrue(s["blocked"] and s["issueRaised"])
+        self.assertFalse(s["expectationMet"])
 
 
 class Scoring(unittest.TestCase):
@@ -162,7 +185,8 @@ class Evidence(unittest.TestCase):
     def write(self, root, turn, lines):
         path = Path(root) / "transcripts" / f"{turn}.jsonl"
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
+        # A string is written raw, such as a line a killed writer truncated.
+        path.write_text("".join((line if isinstance(line, str) else json.dumps(line)) + "\n" for line in lines), encoding="utf-8")
 
     def test_delivery_counts_full_reference_only_and_missing_definitions(self):
         control = {"definitionTexts": {"shop/inputs": {"package": "shop", "body": "Names are trimmed.\nAt most the maximum."},
@@ -179,10 +203,29 @@ class Evidence(unittest.TestCase):
         self.assertEqual(d["missing"], ["p1 shop shop/list: body not sent", "p1 shop shop/storage: not sent"])
 
     def test_attempted_questions_to_the_user_are_counted(self):
+        events = [{"kind": "turn.start", "manager": ".", "turn": "r-p1-root-r1"}, {"kind": "turn.start", "manager": "shop", "turn": "r-p1-shop-r1"}]
         with tempfile.TemporaryDirectory() as root:
             self.write(root, "r-p1-root-r1", [{"kind": "tool_call", "data": {"id": 1, "name": "send", "arguments": {"to": "user", "kind": "question", "text": "Which?"}}},
-                                              {"kind": "tool_call", "data": {"id": 2, "name": "send", "arguments": {"to": "shop", "kind": "question", "text": "Settled?"}}}])
-            self.assertEqual(assess.user_question_attempts(root), [{"turn": "r-p1-root-r1", "text": "Which?"}])
+                                              {"kind": "tool_call", "data": {"id": 2, "name": "send", "arguments": {"to": "shop", "kind": "question", "text": "Settled?"}}},
+                                              {"kind": "tool_call", "data": {"id": 3, "name": "escalate", "arguments": {"category": "model", "text": "Decide."}}}])
+            # A child's escalate goes to its parent, inside the tree.
+            self.write(root, "r-p1-shop-r1", [{"kind": "tool_call", "data": {"id": 1, "name": "escalate", "arguments": {"category": "model", "text": "Settled?"}}},
+                                              '{"kind": "tool_call", "data": {"id": 2, "na'])
+            self.assertEqual(assess.user_question_attempts(root, events), [{"turn": "r-p1-root-r1", "tool": "send", "text": "Which?"},
+                                                                            {"turn": "r-p1-root-r1", "tool": "escalate", "text": "Decide."}])
+
+    def test_truncated_evidence_is_skipped_or_read_as_no_run(self):
+        with tempfile.TemporaryDirectory() as root:
+            path = Path(root) / "events.jsonl"
+            path.write_text('{"kind": "run.start"}\n{"kind": "turn.st', encoding="utf-8")
+            self.assertEqual(assess.jsonl(path), [{"kind": "run.start"}])
+        self.assertEqual(assess.load_report('{\n "run": {"status": "ver\n}\nFAIL\n'), {})
+
+    def test_a_finding_raised_again_after_its_disproof_is_counted(self):
+        run = {"findings": [dict(finding("The limit is unstated.", fid="F1"), closed=True, closedAs="disproved", **{"pass": "p1"}),
+                            dict(finding("The limit is still unstated.", fid="F2"), **{"pass": "p2"}),
+                            dict(finding("Another point.", obligation="shop/list", fid="F3"), **{"pass": "p2"})]}
+        self.assertEqual(assess.process([], run)["reraisedAfterDisproof"], ["F2"])
 
     def test_returns_coverage_and_internal_questions_come_from_the_evidence(self):
         events = [
@@ -220,8 +263,9 @@ class Declaration(unittest.TestCase):
         self.assertIn("never a question to the user", text)
 
     def test_invalid_declarations_are_refused(self):
-        valid = {"purpose": "assess", "mandate": "m", "guidance": "g", "corrections": ["model_error", "model_gap"]}
-        for change in ({"purpose": "verify"}, {"mandate": " "}, {"corrections": ["model_gap"]}, {"corrections": ["owner-decision"]}):
+        valid = {"purpose": "assess", "mandate": "m", "guidance": "g", "corrections": ["model_error", "model_gap", "unclassified"]}
+        self.assertEqual(assess.preflight(valid), [])
+        for change in ({"purpose": "verify"}, {"mandate": " "}, {"corrections": ["model_error", "model_gap"]}, {"corrections": ["owner-decision"]}):
             with self.subTest(change):
                 self.assertTrue(assess.preflight(dict(valid, **change)))
 
@@ -231,7 +275,17 @@ class Freeze(unittest.TestCase):
         self.assertEqual(freeze.body_of("id: a\nkind: K\nbody: |-\n  One line\n  two.\nspec: {}\n"), "One line\ntwo.")
         self.assertEqual(freeze.body_of("id: a\nbody: >\n  Folded\n  text.\n"), "Folded\ntext.")
         self.assertEqual(freeze.body_of("id: a\nbody: Plain text.\n"), "Plain text.")
+        self.assertEqual(freeze.body_of('id: a\nbody: "Say \\"no\\" twice."\n'), 'Say "no" twice.')
+        self.assertEqual(freeze.body_of("id: a\nbody: 'It''s free.'\n"), "It's free.")
         self.assertEqual(freeze.body_of("id: a\n"), "")
+        with self.assertRaises(SystemExit):
+            freeze.body_of('id: a\nbody: "unterminated\n')
+
+    def test_the_build_records_its_images(self):
+        text = ("sha=abc\nimage markitect-runtime:ra-abc sha256:" + "1" * 64 + "\n"
+                "image markitect-runtime-go:ra-abc sha256:" + "2" * 64 + "\npython_image=sha256:" + "3" * 64 + "\n")
+        self.assertEqual(freeze.images(text), [("markitect-runtime:ra-abc", "sha256:" + "1" * 64), ("markitect-runtime-go:ra-abc", "sha256:" + "2" * 64),
+                                               ("sha256:" + "3" * 64, "sha256:" + "3" * 64)])
 
     def test_definition_texts_and_identities_of_a_packet(self):
         with tempfile.TemporaryDirectory() as root:

@@ -17,7 +17,7 @@ import (
 const assessmentMandate = "Assess the bound model before any realization."
 
 func assessmentSpec() run.PassSpec {
-	return run.PassSpec{Purpose: "assess", Mandate: assessmentMandate, Review: true, Guidance: "A genuine finding is a material model issue.", Corrections: []run.Purpose{"model_error", "model_gap"}}
+	return run.PassSpec{Purpose: "assess", Mandate: assessmentMandate, Review: true, Guidance: "A genuine finding is a material model issue.", Corrections: []run.Purpose{"model_error", "model_gap", "unclassified"}}
 }
 
 // assessingAgents follows the Orchestrator's protocol as read-only assessors:
@@ -176,7 +176,7 @@ func TestAssessCapturedRunsOneReadOnlyReviewWithoutChecksOrPublication(t *testin
 	// The binding names the assessment entry and its own Pass: no work Pass, no check.
 	binding := result.Binding
 	if binding.Entry != "model-assessment" || len(binding.Work) != 0 || len(binding.Checks) != 0 ||
-		!slices.Equal(binding.Corrections, []run.Purpose{"model_error", "model_gap"}) || !strings.HasPrefix(binding.Composition, "sha256:") {
+		!slices.Equal(binding.Corrections, []run.Purpose{"model_error", "model_gap", "unclassified"}) || !strings.HasPrefix(binding.Composition, "sha256:") {
 		t.Fatalf("binding %+v", binding)
 	}
 	other := assessmentSpec()

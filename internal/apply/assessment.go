@@ -52,8 +52,12 @@ func AssessCaptured(ctx context.Context, req ApplyRequest, assessment run.PassSp
 		res = r.Pass(assessment)
 	}
 	reason := ""
-	if !res.Stopped && res.Verdict != run.Satisfied {
+	switch {
+	case res.Stopped || res.Verdict == run.Satisfied:
+	case len(r.Corrections()) > 0:
 		reason = AssessmentProblemReason
+	default:
+		reason = "the model assessment did not reach a clean Pass"
 	}
 	outcome, runErr := r.Finish(reason)
 	ports := req.ports()
