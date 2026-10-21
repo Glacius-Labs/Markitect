@@ -1114,7 +1114,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 - **Status:** Selected next slice, owner 21 October 2026, after assessment and provisional direct selection. The [new handoff](../development/claude-direct-runtime-handoff-20261021.md) prepares implementation and bounded retest with Kubernetes portability considered; implementation and benefit remain unproved.
 - **Idea:** Reuse one Manager working container across its Turns within an Apply Run instead of creating one per Turn. Preserve enforceable activity-specific rights, stopped writers, separate helpers/checks and fresh independent Verify reviewers; rights-driven replacement, recovery and disposal need an explicit design.
-- **Sequence:** Finish and assess the current reference/simplified-process tests, then change the selected baseline's container lifecycle, then perform a bounded matched retest. Do not alter the ongoing comparison or combine both changes in one claimed result.
+- **Sequence:** The reference/simplified series have been assessed and direct selected provisionally. Integrate and freeze that baseline with current shared fixes, then change its container lifecycle, then perform the bounded matched retest in the new handoff. Preserve the ended comparisons and do not combine workflow and lifecycle changes in one claimed improvement.
 - **Source and owner:** [Owner instruction](sources/terminology-and-file-accounting-20261020.md#owner-sequencing-manager-container-reuse), [Apply proposal](../design/canonical-model/manager-apply-workflow.md#deferred-proposal-reuse-manager-working-containers), [delivery sequence](../implementation-plan.md#container-reuse-after-the-current-evaluation).
 
 ## Imported collections
