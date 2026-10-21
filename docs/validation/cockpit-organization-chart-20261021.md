@@ -41,3 +41,19 @@ source packager carries `.js` modules. The pure layout module now uses `.js`,
 with its imports and exact registration updated; no packaging rule is relaxed.
 The full bootstrap and architecture package tests passed during that check.
 The failed cockpit packaging check is retained here and will be rerun.
+
+## Delivery after host release
+
+The focused candidate is composed on Main
+`4d95512c` (including the unrelated #585 experiment preparation). Only this
+component's files and registrations were retained when composing the rename.
+The cockpit package tests, architecture CLI, four Node layout tests, structural
+preparation/static product context, fixed-head accounting and documentation
+checks pass on the delivery candidate. Automatic hosted CI remains paused.
+
+The prepared Organization-tab integration was also exercised in the actual
+embedded application: one local Package and Markitect's model, keyboard
+navigation/collapse, pan/zoom/Fit, a low window and 390/860/1440 px. That combined
+browser demonstration used the prepared chart integration, not a provider run;
+the finishing package will retain its screenshots. No owner acceptance is
+inferred. The earlier reservation/pending statements describe preparation time.
