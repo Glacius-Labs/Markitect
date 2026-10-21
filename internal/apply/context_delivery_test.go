@@ -24,8 +24,8 @@ const (
 	reminders           = "lending/reminders"
 	assessOverdueEnd    = "a loan already returned in current state remains excluded even when assessing an earlier date."
 	loanPolicyEnd       = "A lower limit neither deletes existing loans nor forces their return; while at or above that limit, the member cannot start another loan."
-	assessOverdueLinks  = "links: [[Library.inputs]] = library/inputs; [[Library.library]] = library/library; [[Lending.loan|loans]] = lending/loan; [[Lending.loan-policy]] = lending/loan-policy; [[Members.member]] = members/member"
-	loanPolicyLinks     = "links: [[borrow]] = lending/borrow; [[maxOpenLoans]] = lending/maxOpenLoans; [[loan]] = lending/loan; [[loanPeriodDays]] = lending/loanPeriodDays; [[return]] = lending/return"
+	assessOverdueLinks  = "body links: [[Library.inputs]] = library/inputs; [[Library.library]] = library/library; [[Lending.loan|loans]] = lending/loan; [[Lending.loan-policy]] = lending/loan-policy; [[Members.member]] = members/member"
+	loanPolicyLinks     = "body links: [[borrow]] = lending/borrow; [[maxOpenLoans]] = lending/maxOpenLoans; [[loan]] = lending/loan; [[loanPeriodDays]] = lending/loanPeriodDays; [[return]] = lending/return"
 	remindersLinkReason = "included because: lending/reminders/assess-overdue links to it"
 )
 

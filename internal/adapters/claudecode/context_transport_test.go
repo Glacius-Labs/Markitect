@@ -173,44 +173,41 @@ func (f *faultyRuntime) WriteInput(data []byte) error {
 	return f.fakeRuntime.WriteInput(data)
 }
 
-// An Orchestrator answer the channel cannot carry is refused to the Agent with
-// its size, never cut; a compaction the provider reports is named in the next
-// answer, which points to look_up brief.
-func TestAnOversizedAnswerIsRefusedAndACompactionNamed(t *testing.T) {
+// A compaction the provider reports before a tool call is named in that
+// call's answer, which points to look_up brief, and only there.
+func TestACompactionIsNamedInTheNextAnswer(t *testing.T) {
 	rt := newFakeRuntime()
 	rt.extra = []string{`{"type":"system","subtype":"compact_boundary","session_id":"conversation-1","uuid":"cb-1","compact_metadata":{"trigger":"auto","pre_tokens":180000}}`}
-	// The stream and the tool calls are separate channels; the delay lets the
-	// compaction arrive first, as it does from a provider that compacts before
-	// it calls a tool.
+	// The stream and the tool calls are separate channels; the adapter takes in
+	// what was streamed before a call, and the delay makes sure the stream line
+	// is there.
 	rt.callDelay = 200 * time.Millisecond
 	rt.calls = []frame.ToolCall{
-		{ID: 1, Name: "look_up", Arguments: json.RawMessage(`{"topic":"brief"}`)},
-		{ID: 2, Name: "look_up", Arguments: json.RawMessage(`{"topic":"brief"}`)},
+		{ID: 1, Name: "look_up", Arguments: json.RawMessage(`{"topic":"definition","id":"x/y"}`)},
+		{ID: 2, Name: "look_up", Arguments: json.RawMessage(`{"topic":"definition","id":"x/z"}`)},
 	}
 	h := newHarness(t, rt, validProfile())
 	turn := testTurn()
 	turn.Tools = []run.ToolSpec{{Name: "look_up", Description: "Look up.", InputSchema: json.RawMessage(`{"type":"object"}`)}}
-	answers := []string{strings.Repeat("y", maxToolAnswer+1), "short"}
-	n := 0
-	if _, err := h.agents.Run(context.Background(), turn, func(context.Context, string, json.RawMessage) run.ToolAnswer {
-		n++
-		return run.ToolAnswer{Text: answers[n-1]}
-	}); err != nil {
-		t.Fatal(err)
+	res, err := h.agents.Run(context.Background(), turn, func(context.Context, string, json.RawMessage) run.ToolAnswer {
+		return run.ToolAnswer{Text: "the answer"}
+	})
+	if err != nil || !res.Compacted {
+		t.Fatal(err, res)
 	}
-	var first, second struct {
-		Content []struct {
-			Text string `json:"text"`
-		} `json:"content"`
-		IsError bool `json:"isError"`
+	var texts []string
+	for _, r := range rt.replies {
+		var result struct {
+			Content []struct {
+				Text string `json:"text"`
+			} `json:"content"`
+		}
+		if json.Unmarshal(r.Result, &result) != nil || len(result.Content) != 1 {
+			t.Fatalf("reply %+v", r)
+		}
+		texts = append(texts, result.Content[0].Text)
 	}
-	if len(rt.replies) != 2 || json.Unmarshal(rt.replies[0].Result, &first) != nil || json.Unmarshal(rt.replies[1].Result, &second) != nil {
-		t.Fatalf("replies %+v", rt.replies)
-	}
-	if !first.IsError || !strings.Contains(first.Content[0].Text, fmt.Sprintf("The answer of %d bytes exceeds", maxToolAnswer+1)) || strings.Contains(first.Content[0].Text, "yyyy") {
-		t.Errorf("oversized answer: %+v", first)
-	}
-	if !strings.Contains(first.Content[0].Text, "look_up topic brief") || strings.Contains(second.Content[0].Text, "compacted") || second.Content[0].Text != "short" {
-		t.Errorf("the compaction note: %q then %q", first.Content[0].Text, second.Content[0].Text)
+	if len(texts) != 2 || !strings.HasPrefix(texts[0], "the answer\n\n[Your conversation was compacted.") || !strings.Contains(texts[0], "look_up topic brief") || texts[1] != "the answer" {
+		t.Fatalf("answers %q", texts)
 	}
 }

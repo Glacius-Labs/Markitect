@@ -15,7 +15,7 @@ import (
 // the implementation identity. Apply and VerifyCaptured resolve it the same way
 // from one passed preparation before any Agent work; run.start records it and
 // the report repeats it. Head is the captured source revision and Request the
-// digest of the owner's request. Entry names the entry that ran: "apply" or
+// digest of the owner's request with its decisions. Entry names the entry that ran: "apply" or
 // "verify-captured", which runs only the strategy's Verify and so no work
 // Pass. Composition is the digest of the strategy's Pass declarations and
 // Root duty as this build implements them: it tells builds apart that the

@@ -112,7 +112,7 @@ func TestDefinitionsStateEveryValueKindExactly(t *testing.T) {
 	want := []string{
 		"values/widget (values/Gadget): widget (owned by values)\n",
 		"It never runs above the ratio, and it stops when disabled.\n",
-		"  links: [[V.other|its peer]] = values/other; [[other]] = values/other\n",
+		"  body links: [[V.other|its peer]] = values/other; [[other]] = values/other\n",
 		"  enabled: false\n",
 		"  ratio: 1.5\n",
 		"  size: {height: 40, width: 3}\n",

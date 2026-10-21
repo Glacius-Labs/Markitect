@@ -319,7 +319,7 @@ func applyConfig(req ApplyRequest, now time.Time, entry string) (run.Config, Run
 	}
 	budget, _ := req.Prepared.Settings().Budget()
 	strategy, _ := req.Prepared.Settings().Strategy()
-	binding := bindRun(entry, req.Prepared, req.OwnerRequest, strategy, req.Build, budget, cfg.Budget.Deadline, managers, cfg.Checks)
+	binding := bindRun(entry, req.Prepared, strings.Join(append([]string{req.OwnerRequest}, req.OwnerDecisions...), "\x00"), strategy, req.Build, budget, cfg.Budget.Deadline, managers, cfg.Checks)
 	cfg.Binding = binding
 	return cfg, binding, nil
 }
