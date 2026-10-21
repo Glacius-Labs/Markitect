@@ -76,18 +76,14 @@ func (s *executionService) evaluateAssessment(assessment runport.PassSpec) func(
 		if !ok {
 			return report, errors.New("complete captured settings are required")
 		}
-		cfg := session.cfg
-		// A closed Run: no owner channel and no owner decisions reach the assessment.
-		result, err := apply.AssessCaptured(ctx, apply.ApplyRequest{
-			RunID: ports.RunID, Prepared: attempt, Selection: request.Selection,
-			OwnerRequest: cfg.OwnerRequest, Deadline: ports.Deadline,
-			MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
-			CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
-				return executionCheck(selected, cfg)
-			},
-			Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Evidence: ports.Evidence,
-			Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
-		}, assessment)
+		// The same request as the product's Apply in a closed Run: no owner channel
+		// and no owner decisions reach the assessment, which never publishes.
+		req := applyRequest(request, attempt, session.cfg, ports)
+		req.Owner, req.OwnerDecisions, req.Publisher, req.Control = nil, nil, nil, nil
+		result, err := apply.AssessCaptured(ctx, req, assessment)
+		if result.Binding.Entry != "" {
+			report.Binding = &result.Binding
+		}
 		if result.Outcome.Status != "" {
 			report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 		}

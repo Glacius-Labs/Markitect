@@ -173,6 +173,18 @@ func TestAssessCapturedRunsOneReadOnlyReviewWithoutChecksOrPublication(t *testin
 	if checks.calls != 0 {
 		t.Fatalf("%d checks ran", checks.calls)
 	}
+	// The binding names the assessment entry and its own Pass: no work Pass, no check.
+	binding := result.Binding
+	if binding.Entry != "model-assessment" || len(binding.Work) != 0 || len(binding.Checks) != 0 ||
+		!slices.Equal(binding.Corrections, []run.Purpose{"model_error", "model_gap"}) || !strings.HasPrefix(binding.Composition, "sha256:") {
+		t.Fatalf("binding %+v", binding)
+	}
+	other := assessmentSpec()
+	other.Mandate += " Changed."
+	again, _, _, _, _ := assessmentRequest(t)
+	if changed, err := apply.AssessCaptured(context.Background(), again, other); err != nil || changed.Binding.Composition == binding.Composition {
+		t.Fatalf("a changed mandate keeps the composition %s: %v", binding.Composition, err)
+	}
 	assigned := map[string]bool{}
 	for _, turn := range agents.turns {
 		if turn.Kind != run.VerifyTurn || !turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m run.PathMount) bool { return m.Writable }) {
