@@ -96,7 +96,9 @@ type member struct {
 	empty         int
 	// reviewHome and reviewConversation hold the fresh reviewer of a review
 	// Pass; they never carry over to another Pass.
-	reviewHome         string
+	reviewHome string
+	// reviewRehydrate is rehydrate of the fresh reviewer's conversation.
+	reviewRehydrate    bool
 	reviewConversation string
 	helpers            []*helperRun
 	nextHelper         int

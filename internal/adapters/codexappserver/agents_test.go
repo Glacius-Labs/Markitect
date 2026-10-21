@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
@@ -577,4 +578,21 @@ func TestRunsMayOverlap(t *testing.T) {
 		}()
 	}
 	wg.Wait()
+}
+
+// A prompt the provider channel cannot carry fails the turn as a context
+// limit naming both sizes; nothing is cut and the prompt is never sent.
+func TestRunPromptAboveTheChannelIsAContextLimit(t *testing.T) {
+	rt := newRuntime()
+	turn := testTurn()
+	turn.Prompt = strings.Repeat("x", 1<<20+1)
+	res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
+	if !errors.Is(err, run.ErrContextLimit) || !strings.Contains(err.Error(), fmt.Sprintf("%d bytes", 1<<20+1)) || !strings.Contains(err.Error(), fmt.Sprintf("%d bytes", 1<<20)) || !res.Stopped {
+		t.Fatalf("%+v %v", res, err)
+	}
+	for _, w := range rt.writes {
+		if strings.Contains(w, `"method":"turn/start"`) {
+			t.Fatal("the prompt was sent")
+		}
+	}
 }

@@ -430,18 +430,24 @@ type CheckResult struct {
 // its basis, "review" in an independent review and "helper" for a delegated
 // task.
 type TurnRecord struct {
-	ID      string    `json:"id"`
-	Manager string    `json:"manager"`
-	Role    string    `json:"role"`
-	Pass    string    `json:"pass"`
-	Kind    TurnKind  `json:"kind"`
-	Mode    string    `json:"mode"`
-	Started time.Time `json:"started"`
-	Ended   time.Time `json:"ended"`
-	Usage   Usage     `json:"usage"`
-	Stopped bool      `json:"stopped"`
-	Reports []string  `json:"reports,omitempty"`
-	Reason  string    `json:"reason,omitempty"`
+	ID      string   `json:"id"`
+	Manager string   `json:"manager"`
+	Role    string   `json:"role"`
+	Pass    string   `json:"pass"`
+	Kind    TurnKind `json:"kind"`
+	Mode    string   `json:"mode"`
+	// Context says how the turn received its standing context: brief (a
+	// fresh conversation), history (a continued one) or rehydrated (a
+	// continued one that may have lost it). Compacted is the provider's report
+	// that it compacted the conversation during the turn.
+	Context   string    `json:"context,omitempty"`
+	Compacted bool      `json:"compacted,omitempty"`
+	Started   time.Time `json:"started"`
+	Ended     time.Time `json:"ended"`
+	Usage     Usage     `json:"usage"`
+	Stopped   bool      `json:"stopped"`
+	Reports   []string  `json:"reports,omitempty"`
+	Reason    string    `json:"reason,omitempty"`
 }
 
 // State is a Manager's scheduling state within one Pass.

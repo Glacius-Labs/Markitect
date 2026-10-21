@@ -15,6 +15,11 @@ func BuildApplyConfig(req ApplyRequest, now time.Time) (run.Config, error) {
 	return cfg, err
 }
 
+// BuildApplyBinding also returns the binding run.start records.
+func BuildApplyBinding(req ApplyRequest, now time.Time) (run.Config, RunBinding, error) {
+	return applyConfig(req, now, entryApply)
+}
+
 func PublishChanges(ctx context.Context, req ApplyRequest, changes []snapshot.Change) (*PublicationReceipt, error) {
 	return req.publishChanges(ctx, changes)
 }
