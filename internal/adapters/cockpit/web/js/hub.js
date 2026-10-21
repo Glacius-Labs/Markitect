@@ -103,6 +103,9 @@ function drawProject(parts, s) {
     observe.disabled = true;
     observe.textContent = "Observing…";
     try { await api.observeProject(); } catch { /* the hub shows the next state */ }
+    // A poll already under way may predate the request; the second read
+    // follows it.
+    await refreshState();
     await refreshState();
     // A refused request leaves the drawn state unchanged; the button says so.
     if (observe.isConnected && !store.data.project?.observing) {

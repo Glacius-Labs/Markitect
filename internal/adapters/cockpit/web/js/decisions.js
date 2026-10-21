@@ -124,7 +124,8 @@ function detailView(pane, selected) {
       if (s.data.questions || s.errors.questions) clear(body).append(h("p", { class: "refusal", role: "alert" }, `The observed runs hold no question ${selected.id} of run ${selected.run}.`));
       return;
     }
-    clear(body).append(questionView(q, Boolean(s.data.project?.answers)));
+    // Whether this cockpit writes answers is known once the project is read.
+    clear(body).append(questionView(q, s.data.project ? Boolean(s.data.project.answers) : null));
   };
 }
 
@@ -138,7 +139,7 @@ function questionView(q, answers) {
         h("dt", {}, "State"), h("dd", {}, `${cap(q.why)}.`))),
     h("div", { class: "block" }, h("h3", {}, "Root's question"), h("div", { class: "prose quote agent" }, q.text)),
     q.answerable && answers ? h("div", { class: "decide" }, answerForm(q.run, q.id)) : null,
-    q.answerable && !answers ? h("p", { class: "note", style: { margin: 0 } }, "This cockpit writes no answers; answer with markitect answer.") : null);
+    q.answerable && answers === false ? h("p", { class: "note", style: { margin: 0 } }, "This cockpit writes no answers; answer with markitect answer.") : null);
 }
 
 function questionHref(q) {

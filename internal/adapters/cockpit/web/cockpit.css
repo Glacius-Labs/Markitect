@@ -186,7 +186,7 @@ kbd { font: 600 11px var(--digest); color: var(--ink-2); border: 1px solid var(-
 .trail a { color: var(--ink-2); text-decoration: none; }
 .trail a:hover { color: var(--ice); }
 .trail .item { font-family: var(--digest); font-size: var(--s-1); color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
-.statusbar { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; min-width: 0; }
+.statusbar { margin-left: auto; display: flex; align-items: center; gap: 8px; flex-wrap: nowrap; flex: none; }
 .pill { display: inline-flex; align-items: center; gap: 8px; height: 30px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line-2); background: rgb(255 255 255 / 0.03); font-size: var(--s-1); font-weight: 500; color: var(--ink-2); white-space: nowrap; text-decoration: none; transition: border-color 160ms var(--ease), color 160ms var(--ease); }
 .pill strong { color: var(--ink); font-weight: 600; }
 a.pill:hover { border-color: var(--line-ice); color: var(--ice); }
@@ -443,8 +443,8 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 .settings .actions { display: flex; gap: 10px; flex-wrap: wrap; }
 
 /* ---------- Smaller windows ---------- */
-@media (max-width: 1080px) {
-  .topbar .brand strong, .topbar .brand .sub { display: none; }
+@media (max-width: 1100px) {
+  .topbar .brand strong, .topbar .brand .sub, .trail { display: none; }
 }
 @media (max-width: 960px) {
   .modelview { grid-template-columns: 230px minmax(0, 1fr); }
@@ -457,13 +457,16 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
   .tiles { grid-template-columns: minmax(0, 1fr); }
   .tile { min-height: 0; }
 }
+@media (max-width: 860px) {
+  .statusbar .pill:not(:first-child) { display: none; }
+}
 @media (max-width: 760px) {
   .topbar { padding: 0 12px; gap: 10px; }
   .where { gap: 8px; min-width: 0; }
   .where .divider, .where .back span, .trail, .topbar.in-area .brand { display: none; }
   .areaname .areatext { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .atab { padding: 5px 10px; }
-  .statusbar .pill:not(:first-child) { display: none; }
+  .statusbar .pill { max-width: 128px; overflow: hidden; }
   .hub, .page { padding: 18px 16px 40px; }
   .hero { grid-template-columns: minmax(0, 1fr); padding: 20px; }
   .hero .side { justify-items: start; grid-auto-flow: column; justify-content: start; align-items: center; }
