@@ -2,8 +2,11 @@ package agentd
 
 import (
 	"context"
+	"errors"
 	"os"
 	"os/signal"
+	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -46,6 +49,15 @@ func reapChildren() {
 }
 
 func reap(timeout time.Duration) ([]frame.Process, error) {
+	// kill(-1) reaches every process of the caller's user in its PID
+	// namespace: only inside a held container is that the Agent's own.
+	cmdline, err := os.ReadFile("/proc/1/cmdline")
+	if err != nil {
+		return nil, err
+	}
+	if args := strings.Split(strings.TrimRight(string(cmdline), "\x00"), "\x00"); len(args) < 2 || filepath.Base(args[0]) != "markitect-agentd" || args[1] != "hold" {
+		return nil, errors.New("reap runs only inside a held container, whose init is markitect-agentd hold")
+	}
 	deadline := time.Now().Add(timeout)
 	for {
 		// Every process the caller may signal, which excludes init and the
