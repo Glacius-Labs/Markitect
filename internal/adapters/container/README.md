@@ -8,7 +8,6 @@ This package is the Orchestrator's client of the container engine ([DEC-037](../
 | --- | --- |
 | `NewEngine(path)` | Binds the absolute engine executable. The Orchestrator never searches PATH. |
 | `Engine.Start(ctx, spec)` | Runs one session container with agentd and returns its `Session` after agentd's hello. |
-| `Engine.Hold(ctx, spec, idle)` | Starts a reusable container whose PID 1 is `markitect-agentd hold` under its own user; it does nothing and ends by itself after `idle` without another process. The returned `Instance` executes fresh agentd sessions (`Exec`, through `docker exec`), ends every other process of the container and returns its census (`Reap`, through `agentd reap`, which refuses unless PID 1 is the holder), and is removed (`Remove`). |
 | `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `git`, `/usr/bin/tee`, `/bin/cat` or a project check. |
 | `Engine.RunCommand(ctx, spec, argv, env, maxOutputBytes)` | Runs a literal command with fixed environment additions, observes actual container start, terminal state and image, and retains bounded combined output with truncation. A known target nonzero exit is a result. |
 | `Engine.InspectVolume`, `VolumeMounts`, `CreateVolumeExclusive` | Observes volume labels and every container mounting the exact volume, and refuses adoption of preexisting volumes. Exclusive creation verifies a private random label after Docker's idempotent create; Docker provides no atomic exclusive-create primitive. |

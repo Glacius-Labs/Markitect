@@ -92,7 +92,7 @@ func TestContextCrossesTheAdapterBoundaryUnchanged(t *testing.T) {
 		"other recipient":    func(s string) string { return strings.Replace(s, "Package lending/reminders", "Package lending", 1) },
 	} {
 		frt := &faultyRuntime{fakeRuntime: newFakeRuntime(), fault: fault}
-		agents, err := NewAgentsWithRuntime(sessionRuntime{frt},
+		agents, err := NewAgentsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) { return frt, nil },
 			map[string]Profile{"claude": validProfile()}, func(context.Context, string) (RuntimeCredential, error) {
 				return RuntimeCredential{Token: testToken}, nil
 			})
@@ -153,23 +153,6 @@ func TestAReportedCompactionIsPassedOn(t *testing.T) {
 
 // faultyRuntime is a transport that alters the user message on its way to the
 // provider, keeping it valid JSON.
-// sessionRuntime holds one fake container whose every session is session.
-type sessionRuntime struct{ session RuntimeSession }
-
-func (r sessionRuntime) Hold(_ context.Context, spec container.ContainerSpec) (Instance, error) {
-	return sessionInstance{session: r.session, name: spec.Name}, nil
-}
-
-type sessionInstance struct {
-	session RuntimeSession
-	name    string
-}
-
-func (i sessionInstance) Name() string                                  { return i.name }
-func (i sessionInstance) Exec(context.Context) (RuntimeSession, error)  { return i.session, nil }
-func (i sessionInstance) Reap(context.Context) ([]frame.Process, error) { return nil, nil }
-func (i sessionInstance) Remove(context.Context) error                  { return nil }
-
 type faultyRuntime struct {
 	*fakeRuntime
 	fault func(string) string

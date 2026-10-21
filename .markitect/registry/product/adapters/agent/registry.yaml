@@ -55,19 +55,11 @@ artifacts:
   - path: "internal/adapters/claudecode/agents.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: "Implements run.Agents: one Claude turn in its working environment's kept instance or a fresh one, with Orchestrator tool answers, usage and an observed stop of every process of the turn."
+    why: "Implements run.Agents: one Claude turn per container with Orchestrator tool answers, usage and an observed stop."
   - path: "internal/adapters/claudecode/agents_test.go"
     form: test
     realizes: [product/ports-and-adapters]
     why: Distinguishes fake turn spec, invocation, tool round trips, timeout, cancellation, uncertain stop and validation.
-  - path: "internal/adapters/claudecode/environments.go"
-    form: code
-    realizes: [product/runtime/container-runtime, product/ports-and-adapters]
-    why: "Keeps one instance per working environment and capability view, reaps every turn with a census, replaces an instance whose writers did not stop and releases environments for the Orchestrator."
-  - path: "internal/adapters/claudecode/environments_test.go"
-    form: test
-    realizes: [product/runtime/container-runtime, product/ports-and-adapters]
-    why: "Checks reuse within an environment, separate capability views, replacement on surviving writers, fresh instances without an environment, refused concurrent turns and complete releases."
   - path: "internal/adapters/claudecode/transcript.go"
     form: code
     realizes: [product/ports-and-adapters]

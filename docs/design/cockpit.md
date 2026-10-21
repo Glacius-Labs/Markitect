@@ -46,7 +46,7 @@ Do not turn this into a second development coordination backlog. Product Run evi
 
 The Manager tree follows the required Package hierarchy and states what each responsibility owns, who is active, and what releases a wait. Distinguish Manager, team member, fresh reviewer, provider session/Turn, Orchestrator and Runtime. A Manager waiting for Verify must not appear to be implementing merely because its reviewer is active.
 
-A spatial organization view may complement the tree. Highlight the actual sender, receiver and direction of recent messages; keep reviewer identities attached to their historical messages when another reviewer is now active. Show concurrent work without implying that all branches can advance independently of their prerequisites.
+The [organization chart](#organization-chart) presents this tree like a company organization chart, outside and inside a run. A spatial organization view may complement the tree. Highlight the actual sender, receiver and direction of recent messages; keep reviewer identities attached to their historical messages when another reviewer is now active. Show concurrent work without implying that all branches can advance independently of their prerequisites.
 
 ### Messages and causal waits
 
@@ -136,11 +136,40 @@ Personal AI, Government, approval reuse and gamification remain later extensions
 
 **Observable result:** the owner opens the cockpit without arguments, sets up or chooses a project, starts a run with its budget in view, follows it, stops it with its evidence kept, and is notified when it ends or a decision waits — with no terminal command beyond opening the cockpit. Source checks, a scripted run and a real run with the owner's credentials are recorded separately.
 
+## Organization chart
+
+**Owner direction, 21 October 2026:** the cockpit should look like a company organization chart; Claude writes the concept and the work, Codex implements it ([source](../concepts/sources/cockpit-org-chart-20261021.md), [Codex handoff](../development/codex-cockpit-org-chart-handoff-20261021.md)). The owner's words ("Das ganze") are read as the presentation of the organization; the hub and its areas stay. The design below is Claude's proposal within that direction.
+
+**Observation and design response:** the cockpit shows the Manager organization as a track diagram inside a run and as an indented list on small windows. Outside a run the organization is not visible at all: the model browser lists Packages and the settings form lists profiles and helper roles, but nothing shows who is responsible for what and how each team is composed. A company organization chart is the familiar picture of exactly this — leadership, departments, teams, independent review and reporting lines — and Markitect's recursive Managers are such an organization ([VIS-001](../concepts/register.md#vis-001-cockpit-personal-ai-and-autonomous-project-organization)). What stays: the organization is derived from the model's Package hierarchy and from the execution settings, never drawn or edited by hand; a run view still shows only what its record establishes.
+
+**The chart.**
+
+- **Owner.** The owner sits at the top as the project's principal: states the intent in the model, starts runs and decides proposals. In a closed Run no line carries messages between the owner and the organization while it runs; the owner's card shows what waits for the owner's decision.
+- **Orchestrator.** Between the owner and Root, as operations: it runs the declared checks, accepts Root's result, routes and keeps the budget, and it addresses every Manager directly — it does not work for Root. Its card lists the declared checks; its exchanges are drawn straight to the Manager they address.
+- **Leadership and departments.** Root is the project lead; each Package Manager is a department head, nested Packages are sub-departments. Reporting lines follow the Package hierarchy.
+- **Manager card.** Role (Root or Package Manager), department (Package), responsibility (Definitions of its Package — Root has none of its own — and its owned areas), its Execute and Verify profiles and, where a Runtime profile is set up, their provider models, and its team.
+- **Team.** The team is one project-wide setting: helper roles with profile and whether they write, and how many helpers may be active at once. Every Manager has the same team; per Package only the Execute and Verify profiles can differ. The independent reviewer is a separate quality seat on a dotted line; it never reports through the Manager it reviews.
+- **People cards.** Cards read like employee cards: avatar or initial, title, name, a few facts and a status lamp, in the cockpit's card language and the area's accent.
+- **Layout.** A top-down tree with orthogonal connectors and automatic layout. Departments collapse and expand; a large organization (Markitect's own model has 23 Packages) stays readable by collapsing below the second level by default, with pan, zoom and fit to screen. Small windows show the same data as an indented, collapsible tree.
+
+**Declared and resolved.** The project observation supplies the model, the registry and the authored `.markitect/execution.yaml`, so the chart can always show the Package hierarchy, the Definitions and the declared settings, marked as declared. The resolved settings — product defaults applied, profiles bound to the Runtime profile and its provider models — exist only with a Runtime profile, through the same capture that the run start's confirmation uses; the chart reads them on request and marks them as resolved from the committed source. A project that is not set up shows declared values only.
+
+**One chart, two uses.**
+
+1. **Organization.** A third tab of the Model area: Browse, Organization, Session. Selecting a card opens its responsibilities (Definitions linked to Browse, owned areas) and its profiles; *Change profiles* opens Settings with that Package preselected under "Profiles per Package", and *Change the team* opens the project-wide team, saying that it applies to every Manager. A change becomes a proposal as today; nothing is edited on the chart.
+2. **Run.** The run inspector's organization stage becomes the same chart for the run's recorded binding, live and in replay. Cards show state (working, waiting, ready, done), the current Pass and Turn, active team members and the reviewer seat, waits as badges that name whom they wait for, observation counts, and turns, models and cost per Manager from the Turns' reported usage. Submissions run up the reporting lines, acceptance and release down; Orchestrator controls go straight to their Manager. Replay, the record boundary, selection and reduced motion keep their current rules.
+
+**Boundaries:** the chart shows the organization the model and the settings define, and in a run only what the record establishes; declared and resolved values are labelled. It implies no delivery, authority or progress the record lacks and offers no drag-and-drop editing of the organization. No change to Apply semantics, formats or the run engine.
+
+**Observable result:** from the chart alone the owner can say who leads, which departments exist, which profiles and models they use, what the team looks like, who reviews independently, and during a run who works, who waits for whom, and where turns and cost went.
+
 ## Acceptance
 
 Use this bounded set through the actual observation adapter: accepted and returned results; correlated question/answer including lapse; simultaneous independent branches; a no-change result; a correction and fresh Verify on a new candidate; interruption or unknown effects; and successful Publish with exact read-back. Synthetic coverage is legitimate UI evidence, but must not be labelled real runtime proof. Reuse existing real evidence where appropriate; a new provider Run needs its own existing applicable grant.
 
 The owner must be able to explain current work, each demonstrated wait, the next required actor and the final evidence without reading raw logs. Verify that history does not reveal later events, pause/reconnect causes no execution, animation agrees with message identity/direction, keyboard/reduced-motion operation remains useful, and final success is bound to the published/read-back candidate.
+
+For the organization chart, show: the declared chart of a project without a Runtime profile and the resolved chart of a set-up one, for a one-Package project and for Markitect's own model; resolved profiles, helpers and helper limit equal a run's recorded binding for the same settings; a run replayed on the chart with working, waiting and done states, the reviewer seat and Orchestrator exchanges to the addressed Manager; collapse, zoom and the small-window tree; keyboard and reduced motion.
 
 For the desktop app, show: a run starts only after the owner's confirmation and names its budget; a stop ends the run incomplete with its report and evidence; a start is refused with uncommitted changes and while the state directory is held; setup through the cockpit writes the same files as `markitect setup`; and opening without flags reaches the project list.
 
