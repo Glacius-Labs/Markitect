@@ -226,7 +226,7 @@
  },
  "formatVersion": 1,
  "kit": {
-  "experiments/apply-trials/assess.py": "3df63d239d8b04cc7a2ee40535aaec995bbe7a41184af32e778f16239c2b073f",
+  "experiments/apply-trials/assess.py": "d7609205a5c458262a68d2ed15cd8337493c9e678452c350cdb1ce70b3658c15",
   "experiments/apply-trials/bind_profiles.py": "756e8cffbdb085a8c1fd587606ab76aebb260da7d9e608387605c08de9489382",
   "experiments/apply-trials/cases.py": "7d8eb4a9e69dbf16a3098fe48819cd9d461a6f2160e394f715018e890bb2f2a1",
   "experiments/apply-trials/context/execution.yaml": "e47f39ebf1401f09912b34da26f9b860de7b002542647c0ca71f2143cab1052c",
@@ -325,8 +325,8 @@
   "experiments/apply-trials/depot/snapshots/d1/model/stock/limits.yaml": "c091d7b5344daa3dc40233aab2462679e3ccebcf03388cb15e22038866dde43a",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/on-hand.yaml": "4b2da64249bb01954710ebe3d172ae5ada8181abff8ce210646f030e8ea12639",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/receive.yaml": "b1c669349de27e84a90f84c83622dcde9ba2609df52d958937ba0d7d687d0223",
-  "experiments/apply-trials/evalcheck.py": "205cb6f41bcf147223b4cb36ef29899560c37a01799291bccde4b8f2d807b033",
-  "experiments/apply-trials/evaluate.py": "77aa929005c769f4cc2183ef9f007bd1081a5d968bcc276d0587c88bc67d0f1b",
+  "experiments/apply-trials/evalcheck.py": "22f23a7072f5fc8f22f49455e63a72e1fabd350a288025cd6661970460a50ecc",
+  "experiments/apply-trials/evaluate.py": "0be5f4f74792853c87b54697e621bda5e2989d02b040aa6635880d67bc3a76d9",
   "experiments/apply-trials/fleet.py": "959bc914b3d9ec53d471bc9d2da2000489ec1a15d4c23f442661ec61f9ed6bd0",
   "experiments/apply-trials/fleet_checks.py": "a9d4a96e207ab9f1fd19592148c6f489a405b13fdf02d2a13060a3d96cc53626",
   "experiments/apply-trials/freeze.py": "0dca4193447d8b350b2881afdb965269935929a0d0e3fe357fcc26821f114e4f",
@@ -366,7 +366,7 @@
   "experiments/apply-trials/hall/snapshots/h1/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
   "experiments/apply-trials/materialize.py": "5ae2776df974a0a27db11e4a3a2fb107f732fa4dcbd8327193d0a4d9f06ec30b",
   "experiments/apply-trials/oracle.py": "aff1ed421e524bab6a74f3980d1a5703b311bac68682706049fb124e7c11cc4b",
-  "experiments/apply-trials/plan_packet.py": "238a69ea511030ef9b80d4651132987ef9ff0a35db25d796096e388b92159e25",
+  "experiments/apply-trials/plan_packet.py": "c3877a0d5c2e7ca70b2245a36bb3245b546f7cc182acf5c4735c68e42bf2c6ac",
   "experiments/apply-trials/run/build.sh": "a252f951bb7c63e40c345706a81fa3e2e12dc011dd9c52109e4b7231cd534d59",
   "experiments/apply-trials/run/collect.py": "c082f4baddf7092b0dd132b36bc168c3e980cfdf62f81a9b5abc59f426f8ab46",
   "experiments/apply-trials/run/lane.sh": "b60223824b9611150e54091864e6d2c5fcaa1083aebd6049160430a761d7395f",
@@ -420,7 +420,7 @@
   "experiments/apply-trials/trial_kit.py": "362e9a8623ba3db4cb3e140f3988da90f0e977405f72850a036775dba5af16d4",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "6a2b80400c2bf651bd2fb617783b4d5fdc5d891c97e8886fcba2b60bc8f612c3",
+ "kitDigest": "25816aff6341c1c8ae3e00cf953a0f901ecb7a6fd33d98adbf0f627e763c1a9e",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {

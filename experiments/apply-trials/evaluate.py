@@ -354,6 +354,7 @@ def dependency_trace(events, consumer, producer):
             trace["boundToSuperseded"] = {"bound": recorded.get("proposal"), "latest": consumed}
     undoing = "basis.invalidated" if stage == "basis" else "result.reopened"
     later = [event.get("kind") for at, event in enumerate(events) if at > final
+             and (not target or purposes.get(event.get("pass")) == target)
              and owners.get((event.get("data") or {}).get("proposal")) == producer
              and (event.get("kind") == undoing
                   or (event.get("kind") == stage + ".accepted" and (event.get("data") or {}).get("proposal") != consumed))]

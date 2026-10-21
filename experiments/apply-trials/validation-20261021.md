@@ -17,6 +17,8 @@ The successor independently reviewed the full predecessor candidate, especially 
 - The plan verifier previously accepted missing kind, owner, source/digest or changed title metadata. It now checks those fields against product context, with omission/substitution controls.
 - The context selector computed missing connected contracts but still returned passed. Missing connected contracts now fail, with a regression control.
 - #566 changes the exact source-bound Model assessment stop reason. The evaluator must recognize that reason without treating a technical failure or arbitrary mention of model errors as a semantic stop.
+- Independent disproof now also requires the actual later review Pass, its `tree`, and the raising Pass to match the finding's `candidate`; missing/wrong closure-Pass and changed-candidate controls reject fabricated bindings.
+- DEP cannot borrow assessment or Verify questions/acceptances as realization evidence. Plan declarations may legitimately target later Prepare/Implement work; the evaluator keeps that relation, matches prerequisite acceptance and premature-work analysis to the declared purpose, and rejects an acceptance from the wrong phase.
 
 These fixes change the new evaluator/lock. Prior attempts and their original rubric, failures and lock remain historical; none is silently rescored.
 
@@ -49,6 +51,12 @@ Preserved files include every `full-r3-*` JSON/error/completion file, `full-r4-h
 ## Local validation and final freeze
 
 The delivering PR and final chat bind the reviewed head and merge SHA. The evidence table below records actual outputs and product identities; no hosted CI was requested under the current integration rule. Local controls do not establish provider success, Apply acceptance, release or owner acceptance.
+
+After the initial composition, Main advanced through #566, #570 and C's #562 to `f09f006ac575b7681a3baebe0649ce38d3124fe0`. B composed that integrated stand as `1003130150b10ff90cecbd10915ec9f7fe557eca`; the navigation conflict retained both B's detailed kit entry and C's method entry. The final product executable is built from that exact composition with `vcs.modified=false`, SHA256 `a4f169579357a753e14edd1d3f93ef77faba7cca94acfae58b57f626baff41b9`. Later kit-only changes do not alter that executable's identity.
+
+The successor's first broad `evalcheck.py` and combined Stockroom/Depot/Hall `selfcheck.py` processes were explicitly interrupted after confirmed evaluator defects and before full output. Their empty/partial outputs and `interrupted-successor-checks.txt` are retained. They are neither successful full checks nor provider attempts. The renewed checks focus on the corrected contracts and affected fixtures; no complete successor fleet/full-kit result is claimed. The predecessor's actual full results remain separately bound above.
+
+For coordination: all newly confirmed findings in this record are B evaluator/control defects, not demonstrated production failures for A. Production already provides the required `Pass.tree`, `Finding.candidate`, `closedPass`, `closedAs`, `closedReason`, `closedEvidence`, Event `pass` and Pass purpose bindings. B had dropped or failed to correlate them. An accepted model-only assessment is a sealed `Satisfied` with Run `Incomplete` and `AssessmentAccepted`; it is not artifact verification. Root-confirmed model problems are Failed and technical/unfinished assessment is incomplete, as C's integrated scorer records.
 
 ## Remaining D dependencies
 
