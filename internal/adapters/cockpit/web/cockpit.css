@@ -7,6 +7,42 @@
    owner's own text does not. The run inspector below keeps its own track
    diagram and draws from the same tokens. */
 
+/* Organization cards share the cockpit's existing surfaces, lamps and type. */
+.org-chart { min-width: 0; }
+.org-tools { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; padding: 8px 0; }
+.org-tools output { min-width: 4ch; text-align: center; color: var(--ink-2); font-size: var(--s-1); }
+.org-viewport { position: relative; height: clamp(330px, 62vh, 760px); overflow: hidden; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--ground); touch-action: none; }
+.org-canvas { position: relative; transform-origin: 0 0; }
+.org-lines { position: absolute; left: 0; top: 0; overflow: visible; pointer-events: none; }
+.org-connection, .org-review-line { fill: none; stroke: var(--track); stroke-width: 1.5; }
+.org-review-line { stroke: var(--control); stroke-dasharray: 3 4; }
+.org-node { position: absolute; width: 244px; height: 164px; padding: 15px; border: 1px solid var(--line-2); border-radius: var(--r); background: var(--card); color: var(--body); cursor: pointer; display: flex; flex-direction: column; gap: 9px; }
+.org-node:hover { border-color: var(--line-ice); }
+.org-node.selected { border-color: var(--ice); background: var(--work-soft); }
+.org-node:focus-visible, .org-toggle:focus-visible { outline: 3px solid var(--focus); outline-offset: 3px; }
+.org-person { display: flex; align-items: center; gap: 10px; min-width: 0; }
+.org-person > div { min-width: 0; flex: 1; }
+.org-avatar { width: 34px; height: 38px; border-radius: 50% 50% 38% 38%; background: var(--ice-wash); color: var(--ice); display: grid; place-items: center; flex: 0 0 auto; font-weight: 600; font-size: var(--s2); }
+.org-owner .org-avatar { color: var(--owner); background: var(--owner-soft); }
+.org-orchestrator .org-avatar { color: var(--control); }
+.org-role { display: block; color: var(--ink-2); font-size: var(--s-2); }
+.org-name { display: block; color: var(--ink); font-size: var(--s1); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.org-facts { display: grid; gap: 3px; min-height: 30px; font-size: var(--s-1); }
+.org-facts > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.org-badges { display: flex; gap: 4px; overflow: hidden; }
+.org-badges .chip { display: block; min-width: 0; max-width: 100%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: var(--s-2); padding: 1px 5px; }
+.org-toggle { border: 0; border-top: 1px solid var(--line); color: var(--ice); background: transparent; text-align: left; cursor: pointer; font: inherit; font-size: var(--s-1); padding: 5px 0 0; margin-top: auto; }
+.org-reviewer { position: absolute; width: 132px; padding: 10px; border: 1px dashed var(--control); border-radius: var(--r-sm); background: var(--card); color: var(--ink-2); font-size: var(--s-2); display: grid; gap: 5px; }
+.org-reviewer strong { color: var(--body); font-size: var(--s-1); }
+.org-reviewer > span:last-child { overflow-wrap: anywhere; }
+.org-hint { margin: 7px 0; font-size: var(--s-1); }
+.org-narrow .org-viewport { height: auto; max-height: 65vh; overflow: auto; touch-action: auto; padding: 12px 8px; }
+.org-narrow .org-lines, .org-narrow .org-tools { display: none; }
+.org-narrow .org-node { position: relative; height: auto; min-height: 138px; width: auto; margin-bottom: 8px; }
+.org-narrow .org-reviewer { position: relative; width: auto; margin: -2px 0 12px 30px; }
+.org-narrow .org-name, .org-narrow .org-facts > span { white-space: normal; overflow-wrap: anywhere; }
+@media (prefers-reduced-motion: reduce) { .org-chart * { animation: none !important; transition: none !important; } }
+
 :root {
   color-scheme: dark;
   /* Ground and surfaces */

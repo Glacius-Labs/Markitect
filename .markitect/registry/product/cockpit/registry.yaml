@@ -1,5 +1,21 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/cockpit/web/js/org-layout.mjs"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Lays out explicit presentation trees deterministically with reviewer space, orthogonal connectors and collapse ancestry, without deriving product organization."
+  - path: "internal/adapters/cockpit/web/js/orgchart.js"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Renders reusable people cards, independent reviewer seats, pan and zoom, responsive tree and keyboard access using the existing cockpit language."
+  - path: "internal/adapters/cockpit/org-layout.test.mjs"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Locally verifies deterministic layout, reserved reviewer space, collapse ancestry and invalid-topology refusal without dependencies or a CI Node requirement."
+  - path: "docs/validation/cockpit-organization-chart-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Records the reusable chart's source and local layout checks separately from deferred browser acceptance."
   - path: "internal/adapters/cockpit/organization.go"
     form: code
     realizes: [product/cockpit/observed-organization]
