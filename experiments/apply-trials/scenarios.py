@@ -404,6 +404,29 @@ SCENARIOS = tuple(SCENARIOS) + (
             version=1, arms=("direct",), sessions=("CCF",), lineage="CCF-20261021-v1; unchanged A4-gap model, new finite budget only"),
 )
 
+# NIGHT is a separate finite grant and reference version, not a reopening of
+# any historical CCF or D-series ledger. The operator binds stricter process
+# deadlines and cleanup reserves outside the packets.
+_night_budget = Budget("42m", "5m", 240, 8)
+SCENARIOS = tuple(SCENARIOS) + (
+    replace(_original["A2"], id="NIGHT-P", case="D-CF2", profile="d1-ccf2", budget=_night_budget,
+            control="NIGHT-R", version=2, arms=("direct",), sessions=("NIGHT",),
+            lineage="NIGHT-20261021: new usable-path reference; CCF-v1 remains closed"),
+    replace(_original["A1"], id="NIGHT-R", case="D-CFH2", profile="d1-ccf2", budget=_night_budget,
+            control="NIGHT-P", version=2, arms=("direct",), sessions=("NIGHT",),
+            lineage="NIGHT-20261021: exact NIGHT-P counterpart with n1 only"),
+    replace(_original["V1"], id="NIGHT-VN", case="D-CFHN2", profile="d1-ccf2", budget=_night_budget,
+            version=2, arms=("direct",), sessions=("NIGHT",),
+            lineage="Independent productive Verify only, with green author tests and the unchanged name-token fault"),
+    replace(_original["V1"], id="NIGHT-VS", case="D-CFS2", profile="d1-ccf2", budget=_night_budget,
+            version=2, arms=("direct",), sessions=("NIGHT",), finding_owner="depot",
+            finding_terms=(("path", "filename", "basename"), ("temp", "write", "save", "commit", "receive"),
+                           ("test", "assert"), ("expect", "refus", "reject")),
+            question="Does fresh independent Verify reject a storage fault hidden by a green test's unsupported refusal expectation?",
+            lineage="Actual public wrong-assertion control on the same version 2 reference; no answers enter reviewer input"),
+)
+
+BOUNDED_DEPOT = ("CCF-P", "CCF-R", "NIGHT-P", "NIGHT-R", "NIGHT-VN", "NIGHT-VS")
 BY_ID = {scenario.id: scenario for scenario in SCENARIOS}
 DEFECT_TERMS = {STOP_GAP: NAME_TERMS, STOP_ERROR: SKU_TERMS}
 
@@ -421,7 +444,7 @@ def check_catalog():
         if case is None:
             problems.append("%s names the unknown case %s" % (scenario.id, scenario.case))
             continue
-        if scenario.expect in (REJECT, ACCEPT) and scenario.arms != MARKITECT:
+        if scenario.expect in (REJECT, ACCEPT) and any(arm not in MARKITECT for arm in scenario.arms):
             problems.append("%s is a Verify scenario with a plan arm" % scenario.id)
         if scenario.expect == REJECT and not (scenario.finding_terms and scenario.finding_owner):
             problems.append("%s needs finding terms and owner" % scenario.id)

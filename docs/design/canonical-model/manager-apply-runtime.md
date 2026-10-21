@@ -16,6 +16,18 @@ Implement satisfaction remains distinct from verified conformance. The source-bo
 [CCF preparation record](../../validation/ccf-apply-preparation-20261021.md) records controls,
 checks, reviews and the closed provider gate; this statement supplies no provider result.
 
+**Source implementation, NIGHT stabilization:** model-authoritative Apply Verify
+keeps every required reviewer on an empty read-only model view until all open
+model-derived bases have been accepted through stopped Turns and normal parent
+decisions. Model questions and child-basis decisions remain available. Before
+that shared barrier, normal basis revision invalidates consumers; afterward the
+precommitments cannot be replaced. Each reviewer receives the immutable candidate
+and author context only in its next fresh Turn, in the same independent Home
+and conversation. Full probe assertions are delivered or retrieved with a recorded
+digest. [The NIGHT handoff](../../development/night-apply-stability-20261021.md)
+binds the observed failures, controls and finite execution grant; source tests
+establish this ordering, while productive semantic outcomes require separate evidence.
+
 ## Organization and Briefs
 
 The organization is derived, not planned: Root (`.`) and one Manager per local Package, including empty and intermediate ones, with parents from the model hierarchy. Every Manager takes part in every Pass. `run.Config` lists Root first and every parent before its children.

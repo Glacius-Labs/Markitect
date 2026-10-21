@@ -1,5 +1,25 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "experiments/apply-trials/night_run_test.py"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Stops real owned subprocesses under injected registry, clock and recovery-marker failures without Docker or provider generation."
+  - path: "docs/development/night-apply-stability-20261021.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Binds the separate NIGHT stabilization scope, model-first review gate, corrected controls and finite operator validation."
+  - path: "experiments/apply-trials/night_run.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Bounds separately released NIGHT groups against one durable six-start ledger, independent host time and the absolute overnight stop."
+  - path: "internal/run/review_basis_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Distinguishes authority-only derivation from accepted-basis candidate access and checks blocked bypasses."
+  - path: "internal/run/review_basis.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Separates model-derived review conditions from candidate access within the existing accepted-basis boundary."
   - path: "experiments/recursive-apply-demo/README.md"
     form: doc
     realizes: [product/run/confirmed-run-history]

@@ -5,6 +5,11 @@ import (
 	"strings"
 )
 
+// semanticAssessment is a model-directed review method, not a machine proof or
+// a project-specific catalogue of troublesome inputs. It is delivered in the
+// assignment so using this method does not depend on an optional lookup.
+const semanticAssessment = "Derive outcomes before reading a test's expected result. From each material public contract, distinguish the permitted and rejected value/state classes and the exact advertised interface forms; cross the value domain with the interface syntax, including values that may be mistaken for control syntax. A substituted encoding does not establish the advertised form. Trace a representative material condition through the public entry, responsible logic and persistent or external effect, including rejection without the forbidden effect. Before relying on a green receipt, read its complete invocation and assertions: does the model require that outcome for these preconditions, and which materially different permitted or rejected case could still pass this script? Exercise that countercase when it bears on a required claim; otherwise leave the missing evidence open. Do not infer that an input is invalid because the candidate or its test rejects it. A source-only claim must explain why execution is inapplicable. Do not enumerate every possible input or invent model policy."
+
 // methods are the reusable method guidance every Manager, reviewer and helper
 // may consult with look_up topic method: concise names in the standing context,
 // details on request. They describe how to do good work; they grant no right,

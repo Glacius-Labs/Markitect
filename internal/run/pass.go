@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"sync/atomic"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -93,8 +94,10 @@ type member struct {
 	// pending is its submitted basis or result until it is decided.
 	pending       *proposal
 	basis, result *proposal
-	turns         int
-	empty         int
+	// candidateIntroduced records delivery of the post-basis assignment.
+	candidateIntroduced bool
+	turns               int
+	empty               int
 	// reviewHome and reviewConversation hold the fresh reviewer of a review
 	// Pass; they never carry over to another Pass.
 	reviewHome string
@@ -117,6 +120,10 @@ type pass struct {
 	volume string
 	// candidate is the review Pass's read-only volume.
 	candidate WorkspaceID
+	// The empty immutable workspace used while deriving an Apply review basis.
+	modelBasisID     WorkspaceID
+	modelBasisVolume string
+	modelBasisReady  atomic.Bool
 	// accepted is the stand assembled from the entry stand and every accepted
 	// submission's checked area; only the Orchestrator writes it.
 	accepted  snapshot.Tree
@@ -159,6 +166,8 @@ func validateSpec(spec PassSpec) error {
 		return bad("a review Pass is read-only, plans nothing and binds no dependency")
 	case spec.Assesses && (!spec.Review || spec.ArtifactFindingsAdvisory):
 		return bad("a model assessment is a review Pass of the model, without artifact findings")
+	case spec.ModelBasis && (!spec.Review || spec.Assesses || spec.ArtifactFindingsAdvisory):
+		return bad("a model-first basis belongs to model-authoritative artifact review")
 	case spec.Review && strings.TrimSpace(spec.Guidance) == "":
 		return bad("a review Pass needs guidance on what a genuine finding is")
 	case !spec.Review && spec.ArtifactFindingsAdvisory:
@@ -234,8 +243,14 @@ func (e *engine) runPass(spec PassSpec) PassResult {
 	if spec.Review && !e.prepareReview(p) {
 		return e.passEnded(p)
 	}
+	if !e.prepareModelBasis(p) {
+		return e.passEnded(p)
+	}
+	if p.modelBasisID != "" {
+		defer e.closeVolume(p.modelBasisID)
+	}
 	e.mu.Lock()
-	_ = e.record(Event{Kind: "pass.start", Pass: p.id, Data: map[string]any{"purpose": spec.Purpose, "review": spec.Review, "writes": spec.Writes, "tree": p.tree.Digest().String()}})
+	_ = e.record(Event{Kind: "pass.start", Pass: p.id, Data: map[string]any{"purpose": spec.Purpose, "review": spec.Review, "writes": spec.Writes, "tree": p.tree.Digest().String(), "modelBasis": spec.ModelBasis}})
 	for _, m := range p.members {
 		m.waiting = e.parentWaitLocked(m)
 		e.recordStateLocked(m, "the Pass started")
@@ -458,8 +473,10 @@ func (e *engine) computeState(m *member) (State, string) {
 		return Waiting, m.waiting
 	case m.stage == stageBlocked && !e.runnableLocked(m):
 		return Waiting, m.waiting
-	case len(m.items) > 0:
+	case e.runnableLocked(m):
 		return Ready, ""
+	case m.p.spec.ModelBasis && !m.p.modelBasisReady.Load() && m.basis != nil:
+		return Waiting, "the accepted model-first bases of all required reviewers"
 	case m.stage == stageBasis || m.stage == stageResult:
 		parent := "the Orchestrator"
 		if m.Parent != "" {
@@ -548,6 +565,11 @@ func (e *engine) runnableLocked(m *member) bool {
 	case stageBlocked:
 		return slices.ContainsFunc(m.items, func(it item) bool { return it.kind == itemMessage }) || len(e.demandsLocked(m)) > 0
 	}
+	if m.p.spec.ModelBasis && !m.p.modelBasisReady.Load() && m.basis != nil {
+		// Child-basis proposals and model questions still need parent decisions.
+		// A leaf's note to complete its result waits for the shared candidate.
+		return len(e.demandsLocked(m)) > 0 || slices.ContainsFunc(m.items, func(it item) bool { return it.kind == itemMessage })
+	}
 	return len(m.items) > 0
 }
 
@@ -627,6 +649,7 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 			}
 		}
 	}
+	e.openModelCandidateLocked(p)
 	e.releaseWaitingLocked(p, fmt.Sprintf("%s of %s was accepted", pr.id, m.Path))
 	e.scheduleLocked()
 }
@@ -698,6 +721,9 @@ func (e *engine) reviseLocked(m *member, reason string) {
 	e.voidDispositionsLocked(old, "its basis was revised")
 	e.invalidateConsumersLocked(m, true, fmt.Sprintf("%s revises its basis %s: %s", m.Path, old.id, reason))
 	e.deliverLocked(m, item{text: fmt.Sprintf("You revise your accepted basis %s (%s). Rework it and submit the revised basis; your children and dependents wait for it.", old.id, reason)})
+	if m.p.spec.ModelBasis {
+		e.deliverLocked(m, item{kind: itemAssignment})
+	}
 	e.scheduleLocked()
 }
 

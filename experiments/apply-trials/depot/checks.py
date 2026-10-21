@@ -5,6 +5,7 @@ failure points at the responsibilities involved. Error wording and the
 organization of the data file are free; only the envelope, exit code,
 unchanged data and the specified records are checked.
 """
+import os
 import sys
 from pathlib import Path
 
@@ -12,8 +13,8 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 
 from trial_kit import Checks, expect_equal, fail, no_crash, unusable_change, unusable_query  # noqa: E402
 
-CHECKS = Checks("depot", {"d1": {"snapshot": "d1"}})
-D1 = ["d1"]
+CHECKS = Checks("depot", {"d1": {"snapshot": "d1"}, "d1-ccf2": {"snapshot": "d1"}})
+D1 = ["d1", "d1-ccf2"]
 check = CHECKS.check
 
 
@@ -335,3 +336,23 @@ def _(env, p):
     found = env.leftover_temp_files()
     if found:
         fail("files left beside the data file: %s" % found)
+
+
+@check("db-path", ["d1-ccf2"], ["depot/interface", "depot/storage", "catalog/add-item", "stock/receive"],
+       "A filesystem-usable database basename supports creation, later writes, persistence and refusal rollback")
+def _(env, p):
+    # A runtime filesystem witness, not a new model limit or a fixed 250/252 policy.
+    maximum = os.pathconf(env.dbdir, "PC_NAME_MAX")
+    if maximum <= 0:
+        fail("the control environment does not report a usable filename limit")
+    target = env.dbdir / ("x" * maximum)
+    target.write_bytes(b"filesystem witness")
+    target.unlink()
+    env.db = target
+    expect_equal(add(env, "PTH-001", "Path witness")["name"], "Path witness", "creation at usable path")
+    expect_equal(receive(env, "PTH-001", 3)["onHand"], 3, "update of existing long path")
+    expect_equal(figures(env, "PTH-001"), (3, 0, 3), "fresh-process persisted figures")
+    receive(env, "PTH-001", 0, refuse=True)
+    expect_equal(figures(env, "PTH-001"), (3, 0, 3), "refusal retained persisted figures")
+    if env.leftover_temp_files():
+        fail("temporary files remain after the long-path command")

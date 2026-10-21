@@ -189,8 +189,9 @@ started, timed out, uncertain, mismatched, not executable with exit 126 or 127, 
 by a signal with exit 128 or above), which never counts as a pass or as an expected
 refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
 Implement and artifact-review `done`/`preserved` claims require typed evidence.
-`kind: public_behavior` cites an own passing receipt with the same declared `boundary`
-as `probe.boundary`, through the actual public entry and relevant parsing/transport/
+`kind: public_behavior` cites an own passing receipt with a nonempty `probe.boundary`.
+An omitted evidence `boundary` inherits that recorded value; a supplied different value
+is refused. The stored evidence retains the boundary, through the actual public entry and relevant parsing/transport/
 persistence. `kind: static` cites source, location and reasoning explaining why execution
 is inapplicable. Neither private-validator execution, source reassurance for executable
 behavior nor a suite total closes a public behavior claim. Missing required execution
@@ -198,6 +199,28 @@ stays open. One receipt supports only one claim across the entire envelope, inte
 included. Sources/receipts bind to the submitted stand after writers stopped. Tooling
 checks structure and bindings; Managers/reviewers judge authority, actual entry use,
 assertions and semantic adequacy. Repeating a boundary label proves no such adequacy.
+
+Apply Verify sets `PassSpec.ModelBasis`: every required reviewer derives an open basis
+from the bound model before receiving candidate or author observations. Its `/work` is
+an empty read-only snapshot, and candidate lookups, probes and helpers are unavailable.
+Normal model questions, answers, child-basis decisions and future named waits remain
+available. Accepted leaves wait without consuming turns until all required bases have
+been accepted after normal Turn completion and observed stop. Then one assignment wakes
+each reviewer, and a fresh Turn introduces the immutable candidate in its existing
+independent conversation and Home (`review.candidate_opened`). An in-flight model-only
+Turn remains blind even when its last child acceptance opens the shared barrier.
+An incomplete required basis keeps the barrier closed. A result cannot be submitted
+before that reviewer's candidate introduction; the original basis stays visible and
+cannot be replaced after exposure. Extract does not select this model-authority gate.
+
+This enforces ordering and exposure, not semantic completeness. Reviewers still judge
+model classes, exact interface forms, the actual probe assertions and missing proof.
+Relied-on probe files are delivered in full within the bounded assignment budget;
+larger files require `look_up probe`. That lookup records the exact delivered bytes'
+digest. A valid report submission ends probing/helper work in that Turn and explicitly
+asks the provider to end the Turn; a submitted report never substitutes for its normal
+terminal event and observed stop. NIGHT's bounded operator validation is described in
+[the NIGHT handoff](../../docs/development/night-apply-stability-20261021.md).
 
 A probe runs only while its turn keeps a fifth of its timeout for the report, and it ends
 before that point; late in a turn it is refused rather than letting the timeout fail the

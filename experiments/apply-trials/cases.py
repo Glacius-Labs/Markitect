@@ -587,7 +587,69 @@ CCF_REFERENCE_EDITS = (
          '    def test_empty_depot(self):\n'),
 )
 
+# Version 2 is a new reference overlay. Frozen v1 packets and scores remain intact.
+# The owner commissioned correction of the observed usable-path fault, without
+# adding a model PATH limit. Both assertions below use the public CLI.
+CCF2_PATH_TEST = (
+    '    def test_filesystem_usable_database_basename(self):\n'
+    '        self.ok("add-item", "--sku", "PNM-001", "--name", "Path witness")\n'
+    '        maximum = os.pathconf(self.db.parent, "PC_NAME_MAX")\n'
+    '        target = self.db.parent / ("x" * maximum)\n'
+    '        target.write_bytes(self.db.read_bytes())\n'
+    '        self.db = target\n'
+    '        self.assertEqual(self.ok("receive", "--sku", "PNM-001", "--qty", "1")["onHand"], 1)\n\n'
+)
+CCF2_REFERENCE_EDITS = CCF_REFERENCE_EDITS + (
+    Edit(RZ + "tests/test_cli.py", 'import json\n', 'import json\nimport os\n'),
+    Edit(RZ + "depot/store.py", 'tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)',
+         'tempfile.mkstemp(prefix=".depot-", suffix=".tmp", dir=path.parent)'),
+    Edit(RZ + "tests/test_cli.py", '    def test_empty_depot(self):\n', CCF2_PATH_TEST + '    def test_empty_depot(self):\n'),
+)
+CCF2_PATH_FAULT = Fault(
+    "p2-path", "depot", "behavior", "the temporary basename repeats the usable target basename and cannot be created",
+    (Edit(RZ + "depot/store.py", 'tempfile.mkstemp(prefix=".depot-", suffix=".tmp", dir=path.parent)',
+          'tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)'),),
+    detected_by=("db-path",), test_signal=True)
+CCF2_ASSERTION_FAULT = Fault(
+    "p2-assertion", "depot", "test", "a public test assumes refusal on an existing filesystem-usable path, without model authority",
+    (Edit(RZ + "tests/test_cli.py",
+          '        self.assertEqual(self.ok("receive", "--sku", "PNM-001", "--qty", "1")["onHand"], 1)\n',
+          '        self.refused("receive", "--sku", "PNM-001", "--qty", "1")\n'),),
+    test_signal=True)
+CCF2_INCOMPLETE_NAME_TEST = Edit(
+    RZ + "tests/test_cli.py", '    def test_empty_depot(self):\n',
+    '    def test_all_permitted_name_forms(self):\n'
+    '        self.assertEqual(self.ok("add-item", "--sku", "EVD-001", "--name", "Plain name")["name"], "Plain name")\n'
+    '        self.assertEqual(self.ok("add-item", "--sku", "EVD-002", "--name=--reorder")["name"], "--reorder")\n\n'
+    '    def test_empty_depot(self):\n')
+
 DEPOT = (
+    Case("D-CF2", "depot", 2, "Version 2 usable-path preservation reference",
+         "Does Apply preserve the newly corrected reference without optional changes?",
+         snapshot="d1", start="reference", expected=UNCHANGED, profile="d1-ccf2",
+         reference_edits=CCF2_REFERENCE_EDITS, stand_edits=UNATTRACTIVE_EDITS, preserve=UNATTRACTIVE_SPOTS,
+         notes="New reference version after actual R40 and R54 evidence; no historical model, packet or score is changed."),
+    Case("D-CFH2", "depot", 2, "Version 2 matched name-token defect",
+         "Does Apply repair the sole public name-token fault and complete fresh Verify?",
+         snapshot="d1", start="reference", expected=APPLIED, profile="d1-ccf2",
+         reference_edits=CCF2_REFERENCE_EDITS, stand_edits=UNATTRACTIVE_EDITS, faults=(N1_HYPHEN,),
+         preserve=UNATTRACTIVE_SPOTS,
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*")),
+    Case("D-CFS2", "depot", 2, "Green test with a wrong refusal expectation",
+         "Does independent review reject the storage fault and its green but unsupported public refusal assertion?",
+         snapshot="d1", start="reference", expected=APPLIED, profile="d1-ccf2",
+         reference_edits=CCF2_REFERENCE_EDITS, stand_edits=UNATTRACTIVE_EDITS,
+         faults=(CCF2_PATH_FAULT, CCF2_ASSERTION_FAULT),
+         preserve=("realization/orders/orderbook.py", "realization/stock/ledger.py"),
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         notes="Both faults together have green project tests; public db-path fails. Neither partial repair is conforming."),
+    Case("D-CFHN2", "depot", 2, "Green public name tests with an incomplete completeness claim",
+         "Does independent review derive the missing interface/value interaction despite green broad-name tests?",
+         snapshot="d1", start="reference", expected=APPLIED, profile="d1-ccf2",
+         reference_edits=CCF2_REFERENCE_EDITS, stand_edits=UNATTRACTIVE_EDITS + (CCF2_INCOMPLETE_NAME_TEST,),
+         faults=(N1_HYPHEN,), preserve=UNATTRACTIVE_SPOTS,
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         notes="Genuine green author tests exercise ordinary and attached forms but claim all permitted name forms. No oracle answer or expected missed input enters the packet."),
     Case("D-CF", "depot", 2, "CCF corrected preservation reference",
          "Does Apply preserve the source-adjudicated corrected reference without optional changes?",
          snapshot="d1", start="reference", expected=UNCHANGED, profile="d1",

@@ -37,7 +37,7 @@ func TestStrategiesComposeTheOnePassProcess(t *testing.T) {
 			t.Errorf("staged %s binds waits or has corrections %v", spec.Purpose, spec.Corrections)
 		}
 	}
-	if d, s := Direct.verify(), Staged.verify(); d.Purpose != run.Verify || !d.Review || d.Mandate != s.Mandate || d.Guidance != s.Guidance {
+	if d, s := Direct.verify(), Staged.verify(); d.Purpose != run.Verify || !d.Review || !d.ModelBasis || !s.ModelBasis || d.Mandate != s.Mandate || d.Guidance != s.Guidance {
 		t.Errorf("the strategies' Verify differ: %+v / %+v", d, s)
 	}
 	// One Root duty in every strategy: a confirmed model problem ends the run,
@@ -176,5 +176,14 @@ func TestTheAssessmentMethodIsPinned(t *testing.T) {
 	}
 	if !spec.Review || !spec.Assesses || !slices.Equal(spec.Corrections, []run.Purpose{"model_error", "model_gap", "unclassified"}) {
 		t.Errorf("spec %+v", spec)
+	}
+}
+
+func TestStrategyDigestBindsModelFirstCandidateExposure(t *testing.T) {
+	spec := Direct.verify()
+	blind := strategyDigest([]run.PassSpec{spec}, rootModelDuty)
+	spec.ModelBasis = false
+	if blind == strategyDigest([]run.PassSpec{spec}, rootModelDuty) {
+		t.Error("strategy binding omitted the model-first candidate exposure gate")
 	}
 }

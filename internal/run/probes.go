@@ -561,9 +561,10 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, 
 				if item.Kind != "public_behavior" {
 					return nil, fmt.Errorf("%s: executed evidence declares kind public_behavior and its real public boundary", name)
 				}
-				if r.Boundary == "" || item.Boundary != r.Boundary {
+				if r.Boundary == "" || item.Boundary != "" && item.Boundary != r.Boundary {
 					return nil, fmt.Errorf("%s: public behavior needs a receipt declaring the same real entry boundary; private-validator execution alone cannot close it", name)
 				}
+				item.Boundary = r.Boundary
 			}
 			item.Authority = r.Obligation
 			cited[r.ID] = true

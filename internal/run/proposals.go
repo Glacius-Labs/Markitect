@@ -285,7 +285,7 @@ func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 }
 
 func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswer {
-	if m.stage != stageOwn && m.stage != stageIntegrate {
+	if m.stage != stageOwn && m.stage != stageIntegrate && !(m.p.spec.ModelBasis && m.stage == stageDelegated) {
 		return refuse("progress is reported while you work on your basis or your complete result.")
 	}
 	summary, err := toolText("summary", in.Summary)
@@ -437,6 +437,8 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		return refuse("Your helpers are still working; submit after their results reached you.")
 	case ts.blocked:
 		return refuse("This turn started while your own work was blocked, so it only answers what is asked of you; your work starts in your next turn.")
+	case in.Kind == kindResult && m.candidateHidden():
+		return refuse("Candidate assessment starts in a fresh Turn after every required reviewer's model-first basis is accepted. Coordinate model questions and child bases meanwhile.")
 	case in.Kind == kindBasis && m.stage != stageOwn:
 		return refuse("A basis is submitted while you work on your own contribution; you are at %s.", m.stage)
 	case in.Kind == kindResult && m.stage != stageIntegrate:
@@ -452,6 +454,9 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 	}
 	summary, err := toolText("summary", in.Summary)
 	if err != nil {
+		return refuse("%v", err)
+	}
+	if err := modelBasisOf(m, in); err != nil {
 		return refuse("%v", err)
 	}
 	env := envelope{Summary: summary}
@@ -538,7 +543,7 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 	if m.Parent != "" {
 		text += " and then decided by your parent"
 	}
-	return ToolAnswer{Text: text + "."}
+	return ToolAnswer{Text: text + ". End this Agent Turn now; do not continue probing or rewriting the submitted report. Your next work starts in a later Turn after its decision."}
 }
 
 // coverageOf validates the obligation coverage of a submission: every entry is
@@ -589,7 +594,7 @@ func (e *engine) coverageOf(m *member, in reportIn, cited map[string]bool) ([]co
 		}
 		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Conditions: c.Conditions, Evidence: evidence})
 	}
-	if in.Kind == kindResult {
+	if in.Kind == kindResult || m.modelBasisPending() && in.Kind == kindBasis {
 		var missing []string
 		for _, id := range m.Obligations {
 			if !seen[id] {
@@ -1242,6 +1247,9 @@ func (e *engine) reopen(m *member, ts *turnState, in reportIn) ToolAnswer {
 }
 
 func (e *engine) revise(m *member, ts *turnState, in reportIn) ToolAnswer {
+	if m.p.spec.ModelBasis && m.p.modelBasisReady.Load() && m.basis != nil {
+		return refuse("Your accepted model-first basis remains the precommitment for this immutable candidate. Add newly discovered conditions to the result and account for the original basis; do not replace it after seeing the candidate.")
+	}
 	if (m.stage != stageDelegated && m.stage != stageIntegrate) || m.basis == nil {
 		return refuse("You revise an accepted basis while your children work on it or before you submit your result.")
 	}

@@ -213,6 +213,16 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 				report["verdict"] = "needs_correction"
 			}
 		}
+		if kind == "basis" && strings.Contains(turn.Prompt, "MODEL-FIRST BASIS:") {
+			for _, entry := range covered {
+				entry["status"], entry["note"] = "open", "model-derived static conditions; candidate assessment pending"
+				delete(entry, "evidence")
+			}
+			if entry, ok := report["integration"].(map[string]any); ok {
+				entry["status"], entry["note"] = "open", "model-derived static composition; candidate assessment pending"
+				delete(entry, "evidence")
+			}
+		}
 		return report
 	}
 	_, rest, _ := strings.Cut(turn.Prompt, "\nNow: ")

@@ -40,7 +40,8 @@ sys.path.insert(0, str(HERE.parent / "test-projects"))
 import assess  # noqa: E402
 import oracle  # noqa: E402
 from cases import (APPLIED, CASES, DEFECT, GAP, N1_HYPHEN, N1_HYPHEN_SHA256, PROJECTS, REFUSED, SHIFTS,  # noqa: E402
-                   UNCHANGED, VARIANTS, Edit, markdown)
+                   UNCHANGED, VARIANTS, CCF2_REFERENCE_EDITS, CCF2_PATH_FAULT, CCF2_ASSERTION_FAULT,
+                   UNATTRACTIVE_EDITS, CCF2_INCOMPLETE_NAME_TEST, Edit, markdown)
 from materialize import apply_edits, materialize, project_root  # noqa: E402
 from oracle_kit import DEGENERATE  # noqa: E402
 from trial_kit import python_command  # noqa: E402
@@ -446,6 +447,30 @@ def materialize_path(case_id, target):
     return target
 
 
+def check_ccf2(python, report):
+    """Real public subprocess truth table; no Agent or semantic-detector fake."""
+    states = (
+        ("reference", (), set(), True),
+        ("code fault", (CCF2_PATH_FAULT,), {"db-path"}, False),
+        ("assertion fault", (CCF2_ASSERTION_FAULT,), set(), False),
+        ("green wrong assertion plus code fault", (CCF2_PATH_FAULT, CCF2_ASSERTION_FAULT), {"db-path"}, True),
+        ("matched name fault", (N1_HYPHEN,), {"item-inputs", "name-hyphens"}, True),
+        ("green broad name claim", (N1_HYPHEN,), {"item-inputs", "name-hyphens"}, True),
+    )
+    facts = {}
+    for name, faults, expected_bad, expected_tests in states:
+        with tempfile.TemporaryDirectory(prefix="ccf2-control-") as folder:
+            extra = (CCF2_INCOMPLETE_NAME_TEST,) if name == "green broad name claim" else ()
+            realization = build("depot", folder, faults=faults, stand=CCF2_REFERENCE_EDITS + UNATTRACTIVE_EDITS + extra)
+            bad, outcome = failing("depot", "d1-ccf2", realization, python)
+            tests, output = assess.run_tests(realization, "depot", python)
+            report.expect(bad == expected_bad and tests == expected_tests,
+                          "CCF2 %s: failed %s, project tests %s; expected %s/%s; %s"
+                          % (name, sorted(bad), tests, sorted(expected_bad), expected_tests, output[-600:]))
+            facts[name] = {"oracle": outcome["summary"], "failed": sorted(bad), "projectTests": tests}
+    report.facts["CCF2 public truth table"] = facts
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", choices=sorted(PROJECTS), action="append")
@@ -470,6 +495,8 @@ def main(argv=None):
         check_variants(project, python, report)
         check_continuity(project, report)
         check_model_change(project, python, report)
+        if project == "depot":
+            check_ccf2(python, report)
     print(json.dumps({"facts": facts, "problems": report.problems, "passed": not report.problems},
                      indent=2))
     return 0 if not report.problems else 1
