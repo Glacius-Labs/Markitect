@@ -1,9 +1,13 @@
 """Provider-free self-tests of assess.py and freeze.py. Run: python -B -m unittest discover -s experiments/model-assessment"""
 import importlib.util
 import json
+import os
+import shutil
+import subprocess
 import tempfile
 import unittest
 from pathlib import Path
+from unittest.mock import patch
 
 import assess
 
@@ -301,6 +305,77 @@ class Declaration(unittest.TestCase):
 
 
 class Freeze(unittest.TestCase):
+    def make_freeze(self, root):
+        """Real tiny Git inputs; fake build bytes, with only the CLI check stubbed."""
+        root = Path(root)
+        source, packet, build = root / "source", root / "packet", root / "build"
+        kit = source / "experiments"
+        shutil.copytree(HERE, kit / "model-assessment", ignore=shutil.ignore_patterns("__pycache__"))
+        (packet / ".markitect" / "model" / "shop").mkdir(parents=True)
+        (packet / ".markitect" / "model" / "shop" / "inputs.yaml").write_text("id: inputs\nbody: Names are trimmed.\n", encoding="utf-8")
+        heads = []
+        for repo in (source, packet):
+            subprocess.run(["git", "init", "-q", str(repo)], check=True, capture_output=True)
+            freeze.git(repo, "add", ".")
+            freeze.git(repo, "-c", "user.name=Freeze test", "-c", "user.email=freeze@example.invalid", "commit", "-qm", "fixture")
+            heads.append(freeze.git(repo, "rev-parse", "HEAD"))
+        build.mkdir()
+        for name in ("assessment.test", "markitect", "runtime.env"):
+            (build / name).write_bytes(b"frozen test bytes\n")
+        (build / "build.txt").write_text("sha=" + heads[0] + "\n", encoding="utf-8")
+        spec = {"build": str(build), "kit": str(kit), "controls": [{"id": "complete", "packet": {"repo": str(packet), "head": heads[1]},
+                                                                    "expectation": {"expected": "accepted"}}]}
+        spec_path, frozen = root / "spec.json", root / "frozen"
+        spec_path.write_text(json.dumps(spec), encoding="utf-8")
+        with patch.object(freeze, "check", return_value=(0, "passed", '{"status":"passed"}')):
+            freeze.freeze(spec_path, frozen)
+        return frozen, spec, spec_path
+
+    def test_verification_rejects_changed_execution_metadata_and_added_kit_files(self):
+        with tempfile.TemporaryDirectory() as root:
+            frozen, spec, _ = self.make_freeze(root)
+            self.assertEqual(freeze.verify(frozen, "complete"), [])
+            for name in ("build.txt", "runtime.env"):
+                path = Path(spec["build"]) / name
+                original = path.read_bytes()
+                path.write_bytes(original + b"changed\n")
+                self.assertTrue(any(name in p for p in freeze.verify(frozen, "complete")), name)
+                path.write_bytes(original)
+            added = frozen / "kit" / "model-assessment" / "unexpected.py"
+            added.write_text("raise RuntimeError('different imported code')\n", encoding="utf-8")
+            self.assertIn("kit file model-assessment/unexpected.py was added after freeze", freeze.verify(frozen, "complete"))
+            freeze.ledger_path(frozen).unlink()
+            self.assertIn("the shared series ledger is missing", freeze.verify(frozen, "complete"))
+
+    def test_successor_freezes_share_the_live_ledger_without_resetting_attempts(self):
+        with tempfile.TemporaryDirectory() as root:
+            first, spec, spec_path = self.make_freeze(root)
+            ledger = freeze.ledger_path(first)
+            ledger.write_text("complete C-01 status=done charged=600 cap=600\n", encoding="utf-8")
+            spec["ledgerFrom"] = str(ledger)
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+            second = Path(root) / "successor"
+            with patch.object(freeze, "check", return_value=(0, "passed", '{"status":"passed"}')):
+                freeze.freeze(spec_path, second)
+            self.assertEqual(freeze.ledger_path(second), ledger)
+            self.assertFalse((second / "ledger.txt").exists())
+            with ledger.open("a", encoding="utf-8") as stream:
+                stream.write("complete C-02 status=done charged=600 cap=600\n")
+            self.assertEqual(len(freeze.ledger_path(second).read_text(encoding="utf-8").splitlines()), 2)
+            self.assertEqual(freeze.ledger_path(second).parent / "ledger.lock", ledger.parent / "ledger.lock")
+
+    def test_a_successor_refuses_unresolved_cleanup(self):
+        with tempfile.TemporaryDirectory() as root:
+            first, spec, spec_path = self.make_freeze(root)
+            ledger = freeze.ledger_path(first)
+            ledger.write_text("complete C-01 status=cleanup_failed charged=600 cap=600\n", encoding="utf-8")
+            spec["ledgerFrom"] = str(ledger)
+            spec_path.write_text(json.dumps(spec), encoding="utf-8")
+            with patch.object(freeze, "check", return_value=(0, "passed", '{"status":"passed"}')):
+                with self.assertRaisesRegex(SystemExit, "unfinished attempt"):
+                    freeze.freeze(spec_path, Path(root) / "successor")
+            self.assertIn("status=cleanup_failed", ledger.read_text(encoding="utf-8"))
+
     def test_bodies_of_block_folded_and_plain_definitions(self):
         self.assertEqual(freeze.body_of("id: a\nkind: K\nbody: |-\n  One line\n  two.\nspec: {}\n"), "One line\ntwo.")
         self.assertEqual(freeze.body_of("id: a\nbody: >\n  Folded\n  text.\n"), "Folded\ntext.")
@@ -333,6 +408,31 @@ class Freeze(unittest.TestCase):
         with self.assertRaises(SystemExit):
             freeze.validate("x", {"expected": "model_gap", "issue": {"terms": ["("]}})
         freeze.validate("x", {"expected": "model_gap", "issue": {"terms": ["max"]}})
+
+
+class Cleanup(unittest.TestCase):
+    def test_missing_observation_live_containers_and_failed_cleanup_cannot_claim_cessation(self):
+        bash = shutil.which("bash")
+        if os.name == "nt":
+            git_bash = Path(os.environ.get("ProgramFiles", "C:/Program Files")) / "Git/bin/bash.exe"
+            bash = str(git_bash) if git_bash.is_file() else None
+        if not bash:
+            self.skipTest("Bash is needed for the attempt cleanup controls")
+        source = (HERE / "run" / "attempt.sh").read_text(encoding="utf-8")
+        cleanup = "cleanup() {" + source.split("cleanup() {", 1)[1].split("\nfinish() {", 1)[0]
+        for name, docker, helper, expected in (
+                ("unavailable", "return 1", 0, "alive_after=unknown cleanup_confirmed=0"),
+                ("alive", "echo container-id", 0, "alive_after=1 cleanup_confirmed=0"),
+                ("helper-failed", "return 0", 1, "alive_after=0 cleanup_confirmed=0"),
+                ("observed-stopped", "return 0", 0, "alive_after=0 cleanup_confirmed=1")):
+            with self.subTest(name), tempfile.TemporaryDirectory() as root:
+                script = ("set -u\nATTEMPT=attempt; CLEANED=0; CLEANUP_OK=0; START=$(date +%s); MARKITECT_STORE=unit-test\n"
+                          "mkdir -p attempt/host attempt/frozen\ntouch attempt/host/host.yaml\n"
+                          f"printf 'exit {helper}\\n' > attempt/frozen/ra_cleanup.sh\n"
+                          "docker() { " + docker + "; }\n" + cleanup + "\ncleanup\ncat attempt/timing.txt\n")
+                result = subprocess.run([bash, "-c", script], cwd=root, capture_output=True, text=True)
+                self.assertEqual(result.returncode, 0, result.stderr)
+                self.assertIn(expected, result.stdout)
 
 
 class Series(unittest.TestCase):

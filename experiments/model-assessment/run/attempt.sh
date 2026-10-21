@@ -21,12 +21,13 @@ set -uo pipefail
 FROZEN="$(realpath "$1")"; CONTROL="$2"; NAME="$3"
 [[ "$NAME" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,31}$ ]] || { echo "an attempt name is letters, digits and hyphens, such as C-01"; exit 2; }
 KIT="$FROZEN/kit"
-LEDGER="$FROZEN/ledger.txt"
 ATTEMPT="$FROZEN/attempts/$NAME"
 PACKET="$FROZEN/packets/$CONTROL"
 PASS="$KIT/model-assessment/assessment-pass.json"
 GO_SENTENCE=" Use only the Go standard library for the realization."
 python3 -B "$KIT/model-assessment/run/freeze.py" verify "$FROZEN" "$CONTROL" || exit 2
+LEDGER=$(python3 -B "$KIT/model-assessment/run/freeze.py" ledger "$FROZEN") || exit 2
+LEDGER_LOCK="$(dirname "$LEDGER")/ledger.lock"
 BUILD=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["build"])' "$FROZEN/manifest.json")
 HEAD=$(git -C "$PACKET" rev-parse HEAD)
 test ! -e "$ATTEMPT" || { echo "$ATTEMPT exists"; exit 2; }
@@ -34,14 +35,14 @@ test ! -e "$ATTEMPT" || { echo "$ATTEMPT exists"; exit 2; }
 # Under the ledger lock: the manifest's ceilings (12 attempts, 90 summed
 # minutes, 10 minutes each), the ledger's count, the busy check and the
 # write-ahead line.
-exec 9>> "$FROZEN/ledger.lock"
+exec 9>> "$LEDGER_LOCK"
 flock 9
 read -r MAX_ATTEMPTS MAX_SUMMED MAX_ATTEMPT MODEL EFFORT < <(python3 -B "$KIT/model-assessment/run/freeze.py" ceilings "$FROZEN")
-read -r COUNT SUMMED RUNNING < <(awk '{n++; if ($0 ~ / status=running /) r++; for (i = 1; i <= NF; i++) if ($i ~ /^charged=/) {split($i, a, "="); s += a[2]}}
+read -r COUNT SUMMED RUNNING < <(awk '{n++; if ($0 ~ / status=(running|cleanup_failed) /) r++; for (i = 1; i <= NF; i++) if ($i ~ /^charged=/) {split($i, a, "="); s += a[2]}}
   END {printf "%d %d %d\n", n, s, r}' "$LEDGER")
 REMAINING=$(( MAX_SUMMED - SUMMED ))
 CAP=$(( REMAINING < MAX_ATTEMPT ? REMAINING : MAX_ATTEMPT ))
-if [ "$RUNNING" -gt 0 ]; then echo "an attempt is still running or was killed: mark its ledger line abandoned first"; exit 3; fi
+if [ "$RUNNING" -gt 0 ]; then echo "an attempt is unfinished: resolve its cleanup and mark its ledger line abandoned first"; exit 3; fi
 if [ "$COUNT" -ge "$MAX_ATTEMPTS" ] || [ "$CAP" -lt 180 ]; then echo "ceiling reached: $COUNT attempts, $SUMMED s"; exit 3; fi
 # One provider series per Docker host; never touch another session's containers.
 BUSY=$(docker ps --filter label=markitect.store --format '{{.Label "markitect.store"}} {{.Names}}') || { echo "docker is unavailable"; exit 4; }
@@ -51,7 +52,7 @@ STARTED=$(date -u -d "@$START" +%FT%TZ)
 echo "$CONTROL $NAME status=running charged=$CAP cap=$CAP started=$STARTED" >> "$LEDGER"
 flock -u 9
 
-RUN=""; CONCLUSION="not-started"; MET="none"; CLEANED=0
+RUN=""; CONCLUSION="not-started"; MET="none"; CLEANED=0; CLEANUP_OK=0
 STATE="$ATTEMPT/state-run"
 export MARKITECT_DEMO_WORK="$FROZEN" MARKITECT_AGENT_MODEL="$MODEL" MARKITECT_STORE="ma-$(echo "$NAME" | tr 'A-Z' 'a-z')"
 export MARKITECT_RUNTIME_ENV="${MARKITECT_RUNTIME_ENV:-/mnt/c/Users/Consiliari/.markitect/runtime.env}"
@@ -59,13 +60,22 @@ cleanup() {
   [ "$CLEANED" = 1 ] && return
   CLEANED=1
   mkdir -p "$ATTEMPT"
-  [ -e "$ATTEMPT/host/host.yaml" ] && bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" > /dev/null 2>&1
-  echo "cleanup_done=$(date -u +%FT%TZ) alive_after=$(docker ps -q --filter "label=markitect.store=$MARKITECT_STORE" | grep -c . || true) wall_seconds=$(( $(date +%s) - START ))" >> "$ATTEMPT/timing.txt"
+  local cleanup_exit=0 alive_ids alive_after=unknown
+  if [ -e "$ATTEMPT/host/host.yaml" ]; then
+    bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" > /dev/null 2>&1 || cleanup_exit=$?
+  fi
+  if alive_ids=$(docker ps -q --filter "label=markitect.store=$MARKITECT_STORE"); then
+    alive_after=$(printf '%s\n' "$alive_ids" | grep -c . || true)
+    if [ "$cleanup_exit" = 0 ] && [ "$alive_after" = 0 ]; then CLEANUP_OK=1; fi
+  fi
+  echo "cleanup_done=$(date -u +%FT%TZ) cleanup_exit=$cleanup_exit alive_after=$alive_after cleanup_confirmed=$CLEANUP_OK wall_seconds=$(( $(date +%s) - START ))" >> "$ATTEMPT/timing.txt"
 }
 finish() {
   cleanup
-  local line="$CONTROL $NAME status=done run=${RUN:-none} conclusion=$CONCLUSION met=$MET charged=$(( $(date +%s) - START )) cap=$CAP started=$STARTED"
-  flock "$FROZEN/ledger.lock" python3 -c 'import sys
+  local status=done
+  [ "$CLEANUP_OK" = 1 ] || status=cleanup_failed
+  local line="$CONTROL $NAME status=$status run=${RUN:-none} conclusion=$CONCLUSION met=$MET charged=$(( $(date +%s) - START )) cap=$CAP started=$STARTED"
+  flock "$LEDGER_LOCK" python3 -c 'import sys
 path, name, line = sys.argv[1:]
 lines = open(path).read().splitlines()
 hits = [i for i, l in enumerate(lines) if l.split()[1:2] == [name] and " status=running " in l]

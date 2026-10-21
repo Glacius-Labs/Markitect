@@ -82,3 +82,7 @@ The handoff lists A's own production controls.
 - The complete and freedom controls must be accepted even when they omit optional detail or state an unconventional valid choice.
 - The gap and contradiction controls must still be rejected.
 - An accepted assessment is no completeness proof: a later Root-confirmed problem still stops the Run, and independent artifact Verify still follows realization.
+
+The primary-goal clarification requires reviewers to derive material clauses, exceptions and cross-area conditions independently from the bound model and its explicit purpose. Complete Definition IDs and an author's coverage list do not establish that work. Parent acceptance must challenge actual contract consistency and unsupported acceptance as well as reported problems. An alleged implementation freedom needs a model-based reason; it cannot erase an unresolved public decision. This interpretation does not change the frozen treatment or claim that its runtime enforcement has been demonstrated.
+
+A later bounded adequacy/authoring exercise would start from supplied project purpose and requirements and assess whether the authored concepts, relations, interfaces and cross-area rules express them usefully. It would record omissions, invented constraints and owner effort separately from internal consistency. It needs its own scope and controls; it adds no fifth control, provider attempt, framework or longitudinal study to this assignment. Without supplied purpose, an entirely omitted need remains outside what this model-only assessment can discover.

@@ -2,6 +2,8 @@
 
 Session C's method trial for the mandatory Model assessment ([handoff](../../docs/development/claude-direct-runtime-handoff-20261021.md#session-c-model-assessment-before-realization), [workflow](../../docs/design/canonical-model/manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs)). After the deterministic Model check and File check, does a read-only Agent team find the material gaps and contradictions of the bound model, with sources, before any realization? And does it accept complete models that leave optional details out, state an unusual but valid design or delegate choices explicitly ([conformance mandate](../../docs/design/canonical-model/manager-apply-workflow.md#conformance-mandate-and-observation-kinds))? The harness is isolated evaluation material: no Command, no Apply step, no production hook. [contract.md](contract.md) states the method and contract for Session A, which owns the product integration. A positive conclusion is no completeness proof and does not replace independent artifact Verify.
 
+**Current successor scope, 21 October 2026:** method review and provider-free harness preparation only. Provider evaluation is paused and requires new explicit authority; earlier startup wording and the ceilings below do not grant it. Production composition and wiring evidence wait for A's integrated assessment and B's reviewed integrated controls.
+
 **Everything here is operator material.** Agents receive only a packet: the frozen control's repository. Expectations, this guide, the scorer and the ledger stay outside every packet and mount.
 
 ## Method
@@ -12,6 +14,7 @@ Session C's method trial for the mandatory Model assessment ([handoff](../../doc
 
 - The team is the model's Manager tree: Root and one reviewer per Package, so its size follows the model. Every reviewer starts fresh and reads the stand read-only.
 - The test is materiality: is the model usable, materially consistent and decisive enough for its realization? Not: is it as detailed as possible, or does it follow a preferred architecture? Each reviewer asks four questions about its own obligations, each covered with an inspected model source: are the outcomes users or other areas rely on stated, derivable or explicitly delegated; do statements contradict; are responsibilities and contracts usable; and which freedom is permitted.
+- Derive the material conditions, exceptions and interactions from the complete bound statements and explicit purpose. A list of Definition IDs or an author's condition list is not complete semantic coverage. Parents independently challenge acceptance as well as findings and assess the actual fit of their children's contracts. A missing material public decision cannot become implementation freedom merely through that label.
 - The common observation kinds, applied to a model:
   - A *model problem* is a genuine finding with its basis and class. `model_gap` covers a missing material decision or an unusable contract; `model_error` covers a contradiction or an erroneous statement.
   - A *suspected* problem is investigated inside the Pass, by lookup and questions along the tree. It ends as a model problem, is resolved, or keeps the reviewer working. It is never parked as a note.
@@ -74,25 +77,25 @@ In WSL Ubuntu with Docker, after the owner's start signal and only while no othe
 MARKITECT_SOURCE_REPO=CHECKOUT bash experiments/model-assessment/run/build.sh SHA
 python3 -B experiments/model-assessment/run/freeze.py freeze SPEC FROZEN
 bash FROZEN/kit/model-assessment/run/attempt.sh FROZEN CONTROL C-01
-python3 -B FROZEN/kit/model-assessment/assess.py series --ledger FROZEN/ledger.txt FROZEN/attempts/*/out/assessment.json
+python3 -B FROZEN/kit/model-assessment/assess.py series --ledger "$(python3 -B FROZEN/kit/model-assessment/run/freeze.py ledger FROZEN)" FROZEN/attempts/*/out/assessment.json
 ```
 
 `freeze.py`'s docstring defines SPEC:
 - the build;
 - the experiments directory of the clean clone it was built from;
-- the ledger of an earlier freeze of the same series, whose attempts keep counting;
+- the ledger of an earlier freeze of the same series, which all successor freezes share with its lock;
 - per control, the packet (a materialization command or an existing repository with its head) and its expectation.
 
-The freeze copies that directory as the kit, refuses an invalid Pass declaration (`assess.py preflight`), builds and checks the packets, writes the hidden control files and a manifest of every hash. The ceilings hold for the series: a series uses one freeze, and a later freeze carries the earlier ledger. Pass the earlier freeze's assessment files to `series` too, or its attempts count as unassessed.
+The freeze copies that directory as the kit, refuses an invalid Pass declaration (`assess.py preflight`), builds and checks the packets, writes the hidden control files and a manifest of every hash. It binds the complete kit file set, build declaration and runtime environment as well as the binaries and images. The ceilings hold for the series: successor freezes use the same live ledger and lock, so attempts through an earlier freeze still count. `freeze.py ledger FROZEN` prints that shared path; use it with `series --ledger`, and pass the earlier freezes' assessment files too, or their attempts count as unassessed. Do not reuse an older freeze whose scripts copied ledgers; prepare a new freeze carrying all consumed attempts instead.
 
 `attempt.sh` runs one attempt:
-1. It recomputes every frozen hash and the build's image IDs (`freeze.py verify`).
+1. It recomputes every frozen hash, the exact kit file set and the build's image IDs (`freeze.py verify`).
 2. Under a lock on the ledger it reads the manifest's ceilings, model and effort, and refuses beyond 12 attempts or 90 summed minutes. It also refuses while any container with a `markitect.store` label runs.
 3. It writes the attempt's ledger line before anything starts, marked running and charged with the whole cap of at most 10 minutes. The operator deadline lies 90 s before the cap, so cleanup fits.
 4. It binds the manifest's model (Sonnet) and effort (high), and refuses a bound profile that differs from them or still carries the demonstration's Go sentence. It runs the attempt with its own store label.
-5. On every exit it cleans up only that label and replaces the line with the actual charge, labelled `interrupted` after INT or TERM.
+5. On every exit it cleans up only that label and replaces the line with the actual charge, labelled `interrupted` after INT or TERM. A failed cleanup or unavailable container observation records `status=cleanup_failed` and blocks further attempts. An unavailable Docker observation is `alive_after=unknown`.
 
-A killed attempt keeps its pessimistic line, and a running line refuses further attempts until the operator marks it `status=abandoned`. Name attempts neutrally (letters, digits, hyphens) and interleave the controls in an order fixed before the first attempt.
+A killed attempt keeps its pessimistic line. Resolve and observe its resource cessation before marking a running or cleanup-failed line `status=abandoned`; retain its charge. Name attempts neutrally (letters, digits, hyphens) and interleave the controls in an order fixed before the first attempt.
 
 `ASSESS_SMOKE_NO_CREDENTIAL=1` runs the same script without a provider: the bound token is removed before the run, so every turn fails at its credential read. Use it only on a separate smoke freeze, whose ledger is not the series'.
 
@@ -113,5 +116,6 @@ A killed attempt keeps its pessimistic line, and a running line refuses further 
 - One fixed mandate, one model family (Sonnet), small controls and three repetitions per control: a diagnostic sample, not a reliability rate or a comparison of assessment designs.
 - Signal matching is textual. A false alarm, an unfounded requirement and source quality are the evaluator's judgment on the listed signals. The class of Root's abort route is read from its free text.
 - Delivery compares whitespace-normalized bodies with the sent prompt text; structured fields are not compared, and a delivered body is no evidence that an Agent read or followed it.
+- Complete IDs, body delivery and source references do not show that every material clause was assessed. Technical context delivery, semantic model quality and harness wiring are separate evidence claims.
 - The assessment sees the model through the same Briefs as Apply; a gap that the Briefs hide from a Manager is a finding about the Briefs, not about the team. The Briefs still name the project's required checks, which do not run.
 - The Runtime profile comes from the demonstration harness (`ra_bind.sh`), whose Agent system prompt frames the team as applying a model. The attempt removes only its Go sentence, which states a technology the model may not.

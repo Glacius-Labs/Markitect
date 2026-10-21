@@ -4,10 +4,11 @@ Usage:
   freeze.py freeze SPEC FROZEN_DIR
   freeze.py verify FROZEN_DIR CONTROL
   freeze.py ceilings FROZEN_DIR
+  freeze.py ledger FROZEN_DIR
 
 SPEC (JSON) names the built candidate, the experiments directory of the clean
 clone it was built from, the ledger of an earlier freeze of the same series if
-there is one (its attempts keep counting), and the controls:
+there is one (all freezes share that ledger and lock), and the controls:
   {"build": BUILD_DIR, "kit": SOURCE_EXPERIMENTS_DIR, "ledgerFrom": EARLIER_LEDGER (optional),
    "controls": [{"id": ..., "packet": {"materialize": [ARGV...]} | {"repo": PATH, "head": SHA},
                  "expectation": {"expected": ..., "issue": {"definitions": [...], "terms": [REGEX...]},
@@ -167,6 +168,7 @@ def freeze(spec_path, frozen):
     manifest = {"build": str(build), "buildText": build_text, "kitSource": {"path": str(kit), "sha": built}, "ceilings": CEILINGS,
                 "assessmentPass": sha(frozen / "kit" / "model-assessment" / "assessment-pass.json"),
                 "harness": sha(build / "assessment.test"), "cli": sha(build / "markitect"),
+                "buildDeclaration": sha(build / "build.txt"), "runtimeEnv": sha(build / "runtime.env"),
                 "kit": kit_hashes(frozen / "kit"), "controls": {}}
     for control in spec["controls"]:
         cid, expectation = control["id"], control["expectation"]
@@ -190,13 +192,16 @@ def freeze(spec_path, frozen):
         manifest["controls"][cid] = {"packet": str(packet), "head": git(packet, "rev-parse", "HEAD"), "tree": git(packet, "rev-parse", "HEAD^{tree}"),
                                      "files": {p: sha(packet / p) for p in tracked(packet)},
                                      "check": status, "expectation": sha(frozen / "controls" / f"{cid}.json"), "source": source}
-    # The ceilings hold for the series, not for one freeze: a later freeze carries the earlier ledger.
-    ledger = Path(spec["ledgerFrom"]).read_text(encoding="utf-8") if spec.get("ledgerFrom") else ""
-    if " status=running " in ledger:
-        raise SystemExit("the earlier ledger has a running attempt: mark it abandoned first")
+    # A successor shares the live ledger, never a snapshot with fresh allowance.
+    ledger_path = Path(spec["ledgerFrom"]).resolve() if spec.get("ledgerFrom") else frozen / "ledger.txt"
+    ledger = ledger_path.read_text(encoding="utf-8") if spec.get("ledgerFrom") else ""
+    if any(f" status={status} " in ledger for status in ("running", "cleanup_failed")):
+        raise SystemExit("the earlier ledger has an unfinished attempt: resolve its cleanup and mark it abandoned first")
     manifest["ledgerFrom"] = {"path": spec.get("ledgerFrom", ""), "sha256": hashlib.sha256(ledger.encode()).hexdigest()}
+    manifest["ledgerPath"] = str(ledger_path)
     (frozen / "manifest.json").write_text(json.dumps(manifest, indent=1), encoding="utf-8")
-    (frozen / "ledger.txt").write_text(ledger, encoding="utf-8")
+    if not spec.get("ledgerFrom"):
+        ledger_path.write_text("", encoding="utf-8")
     print(json.dumps({"frozen": str(frozen), "manifest": sha(frozen / "manifest.json"), "controls": ids}))
     return 0
 
@@ -206,18 +211,23 @@ def verify(frozen, control):
     manifest = json.loads((frozen / "manifest.json").read_text(encoding="utf-8"))
     build = Path(manifest["build"])
     problems = []
+    if not ledger_path(frozen).is_file():
+        problems.append("the shared series ledger is missing")
     if control not in manifest["controls"]:
         return [f"unknown control {control}"]
     entry = manifest["controls"][control]
     packet = frozen / "packets" / control
     expected = {"assessment Pass": (frozen / "kit" / "model-assessment" / "assessment-pass.json", manifest["assessmentPass"]),
                 "harness": (build / "assessment.test", manifest["harness"]), "CLI": (build / "markitect", manifest["cli"]),
+                "build declaration": (build / "build.txt", manifest["buildDeclaration"]),
+                "runtime environment": (build / "runtime.env", manifest["runtimeEnv"]),
                 "expectation": (frozen / "controls" / f"{control}.json", entry["expectation"])}
     for name, (path, digest) in expected.items():
         if not path.is_file() or sha(path) != digest:
             problems.append(f"the {name} {path} is not the frozen one")
     actual = kit_hashes(frozen / "kit")
     problems += [f"kit file {p} changed or missing" for p, digest in manifest["kit"].items() if actual.get(p) != digest]
+    problems += [f"kit file {p} was added after freeze" for p in sorted(actual.keys() - manifest["kit"].keys())]
     problems += [f"the image {ref} is not the built {iid}" for ref, iid in images(manifest["buildText"]) if image_id(ref) != iid]
     if git(packet, "rev-parse", "HEAD") != entry["head"] or git(packet, "rev-parse", "HEAD^{tree}") != entry["tree"] or git(packet, "status", "--porcelain"):
         problems.append(f"the packet {packet} is not the frozen commit")
@@ -231,6 +241,11 @@ def ceilings(frozen):
     return f"{c['attempts']} {c['summedSeconds']} {c['attemptSeconds']} {c['model']} {c['effort']}"
 
 
+def ledger_path(frozen):
+    """The series-wide ledger; successor freezes keep the original lock directory."""
+    return Path(json.loads((frozen / "manifest.json").read_text(encoding="utf-8"))["ledgerPath"])
+
+
 def main(argv):
     if len(argv) == 4 and argv[1] == "freeze":
         return freeze(argv[2], Path(argv[3]))
@@ -241,6 +256,9 @@ def main(argv):
         return 1 if problems else 0
     if len(argv) == 3 and argv[1] == "ceilings":
         print(ceilings(Path(argv[2]).resolve()))
+        return 0
+    if len(argv) == 3 and argv[1] == "ledger":
+        print(ledger_path(Path(argv[2]).resolve()))
         return 0
     raise SystemExit(__doc__)
 
