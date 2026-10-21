@@ -651,7 +651,7 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
   .where { gap: 6px; }
   .pill .pillword { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .pill { padding: 0 10px; gap: 6px; }
-  .atab { padding: 5px 8px; gap: 6px; }
+  .atab { padding: 5px 4px; gap: 4px; font-size: 12px; }
   .topbar .bell { width: 32px; min-height: 32px; }
   .where .back { padding: 3px 7px; min-height: 30px; }
 }
