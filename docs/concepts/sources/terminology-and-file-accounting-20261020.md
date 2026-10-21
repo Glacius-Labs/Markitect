@@ -373,6 +373,26 @@ On 21 October 2026, after assessing the completed reference and simplified serie
 
 Recorder's disposition: direct is the selected provisional Apply composition; staged stays an explicit comparison with the same guarantees. This does not assert staged is safer or that the experimental code is already Main. The [workflow amendment](../../design/canonical-model/manager-apply-workflow.md#provisional-direct-baseline-21-october-2026) owns the decision. The [new handoff](../../development/claude-direct-runtime-handoff-20261021.md) refines the proposals into four bounded sessions: runtime/container retest; small independent scenario controls plus an ordinary-Agent packet and one realistic case; separate read-only Model assessment; then matched evaluation. Model assessment remains an experiment before any mandatory gate decision; it cannot certify completeness or edit intent. Kubernetes is a portability constraint, not current cluster implementation scope. The startup prompts propose explicit finite grants activated by the owner's later dispatch; this documentation starts no session or provider run. The earlier blanket deferral of new complexity cases is lifted only for this bounded preparation/comparison plan.
 
+## Owner adoption: exchangeable Apply strategies
+
+After starting the four sessions on 21 October 2026, the owner asked how easily strategies could be selected in tests and normal Apply, including a future checked-model/complete-prompt strategy with one Agent and no Manager tree. The response distinguished the small direct/staged composition change from the additional separation of Package responsibility and execution rights required by a single Agent. It recommended common checked preparation and candidate acceptance/publication around a selected realization strategy, the same selection path for tests and Apply, and learning from B/D's ordinary-Agent comparison before implementing that product strategy.
+
+The owner adopted that direction and bounded the immediate change:
+
+> Das passt. Halte die Richtung auf Main fest und gib mir einen kurzen Ergänzungsprompt für Session A, damit sie die Strategieauswahl entsprechend vorbereitet, ohne jetzt schon die Einzelagent-Strategie zu implementieren.
+
+Recorder's disposition: the [workflow](../../design/canonical-model/manager-apply-workflow.md#strategy-boundary-and-future-extension) owns the accepted extension direction and the [Session A supplement](../../development/claude-direct-runtime-handoff-20261021.md#session-a-supplement-shared-strategy-selection) prepares its bounded implementation. Direct/staged share validated Run-bound selection and acceptance guards; current ownership remains unchanged. Future multi-area execution and a single-Agent product strategy require their own implementation assignment. No new provider grant or start signal is issued, and no session is messaged by this documentation delivery.
+
+## Owner adoption: model context delivery
+
+On 21 October 2026 the owner asked whether Agents receive assembled model content or must discover it by reading every file. The source inspection at Main `dec1de6e` found deterministic context selection and Brief rendering with full selected bodies/spec fields, Root's project inventory, bound Definition lookup, initial Brief delivery and conversation reuse. The response recommended automatically supplying required content, retrieving supplementary context, explicitly checking selection versus actual delivery, and avoiding silent loss at size limits or conversation compaction. It distinguished these from proof of semantic completeness or Agent understanding.
+
+The owner adopted the direction and requested a Main record:
+
+> Das passt. Halte auch diese Richtung auf Main fest. Die Vollständigkeit der übergebenen Modellinhalte sollten wir gezielt prüfen.
+
+Recorder's disposition: the [workflow](../../design/canonical-model/manager-apply-workflow.md#model-context-delivery-and-completeness) owns the direction and the [current handoff](../../development/claude-direct-runtime-handoff-20261021.md#targeted-checks-model-context-completeness) adds discriminating technical and packet-equivalence checks to the existing owners. This documents expected checks and implementation boundaries, not execution of those checks, a new context framework, an added provider series or a message/start signal to the running sessions.
+
 ## Owner adoption: evidence-driven Apply hardening
 
 After discussing draft PR #536, the owner asked how to prevent reviewers from filling the new fields while still missing the same defect, and proposed making Managers suspicious of unsupported success. The response proposed active counterexample search, expectations derived from authority independently of existing assertions, tool-recorded observations, parent assessment of the actual evidence, and faulty/conforming evaluation controls. It explicitly rejected finding quotas and kept concrete unresolved conformity questions blocking.
