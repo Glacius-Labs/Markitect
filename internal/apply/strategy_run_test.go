@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"reflect"
 	"regexp"
 	"slices"
@@ -23,14 +24,18 @@ import (
 // preserving each own obligation, and every reviewer cites an inspected source
 // for each own obligation. unstopped names a Manager whose first work turn
 // reports no observed stop of its writers. The reviewer of finds raises one
-// genuine finding on its first obligation in its first Verify and disproves it
-// in the next. A refused tool call fails the test, so the script cannot drift
-// from the engine's protocol unnoticed.
+// genuine finding on its first obligation in its first Verify, naming the
+// earliest correction correction (implement when empty), and disproves it in
+// the next; a refused correction is kept in refused and the finding raised for
+// implement instead. Any other refused tool call fails the test, so the script
+// cannot drift from the engine's protocol unnoticed.
 type preservingAgents struct {
 	t           *testing.T
 	obligations map[string][]string
 	unstopped   string
 	finds       string
+	correction  string
+	refused     []string
 	mu          sync.Mutex
 	turns       []run.Turn
 	raised      bool
@@ -92,7 +97,11 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 			switch {
 			case raise && i == 0:
 				entry["status"], entry["note"] = "open", "The scripted finding holds it open."
-				report["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": id, "observed": "A scripted counterexample.", "blocking": true, "correction": "implement"}}
+				correction := a.correction
+				if correction == "" {
+					correction = "implement"
+				}
+				report["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": id, "observed": "A scripted counterexample.", "blocking": true, "correction": correction}}
 			case turn.Kind == run.VerifyTurn:
 				entry["evidence"] = []map[string]any{{"claim": "the stand keeps " + id, "source": ".markitect/execution.yaml", "location": "the whole file", "reasoning": "This scripted reviewer inspected the stand."}}
 			}
@@ -123,7 +132,20 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	case strings.HasPrefix(now, "work on your own contribution"):
 		call("report", submission("basis"))
 	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
-		call("report", submission("result"))
+		report := submission("result")
+		findings, _ := report["findings"].([]map[string]any)
+		if len(findings) == 1 && findings[0]["correction"] != "implement" {
+			data, _ := json.Marshal(report)
+			answer := tools(ctx, "report", data)
+			if !answer.Refused {
+				break
+			}
+			a.mu.Lock()
+			a.refused = append(a.refused, answer.Text)
+			a.mu.Unlock()
+			findings[0]["correction"] = "implement"
+		}
+		call("report", report)
 	}
 	stopped := true
 	if turn.Manager == a.unstopped && turn.Kind == run.ExecuteTurn {
@@ -191,7 +213,15 @@ func (w *treeWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.Works
 // the product preparation, as every Apply does.
 func strategyRequest(t *testing.T, strategy string) apply.ApplyRequest {
 	t.Helper()
-	selection, raw := executionInputs(t, strings.Replace(withOwnership(t, libraryOwnershipYAML), "strategy: direct", "strategy: "+strategy, 1))
+	return strategyRequestWithTurns(t, strategy, 120)
+}
+
+// strategyRequestWithTurns also sets the budget's agent turns.
+func strategyRequestWithTurns(t *testing.T, strategy string, turns int) apply.ApplyRequest {
+	t.Helper()
+	execution := strings.Replace(withOwnership(t, libraryOwnershipYAML), "strategy: direct", "strategy: "+strategy, 1)
+	execution = strings.Replace(execution, "agentTurns: 120", fmt.Sprintf("agentTurns: %d", turns), 1)
+	selection, raw := executionInputs(t, execution)
 	libraryLayoutFiles(t, &selection, &raw)
 	return apply.ApplyRequest{RunID: "run-1", Prepared: preparedAttempt(t, selection, raw), Selection: apply.InputSelection{Repository: "/repo"}, Build: "test-build",
 		MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest, RequireVolumeSubpaths: func(context.Context) error { return nil }}
@@ -203,6 +233,12 @@ func strategyRequest(t *testing.T, strategy string) apply.ApplyRequest {
 // guarded publication of the verified candidate. The binding of the strategy,
 // the effective settings and the build is recorded before any Agent work.
 func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
+	compositions := map[string]string{}
+	t.Cleanup(func() {
+		if d, s := compositions["direct"], compositions["staged"]; !strings.HasPrefix(d, "sha256:") || !strings.HasPrefix(s, "sha256:") || d == s {
+			t.Errorf("composition digests direct %q, staged %q", d, s)
+		}
+	})
 	for _, tc := range []struct {
 		strategy string
 		work     []run.Purpose
@@ -255,6 +291,7 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 				t.Fatalf("publication %+v receipt %+v closed %v", publisher.requests, result.Receipt, workspaces.closed)
 			}
 			b := result.Binding
+			compositions[tc.strategy] = b.Composition
 			if b.Entry != "apply" || string(b.Strategy) != tc.strategy || !slices.Equal(b.Work, tc.work) || b.Build != "test-build" || !strings.HasPrefix(b.Execution, ".markitect/execution.yaml@") || !strings.HasPrefix(b.Defaults, "product:apply/defaults.yaml@") {
 				t.Fatalf("binding %+v", b)
 			}
@@ -305,19 +342,23 @@ func TestBothStrategiesStopWithoutObservedWriterCessation(t *testing.T) {
 // fresh Verify closes it before anything is published.
 func TestBothStrategiesCorrectAFindingThroughAFreshVerify(t *testing.T) {
 	for _, tc := range []struct {
-		strategy string
-		passes   []run.Purpose
+		strategy, correction string
+		passes               []run.Purpose
+		refused              bool
 	}{
-		{"direct", []run.Purpose{run.Implement, run.Verify, run.Implement, run.Verify}},
-		{"staged", []run.Purpose{run.Plan, run.Prepare, run.Implement, run.Verify, run.Implement, run.Verify}},
+		// direct knows only implement: a finding that names plan is refused.
+		{"direct", "plan", []run.Purpose{run.Implement, run.Verify, run.Implement, run.Verify}, true},
+		// staged restarts at the earliest purpose the finding names.
+		{"staged", "prepare", []run.Purpose{run.Plan, run.Prepare, run.Implement, run.Verify, run.Prepare, run.Implement, run.Verify}, false},
 	} {
 		t.Run(tc.strategy, func(t *testing.T) {
-			req := strategyRequest(t, tc.strategy)
+			// Seven Passes of six Managers need more turns than the fixture's 120.
+			req := strategyRequestWithTurns(t, tc.strategy, 400)
 			cfg, err := apply.BuildApplyConfig(req, time.Now())
 			if err != nil {
 				t.Fatal(err)
 			}
-			agents := &preservingAgents{t: t, obligations: map[string][]string{}, finds: "lending/reminders"}
+			agents := &preservingAgents{t: t, obligations: map[string][]string{}, finds: "lending/reminders", correction: tc.correction}
 			for _, m := range cfg.Team {
 				agents.obligations[m.Path] = m.Obligations
 			}
@@ -332,8 +373,12 @@ func TestBothStrategiesCorrectAFindingThroughAFreshVerify(t *testing.T) {
 			for _, p := range result.Outcome.Passes {
 				purposes, verdicts = append(purposes, p.Purpose), append(verdicts, p.Verdict)
 			}
-			if !slices.Equal(purposes, tc.passes) || verdicts[len(tc.passes)-3] != run.NeedsCorrection || verdicts[len(tc.passes)-1] != run.Satisfied {
+			verify := slices.Index(purposes, run.Verify)
+			if !slices.Equal(purposes, tc.passes) || verify < 0 || verdicts[verify] != run.NeedsCorrection || verdicts[len(tc.passes)-1] != run.Satisfied {
 				t.Fatalf("passes %v verdicts %v", purposes, verdicts)
+			}
+			if refused := len(agents.refused) == 1 && strings.Contains(agents.refused[0], "correction"); refused != tc.refused {
+				t.Errorf("correction %s refused %v: %v", tc.correction, refused, agents.refused)
 			}
 			if len(result.Outcome.Findings) != 1 || !result.Outcome.Findings[0].Closed || result.Outcome.Findings[0].ClosedAs != "disproved" || len(publisher.requests) != 1 {
 				t.Fatalf("findings %+v, publications %d", result.Outcome.Findings, len(publisher.requests))
