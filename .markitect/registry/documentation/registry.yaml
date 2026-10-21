@@ -1904,6 +1904,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: "Records the cockpit's start and stop of an Apply: checks with an injected execution function, a synthetic page demonstration and what remains unproved without a real run."
+  - path: "docs/validation/cockpit-run-concepts-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    why: "Records how the run inspector now reads the current Apply concept (Model assessment verdict, observation kinds, probes, context coverage, strategy, closed Runs), its checks, a demonstration on two real runs and what the record still does not establish."
   - path: "docs/validation/cockpit-projects-20261021.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
