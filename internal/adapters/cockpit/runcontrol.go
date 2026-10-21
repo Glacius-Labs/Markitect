@@ -303,15 +303,22 @@ func (c *RunController) ReadFacts(ctx context.Context) (RunFacts, error) {
 		c.wg.Add(1)
 		go func() {
 			defer c.wg.Done()
+			// A failed read is the waiters' error; it never ends the cockpit
+			// and a run it holds, and the waiters are always released.
+			defer func() {
+				if r := recover(); r != nil {
+					call.facts, call.err = RunFacts{}, fmt.Errorf("reading the confirmation facts failed: %v", r)
+				}
+				c.mu.Lock()
+				c.facts = nil
+				c.mu.Unlock()
+				close(call.done)
+			}()
 			// The capture belongs to no request, so a waiter that leaves does
 			// not cancel it for the others.
 			readCtx, cancel := context.WithTimeout(c.base, factsTimeout)
 			defer cancel()
 			call.facts, call.err = c.cfg.Facts(readCtx)
-			c.mu.Lock()
-			c.facts = nil
-			c.mu.Unlock()
-			close(call.done)
 		}()
 	}
 	c.mu.Unlock()

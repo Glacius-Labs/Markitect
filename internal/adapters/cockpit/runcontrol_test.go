@@ -361,6 +361,33 @@ func TestRunControlSharesOneFactsReadBetweenConcurrentRequests(t *testing.T) {
 	}
 }
 
+func TestRunControlFactsReadThatPanicsIsAnErrorAndReleasesTheRead(t *testing.T) {
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	panics := true
+	runs := NewRunController(ctx, RunControlConfig{
+		StateDir: t.TempDir(),
+		Facts: func(context.Context) (RunFacts, error) {
+			if panics {
+				panic("broken profile")
+			}
+			return RunFacts{Head: confirmedHead}, nil
+		},
+		Head:    func(context.Context) (string, error) { return confirmedHead, nil },
+		Execute: newFakeRun().execute,
+		Held:    func() (string, error) { return "", nil },
+	})
+	if _, err := runs.ReadFacts(context.Background()); err == nil || !strings.Contains(err.Error(), "broken profile") {
+		t.Fatalf("a panicking read = %v, want its error", err)
+	}
+	panics = false
+	if facts, err := runs.ReadFacts(context.Background()); err != nil || facts.Head != confirmedHead {
+		t.Fatalf("the next read = %+v, %v", facts, err)
+	}
+	cancel()
+	runs.Wait()
+}
+
 func TestRunControlFactsAreReadOnlyWhenAskedFor(t *testing.T) {
 	f := newRunFixture(t, context.Background())
 	f.status(t)

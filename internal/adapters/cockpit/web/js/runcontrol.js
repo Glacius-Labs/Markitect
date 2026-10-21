@@ -108,6 +108,7 @@ function mount(el, render) {
 // ---------- actions ----------
 
 function openConfirmation() {
+  ui.focusHeading = false;
   ui.step = "confirm";
   ui.facts = null;
   ui.factsError = "";
