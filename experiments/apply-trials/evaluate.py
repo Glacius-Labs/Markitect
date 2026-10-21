@@ -136,6 +136,7 @@ def independent_disproof(item, passes):
             and raised.get("review") and closed.get("review")
             and raised.get("purpose") == closed.get("purpose") == "verify"
             and raised.get("tree") == closed.get("tree") == item.get("candidate")
+            and item.get("closedCandidate", item.get("candidate")) == item.get("candidate")
             and next((index for index, entry in enumerate(passes) if entry is closed), -1)
                 > next((index for index, entry in enumerate(passes) if entry is raised), -1))
 
@@ -147,7 +148,7 @@ def false_blockers(findings, passes):
     than automatic condemnation merely because a bounded oracle accepts the stand.
     """
     return [item["id"] for item in findings if item.get("blocking") and item.get("raisedBy") != "markitect"
-            and independent_disproof(item, passes)]
+            and item.get("kind") != "suspected" and independent_disproof(item, passes)]
 
 
 # -- the arm-neutral outcome ------------------------------------------------------------

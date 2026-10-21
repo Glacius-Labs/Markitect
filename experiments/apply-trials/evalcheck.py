@@ -265,9 +265,17 @@ def check_dispositions(report):
     report.expect(evaluate.false_blockers([closed], passes) == ["F1"], "proven false factual blocker escaped quality score")
     suspicion = finding("F2", "depot/orders", SUSPICION, True)
     report.expect(not evaluate.false_blockers([suspicion], passes), "unresolved concrete suspicion called a proven false claim")
+    settled = dict(closed, kind="suspected", closedCandidate="s1")
+    report.expect(not evaluate.false_blockers([settled], passes), "a properly investigated suspicion was a false factual claim")
+    assessed = {"changes": {"all": [], "protectedInputsChanged": []}, "behavior": {"passed": True},
+                "tests": {"passed": True}}
+    accepted = dict(summary, findings=[settled], runStatus="verified", publication="no_change", reason="")
+    report.expect(evaluate.outcome(BY_ID["A2"], "direct", assessed, accepted, None)[0] == evaluate.MET,
+                  "settled suspicion prevented conforming no-change acceptance")
     report.expect(not evaluate.false_blockers([original], passes), "closed=True alone fabricated independent disproof")
     for label, mutation in (("absent-pass", dict(closed, closedPass="missing")),
-                            ("wrong-candidate", dict(closed, candidate="another"))):
+                            ("wrong-candidate", dict(closed, candidate="another")),
+                            ("wrong-closed-candidate", dict(closed, closedCandidate="another"))):
         bad = evaluate.process(BY_ID["A2"], dict(summary, findings=[mutation]),
                                [event("pass.start", ".", purpose="verify")])
         report.expect(bad["verdict"] != evaluate.MET, "invalid disproof accepted: " + label)
@@ -571,7 +579,7 @@ def check_primary_goal(report, python, folder):
     selfcheck.materialize("H-I", repo)
     children = {}
     for child in ("rooms", "bookings"):
-        done = subprocess.run([*python, "-B", "-m", "unittest", "discover", "-s", child],
+        done = subprocess.run([*python, "-B", "-m", "unittest", "discover", "-s", child, "-t", "."],
                               cwd=repo / "realization", capture_output=True, text=True)
         children[child] = done.returncode == 0
     checked = evaluate.oracle.assess("hall", "h1", repo / "realization", python)
