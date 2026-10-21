@@ -89,3 +89,13 @@ export function usageText(p) {
 export function digest(d) {
   return d ? d.slice(0, 12) : "";
 }
+
+// confirmsModelProblem says whether Pass p is the Assess Pass that confirmed
+// the run's model problem: the run ended on one, and p is the last Assess
+// Pass, sealed needing correction. An earlier, clean assessment keeps its own
+// verdict.
+export function confirmsModelProblem(view, p) {
+  if (view.status.ending !== "model_problem" || p.purpose !== "assess" || !p.sealed || p.verdict !== "needs_correction") return false;
+  const last = view.passes.filter((x) => x.purpose === "assess").at(-1);
+  return last?.id === p.id;
+}

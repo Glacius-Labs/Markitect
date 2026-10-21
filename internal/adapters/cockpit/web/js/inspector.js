@@ -7,7 +7,7 @@
 
 import { api } from "./api.js";
 import { h, clear, icon, clock, since, label, announce, when, duration } from "./dom.js";
-import { outcomeFacts, passTitle, publicationText, usageText } from "./runfacts.js";
+import { outcomeFacts, passTitle, publicationText, usageText, confirmsModelProblem } from "./runfacts.js";
 import { Playback, SPEEDS } from "./playback.js";
 import { Diagram } from "./diagram.js";
 import { Timeline } from "./timeline.js";
@@ -389,7 +389,7 @@ export class Inspector {
     const v = this.view;
     const items = v.passes.filter((p) => p.started).map((p) => {
       const stateCls = p.sealed ? `sealed-${p.verdict}` : v.status.outcome ? "stopped" : "running";
-      const modelProblem = p.purpose === "assess" && p.sealed && v.status.ending === "model_problem";
+      const modelProblem = confirmsModelProblem(v, p);
       const meta = p.sealed
         ? `${modelProblem ? "model problem confirmed" : p.verdict === "satisfied" ? "sealed satisfied" : "needs correction"}${p.review && p.checks?.length ? `, checks ${p.checks.every((c) => c.passed) ? "passed" : "failed"}` : ""}`
         : v.status.outcome ? "ended unsealed" : "running";

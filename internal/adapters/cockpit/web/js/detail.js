@@ -5,7 +5,7 @@
 
 import { h, clear, clock, since, label, stateWord, shortDigest, duration } from "./dom.js";
 import { activity } from "./diagram.js";
-import { passTitle, passRef, plural, usageText, buildText } from "./runfacts.js";
+import { passTitle, passRef, plural, usageText, buildText, confirmsModelProblem } from "./runfacts.js";
 
 export function renderDetail(aside, ctx) {
   const token = (aside._token = (aside._token || 0) + 1);
@@ -656,7 +656,7 @@ function assessment(c, p) {
   const { view, r } = c;
   const model = view.findings.filter((f) => f.pass === p.id);
   const open = model.filter((f) => f.effect === "blocks");
-  const problem = view.status.ending === "model_problem";
+  const problem = confirmsModelProblem(view, p);
   const box = h("div", { class: `verdict ${problem ? "v-problem" : p.sealed ? "v-ok" : "v-run"}`, role: "group", "aria-label": "Assessment verdict" });
   if (problem) {
     box.append(h("div", { class: "vhead" }, "Model problem confirmed — nothing published."), h("div", {}, "Correct the model and start a new run."));
