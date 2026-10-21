@@ -53,9 +53,10 @@ func listProcesses(self int) ([]frame.Process, error) {
 	return out, nil
 }
 
-// parseStat reads pid, command, state, parent and process group from one
-// /proc/<pid>/stat line. The command may itself contain spaces and
-// parentheses, so it ends at the last closing parenthesis.
+// parseStat reads pid, command, state, parent, process group and, when the
+// line has it, the thread count from one /proc/<pid>/stat line. The command
+// may itself contain spaces and parentheses, so it ends at the last closing
+// parenthesis.
 func parseStat(line string) (frame.Process, error) {
 	lp, rp := strings.IndexByte(line, '('), strings.LastIndexByte(line, ')')
 	if lp < 0 || rp < lp {
@@ -74,5 +75,12 @@ func parseStat(line string) (frame.Process, error) {
 	if err1 != nil || err2 != nil {
 		return frame.Process{}, fmt.Errorf("malformed stat %q", line)
 	}
-	return frame.Process{PID: pid, PPID: ppid, PGID: pgid, State: rest[0], Command: line[lp+1 : rp]}, nil
+	p := frame.Process{PID: pid, PPID: ppid, PGID: pgid, State: rest[0], Command: line[lp+1 : rp]}
+	// num_threads is field 20 of the line, the 18th after the command.
+	if len(rest) > 17 {
+		if n, err := strconv.Atoi(rest[17]); err == nil {
+			p.Threads = n
+		}
+	}
+	return p, nil
 }

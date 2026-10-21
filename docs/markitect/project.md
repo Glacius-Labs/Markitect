@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:75fb0002e9ac037965d6f9fa03f6cc9d9b38c06b8e09bc0133f68629c7da62e5`.
+Canonical model digest: `sha256:07ae145f7e381dccc944198d9ee4ca25335b3b9612d1d6d1fd30741b42662bec`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -220,9 +220,9 @@ Bind each Run to the exact starting commit, model and dependency locks, ownershi
 
 ### product/runtime/container-runtime
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/runtime/container-runtime.yaml` (original bytes `sha256:1b5bbe332d5dde94e39eb52d99742a8d38071a45c2deaf01a16bcd63cbae3c3d`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/runtime/container-runtime.yaml` (original bytes `sha256:7a2f81fef6976e7e94d7fa9dd4bfbbc683a6959b828eceaf7e25362b08b2bb6f`).
 
-Run every Agent session and project check in its own hardened Linux container from a runtime image named by its engine image ID. markitect-agentd is the only program the Orchestrator talks to: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket inside the container and reports exits, adding no policy. The Orchestrator passes only validated specs to the engine, gives containers named volumes and never host paths, mounts the shared tree read-only with only the session's permitted directories and exact files overlaid writable and other owners' deeper ones read-only, runs them as a non-root user with a read-only root filesystem, no capabilities and bounded resources, and refuses a different frame protocol.
+Run every Agent session and project check in a hardened Linux container from a runtime image named by its engine image ID: a check, a probe and a helper turn in a fresh container of their own, the turns of one Manager's or reviewer's conversation in that working environment's kept container for exactly the turn's capabilities (image, mounts with their writability, home and resources), never with other rights than it was created with. Before a turn ends, every process it started has ended as a process census of the container observes, or the container is removed and its removal observed; otherwise the turn did not stop. Nothing runs in a kept container between turns, reviewers' containers end with their review Pass and all others with the Run, and the scheduling of a Run depends on no container engine. markitect-agentd is the only program the Orchestrator talks to: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket inside the container and reports exits, adding no policy. The Orchestrator passes only validated specs to the engine, gives containers named volumes and never host paths, mounts the shared tree read-only with only the session's permitted directories and exact files overlaid writable and other owners' deeper ones read-only, runs them as a non-root user with a read-only root filesystem, no capabilities and bounded resources, and refuses a different frame protocol.
 
 ### product/snapshot/fixed-values
 

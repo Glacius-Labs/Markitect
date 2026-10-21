@@ -92,6 +92,18 @@ artifacts:
     form: code
     realizes: [product/runtime/container-runtime]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/container/instance.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: "Holds a reusable container with agentd as its idle-bounded PID 1, executes agentd sessions in it, reaps it with a process census and removes it."
+  - path: "internal/adapters/container/instance_integration_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: "Checks against a real engine that held instances carry several sessions, that escaped writers are reaped, that read-only views stay read-only and that an idle instance ends."
+  - path: "internal/adapters/container/instance_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: "Checks that removing an instance the engine no longer knows confirms its end and that no session runs as the holder's user."
   - path: "internal/adapters/container/spec_test.go"
     form: test
     realizes: [product/runtime/container-runtime]
@@ -116,6 +128,22 @@ artifacts:
     form: code
     realizes: [product/runtime/container-runtime]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/agentd/hold.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: "Implements agentd hold and reap: an idle holder as PID 1 and the end of every other process of the container with a census."
+  - path: "internal/agentd/hold_linux.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: "Signals every process the provider user may reach and refuses unless PID 1 is the holder."
+  - path: "internal/agentd/hold_other.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: "Refuses hold and reap outside Linux."
+  - path: "internal/agentd/hold_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: "Checks that the reap's census counts a zombie leader whose threads still run and nothing that can no longer write."
   - path: "internal/agentd/frame/frame.go"
     form: code
     realizes: [product/runtime/container-runtime]

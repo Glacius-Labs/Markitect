@@ -252,11 +252,25 @@ func (e *engine) passEnded(p *pass) PassResult {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if p.candidate != "" {
+		e.releaseEnvironments(p.reviewEnvironmentsLocked())
 		e.closeVolume(p.candidate)
 		p.candidate = ""
 	}
 	e.verified = nil
 	return PassResult{Record: p.recordLocked(), Stopped: true}
+}
+
+// reviewEnvironmentsLocked names the reviewers' environments of a review
+// Pass, none for a work Pass.
+func (p *pass) reviewEnvironmentsLocked() []string {
+	if !p.spec.Review {
+		return nil
+	}
+	names := []string{}
+	for _, m := range p.members {
+		names = append(names, m.reviewHome)
+	}
+	return names
 }
 
 func (p *pass) closableLocked() bool {
@@ -893,7 +907,10 @@ func (e *engine) seal(p *pass) PassResult {
 	_ = e.record(Event{Kind: "pass.sealed", Pass: p.id, Data: map[string]any{"purpose": p.spec.Purpose, "verdict": p.verdict, "tree": p.sealedOn, "managers": record.Managers}})
 	candidate := p.candidate
 	p.candidate = ""
+	reviewers := p.reviewEnvironmentsLocked()
 	e.mu.Unlock()
+	// The reviewers' environments end with their Pass, before its candidate.
+	e.releaseEnvironments(reviewers)
 	view := e.cfg.Registry(stand)
 	_ = e.record(Event{Kind: "registry.view", Pass: p.id, Data: view})
 	if candidate != "" {

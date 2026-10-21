@@ -158,21 +158,79 @@ func (f *fakeRuntime) Close() error {
 	return f.closeErr
 }
 
+// harness plays the Runtime: every Hold starts a fake instance whose sessions
+// are the harness's fake provider runtimes, the given one first and then those
+// next supplies.
 type harness struct {
-	t       *testing.T
-	runtime *fakeRuntime
-	starts  int
-	agents  *Agents
+	t         *testing.T
+	runtime   *fakeRuntime
+	next      func() *fakeRuntime
+	starts    int
+	instances []*fakeInstance
+	agents    *Agents
+	// holdErr fails the next Hold; the instances take reap and removal faults
+	// from the harness when they start.
+	holdErr   error
+	remaining []frame.Process
+	reapErr   error
+	removeErr error
+	execErr   error
+}
+
+// fakeInstance is one held fake container.
+type fakeInstance struct {
+	h         *harness
+	name      string
+	spec      container.ContainerSpec
+	execs     int
+	reaps     int
+	removed   int
+	remaining []frame.Process
+	reapErr   error
+	removeErr error
+	execErr   error
+}
+
+func (h *harness) Hold(_ context.Context, spec container.ContainerSpec) (Instance, error) {
+	if err := h.holdErr; err != nil {
+		h.holdErr = nil
+		return nil, err
+	}
+	h.starts++
+	h.runtime.spec = spec
+	inst := &fakeInstance{h: h, name: spec.Name, spec: spec, remaining: h.remaining, reapErr: h.reapErr, removeErr: h.removeErr, execErr: h.execErr}
+	h.instances = append(h.instances, inst)
+	return inst, nil
+}
+
+func (i *fakeInstance) Name() string { return i.name }
+func (i *fakeInstance) Exec(context.Context) (RuntimeSession, error) {
+	if i.execErr != nil {
+		return nil, i.execErr
+	}
+	i.execs++
+	if i.execs > 1 || i != i.h.instances[0] {
+		if i.h.next == nil {
+			i.h.t.Fatal("a further session without a next fake runtime")
+		}
+		i.h.runtime = i.h.next()
+		i.h.runtime.spec = i.spec
+	}
+	return i.h.runtime, nil
+}
+func (i *fakeInstance) Reap(context.Context) ([]frame.Process, error) {
+	i.reaps++
+	return i.remaining, i.reapErr
+}
+func (i *fakeInstance) Remove(context.Context) error {
+	i.removed++
+	return i.removeErr
 }
 
 func newHarness(t *testing.T, rt *fakeRuntime, profile Profile) *harness {
 	t.Helper()
 	h := &harness{t: t, runtime: rt}
-	agents, err := NewAgentsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
-		h.starts++
-		rt.spec = spec
-		return rt, nil
-	}, map[string]Profile{"claude": profile}, func(_ context.Context, ref string) (RuntimeCredential, error) {
+	agents, err := NewAgentsWithRuntime(h, map[string]Profile{"claude": profile}, func(_ context.Context, ref string) (RuntimeCredential, error) {
 		if ref != "ref" {
 			return RuntimeCredential{}, errors.New("unknown credential")
 		}
@@ -483,32 +541,35 @@ func TestCancelWhileAnOrchestratorToolRuns(t *testing.T) {
 	}
 }
 
+// An unobserved provider exit or session end is no cessation proof either
+// way: the reap of the instance decides. When the reap leaves a process and the
+// instance's removal is not observed either, the turn is not stopped.
 func TestUncertainStopIsReportedAsNotStopped(t *testing.T) {
-	rt := newFakeRuntime()
-	rt.stopErr = errors.New("engine unreachable " + testToken)
-	h := newHarness(t, rt, validProfile())
-	res, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
-	if err == nil || res.Stopped || !strings.Contains(res.Reason, "provider exit not observed") || res.Final != "all done" {
-		t.Fatalf("%v %+v", err, res)
-	}
-	if strings.Contains(err.Error(), testToken) || strings.Contains(res.Reason, testToken) {
-		t.Fatal("token leaked")
-	}
-	if !rt.closed {
-		t.Fatal("runtime not closed")
-	}
-}
-
-func TestForcedCloseIsNotAnObservedContainerEnd(t *testing.T) {
-	rt := newFakeRuntime()
-	rt.closeErr = errors.Join(container.ErrForcedClose, errors.New("engine "+testToken))
-	h := newHarness(t, rt, validProfile())
-	res, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
-	if !errors.Is(err, container.ErrForcedClose) || res.Stopped || !strings.Contains(res.Reason, "container end was not") || res.Final != "all done" {
-		t.Fatalf("%v %+v", err, res)
-	}
-	if strings.Contains(err.Error(), testToken) || strings.Contains(res.Reason, testToken) {
-		t.Fatal("token leaked")
+	for _, tc := range []struct {
+		name               string
+		stopErr, closeErr  error
+		reapErr, removeErr error
+		stopped            bool
+		reason             string
+	}{
+		{"provider exit unobserved, reaped", errors.New("engine unreachable " + testToken), nil, nil, nil, true, "provider exit not observed"},
+		{"session end forced, reaped", nil, errors.Join(container.ErrForcedClose, errors.New("engine "+testToken)), nil, nil, true, "agentd session end not observed"},
+		{"reap and removal fail", errors.New("engine unreachable " + testToken), nil, errors.New("exec failed"), errors.New("rm failed"), false, "removal was not observed"},
+		{"reap fails, removal observed", nil, nil, errors.New("exec failed"), nil, true, "the instance was removed"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rt := newFakeRuntime()
+			rt.stopErr, rt.closeErr = tc.stopErr, tc.closeErr
+			h := newHarness(t, rt, validProfile())
+			h.reapErr, h.removeErr = tc.reapErr, tc.removeErr
+			res, err := h.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
+			if res.Stopped != tc.stopped || !strings.Contains(res.Reason, tc.reason) || res.Final != "all done" || !rt.closed {
+				t.Fatalf("%v %+v", err, res)
+			}
+			if err != nil && strings.Contains(err.Error(), testToken) || strings.Contains(res.Reason, testToken) {
+				t.Fatal("token leaked")
+			}
+		})
 	}
 }
 
@@ -577,15 +638,9 @@ func TestStartFailuresReportNoObservedExit(t *testing.T) {
 	if err == nil || strings.Contains(err.Error(), testToken) || !res.Stopped || rt.stopCalls != 1 {
 		t.Fatalf("provider start failure must still stop the container: %v %+v", err, res)
 	}
-	failing, err := NewAgentsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) {
-		return nil, errors.New("no engine")
-	}, map[string]Profile{"claude": validProfile()}, func(context.Context, string) (RuntimeCredential, error) {
-		return RuntimeCredential{Token: testToken}, nil
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	res, err = failing.Run(context.Background(), testTurn(), echoHandler(new([]string)))
+	failing := newHarness(t, newFakeRuntime(), validProfile())
+	failing.holdErr = errors.New("no engine")
+	res, err = failing.agents.Run(context.Background(), testTurn(), echoHandler(new([]string)))
 	if err == nil || res.Stopped || res.Reason == "" {
 		t.Fatalf("%v %+v", err, res)
 	}
@@ -646,7 +701,7 @@ func TestCredentialFailureStartsNothing(t *testing.T) {
 }
 
 func TestConstructorsRefuseInvalidInput(t *testing.T) {
-	start := func(context.Context, container.ContainerSpec) (RuntimeSession, error) { return nil, nil }
+	start := &harness{t: t}
 	creds := func(context.Context, string) (RuntimeCredential, error) { return RuntimeCredential{}, nil }
 	bad := validProfile()
 	bad.Session.Effort = "max"

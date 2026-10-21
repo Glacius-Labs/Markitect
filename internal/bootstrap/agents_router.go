@@ -3,6 +3,8 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"reflect"
+	"slices"
 
 	runport "github.com/Glacius-Labs/Markitect/internal/run"
 )
@@ -14,7 +16,10 @@ type agentsRouter struct {
 	routes map[string]runport.Agents
 }
 
-var _ runport.Agents = agentsRouter{}
+var (
+	_ runport.Agents       = agentsRouter{}
+	_ runport.Environments = agentsRouter{}
+)
 
 func newAgentsRouter(routes map[string]runport.Agents) runport.Agents {
 	copied := make(map[string]runport.Agents, len(routes))
@@ -31,4 +36,28 @@ func (r agentsRouter) Run(ctx context.Context, turn runport.Turn, tools runport.
 		return runport.TurnResult{Stopped: true, Reason: "no Agent adapter for the turn profile"}, fmt.Errorf("%w: turn %s names profile %q, which has no Agent adapter", runport.ErrInvalid, turn.ID, turn.Profile)
 	}
 	return agents.Run(ctx, turn, tools)
+}
+
+// Release asks every adapter that keeps working environments to end the named
+// ones, once per adapter.
+func (r agentsRouter) Release(ctx context.Context, names []string) []runport.EnvironmentRelease {
+	var done []runport.Agents
+	var out []runport.EnvironmentRelease
+	for _, agents := range r.routes {
+		envs, ok := agents.(runport.Environments)
+		if !ok || slices.ContainsFunc(done, func(d runport.Agents) bool { return sameAdapter(d, agents) }) {
+			continue
+		}
+		done = append(done, agents)
+		out = append(out, envs.Release(ctx, names)...)
+	}
+	return out
+}
+
+// sameAdapter reports whether two routes hold the same adapter value; values
+// of a type that cannot be compared count as different, and a second Release
+// of an adapter finds nothing left to end.
+func sameAdapter(a, b runport.Agents) bool {
+	va, vb := reflect.ValueOf(a), reflect.ValueOf(b)
+	return va.IsValid() && va.Type() == vb.Type() && va.Comparable() && vb.Comparable() && va.Equal(vb)
 }
