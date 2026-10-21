@@ -95,6 +95,9 @@ func (s ContainerSpec) args(held bool, entry []string) ([]string, error) {
 	if s.Network != "" && (!namePattern.MatchString(s.Network) || s.Network == "host") {
 		return nil, fmt.Errorf("network %q is not a plain isolated engine network", s.Network)
 	}
+	if s.User == HoldUser {
+		return nil, fmt.Errorf("container %s: user %s is reserved for the holder of a held container", s.Name, HoldUser)
+	}
 	args := []string{"run", "--interactive", "--rm", "--init"}
 	user := s.User
 	if held {

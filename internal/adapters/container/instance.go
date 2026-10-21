@@ -115,7 +115,9 @@ func (i *Instance) Reap(ctx context.Context) ([]frame.Process, error) {
 func (i *Instance) Remove(ctx context.Context) error {
 	ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), removeBound)
 	defer cancel()
-	if _, err := i.e.output(ctx, "rm", "--force", i.id); err != nil {
+	// An instance that ended by itself (its idle bound, an engine restart) is
+	// gone already; the inspection below confirms that.
+	if _, err := i.e.output(ctx, "rm", "--force", i.id); err != nil && !strings.Contains(strings.ToLower(err.Error()), "no such") {
 		return err
 	}
 	// Only the engine's "no such" answer confirms the removal; any other

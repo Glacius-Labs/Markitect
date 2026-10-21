@@ -48,11 +48,12 @@ func Reap(timeout time.Duration) ([]frame.Process, error) {
 }
 
 // live are the processes that can still run: not the init process and not
-// a zombie or dead entry.
+// a zombie or dead entry, unless other threads of a zombie leader's group
+// still run.
 func live(processes []frame.Process) []frame.Process {
 	var out []frame.Process
 	for _, p := range processes {
-		if p.PID != 1 && p.State != "Z" && p.State != "X" {
+		if p.PID != 1 && (p.State != "Z" && p.State != "X" || p.Threads > 1) {
 			out = append(out, p)
 		}
 	}

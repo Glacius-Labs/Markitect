@@ -3,6 +3,7 @@ package bootstrap
 import (
 	"context"
 	"fmt"
+	"reflect"
 	"slices"
 
 	runport "github.com/Glacius-Labs/Markitect/internal/run"
@@ -40,15 +41,23 @@ func (r agentsRouter) Run(ctx context.Context, turn runport.Turn, tools runport.
 // Release asks every adapter that keeps working environments to end the named
 // ones, once per adapter.
 func (r agentsRouter) Release(ctx context.Context, names []string) []runport.EnvironmentRelease {
-	var done []runport.Environments
+	var done []runport.Agents
 	var out []runport.EnvironmentRelease
 	for _, agents := range r.routes {
 		envs, ok := agents.(runport.Environments)
-		if !ok || slices.ContainsFunc(done, func(d runport.Environments) bool { return d == envs }) {
+		if !ok || slices.ContainsFunc(done, func(d runport.Agents) bool { return sameAdapter(d, agents) }) {
 			continue
 		}
-		done = append(done, envs)
+		done = append(done, agents)
 		out = append(out, envs.Release(ctx, names)...)
 	}
 	return out
+}
+
+// sameAdapter reports whether two routes hold the same adapter value; values
+// of a type that cannot be compared count as different, and a second Release
+// of an adapter finds nothing left to end.
+func sameAdapter(a, b runport.Agents) bool {
+	ta := reflect.TypeOf(a)
+	return ta == reflect.TypeOf(b) && ta != nil && ta.Comparable() && a == b
 }

@@ -182,3 +182,31 @@ func TestAnEvictedViewIsRemovedAgainAtTheRelease(t *testing.T) {
 		t.Fatalf("release %+v", got)
 	}
 }
+
+// A kept instance that ended by itself (its idle bound, an engine restart)
+// cannot serve its environment's next turn: its end is confirmed and one new
+// instance serves the turn, saying why.
+func TestAKeptInstanceThatEndedIsReplacedOnce(t *testing.T) {
+	h := envHarness(t)
+	mustRun(t, h, envTurn("t1", true))
+	h.instances[0].execErr = errors.New("No such container: markitect-run-1-lending-m-g1")
+	next := mustRun(t, h, envTurn("t2", true))
+	if h.starts != 2 || h.instances[0].removed != 1 || next.Instance.Reused || next.Instance.Generation != 2 || !strings.HasPrefix(next.Instance.Started, "its kept instance had ended") {
+		t.Fatalf("replacement %+v; removed %d", next.Instance, h.instances[0].removed)
+	}
+}
+
+// An instance whose removal after surviving writers was not observed stays
+// the adapter's responsibility: the release removes it again.
+func TestAnUnremovedInstanceIsRemovedAgainAtTheRelease(t *testing.T) {
+	h := envHarness(t)
+	h.remaining, h.removeErr = []frame.Process{{PID: 43, State: "R"}}, errors.New("engine gone")
+	if res, _ := h.agents.Run(context.Background(), envTurn("t1", true), echoHandler(new([]string))); res.Stopped {
+		t.Fatalf("a turn without an observed end stopped: %+v", res)
+	}
+	h.instances[0].removeErr = nil
+	got := h.agents.Release(context.Background(), nil)
+	if len(got) != 1 || got[0].Instance != h.instances[0].name || !got[0].Removed || h.instances[0].removed != 2 {
+		t.Fatalf("release %+v", got)
+	}
+}

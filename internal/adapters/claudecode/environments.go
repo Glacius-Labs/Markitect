@@ -186,9 +186,11 @@ func (a *Agents) settle(ctx context.Context, l *lease) (bool, string) {
 	keep := quiet && l.env != nil
 	if !keep {
 		if rmErr := l.inst.Remove(ctx); rmErr != nil {
+			// The release removes it again; until then a writer may live in it.
+			a.orphan(l)
 			if !quiet {
 				note = fmt.Sprintf("processes of the turn did not end in place (%d left, %v) and the instance's removal was not observed: %v", len(remaining), err, rmErr)
-				a.dropLocked(l, "")
+				a.drop(l, "")
 				return false, note
 			}
 			note += "; the fresh instance's removal was not observed: " + rmErr.Error()
@@ -198,10 +200,33 @@ func (a *Agents) settle(ctx context.Context, l *lease) (bool, string) {
 		if keep {
 			a.release(l)
 		} else {
-			a.dropLocked(l, "the writers of its predecessor did not stop in place")
+			a.drop(l, "the writers of its predecessor did not stop in place")
 		}
 	}
 	return true, note
+}
+
+// discard removes a kept instance that cannot serve its turn, such as one
+// that ended by itself (its idle bound, an engine restart): its confirmed
+// removal is its end, and the environment's next instance says why it
+// replaces it.
+func (a *Agents) discard(ctx context.Context, l *lease, why string) error {
+	if err := l.inst.Remove(ctx); err != nil {
+		return err
+	}
+	a.drop(l, why)
+	return nil
+}
+
+// orphan keeps an instance whose removal was not observed for the release.
+func (a *Agents) orphan(l *lease) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	if l.env != nil {
+		l.env.orphans = append(l.env.orphans, l.inst)
+		return
+	}
+	a.orphans = append(a.orphans, l.inst)
 }
 
 // release frees an environment for its next turn.
@@ -211,9 +236,9 @@ func (a *Agents) release(l *lease) {
 	l.env.busy = false
 }
 
-// dropLocked forgets a removed instance of an environment; its next instance
+// drop forgets a removed instance of an environment; its next instance
 // says why it replaces it.
-func (a *Agents) dropLocked(l *lease, why string) {
+func (a *Agents) drop(l *lease, why string) {
 	if l.env == nil {
 		return
 	}
@@ -231,6 +256,10 @@ func (a *Agents) dropLocked(l *lease, why string) {
 func (a *Agents) Release(ctx context.Context, names []string) []run.EnvironmentRelease {
 	a.mu.Lock()
 	var envs []*environment
+	var fresh []Instance
+	if names == nil {
+		fresh, a.orphans = a.orphans, nil
+	}
 	for name, env := range a.envs {
 		if names == nil || slices.Contains(names, name) {
 			envs = append(envs, env)
@@ -248,6 +277,13 @@ func (a *Agents) Release(ctx context.Context, names []string) []run.EnvironmentR
 		return 0
 	})
 	var out []run.EnvironmentRelease
+	for _, inst := range fresh {
+		r := run.EnvironmentRelease{Instance: inst.Name(), Removed: true}
+		if err := inst.Remove(context.WithoutCancel(ctx)); err != nil {
+			r.Removed, r.Error = false, err.Error()
+		}
+		out = append(out, r)
+	}
 	for _, env := range envs {
 		insts := slices.Clone(env.orphans)
 		for _, v := range env.views {

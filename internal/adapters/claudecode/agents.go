@@ -40,6 +40,8 @@ type Agents struct {
 
 	mu   sync.Mutex
 	envs map[string]*environment
+	// orphans are fresh instances whose removal was not observed.
+	orphans []Instance
 }
 
 var _ run.Agents = (*Agents)(nil)
@@ -121,13 +123,26 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 		defer cancel()
 	}
 	res.Started = time.Now().UTC()
-	l, err := a.acquire(ctx, turn, turnSpec(turn, profile))
+	spec := turnSpec(turn, profile)
+	l, err := a.acquire(ctx, turn, spec)
 	if err != nil {
 		res.Ended, res.Reason = time.Now().UTC(), "container did not start; no exit observed"
 		return res, redact.err(err)
 	}
 	res.Instance = l.obs
 	peer, err := l.inst.Exec(ctx)
+	if err != nil && l.obs.Reused {
+		// A kept instance can end without the adapter; once its end is
+		// confirmed, one new instance serves the turn.
+		if a.discard(context.WithoutCancel(ctx), l, "its kept instance had ended: "+redact.text(err.Error())) == nil {
+			if l, err = a.acquire(ctx, turn, spec); err != nil {
+				res.Ended, res.Reason = time.Now().UTC(), "container did not start; no exit observed"
+				return res, redact.err(err)
+			}
+			res.Instance = l.obs
+			peer, err = l.inst.Exec(ctx)
+		}
+	}
 	if err == nil && peer == nil {
 		err = ErrSession
 	}
