@@ -7,6 +7,7 @@
 import { api } from "./api.js";
 
 const POLL_MS = 4000;
+const notificationsAllowed = () => typeof Notification !== "undefined" && Notification.permission === "granted";
 const parts = {
   project: () => api.project(),
   runs: () => api.runs(),
@@ -52,8 +53,11 @@ export const store = {
   start() {
     if (this.timer) return;
     this.refresh();
+    // A hidden window (minimized or covered) keeps polling when the owner
+    // allowed notifications, so that it can notify; the browser throttles
+    // the timer of a hidden page but still fires it.
     this.timer = setInterval(() => {
-      if (document.visibilityState === "visible") this.refresh();
+      if (document.visibilityState === "visible" || notificationsAllowed()) this.refresh();
     }, POLL_MS);
     document.addEventListener("visibilitychange", () => {
       if (document.visibilityState === "visible") this.refresh();

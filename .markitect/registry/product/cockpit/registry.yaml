@@ -63,7 +63,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/cockpit.css"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar, the areas' accents, split views, model browser, the run control card, state lamps, exchange channels, responsive layout and reduced motion."
+    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar with the notification bell, the areas' accents, split views, model browser, the run control card, state lamps, exchange channels, responsive layout and reduced motion."
   - path: "internal/adapters/cockpit/web/js/main.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -102,16 +102,16 @@ artifacts:
     why: "Renders the selected Manager, wait cause, proposal, finding, question, turn, Pass, check, problem, message or run outcome as recorded."
   - path: "internal/adapters/cli/cockpit.go"
     form: code
-    realizes: [product/cockpit/observed-run-inspection]
-    why: "Parses the cockpit command's state directories, run configuration, Runtime profile, repository with its model and dependency models, listen address and the product build identity a started run binds, and reports where the cockpit serves."
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
+    why: "Parses the cockpit command's state directories, run configuration, Runtime profile, repository with its model and dependency models, listen address, the product build identity a started run binds and --no-open, reports where the cockpit serves and opens that address in a window through the installed opener, reporting a failure on stderr without stopping the cockpit."
   - path: "internal/bootstrap/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/accepted-proposals]
     why: "Composes the cockpit over the selected state directories with the state lock probe, the answer command's owner channel, structural preparation of the repository, the proposal service fenced by every observed state lock and the start and stop of an Apply through the execution function of markitect apply."
   - path: "internal/adapters/cli/cockpit_test.go"
     form: test
-    realizes: [product/cockpit/observed-run-inspection]
-    why: "Verifies the cockpit command's selection and build identity, its refusals before serving and that failures and an unconfigured cockpit never report success."
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
+    why: "Verifies the cockpit command's selection and build identity, its refusals before serving, that failures and an unconfigured cockpit never report success, and that the window opens by default, not with --no-open, and that a failed opening is reported without failing the command."
   - path: "internal/adapters/cockpit/contract_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
@@ -219,11 +219,23 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/store.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads the project, runs, owner questions, proposals, sessions and the run this cockpit started together while the page is visible and shares them with the top bar, the hub and the pages."
+    why: "Reads the project, runs, owner questions, proposals, sessions and the run this cockpit started together while the page is visible, or hidden once notifications are allowed, and shares them with the top bar, the hub and the pages."
   - path: "internal/adapters/cockpit/web/js/shell.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Frames the cockpit as a hub and areas: the top bar with the way back, the area, its tabs and the open item, what waits for the owner, running runs and the check, and the keys that enter and leave the areas."
+    why: "Frames the cockpit as a hub and areas: the top bar with the way back, the area, its tabs and the open item, what waits for the owner, running runs and the check, the notification bell, the window title through the notification module, and the keys that enter and leave the areas."
+  - path: "internal/adapters/cockpit/web/js/notify.js"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Compares each new observation with the previous one and notifies, with the owner's permission, when a run ended, the model session answered or halted or a proposal waits for a decision, per part of the observation and only when the window is not in the owner's sight; owns the bell that asks for permission and the count in the window title; the first observation only sets the baseline."
+  - path: "internal/adapters/cockpit/window.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Chooses, as a pure function of platform, environment and installed programs, the ways to open the cockpit's address in an app window of Edge or Chrome and in the default browser, and starts the first that works detached without waiting for it."
+  - path: "internal/adapters/cockpit/window_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies the choice and order of the opening commands for Windows, macOS, Linux, WSL and the default-browser fallback."
   - path: "internal/adapters/cockpit/web/js/hub.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]

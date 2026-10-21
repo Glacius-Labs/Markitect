@@ -14,6 +14,7 @@ import { renderDetail } from "./detail.js";
 import { LiveLink } from "./live.js";
 import { answerInProgress } from "./answer.js";
 import { stopControl } from "./runcontrol.js";
+import { setTitle } from "./notify.js";
 
 const HIDDEN_BY_DEFAULT = new Set(["state", "runtime"]);
 
@@ -184,7 +185,7 @@ export class Inspector {
 
   build() {
     clear(this.app);
-    document.title = `${this.run} – Markitect cockpit`;
+    setTitle(`${this.run} – Markitect cockpit`);
     this.headEl = h("header", { class: "head" });
     // Stop is offered only while this run is the one the cockpit started.
     this.stopEl = stopControl(this.run);

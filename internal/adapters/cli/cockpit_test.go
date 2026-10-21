@@ -96,3 +96,41 @@ func TestCockpitSelectsTheModelAndDependenciesAsCheckDoes(t *testing.T) {
 		t.Fatalf("an invalid dependency = %d", code)
 	}
 }
+
+func TestCockpitOpensItsWindowUnlessToldNotTo(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		args   []string
+		opener func(string) error
+		opened []string
+		stderr string
+	}{
+		{"by default", []string{"cockpit", "--state", "a"}, nil, []string{"http://127.0.0.1:7341/"}, ""},
+		{"not with --no-open", []string{"cockpit", "--state", "a", "--no-open"}, nil, nil, ""},
+		{"a failure is reported and not fatal", []string{"cockpit", "--state", "a"}, func(string) error { return errors.New("no browser") }, []string{"http://127.0.0.1:7341/"}, "no browser"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var opened []string
+			c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, _ CockpitRequest, ready func(string)) error {
+				ready("http://127.0.0.1:7341/")
+				return nil
+			}).WithWindowOpener(func(url string) error {
+				opened = append(opened, url)
+				if tt.opener != nil {
+					return tt.opener(url)
+				}
+				return nil
+			})
+			var out, errout bytes.Buffer
+			if code := c.Run(context.Background(), tt.args, &out, &errout); code != 0 {
+				t.Fatalf("%d: %s %s", code, out.String(), errout.String())
+			}
+			if !slices.Equal(opened, tt.opened) || !strings.Contains(errout.String(), tt.stderr) {
+				t.Fatalf("opened %v, stderr %q", opened, errout.String())
+			}
+			if !strings.Contains(out.String(), `"url": "http://127.0.0.1:7341/"`) {
+				t.Fatal("the address is printed either way: " + out.String())
+			}
+		})
+	}
+}
