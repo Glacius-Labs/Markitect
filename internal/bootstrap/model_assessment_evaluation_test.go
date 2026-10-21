@@ -45,14 +45,7 @@ func (s *executionService) evaluateAssessment(ctx context.Context, request cli.A
 	}
 	report.EvidenceDirectory = ports.Evidence.Dir()
 	defer func() {
-		if err != nil {
-			report.Error = err.Error()
-		}
-		if writeErr := ports.Evidence.WriteReport(cli.ReportValue(report)); writeErr != nil {
-			err = errors.Join(err, writeErr)
-			report.Status = model.NotCompleted
-		}
-		err = errors.Join(err, ports.Evidence.Close())
+		err = finishAssessmentReport(&report, err, ports.Evidence.Close, session.lock.Release, ports.Evidence.WriteReport)
 	}()
 	attempt, ok := prepared.Prepared()
 	if !ok {
@@ -77,6 +70,58 @@ func (s *executionService) evaluateAssessment(ctx context.Context, request cli.A
 		report.Status = model.Passed
 	}
 	return report, err
+}
+
+// Finalize after the event log and lock have closed, so deferred errors cannot
+// leave a successful on-disk assessment report. WriteReport is independent of
+// the closed event stream; a write failure also reaches the final CLI output.
+func finishAssessmentReport(report *cli.ApplyReport, err error, closeEvidence, releaseLock func() error, writeReport func(any) error) error {
+	err = errors.Join(err, closeEvidence(), releaseLock())
+	if err != nil {
+		report.Error, report.Status = err.Error(), model.NotCompleted
+	}
+	if writeErr := writeReport(cli.ReportValue(*report)); writeErr != nil {
+		err = errors.Join(err, writeErr)
+		report.Error, report.Status = err.Error(), model.NotCompleted
+	}
+	return err
+}
+
+func TestModelAssessmentReportIncludesDeferredFailures(t *testing.T) {
+	for _, failed := range []string{"", "close", "release", "write"} {
+		t.Run("failure-"+failed, func(t *testing.T) {
+			report := cli.ApplyReport{Status: model.Passed, Run: cli.NewRunReport("assessment-test", runport.Outcome{Status: runport.Incomplete, Reason: apply.AssessmentAccepted})}
+			var order []string
+			step := func(name string) error {
+				order = append(order, name)
+				if failed == name {
+					return fmt.Errorf("%s failed", name)
+				}
+				return nil
+			}
+			var persisted map[string]any
+			err := finishAssessmentReport(&report, nil, func() error { return step("close") }, func() error { return step("release") }, func(value any) error {
+				data, err := json.Marshal(value)
+				if err != nil {
+					t.Fatal(err)
+				}
+				if err := json.Unmarshal(data, &persisted); err != nil {
+					t.Fatal(err)
+				}
+				return step("write")
+			})
+			if fmt.Sprint(order) != "[close release write]" {
+				t.Fatalf("finalization order %v", order)
+			}
+			if failed == "" {
+				if err != nil || report.Status != model.Passed || persisted["error"] != nil {
+					t.Fatalf("clean report %+v, %v", report, err)
+				}
+			} else if err == nil || report.Status != model.NotCompleted || report.Error == "" || failed != "write" && (persisted["status"] != "not_completed" || persisted["error"] == nil) {
+				t.Fatalf("failed report %+v, persisted %+v, %v", report, persisted, err)
+			}
+		})
+	}
 }
 
 // TestModelAssessmentHarness runs one read-only Model assessment of a captured

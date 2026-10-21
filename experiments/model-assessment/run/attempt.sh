@@ -135,8 +135,9 @@ echo "exit=$?" >> "$ATTEMPT/timing.txt"
 cleanup
 RUN=$(cat "$STATE/current-run" 2>/dev/null)
 EVIDENCE="$STATE/runs/$RUN"
-REPORT="$EVIDENCE/report.json"
-[ -n "$RUN" ] && [ -s "$REPORT" ] || REPORT="$ATTEMPT/out/harness.stdout"
+# The CLI emits this envelope after every deferred close/release returned;
+# retained evidence may predate a final report-write failure.
+REPORT="$ATTEMPT/out/harness.stdout"
 python3 -B "$KIT/model-assessment/assess.py" attempt --report "$REPORT" --evidence "$EVIDENCE" \
   --control "$FROZEN/controls/$CONTROL.json" --timing "$ATTEMPT/timing.txt" --output "$ATTEMPT/out/assessment.json" > /dev/null 2> "$ATTEMPT/out/assess.stderr"
 CONCLUSION=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["classification"]["conclusion"])' "$ATTEMPT/out/assessment.json" 2>/dev/null || echo unassessed)
