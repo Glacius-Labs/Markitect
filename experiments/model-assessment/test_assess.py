@@ -290,8 +290,15 @@ class Evidence(unittest.TestCase):
         self.assertEqual(p["acceptedResultCoverage"], {"obligations": 1, "withModelSource": 1, "open": 0})
 
     def test_the_report_is_read_between_the_harness_lines(self):
-        text = '{\n "status": "failed",\n "run": {"status": "verified"}\n}\nPASS\n'
-        self.assertEqual(assess.load_report(text)["run"]["status"], "verified")
+        envelope = report("incomplete", "credential unavailable")
+        envelope.update(operation="model-assessment", outcome="incomplete")
+        for indent in (None, 2):
+            for end in ("PASS", "FAIL"):
+                with self.subTest(indent=indent, end=end):
+                    text = "=== RUN TestModelAssessmentHarness\n" + json.dumps(envelope, indent=indent) + "\n" + end + "\n"
+                    decoded = assess.load_report(text)
+                    self.assertEqual(decoded, envelope)
+                    self.assertEqual(assess.classify(decoded)["incomplete"], "technical")
         self.assertEqual(assess.load_report("model assessment exit 1\nFAIL\n"), {})
         self.assertEqual(assess.load_report(""), {})
 
