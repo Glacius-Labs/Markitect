@@ -1,11 +1,15 @@
 package bootstrap
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"os"
+	"path/filepath"
+	"reflect"
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
@@ -124,6 +128,89 @@ func TestModelAssessmentReportIncludesDeferredFailures(t *testing.T) {
 	}
 }
 
+// Reuse the product's argument parser, but print the finalized assessment
+// report with its own operation. The apply parser otherwise renames it to
+// "apply", whose successful outcome would imply artifact publication.
+func runAssessmentCommand(execute cli.ApplyFunc, run func(cli.ApplyFunc, io.Writer) int, stdout io.Writer) (int, error) {
+	var captured *cli.ApplyReport
+	invoke := func(ctx context.Context, request cli.ApplyRequest) (cli.ApplyReport, error) {
+		report, err := execute(ctx, request)
+		if err != nil {
+			report.Error = err.Error()
+		}
+		captured = &report
+		return report, err
+	}
+	var parsed bytes.Buffer
+	code := run(invoke, &parsed)
+	if captured == nil {
+		_, err := stdout.Write(parsed.Bytes())
+		return code, err
+	}
+	return code, json.NewEncoder(stdout).Encode(cli.ReportValue(*captured))
+}
+
+func TestModelAssessmentFileAndStdoutKeepTheSameMeaning(t *testing.T) {
+	for _, name := range []string{"accepted", "rejected", "technical", "close", "release"} {
+		t.Run(name, func(t *testing.T) {
+			e, err := newFileEvidence(t.TempDir(), "assessment-test")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer e.Close()
+			execute := func(context.Context, cli.ApplyRequest) (cli.ApplyReport, error) {
+				status, runStatus, reason := model.Passed, runport.Incomplete, apply.AssessmentAccepted
+				if name == "rejected" {
+					status, runStatus, reason = model.Failed, runport.Failed, runport.ModelAssessmentReason+"missing public decision"
+				} else if name == "technical" {
+					status, reason = model.NotCompleted, "credential unavailable"
+				}
+				report := cli.ApplyReport{FormatVersion: 1, Operation: "model-assessment", Status: status, Run: cli.NewRunReport("assessment-test", runport.Outcome{Status: runStatus, Reason: reason})}
+				err := finishAssessmentReport(&report, nil, func() error {
+					err := e.Close()
+					if name == "close" {
+						return errors.Join(err, errors.New("close failed"))
+					}
+					return err
+				}, func() error {
+					if name == "release" {
+						return errors.New("release failed")
+					}
+					return nil
+				}, e.WriteReport)
+				return report, err
+			}
+			var stdout, stderr bytes.Buffer
+			_, err = runAssessmentCommand(execute, func(invoke cli.ApplyFunc, out io.Writer) int {
+				return cli.New(nil, nil, nil, nil, nil, invoke).Run(context.Background(), []string{"apply", "--runtime-profile", filepath.Join(e.Dir(), "runtime.yaml"), "--run-config", filepath.Join(e.Dir(), "run.json")}, out, &stderr)
+			}, &stdout)
+			if err != nil {
+				t.Fatal(err)
+			}
+			data, err := os.ReadFile(filepath.Join(e.Dir(), "report.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var persisted, printed map[string]any
+			if err := json.Unmarshal(data, &persisted); err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(stdout.Bytes(), &printed); err != nil {
+				t.Fatal(err)
+			}
+			want := "incomplete"
+			if name == "accepted" {
+				want = "success"
+			} else if name == "rejected" {
+				want = "failed"
+			}
+			if !reflect.DeepEqual(persisted, printed) || printed["operation"] != "model-assessment" || printed["outcome"] != want {
+				t.Fatalf("assessment reports differ or lose their meaning: file=%s stdout=%s", data, stdout.String())
+			}
+		})
+	}
+}
+
 // TestModelAssessmentHarness runs one read-only Model assessment of a captured
 // stand through the product's real preparation and adapters, for the finite
 // model assessment trial (handoff of 21 October 2026, Session C). It is no
@@ -150,6 +237,11 @@ func TestModelAssessmentHarness(t *testing.T) {
 	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(codexappserver.NewEngineImageReader), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
 	execution := newExecution(preparation, repository, agents, checker)
-	code := cli.New(preparation, agents, checker, repository, views, execution.evaluateAssessment).Run(context.Background(), args, os.Stdout, os.Stderr)
+	code, err := runAssessmentCommand(execution.evaluateAssessment, func(invoke cli.ApplyFunc, out io.Writer) int {
+		return cli.New(preparation, agents, checker, repository, views, invoke).Run(context.Background(), args, out, os.Stderr)
+	}, os.Stdout)
+	if err != nil {
+		t.Fatal(err)
+	}
 	fmt.Fprintf(os.Stderr, "model assessment exit %d\n", code)
 }

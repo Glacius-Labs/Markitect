@@ -59,6 +59,8 @@ A Root-confirmed material problem seals `NeedsCorrection` and ends `Failed` with
 
 The binding identifies entry `model-assessment`, `Work: [assess]`, no checks, and the production composition digest. Its composition digest includes the assessment and strategy declarations; it is distinct from the reference file's byte hash. Context binding records the Brief and full/reference identities; C's transcript comparison records body submission, not provider understanding or semantic coverage.
 
+The saved report and harness stdout use the common `cli.ReportValue` projection and retain operation `model-assessment`. The CLI parser's internal `apply` route supplies arguments, not the assessment's meaning. Top-level `outcome: success` means successful assessment only; the accepted assessment-only Run still has status `incomplete` and no publication. Event-log and lock errors are incorporated before persistence. Printing and persistence failures remain technical evidence failures.
+
 C's `internal/apply/assessment_test.go` covers the built-in method reference, read-only fresh reviewers, absence of checks/publication, Root's model-error stop, refusal of external questions, confirmed finding classes, the omitted class and fresh reassessment of a disputed finding. `internal/bootstrap/model_assessment_evaluation_test.go` supplies the grant-gated adapter wiring. These source tests do not establish provider behavior or a completed wiring smoke. Extract's production migration and evidence remain A's responsibility; this model-only harness does not exercise Extract.
 
 ## Evaluation
