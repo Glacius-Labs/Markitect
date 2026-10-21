@@ -17,7 +17,7 @@ export class OrgChart {
     this.viewport = h("div", { class: "org-viewport" }, this.canvas);
     this.zoomLabel = h("output", { "aria-label": "Organization zoom" }, "100%");
     this.toolbar = h("div", { class: "org-tools", role: "group", "aria-label": "Organization controls" },
-      this.button("Zoom out", "âˆ’", () => this.zoom(1 / 1.2)), this.zoomLabel,
+      this.button("Zoom out", "−", () => this.zoom(1 / 1.2)), this.zoomLabel,
       this.button("Zoom in", "+", () => this.zoom(1.2)), this.button("Fit organization", "Fit", () => this.fit()),
       this.button("Expand all departments", "Expand all", () => { this.collapsed.clear(); this.render(); this.fit(); }),
       this.button("Collapse departments", "Collapse", () => { this.collapsed = initialCollapse(this.nodes); this.render(); this.fit(); }));
@@ -87,7 +87,7 @@ export class OrgChart {
         append(clear(card), [h("div", { class: "org-person" }, h("span", { class: "org-avatar", "aria-hidden": "true" }, n.initial || n.name.slice(0, 1)), h("div", {}, h("span", { class: "org-role" }, n.title), h("strong", { class: "org-name", title: n.name }, n.name)), h("span", { class: "lamp", title: n.state || "Observed organization" })),
           h("div", { class: "org-facts" }, (n.facts || []).map((text) => h("span", { title: text }, text))),
           n.badges?.length ? h("div", { class: "org-badges" }, n.badges.map((b) => h("span", { class: "chip", title: b }, b))) : null,
-          p.children.length ? h("button", { class: "org-toggle", type: "button", tabindex: -1, "aria-label": `${p.collapsed ? "Expand" : "Collapse"} ${n.name}`, onclick: (e) => { e.stopPropagation(); this.toggle(n.id); } }, `${p.collapsed ? "+" : "âˆ’"} ${p.children.length} ${p.children.length === 1 ? "department" : "departments"}`) : null]);
+          p.children.length ? h("button", { class: "org-toggle", type: "button", tabindex: -1, "aria-label": `${p.collapsed ? "Expand" : "Collapse"} ${n.name}`, onclick: (e) => { e.stopPropagation(); this.toggle(n.id); } }, `${p.collapsed ? "+" : "−"} ${p.children.length} ${p.children.length === 1 ? "department" : "departments"}`) : null]);
       }
       if (!card.isConnected) this.tree.append(card);
       card.style.left = this.narrow ? "" : `${p.x}px`; card.style.top = this.narrow ? "" : `${p.y}px`;
