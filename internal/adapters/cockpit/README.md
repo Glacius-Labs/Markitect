@@ -192,7 +192,7 @@ node --test internal/adapters/cockpit/org-layout.test.mjs internal/adapters/cock
 ```
 
 The [organization validation](../../../docs/validation/cockpit-organization-finish-20261021.md)
-separates prepared source, synthetic checks, pending browser screenshots and
+separates local source checks, synthetic UI cases, browser screenshots and
 read-only real recorded-run evidence. It must not be read as provider acceptance.
 
 The page is plain HTML, CSS and JavaScript modules without a build step, embedded in the binary and packaged with the source. Replay moves the boundary through the record with play, pause, speed, record and exchange steps; recorded gaps are compressed and bookkeeping records take no playback time. Selecting anything pauses the presentation; pausing never affects a run. Arrows illustrate recorded sends along the tree, pause with the replay and open their record; with reduced motion they are drawn still. Keyboard: Space, arrows, Shift with arrows, Home, End, `[` `]`, Esc and `?`. Narrow windows show the same collapsible organization as an indented tree.
