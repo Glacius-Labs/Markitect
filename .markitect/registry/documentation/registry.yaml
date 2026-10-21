@@ -1912,6 +1912,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: "Records the cockpit's project list and guided setup: checks with fake projects and a fake engine, a recorded page demonstration and what remains unproved without a real image, credential and run."
+  - path: "docs/validation/cockpit-desktop-acceptance-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: "Records the first real runs through the cockpit desktop app: setup through the cockpit, a verified run followed live and a deliberate stop, with costs and what remains unproved."
   - path: "docs/validation/cockpit-live-observation-20261020.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
