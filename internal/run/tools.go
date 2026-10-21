@@ -142,7 +142,7 @@ func reportSchema(spec PassSpec) schema {
 }
 
 var sendSchema = object([]string{"to", "kind", "text"}, schema{
-	"to":    str("\"parent\", the path of a direct child, or for Root \"user\"."),
+	"to":    str("\"parent\" or the path of a direct child."),
 	"kind":  schema{"type": "string", "enum": []string{sendQuestion, sendAnswer, sendInfo}},
 	"text":  str("The message."),
 	"about": str("answer: the question ID you answer. question: the question addressed to you that this one serves, when you forward an exchange."),
@@ -217,7 +217,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent as a question. Root has nobody above it: it reports a model problem with report kind problem.", InputSchema: raw(escalateSchema)},
 		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
-	switch probes := e.probesAvailable(); {
+	switch probes := e.probesAvailable(spec); {
 	case spec.Writes && probes:
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Without probe: File check of your current area against the accepted stand (unregistered or wrongly registered files, invalid registry entries, missing owners), advice while you work. With probe: run one behavioral probe file in its own container on a stable stand and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
 	case spec.Writes:

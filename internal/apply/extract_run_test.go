@@ -103,46 +103,17 @@ type scriptedAgents struct {
 	ws       *memoryWorkspaces
 	writes   map[string]map[string]string // "<run> <manager>" -> files written in the first working turn
 	findings map[string][]map[string]any  // "<run> <manager>" -> findings a reviewer raises with its result
-	asks     map[string]string            // "<run> <manager>" -> a question to the user before it works
+	asks     map[string]string            // "<run> <manager>" -> a question beyond the tree it tries before it works
 	mu       sync.Mutex
 	turns    []run.Turn
-	asked    map[string]string // key -> the question ID the user was asked
-}
-
-// answeringOwner answers every question at once and refuses an identity it was
-// already asked.
-type answeringOwner struct {
-	mu        sync.Mutex
-	asked     []run.Question
-	withdrawn []string
-}
-
-func (o *answeringOwner) Ask(_ context.Context, q run.Question) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if slices.ContainsFunc(o.asked, func(a run.Question) bool { return a.ID == q.ID }) {
-		return errors.New("question " + q.ID + " exists already")
-	}
-	o.asked = append(o.asked, q)
-	return nil
-}
-
-func (o *answeringOwner) Answer(_ context.Context, id string) (string, bool, error) {
-	return "answer to " + id, true, nil
-}
-
-func (o *answeringOwner) Withdraw(_ context.Context, id string) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	o.withdrawn = append(o.withdrawn, id)
-	return nil
+	refusals map[string]string // key -> the answer to that question
+	assessed map[string]bool   // conversation -> it is a Model assessment
 }
 
 var (
 	scriptedRun = regexp.MustCompile(`^(x-1-(?:structure|model))-p\d+-`)
 	decideRE    = regexp.MustCompile(`- decide (P\d+),`)
 	answerRE    = regexp.MustCompile(`- answer (Q\d+) from`)
-	askedRE     = regexp.MustCompile(`Asked the user (Q\d+)\.`)
 )
 
 func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
@@ -153,6 +124,9 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		a.t.Errorf("verify turn %s can write", turn.ID)
 	}
 	key := scriptedRun.FindStringSubmatch(turn.ID)[1] + " " + turn.Manager
+	a.mu.Lock()
+	assessing := a.assessed[turn.Resume] || turn.Resume == "" && strings.Contains(turn.Prompt, "You assess the bound model")
+	a.mu.Unlock()
 	call := func(name string, args map[string]any) run.ToolAnswer {
 		data, _ := json.Marshal(args)
 		answer := tools(ctx, name, data)
@@ -172,18 +146,15 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 	now, _, _ := strings.Cut(rest, "\n")
 	switch {
 	case strings.HasPrefix(now, "work on your own contribution"):
-		if question := a.asks[key]; question != "" && turn.Kind == run.ExecuteTurn && a.asked[key] == "" {
-			answer := call("send", map[string]any{"to": "user", "kind": "question", "text": question})
-			id := askedRE.FindStringSubmatch(answer.Text)
-			if id == nil {
-				a.t.Errorf("turn %s: the question was not asked: %s", turn.ID, answer.Text)
-			} else {
-				a.mu.Lock()
-				a.asked[key] = id[1]
-				a.mu.Unlock()
-				call("report", map[string]any{"kind": "wait", "for": id[1], "reason": "the answer decides the boundary"})
+		if question := a.asks[key]; question != "" && turn.Kind == run.ExecuteTurn && a.refusals[key] == "" {
+			data, _ := json.Marshal(map[string]any{"to": "user", "kind": "question", "text": question})
+			answer := tools(ctx, "send", data)
+			if !answer.Refused {
+				a.t.Errorf("turn %s: a question beyond the tree was not refused: %s", turn.ID, answer.Text)
 			}
-			break
+			a.mu.Lock()
+			a.refusals[key] = answer.Text
+			a.mu.Unlock()
 		}
 		if turn.Kind == run.ExecuteTurn {
 			a.ws.write(turn.Workspace, a.writes[key])
@@ -193,7 +164,7 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		result := map[string]any{"kind": "result", "summary": "Described " + turn.Manager + ".", "verdict": "satisfied"}
 		if turn.Kind == run.VerifyTurn {
 			result["summary"] = "The model matches the artifacts."
-			if findings := a.findings[key]; len(findings) > 0 {
+			if findings := a.findings[key]; len(findings) > 0 && !assessing {
 				result["findings"] = findings
 			}
 		}
@@ -203,6 +174,9 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 	if conversation == "" {
 		conversation = "conv-" + turn.ID
 	}
+	a.mu.Lock()
+	a.assessed[conversation] = assessing
+	a.mu.Unlock()
 	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
 }
 
@@ -225,7 +199,7 @@ func bothPhases(t *testing.T) (apply.ExtractRequest, *scriptedAgents, *memoryWor
 		return files
 	}
 	workspaces := newMemoryWorkspaces()
-	agents := &scriptedAgents{t: t, ws: workspaces, asked: map[string]string{}, writes: map[string]map[string]string{
+	agents := &scriptedAgents{t: t, ws: workspaces, refusals: map[string]string{}, assessed: map[string]bool{}, writes: map[string]map[string]string{
 		"x-1-structure .": diff(start, proposed, func(string) bool { return true }),
 	}, findings: map[string][]map[string]any{
 		"x-1-model lending": {{"owner": "lending", "subject": "artifact", "definition": "lending/lending", "obligation": "Loans are limited", "observed": "borrow.go admits a sixth loan.", "blocking": true}},
@@ -402,11 +376,12 @@ func TestExtractReportsTheChecksTheStructureProposed(t *testing.T) {
 	}
 }
 
-func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
+// Nobody outside the Manager tree answers during an Extract: Root's question
+// to the user is refused with the closed-run rule in both phases, and the
+// phases go on without it.
+func TestExtractRefusesQuestionsBeyondTheTree(t *testing.T) {
 	req, agents, _, _, _, _, _ := bothPhases(t)
 	agents.asks = map[string]string{"x-1-structure .": "Is the reminders area part of lending?", "x-1-model .": "Is go.mod part of the library?"}
-	owner := &answeringOwner{}
-	req.Owner = owner
 	result, err := apply.Extract(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
@@ -414,16 +389,17 @@ func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
 	if result.Model == nil || result.Model.Status != run.Verified {
 		t.Fatalf("structure %s %s; model %+v", result.Structure.Status, result.Structure.Reason, result.Model)
 	}
-	if len(owner.asked) != 2 || owner.asked[0].ID != "Q1" || owner.asked[1].ID != "Q2" || owner.asked[1].Text != "Is go.mod part of the library?" {
-		t.Fatalf("the owner was asked %+v", owner.asked)
+	if len(agents.refusals) != 2 {
+		t.Fatalf("refusals %v", agents.refusals)
 	}
-	if questions := result.Model.Questions; len(questions) != 2 || questions[0].Answer != "answer to Q1" || !questions[1].Answered {
-		t.Fatalf("model-phase questions %+v", questions)
+	for key, text := range agents.refusals {
+		if !strings.Contains(text, "Nobody outside the Manager tree answers") || strings.Contains(text, "owner decisions") {
+			t.Errorf("%s was told %q", key, text)
+		}
 	}
 	for _, turn := range agents.turns {
-		if turn.Manager == "." && turn.Kind == run.ExecuteTurn && strings.HasPrefix(turn.ID, "x-1-model") && turn.Resume == "" &&
-			!(strings.Contains(turn.Prompt, "Q1: Is the reminders area part of lending?") && strings.Contains(turn.Prompt, "Answer: answer to Q1")) {
-			t.Errorf("the model phase does not show the structure phase's answer:\n%s", turn.Prompt)
+		if strings.Contains(turn.Prompt, "Is the reminders area part of lending?") {
+			t.Errorf("turn %s shows the refused question", turn.ID)
 		}
 	}
 }
@@ -431,7 +407,7 @@ func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
 func TestExtractStopsAfterAnUnverifiedStructurePhaseAndKeepsItsWork(t *testing.T) {
 	req := extractRequest(t)
 	workspaces := newMemoryWorkspaces()
-	agents := &scriptedAgents{t: t, ws: workspaces, asked: map[string]string{}, writes: map[string]map[string]string{}}
+	agents := &scriptedAgents{t: t, ws: workspaces, refusals: map[string]string{}, assessed: map[string]bool{}, writes: map[string]map[string]string{}}
 	publisher := &fakePublisher{}
 	evidence := &memoryEvidence{}
 	req.Agents, req.Workspaces, req.Evidence, req.Publisher = agents, workspaces, evidence, publisher

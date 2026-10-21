@@ -119,11 +119,9 @@ function drawProject(parts, s) {
 }
 
 // nextStep is the one thing the owner should look at now, most urgent first:
-// a question a run waits for, a proposal to decide, the open session, a run
-// that runs, a check that did not pass.
+// a proposal to decide, the open session, a run that runs, a check that did
+// not pass.
 function nextStep(s) {
-  const q = s.waitingQuestions[0];
-  if (q) return { accent: "var(--owner)", urgent: true, title: `Run ${q.run} asks you ${q.id}`, text: "The run waits for your answer.", href: `#/question/${encodeURIComponent(q.run)}/${encodeURIComponent(q.id)}`, action: "Answer" };
   const p = s.proposalsToDecide[0];
   if (p) return { accent: "var(--owner)", urgent: true, title: `A proposal waits for your decision`, text: p.title, href: `#/proposal/${encodeURIComponent(p.id)}`, action: "Decide" };
   const session = s.openSession;
@@ -171,11 +169,9 @@ function drawRuns(t, s) {
 }
 
 function drawDecisions(t, s) {
-  const questions = s.waitingQuestions.length;
-  const proposals = s.proposalsToDecide.length;
-  const waiting = questions + proposals;
+  const waiting = s.proposalsToDecide.length;
   fill(t, {
-    stats: [[String(questions), questions === 1 ? "Question" : "Questions"], [String(proposals), proposals === 1 ? "Proposal" : "Proposals"]],
+    stats: [[String(waiting), waiting === 1 ? "Proposal" : "Proposals"]],
     lamp: waiting ? "st-owner" : "st-none",
     foot: waiting ? `${waiting} ${waiting === 1 ? "waits" : "wait"} for you` : "Nothing waits for you",
     count: waiting,

@@ -321,10 +321,14 @@ type Config struct {
 // a wait names, or that is already accepted when the wait is reported, is bound
 // to the waiter's work; its revision or reopening resets a waiter whose basis
 // built on it, for which it is a start condition of the restart, and returns a
-// waiter whose result alone built on it to its integration. Assesses (work)
-// makes the Pass the read-only assessment of the bound model before any
-// realization: a sealed verdict other than satisfied ends the run Failed, since
-// no Pass of the run can correct the model.
+// waiter whose result alone built on it to its integration. Assesses (review)
+// makes the review Pass the Model assessment of the bound model before any
+// realization: it runs no required check and offers no probe, because a check
+// judges artifacts, its satisfied seal verifies no candidate of its own (a
+// candidate verified just before it stays verified), and a seal that
+// needs correction with a confirmed finding (open, genuine, raised by the team
+// and not disputed in the Pass) ends the run Failed, since no Pass of the run
+// can correct the model.
 type PassSpec struct {
 	Purpose                  Purpose
 	Mandate                  string
@@ -506,6 +510,6 @@ func (r *Run) Finish(reason string) (Outcome, error) { return r.e.finish(reason)
 // judged the model erroneous or contradictory.
 const ModelErrorReason = "Root judged the model erroneous or contradictory: "
 
-// ModelAssessmentReason begins the Failed reason of a run whose model
-// assessment ended with a material model problem its Root confirmed.
-const ModelAssessmentReason = "the model assessment found a material model problem: "
+// ModelAssessmentReason begins the Failed reason of a run whose Model
+// assessment sealed with a material model problem its Root confirmed.
+const ModelAssessmentReason = "the model assessment confirmed a material model problem: "

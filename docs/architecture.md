@@ -10,7 +10,7 @@ The repository adapter captures actual sources. ModelService checks only complet
 
 Generated views use `internal/modeldocs` and its document-writer port, implemented by `internal/adapters/documents`. Their guard is independent of Apply publication.
 
-`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `apply.Apply`, which composes the Passes of `run.Open`/`Pass`/`Finish` over `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file-based owner channel and evidence.
+`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `apply.Apply`, which composes the Passes of `run.Open`/`Pass`/`Finish` over `Agents`, `Workspaces`, `Checks` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file evidence.
 
 ## Authority and evidence
 

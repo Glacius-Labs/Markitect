@@ -1,7 +1,6 @@
 package bootstrap
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -32,7 +31,7 @@ func writeRunConfig(t *testing.T, document map[string]any) string {
 func TestExecuteRefusesAnInvalidRunConfigurationBeforeAnyEffect(t *testing.T) {
 	document := runConfigFixture(t)
 	document["allocation"] = map[string]any{"runs": 1}
-	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil, &bytes.Buffer{})
+	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil)
 	report, err := service.Execute(context.Background(), cli.ApplyRequest{RunConfig: writeRunConfig(t, document)})
 	if !errors.Is(err, errRunConfig) || report.Status != model.Failed || report.EvidenceDirectory != "" {
 		t.Fatalf("%v %+v", err, report)
@@ -54,7 +53,7 @@ func TestExecuteRefusesAHeldStateDirectoryBeforePreparation(t *testing.T) {
 	startLockWait = 20 * time.Millisecond
 	t.Cleanup(func() { startLockWait = previous })
 	// Preparation would panic on this empty composition; the lock comes first.
-	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil, &bytes.Buffer{})
+	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil)
 	report, err := service.Execute(context.Background(), cli.ApplyRequest{Selection: apply.InputSelection{Repository: testkit.TempDir(t)}, RunConfig: writeRunConfig(t, document)})
 	if !errors.Is(err, errStateLocked) || report.Status != model.NotCompleted || report.Preparation != nil || report.FormatVersion != 1 || report.Operation != "apply" {
 		t.Fatalf("%v %+v", err, report)
@@ -70,7 +69,7 @@ func TestExecuteRefusesAStateDirectoryThatOverlapsTheRepository(t *testing.T) {
 	for name, state := range map[string]string{"inside": filepath.Join(repository, ".state"), "equal": repository, "containing": root} {
 		document := runConfigFixture(t)
 		document["stateDirectory"] = state
-		service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil, &bytes.Buffer{})
+		service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil)
 		report, err := service.Execute(context.Background(), cli.ApplyRequest{Selection: apply.InputSelection{Repository: repository}, RunConfig: writeRunConfig(t, document)})
 		if err == nil || !strings.Contains(err.Error(), "overlap") || report.Status != model.Failed {
 			t.Errorf("%s: %v %+v", name, err, report)
@@ -90,7 +89,7 @@ func TestExtractRefusesBeforeAnyEffectLikeApply(t *testing.T) {
 	// An invalid run configuration is a definite refusal and creates nothing.
 	document := runConfigFixture(t)
 	document["allocation"] = map[string]any{"runs": 1}
-	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil, &bytes.Buffer{})
+	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil)
 	report, err := service.Extract(context.Background(), cli.ExtractRequest{RunConfig: writeRunConfig(t, document)})
 	if !errors.Is(err, errRunConfig) || report.Status != model.Failed || report.Operation != "extract" || report.EvidenceDirectory != "" || report.Deviations == nil || report.OpenQuestions == nil {
 		t.Fatalf("%v %+v", err, report)
@@ -127,38 +126,25 @@ func TestExtractRefusesBeforeAnyEffectLikeApply(t *testing.T) {
 	}
 }
 
-func TestAnswerWritesForTheRunningApplyOfTheConfiguredStateDirectory(t *testing.T) {
+// The cockpit tells the run that holds the state directory by current-run;
+// nothing else is written to the state directory before the run's evidence.
+func TestOpenRecordsTheRunIdentityAndNoQuestionOrAnswerFiles(t *testing.T) {
 	document := runConfigFixture(t)
 	state := document["stateDirectory"].(string)
-	config := writeRunConfig(t, document)
-	if report, err := answer(context.Background(), cli.AnswerRequest{Question: "q1", Text: "Euro.", RunConfig: config}); err == nil || report.Status != model.NotCompleted {
-		t.Fatalf("answer without a running Apply: %+v %v", report, err)
+	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil)
+	session, failed, err := service.open(context.Background(), testkit.TempDir(t), writeRunConfig(t, document))
+	if err != nil || failed {
+		t.Fatal(failed, err)
 	}
-	owner, err := newFileOwner(state, "run-1", config, &bytes.Buffer{})
-	if err != nil {
-		t.Fatal(err)
+	defer session.lock.Release()
+	data, err := os.ReadFile(filepath.Join(state, "current-run"))
+	if err != nil || strings.TrimSpace(string(data)) != session.runID || !stateName.MatchString(session.runID) {
+		t.Fatalf("current-run = %q, %v", data, err)
 	}
-	held, err := lockState(state)
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer held.Release()
-	if err := owner.Ask(context.Background(), runport.Question{ID: "q1", Text: "Which currency?"}); err != nil {
-		t.Fatal(err)
-	}
-	if report, err := answer(context.Background(), cli.AnswerRequest{Question: "q1", Run: "run-0", Text: "Euro.", RunConfig: config}); err == nil || report.Status == model.Passed {
-		t.Fatalf("an answer naming another run was written: %+v %v", report, err)
-	}
-	report, err := answer(context.Background(), cli.AnswerRequest{Question: "q1", Run: "run-1", Text: "Euro.", RunConfig: config})
-	if err != nil || report.Status != model.Passed || report.Path != filepath.Join(state, "answers", "q1.txt") || report.Bytes != len("Euro.") {
-		t.Fatalf("%+v %v", report, err)
-	}
-	if text, answered, err := owner.Answer(context.Background(), "q1"); err != nil || !answered || text != "Euro." {
-		t.Fatalf("the running Apply did not see the answer: %q %v %v", text, answered, err)
-	}
-	document["formatVersion"] = 1
-	if report, err := answer(context.Background(), cli.AnswerRequest{Question: "q1", Text: "x", RunConfig: writeRunConfig(t, document)}); !errors.Is(err, errRunConfig) || report.Status != model.Failed {
-		t.Fatalf("invalid configuration: %+v %v", report, err)
+	for _, name := range []string{"questions", "answers"} {
+		if _, err := os.Stat(filepath.Join(state, name)); !os.IsNotExist(err) {
+			t.Fatalf("a closed Run created %s: %v", name, err)
+		}
 	}
 }
 

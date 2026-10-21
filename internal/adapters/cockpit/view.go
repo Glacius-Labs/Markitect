@@ -13,6 +13,11 @@ const (
 	nodeUser         = "@user"
 )
 
+// recordedUser is the identity earlier runs recorded for the owner in their
+// question events, when Root could still ask the user. It is read only so that
+// old evidence still renders; a Run asks the owner nothing now.
+const recordedUser = "user"
+
 // View is what the inspector shows at one recorded boundary: the first Seq
 // records of the run and nothing after them. Report content appears only at
 // the final boundary of a run whose report exists.

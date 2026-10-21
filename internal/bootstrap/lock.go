@@ -36,7 +36,7 @@ func lockState(stateDirectory string) (*stateLock, error) {
 }
 
 // startLockWait is how long a starting Apply retries a held state lock. A
-// concurrent `markitect answer` probes the lock for an instant; that must not
+// concurrent cockpit probes the lock for an instant; that must not
 // make a starting Apply fail.
 var startLockWait = 500 * time.Millisecond
 

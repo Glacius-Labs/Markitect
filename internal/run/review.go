@@ -32,6 +32,10 @@ func (e *engine) prepareReview(p *pass) bool {
 	if !e.gate(p, p.tree, "on the candidate") {
 		return false
 	}
+	if p.spec.Assesses {
+		// The assessment judges the model; a check judges artifacts.
+		return true
+	}
 	results := e.runChecks(p, p.tree)
 	if e.ctx.Err() != nil {
 		return false

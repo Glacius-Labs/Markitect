@@ -174,7 +174,7 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 			if r := e.lastCheckLocked(c.Name); r != nil {
 				line += fmt.Sprintf(": last result passed=%t", r.Passed)
 			}
-			if e.probesAvailable() {
+			if e.probesAvailable(m.p.spec) {
 				prefix := strings.Join(append([]string{c.Request.Executable}, c.Request.Args[:c.ProfileArgs]...), " ")
 				line += fmt.Sprintf("\n  A probe with check %q runs `%s ARGS` in %s with your probe file placed there, without network, on a disposable copy.", c.Name, prefix, c.Request.Directory)
 			}

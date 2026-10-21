@@ -20,10 +20,8 @@ import (
 // cockpitService serves the cockpit over the selected state directories. A run
 // configuration contributes its state directory and, with a Runtime profile,
 // the container engine, workspace helper, credentials and harvest limits of
-// model sessions. Live views probe the state lock the way the answer command
-// does, and an owner's answer goes through that command's owner channel
-// operation. With a repository, the cockpit also observes the project and
-// makes proposals for its .markitect inputs, published through the
+// model sessions. Live views probe the state lock. With a repository, the cockpit also
+// observes the project and makes proposals for its .markitect inputs, published through the
 // repository's guarded publisher while every observed state directory is
 // locked.
 type cockpitService struct {
@@ -59,7 +57,7 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 		}
 		return stateHeld(dir)
 	}
-	cfg := cockpit.Config{States: states, Liveness: liveness, Answer: writeAnswer}
+	cfg := cockpit.Config{States: states, Liveness: liveness}
 	var proposals *authoring.Service
 	if selection := request.Selection; selection.Repository != "" {
 		cfg.Project = func(ctx context.Context) (cockpit.ProjectInfo, error) {

@@ -251,9 +251,12 @@ func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, 
 }
 
 func (e *engine) standingLocked(b *strings.Builder, m *member) {
-	if m.p.spec.Review {
+	switch {
+	case m.p.spec.Assesses:
+		fmt.Fprintf(b, "You assess the bound model of the responsibility of %s read-only, in a fresh context, before anything is realized.\n", labelOf(m.mgr))
+	case m.p.spec.Review:
 		fmt.Fprintf(b, "You are the independent reviewer of the responsibility of %s. You assess an immutable candidate read-only, in a fresh context without the authors' conversation.\n", labelOf(m.mgr))
-	} else {
+	default:
 		fmt.Fprintf(b, "You are %s.\n", labelOf(m.mgr))
 	}
 	if m.Brief != "" {
@@ -336,6 +339,9 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 			checks = append(checks, line)
 		}
 		b.WriteString("\nThe candidate passed the Model check and the File check.\n")
+		if p.spec.Assesses {
+			b.WriteString("No required check runs and no probe is offered in this Pass: a check judges artifacts, not the model.\n")
+		}
 		list(b, "Required checks on this candidate:", checks)
 		var mine, within, inherited []string
 		for _, f := range e.findings {

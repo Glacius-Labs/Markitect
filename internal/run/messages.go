@@ -37,8 +37,16 @@ func (e *engine) resolveContact(m *mgr, to string) (string, bool) {
 	return "", false
 }
 
-// closedRun is what a Root that tries to reach beyond the tree is told.
-const closedRun = "Nobody outside the Manager tree answers during a run. A public decision the model leaves open without delegating it, a contradiction or an error is a model problem: report kind problem, category model, abort true, naming the Definitions concerned; the model is corrected outside the run and a new run starts."
+// closedRun is what a Root that tries to reach beyond the tree is told: in a
+// Model assessment a material problem of the model is a finding of the Pass,
+// in any other Pass a problem that ends the run.
+func closedRun(spec PassSpec) string {
+	const closed = "Nobody outside the Manager tree answers during a run, and the model cannot change within it. "
+	if spec.Assesses {
+		return closed + "A material decision the model leaves open without delegating it, an unusable contract, a contradiction or an erroneous statement is a genuine finding of this assessment, with the correction its guidance names; your integrated result confirms it."
+	}
+	return closed + "A public decision the model leaves open without delegating it, a contradiction or an error is a model problem: report kind problem, category model, abort true, naming the Definitions concerned; the model is corrected outside the run and a new run starts."
+}
 
 // send serves the tool send: a question, an answer to a question addressed to
 // the sender, or information, along one direct edge of the Manager tree. A
@@ -64,7 +72,7 @@ func (e *engine) send(ctx context.Context, m *member, ts *turnState, args json.R
 		contacts := e.contactsLocked(m.mgr)
 		e.mu.Unlock()
 		if m.Parent == "" && in.To != "" && !slices.Contains(m.Children, in.To) {
-			return refuse(closedRun)
+			return refuse("%s", closedRun(m.p.spec))
 		}
 		return refuse("%q is not one of your contacts. Your contacts are: %s. Other Managers are reached through your parent or children.", in.To, strings.Join(contacts, ", "))
 	}
@@ -167,7 +175,7 @@ func (e *engine) escalate(ctx context.Context, m *member, ts *turnState, args js
 	to := m.Parent
 	if to == "" {
 		e.mu.Unlock()
-		return refuse(closedRun)
+		return refuse("%s", closedRun(m.p.spec))
 	}
 	x := e.addProblemLocked(Problem{Manager: m.Path, Category: in.Category, Text: text, Escalated: true})
 	answer, id := e.ask(ctx, m, ts, to, fmt.Sprintf("Escalated %s problem: %s", in.Category, text), "")

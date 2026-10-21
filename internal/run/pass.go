@@ -156,8 +156,8 @@ func validateSpec(spec PassSpec) error {
 		return bad("pass %q needs a mandate", spec.Purpose)
 	case spec.Review && (spec.Writes || spec.Plans || spec.BindWaits):
 		return bad("a review Pass is read-only, plans nothing and binds no dependency")
-	case spec.Assesses && (spec.Review || spec.Writes || spec.Plans || spec.BindWaits):
-		return bad("a model assessment is read-only work: no review, writes, plan or bound dependency")
+	case spec.Assesses && (!spec.Review || spec.ArtifactFindingsAdvisory):
+		return bad("a model assessment is a review Pass of the model, without artifact findings")
 	case spec.Review && strings.TrimSpace(spec.Guidance) == "":
 		return bad("a review Pass needs guidance on what a genuine finding is")
 	case !spec.Review && spec.ArtifactFindingsAdvisory:
@@ -809,7 +809,7 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 		}
 	}
 	if p.spec.Review {
-		if len(p.checks) != len(e.cfg.Checks) {
+		if len(p.checks) != len(e.checksOf(p.spec)) {
 			return NeedsCorrection
 		}
 		for _, c := range p.checks {
@@ -878,13 +878,14 @@ func (e *engine) seal(p *pass) PassResult {
 		}
 	}
 	e.verified = nil
-	if p.spec.Review && p.verdict == Satisfied {
+	if p.spec.Review && p.verdict == Satisfied && (!p.spec.Assesses || e.verifiedBeforeLocked(p)) {
 		e.verified = &stand
 	}
-	if p.spec.Assesses && p.verdict != Satisfied {
+	if confirmed := e.confirmedLocked(p); p.spec.Assesses && p.verdict == NeedsCorrection && len(confirmed) > 0 {
 		// Root confirmed what its tree found: the bound model has a material
-		// problem, which no Pass of this run can correct.
-		e.reject(ModelAssessmentReason + e.assessmentSummaryLocked())
+		// problem, which no Pass of this run can correct. A Pass that only
+		// disputed findings keep from being clean is reassessed instead.
+		e.reject(ModelAssessmentReason + strings.Join(confirmed, "; "))
 	}
 	record := p.recordLocked()
 	_ = e.record(Event{Kind: "pass.sealed", Pass: p.id, Data: map[string]any{"purpose": p.spec.Purpose, "verdict": p.verdict, "tree": p.sealedOn, "managers": record.Managers}})
@@ -953,17 +954,26 @@ func listNames(names []string) string {
 	return text
 }
 
-// assessmentSummaryLocked names the open genuine findings of the run, of which
-// a confirmed model assessment consists.
-func (e *engine) assessmentSummaryLocked() string {
-	var lines []string
-	for _, f := range e.findings {
-		if f.Blocking && !f.Closed {
-			lines = append(lines, fmt.Sprintf("%s [%s] %s: %s", f.ID, f.Owner, f.Obligation, f.Observed))
+// verifiedBeforeLocked reports whether a clean independent Verify of the same
+// stand precedes the Model assessment p with only Model assessments between
+// them: a clean assessment of a verified candidate keeps it verified.
+func (e *engine) verifiedBeforeLocked(p *pass) bool {
+	for i := p.number - 2; i >= 0; i-- {
+		if q := e.passes[i]; !q.spec.Assesses {
+			return q.spec.Review && q.verdict == Satisfied && q.sealedOn == p.sealedOn
 		}
 	}
-	if len(lines) == 0 {
-		return "Root's result needs correction"
+	return false
+}
+
+// confirmedLocked names the confirmed findings of a sealed Pass: open, genuine,
+// raised by the team and not disputed in it, each with its correction class.
+func (e *engine) confirmedLocked(p *pass) []string {
+	var lines []string
+	for _, f := range e.findings {
+		if f.Blocking && !f.Closed && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
+			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, f.Observed))
+		}
 	}
-	return strings.Join(lines, "; ")
+	return lines
 }

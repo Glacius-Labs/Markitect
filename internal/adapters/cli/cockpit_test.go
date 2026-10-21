@@ -13,7 +13,7 @@ import (
 
 func TestCockpitPassesItsSelectionAndReportsWhereItServes(t *testing.T) {
 	var got CockpitRequest
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, ready func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, ready func(string)) error {
 		got = r
 		ready("http://127.0.0.1:7341/")
 		return nil
@@ -34,7 +34,7 @@ func TestCockpitPassesItsSelectionAndReportsWhereItServes(t *testing.T) {
 
 func TestCockpitRefusesIncompleteSelectionsAndReportsFailures(t *testing.T) {
 	calls := 0
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(context.Context, CockpitRequest, func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(context.Context, CockpitRequest, func(string)) error {
 		calls++
 		return errors.New("listen address is not a loopback address")
 	})
@@ -51,14 +51,14 @@ func TestCockpitRefusesIncompleteSelectionsAndReportsFailures(t *testing.T) {
 	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 || !strings.Contains(out.String(), "loopback") {
 		t.Fatalf("%d %s", code, out.String())
 	}
-	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 {
+	if code := New(nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 {
 		t.Fatalf("an unconfigured cockpit = %d", code)
 	}
 }
 
 func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
 	var got CockpitRequest
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
 		got = r
 		return nil
 	})
@@ -77,7 +77,7 @@ func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
 
 func TestCockpitSelectsTheModelAndDependenciesAsCheckDoes(t *testing.T) {
 	var got CockpitRequest
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
 		got = r
 		return nil
 	})

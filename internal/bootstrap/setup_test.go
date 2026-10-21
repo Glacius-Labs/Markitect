@@ -94,7 +94,7 @@ func (f setupFixture) run(t *testing.T, extra ...string) (code int, stdout, stde
 		t.Fatal(err)
 	}
 	preparation := apply.NewPreparationService(apply.NewModelService(repository, repository))
-	command := cli.New(preparation, nil, nil, repository, nil, nil, nil).WithSetup(newSetup(preparation, f.fake.engine).Setup)
+	command := cli.New(preparation, nil, nil, repository, nil, nil).WithSetup(newSetup(preparation, f.fake.engine).Setup)
 	var out, errout bytes.Buffer
 	code = command.Run(context.Background(), append(slices.Clone(f.args), extra...), &out, &errout)
 	return code, out.String(), errout.String()
@@ -201,7 +201,7 @@ func TestSetupPreparesARuntimeThatApplyAndCheckAccept(t *testing.T) {
 		t.Fatal(err)
 	}
 	if _, found := raw["ownerDecisions"]; found {
-		t.Fatal("ownerDecisions written without a decision")
+		t.Fatal("setup wrote the retired ownerDecisions key")
 	}
 	if _, found := raw["deadline"]; found {
 		t.Fatal("deadline written without one")
@@ -222,7 +222,7 @@ func TestSetupPreparesARuntimeThatApplyAndCheckAccept(t *testing.T) {
 	agents := agentMetadataRouter{claude: claudecode.NewMetadataPreparer(func(claudecode.EngineConfig) (claudecode.ImageReader, error) { return fake, nil })}
 	checker := checks.NewMetadataPreparer(func(checks.EngineConfig) (checks.ImageReader, error) { return fake, nil })
 	var checkOut, checkErr bytes.Buffer
-	command := cli.New(preparation, agents, checker, repository, nil, nil, nil)
+	command := cli.New(preparation, agents, checker, repository, nil, nil)
 	if code := command.Run(context.Background(), []string{"check", "--repo", f.repo.Dir, "--metadata", "--runtime-profile", profilePath}, &checkOut, &checkErr); code != 0 {
 		t.Fatalf("check --metadata exit %d\n%s\n%s", code, checkOut.String(), checkErr.String())
 	}
@@ -419,9 +419,9 @@ func TestSetupRefusesAnEngineWithoutVolumeSubpaths(t *testing.T) {
 	}
 }
 
-func TestSetupWritesOwnerDecisionsAndDeadlineOnlyWhenGiven(t *testing.T) {
+func TestSetupWritesDeadlineOnlyWhenGiven(t *testing.T) {
 	f := newSetupFixture(t)
-	code, out, errout := f.run(t, "--request", "Apply the model.", "--decision", "Use euro.", "--decision", "No tabs.", "--deadline", "2030-01-02T03:04:05Z", "--store", "setup-store")
+	code, out, errout := f.run(t, "--request", "Apply the model.", "--deadline", "2030-01-02T03:04:05Z", "--store", "setup-store")
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
@@ -429,7 +429,7 @@ func TestSetupWritesOwnerDecisionsAndDeadlineOnlyWhenGiven(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.OwnerRequest != "Apply the model." || len(cfg.OwnerDecisions) != 2 || cfg.OwnerDecisions[1] != "No tabs." || cfg.Deadline != "2030-01-02T03:04:05Z" || cfg.RepositoryIdentity != "setup-store" || cfg.WorkspaceHelper.Labels["markitect.store"] != "setup-store" {
+	if cfg.OwnerRequest != "Apply the model." || cfg.Deadline != "2030-01-02T03:04:05Z" || cfg.RepositoryIdentity != "setup-store" || cfg.WorkspaceHelper.Labels["markitect.store"] != "setup-store" {
 		t.Fatalf("%+v", cfg)
 	}
 	// A deadline that is not UTC is refused before any file changes.
@@ -448,7 +448,7 @@ func TestSetupWritesOwnerDecisionsAndDeadlineOnlyWhenGiven(t *testing.T) {
 func TestEncodedRunConfigRoundTripsThroughTheDecoder(t *testing.T) {
 	root := testkit.TempDir(t)
 	token, state := filepath.Join(root, "token"), filepath.Join(root, "state")
-	document := setupRunConfig(cli.SetupRequest{Credential: token, Engine: filepath.Join(root, "docker"), ProductBuild: "0.0.1", OwnerRequest: "Do it.", OwnerDecisions: []string{"A", "B <&> C"}, Deadline: "2031-05-06T07:08:09Z"}, bootstrapImageID, "store-1", state)
+	document := setupRunConfig(cli.SetupRequest{Credential: token, Engine: filepath.Join(root, "docker"), ProductBuild: "0.0.1", OwnerRequest: "Do <&> it.", Deadline: "2031-05-06T07:08:09Z"}, bootstrapImageID, "store-1", state)
 	data, err := encodeRunConfig(document)
 	if err != nil {
 		t.Fatal(err)
@@ -458,7 +458,7 @@ func TestEncodedRunConfigRoundTripsThroughTheDecoder(t *testing.T) {
 		t.Fatalf("encoding is not deterministic or escapes HTML:\n%s", data)
 	}
 	cfg, err := decodeRunConfig(data)
-	if err != nil || cfg.OwnerDecisions[1] != "B <&> C" || cfg.deadline().IsZero() || cfg.Credentials[setupCredentialRef].Path != token || cfg.Harvest.MaxEntries != 50000 {
+	if err != nil || cfg.OwnerRequest != "Do <&> it." || cfg.deadline().IsZero() || cfg.Credentials[setupCredentialRef].Path != token || cfg.Harvest.MaxEntries != 50000 {
 		t.Fatalf("%v %+v", err, cfg)
 	}
 	// An invalid document never encodes.

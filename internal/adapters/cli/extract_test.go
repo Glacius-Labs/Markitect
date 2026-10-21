@@ -23,7 +23,7 @@ func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	var observed ExtractRequest
 	calls := 0
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(_ context.Context, request ExtractRequest) (ExtractReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithExtract(func(_ context.Context, request ExtractRequest) (ExtractReport, error) {
 		calls++
 		observed = request
 		return ExtractReport{Status: model.NotCompleted}, nil
@@ -48,7 +48,7 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	dir := t.TempDir()
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	calls := 0
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
 		calls++
 		return ExtractReport{Status: model.Passed}, nil
 	})
@@ -72,7 +72,7 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	}
 	// Without the operation installed, Extract is unavailable.
 	var out, stderr bytes.Buffer
-	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--runtime-profile", runtimeProfile}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
+	if code := New(nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--runtime-profile", runtimeProfile}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
 		t.Fatalf("%d %s", code, out.String())
 	}
 }
@@ -337,7 +337,7 @@ func TestExtractPrintsTheAccountToStderrAndKeepsStdoutJSON(t *testing.T) {
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	result := libraryExtract(t)
 	var report ExtractReport
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
 		report = NewExtractReport("x-1", result)
 		report.Status, report.EvidenceDirectory = model.Passed, "/state/x-1"
 		return report, nil

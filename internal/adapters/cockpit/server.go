@@ -27,27 +27,24 @@ const DefaultListen = "127.0.0.1:7341"
 
 // Config selects the state directories the cockpit observes. The cockpit only
 // reads them; Liveness, when set, probes whether an Apply holds one. Project
-// observes the repository's identity. Answer, when set, is the owner
-// channel's answer operation, the cockpit's only action.
+// observes the repository's identity.
 type Config struct {
 	States   []string
 	Liveness Liveness
 	Project  ProjectObserver
-	Answer   Answerer
 	// Authoring, when set, makes and decides proposals for the project's
 	// .markitect inputs.
 	Authoring Authoring
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
-// of the configured state directories. It writes only an owner's answer
-// through the configured owner channel and an accepted proposal through the
-// configured authoring service; no request starts, stops or repairs a run.
+// of the configured state directories. It writes only an accepted proposal
+// through the configured authoring service; no request starts, stops or
+// repairs a run and none answers a question of a run.
 type Server struct {
 	states    []*stateDirectory
 	liveness  Liveness
 	project   projectCache
-	answer    Answerer
 	authoring Authoring
 	poll      time.Duration
 	host      string
@@ -59,7 +56,7 @@ func New(cfg Config) (*Server, error) {
 	if len(cfg.States) == 0 {
 		return nil, errors.New("the cockpit needs at least one state directory")
 	}
-	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, authoring: cfg.Authoring, poll: 400 * time.Millisecond}
+	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, authoring: cfg.Authoring, poll: 400 * time.Millisecond}
 	seen := map[string]bool{}
 	for _, dir := range cfg.States {
 		abs, err := filepath.Abs(dir)
@@ -128,8 +125,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/project", s.handleProject)
 	mux.HandleFunc("POST /api/project/observe", s.handleObserve)
 	mux.HandleFunc("GET /api/model", s.handleModel)
-	mux.HandleFunc("GET /api/questions", s.handleQuestions)
-	mux.HandleFunc("POST /api/runs/{run}/questions/{question}/answer", s.handleAnswer)
 	mux.HandleFunc("GET /api/settings", s.handleSettings)
 	mux.HandleFunc("POST /api/proposals/settings", s.handleProposeSettings)
 	mux.HandleFunc("GET /api/proposals", s.handleProposals)

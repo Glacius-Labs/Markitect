@@ -6,7 +6,6 @@
 import { h, clear, clock, since, label, stateWord, shortDigest, duration } from "./dom.js";
 import { activity } from "./diagram.js";
 import { api } from "./api.js";
-import { answerForm } from "./answer.js";
 
 export function renderDetail(aside, ctx) {
   const token = (aside._token = (aside._token || 0) + 1);
@@ -260,7 +259,7 @@ function question(c) {
     return;
   }
   const toUser = q.to === "user";
-  title(c, `Question ${q.id}`, `${label(q.from)} to ${toUser ? "the owner, through the owner channel" : label(q.to)}, ${q.pass}`);
+  title(c, `Question ${q.id}`, `${label(q.from)} to ${toUser ? "the owner (an earlier run recorded this; Runs no longer ask the owner)" : label(q.to)}, ${q.pass}`);
   c.body.append(h("ol", { class: "steps" },
     h("li", { class: "ok" }, `Asked at ${clock(q.asked)}`),
     q.status === "answered"
@@ -274,24 +273,6 @@ function question(c) {
   const servedBy = view.questions.filter((x) => x.about === q.id);
   if (servedBy.length) section(c, "Forwarded as", h("p", {}, servedBy.map((x, i) => [i ? ", " : "", r(`question:${x.id}`, `${x.id} to ${label(x.to === "user" ? "@user" : x.to)}`)])));
   c.body.append(h("p", { class: "note" }, "The record shows the send and the answer; whether and when the recipient read the question is not recorded."));
-  if (toUser && q.status === "open" && c.boundary >= c.entries.length) ownerAnswer(c, q);
-}
-
-// ownerAnswer offers the answer form at the latest boundary when the owner
-// channel says the run waits for this answer, and says why not otherwise.
-function ownerAnswer(c, q) {
-  const slot = h("div", {});
-  c.body.append(h("h3", {}, "Owner answer"), slot);
-  api.questions().then((all) => {
-    const oq = all.find((x) => x.run === c.view.run.id && x.id === q.id);
-    if (!oq) {
-      slot.append(h("p", { class: "note" }, "The owner channel has no record of this question."));
-    } else if (oq.answerable) {
-      slot.append(answerForm(oq.run, oq.id));
-    } else {
-      slot.append(h("p", { class: "note" }, `Not answerable now: ${oq.why}.`));
-    }
-  }).catch((err) => slot.append(h("p", { class: "note" }, `The owner channel is not readable: ${err.message}`)));
 }
 
 // ---------- Turn ----------
@@ -451,12 +432,12 @@ function record(c) {
 
 function owner(c) {
   const { view, r } = c;
-  title(c, "Owner channel", "Root's questions to the AI that invoked Markitect, which can consult the owner");
+  title(c, "Owner", "Recorded questions of earlier runs that Root asked the owner. A Run asks the owner nothing now; this cockpit answers none");
   const qs = view.questions.filter((q) => q.to === "user");
   section(c, "Questions", qs.length
     ? h("table", {}, h("tbody", {}, qs.map((q) => h("tr", {}, h("td", {}, r(`question:${q.id}`, q.id)), h("td", {}, q.status), h("td", { class: "prose" }, clip(q.text, 140))))))
     : h("p", { class: "empty" }, "No question to the owner recorded."));
-  c.body.append(h("p", { class: "note" }, "Answers clarify within the model; they cannot change it. A model Root judges erroneous or contradictory ends the run."));
+  c.body.append(h("p", { class: "note" }, "A model Root judges incomplete or contradictory ends the run without publication; the model is amended outside the run."));
 }
 
 function orchestrator(c) {

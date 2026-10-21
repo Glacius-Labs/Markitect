@@ -65,7 +65,7 @@ func NewExtractReport(id string, result apply.ExtractResult) ExtractReport {
 	}
 	if result.Model != nil {
 		r.Model = NewRunReport(id+"-"+apply.ExtractModelPhase, *result.Model)
-		// The model phase continues the structure phase's owner channel, so its
+		// The model phase continues the structure phase's questions, so its
 		// questions include the structure phase's; a model phase that failed to
 		// start has none.
 		if len(result.Model.Questions) >= len(questions) {

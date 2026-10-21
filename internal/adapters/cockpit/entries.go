@@ -173,7 +173,7 @@ func entry(r Record) Entry {
 		from, to := str("from"), str("to")
 		e.Class, e.Ref, e.Text = "exchange", "question:"+id, fmt.Sprintf("%s asked %s %s", labelOf(from), nodeLabel(participant(to)), id)
 		channel := "agent"
-		if to == "user" {
+		if to == recordedUser {
 			channel = "owner"
 		}
 		e.Link = &Link{From: from, To: participant(to), Channel: channel, Purpose: "question " + id}
