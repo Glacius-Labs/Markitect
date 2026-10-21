@@ -41,3 +41,26 @@ checks are the only executed checks at preparation time. Structural/accounting,
 browser keyboard/resize/390–860–1440 px screenshots, and actual one-Package and
 Markitect observations remain pending the resource gate. Node remains local
 only; CI gains no Node requirement. No Docker, provider or model session ran.
+
+## Delivery after host release
+
+Composed on actual Main `06ac30b6` (#586), retaining only this package's four
+new registrations and the integrated component's `.js` path. The presentation
+module also uses `.js` to match the existing source packager. The final candidate
+passes the cockpit Go package, seven local Node tests, architecture CLI, working
+and fixed-head structural accounting, product context, docs and diff checks.
+Independent complete-diff review is required on that exact candidate before merge.
+
+The actual embedded application displayed a checked one-local-Package fixture
+(`one-package-ui-fixture`, source `34628cb40e7f62cda05b42899456b6ed33cccd88`,
+with Core supplied by its pinned Markitect dependency) and Markitect's 22 local
+Packages. Browse responsibility links, Package profile preselection and
+project-wide team focus worked without creating a proposal. Keyboard collapse,
+pan/zoom/Fit, 390/860/1440 px and an 860x400 window were exercised. The observed
+390 px tab/status overlap was corrected with separate header rows and rechecked.
+
+Resolved progress, provider-model labels, return to declarations and refusal
+were demonstrated with an explicitly synthetic HTTP metadata stub; no Runtime
+was contacted. These are UI checks, not provider or owner acceptance. The
+finishing record will retain the combined browser screenshots. Earlier pending
+statements above describe the resource-reserved preparation period.
