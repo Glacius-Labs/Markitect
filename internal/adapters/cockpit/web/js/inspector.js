@@ -556,6 +556,7 @@ export class Inspector {
     else if (this.isLive()) this.playback.resume();
     else this.playback.play();
     this.updatePlayButton();
+    if (this.playback.playing) this.startAnimation();
   }
 
   updatePlayButton() {

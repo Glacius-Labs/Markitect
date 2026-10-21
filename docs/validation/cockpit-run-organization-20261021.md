@@ -92,3 +92,8 @@ The independently reviewed correction keeps automated playback selections free
 to continue. No real suspected-observation case was present in these three
 records; that case remains synthetic. No provider, Apply or model session was
 started, and none of these UI checks establishes owner/provider acceptance.
+
+A non-empty-arrow replay check also found that pressing Play at a selected
+send waited for the next record before starting the exchange animation loop.
+Play now starts that loop immediately; the repeated browser check compares
+moving arrow coordinates and then verifies that Pause freezes them.
