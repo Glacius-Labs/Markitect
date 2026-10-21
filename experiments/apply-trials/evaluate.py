@@ -33,7 +33,7 @@ sys.path.insert(0, str(HERE))
 import assess  # noqa: E402
 import oracle  # noqa: E402
 from cases import CASES  # noqa: E402
-from scenarios import (ACCEPT, BY_ID, COMPLETED, FALSE_ABORT, FALSE_BLOCKER, JUSTIFIED_STOP, LATE_STOP,  # noqa: E402
+from scenarios import (ACCEPT, BOUNDED_DEPOT, BY_ID, COMPLETED, FALSE_ABORT, FALSE_BLOCKER, JUSTIFIED_STOP, LATE_STOP,  # noqa: E402
                        MARKITECT, MISSED, OPTIONAL_CHANGE, OWNER_CHANNEL, PRESERVE, REJECT, SILENT_INVENTION, STOPS,
                        TECHNICAL, UNAUTHORIZED_PUBLICATION, WRONG_STOP, stop_terms)
 from trial_kit import python_command  # noqa: E402
@@ -167,8 +167,17 @@ def outcome(scenario, arm, assessed, summary, final, earlier_run=None, run_id=No
             reasons.append("the working tree changed: %s" % changed[:5])
         findings = [item for item in summary["findings"] if item.get("blocking") and not item.get("closed")]
         if scenario.expect == REJECT:
-            genuine = [item for item in findings if item.get("owner") == scenario.finding_owner
+            eligible = findings
+            if scenario.id.startswith("NIGHT-"):
+                eligible = [item for item in findings if item.get("kind") == "deviation" and item.get("raisedBy") != "markitect"]
+            genuine = [item for item in eligible if item.get("owner") == scenario.finding_owner
                        and text_names("%s %s" % (item.get("obligation", ""), item.get("observed", "")), scenario.finding_terms)]
+            if scenario.id == "NIGHT-VS":
+                # A real storage deviation and its unsupported test expectation
+                # may be reported together or as two separate owner findings.
+                owned = [item for item in eligible if item.get("owner") == scenario.finding_owner]
+                genuine = all(any(text_names("%s %s" % (item.get("obligation", ""), item.get("observed", "")), groups) for item in owned)
+                              for groups in (scenario.finding_terms[:2], scenario.finding_terms[2:]))
             if "satisfied" in verify:
                 reasons.append("a satisfied Verify verdict on the faulty stand")
             if not genuine:
@@ -431,12 +440,12 @@ def process(scenario, summary, events, damaged=0):
     if summary and (scenario.expect == PRESERVE or CASES[scenario.case].preserve):
         repeated = repeated_notes(summary["findings"])
         details["repeatedSuggestionCandidates"] = repeated
-    if summary and scenario.id in ("A1", "CCF-R"):
+    if summary and scenario.id in ("A1", "CCF-R", "NIGHT-R"):
         open_findings = [item["id"] for item in summary["findings"] if item.get("blocking") and not item.get("closed")]
         details["openFindings"] = open_findings
         if open_findings:
             reasons.append("genuine findings still open: %s" % open_findings)
-    if summary and scenario.id in ("CCF-P", "CCF-R"):
+    if summary and scenario.id in BOUNDED_DEPOT:
         # CCF acceptance needs a completed fresh independent Verify, not only
         # a claimed run label or an ordinary green test suite. Older scores
         # keep their historical criteria.
@@ -446,8 +455,9 @@ def process(scenario, summary, events, damaged=0):
         # The fixed CCF depot model owns these five Packages plus Root; the
         # control/model hashes freeze this list outside all Agent packets.
         required = {".", "catalog", "depot", "orders", "reports", "stock"}
+        expected_verdict = "needs_correction" if scenario.expect == REJECT else "satisfied"
         complete = (last.get("purpose") == "verify" and last.get("review") is True
-                    and last.get("sealed") is True and last.get("verdict") == "satisfied"
+                    and last.get("sealed") is True and last.get("verdict") == expected_verdict
                     and bool(last.get("tree")) and len(managers) == len(required)
                     and {m.get("manager") for m in managers} == required
                     and all(m.get("state") == "done" and m.get("basis") and m.get("result") for m in managers))
@@ -463,6 +473,35 @@ def process(scenario, summary, events, damaged=0):
         if (not bound or not sealed or
                 any((event.get("data") or {}).get("tree") != last["tree"] for event in bound + sealed)):
             return {"verdict": INCOMPLETE, "reasons": reasons + ["Verify candidate tree does not match its candidate/sealed events"], "details": details}
+        if scenario.id.startswith("NIGHT-"):
+            # NIGHT binds acceptance and exposure to the actual Verify event
+            # chain. Preserve the original CCF-v1 scoring contract unchanged.
+            accepted = {}
+            for manager in managers:
+                for stage in ("basis", "result"):
+                    indices = [index for index, event in enumerate(events)
+                               if event.get("kind") == stage + ".accepted"
+                               and event.get("pass") == last["id"]
+                               and event.get("manager") == manager["manager"]
+                               and (event.get("data") or {}).get("proposal") == manager[stage]]
+                    if not indices:
+                        return {"verdict": INCOMPLETE, "reasons": reasons + ["missing matching Verify acceptance event"], "details": details}
+                    accepted[manager["manager"], stage] = indices[-1]
+            all_bases = max(index for (manager, stage), index in accepted.items() if stage == "basis")
+            seal_index = min(index for index, event in enumerate(events)
+                             if event.get("kind") == "pass.sealed" and event.get("pass") == last["id"])
+            for manager in managers:
+                opened = [index for index, event in enumerate(events)
+                          if event.get("kind") == "review.candidate_opened" and event.get("pass") == last["id"]
+                          and event.get("manager") == manager["manager"]]
+                exposure = (events[opened[0]].get("data") or {}) if len(opened) == 1 else {}
+                if (len(opened) != 1 or exposure.get("basis") != manager["basis"] or exposure.get("tree") != last["tree"]
+                        or not all_bases < opened[0] < accepted[manager["manager"], "result"] < seal_index):
+                    return {"verdict": INCOMPLETE, "reasons": reasons + ["candidate exposure is not bound to all accepted model-first bases"], "details": details}
+            if scenario.expect == REJECT and any(event.get("kind") == "pass.start"
+                    and str((event.get("data") or {}).get("purpose", "")).lower() in REALIZATION_PURPOSES
+                    for event in events):
+                return {"verdict": NOT_MET, "reasons": reasons + ["independent negative Verify contains a realization Pass"], "details": details}
     if summary and scenario.expect in STOPS:
         realization = [event for event in events if event.get("kind") == "pass.start"
                        and str((event.get("data") or {}).get("purpose", "")).lower() in REALIZATION_PURPOSES]
@@ -507,7 +546,7 @@ def evaluate(scenario_id, arm, repo, report=None, events=None, final=None, pytho
                                 "failed": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "fail"},
                                 "skipped": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "skip"}}
     summary = assess.summarize_report(report_data) if report_data is not None else None
-    if summary is not None and scenario.id.startswith("CCF-"):
+    if summary is not None and scenario.id.startswith(("CCF-", "NIGHT-")):
         # Provider token usage is retained; an unpriced numeric zero from the
         # shared report is not evidence that this ChatGPT session cost nothing.
         summary["reportedCostUSDRaw"] = ((report_data or {}).get("run") or {}).get("usage", {}).get("costUSD")

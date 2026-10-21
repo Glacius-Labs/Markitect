@@ -6,6 +6,13 @@ the existing `process/v1` Runtime profile executable metadata format. Compose
 `ProfileInput.Section()` dispatches the adapter. Preparation does not run the
 executable or establish runtime capability.
 
+Execution composition passes the configured workspace helper's ownership labels
+to `Runner`. It clones those labels at construction and for each command, then
+adds the actual `markitect.check` identity. Thus production checks carry the
+same run store label as its workspace helpers for bounded emergency cleanup;
+caller mutation or the reserved check label cannot redirect that ownership.
+Labels identify owned resources; they never establish normal observed stop.
+
 ## Container Runtime profile
 
 The selected Runtime check profile uses exactly one `container` section. Every

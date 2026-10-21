@@ -402,6 +402,16 @@ func (c *call) envelope(kind string, extra map[string]any) map[string]any {
 	for k, v := range extra {
 		args[k] = v
 	}
+	if kind == kindBasis && strings.Contains(c.turn.Prompt, "MODEL-FIRST BASIS:") {
+		for _, entry := range args["obligations"].([]map[string]any) {
+			entry["status"], entry["note"] = coverOpen, "model-derived cases; candidate assessment pending"
+			delete(entry, "evidence")
+		}
+		if entry, ok := args["integration"].(map[string]any); ok {
+			entry["status"], entry["note"] = coverOpen, "model-derived composition; candidate assessment pending"
+			delete(entry, "evidence")
+		}
+	}
 	return args
 }
 

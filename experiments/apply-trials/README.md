@@ -1,5 +1,9 @@
 # Apply trial cases
 
+The separate [NIGHT stabilization handoff](../../docs/development/night-apply-stability-20261021.md)
+binds model-first independent Verify, the new usable-path reference controls and a
+source-released finite overnight ledger. Historical CCF-v1 packets and results remain closed.
+
 D's [four-slot preparation](d-preparation-20261021.md) reuses preservation, artifact and parent-semantic controls, adds the one bounded Workshop R1 input, and supplies a finite ledger and single-conversation ordinary-Agent Driver. It is provider-free preparation, with explicit real-transport/profile dependencies.
 
 The [offline report-contract correction](report-contract-validation-20261021.md) binds A's historical reports, reproduces the old and #564 parser/scoring gaps, and records a separate outcome-only re-evaluation. Its focused regression command runs no oracle, Agent or provider.

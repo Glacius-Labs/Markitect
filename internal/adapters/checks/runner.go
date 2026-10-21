@@ -6,6 +6,7 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"path"
 	"strings"
 	"sync"
@@ -32,6 +33,7 @@ const closeBound = 45 * time.Second
 type Runner struct {
 	runtime    CommandRuntime
 	workspaces run.Workspaces
+	labels     map[string]string
 }
 
 var _ run.Checks = (*Runner)(nil)
@@ -39,21 +41,23 @@ var _ run.Checks = (*Runner)(nil)
 // NewRunner composes the actual container runtime with an independently
 // configured workspace adapter. Workspace helper images and check images have
 // separate identities; every check runs only in the request's exact image.
-func NewRunner(engine *container.Engine, workspaces run.Workspaces) (*Runner, error) {
+// Ownership labels are copied into each command's container specification.
+func NewRunner(engine *container.Engine, workspaces run.Workspaces, labels map[string]string) (*Runner, error) {
 	if engine == nil {
 		return nil, fmt.Errorf("check runner needs a container engine")
 	}
-	return NewRunnerWithRuntime(engine, workspaces)
+	return NewRunnerWithRuntime(engine, workspaces, labels)
 }
 
 // NewRunnerWithRuntime supplies an observation-compatible runtime, including
 // deterministic peers for source tests. A workspace must be private to Run
 // until its command has ended and Close has completed.
-func NewRunnerWithRuntime(runtime CommandRuntime, workspaces run.Workspaces) (*Runner, error) {
+// Labels are cloned at construction and per command; markitect.check is reserved.
+func NewRunnerWithRuntime(runtime CommandRuntime, workspaces run.Workspaces, labels map[string]string) (*Runner, error) {
 	if runtime == nil || workspaces == nil {
 		return nil, fmt.Errorf("check runner needs runtime and workspaces")
 	}
-	return &Runner{runtime: runtime, workspaces: workspaces}, nil
+	return &Runner{runtime: runtime, workspaces: workspaces, labels: maps.Clone(labels)}, nil
 }
 
 func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.CheckReceipt, err error) {
@@ -161,8 +165,11 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	if !req.Directory.IsRoot() {
 		workdir += "/" + req.Directory.String()
 	}
+	labels := make(map[string]string, len(r.labels)+1)
+	maps.Copy(labels, r.labels)
+	labels["markitect.check"] = string(req.ID)
 	spec := container.ContainerSpec{
-		Name: name, Image: req.ImageID, Labels: map[string]string{"markitect.check": string(req.ID)}, User: "1000:1000",
+		Name: name, Image: req.ImageID, Labels: labels, User: "1000:1000",
 		Mounts: []container.Mount{{Volume: copy.Volume, Target: "/work", NoCopy: true}, {Volume: home.Volume, Target: "/home/agent", NoCopy: true}}, Workdir: workdir,
 		CPUs: float64(req.Limits.MilliCPUs) / 1000, MemoryBytes: req.Limits.MemoryBytes, Pids: int(req.Limits.Processes),
 		TmpBytes: 64 << 20, Network: "none",

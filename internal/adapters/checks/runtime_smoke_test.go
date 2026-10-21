@@ -53,7 +53,7 @@ func TestCheckWorkspaceRuntimeSmoke(t *testing.T) {
 		t.Fatal(err)
 	}
 	observed := &smokeWorkspaces{Workspaces: w}
-	runner, err := NewRunner(engine, observed)
+	runner, err := NewRunner(engine, observed, map[string]string{"markitect.smoke": name})
 	if err != nil {
 		t.Fatal(err)
 	}

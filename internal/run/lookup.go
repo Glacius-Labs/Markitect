@@ -30,11 +30,25 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 	if !slices.Contains(lookUpTopics, in.Topic) {
 		return refuse("topic must be one of %s.", strings.Join(lookUpTopics, ", "))
 	}
+	if m.candidateHidden() {
+		switch in.Topic {
+		case "brief", "definition", "owner", "method":
+		case "basis":
+			if in.Manager != "" && in.Manager != m.Parent {
+				return refuse("Before candidate introduction, only your parent's model-derived basis is available.")
+			}
+		default:
+			return refuse("Candidate or author information (%s) opens in a fresh Turn after all required model-first bases are accepted. Derive conditions and intended cases from the bound Definitions first.", in.Topic)
+		}
+	}
 	switch in.Topic {
 	case "method":
 		text, ok := methods[strings.TrimSpace(in.ID)]
 		if !ok {
 			return refuse("id names a method: one of %s.", strings.Join(methodNames(), ", "))
+		}
+		if in.ID == "reviewing" || in.ID == "integrating" {
+			text += "\n" + semanticAssessment
 		}
 		return ToolAnswer{Text: text}
 	case "brief":
@@ -84,7 +98,7 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 		}
 		var b strings.Builder
 		writeReceipt(&b, r, true)
-		return ToolAnswer{Text: strings.TrimRight(b.String(), "\n")}
+		return e.recordLookup(m, ts, "lookup.probe", ToolAnswer{Text: strings.TrimRight(b.String(), "\n")}, map[string]any{"id": r.ID, "stand": r.Stand, "content": r.ContentDigest})
 	case "registry":
 		view := e.cfg.Registry(p.accepted)
 		path := strings.TrimSpace(in.Path)

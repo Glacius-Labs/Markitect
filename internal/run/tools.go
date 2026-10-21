@@ -182,7 +182,7 @@ func evidenceSchema(spec PassSpec) schema {
 	return schema{"type": "array", "description": evidenceText(spec), "items": object(nil, schema{
 		"kind":      schema{"type": "string", "enum": []string{"public_behavior", "static"}, "description": "Required in Implement and artifact review. public_behavior needs a passing receipt at the actual declared public entry; static needs inspected source and why execution is inapplicable. Never relabel executable public behavior static to waive evidence."},
 		"authority": str("Bound model Definition identity; implicit own obligation, required for integration source inspection (pass_mandate refers to the already bound Pass task where no Definition supplies that integration duty, never a new Definition or permission to override the model). State the precise condition/source reference in claim/conditions."),
-		"boundary":  str("public_behavior: actual declared public entry exercised by the receipt, matching probe.boundary. Inspect the probe's assertions and invocation; a label alone proves no semantic adequacy."),
+		"boundary":  str("public_behavior: actual declared public entry exercised by the receipt; omit to inherit probe.boundary, or supply the same value. Inspect the probe's assertions and invocation; a label alone proves no semantic adequacy."),
 		"claim":     str("Distinct model-derived condition and case/input class. A receipt supplies its recorded claim."),
 		"receipt":   str("Your passing tool-produced receipt for this obligation on this submitted stand; private-validator or suite totals cannot establish the public composition."),
 		"source":    str("static: inspected repository-relative source file."),
@@ -242,6 +242,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
 	switch probes := e.probesAvailable(spec); {
+	case m.candidateHidden():
 	case spec.Writes && probes:
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Without probe: File check of your current area against the accepted stand (unregistered or wrongly registered files, invalid registry entries, missing owners), advice while you work. With probe: run one behavioral probe file in its own container on a stable stand and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
 	case spec.Writes:
@@ -249,7 +250,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 	case probes:
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Run one behavioral probe file in its own container on the stand of this Pass and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
 	}
-	if len(m.Helpers) > 0 {
+	if !m.candidateHidden() && len(m.Helpers) > 0 {
 		tools = append(tools, ToolSpec{Name: toolDelegate, Description: "Delegate a bounded task to one of your helper roles; it runs in its own container after this turn and reports its result to you.", InputSchema: raw(delegateSchema)})
 	}
 	return tools

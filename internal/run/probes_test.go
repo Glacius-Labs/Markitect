@@ -2,6 +2,7 @@ package run
 
 import (
 	"encoding/json"
+	"fmt"
 	"regexp"
 	"slices"
 	"strings"
@@ -143,6 +144,50 @@ func TestProbeReceiptsAreBoundAndRetained(t *testing.T) {
 	recorded := f.ev.index("probe.receipt", "library", "", nil)
 	if requested < 0 || recorded < requested {
 		t.Errorf("the expectation was not on record before the probe ran: %d, %d", requested, recorded)
+	}
+}
+
+// The acceptance path must deliver assertions beyond the old 1,500-byte
+// preview. Oversized evidence remains retrievable and records which complete
+// receipt was delivered. Scripted Agents establish delivery, not semantics.
+func TestParentCanInspectCompleteReliedOnProbeBeforeDeciding(t *testing.T) {
+	for _, size := range []int{3000, 40000} {
+		t.Run(fmt.Sprint(size), func(t *testing.T) {
+			f := probeFixture(t)
+			var mu sync.Mutex
+			content := strings.Repeat("# prelude\n", size/10) + "assert expected_from_model == observed\n"
+			var receipt string
+			var inspected, cut bool
+			f.agents.script = func(c *call) error {
+				mu.Lock()
+				defer mu.Unlock()
+				if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
+					receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "public contract", "probe_contract.py", content)))
+					c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, receipt)}))
+					return nil
+				}
+				if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && proposalOf(c, kindBasis, "library") != "" {
+					cut = strings.Contains(c.turn.Prompt, "[cut; look_up topic probe")
+					text := c.turn.Prompt
+					if cut {
+						text = c.must(toolLookUp, map[string]any{"topic": "probe", "id": receipt}).Text
+					}
+					inspected = strings.Contains(text, "assert expected_from_model == observed") && strings.Contains(text, "Declared public boundary: fixture public entry")
+				}
+				c.protocol()
+				return nil
+			}
+			r := f.open()
+			r.Pass(implementSpec())
+			r.Pass(verifySpec())
+			out := f.finish(r, "")
+			if out.Status != Verified || !inspected || cut != (size > 32<<10) {
+				t.Fatalf("status %s; complete content delivered %v; cut %v", out.Status, inspected, cut)
+			}
+			if cut && f.ev.index("lookup.probe", ".", "", nil) < 0 {
+				t.Fatal("retrieved receipt delivery was not recorded")
+			}
+		})
 	}
 }
 
@@ -754,7 +799,7 @@ func TestTheChildJudgesRootsFailedProbeOfItsClaim(t *testing.T) {
 // conditions or prove that a real reviewer finds a semantic omission.
 func TestImplementNeedsDiscriminatingEvidenceAtTheDeclaredEntry(t *testing.T) {
 	f := probeFixture(t)
-	var missing, sourceOnly, privateOnly, noConditions ToolAnswer
+	var missing, sourceOnly, privateOnly, noConditions, wrongBoundary ToolAnswer
 	f.agents.script = func(c *call) error {
 		if c.turn.Manager == "library" && c.turn.Kind == ExecuteTurn && strings.HasPrefix(c.now(), "work on") {
 			cov := c.coverage()
@@ -771,7 +816,11 @@ func TestImplementNeedsDiscriminatingEvidenceAtTheDeclaredEntry(t *testing.T) {
 			cov = withEvidence(c, publicID)
 			delete(cov[0], "conditions")
 			noConditions = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, publicID)}))
+			cov = withEvidence(c, publicID)
+			cov[0]["evidence"].([]map[string]string)[0]["boundary"] = "another entry"
+			wrongBoundary = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
+			delete(cov[0]["evidence"].([]map[string]string)[0], "boundary")
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
 			return nil
 		}
 		c.protocol()
@@ -783,10 +832,23 @@ func TestImplementNeedsDiscriminatingEvidenceAtTheDeclaredEntry(t *testing.T) {
 	if result.Stopped || result.Verdict != Satisfied || out.Status == Verified {
 		t.Fatalf("implementation result %+v, outcome %+v", result, out)
 	}
-	for name, a := range map[string]ToolAnswer{"suite-only": missing, "source for public behavior": sourceOnly, "private receipt": privateOnly, "Definition IDs without conditions": noConditions} {
+	for name, a := range map[string]ToolAnswer{"suite-only": missing, "source for public behavior": sourceOnly, "private receipt": privateOnly, "Definition IDs without conditions": noConditions, "mismatched boundary": wrongBoundary} {
 		if !a.Refused {
 			t.Errorf("%s was accepted: %+v", name, a)
 		}
+	}
+	f.ev.mu.Lock()
+	defer f.ev.mu.Unlock()
+	var inherited bool
+	for _, ev := range f.ev.events {
+		fields, _ := ev.Data.(map[string]any)
+		if ev.Kind == "proposal.submitted" && ev.Manager == "library" && fields["kind"] == kindBasis {
+			data, _ := json.Marshal(ev.Data)
+			inherited = strings.Contains(string(data), `"boundary":"fixture public entry"`)
+		}
+	}
+	if !inherited {
+		t.Error("accepted evidence did not retain the receipt's inherited public boundary")
 	}
 }
 

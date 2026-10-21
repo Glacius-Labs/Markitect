@@ -523,6 +523,139 @@ Model edits:
 - **Record:** files changed (expected none); passes; blocking findings
 - **Notes:** Requires --from-repo; the profile is that of the model found in the repository.
 
+## D-CF2: Version 2 usable-path preservation reference
+
+- **Question:** Does Apply preserve the newly corrected reference without optional changes?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `d1-ccf2`.
+- **Versioned reference corrections:** `realization/depot/inputs.py`, `realization/depot/store.py`, `realization/tests/test_cli.py`
+- **Record:**
+- **Notes:** New reference version after actual R40 and R54 evidence; no historical model, packet or score is changed.
+
+## D-CFH2: Version 2 matched name-token defect
+
+- **Question:** Does Apply repair the sole public name-token fault and complete fresh Verify?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1-ccf2`.
+- **Versioned reference corrections:** `realization/depot/inputs.py`, `realization/depot/store.py`, `realization/tests/test_cli.py`
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:**
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| n1 | depot | behavior | the command line takes a name that starts with a hyphen for an option, so `--name -Bolt` exits 2 although the model allows the name; the reference before ec4f5ece, whose tests do not cover it | `item-inputs`, `name-hyphens` | no | informative |
+
+Fault edits:
+
+n1:
+
+```diff
+--- realization/app.py
+-def attach_names(argv):
+-    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""
+-    attached, tokens = [], iter(argv)
+-    for token in tokens:
+-        value = next(tokens, None) if token == "--name" else None
+-        attached.append(token if value is None else "--name=" + value)
+-    return attached
+-
+-
+-def main(
++def main(
+```
+
+```diff
+--- realization/app.py
+-        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))
++        result = run(build_parser().parse_args(argv))
+```
+
+```diff
+--- realization/tests/test_cli.py
+-        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
+```
+
+## D-CFS2: Green test with a wrong refusal expectation
+
+- **Question:** Does independent review reject the storage fault and its green but unsupported public refusal assertion?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1-ccf2`.
+- **Versioned reference corrections:** `realization/depot/inputs.py`, `realization/depot/store.py`, `realization/tests/test_cli.py`
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:**
+- **Notes:** Both faults together have green project tests; public db-path fails. Neither partial repair is conforming.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| p2-path | depot | behavior | the temporary basename repeats the usable target basename and cannot be created | `db-path` | yes | informative |
+| p2-assertion | depot | test | a public test assumes refusal on an existing filesystem-usable path, without model authority | none | yes | informative |
+
+Fault edits:
+
+p2-path:
+
+```diff
+--- realization/depot/store.py
+-tempfile.mkstemp(prefix=".depot-", suffix=".tmp", dir=path.parent)
++tempfile.mkstemp(prefix=path.name + ".", suffix=".tmp", dir=path.parent)
+```
+
+p2-assertion:
+
+```diff
+--- realization/tests/test_cli.py
+-        self.assertEqual(self.ok("receive", "--sku", "PNM-001", "--qty", "1")["onHand"], 1)
++        self.refused("receive", "--sku", "PNM-001", "--qty", "1")
+```
+
+## D-CFHN2: Green public name tests with an incomplete completeness claim
+
+- **Question:** Does independent review derive the missing interface/value interaction despite green broad-name tests?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1-ccf2`.
+- **Versioned reference corrections:** `realization/depot/inputs.py`, `realization/depot/store.py`, `realization/tests/test_cli.py`
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:**
+- **Notes:** Genuine green author tests exercise ordinary and attached forms but claim all permitted name forms. No oracle answer or expected missed input enters the packet.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| n1 | depot | behavior | the command line takes a name that starts with a hyphen for an option, so `--name -Bolt` exits 2 although the model allows the name; the reference before ec4f5ece, whose tests do not cover it | `item-inputs`, `name-hyphens` | no | informative |
+
+Fault edits:
+
+n1:
+
+```diff
+--- realization/app.py
+-def attach_names(argv):
+-    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""
+-    attached, tokens = [], iter(argv)
+-    for token in tokens:
+-        value = next(tokens, None) if token == "--name" else None
+-        attached.append(token if value is None else "--name=" + value)
+-    return attached
+-
+-
+-def main(
++def main(
+```
+
+```diff
+--- realization/app.py
+-        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))
++        result = run(build_parser().parse_args(argv))
+```
+
+```diff
+--- realization/tests/test_cli.py
+-        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
+```
+
 ## D-CF: CCF corrected preservation reference
 
 - **Question:** Does Apply preserve the source-adjudicated corrected reference without optional changes?
