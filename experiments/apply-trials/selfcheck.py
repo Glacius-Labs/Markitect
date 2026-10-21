@@ -143,7 +143,7 @@ def check_faults(project, python, report):
         union = set()
         for fault in case.faults:
             with tempfile.TemporaryDirectory(prefix="trial-fault-") as folder:
-                realization = build(project, folder, faults=[fault], stand=case.stand_edits)
+                realization = build(project, folder, faults=[fault], stand=case.reference_edits + case.stand_edits)
                 bad, _ = failing(project, case.profile or PROJECTS[project]["profile"], realization, python)
                 report.expect(bad == set(fault.detected_by), "%s %s fails %s, declared %s"
                               % (case.id, fault.id, sorted(bad), sorted(fault.detected_by)))
@@ -157,7 +157,7 @@ def check_faults(project, python, report):
                 union |= set(fault.detected_by)
                 found["%s %s" % (case.id, fault.id)] = sorted(bad) + sorted(static) + (["tests"] if not passed else [])
         with tempfile.TemporaryDirectory(prefix="trial-fault-") as folder:
-            realization = build(project, folder, faults=case.faults, stand=case.stand_edits)
+            realization = build(project, folder, faults=case.faults, stand=case.reference_edits + case.stand_edits)
             bad, _ = failing(project, case.profile or PROJECTS[project]["profile"], realization, python)
             report.expect(bad == union, "%s all faults fail %s, declared %s" % (case.id, sorted(bad), sorted(union)))
     report.facts["faults"] = found
@@ -269,7 +269,7 @@ def check_assessor(project, python, report):
                 partial = assess.assess(case.id, repo, None, python)
                 repaired = [item["id"] for item in partial["faults"] if item["repaired"]]
                 report.expect(repaired == [first.id], "%s: partial repair counts %s as repaired" % (case.id, repaired))
-                publish(project, repo, stand=case.stand_edits)
+                publish(project, repo, stand=case.reference_edits + case.stand_edits)
                 full = assess.assess(case.id, repo, fake_report(folder / "applied.json", "verified", "applied"), python)
                 report.expect(all(item["repaired"] for item in full["faults"]), "%s: the reference repair is not "
                               "counted as complete: %s" % (case.id, full["faults"]))
@@ -315,7 +315,7 @@ def check_stands(project, python, report):
         if case.project != project or not case.stand_edits or case.faults:
             continue
         with tempfile.TemporaryDirectory(prefix="trial-stand-") as folder:
-            realization = build(project, folder, stand=case.stand_edits)
+            realization = build(project, folder, stand=case.reference_edits + case.stand_edits)
             bad, outcome = failing(project, case.profile, realization, python)
             passed, output = assess.run_tests(realization, project, python)
             report.expect(not bad and passed, "the %s stand fails %s, own tests %s" % (case.id, sorted(bad), passed))

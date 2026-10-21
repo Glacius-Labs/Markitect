@@ -700,7 +700,7 @@ func TestOpenCoverageKeepsThePassAtNeedsCorrection(t *testing.T) {
 			return nil
 		case c.is("p2", "lending/reminders") && strings.HasPrefix(c.now(), "submit your complete result"):
 			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection),
-				"obligations": []any{map[string]any{"definition": "lending/reminders/notice", "status": coverOpen, "note": "the notice timing is not realized yet"}}}))
+				"obligations": []any{map[string]any{"definition": "lending/reminders/notice", "status": coverOpen, "conditions": "notice timing remains uncovered", "note": "the notice timing is not realized yet"}}}))
 			return nil
 		case c.is("p2", "lending") && strings.HasPrefix(c.now(), "integrate"):
 			c.must(toolReport, c.envelope(kindResult, map[string]any{"closed": []any{map[string]any{"id": "F1", "reason": "looks done", "evidence": "lending/reminders/r.go on this stand"}}}))

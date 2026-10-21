@@ -68,6 +68,7 @@ type ProbeReceipt struct {
 	Turn       string `json:"turn"`
 	Obligation string `json:"obligation"`
 	Claim      string `json:"claim"`
+	Boundary   string `json:"boundary,omitempty"`
 	Expected   string `json:"expected"`
 	// Check names the required check whose execution profile ran the probe.
 	Check     string `json:"check"`
@@ -128,6 +129,7 @@ func (r *ProbeReceipt) disposed() bool { return r.Disposition != nil && !r.Dispo
 type probeIn struct {
 	Obligation string   `json:"obligation"`
 	Claim      string   `json:"claim"`
+	Boundary   string   `json:"boundary"`
 	Expected   string   `json:"expected"`
 	Check      string   `json:"check"`
 	Path       string   `json:"path"`
@@ -141,6 +143,7 @@ type probeIn struct {
 type probeSpec struct {
 	definition ModelDefinition
 	claim      string
+	boundary   string
 	expected   string
 	check      *Check
 	path       snapshot.Path
@@ -155,6 +158,9 @@ type probeSpec struct {
 // Stand and Digest are the Orchestrator's binding: the stand the item was
 // checked against and, for a source, the digest of the cited file there.
 type evidenceItem struct {
+	Kind      string `json:"kind,omitempty"`
+	Authority string `json:"authority,omitempty"`
+	Boundary  string `json:"boundary,omitempty"`
 	Claim     string `json:"claim"`
 	Receipt   string `json:"receipt,omitempty"`
 	Source    string `json:"source,omitempty"`
@@ -225,7 +231,7 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 // rerunSpec is the exact probe of an error receipt, for a review of the same
 // candidate.
 func (e *engine) rerunSpec(m *member, in probeIn) (probeSpec, string) {
-	if in.Obligation != "" || in.Claim != "" || in.Expected != "" || in.Check != "" || in.Path != "" || in.Content != "" || in.Args != nil || in.Proposal != "" {
+	if in.Obligation != "" || in.Claim != "" || in.Boundary != "" || in.Expected != "" || in.Check != "" || in.Path != "" || in.Content != "" || in.Args != nil || in.Proposal != "" {
 		return probeSpec{}, "A rerun repeats a receipt's probe exactly; give only probe.rerun."
 	}
 	e.mu.Lock()
@@ -257,7 +263,7 @@ func (e *engine) rerunSpec(m *member, in probeIn) (probeSpec, string) {
 	if chk == nil || err != nil || len(r.Args) < chk.ProfileArgs {
 		return probeSpec{}, fmt.Sprintf("%s cannot be repeated.", r.ID)
 	}
-	return probeSpec{definition: d, claim: r.Claim, expected: r.Expected, check: chk, path: path, content: r.Content, args: slices.Clone(r.Args[chk.ProfileArgs:]), rerun: r.ID}, ""
+	return probeSpec{definition: d, claim: r.Claim, boundary: r.Boundary, expected: r.Expected, check: chk, path: path, content: r.Content, args: slices.Clone(r.Args[chk.ProfileArgs:]), rerun: r.ID}, ""
 }
 
 // probeSpecOf validates a new probe.
@@ -316,7 +322,13 @@ func (e *engine) probeSpecOf(m *member, in probeIn) (probeSpec, string) {
 	if err != nil {
 		return probeSpec{}, fmt.Sprintf("probe.path %q does not name a file below %s.", in.Path, chk.Request.Directory)
 	}
-	return probeSpec{definition: d, claim: claim, expected: expected, check: chk, path: path, content: in.Content, args: in.Args, proposal: strings.TrimSpace(in.Proposal)}, ""
+	boundary := strings.TrimSpace(in.Boundary)
+	if boundary != "" {
+		if _, err := toolText("probe.boundary", boundary); err != nil {
+			return probeSpec{}, err.Error()
+		}
+	}
+	return probeSpec{definition: d, claim: claim, boundary: boundary, expected: expected, check: chk, path: path, content: in.Content, args: in.Args, proposal: strings.TrimSpace(in.Proposal)}, ""
 }
 
 // runProbe places a validated probe on its stand, runs it and records the
@@ -368,7 +380,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 	e.mu.Lock()
 	ts.probes++
 	e.nextReceipt++
-	r := &ProbeReceipt{ID: fmt.Sprintf("R%d", e.nextReceipt), Pass: p.id, Requester: m.Path, Turn: ts.id, Obligation: d.ID, Claim: spec.claim, Expected: spec.expected,
+	r := &ProbeReceipt{ID: fmt.Sprintf("R%d", e.nextReceipt), Pass: p.id, Requester: m.Path, Turn: ts.id, Obligation: d.ID, Claim: spec.claim, Boundary: spec.boundary, Expected: spec.expected,
 		Check: chk.Name, StandKind: kind, Proposal: proposalID, Stand: stand.Digest().String(), Tree: tree.Digest().String(), Path: path.String(),
 		Content: spec.content, ContentDigest: hex.EncodeToString(sum[:]), Directory: chk.Request.Directory.String(), Rerun: spec.rerun}
 	req := chk.Request
@@ -377,7 +389,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 	req.Args = append(slices.Clone(req.Args[:chk.ProfileArgs]), spec.args...)
 	r.ImageID, r.Executable, r.Args = req.ImageID, req.Executable, req.Args
 	// The claim and expectation are on record before the probe runs.
-	_ = e.record(Event{Kind: "probe.requested", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"id": r.ID, "obligation": r.Obligation, "claim": r.Claim, "expected": r.Expected,
+	_ = e.record(Event{Kind: "probe.requested", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"id": r.ID, "obligation": r.Obligation, "claim": r.Claim, "boundary": r.Boundary, "expected": r.Expected,
 		"check": r.Check, "standKind": r.StandKind, "proposal": r.Proposal, "stand": r.Stand, "path": r.Path, "contentDigest": r.ContentDigest, "args": r.Args, "rerun": r.Rerun}})
 	e.mu.Unlock()
 	began := e.now()
@@ -533,7 +545,7 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, 
 				return nil, fmt.Errorf("%s: %q is no probe receipt of this run; a receipt comes only from the tool check", name, item.Receipt)
 			case r.Requester != m.Path:
 				return nil, fmt.Errorf("%s: %s was requested by %s; cite your own receipts", name, r.ID, r.Requester)
-			case r.Obligation != c.Definition:
+			case c.Definition != "" && r.Obligation != c.Definition:
 				return nil, fmt.Errorf("%s: %s assesses %s, not %s", name, r.ID, r.Obligation, c.Definition)
 			case r.Outcome != ProbePassed:
 				return nil, fmt.Errorf("%s: %s %s; an adverse receipt cannot support %s", name, r.ID, describeOutcome(r), c.Status)
@@ -542,15 +554,38 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, 
 			case cited[r.ID]:
 				return nil, fmt.Errorf("%s: %s is already cited for another claim; one receipt supports one claim", name, r.ID)
 			}
+			if c.Definition == "" && !e.within(e.byPath[r.Requester].Path, m.Path) {
+				return nil, fmt.Errorf("%s: receipt outside your integration responsibility", name)
+			}
+			if evidenceRequired(m.p.spec) {
+				if item.Kind != "public_behavior" {
+					return nil, fmt.Errorf("%s: executed evidence declares kind public_behavior and its real public boundary", name)
+				}
+				if r.Boundary == "" || item.Boundary != r.Boundary {
+					return nil, fmt.Errorf("%s: public behavior needs a receipt declaring the same real entry boundary; private-validator execution alone cannot close it", name)
+				}
+			}
+			item.Authority = r.Obligation
 			cited[r.ID] = true
 			item.Claim, item.Receipt, item.Source, item.Location, item.Reasoning = r.Claim, r.ID, "", "", ""
 			item.Stand = r.Stand
 		case item.Source != "":
+			if evidenceRequired(m.p.spec) && item.Kind != "static" {
+				return nil, fmt.Errorf("%s: source inspection only establishes kind static with reasoned inapplicability of execution; public_behavior requires a probe receipt at its entry boundary", name)
+			}
 			claim, err := toolText(name+".claim", item.Claim)
 			if err != nil {
 				return nil, err
 			}
 			item.Claim = claim
+			if item.Authority == "" {
+				item.Authority = c.Definition
+			}
+			if evidenceRequired(m.p.spec) {
+				if _, ok := e.cfg.Definition(item.Authority); !ok && !(c.Definition == "" && item.Authority == "pass_mandate") && (c.Definition == "" || item.Authority != c.Definition) {
+					return nil, fmt.Errorf("%s: authority must name a bound Definition (or pass_mandate for integration of the bound Pass task)", name)
+				}
+			}
 			path, err := snapshot.NewPath(strings.TrimSpace(item.Source))
 			if err != nil {
 				return nil, fmt.Errorf("%s.source must be a repository-relative file path", name)
@@ -584,8 +619,14 @@ func (e *engine) bindEvidence(pr *proposal, stand snapshot.Tree) []Finding {
 	m := pr.member
 	digest := stand.Digest().String()
 	var out []Finding
+	entries := make([]*coverage, 0, len(pr.env.Obligations)+1)
 	for i := range pr.env.Obligations {
-		c := &pr.env.Obligations[i]
+		entries = append(entries, &pr.env.Obligations[i])
+	}
+	if pr.env.Integration != nil {
+		entries = append(entries, pr.env.Integration)
+	}
+	for _, c := range entries {
 		for j := range c.Evidence {
 			item := &c.Evidence[j]
 			if item.Receipt != "" {
@@ -834,7 +875,7 @@ func (e *engine) voidDispositionsLocked(pr *proposal, why string) {
 // disposition and the beginning of its probe bytes and output.
 func writeReceipt(b *strings.Builder, r *ProbeReceipt, full bool) {
 	fmt.Fprintf(b, "Receipt %s by %s in %s for %s: %s\n", r.ID, r.Requester, r.Pass, r.Obligation, describeOutcome(r))
-	fmt.Fprintf(b, "  Claim: %s\n  Expected: %s\n", r.Claim, r.Expected)
+	fmt.Fprintf(b, "  Claim: %s\n  Expected: %s\n  Declared public boundary: %s\n", r.Claim, r.Expected, r.Boundary)
 	stand := r.StandKind + " " + short(r.Stand)
 	if r.Proposal != "" {
 		stand += " (" + r.Proposal + ")"
@@ -890,7 +931,7 @@ func writeEvidence(b *strings.Builder, items []evidenceItem) {
 	for _, item := range items {
 		claim := strings.ReplaceAll(item.Claim, "\n", " ")
 		if item.Receipt != "" {
-			fmt.Fprintf(b, "    Claim %q: executed, receipt %s\n", claim, item.Receipt)
+			fmt.Fprintf(b, "    Claim %q (authority %s): executed at %s, receipt %s\n", claim, item.Authority, item.Boundary, item.Receipt)
 			continue
 		}
 		where := item.Source

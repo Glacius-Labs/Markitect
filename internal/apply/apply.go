@@ -32,6 +32,7 @@ type ApplyRequest struct {
 	Selection    InputSelection
 	OwnerRequest string
 	Deadline     time.Time
+	WorkDeadline time.Time
 	MaxEntries   int
 	MaxBytes     int64
 	CheckRequest func(CheckSelection) (run.CheckRequest, error)
@@ -321,6 +322,7 @@ func applyConfig(req ApplyRequest, now time.Time, entry string) (run.Config, Run
 	budget, _ := req.Prepared.Settings().Budget()
 	strategy, _ := req.Prepared.Settings().Strategy()
 	binding := bindRun(entry, req.Prepared, req.OwnerRequest, strategy, req.Build, budget, cfg.Budget.Deadline, managers, cfg.Checks)
+	binding.Budget.WorkDeadline = cfg.Budget.WorkDeadline.UTC()
 	cfg.Binding = binding
 	return cfg, binding, nil
 }
@@ -445,7 +447,7 @@ func runConfig(req ApplyRequest, now time.Time) (run.Config, []boundManager, err
 		OwnerOf:    candidates.OwnerOf,
 		Registry:   candidates.RegistryView,
 		Definition: definitionLookup(checked),
-		Budget:     run.Budget{Deadline: deadline, TurnTimeout: budget.TurnTimeout.Value, AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value},
+		Budget:     run.Budget{Deadline: deadline, WorkDeadline: req.WorkDeadline, TurnTimeout: budget.TurnTimeout.Value, AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value},
 		MaxEntries: req.MaxEntries, MaxBytes: req.MaxBytes,
 		Agents: req.Agents, Workspaces: req.Workspaces, Runner: req.Runner, Evidence: req.Evidence, Clock: req.Clock,
 	}

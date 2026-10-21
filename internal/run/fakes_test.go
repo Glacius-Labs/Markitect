@@ -294,6 +294,22 @@ func (c *call) now() string {
 	return line
 }
 
+func (c *call) hasReportField(field string) bool {
+	for _, tool := range c.turn.Tools {
+		if tool.Name == toolReport {
+			var s struct {
+				Properties map[string]any `json:"properties"`
+			}
+			if err := json.Unmarshal(tool.InputSchema, &s); err != nil {
+				c.t.Fatal(err)
+			}
+			_, ok := s.Properties[field]
+			return ok
+		}
+	}
+	return false
+}
+
 func (c *call) planning() bool {
 	for _, tool := range c.turn.Tools {
 		if tool.Name == toolReport {
@@ -353,14 +369,14 @@ func (c *call) earlierRaised() []string {
 
 // sourceOf is a start-stand file each fixture Manager owns, which a review
 // cites as inspected source.
-var sourceOf = map[string]string{"lending": "lending/l.go", "lending/reminders": "lending/reminders/r.go", "library": "library/a.go"}
+var sourceOf = map[string]string{".": "go.mod", "lending": "lending/l.go", "lending/reminders": "lending/reminders/r.go", "library": "library/a.go"}
 
 func (c *call) coverage() []map[string]any {
 	var out []map[string]any
 	for _, id := range c.ag.obligations[c.turn.Manager] {
-		entry := map[string]any{"definition": id, "status": coverDone, "note": "covered by the work of " + c.turn.Manager}
-		if c.turn.Kind == VerifyTurn {
-			entry["evidence"] = []map[string]string{{"claim": "the fixture contract of " + id, "source": sourceOf[c.turn.Manager], "location": "whole file", "reasoning": "the fixture realizes it by contract"}}
+		entry := map[string]any{"definition": id, "status": coverDone, "note": "covered by the work of " + c.turn.Manager, "conditions": "fixture contract; static declarations only, no public runtime claim"}
+		if !c.planning() {
+			entry["evidence"] = []map[string]string{{"kind": "static", "claim": "the fixture contract of " + id, "source": sourceOf[c.turn.Manager], "location": "whole file", "reasoning": "the fixture realizes it by contract"}}
 		}
 		out = append(out, entry)
 	}
@@ -374,6 +390,9 @@ func samplePlan() map[string]any {
 // envelope builds a basis or result report with full coverage.
 func (c *call) envelope(kind string, extra map[string]any) map[string]any {
 	args := map[string]any{"kind": kind, "summary": kind + " of " + c.turn.Manager, "obligations": c.coverage()}
+	if (c.turn.Manager == "." || c.turn.Manager == "lending") && c.hasReportField("integration") {
+		args["integration"] = map[string]any{"status": coverDone, "conditions": "model-derived static fixture composition", "note": "protocol fixture only: source declares compatible static layout", "evidence": []map[string]string{{"kind": "static", "authority": "library/interface", "claim": "static fixture layout", "source": "go.mod", "location": "module declaration", "reasoning": "static declaration; no executable behavior asserted"}}}
+	}
 	if c.planning() {
 		args["plan"] = samplePlan()
 	}

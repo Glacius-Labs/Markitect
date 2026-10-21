@@ -50,8 +50,9 @@ type applyPorts struct {
 	RequireVolumeSubpaths func(context.Context) error
 	Harvest               harvestLimits
 	// Deadline is the operator's absolute wall-clock limit; zero means none.
-	Deadline time.Time
-	Clock    func() time.Time
+	Deadline     time.Time
+	WorkDeadline time.Time
+	Clock        func() time.Time
 }
 
 // Execute prepares the committed repository, composes the ports and runs the
@@ -230,7 +231,7 @@ func (s *executionService) applyAndPublish(ctx context.Context, request cli.Appl
 func applyRequest(request cli.ApplyRequest, prepared apply.CapturedSettingsAttempt, cfg runConfig, ports applyPorts) apply.ApplyRequest {
 	return apply.ApplyRequest{
 		RunID: ports.RunID, Prepared: prepared, Selection: request.Selection, Build: request.Build,
-		OwnerRequest: cfg.OwnerRequest, Deadline: ports.Deadline,
+		OwnerRequest: cfg.OwnerRequest, Deadline: ports.Deadline, WorkDeadline: ports.WorkDeadline,
 		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
 		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
 			return executionCheck(selected, cfg)
@@ -338,7 +339,7 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 		return applyPorts{}, err
 	}
 	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Evidence: evidence,
-		Publisher: s.repository, Control: lock, RemoveHome: engine.RemoveVolume, RequireVolumeSubpaths: engine.RequireVolumeSubpaths, Harvest: cfg.Harvest, Deadline: cfg.deadline(), Clock: time.Now}, nil
+		Publisher: s.repository, Control: lock, RemoveHome: engine.RemoveVolume, RequireVolumeSubpaths: engine.RequireVolumeSubpaths, Harvest: cfg.Harvest, Deadline: cfg.deadline(), WorkDeadline: cfg.workDeadline(), Clock: time.Now}, nil
 }
 
 // newAgents builds one adapter per provider that a selected profile uses and

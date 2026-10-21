@@ -6,6 +6,16 @@
 
 The packages own their details: [run](../../../internal/run/README.md), [apply](../../../internal/apply/README.md), [realization](../../../internal/realization/doc.go), the [Claude](../../../internal/adapters/claudecode/README.md) and [Codex](../../../internal/adapters/codexappserver/README.md) adapters.
 
+**Source implementation, CCF hardening:** Implement and artifact-review coverage now
+requires material `conditions`, typed public-boundary receipts or reasoned static evidence,
+and explicit parent `integration`, including empty-Definition Root. Receipt uniqueness
+covers the whole envelope. Fresh Verify records its own authority-derived cases before
+assessing author coverage. The tool validates structure/stand bindings; relevance,
+actual entry use and semantic completeness still require independent judgment.
+Implement satisfaction remains distinct from verified conformance. The source-bound
+[CCF preparation record](../../validation/ccf-apply-preparation-20261021.md) records controls,
+checks, reviews and the closed provider gate; this statement supplies no provider result.
+
 ## Organization and Briefs
 
 The organization is derived, not planned: Root (`.`) and one Manager per local Package, including empty and intermediate ones, with parents from the model hierarchy. Every Manager takes part in every Pass. `run.Config` lists Root first and every parent before its children.
@@ -129,7 +139,15 @@ The standard team is the Manager role (Execute profile), a Worker helper and the
 
 ## Budget and stopping
 
-The budget bounds the whole run (`executionTime`, with the operator's earlier `deadline`), each turn (`turnTimeout`), all Agent turns of Managers, reviewers and helpers (`agentTurns`) and the number of Passes (`passes`). The deadline cancels running turns and checks. Every limit ends the run Incomplete with its evidence; nothing is published.
+The budget bounds the whole run (`executionTime`, with the operator's earlier `deadline`), each turn (`turnTimeout`), all Agent turns of Managers, reviewers and helpers (`agentTurns`) and the number of Passes (`passes`). The deadline cancels running turns and checks. The invocation may additionally supply
+`workDeadline`, strictly earlier than its explicit `deadline` (and the effective product
+execution deadline). It is bound as `Budget.WorkDeadline`/`binding.budget.workDeadline`.
+An active non-Verify Pass is canceled there and ends Incomplete rather than consuming the
+reserved review window or sending unfinished work to Verify. Verify can use the remaining
+window. Setup leaves this optional cutoff unset; CCF's frozen invocation sets it explicitly.
+The CCF grant separately requires at least 12 minutes between the effective work and
+Verify cutoffs plus 3 minutes for observed stop/cleanup; those series-specific minima are
+checked in its frozen runner, not imposed as universal project policy. Every limit ends the run Incomplete with its evidence; nothing is published.
 
 ## Ports and adapters
 
@@ -198,7 +216,7 @@ Nobody outside the tree answers in either phase. A gap or contradiction Root con
 ## Known limits
 
 - Provider evidence covers few small projects and runs per build; reliability, cost, turn budgets and the usefulness of helpers are not established. The example budgets are unvalidated starting values.
-- Probes need a declared check whose profile can run them; without one, reviews cite inspected sources only. A probe runs synchronously inside its tool call and only while its turn keeps time for the report; a parent can probe a child's checked proposal but not its unsubmitted work. Joint submission of a basis and a complete result is not implemented (deferred; see the hardening report).
+- Probes need a declared check whose profile can run them; without one, only genuinely static claims can close by inspected source; a required public behavior stays open. A probe runs synchronously inside its tool call and only while its turn keeps time for the report; a parent can probe a child's checked proposal but not its unsubmitted work. Joint submission of a basis and a complete result is not implemented (deferred; see the hardening report).
 - An exact-file area owned apart from its directory's owner must exist in the start stand; its owner can change it but not delete or create it.
 - Dependencies are enforced only as declared: in `staged` by accepted plans, in `direct` by waits. Reading another Manager's accepted basis through `look_up` alone does not bind it. A binding that would close a cycle is skipped and named to the waiter; a later change of that submission invalidates nothing. A binding made in a turn that later fails stays, which can only cause an additional reset. A work-phase cross-Manager dependency has not been exercised in a provider run of either strategy.
 - No restore of an interrupted run; a new Apply starts again from the committed repository.

@@ -43,6 +43,7 @@ type BudgetBinding struct {
 	AgentTurns    int       `json:"agentTurns"`
 	Passes        int       `json:"passes"`
 	Deadline      time.Time `json:"deadline"`
+	WorkDeadline  time.Time `json:"workDeadline,omitempty"`
 }
 
 // ManagerBinding is one Manager's resolved roles, team and model context.

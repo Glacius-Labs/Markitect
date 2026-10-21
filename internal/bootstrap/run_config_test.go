@@ -125,3 +125,24 @@ func TestRunConfigRefusesImplicitOrUnknownValues(t *testing.T) {
 		}
 	}
 }
+
+func TestRunConfigWorkDeadlineReservesTimeInsideTheWholeRun(t *testing.T) {
+	d := runConfigFixture(t)
+	d["deadline"] = "2026-10-21T22:42:00Z"
+	d["workDeadline"] = "2026-10-21T22:30:00Z"
+	cfg, err := decodeRunConfig(configBytes(t, d))
+	if err != nil || cfg.deadline().Sub(cfg.workDeadline()) != 12*time.Minute {
+		t.Fatalf("reserve lost: %+v, %v", cfg, err)
+	}
+	for _, bad := range []any{"", nil, "2026-10-21T22:42:00Z", "2026-10-21T22:43:00Z", "2026-10-21T22:30:00+00:00"} {
+		d["workDeadline"] = bad
+		if _, err := decodeRunConfig(configBytes(t, d)); !errors.Is(err, errRunConfig) {
+			t.Errorf("accepted cutoff %v", bad)
+		}
+	}
+	d["workDeadline"] = "2026-10-21T22:30:00Z"
+	delete(d, "deadline")
+	if _, err := decodeRunConfig(configBytes(t, d)); !errors.Is(err, errRunConfig) {
+		t.Fatal("work deadline without whole-run bound accepted")
+	}
+}

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"sync"
 	"testing"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -273,5 +274,38 @@ func TestSubmissionGateChecksOnlyTheSubmittersStableArea(t *testing.T) {
 	}
 	if content, ok := f.ws.file("run1-work", "library/registry"); !ok || content != "new.go" {
 		t.Errorf("the registration was not made")
+	}
+}
+
+// A real timer cancels an active scripted writer. Its observed end is still
+// required; the timer neither seals work nor manufactures a Verify result.
+func TestWorkCutoffCancelsActiveWorkWithoutSpendingTheVerifyReserve(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.Budget.WorkDeadline = time.Now().Add(80 * time.Millisecond)
+	f.agents.script = func(c *call) error { <-c.ctx.Done(); return c.ctx.Err() }
+	r := f.open()
+	res := r.Pass(implementSpec())
+	out := f.finish(r, "")
+	if !res.Stopped || out.Status != Incomplete || !strings.Contains(out.Reason, "work deadline") {
+		t.Fatalf("result %+v, outcome %s: %s", res, out.Status, out.Reason)
+	}
+	for _, tr := range out.Turns {
+		if !tr.Stopped {
+			t.Fatalf("unobserved stop: %+v", tr)
+		}
+	}
+	if len(out.Passes) != 1 || out.Passes[0].Sealed {
+		t.Fatalf("unfinished work was sealed: %+v", out.Passes)
+	}
+}
+
+func TestVerifyMayUseItsReservedWindowAfterTheWorkCutoff(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.Budget.WorkDeadline = time.Now().Add(-time.Second)
+	r := f.open()
+	res := r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if res.Stopped || out.Status != Verified {
+		t.Fatalf("Verify lost its reserve: %s %s", out.Status, out.Reason)
 	}
 }

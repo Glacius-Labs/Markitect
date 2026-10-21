@@ -131,6 +131,15 @@ to derive claims and permitted counterexamples from the bound model first, probe
 the public interface and cite receipts or inspected sources for their claims, with parents
 challenging their children's assertions.
 
+Implement and artifact review now require model-derived `conditions` and typed,
+stand-bound evidence for done/preserved claims. Parents supply explicit `integration`
+even without own Definitions; fresh Verify derives its cases before author coverage.
+See [the Run envelope](../run/README.md#envelope-and-verdicts). Implement satisfaction
+is a submission to Verify, never verified conformance. `ApplyRequest.WorkDeadline`
+optionally binds an earlier cutoff for all non-Verify Passes, preserving the remaining
+whole-run window for Verify; its expiry leaves unfinished work Incomplete. Both effective
+cutoffs are retained in `BudgetBinding`/run evidence. Setup does not choose this reserve.
+
 `VerifyCaptured(ctx, ApplyRequest)` runs only the independent Verify of the captured stand
 with the same configuration and never publishes. It is the evaluation entry for assessing
 a known stand through the Pass process; no Command uses it, and the grant-gated

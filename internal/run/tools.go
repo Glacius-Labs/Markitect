@@ -84,14 +84,15 @@ func reportSchema(spec PassSpec) schema {
 			"definition": str("Identity of one of your own Definitions."),
 			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverNotApplicable, coverOpen}},
 			"note":       str("How it is met and with which evidence; required for not_applicable and open, and for every entry of a plan."),
-			"evidence": schema{"type": "array", "description": evidenceText(spec), "items": object(nil, schema{
-				"claim":     str("source: the distinct claim of the Definition, with the case or input class it covers. A receipt brings its own claim."),
-				"receipt":   str("Executed behavior: your passing probe receipt (R...) of the tool check for this Definition, run on the stand of this submission; each receipt supports one claim."),
-				"source":    str("Inspected source instead: the repository-relative file."),
-				"location":  str("source: the inspected location, such as a function or lines."),
-				"reasoning": str("source: why the inspected text establishes the claim, and why executing it is not applicable."),
-			})},
+			"conditions": str("Derive material conditions, exceptions and interactions from this Definition and required bound contracts; give concise source references, explain coverage and any uncovered conditions. Required in Implement and artifact review, including the reviewer basis before considering author coverage."),
+			"evidence":   evidenceSchema(spec),
 		})},
+		"integration": object([]string{"status", "conditions", "note"}, schema{
+			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverOpen}},
+			"conditions": str("Every parent, including Root without own Definitions: your authority-derived composed workflows/global invariants, source references and discriminating cases. Basis and Plan result state intended integration; every non-Plan result justifies actual integration with evidence beyond child reports."),
+			"note":       str("What your integration establishes and what remains uncovered; route corrections to actual owners."),
+			"evidence":   evidenceSchema(spec),
+		}),
 		"artifacts": strs("basis, result: your own artifacts this contribution created, changed or preserved (repository-relative paths)."),
 		"evidence":  strs("basis, result: the checks, tests and observations that support it."),
 		"verdict":   schema{"type": "string", "enum": []string{string(Satisfied), string(NeedsCorrection)}, "description": "result: satisfied when its objective is met; needs_correction when a genuine finding names required corrective work."},
@@ -144,6 +145,9 @@ func reportSchema(spec PassSpec) schema {
 			"assumptions": strs("Assumptions that need clarification."),
 		})
 	}
+	if spec.Assesses {
+		delete(properties, "integration")
+	}
 	return object([]string{"kind"}, properties)
 }
 
@@ -168,10 +172,23 @@ var lookUpSchema = object([]string{"topic"}, schema{
 
 // evidenceText describes the evidence items of a coverage entry for one Pass.
 func evidenceText(spec PassSpec) string {
-	if spec.Review {
+	if spec.Review || evidenceRequired(spec) {
 		return "Required for done and preserved: per distinct claim, a passing probe receipt on this candidate or an inspected source location; a suite total alone is no coverage. Adverse receipts cannot support a claim."
 	}
 	return "Optional: per claim, a passing probe receipt run on the stand you submit, or an inspected source location."
+}
+
+func evidenceSchema(spec PassSpec) schema {
+	return schema{"type": "array", "description": evidenceText(spec), "items": object(nil, schema{
+		"kind":      schema{"type": "string", "enum": []string{"public_behavior", "static"}, "description": "Required in Implement and artifact review. public_behavior needs a passing receipt at the actual declared public entry; static needs inspected source and why execution is inapplicable. Never relabel executable public behavior static to waive evidence."},
+		"authority": str("Bound model Definition identity; implicit own obligation, required for integration source inspection (pass_mandate refers to the already bound Pass task where no Definition supplies that integration duty, never a new Definition or permission to override the model). State the precise condition/source reference in claim/conditions."),
+		"boundary":  str("public_behavior: actual declared public entry exercised by the receipt, matching probe.boundary. Inspect the probe's assertions and invocation; a label alone proves no semantic adequacy."),
+		"claim":     str("Distinct model-derived condition and case/input class. A receipt supplies its recorded claim."),
+		"receipt":   str("Your passing tool-produced receipt for this obligation on this submitted stand; private-validator or suite totals cannot establish the public composition."),
+		"source":    str("static: inspected repository-relative source file."),
+		"location":  str("static: precise inspected location."),
+		"reasoning": str("static: why this location establishes the claim and why behavioral execution is inapplicable."),
+	})}
 }
 
 // checkSchema is the schema of check: the File check of the caller's area in a
@@ -182,6 +199,7 @@ func checkSchema(spec PassSpec) schema {
 			"rerun":      str("Instead of a new probe: an error receipt (R...) of this candidate whose exact probe runs again; give nothing else."),
 			"obligation": str("New probe: the Definition whose claim it assesses, yours or one of your descendants'. A new probe gives obligation, claim, expected, check, path, content and args."),
 			"claim":      str("The distinct claim, with the case or input class, derived from the model."),
+			"boundary":   str("The actual declared public entry the probe exercises, including transport/parsing/persistence when relevant. Required to support a public_behavior claim; a private validator alone cannot do so."),
 			"expected":   str("The outcome the model requires, stated before the probe runs."),
 			"check":      str("The required check whose execution profile (image, executable, environment, limits) runs the probe."),
 			"path":       str("Where the probe file is placed, relative to that check's directory; it must not exist in the stand."),
