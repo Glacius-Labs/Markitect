@@ -7,7 +7,7 @@
 // shown as its text, never as a fact the cockpit established.
 
 import { api } from "./api.js";
-import { h, clear, clock, when, duration, announce, about, empty } from "./dom.js";
+import { h, clear, append, clock, when, duration, announce, about, empty } from "./dom.js";
 import { refusal } from "./settings.js";
 import { refreshState } from "./shell.js";
 import { mountProposal } from "./proposal.js";
@@ -103,11 +103,11 @@ function drawHead(head, s, refresh) {
 function drawConversation(section, available, s) {
   clear(section);
   if (!available) {
-    section.append(empty("Model sessions are not available", "They need a run configuration and a Runtime profile."),
+    append(section, [empty("Model sessions are not available", "They need a run configuration and a Runtime profile."),
       store.currentProject?.saved && !store.currentProject.setUp
         ? h("p", { class: "void-action" }, h("a", { class: "btn act small", href: `#/projects?setup=${encodeURIComponent(store.currentProject.name)}` }, "Set up runs for this project"))
         : null,
-      about("From the command line", h("p", {}, "Start the cockpit with markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. Sessions use the run configuration's container engine, workspace helper and credentials.")));
+      about("From the command line", h("p", {}, "Start the cockpit with markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. Sessions use the run configuration's container engine, workspace helper and credentials."))]);
     return;
   }
   if (!s) {
