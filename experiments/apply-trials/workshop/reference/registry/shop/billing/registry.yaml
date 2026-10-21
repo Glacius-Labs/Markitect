@@ -1,0 +1,14 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/billing/__init__.py
+    form: code
+    realizes: [shop/billing/invoice]
+    why: Makes the billing part an importable package.
+  - path: realization/billing/billing.py
+    form: code
+    realizes: [shop/billing/invoice, shop/billing/pricing, shop/billing/write-invoice, shop/billing/pay, shop/billing/list-invoices]
+    why: Writes, numbers, prices and pays invoices of closed jobs.
+  - path: realization/billing/test_billing.py
+    form: test
+    realizes: [shop/billing/invoice, shop/billing/pricing, shop/billing/write-invoice, shop/billing/pay]
+    why: Tests standard and loyal amounts, rounding and refusals.

@@ -1,5 +1,269 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "experiments/apply-trials/d-preparation-20261021.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents the bounded D preparation, its independently checked inputs, evidence limits and remaining execution dependencies.
+  - path: "experiments/apply-trials/d_series.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/plan_arm.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/run/plan-profile.example.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/test_d_execution.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/test_workshop.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/workshop/checks.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents the bounded D preparation, its independently checked inputs, evidence limits and remaining execution dependencies.
+  - path: "experiments/apply-trials/workshop/reference/realization/app.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/billing/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/billing/billing.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/billing/test_billing.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/workshop/reference/realization/customers/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/customers/customers.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/customers/test_customers.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/workshop/reference/realization/jobs/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/jobs/jobs.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/jobs/test_jobs.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/workshop/reference/realization/parts/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/parts/parts.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/parts/test_parts.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/workshop/reference/realization/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents the bounded D preparation, its independently checked inputs, evidence limits and remaining execution dependencies.
+  - path: "experiments/apply-trials/workshop/reference/realization/reports/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/reports/reports.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/reports/test_reports.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/workshop/reference/realization/shop/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/shop/errors.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/shop/inputs.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/shop/store.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/tests/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Realizes the bounded Workshop reference, independent black-box control, or ordinary-Agent preparation and finite accounting seam.
+  - path: "experiments/apply-trials/workshop/reference/realization/tests/test_cli.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Checks the bounded Workshop or D harness contract with deterministic local controls.
+  - path: "experiments/apply-trials/workshop/reference/registry/shop/billing/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/reference/registry/shop/customers/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/reference/registry/shop/jobs/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/reference/registry/shop/parts/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/reference/registry/shop/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/reference/registry/shop/reports/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/billing/invoice.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/billing/list-invoices.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/billing/pay.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/billing/pricing.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/billing/write-invoice.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/customers/add-customer.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/customers/customer.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/customers/loyalty.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/customers/show-customer.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/jobs/add-labor.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/jobs/close-job.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/jobs/job.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/jobs/list-jobs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/jobs/open-job.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/jobs/use-part.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/parts/add-part.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/parts/list-parts.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/parts/part.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/parts/receive.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/parts/stock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/reports/report.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model/shop/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
+  - path: "experiments/apply-trials/workshop/snapshots/w1/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Pins the bounded Workshop input or explicit provider-profile declaration without starting a provider.
   - path: "experiments/apply-trials/test_report_contract.py"
     form: test
     realizes: [examples/independent-oracles]

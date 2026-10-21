@@ -1,0 +1,14 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/parts/__init__.py
+    form: code
+    realizes: [shop/parts/part]
+    why: Makes the parts part an importable package.
+  - path: realization/parts/parts.py
+    form: code
+    realizes: [shop/parts/part, shop/parts/stock, shop/parts/add-part, shop/parts/receive, shop/parts/list-parts]
+    why: Keeps the parts with their on-hand, reserved and available quantities.
+  - path: realization/parts/test_parts.py
+    form: test
+    realizes: [shop/parts/part, shop/parts/stock, shop/parts/add-part, shop/parts/receive]
+    why: Tests registering parts, the stock limit and refusals.

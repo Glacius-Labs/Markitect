@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop
+    as: Shop
+id: add-labor
+kind: Software.UseCase
+title: Record labor
+body: |-
+  At [[Shop.interface]], `add-labor --job ID --minutes N` adds the labor
+  duration N of [[Shop.inputs]] to the minutes of the existing open [[job]],
+  commits the change through [[Shop.storage]] and returns the job record. An
+  unknown or closed job, an invalid duration or a total above 2400 minutes is
+  refused with stored data unchanged; reaching exactly 2400 is allowed.
+spec: {}

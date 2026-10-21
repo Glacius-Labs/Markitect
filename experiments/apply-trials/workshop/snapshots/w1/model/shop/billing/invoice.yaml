@@ -1,0 +1,22 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop
+    as: Shop
+  - package: shop/jobs
+    as: Jobs
+id: invoice
+kind: Software.Concept
+title: Invoice
+body: |-
+  An invoice of [[Shop.system]] bills one closed [[Jobs.job]]; each job has at
+  most one invoice. [[write-invoice]] creates it unpaid with the next number:
+  INV-0001 for the first invoice, then INV-0002 and so on, the sequence
+  number written with at least four digits. Its amounts follow [[pricing]]
+  when it is written and never change; [[pay]] marks it paid once. Invoices
+  are never deleted. The invoice record is a JSON object with exactly number
+  (string), job (string, the job's id), customer (string, the customer's id),
+  tier (string, the customer's tier when the invoice was written), labor,
+  parts, discount, net, vat and total (integers, amounts in cents) and paid
+  (boolean).
+spec: {}

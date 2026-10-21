@@ -37,6 +37,7 @@ TEST_COMMANDS = {
     "stockroom": ["-B", "-m", "unittest", "discover", "-s", "tests"],
     "depot": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
     "hall": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
+    "workshop": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
     "fleet": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
 }
 
@@ -85,7 +86,8 @@ def owner_of(project, path):
     for base, fallback in (("realization/", layout["exception"]), (".markitect/registry/", ".")):
         if path.startswith(base):
             rest = path[len(base):]
-            owners = [package for package in layout["packages"] if rest.startswith(package + "/")]
+            owners = [package for package in layout["packages"] if rest.startswith(
+                (package.removeprefix(layout["exception"] + "/") if base == "realization/" else package) + "/")]
             return max(owners, key=len) if owners else fallback
     return "."
 
@@ -116,7 +118,9 @@ def static_readme_commands(realization, case):
         words = {"stockroom": ("add-item", "receive", "issue", "list", "--sku", "--name", "--qty"),
                  "depot": ("add-item", "receive", "place-order", "fulfil-order", "cancel-order", "orders", "items",
                            "reorder", "--line", "--status"),
-                 "hall": ("add-room", "rooms", "book", "bookings", "--code", "--seats")}[case.project]
+                           "hall": ("add-room", "rooms", "book", "bookings", "--code", "--seats"),
+                           "workshop": ("add-customer", "customer", "add-part", "receive", "parts", "open-job",
+                                        "add-labor", "use-part", "close-job", "jobs", "invoice", "pay", "invoices", "report")}[case.project]
     missing = [word for word in words if word not in text]
     return "the README does not mention %s" % missing if missing else ""
 

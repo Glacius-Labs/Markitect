@@ -1,5 +1,7 @@
 # Apply trial cases
 
+D's [four-slot preparation](d-preparation-20261021.md) reuses preservation, artifact and parent-semantic controls, adds the one bounded Workshop R1 input, and supplies a finite ledger and single-conversation ordinary-Agent Driver. It is provider-free preparation, with explicit real-transport/profile dependencies.
+
 The [offline report-contract correction](report-contract-validation-20261021.md) binds A's historical reports, reproduces the old and #564 parser/scoring gaps, and records a separate outcome-only re-evaluation. Its focused regression command runs no oracle, Agent or provider.
 
 Trial cases for real Apply runs, each answering one question about where Apply works reliably and which kinds of error it detects, repairs or correctly escalates ([#523](https://github.com/Glacius-Labs/Markitect/issues/523)): fixtures, an answer key, independent checks and small run helpers. The self-check shows that the fixtures are consistent and that the checks discriminate; it does not show how Apply behaves. The first real series with Haiku is recorded in [docs/validation](../../docs/validation/apply-trials-haiku-20261020.md).
