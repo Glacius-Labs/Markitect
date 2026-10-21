@@ -39,7 +39,7 @@ export function renderRuns(content) {
       return;
     }
     const runs = s.data.runs || [];
-    history.append(runs.length ? runRows(runs) : h("p", { class: "void" }, h("strong", {}, "No run evidence"), "Start the cockpit with the state directory of an Apply (--state DIR or --run-config PATH)."));
+    history.append(runs.length ? runRows(runs) : h("p", { class: "void" }, h("strong", {}, "No run evidence"), "A run started here or with markitect apply appears once it holds a state directory this cockpit observes (the runtime directory's state/ for a project that is set up, or --state DIR)."));
     const dirs = s.data.project?.states || [];
     clear(states).append("State directories observed: ", ...dirs.map((d, i) => [i ? ", " : "", h("span", { class: "digest", title: d }, shortPath(d))]).flat());
   };

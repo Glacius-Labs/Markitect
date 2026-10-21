@@ -476,6 +476,38 @@ artifacts:
     form: test
     realizes: [examples/independent-oracles]
     why: Tests the stated responsibility and retains negative boundaries.
+  - path: "experiments/model-assessment/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Describes the Model assessment trial's method, conclusions, measures, independence, run procedure and limits.
+  - path: "experiments/model-assessment/assess.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Classifies an assessment attempt from the common envelope and scores it against a hidden control outside every packet.
+  - path: "experiments/model-assessment/assessment-pass.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Binds a hashed reference copy of the production assessment's purpose, mandate, guidance and finding classes, checked against actual reviewer prompts without supplying an execution specification.
+  - path: "experiments/model-assessment/contract.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: States the Model assessment method and its contract with the common Pass result for the production gate, and what production must add.
+  - path: "experiments/model-assessment/run/attempt.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Runs one assessment attempt within the series ceilings in a closed Run, with its own cleanup, scoring and ledger entry.
+  - path: "experiments/model-assessment/run/build.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Builds a candidate's images and CLI with the trial kit and compiles the grant-gated assessment harness.
+  - path: "experiments/model-assessment/run/freeze.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Freezes the kit, the structurally checked control packets, their hidden expectations and the manifest before provider work, and verifies them before each attempt.
+  - path: "experiments/model-assessment/test_assess.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests the classification, scoring, delivery, report extraction, process measures, Pass declaration and freeze parsing without a provider.
   - path: "experiments/test-projects/README.md"
     form: doc
     realizes: [examples/independent-oracles]

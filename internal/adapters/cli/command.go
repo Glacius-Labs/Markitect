@@ -70,7 +70,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   extract [options]        derive a model candidate from the existing artifacts
   setup --runtime DIR --image REF --credential FILE --agent-model M [options]
                             prepare a Runtime directory with runtime.yaml and run.json
-  cockpit --state DIR | --run-config PATH [--repo PATH] [--listen ADDR] [--no-open]
+  cockpit [--state DIR | --run-config PATH [--repo PATH]] [--listen ADDR] [--no-open]
                             open the app window and observe runs in a local web view
   version | licenses | help
 
@@ -152,6 +152,9 @@ cockpit options:
                            the model and dependency models, as for check
   --runtime-profile PATH   with --run-config: enable model sessions with this Runtime profile
   --listen ADDR            loopback address (default 127.0.0.1:7341)
+  Without --state, --run-config, --runtime-profile, --repo, --model and
+  --dependency, the cockpit opens the per-user project list (the last used
+  project, if any) and sets projects up in its window.
   Serves a local web view of the recorded and running runs until interrupted.
   It reads the evidence under STATE/runs. It writes only a settings or model
   proposal the owner accepted after its structural check passed, through
