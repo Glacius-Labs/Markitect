@@ -90,7 +90,7 @@ submission resets a waiter whose basis built on it, like a declared consumer, an
 restart waits for the newly accepted version (`rebound`). A waiter whose result alone built
 on it keeps its basis and its children's work and integrates again: its submitted result
 is invalidated, an accepted one reopened with its consumers, and the submission of a turn
-running meanwhile withdrawn. Verify and Extract bind nothing. A wait
+running meanwhile withdrawn; that turn's helper delegations stand. Verify and Extract bind nothing. A wait
 on another Manager that closes a cycle with the accepted plans' dependencies, the bindings
 and the parent-first and integration order could never be
 satisfied, so it is refused with the cycle named; the Manager submits first what does not

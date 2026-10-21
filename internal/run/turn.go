@@ -169,11 +169,16 @@ func (e *engine) memberTurn(m *member, ts *turnState, turn Turn) {
 
 // withdrawLocked discards what a turn submitted or delegated without effect.
 func (e *engine) withdrawLocked(ts *turnState, why string) {
+	e.withdrawProposalLocked(ts, why)
+	ts.delegations = nil
+}
+
+// withdrawProposalLocked discards the turn's submission without effect.
+func (e *engine) withdrawProposalLocked(ts *turnState, why string) {
 	if pr := ts.proposal; pr != nil && pr.status == proposalSubmitted {
 		pr.status = proposalWithdrawn
 		_ = e.record(Event{Kind: "proposal.withdrawn", Pass: ts.m.p.id, Manager: ts.m.Path, Turn: ts.id, Data: map[string]any{"proposal": pr.id, "why": why}})
 	}
-	ts.delegations = nil
 }
 
 // turnFailedLocked handles a turn that ended with an error after its container
@@ -211,10 +216,11 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 		return
 	}
 	// What its result built on changed while the turn ran: its submission does
-	// not stand, but the turn reported and is no empty turn.
+	// not stand, but the turn reported and is no empty turn. Its delegations
+	// stay: they are work in its own area, not a submission.
 	stale := m.stale != ""
 	if stale {
-		e.withdrawLocked(ts, m.stale)
+		e.withdrawProposalLocked(ts, m.stale)
 		m.stale = ""
 	}
 	submitted := false

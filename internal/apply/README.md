@@ -100,11 +100,12 @@ and publication are the same, and `run.start` and the report record it:
 
 `Apply` and `VerifyCaptured` bind through one `applyConfig`, which needs `ApplyRequest.Build`,
 the implementation identity of the running product, and returns a `RunBinding`: the entry,
-the strategy with its work sequence and correction purposes, the build, the content
+the strategy with its work sequence (none for `VerifyCaptured`), correction purposes and
+the `composition` digest of its Pass declarations and Root duty, the build, the content
 identities of the execution settings and product defaults, the budget and deadline, every
 Manager's resolved profiles, helpers and instructions, and the required checks. `run.start`
 records it and `ApplyResult.Binding` returns it for the report. Everything but the work
-Passes is shared: entry and Pass-boundary gates, writer-stop proof, Verify, finding closure
+Passes and Root's acceptance wording (a plan in `staged`, any submission in `direct`) is shared: entry and Pass-boundary gates, writer-stop proof, Verify, finding closure
 and publication.
 
 A Pass that needs correction restarts the work as its strategy allows and a fresh complete
