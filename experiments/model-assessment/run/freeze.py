@@ -67,8 +67,8 @@ def main(argv):
         raise SystemExit("control ids must be distinct and present")
     (frozen / "packets").mkdir(parents=True)
     (frozen / "controls").mkdir()
-    for part in ("model-assessment", "apply-trials", "recursive-apply-demo"):
-        shutil.copytree(kit / part, frozen / "kit" / part, ignore=shutil.ignore_patterns("__pycache__"))
+    # The whole experiments directory: packet materialization reads shared inputs such as test-projects.
+    shutil.copytree(kit, frozen / "kit", ignore=shutil.ignore_patterns("__pycache__"))
     build_text = (build / "build.txt").read_text(encoding="utf-8")
     manifest = {"build": str(build), "buildText": build_text, "ceilings": CEILINGS,
                 "assessmentPass": sha(frozen / "kit" / "model-assessment" / "assessment-pass.json"),
