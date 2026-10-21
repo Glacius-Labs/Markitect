@@ -112,23 +112,21 @@ def profile_data(path):
     if p.get("network", "none") not in ("none", "bridge"):
         raise ValueError("ordinary provider network must be explicitly none or bridge")
     if p["protocol"] == "codex-exec-jsonl":
-        pairs = list(zip(argv, argv[1:]))
-        efforts = [(flag, value) for flag, value in pairs if flag in ("-c", "--config")
-                   and value in ('model_reasoning_effort="{effort}"', 'model_reasoning_effort={effort}')]
-        if (p["provider"] != "codex" or "exec" not in argv or "--json" not in argv
-                or ("--model", "{model}") not in pairs or len(efforts) != 1
-                or any(("--disable", feature) not in pairs for feature in ("multi_agent", "apps", "memories"))
-                or any(a in argv for a in ("resume", "--resume", "--continue", "--enable")) or argv[-1] != "-"):
-            raise ValueError("Codex requires a fresh exec/JSONL prompt, model/effort and disabled multi_agent/apps/memories")
+        expected = ["exec", "--json", "--model", "{model}", "--config", 'model_reasoning_effort="{effort}"',
+                    "--disable", "multi_agent", "--disable", "apps", "--disable", "memories",
+                    "--sandbox", "danger-full-access", "-"]
+        normalized = ["--config" if a == "-c" else a for a in argv[1:]]
+        if p["provider"] != "codex" or normalized != expected:
+            raise ValueError("Codex native argv must match the closed fresh-exec template without extra overrides")
     if p["protocol"] == "claude-print-json":
         pairs = list(zip(argv, argv[1:]))
         tools = [value for flag, value in pairs if flag == "--tools"]
         allowed = {"Read", "Write", "Edit", "Glob", "Grep", "Bash"}
-        if (p["provider"] != "claude" or not any(flag in argv for flag in ("-p", "--print"))
-                or ("--output-format", "json") not in pairs or ("--max-turns", "{maxTurns}") not in pairs
-                or ("--model", "{model}") not in pairs or ("--effort", "{effort}") not in pairs
-                or len(tools) != 1 or not tools[0] or not set(tools[0].split(",")) <= allowed
-                or any(flag in argv for flag in ("--agents", "--agent", "--resume", "--continue", "--allowedTools"))):
+        expected = ["-p", "--output-format", "json", "--model", "{model}", "--effort", "{effort}",
+                    "--max-turns", "{maxTurns}", "--tools", tools[0] if tools else ""]
+        normalized = ["-p" if a == "--print" else a for a in argv[1:]]
+        if (p["provider"] != "claude" or normalized != expected
+                or len(tools) != 1 or not tools[0] or not set(tools[0].split(",")) <= allowed):
             raise ValueError("Claude requires fresh print JSON, native limits and an ordinary builtin tool set")
     return p
 

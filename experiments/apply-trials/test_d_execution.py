@@ -39,7 +39,8 @@ def profile():
             "engineSha256": d_series.sha(sys.executable), "imageID": "sha256:" + "a" * 64,
             "network": "none", "singleAgentTurnBoundVerified": True,
             "argv": ["/usr/local/bin/codex", "exec", "--json", "--model", "{model}", "-c", 'model_reasoning_effort="{effort}"',
-                     "--disable", "multi_agent", "--disable", "apps", "--disable", "memories", "-"],
+                     "--disable", "multi_agent", "--disable", "apps", "--disable", "memories",
+                     "--sandbox", "danger-full-access", "-"],
             "limits": {"milliCPUs": 2000, "memoryBytes": 4096, "processes": 32, "maxOutputBytes": 65536}}
 
 
@@ -135,6 +136,10 @@ class DExecution(unittest.TestCase):
                 bad = copy.deepcopy(p); index = bad["argv"].index(feature)
                 del bad["argv"][index - 1:index + 1]; path.write_text(json.dumps(bad))
                 with self.assertRaises(ValueError): plan_arm.profile_data(path)
+            for extra in (["--model", "other"], ["-c", 'model_reasoning_effort="low"'],
+                          ["-c", 'model="other"'], ["--enable", "multi_agent"]):
+                bad = dict(p, argv=p["argv"][:-1] + extra + ["-"]); path.write_text(json.dumps(bad))
+                with self.assertRaises(ValueError): plan_arm.profile_data(path)
             path.write_text(json.dumps(p))
             argv = plan_arm.create_command(p, workspace, "owned-attempt", 400)
             mounts = [argv[i + 1] for i, a in enumerate(argv) if a == "--mount"]
@@ -179,7 +184,9 @@ class DExecution(unittest.TestCase):
                 "--max-turns", "{maxTurns}", "--tools", "Read,Write,Edit,Glob,Grep,Bash"])
             path.write_text(json.dumps(p)); plan_arm.profile_data(path)
             for argv in (p["argv"][:-2], p["argv"][:-1] + ["Read,Agent"],
-                         p["argv"] + ["--resume", "old"], [a.replace("--max-turns", "--other") for a in p["argv"]]):
+                         p["argv"] + ["--resume", "old"], p["argv"] + ["--model", "other"],
+                         p["argv"] + ["--effort", "low"], p["argv"] + ["--max-turns", "9999"],
+                         [a.replace("--max-turns", "--other") for a in p["argv"]]):
                 path.write_text(json.dumps(dict(p, argv=argv)))
                 with self.assertRaises(ValueError): plan_arm.profile_data(path)
 
