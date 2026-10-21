@@ -31,7 +31,7 @@ type RawRecord struct {
 const maxManagerRecords = 400
 
 // Select returns the records among the first n that concern ref:
-// proposal:ID, finding:ID, question:ID, problem:ID, turn:ID, pass:ID,
+// proposal:ID, finding:ID, question:ID, problem:ID, probe:ID, turn:ID, pass:ID,
 // check:PASS/NAME, manager:PATH or seq:N. An unknown reference selects nothing.
 func Select(records []Record, n int, ref string) Detail {
 	if n < 0 || n > len(records) {
@@ -65,6 +65,16 @@ func Select(records []Record, n int, ref string) Detail {
 		match = func(r Record) bool { return strings.HasPrefix(r.Kind, "question.") && field(r, "id") == id }
 	case "problem":
 		match = func(r Record) bool { return r.Kind == "problem.raised" && field(r, "id") == id }
+	case "probe":
+		match = func(r Record) bool {
+			switch r.Kind {
+			case "probe.requested", "probe.receipt":
+				return field(r, "id") == id
+			case "probe.disposed":
+				return field(r, "receipt") == id
+			}
+			return false
+		}
 	case "turn":
 		match = func(r Record) bool { return r.Turn == id }
 	case "pass":

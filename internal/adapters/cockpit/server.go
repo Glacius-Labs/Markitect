@@ -219,8 +219,12 @@ type RunSummary struct {
 	Records     int        `json:"records"`
 	Managers    int        `json:"managers"`
 	Passes      int        `json:"passes"`
+	Strategy    string     `json:"strategy,omitempty"`
+	Build       string     `json:"build,omitempty"`
 	Outcome     string     `json:"outcome,omitempty"`
 	RunOutcome  string     `json:"runOutcome,omitempty"`
+	RunStatus   string     `json:"runStatus,omitempty"`
+	Ending      string     `json:"ending,omitempty"`
 	Publication string     `json:"publication,omitempty"`
 	Reason      string     `json:"reason,omitempty"`
 	Head        string     `json:"head,omitempty"`
@@ -270,9 +274,14 @@ func (s *Server) summarize(st *stateDirectory, entry RunEntry) RunSummary {
 			sum.Started = rec.At
 			var d struct {
 				Managers []string `json:"managers"`
+				Binding  struct {
+					Strategy string `json:"strategy"`
+					Build    string `json:"build"`
+				} `json:"binding"`
 			}
 			_ = json.Unmarshal(rec.Data, &d)
 			sum.Managers = len(d.Managers)
+			sum.Strategy, sum.Build = d.Binding.Strategy, d.Binding.Build
 		case "pass.start":
 			sum.Passes++
 		case "outcome":
@@ -282,6 +291,7 @@ func (s *Server) summarize(st *stateDirectory, entry RunEntry) RunSummary {
 			}
 			_ = json.Unmarshal(rec.Data, &d)
 			sum.Outcome, sum.Reason = d.Status, d.Reason
+			sum.Ending = ending(View{Status: Status{Outcome: d.Status, Reason: d.Reason}})
 		}
 		if !rec.At.IsZero() {
 			sum.Last = rec.At
@@ -290,6 +300,7 @@ func (s *Server) summarize(st *stateDirectory, entry RunEntry) RunSummary {
 	if report != nil {
 		sum.RunOutcome, sum.Head = report.Outcome, report.Head
 		if report.Run != nil {
+			sum.RunStatus = report.Run.Status
 			usage := report.Run.Usage
 			sum.Usage = &usage
 		}

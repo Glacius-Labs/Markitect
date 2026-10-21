@@ -16,7 +16,11 @@ var (
 	waitDecision   = regexp.MustCompile(`^the decision of (Root \(\.\)|Manager (.+)|the Orchestrator) on (P\d+)$`)
 	waitDependency = regexp.MustCompile(`^the accepted (basis|result) of (Root \(\.\)|Manager (.+?)) \((.*)\)$`)
 	waitParent     = regexp.MustCompile(`^the accepted basis of (Root \(\.\)|Manager (.+))$`)
-	waitQuestion   = regexp.MustCompile(`^Q\d+$`)
+	// A wait the Manager itself named for another Manager's accepted
+	// submission carries the bare path ("." for Root), as in
+	// "the accepted basis of stockroom".
+	waitNamed    = regexp.MustCompile(`^the accepted (basis|result) of (\S+)$`)
+	waitQuestion = regexp.MustCompile(`^Q\d+$`)
 )
 
 const maxCauseDepth = 6
@@ -80,6 +84,9 @@ func classify(w *Wait, m *ManagerView, byPath map[string]*ManagerView, questions
 	case waitParent.MatchString(t):
 		s := waitParent.FindStringSubmatch(t)
 		w.Kind, w.On = "parent-basis", []string{node(s[1], s[2])}
+	case waitNamed.MatchString(t):
+		s := waitNamed.FindStringSubmatch(t)
+		w.Kind, w.On = "dependency", []string{s[2]}
 	case waitQuestion.MatchString(t):
 		w.Kind, w.Refs = "answer", []string{"question:" + t}
 		if q, ok := questions[t]; ok {
@@ -311,24 +318,41 @@ func account(v *View) []Sentence {
 			out = append(out, Sentence{{Text: "Root asked the owner "}, {Text: q.ID, Ref: "question:" + q.ID}, {Text: "; no answer is recorded."}})
 		}
 	}
-	var open Sentence
-	for _, f := range v.Findings {
-		if f.Blocking && !f.Closed {
+	// Only confirmed deviations and model problems block. A suspicion is
+	// investigated and classified by a fresh review; it is stated as one.
+	for _, group := range []struct{ effect, lead string }{
+		{"blocks", "Open findings that block: "},
+		{"investigate", "Suspicions to investigate (they name no correction yet): "},
+	} {
+		var open Sentence
+		for _, f := range v.Findings {
+			if f.Effect != group.effect {
+				continue
+			}
 			if len(open) == 0 {
-				open = append(open, Segment{Text: "Open genuine findings: "})
+				open = append(open, Segment{Text: group.lead})
 			} else {
 				open = append(open, Segment{Text: ", "})
 			}
 			open = append(open, Segment{Text: f.ID, Ref: "finding:" + f.ID}, Segment{Text: " (owner " + labelOf(f.Owner) + ")"})
 		}
-	}
-	if len(open) > 0 {
-		out = append(out, append(open, Segment{Text: "."}))
+		if len(open) > 0 {
+			out = append(out, append(open, Segment{Text: "."}))
+		}
 	}
 	return out
 }
 
 func statusSentence(v *View) Sentence {
+	if v.Status.Ending == "model_problem" {
+		// A closed ending, not a failure of the work: nothing is published and
+		// the owner corrects the model and starts a new Run.
+		s := Sentence{{Text: "Model problem confirmed — nothing published. Correct the model and start a new run."}}
+		if v.Status.Reason != "" {
+			s = append(s, Segment{Text: " " + v.Status.Reason + "."})
+		}
+		return s
+	}
 	if v.Status.Outcome != "" {
 		s := Sentence{{Text: "The Orchestrator recorded the outcome " + v.Status.Outcome}}
 		if v.Status.Reason != "" {
@@ -336,10 +360,9 @@ func statusSentence(v *View) Sentence {
 		}
 		s = append(s, Segment{Text: "."})
 		if r := v.Status.Report; r != nil {
-			s = append(s, Segment{Text: " Run outcome: " + r.Outcome + "."})
 			if pub := r.Publication; pub != nil && pub.Outcome == "no_change" {
-				s = append(s, Segment{Text: " Publication no_change: the verified candidate equals the captured source; nothing was written and the guard held."})
-			} else if pub := r.Publication; pub != nil {
+				s = append(s, Segment{Text: " Publication: no change — the verified candidate equals the captured source; nothing to write."})
+			} else if pub != nil {
 				after := 0
 				for _, path := range pub.Paths {
 					if path.State == "after" {
@@ -367,6 +390,9 @@ func statusSentence(v *View) Sentence {
 		return s
 	}
 	s = append(s, Segment{Text: " is running"})
+	if pv.Unchanged != "" {
+		s = append(s, Segment{Text: " on the unchanged candidate of Pass "}, Segment{Text: pv.Unchanged, Ref: "pass:" + pv.Unchanged}, Segment{Text: " to decide its disputes and suspicions"})
+	}
 	if pv.Correction {
 		s = append(s, Segment{Text: " to correct "})
 		for i, f := range pv.Addresses {
@@ -383,5 +409,20 @@ func passName(pv PassView) string {
 	if pv.Purpose == "" {
 		return "A"
 	}
+	if pv.Purpose == string(run.Assess) {
+		return passTitle(pv.Purpose)
+	}
 	return strings.ToUpper(pv.Purpose[:1]) + pv.Purpose[1:]
+}
+
+// passTitle is how the cockpit names a Pass purpose: the first Pass of a Run
+// is the Model assessment, every other is named by its purpose.
+func passTitle(purpose string) string {
+	if purpose == string(run.Assess) {
+		return "Model assessment"
+	}
+	if purpose == "" {
+		return ""
+	}
+	return strings.ToUpper(purpose[:1]) + purpose[1:]
 }

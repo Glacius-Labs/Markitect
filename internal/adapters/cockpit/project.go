@@ -30,10 +30,46 @@ func Project(id string, records []Record, n int, src Source, report *Report) Vie
 	if v.Boundary.Final {
 		v.Status.Report = report
 	}
+	v.Status.Ending = ending(v)
 	classifyWaits(&v)
 	v.Account = account(&v)
 	v.Gaps = p.gaps(v, src)
 	return v
+}
+
+// ending recognizes a closed Run's ending that the record establishes: a Run
+// that failed because a Model assessment or Root confirmed a material model
+// problem. It ends without publication; the model is corrected outside the
+// Run, which a new Run then binds.
+func ending(v View) string {
+	if v.Status.Outcome != string(run.Failed) {
+		return ""
+	}
+	if strings.HasPrefix(v.Status.Reason, run.ModelAssessmentReason) || strings.HasPrefix(v.Status.Reason, run.ModelErrorReason) {
+		return "model_problem"
+	}
+	for _, pv := range v.Passes {
+		if pv.Purpose == string(run.Assess) && pv.Sealed && pv.Verdict == string(run.NeedsCorrection) {
+			return "model_problem"
+		}
+	}
+	return ""
+}
+
+// listedOnly are the kinds the run engine records that change nothing the view
+// projects. They are listed as entries with a plain text and are no unknown
+// kinds: bookkeeping of the Orchestrator, and records of earlier builds that
+// stay readable (the working environments a Turn kept between turns, removed
+// by the per-Turn container baseline).
+var listedOnly = map[string]bool{
+	"manager.unblocked":     true,
+	"report.progress":       true,
+	"check.requested":       true,
+	"workspace.materialize": true,
+	"workspace.close":       true,
+	"home.remove":           true,
+	"extract.phase":         true,
+	"environment.release":   true,
 }
 
 type projector struct {
@@ -63,6 +99,12 @@ type projector struct {
 	exchanges bool
 	deps      map[string][]Dependency // proposal -> its plan's declared dependencies
 	plans     map[string][]Dependency // Manager -> dependencies of its accepted plan
+	probes    []*ProbeView
+	byProbe   map[string]*ProbeView
+	lookups   []LookupView
+	bindings  []BindingView
+	contexts  map[string]*ContextCoverage // Manager -> the context run.start bound
+	owner     bool                        // owner-channel records of an earlier run
 }
 
 func newProjector(id string) *projector {
@@ -70,7 +112,7 @@ func newProjector(id string) *projector {
 		head: RunHead{ID: id, Managers: []string{}}, managers: map[string]*ManagerView{}, byPass: map[string]*PassView{},
 		byTurn: map[string]*TurnView{}, byProp: map[string]*ProposalView{}, byFinding: map[string]*FindingView{},
 		byQ: map[string]*QuestionView{}, open: map[string]int{}, said: map[string]*Said{}, unknown: map[string]int{},
-		deps: map[string][]Dependency{}, plans: map[string][]Dependency{},
+		deps: map[string][]Dependency{}, plans: map[string][]Dependency{}, byProbe: map[string]*ProbeView{}, contexts: map[string]*ContextCoverage{},
 	}
 }
 
@@ -98,10 +140,39 @@ func (p *projector) apply(r Record) {
 			AgentTurns int       `json:"agentTurns"`
 			Passes     int       `json:"passes"`
 			Deadline   time.Time `json:"deadline"`
+			Binding    struct {
+				Head        string   `json:"head"`
+				Strategy    string   `json:"strategy"`
+				Build       string   `json:"build"`
+				Work        []string `json:"work"`
+				Corrections []string `json:"corrections"`
+				Budget      struct {
+					ExecutionTime string `json:"executionTime"`
+					TurnTimeout   string `json:"turnTimeout"`
+				} `json:"budget"`
+				Managers []struct {
+					Manager string `json:"manager"`
+					Context struct {
+						Brief     string   `json:"brief"`
+						Full      []string `json:"full"`
+						Reference []string `json:"reference"`
+					} `json:"context"`
+				} `json:"managers"`
+			} `json:"binding"`
 		}](p, r)
 		p.head.Started, p.head.Deadline, p.head.AgentTurns, p.head.Passes, p.head.Start = r.At, d.Deadline, d.AgentTurns, d.Passes, d.Start
+		b := d.Binding
+		p.head.Strategy, p.head.Build, p.head.Source, p.head.Work, p.head.Corrections = b.Strategy, b.Build, b.Head, b.Work, b.Corrections
+		p.head.ExecutionTime, p.head.TurnTimeout = b.Budget.ExecutionTime, b.Budget.TurnTimeout
 		for _, m := range d.Managers {
 			p.manager(m)
+		}
+		for _, m := range b.Managers {
+			c := m.Context
+			if c.Brief == "" && len(c.Full) == 0 && len(c.Reference) == 0 {
+				continue
+			}
+			p.contexts[m.Manager] = &ContextCoverage{Brief: c.Brief, Full: nonNil(c.Full), Reference: nonNil(c.Reference)}
 		}
 	case "pass.start":
 		d := decode[struct {
@@ -113,10 +184,21 @@ func (p *projector) apply(r Record) {
 		pv := p.pass(r.Pass)
 		pv.Purpose, pv.Review, pv.Writes, pv.StartTree, pv.StartSeq, pv.Started = d.Purpose, d.Review, d.Writes, d.Tree, r.Seq, r.At
 		if !d.Review {
+			// A correction Pass works on open confirmed findings that name a
+			// correction. A suspicion names none: a fresh review decides it.
 			for _, f := range p.findings {
-				if f.Blocking && !f.Closed {
+				if f.Blocking && !f.Closed && f.Kind != run.Suspected && f.Correction != "" {
 					pv.Correction = true
 					pv.Addresses = append(pv.Addresses, f.ID)
+				}
+			}
+		} else if pv.Candidate != "" {
+			// A review of the very candidate an earlier review of this purpose
+			// judged decides that review's disputes and suspicions; it is no
+			// review of a corrected candidate.
+			for _, earlier := range p.passes {
+				if earlier != pv && earlier.Review && earlier.Purpose == d.Purpose && earlier.Candidate == pv.Candidate {
+					pv.Unchanged = earlier.ID
 				}
 			}
 		}
@@ -158,14 +240,81 @@ func (p *projector) apply(r Record) {
 			Registrations []json.RawMessage `json:"registrations"`
 		}](p, r)
 		p.pass(r.Pass).Registry = len(d.Registrations)
-	case "manager.unblocked", "report.progress", "check.requested", "workspace.materialize", "workspace.close", "home.remove", "owner.error", "extract.phase":
-		// Listed as entries; they change nothing the view projects.
+	case "owner.error":
+		p.owner = true
 	case "report.wait":
 		d := decode[struct {
 			For    string `json:"for"`
 			Reason string `json:"reason"`
+			Stage  string `json:"stage"`
 		}](p, r)
-		p.said[r.Pass+"\x00"+r.Manager] = &Said{Seq: r.Seq, For: d.For, Reason: d.Reason}
+		p.said[r.Pass+"\x00"+r.Manager] = &Said{Seq: r.Seq, For: d.For, Reason: d.Reason, Stage: d.Stage}
+	case "lookup.definition", "lookup.brief":
+		d := decode[struct {
+			ID      string `json:"id"`
+			Owner   string `json:"owner"`
+			Bytes   int    `json:"bytes"`
+			Refused bool   `json:"refused"`
+			Helper  string `json:"helper"`
+		}](p, r)
+		p.lookups = append(p.lookups, LookupView{Seq: r.Seq, Pass: r.Pass, Manager: r.Manager, Turn: r.Turn, Kind: strings.TrimPrefix(r.Kind, "lookup."), ID: d.ID, Owner: d.Owner, Bytes: d.Bytes, Refused: d.Refused, Helper: d.Helper})
+	case "dependency.bound", "dependency.unbound":
+		d := decode[struct {
+			On       string `json:"on"`
+			Stage    string `json:"stage"`
+			Serves   string `json:"serves"`
+			Proposal string `json:"proposal"`
+			Rebound  bool   `json:"rebound"`
+			Cycle    string `json:"cycle"`
+		}](p, r)
+		p.bindings = append(p.bindings, BindingView{Seq: r.Seq, Pass: r.Pass, Manager: r.Manager, On: d.On, Stage: d.Stage, Serves: d.Serves, Proposal: d.Proposal, Rebound: d.Rebound, Cycle: d.Cycle})
+	case "probe.requested":
+		d := decode[struct {
+			ID         string `json:"id"`
+			Obligation string `json:"obligation"`
+			Claim      string `json:"claim"`
+			Expected   string `json:"expected"`
+			Check      string `json:"check"`
+			StandKind  string `json:"standKind"`
+			Proposal   string `json:"proposal"`
+			Stand      string `json:"stand"`
+			Path       string `json:"path"`
+			Rerun      string `json:"rerun"`
+		}](p, r)
+		pr := &ProbeView{ID: d.ID, Pass: r.Pass, Manager: r.Manager, Turn: r.Turn, Obligation: d.Obligation, Claim: d.Claim, Expected: d.Expected, Check: d.Check, StandKind: d.StandKind,
+			Stand: d.Stand, Path: d.Path, Proposal: d.Proposal, Rerun: d.Rerun, RequestSeq: r.Seq}
+		p.probes = append(p.probes, pr)
+		p.byProbe[pr.ID] = pr
+	case "probe.receipt":
+		d := decode[run.ProbeReceipt](p, r)
+		pr := p.byProbe[d.ID]
+		if pr == nil {
+			// A receipt whose request is not in the record still shows.
+			pr = &ProbeView{ID: d.ID, Pass: r.Pass, Manager: r.Manager, Turn: r.Turn, Obligation: d.Obligation, Claim: d.Claim, Expected: d.Expected, Check: d.Check,
+				StandKind: d.StandKind, Stand: d.Stand, Path: d.Path, Proposal: d.Proposal, Rerun: d.Rerun}
+			p.probes = append(p.probes, pr)
+			p.byProbe[pr.ID] = pr
+		}
+		pr.ReceiptSeq, pr.Outcome, pr.ExitCode, pr.TimedOut, pr.Uncertain, pr.Reason = r.Seq, d.Outcome, d.ExitCode, d.TimedOut, d.Uncertain, clip(d.Reason, 320)
+		pr.Adverse = d.Outcome != run.ProbePassed
+		if d.Disposition != nil {
+			pr.Disposition = d.Disposition
+		}
+	case "probe.disposed":
+		d := decode[struct {
+			Receipt     string                `json:"receipt"`
+			Disposition *run.ProbeDisposition `json:"disposition"`
+			Voided      *run.ProbeDisposition `json:"voided"`
+			Why         string                `json:"why"`
+		}](p, r)
+		if pr := p.byProbe[d.Receipt]; pr != nil {
+			switch {
+			case d.Voided != nil:
+				pr.Disposition, pr.VoidedSeq, pr.VoidedWhy = nil, r.Seq, clip(d.Why, 320)
+			case d.Disposition != nil:
+				pr.Disposition, pr.DisposedSeq, pr.VoidedSeq, pr.VoidedWhy = d.Disposition, r.Seq, 0, ""
+			}
+		}
 	case "turn.start":
 		d := decode[struct {
 			Role     string `json:"role"`
@@ -173,8 +322,11 @@ func (p *projector) apply(r Record) {
 			Profile  string `json:"profile"`
 			ReadOnly bool   `json:"readOnly"`
 			Resume   string `json:"resume"`
+			Mode     string `json:"mode"`
+			Context  string `json:"context"`
 		}](p, r)
-		t := &TurnView{ID: r.Turn, Short: shortTurn(r.Turn), Pass: r.Pass, Manager: r.Manager, Role: d.Role, Kind: d.Kind, ReadOnly: d.ReadOnly, Profile: d.Profile, Resume: d.Resume != "", StartSeq: r.Seq, Started: r.At}
+		t := &TurnView{ID: r.Turn, Short: shortTurn(r.Turn), Pass: r.Pass, Manager: r.Manager, Role: d.Role, Kind: d.Kind, ReadOnly: d.ReadOnly, Profile: d.Profile, Resume: d.Resume != "", StartSeq: r.Seq, Started: r.At,
+			Mode: d.Mode, Context: d.Context}
 		p.turns = append(p.turns, t)
 		p.byTurn[r.Turn] = t
 		if m := p.manager(r.Manager); r.Pass == p.current && !isHelperRole(d.Role) {
@@ -182,14 +334,24 @@ func (p *projector) apply(r Record) {
 		}
 	case "turn.end":
 		d := decode[struct {
-			Stopped bool       `json:"stopped"`
-			Reason  string     `json:"reason"`
-			Reports []string   `json:"reports"`
-			Usage   *run.Usage `json:"usage"`
+			Stopped   bool       `json:"stopped"`
+			Reason    string     `json:"reason"`
+			Reports   []string   `json:"reports"`
+			Usage     *run.Usage `json:"usage"`
+			Compacted bool       `json:"compacted"`
+			Probes    int        `json:"probes"`
 		}](p, r)
 		if t := p.byTurn[r.Turn]; t != nil {
 			stopped := d.Stopped
 			t.EndSeq, t.Ended, t.Stopped, t.Reason, t.Reports, t.Usage = r.Seq, r.At, &stopped, d.Reason, d.Reports, d.Usage
+			t.Compacted, t.Probes = d.Compacted, d.Probes
+			if pv := p.byPass[r.Pass]; pv != nil {
+				pv.Turns++
+				if d.Usage != nil {
+					pv.CostUSD += d.Usage.CostUSD
+					pv.OutputTokens += d.Usage.OutputTokens
+				}
+			}
 		}
 		if m := p.managers[r.Manager]; m != nil && m.Turn != nil && m.Turn.ID == r.Turn {
 			m.Turn = nil
@@ -217,10 +379,16 @@ func (p *projector) apply(r Record) {
 			Kind     string `json:"kind"`
 			Purpose  string `json:"purpose"`
 			Envelope struct {
-				Summary  string   `json:"summary"`
-				Verdict  string   `json:"verdict"`
-				Children []string `json:"children"`
-				Plan     *struct {
+				Summary     string   `json:"summary"`
+				Verdict     string   `json:"verdict"`
+				Children    []string `json:"children"`
+				Obligations []struct {
+					Definition string         `json:"definition"`
+					Status     string         `json:"status"`
+					Note       string         `json:"note"`
+					Evidence   []EvidenceView `json:"evidence"`
+				} `json:"obligations"`
+				Plan *struct {
 					Dependencies []Dependency `json:"dependencies"`
 				} `json:"plan"`
 			} `json:"envelope"`
@@ -230,6 +398,14 @@ func (p *projector) apply(r Record) {
 		}](p, r)
 		pr := &ProposalView{ID: d.Proposal, Pass: r.Pass, Manager: r.Manager, Kind: d.Kind, Purpose: d.Purpose, Turn: r.Turn, Seq: r.Seq, At: r.At,
 			Summary: clip(d.Envelope.Summary, 320), Verdict: d.Envelope.Verdict, Status: "submitted", Raised: len(d.Findings), Closes: d.Closed, Disputes: d.Disputed, Children: d.Envelope.Children}
+		if d.Purpose == string(run.Assess) {
+			// The Model assessment's verdict is its coverage: per Definition
+			// the status and the evidence, complete, since this is the
+			// assessment the owner reads.
+			for _, o := range d.Envelope.Obligations {
+				pr.Coverage = append(pr.Coverage, CoverageView{Definition: o.Definition, Status: o.Status, Note: o.Note, Evidence: o.Evidence})
+			}
+		}
 		p.proposals = append(p.proposals, pr)
 		p.byProp[pr.ID] = pr
 		if d.Envelope.Plan != nil {
@@ -275,6 +451,9 @@ func (p *projector) apply(r Record) {
 		}
 		qv.Question = q
 		p.exchanges = true
+		if q.To == recordedUser || q.From == recordedUser {
+			p.owner = true
+		}
 		switch r.Kind {
 		case "question.answered":
 			qv.Status, qv.AnsweredSeq, qv.AnsweredBy = "answered", r.Seq, r.Manager
@@ -341,8 +520,19 @@ func (p *projector) apply(r Record) {
 			p.closeSpan(pass, m, r)
 		}
 	default:
-		p.unknown[r.Kind]++
+		// Listed as entries; they change nothing the view projects.
+		if !listedOnly[r.Kind] {
+			p.unknown[r.Kind]++
+		}
 	}
+}
+
+// nonNil keeps a list in the JSON as a list.
+func nonNil(s []string) []string {
+	if s == nil {
+		return []string{}
+	}
+	return s
 }
 
 // pass returns the Pass with this identity. A review Pass's candidate, gate
@@ -490,14 +680,25 @@ func (p *projector) view() View {
 		v.Proposals = append(v.Proposals, *pr)
 	}
 	for _, f := range p.findings {
-		v.Findings = append(v.Findings, *f)
+		fv := *f
+		fv.Effect = findingEffect(fv.Finding)
+		if pv := p.byPass[fv.Pass]; pv != nil && pv.Purpose == string(run.Assess) {
+			fv.Class = string(fv.Correction)
+		}
+		v.Findings = append(v.Findings, fv)
 	}
 	for _, q := range p.questions {
 		v.Questions = append(v.Questions, *q)
 	}
+	v.Probes, v.Lookups, v.Bindings, v.OwnerChannel = []ProbeView{}, []LookupView{}, []BindingView{}, p.owner
+	for _, pr := range p.probes {
+		v.Probes = append(v.Probes, *pr)
+	}
+	v.Lookups = append(v.Lookups, p.lookups...)
+	v.Bindings = append(v.Bindings, p.bindings...)
 	open := map[string][]string{}
 	for _, f := range p.findings {
-		if f.Blocking && !f.Closed {
+		if findingEffect(f.Finding) == "blocks" {
 			open[f.Owner] = append(open[f.Owner], f.ID)
 		}
 	}
@@ -507,6 +708,7 @@ func (p *projector) view() View {
 	}
 	for _, path := range p.preorder() {
 		m := *p.managers[path]
+		m.Context = p.contexts[path]
 		for _, d := range p.plans[path] {
 			if d.Pass != purpose {
 				continue
@@ -522,7 +724,7 @@ func (p *projector) view() View {
 			w := *m.Wait
 			// The Orchestrator waits for exactly what the Manager's own
 			// report.wait named; its reason belongs to that wait only.
-			if s := p.said[p.current+"\x00"+path]; s != nil && s.For == w.Text && s.Seq < w.Since {
+			if s := p.said[p.current+"\x00"+path]; s != nil && s.names(w.Text) && s.Seq < w.Since {
 				w.Agent = s
 			}
 			m.Wait = &w
@@ -530,6 +732,30 @@ func (p *projector) view() View {
 		v.Managers = append(v.Managers, m)
 	}
 	return v
+}
+
+// names reports whether the Orchestrator's wait text is the wait this report
+// started: the contact or question itself, or "the accepted <stage> of <who>"
+// for a wait on another Manager's accepted submission.
+func (s *Said) names(text string) bool {
+	return s.For == text || s.Stage != "" && text == "the accepted "+s.Stage+" of "+s.For
+}
+
+// findingEffect says what a finding does to the Run (owner refinement of 21
+// October 2026). Only an open confirmed deviation or model problem blocks and
+// names a correction. An open suspicion is investigated by a fresh review; a
+// suggestion or an advisory artifact finding never blocks. A finding of an
+// earlier build has no kind; its blocking flag decides.
+func findingEffect(f run.Finding) string {
+	switch {
+	case f.Closed:
+		return "closed"
+	case f.Kind == run.Suspected:
+		return "investigate"
+	case f.Kind == run.Suggestion || !f.Blocking:
+		return "advisory"
+	}
+	return "blocks"
 }
 
 // preorder lists the Managers parents first, children in recorded order.
@@ -583,7 +809,7 @@ func (p *projector) gaps(v View, src Source) []Gap {
 			kinds = append(kinds, k)
 		}
 		sort.Strings(kinds)
-		out = append(out, Gap{Code: "record.kind", Text: "Records of kinds the cockpit does not interpret are listed but not projected: " + strings.Join(kinds, ", ") + "."})
+		out = append(out, Gap{Code: "record.kind", Text: "Records of kinds the cockpit does not know are listed but not projected: " + strings.Join(kinds, ", ") + "."})
 	}
 	for _, m := range p.mismatch {
 		out = append(out, Gap{Code: "organization.parent", Text: "The recorded release disagrees with the organization derived from the Package paths: " + m + "."})
@@ -605,10 +831,7 @@ func (p *projector) gaps(v View, src Source) []Gap {
 			out = append(out, Gap{Code: "run.no_report", Text: "The outcome is recorded but report.json is absent: the publication and the Run outcome are not recorded."})
 		}
 		if r := v.Status.Report; r != nil {
-			if r.Derived {
-				out = append(out, Gap{Code: "report.derived", Text: "This report has no Run outcome field; the outcome shown is mapped from its command status."})
-			}
-			if r.Publication != nil {
+			if r.Publication != nil && r.Publication.Outcome != "no_change" {
 				out = append(out, Gap{Code: "publication.candidate", Text: "The publication receipt names no candidate digest. Apply publishes only the candidate of its clean Verify; the receipt itself records the read-back state of each path."})
 			}
 		}

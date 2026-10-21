@@ -178,7 +178,7 @@ func TestProjectNoChangeAndInterruptedRuns(t *testing.T) {
 	records := s.records()
 	report, _ := decodeReport(mustJSON(t, applyReport("success", "no_change")))
 	v := Project("r", records, len(records), Source{Report: true}, report)
-	if text := sentenceText(v.Account[0]); !strings.Contains(text, "no_change") || strings.Contains(text, "0 of 0") {
+	if text := sentenceText(v.Account[0]); !strings.Contains(text, "no change") || !strings.Contains(text, "nothing to write") || strings.Contains(text, "0 of 0") {
 		t.Fatalf("no-change account = %q", text)
 	}
 	cut := records[:len(records)-1]
