@@ -23,7 +23,7 @@ func TestExtractParsingFixesTheManifestAndDispatches(t *testing.T) {
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	var observed ExtractRequest
 	calls := 0
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(_ context.Context, request ExtractRequest) (ExtractReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithExtract(func(_ context.Context, request ExtractRequest) (ExtractReport, error) {
 		calls++
 		observed = request
 		return ExtractReport{Status: model.NotCompleted}, nil
@@ -48,7 +48,7 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	dir := t.TempDir()
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	calls := 0
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
 		calls++
 		return ExtractReport{Status: model.Passed}, nil
 	})
@@ -72,7 +72,7 @@ func TestExtractRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	}
 	// Without the operation installed, Extract is unavailable.
 	var out, stderr bytes.Buffer
-	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--runtime-profile", runtimeProfile}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
+	if code := New(nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"extract", "--run-config", config, "--runtime-profile", runtimeProfile}, &out, &stderr); code != 3 || !strings.Contains(out.String(), "unavailable") {
 		t.Fatalf("%d %s", code, out.String())
 	}
 }
@@ -107,8 +107,8 @@ func TestExtractReportShape(t *testing.T) {
 	if report.Verify == nil || report.Verify.Pass != "verify-4" || report.Verify.Verdict != run.Satisfied || len(report.Verify.Managers) != 2 {
 		t.Fatalf("verify %+v", report.Verify)
 	}
-	if len(report.Deviations) != 1 || report.Deviations[0].Definition != "lending/loan-limit" || len(report.Deviations[0].Observed) != 2 || !slices.Equal(report.Deviations[0].Owners, []string{"lending", "lending/reminders"}) || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
-		t.Fatalf("deviations %+v questions %+v", report.Deviations, report.OpenQuestions)
+	if len(report.Deviations) != 1 || report.Deviations[0].Definition != "lending/loan-limit" || len(report.Deviations[0].Observed) != 2 || !slices.Equal(report.Deviations[0].Owners, []string{"lending", "lending/reminders"}) {
+		t.Fatalf("deviations %+v", report.Deviations)
 	}
 	if len(report.ProposedChecks) != 1 || report.ProposedChecks[0].ID != "project-tests" {
 		t.Fatalf("proposed checks %+v", report.ProposedChecks)
@@ -121,14 +121,14 @@ func TestExtractReportShape(t *testing.T) {
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		t.Fatal(err)
 	}
-	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "proposedChecks", "openQuestions", "publication"} {
+	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "proposedChecks", "publication"} {
 		if _, ok := decoded[key]; !ok {
 			t.Errorf("report lacks %q: %s", key, data)
 		}
 	}
 	// Lists are never null, even for an Extract that stopped in the first phase.
 	stopped := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Incomplete, Reason: "budget"}})
-	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.OpenQuestions == nil || stopped.Structure.Passes == nil || stopped.Structure.Problems == nil {
+	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.Structure.Passes == nil || stopped.Structure.Problems == nil {
 		t.Fatalf("%+v", stopped)
 	}
 }
@@ -158,21 +158,16 @@ func TestExtractStatusIsPassedOnlyForAPublishedVerifiedModel(t *testing.T) {
 	}
 }
 
-func TestExtractReportTakesOpenQuestionsFromTheFinalPhase(t *testing.T) {
-	asked := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-	answered := run.Question{ID: "Q1", Text: "Structure?", Asked: asked, Answered: true, Answer: "yes"}
-	open := run.Question{ID: "Q2", Text: "Currency?", Asked: asked}
-	// The model phase carries the structure phase's questions: Q1 is reported once or not at all.
-	carried := NewExtractReport("x-1", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered}},
-		Model: &run.Outcome{Status: run.Incomplete, Questions: []run.Question{answered, open}}})
-	if len(carried.OpenQuestions) != 1 || carried.OpenQuestions[0].ID != "Q2" {
-		t.Errorf("questions %+v", carried.OpenQuestions)
-	}
-	// A model phase that never started has none of its own: the structure's stay.
-	unstarted := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered, open}},
-		Model: &run.Outcome{Status: run.Failed}})
-	if len(unstarted.OpenQuestions) != 1 || unstarted.OpenQuestions[0].ID != "Q2" {
-		t.Errorf("questions %+v", unstarted.OpenQuestions)
+// The report's Verify is the model phase's last independent Verify, never
+// the Model assessment of the candidate that follows it.
+func TestExtractReportVerifyIsTheVerifyPass(t *testing.T) {
+	model := run.Outcome{Status: run.Failed, Passes: []run.PassRecord{
+		{ID: "x-1-model-p2", Purpose: run.Verify, Review: true, Verdict: run.Satisfied},
+		{ID: "x-1-model-p3", Purpose: run.Assess, Review: true, Verdict: run.NeedsCorrection},
+	}}
+	report := NewExtractReport("x-1", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified}, Model: &model})
+	if report.Verify == nil || report.Verify.Pass != "x-1-model-p2" || report.Verify.Verdict != run.Satisfied {
+		t.Fatalf("verify %+v", report.Verify)
 	}
 }
 
@@ -229,9 +224,6 @@ Packages (5)
   library            Small library
   members
 
-Owner questions (1)
-  Q1 Which currency do fines use? -> euro
-
 Realization deviates from the model (1)
   lending/lending (owners: lending)
     borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only chec...
@@ -256,7 +248,7 @@ func TestRenderExtractAccount(t *testing.T) {
 
 	incomplete := libraryExtract(t)
 	incomplete.Receipt, incomplete.ProposedChecks, incomplete.Packages = nil, nil, nil
-	incomplete.Model.Status, incomplete.Model.Reason = run.Incomplete, "owner question Q2 is still open"
+	incomplete.Model.Status, incomplete.Model.Reason = run.Incomplete, "the agent turn budget of 60 ended"
 	incomplete.Model.Passes = []run.PassRecord{{ID: "verify-1", Purpose: run.Verify, Review: true, Verdict: run.NeedsCorrection, Managers: []run.ManagerRecord{{Manager: ".", State: run.Done, Verdict: run.Satisfied}, {Manager: "lending", State: run.Done, Verdict: run.NeedsCorrection}}}}
 	incomplete.Model.Questions = append(incomplete.Model.Questions, run.Question{ID: "Q2", Text: "May a member hold a reserved copy?", Asked: asked})
 	incomplete.RetainedWork = "x-1-model-work"
@@ -284,21 +276,21 @@ func TestRenderExtractAccount(t *testing.T) {
 		absent   []string
 	}{
 		{"complete", library, nil, "/state/x-1", []string{
-			"Model complete and published.", "Packages (5)", "  library            Small library", "Owner questions (1)", "  Q1 Which currency do fines use? -> euro",
+			"Model complete and published.", "Packages (5)", "  library            Small library",
 			"Realization deviates from the model (1)", "  lending/lending (owners: lending)", "    borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only chec...",
 			"Proposed checks (1)", "  project-vet: vet ./... in realization", "Verify (Pass verify-2, verdict satisfied)", "  satisfied: ., catalog, lending, lending/reminders, library, members", "  open advisory findings: 1",
 			"Publication: applied, 3 files changed", "Evidence: /state/x-1", "Next: review and commit .markitect/model, .markitect/registry and", "  .markitect/execution.yaml to adopt the model. Extract commits nothing.",
-		}, []string{"not satisfied", "Retained work"}},
+		}, []string{"not satisfied", "Retained work", "questions", "Q1"}},
 		{"incomplete", incomplete, nil, "/state/x-1", []string{
-			"Model incomplete: owner question Q2 is still open.", "Owner questions (2)", "  Q2 May a member hold a reserved copy? -> unanswered",
+			"Model incomplete: the agent turn budget of 60 ended.",
 			"Verify (Pass verify-1, verdict needs_correction)", "  satisfied: .", "  not satisfied: lending", "Publication: none", "Retained work: x-1-model-work (kept for inspection)", "Evidence: /state/x-1",
-		}, []string{"Next:", "Packages", "Proposed checks"}},
+		}, []string{"Next:", "Packages", "Proposed checks", "Q2"}},
 		{"verified but stale", stale, nil, "", []string{
 			"Model incomplete: the verified model was not published (stale: the repository changed).", "Publication: stale, 0 of 3 files written: the repository changed",
 		}, []string{"Next:", "Evidence"}},
 		{"failed", failed, errors.New("agent port: closed"), "", []string{
 			"Extract failed: structure phase: the agent port broke; agent port: closed.", "Verify: no Pass finished", "Publication: none",
-		}, []string{"Next:", "Owner questions", "Realization deviations"}},
+		}, []string{"Next:", "questions", "Realization deviations"}},
 		{"capped lists", many, nil, "", []string{"Packages (25)", "  and 13 more", "Realization deviates from the model (21)", "  and 16 more"}, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -337,7 +329,7 @@ func TestExtractPrintsTheAccountToStderrAndKeepsStdoutJSON(t *testing.T) {
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	result := libraryExtract(t)
 	var report ExtractReport
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithExtract(func(context.Context, ExtractRequest) (ExtractReport, error) {
 		report = NewExtractReport("x-1", result)
 		report.Status, report.EvidenceDirectory = model.Passed, "/state/x-1"
 		return report, nil

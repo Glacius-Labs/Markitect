@@ -103,7 +103,7 @@ func TestProposalWritesNeedTheCockpitsOwnJSONRequest(t *testing.T) {
 	plain := httptest.NewRequest(http.MethodPost, "/api/proposals/settings", nil)
 	plain.Host = local
 	plain.Header.Set("Content-Type", "text/plain")
-	plain.Header.Set(answerHeader, "propose")
+	plain.Header.Set(requestHeader, "propose")
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, plain)
 	if rec.Code != http.StatusForbidden {

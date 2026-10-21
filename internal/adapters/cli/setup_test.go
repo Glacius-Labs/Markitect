@@ -27,17 +27,17 @@ func runSetup(c *Command, args ...string) (code int, stdout, stderr string) {
 func TestSetupParsesFlagsAndReportsTheApplyCommand(t *testing.T) {
 	runtimeDir, credential, args := setupArgs(t)
 	var got SetupRequest
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithSetup(func(_ context.Context, r SetupRequest) (SetupReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithSetup(func(_ context.Context, r SetupRequest) (SetupReport, error) {
 		got = r
 		return SetupReport{Status: model.Passed, Files: []SetupFile{{Path: filepath.Join(runtimeDir, "runtime.yaml"), SHA256: "ab", Action: "written"}}}, nil
 	})
-	args = append(args, "--check", "go=/usr/local/go/bin/go", "--check", "lint=/bin/lint", "--decision", "A", "--decision", "B", "--deadline", "2030-01-01T00:00:00Z", "--store", "s", "--request", "R", "--dependency", "dep/model.yaml")
+	args = append(args, "--check", "go=/usr/local/go/bin/go", "--check", "lint=/bin/lint", "--deadline", "2030-01-01T00:00:00Z", "--store", "s", "--request", "R", "--dependency", "dep/model.yaml")
 	code, out, errout := runSetup(c, args...)
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
 	if got.RuntimeDir != runtimeDir || got.Credential != credential || got.Image != "runtime:1" || got.AgentModel != "claude-haiku-5-5" || got.Effort != "high" || !strings.HasSuffix(got.Engine, "docker") || got.Store != "s" || got.OwnerRequest != "R" || got.Deadline != "2030-01-01T00:00:00Z" || got.ProductBuild == "" ||
-		!reflect.DeepEqual(got.Checks, map[string]string{"go": "/usr/local/go/bin/go", "lint": "/bin/lint"}) || !reflect.DeepEqual(got.OwnerDecisions, []string{"A", "B"}) || len(got.Selection.Dependencies) != 1 || got.Selection.Local.ManifestPath.String() != ".markitect/model.yaml" {
+		!reflect.DeepEqual(got.Checks, map[string]string{"go": "/usr/local/go/bin/go", "lint": "/bin/lint"}) || len(got.Selection.Dependencies) != 1 || got.Selection.Local.ManifestPath.String() != ".markitect/model.yaml" {
 		t.Fatalf("%+v", got)
 	}
 	for _, want := range []string{`"operation": "setup"`, `"status": "passed"`, `"applyCommand"`, `--runtime-profile`, `--run-config`, `--dependency`, `"agentProfiles": []`} {
@@ -50,7 +50,7 @@ func TestSetupParsesFlagsAndReportsTheApplyCommand(t *testing.T) {
 func TestSetupRefusesInvalidInvocationsBeforeAnyEffect(t *testing.T) {
 	_, _, args := setupArgs(t)
 	called := false
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithSetup(func(context.Context, SetupRequest) (SetupReport, error) {
+	c := New(nil, nil, nil, nil, nil, nil).WithSetup(func(context.Context, SetupRequest) (SetupReport, error) {
 		called = true
 		return SetupReport{}, nil
 	})
@@ -65,12 +65,13 @@ func TestSetupRefusesInvalidInvocationsBeforeAnyEffect(t *testing.T) {
 		"duplicate check":            append(append([]string{}, args...), "--check", "go=/a", "--check", "go=/b"),
 		"stray argument":             append(append([]string{}, args...), "stray"),
 		"unknown flag":               append(append([]string{}, args...), "--unknown"),
+		"retired owner decision":     append(append([]string{}, args...), "--decision", "Use euro."),
 	} {
 		if code, out, _ := runSetup(c, bad...); code != 2 || called {
 			t.Errorf("%s: exit %d called=%v %s", name, code, called, out)
 		}
 	}
-	unavailable := New(nil, nil, nil, nil, nil, nil, nil)
+	unavailable := New(nil, nil, nil, nil, nil, nil)
 	if code, out, _ := runSetup(unavailable, args...); code != 3 || !strings.Contains(out, "unavailable") {
 		t.Fatalf("exit %d: %s", code, out)
 	}
@@ -79,7 +80,7 @@ func TestSetupRefusesInvalidInvocationsBeforeAnyEffect(t *testing.T) {
 func TestSetupExitCodesFollowTheReportStatus(t *testing.T) {
 	_, _, args := setupArgs(t)
 	for status, want := range map[model.Status]int{model.Failed: 1, model.NotCompleted: 3} {
-		c := New(nil, nil, nil, nil, nil, nil, nil).WithSetup(func(context.Context, SetupRequest) (SetupReport, error) {
+		c := New(nil, nil, nil, nil, nil, nil).WithSetup(func(context.Context, SetupRequest) (SetupReport, error) {
 			return SetupReport{Status: status}, nil
 		})
 		code, out, _ := runSetup(c, args...)

@@ -15,7 +15,7 @@ import (
 
 func TestCockpitPassesItsSelectionAndReportsWhereItServes(t *testing.T) {
 	var got CockpitRequest
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, ready func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, ready func(string)) error {
 		got = r
 		ready("http://127.0.0.1:7341/")
 		return nil
@@ -36,11 +36,11 @@ func TestCockpitPassesItsSelectionAndReportsWhereItServes(t *testing.T) {
 
 func TestCockpitRefusesIncompleteSelectionsAndReportsFailures(t *testing.T) {
 	calls := 0
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(context.Context, CockpitRequest, func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(context.Context, CockpitRequest, func(string)) error {
 		calls++
 		return errors.New("listen address is not a loopback address")
 	})
-	for _, args := range [][]string{{"cockpit"}, {"cockpit", "--run-config", "relative.json"}, {"cockpit", "--state", "a", "extra"}} {
+	for _, args := range [][]string{{"cockpit", "--repo", "."}, {"cockpit", "--model", "m.yaml"}, {"cockpit", "--dependency", "d.yaml"}, {"cockpit", "--runtime-profile", "/abs/runtime.yaml"}, {"cockpit", "--run-config", "relative.json"}, {"cockpit", "--state", "a", "extra"}, {"cockpit", "extra"}} {
 		var out, errout bytes.Buffer
 		if code := c.Run(context.Background(), args, &out, &errout); code != 2 {
 			t.Fatalf("%v = %d", args, code)
@@ -53,14 +53,14 @@ func TestCockpitRefusesIncompleteSelectionsAndReportsFailures(t *testing.T) {
 	if code := c.Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 || !strings.Contains(out.String(), "loopback") {
 		t.Fatalf("%d %s", code, out.String())
 	}
-	if code := New(nil, nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 {
+	if code := New(nil, nil, nil, nil, nil, nil).Run(context.Background(), []string{"cockpit", "--state", "a"}, &out, &errout); code != 3 {
 		t.Fatalf("an unconfigured cockpit = %d", code)
 	}
 }
 
 func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
 	var got CockpitRequest
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
 		got = r
 		return nil
 	})
@@ -79,7 +79,7 @@ func TestCockpitObservesTheCurrentRepositoryByDefault(t *testing.T) {
 
 func TestCockpitSelectsTheModelAndDependenciesAsCheckDoes(t *testing.T) {
 	var got CockpitRequest
-	c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+	c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
 		got = r
 		return nil
 	})
@@ -111,7 +111,7 @@ func TestCockpitOpensItsWindowUnlessToldNotTo(t *testing.T) {
 	} {
 		t.Run(tt.name, func(t *testing.T) {
 			var opened []string
-			c := New(nil, nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, _ CockpitRequest, ready func(string)) error {
+			c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, _ CockpitRequest, ready func(string)) error {
 				ready("http://127.0.0.1:7341/")
 				return nil
 			}).WithWindowOpener(func(url string) error {
@@ -132,5 +132,67 @@ func TestCockpitOpensItsWindowUnlessToldNotTo(t *testing.T) {
 				t.Fatal("the address is printed either way: " + out.String())
 			}
 		})
+	}
+}
+
+func TestCockpitWithoutProjectFlagsOpensProjectMode(t *testing.T) {
+	for _, tt := range []struct {
+		name   string
+		args   []string
+		listen string
+		opened []string
+	}{
+		{"no flags", []string{"cockpit"}, "", []string{"http://127.0.0.1:7341/"}},
+		{"listen and no-open work in project mode", []string{"cockpit", "--listen", "127.0.0.1:9000", "--no-open"}, "127.0.0.1:9000", nil},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var got CockpitRequest
+			var opened []string
+			c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, ready func(string)) error {
+				got = r
+				ready("http://127.0.0.1:7341/")
+				return nil
+			}).WithWindowOpener(func(url string) error { opened = append(opened, url); return nil })
+			var out, errout bytes.Buffer
+			if code := c.Run(context.Background(), tt.args, &out, &errout); code != 0 {
+				t.Fatalf("%d: %s %s", code, out.String(), errout.String())
+			}
+			if !got.Projects || got.Listen != tt.listen || len(got.States) != 0 || got.RunConfig != "" || got.Selection.Repository != "" || got.Build != buildinfo.Build() {
+				t.Fatalf("request = %+v", got)
+			}
+			if !slices.Equal(opened, tt.opened) {
+				t.Fatalf("opened %v", opened)
+			}
+		})
+	}
+}
+
+func TestCockpitWithAProjectFlagOpensThatProjectDirectly(t *testing.T) {
+	config := filepath.Join(t.TempDir(), "run.json")
+	for _, args := range [][]string{
+		{"cockpit", "--state", "a"},
+		{"cockpit", "--run-config", config},
+		{"cockpit", "--state", "a", "--repo", "."},
+	} {
+		var got CockpitRequest
+		c := New(nil, nil, nil, nil, nil, nil).WithCockpit(func(_ context.Context, r CockpitRequest, _ func(string)) error {
+			got = r
+			return nil
+		})
+		var out, errout bytes.Buffer
+		if code := c.Run(context.Background(), args, &out, &errout); code != 0 || got.Projects || got.Selection.Repository == "" {
+			t.Fatalf("%v = %d, request %+v", args, code, got)
+		}
+	}
+}
+
+func TestRepositorySelectionSelectsAsCheckDoes(t *testing.T) {
+	root := t.TempDir()
+	got, err := RepositorySelection(root, ".markitect/model.yaml", []string{".markitect/dependencies/core/model.yaml"})
+	if err != nil || got.Repository != root || got.Local.Boundary != "." || got.Local.ManifestPath.String() != ".markitect/model.yaml" || len(got.Dependencies) != 1 {
+		t.Fatalf("selection = %+v, %v", got, err)
+	}
+	if _, err := RepositorySelection(root, "../outside.yaml", nil); err == nil {
+		t.Fatal("a manifest outside the repository was selected")
 	}
 }

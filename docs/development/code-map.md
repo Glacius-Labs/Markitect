@@ -93,7 +93,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Constructs actual services and adapters; owns the Agents router, file evidence, file owner channel and state lock. | [docs/development/modules.md](modules.md) |
+| `internal/bootstrap` | Constructs actual services and adapters; owns the Agents router, file evidence and state lock. | [docs/development/modules.md](modules.md) |
 
 ## Product command
 

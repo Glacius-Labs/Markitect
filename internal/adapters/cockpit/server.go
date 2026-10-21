@@ -27,44 +27,44 @@ const DefaultListen = "127.0.0.1:7341"
 
 // Config selects the state directories the cockpit observes. The cockpit only
 // reads them; Liveness, when set, probes whether an Apply holds one. Project
-// observes the repository's identity. Answer, when set, is the owner
-// channel's answer operation. Runs, when set, starts and stops the one Apply
-// this cockpit runs in its own process.
+// observes the repository's identity. Runs, when set, starts and stops the one
+// Apply this cockpit runs in its own process.
 type Config struct {
 	States   []string
 	Liveness Liveness
 	Project  ProjectObserver
-	Answer   Answerer
 	// Authoring, when set, makes and decides proposals for the project's
 	// .markitect inputs.
 	Authoring Authoring
 	Runs      *RunController
+	// RunsReason, when set, replaces the text that says why starting a run is
+	// unavailable.
+	RunsReason string
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
-// of the configured state directories. It writes an owner's answer through
-// the configured owner channel, an accepted proposal through the configured
-// authoring service, and starts and stops the one run its own controller
-// holds; no request repairs a run, and a run started elsewhere is only
-// observed.
+// of the configured state directories. It writes an accepted proposal through
+// the configured authoring service and starts and stops the one run its own
+// controller holds; no request repairs a run or answers a question of a run,
+// and a run started elsewhere is only observed.
 type Server struct {
-	states    []*stateDirectory
-	liveness  Liveness
-	project   projectCache
-	answer    Answerer
-	authoring Authoring
-	runs      *RunController
-	poll      time.Duration
-	host      string
-	web       fs.FS
+	states     []*stateDirectory
+	liveness   Liveness
+	project    projectCache
+	authoring  Authoring
+	runs       *RunController
+	runsReason string
+	poll       time.Duration
+	host       string
+	web        fs.FS
 }
 
 // New checks the configuration. Every state directory must exist.
 func New(cfg Config) (*Server, error) {
-	if len(cfg.States) == 0 {
-		return nil, errors.New("the cockpit needs at least one state directory")
+	if len(cfg.States) == 0 && cfg.Project == nil {
+		return nil, errors.New("the cockpit needs at least one state directory or a repository")
 	}
-	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, authoring: cfg.Authoring, runs: cfg.Runs, poll: 400 * time.Millisecond}
+	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, authoring: cfg.Authoring, runs: cfg.Runs, runsReason: cfg.RunsReason, poll: 400 * time.Millisecond}
 	seen := map[string]bool{}
 	for _, dir := range cfg.States {
 		abs, err := filepath.Abs(dir)
@@ -94,6 +94,16 @@ func New(cfg Config) (*Server, error) {
 // Serve listens on the loopback address and serves until ctx ends. ready
 // receives the address the browser opens.
 func (s *Server) Serve(ctx context.Context, listen string, ready func(url string)) error {
+	return serveLoopback(ctx, listen, func(host string) http.Handler {
+		s.host = host
+		return s.Handler()
+	}, ready)
+}
+
+// serveLoopback listens on a loopback address (the default when listen is
+// empty) and serves the handler built for the address it listens on until ctx
+// ends. ready receives the address the browser opens.
+func serveLoopback(ctx context.Context, listen string, handler func(host string) http.Handler, ready func(url string)) error {
 	if listen == "" {
 		listen = DefaultListen
 	}
@@ -108,13 +118,13 @@ func (s *Server) Serve(ctx context.Context, listen string, ready func(url string
 	if err != nil {
 		return err
 	}
-	s.host = ln.Addr().String()
+	address := ln.Addr().String()
 	// Requests end with ctx, so open live streams do not hold up the exit.
-	srv := &http.Server{Handler: s.Handler(), ReadHeaderTimeout: 10 * time.Second, BaseContext: func(net.Listener) context.Context { return ctx }}
+	srv := &http.Server{Handler: handler(address), ReadHeaderTimeout: 10 * time.Second, BaseContext: func(net.Listener) context.Context { return ctx }}
 	errs := make(chan error, 1)
 	go func() { errs <- srv.Serve(ln) }()
 	if ready != nil {
-		ready("http://" + s.host + "/")
+		ready("http://" + address + "/")
 	}
 	select {
 	case <-ctx.Done():
@@ -133,8 +143,6 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/project", s.handleProject)
 	mux.HandleFunc("POST /api/project/observe", s.handleObserve)
 	mux.HandleFunc("GET /api/model", s.handleModel)
-	mux.HandleFunc("GET /api/questions", s.handleQuestions)
-	mux.HandleFunc("POST /api/runs/{run}/questions/{question}/answer", s.handleAnswer)
 	mux.HandleFunc("GET /api/settings", s.handleSettings)
 	mux.HandleFunc("POST /api/proposals/settings", s.handleProposeSettings)
 	mux.HandleFunc("GET /api/proposals", s.handleProposals)
@@ -162,9 +170,11 @@ func (s *Server) Handler() http.Handler {
 // guard admits only requests addressed to this loopback server, so another
 // site cannot read run evidence through a rebound host name, and sets a
 // restrictive content policy.
-func (s *Server) guard(next http.Handler) http.Handler {
+func (s *Server) guard(next http.Handler) http.Handler { return guardHandler(next, s.admitHost) }
+
+func guardHandler(next http.Handler, admit func(host string) bool) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if !s.admitHost(r.Host) {
+		if !admit(r.Host) {
 			http.Error(w, "unknown host", http.StatusMisdirectedRequest)
 			return
 		}
@@ -179,11 +189,15 @@ func (s *Server) guard(next http.Handler) http.Handler {
 	})
 }
 
-func (s *Server) admitHost(host string) bool {
-	if s.host == "" {
-		return true // Handler used without Serve, as in tests
+func (s *Server) admitHost(host string) bool { return admitLoopback(s.host, host) }
+
+// admitLoopback admits the host names that reach the loopback address served;
+// without one (a handler used without Serve, as in tests) every host.
+func admitLoopback(served, host string) bool {
+	if served == "" {
+		return true
 	}
-	_, port, err := net.SplitHostPort(s.host)
+	_, port, err := net.SplitHostPort(served)
 	if err != nil {
 		return false
 	}

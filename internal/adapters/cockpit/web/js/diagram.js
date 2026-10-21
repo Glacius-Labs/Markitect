@@ -162,7 +162,7 @@ export class Diagram {
     }
     this.nodesLayer.append(this.systemNode("@orchestrator", "Orchestrator", "Checks, accepts Root, routes"));
     const ownerOpen = view.questions.filter((q) => q.to === "user" && q.status === "open").length;
-    this.nodesLayer.append(this.systemNode("@user", "Owner", ownerOpen ? `${ownerOpen} open question${ownerOpen > 1 ? "s" : ""}` : "Owner channel of Root"));
+    this.nodesLayer.append(this.systemNode("@user", "Owner", ownerOpen ? `${ownerOpen} unanswered question${ownerOpen > 1 ? "s" : ""} recorded` : "Asks nothing in a Run"));
     for (const m of view.managers) {
       if (this.hidden(m.path)) continue;
       this.nodesLayer.append(this.managerNode(m));

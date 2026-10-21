@@ -300,7 +300,7 @@ func setupRunConfig(request cli.SetupRequest, imageID, store, stateDirectory str
 	}
 	return runConfigDocument{
 		FormatVersion: 2, RepositoryIdentity: store, ProductBuild: request.ProductBuild, OwnerRequest: ownerRequest,
-		OwnerDecisions: request.OwnerDecisions, StateDirectory: stateDirectory, Deadline: request.Deadline,
+		StateDirectory: stateDirectory, Deadline: request.Deadline,
 		EngineExecutable: request.Engine,
 		WorkspaceHelper: workspaceHelperDocument{
 			Name: "markitect-ws", Image: imageID, Labels: map[string]string{"markitect.store": store}, User: "1000:1000",

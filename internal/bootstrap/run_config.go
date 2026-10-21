@@ -32,7 +32,6 @@ type runConfig struct {
 	RepositoryIdentity string                      `json:"repositoryIdentity"`
 	ProductBuild       string                      `json:"productBuild"`
 	OwnerRequest       string                      `json:"ownerRequest"`
-	OwnerDecisions     []string                    `json:"ownerDecisions"`
 	StateDirectory     string                      `json:"stateDirectory"`
 	EngineExecutable   string                      `json:"engineExecutable"`
 	WorkspaceHelper    container.ContainerSpec     `json:"workspaceHelper"`
@@ -68,10 +67,12 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	if err != nil {
 		return runConfig{}, err
 	}
-	// ownerDecisions (DEC-053) and deadline are the optional fields.
+	// deadline is the only optional field. Every other key is required, and any
+	// further key is refused, ownerDecisions included: no preloaded owner decision
+	// supplies model intent to a Run.
 	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "engineExecutable", "workspaceHelper", "harvest", "credentials"}
 	for key := range root {
-		if !slices.Contains(required, key) && key != "ownerDecisions" && key != "deadline" {
+		if !slices.Contains(required, key) && key != "deadline" {
 			return runConfig{}, errRunConfig
 		}
 	}
@@ -168,11 +169,6 @@ var (
 
 func (c runConfig) valid() bool {
 	if c.FormatVersion != 2 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !utf8.ValidString(c.OwnerRequest) || strings.TrimSpace(c.OwnerRequest) == "" || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
-		return false
-	}
-	if c.OwnerDecisions != nil && len(c.OwnerDecisions) == 0 || len(c.OwnerDecisions) > 64 || slices.ContainsFunc(c.OwnerDecisions, func(d string) bool {
-		return !utf8.ValidString(d) || strings.TrimSpace(d) == "" || strings.ContainsRune(d, 0) || len(d) > 16384
-	}) {
 		return false
 	}
 	if c.Deadline != "" {

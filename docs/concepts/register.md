@@ -65,7 +65,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-050](#dec-050-an-accepted-delivery-restarts-the-rejection-count) | Decision | An accepted delivery restarts the rejection count | Accepted |
 | [DEC-051](#dec-051-agents-get-tasks-the-orchestrator-owns-the-process) | Decision | Agents get tasks; the Orchestrator owns the process | Accepted |
 | [DEC-052](#dec-052-implement-then-review-no-explore-phase) | Decision | Implement then review: no Explore phase | Accepted |
-| [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Accepted |
+| [DEC-053](#dec-053-owner-decisions-bind-the-whole-run) | Decision | Owner decisions bind the whole run | Superseded by closed Runs (owner, 21 October 2026); removed from the implementation |
 | [DEC-054](#dec-054-a-rejection-that-finds-fewer-gaps-does-not-count) | Decision | A rejection that finds fewer gaps does not count | Accepted |
 | [DEC-055](#dec-055-a-submission-must-pass-its-required-checks) | Decision | A submission must pass its required checks | Accepted |
 | [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) | Decision | Recursive reconciliation with a shared workspace | Accepted; implemented (PR #463) |
@@ -660,6 +660,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Owners:** [core protocol](../history/apply-design-before-dec-056/manager-apply-core.md#manager-tasks), rules T4 to T7, D6 and the Orchestrator tool table.
 
 ### DEC-053 Owner decisions bind the whole run
+
+**Current disposition, 21 October 2026:** Superseded by the owner's [mandatory Model assessment and closed Runs](../design/canonical-model/manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs): no answer or preloaded owner decision supplies model intent during a Run, and `ownerDecisions` is refused. The entry below remains the record of the former contract.
 
 - **Status:** Accepted, owner, 18 October 2026 ([evidence and owner instruction](sources/run-wide-owner-decisions-20261018.md)).
 - **Decision:** An owner's answer binds the whole run: every task's later Manager steps and candidate reviews see it, not only the asking task's; another task's expectations steps do not, so its recorded cases stand. The owner's earlier decisions can be bound with a run as `ownerDecisions` in its configuration; every step sees them from the run's start, so a question that the owner has decided is not asked again. A candidate review judges a recorded case or finding that an owner decision contradicts as not applicable. Only the asking task's recorded review cases are renewed by an answer; bound decisions are inputs of every task's cases from the start.

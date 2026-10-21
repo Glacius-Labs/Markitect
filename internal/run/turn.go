@@ -472,7 +472,7 @@ func (e *engine) memberTool(m *member, ts *turnState) ToolHandler {
 		case toolLookUp:
 			return e.lookUp(m, ts, args)
 		case toolCheck:
-			if m.p.spec.Writes || e.probesAvailable() {
+			if m.p.spec.Writes || e.probesAvailable(m.p.spec) {
 				return e.check(ctx, m, ts, args)
 			}
 		case toolDelegate:

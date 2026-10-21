@@ -351,7 +351,7 @@ const factsTimeout = 2 * time.Minute
 // only when it shows the confirmation.
 func (s *Server) handleRunControl(w http.ResponseWriter, r *http.Request) {
 	if s.runs == nil {
-		writeJSON(w, runControlView{Reason: runControlUnavailable})
+		writeJSON(w, runControlView{Reason: s.unavailableReason()})
 		return
 	}
 	view := runControlView{Available: true, Run: s.runs.Status()}
@@ -366,9 +366,16 @@ func (s *Server) handleRunControl(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, view)
 }
 
+func (s *Server) unavailableReason() string {
+	if s.runsReason != "" {
+		return s.runsReason
+	}
+	return runControlUnavailable
+}
+
 func (s *Server) runsOrRefuse(w http.ResponseWriter) bool {
 	if s.runs == nil {
-		http.Error(w, runControlUnavailable, http.StatusNotImplemented)
+		http.Error(w, s.unavailableReason(), http.StatusNotImplemented)
 		return false
 	}
 	return true

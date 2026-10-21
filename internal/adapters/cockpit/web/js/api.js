@@ -1,9 +1,12 @@
-// The cockpit's interface. Every GET reads. answer writes an owner's answer
-// through the owner channel the answer command uses, observeProject runs the
+// The cockpit's interface. Every GET reads. observeProject runs the
 // repository's structural preparation again, proposeSettings makes a checked
 // proposal without writing, and decide accepts (writes through Apply's
 // guarded publication) or discards one. startSession and promptSession each
 // start one provider turn of a model session; closeSession ends it.
+// projects reads the per-user project list with the project that is open;
+// addProject, openProject, removeProject, keepProject and setupProject change
+// it (a setup also writes the project's runtime directory through the
+// function behind markitect setup).
 // runControl reads whether the cockpit can start a run and the run it
 // started, with the confirmation facts when asked; startRun and stopRun start
 // and stop that one run.
@@ -18,14 +21,24 @@ async function request(path, init = {}) {
 }
 
 const get = (path) => request(path);
+const postJSON = (path, purpose, body) => request(path, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": purpose },
+  body: JSON.stringify(body),
+});
 const enc = encodeURIComponent;
 
 export const api = {
+  projects: () => get("/api/projects"),
+  addProject: (body) => postJSON("/api/projects", "project-add", body),
+  openProject: (name) => request(`/api/projects/${enc(name)}/open`, { method: "POST", headers: { "X-Markitect-Cockpit": "project-open" } }),
+  removeProject: (name) => request(`/api/projects/${enc(name)}/remove`, { method: "POST", headers: { "X-Markitect-Cockpit": "project-remove" } }),
+  keepProject: (name) => postJSON("/api/projects/keep", "project-keep", { name }),
+  setupProject: (name, body) => postJSON(`/api/projects/${enc(name)}/setup`, "project-setup", body),
   project: () => get("/api/project"),
   model: () => get("/api/model"),
   observeProject: () => request("/api/project/observe", { method: "POST", headers: { "X-Markitect-Cockpit": "observe" } }),
   runs: () => get("/api/runs"),
-  questions: () => get("/api/questions"),
   view: (run, at) => get(`/api/runs/${enc(run)}/view${at === undefined ? "" : `?at=${at}`}`),
   entries: (run, after = 0) => get(`/api/runs/${enc(run)}/entries?after=${after}`),
   detail: (run, ref, at) => get(`/api/runs/${enc(run)}/detail?ref=${enc(ref)}&at=${at}`),
@@ -59,9 +72,4 @@ export const api = {
     body: JSON.stringify({ head }),
   }),
   stopRun: () => request("/api/run-control/stop", { method: "POST", headers: { "X-Markitect-Cockpit": "stop-run" } }),
-  answer: (run, question, text) => request(`/api/runs/${enc(run)}/questions/${enc(question)}/answer`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "answer" },
-    body: JSON.stringify({ text }),
-  }),
 };

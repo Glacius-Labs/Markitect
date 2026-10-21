@@ -137,8 +137,8 @@ func writeSetupFiles(runtimeDir, stateDirectory string, files []setupFile) ([]cl
 	if info, err := os.Stat(runtimeDir); err != nil || !info.IsDir() {
 		return nil, refuse("the Runtime path is not a directory")
 	}
-	// Like a starting Apply, setup absorbs the instant probe of markitect answer
-	// or the cockpit by retrying briefly.
+	// Like a starting Apply, setup absorbs the instant probe of the cockpit
+	// by retrying briefly.
 	lock, err := lockStateWithin(context.Background(), stateDirectory, startLockWait)
 	if err != nil {
 		if errors.Is(err, errStateLocked) {
