@@ -115,6 +115,12 @@ func (c cockpitService) open(ctx context.Context, spec projectSpec) (cockpit.Ope
 		cfg.Project = func(ctx context.Context) (cockpit.ProjectInfo, error) {
 			return c.project(ctx, selection)
 		}
+		if spec.runConfig != "" && spec.runtimeProfile != "" {
+			cfg.Organization = func(ctx context.Context) (*cockpit.OrganizationView, error) {
+				facts, err := c.runFacts(ctx, selection, spec.runConfig, spec.runtimeProfile)
+				return facts.Organization, err
+			}
+		}
 		proposals = c.authoring(selection, states, fence)
 		if spec.runConfig != "" && spec.runtimeProfile != "" {
 			proposals.WithSessions(c.sessionOpener(selection, spec.runConfig, spec.runtimeProfile))
@@ -196,6 +202,7 @@ func (c cockpitService) project(ctx context.Context, selection apply.InputSelect
 		return info, errors.Join(err, errors.New("structural preparation made no attempt"))
 	}
 	final := attempts[len(attempts)-1]
+	info.Organization = declaredOrganization(final)
 	info.Head = final.Model().Inputs().Head
 	checked := final.Model().Checked()
 	if len(checked.Models) > 0 {

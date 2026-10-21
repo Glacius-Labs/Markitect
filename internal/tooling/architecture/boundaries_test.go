@@ -242,7 +242,7 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 		{"internal/model", true, true},
 		{"internal/adapters/claudecode", true, true},
 		{"internal/snapshot", true, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
-		{"internal/organization", false, false}, {"internal/realization", false, false},
+		{"internal/organization", true, true}, {"internal/realization", true, true},
 		{"internal/adapters/container", true, true}, {"internal/adapters/unknown", false, false},
 	} {
 		for _, test := range []bool{false, true} {

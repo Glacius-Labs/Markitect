@@ -22,7 +22,8 @@ type ProjectInfo struct {
 	Error       string    `json:"error,omitempty"`
 	ObservedAt  time.Time `json:"observedAt"`
 	// Model is served on its own route; the project summary stays small.
-	Model *ModelView `json:"-"`
+	Model        *ModelView        `json:"-"`
+	Organization *OrganizationView `json:"-"`
 }
 
 // ProjectObserver prepares the project's identity. Bootstrap supplies the
