@@ -4,7 +4,7 @@ Package 2 of the [handoff](../development/codex-cockpit-org-chart-handoff-202610
 on Main `d94a87692ecfdf44bcd491529977b97d4fa9feef`. The component consumes explicit
 presentation nodes; model hierarchy and Run projection belong to their producers.
 
-The pure `org-layout.mjs` lays out a top-down tree with orthogonal connectors,
+The pure `org-layout.js` lays out a top-down tree with orthogonal connectors,
 reserves lateral space for the independent reviewer seat and refuses malformed
 topology. Large trees initially show Root and the first department level; deeper
 departments expand explicitly. Layout, collapse and visible ancestors have
