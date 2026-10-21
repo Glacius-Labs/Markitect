@@ -9,5 +9,5 @@ body: >-
   Only the owner starts a run, after a confirmation that names the committed execution budget, the run configuration's deadline and the Agent profile; the cockpit never starts a run by itself.
   A started run is the same Apply as markitect apply with the same inputs, checks, budget, evidence and publication, and one run holds a state directory at a time.
   Stopping a run the cockpit started ends it incomplete with its report and evidence, as an interrupted markitect apply, and restores nothing; runs started elsewhere are only observed.
-  Closing the window keeps the cockpit and its runs working; with the owner's permission it notifies when a run asks a question or ends.
+  Closing the window keeps the cockpit and its runs working; with the owner's permission it notifies when a run ends or a decision waits for the owner.
 spec: {}

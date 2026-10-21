@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:dba9e4a51ba0f1393dcafd5903344e19b230ffba989d5b71dd6bb330abfc8912`.
+Canonical model digest: `sha256:888d419d4f8304a22d6bf0c9971a38f444b53f34e56bc53f2944226ffeb679bb`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -178,9 +178,9 @@ Changes to the canonical model and to the execution settings made through the co
 
 ### product/cockpit/desktop-app
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/desktop-app.yaml` (original bytes `sha256:1a3b6e08c0763ed6e3b87ba802c34fac96162cdeadb7e8a26bf6ac3337edd8e7`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/desktop-app.yaml` (original bytes `sha256:d77738c772ce29d10b77960fddaec1db61b107480e8996396a0eb014d5666937`).
 
-The cockpit is the owner's desktop app for Markitect: opened without arguments it shows a per-user list of projects, each a repository with the runtime directory that setup fills, and it opens its local address in its own app window. A project is set up through the same function as markitect setup, which writes exactly what setup writes and refuses where setup refuses. Only the owner starts a run, after a confirmation that names the committed execution budget, the run configuration's deadline and the Agent profile; the cockpit never starts a run by itself. A started run is the same Apply as markitect apply with the same inputs, checks, budget, evidence and publication, and one run holds a state directory at a time. Stopping a run the cockpit started ends it incomplete with its report and evidence, as an interrupted markitect apply, and restores nothing; runs started elsewhere are only observed. Closing the window keeps the cockpit and its runs working; with the owner's permission it notifies when a run asks a question or ends.
+The cockpit is the owner's desktop app for Markitect: opened without arguments it shows a per-user list of projects, each a repository with the runtime directory that setup fills, and it opens its local address in its own app window. A project is set up through the same function as markitect setup, which writes exactly what setup writes and refuses where setup refuses. Only the owner starts a run, after a confirmation that names the committed execution budget, the run configuration's deadline and the Agent profile; the cockpit never starts a run by itself. A started run is the same Apply as markitect apply with the same inputs, checks, budget, evidence and publication, and one run holds a state directory at a time. Stopping a run the cockpit started ends it incomplete with its report and evidence, as an interrupted markitect apply, and restores nothing; runs started elsewhere are only observed. Closing the window keeps the cockpit and its runs working; with the owner's permission it notifies when a run ends or a decision waits for the owner.
 
 ### product/cockpit/observed-run-inspection
 
