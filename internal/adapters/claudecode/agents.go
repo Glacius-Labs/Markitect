@@ -40,8 +40,12 @@ type Agents struct {
 
 	mu   sync.Mutex
 	envs map[string]*environment
-	// orphans are fresh instances whose removal was not observed.
+	// orphans are instances whose removal was not observed, of fresh turns or
+	// of released environments.
 	orphans []Instance
+	// generations keeps the last generation of a released environment, so a
+	// later instance of the same environment gets a new name and says why.
+	generations map[string]int
 }
 
 var _ run.Agents = (*Agents)(nil)
@@ -67,7 +71,7 @@ func NewAgentsWithRuntime(runtime Runtime, profiles map[string]Profile, credenti
 		profile.Session.BuiltinTools = slices.Clone(profile.Session.BuiltinTools)
 		checked[name] = profile
 	}
-	return &Agents{runtime: runtime, profiles: checked, credentials: credentials, envs: map[string]*environment{}}, nil
+	return &Agents{runtime: runtime, profiles: checked, credentials: credentials, envs: map[string]*environment{}, generations: map[string]int{}}, nil
 }
 
 // Run implements run.Agents. A turn that fails before an instance starts is

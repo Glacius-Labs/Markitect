@@ -108,7 +108,10 @@ func (a *Agents) acquire(ctx context.Context, turn run.Turn, spec container.Cont
 	a.mu.Lock()
 	env := a.envs[turn.Environment]
 	if env == nil {
-		env = &environment{name: turn.Environment}
+		env = &environment{name: turn.Environment, generation: a.generations[turn.Environment]}
+		if env.generation > 0 {
+			env.replaced = "its environment was released at the end of a Pass"
+		}
 		a.envs[turn.Environment] = env
 	}
 	if env.busy {
@@ -293,9 +296,16 @@ func (a *Agents) Release(ctx context.Context, names []string) []run.EnvironmentR
 			r := run.EnvironmentRelease{Environment: env.name, Instance: inst.Name(), Removed: true}
 			if err := inst.Remove(context.WithoutCancel(ctx)); err != nil {
 				r.Removed, r.Error = false, err.Error()
+				// The final release removes it again.
+				a.mu.Lock()
+				a.orphans = append(a.orphans, inst)
+				a.mu.Unlock()
 			}
 			out = append(out, r)
 		}
+		a.mu.Lock()
+		a.generations[env.name] = env.generation
+		a.mu.Unlock()
 	}
 	return out
 }

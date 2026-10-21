@@ -3,6 +3,7 @@ package claudecode
 import (
 	"context"
 	"errors"
+	"slices"
 	"strings"
 	"testing"
 
@@ -157,6 +158,12 @@ func TestReleaseRemovesTheNamedEnvironments(t *testing.T) {
 	if len(got) != 2 || got[0].Removed || got[0].Error == "" || !got[1].Removed {
 		t.Fatalf("final release %+v", got)
 	}
+	// Only the instance whose removal was not observed is tried again, until
+	// its removal is observed; a removed one never twice.
+	h.instances[0].removeErr = nil
+	if again := h.agents.Release(context.Background(), nil); len(again) != 1 || !again[0].Removed || again[0].Instance != h.instances[0].name {
+		t.Fatalf("retry %+v", again)
+	}
 	if again := h.agents.Release(context.Background(), nil); len(again) != 0 {
 		t.Fatalf("released twice: %+v", again)
 	}
@@ -208,5 +215,26 @@ func TestAnUnremovedInstanceIsRemovedAgainAtTheRelease(t *testing.T) {
 	got := h.agents.Release(context.Background(), nil)
 	if len(got) != 1 || got[0].Instance != h.instances[0].name || !got[0].Removed || h.instances[0].removed != 2 {
 		t.Fatalf("release %+v", got)
+	}
+}
+
+// An environment released at the end of a Pass continues with a new
+// generation that says why, so its names never collide; an instance whose
+// removal failed at a release is removed again by the final release.
+func TestAReleasedEnvironmentContinuesWithANewGeneration(t *testing.T) {
+	h := envHarness(t)
+	first := mustRun(t, h, envTurn("t1", true))
+	h.instances[0].removeErr = errors.New("engine busy")
+	if got := h.agents.Release(context.Background(), []string{"run-1-lending-m"}); len(got) != 1 || got[0].Removed {
+		t.Fatalf("release %+v", got)
+	}
+	next := mustRun(t, h, envTurn("t2", true))
+	if next.Instance.Generation != 2 || next.Instance.Name == first.Instance.Name || next.Instance.Started != "its environment was released at the end of a Pass" {
+		t.Fatalf("next instance %+v after %+v", next.Instance, first.Instance)
+	}
+	h.instances[0].removeErr = nil
+	got := h.agents.Release(context.Background(), nil)
+	if len(got) != 2 || !slices.ContainsFunc(got, func(r run.EnvironmentRelease) bool { return r.Instance == first.Instance.Name && r.Removed }) {
+		t.Fatalf("final release %+v", got)
 	}
 }
