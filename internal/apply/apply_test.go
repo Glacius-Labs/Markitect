@@ -40,7 +40,7 @@ func layoutRequest(t *testing.T) (apply.ApplyRequest, snapshot.Tree) {
 	libraryLayoutFiles(t, &selection, &raw)
 	attempt := preparedAttempt(t, selection, raw)
 	return apply.ApplyRequest{
-		RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, OwnerRequest: "Realize the model.",
+		RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, Build: "test-build", OwnerRequest: "Realize the model.",
 		OwnerDecisions: []string{"Use euro."}, MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest,
 		RequireVolumeSubpaths: func(context.Context) error { return nil },
 	}, attempt.Structural().Model().Inputs().Raw.Census
@@ -519,7 +519,7 @@ func TestApplyConfigRefusesWithoutDeclaredOwnership(t *testing.T) {
 	selection, raw := executionInputs(t, documentedExecution(t))
 	libraryLayoutFiles(t, &selection, &raw)
 	attempt := preparedAttempt(t, selection, raw)
-	req := apply.ApplyRequest{RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, CheckRequest: checkRequest, RequireVolumeSubpaths: func(context.Context) error { return nil }}
+	req := apply.ApplyRequest{RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, Build: "test-build", CheckRequest: checkRequest, RequireVolumeSubpaths: func(context.Context) error { return nil }}
 	if _, err := apply.BuildApplyConfig(req, time.Now()); !errors.Is(err, apply.ErrUnsupportedOwnership) || !strings.Contains(err.Error(), "declares no ownership") {
 		t.Fatalf("an Apply without declared ownership was configured: %v", err)
 	}
@@ -535,7 +535,7 @@ func TestApplyConfigRefusesAnExactFileAreaThatDoesNotExistInTheStartStand(t *tes
 	selection, raw := executionInputs(t, withOwnership(t, foreignFileOwnership))
 	libraryLayoutFiles(t, &selection, &raw)
 	attempt := preparedAttempt(t, selection, raw)
-	req := apply.ApplyRequest{RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, CheckRequest: checkRequest, RequireVolumeSubpaths: func(context.Context) error { return nil }}
+	req := apply.ApplyRequest{RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, Build: "test-build", CheckRequest: checkRequest, RequireVolumeSubpaths: func(context.Context) error { return nil }}
 	if _, err := apply.BuildApplyConfig(req, time.Now()); !errors.Is(err, apply.ErrUnsupportedOwnership) || !strings.Contains(err.Error(), "realization/lending/Makefile") {
 		t.Fatalf("an unmountable exact-file area was configured: %v", err)
 	}

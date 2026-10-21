@@ -93,7 +93,10 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		}
 		err = errors.Join(err, ports.Evidence.Close())
 	}()
-	result, err := s.applyAndPublish(ctx, request.Selection, prepared, session.cfg, ports)
+	result, err := s.applyAndPublish(ctx, request, prepared, session.cfg, ports)
+	if result.Binding.Strategy != "" {
+		report.Binding = &result.Binding
+	}
 	if result.Outcome.Status != "" {
 		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 	}
@@ -203,13 +206,21 @@ func (s *executionService) open(ctx context.Context, repository, runConfigPath s
 // applyAndPublish runs the Apply use case over the captured preparation with
 // the composed ports. Root's questions reach the invoking AI through the run's
 // owner channel.
-func (s *executionService) applyAndPublish(ctx context.Context, selection apply.InputSelection, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ApplyResult, error) {
+func (s *executionService) applyAndPublish(ctx context.Context, request cli.ApplyRequest, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ApplyResult, error) {
 	prepared, ok := captured.Prepared()
 	if !ok {
 		return apply.ApplyResult{}, errors.New("complete captured settings are required")
 	}
-	return apply.Apply(ctx, apply.ApplyRequest{
-		RunID: ports.RunID, Prepared: prepared, Selection: selection,
+	return apply.Apply(ctx, applyRequest(request, prepared, cfg, ports))
+}
+
+// applyRequest is the one request every entry of an Apply runs with, the
+// product command and the evaluation harness alike: the captured preparation
+// with its strategy and settings, the invocation's build identity and bounds,
+// and the composed ports.
+func applyRequest(request cli.ApplyRequest, prepared apply.CapturedSettingsAttempt, cfg runConfig, ports applyPorts) apply.ApplyRequest {
+	return apply.ApplyRequest{
+		RunID: ports.RunID, Prepared: prepared, Selection: request.Selection, Build: request.Build,
 		OwnerRequest: cfg.OwnerRequest, OwnerDecisions: cfg.OwnerDecisions, Deadline: ports.Deadline,
 		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
 		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
@@ -217,7 +228,7 @@ func (s *executionService) applyAndPublish(ctx context.Context, selection apply.
 		},
 		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
 		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
-	})
+	}
 }
 
 // checkStateOutsideRepository refuses a state directory inside the repository

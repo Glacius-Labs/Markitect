@@ -1,0 +1,107 @@
+package apply
+
+import (
+	"strings"
+	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/run"
+)
+
+// RunBinding is what an Apply binds its Run to besides the captured stand and
+// the request: the strategy with its work sequence, the effective settings and
+// the implementation identity. Apply and VerifyCaptured resolve it the same way
+// from one passed preparation before any Agent work; run.start records it and
+// the report repeats it. Entry names the entry that ran: "apply" or
+// "verify-captured", which runs only the strategy's Verify.
+type RunBinding struct {
+	Entry       string           `json:"entry"`
+	Strategy    Strategy         `json:"strategy"`
+	Work        []run.Purpose    `json:"work"`
+	Corrections []run.Purpose    `json:"corrections"`
+	Build       string           `json:"build"`
+	Execution   string           `json:"execution"`
+	Defaults    string           `json:"defaults"`
+	Budget      BudgetBinding    `json:"budget"`
+	Managers    []ManagerBinding `json:"managers"`
+	Checks      []CheckBinding   `json:"checks"`
+}
+
+// BudgetBinding is the authored budget with the run's effective deadline.
+type BudgetBinding struct {
+	ExecutionTime string    `json:"executionTime"`
+	TurnTimeout   string    `json:"turnTimeout"`
+	AgentTurns    int       `json:"agentTurns"`
+	Passes        int       `json:"passes"`
+	Deadline      time.Time `json:"deadline"`
+}
+
+// ManagerBinding is one Manager's resolved roles and team.
+type ManagerBinding struct {
+	Manager    string          `json:"manager"`
+	Execute    RoleBinding     `json:"execute"`
+	Verify     RoleBinding     `json:"verify"`
+	Helpers    []HelperBinding `json:"helpers"`
+	MaxHelpers int             `json:"maxHelpers"`
+}
+
+// RoleBinding is a resolved profile with its prepared identity and the content
+// of its instructions.
+type RoleBinding struct {
+	Profile      string   `json:"profile"`
+	Identity     string   `json:"identity"`
+	Instructions []string `json:"instructions"`
+}
+
+// HelperBinding is one resolved helper role.
+type HelperBinding struct {
+	Role   string `json:"role"`
+	Writes bool   `json:"writes"`
+	RoleBinding
+}
+
+// CheckBinding is one required check as its request runs.
+type CheckBinding struct {
+	Name       string `json:"name"`
+	RequiredBy string `json:"requiredBy,omitempty"`
+	Image      string `json:"image"`
+	Command    string `json:"command"`
+	Timeout    string `json:"timeout"`
+}
+
+// bindRun records the effective values of one passed preparation and the bound
+// request.
+func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []organization.ManagerSettings, checks []run.Check) RunBinding {
+	b := RunBinding{Entry: entry, Strategy: strategy, Corrections: strategy.corrections(), Build: build,
+		Budget: BudgetBinding{ExecutionTime: budget.ExecutionTime.Value.String(), TurnTimeout: budget.TurnTimeout.Value.String(), AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value, Deadline: deadline.UTC()}}
+	for _, spec := range strategy.work() {
+		b.Work = append(b.Work, spec.Purpose)
+	}
+	if raw := prepared.Structural().Model().Inputs().Raw.Execution; len(raw) == 1 {
+		b.Execution = raw[0].RepositoryPath.String() + "@" + raw[0].File.ContentID().String()
+	}
+	if source := prepared.Defaults().ProductSource(); source.File != "" {
+		b.Defaults = source.File + "@" + source.ContentID.String()
+	}
+	for _, m := range managers {
+		mb := ManagerBinding{Manager: m.Package, Execute: roleBinding(m.Execute), Verify: roleBinding(m.Verify), Helpers: []HelperBinding{}, MaxHelpers: m.MaxHelpers}
+		for _, h := range m.Helpers {
+			mb.Helpers = append(mb.Helpers, HelperBinding{Role: h.Role, Writes: h.Writes, RoleBinding: roleBinding(h.RoleSettings)})
+		}
+		b.Managers = append(b.Managers, mb)
+	}
+	b.Checks = []CheckBinding{}
+	for _, c := range checks {
+		b.Checks = append(b.Checks, CheckBinding{Name: c.Name, RequiredBy: c.RequiredBy, Image: c.Request.ImageID,
+			Command: strings.Join(append([]string{c.Request.Executable}, c.Request.Args...), " "), Timeout: c.Request.Timeout.String()})
+	}
+	return b
+}
+
+func roleBinding(r organization.RoleSettings) RoleBinding {
+	b := RoleBinding{Profile: r.Profile.Value.Name, Identity: r.Profile.Value.Identity, Instructions: []string{}}
+	for _, instruction := range r.Instructions {
+		b.Instructions = append(b.Instructions, instruction.Value.Source.File+"@"+instruction.Value.Source.ContentID.String())
+	}
+	return b
+}

@@ -11,7 +11,8 @@ import (
 // BuildApplyConfig and PublishChanges expose the use case's steps to the
 // external tests.
 func BuildApplyConfig(req ApplyRequest, now time.Time) (run.Config, error) {
-	return applyConfig(req, now)
+	cfg, _, err := applyConfig(req, now, entryApply)
+	return cfg, err
 }
 
 func PublishChanges(ctx context.Context, req ApplyRequest, changes []snapshot.Change) (*PublicationReceipt, error) {

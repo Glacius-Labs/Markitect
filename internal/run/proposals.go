@@ -22,6 +22,9 @@ const (
 	kindReopen   = "reopen"
 	kindRevise   = "revise"
 	kindProblem  = "problem"
+	// kindBind is recorded for a wait that only declared a dependency on an
+	// already accepted submission.
+	kindBind = "bind"
 )
 
 // Dependency stages of a plan.
@@ -252,11 +255,12 @@ func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 		return refuse("Your own work waits for %s. Until then you may answer, ask, wait or report a problem; you cannot submit, report progress or decide.", m.waiting)
 	}
 	var answer ToolAnswer
+	kind := in.Kind
 	switch in.Kind {
 	case kindProgress:
 		answer = e.reportProgress(m, ts, in)
 	case kindWait:
-		answer = e.reportWait(m, ts, in)
+		answer, kind = e.reportWait(m, ts, in)
 	case kindBasis, kindResult:
 		answer = e.submit(m, ts, in)
 	case kindAccept, kindReturn:
@@ -269,7 +273,7 @@ func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 		answer = e.problem(m, ts, in)
 	}
 	if !answer.Refused {
-		ts.reports = append(ts.reports, in.Kind)
+		ts.reports = append(ts.reports, kind)
 	}
 	return answer
 }
@@ -290,38 +294,57 @@ func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswe
 // reportWait records a named wait: an open question of the Manager, a child
 // that is not Done, or the accepted basis or result of another Manager of the
 // Pass. A wait on another Manager wakes the waiter when that submission is
-// accepted; nothing else re-queues it. A wait that closes a cycle with the
-// declared dependencies and the parent-first order could never be satisfied: it
-// is refused with the cycle, so the Manager can submit what does not need it
-// first or ask its parent; a Pass that still cannot advance ends as stalled.
-func (e *engine) reportWait(m *member, ts *turnState, in reportIn) ToolAnswer {
+// accepted; nothing else re-queues it. In a Pass with BindWaits that accepted
+// submission, or one that is already accepted when the wait is reported, is
+// bound to the waiter's work (kind "bind" in the turn record). A wait that
+// closes a cycle with the declared dependencies and the parent-first order
+// could never be satisfied: it is refused with the cycle, so the Manager can
+// submit what does not need it first or ask its parent; a Pass that still
+// cannot advance ends as stalled. It returns the answer and the report kind the
+// turn records.
+func (e *engine) reportWait(m *member, ts *turnState, in reportIn) (ToolAnswer, string) {
+	answer, bound := e.waitLocked(m, ts, in)
+	if bound {
+		return answer, kindBind
+	}
+	return answer, kindWait
+}
+
+func (e *engine) waitLocked(m *member, ts *turnState, in reportIn) (ToolAnswer, bool) {
 	what := strings.TrimSpace(in.For)
 	stage := strings.TrimSpace(in.Stage)
 	var on *waitTarget
 	if q := e.questionLocked(what); q != nil {
 		if q.From != m.Path || q.Answered || q.Lapsed || stage != "" {
-			return refuse("%s is not an open question of yours.", what)
+			return refuse("%s is not an open question of yours.", what), false
 		}
 	} else if c, ok := m.p.byPath[what]; ok && slices.Contains(m.Children, what) && stage == "" {
 		if c.stage == stageDone {
-			return refuse("%s is Done.", what)
+			return refuse("%s is Done.", what), false
 		}
 	} else if ok && what != m.Path {
 		if stage == "" {
 			stage = stageNameResult
 		}
 		if stage != stageNameBasis && stage != stageNameResult {
-			return refuse("stage must be basis or result.")
-		}
-		if stage == stageNameBasis && c.basis != nil || stage == stageNameResult && c.result != nil {
-			return refuse("The %s of %s is already accepted; look_up topic basis or plan, read its artifacts and continue.", stage, what)
+			return refuse("stage must be basis or result."), false
 		}
 		on = &waitTarget{manager: what, stage: stage}
+		if pr := acceptedOf(c, stage); pr != nil {
+			if !e.bindableLocked(m, *on) {
+				return refuse("The %s of %s is already accepted; look_up topic basis or plan, read its artifacts and continue.", stage, what), false
+			}
+			// Nothing to wait for: the wait declares a dependency of its work.
+			if cycle := e.bindLocked(m, *on, pr); cycle != "" {
+				return refuse("The %s of %s is accepted, but your work cannot depend on it, because that would close a cycle: %s. Build on what does not need it, or ask your parent.", stage, what, cycle), false
+			}
+			return ToolAnswer{Text: e.renderAcceptedLocked(pr) + "\nIt is already accepted and is now a recorded dependency of your work in this Pass: if it is revised, your work built on it is reset. Read its artifacts and continue."}, true
+		}
 		if cycle := e.waitCycleLocked(m, *on); cycle != "" {
-			return refuse("This wait could never be satisfied, because it closes a cycle: %s. Submit first what does not need it, such as your basis, or ask your parent.", cycle)
+			return refuse("This wait could never be satisfied, because it closes a cycle: %s. Submit first what does not need it, such as your basis, or ask your parent.", cycle), false
 		}
 	} else {
-		return refuse("for names an open question you asked (Q...), a child that is not Done, or another Manager whose accepted basis or result (stage) you need first.")
+		return refuse("for names an open question you asked (Q...), a child that is not Done, or another Manager whose accepted basis or result (stage) you need first."), false
 	}
 	ts.wait, ts.waitOn = what, on
 	data := map[string]any{"for": what, "reason": strings.TrimSpace(in.Reason)}
@@ -330,9 +353,9 @@ func (e *engine) reportWait(m *member, ts *turnState, in reportIn) ToolAnswer {
 	}
 	_ = e.record(Event{Kind: "report.wait", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: data})
 	if on != nil {
-		return ToolAnswer{Text: fmt.Sprintf("Recorded: you wait for the accepted %s of %s. You are woken when it is accepted or other work for you arrives.", on.stage, what)}
+		return ToolAnswer{Text: fmt.Sprintf("Recorded: you wait for the accepted %s of %s. You are woken when it is accepted or other work for you arrives.", on.stage, what)}, false
 	}
-	return ToolAnswer{Text: "Recorded: you wait for " + what + ". You are woken when work for you arrives."}
+	return ToolAnswer{Text: "Recorded: you wait for " + what + ". You are woken when work for you arrives."}, false
 }
 
 // waitTarget is an accepted submission a Manager waits for.
@@ -341,12 +364,9 @@ type waitTarget struct {
 	stage   string
 }
 
-// waitCycleLocked reports the cycle a new wait of m would close: the edges of
-// the accepted plans' dependencies for this purpose, the parent-first and
-// integration order and every Manager's recorded wait, without the events that
-// are already accepted.
-func (e *engine) waitCycleLocked(m *member, on waitTarget) string {
-	p := m.p
+// acceptedPlansLocked returns the accepted plans whose dependencies apply to a
+// later Pass p.
+func (e *engine) acceptedPlansLocked(p *pass) map[string]*plan {
 	plans := map[string]*plan{}
 	if !p.spec.Plans {
 		for path, pr := range e.plans {
@@ -355,7 +375,16 @@ func (e *engine) waitCycleLocked(m *member, on waitTarget) string {
 			}
 		}
 	}
-	edges := dependencyEdges(e.team, p.spec.Purpose, plans)
+	return plans
+}
+
+// waitCycleLocked reports the cycle a new wait of m would close: the edges of
+// the accepted plans' dependencies for this purpose, the parent-first and
+// integration order, every Manager's bindings and recorded wait, without the
+// events that are already accepted.
+func (e *engine) waitCycleLocked(m *member, on waitTarget) string {
+	p := m.p
+	edges := dependencyEdges(e.team, p.spec.Purpose, e.acceptedPlansLocked(p))
 	done := func(n depNode) bool {
 		x := p.byPath[n.manager]
 		switch n.event {
@@ -375,6 +404,10 @@ func (e *engine) waitCycleLocked(m *member, on waitTarget) string {
 	for _, x := range p.members {
 		if x.waitOn != nil {
 			edges[waiter(x)] = append(edges[waiter(x)], depNode{x.waitOn.manager, eventOf(x.waitOn.stage)})
+		}
+		for _, b := range x.bound {
+			from := b.source(x.Path)
+			edges[from] = append(edges[from], depNode{b.target.manager, eventOf(b.target.stage)})
 		}
 	}
 	from := waiter(m)
@@ -405,6 +438,11 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 			return refuse("Submit your basis first: your children start from it. Your complete result follows after their results are accepted.")
 		}
 		return refuse("A complete result is submitted after all your children's results are accepted; you are at %s.", m.stage)
+	}
+	if in.Kind == kindResult {
+		if w := e.awaitedLocked(m); w != "" {
+			return refuse("Your complete result builds on %s, which is not accepted again yet; report wait for it, then integrate its new version.", w)
+		}
 	}
 	summary, err := toolText("summary", in.Summary)
 	if err != nil {

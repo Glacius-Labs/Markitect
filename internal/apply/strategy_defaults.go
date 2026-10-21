@@ -10,7 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-const strategyDefaultsSource = "product:recursive-passes-v1/defaults.yaml"
+const strategyDefaultsSource = "product:apply/defaults.yaml"
 
 //go:embed strategy_defaults.yaml
 var strategyDefaultsBytes []byte

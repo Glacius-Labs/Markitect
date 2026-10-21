@@ -194,7 +194,7 @@ def execution(project):
     for package in groups(project) + [path for _, path, *_ in ledgers(project)]:
         ownership += ["  - path: realization/%s/" % package, "    owner: " + package]
     return "\n".join([
-        "apiVersion: markitect.execution/v1", "strategy: recursive-passes-v1", "budget:",
+        "apiVersion: markitect.execution/v1", "strategy: direct", "budget:",
         "  executionTime: %dm" % (20 + 4 * count), "  turnTimeout: 8m", "  agentTurns: %d" % (25 * count),
         "  passes: 12", "profiles:", "  execute: project-agent", "  verify: project-agent", "packages: {}",
         "ownership:"] + ownership + [

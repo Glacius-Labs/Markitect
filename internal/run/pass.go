@@ -76,6 +76,12 @@ type member struct {
 	// new work arrives.
 	waitFor string
 	waitOn  *waitTarget
+	// bound are the dependencies its waits declared in a Pass with BindWaits:
+	// the accepted submissions of other Managers its work builds on.
+	bound []binding
+	// stale says why the submission of its running turn no longer stands: what
+	// its result built on changed during the turn.
+	stale string
 	// progressed holds its progress summaries in this Pass: a repeated one
 	// is no progress.
 	progressed []string
@@ -146,8 +152,8 @@ func validateSpec(spec PassSpec) error {
 		return bad("purpose %q is not a valid name", spec.Purpose)
 	case strings.TrimSpace(spec.Mandate) == "":
 		return bad("pass %q needs a mandate", spec.Purpose)
-	case spec.Review && (spec.Writes || spec.Plans):
-		return bad("a review Pass is read-only and plans nothing")
+	case spec.Review && (spec.Writes || spec.Plans || spec.BindWaits):
+		return bad("a review Pass is read-only, plans nothing and binds no dependency")
 	case spec.Review && strings.TrimSpace(spec.Guidance) == "":
 		return bad("a review Pass needs guidance on what a genuine finding is")
 	case !spec.Review && spec.ArtifactFindingsAdvisory:
@@ -311,8 +317,9 @@ func (e *engine) parentWaitLocked(m *member) string {
 	return ""
 }
 
-// dependencyWaitLocked names the first declared dependency of its accepted
-// plan that a released Manager's productive work still needs, or is empty.
+// dependencyWaitLocked names the first declared dependency, or after a reset
+// the first submission its basis was bound to, that a released Manager's
+// productive work still needs, or is empty.
 func (e *engine) dependencyWaitLocked(m *member) string {
 	p := m.p
 	for _, d := range e.dependenciesLocked(m) {
@@ -324,17 +331,22 @@ func (e *engine) dependencyWaitLocked(m *member) string {
 	return ""
 }
 
-// dependenciesLocked returns the dependencies of a Manager's accepted plan that
-// apply to the purpose of its Pass.
+// dependenciesLocked returns the start conditions of a Manager in its Pass: the
+// dependencies of its accepted plan that apply to the purpose of the Pass and
+// the submissions its basis in this Pass is bound to.
 func (e *engine) dependenciesLocked(m *member) []dependency {
-	plan := e.plans[m.Path]
-	if plan == nil || plan.env.Plan == nil || m.p.spec.Plans {
-		return nil
-	}
 	var out []dependency
-	for _, d := range plan.env.Plan.Dependencies {
-		if d.Pass == m.p.spec.Purpose {
-			out = append(out, d)
+	if plan := e.plans[m.Path]; plan != nil && plan.env.Plan != nil && !m.p.spec.Plans {
+		for _, d := range plan.env.Plan.Dependencies {
+			if d.Pass == m.p.spec.Purpose {
+				out = append(out, d)
+			}
+		}
+	}
+	for _, b := range m.bound {
+		on := b.target
+		if b.serves == eventBasis && !slices.ContainsFunc(out, func(d dependency) bool { return d.Owner == on.manager && d.Stage == on.stage }) {
+			out = append(out, dependency{Owner: on.manager, Stage: on.stage, Pass: m.p.spec.Purpose, Need: "your basis in this Pass builds on it"})
 		}
 	}
 	return out
@@ -344,8 +356,9 @@ func (e *engine) dependenciesLocked(m *member) []dependency {
 // The accepted parent basis releases it: its assignment is delivered first,
 // then the open genuine findings it owns for a work Pass, then what reached it
 // while it waited. Its productive work starts once the dependencies of its
-// accepted plan for this purpose are accepted too; until then it is blocked and
-// may only handle permitted messages, read-only.
+// accepted plan for this purpose, and after a reset the submissions its basis
+// was bound to, are accepted too; until then it is blocked and may only handle
+// permitted messages, read-only.
 func (e *engine) releaseLocked(m *member, why string) {
 	if m.disabled {
 		return
@@ -381,6 +394,7 @@ func (e *engine) releaseLocked(m *member, why string) {
 		return
 	}
 	m.stage, m.waiting = stageOwn, ""
+	e.rebindLocked(m)
 	if !slices.ContainsFunc(m.items, func(it item) bool { return it.kind == itemAssignment }) {
 		// It already handled messages while blocked: its assignment was delivered,
 		// so it learns which dependencies it now builds on.
@@ -570,9 +584,11 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 	// Wake exactly the Managers that wait for this acceptance.
 	for _, x := range p.members {
 		if x.waitOn != nil && x.waitOn.manager == m.Path && x.waitOn.stage == pr.kind {
-			e.deliverLocked(x, item{text: e.renderAcceptedLocked(pr) + "\nThe submission you waited for is accepted; continue your work."})
+			note := e.bindWaitLocked(x, *x.waitOn, pr)
+			e.deliverLocked(x, item{text: e.renderAcceptedLocked(pr) + "\nThe submission you waited for is accepted; continue your work." + note})
 		}
 	}
+	e.resumeLocked(m, pr)
 	switch pr.kind {
 	case kindBasis:
 		m.basis = pr
@@ -672,8 +688,8 @@ func (e *engine) reviseLocked(m *member, reason string) {
 }
 
 // invalidateConsumersLocked resets every Manager that started on m's basis (its
-// children and its declared dependents) or, when basis is false, on its
-// result, together with their own consumers, and unsettles their parents.
+// children and its declared or bound dependents) or, when basis is false, on
+// its result, together with their own consumers, and unsettles their parents.
 func (e *engine) invalidateConsumersLocked(m *member, basis bool, why string) {
 	p := m.p
 	var consumers []*member
@@ -689,8 +705,19 @@ func (e *engine) invalidateConsumersLocked(m *member, basis bool, why string) {
 			}
 		}
 	}
+	// A Manager whose result alone built on it integrates again: its basis and
+	// its children's work stay.
+	var results []*member
+	for _, z := range e.resultConsumersLocked(m, basis) {
+		if !slices.Contains(consumers, z) {
+			results = append(results, z)
+		}
+	}
 	for _, z := range consumers {
 		e.resetLocked(z, why)
+	}
+	for _, z := range results {
+		e.unsettleResultLocked(z, m.Path, basis, why)
 	}
 }
 
@@ -710,6 +737,9 @@ func (e *engine) resetLocked(z *member, why string) {
 		}
 	}
 	z.pending, z.basis, z.result = nil, nil, nil
+	// What its basis was bound to stays a start condition; what its result built
+	// on stays bound or awaits its next version.
+	e.settleResultBindingsLocked(z)
 	z.stage, z.waitFor, z.waitOn = stageStart, "", nil
 	z.items = []item{{text: "Your earlier work in this Pass was reset because " + why + ". Re-establish your basis against the current accepted stand."}}
 	if hadBasis {

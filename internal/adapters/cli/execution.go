@@ -9,16 +9,19 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // ApplyRequest contains parsed invocation coordinates, never credentials,
-// resolved profiles or a preview publication guard.
+// resolved profiles or a preview publication guard. Build is the
+// implementation identity of this product build, which the Run binds.
 type ApplyRequest struct {
 	Selection apply.InputSelection
 	RunConfig string
+	Build     string
 }
 
 // AnswerRequest carries the answer of the invoking AI to one open question of
@@ -42,6 +45,7 @@ type ApplyReport struct {
 	Status            model.Status              `json:"status"`
 	Outcome           string                    `json:"outcome,omitempty"`
 	Preparation       any                       `json:"preparation,omitempty"`
+	Binding           *apply.RunBinding         `json:"binding,omitempty"`
 	Run               *RunReport                `json:"run,omitempty"`
 	Publication       *apply.PublicationReceipt `json:"publication,omitempty"`
 	RetainedWork      string                    `json:"retainedWork,omitempty"`
@@ -239,7 +243,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		io.WriteString(stderr, RenderExtractAccount(report))
 		return exitStatus(report.Status, err)
 	}
-	report, err := c.apply(ctx, ApplyRequest{Selection: selection, RunConfig: *config})
+	report, err := c.apply(ctx, ApplyRequest{Selection: selection, RunConfig: *config, Build: buildinfo.Build()})
 	report.FormatVersion, report.Operation = 1, verb
 	if err != nil {
 		report.Error = err.Error()

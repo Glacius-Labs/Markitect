@@ -112,6 +112,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history, product/organization/delegated-context]
     why: "Runs the one recursive base process of every Pass: stages and states, release, acceptance, returns, reopening, revision and invalidation, closure and the whole-stand exit gates."
+  - path: "internal/run/bindings.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Binds the dependencies a Manager declares through waits in a Pass without a planning Pass to their accepted versions, refuses bindings that close a cycle, and resets or reintegrates the work built on a revised or reopened submission."
   - path: "internal/run/proposals.go"
     form: code
     realizes: [product/run/confirmed-run-history, product/realization/artifact-accounting]

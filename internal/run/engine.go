@@ -429,7 +429,7 @@ func (e *engine) open() {
 	for _, m := range e.team {
 		managers = append(managers, m.Path)
 	}
-	if e.record(Event{Kind: "run.start", Data: map[string]any{"run": cfg.RunID, "managers": managers, "start": cfg.Start.Digest().String(), "agentTurns": cfg.Budget.AgentTurns, "passes": cfg.Budget.Passes, "deadline": cfg.Budget.Deadline}}) != nil {
+	if e.record(Event{Kind: "run.start", Data: map[string]any{"run": cfg.RunID, "binding": cfg.Binding, "managers": managers, "start": cfg.Start.Digest().String(), "agentTurns": cfg.Budget.AgentTurns, "passes": cfg.Budget.Passes, "deadline": cfg.Budget.Deadline}}) != nil {
 		return
 	}
 	if cfg.Budget.AgentTurns < 2*len(e.team) {

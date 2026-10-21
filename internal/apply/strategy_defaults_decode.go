@@ -2,7 +2,9 @@ package apply
 
 import (
 	"bytes"
+	"fmt"
 	"io"
+	"slices"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -39,17 +41,18 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 	}
 	root := configField{node: document.Content[0]}
 	d.restricted(root)
-	f := d.object(root, "apiVersion", "strategy", "defaults")
+	f := d.object(root, "apiVersion", "strategies", "defaults")
 	version := d.required(f, root, "apiVersion")
-	strategy := d.required(f, root, "strategy")
+	served := d.required(f, root, "strategies")
 	versionName, versionOK := d.text(version, false)
-	strategyName, strategyOK := d.text(strategy, false)
 	if versionOK && versionName != "markitect.strategy-defaults/v1" {
 		r.issue(model.NotCompleted, "strategy_defaults.profile_unknown", version, "This product defaults version is not supported.")
 		return r
 	}
-	if strategyOK && strategyName != executionStrategy {
-		r.issue(model.NotCompleted, "strategy_defaults.profile_unknown", strategy, "This product defaults strategy is not supported.")
+	// The product defaults serve every strategy this build implements and no
+	// other.
+	if names, ok := servedStrategies(d, served); ok && !slices.Equal(names, strategies) {
+		r.issue(model.NotCompleted, "strategy_defaults.profile_unknown", served, "These product defaults do not serve exactly the strategies of this build: direct and staged.")
 		return r
 	}
 	defaults := d.required(f, root, "defaults")
@@ -91,6 +94,28 @@ func decodeStrategyDefaults(input StrategyDefaultsInput) strategyDefaults {
 		r.status = typed.Status()
 	}
 	return r
+}
+
+// servedStrategies reads the sorted list of strategies the product defaults
+// serve.
+func servedStrategies(d configYAML, field configField) ([]Strategy, bool) {
+	if field.node == nil {
+		return nil, false
+	}
+	if field.node.Kind != yaml.SequenceNode {
+		d.issue("list", field, "Expected an explicit list.")
+		return nil, false
+	}
+	var names []Strategy
+	for i, node := range field.node.Content {
+		name, ok := d.text(configChild(field, fmt.Sprint(i), node), false)
+		if !ok {
+			return nil, false
+		}
+		names = append(names, Strategy(name))
+	}
+	slices.Sort(names)
+	return names, true
 }
 
 // productSources attributes a team decoded from the product document to the

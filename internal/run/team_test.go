@@ -429,6 +429,373 @@ func TestWaitForAnotherManagerWakesOnItsAcceptance(t *testing.T) {
 	}
 }
 
+// tolerant follows the base process like protocol, for tests in which a
+// revision resets or unsettles Managers while their turns run: a decision or
+// submission such a change made stale is refused, and the change delivers the
+// work again, so those refusals are expected.
+func tolerant(c *call) {
+	for _, id := range c.pendingDecisions() {
+		if !c.decided[id] {
+			c.accept(id)
+		}
+	}
+	switch now := c.now(); {
+	case strings.HasPrefix(now, "work on your own contribution"):
+		c.basis(nil)
+	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
+		c.result(nil)
+	}
+}
+
+// bindingSpec is an Implement Pass of a workflow without a planning Pass.
+func bindingSpec() PassSpec {
+	spec := implementSpec()
+	spec.BindWaits = true
+	return spec
+}
+
+// Without a planning Pass, a wait declares the dependency: the accepted
+// submission it waited for, or one already accepted when the wait is reported,
+// is bound to the waiter's work. A revision of that basis resets the waiter,
+// which starts again only on the newly accepted version, recorded as rebound.
+// Old behavior: only a plan's dependencies were consumers, so work built on a
+// revised basis through a wait stayed accepted.
+func TestWaitBindsTheAcceptedSubmissionAndItsRevisionResetsTheWaiter(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	waited, revised := false, false
+	var again ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case c.turn.Manager == "library" && !waited && strings.HasPrefix(c.now(), "work on"):
+			waited = true
+			// Lending's basis may already be accepted: then the wait binds at once.
+			if a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis", "reason": "the program uses the loan contract"}); strings.Contains(a.Text, "recorded dependency") {
+				again = a
+				c.basis(nil)
+			}
+			return nil
+		case c.turn.Manager == "library" && again.Text == "" && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted"):
+			again = c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			c.basis(nil)
+			return nil
+		case c.turn.Manager == "lending" && !revised && f.ev.index("dependency.bound", "library", "on", "lending") >= 0 &&
+			(strings.HasPrefix(c.now(), "your children work") || strings.HasPrefix(c.now(), "integrate")):
+			revised = true
+			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the loan contract needs the due date"})
+			return nil
+		}
+		tolerant(c)
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(bindingSpec())
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != Satisfied || !revised {
+		t.Fatalf("stopped %v, verdict %s, revised %v: %s", res.Stopped, res.Verdict, revised, out.Reason)
+	}
+	// However the turns interleave, the binding moves from lending's first
+	// accepted basis to its revised one.
+	var boundTo, accepted []any
+	for _, ev := range f.ev.kinds("dependency.bound") {
+		if data, _ := ev.Data.(map[string]any); ev.Manager == "library" && data["on"] == "lending" {
+			boundTo = append(boundTo, data["proposal"])
+		}
+	}
+	for _, ev := range f.ev.kinds("basis.accepted") {
+		if data, _ := ev.Data.(map[string]any); ev.Manager == "lending" {
+			accepted = append(accepted, data["proposal"])
+		}
+	}
+	if len(accepted) != 2 || len(boundTo) < 2 || boundTo[0] != accepted[0] || boundTo[len(boundTo)-1] != accepted[1] {
+		t.Errorf("library bound to %v; lending's accepted bases %v", boundTo, accepted)
+	}
+	bound := f.ev.index("dependency.bound", "library", "stage", "basis")
+	revisedAt := f.ev.index("basis.invalidated", "lending", "", nil)
+	if bound < 0 || revisedAt < bound {
+		t.Fatalf("bound at %d, revised at %d", bound, revisedAt)
+	}
+	f.ev.mu.Lock()
+	defer f.ev.mu.Unlock()
+	reset, reaccepted, resubmitted := -1, -1, -1
+	for i, ev := range f.ev.events[revisedAt:] {
+		switch {
+		case reset < 0 && ev.Kind == "manager.release" && ev.Manager == "library":
+			reset = i
+		case reaccepted < 0 && ev.Kind == "basis.accepted" && ev.Manager == "lending":
+			reaccepted = i
+		case resubmitted < 0 && reaccepted >= 0 && ev.Kind == "proposal.submitted" && ev.Manager == "library":
+			resubmitted = i
+		}
+	}
+	if reset < 0 || reaccepted < reset || resubmitted < reaccepted {
+		t.Fatalf("library reset %d, lending re-accepted %d, library resubmitted %d", reset, reaccepted, resubmitted)
+	}
+	// Reset, library waits for the revised basis: it submits nothing before that
+	// acceptance (a turn already running at the reset is refused).
+	for _, ev := range f.ev.events[revisedAt+reset : revisedAt+reaccepted] {
+		if ev.Kind == "proposal.submitted" && ev.Manager == "library" {
+			t.Errorf("library submitted before its revised dependency was accepted: %+v", ev)
+		}
+	}
+}
+
+// Without BindWaits, as in Verify, Extract and a staged workflow, a wait binds
+// nothing: a wait on an accepted submission is refused as before and a revision
+// resets only children and declared dependents.
+func TestWaitsBindNothingWithoutBindWaits(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	waited := false
+	var again ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case c.turn.Manager == "library" && !waited && strings.HasPrefix(c.now(), "work on"):
+			waited = true
+			c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			return nil
+		case c.turn.Manager == "library" && again.Text == "" && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted"):
+			again = c.tool(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(implementSpec())
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != Satisfied {
+		t.Fatalf("stopped %v, verdict %s: %s", res.Stopped, res.Verdict, out.Reason)
+	}
+	if !again.Refused || !strings.Contains(again.Text, "already accepted") || len(f.ev.kinds("dependency.bound")) != 0 {
+		t.Errorf("a wait bound without BindWaits: %+v, %d bindings", again, len(f.ev.kinds("dependency.bound")))
+	}
+	if err := validateSpec(PassSpec{Purpose: Verify, Mandate: "m", Review: true, Guidance: "g", BindWaits: true, Corrections: corrections}); err == nil {
+		t.Errorf("a review Pass accepted BindWaits")
+	}
+}
+
+// A Manager never binds its own ancestors or descendants: the parent-first and
+// integration order already relate them. Before, a parent bound to its child's
+// result would be reset with its whole subtree when it reopened that child.
+func TestWaitsBindNoAncestorOrDescendant(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	var own ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Manager == "lending" && own.Text == "" && strings.HasPrefix(c.now(), "integrate") {
+			own = c.tool(toolReport, map[string]any{"kind": kindWait, "for": "lending/reminders", "stage": "result"})
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(bindingSpec())
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != Satisfied {
+		t.Fatalf("stopped %v, verdict %s: %s", res.Stopped, res.Verdict, out.Reason)
+	}
+	if !own.Refused || len(f.ev.kinds("dependency.bound")) != 0 {
+		t.Errorf("a parent bound its child's result: %+v", own)
+	}
+}
+
+// A Manager whose complete result alone built on a revised basis keeps its own
+// basis and its children's work: its accepted result is reopened and it
+// integrates again on the new version. Before the re-review fix, such a binding
+// reset the whole Manager, invalidating its unchanged basis and its subtree.
+func TestRevisionReopensOnlyAResultBuiltOnIt(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	lendingWaits, libraryWaited, revised := 0, false, false
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		now := c.now()
+		switch {
+		case c.turn.Manager == "lending" && strings.HasPrefix(now, "integrate") && lendingWaits < 2 && !strings.Contains(c.turn.Prompt, "The submission you waited for is accepted"):
+			// Its result integrates library's contract, at first and again after
+			// the revision, where it first tries to submit at once.
+			lendingWaits++
+			if lendingWaits == 2 {
+				if a := c.result(nil); !a.Refused {
+					return nil
+				} else if !strings.Contains(a.Text, "not accepted again yet") {
+					t.Errorf("unexpected refusal: %s", a.Text)
+				}
+			}
+			if a := c.tool(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"}); !a.Refused && strings.Contains(a.Text, "recorded dependency") {
+				c.result(nil)
+			}
+			return nil
+		case c.turn.Manager == "library" && !libraryWaited && strings.HasPrefix(now, "submit your complete result"):
+			libraryWaited = true
+			// Lending's result may already be accepted: then it binds at once.
+			if a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "result"}); strings.Contains(a.Text, "recorded dependency") {
+				revised = true
+				c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the program's contract changes"})
+			}
+			return nil
+		case c.turn.Manager == "library" && !revised && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted"):
+			revised = true
+			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the program's contract changes"})
+			return nil
+		case c.turn.Manager == "library" && revised && strings.HasPrefix(now, "submit your complete result") && !strings.Contains(c.turn.Prompt, "The submission you waited for is accepted") && !strings.Contains(c.turn.Prompt, "builds on is accepted"):
+			// Its result built on lending's reopened result: it is refused until
+			// lending's new result is accepted.
+			if a := c.result(nil); a.Refused {
+				if !strings.Contains(a.Text, "not accepted again yet") {
+					t.Errorf("unexpected refusal: %s", a.Text)
+				}
+				if w := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "result"}); strings.Contains(w.Text, "recorded dependency") {
+					c.result(nil)
+				}
+			}
+			return nil
+		}
+		tolerant(c)
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(bindingSpec())
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != Satisfied || !revised {
+		t.Fatalf("stopped %v, verdict %s, revised %v: %s", res.Stopped, res.Verdict, revised, out.Reason)
+	}
+	if f.ev.index("dependency.bound", "lending", "serves", "result") < 0 || f.ev.index("result.reopened", "lending", "by", "markitect") < 0 {
+		t.Fatalf("lending's result was not bound and reopened")
+	}
+	for _, m := range []string{"lending", "lending/reminders"} {
+		if i := f.ev.index("proposal.invalidated", m, "", nil); i >= 0 {
+			t.Errorf("%s lost work that never used library: %+v", m, f.ev.events[i])
+		}
+	}
+	releases := 0
+	for _, ev := range f.ev.kinds("manager.release") {
+		if ev.Manager == "lending/reminders" {
+			releases++
+		}
+	}
+	if releases != 1 {
+		t.Errorf("lending/reminders released %d times; its parent's basis never changed", releases)
+	}
+	// After the reopening, lending's next result is accepted only on library's
+	// new basis, however the turns interleave.
+	reopened := f.ev.index("result.reopened", "lending", "by", "markitect")
+	f.ev.mu.Lock()
+	defer f.ev.mu.Unlock()
+	rebasis, again := -1, -1
+	for i, ev := range f.ev.events[reopened:] {
+		switch {
+		case rebasis < 0 && ev.Kind == "basis.accepted" && ev.Manager == "library":
+			rebasis = i
+		case again < 0 && ev.Kind == "result.accepted" && ev.Manager == "lending":
+			again = i
+		}
+	}
+	if rebasis < 0 || again < rebasis {
+		t.Errorf("lending's result accepted at %d, library's new basis at %d after the reopening", again, rebasis)
+	}
+}
+
+// Two siblings may build on each other's accepted bases when one of them needs
+// the other only for its result: a revision then resets both without a
+// deadlock (the review's mutual-binding scenario). A real cycle among bindings
+// and the parent-first and integration order is refused before it is bound,
+// whether or not its events already happened.
+func TestBindingsNeverCloseACycle(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	stage, remindersWaited := 0, false
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case c.turn.Manager == "lending/reminders" && !remindersWaited && strings.HasPrefix(c.now(), "work on"):
+			// Its parent decides it only after library's basis is accepted.
+			remindersWaited = true
+			if a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"}); strings.Contains(a.Text, "recorded dependency") {
+				c.basis(nil)
+			}
+			return nil
+		case stage == 0 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			stage = 1
+			c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			return nil
+		case stage == 1 && c.turn.Manager == "lending" && f.ev.index("basis.accepted", "library", "", nil) >= 0 &&
+			(strings.HasPrefix(c.now(), "your children work") || strings.HasPrefix(c.now(), "integrate")):
+			stage = 2
+			c.must(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"})
+			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the loan contract changes"})
+			return nil
+		}
+		tolerant(c)
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(bindingSpec())
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != Satisfied || stage != 2 {
+		t.Fatalf("stopped %v, verdict %s, stage %d: %s", res.Stopped, res.Verdict, stage, out.Reason)
+	}
+	if f.ev.index("dependency.bound", "lending", "serves", "result") < 0 {
+		t.Errorf("lending's result binding on library's basis was not recorded")
+	}
+
+	// White box: the cycle check covers events that already happened.
+	g := newFixture(t)
+	gr := g.open()
+	defer g.finish(gr, "white box")
+	e := gr.e
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	p := e.newPassLocked(bindingSpec())
+	lending, reminders, library := p.byPath["lending"], p.byPath["lending/reminders"], p.byPath["library"]
+	basisOf := func(m string) waitTarget { return waitTarget{manager: m, stage: stageNameBasis} }
+	resultOf := func(m string) waitTarget { return waitTarget{manager: m, stage: stageNameResult} }
+	for _, tc := range []struct {
+		name   string
+		preset map[*member][]binding
+		m      *member
+		b      binding
+		cycle  bool
+	}{
+		{"one basis on another branch", nil, library, binding{target: basisOf("lending"), serves: eventBasis}, false},
+		{"mutual bases, one for a result", map[*member][]binding{library: {{target: basisOf("lending"), serves: eventBasis}}}, lending, binding{target: basisOf("library"), serves: eventResult}, false},
+		{"mutual bases", map[*member][]binding{library: {{target: basisOf("lending/reminders"), serves: eventBasis}}}, reminders, binding{target: basisOf("library"), serves: eventBasis}, true},
+		{"a basis on a result that needs it", map[*member][]binding{lending: {{target: basisOf("library"), serves: eventResult}}}, library, binding{target: resultOf("lending"), serves: eventBasis}, true},
+	} {
+		for _, x := range p.members {
+			x.bound = tc.preset[x]
+		}
+		if cycle := e.bindCycleLocked(tc.m, tc.b); (cycle != "") != tc.cycle {
+			t.Errorf("%s: cycle %q, want one: %v", tc.name, cycle, tc.cycle)
+		}
+	}
+
+	// A wait on an accepted basis binds it at once, recorded as kind bind.
+	for _, x := range p.members {
+		x.bound = nil
+	}
+	lending.basis = &proposal{id: "P1", kind: kindBasis, member: lending, status: proposalAccepted}
+	library.stage = stageOwn
+	ts := &turnState{m: library, id: "wb"}
+	e.mu.Unlock()
+	a := e.report(library, ts, []byte(`{"kind":"wait","for":"lending","stage":"basis"}`))
+	e.mu.Lock()
+	if a.Refused || !strings.Contains(a.Text, "recorded dependency") || len(ts.reports) != 1 || ts.reports[0] != kindBind || ts.wait != "" {
+		t.Errorf("immediate binding: %+v, reports %v, wait %q", a, ts.reports, ts.wait)
+	}
+	if len(library.bound) != 1 || library.bound[0] != (binding{target: basisOf("lending"), serves: eventBasis, proposal: "P1"}) {
+		t.Errorf("library bound %+v", library.bound)
+	}
+}
+
 // A wait that closes a cycle with the accepted plans' dependencies could never
 // be satisfied: it is refused with the cycle named, so the Manager submits what
 // does not need it first and the Pass completes. Before, nothing named such a

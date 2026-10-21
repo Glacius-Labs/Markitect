@@ -47,7 +47,7 @@ func TestDocumentedExecutionDecodesWithoutInventingResolvedSettings(t *testing.T
 		t.Fatalf("documented execution failed: %s %+v", result.Status(), result.Diagnostics())
 	}
 	budget := document.Budget
-	if document.APIVersion.Value != "markitect.execution/v1" || document.Strategy.Value != "recursive-passes-v1" || budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Passes.Value != 12 {
+	if document.APIVersion.Value != "markitect.execution/v1" || document.Strategy.Value != "direct" || budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Passes.Value != 12 {
 		t.Fatal("declared budget changed")
 	}
 	if document.Defaults.Execute.Profile == nil || document.Defaults.Execute.Profile.Value != "library-agent" || document.Defaults.Execute.Profile.Source.Field != "/profiles/execute" || document.Defaults.Verify.Profile.Source.Field != "/profiles/verify" || document.Defaults.Execute.Instructions != nil || document.Defaults.Verify.Instructions != nil {
