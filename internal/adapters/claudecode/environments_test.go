@@ -161,3 +161,24 @@ func TestReleaseRemovesTheNamedEnvironments(t *testing.T) {
 		t.Fatalf("released twice: %+v", again)
 	}
 }
+
+// An evicted view whose removal was not observed stays the environment's
+// responsibility: its release removes it again and reports it, so no kept
+// instance is left behind unreported.
+func TestAnEvictedViewIsRemovedAgainAtTheRelease(t *testing.T) {
+	h := envHarness(t)
+	mustRun(t, h, envTurn("t1", true))
+	mustRun(t, h, envTurn("t2", false))
+	h.instances[0].removeErr = errors.New("engine busy")
+	helper := envTurn("t3", true)
+	helper.Mounts = append(helper.Mounts, run.PathMount{Path: "realization/lending/report"})
+	mustRun(t, h, helper)
+	if h.instances[0].removed != 1 {
+		t.Fatalf("the evicted view was not removed: %d", h.instances[0].removed)
+	}
+	h.instances[0].removeErr = nil
+	got := h.agents.Release(context.Background(), nil)
+	if len(got) != 3 || got[0].Instance != h.instances[0].name || !got[0].Removed || h.instances[0].removed != 2 {
+		t.Fatalf("release %+v", got)
+	}
+}

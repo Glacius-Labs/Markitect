@@ -103,8 +103,10 @@ func TestRealEngineReusesAHeldInstanceAndReapsWritersThatEscapedTheirSession(t *
 	if got := f.sh(inst, "cat /work/a; stat -c %u /proc/1; id -u"); got != "first\n65534\n1000" {
 		t.Fatalf("second session in the same instance: %q", got)
 	}
-	// A background writer in its own session survives the provider's group.
-	f.sh(inst, "setsid sh -c 'while true; do echo x >> /work/bg; sleep 0.1; done' > /dev/null 2>&1 < /dev/null & echo started")
+	// A background writer in its own session survives the provider's group,
+	// which agentd ends with the session; the session waits until the writer
+	// has escaped and written.
+	f.sh(inst, "setsid sh -c 'while true; do echo x >> /work/bg; sleep 0.1; done' > /dev/null 2>&1 < /dev/null & while [ ! -s /work/bg ]; do sleep 0.05; done; echo started")
 	size := func() int {
 		n, _ := strconv.Atoi(f.sh(inst, "wc -c < /work/bg"))
 		return n

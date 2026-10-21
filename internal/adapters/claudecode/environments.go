@@ -69,6 +69,9 @@ type environment struct {
 	generation int
 	replaced   string
 	busy       bool
+	// orphans are replaced instances whose removal was not observed; Release
+	// removes them again.
+	orphans []Instance
 }
 
 // view is one kept instance with the capabilities it was created with.
@@ -134,8 +137,13 @@ func (a *Agents) acquire(ctx context.Context, turn run.Turn, spec container.Cont
 	}
 	a.mu.Unlock()
 	if evicted != nil {
-		// Nothing runs in a kept instance between turns; its end is cleanup.
-		_ = evicted.inst.Remove(ctx)
+		// Nothing runs in a kept instance between turns; its end is cleanup,
+		// retried at the environment's release when it was not observed.
+		if err := evicted.inst.Remove(ctx); err != nil {
+			a.mu.Lock()
+			env.orphans = append(env.orphans, evicted.inst)
+			a.mu.Unlock()
+		}
 	}
 	spec.Name = "markitect-" + turn.Environment + "-g" + strconv.Itoa(generation)
 	l, err := a.start(ctx, spec, env, why, generation)
@@ -241,9 +249,13 @@ func (a *Agents) Release(ctx context.Context, names []string) []run.EnvironmentR
 	})
 	var out []run.EnvironmentRelease
 	for _, env := range envs {
+		insts := slices.Clone(env.orphans)
 		for _, v := range env.views {
-			r := run.EnvironmentRelease{Environment: env.name, Instance: v.inst.Name(), Removed: true}
-			if err := v.inst.Remove(context.WithoutCancel(ctx)); err != nil {
+			insts = append(insts, v.inst)
+		}
+		for _, inst := range insts {
+			r := run.EnvironmentRelease{Environment: env.name, Instance: inst.Name(), Removed: true}
+			if err := inst.Remove(context.WithoutCancel(ctx)); err != nil {
 				r.Removed, r.Error = false, err.Error()
 			}
 			out = append(out, r)
