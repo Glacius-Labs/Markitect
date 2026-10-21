@@ -111,10 +111,15 @@ def profile_data(path):
         raise ValueError("this protocol needs an enforced maxTurns argument")
     if p.get("network", "none") not in ("none", "bridge"):
         raise ValueError("ordinary provider network must be explicitly none or bridge")
-    if p["protocol"] == "codex-exec-jsonl" and (p["provider"] != "codex" or "exec" not in argv
-            or "--json" not in argv or not any(a == "--disable" and b == "multi_agent" for a, b in zip(argv, argv[1:]))
-            or "resume" in argv or argv[-1] != "-"):
-        raise ValueError("Codex must receive one fresh exec prompt, JSONL and disabled multi_agent")
+    if p["protocol"] == "codex-exec-jsonl":
+        pairs = list(zip(argv, argv[1:]))
+        efforts = [(flag, value) for flag, value in pairs if flag in ("-c", "--config")
+                   and value in ('model_reasoning_effort="{effort}"', 'model_reasoning_effort={effort}')]
+        if (p["provider"] != "codex" or "exec" not in argv or "--json" not in argv
+                or ("--model", "{model}") not in pairs or len(efforts) != 1
+                or any(("--disable", feature) not in pairs for feature in ("multi_agent", "apps", "memories"))
+                or any(a in argv for a in ("resume", "--resume", "--continue", "--enable")) or argv[-1] != "-"):
+            raise ValueError("Codex requires a fresh exec/JSONL prompt, model/effort and disabled multi_agent/apps/memories")
     if p["protocol"] == "claude-print-json":
         pairs = list(zip(argv, argv[1:]))
         tools = [value for flag, value in pairs if flag == "--tools"]

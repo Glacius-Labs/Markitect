@@ -38,8 +38,8 @@ def profile():
             "model": "frozen-model", "effort": "high", "engineExecutable": sys.executable,
             "engineSha256": d_series.sha(sys.executable), "imageID": "sha256:" + "a" * 64,
             "network": "none", "singleAgentTurnBoundVerified": True,
-            "argv": ["/usr/local/bin/codex", "exec", "--json", "--model", "{model}", "-c", "effort={effort}",
-                     "--disable", "multi_agent", "-"],
+            "argv": ["/usr/local/bin/codex", "exec", "--json", "--model", "{model}", "-c", 'model_reasoning_effort="{effort}"',
+                     "--disable", "multi_agent", "--disable", "apps", "--disable", "memories", "-"],
             "limits": {"milliCPUs": 2000, "memoryBytes": 4096, "processes": 32, "maxOutputBytes": 65536}}
 
 
@@ -131,6 +131,11 @@ class DExecution(unittest.TestCase):
             root = Path(folder); workspace = root / "writer"; workspace.mkdir(); (workspace / "plan.md").write_text("requirements")
             p = profile(); path = root / "profile.json"; d_series.write_new(path, p)
             self.assertEqual(plan_arm.profile_data(path)["model"], "frozen-model")
+            for feature in ("multi_agent", "apps", "memories"):
+                bad = copy.deepcopy(p); index = bad["argv"].index(feature)
+                del bad["argv"][index - 1:index + 1]; path.write_text(json.dumps(bad))
+                with self.assertRaises(ValueError): plan_arm.profile_data(path)
+            path.write_text(json.dumps(p))
             argv = plan_arm.create_command(p, workspace, "owned-attempt", 400)
             mounts = [argv[i + 1] for i, a in enumerate(argv) if a == "--mount"]
             self.assertEqual(len(mounts), 2)

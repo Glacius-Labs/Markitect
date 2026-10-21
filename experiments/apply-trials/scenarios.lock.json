@@ -367,7 +367,7 @@
   "experiments/apply-trials/hall/snapshots/h1/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
   "experiments/apply-trials/materialize.py": "5ae2776df974a0a27db11e4a3a2fb107f732fa4dcbd8327193d0a4d9f06ec30b",
   "experiments/apply-trials/oracle.py": "385d8d709a1fa4f992f927967858089298afe46cc46ed1d43804d57019b545fd",
-  "experiments/apply-trials/plan_arm.py": "cd97a699d7f026819e751d8b76fe76d833b75518fafcd7736c5963b4a893f651",
+  "experiments/apply-trials/plan_arm.py": "1524539e2537860675cd2b89a04332c96cf553c7f528c22fb14adda9ed74c4e1",
   "experiments/apply-trials/plan_packet.py": "c3877a0d5c2e7ca70b2245a36bb3245b546f7cc182acf5c4735c68e42bf2c6ac",
   "experiments/apply-trials/report-contract-extracts.json": "59befc5fd76804d6ee4a71a5e53c86abe318b143750fff8c5b81ff192b232fce",
   "experiments/apply-trials/run/build.sh": "a252f951bb7c63e40c345706a81fa3e2e12dc011dd9c52109e4b7231cd534d59",
@@ -421,7 +421,7 @@
   "experiments/apply-trials/stockroom/validation/s2/app.py": "50d37ff1b450f758bae6c0375e91f11bef78736176b91f93d7be4ee0cb17f4ff",
   "experiments/apply-trials/stockroom/validation/s2/stockroom.py": "612d47dcd8f49eb5ed232206f6b8a0a486ea7eda305b24c4899bd554be5925e4",
   "experiments/apply-trials/stockroom/validation/s2/store.py": "da0f993aa652479554ec4ab23ad1c37582a70aae9515eca5e7e2f609f0f19f0f",
-  "experiments/apply-trials/test_d_execution.py": "cbaf6eca62446793ff7eee8965955c9052899b97a37ee9af8d17df97a8ded17a",
+  "experiments/apply-trials/test_d_execution.py": "8447fa44b36cd6c721a7bd1ed32984c17f6e3c702fcf6b5d425c0dad52dc0dc5",
   "experiments/apply-trials/test_report_contract.py": "7cf1f86c94dafbc2c45557cf1cdadc2b1e6060b42d6c8c5569cf5ce21dd9d760",
   "experiments/apply-trials/test_workshop.py": "15be8f49b96eb42ebb2887e956ac764454af46115a79441840a5b01a0b71a7f3",
   "experiments/apply-trials/trial_kit.py": "362e9a8623ba3db4cb3e140f3988da90f0e977405f72850a036775dba5af16d4",
@@ -485,7 +485,7 @@
   "experiments/apply-trials/workshop/snapshots/w1/model/shop/system.yaml": "dd496d40ddd2e53d9aeaf1bc9bd1fa56336af0ab7dcd1cbb7cf02070c93ba803",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "48297fe612bffb339b96830881bbb267ab6d2024737ac5887577c1035c6367b2",
+ "kitDigest": "6eed4d8d8b532896de4387933749f3416cf97333c691bcd0a4e0bcea26b42368",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
