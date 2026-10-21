@@ -93,6 +93,14 @@ class Classification(unittest.TestCase):
         only_disputed = confirmed(disputed)
         self.assertEqual(assess.classify(only_disputed)["incomplete"], "unresolved")
 
+    def test_only_the_exact_limit_reasons_are_a_limit(self):
+        for reason, kind in (("the Pass budget of 2 ended", "limit"), ("the agent turn budget of 40 ended", "limit"),
+                             ("the deadline was reached", "limit"), ("the run was cancelled", "limit"),
+                             ("the agent turn budget of 4 does not cover a basis and a result of each of the 3 managers in one Pass", "technical"),
+                             ('manager "shop" stopped after 3 failed turns: context deadline exceeded', "technical")):
+            with self.subTest(reason):
+                self.assertEqual(assess.classify(report("incomplete", reason))["incomplete"], kind)
+
     def test_an_omitted_class_stays_visible(self):
         r = confirmed(finding("The maximum length of shop/inputs is never stated.", cls="unclassified"))
         c = assess.classify(r)
@@ -161,10 +169,20 @@ class Scoring(unittest.TestCase):
             self.assertEqual(s["uncitedBlocking"], [])
 
     def test_an_incomplete_attempt_is_not_scored_as_a_judgment(self):
-        r = report("incomplete", "the deadline was reached")
+        r = report("incomplete", "the deadline was reached", findings=[finding("The format is open.", obligation="shop/storage")])
         s = assess.score(r, assess.classify(r), GAP)
         self.assertIsNone(s["expectationMet"])
         self.assertFalse(s["missedIssue"] or s["blocked"])
+        # An unfinished attempt confirms nothing: no owner effort and no false alarm.
+        self.assertEqual(([x["kind"] for x in s["signals"]], s["falseAlarmCandidates"], s["ownerEffort"]["confirmedFindings"]), (["open"], [], 0))
+
+    def test_the_class_of_the_finding_on_the_issue_decides(self):
+        r = confirmed(finding("The maximum length of shop/inputs is never stated.", fid="F1"),
+                      finding("shop/storage contradicts shop/system.", obligation="shop/storage", cls="model_error", fid="F2"))
+        s = assess.score(r, assess.classify(r), GAP)
+        self.assertEqual((s["classification"]["conclusion"], s["issueClasses"]), ("model_error", ["model_gap"]))
+        self.assertTrue(s["expectationMet"])
+        self.assertEqual(s["falseAlarmCandidates"], ["F2"])
 
     def test_terms_decide_the_match_and_tags_name_known_observations(self):
         control = dict(GAP, tags={"M2": {"terms": [r"unicode"]}, "invented: error wording": {"terms": [r"error (text|wording)"]}})
@@ -222,10 +240,22 @@ class Evidence(unittest.TestCase):
         self.assertEqual(assess.load_report('{\n "run": {"status": "ver\n}\nFAIL\n'), {})
 
     def test_a_finding_raised_again_after_its_disproof_is_counted(self):
-        run = {"findings": [dict(finding("The limit is unstated.", fid="F1"), closed=True, closedAs="disproved", **{"pass": "p1"}),
-                            dict(finding("The limit is still unstated.", fid="F2"), **{"pass": "p2"}),
-                            dict(finding("Another point.", obligation="shop/list", fid="F3"), **{"pass": "p2"})]}
-        self.assertEqual(assess.process([], run)["reraisedAfterDisproof"], ["F2"])
+        # F1 is raised in p1 and disproved in p2; only a finding on its Definition after p2 is raised again.
+        run = {"findings": [dict(finding("The limit is unstated.", fid="F1"), closed=True, closedAs="disproved", closedPass="p2", **{"pass": "p1"}),
+                            dict(finding("Another statement of it.", fid="F2"), **{"pass": "p2"}),
+                            dict(finding("The limit is still unstated.", fid="F3"), **{"pass": "p3"}),
+                            dict(finding("Much later.", fid="F4"), **{"pass": "p10"}),
+                            dict(finding("Another point.", obligation="shop/list", fid="F5"), **{"pass": "p3"})]}
+        self.assertEqual(assess.process([], run)["reraisedAfterDisproof"], ["F3", "F4"])
+
+    def test_non_object_evidence_lines_are_skipped(self):
+        events = [{"kind": "turn.start", "manager": ".", "turn": "r-p1-root-r1"}]
+        with tempfile.TemporaryDirectory() as root:
+            self.write(root, "r-p1-root-r1", [{"kind": "provider-error", "data": "boom"}, {"kind": "tool_call", "data": "not an object"}, "123",
+                                              {"kind": "tool_call", "data": {"id": 1, "name": "send", "arguments": "x"}}])
+            self.assertEqual(assess.user_question_attempts(root, events), [])
+            self.assertEqual(assess.jsonl(Path(root) / "transcripts" / "r-p1-root-r1.jsonl")[0], {"kind": "provider-error", "data": "boom"})
+            self.assertEqual(len(assess.jsonl(Path(root) / "transcripts" / "r-p1-root-r1.jsonl")), 3)
 
     def test_returns_coverage_and_internal_questions_come_from_the_evidence(self):
         events = [

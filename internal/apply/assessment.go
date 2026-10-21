@@ -13,8 +13,9 @@ import (
 const entryAssessment = "model-assessment"
 
 // AssessmentProblemReason is the reason of an assessment whose sealed Pass
-// needs correction: Root's integrated result confirmed a material model gap or
-// error. The mandatory gate maps it to a Failed Run without realization.
+// needs correction with open genuine findings: Root's integrated result keeps a
+// material model gap or error, unless every one left open is disputed. The
+// mandatory gate maps a confirmed one to a Failed Run without realization.
 const AssessmentProblemReason = "the model assessment confirmed a material model problem"
 
 // AssessCaptured runs the Model assessment of the captured stand as one

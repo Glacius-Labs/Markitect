@@ -159,6 +159,11 @@ def freeze(spec_path, frozen):
     (frozen / "controls").mkdir()
     # The whole experiments directory: packet materialization reads shared inputs such as test-projects.
     shutil.copytree(kit, frozen / "kit", ignore=shutil.ignore_patterns("__pycache__"))
+    assessment = frozen / "kit" / "model-assessment"
+    preflight = subprocess.run([sys.executable, "-B", str(assessment / "assess.py"), "preflight", str(assessment / "assessment-pass.json")],
+                               capture_output=True, text=True)
+    if preflight.returncode != 0:
+        raise SystemExit("the assessment Pass declaration is refused: " + preflight.stdout)
     manifest = {"build": str(build), "buildText": build_text, "kitSource": {"path": str(kit), "sha": built}, "ceilings": CEILINGS,
                 "assessmentPass": sha(frozen / "kit" / "model-assessment" / "assessment-pass.json"),
                 "harness": sha(build / "assessment.test"), "cli": sha(build / "markitect"),
@@ -221,9 +226,9 @@ def verify(frozen, control):
 
 
 def ceilings(frozen):
-    """The series ceilings of a freeze as shell words: attempts, summed seconds, seconds per attempt."""
+    """The series ceilings of a freeze as shell words: attempts, summed seconds, seconds per attempt, model, effort."""
     c = json.loads((frozen / "manifest.json").read_text(encoding="utf-8"))["ceilings"]
-    return f"{c['attempts']} {c['summedSeconds']} {c['attemptSeconds']}"
+    return f"{c['attempts']} {c['summedSeconds']} {c['attemptSeconds']} {c['model']} {c['effort']}"
 
 
 def main(argv):

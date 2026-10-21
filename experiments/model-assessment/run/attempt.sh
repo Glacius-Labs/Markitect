@@ -31,11 +31,12 @@ BUILD=$(python3 -c 'import json, sys; print(json.load(open(sys.argv[1]))["build"
 HEAD=$(git -C "$PACKET" rev-parse HEAD)
 test ! -e "$ATTEMPT" || { echo "$ATTEMPT exists"; exit 2; }
 
-# The manifest's ceilings (12 attempts, 90 summed minutes, 10 minutes each) and
-# the busy check run under the ledger lock together with the write-ahead line.
-read -r MAX_ATTEMPTS MAX_SUMMED MAX_ATTEMPT < <(python3 -B "$KIT/model-assessment/run/freeze.py" ceilings "$FROZEN")
+# Under the ledger lock: the manifest's ceilings (12 attempts, 90 summed
+# minutes, 10 minutes each), the ledger's count, the busy check and the
+# write-ahead line.
 exec 9>> "$FROZEN/ledger.lock"
 flock 9
+read -r MAX_ATTEMPTS MAX_SUMMED MAX_ATTEMPT MODEL EFFORT < <(python3 -B "$KIT/model-assessment/run/freeze.py" ceilings "$FROZEN")
 read -r COUNT SUMMED RUNNING < <(awk '{n++; if ($0 ~ / status=running /) r++; for (i = 1; i <= NF; i++) if ($i ~ /^charged=/) {split($i, a, "="); s += a[2]}}
   END {printf "%d %d %d\n", n, s, r}' "$LEDGER")
 REMAINING=$(( MAX_SUMMED - SUMMED ))
@@ -52,7 +53,7 @@ flock -u 9
 
 RUN=""; CONCLUSION="not-started"; MET="none"; CLEANED=0
 STATE="$ATTEMPT/state-run"
-export MARKITECT_DEMO_WORK="$FROZEN" MARKITECT_AGENT_MODEL=claude-sonnet-5-5 MARKITECT_STORE="ma-$(echo "$NAME" | tr 'A-Z' 'a-z')"
+export MARKITECT_DEMO_WORK="$FROZEN" MARKITECT_AGENT_MODEL="$MODEL" MARKITECT_STORE="ma-$(echo "$NAME" | tr 'A-Z' 'a-z')"
 export MARKITECT_RUNTIME_ENV="${MARKITECT_RUNTIME_ENV:-/mnt/c/Users/Consiliari/.markitect/runtime.env}"
 cleanup() {
   [ "$CLEANED" = 1 ] && return
@@ -87,10 +88,14 @@ if grep -q 'execute: project-agent' "$ATTEMPT/repo/.markitect/execution.yaml"; t
   python3 "$KIT/apply-trials/bind_profiles.py" "$ATTEMPT" "$(grep '^python_image=' "$BUILD/build.txt" | cut -d= -f2)" > /dev/null || { CONCLUSION=bind-failed; exit 5; }
 fi
 # The demonstration profile names a technology the model may not state; an assessment gets no such hint.
-python3 -c 'import sys
+GO_REMOVED=$(python3 -c 'import sys
 path, sentence = sys.argv[1:]
 text = open(path).read()
-open(path, "w").write(text.replace(sentence, ""))' "$ATTEMPT/host/host.yaml" "$GO_SENTENCE" || { CONCLUSION=bind-failed; exit 5; }
+open(path, "w").write(text.replace(sentence, ""))
+print("removed" if sentence in text else "absent")' "$ATTEMPT/host/host.yaml" "$GO_SENTENCE") || { CONCLUSION=bind-failed; exit 5; }
+# The bound profile must carry the manifest's model and effort and no Go sentence.
+grep -q "model: $MODEL\$" "$ATTEMPT/host/host.yaml" && grep -q "effort: $EFFORT\$" "$ATTEMPT/host/host.yaml" &&
+  ! grep -qF "$GO_SENTENCE" "$ATTEMPT/host/host.yaml" || { CONCLUSION=bind-failed; exit 5; }
 SHA=$(grep '^sha=' "$BUILD/build.txt" | cut -d= -f2)
 DEADLINE=$(date -u -d "@$(( START + CAP - 90 ))" +%FT%TZ)
 python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" run "$SHA" "$DEADLINE" "Assess the committed model." > /dev/null &&
@@ -100,7 +105,7 @@ python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" run "$SHA" "$DEADLINE" "Ass
   echo "control=$CONTROL packet_head=$HEAD packet_tree=$(git -C "$PACKET" rev-parse 'HEAD^{tree}')"
   echo "assessment_pass_sha256=$(sha256sum "$PASS" | cut -d' ' -f1) harness_sha256=$(sha256sum "$BUILD/assessment.test" | cut -d' ' -f1)"
   echo "closed_run=no owner channel, no owner decisions cap=$CAP deadline=$DEADLINE store=$MARKITECT_STORE"
-  echo "host_profile_sha256_assessment=$(sha256sum "$ATTEMPT/host/host.yaml" | cut -d' ' -f1) (Go sentence removed)"
+  echo "host_profile_sha256_assessment=$(sha256sum "$ATTEMPT/host/host.yaml" | cut -d' ' -f1) (Go sentence $GO_REMOVED, model $MODEL, effort $EFFORT)"
 } >> "$ATTEMPT/binding.txt"
 
 ARGS=(apply --repo "$ATTEMPT/repo" --model .markitect/model.yaml)

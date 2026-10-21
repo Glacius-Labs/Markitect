@@ -32,6 +32,8 @@ type assessingAgents struct {
 	source      string
 	ask, abort  string
 	finding     string
+	// class is the correction of Root's finding; "-" omits it.
+	class string
 	// raiser raises a genuine finding in the first Pass that Root disputes and
 	// the raiser's fresh reviewer disproves in the reassessment.
 	raiser  string
@@ -109,7 +111,13 @@ func (a *assessingAgents) Run(ctx context.Context, turn run.Turn, tools run.Tool
 		switch {
 		case root && a.finding != "":
 			result["verdict"] = "needs_correction"
-			result["findings"] = []map[string]any{{"owner": ".", "obligation": a.source, "observed": a.finding, "blocking": true, "correction": "model_gap"}}
+			f := map[string]any{"owner": ".", "obligation": a.source, "observed": a.finding, "blocking": true, "correction": "model_gap"}
+			if a.class == "-" {
+				delete(f, "correction")
+			} else if a.class != "" {
+				f["correction"] = a.class
+			}
+			result["findings"] = []map[string]any{f}
 		case turn.Manager == a.raiser && first:
 			result["verdict"] = "needs_correction"
 			result["findings"] = []map[string]any{{"owner": a.raiser, "obligation": a.source, "observed": "The limit is unstated.", "blocking": true}}
@@ -252,6 +260,20 @@ func TestAssessCapturedIsAClosedRunAndKeepsTheConfirmedFinding(t *testing.T) {
 	}
 	if len(outcome.Passes) != 1 || !outcome.Passes[0].Sealed || outcome.Passes[0].Verdict != run.NeedsCorrection {
 		t.Fatalf("passes %+v", outcome.Passes)
+	}
+}
+
+// A finding whose class the reviewer omits takes the last correction,
+// unclassified, so that it never passes for a gap.
+func TestAssessCapturedKeepsAnOmittedClassVisible(t *testing.T) {
+	req, agents, _, _, _ := assessmentRequest(t)
+	agents.finding, agents.class = "The model leaves the public maximum open.", "-"
+	result, err := apply.AssessCaptured(context.Background(), req, assessmentSpec())
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !slices.ContainsFunc(result.Outcome.Findings, func(f run.Finding) bool { return f.Observed == agents.finding && f.Correction == "unclassified" }) {
+		t.Fatalf("findings %+v", result.Outcome.Findings)
 	}
 }
 

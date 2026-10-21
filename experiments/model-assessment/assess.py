@@ -24,7 +24,7 @@ PROBLEMS = (GAP, ERROR, UNCLASSED)
 CORRECTIONS = [ERROR, GAP, "unclassified"]
 MODEL_ERROR_REASON = "Root judged the model erroneous or contradictory: "
 PROBLEM_REASON = "the model assessment confirmed a material model problem"
-LIMIT = re.compile(r"deadline|budget|turn limit|pass limit|cancelled", re.IGNORECASE)
+LIMIT = re.compile(r"^(the deadline was reached|the run was cancelled|the Pass budget of \d+ ended|the agent turn budget of \d+ ended)$")
 NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$")
 
 
@@ -91,28 +91,36 @@ def classify(report):
     elif sealed_negative:
         out.update(conclusion=INCOMPLETE, incomplete="unresolved", why="the sealed Pass needs correction without a confirmed finding")
     else:
-        kind = "limit" if status == "incomplete" and LIMIT.search(reason) else "technical"
+        kind = "limit" if status == "incomplete" and LIMIT.match(reason) else "technical"
         out.update(conclusion=INCOMPLETE, incomplete=kind, why="the run ended %s before a conclusion: %s %s" % (status, reason, report.get("error", "")))
     return out
 
 
-def signals(run):
+def signals(run, conclusion=None):
     """Everything the team raised that the owner reads to correct the model.
 
-    A blocking signal is one the conclusion rests on: a confirmed finding or
-    Root's model-error decision. A disputed finding is dissent, a note a
-    suggestion.
+    A blocking signal is one a model-problem conclusion rests on: a confirmed
+    finding or Root's model-error decision. Without such a conclusion nothing
+    blocks, so an unfinished attempt inflates no owner effort or false alarm. A
+    disputed finding is dissent, a note a suggestion.
     """
     passes = run.get("passes", [])
-    found = {f.get("id") for f in confirmed(run, passes[-1].get("id") if passes else None)}
+    concluded = conclusion in PROBLEMS
+    found = {f.get("id") for f in confirmed(run, passes[-1].get("id") if passes else None)} if concluded else set()
     out = []
     for p in run.get("problems", []):
+        root_decision = bool(p.get("abort")) and p.get("manager") == "."
         out.append({"kind": "model_decision" if p.get("abort") else "problem", "id": p.get("id"), "by": p.get("manager"),
-                    "text": "%s: %s" % (p.get("category"), p.get("text", "")), "blocking": bool(p.get("abort"))})
+                    "text": "%s: %s" % (p.get("category"), p.get("text", "")), "blocking": concluded and root_decision})
     for f in run.get("findings", []):
         if f.get("raisedBy") == "markitect":
             continue
-        kind = "note" if not f.get("blocking") else "finding" if f.get("id") in found else "closed" if f.get("closed") else "disputed"
+        if not f.get("blocking"):
+            kind = "note"
+        elif f.get("id") in found:
+            kind = "finding"
+        else:
+            kind = "closed" if f.get("closed") else "disputed" if f.get("disputes") else "open"
         out.append({"kind": kind, "id": f.get("id"), "by": f.get("raisedBy"), "owner": f.get("owner"), "pass": f.get("pass"),
                     "class": f.get("correction", ""), "obligation": f.get("obligation", ""),
                     "text": "%s: %s" % (f.get("obligation", ""), f.get("observed", "")),
@@ -168,9 +176,11 @@ def jsonl(path):
     for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
         if line.strip():
             try:
-                out.append(json.loads(line))
+                value = json.loads(line)
             except json.JSONDecodeError:
                 continue
+            if isinstance(value, dict):
+                out.append(value)
     return out
 
 
@@ -187,6 +197,12 @@ def strings(value):
 
 def flat(text):
     return " ".join(text.split())
+
+
+def pass_number(pass_id):
+    """The number of a Pass identity p<N>, for ordering; 0 when it has none."""
+    match = re.fullmatch(r"p(\d+)", str(pass_id or ""))
+    return int(match.group(1)) if match else 0
 
 
 def process(events, run):
@@ -208,8 +224,8 @@ def process(events, run):
     disproved = {}
     for f in findings:
         if f.get("closedAs") == "disproved":
-            disproved.setdefault(f.get("obligation"), f.get("pass"))
-    reraised = [f.get("id") for f in findings if f.get("obligation") in disproved and str(f.get("pass")) > str(disproved[f.get("obligation")])]
+            disproved[f.get("obligation")] = min(pass_number(f.get("closedPass")), disproved.get(f.get("obligation"), 1 << 30))
+    reraised = [f.get("id") for f in findings if f.get("obligation") in disproved and pass_number(f.get("pass")) > disproved[f.get("obligation")]]
     return {"returned": [{"manager": e.get("manager"), "by": e.get("data", {}).get("by"), "reason": e.get("data", {}).get("reason")} for e in returned],
             "disputes": sum(len(f.get("disputes") or []) for f in findings),
             "disproved": sum(f.get("closedAs") == "disproved" for f in findings),
@@ -263,10 +279,10 @@ def user_question_attempts(evidence, events=()):
     root = {e.get("turn") for e in events if e.get("kind") == "turn.start" and e.get("manager") == "."}
     for path in sorted((Path(evidence) / "transcripts").glob("*.jsonl")):
         for line in jsonl(path):
-            data = line.get("data") or {}
-            arguments = data.get("arguments") or {}
-            if line.get("kind") != "tool_call" or not isinstance(arguments, dict):
+            data = line.get("data")
+            if line.get("kind") != "tool_call" or not isinstance(data, dict) or not isinstance(data.get("arguments"), dict):
                 continue
+            arguments = data["arguments"]
             if data.get("name") == "send" and arguments.get("to") == "user" or data.get("name") == "escalate" and path.stem in root:
                 attempts.append({"turn": path.stem, "tool": data.get("name"), "text": arguments.get("text", "")})
     return attempts
@@ -285,7 +301,7 @@ def timing_of(path):
 def score(report, classification, control, events=(), timing=None, evidence=None):
     run = report.get("run") or {}
     definitions = control.get("definitions", []) if control else []
-    raised = signals(run)
+    raised = signals(run, classification.get("conclusion"))
     for s in raised:
         s["cites"] = cited(s["text"], definitions)
         s["matchesIssue"] = matches(s["text"], control.get("issue") if control else None, definitions)
@@ -312,9 +328,14 @@ def score(report, classification, control, events=(), timing=None, evidence=None
     out["expectationMet"] = None
     if control.get("issue"):
         out["issueRaised"] = any(s["matchesIssue"] for s in blocking)
+        # The class that counts is the class of the finding on the known issue, not of an unrelated one.
+        out["issueClasses"] = sorted({s.get("class") or classification["conclusion"] for s in blocking if s["matchesIssue"]})
         out["missedIssue"] = concluded and not (out["blocked"] and out["issueRaised"])
     if concluded:
-        out["expectationMet"] = conclusion == expected and out.get("issueRaised", True)
+        if control.get("issue"):
+            out["expectationMet"] = out["blocked"] and out["issueRaised"] and expected in out["issueClasses"]
+        else:
+            out["expectationMet"] = conclusion == expected
     out["falseAlarmCandidates"] = [s["id"] for s in blocking if not s["matchesIssue"]]
     out["uncitedBlocking"] = [s["id"] for s in blocking if not s["cites"]]
     return out

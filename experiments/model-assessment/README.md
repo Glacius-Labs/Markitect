@@ -16,7 +16,7 @@ Session C's method trial for the mandatory Model assessment ([handoff](../../doc
   - A *model problem* is a genuine finding with its basis and class. `model_gap` covers a missing material decision or an unusable contract; `model_error` covers a contradiction or an erroneous statement.
   - A *suspected* problem is investigated inside the Pass, by lookup and questions along the tree. It ends as a model problem, is resolved, or keeps the reviewer working. It is never parked as a note.
   - A *suggestion* is at most a non-blocking note: missing optional detail, an ordinary implementation choice, an unusual but consistent design, delegated freedom, style or preference.
-- Parents assess interfaces and cross-area consistency. They also judge the basis and class of their children's findings: they accept, return or dispute them. Root confirms the conclusion in its integrated result and disputes every open finding it does not confirm. While only fresh disputes keep a Pass from being clean, a new complete Pass runs on the unchanged stand, as in Apply, within the packet's Pass budget and the attempt's deadline. A resolved or disproved finding is not raised again on the same statements without new evidence.
+- Parents assess interfaces and cross-area consistency. They also judge the basis and class of their children's findings: they accept or return them, and dispute only an unfounded finding. A real problem with the wrong class is returned for the class to be corrected, never disputed, so that a disproof cannot remove a real gap. Root confirms the conclusion in its integrated result and disputes every open finding it does not confirm. While only fresh disputes keep a Pass from being clean, a new complete Pass runs on the unchanged stand, as in Apply, within the packet's Pass budget and the attempt's deadline. A resolved or disproved finding is not raised again on the same statements without new evidence.
 - The classes are the corrections `[model_error, model_gap, unclassified]`. The tool's default is the last, so an omitted class stays visible as `unclassified` instead of passing for a gap.
 - No required check, probe, write or publication runs: a check judges artifacts, not the model.
 
@@ -44,7 +44,7 @@ A signal concerns a target by its terms when the target has any, otherwise by a 
 
 **Measures.** Per attempt `assess.py attempt` records:
 
-- the conclusion, whether it blocks, and whether it meets the expectation, including the class;
+- the conclusion, whether it blocks, and whether it meets the expectation, including the class of the finding on the known issue (an unrelated finding's class does not decide it);
 - matches and misses: whether a confirmed finding matches the known issue, missed issues, and false aborts (a block on a control that expects acceptance);
 - false-alarm candidates (confirmed findings that do not match the known issue), with the signals that cite the permitted freedom or concern one of the control's named observations;
 - confirmed findings that cite no Definition of the model;
@@ -60,6 +60,7 @@ A signal concerns a target by its terms when the target has any, otherwise by a 
 - **Origin.** The mandate and guidance were written from the handoff's assessment questions before Session B delivered its controls, and they have never run against a control.
 - **First revision.** They were revised for the owner's closed-Run policy (#560: no user questions; classed findings).
 - **Second revision.** Revised again for the conformance mandate (#561: materiality, observation kinds, suggestions, the explicit `unclassified` class), following the workflow's own wording. The second revision came after the author had read Session B's draft assessment key for the earlier control versions (its required findings, minor ambiguities and invented requirements). It takes no example from that key, but this is disclosed.
+- **Review correction.** An independent review then found that the dispute rule could disprove a real but misclassified gap. A wrong class is now returned instead of disputed. This was a rule defect found by review, not by a result.
 - **No control names.** The treatment names no control-specific issue; a self-test guards this.
 - **Earlier cases.** The author also knew the earlier Apply trial cases: the unstated maximum of S-QV, the shortfall policy of S-Q and the contradiction of S-X. The mandate's generic outcome categories (results, acceptance or refusal) overlap them.
 - **Unseen controls.** The strengthened complete and freedom versions B prepares after this revision remain unseen until the freeze transcribes them.
@@ -82,13 +83,13 @@ python3 -B FROZEN/kit/model-assessment/assess.py series --ledger FROZEN/ledger.t
 - the ledger of an earlier freeze of the same series, whose attempts keep counting;
 - per control, the packet (a materialization command or an existing repository with its head) and its expectation.
 
-The freeze copies that directory as the kit, builds and checks the packets, writes the hidden control files and a manifest of every hash. The ceilings hold for the series: a series uses one freeze, and a later freeze carries the earlier ledger.
+The freeze copies that directory as the kit, refuses an invalid Pass declaration (`assess.py preflight`), builds and checks the packets, writes the hidden control files and a manifest of every hash. The ceilings hold for the series: a series uses one freeze, and a later freeze carries the earlier ledger. Pass the earlier freeze's assessment files to `series` too, or its attempts count as unassessed.
 
 `attempt.sh` runs one attempt:
 1. It recomputes every frozen hash and the build's image IDs (`freeze.py verify`).
-2. Under a lock on the ledger it reads the manifest's ceilings and refuses beyond 12 attempts or 90 summed minutes. It also refuses while any container with a `markitect.store` label runs.
+2. Under a lock on the ledger it reads the manifest's ceilings, model and effort, and refuses beyond 12 attempts or 90 summed minutes. It also refuses while any container with a `markitect.store` label runs.
 3. It writes the attempt's ledger line before anything starts, marked running and charged with the whole cap of at most 10 minutes. The operator deadline lies 90 s before the cap, so cleanup fits.
-4. It binds Sonnet with effort high and runs the attempt with its own store label.
+4. It binds the manifest's model (Sonnet) and effort (high), and refuses a bound profile that differs from them or still carries the demonstration's Go sentence. It runs the attempt with its own store label.
 5. On every exit it cleans up only that label and replaces the line with the actual charge, labelled `interrupted` after INT or TERM.
 
 A killed attempt keeps its pessimistic line, and a running line refuses further attempts until the operator marks it `status=abandoned`. Name attempts neutrally (letters, digits, hyphens) and interleave the controls in an order fixed before the first attempt.

@@ -18,7 +18,7 @@ Bind authority and limits, deterministic Model check, strict File check, then **
 - **Treatment.** The mandate and the guidance of [assessment-pass.json](assessment-pass.json), bound by its hash. They ask about the outcomes others rely on, consistency, usable responsibility and contracts, and the permitted freedom. Evidence is model sources, and there is no quota.
 - **No required check, probe, write or publication.** A check judges artifacts, not the model. Artifacts in the stand are not assessed and never settle what the model leaves open.
 - **Closed Run.** No owner channel, no earlier answers and no owner decisions. Questions travel only along the Manager tree and may make a Manager Waiting. A material decision the model lacks becomes a model problem, never a question to the user, a default or a chosen value.
-- **Disputes.** Root confirms the findings it keeps and disputes every open finding it does not confirm. While only fresh disputes keep the Pass from being clean, a new complete assessment Pass of the unchanged stand decides them, within the Pass budget, as Verify does in Apply.
+- **Disputes.** A dispute is only for an unfounded finding. A real problem with the wrong class is returned to its raiser for the class, so that a disproof can never remove a real gap. Root confirms the findings it keeps and disputes every open finding it does not confirm. While only fresh disputes keep the Pass from being clean, a new complete assessment Pass of the unchanged stand decides them, within the Pass budget, as Verify does in Apply.
 
 ## Observation kinds
 
