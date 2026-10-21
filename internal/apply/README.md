@@ -135,6 +135,14 @@ challenging their children's assertions.
 with the same configuration and never publishes. It is the evaluation entry for assessing
 a known stand through the Pass process; no Command uses it, and the grant-gated
 `TestVerifyEvaluationHarness` in `internal/bootstrap` drives it with the real adapters.
+`AssessCaptured(ctx, ApplyRequest)` is the evaluation entry of the
+[Model assessment trial](../../experiments/model-assessment/README.md): one read-only review
+Pass of the captured stand with the product's built-in assessment method, repeated only for
+fresh disputes, with the same configuration in a closed Run (no owner channel, answers or
+decisions) and without required checks or publication. A confirmed material problem ends
+`Failed`; acceptance seals `Satisfied` and ends `Incomplete` with `AssessmentAccepted`,
+because this entry realizes and verifies no artifacts. The grant-gated
+`TestModelAssessmentHarness` drives it with the real adapters.
 
 Each Brief lists the Manager's own Definitions, included ones with their owners, its
 areas and local registry with its entry shape (exact files or directories), the required
