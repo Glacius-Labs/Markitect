@@ -1,6 +1,7 @@
-// The run history: every recorded run of the observed state directories with
-// its outcome, publication, organization, source and reported usage. A run
-// opens in the inspector. The cockpit neither starts nor stops a run.
+// The Runs area: the runs that run now and the history of every recorded run
+// of the observed state directories with its outcome, publication,
+// organization, source and reported usage. A run opens in the inspector. The
+// cockpit neither starts nor stops a run.
 
 import { h, clear, when, duration } from "./dom.js";
 import { store } from "./store.js";
@@ -9,24 +10,34 @@ import { refreshState } from "./shell.js";
 const outcomeClass = { success: "st-done", verified: "st-done", failed: "st-fail", incomplete: "st-waiting" };
 
 export function renderRuns(content) {
-  const page = h("div", { class: "page" });
-  const table = h("section", { class: "panel" });
-  const states = h("p", { class: "note" });
-  page.append(
+  const now = h("section", { class: "panel", "aria-labelledby": "runs-now" });
+  const history = h("section", { class: "panel", "aria-labelledby": "runs-history" });
+  const states = h("p", { class: "note", style: { margin: 0 } });
+  const page = h("div", { class: "page" },
     h("div", { class: "pagehead" }, h("div", {},
       h("h2", {}, "Runs"),
-      h("p", { class: "lead" }, "Every Apply recorded in the observed state directories. Start an Apply with markitect apply; it appears here while it runs. No stop command exists: interrupting the markitect apply process ends the run incomplete with its evidence, and pausing a replay or a live view never stops a run."))),
-    table, states);
+      h("p", { class: "lead" }, "Start an Apply with markitect apply; it appears here while it runs. The cockpit neither starts nor stops a run: interrupting the markitect apply process ends it incomplete with its evidence, and pausing a replay never reaches the run."))),
+    now, history, states);
   content.append(page);
   const draw = (s) => {
     if (!page.isConnected) return unsubscribe();
-    clear(table);
+    const live = s.liveRuns;
+    clear(now).append(h("header", {}, h("h3", { id: "runs-now" }, "Running now")));
+    now.append(live.length
+      ? h("ul", { class: "rows" }, live.map((r) => h("li", {},
+        h("a", { class: "row", href: `#/run/${encodeURIComponent(r.id)}` },
+          h("span", { class: "lamp st-working" }),
+          h("span", { class: "title" }, r.id),
+          h("span", { class: "meta" }, r.health.run),
+          h("span", { class: "sub" }, (r.account || [])[0]?.map((seg) => seg.text).join("") || `${r.records} records so far`)))))
+      : h("p", { class: "void", style: { paddingTop: "4px" } }, "No run holds its state directory now."));
+    clear(history).append(h("header", {}, h("h3", { id: "runs-history" }, "History")));
     if (s.errors.runs) {
-      table.append(h("p", { class: "void", role: "alert" }, `The runs are not readable: ${s.errors.runs.message}`));
+      history.append(h("p", { class: "void", role: "alert" }, `The runs are not readable: ${s.errors.runs.message}`));
       return;
     }
     const runs = s.data.runs || [];
-    table.append(runs.length ? runRows(runs) : h("p", { class: "void" }, h("strong", {}, "No run evidence"), "Start the cockpit with the state directory of an Apply (--state DIR or --run-config PATH)."));
+    history.append(runs.length ? runRows(runs) : h("p", { class: "void" }, h("strong", {}, "No run evidence"), "Start the cockpit with the state directory of an Apply (--state DIR or --run-config PATH)."));
     const dirs = s.data.project?.states || [];
     clear(states).append("State directories observed: ", ...dirs.map((d, i) => [i ? ", " : "", h("span", { class: "digest", title: d }, shortPath(d))]).flat());
   };
@@ -35,7 +46,7 @@ export function renderRuns(content) {
   else refreshState();
 }
 
-// runRows is the run table, shared with the overview.
+// runRows is the run table.
 export function runRows(runs) {
   const rows = runs.map((r) => {
     if (r.error && !r.id) return h("tr", {}, h("td", { colspan: 5 }, `${r.state}: ${r.error}`));
