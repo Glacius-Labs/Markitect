@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Primary goal and conformance evaluation](primary-goal-and-conformance-evaluation-20261021.md) | Direct owner goal and adoption, 21 October 2026; labeled coordination notes | Trust through complete model-to-artifact conformance, independent semantic coverage and parent integration, refined A–D evidence priorities and bounded handoff |
 | [Cockpit commission](cockpit-commission-20261020.md) | Direct owner instructions, 20 October 2026 | Local Run visualization, playback, causal messages and arrows, cockpit direction, Claude design/implementation assignment and documentation-only Main delivery |
 | [Apply workflow conversation](terminology-and-file-accounting-20261020.md) | Direct owner instructions and adoption, 20 October 2026 | Provenance for accepted DEC-064: names, strict checks, local registries, readiness/events, recursive Passes, routed questions, tools and Manager teams; concept and Claude handoff prepared, no runtime implementation |
 | [The model is authoritative; defects escalate](model-defects-escalate-20261019.md) | Direct owner decision, 19 October 2026 | Apply never repairs the model; unsettled matters escalate through the tree with the model binding; a model defect ends the run with a report to the owner |
