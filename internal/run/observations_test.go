@@ -195,9 +195,8 @@ func TestASuspicionIsInvestigatedNotWorkedOn(t *testing.T) {
 	}
 }
 
-// A finding a review of this unchanged candidate settled is not raised again
-// by another reviewer or in other words: only a probe receipt of the Pass is
-// new evidence.
+// A finding a review of this unchanged candidate disproved is not raised
+// again by another reviewer or in other words.
 func TestASettledFindingIsNotReopenedWithoutNewEvidence(t *testing.T) {
 	f := newFixture(t)
 	var mu sync.Mutex
@@ -368,5 +367,66 @@ func TestAnAdvisoryArtifactFindingNamesNoCorrection(t *testing.T) {
 	out := f.finish(r, "")
 	if len(out.Findings) != 1 || out.Findings[0].Blocking || out.Findings[0].Correction != "" || out.Findings[0].Kind != Deviation || out.Findings[0].Subject != subjectArtifact {
 		t.Fatalf("findings %+v", out.Findings)
+	}
+}
+
+// After a disproof on the unchanged candidate, only a failed probe receipt of
+// the Pass is new evidence for raising the finding again; a passing receipt is
+// none.
+func TestOnlyAFailedReceiptReopensADisprovedFinding(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var bare, passing, failing ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Kind != VerifyTurn {
+			c.protocol()
+			return nil
+		}
+		switch {
+		case c.pass() == "p2" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
+			return nil
+		case c.pass() == "p2" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
+			for _, id := range c.pendingDecisions() {
+				c.accept(id)
+			}
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "the interface conforms", "evidence": "library/a.go"}}}))
+			return nil
+		case c.pass() == "p3" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the interface conforms", "evidence": "library/a.go on this candidate"}}}))
+			return nil
+		case c.pass() == "p3" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && failing.Text == "":
+			for _, id := range c.pendingDecisions() {
+				c.accept(id)
+			}
+			bare = c.result(map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("library", "library/interface")}})
+			ok := receiptOf(t, c.must(toolCheck, probe("library/interface", "a plain name", "probe_plain.py", "PASS")))
+			withPass := genuine("library", "library/interface")
+			withPass["receipts"] = []string{ok}
+			passing = c.result(map[string]any{"verdict": string(NeedsCorrection), "findings": []any{withPass}})
+			bad := receiptOf(t, c.must(toolCheck, probe("library/interface", "a hyphen name", "probe_names.py", "FAIL")))
+			withFail := genuine("library", "library/interface")
+			withFail["receipts"] = []string{bad}
+			if failing = c.result(map[string]any{"verdict": string(NeedsCorrection), "findings": []any{withFail}}); !failing.Refused {
+				return nil
+			}
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	if first := r.Pass(verifySpec()); first.Verdict != NeedsCorrection || !r.Reassess() {
+		t.Fatalf("first verify %+v", first)
+	}
+	r.Pass(verifySpec())
+	f.finish(r, "")
+	if !bare.Refused || !passing.Refused || !strings.Contains(passing.Text, "failed probe receipt") {
+		t.Fatalf("a repeat without new evidence was accepted: %q / %q", bare.Text, passing.Text)
+	}
+	if failing.Refused {
+		t.Fatalf("a repeat with a failed receipt of the Pass was refused: %q", failing.Text)
 	}
 }

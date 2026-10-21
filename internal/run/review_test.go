@@ -144,7 +144,7 @@ func TestFailedRequiredCheckBlocksTheReview(t *testing.T) {
 			check = &out.Findings[i]
 		}
 	}
-	if check == nil || check.Owner != "." || !check.Closed || check.ClosedPass != "p4" || check.Correction != Implement {
+	if check == nil || check.Owner != "." || !check.Closed || check.ClosedPass != "p4" || check.Correction != Implement || check.Kind != Deviation || check.Expected == "" {
 		t.Errorf("check finding %+v", check)
 	}
 	// Root's correction pass received the finding.
