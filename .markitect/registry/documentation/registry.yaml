@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/apply-conformance-acceptance-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner's accepted Apply acceptance correction after the bounded Codex retest, with target and evidence boundaries.
+  - path: "docs/development/codex-apply-conformance-handoff-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Prepares the next owner-started Codex implementation and finite targeted retest without restarting the exhausted series.
+  - path: "docs/validation/apply-codex-conformance-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the source-bound three-attempt Codex results, incomplete workflows, correct gap stop, candidate evidence and reference uncertainty.
   - path: "docs/concepts/sources/per-turn-container-decision-20261021.md"
     form: doc
     realizes: [documentation/current-guidance]
