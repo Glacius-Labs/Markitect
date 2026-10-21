@@ -4,8 +4,8 @@
    colors. Each area has its own accent so the owner always knows where they
    are. Text an Agent wrote (.prose) carries an ice line at its edge, so
    authored communication never reads like a fact the cockpit established; the
-   owner's own text does not. The run inspector below keeps its own track
-   diagram and draws from the same tokens. */
+   owner's own text does not. The project and Run organization charts draw
+   from the same tokens. */
 
 /* Organization cards share the cockpit's existing surfaces, lamps and type. */
 .org-chart { min-width: 0; }
@@ -44,6 +44,7 @@
 @media (prefers-reduced-motion: reduce) { .org-chart * { animation: none !important; transition: none !important; } }
 
 .organization-page { max-width: 1600px; }
+.organization-page > .refusal:empty { border: 0; padding: 0; }
 .organization-state { color: var(--ink-2); font-size: var(--s-1); overflow-wrap: anywhere; }
 .organization-split { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; gap: 20px; }
 .organization-stage, .organization-detail { min-width: 0; }
@@ -72,6 +73,13 @@
 .org-exchange.org-ch-orchestrator > path:first-child { stroke-dasharray: 5 4; }
 .org-exchange.org-ch-owner { color: var(--owner); }
 .org-exchange.past { opacity: .4; }
+
+.organization-thumbnail { display: flex; align-items: center; gap: 12px; }
+.organization-thumbnail[hidden] { display: none; }
+.organization-thumbnail svg { flex: 0 0 130px; width: 130px; height: 45px; }
+.organization-thumbnail path { fill: none; stroke: var(--ice); stroke-width: 1.5; opacity: .6; }
+.organization-thumbnail circle { fill: var(--card-2); stroke: var(--ice); stroke-width: 1.5; }
+.organization-thumbnail span { font-size: var(--s-1); }
 
 :root {
   color-scheme: dark;

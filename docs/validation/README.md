@@ -6,6 +6,12 @@ Records may link to files that were removed later; read them at release v0.14.1 
 
 ## Project workflow and integration reports
 
+- [Cockpit organization read model — 21 October 2026](cockpit-organization-read-model-20261021.md)
+- [Cockpit organization chart — 21 October 2026](cockpit-organization-chart-20261021.md)
+- [Cockpit Organization tab — 21 October 2026](cockpit-organization-tab-20261021.md)
+- [Cockpit recorded Run chart — 21 October 2026](cockpit-run-organization-20261021.md)
+- [Cockpit organization validation and screenshots — 21 October 2026](cockpit-organization-finish-20261021.md)
+
 - [Role-round integration — 12 October 2026](integration-round-20261012.md)
 - [Integration queue — 11–12 October 2026](integration-queue-20261011.md)
 - [Markitect-first dogfood](markitect-first-dogfood.md)
