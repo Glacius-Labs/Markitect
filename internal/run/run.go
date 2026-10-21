@@ -132,8 +132,16 @@ type Finding struct {
 	Observed   string  `json:"observed"`
 	Blocking   bool    `json:"blocking"`
 	Correction Purpose `json:"correction,omitempty"`
-	Pass       string  `json:"pass"`
-	Review     bool    `json:"review"`
+	// Kind is what the finding claims (owner refinement of 21 October 2026):
+	// a confirmed deviation, a suspected one, a model problem (Model
+	// assessment only) or a suggestion. Only a deviation names a correction of
+	// the work; a suspicion blocks until it is investigated and classified; a
+	// suggestion never blocks. Expected is the outcome a deviation's or
+	// suspicion's obligation requires.
+	Kind     Observation `json:"kind"`
+	Expected string      `json:"expected,omitempty"`
+	Pass     string      `json:"pass"`
+	Review   bool        `json:"review"`
 	// Candidate is the tree of the review Pass's candidate a review finding was
 	// raised on.
 	Candidate string `json:"candidate,omitempty"`
@@ -148,6 +156,9 @@ type Finding struct {
 	// erroneous; ClosedEvidence carries a disproof's evidence.
 	ClosedAs       string `json:"closedAs,omitempty"`
 	ClosedEvidence string `json:"closedEvidence,omitempty"`
+	// ClosedCandidate is the tree of the review Pass's candidate a review
+	// finding was closed on: the fresh Verify that resolved or disproved it.
+	ClosedCandidate string `json:"closedCandidate,omitempty"`
 	// Subject and Definition are set only on findings of a review Pass with
 	// ArtifactFindingsAdvisory: Subject is "artifact" or "model", and Definition
 	// names the Definition an artifact finding deviates from.
@@ -167,11 +178,38 @@ type Dispute struct {
 	Evidence  string `json:"evidence"`
 }
 
-// Closure kinds of a finding.
+// Closure kinds of a finding: resolved by a changed candidate, disproved as
+// erroneous, or, for a suspicion, confirmed by a deviation or model problem
+// the same submission raises.
 const (
 	ClosedResolved  = "resolved"
 	ClosedDisproved = "disproved"
+	ClosedConfirmed = "confirmed"
 )
+
+// Observation is the semantic kind of a finding.
+type Observation string
+
+// The kinds of a finding. A Model assessment knows model problems instead of
+// deviations; every other Pass knows deviations.
+const (
+	Deviation    Observation = "deviation"
+	Suspected    Observation = "suspected"
+	ModelProblem Observation = "model"
+	Suggestion   Observation = "suggestion"
+)
+
+// observations lists the kinds a Pass's findings may have: a suspicion is
+// investigated by a fresh review, so only a review raises one.
+func (s PassSpec) observations() []Observation {
+	switch {
+	case s.Assesses:
+		return []Observation{ModelProblem, Suspected, Suggestion}
+	case s.Review:
+		return []Observation{Deviation, Suspected, Suggestion}
+	}
+	return []Observation{Deviation, Suggestion}
+}
 
 // MarkitectFinding is the RaisedBy value of findings the Orchestrator observes
 // itself.

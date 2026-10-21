@@ -142,6 +142,27 @@ func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
 	}
 }
 
+// Apply fulfills the model: the work mandates preserve a conforming stand
+// against mere permission, and the review distinguishes deviations,
+// suspicions and suggestions (owner refinement of 21 October 2026).
+func TestMandatesBoundChangesAndFindingsToConformance(t *testing.T) {
+	for _, s := range strategies {
+		implement := s.work()[len(s.work())-1].Mandate
+		if !strings.Contains(implement, "that the model permits a change is no reason to make it") || !strings.Contains(implement, "which fulfillment it serves") {
+			t.Errorf("%s Implement does not bound its changes to fulfillment", s)
+		}
+	}
+	review := Direct.verify()
+	for _, want := range []string{"is suspected", "names no correction", "are suggestions", "no new evidence"} {
+		if !strings.Contains(review.Guidance, want) {
+			t.Errorf("the Verify guidance lacks %q", want)
+		}
+	}
+	if !strings.Contains(review.Mandate, "is a suspected finding, never a suggestion") {
+		t.Error("the Verify mandate parks an unsettled question elsewhere")
+	}
+}
+
 // The Model assessment's mandate and guidance are Session C's method of
 // experiments/model-assessment/assessment-pass.json at 7db130d7 byte for byte;
 // a change of the method changes these digests deliberately.

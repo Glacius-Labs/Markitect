@@ -372,7 +372,8 @@ func (e *engine) releaseLocked(m *member, why string) {
 		front := []item{{kind: itemAssignment}}
 		if !m.p.spec.Review {
 			for _, f := range e.findings {
-				if f.Blocking && !f.Closed && f.Owner == m.Path {
+				// A suspicion is investigated by a review, never worked on.
+				if f.Blocking && !f.Closed && f.Owner == m.Path && f.Kind != Suspected {
 					front = append(front, item{kind: itemFinding, text: renderFinding(f), finding: f.ID})
 				}
 			}
@@ -968,11 +969,12 @@ func (e *engine) verifiedBeforeLocked(p *pass) bool {
 }
 
 // confirmedLocked names the confirmed findings of a sealed Pass: open, genuine,
-// raised by the team and not disputed in it, each with its correction class.
+// raised by the team, not disputed in it and no mere suspicion, each with its
+// correction class.
 func (e *engine) confirmedLocked(p *pass) []string {
 	var lines []string
 	for _, f := range e.findings {
-		if f.Blocking && !f.Closed && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
+		if f.Blocking && !f.Closed && f.Kind != Suspected && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
 			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, clip(f.Observed, 400)))
 		}
 	}

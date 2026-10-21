@@ -523,6 +523,15 @@ func (e *engine) findingLocked(id string) *Finding {
 	return nil
 }
 
+func (e *engine) passLocked(id string) *pass {
+	for _, p := range e.passes {
+		if p.id == id {
+			return p
+		}
+	}
+	return nil
+}
+
 func (e *engine) questionLocked(id string) *Question {
 	for _, q := range e.questions {
 		if q.ID == id {

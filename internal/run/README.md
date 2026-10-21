@@ -198,6 +198,18 @@ the unchanged candidate, whose Root reviewer confirms it or raises a finding. A 
 with an undisposed adverse receipt of its own and a satisfied result with one within the
 responsibility are refused.
 
+## Finding kinds
+
+A finding is a `Deviation` (blocks, states `Expected`, names a correction purpose),
+`Suspected` (only in a review; blocks and states `Expected`, but names no correction and is
+never handed to a work Pass: `Reassess` holds while only suspicions and fresh disputes keep a
+review from being clean), `ModelProblem` (only in
+a Model assessment) or `Suggestion` (never blocks, no correction). Only the declared effect
+is checked. A suspicion closes as `disproved` or as `confirmed` with the deviation of the same owner
+and obligation that the same submission raises. A blocking review finding that repeats a
+finding a review of the unchanged candidate disproved, same owner and obligation text, is
+refused without a failed probe receipt of its Pass.
+
 ## Model assessment
 
 A review Pass with `Assesses` is the Model assessment of the bound model before any

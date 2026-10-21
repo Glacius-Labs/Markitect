@@ -30,6 +30,9 @@ func renderFinding(f *Finding) string {
 		kind = "genuine"
 	}
 	text := fmt.Sprintf("Finding %s [%s], owner %s, raised by %s in %s", f.ID, kind, f.Owner, f.RaisedBy, f.Pass)
+	if f.Kind != "" {
+		text = fmt.Sprintf("Finding %s [%s], kind %s, owner %s, raised by %s in %s", f.ID, kind, f.Kind, f.Owner, f.RaisedBy, f.Pass)
+	}
 	if f.Blocking && f.Correction != "" {
 		text += ", correction " + string(f.Correction)
 	}
@@ -39,7 +42,11 @@ func renderFinding(f *Finding) string {
 			text += " " + f.Definition
 		}
 	}
-	text = fmt.Sprintf("%s.\n  Obligation: %s\n  Observed: %s", text, f.Obligation, f.Observed)
+	text = fmt.Sprintf("%s.\n  Obligation: %s", text, f.Obligation)
+	if f.Expected != "" {
+		text += "\n  Expected: " + f.Expected
+	}
+	text += "\n  Observed: " + f.Observed
 	for _, d := range f.Disputes {
 		text += fmt.Sprintf("\n  Disputed by %s in %s: %s\n    Evidence: %s", d.By, d.Pass, d.Reason, d.Evidence)
 	}
