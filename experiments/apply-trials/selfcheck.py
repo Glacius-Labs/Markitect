@@ -222,6 +222,9 @@ def fake_report(path, run_status, publication, reason="", questions=(), status=N
         report["run"] = {"id": "r", "status": run_status, "reason": reason, "passes": [], "findings": [],
                          "questions": [{"from": ".", "to": "user", "text": text, "answered": False} for text in questions],
                          "problems": [], "turns": [], "usage": {}}
+        if reason.startswith("Root judged the model erroneous or contradictory: "):
+            report["run"]["problems"] = [{"manager": ".", "category": "model", "abort": True,
+                                          "text": reason.removeprefix("Root judged the model erroneous or contradictory: ")}]
     if publication:
         report["publication"] = {"Outcome": publication}
     Path(path).write_text(json.dumps(report), encoding="utf-8")
@@ -287,11 +290,11 @@ def check_assessor(project, python, report):
                                              ("new", "failed", "Root judged the model erroneous or contradictory: ")):
                     judged = assess.assess(case.id, repo, fake_report(folder / (name + ".json"), status, None, reason + terms),
                                            python)
-                    report.expect(judged["outcome"]["met"] and judged["outcome"]["defectNamed"],
+                    report.expect(judged["outcome"]["met"] is (name == "new") and judged["outcome"]["defectNamed"],
                                   "%s: the %s model-defect ending is not judged as met: %s" % (case.id, name, judged["outcome"]))
                 asked = assess.assess(case.id, repo, fake_report(folder / "asked.json", "incomplete", None, "deadline",
                                                                  questions=[terms]), python)
-                report.expect(asked["outcome"]["met"] is (case.expected == GAP),
+                report.expect(asked["outcome"]["met"] is False,
                               "%s: a question to the user is judged %s" % (case.id, asked["outcome"]))
                 (repo / "realization" / "README.md").write_text("changed\n", encoding="utf-8")
                 judged = assess.assess(case.id, repo, fake_report(folder / "defect.json", "failed", None,

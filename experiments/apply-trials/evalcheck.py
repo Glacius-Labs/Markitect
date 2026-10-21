@@ -50,8 +50,8 @@ from scenarios import (BY_ID, COMPLETED, FALSE_ABORT, FALSE_BLOCKER, JUSTIFIED_S
                        UNAUTHORIZED_PUBLICATION, WRONG_STOP, check_catalog)
 from trial_kit import python_command  # noqa: E402
 
-GAP_STOP = "Root confirmed a model gap: stockroom/inputs refers to the maximum name length but never gives its value"
-ERROR_STOP = ("Root confirmed a model error: stockroom/item makes SKUs case-sensitive while stockroom/inputs converts "
+GAP_STOP = assess.ASSESSMENT_REASON + "F1 [stockroom, model_gap] stockroom/inputs: maximum name length has no value"
+ERROR_STOP = (assess.ASSESSMENT_REASON + "F1 [stockroom, model_error] stockroom/item: SKUs are case-sensitive while stockroom/inputs converts "
               "them to uppercase")
 ASSESSED = [{"id": "p1", "purpose": "assessment", "verdict": "needs_correction"}]
 REALIZED = [{"id": "p1", "purpose": "assessment", "verdict": "satisfied"},
@@ -75,6 +75,20 @@ def apply_report(folder, name, run_status, publication, passes=(), findings=(), 
               "run": {"id": "r", "status": run_status, "reason": reason, "passes": list(passes),
                       "findings": list(findings), "questions": list(questions), "problems": [], "turns": [],
                       "usage": {}}}
+    # These simulated stops must carry the evidence required from real producer reports as well.
+    run = report["run"]
+    if reason.startswith(assess.ASSESSMENT_REASON) and passes:
+        correction = "model_error" if "model_error" in reason else "model_gap"
+        obligation = "stockroom/item" if correction == "model_error" else "stockroom/inputs"
+        run["passes"] = [dict(passes[0], review=True, sealed=True, tree="candidate", verdict="needs_correction",
+                              managers=[{"manager": ".", "state": "done", "result": "P1", "verdict": "needs_correction"}]),
+                         *passes[1:]]
+        run["findings"] = [{"id": "F1", "owner": "stockroom", "obligation": obligation, "observed": reason,
+                            "pass": passes[0]["id"], "candidate": "candidate", "review": True, "raisedBy": ".",
+                            "blocking": True, "kind": "model", "correction": correction}]
+    elif reason.startswith("Root judged the model erroneous or contradictory: "):
+        run["problems"] = [{"manager": ".", "category": "model", "abort": True,
+                            "text": reason.removeprefix("Root judged the model erroneous or contradictory: ")}]
     if publication:
         report["publication"] = {"Outcome": publication}
     return write(Path(folder) / ("%s.json" % name), report)
@@ -289,10 +303,10 @@ def check_stops(report, python, folder):
     """A4-gap and A7 stop; A4-fixed, FREE and A7-near must not."""
     repo = packet("A4-gap", folder, "A4-gap")
     stops = {
-        "actual #566 assessment stop": (apply_report(folder, "g566", "failed", None,
+        "simulated #566 assessment stop": (apply_report(folder, "g566", "failed", None,
             [{"id": "p1", "purpose": "assess", "verdict": "needs_correction"}],
-            reason="the model assessment confirmed a material model problem: F1 [stockroom, model_gap]: "
-                   "stockroom/inputs gives no maximum name length"), evaluate.MET, JUSTIFIED_STOP),
+            reason="the model assessment confirmed a material model problem: F1 [stockroom, model_gap] "
+                   "stockroom/inputs: gives no maximum name length"), evaluate.MET, JUSTIFIED_STOP),
         "assessment stop": (apply_report(folder, "g1", "failed", None, ASSESSED, reason=GAP_STOP), evaluate.MET,
                             JUSTIFIED_STOP),
         "stop after realization began": (apply_report(folder, "g2", "failed", None, REALIZED, reason=GAP_STOP),
@@ -530,7 +544,7 @@ def check_dep_outcome(report, python, folder):
                                                         python=python), evaluate.MET)
     verdict(report, "DEP direct stop about the delegated reserve", evaluate.evaluate(
         "DEP", "direct", repo, apply_report(folder, "DEP-s", "failed", None, ASSESSED,
-                                            reason="Root confirmed a model gap: the reserve is never given"),
+                                            reason=assess.ASSESSMENT_REASON + "F1 [stockroom, model_gap] stockroom/inputs: the reserve is never given"),
         python=python), evaluate.NOT_MET, FALSE_ABORT)
     apply_variant(repo, "h1-reserve-per-room")
     verdict(report, "DEP direct disagreeing reserve", evaluate.evaluate("DEP", "direct", repo, rep, python=python),

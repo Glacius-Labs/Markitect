@@ -1,0 +1,521 @@
+{
+  "archive": {
+    "name": "b0b1-attempts-20261021.tar.gz",
+    "sha256": "038d314634e191c5ed6e5de6027fe8daf80d73bdee12d2d87e70f3ddfa4ab75e"
+  },
+  "projection": "Top-level outcome; preparation status and attempt errors/Diagnostics; run outcome, findings, problems, questions; Pass identity/seal/candidate/verdict and Root manager result/verdict. Other fields omitted without rewriting values.",
+  "reports": {
+    "SA-B0-SN-2": {
+      "member": "SA-B0-SN-2/out/apply.json",
+      "sha256": "86f9f04450df51d22f450fee0322ae75f0fc1278dd36c5f13879ffa1802ebbbb",
+      "report": {
+        "operation": "apply",
+        "status": "not_completed",
+        "error": "observe image path /work: context deadline exceeded\nread |0: file already closed\nimage observation cleanup: context deadline exceeded\ncontainer engine rm: signal: killed: ",
+        "preparation": {
+          "status": "not_completed",
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "defaultsDiagnostics": null,
+              "error": "observe image path /work: context deadline exceeded\nread |0: file already closed\nimage observation cleanup: context deadline exceeded\ncontainer engine rm: signal: killed: ",
+              "executionDiagnostics": null,
+              "fileDiagnostics": [
+                {
+                  "Code": "files.registry_not_passed",
+                  "Message": "The registry parent has not passed; no partial registry is used for accounting.",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "Field": "",
+                    "File": ""
+                  }
+                }
+              ],
+              "modelDiagnostics": null,
+              "registryDiagnostics": [
+                {
+                  "Code": "registry.source_uncaptured",
+                  "Message": "A Census registry shard has no captured source observation.",
+                  "Position": null,
+                  "Source": ".markitect/registry/stockroom/registry.yaml"
+                }
+              ],
+              "settingsDiagnostics": [
+                {
+                  "Code": "settings.file_check_not_passed",
+                  "Message": "The bound FileCheck has not passed; inspect FileCheck diagnostics.",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "Field": "",
+                    "File": ""
+                  }
+                },
+                {
+                  "Code": "runtime.adapter_error",
+                  "Message": "observe image path /work: context deadline exceeded\nread |0: file already closed\nimage observation cleanup: context deadline exceeded\ncontainer engine rm: signal: killed: ",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "63568c83acd0d73881afa34e408074ebdac0db2cb660d8aa68b035caec58dcdc",
+                    "Field": "/checkProfiles/library-go/container",
+                    "File": "source:[\"/home/user/mk-sa/SA-B0-SN-2/host\",\"host.yaml\"]"
+                  }
+                },
+                {
+                  "Code": "container_check.acquisition",
+                  "Message": "observe image path /work: context deadline exceeded\nread |0: file already closed\nimage observation cleanup: context deadline exceeded\ncontainer engine rm: signal: killed: ",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "63568c83acd0d73881afa34e408074ebdac0db2cb660d8aa68b035caec58dcdc",
+                    "Field": "/checkProfiles/library-go/container/executable",
+                    "File": "source:[\"/home/user/mk-sa/SA-B0-SN-2/host\",\"host.yaml\"]"
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    "SA-B0-SQV-2": {
+      "member": "SA-B0-SQV-2/out/apply.json",
+      "sha256": "75b4a541e367fd13926bb9df0807cb83fcbd92fe59ec377336b6c19284944206",
+      "report": {
+        "operation": "apply",
+        "status": "failed",
+        "preparation": {
+          "status": "passed",
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "defaultsDiagnostics": null,
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "modelDiagnostics": null,
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ]
+        },
+        "run": {
+          "findings": [
+            {
+              "blocking": true,
+              "candidate": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "closed": false,
+              "correction": "model_gap",
+              "id": "F1",
+              "kind": "model",
+              "obligation": "stockroom/inputs",
+              "observed": "stockroom/inputs says a name, after trimming, \"must then be nonempty and at most the maximum name length, counted as Unicode code points\". No Definition (inputs, add-item, item, interface, system, realization, storage) gives the number. Two conforming realizations could pick 50 and 100, and would then accept or refuse the same `add-item --name` input differently. A test could not decide which is right. The value is a public acceptance/refusal outcome, not an ordinary implementation choice, and the model does not delegate it as freedom. Neither derivation nor delegation settles it.",
+              "owner": "stockroom",
+              "pass": "p1",
+              "raisedBy": ".",
+              "review": true
+            },
+            {
+              "blocking": true,
+              "candidate": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "closed": false,
+              "correction": "model_gap",
+              "id": "F2",
+              "kind": "model",
+              "obligation": "stockroom/inputs",
+              "observed": "stockroom/inputs says a name, after trimming, must be nonempty and at most the maximum name length, counted as Unicode code points. No Definition (inputs, add-item, item, interface, system, realization, storage, stock-limits) states that number, and a search of the model finds the phrase only in inputs. Two conforming realizations could choose 50 and 100 and then accept or refuse the same add-item --name input differently. A test could not decide which is right. The value is a public acceptance/refusal outcome, and the model neither derives it nor delegates it as implementation freedom.",
+              "owner": "stockroom",
+              "pass": "p1",
+              "raisedBy": "stockroom",
+              "review": true
+            },
+            {
+              "blocking": true,
+              "candidate": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "closed": false,
+              "correction": "model_gap",
+              "id": "F3",
+              "kind": "model",
+              "obligation": "stockroom/inputs",
+              "observed": "stockroom/inputs says a name, after trimming, must be nonempty and at most the maximum name length, counted as Unicode code points. No Definition (inputs, add-item, item, interface, system, realization, storage, stock-limits) states that number, and a search of the model finds the phrase only in inputs. Two conforming realizations could choose 50 and 100 and then accept or refuse the same add-item --name input differently. A test could not decide which is right. The value is a public acceptance/refusal outcome, and the model neither derives it nor delegates it as implementation freedom.",
+              "owner": "stockroom",
+              "pass": "p1",
+              "raisedBy": "stockroom",
+              "review": true
+            },
+            {
+              "blocking": true,
+              "candidate": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "closed": false,
+              "correction": "model_gap",
+              "id": "F4",
+              "kind": "model",
+              "obligation": "stockroom/inputs",
+              "observed": "stockroom/inputs says a name must be nonempty and \"at most the maximum name length\", counted as Unicode code points. No Definition states the number, and the phrase occurs only in inputs.yaml. The model neither derives it nor delegates it as freedom, and it decides which `add-item --name` inputs are accepted or refused.",
+              "owner": "stockroom",
+              "pass": "p1",
+              "raisedBy": ".",
+              "review": true
+            }
+          ],
+          "problems": [],
+          "questions": [],
+          "reason": "the model assessment confirmed a material model problem: F1 [stockroom, model_gap] stockroom/inputs: stockroom/inputs says a name, after trimming, \"must then be nonempty and at most the maximum name length, counted as Unicode code points\". No Definition (inputs, add-item, item, interface, system, realization, storage) gives the number. Two conforming realizations could pick 50 and 100, and would then accept or refuse the same `add-item --name` input differently. A test could not decide which is r\n[cut; look_up topic probe for the whole receipt]; F2 [stockroom, model_gap] stockroom/inputs: stockroom/inputs says a name, after trimming, must be nonempty and at most the maximum name length, counted as Unicode code points. No Definition (inputs, add-item, item, interface, system, realization, storage, stock-limits) states that number, and a search of the model finds the phrase only in inputs. Two conforming realizations could choose 50 and 100 and then accept or refuse the same add-item\n[cut; look_up topic probe for the whole receipt]; F3 [stockroom, model_gap] stockroom/inputs: stockroom/inputs says a name, after trimming, must be nonempty and at most the maximum name length, counted as Unicode code points. No Definition (inputs, add-item, item, interface, system, realization, storage, stock-limits) states that number, and a search of the model finds the phrase only in inputs. Two conforming realizations could choose 50 and 100 and then accept or refuse the same add-item\n[cut; look_up topic probe for the whole receipt]; F4 [stockroom, model_gap] stockroom/inputs: stockroom/inputs says a name must be nonempty and \"at most the maximum name length\", counted as Unicode code points. No Definition states the number, and the phrase occurs only in inputs.yaml. The model neither derives it nor delegates it as freedom, and it decides which `add-item --name` inputs are accepted or refused. (4 confirmed)",
+          "status": "failed",
+          "passes": [
+            {
+              "id": "p1",
+              "purpose": "assess",
+              "review": true,
+              "sealed": true,
+              "tree": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "verdict": "needs_correction",
+              "managers": [
+                {
+                  "manager": ".",
+                  "result": "P4",
+                  "state": "done",
+                  "verdict": "needs_correction"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "persisted": {
+        "member": "SA-B0-SQV-2/state-run/runs/20261021T121029Z-1d440bc4/report.json",
+        "sha256": "1ead49a2ba5aff400994520c49d1cdbb2ea949ada14bc1c361afc1ed8167b948",
+        "status": "failed",
+        "runStatus": "failed"
+      }
+    },
+    "SA-B0-SN-3": {
+      "member": "SA-B0-SN-3/out/apply.json",
+      "sha256": "5f660b89214d53f3c5b0679858c2cd6ae03254f823f899b3e6f3fb98e418b827",
+      "report": {
+        "operation": "apply",
+        "status": "passed",
+        "publication": {
+          "ID": "20261021T121802Z-377fea2c",
+          "Outcome": "no_change",
+          "Paths": null,
+          "Reason": ""
+        },
+        "preparation": {
+          "status": "passed",
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "defaultsDiagnostics": null,
+              "executionDiagnostics": null,
+              "fileDiagnostics": [
+                {
+                  "Code": "files.registry_not_passed",
+                  "Message": "The registry parent has not passed; no partial registry is used for accounting.",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "Field": "",
+                    "File": ""
+                  }
+                }
+              ],
+              "modelDiagnostics": null,
+              "registryDiagnostics": [
+                {
+                  "Code": "registry.source_uncaptured",
+                  "Message": "A Census registry shard has no captured source observation.",
+                  "Position": null,
+                  "Source": ".markitect/registry/stockroom/registry.yaml"
+                }
+              ],
+              "settingsDiagnostics": [
+                {
+                  "Code": "settings.file_check_not_passed",
+                  "Message": "The bound FileCheck has not passed; inspect FileCheck diagnostics.",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "Field": "",
+                    "File": ""
+                  }
+                }
+              ]
+            },
+            {
+              "contextDiagnostics": null,
+              "defaultsDiagnostics": null,
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "modelDiagnostics": null,
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ]
+        },
+        "run": {
+          "findings": [],
+          "problems": [],
+          "questions": [],
+          "status": "verified",
+          "passes": [
+            {
+              "id": "p1",
+              "purpose": "assess",
+              "review": true,
+              "sealed": true,
+              "tree": "371d7f2db6d753d26f38ce70e6946d9a72274f991409baaf5800c945b0952f9f",
+              "verdict": "satisfied",
+              "managers": [
+                {
+                  "manager": ".",
+                  "result": "P4",
+                  "state": "done",
+                  "verdict": "satisfied"
+                }
+              ]
+            },
+            {
+              "id": "p2",
+              "purpose": "implement",
+              "review": false,
+              "sealed": true,
+              "tree": "371d7f2db6d753d26f38ce70e6946d9a72274f991409baaf5800c945b0952f9f",
+              "verdict": "satisfied",
+              "managers": [
+                {
+                  "manager": ".",
+                  "result": "P8",
+                  "state": "done",
+                  "verdict": "satisfied"
+                }
+              ]
+            },
+            {
+              "id": "p3",
+              "purpose": "verify",
+              "review": true,
+              "sealed": true,
+              "tree": "371d7f2db6d753d26f38ce70e6946d9a72274f991409baaf5800c945b0952f9f",
+              "verdict": "satisfied",
+              "managers": [
+                {
+                  "manager": ".",
+                  "result": "P12",
+                  "state": "done",
+                  "verdict": "satisfied"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "persisted": {
+        "member": "SA-B0-SN-3/state-run/runs/20261021T121802Z-377fea2c/report.json",
+        "sha256": "abb43862e1900c51806f54d9a872d6b52ebe2dd9fbab35ae96ab0e88a08af4bc",
+        "status": "passed",
+        "runStatus": "verified"
+      }
+    },
+    "SA-B1-SN-1": {
+      "member": "SA-B1-SN-1/out/apply.json",
+      "sha256": "29350c8b1f568a2be945417c96fbb60e0d434f802223a3eddad68043f18b71dc",
+      "report": {
+        "operation": "apply",
+        "status": "not_completed",
+        "preparation": {
+          "status": "passed",
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "defaultsDiagnostics": null,
+              "executionDiagnostics": null,
+              "fileDiagnostics": [
+                {
+                  "Code": "files.registry_not_passed",
+                  "Message": "The registry parent has not passed; no partial registry is used for accounting.",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "Field": "",
+                    "File": ""
+                  }
+                }
+              ],
+              "modelDiagnostics": null,
+              "registryDiagnostics": [
+                {
+                  "Code": "registry.source_uncaptured",
+                  "Message": "A Census registry shard has no captured source observation.",
+                  "Position": null,
+                  "Source": ".markitect/registry/stockroom/registry.yaml"
+                }
+              ],
+              "settingsDiagnostics": [
+                {
+                  "Code": "settings.file_check_not_passed",
+                  "Message": "The bound FileCheck has not passed; inspect FileCheck diagnostics.",
+                  "Position": null,
+                  "Source": {
+                    "ContentID": "0000000000000000000000000000000000000000000000000000000000000000",
+                    "Field": "",
+                    "File": ""
+                  }
+                }
+              ]
+            },
+            {
+              "contextDiagnostics": null,
+              "defaultsDiagnostics": null,
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "modelDiagnostics": null,
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ]
+        },
+        "run": {
+          "findings": [],
+          "problems": [],
+          "questions": [],
+          "reason": "capture of the stand at the end of p2 is uncertain: workspace volume remains mounted by 3 container(s)",
+          "status": "incomplete",
+          "passes": [
+            {
+              "id": "p1",
+              "purpose": "assess",
+              "review": true,
+              "sealed": true,
+              "tree": "371d7f2db6d753d26f38ce70e6946d9a72274f991409baaf5800c945b0952f9f",
+              "verdict": "satisfied",
+              "managers": [
+                {
+                  "manager": ".",
+                  "result": "P4",
+                  "state": "done",
+                  "verdict": "satisfied"
+                }
+              ]
+            },
+            {
+              "id": "p2",
+              "purpose": "implement",
+              "review": false,
+              "sealed": false,
+              "managers": [
+                {
+                  "manager": ".",
+                  "result": "P8",
+                  "state": "done",
+                  "verdict": "satisfied"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "persisted": {
+        "member": "SA-B1-SN-1/state-run/runs/20261021T123238Z-ee56e08d/report.json",
+        "sha256": "74a24a76cbb03ff96d8cadec2c0086f27423aa4f5ba7286c5a27894ac3448307",
+        "status": "not_completed",
+        "runStatus": "incomplete"
+      }
+    },
+    "SA-B1-SQV-1": {
+      "member": "SA-B1-SQV-1/out/apply.json",
+      "sha256": "45cc74f92fe08e4bded9ba58fadd96f31264c4ec80b0b69949687b73275a8dcb",
+      "report": {
+        "operation": "apply",
+        "status": "failed",
+        "preparation": {
+          "status": "passed",
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "defaultsDiagnostics": null,
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "modelDiagnostics": null,
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ]
+        },
+        "run": {
+          "findings": [
+            {
+              "blocking": true,
+              "candidate": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "closed": false,
+              "correction": "model_gap",
+              "id": "F1",
+              "kind": "model",
+              "obligation": "stockroom/inputs",
+              "observed": "stockroom/inputs says a name 'must then be nonempty and at most the maximum name length, counted as Unicode code points', but no value for that maximum is given in inputs or in any linked/included Definition (system, item, add-item, interface, storage, realization, stock-limits); a search of the whole model finds the phrase only in inputs.yaml. The limit decides which add-item names are accepted or refused (e.g. 60, 100 or 200 code points), so two realizations that both follow the model would accept/refuse different names and tests could not verify the boundary. Neither derivation from the model nor an explicit grant of implementation freedom settles the value (the text presents it as a defined constant, unlike the quantity range 1..1000 and stock cap 9999, which are stated).",
+              "owner": "stockroom",
+              "pass": "p1",
+              "raisedBy": ".",
+              "review": true
+            },
+            {
+              "blocking": true,
+              "candidate": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "closed": false,
+              "correction": "model_gap",
+              "id": "F2",
+              "kind": "model",
+              "obligation": "stockroom/inputs",
+              "observed": "stockroom/inputs: a name 'must then be nonempty and at most the maximum name length, counted as Unicode code points'. No value for that maximum appears in inputs or in any linked or included Definition (system, item, add-item, interface, storage, realization, stock-limits); a grep of .markitect finds the phrase only in inputs.yaml. The limit decides which add-item names are accepted or refused, so two realizations that both follow the model would accept different names, and the boundary cannot be tested. It is presented as a defined constant, not as implementation freedom, unlike the stated quantity range 1..1000 and stock cap 9999.",
+              "owner": "stockroom",
+              "pass": "p1",
+              "raisedBy": "stockroom",
+              "review": true
+            },
+            {
+              "blocking": true,
+              "candidate": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "closed": false,
+              "correction": "model_gap",
+              "id": "F3",
+              "kind": "model",
+              "obligation": "stockroom/inputs",
+              "observed": "stockroom/inputs: a name 'must then be nonempty and at most the maximum name length, counted as Unicode code points'. No value for that maximum appears in inputs or in any linked or included Definition (system, item, add-item, interface, storage, realization, stock-limits); a grep of .markitect finds the phrase only in inputs.yaml. The limit decides which add-item names are accepted or refused, so two realizations that both follow the model would accept different names, and the boundary cannot be tested. It is presented as a defined constant, not as implementation freedom, unlike the stated quantity range 1..1000 and stock cap 9999.",
+              "owner": "stockroom",
+              "pass": "p1",
+              "raisedBy": "stockroom",
+              "review": true
+            }
+          ],
+          "problems": [],
+          "questions": [],
+          "reason": "the model assessment confirmed a material model problem: F1 [stockroom, model_gap] stockroom/inputs: stockroom/inputs says a name 'must then be nonempty and at most the maximum name length, counted as Unicode code points', but no value for that maximum is given in inputs or in any linked/included Definition (system, item, add-item, interface, storage, realization, stock-limits); a search of the whole model finds the phrase only in inputs.yaml. The limit decides which add-item names are accepted o\n[cut; look_up topic probe for the whole receipt]; F2 [stockroom, model_gap] stockroom/inputs: stockroom/inputs: a name 'must then be nonempty and at most the maximum name length, counted as Unicode code points'. No value for that maximum appears in inputs or in any linked or included Definition (system, item, add-item, interface, storage, realization, stock-limits); a grep of .markitect finds the phrase only in inputs.yaml. The limit decides which add-item names are accepted or refused, so\n[cut; look_up topic probe for the whole receipt]; F3 [stockroom, model_gap] stockroom/inputs: stockroom/inputs: a name 'must then be nonempty and at most the maximum name length, counted as Unicode code points'. No value for that maximum appears in inputs or in any linked or included Definition (system, item, add-item, interface, storage, realization, stock-limits); a grep of .markitect finds the phrase only in inputs.yaml. The limit decides which add-item names are accepted or refused, so\n[cut; look_up topic probe for the whole receipt] (3 confirmed)",
+          "status": "failed",
+          "passes": [
+            {
+              "id": "p1",
+              "purpose": "assess",
+              "review": true,
+              "sealed": true,
+              "tree": "19d3c7a224ca995771d8d348276fbbb85eb943e2b8decc35e25112ab782053eb",
+              "verdict": "needs_correction",
+              "managers": [
+                {
+                  "manager": ".",
+                  "result": "P4",
+                  "state": "done",
+                  "verdict": "needs_correction"
+                }
+              ]
+            }
+          ]
+        }
+      },
+      "persisted": {
+        "member": "SA-B1-SQV-1/state-run/runs/20261021T123851Z-2f742a15/report.json",
+        "sha256": "bd000ceedd263ebae7ab726347086706b35c5ac58b6e888aad9e98bb509a9e4c",
+        "status": "failed",
+        "runStatus": "failed"
+      }
+    }
+  }
+}
