@@ -206,8 +206,7 @@ export function runControlCard() {
       return;
     }
     if (!rc.available) {
-      body.append(h("p", { class: "note" }, rc.reason), setupHint(),
-        h("p", { class: "note" }, "An Apply started with markitect apply still appears below while it runs; it is observed, not controlled, here."));
+      body.append(h("p", { class: "note" }, rc.reason), setupHint());
       return;
     }
     if (run) {

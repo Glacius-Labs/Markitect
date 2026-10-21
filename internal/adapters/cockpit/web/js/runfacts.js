@@ -11,6 +11,12 @@ export function passTitle(purpose) {
   return purpose ? purpose[0].toUpperCase() + purpose.slice(1) : "Pass";
 }
 
+// passRef names a Pass with its purpose when the purpose is known: a Pass that
+// is not in the view (or has no purpose yet) is just "Pass p5".
+export function passRef(purpose, id) {
+  return purpose ? `${passTitle(purpose)} Pass ${id}` : `Pass ${id}`;
+}
+
 export function plural(n, word) {
   return `${n} ${word}${n === 1 ? "" : "s"}`;
 }

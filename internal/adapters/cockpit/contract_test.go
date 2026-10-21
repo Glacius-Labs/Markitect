@@ -5,6 +5,7 @@ import (
 	"go/parser"
 	"go/token"
 	"maps"
+	"os"
 	"path/filepath"
 	"reflect"
 	"regexp"
@@ -473,6 +474,12 @@ func TestReportDecodesOnlyFieldsTheProducerWrites(t *testing.T) {
 		}
 		return out
 	}
+	// ReportValue adds the outcome to the report it prints and retains; the
+	// type has no field for it.
+	if src, err := os.ReadFile(filepath.Join("..", "cli", "json.go")); err != nil || !strings.Contains(string(src), `out["outcome"] =`) {
+		t.Errorf("the producer's ReportValue no longer writes the report's outcome: %v", err)
+	}
+	fields["ApplyReport"]["outcome"] = true
 	for _, c := range []struct {
 		decoded  reflect.Type
 		producer string
@@ -492,5 +499,50 @@ func TestReportDecodesOnlyFieldsTheProducerWrites(t *testing.T) {
 		"publication":{"ID":"r","Outcome":"no_change","Paths":null,"Reason":""},"retainedWork":"w","evidenceDirectory":"d"}`))
 	if err != nil || r.Head != "h" || r.Run == nil || r.Run.Turns != 1 || len(r.Run.Passes) != 1 || r.Publication == nil || r.Retained != "w" || r.Run.Usage.CostUSD != 1 {
 		t.Fatalf("report = %+v, %v", r, err)
+	}
+}
+
+// lookupKeys reads the data keys a lookup record carries from the run engine's
+// source: the literal maps its callers pass to recordLookup, and the keys
+// recordLookup itself adds.
+func lookupKeys(t *testing.T) map[string]bool {
+	t.Helper()
+	file, err := parser.ParseFile(token.NewFileSet(), filepath.Join("..", "..", "run", "lookup.go"), nil, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	keys := map[string]bool{}
+	ast.Inspect(file, func(n ast.Node) bool {
+		switch x := n.(type) {
+		case *ast.CallExpr:
+			if sel, ok := x.Fun.(*ast.SelectorExpr); ok && sel.Sel.Name == "recordLookup" {
+				for _, arg := range x.Args {
+					for k := range mapKeys(arg) {
+						keys[k] = true
+					}
+				}
+			}
+		case *ast.AssignStmt:
+			for _, lhs := range x.Lhs {
+				if ix, ok := lhs.(*ast.IndexExpr); ok {
+					if id, ok := ix.X.(*ast.Ident); ok && id.Name == "data" {
+						if key := stringLit(ix.Index); key != "" {
+							keys[key] = true
+						}
+					}
+				}
+			}
+		}
+		return true
+	})
+	return keys
+}
+
+func TestProjectionReadsOnlyKeysALookupRecordCarries(t *testing.T) {
+	got := lookupKeys(t)
+	for _, key := range []string{"id", "owner", "bytes", "refused", "helper"} {
+		if !got[key] {
+			t.Errorf("the projection reads %q of a lookup record, which the run engine does not record (it records %v)", key, sortedKeys(got))
+		}
 	}
 }

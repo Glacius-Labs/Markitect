@@ -870,7 +870,7 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
    never by color alone. */
 .head .strategy { font-size: var(--s-1); padding: 1px 9px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--ink-2); }
 .head .runid { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
-.chip { display: inline-flex; align-items: center; gap: 6px; font-size: var(--s-1); padding: 1px 9px; border: 1px solid var(--line-2); border-radius: 999px; cursor: help; }
+.head .chip { display: inline-flex; align-items: center; gap: 6px; font-size: var(--s-1); padding: 1px 9px; border: 1px solid var(--line-2); border-radius: 999px; cursor: help; }
 .rail .pass .pmeta.faint { color: var(--ink-3); }
 .tag.warn { color: var(--wait); }
 .aside p.inline { display: flex; gap: 8px; align-items: center; margin: 0; }

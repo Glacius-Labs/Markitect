@@ -181,15 +181,15 @@ func TestFindingKindsDecideWhatBlocks(t *testing.T) {
 	if v.Findings[0].Class != "model_gap" || v.Findings[1].Class != "" {
 		t.Fatalf("classes = %q %q: the class of a Model assessment finding is its correction field", v.Findings[0].Class, v.Findings[1].Class)
 	}
-	if got := managerOf(t, v, "stock").Findings; !slices.Equal(got, []string{"F1"}) {
-		t.Fatalf("only the confirmed finding is a blocking badge: %v", got)
+	if got := managerOf(t, v, "stock").Findings; !slices.Equal(got, []string{"F1", "F2"}) {
+		t.Fatalf("a confirmed finding and an open suspicion hold the Pass back, a suggestion does not: %v", got)
 	}
 	var open []string
 	for _, sentence := range v.Account {
 		open = append(open, sentenceText(sentence))
 	}
 	text := strings.Join(open, "\n")
-	if !strings.Contains(text, "Open findings that block: F1 ") || !strings.Contains(text, "Suspicions to investigate") || strings.Contains(text, "F3") {
+	if !strings.Contains(text, "Open findings that block: F1 ") || !strings.Contains(text, "Suspicions to decide (they hold the Pass back") || strings.Contains(text, "F3") {
 		t.Fatalf("account = %q", text)
 	}
 	texts := entryTexts(records)
@@ -278,6 +278,18 @@ func TestModelAssessmentShowsItsCoverageAndAConfirmedProblemEndsTheRun(t *testin
 	s.add("outcome", "", "", "", map[string]any{"status": "failed", "reason": run.ModelErrorReason + "contradiction"})
 	rec := s.records()
 	if got := Project("r", rec, len(rec), Source{}, nil).Status.Ending; got != "model_problem" {
+		t.Fatalf("ending = %q", got)
+	}
+	// An assessment that sealed unclean without a confirmed problem ends in no
+	// closed model-problem ending: only the engine's reason says so.
+	s3 := newScenario(t)
+	startWithBinding(s3)
+	s3.add("candidate", "p1", "", "", map[string]any{"tree": "t"})
+	s3.add("pass.start", "p1", "", "", map[string]any{"purpose": "assess", "review": true, "writes": false, "tree": "t"})
+	s3.add("pass.sealed", "p1", "", "", map[string]any{"purpose": "assess", "verdict": "needs_correction", "tree": "t", "managers": []run.ManagerRecord{}})
+	s3.add("outcome", "", "", "", map[string]any{"status": "incomplete", "reason": "the pass budget ended"})
+	rec = s3.records()
+	if got := Project("r", rec, len(rec), Source{}, nil).Status.Ending; got != "" {
 		t.Fatalf("ending = %q", got)
 	}
 	// A technical failure is no model problem.
@@ -393,5 +405,17 @@ func TestPassTitleNamesTheModelAssessment(t *testing.T) {
 	s.add("pass.sealed", "p1", "", "", map[string]any{"purpose": "assess", "verdict": "satisfied", "tree": "t", "managers": []run.ManagerRecord{}})
 	if !anyContains(entryTexts(s.records()), "Model assessment Pass p1 sealed satisfied") {
 		t.Fatalf("entries = %v", entryTexts(s.records()))
+	}
+}
+
+func TestAnArtifactSubjectSuspicionNeverBlocks(t *testing.T) {
+	f := finding("F9", "suspected", false, "")
+	f.Subject = "artifact"
+	if got := findingEffect(f); got != "advisory" {
+		t.Fatalf("effect = %q", got)
+	}
+	f.Blocking = true
+	if got := findingEffect(f); got != "investigate" {
+		t.Fatalf("effect = %q", got)
 	}
 }

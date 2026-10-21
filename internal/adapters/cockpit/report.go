@@ -10,11 +10,11 @@ import (
 // is written once when the run ends; its absence during a run is no failure.
 //
 // Status is the command status the report carries. Outcome is the Run outcome
-// as the report states it when it does; the report of this build does not
-// write that field, so the outcome is then mapped from the command status by
-// the rule the producer documents (passed success, failed failed, anything
-// else incomplete), and the Run's own status (report.run.status) is what the
-// view presents with the publication.
+// the report states (the producer's ReportValue projects it from the command
+// status). A report of an earlier build lacks it; the outcome is then mapped
+// from the command status by the same rule (passed success, failed failed,
+// anything else incomplete) and Derived marks it. The view presents the Run's
+// own status (report.run.status) with the publication beside the outcome.
 type Report struct {
 	Operation   string       `json:"operation"`
 	Head        string       `json:"head,omitempty"`
@@ -139,10 +139,8 @@ func decodeReport(data []byte) (*Report, error) {
 		}
 	}
 	if r.Outcome == "" {
-		// The report of this build does not write the Run outcome. It follows
-		// from the command status by the producer's rule; Derived marks the
-		// value as mapped, and the view presents the Run's own status with
-		// the publication beside it.
+		// A report of an earlier build does not write the Run outcome. It
+		// follows from the command status by the producer's rule.
 		r.Derived = true
 		switch r.Status {
 		case "passed":

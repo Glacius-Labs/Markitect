@@ -177,8 +177,15 @@ export class Inspector {
     // The chip is small; what the link shows is in its tooltip.
     const detail = `${runSaid}.${follow} Link ${conn}.${health?.why ? ` ${health.why}` : ""}`;
     this.liveEl.title = `${detail} This is the observation of the run, separate from the recorded boundary. Pausing or losing the link never affects the run.`;
-    clear(this.liveEl).append(
-      h("span", { class: `chip ${cls}`, tabindex: 0, role: "status", "aria-label": `${live ? "Live" : "Replay"}. ${detail}` }, h("span", { class: "lamp" }), live ? "Live" : "Replay"));
+    // The chip is one element for the page's life, so a focus on it survives
+    // every render.
+    if (!this.chipEl) {
+      this.chipEl = h("span", { class: "chip", tabindex: 0, role: "status" }, h("span", { class: "lamp" }), h("span", { class: "chipword" }));
+      this.liveEl.append(this.chipEl);
+    }
+    this.chipEl.className = `chip ${cls}`;
+    this.chipEl.setAttribute("aria-label", `${live ? "Live" : "Replay"}. ${detail}`);
+    this.chipEl.querySelector(".chipword").textContent = live ? "Live" : "Replay";
     this.liveBtn.hidden = !live || this.following;
     this.liveBtn.textContent = newer ? `Return to live (${newer} newer)` : "Return to live";
   }
@@ -365,6 +372,7 @@ export class Inspector {
       run.source && `Source ${run.source.slice(0, 12)}.`,
       budget,
     ].filter(Boolean).join(" ");
+    const refocus = this.chipEl && document.activeElement === this.chipEl;
     clear(this.headEl).append(
       h("span", { class: "runid", title: v.run.id }, v.run.id),
       run.strategy ? h("span", { class: "strategy", title: binding || "The composition this run was bound to" }, run.strategy) : null,
@@ -374,15 +382,16 @@ export class Inspector {
       this.liveEl,
       this.stopEl);
     this.renderLive();
+    if (refocus) this.chipEl.focus();
   }
 
   renderRail() {
     const v = this.view;
     const items = v.passes.filter((p) => p.started).map((p) => {
       const stateCls = p.sealed ? `sealed-${p.verdict}` : v.status.outcome ? "stopped" : "running";
-      const modelProblem = p.purpose === "assess" && p.sealed && p.verdict === "needs_correction";
+      const modelProblem = p.purpose === "assess" && p.sealed && v.status.ending === "model_problem";
       const meta = p.sealed
-        ? `${modelProblem ? "model problem found" : p.verdict === "satisfied" ? "sealed satisfied" : "needs correction"}${p.review && p.checks?.length ? `, checks ${p.checks.every((c) => c.passed) ? "passed" : "failed"}` : ""}`
+        ? `${modelProblem ? "model problem confirmed" : p.verdict === "satisfied" ? "sealed satisfied" : "needs correction"}${p.review && p.checks?.length ? `, checks ${p.checks.every((c) => c.passed) ? "passed" : "failed"}` : ""}`
         : v.status.outcome ? "ended unsealed" : "running";
       // A correction round works on confirmed findings; a re-Verify decides the
       // disputes and suspicions of an unchanged candidate.

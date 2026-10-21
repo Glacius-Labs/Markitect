@@ -4,7 +4,7 @@
 // card above them starts and stops the one run this cockpit runs, when it is
 // configured to; runs started elsewhere are only observed.
 
-import { h, clear, when, duration } from "./dom.js";
+import { h, clear, when, duration, pagehead, about } from "./dom.js";
 import { store } from "./store.js";
 import { refreshState } from "./shell.js";
 import { runControlCard } from "./runcontrol.js";
@@ -15,9 +15,10 @@ export function renderRuns(content) {
   const history = h("section", { class: "panel", "aria-labelledby": "runs-history" });
   const states = h("p", { class: "note", style: { margin: 0 } });
   const page = h("div", { class: "page" },
-    h("div", { class: "pagehead" }, h("div", {},
-      h("h2", {}, "Runs"),
-      h("p", { class: "lead" }, "Start a run here when the cockpit has a run configuration and a Runtime profile, or start an Apply with markitect apply; it appears below while it runs. Stop ends only the run started here, incomplete with its evidence. A run started elsewhere is stopped where it was started, and pausing a replay never reaches a run."))),
+    pagehead("Runs", "Start a run here, or watch the runs of this project.", {
+      about: about("How this works",
+        h("p", {}, "Start a run here when the cockpit has a run configuration and a Runtime profile; starting spends provider usage. An Apply started with markitect apply appears below while it runs and is only observed here."),
+        h("p", {}, "Stop ends only the run started here, incomplete, with its evidence kept. A run started elsewhere is stopped where it was started, and pausing a replay never reaches a run.")) }),
     runControlCard(), now, history, states);
   content.append(page);
   const draw = (s) => {

@@ -5,10 +5,19 @@
 
 import { h, clear, clock, since, label, stateWord, shortDigest, duration } from "./dom.js";
 import { activity } from "./diagram.js";
-import { passTitle, plural, usageText, buildText } from "./runfacts.js";
+import { passTitle, passRef, plural, usageText, buildText } from "./runfacts.js";
 
 export function renderDetail(aside, ctx) {
   const token = (aside._token = (aside._token || 0) + 1);
+  // A live or replay step draws the plate again. What the owner opened and
+  // where they scrolled stays: sections remember their state per reference,
+  // and the scroll position is restored while the same reference is shown.
+  const top = aside._ref === (ctx.ref || "run") ? aside.scrollTop : 0;
+  aside._ref = ctx.ref || "run";
+  if (!aside._open) aside._open = new Set();
+  const keep = () => {
+    if (top && aside.scrollTop < top) aside.scrollTop = top;
+  };
   clear(aside);
   const close = h("button", { class: "btn icon close", "aria-label": "Close details", onclick: () => ctx.select(null) }, "×");
   const body = h("div", {});
@@ -18,8 +27,20 @@ export function renderDetail(aside, ctx) {
   const id = rest.join(":");
   const r = (target, text) => target ? h("button", { class: "ref", onclick: () => ctx.select(target) }, text) : text;
   const later = (records) => token === aside._token && records;
-  const load = async () => later((await ctx.detail(ref)).records);
-  const c = { ...ctx, r, body, load, id };
+  const load = async () => {
+    const records = later((await ctx.detail(ref)).records);
+    // The record arrives after the plate was drawn; the plate grows then.
+    if (records) queueMicrotask(() => setTimeout(keep, 0));
+    return records;
+  };
+  const disclose = (key, summary, ...children) => {
+    const id = `${ref}|${key}`;
+    const el = h("details", {}, h("summary", {}, summary), ...children);
+    el.open = aside._open.has(id);
+    el.addEventListener("toggle", () => (el.open ? aside._open.add(id) : aside._open.delete(id)));
+    return el;
+  };
+  const c = { ...ctx, r, body, load, id, disclose };
   switch (kind) {
     case "manager": manager(c); break;
     case "proposal": proposal(c); break;
@@ -35,6 +56,7 @@ export function renderDetail(aside, ctx) {
     case "orchestrator": orchestrator(c); break;
     default: overview(c);
   }
+  keep();
 }
 
 function title(c, text, kicker) {
@@ -100,7 +122,7 @@ const CLASSES = {
 function effectText(f) {
   if (f.effect === "closed") return `Closed as ${f.closedAs || "closed"}`;
   switch (f.kind) {
-    case "suspected": return "Suspicion: a concrete, plausible violation to investigate. It names no correction yet; a fresh review confirms it as a deviation or model problem or resolves it with evidence. Unresolved, it keeps a Verify from being clean.";
+    case "suspected": return "Suspicion: a concrete, plausible violation to investigate. It holds the Pass back until it is decided and names no correction yet; a fresh review confirms it as a deviation or model problem or resolves it with evidence.";
     case "model": return "Model problem: it points to the model, not to the work. Once Root confirms it the Run ends without publication; the model is corrected outside the Run.";
     case "suggestion": return "Suggestion: an optional idea. It never blocks, dispatches no correction and authorizes no write in this Run.";
   }
@@ -232,7 +254,7 @@ function manager(c) {
   const pv = view.passes.find((p) => p.id === view.current);
   title(c, label(m.path), m.path === "." ? "Root Manager: coordinates the whole model" : `Manager of Package ${m.path}`);
   c.body.append(h("p", { class: `st-${m.state || "none"} inline` },
-    h("span", { class: "lamp" }), h("strong", {}, stateWord(m.state)), h("span", { class: "muted" }, pv ? `in ${passTitle(pv.purpose)} Pass ${pv.id}` : "")));
+    h("span", { class: "lamp" }), h("strong", {}, stateWord(m.state)), h("span", { class: "muted" }, pv ? `in ${passRef(pv.purpose, pv.id)}` : "")));
   if (m.wait) c.body.append(why(c, m));
   const act = activity(m);
   if (m.turn) {
@@ -280,12 +302,12 @@ function contextSection(c, m) {
   const { view } = c;
   const ctx = m.context;
   const defs = view.lookups.filter((x) => x.manager === m.path && x.kind === "definition");
-  const briefs = view.lookups.filter((x) => x.manager === m.path && x.kind === "brief");
+  const briefs = view.lookups.filter((x) => x.manager === m.path && x.kind === "brief" && !x.helper);
   if (!ctx && !defs.length && !briefs.length) return;
   const items = [];
   if (ctx) {
     items.push(h("p", {}, [`Brief ${shortDigest(ctx.brief?.replace("sha256:", ""))}`, `${ctx.full.length} in full`, `${ctx.reference.length} reference only`].join(" · ")));
-    if (ctx.full.length) items.push(h("details", {}, h("summary", {}, `Supplied in full (${ctx.full.length})`), h("ul", { class: "defs" }, ctx.full.map((d) => h("li", {}, d)))));
+    if (ctx.full.length) items.push(c.disclose("full", `Supplied in full (${ctx.full.length})`, h("ul", { class: "defs" }, ctx.full.map((d) => h("li", {}, d)))));
   } else {
     items.push(h("p", { class: "note" }, "This run recorded no context binding for the Manager."));
   }
@@ -310,7 +332,7 @@ function contextSection(c, m) {
     const never = [...reference].filter((i) => !everLooked.has(i));
     items.push(h("p", { class: "note" }, reference.size ? "Reference-only Definitions are listed in the Brief; the Manager reads one by looking it up." : "Lookups the Manager made:"),
       rows.length ? h("ul", { class: "lookups" }, rows) : h("p", { class: "empty" }, "No lookup recorded."),
-      never.length ? h("details", {}, h("summary", {}, `Reference-only, not looked up (${never.length})`), h("ul", { class: "defs" }, never.map((d) => h("li", {}, d)))) : null);
+      never.length ? c.disclose("never", `Reference-only, not looked up (${never.length})`, h("ul", { class: "defs" }, never.map((d) => h("li", {}, d)))) : null);
   }
   if (briefs.length) items.push(h("p", { class: "note" }, `Looked up its Brief again ${plural(briefs.length, "time")}.`));
   section(c, "Model context", ...items);
@@ -394,7 +416,7 @@ function proposal(c) {
     title(c, id, "Not submitted up to this boundary.");
     return;
   }
-  title(c, `${cap(p.kind)} ${p.id}`, `${label(p.manager)}, ${passTitle(p.purpose)} Pass ${p.pass}`);
+  title(c, `${cap(p.kind)} ${p.id}`, `${label(p.manager)}, ${passRef(view.passes.find((x) => x.id === p.pass)?.purpose || p.purpose, p.pass)}`);
   const decider = p.manager === "." ? "the Orchestrator" : label(parentOf(p.manager));
   const steps = h("ol", { class: "steps" },
     h("li", { class: "ok" }, `Submitted at ${clock(p.at)} in `, r(`turn:${p.turn}`, `turn ${shortTurn(p.turn)}`)),
@@ -459,7 +481,7 @@ function finding(c) {
     f.class && ["Class", CLASSES[f.class] || f.class],
     ["Owner", r(`manager:${f.owner}`, label(f.owner))],
     ["Raised by", f.raisedBy === "markitect" ? "the Orchestrator (failed required check)" : r(`manager:${f.raisedBy}`, label(f.raisedBy))],
-    ["Raised in", r(`pass:${f.pass}`, `${passTitle(raisedIn?.purpose)} Pass ${f.pass}`)],
+    ["Raised in", r(`pass:${f.pass}`, passRef(raisedIn?.purpose, f.pass))],
     f.candidate && ["On candidate", h("span", { class: "digest" }, shortDigest(f.candidate))],
     f.subject && ["Subject", f.subject],
     f.definition && ["Definition", f.definition],
@@ -474,14 +496,14 @@ function finding(c) {
     const closedIn = view.passes.find((p) => p.id === f.closedPass);
     const same = closedIn?.candidate && f.candidate && closedIn.candidate === f.candidate;
     section(c, `Closed as ${f.closedAs || "closed"}`,
-      h("p", {}, "In ", r(`pass:${f.closedPass}`, `${passTitle(closedIn?.purpose)} Pass ${f.closedPass}`),
+      h("p", {}, "In ", r(`pass:${f.closedPass}`, passRef(closedIn?.purpose, f.closedPass)),
         closedIn?.candidate ? [" on candidate ", h("span", { class: "digest" }, shortDigest(closedIn.candidate)), same ? " (the same candidate)" : " (a changed candidate)"] : ""),
       f.closedAs === "confirmed" ? h("p", { class: "note" }, "A suspicion is closed as confirmed when the same submission raises the deviation or model problem it turned out to be.") : null,
       prose(f.closedReason), f.closedEvidence && prose(f.closedEvidence));
   } else if (f.effect === "blocks") {
     c.body.append(h("p", { class: "why" }, "Open. Only a later accepted review submission of its raising responsibility closes it: resolved on a changed candidate or disproved on the unchanged one."));
   } else if (f.effect === "investigate") {
-    c.body.append(h("p", { class: "why" }, "Open and under investigation. A fresh review of the candidate decides it; it names no correction before it is confirmed."));
+    c.body.append(h("p", { class: "why" }, "Open and under investigation. It holds the Pass back until a fresh review of the candidate decides it, and it names no correction before it is confirmed."));
   }
 }
 
@@ -569,7 +591,7 @@ function pass(c) {
     return;
   }
   const assess = p.purpose === "assess";
-  title(c, `${passTitle(p.purpose)} Pass ${p.id}`, assess ? "Model assessment of the bound model by fresh read-only reviewers, before any work" : p.review ? "Independent Verify with fresh read-only reviewers on one immutable candidate" : p.writes ? "Owned writes" : "Read-only");
+  title(c, passRef(p.purpose, p.id), assess ? "Model assessment of the bound model by fresh read-only reviewers, before any work" : p.review ? "Independent Verify with fresh read-only reviewers on one immutable candidate" : p.writes ? "Owned writes" : "Read-only");
   if (assess) assessment(c, p);
   if (p.unchanged) {
     c.body.append(h("p", { class: "round" }, h("strong", {}, "Re-Verify of an unchanged candidate. "),
@@ -642,7 +664,7 @@ function assessment(c, p) {
   } else if (p.sealed && p.verdict === "satisfied") {
     box.append(h("div", { class: "vhead" }, "No material model problem found"), h("div", { class: "muted" }, "The recorded coverage found nothing unresolved. That is not proof of exhaustive completeness, and it does not replace the artifact Verify."));
   } else if (p.sealed) {
-    box.append(h("div", { class: "vhead" }, "Needs correction"), h("div", { class: "muted" }, "The assessment sealed with a material problem."));
+    box.append(h("div", { class: "vhead" }, "Sealed unclean"), h("div", { class: "muted" }, "The assessment did not seal clean, for instance because a dispute or an open suspicion is undecided. No model problem is confirmed by this record."));
   } else {
     box.append(h("div", { class: "vhead" }, "Assessment in progress"), h("div", { class: "muted" }, open.length ? `${plural(open.length, "model problem")} raised so far.` : "No model problem raised so far."));
   }
@@ -846,7 +868,9 @@ function overview(c) {
   if (suspicions.length) section(c, "Suspicions to investigate", h("ul", { class: "findings" }, suspicions.map((f) => findingLine(c, f))));
   if (view.problems.length) section(c, "Problems", h("ul", {}, view.problems.map((p) => h("li", {}, r(`problem:${p.id}`, p.id), ` ${p.category} of ${label(p.manager)}${p.abort ? ", ends the run" : ""}`))));
   // What the record does not establish is a section to open, not a wall of text.
-  c.body.append(h("details", { class: "gaps" }, h("summary", {}, `What this record does not establish (${view.gaps.length})`), h("ul", {}, view.gaps.map((g) => h("li", {}, g.text)))));
+  const gaps = c.disclose("gaps", `What this record does not establish (${view.gaps.length})`, h("ul", {}, view.gaps.map((g) => h("li", {}, g.text))));
+  gaps.classList.add("gaps");
+  c.body.append(gaps);
 }
 
 // ---------- helpers ----------

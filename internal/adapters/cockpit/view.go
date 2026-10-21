@@ -408,8 +408,9 @@ type FindingView struct {
 	Seq       int `json:"seq"`
 	ClosedSeq int `json:"closedSeq,omitempty"`
 	// Effect says what the finding does to the Run at the boundary: "blocks"
-	// (an open confirmed deviation or model problem), "investigate" (an open
-	// suspicion, which names no correction and is decided by a fresh review),
+	// (an open confirmed deviation or model problem, which names a
+	// correction), "investigate" (an open suspicion: it holds the Pass back
+	// until a fresh review decides it, and names no correction),
 	// "advisory" (a suggestion or an advisory artifact finding, which never
 	// blocks) or "closed".
 	Effect string `json:"effect"`

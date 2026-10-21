@@ -45,13 +45,10 @@ func ending(v View) string {
 	if v.Status.Outcome != string(run.Failed) {
 		return ""
 	}
+	// The engine's reason prefixes are the evidence. An assessment that sealed
+	// unclean only because of disputes or open suspicions confirms no problem.
 	if strings.HasPrefix(v.Status.Reason, run.ModelAssessmentReason) || strings.HasPrefix(v.Status.Reason, run.ModelErrorReason) {
 		return "model_problem"
-	}
-	for _, pv := range v.Passes {
-		if pv.Purpose == string(run.Assess) && pv.Sealed && pv.Verdict == string(run.NeedsCorrection) {
-			return "model_problem"
-		}
 	}
 	return ""
 }
@@ -706,7 +703,7 @@ func (p *projector) view() View {
 	v.Bindings = append(v.Bindings, p.bindings...)
 	open := map[string][]string{}
 	for _, f := range p.findings {
-		if findingEffect(f.Finding) == "blocks" {
+		if e := findingEffect(f.Finding); e == "blocks" || e == "investigate" {
 			open[f.Owner] = append(open[f.Owner], f.ID)
 		}
 	}
@@ -750,18 +747,21 @@ func (s *Said) names(text string) bool {
 }
 
 // findingEffect says what a finding does to the Run (owner refinement of 21
-// October 2026). Only an open confirmed deviation or model problem blocks and
-// names a correction. An open suspicion is investigated by a fresh review; a
-// suggestion or an advisory artifact finding never blocks. A finding of an
+// October 2026). Only an open confirmed deviation or model problem names a
+// correction. An open suspicion also holds the Pass back (the engine records
+// it as blocking and a Pass with one cannot seal satisfied) until a fresh
+// review decides it, but it names no correction. A suggestion or an advisory
+// artifact finding never blocks. A finding of an
 // earlier build has no kind; its blocking flag decides.
 func findingEffect(f run.Finding) string {
 	switch {
 	case f.Closed:
 		return "closed"
+	case f.Kind == run.Suggestion || !f.Blocking:
+		// An artifact-subject finding is non-blocking for any kind.
+		return "advisory"
 	case f.Kind == run.Suspected:
 		return "investigate"
-	case f.Kind == run.Suggestion || !f.Blocking:
-		return "advisory"
 	}
 	return "blocks"
 }

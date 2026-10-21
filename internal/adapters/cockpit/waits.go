@@ -323,11 +323,11 @@ func account(v *View) []Sentence {
 			out = append(out, Sentence{{Text: "Root asked the owner "}, {Text: q.ID, Ref: "question:" + q.ID}, {Text: "; no answer is recorded."}})
 		}
 	}
-	// Only confirmed deviations and model problems block. A suspicion is
-	// investigated and classified by a fresh review; it is stated as one.
+	// Confirmed deviations and model problems name a correction. A suspicion
+	// holds the Pass back until a fresh review decides it; it is stated as one.
 	for _, group := range []struct{ effect, lead string }{
 		{"blocks", "Open findings that block: "},
-		{"investigate", "Suspicions to investigate (they name no correction yet): "},
+		{"investigate", "Suspicions to decide (they hold the Pass back and name no correction yet): "},
 	} {
 		var open Sentence
 		for _, f := range v.Findings {
