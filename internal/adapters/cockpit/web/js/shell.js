@@ -5,6 +5,7 @@
 
 import { h, clear, append, areaIcon, brandMark } from "./dom.js";
 import { store } from "./store.js";
+import { setTitle, notifyControl } from "./notify.js";
 
 export const areas = [
   { id: "model", key: "1", href: "#/model", label: "Model", lead: "Browse the canonical model and change it by prompt in a session.",
@@ -26,7 +27,7 @@ function build(app) {
   const shellEl = h("div", { class: "shell" },
     append(topbar, [
       h("a", { class: "brand", href: "#/", title: "Hub" }, brandMark(), h("strong", {}, "Markitect"), h("span", { class: "sub" }, "Cockpit")),
-      where, statusbar]),
+      where, statusbar, notifyControl()]),
     content);
   app.append(shellEl);
   // The skip link moves focus to the work surface without changing the place.
@@ -85,7 +86,7 @@ export function show(app, { area = null, tab = null, trail = [], escape = null, 
   append(clear(b.trailEl), trail.map((t) => [
     h("span", { "aria-hidden": "true" }, "›"),
     t.href ? h("a", { class: "item", href: t.href }, t.text) : h("span", { class: "item", title: t.text }, t.text)]));
-  document.title = `${trail.at(-1)?.text || a?.label || "Hub"} – Markitect cockpit`;
+  setTitle(`${trail.at(-1)?.text || a?.label || "Hub"} – Markitect cockpit`);
   // A new place enters with a short fade; reduced motion turns it off.
   b.content.className = `content${fill ? " fill" : ""}${entering ? " enter" : ""}`;
   clear(b.content);

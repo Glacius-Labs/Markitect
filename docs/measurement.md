@@ -2,6 +2,25 @@
 
 This document defines measurement procedure for Markitect product work. The [vision](vision.md) owns the quality and intent-fidelity thesis and the [delegated method](vision.md#the-delegated-method); the [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
 
+## Evidence for the primary goal
+
+The [owner's clarified goal](vision.md#primary-goal-and-prerequisites) is trust earned through reliable model-to-artifact conformance. Assess semantic fidelity before time or cost. Keep structural coverage, semantic model assessment, artifact realization and parent integration as distinct claims. Use the existing cases and records, not a new general evaluation platform.
+
+| Risk | Discriminating evidence |
+| --- | --- |
+| A condition is omitted inside a covered Definition | All Definition IDs and ordinary tests are green, but one material exception or boundary condition is wrong. An independent reviewer derives the condition from the same visible model and rejects the faulty candidate; a conforming alternative passes. |
+| Artifacts disagree | Reuse S-A and D-M: code, a green but semantically wrong test, README/configuration and a duplicated rule in another area must agree with binding intent. Report each exercised artifact kind and unexercised kinds separately. Check realization from model to artifacts and material artifact claims back to model or explicit freedom. |
+| Local success hides a composition failure | Extend the existing DEP controls with one genuine cross-area invariant failure despite locally passing children, such as a reservation being counted twice. Verify parent detection, routing to the responsible owner and corrected integrated behavior. Dependency version/routing evidence alone does not satisfy this semantic criterion. |
+| Review becomes endless cleanup | Independently conforming but unattractive artifacts are preserved. Report false blockers, invented requirements and unnecessary changes alongside missed defects and unsupported success. |
+| The model cannot express the intended project | In a later bounded authoring exercise, supply explicit purpose and requirements, then assess concepts, relationships, interfaces, cross-area rules and useful granularity without inventing binding implementation details. Internal model consistency alone cannot detect an unstated, wholly missing user need. |
+| Coherence decays over successive changes | In a later bounded sequence, continue each arm's own actual output through creation, a cross-area model change, removal of a requirement and unchanged Apply. Check stale obligations, regressions, recurring findings and unnecessary changes; never reset to a supplied correct project. |
+
+Freeze expected outcomes before execution, independently validate faulty/conforming controls and give every arm the same visible requirements and freedom. Keep hidden checks and seed locations outside writer inputs. For parent evidence, distinguish actual internal detection from a miss found only by the external oracle. One mixed realistic case does not isolate each mechanism's contribution. Removed requirements do not automatically require deleting every formerly relevant artifact: predeclare the resulting intended behavior and preservation freedom.
+
+Report behavior, test semantics, documentation/configuration consistency, ownership/integration, preservation, missed conditions, unsupported success, false blockers and unknowns separately. State actual assessed scope and evidence in readable results. A green status, an external behavioral oracle or a complete registry is not a holistic proof. Human attention includes model/packet authoring, maintenance and recovery; runtime and money remain separate secondary observations.
+
+The [A–D supplement](development/claude-direct-runtime-handoff-20261021.md#primary-goal-supplement-and-current-handoff) prioritizes current discriminating checks within existing responsibilities and ceilings. The authoring and longitudinal exercises remain later bounded scopes; this adoption starts no additional series, does not rescore historical results and adds no UI implementation assignment.
+
 ## Staged method readiness
 
 Establish a usable ontology-to-reconciliation process before measuring comparative benefit. This procedure orders new work; it does not rescore historical cohorts, erase failures or waive contribution and release gates. A real missing capability from the accepted design must be implemented, not replaced by a mock and reported as working.
