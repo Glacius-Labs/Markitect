@@ -748,7 +748,10 @@ func TestEveryTurnGetsAFreshContainerAndKeepsItsConversation(t *testing.T) {
 	if res, err := agents.Run(context.Background(), second, echoHandler(new([]string))); err != nil || !res.Stopped || res.Conversation != "conversation-1" {
 		t.Fatalf("second turn %+v %v", res, err)
 	}
-	if len(specs) != 2 || specs[0].Name == specs[1].Name || !runtimes[0].closed || !runtimes[1].closed {
+	if len(specs) != 2 {
+		t.Fatalf("%d containers for two turns", len(specs))
+	}
+	if specs[0].Name == specs[1].Name || !runtimes[0].closed || !runtimes[1].closed {
 		t.Fatalf("containers %q, closed %v %v", []string{specs[0].Name, specs[1].Name}, runtimes[0].closed, runtimes[1].closed)
 	}
 	home := func(spec container.ContainerSpec) string {

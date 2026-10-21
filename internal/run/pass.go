@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -984,13 +983,4 @@ func (e *engine) confirmedLocked(p *pass) []string {
 
 // shorten cuts a text for a reason to at most n bytes at a rune boundary and
 // marks the cut; the complete text stays in the run's record.
-func shorten(s string, n int) string {
-	if len(s) <= n {
-		return s
-	}
-	cut := n
-	for cut > 0 && !utf8.RuneStart(s[cut]) {
-		cut--
-	}
-	return s[:cut] + " [...]"
-}
+func shorten(s string, n int) string { return cutText(s, n, " [...]") }

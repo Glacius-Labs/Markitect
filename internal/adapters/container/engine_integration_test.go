@@ -149,7 +149,7 @@ func buildShellTestImage(ctx context.Context, t *testing.T, enginePath string) s
 	t.Helper()
 	return buildTestImageFrom(ctx, t, enginePath,
 		"ubuntu:24.04@sha256:008173c23f95b170204355c12626cb5a965d779a7e1283b09e9cffbb1bf33ca3",
-		"RUN mkdir -p /work && chown 1000:1000 /work\n")
+		"RUN mkdir -p /work /home/agent && chown 1000:1000 /work /home/agent\n")
 }
 
 func buildTestImageFrom(ctx context.Context, t *testing.T, enginePath, base, extra string) string {
