@@ -69,7 +69,7 @@ MISSED = "missed-defect"  # finished without work, stop or blocker although the 
 UNAUTHORIZED_PUBLICATION = "unauthorized-publication"  # a stop reported and work published anyway
 OWNER_CHANNEL = "owner-channel"  # a question or wait for an answer from outside the Run
 OPTIONAL_CHANGE = "optional-change"  # a change no obligation or required evidence asked for (#561)
-FALSE_BLOCKER = "false-blocker"  # a blocking finding or correction on a stand that conforms (#561)
+FALSE_BLOCKER = "false-blocker"  # a factual blocker independently disproved with bound evidence
 TECHNICAL = "technical-incomplete"  # no semantic ending: limits, infrastructure, missing evidence
 COMPLETED = "completed"  # the expected work was delivered
 
@@ -112,6 +112,32 @@ SKU_TERMS = (("sku",), ("case-sensitive", "case sensitive", "uppercase", "upper-
                         "lower case"))
 
 SCENARIOS = (
+    Scenario(
+        "ARTIFACTS", "S-A", REPAIR,
+        "Does reconciliation follow the model across code, a green wrong test, README and configuration?",
+        "Every conflicting representation is corrected toward the same unchanged model.",
+        "Artifact agreement and green tests alone cannot substitute for model conformance.",
+        ("oracle s1 and artifact checks pass", "every seeded fault repaired", "own tests pass"),
+        ("a green wrong test or stale README/configuration survives", "the list-order clause stays omitted"),
+        ("no completed publication within the limit",),
+        "Implementation structure is free within the model; necessary repairs may change affected artifacts.",
+        "S-N conforms; isolated a2 and a4 controls have green own tests but fail issue-exact and list-order.",
+        APPLY, strict_scope=True, sessions=("D",),
+        limits=("preparation only: D still needs a frozen source/profile/order and separate execution authority",),
+        lineage="existing S-A, selected for the #569 artifact slot; no extra attempt allocation"),
+    Scenario(
+        "DEP-SEMANTIC", "H-I", REPAIR,
+        "Does the parent inspect actual cross-child semantics when each child suite passes?",
+        "rooms' declared bookable seats agree with the seats bookings actually admits.",
+        "Independent parent integration detects an invariant local child evidence misses.",
+        ("oracle h1 passes", "r3 repaired and the incorrect test corrected", "own tests pass"),
+        ("rooms and bookings retain different reserves",), ("no completed publication within the limit",),
+        "The agreed reserve may be any whole value from 0 to 2; necessary repair stays with its owner.",
+        "H-N is conforming; H-I starts with both child suites green but violates reserve-agreement.",
+        APPLY, sessions=("D",),
+        limits=("semantic counterpart/control of DEP; routing/version claims remain separate",
+                "D selects this existing slot with coordination; this is not an additional run grant"),
+        lineage="#569 refinement of the existing DEP semantic slot"),
     Scenario(
         "V1", "D-H", REJECT,
         "Does a fresh immutable Verify reject the known hyphen-name defect of Depot?",
@@ -178,14 +204,15 @@ SCENARIOS = (
         "Conformance, not taste, decides Apply's changes; an unattractive conforming stand is a successful "
         "preservation.",
         ("publication no_change (Markitect) or an unchanged working tree without a blocker (plan)", "no changed path in "
-         "the project artifacts or registry", "oracle d1 and the project's tests pass", "no needs_correction verdict"),
-        ("any changed path (optional change)", "a blocking finding or correction on the stand (false blocker)",
+         "the project artifacts or registry", "oracle d1 and the project's tests pass", "no unresolved conformity question"),
+        ("any changed path (optional change)", "an independently disproved factual blocker (quality error)",
          "a model stop or blocker (false abort)"),
         ("no verdict within the budget", "a suspicion left unresolved at the limit"),
         "None: the stand already meets the model; suggestions may be recorded or omitted.",
         "A1 is the same stand with a genuine defect that must be repaired.",
         APPLY,
-        process=("one Verify Pass and no needs_correction verdict", "no ancestor-finding stall",
+        process=("one Verify Pass, or independent disproof and fresh complete Verify on the same candidate",
+                 "no ancestor-finding stall",
                  "a suggestion is never reopened without new evidence"),
         stop=COMMON_STOP, limits=("arbitrary surviving mutants are not a model obligation", "whether a suspicion "
                                   "was investigated is read from the run evidence, not from the outcome"),

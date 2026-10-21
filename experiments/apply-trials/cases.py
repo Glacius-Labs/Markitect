@@ -646,7 +646,25 @@ R2_CODE = Fault(
           '        raise Refusal("there is no room %s" % code)\n'),),
     detected_by=("book-record", "edge-robustness"), test_signal=True)
 
+# Same cross-area inconsistency as r1, with a locally green but wrong room assertion. Both child suites
+# accept their own view; only semantic parent integration establishes that they must agree.
+R3_PARENT = Fault(
+    "r3", "hall/rooms", "test",
+    "rooms reports reserve 1 and its own test expects 1, while bookings admits seats with reserve 2; both child "
+    "suites pass, but the parent-level contract requires one agreed reserve",
+    R1_RESERVE.edits + (Edit(RZ + "rooms/test_rooms.py",
+                           '{"code": "B202", "seats": 40, "bookable": 40 - RESERVE}',
+                           '{"code": "B202", "seats": 40, "bookable": 39}'),),
+    detected_by=R1_RESERVE.detected_by, test_signal=True)
+
 HALL = (
+    Case("H-I", "hall", 2, "Parent invariant violated despite locally green children",
+         "Does independent parent integration reject and repair disagreement about the same room's bookable seats, "
+         "even when rooms and bookings each pass their local suite?",
+         snapshot="h1", start="reference", expected=APPLIED, profile="h1", faults=(R3_PARENT,),
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         measure=("both child suites initially pass", "parent reserve agreement restored", "wrong test corrected"),
+         notes="A semantic control for DEP, not routing/version evidence and not an extra provider allocation."),
     Case("H-N", "hall", 2, "Conforming sibling-dependency stand stays unchanged",
          "Does Apply leave the conforming hall stand, whose rooms part shows the reserve the bookings part chose, "
          "unchanged?",

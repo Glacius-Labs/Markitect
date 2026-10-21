@@ -252,7 +252,7 @@ def summarize_report(report):
         "rounds": [{"number": item.get("number"), "green": item.get("green"),
                     "checks": {check.get("name"): check.get("passed") for check in item.get("checks") or []}}
                    for item in run.get("rounds") or []],
-        "passes": [{"id": item.get("id"), "purpose": item.get("purpose"), "review": item.get("review"),
+        "passes": [{"id": item.get("id"), "purpose": item.get("purpose"), "review": item.get("review"), "tree": item.get("tree"),
                     "verdict": item.get("verdict"), "checks": {check.get("name"): check.get("passed")
                                                               for check in item.get("checks") or []}}
                    for item in run.get("passes") or []],
@@ -264,11 +264,9 @@ def summarize_report(report):
                   for kind in sorted({turn.get("kind") for turn in turns if turn.get("kind")})},
         "engineSeconds": round((max(ends) - min(starts)).total_seconds()) if starts and ends else None,
         "costUSD": round((run.get("usage") or {}).get("costUSD", 0.0), 2),
-        "findings": [{"id": item.get("id"), "owner": item.get("owner"), "raisedBy": item.get("raisedBy"),
-                      "blocking": item.get("blocking"), "closed": item.get("closed"),
-                      "pass": item.get("pass", item.get("round")),
-                      "obligation": (item.get("obligation") or "")[:300], "observed": (item.get("observed") or "")[:300]}
-                     for item in findings],
+        # Keep candidate, disputes, closure evidence and observation classification. A boolean alone cannot
+        # distinguish an unresolved suspicion from an independently disproved factual claim.
+        "findings": [dict(item, **{"pass": item.get("pass", item.get("round"))}) for item in findings],
     }
 
 

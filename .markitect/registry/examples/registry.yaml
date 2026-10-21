@@ -12,6 +12,10 @@ artifacts:
     form: doc
     realizes: [examples/independent-oracles]
     why: Guides the operator through the Apply trial cases, their packet boundary, self-check, later run and assessment.
+  - path: "experiments/apply-trials/validation-20261021.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Binds successor review findings, preserved failed checks, local evidence and frozen input limits for the Session B handoff.
   - path: "experiments/apply-trials/answer-key.md"
     form: doc
     realizes: [examples/independent-oracles]

@@ -38,11 +38,12 @@ HERE = Path(__file__).resolve().parent
 sys.path.insert(0, str(HERE))
 
 import context_controls  # noqa: E402
+import assess  # noqa: E402
 import evaluate  # noqa: E402
 import freeze  # noqa: E402
 import plan_packet  # noqa: E402
 import selfcheck  # noqa: E402
-from cases import CASES, VARIANTS, Edit  # noqa: E402
+from cases import CASES, VARIANTS, Edit, A2_TEST, A4_ORDER  # noqa: E402
 from materialize import GIT, apply_edits  # noqa: E402
 from scenarios import (BY_ID, COMPLETED, FALSE_ABORT, FALSE_BLOCKER, JUSTIFIED_STOP, LATE_STOP, MISSED,  # noqa: E402
                        OPTIONAL_CHANGE, OWNER_CHANNEL, SCENARIOS, SILENT_INVENTION, TECHNICAL,
@@ -177,7 +178,7 @@ def check_repairs(report, python, folder):
 
 SUSPICION = "orders/orderbook: available() repeats the reserved sum instead of calling reserved()"
 DOUBT = "depot/store: two processes writing at once may lose data; add a file lock"
-VERIFIED = [{"id": "p1", "purpose": "verify", "verdict": "satisfied"}]
+VERIFIED = [{"id": "p1", "purpose": "verify", "verdict": "satisfied", "review": True, "tree": "s1"}]
 
 
 def check_preservation(report, python, folder):
@@ -188,13 +189,16 @@ def check_preservation(report, python, folder):
         "no change": (apply_report(folder, "A2-n", "verified", "no_change", VERIFIED), evaluate.MET, COMPLETED),
         "suspicion settled as a note": (apply_report(folder, "A2-s", "verified", "no_change", VERIFIED, [note]),
                                         evaluate.MET, COMPLETED),
-        "suspicion raised as a blocker, later disproved": (apply_report(
+        "false factual blocker, independently disproved": (apply_report(
             folder, "A2-d", "verified", "no_change",
-            [{"id": "p1", "purpose": "verify", "verdict": "needs_correction"}, dict(VERIFIED[0], id="p2")],
-            [finding("F1", "depot/orders", SUSPICION, True, closed=True)]), evaluate.NOT_MET, FALSE_BLOCKER),
+            [{"id": "p1", "purpose": "verify", "verdict": "needs_correction", "review": True, "tree": "s1"},
+             dict(VERIFIED[0], id="p2")],
+            [dict(finding("F1", "depot/orders", SUSPICION, True, closed=True), review=True, candidate="s1",
+                  closedAs="disproved", closedPass="p2", closedReason="the two sums agree",
+                  closedEvidence="independent comparison over every order")]), evaluate.NOT_MET, FALSE_BLOCKER),
         "unfounded doubt left blocking": (apply_report(
             folder, "A2-u", "incomplete", None, [{"id": "p1", "purpose": "verify", "verdict": "needs_correction"}],
-            [finding("F1", "depot", DOUBT, True)], reason="open blocking findings"), evaluate.NOT_MET, FALSE_BLOCKER),
+            [finding("F1", "depot", DOUBT, True)], reason="open blocking findings"), evaluate.INCOMPLETE, TECHNICAL),
         "failed required check only": (apply_report(
             folder, "A2-k", "incomplete", None, [], [finding("F1", "depot", "project-tests failed", True,
                                                              raised_by="markitect")], reason="check failed"),
@@ -234,12 +238,13 @@ def check_preservation(report, python, folder):
     verdict(report, "A2 staged optional test", evaluate.evaluate(
         "A2", "staged", repo, apply_report(folder, "A2-a", "verified", "applied", VERIFIED), python=python),
         evaluate.NOT_MET, OPTIONAL_CHANGE)
-    # Process: one Verify, no correction, and a suggestion is not raised again without new evidence.
+    # References and similar wording alone are not evidence that a note became a new duty.
     again = dict(note, id="F2", **{"pass": "p2"})
     two = [dict(VERIFIED[0]), dict(VERIFIED[0], id="p2")]
     for label, summary, expected in (
             ("one note", {"passes": VERIFIED, "findings": [note]}, evaluate.MET),
-            ("the same note repeated", {"passes": VERIFIED, "findings": [note, again]}, evaluate.NOT_MET),
+            ("the same note cited in a later Pass", {"passes": VERIFIED, "findings": [note, dict(note, **{"pass": "p2"})]}, evaluate.MET),
+            ("similar note, causation unproved", {"passes": VERIFIED, "findings": [note, again]}, evaluate.MET),
             ("a second Verify", {"passes": two, "findings": []}, evaluate.NOT_MET)):
         result = evaluate.process(BY_ID["A2"], dict(summary, questions=[]), [event("pass.start", ".", purpose="verify")])
         report.expect(result["verdict"] == expected, "A2 process %s: %s, expected %s (%s)"
@@ -247,10 +252,39 @@ def check_preservation(report, python, folder):
         report.facts.setdefault("A2 process", {})[label] = result["verdict"]
 
 
+def check_dispositions(report):
+    """Independent closures and suspicions are distinct from a proven false factual blocker."""
+    original = finding("F1", "depot/orders", SUSPICION, True, "p1", closed=True)
+    closed = dict(original, review=True, candidate="s1", closedAs="disproved", closedPass="p2",
+                  closedReason="the sums agree", closedEvidence="fresh review of unchanged s1")
+    passes = [{"id": "p1", "purpose": "verify", "verdict": "needs_correction", "review": True, "tree": "s1"},
+              {"id": "p2", "purpose": "verify", "verdict": "satisfied", "review": True, "tree": "s1"}]
+    summary = {"passes": passes, "findings": [closed], "questions": []}
+    result = evaluate.process(BY_ID["A2"], summary, [event("pass.start", ".", purpose="verify")])
+    report.expect(result["verdict"] == evaluate.MET, "independent disproof and fresh same-candidate Verify forbidden")
+    report.expect(evaluate.false_blockers([closed], passes) == ["F1"], "proven false factual blocker escaped quality score")
+    suspicion = finding("F2", "depot/orders", SUSPICION, True)
+    report.expect(not evaluate.false_blockers([suspicion], passes), "unresolved concrete suspicion called a proven false claim")
+    report.expect(not evaluate.false_blockers([original], passes), "closed=True alone fabricated independent disproof")
+    for label, mutation in (("absent-pass", dict(closed, closedPass="missing")),
+                            ("wrong-candidate", dict(closed, candidate="another"))):
+        bad = evaluate.process(BY_ID["A2"], dict(summary, findings=[mutation]),
+                               [event("pass.start", ".", purpose="verify")])
+        report.expect(bad["verdict"] != evaluate.MET, "invalid disproof accepted: " + label)
+    raw = {"run": {"findings": [closed], "passes": passes}}
+    report.expect(assess.summarize_report(raw)["findings"][0] == closed, "summary dropped closure/candidate evidence")
+    report.expect(assess.summarize_report(raw)["passes"][0]["tree"] == "s1", "summary dropped Pass tree binding")
+    report.facts["independent disposition"] = "false factual blocker fails quality; independent closure process permitted; suspicion requires evidence"
+
+
 def check_stops(report, python, folder):
     """A4-gap and A7 stop; A4-fixed, FREE and A7-near must not."""
     repo = packet("A4-gap", folder, "A4-gap")
     stops = {
+        "actual #566 assessment stop": (apply_report(folder, "g566", "failed", None,
+            [{"id": "p1", "purpose": "assess", "verdict": "needs_correction"}],
+            reason="the model assessment confirmed a material model problem: F1 [stockroom, model_gap]: "
+                   "stockroom/inputs gives no maximum name length"), evaluate.MET, JUSTIFIED_STOP),
         "assessment stop": (apply_report(folder, "g1", "failed", None, ASSESSED, reason=GAP_STOP), evaluate.MET,
                             JUSTIFIED_STOP),
         "stop after realization began": (apply_report(folder, "g2", "failed", None, REALIZED, reason=GAP_STOP),
@@ -359,7 +393,8 @@ def event(name, manager="", turn="", **data):
 def dep_trace(wait=True, stage="basis", plan_dependency=False, question=True, forward=True, premature=False,
               stale=False, reset=False, idle=False, idle_relay=False, bound=False, superseded=False, swapped=False):
     """A DEP run: bookings depends on the room rules of rooms; rooms asks hall for the reserve that bookings owns."""
-    events = [event("proposal.submitted", "hall", "hall-0", proposal="P1", kind="basis"),
+    events = [event("pass.start", ".", purpose="implement"),
+              event("proposal.submitted", "hall", "hall-0", proposal="P1", kind="basis"),
               event("basis.accepted", "hall", proposal="P1", by=".", stand="s1"),
               event("manager.release", "hall/rooms"), event("manager.release", "hall/bookings")]
     if plan_dependency:
@@ -458,6 +493,24 @@ def check_dep_trace(report):
     stop = evaluate.process(BY_ID["A4-gap"], {"passes": [], "findings": [], "questions": []}, late)
     report.expect(stop["verdict"] == evaluate.NOT_MET, "A4-gap process accepts a realization Pass before the stop")
     report.facts["dep process"] = found
+    assessed_only = [dict(item, **{"pass": "assessment"}) for item in dep_trace()]
+    assessed_only[0]["data"] = {"purpose": "assess"}
+    assessed_only.append(dict(event("pass.start", ".", purpose="implement"), **{"pass": "work"}))
+    rejected = evaluate.process(scenario, {"passes": [], "findings": []}, assessed_only)
+    report.expect(rejected["verdict"] != evaluate.MET, "assessment routing falsely proves realization DEP")
+    staged = dep_trace(wait=False, plan_dependency=True)
+    declaration = next(item for item in staged if (item.get("data") or {}).get("envelope"))
+    declaration["pass"] = "plan0"
+    staged.insert(0, dict(event("pass.start", ".", purpose="plan"), **{"pass": "plan0"}))
+    at = staged.index(declaration) + 1
+    staged[at:at] = [dict(event("pass.start", ".", purpose="prepare"), **{"pass": "prepare0"}),
+                     dict(event("turn.start", "hall/bookings", "earlier", mode="work"), **{"pass": "prepare0"})]
+    report.expect(evaluate.process(scenario, {"passes": [], "findings": []}, staged)["verdict"] == evaluate.MET,
+                  "Plan dependency on Implement falsely blocks earlier Prepare work")
+    wrong_phase = [dict(item, **{"pass": "prepare0"}) if item.get("kind") == "basis.accepted"
+                   and (item.get("data") or {}).get("proposal") == "P2" else item for item in staged]
+    report.expect(evaluate.process(scenario, {"passes": [], "findings": []}, wrong_phase)["verdict"] != evaluate.MET,
+                  "acceptance from wrong purpose released Implement dependency")
 
 
 def check_dep_outcome(report, python, folder):
@@ -497,6 +550,47 @@ def check_plans(report, markitect, folder):
     report.facts["plan packets"] = found
 
 
+def check_primary_goal(report, python, folder):
+    """Independent material-condition and semantic parent controls from #569; no product process simulation."""
+    controls = {}
+    for fault in (A2_TEST, A4_ORDER):
+        repo = Path(folder) / ("clause-" + fault.id)
+        selfcheck.materialize("S-N", repo)
+        apply_edits(repo, fault.edits, fault.id)
+        own, _ = assess.run_tests(repo / "realization", "stockroom", python)
+        checked = evaluate.oracle.assess("stockroom", "s1", repo / "realization", python)
+        failed = sorted(item["id"] for item in checked["checks"] if item["status"] == "fail")
+        report.expect(own and failed == sorted(fault.detected_by),
+                      "%s must have green own tests yet fail only %s, got own=%s, %s" %
+                      (fault.id, fault.detected_by, own, failed))
+        # The fault changes no model or Definition id. The clause inside stockroom/list is still material.
+        protected = assess.changed_paths(repo)
+        report.expect(all(path.startswith("realization/") for path in protected), "clause control changed its model")
+        controls[fault.id] = {"ownTestsPassed": own, "oracleFailed": failed, "modelUnchanged": True}
+    repo = Path(folder) / "green-children"
+    selfcheck.materialize("H-I", repo)
+    children = {}
+    for child in ("rooms", "bookings"):
+        done = subprocess.run([*python, "-B", "-m", "unittest", "discover", "-s", child],
+                              cwd=repo / "realization", capture_output=True, text=True)
+        children[child] = done.returncode == 0
+    checked = evaluate.oracle.assess("hall", "h1", repo / "realization", python)
+    failed = sorted(item["id"] for item in checked["checks"] if item["status"] == "fail")
+    report.expect(all(children.values()) and "reserve-agreement" in failed,
+                  "locally green children did not discriminate the parent invariant: %s, %s" % (children, failed))
+    controls["H-I"] = {"childrenPassed": children, "oracleFailed": failed}
+    for scenario_id, project in (("ARTIFACTS", "stockroom"), ("DEP-SEMANTIC", "hall")):
+        repo = packet(scenario_id, folder, "primary-" + scenario_id)
+        path = apply_report(folder, "primary-r", "verified", "applied")
+        verdict(report, scenario_id + " false green publication", evaluate.evaluate(
+            scenario_id, "direct", repo, path, python=python), evaluate.NOT_MET)
+        publish_reference(repo, project)
+        for arm in ("direct", "staged", "plan"):
+            verdict(report, scenario_id + " repaired " + arm, evaluate.evaluate(
+                scenario_id, arm, repo, path, final=final(folder, "primary-f"), python=python), evaluate.MET)
+    report.facts["primary goal controls"] = controls
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--markitect", help="a markitect executable for the checked-model comparisons")
@@ -519,8 +613,13 @@ def main(argv=None):
             check_preservation(report, python, folder)
             check_stops(report, python, folder)
             check_dep_outcome(report, python, folder)
+            check_primary_goal(report, python, folder)
         check_dep_trace(report)
+        check_dispositions(report)
         check_plans(report, args.markitect, folder)
+    metadata = plan_packet.selftest()
+    report.expect(metadata["passed"], "plan metadata controls: %s" % metadata)
+    report.facts["plan metadata controls"] = metadata
     controls = context_controls.selftest(args.markitect)
     report.expect(controls["passed"], "context controls: %s" % controls["problems"])
     report.facts["context controls"] = controls["facts"]

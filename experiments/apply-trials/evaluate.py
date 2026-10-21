@@ -44,7 +44,7 @@ EPHEMERAL = re.compile(r"(^|/)__pycache__/|\.pyc$")
 # conclusions of the mandatory assessment (PR #560), or a model problem that aborted the Run. Free text that
 # merely mentions a model error is no model stop. A new wording needs a matching change here.
 ROOT_STOP_PREFIXES = ("Root judged the model erroneous or contradictory", "Root confirmed a model gap",
-                      "Root confirmed a model error", "model_gap", "model_error")
+                      "Root confirmed a model error", "the model assessment confirmed a material model problem: ")
 ASSESSMENT_PURPOSES = ("assess", "assessment", "model-assessment", "model_assessment")
 REALIZATION_PURPOSES = ("plan", "prepare", "implement")
 BLOCKER = re.compile(r"(?m)^\s*(?:[-*>]\s+)?[*_]{0,2}BLOCKER[*_]{0,2}\s*:\s*[*_]{0,2}\s*(.+?)\s*$")
@@ -126,6 +126,30 @@ def blockers(final):
     return BLOCKER.findall((final or {}).get("reply") or "")
 
 
+def independent_disproof(item, passes):
+    """The product's explicit closure evidence; never infer disproof from a green stand or closed=True."""
+    records = {entry.get("id"): entry for entry in passes}
+    raised, closed = records.get(item.get("pass"), {}), records.get(item.get("closedPass"), {})
+    return (item.get("closed") and item.get("closedAs") == "disproved" and item.get("closedEvidence")
+            and item.get("closedReason") and item.get("closedPass") != item.get("pass")
+            and item.get("closedPass") and item.get("candidate") and item.get("review")
+            and raised.get("review") and closed.get("review")
+            and raised.get("purpose") == closed.get("purpose") == "verify"
+            and raised.get("tree") == closed.get("tree") == item.get("candidate")
+            and next((index for index, entry in enumerate(passes) if entry is closed), -1)
+                > next((index for index, entry in enumerate(passes) if entry is raised), -1))
+
+
+def false_blockers(findings, passes):
+    """A disproved factual claim is a quality error; investigating a concrete suspicion is permitted.
+
+    Older reports have no observation kind. Until independent disproof they need semantic reading, rather
+    than automatic condemnation merely because a bounded oracle accepts the stand.
+    """
+    return [item["id"] for item in findings if item.get("blocking") and item.get("raisedBy") != "markitect"
+            and independent_disproof(item, passes)]
+
+
 # -- the arm-neutral outcome ------------------------------------------------------------
 
 def outcome(scenario, arm, assessed, summary, final, earlier_run=None, run_id=None):
@@ -204,13 +228,17 @@ def outcome(scenario, arm, assessed, summary, final, earlier_run=None, run_id=No
         if changed:
             return NOT_MET, OPTIONAL_CHANGE, reasons + ["changed paths (optional changes): %s" % changed[:8]]
         if markitect:
-            # A blocking finding of a Manager or a correction verdict on the conforming stand is a false blocker,
-            # whether or not the Run finished; a failed required check (raised by markitect) is not judged here.
-            raised = [item["id"] for item in summary["findings"]
-                      if item.get("blocking") and item.get("raisedBy") != "markitect"]
-            if raised or any(item.get("verdict") == "needs_correction" for item in summary["passes"]):
-                return NOT_MET, FALSE_BLOCKER, reasons + ["a blocking finding %s or a correction on the conforming "
-                                                          "stand" % raised]
+            invalid = [item["id"] for item in summary["findings"] if item.get("closedAs") == "disproved"
+                       and not independent_disproof(item, summary["passes"])]
+            if invalid:
+                return INCOMPLETE, TECHNICAL, reasons + ["disproof lacks same-candidate independent Pass binding: %s" % invalid]
+            raised = false_blockers(summary["findings"], summary["passes"])
+            if raised:
+                return NOT_MET, FALSE_BLOCKER, reasons + ["independently disproved factual blocker(s): %s" % raised]
+            unresolved = [item["id"] for item in summary["findings"] if item.get("blocking") and not item.get("closed")]
+            if unresolved:
+                return INCOMPLETE, TECHNICAL, reasons + ["unresolved conformity question(s), requiring semantic "
+                                                       "assessment: %s" % unresolved]
             if not (summary["runStatus"] == "verified" and summary["publication"] == "no_change"):
                 return INCOMPLETE, TECHNICAL, ["run %s, publication %s" % (summary["runStatus"], summary["publication"])]
         return (NOT_MET, "", reasons) if reasons else (MET, COMPLETED, [])
@@ -268,33 +296,42 @@ def proposal_owners(events):
 def dependency_trace(events, consumer, producer):
     """Binding, release, consumed version and staleness of CONSUMER's dependency on PRODUCER."""
     owners = proposal_owners(events)
+    purposes = {event.get("pass"): (event.get("data") or {}).get("purpose") for event in events
+                if event.get("kind") == "pass.start"}
     declared, bound = [], []
     for index, event in enumerate(events):
         data = event.get("data") or {}
         if event.get("kind") == "dependency.bound" and event.get("manager") == consumer and data.get("on") == producer:
             bound.append((index, data))  # the product's own record of the consumed version (BindWaits)
         if event.get("kind") == "report.wait" and event.get("manager") == consumer and data.get("for") == producer:
-            declared.append((index, "wait", data.get("stage") or "result"))
+            declared.append((index, "wait", data.get("stage") or "result", purposes.get(event.get("pass"))))
         if event.get("kind") == "proposal.submitted" and event.get("manager") == consumer:
             plan = ((data.get("envelope") or {}).get("plan") or {})
             for dependency in plan.get("dependencies") or []:
                 if dependency.get("owner") == producer:
-                    declared.append((index, "plan", dependency.get("stage") or "result"))
+                    declared.append((index, "plan", dependency.get("stage") or "result", dependency.get("pass")))
     if bound and not declared:
-        declared.append((bound[0][0], "bound", bound[0][1].get("stage") or "result"))
-    trace = {"declared": [{"at": index, "how": how, "stage": stage} for index, how, stage in declared]}
+        declared.append((bound[0][0], "bound", bound[0][1].get("stage") or "result",
+                         purposes.get(events[bound[0][0]].get("pass"))))
+    trace = {"declared": [{"at": index, "how": how, "stage": stage, "purpose": purpose}
+                           for index, how, stage, purpose in declared]}
     if not declared:
         trace["binding"] = "not declared"
         return trace
     first, stage = declared[0][0], declared[0][2]
+    target = declared[0][3]
+    trace["targetPurpose"] = target
     accepted = [(index, event) for index, event in enumerate(events) if event.get("kind") == stage + ".accepted"
+                and (not target or purposes.get(event.get("pass")) == target)
                 and owners.get((event.get("data") or {}).get("proposal")) == producer]
     premature = [event.get("turn") for index, event in enumerate(events)
                  if index > first and event.get("kind") == "turn.start" and event.get("manager") == consumer
+                 and (not target or purposes.get(event.get("pass")) == target)
                  and (event.get("data") or {}).get("mode") == "work"
                  and not any(at < index for at, _ in accepted)]
     trace["prematureWorkTurns"] = premature
     consumer_results = [index for index, event in enumerate(events) if event.get("kind") == "result.accepted"
+                        and (not target or purposes.get(event.get("pass")) == target)
                         and owners.get((event.get("data") or {}).get("proposal")) == consumer]
     if not consumer_results:
         trace["binding"] = "declared, consumer never accepted"
@@ -350,12 +387,16 @@ def question_route(events, asker, parent, answerer):
 
 
 def repeated_notes(findings):
-    """Ids of non-blocking notes whose owner and text an earlier Pass already recorded (#561: a suggestion is not
-    raised again without new evidence)."""
-    seen, repeated = {}, []
+    """Possible repeated notes for reading, not proof of reopening as a new duty.
+
+    A retained reference to the same finding is never a new note. Different ids with the same wording can
+    carry changed evidence or merely refer to settled history; causation needs the actual proposals/events.
+    """
+    seen, repeated, ids = {}, [], set()
     for item in findings:
-        if item.get("blocking"):
+        if item.get("blocking") or item.get("id") in ids:
             continue
+        ids.add(item.get("id"))
         key = (item.get("owner"), " ".join(("%s %s" % (item.get("obligation", ""), item.get("observed", ""))).lower().split()))
         if key in seen and seen[key] != item.get("pass"):
             repeated.append(item.get("id"))
@@ -372,8 +413,16 @@ def process(scenario, summary, events, damaged=0):
     details["idle"] = idle
     if scenario.internal_route:
         asker, parent, answerer = scenario.internal_route
-        binding = dependency_trace(events, answerer, asker)
-        route = question_route(events, asker, parent, answerer)
+        purposes = {event.get("pass"): (event.get("data") or {}).get("purpose") for event in events
+                    if event.get("kind") == "pass.start"}
+        work = [pid for pid, purpose in purposes.items() if purpose in REALIZATION_PURPOSES]
+        details["workPasses"] = work
+        if not work:
+            return {"verdict": INCOMPLETE, "reasons": ["no source-bound realization Pass for DEP"], "details": details}
+        # Staged Plan may declare a prerequisite for Prepare/Implement. Keep that relation while excluding
+        # assessment/Verify evidence; dependency_trace matches acceptances and work to the target purpose.
+        scoped = [event for event in events if event.get("pass") in work]
+        binding, route = dependency_trace(scoped, answerer, asker), question_route(scoped, asker, parent, answerer)
         details.update(binding=binding, route=route)
         if binding.get("binding") != "met":
             reasons.append("%s's dependency on %s: %s" % (answerer, asker, binding.get("binding")))
@@ -385,15 +434,19 @@ def process(scenario, summary, events, damaged=0):
         verifies = [item for item in summary["passes"] if item.get("purpose") == "verify"]
         corrections = [item for item in summary["passes"] if item.get("verdict") == "needs_correction"]
         details.update(verifyPasses=len(verifies), correctionVerdicts=len(corrections))
-        if len(verifies) > 1:
+        disproved = [item for item in summary["findings"] if independent_disproof(item, summary["passes"])]
+        explained = {item.get("pass") for item in disproved}
+        # Independent disproof may require a new complete Verify of the unchanged candidate. That contract
+        # remains valid even when the original false factual blocker separately fails the quality outcome.
+        if len(verifies) > 1 and not (len(verifies) == 2 and disproved and verifies[-1].get("verdict") == "satisfied" and
+                                     all(item.get("id") in explained for item in corrections)):
             reasons.append("%d Verify Passes on the conforming stand" % len(verifies))
-        if corrections:
-            reasons.append("%d needs_correction verdict(s) on the conforming stand" % len(corrections))
+        unexplained = [item for item in corrections if item.get("id") not in explained]
+        if unexplained:
+            details["unresolvedCorrectionPasses"] = [item.get("id") for item in unexplained]
     if summary and (scenario.expect == PRESERVE or CASES[scenario.case].preserve):
         repeated = repeated_notes(summary["findings"])
-        details["repeatedSuggestions"] = repeated
-        if repeated:
-            reasons.append("suggestions repeated in later Passes without new evidence: %s" % repeated)
+        details["repeatedSuggestionCandidates"] = repeated
     if summary and scenario.id == "A1":
         open_findings = [item["id"] for item in summary["findings"] if item.get("blocking") and not item.get("closed")]
         details["openFindings"] = open_findings
@@ -408,6 +461,8 @@ def process(scenario, summary, events, damaged=0):
     if damaged:
         return {"verdict": INCOMPLETE, "reasons": reasons + ["%d unreadable line(s) in events.jsonl" % damaged],
                 "details": details}
+    if details.get("unresolvedCorrectionPasses") and not reasons:
+        return {"verdict": INCOMPLETE, "reasons": ["correction requires semantic disposition"], "details": details}
     return {"verdict": NOT_MET if reasons else MET, "reasons": reasons, "details": details}
 
 

@@ -226,9 +226,9 @@
  },
  "formatVersion": 1,
  "kit": {
-  "experiments/apply-trials/assess.py": "94ec3a241b19050197e1be244f0fc3875d48b892eda3ad5d407d754bc77f2da2",
+  "experiments/apply-trials/assess.py": "3df63d239d8b04cc7a2ee40535aaec995bbe7a41184af32e778f16239c2b073f",
   "experiments/apply-trials/bind_profiles.py": "756e8cffbdb085a8c1fd587606ab76aebb260da7d9e608387605c08de9489382",
-  "experiments/apply-trials/cases.py": "25c4291dd7eb82ac835883aba27583c936a928eb564c18d1af2c4110603cdf58",
+  "experiments/apply-trials/cases.py": "7d8eb4a9e69dbf16a3098fe48819cd9d461a6f2160e394f715018e890bb2f2a1",
   "experiments/apply-trials/context/execution.yaml": "e47f39ebf1401f09912b34da26f9b860de7b002542647c0ca71f2143cab1052c",
   "experiments/apply-trials/context/expected.json": "8b52172b41f2bf25fa4926c64f41a5953c50b1316aa4dfdc1e10b7a31933ccc7",
   "experiments/apply-trials/context/snapshots/c1-stale/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
@@ -277,7 +277,7 @@
   "experiments/apply-trials/context/snapshots/c1/model/shop/system.yaml": "2b27fd0de7c4656e265df39952a1bf77f55a71b2c2856358f45331e8a62bb566",
   "experiments/apply-trials/context/snapshots/c1/model/shop/tax-rate.yaml": "bd2faddc78fb98e5d895f4bd5436f8306242fdf47d57ff2d7805541c7cefad1d",
   "experiments/apply-trials/context/snapshots/c1/model/shop/tiers.yaml": "5ae1c1e20d5a9bdc038f759629634b494a19203740a07b00acfedb76fef4e9b5",
-  "experiments/apply-trials/context_controls.py": "449eeae71c6cde3e1f3b53d41ce23461b57d4301546f6fce482c12ccb410be89",
+  "experiments/apply-trials/context_controls.py": "162b3956cdc07ade6cfe7edf25a0ef05b143c51055665ff7742fd511da3d51f1",
   "experiments/apply-trials/depot/checks.py": "8ae86892636272f26348a6c46bb4321a649a75a5a0e1cb8b03229dd0fb1e513f",
   "experiments/apply-trials/depot/execution.yaml": "a8a647f162a13dc99ecd8f22c7094fe562ee8a6b6d9dc81228c89a2b85151cb2",
   "experiments/apply-trials/depot/reference/realization/app.py": "adfdd0cf8297f031fe9eeb39d2995ac942b6bb1c15e74ab2860a7fceb90a7e79",
@@ -325,8 +325,8 @@
   "experiments/apply-trials/depot/snapshots/d1/model/stock/limits.yaml": "c091d7b5344daa3dc40233aab2462679e3ccebcf03388cb15e22038866dde43a",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/on-hand.yaml": "4b2da64249bb01954710ebe3d172ae5ada8181abff8ce210646f030e8ea12639",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/receive.yaml": "b1c669349de27e84a90f84c83622dcde9ba2609df52d958937ba0d7d687d0223",
-  "experiments/apply-trials/evalcheck.py": "a6fab4021ef5fa28512446c78d1bc7e161cfff5ef6370069a77b1fac4c42dd8b",
-  "experiments/apply-trials/evaluate.py": "b8ee2b039b8a9059b88036da631351590fa83d29f797d7b33b901364ec68024b",
+  "experiments/apply-trials/evalcheck.py": "205cb6f41bcf147223b4cb36ef29899560c37a01799291bccde4b8f2d807b033",
+  "experiments/apply-trials/evaluate.py": "77aa929005c769f4cc2183ef9f007bd1081a5d968bcc276d0587c88bc67d0f1b",
   "experiments/apply-trials/fleet.py": "959bc914b3d9ec53d471bc9d2da2000489ec1a15d4c23f442661ec61f9ed6bd0",
   "experiments/apply-trials/fleet_checks.py": "a9d4a96e207ab9f1fd19592148c6f489a405b13fdf02d2a13060a3d96cc53626",
   "experiments/apply-trials/freeze.py": "0dca4193447d8b350b2881afdb965269935929a0d0e3fe357fcc26821f114e4f",
@@ -366,14 +366,14 @@
   "experiments/apply-trials/hall/snapshots/h1/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
   "experiments/apply-trials/materialize.py": "5ae2776df974a0a27db11e4a3a2fb107f732fa4dcbd8327193d0a4d9f06ec30b",
   "experiments/apply-trials/oracle.py": "aff1ed421e524bab6a74f3980d1a5703b311bac68682706049fb124e7c11cc4b",
-  "experiments/apply-trials/plan_packet.py": "2a0a2a1172f60dbfe4ea1c981d9fa58e54396edd612aee6a966cbbf0b52e53ab",
+  "experiments/apply-trials/plan_packet.py": "238a69ea511030ef9b80d4651132987ef9ff0a35db25d796096e388b92159e25",
   "experiments/apply-trials/run/build.sh": "a252f951bb7c63e40c345706a81fa3e2e12dc011dd9c52109e4b7231cd534d59",
   "experiments/apply-trials/run/collect.py": "c082f4baddf7092b0dd132b36bc168c3e980cfdf62f81a9b5abc59f426f8ab46",
   "experiments/apply-trials/run/lane.sh": "b60223824b9611150e54091864e6d2c5fcaa1083aebd6049160430a761d7395f",
   "experiments/apply-trials/run/patch_runconfig.py": "da0fe4d872ff1cbfbc7ce81faa99db4fa7878df355c05743de6b9238c5cbe4e3",
   "experiments/apply-trials/run/reassess.sh": "63ecc415df3108210fb1e18852e427f894bfed67f5bf795dc7f294c46b583e24",
   "experiments/apply-trials/run/run_case.sh": "71cbb7334c4159c9c2bda685477527fbe6651a9f3d9bb13fa753e83da9179354",
-  "experiments/apply-trials/scenarios.py": "34c3293ff42e1dcab374ecb42382be3d2b8bf423a0533cccd44e08da0b8058aa",
+  "experiments/apply-trials/scenarios.py": "3fb576ccf1a9ec96e195140d753cc0beb9bc0162205a3f53c4562eac868c3f72",
   "experiments/apply-trials/selfcheck.py": "b865bed145b7e7641ed2b36d98a6ee9ed44544be69a9c77063c86d9ef985d74a",
   "experiments/apply-trials/stockroom/checks.py": "2dddb68b7b9c935ac286c94cb0d91a87c512ce3be4034957f10ae0ebd2ad3bfd",
   "experiments/apply-trials/stockroom/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
@@ -420,7 +420,7 @@
   "experiments/apply-trials/trial_kit.py": "362e9a8623ba3db4cb3e140f3988da90f0e977405f72850a036775dba5af16d4",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "c020caa9189f0d4515a07b7b71bbf9f9fafba3943f481e3cbfc05373a9a6223f",
+ "kitDigest": "6a2b80400c2bf651bd2fb617783b4d5fdc5d891c97e8886fcba2b60bc8f612c3",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
@@ -1204,6 +1204,106 @@
    "sessions": [],
    "version": 1
   },
+  "ARTIFACTS": {
+   "arms": [
+    "direct",
+    "staged",
+    "plan"
+   ],
+   "budget": {
+    "agentTurns": 400,
+    "executionTime": "60m",
+    "passes": 12,
+    "turnTimeout": "20m"
+   },
+   "case": "S-A",
+   "expect": "apply-repairs",
+   "internalRoute": [],
+   "markitect": {
+    "direct": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "af66bb497f611d193b16ee1259190563ced72afe276aa4a7cf32d80ce2b0c595",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "bfd97670797162bd082e6c47162e8cd1ee79dbc5318eed0a6cecc1b64ac15f93",
+      "realization/app.py": "b27fed55f5312e22a7fe7028f9235087c4d5ff3d92a856cb284cfd14c21a36b8",
+      "realization/limits.json": "fe56ee3d281439e83dcef1767ef2c9d77a1b70abe0f9a46725ad95b2f89c067b",
+      "realization/stockroom.py": "286a1be7b2aec23e14d220d4ebd25c69b89119fd13596d0a3fce5a916cd1041b",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "a7d6aae33b81ff2a4c0c79cf9f50e630b2944a54b055bd8812aefa74455b28aa"
+     },
+     "head": "586bfea7958d73de69e3eb6144a5110bed68feca",
+     "tree": "947744babef9c1524696e0709898a6e95deca2a1"
+    },
+    "staged": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "0fcea54c9137c360720466a9a419ba5bafadf59c27287228b6232eac46428984",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "bfd97670797162bd082e6c47162e8cd1ee79dbc5318eed0a6cecc1b64ac15f93",
+      "realization/app.py": "b27fed55f5312e22a7fe7028f9235087c4d5ff3d92a856cb284cfd14c21a36b8",
+      "realization/limits.json": "fe56ee3d281439e83dcef1767ef2c9d77a1b70abe0f9a46725ad95b2f89c067b",
+      "realization/stockroom.py": "286a1be7b2aec23e14d220d4ebd25c69b89119fd13596d0a3fce5a916cd1041b",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "a7d6aae33b81ff2a4c0c79cf9f50e630b2944a54b055bd8812aefa74455b28aa"
+     },
+     "head": "45cf36e7593e6c5c381f9ca209eee63b08b2af62",
+     "tree": "1991abe52e27ce5c443e561dce99146bae2e2c8f"
+    }
+   },
+   "plan": {
+    "commits": 1,
+    "files": {
+     "plan.md": "cb5bb4e0dec84e239536873dab20f63010edcd26def3489c9fb43f7ce1e90473",
+     "realization/README.md": "bfd97670797162bd082e6c47162e8cd1ee79dbc5318eed0a6cecc1b64ac15f93",
+     "realization/app.py": "b27fed55f5312e22a7fe7028f9235087c4d5ff3d92a856cb284cfd14c21a36b8",
+     "realization/limits.json": "fe56ee3d281439e83dcef1767ef2c9d77a1b70abe0f9a46725ad95b2f89c067b",
+     "realization/stockroom.py": "286a1be7b2aec23e14d220d4ebd25c69b89119fd13596d0a3fce5a916cd1041b",
+     "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+     "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+     "realization/tests/test_rules.py": "a7d6aae33b81ff2a4c0c79cf9f50e630b2944a54b055bd8812aefa74455b28aa"
+    },
+    "head": "1e92b0a9381b7a9e600219db9c1ad77b5ba521de",
+    "planSha256": "cb5bb4e0dec84e239536873dab20f63010edcd26def3489c9fb43f7ce1e90473",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
+    "tree": "4fd3e43c60e648b929c7e4c3a9e847f406f95241"
+   },
+   "preflight": false,
+   "sessions": [
+    "D"
+   ],
+   "version": 1
+  },
   "DEP": {
    "arms": [
     "direct",
@@ -1286,6 +1386,138 @@
    "preflight": false,
    "sessions": [
     "A",
+    "D"
+   ],
+   "version": 1
+  },
+  "DEP-SEMANTIC": {
+   "arms": [
+    "direct",
+    "staged",
+    "plan"
+   ],
+   "budget": {
+    "agentTurns": 400,
+    "executionTime": "60m",
+    "passes": 12,
+    "turnTimeout": "20m"
+   },
+   "case": "H-I",
+   "expect": "apply-repairs",
+   "internalRoute": [],
+   "markitect": {
+    "direct": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "479f31dc5707230b43d705002082ef3ca8dfbae4bfbfceca21e932674daf043d",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "e4ed57d3a077f764a71406b819a6c9873086159d156b49598735765648276600",
+      ".markitect/model/hall/bookings/book.yaml": "d304ed651cf6ef4ff67e08e70a045e4b13e1d858409e0e334ee5de1c6eb1569f",
+      ".markitect/model/hall/bookings/booking.yaml": "e7dc606765bea0050909f827ca9c975c89cbfc79a95d2d36035fc56a450ca232",
+      ".markitect/model/hall/bookings/list-bookings.yaml": "5e9a80ce4308eff8743d1a9c2798c6e554f50f22827964ec4411ea6c8b231d34",
+      ".markitect/model/hall/bookings/reserve.yaml": "ffc29dcec1238c15ea5d0e6e1095e6395ba76ec078d0c55ce7d1b4ff36002a4a",
+      ".markitect/model/hall/inputs.yaml": "f70b857657d51d80700bce38f4cad8d31ad7c4402f55d2c6efd21bb7ee735a8b",
+      ".markitect/model/hall/interface.yaml": "23edadca266cd2b8aa92279d13b25dcd789b51fb3e3dd39eddb09c74515e087e",
+      ".markitect/model/hall/realization.yaml": "5045f5e124f31e369ad2f096ea8bc6cd40bb63cf2ec5e54cc06b25b4b0abe107",
+      ".markitect/model/hall/rooms/add-room.yaml": "d242559abc9051257d5002b2b3d533bc423865120631d53be6962cdb10121379",
+      ".markitect/model/hall/rooms/list-rooms.yaml": "61bc94866a38b1cbb6ec436aea83fbcfd31fc2d9daf361e9b94f022895d695bc",
+      ".markitect/model/hall/rooms/room-code.yaml": "941d35ad94b57d1c9f26b8895752fb249a16714df3e60eda0d730b9b4b76e70f",
+      ".markitect/model/hall/rooms/room.yaml": "4efef633aa071c020c4eb68446afa3bdaa4092870d66ee9f0131361aeb91210d",
+      ".markitect/model/hall/storage.yaml": "4471d295803a05582d00853532c07d2fee0f9b863d5cc344794edffdf8d65b73",
+      ".markitect/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
+      ".markitect/registry/hall/bookings/registry.yaml": "c47170e0d8ba16b4cd1911434f3754b48d6c02c3cb376c60ad4463fa802f276f",
+      ".markitect/registry/hall/registry.yaml": "3aa64f79a8d49bec2f365cc7ccf3d5046b80dc619d9621bef241d82cfdaa280a",
+      ".markitect/registry/hall/rooms/registry.yaml": "2d04c49157e6cc7c0bd9c0ab317d967acfef47e148e8d180fd98f8e2105aeb8c",
+      "realization/README.md": "f09b22748fefd01bc0c71339de096fdb92a3ebd6a835eea0939e67c418a61382",
+      "realization/app.py": "991633f3e64fc45e87ba2a748d28df9bf4b48f127b2821e9f8d62048492ecd44",
+      "realization/bookings/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/bookings/bookings.py": "b896260e72a75a97d16a4f17b8bab4be5027f2997b580f51f7c9c40ad2220df6",
+      "realization/bookings/reserve.py": "971c139dc465fab02e2ef3342a93b6b78e205a33b1e73b7119b3911ee0bfd9f9",
+      "realization/bookings/test_bookings.py": "16109ea85f03075d53bcaeb31e781eec7e0d8d073f561cfe2b4d0be846886646",
+      "realization/hall/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/hall/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
+      "realization/hall/inputs.py": "d7f667a29d68a9e5b81a85800dac76cfcf1c556edf10e2238001ec64b7c87c6f",
+      "realization/hall/store.py": "4ec1b5c1da45268c4c89097f82e6bc840192ce85ac48a540387688f0ff89d68c",
+      "realization/rooms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/rooms/rooms.py": "f2d9948ce2dd0d5927e5e680b4d6b7ee9b71dca13beccc9d70b2a519bee00411",
+      "realization/rooms/test_rooms.py": "4127b47d40283e4f5f8c875dec355e22fcefb12c6306f42852a610ac917db186",
+      "realization/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/tests/test_cli.py": "769a8e171f5f597c7529a1dbc016ff287ef893c0cdeaedf1160695b881697010"
+     },
+     "head": "55f6e382aadc686e2cc36beaa26185d9aca5d232",
+     "tree": "ff369b9504fe698592609cfa62e27734a3d50f9a"
+    },
+    "staged": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "78ee84275e373d903d073fd1acffd66d188cf71b23721c555b42bd0353bcff1c",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "e4ed57d3a077f764a71406b819a6c9873086159d156b49598735765648276600",
+      ".markitect/model/hall/bookings/book.yaml": "d304ed651cf6ef4ff67e08e70a045e4b13e1d858409e0e334ee5de1c6eb1569f",
+      ".markitect/model/hall/bookings/booking.yaml": "e7dc606765bea0050909f827ca9c975c89cbfc79a95d2d36035fc56a450ca232",
+      ".markitect/model/hall/bookings/list-bookings.yaml": "5e9a80ce4308eff8743d1a9c2798c6e554f50f22827964ec4411ea6c8b231d34",
+      ".markitect/model/hall/bookings/reserve.yaml": "ffc29dcec1238c15ea5d0e6e1095e6395ba76ec078d0c55ce7d1b4ff36002a4a",
+      ".markitect/model/hall/inputs.yaml": "f70b857657d51d80700bce38f4cad8d31ad7c4402f55d2c6efd21bb7ee735a8b",
+      ".markitect/model/hall/interface.yaml": "23edadca266cd2b8aa92279d13b25dcd789b51fb3e3dd39eddb09c74515e087e",
+      ".markitect/model/hall/realization.yaml": "5045f5e124f31e369ad2f096ea8bc6cd40bb63cf2ec5e54cc06b25b4b0abe107",
+      ".markitect/model/hall/rooms/add-room.yaml": "d242559abc9051257d5002b2b3d533bc423865120631d53be6962cdb10121379",
+      ".markitect/model/hall/rooms/list-rooms.yaml": "61bc94866a38b1cbb6ec436aea83fbcfd31fc2d9daf361e9b94f022895d695bc",
+      ".markitect/model/hall/rooms/room-code.yaml": "941d35ad94b57d1c9f26b8895752fb249a16714df3e60eda0d730b9b4b76e70f",
+      ".markitect/model/hall/rooms/room.yaml": "4efef633aa071c020c4eb68446afa3bdaa4092870d66ee9f0131361aeb91210d",
+      ".markitect/model/hall/storage.yaml": "4471d295803a05582d00853532c07d2fee0f9b863d5cc344794edffdf8d65b73",
+      ".markitect/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
+      ".markitect/registry/hall/bookings/registry.yaml": "c47170e0d8ba16b4cd1911434f3754b48d6c02c3cb376c60ad4463fa802f276f",
+      ".markitect/registry/hall/registry.yaml": "3aa64f79a8d49bec2f365cc7ccf3d5046b80dc619d9621bef241d82cfdaa280a",
+      ".markitect/registry/hall/rooms/registry.yaml": "2d04c49157e6cc7c0bd9c0ab317d967acfef47e148e8d180fd98f8e2105aeb8c",
+      "realization/README.md": "f09b22748fefd01bc0c71339de096fdb92a3ebd6a835eea0939e67c418a61382",
+      "realization/app.py": "991633f3e64fc45e87ba2a748d28df9bf4b48f127b2821e9f8d62048492ecd44",
+      "realization/bookings/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/bookings/bookings.py": "b896260e72a75a97d16a4f17b8bab4be5027f2997b580f51f7c9c40ad2220df6",
+      "realization/bookings/reserve.py": "971c139dc465fab02e2ef3342a93b6b78e205a33b1e73b7119b3911ee0bfd9f9",
+      "realization/bookings/test_bookings.py": "16109ea85f03075d53bcaeb31e781eec7e0d8d073f561cfe2b4d0be846886646",
+      "realization/hall/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/hall/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
+      "realization/hall/inputs.py": "d7f667a29d68a9e5b81a85800dac76cfcf1c556edf10e2238001ec64b7c87c6f",
+      "realization/hall/store.py": "4ec1b5c1da45268c4c89097f82e6bc840192ce85ac48a540387688f0ff89d68c",
+      "realization/rooms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/rooms/rooms.py": "f2d9948ce2dd0d5927e5e680b4d6b7ee9b71dca13beccc9d70b2a519bee00411",
+      "realization/rooms/test_rooms.py": "4127b47d40283e4f5f8c875dec355e22fcefb12c6306f42852a610ac917db186",
+      "realization/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "realization/tests/test_cli.py": "769a8e171f5f597c7529a1dbc016ff287ef893c0cdeaedf1160695b881697010"
+     },
+     "head": "030ac11325c4cc7a307b0dc5c57b685606fbde31",
+     "tree": "e604071c61af649faab2aac30990223051f5f673"
+    }
+   },
+   "plan": {
+    "commits": 1,
+    "files": {
+     "plan.md": "49cf33dabe98a5db22c4e6f5eec14b0af21dd41b93b5c8956ad9c67155c0c1f1",
+     "realization/README.md": "f09b22748fefd01bc0c71339de096fdb92a3ebd6a835eea0939e67c418a61382",
+     "realization/app.py": "991633f3e64fc45e87ba2a748d28df9bf4b48f127b2821e9f8d62048492ecd44",
+     "realization/bookings/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "realization/bookings/bookings.py": "b896260e72a75a97d16a4f17b8bab4be5027f2997b580f51f7c9c40ad2220df6",
+     "realization/bookings/reserve.py": "971c139dc465fab02e2ef3342a93b6b78e205a33b1e73b7119b3911ee0bfd9f9",
+     "realization/bookings/test_bookings.py": "16109ea85f03075d53bcaeb31e781eec7e0d8d073f561cfe2b4d0be846886646",
+     "realization/hall/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "realization/hall/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
+     "realization/hall/inputs.py": "d7f667a29d68a9e5b81a85800dac76cfcf1c556edf10e2238001ec64b7c87c6f",
+     "realization/hall/store.py": "4ec1b5c1da45268c4c89097f82e6bc840192ce85ac48a540387688f0ff89d68c",
+     "realization/rooms/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "realization/rooms/rooms.py": "f2d9948ce2dd0d5927e5e680b4d6b7ee9b71dca13beccc9d70b2a519bee00411",
+     "realization/rooms/test_rooms.py": "4127b47d40283e4f5f8c875dec355e22fcefb12c6306f42852a610ac917db186",
+     "realization/tests/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+     "realization/tests/test_cli.py": "769a8e171f5f597c7529a1dbc016ff287ef893c0cdeaedf1160695b881697010"
+    },
+    "head": "73165ae7e429e6b6b8a91671b41cb5512a52f279",
+    "planSha256": "49cf33dabe98a5db22c4e6f5eec14b0af21dd41b93b5c8956ad9c67155c0c1f1",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
+    "tree": "8fe674ee78a65c12d4ad8ef993945edcd7e8271d"
+   },
+   "preflight": false,
+   "sessions": [
     "D"
    ],
    "version": 1

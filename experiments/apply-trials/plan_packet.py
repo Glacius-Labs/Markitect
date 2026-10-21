@@ -385,16 +385,28 @@ def canonical_facts(markitect, repo):
                 item = entry["definition"]
                 identity = "%s/%s" % (item["identity"]["Package"], item["identity"]["ID"])
                 kind = "%s/%s" % (item["kind"]["Package"], item["kind"]["ID"])
+                source = item.get("source") or {}
                 body = item["body"] or ""
                 fragments = [" ".join(part.split()) for part in re.split(r"\[\[[^\]]*\]\]", body)
                              if len(" ".join(part.split())) > 2]
                 links = [{"target": "%s/%s" % (link["Target"]["Package"], link["Target"]["ID"]), "written": "\0"}
                          for link in item.get("bodyLinks") or []]
+                source_path, source_digest = context_source(source)
                 facts[identity] = {"owner": item["identity"]["Package"], "text": fragments, "links": links,
-                                   "values": flatten(item.get("spec") or {}, kind, identity)}
+                                   "values": flatten(item.get("spec") or {}, kind, identity),
+                                   "metadata": {"title": item.get("title") or "", "kind": kind,
+                                                "owner": item["identity"]["Package"],
+                                                "source": source_path, "digest": source_digest}}
     if not facts:
         raise PlanError("markitect context reported no Definitions for %s" % repo)
     return facts
+
+
+def context_source(source):
+    """Return the repository-relative path and bare digest used by the plan renderer."""
+    path = source.get("Path", source.get("path", ""))
+    digest = source.get("Digest", source.get("digest", ""))
+    return path, digest.removeprefix("sha256:") if isinstance(digest, str) else digest
 
 
 def verify(repo, markitect):
@@ -403,10 +415,72 @@ def verify(repo, markitect):
     text = render(repo)["text"]
     delivered = context_controls.full_delivery(text, facts, sorted(facts))
     incomplete = {identity: gaps for identity, gaps in delivered.items() if gaps}
+    metadata_incomplete = metadata_gaps(text, facts)
     local, _ = model_definitions(Path(repo) / ".markitect")
-    return {"passed": not incomplete and set(local) == set(facts), "definitions": len(facts),
+    return {"passed": not incomplete and not metadata_incomplete and set(local) == set(facts),
+            "definitions": len(facts),
             "incomplete": incomplete, "renderedOnly": sorted(set(local) - set(facts)),
-            "checkedOnly": sorted(set(facts) - set(local))}
+            "checkedOnly": sorted(set(facts) - set(local)), "metadataIncomplete": metadata_incomplete}
+
+
+def metadata_gaps(payload, facts):
+    """Metadata the plan arm promises for each Definition, checked against product context output."""
+    import context_controls  # noqa: E402
+    found = context_controls.sections(payload, facts.keys())
+    gaps = {}
+    for identity, fact in facts.items():
+        metadata = fact.get("metadata")
+        if not metadata:
+            continue
+        sections = found.get(identity, [])
+        problems = []
+        for section in sections:
+            lines = [line.strip() for line in section.splitlines()]
+            heading = "### " + identity + (" — " + metadata["title"] if metadata["title"] else "")
+            expected = {
+                "heading": heading,
+                "kind": "- Kind: " + metadata["kind"],
+                "owner": "- Part of the project: " + metadata["owner"],
+                "source": "- Source: `%s` (sha256 %s)" % (metadata["source"], metadata["digest"]),
+            }
+            missing = [label for label, line in expected.items() if line not in lines]
+            if not missing:
+                problems = []
+                break
+            if not problems or len(missing) < len(problems):
+                problems = missing
+        if problems or not sections:
+            gaps[identity] = problems or ["no section starts with this identity"]
+    return gaps
+
+
+def selftest():
+    """Metadata parity controls catch omissions and substitutions in the plan renderer."""
+    source, digest = context_source({"Path": ".markitect/model/shop/pricing/rule.yaml",
+                                     "Digest": "sha256:" + "a" * 64})
+    fact = {"metadata": {"title": "A requirement", "kind": "shop/Rule", "owner": "shop/pricing",
+                          "source": source, "digest": digest}}
+    identity = "shop/pricing/rule"
+    heading = "### %s — A requirement" % identity
+    body = (heading + "\n\n- Kind: shop/Rule\n- Part of the project: shop/pricing\n"
+            "- Source: `.markitect/model/shop/pricing/rule.yaml` (sha256 %s)\n" % ("a" * 64))
+    failures = {}
+    cases = {
+        "complete": body,
+        "missing-kind": body.replace("- Kind: shop/Rule\n", ""),
+        "wrong-title": body.replace("A requirement", "Other title"),
+        "missing-owner": body.replace("- Part of the project: shop/pricing\n", ""),
+        "missing-source-digest": body.replace(" (sha256 %s)" % ("a" * 64), ""),
+    }
+    for name, payload in cases.items():
+        gaps = metadata_gaps(payload, {identity: fact})
+        failures[name] = gaps
+    live_source_compatible = (source == ".markitect/model/shop/pricing/rule.yaml" and digest == "a" * 64
+                              and not metadata_gaps(body, {identity: fact}))
+    return {"passed": live_source_compatible and not failures["complete"]
+            and all(failures[name] for name in cases if name != "complete"),
+            "liveSourceCompatible": live_source_compatible,
+            "cases": failures}
 
 
 def main(argv=None):

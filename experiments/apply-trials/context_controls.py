@@ -139,6 +139,9 @@ def compare_selection(actual, expectation):
             problems.append("required %s is not selected" % ident)
         elif not set(reasons) <= set(got):
             problems.append("required %s is selected for %s, expected the reason %s" % (ident, got, reasons))
+    for ident in expectation.get("connectedContracts", []):
+        if ident not in actual:
+            problems.append("connected contract %s is not selected" % ident)
     for ident in expectation["forbidden"]:
         if ident in actual:
             problems.append("forbidden %s is selected for %s" % (ident, actual[ident]))
@@ -467,6 +470,17 @@ def selftest(markitect=None):
         if verdict["passed"]:
             problems.append("fault %s is not detected" % fault["id"])
     facts["faults"] = caught
+    # A listed linked/scoped contract is part of the expected selection, even when it has no special reason.
+    pricing = expectation["selection"]["shop/pricing"]
+    complete_selection = {ident: ["own"] for ident in pricing["own"]}
+    complete_selection.update({ident: list(reasons) for ident, reasons in pricing["required"].items()})
+    complete_selection.update({ident: ["connected"] for ident in pricing["connectedContracts"]})
+    missing_contract = dict(complete_selection)
+    missing_contract.pop(pricing["connectedContracts"][0])
+    missing_result = compare_selection(missing_contract, pricing)
+    facts["connected-contract-omission"] = missing_result
+    if missing_result["passed"] or pricing["connectedContracts"][0] not in missing_result["connectedContractsMissing"]:
+        problems.append("a missing connected contract is accepted")
     widened = payload + "\n" + source_payload("c1", "shop/marketing", expectation)
     if check_payload(widened, "shop/pricing", expectation)["passed"]:
         problems.append("a payload that adds marketing's context is accepted for pricing")

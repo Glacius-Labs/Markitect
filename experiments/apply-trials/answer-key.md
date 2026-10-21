@@ -772,6 +772,36 @@ m1:
 - **Record:** files changed (expected none); passes; blocking findings
 - **Notes:** Requires --from-repo with the result of D-M or D-G.
 
+## H-I: Parent invariant violated despite locally green children
+
+- **Question:** Does independent parent integration reject and repair disagreement about the same room's bookable seats, even when rooms and bookings each pass their local suite?
+- **Project and level:** hall, level 2
+- **Start:** snapshot `h1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `h1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** both child suites initially pass; parent reserve agreement restored; wrong test corrected
+- **Notes:** A semantic control for DEP, not routing/version evidence and not an extra provider allocation.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| r3 | hall/rooms | test | rooms reports reserve 1 and its own test expects 1, while bookings admits seats with reserve 2; both child suites pass, but the parent-level contract requires one agreed reserve | `readme-reserve`, `refusal-keeps-data`, `reserve-agreement`, `rooms-independent` | yes | informative |
+
+Fault edits:
+
+r3:
+
+```diff
+--- realization/rooms/rooms.py
+-    return {"code": code, "seats": seats, "bookable": bookable(seats)}
++    return {"code": code, "seats": seats, "bookable": seats - 1}
+```
+
+```diff
+--- realization/rooms/test_rooms.py
+-{"code": "B202", "seats": 40, "bookable": 40 - RESERVE}
++{"code": "B202", "seats": 40, "bookable": 39}
+```
+
 ## H-N: Conforming sibling-dependency stand stays unchanged
 
 - **Question:** Does Apply leave the conforming hall stand, whose rooms part shows the reserve the bookings part chose, unchanged?
