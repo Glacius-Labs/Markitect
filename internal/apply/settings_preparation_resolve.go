@@ -111,8 +111,8 @@ func prepareRuntimeSettings(ctx context.Context, fileStatus model.Status, defaul
 		if resolveErr != nil {
 			r.issue(model.Failed, "resolution", organization.SettingSource{}, resolveErr.Error())
 		} else {
-			budget := execution.authored.Budget
-			r.settings, r.facts, r.budget = &settings, &settingsFacts, &budget
+			budget, strategy := execution.authored.Budget, Strategy(execution.authored.Strategy.Value)
+			r.settings, r.facts, r.budget, r.strategy = &settings, &settingsFacts, &budget, &strategy
 		}
 	}
 	// Check declarations are retained exactly, with no second inheritance,

@@ -3,8 +3,9 @@
 This package is the Orchestrator of Apply and Extract
 ([DEC-064](../../docs/concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams),
 [accepted workflow](../../docs/design/canonical-model/manager-apply-workflow.md)). It runs
-**one recursive Pass process** for every purpose: Plan, Prepare, Implement and Verify for
-Apply, and Extract's own work purposes. Only the mandate, the effects, the purpose
+**one recursive Pass process** for every purpose: Apply's work Passes (Implement in its
+`direct` strategy; Plan, Prepare and Implement in `staged`) and Verify, and Extract's own
+work purposes. Only the mandate, the effects, the purpose
 payload and the acceptance differ; every purpose uses the same stages, states, result
 envelope, routing and gates. It does no file or process I/O itself: everything goes
 through the ports in `Config`: `Agents` (one Agent turn), `Workspaces` (volumes),
@@ -22,12 +23,14 @@ ended. `Corrections()` names the correction purposes of the open genuine finding
 `Reassess()` says whether only fresh disputes keep the last review from being clean.
 `Finish(reason)` ends the run: `Verified` only when the last Pass was a clean review of
 one candidate, `Failed` for a definite rejection, `Incomplete` otherwise. After Finish the
-caller owns the work volume.
+caller owns the work volume. `Config.Binding` is what the caller bound the run to besides
+the Config's own inputs, such as an Apply's strategy, effective settings and build:
+`run.start` records it as given, and the Orchestrator chooses nothing by it.
 
 A `PassSpec` declares `Purpose`, `Mandate`, `Writes` (owned writes allowed), `Review`
 (fresh independent reviewers on an immutable candidate, with `Guidance` on what a genuine
 finding is), `Plans` (the plan payload; accepted plans' dependencies become start
-conditions of later Passes of the named purpose), `Corrections` (the work purposes a
+conditions of later Passes of the named purpose; Apply's `direct` declares no planning Pass), `Corrections` (the work purposes a
 finding may name, the last one the default) and `ArtifactFindingsAdvisory` (Extract's
 model review).
 
@@ -37,7 +40,8 @@ Every Manager, Root and leaves alike, goes through the stages of `pass.go`:
 
 1. **start**: waiting for the parent's accepted basis (Root starts at once).
 2. **blocked**: released by the parent's basis, but the dependencies of its accepted plan
-   for this purpose are not accepted yet. It may answer routed questions in
+   for this purpose, or after a reset the submissions its basis was bound to, are not
+   accepted yet. It may answer routed questions in
    communication-only turns with a read-only project; it cannot submit, report progress,
    decide or release children.
 3. **own**: works on its own contribution and submits its **basis** with `report`.
@@ -74,8 +78,21 @@ with the named waits.
 `report kind wait` names an own open question, a child, or the accepted basis or result
 (`stage`) of any other Manager of the Pass. Only an actual event wakes a waiting Manager:
 the accepted submission it named, an answer, a message or a decision it must make; an
-unchanged wait starts no turn. A wait on another Manager that closes a cycle with the
-accepted plans' dependencies and the parent-first and integration order could never be
+unchanged wait starts no turn. In a Pass with `BindWaits` (Implement of Apply's `direct`,
+which has no planning Pass before it), the accepted submission a wait named, or one already accepted
+when the wait is reported (recorded as report kind `bind`), becomes a **bound dependency**
+of the event the waiter works toward, its basis or its result (`dependency.bound`, with
+proposal and stand). Only Managers outside the waiter's own line bind: ancestors and
+descendants are already related by the parent-first and integration order. A binding that
+would close a cycle among all start, basis and result events, whether or not they already
+happened, is refused or skipped (`dependency.unbound`). A revision or reopening of a bound
+submission resets a waiter whose basis built on it, like a declared consumer, and its
+restart waits for the newly accepted version (`rebound`). A waiter whose result alone built
+on it keeps its basis and its children's work and integrates again: its submitted result
+is invalidated, an accepted one reopened with its consumers, and the submission of a turn
+running meanwhile withdrawn; that turn's helper delegations stand. Verify and Extract bind nothing. A wait
+on another Manager that closes a cycle with the accepted plans' dependencies, the bindings
+and the parent-first and integration order could never be
 satisfied, so it is refused with the cycle named; the Manager submits first what does not
 need it or asks its parent, and a Pass that still cannot advance ends as stalled. Every turn records its `mode`: `work`, `communication` (blocked), `coordination`
 (decisions and answers after the basis), `review` or `helper`.

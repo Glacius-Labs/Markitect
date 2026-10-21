@@ -11,15 +11,19 @@ artifacts:
   - path: "internal/apply/apply.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Binds the run from one passed capture, composes Plan, Prepare, Implement and Verify with corrections and reassessment, and publishes a verified candidate through the guarded Publisher.
+    why: Binds the run and its strategy from one passed capture, composes the direct or staged work Passes and Verify with corrections and reassessment, and publishes a verified candidate through the guarded Publisher.
   - path: "internal/apply/apply_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Tests the organization, briefs, checks, budget deadline, gates and write plans of the run configuration, publication refusals and an unverified run with fake ports.
+  - path: "internal/apply/binding.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Records what an Apply binds its Run to before any Agent work, the strategy with its work sequence, the effective settings and the implementation identity, for run.start and the report.
   - path: "internal/apply/compose_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Checks that work Passes repeat or restart only at an earlier purpose their own findings name and never skip a forward Pass.
+    why: Checks that direct runs Implement before Verify with Implement as its only correction, that staged runs Plan, Prepare and Implement, that both share Verify, and that work Passes repeat or restart only at an earlier purpose their own findings name and never skip a forward Pass.
   - path: "internal/apply/export_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
@@ -380,6 +384,10 @@ artifacts:
     form: code
     realizes: [product/apply/read-only-preparation]
     why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_run_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Runs both strategies through the product preparation and checks their work sequences with the same Pass-boundary gates, candidate check, fresh read-only Verify, publication, recorded binding and writer-stop guard, and the refusal of an unknown strategy or a missing build identity.
   - path: "internal/apply/strategy_defaults.go"
     form: code
     realizes: [product/apply/read-only-preparation]

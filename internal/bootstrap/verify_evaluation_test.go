@@ -58,17 +58,11 @@ func (s *executionService) evaluateVerify(ctx context.Context, request cli.Apply
 	if !ok {
 		return report, errors.New("complete captured settings are required")
 	}
-	cfg := session.cfg
-	result, err := apply.VerifyCaptured(ctx, apply.ApplyRequest{
-		RunID: ports.RunID, Prepared: attempt, Selection: request.Selection,
-		OwnerRequest: cfg.OwnerRequest, OwnerDecisions: cfg.OwnerDecisions, Deadline: ports.Deadline,
-		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
-		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
-			return executionCheck(selected, cfg)
-		},
-		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
-		Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
-	})
+	// The same request as the product's Apply; VerifyCaptured never publishes.
+	result, err := apply.VerifyCaptured(ctx, applyRequest(request, attempt, session.cfg, ports))
+	if result.Binding.Strategy != "" {
+		report.Binding = &result.Binding
+	}
 	if result.Outcome.Status != "" {
 		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
 	}

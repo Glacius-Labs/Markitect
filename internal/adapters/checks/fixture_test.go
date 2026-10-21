@@ -166,7 +166,7 @@ func processInput(t *testing.T, inner string) apply.ProfileInput {
 
 // fixtureExecution is the execution document of the controlled Library fixture.
 const fixtureExecution = `apiVersion: markitect.execution/v1
-strategy: recursive-passes-v1
+strategy: direct
 budget:
   executionTime: 25m
   turnTimeout: 10m

@@ -21,8 +21,10 @@ func TestExecutionRejectsClosedContractViolations(t *testing.T) {
 	base := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
 	for _, tc := range []struct{ name, from, to, code string }{
 		{"version", "markitect.execution/v1", "markitect.execution/v2", "execution.version"},
-		{"strategy", "recursive-passes-v1", "unreviewed", "execution.strategy"},
-		{"old strategy", "recursive-passes-v1", "shared-workspace-v1", "execution.strategy"},
+		{"strategy", "strategy: direct", "strategy: unreviewed", "execution.strategy"},
+		{"replaced strategy", "strategy: direct", "strategy: recursive-passes-v1", "execution.strategy"},
+		{"old strategy", "strategy: direct", "strategy: shared-workspace-v1", "execution.strategy"},
+		{"strategy case", "strategy: direct", "strategy: Direct", "execution.strategy"},
 		{"root option", "budget:", "disableReview: true\nbudget:", "execution.unknown_key"},
 		{"nested option", "agentTurns: 120", "agentTurns: 120\n  unlimited: true", "execution.unknown_key"},
 		{"old limits section", "budget:", "limits: {maxRuns: 5}\nbudget:", "execution.unknown_key"},

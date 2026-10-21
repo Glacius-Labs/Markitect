@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
@@ -38,6 +39,10 @@ func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
 	code := c.Run(context.Background(), []string{"apply", "--repo", dir, "--model", ".markitect/model.yaml", "--dependency", "vendor/model.yaml", "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr)
 	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || len(observed.Selection.Dependencies) != 1 || observed.Selection.Dependencies[0].ManifestPath.String() != "vendor/model.yaml" || len(observed.Selection.RuntimeProfiles) != 1 {
 		t.Fatalf("apply arguments changed: code=%d calls=%d stderr=%s", code, calls, stderr.String())
+	}
+	// The Run binds the identity of the build that runs it.
+	if observed.Build != buildinfo.Build() || observed.Build == "" {
+		t.Fatalf("apply runs without its build identity: %q", observed.Build)
 	}
 	var report struct {
 		Operation string `json:"operation"`

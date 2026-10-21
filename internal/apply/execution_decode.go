@@ -14,10 +14,6 @@ import (
 
 const executionPath = ".markitect/execution.yaml"
 
-// executionStrategy names the strategy this build implements: one recursive
-// Pass process for Plan, Prepare, Implement and Verify.
-const executionStrategy = "recursive-passes-v1"
-
 func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {
 	r := executionDecoding{status: model.Passed}
 	d := executionDecoder{result: &r}
@@ -75,8 +71,8 @@ func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {
 		d.issue(model.Failed, "execution.version", fields["apiVersion"], "Unsupported execution apiVersion.")
 	}
 	r.authored.Strategy, _ = d.text(d.required(fields, root, "strategy"), false)
-	if r.authored.Strategy.Source.File != "" && r.authored.Strategy.Value != executionStrategy {
-		d.issue(model.Failed, "execution.strategy", fields["strategy"], "Unsupported execution strategy.")
+	if r.authored.Strategy.Source.File != "" && !slices.Contains(strategies, Strategy(r.authored.Strategy.Value)) {
+		d.issue(model.Failed, "execution.strategy", fields["strategy"], "Unsupported execution strategy: direct or staged.")
 	}
 	r.authored.Budget = d.budget(d.required(fields, root, "budget"))
 	r.authored.Defaults.Execute, r.authored.Defaults.Verify = d.roles(fields, root, true)

@@ -22,8 +22,11 @@ func TestDefaultsRefuseMissingUnknownAndInvalidProductInputs(t *testing.T) {
 		{"unknown source", "", "", "strategy_defaults.source_unknown", "", model.NotCompleted},
 		{"observed empty", "", "", "strategy_defaults.yaml", "", model.Failed},
 		{"unknown version", "markitect.strategy-defaults/v1", "markitect.strategy-defaults/v2", "strategy_defaults.profile_unknown", "/apiVersion", model.NotCompleted},
-		{"unknown strategy", "recursive-passes-v1", "future-strategy", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
-		{"old strategy", "recursive-passes-v1", "recursive-apply-v1", "strategy_defaults.profile_unknown", "/strategy", model.NotCompleted},
+		{"unknown strategy", "[direct, staged]", "[direct, staged, future]", "strategy_defaults.profile_unknown", "/strategies", model.NotCompleted},
+		{"missing strategy", "[direct, staged]", "[staged]", "strategy_defaults.profile_unknown", "/strategies", model.NotCompleted},
+		{"duplicate strategy", "[direct, staged]", "[direct, staged, direct]", "strategy_defaults.profile_unknown", "/strategies", model.NotCompleted},
+		{"strategies not a list", "[direct, staged]", "direct", "strategy_defaults.list", "/strategies", model.Failed},
+		{"old strategy key", "strategies: [direct, staged]", "strategy: recursive-passes-v1", "strategy_defaults.unknown_key", "/strategy", model.Failed},
 		{"missing defaults", "", "", "strategy_defaults.field_missing", "/defaults", model.Failed},
 		{"missing team", "", "", "strategy_defaults.field_missing", "/defaults/team", model.Failed},
 		{"missing maxHelpers", "    maxHelpers: 1\n", "", "strategy_defaults.field_missing", "/defaults/team/maxHelpers", model.Failed},
@@ -104,7 +107,7 @@ func TestDefaultsKnownInvalidProductSurvivesIncompleteExecutionParent(t *testing
 	if _, ok := result.Declarations(); ok || result.Status() != model.Failed || len(result.Diagnostics()) != 2 {
 		t.Fatalf("known product error was hidden by incomplete parent: %+v", result.Diagnostics())
 	}
-	parent := executionResult(t, strings.Replace(defaultsAbsentExecution(t), "strategy: recursive-passes-v1", "strategy: unsupported", 1))
+	parent := executionResult(t, strings.Replace(defaultsAbsentExecution(t), "strategy: direct", "strategy: unsupported", 1))
 	result = parent.PrepareDefaults(apply.ProductStrategyDefaults())
 	if result.Status() != model.Failed || !reflect.DeepEqual(result.Execution().Diagnostics(), parent.Diagnostics()) || !reflect.DeepEqual(result.Execution().Partial(), parent.Partial()) {
 		t.Fatal("failed execution parent was replaced with product defaults")
