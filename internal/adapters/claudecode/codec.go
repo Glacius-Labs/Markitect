@@ -126,6 +126,9 @@ const (
 	ControlResponseMessage MessageKind = "control-response"
 	SystemInitMessage      MessageKind = "system-init"
 	ThinkingTokensMessage  MessageKind = "thinking-tokens"
+	// CompactBoundaryMessage marks that the provider compacted the
+	// conversation: what came before survives only in its summary.
+	CompactBoundaryMessage MessageKind = "compact-boundary"
 	UserMessage            MessageKind = "user"
 	AssistantMessage       MessageKind = "assistant"
 	StreamEventMessage     MessageKind = "stream-event"
@@ -324,6 +327,10 @@ func decodeLine(raw []byte) (Message, error) {
 					}
 				}
 				m.kind = ThinkingTokensMessage
+			case "compact_boundary":
+				// Classified by its type alone: any shape of it is an observed
+				// compaction, which errs toward delivering the context again.
+				m.kind = CompactBoundaryMessage
 			}
 		}
 	case "user", "assistant", "stream_event":

@@ -21,6 +21,8 @@ type helperRun struct {
 	task    string
 	paths   []PathMount
 	running bool
+	// prompt is what its turn received, which look_up brief returns.
+	prompt string
 }
 
 // delegate serves the tool delegate: it validates a bounded task for one of
@@ -172,9 +174,10 @@ func (e *engine) startHelpersLocked(p *pass) {
 			}
 			id := fmt.Sprintf("%s-%s-%s-%s", e.cfg.RunID, p.id, m.slug, h.id)
 			home := id + "-home"
-			ts := &turnState{m: m, h: h, id: id, role: h.role.Role, kind: kind, mode: "helper"}
+			ts := &turnState{m: m, h: h, id: id, role: h.role.Role, kind: kind, mode: "helper", context: contextBrief}
+			h.prompt = e.helperPromptLocked(h)
 			turn := Turn{Kind: kind, Profile: h.role.Profile, Workspace: p.volume, ReadOnly: true, Mounts: helperMounts(m.Write, h.paths), Home: home,
-				Prompt: e.helperPromptLocked(h), Tools: helperTools(len(h.paths) > 0)}
+				Prompt: h.prompt, Tools: helperTools(len(h.paths) > 0)}
 			e.useHomeLocked(home)
 			_ = e.record(Event{Kind: "helper.start", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"helper": h.id, "role": h.role.Role}})
 			e.wg.Add(1)
@@ -230,6 +233,13 @@ func (e *engine) helperTurn(h *helperRun, ts *turnState, turn Turn) {
 // helperHandler serves the tools of a helper's turn: its result report, the
 // look-up and, with a write subset, the check of its accounting.
 func (e *engine) helperHandler(h *helperRun, ts *turnState) ToolHandler {
+	serve := e.helperTool(h, ts)
+	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
+		return boundAnswer(serve(ctx, name, args))
+	}
+}
+
+func (e *engine) helperTool(h *helperRun, ts *turnState) ToolHandler {
 	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
 		switch name {
 		case toolReport:
@@ -249,7 +259,7 @@ func (e *engine) helperHandler(h *helperRun, ts *turnState) ToolHandler {
 			e.mu.Unlock()
 			return ToolAnswer{Text: "Recorded for your Manager. A later report in this turn replaces it."}
 		case toolLookUp:
-			return e.lookUp(h.m, args)
+			return e.lookUp(h.m, ts, args)
 		case toolCheck:
 			if len(h.paths) > 0 {
 				return e.check(ctx, h.m, ts, args)
