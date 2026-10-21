@@ -196,7 +196,7 @@ a.pill:hover { border-color: var(--line-ice); color: var(--ice); }
 .content { overflow: auto; min-height: 0; position: relative; }
 .content.fill { overflow: hidden; padding: 14px 16px 16px; display: grid; }
 .content.fill > * { min-height: 0; }
-.content.enter > * { animation: enter 280ms var(--ease-out) both; }
+.content.enter > * { animation: enter 280ms var(--ease-out) backwards; }
 .content.fill.enter > * { animation-name: fade; }
 @keyframes enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
 @keyframes fade { from { opacity: 0; } to { opacity: 1; } }
@@ -295,7 +295,7 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
   background: radial-gradient(440px 240px at 100% 0%, color-mix(in srgb, var(--accent) 11%, transparent), transparent 72%), var(--card);
   box-shadow: var(--shadow);
   transition: transform 240ms var(--ease-out), border-color 240ms var(--ease), box-shadow 240ms var(--ease);
-  animation: rise 460ms var(--ease-out) both;
+  animation: rise 460ms var(--ease-out) backwards;
 }
 .tile:nth-child(2) { animation-delay: 50ms; }
 .tile:nth-child(3) { animation-delay: 100ms; }
@@ -445,7 +445,6 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 /* ---------- Smaller windows ---------- */
 @media (max-width: 1080px) {
   .topbar .brand strong, .topbar .brand .sub { display: none; }
-  .trail { display: none; }
 }
 @media (max-width: 960px) {
   .modelview { grid-template-columns: 230px minmax(0, 1fr); }
@@ -460,8 +459,10 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 }
 @media (max-width: 760px) {
   .topbar { padding: 0 12px; gap: 10px; }
-  .where { gap: 8px; min-width: 0; overflow-x: auto; scrollbar-width: none; }
-  .where .divider, .areaname .label-text { display: none; }
+  .where { gap: 8px; min-width: 0; }
+  .where .divider, .where .back span, .trail, .topbar.in-area .brand { display: none; }
+  .areaname .areatext { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .atab { padding: 5px 10px; }
   .statusbar .pill:not(:first-child) { display: none; }
   .hub, .page { padding: 18px 16px 40px; }
   .hero { grid-template-columns: minmax(0, 1fr); padding: 20px; }
@@ -714,7 +715,7 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
   .aside .close { display: inline-flex; float: right; }
 }
 @media (max-width: 700px) {
-  .inspector { height: auto; min-height: 100%; grid-template-rows: auto auto auto auto auto; }
+  .inspector { height: auto; min-height: 100%; grid-template-rows: auto auto auto auto auto; overflow: visible; }
   .work { grid-template-rows: auto auto; }
   .stage { max-height: 62vh; }
   .lower .tabpanel { max-height: 60vh; }

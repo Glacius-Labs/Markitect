@@ -22,10 +22,11 @@ function build(app) {
   const where = h("div", { class: "where" });
   const statusbar = h("div", { class: "statusbar", "aria-label": "Project state" });
   const content = h("main", { id: "main", class: "content", tabindex: -1 });
+  const topbar = h("header", { class: "topbar" });
   const shellEl = h("div", { class: "shell" },
-    h("header", { class: "topbar" },
+    append(topbar, [
       h("a", { class: "brand", href: "#/", title: "Hub" }, brandMark(), h("strong", {}, "Markitect"), h("span", { class: "sub" }, "Cockpit")),
-      where, statusbar),
+      where, statusbar]),
     content);
   app.append(shellEl);
   // The skip link moves focus to the work surface without changing the place.
@@ -45,7 +46,7 @@ function build(app) {
     const area = !up && areas.find((a) => a.key === e.key);
     if (area) location.hash = area.href;
   });
-  built = { where, statusbar, content, tabs: new Map(), place: null, trailEl: null };
+  built = { topbar, where, statusbar, content, tabs: new Map(), place: null, trailEl: null, chips: null };
   store.subscribe(drawState);
   store.start();
   return built;
@@ -63,21 +64,20 @@ export function show(app, { area = null, tab = null, trail = [], escape = null, 
   const entering = place !== b.place;
   if (entering) {
     b.place = place;
+    b.topbar.classList.toggle("in-area", Boolean(a));
     b.tabs.clear();
     clear(b.where);
     if (a) {
       append(b.where, [
-        h("a", { class: "btn quiet small", href: "#/", title: "Back to the hub (Esc)" }, areaIcon("back"), "Hub"),
+        h("a", { class: "btn quiet small back", href: "#/", title: "Back to the hub", "aria-label": "Back to the hub" }, areaIcon("back"), h("span", {}, "Hub")),
         h("span", { class: "divider", "aria-hidden": "true" }),
-        h("h1", { class: "areaname" }, h("a", { href: a.href }, emblem(a.id), h("span", { class: "label-text" }, a.label))),
+        h("h1", { class: "areaname" }, h("a", { href: a.href }, emblem(a.id), h("span", { class: "areatext" }, a.label))),
         a.tabs && h("nav", { class: "atabs", "aria-label": `${a.label} views` }, a.tabs.map((t) => {
           const link = h("a", { class: "atab", href: t.href, "aria-current": t.id === tab ? "page" : null }, t.label);
           b.tabs.set(t.id, link);
           return link;
         })),
       ]);
-    } else {
-      b.where.append(h("h1", { class: "visually-hidden" }, "Hub"));
     }
     b.trailEl = h("div", { class: "trail" });
     b.where.append(b.trailEl);
@@ -132,5 +132,11 @@ function drawState(s) {
     const ok = p.status === "passed";
     chips.push(h("a", { class: "pill", href: "#/model", title: p.error || "Structural check of the working tree" }, h("span", { class: `lamp ${ok ? "st-done" : "st-fail"}` }), "Check ", h("strong", {}, ok ? "passed" : p.status || "not completed")));
   }
-  clear(built.statusbar).append(...chips);
+  // The chips are replaced only when they change, so focus on one survives a
+  // poll.
+  const sig = chips.map((c) => c.outerHTML).join("");
+  if (sig !== built.chips) {
+    built.chips = sig;
+    clear(built.statusbar).append(...chips);
+  }
 }

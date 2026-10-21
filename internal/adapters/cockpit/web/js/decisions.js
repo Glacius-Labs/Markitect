@@ -19,14 +19,20 @@ export function renderDecisions(content, selected) {
   const title = h("h2", {});
   const listBody = h("div", {});
   listPane.append(h("div", { class: "panehead" }, title, h("div", { class: "actions" }, tabs)), listBody);
+  // The filter buttons stay and change state, so focus stays on them.
+  const buttons = [["waiting", "Waiting"], ["all", "All"]].map(([key, text]) => {
+    const b = h("button", { type: "button", dataset: { key } }, text);
+    b.addEventListener("click", () => { filter = key; drawTabs(); drawList(store); });
+    return b;
+  });
+  tabs.append(...buttons);
   const drawTabs = () => {
     title.textContent = filter === "waiting" ? "Waiting for you" : "All decisions";
-    clear(tabs).append(...[["waiting", "Waiting"], ["all", "All"]].map(([key, text]) => {
-      const b = h("button", { type: "button", "aria-pressed": String(filter === key) }, text);
-      b.addEventListener("click", () => { filter = key; drawTabs(); drawList(store); });
-      return b;
-    }));
+    for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.key === filter));
   };
+  // The list is drawn again only when what it shows changes, so a poll keeps
+  // the focus on a row.
+  let shownList = null;
   const drawList = (s) => {
     const shown = items(s).filter((x) => filter === "all" || x.open);
     const first = shown.find((x) => x.open);
@@ -34,6 +40,9 @@ export function renderDecisions(content, selected) {
       location.replace(first.kind === "question" ? questionHref(first.q) : proposalHref(first.p));
       return;
     }
+    const sig = JSON.stringify([filter, shown, s.errors.questions?.message, s.errors.proposals?.message]);
+    if (sig === shownList) return;
+    shownList = sig;
     clear(listBody);
     if (!shown.length) {
       listBody.append(h("p", { class: "void" }, h("strong", {}, filter === "waiting" ? "Nothing waits for you" : "No question or proposal yet"),
@@ -128,7 +137,8 @@ function questionView(q, answers) {
         h("dt", {}, "Asked"), h("dd", {}, when(q.asked)),
         h("dt", {}, "State"), h("dd", {}, `${cap(q.why)}.`))),
     h("div", { class: "block" }, h("h3", {}, "Root's question"), h("div", { class: "prose quote agent" }, q.text)),
-    q.answerable && answers ? h("div", { class: "decide" }, answerForm(q.run, q.id)) : null);
+    q.answerable && answers ? h("div", { class: "decide" }, answerForm(q.run, q.id)) : null,
+    q.answerable && !answers ? h("p", { class: "note", style: { margin: 0 } }, "This cockpit writes no answers; answer with markitect answer.") : null);
 }
 
 function questionHref(q) {

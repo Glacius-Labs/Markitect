@@ -20,11 +20,21 @@ export function renderHub(content) {
   content.append(page);
   const parts = { head: h("div", {}), side: h("div", { class: "side" }), next: h("div", { class: "next", role: "status" }) };
   hero.append(parts.head, parts.side, parts.next);
-  // The parts are drawn again in place, so focus on a tile survives a poll.
+  // Tiles are filled in place and the hero's parts are drawn again only when
+  // what they show changes, so focus and announcements survive a poll.
+  const drawn = {};
+  const once = (key, value, fn) => {
+    const sig = JSON.stringify(value);
+    if (drawn[key] === sig) return;
+    drawn[key] = sig;
+    fn();
+  };
   const draw = (s) => {
     if (!page.isConnected) return unsubscribe();
-    drawProject(parts, s);
-    drawNext(parts.next, s);
+    const part = s.data.project;
+    once("project", [part?.configured, part?.observing, part?.project, s.errors.project?.message], () => drawProject(parts, s));
+    const next = nextStep(s);
+    once("next", next, () => drawNext(parts.next, next));
     drawModel(tiles.get("model"), s);
     drawRuns(tiles.get("runs"), s);
     drawDecisions(tiles.get("decisions"), s);
@@ -93,7 +103,12 @@ function drawProject(parts, s) {
     observe.disabled = true;
     observe.textContent = "Observing…";
     try { await api.observeProject(); } catch { /* the hub shows the next state */ }
-    refreshState();
+    await refreshState();
+    // A refused request leaves the drawn state unchanged; the button says so.
+    if (observe.isConnected && !store.data.project?.observing) {
+      observe.disabled = false;
+      observe.textContent = "Observe again";
+    }
   });
   clear(parts.side).append(
     h("a", { class: `checkbadge ${ok ? "st-done" : "st-fail"}`, href: "#/model", title: "Structural check of the working tree" }, h("span", { class: "lamp" }), ok ? "Check passed" : `Check ${p.status || "not completed"}`),
@@ -118,8 +133,7 @@ function nextStep(s) {
   return { calm: true, title: "Nothing waits for you", text: "Browse the model, or change it by prompt in a session." };
 }
 
-function drawNext(el, s) {
-  const n = nextStep(s);
+function drawNext(el, n) {
   el.className = `next${n.urgent ? " urgent" : ""}${n.calm ? " calm" : ""}`;
   el.style.setProperty("--accent", n.accent || "var(--ice)");
   append(clear(el), [
@@ -142,9 +156,9 @@ function drawModel(t, s) {
 
 function drawRuns(t, s) {
   if (s.errors.runs) return fill(t, { lamp: "st-fail", foot: "The runs are not readable" });
-  const runs = s.data.runs || [];
+  const runs = (s.data.runs || []).filter((r) => r.id);
   const live = s.liveRuns.length;
-  const latest = runs.find((r) => r.id);
+  const latest = runs[0];
   const result = latest?.runOutcome || latest?.outcome;
   fill(t, {
     stats: [[String(runs.length), runs.length === 1 ? "Run recorded" : "Runs recorded"], [String(live), "Running now"]],
