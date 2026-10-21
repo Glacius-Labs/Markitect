@@ -112,8 +112,29 @@ export function areaIcon(name) {
     settings: "M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4",
     back: "M14.5 5l-7 7 7 7",
     browse: "M4 5h6v14H4zM12 5h8M12 9h8M12 13h8M12 17h5",
+    bell: "M6 16.5V11a6 6 0 0 1 12 0v5.5l1.5 2h-15zM10 21h4",
+    plus: "M12 5v14M5 12h14",
   };
   return s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false", class: "ico" }, s("path", { d: paths[name] || "" }));
+}
+
+// pagehead is the header every page of its own carries: the title, one short
+// sentence and, optionally, the actions on the right and a "How this works"
+// disclosure for what the owner should be able to reach but not have to read.
+export function pagehead(title, lead, { actions = null, about: more = null } = {}) {
+  return h("header", { class: "pagehead" },
+    h("div", { class: "headtext" }, h("h2", {}, title), lead ? h("p", { class: "lead" }, lead) : null, more),
+    actions ? h("div", { class: "actions" }, actions) : null);
+}
+
+// about is a small collapsed disclosure; its body is the longer explanation.
+export function about(summary, ...children) {
+  return h("details", { class: "about" }, h("summary", {}, summary), h("div", { class: "aboutbody" }, children));
+}
+
+// empty is the cockpit's empty state: a short title and one line.
+export function empty(title, ...children) {
+  return h("div", { class: "void" }, h("strong", {}, title), children.length ? h("span", {}, children) : null);
 }
 
 // brandMark is the Markitect mark of the repository's wordmark

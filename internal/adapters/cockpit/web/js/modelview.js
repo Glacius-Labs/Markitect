@@ -6,7 +6,7 @@
 // session or by hand.
 
 import { api } from "./api.js";
-import { h, clear, when } from "./dom.js";
+import { h, clear, when, empty } from "./dom.js";
 import { store } from "./store.js";
 
 let cache = null; // { observedAt, data }
@@ -29,7 +29,9 @@ export function renderModelView(content, route) {
   }, (err) => {
     if (!view.isConnected) return;
     const waiting = /being observed/.test(err.message);
-    clear(detail).append(h("p", { class: "void", role: waiting ? "status" : "alert" }, h("strong", {}, waiting ? "Observing the repository" : "The model is not readable"), waiting ? "The structural preparation of the working tree runs; the model appears when it ends." : err.message));
+    const note = empty(waiting ? "Observing the repository" : "The model is not readable", waiting ? "The structural preparation runs; the model appears when it ends." : err.message);
+    note.setAttribute("role", waiting ? "status" : "alert");
+    clear(detail).append(note);
     if (waiting) setTimeout(() => view.isConnected && load(), 2500);
   });
   // A newer observation (after Observe again or an accepted proposal) is read
@@ -88,7 +90,7 @@ function drawLists(tree, defs, m, route) {
   const shown = m.all.filter((d) => (!route.pkg || d.package === route.pkg) && matches(d, query));
   clear(defs).append(h("div", { class: "panehead" }, h("h2", {}, route.pkg || (query ? "Matching Definitions" : "All Definitions")), h("span", { class: "coord" }, String(shown.length))));
   if (!shown.length) {
-    defs.append(h("p", { class: "void" }, query ? `No Definition matches “${route.q}”.` : "This Package holds no Definition."));
+    defs.append(empty(query ? "No match" : "Nothing here", query ? `No Definition matches “${route.q}”.` : "This Package holds no Definition."));
     return;
   }
   defs.append(h("ul", { class: "rows" }, shown.map((d) => h("li", {},
@@ -119,19 +121,19 @@ function drawDetail(view, detail, m, route) {
         kindDef ? h("a", { class: "kind", href: href({ pkg: kindDef.package, def: kindDef.id }) }, kindName(d.kind)) : h("span", { class: "kind" }, kindName(d.kind)),
         d.title ? h("span", { class: "digest" }, d.id) : null,
         h("span", { class: "digest faint", title: "Source file" }, d.source)),
-      d.scope.status !== "passed" ? h("p", { class: "refusal", style: { marginTop: "14px" } }, `This model's check did not pass (${d.scope.status}); the Definition is shown as read.`) : null),
+      d.scope.status !== "passed" ? h("p", { class: "refusal lined" }, `This model's check did not pass (${d.scope.status}); the Definition is shown as read.`) : null),
     h("div", { class: "defbody" },
       h("section", {}, h("h3", {}, "Body"), h("p", { class: "text" }, bodyView(d, m.byKey))),
-      d.spec.length ? h("section", {}, h("h3", {}, "Fields"), h("table", { class: "table" }, h("tbody", {}, d.spec.map((f) => h("tr", {}, h("th", { scope: "row", style: { width: "1%", whiteSpace: "nowrap" } }, f.name), h("td", { class: "digest" }, f.value)))))) : null,
+      d.spec.length ? h("section", {}, h("h3", {}, "Fields"), h("table", { class: "table" }, h("tbody", {}, d.spec.map((f) => h("tr", {}, h("th", { scope: "row", class: "fieldname" }, f.name), h("td", { class: "digest" }, f.value)))))) : null,
       h("section", {}, h("h3", {}, `Realized by ${realized.length} registered file${realized.length === 1 ? "" : "s"}`),
-        registryRead ? null : h("p", { class: "refusal", style: { marginBottom: "10px" } }, `The registry was not read completely (${m.data.model.registryStatus}); files may be missing from this list.`),
+        registryRead ? null : h("p", { class: "refusal spaced" }, `The registry was not read completely (${m.data.model.registryStatus}); files may be missing from this list.`),
         realized.length ? h("table", { class: "table" }, h("thead", {}, h("tr", {}, h("th", {}, "Path"), h("th", {}, "Form"), h("th", {}, "Why"))),
           h("tbody", {}, realized.map((r) => h("tr", {}, h("td", { class: "digest path" }, r.path), h("td", {}, r.form), h("td", {}, r.why, h("div", { class: "sub digest" }, r.shard))))))
-          : h("p", { class: "note", style: { margin: 0 } }, registryRead ? "No registered file names this Definition." : "No file read from the registry names this Definition.")),
+          : h("p", { class: "note" }, registryRead ? "No registered file names this Definition." : "No file read from the registry names this Definition.")),
       h("section", {}, h("h3", {}, `Linked from ${linkedFrom.length} Definition${linkedFrom.length === 1 ? "" : "s"}`),
-        linkedFrom.length ? h("ul", { class: "rows", style: { border: "1px solid var(--rule-2)" } }, linkedFrom.map((x) => h("li", {},
+        linkedFrom.length ? h("ul", { class: "rows boxed" }, linkedFrom.map((x) => h("li", {},
           h("a", { class: "row", href: href({ pkg: x.package, def: x.id }) }, h("span", { class: "kind" }, kindName(x.kind)), h("span", { class: "title" }, x.title || x.id), h("span", { class: "meta" }, x.package)))))
-          : h("p", { class: "note", style: { margin: 0 } }, "No Definition links to this one."))));
+          : h("p", { class: "note" }, "No Definition links to this one."))));
   detail.scrollTop = 0;
 }
 
@@ -183,21 +185,22 @@ function overviewPanel(m, missing) {
   const kinds = {};
   for (const s of m.scopes) for (const d of s.definitions) kinds[kindName(d.kind)] = (kinds[kindName(d.kind)] || 0) + 1;
   const failed = m.scopes.filter((s) => s.status !== "passed");
-  return h("div", { class: "panebody blueprint", style: { minHeight: "100%" } },
+  return h("div", { class: "panebody blueprint fillpane" },
     missing ? h("p", { class: "refusal", role: "alert" }, `The model holds no Definition ${missing}.`) : null,
     h("div", { class: "pagehead" }, h("div", {}, h("span", { class: "label" }, "Canonical model"), h("h2", {}, local ? local.id : "Model"),
       h("p", { class: "lead" }, `Observed ${when(m.data.observedAt)} from the working tree at `, h("span", { class: "digest" }, (m.data.head || "").slice(0, 12)), ". Choose a Package or a Definition, or filter with /."))),
     failed.length ? h("p", { class: "refusal" }, `The check of ${failed.map((s) => s.id).join(", ")} did not pass; what the observation read is shown.`) : null,
     m.data.model.registryStatus !== "passed" ? h("p", { class: "refusal" }, `The registry was not read completely (${m.data.model.registryStatus}).`) : null,
-    h("div", { class: "stat", style: { margin: "8px 0 28px" } },
+    h("div", { class: "statcards" },
       h("div", {}, h("b", {}, String(total)), h("span", {}, "Definitions")),
       h("div", {}, h("b", {}, String(m.scopes.reduce((n, s) => n + s.packages.length, 0))), h("span", {}, "Packages")),
       h("div", {}, h("b", {}, String(m.data.model.registry.length)), h("span", {}, "Registered files")),
       h("div", {}, h("b", {}, String(m.scopes.length)), h("span", {}, m.scopes.length === 1 ? "Model" : "Models"))),
-    h("h3", { class: "label", style: { margin: "0 0 10px" } }, "Kinds"),
-    h("table", { class: "table", style: { maxWidth: "520px", border: "1px solid var(--rule-2)" } }, h("tbody", {},
-      Object.entries(kinds).sort((a, b) => b[1] - a[1]).map(([k, n]) => h("tr", {}, h("td", {}, k), h("td", { class: "digest", style: { textAlign: "right" } }, String(n)))))),
-    local?.digest ? h("p", { class: "note", style: { marginTop: "22px" } }, h("span", { class: "label" }, "Digest "), h("span", { class: "digest" }, local.digest)) : null);
+    h("section", { class: "card kinds" },
+      h("header", {}, h("h3", {}, "Kinds"), h("span", { class: "coord" }, String(Object.keys(kinds).length))),
+      h("table", { class: "table" }, h("tbody", {},
+        Object.entries(kinds).sort((a, b) => b[1] - a[1]).map(([k, n]) => h("tr", {}, h("td", {}, k), h("td", { class: "digest num" }, String(n))))))),
+    local?.digest ? h("p", { class: "note digestline" }, h("span", { class: "label" }, "Digest "), h("span", { class: "digest" }, local.digest)) : null);
 }
 
 // "/" focuses the filter while the model browser is open.

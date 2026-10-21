@@ -3,7 +3,7 @@
 // Without a choice, the first waiting proposal opens, as in a mail inbox. A
 // run asks the owner nothing: no question crosses Root during a Run.
 
-import { h, clear, when } from "./dom.js";
+import { h, clear, when, empty } from "./dom.js";
 import { store } from "./store.js";
 import { refreshState } from "./shell.js";
 import { mountProposal, stateWords } from "./proposal.js";
@@ -44,13 +44,12 @@ export function renderDecisions(content, selected) {
     shownList = sig;
     clear(listBody);
     if (!shown.length) {
-      listBody.append(h("p", { class: "void" }, h("strong", {}, filter === "waiting" ? "Nothing waits for you" : "No proposal yet"),
-        "Proposals come from the ", h("a", { href: "#/settings" }, "settings"),
-        " and from ", h("a", { href: "#/session" }, "model sessions"), "; they live as long as this cockpit."));
+      listBody.append(empty(filter === "waiting" ? "Nothing waits for you" : "No proposal yet",
+        "They come from ", h("a", { href: "#/settings" }, "Settings"), " and ", h("a", { href: "#/session" }, "model sessions"), "."));
     } else {
       listBody.append(h("ul", { class: "rows" }, shown.map((x) => h("li", {}, proposalRow(x.p, selected)))));
     }
-    if (s.errors.proposals) listBody.append(h("p", { class: "note", style: { padding: "0 18px" } }, "Proposals need the cockpit to be started with --repo."));
+    if (s.errors.proposals) listBody.append(h("p", { class: "note pad" }, "Proposals need the cockpit to be started with --repo."));
   };
   drawTabs();
   detailView(detail, selected);
@@ -84,8 +83,7 @@ function proposalRow(p, selected) {
 // detailView draws the chosen proposal into the right pane.
 function detailView(pane, selected) {
   if (!selected) {
-    pane.append(h("div", { class: "panebody blueprint", style: { minHeight: "100%" } },
-      h("p", { class: "void" }, h("strong", {}, "Choose a proposal"), "A proposal shows its check, difference and your decision.")));
+    pane.append(h("div", { class: "panebody blueprint fillpane" }, empty("Choose a proposal", "It shows its check, difference and your decision.")));
     return;
   }
   const body = h("div", { class: "panebody" });

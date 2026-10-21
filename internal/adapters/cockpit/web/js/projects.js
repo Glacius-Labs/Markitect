@@ -8,7 +8,7 @@
 // typed values survive the four-second observation.
 
 import { api } from "./api.js";
-import { h, clear, append, announce } from "./dom.js";
+import { h, clear, append, announce, pagehead, about, areaIcon } from "./dom.js";
 import { store } from "./store.js";
 import { refreshState } from "./shell.js";
 
@@ -25,9 +25,11 @@ export function renderProjects(content, setupFor) {
   const addCard = addForm();
   const setupSlot = h("div", {});
   const page = h("div", { class: "page" },
-    h("div", { class: "pagehead" }, h("div", {},
-      h("h2", {}, "Projects"),
-      h("p", { class: "lead" }, "Each project is a repository with the runtime directory that setup fills. Opening a project switches the cockpit to it; that is refused while the current one runs a run you started here, works in a model session or writes an accepted proposal. Removing a project forgets its entry only: the repository and the runtime directory stay."))),
+    pagehead("Projects", "Open, add and set up the projects the cockpit works on.", {
+      about: about("How this works",
+        h("p", {}, "A project is a repository with the runtime directory that setup fills."),
+        h("p", {}, "Opening a project switches the cockpit to it. That is refused while the open project runs a run you started here, works in a model session or writes an accepted proposal."),
+        h("p", {}, "Removing a project forgets its entry only: the repository and the runtime directory stay.")) }),
     notices, keep, cards, setupSlot, addCard.el);
   content.append(page);
 
@@ -92,7 +94,7 @@ function drawNotices(el, view) {
   if (ui.message) el.append(h("p", { class: "refusal", role: "alert" }, ui.message));
   if (view.current && view.busy) el.append(h("p", { class: "note" }, `${view.current.name} is busy and stays open: ${view.busy}. Opening another project waits for that.`));
   if (view.available && !view.error && !view.projects.length && !view.current) {
-    el.append(h("p", { class: "note" }, "No project yet. Add one below: a repository with a model, and optionally the runtime directory of its setup."));
+    el.append(h("p", { class: "note" }, "No project yet. Add a repository below."));
   }
 }
 
@@ -107,13 +109,14 @@ function drawKeep(el, view) {
     await act(api.keepProject(name.value.trim()));
     announce(`${name.value.trim()} is kept in the project list.`);
   }));
-  el.append(h("section", { class: "panel keepcard", "aria-labelledby": "keep-title" },
-    h("header", {}, h("h3", { id: "keep-title" }, `${c.name} is open from the command line`)),
-    h("div", { class: "body" },
-      h("p", { class: "note" }, `Opened with flags and not in the project list: ${c.repository}. Keeping it adds the repository, its model selection and ${c.runtime ? "its runtime directory" : "no runtime (set it up afterwards)"} to the list; explicit state directories are not kept.`),
-      h("div", { class: "keeprow" },
-        h("div", { class: "field" }, h("label", { for: "keep-name" }, "Name in the list"), name),
-        button))));
+  el.append(h("section", { class: "card keepcard", "aria-labelledby": "keep-title" },
+    h("div", { class: "cardhead" }, h("span", { class: "emblem" }, areaIcon("plus")), h("div", { class: "who" },
+      h("h3", { id: "keep-title" }, `${c.name} is open from the command line`),
+      h("span", { class: "sub digest", title: c.repository }, c.repository))),
+    h("p", { class: "note", title: "Explicit state directories are not kept." }, `Keep it to add the repository, its model selection and ${c.runtime ? "its runtime directory" : "no runtime (set it up afterwards)"} to the list.`),
+    h("div", { class: "keeprow" },
+      h("div", { class: "field" }, h("label", { for: "keep-name" }, "Name in the list"), name),
+      button)));
 }
 
 function drawCards(el, view, redraw) {
@@ -125,11 +128,15 @@ function drawCards(el, view, redraw) {
   for (const p of view.projects) {
     const key = (action) => `${action}:${p.name}`;
     const removing = ui.removing === p.name;
-    const head = h("header", {}, h("h3", { id: `proj-${p.name}` }, p.name), p.current ? h("span", { class: "kind current" }, "Open") : null);
-    const body = h("div", { class: "body" },
-      h("dl", { class: "facts" },
-        h("dt", {}, "Repository"), h("dd", { class: "digest", title: p.repository }, p.repository),
-        h("dt", {}, "Runtime"), h("dd", {}, p.setUp ? h("span", { class: "digest", title: p.runtime }, p.runtime) : h("span", { class: "outcome st-waiting" }, h("span", { class: "lamp" }), "Not set up: no runs and no model sessions"))));
+    const head = h("div", { class: "cardhead" },
+      h("span", { class: "emblem initial", "aria-hidden": "true" }, (p.name || "?").slice(0, 1).toUpperCase()),
+      h("div", { class: "who" },
+        h("h3", { id: `proj-${p.name}` }, p.name),
+        h("span", { class: `state ${p.setUp ? "st-done" : "st-waiting"}` }, h("span", { class: "lamp" }), p.setUp ? "Set up" : "Not set up")),
+      p.current ? h("span", { class: "kind current" }, "Open") : null);
+    const body = h("dl", { class: "facts" },
+      h("dt", {}, "Repository"), h("dd", { class: "digest", title: p.repository }, p.repository),
+      h("dt", {}, "Runtime"), h("dd", {}, p.setUp ? h("span", { class: "digest", title: p.runtime }, p.runtime) : h("span", { class: "muted" }, "None: no runs or model sessions until set up")));
     const actions = h("div", { class: "actions" });
     if (p.current) {
       actions.append(h("a", { class: "btn act small", href: "#/", "data-key": key("go") }, "Go to the project"));
@@ -148,11 +155,11 @@ function drawCards(el, view, redraw) {
       el.closest(".page").dispatchEvent(new CustomEvent("setup", { detail: p.name }));
     } }, p.setUp ? "Set up again" : "Set up runs"));
     if (!removing) {
-      actions.append(button("Remove…", { key: key("remove"), cls: "btn quiet small", disabled: ui.busy, onclick: () => { ui.removing = p.name; ui.message = ""; redrawAll(redraw, key("confirm")); } }));
+      actions.append(button("Remove…", { key: key("remove"), cls: "btn quiet small end", disabled: ui.busy, onclick: () => { ui.removing = p.name; ui.message = ""; redrawAll(redraw, key("confirm")); } }));
     }
-    body.append(actions);
+    const confirm = [];
     if (removing) {
-      body.append(h("div", { class: "confirm", role: "group", "aria-label": `Remove ${p.name} from the list` },
+      confirm.push(h("div", { class: "confirm", role: "group", "aria-label": `Remove ${p.name} from the list` },
         h("p", { class: "note", role: "status" }, "Removes the entry from the list. The repository and the runtime directory are not touched."),
         p.current && view.busy ? h("p", { class: "refusal", role: "alert" }, `It is open and busy: ${view.busy}.`) : null,
         h("div", { class: "actions" },
@@ -163,7 +170,7 @@ function drawCards(el, view, redraw) {
           }) }),
           button("Keep it", { key: key("cancel"), cls: "btn small", disabled: ui.busy, onclick: () => { ui.removing = null; redrawAll(redraw, key("remove")); } }))));
     }
-    el.append(h("section", { class: `panel projcard${p.current ? " is-current" : ""}`, "aria-labelledby": `proj-${p.name}` }, head, body));
+    el.append(h("section", { class: `card projcard${p.current ? " is-current" : ""}`, "aria-labelledby": `proj-${p.name}` }, head, body, actions, confirm));
   }
   if (focused) el.querySelector(`[data-key="${CSS.escape(focused)}"]`)?.focus();
 }
@@ -205,9 +212,9 @@ async function act(request) {
 
 function addForm() {
   const f = {
-    name: field("add-name", "Name", "Default: the repository's directory name"),
-    repository: field("add-repository", "Repository", "Absolute path of the repository root"),
-    runtime: field("add-runtime", "Runtime directory (optional)", "The directory markitect setup filled, with run.json and runtime.yaml"),
+    name: field("add-name", "Name", "Default: the directory name"),
+    repository: field("add-repository", "Repository", "Absolute path of the root"),
+    runtime: field("add-runtime", "Runtime directory (optional)", "Filled by markitect setup"),
     model: field("add-model", "Model manifest", "Relative to the repository, or absolute", ".markitect/model.yaml"),
   };
   const deps = h("textarea", { id: "add-deps", rows: "2", spellcheck: "false", autocomplete: "off" });
@@ -241,9 +248,11 @@ function addForm() {
     }
     submit.disabled = false;
   });
-  out.el = h("section", { class: "panel addcard", "aria-labelledby": "add-title" },
-    h("header", {}, h("h3", { id: "add-title" }, "Add a project")),
-    h("div", { class: "body" }, form));
+  out.el = h("section", { class: "card addcard", "aria-labelledby": "add-title" },
+    h("div", { class: "cardhead" }, h("span", { class: "emblem" }, areaIcon("plus")), h("div", { class: "who" },
+      h("h3", { id: "add-title" }, "Add a project"),
+      h("span", { class: "sub" }, "A repository with a model. The runtime directory is optional."))),
+    form);
   out.update = (view) => {
     const off = !view || !view.available || Boolean(view.error);
     for (const input of form.querySelectorAll("input, textarea, button")) input.disabled = off;
@@ -301,7 +310,7 @@ function setupCard(project, view) {
       text("effort", "Effort", "effort", ""),
       text("engine", "Container engine", "engine", "Absolute path of the executable")),
     h("fieldset", { class: "plate" }, h("legend", {}, "Check profiles"),
-      h("p", { class: "note" }, "One PROFILE = EXECUTABLE per check profile the project selects. Setup refuses when one is missing and names it."),
+      h("p", { class: "note" }, "One PROFILE = EXECUTABLE per check profile the project selects; setup names a missing one."),
       checks,
       h("div", { class: "addrow" }, h("button", { class: "btn small", type: "button", onclick: () => { draft.checks.push({ profile: "", executable: "" }); drawChecks(); checks.querySelector(".checkrow:last-child input")?.focus(); } }, "Add a check"))),
     h("div", { class: "grid4" },
@@ -330,7 +339,7 @@ function setupCard(project, view) {
     append(review, [
       h("div", { class: "confirm", role: "group", "aria-label": "Confirm the setup" },
         h("h4", {}, `Writes runtime.yaml and run.json in ${b.runtimeDir}`),
-        h("p", { class: "note" }, "Setup observes the container engine and the image, creates the directory with its state directory and writes the two files. It starts no container and reads no credential."),
+        h("p", { class: "note" }, "Setup observes the engine and the image, creates the directory with its state directory and writes the two files. It starts no container and reads no credential."),
         h("dl", { class: "facts" },
           h("dt", {}, "Project"), h("dd", {}, `${name} (${project.repository})`),
           h("dt", {}, "Image"), h("dd", { class: "digest" }, b.image),
@@ -398,10 +407,12 @@ function setupCard(project, view) {
     result.focus();
   };
   draw();
-  const el = h("section", { class: "panel setupcard", "aria-labelledby": "setup-title" },
-    h("header", {}, h("h3", { id: "setup-title", tabindex: "-1" }, `Set up runs for ${name}`)),
-    h("div", { class: "body settings" },
-      h("p", { class: "note" }, "This calls the function behind markitect setup with the project's repository and model selection and writes exactly what it writes. Its refusals are shown as they are."),
+  const el = h("section", { class: "card setupcard", "aria-labelledby": "setup-title" },
+    h("div", { class: "cardhead" }, h("span", { class: "emblem initial", "aria-hidden": "true" }, (name || "?").slice(0, 1).toUpperCase()), h("div", { class: "who" },
+      h("h3", { id: "setup-title", tabindex: "-1" }, `Set up runs for ${name}`),
+      h("span", { class: "sub" }, "Prepares the runtime directory for runs and model sessions."))),
+    h("div", { class: "settings" },
+      about("What this does", h("p", {}, "It calls the function behind markitect setup with the project's repository and model selection and writes exactly what it writes. Its refusals are shown as they are.")),
       form, review, result, actions));
   return el;
 }
