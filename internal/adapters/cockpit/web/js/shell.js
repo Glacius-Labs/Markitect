@@ -8,11 +8,11 @@ import { store } from "./store.js";
 import { setTitle, notifyControl } from "./notify.js";
 
 export const areas = [
-  { id: "model", key: "1", href: "#/model", label: "Model", lead: "Browse the canonical model and change it by prompt in a session.",
+  { id: "model", key: "1", href: "#/model", label: "Model", lead: "Browse the model, or change it by prompt.", chips: ["Browse", "Session"],
     tabs: [{ id: "browse", href: "#/model", label: "Browse" }, { id: "session", href: "#/session", label: "Session" }] },
-  { id: "runs", key: "2", href: "#/runs", label: "Runs", lead: "Follow a running Apply and replay recorded ones." },
-  { id: "decisions", key: "3", href: "#/decisions", label: "Decisions", lead: "Decide on proposals." },
-  { id: "settings", key: "4", href: "#/settings", label: "Settings", lead: "Budget, role profiles and team of an Apply. A change becomes a proposal." },
+  { id: "runs", key: "2", href: "#/runs", label: "Runs", lead: "Follow a running Apply or replay a recorded one.", chips: ["Live", "Replay"] },
+  { id: "decisions", key: "3", href: "#/decisions", label: "Decisions", lead: "Review and decide on proposals.", chips: ["Proposals"] },
+  { id: "settings", key: "4", href: "#/settings", label: "Settings", lead: "Change the budget, profiles and team.", chips: ["Budget", "Profiles", "Team"] },
 ];
 
 let built = null;
@@ -132,8 +132,8 @@ function drawState(s) {
     built.project.title = `${current.repository}\nSwitch the project or set it up`;
   }
   const chips = [];
-  if (waiting) chips.push(h("a", { class: "pill hot", href: "#/decisions" }, h("span", { class: "lamp st-owner" }), h("strong", {}, String(waiting)), waiting === 1 ? " waits for you" : " wait for you"));
-  if (live) chips.push(h("a", { class: "pill", href: "#/runs" }, h("span", { class: "lamp st-working" }), h("strong", {}, String(live)), live === 1 ? " run running" : " runs running"));
+  if (waiting) chips.push(h("a", { class: "pill hot", href: "#/decisions", title: `${waiting} ${waiting === 1 ? "proposal waits" : "proposals wait"} for your decision` }, h("span", { class: "lamp st-owner" }), h("strong", {}, String(waiting)), h("span", { class: "pillword" }, waiting === 1 ? " waits for you" : " wait for you")));
+  if (live) chips.push(h("a", { class: "pill", href: "#/runs", title: `${live} ${live === 1 ? "run is" : "runs are"} running` }, h("span", { class: "lamp st-working" }), h("strong", {}, String(live)), h("span", { class: "pillword" }, live === 1 ? " run running" : " runs running")));
   const projectPart = s.data.project;
   if (projectPart && !projectPart.configured) {
     chips.push(h("span", { class: "pill" }, "No repository"));
@@ -141,7 +141,7 @@ function drawState(s) {
     chips.push(h("span", { class: "pill" }, h("span", { class: "lamp st-none" }), "Observing"));
   } else {
     const ok = p.status === "passed";
-    chips.push(h("a", { class: "pill", href: "#/model", title: p.error || "Structural check of the working tree" }, h("span", { class: `lamp ${ok ? "st-done" : "st-fail"}` }), "Check ", h("strong", {}, ok ? "passed" : p.status || "not completed")));
+    chips.push(h("a", { class: "pill", href: "#/model", title: p.error || "Structural check of the working tree" }, h("span", { class: `lamp ${ok ? "st-done" : "st-fail"}` }), h("span", { class: "pillword" }, "Check "), h("strong", {}, ok ? "passed" : p.status || "not completed")));
   }
   // Nothing of a project is shown while none is open: no other part can be
   // read until one is.

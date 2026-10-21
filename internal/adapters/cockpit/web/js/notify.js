@@ -6,7 +6,7 @@
 // bell in the top bar; without it everything else works as before and the
 // browser keeps the permission, not the cockpit. Nothing here writes.
 
-import { h } from "./dom.js";
+import { h, areaIcon } from "./dom.js";
 import { store } from "./store.js";
 
 const WORKING = new Set(["working", "preparing"]);
@@ -115,11 +115,12 @@ function observe(s) {
 }
 
 const bellState = {
-  default: { label: "Turn on notifications", title: "Ask the browser to allow desktop notifications for ended runs, model session answers and proposals", lamp: "st-none" },
-  granted: { label: "Notifications on", title: "The browser lets the cockpit notify you; change this in the site settings of the browser", lamp: "st-done" },
-  denied: { label: "Notifications blocked", title: "The browser blocks notifications for the cockpit; allow them in the site settings of the browser", lamp: "st-fail" },
+  default: { label: "Notifications off", title: "Notifications off. Click to ask the browser to allow desktop notifications for ended runs, model session answers and proposals.", lamp: "st-none" },
+  granted: { label: "Notifications on", title: "Notifications on. The browser lets the cockpit notify you; change this in the browser's site settings.", lamp: "st-done" },
+  denied: { label: "Notifications blocked", title: "Notifications blocked. The browser blocks them for the cockpit; allow them in the browser's site settings.", lamp: "st-fail" },
 };
 
+// The bell is an icon with a status dot; its name and tooltip say the state.
 function drawBell() {
   if (!bell) return;
   const state = bellState[permission()] || bellState.default;
@@ -127,8 +128,9 @@ function drawBell() {
   if (permission() === "denied") bell.setAttribute("aria-disabled", "true");
   else bell.removeAttribute("aria-disabled");
   bell.title = state.title;
-  bell.className = `btn quiet small bell${permission() === "denied" ? " blocked" : permission() === "granted" ? " on" : ""}`;
-  bell.replaceChildren(h("span", { class: `lamp ${state.lamp}` }), h("span", { class: "belltext" }, state.label));
+  bell.setAttribute("aria-label", state.label);
+  bell.className = `btn quiet icon bell${permission() === "denied" ? " blocked" : permission() === "granted" ? " on" : ""}`;
+  bell.replaceChildren(areaIcon("bell"), h("span", { class: `lamp ${state.lamp}` }));
 }
 
 // notifyControl is the bell in the top bar: it shows whether notifications
