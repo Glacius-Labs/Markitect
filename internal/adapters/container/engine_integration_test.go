@@ -475,7 +475,12 @@ func TestRealEngineGivesEveryTurnAFreshContainerWithItsHome(t *testing.T) {
 		if _, err := s.StartProvider(ctx, frame.Start{Argv: []string{"/bin/sh", "-c", script}, Dir: "/work"}); err != nil {
 			t.Fatalf("start %s: %v %q", name, err, s.Diagnostics())
 		}
-		out, _ := io.ReadAll(s.Stdout())
+		// The session's output ends with the session, so it is read aside.
+		output := make(chan []byte, 1)
+		go func() {
+			out, _ := io.ReadAll(s.Stdout())
+			output <- out
+		}()
 		select {
 		case <-s.Exited():
 		case <-time.After(30 * time.Second):
@@ -485,7 +490,13 @@ func TestRealEngineGivesEveryTurnAFreshContainerWithItsHome(t *testing.T) {
 		if err := s.Close(); err != nil {
 			t.Fatalf("turn %s: the container did not end by itself: %v", name, err)
 		}
-		return strings.TrimSpace(string(out))
+		select {
+		case out := <-output:
+			return strings.TrimSpace(string(out))
+		case <-time.After(30 * time.Second):
+			t.Fatalf("turn %s: the output did not end with the session", name)
+		}
+		return ""
 	}
 	first := turn("t1", "echo conversation-1 > /home/agent/conversation && echo a > /work/a && "+
 		"setsid sh -c 'while true; do echo x >> /work/bg; sleep 0.1; done' > /dev/null 2>&1 < /dev/null & "+
