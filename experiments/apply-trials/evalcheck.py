@@ -558,6 +558,16 @@ def check_plans(report, markitect, folder):
     report.facts["plan packets"] = found
 
 
+def child_suites(repo, python):
+    """Discover child tests as packages under the realization root, avoiding module/package shadowing."""
+    results = {}
+    for child in ("rooms", "bookings"):
+        done = subprocess.run([*python, "-B", "-m", "unittest", "discover", "-s", child, "-t", "."],
+                              cwd=Path(repo) / "realization", capture_output=True, text=True)
+        results[child] = {"passed": done.returncode == 0, "output": done.stdout + done.stderr}
+    return results
+
+
 def check_primary_goal(report, python, folder):
     """Independent material-condition and semantic parent controls from #569; no product process simulation."""
     controls = {}
@@ -577,11 +587,8 @@ def check_primary_goal(report, python, folder):
         controls[fault.id] = {"ownTestsPassed": own, "oracleFailed": failed, "modelUnchanged": True}
     repo = Path(folder) / "green-children"
     selfcheck.materialize("H-I", repo)
-    children = {}
-    for child in ("rooms", "bookings"):
-        done = subprocess.run([*python, "-B", "-m", "unittest", "discover", "-s", child, "-t", "."],
-                              cwd=repo / "realization", capture_output=True, text=True)
-        children[child] = done.returncode == 0
+    child_results = child_suites(repo, python)
+    children = {child: result["passed"] for child, result in child_results.items()}
     checked = evaluate.oracle.assess("hall", "h1", repo / "realization", python)
     failed = sorted(item["id"] for item in checked["checks"] if item["status"] == "fail")
     report.expect(all(children.values()) and "reserve-agreement" in failed,
