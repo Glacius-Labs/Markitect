@@ -404,3 +404,47 @@ func TestAdvisoryArtifactFindingsNeverBlock(t *testing.T) {
 		t.Errorf("findings %+v", out.Findings)
 	}
 }
+
+// A Manager's work turns keep one provider home and continue one conversation
+// across the work Passes, though every turn has its own identity and so its
+// own container; reviewers start a fresh conversation in a fresh home in every
+// review Pass.
+func TestWorkConversationsContinueAcrossFreshTurns(t *testing.T) {
+	f := newFixture(t)
+	r := f.open()
+	for _, spec := range []PassSpec{implementSpec(), verifySpec(), implementSpec(), verifySpec()} {
+		if res := r.Pass(spec); res.Stopped {
+			t.Fatalf("%s stopped", spec.Purpose)
+		}
+	}
+	f.finish(r, "")
+	ids := map[string]bool{}
+	last := map[string]string{}
+	for _, turn := range f.agents.all() {
+		if ids[turn.ID] {
+			t.Fatalf("turn %s twice", turn.ID)
+		}
+		ids[turn.ID] = true
+		if turn.Kind != ExecuteTurn || strings.Contains(turn.ID, "-h") {
+			continue
+		}
+		if want := "run1-" + slugOf(turn.Manager) + "-m"; turn.Home != want {
+			t.Errorf("work turn %s of %s uses home %s, want %s", turn.ID, turn.Manager, turn.Home, want)
+		}
+		if prev, ok := last[turn.Manager]; ok && turn.Resume != prev {
+			t.Errorf("work turn %s resumes %q, not its conversation %q", turn.ID, turn.Resume, prev)
+		}
+		last[turn.Manager] = "conv-" + firstWorkTurn(f, turn.Manager)
+	}
+}
+
+// firstWorkTurn names the first work turn of a Manager, whose conversation the
+// fixture's Agents continue.
+func firstWorkTurn(f *fixture, manager string) string {
+	for _, turn := range f.agents.all() {
+		if turn.Kind == ExecuteTurn && turn.Manager == manager && !strings.Contains(turn.ID, "-h") {
+			return turn.ID
+		}
+	}
+	return ""
+}

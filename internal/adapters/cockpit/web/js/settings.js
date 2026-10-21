@@ -5,16 +5,17 @@
 // returning keeps it while the committed source is unchanged.
 
 import { api } from "./api.js";
-import { h, clear, announce } from "./dom.js";
+import { h, clear, announce, pagehead, about } from "./dom.js";
 
 let draft = null; // { head, settings }
 
 export function renderSettings(content) {
   const page = h("div", { class: "page narrow" });
   content.append(page);
-  const head = h("div", { class: "pagehead" }, h("div", {},
-    h("h2", {}, "Execution settings"),
-    h("p", { class: "lead" }, "Budget, role profiles, per-Package profiles and the team below each Manager. A change becomes a proposal: the structural check judges it, you review its difference in Decisions, and only your acceptance writes it to the working tree. Nothing is committed and no Apply starts.")));
+  const head = pagehead("Execution settings", "Change the budget, profiles and team of an Apply. A change becomes a proposal.", {
+    about: about("How this works",
+      h("p", {}, "The structural check judges the change, you review its difference in Decisions, and only your acceptance writes it to the working tree."),
+      h("p", {}, "Nothing is committed and no Apply starts.")) });
   const body = h("div", {}, h("p", { class: "note", role: "status" }, "Capturing the committed source and preparing it as markitect check does. On a large model this takes a while…"));
   page.append(head, body);
   api.settings().then((settings) => {
@@ -45,13 +46,14 @@ function settingsForm(committed, s) {
   const status = h("p", { class: "note", role: "status", tabindex: -1 });
   const submit = h("button", { class: "btn act", type: "submit" }, "Propose the change");
   form.append(
-    h("p", { class: "note" }, `From the committed source at `, h("span", { class: "digest" }, committed.head.slice(0, 12)), `, file .markitect/execution.yaml. Ownership, the top-level and per-Package instructions, scope and checks are not edited here; they stay as written.`),
+    h("p", { class: "note", title: "Ownership, the top-level and per-Package instructions, scope and checks are not edited here; they stay as written." }, `From the committed source at `, h("span", { class: "digest" }, committed.head.slice(0, 12)), `, file .markitect/execution.yaml.`),
     budget(s.budget),
     profiles(s.profiles),
     overrides(s),
     team(s, committed),
-    h("div", { class: "actions" }, submit, h("button", { class: "btn", type: "button", onclick: () => reset(form, committed) }, "Reset to the committed settings")),
-    status);
+    h("div", { class: "formbar" },
+      h("div", { class: "actions" }, submit, h("button", { class: "btn", type: "button", onclick: () => reset(form, committed) }, "Reset to the committed settings")),
+      status));
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
     const whole = [...form.querySelectorAll("input[type=number]")].find((i) => !/^\d+$/.test(i.value.trim()));
@@ -108,7 +110,7 @@ function profiles(p) {
     h("div", { class: "grid4" },
       field("Execute", p, "execute", { hint: "Managers and their helpers" }),
       field("Verify", p, "verify", { hint: "independent reviewers" })),
-    h("p", { class: "note" }, "A name refers to an Agent profile of the Runtime profile given to markitect apply. The structural check cannot see that profile; an unknown name is refused when an Apply starts."));
+    h("p", { class: "note" }, "Names of Agent profiles of the Runtime profile; an unknown name is refused when an Apply starts."));
 }
 
 // overrides lists the Packages with their own Execute or Verify profile and
@@ -136,7 +138,7 @@ function overrides(s) {
       });
       body.append(h("table", { class: "proftable" }, h("thead", {}, h("tr", {}, h("th", {}, "Package"), h("th", {}, "Execute"), h("th", {}, "Verify"), h("th", {}, h("span", { class: "visually-hidden" }, "Remove")))), h("tbody", {}, rows)));
     } else {
-      body.append(h("p", { class: "muted" }, "Every Package uses the role profiles above."));
+      body.append(h("p", { class: "note" }, "Every Package uses the role profiles above."));
     }
     const free = s.packages.filter((name) => !s.overrides.some((o) => o.package === name));
     if (free.length) {
@@ -149,7 +151,7 @@ function overrides(s) {
     if (focus) body.querySelector(focus)?.focus();
   };
   draw();
-  box.append(body, h("p", { class: "note" }, "An empty field uses the role's profile above. A Package whose fields are both empty keeps no entry."));
+  box.append(body, h("p", { class: "note" }, "An empty field uses the role's profile above; a Package with both empty keeps no entry."));
   return box;
 }
 
@@ -163,7 +165,7 @@ function team(s, committed) {
   const draw = (focus) => {
     clear(body);
     if (!s.team) {
-      body.append(h("p", { class: "note" }, "Every Manager works with the product's default team. Choosing an own team replaces it."));
+      body.append(h("p", { class: "note" }, "Every Manager works with the product's default team."));
       return;
     }
     s.team.helpers = s.team.helpers || [];
@@ -176,7 +178,7 @@ function team(s, committed) {
       body.querySelector(".helpers li:last-child input")?.focus();
     } }, "Add a helper role"));
     if (focus) body.querySelector(focus)?.focus();
-    body.append(h("p", { class: "note" }, "A role name uses lowercase letters, digits and hyphens; manager and reviewer are reserved. A helper without a profile uses the Execute profile. Instructions are repository paths of instruction files, separated by commas."));
+    body.append(h("p", { class: "note" }, "Role names use lowercase letters, digits and hyphens (manager and reviewer are reserved). No profile means the Execute profile; instructions are comma-separated repository paths."));
   };
   own.addEventListener("change", () => {
     s.team = committed.team ? structuredClone(committed.team) : { maxHelpers: 1, helpers: [{ role: "worker", profile: "", writes: true, instructions: [] }] };

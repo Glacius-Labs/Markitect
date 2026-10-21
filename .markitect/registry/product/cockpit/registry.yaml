@@ -67,7 +67,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/cockpit.css"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar with the project name and the notification bell, the areas' accents, split views, model browser, the run control card, the project cards and setup form, state lamps, exchange channels, responsive layout and reduced motion."
+    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar with the project name and the notification bell icon, the common page header with its collapsed explanation, the areas' accents, split views, the session's single column, model browser, the run control card, the project cards and setup form, state lamps, exchange channels, responsive layout and reduced motion."
   - path: "internal/adapters/cockpit/web/js/main.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -79,7 +79,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/dom.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Builds DOM and SVG nodes with text nodes only, so recorded Agent text is never interpreted as markup."
+    why: "Builds DOM and SVG nodes with text nodes only, so recorded Agent text is never interpreted as markup, and draws the icons, the common page header, the collapsed explanation and the empty state."
   - path: "internal/adapters/cockpit/web/js/runs.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -203,7 +203,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/session.js"
     form: code
     realizes: [product/cockpit/accepted-proposals]
-    why: "Offers the model session as a split view: a deliberate start, the owner's prompts and the Agent's answers as its own text, tool uses, limits and reported usage on the left, the session's latest proposal with its decision on the right, and closing; a project without a runtime is pointed to its guided setup."
+    why: "Offers the model session as a split view, or one inviting column with a stepper before the first session: a deliberate start with the provider-usage note, the owner's prompts and the Agent's answers as its own text, tool uses, limits and reported usage on the left, the session's latest proposal with its decision on the right, and closing; a project without a runtime is pointed to its guided setup."
   - path: "internal/authoring/session_test.go"
     form: test
     realizes: [product/cockpit/accepted-proposals]
@@ -231,7 +231,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/notify.js"
     form: code
     realizes: [product/cockpit/desktop-app]
-    why: "Compares each new observation with the previous one and notifies, with the owner's permission, when a run ended, the model session answered or halted or a proposal waits for a decision, per part of the observation and only when the window is not in the owner's sight; owns the bell that asks for permission and the count in the window title; the first observation only sets the baseline."
+    why: "Compares each new observation with the previous one and notifies, with the owner's permission, when a run ended, the model session answered or halted or a proposal waits for a decision, per part of the observation and only when the window is not in the owner's sight; owns the bell, an icon with a status dot that asks for permission, and the count in the window title; the first observation only sets the baseline."
   - path: "internal/adapters/cockpit/window.go"
     form: code
     realizes: [product/cockpit/desktop-app]
@@ -243,7 +243,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/hub.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Renders the hub: the project's observed state, the one next step that needs the owner, and the tiles of the areas with their live state."
+    why: "Renders the hub: the project's observed state, the one next step that needs the owner, and the tiles of the areas with their live state or, without figures, what the area holds."
   - path: "internal/adapters/cockpit/web/js/modelview.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -299,7 +299,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/projects.js"
     form: code
     realizes: [product/cockpit/desktop-app]
-    why: "Offers the project list as cards that open, set up or remove a project with a two-step removal, a card to add a project, the offer to keep a project opened by flags, and the guided setup form with a two-step confirmation that shows setup's refusals as they are, redrawing the cards only on change so focus and typed values stay."
+    why: "Offers the project list as cards in the hub tiles' language, with an initial and a set-up lamp, that open, set up or remove a project with a two-step removal, a card to add a project, the offer to keep a project opened by flags, and the guided setup form with a two-step confirmation that shows setup's refusals as they are, redrawing the cards only on change so focus and typed values stay."
   - path: "internal/bootstrap/cockpit_projects.go"
     form: code
     realizes: [product/cockpit/desktop-app]

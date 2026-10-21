@@ -22,6 +22,13 @@ func reportValue(value any) any {
 		return nil
 	}
 	switch v := value.(type) {
+	case ApplyReport:
+		// Outcome is a projection of the command status, never separately
+		// mutable state enriched only after the evidence file was written.
+		type fields ApplyReport
+		out := reportValue(fields(v)).(map[string]any)
+		out["outcome"] = RunOutcome(v.Status)
+		return out
 	case snapshot.Path:
 		return v.String()
 	case snapshot.DirectoryBoundary:

@@ -320,3 +320,30 @@ func TestAVerifiedCandidateStaysVerifiedThroughItsAssessment(t *testing.T) {
 		t.Fatalf("status %s: %s", out.Status, out.Reason)
 	}
 }
+
+// The Failed reason names each confirmed finding with a shortened text and a
+// neutral cut mark; the complete finding stays in the record.
+func TestTheAssessmentReasonShortensLongFindings(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	raised := false
+	long := strings.Repeat("the model leaves the maximum name length open; ", 30)
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.pass() == "p1" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit your complete result") && !raised {
+			raised = true
+			gap := map[string]any{"owner": "library", "obligation": "library/interface", "observed": long, "blocking": true, "correction": "model_gap"}
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{gap}}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(assessSpec())
+	out := f.finish(r, "")
+	if out.Status != Failed || !strings.Contains(out.Reason, " [...]") || strings.Contains(out.Reason, "probe") || len(out.Reason) > 1000 || out.Findings[0].Observed != strings.TrimSpace(long) {
+		t.Fatalf("reason %q", out.Reason)
+	}
+}

@@ -869,6 +869,12 @@ func writeReceipt(b *strings.Builder, r *ProbeReceipt, full bool) {
 }
 
 func clip(s string, n int) string {
+	return cutText(s, n, "\n[cut; look_up topic probe for the whole receipt]")
+}
+
+// cutText cuts a text to at most n bytes at a rune boundary and appends mark
+// when it cut.
+func cutText(s string, n int, mark string) string {
 	if len(s) <= n {
 		return s
 	}
@@ -876,7 +882,7 @@ func clip(s string, n int) string {
 	for cut > 0 && !utf8.RuneStart(s[cut]) {
 		cut--
 	}
-	return s[:cut] + "\n[cut; look_up topic probe for the whole receipt]"
+	return s[:cut] + mark
 }
 
 // writeEvidence renders the evidence items of one coverage entry.

@@ -7,7 +7,7 @@
 // shown as its text, never as a fact the cockpit established.
 
 import { api } from "./api.js";
-import { h, clear, clock, when, duration, announce } from "./dom.js";
+import { h, clear, append, clock, when, duration, announce, about, empty } from "./dom.js";
 import { refusal } from "./settings.js";
 import { refreshState } from "./shell.js";
 import { mountProposal } from "./proposal.js";
@@ -29,7 +29,8 @@ let draft = ""; // the composer's text survives redraws and leaving the page
 export function renderSession(content) {
   const left = h("div", { class: "pane" });
   const right = h("div", { class: "pane" });
-  content.append(h("div", { class: "split" }, left, right));
+  const split = h("div", { class: "split" }, left, right);
+  content.append(split);
   const head = h("div", { class: "panehead" });
   const conversation = h("div", { class: "panebody" });
   const composer = h("section", { class: "composer", "aria-label": "Your prompt" });
@@ -59,6 +60,9 @@ export function renderSession(content) {
         shownComposer = key;
         drawComposer(composer, list.available, current, refresh);
       }
+      // Without a session and without earlier ones the page is one inviting
+      // column; the right pane appears with a session or earlier sessions.
+      split.classList.toggle("solo", !current && !list.sessions.some((x) => x.state === "closed"));
       // The right pane follows the newest proposal of the open session; with
       // none, it shows the session's facts and the closed sessions.
       const latest = current?.turns.flatMap((t) => t.proposals).at(-1) || null;
@@ -99,18 +103,23 @@ function drawHead(head, s, refresh) {
 function drawConversation(section, available, s) {
   clear(section);
   if (!available) {
-    section.append(h("p", { class: "void" }, h("strong", {}, "Model sessions are not available"),
-      "Start the cockpit with a run configuration and a Runtime profile: markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. Sessions use the run configuration's container engine, workspace helper and credentials.",
+    append(section, [empty("Model sessions are not available", "They need a run configuration and a Runtime profile."),
       store.currentProject?.saved && !store.currentProject.setUp
-        ? h("p", {}, h("a", { class: "btn act small", href: `#/projects?setup=${encodeURIComponent(store.currentProject.name)}` }, "Set up runs for this project"))
-        : null));
+        ? h("p", { class: "void-action" }, h("a", { class: "btn act small", href: `#/projects?setup=${encodeURIComponent(store.currentProject.name)}` }, "Set up runs for this project"))
+        : null,
+      about("From the command line", h("p", {}, "Start the cockpit with markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. Sessions use the run configuration's container engine, workspace helper and credentials."))]);
     return;
   }
   if (!s) {
-    section.append(h("div", { class: "void", style: { maxWidth: "70ch" } },
-      h("strong", {}, "Change the model by prompt"),
-      h("p", { style: { margin: "4px 0" } }, "Your prompt goes to an Agent of Root's Execute profile in a container. It works on its own copy of the committed source, may change only the model's Definitions and the registry, checks its work and proposes; you decide on every proposal on the right. Each prompt is one Agent turn, which costs provider usage."),
-      h("p", { style: { margin: "4px 0" } }, "A session's proposals start from its source: after you accept one, commit it and start a new session.")));
+    const steps = ["Describe the change", "An Agent works on a copy", "It checks and proposes", "You decide"];
+    section.append(h("div", { class: "intro" },
+      h("p", { class: "lead" }, "Describe a change to the model. An Agent proposes it and you decide."),
+      h("ol", { class: "stepper", "aria-label": "How a session goes" }, steps.map((x) => h("li", {}, x))),
+      about("How it works",
+        h("p", {}, "Starting a session captures the committed source with the Runtime profile."),
+        h("p", {}, "An Agent of Root's Execute profile works on its own copy in a container; it may change only the model's Definitions and the registry."),
+        h("p", {}, "The structural check judges its workspace; it submits a proposal with a summary, or answers you."),
+        h("p", {}, "The proposal appears here with its difference and check. Accepting writes it into the working tree; nothing is committed and no Apply starts. A session's proposals start from its source: after you accept one, commit it and start a new session."))));
     return;
   }
   if (s.state === "preparing") {
@@ -142,8 +151,8 @@ function drawConversation(section, available, s) {
 }
 
 function drawSide(side, list, s) {
-  const body = h("div", { class: `panebody${s ? "" : " blueprint"}`, style: s ? null : { minHeight: "100%" } });
-  clear(side).append(h("div", { class: "panehead" }, h("h2", {}, s ? "Session" : "Sessions")), body);
+  const body = h("div", { class: "panebody" });
+  clear(side).append(h("div", { class: "panehead" }, h("h2", {}, s ? "Session" : "Earlier sessions")), body);
   if (s && s.state !== "preparing") {
     body.append(h("dl", { class: "facts" },
       h("dt", {}, "Session"), h("dd", { class: "digest" }, s.id),
@@ -154,19 +163,13 @@ function drawSide(side, list, s) {
       s.evidence && [h("dt", {}, "Evidence"), h("dd", { class: "digest" }, s.evidence)],
       s.error && [h("dt", {}, "Problem"), h("dd", { class: "st-fail" }, s.error)]),
     h("p", { class: "note" }, "The Agent's proposals appear here with their difference and check as soon as it submits one."));
-  } else if (!s) {
-    body.append(h("ol", { class: "howto" },
-      h("li", {}, h("b", {}, "You write what should change"), h("span", { class: "note" }, "Starting a session captures the committed source with the Runtime profile.")),
-      h("li", {}, h("b", {}, "An Agent works on its own copy"), h("span", { class: "note" }, "Root's Execute profile in a container; it may change only the model's Definitions and the registry.")),
-      h("li", {}, h("b", {}, "It checks and proposes"), h("span", { class: "note" }, "The structural check judges its workspace; it submits a proposal with a summary, or answers you.")),
-      h("li", {}, h("b", {}, "You decide here"), h("span", { class: "note" }, "The proposal appears in this pane with its difference and check. Accepting writes it into the working tree; nothing is committed and no Apply starts."))));
   }
   const closed = (list.sessions || []).filter((x) => x.state === "closed");
   if (closed.length) {
-    body.append(h("h3", { class: "label", style: { margin: "26px 0 8px" } }, "Closed sessions"),
+    body.append(h("h3", { class: "label sech" }, "Closed sessions"),
       h("ul", { class: "rows" }, closed.map((x) => {
         const proposals = x.turns.flatMap((t) => t.proposals);
-        return h("li", {}, h("div", { class: "row", style: { cursor: "default" } },
+        return h("li", {}, h("div", { class: "row static" },
           h("span", { class: "lamp st-none" }),
           h("span", { class: "title digest" }, x.id),
           h("span", { class: "meta" }, `${x.turns.length} turn${x.turns.length === 1 ? "" : "s"}`),
@@ -182,15 +185,15 @@ function drawComposer(section, available, s, refresh) {
   section.hidden = !available || (s && s.state !== "waiting" && s.state !== "working" && s.state !== "preparing");
   if (section.hidden) return;
   if (s && s.state !== "waiting") {
-    section.append(h("p", { class: "note", style: { margin: 0 } }, "You can write the next prompt when the Agent has answered."));
+    section.append(h("p", { class: "note" }, "You can write the next prompt when the Agent has answered."));
     return;
   }
   const atLimit = s && s.turns.length >= s.maxTurns;
   const id = "prompt-text";
-  const text = h("textarea", { id, rows: s ? 3 : 5, disabled: atLimit, placeholder: s ? "Your next prompt" : "Describe the change you want, for example: Lower the highest allowed quantity from 9999 to 5000." });
+  const text = h("textarea", { id, rows: s ? 3 : 5, disabled: atLimit, placeholder: s ? "Your next prompt" : "For example: Lower the highest allowed quantity from 9999 to 5000." });
   text.value = draft;
   text.addEventListener("input", () => { draft = text.value; });
-  const status = h("p", { class: "note", role: "status", tabindex: -1, style: { margin: 0 } });
+  const status = h("p", { class: "note", role: "status", tabindex: -1 });
   const actions = h("div", { class: "actions" });
   section.append(h("label", { for: id }, s ? "Your next prompt" : "What should change in the model?"), text, actions, status);
   if (atLimit) status.textContent = "The session used all its Agent turns. Close it and start a new one.";
@@ -235,7 +238,7 @@ function drawComposer(section, available, s, refresh) {
     const back = h("button", { class: "btn", type: "button" }, "Edit");
     back.addEventListener("click", () => {
       text.readOnly = false;
-      clear(actions).append(review);
+      clear(actions).append(review, h("span", { class: "note" }, "Each prompt is one Agent turn and costs provider usage."));
       status.textContent = "";
       text.focus();
     });
@@ -244,7 +247,7 @@ function drawComposer(section, available, s, refresh) {
     status.textContent = "This starts a container with an Agent of Root's Execute profile for one Agent turn, which costs provider usage. Only a proposal you accept writes anything.";
     start.focus();
   });
-  actions.append(review);
+  actions.append(review, h("span", { class: "note" }, "Each prompt is one Agent turn and costs provider usage."));
 }
 
 function closeButton(s, refresh) {

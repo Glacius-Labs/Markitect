@@ -24,6 +24,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Prepares Claude's bounded cockpit implementation and design assignment with current Apply semantics, observation seams, acceptance and a startup prompt.
+  - path: "docs/development/codex-cockpit-org-chart-handoff-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Prepares Codex's cockpit organization chart assignment with its base, write scope, five work packages, further cockpit work and a startup prompt."
   - path: "docs/concepts/sources/cockpit-commission-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -32,6 +36,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: Preserves the owner's decision that the cockpit is Markitect's desktop app and starts and stops Apply, verbatim with labelled recorder context.
+  - path: "docs/concepts/sources/cockpit-org-chart-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the owner's request that the cockpit look like a company organization chart and be implemented by Codex, verbatim with labelled recorder context."
   - path: "docs/development/claude-apply-implementation-handoff-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -1908,10 +1916,18 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
     why: "Records how the run inspector now reads the current Apply concept (Model assessment verdict, observation kinds, probes, context coverage, strategy, closed Runs), its checks, a demonstration on two real runs and what the record still does not establish."
+  - path: "docs/validation/session-a-b0-b1-runs-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/runtime/container-runtime]
+    why: "Records Session A's B0/B1 provider attempts bound to their actual builds, images and kit, with the B1 capture defect, the failed external scoring and the retained evidence."
   - path: "docs/validation/cockpit-projects-20261021.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: "Records the cockpit's project list and guided setup: checks with fake projects and a fake engine, a recorded page demonstration and what remains unproved without a real image, credential and run."
+  - path: "docs/validation/cockpit-polish-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: "Records the cockpit's presentation polish: shorter page leads with a collapsed explanation, the notification bell as an icon, the compact hub, the project cards, the single-column session start, consistent headers and empty states, checks, screenshots taken and what remains unestablished."
   - path: "docs/validation/cockpit-desktop-acceptance-20261021.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]

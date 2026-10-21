@@ -16,7 +16,7 @@ export function renderHub(content) {
   const page = h("div", { class: "hub" },
     hero,
     h("nav", { class: "tiles", "aria-label": "Areas" }, [...tiles.values()].map((t) => t.el)),
-    h("p", { class: "hint" }, "Press ", h("kbd", {}, "1"), "–", h("kbd", {}, String(areas.length)), " to enter an area and ", h("kbd", {}, "Esc"), " to come back."));
+    h("p", { class: "hint" }, h("kbd", {}, "1"), "–", h("kbd", {}, String(areas.length)), " enter an area · ", h("kbd", {}, "Esc"), " comes back"));
   content.append(page);
   const parts = { head: h("div", {}), side: h("div", { class: "side" }), next: h("div", { class: "next", role: "status" }) };
   hero.append(parts.head, parts.side, parts.next);
@@ -55,14 +55,19 @@ function tile(a) {
   const el = h("a", { class: `tile t-${a.id}`, href: a.href, "aria-keyshortcuts": a.key },
     h("span", { class: "ghost", "aria-hidden": "true" }, areaIcon(a.id)),
     h("div", { class: "top" }, emblem(a.id), h("span", { class: "badge" }, badge, h("kbd", { title: `Press ${a.key}` }, a.key))),
-    h("div", {}, h("h2", {}, a.label), h("p", { class: "lead" }, a.lead)),
+    h("div", { class: "name" }, h("h2", {}, a.label), h("p", { class: "lead" }, a.lead)),
     stats,
     h("div", { class: "foot" }, footLamp, foot, h("span", { class: "go", "aria-hidden": "true" }, "Enter →")));
-  return { el, badge, stats, foot, footLamp };
+  return { el, badge, stats, foot, footLamp, chips: a.chips || [] };
 }
 
+// A tile without figures names what the area holds, so its middle is never
+// empty and nothing moves when the figures arrive.
 function fill(t, { stats = [], lamp = null, foot = "", count = 0, attention = false }) {
-  append(clear(t.stats), stats.map(([value, label]) => h("div", {}, h("b", {}, value), h("span", {}, label))));
+  t.stats.classList.toggle("chips", !stats.length);
+  append(clear(t.stats), stats.length
+    ? stats.map(([value, label]) => h("div", {}, h("b", {}, value), h("span", {}, label)))
+    : t.chips.map((c) => h("span", { class: "chip" }, c)));
   append(clear(t.footLamp), [lamp && h("span", { class: `lamp ${lamp}` })]);
   t.foot.textContent = foot;
   append(clear(t.badge), [count ? h("span", { class: "count" }, String(count)) : null]);
@@ -97,7 +102,7 @@ function drawProject(parts, s) {
       p.head ? h("span", {}, "Head ", h("span", { class: "digest", title: p.head }, p.head.slice(0, 12))) : null,
       p.modelDigest ? h("span", {}, "Model ", h("span", { class: "digest", title: p.modelDigest }, shortDigest(p.modelDigest))) : null,
       h("span", {}, `Observed ${when(p.observedAt)}`)),
-    p.error ? h("p", { class: "refusal problem", style: { marginTop: "12px" } }, p.error) : null]);
+    p.error ? h("p", { class: "refusal problem" }, p.error) : null]);
   const observe = h("button", { class: "btn small", type: "button", disabled: part.observing }, part.observing ? "Observing…" : "Observe again");
   observe.addEventListener("click", async () => {
     observe.disabled = true;
@@ -170,8 +175,9 @@ function drawRuns(t, s) {
 
 function drawDecisions(t, s) {
   const waiting = s.proposalsToDecide.length;
+  const held = s.data.proposals?.length ?? 0;
   fill(t, {
-    stats: [[String(waiting), waiting === 1 ? "Proposal" : "Proposals"]],
+    stats: [[String(waiting), "Waiting for you"], [String(held), held === 1 ? "Proposal held" : "Proposals held"]],
     lamp: waiting ? "st-owner" : "st-none",
     foot: waiting ? `${waiting} ${waiting === 1 ? "waits" : "wait"} for you` : "Nothing waits for you",
     count: waiting,
