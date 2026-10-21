@@ -1,34 +1,49 @@
 {
  "assessmentControls": {
   "MA-COMPLETE": {
-   "case": "S-G",
+   "budget": {
+    "agentTurns": 400,
+    "executionTime": "30m",
+    "passes": 12,
+    "turnTimeout": "20m"
+   },
+   "case": "S-GO",
    "commits": 1,
+   "conclusion": "accepted",
    "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
    "files": {
-    ".markitect/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
+    ".markitect/execution.yaml": "1405b02d67ad6056988ee4d0360915e5e30d4374e5f2c1f217c88f4f0bd6149f",
     ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
     ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
     ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
-    ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
-    ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+    ".markitect/model/stockroom/inputs.yaml": "b071a734699ed17496b32b58a2a87260ed4aad58d35c5ce536e168be36dbfe8a",
+    ".markitect/model/stockroom/interface.yaml": "3cee81f960102bd1b6923c98099f4a87cdbbd943b7d5329b53bf9f1668f84cf2",
     ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
     ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
     ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
-    ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+    ".markitect/model/stockroom/realization.yaml": "9c59bef41b66749796196b9c5b18519620b3d970039379fa8221039107da1c72",
     ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
     ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
-    ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+    ".markitect/model/stockroom/storage.yaml": "bf8688cb0019c6680e53617e4e778ee800d5cb835f5aecfb98cf5ffd6d452b56",
     ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5"
    },
-   "head": "b66b0d07e98514c03b0ab0c73afaf1dca5b46fd7",
-   "tree": "c535a4c1c3add568b55da6427f24437776b6eb8b"
+   "head": "222437de44b5ee8eb7e1781e991a5066a1412081",
+   "tree": "c2c41d3e86247534dd2f6a725fc4240804600d63",
+   "version": 2
   },
   "MA-CONTRA": {
+   "budget": {
+    "agentTurns": 400,
+    "executionTime": "30m",
+    "passes": 12,
+    "turnTimeout": "20m"
+   },
    "case": "S-XG",
    "commits": 1,
+   "conclusion": "model_error",
    "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
    "files": {
-    ".markitect/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
+    ".markitect/execution.yaml": "1405b02d67ad6056988ee4d0360915e5e30d4374e5f2c1f217c88f4f0bd6149f",
     ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
     ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
     ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
@@ -43,19 +58,27 @@
     ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
     ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5"
    },
-   "head": "07041bdf6f60a5c03cd3353dad4ce8ef1054b314",
-   "tree": "f24211114e051f42e8cbda603171d15df9149457"
+   "head": "7f2946bd73973dc6f043951c29966a7c95b20c0f",
+   "tree": "8d3fd97e22e5882a634f7cd7546e6caf0d22d0de",
+   "version": 1
   },
   "MA-FREE": {
-   "case": "S-FREE",
+   "budget": {
+    "agentTurns": 400,
+    "executionTime": "30m",
+    "passes": 12,
+    "turnTimeout": "20m"
+   },
+   "case": "S-FREEU",
    "commits": 1,
+   "conclusion": "accepted",
    "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
    "files": {
-    ".markitect/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
+    ".markitect/execution.yaml": "1405b02d67ad6056988ee4d0360915e5e30d4374e5f2c1f217c88f4f0bd6149f",
     ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
     ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
     ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
-    ".markitect/model/stockroom/inputs.yaml": "022d58f95478e929eb88199c98c2f19246fbdb6159504c475e1e3cda504a4b67",
+    ".markitect/model/stockroom/inputs.yaml": "78670e463e2b30432c33e36d2ef0ff32eaebd9373e1cb90bafeb9021401a5458",
     ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
     ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
     ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
@@ -66,15 +89,23 @@
     ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
     ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5"
    },
-   "head": "25a74ecd5c681e6742e5fc76efda08d8383a02d8",
-   "tree": "9ae6d079adcd55a19d5529e79da18466c7e3612e"
+   "head": "642076c6c58a7c11a162f87ed04cfdb91353a39e",
+   "tree": "82f6c9caa8c22d66ba40840e9d0ba8d91eecec24",
+   "version": 2
   },
   "MA-GAP": {
+   "budget": {
+    "agentTurns": 400,
+    "executionTime": "30m",
+    "passes": 12,
+    "turnTimeout": "20m"
+   },
    "case": "S-QV",
    "commits": 1,
+   "conclusion": "model_gap",
    "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
    "files": {
-    ".markitect/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
+    ".markitect/execution.yaml": "1405b02d67ad6056988ee4d0360915e5e30d4374e5f2c1f217c88f4f0bd6149f",
     ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
     ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
     ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
@@ -89,15 +120,23 @@
     ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
     ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5"
    },
-   "head": "3fe24bc089927d88c683f31ad9337cbcc60b1a80",
-   "tree": "b31696486166e6902391209e260a13aa25ba1456"
+   "head": "4a79dedefbe11b836c48e11bfed801327f4c04c0",
+   "tree": "6af98609643f222d18e69dbeacaa7f644578ae09",
+   "version": 1
   },
   "MA-NEAR": {
+   "budget": {
+    "agentTurns": 400,
+    "executionTime": "30m",
+    "passes": 12,
+    "turnTimeout": "20m"
+   },
    "case": "S-XNG",
    "commits": 1,
+   "conclusion": "accepted",
    "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
    "files": {
-    ".markitect/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
+    ".markitect/execution.yaml": "1405b02d67ad6056988ee4d0360915e5e30d4374e5f2c1f217c88f4f0bd6149f",
     ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
     ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
     ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
@@ -112,11 +151,12 @@
     ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
     ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5"
    },
-   "head": "e01126dcdd854310950098fe6e3e8feaa9a21366",
-   "tree": "6e54aa8e06bc57e64e93b23c39ad9dfaa44dd456"
+   "head": "80a0a220163a9c9b1b940b6a599c4eaae321a49d",
+   "tree": "0fc0e627c8687e8b6099097e7e0324ddb16ca849",
+   "version": 1
   }
  },
- "assessmentKey": "e7c238e57539c149154e198ee31c1149890caa9f5ccd651593847c233f7f2109",
+ "assessmentKey": "cb757240c947ef254c800baec3b0fcdb4e4ccdbf8029aafccd0024e600795bd4",
  "contextControls": {
   "c1": {
    "commits": 1,
@@ -188,7 +228,7 @@
  "kit": {
   "experiments/apply-trials/assess.py": "94ec3a241b19050197e1be244f0fc3875d48b892eda3ad5d407d754bc77f2da2",
   "experiments/apply-trials/bind_profiles.py": "756e8cffbdb085a8c1fd587606ab76aebb260da7d9e608387605c08de9489382",
-  "experiments/apply-trials/cases.py": "8001e3b82dfe67fc38aa24a6e89f1e9cbff9b0842fcd908727b7cfbf34326e29",
+  "experiments/apply-trials/cases.py": "7c12cd4430beb794b7366193693668b7cd2ab078e45c2fdec21b996bd4b0a5b7",
   "experiments/apply-trials/context/execution.yaml": "e47f39ebf1401f09912b34da26f9b860de7b002542647c0ca71f2143cab1052c",
   "experiments/apply-trials/context/expected.json": "8b52172b41f2bf25fa4926c64f41a5953c50b1316aa4dfdc1e10b7a31933ccc7",
   "experiments/apply-trials/context/snapshots/c1-stale/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
@@ -285,12 +325,12 @@
   "experiments/apply-trials/depot/snapshots/d1/model/stock/limits.yaml": "c091d7b5344daa3dc40233aab2462679e3ccebcf03388cb15e22038866dde43a",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/on-hand.yaml": "4b2da64249bb01954710ebe3d172ae5ada8181abff8ce210646f030e8ea12639",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/receive.yaml": "b1c669349de27e84a90f84c83622dcde9ba2609df52d958937ba0d7d687d0223",
-  "experiments/apply-trials/evalcheck.py": "f90f4fb2bae0748519c116f12d5331684a54c5e0b37e3415cd710b906cc0dd1c",
-  "experiments/apply-trials/evaluate.py": "dc692d397bb4fbb3cfcadb73a55e356b8997b1dbc38132bc672e6b472a5cbb0c",
+  "experiments/apply-trials/evalcheck.py": "a6fab4021ef5fa28512446c78d1bc7e161cfff5ef6370069a77b1fac4c42dd8b",
+  "experiments/apply-trials/evaluate.py": "b8ee2b039b8a9059b88036da631351590fa83d29f797d7b33b901364ec68024b",
   "experiments/apply-trials/fleet.py": "959bc914b3d9ec53d471bc9d2da2000489ec1a15d4c23f442661ec61f9ed6bd0",
   "experiments/apply-trials/fleet_checks.py": "a9d4a96e207ab9f1fd19592148c6f489a405b13fdf02d2a13060a3d96cc53626",
-  "experiments/apply-trials/freeze.py": "56b7abf6b7ff88c84a2f37448657d81effbcd232ee05f61f5bbc9cef600ce001",
-  "experiments/apply-trials/hall/checks.py": "2af8d437415fa6e5d8e3f5a44e8bcd05f673fd8c19284fe5240ad168bd880e13",
+  "experiments/apply-trials/freeze.py": "0dca4193447d8b350b2881afdb965269935929a0d0e3fe357fcc26821f114e4f",
+  "experiments/apply-trials/hall/checks.py": "71a924a82d15d6a27ad87b8b3f5c0ce16e30c72187b5f579a9adad852b91787a",
   "experiments/apply-trials/hall/execution.yaml": "642957ce317c72db2e20f2542d15065b4afc2727b19c14fa2295dd002c498e89",
   "experiments/apply-trials/hall/reference/realization/app.py": "991633f3e64fc45e87ba2a748d28df9bf4b48f127b2821e9f8d62048492ecd44",
   "experiments/apply-trials/hall/reference/realization/bookings/__init__.py": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
@@ -324,17 +364,17 @@
   "experiments/apply-trials/hall/snapshots/h1/model/hall/rooms/room.yaml": "4efef633aa071c020c4eb68446afa3bdaa4092870d66ee9f0131361aeb91210d",
   "experiments/apply-trials/hall/snapshots/h1/model/hall/storage.yaml": "4471d295803a05582d00853532c07d2fee0f9b863d5cc344794edffdf8d65b73",
   "experiments/apply-trials/hall/snapshots/h1/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
-  "experiments/apply-trials/materialize.py": "9a4d63ecf5b794db721ca56941176e8451f8e8352f193f0a524a712d50e5f82a",
+  "experiments/apply-trials/materialize.py": "5ae2776df974a0a27db11e4a3a2fb107f732fa4dcbd8327193d0a4d9f06ec30b",
   "experiments/apply-trials/oracle.py": "aff1ed421e524bab6a74f3980d1a5703b311bac68682706049fb124e7c11cc4b",
-  "experiments/apply-trials/plan_packet.py": "96e18bfa2763d0dde902f30941c7aef121ae2109d9156c36e19184f01df109e1",
+  "experiments/apply-trials/plan_packet.py": "2a0a2a1172f60dbfe4ea1c981d9fa58e54396edd612aee6a966cbbf0b52e53ab",
   "experiments/apply-trials/run/build.sh": "a252f951bb7c63e40c345706a81fa3e2e12dc011dd9c52109e4b7231cd534d59",
   "experiments/apply-trials/run/collect.py": "c082f4baddf7092b0dd132b36bc168c3e980cfdf62f81a9b5abc59f426f8ab46",
   "experiments/apply-trials/run/lane.sh": "b60223824b9611150e54091864e6d2c5fcaa1083aebd6049160430a761d7395f",
   "experiments/apply-trials/run/patch_runconfig.py": "da0fe4d872ff1cbfbc7ce81faa99db4fa7878df355c05743de6b9238c5cbe4e3",
   "experiments/apply-trials/run/reassess.sh": "63ecc415df3108210fb1e18852e427f894bfed67f5bf795dc7f294c46b583e24",
   "experiments/apply-trials/run/run_case.sh": "71cbb7334c4159c9c2bda685477527fbe6651a9f3d9bb13fa753e83da9179354",
-  "experiments/apply-trials/scenarios.py": "75c45b01e18d4ff336b056f5e5337872bfba34438da8cdfd7035f2cc94a105e2",
-  "experiments/apply-trials/selfcheck.py": "d09db32bd503df8d58cafa525bc7016d329fbb7e5cf3fee99bcc0532119f9a12",
+  "experiments/apply-trials/scenarios.py": "34c3293ff42e1dcab374ecb42382be3d2b8bf423a0533cccd44e08da0b8058aa",
+  "experiments/apply-trials/selfcheck.py": "b865bed145b7e7641ed2b36d98a6ee9ed44544be69a9c77063c86d9ef985d74a",
   "experiments/apply-trials/stockroom/checks.py": "2dddb68b7b9c935ac286c94cb0d91a87c512ce3be4034957f10ae0ebd2ad3bfd",
   "experiments/apply-trials/stockroom/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
   "experiments/apply-trials/stockroom/reference/realization/app.py": "b27fed55f5312e22a7fe7028f9235087c4d5ff3d92a856cb284cfd14c21a36b8",
@@ -380,8 +420,8 @@
   "experiments/apply-trials/trial_kit.py": "362e9a8623ba3db4cb3e140f3988da90f0e977405f72850a036775dba5af16d4",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "efcd4cc3fccc1510172e6f673a576e42e9ad557568686bb9331b72a20339729f",
- "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. If it leaves a material decision open that you would otherwise\nhave to invent, or if two of its requirements contradict each other, do not\ndecide it and change nothing: end your reply with one line per such problem\nthat starts with `BLOCKER:` and names the requirements involved. Nobody\nanswers questions during this task. Report the delivered files, checks\nactually performed and any unresolved requirement.\n",
+ "kitDigest": "f0903345bf9d70537c3087d7bdb0dec0671bd3ce65edd9a2dc1c7eba6a879a57",
+ "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
   "A1": {
@@ -396,7 +436,7 @@
     "passes": 12,
     "turnTimeout": "20m"
    },
-   "case": "D-H",
+   "case": "D-UH",
    "expect": "apply-repairs",
    "internalRoute": [],
    "markitect": {
@@ -439,21 +479,21 @@
       "realization/depot/__init__.py": "98489bd8fa59f462f3619bccd705615bb390541cd4f57711955a189951d7f4e4",
       "realization/depot/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
       "realization/depot/inputs.py": "5ed6afe8c66c6dc4bf57bfa30451239feb5d58f2ea9295db3b5f59ed7c90afcd",
-      "realization/depot/store.py": "6eac453fca224860f77d322bc7ca4f6a97b4705902e7ff67adcade071b3d0d04",
+      "realization/depot/store.py": "37d6f8f12cebb162a3f17302e0578e8101df97ac0ca3a470cee372eb205b91c7",
       "realization/orders/__init__.py": "527b63abfeef55de06904d941dbc1e563a90f911d169e00d9a1df60183f3df00",
-      "realization/orders/orderbook.py": "d9f3d9bad41daf293d4d249cf9a07fe8fcb569efb492dcd6012d79f3d81642bd",
+      "realization/orders/orderbook.py": "ade56e4ac4c83cc83a464e4d81debcb2e607009f14d73c7e51b6be7e650f6917",
       "realization/orders/test_orders.py": "48171dcc25d0337f5136c21a25c263dd3a4a6ec7b4331b8101fc251903466fe8",
       "realization/reports/__init__.py": "33119e09ca95b2342e1f09a37901f59a6085efe6b11e9ddf84fee6871c1c0e3a",
       "realization/reports/test_views.py": "715946bde6f083a7a4bd568a63c0feb0321331b057065d035c82c92621dcf38b",
       "realization/reports/views.py": "24711f4cb4ef33399fd1a36881c7b60238fa5434c948ff9bf304e742867c981b",
       "realization/stock/__init__.py": "ab3e0218c6e73dec0cda91a8c91a2043975edcf37b682ce16d7b034a3a489f22",
-      "realization/stock/ledger.py": "0587071d5597b154cf73da2e865f835d6f23b7fae5e5443f20461e5535e6ed0f",
+      "realization/stock/ledger.py": "b1ffc44a774172c4e1693d59512af2f0f0ec4f8db61ab0d18754c1e19e9da4d7",
       "realization/stock/test_ledger.py": "6348abce8d0d22b6d81ab13285492cfb66e2c678837c89c64a1dca8a69d3393f",
       "realization/tests/__init__.py": "77b5a0e94b28935e5d52a7dcf776612359e97f6e0132a70cbd3ec602e88be1e5",
       "realization/tests/test_cli.py": "a706ee875667b5b8e0477c51e5283f43794fce97215981770a8418149a14e890"
      },
-     "head": "2109f1811e18994df37e853ae3fc534878ece32d",
-     "tree": "e83954255f9322f3b923985926241c9ba579ba6e"
+     "head": "4d0711b62e7ab8661aa009947a984ca136fe3610",
+     "tree": "a52abd7c965963b073e2ba873d0650e104564273"
     },
     "staged": {
      "commits": 1,
@@ -494,21 +534,21 @@
       "realization/depot/__init__.py": "98489bd8fa59f462f3619bccd705615bb390541cd4f57711955a189951d7f4e4",
       "realization/depot/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
       "realization/depot/inputs.py": "5ed6afe8c66c6dc4bf57bfa30451239feb5d58f2ea9295db3b5f59ed7c90afcd",
-      "realization/depot/store.py": "6eac453fca224860f77d322bc7ca4f6a97b4705902e7ff67adcade071b3d0d04",
+      "realization/depot/store.py": "37d6f8f12cebb162a3f17302e0578e8101df97ac0ca3a470cee372eb205b91c7",
       "realization/orders/__init__.py": "527b63abfeef55de06904d941dbc1e563a90f911d169e00d9a1df60183f3df00",
-      "realization/orders/orderbook.py": "d9f3d9bad41daf293d4d249cf9a07fe8fcb569efb492dcd6012d79f3d81642bd",
+      "realization/orders/orderbook.py": "ade56e4ac4c83cc83a464e4d81debcb2e607009f14d73c7e51b6be7e650f6917",
       "realization/orders/test_orders.py": "48171dcc25d0337f5136c21a25c263dd3a4a6ec7b4331b8101fc251903466fe8",
       "realization/reports/__init__.py": "33119e09ca95b2342e1f09a37901f59a6085efe6b11e9ddf84fee6871c1c0e3a",
       "realization/reports/test_views.py": "715946bde6f083a7a4bd568a63c0feb0321331b057065d035c82c92621dcf38b",
       "realization/reports/views.py": "24711f4cb4ef33399fd1a36881c7b60238fa5434c948ff9bf304e742867c981b",
       "realization/stock/__init__.py": "ab3e0218c6e73dec0cda91a8c91a2043975edcf37b682ce16d7b034a3a489f22",
-      "realization/stock/ledger.py": "0587071d5597b154cf73da2e865f835d6f23b7fae5e5443f20461e5535e6ed0f",
+      "realization/stock/ledger.py": "b1ffc44a774172c4e1693d59512af2f0f0ec4f8db61ab0d18754c1e19e9da4d7",
       "realization/stock/test_ledger.py": "6348abce8d0d22b6d81ab13285492cfb66e2c678837c89c64a1dca8a69d3393f",
       "realization/tests/__init__.py": "77b5a0e94b28935e5d52a7dcf776612359e97f6e0132a70cbd3ec602e88be1e5",
       "realization/tests/test_cli.py": "a706ee875667b5b8e0477c51e5283f43794fce97215981770a8418149a14e890"
      },
-     "head": "b4046c86d0da12bfcef62d6ec2e39146f760593e",
-     "tree": "bfd03e24c0ee2f172e20cb3cbc4fc8866607fcd4"
+     "head": "1f380718d24b439c75d0ce1f86e4dce3b4617330",
+     "tree": "4f9635adcccda80448447faca5bb94e99d6479e0"
     }
    },
    "plan": {
@@ -523,28 +563,29 @@
      "realization/depot/__init__.py": "98489bd8fa59f462f3619bccd705615bb390541cd4f57711955a189951d7f4e4",
      "realization/depot/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
      "realization/depot/inputs.py": "5ed6afe8c66c6dc4bf57bfa30451239feb5d58f2ea9295db3b5f59ed7c90afcd",
-     "realization/depot/store.py": "6eac453fca224860f77d322bc7ca4f6a97b4705902e7ff67adcade071b3d0d04",
+     "realization/depot/store.py": "37d6f8f12cebb162a3f17302e0578e8101df97ac0ca3a470cee372eb205b91c7",
      "realization/orders/__init__.py": "527b63abfeef55de06904d941dbc1e563a90f911d169e00d9a1df60183f3df00",
-     "realization/orders/orderbook.py": "d9f3d9bad41daf293d4d249cf9a07fe8fcb569efb492dcd6012d79f3d81642bd",
+     "realization/orders/orderbook.py": "ade56e4ac4c83cc83a464e4d81debcb2e607009f14d73c7e51b6be7e650f6917",
      "realization/orders/test_orders.py": "48171dcc25d0337f5136c21a25c263dd3a4a6ec7b4331b8101fc251903466fe8",
      "realization/reports/__init__.py": "33119e09ca95b2342e1f09a37901f59a6085efe6b11e9ddf84fee6871c1c0e3a",
      "realization/reports/test_views.py": "715946bde6f083a7a4bd568a63c0feb0321331b057065d035c82c92621dcf38b",
      "realization/reports/views.py": "24711f4cb4ef33399fd1a36881c7b60238fa5434c948ff9bf304e742867c981b",
      "realization/stock/__init__.py": "ab3e0218c6e73dec0cda91a8c91a2043975edcf37b682ce16d7b034a3a489f22",
-     "realization/stock/ledger.py": "0587071d5597b154cf73da2e865f835d6f23b7fae5e5443f20461e5535e6ed0f",
+     "realization/stock/ledger.py": "b1ffc44a774172c4e1693d59512af2f0f0ec4f8db61ab0d18754c1e19e9da4d7",
      "realization/stock/test_ledger.py": "6348abce8d0d22b6d81ab13285492cfb66e2c678837c89c64a1dca8a69d3393f",
      "realization/tests/__init__.py": "77b5a0e94b28935e5d52a7dcf776612359e97f6e0132a70cbd3ec602e88be1e5",
      "realization/tests/test_cli.py": "a706ee875667b5b8e0477c51e5283f43794fce97215981770a8418149a14e890"
     },
-    "head": "81e1abc3099e409d26a21d75bd37f4532153e0a4",
+    "head": "67032c90759ae802d80a977d00b747d414e4f1b2",
     "planSha256": "6c577859980c3ca068083d2a41c93ca7a3cc24ef47de59b340627901eb73a5a8",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
-    "tree": "66c3c8b1dfe3b70a47e9f5e2698028a0ffb3dd48"
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
+    "tree": "911f89724b1cfd3391d5e5cb75565d507f76190e"
    },
    "preflight": false,
    "sessions": [
     "A"
-   ]
+   ],
+   "version": 2
   },
   "A2": {
    "arms": [
@@ -558,7 +599,7 @@
     "passes": 12,
     "turnTimeout": "20m"
    },
-   "case": "D-N",
+   "case": "D-U",
    "expect": "apply-preserves",
    "internalRoute": [],
    "markitect": {
@@ -601,21 +642,21 @@
       "realization/depot/__init__.py": "98489bd8fa59f462f3619bccd705615bb390541cd4f57711955a189951d7f4e4",
       "realization/depot/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
       "realization/depot/inputs.py": "5ed6afe8c66c6dc4bf57bfa30451239feb5d58f2ea9295db3b5f59ed7c90afcd",
-      "realization/depot/store.py": "6eac453fca224860f77d322bc7ca4f6a97b4705902e7ff67adcade071b3d0d04",
+      "realization/depot/store.py": "37d6f8f12cebb162a3f17302e0578e8101df97ac0ca3a470cee372eb205b91c7",
       "realization/orders/__init__.py": "527b63abfeef55de06904d941dbc1e563a90f911d169e00d9a1df60183f3df00",
-      "realization/orders/orderbook.py": "d9f3d9bad41daf293d4d249cf9a07fe8fcb569efb492dcd6012d79f3d81642bd",
+      "realization/orders/orderbook.py": "ade56e4ac4c83cc83a464e4d81debcb2e607009f14d73c7e51b6be7e650f6917",
       "realization/orders/test_orders.py": "48171dcc25d0337f5136c21a25c263dd3a4a6ec7b4331b8101fc251903466fe8",
       "realization/reports/__init__.py": "33119e09ca95b2342e1f09a37901f59a6085efe6b11e9ddf84fee6871c1c0e3a",
       "realization/reports/test_views.py": "715946bde6f083a7a4bd568a63c0feb0321331b057065d035c82c92621dcf38b",
       "realization/reports/views.py": "24711f4cb4ef33399fd1a36881c7b60238fa5434c948ff9bf304e742867c981b",
       "realization/stock/__init__.py": "ab3e0218c6e73dec0cda91a8c91a2043975edcf37b682ce16d7b034a3a489f22",
-      "realization/stock/ledger.py": "0587071d5597b154cf73da2e865f835d6f23b7fae5e5443f20461e5535e6ed0f",
+      "realization/stock/ledger.py": "b1ffc44a774172c4e1693d59512af2f0f0ec4f8db61ab0d18754c1e19e9da4d7",
       "realization/stock/test_ledger.py": "6348abce8d0d22b6d81ab13285492cfb66e2c678837c89c64a1dca8a69d3393f",
       "realization/tests/__init__.py": "77b5a0e94b28935e5d52a7dcf776612359e97f6e0132a70cbd3ec602e88be1e5",
       "realization/tests/test_cli.py": "c4d673cd0f7bd8cd9b4368b6bd5a089f2e3fd6eee7560aa15c784ac8620bc7b9"
      },
-     "head": "353959a93fc86f1931c84e564f5952741494f061",
-     "tree": "04c8c23a948d370d4045bff6f8df4adf9011f4ea"
+     "head": "a38b982a07ff9a8f60e076c07b2a1015c36c980e",
+     "tree": "645794e729ff265a20967e8df0ce6f65c077a4b6"
     },
     "staged": {
      "commits": 1,
@@ -656,21 +697,21 @@
       "realization/depot/__init__.py": "98489bd8fa59f462f3619bccd705615bb390541cd4f57711955a189951d7f4e4",
       "realization/depot/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
       "realization/depot/inputs.py": "5ed6afe8c66c6dc4bf57bfa30451239feb5d58f2ea9295db3b5f59ed7c90afcd",
-      "realization/depot/store.py": "6eac453fca224860f77d322bc7ca4f6a97b4705902e7ff67adcade071b3d0d04",
+      "realization/depot/store.py": "37d6f8f12cebb162a3f17302e0578e8101df97ac0ca3a470cee372eb205b91c7",
       "realization/orders/__init__.py": "527b63abfeef55de06904d941dbc1e563a90f911d169e00d9a1df60183f3df00",
-      "realization/orders/orderbook.py": "d9f3d9bad41daf293d4d249cf9a07fe8fcb569efb492dcd6012d79f3d81642bd",
+      "realization/orders/orderbook.py": "ade56e4ac4c83cc83a464e4d81debcb2e607009f14d73c7e51b6be7e650f6917",
       "realization/orders/test_orders.py": "48171dcc25d0337f5136c21a25c263dd3a4a6ec7b4331b8101fc251903466fe8",
       "realization/reports/__init__.py": "33119e09ca95b2342e1f09a37901f59a6085efe6b11e9ddf84fee6871c1c0e3a",
       "realization/reports/test_views.py": "715946bde6f083a7a4bd568a63c0feb0321331b057065d035c82c92621dcf38b",
       "realization/reports/views.py": "24711f4cb4ef33399fd1a36881c7b60238fa5434c948ff9bf304e742867c981b",
       "realization/stock/__init__.py": "ab3e0218c6e73dec0cda91a8c91a2043975edcf37b682ce16d7b034a3a489f22",
-      "realization/stock/ledger.py": "0587071d5597b154cf73da2e865f835d6f23b7fae5e5443f20461e5535e6ed0f",
+      "realization/stock/ledger.py": "b1ffc44a774172c4e1693d59512af2f0f0ec4f8db61ab0d18754c1e19e9da4d7",
       "realization/stock/test_ledger.py": "6348abce8d0d22b6d81ab13285492cfb66e2c678837c89c64a1dca8a69d3393f",
       "realization/tests/__init__.py": "77b5a0e94b28935e5d52a7dcf776612359e97f6e0132a70cbd3ec602e88be1e5",
       "realization/tests/test_cli.py": "c4d673cd0f7bd8cd9b4368b6bd5a089f2e3fd6eee7560aa15c784ac8620bc7b9"
      },
-     "head": "ff1590e2c5b65efeb9d6eb837b7c264e93d4b2d0",
-     "tree": "d8528faeca2af3910136a46d29175cbee0ba14ff"
+     "head": "327825dead7e68de11ffc716877016012d0a152e",
+     "tree": "5f69da3d948e04359994cdc54c9482dc67db953b"
     }
    },
    "plan": {
@@ -685,29 +726,30 @@
      "realization/depot/__init__.py": "98489bd8fa59f462f3619bccd705615bb390541cd4f57711955a189951d7f4e4",
      "realization/depot/errors.py": "b73db8105c26924e91a551049d5e126ff583e7890d82a9165a7a291f116738c0",
      "realization/depot/inputs.py": "5ed6afe8c66c6dc4bf57bfa30451239feb5d58f2ea9295db3b5f59ed7c90afcd",
-     "realization/depot/store.py": "6eac453fca224860f77d322bc7ca4f6a97b4705902e7ff67adcade071b3d0d04",
+     "realization/depot/store.py": "37d6f8f12cebb162a3f17302e0578e8101df97ac0ca3a470cee372eb205b91c7",
      "realization/orders/__init__.py": "527b63abfeef55de06904d941dbc1e563a90f911d169e00d9a1df60183f3df00",
-     "realization/orders/orderbook.py": "d9f3d9bad41daf293d4d249cf9a07fe8fcb569efb492dcd6012d79f3d81642bd",
+     "realization/orders/orderbook.py": "ade56e4ac4c83cc83a464e4d81debcb2e607009f14d73c7e51b6be7e650f6917",
      "realization/orders/test_orders.py": "48171dcc25d0337f5136c21a25c263dd3a4a6ec7b4331b8101fc251903466fe8",
      "realization/reports/__init__.py": "33119e09ca95b2342e1f09a37901f59a6085efe6b11e9ddf84fee6871c1c0e3a",
      "realization/reports/test_views.py": "715946bde6f083a7a4bd568a63c0feb0321331b057065d035c82c92621dcf38b",
      "realization/reports/views.py": "24711f4cb4ef33399fd1a36881c7b60238fa5434c948ff9bf304e742867c981b",
      "realization/stock/__init__.py": "ab3e0218c6e73dec0cda91a8c91a2043975edcf37b682ce16d7b034a3a489f22",
-     "realization/stock/ledger.py": "0587071d5597b154cf73da2e865f835d6f23b7fae5e5443f20461e5535e6ed0f",
+     "realization/stock/ledger.py": "b1ffc44a774172c4e1693d59512af2f0f0ec4f8db61ab0d18754c1e19e9da4d7",
      "realization/stock/test_ledger.py": "6348abce8d0d22b6d81ab13285492cfb66e2c678837c89c64a1dca8a69d3393f",
      "realization/tests/__init__.py": "77b5a0e94b28935e5d52a7dcf776612359e97f6e0132a70cbd3ec602e88be1e5",
      "realization/tests/test_cli.py": "c4d673cd0f7bd8cd9b4368b6bd5a089f2e3fd6eee7560aa15c784ac8620bc7b9"
     },
-    "head": "f73c1dcd3801e29e40d970bdc6531a35e2e64744",
+    "head": "b601bbcf87b80615c680c785a27e4d17416d112f",
     "planSha256": "6c577859980c3ca068083d2a41c93ca7a3cc24ef47de59b340627901eb73a5a8",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
-    "tree": "fa407b56215ba5ee57ff37ba7d4d91fcc9ea9d77"
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
+    "tree": "589701cc76a1599a5d00a48143ec93af2282990b"
    },
    "preflight": false,
    "sessions": [
     "A",
     "D"
-   ]
+   ],
+   "version": 2
   },
   "A4-fixed": {
    "arms": [
@@ -777,13 +819,14 @@
     },
     "head": "63e5b3710da0027229fb4dbc9e8280b6f912445f",
     "planSha256": "cb5bb4e0dec84e239536873dab20f63010edcd26def3489c9fb43f7ce1e90473",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
     "tree": "58517c4e9c4c3c8a7b3ae4b17777a46f0bc5a4fa"
    },
    "preflight": false,
    "sessions": [
     "A"
-   ]
+   ],
+   "version": 1
   },
   "A4-gap": {
    "arms": [
@@ -853,14 +896,15 @@
     },
     "head": "4403f021996214cf271cfd62ff2c10ee219a1b69",
     "planSha256": "25ffd4bdc89fb409a24eb1710f40d020bf3f0a690278ea04426bcd0be395970b",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
     "tree": "5626680ba5433fb585a8f62c443b1045e51dab35"
    },
    "preflight": true,
    "sessions": [
     "A",
     "D"
-   ]
+   ],
+   "version": 1
   },
   "A5": {
    "arms": [
@@ -953,13 +997,14 @@
     },
     "head": "76fae98934e0b951a4670ebc402d470c1c049396",
     "planSha256": "390267525c166209138aaeb0e1f5a293c2f299716787758775241a3467a95069",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
     "tree": "aa2d4c4bd3a4e32f04ede1f74251102175536987"
    },
    "preflight": false,
    "sessions": [
     "A"
-   ]
+   ],
+   "version": 1
   },
   "A7": {
    "arms": [
@@ -1052,13 +1097,14 @@
     },
     "head": "bb8e533eebae56e21bdea6c2e697fd2c83e6e715",
     "planSha256": "fd01965c61a73cb03b38388f58ccc30630d0b572ed042b954dc0897ff89b07e8",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
     "tree": "86e27a5558f679e0bd731e45cc04d029bbe6997c"
    },
    "preflight": false,
    "sessions": [
     "A"
-   ]
+   ],
+   "version": 1
   },
   "A7-near": {
    "arms": [
@@ -1151,11 +1197,12 @@
     },
     "head": "29c30a228b8df76326413ade273012cb6c620e2c",
     "planSha256": "798abdfa2addf1feae6e62f8a288c2be0f9567e49ef09ae9ac060f7eb0538b8b",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
     "tree": "8e46b9b129b107dc4ab4cb4b21082c71b07107da"
    },
    "preflight": false,
-   "sessions": []
+   "sessions": [],
+   "version": 1
   },
   "DEP": {
    "arms": [
@@ -1233,14 +1280,15 @@
     },
     "head": "038414f433a284020dc7195fc3e490df0a4312eb",
     "planSha256": "49cf33dabe98a5db22c4e6f5eec14b0af21dd41b93b5c8956ad9c67155c0c1f1",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
     "tree": "b79eb3c80fb175520d8f90a654bade4e81652595"
    },
    "preflight": false,
    "sessions": [
     "A",
     "D"
-   ]
+   ],
+   "version": 1
   },
   "FREE": {
    "arms": [
@@ -1310,11 +1358,12 @@
     },
     "head": "b3906c9ae23578cbb1da5fe41d986e1fde7a17df",
     "planSha256": "7a6448027ca27d39cab889c51cb78c3898ceee9411445f62813acbaba96727a2",
-    "promptSha256": "faca34fc2f7f1598f14f4a148221ffd3c631510bdf70ada388b3824a8899b819",
+    "promptSha256": "6b211bb683145c08188c1e95f2105446ebd35f353afcdbb84dfa2ac6d20dd80a",
     "tree": "d6be7881bfd21cffa9bbf594715aab30b97c7610"
    },
    "preflight": false,
-   "sessions": []
+   "sessions": [],
+   "version": 1
   },
   "V1": {
    "arms": [
@@ -1445,7 +1494,8 @@
    "preflight": false,
    "sessions": [
     "A"
-   ]
+   ],
+   "version": 1
   },
   "V2": {
    "arms": [
@@ -1576,7 +1626,8 @@
    "preflight": false,
    "sessions": [
     "A"
-   ]
+   ],
+   "version": 1
   }
  }
 }

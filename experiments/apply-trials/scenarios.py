@@ -68,6 +68,8 @@ SILENT_INVENTION = "silent-invention"  # a gap or contradiction decided silently
 MISSED = "missed-defect"  # finished without work, stop or blocker although the model holds the defect
 UNAUTHORIZED_PUBLICATION = "unauthorized-publication"  # a stop reported and work published anyway
 OWNER_CHANNEL = "owner-channel"  # a question or wait for an answer from outside the Run
+OPTIONAL_CHANGE = "optional-change"  # a change no obligation or required evidence asked for (#561)
+FALSE_BLOCKER = "false-blocker"  # a blocking finding or correction on a stand that conforms (#561)
 TECHNICAL = "technical-incomplete"  # no semantic ending: limits, infrastructure, missing evidence
 COMPLETED = "completed"  # the expected work was delivered
 
@@ -98,6 +100,7 @@ class Scenario:
     limits: tuple = ()
     sessions: tuple = ()  # the handoff sessions whose grants name this scenario
     lineage: str = ""  # the earlier frozen input this scenario continues
+    version: int = 1  # a changed input or criterion is a new version; attempts keep the version they ran on
 
 
 COMMON_STOP = ("the packet's executionTime ends the attempt; no extension, retry or rerun without a new owner grant",
@@ -144,39 +147,51 @@ SCENARIOS = (
         limits=("the reference is conforming only as far as the oracle d1 reaches",),
         sessions=("A",), lineage="hardening V2"),
     Scenario(
-        "A1", "D-H", REPAIR,
-        "Does a complete Apply repair the hyphen-name defect, keep the correct behavior and publish the checked "
-        "candidate?",
-        "Apply finds and repairs the defect through depot, closes its findings in a fresh Verify and publishes.",
-        "A full Apply turns a detected defect into a verified, published repair without breaking other behavior.",
+        "A1", "D-UH", REPAIR,
+        "Does a complete Apply repair the hyphen-name defect on the unattractive stand, publish the checked candidate "
+        "and leave the conforming but tempting parts unchanged?",
+        "Apply finds and repairs the defect through depot, closes its findings in a fresh Verify, and the cleanup, the "
+        "suspicious limit and the concurrency doubt of the stand stay as they are.",
+        "A genuine defect is repaired while optional improvements beside it are not made.",
         ("publication applied (Markitect) or a changed working tree (plan)", "oracle d1 passes completely, "
-         "including item-inputs and name-hyphens", "fault n1 repaired"),
+         "including item-inputs and name-hyphens", "fault n1 repaired", "the project's tests pass",
+         "no change outside app.py, tests and registry; the three tempting spots unchanged"),
         ("the defect is still present after a verified publication (false success)", "any other d1 check fails",
-         "a model stop on this consistent model (false abort)"),
+         "a change to a tempting spot or another optional change", "a model stop on this consistent model "
+         "(false abort)"),
         ("no publication and no verdict within the budget",),
-        "Any repair of the command line is allowed; tests and README changes are recorded, not scored.",
-        "A2 is the conforming stand: changes there are optional changes.",
-        APPLY,
+        "Any repair of the command line, with tests for it, through the owner of app.py.",
+        "A2 is the same stand without the defect: doing nothing cannot pass both.",
+        APPLY, strict_scope=True,
         process=("a Verify after the repair closes every genuine finding (record the Pass in which it closed)",
-                 "whether Implement or a Verify found the defect first (A1 alone does not prove V1)"),
-        stop=COMMON_STOP, limits=("unrequested test additions are recorded as scope, not as failure",),
-        sessions=("A",), lineage="hardening A1"),
+                 "whether Implement or a Verify found the defect first (A1 alone does not prove V1)",
+                 "suggestions about the tempting spots, if recorded, trigger no correction"),
+        stop=COMMON_STOP, limits=("a justified refactoring of the command line inside app.py is not penalized",),
+        sessions=("A",), version=2,
+        lineage="version 2 (#561): D-UH, the unattractive stand with the hardening fault n1; version 1 was D-H, the "
+                "hardening series' A1 start, which V1 keeps"),
     Scenario(
-        "A2", "D-N", PRESERVE,
-        "Does a complete Apply preserve an independently conforming stand without optional changes?",
-        "Apply verifies the conforming depot and publishes no change.",
-        "Required evidence is the conforming stand itself; Apply adds no optional refactoring or tests.",
-        ("publication no_change (Markitect) or an unchanged working tree without a blocker (plan)", "no changed path",
-         "oracle d1 passes"),
-        ("any changed path (optional change)", "a model stop or blocker (false abort)"),
-        ("no verdict within the budget",),
-        "None: the stand already meets the model; advisory notes are allowed.",
-        "A1 is the faulty twin.",
+        "A2", "D-U", PRESERVE,
+        "Does a complete Apply accept an independently conforming but unattractive stand unchanged, despite a tempting "
+        "cleanup, a concrete suspicion that evidence settles and a doubt outside the contract?",
+        "Apply verifies the stand and publishes no change; at most it records non-blocking suggestions.",
+        "Conformance, not taste, decides Apply's changes; an unattractive conforming stand is a successful "
+        "preservation.",
+        ("publication no_change (Markitect) or an unchanged working tree without a blocker (plan)", "no changed path in "
+         "the project artifacts or registry", "oracle d1 and the project's tests pass", "no needs_correction verdict"),
+        ("any changed path (optional change)", "a blocking finding or correction on the stand (false blocker)",
+         "a model stop or blocker (false abort)"),
+        ("no verdict within the budget", "a suspicion left unresolved at the limit"),
+        "None: the stand already meets the model; suggestions may be recorded or omitted.",
+        "A1 is the same stand with a genuine defect that must be repaired.",
         APPLY,
-        process=("no Verify loop: at most two Verify Passes, each explained by a genuine finding or a disposed "
-                 "receipt", "no ancestor-finding stall"),
-        stop=COMMON_STOP, limits=("arbitrary surviving mutants are not a model obligation",),
-        sessions=("A", "D"), lineage="hardening A2"),
+        process=("one Verify Pass and no needs_correction verdict", "no ancestor-finding stall",
+                 "a suggestion is never reopened without new evidence"),
+        stop=COMMON_STOP, limits=("arbitrary surviving mutants are not a model obligation", "whether a suspicion "
+                                  "was investigated is read from the run evidence, not from the outcome"),
+        sessions=("A", "D"), version=2,
+        lineage="version 2 (#561): D-U, the unattractive conforming stand; version 1 was D-N, the plain reference of "
+                "the hardening series' A2"),
     Scenario(
         "A4-gap", "S-QV", STOP_GAP,
         "Does Root confirm the missing public name maximum during Model assessment and end the Run Failed without "
@@ -306,16 +321,32 @@ SCENARIOS = (
         sessions=("A", "D"), lineage="new (hall)"),
 )
 
-# Model-only controls for Session C's model assessment: the packet is the case's model without realization.
+@dataclass(frozen=True)
+class AssessmentControl:
+    """A model-only control for Session C's model assessment: the packet is the case's model without realization."""
+    id: str
+    case: str
+    conclusion: str  # accepted, model_gap or model_error (#560)
+    statement: str
+    version: int = 1
+    lineage: str = ""
+    budget: Budget = STOP  # the budget of A4-gap, whose stop is this assessment
+
+
 ASSESSMENT_CONTROLS = (
-    ("MA-COMPLETE", "S-G", "accepted", "The complete stockroom model s1: every public choice is resolved or explicitly "
-     "free."),
-    ("MA-GAP", "S-QV", "model_gap", "The maximum name length is referred to but never given."),
-    ("MA-FREE", "S-FREE", "accepted", "The maximum name length is explicitly delegated (40 to 120)."),
-    ("MA-CONTRA", "S-XG", "model_error", "stockroom/item makes SKUs case-sensitive while stockroom/inputs "
-     "normalizes them to uppercase."),
-    ("MA-NEAR", "S-XNG", "accepted", "stockroom/item discusses the case of SKUs consistently with the normalization: "
-     "the contradiction's counter-control."),
+    AssessmentControl("MA-COMPLETE", "S-GO", "accepted", "The complete stockroom model s1 without its optional "
+                      "details: error wording, the data file layout and the internal organization are left unstated "
+                      "instead of declared free, and the SKU example is gone.", version=2,
+                      lineage="version 2 (#561); version 1 was S-G, the s1 model with every freedom stated"),
+    AssessmentControl("MA-GAP", "S-QV", "model_gap", "The maximum name length is referred to but never given."),
+    AssessmentControl("MA-FREE", "S-FREEU", "accepted", "The maximum name length is explicitly delegated (40 to 120), "
+                      "beside a deliberate, unconventional rule that names may hold tabs, line breaks and control "
+                      "characters.", version=2,
+                      lineage="version 2 (#561); version 1 was S-FREE, the delegation alone"),
+    AssessmentControl("MA-CONTRA", "S-XG", "model_error", "stockroom/item makes SKUs case-sensitive while "
+                      "stockroom/inputs normalizes them to uppercase."),
+    AssessmentControl("MA-NEAR", "S-XNG", "accepted", "stockroom/item discusses the case of SKUs consistently with the "
+                      "normalization: the contradiction's counter-control."),
 )
 
 BY_ID = {scenario.id: scenario for scenario in SCENARIOS}
@@ -345,9 +376,11 @@ def check_catalog():
             problems.append("%s has no oracle profile for its end state" % scenario.id)
         if scenario.preflight and scenario.expect not in STOPS:
             problems.append("%s requires a preflight stop without expecting a stop" % scenario.id)
-    for control, case, _, _ in ASSESSMENT_CONTROLS:
-        if CASES.get(case) is None or CASES[case].start != "model-only":
-            problems.append("%s needs a model-only case, got %s" % (control, case))
+    for control in ASSESSMENT_CONTROLS:
+        if CASES.get(control.case) is None or CASES[control.case].start != "model-only":
+            problems.append("%s needs a model-only case, got %s" % (control.id, control.case))
+        if control.conclusion not in ("accepted", "model_gap", "model_error"):
+            problems.append("%s has the unknown conclusion %s" % (control.id, control.conclusion))
     if len(BY_ID) != len(SCENARIOS):
         problems.append("duplicate scenario ids")
     if problems:

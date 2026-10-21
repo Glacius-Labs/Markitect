@@ -431,6 +431,89 @@ Model edits:
 +  states. A quantity is
 ```
 
+## S-GO: Complete model without its optional details, model-only start
+
+- **Question:** Does Apply treat a model as complete when it leaves error wording, the data file layout and the internal organization unstated instead of declaring them free, and omits the SKU example?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `s1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** a model stop or gap about an omitted detail (expected none: a false alarm); passes; turns
+- **Notes:** The model of the assessment control MA-COMPLETE version 2; the s1 reference conforms to it.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/interface.yaml
+-  Expected failures never end in an unhandled crash. Exact error wording is free.
++  Expected failures never end in an unhandled crash.
+```
+
+```diff
+--- .markitect/model/stockroom/interface.yaml
+-  the automated tests that [[realization]] requires. These fixed entry points do
+-  not prescribe the internal module organization.
++  the automated tests that [[realization]] requires.
+```
+
+```diff
+--- .markitect/model/stockroom/storage.yaml
+-  it. A failed command leaves the file unchanged, and queries never write it.
+-  The organization of the JSON inside the file is an implementation choice
+-  consistent with the [[item]] records. Concurrent independent writers are
+-  outside this contract; [[realization]] documents that limitation.
++  it. A failed command leaves the file unchanged, and queries never write it.
++  Concurrent independent writers are outside this contract; [[realization]]
++  documents that limitation.
+```
+
+```diff
+--- .markitect/model/stockroom/realization.yaml
+-  guarantees for concurrent independent writers. Internal organization is free
+-  within the Python standard-library command and test boundary.
++  guarantees for concurrent independent writers.
+```
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  hyphen and three digits 0-9, for example ABC-123. Two SKUs with the same
++  hyphen and three digits 0-9. Two SKUs with the same
+```
+
+## S-FREEU: Delegated choice beside an unconventional name rule, model-only start
+
+- **Question:** Does Apply accept the delegated name maximum of S-FREE and a deliberate, unconventional but consistent rule that names may hold tabs, line breaks and control characters?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `free`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** a model stop, gap or error about the name rule or the name maximum (expected none); passes; turns
+- **Notes:** The model of the assessment control MA-FREE version 2; the s1 reference conforms to it.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
+-  and at most 60 characters, counted as Unicode code points. A quantity is
++  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
++  and at most the maximum name length, counted as Unicode code points. The
++  maximum name length is the realization's choice: one whole number from 40
++  to 120, the same for every command, which the README of [[realization]]
++  states. A quantity is
+```
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  states. A quantity is
++  states. Inside the trimmed name any text is allowed, including tabs, line
++  breaks and other control characters; records return the name exactly as
++  stored.
++  A quantity is
+```
+
 ## S-F: Follow-up Apply on a conforming result
 
 - **Question:** Does a second Apply on the committed result of a Verified Apply change nothing?
@@ -439,6 +522,59 @@ Model edits:
 - **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand.
 - **Record:** files changed (expected none); passes; blocking findings
 - **Notes:** Requires --from-repo; the profile is that of the model found in the repository.
+
+## D-U: A conforming but unattractive stand stays unchanged
+
+- **Question:** Does Apply accept an independently conforming depot unchanged although it invites an optional cleanup, a concrete suspicion that evidence settles and a doubt outside the contract?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `d1`.
+- **Record:** files changed (expected none); blocking findings or correction Passes (expected none); suggestions recorded about the three spots (allowed, not required); repeated Verify; turns
+- **Notes:** The preservation control of the conformance mandate (#561). Its three spots are HIDDEN: the repeated reserved sum in orders/orderbook.py, the `>= LIMIT` check in stock/ledger.py and the concurrency comment in depot/store.py.
+
+## D-UH: A genuine defect next to the unattractive stand
+
+- **Question:** Does Apply repair the hyphen-name defect on the unattractive stand through depot and leave the three tempting spots unchanged?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** n1 repaired with a fresh independent closure; the three spots unchanged; changes outside app.py and tests; turns; time
+- **Notes:** The paired defect of D-U: doing nothing cannot pass both.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| n1 | depot | behavior | the command line takes a name that starts with a hyphen for an option, so `--name -Bolt` exits 2 although the model allows the name; the reference before ec4f5ece, whose tests do not cover it | `item-inputs`, `name-hyphens` | no | informative |
+
+Fault edits:
+
+n1:
+
+```diff
+--- realization/app.py
+-def attach_names(argv):
+-    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""
+-    attached, tokens = [], iter(argv)
+-    for token in tokens:
+-        value = next(tokens, None) if token == "--name" else None
+-        attached.append(token if value is None else "--name=" + value)
+-    return attached
+-
+-
+-def main(
++def main(
+```
+
+```diff
+--- realization/app.py
+-        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))
++        result = run(build_parser().parse_args(argv))
+```
+
+```diff
+--- realization/tests/test_cli.py
+-        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
+```
 
 ## D-H: A public name refused by the command line
 
@@ -1204,6 +1340,7 @@ Each variant is the reference with exact edits. The oracle must accept an altern
 | --- | --- | --- | --- | --- |
 | n40-done | stockroom | n40 | limit, README and boundary test at 40: a complete change | nothing (accepted) |
 | n40-code-only | stockroom | n40 | only the limit changed; README still states 60 | `readme-name-40` |
+| n40-tests-stale | stockroom | n40 | limit and README at 40, the boundary test still expects 60 | nothing (accepted) |
 | n40-off-by-one | stockroom | n40 | 41 code points accepted | `name-rules` |
 | free-60 | stockroom | free | the reference's documented 60 is a valid choice | nothing (accepted) |
 | free-40 | stockroom | free | documented 40, the lower bound | nothing (accepted) |
@@ -1246,6 +1383,20 @@ n40-code-only:
 --- realization/limits.json
 -"maxNameLength": 60
 +"maxNameLength": 40
+```
+
+n40-tests-stale:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 40
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 40 characters
 ```
 
 n40-off-by-one:

@@ -9,14 +9,18 @@ Without any Agent or provider it shows that:
    stop that names another defect, a silent invention, a stop with a
    publication, a question to the owner and a technical failure are not; a
    model stop or blocker on A4-fixed, FREE, A7-near or DEP is a false abort;
-   an optional change, a false success and an unrepaired fault are not met;
-   missing evidence is incomplete;
+   on the unattractive stand (A1, A2, #561) a repair is met, an optional
+   cleanup beside it is not, a settled suspicion recorded as a note is met,
+   while a blocking suspicion or doubt is a false blocker and a repeated
+   suggestion fails the process; a false success, an unrepaired fault and
+   stale tests are not met; missing or truncated evidence is incomplete;
 3. A4-fixed's packet holds the gap model in its first commit and the
    corrected model, equal to s1, in its second;
-4. the DEP process analysis accepts a traced dependency and internal question
-   route and rejects premature work, stale consumption, a binding to a
-   superseded version, an undeclared dependency, a choice decided without the
-   tree and idle turns;
+4. the DEP process analysis accepts a traced dependency, an internal question
+   route through a relaying coordination turn and results accepted in either
+   order, and rejects premature work, work before the awaited stage, stale
+   consumption, a binding to a superseded version, an undeclared dependency,
+   a choice decided without the tree and idle work or coordination turns;
 5. every plan arm's plan.md carries every Definition of its scenario in full,
    compared with the product's checked model when --markitect is given;
 6. the model context controls pass their self-test.
@@ -38,10 +42,11 @@ import evaluate  # noqa: E402
 import freeze  # noqa: E402
 import plan_packet  # noqa: E402
 import selfcheck  # noqa: E402
-from cases import VARIANTS  # noqa: E402
+from cases import CASES, VARIANTS, Edit  # noqa: E402
 from materialize import GIT, apply_edits  # noqa: E402
-from scenarios import (BY_ID, COMPLETED, FALSE_ABORT, JUSTIFIED_STOP, LATE_STOP, MISSED, OWNER_CHANNEL,  # noqa: E402
-                       SCENARIOS, SILENT_INVENTION, TECHNICAL, UNAUTHORIZED_PUBLICATION, WRONG_STOP, check_catalog)
+from scenarios import (BY_ID, COMPLETED, FALSE_ABORT, FALSE_BLOCKER, JUSTIFIED_STOP, LATE_STOP, MISSED,  # noqa: E402
+                       OPTIONAL_CHANGE, OWNER_CHANNEL, SCENARIOS, SILENT_INVENTION, TECHNICAL,
+                       UNAUTHORIZED_PUBLICATION, WRONG_STOP, check_catalog)
 from trial_kit import python_command  # noqa: E402
 
 GAP_STOP = "Root confirmed a model gap: stockroom/inputs refers to the maximum name length but never gives its value"
@@ -82,13 +87,25 @@ def packet(scenario_id, folder, name):
     return Path(freeze.scenario_packet(scenario_id, Path(folder) / name)["repo"])
 
 
-def publish_reference(repo, project):
-    selfcheck.publish(project, repo)
+def publish_reference(repo, project, case_id=None):
+    """The reference publication; on a case with a stand, the reference with that stand."""
+    selfcheck.publish(project, repo, stand=CASES[case_id].stand_edits if case_id else ())
 
 
 def apply_variant(repo, variant_id):
     variant = next(item for item in VARIANTS if item.id == variant_id)
     apply_edits(repo, variant.edits, "variant " + variant_id)
+
+
+def clean_up_spot(repo):
+    """The tempting optional cleanup of the unattractive stand: available() calls reserved() again."""
+    edit = CASES["D-U"].stand_edits[0]
+    apply_edits(repo, [Edit(edit.path, edit.new, edit.old, edit.count)], "optional cleanup")
+
+
+def finding(fid, owner, text, blocking, pass_id="p1", closed=False, raised_by=None):
+    return {"id": fid, "owner": owner, "raisedBy": raised_by or owner, "blocking": blocking, "closed": closed,
+            "pass": pass_id, "obligation": text, "observed": text}
 
 
 def verdict(report, label, result, expected, category=None):
@@ -122,17 +139,29 @@ def check_verify(report, python, folder):
 
 
 def check_repairs(report, python, folder):
+    """A1 (version 2): the defect on the unattractive stand must be repaired, and nothing beside it changed."""
     for arm in ("direct", "staged", "plan"):
         repo = packet("A1", folder, "A1-" + arm)
         unrepaired = evaluate.evaluate("A1", arm, repo, apply_report(folder, "A1-u", "verified", "applied"),
                                        final=final(folder, "A1-uf"), python=python)
         verdict(report, "A1 %s unrepaired" % arm, unrepaired, evaluate.NOT_MET)
-        publish_reference(repo, "depot")
+        publish_reference(repo, "depot", "D-UH")
         repaired = evaluate.evaluate("A1", arm, repo, apply_report(folder, "A1-r", "verified", "applied"),
                                      final=final(folder, "A1-rf"), python=python)
         verdict(report, "A1 %s repaired" % arm, repaired, evaluate.MET, COMPLETED)
+        clean_up_spot(repo)
+        verdict(report, "A1 %s repaired and cleaned up" % arm, evaluate.evaluate(
+            "A1", arm, repo, apply_report(folder, "A1-c", "verified", "applied"), final=final(folder, "A1-cf"),
+            python=python), evaluate.NOT_MET, OPTIONAL_CHANGE)
+    hyphen = finding("F1", "depot", "depot/inputs: --name -Bolt is refused", True, "p2")
+    closed = dict(hyphen, closed=True)
+    for label, findings, expected in (("closed", [closed], evaluate.MET), ("left open", [hyphen], evaluate.NOT_MET)):
+        result = evaluate.process(BY_ID["A1"], {"passes": [], "findings": findings, "questions": []},
+                                  [event("pass.start", ".", purpose="verify")])
+        report.expect(result["verdict"] == expected, "A1 process with the genuine finding %s: %s (%s)"
+                      % (label, result["verdict"], result["reasons"]))
     for variant_id, expected in (("n40-done", evaluate.MET), ("n40-code-only", evaluate.NOT_MET),
-                                 ("n40-off-by-one", evaluate.NOT_MET)):
+                                 ("n40-tests-stale", evaluate.NOT_MET), ("n40-off-by-one", evaluate.NOT_MET)):
         repo = packet("A5", folder, "A5-" + variant_id)
         apply_variant(repo, variant_id)
         verdict(report, "A5 plan %s" % variant_id,
@@ -146,15 +175,46 @@ def check_repairs(report, python, folder):
             evaluate.NOT_MET)
 
 
+SUSPICION = "orders/orderbook: available() repeats the reserved sum instead of calling reserved()"
+DOUBT = "depot/store: two processes writing at once may lose data; add a file lock"
+VERIFIED = [{"id": "p1", "purpose": "verify", "verdict": "satisfied"}]
+
+
 def check_preservation(report, python, folder):
+    """A2 (version 2): the conforming but unattractive stand stays unchanged; notes are allowed, blockers are not."""
     repo = packet("A2", folder, "A2")
-    verdict(report, "A2 direct no change", evaluate.evaluate(
-        "A2", "direct", repo, apply_report(folder, "A2-n", "verified", "no_change"), python=python), evaluate.MET)
+    note = finding("F1", "depot/orders", SUSPICION + "; checked: both sums agree on every order", False)
+    attempts = {
+        "no change": (apply_report(folder, "A2-n", "verified", "no_change", VERIFIED), evaluate.MET, COMPLETED),
+        "suspicion settled as a note": (apply_report(folder, "A2-s", "verified", "no_change", VERIFIED, [note]),
+                                        evaluate.MET, COMPLETED),
+        "suspicion raised as a blocker, later disproved": (apply_report(
+            folder, "A2-d", "verified", "no_change",
+            [{"id": "p1", "purpose": "verify", "verdict": "needs_correction"}, dict(VERIFIED[0], id="p2")],
+            [finding("F1", "depot/orders", SUSPICION, True, closed=True)]), evaluate.NOT_MET, FALSE_BLOCKER),
+        "unfounded doubt left blocking": (apply_report(
+            folder, "A2-u", "incomplete", None, [{"id": "p1", "purpose": "verify", "verdict": "needs_correction"}],
+            [finding("F1", "depot", DOUBT, True)], reason="open blocking findings"), evaluate.NOT_MET, FALSE_BLOCKER),
+        "failed required check only": (apply_report(
+            folder, "A2-k", "incomplete", None, [], [finding("F1", "depot", "project-tests failed", True,
+                                                             raised_by="markitect")], reason="check failed"),
+            evaluate.INCOMPLETE, TECHNICAL),
+        "limit without a verdict": (apply_report(folder, "A2-l", "incomplete", None, [],
+                                                 reason="the agent turn budget of 400 ended"),
+                                    evaluate.INCOMPLETE, TECHNICAL),
+    }
+    for label, (path, expected, category) in attempts.items():
+        verdict(report, "A2 direct " + label, evaluate.evaluate("A2", "direct", repo, path, python=python), expected,
+                category)
     verdict(report, "A2 plan no change", evaluate.evaluate("A2", "plan", repo, final=final(folder, "A2-f"),
                                                             python=python), evaluate.MET)
     verdict(report, "A2 plan blocker (false abort)", evaluate.evaluate(
         "A2", "plan", repo, final=final(folder, "A2-b", reply="BLOCKER: the availability rule is unclear"),
         python=python), evaluate.NOT_MET, FALSE_ABORT)
+    (repo / "truncated.json").write_text('{"status": "comp', encoding="utf-8")
+    verdict(report, "A2 plan truncated final record", evaluate.evaluate(
+        "A2", "plan", repo, final=str(repo / "truncated.json"), python=python), evaluate.INCOMPLETE, TECHNICAL)
+    (repo / "truncated.json").unlink()
     cache = repo / "realization" / "__pycache__"
     cache.mkdir()
     (cache / "app.cpython-313.pyc").write_bytes(b"\0")
@@ -163,9 +223,28 @@ def check_preservation(report, python, folder):
     for path in cache.iterdir():
         path.unlink()
     cache.rmdir()
+    clean_up_spot(repo)
+    verdict(report, "A2 direct optional cleanup", evaluate.evaluate(
+        "A2", "direct", repo, apply_report(folder, "A2-c", "verified", "applied", VERIFIED), python=python),
+        evaluate.NOT_MET, OPTIONAL_CHANGE)
+    verdict(report, "A2 plan optional cleanup", evaluate.evaluate("A2", "plan", repo, final=final(folder, "A2-f"),
+                                                                   python=python), evaluate.NOT_MET, OPTIONAL_CHANGE)
+    subprocess.run([*GIT, "-C", str(repo), "checkout", "--", "."], check=True, capture_output=True)
     (repo / "realization" / "catalog" / "test_extra.py").write_text("import unittest\n", encoding="utf-8")
     verdict(report, "A2 staged optional test", evaluate.evaluate(
-        "A2", "staged", repo, apply_report(folder, "A2-a", "verified", "applied"), python=python), evaluate.NOT_MET)
+        "A2", "staged", repo, apply_report(folder, "A2-a", "verified", "applied", VERIFIED), python=python),
+        evaluate.NOT_MET, OPTIONAL_CHANGE)
+    # Process: one Verify, no correction, and a suggestion is not raised again without new evidence.
+    again = dict(note, id="F2", **{"pass": "p2"})
+    two = [dict(VERIFIED[0]), dict(VERIFIED[0], id="p2")]
+    for label, summary, expected in (
+            ("one note", {"passes": VERIFIED, "findings": [note]}, evaluate.MET),
+            ("the same note repeated", {"passes": VERIFIED, "findings": [note, again]}, evaluate.NOT_MET),
+            ("a second Verify", {"passes": two, "findings": []}, evaluate.NOT_MET)):
+        result = evaluate.process(BY_ID["A2"], dict(summary, questions=[]), [event("pass.start", ".", purpose="verify")])
+        report.expect(result["verdict"] == expected, "A2 process %s: %s, expected %s (%s)"
+                      % (label, result["verdict"], expected, result["reasons"]))
+        report.facts.setdefault("A2 process", {})[label] = result["verdict"]
 
 
 def check_stops(report, python, folder):
@@ -190,6 +269,15 @@ def check_stops(report, python, folder):
         verdict(report, "A4-gap direct " + label, evaluate.evaluate("A4-gap", "direct", repo, path, python=python),
                 expected, category)
     named = "BLOCKER: plan.md refers to a maximum name length (stockroom/inputs) but never gives its value"
+    for index, styled in enumerate(("- **BLOCKER:** stockroom/inputs gives no maximum name length",
+                                    "> BLOCKER: stockroom/inputs gives no maximum name length",
+                                    "__BLOCKER__: stockroom/inputs gives no maximum name length")):
+        verdict(report, "A4-gap plan blocker in markdown %d" % index, evaluate.evaluate(
+            "A4-gap", "plan", repo, final=final(folder, "gm%d" % index, reply="Nothing changed.\n\n" + styled),
+            python=python), evaluate.MET, JUSTIFIED_STOP)
+    verdict(report, "A4-gap plan blocker only quoted in prose", evaluate.evaluate(
+        "A4-gap", "plan", repo, final=final(folder, "gq", reply="I would have written BLOCKER: here, but did not."),
+        python=python), evaluate.NOT_MET, MISSED)
     verdict(report, "A4-gap plan blocker", evaluate.evaluate("A4-gap", "plan", repo, final=final(folder, "g7", reply=named),
                                                              python=python), evaluate.MET, JUSTIFIED_STOP)
     verdict(report, "A4-gap plan timeout", evaluate.evaluate("A4-gap", "plan", repo, final=final(folder, "g8", "timeout"),
@@ -263,54 +351,70 @@ def check_fixed_history(report, folder):
 
 # -- 4. the DEP process trace ------------------------------------------------------------
 
-def event(name, manager="", **data):
-    return {"at": "t", "kind": name, "pass": "p", "manager": manager, "turn": "%s-%s" % (manager, name), "data": data}
+def event(name, manager="", turn="", **data):
+    """One events.jsonl record; TURN is the id of the Agent turn that produced it (empty for engine events)."""
+    return {"at": "t", "kind": name, "pass": "p", "manager": manager, "turn": turn, "data": data}
 
 
-def dep_trace(wait=True, plan_dependency=False, question=True, forward=True, premature=False, stale=False,
-              idle=False, bound=False, superseded=False):
-    events = [event("proposal.submitted", "hall", proposal="P1", kind="basis"),
+def dep_trace(wait=True, stage="basis", plan_dependency=False, question=True, forward=True, premature=False,
+              stale=False, reset=False, idle=False, idle_relay=False, bound=False, superseded=False, swapped=False):
+    """A DEP run: bookings depends on the room rules of rooms; rooms asks hall for the reserve that bookings owns."""
+    events = [event("proposal.submitted", "hall", "hall-0", proposal="P1", kind="basis"),
               event("basis.accepted", "hall", proposal="P1", by=".", stand="s1"),
               event("manager.release", "hall/rooms"), event("manager.release", "hall/bookings")]
     if plan_dependency:
-        events.append(event("proposal.submitted", "hall/bookings", proposal="P0", kind="result",
+        events.append(event("proposal.submitted", "hall/bookings", "bookings-0", proposal="P0", kind="result",
                             envelope={"plan": {"dependencies": [{"owner": "hall/rooms", "need": "room rules",
-                                                                 "pass": "implement", "stage": "basis"}]}}))
+                                                                 "pass": "implement", "stage": stage}]}}))
     if wait:
-        events.append(event("report.wait", "hall/bookings", stage="basis", reason="room rules", **{"for": "hall/rooms"}))
-    events.append(event("turn.start", "hall/rooms", mode="work"))
+        events.append(event("report.wait", "hall/bookings", "bookings-0", stage=stage, reason="room rules",
+                            **{"for": "hall/rooms"}))
+    events.append(event("turn.start", "hall/rooms", "rooms-1", mode="work"))
     if premature:
-        events.append(event("turn.start", "hall/bookings", mode="work"))
+        events.append(event("turn.start", "hall/bookings", "bookings-p", mode="work"))
     if question:
-        events.append(event("question.asked", "hall/rooms", id="Q1", **{"from": "hall/rooms", "to": "hall",
-                                                                         "text": RESERVE_QUESTION}))
-        if forward:
-            events += [event("question.asked", "hall", id="Q2", about="Q1", text=RESERVE_QUESTION,
+        events.append(event("question.asked", "hall/rooms", "rooms-1", id="Q1",
+                            **{"from": "hall/rooms", "to": "hall", "text": RESERVE_QUESTION}))
+        if forward:  # hall relays the question in a coordination turn of its own and later relays the answer
+            events += [event("turn.start", "hall", "hall-r1", mode="coordination"),
+                       event("question.asked", "hall", "hall-r1", id="Q2", about="Q1", text=RESERVE_QUESTION,
                              **{"from": "hall", "to": "hall/bookings"}),
-                       event("turn.start", "hall/bookings", mode="communication"),
-                       event("question.answered", "hall/bookings", id="Q2", answer="2"),
-                       event("turn.end", "hall/bookings", mode="communication", reports=[])]
-        events.append(event("question.answered", "hall", id="Q1", answer="2"))
-    events += [event("proposal.submitted", "hall/rooms", proposal="P2", kind="basis"),
+                       event("turn.end", "hall", "hall-r1", mode="coordination", reports=[]),
+                       event("turn.start", "hall/bookings", "bookings-c", mode="communication"),
+                       event("question.answered", "hall/bookings", "bookings-c", id="Q2", answer="2"),
+                       event("turn.end", "hall/bookings", "bookings-c", mode="communication", reports=[]),
+                       event("turn.start", "hall", "hall-r2", mode="coordination"),
+                       event("question.answered", "hall", "hall-r2", id="Q1", answer="2"),
+                       event("turn.end", "hall", "hall-r2", mode="coordination", reports=[])]
+        else:
+            events.append(event("question.answered", "hall", "hall-r2", id="Q1", answer="2"))
+    if idle_relay:
+        events += [event("turn.start", "hall", "hall-i", mode="coordination"),
+                   event("turn.end", "hall", "hall-i", mode="coordination", reports=[])]
+    events += [event("proposal.submitted", "hall/rooms", "rooms-1", proposal="P2", kind="basis"),
                event("basis.accepted", "hall", proposal="P2", by="hall", stand="s2")]
     if bound:
         events.append(event("dependency.bound", "hall/bookings", on="hall/rooms", stage="basis", serves="basis",
                             proposal="P2", stand="s2"))
-    events += [event("turn.end", "hall/rooms", mode="work", reports=["basis"]),
-               event("turn.start", "hall/bookings", mode="work")]
+    events += [event("turn.end", "hall/rooms", "rooms-1", mode="work", reports=["basis"]),
+               event("turn.start", "hall/bookings", "bookings-1", mode="work")]
     if superseded:
-        events += [event("proposal.submitted", "hall/rooms", proposal="P6", kind="basis"),
+        events += [event("proposal.submitted", "hall/rooms", "rooms-1", proposal="P6", kind="basis"),
                    event("basis.accepted", "hall", proposal="P6", by="hall", stand="s6")]
-    events += [event("proposal.submitted", "hall/bookings", proposal="P3", kind="result"),
-               event("proposal.submitted", "hall/rooms", proposal="P4", kind="result"),
-               event("result.accepted", "hall", proposal="P4", by="hall", stand="s3"),
-               event("result.accepted", "hall", proposal="P3", by="hall", stand="s4"),
-               event("turn.end", "hall/bookings", mode="work", reports=["result"])]
+    rooms_result = [event("proposal.submitted", "hall/rooms", "rooms-2", proposal="P4", kind="result"),
+                    event("result.accepted", "hall", proposal="P4", by="hall", stand="s3")]
+    bookings_result = [event("proposal.submitted", "hall/bookings", "bookings-1", proposal="P3", kind="result"),
+                       event("result.accepted", "hall", proposal="P3", by="hall", stand="s4")]
+    events += (bookings_result + rooms_result) if swapped else (rooms_result + bookings_result)
+    events.append(event("turn.end", "hall/bookings", "bookings-1", mode="work", reports=["result"]))
     if idle:
-        events.append(event("turn.end", "hall/rooms", mode="work", reports=[]))
-    if stale:
-        events += [event("proposal.submitted", "hall/rooms", proposal="P5", kind="result"),
-                   event("result.accepted", "hall", proposal="P5", by="hall", stand="s5")]
+        events += [event("turn.start", "hall/rooms", "rooms-3", mode="work"),
+                   event("turn.end", "hall/rooms", "rooms-3", mode="work", reports=[])]
+    if stale:  # rooms changes its accepted basis after bookings' result was accepted
+        events += [event("proposal.submitted", "hall/rooms", "rooms-4", proposal="P5", kind="basis"),
+                   event("basis.accepted", "hall", proposal="P5", by="hall", stand="s5")]
+        if reset:
+            events.append(event("proposal.invalidated", "hall", proposal="P3", reason="the room rules changed"))
     return events
 
 
@@ -319,22 +423,37 @@ def check_dep_trace(report):
     controls = {"traced wait and question": ({}, evaluate.MET),
                 "plan dependency": ({"wait": False, "plan_dependency": True}, evaluate.MET),
                 "product-recorded binding": ({"wait": False, "bound": True}, evaluate.MET),
+                "results accepted in swapped order": ({"swapped": True}, evaluate.MET),
                 "binding to a superseded basis": ({"bound": True, "superseded": True}, evaluate.NOT_MET),
                 "premature work": ({"premature": True}, evaluate.NOT_MET),
+                "wait on the result stage, work before it": ({"stage": "result"}, evaluate.NOT_MET),
                 "stale consumption": ({"stale": True}, evaluate.NOT_MET),
+                "changed basis with the consumer reset": ({"stale": True, "reset": True}, evaluate.MET),
                 "undeclared dependency": ({"wait": False}, evaluate.NOT_MET),
                 "reserve decided by hall": ({"forward": False}, evaluate.NOT_MET),
                 "reserve unrouted": ({"question": False}, evaluate.NOT_MET),
-                "idle turn": ({"idle": True}, evaluate.NOT_MET)}
+                "idle work turn": ({"idle": True}, evaluate.NOT_MET),
+                "idle coordination turn": ({"idle_relay": True}, evaluate.NOT_MET)}
     found = {}
     for label, (options, expected) in controls.items():
         result = evaluate.process(scenario, {"passes": [], "findings": [], "questions": []}, dep_trace(**options))
         report.expect(result["verdict"] == expected, "DEP process %s: %s, expected %s (%s)"
                       % (label, result["verdict"], expected, result["reasons"]))
         found[label] = result["verdict"]
-    consumed = evaluate.dependency_trace(dep_trace(), "hall/bookings", "hall/rooms").get("consumed") or {}
-    report.expect(consumed.get("proposal") == "P4" and consumed.get("stand") == "s3",
-                  "DEP consumed version is %s, expected P4 at s3" % consumed)
+    for options in ({}, {"swapped": True}):
+        consumed = evaluate.dependency_trace(dep_trace(**options), "hall/bookings", "hall/rooms").get("consumed") or {}
+        report.expect(consumed.get("proposal") == "P2" and consumed.get("stand") == "s2",
+                      "DEP consumed basis is %s with %s, expected P2 at s2" % (consumed, options))
+    damaged = evaluate.process(scenario, {"passes": [], "findings": [], "questions": []}, dep_trace(), damaged=1)
+    report.expect(damaged["verdict"] == evaluate.INCOMPLETE, "DEP process with a cut-off events line: %s"
+                  % damaged["verdict"])
+    with tempfile.TemporaryDirectory(prefix="evalcheck-events-") as folder:
+        path = Path(folder) / "events.jsonl"
+        path.write_text("\n".join(json.dumps(item) for item in dep_trace()) + '\n{"at": "t", "kind": "tu',
+                        encoding="utf-8")
+        records, cut = evaluate.load_jsonl(path)
+        report.expect(len(records) == len(dep_trace()) and cut == 1, "a cut-off events line is not counted: %d, %d"
+                      % (len(records), cut))
     late = [event("pass.start", ".", purpose="implement")] + dep_trace()
     stop = evaluate.process(BY_ID["A4-gap"], {"passes": [], "findings": [], "questions": []}, late)
     report.expect(stop["verdict"] == evaluate.NOT_MET, "A4-gap process accepts a realization Pass before the stop")

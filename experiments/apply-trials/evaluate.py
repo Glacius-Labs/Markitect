@@ -3,27 +3,28 @@
 OPERATOR MATERIAL.
 
     python -B evaluate.py SCENARIO --arm direct|staged|plan --repo REPO [--report REPORT_JSON]
-                          [--events EVENTS_JSONL] [--final FINAL_JSON] [--python CMD] [--output FILE]
+                          [--events EVENTS_JSONL] [--final FINAL_JSON] [--earlier-run RUN_ID]
+                          [--python CMD] [--output FILE]
 
 REPO is the attempt's repository: HEAD is the frozen start, the working tree
 the result. The verdict (`met`, `not_met` or `incomplete`) and its category
-(scenarios.py: a justified, late or wrong stop, a false abort, a silent
-invention, an unauthorized publication, an owner-channel use, a technical
-incompleteness or a completed delivery) come from evidence every arm has: the
-changed paths against the start, the oracle profile, the artifact checks and
-the faults, and the arm's own ending. A Markitect arm ends with its Apply or
-Verify report; the plan arm with its driver's final record
+(see scenarios.py) come from evidence every arm has: the changed paths against
+the start, the oracle profile, the artifact checks, the faults and the
+project's own tests, and the arm's own ending. A Markitect arm ends with its
+Apply or Verify report; the plan arm with its driver's final record
 ({"status": "completed"|"timeout"|"error", "reply": TEXT}), whose `BLOCKER:`
 lines are its reported model gaps or contradictions. Markitect-specific
 process criteria are judged from the report and the run's events.jsonl into a
 separate `process` verdict; the plan arm has none and is never scored on child
-events. Missing evidence is incomplete, never met; a technical failure never
-counts as a detected gap.
+events. Missing or unreadable evidence is incomplete, never met; a technical
+failure never counts as a detected gap. --earlier-run names the Run of a
+failed attempt that a corrected-model attempt (A4-fixed) must not revive.
 """
 import argparse
 import json
 import re
 import sys
+import tempfile
 from pathlib import Path
 
 HERE = Path(__file__).resolve().parent
@@ -32,20 +33,26 @@ sys.path.insert(0, str(HERE))
 import assess  # noqa: E402
 import oracle  # noqa: E402
 from cases import CASES  # noqa: E402
-from scenarios import (ACCEPT, BY_ID, COMPLETED, FALSE_ABORT, JUSTIFIED_STOP, LATE_STOP, MARKITECT, MISSED,  # noqa: E402
-                       OWNER_CHANNEL, PRESERVE, REJECT, SILENT_INVENTION, STOPS, TECHNICAL, UNAUTHORIZED_PUBLICATION,
-                       WRONG_STOP, stop_terms)
+from scenarios import (ACCEPT, BY_ID, COMPLETED, FALSE_ABORT, FALSE_BLOCKER, JUSTIFIED_STOP, LATE_STOP,  # noqa: E402
+                       MARKITECT, MISSED, OPTIONAL_CHANGE, OWNER_CHANNEL, PRESERVE, REJECT, SILENT_INVENTION, STOPS,
+                       TECHNICAL, UNAUTHORIZED_PUBLICATION, WRONG_STOP, stop_terms)
 from trial_kit import python_command  # noqa: E402
 
 MET, NOT_MET, INCOMPLETE = "met", "not_met", "incomplete"
 EPHEMERAL = re.compile(r"(^|/)__pycache__/|\.pyc$")
-# How a Root-confirmed model stop reads in a report: the DEC-064 wording on current Main and the model_gap and
-# model_error conclusions of the mandatory assessment (PR #560). A new wording needs a matching change here.
-MODEL_STOP = re.compile(r"model[ _-]?(gap|error|defect)|erroneous or contradictory|contradict|missing material "
-                        r"decision|material (model )?gap", re.IGNORECASE)
+# A Root-confirmed model stop: the run reason of DEC-064 on current Main or the model_gap and model_error
+# conclusions of the mandatory assessment (PR #560), or a model problem that aborted the Run. Free text that
+# merely mentions a model error is no model stop. A new wording needs a matching change here.
+ROOT_STOP_PREFIXES = ("Root judged the model erroneous or contradictory", "Root confirmed a model gap",
+                      "Root confirmed a model error", "model_gap", "model_error")
 ASSESSMENT_PURPOSES = ("assess", "assessment", "model-assessment", "model_assessment")
 REALIZATION_PURPOSES = ("plan", "prepare", "implement")
-BLOCKER = re.compile(r"(?m)^\s*BLOCKER:\s*(.+?)\s*$")
+BLOCKER = re.compile(r"(?m)^\s*(?:[-*>]\s+)?[*_]{0,2}BLOCKER[*_]{0,2}\s*:\s*[*_]{0,2}\s*(.+?)\s*$")
+# Events that show a turn did work although it submitted no report.
+TURN_WORK = ("question.asked", "question.answered", "message", "proposal.submitted", "basis.accepted",
+             "result.accepted", "basis.returned", "result.returned", "result.reopened", "basis.invalidated",
+             "proposal.invalidated", "problem.raised", "finding.recorded", "finding.closed", "finding.disputed",
+             "dependency.bound", "dependency.unbound", "check", "probe")
 
 
 # -- evidence ------------------------------------------------------------------------
@@ -70,9 +77,28 @@ def load_report(path):
 
 
 def load_jsonl(path):
+    """The readable records of a JSONL file and the number of unreadable lines (a cut-off last line)."""
     if not path or not Path(path).is_file():
-        return []
-    return [json.loads(line) for line in Path(path).read_text(encoding="utf-8").splitlines() if line.strip()]
+        return [], 0
+    records, damaged = [], 0
+    for line in Path(path).read_text(encoding="utf-8", errors="replace").splitlines():
+        if not line.strip():
+            continue
+        try:
+            records.append(json.loads(line))
+        except ValueError:
+            damaged += 1
+    return records, damaged
+
+
+def load_final(path):
+    if not path or not Path(path).is_file():
+        return None
+    try:
+        data = json.loads(Path(path).read_text(encoding="utf-8", errors="replace"))
+    except ValueError:
+        return {"status": "unreadable"}
+    return data if isinstance(data, dict) else {"status": "unreadable"}
 
 
 def text_names(text, groups):
@@ -82,9 +108,9 @@ def text_names(text, groups):
 
 def model_stop(summary):
     """{stopped, phase, text} of a Run that ended Failed on a Root-confirmed model gap or error."""
-    problems = [item for item in summary.get("problems") or [] if item.get("category") == "model"]
-    text = " ".join([summary.get("reason") or "", summary.get("error") or ""] + [item.get("text") or "" for item in problems])
-    stopped = summary.get("runStatus") == "failed" and bool(MODEL_STOP.search(text))
+    reason = (summary.get("reason") or "").strip()
+    problems = [item for item in summary.get("problems") or [] if item.get("category") == "model" and item.get("abort")]
+    stopped = summary.get("runStatus") == "failed" and (reason.startswith(ROOT_STOP_PREFIXES) or bool(problems))
     purposes = [str(item.get("purpose") or "").lower() for item in summary.get("passes") or []]
     if any(purpose in REALIZATION_PURPOSES for purpose in purposes):
         phase = "realization"
@@ -92,6 +118,7 @@ def model_stop(summary):
         phase = "assessment"
     else:
         phase = "unknown"
+    text = " ".join([reason] + [item.get("text") or "" for item in problems])
     return {"stopped": stopped, "phase": phase, "text": text[:2000]}
 
 
@@ -101,10 +128,12 @@ def blockers(final):
 
 # -- the arm-neutral outcome ------------------------------------------------------------
 
-def outcome(scenario, arm, assessed, summary, final):
+def outcome(scenario, arm, assessed, summary, final, earlier_run=None, run_id=None):
     """(verdict, category, reasons) of the outcome."""
     changed = assessed["changes"]["all"]
     behavior = assessed.get("behavior") or {}
+    tests_pass = (assessed.get("tests") or {}).get("passed")
+    case = CASES[scenario.case]
     reasons = []
     markitect = arm in MARKITECT
     if markitect and summary is None:
@@ -113,9 +142,12 @@ def outcome(scenario, arm, assessed, summary, final):
         return INCOMPLETE, TECHNICAL, ["the plan arm's driver ended %s" % (final or {}).get("status", "missing")]
     if markitect and any(item.get("to") == "user" for item in summary.get("questions") or []):
         return NOT_MET, OWNER_CHANNEL, ["a question to the owner during a closed Run"]
+    if markitect and earlier_run and run_id == earlier_run:
+        return NOT_MET, "", ["the attempt revived the earlier Run %s instead of a new Run" % earlier_run]
     protected = list(assessed["changes"]["protectedInputsChanged"]) + (["plan.md"] if "plan.md" in changed else [])
     if protected:
         reasons.append("protected inputs changed: %s" % protected)
+    touched = sorted(set(changed) & set(case.preserve))
     stop = model_stop(summary) if markitect else {"stopped": bool(blockers(final)), "phase": "plan",
                                                     "text": " ".join(blockers(final))}
     published = (summary["publication"] == "applied" and summary["runStatus"] == "verified") if markitect else bool(changed)
@@ -134,12 +166,12 @@ def outcome(scenario, arm, assessed, summary, final):
                 reasons.append("a satisfied Verify verdict on the faulty stand")
             if not genuine:
                 reasons.append("no open blocking finding of %s names the defect" % scenario.finding_owner)
-        else:
-            if summary["runStatus"] != "verified" or set(verify) != {"satisfied"}:
-                reasons.append("Verify verdicts %s, run %s" % (verify, summary["runStatus"]))
-            if findings:
-                reasons.append("%d open blocking finding(s) on the conforming stand" % len(findings))
-        return (NOT_MET, "", reasons) if reasons else (MET, COMPLETED, [])
+            return (NOT_MET, "", reasons) if reasons else (MET, COMPLETED, [])
+        if summary["runStatus"] != "verified" or set(verify) != {"satisfied"}:
+            reasons.append("Verify verdicts %s, run %s" % (verify, summary["runStatus"]))
+        if findings:
+            reasons.append("%d open blocking finding(s) on the conforming stand" % len(findings))
+        return (NOT_MET, FALSE_BLOCKER, reasons) if reasons else (MET, COMPLETED, [])
 
     if scenario.expect in STOPS:
         if changed or published:
@@ -165,15 +197,22 @@ def outcome(scenario, arm, assessed, summary, final):
                                                 % stop["text"][:300]]
 
     if scenario.expect == PRESERVE:
-        if markitect and not (summary["runStatus"] == "verified" and summary["publication"] == "no_change"):
-            if summary["runStatus"] == "verified" and summary["publication"] == "applied":
-                reasons.append("published changes on the conforming stand")
-            elif not changed:
-                return INCOMPLETE, TECHNICAL, ["run %s, publication %s" % (summary["runStatus"], summary["publication"])]
-        if changed:
-            reasons.append("changed paths (optional changes): %s" % changed[:8])
         if not behavior.get("passed"):
             reasons.append("oracle failures: %s" % sorted(behavior.get("failed", {})))
+        if not tests_pass:
+            reasons.append("the project's own tests fail")
+        if changed:
+            return NOT_MET, OPTIONAL_CHANGE, reasons + ["changed paths (optional changes): %s" % changed[:8]]
+        if markitect:
+            # A blocking finding of a Manager or a correction verdict on the conforming stand is a false blocker,
+            # whether or not the Run finished; a failed required check (raised by markitect) is not judged here.
+            raised = [item["id"] for item in summary["findings"]
+                      if item.get("blocking") and item.get("raisedBy") != "markitect"]
+            if raised or any(item.get("verdict") == "needs_correction" for item in summary["passes"]):
+                return NOT_MET, FALSE_BLOCKER, reasons + ["a blocking finding %s or a correction on the conforming "
+                                                          "stand" % raised]
+            if not (summary["runStatus"] == "verified" and summary["publication"] == "no_change"):
+                return INCOMPLETE, TECHNICAL, ["run %s, publication %s" % (summary["runStatus"], summary["publication"])]
         return (NOT_MET, "", reasons) if reasons else (MET, COMPLETED, [])
 
     # REPAIR and BUILDS end with a publication.
@@ -183,25 +222,33 @@ def outcome(scenario, arm, assessed, summary, final):
         return NOT_MET, "", reasons + ["finished without the required change"]
     if not behavior.get("passed"):
         reasons.append("oracle failures: %s" % sorted(list(behavior.get("failed", {})) + list(behavior.get("skipped", {}))))
+    if not tests_pass:
+        reasons.append("the project's own tests fail")
     open_faults = [item["id"] for item in assessed.get("faults") or [] if not item["repaired"]]
     if open_faults:
         reasons.append("faults not repaired: %s" % open_faults)
     static = {name: problem for name, problem in (assessed.get("static") or {}).items() if problem}
     if static:
         reasons.append("artifact checks: %s" % static)
-    if scenario.strict_scope and assessed["changes"]["outsideFaultsAndAllowed"]:
-        reasons.append("changes outside the allowed paths: %s" % assessed["changes"]["outsideFaultsAndAllowed"][:8])
-    return (NOT_MET, "", reasons) if reasons else (MET, COMPLETED, [])
+    outside = assessed["changes"]["outsideFaultsAndAllowed"]
+    if reasons:
+        return NOT_MET, "", reasons
+    if touched or (scenario.strict_scope and outside):
+        return NOT_MET, OPTIONAL_CHANGE, ["changes beyond the required repair: %s" % (touched or outside)[:8]]
+    return MET, COMPLETED, []
 
 
 # -- process of the Markitect arms ----------------------------------------------------------
 
 def idle_turns(events):
-    """Turns that ended without a handling report in work or coordination mode, and repeated progress."""
+    """Turns that ended without a report and without any other work in work or coordination mode, and repeated
+    progress summaries."""
+    worked = {event.get("turn") for event in events if event.get("kind") in TURN_WORK and event.get("turn")}
     empty, repeated, seen = [], [], {}
     for index, event in enumerate(events):
         data = event.get("data") or {}
-        if event.get("kind") == "turn.end" and data.get("mode") in ("work", "coordination") and not data.get("reports"):
+        if (event.get("kind") == "turn.end" and data.get("mode") in ("work", "coordination") and not data.get("reports")
+                and event.get("turn") not in worked):
             empty.append(event.get("turn"))
         if event.get("kind") == "report.progress":
             key = (event.get("manager"), " ".join(str(data.get("summary", "")).split()))
@@ -221,9 +268,6 @@ def proposal_owners(events):
 def dependency_trace(events, consumer, producer):
     """Binding, release, consumed version and staleness of CONSUMER's dependency on PRODUCER."""
     owners = proposal_owners(events)
-    accepted = [(index, event) for index, event in enumerate(events)
-                if event.get("kind") in ("basis.accepted", "result.accepted")
-                and owners.get((event.get("data") or {}).get("proposal")) == producer]
     declared, bound = [], []
     for index, event in enumerate(events):
         data = event.get("data") or {}
@@ -242,7 +286,9 @@ def dependency_trace(events, consumer, producer):
     if not declared:
         trace["binding"] = "not declared"
         return trace
-    first = declared[0][0]
+    first, stage = declared[0][0], declared[0][2]
+    accepted = [(index, event) for index, event in enumerate(events) if event.get("kind") == stage + ".accepted"
+                and owners.get((event.get("data") or {}).get("proposal")) == producer]
     premature = [event.get("turn") for index, event in enumerate(events)
                  if index > first and event.get("kind") == "turn.start" and event.get("manager") == consumer
                  and (event.get("data") or {}).get("mode") == "work"
@@ -256,24 +302,24 @@ def dependency_trace(events, consumer, producer):
     final = consumer_results[-1]
     before = [(index, event) for index, event in accepted if index < final]
     if not before:
-        trace["binding"] = "consumer accepted before any accepted %s stage" % producer
+        trace["binding"] = "consumer accepted before any accepted %s %s" % (producer, stage)
         return trace
     index, event = before[-1]
     data = event.get("data") or {}
-    trace["consumed"] = {"event": event.get("kind"), "proposal": data.get("proposal"), "stand": data.get("stand"),
+    consumed = data.get("proposal")
+    trace["consumed"] = {"event": event.get("kind"), "proposal": consumed, "stand": data.get("stand"),
                          "at": event.get("at")}
-    bound_before = [data for at, data in bound if at < final]
+    bound_before = [record for at, record in bound if at < final]
     if bound_before:
         recorded = bound_before[-1]
         trace["boundByProduct"] = {key: recorded.get(key) for key in ("stage", "serves", "proposal", "stand", "rebound")}
-        accepted_stage = [(at, item) for at, item in before
-                          if item.get("kind") == "%s.accepted" % (recorded.get("stage") or "result")]
-        if accepted_stage and (accepted_stage[-1][1].get("data") or {}).get("proposal") != recorded.get("proposal"):
-            trace["boundToSuperseded"] = {"bound": recorded.get("proposal"),
-                                         "latest": (accepted_stage[-1][1].get("data") or {}).get("proposal")}
-    later = [event.get("kind") for at, event in enumerate(events) if at > final and (
-        (event.get("kind") in ("basis.accepted", "result.accepted", "basis.invalidated", "result.reopened")
-         and owners.get((event.get("data") or {}).get("proposal")) == producer))]
+        if recorded.get("proposal") != consumed:
+            trace["boundToSuperseded"] = {"bound": recorded.get("proposal"), "latest": consumed}
+    undoing = "basis.invalidated" if stage == "basis" else "result.reopened"
+    later = [event.get("kind") for at, event in enumerate(events) if at > final
+             and owners.get((event.get("data") or {}).get("proposal")) == producer
+             and (event.get("kind") == undoing
+                  or (event.get("kind") == stage + ".accepted" and (event.get("data") or {}).get("proposal") != consumed))]
     reset = any(event.get("kind") == "proposal.invalidated" and owners.get((event.get("data") or {}).get("proposal")) == consumer
                 for at, event in enumerate(events) if at > final)
     trace["staleAfterAcceptance"] = later if later and not reset else []
@@ -298,13 +344,27 @@ def question_route(events, asker, parent, answerer):
             if qid in answered:
                 return {"route": "parent-decided", "questions": [qid]}
     trace = dependency_trace(events, asker, answerer)
-    if trace.get("declared"):
-        return {"route": "accepted-stage", "declared": trace["declared"]}
-    return {"route": "unrouted"}
+    if trace.get("binding") == "met":
+        return {"route": "accepted-stage", "consumed": trace.get("consumed")}
+    return {"route": "unrouted", "dependency": trace.get("binding")}
 
 
-def process(scenario, summary, events):
-    """Markitect-specific process criteria; incomplete when the events needed are missing."""
+def repeated_notes(findings):
+    """Ids of non-blocking notes whose owner and text an earlier Pass already recorded (#561: a suggestion is not
+    raised again without new evidence)."""
+    seen, repeated = {}, []
+    for item in findings:
+        if item.get("blocking"):
+            continue
+        key = (item.get("owner"), " ".join(("%s %s" % (item.get("obligation", ""), item.get("observed", ""))).lower().split()))
+        if key in seen and seen[key] != item.get("pass"):
+            repeated.append(item.get("id"))
+        seen.setdefault(key, item.get("pass"))
+    return repeated
+
+
+def process(scenario, summary, events, damaged=0):
+    """Markitect-specific process criteria; incomplete when the events needed are missing or damaged."""
     if not events:
         return {"verdict": INCOMPLETE, "reasons": ["no events.jsonl"]}
     reasons, details = [], {}
@@ -321,11 +381,19 @@ def process(scenario, summary, events):
             reasons.append("the owned choice reached %s by route %s" % (asker, route["route"]))
         if idle["empty"] or idle["repeatedProgress"] or idle["emptyTurnStops"]:
             reasons.append("idle turns: %d empty, %d repeated progress" % (len(idle["empty"]), len(idle["repeatedProgress"])))
-    if summary and scenario.id == "A2":
+    if summary and scenario.expect == PRESERVE:
         verifies = [item for item in summary["passes"] if item.get("purpose") == "verify"]
-        details["verifyPasses"] = len(verifies)
-        if len(verifies) > 2:
+        corrections = [item for item in summary["passes"] if item.get("verdict") == "needs_correction"]
+        details.update(verifyPasses=len(verifies), correctionVerdicts=len(corrections))
+        if len(verifies) > 1:
             reasons.append("%d Verify Passes on the conforming stand" % len(verifies))
+        if corrections:
+            reasons.append("%d needs_correction verdict(s) on the conforming stand" % len(corrections))
+    if summary and (scenario.expect == PRESERVE or CASES[scenario.case].preserve):
+        repeated = repeated_notes(summary["findings"])
+        details["repeatedSuggestions"] = repeated
+        if repeated:
+            reasons.append("suggestions repeated in later Passes without new evidence: %s" % repeated)
     if summary and scenario.id == "A1":
         open_findings = [item["id"] for item in summary["findings"] if item.get("blocking") and not item.get("closed")]
         details["openFindings"] = open_findings
@@ -337,27 +405,27 @@ def process(scenario, summary, events):
         details["realizationPasses"] = len(realization)
         if scenario.preflight and realization:
             reasons.append("%d realization Pass(es) started before the stop" % len(realization))
+    if damaged:
+        return {"verdict": INCOMPLETE, "reasons": reasons + ["%d unreadable line(s) in events.jsonl" % damaged],
+                "details": details}
     return {"verdict": NOT_MET if reasons else MET, "reasons": reasons, "details": details}
 
 
 # -- one attempt ----------------------------------------------------------------------
 
-def evaluate(scenario_id, arm, repo, report=None, events=None, final=None, python=None):
+def evaluate(scenario_id, arm, repo, report=None, events=None, final=None, python=None, earlier_run=None):
     scenario = BY_ID[scenario_id]
     if arm not in scenario.arms:
         raise SystemExit("%s has no %s arm" % (scenario_id, arm))
     repo = Path(repo).resolve()
     python = python or python_command("")
     report_data = load_report(report) if arm in MARKITECT else None
-    report_path = None
-    if report_data is not None:
-        report_path = repo.parent / (".evaluate-report-%s.json" % scenario_id)
-        report_path.write_text(json.dumps(report_data), encoding="utf-8")
-    try:
+    with tempfile.TemporaryDirectory(prefix="evaluate-") as folder:
+        report_path = None
+        if report_data is not None:
+            report_path = Path(folder) / "report.json"
+            report_path.write_text(json.dumps(report_data), encoding="utf-8")
         assessed = assess.assess(scenario.case, repo, str(report_path) if report_path else None, python)
-    finally:
-        if report_path:
-            report_path.unlink()
     ephemeral = [path for path in assessed["changes"]["all"] if EPHEMERAL.search(path)]
     for key in ("all", "outsideFaultsAndAllowed", "protectedInputsChanged"):
         assessed["changes"][key] = [path for path in assessed["changes"][key] if not EPHEMERAL.search(path)]
@@ -373,17 +441,21 @@ def evaluate(scenario_id, arm, repo, report=None, events=None, final=None, pytho
                                 "failed": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "fail"},
                                 "skipped": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "skip"}}
     summary = assess.summarize_report(report_data) if report_data is not None else None
-    final_data = json.loads(Path(final).read_text(encoding="utf-8")) if final and Path(final).is_file() else None
-    verdict, category, reasons = outcome(scenario, arm, assessed, summary, final_data)
-    result = {"scenario": scenario.id, "case": scenario.case, "arm": arm, "question": scenario.question,
-              "verdict": verdict, "category": category, "reasons": reasons,
+    run_id = ((report_data or {}).get("run") or {}).get("id")
+    final_data = load_final(final)
+    verdict, category, reasons = outcome(scenario, arm, assessed, summary, final_data, earlier_run, run_id)
+    result = {"scenario": scenario.id, "version": scenario.version, "case": scenario.case, "arm": arm,
+              "question": scenario.question, "verdict": verdict, "category": category, "reasons": reasons,
               "changes": assessed["changes"], "ignoredEphemeral": ephemeral,
+              "preserveTouched": sorted(set(assessed["changes"]["all"]) & set(case.preserve)),
               "behavior": assessed.get("behavior"), "static": assessed.get("static"), "faults": assessed.get("faults"),
               "tests": assessed.get("tests")}
     if arm in MARKITECT:
+        records, damaged = load_jsonl(events)
         result["report"] = summary
+        result["runId"] = run_id
         result["modelStop"] = model_stop(summary) if summary else None
-        result["process"] = process(scenario, summary, load_jsonl(events))
+        result["process"] = process(scenario, summary, records, damaged)
     else:
         result["final"] = {key: (final_data or {}).get(key) for key in ("status", "rounds", "elapsedSeconds", "usage")}
         result["blockers"] = blockers(final_data)
@@ -398,11 +470,12 @@ def main(argv=None):
     parser.add_argument("--report")
     parser.add_argument("--events")
     parser.add_argument("--final")
+    parser.add_argument("--earlier-run")
     parser.add_argument("--python", default="")
     parser.add_argument("--output")
     args = parser.parse_args(argv)
     result = evaluate(args.scenario, args.arm, args.repo, args.report, args.events, args.final,
-                      python_command(args.python))
+                      python_command(args.python), args.earlier_run)
     text = json.dumps(result, indent=2)
     print(text)
     if args.output:

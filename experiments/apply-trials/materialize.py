@@ -96,6 +96,7 @@ def write_base(root, case):
         shutil.copytree(reference / "realization", Path(root) / "realization",
                         ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copytree(reference / "registry", target / "registry")
+        apply_edits(root, case.stand_edits, "%s stand" % case.id)
         for fault in case.faults:
             apply_edits(root, fault.edits, "%s fault %s" % (case.id, fault.id))
 

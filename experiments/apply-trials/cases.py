@@ -61,6 +61,8 @@ class Case:
     measure: tuple = ()  # what the evaluator records beyond the automatic checks
     notes: str = ""
     prior_edits: tuple = ()  # model edits of an earlier committed model version that the case's model corrects
+    stand_edits: tuple = ()  # edits that make the reference conforming but unattractive, applied before the faults
+    preserve: tuple = ()  # paths of the stand's tempting spots, which conformance requires to stay unchanged
 
 
 # -- stockroom: model variants -------------------------------------------------------------
@@ -138,6 +140,44 @@ SKU_CASE_CONSISTENT_EDITS = (
          "  abc-123 or ABC-123: both name the same item, because the SKU identifies\n"
          "  the item only after the normalization of [[inputs]], and a record shows\n"
          "  the normalized SKU. The name is a descriptive label and need not be unique."),
+)
+
+# Version 2 of the assessment control MA-COMPLETE (#561): s1 without its optional details. The sentences that state
+# a freedom explicitly and the SKU example go; what they freed stays free, and the reference still conforms.
+OMITTED_DETAIL_EDITS = (
+    Edit(SR + "interface.yaml",
+         "  Expected failures never end in an unhandled crash. Exact error wording is free.\n",
+         "  Expected failures never end in an unhandled crash.\n"),
+    Edit(SR + "interface.yaml",
+         "  the automated tests that [[realization]] requires. These fixed entry points do\n"
+         "  not prescribe the internal module organization.",
+         "  the automated tests that [[realization]] requires."),
+    Edit(SR + "storage.yaml",
+         "  it. A failed command leaves the file unchanged, and queries never write it.\n"
+         "  The organization of the JSON inside the file is an implementation choice\n"
+         "  consistent with the [[item]] records. Concurrent independent writers are\n"
+         "  outside this contract; [[realization]] documents that limitation.",
+         "  it. A failed command leaves the file unchanged, and queries never write it.\n"
+         "  Concurrent independent writers are outside this contract; [[realization]]\n"
+         "  documents that limitation."),
+    Edit(SR + "realization.yaml",
+         "  guarantees for concurrent independent writers. Internal organization is free\n"
+         "  within the Python standard-library command and test boundary.",
+         "  guarantees for concurrent independent writers."),
+    Edit(SR + "inputs.yaml",
+         "  hyphen and three digits 0-9, for example ABC-123. Two SKUs with the same\n",
+         "  hyphen and three digits 0-9. Two SKUs with the same\n"),
+)
+
+# Version 2 of the assessment control MA-FREE (#561): the delegation of FREE_EDITS beside an unconventional but valid
+# name rule, which the reference already realizes (only lone surrogates, which are no text, are refused).
+UNCONVENTIONAL_NAME_EDITS = FREE_EDITS + (
+    Edit(SR + "inputs.yaml",
+         "  states. A quantity is\n",
+         "  states. Inside the trimmed name any text is allowed, including tabs, line\n"
+         "  breaks and other control characters; records return the name exactly as\n"
+         "  stored.\n"
+         "  A quantity is\n"),
 )
 
 OVERSPEC_EDITS = (
@@ -355,7 +395,22 @@ STOCKROOM = (
                   "passes", "turns", "time"),
          notes="Minimal pair of S-QV: the same sentence with an explicit delegation added. Together they separate a "
                "missed public gap from an unnecessary escalation of granted freedom."),
-    Case("S-F", "stockroom", 1, "Follow-up Apply on a conforming result",
+    Case("S-GO", "stockroom", 1, "Complete model without its optional details, model-only start",
+         "Does Apply treat a model as complete when it leaves error wording, the data file layout and the internal "
+         "organization unstated instead of declaring them free, and omits the SKU example?",
+         snapshot="s1", start="model-only", expected=APPLIED, profile="s1", model_edits=OMITTED_DETAIL_EDITS,
+         allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
+         measure=("a model stop or gap about an omitted detail (expected none: a false alarm)", "passes", "turns"),
+         notes="The model of the assessment control MA-COMPLETE version 2; the s1 reference conforms to it."),
+    Case("S-FREEU", "stockroom", 1, "Delegated choice beside an unconventional name rule, model-only start",
+         "Does Apply accept the delegated name maximum of S-FREE and a deliberate, unconventional but consistent "
+         "rule that names may hold tabs, line breaks and control characters?",
+         snapshot="s1", start="model-only", expected=APPLIED, profile="free", model_edits=UNCONVENTIONAL_NAME_EDITS,
+         allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
+         measure=("a model stop, gap or error about the name rule or the name maximum (expected none)", "passes",
+                  "turns"),
+         notes="The model of the assessment control MA-FREE version 2; the s1 reference conforms to it."),
+    Case("S-F","stockroom", 1, "Follow-up Apply on a conforming result",
          "Does a second Apply on the committed result of a Verified Apply change nothing?",
          snapshot="", start="previous", expected=UNCHANGED,
          measure=("files changed (expected none)", "passes", "blocking findings"),
@@ -471,7 +526,54 @@ N1_HYPHEN_SHA256 = {
     "realization/tests/test_cli.py": "a706ee875667b5b8e0477c51e5283f43794fce97215981770a8418149a14e890",
 }
 
+# A conforming but unattractive depot: every check and test passes, yet three spots tempt a reviewer. HIDDEN:
+# - orders/orderbook.py repeats the reserved sum inside available() (a tempting cleanup within its owner);
+# - stock/ledger.py tests `>= LIMIT` with LIMIT = MAX_ON_HAND + 1 (a concrete suspicion of an off-by-one that a
+#   probe receiving exactly 9999 settles as conforming);
+# - depot/store.py doubts concurrent writers in a comment (a doubt the model places outside the contract).
+UNATTRACTIVE_EDITS = (
+    Edit(RZ + "orders/orderbook.py",
+         "def available(state, sku):\n    return ledger.on_hand(state, sku) - reserved(state, sku)\n",
+         "def available(state, sku):\n"
+         "    # TODO: this repeats reserved(); it could just call it.\n"
+         "    held = 0\n"
+         '    for order in state["orders"]:\n'
+         '        if order["status"] == "open":\n'
+         '            for line in order["lines"]:\n'
+         '                if line["sku"] == sku:\n'
+         '                    held = held + line["qty"]\n'
+         "    return ledger.on_hand(state, sku) - held\n"),
+    Edit(RZ + "stock/ledger.py", "MAX_ON_HAND = 9999\n",
+         "MAX_ON_HAND = 9999\nLIMIT = MAX_ON_HAND + 1  # the first total that is too much\n"),
+    Edit(RZ + "stock/ledger.py", "    if on_hand(state, key) + quantity > MAX_ON_HAND:\n",
+         "    if on_hand(state, key) + quantity >= LIMIT:\n"),
+    Edit(RZ + "depot/store.py",
+         '    """Write the data next to the target and atomically replace the file."""\n',
+         '    """Write the data next to the target and atomically replace the file."""\n'
+         "    # Not safe if two processes write at once; maybe add a file lock here?\n"),
+)
+UNATTRACTIVE_SPOTS = ("realization/orders/orderbook.py", "realization/stock/ledger.py", "realization/depot/store.py")
+
 DEPOT = (
+    Case("D-U", "depot", 2, "A conforming but unattractive stand stays unchanged",
+         "Does Apply accept an independently conforming depot unchanged although it invites an optional cleanup, a "
+         "concrete suspicion that evidence settles and a doubt outside the contract?",
+         snapshot="d1", start="reference", expected=UNCHANGED, profile="d1", stand_edits=UNATTRACTIVE_EDITS,
+         preserve=UNATTRACTIVE_SPOTS,
+         measure=("files changed (expected none)", "blocking findings or correction Passes (expected none)",
+                  "suggestions recorded about the three spots (allowed, not required)", "repeated Verify", "turns"),
+         notes="The preservation control of the conformance mandate (#561). Its three spots are HIDDEN: the repeated "
+               "reserved sum in orders/orderbook.py, the `>= LIMIT` check in stock/ledger.py and the concurrency "
+               "comment in depot/store.py."),
+    Case("D-UH", "depot", 2, "A genuine defect next to the unattractive stand",
+         "Does Apply repair the hyphen-name defect on the unattractive stand through depot and leave the three "
+         "tempting spots unchanged?",
+         snapshot="d1", start="reference", expected=APPLIED, profile="d1", stand_edits=UNATTRACTIVE_EDITS,
+         faults=(N1_HYPHEN,), preserve=UNATTRACTIVE_SPOTS,
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         measure=("n1 repaired with a fresh independent closure", "the three spots unchanged", "changes outside "
+                  "app.py and tests", "turns", "time"),
+         notes="The paired defect of D-U: doing nothing cannot pass both."),
     Case("D-H", "depot", 2, "A public name refused by the command line",
          "Does Apply repair the hyphen-leading name defect that no project test covers, through the owner of the "
          "command line, and change nothing else?",
@@ -663,6 +765,7 @@ class Variant:
     edits: tuple = ()
     fails: tuple = ()
     static: tuple = ()
+    tests_fail: bool = False  # the realization's own tests fail
 
 
 def _limit(value):
@@ -684,9 +787,11 @@ VARIANTS = (
     Variant("n40-done", "stockroom", "n40", "limit, README and boundary test at 40: a complete change",
             (_limit(40), _readme_names(40), _TEST_40)),
     Variant("n40-code-only", "stockroom", "n40", "only the limit changed; README still states 60",
-            (_limit(40),), static=("readme-name-40",)),
+            (_limit(40),), static=("readme-name-40",), tests_fail=True),
+    Variant("n40-tests-stale", "stockroom", "n40", "limit and README at 40, the boundary test still expects 60",
+            (_limit(40), _readme_names(40)), tests_fail=True),
     Variant("n40-off-by-one", "stockroom", "n40", "41 code points accepted", (_limit(41), _readme_names(40)),
-            fails=("name-rules",)),
+            fails=("name-rules",), tests_fail=True),
     # Profile free (S-FREE): any documented maximum from 40 to 120.
     Variant("free-60", "stockroom", "free", "the reference's documented 60 is a valid choice"),
     Variant("free-40", "stockroom", "free", "documented 40, the lower bound", (_limit(40), _readme_names(40))),

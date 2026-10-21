@@ -197,7 +197,7 @@ def _(env, p):
 @check("malformed-kept", H1, ["hall/storage", "hall/interface"],
        "Malformed data is reported through the error object and never overwritten")
 def _(env, p):
-    for content in ("[]", "{", "{\"rooms\": 3}", "\xff"):
+    for content in ("{", "[{", "\xff"):  # not JSON at all: the organization of valid JSON is free
         env.write_db(content.encode("latin-1") if content == "\xff" else content)
         before = env.raw()
         add(env, "A101", 10, refuse=True)

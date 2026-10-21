@@ -48,12 +48,16 @@ Deliver the required implementation, automated tests and usage documentation
 in `realization/`. Use the ordinary implementation, build and test tools made
 available in this workspace. Work as one coding Agent. plan.md is
 authoritative: follow its requirements and use the implementation choices they
-leave open. If it leaves a material decision open that you would otherwise
-have to invent, or if two of its requirements contradict each other, do not
-decide it and change nothing: end your reply with one line per such problem
-that starts with `BLOCKER:` and names the requirements involved. Nobody
-answers questions during this task. Report the delivered files, checks
-actually performed and any unresolved requirement.
+leave open. Change the delivery only where a requirement is not yet fulfilled
+or required evidence is missing. Whatever already fulfills plan.md stays as it
+is, even where you would design it differently; optional cleanup, extra
+features and speculative improvements are not part of this task, though you
+may mention them in your report. If plan.md leaves a material decision open
+that you would otherwise have to invent, or if two of its requirements
+contradict each other, do not decide it and change nothing: end your reply
+with one line per such problem that starts with `BLOCKER:` and names the
+requirements involved. Nobody answers questions during this task. Report the
+delivered files, checks actually performed and any unresolved requirement.
 """
 PLAN_ROOTS = ("plan.md", "realization")
 LINK = re.compile(r"\[\[([^\]|]+)(?:\|[^\]]*)?\]\]")

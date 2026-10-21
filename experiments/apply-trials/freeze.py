@@ -10,7 +10,8 @@ scenarios.lock.json binds every scenario to its exact inputs: per Markitect
 arm the packet's commit and tree and the digest of each file outside the
 shared dependencies (the arms differ only in their strategy line), the plan
 arm's workspace, plan.md and prompt, the policy, the budget, and the digest
-of the kit that judges it. Packets are built
+of the kit that judges it; likewise every assessment control's model-only
+packet with its version, expected conclusion and budget. Packets are built
 from fixed authors, dates and bytes, so the same sources give the same
 commits on every platform. A fixture change is a new lock, never a repair of
 an attempt that ran on an earlier one. `out` materializes the packets for a
@@ -58,10 +59,17 @@ def digest(mapping):
     return hashlib.sha256(json.dumps(mapping, sort_keys=True).encode("utf-8")).hexdigest()
 
 
-def budget_of(scenario):
-    budget = scenario.budget
+def budget_of(item):
+    """The packet budget of a scenario or an assessment control."""
+    budget = item.budget
     return {"executionTime": budget.execution, "turnTimeout": budget.turn, "agentTurns": budget.turns,
             "passes": budget.passes}
+
+
+def control_packet(control, target):
+    """The model-only packet of one assessment control, with its budget and the direct strategy."""
+    materialize(control.case, target, budget=budget_of(control), strategy="direct")
+    return {"repo": str(Path(target).resolve()), **describe(target)}
 
 
 def describe(repo):
@@ -93,7 +101,8 @@ def lock_data():
         folder = Path(folder)
         for scenario in SCENARIOS:
             packets = {arm: scenario_packet(scenario.id, folder / scenario.id / arm, arm) for arm in MARKITECT}
-            entry = {"case": scenario.case, "expect": scenario.expect, "arms": list(scenario.arms),
+            entry = {"case": scenario.case, "version": scenario.version, "expect": scenario.expect,
+                     "arms": list(scenario.arms),
                      "preflight": scenario.preflight, "internalRoute": list(scenario.internal_route),
                      "budget": budget_of(scenario), "sessions": list(scenario.sessions),
                      "markitect": {arm: {k: v for k, v in packet.items() if k != "repo"} for arm, packet in packets.items()}}
@@ -101,10 +110,11 @@ def lock_data():
                 plan = plan_packet.build_from_packet(packets["direct"]["repo"], folder / scenario.id / "plan")
                 entry["plan"] = {key: plan[key] for key in ("head", "tree", "commits", "planSha256", "promptSha256", "files")}
             data["scenarios"][scenario.id] = entry
-        for control, case, verdict, why in ASSESSMENT_CONTROLS:
-            target = folder / control
-            materialize(case, target)
-            data["assessmentControls"][control] = {"case": case, **describe(target)}
+        for control in ASSESSMENT_CONTROLS:
+            packet = control_packet(control, folder / control.id)
+            data["assessmentControls"][control.id] = {
+                "case": control.case, "version": control.version, "conclusion": control.conclusion,
+                "budget": budget_of(control), **{k: v for k, v in packet.items() if k != "repo"}}
         for snapshot in ("c1", "c1-stale"):
             made = context_controls.materialize(snapshot, folder / snapshot)
             data["contextControls"][snapshot] = describe(made["target"])
@@ -130,6 +140,15 @@ def check_lock():
     return {"current": False, "changedScenarios": changed, "kitChanged": old.get("kitDigest") != new["kitDigest"]}
 
 
+def structural_check(markitect, repo):
+    done = subprocess.run([markitect, "check", "--repo", repo, "--revision", "HEAD", *context_controls.MODEL_ARGS],
+                          capture_output=True, text=True, encoding="utf-8")
+    try:
+        return json.loads(done.stdout).get("status")
+    except ValueError:
+        return "unreadable"
+
+
 def write_out(directory, markitect=None):
     """Every packet of the lock under DIRECTORY, verified against the lock, with a manifest."""
     directory = Path(directory).resolve()
@@ -148,12 +167,7 @@ def write_out(directory, markitect=None):
                                                                      expected["markitect"][arm]["head"]))
             entry[arm] = {"repo": packet["repo"], "head": packet["head"]}
             if markitect:
-                done = subprocess.run([markitect, "check", "--repo", packet["repo"], "--revision", "HEAD",
-                                       *context_controls.MODEL_ARGS], capture_output=True, text=True, encoding="utf-8")
-                try:
-                    entry[arm]["structuralCheck"] = json.loads(done.stdout).get("status")
-                except ValueError:
-                    entry[arm]["structuralCheck"] = "unreadable"
+                entry[arm]["structuralCheck"] = structural_check(markitect, packet["repo"])
                 if entry[arm]["structuralCheck"] != "passed":
                     problems.append("%s %s: markitect check %s" % (scenario.id, arm, entry[arm]["structuralCheck"]))
         if "plan" in scenario.arms:
@@ -165,6 +179,18 @@ def write_out(directory, markitect=None):
             entry["plan"] = {"repo": plan["target"], "head": plan["head"]}
             (directory / scenario.id / "plan-prompt.md").write_text(plan_packet.PROMPT, encoding="utf-8", newline="\n")
         manifest["scenarios"][scenario.id] = entry
+    manifest["assessmentControls"] = {}
+    for control in ASSESSMENT_CONTROLS:
+        packet = control_packet(control, directory / "assessment" / control.id)
+        locked = lock["assessmentControls"][control.id]["head"]
+        if packet["head"] != locked:
+            problems.append("%s: packet head %s, locked %s" % (control.id, packet["head"], locked))
+        entry = {"repo": packet["repo"], "head": packet["head"], "version": control.version}
+        if markitect:
+            entry["structuralCheck"] = structural_check(markitect, packet["repo"])
+            if entry["structuralCheck"] != "passed":
+                problems.append("%s: markitect check %s" % (control.id, entry["structuralCheck"]))
+        manifest["assessmentControls"][control.id] = entry
     if markitect:
         version = subprocess.run([markitect, "version"], capture_output=True, text=True).stdout.strip()
         manifest["markitect"] = {"path": str(markitect), "version": version, "sha256": sha256(markitect)}
