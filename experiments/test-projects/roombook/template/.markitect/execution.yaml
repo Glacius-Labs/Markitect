@@ -1,5 +1,5 @@
 apiVersion: markitect.execution/v1
-strategy: direct
+strategy: staged
 budget:
   executionTime: 20m
   turnTimeout: 8m

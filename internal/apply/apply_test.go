@@ -3,6 +3,7 @@ package apply_test
 import (
 	"context"
 	"errors"
+	"reflect"
 	"slices"
 	"strings"
 	"sync"
@@ -360,6 +361,12 @@ func TestVerifyCapturedRunsOnlyAReviewAndNeverPublishes(t *testing.T) {
 	}
 	if !slices.Contains(workspaces.closed, "run-1-work") || !slices.Equal(removed, result.Outcome.Homes) {
 		t.Fatalf("closed %v, removed %v of %v", workspaces.closed, removed, result.Outcome.Homes)
+	}
+	// It binds its entry and no work Pass, recorded before any turn.
+	evidence := req.Evidence.(*memoryEvidence)
+	b := result.Binding
+	if data, _ := evidence.events[0].Data.(map[string]any); b.Entry != "verify-captured" || len(b.Work) != 0 || b.Strategy != apply.Direct || !reflect.DeepEqual(data["binding"], b) {
+		t.Fatalf("binding %+v, run.start %+v", b, evidence.events[0])
 	}
 }
 

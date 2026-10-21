@@ -38,6 +38,11 @@ func TestStrategiesComposeTheOnePassProcess(t *testing.T) {
 	if d, s := Direct.verify(), Staged.verify(); d.Purpose != run.Verify || !d.Review || d.Mandate != s.Mandate || d.Guidance != s.Guidance {
 		t.Errorf("the strategies' Verify differ: %+v / %+v", d, s)
 	}
+	// Staged keeps Main's Root duty: it accepts a plan, which direct has not.
+	if !strings.Contains(Staged.rootDuty(), "accept a plan that depends on it") || !strings.Contains(Direct.rootDuty(), "accept a submission that depends on it") ||
+		strings.Replace(Direct.rootDuty(), "a submission", "a plan", 1) != Staged.rootDuty() {
+		t.Errorf("Root duties: staged %q, direct %q", Staged.rootDuty(), Direct.rootDuty())
+	}
 }
 
 // followWork picks the work Pass after a sealed one: its own open findings repeat
@@ -119,7 +124,7 @@ func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
 	// A public behavior the model leaves open is asked, not defaulted (A4 of
 	// the hardening evaluation picked an unstated name maximum of 80).
 	for _, s := range strategies {
-		if !strings.Contains(s.work()[0].Mandate, "no implementation choice") || !strings.Contains(s.work()[0].Mandate, "stays yours to decide and document") || !strings.Contains(rootModelDuty, "ask the user with the concrete alternatives") {
+		if !strings.Contains(s.work()[0].Mandate, "no implementation choice") || !strings.Contains(s.work()[0].Mandate, "stays yours to decide and document") || !strings.Contains(s.rootDuty(), "ask the user with the concrete alternatives") {
 			t.Fatalf("%s lets a Manager settle a public behavior the model leaves open", s)
 		}
 	}

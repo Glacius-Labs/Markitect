@@ -2,6 +2,7 @@ package apply
 
 import (
 	"context"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"slices"
@@ -107,8 +108,30 @@ const directImplementMandate = "Realize every applicable own obligation in your 
 const verifyMandate = "Assess the immutable candidate independently against the bound model. Before you read the implementation or its tests, derive from the model the distinct claims of each own obligation, the freedom it leaves and the plausible counterexamples it permits: unusual permitted inputs, rejected inputs, exact boundaries, state changes and interactions with other areas. Then try to falsify each material claim through the public interface, including parsing, persistence and integration, not only through internal functions: run such cases as probes with the tool check, each stating its claim and the outcome the model requires, so that the Orchestrator keeps the receipt. Cover every done or preserved own obligation claim by claim with a passing receipt on this candidate, or with an inspected source location and its reasoning where execution does not apply; a passing suite or an author's summary covers no claim by itself. An adverse receipt is a genuine finding when it shows a violation; dispose of it with the model's reason only when your own probe was wrong: its expectation, its assertion, or its execution, such as a probe too large for the check's time limit, which also needs a passing probe of the same claim. Your basis is your own assessment plus the review context your children's reviewers need; your result integrates your children's assessments and the cross-area correctness of their interaction: read their receipts and assertions, ask which plausible violation could still pass them, probe the interactions yourself and return an unsupported claim to its reviewer. Raise every genuine finding with its owner, the obligation, the observed evidence and the earliest kind of correction it needs, and reassess the findings you raised earlier. Never invent a finding or demand optional work; a concrete question about a required claim that you cannot settle goes to your parent."
 
 // rootModelDuty is Root's own duty in an Apply: the bound model is fixed, so a
-// model Root judges erroneous or contradictory ends the run.
-const rootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run: never ask the user to change or override it. When the complete linked model leaves a public behavior materially open and does not delegate it, such as an unstated limit, ask the user with the concrete alternatives instead of letting a Manager pick a default, and accept a submission that depends on it only once the value comes from the model or an answer; an answer within the model lets the work continue."
+// model Root judges erroneous or contradictory ends the run. Staged accepts a
+// plan that depends on a public choice only once the choice is settled; direct,
+// which has no plan, accepts no submission that depends on it before.
+const rootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run: never ask the user to change or override it. When the complete linked model leaves a public behavior materially open and does not delegate it, such as an unstated limit, ask the user with the concrete alternatives instead of letting a Manager pick a default, and accept a plan that depends on it only once the value comes from the model or an answer; an answer within the model lets the work continue."
+
+const directRootModelDuty = "As Root you end the run as soon as you judge the bound model erroneous or contradictory: report kind problem, category model, abort true, naming the Definitions concerned. Nobody can change the model during the run: never ask the user to change or override it. When the complete linked model leaves a public behavior materially open and does not delegate it, such as an unstated limit, ask the user with the concrete alternatives instead of letting a Manager pick a default, and accept a submission that depends on it only once the value comes from the model or an answer; an answer within the model lets the work continue."
+
+// digest identifies the strategy's Pass declarations and Root duty.
+func (s Strategy) digest() string {
+	h := sha256.New()
+	for _, spec := range append(s.work(), s.verify()) {
+		fmt.Fprintf(h, "%q %q %q %v %v %v %v %v %q\n", spec.Purpose, spec.Mandate, spec.Guidance, spec.Writes, spec.Review, spec.Plans, spec.BindWaits, spec.ArtifactFindingsAdvisory, spec.Corrections)
+	}
+	fmt.Fprintf(h, "%q\n", s.rootDuty())
+	return fmt.Sprintf("sha256:%x", h.Sum(nil))
+}
+
+// rootDuty is Root's own standing duty in the strategy's work Passes.
+func (s Strategy) rootDuty() string {
+	if s == Direct {
+		return directRootModelDuty
+	}
+	return rootModelDuty
+}
 
 const verifyGuidance = "A genuine finding is an observed model violation, a missing required realization or evidence item, or a failed required check; cite the obligation and the observed behavior or source. A Definition realized outside its owner's artifacts, or a change outside a Manager's own area, is a model violation; as a parent, check how your children actually use each other's realizations and whether their receipts and assertions cover the claims and public boundaries, and return an unsupported success claim to its reviewer. A missing required realization or evidence item is genuine; doubt alone is not. Optional improvements the model does not require are notes: set blocking to false, and never soften a genuine finding into a note. When another reviewer, below you or about your own responsibility, raised a finding you independently judge erroneous, dispute it with reason and evidence; it stays open until a fresh review of its responsibility disposes of it."
 
@@ -415,7 +438,7 @@ func runConfig(req ApplyRequest, now time.Time) (run.Config, []boundManager, err
 	deadline := runDeadline(now, budget.ExecutionTime.Value, req.Deadline)
 	cfg := run.Config{
 		RunID: req.RunID, Team: team, Start: prepared.Structural().Model().Inputs().Raw.Census,
-		OwnerRequest: req.OwnerRequest, OwnerDecisions: req.OwnerDecisions, RootGuidance: rootModelDuty, Checks: checks,
+		OwnerRequest: req.OwnerRequest, OwnerDecisions: req.OwnerDecisions, RootGuidance: strategy.rootDuty(), Checks: checks,
 		ModelCheck: func(tree snapshot.Tree) []run.Finding { return gateFindings(candidates.ModelCheck(tree)) },
 		FileCheck:  func(tree snapshot.Tree) []run.Finding { return gateFindings(candidates.Account(tree)) },
 		OwnerOf:    candidates.OwnerOf,

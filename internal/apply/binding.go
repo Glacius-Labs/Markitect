@@ -13,13 +13,17 @@ import (
 // the implementation identity. Apply and VerifyCaptured resolve it the same way
 // from one passed preparation before any Agent work; run.start records it and
 // the report repeats it. Entry names the entry that ran: "apply" or
-// "verify-captured", which runs only the strategy's Verify.
+// "verify-captured", which runs only the strategy's Verify and so no work
+// Pass. Composition is the digest of the strategy's Pass declarations and
+// Root duty as this build implements them: it tells builds apart that the
+// build identity alone does not, such as a modified tree.
 type RunBinding struct {
 	Entry       string           `json:"entry"`
 	Head        string           `json:"head"`
 	Strategy    Strategy         `json:"strategy"`
 	Work        []run.Purpose    `json:"work"`
 	Corrections []run.Purpose    `json:"corrections"`
+	Composition string           `json:"composition"`
 	Build       string           `json:"build"`
 	Execution   string           `json:"execution"`
 	Defaults    string           `json:"defaults"`
@@ -94,9 +98,13 @@ type CheckBinding struct {
 func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []boundManager, checks []run.Check) RunBinding {
 	b := RunBinding{Entry: entry, Head: prepared.Structural().Model().Inputs().Head, Strategy: strategy, Corrections: strategy.corrections(), Build: build,
 		Budget: BudgetBinding{ExecutionTime: budget.ExecutionTime.Value.String(), TurnTimeout: budget.TurnTimeout.Value.String(), AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value, Deadline: deadline.UTC()}}
+	b.Work = []run.Purpose{}
 	for _, spec := range strategy.work() {
-		b.Work = append(b.Work, spec.Purpose)
+		if entry == entryApply {
+			b.Work = append(b.Work, spec.Purpose)
+		}
 	}
+	b.Composition = strategy.digest()
 	if raw := prepared.Structural().Model().Inputs().Raw.Execution; len(raw) == 1 {
 		b.Execution = raw[0].RepositoryPath.String() + "@" + raw[0].File.ContentID().String()
 	}

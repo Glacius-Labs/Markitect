@@ -611,10 +611,14 @@ export class Inspector {
         break;
       }
       case "?": this.toggleKeys(); break;
+      // Escape closes what is open; with nothing open it reaches the frame,
+      // which leads back to the runs.
       case "Escape":
         if (this.transcriptEl) this.closeTranscript();
         else if (this.keysEl) this.toggleKeys();
         else if (this.selection) this.select(null);
+        else break;
+        e.preventDefault();
         break;
     }
   }

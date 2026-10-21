@@ -28,7 +28,7 @@ The following organization and delivery sequence are implementation recommendati
 
 Use [DEC-064](../concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), the [accepted workflow](canonical-model/manager-apply-workflow.md) and the [implemented runtime contract](canonical-model/manager-apply-runtime.md). Do not implement the example's older Explore/work/local-review task machine or revive its historical SQLite-journal design.
 
-The view must follow Model check and File check, Execute's Plan/Prepare/Implement Passes, quiescence and immutable capture, mandatory closing checks, independent Verify, correction rounds where needed, and guarded Publish with read-back. A Pass, Manager result, Turn ending and Run outcome are distinct. Render actual recorded participation, state and acceptance; do not invent progress from elapsed time.
+The view must follow Model check and File check, the strategy's work Passes (Implement in `direct`; Plan, Prepare and Implement in `staged`), quiescence and immutable capture, mandatory closing checks, independent Verify, correction rounds where needed, and guarded Publish with read-back. A Pass, Manager result, Turn ending and Run outcome are distinct. Render actual recorded participation, state and acceptance; do not invent progress from elapsed time.
 
 Use Orchestrator for the deterministic controller and Runtime for execution infrastructure. One logical Manager owns each required local Package; Root is an ordinary Manager. Workers, reviewers and specialists belong to the responsible Manager's team and add no independent ownership. Show parallel branches when actually observed, rather than imposing the example's serial execution.
 

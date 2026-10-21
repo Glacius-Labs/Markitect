@@ -11,10 +11,10 @@ import (
 // ErrInvalid reports a Config or Pass the Orchestrator cannot run.
 var ErrInvalid = errors.New("invalid run configuration")
 
-// Purpose names what one Pass is for. Apply runs Implement, in which every
-// Manager plans and prepares its own part, and then Verify; Extract supplies
-// its own work purposes. Plan and Prepare remain purposes a staged workflow
-// may declare. Every purpose uses the same recursive base process.
+// Purpose names what one Pass is for. Apply runs the work purposes of its
+// strategy, Implement in direct and Plan, Prepare and Implement in staged, and
+// then Verify; Extract supplies its own work purposes. Every purpose uses the
+// same recursive base process.
 type Purpose string
 
 const (
@@ -331,14 +331,15 @@ type Config struct {
 // Guidance (review) states what a genuine finding is. Plans requires the plan
 // payload and keeps the accepted plans: their dependencies for a later Pass's
 // purpose become start conditions of that Pass. Corrections lists the work
-// purposes a finding may name, earliest first; the first is the default.
+// purposes a finding may name, earliest first; the last is the default.
 // ArtifactFindingsAdvisory (review) makes every finding state its subject:
 // an artifact finding names a Definition and never blocks. BindWaits (work)
 // declares dependencies through waits, for a workflow without a planning Pass:
 // the accepted basis or result of a Manager outside the waiter's own line that
 // a wait names, or that is already accepted when the wait is reported, is bound
-// to the waiter's work; its revision or reopening resets the waiter, and a
-// basis the waiter's basis built on is a start condition of its restart.
+// to the waiter's work; its revision or reopening resets a waiter whose basis
+// built on it, for which it is a start condition of the restart, and returns a
+// waiter whose result alone built on it to its integration.
 type PassSpec struct {
 	Purpose                  Purpose
 	Mandate                  string

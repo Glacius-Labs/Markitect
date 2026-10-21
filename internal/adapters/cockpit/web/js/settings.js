@@ -14,7 +14,7 @@ export function renderSettings(content) {
   content.append(page);
   const head = h("div", { class: "pagehead" }, h("div", {},
     h("h2", {}, "Execution settings"),
-    h("p", { class: "lead" }, "Budget, role profiles, per-Package profiles and the team below each Manager. Changing a value makes a proposal: the structural check judges the changed file, you review its difference, and only your acceptance writes it to the working tree. Nothing is committed and no Apply starts.")));
+    h("p", { class: "lead" }, "Budget, role profiles, per-Package profiles and the team below each Manager. A change becomes a proposal: the structural check judges it, you review its difference in Decisions, and only your acceptance writes it to the working tree. Nothing is committed and no Apply starts.")));
   const body = h("div", {}, h("p", { class: "note", role: "status" }, "Capturing the committed source and preparing it as markitect check does. On a large model this takes a while…"));
   page.append(head, body);
   api.settings().then((settings) => {

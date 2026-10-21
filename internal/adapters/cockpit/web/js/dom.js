@@ -101,32 +101,24 @@ export function announce(text) {
   if (el) el.textContent = text;
 }
 
-// navIcon draws the desk rail's outline icons.
-export function navIcon(name) {
+// areaIcon draws the outline icons of the cockpit's areas and controls.
+export function areaIcon(name) {
   const paths = {
-    overview: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
+    hub: "M4 4h7v7H4zM13 4h7v7h-7zM4 13h7v7H4zM13 13h7v7h-7z",
     model: "M5 4h5v5H5zM14 15h5v5h-5zM5 15h5v5H5zM7.5 9v6M10 17.5h4M10 6.5h6.5V15",
     session: "M4 5h16v11H10l-5 4v-4H4z M8 9.5h8M8 12.5h5",
-    proposals: "M4 13l2.5-8h11L20 13v6H4zM4 13h5l1 2.5h4l1-2.5h5",
-    runs: "M3 8h18M3 16h18M7 5v14M12 5v14M17 5v14",
+    decisions: "M4 13l2.5-8h11L20 13v6H4zM4 13h5l1 2.5h4l1-2.5h5",
+    runs: "M4 6h9M4 12h16M4 18h12M16 4v4M9 10v4M19 16v4",
     settings: "M4 7h9M17 7h3M4 17h3M11 17h9M15 5v4M9 15v4",
-    menu: "M4 7h16M4 12h16M4 17h16",
+    back: "M14.5 5l-7 7 7 7",
+    browse: "M4 5h6v14H4zM12 5h8M12 9h8M12 13h8M12 17h5",
   };
-  return s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false" }, s("path", { d: paths[name] || "" }));
+  return s("svg", { viewBox: "0 0 24 24", "aria-hidden": "true", focusable: "false", class: "ico" }, s("path", { d: paths[name] || "" }));
 }
 
-// brandMark is the Glacius Labs mark: four shards around a still center.
+// brandMark is the Markitect mark of the repository's wordmark
+// (assets/markitect-wordmark-*.svg): an M of five facets.
 export function brandMark() {
-  const shard = (d) => s("path", { d });
-  return s("svg", { viewBox: "0 0 1700.5129 3315.7236", "aria-hidden": "true", focusable: "false", fill: "currentColor" },
-    s("g", { transform: "matrix(21.93579,0,0,21.93579,-7924.0595,-7116.4542)" },
-      shard("m 365.8093,385.37175 c 8.8944,-17.34602 17.7888,-34.69203 26.6832,-52.03805 -2.7795,15.7096 -5.559,31.4192 -8.3385,47.1288 -6.1149,1.63642 -12.2298,3.27283 -18.3447,4.90925 z"),
-      shard("m 434.1907,385.37175 c -8.8944,-17.34602 -17.7888,-34.69203 -26.6832,-52.03805 2.7795,15.7096 5.559,31.4192 8.3385,47.1288 6.1149,1.63642 12.2298,3.27283 18.3447,4.90925 z"),
-      shard("m 365.8093,414.62825 c 8.8944,17.34602 17.7888,34.69203 26.6832,52.03805 -2.7795,-15.7096 -5.559,-31.4192 -8.3385,-47.1288 -6.1149,-1.63642 -12.2298,-3.27283 -18.3447,-4.90925 z"),
-      shard("m 434.1907,414.62825 c -8.8944,17.34602 -17.7888,34.69203 -26.6832,52.03805 2.7795,-15.7096 5.559,-31.4192 8.3385,-47.1288 6.1149,-1.63642 12.2298,-3.27283 18.3447,-4.90925 z")));
-}
-
-// ticks draws corner registration ticks on a .ticked plate.
-export function ticks() {
-  return h("span", { class: "ticks", "aria-hidden": "true" }, h("i"), h("i"), h("i"), h("i"));
+  return s("svg", { viewBox: "12 16 104 107", "aria-hidden": "true", focusable: "false", fill: "currentColor" },
+    ["M14 18 58 59v20L14 39Z", "m114 18-44 41v20l44-40Z", "m14 47 21 22v43H14Z", "M114 47 93 69v43h21Z", "m64 69 10 10v33l-10 9-10-9V79Z"].map((d) => s("path", { d })));
 }
