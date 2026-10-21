@@ -319,7 +319,7 @@ function pass(c) {
     title(c, id, "Not started up to this boundary.");
     return;
   }
-  title(c, `${cap(p.purpose || "Pass")} Pass ${p.id}`, p.review ? "Independent Verify with fresh read-only reviewers on one immutable candidate" : p.writes ? "Owned writes" : "Read-only");
+  title(c, `${cap(p.purpose || "Pass")} Pass ${p.id}`, p.review && p.purpose === "assess" ? "Model assessment of the bound model by fresh read-only reviewers, before any work" : p.review ? "Independent Verify with fresh read-only reviewers on one immutable candidate" : p.writes ? "Owned writes" : "Read-only");
   if (p.correction) c.body.append(h("p", {}, "Correction Pass for open genuine findings ", p.addresses.map((f, i) => [i ? ", " : "", r(`finding:${f}`, f)]), "."));
   c.body.append(dl([
     p.started && ["Started", clock(p.started)],
@@ -470,7 +470,7 @@ function overview(c) {
       rep.retainedWork && ["Retained work", rep.retainedWork],
       rep.error && ["Error", rep.error],
     ]));
-    const lastVerify = [...view.passes].reverse().find((p) => p.review && p.sealed);
+    const lastVerify = [...view.passes].reverse().find((p) => p.review && p.purpose !== "assess" && p.sealed);
     if (rep.publication) {
       section(c, "Read-back per path", h("table", {}, h("tbody", {}, rep.publication.paths.map((p) => h("tr", {},
         h("td", { class: "digest" }, p.path), h("td", { class: p.state === "after" ? "st-done" : "st-fail" }, p.state === "after" ? "published content read back" : p.state === "before" ? "still the captured content" : "other or unreadable"))))));

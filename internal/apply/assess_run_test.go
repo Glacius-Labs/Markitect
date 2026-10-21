@@ -107,3 +107,39 @@ func TestTheAssessmentRunsNoCheckAndOffersNoProbe(t *testing.T) {
 		}
 	}
 }
+
+// AssessCaptured runs only the Model assessment through the same binding: no
+// work, no check and no publication, an accepted model reported as such and a
+// confirmed gap as Failed.
+func TestAssessCapturedRunsOnlyTheAssessment(t *testing.T) {
+	for _, gap := range []bool{false, true} {
+		req := strategyRequestWithTurns(t, "direct", 400)
+		cfg, err := apply.BuildApplyConfig(req, time.Now())
+		if err != nil {
+			t.Fatal(err)
+		}
+		agents := &preservingAgents{t: t, obligations: map[string][]string{}, finds: reminders, gap: gap}
+		if !gap {
+			agents.finds = ""
+		}
+		for _, m := range cfg.Team {
+			agents.obligations[m.Path] = m.Obligations
+		}
+		runner := &passingRunner{}
+		req.Agents, req.Workspaces, req.Runner, req.Evidence = agents, &treeWorkspaces{}, runner, &memoryEvidence{}
+		result, _ := apply.AssessCaptured(context.Background(), req)
+		b, out := result.Binding, result.Outcome
+		if b.Entry != "model-assessment" || !slices.Equal(b.Work, []run.Purpose{run.Assess}) || len(b.Checks) != 0 || len(runner.runs) != 0 {
+			t.Fatalf("gap %v: binding %+v, %d checks", gap, b, len(runner.runs))
+		}
+		if len(out.Passes) != 1 || out.Passes[0].Purpose != run.Assess || slices.ContainsFunc(agents.turns, func(turn run.Turn) bool { return turn.Kind == run.ExecuteTurn }) {
+			t.Fatalf("gap %v: passes %+v", gap, out.Passes)
+		}
+		switch {
+		case gap && (out.Status != run.Failed || !strings.HasPrefix(out.Reason, run.ModelAssessmentReason)):
+			t.Fatalf("gap: %s: %s", out.Status, out.Reason)
+		case !gap && (out.Status != run.Incomplete || out.Reason != apply.AssessmentAccepted):
+			t.Fatalf("accepted: %s: %s", out.Status, out.Reason)
+		}
+	}
+}

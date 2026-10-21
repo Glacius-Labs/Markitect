@@ -91,7 +91,7 @@ func TestExtractRefusesBeforeAnyEffectLikeApply(t *testing.T) {
 	document["allocation"] = map[string]any{"runs": 1}
 	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil)
 	report, err := service.Extract(context.Background(), cli.ExtractRequest{RunConfig: writeRunConfig(t, document)})
-	if !errors.Is(err, errRunConfig) || report.Status != model.Failed || report.Operation != "extract" || report.EvidenceDirectory != "" || report.Deviations == nil || report.OpenQuestions == nil {
+	if !errors.Is(err, errRunConfig) || report.Status != model.Failed || report.Operation != "extract" || report.EvidenceDirectory != "" || report.Deviations == nil {
 		t.Fatalf("%v %+v", err, report)
 	}
 	if _, err := os.Stat(document["stateDirectory"].(string)); !os.IsNotExist(err) {

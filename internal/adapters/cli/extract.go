@@ -37,7 +37,6 @@ type ExtractReport struct {
 	Verify            *VerifyReport             `json:"verify,omitempty"`
 	Deviations        []apply.ArtifactDeviation `json:"deviations"`
 	ProposedChecks    []apply.ProposedCheck     `json:"proposedChecks"`
-	OpenQuestions     []run.Question            `json:"openQuestions"`
 	Publication       *apply.PublicationReceipt `json:"publication,omitempty"`
 	RetainedWork      string                    `json:"retainedWork,omitempty"`
 	EvidenceDirectory string                    `json:"evidenceDirectory,omitempty"`
@@ -58,33 +57,23 @@ type VerifyReport struct {
 // NewExtractReport projects the result of an Extract with the run identity. Lists
 // are never null.
 func NewExtractReport(id string, result apply.ExtractResult) ExtractReport {
-	r := ExtractReport{Deviations: []apply.ArtifactDeviation{}, ProposedChecks: []apply.ProposedCheck{}, OpenQuestions: []run.Question{}, Publication: result.Receipt, RetainedWork: result.RetainedWork, Packages: result.Packages}
-	questions := result.Structure.Questions
+	r := ExtractReport{Deviations: []apply.ArtifactDeviation{}, ProposedChecks: []apply.ProposedCheck{}, Publication: result.Receipt, RetainedWork: result.RetainedWork, Packages: result.Packages}
 	if result.Structure.Status != "" {
 		r.Structure = NewRunReport(id+"-"+apply.ExtractStructurePhase, result.Structure)
 	}
 	if result.Model != nil {
 		r.Model = NewRunReport(id+"-"+apply.ExtractModelPhase, *result.Model)
-		// The model phase continues the structure phase's questions, so its
-		// questions include the structure phase's; a model phase that failed to
-		// start has none.
-		if len(result.Model.Questions) >= len(questions) {
-			questions = result.Model.Questions
-		}
 		r.ModelComplete = result.Model.Status == run.Verified
 		r.Deviations = append(r.Deviations, apply.ExtractDeviations(result.Model.Findings)...)
+		// The Model assessment of the candidate is a review Pass too; the report's
+		// Verify is the last independent Verify.
 		for _, p := range result.Model.Passes {
-			if p.Review {
+			if p.Purpose == run.Verify {
 				r.Verify = &VerifyReport{Pass: p.ID, Verdict: p.Verdict, Managers: p.Managers}
 			}
 		}
 	}
 	r.ProposedChecks = append(r.ProposedChecks, result.ProposedChecks...)
-	for _, q := range questions {
-		if !q.Answered {
-			r.OpenQuestions = append(r.OpenQuestions, q)
-		}
-	}
 	return r
 }
 

@@ -403,7 +403,7 @@ artifacts:
   - path: "internal/apply/assess_run_test.go"
     form: test
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
-    why: Checks through the product preparation that no work starts before an accepted Model assessment, that a confirmed gap or a model problem during the work ends the run Failed without publication, that a later run assesses again, and that the assessment runs no check or probe.
+    why: Checks through the product preparation that no work starts before an accepted Model assessment, that a confirmed gap or a model problem during the work ends the run Failed without publication, that a later run assesses again, that the assessment runs no check or probe, and that the evaluation entry runs only the assessment.
   - path: "internal/apply/strategy_defaults.go"
     form: code
     realizes: [product/apply/read-only-preparation]

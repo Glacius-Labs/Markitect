@@ -107,8 +107,8 @@ func TestExtractReportShape(t *testing.T) {
 	if report.Verify == nil || report.Verify.Pass != "verify-4" || report.Verify.Verdict != run.Satisfied || len(report.Verify.Managers) != 2 {
 		t.Fatalf("verify %+v", report.Verify)
 	}
-	if len(report.Deviations) != 1 || report.Deviations[0].Definition != "lending/loan-limit" || len(report.Deviations[0].Observed) != 2 || !slices.Equal(report.Deviations[0].Owners, []string{"lending", "lending/reminders"}) || len(report.OpenQuestions) != 1 || report.OpenQuestions[0].ID != "q1" {
-		t.Fatalf("deviations %+v questions %+v", report.Deviations, report.OpenQuestions)
+	if len(report.Deviations) != 1 || report.Deviations[0].Definition != "lending/loan-limit" || len(report.Deviations[0].Observed) != 2 || !slices.Equal(report.Deviations[0].Owners, []string{"lending", "lending/reminders"}) {
+		t.Fatalf("deviations %+v", report.Deviations)
 	}
 	if len(report.ProposedChecks) != 1 || report.ProposedChecks[0].ID != "project-tests" {
 		t.Fatalf("proposed checks %+v", report.ProposedChecks)
@@ -121,14 +121,14 @@ func TestExtractReportShape(t *testing.T) {
 	if err := json.Unmarshal(data, &decoded); err != nil {
 		t.Fatal(err)
 	}
-	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "proposedChecks", "openQuestions", "publication"} {
+	for _, key := range []string{"formatVersion", "operation", "status", "modelComplete", "structure", "model", "verify", "deviations", "proposedChecks", "publication"} {
 		if _, ok := decoded[key]; !ok {
 			t.Errorf("report lacks %q: %s", key, data)
 		}
 	}
 	// Lists are never null, even for an Extract that stopped in the first phase.
 	stopped := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Incomplete, Reason: "budget"}})
-	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.OpenQuestions == nil || stopped.Structure.Passes == nil || stopped.Structure.Problems == nil {
+	if stopped.Model != nil || stopped.Verify != nil || stopped.ModelComplete || stopped.Deviations == nil || stopped.ProposedChecks == nil || stopped.Structure.Passes == nil || stopped.Structure.Problems == nil {
 		t.Fatalf("%+v", stopped)
 	}
 }
@@ -158,21 +158,16 @@ func TestExtractStatusIsPassedOnlyForAPublishedVerifiedModel(t *testing.T) {
 	}
 }
 
-func TestExtractReportTakesOpenQuestionsFromTheFinalPhase(t *testing.T) {
-	asked := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-	answered := run.Question{ID: "Q1", Text: "Structure?", Asked: asked, Answered: true, Answer: "yes"}
-	open := run.Question{ID: "Q2", Text: "Currency?", Asked: asked}
-	// The model phase carries the structure phase's questions: Q1 is reported once or not at all.
-	carried := NewExtractReport("x-1", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered}},
-		Model: &run.Outcome{Status: run.Incomplete, Questions: []run.Question{answered, open}}})
-	if len(carried.OpenQuestions) != 1 || carried.OpenQuestions[0].ID != "Q2" {
-		t.Errorf("questions %+v", carried.OpenQuestions)
-	}
-	// A model phase that never started has none of its own: the structure's stay.
-	unstarted := NewExtractReport("x-2", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified, Questions: []run.Question{answered, open}},
-		Model: &run.Outcome{Status: run.Failed}})
-	if len(unstarted.OpenQuestions) != 1 || unstarted.OpenQuestions[0].ID != "Q2" {
-		t.Errorf("questions %+v", unstarted.OpenQuestions)
+// The report's Verify is the model phase's last independent Verify, never
+// the Model assessment of the candidate that follows it.
+func TestExtractReportVerifyIsTheVerifyPass(t *testing.T) {
+	model := run.Outcome{Status: run.Failed, Passes: []run.PassRecord{
+		{ID: "x-1-model-p2", Purpose: run.Verify, Review: true, Verdict: run.Satisfied},
+		{ID: "x-1-model-p3", Purpose: run.Assess, Review: true, Verdict: run.NeedsCorrection},
+	}}
+	report := NewExtractReport("x-1", apply.ExtractResult{Structure: run.Outcome{Status: run.Verified}, Model: &model})
+	if report.Verify == nil || report.Verify.Pass != "x-1-model-p2" || report.Verify.Verdict != run.Satisfied {
+		t.Fatalf("verify %+v", report.Verify)
 	}
 }
 
