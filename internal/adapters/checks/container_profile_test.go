@@ -70,7 +70,7 @@ func TestContainerProfileRequestReachesExistingRunner(t *testing.T) {
 			t.Fatal("runner omitted the declared timeout")
 		}
 		return passedCommand(want), nil
-	}}, workspaces)
+	}}, workspaces, nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -106,7 +106,7 @@ func TestContainerProfileRefusesInvalidValuesBeforeEffects(t *testing.T) {
 			runner, err := NewRunnerWithRuntime(commandPeer{func(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error) {
 				t.Fatal("invalid configuration reached runtime")
 				return container.CommandResult{}, nil
-			}}, workspaces)
+			}}, workspaces, nil)
 			if err != nil {
 				t.Fatal(err)
 			}

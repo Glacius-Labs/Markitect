@@ -89,9 +89,13 @@ func passedCommand(req run.CheckRequest) container.CommandResult {
 func TestRunnerBindsExactCopyLiteralCommandAndResources(t *testing.T) {
 	req := checkRequest(t)
 	w := &workspacePeer{}
+	labels := map[string]string{"markitect.store": "owned-attempt", "markitect.check": "caller-cannot-override"}
 	called := 0
 	r, err := NewRunnerWithRuntime(commandPeer{func(ctx context.Context, s container.ContainerSpec, a, e []string, max int64) (container.CommandResult, error) {
 		called++
+		if s.Labels["markitect.store"] != "owned-attempt" || s.Labels["markitect.check"] != string(req.ID) {
+			t.Fatalf("owned cleanup labels lost or redirected: %+v", s.Labels)
+		}
 		if !w.request.Tree.Equal(req.Tree) || w.request.ID == "" || s.Name != string(w.request.ID) {
 			t.Fatal("copy identity not fixed")
 		}
@@ -111,10 +115,11 @@ func TestRunnerBindsExactCopyLiteralCommandAndResources(t *testing.T) {
 			t.Fatal("missing deadline")
 		}
 		return passedCommand(req), nil
-	}}, w)
+	}}, w, labels)
 	if err != nil {
 		t.Fatal(err)
 	}
+	labels["markitect.store"] = "foreign-after-construction"
 	got, err := r.Run(context.Background(), req)
 	if err != nil || !got.Passed(req) || called != 1 || w.closed != 2 {
 		t.Fatalf("receipt=%+v err=%v calls=%d close=%d", got, err, called, w.closed)
@@ -134,7 +139,7 @@ func TestRunnerKeepsVerifiedEmptyVolumesFreeOfImageCopyUp(t *testing.T) {
 			t.Fatal("unexpected input tree")
 		}
 		return passedCommand(req), nil
-	}}, w)
+	}}, w, nil)
 	got, err := r.Run(context.Background(), req)
 	if err != nil || !got.Passed(req) || w.closed != 2 {
 		t.Fatalf("receipt=%+v err=%v", got, err)
@@ -165,7 +170,7 @@ func TestRunnerRefusesUnverifiedMaterializationAndClosesPartialCopy(t *testing.T
 			r, _ := NewRunnerWithRuntime(commandPeer{func(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error) {
 				t.Fatal("unverified copy executed")
 				return container.CommandResult{}, nil
-			}}, w)
+			}}, w, nil)
 			got, err := r.Run(context.Background(), req)
 			if err == nil || got.Passed(req) || got.Started || w.closed != 1 {
 				t.Fatalf("receipt=%+v err=%v closed=%d", got, err, w.closed)
@@ -181,7 +186,7 @@ func TestRunnerPreservesFailedExitAndBoundsCombinedOutput(t *testing.T) {
 		o := passedCommand(req)
 		o.ExitCode = 23
 		return o, nil
-	}}, w)
+	}}, w, nil)
 	got, err := r.Run(context.Background(), req)
 	if err != nil || got.Passed(req) || got.ExitCode != 23 || !got.Exited || got.Uncertain || !got.Truncated || string(got.Output) != "stdou" {
 		t.Fatalf("receipt=%+v err=%v", got, err)
@@ -207,7 +212,7 @@ func TestRunnerCannotPassUncertainOrMismatchedRuntimeFacts(t *testing.T) {
 					return o, errors.New("lost observation")
 				}
 				return o, nil
-			}}, w)
+			}}, w, nil)
 			got, _ := r.Run(context.Background(), req)
 			if got.Passed(req) || !got.Uncertain || w.closed != 2 {
 				t.Fatalf("receipt=%+v", got)
@@ -236,7 +241,7 @@ func TestRunnerCancellationAndTimeoutCannotBecomePass(t *testing.T) {
 				}
 				<-ctx.Done()
 				return passedCommand(req), ctx.Err()
-			}}, w)
+			}}, w, nil)
 			got, err := r.Run(ctx, req)
 			if err == nil || got.Passed(req) || !got.Uncertain || got.TimedOut != deadline || w.closed != 2 {
 				t.Fatalf("receipt=%+v err=%v", got, err)
@@ -264,7 +269,7 @@ func TestRunnerCleanupFailureCannotBecomePass(t *testing.T) {
 			}}
 			r, _ := NewRunnerWithRuntime(commandPeer{func(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error) {
 				return passedCommand(req), nil
-			}}, w)
+			}}, w, nil)
 			got, err := r.Run(context.Background(), req)
 			if err == nil || got.Passed(req) || !got.Uncertain || w.closed != 2 {
 				t.Fatalf("receipt=%+v err=%v", got, err)
@@ -305,7 +310,7 @@ func TestRunnerRefusesUnverifiedHomeAndClosesBothCopies(t *testing.T) {
 			r, _ := NewRunnerWithRuntime(commandPeer{func(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error) {
 				t.Fatal("unverified home executed")
 				return container.CommandResult{}, nil
-			}}, w)
+			}}, w, nil)
 			got, err := r.Run(context.Background(), req)
 			if err == nil || got.Passed(req) || got.Started || w.closed != 2 {
 				t.Fatalf("receipt=%+v err=%v closed=%d", got, err, w.closed)
@@ -317,7 +322,7 @@ func TestRunnerRejectsInvalidRequestBeforeCreatingCopy(t *testing.T) {
 	req := checkRequest(t)
 	req.Args = []string{"bad\x00arg"}
 	w := &workspacePeer{}
-	r, _ := NewRunnerWithRuntime(commandPeer{}, w)
+	r, _ := NewRunnerWithRuntime(commandPeer{}, w, nil)
 	got, err := r.Run(context.Background(), req)
 	if err == nil || got.Passed(req) || w.request.ID != "" || w.closed != 0 {
 		t.Fatalf("receipt=%+v err=%v", got, err)

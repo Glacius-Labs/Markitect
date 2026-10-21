@@ -330,7 +330,7 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 	if err != nil {
 		return applyPorts{}, err
 	}
-	checker, err := checks.NewRunner(engine, workspaces)
+	checker, err := checks.NewRunner(engine, workspaces, cfg.WorkspaceHelper.Labels)
 	if err != nil {
 		return applyPorts{}, err
 	}

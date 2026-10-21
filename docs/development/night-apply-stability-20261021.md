@@ -100,8 +100,11 @@ or earlier at the absolute night stop. The packet retains five-minute Turns,
 Observed WSL wall and monotonic clocks advanced faster than Windows. The separate
 supervisor process measures Windows Stopwatch and wall time, tracks process-group
 kernel start identities durably, and stops only the exact reserved store's
-containers on escalation. This covers the observed clock drift while WSL
-scheduling, guest timers and Windows interop respond; it does not promise enforcement through
+containers on escalation. Check containers inherit the workspace helper's
+ownership labels at execution composition, alongside their actual check identity.
+The adapter clones these labels so caller mutation cannot move a running check
+to another attempt. This covers the observed clock drift while WSL scheduling,
+guest timers and Windows interop respond; it does not promise enforcement through
 suspension of the whole subsystem or host bridge. Guest and host durations are
 reported separately. Each consumed attempt is conservatively charged its full
 2,700-second reservation, including setup, stop/cleanup and persistence; observed
