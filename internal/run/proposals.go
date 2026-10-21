@@ -1230,6 +1230,9 @@ func (e *engine) takeEffectsLocked(pr *proposal) {
 			continue
 		}
 		f.Closed, f.ClosedPass, f.ClosedReason, f.ClosedAs, f.ClosedEvidence = true, p.id, c.reason, c.as, c.evidence
+		if p.spec.Review {
+			f.ClosedCandidate = p.tree.Digest().String()
+		}
 		pr.env.Closed = append(pr.env.Closed, id)
 		_ = e.record(Event{Kind: "finding.closed", Pass: p.id, Manager: m.Path, Data: *f})
 	}

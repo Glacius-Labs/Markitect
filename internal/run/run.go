@@ -156,6 +156,9 @@ type Finding struct {
 	// erroneous; ClosedEvidence carries a disproof's evidence.
 	ClosedAs       string `json:"closedAs,omitempty"`
 	ClosedEvidence string `json:"closedEvidence,omitempty"`
+	// ClosedCandidate is the tree of the review Pass's candidate a review
+	// finding was closed on: the fresh Verify that resolved or disproved it.
+	ClosedCandidate string `json:"closedCandidate,omitempty"`
 	// Subject and Definition are set only on findings of a review Pass with
 	// ArtifactFindingsAdvisory: Subject is "artifact" or "model", and Definition
 	// names the Definition an artifact finding deviates from.
