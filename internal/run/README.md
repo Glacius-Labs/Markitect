@@ -201,13 +201,14 @@ responsibility are refused.
 ## Finding kinds
 
 A finding is a `Deviation` (blocks, states `Expected`, names a correction purpose),
-`Suspected` (blocks and states `Expected`, but names no correction: `Reassess` holds while
-only suspicions and fresh disputes keep a review from being clean), `ModelProblem` (only in
+`Suspected` (only in a review; blocks and states `Expected`, but names no correction and is
+never handed to a work Pass: `Reassess` holds while only suspicions and fresh disputes keep a
+review from being clean), `ModelProblem` (only in
 a Model assessment) or `Suggestion` (never blocks, no correction). Only the declared effect
-is checked. A suspicion closes as `disproved` or as `confirmed` with the deviation the same
-submission raises for its owner. A blocking review finding that repeats a finding a review
-of the unchanged candidate closed, same owner and obligation, is refused without a probe
-receipt of its Pass.
+is checked. A suspicion closes as `disproved` or as `confirmed` with the deviation of the same owner
+and obligation that the same submission raises. A blocking review finding that repeats a
+finding a review of the unchanged candidate disproved, same owner and obligation text, is
+refused without a failed probe receipt of its Pass.
 
 ## Model assessment
 

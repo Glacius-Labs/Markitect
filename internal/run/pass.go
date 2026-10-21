@@ -372,7 +372,8 @@ func (e *engine) releaseLocked(m *member, why string) {
 		front := []item{{kind: itemAssignment}}
 		if !m.p.spec.Review {
 			for _, f := range e.findings {
-				if f.Blocking && !f.Closed && f.Owner == m.Path {
+				// A suspicion is investigated by a review, never worked on.
+				if f.Blocking && !f.Closed && f.Owner == m.Path && f.Kind != Suspected {
 					front = append(front, item{kind: itemFinding, text: renderFinding(f), finding: f.ID})
 				}
 			}

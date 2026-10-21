@@ -196,12 +196,16 @@ const (
 	Suggestion   Observation = "suggestion"
 )
 
-// observations lists the kinds a Pass's findings may have.
+// observations lists the kinds a Pass's findings may have: a suspicion is
+// investigated by a fresh review, so only a review raises one.
 func (s PassSpec) observations() []Observation {
-	if s.Assesses {
+	switch {
+	case s.Assesses:
 		return []Observation{ModelProblem, Suspected, Suggestion}
+	case s.Review:
+		return []Observation{Deviation, Suspected, Suggestion}
 	}
-	return []Observation{Deviation, Suspected, Suggestion}
+	return []Observation{Deviation, Suggestion}
 }
 
 // MarkitectFinding is the RaisedBy value of findings the Orchestrator observes

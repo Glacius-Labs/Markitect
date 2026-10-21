@@ -871,9 +871,6 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 			// Only a confirmed deviation or model problem names corrective work.
 			add.Correction = ""
 		}
-		if prior := e.settledLocked(m, add); prior != nil {
-			return nil, fmt.Errorf("findings[%d]: %s settled this obligation of %s on this unchanged candidate (%s: %s); a new reviewer or new wording is no new evidence, so raise it again only with a probe receipt of this Pass", i, prior.ID, prior.Owner, prior.ClosedAs, prior.ClosedReason)
-		}
 		switch {
 		case spec.ArtifactFindingsAdvisory && f.Subject == subjectModel:
 			add.Subject = subjectModel
@@ -885,12 +882,15 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 				return nil, fmt.Errorf("findings[%d]: %q is not a Definition of the candidate model", i, f.Definition)
 			}
 			// An artifact that deviates from the model is reported, never repaired
-			// by the model's Managers, so it cannot block.
-			add.Subject, add.Definition, add.Blocking = subjectArtifact, f.Definition, false
+			// by the model's Managers, so it cannot block or name a correction.
+			add.Subject, add.Definition, add.Blocking, add.Correction = subjectArtifact, f.Definition, false, ""
 		case spec.ArtifactFindingsAdvisory:
 			return nil, fmt.Errorf("findings[%d]: subject must be %q or %q", i, subjectArtifact, subjectModel)
 		case f.Subject != "" || f.Definition != "":
 			return nil, fmt.Errorf("findings[%d]: subject and definition are not part of this Pass's findings", i)
+		}
+		if prior := e.settledLocked(m, add); prior != nil {
+			return nil, fmt.Errorf("findings[%d]: %s disproved this obligation of %s on this unchanged candidate (%s); a new reviewer or new wording is no new evidence, so raise it again only with a failed probe receipt of this Pass", i, prior.ID, prior.Owner, prior.ClosedReason)
 		}
 		out = append(out, add)
 	}
@@ -928,18 +928,23 @@ func observationOf(spec PassSpec, i int, f findingIn) (Observation, string, erro
 	return kind, "", nil
 }
 
-// settledLocked returns a closed finding of the same owner and obligation that
-// a review of this unchanged candidate already settled, when a new blocking
-// review finding repeats it without a probe receipt of this Pass: a new
-// reviewer or new wording is no new evidence.
+// settledLocked returns a finding of the same owner and obligation that a
+// review of this unchanged candidate disproved, when a new blocking review
+// finding repeats it without a failed probe receipt of this Pass: a new
+// reviewer or new wording is no new evidence. It compares the obligation
+// text regardless of case and spacing, so it catches repeats, not every
+// rewording.
 func (e *engine) settledLocked(m *member, add Finding) *Finding {
 	p := m.p
-	if !p.spec.Review || !add.Blocking || slices.ContainsFunc(add.Receipts, func(id string) bool { r := e.receiptLocked(id); return r != nil && r.Pass == p.id }) {
+	if !p.spec.Review || !add.Blocking || slices.ContainsFunc(add.Receipts, func(id string) bool {
+		r := e.receiptLocked(id)
+		return r != nil && r.Pass == p.id && r.Outcome == ProbeFailed
+	}) {
 		return nil
 	}
 	candidate := p.tree.Digest().String()
 	for _, f := range e.findings {
-		if !f.Closed || !f.Review || f.Owner != add.Owner || !sameObligation(f.Obligation, add.Obligation) {
+		if !f.Closed || f.ClosedAs != ClosedDisproved || !f.Review || f.Owner != add.Owner || !sameObligation(f.Obligation, add.Obligation) {
 			continue
 		}
 		if q := e.passLocked(f.ClosedPass); q != nil && q.spec.Review && q.tree.Digest().String() == candidate {
@@ -992,8 +997,10 @@ func (e *engine) closuresOf(m *member, in []closeIn, raised []Finding) (map[stri
 			return nil, fmt.Errorf("closed[%d].as must be %q, %q or %q", i, ClosedResolved, ClosedDisproved, ClosedConfirmed)
 		case as == ClosedConfirmed && f.Kind != Suspected:
 			return nil, fmt.Errorf("closed[%d]: only a suspicion is confirmed; %q is a %s", i, c.ID, f.Kind)
-		case as == ClosedConfirmed && !slices.ContainsFunc(raised, func(r Finding) bool { return r.Owner == f.Owner && (r.Kind == Deviation || r.Kind == ModelProblem) }):
-			return nil, fmt.Errorf("closed[%d]: a suspicion is confirmed by the deviation or model problem for %s that this submission raises", i, f.Owner)
+		case as == ClosedConfirmed && !slices.ContainsFunc(raised, func(r Finding) bool {
+			return r.Owner == f.Owner && (r.Kind == Deviation || r.Kind == ModelProblem) && sameObligation(r.Obligation, f.Obligation)
+		}):
+			return nil, fmt.Errorf("closed[%d]: a suspicion is confirmed by the deviation or model problem of the same owner and obligation that this submission raises", i)
 		case as == ClosedResolved && unchanged:
 			return nil, fmt.Errorf("closed[%d]: %q was raised on this unchanged candidate, so it cannot be resolved here; close it as disproved with evidence only if it is erroneous", i, c.ID)
 		}
