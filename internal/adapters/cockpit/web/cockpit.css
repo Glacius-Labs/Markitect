@@ -651,9 +651,15 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
   .where { gap: 6px; }
   .pill .pillword { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
   .pill { padding: 0 10px; gap: 6px; }
-  .atab { padding: 5px 4px; gap: 4px; font-size: 12px; }
+  .atab { padding: 5px 8px; gap: 6px; }
   .topbar .bell { width: 32px; min-height: 32px; }
   .where .back { padding: 3px 7px; min-height: 30px; }
+  /* Three Model tabs and a transient/long status need their own rows. */
+  .shell:has(.atabs) { grid-template-rows: auto minmax(0, 1fr); }
+  .topbar:has(.atabs) { display: grid; grid-template-columns: minmax(0, 1fr) auto; padding-block: 6px; }
+  .topbar:has(.atabs) .statusbar { grid-row: 1; grid-column: 1; margin-left: 0; }
+  .topbar:has(.atabs) .bell { grid-row: 1; grid-column: 2; }
+  .topbar:has(.atabs) .where { grid-row: 2; grid-column: 1 / -1; }
 }
 @media (prefers-reduced-motion: reduce) {
   *, ::before, ::after { transition-duration: 0.01ms !important; animation-duration: 0.01ms !important; animation-iteration-count: 1 !important; }
