@@ -748,6 +748,100 @@ func TestProbeKeepsTimeForTheTurnsReport(t *testing.T) {
 	if early.Refused || !strings.Contains(early.Text, "after 0 seconds") {
 		t.Errorf("a probe with time left was refused: %+v", early)
 	}
+	if !strings.Contains(early.Text, "Turn budget remaining: 60 seconds") {
+		t.Errorf("the receipt did not expose the bound remaining time for reporting: %+v", early)
+	}
+}
+
+// A malformed progress payload must reveal all incompatible fields at once,
+// so one corrected report can preserve work before the bounded Turn ends.
+func TestProgressReportsAllUnexpectedFieldsAndContinues(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var reported, continued bool
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
+			if !reported {
+				bad := c.tool(toolReport, map[string]any{"kind": kindProgress, "summary": "unfinished assessment", "reason": "next turn", "evidence": []string{"source inspected"}, "text": "continue"})
+				if !bad.Refused || !strings.Contains(bad.Text, "reason, evidence, text") || !strings.Contains(bad.Text, "Allowed fields: kind, summary") {
+					t.Fatalf("progress repair omitted incompatible or allowed fields: %+v", bad)
+				}
+				c.must(toolReport, map[string]any{"kind": kindProgress, "summary": "unfinished assessment; continue with its evidence next Turn"})
+				reported = true
+				return nil
+			}
+			continued = true
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if !reported || !continued || out.Status != Verified {
+		t.Fatalf("progress did not continue to a complete result: reported=%v continued=%v status=%s reason=%s", reported, continued, out.Status, out.Reason)
+	}
+}
+
+// An own public contract may fail in a sibling's implementation. The caller
+// records its own failed contract; their parent independently routes the actual
+// correction. Neither receipt relabelling nor sibling finding authority is needed.
+// Scripted peers establish the protocol path, not the truth of this diagnosis.
+func TestCrossAreaFailureKeepsCallerContractAndActualCorrectionOwner(t *testing.T) {
+	f := probeFixture(t)
+	var mu sync.Mutex
+	var receipt string
+	var outside ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit your complete result") {
+			receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "public contract through the lending dependency", "probe_dependency.py", "FAIL")))
+			cov := c.coverage()
+			cov[0]["status"], cov[0]["note"] = coverOpen, "the public contract fails; parent coordinates the dependency correction"
+			delete(cov[0], "evidence")
+			foreign := genuine("lending", "lending/borrow")
+			foreign["receipts"] = []string{receipt}
+			outside = c.result(map[string]any{"obligations": cov, "verdict": string(NeedsCorrection), "findings": []any{foreign}})
+			if !outside.Refused || !strings.Contains(outside.Text, "or one of your descendants") {
+				t.Fatalf("the caller acquired sibling finding authority: %+v", outside)
+			}
+			own := genuine("library", "library/interface")
+			own["receipts"] = []string{receipt}
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection), "findings": []any{own}}))
+			return nil
+		}
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate your children") {
+			actual := genuine("lending", "lending/borrow")
+			actual["receipts"] = []string{receipt}
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{actual}}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	spec := verifySpec()
+	spec.ModelBasis = true
+	res := r.Pass(spec)
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != NeedsCorrection || len(out.Findings) != 2 || !outside.Refused {
+		t.Fatalf("cross-area negative review did not complete: stopped=%v verdict=%s findings=%+v reason=%s", res.Stopped, res.Verdict, out.Findings, out.Reason)
+	}
+	owners := map[string]string{}
+	for _, finding := range out.Findings {
+		owners[finding.Owner] = finding.RaisedBy
+		if !slices.Contains(finding.Receipts, receipt) {
+			t.Fatalf("parent or caller lost the actual failed receipt: %+v", finding)
+		}
+	}
+	if owners["library"] != "library" || owners["lending"] != "." || out.Status == Verified {
+		t.Fatalf("ownership or negative outcome changed: owners=%v status=%s", owners, out.Status)
+	}
 }
 
 // Root's failed probe of a child's claim is judged by the child's reviewer, an

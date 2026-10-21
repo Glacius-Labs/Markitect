@@ -173,7 +173,7 @@ var lookUpSchema = object([]string{"topic"}, schema{
 // evidenceText describes the evidence items of a coverage entry for one Pass.
 func evidenceText(spec PassSpec) string {
 	if spec.Review || evidenceRequired(spec) {
-		return "Required for done and preserved: per distinct claim, a passing probe receipt on this candidate or an inspected source location; a suite total alone is no coverage. Adverse receipts cannot support a claim."
+		return "Required for done and preserved: per distinct claim, a passing probe receipt on this candidate or an inspected source location; a suite total alone is no coverage. Each receipt is cited once per submission, only for its recorded obligation. Open conditions may omit unsupported evidence. Adverse receipts belong in genuine findings or reasoned dispositions, never in coverage evidence."
 	}
 	return "Optional: per claim, a passing probe receipt run on the stand you submit, or an inspected source location."
 }
@@ -203,7 +203,7 @@ func checkSchema(spec PassSpec) schema {
 			"expected":   str("The outcome the model requires, stated before the probe runs."),
 			"check":      str("The required check whose execution profile (image, executable, environment, limits) runs the probe."),
 			"path":       str("Where the probe file is placed, relative to that check's directory; it must not exist in the stand."),
-			"content":    str("The probe file: its assertions exit 0 when the expected outcome is observed, nonzero otherwise. An expected refusal of the application passes when the probe asserts it."),
+			"content":    str("The complete standalone probe file, with its own imports, setup and helpers; no variables, files or helper state carry from another probe. Its assertions exit 0 when the expected outcome is observed, nonzero otherwise. An expected refusal of the application passes when the probe asserts it."),
 			"args":       strs("Arguments after the profile's fixed arguments, such as the probe file to run."),
 			"proposal":   str("Optional, Pass with writes: the checked proposal (P...) of one of your children to probe its submitted stand."),
 		}),
