@@ -110,14 +110,13 @@ const (
 	accountTextRunes     = 100
 	accountReasonRunes   = 240
 	accountMaxPackages   = 12
-	accountMaxQuestions  = 6
 	accountMaxDeviations = 5
 	accountMaxChecks     = 5
 	accountMaxManagers   = 8
 )
 
 // RenderExtractAccount is the owner's short readable account of an Extract:
-// status, Packages, owner questions, deviations, proposed checks, Verify,
+// status, Packages, deviations, proposed checks, Verify,
 // publication and, for a published model, the next step. It is plain text for
 // the terminal and is rendered from the report alone.
 func RenderExtractAccount(r ExtractReport) string {
@@ -143,24 +142,6 @@ func RenderExtractAccount(r ExtractReport) string {
 			}
 		}
 		more(&b, len(r.Packages), len(shown))
-	}
-
-	questions := accountQuestions(r)
-	if len(questions) > 0 {
-		shown := questions[:min(len(questions), accountMaxQuestions)]
-		line("")
-		line("Owner questions (%d)", len(questions))
-		for _, q := range shown {
-			answer := "unanswered"
-			if q.Answered {
-				answer = shorten(q.Answer, accountTextRunes)
-			}
-			line("  %s %s -> %s", q.ID, shorten(q.Text, accountTextRunes), answer)
-		}
-		more(&b, len(questions), len(shown))
-	} else if ran {
-		line("")
-		line("Owner questions: none")
 	}
 
 	if len(r.Deviations) > 0 {
@@ -271,19 +252,6 @@ func extractReason(r ExtractReport) string {
 		return "no reason reported"
 	}
 	return strings.TrimRight(shorten(strings.Join(parts, "; "), accountReasonRunes), ".")
-}
-
-// accountQuestions are the questions of the final phase, answered or not: the
-// model phase continues the structure phase's channel, so its list includes
-// the structure phase's.
-func accountQuestions(r ExtractReport) []run.Question {
-	switch {
-	case r.Model != nil && (r.Structure == nil || len(r.Model.Questions) >= len(r.Structure.Questions)):
-		return r.Model.Questions
-	case r.Structure != nil:
-		return r.Structure.Questions
-	}
-	return nil
 }
 
 // openAdvisoryFindings counts the open findings of the model phase that do not

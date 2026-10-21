@@ -61,7 +61,7 @@ checkProfiles:
         processes: 1024
       maxOutputBytes: 1048576
 YAML
-cp "$DEMO"/ra_project.sh "$DEMO"/ra_demo.sh "$DEMO"/ra_inner.sh "$DEMO"/ra_cleanup.sh "$DEMO"/ra_assess.sh "$DEMO"/ra_extract_project.sh "$DEMO"/ra_extract.sh "$DEMO"/rx_owner.sh "$DEMO"/rx_rebuild_project.sh "$DEMO"/extract-execution.yaml "$DEMO"/ra_runconfig.py "$DEMO"/library-execution.yaml "$ATTEMPT/frozen/"
+cp "$DEMO"/ra_project.sh "$DEMO"/ra_demo.sh "$DEMO"/ra_inner.sh "$DEMO"/ra_cleanup.sh "$DEMO"/ra_assess.sh "$DEMO"/ra_extract_project.sh "$DEMO"/ra_extract.sh "$DEMO"/rx_rebuild_project.sh "$DEMO"/extract-execution.yaml "$DEMO"/ra_runconfig.py "$DEMO"/library-execution.yaml "$ATTEMPT/frozen/"
 {
   echo "product_sha=$SHA"
   echo "cli_sha256=$(sha256sum "$BUILD/markitect" | cut -d' ' -f1)"

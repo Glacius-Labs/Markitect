@@ -229,9 +229,6 @@ Packages (5)
   library            Small library
   members
 
-Owner questions (1)
-  Q1 Which currency do fines use? -> euro
-
 Realization deviates from the model (1)
   lending/lending (owners: lending)
     borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only chec...
@@ -256,7 +253,7 @@ func TestRenderExtractAccount(t *testing.T) {
 
 	incomplete := libraryExtract(t)
 	incomplete.Receipt, incomplete.ProposedChecks, incomplete.Packages = nil, nil, nil
-	incomplete.Model.Status, incomplete.Model.Reason = run.Incomplete, "owner question Q2 is still open"
+	incomplete.Model.Status, incomplete.Model.Reason = run.Incomplete, "the agent turn budget of 60 ended"
 	incomplete.Model.Passes = []run.PassRecord{{ID: "verify-1", Purpose: run.Verify, Review: true, Verdict: run.NeedsCorrection, Managers: []run.ManagerRecord{{Manager: ".", State: run.Done, Verdict: run.Satisfied}, {Manager: "lending", State: run.Done, Verdict: run.NeedsCorrection}}}}
 	incomplete.Model.Questions = append(incomplete.Model.Questions, run.Question{ID: "Q2", Text: "May a member hold a reserved copy?", Asked: asked})
 	incomplete.RetainedWork = "x-1-model-work"
@@ -284,21 +281,21 @@ func TestRenderExtractAccount(t *testing.T) {
 		absent   []string
 	}{
 		{"complete", library, nil, "/state/x-1", []string{
-			"Model complete and published.", "Packages (5)", "  library            Small library", "Owner questions (1)", "  Q1 Which currency do fines use? -> euro",
+			"Model complete and published.", "Packages (5)", "  library            Small library",
 			"Realization deviates from the model (1)", "  lending/lending (owners: lending)", "    borrow.go admits a sixth loan although the Definition limits a member to five loans at a time; the limit is only chec...",
 			"Proposed checks (1)", "  project-vet: vet ./... in realization", "Verify (Pass verify-2, verdict satisfied)", "  satisfied: ., catalog, lending, lending/reminders, library, members", "  open advisory findings: 1",
 			"Publication: applied, 3 files changed", "Evidence: /state/x-1", "Next: review and commit .markitect/model, .markitect/registry and", "  .markitect/execution.yaml to adopt the model. Extract commits nothing.",
-		}, []string{"not satisfied", "Retained work"}},
+		}, []string{"not satisfied", "Retained work", "questions", "Q1"}},
 		{"incomplete", incomplete, nil, "/state/x-1", []string{
-			"Model incomplete: owner question Q2 is still open.", "Owner questions (2)", "  Q2 May a member hold a reserved copy? -> unanswered",
+			"Model incomplete: the agent turn budget of 60 ended.",
 			"Verify (Pass verify-1, verdict needs_correction)", "  satisfied: .", "  not satisfied: lending", "Publication: none", "Retained work: x-1-model-work (kept for inspection)", "Evidence: /state/x-1",
-		}, []string{"Next:", "Packages", "Proposed checks"}},
+		}, []string{"Next:", "Packages", "Proposed checks", "Q2"}},
 		{"verified but stale", stale, nil, "", []string{
 			"Model incomplete: the verified model was not published (stale: the repository changed).", "Publication: stale, 0 of 3 files written: the repository changed",
 		}, []string{"Next:", "Evidence"}},
 		{"failed", failed, errors.New("agent port: closed"), "", []string{
 			"Extract failed: structure phase: the agent port broke; agent port: closed.", "Verify: no Pass finished", "Publication: none",
-		}, []string{"Next:", "Owner questions", "Realization deviations"}},
+		}, []string{"Next:", "questions", "Realization deviations"}},
 		{"capped lists", many, nil, "", []string{"Packages (25)", "  and 13 more", "Realization deviates from the model (21)", "  and 16 more"}, nil},
 	} {
 		t.Run(tc.name, func(t *testing.T) {

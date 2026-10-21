@@ -16,6 +16,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: Binds the run and its strategy from one passed capture, composes the direct or staged work Passes and Verify with corrections and reassessment, and publishes a verified candidate through the guarded Publisher.
+  - path: "internal/apply/assess.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: The mandatory Model assessment before any work, with Session C's method and the model problem classes, Extract's assessment of its mandate, and the evaluation entry that runs only the assessment.
   - path: "internal/apply/apply_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
@@ -396,6 +400,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Runs both strategies through the product preparation and checks their work sequences with the same Pass-boundary gates, candidate check, fresh read-only Verify, publication, recorded binding and writer-stop guard, and the refusal of an unknown strategy or a missing build identity.
+  - path: "internal/apply/assess_run_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: Checks through the product preparation that no work starts before an accepted Model assessment, that a confirmed gap or a model problem during the work ends the run Failed without publication, that a later run assesses again, and that the assessment runs no check or probe.
   - path: "internal/apply/strategy_defaults.go"
     form: code
     realizes: [product/apply/read-only-preparation]

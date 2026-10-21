@@ -21,8 +21,6 @@ bash "$ATTEMPT/frozen/ra_extract_project.sh" "$SOURCE" "$SRC" "$REPO" > "$ATTEMP
 DEADLINE=$(date -u -d @$((T0 + 1560)) +%FT%TZ)
 python3 "$ATTEMPT/frozen/ra_runconfig.py" "$ATTEMPT" x1 "$SHA" "$DEADLINE" "Extract the model of the existing library artifacts." > /dev/null
 mkdir -p "$ATTEMPT/state-x1"
-bash "$ATTEMPT/frozen/rx_owner.sh" "$ATTEMPT/markitect" "$ATTEMPT/run-config-x1.json" "$ATTEMPT/state-x1" "$ATTEMPT/out/owner.log" "$ATTEMPT/out/owner.stop" &
-OWNER=$!
 mark extract_start
 timeout --kill-after=45 1650 "$ATTEMPT/markitect" extract --repo "$REPO" \
   --dependency .markitect/dependencies/core/model.yaml --dependency .markitect/dependencies/software/model.yaml \
@@ -30,8 +28,6 @@ timeout --kill-after=45 1650 "$ATTEMPT/markitect" extract --repo "$REPO" \
   > "$ATTEMPT/out/extract-x1.json" 2> "$ATTEMPT/out/extract-x1.stderr"
 echo "extract_exit=$?" >> "$ATTEMPT/timing.txt"
 mark extract_end
-touch "$ATTEMPT/out/owner.stop"
-wait "$OWNER"
 timeout 60 bash "$ATTEMPT/frozen/ra_cleanup.sh" "$ATTEMPT" > /dev/null 2>&1
 echo "extract_total_seconds=$(( $(date +%s) - T0 ))" >> "$ATTEMPT/timing.txt"
 # Outside the limit: scripted adoption of the published candidate.

@@ -34,7 +34,10 @@ import (
 // comes back in another conversation, or the first one fails before any tool
 // call; marks keeps which turn did what. A conversation otherwise continues.
 // The Model assessment that precedes the work accepts the model: no scripted
-// event happens in its turns.
+// event happens in its turns, unless gap makes the reviewer of finds raise its
+// finding as a model_gap in the first assessment instead of the first Verify,
+// which nobody disputes. abort names a Manager whose first work turn reports
+// a model problem with abort.
 // Any other refused tool call fails the test, so the script cannot drift from
 // the engine's protocol unnoticed.
 type preservingAgents struct {
@@ -58,6 +61,8 @@ type preservingAgents struct {
 	open        bool
 	ids         []string
 	assessing   map[string]bool // conversation -> it is a Model assessment
+	gap         bool
+	abort       string
 }
 
 var ownFindingRE = regexp.MustCompile(`Finding (F\d+) \[`)
@@ -129,13 +134,23 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	for _, m := range decideRE.FindAllStringSubmatch(turn.Prompt, -1) {
 		call("report", map[string]any{"kind": "accept", "proposal": m[1]})
 	}
+	a.mu.Lock()
+	aborts := turn.Kind == run.ExecuteTurn && turn.Manager == a.abort
+	if aborts {
+		a.abort = ""
+	}
+	a.mu.Unlock()
+	if aborts {
+		call("report", map[string]any{"kind": "problem", "category": "model", "abort": true, "text": "lending/loan-policy and lending/borrow state different loan limits."})
+		return run.TurnResult{Conversation: "conv-" + turn.Home, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
+	}
 	plans := slices.ContainsFunc(turn.Tools, func(s run.ToolSpec) bool {
 		return s.Name == "report" && strings.Contains(string(s.InputSchema), `"plan":`)
 	})
 	submission := func(kind string) map[string]any {
 		report := map[string]any{"kind": kind, "summary": kind + " of " + turn.Manager + "."}
 		raise := false
-		if turn.Kind == run.VerifyTurn && turn.Manager == a.finds && !assessing {
+		if turn.Kind == run.VerifyTurn && turn.Manager == a.finds && assessing == a.gap {
 			a.mu.Lock()
 			// The assignment of a later Verify names the findings it raised.
 			if _, earlier, found := strings.Cut(turn.Prompt, "Open findings you raised in earlier Passes"); found {
@@ -166,7 +181,10 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 			case raise && i == 0:
 				entry["status"], entry["note"] = "open", "The scripted finding holds it open."
 				correction := a.correction
-				if correction == "" {
+				switch {
+				case a.gap:
+					correction = "model_gap"
+				case correction == "":
 					correction = "implement"
 				}
 				report["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": id, "observed": "A scripted counterexample.", "blocking": true, "correction": correction}}

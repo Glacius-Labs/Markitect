@@ -1,6 +1,7 @@
 package run
 
 import (
+	"errors"
 	"strings"
 	"sync"
 	"testing"
@@ -207,5 +208,27 @@ func TestAModelAssessmentIsAReviewOfTheModel(t *testing.T) {
 	}
 	if err := validateSpec(assessSpec()); err != nil {
 		t.Fatal(err)
+	}
+}
+
+// A turn of the assessment that fails technically ends the run with its own
+// classification, never as a confirmed model problem.
+func TestATechnicalFailureInTheAssessmentIsNoModelProblem(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		if c.pass() == "p1" && c.turn.Manager == "library" {
+			return errors.New("the provider connection broke")
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(assessSpec())
+	for !res.Stopped && res.Verdict == NeedsCorrection && r.Reassess() {
+		res = r.Pass(assessSpec())
+	}
+	out := f.finish(r, "the model assessment did not reach a clean Pass")
+	if out.Status == Verified || strings.HasPrefix(out.Reason, ModelAssessmentReason) {
+		t.Fatalf("status %s: %s", out.Status, out.Reason)
 	}
 }

@@ -108,6 +108,7 @@ type scriptedAgents struct {
 	turns    []run.Turn
 	refusals map[string]string // key -> the answer to that question
 	assessed map[string]bool   // conversation -> it is a Model assessment
+	gaps     map[string]string // key -> a model gap its Model assessment result confirms
 }
 
 var (
@@ -166,6 +167,10 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 			result["summary"] = "The model matches the artifacts."
 			if findings := a.findings[key]; len(findings) > 0 && !assessing {
 				result["findings"] = findings
+			}
+			if gap := a.gaps[key]; gap != "" && assessing {
+				result["verdict"] = "needs_correction"
+				result["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": "the mandate of this Extract", "observed": gap, "blocking": true, "correction": "model_gap"}}
 			}
 		}
 		call("report", result)
@@ -526,6 +531,43 @@ func TestExtractDeadlineIsTheEarlierOfTheOperatorAndTheExecutionTime(t *testing.
 			// Both phases share one deadline.
 			if len(deadlines) != 2 || !deadlines[0].Equal(tc.want) || !deadlines[1].Equal(tc.want) {
 				t.Errorf("deadlines %v, want %v", deadlines, tc.want)
+			}
+		})
+	}
+}
+
+// An Extract assesses its mandate before the structure and the verified model
+// candidate before its publication. A gap Root confirms at either point ends
+// the phase Failed with the draft retained: no later phase, no publication.
+func TestExtractEndsOnAConfirmedAssessmentGap(t *testing.T) {
+	for _, tc := range []struct {
+		name, key string
+	}{
+		{"before the structure", "x-1-structure ."},
+		{"on the verified candidate", "x-1-model ."},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req, agents, _, publisher, _, _, _ := bothPhases(t)
+			agents.gaps = map[string]string{tc.key: "The README and the CLI help state different loan limits; no artifact settles which one is intended."}
+			result, err := apply.Extract(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			phase := result.Structure
+			if tc.key == "x-1-model ." {
+				if result.Structure.Status != run.Verified || result.Model == nil {
+					t.Fatalf("structure %s: %s", result.Structure.Status, result.Structure.Reason)
+				}
+				phase = *result.Model
+			} else if result.Model != nil {
+				t.Fatalf("a model phase ran after a confirmed gap: %+v", result.Model)
+			}
+			last := phase.Passes[len(phase.Passes)-1]
+			if phase.Status != run.Failed || !strings.HasPrefix(phase.Reason, run.ModelAssessmentReason) || !strings.Contains(phase.Reason, "model_gap") || last.Purpose != run.Assess {
+				t.Fatalf("phase %s: %s; last Pass %+v", phase.Status, phase.Reason, last)
+			}
+			if len(publisher.requests) != 0 || result.Receipt != nil || result.RetainedWork == "" {
+				t.Fatalf("publications %d, receipt %+v, retained %q", len(publisher.requests), result.Receipt, result.RetainedWork)
 			}
 		})
 	}
