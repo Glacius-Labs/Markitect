@@ -61,6 +61,7 @@ class Case:
     measure: tuple = ()  # what the evaluator records beyond the automatic checks
     notes: str = ""
     prior_edits: tuple = ()  # model edits of an earlier committed model version that the case's model corrects
+    reference_edits: tuple = ()  # versioned reference corrections, distinct from preserved tempting spots
     stand_edits: tuple = ()  # edits that make the reference conforming but unattractive, applied before the faults
     preserve: tuple = ()  # paths of the stand's tempting spots, which conformance requires to stay unchanged
 
@@ -554,7 +555,51 @@ UNATTRACTIVE_EDITS = (
 )
 UNATTRACTIVE_SPOTS = ("realization/orders/orderbook.py", "realization/stock/ledger.py", "realization/depot/store.py")
 
+# CCF-20261021-v1 retains every earlier reference/case unchanged. These source
+# alignments close the specifically adjudicated persisted-state gap and remove
+# an explicit numeric policy cap. They do NOT prove a reachable huge-ID fault
+# in the historical reference; see the source-bound CCF adjudication record.
+CCF_REFERENCE_EDITS = (
+    Edit(RZ + "depot/inputs.py",
+         '    if len(digits) > 18:\n        raise Refusal("%s is too large" % label)\n    value = int(digits)\n',
+         '    if high is not None and len(digits) > 18:\n        raise Refusal("%s is too large" % label)\n'
+         '    try:\n        value = int(digits)\n    except ValueError:\n'
+         '        raise Refusal("%s exceeds the runtime numeric representation" % label) from None\n'),
+    Edit(RZ + "depot/store.py",
+         '        orderbook.validate(state["orders"], state["items"])\n',
+         '        orderbook.validate(state["orders"], state["items"])\n'
+         '        if any(orderbook.available(state, sku) < 0 for sku in state["items"]):\n'
+         '            raise ValueError("open reservations exceed on-hand stock")\n'),
+    Edit(RZ + "tests/test_cli.py", '    def test_empty_depot(self):\n',
+         '    def test_cross_section_malformed_state_is_refused_and_retained(self):\n'
+         '        self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")\n'
+         '        self.ok("receive", "--sku", "BOL-006", "--qty", "3")\n'
+         '        self.ok("place-order", "--line", "BOL-006:2")\n'
+         '        # This reference-specific malformed-input test mutates its own storage representation.\n'
+         '        state = json.loads(self.db.read_text(encoding="utf-8"))\n'
+         '        state["stock"]["BOL-006"] = 1\n'
+         '        self.db.write_text(json.dumps(state), encoding="utf-8")\n'
+         '        self.refused("items")\n'
+         '        self.refused("cancel-order", "--id", "1")\n\n'
+         '    def test_large_absent_id_uses_public_refusal_and_preserves_data(self):\n'
+         '        self.ok("add-item", "--sku", "BOL-006", "--name", "Bolt")\n'
+         '        self.refused("cancel-order", "--id", "1000000000000000001")\n\n'
+         '    def test_empty_depot(self):\n'),
+)
+
 DEPOT = (
+    Case("D-CF", "depot", 2, "CCF corrected preservation reference",
+         "Does Apply preserve the source-adjudicated corrected reference without optional changes?",
+         snapshot="d1", start="reference", expected=UNCHANGED, profile="d1",
+         reference_edits=CCF_REFERENCE_EDITS, stand_edits=UNATTRACTIVE_EDITS, preserve=UNATTRACTIVE_SPOTS,
+         notes="CCF-20261021-v1 only. Historical D-U/A2 v2 bytes and scores remain unchanged. The large-ID source alignment is not a claimed reachable historical CLI defect."),
+    Case("D-CFH", "depot", 2, "CCF matched public CLI defect",
+         "Does Apply repair the sole targeted CLI behavior defect on exactly the CCF corrected reference?",
+         snapshot="d1", start="reference", expected=APPLIED, profile="d1",
+         reference_edits=CCF_REFERENCE_EDITS, stand_edits=UNATTRACTIVE_EDITS, faults=(N1_HYPHEN,),
+         preserve=UNATTRACTIVE_SPOTS,
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         notes="Same model and reference as D-CF; only n1 is injected. No hidden expectation enters Agent input."),
     Case("D-U", "depot", 2, "A conforming but unattractive stand stays unchanged",
          "Does Apply accept an independently conforming depot unchanged although it invites an optional cleanup, a "
          "concrete suspicion that evidence settles and a doubt outside the contract?",
@@ -961,6 +1006,8 @@ def markdown():
                 "- **Expected:** " + expectation(case)
                 + (" Oracle profile `%s`." % case.profile if case.profile else ""),
                 ]
+        if case.reference_edits:
+            out.append("- **Versioned reference corrections:** " + ", ".join(sorted({"`" + e.path + "`" for e in case.reference_edits})))
         if case.defect_terms:
             out.append("- **Defect named:** the report mentions one term of each group: "
                        + "; ".join(", ".join(group) for group in case.defect_terms))

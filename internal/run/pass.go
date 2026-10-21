@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -203,6 +204,19 @@ func (e *engine) runPass(spec PassSpec) PassResult {
 	if err := validateSpec(spec); err != nil {
 		e.fail(err)
 		return PassResult{Stopped: true}
+	}
+	// The reserved review window is never spent finishing work. Expiry cancels
+	// the active Pass and its writers; incomplete work is never sent to Verify.
+	if spec.Purpose != Verify && !e.cfg.Budget.WorkDeadline.IsZero() {
+		remaining := time.Until(e.cfg.Budget.WorkDeadline)
+		if remaining <= 0 {
+			e.halt("the work deadline ended; the reserved Verify capacity cannot complete unfinished work")
+			return PassResult{Stopped: true}
+		}
+		timer := time.AfterFunc(remaining, func() {
+			e.halt("the work deadline ended; unfinished work remains Incomplete, preserving the Verify reserve")
+		})
+		defer timer.Stop()
 	}
 	e.mu.Lock()
 	if e.work == "" {
@@ -800,7 +814,7 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 		}
 		// An accepted result that leaves an own obligation open needs
 		// correction, whatever finding it rests on.
-		if m.result != nil && slices.ContainsFunc(m.result.env.Obligations, func(c coverage) bool { return c.Status == coverOpen }) {
+		if m.result != nil && (slices.ContainsFunc(m.result.env.Obligations, func(c coverage) bool { return c.Status == coverOpen }) || m.result.env.Integration != nil && m.result.env.Integration.Status == coverOpen) {
 			return NeedsCorrection
 		}
 	}

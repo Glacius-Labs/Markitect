@@ -36,6 +36,7 @@ type runConfig struct {
 	EngineExecutable   string                      `json:"engineExecutable"`
 	WorkspaceHelper    container.ContainerSpec     `json:"workspaceHelper"`
 	Harvest            harvestLimits               `json:"harvest"`
+	WorkDeadline       string                      `json:"workDeadline,omitempty"`
 	Deadline           string                      `json:"deadline,omitempty"`
 	Credentials        map[string]credentialSource `json:"credentials"`
 }
@@ -67,12 +68,12 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	if err != nil {
 		return runConfig{}, err
 	}
-	// deadline is the only optional field. Every other key is required, and any
+	// deadline and workDeadline are optional limit fields. Every other key is required, and any
 	// further key is refused, ownerDecisions included: no preloaded owner decision
 	// supplies model intent to a Run.
 	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "engineExecutable", "workspaceHelper", "harvest", "credentials"}
 	for key := range root {
-		if !slices.Contains(required, key) && key != "deadline" {
+		if !slices.Contains(required, key) && key != "deadline" && key != "workDeadline" {
 			return runConfig{}, errRunConfig
 		}
 	}
@@ -106,7 +107,7 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 		}
 	}
 	var cfg runConfig
-	if json.Unmarshal(data, &cfg) != nil || root["deadline"] != nil && cfg.Deadline == "" || !cfg.valid() {
+	if json.Unmarshal(data, &cfg) != nil || root["deadline"] != nil && cfg.Deadline == "" || root["workDeadline"] != nil && cfg.WorkDeadline == "" || !cfg.valid() {
 		return runConfig{}, errRunConfig
 	}
 	// Constructor validation performs no credential file I/O.
@@ -171,6 +172,13 @@ func (c runConfig) valid() bool {
 	if c.FormatVersion != 2 || !runConfigText(c.RepositoryIdentity) || len(c.RepositoryIdentity) > 256 || !runConfigText(c.ProductBuild) || !utf8.ValidString(c.OwnerRequest) || strings.TrimSpace(c.OwnerRequest) == "" || !credentialPath(c.StateDirectory) || !credentialPath(c.EngineExecutable) {
 		return false
 	}
+	if c.WorkDeadline != "" {
+		t, err := time.Parse(time.RFC3339, c.WorkDeadline)
+		deadline, derr := time.Parse(time.RFC3339, c.Deadline)
+		if err != nil || derr != nil || !strings.HasSuffix(c.WorkDeadline, "Z") || t.IsZero() || !t.Before(deadline) {
+			return false
+		}
+	}
 	if c.Deadline != "" {
 		if t, err := time.Parse(time.RFC3339, c.Deadline); err != nil || !strings.HasSuffix(c.Deadline, "Z") || t.IsZero() {
 			return false
@@ -199,4 +207,10 @@ func (c runConfig) deadline() time.Time {
 
 func runConfigText(value string) bool {
 	return value != "" && strings.TrimSpace(value) == value && utf8.ValidString(value) && !strings.ContainsFunc(value, unicode.IsControl)
+}
+
+// workDeadline reserves the remaining whole-run window for independent Verify.
+func (c runConfig) workDeadline() time.Time {
+	t, _ := time.Parse(time.RFC3339, c.WorkDeadline)
+	return t
 }

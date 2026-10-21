@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/validation/ccf-apply-preparation-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Binds CCF hardening, corrected control adjudication, evidence limits, finite reservations and the closed provider gate without rewriting historical outcomes.
   - path: "docs/concepts/sources/apply-conformance-acceptance-20261021.md"
     form: doc
     realizes: [documentation/current-guidance]

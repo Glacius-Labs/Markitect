@@ -523,6 +523,61 @@ Model edits:
 - **Record:** files changed (expected none); passes; blocking findings
 - **Notes:** Requires --from-repo; the profile is that of the model found in the repository.
 
+## D-CF: CCF corrected preservation reference
+
+- **Question:** Does Apply preserve the source-adjudicated corrected reference without optional changes?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `d1`.
+- **Versioned reference corrections:** `realization/depot/inputs.py`, `realization/depot/store.py`, `realization/tests/test_cli.py`
+- **Record:**
+- **Notes:** CCF-20261021-v1 only. Historical D-U/A2 v2 bytes and scores remain unchanged. The large-ID source alignment is not a claimed reachable historical CLI defect.
+
+## D-CFH: CCF matched public CLI defect
+
+- **Question:** Does Apply repair the sole targeted CLI behavior defect on exactly the CCF corrected reference?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1`.
+- **Versioned reference corrections:** `realization/depot/inputs.py`, `realization/depot/store.py`, `realization/tests/test_cli.py`
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:**
+- **Notes:** Same model and reference as D-CF; only n1 is injected. No hidden expectation enters Agent input.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| n1 | depot | behavior | the command line takes a name that starts with a hyphen for an option, so `--name -Bolt` exits 2 although the model allows the name; the reference before ec4f5ece, whose tests do not cover it | `item-inputs`, `name-hyphens` | no | informative |
+
+Fault edits:
+
+n1:
+
+```diff
+--- realization/app.py
+-def attach_names(argv):
+-    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""
+-    attached, tokens = [], iter(argv)
+-    for token in tokens:
+-        value = next(tokens, None) if token == "--name" else None
+-        attached.append(token if value is None else "--name=" + value)
+-    return attached
+-
+-
+-def main(
++def main(
+```
+
+```diff
+--- realization/app.py
+-        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))
++        result = run(build_parser().parse_args(argv))
+```
+
+```diff
+--- realization/tests/test_cli.py
+-        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
+```
+
 ## D-U: A conforming but unattractive stand stays unchanged
 
 - **Question:** Does Apply accept an independently conforming depot unchanged although it invites an optional cleanup, a concrete suspicion that evidence settles and a doubt outside the contract?

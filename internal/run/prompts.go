@@ -76,6 +76,13 @@ func writeEnvelope(b *strings.Builder, env envelope, findings func(string) *Find
 			line += " (" + c.Note + ")"
 		}
 		b.WriteString(strings.ReplaceAll(line, "\n", "\n    ") + "\n")
+		if c.Conditions != "" {
+			fmt.Fprintf(b, "    Conditions and coverage: %s\n", c.Conditions)
+		}
+		writeEvidence(b, c.Evidence)
+	}
+	if c := env.Integration; c != nil {
+		fmt.Fprintf(b, "  Parent integration: %s; conditions: %s; reasoning: %s\n", c.Status, c.Conditions, c.Note)
 		writeEvidence(b, c.Evidence)
 	}
 	if pl := env.Plan; pl != nil {
@@ -303,6 +310,12 @@ func (e *engine) standingLocked(b *strings.Builder, m *member) {
 func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 	p := m.p
 	fmt.Fprintf(b, "\nPass %s: %s\n%s\n", p.id, p.spec.Purpose, strings.TrimSpace(p.spec.Mandate))
+	if evidenceRequired(p.spec) {
+		b.WriteString("Derive and record material conditions, exceptions and interactions from the authority this Pass binds and required contracts in coverage.conditions (Apply: bound Definitions; Extract: fixed artifacts and documented intent, with the proposed model as work product); justify which evidence covers them and what remains open. For executable public behavior, done/preserved requires candidate-bound public_behavior receipts through the real declared entry, not private validators, source reassurance or suite counts. Static/documentary claims use reasoned source inspection. Missing required execution remains open. Every parent, including Root with no own Definitions, reports its own integration conditions and evidence; green children alone cannot establish global invariants. Implement satisfied means implementation submitted to independent Verify, not verified conformance.\n")
+		if p.spec.Review {
+			b.WriteString("Before assessing author claims or coverage, derive your own conditions and counterexamples from that authority in your basis. Challenge omissions inside each Definition: valid inputs wrongly refused, invalid inputs wrongly accepted, boundaries, exceptions, artifact contradictions and child interactions. Then compare the candidate and author coverage against those expectations. Never use author claims as the complete checklist.\n")
+		}
+	}
 	if p.spec.Review {
 		fmt.Fprintf(b, "%s\n", strings.TrimSpace(p.spec.Guidance))
 	}

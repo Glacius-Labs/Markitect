@@ -128,6 +128,12 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 	a.mu.Lock()
 	assessing := a.assessed[turn.Resume] || turn.Resume == "" && strings.Contains(turn.Prompt, "You assess the bound model")
 	a.mu.Unlock()
+	if turn.Kind == run.VerifyTurn && !assessing && turn.Resume == "" {
+		if !strings.Contains(turn.Prompt, "Extract: fixed artifacts and documented intent, with the proposed model as work product") {
+			a.t.Errorf("Extract lost its source authority: %s", turn.ID)
+		}
+	}
+
 	call := func(name string, args map[string]any) run.ToolAnswer {
 		data, _ := json.Marshal(args)
 		answer := tools(ctx, name, data)
@@ -160,7 +166,11 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		if turn.Kind == run.ExecuteTurn {
 			a.ws.write(turn.Workspace, a.writes[key])
 		}
-		call("report", map[string]any{"kind": "basis", "summary": "Basis of " + turn.Manager + "."})
+		basis := map[string]any{"kind": "basis", "summary": "Basis of " + turn.Manager + "."}
+		if !assessing && (turn.Manager == "." || turn.Manager == "lending") {
+			basis["integration"] = map[string]any{"status": "open", "conditions": "structure/model composition from mandate", "note": "will assess in result"}
+		}
+		call("report", basis)
 	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
 		result := map[string]any{"kind": "result", "summary": "Described " + turn.Manager + ".", "verdict": "satisfied"}
 		if turn.Kind == run.VerifyTurn {
@@ -172,6 +182,9 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 				result["verdict"] = "needs_correction"
 				result["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": "the mandate of this Extract", "observed": gap, "blocking": true, "correction": "model_gap"}}
 			}
+		}
+		if !assessing && (turn.Manager == "." || turn.Manager == "lending") {
+			result["integration"] = map[string]any{"status": "done", "conditions": "structure/model composition from Extract mandate", "note": "static fixture metadata", "evidence": []map[string]any{{"kind": "static", "authority": "pass_mandate", "claim": "fixture metadata composes", "source": "README.md", "location": "whole file", "reasoning": "static fixture evidence; no runtime claim"}}}
 		}
 		call("report", result)
 	}

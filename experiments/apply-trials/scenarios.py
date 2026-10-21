@@ -27,7 +27,7 @@ Historical results keep their original expectations: case S-QV still expects
 answer of 60) and its A5 on A4's publication keep their frozen inputs, and
 nothing here rescores them.
 """
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from cases import CASES
 
@@ -388,6 +388,20 @@ ASSESSMENT_CONTROLS = (
                       "stockroom/inputs normalizes them to uppercase."),
     AssessmentControl("MA-NEAR", "S-XNG", "accepted", "stockroom/item discusses the case of SKUs consistently with the "
                       "normalization: the contradiction's counter-control."),
+)
+
+# A separately named three-control series; prior A1/A2 and gap packets retain
+# their identities and original limits. Actual work/stop cutoffs are bound in
+# the invocation manifest before each start, never supplied as trial answers.
+_ccf_budget = Budget("42m", "4m", 240, 8)
+_original = {s.id:s for s in SCENARIOS}
+SCENARIOS = tuple(SCENARIOS) + (
+    replace(_original["A2"], id="CCF-P", case="D-CF", budget=_ccf_budget,
+            control="CCF-R", version=1, arms=("direct",), sessions=("CCF",), lineage="CCF-20261021-v1 corrected source-adjudicated reference; A2 v2 preserved"),
+    replace(_original["A1"], id="CCF-R", case="D-CFH", budget=_ccf_budget,
+            control="CCF-P", version=1, arms=("direct",), sessions=("CCF",), lineage="CCF-20261021-v1, exact CCF-P counterpart with n1 only; A1 v2 preserved"),
+    replace(_original["A4-gap"], id="CCF-G", budget=_ccf_budget,
+            version=1, arms=("direct",), sessions=("CCF",), lineage="CCF-20261021-v1; unchanged A4-gap model, new finite budget only"),
 )
 
 BY_ID = {scenario.id: scenario for scenario in SCENARIOS}

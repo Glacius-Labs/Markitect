@@ -98,10 +98,11 @@ type Check struct {
 // every Agent turn of Managers, reviewers and helpers; Passes counts the
 // Passes of the run.
 type Budget struct {
-	Deadline    time.Time
-	TurnTimeout time.Duration
-	AgentTurns  int
-	Passes      int
+	Deadline     time.Time
+	WorkDeadline time.Time
+	TurnTimeout  time.Duration
+	AgentTurns   int
+	Passes       int
 }
 
 // Verdict is the substantive judgment of a complete result, a Manager's or a

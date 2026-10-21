@@ -205,6 +205,9 @@ func validate(cfg Config) error {
 		}
 	}
 	b := cfg.Budget
+	if !b.WorkDeadline.IsZero() && !b.WorkDeadline.Before(b.Deadline) {
+		return bad("work deadline must precede the whole-run deadline")
+	}
 	if b.Deadline.IsZero() || b.TurnTimeout <= 0 || b.AgentTurns <= 0 || b.Passes <= 0 {
 		return bad("the budget needs a deadline, a turn timeout, agent turns and passes")
 	}
@@ -412,7 +415,7 @@ func (e *engine) open() {
 	for _, m := range e.team {
 		managers = append(managers, m.Path)
 	}
-	if e.record(Event{Kind: "run.start", Data: map[string]any{"run": cfg.RunID, "binding": cfg.Binding, "managers": managers, "start": cfg.Start.Digest().String(), "agentTurns": cfg.Budget.AgentTurns, "passes": cfg.Budget.Passes, "deadline": cfg.Budget.Deadline}}) != nil {
+	if e.record(Event{Kind: "run.start", Data: map[string]any{"run": cfg.RunID, "binding": cfg.Binding, "managers": managers, "start": cfg.Start.Digest().String(), "agentTurns": cfg.Budget.AgentTurns, "passes": cfg.Budget.Passes, "deadline": cfg.Budget.Deadline, "workDeadline": cfg.Budget.WorkDeadline}}) != nil {
 		return
 	}
 	if cfg.Budget.AgentTurns < 2*len(e.team) {

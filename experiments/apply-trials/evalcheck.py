@@ -104,7 +104,7 @@ def packet(scenario_id, folder, name):
 
 def publish_reference(repo, project, case_id=None):
     """The reference publication; on a case with a stand, the reference with that stand."""
-    selfcheck.publish(project, repo, stand=CASES[case_id].stand_edits if case_id else ())
+    selfcheck.publish(project, repo, stand=(CASES[case_id].reference_edits + CASES[case_id].stand_edits) if case_id else ())
 
 
 def apply_variant(repo, variant_id):
@@ -620,6 +620,40 @@ def check_primary_goal(report, python, folder):
     report.facts["primary goal controls"] = controls
 
 
+def check_ccf(report, python, folder):
+    """CCF-only score controls; scripted reports prove scorer rules, not model detection."""
+    complete = [{"id":"v1", "purpose":"verify", "review":True, "sealed":True,
+                 "verdict":"satisfied", "tree":"candidate", "managers":[{"manager":m,"state":"done","basis":"B"+m,"result":"P"+m} for m in (".","catalog","depot","orders","reports","stock")]}]
+    trace = [dict(event("pass.start", ".", purpose="verify"), **{"pass":"v1"}),
+             dict(event("candidate", ".", tree="candidate"), **{"pass":"v1"}),
+             dict(event("pass.sealed", ".", tree="candidate"), **{"pass":"v1"})]
+    events_path = Path(folder) / "ccf-events.jsonl"
+    events_path.write_text("".join(json.dumps(item)+"\n" for item in trace), encoding="utf-8")
+    for sid in ("CCF-P", "CCF-R"):
+        summary = {"passes": complete, "findings":[], "questions":[]}
+        report.expect(evaluate.process(BY_ID[sid], summary, trace)["verdict"] == evaluate.MET, sid+" refuses a complete Verify score control")
+        for damaged in ([], [dict(complete[0], sealed=False)], [dict(complete[0], managers=[])], [dict(complete[0], managers=complete[0]["managers"][:1])], [dict(complete[0], review=False)]):
+            observed_verdict = evaluate.process(BY_ID[sid], dict(summary,passes=damaged), trace)["verdict"]
+            report.expect(observed_verdict == evaluate.INCOMPLETE, sid+" accepts absent/incomplete/nonindependent Verify")
+        for mismatch in (trace[:1],
+                         [dict(item, **{"pass":"another-pass"}) for item in trace],
+                         [dict(item,data=dict(item["data"],tree="another-tree")) if item["kind"] == "candidate" else item for item in trace],
+                         [dict(item,data=dict(item["data"],tree="another-tree")) if item["kind"] == "pass.sealed" else item for item in trace]):
+            report.expect(evaluate.process(BY_ID[sid], summary, mismatch)["verdict"] == evaluate.INCOMPLETE,
+                          sid+" accepts absent or mismatched candidate/sealed event identity")
+    preserved = packet("CCF-P",folder,"CCF-P")
+    positive = evaluate.evaluate("CCF-P","direct",preserved,apply_report(folder,"ccfp","verified","no_change",complete),events=events_path,python=python)
+    verdict(report,"CCF positive preservation",positive,evaluate.MET)
+    report.expect(positive["process"]["verdict"] == evaluate.MET,"CCF positive process is incomplete")
+    report.expect(positive["report"]["costUSD"] is None and not positive["report"]["billingCostKnown"],"CCF treats unpriced usage as known cost")
+    repaired = packet("CCF-R",folder,"CCF-R")
+    verdict(report,"CCF faulty counterpart",evaluate.evaluate("CCF-R","direct",repaired,apply_report(folder,"ccfr-fault","verified","applied",complete),events=events_path,python=python),evaluate.NOT_MET)
+    publish_reference(repaired,"depot","D-CFH")
+    verdict(report,"CCF necessary repair",evaluate.evaluate("CCF-R","direct",repaired,apply_report(folder,"ccfr","verified","applied",complete),events=events_path,python=python),evaluate.MET)
+    gap = packet("CCF-G",folder,"CCF-G")
+    verdict(report,"CCF Assessment gap",evaluate.evaluate("CCF-G","direct",gap,apply_report(folder,"ccfg","failed",None,ASSESSED,reason=GAP_STOP),python=python),evaluate.MET,JUSTIFIED_STOP)
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--markitect", help="a markitect executable for the checked-model comparisons")
@@ -637,6 +671,7 @@ def main(argv=None):
     with tempfile.TemporaryDirectory(prefix="evalcheck-") as folder:
         check_fixed_history(report, folder)
         if not args.quick:
+            check_ccf(report, python, folder)
             check_verify(report, python, folder)
             check_repairs(report, python, folder)
             check_preservation(report, python, folder)

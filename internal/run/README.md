@@ -120,6 +120,25 @@ the Manager's own question is unanswered. Plans are validated (approach, method 
 evidence per obligation, owners of inputs and outputs, dependencies without a cycle with
 the parent-first order).
 
+In Implement and artifact review, every coverage entry has `conditions`: concise
+references to material conditions, exceptions and interactions in the bound authority,
+why the evidence covers them, and anything still uncovered. Definition IDs alone are not
+coverage. A fresh reviewer derives its own conditions/counterexamples in its basis before
+assessing author coverage, including valid inputs wrongly refused and invalid inputs
+wrongly accepted. Extract retains fixed artifacts/documented intent as authority; its
+proposed model is work product.
+
+Every parent, including Root without own Definitions, carries `integration` in the same
+basis/result envelope: `status`, `conditions`, `note`, and evidence of composed workflows/global invariants.
+The basis and a Plan result state intended integration and its planned evidence; every
+non-Plan result establishes actual integration with evidence beyond accepted child reports. Integration grants no sibling writes.
+Source evidence cites a real Definition in `authority`, or `pass_mandate` for the already
+bound integration task where no Definition supplies it; this is no synthetic Definition
+or new authority. Open integration cannot yield a satisfied result/Pass.
+
+Implement `satisfied` means a checked implementation submission to independent Verify.
+It does not establish verified conformance or permit publication.
+
 A Pass verdict is `satisfied` when Root's integrated result is satisfied and no genuine
 finding of the kind the Pass judges is open; a review also needs every required check
 passing on its candidate and every adverse probe receipt on it disposed of independently. In every Pass no accepted result may leave an own obligation
@@ -131,6 +150,12 @@ it holds the Pass back until its raiser closes it, and a child's `needs_correcti
 rested on it no longer does once it is closed. `PassResult.Corrections` names the correction purposes of
 the open genuine findings that kind of Pass judges: work findings after a work Pass, all
 after a review.
+
+An optional `Budget.WorkDeadline` precedes the whole-run deadline and cancels an active
+non-Verify Pass when it expires. Incomplete work is not sealed or sent to Verify. Verify
+can use the remaining window; a subsequent correction must still meet the original
+work cutoff. The existing deadline, turn, Pass and probe limits remain. The invocation
+may bind this cutoff explicitly; setup does not synthesize a reserve.
 
 ## Findings
 
@@ -163,6 +188,17 @@ observed nonzero exit of the probe's own assertions, `error` for everything else
 started, timed out, uncertain, mismatched, not executable with exit 126 or 127, or killed
 by a signal with exit 128 or above), which never counts as a pass or as an expected
 refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
+Implement and artifact-review `done`/`preserved` claims require typed evidence.
+`kind: public_behavior` cites an own passing receipt with the same declared `boundary`
+as `probe.boundary`, through the actual public entry and relevant parsing/transport/
+persistence. `kind: static` cites source, location and reasoning explaining why execution
+is inapplicable. Neither private-validator execution, source reassurance for executable
+behavior nor a suite total closes a public behavior claim. Missing required execution
+stays open. One receipt supports only one claim across the entire envelope, integration
+included. Sources/receipts bind to the submitted stand after writers stopped. Tooling
+checks structure and bindings; Managers/reviewers judge authority, actual entry use,
+assertions and semantic adequacy. Repeating a boundary label proves no such adequacy.
+
 A probe runs only while its turn keeps a fifth of its timeout for the report, and it ends
 before that point; late in a turn it is refused rather than letting the timeout fail the
 turn.

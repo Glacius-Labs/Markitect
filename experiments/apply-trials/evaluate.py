@@ -431,11 +431,38 @@ def process(scenario, summary, events, damaged=0):
     if summary and (scenario.expect == PRESERVE or CASES[scenario.case].preserve):
         repeated = repeated_notes(summary["findings"])
         details["repeatedSuggestionCandidates"] = repeated
-    if summary and scenario.id == "A1":
+    if summary and scenario.id in ("A1", "CCF-R"):
         open_findings = [item["id"] for item in summary["findings"] if item.get("blocking") and not item.get("closed")]
         details["openFindings"] = open_findings
         if open_findings:
             reasons.append("genuine findings still open: %s" % open_findings)
+    if summary and scenario.id in ("CCF-P", "CCF-R"):
+        # CCF acceptance needs a completed fresh independent Verify, not only
+        # a claimed run label or an ordinary green test suite. Older scores
+        # keep their historical criteria.
+        passes = summary["passes"]
+        last = passes[-1] if passes else {}
+        managers = last.get("managers") or []
+        # The fixed CCF depot model owns these five Packages plus Root; the
+        # control/model hashes freeze this list outside all Agent packets.
+        required = {".", "catalog", "depot", "orders", "reports", "stock"}
+        complete = (last.get("purpose") == "verify" and last.get("review") is True
+                    and last.get("sealed") is True and last.get("verdict") == "satisfied"
+                    and bool(last.get("tree")) and len(managers) == len(required)
+                    and {m.get("manager") for m in managers} == required
+                    and all(m.get("state") == "done" and m.get("basis") and m.get("result") for m in managers))
+        if not complete:
+            return {"verdict": INCOMPLETE, "reasons": reasons + ["no completed independent Verify of the full Manager tree"], "details": details}
+        # Match the report to the actual immutable candidate binding emitted by
+        # this Verify Pass. Run/Publisher owns binding it to published bytes;
+        # this cross-check does not independently rehash the candidate tree.
+        bound = [event for event in events if event.get("kind") == "candidate"
+                 and event.get("pass") == last.get("id")]
+        sealed = [event for event in events if event.get("kind") == "pass.sealed"
+                  and event.get("pass") == last.get("id")]
+        if (not bound or not sealed or
+                any((event.get("data") or {}).get("tree") != last["tree"] for event in bound + sealed)):
+            return {"verdict": INCOMPLETE, "reasons": reasons + ["Verify candidate tree does not match its candidate/sealed events"], "details": details}
     if summary and scenario.expect in STOPS:
         realization = [event for event in events if event.get("kind") == "pass.start"
                        and str((event.get("data") or {}).get("purpose", "")).lower() in REALIZATION_PURPOSES]
@@ -480,6 +507,12 @@ def evaluate(scenario_id, arm, repo, report=None, events=None, final=None, pytho
                                 "failed": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "fail"},
                                 "skipped": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "skip"}}
     summary = assess.summarize_report(report_data) if report_data is not None else None
+    if summary is not None and scenario.id.startswith("CCF-"):
+        # Provider token usage is retained; an unpriced numeric zero from the
+        # shared report is not evidence that this ChatGPT session cost nothing.
+        summary["reportedCostUSDRaw"] = ((report_data or {}).get("run") or {}).get("usage", {}).get("costUSD")
+        summary["costUSD"] = None
+        summary["billingCostKnown"] = False
     run_id = ((report_data or {}).get("run") or {}).get("id")
     final_data = load_final(final)
     verdict, category, reasons = outcome(scenario, arm, assessed, summary, final_data, earlier_run, run_id)

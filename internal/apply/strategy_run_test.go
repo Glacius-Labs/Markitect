@@ -176,7 +176,7 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 		}
 		var covered []map[string]any
 		for i, id := range a.obligations[turn.Manager] {
-			entry := map[string]any{"definition": id, "status": "preserved", "note": "The existing artifacts meet it."}
+			entry := map[string]any{"definition": id, "status": "preserved", "note": "The existing artifacts meet it.", "conditions": "scripted static fixture contract; no public behavior asserted"}
 			switch {
 			case raise && i == 0:
 				entry["status"], entry["note"] = "open", "The scripted finding holds it open."
@@ -188,10 +188,13 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 					correction = "implement"
 				}
 				report["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": id, "expected": "the stand keeps " + id, "observed": "A scripted counterexample.", "blocking": true, "correction": correction}}
-			case turn.Kind == run.VerifyTurn:
-				entry["evidence"] = []map[string]any{{"claim": "the stand keeps " + id, "source": ".markitect/execution.yaml", "location": "the whole file", "reasoning": "This scripted reviewer inspected the stand."}}
+			case !plans:
+				entry["evidence"] = []map[string]any{{"kind": "static", "claim": "the stand keeps " + id, "source": ".markitect/execution.yaml", "location": "the whole file", "reasoning": "This scripted reviewer inspected the stand."}}
 			}
 			covered = append(covered, entry)
+		}
+		if !assessing && (turn.Manager == "." || turn.Manager == "lending") {
+			report["integration"] = map[string]any{"status": "done", "conditions": "scripted static composition", "note": "protocol evidence only", "evidence": []map[string]any{{"kind": "static", "authority": "pass_mandate", "claim": "fixture layout composes", "source": ".markitect/execution.yaml", "location": "ownership", "reasoning": "static metadata, no executable claim"}}}
 		}
 		if covered != nil {
 			report["obligations"] = covered
@@ -364,6 +367,8 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 	} {
 		t.Run(tc.strategy, func(t *testing.T) {
 			req := strategyRequest(t, tc.strategy)
+			req.Deadline = time.Now().Add(20 * time.Minute)
+			req.WorkDeadline = req.Deadline.Add(-12 * time.Minute)
 			cfg, err := apply.BuildApplyConfig(req, time.Now())
 			if err != nil {
 				t.Fatal(err)
@@ -409,6 +414,9 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 				t.Fatalf("publication %+v receipt %+v closed %v", publisher.requests, result.Receipt, workspaces.closed)
 			}
 			b := result.Binding
+			if !cfg.Budget.WorkDeadline.Equal(req.WorkDeadline) || !b.Budget.WorkDeadline.Equal(req.WorkDeadline) || !b.Budget.Deadline.Equal(req.Deadline) {
+				t.Fatalf("effective work/review cutoffs lost: %+v", b.Budget)
+			}
 			compositions[tc.strategy] = b.Composition
 			if b.Entry != "apply" || string(b.Strategy) != tc.strategy || !slices.Equal(b.Work, append([]run.Purpose{run.Assess}, tc.work...)) || b.Build != "test-build" || !strings.HasPrefix(b.Execution, ".markitect/execution.yaml@") || !strings.HasPrefix(b.Defaults, "product:apply/defaults.yaml@") {
 				t.Fatalf("binding %+v", b)

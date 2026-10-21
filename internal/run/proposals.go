@@ -85,6 +85,7 @@ type proposal struct {
 type envelope struct {
 	Summary     string     `json:"summary"`
 	Obligations []coverage `json:"obligations"`
+	Integration *coverage  `json:"integration,omitempty"`
 	Plan        *plan      `json:"plan,omitempty"`
 	Artifacts   []string   `json:"artifacts,omitempty"`
 	Evidence    []string   `json:"evidence,omitempty"`
@@ -101,6 +102,7 @@ type coverage struct {
 	Definition string         `json:"definition"`
 	Status     string         `json:"status"`
 	Note       string         `json:"note,omitempty"`
+	Conditions string         `json:"conditions,omitempty"`
 	Evidence   []evidenceItem `json:"evidence,omitempty"`
 }
 
@@ -174,6 +176,7 @@ type reportIn struct {
 	Child        string          `json:"child"`
 	Reason       string          `json:"reason"`
 	Obligations  []coverage      `json:"obligations"`
+	Integration  *coverage       `json:"integration"`
 	Plan         *plan           `json:"plan"`
 	Artifacts    []string        `json:"artifacts"`
 	Evidence     []string        `json:"evidence"`
@@ -192,8 +195,8 @@ type reportIn struct {
 var reportFields = map[string][]string{
 	kindProgress: {"summary"},
 	kindWait:     {"for", "reason", "stage"},
-	kindBasis:    {"summary", "obligations", "plan", "artifacts", "evidence", "findings", "closed", "disputed", "dispositions"},
-	kindResult:   {"summary", "obligations", "plan", "artifacts", "evidence", "verdict", "findings", "closed", "disputed", "dispositions"},
+	kindBasis:    {"summary", "obligations", "integration", "plan", "artifacts", "evidence", "findings", "closed", "disputed", "dispositions"},
+	kindResult:   {"summary", "obligations", "integration", "plan", "artifacts", "evidence", "verdict", "findings", "closed", "disputed", "dispositions"},
 	kindAccept:   {"proposal"},
 	kindReturn:   {"proposal", "reason"},
 	kindReopen:   {"child", "reason"},
@@ -215,6 +218,7 @@ func (in reportIn) present() []string {
 	add("child", in.Child != "")
 	add("reason", in.Reason != "")
 	add("obligations", in.Obligations != nil)
+	add("integration", in.Integration != nil)
 	add("plan", in.Plan != nil)
 	add("artifacts", in.Artifacts != nil)
 	add("evidence", in.Evidence != nil)
@@ -451,7 +455,11 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		return refuse("%v", err)
 	}
 	env := envelope{Summary: summary}
-	if env.Obligations, err = e.coverageOf(m, in); err != nil {
+	cited := map[string]bool{}
+	if env.Obligations, err = e.coverageOf(m, in, cited); err != nil {
+		return refuse("%v", err)
+	}
+	if env.Integration, err = e.integrationOf(m, in, cited); err != nil {
 		return refuse("%v", err)
 	}
 	raised, err := e.findingsOf(m, in.Findings)
@@ -537,8 +545,8 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 // an own obligation once, with a known status and a note where one is needed.
 // A complete result covers every own obligation; a planning Pass needs the
 // method and intended evidence of each covered obligation.
-func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
-	seen, cited := map[string]bool{}, map[string]bool{}
+func (e *engine) coverageOf(m *member, in reportIn, cited map[string]bool) ([]coverage, error) {
+	seen := map[string]bool{}
 	var out []coverage
 	for i, c := range in.Obligations {
 		if !slices.Contains(m.Obligations, c.Definition) {
@@ -564,14 +572,22 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 			}
 		}
 		claimed := c.Status == coverDone || c.Status == coverPreserved
-		if m.p.spec.Review && claimed && len(c.Evidence) == 0 {
-			return nil, fmt.Errorf("obligations[%d]: %s in a review needs evidence for %s: per claim a probe receipt of the tool check or an inspected source location with reasoning; a suite total alone is no coverage", i, c.Status, c.Definition)
+		if evidenceRequired(m.p.spec) && strings.TrimSpace(c.Conditions) == "" {
+			return nil, fmt.Errorf("obligations[%d]: conditions must justify material conditions, exceptions and interactions from this Definition and required contracts, including uncovered cases", i)
+		}
+		if c.Conditions != "" {
+			if _, err := toolText("conditions", c.Conditions); err != nil {
+				return nil, err
+			}
+		}
+		if (m.p.spec.Review || evidenceRequired(m.p.spec)) && claimed && len(c.Evidence) == 0 {
+			return nil, fmt.Errorf("obligations[%d]: %s needs evidence for %s: per claim a probe receipt of the tool check or an inspected source location with reasoning; a suite total alone is no coverage", i, c.Status, c.Definition)
 		}
 		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p), cited)
 		if err != nil {
 			return nil, err
 		}
-		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Evidence: evidence})
+		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Conditions: c.Conditions, Evidence: evidence})
 	}
 	if in.Kind == kindResult {
 		var missing []string
@@ -585,6 +601,51 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 		}
 	}
 	return out, nil
+}
+
+// evidenceRequired applies realized-claim evidence to Implement and independent
+// artifact review. Model assessment judges intent rather than artifact behavior.
+func evidenceRequired(spec PassSpec) bool {
+	return !spec.Assesses && (spec.Purpose == Implement || spec.Review)
+}
+
+// integrationOf keeps the parent's own integration in the common submission,
+// including Root without own Definitions. Its authority is the real model,
+// never a fabricated Definition or a child's success label.
+func (e *engine) integrationOf(m *member, in reportIn, cited map[string]bool) (*coverage, error) {
+	required := !m.p.spec.Assesses && (m.Parent == "" || len(m.Children) > 0)
+	c := in.Integration
+	if c == nil {
+		if required {
+			return nil, fmt.Errorf("integration is required for every parent, including Root with no own Definitions: justify composed workflows and global invariants")
+		}
+		return nil, nil
+	}
+	if !required {
+		return nil, fmt.Errorf("integration belongs to a parent; cover your own obligations instead")
+	}
+	if c.Definition != "" {
+		return nil, fmt.Errorf("integration has no synthetic definition; cite real model authority in its evidence")
+	}
+	if c.Status != coverDone && c.Status != coverPreserved && c.Status != coverOpen {
+		return nil, fmt.Errorf("integration.status must be done, preserved or open; every parent owns integration")
+	}
+	if _, err := toolText("integration.conditions", c.Conditions); err != nil {
+		return nil, err
+	}
+	if _, err := toolText("integration.note", c.Note); err != nil {
+		return nil, err
+	}
+	if in.Kind == kindResult && c.Status != coverOpen && !m.p.spec.Plans && len(c.Evidence) == 0 {
+		return nil, fmt.Errorf("integration needs your own discriminating evidence; accepted child reports alone do not establish composition")
+	}
+	out := *c
+	var err error
+	out.Evidence, err = e.evidenceOf(m, -1, out, e.boundStandLocked(m.p), cited)
+	if err != nil {
+		return nil, fmt.Errorf("integration: %w", err)
+	}
+	return &out, nil
 }
 
 // boundStandLocked is the stand a submission of the Pass is bound to when it is
@@ -1115,7 +1176,7 @@ func (e *engine) verdictConsistent(m *member, env envelope, raised []Finding, cl
 	for i := range raised {
 		count(&raised[i])
 	}
-	hasOpenCoverage := slices.ContainsFunc(env.Obligations, func(c coverage) bool { return c.Status == coverOpen })
+	hasOpenCoverage := slices.ContainsFunc(env.Obligations, func(c coverage) bool { return c.Status == coverOpen }) || env.Integration != nil && env.Integration.Status == coverOpen
 	switch {
 	case env.Verdict == Satisfied && own > 0:
 		return fmt.Errorf("verdict satisfied, but %d genuine finding(s) raised within your responsibility stay open; close those you raised with a reason or report needs_correction", own)
