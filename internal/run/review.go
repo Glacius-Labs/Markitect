@@ -29,12 +29,13 @@ func (e *engine) prepareReview(p *pass) bool {
 		}
 	}
 	e.mu.Unlock()
+	if p.spec.Assesses {
+		// The assessment judges the model of a stand whose entry checks passed;
+		// the gates and checks judge candidates and artifacts.
+		return true
+	}
 	if !e.gate(p, p.tree, "on the candidate") {
 		return false
-	}
-	if p.spec.Assesses {
-		// The assessment judges the model; a check judges artifacts.
-		return true
 	}
 	results := e.runChecks(p, p.tree)
 	if e.ctx.Err() != nil {

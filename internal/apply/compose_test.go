@@ -38,9 +38,10 @@ func TestStrategiesComposeTheOnePassProcess(t *testing.T) {
 	if d, s := Direct.verify(), Staged.verify(); d.Purpose != run.Verify || !d.Review || d.Mandate != s.Mandate || d.Guidance != s.Guidance {
 		t.Errorf("the strategies' Verify differ: %+v / %+v", d, s)
 	}
-	// Staged keeps Main's Root duty: it accepts a plan, which direct has not.
-	if !strings.Contains(Staged.rootDuty(), "accept a plan that depends on it") || !strings.Contains(Direct.rootDuty(), "accept a submission that depends on it") ||
-		strings.Replace(Direct.rootDuty(), "a submission", "a plan", 1) != Staged.rootDuty() {
+	// One Root duty in every strategy: a confirmed model problem ends the run,
+	// since nobody answers from outside the tree (closed Runs, PR #560).
+	if Direct.rootDuty() != Staged.rootDuty() || !strings.Contains(Direct.rootDuty(), "abort true") || !strings.Contains(Direct.rootDuty(), "instead of letting a Manager pick a default") ||
+		!strings.Contains(Direct.rootDuty(), "a new run starts") || strings.Contains(Direct.rootDuty(), "ask the user") {
 		t.Errorf("Root duties: staged %q, direct %q", Staged.rootDuty(), Direct.rootDuty())
 	}
 }
@@ -121,10 +122,13 @@ func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
 	if mandate := Direct.verify().Mandate; !strings.Contains(mandate, "against the bound model") || !strings.Contains(mandate, "probes with the tool check") {
 		t.Fatalf("Apply review lacks its bound-model expectations or probes: %s", mandate)
 	}
-	// A public behavior the model leaves open is asked, not defaulted (A4 of
-	// the hardening evaluation picked an unstated name maximum of 80).
+	// A public behavior the model leaves open is a model problem, not a default
+	// (A4 of the hardening evaluation picked an unstated name maximum of 80),
+	// and nobody outside the tree answers it during the run.
 	for _, s := range strategies {
-		if !strings.Contains(s.work()[0].Mandate, "no implementation choice") || !strings.Contains(s.work()[0].Mandate, "stays yours to decide and document") || !strings.Contains(s.rootDuty(), "ask the user with the concrete alternatives") {
+		mandate := s.work()[0].Mandate
+		if !strings.Contains(mandate, "no implementation choice") || !strings.Contains(mandate, "stays yours to decide and document") || !strings.Contains(mandate, "report it to your parent as a model problem") ||
+			strings.Contains(mandate, "the user") || !strings.Contains(s.rootDuty(), "instead of letting a Manager pick a default") {
 			t.Fatalf("%s lets a Manager settle a public behavior the model leaves open", s)
 		}
 	}

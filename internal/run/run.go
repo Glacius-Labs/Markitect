@@ -323,8 +323,8 @@ type Config struct {
 // built on it, for which it is a start condition of the restart, and returns a
 // waiter whose result alone built on it to its integration. Assesses (review)
 // makes the review Pass the Model assessment of the bound model before any
-// realization: it runs no required check and offers no probe, because a check
-// judges artifacts, its satisfied seal verifies no candidate of its own (a
+// realization: it runs no gate or required check on its candidate and offers
+// no probe, because the entry checks passed and a check judges artifacts, its satisfied seal verifies no candidate of its own (a
 // candidate verified just before it stays verified), and a seal that
 // needs correction with a confirmed finding (open, genuine, raised by the team
 // and not disputed in the Pass) ends the run Failed, since no Pass of the run

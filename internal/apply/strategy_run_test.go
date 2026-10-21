@@ -33,6 +33,8 @@ import (
 // <Manager>": the first such turn reports a compaction, the first continued one
 // comes back in another conversation, or the first one fails before any tool
 // call; marks keeps which turn did what. A conversation otherwise continues.
+// The Model assessment that precedes the work accepts the model: no scripted
+// event happens in its turns.
 // Any other refused tool call fails the test, so the script cannot drift from
 // the engine's protocol unnoticed.
 type preservingAgents struct {
@@ -55,6 +57,7 @@ type preservingAgents struct {
 	raised      bool
 	open        bool
 	ids         []string
+	assessing   map[string]bool // conversation -> it is a Model assessment
 }
 
 var ownFindingRE = regexp.MustCompile(`Finding (F\d+) \[`)
@@ -76,7 +79,11 @@ func (a *preservingAgents) once(events map[string]bool, turn run.Turn, mark stri
 func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
 	a.mu.Lock()
 	a.turns = append(a.turns, turn)
-	failed := a.once(a.fails, turn, "failed")
+	if a.assessing == nil {
+		a.assessing = map[string]bool{}
+	}
+	assessing := a.assessing[turn.Resume] || turn.Resume == "" && strings.Contains(turn.Prompt, "You assess the bound model")
+	failed := !assessing && a.once(a.fails, turn, "failed")
 	a.mu.Unlock()
 	if failed {
 		return run.TurnResult{Conversation: "conv-" + turn.Home, Stopped: true}, errors.New("the scripted turn failed")
@@ -93,9 +100,13 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 		return answer.Text
 	}
 	a.mu.Lock()
-	lookups := a.lookups[turn.Manager]
-	delete(a.lookups, turn.Manager)
-	compacted := a.once(a.compacted, turn, "compacted")
+	var lookups []string
+	compacted := false
+	if !assessing {
+		lookups = a.lookups[turn.Manager]
+		delete(a.lookups, turn.Manager)
+		compacted = a.once(a.compacted, turn, "compacted")
+	}
 	a.mu.Unlock()
 	if len(lookups) > 0 && a.ws != nil {
 		a.ws.edit(turn.Workspace, a.edits)
@@ -124,7 +135,7 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	submission := func(kind string) map[string]any {
 		report := map[string]any{"kind": kind, "summary": kind + " of " + turn.Manager + "."}
 		raise := false
-		if turn.Kind == run.VerifyTurn && turn.Manager == a.finds {
+		if turn.Kind == run.VerifyTurn && turn.Manager == a.finds && !assessing {
 			a.mu.Lock()
 			// The assignment of a later Verify names the findings it raised.
 			if _, earlier, found := strings.Cut(turn.Prompt, "Open findings you raised in earlier Passes"); found {
@@ -215,10 +226,11 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 		conversation = "conv-" + turn.Home
 	}
 	a.mu.Lock()
-	if a.once(a.forgets, turn, "lost") {
+	if !assessing && a.once(a.forgets, turn, "lost") {
 		// The provider did not continue the conversation it was asked to.
 		conversation = "lost-" + turn.Home
 	}
+	a.assessing[conversation] = assessing
 	a.mu.Unlock()
 	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: stopped, Compacted: compacted}, nil
 }
@@ -356,7 +368,7 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 					t.Errorf("pass %s %s: sealed %v verdict %s", p.ID, p.Purpose, p.Sealed, p.Verdict)
 				}
 			}
-			if want := append(slices.Clone(tc.work), run.Verify); !slices.Equal(purposes, want) {
+			if want := append(append([]run.Purpose{run.Assess}, tc.work...), run.Verify); !slices.Equal(purposes, want) {
 				t.Fatalf("passes %v, want %v", purposes, want)
 			}
 			gates := map[string]int{}
@@ -365,9 +377,11 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 					gates[e.Pass]++
 				}
 			}
+			// The Model assessment judges the model of the checked capture; every
+			// other Pass runs the gates.
 			for _, p := range result.Outcome.Passes {
-				if gates[p.ID] == 0 {
-					t.Errorf("pass %s ran without its Model check and File check", p.ID)
+				if (gates[p.ID] == 0) != (p.Purpose == run.Assess) {
+					t.Errorf("pass %s (%s) ran %d gates", p.ID, p.Purpose, gates[p.ID])
 				}
 			}
 			if len(runner.runs) != 1 || runner.runs[0].Tree.Digest() != result.Outcome.Candidate.Digest() {
@@ -378,7 +392,7 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 			}
 			b := result.Binding
 			compositions[tc.strategy] = b.Composition
-			if b.Entry != "apply" || string(b.Strategy) != tc.strategy || !slices.Equal(b.Work, tc.work) || b.Build != "test-build" || !strings.HasPrefix(b.Execution, ".markitect/execution.yaml@") || !strings.HasPrefix(b.Defaults, "product:apply/defaults.yaml@") {
+			if b.Entry != "apply" || string(b.Strategy) != tc.strategy || !slices.Equal(b.Work, append([]run.Purpose{run.Assess}, tc.work...)) || b.Build != "test-build" || !strings.HasPrefix(b.Execution, ".markitect/execution.yaml@") || !strings.HasPrefix(b.Defaults, "product:apply/defaults.yaml@") {
 				t.Fatalf("binding %+v", b)
 			}
 			if len(b.Managers) != len(cfg.Team) || b.Managers[0].Execute.Profile != "library-agent" || b.Managers[0].Execute.Identity == "" || len(b.Checks) != 1 || b.Checks[0].Name != "project-tests" || b.Budget.Passes != 12 {
@@ -414,7 +428,7 @@ func TestBothStrategiesStopWithoutObservedWriterCessation(t *testing.T) {
 			}
 			for _, p := range result.Outcome.Passes {
 				for _, m := range p.Managers {
-					if m.Manager == "." && m.Basis != "" {
+					if p.Purpose != run.Assess && m.Manager == "." && m.Basis != "" {
 						t.Fatalf("Root's basis was accepted from an unstopped turn: %+v", m)
 					}
 				}
@@ -433,9 +447,9 @@ func TestBothStrategiesCorrectAFindingThroughAFreshVerify(t *testing.T) {
 		refused              bool
 	}{
 		// direct knows only implement: a finding that names plan is refused.
-		{"direct", "plan", []run.Purpose{run.Implement, run.Verify, run.Implement, run.Verify}, true},
+		{"direct", "plan", []run.Purpose{run.Assess, run.Implement, run.Verify, run.Implement, run.Verify}, true},
 		// staged restarts at the earliest purpose the finding names.
-		{"staged", "prepare", []run.Purpose{run.Plan, run.Prepare, run.Implement, run.Verify, run.Prepare, run.Implement, run.Verify}, false},
+		{"staged", "prepare", []run.Purpose{run.Assess, run.Plan, run.Prepare, run.Implement, run.Verify, run.Prepare, run.Implement, run.Verify}, false},
 	} {
 		t.Run(tc.strategy, func(t *testing.T) {
 			// Seven Passes of six Managers need more turns than the fixture's 120.

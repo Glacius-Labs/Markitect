@@ -235,9 +235,11 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	if !result.Structure.Candidate.Equal(proposed) || !result.Model.Candidate.Equal(complete) {
 		t.Fatal("the verified candidates are not the proposals the Agents wrote")
 	}
-	// Each phase is one work Pass of its own purpose and one independent Verify;
-	// every Manager takes two turns in each: its basis and its complete result.
-	if len(result.Structure.Passes) != 2 || len(result.Model.Passes) != 2 {
+	// The structure phase is Root's Model assessment of the mandate, its work
+	// Pass and an independent Verify; the model phase its work Pass, Verify and
+	// the Model assessment of the verified candidate. Every Manager takes two
+	// turns in each: its basis and its complete result.
+	if len(result.Structure.Passes) != 3 || len(result.Model.Passes) != 3 {
 		t.Fatalf("passes %d/%d", len(result.Structure.Passes), len(result.Model.Passes))
 	}
 	for i, tc := range []struct {
@@ -245,8 +247,8 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		purpose run.Purpose
 		review  bool
 	}{
-		{result.Structure.Passes[0], "structure", false}, {result.Structure.Passes[1], run.Verify, true},
-		{result.Model.Passes[0], "model", false}, {result.Model.Passes[1], run.Verify, true},
+		{result.Structure.Passes[0], run.Assess, true}, {result.Structure.Passes[1], "structure", false}, {result.Structure.Passes[2], run.Verify, true},
+		{result.Model.Passes[0], "model", false}, {result.Model.Passes[1], run.Verify, true}, {result.Model.Passes[2], run.Assess, true},
 	} {
 		if tc.pass.Purpose != tc.purpose || tc.pass.Review != tc.review || tc.pass.Verdict != run.Satisfied || !tc.pass.Sealed {
 			t.Errorf("pass %d: %+v", i, tc.pass)
@@ -261,9 +263,9 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		t.Errorf("the structure phase is Root alone and the model phase the proposed tree: %d/%d", len(result.Structure.Passes[0].Managers), len(result.Model.Passes[0].Managers))
 	}
 	// Parents take further turns to decide their children's proposals, so the
-	// model phase has at least the two turns of each of its six Managers in both
-	// Passes.
-	if len(result.Structure.Turns) != 4 || len(result.Model.Turns) < 24 || result.Model.Usage.InputTokens != int64(10*len(result.Model.Turns)) {
+	// model phase has at least the two turns of each of its six Managers in its
+	// three Passes.
+	if len(result.Structure.Turns) != 6 || len(result.Model.Turns) < 36 || result.Model.Usage.InputTokens != int64(10*len(result.Model.Turns)) {
 		t.Fatalf("turns %d/%d usage %+v", len(result.Structure.Turns), len(result.Model.Turns), result.Model.Usage)
 	}
 	if len(result.ProposedChecks) != 0 {
@@ -420,7 +422,7 @@ func TestExtractStopsAfterAnUnverifiedStructurePhaseAndKeepsItsWork(t *testing.T
 	if result.Structure.Status != run.Incomplete || result.Model != nil || result.Receipt != nil || len(publisher.requests) != 0 || result.RetainedWork != "x-1-structure-work" {
 		t.Fatalf("%+v", result)
 	}
-	if result.Structure.Reason == "" || len(result.Structure.Passes) == 0 || result.Structure.Passes[0].Sealed {
+	if result.Structure.Reason == "" || len(result.Structure.Passes) != 2 || !result.Structure.Passes[0].Sealed || result.Structure.Passes[1].Sealed {
 		t.Errorf("the unverified phase has no reason, or sealed a Pass nothing could accept: %+v", result.Structure)
 	}
 	returned := false
@@ -482,13 +484,14 @@ func TestExtractEndsTheModelPhaseWhenAnAgentLeavesAFileOutsideAnyArea(t *testing
 
 func TestExtractKeepsTheStructureWhenTheModelPhaseHasTooFewTurns(t *testing.T) {
 	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
-	// 13 turns give the structure phase 6 and the model phase the 9 it has left
-	// after the structure phase's four; its six Managers need 12 for one Pass.
+	// 13 turns give the structure phase 6, which its assessment, work Pass and
+	// Verify use, and the model phase the 7 left; its six Managers need 12 for
+	// one Pass.
 	req.Prepared = extractAttemptWithTurns(t, 13)
 	agents.writes["x-1-structure ."][".markitect/execution.yaml"] = strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 13", 1)
 	result, err := apply.Extract(context.Background(), req)
 	if err != nil || result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status != run.Incomplete ||
-		!strings.Contains(result.Model.Reason, "agent turn budget of 9 does not cover a basis and a result of each of the 6 managers") {
+		!strings.Contains(result.Model.Reason, "agent turn budget of 7 does not cover a basis and a result of each of the 6 managers") {
 		t.Fatalf("err %v, structure %s, model %+v", err, result.Structure.Status, result.Model)
 	}
 	if result.RetainedWork != "x-1-structure-work" || slices.Contains(workspaces.closed, "x-1-structure-work") || result.Receipt != nil || len(publisher.requests) != 0 {

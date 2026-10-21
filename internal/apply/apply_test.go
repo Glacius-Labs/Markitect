@@ -58,7 +58,7 @@ func TestApplyConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
 		t.Fatalf("run inputs changed: %+v", cfg)
 	}
 	// Apply's Root ends the run for a defective model; the bound model is fixed.
-	if !strings.Contains(cfg.RootGuidance, "abort true") || !strings.Contains(cfg.RootGuidance, "never ask the user to change or override it") {
+	if !strings.Contains(cfg.RootGuidance, "abort true") || !strings.Contains(cfg.RootGuidance, "the model is corrected outside it and a new run starts") {
 		t.Fatalf("Apply's Root guidance: %q", cfg.RootGuidance)
 	}
 	if cfg.Team[0].Path != "." || cfg.Team[0].Parent != "" || !strings.Contains(cfg.Team[0].Role, "integration of the whole project") {

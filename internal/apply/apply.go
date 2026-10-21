@@ -108,7 +108,7 @@ const verifyMandate = "Assess the immutable candidate independently against the 
 // rootModelDuty is Root's own duty in an Apply: the bound model is fixed and
 // nobody outside the tree answers during the run, so a model problem Root
 // confirms ends the run.
-const rootModelDuty = "As Root you end the run as soon as you confirm that the bound model is erroneous or contradictory, or leaves a public behavior materially open without delegating it: report kind problem, category model, abort true, naming the Definitions concerned and the concrete alternatives or the contradiction. Nobody can change the model or answer a question from outside the tree during the run; the model is corrected outside it and a new run starts. A choice the model delegates, or a value its wording fixes, is no problem."
+const rootModelDuty = "As Root you end the run as soon as you confirm that the bound model is erroneous or contradictory, or leaves a public behavior materially open without delegating it, such as an unstated limit, instead of letting a Manager pick a default: report kind problem, category model, abort true, naming the Definitions concerned and the concrete alternatives or the contradiction. Nobody can change the model or answer a question from outside the tree during the run; the model is corrected outside it and a new run starts. A choice the model delegates, or a value its wording fixes, is no problem."
 
 // digest identifies the strategy's Pass declarations and Root duty.
 func (s Strategy) digest() string {
