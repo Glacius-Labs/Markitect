@@ -17,8 +17,6 @@ import (
 
 var errTest = errors.New("test failure")
 
-func init() { ownerPollInterval = 5 * time.Millisecond }
-
 func mustPath(t testing.TB, s string) snapshot.Path {
 	t.Helper()
 	p, err := snapshot.NewPath(s)
@@ -526,53 +524,6 @@ func failingIn(name string, passes ...string) func(CheckRequest) (CheckReceipt, 
 	}
 }
 
-type fakeOwner struct {
-	mu        sync.Mutex
-	asked     []Question
-	answers   map[string]string
-	withdrawn []string
-	askErr    error
-}
-
-func (o *fakeOwner) Ask(_ context.Context, q Question) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if o.askErr != nil {
-		return o.askErr
-	}
-	o.asked = append(o.asked, q)
-	return nil
-}
-
-func (o *fakeOwner) Answer(_ context.Context, id string) (string, bool, error) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	a, ok := o.answers[id]
-	return a, ok, nil
-}
-
-func (o *fakeOwner) Withdraw(_ context.Context, id string) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	o.withdrawn = append(o.withdrawn, id)
-	return nil
-}
-
-func (o *fakeOwner) answer(id, text string) {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if o.answers == nil {
-		o.answers = map[string]string{}
-	}
-	o.answers[id] = text
-}
-
-func (o *fakeOwner) questions() []Question {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	return slices.Clone(o.asked)
-}
-
 type recEvidence struct {
 	mu       sync.Mutex
 	events   []Event
@@ -627,7 +578,6 @@ type fixture struct {
 	ws     *fakeWS
 	agents *fakeAgents
 	checks *fakeChecks
-	owner  *fakeOwner
 	ev     *recEvidence
 	cfg    Config
 }
@@ -650,7 +600,7 @@ func newFixture(t *testing.T) *fixture {
 	t.Helper()
 	ws := newFakeWS(t)
 	obligations := map[string][]string{"lending": {"lending/borrow"}, "lending/reminders": {"lending/reminders/notice"}, "library": {"library/interface"}}
-	f := &fixture{t: t, ws: ws, agents: &fakeAgents{t: t, ws: ws, obligations: obligations}, checks: &fakeChecks{}, owner: &fakeOwner{}, ev: &recEvidence{}}
+	f := &fixture{t: t, ws: ws, agents: &fakeAgents{t: t, ws: ws, obligations: obligations}, checks: &fakeChecks{}, ev: &recEvidence{}}
 	plan := func(dirs ...string) WritePlan {
 		var mounts []PathMount
 		for _, d := range dirs {
@@ -675,24 +625,22 @@ func newFixture(t *testing.T) *fixture {
 		"library/interface":        {ID: "library/interface", Owner: "library", Text: "One program."},
 	}
 	f.cfg = Config{
-		RunID:          "run1",
-		Team:           team,
-		Start:          treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "a", "lending/l.go": "l", "lending/reminders/r.go": "r"}),
-		ModelCheck:     func(snapshot.Tree) []Finding { return nil },
-		FileCheck:      func(snapshot.Tree) []Finding { return nil },
-		OwnerOf:        ownerByPrefix,
-		Registry:       func(snapshot.Tree) RegistryView { return RegistryView{Shards: map[string]string{}} },
-		Definition:     func(id string) (ModelDefinition, bool) { d, ok := definitions[id]; return d, ok },
-		OwnerRequest:   "Realize the model.",
-		OwnerDecisions: []string{"Decision: three loans."},
-		Budget:         Budget{Deadline: time.Now().Add(20 * time.Second), TurnTimeout: time.Minute, AgentTurns: 400, Passes: 12},
-		MaxEntries:     1000,
-		MaxBytes:       1 << 20,
-		Agents:         f.agents,
-		Workspaces:     ws,
-		Runner:         f.checks,
-		Owner:          f.owner,
-		Evidence:       f.ev,
+		RunID:        "run1",
+		Team:         team,
+		Start:        treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "a", "lending/l.go": "l", "lending/reminders/r.go": "r"}),
+		ModelCheck:   func(snapshot.Tree) []Finding { return nil },
+		FileCheck:    func(snapshot.Tree) []Finding { return nil },
+		OwnerOf:      ownerByPrefix,
+		Registry:     func(snapshot.Tree) RegistryView { return RegistryView{Shards: map[string]string{}} },
+		Definition:   func(id string) (ModelDefinition, bool) { d, ok := definitions[id]; return d, ok },
+		OwnerRequest: "Realize the model.",
+		Budget:       Budget{Deadline: time.Now().Add(20 * time.Second), TurnTimeout: time.Minute, AgentTurns: 400, Passes: 12},
+		MaxEntries:   1000,
+		MaxBytes:     1 << 20,
+		Agents:       f.agents,
+		Workspaces:   ws,
+		Runner:       f.checks,
+		Evidence:     f.ev,
 	}
 	return f
 }

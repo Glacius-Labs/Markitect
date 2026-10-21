@@ -16,10 +16,6 @@ import (
 
 var nameRE = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 
-// ownerPollInterval is how often the Orchestrator asks the owner channel for
-// answers.
-var ownerPollInterval = 3 * time.Second
-
 const (
 	maxTurnFailures = 2
 	maxEmptyTurns   = 2
@@ -89,7 +85,6 @@ type engine struct {
 	homes    []string
 	homeSet  map[string]bool
 	closing  bool
-	polling  bool
 
 	nextFinding, nextQuestion, nextProposal, nextProblem, nextReceipt int
 }
@@ -224,14 +219,6 @@ func validate(cfg Config) error {
 	case len(cfg.Checks) > 0 && cfg.Runner == nil:
 		return bad("checks need a Runner")
 	}
-	last := 0
-	for _, q := range cfg.Questions {
-		n := questionNumber(q.ID)
-		if n <= last || !q.Answered || q.To != User {
-			return bad("earlier question %q must be an answered user question numbered after Q%d", q.ID, last)
-		}
-		last = n
-	}
 	return nil
 }
 
@@ -286,13 +273,6 @@ func newEngine(parent context.Context, cfg Config) *engine {
 	ctx, cancel := context.WithDeadline(parent, cfg.Budget.Deadline)
 	e := &engine{cfg: cfg, ctx: ctx, cancel: cancel, base: context.WithoutCancel(parent), byPath: map[string]*mgr{}, homeSet: map[string]bool{}, stand: cfg.Start}
 	e.cond = sync.NewCond(&e.mu)
-	for i := range cfg.Questions {
-		q := cfg.Questions[i]
-		e.questions = append(e.questions, &q)
-	}
-	if len(cfg.Questions) > 0 {
-		e.nextQuestion = questionNumber(cfg.Questions[len(cfg.Questions)-1].ID)
-	}
 	for _, m := range cfg.Team {
 		slug := slugOf(m.Path)
 		x := &mgr{Manager: m, slug: slug, workHome: cfg.RunID + "-" + slug + "-m"}

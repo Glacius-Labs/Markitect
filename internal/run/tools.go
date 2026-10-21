@@ -209,15 +209,12 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 	spec := m.p.spec
 	sendText := "Send a question, an answer or information to your parent or a direct child; other Managers are reached through them."
 	if m.Parent == "" {
-		sendText = "Send a question, an answer or information to a direct child; other Managers are reached through them."
-		if e.cfg.Owner != nil {
-			sendText += " Ask the user (to \"user\") what the model and the bound decisions leave open."
-		}
+		sendText = "Send a question, an answer or information to a direct child; other Managers are reached through them. Nobody outside the tree answers during the run."
 	}
 	tools := []ToolSpec{
 		{Name: toolReport, Description: "Report to the Orchestrator: progress, a named wait, your basis or complete result, a decision on a child's proposal, a reopened child result, a revised basis or a problem. End every turn in which you work on your own contribution with one.", InputSchema: raw(reportSchema(spec))},
 		{Name: toolSend, Description: sendText, InputSchema: raw(sendSchema)},
-		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent (Root: to the user) as a question.", InputSchema: raw(escalateSchema)},
+		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent as a question. Root has nobody above it: it reports a model problem with report kind problem.", InputSchema: raw(escalateSchema)},
 		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
 	switch probes := e.probesAvailable(); {

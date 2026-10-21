@@ -156,6 +156,8 @@ func validateSpec(spec PassSpec) error {
 		return bad("pass %q needs a mandate", spec.Purpose)
 	case spec.Review && (spec.Writes || spec.Plans || spec.BindWaits):
 		return bad("a review Pass is read-only, plans nothing and binds no dependency")
+	case spec.Assesses && (spec.Review || spec.Writes || spec.Plans || spec.BindWaits):
+		return bad("a model assessment is read-only work: no review, writes, plan or bound dependency")
 	case spec.Review && strings.TrimSpace(spec.Guidance) == "":
 		return bad("a review Pass needs guidance on what a genuine finding is")
 	case !spec.Review && spec.ArtifactFindingsAdvisory:
@@ -287,11 +289,6 @@ func (e *engine) stalledLocked(p *pass) string {
 	}
 	for _, m := range p.members {
 		if m.running || m.checking || !m.disabled && e.runnableLocked(m) {
-			return ""
-		}
-	}
-	for _, q := range e.questions {
-		if q.To == User && !q.Answered && !q.Lapsed {
 			return ""
 		}
 	}
@@ -867,14 +864,10 @@ func (e *engine) seal(p *pass) PassResult {
 	e.mu.Lock()
 	p.verdict = e.verdictLocked(p)
 	p.sealed, p.sealedOn = true, stand.Digest().String()
-	var lapsed []string
 	for _, q := range e.questions {
 		if q.Pass == p.id && !q.Answered && !q.Lapsed {
 			q.Lapsed = true
 			_ = e.record(Event{Kind: "question.lapsed", Pass: p.id, Manager: q.From, Data: *q})
-			if q.To == User {
-				lapsed = append(lapsed, q.ID)
-			}
 		}
 	}
 	e.stand = stand
@@ -888,16 +881,16 @@ func (e *engine) seal(p *pass) PassResult {
 	if p.spec.Review && p.verdict == Satisfied {
 		e.verified = &stand
 	}
+	if p.spec.Assesses && p.verdict != Satisfied {
+		// Root confirmed what its tree found: the bound model has a material
+		// problem, which no Pass of this run can correct.
+		e.reject(ModelAssessmentReason + e.assessmentSummaryLocked())
+	}
 	record := p.recordLocked()
 	_ = e.record(Event{Kind: "pass.sealed", Pass: p.id, Data: map[string]any{"purpose": p.spec.Purpose, "verdict": p.verdict, "tree": p.sealedOn, "managers": record.Managers}})
 	candidate := p.candidate
 	p.candidate = ""
 	e.mu.Unlock()
-	for _, id := range lapsed {
-		if err := e.cfg.Owner.Withdraw(e.base, id); err != nil {
-			_ = e.record(Event{Kind: "owner.error", Pass: p.id, Data: map[string]any{"question": id, "error": err.Error()}})
-		}
-	}
 	view := e.cfg.Registry(stand)
 	_ = e.record(Event{Kind: "registry.view", Pass: p.id, Data: view})
 	if candidate != "" {
@@ -958,4 +951,19 @@ func listNames(names []string) string {
 		text += fmt.Sprintf(" and %d more", len(names)-len(shown))
 	}
 	return text
+}
+
+// assessmentSummaryLocked names the open genuine findings of the run, of which
+// a confirmed model assessment consists.
+func (e *engine) assessmentSummaryLocked() string {
+	var lines []string
+	for _, f := range e.findings {
+		if f.Blocking && !f.Closed {
+			lines = append(lines, fmt.Sprintf("%s [%s] %s: %s", f.ID, f.Owner, f.Obligation, f.Observed))
+		}
+	}
+	if len(lines) == 0 {
+		return "Root's result needs correction"
+	}
+	return strings.Join(lines, "; ")
 }
