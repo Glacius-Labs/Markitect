@@ -13,6 +13,7 @@ import { Timeline } from "./timeline.js";
 import { renderDetail } from "./detail.js";
 import { LiveLink } from "./live.js";
 import { answerInProgress } from "./answer.js";
+import { stopControl } from "./runcontrol.js";
 import { setTitle } from "./notify.js";
 
 const HIDDEN_BY_DEFAULT = new Set(["state", "runtime"]);
@@ -186,6 +187,8 @@ export class Inspector {
     clear(this.app);
     setTitle(`${this.run} – Markitect cockpit`);
     this.headEl = h("header", { class: "head" });
+    // Stop is offered only while this run is the one the cockpit started.
+    this.stopEl = stopControl(this.run);
     this.liveEl = h("span", { class: "mode", "aria-live": "off", title: "The current observation of the run, separate from the recorded boundary. Pausing or losing the link never affects the run." });
     this.railEl = h("nav", { class: "rail", "aria-label": "Passes" });
     this.accountEl = h("section", { class: "account", "aria-label": "Account at this boundary", "aria-live": "polite" });
@@ -356,6 +359,7 @@ export class Inspector {
       h("span", { class: "runmeta" }, `${v.managers.length} Manager${v.managers.length === 1 ? "" : "s"}, ${v.run.started ? `started ${when(v.run.started)}` : "not started"}`),
       h("span", { class: "spacer" }),
       h("span", { class: `outcome ${cls}`, title: "What the record shows at this boundary" }, h("span", { class: "lamp" }), text),
+      this.stopEl,
       this.liveEl);
     this.renderLive();
   }

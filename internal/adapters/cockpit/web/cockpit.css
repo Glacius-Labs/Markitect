@@ -745,3 +745,10 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 
 /* The inspector's controls stay compact in its dense rows. */
 .inspector .btn { font-size: var(--s0); padding: 4px 10px; }
+
+/* Starting and stopping the run this cockpit runs. */
+.runctl .body > p { margin: 0 0 10px; max-width: 90ch; }
+.runctl .actions { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; margin-top: 12px; }
+.runctl .confirm h4 { margin: 0 0 8px; font-size: var(--s1); font-weight: 600; color: var(--ink); }
+.runctl .confirm .facts { margin-bottom: 12px; }
+.runstop { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }

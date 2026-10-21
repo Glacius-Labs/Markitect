@@ -28,7 +28,8 @@ const DefaultListen = "127.0.0.1:7341"
 // Config selects the state directories the cockpit observes. The cockpit only
 // reads them; Liveness, when set, probes whether an Apply holds one. Project
 // observes the repository's identity. Answer, when set, is the owner
-// channel's answer operation, the cockpit's only action.
+// channel's answer operation. Runs, when set, starts and stops the one Apply
+// this cockpit runs in its own process.
 type Config struct {
 	States   []string
 	Liveness Liveness
@@ -37,18 +38,22 @@ type Config struct {
 	// Authoring, when set, makes and decides proposals for the project's
 	// .markitect inputs.
 	Authoring Authoring
+	Runs      *RunController
 }
 
 // Server serves the cockpit's pages and its read interface over the evidence
-// of the configured state directories. It writes only an owner's answer
-// through the configured owner channel and an accepted proposal through the
-// configured authoring service; no request starts, stops or repairs a run.
+// of the configured state directories. It writes an owner's answer through
+// the configured owner channel, an accepted proposal through the configured
+// authoring service, and starts and stops the one run its own controller
+// holds; no request repairs a run, and a run started elsewhere is only
+// observed.
 type Server struct {
 	states    []*stateDirectory
 	liveness  Liveness
 	project   projectCache
 	answer    Answerer
 	authoring Authoring
+	runs      *RunController
 	poll      time.Duration
 	host      string
 	web       fs.FS
@@ -59,7 +64,7 @@ func New(cfg Config) (*Server, error) {
 	if len(cfg.States) == 0 {
 		return nil, errors.New("the cockpit needs at least one state directory")
 	}
-	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, authoring: cfg.Authoring, poll: 400 * time.Millisecond}
+	s := &Server{liveness: cfg.Liveness, project: projectCache{observe: cfg.Project}, answer: cfg.Answer, authoring: cfg.Authoring, runs: cfg.Runs, poll: 400 * time.Millisecond}
 	seen := map[string]bool{}
 	for _, dir := range cfg.States {
 		abs, err := filepath.Abs(dir)
@@ -140,6 +145,9 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("GET /api/sessions/{id}", s.handleSession)
 	mux.HandleFunc("POST /api/sessions/{id}/prompt", s.handlePromptSession)
 	mux.HandleFunc("POST /api/sessions/{id}/close", s.handleCloseSession)
+	mux.HandleFunc("GET /api/run-control", s.handleRunControl)
+	mux.HandleFunc("POST /api/run-control/start", s.handleStartRun)
+	mux.HandleFunc("POST /api/run-control/stop", s.handleStopRun)
 	mux.HandleFunc("GET /api/runs", s.handleRuns)
 	mux.HandleFunc("GET /api/runs/{run}/view", s.handleView)
 	mux.HandleFunc("GET /api/runs/{run}/entries", s.handleEntries)
