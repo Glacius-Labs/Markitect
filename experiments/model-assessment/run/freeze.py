@@ -30,6 +30,7 @@ import sys
 from pathlib import Path
 
 EXPECTED = {"accepted", "model_gap", "model_error"}
+CONTROL_ID = re.compile(r"[A-Za-z0-9][A-Za-z0-9_-]{0,63}")
 CEILINGS = {"attempts": 12, "summedSeconds": 90 * 60, "attemptSeconds": 10 * 60, "model": "claude-sonnet-5-5", "effort": "high"}
 
 
@@ -111,6 +112,8 @@ def check(build, packet):
 
 
 def validate(cid, expectation):
+    if not isinstance(cid, str) or not CONTROL_ID.fullmatch(cid):
+        raise SystemExit("a control id must be 1-64 letters, digits, underscores or hyphens, starting with a letter or digit")
     if expectation.get("expected") not in EXPECTED:
         raise SystemExit(f"{cid}: expected must be one of {sorted(EXPECTED)}")
     for key in ("issue", "freedom"):
@@ -208,6 +211,8 @@ def freeze(spec_path, frozen):
 
 def verify(frozen, control):
     """The differences between a frozen series and its manifest for one control; empty when intact."""
+    if not isinstance(control, str) or not CONTROL_ID.fullmatch(control):
+        return ["invalid control id"]
     manifest = json.loads((frozen / "manifest.json").read_text(encoding="utf-8"))
     build = Path(manifest["build"])
     problems = []

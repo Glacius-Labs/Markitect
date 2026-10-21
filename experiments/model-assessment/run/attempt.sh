@@ -19,6 +19,7 @@
 # Use it only on a smoke freeze, whose ledger is not the series'.
 set -uo pipefail
 FROZEN="$(realpath "$1")"; CONTROL="$2"; NAME="$3"
+[[ "$CONTROL" =~ ^[A-Za-z0-9][A-Za-z0-9_-]{0,63}$ ]] || { echo "invalid control id"; exit 2; }
 [[ "$NAME" =~ ^[A-Za-z0-9][A-Za-z0-9-]{0,31}$ ]] || { echo "an attempt name is letters, digits and hyphens, such as C-01"; exit 2; }
 KIT="$FROZEN/kit"
 ATTEMPT="$FROZEN/attempts/$NAME"

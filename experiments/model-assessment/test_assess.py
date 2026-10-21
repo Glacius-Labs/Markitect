@@ -415,6 +415,10 @@ class Freeze(unittest.TestCase):
             self.assertEqual(freeze.definition_texts(packet), {"shop/inputs": {"package": "shop", "body": "Names are trimmed."}})
 
     def test_invalid_expectations_are_refused(self):
+        for cid in ("../outside", "/absolute", "C:\\outside", "", ".", "a\nb", None, "x" * 65):
+            with self.subTest(cid), self.assertRaises(SystemExit):
+                freeze.validate(cid, {"expected": "accepted"})
+        self.assertEqual(freeze.verify(Path("unused-freeze"), "../outside"), ["invalid control id"])
         with self.assertRaises(SystemExit):
             freeze.validate("x", {"expected": "needs_clarification"})
         with self.assertRaises(SystemExit):
