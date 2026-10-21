@@ -19,11 +19,11 @@ artifacts:
   - path: "internal/apply/assessment.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: Evaluation entry of the Model assessment trial that runs one read-only review Pass of the captured stand with the caller's mandate, without required checks or publication.
+    why: Evaluation entry of the Model assessment trial that runs one read-only review Pass of the captured stand with the caller's mandate in a closed Run, without required checks or publication.
   - path: "internal/apply/assessment_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: Tests the assessment entry's read-only review without checks, Root's model-error end, a kept owner question with an open finding, reassessment of a disputed finding and refused writing Passes.
+    why: Tests the assessment entry's read-only review without checks, Root's model-error end, the closed Run with a confirmed classed finding, reassessment of a disputed finding and refused writing Passes.
   - path: "internal/apply/binding.go"
     form: code
     realizes: [product/run/confirmed-run-history]

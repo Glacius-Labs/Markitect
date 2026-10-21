@@ -1,13 +1,19 @@
-"""Provider-free self-tests of assess.py. Run: python -B -m unittest discover -s experiments/model-assessment"""
+"""Provider-free self-tests of assess.py and freeze.py. Run: python -B -m unittest discover -s experiments/model-assessment"""
+import importlib.util
 import json
+import tempfile
 import unittest
 from pathlib import Path
 
 import assess
 
 HERE = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location("freeze", HERE / "run" / "freeze.py")
+freeze = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(freeze)
+
 DEFINITIONS = ["shop/inputs", "shop/system", "shop/list", "shop/storage"]
-GAP = {"id": "public-gap", "expected": "needs_clarification", "definitions": DEFINITIONS,
+GAP = {"id": "public-gap", "expected": "model_gap", "definitions": DEFINITIONS,
        "issue": {"definitions": ["shop/inputs"], "terms": [r"maximum.{0,20}length"]}}
 FREEDOM = {"id": "permitted-freedom", "expected": "accepted", "definitions": DEFINITIONS,
            "freedom": {"definitions": ["shop/storage"], "terms": [r"file format"]}}
@@ -15,73 +21,72 @@ CONTRADICTION = {"id": "contradiction", "expected": "model_error", "definitions"
                  "issue": {"definitions": ["shop/inputs", "shop/list"], "terms": [r"case"]}}
 
 
-def report(status, reason="", questions=(), problems=(), findings=(), passes=None):
-    if passes is None:
-        passes = [{"id": "p1", "purpose": "assess", "review": True, "sealed": status != "incomplete" or reason == assess.OPEN_FINDINGS_REASON,
-                   "verdict": {"verified": "satisfied"}.get(status, "needs_correction" if reason == assess.OPEN_FINDINGS_REASON else "")}]
-    return {"status": "passed", "run": {"status": status, "reason": reason, "passes": passes, "questions": list(questions),
-                                         "problems": list(problems), "findings": list(findings), "turns": [{"id": "t1"}, {"id": "t2"}],
-                                         "usage": {"costUSD": 0.5, "inputTokens": 100, "outputTokens": 10}}}
+def report(status, reason="", problems=(), findings=(), questions=(), sealed=None, verdict=None):
+    if sealed is None:
+        sealed = status == "verified" or reason == assess.PROBLEM_REASON
+    if verdict is None:
+        verdict = {"verified": "satisfied"}.get(status, "needs_correction" if reason == assess.PROBLEM_REASON else "")
+    return {"status": "passed" if status == "verified" else "not_completed",
+            "run": {"status": status, "reason": reason, "passes": [{"id": "p1", "purpose": "assess", "review": True, "sealed": sealed, "verdict": verdict}],
+                    "questions": list(questions), "problems": list(problems), "findings": list(findings), "turns": [{"id": "t1"}, {"id": "t2"}],
+                    "usage": {"costUSD": 0.5, "inputTokens": 100, "outputTokens": 10}}}
 
 
-def question(text, qid="Q1"):
-    return {"id": qid, "from": ".", "to": "user", "text": text, "answered": True, "answer": "No owner decision is available."}
+def finding(observed, obligation="shop/inputs", cls="model_gap", blocking=True, closed=False, fid="F1", by="."):
+    return {"id": fid, "owner": ".", "raisedBy": by, "obligation": obligation, "observed": observed, "blocking": blocking,
+            "closed": closed, "correction": cls}
 
 
-def finding(observed, obligation="shop/inputs", blocking=True, closed=False, fid="F1"):
-    return {"id": fid, "owner": ".", "raisedBy": ".", "obligation": obligation, "observed": observed, "blocking": blocking, "closed": closed}
+def confirmed(*findings):
+    return report("incomplete", assess.PROBLEM_REASON, findings=findings)
 
 
 ABORT = {"id": "X1", "manager": ".", "category": "model", "text": "shop/inputs folds case but shop/list keeps it.", "abort": True}
 
 
 class Classification(unittest.TestCase):
-    def test_conclusions_follow_the_common_envelope(self):
+    def test_conclusions_follow_the_sealed_pass_and_the_finding_class(self):
         cases = {
             "accepted": report("verified"),
-            "model_error": report("failed", assess.MODEL_ERROR_REASON + "shop/inputs contradicts shop/list", problems=[ABORT]),
-            "needs_clarification": report("incomplete", assess.OPEN_FINDINGS_REASON, questions=[question("Which maximum length?")],
-                                          findings=[finding("The maximum length of `shop/inputs` is never stated.")]),
+            "model_gap": confirmed(finding("The maximum length of `shop/inputs` is never stated.")),
+            "model_error": confirmed(finding("open", fid="F1"), finding("shop/inputs contradicts shop/list", cls="model_error", fid="F2")),
         }
         for want, r in cases.items():
             with self.subTest(want):
                 self.assertEqual(assess.classify(r)["conclusion"], want)
+                self.assertEqual(assess.classify(r)["route"], "result")
 
-    def test_technical_or_unrouted_ends_are_incomplete_not_a_model_judgment(self):
+    def test_roots_model_decision_is_a_second_route(self):
+        error = report("failed", assess.MODEL_ERROR_REASON + "x", problems=[ABORT])
+        gap = report("failed", assess.MODEL_ERROR_REASON + "x", problems=[dict(ABORT, text="model_gap: the maximum is missing")])
+        self.assertEqual((assess.classify(error)["conclusion"], assess.classify(error)["route"]), ("model_error", "abort"))
+        self.assertEqual(assess.classify(gap)["conclusion"], "model_gap")
+
+    def test_technical_ends_are_incomplete_not_a_model_judgment(self):
+        harness_error = report("verified")
+        harness_error["status"], harness_error["error"] = "not_completed", "evidence: report could not be written"
         cases = {
-            "deadline": report("incomplete", "the run deadline passed", questions=[question("Which maximum length?")]),
-            "unrouted finding": report("incomplete", assess.OPEN_FINDINGS_REASON, findings=[finding("open")]),
+            "deadline": report("incomplete", "the deadline was reached"),
+            "an Orchestrator finding only": confirmed(finding("file.unexplained: x", by="markitect")),
+            "unsealed": report("incomplete", assess.PROBLEM_REASON, findings=[finding("x")], sealed=False),
             "other failure": report("failed", "a definite error of the run's inputs"),
             "abort by a child": report("failed", assess.MODEL_ERROR_REASON + "x", problems=[dict(ABORT, manager="shop")]),
+            "harness error": harness_error,
             "preparation": {"status": "failed"},
         }
         for name, r in cases.items():
             with self.subTest(name):
                 self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
-        self.assertEqual(assess.classify(cases["unrouted finding"])["incomplete"], "unrouted")
-        self.assertEqual(assess.classify(cases["deadline"])["incomplete"], "technical")
-
-    def test_an_orchestrator_finding_is_no_clarification(self):
-        gate = dict(finding("file.unexplained: x"), raisedBy="markitect")
-        r = report("incomplete", assess.OPEN_FINDINGS_REASON, questions=[question("Which maximum length?")], findings=[gate])
-        self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
-
-    def test_a_verified_run_with_a_harness_error_is_not_accepted(self):
-        r = report("verified")
-        r["status"], r["error"] = "not_completed", "evidence: report could not be written"
-        self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
 
 
 class Scoring(unittest.TestCase):
-    def test_a_sourced_question_about_the_gap_meets_the_gap_control(self):
-        r = report("incomplete", assess.OPEN_FINDINGS_REASON, questions=[question("[[inputs]] refers to a maximum name length that no Definition states.")],
-                   findings=[finding("shop/inputs: the maximum length is open; 40 or 100 would both conform.")])
+    def test_a_sourced_gap_finding_meets_the_gap_control(self):
+        r = confirmed(finding("[[inputs]] refers to a maximum name length that no Definition states; 40 and 100 both conform."))
         s = assess.score(r, assess.classify(r), GAP)
-        self.assertTrue(s["expectationMet"])
-        self.assertTrue(s["issueRaised"])
+        self.assertTrue(s["expectationMet"] and s["blocked"] and s["issueRaised"])
         self.assertFalse(s["missedIssue"])
         self.assertEqual(s["falseAlarmCandidates"], [])
-        self.assertEqual(s["ownerEffort"]["questions"], 1)
+        self.assertEqual(s["ownerEffort"]["confirmedFindings"], 1)
 
     def test_accepting_the_gap_misses_it(self):
         r = report("verified")
@@ -89,40 +94,54 @@ class Scoring(unittest.TestCase):
         self.assertFalse(s["expectationMet"])
         self.assertTrue(s["missedIssue"])
 
-    def test_a_clarification_about_something_else_is_no_detection(self):
-        r = report("incomplete", assess.OPEN_FINDINGS_REASON, questions=[question("Which file format should storage use?")],
-                   findings=[finding("The file format is open.", obligation="shop/storage")])
+    def test_a_block_on_another_issue_misses_the_gap_and_is_a_false_alarm(self):
+        r = confirmed(finding("The file format is open.", obligation="shop/storage"))
         s = assess.score(r, assess.classify(r), GAP)
         self.assertFalse(s["expectationMet"])
-        self.assertTrue(s["missedIssue"])
-        self.assertEqual(sorted(s["falseAlarmCandidates"]), ["F1", "Q1"])
+        self.assertTrue(s["blocked"] and s["missedIssue"])
+        self.assertEqual(s["falseAlarmCandidates"], ["F1"])
 
-    def test_a_question_about_permitted_freedom_is_a_false_alarm(self):
-        r = report("incomplete", assess.OPEN_FINDINGS_REASON, questions=[question("Which file format should [[storage]] use?")],
-                   findings=[finding("The file format is open.", obligation="shop/storage")])
-        s = assess.score(r, assess.classify(r), FREEDOM)
+    def test_a_gap_classed_as_an_error_blocks_but_misses_the_class(self):
+        r = confirmed(finding("The maximum length of shop/inputs is never stated.", cls="model_error"))
+        s = assess.score(r, assess.classify(r), GAP)
+        self.assertTrue(s["blocked"] and s["issueRaised"])
+        self.assertFalse(s["missedIssue"])
         self.assertFalse(s["expectationMet"])
-        self.assertEqual(sorted(s["falseAlarmCandidates"]), ["F1", "Q1"])
+
+    def test_blocking_on_permitted_freedom_is_a_false_abort(self):
+        r = confirmed(finding("Which file format should [[storage]] use?", obligation="shop/storage"))
+        s = assess.score(r, assess.classify(r), FREEDOM)
+        self.assertTrue(s["falseAbort"])
+        self.assertFalse(s["expectationMet"])
         self.assertTrue(all(x["citesFreedom"] for x in s["signals"]))
 
     def test_a_note_is_no_false_alarm_and_an_accepted_freedom_meets_its_control(self):
         r = report("verified", findings=[finding("The file format is free.", obligation="shop/storage", blocking=False)])
         s = assess.score(r, assess.classify(r), FREEDOM)
         self.assertTrue(s["expectationMet"])
+        self.assertFalse(s["falseAbort"])
         self.assertEqual(s["falseAlarmCandidates"], [])
         self.assertEqual(s["ownerEffort"]["notes"], 1)
 
-    def test_a_sourced_model_error_meets_the_contradiction_control(self):
-        r = report("failed", assess.MODEL_ERROR_REASON + "contradiction", problems=[ABORT])
-        s = assess.score(r, assess.classify(r), CONTRADICTION)
+    def test_a_disproved_finding_is_disagreement_not_owner_effort(self):
+        r = report("verified", findings=[dict(finding("The maximum is unstated."), closed=True, closedAs="disproved", disputes=[{"by": "."}])])
+        s = assess.score(r, assess.classify(r), FREEDOM)
         self.assertTrue(s["expectationMet"])
-        self.assertEqual(s["uncitedBlocking"], [])
+        self.assertEqual(s["ownerEffort"]["confirmedFindings"], 0)
+        self.assertEqual((s["process"]["disputes"], s["process"]["disproved"]), (1, 1))
+
+    def test_a_sourced_contradiction_meets_the_contradiction_control(self):
+        for r in (confirmed(finding("shop/inputs folds case, shop/list keeps it.", cls="model_error")),
+                  report("failed", assess.MODEL_ERROR_REASON + "contradiction", problems=[ABORT])):
+            s = assess.score(r, assess.classify(r), CONTRADICTION)
+            self.assertTrue(s["expectationMet"])
+            self.assertEqual(s["uncitedBlocking"], [])
 
     def test_an_incomplete_attempt_is_not_scored_as_a_judgment(self):
-        r = report("incomplete", "the run deadline passed")
+        r = report("incomplete", "the deadline was reached")
         s = assess.score(r, assess.classify(r), GAP)
         self.assertIsNone(s["expectationMet"])
-        self.assertFalse(s["missedIssue"])
+        self.assertFalse(s["missedIssue"] or s["blocked"])
 
     def test_citations_need_the_identity_or_a_marked_local_id(self):
         self.assertEqual(assess.cited("see shop/inputs and [[list]]", DEFINITIONS), ["shop/inputs", "shop/list"])
@@ -130,16 +149,33 @@ class Scoring(unittest.TestCase):
         self.assertEqual(assess.cited("shop/inputs-extra", DEFINITIONS), [])
 
 
-class Report(unittest.TestCase):
-    def test_the_report_is_read_between_the_harness_lines(self):
-        text = '{\n "status": "failed",\n "run": {"status": "verified"}\n}\nPASS\n'
-        self.assertEqual(assess.load_report(text)["run"]["status"], "verified")
-        self.assertEqual(assess.load_report("model assessment exit 1\nFAIL\n"), {})
-        self.assertEqual(assess.load_report(""), {})
+class Evidence(unittest.TestCase):
+    def write(self, root, turn, lines):
+        path = Path(root) / "transcripts" / f"{turn}.jsonl"
+        path.parent.mkdir(parents=True, exist_ok=True)
+        path.write_text("".join(json.dumps(line) + "\n" for line in lines), encoding="utf-8")
 
+    def test_delivery_counts_full_reference_only_and_missing_definitions(self):
+        control = {"definitionTexts": {"shop/inputs": {"package": "shop", "body": "Names are trimmed.\nAt most the maximum."},
+                                       "shop/list": {"package": "shop", "body": "Lists every item."},
+                                       "shop/storage": {"package": "shop", "body": "One file."},
+                                       "other/x": {"package": "other", "body": "Not the reviewer's."}}}
+        events = [{"kind": "turn.start", "pass": "p1", "manager": "shop", "turn": "r-p1-shop-r1", "data": {"role": "reviewer"}},
+                  {"kind": "turn.start", "pass": "p1", "manager": "shop", "turn": "r-p1-shop-r2", "data": {"role": "reviewer"}}]
+        prompt = "shop/inputs (Software.Rule): Inputs\nNames are   trimmed. At most the maximum.\nshop/list (Software.Rule): List\n"
+        with tempfile.TemporaryDirectory() as root:
+            self.write(root, "r-p1-shop-r1", [{"kind": "sent", "data": {"type": "user", "message": {"content": [{"type": "text", "text": prompt}]}}}])
+            d = assess.delivery(root, events, control)
+        self.assertEqual((d["reviewers"], d["expected"], d["full"], d["referenceOnly"]), (1, 3, 1, 1))
+        self.assertEqual(d["missing"], ["p1 shop shop/list: body not sent", "p1 shop shop/storage: not sent"])
 
-class Process(unittest.TestCase):
-    def test_returns_disputes_and_coverage_come_from_the_events(self):
+    def test_attempted_questions_to_the_user_are_counted(self):
+        with tempfile.TemporaryDirectory() as root:
+            self.write(root, "r-p1-root-r1", [{"kind": "tool_call", "data": {"id": 1, "name": "send", "arguments": {"to": "user", "kind": "question", "text": "Which?"}}},
+                                              {"kind": "tool_call", "data": {"id": 2, "name": "send", "arguments": {"to": "shop", "kind": "question", "text": "Settled?"}}}])
+            self.assertEqual(assess.user_question_attempts(root), [{"turn": "r-p1-root-r1", "text": "Which?"}])
+
+    def test_returns_coverage_and_internal_questions_come_from_the_evidence(self):
         events = [
             {"kind": "proposal.submitted", "data": {"proposal": "P2", "kind": "result", "envelope": {"obligations": [
                 {"definition": "shop/inputs", "status": "done", "evidence": [{"source": ".markitect/model/shop/inputs.yaml"}]},
@@ -148,12 +184,18 @@ class Process(unittest.TestCase):
             {"kind": "proposal.submitted", "data": {"proposal": "P3", "kind": "result", "envelope": {"obligations": [
                 {"definition": "shop/inputs", "status": "done", "evidence": [{"source": ".markitect/model/shop/inputs.yaml"}]}]}}},
             {"kind": "result.accepted", "data": {"proposal": "P3"}},
-            {"kind": "finding.disputed", "data": {}},
         ]
-        p = assess.process(events)
+        run = {"questions": [{"from": "shop", "to": "."}], "findings": []}
+        p = assess.process(events, run)
         self.assertEqual(p["returned"], [{"manager": "shop", "by": ".", "reason": "unsupported"}])
-        self.assertEqual(p["disputes"], 1)
+        self.assertEqual(p["internalQuestions"], 1)
         self.assertEqual(p["acceptedResultCoverage"], {"obligations": 1, "withModelSource": 1, "open": 0})
+
+    def test_the_report_is_read_between_the_harness_lines(self):
+        text = '{\n "status": "failed",\n "run": {"status": "verified"}\n}\nPASS\n'
+        self.assertEqual(assess.load_report(text)["run"]["status"], "verified")
+        self.assertEqual(assess.load_report("model assessment exit 1\nFAIL\n"), {})
+        self.assertEqual(assess.load_report(""), {})
 
 
 class Declaration(unittest.TestCase):
@@ -161,29 +203,54 @@ class Declaration(unittest.TestCase):
         declaration = json.loads((HERE / "assessment-pass.json").read_text(encoding="utf-8"))
         self.assertEqual(assess.preflight(declaration), [])
 
-    def test_the_mandate_names_no_control_specific_issue(self):
+    def test_the_mandate_names_no_control_specific_issue_and_no_owner_channel(self):
         # The treatment is written from the assessment questions, not from the controls' answers.
         text = (HERE / "assessment-pass.json").read_text(encoding="utf-8").lower()
-        for word in ("name length", "sku", "stockroom", "maximum name", "case-insensitive", "uppercase"):
+        for word in ("name length", "sku", "stockroom", "maximum name", "case-insensitive", "uppercase", "partial", "shortfall"):
             self.assertNotIn(word, text)
+        self.assertIn("never a question to the user", text)
 
     def test_invalid_declarations_are_refused(self):
-        self.assertTrue(assess.preflight({"purpose": "verify", "mandate": "m", "guidance": "g", "corrections": ["x"]}))
-        self.assertTrue(assess.preflight({"purpose": "assess", "mandate": " ", "guidance": "g", "corrections": ["x"]}))
-        self.assertTrue(assess.preflight({"purpose": "assess", "mandate": "m", "guidance": "g", "corrections": []}))
+        valid = {"purpose": "assess", "mandate": "m", "guidance": "g", "corrections": ["model_error", "model_gap"]}
+        for change in ({"purpose": "verify"}, {"mandate": " "}, {"corrections": ["model_gap"]}, {"corrections": ["owner-decision"]}):
+            with self.subTest(change):
+                self.assertTrue(assess.preflight(dict(valid, **change)))
+
+
+class Freeze(unittest.TestCase):
+    def test_bodies_of_block_folded_and_plain_definitions(self):
+        self.assertEqual(freeze.body_of("id: a\nkind: K\nbody: |-\n  One line\n  two.\nspec: {}\n"), "One line\ntwo.")
+        self.assertEqual(freeze.body_of("id: a\nbody: >\n  Folded\n  text.\n"), "Folded\ntext.")
+        self.assertEqual(freeze.body_of("id: a\nbody: Plain text.\n"), "Plain text.")
+        self.assertEqual(freeze.body_of("id: a\n"), "")
+
+    def test_definition_texts_and_identities_of_a_packet(self):
+        with tempfile.TemporaryDirectory() as root:
+            packet = Path(root)
+            (packet / ".markitect" / "model" / "shop").mkdir(parents=True)
+            (packet / ".markitect" / "model" / "shop" / "inputs.yaml").write_text("id: inputs\nbody: |-\n  Names are trimmed.\n", encoding="utf-8")
+            (packet / ".markitect" / "dependencies" / "software" / "model" / "software").mkdir(parents=True)
+            (packet / ".markitect" / "dependencies" / "software" / "model" / "software" / "rule.yaml").write_text("id: rule\n", encoding="utf-8")
+            self.assertEqual(freeze.definitions(packet), ["shop/inputs", "software/rule"])
+            self.assertEqual(freeze.definition_texts(packet), {"shop/inputs": {"package": "shop", "body": "Names are trimmed."}})
+
+    def test_invalid_expectations_are_refused(self):
+        with self.assertRaises(SystemExit):
+            freeze.validate("x", {"expected": "needs_clarification"})
+        with self.assertRaises(SystemExit):
+            freeze.validate("x", {"expected": "model_gap", "issue": {"terms": ["("]}})
+        freeze.validate("x", {"expected": "model_gap", "issue": {"terms": ["max"]}})
 
 
 class Series(unittest.TestCase):
-    def test_series_counts_conclusions_and_agreement_per_control(self):
+    def test_series_counts_conclusions_agreement_and_false_aborts_per_control(self):
         met = assess.score(report("verified"), assess.classify(report("verified")), FREEDOM)
-        alarm_report = report("incomplete", assess.OPEN_FINDINGS_REASON, questions=[question("Which format?")], findings=[finding("format")])
+        alarm_report = confirmed(finding("format", obligation="shop/storage"))
         alarm = assess.score(alarm_report, assess.classify(alarm_report), FREEDOM)
         summary = assess.series([met, met, alarm])["permitted-freedom"]
-        self.assertEqual(summary["attempts"], 3)
-        self.assertEqual(summary["met"], 2)
-        self.assertEqual(summary["conclusions"], {"accepted": 2, "needs_clarification": 1})
+        self.assertEqual((summary["attempts"], summary["met"], summary["falseAborts"]), (3, 2, 1))
+        self.assertEqual(summary["conclusions"], {"accepted": 2, "model_gap": 1})
         self.assertFalse(summary["agreement"])
-        self.assertEqual(summary["questions"], 1)
 
     def test_the_ledger_counts_attempts_that_were_never_assessed(self):
         met = assess.score(report("verified"), assess.classify(report("verified")), FREEDOM)

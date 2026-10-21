@@ -26,7 +26,7 @@ import subprocess
 import sys
 from pathlib import Path
 
-EXPECTED = {"accepted", "needs_clarification", "model_error"}
+EXPECTED = {"accepted", "model_gap", "model_error"}
 CEILINGS = {"attempts": 12, "summedSeconds": 90 * 60, "attemptSeconds": 10 * 60, "model": "claude-sonnet-5-5", "effort": "high"}
 
 
@@ -48,6 +48,38 @@ def definitions(packet):
             match = re.search(r"^id:\s*(\S+)\s*$", path.read_text(encoding="utf-8"), re.MULTILINE)
             if match:
                 out.append(path.parent.relative_to(root).as_posix() + "/" + match.group(1))
+    return out
+
+
+def body_of(text):
+    """The body of one Definition file: a literal or folded block, or a plain one-line value."""
+    lines = text.splitlines()
+    for i, line in enumerate(lines):
+        match = re.match(r"^body:\s*(.*)$", line)
+        if not match:
+            continue
+        value = match.group(1).strip()
+        if value and value[0] not in "|>":
+            return value.strip("\"'")
+        block = []
+        for next_line in lines[i + 1:]:
+            if next_line.strip() and not next_line.startswith((" ", "\t")):
+                break
+            block.append(next_line.strip())
+        return "\n".join(block).strip()
+    return ""
+
+
+def definition_texts(packet):
+    """The package and body of every local Definition, for the delivery check."""
+    root = packet / ".markitect" / "model"
+    out = {}
+    for path in sorted(root.rglob("*.yaml")):
+        text = path.read_text(encoding="utf-8")
+        match = re.search(r"^id:\s*(\S+)\s*$", text, re.MULTILINE)
+        if match:
+            package = path.parent.relative_to(root).as_posix()
+            out[package + "/" + match.group(1)] = {"package": package, "body": body_of(text)}
     return out
 
 
@@ -118,7 +150,7 @@ def freeze(spec_path, frozen):
         (frozen / "packets" / f"{cid}.check.json").write_text(output, encoding="utf-8")
         if code != 0 or status != "passed":
             raise SystemExit(f"{cid}: markitect check {status} (exit {code}); a control must pass the Model check and the File check")
-        hidden = dict(expectation, id=cid, definitions=definitions(packet))
+        hidden = dict(expectation, id=cid, definitions=definitions(packet), definitionTexts=definition_texts(packet))
         (frozen / "controls" / f"{cid}.json").write_text(json.dumps(hidden, indent=1), encoding="utf-8")
         manifest["controls"][cid] = {"packet": str(packet), "head": git(packet, "rev-parse", "HEAD"), "tree": git(packet, "rev-parse", "HEAD^{tree}"),
                                      "files": {p: sha(packet / p) for p in git(packet, "ls-files").splitlines()},

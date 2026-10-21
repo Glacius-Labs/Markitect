@@ -17,14 +17,15 @@ import (
 const assessmentMandate = "Assess the bound model before any realization."
 
 func assessmentSpec() run.PassSpec {
-	return run.PassSpec{Purpose: "assess", Mandate: assessmentMandate, Review: true, Guidance: "A genuine finding is a material model issue.", Corrections: []run.Purpose{"owner-decision"}}
+	return run.PassSpec{Purpose: "assess", Mandate: assessmentMandate, Review: true, Guidance: "A genuine finding is a material model issue.", Corrections: []run.Purpose{"model_error", "model_gap"}}
 }
 
 // assessingAgents follows the Orchestrator's protocol as read-only assessors:
 // each decides its children's proposals, submits its basis and then its
 // complete result, covering every own obligation with an inspected model
-// source. Root can ask the user before its basis and end with a model error or
-// an open finding. A refused tool call fails the test.
+// source. Root can try to ask the user before its basis and end with a model
+// error or a confirmed finding. A refused tool call fails the test, except the
+// question to the user, whose refusal is kept.
 type assessingAgents struct {
 	t           *testing.T
 	obligations map[string][]string
@@ -33,10 +34,10 @@ type assessingAgents struct {
 	finding     string
 	// raiser raises a genuine finding in the first Pass that Root disputes and
 	// the raiser's fresh reviewer disproves in the reassessment.
-	raiser string
-	mu     sync.Mutex
-	turns  []run.Turn
-	asked  string
+	raiser  string
+	mu      sync.Mutex
+	turns   []run.Turn
+	refusal string
 }
 
 var findingRE = regexp.MustCompile(`Finding (F\d+) \[genuine\]`)
@@ -82,15 +83,14 @@ func (a *assessingAgents) Run(ctx context.Context, turn run.Turn, tools run.Tool
 	root := turn.Manager == "."
 	switch {
 	case strings.HasPrefix(now, "work on your own contribution"):
-		if root && a.ask != "" && a.asked == "" {
-			id := askedRE.FindStringSubmatch(call("send", map[string]any{"to": "user", "kind": "question", "text": a.ask}).Text)
-			if id == nil {
-				a.t.Errorf("turn %s: the question was not asked", turn.ID)
-				break
+		if root && a.ask != "" && a.refusal == "" {
+			// A closed Run has no channel to the user: the question is refused.
+			data, _ := json.Marshal(map[string]any{"to": "user", "kind": "question", "text": a.ask})
+			answer := tools(ctx, "send", data)
+			a.refusal = "not refused: " + answer.Text
+			if answer.Refused {
+				a.refusal = answer.Text
 			}
-			a.asked = id[1]
-			call("report", map[string]any{"kind": "wait", "for": id[1], "reason": "the owner decides the public value"})
-			break
 		}
 		call("report", map[string]any{"kind": "basis", "summary": "Assessment context of " + turn.Manager + "."})
 	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
@@ -109,7 +109,7 @@ func (a *assessingAgents) Run(ctx context.Context, turn run.Turn, tools run.Tool
 		switch {
 		case root && a.finding != "":
 			result["verdict"] = "needs_correction"
-			result["findings"] = []map[string]any{{"owner": ".", "obligation": a.source, "observed": a.finding, "blocking": true}}
+			result["findings"] = []map[string]any{{"owner": ".", "obligation": a.source, "observed": a.finding, "blocking": true, "correction": "model_gap"}}
 		case turn.Manager == a.raiser && first:
 			result["verdict"] = "needs_correction"
 			result["findings"] = []map[string]any{{"owner": a.raiser, "obligation": a.source, "observed": "The limit is unstated.", "blocking": true}}
@@ -207,32 +207,38 @@ func TestAssessCapturedEndsFailedOnRootsModelError(t *testing.T) {
 	}
 }
 
-// A question Root asked the user stays in the outcome with its answer, and a
-// genuine finding Root leaves open makes the assessment unverified with the
-// assessment's reason, not a model error.
-func TestAssessCapturedKeepsTheOwnerQuestionAndTheOpenFinding(t *testing.T) {
+// The assessment is a closed Run: Root's question to the user is refused even
+// when the caller supplies an owner channel, the caller's owner decisions never
+// reach a prompt, and the finding Root confirms seals the Pass as needing
+// correction with its class and the assessment's reason, not a model error.
+func TestAssessCapturedIsAClosedRunAndKeepsTheConfirmedFinding(t *testing.T) {
 	req, agents, _, _, _ := assessmentRequest(t)
 	owner := &answeringOwner{}
-	req.Owner = owner
+	req.Owner, req.OwnerDecisions = owner, []string{"The maximum is 60."}
 	agents.ask = "Which maximum applies to the public value?"
-	agents.finding = "The public maximum is referenced but never stated; the owner decision is open."
+	agents.finding = "The public maximum is referenced but never stated; 40 and 100 both conform."
 	result, err := apply.AssessCaptured(context.Background(), req, assessmentSpec())
 	if err != nil {
 		t.Fatal(err)
 	}
 	outcome := result.Outcome
-	if outcome.Status != run.Incomplete || outcome.Reason != "the model assessment left genuine findings open" {
+	if outcome.Status != run.Incomplete || outcome.Reason != apply.AssessmentProblemReason {
 		t.Fatalf("status %s, reason %q", outcome.Status, outcome.Reason)
 	}
-	if len(owner.asked) != 1 || len(outcome.Questions) != 1 || outcome.Questions[0].To != run.User || !outcome.Questions[0].Answered {
-		t.Fatalf("asked %+v, questions %+v", owner.asked, outcome.Questions)
+	if !strings.Contains(agents.refusal, "Nobody answers questions in this run") || len(owner.asked) != 0 || len(outcome.Questions) != 0 {
+		t.Fatalf("refusal %q, asked %+v, questions %+v", agents.refusal, owner.asked, outcome.Questions)
+	}
+	for _, turn := range agents.turns {
+		if strings.Contains(turn.Prompt, "The maximum is 60.") || strings.Contains(turn.Prompt, "\nuser: ") {
+			t.Fatalf("turn %s sees the owner channel or a decision:\n%s", turn.ID, turn.Prompt)
+		}
 	}
 	if !slices.ContainsFunc(outcome.Findings, func(f run.Finding) bool {
-		return f.RaisedBy == "." && f.Blocking && !f.Closed && f.Observed == agents.finding
+		return f.RaisedBy == "." && f.Blocking && !f.Closed && f.Observed == agents.finding && f.Correction == "model_gap"
 	}) {
 		t.Fatalf("findings %+v", outcome.Findings)
 	}
-	if len(outcome.Passes) != 1 || outcome.Passes[0].Verdict != run.NeedsCorrection {
+	if len(outcome.Passes) != 1 || !outcome.Passes[0].Sealed || outcome.Passes[0].Verdict != run.NeedsCorrection {
 		t.Fatalf("passes %+v", outcome.Passes)
 	}
 }
@@ -269,9 +275,9 @@ func TestAssessCapturedReassessesADisputedFinding(t *testing.T) {
 
 func TestAssessCapturedRefusesAPassThatIsNoReadOnlyReview(t *testing.T) {
 	for name, spec := range map[string]run.PassSpec{
-		"writes":    {Purpose: "assess", Mandate: assessmentMandate, Writes: true, Corrections: []run.Purpose{"owner-decision"}},
-		"no review": {Purpose: "assess", Mandate: assessmentMandate, Corrections: []run.Purpose{"owner-decision"}},
-		"plans":     {Purpose: "assess", Mandate: assessmentMandate, Plans: true, Corrections: []run.Purpose{"owner-decision"}},
+		"writes":    {Purpose: "assess", Mandate: assessmentMandate, Writes: true, Corrections: []run.Purpose{"model_gap"}},
+		"no review": {Purpose: "assess", Mandate: assessmentMandate, Corrections: []run.Purpose{"model_gap"}},
+		"plans":     {Purpose: "assess", Mandate: assessmentMandate, Plans: true, Corrections: []run.Purpose{"model_gap"}},
 	} {
 		t.Run(name, func(t *testing.T) {
 			req, agents, workspaces, _, _ := assessmentRequest(t)

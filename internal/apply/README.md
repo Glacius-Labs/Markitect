@@ -133,8 +133,11 @@ a known stand through the Pass process; no Command uses it, and the grant-gated
 `AssessCaptured(ctx, ApplyRequest, PassSpec)` is the evaluation entry of the
 [Model assessment trial](../../experiments/model-assessment/README.md): one read-only review
 Pass of the captured stand with the caller's purpose, mandate and guidance, repeated only for
-fresh disputes, with the same configuration but no required check and no publication. The
-grant-gated `TestModelAssessmentHarness` drives it with the real adapters.
+fresh disputes, with the same configuration in a closed Run (no owner channel, answers or
+decisions) and without required checks or publication. A sealed negative assessment ends
+`Incomplete` with `AssessmentProblemReason`; the mandatory gate is not integrated yet
+([contract](../../experiments/model-assessment/contract.md)). The grant-gated
+`TestModelAssessmentHarness` drives it with the real adapters.
 
 Each Brief lists the Manager's own Definitions, included ones with their owners, its
 areas and local registry with its entry shape (exact files or directories), the required
