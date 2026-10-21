@@ -407,6 +407,22 @@ The owner adopted the direction and requested integration and supplemental promp
 
 Recorder's disposition: the [owning workflow](../../design/canonical-model/manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs) and [current handoff](../../development/claude-direct-runtime-handoff-20261021.md#current-policy-supplement-mandatory-assessment-and-closed-runs) replace the earlier optional-gate status, same-Run owner-answer policy and future single-Agent product direction. A4 now requires material-gap refusal without publication, followed by corrected model input in a new Run; permitted-freedom controls must not be rejected. Historical quotations, attempts and oracle expectations above remain historical, not current instructions. The record changes no runtime itself and sends no messages/start signals or additional budgets to the running sessions. A owns source/self-model migration; C supplies the method, B the controls and D the frozen comparison.
 
+## Owner adoption: conformance mandate and observation kinds
+
+After forwarding the mandatory-assessment supplements to the running sessions, the owner clarified Apply's organizational mandate:
+
+> Eigentlich gibt es in dieser Hinsicht nur folgenden Auftrag: Entspricht die Implementierung und die Artefakte dem Modell? Ja oder Nein? Wenn Nein, warum nicht? Notalls muss eskaliert werden. Es geht nicht um das Verbessern oder Refactoren oder ähnliches innerhalb des Modells. Dafür gibt es dann andere Commands.
+
+The owner identified nitpicks, overengineering and endless reviewer refinement as risks, and proposed collecting potential bugs, ideas, identified problems and improvements for later inspection. The model must first be usable and consistent; model-to-artifact workflows should assess it before realization.
+
+The response refined this into an obligation-based fulfillment mandate: permission to make a change is insufficient; necessity for fulfillment or required evidence justifies it, including refactoring when needed. Supported conformance, demonstrated nonconformance and insufficient evidence must remain distinct. One collection in Run evidence distinguishes confirmed deviation, concrete suspected deviation, model problem and optional suggestion; a real defect cannot be shelved as a note and repeated escalation cannot promote a preference into an obligation. Optional notes cause no project files or automatic follow-up. Conforming but unattractive, genuinely faulty and suggestion-only controls test restraint alongside detection. Model assessment tests material usability/consistency rather than maximal elaboration.
+
+The owner adopted the refinement:
+
+> Das passt. Halte diese Schärfung im Konzept und Handoff auf Main fest und gib mir kurze Ergänzungsprompts für die laufenden Sessions, damit sie die Befundarten und die Tests gegen unnötige Änderungen berücksichtigen.
+
+Recorder's disposition: the [workflow](../../design/canonical-model/manager-apply-workflow.md#conformance-mandate-and-observation-kinds) owns the rule and the [session supplement](../../development/claude-direct-runtime-handoff-20261021.md#session-supplement-conformance-scope-and-observation-kinds) assigns A/B/C/D implementation/evidence within existing limits. This supplements the common Pass, mandatory assessment and closed-Run policy; it creates no competing verdict/state system, automatic improvement command, new provider allowance or message to another session. Earlier reports retain their input/build/expectation bindings. Documentation adoption does not establish runtime enforcement or semantic classification reliability.
+
 ## Owner adoption: evidence-driven Apply hardening
 
 After discussing draft PR #536, the owner asked how to prevent reviewers from filling the new fields while still missing the same defect, and proposed making Managers suspicious of unsupported success. The response proposed active counterexample search, expectations derived from authority independently of existing assertions, tool-recorded observations, parent assessment of the actual evidence, and faulty/conforming evaluation controls. It explicitly rejected finding quotas and kept concrete unresolved conformity questions blocking.
