@@ -390,7 +390,7 @@ function setupCard(project, view) {
         state.step = "done";
         clear(actions);
         clear(review);
-        actions.append(view.opened ? h("a", { class: "btn act", href: "#/runs" }, "Go to Runs") : null, h("a", { class: "btn", href: "#/projects" }, "Back to the projects"));
+        append(actions, [view.opened ? h("a", { class: "btn act", href: "#/runs" }, "Go to Runs") : null, h("a", { class: "btn", href: "#/projects" }, "Back to the projects")]);
       } else {
         // Setup's own refusal, word for word.
         result.append(h("div", { class: "refusal", role: "alert" },
