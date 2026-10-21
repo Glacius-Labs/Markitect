@@ -9,7 +9,7 @@ import { h, clear, announce, pagehead, about } from "./dom.js";
 
 let draft = null; // { head, settings }
 
-export function renderSettings(content) {
+export function renderSettings(content, target = {}) {
   const page = h("div", { class: "page narrow" });
   content.append(page);
   const head = pagehead("Execution settings", "Change the budget, profiles and team of an Apply. A change becomes a proposal.", {
@@ -21,7 +21,18 @@ export function renderSettings(content) {
   api.settings().then((settings) => {
     if (!page.isConnected) return;
     if (!draft || draft.head !== settings.head) draft = { head: settings.head, settings: structuredClone(settings) };
-    clear(body).append(settingsForm(settings, draft.settings));
+    const form = settingsForm(settings, draft.settings, target);
+    clear(body).append(form);
+    if (target.section === "profiles") {
+      form.querySelector("#role-profiles input")?.focus();
+    } else if (target.section === "team") {
+      const section = form.querySelector("#project-team"); section?.focus(); section?.scrollIntoView({ block: "start" });
+    } else if (target.pkg) {
+      const row = [...form.querySelectorAll("[data-package]")].find((row) => row.dataset.package === target.pkg);
+      const select = form.querySelector("#ov-add");
+      if (row) row.querySelector("input")?.focus();
+      else if (select && settings.packages.includes(target.pkg)) { select.value = target.pkg; select.focus(); }
+    }
   }, (err) => {
     if (!page.isConnected) return;
     clear(body).append(h("p", { role: "alert", class: "refusal" }, refusal(err)));
@@ -41,7 +52,7 @@ export function refusal(err) {
   return text;
 }
 
-function settingsForm(committed, s) {
+function settingsForm(committed, s, target = {}) {
   const form = h("form", { class: "settings", novalidate: true });
   const status = h("p", { class: "note", role: "status", tabindex: -1 });
   const submit = h("button", { class: "btn act", type: "submit" }, "Propose the change");
@@ -49,7 +60,7 @@ function settingsForm(committed, s) {
     h("p", { class: "note", title: "Ownership, the top-level and per-Package instructions, scope and checks are not edited here; they stay as written." }, `From the committed source at `, h("span", { class: "digest" }, committed.head.slice(0, 12)), `, file .markitect/execution.yaml.`),
     budget(s.budget),
     profiles(s.profiles),
-    overrides(s),
+    overrides(s, target.pkg),
     team(s, committed),
     h("div", { class: "formbar" },
       h("div", { class: "actions" }, submit, h("button", { class: "btn", type: "button", onclick: () => reset(form, committed) }, "Reset to the committed settings")),
@@ -106,7 +117,7 @@ function budget(b) {
 }
 
 function profiles(p) {
-  return h("fieldset", { class: "plate" }, h("legend", {}, "Runtime profiles of the roles"),
+  return h("fieldset", { class: "plate", id: "role-profiles" }, h("legend", {}, "Runtime profiles of the roles"),
     h("div", { class: "grid4" },
       field("Execute", p, "execute", { hint: "Managers and their helpers" }),
       field("Verify", p, "verify", { hint: "independent reviewers" })),
@@ -116,10 +127,11 @@ function profiles(p) {
 // overrides lists the Packages with their own Execute or Verify profile and
 // lets the owner give another local Package its own; an empty input keeps
 // the role's profile above.
-function overrides(s) {
+function overrides(s, targetPackage) {
   s.packages = s.packages || [];
   s.overrides = (s.overrides || []).filter((o) => o.package);
   const box = h("fieldset", { class: "plate" }, h("legend", {}, "Profiles per Package"));
+  if (targetPackage) box.append(h("p", { class: "note" }, s.packages.includes(targetPackage) ? `Selected Package: ${targetPackage}. Opening this section creates no override.` : `Package ${targetPackage} is not present in this committed source.`));
   const body = h("div", {});
   const draw = (focus) => {
     clear(body);
@@ -130,7 +142,7 @@ function overrides(s) {
           el.addEventListener("input", () => { o[key] = el.value; });
           return el;
         };
-        return h("tr", {}, h("th", { scope: "row" }, o.package), h("td", {}, input("execute", "Execute")), h("td", {}, input("verify", "Verify")),
+        return h("tr", { dataset: { package: o.package } }, h("th", { scope: "row" }, o.package), h("td", {}, input("execute", "Execute")), h("td", {}, input("verify", "Verify")),
           h("td", {}, h("button", { class: "btn", type: "button", "aria-label": `Remove the profiles of ${o.package}`, onclick: () => {
             s.overrides.splice(i, 1);
             draw("select");
@@ -143,6 +155,7 @@ function overrides(s) {
     const free = s.packages.filter((name) => !s.overrides.some((o) => o.package === name));
     if (free.length) {
       const select = h("select", { id: "ov-add", "aria-label": "Package" }, free.map((name) => h("option", { value: name }, name)));
+      if (free.includes(targetPackage)) select.value = targetPackage;
       body.append(h("div", { class: "addrow" }, select, h("button", { class: "btn", type: "button", onclick: () => {
         s.overrides.push({ package: select.value, execute: "", verify: "" });
         draw(`#ov-${s.overrides.length - 1}-execute`);
@@ -158,7 +171,7 @@ function overrides(s) {
 // team chooses between the product's default team and an own team of
 // helper roles below every Manager.
 function team(s, committed) {
-  const box = h("fieldset", { class: "plate" }, h("legend", {}, "Team below each Manager"));
+  const box = h("fieldset", { class: "plate", id: "project-team", tabindex: -1 }, h("legend", {}, "Project-wide team below every Manager"), h("p", { class: "note" }, "Changes here apply to every Manager in the project."));
   const body = h("div", {});
   const own = h("input", { type: "radio", name: "team", id: "team-own", checked: Boolean(s.team) });
   const product = h("input", { type: "radio", name: "team", id: "team-default", checked: !s.team });
