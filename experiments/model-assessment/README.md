@@ -29,12 +29,12 @@ Session C's method trial for the mandatory Model assessment ([handoff](../../doc
 
 The harness ends a confirmed problem `Incomplete` with the reason `the model assessment confirmed a material model problem`, because the caller of `run.Finish` cannot end a sealed Pass `Failed`; the production gate maps it to `Failed` ([contract](contract.md#what-production-must-add)).
 
-**Controls.** Session B's independently checked model controls: public gap, permitted freedom, contradiction and complete model, each with three fresh repetitions. Their expectation (the conclusion; the Definitions and terms of the known issue; the Definitions of the permitted freedom) is transcribed at freeze into a hidden control file, together with the packet's Definition identities and bodies.
+**Controls.** Session B's independently checked model controls: public gap, permitted freedom, contradiction and complete model, each with three fresh repetitions. Their expectation (the conclusion; the terms and Definitions of the known issue and of the permitted freedom; named observations such as known minor ambiguities and invented requirements) is transcribed at freeze into a hidden control file, together with the packet's Definition identities and bodies. A signal concerns a target by its terms when the target has any, otherwise by a cited Definition.
 
 **Measures.** Per attempt `assess.py attempt` records:
 
 - the conclusion, whether it blocks, and whether it meets the expectation, including the class;
-- whether a confirmed finding matches the known issue, missed issues, false aborts (a block on a control that expects acceptance), and false-alarm candidates (confirmed findings that do not match the known issue), with signals that cite the permitted freedom;
+- whether a confirmed finding matches the known issue, missed issues, false aborts (a block on a control that expects acceptance), and false-alarm candidates (confirmed findings that do not match the known issue), with signals that cite the permitted freedom and the control's named observations each signal concerns;
 - confirmed findings that cite no Definition of the model;
 - disagreement: returned results, disputes and disproved findings;
 - internal questions, and attempted questions to the user (refused);

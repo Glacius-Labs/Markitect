@@ -108,11 +108,12 @@ def cited(text, definitions):
 
 
 def matches(text, target, definitions):
+    """Whether a text concerns a target: by its terms when it has any, otherwise by a cited Definition."""
     if not target:
         return False
-    if set(cited(text, definitions)) & set(target.get("definitions", [])):
-        return True
-    return any(re.search(term, text, re.IGNORECASE) for term in target.get("terms", []))
+    if target.get("terms"):
+        return any(re.search(term, text, re.IGNORECASE) for term in target["terms"])
+    return bool(set(cited(text, definitions)) & set(target.get("definitions", [])))
 
 
 def load_report(text):
@@ -246,6 +247,8 @@ def score(report, classification, control, events=(), timing=None, evidence=None
         s["cites"] = cited(s["text"], definitions)
         s["matchesIssue"] = matches(s["text"], control.get("issue") if control else None, definitions)
         s["citesFreedom"] = matches(s["text"], control.get("freedom") if control else None, definitions)
+        # The control's named observations, such as known minor ambiguities or invented requirements.
+        s["tags"] = [name for name, target in sorted(((control or {}).get("tags") or {}).items()) if matches(s["text"], target, definitions)]
     blocking = [s for s in raised if s["blocking"]]
     turns = run.get("turns", [])
     usage = run.get("usage", {})

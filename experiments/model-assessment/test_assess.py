@@ -143,6 +143,15 @@ class Scoring(unittest.TestCase):
         self.assertIsNone(s["expectationMet"])
         self.assertFalse(s["missedIssue"] or s["blocked"])
 
+    def test_terms_decide_the_match_and_tags_name_known_observations(self):
+        control = dict(GAP, tags={"M2": {"terms": [r"unicode"]}, "invented: error wording": {"terms": [r"error (text|wording)"]}})
+        r = confirmed(finding("shop/inputs: Unicode or ASCII trimming is open.", fid="F1"),
+                      finding("shop/inputs: the exact error wording must be fixed.", fid="F2"))
+        s = assess.score(r, assess.classify(r), control)
+        self.assertEqual([x["tags"] for x in s["signals"]], [["M2"], ["invented: error wording"]])
+        self.assertFalse(s["issueRaised"])
+        self.assertEqual(s["falseAlarmCandidates"], ["F1", "F2"])
+
     def test_citations_need_the_identity_or_a_marked_local_id(self):
         self.assertEqual(assess.cited("see shop/inputs and [[list]]", DEFINITIONS), ["shop/inputs", "shop/list"])
         self.assertEqual(assess.cited("the list of inputs is long", DEFINITIONS), [])
