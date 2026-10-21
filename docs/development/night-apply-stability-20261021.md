@@ -110,7 +110,22 @@ reported separately. Each consumed attempt is conservatively charged its full
 2,700-second reservation, including setup, stop/cleanup and persistence; observed
 elapsed duration is a separate measurement.
 
-The durable NIGHT ledger reserves the full attempt charge before execution.
+The supervisor durably reserves the full attempt charge in the NIGHT ledger and
+both ACTIVE records before launching the child, including before child-only live
+guards. The child consumes that exact reservation without appending another one.
+The group position selects a packet; its global start number selects the next
+ledger reservation across groups. A nonzero or unclosed child triggers owned
+cessation and retains the full charge and blockers. The child output is retained
+and fsynced; a guard failure records its fixed nonsecret reason and source line,
+while arbitrary exception payloads stay omitted.
+Supervisor diagnostics distinguish an unreserved refusal, uncertain partial
+reservation writes, a committed reservation without a child and a failure after
+launch. Partial writes require recovery; they never imply an uncharged retry.
+Before releasing its marker, the supervisor checks its exact attempt, clock and
+reservation identity against the closed row. Child setup shares the safe diagnostic
+boundary, and a signal during preflight retains the charged attempt identity.
+The supervisor defers repeated SIGINT/SIGTERM through its existing bounded forced
+cessation and cleanup-evidence sequence, then restores the previous signal mask.
 An unfinished ACTIVE reservation and the supervisor's own pre-existing durable
 ACTIVE reservation independently block another start, including a child-finalization
 race with failed STOP writes. Forced cessation and
@@ -142,3 +157,23 @@ also persists `operation: apply`, matching the CLI
 command's output, so the complete report comparison needs no alias exception.
 A new released freeze must show whether these corrections let a real independent
 review finish; source diagnostics alone cannot establish that improvement.
+
+N2-01 on Main `c028fd19` was refused before its original child-side reservation,
+attempt directory, credentials or provider work. Its exact historical `ValueError`
+guard cannot be recovered from the type-only output; later read-backs found no
+static release or global-position mismatch and do not reconstruct transient state.
+The stopped child identity, unchanged foreign baseline and absent owned containers
+were verified. The original supervisor marker, registry and output were retained;
+only after that evidence was secured was the marker reconciled. The authorized
+failed dispatch was conservatively charged a full 2,700 seconds in a separate
+closed ledger row. Thus N1 and N2 consume two starts and 5,400 seconds, with only
+N1 having generated. No remaining N2 attempt is released. The supervisor-side
+reservation and safe diagnostics above address the observed accounting/diagnosis
+gap without assigning a retrospective cause or raising any ceiling. Provider-free
+controls exercise a later group's local position one with a global reservation,
+the actual child preflight, retained charges on refusal and blocked repetition.
+Additional controls inject partial writes and registry/output/launch failures,
+check child-bootstrap payload suppression, preserve a changed supervisor marker,
+and deliver a signal between reservation validation and the next live guard.
+They also interrupt immediately after launch and queue a second interrupt during
+forced cessation to check that owned Docker cleanup and recovery evidence finish.

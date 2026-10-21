@@ -18,13 +18,41 @@ import time
 
 INTERRUPT = {'seen': False, 'finalizing': False, 'committed': False,
              'stopPath': None, 'attempt': None, 'markerWriteFailed': False}
+SUPERVISION = {}
 
 def sha(path):
     return hashlib.sha256(Path(path).read_bytes()).hexdigest()
 
+class GuardRefusal(ValueError):
+    """Only fixed guard text and a frozen-source location, never input payloads."""
+    def __init__(self, reason, line):
+        super().__init__(reason)
+        self.diagnostic = {'reason': reason, 'source': 'night_run.py', 'line': line}
+
+
 def require(condition, reason='bound precondition refused'):
     if not condition:
-        raise ValueError(reason)
+        raise GuardRefusal(reason, sys._getframe(1).f_lineno)
+
+
+def failure_diagnostic(error, phase):
+    value = {'phase': phase, 'errorType': type(error).__name__}
+    if isinstance(error, GuardRefusal):
+        value['failedGuard'] = error.diagnostic
+    return value
+
+
+def supervisor_failure(error):
+    state = SUPERVISION.get('reservationState', 'absent')
+    status = {'absent': 'refused-before-reservation', 'write-uncertain': 'reservation-write-uncertain',
+              'committed': 'reserved-no-child'}[state]
+    if SUPERVISION.get('childLaunched'):
+        status = 'supervision-failed-after-launch'
+    value = {'status': status, **failure_diagnostic(error, SUPERVISION.get('phase', 'supervisor preparation'))}
+    if state != 'absent':
+        value.update(attempt=SUPERVISION['attempt'], reservationState=state,
+                     reservedSeconds=2700, recoveryRequired=True)
+    return value
 
 HOST_CLOCK = '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
 ABSOLUTE_START_CUTOFF = dt.datetime(2026, 10, 22, 4, 0, tzinfo=dt.timezone.utc)
@@ -38,7 +66,7 @@ def host_clock():
     done = subprocess.run([HOST_CLOCK, '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command],
                           capture_output=True, check=True, timeout=5)
     value = json.loads(done.stdout.decode('utf-8-sig'))
-    require(value['frequency'] > 0)
+    require(value['frequency'] > 0, 'host clock frequency is not positive')
     return value
 
 def host_utc(sample):
@@ -46,7 +74,7 @@ def host_utc(sample):
 
 def host_elapsed(sample=None):
     sample = sample or host_clock()
-    require(sample['frequency'] == process_started_host['frequency'])
+    require(sample['frequency'] == process_started_host['frequency'], 'host clock frequency changed after dispatch')
     return (sample['ticks'] - process_started_host['ticks']) / sample['frequency']
 
 
@@ -195,6 +223,16 @@ def signal_tracked(path, signum):
 
 
 def force_supervised_stop(child, registry, root, packet, reason, stop_sample=None):
+    # A repeated supervisor interrupt must not skip the owned Docker cleanup.
+    # Restore pending signals only after the bounded cessation/evidence sequence.
+    blocked = signal.pthread_sigmask(signal.SIG_BLOCK, {signal.SIGINT, signal.SIGTERM})
+    try:
+        return forced_cleanup(child, registry, root, packet, reason, stop_sample)
+    finally:
+        signal.pthread_sigmask(signal.SIG_SETMASK, blocked)
+
+
+def forced_cleanup(child, registry, root, packet, reason, stop_sample):
     """Cessation continues even if recovery or process-registry writes failed."""
     errors = []
     marker = recovery(root, packet['name'], reason + '; cleanup not yet proved')
@@ -249,26 +287,89 @@ def force_supervised_stop(child, registry, root, packet, reason, stop_sample=Non
     return 4
 
 
+def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None):
+    """Charge an eligible authorized dispatch before any child-only check."""
+    with (root / 'series.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        require(not any((root / name).exists() for name in
+                        ('ACTIVE-ATTEMPT', 'ACTIVE-SUPERVISOR', 'STOP-SERIES')),
+                'an unfinished dispatch or stop marker blocks a new reservation')
+        ledger = root / 'attempts.jsonl'
+        previous = [json.loads(line) for line in ledger.read_text().splitlines()]
+        require(len(previous) == packet['startNumber'] - 1 and len(previous) < 6
+                and all(row['status'] == 'closed' and row['chargedSeconds'] == 2700 for row in previous),
+                'global ledger does not authorize this next start number')
+        require(sum(row['chargedSeconds'] for row in previous) + 2700 <= 16200,
+                'global charged time ceiling would be exceeded')
+        require(host_utc(started) < ABSOLUTE_START_CUTOFF,
+                'absolute no-new-start cutoff reached before reservation')
+        reservation = {'name': packet['name'], 'scenario': packet['scenario'], 'mode': packet['mode'],
+                       'group': manifest['group'], 'startedUtc': host_utc(started).isoformat(),
+                       'startedHostClock': started, 'status': 'running', 'chargedSeconds': 2700,
+                       'manifestSha256': sha(manifest_path)}
+        # Either retained marker blocks another dispatch if a later write fails.
+        # All three records are durable before a process capable of inference exists.
+        if state is not None:
+            state.update(reservationState='write-uncertain', attempt=packet['name'], phase='reservation writes')
+        with (root / 'ACTIVE-SUPERVISOR').open('x') as stream:
+            json.dump({'attempt': packet['name'], 'startedHostClock': started,
+                       'reservation': reservation}, stream)
+            stream.flush()
+            os.fsync(stream.fileno())
+        sync_dir(root)
+        with (root / 'ACTIVE-ATTEMPT').open('x') as stream:
+            stream.write(json.dumps(reservation) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        sync_dir(root)
+        with ledger.open('a') as stream:
+            stream.write(json.dumps(reservation) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+        sync_dir(root)
+        if state is not None:
+            state['reservationState'] = 'committed'
+        return reservation
+
+
+def reserved_dispatch(root, packet, manifest_path, records):
+    """The child consumes exactly the supervisor's durable charge, never another."""
+    require(records and len(records) == packet['startNumber'],
+            'supervised reservation is absent from the global ledger')
+    previous, reservation = records[:-1], records[-1]
+    require(all(row['status'] == 'closed' and row['chargedSeconds'] == 2700 for row in previous) and len(records) <= 6
+            and sum(row['chargedSeconds'] for row in records) <= 16200,
+            'previous dispatch or global charged ceiling blocks this child')
+    require(reservation['name'] == packet['name'] and reservation['status'] == 'running'
+            and reservation['scenario'] == packet['scenario'] and reservation['mode'] == packet['mode']
+            and reservation['chargedSeconds'] == 2700 and reservation['manifestSha256'] == sha(manifest_path),
+            'current charged reservation differs from this released dispatch')
+    active = json.loads((root / 'ACTIVE-ATTEMPT').read_text())
+    supervisor = json.loads((root / 'ACTIVE-SUPERVISOR').read_text())
+    require(active == reservation and supervisor['attempt'] == packet['name']
+            and supervisor['reservation'] == reservation,
+            'durable active markers differ from the charged reservation')
+    return previous, reservation
+
+
 def supervise(manifest_path, gate_path, position):
     """Independent process supervision for the observed guest-clock drift.
 
     Requires responsive WSL scheduling, guest timers and Windows interop. It does not promise
     enforcement through suspension of the entire subsystem or host bridge.
     """
+    SUPERVISION.clear()
+    SUPERVISION.update(reservationState='absent', phase='supervisor authorization', childLaunched=False)
     started = host_clock()
     m = validate(manifest_path, gate_path, files=False)
-    require(1 <= int(position) <= len(m['packets']))
+    require(1 <= int(position) <= len(m['packets']), 'group position is outside the frozen packet list')
     packet = m['packets'][int(position) - 1]
     root = Path(m['nightRoot'])
-    # Independent durable ownership survives a child closing ACTIVE while the
-    # supervisor detects a deadline or loses storage. Forced paths never remove
-    # this pre-existing blocker, even if a new STOP write is impossible.
+    # Reserve before launching the child: an early refusal is a charged dispatch
+    # too. Independent ownership also survives child-finalization/storage races.
     supervisor_active = root / 'ACTIVE-SUPERVISOR'
-    with supervisor_active.open('x') as stream:
-        json.dump({'attempt': packet['name'], 'startedHostClock': started}, stream)
-        stream.flush()
-        os.fsync(stream.fileno())
-    sync_dir(root)
+    reservation = reserve_dispatch(root, packet, m, manifest_path, started, SUPERVISION)
+    SUPERVISION['phase'] = 'process registry preparation'
     registry = root / ('process-groups-' + packet['name'] + '.jsonl')
     with registry.open('x') as stream:
         stream.flush()
@@ -276,9 +377,16 @@ def supervise(manifest_path, gate_path, position):
     sync_dir(root)
     environment = dict(os.environ, MARKITECT_NIGHT_PROCESS_REGISTRY=str(registry),
                        MARKITECT_NIGHT_STARTED_HOST=json.dumps(started))
-    child = subprocess.Popen([sys.executable, '-B', __file__, '--bounded-child',
-                              manifest_path, gate_path, position], start_new_session=True, env=environment)
+    child_output = root / ('supervisor-child-' + packet['name'] + '.jsonl')
+    SUPERVISION['phase'] = 'child output preparation'
+    output = child_output.open('x')
+    child = None
     try:
+        SUPERVISION['phase'] = 'child launch'
+        child = subprocess.Popen([sys.executable, '-B', __file__, '--bounded-child',
+                                  manifest_path, gate_path, position], start_new_session=True,
+                                 env=environment, stdout=output)
+        SUPERVISION.update(childLaunched=True, phase='child supervision')
         track_process(registry, child.pid)
         while child.poll() is None:
             sample = host_clock()
@@ -289,41 +397,66 @@ def supervise(manifest_path, gate_path, position):
                 return force_supervised_stop(child, registry, root, packet, 'independent host-clock supervisor deadline', sample)
             time.sleep(0.1)
     except BaseException as error:
+        if child is None:
+            raise  # no child object exists; full reservation and blockers remain
         return force_supervised_stop(child, registry, root, packet,
                                      'supervisor failure ' + type(error).__name__)
-    if child.returncode == 0 and not (root / 'ACTIVE-ATTEMPT').exists() and not (root / 'STOP-SERIES').exists():
+    finally:
+        output.flush()
+        os.fsync(output.fileno())
+        output.close()
+    print(json.dumps({'status': 'child-exited', 'attempt': packet['name'], 'exitCode': child.returncode,
+                      'childOutput': str(child_output), 'chargedSeconds': 2700}), flush=True)
+    if child.returncode != 0 or (root / 'ACTIVE-ATTEMPT').exists() or (root / 'STOP-SERIES').exists():
+        return force_supervised_stop(child, registry, root, packet,
+                                     'child did not establish safe closed accounting; retained full charge')
+    try:
         records = [json.loads(line) for line in (root / 'attempts.jsonl').read_text().splitlines()]
-        require(records and records[-1]['name'] == packet['name'] and records[-1]['status'] == 'closed')
-        supervisor_active.unlink()
-        sync_dir(root)
-    return child.returncode
+        require(len(records) == packet['startNumber'] and records[-1]['status'] == 'closed'
+                and all(records[-1].get(key) == value for key, value in reservation.items() if key != 'status'),
+                'child closed record differs from its full charged reservation')
+        marker = json.loads(supervisor_active.read_text())
+        require(marker['attempt'] == packet['name'] and marker['reservation'] == reservation
+                and marker['startedHostClock'] == started,
+                'supervisor marker differs from this owned dispatch before release')
+    except Exception as error:
+        return force_supervised_stop(child, registry, root, packet,
+                                     'closed accounting failure ' + type(error).__name__)
+    supervisor_active.unlink()
+    sync_dir(root)
+    return 0
 
 def main():
     manifest_path, gate_path, position = sys.argv[1:]
-    # Guard precedes Docker, credentials, ledger reservation and the binary.
+    # The supervisor already charged this child; guards precede its live work.
     m = validate(manifest_path, gate_path, files=False)
     position = int(position)
-    require(1 <= position <= len(m['packets']))
+    require(1 <= position <= len(m['packets']), 'group position is outside the frozen packet list')
     root = Path(m['nightRoot']).resolve()
+    # An authorized packet identifies recovery even during ledger/marker reads.
+    # Before this point stopPath is unset, so the parent records recovery itself.
+    INTERRUPT['attempt'] = m['packets'][position - 1]['name']
     INTERRUPT['stopPath'] = root / 'STOP-SERIES'
     require(not INTERRUPT['stopPath'].exists(), 'series stop marker is preserved')
+    with (root / 'series.lock').open('a') as lock:
+        fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
+        return run_reserved_attempt(manifest_path, gate_path, position, m, root)
+
+
+def run_reserved_attempt(manifest_path, gate_path, position, m, root):
     active = root / 'ACTIVE-ATTEMPT'
-    require(not active.exists(), 'unfinished durable reservation is preserved')
     ledger = root / 'attempts.jsonl'
-    lock = (root / 'series.lock').open('a')
-    fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
-    previous = [json.loads(line) for line in ledger.read_text().splitlines()] if ledger.exists() else []
+    records = [json.loads(line) for line in ledger.read_text().splitlines()]
     p = m['packets'][position - 1]
-    require(json.loads((root / 'ACTIVE-SUPERVISOR').read_text())['attempt'] == p['name'],
-            'independent supervisor reservation does not match this attempt')
-    require(len(previous) == p['startNumber'] - 1 and len(previous) < 6 and all(r['status'] == 'closed' for r in previous))
-    require(sum(r['chargedSeconds'] for r in previous) + 2700 <= 16200)
-    require(host_utc(host_clock()) < ABSOLUTE_START_CUTOFF, 'absolute no-new-start cutoff reached')
+    previous, reservation = reserved_dispatch(root, p, manifest_path, records)
     INTERRUPT['attempt'] = p['name']
+    require(reservation['startedHostClock'] == process_started_host,
+            'child host-clock anchor differs from the supervised reservation')
+    require(host_utc(host_clock()) < ABSOLUTE_START_CUTOFF, 'absolute no-new-start cutoff reached')
     credential_path = Path(m['provider']['credentialPath'])
     require(not credential_path.exists(), 'unexpected credential file is preserved')
     attempt = root / 'attempts' / p['name']
-    require(not attempt.exists())
+    require(not attempt.exists(), 'an existing attempt directory is preserved')
     docker = '/usr/bin/docker'
     baseline = subprocess.run([docker, 'ps', '--no-trunc', '--format', '{{.ID}}|{{.Image}}|{{.Names}}'],
                               capture_output=True, check=True, timeout=15).stdout.decode().splitlines()
@@ -332,12 +465,7 @@ def main():
                           capture_output=True, check=True, timeout=15)
     require(not busy.stdout.strip(), 'Docker host is busy')
     start = process_started
-    started = process_started_utc
-    reservation = {'name': p['name'], 'scenario': p['scenario'], 'mode': p['mode'], 'group': m['group'], 'startedUtc': started.isoformat(),
-                   'startedHostClock': process_started_host,
-                   'reservedAtUtc': dt.datetime.now(dt.timezone.utc).isoformat(),
-                   'reservationOffsetSeconds': round(time.monotonic() - start, 3),
-                   'status': 'running', 'chargedSeconds': 2700, 'manifestSha256': sha(manifest_path)}
+    started = dt.datetime.fromisoformat(reservation['startedUtc'])
     credential_created = False
     unsafe = False
     result = {'classification': 'technical-incomplete', 'name': p['name']}
@@ -389,20 +517,8 @@ def main():
         return {'runningBeforeEmergencyStop': len(found), 'runningAfter': 0,
                 'emergencyStopUsed': bool(found), 'volumes': 'retained; no foreign resource removed'}
     try:
-        # This reservation remains until cleanup and both final records are
-        # durable. It also blocks a next start if a later recovery write fails.
-        with active.open('x') as f:
-            f.write(json.dumps(reservation) + '\n')
-            f.flush()
-            os.fsync(f.fileno())
-        sync_dir(root)
-        with ledger.open('a') as f:
-            f.write(json.dumps(reservation) + '\n')
-            f.flush()
-            os.fsync(f.fileno())
-        sync_dir(root)
         # Hash/profile/packet failures after an authorized dispatch consume the
-        # durable start too. Invalid/closed releases still refuse before effect.
+        # already durable start too. Invalid/closed releases refuse before effect.
         attempt.mkdir(parents=True)
         (attempt / 'out').mkdir()
         validate(manifest_path, gate_path)
@@ -559,7 +675,7 @@ def main():
             result['classification'] = 'technical-incomplete'
         result['initialCleanup'] = first_cleanup
     except Exception as error:
-        result['errorType'] = type(error).__name__  # never print credential payloads or captured process output
+        result.update(failure_diagnostic(error, 'attempt'))
         if isinstance(error, (subprocess.TimeoutExpired, InterruptedError)):
             unsafe = True
     finally:
@@ -646,36 +762,34 @@ def main():
         print(json.dumps(result))
     return 4 if unsafe else 0
 
-if __name__ == '__main__':
-    # Bound the entire process, including setup and finalization, to 2,700 s.
-    # The 1,740 s work cutoff and 2,460 s provider deadline leaves positive writer-stop/cleanup reserve.
-    if sys.argv[1:2] != ['--bounded-child']:
-        sys.exit(supervise(*sys.argv[1:]))
-    del sys.argv[1]
+def interrupt(signum, frame):
+    if INTERRUPT['committed']:
+        return  # cleanup and durable terminal evidence already completed
+    first = not INTERRUPT['seen']
+    INTERRUPT['seen'] = True
+    if INTERRUPT['stopPath'] is not None:
+        try:
+            # This later recovery record overrides any earlier closed row
+            # or result snapshot; it is never removed by this runner.
+            with INTERRUPT['stopPath'].open('x') as marker:
+                json.dump({'status': 'unsafe', 'recoveryRequired': True,
+                           'attempt': INTERRUPT.get('attempt'),
+                           'reason': 'signal or overall deadline',
+                           'atUtc': dt.datetime.now(dt.timezone.utc).isoformat(),
+                           'overrides': 'earlier result.json and ledger row for this attempt'}, marker)
+                marker.write('\n')
+                marker.flush()
+                os.fsync(marker.fileno())
+            sync_dir(INTERRUPT['stopPath'].parent)
+        except OSError:
+            INTERRUPT['markerWriteFailed'] = True
+    if first and not INTERRUPT['finalizing']:
+        raise InterruptedError('bounded runner interrupted')
+
+
+def bounded_child():
+    global process_started, process_started_utc, process_started_host
     require(os.environ.get('MARKITECT_NIGHT_PROCESS_REGISTRY'), 'independent supervisor is required')
-    def interrupt(signum, frame):
-        if INTERRUPT['committed']:
-            return  # cleanup and durable terminal evidence already completed
-        first = not INTERRUPT['seen']
-        INTERRUPT['seen'] = True
-        if INTERRUPT['stopPath'] is not None:
-            try:
-                # This later recovery record overrides any earlier closed row
-                # or result snapshot; it is never removed by this runner.
-                with INTERRUPT['stopPath'].open('x') as marker:
-                    json.dump({'status': 'unsafe', 'recoveryRequired': True,
-                               'attempt': INTERRUPT.get('attempt'),
-                               'reason': 'signal or overall deadline',
-                               'atUtc': dt.datetime.now(dt.timezone.utc).isoformat(),
-                               'overrides': 'earlier result.json and ledger row for this attempt'}, marker)
-                    marker.write('\n')
-                    marker.flush()
-                    os.fsync(marker.fileno())
-                sync_dir(INTERRUPT['stopPath'].parent)
-            except OSError:
-                INTERRUPT['markerWriteFailed'] = True
-        if first and not INTERRUPT['finalizing']:
-            raise InterruptedError('bounded runner interrupted')
     signal.signal(signal.SIGTERM, interrupt)
     signal.signal(signal.SIGINT, interrupt)
     process_started = time.monotonic()
@@ -688,8 +802,19 @@ if __name__ == '__main__':
         interrupt(signum, frame)
     signal.signal(signal.SIGALRM, deadline)
     signal.setitimer(signal.ITIMER_REAL, 2670)
+    return main()
+
+
+if __name__ == '__main__':
+    # Include setup and finalization in the same diagnostic and 2,700 s boundary.
+    child_mode = sys.argv[1:2] == ['--bounded-child']
     try:
-        sys.exit(main())
+        if child_mode:
+            del sys.argv[1]
+            sys.exit(bounded_child())
+        sys.exit(supervise(*sys.argv[1:]))
     except Exception as error:
-        print(json.dumps({'status': 'refused-before-attempt', 'errorType': type(error).__name__}))
+        failure = ({'status': 'reserved-child-refusal', **failure_diagnostic(error, 'child preparation')}
+                   if child_mode else supervisor_failure(error))
+        print(json.dumps(failure), flush=True)
         sys.exit(3)
