@@ -1,7 +1,7 @@
 import { h, s, append, clear, label } from "./dom.js";
 import { OrgChart } from "./orgchart.js";
-import { visibleAncestor } from "./org-layout.mjs";
-import { runNodes, exchangeFrames, exchangeRoute, pointAlong } from "./run-organization-facts.mjs";
+import { visibleAncestor } from "./org-layout.js";
+import { runNodes, exchangeFrames, exchangeRoute, pointAlong } from "./run-organization-facts.js";
 
 // Adapts the inspector's already-bound view and clock to the shared chart.
 // No project observation or current configuration enters a recorded Run.
@@ -44,7 +44,7 @@ export class RunOrganization {
     const signature = frames.map((f) => f.entry.seq).join(",");
     if (signature !== this.recentSignature) {
       this.recentSignature = signature;
-      append(clear(this.recentList), frames.map(({ entry }) => h("li", {}, h("button", { class: "ref", type: "button", onclick: () => this.onSelect(entry.ref) }, `${label(entry.link.from)} to ${label(entry.link.to)}: ${entry.link.purpose}`), " · recorded send; receipt and reading unobserved")));
+      append(clear(this.recentList), frames.map(({ entry }) => h("li", {}, h("button", { class: "ref", type: "button", onclick: () => this.onSelect(entry.ref) }, `${label(entry.link.from)} to ${label(entry.link.to)}: ${entry.link.purpose}`), " Â· recorded send; receipt and reading unobserved")));
       this.recent.hidden = !frames.length;
     }
     if (this.chart.narrow) return;
@@ -59,7 +59,7 @@ export class RunOrganization {
         s("path", { d: path }),
         s("path", { class: "org-arrowhead", d: "M0 0 L-10 -5 L-10 5 Z", transform: `translate(${points.at(-1).x},${points.at(-1).y}) rotate(${pointAlong(points, 1).angle})` }),
         s("circle", { cx: at.x, cy: at.y, r: 4 }),
-        s("title", {}, `${entry.text} · recorded send; delivery and reading unobserved`));
+        s("title", {}, `${entry.text} Â· recorded send; delivery and reading unobserved`));
       this.chart.exchanges.append(g);
     }
   }
