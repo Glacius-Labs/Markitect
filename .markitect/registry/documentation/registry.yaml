@@ -1896,6 +1896,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: "Records the cockpit's start and stop of an Apply: checks with an injected execution function, a synthetic page demonstration and what remains unproved without a real run."
+  - path: "docs/validation/cockpit-projects-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: "Records the cockpit's project list and guided setup: checks with fake projects and a fake engine, a recorded page demonstration and what remains unproved without a real image, credential and run."
   - path: "docs/validation/cockpit-live-observation-20261020.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]

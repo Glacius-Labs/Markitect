@@ -35,15 +35,60 @@ type cockpitService struct {
 	// configuration and a Runtime profile the cockpit starts it in its own
 	// process, so a run it started ends with it.
 	execute cli.ApplyFunc
+	// userConfigDir and setup stand in for os.UserConfigDir and the function
+	// behind markitect setup; tests supply them.
+	userConfigDir func() (string, error)
+	setup         cli.SetupFunc
 }
 
+// projectSpec is what builds one project's Server: the state directories
+// named directly, the run configuration with its Runtime profile, the
+// repository selection and the product build a started run binds.
+type projectSpec struct {
+	states         []string
+	runConfig      string
+	runtimeProfile string
+	selection      apply.InputSelection
+	build          string
+	// runsReason replaces the text that says why starting a run is
+	// unavailable.
+	runsReason string
+}
+
+// Serve serves the cockpit until ctx ends: the project the flags name, or,
+// in project mode, the owner's per-user project list with the last project
+// opened.
 func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, ready func(url string)) error {
-	states := append([]string(nil), request.States...)
-	runState := ""
-	if request.RunConfig != "" {
-		cfg, err := loadRunConfig(ctx, request.RunConfig)
+	host, err := cockpit.NewHost(ctx, c.hostConfig(request.Build))
+	if err != nil {
+		return err
+	}
+	if request.Projects {
+		host.OpenLast()
+	} else {
+		spec := projectSpec{states: request.States, runConfig: request.RunConfig, runtimeProfile: request.RuntimeProfile, selection: request.Selection, build: request.Build}
+		opened, err := c.open(ctx, spec)
 		if err != nil {
 			return err
+		}
+		host.Adopt(directProject(request), opened)
+	}
+	return host.Serve(ctx, request.Listen, ready)
+}
+
+// open builds a project's Server over the selected state directories. A run
+// configuration contributes its state directory and, with a Runtime profile,
+// the container engine, workspace helper, credentials and harvest limits of
+// model sessions. Closing the project ends its model sessions, lets a started
+// publication finish, and ends the run it started, waiting until the
+// execution wrote the run's report and closed its evidence.
+func (c cockpitService) open(ctx context.Context, spec projectSpec) (cockpit.OpenedProject, error) {
+	states := append([]string(nil), spec.states...)
+	runState := ""
+	if spec.runConfig != "" {
+		cfg, err := loadRunConfig(ctx, spec.runConfig)
+		if err != nil {
+			return cockpit.OpenedProject{}, err
 		}
 		states = append(states, cfg.StateDirectory)
 		runState = cfg.StateDirectory
@@ -52,7 +97,7 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 	for i, dir := range states {
 		abs, err := filepath.Abs(dir)
 		if err != nil {
-			return err
+			return cockpit.OpenedProject{}, err
 		}
 		states[i] = abs
 	}
@@ -65,44 +110,46 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 		}
 		return stateHeld(dir)
 	}
-	cfg := cockpit.Config{States: states, Liveness: liveness, Answer: writeAnswer}
+	cfg := cockpit.Config{States: states, Liveness: liveness, Answer: writeAnswer, RunsReason: spec.runsReason}
 	var runs *cockpit.RunController
 	var proposals *authoring.Service
-	if selection := request.Selection; selection.Repository != "" {
+	if selection := spec.selection; selection.Repository != "" {
 		cfg.Project = func(ctx context.Context) (cockpit.ProjectInfo, error) {
 			return c.project(ctx, selection)
 		}
 		proposals = c.authoring(selection, states, fence)
-		if request.RunConfig != "" && request.RuntimeProfile != "" {
-			proposals.WithSessions(c.sessionOpener(selection, request.RunConfig, request.RuntimeProfile))
+		if spec.runConfig != "" && spec.runtimeProfile != "" {
+			proposals.WithSessions(c.sessionOpener(selection, spec.runConfig, spec.runtimeProfile))
 		}
 		cfg.Authoring = proposals
-		if request.RunConfig != "" && request.RuntimeProfile != "" && c.execute != nil {
+		if spec.runConfig != "" && spec.runtimeProfile != "" && c.execute != nil {
 			abs, err := filepath.Abs(runState)
 			if err != nil {
-				return err
+				return cockpit.OpenedProject{}, err
 			}
-			runs = c.runController(ctx, selection, request.RunConfig, request.RuntimeProfile, abs, request.Build, fence)
+			runs = c.runController(ctx, selection, spec.runConfig, spec.runtimeProfile, abs, spec.build, fence)
 			cfg.Runs = runs
 		}
 	}
 	server, err := cockpit.New(cfg)
 	if err != nil {
-		return err
+		return cockpit.OpenedProject{}, err
 	}
-	err = server.Serve(ctx, request.Listen, ready)
-	if runs != nil {
-		// A stopping cockpit ends the run it started and waits until the
-		// execution wrote the run's report and closed its evidence.
-		runs.Wait()
-	}
-	if proposals != nil {
-		// A stopping cockpit ends its model sessions and lets a started
-		// publication finish.
-		err = errors.Join(err, proposals.CloseSessions(context.Background()))
-		proposals.Wait()
-	}
-	return err
+	return cockpit.OpenedProject{Server: server, Close: func() error {
+		if runs != nil {
+			// A closing project ends the run it started and waits until the
+			// execution wrote the run's report and closed its evidence.
+			runs.Wait()
+		}
+		if proposals != nil {
+			// A closing project ends its model sessions and lets a started
+			// publication finish.
+			err := proposals.CloseSessions(context.Background())
+			proposals.Wait()
+			return err
+		}
+		return nil
+	}}, nil
 }
 
 // fencedStates are the state directories the cockpit holds to publish.

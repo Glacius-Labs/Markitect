@@ -45,7 +45,7 @@ function signature() {
     ui.stopBusy = false;
     ui.stopMessage = "";
   }
-  return JSON.stringify([store.data.runControl, store.errors.runControl?.message, ui]);
+  return JSON.stringify([store.data.runControl, store.errors.runControl?.message, store.currentProject, ui]);
 }
 
 function notify() {
@@ -206,7 +206,7 @@ export function runControlCard() {
       return;
     }
     if (!rc.available) {
-      body.append(h("p", { class: "note" }, rc.reason),
+      body.append(h("p", { class: "note" }, rc.reason), setupHint(),
         h("p", { class: "note" }, "An Apply started with markitect apply still appears below while it runs; it is observed, not controlled, here."));
       return;
     }
@@ -221,6 +221,17 @@ export function runControlCard() {
         h("div", { class: "actions" }, h("button", { class: "btn act", type: "button", onclick: openConfirmation }, "Start a run…")));
     }
   });
+}
+
+// setupHint points a project without a runtime to the guided setup, and one
+// that is not in the project list to keeping it first.
+function setupHint() {
+  const project = store.currentProject;
+  if (!project || project.setUp) return null;
+  if (!project.saved) {
+    return h("p", { class: "note" }, h("a", { href: "#/projects" }, "Keep this project in the project list"), " to set it up for runs here.");
+  }
+  return h("p", {}, h("a", { class: "btn act small", href: `#/projects?setup=${encodeURIComponent(project.name)}` }, "Set up runs for this project"));
 }
 
 function drawActive(body, run) {

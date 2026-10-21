@@ -256,11 +256,18 @@ const answerHeader = "X-Markitect-Cockpit"
 // ownRequest admits a write only from the cockpit's own page: its header with
 // the expected purpose and, when the browser names one, its own origin.
 func (s *Server) ownRequest(w http.ResponseWriter, r *http.Request, purpose string) bool {
+	return checkOwnRequest(w, r, purpose, s.admitHost)
+}
+
+// checkOwnRequest admits a write only when it carries the cockpit's own
+// header for its purpose, which a cross-site form cannot send, and no foreign
+// origin.
+func checkOwnRequest(w http.ResponseWriter, r *http.Request, purpose string, admit func(host string) bool) bool {
 	if r.Header.Get(answerHeader) != purpose {
 		http.Error(w, "a write needs the cockpit's own request", http.StatusForbidden)
 		return false
 	}
-	if origin := r.Header.Get("Origin"); origin != "" && !s.admitHost(strings.TrimPrefix(origin, "http://")) {
+	if origin := r.Header.Get("Origin"); origin != "" && !admit(strings.TrimPrefix(origin, "http://")) {
 		http.Error(w, "foreign origin", http.StatusForbidden)
 		return false
 	}

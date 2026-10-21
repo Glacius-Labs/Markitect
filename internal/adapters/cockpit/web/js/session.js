@@ -11,6 +11,7 @@ import { h, clear, clock, when, duration, announce } from "./dom.js";
 import { refusal } from "./settings.js";
 import { refreshState } from "./shell.js";
 import { mountProposal } from "./proposal.js";
+import { store } from "./store.js";
 
 const POLL_MS = 2000;
 const stateWords = {
@@ -99,7 +100,10 @@ function drawConversation(section, available, s) {
   clear(section);
   if (!available) {
     section.append(h("p", { class: "void" }, h("strong", {}, "Model sessions are not available"),
-      "Start the cockpit with a run configuration and a Runtime profile: markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. Sessions use the run configuration's container engine, workspace helper and credentials."));
+      "Start the cockpit with a run configuration and a Runtime profile: markitect cockpit --run-config PATH --runtime-profile PATH --repo PATH. Sessions use the run configuration's container engine, workspace helper and credentials.",
+      store.currentProject?.saved && !store.currentProject.setUp
+        ? h("p", {}, h("a", { class: "btn act small", href: `#/projects?setup=${encodeURIComponent(store.currentProject.name)}` }, "Set up runs for this project"))
+        : null));
     return;
   }
   if (!s) {
