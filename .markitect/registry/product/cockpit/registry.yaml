@@ -1,6 +1,6 @@
 apiVersion: markitect.registry/v1
 artifacts:
-  - path: "internal/adapters/cockpit/web/js/organization-facts.mjs"
+  - path: "internal/adapters/cockpit/web/js/organization-facts.js"
     form: code
     realizes: [product/cockpit/observed-organization]
     why: "Turns explicit project organization facts into leadership and Manager presentation nodes and exact Browse/Settings navigation, preserving declared and resolved values."

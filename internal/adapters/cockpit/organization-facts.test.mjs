@@ -1,7 +1,7 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { observedNodes, profileText, browseHref, profilesHref } from "./web/js/organization-facts.mjs";
-import { layoutTree, initialCollapse } from "./web/js/org-layout.mjs";
+import { observedNodes, profileText, browseHref, profilesHref } from "./web/js/organization-facts.js";
+import { layoutTree, initialCollapse } from "./web/js/org-layout.js";
 
 function manager(path, parent, depth) {
   return { path, parent, depth, label: path === "." ? "Root" : path.split("/").at(-1), definitions: [], areas: [], execute: { name: "author" }, verify: { name: "reviewer" } };
@@ -31,9 +31,9 @@ test("source Manager parents are kept in a large synthetic observation", () => {
 test("absent declaration remains absent and navigation preserves exact names", () => {
   assert.equal(profileText({}), "Not declared");
   assert.equal(profileText({ name: "p" }), "p");
-  assert.equal(profileText({ name: "p", model: "m" }), "p · m");
+  assert.equal(profileText({ name: "p", model: "m" }), "p Â· m");
   assert.equal(profilesHref("."), "#/settings?section=profiles");
-  const pkg = "a/b + ü";
+  const pkg = "a/b + Ã¼";
   assert.equal(new URLSearchParams(profilesHref(pkg).split("?")[1]).get("pkg"), pkg);
   const params = new URLSearchParams(browseHref(pkg, "rule + 1").split("?")[1]);
   assert.equal(params.get("pkg"), pkg); assert.equal(params.get("def"), "rule + 1");
