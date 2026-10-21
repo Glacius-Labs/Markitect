@@ -4,7 +4,7 @@ This separately re-evaluates existing inputs. It preserves [A's historical recor
 
 ## Source and input bindings
 
-Integrated base: `23591c4a5ff0038d87630c71cd0f3ad445202fe2`. Corrected evaluator source: `77faa5cdfe0d3077e6b78f68556d2f0af0ecc411`.
+Integrated base: `23591c4a5ff0038d87630c71cd0f3ad445202fe2`. Composed with Main `3fd86624a00563e6dfb73a4c9aa87dd70fbb730d` (#578/#579). Corrected evaluator source: `596d3f3252330b12dd50638744674d6f2709b695`.
 
 The secret-free WSL archive `~/session-a/evidence/b0b1-attempts-20261021.tar.gz` has SHA256 `038d314634e191c5ed6e5de6027fe8daf80d73bdee12d2d87e70f3ddfa4ab75e`. Its `SHA256SUMS` verified the archive, ledger and build bindings. [The committed projections](report-contract-extracts.json) identify original archive members and full digests, including the separately persisted `report.json` where present. They retain actual values for the fields used here. Negative mutations in [the tests](test_report_contract.py) are synthetic controls, not product attempts.
 
@@ -29,6 +29,8 @@ The actual B0/B1 kit's `assess.py` matches the file in both product commits `b9c
 
 Both evaluators now share one stop recognizer. Assessment requires the producer's terminal conclusion, successful preparation, a sealed review assessment with Root's accepted correction verdict, and an open genuine model finding bound to a reviewed candidate and named in that conclusion. Reassessment can confirm an earlier finding on that same candidate. DEC-064's Root abort remains supported through its matching structured Root/model/abort problem. Text prefixes, technical Incomplete/timeout/capture errors and unsupported old conclusions alone cannot establish current closed-Run success. DEC-063's reason-only Incomplete ending and old owner-question expectations remain historical. External owner questions, any publication (including `no_change` on a gap stop) or changed paths fail the stop criterion. Case scoring also requires the expected correction class and defect terms.
 
+Independent review found that the old 400-character problem preview also broke strict legacy Root-abort matching. Structured problem text is now retained in full; a regression covers a valid statement longer than 500 characters. The no-Run #3 projection also retains the original absence of a `run` key.
+
 Diagnostic formatting accepts both actual Source forms. `preparationDiagnostics` retains complete records, attempt indexes, diagnostic kinds and unfamiliar shapes; only the readable `preparation` preview remains capped at 2,000 characters.
 
 | Input | Old kit / integrated #564 `assess.py` | Corrected outcome-only result |
@@ -37,7 +39,7 @@ Diagnostic formatting accepts both actual Source forms. `preparationDiagnostics`
 | #5 S-N | Parser exception | `met: true`, Verified / `no_change` |
 | #3 infrastructure, #6 capture | Parser exception | `met: false`; no model-stop success |
 
-Corrected `assess.py` SHA256: `f4f1cc95665fd481fbc81707c676d931a3f27fba0cfdcec9e433c5e6426ca1d8`; `evaluate.py`: `c3396f7e1409a983e34090d780d45d8b6eed59d0fb47e940d4fbd4d36d8098f3`. These results exercise parsing and outcome scoring only. They do not rerun `assess()`/`evaluate()`, artifact tests, behavioral oracles, event/process evaluation or providers, and establish no new complete scenario result or product acceptance.
+Corrected `assess.py` SHA256: `2fdf877f88d0170c60e15f3eb3bf9fd75f53243927bdaf6928fcb86c525b37d3`; `evaluate.py`: `c3396f7e1409a983e34090d780d45d8b6eed59d0fb47e940d4fbd4d36d8098f3`. These results exercise parsing and outcome scoring only. They do not rerun `assess()`/`evaluate()`, artifact tests, behavioral oracles, event/process evaluation or providers, and establish no new complete scenario result or product acceptance.
 
 ## Local validation
 
