@@ -1,6 +1,8 @@
 package apply
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strings"
 	"time"
 
@@ -12,7 +14,8 @@ import (
 // the request: the strategy with its work sequence, the effective settings and
 // the implementation identity. Apply and VerifyCaptured resolve it the same way
 // from one passed preparation before any Agent work; run.start records it and
-// the report repeats it. Entry names the entry that ran: "apply" or
+// the report repeats it. Head is the captured source revision and Request the
+// digest of the owner's request. Entry names the entry that ran: "apply" or
 // "verify-captured", which runs only the strategy's Verify and so no work
 // Pass. Composition is the digest of the strategy's Pass declarations and
 // Root duty as this build implements them: it tells builds apart that the
@@ -20,6 +23,7 @@ import (
 type RunBinding struct {
 	Entry       string           `json:"entry"`
 	Head        string           `json:"head"`
+	Request     string           `json:"request"`
 	Strategy    Strategy         `json:"strategy"`
 	Work        []run.Purpose    `json:"work"`
 	Corrections []run.Purpose    `json:"corrections"`
@@ -95,8 +99,8 @@ type CheckBinding struct {
 
 // bindRun records the effective values of one passed preparation and the bound
 // request.
-func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []boundManager, checks []run.Check) RunBinding {
-	b := RunBinding{Entry: entry, Head: prepared.Structural().Model().Inputs().Head, Strategy: strategy, Corrections: strategy.corrections(), Build: build,
+func bindRun(entry string, prepared CapturedSettingsAttempt, request string, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []boundManager, checks []run.Check) RunBinding {
+	b := RunBinding{Entry: entry, Head: prepared.Structural().Model().Inputs().Head, Request: fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(request))), Strategy: strategy, Corrections: strategy.corrections(), Build: build,
 		Budget: BudgetBinding{ExecutionTime: budget.ExecutionTime.Value.String(), TurnTimeout: budget.TurnTimeout.Value.String(), AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value, Deadline: deadline.UTC()}}
 	b.Work = []run.Purpose{}
 	for _, spec := range strategy.work() {

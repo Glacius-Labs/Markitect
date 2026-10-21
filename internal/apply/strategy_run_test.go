@@ -28,11 +28,13 @@ import (
 // earliest correction correction (implement when empty), and disproves it in
 // the next; a refused correction is kept in refused and the finding raised for
 // implement instead. lookups names the Definitions a Manager looks up, with its
-// Brief, in its first turn; their answers are kept. compacted names Managers
-// whose first work turn reports a compaction, forgets Managers whose first
-// continued work turn comes back in another conversation. Any other refused
-// tool call fails the test, so the script cannot drift from the engine's
-// protocol unnoticed.
+// Brief, in its first turn; their answers are kept, after edits changed the
+// stand's files. compacted, forgets and fails are keyed by "<turn kind>
+// <Manager>": the first such turn reports a compaction, the first continued one
+// comes back in another conversation, or the first one fails before any tool
+// call; marks keeps which turn did what. A conversation otherwise continues.
+// Any other refused tool call fails the test, so the script cannot drift from
+// the engine's protocol unnoticed.
 type preservingAgents struct {
 	t           *testing.T
 	obligations map[string][]string
@@ -41,10 +43,14 @@ type preservingAgents struct {
 	correction  string
 	refused     []string
 	lookups     map[string][]string
+	edits       map[string]string
+	ws          *treeWorkspaces
 	compacted   map[string]bool
 	forgets     map[string]bool
+	fails       map[string]bool
 	mu          sync.Mutex
 	turns       []run.Turn
+	marks       map[string]string
 	answers     map[string]string
 	raised      bool
 	open        bool
@@ -53,10 +59,28 @@ type preservingAgents struct {
 
 var ownFindingRE = regexp.MustCompile(`Finding (F\d+) \[`)
 
+// once reports and consumes a scripted event of the turn.
+func (a *preservingAgents) once(events map[string]bool, turn run.Turn, mark string) bool {
+	key := string(turn.Kind) + " " + turn.Manager
+	if !events[key] || mark == "lost" && turn.Resume == "" {
+		return false
+	}
+	delete(events, key)
+	if a.marks == nil {
+		a.marks = map[string]string{}
+	}
+	a.marks[turn.ID] = mark
+	return true
+}
+
 func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
 	a.mu.Lock()
 	a.turns = append(a.turns, turn)
+	failed := a.once(a.fails, turn, "failed")
 	a.mu.Unlock()
+	if failed {
+		return run.TurnResult{Conversation: "conv-" + turn.Home, Stopped: true}, errors.New("the scripted turn failed")
+	}
 	if turn.Kind == run.VerifyTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m run.PathMount) bool { return m.Writable })) {
 		a.t.Errorf("verify turn %s can write", turn.ID)
 	}
@@ -71,11 +95,11 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	a.mu.Lock()
 	lookups := a.lookups[turn.Manager]
 	delete(a.lookups, turn.Manager)
-	compacted := a.compacted[turn.Manager] && turn.Kind == run.ExecuteTurn
-	if compacted {
-		delete(a.compacted, turn.Manager)
-	}
+	compacted := a.once(a.compacted, turn, "compacted")
 	a.mu.Unlock()
+	if len(lookups) > 0 && a.ws != nil {
+		a.ws.edit(turn.Workspace, a.edits)
+	}
 	if len(lookups) > 0 {
 		brief := call("look_up", map[string]any{"topic": "brief"})
 		a.mu.Lock()
@@ -186,11 +210,13 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 		stopped, a.unstopped = false, ""
 		a.mu.Unlock()
 	}
-	conversation := "conv-" + turn.Home
+	conversation := turn.Resume
+	if conversation == "" {
+		conversation = "conv-" + turn.Home
+	}
 	a.mu.Lock()
-	if a.forgets[turn.Manager] && turn.Kind == run.ExecuteTurn && turn.Resume != "" {
+	if a.once(a.forgets, turn, "lost") {
 		// The provider did not continue the conversation it was asked to.
-		delete(a.forgets, turn.Manager)
 		conversation = "lost-" + turn.Home
 	}
 	a.mu.Unlock()
@@ -211,11 +237,30 @@ func (r *passingRunner) Run(_ context.Context, req run.CheckRequest) (run.CheckR
 }
 
 // treeWorkspaces keeps each volume's exact tree, modes included; the scripted
-// Agents change nothing.
+// Agents change nothing but scripted edits.
 type treeWorkspaces struct {
 	mu     sync.Mutex
 	trees  map[run.WorkspaceID]snapshot.Tree
 	closed []run.WorkspaceID
+}
+
+// edit replaces files of the volume a turn mounts, keeping their modes.
+func (w *treeWorkspaces) edit(volume string, files map[string]string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for id, tree := range w.trees {
+		if "vol-"+string(id) != volume {
+			continue
+		}
+		var entries []snapshot.Entry
+		for _, e := range tree.Entries() {
+			if content, ok := files[e.Path().String()]; ok {
+				e, _ = snapshot.NewEntry(e.Path(), e.Mode(), []byte(content))
+			}
+			entries = append(entries, e)
+		}
+		w.trees[id], _ = snapshot.NewTree(entries)
+	}
 }
 
 func (w *treeWorkspaces) Materialize(_ context.Context, spec run.WorkspaceSpec) (run.WorkspaceObservation, error) {

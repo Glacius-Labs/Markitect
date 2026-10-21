@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"slices"
 	"strings"
@@ -104,6 +105,11 @@ func (e *engine) startTurnLocked(m *member) {
 	}
 	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked, mode: turnMode(m),
 		deadline: e.now().Add(e.cfg.Budget.TurnTimeout), context: contextDelivery(standing, resume)}
+	if ts.context == contextRehydrated && !slices.ContainsFunc(items, func(it item) bool { return it.kind == itemAssignment }) {
+		// A conversation that may have lost its context gets the Pass assignment
+		// again with its standing context.
+		items = append([]item{{kind: itemAssignment}}, items...)
+	}
 	readOnly, mounts := e.mountsLocked(m)
 	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}
@@ -154,9 +160,11 @@ func (e *engine) memberTurn(m *member, ts *turnState, turn Turn) {
 	// context; one that received it again holds it.
 	lost := res.Compacted || turn.Resume != "" && res.Conversation != "" && res.Conversation != turn.Resume
 	switch {
-	case lost && m.p.spec.Review:
+	case (lost || err != nil && ts.context != contextHistory) && m.p.spec.Review:
+		// A turn that may not have kept what it received leaves its
+		// conversation without a reliable standing context.
 		m.reviewRehydrate = true
-	case lost:
+	case lost || err != nil && ts.context != contextHistory:
 		m.rehydrate = true
 	case err == nil && ts.context != contextHistory && m.p.spec.Review:
 		m.reviewRehydrate = false
@@ -169,6 +177,13 @@ func (e *engine) memberTurn(m *member, ts *turnState, turn Turn) {
 		return
 	}
 	if err != nil {
+		if errors.Is(err, ErrContextLimit) {
+			// Repeating the turn would only grow its input.
+			e.withdrawLocked(ts, "its input exceeds the provider channel")
+			e.addProblemLocked(Problem{Manager: m.Path, Category: "technical", Text: err.Error()})
+			e.halt(fmt.Sprintf("turn %s: %v", ts.id, err))
+			return
+		}
 		if res.Stopped {
 			e.turnFailedLocked(m, ts, err)
 			e.scheduleLocked()

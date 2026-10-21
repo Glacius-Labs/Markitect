@@ -21,6 +21,11 @@ const (
 	stopGrace = 10 * time.Second
 	// stopMargin bounds the wait for the exit observation beyond the grace.
 	stopMargin = 10 * time.Second
+	// maxToolAnswer bounds one Orchestrator answer the provider receives;
+	// mcpOutputTokens raises the provider's own cap on a tool result above it,
+	// so a long Definition or Brief is refused here rather than cut there.
+	maxToolAnswer   = 256 << 10
+	mcpOutputTokens = "MAX_MCP_OUTPUT_TOKENS=120000"
 )
 
 // Agents runs one Claude Code turn per container. It implements run.Agents.
@@ -92,6 +97,9 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 		return notStarted(err)
 	}
 	promptRaw, err := codec.EncodeUser(UserInput{Text: turn.Prompt})
+	if errors.Is(err, ErrLimit) {
+		return notStarted(fmt.Errorf("%w: the prompt of %d bytes exceeds the %d bytes the provider channel carries: %w", run.ErrContextLimit, len(turn.Prompt), profile.MaxWireBytes, err))
+	}
 	if err != nil {
 		return notStarted(err)
 	}
@@ -119,7 +127,7 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 
 	c := &conversation{turn: turn, peer: peer, codec: codec, handler: handler, log: log, redact: redact, tools: tools,
 		initID: initID, initRaw: initRaw, promptRaw: promptRaw, res: &res, done: make(chan struct{})}
-	runErr := c.run(ctx, frame.Start{Argv: turnArgv(turn, profile, tools), Dir: "/work", Env: []string{"CLAUDE_CODE_OAUTH_TOKEN=" + credential.Token}, Tools: tools})
+	runErr := c.run(ctx, frame.Start{Argv: turnArgv(turn, profile, tools), Dir: "/work", Env: []string{"CLAUDE_CODE_OAUTH_TOKEN=" + credential.Token, mcpOutputTokens}, Tools: tools})
 	close(c.done)
 
 	outcome := "provider result"
@@ -279,6 +287,9 @@ type conversation struct {
 	// assistant message by its ID, which the provider repeats per content block.
 	usage    usageState
 	streamed map[string]run.Usage
+	// compacted says that the provider compacted the conversation and the
+	// next Orchestrator answer has not said so yet.
+	compacted bool
 }
 
 // usageState tells how complete the usage of a turn is.
@@ -318,6 +329,7 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 	}
 	calls := c.peer.ToolCalls()
 	seen := map[uint64]bool{}
+	var held []frame.ToolCall
 	acked, initialized := false, false
 	for {
 		if err := ctx.Err(); err != nil {
@@ -335,6 +347,11 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 				return ErrProtocol
 			}
 			seen[call.ID] = true
+			if !initialized {
+				// No call is served before the conversation it belongs to is known.
+				held = append(held, call)
+				continue
+			}
 			if err := c.answer(ctx, call); err != nil {
 				return err
 			}
@@ -368,10 +385,21 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 				}
 				initialized = true
 				c.res.Conversation, c.res.Usage.Model = string(init.Session), initModel(m.Raw())
+				if c.turn.Resume != "" && c.res.Conversation != c.turn.Resume {
+					// Without its history the turn would work on neither the
+					// conversation nor the standing context it was given.
+					return fmt.Errorf("%w: the provider started conversation %s instead of continuing %s", ErrSession, c.res.Conversation, c.turn.Resume)
+				}
+				for _, call := range held {
+					if err := c.answer(ctx, call); err != nil {
+						return err
+					}
+				}
+				held = nil
 			case AssistantMessage:
 				c.addStreamed(m.Raw())
 			case CompactBoundaryMessage:
-				c.res.Compacted = true
+				c.res.Compacted, c.compacted = true, true
 			case ResultMessage:
 				return c.finish(m)
 			case UnsupportedRequest, RejectedMessage:
@@ -436,6 +464,13 @@ func (c *conversation) answer(ctx context.Context, call frame.ToolCall) error {
 		a := c.handler(ctx, call.Name, c.redact.bytes(call.Arguments))
 		if err := ctx.Err(); err != nil {
 			return err
+		}
+		if len(a.Text) > maxToolAnswer {
+			a = run.ToolAnswer{Text: fmt.Sprintf("The answer of %d bytes exceeds the %d bytes this channel carries in one answer and was not sent; ask for a narrower part, such as one Definition.", len(a.Text), maxToolAnswer), Refused: true}
+		}
+		if c.compacted {
+			c.compacted = false
+			a.Text += "\n\n[Your conversation was compacted. look_up topic brief returns your standing context and current assignment.]"
 		}
 		c.log.value("tool_answer", map[string]any{"id": call.ID, "text": a.Text, "refused": a.Refused})
 		result, err := json.Marshal(struct {

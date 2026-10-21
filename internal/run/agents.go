@@ -3,8 +3,14 @@ package run
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"time"
 )
+
+// ErrContextLimit reports a turn whose prompt or Orchestrator answer the
+// provider channel cannot carry. Agents return it instead of cutting the
+// content; the Orchestrator does not repeat such a turn.
+var ErrContextLimit = errors.New("the context exceeds what the provider channel carries")
 
 // Agents runs one Agent turn. A turn is one fresh container from the turn
 // profile's image with Workspace mounted at /work (read-only when ReadOnly)

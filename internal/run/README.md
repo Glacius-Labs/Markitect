@@ -23,13 +23,19 @@ ended. `Corrections()` names the correction purposes of the open genuine finding
 `Reassess()` says whether only fresh disputes keep the last review from being clean.
 `Finish(reason)` ends the run: `Verified` only when the last Pass was a clean review of
 one candidate, `Failed` for a definite rejection, `Incomplete` otherwise. After Finish the
-caller owns the work volume. A turn's prompt carries the standing context (the Manager's or reviewer's Brief, contacts and
-owner request) when its conversation is new, or when the previous turn of that conversation
-reported a compaction (`TurnResult.Compacted`) or came back with another conversation than
-it resumed; otherwise it relies on the conversation's history. `TurnRecord.Context` and
-`turn.start` record which (`brief`, `rehydrated`, `history`) with the prompt's digest.
-`look_up brief` returns the standing context; `look_up definition` answers from the bound
-model and records `lookup.definition` with the answer's digest. `Config.Binding` is what the caller bound the run to besides
+caller owns the work volume.
+
+A turn's prompt carries the standing context (the Manager's or reviewer's Brief, contacts
+and owner request) when its conversation is new, or, together with the current Pass
+assignment again, when the previous turn of that conversation reported a compaction
+(`TurnResult.Compacted`), came back with another conversation than it resumed or failed
+after it had carried the standing context; otherwise it relies on the conversation's
+history. `TurnRecord.Context` and `turn.start` record which (`brief`, `rehydrated`,
+`history`) with the prompt's digest and size. `look_up brief` returns the standing context
+with the current assignment (a helper's: its own turn's prompt) and `look_up definition` the
+bound model's Definition; `lookup.brief` and `lookup.definition` record each answer's digest.
+An Agents error wrapping `ErrContextLimit` ends the run Incomplete without repeating the
+turn. `Config.Binding` is what the caller bound the run to besides
 the Config's own inputs, such as an Apply's strategy, effective settings and build:
 `run.start` records it as given, and the Orchestrator chooses nothing by it.
 

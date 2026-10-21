@@ -38,9 +38,20 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 		}
 		return ToolAnswer{Text: text}
 	case "brief":
+		// A helper's brief is the prompt of its one turn; a Manager's or
+		// reviewer's its standing context with the current Pass assignment.
 		var b strings.Builder
-		e.standingLocked(&b, m)
-		return ToolAnswer{Text: "Your standing context of this run, from its bound inputs:\n" + b.String()}
+		e.mu.Lock()
+		if ts != nil && ts.h != nil {
+			b.WriteString(ts.h.prompt)
+		} else {
+			e.standingLocked(&b, m)
+			e.assignmentLocked(&b, m)
+		}
+		e.mu.Unlock()
+		text := "Your standing context and current assignment of this run, from its bound inputs:\n" + b.String()
+		e.recordLookup(m, ts, "lookup.brief", map[string]any{"answer": textDigest(text), "bytes": len(text)})
+		return ToolAnswer{Text: text}
 	case "definition":
 		d, ok := e.cfg.Definition(strings.TrimSpace(in.ID))
 		if !ok {
@@ -51,11 +62,7 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 			label = "your own obligation"
 		}
 		text := fmt.Sprintf("%s (%s, bound model):\n%s", d.ID, label, d.Text)
-		turn := ""
-		if ts != nil {
-			turn = ts.id
-		}
-		_ = e.record(Event{Kind: "lookup.definition", Pass: m.p.id, Manager: m.Path, Turn: turn, Data: map[string]any{"id": d.ID, "owner": d.Owner, "answer": textDigest(text), "bytes": len(text)}})
+		e.recordLookup(m, ts, "lookup.definition", map[string]any{"id": d.ID, "owner": d.Owner, "answer": textDigest(text), "bytes": len(text)})
 		return ToolAnswer{Text: text}
 	case "owner":
 		path, err := snapshot.NewPath(strings.TrimSuffix(strings.TrimSpace(in.Path), "/"))
@@ -319,4 +326,17 @@ func listFindings(b *strings.Builder, title string, findings []Finding, withOwne
 		lines = append(lines, fmt.Sprintf("and %d more", len(findings)-len(lines)))
 	}
 	list(b, title, lines)
+}
+
+// recordLookup records a lookup of a turn with the digest of its answer; a
+// helper's carries its helper.
+func (e *engine) recordLookup(m *member, ts *turnState, kind string, data map[string]any) {
+	turn := ""
+	if ts != nil {
+		turn = ts.id
+		if ts.h != nil {
+			data["helper"] = ts.h.id
+		}
+	}
+	_ = e.record(Event{Kind: kind, Pass: m.p.id, Manager: m.Path, Turn: turn, Data: data})
 }

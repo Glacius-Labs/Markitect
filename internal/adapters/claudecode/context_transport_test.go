@@ -7,7 +7,9 @@ import (
 	"fmt"
 	"strings"
 	"testing"
+	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
@@ -82,13 +84,27 @@ func TestContextCrossesTheAdapterBoundaryUnchanged(t *testing.T) {
 	if err := sameText(delivered, prompt); err != nil {
 		t.Fatalf("the prompt changed at the adapter boundary: %v", err)
 	}
-	for name, faulty := range map[string]string{
-		"cut final sentence": strings.TrimSuffix(delivered, "start another loan.\n"),
-		"changed value":      strings.Replace(delivered, "maxOpenLoans: 5", "maxOpenLoans: 4", 1),
-		"other recipient":    strings.Replace(delivered, "Package lending/reminders", "Package lending", 1),
+	// The same comparison of the actually written payload detects a faulty
+	// transport that cuts, changes or readdresses the message on its way.
+	for name, fault := range map[string]func(string) string{
+		"cut final sentence": func(s string) string { return strings.TrimSuffix(s, "start another loan.\n") },
+		"changed value":      func(s string) string { return strings.Replace(s, "maxOpenLoans: 5", "maxOpenLoans: 4", 1) },
+		"other recipient":    func(s string) string { return strings.Replace(s, "Package lending/reminders", "Package lending", 1) },
 	} {
-		if sameText(faulty, prompt) == nil {
-			t.Errorf("the comparison misses a %s", name)
+		frt := &faultyRuntime{fakeRuntime: newFakeRuntime(), fault: fault}
+		agents, err := NewAgentsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) { return frt, nil },
+			map[string]Profile{"claude": validProfile()}, func(context.Context, string) (RuntimeCredential, error) {
+				return RuntimeCredential{Token: testToken}, nil
+			})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := agents.Run(context.Background(), turn, echoHandler(new([]string))); err != nil {
+			t.Fatal(err)
+		}
+		got, err := deliveredUser(frt.writes)
+		if err != nil || sameText(got, prompt) == nil {
+			t.Errorf("the comparison misses a %s on the wire: %v", name, err)
 		}
 	}
 	var result struct {
@@ -114,7 +130,7 @@ func TestAnOversizedPromptIsRefusedNotCut(t *testing.T) {
 	turn := testTurn()
 	turn.Prompt = strings.Repeat("x", int(profile.MaxWireBytes))
 	res, err := h.agents.Run(context.Background(), turn, echoHandler(&[]string{}))
-	if !errors.Is(err, ErrLimit) || h.starts != 0 || len(rt.writes) != 0 || !res.Stopped || !strings.Contains(res.Reason, "no container started") {
+	if !errors.Is(err, ErrLimit) || !errors.Is(err, run.ErrContextLimit) || !strings.Contains(err.Error(), fmt.Sprintf("the prompt of %d bytes", len(turn.Prompt))) || h.starts != 0 || len(rt.writes) != 0 || !res.Stopped || !strings.Contains(res.Reason, "no container started") {
 		t.Fatalf("an oversized prompt: %+v %v, starts %d, writes %d", res, err, h.starts, len(rt.writes))
 	}
 }
@@ -132,5 +148,69 @@ func TestAReportedCompactionIsPassedOn(t *testing.T) {
 		if err != nil || res.Compacted != compacted {
 			t.Fatalf("compacted %v: %+v %v", compacted, res, err)
 		}
+	}
+}
+
+// faultyRuntime is a transport that alters the user message on its way to the
+// provider, keeping it valid JSON.
+type faultyRuntime struct {
+	*fakeRuntime
+	fault func(string) string
+}
+
+func (f *faultyRuntime) WriteInput(data []byte) error {
+	var m map[string]any
+	if json.Unmarshal(data, &m) == nil && m["type"] == "user" {
+		message, _ := m["message"].(map[string]any)
+		content, _ := message["content"].(string)
+		message["content"] = f.fault(content)
+		changed, err := json.Marshal(m)
+		if err != nil {
+			return err
+		}
+		data = append(changed, '\n')
+	}
+	return f.fakeRuntime.WriteInput(data)
+}
+
+// An Orchestrator answer the channel cannot carry is refused to the Agent with
+// its size, never cut; a compaction the provider reports is named in the next
+// answer, which points to look_up brief.
+func TestAnOversizedAnswerIsRefusedAndACompactionNamed(t *testing.T) {
+	rt := newFakeRuntime()
+	rt.extra = []string{`{"type":"system","subtype":"compact_boundary","session_id":"conversation-1","uuid":"cb-1","compact_metadata":{"trigger":"auto","pre_tokens":180000}}`}
+	// The stream and the tool calls are separate channels; the delay lets the
+	// compaction arrive first, as it does from a provider that compacts before
+	// it calls a tool.
+	rt.callDelay = 200 * time.Millisecond
+	rt.calls = []frame.ToolCall{
+		{ID: 1, Name: "look_up", Arguments: json.RawMessage(`{"topic":"brief"}`)},
+		{ID: 2, Name: "look_up", Arguments: json.RawMessage(`{"topic":"brief"}`)},
+	}
+	h := newHarness(t, rt, validProfile())
+	turn := testTurn()
+	turn.Tools = []run.ToolSpec{{Name: "look_up", Description: "Look up.", InputSchema: json.RawMessage(`{"type":"object"}`)}}
+	answers := []string{strings.Repeat("y", maxToolAnswer+1), "short"}
+	n := 0
+	if _, err := h.agents.Run(context.Background(), turn, func(context.Context, string, json.RawMessage) run.ToolAnswer {
+		n++
+		return run.ToolAnswer{Text: answers[n-1]}
+	}); err != nil {
+		t.Fatal(err)
+	}
+	var first, second struct {
+		Content []struct {
+			Text string `json:"text"`
+		} `json:"content"`
+		IsError bool `json:"isError"`
+	}
+	if len(rt.replies) != 2 || json.Unmarshal(rt.replies[0].Result, &first) != nil || json.Unmarshal(rt.replies[1].Result, &second) != nil {
+		t.Fatalf("replies %+v", rt.replies)
+	}
+	if !first.IsError || !strings.Contains(first.Content[0].Text, fmt.Sprintf("The answer of %d bytes exceeds", maxToolAnswer+1)) || strings.Contains(first.Content[0].Text, "yyyy") {
+		t.Errorf("oversized answer: %+v", first)
+	}
+	if !strings.Contains(first.Content[0].Text, "look_up topic brief") || strings.Contains(second.Content[0].Text, "compacted") || second.Content[0].Text != "short" {
+		t.Errorf("the compaction note: %q then %q", first.Content[0].Text, second.Content[0].Text)
 	}
 }

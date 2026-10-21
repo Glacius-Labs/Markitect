@@ -8,6 +8,10 @@ artifacts:
     form: code
     realizes: [product/organization/delegated-context]
     why: Renders each Manager's standing Brief from its context selection, areas, registry shard, required checks and configured instructions.
+  - path: "internal/apply/brief_values_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Checks against a tiny hand-written model that a stated Definition keeps every value kind exactly, its final sentence and each body link with the identity its alias resolves to, and that dropping any of them is detected.
   - path: "internal/apply/apply.go"
     form: code
     realizes: [product/run/confirmed-run-history]

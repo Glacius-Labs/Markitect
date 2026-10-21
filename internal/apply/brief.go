@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -97,7 +98,8 @@ func projectIdentities(checked model.Result) []string {
 
 // coverage is the context record of a rendered Brief: the Definitions it
 // states in full (the selection and, for Root, the Definitions of the required
-// checks) and the inventory entries it only lists.
+// checks) and those it only lists: Root's inventory and a parent's children's
+// and descendants' Definitions.
 func (in briefInput) coverage(brief string) ContextBinding {
 	c := ContextBinding{Brief: "sha256:" + fmt.Sprintf("%x", sha256.Sum256([]byte(brief))), Full: []string{}, Reference: []string{}}
 	for _, d := range in.Selection.Definitions() {
@@ -108,8 +110,19 @@ func (in briefInput) coverage(brief string) ContextBinding {
 			c.Full = append(c.Full, id)
 		}
 	}
-	for _, id := range in.ProjectIDs {
-		if !slices.Contains(c.Full, id) {
+	listed := slices.Clone(in.ProjectIDs)
+	for _, child := range in.Children {
+		for _, d := range child.Definitions {
+			listed = append(listed, strings.SplitN(d, ": ", 2)[0])
+		}
+		for _, below := range child.Below {
+			for _, d := range below.Definitions {
+				listed = append(listed, strings.SplitN(d, ": ", 2)[0])
+			}
+		}
+	}
+	for _, id := range listed {
+		if !slices.Contains(c.Full, id) && !slices.Contains(c.Reference, id) {
 			c.Reference = append(c.Reference, id)
 		}
 	}
@@ -323,15 +336,19 @@ func writeDefinition(b *strings.Builder, c organization.ContextDefinition, own b
 		fmt.Fprintf(b, "%s\n", strings.TrimSpace(d.Body))
 	}
 	// A body link names its target through the source's own import aliases;
-	// the resolved identities say which Definitions the text means.
-	var targets []string
+	// each link as written is paired with the identity it resolves to.
+	var links []string
 	for _, link := range d.BodyLinks {
-		if target := identityText(link.Target); !slices.Contains(targets, target) {
-			targets = append(targets, target)
+		text := identityText(link.Target)
+		if c := link.Coordinates; c != nil && c.Body != nil && 0 <= c.Body.StartByte && c.Body.StartByte < c.Body.EndByte && c.Body.EndByte <= len(d.Body) {
+			text = d.Body[c.Body.StartByte:c.Body.EndByte] + " = " + text
+		}
+		if !slices.Contains(links, text) {
+			links = append(links, text)
 		}
 	}
-	if len(targets) > 0 {
-		fmt.Fprintf(b, "  links to: %s\n", strings.Join(targets, ", "))
+	if len(links) > 0 {
+		fmt.Fprintf(b, "  links: %s\n", strings.Join(links, "; "))
 	}
 	for _, field := range d.Spec {
 		fmt.Fprintf(b, "  %s: %s\n", field.Name, valueText(field.Value))
@@ -379,7 +396,7 @@ func valueText(v model.Value) string {
 		return text
 	case model.NumberValue:
 		number, _ := v.Number()
-		return number.Coefficient + "e" + number.Exponent
+		return decimalText(number)
 	case model.ReferenceValue:
 		reference, _ := v.Reference()
 		return identityText(reference)
@@ -409,4 +426,29 @@ func writeInstructions(b *strings.Builder, role string, settings organization.Ro
 	for _, instruction := range settings.Instructions {
 		fmt.Fprintf(b, "[%s]\n%s\n", instruction.Value.ID, strings.TrimSpace(string(instruction.Value.Bytes)))
 	}
+}
+
+// decimalText writes an exact decimal coefficient * 10^exponent in plain
+// notation, such as 1.5 or 2500, or in e-notation when the exponent is too
+// large for that.
+func decimalText(d model.Decimal) string {
+	exp, err := strconv.Atoi(d.Exponent)
+	if err != nil || exp > 30 || exp < -30 {
+		return d.Coefficient + "e" + d.Exponent
+	}
+	sign, digits := "", strings.TrimPrefix(d.Coefficient, "-")
+	if digits != d.Coefficient {
+		sign = "-"
+	}
+	if exp >= 0 {
+		if digits == "0" {
+			return "0"
+		}
+		return sign + digits + strings.Repeat("0", exp)
+	}
+	if n := -exp; n >= len(digits) {
+		digits = strings.Repeat("0", n-len(digits)+1) + digits
+	}
+	point := len(digits) + exp
+	return sign + digits[:point] + "." + digits[point:]
 }
