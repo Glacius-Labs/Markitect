@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { CARD, layoutTree, initialCollapse, connector, visibleAncestor } from "./web/js/org-layout.mjs";
+import { CARD, layoutTree, initialCollapse, connector, visibleAncestor } from "./web/js/org-layout.js";
 
 const nodes = [
   { id: "owner", parent: null, kind: "owner" }, { id: "ops", parent: "owner", kind: "orchestrator" },

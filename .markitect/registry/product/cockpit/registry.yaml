@@ -1,6 +1,6 @@
 apiVersion: markitect.registry/v1
 artifacts:
-  - path: "internal/adapters/cockpit/web/js/org-layout.mjs"
+  - path: "internal/adapters/cockpit/web/js/org-layout.js"
     form: code
     realizes: [product/cockpit/observed-organization]
     why: "Lays out explicit presentation trees deterministically with reviewer space, orthogonal connectors and collapse ancestry, without deriving product organization."

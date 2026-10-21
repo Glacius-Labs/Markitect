@@ -33,3 +33,11 @@ remain outside Manager navigation; selection is explicit to assistive tools.
 All four local Node tests, module syntax, changed-page links and whitespace
 checks passed. Browser and Go-based integration checks remain pending the
 resource gate; this package is not yet integrated.
+
+## Post-reservation packaging correction
+
+The first complete cockpit Go check rejected embedded `.mjs` assets because the
+source packager carries `.js` modules. The pure layout module now uses `.js`,
+with its imports and exact registration updated; no packaging rule is relaxed.
+The full bootstrap and architecture package tests passed during that check.
+The failed cockpit packaging check is retained here and will be rerun.
