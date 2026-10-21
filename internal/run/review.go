@@ -57,7 +57,7 @@ func (e *engine) prepareReview(p *pass) bool {
 		if r.Output != "" {
 			observed += "\n" + r.Output
 		}
-		e.addFindingLocked(Finding{Owner: chk.Owner, RaisedBy: MarkitectFinding, Obligation: fmt.Sprintf("Required check %q (required by %s) passes on the candidate", chk.Name, chk.RequiredBy), Observed: observed, Blocking: true, Correction: p.spec.defaultCorrection()})
+		e.addFindingLocked(Finding{Owner: chk.Owner, RaisedBy: MarkitectFinding, Kind: Deviation, Obligation: fmt.Sprintf("Required check %q (required by %s) passes on the candidate", chk.Name, chk.RequiredBy), Expected: "the check passes", Observed: observed, Blocking: true, Correction: p.spec.defaultCorrection()})
 	}
 	return true
 }

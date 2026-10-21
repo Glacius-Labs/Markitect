@@ -358,6 +358,31 @@ func (e *engine) evidenceFailed() error {
 	return e.evErr
 }
 
+// releaseEnvironments ends the kept working environments of the names and
+// records each end; releaseAll ends every one. Without kept environments they
+// do nothing.
+func (e *engine) releaseEnvironments(names []string) {
+	if len(names) > 0 {
+		e.release(names)
+	}
+}
+
+func (e *engine) releaseAll() { e.release(nil) }
+
+func (e *engine) release(names []string) {
+	envs, ok := e.cfg.Agents.(Environments)
+	if !ok {
+		return
+	}
+	for _, r := range envs.Release(e.base, names) {
+		data := map[string]any{"environment": r.Environment, "instance": r.Instance, "removed": r.Removed}
+		if r.Error != "" {
+			data["error"] = r.Error
+		}
+		_ = e.record(Event{Kind: "environment.release", Data: data})
+	}
+}
+
 func (e *engine) closeVolume(id WorkspaceID) {
 	obs, err := e.cfg.Workspaces.Close(e.base, id)
 	data := map[string]any{"workspace": id, "closed": obs.Closed, "uncertain": obs.Uncertain}
@@ -456,6 +481,8 @@ func (e *engine) finish(reason string) (Outcome, error) {
 	status, why, failure := e.stopped()
 	e.cancel()
 	e.wg.Wait()
+	// Every turn is over: no kept environment is of use any more.
+	e.releaseAll()
 	e.mu.Lock()
 	var candidate snapshot.Tree
 	switch {
@@ -518,6 +545,15 @@ func (e *engine) findingLocked(id string) *Finding {
 	for _, f := range e.findings {
 		if f.ID == id {
 			return f
+		}
+	}
+	return nil
+}
+
+func (e *engine) passLocked(id string) *pass {
+	for _, p := range e.passes {
+		if p.id == id {
+			return p
 		}
 	}
 	return nil

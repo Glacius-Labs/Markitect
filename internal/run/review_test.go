@@ -10,7 +10,7 @@ import (
 )
 
 func genuine(owner, obligation string) map[string]any {
-	return map[string]any{"owner": owner, "obligation": obligation, "observed": "observed " + obligation, "blocking": true}
+	return map[string]any{"owner": owner, "obligation": obligation, "expected": "expected " + obligation, "observed": "observed " + obligation, "blocking": true}
 }
 
 // Verify runs fresh read-only reviewers on one immutable candidate: a reviewer
@@ -144,7 +144,7 @@ func TestFailedRequiredCheckBlocksTheReview(t *testing.T) {
 			check = &out.Findings[i]
 		}
 	}
-	if check == nil || check.Owner != "." || !check.Closed || check.ClosedPass != "p4" || check.Correction != Implement {
+	if check == nil || check.Owner != "." || !check.Closed || check.ClosedPass != "p4" || check.Correction != Implement || check.Kind != Deviation || check.Expected == "" {
 		t.Errorf("check finding %+v", check)
 	}
 	// Root's correction pass received the finding.

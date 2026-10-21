@@ -187,7 +187,7 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 				case correction == "":
 					correction = "implement"
 				}
-				report["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": id, "observed": "A scripted counterexample.", "blocking": true, "correction": correction}}
+				report["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": id, "expected": "the stand keeps " + id, "observed": "A scripted counterexample.", "blocking": true, "correction": correction}}
 			case turn.Kind == run.VerifyTurn:
 				entry["evidence"] = []map[string]any{{"claim": "the stand keeps " + id, "source": ".markitect/execution.yaml", "location": "the whole file", "reasoning": "This scripted reviewer inspected the stand."}}
 			}

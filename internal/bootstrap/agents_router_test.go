@@ -54,3 +54,25 @@ func TestAgentsRouterRefusesUnroutedProfilesWithoutFallback(t *testing.T) {
 		t.Fatal(err)
 	}
 }
+
+// keepingAgents keeps environments and counts its releases.
+type keepingAgents struct {
+	recordingAgents
+	releases int
+}
+
+func (a *keepingAgents) Release(_ context.Context, names []string) []runport.EnvironmentRelease {
+	a.releases++
+	return []runport.EnvironmentRelease{{Environment: "env", Removed: true}}
+}
+
+// Release reaches every adapter that keeps environments once, however many
+// profiles route to it, and skips adapters that keep none.
+func TestAgentsRouterReleasesEachKeepingAdapterOnce(t *testing.T) {
+	claude, codex := &keepingAgents{}, &recordingAgents{}
+	router := newAgentsRouter(map[string]runport.Agents{"execute": claude, "verify": claude, "codex": codex})
+	got := router.(runport.Environments).Release(context.Background(), nil)
+	if claude.releases != 1 || len(got) != 1 || !got[0].Removed {
+		t.Fatalf("releases %d, %+v", claude.releases, got)
+	}
+}

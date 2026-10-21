@@ -252,11 +252,25 @@ func (e *engine) passEnded(p *pass) PassResult {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	if p.candidate != "" {
+		e.releaseEnvironments(p.reviewEnvironmentsLocked())
 		e.closeVolume(p.candidate)
 		p.candidate = ""
 	}
 	e.verified = nil
 	return PassResult{Record: p.recordLocked(), Stopped: true}
+}
+
+// reviewEnvironmentsLocked names the reviewers' environments of a review
+// Pass, none for a work Pass.
+func (p *pass) reviewEnvironmentsLocked() []string {
+	if !p.spec.Review {
+		return nil
+	}
+	names := []string{}
+	for _, m := range p.members {
+		names = append(names, m.reviewHome)
+	}
+	return names
 }
 
 func (p *pass) closableLocked() bool {
@@ -372,7 +386,8 @@ func (e *engine) releaseLocked(m *member, why string) {
 		front := []item{{kind: itemAssignment}}
 		if !m.p.spec.Review {
 			for _, f := range e.findings {
-				if f.Blocking && !f.Closed && f.Owner == m.Path {
+				// A suspicion is investigated by a review, never worked on.
+				if f.Blocking && !f.Closed && f.Owner == m.Path && f.Kind != Suspected {
 					front = append(front, item{kind: itemFinding, text: renderFinding(f), finding: f.ID})
 				}
 			}
@@ -892,7 +907,10 @@ func (e *engine) seal(p *pass) PassResult {
 	_ = e.record(Event{Kind: "pass.sealed", Pass: p.id, Data: map[string]any{"purpose": p.spec.Purpose, "verdict": p.verdict, "tree": p.sealedOn, "managers": record.Managers}})
 	candidate := p.candidate
 	p.candidate = ""
+	reviewers := p.reviewEnvironmentsLocked()
 	e.mu.Unlock()
+	// The reviewers' environments end with their Pass, before its candidate.
+	e.releaseEnvironments(reviewers)
 	view := e.cfg.Registry(stand)
 	_ = e.record(Event{Kind: "registry.view", Pass: p.id, Data: view})
 	if candidate != "" {
@@ -968,11 +986,12 @@ func (e *engine) verifiedBeforeLocked(p *pass) bool {
 }
 
 // confirmedLocked names the confirmed findings of a sealed Pass: open, genuine,
-// raised by the team and not disputed in it, each with its correction class.
+// raised by the team, not disputed in it and no mere suspicion, each with its
+// correction class.
 func (e *engine) confirmedLocked(p *pass) []string {
 	var lines []string
 	for _, f := range e.findings {
-		if f.Blocking && !f.Closed && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
+		if f.Blocking && !f.Closed && f.Kind != Suspected && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
 			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, clip(f.Observed, 400)))
 		}
 	}

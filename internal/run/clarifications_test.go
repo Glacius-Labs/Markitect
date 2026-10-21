@@ -196,7 +196,8 @@ func TestFalseFindingIsDisprovedOnTheUnchangedCandidate(t *testing.T) {
 		t.Errorf("passes %+v / %+v", out.Passes[1], out.Passes[2])
 	}
 	f1 := out.Findings[0]
-	if !f1.Closed || f1.ClosedAs != ClosedDisproved || f1.ClosedEvidence == "" || f1.ClosedPass != "p3" || len(f1.Disputes) != 1 || f1.Disputes[0].By != "lending/reminders" || f1.Candidate == "" {
+	if !f1.Closed || f1.ClosedAs != ClosedDisproved || f1.ClosedEvidence == "" || f1.ClosedPass != "p3" || len(f1.Disputes) != 1 || f1.Disputes[0].By != "lending/reminders" || f1.Candidate == "" ||
+		f1.ClosedCandidate != f1.Candidate || f1.Disputes[0].Candidate != f1.Candidate || f1.Disputes[0].Pass != "p2" || out.Passes[2].Tree != f1.ClosedCandidate {
 		t.Errorf("F1 %+v", f1)
 	}
 	if !strings.Contains(resolvedRefusal, "unchanged candidate") || !strings.Contains(raiserDispute, "you raised") {

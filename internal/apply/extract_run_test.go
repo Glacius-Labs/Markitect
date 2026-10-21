@@ -207,7 +207,7 @@ func bothPhases(t *testing.T) (apply.ExtractRequest, *scriptedAgents, *memoryWor
 	agents := &scriptedAgents{t: t, ws: workspaces, refusals: map[string]string{}, assessed: map[string]bool{}, writes: map[string]map[string]string{
 		"x-1-structure .": diff(start, proposed, func(string) bool { return true }),
 	}, findings: map[string][]map[string]any{
-		"x-1-model lending": {{"owner": "lending", "subject": "artifact", "definition": "lending/lending", "obligation": "Loans are limited", "observed": "borrow.go admits a sixth loan.", "blocking": true}},
+		"x-1-model lending": {{"owner": "lending", "subject": "artifact", "definition": "lending/lending", "obligation": "Loans are limited", "expected": "at most five open loans per member", "observed": "borrow.go admits a sixth loan.", "blocking": true}},
 	}}
 	for _, owner := range []string{".", "catalog", "library", "lending", "lending/reminders", "members"} {
 		shard := ".markitect/registry/" + owner + "/registry.yaml"

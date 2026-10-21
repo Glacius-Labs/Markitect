@@ -136,6 +136,8 @@ type dependency struct {
 }
 
 type findingIn struct {
+	Kind       string   `json:"kind"`
+	Expected   string   `json:"expected"`
 	Owner      string   `json:"owner"`
 	Obligation string   `json:"obligation"`
 	Observed   string   `json:"observed"`
@@ -484,7 +486,7 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		}
 		env.Evidence = append(env.Evidence, text)
 	}
-	closing, err := e.closuresOf(m, in.Closed)
+	closing, err := e.closuresOf(m, in.Closed, raised)
 	if err != nil {
 		return refuse("%v", err)
 	}
@@ -853,6 +855,9 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 			return nil, err
 		}
 		add := Finding{Owner: f.Owner, RaisedBy: m.Path, Obligation: obligation, Observed: observed, Blocking: *f.Blocking, Correction: spec.defaultCorrection()}
+		if add.Kind, add.Expected, err = observationOf(spec, i, f); err != nil {
+			return nil, err
+		}
 		if add.Receipts, err = e.receiptsOf(m, fmt.Sprintf("findings[%d]", i), f.Receipts); err != nil {
 			return nil, err
 		}
@@ -861,6 +866,10 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 				return nil, fmt.Errorf("findings[%d]: correction must be one of %v", i, spec.Corrections)
 			}
 			add.Correction = Purpose(f.Correction)
+		}
+		if add.Kind == Suspected || add.Kind == Suggestion {
+			// Only a confirmed deviation or model problem names corrective work.
+			add.Correction = ""
 		}
 		switch {
 		case spec.ArtifactFindingsAdvisory && f.Subject == subjectModel:
@@ -873,23 +882,90 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 				return nil, fmt.Errorf("findings[%d]: %q is not a Definition of the candidate model", i, f.Definition)
 			}
 			// An artifact that deviates from the model is reported, never repaired
-			// by the model's Managers, so it cannot block.
-			add.Subject, add.Definition, add.Blocking = subjectArtifact, f.Definition, false
+			// by the model's Managers, so it cannot block or name a correction.
+			add.Subject, add.Definition, add.Blocking, add.Correction = subjectArtifact, f.Definition, false, ""
 		case spec.ArtifactFindingsAdvisory:
 			return nil, fmt.Errorf("findings[%d]: subject must be %q or %q", i, subjectArtifact, subjectModel)
 		case f.Subject != "" || f.Definition != "":
 			return nil, fmt.Errorf("findings[%d]: subject and definition are not part of this Pass's findings", i)
+		}
+		if prior := e.settledLocked(m, add); prior != nil {
+			return nil, fmt.Errorf("findings[%d]: %s disproved this obligation of %s on this unchanged candidate (%s); a new reviewer or new wording is no new evidence, so raise it again only with a failed probe receipt of this Pass", i, prior.ID, prior.Owner, prior.ClosedReason)
 		}
 		out = append(out, add)
 	}
 	return out, nil
 }
 
+// observationOf validates a finding's kind against its Pass and its blocking
+// flag and returns it with the expected outcome a deviation or suspicion
+// states. Only its declared effects and provenance are checked, never whether
+// the classification is true.
+func observationOf(spec PassSpec, i int, f findingIn) (Observation, string, error) {
+	kind := Observation(f.Kind)
+	switch {
+	case kind == "" && !*f.Blocking:
+		kind = Suggestion
+	case kind == "" && spec.Assesses:
+		kind = ModelProblem
+	case kind == "":
+		kind = Deviation
+	}
+	switch {
+	case !slices.Contains(spec.observations(), kind):
+		return "", "", fmt.Errorf("findings[%d]: kind must be one of %v in this Pass", i, spec.observations())
+	case kind == Suggestion && *f.Blocking:
+		return "", "", fmt.Errorf("findings[%d]: a suggestion never blocks; set blocking false, or report a deviation or a suspicion with its evidence", i)
+	case kind != Suggestion && !*f.Blocking:
+		return "", "", fmt.Errorf("findings[%d]: a %s blocks; set blocking true, or record an optional idea as a suggestion", i, kind)
+	case kind == Deviation || kind == Suspected:
+		expected, err := toolText(fmt.Sprintf("findings[%d].expected", i), f.Expected)
+		if err != nil {
+			return "", "", fmt.Errorf("%v: a %s states the outcome its obligation requires", err, kind)
+		}
+		return kind, expected, nil
+	}
+	return kind, "", nil
+}
+
+// settledLocked returns a finding of the same owner and obligation that a
+// review of this unchanged candidate disproved, when a new blocking review
+// finding repeats it without a failed probe receipt of this Pass: a new
+// reviewer or new wording is no new evidence. It compares the obligation
+// text regardless of case and spacing, so it catches repeats, not every
+// rewording.
+func (e *engine) settledLocked(m *member, add Finding) *Finding {
+	p := m.p
+	if !p.spec.Review || !add.Blocking || slices.ContainsFunc(add.Receipts, func(id string) bool {
+		r := e.receiptLocked(id)
+		return r != nil && r.Pass == p.id && r.Outcome == ProbeFailed
+	}) {
+		return nil
+	}
+	candidate := p.tree.Digest().String()
+	for _, f := range e.findings {
+		if !f.Closed || f.ClosedAs != ClosedDisproved || !f.Review || f.Owner != add.Owner || !sameObligation(f.Obligation, add.Obligation) {
+			continue
+		}
+		if q := e.passLocked(f.ClosedPass); q != nil && q.spec.Review && q.tree.Digest().String() == candidate {
+			return f
+		}
+	}
+	return nil
+}
+
+// sameObligation compares two obligation texts regardless of case and spacing.
+func sameObligation(a, b string) bool {
+	return strings.Join(strings.Fields(strings.ToLower(a)), " ") == strings.Join(strings.Fields(strings.ToLower(b)), " ")
+}
+
 // closuresOf validates closures: a finding closes only through a submission of
 // its raiser's responsibility in a later Pass of the same kind, with a reason.
 // A review finding is resolved on a changed candidate; on the unchanged
-// candidate it can only be disproved, with evidence, as erroneous.
-func (e *engine) closuresOf(m *member, in []closeIn) (map[string]closure, error) {
+// candidate it can only be disproved, with evidence, as erroneous. A suspicion
+// is also closed as confirmed by a deviation or model problem for the same
+// owner that the submission raises.
+func (e *engine) closuresOf(m *member, in []closeIn, raised []Finding) (map[string]closure, error) {
 	if len(in) > maxToolItems {
 		return nil, fmt.Errorf("at most %d closures per report", maxToolItems)
 	}
@@ -917,8 +993,14 @@ func (e *engine) closuresOf(m *member, in []closeIn) (map[string]closure, error)
 		unchanged := f.Review && f.Candidate == m.p.tree.Digest().String()
 		var evidence string
 		switch {
-		case as != ClosedResolved && as != ClosedDisproved:
-			return nil, fmt.Errorf("closed[%d].as must be %q or %q", i, ClosedResolved, ClosedDisproved)
+		case as != ClosedResolved && as != ClosedDisproved && as != ClosedConfirmed:
+			return nil, fmt.Errorf("closed[%d].as must be %q, %q or %q", i, ClosedResolved, ClosedDisproved, ClosedConfirmed)
+		case as == ClosedConfirmed && f.Kind != Suspected:
+			return nil, fmt.Errorf("closed[%d]: only a suspicion is confirmed; %q is a %s", i, c.ID, f.Kind)
+		case as == ClosedConfirmed && !slices.ContainsFunc(raised, func(r Finding) bool {
+			return r.Owner == f.Owner && (r.Kind == Deviation || r.Kind == ModelProblem) && sameObligation(r.Obligation, f.Obligation)
+		}):
+			return nil, fmt.Errorf("closed[%d]: a suspicion is confirmed by the deviation or model problem of the same owner and obligation that this submission raises", i)
 		case as == ClosedResolved && unchanged:
 			return nil, fmt.Errorf("closed[%d]: %q was raised on this unchanged candidate, so it cannot be resolved here; close it as disproved with evidence only if it is erroneous", i, c.ID)
 		}
@@ -993,7 +1075,8 @@ func (e *engine) reassess() bool {
 			continue
 		}
 		open++
-		if !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
+		// An open suspicion is investigated by a fresh review, never by work.
+		if f.Kind != Suspected && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
 			return false
 		}
 	}
@@ -1147,6 +1230,9 @@ func (e *engine) takeEffectsLocked(pr *proposal) {
 			continue
 		}
 		f.Closed, f.ClosedPass, f.ClosedReason, f.ClosedAs, f.ClosedEvidence = true, p.id, c.reason, c.as, c.evidence
+		if p.spec.Review {
+			f.ClosedCandidate = p.tree.Digest().String()
+		}
 		pr.env.Closed = append(pr.env.Closed, id)
 		_ = e.record(Event{Kind: "finding.closed", Pass: p.id, Manager: m.Path, Data: *f})
 	}

@@ -51,7 +51,13 @@ func reportSchema(spec PassSpec) schema {
 	for _, c := range spec.Corrections {
 		corrections = append(corrections, string(c))
 	}
+	var kinds []string
+	for _, k := range spec.observations() {
+		kinds = append(kinds, string(k))
+	}
 	finding := schema{
+		"kind":       schema{"type": "string", "enum": kinds, "description": "What you claim. deviation: a binding obligation or required check is violated, or a required realization or evidence is missing; it blocks and names its correction. model: a material model problem (Model assessment only); it blocks. suspected: a concrete, plausible violation of a named obligation you could not settle yet; it blocks until a review investigates and classifies it, and names no correction. suggestion: an optional idea beyond what the mandate requires; it never blocks, never causes a correction and grants no write. Default: deviation (model in the assessment) when blocking, suggestion otherwise."},
+		"expected":   str("deviation, suspected: the outcome the obligation requires, which the observed text contradicts or for which proof is missing."),
 		"owner":      str("Path of the Manager that must act: yourself or one of your descendants."),
 		"obligation": str("The model obligation that is violated or lacks evidence."),
 		"observed":   str("The observed behavior or source evidence."),
@@ -93,7 +99,7 @@ func reportSchema(spec PassSpec) schema {
 		"closed": schema{"type": "array", "description": "basis, result: open findings you raised in an earlier Pass that are resolved or disproved now.", "items": object([]string{"id", "reason", "evidence"}, schema{
 			"id":       str("ID of an open finding you raised earlier."),
 			"reason":   str("Why it is closed."),
-			"as":       schema{"type": "string", "enum": []string{ClosedResolved, ClosedDisproved}, "description": "resolved (default): the candidate corrects it. disproved: it was erroneous; required on an unchanged candidate."},
+			"as":       schema{"type": "string", "enum": []string{ClosedResolved, ClosedDisproved, ClosedConfirmed}, "description": "resolved (default): the candidate corrects it. disproved: it was erroneous; required on an unchanged candidate. confirmed: a suspicion this submission confirms by raising the deviation or model problem for the same owner."},
 			"evidence": str("The observed evidence of the resolution or disproof."),
 		})},
 		"category": schema{"type": "string", "enum": problemCategories, "description": "problem: its category."},
