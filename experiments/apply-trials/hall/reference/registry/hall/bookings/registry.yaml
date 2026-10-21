@@ -1,0 +1,18 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/bookings/__init__.py
+    form: code
+    realizes: [hall/bookings/booking]
+    why: Makes the bookings part an importable package.
+  - path: realization/bookings/bookings.py
+    form: code
+    realizes: [hall/bookings/booking, hall/bookings/book, hall/bookings/list-bookings]
+    why: Books seats within the bookable seats of a room and lists bookings.
+  - path: realization/bookings/reserve.py
+    form: code
+    realizes: [hall/bookings/reserve]
+    why: Holds the reserve that the bookings part chooses and the bookable seats it gives.
+  - path: realization/bookings/test_bookings.py
+    form: test
+    realizes: [hall/bookings/booking, hall/bookings/reserve, hall/bookings/book, hall/bookings/list-bookings]
+    why: Tests the reserve, booking up to the bookable seats, refusals and the listing.

@@ -1,0 +1,10 @@
+imports:
+  - package: software
+    as: Software
+id: import
+kind: Software.UseCase
+title: Import a price list
+body: |-
+  Importing a price list replaces the list price of every listed [[product]].
+  Unknown product codes are reported and never created by an import.
+spec: {}

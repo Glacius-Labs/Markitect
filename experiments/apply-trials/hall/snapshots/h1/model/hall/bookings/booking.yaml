@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: hall
+    as: Hall
+  - package: hall/rooms
+    as: Rooms
+id: booking
+kind: Software.Concept
+body: |-
+  A booking of [[Hall.system]] takes a number of seats of one [[Rooms.room]].
+  [[book]] creates it with the next id: 1 for the first booking and one more
+  than the highest existing id afterwards. Bookings never change and are never
+  deleted. The booking record is a JSON object with exactly id (integer), code
+  (string, the normalized code of its room) and seats (integer).
+spec: {}

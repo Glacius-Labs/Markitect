@@ -1,0 +1,29 @@
+apiVersion: markitect.execution/v1
+strategy: staged
+budget:
+  executionTime: 30m
+  turnTimeout: 8m
+  agentTurns: 100
+  passes: 12
+profiles:
+  execute: project-agent
+  verify: project-agent
+packages: {}
+ownership:
+  - path: ./
+    owner: .
+    reason: Root coordinates and owns the files outside the delivery directory.
+  - path: realization/
+    owner: shop
+    reason: The shop Package owns the shared delivery directory; each part owns its own subdirectory.
+  - path: realization/pricing/
+    owner: shop/pricing
+  - path: realization/catalog/
+    owner: shop/catalog
+  - path: realization/checkout/
+    owner: shop/checkout
+  - path: realization/marketing/
+    owner: shop/marketing
+scope:
+  - kind: shop/Policy
+    property: shop/applies

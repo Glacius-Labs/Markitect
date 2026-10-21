@@ -16,6 +16,7 @@ import argparse
 import fnmatch
 import io
 import json
+import re
 import shutil
 import subprocess
 import sys
@@ -35,6 +36,7 @@ from trial_kit import python_command  # noqa: E402
 TEST_COMMANDS = {
     "stockroom": ["-B", "-m", "unittest", "discover", "-s", "tests"],
     "depot": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
+    "hall": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
     "fleet": ["-B", "-m", "unittest", "discover", "-s", ".", "-p", "test_*.py"],
 }
 
@@ -113,7 +115,8 @@ def static_readme_commands(realization, case):
     else:
         words = {"stockroom": ("add-item", "receive", "issue", "list", "--sku", "--name", "--qty"),
                  "depot": ("add-item", "receive", "place-order", "fulfil-order", "cancel-order", "orders", "items",
-                           "reorder", "--line", "--status")}[case.project]
+                           "reorder", "--line", "--status"),
+                 "hall": ("add-room", "rooms", "book", "bookings", "--code", "--seats")}[case.project]
     missing = [word for word in words if word not in text]
     return "the README does not mention %s" % missing if missing else ""
 
@@ -151,6 +154,16 @@ def static_config_consistent(realization, case):
     return "limits.json disagrees with the model: %s" % wrong if wrong else ""
 
 
+def static_readme_name_40(realization, case):
+    """The README states the owner's name maximum of 40 and no longer the earlier 60 (S-N40)."""
+    lines = [line for line in (read(realization, "README.md") or "").splitlines() if "name" in line.lower()]
+    stated = [line for line in lines if re.search(r"(?<![0-9])40(?![0-9])", line)]
+    stale = [line for line in lines if re.search(r"(?<![0-9])60(?![0-9])", line)]
+    if not stated or stale:
+        return "the README's name lines do not state 40 or still state 60: %s" % lines[:5]
+    return ""
+
+
 def static_readme_limits(realization, case):
     """The README does not point at a limits file the realization no longer has (S-O moves the limits)."""
     text = read(realization, "README.md") or ""
@@ -175,6 +188,7 @@ STATIC = {
     "tests-present": static_tests_present,
     "config-consistent": static_config_consistent,
     "readme-limits": static_readme_limits,
+    "readme-name-40": static_readme_name_40,
     "registry-owner": static_registry_owner,
 }
 
@@ -238,7 +252,7 @@ def summarize_report(report):
         "rounds": [{"number": item.get("number"), "green": item.get("green"),
                     "checks": {check.get("name"): check.get("passed") for check in item.get("checks") or []}}
                    for item in run.get("rounds") or []],
-        "passes": [{"id": item.get("id"), "purpose": item.get("purpose"), "review": item.get("review"),
+        "passes": [{"id": item.get("id"), "purpose": item.get("purpose"), "review": item.get("review"), "tree": item.get("tree"),
                     "verdict": item.get("verdict"), "checks": {check.get("name"): check.get("passed")
                                                               for check in item.get("checks") or []}}
                    for item in run.get("passes") or []],
@@ -250,11 +264,9 @@ def summarize_report(report):
                   for kind in sorted({turn.get("kind") for turn in turns if turn.get("kind")})},
         "engineSeconds": round((max(ends) - min(starts)).total_seconds()) if starts and ends else None,
         "costUSD": round((run.get("usage") or {}).get("costUSD", 0.0), 2),
-        "findings": [{"id": item.get("id"), "owner": item.get("owner"), "raisedBy": item.get("raisedBy"),
-                      "blocking": item.get("blocking"), "closed": item.get("closed"),
-                      "pass": item.get("pass", item.get("round")),
-                      "obligation": (item.get("obligation") or "")[:300], "observed": (item.get("observed") or "")[:300]}
-                     for item in findings],
+        # Keep candidate, disputes, closure evidence and observation classification. A boolean alone cannot
+        # distinguish an unresolved suspicion from an independently disproved factual claim.
+        "findings": [dict(item, **{"pass": item.get("pass", item.get("round"))}) for item in findings],
     }
 
 

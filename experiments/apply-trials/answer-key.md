@@ -321,6 +321,199 @@ Model edits:
 - **Record:** all s2 checks including upgrade; unchanged behavior retained; files changed; passes
 - **Notes:** Primary form: --from-repo with the committed result of S-G. Without it the reference stands in for the previous result (controlled form).
 
+## S-N40: Owner policy change on a fixed conforming stand
+
+- **Question:** Does Apply realize the owner's change of the maximum name length from 60 to 40 on the conforming reference, changing exactly the behavior, tests and documentation that the change requires?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, the committed result of an earlier Apply (`--from-repo`)
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `n40`.
+- **Not counted as unnecessary:** `realization/limits.json`, `realization/README.md`, `realization/tests/*`, `.markitect/registry/stockroom/registry.yaml`
+- **Artifact checks:** `readme-name-40`
+- **Record:** name maximum 40 enforced and documented; changes outside the limit value, README and tests; own tests updated for the new boundary; passes; turns; time
+- **Notes:** Fixed-start form of the hardening series' A5, which applied the change to A4's own publication. Without --from-repo the reference is the accepted stand and the change is a separate owner commit; every comparison arm starts from the same bytes. The reference's own tests assert a 60-character name, so a code-only change leaves them failing.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  and at most 60 characters, counted as Unicode code points. A quantity is
++  and at most 40 characters, counted as Unicode code points. A quantity is
+```
+
+## S-QVF: The S-QV gap corrected by the owner, model-only start
+
+- **Question:** Does a new Apply realize the model after the owner's correction supplied the missing maximum name length (60) in a new model version?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `s1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** a model stop or question (expected none); name maximum 60 enforced; passes; turns; time
+- **Notes:** The packet's first commit holds the S-QV model with the gap, the second the owner's correction; the corrected model equals s1. A new Run on it is the corrected counterpart of a material-gap stop, not a revival of the failed Run and not an answer given during it.
+
+Model edits of the earlier version in the packet's first commit (the second commit holds the case's model):
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
+-  and at most 60 characters, counted as Unicode code points. A quantity is
++  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
++  and at most the maximum name length, counted as Unicode code points. A quantity is
+```
+
+## S-XN: Case of SKUs mentioned, consistently with the normalization
+
+- **Question:** Does Apply accept an item text that speaks about the case of SKUs but agrees with the normalization of inputs, and leave the conforming reference unchanged?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `s1`.
+- **Record:** a model stop (expected none: a false alarm); files changed (expected none); passes; turns
+- **Notes:** Counter-control of S-X: the same Definition and topic, without the contradiction.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/item.yaml
+-  creates it with on-hand 0. The SKU identifies the item: at most one item
+-  exists per SKU after the normalization of [[inputs]]. The name is a
+-  descriptive label and need not be unique.
++  creates it with on-hand 0. An operator may type a SKU in any case, such as
++  abc-123 or ABC-123: both name the same item, because the SKU identifies
++  the item only after the normalization of [[inputs]], and a record shows
++  the normalized SKU. The name is a descriptive label and need not be unique.
+```
+
+## S-XNG: Case of SKUs mentioned consistently, model-only start
+
+- **Question:** Does Apply build the stockroom from the S-XN model without a false contradiction stop?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `s1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** a model stop (expected none: a false alarm); passes; turns; time
+- **Notes:** Model-only form of S-XN, the model of the assessment control MA-NEAR.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/item.yaml
+-  creates it with on-hand 0. The SKU identifies the item: at most one item
+-  exists per SKU after the normalization of [[inputs]]. The name is a
+-  descriptive label and need not be unique.
++  creates it with on-hand 0. An operator may type a SKU in any case, such as
++  abc-123 or ABC-123: both name the same item, because the SKU identifies
++  the item only after the normalization of [[inputs]], and a record shows
++  the normalized SKU. The name is a descriptive label and need not be unique.
+```
+
+## S-FREE: Explicitly delegated choice, model-only start
+
+- **Question:** Does Apply decide a value the model explicitly leaves to the realization within bounds (the maximum name length, 40 to 120, stated in the README) without asking the owner?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `free`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** owner question about the name length (expected none: a false alarm); value chosen and documented; passes; turns; time
+- **Notes:** Minimal pair of S-QV: the same sentence with an explicit delegation added. Together they separate a missed public gap from an unnecessary escalation of granted freedom.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
+-  and at most 60 characters, counted as Unicode code points. A quantity is
++  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
++  and at most the maximum name length, counted as Unicode code points. The
++  maximum name length is the realization's choice: one whole number from 40
++  to 120, the same for every command, which the README of [[realization]]
++  states. A quantity is
+```
+
+## S-GO: Complete model without its optional details, model-only start
+
+- **Question:** Does Apply treat a model as complete when it leaves error wording, the data file layout and the internal organization unstated instead of declaring them free, and omits the SKU example?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `s1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** a model stop or gap about an omitted detail (expected none: a false alarm); passes; turns
+- **Notes:** The model of the assessment control MA-COMPLETE version 2; the s1 reference conforms to it.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/interface.yaml
+-  Expected failures never end in an unhandled crash. Exact error wording is free.
++  Expected failures never end in an unhandled crash.
+```
+
+```diff
+--- .markitect/model/stockroom/interface.yaml
+-  the automated tests that [[realization]] requires. These fixed entry points do
+-  not prescribe the internal module organization.
++  the automated tests that [[realization]] requires.
+```
+
+```diff
+--- .markitect/model/stockroom/storage.yaml
+-  it. A failed command leaves the file unchanged, and queries never write it.
+-  The organization of the JSON inside the file is an implementation choice
+-  consistent with the [[item]] records. Concurrent independent writers are
+-  outside this contract; [[realization]] documents that limitation.
++  it. A failed command leaves the file unchanged, and queries never write it.
++  Concurrent independent writers are outside this contract; [[realization]]
++  documents that limitation.
+```
+
+```diff
+--- .markitect/model/stockroom/realization.yaml
+-  guarantees for concurrent independent writers. Internal organization is free
+-  within the Python standard-library command and test boundary.
++  guarantees for concurrent independent writers.
+```
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  hyphen and three digits 0-9, for example ABC-123. Two SKUs with the same
++  hyphen and three digits 0-9. Two SKUs with the same
+```
+
+## S-FREEU: Delegated choice beside an unconventional name rule, model-only start
+
+- **Question:** Does Apply accept the delegated name maximum of S-FREE and a deliberate, unconventional but consistent rule that names may hold tabs, line breaks and control characters?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `free`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** a model stop, gap or error about the name rule or the name maximum (expected none); passes; turns
+- **Notes:** The model of the assessment control MA-FREE version 2; the s1 reference conforms to it.
+
+Model edits:
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
+-  and at most 60 characters, counted as Unicode code points. A quantity is
++  SKU. A name is trimmed of surrounding whitespace and must then be nonempty
++  and at most the maximum name length, counted as Unicode code points. The
++  maximum name length is the realization's choice: one whole number from 40
++  to 120, the same for every command, which the README of [[realization]]
++  states. A quantity is
+```
+
+```diff
+--- .markitect/model/stockroom/inputs.yaml
+-  states. A quantity is
++  states. Inside the trimmed name any text is allowed, including tabs, line
++  breaks and other control characters; records return the name exactly as
++  stored.
++  A quantity is
+```
+
 ## S-F: Follow-up Apply on a conforming result
 
 - **Question:** Does a second Apply on the committed result of a Verified Apply change nothing?
@@ -329,6 +522,103 @@ Model edits:
 - **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand.
 - **Record:** files changed (expected none); passes; blocking findings
 - **Notes:** Requires --from-repo; the profile is that of the model found in the repository.
+
+## D-U: A conforming but unattractive stand stays unchanged
+
+- **Question:** Does Apply accept an independently conforming depot unchanged although it invites an optional cleanup, a concrete suspicion that evidence settles and a doubt outside the contract?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `d1`.
+- **Record:** files changed (expected none); blocking findings or correction Passes (expected none); suggestions recorded about the three spots (allowed, not required); repeated Verify; turns
+- **Notes:** The preservation control of the conformance mandate (#561). Its three spots are HIDDEN: the repeated reserved sum in orders/orderbook.py, the `>= LIMIT` check in stock/ledger.py and the concurrency comment in depot/store.py.
+
+## D-UH: A genuine defect next to the unattractive stand
+
+- **Question:** Does Apply repair the hyphen-name defect on the unattractive stand through depot and leave the three tempting spots unchanged?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** n1 repaired with a fresh independent closure; the three spots unchanged; changes outside app.py and tests; turns; time
+- **Notes:** The paired defect of D-U: doing nothing cannot pass both.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| n1 | depot | behavior | the command line takes a name that starts with a hyphen for an option, so `--name -Bolt` exits 2 although the model allows the name; the reference before ec4f5ece, whose tests do not cover it | `item-inputs`, `name-hyphens` | no | informative |
+
+Fault edits:
+
+n1:
+
+```diff
+--- realization/app.py
+-def attach_names(argv):
+-    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""
+-    attached, tokens = [], iter(argv)
+-    for token in tokens:
+-        value = next(tokens, None) if token == "--name" else None
+-        attached.append(token if value is None else "--name=" + value)
+-    return attached
+-
+-
+-def main(
++def main(
+```
+
+```diff
+--- realization/app.py
+-        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))
++        result = run(build_parser().parse_args(argv))
+```
+
+```diff
+--- realization/tests/test_cli.py
+-        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
+```
+
+## D-H: A public name refused by the command line
+
+- **Question:** Does Apply repair the hyphen-leading name defect that no project test covers, through the owner of the command line, and change nothing else?
+- **Project and level:** depot, level 2
+- **Start:** snapshot `d1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `d1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** n1 repaired by depot; a test of a hyphen-leading name added (informative); changes outside app.py and tests; passes and the pass in which the finding closed; false findings; turns; time
+- **Notes:** The start of the hardening series' V1 (Verify only) and A1 (full Apply). The defect hides behind a green project suite, so only a review that derives inputs from depot/inputs finds it.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| n1 | depot | behavior | the command line takes a name that starts with a hyphen for an option, so `--name -Bolt` exits 2 although the model allows the name; the reference before ec4f5ece, whose tests do not cover it | `item-inputs`, `name-hyphens` | no | informative |
+
+Fault edits:
+
+n1:
+
+```diff
+--- realization/app.py
+-def attach_names(argv):
+-    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""
+-    attached, tokens = [], iter(argv)
+-    for token in tokens:
+-        value = next(tokens, None) if token == "--name" else None
+-        attached.append(token if value is None else "--name=" + value)
+-    return attached
+-
+-
+-def main(
++def main(
+```
+
+```diff
+--- realization/app.py
+-        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))
++        result = run(build_parser().parse_args(argv))
+```
+
+```diff
+--- realization/tests/test_cli.py
+-        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")
+```
 
 ## D-N: Conforming multi-Package reference stays unchanged
 
@@ -481,6 +771,89 @@ m1:
 - **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand.
 - **Record:** files changed (expected none); passes; blocking findings
 - **Notes:** Requires --from-repo with the result of D-M or D-G.
+
+## H-I: Parent invariant violated despite locally green children
+
+- **Question:** Does independent parent integration reject and repair disagreement about the same room's bookable seats, even when rooms and bookings each pass their local suite?
+- **Project and level:** hall, level 2
+- **Start:** snapshot `h1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `h1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** both child suites initially pass; parent reserve agreement restored; wrong test corrected
+- **Notes:** A semantic control for DEP, not routing/version evidence and not an extra provider allocation.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| r3 | hall/rooms | test | rooms reports reserve 1 and its own test expects 1, while bookings admits seats with reserve 2; both child suites pass, but the parent-level contract requires one agreed reserve | `readme-reserve`, `refusal-keeps-data`, `reserve-agreement`, `rooms-independent` | yes | informative |
+
+Fault edits:
+
+r3:
+
+```diff
+--- realization/rooms/rooms.py
+-    return {"code": code, "seats": seats, "bookable": bookable(seats)}
++    return {"code": code, "seats": seats, "bookable": seats - 1}
+```
+
+```diff
+--- realization/rooms/test_rooms.py
+-{"code": "B202", "seats": 40, "bookable": 40 - RESERVE}
++{"code": "B202", "seats": 40, "bookable": 39}
+```
+
+## H-N: Conforming sibling-dependency stand stays unchanged
+
+- **Question:** Does Apply leave the conforming hall stand, whose rooms part shows the reserve the bookings part chose, unchanged?
+- **Project and level:** hall, level 2
+- **Start:** snapshot `h1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `h1`.
+- **Record:** files changed (expected none); passes; blocking findings (expected none); turns; time
+
+## H-G: Model-only Apply with a sibling dependency and a sibling-owned choice
+
+- **Question:** Does a three-Manager tree build hall from the model alone, with the bookings part building on the rooms part's accepted room rules and the rooms part obtaining the reserve that the bookings part chose through the tree, without asking the owner?
+- **Project and level:** hall, level 2
+- **Start:** snapshot `h1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `h1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** reserve agreement between rooms and bookings; how the reserve reached rooms (question through hall, wait for an accepted basis, or a decision by rooms itself); release of bookings after the accepted rooms basis or result it needs; owner questions (expected none: the reserve is delegated); empty or repeated-progress turns; passes; turns; time
+- **Notes:** The dependency probe of the 21 October handoff (DEP). The process criteria are evaluated from the run's events by scenarios.py; the oracle judges only the published behavior.
+
+## H-M: Uncoordinated siblings: disagreement and a duplicated rule
+
+- **Question:** Does Apply repair a reserve the rooms part decided against the bookings part's choice and a copy of the room code rule inside bookings, each through its owner?
+- **Project and level:** hall, level 2
+- **Start:** snapshot `h1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `h1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** each fault repaired; r2 repaired by using the rooms rule rather than a corrected copy; which Manager changed which area; false findings; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| r1 | hall/rooms | behavior | the rooms part reports its own reserve of 1 instead of the reserve the bookings part chose (2), so a room shows one bookable seat more than book admits | `readme-reserve`, `refusal-keeps-data`, `reserve-agreement`, `rooms-independent` | yes | informative |
+| r2 | hall/bookings | duplication | book looks rooms up with its own copy of the room code rule that trims but does not uppercase, instead of the rooms part's rule, so a lowercase code names no room | `book-record`, `edge-robustness` | yes | informative |
+
+Fault edits:
+
+r1:
+
+```diff
+--- realization/rooms/rooms.py
+-    return {"code": code, "seats": seats, "bookable": bookable(seats)}
++    return {"code": code, "seats": seats, "bookable": seats - 1}
+```
+
+r2:
+
+```diff
+--- realization/bookings/bookings.py
+-    code, seats = rooms.existing(state, code_text), inputs.booking_seats(seats_text)
++    code, seats = code_text.strip(), inputs.booking_seats(seats_text)
++    if code not in state["rooms"]:
++        raise Refusal("there is no room %s" % code)
+```
 
 ## W1D1-N: Conforming fleet stand, 1 ledger at depth 1 (3 Managers)
 
@@ -987,3 +1360,267 @@ The reference realization fails exactly these checks under a changed or variant 
 
 - stockroom `s2`: `add-record`, `issue-exact`, `list-low`, `other-items`, `persist`, `qty-max`, `reads-untouched`, `reorder-option`, `sku-identity`, `upgrade`
 - stockroom `o`: `limits-module`, `storage-format`, `storage-format-strict`, `unknown-sku-message`
+- stockroom `n40`: `name-rules`
+
+## Oracle variants
+
+Each variant is the reference with exact edits. The oracle must accept an alternative that fails nothing and reject a wrong one with exactly the listed checks.
+
+| Variant | Project | Profile | Realization | Fails |
+| --- | --- | --- | --- | --- |
+| n40-done | stockroom | n40 | limit, README and boundary test at 40: a complete change | nothing (accepted) |
+| n40-code-only | stockroom | n40 | only the limit changed; README still states 60 | `readme-name-40` |
+| n40-tests-stale | stockroom | n40 | limit and README at 40, the boundary test still expects 60 | nothing (accepted) |
+| n40-off-by-one | stockroom | n40 | 41 code points accepted | `name-rules` |
+| free-60 | stockroom | free | the reference's documented 60 is a valid choice | nothing (accepted) |
+| free-40 | stockroom | free | documented 40, the lower bound | nothing (accepted) |
+| free-120 | stockroom | free | documented 120, the upper bound | nothing (accepted) |
+| free-30 | stockroom | free | documented 30, below the permitted range | `name-hyphens`, `name-limit-free` |
+| free-121 | stockroom | free | documented 121, above the permitted range | `name-limit-free` |
+| free-undocumented | stockroom | free | enforces 80 while the README states 60 | `name-limit-free` |
+| s1-chose-80 | stockroom | s1 | a silently chosen maximum of 80 | `name-rules`, `config-consistent` |
+| h1-reserve-0 | hall | h1 | reserve 0, a valid choice | nothing (accepted) |
+| h1-reserve-1 | hall | h1 | reserve 1, a valid choice | nothing (accepted) |
+| h1-readme-stale | hall | h1 | reserve 1 in the code while the README still states 2 | `readme-reserve` |
+| h1-reserve-3 | hall | h1 | reserve 3, outside the model's range | `add-room-record`, `book-inputs`, `book-record`, `bookings-listing`, `edge-robustness`, `no-leftovers`, `readme-reserve`, `reads-untouched`, `refusal-keeps-data`, `reserve-agreement`, `rooms-independent` |
+| h1-reserve-per-room | hall | h1 | a reserve that differs between rooms (1 below 10 seats, else 2) | `reserve-agreement` |
+
+n40-done:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 40
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 40 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
++        self.assertEqual(stockroom.parse_name("x" * 40), "x" * 40)
++        with self.assertRaises(StockError):
++            stockroom.parse_name("x" * 41)
+```
+
+n40-code-only:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 40
+```
+
+n40-tests-stale:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 40
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 40 characters
+```
+
+n40-off-by-one:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 41
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 40 characters
+```
+
+free-40:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 40
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 40 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 40), "x" * 40)
++        for text in ("", "   ", "x" * 41):
+```
+
+free-120:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 120
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 120 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 120), "x" * 120)
++        for text in ("", "   ", "x" * 121):
+```
+
+free-30:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 30
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 30 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 30), "x" * 30)
++        for text in ("", "   ", "x" * 31):
+```
+
+free-121:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 121
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 121 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 121), "x" * 121)
++        for text in ("", "   ", "x" * 122):
+```
+
+free-undocumented:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 80
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 80), "x" * 80)
++        for text in ("", "   ", "x" * 81):
+```
+
+s1-chose-80:
+
+```diff
+--- realization/limits.json
+-"maxNameLength": 60
++"maxNameLength": 80
+```
+
+```diff
+--- realization/README.md
+-has at most 60 characters
++has at most 80 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 80), "x" * 80)
++        for text in ("", "   ", "x" * 81):
+```
+
+h1-reserve-0:
+
+```diff
+--- realization/bookings/reserve.py
+-RESERVE = 2
++RESERVE = 0
+```
+
+```diff
+--- realization/README.md
+-The reserve is **2**: every room holds back 2 of its seats, so its bookable
+-  seats are its seats minus 2.
++The reserve is **0**: every room holds back 0 of its seats, so its bookable
++  seats are its seats minus 0.
+```
+
+h1-reserve-1:
+
+```diff
+--- realization/bookings/reserve.py
+-RESERVE = 2
++RESERVE = 1
+```
+
+```diff
+--- realization/README.md
+-The reserve is **2**: every room holds back 2 of its seats, so its bookable
+-  seats are its seats minus 2.
++The reserve is **1**: every room holds back 1 of its seats, so its bookable
++  seats are its seats minus 1.
+```
+
+h1-readme-stale:
+
+```diff
+--- realization/bookings/reserve.py
+-RESERVE = 2
++RESERVE = 1
+```
+
+h1-reserve-3:
+
+```diff
+--- realization/bookings/reserve.py
+-RESERVE = 2
++RESERVE = 3
+```
+
+h1-reserve-per-room:
+
+```diff
+--- realization/bookings/reserve.py
+-    return seats - RESERVE
++    return seats - (1 if seats < 10 else RESERVE)
+```

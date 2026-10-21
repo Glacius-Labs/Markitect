@@ -28,11 +28,11 @@ from cases import CASES  # noqa: E402
 DEPENDENCIES = HERE.parent / "test-projects" / "library-r2" / "project" / ".markitect" / "dependencies"
 PACKET_ROOTS = (".markitect", "realization")
 LEAK = re.compile(r"\b(fault\w*|inject\w*|deliberate\w*|drift\w*|trial\w*|oracle\w*|answer key|mutant\w*|"
-                  r"seeded|planted|[SD]-[A-Z])\b", re.IGNORECASE)
+                  r"seeded|planted|[SDH]-[A-Z])\b", re.IGNORECASE)
 IDENTITY = {"GIT_AUTHOR_NAME": "Project owner", "GIT_AUTHOR_EMAIL": "owner@example.invalid",
             "GIT_COMMITTER_NAME": "Project owner", "GIT_COMMITTER_EMAIL": "owner@example.invalid",
             "GIT_AUTHOR_DATE": "2026-10-20T08:00:00+00:00", "GIT_COMMITTER_DATE": "2026-10-20T08:00:00+00:00"}
-GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.safecrlf=false", "-c", "core.hooksPath=",
+GIT = ["git", "-c", "core.autocrlf=false", "-c", "core.safecrlf=false", "-c", "core.hooksPath=", "-c", "core.filemode=false",
        "-c", "commit.gpgsign=false", "-c", "init.defaultBranch=main"]
 
 
@@ -72,8 +72,8 @@ def apply_edits(root, edits, label):
         path.write_text(text.replace(edit.old, edit.new), encoding="utf-8", newline="\n")
 
 
-def write_model(root, case, snapshot):
-    """Replace the packet's manifest, lock and Definitions by the snapshot plus the case's model edits."""
+def write_model(root, case, snapshot, edits=None):
+    """Replace the packet's manifest, lock and Definitions by the snapshot plus EDITS (the case's model edits)."""
     source = project_dir(case) / "snapshots" / snapshot
     target = Path(root) / ".markitect"
     target.mkdir(parents=True, exist_ok=True)
@@ -82,19 +82,21 @@ def write_model(root, case, snapshot):
     shutil.copytree(source / "model", target / "model")
     for name in ("model.yaml", "model-lock.yaml"):
         shutil.copyfile(source / name, target / name)
-    apply_edits(root, case.model_edits, case.id + " model")
+    apply_edits(root, case.model_edits if edits is None else edits, case.id + " model")
 
 
 def write_base(root, case):
+    """The first commit's content; a case with prior edits starts from the earlier model version it corrects."""
     target = Path(root) / ".markitect"
     shutil.copytree(DEPENDENCIES, target / "dependencies")
     shutil.copyfile(project_dir(case) / "execution.yaml", target / "execution.yaml")
-    write_model(root, case, case.snapshot)
+    write_model(root, case, case.snapshot, case.prior_edits or None)
     if case.start == "reference":
         reference = project_dir(case) / "reference"
         shutil.copytree(reference / "realization", Path(root) / "realization",
                         ignore=shutil.ignore_patterns("__pycache__"))
         shutil.copytree(reference / "registry", target / "registry")
+        apply_edits(root, case.stand_edits, "%s stand" % case.id)
         for fault in case.faults:
             apply_edits(root, fault.edits, "%s fault %s" % (case.id, fault.id))
 
@@ -184,7 +186,38 @@ def same_tree(left, right, names):
     return collect(left) == collect(right)
 
 
-def materialize(case_id, target, from_repo=None):
+def set_budget(root, budget):
+    """Replace the packet's budget block by BUDGET {executionTime, turnTimeout, agentTurns, passes}."""
+    path = Path(root) / ".markitect" / "execution.yaml"
+    lines = path.read_text(encoding="utf-8").split("\n")
+    start = lines.index("budget:")
+    end = start + 1
+    while end < len(lines) and lines[end].startswith("  "):
+        end += 1
+    block = ["budget:"] + ["  %s: %s" % (key, budget[key]) for key in ("executionTime", "turnTimeout", "agentTurns", "passes")]
+    path.write_text("\n".join(lines[:start] + block + lines[end:]), encoding="utf-8", newline="\n")
+
+
+def set_strategy(root, strategy):
+    """Select the packet's Apply strategy, the one line in which the direct and staged arms differ."""
+    path = Path(root) / ".markitect" / "execution.yaml"
+    text = path.read_text(encoding="utf-8")
+    changed, count = re.subn(r"(?m)^strategy: .*$", "strategy: " + strategy, text)
+    if count != 1:
+        raise PacketError("%s has no single strategy line" % path)
+    path.write_text(changed, encoding="utf-8", newline="\n")
+
+
+def configure(root, budget, strategy):
+    if budget:
+        set_budget(root, budget)
+    if strategy:
+        set_strategy(root, strategy)
+
+
+def materialize(case_id, target, from_repo=None, budget=None, strategy=None):
+    """BUDGET and STRATEGY, when given, replace the execution budget and strategy in the first commit (not with
+    --from-repo)."""
     if case_id not in CASES:
         raise PacketError("unknown case %s; known: %s" % (case_id, ", ".join(CASES)))
     case = CASES[case_id]
@@ -206,6 +239,7 @@ def materialize(case_id, target, from_repo=None):
         reference = CASES["S-N"] if case.project == "stockroom" else CASES["D-N"]
         target.mkdir(parents=True)
         write_base(target, reference)
+        configure(target, budget, strategy)
         git(target, "init", "-q")
         commit(target, "Current project state")
         write_model(target, case, case.snapshot)
@@ -215,8 +249,12 @@ def materialize(case_id, target, from_repo=None):
     else:
         target.mkdir(parents=True)
         write_base(target, case)
+        configure(target, budget, strategy)
         git(target, "init", "-q")
         commit(target, "Current project state")
+        if case.prior_edits:
+            write_model(target, case, case.snapshot)
+            commit(target, "Correct the model")
     warnings = audit(target, (lambda relative: relative.startswith(".markitect/model")) if from_repo else (lambda relative: True))
     return {"case": case.id, "target": str(target), "head": git(target, "rev-parse", "HEAD").strip(),
             "files": len(packet_files(target)), "acceptedFromSource": accepted, "auditWarnings": warnings}

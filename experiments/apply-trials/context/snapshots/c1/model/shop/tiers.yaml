@@ -1,0 +1,14 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: tiers
+kind: Core.Property
+body: >-
+  Ordered quantity tiers of a discount, each with its minQuantity and percent.
+spec:
+  type: object
+  minCount: 0
+  maxCount: -1
+  properties:
+    - minQuantity
+    - percent

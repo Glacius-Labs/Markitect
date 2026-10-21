@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop/pricing
+    as: Pricing
+id: pay
+kind: Software.UseCase
+title: Pay for a cart
+body: |-
+  Paying for a cart charges the sum of one [[Pricing.quote]] per cart line.
+  The payment is refused when any line's quote is refused.
+spec: {}

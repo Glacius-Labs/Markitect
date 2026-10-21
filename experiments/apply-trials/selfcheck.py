@@ -14,10 +14,18 @@ Shows, without any Agent or provider:
 6. every case materializes and passes the packet audit, and with --markitect
    the packet passes `markitect check` and `context` at HEAD;
 7. the assessor judges simulated results: unrepaired, partly and fully
-   repaired starts, an unchanged stand and a model-defect report.
+   repaired starts, an unchanged stand and a model-defect report;
+8. each oracle variant fails exactly its declared checks: accepted
+   alternatives fail nothing and wrong versions are rejected;
+9. the depot hyphen fault reproduces the faulty bytes that the hardening
+   series froze, and a model change on the reference is judged as met only
+   when its documentation follows;
+10. every conforming but unattractive stand (#561) passes its profile and its
+   own tests, and its edits touch exactly the paths it declares tempting.
 Exits 0 only without problems.
 """
 import argparse
+import hashlib
 import json
 import shutil
 import subprocess
@@ -31,7 +39,8 @@ sys.path.insert(0, str(HERE.parent / "test-projects"))
 
 import assess  # noqa: E402
 import oracle  # noqa: E402
-from cases import CASES, DEFECT, GAP, PROJECTS, REFUSED, SHIFTS, Edit, markdown  # noqa: E402
+from cases import (APPLIED, CASES, DEFECT, GAP, N1_HYPHEN, N1_HYPHEN_SHA256, PROJECTS, REFUSED, SHIFTS,  # noqa: E402
+                   UNCHANGED, VARIANTS, Edit, markdown)
 from materialize import apply_edits, materialize, project_root  # noqa: E402
 from oracle_kit import DEGENERATE  # noqa: E402
 from trial_kit import python_command  # noqa: E402
@@ -53,8 +62,9 @@ class Report:
         return condition
 
 
-def build(project, root, faults=(), overlay=None, remove=()):
-    """A packet-shaped folder ROOT holding the reference realization and registry with overlays and faults."""
+def build(project, root, faults=(), overlay=None, remove=(), stand=()):
+    """A packet-shaped folder ROOT holding the reference realization and registry with overlays, a case's stand
+    edits and faults."""
     root = Path(root)
     shutil.copytree(project_root(project) / "reference" / "realization", root / "realization",
                     ignore=shutil.ignore_patterns("__pycache__"))
@@ -64,6 +74,7 @@ def build(project, root, faults=(), overlay=None, remove=()):
             shutil.copyfile(path, root / "realization" / path.name)
     for name in remove:
         (root / "realization" / name).unlink()
+    apply_edits(root, stand, "stand")
     for fault in faults:
         apply_edits(root, fault.edits, "fault " + fault.id)
     return root / "realization"
@@ -132,7 +143,7 @@ def check_faults(project, python, report):
         union = set()
         for fault in case.faults:
             with tempfile.TemporaryDirectory(prefix="trial-fault-") as folder:
-                realization = build(project, folder, faults=[fault])
+                realization = build(project, folder, faults=[fault], stand=case.stand_edits)
                 bad, _ = failing(project, case.profile or PROJECTS[project]["profile"], realization, python)
                 report.expect(bad == set(fault.detected_by), "%s %s fails %s, declared %s"
                               % (case.id, fault.id, sorted(bad), sorted(fault.detected_by)))
@@ -146,7 +157,7 @@ def check_faults(project, python, report):
                 union |= set(fault.detected_by)
                 found["%s %s" % (case.id, fault.id)] = sorted(bad) + sorted(static) + (["tests"] if not passed else [])
         with tempfile.TemporaryDirectory(prefix="trial-fault-") as folder:
-            realization = build(project, folder, faults=case.faults)
+            realization = build(project, folder, faults=case.faults, stand=case.stand_edits)
             bad, _ = failing(project, case.profile or PROJECTS[project]["profile"], realization, python)
             report.expect(bad == union, "%s all faults fail %s, declared %s" % (case.id, sorted(bad), sorted(union)))
     report.facts["faults"] = found
@@ -255,7 +266,7 @@ def check_assessor(project, python, report):
                 partial = assess.assess(case.id, repo, None, python)
                 repaired = [item["id"] for item in partial["faults"] if item["repaired"]]
                 report.expect(repaired == [first.id], "%s: partial repair counts %s as repaired" % (case.id, repaired))
-                publish(project, repo)
+                publish(project, repo, stand=case.stand_edits)
                 full = assess.assess(case.id, repo, fake_report(folder / "applied.json", "verified", "applied"), python)
                 report.expect(all(item["repaired"] for item in full["faults"]), "%s: the reference repair is not "
                               "counted as complete: %s" % (case.id, full["faults"]))
@@ -286,12 +297,100 @@ def check_assessor(project, python, report):
                 judged = assess.assess(case.id, repo, fake_report(folder / "defect.json", "failed", None,
                                                                   "Root judged the model erroneous or contradictory: x"), python)
                 report.expect(judged["outcome"]["met"] is False, "%s: a changed tree after a defect counts as met" % case.id)
-            elif case.id.endswith("-N"):
+            elif case.expected == UNCHANGED and case.start == "reference":
                 repo = folder / case.id
                 materialize(case.id, repo)
                 judged = assess.assess(case.id, repo, fake_report(folder / "same.json", "verified", "no_change"), python)
-                report.expect(judged["outcome"]["met"] and judged["behavior"]["passed"],
+                report.expect(judged["outcome"]["met"] and judged["behavior"]["passed"] and judged["tests"]["passed"],
                               "%s: an unchanged conforming stand is not judged as met: %s" % (case.id, judged["outcome"]))
+
+
+def check_stands(project, python, report):
+    """A conforming but unattractive stand: independently conforming, and its tempting spots really differ."""
+    found = {}
+    for case in CASES.values():
+        if case.project != project or not case.stand_edits or case.faults:
+            continue
+        with tempfile.TemporaryDirectory(prefix="trial-stand-") as folder:
+            realization = build(project, folder, stand=case.stand_edits)
+            bad, outcome = failing(project, case.profile, realization, python)
+            passed, output = assess.run_tests(realization, project, python)
+            report.expect(not bad and passed, "the %s stand fails %s, own tests %s" % (case.id, sorted(bad), passed))
+            changed = sorted({edit.path for edit in case.stand_edits})
+            report.expect(changed == sorted(case.preserve), "the %s stand edits %s, its spots are %s"
+                          % (case.id, changed, sorted(case.preserve)))
+            found[case.id] = "%s %d/%d, own tests %s, spots %s" % (case.profile, outcome["summary"]["passed"],
+                                                                  outcome["summary"]["total"],
+                                                                  "pass" if passed else "fail", len(changed))
+    if found:
+        report.facts["stands"] = found
+
+
+def variant_static(variant):
+    """The artifact checks of the cases that share the variant's project and profile."""
+    return sorted({name for case in CASES.values() if case.project == variant.project and case.profile == variant.profile
+                   for name in case.static})
+
+
+def check_variants(project, python, report):
+    found = {}
+    for variant in VARIANTS:
+        if variant.project != project:
+            continue
+        with tempfile.TemporaryDirectory(prefix="trial-variant-") as folder:
+            realization = build(project, folder)
+            apply_edits(folder, variant.edits, "variant " + variant.id)
+            bad, _ = failing(project, variant.profile, realization, python)
+            report.expect(bad == set(variant.fails), "variant %s fails %s, declared %s"
+                          % (variant.id, sorted(bad), sorted(variant.fails)))
+            case = next(case for case in CASES.values() if case.project == project)
+            static = {name for name, problem in assess.run_static(variant_static(variant), realization, case).items()
+                      if problem}
+            report.expect(static == set(variant.static), "variant %s fails artifact checks %s, declared %s"
+                          % (variant.id, sorted(static), sorted(variant.static)))
+            passed, _ = assess.run_tests(realization, project, python)
+            report.expect(passed is not variant.tests_fail, "variant %s: own tests %s, declared failing %s"
+                          % (variant.id, "pass" if passed else "fail", variant.tests_fail))
+            found[variant.id] = sorted(bad | static | ({"own tests"} if not passed else set())) or "accepted"
+    if found:
+        report.facts["variants"] = found
+
+
+def check_continuity(project, report):
+    """The depot hyphen fault is byte for byte the start that the hardening series froze for V1 and A1."""
+    if project != "depot":
+        return
+    with tempfile.TemporaryDirectory(prefix="trial-continuity-") as folder:
+        build(project, folder, faults=[N1_HYPHEN])
+        digests = {path: hashlib.sha256((Path(folder) / path).read_bytes()).hexdigest() for path in N1_HYPHEN_SHA256}
+        report.expect(digests == N1_HYPHEN_SHA256, "the n1 fault does not reproduce the frozen bytes: %s" % digests)
+        report.facts["continuity n1"] = "matches the hardening series' V1/A1 bytes" if digests == N1_HYPHEN_SHA256 else digests
+
+
+def check_model_change(project, python, report):
+    """A model change on the reference (start `previous` with a snapshot): complete and code-only publications."""
+    for case in CASES.values():
+        if case.project != project or case.start != "previous" or not case.snapshot or case.expected != APPLIED:
+            continue
+        variants = [variant for variant in VARIANTS if variant.project == project and variant.profile == case.profile]
+        if not variants:
+            continue
+        with tempfile.TemporaryDirectory(prefix="trial-change-") as folder:
+            folder = Path(folder)
+            judged = {}
+            for variant in variants:
+                repo = folder / variant.id
+                materialize(case.id, repo)
+                apply_edits(repo, variant.edits, "variant " + variant.id)
+                result = assess.assess(case.id, repo, fake_report(folder / "applied.json", "verified", "applied"), python)
+                good = not variant.fails and not variant.static and not variant.tests_fail
+                met = (result["outcome"]["met"] and result["behavior"]["passed"] and result["tests"]["passed"]
+                       and not any(result["static"].values()) and not result["changes"]["outsideFaultsAndAllowed"])
+                report.expect(met is good, "%s with variant %s is judged %s, expected %s: %s %s %s"
+                              % (case.id, variant.id, met, good, result["behavior"]["failed"], result["static"],
+                                 result["changes"]["outsideFaultsAndAllowed"]))
+                judged[variant.id] = "met" if met else "not met"
+            report.facts["change " + case.id] = judged
 
 
 # Model-only start, optional model change with the overlay that realizes it, follow-up case.
@@ -299,12 +398,12 @@ LONGITUDINAL = {"stockroom": ("S-G", "S-C", "S-F", "validation/s2", ["limits.jso
                 "depot": ("D-G", None, "D-F", None, [])}
 
 
-def publish(project, repo, overlay=None, remove=()):
-    """Simulate a publication: the reference (with an overlay) and its registry in REPO's working tree."""
+def publish(project, repo, overlay=None, remove=(), stand=()):
+    """Simulate a publication: the reference (with an overlay or a case's stand) and its registry in REPO's tree."""
     for folder in (repo / "realization", repo / ".markitect" / "registry"):
         if folder.exists():
             shutil.rmtree(folder)
-    build(project, repo, overlay=overlay, remove=remove)
+    build(project, repo, overlay=overlay, remove=remove, stand=stand)
 
 
 def check_longitudinal(project, python, report):
@@ -364,6 +463,10 @@ def main(argv=None):
         check_packets(project, args.markitect, report)
         check_assessor(project, python, report)
         check_longitudinal(project, python, report)
+        check_stands(project, python, report)
+        check_variants(project, python, report)
+        check_continuity(project, report)
+        check_model_change(project, python, report)
     print(json.dumps({"facts": facts, "problems": report.problems, "passed": not report.problems},
                      indent=2))
     return 0 if not report.problems else 1
