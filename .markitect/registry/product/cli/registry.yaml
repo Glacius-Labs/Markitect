@@ -36,6 +36,10 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Grant-gated evaluation harness that runs only the independent Verify of a captured stand through the real preparation and adapters, without a Command or publication.
+  - path: "internal/bootstrap/model_assessment_evaluation_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Grant-gated harness of the Model assessment trial that runs one read-only assessment Pass of a captured stand through the real preparation and adapters, without a Command or publication.
   - path: "internal/bootstrap/profile_router.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
