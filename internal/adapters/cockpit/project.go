@@ -396,8 +396,12 @@ func (p *projector) apply(r Record) {
 			Closed   []string          `json:"closed"`
 			Disputed []string          `json:"disputed"`
 		}](p, r)
+		summary := clip(d.Envelope.Summary, 320)
+		if d.Purpose == string(run.Assess) {
+			summary = strings.TrimSpace(d.Envelope.Summary)
+		}
 		pr := &ProposalView{ID: d.Proposal, Pass: r.Pass, Manager: r.Manager, Kind: d.Kind, Purpose: d.Purpose, Turn: r.Turn, Seq: r.Seq, At: r.At,
-			Summary: clip(d.Envelope.Summary, 320), Verdict: d.Envelope.Verdict, Status: "submitted", Raised: len(d.Findings), Closes: d.Closed, Disputes: d.Disputed, Children: d.Envelope.Children}
+			Summary: summary, Verdict: d.Envelope.Verdict, Status: "submitted", Raised: len(d.Findings), Closes: d.Closed, Disputes: d.Disputed, Children: d.Envelope.Children}
 		if d.Purpose == string(run.Assess) {
 			// The Model assessment's verdict is its coverage: per Definition
 			// the status and the evidence, complete, since this is the
@@ -494,8 +498,12 @@ func (p *projector) apply(r Record) {
 		}](p, r)
 		if pv := p.byPass[r.Pass]; pv != nil {
 			pv.Sealed, pv.SealedSeq, pv.SealedAt, pv.Verdict, pv.Tree, pv.Managers = true, r.Seq, r.At, d.Verdict, d.Tree, d.Managers
-			for i := range pv.Managers {
-				pv.Managers[i].Summary = clip(pv.Managers[i].Summary, 320)
+			// A Model assessment's conclusion is what the owner reads; it is
+			// shown whole.
+			if pv.Purpose != string(run.Assess) {
+				for i := range pv.Managers {
+					pv.Managers[i].Summary = clip(pv.Managers[i].Summary, 320)
+				}
 			}
 			// The Orchestrator enforces the dependencies of the plans accepted
 			// when the Plan Pass sealed: each Manager's accepted result.

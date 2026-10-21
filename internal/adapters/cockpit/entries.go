@@ -21,6 +21,9 @@ type Entry struct {
 	Text    string    `json:"text"`
 	Ref     string    `json:"ref,omitempty"`
 	Link    *Link     `json:"link,omitempty"`
+	// Tone is the quiet judgment a record carries for the eye: "ok", "bad" or
+	// "warn" for a probe outcome, "ok" for an accepted result.
+	Tone string `json:"tone,omitempty"`
 }
 
 // Link is the direction and channel of one recorded exchange. Channel "agent"
@@ -261,8 +264,17 @@ func entry(r Record) Entry {
 		e.Class, e.Ref, e.Text = "evidence", "probe:"+str("id"), fmt.Sprintf("Probe %s requested by %s on %s for %s", str("id"), who, standText(str("standKind")), str("obligation"))
 	case "probe.receipt":
 		e.Class, e.Ref, e.Text = "evidence", "probe:"+str("id"), fmt.Sprintf("Probe %s on %s: %s", str("id"), standText(str("standKind")), str("outcome"))
+		switch str("outcome") {
+		case "passed":
+			e.Tone = "ok"
+		case "failed":
+			e.Tone = "bad"
+		default:
+			e.Tone = "warn"
+		}
 		if flag("uncertain") {
 			e.Text += " (uncertain)"
+			e.Tone = "warn"
 		}
 	case "probe.disposed":
 		var disposition struct {

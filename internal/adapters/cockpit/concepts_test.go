@@ -267,8 +267,10 @@ func TestModelAssessmentShowsItsCoverageAndAConfirmedProblemEndsTheRun(t *testin
 	if v.Status.Ending != "model_problem" {
 		t.Fatalf("status = %+v", v.Status)
 	}
-	text := sentenceText(v.Account[0])
-	if !strings.HasPrefix(text, "Model problem confirmed — nothing published. Correct the model and start a new run.") || !strings.Contains(text, long) {
+	if text := sentenceText(v.Account[0]); text != "Model problem confirmed — nothing published. Correct the model and start a new run." {
+		t.Fatalf("account = %q", text)
+	}
+	if text := sentenceText(v.Account[1]); !strings.HasPrefix(text, "Reason: stock/inputs refers to a name maximum") || !strings.Contains(text, long[:len(long)-1]) {
 		t.Fatalf("account = %q: the assessment reason is shown whole", text)
 	}
 	// The same ending is recognized when Root ended the Run itself.

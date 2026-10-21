@@ -249,6 +249,11 @@ func account(v *View) []Sentence {
 		return append(out, Sentence{{Text: "No run record has been read up to this point."}})
 	}
 	out = append(out, statusSentence(v))
+	if v.Status.Ending == "model_problem" && v.Status.Reason != "" {
+		// The reason is what the owner corrects the model by: shown whole.
+		reason := strings.TrimPrefix(strings.TrimPrefix(v.Status.Reason, run.ModelAssessmentReason), run.ModelErrorReason)
+		out = append(out, Sentence{{Text: "Reason: " + strings.TrimSpace(reason)}})
+	}
 	var working Sentence
 	for _, m := range v.Managers {
 		if m.State != string(run.Working) {
@@ -347,11 +352,7 @@ func statusSentence(v *View) Sentence {
 	if v.Status.Ending == "model_problem" {
 		// A closed ending, not a failure of the work: nothing is published and
 		// the owner corrects the model and starts a new Run.
-		s := Sentence{{Text: "Model problem confirmed — nothing published. Correct the model and start a new run."}}
-		if v.Status.Reason != "" {
-			s = append(s, Segment{Text: " " + v.Status.Reason + "."})
-		}
-		return s
+		return Sentence{{Text: "Model problem confirmed — nothing published. Correct the model and start a new run."}}
 	}
 	if v.Status.Outcome != "" {
 		s := Sentence{{Text: "The Orchestrator recorded the outcome " + v.Status.Outcome}}

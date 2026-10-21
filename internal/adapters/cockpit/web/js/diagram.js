@@ -121,7 +121,9 @@ export class Diagram {
     const rx = rootPos ? rootPos.x : 0;
     const top = rootPos ? rootPos.y : H + VGAP;
     this.pos.set("@orchestrator", { x: rx - W - 2 * HGAP - 20, y: top, w: W - 24, h: H - 16 });
-    this.pos.set("@user", { x: rx + W + 2 * HGAP + 44, y: top, w: W - 24, h: H - 16 });
+    // A Run has no owner channel: the owner is drawn only for the record of an
+    // earlier run that holds owner-channel records.
+    if (this.view.ownerChannel) this.pos.set("@user", { x: rx + W + 2 * HGAP + 44, y: top, w: W - 24, h: H - 16 });
     let minX = Infinity, maxX = -Infinity, maxY = 0;
     for (const p of this.pos.values()) {
       minX = Math.min(minX, p.x);
@@ -161,8 +163,10 @@ export class Diagram {
       this.edges.append(s("path", { class: "owner-edge", d: `M${root.x + root.w} ${root.y + root.h / 2} H${user.x}` }));
     }
     this.nodesLayer.append(this.systemNode("@orchestrator", "Orchestrator", "Checks, accepts Root, routes"));
-    const ownerOpen = view.questions.filter((q) => q.to === "user" && q.status === "open").length;
-    this.nodesLayer.append(this.systemNode("@user", "Owner", ownerOpen ? `${ownerOpen} unanswered question${ownerOpen > 1 ? "s" : ""} recorded` : "Asks nothing in a Run"));
+    if (this.pos.has("@user")) {
+      const ownerOpen = view.questions.filter((q) => q.to === "user" && q.status === "open").length;
+      this.nodesLayer.append(this.systemNode("@user", "Owner", ownerOpen ? `${ownerOpen} unanswered question${ownerOpen > 1 ? "s" : ""} recorded` : "Earlier run: owner channel"));
+    }
     for (const m of view.managers) {
       if (this.hidden(m.path)) continue;
       this.nodesLayer.append(this.managerNode(m));

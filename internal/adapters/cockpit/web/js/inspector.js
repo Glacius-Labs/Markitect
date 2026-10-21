@@ -6,7 +6,8 @@
 // it then counts the newer records and offers an explicit return to live.
 
 import { api } from "./api.js";
-import { h, clear, icon, clock, since, label, announce, when } from "./dom.js";
+import { h, clear, icon, clock, since, label, announce, when, duration } from "./dom.js";
+import { outcomeFacts, passTitle, publicationText, usageText } from "./runfacts.js";
 import { Playback, SPEEDS } from "./playback.js";
 import { Diagram } from "./diagram.js";
 import { Timeline } from "./timeline.js";
@@ -173,9 +174,11 @@ export class Inspector {
     const cls = live ? (current ? "st-done" : "st-waiting") : "st-none";
     const runSaid = current || !health ? runText : `At the last contact: ${runText.charAt(0).toLowerCase()}${runText.slice(1)}`;
     const follow = live ? ` ${this.following ? "Following new records." : `Pinned at record ${this.boundary}${newer ? `, ${newer} newer` : ""}.`}` : "";
+    // The chip is small; what the link shows is in its tooltip.
+    const detail = `${runSaid}.${follow} Link ${conn}.${health?.why ? ` ${health.why}` : ""}`;
+    this.liveEl.title = `${detail} This is the observation of the run, separate from the recorded boundary. Pausing or losing the link never affects the run.`;
     clear(this.liveEl).append(
-      h("span", { class: `outcome ${cls}` }, h("span", { class: "lamp" }), h("strong", {}, live ? "Live" : "Replay")),
-      h("span", { class: "muted", title: health?.why || "" }, `${runSaid}.${follow} Link ${conn}.`));
+      h("span", { class: `chip ${cls}`, tabindex: 0, role: "status", "aria-label": `${live ? "Live" : "Replay"}. ${detail}` }, h("span", { class: "lamp" }), live ? "Live" : "Replay"));
     this.liveBtn.hidden = !live || this.following;
     this.liveBtn.textContent = newer ? `Return to live (${newer} newer)` : "Return to live";
   }
@@ -188,15 +191,18 @@ export class Inspector {
     this.headEl = h("header", { class: "head" });
     // Stop is offered only while this run is the one the cockpit started.
     this.stopEl = stopControl(this.run);
-    this.liveEl = h("span", { class: "mode", "aria-live": "off", title: "The current observation of the run, separate from the recorded boundary. Pausing or losing the link never affects the run." });
+    this.liveEl = h("span", { class: "mode", "aria-live": "off" });
     this.railEl = h("nav", { class: "rail", "aria-label": "Passes" });
     this.accountEl = h("section", { class: "account", "aria-label": "Account at this boundary", "aria-live": "polite" });
     this.stageEl = h("div", { class: "stage" });
+    // A Run has no owner channel; the legend names it only for a record of an
+    // earlier run that holds owner-channel records.
+    this.legendOwner = h("span", { hidden: true }, h("i", { class: "l-owner" }), "Owner channel (earlier run)");
     this.legend = h("div", { class: "legend", "aria-hidden": "true" },
       h("span", {}, h("i", { class: "l-agent" }), "Agent message"),
       h("span", {}, h("i", { class: "l-submission" }), "Submission"),
       h("span", {}, h("i", { class: "l-orchestrator" }), "Orchestrator control"),
-      h("span", {}, h("i", { class: "l-owner" }), "Owner channel"));
+      this.legendOwner);
     this.stageEl.append(this.legend);
     this.diagram = new Diagram(this.stageEl, { onSelect: (ref) => this.select(ref) });
     this.diagram.setMotion(this.motion);
@@ -315,6 +321,7 @@ export class Inspector {
       const actor = this.latestActor(v.boundary.seq);
       if (actor && this.selection !== `manager:${actor}`) this.selection = `manager:${actor}`;
     }
+    this.legendOwner.hidden = !v.ownerChannel;
     this.renderHead();
     this.renderRail();
     this.renderAccount();
@@ -346,18 +353,26 @@ export class Inspector {
 
   renderHead() {
     const v = this.view;
-    const st = v.status;
-    const rep = st.report;
-    const outcome = rep ? rep.outcome : st.outcome;
-    const cls = { success: "st-done", verified: "st-done", failed: "st-fail", incomplete: "st-waiting" }[outcome] || (outcome ? "" : "st-working");
-    const text = rep ? `Run outcome: ${rep.outcome}` : st.outcome ? `Outcome recorded: ${st.outcome}` : v.boundary.final ? "No outcome recorded" : "In progress at this boundary";
+    const out = outcomeFacts(v);
+    const run = v.run;
+    const last = this.entries.at(-1)?.at;
+    const upto = v.boundary.at || last;
+    const span = run.started && upto ? duration(Date.parse(upto) - Date.parse(run.started)) : "";
+    const budget = run.agentTurns ? `Budget: ${run.agentTurns} Agent turns, ${run.passes} Passes${run.executionTime ? `, ${run.executionTime} execution time` : ""}${run.turnTimeout ? `, ${run.turnTimeout} per turn` : ""}.` : "";
+    const binding = [
+      run.strategy && `Strategy ${run.strategy}${run.work?.length ? `: ${run.work.join(" → ")} → verify` : ""}.`,
+      run.build && `Build ${run.build}.`,
+      run.source && `Source ${run.source.slice(0, 12)}.`,
+      budget,
+    ].filter(Boolean).join(" ");
     clear(this.headEl).append(
-      h("span", { class: "runid" }, v.run.id),
-      h("span", { class: "runmeta" }, `${v.managers.length} Manager${v.managers.length === 1 ? "" : "s"}, ${v.run.started ? `started ${when(v.run.started)}` : "not started"}`),
+      h("span", { class: "runid", title: v.run.id }, v.run.id),
+      run.strategy ? h("span", { class: "strategy", title: binding || "The composition this run was bound to" }, run.strategy) : null,
+      h("span", { class: "runmeta" }, run.started ? `started ${when(run.started)}${span ? ` · ${span}` : ""}` : "not started"),
       h("span", { class: "spacer" }),
-      h("span", { class: `outcome ${cls}`, title: "What the record shows at this boundary" }, h("span", { class: "lamp" }), text),
-      this.stopEl,
-      this.liveEl);
+      h("span", { class: `outcome ${out.cls}`, title: out.title }, h("span", { class: "lamp" }), out.text),
+      this.liveEl,
+      this.stopEl);
     this.renderLive();
   }
 
@@ -365,12 +380,18 @@ export class Inspector {
     const v = this.view;
     const items = v.passes.filter((p) => p.started).map((p) => {
       const stateCls = p.sealed ? `sealed-${p.verdict}` : v.status.outcome ? "stopped" : "running";
+      const modelProblem = p.purpose === "assess" && p.sealed && p.verdict === "needs_correction";
       const meta = p.sealed
-        ? `${p.verdict === "satisfied" ? "sealed satisfied" : "needs correction"}${p.review && p.checks?.length ? `, checks ${p.checks.every((c) => c.passed) ? "passed" : "failed"}` : ""}`
+        ? `${modelProblem ? "model problem found" : p.verdict === "satisfied" ? "sealed satisfied" : "needs correction"}${p.review && p.checks?.length ? `, checks ${p.checks.every((c) => c.passed) ? "passed" : "failed"}` : ""}`
         : v.status.outcome ? "ended unsealed" : "running";
-      const extra = p.correction ? `correction ${p.addresses.join(", ")}` : p.review && p.candidate ? `candidate ${p.candidate.slice(0, 8)}` : p.writes ? "owned writes" : "read-only";
-      return h("button", { class: `pass ${stateCls}${this.selection === `pass:${p.id}` ? " selected" : ""}`, onclick: () => this.select(`pass:${p.id}`), "aria-label": `${p.purpose} Pass ${p.id}: ${meta}` },
-        h("span", { class: "pname" }, `${cap(p.purpose)} ${p.id}`), h("span", { class: "pmeta" }, meta), h("span", { class: "pmeta" }, extra));
+      // A correction round works on confirmed findings; a re-Verify decides the
+      // disputes and suspicions of an unchanged candidate.
+      const extra = p.unchanged ? `re-Verify, unchanged candidate` : p.correction ? `correction ${p.addresses.join(", ")}` : p.review && p.candidate ? `candidate ${p.candidate.slice(0, 8)}` : p.writes ? "owned writes" : "read-only";
+      const usage = usageText(p);
+      return h("button", { class: `pass ${stateCls}${this.selection === `pass:${p.id}` ? " selected" : ""}`, onclick: () => this.select(`pass:${p.id}`),
+        title: `${passTitle(p.purpose)} Pass ${p.id}: ${meta}. ${extra}.${usage ? ` ${usage}; ${p.outputTokens || 0} output tokens.` : ""}`, "aria-label": `${passTitle(p.purpose)} Pass ${p.id}: ${meta}` },
+        h("span", { class: "pname" }, `${passTitle(p.purpose)} ${p.id}`), h("span", { class: "pmeta" }, meta), h("span", { class: "pmeta" }, extra),
+        usage ? h("span", { class: "pmeta faint" }, usage) : null);
     });
     const rep = v.status.report;
     if (rep) {
@@ -378,8 +399,8 @@ export class Inspector {
       const ok = rep.outcome === "success";
       items.push(h("button", { class: `pass publish ${ok ? "ok" : "bad"}${this.selection === "run" ? " selected" : ""}`, onclick: () => this.select("run") },
         h("span", { class: "pname" }, "Publish"),
-        h("span", { class: "pmeta" }, pub ? `${pub.outcome}, ${pub.paths.filter((p) => p.state === "after").length}/${pub.paths.length} read back` : "nothing published"),
-        h("span", { class: "pmeta" }, `run ${rep.outcome}`)));
+        h("span", { class: "pmeta" }, publicationText(pub)),
+        h("span", { class: "pmeta" }, `run ${rep.run?.status || rep.outcome}`)));
     }
     if (!items.length) items.push(h("span", { class: "muted" }, "No Pass has started at this boundary."));
     clear(this.railEl).append(...items);
@@ -404,7 +425,7 @@ export class Inspector {
   }
 
   listRow(e) {
-    const li = h("li", { class: `c-${e.class}`, dataset: { seq: e.seq }, tabindex: -1 },
+    const li = h("li", { class: `c-${e.class}${e.tone ? ` t-${e.tone}` : ""}`, dataset: { seq: e.seq }, tabindex: -1 },
       h("span", { class: "t" }, `${clock(e.at)}`),
       h("span", { class: "x" }, e.link ? h("span", { class: `chan ch-${e.link.channel}` }, exchangeKind(e)) : null, e.text));
     li.addEventListener("click", () => {
@@ -683,8 +704,4 @@ function exchangeKind(e) {
   if (e.kind === "question.answered") return e.link.channel === "owner" ? "owner answer" : "answer";
   if (e.kind === "message") return "information";
   return "decision";
-}
-
-function cap(s) {
-  return s ? s[0].toUpperCase() + s.slice(1) : "";
 }
