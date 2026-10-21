@@ -1,0 +1,13 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop
+    as: Shop
+id: show-customer
+kind: Software.UseCase
+title: Show a customer
+body: |-
+  At [[Shop.interface]], `customer --id ID` returns the record of the existing
+  [[customer]] with that id, with its paid invoices and tier under
+  [[loyalty]]. An unknown id is refused. The query never changes stored data.
+spec: {}

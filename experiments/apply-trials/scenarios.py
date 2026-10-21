@@ -113,6 +113,20 @@ SKU_TERMS = (("sku",), ("case-sensitive", "case sensitive", "uppercase", "upper-
 
 SCENARIOS = (
     Scenario(
+        "R1", "W-G", BUILDS,
+        "Can the complete workshop be realized from its model and integrated across customer, parts, jobs, billing and report responsibilities?",
+        "One operator can complete the stated workshop workflow with consistent stock, payment/loyalty, pricing and reporting.",
+        "Local realizations and their parent integration satisfy the same 26 Definitions across six named Packages.",
+        ("oracle w1 and required artifact checks pass", "own tests pass", "a completed realization is published"),
+        ("a material condition or cross-area invariant is missed", "a false model stop or blocker"),
+        ("no completed result within the finite attempt and series budget",),
+        "Use the Python standard library and fixed CLI/test entry points; internal layout and data representation remain free.",
+        "W-N is independently checked; W-M and its isolated w1/w2/w3 faults discriminate pricing, paid-only loyalty and report thresholds.",
+        Budget("180m", "20m", 600, 12), stop=COMMON_STOP, sessions=("D",),
+        limits=("one integrated workflow, not a reliability estimate or an exhaustive clause proof",
+                "no policy for valid JSON with invalid internal records is inferred by the oracle"),
+        lineage="bounded adoption of workshop WIP e514b954; no meter, depth or fan scenarios"),
+    Scenario(
         "ARTIFACTS", "S-A", REPAIR,
         "Does reconciliation follow the model across code, a green wrong test, README and configuration?",
         "Every conflicting representation is corrected toward the same unchanged model.",

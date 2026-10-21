@@ -1354,6 +1354,67 @@ cap4:
 - **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `f1`.
 - **Record:** files changed (expected none); test files changed; passes; turns; time
 
+## W-N: Conforming workshop stays unchanged
+
+- **Question:** Does Apply leave the conforming seven-Manager workshop unchanged?
+- **Project and level:** workshop, level 2
+- **Start:** snapshot `w1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `w1`.
+- **Record:** files changed (expected none); passes; turns; time
+
+## W-G: Realistic integrated model-only Apply
+
+- **Question:** Can Apply build the complete workshop from the model alone: six areas, jobs reserving and consuming parts, billing pricing closed jobs with a loyalty tier counted from its own paid invoices, a report across areas, tests and documentation?
+- **Project and level:** workshop, level 2
+- **Start:** snapshot `w1`, model, dependencies and execution settings only; no realization or registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; no change outside the allowed paths. Oracle profile `w1`.
+- **Not counted as unnecessary:** `realization/**`, `.markitect/registry/**`
+- **Artifact checks:** `readme-commands`, `tests-present`
+- **Record:** checks failed by area; cross-area dependencies and how they were bound; internal questions; passes; turns; time; cost
+- **Notes:** The one realistic integrated case of the handoff. It combines mechanisms on purpose; diagnose a failure through the small cases rather than by one-factor causality.
+
+## W-M: Faults in billing and reports
+
+- **Question:** Does Apply repair a half-up discount, a loyalty count that includes unpaid invoices and a wrong stock threshold, each through its owner?
+- **Project and level:** workshop, level 2
+- **Start:** snapshot `w1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `w1`.
+- **Not counted as unnecessary:** `realization/test_*.py`, `realization/*/test_*.py`, `realization/tests/*`, `.markitect/registry/*`
+- **Record:** each fault repaired by its owner; false findings; turns; time
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| w1 | shop/billing | behavior | the loyal parts discount rounds an exact half up | `loyalty` | yes | informative |
+| w2 | shop/billing | behavior | the loyalty count includes unpaid invoices | `loyalty` | yes | informative |
+| w3 | shop/reports | behavior | the report lists parts below 2 available instead of below 3 | `report` | yes | informative |
+
+Fault edits:
+
+w1:
+
+```diff
+--- realization/billing/billing.py
+-    discount = cents(labor, LABOR_DISCOUNT) + cents(parts_amount, PARTS_DISCOUNT) if tier == "loyal" else 0
++    discount = (cents(labor, LABOR_DISCOUNT) + int(Decimal(parts_amount) * PARTS_DISCOUNT + Decimal("0.5"))
++                if tier == "loyal" else 0)
+```
+
+w2:
+
+```diff
+--- realization/billing/billing.py
+-    return sum(1 for invoice in state["invoices"] if invoice["customer"] == customer_id and invoice["paid"])
++    return sum(1 for invoice in state["invoices"] if invoice["customer"] == customer_id)
+```
+
+w3:
+
+```diff
+--- realization/reports/reports.py
+-LOW_STOCK = 3
++LOW_STOCK = 2
+```
+
 ## Profile shifts
 
 The reference realization fails exactly these checks under a changed or variant profile:

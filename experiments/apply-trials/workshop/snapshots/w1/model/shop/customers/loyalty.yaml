@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop/billing
+    as: Billing
+id: loyalty
+kind: Software.Rule
+title: Loyalty tier
+body: |-
+  The paid invoices of a [[customer]] are the number of their
+  [[Billing.invoice|invoices]] that are paid. A customer with at least 3 paid
+  invoices has the tier loyal; every other customer has the tier standard.
+  [[Billing.pricing]] uses the tier the customer has when an invoice is
+  written; a later payment never changes an existing invoice.
+spec: {}

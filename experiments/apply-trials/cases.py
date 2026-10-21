@@ -860,17 +860,63 @@ VARIANTS = (
             fails=("reserve-agreement",)),
 )
 
+# -- workshop: one bounded realistic project; source WIP independently reviewed --
+
+W1_DISCOUNT = Fault(
+    "w1", "shop/billing", "behavior", "the loyal parts discount rounds an exact half up",
+    (Edit(RZ + "billing/billing.py",
+          "    discount = cents(labor, LABOR_DISCOUNT) + cents(parts_amount, PARTS_DISCOUNT) if tier == \"loyal\" else 0\n",
+          "    discount = (cents(labor, LABOR_DISCOUNT) + int(Decimal(parts_amount) * PARTS_DISCOUNT + Decimal(\"0.5\"))\n"
+          "                if tier == \"loyal\" else 0)\n"),),
+    detected_by=("loyalty",), test_signal=True)
+
+W2_TIER = Fault(
+    "w2", "shop/billing", "behavior", "the loyalty count includes unpaid invoices",
+    (Edit(RZ + "billing/billing.py",
+          '    return sum(1 for invoice in state["invoices"] if invoice["customer"] == customer_id and invoice["paid"])\n',
+          '    return sum(1 for invoice in state["invoices"] if invoice["customer"] == customer_id)\n'),),
+    detected_by=("loyalty",), test_signal=True)
+
+W3_LOW_STOCK = Fault(
+    "w3", "shop/reports", "behavior", "the report lists parts below 2 available instead of below 3",
+    (Edit(RZ + "reports/reports.py", "LOW_STOCK = 3\n", "LOW_STOCK = 2\n"),),
+    detected_by=("report",), test_signal=True)
+
+WORKSHOP = (
+    Case("W-N", "workshop", 2, "Conforming workshop stays unchanged",
+         "Does Apply leave the conforming seven-Manager workshop unchanged?",
+         snapshot="w1", start="reference", expected=UNCHANGED, profile="w1",
+         measure=("files changed (expected none)", "passes", "turns", "time")),
+    Case("W-G", "workshop", 2, "Realistic integrated model-only Apply",
+         "Can Apply build the complete workshop from the model alone: six areas, jobs reserving and consuming parts, "
+         "billing pricing closed jobs with a loyalty tier counted from its own paid invoices, a report across areas, "
+         "tests and documentation?",
+         snapshot="w1", start="model-only", expected=APPLIED, profile="w1",
+         allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
+         measure=("checks failed by area", "cross-area dependencies and how they were bound", "internal questions",
+                  "passes", "turns", "time", "cost"),
+         notes="The one realistic integrated case of the handoff. It combines mechanisms on purpose; diagnose a "
+               "failure through the small cases rather than by one-factor causality."),
+    Case("W-M", "workshop", 2, "Faults in billing and reports",
+         "Does Apply repair a half-up discount, a loyalty count that includes unpaid invoices and a wrong stock "
+         "threshold, each through its owner?",
+         snapshot="w1", start="reference", expected=APPLIED, profile="w1", faults=(W1_DISCOUNT, W2_TIER, W3_LOW_STOCK),
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         measure=("each fault repaired by its owner", "false findings", "turns", "time")),
+)
+
 # Base profile and ownership layout of each project: domain Packages own realization/<package>/, the
 # directory exception gives the rest of realization/ to `exception`, and Root owns everything else.
 PROJECTS = {
     "stockroom": {"profile": "s1", "packages": ("stockroom",), "exception": "stockroom"},
     "depot": {"profile": "d1", "packages": ("depot", "catalog", "stock", "orders", "reports"), "exception": "depot"},
     "hall": {"profile": "h1", "packages": ("hall", "hall/rooms", "hall/bookings"), "exception": "hall"},
+    "workshop": {"profile": "w1", "packages": ("shop", "shop/customers", "shop/parts", "shop/jobs", "shop/billing", "shop/reports"), "exception": "shop"},
 }
 for _project in sorted({case.project for case in FLEET}):
     PROJECTS[_project] = {"profile": "f1", "packages": fleet.packages(_project), "exception": "hub"}
 
-CASES = {case.id: case for case in STOCKROOM + DEPOT + HALL + FLEET}
+CASES = {case.id: case for case in STOCKROOM + DEPOT + HALL + FLEET + WORKSHOP}
 
 def expectation(case):
     if case.expected == APPLIED:

@@ -1,0 +1,14 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/customers/__init__.py
+    form: code
+    realizes: [shop/customers/customer]
+    why: Makes the customers part an importable package.
+  - path: realization/customers/customers.py
+    form: code
+    realizes: [shop/customers/customer, shop/customers/loyalty, shop/customers/add-customer, shop/customers/show-customer]
+    why: Registers and shows customers with the loyalty tier from their paid invoices.
+  - path: realization/customers/test_customers.py
+    form: test
+    realizes: [shop/customers/customer, shop/customers/loyalty, shop/customers/add-customer, shop/customers/show-customer]
+    why: Tests customer ids, records and the loyal tier after three paid invoices.

@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop
+    as: Shop
+id: list-parts
+kind: Software.UseCase
+title: List the parts
+body: |-
+  At [[Shop.interface]], `parts` returns an object whose only field, parts,
+  holds every [[part]] record, sorted by SKU in ascending code-point order. A
+  missing data file is empty data under [[Shop.storage]]. The query never
+  changes stored data.
+spec: {}

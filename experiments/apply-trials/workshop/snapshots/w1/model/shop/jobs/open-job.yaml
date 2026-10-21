@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop
+    as: Shop
+id: open-job
+kind: Software.UseCase
+title: Open a repair job
+body: |-
+  At [[Shop.interface]], `open-job --customer ID --bike TEXT` creates one open
+  [[job]] for the existing customer with that id and the bicycle text of
+  [[Shop.inputs]], commits it through [[Shop.storage]] and returns the job
+  record. An unknown customer or an invalid text is refused with stored data
+  unchanged.
+spec: {}

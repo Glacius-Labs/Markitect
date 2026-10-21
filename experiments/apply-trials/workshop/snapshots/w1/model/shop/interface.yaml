@@ -1,0 +1,51 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop/customers
+    as: Customers
+  - package: shop/parts
+    as: Parts
+  - package: shop/jobs
+    as: Jobs
+  - package: shop/billing
+    as: Billing
+  - package: shop/reports
+    as: Reports
+id: interface
+kind: Software.Rule
+title: Command line
+body: |-
+  From realization/, invoke [[system]] as:
+  `python -B app.py --db PATH COMMAND ...`
+  Use the Python 3.13 standard library; no network, service or external package.
+  Every successful command writes exactly one JSON object to stdout and exits 0.
+  Invalid input, an unknown or missing command or option, malformed or
+  unreadable data and every refusal write exactly one JSON object to stdout
+  whose only field is error, holding an understandable nonempty string; they
+  exit 2 and leave stored data unchanged. Expected failures never end in an
+  unhandled crash. Exact error wording is free. An option value is the token
+  after the option, even when it starts with a hyphen.
+
+  Commands, each returning the record or object its use case names:
+  - `add-customer --name NAME` follows [[Customers.add-customer]].
+  - `customer --id ID` follows [[Customers.show-customer]].
+  - `add-part --sku SKU --name NAME --price CENTS` follows [[Parts.add-part]].
+  - `receive --sku SKU --qty N` follows [[Parts.receive]].
+  - `parts` follows [[Parts.list-parts]].
+  - `open-job --customer ID --bike TEXT` follows [[Jobs.open-job]].
+  - `add-labor --job ID --minutes N` follows [[Jobs.add-labor]].
+  - `use-part --job ID --sku SKU --qty N` follows [[Jobs.use-part]].
+  - `close-job --job ID` follows [[Jobs.close-job]].
+  - `jobs [--status open|closed]` follows [[Jobs.list-jobs]].
+  - `invoice --job ID` follows [[Billing.write-invoice]].
+  - `pay --invoice NUMBER` follows [[Billing.pay]].
+  - `invoices [--customer ID]` follows [[Billing.list-invoices]].
+  - `report` follows [[Reports.report]].
+
+  [[inputs]] governs values and [[storage]] governs the data file. A list
+  object has exactly the one field its use case names. Automated tests are
+  test_*.py modules in importable packages below realization/; from
+  realization/, `python -B -m unittest discover -s . -p "test_*.py"` runs all
+  of them, as [[realization]] requires. These fixed entry points do not
+  prescribe any other module organization.
+spec: {}

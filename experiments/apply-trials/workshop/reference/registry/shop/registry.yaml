@@ -1,0 +1,34 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/README.md
+    form: doc
+    realizes: [shop/realization, shop/interface, shop/inputs, shop/storage]
+    why: Documents the commands, inputs, stock, loyalty, pricing, output, data file and the single-writer limitation.
+  - path: realization/app.py
+    form: code
+    realizes: [shop/system, shop/interface]
+    why: Parses the command line, runs one command of a part and writes the JSON result or error object.
+  - path: realization/shop/__init__.py
+    form: code
+    realizes: [shop/system]
+    why: Makes the shared foundations an importable package.
+  - path: realization/shop/errors.py
+    form: code
+    realizes: [shop/interface]
+    why: Defines the refusal that every part raises.
+  - path: realization/shop/inputs.py
+    form: code
+    realizes: [shop/inputs]
+    why: Validates texts, SKUs, numbers, prices, quantities and labor durations.
+  - path: realization/shop/store.py
+    form: code
+    realizes: [shop/storage]
+    why: Reads the one data file, has each part validate its section and replaces the file atomically.
+  - path: realization/tests/__init__.py
+    form: test
+    realizes: [shop/interface]
+    why: Makes the end-to-end tests an importable package.
+  - path: realization/tests/test_cli.py
+    form: test
+    realizes: [shop/interface, shop/storage]
+    why: Exercises a job from opening to payment and the usage errors end to end.

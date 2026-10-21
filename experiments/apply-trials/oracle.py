@@ -44,7 +44,7 @@ def assess(project, profile, realization, python=None, previous=None):
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
-    parser.add_argument("--project", required=True, help="stockroom, depot or a generated fleet-w<W>-d<D>")
+    parser.add_argument("--project", required=True, help="stockroom, depot, hall, workshop or a generated fleet-w<W>-d<D>")
     parser.add_argument("--profile", required=True)
     parser.add_argument("--realization", required=True)
     parser.add_argument("--previous", help="realization of the previous model version, for upgrade checks")

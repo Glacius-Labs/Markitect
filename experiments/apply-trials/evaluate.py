@@ -496,7 +496,8 @@ def evaluate(scenario_id, arm, repo, report=None, events=None, final=None, pytho
         result["modelStop"] = model_stop(summary) if summary else None
         result["process"] = process(scenario, summary, records, damaged)
     else:
-        result["final"] = {key: (final_data or {}).get(key) for key in ("status", "rounds", "elapsedSeconds", "usage")}
+        result["final"] = {key: (final_data or {}).get(key) for key in ("status", "rounds", "elapsedSeconds", "usage",
+                           "mode", "providerEvidence", "attempt", "turns", "turnUnit", "sessionId")}
         result["blockers"] = blockers(final_data)
     return result
 

@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+id: inputs
+kind: Software.Rule
+title: Inputs
+body: |-
+  These input rules apply to every command of [[system]]. A text value (a
+  customer's name, a part's name or a bicycle's description) is trimmed of
+  surrounding whitespace and must then be nonempty and at most 60
+  characters, counted as Unicode code points. A SKU is trimmed and converted
+  to uppercase; the result must be exactly three letters A-Z, a hyphen and
+  three digits 0-9, for example BRK-101, and records show the normalized SKU.
+  A number is written as one or more ASCII decimal digits, with no sign,
+  whitespace, fraction or exponent; leading zeros do not change its value. A
+  price is such a number of cents from 1 to 1000000, a quantity such a number
+  from 1 to 500, and a labor duration such a number of minutes from 15 to 480
+  that is a multiple of 15. Customer ids, job ids and invoice numbers are
+  compared exactly as the records show them. Invalid input fails through
+  [[interface]] and leaves stored data unchanged under [[storage]].
+spec: {}

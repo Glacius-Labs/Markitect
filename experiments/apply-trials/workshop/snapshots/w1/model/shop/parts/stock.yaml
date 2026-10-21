@@ -1,0 +1,18 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop/jobs
+    as: Jobs
+id: stock
+kind: Software.Rule
+title: Stock
+body: |-
+  Every [[part]] has an on-hand quantity, the units in the workshop, and a
+  reserved quantity, the units that open [[Jobs.job|jobs]] have taken with
+  [[Jobs.use-part]] and not yet consumed. Both start at 0. The available
+  quantity is on hand minus reserved. On hand never exceeds 9999, and reserved
+  never exceeds on hand, so available is never negative. Only [[receive]]
+  raises on hand. A reservation lowers available and leaves on hand; when
+  [[Jobs.close-job]] closes the job, its reserved units leave both on hand
+  and reserved.
+spec: {}
