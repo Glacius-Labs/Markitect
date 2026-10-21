@@ -58,6 +58,6 @@ func (r agentsRouter) Release(ctx context.Context, names []string) []runport.Env
 // of a type that cannot be compared count as different, and a second Release
 // of an adapter finds nothing left to end.
 func sameAdapter(a, b runport.Agents) bool {
-	ta := reflect.TypeOf(a)
-	return ta == reflect.TypeOf(b) && ta != nil && ta.Comparable() && a == b
+	va, vb := reflect.ValueOf(a), reflect.ValueOf(b)
+	return va.IsValid() && va.Type() == vb.Type() && va.Comparable() && vb.Comparable() && va.Equal(vb)
 }

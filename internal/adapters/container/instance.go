@@ -117,7 +117,7 @@ func (i *Instance) Remove(ctx context.Context) error {
 	defer cancel()
 	// An instance that ended by itself (its idle bound, an engine restart) is
 	// gone already; the inspection below confirms that.
-	if _, err := i.e.output(ctx, "rm", "--force", i.id); err != nil && !strings.Contains(strings.ToLower(err.Error()), "no such") {
+	if _, err := i.e.output(ctx, "rm", "--force", i.id); err != nil && !strings.Contains(strings.ToLower(err.Error()), "no such container") {
 		return err
 	}
 	// Only the engine's "no such" answer confirms the removal; any other

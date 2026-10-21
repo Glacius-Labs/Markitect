@@ -131,7 +131,7 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 	}
 	res.Instance = l.obs
 	peer, err := l.inst.Exec(ctx)
-	if err != nil && l.obs.Reused {
+	if err != nil && l.obs.Reused && ctx.Err() == nil {
 		// A kept instance can end without the adapter; once its end is
 		// confirmed, one new instance serves the turn.
 		if a.discard(context.WithoutCancel(ctx), l, "its kept instance had ended: "+redact.text(err.Error())) == nil {
