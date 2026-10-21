@@ -73,7 +73,7 @@ export class Inspector {
     this.renderLists();
     const at = route.at === null || route.at === undefined ? this.entries.length : Number(route.at);
     this.playback.seek(Number.isFinite(at) ? at : this.entries.length);
-    this.following = this.boundary >= this.entries.length;
+    this.following = !this.selection && (route.at === null || route.at === undefined) && this.boundary >= this.entries.length;
     this.live = new LiveLink(this.run, this.entries.length, this.entries.at(-1)?.mark, {
       onEntries: (p) => this.queueEntries(p),
       onHealth: (health, previous) => this.onHealth(health, previous),
@@ -524,6 +524,7 @@ export class Inspector {
 
   select(ref, opts = {}) {
     // A manual selection pins the presentation: replay pauses, the run does not.
+    if (!opts.keepPlaying) this.following = false;
     if (this.playback.playing && !opts.keepPlaying) {
       this.playback.pause("select");
       announce("Replay paused for the selection. The run is not affected.");
@@ -537,6 +538,7 @@ export class Inspector {
       this.lastDetail = performance.now();
       this.renderAside();
     }
+    this.renderLive();
   }
 
   setTab(id) {
