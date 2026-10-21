@@ -1,0 +1,10 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: Policy
+kind: Core.Kind
+body: >-
+  A policy of the shop that binds every part named in its applies field.
+spec:
+  properties:
+    - applies

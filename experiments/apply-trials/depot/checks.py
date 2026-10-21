@@ -103,6 +103,13 @@ def _(env, p):
     expect_equal(add(env, "CAP-001", "-Cap")["name"], "-Cap", "a name that starts with a hyphen")
 
 
+@check("name-hyphens", D1, ["depot/inputs", "catalog/add-item", "depot/interface"],
+       "Names that start with or consist of hyphens are names, not options")
+def _(env, p):
+    for index, name in enumerate(("-Bolt", "--Bolt", "-9", "-", "--reorder")):
+        expect_equal(add(env, "HYP-%03d" % index, name)["name"], name, "the name %r" % name)
+
+
 @check("receive-record", D1, ["stock/receive", "stock/on-hand", "catalog/sku", "depot/inputs"],
        "receive adds to the item found by its normalized SKU and returns the stock record")
 def _(env, p):

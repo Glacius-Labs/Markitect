@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+  - package: hall/rooms
+    as: Rooms
+  - package: hall/bookings
+    as: Bookings
+id: system
+kind: Software.Concept
+body: |-
+  A small local room booking CLI for one operator. The rooms part registers
+  [[Rooms.room|rooms]] with [[Rooms.add-room]] and lists them with
+  [[Rooms.list-rooms]]. The bookings part books seats of a room with
+  [[Bookings.book]], lists bookings with [[Bookings.list-bookings]] and holds
+  back the [[Bookings.reserve]] of every room. [[inputs]], [[storage]] and
+  [[interface]] govern every command, and [[realization]] requires code,
+  meaningful tests and usage documentation. Use the Python 3.13 standard
+  library, with no service, network or package installation. There are no
+  dates, times, prices, users, cancellation, editing or deletion of rooms and
+  bookings.
+spec: {}

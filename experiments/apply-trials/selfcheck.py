@@ -14,10 +14,16 @@ Shows, without any Agent or provider:
 6. every case materializes and passes the packet audit, and with --markitect
    the packet passes `markitect check` and `context` at HEAD;
 7. the assessor judges simulated results: unrepaired, partly and fully
-   repaired starts, an unchanged stand and a model-defect report.
+   repaired starts, an unchanged stand and a model-defect report;
+8. each oracle variant fails exactly its declared checks: accepted
+   alternatives fail nothing and wrong versions are rejected;
+9. the depot hyphen fault reproduces the faulty bytes that the hardening
+   series froze, and a model change on the reference is judged as met only
+   when its documentation follows.
 Exits 0 only without problems.
 """
 import argparse
+import hashlib
 import json
 import shutil
 import subprocess
@@ -31,7 +37,8 @@ sys.path.insert(0, str(HERE.parent / "test-projects"))
 
 import assess  # noqa: E402
 import oracle  # noqa: E402
-from cases import CASES, DEFECT, GAP, PROJECTS, REFUSED, SHIFTS, Edit, markdown  # noqa: E402
+from cases import (APPLIED, CASES, DEFECT, GAP, N1_HYPHEN, N1_HYPHEN_SHA256, PROJECTS, REFUSED, SHIFTS,  # noqa: E402
+                   VARIANTS, Edit, markdown)
 from materialize import apply_edits, materialize, project_root  # noqa: E402
 from oracle_kit import DEGENERATE  # noqa: E402
 from trial_kit import python_command  # noqa: E402
@@ -294,6 +301,70 @@ def check_assessor(project, python, report):
                               "%s: an unchanged conforming stand is not judged as met: %s" % (case.id, judged["outcome"]))
 
 
+def variant_static(variant):
+    """The artifact checks of the cases that share the variant's project and profile."""
+    return sorted({name for case in CASES.values() if case.project == variant.project and case.profile == variant.profile
+                   for name in case.static})
+
+
+def check_variants(project, python, report):
+    found = {}
+    for variant in VARIANTS:
+        if variant.project != project:
+            continue
+        with tempfile.TemporaryDirectory(prefix="trial-variant-") as folder:
+            realization = build(project, folder)
+            apply_edits(folder, variant.edits, "variant " + variant.id)
+            bad, _ = failing(project, variant.profile, realization, python)
+            report.expect(bad == set(variant.fails), "variant %s fails %s, declared %s"
+                          % (variant.id, sorted(bad), sorted(variant.fails)))
+            case = next(case for case in CASES.values() if case.project == project)
+            static = {name for name, problem in assess.run_static(variant_static(variant), realization, case).items()
+                      if problem}
+            report.expect(static == set(variant.static), "variant %s fails artifact checks %s, declared %s"
+                          % (variant.id, sorted(static), sorted(variant.static)))
+            found[variant.id] = sorted(bad | static) or "accepted"
+    if found:
+        report.facts["variants"] = found
+
+
+def check_continuity(project, report):
+    """The depot hyphen fault is byte for byte the start that the hardening series froze for V1 and A1."""
+    if project != "depot":
+        return
+    with tempfile.TemporaryDirectory(prefix="trial-continuity-") as folder:
+        build(project, folder, faults=[N1_HYPHEN])
+        digests = {path: hashlib.sha256((Path(folder) / path).read_bytes()).hexdigest() for path in N1_HYPHEN_SHA256}
+        report.expect(digests == N1_HYPHEN_SHA256, "the n1 fault does not reproduce the frozen bytes: %s" % digests)
+        report.facts["continuity n1"] = "matches the hardening series' V1/A1 bytes" if digests == N1_HYPHEN_SHA256 else digests
+
+
+def check_model_change(project, python, report):
+    """A model change on the reference (start `previous` with a snapshot): complete and code-only publications."""
+    for case in CASES.values():
+        if case.project != project or case.start != "previous" or not case.snapshot or case.expected != APPLIED:
+            continue
+        variants = [variant for variant in VARIANTS if variant.project == project and variant.profile == case.profile]
+        if not variants:
+            continue
+        with tempfile.TemporaryDirectory(prefix="trial-change-") as folder:
+            folder = Path(folder)
+            judged = {}
+            for variant in variants:
+                repo = folder / variant.id
+                materialize(case.id, repo)
+                apply_edits(repo, variant.edits, "variant " + variant.id)
+                result = assess.assess(case.id, repo, fake_report(folder / "applied.json", "verified", "applied"), python)
+                good = not variant.fails and not variant.static
+                met = (result["outcome"]["met"] and result["behavior"]["passed"]
+                       and not any(result["static"].values()) and not result["changes"]["outsideFaultsAndAllowed"])
+                report.expect(met is good, "%s with variant %s is judged %s, expected %s: %s %s %s"
+                              % (case.id, variant.id, met, good, result["behavior"]["failed"], result["static"],
+                                 result["changes"]["outsideFaultsAndAllowed"]))
+                judged[variant.id] = "met" if met else "not met"
+            report.facts["change " + case.id] = judged
+
+
 # Model-only start, optional model change with the overlay that realizes it, follow-up case.
 LONGITUDINAL = {"stockroom": ("S-G", "S-C", "S-F", "validation/s2", ["limits.json"]),
                 "depot": ("D-G", None, "D-F", None, [])}
@@ -364,6 +435,9 @@ def main(argv=None):
         check_packets(project, args.markitect, report)
         check_assessor(project, python, report)
         check_longitudinal(project, python, report)
+        check_variants(project, python, report)
+        check_continuity(project, report)
+        check_model_change(project, python, report)
     print(json.dumps({"facts": facts, "problems": report.problems, "passed": not report.problems},
                      indent=2))
     return 0 if not report.problems else 1

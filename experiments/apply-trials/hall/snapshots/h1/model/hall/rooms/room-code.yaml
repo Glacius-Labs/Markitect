@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+  - package: hall
+    as: Hall
+id: room-code
+kind: Software.Rule
+body: |-
+  Wherever a command of [[Hall.system]] takes a room code, the code is trimmed
+  of surrounding whitespace and converted to uppercase; the result must be
+  exactly one letter A-Z followed by three digits 0-9, for example A101. Two
+  codes with the same normalized value denote the same [[room]], and every
+  record shows the normalized code. A code that is malformed, or that names no
+  room where an existing room is required, fails through [[Hall.interface]]
+  with stored data unchanged.
+spec: {}

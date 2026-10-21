@@ -1,0 +1,29 @@
+apiVersion: markitect.execution/v1
+strategy: recursive-passes-v1
+budget:
+  executionTime: 60m
+  turnTimeout: 8m
+  agentTurns: 160
+  passes: 12
+profiles:
+  execute: project-agent
+  verify: project-agent
+packages: {}
+ownership:
+  - path: ./
+    owner: .
+    reason: Root coordinates and owns the files outside the delivery directory.
+  - path: realization/
+    owner: hall
+    reason: The fixed delivery boundary puts app.py, README.md and the end-to-end tests directly in realization/; the hall Package realizes them and the shared foundations in realization/hall/.
+  - path: realization/rooms/
+    owner: hall/rooms
+  - path: realization/bookings/
+    owner: hall/bookings
+checks:
+  - id: project-tests
+    profile: python-tests
+    directory: realization
+    args: [-B, -m, unittest, discover, -s, ., -p, "test_*.py"]
+    requiredBy: hall/interface
+    timeout: 3m

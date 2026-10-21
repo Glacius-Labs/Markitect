@@ -60,6 +60,7 @@ class Case:
     static: tuple = ()  # assess.py artifact checks of the result
     measure: tuple = ()  # what the evaluator records beyond the automatic checks
     notes: str = ""
+    prior_edits: tuple = ()  # model edits of an earlier committed model version that the case's model corrects
 
 
 # -- stockroom: model variants -------------------------------------------------------------
@@ -97,6 +98,25 @@ VALUE_GAP_EDITS = (
          "  and at most the maximum name length, counted as Unicode code points. A quantity is\n"),
 )
 
+# The owner's policy change of case S-N40: the maximum name length 60 becomes 40.
+NAME_40_EDITS = (
+    Edit(SR + "inputs.yaml",
+         "  and at most 60 characters, counted as Unicode code points. A quantity is\n",
+         "  and at most 40 characters, counted as Unicode code points. A quantity is\n"),
+)
+
+# Minimal pair of S-QV: the same missing value, now explicitly left to the realization within bounds.
+FREE_EDITS = (
+    Edit(SR + "inputs.yaml",
+         "  SKU. A name is trimmed of surrounding whitespace and must then be nonempty\n"
+         "  and at most 60 characters, counted as Unicode code points. A quantity is\n",
+         "  SKU. A name is trimmed of surrounding whitespace and must then be nonempty\n"
+         "  and at most the maximum name length, counted as Unicode code points. The\n"
+         "  maximum name length is the realization's choice: one whole number from 40\n"
+         "  to 120, the same for every command, which the README of [[realization]]\n"
+         "  states. A quantity is\n"),
+)
+
 CONTRADICTION_EDITS = (
     Edit(SR + "item.yaml",
          "  creates it with on-hand 0. The SKU identifies the item: at most one item\n"
@@ -106,6 +126,18 @@ CONTRADICTION_EDITS = (
          "  identify two different items, and a record shows its SKU exactly as entered\n"
          "  apart from surrounding whitespace. The name is a descriptive label and need\n"
          "  not be unique."),
+)
+
+# Counter-control of S-X: the item text speaks about the case of SKUs, consistently with the normalization of inputs.
+SKU_CASE_CONSISTENT_EDITS = (
+    Edit(SR + "item.yaml",
+         "  creates it with on-hand 0. The SKU identifies the item: at most one item\n"
+         "  exists per SKU after the normalization of [[inputs]]. The name is a\n"
+         "  descriptive label and need not be unique.",
+         "  creates it with on-hand 0. An operator may type a SKU in any case, such as\n"
+         "  abc-123 or ABC-123: both name the same item, because the SKU identifies\n"
+         "  the item only after the normalization of [[inputs]], and a record shows\n"
+         "  the normalized SKU. The name is a descriptive label and need not be unique."),
 )
 
 OVERSPEC_EDITS = (
@@ -280,6 +312,49 @@ STOCKROOM = (
          measure=("all s2 checks including upgrade", "unchanged behavior retained", "files changed", "passes"),
          notes="Primary form: --from-repo with the committed result of S-G. Without it the reference stands "
                "in for the previous result (controlled form)."),
+    Case("S-N40", "stockroom", 1, "Owner policy change on a fixed conforming stand",
+         "Does Apply realize the owner's change of the maximum name length from 60 to 40 on the conforming "
+         "reference, changing exactly the behavior, tests and documentation that the change requires?",
+         snapshot="s1", start="previous", expected=APPLIED, profile="n40", model_edits=NAME_40_EDITS,
+         allowed=("realization/limits.json", "realization/README.md", "realization/tests/*",
+                  ".markitect/registry/stockroom/registry.yaml"),
+         static=("readme-name-40",),
+         measure=("name maximum 40 enforced and documented", "changes outside the limit value, README and tests",
+                  "own tests updated for the new boundary", "passes", "turns", "time"),
+         notes="Fixed-start form of the hardening series' A5, which applied the change to A4's own publication. "
+               "Without --from-repo the reference is the accepted stand and the change is a separate owner commit; "
+               "every comparison arm starts from the same bytes. The reference's own tests assert a 60-character "
+               "name, so a code-only change leaves them failing."),
+    Case("S-QVF", "stockroom", 1, "The S-QV gap corrected by the owner, model-only start",
+         "Does a new Apply realize the model after the owner's correction supplied the missing maximum name length "
+         "(60) in a new model version?",
+         snapshot="s1", start="model-only", expected=APPLIED, profile="s1", prior_edits=VALUE_GAP_EDITS,
+         allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
+         measure=("a model stop or question (expected none)", "name maximum 60 enforced", "passes", "turns", "time"),
+         notes="The packet's first commit holds the S-QV model with the gap, the second the owner's correction; the "
+               "corrected model equals s1. A new Run on it is the corrected counterpart of a material-gap stop, not a "
+               "revival of the failed Run and not an answer given during it."),
+    Case("S-XN", "stockroom", 1, "Case of SKUs mentioned, consistently with the normalization",
+         "Does Apply accept an item text that speaks about the case of SKUs but agrees with the normalization of "
+         "inputs, and leave the conforming reference unchanged?",
+         snapshot="s1", start="reference", expected=UNCHANGED, profile="s1", model_edits=SKU_CASE_CONSISTENT_EDITS,
+         measure=("a model stop (expected none: a false alarm)", "files changed (expected none)", "passes", "turns"),
+         notes="Counter-control of S-X: the same Definition and topic, without the contradiction."),
+    Case("S-XNG", "stockroom", 1, "Case of SKUs mentioned consistently, model-only start",
+         "Does Apply build the stockroom from the S-XN model without a false contradiction stop?",
+         snapshot="s1", start="model-only", expected=APPLIED, profile="s1", model_edits=SKU_CASE_CONSISTENT_EDITS,
+         allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
+         measure=("a model stop (expected none: a false alarm)", "passes", "turns", "time"),
+         notes="Model-only form of S-XN, the model of the assessment control MA-NEAR."),
+    Case("S-FREE", "stockroom", 1, "Explicitly delegated choice, model-only start",
+         "Does Apply decide a value the model explicitly leaves to the realization within bounds (the maximum name "
+         "length, 40 to 120, stated in the README) without asking the owner?",
+         snapshot="s1", start="model-only", expected=APPLIED, profile="free", model_edits=FREE_EDITS,
+         allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
+         measure=("owner question about the name length (expected none: a false alarm)", "value chosen and documented",
+                  "passes", "turns", "time"),
+         notes="Minimal pair of S-QV: the same sentence with an explicit delegation added. Together they separate a "
+               "missed public gap from an unnecessary escalation of granted freedom."),
     Case("S-F", "stockroom", 1, "Follow-up Apply on a conforming result",
          "Does a second Apply on the committed result of a Verified Apply change nothing?",
          snapshot="", start="previous", expected=UNCHANGED,
@@ -365,7 +440,48 @@ M6_TRIM = Fault(
     (Edit(RZ + "catalog/items.py", "    sku = text.strip().upper()\n", "    sku = text.upper()\n"),),
     detected_by=("add-item-record", "receive-record", "place-order-record"), test_signal=True)
 
+N1_HYPHEN = Fault(
+    "n1", "depot", "behavior",
+    "the command line takes a name that starts with a hyphen for an option, so `--name -Bolt` exits 2 although the "
+    "model allows the name; the reference before ec4f5ece, whose tests do not cover it",
+    (Edit(RZ + "app.py",
+          "def attach_names(argv):\n"
+          '    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""\n'
+          "    attached, tokens = [], iter(argv)\n"
+          "    for token in tokens:\n"
+          '        value = next(tokens, None) if token == "--name" else None\n'
+          '        attached.append(token if value is None else "--name=" + value)\n'
+          "    return attached\n"
+          "\n"
+          "\n"
+          "def main(",
+          "def main("),
+     Edit(RZ + "app.py",
+          "        result = run(build_parser().parse_args(attach_names(sys.argv[1:] if argv is None else argv)))\n",
+          "        result = run(build_parser().parse_args(argv))\n"),
+     Edit(RZ + "tests/test_cli.py",
+          '        self.assertEqual(self.ok("add-item", "--sku", "HYP-001", "--name", "-Bolt")["name"], "-Bolt")\n',
+          "")),
+    detected_by=("item-inputs", "name-hyphens"))
+
+# The faulty files of N1_HYPHEN are byte for byte the depot reference before ec4f5ece, which the hardening
+# series of 20 October froze for V1 and A1 (docs/validation/apply-hardening-20261020.md).
+N1_HYPHEN_SHA256 = {
+    "realization/app.py": "faa7ad9f050c0d60c0fa71e7bb4979c6efe64955d128c530f1b5a1ff3ff25e2b",
+    "realization/tests/test_cli.py": "a706ee875667b5b8e0477c51e5283f43794fce97215981770a8418149a14e890",
+}
+
 DEPOT = (
+    Case("D-H", "depot", 2, "A public name refused by the command line",
+         "Does Apply repair the hyphen-leading name defect that no project test covers, through the owner of the "
+         "command line, and change nothing else?",
+         snapshot="d1", start="reference", expected=APPLIED, profile="d1", faults=(N1_HYPHEN,),
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         measure=("n1 repaired by depot", "a test of a hyphen-leading name added (informative)",
+                  "changes outside app.py and tests", "passes and the pass in which the finding closed",
+                  "false findings", "turns", "time"),
+         notes="The start of the hardening series' V1 (Verify only) and A1 (full Apply). The defect hides behind a "
+               "green project suite, so only a review that derives inputs from depot/inputs finds it."),
     Case("D-N", "depot", 2, "Conforming multi-Package reference stays unchanged",
          "Does Apply leave a conforming stand with five Managers and cross-area rules unchanged?",
          snapshot="d1", start="reference", expected=UNCHANGED, profile="d1",
@@ -404,6 +520,55 @@ DEPOT = (
          snapshot="", start="previous", expected=UNCHANGED,
          measure=("files changed (expected none)", "passes", "blocking findings"),
          notes="Requires --from-repo with the result of D-M or D-G."),
+)
+
+# -- hall: a sibling dependency and a choice owned by the other sibling -------------------------
+
+R1_RESERVE = Fault(
+    "r1", "hall/rooms", "behavior",
+    "the rooms part reports its own reserve of 1 instead of the reserve the bookings part chose (2), so a room "
+    "shows one bookable seat more than book admits",
+    (Edit(RZ + "rooms/rooms.py",
+          '    return {"code": code, "seats": seats, "bookable": bookable(seats)}\n',
+          '    return {"code": code, "seats": seats, "bookable": seats - 1}\n'),),
+    detected_by=("readme-reserve", "refusal-keeps-data", "reserve-agreement", "rooms-independent"), test_signal=True)
+
+R2_CODE = Fault(
+    "r2", "hall/bookings", "duplication",
+    "book looks rooms up with its own copy of the room code rule that trims but does not uppercase, instead of "
+    "the rooms part's rule, so a lowercase code names no room",
+    (Edit(RZ + "bookings/bookings.py",
+          "    code, seats = rooms.existing(state, code_text), inputs.booking_seats(seats_text)\n",
+          "    code, seats = code_text.strip(), inputs.booking_seats(seats_text)\n"
+          '    if code not in state["rooms"]:\n'
+          '        raise Refusal("there is no room %s" % code)\n'),),
+    detected_by=("book-record", "edge-robustness"), test_signal=True)
+
+HALL = (
+    Case("H-N", "hall", 2, "Conforming sibling-dependency stand stays unchanged",
+         "Does Apply leave the conforming hall stand, whose rooms part shows the reserve the bookings part chose, "
+         "unchanged?",
+         snapshot="h1", start="reference", expected=UNCHANGED, profile="h1",
+         measure=("files changed (expected none)", "passes", "blocking findings (expected none)", "turns", "time")),
+    Case("H-G", "hall", 2, "Model-only Apply with a sibling dependency and a sibling-owned choice",
+         "Does a three-Manager tree build hall from the model alone, with the bookings part building on the rooms "
+         "part's accepted room rules and the rooms part obtaining the reserve that the bookings part chose through "
+         "the tree, without asking the owner?",
+         snapshot="h1", start="model-only", expected=APPLIED, profile="h1",
+         allowed=("realization/**", ".markitect/registry/**"), static=("readme-commands", "tests-present"),
+         measure=("reserve agreement between rooms and bookings", "how the reserve reached rooms (question through "
+                  "hall, wait for an accepted basis, or a decision by rooms itself)", "release of bookings after "
+                  "the accepted rooms basis or result it needs", "owner questions (expected none: the reserve is "
+                  "delegated)", "empty or repeated-progress turns", "passes", "turns", "time"),
+         notes="The dependency probe of the 21 October handoff (DEP). The process criteria are evaluated from the "
+               "run's events by scenarios.py; the oracle judges only the published behavior."),
+    Case("H-M", "hall", 2, "Uncoordinated siblings: disagreement and a duplicated rule",
+         "Does Apply repair a reserve the rooms part decided against the bookings part's choice and a copy of the "
+         "room code rule inside bookings, each through its owner?",
+         snapshot="h1", start="reference", expected=APPLIED, profile="h1", faults=(R1_RESERVE, R2_CODE),
+         allowed=("realization/test_*.py", "realization/*/test_*.py", "realization/tests/*", ".markitect/registry/*"),
+         measure=("each fault repaired", "r2 repaired by using the rooms rule rather than a corrected copy",
+                  "which Manager changed which area", "false findings", "turns", "time")),
 )
 
 # -- fleet: generated projects of varying width and depth --------------------------------------
@@ -480,18 +645,97 @@ SHIFTS = {
     ("stockroom", "s2"): ("add-record", "issue-exact", "list-low", "other-items", "persist", "qty-max",
                           "reads-untouched", "reorder-option", "sku-identity", "upgrade"),
     ("stockroom", "o"): ("limits-module", "storage-format", "storage-format-strict", "unknown-sku-message"),
+    ("stockroom", "n40"): ("name-rules",),
 }
+
+
+@dataclass(frozen=True)
+class Variant:
+    """A realization the oracle must judge as declared: an accepted alternative (fails nothing) or a wrong one.
+
+    It is the project's reference with exact edits (packet paths), assessed under PROFILE. FAILS and STATIC are the
+    exact sets of failing oracle checks and assess.py artifact checks.
+    """
+    id: str
+    project: str
+    profile: str
+    summary: str
+    edits: tuple = ()
+    fails: tuple = ()
+    static: tuple = ()
+
+
+def _limit(value):
+    return Edit(RZ + "limits.json", '"maxNameLength": 60', '"maxNameLength": %d' % value)
+
+
+def _readme_names(value):
+    return Edit(RZ + "README.md", "has at most 60 characters", "has at most %d characters" % value)
+
+
+_TEST_40 = Edit(RZ + "tests/test_rules.py",
+                '        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)\n',
+                '        self.assertEqual(stockroom.parse_name("x" * 40), "x" * 40)\n'
+                "        with self.assertRaises(StockError):\n"
+                '            stockroom.parse_name("x" * 41)\n')
+
+VARIANTS = (
+    # Profile n40 (S-N40): the owner's maximum of 40.
+    Variant("n40-done", "stockroom", "n40", "limit, README and boundary test at 40: a complete change",
+            (_limit(40), _readme_names(40), _TEST_40)),
+    Variant("n40-code-only", "stockroom", "n40", "only the limit changed; README still states 60",
+            (_limit(40),), static=("readme-name-40",)),
+    Variant("n40-off-by-one", "stockroom", "n40", "41 code points accepted", (_limit(41), _readme_names(40)),
+            fails=("name-rules",)),
+    # Profile free (S-FREE): any documented maximum from 40 to 120.
+    Variant("free-60", "stockroom", "free", "the reference's documented 60 is a valid choice"),
+    Variant("free-40", "stockroom", "free", "documented 40, the lower bound", (_limit(40), _readme_names(40))),
+    Variant("free-120", "stockroom", "free", "documented 120, the upper bound", (_limit(120), _readme_names(120))),
+    Variant("free-30", "stockroom", "free", "documented 30, below the permitted range", (_limit(30), _readme_names(30)),
+            fails=("name-hyphens", "name-limit-free")),
+    Variant("free-121", "stockroom", "free", "documented 121, above the permitted range",
+            (_limit(121), _readme_names(121)), fails=("name-limit-free",)),
+    Variant("free-undocumented", "stockroom", "free", "enforces 80 while the README states 60", (_limit(80),),
+            fails=("name-limit-free",)),
+    # Profile s1 as the end state of S-QV with the scripted owner answer (60).
+    Variant("s1-chose-80", "stockroom", "s1", "a silently chosen maximum of 80", (_limit(80), _readme_names(80)),
+            fails=("name-rules",), static=("config-consistent",)),
+    # Profile h1: the reserve is the bookings part's choice from 0 to 2.
+    Variant("h1-reserve-0", "hall", "h1", "reserve 0, a valid choice",
+            (Edit(RZ + "bookings/reserve.py", "RESERVE = 2", "RESERVE = 0"),
+             Edit(RZ + "README.md", "The reserve is **2**: every room holds back 2 of its seats, so its bookable\n"
+                                    "  seats are its seats minus 2.",
+                  "The reserve is **0**: every room holds back 0 of its seats, so its bookable\n"
+                  "  seats are its seats minus 0."))),
+    Variant("h1-reserve-1", "hall", "h1", "reserve 1, a valid choice",
+            (Edit(RZ + "bookings/reserve.py", "RESERVE = 2", "RESERVE = 1"),
+             Edit(RZ + "README.md", "The reserve is **2**: every room holds back 2 of its seats, so its bookable\n"
+                                    "  seats are its seats minus 2.",
+                  "The reserve is **1**: every room holds back 1 of its seats, so its bookable\n"
+                  "  seats are its seats minus 1."))),
+    Variant("h1-readme-stale", "hall", "h1", "reserve 1 in the code while the README still states 2",
+            (Edit(RZ + "bookings/reserve.py", "RESERVE = 2", "RESERVE = 1"),), fails=("readme-reserve",)),
+    Variant("h1-reserve-3", "hall", "h1", "reserve 3, outside the model's range",
+            (Edit(RZ + "bookings/reserve.py", "RESERVE = 2", "RESERVE = 3"),),
+            fails=("add-room-record", "book-inputs", "book-record", "bookings-listing", "edge-robustness", "no-leftovers",
+                   "readme-reserve", "reads-untouched", "refusal-keeps-data", "reserve-agreement", "rooms-independent")),
+    Variant("h1-reserve-per-room", "hall", "h1", "a reserve that differs between rooms (1 below 10 seats, else 2)",
+            (Edit(RZ + "bookings/reserve.py", "    return seats - RESERVE\n",
+                  "    return seats - (1 if seats < 10 else RESERVE)\n"),),
+            fails=("reserve-agreement",)),
+)
 
 # Base profile and ownership layout of each project: domain Packages own realization/<package>/, the
 # directory exception gives the rest of realization/ to `exception`, and Root owns everything else.
 PROJECTS = {
     "stockroom": {"profile": "s1", "packages": ("stockroom",), "exception": "stockroom"},
     "depot": {"profile": "d1", "packages": ("depot", "catalog", "stock", "orders", "reports"), "exception": "depot"},
+    "hall": {"profile": "h1", "packages": ("hall", "hall/rooms", "hall/bookings"), "exception": "hall"},
 }
 for _project in sorted({case.project for case in FLEET}):
     PROJECTS[_project] = {"profile": "f1", "packages": fleet.packages(_project), "exception": "hub"}
 
-CASES = {case.id: case for case in STOCKROOM + DEPOT + FLEET}
+CASES = {case.id: case for case in STOCKROOM + DEPOT + HALL + FLEET}
 
 def expectation(case):
     if case.expected == APPLIED:
@@ -546,6 +790,11 @@ def markdown():
         out.append("- **Record:** " + "; ".join(case.measure))
         if case.notes:
             out.append("- **Notes:** " + case.notes)
+        if case.prior_edits:
+            out += ["", "Model edits of the earlier version in the packet's first commit (the second commit holds "
+                        "the case's model):", ""]
+            for edit in case.prior_edits:
+                out += diff(edit)
         if case.model_edits:
             out += ["", "Model edits:", ""]
             for edit in case.model_edits:
@@ -570,6 +819,18 @@ def markdown():
             "The reference realization fails exactly these checks under a changed or variant profile:", ""]
     for (project, profile), names in SHIFTS.items():
         out.append("- %s `%s`: %s" % (project, profile, ", ".join("`%s`" % name for name in names)))
+    out += ["", "## Oracle variants", "",
+            "Each variant is the reference with exact edits. The oracle must accept an alternative that fails nothing "
+            "and reject a wrong one with exactly the listed checks.", "",
+            "| Variant | Project | Profile | Realization | Fails |", "| --- | --- | --- | --- | --- |"]
+    for variant in VARIANTS:
+        failing = ", ".join("`%s`" % name for name in variant.fails + variant.static) or "nothing (accepted)"
+        out.append("| %s | %s | %s | %s | %s |" % (variant.id, variant.project, variant.profile, variant.summary, failing))
+    for variant in VARIANTS:
+        if variant.edits:
+            out += ["", "%s:" % variant.id, ""]
+            for edit in variant.edits:
+                out += diff(edit)
     text = "\n".join(line.rstrip() for line in out)
     while "\n\n\n" in text:
         text = text.replace("\n\n\n", "\n\n")

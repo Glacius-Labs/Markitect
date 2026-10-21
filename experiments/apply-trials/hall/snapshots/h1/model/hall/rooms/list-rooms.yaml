@@ -1,0 +1,13 @@
+imports:
+  - package: software
+    as: Software
+  - package: hall
+    as: Hall
+id: list-rooms
+kind: Software.UseCase
+body: |-
+  At [[Hall.interface]], `rooms` returns an object whose only field, rooms,
+  holds every [[room]] record, sorted by code in ascending code-point order. A
+  missing data file is an empty result under [[Hall.storage]]. The query never
+  changes stored data.
+spec: {}

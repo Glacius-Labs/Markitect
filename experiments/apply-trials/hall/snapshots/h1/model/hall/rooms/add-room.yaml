@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: hall
+    as: Hall
+id: add-room
+kind: Software.UseCase
+body: |-
+  At [[Hall.interface]], `add-room --code CODE --seats N` creates one [[room]]
+  with the normalized code of [[room-code]] and the given seats, commits it
+  through [[Hall.storage]] and returns its room record. An invalid code or
+  seat count under [[Hall.inputs]], or a code that already exists after
+  normalization, is refused with stored data unchanged.
+spec: {}

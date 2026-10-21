@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+  - package: hall/rooms
+    as: Rooms
+id: inputs
+kind: Software.Rule
+body: |-
+  These input rules apply to every command of [[system]]; room codes follow
+  [[Rooms.room-code]]. A number is written as one or more ASCII decimal digits,
+  with no sign, whitespace, fraction or exponent; leading zeros do not change
+  its value. The seats of a room are such a number from 3 to 500. The seats of
+  a booking are such a number from 1 to 500. Invalid input fails through
+  [[interface]] and leaves stored data unchanged under [[storage]].
+spec: {}

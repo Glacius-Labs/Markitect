@@ -2,9 +2,12 @@
 
 Profiles: `s1` is snapshot s1 (version 0.1.0); `s2` is snapshot s2 (0.2.0:
 movement quantity at most 500, reorder points, `list --low`, 0.1.0 data stays
-usable); `o` is s1 with the three overspecified statements of case S-O.
-Error wording is free except where profile `o` fixes it. The data file is
-inspected only as the profile's storage statement binds it.
+usable); `o` is s1 with the three overspecified statements of case S-O;
+`n40` is s1 with the maximum name length 40 (case S-N40); `free` is s1 with
+the maximum name length left to the realization from 40 to 120 and stated in
+its README (case S-FREE). Error wording is free except where profile `o`
+fixes it. The data file is inspected only as the profile's storage statement
+binds it, and the README only where `free` binds it.
 """
 import ast
 import json
@@ -19,11 +22,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from trial_kit import Checks, Env, Skip, expect_equal, fail, no_crash, unusable_change, unusable_query  # noqa: E402
 
 PROFILES = {
-    "s1": {"snapshot": "s1", "maxQty": 1000, "reorder": False},
-    "s2": {"snapshot": "s2", "maxQty": 500, "reorder": True},
-    "o": {"snapshot": "s1", "maxQty": 1000, "reorder": False},
+    "s1": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": 60},
+    "s2": {"snapshot": "s2", "maxQty": 500, "reorder": True, "maxName": 60},
+    "o": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": 60},
+    "n40": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": 40},
+    "free": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": None, "nameRange": (40, 120)},
 }
-ALL = ["s1", "s2", "o"]
+ALL = ["s1", "s2", "o", "n40", "free"]
+FIXED_NAME = ["s1", "s2", "o", "n40"]
 CHECKS = Checks("stockroom", PROFILES)
 check = CHECKS.check
 
@@ -105,14 +111,60 @@ def _(env, p):
     expect_equal(listing(env), [], "items after refusals")
 
 
-@check("name-rules", ALL, ["stockroom/inputs", "stockroom/add-item"],
-       "Names are trimmed, nonempty and at most 60 code points")
+@check("name-rules", FIXED_NAME, ["stockroom/inputs", "stockroom/add-item"],
+       "Names are trimmed, nonempty and at most the profile's maximum of code points")
 def _(env, p):
-    expect_equal(add(env, "AAA-001", "é" * 60)["name"], "é" * 60, "60 non-ASCII code points")
-    expect_equal(add(env, "AAA-002", "  " + "x" * 60 + "  ")["name"], "x" * 60, "60 characters after trimming")
+    top = p["maxName"]
+    expect_equal(add(env, "AAA-001", "é" * top)["name"], "é" * top, "%d non-ASCII code points" % top)
+    expect_equal(add(env, "AAA-002", "  " + "x" * top + "  ")["name"], "x" * top, "%d characters after trimming" % top)
     expect_equal(add(env, "AAA-004", "-Bolt")["name"], "-Bolt", "a name that starts with a hyphen")
-    for name in ("", "   ", "x" * 61, "é" * 61):
+    for name in ("", "   ", "x" * (top + 1), "é" * (top + 1), "  " + "x" * (top + 1) + "  "):
         add(env, "AAA-003", name, refuse=True)
+
+
+@check("name-hyphens", ALL, ["stockroom/inputs", "stockroom/add-item", "stockroom/interface"],
+       "Names that start with or consist of hyphens are names, not options")
+def _(env, p):
+    for index, name in enumerate(("-Bolt", "--Bolt", "-9", "-", "-x" + "y" * 30)):
+        expect_equal(add(env, "HYP-%03d" % index, name)["name"], name, "the name %r" % name)
+
+
+def accepts(env, length, serial):
+    """Whether add-item accepts a name of LENGTH non-ASCII code points; a refusal must be the clean one."""
+    result = env.run("add-item", "--sku", "LEN-%03d" % serial, "--name", "é" * length)
+    if result.code == 0 and result.obj is not None and result.obj.get("name") == "é" * length:
+        return True
+    if result.code == 2 and result.obj is not None and set(result.obj) == {"error"}:
+        return False
+    fail("add-item with a name of %d code points neither succeeds nor fails cleanly: %s" % (length, result.describe()))
+
+
+@check("name-limit-free", ["free"], ["stockroom/inputs", "stockroom/add-item", "stockroom/realization"],
+       "The chosen maximum name length is one value from 40 to 120, enforced in code points and stated in the README")
+def _(env, p):
+    low, high = p["nameRange"]
+    if not accepts(env, 1, 0):
+        fail("a one-character name is refused")
+    top, step, serial = 1, 1, 1
+    while top < 400 and accepts(env, top + step, serial):  # bracket the maximum by doubling, then halve
+        top, step, serial = top + step, step * 2, serial + 1
+    while step > 1:
+        step //= 2
+        serial += 1
+        if accepts(env, top + step, serial):
+            top += step
+    if not low <= top <= high:
+        fail("the maximum name length is %d, the model allows %d to %d" % (top, low, high))
+    for length, expected in ((top, True), (top + 1, False), (low, True)):
+        serial += 1
+        if accepts(env, length, serial) is not expected:
+            fail("the maximum %d is not applied consistently at %d code points" % (top, length))
+    expect_equal(add(env, "PAD-001", "  " + "x" * top + "  ")["name"], "x" * top, "%d characters after trimming" % top)
+    readme = env.realization / "README.md"
+    lines = [line for line in (readme.read_text(encoding="utf-8", errors="replace") if readme.is_file() else "").splitlines()
+             if "name" in line.lower()]
+    if not any(re.search(r"(?<![0-9])%d(?![0-9])" % top, line) for line in lines):
+        fail("no README line about names states the maximum %d: %s" % (top, lines[:5]))
 
 
 @check("duplicate-names", ALL, ["stockroom/item"], "Different items may share a name")

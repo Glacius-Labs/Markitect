@@ -28,6 +28,202 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Defines each Apply trial case with its exact model and artifact edits, expectation and checks, outside every packet.
+  - path: "experiments/apply-trials/context/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the context control model's ownership and modeled-scope selector.
+  - path: "experiments/apply-trials/context/expected.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Holds the hand-written expected selection, facts and faults of the model context controls.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/allow-stacking.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/applies.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/basis.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/campaign-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/catalog/import.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/catalog/list-price.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/catalog/product.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/checkout/pay.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/checkout/receipt.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/currency-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/marketing/banner.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/max-discount-percent.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/min-quantity.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/percent.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/price-rule.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/pricing/discount.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/pricing/quote.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/tax-rate.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1-stale/model/shop/tiers.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the stale revision of the context control model, used to detect content of a wrong model.
+  - path: "experiments/apply-trials/context/snapshots/c1/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/allow-stacking.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/applies.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/basis.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/campaign-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/catalog/import.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/catalog/list-price.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/catalog/product.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/checkout/pay.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/checkout/receipt.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/currency-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/marketing/banner.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/max-discount-percent.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/min-quantity.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/percent.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/price-rule.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/pricing/discount.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/pricing/quote.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/tax-rate.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context/snapshots/c1/model/shop/tiers.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the context control model whose selection and delivered content the controls check.
+  - path: "experiments/apply-trials/context_controls.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Checks model context selection and delivered payloads against hand-written expectations and declared faults.
   - path: "experiments/apply-trials/depot/checks.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -220,6 +416,14 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Defines stock/receive in the depot trial snapshot d1; deliberate trial material, not a product definition.
+  - path: "experiments/apply-trials/evalcheck.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Shows locally that the scenarios, owner script, evaluator, plan packets and context controls discriminate as declared.
+  - path: "experiments/apply-trials/evaluate.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Judges one evaluation attempt with the same external evidence for every arm and Markitect's process criteria separately.
   - path: "experiments/apply-trials/fleet.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -228,6 +432,150 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Builds the black-box checks of a generated fleet project from its parameters, one per ledger.
+  - path: "experiments/apply-trials/freeze.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Builds the scenario packets and plan workspaces deterministically and writes or checks their hash lock.
+  - path: "experiments/apply-trials/hall/checks.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Holds the hall black-box checks, including the reserve agreement between rooms and bookings.
+  - path: "experiments/apply-trials/hall/execution.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the hall trial packets' layout, budget, profile names and Python test command.
+  - path: "experiments/apply-trials/hall/reference/realization/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/app.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/bookings/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/bookings/bookings.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/bookings/reserve.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/bookings/test_bookings.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/hall/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/hall/errors.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/hall/inputs.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/hall/store.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/rooms/__init__.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/rooms/rooms.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/rooms/test_rooms.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/tests/__init__.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/realization/tests/test_cli.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Is part of the known-correct hall reference realization that the trial packets start from.
+  - path: "experiments/apply-trials/hall/reference/registry/hall/bookings/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is the registry shard of the known-correct hall reference realization.
+  - path: "experiments/apply-trials/hall/reference/registry/hall/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is the registry shard of the known-correct hall reference realization.
+  - path: "experiments/apply-trials/hall/reference/registry/hall/rooms/registry.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is the registry shard of the known-correct hall reference realization.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model-lock.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/bookings/book.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/bookings/booking.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/bookings/list-bookings.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/bookings/reserve.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/inputs.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/rooms/add-room.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/rooms/list-rooms.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/rooms/room-code.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/rooms/room.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/storage.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
+  - path: "experiments/apply-trials/hall/snapshots/h1/model/hall/system.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Is part of the hall model snapshot h1, a sibling dependency with a choice the bookings part owns.
   - path: "experiments/apply-trials/materialize.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -236,6 +584,14 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Assesses a trial realization against one expectation profile and reports each check as JSON.
+  - path: "experiments/apply-trials/owner.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Plays the scripted test owner identically for every arm and logs each question, answer or withheld answer.
+  - path: "experiments/apply-trials/plan_packet.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Assembles the ordinary-Agent plan.md packet from the committed model and verifies it against the checked model.
   - path: "experiments/apply-trials/run/build.sh"
     form: code
     realizes: [examples/independent-oracles]
@@ -260,6 +616,14 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Runs one trial case end to end and assesses the result inside the Python image.
+  - path: "experiments/apply-trials/scenarios.lock.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Freezes every evaluation scenario's packets, plan workspace, owner answers, prompt and kit digest as exact hashes.
+  - path: "experiments/apply-trials/scenarios.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Defines each evaluation scenario of the direct/staged/plan comparison with its one question, budget, owner policy, arms and criteria, outside every packet.
   - path: "experiments/apply-trials/selfcheck.py"
     form: code
     realizes: [examples/independent-oracles]

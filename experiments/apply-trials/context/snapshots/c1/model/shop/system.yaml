@@ -1,0 +1,19 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop/catalog
+    as: Catalog
+  - package: shop/pricing
+    as: Pricing
+  - package: shop/checkout
+    as: Checkout
+  - package: shop/marketing
+    as: Marketing
+id: system
+kind: Software.Concept
+title: Shop
+body: |-
+  A small shop. It lists [[Catalog.product|products]], quotes prices with
+  [[Pricing.quote]], takes payments with [[Checkout.pay]] and shows
+  [[Marketing.banner|banners]].
+spec: {}

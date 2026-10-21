@@ -1,0 +1,11 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: allowStacking
+kind: Core.Property
+body: >-
+  Whether another discount may combine with this one.
+spec:
+  type: boolean
+  minCount: 1
+  maxCount: 1
