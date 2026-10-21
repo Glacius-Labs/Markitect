@@ -120,11 +120,13 @@ class ReportContract(unittest.TestCase):
 
     def test_legacy_root_abort_requires_its_structured_problem(self):
         data = report(); data["run"]["passes"] = []; data["run"]["findings"] = []
-        text = "stockroom/inputs gives no maximum name length"
+        # The producer permits up to 16 KiB; the summary must not destroy the exact reason/problem binding.
+        text = "stockroom/inputs gives no maximum name length: " + "detail " * 80 + "end"
         data["run"]["reason"] = "Root judged the model erroneous or contradictory: " + text
         self.assert_stop(data, False)
         data["run"]["problems"] = [{"manager": ".", "category": "model", "abort": True, "text": text}]
         summary = assess.summarize_report(data)
+        self.assertEqual(summary["problems"][0]["text"], text)
         self.assertTrue(assess.model_stop(summary)["stopped"])
         self.assertTrue(assess.judge_outcome(CASES["S-QV"], summary, [])["met"])
         # A4-gap still cannot claim the legacy abort occurred in preflight without Pass evidence.

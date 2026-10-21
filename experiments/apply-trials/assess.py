@@ -266,7 +266,7 @@ def summarize_report(report):
         "questions": [{"from": item.get("from"), "to": item.get("to"), "answered": item.get("answered"),
                        "text": (item.get("text") or "")[:400]} for item in run.get("questions") or []],
         "problems": [{"manager": item.get("manager"), "category": item.get("category"), "abort": item.get("abort"),
-                      "text": (item.get("text") or "")[:400]} for item in run.get("problems") or []],
+                      "text": item.get("text") or ""} for item in run.get("problems") or []],
         "turns": {kind: sum(1 for turn in turns if turn.get("kind") == kind)
                   for kind in sorted({turn.get("kind") for turn in turns if turn.get("kind")})},
         "engineSeconds": round((max(ends) - min(starts)).total_seconds()) if starts and ends else None,

@@ -226,7 +226,7 @@
  },
  "formatVersion": 1,
  "kit": {
-  "experiments/apply-trials/assess.py": "f4f1cc95665fd481fbc81707c676d931a3f27fba0cfdcec9e433c5e6426ca1d8",
+  "experiments/apply-trials/assess.py": "2fdf877f88d0170c60e15f3eb3bf9fd75f53243927bdaf6928fcb86c525b37d3",
   "experiments/apply-trials/bind_profiles.py": "756e8cffbdb085a8c1fd587606ab76aebb260da7d9e608387605c08de9489382",
   "experiments/apply-trials/cases.py": "7d8eb4a9e69dbf16a3098fe48819cd9d461a6f2160e394f715018e890bb2f2a1",
   "experiments/apply-trials/context/execution.yaml": "e47f39ebf1401f09912b34da26f9b860de7b002542647c0ca71f2143cab1052c",
@@ -367,7 +367,7 @@
   "experiments/apply-trials/materialize.py": "5ae2776df974a0a27db11e4a3a2fb107f732fa4dcbd8327193d0a4d9f06ec30b",
   "experiments/apply-trials/oracle.py": "aff1ed421e524bab6a74f3980d1a5703b311bac68682706049fb124e7c11cc4b",
   "experiments/apply-trials/plan_packet.py": "c3877a0d5c2e7ca70b2245a36bb3245b546f7cc182acf5c4735c68e42bf2c6ac",
-  "experiments/apply-trials/report-contract-extracts.json": "0eb0c654d4488416228de9a5e655b70c6a3f873110a98d375ae7a75a53b5e10d",
+  "experiments/apply-trials/report-contract-extracts.json": "59befc5fd76804d6ee4a71a5e53c86abe318b143750fff8c5b81ff192b232fce",
   "experiments/apply-trials/run/build.sh": "a252f951bb7c63e40c345706a81fa3e2e12dc011dd9c52109e4b7231cd534d59",
   "experiments/apply-trials/run/collect.py": "c082f4baddf7092b0dd132b36bc168c3e980cfdf62f81a9b5abc59f426f8ab46",
   "experiments/apply-trials/run/lane.sh": "b60223824b9611150e54091864e6d2c5fcaa1083aebd6049160430a761d7395f",
@@ -418,11 +418,11 @@
   "experiments/apply-trials/stockroom/validation/s2/app.py": "50d37ff1b450f758bae6c0375e91f11bef78736176b91f93d7be4ee0cb17f4ff",
   "experiments/apply-trials/stockroom/validation/s2/stockroom.py": "612d47dcd8f49eb5ed232206f6b8a0a486ea7eda305b24c4899bd554be5925e4",
   "experiments/apply-trials/stockroom/validation/s2/store.py": "da0f993aa652479554ec4ab23ad1c37582a70aae9515eca5e7e2f609f0f19f0f",
-  "experiments/apply-trials/test_report_contract.py": "ec6c981e0cc4eee5f5a1d1e2b171d4d30116fa67090e0380223f3a3f3bb80691",
+  "experiments/apply-trials/test_report_contract.py": "7cf1f86c94dafbc2c45557cf1cdadc2b1e6060b42d6c8c5569cf5ce21dd9d760",
   "experiments/apply-trials/trial_kit.py": "362e9a8623ba3db4cb3e140f3988da90f0e977405f72850a036775dba5af16d4",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "04ff402490867aca0c51da175ddf47a34b8692c1bc6885e75efe27f2c5964247",
+ "kitDigest": "24da02f60d068fab31f179a17488953a30e834c409698bcc45849de5c3ab50ce",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
