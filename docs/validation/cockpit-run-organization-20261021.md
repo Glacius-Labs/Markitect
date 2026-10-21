@@ -52,3 +52,43 @@ Pending after host release: focused cockpit Go/contract tests, structural and
 fixed-head accounting, actual browser source/recorded-run checks, small/low
 windows and 390/860/1440 px screenshots. Existing real records may supply later
 read-only UI evidence; no new provider Run is authorized by this preparation.
+
+## Delivery after host release
+
+Composed on actual Main `e26568f9` (#587), with the shared `.js` modules and
+only this package's registrations. The final candidate passes full cockpit Go
+tests (including binding producer contracts and prefix/legacy tests), 12 local
+Node tests, architecture CLI, working/fixed structural accounting, product
+context, documentation and diff checks. Full bootstrap and architecture package
+tests and bootstrap/cockpit vet also passed on the prepared combined source;
+they are separate evidence from this focused candidate's checks. Hosted CI was
+not dispatched.
+
+The actual embedded application opened read-only copies of WSL evidence:
+
+| Run | Observed UI case |
+| --- | --- |
+| `20261021T121802Z-377fea2c` | 207 records, verified/no change, 18 turns, 3 Passes; failed Probe R1 at prefix 142, six final receipts and their dispositions |
+| `20261021T123238Z-ee56e08d` | 126 records, incomplete after uncertain stand capture |
+| `20261021T123851Z-2f742a15` | 72 records, confirmed model problems, nothing published |
+
+Their original `events.jsonl` and `report.json` bytes were hashed before copying;
+the finishing record retains those digests and screenshots. Only those two
+files were copied, so unavailable receipt files/transcripts remain unavailable.
+Current Markitect profiles never entered these earlier Runs. Prefix 1 hid later
+usage/report facts; Manager keyboard selection, explicit collapse through a
+boundary change, paused exchange rendering, reduced motion and 390/860/1440 px
+were exercised without a page script error. Rail, account, timeline and aside
+remain the inspector's existing surfaces.
+
+Separate synthetic UI cases covered absent historical binding, a suspected
+observation and wait, plus append/reconnect. The latter exposed an existing
+pinning bug: selection at the old record end left following enabled. Selection
+now clears following, including a click on the newest event; an explicit initial
+boundary is pinned. The repeated Manager and newest-event cases received 207
+records after offline/reconnect while retaining boundary 60, selection and the
+Manager's collapse choice. Expected offline network errors are not CSP failures.
+The independently reviewed correction keeps automated playback selections free
+to continue. No real suspected-observation case was present in these three
+records; that case remains synthetic. No provider, Apply or model session was
+started, and none of these UI checks establishes owner/provider acceptance.
