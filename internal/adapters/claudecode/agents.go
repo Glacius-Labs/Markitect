@@ -9,7 +9,6 @@ import (
 	"slices"
 	"strconv"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
@@ -29,19 +28,11 @@ const (
 	mcpOutputTokens = "MAX_MCP_OUTPUT_TOKENS=262144"
 )
 
-// Agents runs Claude Code turns in reusable containers. Each turn joins its
-// environment's instance with exactly its capabilities through a fresh agentd
-// session; a turn without an environment gets a fresh instance that ends with
-// it. It implements run.Agents and run.Environments.
+// Agents runs one Claude Code turn per container. It implements run.Agents.
 type Agents struct {
-	runtime     Runtime
+	start       RuntimeStarter
 	profiles    map[string]Profile
 	credentials CredentialResolver
-
-	mu   sync.Mutex
-	envs map[string]*environment
-	// orphans are fresh instances whose removal was not observed.
-	orphans []Instance
 }
 
 var _ run.Agents = (*Agents)(nil)
@@ -50,13 +41,15 @@ func NewAgents(engine *container.Engine, profiles map[string]Profile, credential
 	if engine == nil {
 		return nil, ErrSession
 	}
-	return NewAgentsWithRuntime(engineRuntime{engine}, profiles, credentials)
+	return NewAgentsWithRuntime(func(ctx context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
+		return engine.Start(ctx, spec)
+	}, profiles, credentials)
 }
 
-// NewAgentsWithRuntime permits an Orchestrator-supplied runtime peer. Production
-// peers must preserve container.Engine.Hold, Instance and Session semantics.
-func NewAgentsWithRuntime(runtime Runtime, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
-	if runtime == nil || credentials == nil {
+// NewAgentsWithRuntime permits an Orchestrator-supplied runtime peer. Production peers
+// must preserve Engine.Start and Session's exit semantics.
+func NewAgentsWithRuntime(start RuntimeStarter, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
+	if start == nil || credentials == nil {
 		return nil, ErrSession
 	}
 	checked := make(map[string]Profile, len(profiles))
@@ -67,17 +60,16 @@ func NewAgentsWithRuntime(runtime Runtime, profiles map[string]Profile, credenti
 		profile.Session.BuiltinTools = slices.Clone(profile.Session.BuiltinTools)
 		checked[name] = profile
 	}
-	return &Agents{runtime: runtime, profiles: checked, credentials: credentials, envs: map[string]*environment{}}, nil
+	return &Agents{start: start, profiles: checked, credentials: credentials}, nil
 }
 
-// Run implements run.Agents. A turn that fails before an instance starts is
-// reported as stopped, with the error. After its provider ends, every process
-// of the turn is ended in its instance; Stopped reports whether that was
-// observed, in place or through the instance's removal. A quiet instance of an
-// environment stays for the environment's next turn. Usage is accumulated from
-// the stream and replaced by the result message's totals; a turn without them
-// reports a lower bound and says so in Reason. The known token is removed from
-// tool-call arguments before the handler sees them.
+// Run implements run.Agents. A turn that fails before a container starts is
+// reported as stopped, with the error. Every failure after the container
+// started stops it before returning; Stopped reports whether the provider exit
+// and the end of the container were observed. Usage is accumulated from the
+// stream and replaced by the result message's totals; a turn without them
+// reports a lower bound and says so in Reason. The known token is removed from tool-call arguments before the
+// handler sees them.
 func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler) (res run.TurnResult, err error) {
 	// Before a container starts there is nothing to stop: the turn is over and
 	// the error is the whole story.
@@ -124,32 +116,12 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 	}
 	res.Started = time.Now().UTC()
 	spec := turnSpec(turn, profile)
-	l, err := a.acquire(ctx, turn, spec)
-	if err != nil {
-		res.Ended, res.Reason = time.Now().UTC(), "container did not start; no exit observed"
-		return res, redact.err(err)
-	}
-	res.Instance = l.obs
-	peer, err := l.inst.Exec(ctx)
-	if err != nil && l.obs.Reused && ctx.Err() == nil {
-		// A kept instance can end without the adapter; once its end is
-		// confirmed, one new instance serves the turn.
-		if a.discard(context.WithoutCancel(ctx), l, "its kept instance had ended: "+redact.text(err.Error())) == nil {
-			if l, err = a.acquire(ctx, turn, spec); err != nil {
-				res.Ended, res.Reason = time.Now().UTC(), "container did not start; no exit observed"
-				return res, redact.err(err)
-			}
-			res.Instance = l.obs
-			peer, err = l.inst.Exec(ctx)
-		}
-	}
+	peer, err := a.start(ctx, spec)
 	if err == nil && peer == nil {
 		err = ErrSession
 	}
 	if err != nil {
-		// No provider started; the instance is ended whatever its state.
-		stopped, note := a.settle(context.WithoutCancel(ctx), l)
-		res.Stopped, res.Ended, res.Reason = stopped, time.Now().UTC(), "agentd session did not start; "+note
+		res.Ended, res.Reason = time.Now().UTC(), "container did not start; no exit observed"
 		return res, redact.err(err)
 	}
 
@@ -171,20 +143,18 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 	defer cancel()
 	exit, stopErr := peer.Stop(stopCtx, stopGrace.Milliseconds())
 	closeErr := peer.Close()
-	// The instance outlives the session: Stopped needs the observed end of
-	// every process of the turn, which the reap establishes.
-	stopped, note := a.settle(context.WithoutCancel(ctx), l)
-	res.Stopped, res.Ended = stopped, time.Now().UTC()
+	// The container really ends in Close: Stopped needs the provider's exit and
+	// a Close that did not have to give up on the container.
+	res.Stopped = stopErr == nil && closeErr == nil
+	res.Ended = time.Now().UTC()
 	switch {
-	case stopErr == nil:
+	case res.Stopped:
 		res.Reason = outcome + "; provider exit observed code=" + strconv.Itoa(exit.Code) + " signal=" + redact.text(exit.Signal)
+	case stopErr == nil:
+		res.Reason = outcome + "; provider exit observed but the container end was not: " + redact.text(closeErr.Error())
 	default:
 		res.Reason = outcome + "; provider exit not observed"
 	}
-	if closeErr != nil {
-		res.Reason += "; agentd session end not observed: " + redact.text(closeErr.Error())
-	}
-	res.Reason += "; " + redact.text(note)
 	if c.usage != usageFinal {
 		res.Reason += "; " + c.usage.partial()
 	}

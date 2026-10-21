@@ -434,3 +434,70 @@ try create-beside "echo n > /work/a/z.txt"
 		t.Errorf("final state:\n%s", final)
 	}
 }
+
+// Every turn runs in a container of its own. Consecutive turns of one
+// conversation get different containers but mount the same provider home, so
+// the permitted conversation state continues. A writer that escaped the first
+// turn's session ends with that container, the ended container no longer
+// mounts the shared tree, which a capture requires, and nothing is left.
+func TestRealEngineGivesEveryTurnAFreshContainerWithItsHome(t *testing.T) {
+	enginePath := os.Getenv("MARKITECT_TEST_ENGINE")
+	if enginePath == "" {
+		t.Skip("set MARKITECT_TEST_ENGINE to an absolute container engine path")
+	}
+	engine, err := container.NewEngine(enginePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Minute)
+	defer cancel()
+	image := buildShellTestImage(ctx, t, enginePath)
+	store := fmt.Sprintf("test-%d", time.Now().UnixNano())
+	labels := map[string]string{"io.markitect.store": store}
+	work, home := "mk-"+store+"-work", "mk-"+store+"-home"
+	for _, v := range []string{work, home} {
+		if err := engine.CreateVolume(ctx, v, labels); err != nil {
+			t.Fatal(err)
+		}
+		v := v
+		t.Cleanup(func() { _ = engine.RemoveVolume(context.Background(), v) })
+	}
+	turn := func(name, script string) string {
+		t.Helper()
+		s, err := engine.Start(ctx, container.ContainerSpec{
+			Name: "mk-" + store + "-" + name, Image: image, Labels: labels, User: "1000:1000",
+			Mounts:  []container.Mount{{Volume: work, Target: "/work"}, {Volume: home, Target: "/home/agent"}},
+			Workdir: "/work", CPUs: 1, MemoryBytes: 256 << 20, Pids: 64, TmpBytes: 16 << 20, Network: "none",
+		})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.StartProvider(ctx, frame.Start{Argv: []string{"/bin/sh", "-c", script}, Dir: "/work"}); err != nil {
+			t.Fatalf("start %s: %v %q", name, err, s.Diagnostics())
+		}
+		out, _ := io.ReadAll(s.Stdout())
+		select {
+		case <-s.Exited():
+		case <-time.After(30 * time.Second):
+			t.Fatalf("turn %s did not exit", name)
+		}
+		// The container's own end is the observed end of every process of the turn.
+		if err := s.Close(); err != nil {
+			t.Fatalf("turn %s: the container did not end by itself: %v", name, err)
+		}
+		return strings.TrimSpace(string(out))
+	}
+	first := turn("t1", "echo conversation-1 > /home/agent/conversation && echo a > /work/a && "+
+		"setsid sh -c 'while true; do echo x >> /work/bg; sleep 0.1; done' > /dev/null 2>&1 < /dev/null & "+
+		"while [ ! -s /work/bg ]; do sleep 0.05; done; hostname")
+	if mounts, err := engine.VolumeMounts(ctx, work); err != nil || len(mounts) != 0 {
+		t.Fatalf("the ended turn still mounts the shared tree: %v %v", mounts, err)
+	}
+	got := strings.Split(turn("t2", `cat /home/agent/conversation; cat /work/a; a=$(wc -c < /work/bg); sleep 1; b=$(wc -c < /work/bg); if [ "$a" = "$b" ]; then echo stopped; else echo running; fi; hostname`), "\n")
+	if len(got) != 4 || got[0] != "conversation-1" || got[1] != "a" || got[2] != "stopped" || got[3] == first || first == "" {
+		t.Fatalf("second turn saw %q after %q", got, first)
+	}
+	if names, err := engine.Containers(ctx, "io.markitect.store", store); err != nil || len(names) != 0 {
+		t.Fatalf("containers after the turns = %v, %v", names, err)
+	}
+}
