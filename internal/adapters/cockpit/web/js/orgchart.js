@@ -6,9 +6,10 @@ let chartSerial = 0;
 // One presentation component for observed project and recorded Run facts.
 // It consumes explicit nodes; it does not infer work, authority or hierarchy.
 export class OrgChart {
-  constructor(container, { onSelect = () => {}, name = "Project organization" } = {}) {
+  constructor(container, { onSelect = () => {}, onLayout = () => {}, name = "Project organization" } = {}) {
     this.onSelect = onSelect; this.cards = new Map(); this.nodes = [];
     this.notePrefix = `org-review-${++chartSerial}`;
+    this.onLayout = onLayout;
     this.scale = 1; this.pan = { x: 0, y: 0 }; this.collapsed = new Set();
     this.tree = h("div", { class: "org-tree", role: "tree", "aria-label": name });
     this.lines = s("svg", { class: "org-lines", "aria-hidden": "true", focusable: "false" });
@@ -111,6 +112,7 @@ export class OrgChart {
     if (focusedID && this.positions.has(focusedID)) {
       const card = this.cards.get(focusedID); (wasToggle ? card.querySelector(".org-toggle") || card : card).focus({ preventScroll: true });
     }
+    this.onLayout();
   }
 
   rove() { for (const [id, card] of this.cards) card.tabIndex = id === this.focusID && this.positions?.has(id) ? 0 : -1; }

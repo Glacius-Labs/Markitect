@@ -1,5 +1,25 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/cockpit/organization_binding_test.go"
+    form: test
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Checks the Run boundary's recorded profiles, helpers, zero versus absent helper limit, checks and historical missing binding without consulting current project settings."
+  - path: "internal/adapters/cockpit/web/js/run-organization-facts.js"
+    form: code
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Projects recorded Manager/Turn facts into chart cards and explicit prefix-bound exchanges, reported usage and deterministic routes without inventing execution or provider facts."
+  - path: "internal/adapters/cockpit/web/js/run-organization.js"
+    form: code
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Reuses the organization chart for the inspector's recorded binding and clock, retains closed-Run owner context and historical exchanges, and supplies pause-bound motion plus keyboard exchange navigation."
+  - path: "internal/adapters/cockpit/run-organization.test.mjs"
+    form: test
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Locally checks synthetic recorded binding and usage separation, reviewer/helper states, observations, adverse probes, historical absence, prefix and owner boundaries, frozen progress and directional routes."
+  - path: "docs/validation/cockpit-run-organization-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Separates the recorded-Run chart's lightweight source preparation from unrun Go gates, deferred browser acceptance and actual provider evidence."
   - path: "internal/adapters/cockpit/web/js/organization-facts.js"
     form: code
     realizes: [product/cockpit/observed-organization]
@@ -148,10 +168,6 @@ artifacts:
     form: code
     realizes: [product/cockpit/observed-run-inspection]
     why: "Composes the run inspector: the condensed header with strategy, outcome and live chip, the Pass rail with turns and cost, boundary views, account, lists, transport, keyboard control, selection that pauses replay, the transcript dialog and the stop of the run the cockpit started."
-  - path: "internal/adapters/cockpit/web/js/diagram.js"
-    form: code
-    realizes: [product/cockpit/observed-run-inspection]
-    why: "Draws the organization as a track diagram with recorded exchanges as directional arrows that pause with replay, a still form for reduced motion and a list for narrow windows, and draws the owner only for records of an earlier run."
   - path: "internal/adapters/cockpit/web/js/timeline.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]

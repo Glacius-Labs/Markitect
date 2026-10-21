@@ -56,6 +56,23 @@
 .organization-profile .digest { font-size: var(--s-2); overflow-wrap: anywhere; }
 @media (max-width: 1100px) { .organization-split { grid-template-columns: minmax(0, 1fr); } }
 
+.stage .run-organization { min-width: 0; padding: 8px 12px 12px; }
+.stage .org-viewport { height: clamp(200px, 32vh, 440px); }
+.stage .org-narrow .org-viewport { height: auto; }
+.stage:has(.run-organization) > .legend { position: static; margin: 6px 12px 0; }
+.org-record-note { font-size: var(--s-2); margin: 0 0 4px; overflow-wrap: anywhere; }
+.org-recent-details { font-size: var(--s-1); margin: 5px 0; }
+.org-recent { margin: 6px 0; padding-left: 20px; }
+.org-exchange { color: var(--ice); cursor: pointer; pointer-events: stroke; }
+.org-exchange > path { stroke: currentColor; stroke-width: 2; fill: none; }
+.org-exchange .org-arrowhead, .org-exchange > circle { fill: currentColor; stroke: none; }
+.org-exchange.org-ch-orchestrator { color: var(--control); }
+.org-exchange.org-ch-agent { color: var(--ink); }
+.org-exchange.selected > path { stroke-width: 3.5; }
+.org-exchange.org-ch-orchestrator > path:first-child { stroke-dasharray: 5 4; }
+.org-exchange.org-ch-owner { color: var(--owner); }
+.org-exchange.past { opacity: .4; }
+
 :root {
   color-scheme: dark;
   /* Ground and surfaces */
@@ -718,47 +735,6 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 .legend .l-orchestrator { border-color: var(--control); border-top-style: dashed; }
 .legend .l-owner { border-color: var(--owner); }
 
-/* Track diagram */
-.track-edge { stroke: var(--track); stroke-width: 3; fill: none; stroke-linecap: round; }
-.owner-edge { stroke: var(--owner); stroke-width: 1.5; stroke-dasharray: 2 4; fill: none; }
-.node { cursor: pointer; }
-.node .plate { fill: var(--plate); stroke: var(--rule); stroke-width: 1; }
-.node.selected .plate { stroke: var(--ink); stroke-width: 2.5; }
-.node .bar { fill: var(--ink-3); }
-.node.st-working .bar { fill: var(--work); }
-.node.st-waiting .bar { fill: var(--wait); }
-.node.st-done .bar { fill: var(--done); }
-.node.st-ready .bar { fill: var(--ink); }
-.node .name { font: 600 15px var(--ui); fill: var(--ink); }
-.node .line { font: 400 12.5px var(--ui); fill: var(--ink-2); }
-.node .line.state { fill: currentColor; font-weight: 600; }
-.node .badge { font: 600 11.5px var(--ui); }
-.node .badge-fail rect { fill: var(--fail); }
-.node .badge-fail text { fill: #fff; }
-.node .badge-pend rect { fill: var(--work-soft); stroke: var(--work); }
-.node .badge-pend text { fill: var(--work); }
-.node.system .plate { fill: var(--plate-2); stroke-dasharray: 4 3; }
-.node.system .name { font-size: 13.5px; }
-.node:focus-visible .plate { stroke: var(--focus); stroke-width: 3; }
-.node .lampc { stroke-width: 2; }
-
-.exchange path { fill: none; stroke-width: 2.25; }
-.exchange .head { stroke: none; }
-.exchange.ch-agent path { stroke: var(--ink); }
-.exchange.ch-agent .head, .exchange.ch-agent .token { fill: var(--ink); }
-.exchange.ch-submission path { stroke: var(--work); }
-.exchange.ch-submission .head, .exchange.ch-submission .token { fill: var(--work); }
-.exchange.ch-orchestrator path { stroke: var(--control); stroke-dasharray: 6 4; }
-.exchange.ch-orchestrator .head, .exchange.ch-orchestrator .token { fill: var(--control); }
-.exchange.ch-owner path { stroke: var(--owner); }
-.exchange.ch-owner .head, .exchange.ch-owner .token { fill: var(--owner); }
-.exchange .chip rect { fill: var(--plate); stroke: currentColor; stroke-width: 1; }
-.exchange .chip text { font: 600 11.5px var(--ui); fill: var(--ink); }
-.exchange { cursor: pointer; }
-.exchange.past { opacity: 0.32; }
-.exchange.selected path { stroke-width: 4; }
-.exchange:focus-visible path { stroke: var(--focus); }
-
 /* Lower panel */
 .lower { display: grid; grid-template-rows: auto minmax(0, 1fr); min-height: 0; border-top: 1px solid var(--rule); background: var(--plate); }
 .tabs { display: flex; gap: 2px; padding: 0 12px; border-bottom: 1px solid var(--rule); align-items: end; }
@@ -805,16 +781,6 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 .list li .chan.ch-owner { color: var(--owner); }
 .list li .chan.ch-submission { color: var(--work); }
 
-/* Narrow windows show the organization as an indented list instead of a
-   scaled track diagram. */
-.orglist { list-style: none; margin: 0; padding: 8px 12px 64px; }
-.orglist li { display: grid; grid-template-columns: 14px 1fr; gap: 2px 8px; padding: 6px 8px; border-bottom: 1px solid var(--plate-2); cursor: pointer; align-items: center; }
-.orglist li.selected { box-shadow: inset 3px 0 0 var(--ink); background: var(--plate); }
-.orglist .oname { font-weight: 600; }
-.orglist .oact { grid-column: 2; font-size: var(--s0); color: var(--ink-2); }
-.orglist .ostate { font-weight: 400; margin-left: 6px; }
-.recent { list-style: none; margin: 0; padding: 4px 12px 8px; font-size: var(--s0); }
-.recent li { padding: 3px 0; }
 .list li.c-problem .x, .list li.c-unreadable .x { color: var(--fail); }
 .list li.later { display: none; }
 .filters { display: flex; gap: 10px; flex-wrap: wrap; padding: 6px 12px; border-bottom: 1px solid var(--plate-2); font-size: var(--s0); }

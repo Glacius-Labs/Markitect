@@ -50,6 +50,13 @@ var consumedKeys = map[string][]string{
 // consumedFields are the JSON fields of the submission envelope and its plan
 // payload the projection reads.
 var consumedFields = map[string][]string{
+	"RunBinding":       {"head", "strategy", "build", "work", "corrections", "execution", "defaults", "budget", "managers", "checks"},
+	"BudgetBinding":    {"executionTime", "turnTimeout"},
+	"ManagerBinding":   {"manager", "execute", "verify", "helpers", "maxHelpers", "context"},
+	"ContextBinding":   {"brief", "full", "reference"},
+	"RoleBinding":      {"profile", "identity", "instructions"},
+	"HelperBinding":    {"role", "writes"},
+	"CheckBinding":     {"name", "requiredBy", "image", "command", "timeout"},
 	"envelope":         {"summary", "verdict", "children", "plan"},
 	"plan":             {"dependencies"},
 	"dependency":       {"owner", "need", "pass", "stage"},
@@ -93,6 +100,8 @@ func producerContract(t *testing.T) (map[string]map[string]bool, map[string]map[
 	if err != nil || len(files) == 0 {
 		t.Fatalf("run engine source not found: %v", err)
 	}
+	// Apply supplies the binding the engine records unchanged.
+	files = append(files, filepath.Join("..", "..", "apply", "binding.go"))
 	produced := map[string]map[string]bool{}
 	fields := map[string]map[string]bool{}
 	fset := token.NewFileSet()
