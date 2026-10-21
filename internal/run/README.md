@@ -198,8 +198,8 @@ by a signal with exit 128 or above), which never counts as a pass or as an expec
 refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
 Implement and artifact-review `done`/`preserved` claims require typed evidence.
 `kind: public_behavior` cites an own passing receipt with a nonempty `probe.boundary`.
-Each receipt supports one claim in one submission, only under its recorded
-obligation. Keep unsupported conditions `open` with a note instead of duplicating
+In coverage evidence, each passing receipt supports one claim per submission,
+only under its recorded obligation. Keep unsupported conditions `open` with a note instead of duplicating
 or relabelling a receipt. A failed receipt belongs in a genuine finding (or its
 reasoned disposition), not in coverage evidence. A failure of an own public
 contract is reported under that own obligation; coordinate a dependency's required
@@ -207,6 +207,9 @@ implementation change through the parent, preserving the dependency's write owne
 The parent independently assesses that cross-area cause and records the necessary
 finding for the actual correction owner in its subtree; the caller's contract
 finding alone does not route the dependency's implementation work.
+A parent may cite a descendant's adverse receipt in that finding after assessing
+the causal link independently. The receipt retains its original requester,
+obligation, candidate and outcome; it is not relabelled as coverage evidence.
 An omitted evidence `boundary` inherits that recorded value; a supplied different value
 is refused. The stored evidence retains the boundary, through the actual public entry and relevant parsing/transport/
 persistence. `kind: static` cites source, location and reasoning explaining why execution
