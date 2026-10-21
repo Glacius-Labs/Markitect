@@ -163,11 +163,12 @@ def load_report(text):
     except json.JSONDecodeError:
         lines = text.splitlines()
         starts = [i for i, line in enumerate(lines) if line.startswith("{")]
-        ends = [i for i, line in enumerate(lines) if line.startswith("}")]
-        if not starts or not ends or ends[-1] < starts[0]:
+        if not starts:
             return {}
         try:
-            return json.loads("\n".join(lines[starts[0]:ends[-1] + 1]))
+            # The common projector may print compact or indented JSON. Decode
+            # one complete value before the harness's trailing PASS/FAIL lines.
+            return json.JSONDecoder().raw_decode("\n".join(lines[starts[0]:]))[0]
         except json.JSONDecodeError:
             # A killed harness leaves a truncated report: no run, so incomplete.
             return {}
@@ -304,6 +305,11 @@ def timing_of(path):
 
 
 def score(report, classification, control, events=(), timing=None, evidence=None):
+    harness_exit = (timing or {}).get("exit")
+    if harness_exit is not None and str(harness_exit) != "0":
+        classification = {"conclusion": INCOMPLETE, "incomplete": "technical", "harnessExit": str(harness_exit),
+                          "why": "the harness process ended unsuccessfully after writing its report",
+                          "reportClassification": classification}
     run = report.get("run") or {}
     definitions = control.get("definitions", []) if control else []
     raised = signals(run, classification.get("conclusion"))

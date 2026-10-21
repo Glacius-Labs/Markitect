@@ -192,6 +192,29 @@ class Scoring(unittest.TestCase):
         # An unfinished attempt confirms nothing: no owner effort and no false alarm.
         self.assertEqual(([x["kind"] for x in s["signals"]], s["falseAlarmCandidates"], s["ownerEffort"]["confirmedFindings"]), (["open"], [], 0))
 
+    def test_failed_harness_process_overrides_a_complete_report(self):
+        for envelope, control in ((report("incomplete", assess.ACCEPTED_REASON), FREEDOM),
+                                  (confirmed(finding("The maximum length is missing.")), GAP)):
+            for code in (0, 1, 124):
+                with self.subTest(conclusion=assess.classify(envelope)["conclusion"], code=code), tempfile.TemporaryDirectory() as root:
+                    root = Path(root)
+                    (root / "stdout").write_text(json.dumps(envelope) + "\n" + ("PASS" if code == 0 else "FAIL") + "\n", encoding="utf-8")
+                    (root / "timing").write_text(f"exit={code}\nwall_seconds=2\n", encoding="utf-8")
+                    (root / "control").write_text(json.dumps(control), encoding="utf-8")
+                    with patch("builtins.print"):
+                        self.assertEqual(assess.main(["assess.py", "attempt", "--report", str(root / "stdout"),
+                                                     "--control", str(root / "control"), "--timing", str(root / "timing"),
+                                                     "--output", str(root / "score")]), 0)
+                    result = json.loads((root / "score").read_text(encoding="utf-8"))
+                    if code == 0:
+                        self.assertEqual(result["classification"]["conclusion"], assess.classify(envelope)["conclusion"])
+                    else:
+                        self.assertEqual(result["classification"]["incomplete"], "technical")
+                        self.assertEqual(result["classification"]["harnessExit"], str(code))
+                        self.assertIsNone(result["expectationMet"])
+                        self.assertFalse(result["blocked"] or result["falseAbort"])
+                        self.assertEqual(result["ownerEffort"]["confirmedFindings"], 0)
+
     def test_the_class_of_the_finding_on_the_issue_decides(self):
         r = confirmed(finding("The maximum length of shop/inputs is never stated.", fid="F1"),
                       finding("shop/storage contradicts shop/system.", obligation="shop/storage", cls="model_error", fid="F2"))
@@ -290,8 +313,15 @@ class Evidence(unittest.TestCase):
         self.assertEqual(p["acceptedResultCoverage"], {"obligations": 1, "withModelSource": 1, "open": 0})
 
     def test_the_report_is_read_between_the_harness_lines(self):
-        text = '{\n "status": "failed",\n "run": {"status": "verified"}\n}\nPASS\n'
-        self.assertEqual(assess.load_report(text)["run"]["status"], "verified")
+        envelope = report("incomplete", "credential unavailable")
+        envelope.update(operation="model-assessment", outcome="incomplete")
+        for indent in (None, 2):
+            for end in ("PASS", "FAIL"):
+                with self.subTest(indent=indent, end=end):
+                    text = "=== RUN TestModelAssessmentHarness\n" + json.dumps(envelope, indent=indent) + "\n" + end + "\n"
+                    decoded = assess.load_report(text)
+                    self.assertEqual(decoded, envelope)
+                    self.assertEqual(assess.classify(decoded)["incomplete"], "technical")
         self.assertEqual(assess.load_report("model assessment exit 1\nFAIL\n"), {})
         self.assertEqual(assess.load_report(""), {})
 
