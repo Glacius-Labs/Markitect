@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "experiments/apply-trials/test_report_contract.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Regresses archived Apply report parsing and evidence-bound model-stop scoring without executing a project or provider.
+  - path: "experiments/apply-trials/report-contract-extracts.json"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Retains minimal actual historical report projections with archive and member digests for offline evaluator regression.
+  - path: "experiments/apply-trials/report-contract-validation-20261021.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Separately records the historical report-contract reproduction and corrected offline outcome assessment without rewriting old attempts.
   - path: "examples/README.md"
     form: doc
     realizes: [examples/independent-oracles]
