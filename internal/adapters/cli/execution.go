@@ -25,15 +25,14 @@ type ApplyRequest struct {
 }
 
 // ApplyReport projects the observations of one Apply: the preparation, the
-// run with its Passes, the publication and where the evidence is kept. Outcome
-// is the Run outcome: success only for a clean Verify with an applied or
-// no-change publication and read-back, failed for a definite rejection,
-// incomplete otherwise.
+// run with its Passes, the publication and where the evidence is kept.
+// ReportValue derives its JSON outcome from Status for both stdout and retained
+// evidence: success only for a clean Verify with an applied or no-change
+// publication and read-back, failed for a definite rejection, incomplete otherwise.
 type ApplyReport struct {
 	FormatVersion     int                       `json:"formatVersion"`
 	Operation         string                    `json:"operation"`
 	Status            model.Status              `json:"status"`
-	Outcome           string                    `json:"outcome,omitempty"`
 	Preparation       any                       `json:"preparation,omitempty"`
 	Binding           *apply.RunBinding         `json:"binding,omitempty"`
 	Run               *RunReport                `json:"run,omitempty"`
@@ -201,7 +200,6 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 	if err != nil {
 		report.Error = err.Error()
 	}
-	report.Outcome = RunOutcome(report.Status)
 	if emit(report) != 0 {
 		return 3
 	}

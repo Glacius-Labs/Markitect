@@ -1,11 +1,13 @@
 package bootstrap
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
 	"os"
 	"path/filepath"
+	"reflect"
 	"regexp"
 	"strings"
 	"testing"
@@ -179,6 +181,73 @@ func TestApplyReportRetainedAsEvidenceMatchesThePrintedShape(t *testing.T) {
 	var decoded map[string]any
 	if json.Unmarshal(data, &decoded) != nil {
 		t.Fatal("report is not JSON")
+	}
+	if decoded["outcome"] != "incomplete" {
+		t.Fatalf("retained report lacks the command outcome: %s", data)
+	}
+}
+
+// Persist before returning to the CLI, as Execute does. Comparing only two
+// calls to ReportValue would miss enrichment performed later by the command.
+func TestApplyFileAndStdoutKeepTheSameOutcomeAndEvidence(t *testing.T) {
+	for _, tc := range []struct {
+		name, want string
+		runStatus  runport.Status
+		reason     string
+		receipt    *apply.PublicationReceipt
+		err        error
+		code       int
+	}{
+		{"applied", "success", runport.Verified, "", &apply.PublicationReceipt{Outcome: apply.PublicationApplied}, nil, 0},
+		{"no_change", "success", runport.Verified, "", &apply.PublicationReceipt{Outcome: apply.PublicationNoChange}, nil, 0},
+		{"assessment_failed", "failed", runport.Failed, "the model assessment confirmed a material model problem: missing public policy", nil, errors.New("model assessment rejected"), 1},
+		{"technical_incomplete", "incomplete", runport.Incomplete, "capture is uncertain", nil, errors.New("workspace remains mounted"), 3},
+		{"publication_unknown", "incomplete", runport.Verified, "", &apply.PublicationReceipt{Outcome: apply.PublicationUnknown, Reason: "read-back uncertain"}, nil, 3},
+		{"publication_failed", "failed", runport.Verified, "", &apply.PublicationReceipt{Outcome: apply.PublicationFailed, Reason: "publication refused"}, nil, 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			e, err := newFileEvidence(testkit.TempDir(t), "run-1")
+			if err != nil {
+				t.Fatal(err)
+			}
+			defer e.Close()
+			outcome := runport.Outcome{Status: tc.runStatus, Reason: tc.reason}
+			report := cli.ApplyReport{FormatVersion: 1, Operation: "apply", Status: cli.ApplyStatus(outcome, tc.receipt, tc.err), Run: cli.NewRunReport("run-1", outcome), Publication: tc.receipt, EvidenceDirectory: e.Dir()}
+			if tc.err != nil {
+				report.Error = tc.err.Error()
+			}
+			command := cli.New(nil, nil, nil, nil, nil, func(context.Context, cli.ApplyRequest) (cli.ApplyReport, error) {
+				if err := e.WriteReport(cli.ReportValue(report)); err != nil {
+					t.Fatal(err)
+				}
+				return report, tc.err
+			})
+			var stdout, stderr bytes.Buffer
+			if code := command.Run(context.Background(), []string{"apply", "--runtime-profile", filepath.Join(e.Dir(), "runtime.yaml"), "--run-config", filepath.Join(e.Dir(), "run.json")}, &stdout, &stderr); code != tc.code {
+				t.Fatalf("exit %d, want %d: %s", code, tc.code, stderr.String())
+			}
+			data, err := os.ReadFile(filepath.Join(e.Dir(), "report.json"))
+			if err != nil {
+				t.Fatal(err)
+			}
+			var retained, printed map[string]any
+			if err := json.Unmarshal(data, &retained); err != nil {
+				t.Fatal(err)
+			}
+			if err := json.Unmarshal(stdout.Bytes(), &printed); err != nil {
+				t.Fatal(err)
+			}
+			if retained["outcome"] != tc.want || !reflect.DeepEqual(retained, printed) {
+				t.Fatalf("want outcome %q and matching reports\nretained: %s\nprinted: %s", tc.want, data, stdout.String())
+			}
+			gotRun := retained["run"].(map[string]any)
+			if gotRun["status"] != string(tc.runStatus) || tc.reason != "" && gotRun["reason"] != tc.reason {
+				t.Fatalf("run conclusion changed: %v", gotRun)
+			}
+			if tc.receipt != nil && retained["publication"].(map[string]any)["Outcome"] != string(tc.receipt.Outcome) {
+				t.Fatalf("publication outcome changed: %v", retained["publication"])
+			}
+		})
 	}
 }
 
