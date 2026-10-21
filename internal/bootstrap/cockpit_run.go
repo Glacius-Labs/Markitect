@@ -118,6 +118,10 @@ func (c cockpitService) runFacts(ctx context.Context, base apply.InputSelection,
 		}
 		facts.Profiles[i].Model = model
 	}
+	facts.Organization, err = resolvedOrganization(a)
+	if err != nil {
+		return cockpit.RunFacts{}, err
+	}
 	return facts, nil
 }
 

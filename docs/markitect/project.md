@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:9c45810a248aeecf5ca705f5943e9d724b890aefa4f84d46a40d10132fb0caf0`.
+Canonical model digest: `sha256:68a81ccd36ca69aea6977414b46936164a2f106c522e7a881dab8b56fce5d9f7`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -181,6 +181,12 @@ Changes to the canonical model and to the execution settings made through the co
 Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/desktop-app.yaml` (original bytes `sha256:d77738c772ce29d10b77960fddaec1db61b107480e8996396a0eb014d5666937`).
 
 The cockpit is the owner's desktop app for Markitect: opened without arguments it shows a per-user list of projects, each a repository with the runtime directory that setup fills, and it opens its local address in its own app window. A project is set up through the same function as markitect setup, which writes exactly what setup writes and refuses where setup refuses. Only the owner starts a run, after a confirmation that names the committed execution budget, the run configuration's deadline and the Agent profile; the cockpit never starts a run by itself. A started run is the same Apply as markitect apply with the same inputs, checks, budget, evidence and publication, and one run holds a state directory at a time. Stopping a run the cockpit started ends it incomplete with its report and evidence, as an interrupted markitect apply, and restores nothing; runs started elsewhere are only observed. Closing the window keeps the cockpit and its runs working; with the owner's permission it notifies when a run ends or a decision waits for the owner.
+
+### product/cockpit/observed-organization
+
+Kind: `vocabulary/Rule`. Source: `.markitect/model/product/cockpit/observed-organization.yaml` (original bytes `sha256:2182fcd11eddc7b12b8e0b5664b3899d5618d9d20c060cab6cbb5819cd9e224b`).
+
+Present the project organization as the model's complete local Package hierarchy with Root, an ordinary Manager for every Package, its own Definitions and the actual owned areas with more specific ownership exclusions. Show declared execution defaults, exact Package overrides, the project-wide helper team with profiles, write roles and maximum helpers active per Manager, the run-wide strategy and declared checks from the same structural observation as the model browser. Resolve product defaults, profile bindings and their provider models only on the owner's request with a configured Runtime profile, through the same committed-source capture as the run-start confirmation; retain progress, refusal and source identity, and clearly distinguish declared from resolved values. Display the organization as a top-down chart with the owner above the deterministic Orchestrator, Root and Package Managers, people cards and a separate independent reviewer seat on a dotted line; support collapse, pan, zoom, fit, a small-window tree, keyboard navigation and reduced motion. Organization selection links to its model responsibilities and the existing settings proposal flow; the chart itself changes no organization or settings. Reuse the chart for a Run's recorded binding and boundary, with an honest fallback where binding is absent; show only recorded work, waits, observations, exchanges and usage, preserve replay and selection, and show no live external owner channel in a closed Run.
 
 ### product/cockpit/observed-run-inspection
 

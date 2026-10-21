@@ -1,5 +1,25 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/cockpit/organization.go"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Serves declared organization from the project observation and explicit asynchronous resolution through a bootstrap port, with progress and refusals."
+  - path: "internal/adapters/cockpit/organization_test.go"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Checks that resolution is explicit, shared while running, read-only and honest about unavailable Runtime and capture refusals."
+  - path: "internal/bootstrap/cockpit_organization.go"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Projects the product topology and ownership layout plus declared or captured settings into organization facts without duplicating hierarchy or specificity rules."
+  - path: "internal/bootstrap/cockpit_organization_test.go"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Compares resolved profiles and helpers with the actual run.start binding using ports that stop before workspace, Agent or check execution, and checks declaration provenance and ownership exclusions."
+  - path: "docs/validation/cockpit-organization-read-model-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Records the organization read model source checks and their provider-free evidence boundary."
   - path: "internal/adapters/cockpit/evidence.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]

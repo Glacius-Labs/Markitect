@@ -138,6 +138,27 @@ Waits keep the Orchestrator's wording. The known forms (a decision on a proposal
 
 What the record does not establish stays visible: delivery and reading of exchanges, the candidate's file differences, the publication's candidate digest when something was written, a missing outcome or report, unknown record kinds and unreadable lines. Only kinds the cockpit does not know are listed as unknown; bookkeeping kinds (`listedOnly`) and the historical working-environment records of earlier builds are listed as entries and are no gap. `TestEveryRecordedKindIsProjectedOrListedOnly` reads the run engine's and Apply's source and fails when a recorded kind is neither projected nor listed; a listed kind need not still be produced.
 
+## Project organization
+
+`GET /api/organization` serves `declared` from the same structural project
+observation as the model browser. Bootstrap uses the product's topology and
+ownership layout, including its more-specific exclusions. Root has no local
+Definitions. Profiles retain their declaration source; absent team/profile
+values remain absent. The response includes defaults, exact Package overrides,
+the project-wide helper team, run-wide strategy and declared checks.
+
+With a configured Runtime profile and run configuration, `?resolve=1` explicitly
+starts a bounded background capture through the run confirmation's `runFacts`
+path. Ordinary reads poll `resolving` and receive `resolved` or the refusal in
+`error`. Concurrent resolution requests share the active capture. A later
+explicit request refreshes it. The resolved observation names its committed
+head and model digest separately from the draft declaration observation; it
+is a snapshot, not a guarantee about a later start. It applies product defaults,
+binds Execute, Verify and helper profiles and decodes their provider models.
+Neither operation starts a Run, Agent, container or project check. Tests use
+fake metadata readers; production metadata preparation may inspect the selected
+Runtime image as run confirmation does.
+
 ## Browser
 
 The page is plain HTML, CSS and JavaScript modules without a build step, embedded in the binary and packaged with the source. Replay moves the boundary through the record with play, pause, speed, record and exchange steps; recorded gaps are compressed and bookkeeping records take no playback time. Selecting anything pauses the presentation; pausing never affects a run. Arrows illustrate recorded sends along the tree, pause with the replay and open their record; with reduced motion they are drawn still. Keyboard: Space, arrows, Shift with arrows, Home, End, `[` `]`, Esc and `?`. Narrow windows show the organization as a list.

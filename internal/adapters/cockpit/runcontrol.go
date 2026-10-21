@@ -23,6 +23,8 @@ type RunFacts struct {
 	// Profiles lists the distinct Execute Agent profiles of the Managers,
 	// Root's first.
 	Profiles []RunProfile `json:"profiles"`
+	// Organization shares this capture, but has its own read endpoint.
+	Organization *OrganizationView `json:"-"`
 }
 
 // RunProfile is an Execute Agent profile with the model its Runtime profile
