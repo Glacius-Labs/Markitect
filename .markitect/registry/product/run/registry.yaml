@@ -72,10 +72,6 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Summarizes Extract attempts: phases, rounds, Verify depth, questions, deviations, model size, rebuild and oracle."
-  - path: "experiments/recursive-apply-demo/rx_owner.sh"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: "Answers an Extract's owner questions by script and logs them, so the owner channel is exercised in real runs."
   - path: "experiments/recursive-apply-demo/rx_python_profile.py"
     form: code
     realizes: [product/run/confirmed-run-history]
@@ -127,7 +123,7 @@ artifacts:
   - path: "internal/run/messages.go"
     form: code
     realizes: [product/organization/delegated-context]
-    why: "Routes questions, answers and information along direct tree edges with correlation, escalates through the parent and connects Root to the invoking AI."
+    why: "Routes questions, answers and information along direct tree edges with correlation, escalates through the parent and refuses Root's messages beyond the tree."
   - path: "internal/run/helpers.go"
     form: code
     realizes: [product/organization/delegated-context, product/realization/artifact-accounting]
@@ -196,6 +192,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: "Checks retained findings until independent closure, fresh reviewer homes, failed required checks, verdict consistency, strict exit gates and advisory artifact findings."
+  - path: "internal/run/assess_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks the Model assessment Pass: fresh read-only reviewers without checks or probes, release only on a clean seal, a Failed run on a confirmed finding with its class, reassessment of disputed findings, Incomplete at the limit and for technical failures, and the closed-run refusal text."
   - path: "internal/run/team_test.go"
     form: test
     realizes: [product/organization/delegated-context, product/realization/artifact-accounting]

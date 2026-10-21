@@ -65,7 +65,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/bootstrap
     layer: apply-bootstrap
-    purpose: Constructs actual services and adapters; owns the Agents router, file evidence, file owner channel and state lock.
+    purpose: Constructs actual services and adapters; owns the Agents router, file evidence and state lock.
     doc: docs/development/modules.md
   - path: cmd/markitect
     layer: apply-command

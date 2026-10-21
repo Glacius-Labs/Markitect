@@ -12,7 +12,6 @@ import { Diagram } from "./diagram.js";
 import { Timeline } from "./timeline.js";
 import { renderDetail } from "./detail.js";
 import { LiveLink } from "./live.js";
-import { answerInProgress } from "./answer.js";
 import { stopControl } from "./runcontrol.js";
 import { setTitle } from "./notify.js";
 
@@ -324,8 +323,6 @@ export class Inspector {
     this.markLists();
     this.renderMarks();
     const now = performance.now();
-    // New records never redraw the details under an answer being written.
-    if (answerInProgress(this.asideEl)) return;
     if (!this.playback.playing || !this.lastDetail || now - this.lastDetail > 700) {
       this.lastDetail = now;
       this.renderAside();

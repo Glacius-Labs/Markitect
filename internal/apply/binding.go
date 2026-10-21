@@ -102,7 +102,12 @@ type CheckBinding struct {
 func bindRun(entry string, prepared CapturedSettingsAttempt, request string, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []boundManager, checks []run.Check) RunBinding {
 	b := RunBinding{Entry: entry, Head: prepared.Structural().Model().Inputs().Head, Request: fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(request))), Strategy: strategy, Corrections: strategy.corrections(), Build: build,
 		Budget: BudgetBinding{ExecutionTime: budget.ExecutionTime.Value.String(), TurnTimeout: budget.TurnTimeout.Value.String(), AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value, Deadline: deadline.UTC()}}
+	// The Model assessment precedes the work of every entry but the
+	// independent Verify of a known stand.
 	b.Work = []run.Purpose{}
+	if entry != entryVerify {
+		b.Work = append(b.Work, run.Assess)
+	}
 	for _, spec := range strategy.work() {
 		if entry == entryApply {
 			b.Work = append(b.Work, spec.Purpose)

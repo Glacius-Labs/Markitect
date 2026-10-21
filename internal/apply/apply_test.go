@@ -42,7 +42,7 @@ func layoutRequest(t *testing.T) (apply.ApplyRequest, snapshot.Tree) {
 	attempt := preparedAttempt(t, selection, raw)
 	return apply.ApplyRequest{
 		RunID: "run-1", Prepared: attempt, Selection: apply.InputSelection{Repository: "/repo"}, Build: "test-build", OwnerRequest: "Realize the model.",
-		OwnerDecisions: []string{"Use euro."}, MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest,
+		MaxEntries: 1000, MaxBytes: 1 << 20, CheckRequest: checkRequest,
 		RequireVolumeSubpaths: func(context.Context) error { return nil },
 	}, attempt.Structural().Model().Inputs().Raw.Census
 }
@@ -54,11 +54,11 @@ func TestApplyConfigTeamBriefsChecksBudgetAndAccounting(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if cfg.RunID != "run-1" || cfg.OwnerRequest != "Realize the model." || !slices.Equal(cfg.OwnerDecisions, []string{"Use euro."}) || cfg.MaxEntries != 1000 || cfg.MaxBytes != 1<<20 || !cfg.Start.Equal(start) {
+	if cfg.RunID != "run-1" || cfg.OwnerRequest != "Realize the model." || cfg.MaxEntries != 1000 || cfg.MaxBytes != 1<<20 || !cfg.Start.Equal(start) {
 		t.Fatalf("run inputs changed: %+v", cfg)
 	}
 	// Apply's Root ends the run for a defective model; the bound model is fixed.
-	if !strings.Contains(cfg.RootGuidance, "abort true") || !strings.Contains(cfg.RootGuidance, "never ask the user to change or override it") {
+	if !strings.Contains(cfg.RootGuidance, "abort true") || !strings.Contains(cfg.RootGuidance, "the model is corrected outside it and a new run starts") {
 		t.Fatalf("Apply's Root guidance: %q", cfg.RootGuidance)
 	}
 	if cfg.Team[0].Path != "." || cfg.Team[0].Parent != "" || !strings.Contains(cfg.Team[0].Role, "integration of the whole project") {

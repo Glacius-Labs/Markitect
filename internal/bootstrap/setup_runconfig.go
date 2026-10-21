@@ -14,18 +14,16 @@ const setupCredentialRef = "markitect-claude-token"
 
 // runConfigDocument and workspaceHelperDocument exist beside runConfig because
 // container.ContainerSpec has no JSON tags and runConfig cannot omit the
-// optional keys ownerDecisions and deadline.
+// optional key deadline.
 //
 // runConfigDocument is the formatVersion 2 run configuration as setup writes
 // it. Its field names are those of the decoder's closed contract; the optional
-// ownerDecisions and deadline are omitted when absent, because the decoder
-// refuses an empty list or null.
+// deadline is omitted when absent, because the decoder refuses an empty value.
 type runConfigDocument struct {
 	FormatVersion      int                         `json:"formatVersion"`
 	RepositoryIdentity string                      `json:"repositoryIdentity"`
 	ProductBuild       string                      `json:"productBuild"`
 	OwnerRequest       string                      `json:"ownerRequest"`
-	OwnerDecisions     []string                    `json:"ownerDecisions,omitempty"`
 	StateDirectory     string                      `json:"stateDirectory"`
 	Deadline           string                      `json:"deadline,omitempty"`
 	EngineExecutable   string                      `json:"engineExecutable"`

@@ -260,7 +260,6 @@ a.pill:hover { border-color: var(--line-ice); color: var(--ice); }
 .kind { display: inline-block; padding: 0 8px; border-radius: 6px; background: rgb(255 255 255 / 0.05); border: 1px solid var(--line); color: var(--ink-2); font-size: var(--s-2); font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; line-height: 20px; white-space: nowrap; text-decoration: none; }
 a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 .refusal { border: 1px solid rgb(238 150 150 / 0.3); background: rgb(238 150 150 / 0.07); color: var(--fail); padding: 10px 14px; border-radius: var(--r); max-width: 90ch; margin: 0; }
-.written { border-left: 2px solid var(--done); padding-left: 12px; }
 
 /* Split views: panes are cards side by side. */
 .split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(400px, 46%); gap: 14px; height: 100%; min-height: 0; }
@@ -337,22 +336,11 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 .t-settings { --accent: var(--a-settings); }
 .hint { color: var(--ink-3); font-size: var(--s-1); text-align: center; margin: 4px 0 0; }
 
-/* ---------- Owner questions and the answer ---------- */
-.qcard { padding: 14px 16px; border-radius: var(--r); background: rgb(255 255 255 / 0.025); border: 1px solid var(--line); }
-.qcard.waiting { border-color: rgb(227 169 201 / 0.4); background: var(--owner-soft); }
-.qcard h4 { margin: 0 0 6px; font-size: var(--s1); font-weight: 600; color: var(--ink); display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
-.answer { margin-top: 4px; display: grid; gap: 8px; max-width: 80ch; }
-.answer label { font-size: var(--s0); font-weight: 600; color: var(--ink-2); }
-.answer textarea { font: var(--s1)/1.55 var(--prose); padding: 10px 12px; resize: vertical; }
-.answer textarea[readonly] { background: var(--card-2); }
-.answer .actions { display: flex; gap: 8px; }
-
 /* Text an Agent wrote: framed by an ice line and labelled. */
 .quote.agent, .agenttext { border-left: 2px solid var(--line-ice); padding-left: 14px; }
 
 /* ---------- Decisions ---------- */
 .dkind { display: inline-block; padding: 0 8px; border-radius: 999px; font-size: var(--s-2); font-weight: 600; line-height: 20px; white-space: nowrap; }
-.dkind.question { color: var(--owner); background: var(--owner-soft); }
 .dkind.proposal { color: var(--ice); background: var(--ice-wash); }
 .rows .row .dkind { align-self: center; }
 .dhead { display: grid; gap: 10px; }

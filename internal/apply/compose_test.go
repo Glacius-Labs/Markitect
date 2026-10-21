@@ -1,6 +1,8 @@
 package apply
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -38,9 +40,10 @@ func TestStrategiesComposeTheOnePassProcess(t *testing.T) {
 	if d, s := Direct.verify(), Staged.verify(); d.Purpose != run.Verify || !d.Review || d.Mandate != s.Mandate || d.Guidance != s.Guidance {
 		t.Errorf("the strategies' Verify differ: %+v / %+v", d, s)
 	}
-	// Staged keeps Main's Root duty: it accepts a plan, which direct has not.
-	if !strings.Contains(Staged.rootDuty(), "accept a plan that depends on it") || !strings.Contains(Direct.rootDuty(), "accept a submission that depends on it") ||
-		strings.Replace(Direct.rootDuty(), "a submission", "a plan", 1) != Staged.rootDuty() {
+	// One Root duty in every strategy: a confirmed model problem ends the run,
+	// since nobody answers from outside the tree (closed Runs, PR #560).
+	if Direct.rootDuty() != Staged.rootDuty() || !strings.Contains(Direct.rootDuty(), "abort true") || !strings.Contains(Direct.rootDuty(), "instead of letting a Manager pick a default") ||
+		!strings.Contains(Direct.rootDuty(), "a new run starts") || strings.Contains(Direct.rootDuty(), "ask the user") {
 		t.Errorf("Root duties: staged %q, direct %q", Staged.rootDuty(), Direct.rootDuty())
 	}
 }
@@ -121,10 +124,13 @@ func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
 	if mandate := Direct.verify().Mandate; !strings.Contains(mandate, "against the bound model") || !strings.Contains(mandate, "probes with the tool check") {
 		t.Fatalf("Apply review lacks its bound-model expectations or probes: %s", mandate)
 	}
-	// A public behavior the model leaves open is asked, not defaulted (A4 of
-	// the hardening evaluation picked an unstated name maximum of 80).
+	// A public behavior the model leaves open is a model problem, not a default
+	// (A4 of the hardening evaluation picked an unstated name maximum of 80),
+	// and nobody outside the tree answers it during the run.
 	for _, s := range strategies {
-		if !strings.Contains(s.work()[0].Mandate, "no implementation choice") || !strings.Contains(s.work()[0].Mandate, "stays yours to decide and document") || !strings.Contains(s.rootDuty(), "ask the user with the concrete alternatives") {
+		mandate := s.work()[0].Mandate
+		if !strings.Contains(mandate, "no implementation choice") || !strings.Contains(mandate, "stays yours to decide and document") || !strings.Contains(mandate, "report it to your parent as a model problem") ||
+			strings.Contains(mandate, "the user") || !strings.Contains(s.rootDuty(), "instead of letting a Manager pick a default") {
 			t.Fatalf("%s lets a Manager settle a public behavior the model leaves open", s)
 		}
 	}
@@ -133,5 +139,21 @@ func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
 		if !strings.Contains(mandate, "fixed artifacts and their documented intent") || !strings.Contains(mandate, "never evidence for itself") || strings.Contains(mandate, "bound model") {
 			t.Fatalf("Extract %s has circular or Apply review authority: %s", phase, mandate)
 		}
+	}
+}
+
+// The Model assessment's mandate and guidance are Session C's method of
+// experiments/model-assessment/assessment-pass.json at 7db130d7 byte for byte;
+// a change of the method changes these digests deliberately.
+func TestTheAssessmentMethodIsPinned(t *testing.T) {
+	spec := assessSpec()
+	if got := fmt.Sprintf("%x", sha256.Sum256([]byte(spec.Mandate))); got != "17353a41dfef65452c925ae552092884de4c4c703654af9e03c090fe1b56dad5" {
+		t.Errorf("mandate digest %s", got)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256([]byte(spec.Guidance))); got != "b2f5ba101ea459e7f044caa41c154c7714482c7594db53a7b25d5b3ca517a80d" {
+		t.Errorf("guidance digest %s", got)
+	}
+	if !spec.Review || !spec.Assesses || !slices.Equal(spec.Corrections, []run.Purpose{"model_error", "model_gap", "unclassified"}) {
+		t.Errorf("spec %+v", spec)
 	}
 }

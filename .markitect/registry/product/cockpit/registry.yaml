@@ -107,7 +107,7 @@ artifacts:
   - path: "internal/bootstrap/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/accepted-proposals]
-    why: "Composes the cockpit over the selected state directories with the state lock probe, the answer command's owner channel, structural preparation of the repository, the proposal service fenced by every observed state lock and the start and stop of an Apply through the execution function of markitect apply."
+    why: "Composes the cockpit over the selected state directories with the state lock probe, structural preparation of the repository, the proposal service fenced by every observed state lock and the start and stop of an Apply through the execution function of markitect apply."
   - path: "internal/adapters/cli/cockpit_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
@@ -131,15 +131,11 @@ artifacts:
   - path: "internal/adapters/cockpit/overview.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Observes the project in the background, lists owner questions with the owner channel's state and writes an owner's answer only for a question a running run waits for."
+    why: "Observes the project in the background and offers the cockpit's own-request guard for writes; it lists and answers no question of a run."
   - path: "internal/adapters/cockpit/overview_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Verifies that answers reach the owner channel only for a waiting question and only through the cockpit's own request, refusals for runs that do not run and withdrawn or answered questions, the owner question list and the background project observation."
-  - path: "internal/adapters/cockpit/web/js/answer.js"
-    form: code
-    realizes: [product/cockpit/observed-run-inspection]
-    why: "Offers the two-step owner answer form and reports a written answer as written, not as recorded by the run."
+    why: "Verifies that no route lists or answers a question of a run, the cockpit's own-request guard for writes and the background project observation."
   - path: "internal/adapters/cockpit/proposals.go"
     form: code
     realizes: [product/cockpit/accepted-proposals]
@@ -219,7 +215,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/store.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads the project, runs, owner questions, proposals, sessions and the run this cockpit started together while the page is visible, or hidden once notifications are allowed, and shares them with the top bar, the hub and the pages."
+    why: "Reads the project, runs, proposals, sessions and the run this cockpit started together while the page is visible, or hidden once notifications are allowed, and shares them with the top bar, the hub and the pages."
   - path: "internal/adapters/cockpit/web/js/shell.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -247,7 +243,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/decisions.js"
     form: code
     realizes: [product/cockpit/accepted-proposals, product/cockpit/observed-run-inspection]
-    why: "Lists the owner questions of runs and this cockpit's proposals beside the chosen one: a question with its answer form, a proposal with its check, difference and the owner's decision."
+    why: "Lists this cockpit's proposals beside the chosen one with its check, difference and the owner's decision."
   - path: "internal/bootstrap/cockpit_model_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]

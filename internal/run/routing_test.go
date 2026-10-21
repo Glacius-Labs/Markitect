@@ -4,7 +4,6 @@ import (
 	"strings"
 	"sync"
 	"testing"
-	"time"
 )
 
 // A cross-branch question travels only along tree edges: lending asks Root,
@@ -104,44 +103,6 @@ func TestParentAsksAChildAndForeignAnswersAreRefused(t *testing.T) {
 	}
 }
 
-// Root's question to the user pauses Root, and the run continues with the
-// answer; an unanswered question cannot hide behind a complete result.
-func TestRootUserQuestionPausesAndContinuesTheSameRun(t *testing.T) {
-	f := newFixture(t)
-	var mu sync.Mutex
-	asked := false
-	var hidden string
-	f.agents.script = func(c *call) error {
-		mu.Lock()
-		defer mu.Unlock()
-		if c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on your own contribution") && !asked {
-			c.must(toolSend, map[string]any{"to": User, "kind": sendQuestion, "text": "Which loan limit applies to staff?"})
-			asked = true
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "Q1"})
-			go func() {
-				time.Sleep(30 * time.Millisecond)
-				f.owner.answer("Q1", "the model's limit applies")
-			}()
-			return nil
-		}
-		c.protocol()
-		return nil
-	}
-	r := f.open()
-	res := r.Pass(implementSpec())
-	out := f.finish(r, "")
-	if res.Stopped || res.Verdict != Satisfied {
-		t.Fatalf("stopped %v: %s", res.Stopped, out.Reason)
-	}
-	if len(f.owner.questions()) != 1 || !out.Questions[0].Answered || out.Questions[0].To != User {
-		t.Fatalf("questions %+v", out.Questions)
-	}
-	if !strings.Contains(promptOf(f, ".", "the model's limit applies"), "Answer of the user to your question Q1") {
-		t.Errorf("Root never saw the answer")
-	}
-	_ = hidden
-}
-
 // A result is refused while its Manager's own question is unanswered.
 func TestOpenQuestionBlocksTheCompleteResult(t *testing.T) {
 	f := newFixture(t)
@@ -219,19 +180,27 @@ func TestRootModelErrorEndsTheRunFailed(t *testing.T) {
 	}
 }
 
-// Without an owner channel nobody answers: Root's question is refused with the
-// way out within the model.
-func TestWithoutOwnerChannelRootCannotAsk(t *testing.T) {
+// Nobody outside the Manager tree answers during a run: Root cannot send to
+// anybody above it or escalate, and is told that a gap or contradiction of the
+// model ends the run; questions along the tree still work.
+func TestNobodyOutsideTheTreeAnswersDuringARun(t *testing.T) {
 	f := newFixture(t)
-	f.cfg.Owner = nil
-	var refusal string
+	var refusals []string
 	var mu sync.Mutex
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
-		if c.turn.Manager == "." && refusal == "" {
-			a := c.send(User, sendQuestion, "may I?", "")
-			refusal = a.Text
+		if c.turn.Manager == "." && len(refusals) == 0 {
+			for _, a := range []ToolAnswer{
+				c.send("user", sendQuestion, "may I?", ""),
+				c.send("owner", sendInfo, "fyi", ""),
+				c.tool(toolEscalate, map[string]any{"category": "model", "text": "the limit is open"}),
+			} {
+				if !a.Refused {
+					t.Errorf("Root reached beyond the tree: %q", a.Text)
+				}
+				refusals = append(refusals, a.Text)
+			}
 		}
 		c.protocol()
 		return nil
@@ -239,8 +208,15 @@ func TestWithoutOwnerChannelRootCannotAsk(t *testing.T) {
 	r := f.open()
 	r.Pass(planSpec())
 	f.finish(r, "")
-	if !strings.Contains(refusal, "Nobody answers questions") {
-		t.Errorf("refusal %q", refusal)
+	for _, refusal := range refusals {
+		if !strings.Contains(refusal, "Nobody outside the Manager tree answers") || !strings.Contains(refusal, "category model, abort true") {
+			t.Errorf("refusal %q", refusal)
+		}
+	}
+	for _, turn := range f.agents.turns {
+		if turn.Manager == "." && strings.Contains(turn.Prompt, "user:") {
+			t.Errorf("Root is offered a user contact")
+		}
 	}
 }
 

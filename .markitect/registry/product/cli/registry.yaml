@@ -27,11 +27,11 @@ artifacts:
   - path: "internal/bootstrap/execution.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
-    why: Composes captured settings, the exclusive state lock, concrete container adapters, evidence, the owner channel and guarded publication for one Apply, and records owner answers.
+    why: Composes captured settings, the exclusive state lock, concrete container adapters, evidence and guarded publication for one Apply and records the run's identity.
   - path: "internal/bootstrap/execution_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
-    why: Tests refusal before effects for invalid configurations and held state directories, the answer command and retained report evidence.
+    why: Tests refusal before effects for invalid configurations and held state directories and retained report evidence.
   - path: "internal/bootstrap/verify_evaluation_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
@@ -132,14 +132,6 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Tests whole synced events under concurrency, refusal after close, safe transcript paths, no overwritten runs and the atomic report.
-  - path: "internal/bootstrap/owner.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Implements the owner channel as question and answer files in the state directory and writes final owner answers for the running Apply.
-  - path: "internal/bootstrap/owner_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Tests question publication, polling, refusal of unsafe identities and stale files, and final answers only for a running Apply and asked question.
   - path: "internal/bootstrap/agents_router.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
