@@ -305,6 +305,11 @@ def timing_of(path):
 
 
 def score(report, classification, control, events=(), timing=None, evidence=None):
+    harness_exit = (timing or {}).get("exit")
+    if harness_exit is not None and str(harness_exit) != "0":
+        classification = {"conclusion": INCOMPLETE, "incomplete": "technical", "harnessExit": str(harness_exit),
+                          "why": "the harness process ended unsuccessfully after writing its report",
+                          "reportClassification": classification}
     run = report.get("run") or {}
     definitions = control.get("definitions", []) if control else []
     raised = signals(run, classification.get("conclusion"))
