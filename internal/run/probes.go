@@ -423,6 +423,9 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 	_ = e.record(Event{Kind: "probe.receipt", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: *r})
 	var b strings.Builder
 	fmt.Fprintf(&b, "Receipt %s: %s, after %d seconds.", r.ID, describeOutcome(r), int(r.At.Sub(began).Seconds()))
+	if !ts.deadline.IsZero() {
+		fmt.Fprintf(&b, " Turn budget remaining: %d seconds, including the report and ending the Turn. Preserve that reserve; continue other probes in a fresh Turn.", max(0, int(ts.deadline.Sub(e.now()).Seconds())))
+	}
 	switch kind {
 	case standLive:
 		fmt.Fprintf(&b, " It ran on your live area composed with the accepted stand (%s); it supports your submission only if your area is unchanged when you submit.", short(r.Stand))
@@ -546,13 +549,13 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, 
 			case r.Requester != m.Path:
 				return nil, fmt.Errorf("%s: %s was requested by %s; cite your own receipts", name, r.ID, r.Requester)
 			case c.Definition != "" && r.Obligation != c.Definition:
-				return nil, fmt.Errorf("%s: %s assesses %s, not %s", name, r.ID, r.Obligation, c.Definition)
+				return nil, fmt.Errorf("%s: %s assesses %s, not %s; cite it only under its recorded obligation, once in this submission. Omit it here and leave unsupported conditions open; a different executable claim needs its own passing probe", name, r.ID, r.Obligation, c.Definition)
 			case r.Outcome != ProbePassed:
-				return nil, fmt.Errorf("%s: %s %s; an adverse receipt cannot support %s", name, r.ID, describeOutcome(r), c.Status)
+				return nil, fmt.Errorf("%s: %s %s; an adverse receipt cannot support %s coverage. Remove it from this evidence array; if it demonstrates a violation, cite it in a genuine finding and leave the affected coverage open with a note. Otherwise give its reasoned disposition", name, r.ID, describeOutcome(r), c.Status)
 			case stand != nil && r.Stand != stand.Digest().String():
 				return nil, fmt.Errorf("%s: %s ran on the stand %s, not on %s; a stale receipt supports nothing here", name, r.ID, short(r.Stand), short(stand.Digest().String()))
 			case cited[r.ID]:
-				return nil, fmt.Errorf("%s: %s is already cited for another claim; one receipt supports one claim", name, r.ID)
+				return nil, fmt.Errorf("%s: %s is already cited for another claim; one receipt supports one claim. Keep it only under its recorded obligation; leave other unsupported conditions open instead of duplicating it", name, r.ID)
 			}
 			if c.Definition == "" && !e.within(e.byPath[r.Requester].Path, m.Path) {
 				return nil, fmt.Errorf("%s: receipt outside your integration responsibility", name)

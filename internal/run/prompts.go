@@ -275,6 +275,10 @@ func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, 
 	}
 	b.WriteString("\nNow: " + e.taskLocked(m) + "\n")
 	fmt.Fprintf(&b, "This Agent Turn has a finite limit of %s. End after submitting basis/result; if work remains, report concise progress before the limit and continue in a later Turn. Use wait for a missing named submission or answer instead of polling it.\n", e.cfg.Budget.TurnTimeout)
+	b.WriteString("Each Turn uses a fresh container: conversation and the provider home persist, but in-memory tool/REPL variables and /tmp do not. Save recipes in provider-home files or resend their complete content; never rely on an earlier Turn's variables. A probe is a separate execution and must include all its own setup and helpers.\n")
+	if p.spec.Review && !m.candidateHidden() {
+		b.WriteString("Plan one highest-value bounded probe for this Turn, then leave time to report and end. Start a second only when the observed tool latency still leaves a conservative reserve for a valid report and any repair; a short script can take minutes including Runtime setup. If a check refuses for remaining time, do not try another: report progress with only kind and summary, then end. For result evidence, cite each passing receipt once, only under its recorded obligation. Keep unsupported conditions open with a note; cite failed receipts in findings, not coverage evidence. Report a demonstrated failure of your own public contract under that own obligation, even when its implementation cause is a dependency; coordinate required work outside your ownership through your parent. In parent integration, independently assess such cross-area failures and record the necessary finding for the actual correction owner within your subtree; accepting the caller's contract finding alone does not route that correction.\n")
+	}
 	switch {
 	case !p.spec.Review && !p.spec.Writes:
 		fmt.Fprintf(&b, "In the %s Pass /work is read-only for every Manager: nobody writes a project file in it, and your result is complete without one. Write scratch files under /tmp.\n", p.spec.Purpose)

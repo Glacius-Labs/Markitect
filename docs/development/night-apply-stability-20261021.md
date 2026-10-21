@@ -124,3 +124,21 @@ evidence, time scheme and exact ordered attempts. Announce NIGHT TESTBEREIT;
 the coordinator must issue one source-bound group release before execution.
 A concrete blocker ends that group. A changed hypothesis requires a new freeze
 and release within the same unchanged global ledger and deadline.
+
+N1-01 on Main `cf5530f1` found the intended name violation through independent
+public probes, but remained technically incomplete: Catalog timed out twice,
+and no complete Verify was sealed. All 25 Turns stopped; cleanup found no
+running owned container and used no emergency stop. The other N1 attempts were
+not started. Raw artifacts and the one fully charged reservation remain intact.
+The trace shows malformed standalone probes, lost tool variables across fresh
+containers, repeated report-shape/evidence-binding repairs and checks taking
+78–125 seconds including Runtime work. The next correction makes those existing
+contracts actionable and exposes remaining Turn time; it raises no time or retry
+limit. A scripted full negative review also checks the existing cross-area path:
+the caller reports its own failed public contract, and the parent independently
+routes the correction to the actual dependency owner without sibling authority.
+This is protocol evidence, not a semantic-detection proof. The Verify harness
+also persists `operation: apply`, matching the CLI
+command's output, so the complete report comparison needs no alias exception.
+A new released freeze must show whether these corrections let a real independent
+review finish; source diagnostics alone cannot establish that improvement.

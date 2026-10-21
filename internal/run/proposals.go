@@ -244,10 +244,14 @@ func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 	if !ok {
 		return refuse("kind must be one of progress, wait, basis, result, accept, return, reopen, revise or problem.")
 	}
+	var unexpected []string
 	for _, field := range in.present() {
 		if !slices.Contains(allowed, field) {
-			return refuse("%s is not part of a report of kind %s.", field, in.Kind)
+			unexpected = append(unexpected, field)
 		}
+	}
+	if len(unexpected) > 0 {
+		return refuse("Fields %s are not part of a report of kind %s. Allowed fields: kind, %s. Omit the other fields; put a progress update entirely in summary.", strings.Join(unexpected, ", "), in.Kind, strings.Join(allowed, ", "))
 	}
 	e.mu.Lock()
 	defer e.mu.Unlock()

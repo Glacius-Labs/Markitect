@@ -24,7 +24,10 @@ import (
 // instead of Apply: the same preparation, ports, evidence and report, never a
 // publication.
 func (s *executionService) evaluateVerify(ctx context.Context, request cli.ApplyRequest) (report cli.ApplyReport, err error) {
-	report.FormatVersion, report.Operation, report.Status = 1, "verify-evaluation", model.NotCompleted
+	// The harness invokes CLI apply, which emits that operation after this
+	// callback returns. Persist the same envelope; the Verify Pass and binding
+	// identify the evaluation without a stdout/report identity exception.
+	report.FormatVersion, report.Operation, report.Status = 1, "apply", model.NotCompleted
 	session, failed, err := s.open(ctx, request.Selection.Repository, request.RunConfig)
 	if err != nil {
 		if failed {

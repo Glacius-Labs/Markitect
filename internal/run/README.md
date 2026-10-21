@@ -176,7 +176,15 @@ later work Pass of their raiser.
 `check` with a `probe` runs one behavioral probe file through the `Checks` port with the
 execution profile of a required check: the profile's image, executable, fixed arguments,
 environment and limits, the caller's arguments, no network and a disposable copy. The probe
-names its obligation (own or a descendant's), claim and expected outcome; they are recorded
+is standalone: include all imports, setup and helpers in its content; another probe's
+files or process state do not carry over. Each Agent Turn also uses a fresh container.
+Its conversation and provider-home files persist, but tool/REPL variables and `/tmp`
+do not. Save a recipe in the provider home or send its complete content again.
+Plan one bounded probe per reviewer Turn; attempt a second only when observed tool
+latency leaves conservative time for a valid report and any repair. Receipts report
+the remaining Turn time. A late-check refusal means report progress (`kind` and
+`summary` only) and end the Turn; it does not invite another probe.
+The probe names its obligation (own or a descendant's), claim and expected outcome; they are recorded
 (`probe.requested`) before it runs. It runs on a stable stand: the candidate in a review,
 the accepted stand in a Pass without writes, a child's checked proposal, or in a Pass with
 writes the caller's live area composed with the accepted stand. The file is added to that
@@ -190,6 +198,18 @@ by a signal with exit 128 or above), which never counts as a pass or as an expec
 refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
 Implement and artifact-review `done`/`preserved` claims require typed evidence.
 `kind: public_behavior` cites an own passing receipt with a nonempty `probe.boundary`.
+In coverage evidence, each passing receipt supports one claim per submission,
+only under its recorded obligation. Keep unsupported conditions `open` with a note instead of duplicating
+or relabelling a receipt. A failed receipt belongs in a genuine finding (or its
+reasoned disposition), not in coverage evidence. A failure of an own public
+contract is reported under that own obligation; coordinate a dependency's required
+implementation change through the parent, preserving the dependency's write owner.
+The parent independently assesses that cross-area cause and records the necessary
+finding for the actual correction owner in its subtree; the caller's contract
+finding alone does not route the dependency's implementation work.
+A parent may cite a descendant's adverse receipt in that finding after assessing
+the causal link independently. The receipt retains its original requester,
+obligation, candidate and outcome; it is not relabelled as coverage evidence.
 An omitted evidence `boundary` inherits that recorded value; a supplied different value
 is refused. The stored evidence retains the boundary, through the actual public entry and relevant parsing/transport/
 persistence. `kind: static` cites source, location and reasoning explaining why execution
