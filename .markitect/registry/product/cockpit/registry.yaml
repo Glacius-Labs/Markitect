@@ -219,7 +219,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/store.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads the project, runs, owner questions, proposals and sessions together while the page is visible and shares them with the top bar, the hub and the pages."
+    why: "Reads the project, runs, owner questions, proposals and sessions together while the page is visible, or hidden once notifications are allowed, and shares them with the top bar, the hub and the pages."
   - path: "internal/adapters/cockpit/web/js/shell.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -227,7 +227,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/notify.js"
     form: code
     realizes: [product/cockpit/desktop-app]
-    why: "Compares each new observation with the previous one and notifies, with the owner's permission, when a run ended, the model session answered or a proposal waits for a decision; owns the bell that asks for permission and the count in the window title; the first observation only sets the baseline."
+    why: "Compares each new observation with the previous one and notifies, with the owner's permission, when a run ended, the model session answered or halted or a proposal waits for a decision, per part of the observation and only when the window is not in the owner's sight; owns the bell that asks for permission and the count in the window title; the first observation only sets the baseline."
   - path: "internal/adapters/cockpit/window.go"
     form: code
     realizes: [product/cockpit/desktop-app]

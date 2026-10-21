@@ -65,17 +65,17 @@ Starting and stopping runs are not offered. An Apply is started with `markitect 
 - Windows: Microsoft Edge (`msedge.exe` in `Program Files`, `Program Files (x86)` or the user's local application directory, or on the path), then Google Chrome in the same places, then the default browser.
 - macOS: Google Chrome, then Microsoft Edge, installed as an application (`open -na APP --args --app=URL`), then `open URL`.
 - Linux: `google-chrome`, `chromium` or `microsoft-edge` (and their stable or packaged names) with `--app`, then `xdg-open`.
-- WSL (`WSL_DISTRO_NAME` set): the Windows side first through `cmd.exe /c start "" msedge --app=URL` (then `chrome`, then the default browser), then the Linux candidates.
+- WSL (`WSL_DISTRO_NAME` set): the Windows side first. Edge and Chrome are probed in their standard `Program Files` places through the `/mnt/c` mount and the one found is run directly with `--app`; without one, `cmd.exe /c start "" URL` opens the default browser; then the Linux candidates. Starting through `cmd.exe` is not used for the browsers because it would succeed without one.
 
-Opening is best effort. A failure, or the absence of any browser, is reported on stderr with the address to open by hand, and the cockpit keeps serving. A launcher that starts but whose browser then fails (for example a missing Edge under WSL) cannot be noticed, because the browser is never waited for; the printed address is the fallback. Nothing is bundled; installer and updates belong to the pinned pilot build.
+Opening is best effort. A failure, or the absence of any browser, is reported on stderr with the address to open by hand, and the cockpit keeps serving. A browser that starts but then fails cannot be noticed, because it is never waited for; the printed address is the fallback. Nothing is bundled; installer and updates belong to the pinned pilot build.
 
 **Notifications.** The page compares each observation of the four-second poll with the previous one and, with the owner's permission, raises a desktop notification through the Web Notifications API when:
 
 - a run that was running or finishing is no longer, naming its outcome when the run list has one (a click opens the run);
-- the open model session leaves working or preparing and waits for the next prompt (a click opens the session);
+- the open model session leaves working or preparing and waits for the next prompt, or halts (a click opens the session);
 - a proposal newly waits for a decision (a click opens the proposal).
 
-The first observation after the page loads only sets the baseline, so opening the cockpit raises no burst for what was already there. The permission is asked only from the bell in the top bar, which shows whether notifications are on, off or blocked; the browser keeps the permission and the cockpit remembers nothing. Without it nothing is notified and everything else works as before. A notification is raised also while the window has focus.
+Each part of the observation (runs, sessions, proposals) takes its baseline when it first arrives, so opening the cockpit, or a part that failed to load at first, raises no burst for what was already there. The permission is asked only from the bell in the top bar, a status that reads "Turn on notifications", "Notifications on" or "Notifications blocked" (blocked stays focusable and explains itself; the browser's site settings change it); the browser keeps the permission and the cockpit remembers nothing. Without it nothing is notified and everything else works as before. No notification is raised while the window is visible and has focus, because the page shows the change itself. A minimized or covered window keeps polling once notifications are allowed and still notifies, with the delay of the browser's throttling of hidden pages; a closed window cannot notify, because only the open page watches.
 
 **Window title.** The document title is prefixed with the count of proposals that wait for a decision, `(2) Hub – Markitect cockpit`, and carries no prefix when none waits. One module (`web/js/notify.js`) owns the prefix; the places only name themselves.
 

@@ -11,34 +11,54 @@ import { store } from "./store.js";
 
 const WORKING = new Set(["working", "preparing"]);
 
-// snapshot reduces an observation to what notifications compare.
+// snapshot reduces an observation to what notifications compare, one entry
+// per part of the observation. A part that has not arrived yet (its read
+// failed so far) is null, and nothing is compared for it.
 export function snapshot(s) {
-  const runs = new Map((s.data.runs || []).map((r) => [r.id, r]));
-  const session = s.openSession;
+  const runs = s.data.runs ? { live: new Set(s.liveRuns.map((r) => r.id)), byId: new Map(s.data.runs.map((r) => [r.id, r])) } : null;
+  const session = s.data.sessions ? s.openSession : null;
   return {
-    live: new Set(s.liveRuns.map((r) => r.id)),
     runs,
-    session: session ? { id: session.id, working: WORKING.has(session.state), waiting: session.state === "waiting" } : null,
-    proposals: new Set(s.proposalsToDecide.map((p) => p.id)),
+    sessions: s.data.sessions ? { open: session ? { id: session.id, working: WORKING.has(session.state), state: session.state } : null } : null,
+    proposals: s.data.proposals ? new Set(s.proposalsToDecide.map((p) => p.id)) : null,
+  };
+}
+
+// merge keeps, per part, the last observation that arrived: a part that
+// failed to load in a poll keeps its earlier value, and a part that arrives
+// for the first time becomes its baseline without notifying.
+export function merge(prev, next) {
+  return {
+    runs: next.runs || prev?.runs || null,
+    sessions: next.sessions || prev?.sessions || null,
+    proposals: next.proposals || prev?.proposals || null,
   };
 }
 
 // changes lists the notifications a new observation causes against the
 // previous one. Every item has a title, a body and the place a click opens.
+// Only a part present in both observations is compared.
 export function changes(prev, next) {
   const out = [];
-  for (const id of prev.live) {
-    if (next.live.has(id)) continue;
-    const run = next.runs.get(id);
-    const outcome = run?.runOutcome || run?.outcome;
-    out.push({ tag: `run-ended-${id}`, title: `Run ${id} ended`, body: outcome ? `Outcome: ${outcome}.` : "Open it to see how it ended.", href: `#/run/${encodeURIComponent(id)}` });
+  if (prev.runs && next.runs) {
+    for (const id of prev.runs.live) {
+      if (next.runs.live.has(id)) continue;
+      const run = next.runs.byId.get(id);
+      const outcome = run?.runOutcome || run?.outcome;
+      out.push({ tag: `run-ended-${id}`, title: `Run ${id} ended`, body: outcome ? `Outcome: ${outcome}.` : "Open it to see how it ended.", href: `#/run/${encodeURIComponent(id)}` });
+    }
   }
-  if (prev.session?.working && next.session && next.session.id === prev.session.id && next.session.waiting) {
-    out.push({ tag: `session-${next.session.id}`, title: "The model session answered", body: "The session waits for your next prompt.", href: "#/session" });
+  const was = prev.sessions?.open;
+  const now = next.sessions?.open;
+  if (was?.working && now && now.id === was.id) {
+    if (now.state === "waiting") out.push({ tag: `session-${now.id}`, title: "The model session answered", body: "The session waits for your next prompt.", href: "#/session" });
+    else if (now.state === "halted") out.push({ tag: `session-${now.id}`, title: "The model session halted", body: "It takes no more prompts; open it to close it.", href: "#/session" });
   }
-  for (const id of next.proposals) {
-    if (prev.proposals.has(id)) continue;
-    out.push({ tag: `proposal-${id}`, title: "A proposal waits for your decision", body: `Proposal ${id}.`, href: `#/proposal/${encodeURIComponent(id)}` });
+  if (prev.proposals && next.proposals) {
+    for (const id of next.proposals) {
+      if (prev.proposals.has(id)) continue;
+      out.push({ tag: `proposal-${id}`, title: "A proposal waits for your decision", body: `Proposal ${id}.`, href: `#/proposal/${encodeURIComponent(id)}` });
+    }
   }
   return out;
 }
@@ -49,7 +69,7 @@ export function pending(s) {
 }
 
 const supported = typeof Notification !== "undefined";
-let previous = null;
+let previous = null; // per part, the last observation that arrived
 let baseTitle = document.title;
 let bell = null;
 
@@ -59,6 +79,8 @@ function permission() {
 
 function notify(item) {
   if (permission() !== "granted") return;
+  // The page shows it already while the owner looks at it.
+  if (document.visibilityState === "visible" && document.hasFocus()) return;
   try {
     const n = new Notification(item.title, { body: item.body, tag: item.tag });
     n.onclick = () => {
@@ -84,38 +106,42 @@ function drawTitle() {
 
 function observe(s) {
   const next = snapshot(s);
-  // Parts that failed to arrive leave their last value; a failed poll is not
-  // a change.
+  // A part that failed to arrive leaves its last value, so a failed poll is
+  // not a change and the next successful one does not burst.
   if (previous) for (const item of changes(previous, next)) notify(item);
-  previous = next;
+  previous = merge(previous, next);
   drawTitle();
   drawBell();
 }
 
-const bellText = {
-  default: { label: "Notifications off", title: "Turn on desktop notifications for ended runs, model session answers and proposals", on: false },
-  granted: { label: "Notifications on", title: "The browser lets the cockpit notify you; change this in the site settings of the browser", on: true },
-  denied: { label: "Notifications blocked", title: "The browser blocks notifications for the cockpit; allow them in the site settings of the browser", on: false },
+const bellState = {
+  default: { label: "Turn on notifications", title: "Ask the browser to allow desktop notifications for ended runs, model session answers and proposals", lamp: "st-none" },
+  granted: { label: "Notifications on", title: "The browser lets the cockpit notify you; change this in the site settings of the browser", lamp: "st-done" },
+  denied: { label: "Notifications blocked", title: "The browser blocks notifications for the cockpit; allow them in the site settings of the browser", lamp: "st-fail" },
 };
 
 function drawBell() {
   if (!bell) return;
-  const state = bellText[permission()] || bellText.default;
-  bell.setAttribute("aria-pressed", state.on ? "true" : "false");
-  bell.disabled = permission() === "denied";
+  const state = bellState[permission()] || bellState.default;
+  // Blocked stays focusable and says why; a click does nothing.
+  if (permission() === "denied") bell.setAttribute("aria-disabled", "true");
+  else bell.removeAttribute("aria-disabled");
   bell.title = state.title;
-  bell.className = `btn quiet small bell${permission() === "denied" ? " blocked" : ""}`;
-  bell.replaceChildren(h("span", { class: `lamp ${state.on ? "st-done" : permission() === "denied" ? "st-fail" : "st-none"}` }), h("span", { class: "belltext" }, state.label));
+  bell.className = `btn quiet small bell${permission() === "denied" ? " blocked" : permission() === "granted" ? " on" : ""}`;
+  bell.replaceChildren(h("span", { class: `lamp ${state.lamp}` }), h("span", { class: "belltext" }, state.label));
 }
 
 // notifyControl is the bell in the top bar: it shows whether notifications
 // are on, off or blocked and, while the browser has not been asked, asks on
-// the owner's click. It is absent where the browser has no notifications.
+// the owner's click. It is a status, not a switch: the page cannot turn
+// notifications off, the browser's site settings can. It is absent where
+// the browser has no notifications.
 export function notifyControl() {
   if (!supported || bell) return null;
   bell = h("button", {
     type: "button",
     onclick: async () => {
+      if (permission() !== "default") return;
       try {
         await Notification.requestPermission();
       } catch (err) {

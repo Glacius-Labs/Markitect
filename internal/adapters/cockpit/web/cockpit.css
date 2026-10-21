@@ -196,7 +196,8 @@ a.pill:hover { border-color: var(--line-ice); color: var(--ice); }
 .pill.hot { border-color: rgb(227 169 201 / 0.45); background: var(--owner-soft); color: var(--owner); }
 .pill.hot strong { color: var(--owner); }
 .topbar .bell { flex: none; gap: 8px; color: var(--ink-2); }
-.topbar .bell[aria-pressed="true"] { color: var(--ink); }
+.topbar .bell.on { color: var(--ink); }
+.topbar .bell[aria-disabled="true"] { cursor: default; }
 .topbar .bell.blocked { color: var(--ink-3); }
 
 .content { overflow: auto; min-height: 0; position: relative; }

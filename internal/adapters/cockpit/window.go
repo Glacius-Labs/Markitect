@@ -56,10 +56,15 @@ func WindowLaunches(goos string, getenv func(string) string, lookPath func(strin
 		out = append(out, Launch{"open", []string{url}})
 	default:
 		if getenv("WSL_DISTRO_NAME") != "" {
-			if cmd, ok := found("cmd.exe"); ok {
-				for _, name := range []string{"msedge", "chrome"} {
-					out = append(out, Launch{cmd, []string{"/c", "start", "", name, app}})
+			// The Windows browsers are probed through the mount of the C drive and
+			// run directly: starting through cmd.exe would succeed without a
+			// browser and never reach the fallbacks.
+			for _, path := range wslBrowsers {
+				if exists(path) {
+					out = append(out, Launch{path, []string{app}})
 				}
+			}
+			if cmd, ok := found("cmd.exe"); ok {
 				out = append(out, Launch{cmd, []string{"/c", "start", "", url}})
 			}
 		}
@@ -73,6 +78,14 @@ func WindowLaunches(goos string, getenv func(string) string, lookPath func(strin
 		}
 	}
 	return out
+}
+
+// wslBrowsers are the standard places of Edge and Chrome as seen from WSL.
+var wslBrowsers = []string{
+	"/mnt/c/Program Files (x86)/Microsoft/Edge/Application/msedge.exe",
+	"/mnt/c/Program Files/Microsoft/Edge/Application/msedge.exe",
+	"/mnt/c/Program Files/Google/Chrome/Application/chrome.exe",
+	"/mnt/c/Program Files (x86)/Google/Chrome/Application/chrome.exe",
 }
 
 var windowsBrowsers = []struct{ dir, exe string }{

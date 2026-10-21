@@ -5,7 +5,7 @@
 ## What was built
 
 - `markitect cockpit` opens the address it prints in an app window of an installed Chromium browser unless `--no-open` is given. `WindowLaunches` chooses the command from the platform, the environment and the installed programs; `OpenWindow` starts the first that works, detached. A failure is reported on stderr and never stops the cockpit.
-- The page notifies, with the owner's permission, when a run ended, when the model session answered and when a proposal waits for a decision. The first observation is the baseline. The bell in the top bar shows on, off or blocked and asks only on a click.
+- The page notifies, with the owner's permission, when a run ended, when the model session answered or halted and when a proposal waits for a decision. Each part of the observation takes its baseline when it first arrives; nothing is raised while the window is visible and focused. A hidden window keeps polling once notifications are allowed and still notifies, delayed by the browser's throttling; a closed window cannot notify. The bell in the top bar is a status (turn on, on, blocked) and asks only on a click.
 - The window title carries the count of proposals that wait for a decision.
 - Closing the window stops nothing: no page script or server route ties the server to the window, and the README says so.
 
@@ -13,8 +13,8 @@
 
 Run on Windows from the worktree of branch `dev/cockpit-window-notify`:
 
-- `go test` of `internal/adapters/cli`, `internal/adapters/cockpit` and `internal/bootstrap`, with `go vet`. New tests: the opening commands for Windows (Edge, Chrome, path, none), macOS, Linux, WSL with and without Windows interop and the default-browser fallback; the CLI opens by default, not with `--no-open`, and reports a failed opening on stderr with exit code 0 while the address is still printed.
-- The notification comparison (`snapshot`, `changes`) was exercised in Node on a constructed before and after observation: one notification each for the ended run (with its outcome), the answered session and the new proposal, none for an unchanged observation.
+- `go test` of `internal/adapters/cli`, `internal/adapters/cockpit` and `internal/bootstrap`, with `go vet`. New tests: the opening commands for Windows (Edge, Chrome, path, none), macOS, Linux, WSL (the Windows browsers probed through `/mnt/c` and run directly, then the default browser) and the default-browser fallback; the CLI opens by default, not with `--no-open`, and reports a failed opening on stderr with exit code 0 while the address is still printed.
+- The notification comparison (`snapshot`, `changes`) was exercised in Node on a constructed before and after observation: one notification each for the ended run (with its outcome), the answered or halted session and the new proposal, none for an unchanged observation, and none for a part that arrived late (it only sets its baseline).
 - `gofmt`, the architecture gate, `markitect check`, `node --check` of the changed modules, `check-docs.py` and `git diff --check`: see the commit report.
 
 ## Not established
