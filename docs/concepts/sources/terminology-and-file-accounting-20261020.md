@@ -356,6 +356,23 @@ Its A4 (run `20261020T211052Z-f08d3eb3`, product `205bf524`, Sonnet; evidence in
 
 Recorder's disposition: the matched retest includes that gap-check trial beside A4, so one retest shows whether the correction suffices or the check is needed. The trial needs a minimal check prepared for the retest; its form and placement are settled then. This adopts no product feature and grants no provider budget.
 
+## Owner selection: direct and next experiments
+
+On 21 October 2026, after assessing the completed reference and simplified series, the owner selected the provisional baseline and requested a Main record and manually started Claude assignments:
+
+> Dann nehmen wir direct als vorläufige Basis und behalten staged als Vergleich. Halte das auf Main fest und gib mir den Claude-Prompt für den Containerumbau und die gezielten Nachtests.
+>
+> Ausserdem schlage ich folgendes vor:
+>
+> - Wir brauchen eine Testumgebung mit Szenarien die jeweils möglichst klein und gezielt sind. Das heißt jedes Szenario das wir als Test nehmen sollte einen Aspekt abprüfen und uns eine Aussage ermöglichen. Beispielsweise Modell Lücke, Reliability bei hoher Komplexität, Viele Abhängigkeiten, Hohe Komplexität. Ein Szenario testet einen vollständigen Run mit hoher Komplexität und hohem Aufwand, ähnlich wie bei einem realen Szenario.
+> - Modell Prüfung als Check vorher. Wir haben ein Agenten Team, welches zuerst nach den Compiler Checks das Modell prüft und entweder sagt es nimmt es ab oder nicht.
+> - Ein Vergleichsaufbau pro Versuch mit kompiliertem Plan (Zusammenstellen einer plan.md und einen Agenten nehmen wie im normalen Durchlauf).
+> - Bei Containern berücksichtigen, dass wir in etwa so arbeiten, dass wir später genauso auch in Kubernetes arbeiten können.
+>
+> Was denkst du davon? Wenn du mit allem Einverstanden bist mache einen Plan. Dann starte ich neue Claude Sessions dafür. Ansonsten refine den Plan oder ergänze ihn gerne
+
+Recorder's disposition: direct is the selected provisional Apply composition; staged stays an explicit comparison with the same guarantees. This does not assert staged is safer or that the experimental code is already Main. The [workflow amendment](../../design/canonical-model/manager-apply-workflow.md#provisional-direct-baseline-21-october-2026) owns the decision. The [new handoff](../../development/claude-direct-runtime-handoff-20261021.md) refines the proposals into four bounded sessions: runtime/container retest; small independent scenario controls plus an ordinary-Agent packet and one realistic case; separate read-only Model assessment; then matched evaluation. Model assessment remains an experiment before any mandatory gate decision; it cannot certify completeness or edit intent. Kubernetes is a portability constraint, not current cluster implementation scope. The startup prompts propose explicit finite grants activated by the owner's later dispatch; this documentation starts no session or provider run. The earlier blanket deferral of new complexity cases is lifted only for this bounded preparation/comparison plan.
+
 ## Owner adoption: evidence-driven Apply hardening
 
 After discussing draft PR #536, the owner asked how to prevent reviewers from filling the new fields while still missing the same defect, and proposed making Managers suspicious of unsupported success. The response proposed active counterexample search, expectations derived from authority independently of existing assertions, tool-recorded observations, parent assessment of the actual evidence, and faulty/conforming evaluation controls. It explicitly rejected finding quotas and kept concrete unresolved conformity questions blocking.
