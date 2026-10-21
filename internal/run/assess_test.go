@@ -11,6 +11,20 @@ func assessSpec() PassSpec {
 	return PassSpec{Purpose: Assess, Mandate: "Assess the bound model.", Review: true, Assesses: true, Guidance: "A genuine finding is a material model problem.", Corrections: []Purpose{"model_error", "model_gap", "unclassified"}}
 }
 
+// resultTurn reports whether the turn submits a complete result, after it
+// decided its children's proposals.
+func (c *call) resultTurn() bool {
+	if now := c.now(); !strings.HasPrefix(now, "submit your complete result") && !strings.HasPrefix(now, "integrate your children") {
+		return false
+	}
+	for _, id := range c.pendingDecisions() {
+		if !c.decided[id] {
+			c.accept(id)
+		}
+	}
+	return true
+}
+
 // libraryGap is the material gap the fixture's library reviewer reports.
 var libraryGap = map[string]any{"owner": "library", "obligation": "library/interface", "observed": "the model leaves the maximum name length open", "blocking": true, "correction": "model_gap"}
 
@@ -228,7 +242,81 @@ func TestATechnicalFailureInTheAssessmentIsNoModelProblem(t *testing.T) {
 		res = r.Pass(assessSpec())
 	}
 	out := f.finish(r, "the model assessment did not reach a clean Pass")
-	if out.Status == Verified || strings.HasPrefix(out.Reason, ModelAssessmentReason) {
+	if out.Status != Incomplete || !strings.Contains(out.Reason, "the provider connection broke") || strings.HasPrefix(out.Reason, ModelAssessmentReason) {
+		t.Fatalf("status %s: %s", out.Status, out.Reason)
+	}
+}
+
+// A dispute counts only in the Pass it was raised in: a finding disputed in
+// one assessment and upheld, undisputed, in the next is confirmed.
+func TestAFindingUpheldInTheNextAssessmentIsConfirmed(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	raised := false
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case raiseGap(c, &raised), disputeGap(c):
+		case c.pass() == "p2" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			// The fresh reviewer keeps its finding: it neither closes nor softens it.
+			c.must(toolReport, c.envelope(kindBasis, nil))
+		case c.pass() == "p2" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit your complete result"):
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+		default:
+			c.protocol()
+		}
+		return nil
+	}
+	r := f.open()
+	if first := r.Pass(assessSpec()); first.Verdict != NeedsCorrection || !r.Reassess() {
+		t.Fatalf("first assessment %+v", first)
+	}
+	if second := r.Pass(assessSpec()); second.Verdict != NeedsCorrection || r.Reassess() {
+		t.Fatalf("second assessment %+v", second)
+	}
+	if out := f.finish(r, ""); out.Status != Failed || !strings.HasPrefix(out.Reason, ModelAssessmentReason) || !strings.Contains(out.Reason, "F1 [library, model_gap]") {
+		t.Fatalf("status %s: %s", out.Status, out.Reason)
+	}
+}
+
+// A candidate verified just before an assessment stays verified only through
+// clean assessments of the same stand, also after a reassessment.
+func TestAVerifiedCandidateStaysVerifiedThroughItsAssessment(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	raised := false
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case c.pass() == "p3" && c.turn.Manager == "library" && c.resultTurn() && !raised:
+			raised = true
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []map[string]any{libraryGap}}))
+		case c.pass() == "p3" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate your children"):
+			for _, id := range c.pendingDecisions() {
+				c.accept(id)
+			}
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "the wording fixes the limit", "evidence": "library/interface"}}}))
+		case c.pass() == "p4" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the wording fixes the limit", "evidence": "library/interface"}}}))
+		default:
+			c.protocol()
+		}
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	if v := r.Pass(verifySpec()); v.Verdict != Satisfied {
+		t.Fatalf("verify %+v", v)
+	}
+	if a := r.Pass(assessSpec()); a.Verdict != NeedsCorrection || !r.Reassess() {
+		t.Fatalf("first assessment %+v", a)
+	}
+	if a := r.Pass(assessSpec()); a.Verdict != Satisfied {
+		t.Fatalf("second assessment %+v", a)
+	}
+	if out := f.finish(r, ""); out.Status != Verified {
 		t.Fatalf("status %s: %s", out.Status, out.Reason)
 	}
 }

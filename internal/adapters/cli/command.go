@@ -42,6 +42,7 @@ type Command struct {
 	extract     ExtractFunc
 	setup       SetupFunc
 	cockpit     CockpitFunc
+	window      WindowOpener
 }
 
 func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc) *Command {
@@ -69,8 +70,8 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   extract [options]        derive a model candidate from the existing artifacts
   setup --runtime DIR --image REF --credential FILE --agent-model M [options]
                             prepare a Runtime directory with runtime.yaml and run.json
-  cockpit --state DIR | --run-config PATH [--repo PATH] [--listen ADDR]
-                            observe runs and make settings and model proposals in a local web view
+  cockpit --state DIR | --run-config PATH [--repo PATH] [--listen ADDR] [--no-open]
+                            open the app window and observe runs in a local web view
   version | licenses | help
 
 Common options:

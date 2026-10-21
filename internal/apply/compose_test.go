@@ -1,6 +1,8 @@
 package apply
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"slices"
 	"strings"
 	"testing"
@@ -158,5 +160,21 @@ func TestMandatesBoundChangesAndFindingsToConformance(t *testing.T) {
 	}
 	if !strings.Contains(review.Mandate, "is a suspected finding, never a suggestion") {
 		t.Error("the Verify mandate parks an unsettled question elsewhere")
+	}
+}
+
+// The Model assessment's mandate and guidance are Session C's method of
+// experiments/model-assessment/assessment-pass.json at 7db130d7 byte for byte;
+// a change of the method changes these digests deliberately.
+func TestTheAssessmentMethodIsPinned(t *testing.T) {
+	spec := assessSpec()
+	if got := fmt.Sprintf("%x", sha256.Sum256([]byte(spec.Mandate))); got != "17353a41dfef65452c925ae552092884de4c4c703654af9e03c090fe1b56dad5" {
+		t.Errorf("mandate digest %s", got)
+	}
+	if got := fmt.Sprintf("%x", sha256.Sum256([]byte(spec.Guidance))); got != "b2f5ba101ea459e7f044caa41c154c7714482c7594db53a7b25d5b3ca517a80d" {
+		t.Errorf("guidance digest %s", got)
+	}
+	if !spec.Review || !spec.Assesses || !slices.Equal(spec.Corrections, []run.Purpose{"model_error", "model_gap", "unclassified"}) {
+		t.Errorf("spec %+v", spec)
 	}
 }

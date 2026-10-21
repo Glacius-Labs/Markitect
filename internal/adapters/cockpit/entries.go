@@ -85,8 +85,11 @@ func entry(r Record) Entry {
 		}
 		e.Class, e.Ref = "control", "pass:"+r.Pass
 		e.Text = fmt.Sprintf("Pass %s started: %s, %s", r.Pass, str("purpose"), access)
-		if flag("review") {
-			e.Text = fmt.Sprintf("Pass %s started: verify with fresh reviewers, read-only", r.Pass)
+		switch {
+		case flag("review") && str("purpose") == "assess":
+			e.Text = fmt.Sprintf("Pass %s started: Model assessment with fresh reviewers, read-only", r.Pass)
+		case flag("review"):
+			e.Text = fmt.Sprintf("Pass %s started: %s with fresh reviewers, read-only", r.Pass, str("purpose"))
 		}
 	case "pass.sealed":
 		e.Class, e.Ref, e.Text = "control", "pass:"+r.Pass, fmt.Sprintf("Pass %s sealed %s", r.Pass, str("verdict"))

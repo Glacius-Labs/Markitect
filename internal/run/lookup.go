@@ -166,6 +166,9 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 		list(&b, "Open findings of your responsibility:", lines)
 		return ToolAnswer{Text: b.String()}
 	case "checks":
+		if m.p.spec.Assesses {
+			return ToolAnswer{Text: "No required check runs in the Model assessment: the project's checks judge artifacts and run in Verify."}
+		}
 		var lines []string
 		for _, c := range e.cfg.Checks {
 			line := fmt.Sprintf("%s (required by %s)", c.Name, c.RequiredBy)

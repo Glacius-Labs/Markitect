@@ -52,6 +52,11 @@ func assess(r *run.Run, spec run.PassSpec) (bool, string) {
 	return false, "the model assessment did not reach a clean Pass"
 }
 
+// AssessmentAccepted is the reason of an AssessCaptured run whose Model
+// assessment accepted the model: it is Incomplete only because nothing is
+// realized after the assessment.
+const AssessmentAccepted = "the model assessment accepted the model; this entry realizes nothing"
+
 // AssessCaptured runs only the Model assessment of the captured stand, with
 // the same Briefs, ownership, gates and budget as Apply in the same closed run
 // but without work, required checks or publication: the evaluation entry of
@@ -70,7 +75,10 @@ func AssessCaptured(ctx context.Context, req ApplyRequest) (ApplyResult, error) 
 	if err != nil {
 		return ApplyResult{Binding: binding}, err
 	}
-	_, reason := assess(r, assessSpec())
+	accepted, reason := assess(r, assessSpec())
+	if accepted {
+		reason = AssessmentAccepted
+	}
 	outcome, runErr := r.Finish(reason)
 	ports := req.ports()
 	ports.removeHomes(ctx, outcome.Homes)

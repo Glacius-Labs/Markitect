@@ -1,24 +1,13 @@
 package run
 
 import (
+	"slices"
 	"strings"
 	"sync"
 	"testing"
-)
 
-// resultTurn reports whether the turn submits a complete result, after it
-// decided its children's proposals.
-func (c *call) resultTurn() bool {
-	if now := c.now(); !strings.HasPrefix(now, "submit your complete result") && !strings.HasPrefix(now, "integrate your children") {
-		return false
-	}
-	for _, id := range c.pendingDecisions() {
-		if !c.decided[id] {
-			c.accept(id)
-		}
-	}
-	return true
-}
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
+)
 
 // suggestion is an optional note a reviewer adds to its result.
 func suggestion(owner, obligation string) map[string]any {
@@ -35,7 +24,7 @@ func suspicion(owner, obligation string) map[string]any {
 // deviation or suspicion states its expected outcome, and each Pass knows only
 // its own kinds.
 func TestFindingKindsHaveTheirDeclaredEffects(t *testing.T) {
-	work, assess := implementSpec(), assessSpec()
+	work, review, assess := implementSpec(), verifySpec(), assessSpec()
 	no, yes := false, true
 	for _, tc := range []struct {
 		name string
@@ -47,11 +36,12 @@ func TestFindingKindsHaveTheirDeclaredEffects(t *testing.T) {
 		{"default genuine", work, findingIn{Blocking: &yes, Expected: "e"}, Deviation, ""},
 		{"default note", work, findingIn{Blocking: &no}, Suggestion, ""},
 		{"default in the assessment", assess, findingIn{Blocking: &yes}, ModelProblem, ""},
-		{"suspicion", work, findingIn{Kind: "suspected", Blocking: &yes, Expected: "e"}, Suspected, ""},
+		{"suspicion", review, findingIn{Kind: "suspected", Blocking: &yes, Expected: "e"}, Suspected, ""},
+		{"a suspicion in a work Pass", work, findingIn{Kind: "suspected", Blocking: &yes, Expected: "e"}, "", "kind must be one of"},
 		{"a blocking suggestion", work, findingIn{Kind: "suggestion", Blocking: &yes}, "", "a suggestion never blocks"},
 		{"a non-blocking deviation", work, findingIn{Kind: "deviation", Blocking: &no, Expected: "e"}, "", "a deviation blocks"},
 		{"a deviation without its expected outcome", work, findingIn{Blocking: &yes}, "", "states the outcome its obligation requires"},
-		{"a suspicion without its expected outcome", work, findingIn{Kind: "suspected", Blocking: &yes}, "", "states the outcome its obligation requires"},
+		{"a suspicion without its expected outcome", review, findingIn{Kind: "suspected", Blocking: &yes}, "", "states the outcome its obligation requires"},
 		{"a model problem outside the assessment", work, findingIn{Kind: "model", Blocking: &yes}, "", "kind must be one of"},
 		{"a deviation in the assessment", assess, findingIn{Kind: "deviation", Blocking: &yes, Expected: "e"}, "", "kind must be one of"},
 	} {
@@ -243,10 +233,140 @@ func TestASettledFindingIsNotReopenedWithoutNewEvidence(t *testing.T) {
 		t.Fatalf("first verify %+v", first)
 	}
 	second := r.Pass(verifySpec())
-	if !strings.Contains(reopened, "F1 settled this obligation") || !strings.Contains(reopened, "no new evidence") {
+	if !strings.Contains(reopened, "F1 disproved this obligation") || !strings.Contains(reopened, "no new evidence") {
 		t.Fatalf("a reworded repeat was accepted: %q", reopened)
 	}
 	if out := f.finish(r, ""); second.Verdict != Satisfied || out.Status != Verified || len(out.Findings) != 1 {
 		t.Fatalf("second verify %s, status %s: %s, findings %d", second.Verdict, out.Status, out.Reason, len(out.Findings))
+	}
+}
+
+// Next to a deviation of the same owner, a suspicion still is no work: the
+// correction Pass the deviation starts hands its owner the deviation only.
+func TestASuspicionNextToADeviationIsNotWorkedOn(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn() {
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice"), suspicion("lending/reminders", "lending/reminders/boundary")}}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	if v := r.Pass(verifySpec()); v.Verdict != NeedsCorrection || !slices.Equal(r.Corrections(), []Purpose{Implement}) {
+		t.Fatalf("verify %+v, corrections %v", v, r.Corrections())
+	}
+	r.Pass(implementSpec())
+	seen := false
+	for _, turn := range f.agents.turns {
+		if strings.Contains(turn.ID, "-p3-") && turn.Manager == "lending/reminders" && strings.Contains(turn.Prompt, "Finding F1") {
+			seen = true
+			if strings.Contains(turn.Prompt, "Finding F2") {
+				t.Fatalf("the correction Pass hands the suspicion to its owner:\n%s", turn.Prompt)
+			}
+		}
+	}
+	if !seen {
+		t.Fatal("the correction Pass does not hand the deviation to its owner")
+	}
+	f.finish(r, "")
+}
+
+// Only a disproof settles a finding: after its raiser closed it as resolved
+// on a changed candidate, another reviewer may raise the same obligation
+// there.
+func TestAResolvedFindingCanBeRaisedAgain(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	var again ToolAnswer
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn():
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			return nil
+		case c.pass() == "p3" && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on"):
+			c.write("lending/reminders/r.go", "r2")
+		case c.pass() == "p4" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && again.Text == "":
+			if again = c.result(map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}); !again.Refused {
+				return nil
+			}
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	r.Pass(verifySpec())
+	r.Pass(implementSpec())
+	r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if again.Refused || len(out.Findings) != 2 || out.Findings[0].ClosedAs != ClosedResolved {
+		t.Fatalf("raise again %q; findings %+v", again.Text, out.Findings)
+	}
+}
+
+// A suspicion is confirmed only by a deviation of its own obligation.
+func TestAConfirmationNamesTheSameObligation(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	var refusal string
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		switch {
+		case c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn():
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{suspicion("lending/reminders", "lending/reminders/notice")}}))
+			return nil
+		case c.pass() == "p3" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on") && refusal == "":
+			refusal = c.basis(map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedConfirmed, "reason": "another defect", "evidence": "r.go"}}, "findings": []any{genuine("lending/reminders", "lending/reminders/other")}}).Text
+			// The suspicion stays open for the next review.
+			c.must(toolReport, c.envelope(kindBasis, nil))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	if v := r.Pass(verifySpec()); v.Verdict != NeedsCorrection || !r.Reassess() {
+		t.Fatalf("verify %+v", v)
+	}
+	r.Pass(verifySpec())
+	f.finish(r, "")
+	if !strings.Contains(refusal, "of the same owner and obligation") {
+		t.Fatalf("a deviation of another obligation confirmed the suspicion: %q", refusal)
+	}
+}
+
+// An Extract artifact finding keeps its kind but stays advisory: it blocks
+// nothing, names no correction and is never refused as a repeat.
+func TestAnAdvisoryArtifactFindingNamesNoCorrection(t *testing.T) {
+	f := newFixture(t)
+	f.cfg.ResolveDefinition = func(snapshot.Tree, string) bool { return true }
+	spec := verifySpec()
+	spec.ArtifactFindingsAdvisory = true
+	f.agents.script = func(c *call) error {
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "lending" && c.resultTurn() {
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"findings": []any{map[string]any{"subject": "artifact", "definition": "lending/borrow", "owner": "lending", "obligation": "lending/borrow", "expected": "five loans at most", "observed": "borrow admits a sixth loan", "blocking": true}}}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	if v := r.Pass(spec); v.Verdict != Satisfied || len(r.Corrections()) != 0 {
+		t.Fatalf("verify %+v, corrections %v", v, r.Corrections())
+	}
+	out := f.finish(r, "")
+	if len(out.Findings) != 1 || out.Findings[0].Blocking || out.Findings[0].Correction != "" || out.Findings[0].Kind != Deviation || out.Findings[0].Subject != subjectArtifact {
+		t.Fatalf("findings %+v", out.Findings)
 	}
 }

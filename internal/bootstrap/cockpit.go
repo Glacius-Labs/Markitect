@@ -29,16 +29,22 @@ type cockpitService struct {
 	repository  *gitrepo.Repository
 	agents      apply.AgentProfilePreparer
 	checks      apply.CheckProfilePreparer
+	// execute is the execution function markitect apply runs. With a run
+	// configuration and a Runtime profile the cockpit starts it in its own
+	// process, so a run it started ends with it.
+	execute cli.ApplyFunc
 }
 
 func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, ready func(url string)) error {
 	states := append([]string(nil), request.States...)
+	runState := ""
 	if request.RunConfig != "" {
 		cfg, err := loadRunConfig(ctx, request.RunConfig)
 		if err != nil {
 			return err
 		}
 		states = append(states, cfg.StateDirectory)
+		runState = cfg.StateDirectory
 	}
 	// The server and the fence name every state directory by its absolute path.
 	for i, dir := range states {
@@ -58,6 +64,7 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 		return stateHeld(dir)
 	}
 	cfg := cockpit.Config{States: states, Liveness: liveness}
+	var runs *cockpit.RunController
 	var proposals *authoring.Service
 	if selection := request.Selection; selection.Repository != "" {
 		cfg.Project = func(ctx context.Context) (cockpit.ProjectInfo, error) {
@@ -68,12 +75,25 @@ func (c cockpitService) Serve(ctx context.Context, request cli.CockpitRequest, r
 			proposals.WithSessions(c.sessionOpener(selection, request.RunConfig, request.RuntimeProfile))
 		}
 		cfg.Authoring = proposals
+		if request.RunConfig != "" && request.RuntimeProfile != "" && c.execute != nil {
+			abs, err := filepath.Abs(runState)
+			if err != nil {
+				return err
+			}
+			runs = c.runController(ctx, selection, request.RunConfig, request.RuntimeProfile, abs, request.Build, fence)
+			cfg.Runs = runs
+		}
 	}
 	server, err := cockpit.New(cfg)
 	if err != nil {
 		return err
 	}
 	err = server.Serve(ctx, request.Listen, ready)
+	if runs != nil {
+		// A stopping cockpit ends the run it started and waits until the
+		// execution wrote the run's report and closed its evidence.
+		runs.Wait()
+	}
 	if proposals != nil {
 		// A stopping cockpit ends its model sessions and lets a started
 		// publication finish.
@@ -221,29 +241,9 @@ func (s stateLocks) release() {
 // evidence goes to the run configuration's state directory.
 func (c cockpitService) sessionOpener(base apply.InputSelection, runConfig, runtimeProfile string) authoring.SessionOpener {
 	return func(ctx context.Context) (authoring.SessionStart, error) {
-		cfg, err := loadRunConfig(ctx, runConfig)
+		cfg, a, err := c.captureWithRuntime(ctx, base, runConfig, runtimeProfile)
 		if err != nil {
 			return authoring.SessionStart{}, err
-		}
-		if err := checkStateOutsideRepository(cfg.StateDirectory, base.Repository); err != nil {
-			return authoring.SessionStart{}, err
-		}
-		selection := base
-		profile, err := snapshot.NewPath(filepath.Base(runtimeProfile))
-		if err != nil {
-			return authoring.SessionStart{}, err
-		}
-		selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(runtimeProfile), Path: profile}}
-		prepared, err := c.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: selection}, model.Limits{}, c.agents, c.checks)
-		if errors.Is(err, gitrepo.ErrDirty) {
-			return authoring.SessionStart{}, fmt.Errorf("%w (%v)", authoring.ErrNotClean, err)
-		}
-		if err != nil {
-			return authoring.SessionStart{}, err
-		}
-		a, ok := prepared.Prepared()
-		if prepared.Status() != model.Passed || !ok {
-			return authoring.SessionStart{}, fmt.Errorf("the committed source with the Runtime profile does not pass preparation (%s); run markitect check and markitect setup", prepared.Status())
 		}
 		basis, err := apply.SessionBasisOf(a)
 		if err != nil {
@@ -268,4 +268,43 @@ func (c cockpitService) sessionOpener(base apply.InputSelection, runConfig, runt
 			MaxEntries: cfg.Harvest.MaxEntries, MaxBytes: cfg.Harvest.MaxBytes, Evidence: cfg.StateDirectory,
 		}}, nil
 	}
+}
+
+// withRuntimeProfile selects the Runtime profile as markitect apply does.
+func withRuntimeProfile(base apply.InputSelection, runtimeProfile string) (apply.InputSelection, error) {
+	profile, err := snapshot.NewPath(filepath.Base(runtimeProfile))
+	if err != nil {
+		return apply.InputSelection{}, err
+	}
+	base.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(runtimeProfile), Path: profile}}
+	return base, nil
+}
+
+// captureWithRuntime captures the committed source with its settings and the
+// Runtime profile, as an Apply does, and requires that it passes. It is the
+// start of a model session and the source of a run's confirmation facts.
+func (c cockpitService) captureWithRuntime(ctx context.Context, base apply.InputSelection, configPath, runtimeProfile string) (runConfig, apply.CapturedSettingsAttempt, error) {
+	cfg, err := loadRunConfig(ctx, configPath)
+	if err != nil {
+		return cfg, apply.CapturedSettingsAttempt{}, err
+	}
+	if err := checkStateOutsideRepository(cfg.StateDirectory, base.Repository); err != nil {
+		return cfg, apply.CapturedSettingsAttempt{}, err
+	}
+	selection, err := withRuntimeProfile(base, runtimeProfile)
+	if err != nil {
+		return cfg, apply.CapturedSettingsAttempt{}, err
+	}
+	prepared, err := c.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: selection}, model.Limits{}, c.agents, c.checks)
+	if errors.Is(err, gitrepo.ErrDirty) {
+		return cfg, apply.CapturedSettingsAttempt{}, fmt.Errorf("%w (%v)", authoring.ErrNotClean, err)
+	}
+	if err != nil {
+		return cfg, apply.CapturedSettingsAttempt{}, err
+	}
+	a, ok := prepared.Prepared()
+	if prepared.Status() != model.Passed || !ok {
+		return cfg, apply.CapturedSettingsAttempt{}, fmt.Errorf("the committed source with the Runtime profile does not pass preparation (%s); run markitect check and markitect setup", prepared.Status())
+	}
+	return cfg, a, nil
 }

@@ -886,7 +886,8 @@ func (e *engine) seal(p *pass) PassResult {
 		// Root confirmed what its tree found: the bound model has a material
 		// problem, which no Pass of this run can correct. A Pass that only
 		// disputed findings keep from being clean is reassessed instead.
-		e.reject(ModelAssessmentReason + strings.Join(confirmed, "; "))
+		shown := confirmed[:min(len(confirmed), maxListedNames)]
+		e.reject(fmt.Sprintf("%s%s (%d confirmed)", ModelAssessmentReason, strings.Join(shown, "; "), len(confirmed)))
 	}
 	record := p.recordLocked()
 	_ = e.record(Event{Kind: "pass.sealed", Pass: p.id, Data: map[string]any{"purpose": p.spec.Purpose, "verdict": p.verdict, "tree": p.sealedOn, "managers": record.Managers}})
@@ -974,7 +975,7 @@ func (e *engine) confirmedLocked(p *pass) []string {
 	var lines []string
 	for _, f := range e.findings {
 		if f.Blocking && !f.Closed && f.Kind != Suspected && f.RaisedBy != MarkitectFinding && !slices.ContainsFunc(f.Disputes, func(d Dispute) bool { return d.Pass == p.id }) {
-			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, f.Observed))
+			lines = append(lines, fmt.Sprintf("%s [%s, %s] %s: %s", f.ID, f.Owner, f.Correction, f.Obligation, clip(f.Observed, 400)))
 		}
 	}
 	return lines

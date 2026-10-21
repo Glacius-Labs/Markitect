@@ -1,11 +1,13 @@
 // The Runs area: the runs that run now and the history of every recorded run
 // of the observed state directories with its outcome, publication,
-// organization, source and reported usage. A run opens in the inspector. The
-// cockpit neither starts nor stops a run.
+// organization, source and reported usage. A run opens in the inspector. A
+// card above them starts and stops the one run this cockpit runs, when it is
+// configured to; runs started elsewhere are only observed.
 
 import { h, clear, when, duration } from "./dom.js";
 import { store } from "./store.js";
 import { refreshState } from "./shell.js";
+import { runControlCard } from "./runcontrol.js";
 
 const outcomeClass = { success: "st-done", verified: "st-done", failed: "st-fail", incomplete: "st-waiting" };
 
@@ -16,8 +18,8 @@ export function renderRuns(content) {
   const page = h("div", { class: "page" },
     h("div", { class: "pagehead" }, h("div", {},
       h("h2", {}, "Runs"),
-      h("p", { class: "lead" }, "Start an Apply with markitect apply; it appears here while it runs. The cockpit neither starts nor stops a run: interrupting the markitect apply process ends it incomplete with its evidence, and pausing a replay never reaches the run."))),
-    now, history, states);
+      h("p", { class: "lead" }, "Start a run here when the cockpit has a run configuration and a Runtime profile, or start an Apply with markitect apply; it appears below while it runs. Stop ends only the run started here, incomplete with its evidence. A run started elsewhere is stopped where it was started, and pausing a replay never reaches a run."))),
+    runControlCard(), now, history, states);
   content.append(page);
   const draw = (s) => {
     if (!page.isConnected) return unsubscribe();
