@@ -26,10 +26,10 @@ export function renderOrganization(content) {
     if (closed || !data) return;
     const v = wantResolved && data.resolved ? data.resolved : data.declared;
     resolve.disabled = !data.resolvable || data.resolving || reading;
-    resolve.textContent = data.resolving ? "Resolving profilesâ€¦" : "Resolve profiles";
+    resolve.textContent = data.resolving ? "Resolving profiles…" : "Resolve profiles";
     resolve.title = data.resolvable ? "Read the committed settings with the configured Runtime profile" : "A Runtime profile and run configuration are needed to resolve profiles";
     declared.hidden = !wantResolved;
-    const status = [data.resolving ? "Resolving the committed source; declarations stay visible until it is ready." : "", v ? `${v.mode === "resolved" ? "Resolved from committed source" : "Declared in the working-tree observation"} Â· ${v.head ? v.head.slice(0, 12) : "head not observed"} Â· model ${shortDigest(v.modelDigest) || "not checked"}` : data.observing ? "Observing the repositoryâ€¦" : "No checked organization is available.", !data.resolvable ? "Runtime resolution is not configured." : ""].filter(Boolean).join(" ");
+    const status = [data.resolving ? "Resolving the committed source; declarations stay visible until it is ready." : "", v ? `${v.mode === "resolved" ? "Resolved from committed source" : "Declared in the working-tree observation"} · ${v.head ? v.head.slice(0, 12) : "head not observed"} · model ${shortDigest(v.modelDigest) || "not checked"}` : data.observing ? "Observing the repository…" : "No checked organization is available.", !data.resolvable ? "Runtime resolution is not configured." : ""].filter(Boolean).join(" ");
     if (state.textContent !== status) state.textContent = status;
     problem.textContent = [data.error, v?.error].filter(Boolean).join(" ");
     if (!v?.managers.length) {
@@ -91,7 +91,7 @@ function drawDetail(el, v, selected) {
     h("h4", {}, "Own Definitions"), m.definitions.length ? h("ul", {}, m.definitions.map((d) => h("li", {}, h("a", { href: browseHref(d.package, d.id) }, d.id)))) : h("p", { class: "note" }, m.path === "." ? "Root has no local Definitions; it coordinates the complete project." : "This Package has no own Definitions."),
     h("h4", {}, "Owned areas"), v.error && !v.ownership ? h("p", { class: "note" }, "Validated areas are unavailable; inspect the preparation error above.") : !v.ownership ? h("p", { class: "note" }, "No ownership layout is declared. Registry assignments are separate.") : m.areas.length ? h("ul", {}, m.areas.map((area) => h("li", {}, area))) : h("p", { class: "note" }, "No artifact area assigned to this Manager."),
     h("h4", {}, "Project-wide team"), h("p", { class: "note" }, "This team applies to every Manager. Per-Package overrides change only Execute and Verify profiles."),
-    m.team ? h("div", {}, h("p", {}, `At most ${m.team.maxHelpers} helpers active per Manager.`), h("ul", {}, m.team.helpers.map((helper) => h("li", {}, h("strong", {}, helper.role), ` Â· ${helper.writes ? "may write delegated files" : "read-only"}`, h("p", {}, profileText(helper.profile, "Manager's Execute profile")))))) : h("p", { class: "note" }, "No team declaration. Resolve profiles to inspect the product default."),
+    m.team ? h("div", {}, h("p", {}, `At most ${m.team.maxHelpers} helpers active per Manager.`), h("ul", {}, m.team.helpers.map((helper) => h("li", {}, h("strong", {}, helper.role), ` · ${helper.writes ? "may write delegated files" : "read-only"}`, h("p", {}, profileText(helper.profile, "Manager's Execute profile")))))) : h("p", { class: "note" }, "No team declaration. Resolve profiles to inspect the product default."),
     h("a", { class: "btn small", href: "#/settings?section=team" }, "Change the project-wide team")]);
 }
 

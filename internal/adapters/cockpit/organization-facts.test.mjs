@@ -31,9 +31,9 @@ test("source Manager parents are kept in a large synthetic observation", () => {
 test("absent declaration remains absent and navigation preserves exact names", () => {
   assert.equal(profileText({}), "Not declared");
   assert.equal(profileText({ name: "p" }), "p");
-  assert.equal(profileText({ name: "p", model: "m" }), "p Â· m");
+  assert.equal(profileText({ name: "p", model: "m" }), "p · m");
   assert.equal(profilesHref("."), "#/settings?section=profiles");
-  const pkg = "a/b + Ã¼";
+  const pkg = "a/b + ü";
   assert.equal(new URLSearchParams(profilesHref(pkg).split("?")[1]).get("pkg"), pkg);
   const params = new URLSearchParams(browseHref(pkg, "rule + 1").split("?")[1]);
   assert.equal(params.get("pkg"), pkg); assert.equal(params.get("def"), "rule + 1");
