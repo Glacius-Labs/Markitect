@@ -52,11 +52,44 @@ Preserved files include every `full-r3-*` JSON/error/completion file, `full-r4-h
 
 The delivering PR and final chat bind the reviewed head and merge SHA. The evidence table below records actual outputs and product identities; no hosted CI was requested under the current integration rule. Local controls do not establish provider success, Apply acceptance, release or owner acceptance.
 
-After the initial composition, Main advanced through #566, #570 and C's #562 to `f09f006ac575b7681a3baebe0649ce38d3124fe0`. B composed that integrated stand as `1003130150b10ff90cecbd10915ec9f7fe557eca`; the navigation conflict retained both B's detailed kit entry and C's method entry. The final product executable is built from that exact composition with `vcs.modified=false`, SHA256 `a4f169579357a753e14edd1d3f93ef77faba7cca94acfae58b57f626baff41b9`. Later kit-only changes do not alter that executable's identity.
+After the initial composition, Main advanced through #566, #570 and C's #562 to `f09f006ac575b7681a3baebe0649ce38d3124fe0`. B composed that integrated stand as `1003130150b10ff90cecbd10915ec9f7fe557eca`; the navigation conflict retained both B's detailed kit entry and C's method entry. The second product executable is built from that exact composition with `vcs.modified=false`, SHA256 `a4f169579357a753e14edd1d3f93ef77faba7cca94acfae58b57f626baff41b9`. Later kit-only changes do not alter that executable's identity.
 
 The successor's first broad `evalcheck.py` and combined Stockroom/Depot/Hall `selfcheck.py` processes were explicitly interrupted after confirmed evaluator defects and before full output. Their empty/partial outputs and `interrupted-successor-checks.txt` are retained. They are neither successful full checks nor provider attempts. The renewed checks focus on the corrected contracts and affected fixtures; no complete successor fleet/full-kit result is claimed. The predecessor's actual full results remain separately bound above.
 
 For coordination: all newly confirmed findings in this record are B evaluator/control defects, not demonstrated production failures for A. Production already provides the required `Pass.tree`, `Finding.candidate`, `closedPass`, `closedAs`, `closedReason`, `closedEvidence`, Event `pass` and Pass purpose bindings. B had dropped or failed to correlate them. An accepted model-only assessment is a sealed `Satisfied` with Run `Incomplete` and `AssessmentAccepted`; it is not artifact verification. Root-confirmed model problems are Failed and technical/unfinished assessment is incomplete, as C's integrated scorer records.
+
+## Closing source, controls and evidence
+
+Main subsequently integrated observation kinds (#571) and reusable Manager containers (#572), reaching `fd94e365f9c1c060c9419be67b70ca072b6c1128`. B composed those changes as `b0635a60b28320f692988a8da3b6103a7ca43585`; its closing product executable is built at `8198b318ee106501c1c8d16760c2c14b6f7100e0`, `vcs.modified=false`, SHA256 `5fb24d10df3a9fe408c178d5c1a7e5d415ed5d1c4a5c3d41bf7264e08c467570`. This adds no B production implementation or runtime evaluation.
+
+The current source supplies `Finding.kind` (`deviation`, `suspected`, `model`, `suggestion`) and `closedCandidate`. The evaluator preserves them, does not label a properly investigated and disproved `suspected` observation a false factual claim, and rejects a disproof whose closing candidate differs. No missing production evidence field is established.
+
+The focused successor script completed 53 declared verdict controls, A4 history, DEP/disproof controls and the conforming D-U stand (22/22 external checks plus own tests and three preserved tempting spots). Its aggregate result is **failed**: the new child-suite command used the wrong unittest discovery root and both child imports failed. The command is corrected to `discover -s CHILD -t .`. The separate corrective supplement invokes the corrected helper on the same frozen H-I bytes: four Rooms tests and five Bookings tests pass; the independent reserve-agreement check rejects H-I and accepts H-N. The supplement also renews DEP and the current observation/disproof schema controls. All its assertions pass. The failed original output remains unchanged; this is not a full new green selfcheck/fleet result.
+
+The first working-tree structural check failed only on four ignored bytecode files created during review. They were preserved, without discarding bytes, under `preserved-bytecode/` with their own manifest. The review session confirmed Python-based repros as their likely source, without certifying the timestamp-specific invocation. Fixed-HEAD preparation passed; subsequent working-tree preparation and product/examples contexts passed after preservation. No source ignore exception was added.
+
+Final input lock SHA256: `c18bfd3aa12db8990a1bb00aa600fa445c2f89de4652ac091d200f05df0e38fe`; kit digest: `6877e9a7c57e1063ded27bd2e800263ed2bc7d89844ba2064bfb1bd81e0ab63e`. All 31 Markitect packet heads and all 11 ordinary-Agent packet heads are unchanged from the prior checked lock. The four C packet heads are also unchanged. The prior output manifest checked every Markitect packet structurally, and all eleven plan packets passed complete-definition/metadata parity against the product. Changed evaluator code is bound by the new kit digest; the new observation/helper controls ran against that code.
+
+The existing multi-area controls are frozen separately in `existing-controls.json`: D-M head `a2046fa5c5d5f598eb1c4857db64eba9ee0faadc`, tree `a34e2f545df0d467004da26a4a273de0640476a1`, structurally passed despite semantic faults; D-R head `bb88f0e88cdeb3a61005c903b8942b564e7ffd1f`, tree `975ec38caa0063592370a08f572f900ea1ebf842`, correctly refused by strict accounting. D-M has a matched ordinary-Agent plan packet in that manifest. This retains ownership/accounting controls alongside the selected S-A artifact slot, without allocating another provider case. The preserved predecessor Depot selfcheck contains its actual D-M fault/oracle results.
+
+The 33 neutral blind-v2 model-input files were also preserved outside writer packets in `preserved-blind-v2.zip`, SHA256 `3350b4ab091f48c5547767e93791b8403639a97003d0eba61faae0ca3be14f0a`, with a per-file manifest. No blind review transcript is invented from those inputs.
+
+All filenames below are relative to `C:/Users/Consiliari/.codex/evidence/markitect-session-b-20261021/`. They bind the actual retained outputs, including failures.
+
+| Evidence | Actual scope/result | SHA256 |
+| --- | --- | --- |
+| `preserved-manifest.json` | Original scratchpad output/binary hash inventory | `b24cbfc4654aa8af0d9865e8555158ecb8c1fbb55005169f1fb845b1a0f85e18` |
+| `quick-final.json` | Passed: lock, eleven complete plan packets, context and process controls at ecda26b7 | `5fd7d7f52ced78e29d5ddbe7ae258d004903075e83090f92925ba5e07fa77aff` |
+| `packets-final.json` | Passed: all 31 Markitect packet structural checks | `6c371d6323119d0a4391c1b9b210609e94fe3f771f94519c63d41d3cec8c2b58` |
+| `lock-linux-final.json` | Passed: Windows/Linux identity for prior c0d8501f lock | `5ab408816734165a70742e837b914f746f2d0895d2645510bb03db19e820644b` |
+| `focused-final.json` | Failed aggregate: 53 matching verdicts; child discovery invocation failed | `b2c3d57974b9ce73e73f4aec5f0133844cb5358c8a47186bafb55ba5a1b6031c` |
+| `supplement-final.json` | Passed corrected child discovery, parent positive/negative, observation/disproof and DEP controls | `2c13a6d09d19ef0623d84461a5bfd96a2ae719537aaee7faef81d7be35fe531f` |
+| `existing-controls.json` | D-M/D-R exact packets and matched D-M plan | `39903890b1763ddde146973df29ec9912f2d3a3a3ee8d8d55d69c5ae5e6f5084` |
+| `repo-final-check.json` | Failed working preparation: four unregistered bytecode files | `17059e5190be689c4afecfb9f1718f5fae4f52f0e4df6d0961aab9d4ab143f52` |
+| `repo-final-fixed-check.json` | Passed fixed-HEAD structural preparation | `a0a7a6e92259bdd788d3085db3ab7055916ca0d7bbb59e4072ff966bf2a65632` |
+| `repo-final-working-check.json` | Passed working preparation after preserving bytecode | `62930897e2ff5fda34e9aec66903efcc62932ba945defdd18bce45d3967a8b8d` |
+
+The closing PR/chat records renewed final-head checks, review, merge and Main read-back. Code-source validation is reused only for unchanged packet bytes and unaffected assertions, with the corrected discovery and observation contracts tested separately. Hosted CI was not requested. B used zero provider evaluation attempts.
 
 ## Remaining D dependencies
 

@@ -325,8 +325,8 @@
   "experiments/apply-trials/depot/snapshots/d1/model/stock/limits.yaml": "c091d7b5344daa3dc40233aab2462679e3ccebcf03388cb15e22038866dde43a",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/on-hand.yaml": "4b2da64249bb01954710ebe3d172ae5ada8181abff8ce210646f030e8ea12639",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/receive.yaml": "b1c669349de27e84a90f84c83622dcde9ba2609df52d958937ba0d7d687d0223",
-  "experiments/apply-trials/evalcheck.py": "22f23a7072f5fc8f22f49455e63a72e1fabd350a288025cd6661970460a50ecc",
-  "experiments/apply-trials/evaluate.py": "0be5f4f74792853c87b54697e621bda5e2989d02b040aa6635880d67bc3a76d9",
+  "experiments/apply-trials/evalcheck.py": "532da1f8a0064f8dc678b53a26dae05f6dc87e506113b5cd913082b006d38fe4",
+  "experiments/apply-trials/evaluate.py": "b0bf4ef30fcd4b662c42b14d950665cc66e1364b1e6102b7782c6d52780d35cf",
   "experiments/apply-trials/fleet.py": "959bc914b3d9ec53d471bc9d2da2000489ec1a15d4c23f442661ec61f9ed6bd0",
   "experiments/apply-trials/fleet_checks.py": "a9d4a96e207ab9f1fd19592148c6f489a405b13fdf02d2a13060a3d96cc53626",
   "experiments/apply-trials/freeze.py": "0dca4193447d8b350b2881afdb965269935929a0d0e3fe357fcc26821f114e4f",
@@ -420,7 +420,7 @@
   "experiments/apply-trials/trial_kit.py": "362e9a8623ba3db4cb3e140f3988da90f0e977405f72850a036775dba5af16d4",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "25816aff6341c1c8ae3e00cf953a0f901ecb7a6fd33d98adbf0f627e763c1a9e",
+ "kitDigest": "6877e9a7c57e1063ded27bd2e800263ed2bc7d89844ba2064bfb1bd81e0ab63e",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
