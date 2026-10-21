@@ -10,7 +10,7 @@ import (
 )
 
 func genuine(owner, obligation string) map[string]any {
-	return map[string]any{"owner": owner, "obligation": obligation, "observed": "observed " + obligation, "blocking": true}
+	return map[string]any{"owner": owner, "obligation": obligation, "expected": "expected " + obligation, "observed": "observed " + obligation, "blocking": true}
 }
 
 // Verify runs fresh read-only reviewers on one immutable candidate: a reviewer

@@ -492,7 +492,7 @@ func TestBlockedManagerKeepsItsFindingsAcrossASend(t *testing.T) {
 		}
 		switch {
 		case c.is("p2", ".") && strings.HasPrefix(c.now(), "work on"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{map[string]any{"owner": "lending", "obligation": "lending/borrow", "observed": observed, "blocking": true}}}))
+			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{map[string]any{"owner": "lending", "obligation": "lending/borrow", "expected": "a due date on every loan", "observed": observed, "blocking": true}}}))
 			return nil
 		case c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") && !asked:
 			c.must(toolSend, map[string]any{"to": "parent", "kind": sendQuestion, "text": "which loan fields does lending expose?"})
