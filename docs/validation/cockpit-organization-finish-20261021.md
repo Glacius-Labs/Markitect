@@ -4,8 +4,8 @@ Package 5 closes the source and local UI work in the
 [handoff](../development/codex-cockpit-org-chart-handoff-20261021.md). It is
 composed on actual Main `de1fb9b9` after the first four focused deliveries.
 This is local source/browser evidence, not provider, release or owner acceptance.
-The associated PR records this candidate's final review, exact head, merge and
-Main read-back; automatic hosted CI remains paused.
+The associated PR must record final review, exact head, merge and Main read-back
+before this candidate counts as delivered. Automatic hosted CI remains paused.
 
 ## Delivered workflow and checks
 
