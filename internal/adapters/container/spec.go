@@ -60,9 +60,20 @@ type ContainerSpec struct {
 	Network string
 }
 
+// HoldUser runs the init process of a held container: a user apart from the
+// Agents', so their processes can neither signal nor trace it.
+const HoldUser = "65534:65534"
+
 // runArgs validates the spec and returns the engine's run arguments for the
 // entry command: an absolute path inside the image and its arguments.
 func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
+	return s.args(false, entry)
+}
+
+// args builds the run arguments of a session container or, when held, of a
+// detached reusable container whose own init process is entry, run as
+// HoldUser; the Agents' sessions join it through exec as the spec's user.
+func (s ContainerSpec) args(held bool, entry []string) ([]string, error) {
 	if !namePattern.MatchString(s.Name) {
 		return nil, fmt.Errorf("container name %q is not a plain engine name", s.Name)
 	}
@@ -84,21 +95,25 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 	if s.Network != "" && (!namePattern.MatchString(s.Network) || s.Network == "host") {
 		return nil, fmt.Errorf("network %q is not a plain isolated engine network", s.Network)
 	}
-	args := []string{
-		"run", "--interactive", "--rm", "--init",
+	args := []string{"run", "--interactive", "--rm", "--init"}
+	user := s.User
+	if held {
+		args, user = []string{"run", "--detach", "--rm"}, HoldUser
+	}
+	args = append(args,
 		"--name", s.Name,
 		"--read-only",
 		"--cap-drop", "ALL",
 		"--security-opt", "no-new-privileges",
-		"--user", s.User,
+		"--user", user,
 		// Executable on purpose: the workspace is executable anyway, and
 		// toolchains such as Go run their build products from /tmp.
-		"--tmpfs", "/tmp:rw,exec,nosuid,nodev,mode=1777,size=" + strconv.FormatInt(s.TmpBytes, 10),
+		"--tmpfs", "/tmp:rw,exec,nosuid,nodev,mode=1777,size="+strconv.FormatInt(s.TmpBytes, 10),
 		"--workdir", s.Workdir,
 		"--cpus", strconv.FormatFloat(s.CPUs, 'f', -1, 64),
 		"--memory", strconv.FormatInt(s.MemoryBytes, 10),
 		"--pids-limit", strconv.Itoa(s.Pids),
-	}
+	)
 	if s.Network != "" {
 		args = append(args, "--network", s.Network)
 	}

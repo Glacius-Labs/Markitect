@@ -11,7 +11,6 @@ import (
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -121,4 +120,3 @@ type RuntimeSession interface {
 	Stop(context.Context, int64) (frame.Exited, error)
 	Close() error
 }
-type RuntimeStarter func(context.Context, container.ContainerSpec) (RuntimeSession, error)

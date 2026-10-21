@@ -12,19 +12,43 @@ import (
 // content; the Orchestrator does not repeat such a turn.
 var ErrContextLimit = errors.New("the context exceeds what the provider channel carries")
 
-// Agents runs one Agent turn. A turn is one fresh container from the turn
-// profile's image with Workspace mounted at /work (read-only when ReadOnly)
-// and Home mounted as the provider home, one provider conversation turn whose
-// single user message is Prompt, and the Orchestrator tools served over MCP.
-// Run returns when the provider finished the turn, the Timeout passed or ctx
-// ended. In every case it stops the container before it returns and reports
-// in TurnResult.Stopped whether the end of the container, and with it of every
-// process the turn started, was observed. A partial TurnResult is returned
-// with an error. The handler answers each tool call; Run calls it serially
-// within one turn, while other turns may run concurrently. A provider exit
-// ends a turn; it never establishes the completion of any work.
+// Agents runs one Agent turn. A turn runs in a working environment from the
+// turn profile's image with Workspace mounted at /work (read-only when
+// ReadOnly), the Mounts over it and Home mounted as the provider home: one
+// provider conversation turn whose single user message is Prompt, with the
+// Orchestrator tools served over MCP. Run returns when the provider finished
+// the turn, the Timeout passed or ctx ended. In every case it ends every
+// process of the turn before it returns and reports in TurnResult.Stopped
+// whether that cessation was observed: of the whole environment, or of every
+// process in an environment it keeps. A partial TurnResult is returned with an
+// error. The handler answers each tool call; Run calls it serially within one
+// turn, while other turns may run concurrently. A provider exit ends a turn;
+// it never establishes the completion of any work.
+//
+// An implementation may keep the environment of a Turn.Environment between
+// turns as long as the next turn's capabilities (image, mounts and their
+// writability, home, resources) are exactly those it was created with; it
+// then also implements Environments. Nothing may run in a kept environment
+// between turns.
 type Agents interface {
 	Run(ctx context.Context, turn Turn, tools ToolHandler) (TurnResult, error)
+}
+
+// Environments ends kept working environments. Release ends every instance of
+// the named environments, or of all when names is nil, and reports each; the
+// Orchestrator calls it once their turns are over, before it removes the
+// volumes they mount.
+type Environments interface {
+	Release(ctx context.Context, names []string) []EnvironmentRelease
+}
+
+// EnvironmentRelease is the end of one kept instance: Removed when its end was
+// observed.
+type EnvironmentRelease struct {
+	Environment string
+	Instance    string
+	Removed     bool
+	Error       string
 }
 
 // TurnKind separates work of the Execute Passes from independent assessment.
@@ -51,21 +75,25 @@ const (
 // inspection. Mounts overlay directories or files of the same Workspace volume
 // below /work after the base mount (read-only when ReadOnly), in order: each is
 // the volume's subpath Path mounted at /work/Path, writable only when Writable
-// says so.
+// says so. Environment names the working environment the turn belongs to: the
+// Orchestrator names one per Manager's work conversation in the run and one
+// per reviewer of a review Pass; empty asks for a fresh environment that ends
+// with the turn, such as a helper's.
 type Turn struct {
-	ID         string
-	Manager    string
-	Kind       TurnKind
-	Profile    string
-	Workspace  string
-	ReadOnly   bool
-	Mounts     []PathMount
-	Home       string
-	Resume     string
-	Prompt     string
-	Tools      []ToolSpec
-	Timeout    time.Duration
-	Transcript string
+	ID          string
+	Environment string
+	Manager     string
+	Kind        TurnKind
+	Profile     string
+	Workspace   string
+	ReadOnly    bool
+	Mounts      []PathMount
+	Home        string
+	Resume      string
+	Prompt      string
+	Tools       []ToolSpec
+	Timeout     time.Duration
+	Transcript  string
 }
 
 // ToolSpec is one Orchestrator tool offered to the provider. InputSchema is a
@@ -95,6 +123,7 @@ type ToolAnswer struct {
 // reports that the provider observably compacted the conversation during the
 // turn, so earlier context such as the standing Brief may survive only in its
 // summary; a provider that hides compaction never sets it.
+// Instance tells which runtime instance the turn ran in.
 type TurnResult struct {
 	Conversation string
 	Final        string
@@ -103,7 +132,23 @@ type TurnResult struct {
 	Ended        time.Time
 	Stopped      bool
 	Compacted    bool
+	Instance     InstanceObservation
 	Reason       string
+}
+
+// InstanceObservation is the runtime instance of a turn: its name, its
+// generation within the environment (1 for the first, counted up whenever a
+// new instance replaces or adds to the environment's), whether it existed
+// before the turn, and for a new one why it started ("fresh" for a turn
+// without an environment, "first", "capabilities" for a capability view the
+// environment did not hold, or the reason its predecessor was replaced) and
+// how long its start took.
+type InstanceObservation struct {
+	Name        string `json:"name,omitempty"`
+	Generation  int    `json:"generation,omitempty"`
+	Reused      bool   `json:"reused,omitempty"`
+	Started     string `json:"started,omitempty"`
+	StartMillis int64  `json:"startMillis,omitempty"`
 }
 
 // Usage is what the provider reported for one turn. CostUSD is the provider's
