@@ -27,8 +27,19 @@ import (
 // genuine finding on its first obligation in its first Verify, naming the
 // earliest correction correction (implement when empty), and disproves it in
 // the next; a refused correction is kept in refused and the finding raised for
-// implement instead. Any other refused tool call fails the test, so the script
-// cannot drift from the engine's protocol unnoticed.
+// implement instead. lookups names the Definitions a Manager looks up, with its
+// Brief, in its first turn; their answers are kept, after edits changed the
+// stand's files. compacted, forgets and fails are keyed by "<turn kind>
+// <Manager>": the first such turn reports a compaction, the first continued one
+// comes back in another conversation, or the first one fails before any tool
+// call; marks keeps which turn did what. A conversation otherwise continues.
+// The Model assessment that precedes the work accepts the model: no scripted
+// event happens in its turns, unless gap makes the reviewer of finds raise its
+// finding as a model_gap in the first assessment instead of the first Verify,
+// which nobody disputes. abort names a Manager whose first work turn reports
+// a model problem with abort.
+// Any other refused tool call fails the test, so the script cannot drift from
+// the engine's protocol unnoticed.
 type preservingAgents struct {
 	t           *testing.T
 	obligations map[string][]string
@@ -36,30 +47,102 @@ type preservingAgents struct {
 	finds       string
 	correction  string
 	refused     []string
+	lookups     map[string][]string
+	edits       map[string]string
+	ws          *treeWorkspaces
+	compacted   map[string]bool
+	forgets     map[string]bool
+	fails       map[string]bool
 	mu          sync.Mutex
 	turns       []run.Turn
+	marks       map[string]string
+	answers     map[string]string
 	raised      bool
 	open        bool
 	ids         []string
+	assessing   map[string]bool // conversation -> it is a Model assessment
+	gap         bool
+	abort       string
 }
 
 var ownFindingRE = regexp.MustCompile(`Finding (F\d+) \[`)
 
+// once reports and consumes a scripted event of the turn.
+func (a *preservingAgents) once(events map[string]bool, turn run.Turn, mark string) bool {
+	key := string(turn.Kind) + " " + turn.Manager
+	if !events[key] || mark == "lost" && turn.Resume == "" {
+		return false
+	}
+	delete(events, key)
+	if a.marks == nil {
+		a.marks = map[string]string{}
+	}
+	a.marks[turn.ID] = mark
+	return true
+}
+
 func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
 	a.mu.Lock()
 	a.turns = append(a.turns, turn)
+	if a.assessing == nil {
+		a.assessing = map[string]bool{}
+	}
+	assessing := a.assessing[turn.Resume] || turn.Resume == "" && strings.Contains(turn.Prompt, "You assess the bound model")
+	failed := !assessing && a.once(a.fails, turn, "failed")
 	a.mu.Unlock()
+	if failed {
+		return run.TurnResult{Conversation: "conv-" + turn.Home, Stopped: true}, errors.New("the scripted turn failed")
+	}
 	if turn.Kind == run.VerifyTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m run.PathMount) bool { return m.Writable })) {
 		a.t.Errorf("verify turn %s can write", turn.ID)
 	}
-	call := func(name string, args map[string]any) {
+	call := func(name string, args map[string]any) string {
 		data, _ := json.Marshal(args)
-		if answer := tools(ctx, name, data); answer.Refused {
+		answer := tools(ctx, name, data)
+		if answer.Refused {
 			a.t.Errorf("turn %s: %s %v refused: %s", turn.ID, name, args, answer.Text)
+		}
+		return answer.Text
+	}
+	a.mu.Lock()
+	var lookups []string
+	compacted := false
+	if !assessing {
+		lookups = a.lookups[turn.Manager]
+		delete(a.lookups, turn.Manager)
+		compacted = a.once(a.compacted, turn, "compacted")
+	}
+	a.mu.Unlock()
+	if len(lookups) > 0 && a.ws != nil {
+		a.ws.edit(turn.Workspace, a.edits)
+	}
+	if len(lookups) > 0 {
+		brief := call("look_up", map[string]any{"topic": "brief"})
+		a.mu.Lock()
+		if a.answers == nil {
+			a.answers = map[string]string{}
+		}
+		a.answers[turn.Manager+" brief"] = brief
+		a.mu.Unlock()
+		for _, id := range lookups {
+			text := call("look_up", map[string]any{"topic": "definition", "id": id})
+			a.mu.Lock()
+			a.answers[turn.Manager+" "+id] = text
+			a.mu.Unlock()
 		}
 	}
 	for _, m := range decideRE.FindAllStringSubmatch(turn.Prompt, -1) {
 		call("report", map[string]any{"kind": "accept", "proposal": m[1]})
+	}
+	a.mu.Lock()
+	aborts := turn.Kind == run.ExecuteTurn && turn.Manager == a.abort
+	if aborts {
+		a.abort = ""
+	}
+	a.mu.Unlock()
+	if aborts {
+		call("report", map[string]any{"kind": "problem", "category": "model", "abort": true, "text": "lending/loan-policy and lending/borrow state different loan limits."})
+		return run.TurnResult{Conversation: "conv-" + turn.Home, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
 	}
 	plans := slices.ContainsFunc(turn.Tools, func(s run.ToolSpec) bool {
 		return s.Name == "report" && strings.Contains(string(s.InputSchema), `"plan":`)
@@ -67,7 +150,7 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	submission := func(kind string) map[string]any {
 		report := map[string]any{"kind": kind, "summary": kind + " of " + turn.Manager + "."}
 		raise := false
-		if turn.Kind == run.VerifyTurn && turn.Manager == a.finds {
+		if turn.Kind == run.VerifyTurn && turn.Manager == a.finds && assessing == a.gap {
 			a.mu.Lock()
 			// The assignment of a later Verify names the findings it raised.
 			if _, earlier, found := strings.Cut(turn.Prompt, "Open findings you raised in earlier Passes"); found {
@@ -98,7 +181,10 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 			case raise && i == 0:
 				entry["status"], entry["note"] = "open", "The scripted finding holds it open."
 				correction := a.correction
-				if correction == "" {
+				switch {
+				case a.gap:
+					correction = "model_gap"
+				case correction == "":
 					correction = "implement"
 				}
 				report["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": id, "observed": "A scripted counterexample.", "blocking": true, "correction": correction}}
@@ -153,7 +239,18 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 		stopped, a.unstopped = false, ""
 		a.mu.Unlock()
 	}
-	return run.TurnResult{Conversation: "conv-" + turn.Manager, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: stopped}, nil
+	conversation := turn.Resume
+	if conversation == "" {
+		conversation = "conv-" + turn.Home
+	}
+	a.mu.Lock()
+	if !assessing && a.once(a.forgets, turn, "lost") {
+		// The provider did not continue the conversation it was asked to.
+		conversation = "lost-" + turn.Home
+	}
+	a.assessing[conversation] = assessing
+	a.mu.Unlock()
+	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: stopped, Compacted: compacted}, nil
 }
 
 // passingRunner runs every check of a candidate successfully.
@@ -170,11 +267,30 @@ func (r *passingRunner) Run(_ context.Context, req run.CheckRequest) (run.CheckR
 }
 
 // treeWorkspaces keeps each volume's exact tree, modes included; the scripted
-// Agents change nothing.
+// Agents change nothing but scripted edits.
 type treeWorkspaces struct {
 	mu     sync.Mutex
 	trees  map[run.WorkspaceID]snapshot.Tree
 	closed []run.WorkspaceID
+}
+
+// edit replaces files of the volume a turn mounts, keeping their modes.
+func (w *treeWorkspaces) edit(volume string, files map[string]string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for id, tree := range w.trees {
+		if "vol-"+string(id) != volume {
+			continue
+		}
+		var entries []snapshot.Entry
+		for _, e := range tree.Entries() {
+			if content, ok := files[e.Path().String()]; ok {
+				e, _ = snapshot.NewEntry(e.Path(), e.Mode(), []byte(content))
+			}
+			entries = append(entries, e)
+		}
+		w.trees[id], _ = snapshot.NewTree(entries)
+	}
 }
 
 func (w *treeWorkspaces) Materialize(_ context.Context, spec run.WorkspaceSpec) (run.WorkspaceObservation, error) {
@@ -270,7 +386,7 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 					t.Errorf("pass %s %s: sealed %v verdict %s", p.ID, p.Purpose, p.Sealed, p.Verdict)
 				}
 			}
-			if want := append(slices.Clone(tc.work), run.Verify); !slices.Equal(purposes, want) {
+			if want := append(append([]run.Purpose{run.Assess}, tc.work...), run.Verify); !slices.Equal(purposes, want) {
 				t.Fatalf("passes %v, want %v", purposes, want)
 			}
 			gates := map[string]int{}
@@ -279,9 +395,11 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 					gates[e.Pass]++
 				}
 			}
+			// The Model assessment judges the model of the checked capture; every
+			// other Pass runs the gates.
 			for _, p := range result.Outcome.Passes {
-				if gates[p.ID] == 0 {
-					t.Errorf("pass %s ran without its Model check and File check", p.ID)
+				if (gates[p.ID] == 0) != (p.Purpose == run.Assess) {
+					t.Errorf("pass %s (%s) ran %d gates", p.ID, p.Purpose, gates[p.ID])
 				}
 			}
 			if len(runner.runs) != 1 || runner.runs[0].Tree.Digest() != result.Outcome.Candidate.Digest() {
@@ -292,7 +410,7 @@ func TestBothStrategiesShareTheGatesVerifyAndPublication(t *testing.T) {
 			}
 			b := result.Binding
 			compositions[tc.strategy] = b.Composition
-			if b.Entry != "apply" || string(b.Strategy) != tc.strategy || !slices.Equal(b.Work, tc.work) || b.Build != "test-build" || !strings.HasPrefix(b.Execution, ".markitect/execution.yaml@") || !strings.HasPrefix(b.Defaults, "product:apply/defaults.yaml@") {
+			if b.Entry != "apply" || string(b.Strategy) != tc.strategy || !slices.Equal(b.Work, append([]run.Purpose{run.Assess}, tc.work...)) || b.Build != "test-build" || !strings.HasPrefix(b.Execution, ".markitect/execution.yaml@") || !strings.HasPrefix(b.Defaults, "product:apply/defaults.yaml@") {
 				t.Fatalf("binding %+v", b)
 			}
 			if len(b.Managers) != len(cfg.Team) || b.Managers[0].Execute.Profile != "library-agent" || b.Managers[0].Execute.Identity == "" || len(b.Checks) != 1 || b.Checks[0].Name != "project-tests" || b.Budget.Passes != 12 {
@@ -328,7 +446,7 @@ func TestBothStrategiesStopWithoutObservedWriterCessation(t *testing.T) {
 			}
 			for _, p := range result.Outcome.Passes {
 				for _, m := range p.Managers {
-					if m.Manager == "." && m.Basis != "" {
+					if p.Purpose != run.Assess && m.Manager == "." && m.Basis != "" {
 						t.Fatalf("Root's basis was accepted from an unstopped turn: %+v", m)
 					}
 				}
@@ -347,9 +465,9 @@ func TestBothStrategiesCorrectAFindingThroughAFreshVerify(t *testing.T) {
 		refused              bool
 	}{
 		// direct knows only implement: a finding that names plan is refused.
-		{"direct", "plan", []run.Purpose{run.Implement, run.Verify, run.Implement, run.Verify}, true},
+		{"direct", "plan", []run.Purpose{run.Assess, run.Implement, run.Verify, run.Implement, run.Verify}, true},
 		// staged restarts at the earliest purpose the finding names.
-		{"staged", "prepare", []run.Purpose{run.Plan, run.Prepare, run.Implement, run.Verify, run.Prepare, run.Implement, run.Verify}, false},
+		{"staged", "prepare", []run.Purpose{run.Assess, run.Plan, run.Prepare, run.Implement, run.Verify, run.Prepare, run.Implement, run.Verify}, false},
 	} {
 		t.Run(tc.strategy, func(t *testing.T) {
 			// Seven Passes of six Managers need more turns than the fixture's 120.

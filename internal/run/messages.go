@@ -6,7 +6,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"time"
 )
 
 // Message kinds of the tool send.
@@ -17,31 +16,36 @@ const (
 )
 
 // contactsLocked lists a Manager's contacts for send: its direct parent and
-// children, and for Root the user when an owner channel exists.
+// children. Nobody outside the tree answers during a run.
 func (e *engine) contactsLocked(m *mgr) []string {
 	var c []string
 	if m.Parent != "" {
 		c = append(c, "parent")
 	}
-	c = append(c, m.Children...)
-	if m.Parent == "" && e.cfg.Owner != nil {
-		c = append(c, User)
-	}
-	return c
+	return append(c, m.Children...)
 }
 
-// resolveContact maps a send target to a Manager path, or User. Only direct
-// parent and child edges, and Root's channel to the user, exist.
+// resolveContact maps a send target to a Manager path. Only direct parent and
+// child edges exist.
 func (e *engine) resolveContact(m *mgr, to string) (string, bool) {
 	switch {
 	case to == "parent" && m.Parent != "":
 		return m.Parent, true
-	case to == User && m.Parent == "" && e.cfg.Owner != nil:
-		return User, true
 	case slices.Contains(m.Children, to):
 		return to, true
 	}
 	return "", false
+}
+
+// closedRun is what a Root that tries to reach beyond the tree is told: in a
+// Model assessment a material problem of the model is a finding of the Pass,
+// in any other Pass a problem that ends the run.
+func closedRun(spec PassSpec) string {
+	const closed = "Nobody outside the Manager tree answers during a run, and the model cannot change within it. "
+	if spec.Assesses {
+		return closed + "A material decision the model leaves open without delegating it, an unusable contract, a contradiction or an erroneous statement is a genuine finding of this assessment, with the correction its guidance names; your integrated result confirms it."
+	}
+	return closed + "A public decision the model leaves open without delegating it, a contradiction or an error is a model problem: report kind problem, category model, abort true, naming the Definitions concerned; the model is corrected outside the run and a new run starts."
 }
 
 // send serves the tool send: a question, an answer to a question addressed to
@@ -67,8 +71,8 @@ func (e *engine) send(ctx context.Context, m *member, ts *turnState, args json.R
 	if !ok {
 		contacts := e.contactsLocked(m.mgr)
 		e.mu.Unlock()
-		if in.To == User && m.Parent == "" {
-			return refuse("Nobody answers questions in this run. Decide within the model and the bound owner decisions; a model that is erroneous or contradictory is reported with report kind problem, category model, abort true.")
+		if m.Parent == "" && in.To != "" && !slices.Contains(m.Children, in.To) {
+			return refuse("%s", closedRun(m.p.spec))
 		}
 		return refuse("%q is not one of your contacts. Your contacts are: %s. Other Managers are reached through your parent or children.", in.To, strings.Join(contacts, ", "))
 	}
@@ -85,8 +89,8 @@ func (e *engine) send(ctx context.Context, m *member, ts *turnState, args json.R
 		return e.answerLocked(m, ts, to, text, strings.TrimSpace(in.About))
 	case sendInfo:
 		defer e.mu.Unlock()
-		if to == User || in.About != "" {
-			return refuse("Information goes to a Manager without about; ask the user with kind question.")
+		if in.About != "" {
+			return refuse("Information goes to a Manager without about.")
 		}
 		target := m.p.byPath[to]
 		_ = e.record(Event{Kind: "message", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"from": m.Path, "to": to, "text": text}})
@@ -106,8 +110,7 @@ func relation(from, to *mgr) string {
 	return "your child " + contactOf(from)
 }
 
-// ask records a question to an adjacent Manager or, for Root, to the user.
-// about correlates a forwarded exchange: it names an open question addressed to
+// ask records a question to an adjacent Manager. about correlates a forwarded exchange: it names an open question addressed to
 // the sender that this one serves. It is called with the lock held and
 // releases it. It returns the new question's identity.
 func (e *engine) ask(ctx context.Context, m *member, ts *turnState, to, text, about string) (ToolAnswer, string) {
@@ -120,30 +123,14 @@ func (e *engine) ask(ctx context.Context, m *member, ts *turnState, to, text, ab
 	}
 	e.nextQuestion++
 	q := &Question{ID: fmt.Sprintf("Q%d", e.nextQuestion), From: m.Path, To: to, About: about, Pass: m.p.id, Text: text, Asked: e.now()}
-	if to != User {
-		e.questions = append(e.questions, q)
-		_ = e.record(Event{Kind: "question.asked", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: *q})
-		target := m.p.byPath[to]
-		e.deliverLocked(target, item{kind: itemMessage, text: fmt.Sprintf("Question %s from %s: %s\n  Answer it with send kind answer, about %s; or ask your own contact first with about %s.", q.ID, relation(m.mgr, target.mgr), text, q.ID, q.ID)})
-		e.scheduleLocked()
-		answer := fmt.Sprintf("Asked %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m, ts))
-		e.mu.Unlock()
-		return ToolAnswer{Text: answer}, q.ID
-	}
-	e.mu.Unlock()
-	if err := e.cfg.Owner.Ask(ctx, *q); err != nil {
-		return refuse("The user could not be reached: %v. Decide within the model and the bound owner decisions, or report a problem.", err), ""
-	}
-	e.mu.Lock()
-	defer e.mu.Unlock()
 	e.questions = append(e.questions, q)
 	_ = e.record(Event{Kind: "question.asked", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: *q})
-	if !e.polling && !e.closing {
-		e.polling = true
-		e.wg.Add(1)
-		go e.pollOwner()
-	}
-	return ToolAnswer{Text: fmt.Sprintf("Asked the user %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m, ts))}, q.ID
+	target := m.p.byPath[to]
+	e.deliverLocked(target, item{kind: itemMessage, text: fmt.Sprintf("Question %s from %s: %s\n  Answer it with send kind answer, about %s; or ask your own contact first with about %s.", q.ID, relation(m.mgr, target.mgr), text, q.ID, q.ID)})
+	e.scheduleLocked()
+	answer := fmt.Sprintf("Asked %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m, ts))
+	e.mu.Unlock()
+	return ToolAnswer{Text: answer}, q.ID
 }
 
 // answerLocked records an answer to an open question addressed to the sender;
@@ -167,8 +154,8 @@ func (e *engine) answerLocked(m *member, ts *turnState, to, text, about string) 
 }
 
 // escalate serves the tool escalate: a classified problem and the decision the
-// Manager needs, sent as a question to its parent (Root's to the user). It adds
-// no route of its own.
+// Manager needs, sent as a question to its parent. It adds no route of its own;
+// above Root there is none.
 func (e *engine) escalate(ctx context.Context, m *member, ts *turnState, args json.RawMessage) ToolAnswer {
 	var in struct {
 		Category string `json:"category"`
@@ -187,11 +174,8 @@ func (e *engine) escalate(ctx context.Context, m *member, ts *turnState, args js
 	e.mu.Lock()
 	to := m.Parent
 	if to == "" {
-		if e.cfg.Owner == nil {
-			e.mu.Unlock()
-			return refuse("Nobody answers questions in this run. Decide within the model and the bound owner decisions; a model that is erroneous or contradictory is reported with report kind problem, category model, abort true.")
-		}
-		to = User
+		e.mu.Unlock()
+		return refuse("%s", closedRun(m.p.spec))
 	}
 	x := e.addProblemLocked(Problem{Manager: m.Path, Category: in.Category, Text: text, Escalated: true})
 	answer, id := e.ask(ctx, m, ts, to, fmt.Sprintf("Escalated %s problem: %s", in.Category, text), "")
@@ -226,50 +210,4 @@ func (e *engine) takeItemsLocked(m *member, ts *turnState) string {
 	var b strings.Builder
 	list(&b, "New items for you:", texts)
 	return " " + b.String()
-}
-
-// pollOwner asks the owner channel for answers until the run ends. An answer
-// reaches Root as an item.
-func (e *engine) pollOwner() {
-	defer e.wg.Done()
-	tick := time.NewTicker(ownerPollInterval)
-	defer tick.Stop()
-	for {
-		select {
-		case <-e.ctx.Done():
-			return
-		case <-tick.C:
-		}
-		e.mu.Lock()
-		var open []string
-		for _, q := range e.questions {
-			if q.To == User && !q.Answered && !q.Lapsed {
-				open = append(open, q.ID)
-			}
-		}
-		e.mu.Unlock()
-		for _, id := range open {
-			answer, ok, err := e.cfg.Owner.Answer(e.ctx, id)
-			if err != nil {
-				if e.ctx.Err() == nil {
-					_ = e.record(Event{Kind: "owner.error", Data: map[string]any{"question": id, "error": err.Error()}})
-				}
-				continue
-			}
-			if !ok {
-				continue
-			}
-			e.mu.Lock()
-			if q := e.questionLocked(id); q != nil && !q.Answered && !q.Lapsed {
-				q.Answer, q.Answered, q.AnsweredAt = answer, true, e.now()
-				_ = e.record(Event{Kind: "question.answered", Pass: q.Pass, Manager: User, Data: *q})
-				if e.cur != nil && !e.cur.sealed {
-					e.deliverLocked(e.cur.members[0], item{kind: itemMessage, text: fmt.Sprintf("Answer of the user to your question %s (%q): %s", q.ID, q.Text, answer)})
-				}
-				e.scheduleLocked()
-			}
-			e.cond.Broadcast()
-			e.mu.Unlock()
-		}
-	}
 }

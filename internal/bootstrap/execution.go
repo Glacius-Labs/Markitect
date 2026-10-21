@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
-	"io"
 	"path/filepath"
 	"strings"
 	"time"
@@ -29,21 +28,19 @@ type executionService struct {
 	repository  *gitrepo.Repository
 	agents      apply.AgentProfilePreparer
 	checks      apply.CheckProfilePreparer
-	stderr      io.Writer
 }
 
-func newExecution(preparation *apply.PreparationService, repository *gitrepo.Repository, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, stderr io.Writer) *executionService {
-	return &executionService{preparation: preparation, repository: repository, agents: agents, checks: checks, stderr: stderr}
+func newExecution(preparation *apply.PreparationService, repository *gitrepo.Repository, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer) *executionService {
+	return &executionService{preparation: preparation, repository: repository, agents: agents, checks: checks}
 }
 
 // applyPorts is everything one Apply runs with: the concrete adapters, the
-// run's evidence and owner channel, and the explicit bounds of the invocation.
+// run's evidence and the explicit bounds of the invocation.
 type applyPorts struct {
 	RunID      string
 	Agents     runport.Agents
 	Workspaces runport.Workspaces
 	Checks     runport.Checks
-	Owner      runport.Owner
 	Evidence   *fileEvidence
 	Publisher  apply.Publisher
 	Control    apply.ControlCheck
@@ -76,7 +73,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 		report.Status = prepared.Status()
 		return report, err
 	}
-	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID, session.owner)
+	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID)
 	if err != nil {
 		return report, err
 	}
@@ -111,7 +108,7 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 // preparation passed, and only one run holds a state directory at a time.
 func (s *executionService) Extract(ctx context.Context, request cli.ExtractRequest) (report cli.ExtractReport, err error) {
 	report.FormatVersion, report.Operation, report.Status = 1, "extract", model.NotCompleted
-	report.Deviations, report.OpenQuestions = []apply.ArtifactDeviation{}, []runport.Question{}
+	report.Deviations = []apply.ArtifactDeviation{}
 	session, failed, err := s.open(ctx, request.Selection.Repository, request.RunConfig)
 	if err != nil {
 		if failed {
@@ -126,7 +123,7 @@ func (s *executionService) Extract(ctx context.Context, request cli.ExtractReque
 		report.Status = prepared.Status()
 		return report, err
 	}
-	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID, session.owner)
+	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID)
 	if err != nil {
 		return report, err
 	}
@@ -148,9 +145,9 @@ func (s *executionService) Extract(ctx context.Context, request cli.ExtractReque
 	}()
 	result, err := apply.Extract(ctx, apply.ExtractRequest{
 		RunID: ports.RunID, Prepared: attempt, Selection: request.Selection,
-		OwnerRequest: session.cfg.OwnerRequest, OwnerDecisions: session.cfg.OwnerDecisions, Deadline: ports.Deadline,
+		OwnerRequest: session.cfg.OwnerRequest, Deadline: ports.Deadline,
 		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
-		Agents: ports.Agents, Workspaces: ports.Workspaces, Owner: ports.Owner, Evidence: ports.Evidence,
+		Agents: ports.Agents, Workspaces: ports.Workspaces, Evidence: ports.Evidence,
 		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
 	})
 	report = cli.NewExtractReport(ports.RunID, result)
@@ -160,20 +157,17 @@ func (s *executionService) Extract(ctx context.Context, request cli.ExtractReque
 }
 
 // runSession is what every run command holds before it prepares: the run
-// configuration, the exclusive state directory, the owner channel and the run
-// identity.
+// configuration, the exclusive state directory and the run identity.
 type runSession struct {
 	cfg   runConfig
 	lock  *stateLock
-	owner runport.Owner
 	runID string
 }
 
 // open loads the run configuration, takes the state directory of the run and
-// opens its owner channel. failed says that the error is a definite refusal of
-// the invocation rather than an incomplete observation. The owner channel opens
-// before anything else so that no question or answer of an earlier run can
-// reach this one. The caller releases the lock.
+// records the run's identity in it.
+// failed says that the error is a definite refusal of the invocation rather
+// than an incomplete observation. The caller releases the lock.
 func (s *executionService) open(ctx context.Context, repository, runConfigPath string) (session runSession, failed bool, err error) {
 	cfg, err := loadRunConfig(ctx, runConfigPath)
 	if err != nil {
@@ -196,16 +190,15 @@ func (s *executionService) open(ctx context.Context, repository, runConfigPath s
 	if err != nil {
 		return fail(err)
 	}
-	owner, err := newFileOwner(cfg.StateDirectory, runID, runConfigPath, s.stderr)
-	if err != nil {
+	// The cockpit tells the run that holds the lock by this name.
+	if err := writeStateFile(filepath.Join(cfg.StateDirectory, currentRunFile), []byte(runID+"\n"), true); err != nil {
 		return fail(err)
 	}
-	return runSession{cfg: cfg, lock: lock, owner: owner, runID: runID}, false, nil
+	return runSession{cfg: cfg, lock: lock, runID: runID}, false, nil
 }
 
 // applyAndPublish runs the Apply use case over the captured preparation with
-// the composed ports. Root's questions reach the invoking AI through the run's
-// owner channel.
+// the composed ports.
 func (s *executionService) applyAndPublish(ctx context.Context, request cli.ApplyRequest, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ApplyResult, error) {
 	prepared, ok := captured.Prepared()
 	if !ok {
@@ -221,12 +214,12 @@ func (s *executionService) applyAndPublish(ctx context.Context, request cli.Appl
 func applyRequest(request cli.ApplyRequest, prepared apply.CapturedSettingsAttempt, cfg runConfig, ports applyPorts) apply.ApplyRequest {
 	return apply.ApplyRequest{
 		RunID: ports.RunID, Prepared: prepared, Selection: request.Selection, Build: request.Build,
-		OwnerRequest: cfg.OwnerRequest, OwnerDecisions: cfg.OwnerDecisions, Deadline: ports.Deadline,
+		OwnerRequest: cfg.OwnerRequest, Deadline: ports.Deadline,
 		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
 		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
 			return executionCheck(selected, cfg)
 		},
-		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Owner: ports.Owner, Evidence: ports.Evidence,
+		Agents: ports.Agents, Workspaces: ports.Workspaces, Runner: ports.Checks, Evidence: ports.Evidence,
 		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
 	}
 }
@@ -264,25 +257,6 @@ func resolvedPath(path string) string {
 	}
 }
 
-// answer records the owner's answer for the Apply running on the configured
-// state directory.
-func answer(ctx context.Context, request cli.AnswerRequest) (cli.AnswerReport, error) {
-	report := cli.AnswerReport{Status: model.NotCompleted}
-	cfg, err := loadRunConfig(ctx, request.RunConfig)
-	if err != nil {
-		if errors.Is(err, errRunConfig) {
-			report.Status = model.Failed
-		}
-		return report, err
-	}
-	path, err := writeAnswer(cfg.StateDirectory, request.Run, request.Question, request.Text)
-	if err != nil {
-		return report, err
-	}
-	report.Status, report.Path, report.Bytes = model.Passed, path, len(request.Text)
-	return report, nil
-}
-
 func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild string) any {
 	attempts := []any{}
 	for _, attempt := range prepared.Attempts() {
@@ -311,7 +285,7 @@ func capturedExecutionReport(prepared apply.CapturedSettingsResult, productBuild
 // ports composes the concrete adapters from one complete capture. Every
 // selected profile is validated against the explicit run engine before any
 // adapter is constructed.
-func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsResult, lock *stateLock, runID string, owner runport.Owner) (applyPorts, error) {
+func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsResult, lock *stateLock, runID string) (applyPorts, error) {
 	a, ok := prepared.Prepared()
 	if !ok {
 		return applyPorts{}, errors.New("complete captured settings are required")
@@ -347,7 +321,7 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 	if err != nil {
 		return applyPorts{}, err
 	}
-	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Owner: owner, Evidence: evidence,
+	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Evidence: evidence,
 		Publisher: s.repository, Control: lock, RemoveHome: engine.RemoveVolume, RequireVolumeSubpaths: engine.RequireVolumeSubpaths, Harvest: cfg.Harvest, Deadline: cfg.deadline(), Clock: time.Now}, nil
 }
 

@@ -12,6 +12,7 @@ TRIALS_WORK="$WORK" bash "$HERE/../../apply-trials/run/build.sh" "$SHA" > /dev/n
 SRC="$WORK/src-$SHA"
 BUILD="$WORK/build-${SHA:0:12}"
 ( cd "$SRC" && test "$(git rev-parse HEAD)" = "$SHA" && test -z "$(git status --porcelain)" \
+  && go test -p 1 ./internal/apply -run '^TestAssessCapturedRunsOneReadOnlyReviewWithoutChecksOrPublication$' -count=1 \
   && go test -c -o "$BUILD/assessment.test" ./internal/bootstrap )
 echo "assessment_harness_sha256=$(sha256sum "$BUILD/assessment.test" | cut -d' ' -f1)" >> "$BUILD/build.txt"
 cat "$BUILD/build.txt"

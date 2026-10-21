@@ -9,8 +9,8 @@ work purposes. Only the mandate, the effects, the purpose
 payload and the acceptance differ; every purpose uses the same stages, states, result
 envelope, routing and gates. It does no file or process I/O itself: everything goes
 through the ports in `Config`: `Agents` (one Agent turn), `Workspaces` (volumes),
-`Checks` (required checks), `Owner` (the AI that invoked Markitect, optional) and
-`Evidence` (the append-only record). Callers compose Passes and publish; this package
+`Checks` (required checks) and `Evidence` (the append-only record). A run is closed:
+nobody outside the Manager tree answers during it. Callers compose Passes and publish; this package
 never publishes and never commits.
 
 ## API
@@ -23,7 +23,19 @@ ended. `Corrections()` names the correction purposes of the open genuine finding
 `Reassess()` says whether only fresh disputes keep the last review from being clean.
 `Finish(reason)` ends the run: `Verified` only when the last Pass was a clean review of
 one candidate, `Failed` for a definite rejection, `Incomplete` otherwise. After Finish the
-caller owns the work volume. `Config.Binding` is what the caller bound the run to besides
+caller owns the work volume.
+
+A turn's prompt carries the standing context (the Manager's or reviewer's Brief, contacts
+and owner request) when its conversation is new, or, together with the current Pass
+assignment again, when the previous turn of that conversation reported a compaction
+(`TurnResult.Compacted`), came back with another conversation than it resumed or failed
+after it had carried the standing context; otherwise it relies on the conversation's
+history. `TurnRecord.Context` and `turn.start` record which (`brief`, `rehydrated`,
+`history`) with the prompt's digest and size. `look_up brief` returns the standing context
+with the current assignment (a helper's: its own turn's prompt) and `look_up definition` the
+bound model's Definition; `lookup.brief` and `lookup.definition` record each answer's digest.
+An Agents error wrapping `ErrContextLimit` ends the run Incomplete without repeating the
+turn. `Config.Binding` is what the caller bound the run to besides
 the Config's own inputs, such as an Apply's strategy, effective settings and build:
 `run.start` records it as given, and the Orchestrator chooses nothing by it.
 
@@ -186,16 +198,29 @@ the unchanged candidate, whose Root reviewer confirms it or raises a finding. A 
 with an undisposed adverse receipt of its own and a satisfied result with one within the
 responsibility are refused.
 
+## Model assessment
+
+A review Pass with `Assesses` is the Model assessment of the bound model before any
+realization: its fresh read-only reviewers run the same stages, but no gate or required check
+runs on its candidate and no probe is offered, and its clean seal verifies no candidate of its
+own (a candidate a clean Verify verified just before stays verified). A seal that needs
+correction with a confirmed finding, open, genuine, raised by the team and not disputed in
+the Pass, ends the run Failed with `ModelAssessmentReason`, since no Pass of the run can
+correct the model; findings disputed in the Pass are left to `Reassess`. The caller supplies
+the mandate, the guidance and the correction purposes, which name the classes of a model
+problem.
+
 ## Tools
 
 `report` (above), `send` (question, answer or information to the direct parent or a child;
-Root also to `user`; answers travel back the same edge, forwarded exchanges correlate with
-`about`), `escalate` (a classified problem as a question to the parent, Root's to the user),
+answers travel back the same edge, forwarded exchanges correlate with `about`; Root's message
+beyond the tree is refused with the route that applies), `escalate` (a classified problem as
+a question to the parent; Root has nobody above it and reports a model problem instead),
 `look_up` (Definitions, owners, the derived registry view, states, plans, bases, findings,
 checks, probe receipts, questions and the method guidance of `methods.go`), `check`
 (advisory File check of the caller's live area composed with the accepted stand in write
-Passes, or a probe when the project declares a check) and `delegate` (a bounded task for a
-configured helper role).
+Passes, or a probe when the project declares a check; not in a Model assessment) and
+`delegate` (a bounded task for a configured helper role).
 Helpers run one turn each in their own container with their own home, read the whole
 stand, write only their delegated, existing, disjoint subset of the Manager's area and
 report to their Manager only; while they work their subset is read-only for the Manager.
@@ -214,7 +239,7 @@ read-only base; every other turn is read-only. Turn identities are
 `run.go` and `agents.go` hold the contract, `workspace.go` and `checks.go` the
 consumer-owned ports. `engine.go` validates and ends the run; `pass.go` holds the base
 process; `proposals.go` the `report` tool, envelopes and technical checks; `messages.go`
-routing and the owner channel; `helpers.go` delegation; `review.go` candidates and checks;
+routing along the tree; `helpers.go` delegation; `review.go` candidates and checks;
 `lookup.go` the look-up and check tools; `probes.go` probes, receipts, evidence binding and
 dispositions; `methods.go` the method guidance; `turn.go`, `tools.go` and `prompts.go` turns, tool
 schemas and prompts. Tests use scripted fakes for every port.

@@ -979,7 +979,7 @@ func (e *engine) reassess() bool {
 		return false
 	}
 	p := e.passes[len(e.passes)-1]
-	if !p.spec.Review || !p.sealed || p.verdict != NeedsCorrection || len(p.checks) != len(e.cfg.Checks) {
+	if !p.spec.Review || !p.sealed || p.verdict != NeedsCorrection || len(p.checks) != len(e.checksOf(p.spec)) {
 		return false
 	}
 	for _, c := range p.checks {

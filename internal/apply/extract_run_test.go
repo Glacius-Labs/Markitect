@@ -103,46 +103,18 @@ type scriptedAgents struct {
 	ws       *memoryWorkspaces
 	writes   map[string]map[string]string // "<run> <manager>" -> files written in the first working turn
 	findings map[string][]map[string]any  // "<run> <manager>" -> findings a reviewer raises with its result
-	asks     map[string]string            // "<run> <manager>" -> a question to the user before it works
+	asks     map[string]string            // "<run> <manager>" -> a question beyond the tree it tries before it works
 	mu       sync.Mutex
 	turns    []run.Turn
-	asked    map[string]string // key -> the question ID the user was asked
-}
-
-// answeringOwner answers every question at once and refuses an identity it was
-// already asked.
-type answeringOwner struct {
-	mu        sync.Mutex
-	asked     []run.Question
-	withdrawn []string
-}
-
-func (o *answeringOwner) Ask(_ context.Context, q run.Question) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	if slices.ContainsFunc(o.asked, func(a run.Question) bool { return a.ID == q.ID }) {
-		return errors.New("question " + q.ID + " exists already")
-	}
-	o.asked = append(o.asked, q)
-	return nil
-}
-
-func (o *answeringOwner) Answer(_ context.Context, id string) (string, bool, error) {
-	return "answer to " + id, true, nil
-}
-
-func (o *answeringOwner) Withdraw(_ context.Context, id string) error {
-	o.mu.Lock()
-	defer o.mu.Unlock()
-	o.withdrawn = append(o.withdrawn, id)
-	return nil
+	refusals map[string]string // key -> the answer to that question
+	assessed map[string]bool   // conversation -> it is a Model assessment
+	gaps     map[string]string // key -> a model gap its Model assessment result confirms
 }
 
 var (
 	scriptedRun = regexp.MustCompile(`^(x-1-(?:structure|model))-p\d+-`)
 	decideRE    = regexp.MustCompile(`- decide (P\d+),`)
 	answerRE    = regexp.MustCompile(`- answer (Q\d+) from`)
-	askedRE     = regexp.MustCompile(`Asked the user (Q\d+)\.`)
 )
 
 func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolHandler) (run.TurnResult, error) {
@@ -153,6 +125,9 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		a.t.Errorf("verify turn %s can write", turn.ID)
 	}
 	key := scriptedRun.FindStringSubmatch(turn.ID)[1] + " " + turn.Manager
+	a.mu.Lock()
+	assessing := a.assessed[turn.Resume] || turn.Resume == "" && strings.Contains(turn.Prompt, "You assess the bound model")
+	a.mu.Unlock()
 	call := func(name string, args map[string]any) run.ToolAnswer {
 		data, _ := json.Marshal(args)
 		answer := tools(ctx, name, data)
@@ -172,18 +147,15 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 	now, _, _ := strings.Cut(rest, "\n")
 	switch {
 	case strings.HasPrefix(now, "work on your own contribution"):
-		if question := a.asks[key]; question != "" && turn.Kind == run.ExecuteTurn && a.asked[key] == "" {
-			answer := call("send", map[string]any{"to": "user", "kind": "question", "text": question})
-			id := askedRE.FindStringSubmatch(answer.Text)
-			if id == nil {
-				a.t.Errorf("turn %s: the question was not asked: %s", turn.ID, answer.Text)
-			} else {
-				a.mu.Lock()
-				a.asked[key] = id[1]
-				a.mu.Unlock()
-				call("report", map[string]any{"kind": "wait", "for": id[1], "reason": "the answer decides the boundary"})
+		if question := a.asks[key]; question != "" && turn.Kind == run.ExecuteTurn && a.refusals[key] == "" {
+			data, _ := json.Marshal(map[string]any{"to": "user", "kind": "question", "text": question})
+			answer := tools(ctx, "send", data)
+			if !answer.Refused {
+				a.t.Errorf("turn %s: a question beyond the tree was not refused: %s", turn.ID, answer.Text)
 			}
-			break
+			a.mu.Lock()
+			a.refusals[key] = answer.Text
+			a.mu.Unlock()
 		}
 		if turn.Kind == run.ExecuteTurn {
 			a.ws.write(turn.Workspace, a.writes[key])
@@ -193,8 +165,12 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		result := map[string]any{"kind": "result", "summary": "Described " + turn.Manager + ".", "verdict": "satisfied"}
 		if turn.Kind == run.VerifyTurn {
 			result["summary"] = "The model matches the artifacts."
-			if findings := a.findings[key]; len(findings) > 0 {
+			if findings := a.findings[key]; len(findings) > 0 && !assessing {
 				result["findings"] = findings
+			}
+			if gap := a.gaps[key]; gap != "" && assessing {
+				result["verdict"] = "needs_correction"
+				result["findings"] = []map[string]any{{"owner": turn.Manager, "obligation": "the mandate of this Extract", "observed": gap, "blocking": true, "correction": "model_gap"}}
 			}
 		}
 		call("report", result)
@@ -203,6 +179,9 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 	if conversation == "" {
 		conversation = "conv-" + turn.ID
 	}
+	a.mu.Lock()
+	a.assessed[conversation] = assessing
+	a.mu.Unlock()
 	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
 }
 
@@ -225,7 +204,7 @@ func bothPhases(t *testing.T) (apply.ExtractRequest, *scriptedAgents, *memoryWor
 		return files
 	}
 	workspaces := newMemoryWorkspaces()
-	agents := &scriptedAgents{t: t, ws: workspaces, asked: map[string]string{}, writes: map[string]map[string]string{
+	agents := &scriptedAgents{t: t, ws: workspaces, refusals: map[string]string{}, assessed: map[string]bool{}, writes: map[string]map[string]string{
 		"x-1-structure .": diff(start, proposed, func(string) bool { return true }),
 	}, findings: map[string][]map[string]any{
 		"x-1-model lending": {{"owner": "lending", "subject": "artifact", "definition": "lending/lending", "obligation": "Loans are limited", "observed": "borrow.go admits a sixth loan.", "blocking": true}},
@@ -261,9 +240,11 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 	if !result.Structure.Candidate.Equal(proposed) || !result.Model.Candidate.Equal(complete) {
 		t.Fatal("the verified candidates are not the proposals the Agents wrote")
 	}
-	// Each phase is one work Pass of its own purpose and one independent Verify;
-	// every Manager takes two turns in each: its basis and its complete result.
-	if len(result.Structure.Passes) != 2 || len(result.Model.Passes) != 2 {
+	// The structure phase is Root's Model assessment of the mandate, its work
+	// Pass and an independent Verify; the model phase its work Pass, Verify and
+	// the Model assessment of the verified candidate. Every Manager takes two
+	// turns in each: its basis and its complete result.
+	if len(result.Structure.Passes) != 3 || len(result.Model.Passes) != 3 {
 		t.Fatalf("passes %d/%d", len(result.Structure.Passes), len(result.Model.Passes))
 	}
 	for i, tc := range []struct {
@@ -271,8 +252,8 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		purpose run.Purpose
 		review  bool
 	}{
-		{result.Structure.Passes[0], "structure", false}, {result.Structure.Passes[1], run.Verify, true},
-		{result.Model.Passes[0], "model", false}, {result.Model.Passes[1], run.Verify, true},
+		{result.Structure.Passes[0], run.Assess, true}, {result.Structure.Passes[1], "structure", false}, {result.Structure.Passes[2], run.Verify, true},
+		{result.Model.Passes[0], "model", false}, {result.Model.Passes[1], run.Verify, true}, {result.Model.Passes[2], run.Assess, true},
 	} {
 		if tc.pass.Purpose != tc.purpose || tc.pass.Review != tc.review || tc.pass.Verdict != run.Satisfied || !tc.pass.Sealed {
 			t.Errorf("pass %d: %+v", i, tc.pass)
@@ -287,9 +268,9 @@ func TestExtractRunsBothPhasesAndPublishesTheModel(t *testing.T) {
 		t.Errorf("the structure phase is Root alone and the model phase the proposed tree: %d/%d", len(result.Structure.Passes[0].Managers), len(result.Model.Passes[0].Managers))
 	}
 	// Parents take further turns to decide their children's proposals, so the
-	// model phase has at least the two turns of each of its six Managers in both
-	// Passes.
-	if len(result.Structure.Turns) != 4 || len(result.Model.Turns) < 24 || result.Model.Usage.InputTokens != int64(10*len(result.Model.Turns)) {
+	// model phase has at least the two turns of each of its six Managers in its
+	// three Passes.
+	if len(result.Structure.Turns) != 6 || len(result.Model.Turns) < 36 || result.Model.Usage.InputTokens != int64(10*len(result.Model.Turns)) {
 		t.Fatalf("turns %d/%d usage %+v", len(result.Structure.Turns), len(result.Model.Turns), result.Model.Usage)
 	}
 	if len(result.ProposedChecks) != 0 {
@@ -402,11 +383,12 @@ func TestExtractReportsTheChecksTheStructureProposed(t *testing.T) {
 	}
 }
 
-func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
+// Nobody outside the Manager tree answers during an Extract: Root's question
+// to the user is refused with the closed-run rule in both phases, and the
+// phases go on without it.
+func TestExtractRefusesQuestionsBeyondTheTree(t *testing.T) {
 	req, agents, _, _, _, _, _ := bothPhases(t)
 	agents.asks = map[string]string{"x-1-structure .": "Is the reminders area part of lending?", "x-1-model .": "Is go.mod part of the library?"}
-	owner := &answeringOwner{}
-	req.Owner = owner
 	result, err := apply.Extract(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
@@ -414,16 +396,17 @@ func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
 	if result.Model == nil || result.Model.Status != run.Verified {
 		t.Fatalf("structure %s %s; model %+v", result.Structure.Status, result.Structure.Reason, result.Model)
 	}
-	if len(owner.asked) != 2 || owner.asked[0].ID != "Q1" || owner.asked[1].ID != "Q2" || owner.asked[1].Text != "Is go.mod part of the library?" {
-		t.Fatalf("the owner was asked %+v", owner.asked)
+	if len(agents.refusals) != 2 {
+		t.Fatalf("refusals %v", agents.refusals)
 	}
-	if questions := result.Model.Questions; len(questions) != 2 || questions[0].Answer != "answer to Q1" || !questions[1].Answered {
-		t.Fatalf("model-phase questions %+v", questions)
+	for key, text := range agents.refusals {
+		if !strings.Contains(text, "Nobody outside the Manager tree answers") || strings.Contains(text, "owner decisions") {
+			t.Errorf("%s was told %q", key, text)
+		}
 	}
 	for _, turn := range agents.turns {
-		if turn.Manager == "." && turn.Kind == run.ExecuteTurn && strings.HasPrefix(turn.ID, "x-1-model") && turn.Resume == "" &&
-			!(strings.Contains(turn.Prompt, "Q1: Is the reminders area part of lending?") && strings.Contains(turn.Prompt, "Answer: answer to Q1")) {
-			t.Errorf("the model phase does not show the structure phase's answer:\n%s", turn.Prompt)
+		if strings.Contains(turn.Prompt, "Is the reminders area part of lending?") {
+			t.Errorf("turn %s shows the refused question", turn.ID)
 		}
 	}
 }
@@ -431,7 +414,7 @@ func TestExtractModelPhaseContinuesTheOwnerChannel(t *testing.T) {
 func TestExtractStopsAfterAnUnverifiedStructurePhaseAndKeepsItsWork(t *testing.T) {
 	req := extractRequest(t)
 	workspaces := newMemoryWorkspaces()
-	agents := &scriptedAgents{t: t, ws: workspaces, asked: map[string]string{}, writes: map[string]map[string]string{}}
+	agents := &scriptedAgents{t: t, ws: workspaces, refusals: map[string]string{}, assessed: map[string]bool{}, writes: map[string]map[string]string{}}
 	publisher := &fakePublisher{}
 	evidence := &memoryEvidence{}
 	req.Agents, req.Workspaces, req.Evidence, req.Publisher = agents, workspaces, evidence, publisher
@@ -444,7 +427,7 @@ func TestExtractStopsAfterAnUnverifiedStructurePhaseAndKeepsItsWork(t *testing.T
 	if result.Structure.Status != run.Incomplete || result.Model != nil || result.Receipt != nil || len(publisher.requests) != 0 || result.RetainedWork != "x-1-structure-work" {
 		t.Fatalf("%+v", result)
 	}
-	if result.Structure.Reason == "" || len(result.Structure.Passes) == 0 || result.Structure.Passes[0].Sealed {
+	if result.Structure.Reason == "" || len(result.Structure.Passes) != 2 || !result.Structure.Passes[0].Sealed || result.Structure.Passes[1].Sealed {
 		t.Errorf("the unverified phase has no reason, or sealed a Pass nothing could accept: %+v", result.Structure)
 	}
 	returned := false
@@ -506,13 +489,14 @@ func TestExtractEndsTheModelPhaseWhenAnAgentLeavesAFileOutsideAnyArea(t *testing
 
 func TestExtractKeepsTheStructureWhenTheModelPhaseHasTooFewTurns(t *testing.T) {
 	req, agents, workspaces, publisher, _, _, _ := bothPhases(t)
-	// 13 turns give the structure phase 6 and the model phase the 9 it has left
-	// after the structure phase's four; its six Managers need 12 for one Pass.
+	// 13 turns give the structure phase 6, which its assessment, work Pass and
+	// Verify use, and the model phase the 7 left; its six Managers need 12 for
+	// one Pass.
 	req.Prepared = extractAttemptWithTurns(t, 13)
 	agents.writes["x-1-structure ."][".markitect/execution.yaml"] = strings.Replace(extractExecutionProposed, "agentTurns: 120", "agentTurns: 13", 1)
 	result, err := apply.Extract(context.Background(), req)
 	if err != nil || result.Structure.Status != run.Verified || result.Model == nil || result.Model.Status != run.Incomplete ||
-		!strings.Contains(result.Model.Reason, "agent turn budget of 9 does not cover a basis and a result of each of the 6 managers") {
+		!strings.Contains(result.Model.Reason, "agent turn budget of 7 does not cover a basis and a result of each of the 6 managers") {
 		t.Fatalf("err %v, structure %s, model %+v", err, result.Structure.Status, result.Model)
 	}
 	if result.RetainedWork != "x-1-structure-work" || slices.Contains(workspaces.closed, "x-1-structure-work") || result.Receipt != nil || len(publisher.requests) != 0 {
@@ -547,6 +531,43 @@ func TestExtractDeadlineIsTheEarlierOfTheOperatorAndTheExecutionTime(t *testing.
 			// Both phases share one deadline.
 			if len(deadlines) != 2 || !deadlines[0].Equal(tc.want) || !deadlines[1].Equal(tc.want) {
 				t.Errorf("deadlines %v, want %v", deadlines, tc.want)
+			}
+		})
+	}
+}
+
+// An Extract assesses its mandate before the structure and the verified model
+// candidate before its publication. A gap Root confirms at either point ends
+// the phase Failed with the draft retained: no later phase, no publication.
+func TestExtractEndsOnAConfirmedAssessmentGap(t *testing.T) {
+	for _, tc := range []struct {
+		name, key string
+	}{
+		{"before the structure", "x-1-structure ."},
+		{"on the verified candidate", "x-1-model ."},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			req, agents, _, publisher, _, _, _ := bothPhases(t)
+			agents.gaps = map[string]string{tc.key: "The README and the CLI help state different loan limits; no artifact settles which one is intended."}
+			result, err := apply.Extract(context.Background(), req)
+			if err != nil {
+				t.Fatal(err)
+			}
+			phase := result.Structure
+			if tc.key == "x-1-model ." {
+				if result.Structure.Status != run.Verified || result.Model == nil {
+					t.Fatalf("structure %s: %s", result.Structure.Status, result.Structure.Reason)
+				}
+				phase = *result.Model
+			} else if result.Model != nil {
+				t.Fatalf("a model phase ran after a confirmed gap: %+v", result.Model)
+			}
+			last := phase.Passes[len(phase.Passes)-1]
+			if phase.Status != run.Failed || !strings.HasPrefix(phase.Reason, run.ModelAssessmentReason) || !strings.Contains(phase.Reason, "model_gap") || last.Purpose != run.Assess {
+				t.Fatalf("phase %s: %s; last Pass %+v", phase.Status, phase.Reason, last)
+			}
+			if len(publisher.requests) != 0 || result.Receipt != nil || result.RetainedWork == "" {
+				t.Fatalf("publications %d, receipt %+v, retained %q", len(publisher.requests), result.Receipt, result.RetainedWork)
 			}
 		})
 	}

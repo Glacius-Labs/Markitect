@@ -25,18 +25,17 @@ const (
 // SetupRequest contains the parsed invocation. Credential is the path of a
 // private token file; its bytes never enter a request or a report.
 type SetupRequest struct {
-	Selection      apply.InputSelection
-	RuntimeDir     string
-	Image          string
-	Credential     string
-	Checks         map[string]string
-	AgentModel     string
-	Effort         string
-	Engine         string
-	Store          string
-	OwnerRequest   string
-	OwnerDecisions []string
-	Deadline       string
+	Selection    apply.InputSelection
+	RuntimeDir   string
+	Image        string
+	Credential   string
+	Checks       map[string]string
+	AgentModel   string
+	Effort       string
+	Engine       string
+	Store        string
+	OwnerRequest string
+	Deadline     string
 	// ProductBuild is the build identity of this CLI, written into the run
 	// configuration as the operator's assertion.
 	ProductBuild string
@@ -105,10 +104,8 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 	ownerRequest := flags.String("request", "", "owner request text")
 	deadline := flags.String("deadline", "", "absolute RFC 3339 UTC wall-clock limit")
 	var dependencies manifestList
-	var decisions manifestList
 	var checkFlags checkList
 	flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
-	flags.Var(&decisions, "decision", "owner decision text; repeat")
 	flags.Var(&checkFlags, "check", "PROFILE=EXECUTABLE for a check profile; repeat")
 	if err := flags.Parse(args); err != nil {
 		if errors.Is(err, flag.ErrHelp) {
@@ -158,7 +155,7 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 	report, err := c.setup(ctx, SetupRequest{
 		Selection: selection, RuntimeDir: *runtimeDir, Image: *image, Credential: *credential, Checks: checks,
 		AgentModel: *agentModel, Effort: *effort, Engine: *engine, Store: *store, OwnerRequest: *ownerRequest,
-		OwnerDecisions: decisions, Deadline: *deadline, ProductBuild: buildinfo.Build(),
+		Deadline: *deadline, ProductBuild: buildinfo.Build(),
 	})
 	report.FormatVersion, report.Operation = 1, "setup"
 	report.AgentProfiles, report.CheckProfiles = nonNil(report.AgentProfiles), nonNil(report.CheckProfiles)

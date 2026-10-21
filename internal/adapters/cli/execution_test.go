@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"errors"
 	"path/filepath"
-	"strings"
 	"testing"
 	"time"
 
@@ -34,7 +33,7 @@ func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
 			Usage:     run.Usage{InputTokens: 7},
 		}
 		return ApplyReport{Status: ApplyStatus(outcome, nil, nil), Run: NewRunReport("run-1", outcome), EvidenceDirectory: filepath.Join(dir, "runs", "run-1")}, nil
-	}, nil)
+	})
 	var out, stderr bytes.Buffer
 	code := c.Run(context.Background(), []string{"apply", "--repo", dir, "--model", ".markitect/model.yaml", "--dependency", "vendor/model.yaml", "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr)
 	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || len(observed.Selection.Dependencies) != 1 || observed.Selection.Dependencies[0].ManifestPath.String() != "vendor/model.yaml" || len(observed.Selection.RuntimeProfiles) != 1 {
@@ -84,16 +83,13 @@ func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
 	}
 }
 
-func TestApplyAndAnswerRefuseInvalidInvocationsWithoutDispatch(t *testing.T) {
+func TestApplyRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	dir := t.TempDir()
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	calls := 0
 	c := New(nil, nil, nil, nil, nil, func(context.Context, ApplyRequest) (ApplyReport, error) {
 		calls++
 		return ApplyReport{Status: model.Passed}, nil
-	}, func(context.Context, AnswerRequest) (AnswerReport, error) {
-		calls++
-		return AnswerReport{Status: model.Passed}, nil
 	})
 	for _, args := range [][]string{
 		{"apply"}, {"apply", "--repo", "absent"},
@@ -101,13 +97,9 @@ func TestApplyAndAnswerRefuseInvalidInvocationsWithoutDispatch(t *testing.T) {
 		{"apply", "--run-config", config, "--runtime-profile", runtimeProfile, "--revision", "HEAD"},
 		{"apply", "--run-config", config, "--runtime-profile", runtimeProfile, "--metadata"},
 		{"apply", "--run-config", config, "--runtime-profile", runtimeProfile, "--text", "x"},
-		{"answer"}, {"answer", "q"}, {"answer", "q", "--run-config", config}, {"answer", "q", "--run", "run-1", "--text", "x"},
-		{"answer", "q", "--run", "run-1", "--text", "x", "--run-config", "relative.json"},
-		{"answer", "q", "--run", "run-1", "--text", "x", "--run-config", config, "--runtime-profile", runtimeProfile},
-		{"answer", "--run", "run-1", "--text", "x", "--run-config", config},
-		// The run is required: an answer never reaches a run it was not made for.
-		{"answer", "q", "--text", "x", "--run-config", config},
-		{"answer", "q", "--run", "run-1", "--run-config", config},
+		// The answer command is gone: a Run is closed.
+		{"answer"}, {"answer", "q", "--run", "run-1", "--text", "x", "--run-config", config},
+		{"apply", "--run-config", config, "--runtime-profile", runtimeProfile, "--decision", "x"},
 	} {
 		var out, stderr bytes.Buffer
 		if code := c.Run(context.Background(), args, &out, &stderr); code == 0 {
@@ -116,26 +108,6 @@ func TestApplyAndAnswerRefuseInvalidInvocationsWithoutDispatch(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Fatal("invalid invocation reached execution")
-	}
-}
-
-func TestAnswerPassesQuestionTextAndConfigAndReportsTheWrite(t *testing.T) {
-	dir := t.TempDir()
-	config := filepath.Join(dir, "run.json")
-	var observed AnswerRequest
-	c := New(nil, nil, nil, nil, nil, nil, func(_ context.Context, request AnswerRequest) (AnswerReport, error) {
-		observed = request
-		return AnswerReport{Status: model.Passed, Path: filepath.Join(dir, "answers", "q1.txt"), Bytes: 14}, nil
-	})
-	var out, stderr bytes.Buffer
-	if code := c.Run(context.Background(), []string{"answer", "q1", "--run", "run-1", "--text", "literal answer", "--run-config", config}, &out, &stderr); code != 0 {
-		t.Fatalf("code=%d stderr=%s", code, stderr.String())
-	}
-	if observed != (AnswerRequest{Question: "q1", Run: "run-1", Text: "literal answer", RunConfig: config}) {
-		t.Fatalf("answer arguments changed: %+v", observed)
-	}
-	if !strings.Contains(out.String(), `"operation": "answer"`) || !strings.Contains(out.String(), `"question": "q1"`) || !strings.Contains(out.String(), "q1.txt") {
-		t.Fatal(out.String())
 	}
 }
 
@@ -182,7 +154,7 @@ func TestExecutionExitCodesFollowTheReportedStatus(t *testing.T) {
 	} {
 		c := New(nil, nil, nil, nil, nil, func(context.Context, ApplyRequest) (ApplyReport, error) {
 			return ApplyReport{Status: tc.status}, tc.err
-		}, nil)
+		})
 		var out, stderr bytes.Buffer
 		if code := c.Run(context.Background(), []string{"apply", "--runtime-profile", filepath.Join(dir, "runtime.yaml"), "--run-config", filepath.Join(dir, "run.json")}, &out, &stderr); code != tc.code {
 			t.Fatalf("status=%s err=%v code=%d", tc.status, tc.err, code)

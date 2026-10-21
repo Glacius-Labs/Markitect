@@ -3,6 +3,8 @@ package apply_test
 import (
 	"context"
 	"encoding/json"
+	"os"
+	"path/filepath"
 	"regexp"
 	"slices"
 	"strings"
@@ -14,10 +16,22 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-const assessmentMandate = "Assess the bound model before any realization."
-
-func assessmentSpec() run.PassSpec {
-	return run.PassSpec{Purpose: "assess", Mandate: assessmentMandate, Review: true, Guidance: "A genuine finding is a material model issue.", Corrections: []run.Purpose{"model_error", "model_gap", "unclassified"}}
+// assessmentReference is an expected copy only; execution uses the product's
+// built-in assessSpec through AssessCaptured, never this reference as input.
+func assessmentReference(t *testing.T) (mandate, guidance string) {
+	t.Helper()
+	data, err := os.ReadFile(filepath.Join("..", "..", "experiments", "model-assessment", "assessment-pass.json"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	var reference struct {
+		Mandate  string `json:"mandate"`
+		Guidance string `json:"guidance"`
+	}
+	if err := json.Unmarshal(data, &reference); err != nil {
+		t.Fatal(err)
+	}
+	return reference.Mandate, reference.Guidance
 }
 
 // assessingAgents follows the Orchestrator's protocol as read-only assessors:
@@ -163,16 +177,16 @@ func assessmentRequest(t *testing.T) (apply.ApplyRequest, *assessingAgents, *mem
 }
 
 // The assessment is one review Pass of the captured stand: fresh read-only
-// reviewers with the caller's mandate, no required check, no publication, and
+// reviewers with the product's mandate, no required check, no publication, and
 // the work volume and the homes removed afterwards.
 func TestAssessCapturedRunsOneReadOnlyReviewWithoutChecksOrPublication(t *testing.T) {
 	req, agents, workspaces, checks, removed := assessmentRequest(t)
-	result, err := apply.AssessCaptured(context.Background(), req, assessmentSpec())
+	result, err := apply.AssessCaptured(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	outcome := result.Outcome
-	if outcome.Status != run.Verified || result.Receipt != nil || len(req.Publisher.(*fakePublisher).requests) != 0 {
+	if outcome.Status != run.Incomplete || outcome.Reason != apply.AssessmentAccepted || result.Receipt != nil || len(req.Publisher.(*fakePublisher).requests) != 0 {
 		t.Fatalf("status %s (%s), receipt %+v", outcome.Status, outcome.Reason, result.Receipt)
 	}
 	if len(outcome.Passes) != 1 || outcome.Passes[0].Purpose != "assess" || !outcome.Passes[0].Review || outcome.Passes[0].Verdict != run.Satisfied || len(outcome.Passes[0].Checks) != 0 {
@@ -183,22 +197,16 @@ func TestAssessCapturedRunsOneReadOnlyReviewWithoutChecksOrPublication(t *testin
 	}
 	// The binding names the assessment entry and its own Pass: no work Pass, no check.
 	binding := result.Binding
-	if binding.Entry != "model-assessment" || len(binding.Work) != 0 || len(binding.Checks) != 0 ||
-		!slices.Equal(binding.Corrections, []run.Purpose{"model_error", "model_gap", "unclassified"}) || !strings.HasPrefix(binding.Composition, "sha256:") {
+	if binding.Entry != "model-assessment" || !slices.Equal(binding.Work, []run.Purpose{run.Assess}) || len(binding.Checks) != 0 || !strings.HasPrefix(binding.Composition, "sha256:") {
 		t.Fatalf("binding %+v", binding)
 	}
-	other := assessmentSpec()
-	other.Mandate += " Changed."
-	again, _, _, _, _ := assessmentRequest(t)
-	if changed, err := apply.AssessCaptured(context.Background(), again, other); err != nil || changed.Binding.Composition == binding.Composition {
-		t.Fatalf("a changed mandate keeps the composition %s: %v", binding.Composition, err)
-	}
+	mandate, guidance := assessmentReference(t)
 	assigned := map[string]bool{}
 	for _, turn := range agents.turns {
 		if turn.Kind != run.VerifyTurn || !turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m run.PathMount) bool { return m.Writable }) {
 			t.Errorf("turn %s is no read-only review turn: %+v", turn.ID, turn)
 		}
-		if strings.Contains(turn.Prompt, "Pass p1: assess\n"+assessmentMandate) {
+		if strings.Contains(turn.Prompt, "Pass p1: assess\n"+mandate) && strings.Contains(turn.Prompt, guidance) {
 			assigned[turn.Manager] = true
 		}
 	}
@@ -215,7 +223,7 @@ func TestAssessCapturedRunsOneReadOnlyReviewWithoutChecksOrPublication(t *testin
 func TestAssessCapturedEndsFailedOnRootsModelError(t *testing.T) {
 	req, agents, _, _, _ := assessmentRequest(t)
 	agents.abort = "catalog/item and lending/borrow state contradicting limits"
-	result, err := apply.AssessCaptured(context.Background(), req, assessmentSpec())
+	result, err := apply.AssessCaptured(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -228,25 +236,22 @@ func TestAssessCapturedEndsFailedOnRootsModelError(t *testing.T) {
 }
 
 // The assessment is a closed Run: Root's question to the user is refused even
-// when the caller supplies an owner channel, the caller's owner decisions never
-// reach a prompt, and the finding Root confirms seals the Pass as needing
+// and the finding Root confirms seals the Pass as needing
 // correction with its class and the assessment's reason, not a model error.
 func TestAssessCapturedIsAClosedRunAndKeepsTheConfirmedFinding(t *testing.T) {
 	req, agents, _, _, _ := assessmentRequest(t)
-	owner := &answeringOwner{}
-	req.Owner, req.OwnerDecisions = owner, []string{"The maximum is 60."}
 	agents.ask = "Which maximum applies to the public value?"
 	agents.finding = "The public maximum is referenced but never stated; 40 and 100 both conform."
-	result, err := apply.AssessCaptured(context.Background(), req, assessmentSpec())
+	result, err := apply.AssessCaptured(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	outcome := result.Outcome
-	if outcome.Status != run.Incomplete || outcome.Reason != apply.AssessmentProblemReason {
+	if outcome.Status != run.Failed || !strings.HasPrefix(outcome.Reason, run.ModelAssessmentReason) {
 		t.Fatalf("status %s, reason %q", outcome.Status, outcome.Reason)
 	}
-	if !strings.Contains(agents.refusal, "Nobody answers questions in this run") || len(owner.asked) != 0 || len(outcome.Questions) != 0 {
-		t.Fatalf("refusal %q, asked %+v, questions %+v", agents.refusal, owner.asked, outcome.Questions)
+	if !strings.Contains(agents.refusal, "Nobody outside the Manager tree answers") || len(outcome.Questions) != 0 {
+		t.Fatalf("refusal %q, questions %+v", agents.refusal, outcome.Questions)
 	}
 	for _, turn := range agents.turns {
 		if strings.Contains(turn.Prompt, "The maximum is 60.") || strings.Contains(turn.Prompt, "\nuser: ") {
@@ -268,7 +273,7 @@ func TestAssessCapturedIsAClosedRunAndKeepsTheConfirmedFinding(t *testing.T) {
 func TestAssessCapturedKeepsAnOmittedClassVisible(t *testing.T) {
 	req, agents, _, _, _ := assessmentRequest(t)
 	agents.finding, agents.class = "The model leaves the public maximum open.", "-"
-	result, err := apply.AssessCaptured(context.Background(), req, assessmentSpec())
+	result, err := apply.AssessCaptured(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -294,33 +299,15 @@ func TestAssessCapturedReassessesADisputedFinding(t *testing.T) {
 	if agents.raiser == "" {
 		t.Fatal("no leaf below Root")
 	}
-	result, err := apply.AssessCaptured(context.Background(), req, assessmentSpec())
+	result, err := apply.AssessCaptured(context.Background(), req)
 	if err != nil {
 		t.Fatal(err)
 	}
 	outcome := result.Outcome
-	if outcome.Status != run.Verified || len(outcome.Passes) != 2 || outcome.Passes[0].Verdict != run.NeedsCorrection || outcome.Passes[1].Verdict != run.Satisfied {
+	if outcome.Status != run.Incomplete || outcome.Reason != apply.AssessmentAccepted || len(outcome.Passes) != 2 || outcome.Passes[0].Verdict != run.NeedsCorrection || outcome.Passes[1].Verdict != run.Satisfied {
 		t.Fatalf("status %s (%s), passes %+v", outcome.Status, outcome.Reason, outcome.Passes)
 	}
 	if len(outcome.Findings) != 1 || !outcome.Findings[0].Closed || outcome.Findings[0].ClosedAs != run.ClosedDisproved || len(outcome.Findings[0].Disputes) != 1 {
 		t.Fatalf("findings %+v", outcome.Findings)
-	}
-}
-
-func TestAssessCapturedRefusesAPassThatIsNoReadOnlyReview(t *testing.T) {
-	for name, spec := range map[string]run.PassSpec{
-		"writes":    {Purpose: "assess", Mandate: assessmentMandate, Writes: true, Corrections: []run.Purpose{"model_gap"}},
-		"no review": {Purpose: "assess", Mandate: assessmentMandate, Corrections: []run.Purpose{"model_gap"}},
-		"plans":     {Purpose: "assess", Mandate: assessmentMandate, Plans: true, Corrections: []run.Purpose{"model_gap"}},
-	} {
-		t.Run(name, func(t *testing.T) {
-			req, agents, workspaces, _, _ := assessmentRequest(t)
-			if _, err := apply.AssessCaptured(context.Background(), req, spec); err == nil {
-				t.Fatal("the Pass was accepted")
-			}
-			if len(agents.turns) != 0 || len(workspaces.ids) != 0 {
-				t.Fatalf("the refused assessment started work: %d turns, volumes %v", len(agents.turns), workspaces.ids)
-			}
-		})
 	}
 }

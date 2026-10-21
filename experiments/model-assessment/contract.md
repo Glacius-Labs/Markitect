@@ -5,7 +5,7 @@
 - Its [conformance mandate](../../docs/design/canonical-model/manager-apply-workflow.md#conformance-mandate-and-observation-kinds) sets the materiality test and the observation kinds.
 - The [handoff](../../docs/development/claude-direct-runtime-handoff-20261021.md#session-c-model-assessment-before-realization) gives C the method and A the production integration.
 
-This page states what C's isolated harness implements and what the production gate must keep or add. It adds no behavior of its own. The trial's results, not this page, show how well the method finds gaps without false alarms.
+This page states the method exercised by C's isolated harness through A's production assessment. It adds no behavior of its own. The trial's results, not this page, show how well the method finds gaps without false alarms.
 
 ## Place in the Run
 
@@ -15,7 +15,7 @@ Bind authority and limits, deterministic Model check, strict File check, then **
 
 - **Purpose `assess`, one review Pass of the common recursive process.** Every Manager of the required tree is a fresh read-only reviewer of its own obligations. Parents release children on their accepted basis, then accept, return or dispute child results and integrate interfaces and cross-area consistency. Root's integrated result seals the Pass with one of the two common verdicts. There is no second scheduler, state or verdict.
 - **Materiality.** Is the model usable, materially consistent and decisive enough for its realization? Not: is it as detailed as possible, or does it follow a preferred architecture? A decision is material when the model's purpose depends on it. Two realizations that both follow the model would differ in results, acceptances or refusals that users or other areas rely on, or could not be realized or verified at all, and neither derivation nor delegated freedom settles which. The following are no defects: missing optional detail, ordinary implementation choices left out, an unusual but consistently stated design, explicitly delegated choices.
-- **Treatment.** The mandate and the guidance of [assessment-pass.json](assessment-pass.json), bound by its hash. They ask about the outcomes others rely on, consistency, usable responsibility and contracts, and the permitted freedom. Evidence is model sources, and there is no quota.
+- **Treatment.** The production `assessSpec()` mandate and guidance, with [assessment-pass.json](assessment-pass.json) as a hashed reference checked against actual reviewer prompts. The reference never supplies an execution specification. They ask about the outcomes others rely on, consistency, usable responsibility and contracts, and the permitted freedom. Evidence is model sources, and there is no quota.
 - **No required check, probe, write or publication.** A check judges artifacts, not the model. Artifacts in the stand are not assessed and never settle what the model leaves open.
 - **Closed Run.** No owner channel, no earlier answers and no owner decisions. Questions travel only along the Manager tree and may make a Manager Waiting. A material decision the model lacks becomes a model problem, never a question to the user, a default or a chosen value.
 - **Disputes.** A dispute is only for an unfounded finding. A real problem with the wrong class is returned to its raiser for the class, so that a disproof can never remove a real gap. Root confirms the findings it keeps and disputes every open finding it does not confirm. While only fresh disputes keep the Pass from being clean, a new complete assessment Pass of the unchanged stand decides them, within the Pass budget, as Verify does in Apply.
@@ -26,7 +26,7 @@ The assessment uses the workflow's common kinds and existing dispositions, with 
 
 | Kind | In the assessment | Effect |
 | --- | --- | --- |
-| Confirmed deviation | Does not apply: no artifact is assessed. | — |
+| Confirmed deviation | Does not apply: no artifact is assessed. | None. |
 | Suspected deviation | A concrete suspected model problem. The reviewer investigates it inside the Pass by lookup and questions along the tree, and then classifies it, resolves it or keeps working. | The reviewer cannot report its result as satisfied, or park the suspicion as a note, while it is unresolved; at the limit the Run is `Incomplete`. |
 | Model problem | A genuine finding with its basis: the Definition as obligation; the source statements, the incompatible outcomes or the contradiction, and why derivation or delegated freedom cannot settle it as observed text; the class in `correction`. | Root's confirmation seals `NeedsCorrection` and ends the Run. |
 | Suggestion | A non-blocking note, or nothing at all. | Never blocks. |
@@ -39,7 +39,7 @@ A finding is **confirmed** when it is open, genuine, raised by the team (not `ma
 
 | Conclusion | Common envelope | Run |
 | --- | --- | --- |
-| `accepted` | Sealed `Satisfied`: no open genuine finding of the team. | Releases the work composition. |
+| `accepted` | Sealed `Satisfied`: no open genuine finding of the team. | Releases production work. Assessment-only entry ends `Incomplete` with `AssessmentAccepted`, realizing and verifying nothing. |
 | `model_gap` | Sealed `NeedsCorrection` with confirmed findings, at least one classed `model_gap` and none `model_error`. | `Failed`, no publication, no in-Run repair. |
 | `model_error` | As above, with at least one confirmed `model_error`. | `Failed`, no publication, no in-Run repair. |
 | (unclassed) | Confirmed findings whose class was omitted. | `Failed` like the others; a protocol defect of the report, recorded as such. |
@@ -49,31 +49,17 @@ The class rides in the existing `correction` field, because an assessment has no
 
 Root's model-error decision (`problem`, category `model`, `abort`) during the assessment ends the Run `Failed` as before. The mandate asks Root to conclude in its integrated result instead, so that the confirmed findings stay in the sealed Pass. The harness records an abort as a second route, classed `model_error` unless its free text names `model_gap`.
 
-## What production must add
+## Production integration
 
-The harness entry `apply.AssessCaptured` (with `TestModelAssessmentHarness` in `internal/bootstrap`) reuses `applyConfig`, `run.Open`, `Pass`, `Reassess` and `Finish`. It changes no Apply behavior. For the mandatory gate, A owns these changes:
+A integrated the production hook in [#566](https://github.com/Glacius-Labs/Markitect/pull/566), Main `54fc867032aa8e38a368ae1c3dd87e77171236dc`. C uses `apply.AssessCaptured(ctx, req)`, which runs the built-in `assessSpec()` through the same recursive Pass as mandatory Apply assessment. C's provisional second implementation and the caller-supplied Pass specification are removed. The harness has no Owner/OwnerDecisions or environment-supplied treatment alternative.
 
-1. **Terminal `Failed` for a sealed negative assessment.** `run.Finish(reason)` turns a caller's reason into `Incomplete`. The harness therefore ends a Pass sealed `NeedsCorrection` with open genuine findings `Incomplete`, with the reason `the model assessment confirmed a material model problem`. A sealed negative Pass without open genuine findings ends with *"the model assessment did not reach a clean Pass"*. The harness classifies from the sealed Pass. The gate needs a definite-rejection end for the first case.
-2. **Release only on `Satisfied`.** Run the strategy's work Passes only after an accepted assessment. Production assessment uses the same bound capture, and nothing resumes a failed Run.
-3. **The closed-Run refusal text.** With no owner channel, `send` and Root's `escalate` to the user are refused with *"Decide within the model and the bound owner decisions; a model that is erroneous or contradictory is reported with report kind problem, category model, abort true"*. Under the closed-Run policy this invites choosing a value for a missing decision. In an assessment it should point to a `model_gap` finding, and in work Passes to Root's confirmed gap stop. Remove the mention of owner decisions.
-4. **Assessment framing and Root's duty.** Review Passes show no `RootGuidance` and frame every reviewer as assessing "an immutable candidate", so the assessment's Root duty lives in the mandate. Briefs still list the required checks, which do not run in the assessment. The work mandates of both strategies still tell Managers to ask the user about missing public choices; under the closed-Run policy they belong to A's migration.
-5. **Evidence binding.** The harness already binds through A's `RunBinding`: the entry is `model-assessment`, with no work Pass and no check, the classes as corrections and the assessment Pass's digest as composition. Production should keep the assessment digest beside the strategy's and record the conclusion with the Run. It should also record:
-   - coverage: every own obligation `done` with a model-source evidence item;
-   - dissent: returns, disputes and disproofs;
-   - actual context delivery: the harness's scorer checks each reviewer's first sent prompt against the frozen Definitions' identities and bodies. The workflow's coverage record should make this a product observation.
-6. **Observation kinds.** Map the assessment's model problems, suspicions and suggestions onto the common observation fields when A introduces them. Keep the rule that code checks declared effects and provenance, not the truth of an Agent's classification.
-7. **Extract.** Assess the available mandate, model and constraints before Extract work, and the resulting candidate when it exists, with the same Pass and conclusions. The harness does not cover Extract.
+The production mandate and guidance are exactly the corrected C reference from `7db130d7`, SHA-256 `ae7d3a4b2d2e34707d88df5f28565451dfcf1ed825470e7de6242a4554521a02`. C's source tests compare that reference with the actual reviewer prompts; the omitted-class test checks the production default remains visible. The reference is never passed to execution.
 
-C's source tests in `internal/apply/assessment_test.go` cover the harness entry:
-- read-only fresh reviewers without checks or publication;
-- the binding with its own composition digest;
-- Root's model-error end;
-- a closed Run that refuses a user question and keeps owner decisions out of every prompt;
-- a confirmed finding that seals `NeedsCorrection` with its class;
-- reassessment of a disputed finding;
-- refusal of a writing or non-review Pass.
+A Root-confirmed material problem seals `NeedsCorrection` and ends `Failed` with `run.ModelAssessmentReason`, without publication or model repair. Acceptance seals `Satisfied`; in normal Apply it releases the selected strategy's work. In the assessment-only entry it ends `Incomplete` with `apply.AssessmentAccepted`, since no artifact was realized or independently verified. Technical errors, unsealed results and unresolved evidence never become model conclusions. Root's older direct model-problem abort remains a separately recorded route, classified from its report text.
 
-The handoff lists A's own production controls.
+The binding identifies entry `model-assessment`, `Work: [assess]`, no checks, and the production composition digest. Its composition digest includes the assessment and strategy declarations; it is distinct from the reference file's byte hash. Context binding records the Brief and full/reference identities; C's transcript comparison records body submission, not provider understanding or semantic coverage.
+
+C's `internal/apply/assessment_test.go` covers the built-in method reference, read-only fresh reviewers, absence of checks/publication, Root's model-error stop, refusal of external questions, confirmed finding classes, the omitted class and fresh reassessment of a disputed finding. `internal/bootstrap/model_assessment_evaluation_test.go` supplies the grant-gated adapter wiring. These source tests do not establish provider behavior or a completed wiring smoke. Extract's production migration and evidence remain A's responsibility; this model-only harness does not exercise Extract.
 
 ## Evaluation
 

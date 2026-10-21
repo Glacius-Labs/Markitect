@@ -23,7 +23,8 @@ CONCLUSIONS = (ACCEPTED, GAP, ERROR, UNCLASSED)
 PROBLEMS = (GAP, ERROR, UNCLASSED)
 CORRECTIONS = [ERROR, GAP, "unclassified"]
 MODEL_ERROR_REASON = "Root judged the model erroneous or contradictory: "
-PROBLEM_REASON = "the model assessment confirmed a material model problem"
+PROBLEM_REASON = "the model assessment confirmed a material model problem: "
+ACCEPTED_REASON = "the model assessment accepted the model; this entry realizes nothing"
 LIMIT = re.compile(r"^(the deadline was reached|the run was cancelled|the Pass budget of \d+ ended|the agent turn budget of \d+ ended)$")
 NAME = re.compile(r"^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$")
 
@@ -56,8 +57,9 @@ def confirmed(run, pass_id):
 def classify(report):
     """The assessment conclusion of one harness report.
 
-    accepted: the run verified, so the assessment Pass sealed Satisfied, and the
-    harness reported no error. model_gap or model_error: Root's integrated result
+    accepted: the assessment-only run ended Incomplete with its explicit
+    acceptance reason and a sealed Satisfied Pass, and the harness reported no
+    error. This verifies no artifacts. model_gap or model_error: Root's integrated result
     sealed the Pass as needing correction for confirmed genuine findings of the
     team, classed by their correction (model_error when any is one, model_gap
     when any is one, model_problem when every class was omitted); or, as a
@@ -78,11 +80,14 @@ def classify(report):
     out = {"status": status, "reason": reason, "confirmedFindings": len(found), "passes": len(passes),
            "lastPassSealed": bool(last.get("sealed")), "lastVerdict": last.get("verdict", ""),
            "reportStatus": report.get("status"), "reportError": report.get("error", "")}
-    sealed_negative = status == "incomplete" and reason == PROBLEM_REASON and last.get("sealed") and last.get("verdict") == "needs_correction"
-    if status == "failed" and aborts and reason.startswith(MODEL_ERROR_REASON):
+    assessment = last.get("purpose") == "assess" and last.get("review")
+    sealed_negative = assessment and status == "failed" and reason.startswith(PROBLEM_REASON) and last.get("sealed") and last.get("verdict") == "needs_correction"
+    if report.get("error"):
+        out.update(conclusion=INCOMPLETE, incomplete="technical", why="the harness reported an execution or evidence error: " + str(report["error"]))
+    elif assessment and status == "failed" and aborts and reason.startswith(MODEL_ERROR_REASON):
         gap = re.search(r"\bmodel[_ ]gap\b", aborts[-1].get("text", ""), re.IGNORECASE)
         out.update(conclusion=GAP if gap else ERROR, route="abort", why="Root ended the assessment with a model-problem decision")
-    elif status == "verified" and last.get("sealed") and last.get("verdict") == "satisfied" and report.get("status") == "passed" and not report.get("error"):
+    elif assessment and status == "incomplete" and reason == ACCEPTED_REASON and last.get("sealed") and last.get("verdict") == "satisfied" and report.get("status") == "passed" and not report.get("error"):
         out.update(conclusion=ACCEPTED, route="result", why="clean assessment Pass")
     elif sealed_negative and found:
         classes = {f.get("correction") for f in found}

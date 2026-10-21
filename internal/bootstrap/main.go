@@ -10,6 +10,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/claudecode"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/cockpit"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/documents"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
@@ -32,6 +33,6 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(images), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
-	execution := newExecution(preparation, repository, agents, checker, stderr)
-	return cli.New(preparation, agents, checker, repository, views, execution.Execute, answer).WithExtract(execution.Extract).WithSetup(newSetup(preparation, containerSetupEngine).Setup).WithCockpit(cockpitService{preparation: preparation, repository: repository, agents: agents, checks: checker}.Serve).Run(ctx, args, stdout, stderr)
+	execution := newExecution(preparation, repository, agents, checker)
+	return cli.New(preparation, agents, checker, repository, views, execution.Execute).WithExtract(execution.Extract).WithSetup(newSetup(preparation, containerSetupEngine).Setup).WithCockpit(cockpitService{preparation: preparation, repository: repository, agents: agents, checks: checker, execute: execution.Execute}.Serve).WithWindowOpener(cockpit.OpenWindow).Run(ctx, args, stdout, stderr)
 }

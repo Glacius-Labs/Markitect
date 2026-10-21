@@ -127,7 +127,7 @@ ARGS+=(--runtime-profile "$ATTEMPT/host/host.yaml" --run-config "$ATTEMPT/run-co
 LIMIT=$(( START + CAP - 45 - $(date +%s) ))
 [ "$LIMIT" -ge 60 ] || { CONCLUSION=setup-too-slow; exit 5; }
 echo "started=$STARTED deadline=$DEADLINE harness_limit=$LIMIT" > "$ATTEMPT/timing.txt"
-MARKITECT_MODEL_ASSESSMENT=run-model-assessment MARKITECT_MODEL_ASSESSMENT_PASS="$PASS" \
+MARKITECT_MODEL_ASSESSMENT=run-model-assessment \
   MARKITECT_MODEL_ASSESSMENT_ARGS="$(python3 -c 'import json, sys; print(json.dumps(sys.argv[1:]))' "${ARGS[@]}")" \
   timeout --kill-after=15 "$LIMIT" "$BUILD/assessment.test" -test.run '^TestModelAssessmentHarness$' -test.count=1 -test.timeout=$(( LIMIT - 5 ))s \
   > "$ATTEMPT/out/harness.stdout" 2> "$ATTEMPT/out/harness.stderr"

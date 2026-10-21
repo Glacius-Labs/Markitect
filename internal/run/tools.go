@@ -142,7 +142,7 @@ func reportSchema(spec PassSpec) schema {
 }
 
 var sendSchema = object([]string{"to", "kind", "text"}, schema{
-	"to":    str("\"parent\", the path of a direct child, or for Root \"user\"."),
+	"to":    str("\"parent\" or the path of a direct child."),
 	"kind":  schema{"type": "string", "enum": []string{sendQuestion, sendAnswer, sendInfo}},
 	"text":  str("The message."),
 	"about": str("answer: the question ID you answer. question: the question addressed to you that this one serves, when you forward an exchange."),
@@ -209,18 +209,15 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 	spec := m.p.spec
 	sendText := "Send a question, an answer or information to your parent or a direct child; other Managers are reached through them."
 	if m.Parent == "" {
-		sendText = "Send a question, an answer or information to a direct child; other Managers are reached through them."
-		if e.cfg.Owner != nil {
-			sendText += " Ask the user (to \"user\") what the model and the bound decisions leave open."
-		}
+		sendText = "Send a question, an answer or information to a direct child; other Managers are reached through them. Nobody outside the tree answers during the run."
 	}
 	tools := []ToolSpec{
 		{Name: toolReport, Description: "Report to the Orchestrator: progress, a named wait, your basis or complete result, a decision on a child's proposal, a reopened child result, a revised basis or a problem. End every turn in which you work on your own contribution with one.", InputSchema: raw(reportSchema(spec))},
 		{Name: toolSend, Description: sendText, InputSchema: raw(sendSchema)},
-		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent (Root: to the user) as a question.", InputSchema: raw(escalateSchema)},
-		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
+		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent as a question. Root has nobody above it: it reports a model problem with report kind problem.", InputSchema: raw(escalateSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
-	switch probes := e.probesAvailable(); {
+	switch probes := e.probesAvailable(spec); {
 	case spec.Writes && probes:
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Without probe: File check of your current area against the accepted stand (unregistered or wrongly registered files, invalid registry entries, missing owners), advice while you work. With probe: run one behavioral probe file in its own container on a stable stand and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
 	case spec.Writes:
@@ -237,7 +234,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 func helperTools(writes bool) []ToolSpec {
 	tools := []ToolSpec{
 		{Name: toolReport, Description: "Report your result to your Manager when your task is done.", InputSchema: raw(helperReportSchema)},
-		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, plans and bases, findings, checks.", InputSchema: raw(lookUpSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, plans and bases, findings, checks.", InputSchema: raw(lookUpSchema)},
 	}
 	if writes {
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your Manager's current area against the accepted stand.", InputSchema: raw(fileCheckSchema)})

@@ -32,7 +32,7 @@ func (s *unavailableSource) CapturePreview(_ context.Context, r apply.PreviewReq
 func TestExplicitRevisionResolvedOnceWithoutExecution(t *testing.T) {
 	source := &unavailableSource{}
 	revision := &resolver{}
-	c := New(apply.NewPreparationService(apply.NewModelService(nil, source)), nil, nil, revision, nil, nil, nil)
+	c := New(apply.NewPreparationService(apply.NewModelService(nil, source)), nil, nil, revision, nil, nil)
 	var out, errout bytes.Buffer
 	if code := c.Run(context.Background(), []string{"check", "--repo", t.TempDir(), "--revision", "HEAD"}, &out, &errout); code != 3 {
 		t.Fatalf("%d: %s %s", code, out.String(), errout.String())
@@ -48,7 +48,7 @@ func TestExplicitRevisionResolvedOnceWithoutExecution(t *testing.T) {
 func TestUnavailableApplyDoesNotAcquireOrResolveEvenWithInvalidArguments(t *testing.T) {
 	source := &unavailableSource{}
 	revision := &resolver{}
-	c := New(apply.NewPreparationService(apply.NewModelService(nil, source)), nil, nil, revision, nil, nil, nil)
+	c := New(apply.NewPreparationService(apply.NewModelService(nil, source)), nil, nil, revision, nil, nil)
 	var out, errout bytes.Buffer
 	if code := c.Run(context.Background(), []string{"apply", "--repo", "absent", "--revision", "HEAD", "--unknown"}, &out, &errout); code != 3 || !strings.Contains(out.String(), "unavailable") {
 		t.Fatalf("%d %s", code, out.String())

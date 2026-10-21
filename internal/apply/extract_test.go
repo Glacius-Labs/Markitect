@@ -130,7 +130,7 @@ func TestExtractRefusesTooFewAgentTurnsForBothPhases(t *testing.T) {
 	req.Prepared = extractAttemptWithTurns(t, 3)
 	workspaces := &fakeWorkspaces{}
 	req.Workspaces, req.Evidence, req.Agents = workspaces, &memoryEvidence{}, failingAgents{}
-	if _, err := apply.Extract(context.Background(), req); err == nil || !strings.Contains(err.Error(), "at least 8 agent turns") || len(workspaces.open) != 0 {
+	if _, err := apply.Extract(context.Background(), req); err == nil || !strings.Contains(err.Error(), "at least 12 agent turns") || len(workspaces.open) != 0 {
 		t.Fatalf("err = %v", err)
 	}
 }

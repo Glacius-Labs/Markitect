@@ -27,10 +27,10 @@ CONTRADICTION = {"id": "contradiction", "expected": "model_error", "definitions"
 
 def report(status, reason="", problems=(), findings=(), questions=(), sealed=None, verdict=None):
     if sealed is None:
-        sealed = status == "verified" or reason == assess.PROBLEM_REASON
+        sealed = reason == assess.ACCEPTED_REASON or reason.startswith(assess.PROBLEM_REASON)
     if verdict is None:
-        verdict = {"verified": "satisfied"}.get(status, "needs_correction" if reason == assess.PROBLEM_REASON else "")
-    return {"status": "passed" if status == "verified" else "not_completed",
+        verdict = "satisfied" if reason == assess.ACCEPTED_REASON else "needs_correction" if reason.startswith(assess.PROBLEM_REASON) else ""
+    return {"status": "passed" if reason == assess.ACCEPTED_REASON else "failed" if status == "failed" else "not_completed",
             "run": {"status": status, "reason": reason, "passes": [{"id": "p1", "purpose": "assess", "review": True, "sealed": sealed, "verdict": verdict}],
                     "questions": list(questions), "problems": list(problems), "findings": list(findings), "turns": [{"id": "t1"}, {"id": "t2"}],
                     "usage": {"costUSD": 0.5, "inputTokens": 100, "outputTokens": 10}}}
@@ -42,7 +42,7 @@ def finding(observed, obligation="shop/inputs", cls="model_gap", blocking=True, 
 
 
 def confirmed(*findings):
-    return report("incomplete", assess.PROBLEM_REASON, findings=findings)
+    return report("failed", assess.PROBLEM_REASON + "F1 [shop/inputs, model_gap]", findings=findings)
 
 
 ABORT = {"id": "X1", "manager": ".", "category": "model", "text": "shop/inputs folds case but shop/list keeps it.", "abort": True}
@@ -51,7 +51,7 @@ ABORT = {"id": "X1", "manager": ".", "category": "model", "text": "shop/inputs f
 class Classification(unittest.TestCase):
     def test_conclusions_follow_the_sealed_pass_and_the_finding_class(self):
         cases = {
-            "accepted": report("verified"),
+            "accepted": report("incomplete", assess.ACCEPTED_REASON),
             "model_gap": confirmed(finding("The maximum length of `shop/inputs` is never stated.")),
             "model_error": confirmed(finding("open", fid="F1"), finding("shop/inputs contradicts shop/list", cls="model_error", fid="F2")),
         }
@@ -67,12 +67,12 @@ class Classification(unittest.TestCase):
         self.assertEqual(assess.classify(gap)["conclusion"], "model_gap")
 
     def test_technical_ends_are_incomplete_not_a_model_judgment(self):
-        harness_error = report("verified")
+        harness_error = report("incomplete", assess.ACCEPTED_REASON)
         harness_error["status"], harness_error["error"] = "not_completed", "evidence: report could not be written"
         cases = {
             "deadline": report("incomplete", "the deadline was reached"),
             "an Orchestrator finding only": confirmed(finding("file.unexplained: x", by="markitect")),
-            "unsealed": report("incomplete", assess.PROBLEM_REASON, findings=[finding("x")], sealed=False),
+            "unsealed": report("failed", assess.PROBLEM_REASON + "x", findings=[finding("x")], sealed=False),
             "other failure": report("failed", "a definite error of the run's inputs"),
             "abort by a child": report("failed", assess.MODEL_ERROR_REASON + "x", problems=[dict(ABORT, manager="shop")]),
             "harness error": harness_error,
@@ -113,6 +113,18 @@ class Classification(unittest.TestCase):
         self.assertTrue(s["blocked"] and s["issueRaised"])
         self.assertFalse(s["expectationMet"])
 
+    def test_only_the_production_assessment_envelope_can_conclude(self):
+        accepted = report("incomplete", assess.ACCEPTED_REASON)
+        legacy = report("verified", sealed=True, verdict="satisfied")
+        wrong_purpose = report("incomplete", assess.ACCEPTED_REASON)
+        wrong_purpose["run"]["passes"][0]["purpose"] = "verify"
+        failed_evidence = confirmed(finding("The maximum length of shop/inputs is missing."))
+        failed_evidence["error"] = "evidence write failed"
+        for r in (legacy, wrong_purpose, failed_evidence):
+            with self.subTest(r):
+                self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
+        self.assertEqual(assess.classify(accepted)["conclusion"], assess.ACCEPTED)
+
 
 class Scoring(unittest.TestCase):
     def test_a_sourced_gap_finding_meets_the_gap_control(self):
@@ -124,7 +136,7 @@ class Scoring(unittest.TestCase):
         self.assertEqual(s["ownerEffort"]["confirmedFindings"], 1)
 
     def test_accepting_the_gap_misses_it(self):
-        r = report("verified")
+        r = report("incomplete", assess.ACCEPTED_REASON)
         s = assess.score(r, assess.classify(r), GAP)
         self.assertFalse(s["expectationMet"])
         self.assertTrue(s["missedIssue"])
@@ -151,7 +163,7 @@ class Scoring(unittest.TestCase):
         self.assertTrue(all(x["citesFreedom"] for x in s["signals"]))
 
     def test_a_note_is_no_false_alarm_and_an_accepted_freedom_meets_its_control(self):
-        r = report("verified", findings=[finding("The file format is free.", obligation="shop/storage", blocking=False)])
+        r = report("incomplete", assess.ACCEPTED_REASON, findings=[finding("The file format is free.", obligation="shop/storage", blocking=False)])
         s = assess.score(r, assess.classify(r), FREEDOM)
         self.assertTrue(s["expectationMet"])
         self.assertFalse(s["falseAbort"])
@@ -159,7 +171,7 @@ class Scoring(unittest.TestCase):
         self.assertEqual(s["ownerEffort"]["notes"], 1)
 
     def test_a_disproved_finding_is_disagreement_not_owner_effort(self):
-        r = report("verified", findings=[dict(finding("The maximum is unstated."), closed=True, closedAs="disproved", disputes=[{"by": "."}])])
+        r = report("incomplete", assess.ACCEPTED_REASON, findings=[dict(finding("The maximum is unstated."), closed=True, closedAs="disproved", disputes=[{"by": "."}])])
         s = assess.score(r, assess.classify(r), FREEDOM)
         self.assertTrue(s["expectationMet"])
         self.assertEqual(s["ownerEffort"]["confirmedFindings"], 0)
@@ -437,7 +449,7 @@ class Cleanup(unittest.TestCase):
 
 class Series(unittest.TestCase):
     def test_series_counts_conclusions_agreement_and_false_aborts_per_control(self):
-        met = assess.score(report("verified"), assess.classify(report("verified")), FREEDOM)
+        met = assess.score(report("incomplete", assess.ACCEPTED_REASON), assess.classify(report("incomplete", assess.ACCEPTED_REASON)), FREEDOM)
         alarm_report = confirmed(finding("format", obligation="shop/storage"))
         alarm = assess.score(alarm_report, assess.classify(alarm_report), FREEDOM)
         summary = assess.series([met, met, alarm])["permitted-freedom"]
@@ -446,7 +458,7 @@ class Series(unittest.TestCase):
         self.assertFalse(summary["agreement"])
 
     def test_the_ledger_counts_attempts_that_were_never_assessed(self):
-        met = assess.score(report("verified"), assess.classify(report("verified")), FREEDOM)
+        met = assess.score(report("incomplete", assess.ACCEPTED_REASON), assess.classify(report("incomplete", assess.ACCEPTED_REASON)), FREEDOM)
         ledger = ("permitted-freedom C-01 status=done conclusion=accepted charged=200\n"
                   "permitted-freedom C-05 status=running charged=600\n"
                   "public-gap C-02 status=done conclusion=bind-failed charged=12\n")

@@ -487,7 +487,7 @@ artifacts:
   - path: "experiments/model-assessment/assessment-pass.json"
     form: config
     realizes: [examples/independent-oracles]
-    why: Freezes the assessment Pass's purpose, mandate, guidance and finding classes as the trial's treatment.
+    why: Binds a hashed reference copy of the production assessment's purpose, mandate, guidance and finding classes, checked against actual reviewer prompts without supplying an execution specification.
   - path: "experiments/model-assessment/contract.md"
     form: doc
     realizes: [examples/independent-oracles]

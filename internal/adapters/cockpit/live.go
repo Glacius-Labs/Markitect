@@ -10,7 +10,7 @@ import (
 )
 
 // Liveness reports whether an Apply holds a state directory's lock. Bootstrap
-// supplies the probe the answer command uses; it takes the lock for an instant
+// supplies the probe; it takes the lock for an instant
 // when nobody holds it, which the brief retries of a starting Apply and of
 // setup absorb.
 type Liveness func(stateDirectory string) (bool, error)

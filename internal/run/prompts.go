@@ -251,9 +251,12 @@ func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, 
 }
 
 func (e *engine) standingLocked(b *strings.Builder, m *member) {
-	if m.p.spec.Review {
+	switch {
+	case m.p.spec.Assesses:
+		fmt.Fprintf(b, "You assess the bound model of the responsibility of %s read-only, in a fresh context, before anything is realized.\n", labelOf(m.mgr))
+	case m.p.spec.Review:
 		fmt.Fprintf(b, "You are the independent reviewer of the responsibility of %s. You assess an immutable candidate read-only, in a fresh context without the authors' conversation.\n", labelOf(m.mgr))
-	} else {
+	default:
 		fmt.Fprintf(b, "You are %s.\n", labelOf(m.mgr))
 	}
 	if m.Brief != "" {
@@ -262,16 +265,12 @@ func (e *engine) standingLocked(b *strings.Builder, m *member) {
 	if e.cfg.OwnerRequest != "" {
 		fmt.Fprintf(b, "\nOwner request: %s\n", strings.TrimSpace(e.cfg.OwnerRequest))
 	}
-	list(b, "Owner decisions (fixed for this run):", e.cfg.OwnerDecisions)
 	var contacts []string
 	if m.Parent != "" {
 		contacts = append(contacts, "parent: "+contactOf(e.byPath[m.Parent]))
 	}
 	for _, c := range m.Children {
 		contacts = append(contacts, "child: "+contactOf(e.byPath[c]))
-	}
-	if m.Parent == "" && e.cfg.Owner != nil {
-		contacts = append(contacts, "user: the AI that invoked Markitect, which can consult the user")
 	}
 	list(b, "Your contacts for send:", contacts)
 	if len(m.Helpers) > 0 {
@@ -340,6 +339,9 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 			checks = append(checks, line)
 		}
 		b.WriteString("\nThe candidate passed the Model check and the File check.\n")
+		if p.spec.Assesses {
+			b.WriteString("No required check runs and no probe is offered in this Pass: a check judges artifacts, not the model.\n")
+		}
 		list(b, "Required checks on this candidate:", checks)
 		var mine, within, inherited []string
 		for _, f := range e.findings {
@@ -382,13 +384,6 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 		}
 		list(b, "Open findings you raised in earlier work Passes: close each with reason and evidence in your basis or result once it is resolved:", mine)
 	}
-	var answered []string
-	for _, q := range e.questions {
-		if q.To == User && q.Answered {
-			answered = append(answered, fmt.Sprintf("%s: %s\n  Answer: %s", q.ID, q.Text, q.Answer))
-		}
-	}
-	list(b, "Answered user questions of this run:", answered)
 }
 
 // taskLocked states what the Manager is to do in its current stage.

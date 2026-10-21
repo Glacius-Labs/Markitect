@@ -10,7 +10,7 @@ The repository adapter captures actual sources. ModelService checks only complet
 
 Generated views use `internal/modeldocs` and its document-writer port, implemented by `internal/adapters/documents`. Their guard is independent of Apply publication.
 
-`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `apply.Apply`, which composes the Passes of `run.Open`/`Pass`/`Finish` over `Agents`, `Workspaces`, `Checks`, `Owner` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file-based owner channel and evidence.
+`apply` prepares from one complete committed capture and composes the actual ports: `cmd/markitect → internal/bootstrap → CLI adapter → PreparationService`, then `apply.Apply`, which composes the Passes of `run.Open`/`Pass`/`Finish` over `Agents`, `Workspaces`, `Checks` and `Evidence`, and finally the guarded `apply.Publisher`. Bootstrap alone builds the concrete adapters and the file evidence.
 
 ## Authority and evidence
 
@@ -64,7 +64,7 @@ The [provider guide](provider-adapters.md#container-runtime) routes to the imple
 
 ## Operational record storage
 
-Read-only preparation creates no run, candidate or evidence. An Apply or Extract keeps its evidence in the operator's state directory outside the repository (`runs/<runID>/events.jsonl`, transcripts and `report.json`; Extract adds its owner question and answer files) and holds one lock per state directory. Document writes retain observed completed paths if a later validation fails. A preview cannot fabricate run evidence.
+Read-only preparation creates no run, candidate or evidence. An Apply or Extract keeps its evidence in the operator's state directory outside the repository (`runs/<runID>/events.jsonl`, transcripts and `report.json`) and holds one lock per state directory. Document writes retain observed completed paths if a later validation fails. A preview cannot fabricate run evidence.
 
 ## Project artifact boundary
 
