@@ -4,21 +4,21 @@
 // card above them starts and stops the one run this cockpit runs, when it is
 // configured to; runs started elsewhere are only observed.
 
-import { h, clear, when, duration } from "./dom.js";
+import { h, clear, when, duration, pagehead, about } from "./dom.js";
 import { store } from "./store.js";
 import { refreshState } from "./shell.js";
 import { runControlCard } from "./runcontrol.js";
-
-const outcomeClass = { success: "st-done", verified: "st-done", failed: "st-fail", incomplete: "st-waiting" };
+import { outcomeOfSummary, buildText } from "./runfacts.js";
 
 export function renderRuns(content) {
   const now = h("section", { class: "panel", "aria-labelledby": "runs-now" });
   const history = h("section", { class: "panel", "aria-labelledby": "runs-history" });
   const states = h("p", { class: "note", style: { margin: 0 } });
   const page = h("div", { class: "page" },
-    h("div", { class: "pagehead" }, h("div", {},
-      h("h2", {}, "Runs"),
-      h("p", { class: "lead" }, "Start a run here when the cockpit has a run configuration and a Runtime profile, or start an Apply with markitect apply; it appears below while it runs. Stop ends only the run started here, incomplete with its evidence. A run started elsewhere is stopped where it was started, and pausing a replay never reaches a run."))),
+    pagehead("Runs", "Start a run here, or watch the runs of this project.", {
+      about: about("How this works",
+        h("p", {}, "Start a run here when the cockpit has a run configuration and a Runtime profile; starting spends provider usage. An Apply started with markitect apply appears below while it runs and is only observed here."),
+        h("p", {}, "Stop ends only the run started here, incomplete, with its evidence kept. A run started elsewhere is stopped where it was started, and pausing a replay never reaches a run.")) }),
     runControlCard(), now, history, states);
   content.append(page);
   const draw = (s) => {
@@ -51,23 +51,21 @@ export function renderRuns(content) {
 // runRows is the run table.
 export function runRows(runs) {
   const rows = runs.map((r) => {
-    if (r.error && !r.id) return h("tr", {}, h("td", { colspan: 5 }, `${r.state}: ${r.error}`));
-    const result = r.runOutcome || r.outcome;
+    if (r.error && !r.id) return h("tr", {}, h("td", { colspan: 6 }, `${r.state}: ${r.error}`));
     const run = r.health?.run;
-    const outcome = result
-      ? h("span", { class: `outcome ${outcomeClass[result] || ""}` }, h("span", { class: "lamp" }), r.runOutcome ? r.runOutcome : `${r.outcome}, no report`)
-      : h("span", { class: `outcome ${run === "ended-without-report" ? "st-fail" : run === "running" ? "st-working" : "st-none"}` }, h("span", { class: "lamp" }),
-        run === "ended-without-report" ? "ended without outcome or report" : run === "running" ? "running" : "no outcome recorded");
+    const out = outcomeOfSummary(r, run);
+    const outcome = h("span", { class: `outcome ${out.cls}` }, h("span", { class: "lamp" }), out.text);
     const span = r.started && r.last ? duration(new Date(r.last) - new Date(r.started)) : "";
     return h("tr", {},
       h("td", {}, h("a", { href: `#/run/${encodeURIComponent(r.id)}` }, r.id), h("div", { class: "sub", title: r.state }, shortPath(r.state))),
       h("td", {}, when(r.started), span && h("div", { class: "sub" }, span)),
-      h("td", {}, outcome, r.publication && h("div", { class: "sub" }, `publication ${r.publication}`), r.reason && h("div", { class: "sub" }, r.reason.length > 140 ? `${r.reason.slice(0, 139)}…` : r.reason)),
+      h("td", {}, outcome, r.publication && r.runStatus !== "verified" && h("div", { class: "sub" }, `publication ${r.publication}`), r.reason && h("div", { class: "sub" }, r.reason.length > 140 ? `${r.reason.slice(0, 139)}…` : r.reason)),
+      h("td", {}, r.strategy ? h("strong", {}, r.strategy) : "—", r.build && h("div", { class: "sub", title: r.build }, buildText(r.build))),
       h("td", {}, `${r.managers} Manager${r.managers === 1 ? "" : "s"}`, h("div", { class: "sub" }, `${r.passes} Pass${r.passes === 1 ? "" : "es"}`), r.head && h("div", { class: "sub digest" }, `source ${r.head.slice(0, 12)}`)),
       h("td", {}, `${r.records} records`, usage(r.usage), r.error && h("div", { class: "st-fail" }, r.error)));
   });
   return h("table", { class: "table" },
-    h("thead", {}, h("tr", {}, h("th", {}, "Run"), h("th", {}, "Started"), h("th", {}, "Outcome"), h("th", {}, "Organization and source"), h("th", {}, "Record"))),
+    h("thead", {}, h("tr", {}, h("th", {}, "Run"), h("th", {}, "Started"), h("th", {}, "Outcome"), h("th", {}, "Strategy"), h("th", {}, "Organization and source"), h("th", {}, "Record"))),
     h("tbody", {}, rows));
 }
 

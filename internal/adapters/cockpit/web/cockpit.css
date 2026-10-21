@@ -864,3 +864,66 @@ a.kind:hover { border-color: var(--line-ice); color: var(--ice); }
 .runctl .confirm h4 { margin: 0 0 8px; font-size: var(--s1); font-weight: 600; color: var(--ink); }
 .runctl .confirm .facts { margin-bottom: 12px; }
 .runstop { display: inline-flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+
+/* Run concepts: strategy, observation kinds, probes, context coverage and the
+   Model assessment's verdict. Kinds are told apart by label and a quiet tone,
+   never by color alone. */
+.head .strategy { font-size: var(--s-1); padding: 1px 9px; border: 1px solid var(--line-2); border-radius: 999px; color: var(--ink-2); }
+.head .runid { overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.head .chip { display: inline-flex; align-items: center; gap: 6px; font-size: var(--s-1); padding: 1px 9px; border: 1px solid var(--line-2); border-radius: 999px; cursor: help; }
+.rail .pass .pmeta.faint { color: var(--ink-3); }
+.tag.warn { color: var(--wait); }
+.aside p.inline { display: flex; gap: 8px; align-items: center; margin: 0; }
+.aside p.tight { margin: 4px 0; }
+.aside .gap-top { margin-top: 8px; }
+.aside .participation { margin-bottom: 10px; }
+.aside .round { margin: 10px 0; padding: 8px 12px; border-left: 3px solid var(--control); background: var(--card-3); border-radius: 0 var(--r-sm) var(--r-sm) 0; }
+
+.obs { display: inline-block; font-size: var(--s-1); font-weight: 600; padding: 0 7px; border-radius: 999px; border: 1px solid currentColor; vertical-align: 1px; white-space: nowrap; }
+.obs-deviation { color: var(--fail); background: var(--fail-soft); }
+.obs-suspected { color: var(--wait); background: var(--wait-soft); }
+.obs-model { color: var(--control); background: rgb(183 177 230 / 0.12); }
+.obs-suggestion { color: var(--ink-2); background: transparent; border-style: dashed; }
+.aside .class { font-size: var(--s-1); color: var(--control); }
+.aside ul.findings, .aside ul.probes, .aside ul.coverage, .aside ul.lookups, .aside ul.defs { list-style: none; margin: 4px 0; padding: 0; }
+.aside .finding-line { padding: 5px 0; border-bottom: 1px solid var(--card-3); }
+
+.aside .probe { padding: 8px 0 8px 10px; border-bottom: 1px solid var(--card-3); border-left: 2px solid var(--line-2); margin-bottom: 4px; }
+.aside .probe.adverse { border-left-color: var(--fail); }
+.aside .probe .probehead { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.aside .probe .probefoot { font-size: var(--s-1); }
+.aside .probe .prose { font-size: var(--s0); }
+
+.aside .cov { padding: 8px 0; border-bottom: 1px solid var(--card-3); }
+.aside .cov.cov-open { border-left: 2px solid var(--wait); padding-left: 10px; }
+.aside .covhead { display: flex; flex-wrap: wrap; gap: 6px; align-items: baseline; }
+.aside .evidence { margin: 6px 0 0 10px; padding-left: 10px; border-left: 2px solid var(--line-2); font-size: var(--s0); }
+.aside .evidence .prose { font-size: var(--s0); margin-top: 3px; }
+.aside .defs li { font-family: var(--digest); font-size: var(--s-1); color: var(--ink-2); padding: 1px 0; }
+.aside .lookups li { padding: 3px 0; }
+.aside .defnames { font-size: var(--s-1); overflow-wrap: anywhere; }
+.aside details summary { cursor: pointer; color: var(--ink-2); font-size: var(--s0); }
+
+.aside .verdict { border: 1px solid var(--line-2); border-left-width: 4px; border-radius: var(--r-sm); padding: 10px 14px; margin: 8px 0 12px; background: var(--card-3); }
+.aside .verdict .vhead { font-weight: 600; font-size: var(--s2); }
+.aside .verdict.v-ok { border-left-color: var(--done); }
+.aside .verdict.v-problem { border-left-color: var(--wait); background: var(--wait-soft); }
+.aside .verdict.v-run { border-left-color: var(--work); }
+
+details.gaps > summary { cursor: pointer; font-weight: 600; font-size: var(--s0); color: var(--ink-2); }
+details.gaps[open] > summary { margin-bottom: 6px; }
+
+.list li.t-bad .x { color: var(--fail); }
+.list li.t-warn .x { color: var(--wait); }
+.timeline .mark.probe-ok { fill: var(--done); }
+.timeline .mark.probe-bad { fill: var(--fail); }
+.timeline .mark.probe-warn { fill: var(--wait); }
+
+@media (max-width: 700px) {
+  .head { gap: 8px 12px; }
+  .head .runmeta { flex-basis: auto; }
+  .rail .pass { min-width: 116px; }
+  .aside dl { grid-template-columns: 1fr; gap: 0; }
+  .aside dt { margin-top: 6px; }
+}
+.aside .probe .probelabel { font-size: var(--s-1); margin-top: 4px; }

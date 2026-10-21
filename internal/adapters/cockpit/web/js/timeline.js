@@ -3,8 +3,9 @@
 // what is shown up to the boundary.
 
 import { s, clear, label, clock } from "./dom.js";
+import { passTitle } from "./runfacts.js";
 
-const LANE = 26, LABEL = 132, TOP = 26;
+const LANE = 26, LABEL = 132, TOP = 26, CHAR = 6.4;
 
 export class Timeline {
   constructor(container, { onSelect }) {
@@ -33,12 +34,23 @@ export class Timeline {
     const nowIso = view.boundary.at || extent.start;
     const nowX = x(nowIso);
 
+    // A Pass label is drawn only where it fits its band and does not run into
+    // the label before it: the full title, else the Pass identity, else
+    // nothing. The band's tooltip and a click always name the Pass.
+    let labelEnd = -Infinity;
     view.passes.forEach((p, i) => {
       if (!p.started) return;
       const x1 = x(p.started), x2 = p.sealedAt ? x(p.sealedAt) : nowX;
       const band = s("rect", { class: `passband${i % 2 ? " alt" : ""}`, x: x1, y: 0, width: Math.max(1, x2 - x1), height });
-      const lbl = s("text", { class: "passlabel", x: x1 + 4, y: 14 }, `${p.id} ${p.purpose}${p.sealed ? "" : " (open)"}`);
-      const g = s("g", { class: "mark", tabindex: -1 }, band, lbl, s("title", {}, `Pass ${p.id}: ${p.purpose}${p.verdict ? `, sealed ${p.verdict}` : ""}`));
+      const start = Math.max(x1 + 4, labelEnd + 6);
+      const full = `${p.id} ${passTitle(p.purpose)}${p.sealed ? "" : " (open)"}`;
+      const fits = (t) => t.length * CHAR <= x2 - start - 4;
+      const text = [full, `${p.id} ${passTitle(p.purpose)}`, p.id].find(fits);
+      const g = s("g", { class: "mark", tabindex: -1 }, band, s("title", {}, `Pass ${p.id}: ${passTitle(p.purpose)}${p.verdict ? `, sealed ${p.verdict.replace("_", " ")}` : ""}${p.unchanged ? `, re-Verify of the unchanged candidate of ${p.unchanged}` : ""}`));
+      if (text) {
+        g.append(s("text", { class: "passlabel", x: start, y: 14 }, text));
+        labelEnd = start + text.length * CHAR;
+      }
       g.addEventListener("click", () => this.onSelect(`pass:${p.id}`));
       svg.append(g);
     });
@@ -108,6 +120,8 @@ function marker(e) {
     case "question.lapsed": return { cls: "return", shape: "dia" };
     case "message": return { cls: "info", lane: e.link?.from };
     case "finding.recorded": case "finding.closed": case "finding.disputed": return { cls: "finding", shape: "dia" };
+    case "probe.receipt": return { cls: `probe-${e.tone || "ok"}`, lane: e.manager };
+    case "probe.disposed": return { cls: "probe-warn", shape: "dia", lane: e.manager };
     case "problem.raised": return { cls: "return", shape: "dia" };
     case "check": case "gate": case "candidate": return { cls: "check", lane: "@orchestrator" };
     case "outcome": return { cls: "check", shape: "dia", lane: "@orchestrator" };

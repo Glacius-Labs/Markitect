@@ -7,27 +7,27 @@ artifacts:
   - path: "internal/adapters/cockpit/report.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Decodes the run report's outcome and publication read-back and marks an outcome mapped from an earlier report's command status."
+    why: "Decodes the run report's command status, the Run's own status with its problems, turn count and probe counts, and the publication read-back, and maps an outcome the producer does not write from the command status."
   - path: "internal/adapters/cockpit/view.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Defines the boundary-bound view of a run: Passes, Managers, waits, turns, spans, proposals, findings, questions, problems and limitations."
+    why: "Defines the boundary-bound view of a run: the binding with each Manager's context, Passes with their turns and cost, Managers, waits, turns, spans, proposals with a Model assessment's coverage, findings by kind, questions, problems, probes, lookups, dependency bindings and limitations."
   - path: "internal/adapters/cockpit/project.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Projects exactly the records up to a boundary into the view, derives the organization from Package paths and lists what the record does not establish."
+    why: "Projects exactly the records up to a boundary into the view, derives the organization from Package paths, applies the observation kinds and the closed model-problem ending, lists only unknown kinds and lists what the record does not establish."
   - path: "internal/adapters/cockpit/waits.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads the Orchestrator's recorded waits, names what they depend on, follows their causes and marks waits the record shows fulfilled as outdated."
+    why: "Reads the Orchestrator's recorded waits including the accepted submission of a Manager the waiter named, names what they depend on, follows their causes, marks waits the record shows fulfilled as outdated and states the account with the closed model-problem ending."
   - path: "internal/adapters/cockpit/entries.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Describes every record for the timeline and marks exchanges with direction and Agent, submission, Orchestrator or owner channel without claiming delivery."
+    why: "Describes every record for the timeline, including observation kinds, probes, lookups and dependency bindings, and marks exchanges with direction and Agent, submission, Orchestrator or owner channel without claiming delivery."
   - path: "internal/adapters/cockpit/detail.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Selects the complete records that concern one reference up to the boundary."
+    why: "Selects the complete records that concern one reference, including a probe, up to the boundary."
   - path: "internal/adapters/cockpit/transcript.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -48,6 +48,10 @@ artifacts:
     form: test
     realizes: [product/cockpit/observed-run-inspection]
     why: "Verifies boundary isolation, correction with fresh Verify on a changed candidate, parallel work, routed questions, lapses, outdated waits, no-change and interrupted runs."
+  - path: "internal/adapters/cockpit/concepts_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies the binding and context coverage, probes with receipts and dispositions, observation kinds and their effect, a re-Verify of an unchanged candidate, the Model assessment verdict and the closed model-problem ending, the named wait form and the report without an outcome."
   - path: "internal/adapters/cockpit/evidence_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
@@ -79,7 +83,11 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/runs.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Renders the run history with outcomes, publication, organization, source and reported usage, and places the run control card above the runs that run now."
+    why: "Renders the run history with outcomes, strategy, publication, organization, source and reported usage, and places the run control card above the runs that run now."
+  - path: "internal/adapters/cockpit/web/js/runfacts.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Words the outcome pill, publication, strategy, build and the turns and cost of a Pass for the inspector and the run list, so both say a closed Run the same way."
   - path: "internal/adapters/cockpit/web/js/playback.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -87,19 +95,19 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/inspector.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Composes the run inspector: boundary views, account, Pass rail, lists, transport, keyboard control, selection that pauses replay, the transcript dialog and the stop of the run the cockpit started."
+    why: "Composes the run inspector: the condensed header with strategy, outcome and live chip, the Pass rail with turns and cost, boundary views, account, lists, transport, keyboard control, selection that pauses replay, the transcript dialog and the stop of the run the cockpit started."
   - path: "internal/adapters/cockpit/web/js/diagram.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Draws the organization as a track diagram with recorded exchanges as directional arrows that pause with replay, a still form for reduced motion and a list for narrow windows."
+    why: "Draws the organization as a track diagram with recorded exchanges as directional arrows that pause with replay, a still form for reduced motion and a list for narrow windows, and draws the owner only for records of an earlier run."
   - path: "internal/adapters/cockpit/web/js/timeline.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Draws one time axis with Pass bands, state spans, turns and exchange, finding and check marks up to the boundary."
+    why: "Draws one time axis with Pass bands whose labels never overlap, state spans, turns and exchange, finding, probe and check marks up to the boundary."
   - path: "internal/adapters/cockpit/web/js/detail.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Renders the selected Manager, wait cause, proposal, finding, question, turn, Pass, check, problem, message or run outcome as recorded."
+    why: "Renders the selected Manager with its context coverage, wait cause, proposal, finding by kind, probe, question, turn, Pass (the Model assessment's verdict, probes, observations), check, problem, message, lookup or run outcome as recorded."
   - path: "internal/adapters/cli/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
@@ -115,7 +123,7 @@ artifacts:
   - path: "internal/adapters/cockpit/contract_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads the run engine's source and fails when a data key or envelope field the projection decodes is no longer recorded."
+    why: "Reads the run engine's, Apply's and the report producer's source and fails when a data key or envelope field the projection decodes is no longer recorded, when a recorded event kind is neither projected nor on the listed-only allowlist, or when the report fields the cockpit reads are not the producer's."
   - path: "internal/adapters/cockpit/live.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]

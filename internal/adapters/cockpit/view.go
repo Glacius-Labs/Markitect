@@ -36,10 +36,19 @@ type View struct {
 	Findings  []FindingView  `json:"findings"`
 	Questions []QuestionView `json:"questions"`
 	Problems  []ProblemView  `json:"problems"`
-	Gaps      []Gap          `json:"gaps"`
+	Probes    []ProbeView    `json:"probes"`
+	Lookups   []LookupView   `json:"lookups"`
+	Bindings  []BindingView  `json:"bindings"`
+	// OwnerChannel says that the record holds owner-channel records (a
+	// question to the owner or an owner error) of an earlier run. A Run no
+	// longer has an owner channel, so the inspector draws the owner only then.
+	OwnerChannel bool  `json:"ownerChannel"`
+	Gaps         []Gap `json:"gaps"`
 }
 
-// RunHead is what run.start recorded.
+// RunHead is what run.start recorded, including the binding the caller gave
+// the run: the strategy, the build and the budget. A run of an earlier build
+// has no binding; those fields stay empty.
 type RunHead struct {
 	ID         string    `json:"id"`
 	Started    time.Time `json:"started,omitzero"`
@@ -48,6 +57,17 @@ type RunHead struct {
 	Passes     int       `json:"passes,omitempty"`
 	Start      string    `json:"start,omitempty"`
 	Managers   []string  `json:"managers"`
+	// Strategy is the composition the run was bound to ("direct" or "staged"),
+	// Work its work Passes in order and Corrections the work Passes a finding
+	// may name.
+	Strategy    string   `json:"strategy,omitempty"`
+	Work        []string `json:"work,omitempty"`
+	Corrections []string `json:"corrections,omitempty"`
+	Build       string   `json:"build,omitempty"`
+	Source      string   `json:"source,omitempty"`
+	// ExecutionTime and TurnTimeout are the budget's durations as written.
+	ExecutionTime string `json:"executionTime,omitempty"`
+	TurnTimeout   string `json:"turnTimeout,omitempty"`
 }
 
 // Boundary is the recorded position of the view. Total is the number of
@@ -64,10 +84,15 @@ type Boundary struct {
 // boundary. Without an outcome the record does not say whether the run still
 // runs or was interrupted; live observation adds that separately.
 type Status struct {
-	Outcome    string  `json:"outcome,omitempty"`
-	Reason     string  `json:"reason,omitempty"`
-	OutcomeSeq int     `json:"outcomeSeq,omitempty"`
-	Report     *Report `json:"report,omitempty"`
+	Outcome    string `json:"outcome,omitempty"`
+	Reason     string `json:"reason,omitempty"`
+	OutcomeSeq int    `json:"outcomeSeq,omitempty"`
+	// Ending names a closed ending the outcome and the record establish
+	// together: "model_problem" when a Model assessment or Root confirmed a
+	// material model problem. That ends the Run without publication; the
+	// model is corrected outside it and a new Run starts.
+	Ending string  `json:"ending,omitempty"`
+	Report *Report `json:"report,omitempty"`
 }
 
 // Sentence is one factual statement of the account, split into segments of
@@ -101,6 +126,15 @@ type PassView struct {
 	Tree       string              `json:"tree,omitempty"`
 	Managers   []run.ManagerRecord `json:"managers,omitempty"`
 	Registry   int                 `json:"registrations,omitempty"`
+	// Unchanged names the earlier Pass of the same purpose that reviewed this
+	// very candidate: this review decides that Pass's disputes and suspicions
+	// instead of judging a corrected candidate.
+	Unchanged string `json:"unchanged,omitempty"`
+	// Turns, CostUSD and OutputTokens sum the usage of the Pass's turns that
+	// ended up to the boundary.
+	Turns        int     `json:"turns,omitempty"`
+	CostUSD      float64 `json:"costUSD,omitempty"`
+	OutputTokens int64   `json:"outputTokens,omitempty"`
 }
 
 // CheckView is one required check on a review Pass's candidate.
@@ -148,6 +182,77 @@ type ManagerView struct {
 	// Declared are the dependencies its accepted plan declares for the
 	// current Pass's purpose, with whether each is accepted at the boundary.
 	Declared []Dependency `json:"declared,omitempty"`
+	// Context is the standing context the run bound for this Manager.
+	Context *ContextCoverage `json:"context,omitempty"`
+}
+
+// ContextCoverage is what run.start bound as one Manager's model context: the
+// digest of its Brief, the Definitions supplied in full and the Definitions
+// supplied by reference only, which the Manager can look up.
+type ContextCoverage struct {
+	Brief     string   `json:"brief,omitempty"`
+	Full      []string `json:"full"`
+	Reference []string `json:"reference"`
+}
+
+// LookupView is one lookup of a Manager's turn: a Definition of the bound
+// model, or its own Brief again.
+type LookupView struct {
+	Seq     int    `json:"seq"`
+	Pass    string `json:"pass"`
+	Manager string `json:"manager"`
+	Turn    string `json:"turn,omitempty"`
+	Kind    string `json:"kind"`
+	ID      string `json:"id,omitempty"`
+	Owner   string `json:"owner,omitempty"`
+	Bytes   int    `json:"bytes"`
+	Refused bool   `json:"refused,omitempty"`
+	Helper  string `json:"helper,omitempty"`
+}
+
+// BindingView is one recorded dependency of a Manager's work on another
+// Manager's accepted submission, or a refused binding that would close a cycle.
+type BindingView struct {
+	Seq      int    `json:"seq"`
+	Pass     string `json:"pass"`
+	Manager  string `json:"manager"`
+	On       string `json:"on"`
+	Stage    string `json:"stage"`
+	Serves   string `json:"serves,omitempty"`
+	Proposal string `json:"proposal,omitempty"`
+	Rebound  bool   `json:"rebound,omitempty"`
+	Cycle    string `json:"cycle,omitempty"`
+}
+
+// ProbeView is one probe: the claim and the expectation recorded before it ran,
+// the receipt once it ran and the disposition of an adverse receipt. The
+// probe's bytes and output stay in the record (probe:ID).
+type ProbeView struct {
+	ID          string                `json:"id"`
+	Pass        string                `json:"pass"`
+	Manager     string                `json:"manager"`
+	Turn        string                `json:"turn,omitempty"`
+	Obligation  string                `json:"obligation"`
+	Claim       string                `json:"claim"`
+	Expected    string                `json:"expected"`
+	Check       string                `json:"check,omitempty"`
+	StandKind   string                `json:"standKind"`
+	Stand       string                `json:"stand,omitempty"`
+	Path        string                `json:"path,omitempty"`
+	Proposal    string                `json:"proposal,omitempty"`
+	Rerun       string                `json:"rerun,omitempty"`
+	RequestSeq  int                   `json:"requestSeq"`
+	ReceiptSeq  int                   `json:"receiptSeq,omitempty"`
+	Outcome     string                `json:"outcome,omitempty"`
+	ExitCode    int                   `json:"exitCode"`
+	TimedOut    bool                  `json:"timedOut,omitempty"`
+	Uncertain   bool                  `json:"uncertain,omitempty"`
+	Reason      string                `json:"reason,omitempty"`
+	Adverse     bool                  `json:"adverse,omitempty"`
+	DisposedSeq int                   `json:"disposedSeq,omitempty"`
+	Disposition *run.ProbeDisposition `json:"disposition,omitempty"`
+	VoidedSeq   int                   `json:"voidedSeq,omitempty"`
+	VoidedWhy   string                `json:"voidedWhy,omitempty"`
 }
 
 // Dependency is one dependency an accepted plan declares: the owner's basis or
@@ -189,11 +294,13 @@ type Wait struct {
 	Outdated string `json:"outdated,omitempty"`
 }
 
-// Said is a Manager's own report.wait: the contact or question it named and
-// its reason, authored by the Agent.
+// Said is a Manager's own report.wait: the contact, question or Manager it
+// named, the stage (basis or result) it waits for when it named another
+// Manager's accepted submission, and its reason, authored by the Agent.
 type Said struct {
 	Seq    int    `json:"seq"`
 	For    string `json:"for"`
+	Stage  string `json:"stage,omitempty"`
 	Reason string `json:"reason"`
 }
 
@@ -226,6 +333,14 @@ type TurnView struct {
 	Reason   string     `json:"reason,omitempty"`
 	Reports  []string   `json:"reports,omitempty"`
 	Usage    *run.Usage `json:"usage,omitempty"`
+	// Mode is what the turn was admitted for (work, communication,
+	// coordination, review or helper). Context says how it received its
+	// standing context: brief (a fresh conversation), history (a continued
+	// one) or rehydrated (a continued one that may have lost it).
+	Mode      string `json:"mode,omitempty"`
+	Context   string `json:"context,omitempty"`
+	Compacted bool   `json:"compacted,omitempty"`
+	Probes    int    `json:"probes,omitempty"`
 }
 
 // Span is one recorded state of a Manager in a Pass, from the state change
@@ -263,6 +378,28 @@ type ProposalView struct {
 	Disputes []string  `json:"disputes,omitempty"`
 	Children []string  `json:"children,omitempty"`
 	Stand    string    `json:"stand,omitempty"`
+	// Coverage is the obligation coverage of a Model assessment submission:
+	// per Definition its status and the evidence behind it.
+	Coverage []CoverageView `json:"coverage,omitempty"`
+}
+
+// CoverageView is the status of one own obligation in a submission with the
+// evidence items that support its claims.
+type CoverageView struct {
+	Definition string         `json:"definition"`
+	Status     string         `json:"status"`
+	Note       string         `json:"note,omitempty"`
+	Evidence   []EvidenceView `json:"evidence,omitempty"`
+}
+
+// EvidenceView supports one claim: a probe receipt or an inspected source
+// location of the stand with the reviewer's reasoning.
+type EvidenceView struct {
+	Claim     string `json:"claim"`
+	Receipt   string `json:"receipt,omitempty"`
+	Source    string `json:"source,omitempty"`
+	Location  string `json:"location,omitempty"`
+	Reasoning string `json:"reasoning,omitempty"`
 }
 
 // FindingView is one finding as recorded up to the boundary.
@@ -270,6 +407,17 @@ type FindingView struct {
 	run.Finding
 	Seq       int `json:"seq"`
 	ClosedSeq int `json:"closedSeq,omitempty"`
+	// Effect says what the finding does to the Run at the boundary: "blocks"
+	// (an open confirmed deviation or model problem, which names a
+	// correction), "investigate" (an open suspicion: it holds the Pass back
+	// until a fresh review decides it, and names no correction),
+	// "advisory" (a suggestion or an advisory artifact finding, which never
+	// blocks) or "closed".
+	Effect string `json:"effect"`
+	// Class is the class of a Model assessment finding: model_error,
+	// model_gap or unclassified. The engine carries it in the correction
+	// field, because an assessment has no correction purpose.
+	Class string `json:"class,omitempty"`
 }
 
 // QuestionView is one question and its recorded fate.

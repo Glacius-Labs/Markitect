@@ -21,6 +21,9 @@ type Entry struct {
 	Text    string    `json:"text"`
 	Ref     string    `json:"ref,omitempty"`
 	Link    *Link     `json:"link,omitempty"`
+	// Tone is the quiet judgment a record carries for the eye: "ok", "bad" or
+	// "warn" for a probe outcome, "ok" for an accepted result.
+	Tone string `json:"tone,omitempty"`
 }
 
 // Link is the direction and channel of one recorded exchange. Channel "agent"
@@ -92,7 +95,7 @@ func entry(r Record) Entry {
 			e.Text = fmt.Sprintf("Pass %s started: %s with fresh reviewers, read-only", r.Pass, str("purpose"))
 		}
 	case "pass.sealed":
-		e.Class, e.Ref, e.Text = "control", "pass:"+r.Pass, fmt.Sprintf("Pass %s sealed %s", r.Pass, str("verdict"))
+		e.Class, e.Ref, e.Text = "control", "pass:"+r.Pass, fmt.Sprintf("%s Pass %s sealed %s", passTitle(str("purpose")), r.Pass, strings.ReplaceAll(str("verdict"), "_", " "))
 	case "manager.state_changed":
 		e.Class, e.Ref = "state", "manager:"+r.Manager
 		e.Text = fmt.Sprintf("%s %s → %s: %s", who, str("from"), str("to"), str("why"))
@@ -111,6 +114,12 @@ func entry(r Record) Entry {
 		if flag("readOnly") {
 			access = "read-only"
 		}
+		if mode := str("mode"); mode != "" {
+			access += ", " + mode
+		}
+		if ctx := str("context"); ctx != "" {
+			access += ", context " + ctx
+		}
 		e.Class, e.Ref, e.Text = "work", "turn:"+r.Turn, fmt.Sprintf("%s: %s turn %s started (%s)", who, str("role"), shortTurn(r.Turn), access)
 	case "turn.end":
 		var reports []string
@@ -121,6 +130,9 @@ func entry(r Record) Entry {
 		} else {
 			text += " without a report"
 		}
+		if n := intOf(d["probes"]); n > 0 {
+			text += fmt.Sprintf("; %d probe%s", n, plural(n))
+		}
 		if !flag("stopped") {
 			text += "; container stop not observed"
 		}
@@ -128,7 +140,11 @@ func entry(r Record) Entry {
 	case "report.progress":
 		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), who+" reported progress"
 	case "report.wait":
-		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), fmt.Sprintf("%s reported waiting for %s", who, str("for"))
+		waitFor := str("for")
+		if stage := str("stage"); stage != "" {
+			waitFor = fmt.Sprintf("the accepted %s of %s", stage, labelOf(waitFor))
+		}
+		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), fmt.Sprintf("%s reported waiting for %s", who, waitFor)
 	case "proposal.submitted":
 		id := str("proposal")
 		e.Class, e.Ref, e.Text = "exchange", "proposal:"+id, fmt.Sprintf("%s submitted %s %s", who, str("kind"), id)
@@ -161,15 +177,18 @@ func entry(r Record) Entry {
 		e.Class, e.Ref, e.Text = "control", "proposal:"+str("proposal"), fmt.Sprintf("%s %s", str("proposal"), strings.TrimPrefix(r.Kind, "proposal."))
 	case "finding.recorded", "finding.closed", "finding.disputed":
 		id := str("id")
-		kind := "note"
-		if flag("blocking") {
-			kind = "genuine finding"
-		}
+		kind := observationLabel(str("kind"), flag("blocking"))
 		verb := strings.TrimPrefix(r.Kind, "finding.")
+		if verb == "recorded" {
+			verb = "raised"
+		}
 		e.Class, e.Ref = "evidence", "finding:"+id
-		e.Text = fmt.Sprintf("%s %s %s: owner %s, raised by %s", strings.ToUpper(kind[:1])+kind[1:], id, verb, labelOf(str("owner")), labelOf(str("raisedBy")))
+		e.Text = fmt.Sprintf("%s %s %s: owner %s, raised by %s", kind, id, verb, labelOf(str("owner")), labelOf(str("raisedBy")))
 		if verb == "closed" {
-			e.Text = fmt.Sprintf("%s %s closed as %s", strings.ToUpper(kind[:1])+kind[1:], id, str("closedAs"))
+			e.Text = fmt.Sprintf("%s %s closed as %s", kind, id, str("closedAs"))
+		}
+		if class := str("correction"); class != "" && str("kind") == "model" {
+			e.Text += ", class " + class
 		}
 	case "question.asked":
 		id := str("id")
@@ -227,6 +246,57 @@ func entry(r Record) Entry {
 		if reason := str("reason"); reason != "" {
 			e.Text += " (" + clip(reason, 120) + ")"
 		}
+	case "lookup.definition":
+		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), fmt.Sprintf("%s looked up %s", who, str("id"))
+		if flag("refused") {
+			e.Text += " (refused: too large)"
+		}
+	case "lookup.brief":
+		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), who+" looked up its Brief again"
+	case "dependency.bound":
+		e.Class, e.Ref, e.Text = "control", "seq:"+fmt.Sprint(r.Seq), fmt.Sprintf("%s's work now depends on the accepted %s of %s (%s)", who, str("stage"), labelOf(str("on")), str("proposal"))
+		if flag("rebound") {
+			e.Text = fmt.Sprintf("%s's work was rebound to the revised %s of %s (%s)", who, str("stage"), labelOf(str("on")), str("proposal"))
+		}
+	case "dependency.unbound":
+		e.Class, e.Ref, e.Text = "control", "seq:"+fmt.Sprint(r.Seq), fmt.Sprintf("%s's dependency on the accepted %s of %s was refused: it would close a cycle", who, str("stage"), labelOf(str("on")))
+	case "probe.requested":
+		e.Class, e.Ref, e.Text = "evidence", "probe:"+str("id"), fmt.Sprintf("Probe %s requested by %s on %s for %s", str("id"), who, standText(str("standKind")), str("obligation"))
+	case "probe.receipt":
+		e.Class, e.Ref, e.Text = "evidence", "probe:"+str("id"), fmt.Sprintf("Probe %s on %s: %s", str("id"), standText(str("standKind")), str("outcome"))
+		switch str("outcome") {
+		case "passed":
+			e.Tone = "ok"
+		case "failed":
+			e.Tone = "bad"
+		default:
+			e.Tone = "warn"
+		}
+		if flag("uncertain") {
+			e.Text += " (uncertain)"
+			e.Tone = "warn"
+		}
+	case "probe.disposed":
+		var disposition struct {
+			As      string `json:"as"`
+			By      string `json:"by"`
+			Pending bool   `json:"pending"`
+		}
+		_ = json.Unmarshal(d["disposition"], &disposition)
+		e.Class, e.Ref = "evidence", "probe:"+str("receipt")
+		switch {
+		case d["voided"] != nil:
+			e.Text = fmt.Sprintf("The disposition of probe %s was withdrawn", str("receipt"))
+		case disposition.Pending:
+			e.Text = fmt.Sprintf("Probe %s disposed as %s by %s, pending an independent review", str("receipt"), strings.ReplaceAll(disposition.As, "_", " "), labelOf(disposition.By))
+		default:
+			e.Text = fmt.Sprintf("Probe %s disposed as %s by %s", str("receipt"), strings.ReplaceAll(disposition.As, "_", " "), labelOf(disposition.By))
+		}
+	case "extract.phase":
+		e.Class, e.Text = "control", fmt.Sprintf("Extract phase %s ended %s", str("phase"), str("status"))
+	case "environment.release":
+		// Written by earlier builds that kept a working environment between turns.
+		e.Class, e.Text = "runtime", "environment release"
 	case "owner.error":
 		e.Class, e.Text = "problem", fmt.Sprintf("Owner channel error for %s", str("question"))
 	case "workspace.materialize", "workspace.close", "home.remove":
@@ -238,6 +308,53 @@ func entry(r Record) Entry {
 		e.Ref = "seq:" + fmt.Sprint(r.Seq)
 	}
 	return e
+}
+
+// observationLabel names a finding's kind (owner refinement of 21 October
+// 2026). A record of an earlier build has no kind; its blocking flag decides.
+func observationLabel(kind string, blocking bool) string {
+	switch kind {
+	case "deviation":
+		return "Deviation"
+	case "suspected":
+		return "Suspicion"
+	case "model":
+		return "Model problem"
+	case "suggestion":
+		return "Suggestion"
+	}
+	if blocking {
+		return "Genuine finding"
+	}
+	return "Note"
+}
+
+// standText says which stand a probe ran on.
+func standText(kind string) string {
+	switch kind {
+	case "candidate":
+		return "the candidate"
+	case "accepted":
+		return "the accepted stand"
+	case "proposal":
+		return "a checked proposal"
+	case "live":
+		return "the live stand"
+	}
+	return "a stand"
+}
+
+func intOf(raw json.RawMessage) int {
+	var n int
+	_ = json.Unmarshal(raw, &n)
+	return n
+}
+
+func plural(n int) string {
+	if n == 1 {
+		return ""
+	}
+	return "s"
 }
 
 func parentOf(path string) string {
