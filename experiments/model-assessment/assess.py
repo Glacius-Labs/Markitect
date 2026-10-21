@@ -44,35 +44,37 @@ def preflight(declaration):
 def classify(report):
     """The assessment conclusion of one harness report.
 
-    accepted: the run verified, so the review Pass was clean. model_error: Root's
-    model-error decision ended the run. needs_clarification: Root asked the user
-    and the sealed last Pass needs correction for an open genuine finding.
-    Everything else, including a run that ended before its conclusion, is
-    incomplete, with the reason kept separately from model quality.
+    accepted: the run verified, so the review Pass was clean, and the harness
+    reported no error. model_error: Root's model-error decision ended the run.
+    needs_clarification: Root asked the user and the sealed last Pass needs
+    correction for an open genuine finding of the team. Everything else is
+    incomplete, with the reason kept separately from model quality: technical
+    (a run that ended before its conclusion) or unrouted (the team left genuine
+    findings open without asking the user).
     """
     run = report.get("run")
     if not run:
-        status = report.get("status")
-        return {"conclusion": INCOMPLETE, "why": "no run: preparation " + str(status), "status": None}
+        return {"conclusion": INCOMPLETE, "incomplete": "technical", "why": "no run: preparation " + str(report.get("status")), "status": None}
     status, reason = run.get("status"), run.get("reason", "")
     questions = [q for q in run.get("questions", []) if q.get("to") == "user"]
     aborts = [p for p in run.get("problems", []) if p.get("manager") == "." and p.get("abort") and p.get("category") == "model"]
-    open_genuine = [f for f in run.get("findings", []) if f.get("blocking") and not f.get("closed")]
+    open_genuine = [f for f in run.get("findings", []) if f.get("blocking") and not f.get("closed") and f.get("raisedBy") != "markitect"]
     passes = run.get("passes", [])
     last = passes[-1] if passes else {}
     out = {"status": status, "reason": reason, "questions": len(questions), "openGenuineFindings": len(open_genuine),
-           "passes": len(passes), "lastPassSealed": bool(last.get("sealed")), "lastVerdict": last.get("verdict", "")}
+           "passes": len(passes), "lastPassSealed": bool(last.get("sealed")), "lastVerdict": last.get("verdict", ""),
+           "reportStatus": report.get("status"), "reportError": report.get("error", "")}
     if status == "failed" and aborts and reason.startswith(MODEL_ERROR_REASON):
         out.update(conclusion=MODEL_ERROR, why="Root ended the assessment with a model error")
-    elif status == "verified":
+    elif status == "verified" and report.get("status") == "passed" and not report.get("error"):
         out.update(conclusion=ACCEPTED, why="clean assessment Pass")
     elif status == "incomplete" and reason == OPEN_FINDINGS_REASON and last.get("sealed") and \
             last.get("verdict") == "needs_correction" and questions and open_genuine:
         out.update(conclusion=CLARIFICATION, why="Root asked the user and kept genuine findings open")
-    elif status == "incomplete" and reason == OPEN_FINDINGS_REASON:
-        out.update(conclusion=INCOMPLETE, why="genuine findings open without a question to the user")
+    elif status == "incomplete" and reason == OPEN_FINDINGS_REASON and open_genuine and not questions:
+        out.update(conclusion=INCOMPLETE, incomplete="unrouted", why="genuine findings open without a question to the user")
     else:
-        out.update(conclusion=INCOMPLETE, why="the run ended %s before a conclusion: %s" % (status, reason))
+        out.update(conclusion=INCOMPLETE, incomplete="technical", why="the run ended %s before a conclusion: %s %s" % (status, reason, report.get("error", "")))
     return out
 
 
@@ -200,9 +202,19 @@ def score(report, classification, control, events=(), timing=None):
     return out
 
 
-def series(results):
-    """Per control: conclusions, met expectations and the evaluator's material."""
+def series(results, ledger=""):
+    """Per control: conclusions, met expectations and the evaluator's material.
+
+    With the ledger, every recorded attempt counts, also one that was never
+    assessed, so a missing assessment cannot shrink the series.
+    """
     by = {}
+    for line in ledger.splitlines():
+        fields = line.split()
+        if len(fields) >= 2:
+            entry = by.setdefault(fields[0], {"attempts": 0, "conclusions": {}, "met": 0, "incomplete": 0, "issueRaised": 0,
+                                              "falseAlarmCandidates": 0, "questions": 0, "turns": 0, "costUSD": 0.0, "wallSeconds": 0})
+            entry["ledgerAttempts"] = entry.get("ledgerAttempts", 0) + 1
     for r in results:
         control = (r.get("control") or {}).get("id", "unbound")
         entry = by.setdefault(control, {"attempts": 0, "conclusions": {}, "met": 0, "incomplete": 0, "issueRaised": 0,
@@ -220,6 +232,8 @@ def series(results):
         entry["wallSeconds"] += int(r["cost"]["wallSeconds"] or 0)
     for entry in by.values():
         entry["agreement"] = len(entry["conclusions"]) == 1
+        if "ledgerAttempts" in entry:
+            entry["unassessed"] = entry["ledgerAttempts"] - entry["attempts"]
     return by
 
 
@@ -235,14 +249,16 @@ def main(argv):
     a.add_argument("--timing")
     a.add_argument("--output", required=True)
     s = sub.add_parser("series")
-    s.add_argument("results", nargs="+")
+    s.add_argument("--ledger")
+    s.add_argument("results", nargs="*")
     args = parser.parse_args(argv[1:])
     if args.command == "preflight":
         problems = preflight(json.loads(Path(args.declaration).read_text(encoding="utf-8")))
         print(json.dumps({"declaration": args.declaration, "problems": problems}, indent=1))
         return 1 if problems else 0
     if args.command == "series":
-        print(json.dumps(series([json.loads(Path(r).read_text(encoding="utf-8")) for r in args.results]), indent=1))
+        ledger = Path(args.ledger).read_text(encoding="utf-8") if args.ledger else ""
+        print(json.dumps(series([json.loads(Path(r).read_text(encoding="utf-8")) for r in args.results], ledger), indent=1))
         return 0
     report = load_report(Path(args.report).read_text(encoding="utf-8")) if Path(args.report).exists() else {}
     control = json.loads(Path(args.control).read_text(encoding="utf-8")) if args.control else None

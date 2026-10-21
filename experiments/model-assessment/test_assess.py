@@ -58,6 +58,18 @@ class Classification(unittest.TestCase):
         for name, r in cases.items():
             with self.subTest(name):
                 self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
+        self.assertEqual(assess.classify(cases["unrouted finding"])["incomplete"], "unrouted")
+        self.assertEqual(assess.classify(cases["deadline"])["incomplete"], "technical")
+
+    def test_an_orchestrator_finding_is_no_clarification(self):
+        gate = dict(finding("file.unexplained: x"), raisedBy="markitect")
+        r = report("incomplete", assess.OPEN_FINDINGS_REASON, questions=[question("Which maximum length?")], findings=[gate])
+        self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
+
+    def test_a_verified_run_with_a_harness_error_is_not_accepted(self):
+        r = report("verified")
+        r["status"], r["error"] = "not_completed", "evidence: report could not be written"
+        self.assertEqual(assess.classify(r)["conclusion"], assess.INCOMPLETE)
 
 
 class Scoring(unittest.TestCase):
@@ -172,6 +184,15 @@ class Series(unittest.TestCase):
         self.assertEqual(summary["conclusions"], {"accepted": 2, "needs_clarification": 1})
         self.assertFalse(summary["agreement"])
         self.assertEqual(summary["questions"], 1)
+
+    def test_the_ledger_counts_attempts_that_were_never_assessed(self):
+        met = assess.score(report("verified"), assess.classify(report("verified")), FREEDOM)
+        ledger = ("permitted-freedom C-01 status=done conclusion=accepted charged=200\n"
+                  "permitted-freedom C-05 status=running charged=600\n"
+                  "public-gap C-02 status=done conclusion=bind-failed charged=12\n")
+        summary = assess.series([met], ledger)
+        self.assertEqual((summary["permitted-freedom"]["ledgerAttempts"], summary["permitted-freedom"]["unassessed"]), (2, 1))
+        self.assertEqual((summary["public-gap"]["attempts"], summary["public-gap"]["unassessed"]), (0, 1))
 
 
 if __name__ == "__main__":
