@@ -9,19 +9,22 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 )
 
 // CockpitRequest selects what the cockpit observes: state directories named
 // directly or through a run configuration, the repository with its model and
 // dependency models as check selects them, and its loopback listen address.
 // A run configuration together with a Runtime profile enables model
-// sessions.
+// sessions and the start of runs. Build is the implementation identity of this
+// product build, which a run the cockpit starts binds as markitect apply does.
 type CockpitRequest struct {
 	States         []string
 	RunConfig      string
 	RuntimeProfile string
 	Selection      apply.InputSelection
 	Listen         string
+	Build          string
 }
 
 // CockpitFunc serves the cockpit until ctx ends. ready receives the address
@@ -89,7 +92,7 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 		fmt.Fprintln(stderr, "invalid explicit model selection")
 		return 2
 	}
-	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Selection: selection, Listen: *listen}
+	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Selection: selection, Listen: *listen, Build: buildinfo.Build()}
 	err = c.cockpit(ctx, request, func(url string) {
 		emit(map[string]any{"operation": "cockpit", "status": "serving", "url": url})
 	})

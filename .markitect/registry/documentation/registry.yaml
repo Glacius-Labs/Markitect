@@ -1888,6 +1888,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
     why: "Records the cockpit's rebuild as a hub with the areas Model, Runs, Decisions and Settings in modern cards, its keys, checks and a recorded demonstration."
+  - path: "docs/validation/cockpit-run-control-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    why: "Records the cockpit's start and stop of an Apply: checks with an injected execution function, a synthetic page demonstration and what remains unproved without a real run."
   - path: "docs/validation/cockpit-live-observation-20261020.md"
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]

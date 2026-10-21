@@ -3,8 +3,10 @@
 // repository's structural preparation again, proposeSettings makes a checked
 // proposal without writing, and decide accepts (writes through Apply's
 // guarded publication) or discards one. startSession and promptSession each
-// start one provider turn of a model session; closeSession ends it. Nothing
-// here starts or stops a run.
+// start one provider turn of a model session; closeSession ends it.
+// runControl reads whether the cockpit can start a run and the run it
+// started, with the confirmation facts when asked; startRun and stopRun start
+// and stop that one run.
 
 async function request(path, init = {}) {
   const res = await fetch(path, { ...init, headers: { Accept: "application/json", ...init.headers } });
@@ -49,6 +51,9 @@ export const api = {
     body: JSON.stringify({ prompt }),
   }),
   closeSession: (id) => request(`/api/sessions/${enc(id)}/close`, { method: "POST", headers: { "X-Markitect-Cockpit": "close" } }),
+  runControl: (facts = false) => get(`/api/run-control${facts ? "?facts=1" : ""}`),
+  startRun: () => request("/api/run-control/start", { method: "POST", headers: { "X-Markitect-Cockpit": "start-run" } }),
+  stopRun: () => request("/api/run-control/stop", { method: "POST", headers: { "X-Markitect-Cockpit": "stop-run" } }),
   answer: (run, question, text) => request(`/api/runs/${enc(run)}/questions/${enc(question)}/answer`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": "answer" },

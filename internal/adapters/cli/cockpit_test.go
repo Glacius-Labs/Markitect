@@ -9,6 +9,8 @@ import (
 	"slices"
 	"strings"
 	"testing"
+
+	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 )
 
 func TestCockpitPassesItsSelectionAndReportsWhereItServes(t *testing.T) {
@@ -24,7 +26,7 @@ func TestCockpitPassesItsSelectionAndReportsWhereItServes(t *testing.T) {
 	if code := c.Run(context.Background(), args, &out, &errout); code != 0 {
 		t.Fatalf("%d: %s %s", code, out.String(), errout.String())
 	}
-	if !slices.Equal(got.States, []string{"a", "b"}) || got.RunConfig != config || got.Listen != "127.0.0.1:9000" {
+	if !slices.Equal(got.States, []string{"a", "b"}) || got.RunConfig != config || got.Listen != "127.0.0.1:9000" || got.Build != buildinfo.Build() {
 		t.Fatalf("request = %+v", got)
 	}
 	if !strings.Contains(out.String(), `"url": "http://127.0.0.1:7341/"`) || !strings.Contains(out.String(), `"serving"`) {
