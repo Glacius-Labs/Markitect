@@ -1,7 +1,9 @@
 // Routing between the hub and the areas of the cockpit. The address keeps the
 // place and its selection — a run with its pinned boundary, a Definition, a
 // question or a proposal — so a view can be reopened. Escape leads from a
-// run or a Definition to its area and from an area to the hub.
+// run or a Definition to its area and from an area to the hub. The project
+// list (#/projects) is where the owner opens, adds and sets up projects;
+// while no project is open, every other place leads there.
 
 import { show } from "./shell.js";
 import { Inspector } from "./inspector.js";
@@ -11,6 +13,9 @@ import { renderSession } from "./session.js";
 import { renderDecisions } from "./decisions.js";
 import { renderRuns } from "./runs.js";
 import { renderSettings } from "./settings.js";
+import { renderProjects } from "./projects.js";
+import { store } from "./store.js";
+import { api } from "./api.js";
 
 const app = document.getElementById("app");
 let inspector = null;
@@ -28,6 +33,7 @@ export function parseRoute() {
     case "decisions": case "proposals": return { page: "decisions" };
     case "proposal": return parts[1] ? { page: "decisions", item: { kind: "proposal", id: parts[1] } } : { page: "decisions" };
     case "settings": return { page: "settings" };
+    case "projects": return { page: "projects", setup: params.get("setup") };
     default: return { page: "hub" };
   }
 }
@@ -41,6 +47,21 @@ function modelHref(params) {
 
 function route() {
   const r = parseRoute();
+  if (r.page !== "projects" && store.data.projects && !store.data.projects.current) {
+    // The page may have been open before a project was: read the list again
+    // and lead to it only when it still states that none is open.
+    api.projects().then((view) => {
+      store.data.projects = view;
+      delete store.errors.projects;
+      if (view.current) {
+        store.refresh();
+        route();
+      } else {
+        location.replace("#/projects");
+      }
+    }, () => location.replace("#/projects"));
+    return;
+  }
   if (r.page === "run" && inspector && inspector.run === r.run) {
     inspector.follow(r);
     return;
@@ -74,10 +95,19 @@ function route() {
     case "settings":
       renderSettings(show(app, { area: "settings" }));
       break;
+    case "projects":
+      renderProjects(show(app, { page: "projects", trail: [{ text: "Projects" }], escape: store.data.projects?.current ? "#/" : null }), r.setup);
+      break;
     default:
       renderHub(show(app, {}));
   }
 }
 
 window.addEventListener("hashchange", route);
+// Which project is open decides where the first place is, so it is read first.
+try {
+  store.data.projects = await api.projects();
+} catch {
+  // The pages show what they cannot read.
+}
 route();

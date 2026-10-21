@@ -35,11 +35,11 @@ artifacts:
   - path: "internal/adapters/cockpit/server.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Serves the embedded page, the read interface, the model view, the owner's write routes and the run control routes on a loopback address and refuses requests addressed to other hosts."
+    why: "Serves the embedded page, the read interface, the model view, the owner's write routes and the run control routes of one project on a loopback address, refuses requests addressed to other hosts, and offers the listening and the host guard the project host reuses."
   - path: "internal/adapters/cockpit/README.md"
     form: doc
-    realizes: [product/cockpit/observed-run-inspection]
-    why: "Documents the cockpit's read boundary, projection, limitations, browser interaction and the start and stop of the one run the cockpit runs."
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
+    why: "Documents the cockpit's read boundary, projection, limitations, browser interaction, the start and stop of the one run the cockpit runs, and the project list with guided setup and the two ways to open the cockpit."
   - path: "internal/adapters/cockpit/fixture_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
@@ -63,15 +63,15 @@ artifacts:
   - path: "internal/adapters/cockpit/web/cockpit.css"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar with the notification bell, the areas' accents, split views, model browser, the run control card, state lamps, exchange channels, responsive layout and reduced motion."
+    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar with the project name and the notification bell, the areas' accents, split views, model browser, the run control card, the project cards and setup form, state lamps, exchange channels, responsive layout and reduced motion."
   - path: "internal/adapters/cockpit/web/js/main.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Routes between the hub and the areas, keeps the run, its boundary and selection, the Definition, the question and the proposal in the address, and names where Escape leads."
+    why: "Routes between the hub, the areas and the project list, keeps the run, its boundary and selection, the Definition, the question and the proposal in the address, leads every place to the project list while no project is open, and names where Escape leads."
   - path: "internal/adapters/cockpit/web/js/api.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Calls the cockpit's read interface and its write routes, including the run control, each with the cockpit's request header."
+    why: "Calls the cockpit's read interface and its write routes, including the run control and the project list with its setup, each with the cockpit's request header."
   - path: "internal/adapters/cockpit/web/js/dom.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
@@ -103,15 +103,15 @@ artifacts:
   - path: "internal/adapters/cli/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
-    why: "Parses the cockpit command's state directories, run configuration, Runtime profile, repository with its model and dependency models, listen address, the product build identity a started run binds and --no-open, reports where the cockpit serves and opens that address in a window through the installed opener, reporting a failure on stderr without stopping the cockpit."
+    why: "Parses the cockpit command's state directories, run configuration, Runtime profile, repository with its model and dependency models, listen address, the product build identity a started run binds and --no-open, opens the per-user project list when none of the project flags is given, reports where the cockpit serves and opens that address in a window through the installed opener, reporting a failure on stderr without stopping the cockpit."
   - path: "internal/bootstrap/cockpit.go"
     form: code
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/accepted-proposals]
-    why: "Composes the cockpit over the selected state directories with the state lock probe, structural preparation of the repository, the proposal service fenced by every observed state lock and the start and stop of an Apply through the execution function of markitect apply."
+    why: "Composes a project's cockpit over the selected state directories with the state lock probe, structural preparation of the repository, the proposal service fenced by every observed state lock and the start and stop of an Apply through the execution function of markitect apply, and serves the project the flags name or the per-user project list through the project host."
   - path: "internal/adapters/cli/cockpit_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
-    why: "Verifies the cockpit command's selection and build identity, its refusals before serving, that failures and an unconfigured cockpit never report success, and that the window opens by default, not with --no-open, and that a failed opening is reported without failing the command."
+    why: "Verifies the cockpit command's selection and build identity, its refusals before serving, the rule that no project flag opens the project list and any project flag opens that project directly, that failures and an unconfigured cockpit never report success, and that the window opens by default, not with --no-open, and that a failed opening is reported without failing the command."
   - path: "internal/adapters/cockpit/contract_test.go"
     form: test
     realizes: [product/cockpit/observed-run-inspection]
@@ -195,7 +195,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/session.js"
     form: code
     realizes: [product/cockpit/accepted-proposals]
-    why: "Offers the model session as a split view: a deliberate start, the owner's prompts and the Agent's answers as its own text, tool uses, limits and reported usage on the left, the session's latest proposal with its decision on the right, and closing."
+    why: "Offers the model session as a split view: a deliberate start, the owner's prompts and the Agent's answers as its own text, tool uses, limits and reported usage on the left, the session's latest proposal with its decision on the right, and closing; a project without a runtime is pointed to its guided setup."
   - path: "internal/authoring/session_test.go"
     form: test
     realizes: [product/cockpit/accepted-proposals]
@@ -215,11 +215,11 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/store.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Reads the project, runs, proposals, sessions and the run this cockpit started together while the page is visible, or hidden once notifications are allowed, and shares them with the top bar, the hub and the pages."
+    why: "Reads the open project, the runs, proposals, sessions, the run this cockpit started and the project list together while the page is visible, or hidden once notifications are allowed, reads only the list while no project is open, and shares them with the top bar, the hub and the pages."
   - path: "internal/adapters/cockpit/web/js/shell.js"
     form: code
     realizes: [product/cockpit/observed-run-inspection]
-    why: "Frames the cockpit as a hub and areas: the top bar with the way back, the area, its tabs and the open item, what waits for the owner, running runs and the check, the notification bell, the window title through the notification module, and the keys that enter and leave the areas."
+    why: "Frames the cockpit as a hub and areas: the top bar with the open project's name as a link to the project list, the way back, the area, its tabs and the open item, what waits for the owner, running runs and the check, the notification bell, the window title through the notification module, and the keys that enter and leave the areas."
   - path: "internal/adapters/cockpit/web/js/notify.js"
     form: code
     realizes: [product/cockpit/desktop-app]
@@ -259,7 +259,7 @@ artifacts:
   - path: "internal/adapters/cockpit/web/js/runcontrol.js"
     form: code
     realizes: [product/cockpit/desktop-app]
-    why: "Offers the two-step start with the budget, deadline and Agent profile and a provider usage warning, and the two-step stop of the run the cockpit started, on the Runs card and in the inspector's head, redrawing only on change so focus stays."
+    why: "Offers the two-step start with the budget, deadline and Agent profile and a provider usage warning, and the two-step stop of the run the cockpit started, on the Runs card and in the inspector's head, redrawing only on change so focus stays, and points a project without a runtime to its guided setup."
   - path: "internal/bootstrap/cockpit_run.go"
     form: code
     realizes: [product/cockpit/desktop-app]
@@ -268,3 +268,35 @@ artifacts:
     form: test
     realizes: [product/cockpit/desktop-app]
     why: "Verifies on a repository with a prepared Runtime that the confirmation facts come from the committed settings and Runtime profile, that a start passes Apply's inputs and a stop cancels it, that a held state directory, a publication or a later commit refuses a start, and that a stopping cockpit ends its run."
+  - path: "internal/adapters/cockpit/projects.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Keeps the per-user project list in one JSON file: reads a missing file as an empty list, replaces the file atomically with mode 0600, refuses and never overwrites a file with an unknown format version, malformed content, repeated names or relative paths, and validates a project's repository, model, dependency models and runtime directory."
+  - path: "internal/adapters/cockpit/projects_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies the list's file format, creation of its directories, atomic write without leftovers, that every unusable file is reported and left unchanged by loads and updates, that a refused update changes nothing, and the validation of a project's entry."
+  - path: "internal/adapters/cockpit/host.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Owns the cockpit's one HTTP handler and one swappable project: serves the page and the project routes, delegates every other API route to the current project's server or answers 409 without one, refuses to switch or remove the open project while it is busy or being set up, admits and counts writes so that a switch drains them before it swaps and closes, builds the new project before it closes the old one, joins a switch and a setup under way when it ends, and calls the function behind markitect setup for a project and stores its runtime on success."
+  - path: "internal/adapters/cockpit/host_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies with fake projects that the host serves the page, answers 409 without a project, admits writes only with the cockpit's own header and origin, validates adds, delegates to the open project, remembers the last one, refuses switching and removing while a run, a model session, a publication or a setup is busy and allows it otherwise, drains admitted writes before a switch, waits for a switch when it ends, keeps the open project when another cannot be built, keeps a project opened by flags, passes the form to an injected setup, shows its refusals as they are and closes the project when it ends."
+  - path: "internal/adapters/cockpit/busy.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "States why a project must not be left: a run the cockpit started is active, a model session prepares, works or closes, or an accepted proposal is being written."
+  - path: "internal/adapters/cockpit/web/js/projects.js"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Offers the project list as cards that open, set up or remove a project with a two-step removal, a card to add a project, the offer to keep a project opened by flags, and the guided setup form with a two-step confirmation that shows setup's refusals as they are, redrawing the cards only on change so focus and typed values stay."
+  - path: "internal/bootstrap/cockpit_projects.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Composes the project host: the list under the user configuration directory, the opener that builds a listed project's server as the flags would from its repository, model, dependency models and runtime directory, the entry of a project the flags opened, and the guided setup as a call of the function behind markitect setup without an owner request."
+  - path: "internal/bootstrap/cockpit_projects_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies on a repository with a fake engine that the list sits under the user configuration directory, that a project without a runtime is observed and starts no run, that the guided setup writes the same bytes as markitect setup, reopens the project with runs and sessions, shows setup's own refusals and sends no owner request, and that a project opened by flags is described for keeping."

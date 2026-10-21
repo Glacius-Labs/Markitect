@@ -3,6 +3,10 @@
 // proposal without writing, and decide accepts (writes through Apply's
 // guarded publication) or discards one. startSession and promptSession each
 // start one provider turn of a model session; closeSession ends it.
+// projects reads the per-user project list with the project that is open;
+// addProject, openProject, removeProject, keepProject and setupProject change
+// it (a setup also writes the project's runtime directory through the
+// function behind markitect setup).
 // runControl reads whether the cockpit can start a run and the run it
 // started, with the confirmation facts when asked; startRun and stopRun start
 // and stop that one run.
@@ -17,9 +21,20 @@ async function request(path, init = {}) {
 }
 
 const get = (path) => request(path);
+const postJSON = (path, purpose, body) => request(path, {
+  method: "POST",
+  headers: { "Content-Type": "application/json", "X-Markitect-Cockpit": purpose },
+  body: JSON.stringify(body),
+});
 const enc = encodeURIComponent;
 
 export const api = {
+  projects: () => get("/api/projects"),
+  addProject: (body) => postJSON("/api/projects", "project-add", body),
+  openProject: (name) => request(`/api/projects/${enc(name)}/open`, { method: "POST", headers: { "X-Markitect-Cockpit": "project-open" } }),
+  removeProject: (name) => request(`/api/projects/${enc(name)}/remove`, { method: "POST", headers: { "X-Markitect-Cockpit": "project-remove" } }),
+  keepProject: (name) => postJSON("/api/projects/keep", "project-keep", { name }),
+  setupProject: (name, body) => postJSON(`/api/projects/${enc(name)}/setup`, "project-setup", body),
   project: () => get("/api/project"),
   model: () => get("/api/model"),
   observeProject: () => request("/api/project/observe", { method: "POST", headers: { "X-Markitect-Cockpit": "observe" } }),

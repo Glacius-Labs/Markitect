@@ -18,7 +18,10 @@ import (
 // A run configuration together with a Runtime profile enables model
 // sessions and the start of runs. Build is the implementation identity of this
 // product build, which a run the cockpit starts binds as markitect apply does.
+// Projects is project mode: no project flag was given, so the cockpit opens
+// the owner's per-user project list instead and selects nothing itself.
 type CockpitRequest struct {
+	Projects       bool
 	States         []string
 	RunConfig      string
 	RuntimeProfile string
@@ -73,8 +76,22 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 		}
 		return 2
 	}
+	// Project mode: none of the flags that select a project is given. They are
+	// --state, --run-config, --runtime-profile, --repo, --model and
+	// --dependency, even when set to their defaults; --listen and --no-open
+	// work in both modes.
+	selecting := false
+	flags.Visit(func(f *flag.Flag) {
+		switch f.Name {
+		case "state", "run-config", "runtime-profile", "repo", "model", "dependency":
+			selecting = true
+		}
+	})
+	if flags.NArg() == 0 && !selecting {
+		return c.serveCockpit(ctx, CockpitRequest{Projects: true, Listen: *listen, Build: buildinfo.Build()}, *noOpen, stderr, emit)
+	}
 	if flags.NArg() != 0 || len(states) == 0 && *config == "" {
-		fmt.Fprintln(stderr, "cockpit requires --state DIR or --run-config PATH; see help")
+		fmt.Fprintln(stderr, "cockpit requires --state DIR or --run-config PATH, or no project flag to open the project list; see help")
 		return 2
 	}
 	if *config != "" && (!filepath.IsAbs(*config) || filepath.Clean(*config) != *config) {
@@ -85,29 +102,20 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 		fmt.Fprintln(stderr, "--runtime-profile requires --run-config and an explicit absolute native path")
 		return 2
 	}
-	root, err := filepath.Abs(*repo)
-	if err != nil {
-		fmt.Fprintln(stderr, err)
-		return 2
-	}
-	selection := apply.InputSelection{Repository: root}
-	selection.Local, err = selectManifest(root, *manifest)
-	for _, dependency := range dependencies {
-		if err != nil {
-			break
-		}
-		selected, e := selectManifest(root, dependency)
-		err = e
-		selection.Dependencies = append(selection.Dependencies, selected)
-	}
+	selection, err := RepositorySelection(*repo, *manifest, dependencies)
 	if err != nil {
 		fmt.Fprintln(stderr, "invalid explicit model selection")
 		return 2
 	}
 	request := CockpitRequest{States: states, RunConfig: *config, RuntimeProfile: *runtimeProfile, Selection: selection, Listen: *listen, Build: buildinfo.Build()}
-	err = c.cockpit(ctx, request, func(url string) {
+	return c.serveCockpit(ctx, request, *noOpen, stderr, emit)
+}
+
+// serveCockpit runs the cockpit and opens its window once it listens.
+func (c *Command) serveCockpit(ctx context.Context, request CockpitRequest, noOpen bool, stderr io.Writer, emit func(any) int) int {
+	err := c.cockpit(ctx, request, func(url string) {
 		emit(map[string]any{"operation": "cockpit", "status": "serving", "url": url})
-		if *noOpen || c.window == nil {
+		if noOpen || c.window == nil {
 			return
 		}
 		if err := c.window(url); err != nil {
@@ -120,3 +128,31 @@ func (c *Command) cockpitVerb(ctx context.Context, args []string, stdout, stderr
 	}
 	return 0
 }
+
+// RepositorySelection selects a repository's model and dependency models as
+// check selects them: the repository root made absolute, the manifest and
+// each dependency relative to it or absolute.
+func RepositorySelection(repo, manifest string, dependencies []string) (apply.InputSelection, error) {
+	root, err := filepath.Abs(repo)
+	if err != nil {
+		return apply.InputSelection{}, err
+	}
+	selection := apply.InputSelection{Repository: root}
+	if selection.Local, err = selectManifest(root, manifest); err != nil {
+		return apply.InputSelection{}, err
+	}
+	for _, dependency := range dependencies {
+		selected, err := selectManifest(root, dependency)
+		if err != nil {
+			return apply.InputSelection{}, err
+		}
+		selection.Dependencies = append(selection.Dependencies, selected)
+	}
+	return selection, nil
+}
+
+// Defaults of the setup form of the cockpit, the same as markitect setup's.
+const (
+	DefaultSetupEngine = defaultSetupEngine
+	DefaultSetupEffort = defaultSetupEffort
+)
