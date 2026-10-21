@@ -441,7 +441,7 @@ export class Inspector {
     li.addEventListener("click", () => {
       this.playback.pause("select");
       this.playback.seek(e.seq);
-      this.select(e.ref, { keepPlaying: true });
+      this.select(e.ref);
     });
     return li;
   }
