@@ -24,6 +24,10 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: Tests the organization, briefs, checks, budget deadline, gates and write plans of the run configuration, publication refusals and an unverified run with fake ports.
+  - path: "internal/apply/assessment_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Tests the production assessment entry's frozen method reference, read-only reviewers without checks or publication, closed Run, confirmed finding classes and fresh reassessment of a disputed finding.
   - path: "internal/apply/binding.go"
     form: code
     realizes: [product/run/confirmed-run-history]
