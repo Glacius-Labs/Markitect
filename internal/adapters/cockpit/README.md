@@ -34,7 +34,7 @@ The page follows new records while the boundary is at the latest record. Pausing
 
 The cockpit is one application built as a hub and four areas the owner enters and leaves: Model, Runs, Decisions and Settings. The hub shows the project as its last observation saw it (model, source head, canonical model digest, the check, *Observe again*), the one next step that needs the owner — a proposal to decide, the open session, a running run or a failed check, in that order — and a tile per area with its live state. A tile glows while its area waits for the owner. The digits 1 to 4 enter the areas from the hub; Escape leads one level up: from a run to the Runs area, from a Definition to its Package and on to all Definitions, from an area or an open decision to the hub. The top bar names where the owner is (the way back, the area, its tabs, the open item) and carries what waits for the owner, the running runs, the check and the notification bell; on narrow windows it keeps one status chip with its word shortened, so the project name, the way back, the area emblem, the tabs, the chip and the bell fit at 390 px. One poll every four seconds while the page is visible (project, runs, proposals, sessions) serves the top bar, the hub and the pages.
 
-- **Model:** two tabs. *Browse* is a browser of the checked model the project observation prepared (`GET /api/model`): Packages on the left, their Definitions in the middle (`/` filters by id, title, body or Package), the chosen Definition on the right with its body (each `[[link]]` opens its target), its fields, the registered files that realize it and the Definitions that link to it. A newer observation, after *Observe again* or an accepted proposal, is read again. The model is read only; it changes through a model session or by hand. *Session* is the model session: the conversation on the left and the session's latest proposal with its decision on the right (below).
+- **Model:** three tabs. *Browse* is a browser of the checked model the project observation prepared (`GET /api/model`): Packages on the left, their Definitions in the middle (`/` filters by id, title, body or Package), the chosen Definition on the right with its body (each `[[link]]` opens its target), its fields, the registered files that realize it and the Definitions that link to it. A newer observation, after *Observe again* or an accepted proposal, is read again. The model is read only; it changes through a model session or by hand. *Organization* (`#/organization`) shows the declared project organization, resolves profiles on request and links responsibilities to Browse and Settings. *Session* is the model session: the conversation on the left and the session's latest proposal with its decision on the right (below).
 - **Runs:** a card to start and stop a run ([below](#starting-and-stopping-a-run)), the runs that run now and the run history; a run opens in the inspector inside the area.
 - **Decisions:** this cockpit's proposals in one list, waiting ones first, beside the chosen one with its check, difference and decision. Without a choice, the first waiting proposal opens.
 - **Settings:** the execution settings form.
@@ -161,9 +161,43 @@ Runtime image as run confirmation does.
 
 ## Browser
 
-The page is plain HTML, CSS and JavaScript modules without a build step, embedded in the binary and packaged with the source. Replay moves the boundary through the record with play, pause, speed, record and exchange steps; recorded gaps are compressed and bookkeeping records take no playback time. Selecting anything pauses the presentation; pausing never affects a run. Arrows illustrate recorded sends along the tree, pause with the replay and open their record; with reduced motion they are drawn still. Keyboard: Space, arrows, Shift with arrows, Home, End, `[` `]`, Esc and `?`. Narrow windows show the organization as a list.
+The Organization tab uses the shared people-card chart: Owner, deterministic
+Orchestrator, Root, Package Managers and separate independent reviewer seats.
+Departments collapse; large organizations initially show Root and the first
+department level. Drag the background to pan, use zoom and Fit, and use arrow
+keys inside the tree to move or expand. Small windows use an indented tree.
+Selecting a Manager opens its own Definitions, actual areas and profiles.
+`#/settings?pkg=Package` preselects the existing Package profile editor without
+creating an override; Root targets the default Profiles section. Team navigation
+opens a section explicitly marked as project-wide.
 
-**Inspector header and rail.** The header holds the run identity, the strategy, the start and duration at the boundary, the outcome pill (*Verified · no change*, *Incomplete*, *Model problem confirmed*, in progress) and a small *Live* or *Replay* chip whose tooltip holds the link details (connection, last contact, run state, following or pinned). The rail names each Pass (*Model assessment p1*, *Verify p5*) with its seal, whether it is a correction round or a re-Verify of an unchanged candidate, and its turns and reported cost, which its tooltip completes with the output tokens. The owner is drawn in the organization, and named in the legend, only when the record holds owner-channel records of an earlier run.
+The Run inspector reuses the same chart from its recorded binding, never today's
+project settings. Missing historical profiles and helper limits stay unknown.
+Cards and details name the current Pass/Turn, reviewer, helpers, waits and
+observations. Models, provider turns and cost come only from reported Turn Usage.
+The arrows use recorded sender/recipient links and the inspector's replay clock;
+pausing freezes progress, and reduced motion draws still arrows. The expandable
+latest-exchange list supplies the same navigation on narrow windows and through
+the keyboard. Layout changes reroute exchanges while preserving collapse choices.
+
+The hub's small Model thumbnail is bounded to Root and up to six top-level
+departments, with the count of other Managers stated. It comes in the existing
+`/api/project` response from its cached observation, with no extra observation,
+Runtime capture or request.
+
+Local dependency-free presentation checks (Node is not required by CI):
+
+```text
+node --test internal/adapters/cockpit/org-layout.test.mjs internal/adapters/cockpit/organization-facts.test.mjs internal/adapters/cockpit/run-organization.test.mjs
+```
+
+The [organization validation](../../../docs/validation/cockpit-organization-finish-20261021.md)
+separates prepared source, synthetic checks, pending browser screenshots and
+read-only real recorded-run evidence. It must not be read as provider acceptance.
+
+The page is plain HTML, CSS and JavaScript modules without a build step, embedded in the binary and packaged with the source. Replay moves the boundary through the record with play, pause, speed, record and exchange steps; recorded gaps are compressed and bookkeeping records take no playback time. Selecting anything pauses the presentation; pausing never affects a run. Arrows illustrate recorded sends along the tree, pause with the replay and open their record; with reduced motion they are drawn still. Keyboard: Space, arrows, Shift with arrows, Home, End, `[` `]`, Esc and `?`. Narrow windows show the same collapsible organization as an indented tree.
+
+**Inspector header and rail.** The header holds the run identity, the strategy, the start and duration at the boundary, the outcome pill (*Verified · no change*, *Incomplete*, *Model problem confirmed*, in progress) and a small *Live* or *Replay* chip whose tooltip holds the link details (connection, last contact, run state, following or pinned). The rail names each Pass (*Model assessment p1*, *Verify p5*) with its seal, whether it is a correction round or a re-Verify of an unchanged candidate, and its turns and reported cost, which its tooltip completes with the output tokens. The owner is static project context above the Orchestrator, with no line or external action in a closed Run. Only recorded owner-channel exchanges of an earlier run attach to it and appear in the legend.
 
 **Detail pages.** A Pass page shows the assessment's verdict and coverage, the probes of the Pass with their outcome, stand, exit code, uncertainty and disposition, the observations it raised and closed and its turns and cost. A Manager page adds its model context (counts, the Definitions in full, the reference-only ones looked up in each Pass), its probes, the findings it owns by kind, its bound dependencies and its turns with mode and context. A probe page shows claim, expectation, receipt, disposition and, from the record, the probe's bytes and output. Findings carry a kind label in a quiet color and are never told apart by color alone. *What this record does not establish* is a collapsed section.
 

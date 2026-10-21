@@ -51,15 +51,16 @@ func TestProjectIsObservedOnceAndAgainOnRequest(t *testing.T) {
 	calls := 0
 	srv, err := New(Config{States: []string{t.TempDir()}, Project: func(context.Context) (ProjectInfo, error) {
 		calls++
-		return ProjectInfo{Repository: "repo", ModelID: "markitect", Status: "passed", Packages: 3}, nil
+		return ProjectInfo{Repository: "repo", ModelID: "markitect", Status: "passed", Packages: 3, Organization: &OrganizationView{Status: "passed", Managers: []OrganizationManager{{Path: ".", Label: "Root"}, {Path: "stock", Parent: ".", Depth: 1, Label: "stock"}, {Path: "stock/deep", Parent: "stock", Depth: 2, Label: "deep"}}}}, nil
 	}})
 	if err != nil {
 		t.Fatal(err)
 	}
 	h := srv.Handler()
 	var got struct {
-		Project   *ProjectInfo `json:"project"`
-		Observing bool         `json:"observing"`
+		Project      *ProjectInfo           `json:"project"`
+		Observing    bool                   `json:"observing"`
+		Organization *OrganizationThumbnail `json:"organization"`
 	}
 	read := func(target string) {
 		rec := get(t, h, "", target, nil)
@@ -80,6 +81,9 @@ func TestProjectIsObservedOnceAndAgainOnRequest(t *testing.T) {
 	}
 	settle("/api/project")
 	settle("/api/project")
+	if got.Organization == nil || got.Organization.Total != 3 || got.Organization.Hidden != 1 || len(got.Organization.Managers) != 2 || calls != 1 {
+		t.Fatalf("thumbnail caused another observation or invented structure: %+v, calls %d", got.Organization, calls)
+	}
 	if rec := post(h, "", "", "", "/api/project/observe", ""); rec.Code != http.StatusForbidden || calls != 1 {
 		t.Fatalf("an observation without the cockpit's request = %d, %d calls", rec.Code, calls)
 	}

@@ -94,13 +94,14 @@ func (s *Server) handleObserve(w http.ResponseWriter, r *http.Request) {
 func (s *Server) writeProject(w http.ResponseWriter, refresh bool) {
 	p, observing := s.project.get(refresh)
 	writeJSON(w, struct {
-		Project    *ProjectInfo `json:"project"`
-		Observing  bool         `json:"observing"`
-		Configured bool         `json:"configured"`
-		States     []string     `json:"states"`
-		Proposals  bool         `json:"proposals"`
-		Sessions   bool         `json:"sessions"`
-	}{p, observing, s.project.observe != nil, s.stateDirs(), s.authoring != nil, s.authoring != nil && s.authoring.SessionsAvailable()})
+		Project      *ProjectInfo           `json:"project"`
+		Observing    bool                   `json:"observing"`
+		Configured   bool                   `json:"configured"`
+		States       []string               `json:"states"`
+		Proposals    bool                   `json:"proposals"`
+		Sessions     bool                   `json:"sessions"`
+		Organization *OrganizationThumbnail `json:"organization,omitempty"`
+	}{p, observing, s.project.observe != nil, s.stateDirs(), s.authoring != nil, s.authoring != nil && s.authoring.SessionsAvailable(), organizationThumbnail(p)})
 }
 
 func (s *Server) stateDirs() []string {

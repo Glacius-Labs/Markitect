@@ -84,6 +84,34 @@ type OrganizationCheck struct {
 	Source     *OrganizationSource `json:"source,omitempty"`
 }
 
+// OrganizationThumbnail is a bounded summary of the same cached observation.
+// It causes no additional observation or Runtime resolution.
+type OrganizationThumbnail struct {
+	Managers []OrganizationThumbnailManager `json:"managers"`
+	Total    int                            `json:"total"`
+	Hidden   int                            `json:"hidden"`
+}
+
+type OrganizationThumbnailManager struct {
+	Path   string `json:"path"`
+	Parent string `json:"parent"`
+	Label  string `json:"label"`
+}
+
+func organizationThumbnail(p *ProjectInfo) *OrganizationThumbnail {
+	if p == nil || p.Organization == nil || p.Organization.Status != "passed" || p.Organization.Error != "" {
+		return nil
+	}
+	v := &OrganizationThumbnail{Managers: []OrganizationThumbnailManager{}, Total: len(p.Organization.Managers)}
+	for _, m := range p.Organization.Managers {
+		if m.Depth <= 1 && len(v.Managers) < 7 {
+			v.Managers = append(v.Managers, OrganizationThumbnailManager{Path: m.Path, Parent: m.Parent, Label: m.Label})
+		}
+	}
+	v.Hidden = v.Total - len(v.Managers)
+	return v
+}
+
 // OrganizationResolver performs the same bounded capture as run confirmation.
 // It starts no Run, Agent or check. The server starts it only on request.
 type OrganizationResolver func(context.Context) (*OrganizationView, error)

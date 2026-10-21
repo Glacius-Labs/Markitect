@@ -4,7 +4,7 @@
 // except asking for a new observation of the project.
 
 import { api } from "./api.js";
-import { h, clear, append, when, shortDigest, areaIcon } from "./dom.js";
+import { h, s as svg, clear, append, when, shortDigest, areaIcon } from "./dom.js";
 import { store } from "./store.js";
 import { areas, emblem, refreshState, sessionClass } from "./shell.js";
 
@@ -52,13 +52,14 @@ function tile(a) {
   const stats = h("div", { class: "stats" });
   const foot = h("span", { class: "txt" });
   const footLamp = h("span", {});
+  const thumbnail = h("div", { class: "organization-thumbnail", hidden: true });
   const el = h("a", { class: `tile t-${a.id}`, href: a.href, "aria-keyshortcuts": a.key },
     h("span", { class: "ghost", "aria-hidden": "true" }, areaIcon(a.id)),
     h("div", { class: "top" }, emblem(a.id), h("span", { class: "badge" }, badge, h("kbd", { title: `Press ${a.key}` }, a.key))),
     h("div", { class: "name" }, h("h2", {}, a.label), h("p", { class: "lead" }, a.lead)),
-    stats,
+    stats, thumbnail,
     h("div", { class: "foot" }, footLamp, foot, h("span", { class: "go", "aria-hidden": "true" }, "Enter →")));
-  return { el, badge, stats, foot, footLamp, chips: a.chips || [] };
+  return { el, badge, stats, foot, footLamp, thumbnail, chips: a.chips || [] };
 }
 
 // A tile without figures names what the area holds, so its middle is never
@@ -158,6 +159,28 @@ function drawModel(t, s) {
     foot: session ? `Session ${session.state}` : p ? (p.status === "passed" ? "Check passed · no open session" : `Check ${p.status || "not completed"}`) : s.data.project?.configured === false ? "No repository" : "Observing the repository",
     attention: session?.state === "waiting",
   });
+  const observation = s.data.project?.organization;
+  const signature = JSON.stringify(observation);
+  if (t.thumbnail._signature !== signature) {
+    t.thumbnail._signature = signature;
+    drawOrganizationThumbnail(t.thumbnail, observation);
+  }
+}
+
+function drawOrganizationThumbnail(el, observation) {
+  clear(el);
+  const managers = observation?.managers || [], root = managers.find((m) => !m.parent);
+  el.hidden = !root;
+  if (!root) return;
+  const children = managers.filter((m) => m.parent === root.path);
+  const diagram = svg("svg", { viewBox: "0 0 200 62", "aria-hidden": "true", focusable: "false" });
+  const person = (x, y, name) => svg("g", {}, svg("circle", { cx: x, cy: y, r: 7 }), svg("title", {}, name));
+  diagram.append(person(100, 10, root.label));
+  children.forEach((m, i) => {
+    const x = (i + 1) * 200 / (children.length + 1);
+    diagram.append(svg("path", { d: `M100 17 V30 H${x} V43` }), person(x, 50, m.label));
+  });
+  append(el, [diagram, h("span", { class: "faint" }, `${observation.total} Managers${observation.hidden ? ` · ${observation.hidden} more in Organization` : ""}`)]);
 }
 
 function drawRuns(t, s) {
