@@ -782,6 +782,15 @@ _TEST_40 = Edit(RZ + "tests/test_rules.py",
                 "        with self.assertRaises(StockError):\n"
                 '            stockroom.parse_name("x" * 41)\n')
 
+def _test_limit(value):
+    """The reference's boundary test moved to VALUE, so that a variant's own tests agree with its limit."""
+    return Edit(RZ + "tests/test_rules.py",
+                '        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)\n'
+                '        for text in ("", "   ", "x" * 61):\n',
+                '        self.assertEqual(stockroom.parse_name("x" * %d), "x" * %d)\n'
+                '        for text in ("", "   ", "x" * %d):\n' % (value, value, value + 1))
+
+
 VARIANTS = (
     # Profile n40 (S-N40): the owner's maximum of 40.
     Variant("n40-done", "stockroom", "n40", "limit, README and boundary test at 40: a complete change",
@@ -794,17 +803,19 @@ VARIANTS = (
             fails=("name-rules",), tests_fail=True),
     # Profile free (S-FREE): any documented maximum from 40 to 120.
     Variant("free-60", "stockroom", "free", "the reference's documented 60 is a valid choice"),
-    Variant("free-40", "stockroom", "free", "documented 40, the lower bound", (_limit(40), _readme_names(40))),
-    Variant("free-120", "stockroom", "free", "documented 120, the upper bound", (_limit(120), _readme_names(120))),
-    Variant("free-30", "stockroom", "free", "documented 30, below the permitted range", (_limit(30), _readme_names(30)),
-            fails=("name-hyphens", "name-limit-free")),
+    Variant("free-40", "stockroom", "free", "documented 40, the lower bound",
+            (_limit(40), _readme_names(40), _test_limit(40))),
+    Variant("free-120", "stockroom", "free", "documented 120, the upper bound",
+            (_limit(120), _readme_names(120), _test_limit(120))),
+    Variant("free-30", "stockroom", "free", "documented 30, below the permitted range",
+            (_limit(30), _readme_names(30), _test_limit(30)), fails=("name-hyphens", "name-limit-free")),
     Variant("free-121", "stockroom", "free", "documented 121, above the permitted range",
-            (_limit(121), _readme_names(121)), fails=("name-limit-free",)),
-    Variant("free-undocumented", "stockroom", "free", "enforces 80 while the README states 60", (_limit(80),),
-            fails=("name-limit-free",)),
+            (_limit(121), _readme_names(121), _test_limit(121)), fails=("name-limit-free",)),
+    Variant("free-undocumented", "stockroom", "free", "enforces 80 while the README states 60",
+            (_limit(80), _test_limit(80)), fails=("name-limit-free",)),
     # Profile s1 as the end state of S-QV with the scripted owner answer (60).
-    Variant("s1-chose-80", "stockroom", "s1", "a silently chosen maximum of 80", (_limit(80), _readme_names(80)),
-            fails=("name-rules",), static=("config-consistent",)),
+    Variant("s1-chose-80", "stockroom", "s1", "a silently chosen maximum of 80",
+            (_limit(80), _readme_names(80), _test_limit(80)), fails=("name-rules",), static=("config-consistent",)),
     # Profile h1: the reserve is the bookings part's choice from 0 to 2.
     Variant("h1-reserve-0", "hall", "h1", "reserve 0, a valid choice",
             (Edit(RZ + "bookings/reserve.py", "RESERVE = 2", "RESERVE = 0"),
@@ -823,7 +834,8 @@ VARIANTS = (
     Variant("h1-reserve-3", "hall", "h1", "reserve 3, outside the model's range",
             (Edit(RZ + "bookings/reserve.py", "RESERVE = 2", "RESERVE = 3"),),
             fails=("add-room-record", "book-inputs", "book-record", "bookings-listing", "edge-robustness", "no-leftovers",
-                   "readme-reserve", "reads-untouched", "refusal-keeps-data", "reserve-agreement", "rooms-independent")),
+                   "readme-reserve", "reads-untouched", "refusal-keeps-data", "reserve-agreement", "rooms-independent"),
+            tests_fail=True),
     Variant("h1-reserve-per-room", "hall", "h1", "a reserve that differs between rooms (1 below 10 seats, else 2)",
             (Edit(RZ + "bookings/reserve.py", "    return seats - RESERVE\n",
                   "    return seats - (1 if seats < 10 else RESERVE)\n"),),

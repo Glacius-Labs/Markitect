@@ -228,7 +228,7 @@
  "kit": {
   "experiments/apply-trials/assess.py": "94ec3a241b19050197e1be244f0fc3875d48b892eda3ad5d407d754bc77f2da2",
   "experiments/apply-trials/bind_profiles.py": "756e8cffbdb085a8c1fd587606ab76aebb260da7d9e608387605c08de9489382",
-  "experiments/apply-trials/cases.py": "7c12cd4430beb794b7366193693668b7cd2ab078e45c2fdec21b996bd4b0a5b7",
+  "experiments/apply-trials/cases.py": "25c4291dd7eb82ac835883aba27583c936a928eb564c18d1af2c4110603cdf58",
   "experiments/apply-trials/context/execution.yaml": "e47f39ebf1401f09912b34da26f9b860de7b002542647c0ca71f2143cab1052c",
   "experiments/apply-trials/context/expected.json": "8b52172b41f2bf25fa4926c64f41a5953c50b1316aa4dfdc1e10b7a31933ccc7",
   "experiments/apply-trials/context/snapshots/c1-stale/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
@@ -420,7 +420,7 @@
   "experiments/apply-trials/trial_kit.py": "362e9a8623ba3db4cb3e140f3988da90f0e977405f72850a036775dba5af16d4",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "f0903345bf9d70537c3087d7bdb0dec0671bd3ce65edd9a2dc1c7eba6a879a57",
+ "kitDigest": "c020caa9189f0d4515a07b7b71bbf9f9fafba3943f481e3cbfc05373a9a6223f",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {

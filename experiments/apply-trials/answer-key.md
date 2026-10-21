@@ -1427,6 +1427,14 @@ free-40:
 +has at most 40 characters
 ```
 
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 40), "x" * 40)
++        for text in ("", "   ", "x" * 41):
+```
+
 free-120:
 
 ```diff
@@ -1439,6 +1447,14 @@ free-120:
 --- realization/README.md
 -has at most 60 characters
 +has at most 120 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 120), "x" * 120)
++        for text in ("", "   ", "x" * 121):
 ```
 
 free-30:
@@ -1455,6 +1471,14 @@ free-30:
 +has at most 30 characters
 ```
 
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 30), "x" * 30)
++        for text in ("", "   ", "x" * 31):
+```
+
 free-121:
 
 ```diff
@@ -1469,12 +1493,28 @@ free-121:
 +has at most 121 characters
 ```
 
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 121), "x" * 121)
++        for text in ("", "   ", "x" * 122):
+```
+
 free-undocumented:
 
 ```diff
 --- realization/limits.json
 -"maxNameLength": 60
 +"maxNameLength": 80
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 80), "x" * 80)
++        for text in ("", "   ", "x" * 81):
 ```
 
 s1-chose-80:
@@ -1489,6 +1529,14 @@ s1-chose-80:
 --- realization/README.md
 -has at most 60 characters
 +has at most 80 characters
+```
+
+```diff
+--- realization/tests/test_rules.py
+-        self.assertEqual(stockroom.parse_name("x" * 60), "x" * 60)
+-        for text in ("", "   ", "x" * 61):
++        self.assertEqual(stockroom.parse_name("x" * 80), "x" * 80)
++        for text in ("", "   ", "x" * 81):
 ```
 
 h1-reserve-0:
