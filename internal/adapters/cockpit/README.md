@@ -3,9 +3,11 @@
 `markitect cockpit` serves a local web view of the runs recorded in one or more state directories. It implements the [cockpit concept](../../../docs/design/cockpit.md) in five slices: the inspector of a recorded Apply Run with organization, causal waits, exchanges, timeline, step details, candidates, evidence and replay; live observation of a running Apply through the same projections; the cockpit entry with the project, running runs, owner questions, run history and the owner's answer; proposals for the execution settings; and model sessions in which an Agent proposes model changes on the owner's prompts ([working through the cockpit](../../../docs/design/cockpit.md#working-through-the-cockpit)). The [runtime contract](../../../docs/design/canonical-model/manager-apply-runtime.md#evidence-and-state) owns the evidence it reads.
 
 ```text
-markitect cockpit --state DIR [--state DIR ...] [--repo .] [--model PATH] [--dependency PATH ...] [--listen 127.0.0.1:7341]
-markitect cockpit --run-config PATH [--runtime-profile PATH] [--repo .] [--model PATH] [--dependency PATH ...]
+markitect cockpit --state DIR [--state DIR ...] [--repo .] [--model PATH] [--dependency PATH ...] [--listen 127.0.0.1:7341] [--no-open]
+markitect cockpit --run-config PATH [--runtime-profile PATH] [--repo .] [--model PATH] [--dependency PATH ...] [--no-open]
 ```
+
+The command prints the address it serves and opens it in its own window ([below](#app-window-notifications-and-background)); `--no-open` only suppresses the opening.
 
 `--model` and `--dependency` select the repository's model and its dependency models as `markitect check` and `markitect apply` select them; a project whose model imports dependency models needs them for its observation, its proposals and its model sessions.
 
@@ -55,6 +57,29 @@ With `--run-config` and `--runtime-profile`, the session page (`#/session`) open
 A model proposal's page shows the Agent's summary as the Agent's text, apart from the difference and the check the cockpit observed.
 
 Starting and stopping runs are not offered. An Apply is started with `markitect apply`; starting it from the cockpit would start provider work and needs its own decision. No stop command exists: interrupting the `markitect apply` process ends the run incomplete with its evidence.
+
+## App window, notifications and background
+
+**Window.** Once the cockpit listens, `markitect cockpit` opens its address in an app window of an installed Chromium browser (`--app=URL`: no tabs, no address bar), unless `--no-open` is given. The address is printed either way. `WindowLaunches` chooses, as a pure function of the platform, the environment and the installed programs, an ordered list of ways to open it, and `OpenWindow` starts the first that works, detached and without waiting for it:
+
+- Windows: Microsoft Edge (`msedge.exe` in `Program Files`, `Program Files (x86)` or the user's local application directory, or on the path), then Google Chrome in the same places, then the default browser.
+- macOS: Google Chrome, then Microsoft Edge, installed as an application (`open -na APP --args --app=URL`), then `open URL`.
+- Linux: `google-chrome`, `chromium` or `microsoft-edge` (and their stable or packaged names) with `--app`, then `xdg-open`.
+- WSL (`WSL_DISTRO_NAME` set): the Windows side first through `cmd.exe /c start "" msedge --app=URL` (then `chrome`, then the default browser), then the Linux candidates.
+
+Opening is best effort. A failure, or the absence of any browser, is reported on stderr with the address to open by hand, and the cockpit keeps serving. A launcher that starts but whose browser then fails (for example a missing Edge under WSL) cannot be noticed, because the browser is never waited for; the printed address is the fallback. Nothing is bundled; installer and updates belong to the pinned pilot build.
+
+**Notifications.** The page compares each observation of the four-second poll with the previous one and, with the owner's permission, raises a desktop notification through the Web Notifications API when:
+
+- a run that was running or finishing is no longer, naming its outcome when the run list has one (a click opens the run);
+- the open model session leaves working or preparing and waits for the next prompt (a click opens the session);
+- a proposal newly waits for a decision (a click opens the proposal).
+
+The first observation after the page loads only sets the baseline, so opening the cockpit raises no burst for what was already there. The permission is asked only from the bell in the top bar, which shows whether notifications are on, off or blocked; the browser keeps the permission and the cockpit remembers nothing. Without it nothing is notified and everything else works as before. A notification is raised also while the window has focus.
+
+**Window title.** The document title is prefixed with the count of proposals that wait for a decision, `(2) Hub – Markitect cockpit`, and carries no prefix when none waits. One module (`web/js/notify.js`) owns the prefix; the places only name themselves.
+
+**Background.** The window is only a view. Nothing in the page or the server ties the cockpit's life to it: the server ends when the `markitect cockpit` process is interrupted, a closed window only ends its own requests and event streams, and model sessions, accepted proposals and anything else the cockpit runs continue. Closing the window therefore leaves the cockpit working, and reopening its address (or `markitect cockpit` again, if it ended) shows the same state.
 
 ## Projection
 
