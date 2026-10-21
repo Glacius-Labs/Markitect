@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Return to one container per Turn](per-turn-container-decision-20261021.md) | Direct owner decision, 21 October 2026; labeled evidence notes | Supersedes Manager-container reuse, preserves other improvements, assigns targeted rollback to A and asks the Apply planning chat for the Claude prompt |
 | [Primary goal and conformance evaluation](primary-goal-and-conformance-evaluation-20261021.md) | Direct owner goal and adoption, 21 October 2026; labeled coordination notes | Trust through complete model-to-artifact conformance, independent semantic coverage and parent integration, refined A–D evidence priorities and bounded handoff |
 | [Cockpit commission](cockpit-commission-20261020.md) | Direct owner instructions, 20 October 2026 | Local Run visualization, playback, causal messages and arrows, cockpit direction, Claude design/implementation assignment and documentation-only Main delivery |
 | [Apply workflow conversation](terminology-and-file-accounting-20261020.md) | Direct owner instructions and adoption, 20 October 2026 | Provenance for accepted DEC-064: names, strict checks, local registries, readiness/events, recursive Passes, routed questions, tools and Manager teams; concept and Claude handoff prepared, no runtime implementation |

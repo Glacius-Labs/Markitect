@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/per-turn-container-decision-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's decision to restore per-Turn containers and retain independent improvements, with evidence limits and A-D handoff boundaries.
   - path: "docs/concepts/sources/primary-goal-and-conformance-evaluation-20261021.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -7,7 +11,7 @@ artifacts:
   - path: "docs/development/claude-direct-runtime-handoff-20261021.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Prepares bounded owner-started sessions for the provisional direct baseline, portable container reuse, discriminating scenarios, model assessment and matched evaluation without starting runs.
+    why: Defines bounded A-D work for the direct baseline, targeted per-Turn container rollback, retained model assessment and discriminating evaluation without starting runs.
   - path: "docs/development/claude-apply-hardening-handoff-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
