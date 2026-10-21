@@ -849,6 +849,9 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 func (e *engine) seal(p *pass) PassResult {
 	stand := p.tree
 	if !p.spec.Review {
+		// Kept work environments mount the shared tree; they end before its
+		// capture, whose guard admits no container that mounts it.
+		e.releaseEnvironments(e.workEnvironments())
 		h, err := e.cfg.Workspaces.Harvest(e.ctx, HarvestRequest{ID: e.workID, MaxEntries: e.cfg.MaxEntries, MaxBytes: e.cfg.MaxBytes})
 		if err == nil && h.Uncertain {
 			err = fmt.Errorf("the harvest is uncertain: %s", h.Reason)

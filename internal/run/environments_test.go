@@ -9,18 +9,24 @@ import (
 )
 
 // keepingAgents is fakeAgents that keeps environments: it records every
-// release and reports one kept instance per named environment it saw.
+// release and reports one kept instance per named environment it saw, which
+// mounts its turn's volume until its release, as a held container does.
 type keepingAgents struct {
 	*fakeAgents
 	mu       sync.Mutex
 	seen     map[string]bool
+	volumes  map[string]string
 	releases [][]string
 }
 
 func (a *keepingAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnResult, error) {
 	a.mu.Lock()
-	if turn.Environment != "" {
+	if turn.Environment != "" && !a.seen[turn.Environment] {
 		a.seen[turn.Environment] = true
+		a.volumes[turn.Environment] = turn.Workspace
+		a.ws.mu.Lock()
+		a.ws.mounted[turn.Workspace]++
+		a.ws.mu.Unlock()
 	}
 	a.mu.Unlock()
 	res, err := a.fakeAgents.Run(ctx, turn, h)
@@ -37,20 +43,24 @@ func (a *keepingAgents) Release(_ context.Context, names []string) []Environment
 		if names == nil || slices.Contains(names, name) {
 			out = append(out, EnvironmentRelease{Environment: name, Instance: "inst-" + name, Removed: true})
 			delete(a.seen, name)
+			a.ws.mu.Lock()
+			a.ws.mounted[a.volumes[name]]--
+			a.ws.mu.Unlock()
 		}
 	}
 	return out
 }
 
-// Every Manager's work turns share one environment across the work Passes of
-// the run, every reviewer has its own for its Verify Pass, and helpers have
-// none. A Verify Pass releases its reviewers' environments before its candidate
-// volume closes; the run's end releases the rest. Each turn records its
-// instance.
+// Every Manager's work turns share one named environment, every reviewer has
+// its own for its Verify Pass, and helpers have none. A work Pass releases the
+// work environments before it captures the shared tree, whose capture admits
+// no mounting container; a Verify Pass releases its reviewers' environments
+// before its candidate volume closes; the run's end releases the rest. Each
+// turn records its instance.
 func TestEnvironmentsFollowTheirConversationsAndEndWithThem(t *testing.T) {
 	f := newFixture(t)
 	f.addCheck("unit", ".")
-	agents := &keepingAgents{fakeAgents: f.agents, seen: map[string]bool{}}
+	agents := &keepingAgents{fakeAgents: f.agents, seen: map[string]bool{}, volumes: map[string]string{}}
 	f.cfg.Agents = agents
 	r := f.open()
 	for _, spec := range []PassSpec{implementSpec(), verifySpec(), implementSpec(), verifySpec()} {
@@ -78,14 +88,22 @@ func TestEnvironmentsFollowTheirConversationsAndEndWithThem(t *testing.T) {
 			t.Errorf("%s reviews in %v, not one fresh environment per Verify Pass", path, review)
 		}
 	}
-	// The first Verify Pass released exactly its reviewers before its
-	// candidate closed; the end of the run released everything else.
-	if len(agents.releases) != 3 || agents.releases[2] != nil || len(agents.releases[0]) != len(teamPaths) {
+	// Each work Pass released the work environments before its capture, each
+	// Verify Pass exactly its reviewers before its candidate closed; the end
+	// of the run released everything else.
+	if len(agents.releases) != 5 || agents.releases[4] != nil {
 		t.Fatalf("releases %v", agents.releases)
 	}
-	for i, path := range teamPaths {
-		if agents.releases[0][i] != byKind[VerifyTurn][path][0] && !slices.Contains(agents.releases[0], byKind[VerifyTurn][path][0]) {
-			t.Errorf("first review release %v lacks %s's reviewer", agents.releases[0], path)
+	for _, i := range []int{0, 2} {
+		for _, path := range teamPaths {
+			if !slices.Contains(agents.releases[i], byKind[ExecuteTurn][path][0]) {
+				t.Errorf("work release %d %v lacks %s's work environment", i, agents.releases[i], path)
+			}
+		}
+	}
+	for _, path := range teamPaths {
+		if !slices.Contains(agents.releases[1], byKind[VerifyTurn][path][0]) {
+			t.Errorf("first review release %v lacks %s's reviewer", agents.releases[1], path)
 		}
 	}
 	var kinds []string
@@ -98,8 +116,8 @@ func TestEnvironmentsFollowTheirConversationsAndEndWithThem(t *testing.T) {
 	if first < len(teamPaths) || slices.ContainsFunc(kinds[:first], func(k string) bool { return k != "environment.release" }) {
 		t.Errorf("the reviewers' environments did not end before their candidate: %v", kinds)
 	}
-	if kinds[len(kinds)-1] != "outcome" || kinds[len(kinds)-2] != "environment.release" {
-		t.Errorf("the work environments did not end before the outcome: %v", kinds)
+	if kinds[len(kinds)-1] != "outcome" || len(agents.seen) != 0 {
+		t.Errorf("environments outlived the run: %v, left %v", kinds, agents.seen)
 	}
 	for _, tr := range out.Turns {
 		if tr.Instance.Name == "" || tr.Instance.Generation != 1 {

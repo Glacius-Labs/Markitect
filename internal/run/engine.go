@@ -369,6 +369,15 @@ func (e *engine) releaseEnvironments(names []string) {
 
 func (e *engine) releaseAll() { e.release(nil) }
 
+// workEnvironments names every Manager's work environment.
+func (e *engine) workEnvironments() []string {
+	names := make([]string, 0, len(e.team))
+	for _, m := range e.team {
+		names = append(names, m.workHome)
+	}
+	return names
+}
+
 func (e *engine) release(names []string) {
 	envs, ok := e.cfg.Agents.(Environments)
 	if !ok {
