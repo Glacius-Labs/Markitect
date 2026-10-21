@@ -1,5 +1,21 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/cockpit/web/js/organization-facts.mjs"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Turns explicit project organization facts into leadership and Manager presentation nodes and exact Browse/Settings navigation, preserving declared and resolved values."
+  - path: "internal/adapters/cockpit/web/js/organization.js"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Shows the Organization tab from project observation with explicit Runtime resolution, responsibility details and navigation through the existing settings proposal flow."
+  - path: "internal/adapters/cockpit/organization-facts.test.mjs"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Locally checks synthetic one-Package and large organization presentation, source parents, profile absence, reviewer descriptions, helper limits and exact link encoding."
+  - path: "docs/validation/cockpit-organization-tab-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Records the Organization tab's lightweight preparation separately from deferred structural checks, browser demonstrations and Main integration."
   - path: "internal/adapters/cockpit/web/js/org-layout.js"
     form: code
     realizes: [product/cockpit/observed-organization]

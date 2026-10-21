@@ -37,6 +37,7 @@ export const api = {
   setupProject: (name, body) => postJSON(`/api/projects/${enc(name)}/setup`, "project-setup", body),
   project: () => get("/api/project"),
   model: () => get("/api/model"),
+  organization: (resolve = false) => get(`/api/organization${resolve ? "?resolve=1" : ""}`),
   observeProject: () => request("/api/project/observe", { method: "POST", headers: { "X-Markitect-Cockpit": "observe" } }),
   runs: () => get("/api/runs"),
   view: (run, at) => get(`/api/runs/${enc(run)}/view${at === undefined ? "" : `?at=${at}`}`),

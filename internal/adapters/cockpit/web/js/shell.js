@@ -8,8 +8,8 @@ import { store } from "./store.js";
 import { setTitle, notifyControl } from "./notify.js";
 
 export const areas = [
-  { id: "model", key: "1", href: "#/model", label: "Model", lead: "Browse the model, or change it by prompt.", chips: ["Browse", "Session"],
-    tabs: [{ id: "browse", href: "#/model", label: "Browse" }, { id: "session", href: "#/session", label: "Session" }] },
+  { id: "model", key: "1", href: "#/model", label: "Model", lead: "Browse the model, see its organization, or change it by prompt.", chips: ["Browse", "Organization", "Session"],
+    tabs: [{ id: "browse", href: "#/model", label: "Browse" }, { id: "organization", href: "#/organization", label: "Organization" }, { id: "session", href: "#/session", label: "Session" }] },
   { id: "runs", key: "2", href: "#/runs", label: "Runs", lead: "Follow a running Apply or replay a recorded one.", chips: ["Live", "Replay"] },
   { id: "decisions", key: "3", href: "#/decisions", label: "Decisions", lead: "Review and decide on proposals.", chips: ["Proposals"] },
   { id: "settings", key: "4", href: "#/settings", label: "Settings", lead: "Change the budget, profiles and team.", chips: ["Budget", "Profiles", "Team"] },
