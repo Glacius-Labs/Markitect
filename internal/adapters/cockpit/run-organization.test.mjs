@@ -19,7 +19,7 @@ test("recorded binding and current work stay separate from reported usage", () =
   assert.ok(root.badges.includes("1 adverse probes without accepted disposition"));
   assert.match(root.facts[1], /3 turns.*0.30 USD reported.*partial/);
   assert.ok(root.badges.includes("Models reported: alpha, beta"));
-  assert.equal(root.reviewer.text, "reviewer Â· no active reviewer recorded");
+  assert.equal(root.reviewer.text, "reviewer · no active reviewer recorded");
   assert.equal(stock.reviewer.state, "working"); assert.match(stock.facts[0], /reviewer turn r1/);
   assert.ok(stock.badges.includes("Active: worker h1"));
   assert.deepEqual(managerUsage(view.turns, "."), { turns: 3, reported: 2, providerTurns: 4, costUSD: .30000000000000004, models: ["alpha", "beta"] });

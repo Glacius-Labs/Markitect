@@ -19,7 +19,7 @@ export function renderDetail(aside, ctx) {
     if (top && aside.scrollTop < top) aside.scrollTop = top;
   };
   clear(aside);
-  const close = h("button", { class: "btn icon close", "aria-label": "Close details", onclick: () => ctx.select(null) }, "Ã—");
+  const close = h("button", { class: "btn icon close", "aria-label": "Close details", onclick: () => ctx.select(null) }, "×");
   const body = h("div", {});
   aside.append(close, body);
   const ref = ctx.ref || "run";
@@ -76,7 +76,7 @@ function prose(text, cls = "") {
   return h("div", { class: `prose quote agent ${cls}` }, text || "");
 }
 
-function pending(c, what = "Reading the recordâ€¦") {
+function pending(c, what = "Reading the record…") {
   const p = h("p", { class: "note" }, what);
   c.body.append(p);
   return p;
@@ -170,7 +170,7 @@ function probeItem(c, p, { showPass = false } = {}) {
     h("div", { class: "probehead" }, c.r(`probe:${p.id}`, `Probe ${p.id}`), " ", outcomeTag(p), h("span", { class: "muted" }, ` ${p.obligation}`)),
     h("div", { class: "prose" }, p.claim),
     p.expected ? [h("div", { class: "muted probelabel" }, "Expected"), h("div", { class: "prose" }, p.expected)] : null,
-    h("div", { class: "muted probefoot" }, bits.join(" Â· "), p.adverse ? ` Â· disposition: ${disp}` : ""),
+    h("div", { class: "muted probefoot" }, bits.join(" · "), p.adverse ? ` · disposition: ${disp}` : ""),
     p.adverse && p.disposition?.finding ? h("div", { class: "muted" }, "Finding ", c.r(`finding:${p.disposition.finding}`, p.disposition.finding)) : null);
 }
 
@@ -292,7 +292,7 @@ function manager(c) {
   if (turns.length) {
     section(c, "Turns", h("table", {}, h("tbody", {}, turns.slice(-12).reverse().map((t) => h("tr", {},
       h("td", {}, r(`turn:${t.id}`, `${t.pass} ${t.short}`)), h("td", {}, t.role),
-      h("td", { class: "muted" }, [t.mode, t.context].filter(Boolean).join(" Â· ")),
+      h("td", { class: "muted" }, [t.mode, t.context].filter(Boolean).join(" · ")),
       h("td", {}, t.ended ? duration(Date.parse(t.ended) - Date.parse(t.started)) : "running"))))));
   }
   if (m.declared?.length) {
@@ -315,7 +315,7 @@ function contextSection(c, m) {
   if (!ctx && !defs.length && !briefs.length) return;
   const items = [];
   if (ctx) {
-    items.push(h("p", {}, [`Brief ${shortDigest(ctx.brief?.replace("sha256:", ""))}`, `${ctx.full.length} in full`, `${ctx.reference.length} reference only`].join(" Â· ")));
+    items.push(h("p", {}, [`Brief ${shortDigest(ctx.brief?.replace("sha256:", ""))}`, `${ctx.full.length} in full`, `${ctx.reference.length} reference only`].join(" · ")));
     if (ctx.full.length) items.push(c.disclose("full", `Supplied in full (${ctx.full.length})`, h("ul", { class: "defs" }, ctx.full.map((d) => h("li", {}, d)))));
   } else {
     items.push(h("p", { class: "note" }, "This run recorded no context binding for the Manager."));
@@ -358,7 +358,7 @@ function why(c, m) {
     const open = (m.declared || []).filter((d) => !d.accepted);
     if (open.length) {
       box.append(h("div", {}, "Its accepted plan still needs, unaccepted at this boundary:"),
-        h("ul", { class: "chain" }, open.map((d) => h("li", {}, h("span", { class: "arrow" }, "â†’"), h("span", {}, `the ${d.stage} of `, r(`manager:${d.owner}`, label(d.owner)), ": ", h("span", { class: "prose" }, d.need))))));
+        h("ul", { class: "chain" }, open.map((d) => h("li", {}, h("span", { class: "arrow" }, "→"), h("span", {}, `the ${d.stage} of `, r(`manager:${d.owner}`, label(d.owner)), ": ", h("span", { class: "prose" }, d.need))))));
     }
     if (w.cause?.length) box.append(chain(c, w.cause));
     return box;
@@ -383,7 +383,7 @@ function why(c, m) {
 function chain(c, steps) {
   const { r } = c;
   return h("ul", { class: "chain" }, steps.map((st) => h("li", { style: { paddingLeft: `${st.depth * 14}px` } },
-    h("span", { class: "arrow" }, "â†’"),
+    h("span", { class: "arrow" }, "→"),
     h("span", {}, st.node.startsWith("@") ? h("strong", {}, label(st.node)) : r(`manager:${st.node}`, label(st.node)), " ",
       st.repeat ? "(already on this path: a cycle of waits)" : st.doing || stateWord(st.state)))));
 }
@@ -414,7 +414,7 @@ function coverageList(c, obligations, { assessment = false } = {}) {
     o.note ? h("div", { class: "prose" }, o.note) : null,
     (o.evidence || []).map((e) => h("div", { class: "evidence" },
       h("div", {}, e.claim),
-      h("div", { class: "muted" }, e.receipt ? ["Probe receipt ", c.r(`probe:${e.receipt}`, e.receipt)] : [e.source ? "Source " : "", e.source ? h("span", { class: "digest" }, e.source) : "", e.location ? ` â€” ${e.location}` : ""]),
+      h("div", { class: "muted" }, e.receipt ? ["Probe receipt ", c.r(`probe:${e.receipt}`, e.receipt)] : [e.source ? "Source " : "", e.source ? h("span", { class: "digest" }, e.source) : "", e.location ? ` — ${e.location}` : ""]),
       e.reasoning ? h("div", { class: "prose" }, e.reasoning) : null)))));
 }
 
@@ -668,7 +668,7 @@ function assessment(c, p) {
   const problem = confirmsModelProblem(view, p);
   const box = h("div", { class: `verdict ${problem ? "v-problem" : p.sealed ? "v-ok" : "v-run"}`, role: "group", "aria-label": "Assessment verdict" });
   if (problem) {
-    box.append(h("div", { class: "vhead" }, "Model problem confirmed â€” nothing published."), h("div", {}, "Correct the model and start a new run."));
+    box.append(h("div", { class: "vhead" }, "Model problem confirmed — nothing published."), h("div", {}, "Correct the model and start a new run."));
     if (view.status.reason) box.append(prose(view.status.reason));
   } else if (p.sealed && p.verdict === "satisfied") {
     box.append(h("div", { class: "vhead" }, "No material model problem found"), h("div", { class: "muted" }, "The recorded coverage found nothing unresolved. That is not proof of exhaustive completeness, and it does not replace the artifact Verify."));
@@ -682,7 +682,7 @@ function assessment(c, p) {
   if (model.length) {
     section(c, "Model observations", h("ul", { class: "findings" }, model.map((f) => h("li", { class: "finding-line" }, c.r(`finding:${f.id}`, f.id), " ", obsTag(f),
       f.class ? h("span", { class: `class class-${f.class}` }, ` ${f.class.replace("_", " ")}`) : null,
-      h("div", { class: "muted" }, `Definition ${f.obligation} Â· owner ${label(f.owner)}${f.effect === "closed" ? ` Â· closed ${f.closedAs || ""}` : ""}`),
+      h("div", { class: "muted" }, `Definition ${f.obligation} · owner ${label(f.owner)}${f.effect === "closed" ? ` · closed ${f.closedAs || ""}` : ""}`),
       h("div", { class: "prose" }, f.observed)))));
   }
   // Each Manager's latest submission with coverage; its result over its basis.
@@ -833,7 +833,7 @@ function overview(c) {
   title(c, "Run", view.run.id);
   c.body.append(dl([
     run.started && ["Started", `${new Date(run.started).toLocaleString()}`],
-    run.strategy && ["Strategy", `${run.strategy}${run.work?.length ? `: ${run.work.join(" â†’ ")} â†’ verify` : ""}`],
+    run.strategy && ["Strategy", `${run.strategy}${run.work?.length ? `: ${run.work.join(" → ")} → verify` : ""}`],
     run.build && ["Build", buildText(run.build)],
     run.source && ["Source", h("span", { class: "digest" }, run.source.slice(0, 12))],
     run.agentTurns && ["Budget", `${run.agentTurns} Agent turns, ${run.passes} Passes${run.executionTime ? `, ${run.executionTime} execution time` : ""}`],
@@ -843,7 +843,7 @@ function overview(c) {
     ["Outcome", st.outcome ? `${st.outcome}${st.reason ? `: ${st.reason}` : ""}` : view.boundary.final ? "not recorded" : "not recorded at this boundary"],
   ]));
   if (st.ending === "model_problem") {
-    c.body.append(h("p", { class: "why" }, h("strong", {}, "Model problem confirmed â€” nothing published. "), "Correct the model and start a new run."));
+    c.body.append(h("p", { class: "why" }, h("strong", {}, "Model problem confirmed — nothing published. "), "Correct the model and start a new run."));
   }
   const rep = st.report;
   if (rep) {
@@ -939,5 +939,5 @@ function cap(s) {
 }
 
 function clip(s, n) {
-  return s && s.length > n ? s.slice(0, n - 1) + "â€¦" : s || "";
+  return s && s.length > n ? s.slice(0, n - 1) + "…" : s || "";
 }
