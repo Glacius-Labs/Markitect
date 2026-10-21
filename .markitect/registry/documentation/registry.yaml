@@ -24,6 +24,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Prepares Claude's bounded cockpit implementation and design assignment with current Apply semantics, observation seams, acceptance and a startup prompt.
+  - path: "docs/development/codex-cockpit-org-chart-handoff-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Prepares Codex's cockpit organization chart assignment with its base, write scope, five work packages, further cockpit work and a startup prompt."
   - path: "docs/concepts/sources/cockpit-commission-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -32,6 +36,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance, product/cockpit/desktop-app]
     why: Preserves the owner's decision that the cockpit is Markitect's desktop app and starts and stops Apply, verbatim with labelled recorder context.
+  - path: "docs/concepts/sources/cockpit-org-chart-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves the owner's request that the cockpit look like a company organization chart and be implemented by Codex, verbatim with labelled recorder context."
   - path: "docs/development/claude-apply-implementation-handoff-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]
