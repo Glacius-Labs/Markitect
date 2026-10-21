@@ -218,7 +218,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 		{Name: toolReport, Description: "Report to the Orchestrator: progress, a named wait, your basis or complete result, a decision on a child's proposal, a reopened child result, a revised basis or a problem. End every turn in which you work on your own contribution with one.", InputSchema: raw(reportSchema(spec))},
 		{Name: toolSend, Description: sendText, InputSchema: raw(sendSchema)},
 		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent (Root: to the user) as a question.", InputSchema: raw(escalateSchema)},
-		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
 	switch probes := e.probesAvailable(); {
 	case spec.Writes && probes:
@@ -237,7 +237,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 func helperTools(writes bool) []ToolSpec {
 	tools := []ToolSpec{
 		{Name: toolReport, Description: "Report your result to your Manager when your task is done.", InputSchema: raw(helperReportSchema)},
-		{Name: toolLookUp, Description: "Look up structural facts: a Definition, the owner of a path, the derived registry view, the states of the Pass, plans and bases, findings, checks.", InputSchema: raw(lookUpSchema)},
+		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, plans and bases, findings, checks.", InputSchema: raw(lookUpSchema)},
 	}
 	if writes {
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "File check of your Manager's current area against the accepted stand.", InputSchema: raw(fileCheckSchema)})

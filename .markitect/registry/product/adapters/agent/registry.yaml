@@ -36,6 +36,10 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Supplies independently authored synthetic stream fixtures without provider captures or copied schemas.
+  - path: "internal/adapters/claudecode/context_transport_test.go"
+    form: test
+    realizes: [product/ports-and-adapters, product/organization/delegated-context]
+    why: Compares the user message and tool answer the Claude adapter actually writes with independently built context text, detects cut, changed and misaddressed payloads, refuses an oversized prompt instead of cutting it and passes on a reported compaction.
   - path: "internal/adapters/claudecode/codec_test.go"
     form: test
     realizes: [product/ports-and-adapters]

@@ -104,6 +104,10 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Defines the Run contract: Config, Manager, helpers, write plans, Pass specs, findings, questions, problems, outcomes and Open, Pass, Reassess, Corrections and Finish."
+  - path: "internal/run/context_limit_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history, product/organization/delegated-context]
+    why: Checks that a turn whose input the provider channel cannot carry ends the run Incomplete at once with its sizes instead of being repeated.
   - path: "internal/run/engine.go"
     form: code
     realizes: [product/run/confirmed-run-history]

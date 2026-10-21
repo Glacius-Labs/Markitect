@@ -257,6 +257,9 @@ func (t *turnRun) handshake(ctx context.Context) error {
 func (t *turnRun) runTurn(ctx context.Context, res *run.TurnResult) error {
 	id := IntegerRequestID(3)
 	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.turn.Prompt, Effort: t.profile.Session.Effort})
+	if errors.Is(err, ErrProtocolLimit) {
+		return fmt.Errorf("%w: the prompt of %d bytes exceeds the %d bytes the provider channel carries: %w", run.ErrContextLimit, len(t.turn.Prompt), t.profile.MaxWireBytes, err)
+	}
 	if err != nil {
 		return err
 	}

@@ -1,6 +1,8 @@
 package apply
 
 import (
+	"crypto/sha256"
+	"fmt"
 	"strings"
 	"time"
 
@@ -12,13 +14,16 @@ import (
 // the request: the strategy with its work sequence, the effective settings and
 // the implementation identity. Apply and VerifyCaptured resolve it the same way
 // from one passed preparation before any Agent work; run.start records it and
-// the report repeats it. Entry names the entry that ran: "apply" or
+// the report repeats it. Head is the captured source revision and Request the
+// digest of the owner's request with its decisions. Entry names the entry that ran: "apply" or
 // "verify-captured", which runs only the strategy's Verify and so no work
 // Pass. Composition is the digest of the strategy's Pass declarations and
 // Root duty as this build implements them: it tells builds apart that the
 // build identity alone does not, such as a modified tree.
 type RunBinding struct {
 	Entry       string           `json:"entry"`
+	Head        string           `json:"head"`
+	Request     string           `json:"request"`
 	Strategy    Strategy         `json:"strategy"`
 	Work        []run.Purpose    `json:"work"`
 	Corrections []run.Purpose    `json:"corrections"`
@@ -40,13 +45,32 @@ type BudgetBinding struct {
 	Deadline      time.Time `json:"deadline"`
 }
 
-// ManagerBinding is one Manager's resolved roles and team.
+// ManagerBinding is one Manager's resolved roles, team and model context.
 type ManagerBinding struct {
 	Manager    string          `json:"manager"`
 	Execute    RoleBinding     `json:"execute"`
 	Verify     RoleBinding     `json:"verify"`
 	Helpers    []HelperBinding `json:"helpers"`
 	MaxHelpers int             `json:"maxHelpers"`
+	Context    ContextBinding  `json:"context"`
+}
+
+// ContextBinding is the coverage record of a Manager's standing Brief: its
+// digest, the Definitions it states in full and those it only lists for
+// reference (Root's project inventory), each by identity. Every other
+// Definition of the bound model is available through look_up. Whether a turn
+// delivered the Brief, or relied on its conversation, run evidence records per
+// turn.
+type ContextBinding struct {
+	Brief     string   `json:"brief"`
+	Full      []string `json:"full"`
+	Reference []string `json:"reference"`
+}
+
+// boundManager is one Manager's resolved settings with its context record.
+type boundManager struct {
+	settings organization.ManagerSettings
+	context  ContextBinding
 }
 
 // RoleBinding is a resolved profile with its prepared identity and the content
@@ -75,8 +99,8 @@ type CheckBinding struct {
 
 // bindRun records the effective values of one passed preparation and the bound
 // request.
-func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []organization.ManagerSettings, checks []run.Check) RunBinding {
-	b := RunBinding{Entry: entry, Strategy: strategy, Corrections: strategy.corrections(), Build: build,
+func bindRun(entry string, prepared CapturedSettingsAttempt, request string, strategy Strategy, build string, budget ExecutionBudget, deadline time.Time, managers []boundManager, checks []run.Check) RunBinding {
+	b := RunBinding{Entry: entry, Head: prepared.Structural().Model().Inputs().Head, Request: fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(request))), Strategy: strategy, Corrections: strategy.corrections(), Build: build,
 		Budget: BudgetBinding{ExecutionTime: budget.ExecutionTime.Value.String(), TurnTimeout: budget.TurnTimeout.Value.String(), AgentTurns: budget.AgentTurns.Value, Passes: budget.Passes.Value, Deadline: deadline.UTC()}}
 	b.Work = []run.Purpose{}
 	for _, spec := range strategy.work() {
@@ -91,8 +115,9 @@ func bindRun(entry string, prepared CapturedSettingsAttempt, strategy Strategy, 
 	if source := prepared.Defaults().ProductSource(); source.File != "" {
 		b.Defaults = source.File + "@" + source.ContentID.String()
 	}
-	for _, m := range managers {
-		mb := ManagerBinding{Manager: m.Package, Execute: roleBinding(m.Execute), Verify: roleBinding(m.Verify), Helpers: []HelperBinding{}, MaxHelpers: m.MaxHelpers}
+	for _, bound := range managers {
+		m := bound.settings
+		mb := ManagerBinding{Manager: m.Package, Execute: roleBinding(m.Execute), Verify: roleBinding(m.Verify), Helpers: []HelperBinding{}, MaxHelpers: m.MaxHelpers, Context: bound.context}
 		for _, h := range m.Helpers {
 			mb.Helpers = append(mb.Helpers, HelperBinding{Role: h.Role, Writes: h.Writes, RoleBinding: roleBinding(h.RoleSettings)})
 		}

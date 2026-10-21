@@ -62,10 +62,11 @@ type fakeRuntime struct {
 
 	session   string // init session_id
 	calls     []frame.ToolCall
-	extra     []string // provider lines sent after init
-	result    string   // override of the result line
-	silent    bool     // never sends a result
-	endStream bool     // closes stdout after the prompt instead of a result
+	extra     []string      // provider lines sent after init
+	result    string        // override of the result line
+	silent    bool          // never sends a result
+	endStream bool          // closes stdout after the prompt instead of a result
+	callDelay time.Duration // waits before the scripted tool calls
 	startErr  error
 	stopErr   error
 	closeErr  error
@@ -105,6 +106,13 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		switch {
 		case f.endStream:
 			f.stream.close()
+		case len(f.calls) > 0 && f.callDelay > 0:
+			go func() {
+				time.Sleep(f.callDelay)
+				for _, c := range f.calls {
+					f.tools <- c
+				}
+			}()
 		case len(f.calls) > 0:
 			for _, c := range f.calls {
 				f.tools <- c
@@ -225,7 +233,7 @@ func TestExecuteTurnSpecArgvEnvAndResult(t *testing.T) {
 	if !strings.Contains(argAfter(argv, "--mcp-config"), `"args":["mcp"]`) || argv[0] != "/usr/local/bin/claude" {
 		t.Errorf("argv %q", argv)
 	}
-	if rt.start.Dir != "/work" || !reflect.DeepEqual(rt.start.Env, []string{"CLAUDE_CODE_OAUTH_TOKEN=" + testToken}) ||
+	if rt.start.Dir != "/work" || !reflect.DeepEqual(rt.start.Env, []string{"CLAUDE_CODE_OAUTH_TOKEN=" + testToken, mcpOutputTokens}) ||
 		len(rt.start.Tools) != 1 || rt.start.Tools[0].Name != "report" {
 		t.Errorf("start %+v", rt.start)
 	}
@@ -350,20 +358,26 @@ func TestVerifyTurnWithReadOnlyMountsStarts(t *testing.T) {
 	}
 }
 
-func TestResumeAcceptsAndRecordsADifferentConversation(t *testing.T) {
+// A resumed turn whose provider starts another conversation would work on
+// neither its history nor its standing context: it fails before any tool call
+// is served, and reports the conversation it got.
+func TestAResumeThatStartsAnotherConversationFails(t *testing.T) {
 	rt := newFakeRuntime()
 	rt.session = "observed-other"
+	rt.calls = []frame.ToolCall{{ID: 1, Name: "report", Arguments: json.RawMessage(`{"kind":"basis"}`)}}
 	h := newHarness(t, rt, validProfile())
 	turn := testTurn()
 	turn.Resume = "earlier"
-	res, err := h.agents.Run(context.Background(), turn, echoHandler(new([]string)))
-	if err != nil || res.Conversation != "observed-other" || argAfter(rt.start.Argv, "--resume") != "earlier" {
-		t.Fatalf("%v %+v %q", err, res, rt.start.Argv)
+	var served []string
+	res, err := h.agents.Run(context.Background(), turn, echoHandler(&served))
+	if err == nil || !strings.Contains(err.Error(), "instead of continuing earlier") || res.Conversation != "observed-other" || !res.Stopped || len(served) != 0 || argAfter(rt.start.Argv, "--resume") != "earlier" {
+		t.Fatalf("%v %+v served %v", err, res, served)
 	}
 }
 
 func TestVerifyTurnMayResumeItsReviewersConversationAndStaysReadOnly(t *testing.T) {
 	rt := newFakeRuntime()
+	rt.session = "reviewer-conversation"
 	h := newHarness(t, rt, validProfile())
 	turn := testTurn()
 	turn.Kind, turn.ReadOnly, turn.Resume = run.VerifyTurn, true, "reviewer-conversation"

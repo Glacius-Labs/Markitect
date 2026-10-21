@@ -21,6 +21,11 @@ const (
 	stopGrace = 10 * time.Second
 	// stopMargin bounds the wait for the exit observation beyond the grace.
 	stopMargin = 10 * time.Second
+	// mcpOutputTokens raises the provider's own cap on a tool result to at
+	// least one token per byte of the Orchestrator's answer bound, so a long
+	// Definition or Brief is refused by the Orchestrator rather than cut by the
+	// provider.
+	mcpOutputTokens = "MAX_MCP_OUTPUT_TOKENS=262144"
 )
 
 // Agents runs one Claude Code turn per container. It implements run.Agents.
@@ -92,6 +97,9 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 		return notStarted(err)
 	}
 	promptRaw, err := codec.EncodeUser(UserInput{Text: turn.Prompt})
+	if errors.Is(err, ErrLimit) {
+		return notStarted(fmt.Errorf("%w: the prompt of %d bytes exceeds the %d bytes the provider channel carries: %w", run.ErrContextLimit, len(turn.Prompt), profile.MaxWireBytes, err))
+	}
 	if err != nil {
 		return notStarted(err)
 	}
@@ -119,7 +127,7 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 
 	c := &conversation{turn: turn, peer: peer, codec: codec, handler: handler, log: log, redact: redact, tools: tools,
 		initID: initID, initRaw: initRaw, promptRaw: promptRaw, res: &res, done: make(chan struct{})}
-	runErr := c.run(ctx, frame.Start{Argv: turnArgv(turn, profile, tools), Dir: "/work", Env: []string{"CLAUDE_CODE_OAUTH_TOKEN=" + credential.Token}, Tools: tools})
+	runErr := c.run(ctx, frame.Start{Argv: turnArgv(turn, profile, tools), Dir: "/work", Env: []string{"CLAUDE_CODE_OAUTH_TOKEN=" + credential.Token, mcpOutputTokens}, Tools: tools})
 	close(c.done)
 
 	outcome := "provider result"
@@ -279,6 +287,9 @@ type conversation struct {
 	// assistant message by its ID, which the provider repeats per content block.
 	usage    usageState
 	streamed map[string]run.Usage
+	// compacted says that the provider compacted the conversation and the
+	// next Orchestrator answer has not said so yet.
+	compacted bool
 }
 
 // usageState tells how complete the usage of a turn is.
@@ -318,7 +329,62 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 	}
 	calls := c.peer.ToolCalls()
 	seen := map[uint64]bool{}
+	var held []frame.ToolCall
 	acked, initialized := false, false
+	// handle processes one stream event; done ends the turn with err.
+	handle := func(event streamEvent) (done bool, err error) {
+		if event.err != nil {
+			c.log.line("provider-error", event.message.Raw())
+			return true, event.err
+		}
+		m := event.message
+		c.log.line("provider", m.Raw())
+		if !acked && m.kind != ControlResponseMessage {
+			return true, ErrProtocol
+		}
+		switch m.kind {
+		case ControlResponseMessage:
+			if acked {
+				return false, nil
+			}
+			ack, err := m.ReadInitializeResponse(c.initID)
+			if err != nil || ack.Status != ControlSuccess || ack.Version != "" && ack.Version != "2.1.301" {
+				return true, ErrProtocol
+			}
+			acked = true
+			if err := c.write(ctx, c.promptRaw); err != nil {
+				return true, err
+			}
+		case SystemInitMessage:
+			init, err := m.Init()
+			if err != nil || initialized || init.Version != "2.1.301" {
+				return true, ErrProtocol
+			}
+			initialized = true
+			c.res.Conversation, c.res.Usage.Model = string(init.Session), initModel(m.Raw())
+			if c.turn.Resume != "" && c.res.Conversation != c.turn.Resume {
+				// Without its history the turn would work on neither the
+				// conversation nor the standing context it was given.
+				return true, fmt.Errorf("%w: the provider started conversation %s instead of continuing %s", ErrSession, c.res.Conversation, c.turn.Resume)
+			}
+			for _, call := range held {
+				if err := c.answer(ctx, call); err != nil {
+					return true, err
+				}
+			}
+			held = nil
+		case AssistantMessage:
+			c.addStreamed(m.Raw())
+		case CompactBoundaryMessage:
+			c.res.Compacted, c.compacted = true, true
+		case ResultMessage:
+			return true, c.finish(m)
+		case UnsupportedRequest, RejectedMessage:
+			return true, ErrUnsupported
+		}
+		// Other messages are the provider's own progress and carry no outcome.
+		return false, nil
+	}
 	for {
 		if err := ctx.Err(); err != nil {
 			return err
@@ -335,47 +401,30 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 				return ErrProtocol
 			}
 			seen[call.ID] = true
+			// What the provider streamed before its call, such as a compaction,
+			// is taken in first.
+			for pending := true; pending; {
+				select {
+				case event := <-events:
+					if done, err := handle(event); done {
+						return err
+					}
+				default:
+					pending = false
+				}
+			}
+			if !initialized {
+				// No call is served before the conversation it belongs to is known.
+				held = append(held, call)
+				continue
+			}
 			if err := c.answer(ctx, call); err != nil {
 				return err
 			}
 		case event := <-events:
-			if event.err != nil {
-				c.log.line("provider-error", event.message.Raw())
-				return event.err
+			if done, err := handle(event); done {
+				return err
 			}
-			m := event.message
-			c.log.line("provider", m.Raw())
-			if !acked && m.kind != ControlResponseMessage {
-				return ErrProtocol
-			}
-			switch m.kind {
-			case ControlResponseMessage:
-				if acked {
-					continue
-				}
-				ack, err := m.ReadInitializeResponse(c.initID)
-				if err != nil || ack.Status != ControlSuccess || ack.Version != "" && ack.Version != "2.1.301" {
-					return ErrProtocol
-				}
-				acked = true
-				if err := c.write(ctx, c.promptRaw); err != nil {
-					return err
-				}
-			case SystemInitMessage:
-				init, err := m.Init()
-				if err != nil || initialized || init.Version != "2.1.301" {
-					return ErrProtocol
-				}
-				initialized = true
-				c.res.Conversation, c.res.Usage.Model = string(init.Session), initModel(m.Raw())
-			case AssistantMessage:
-				c.addStreamed(m.Raw())
-			case ResultMessage:
-				return c.finish(m)
-			case UnsupportedRequest, RejectedMessage:
-				return ErrUnsupported
-			}
-			// Other messages are the provider's own progress and carry no outcome.
 		}
 	}
 }
@@ -434,6 +483,10 @@ func (c *conversation) answer(ctx context.Context, call frame.ToolCall) error {
 		a := c.handler(ctx, call.Name, c.redact.bytes(call.Arguments))
 		if err := ctx.Err(); err != nil {
 			return err
+		}
+		if c.compacted {
+			c.compacted = false
+			a.Text += "\n\n[Your conversation was compacted. look_up topic brief returns your standing context and current assignment.]"
 		}
 		c.log.value("tool_answer", map[string]any{"id": call.ID, "text": a.Text, "refused": a.Refused})
 		result, err := json.Marshal(struct {
