@@ -27,6 +27,7 @@ type runtimeSettingsPreparation struct {
 	settings       *organization.Settings
 	facts          *organization.SettingsFacts
 	budget         *ExecutionBudget
+	strategy       *Strategy
 	checks         []CheckSelection
 	checksComplete bool
 	profiles       []PreparedProfile
@@ -68,6 +69,15 @@ func (r runtimeSettingsPreparation) Budget() (ExecutionBudget, bool) {
 		return ExecutionBudget{}, false
 	}
 	return *r.budget, true
+}
+
+// Strategy returns the authored strategy of the run, available together with
+// the resolved Settings.
+func (r runtimeSettingsPreparation) Strategy() (Strategy, bool) {
+	if r.strategy == nil {
+		return "", false
+	}
+	return *r.strategy, true
 }
 func (r runtimeSettingsPreparation) Checks() ([]CheckSelection, bool) {
 	if !r.checksComplete {

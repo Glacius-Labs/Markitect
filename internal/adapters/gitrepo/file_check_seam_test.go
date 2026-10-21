@@ -34,7 +34,7 @@ func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, st
 		selection.Instructions = append(selection.Instructions, selected(name))
 	}
 	execution := `apiVersion: markitect.execution/v1
-strategy: recursive-passes-v1
+strategy: direct
 budget:
   executionTime: 25m
   turnTimeout: 10m

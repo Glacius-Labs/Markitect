@@ -46,6 +46,9 @@
   --a-runs: #b7b1e6;
   --a-decisions: #e3a9c9;
   --a-settings: #dcc7a1;
+  /* The Markitect wordmark's colors on dark */
+  --mark: #c4cac8;
+  --mark-text: #f0f3f2;
   /* Names the run inspector draws with */
   --panel: var(--card);
   --plate: var(--card-2);
@@ -168,8 +171,8 @@ kbd { font: 600 11px var(--digest); color: var(--ink-2); border: 1px solid var(-
 .topbar { display: flex; align-items: center; gap: 14px; padding: 0 20px; border-bottom: 1px solid var(--line); background: rgb(19 21 24 / 0.78); backdrop-filter: blur(10px); min-width: 0; position: relative; z-index: 10; }
 .brand { display: flex; align-items: center; gap: 10px; color: var(--ink); text-decoration: none; padding: 6px 10px 6px 8px; margin-left: -8px; border-radius: var(--r); flex: none; transition: background-color 160ms var(--ease); }
 .brand:hover { background: rgb(255 255 255 / 0.05); color: var(--ink); }
-.brand svg { height: 26px; width: auto; color: var(--ice); flex: none; }
-.brand strong { font-size: 16px; font-weight: 600; letter-spacing: -0.01em; }
+.brand svg { height: 24px; width: auto; color: var(--mark); flex: none; }
+.brand strong { font-size: 18px; font-weight: 700; letter-spacing: -0.04em; color: var(--mark-text); }
 .brand .sub { color: var(--ink-3); font-size: var(--s-1); font-weight: 500; }
 .where { display: flex; align-items: center; gap: 12px; min-width: 0; }
 .where .divider { width: 1px; height: 24px; background: var(--line-2); flex: none; }

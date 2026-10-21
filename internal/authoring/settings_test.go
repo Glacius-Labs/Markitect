@@ -6,7 +6,7 @@ import (
 )
 
 const executionDoc = `apiVersion: markitect.execution/v1
-strategy: recursive-passes-v1
+strategy: direct
 # The budget is an unvalidated starting value.
 budget:
   executionTime: 25m # whole run
@@ -114,7 +114,7 @@ func TestDiffLinesCutsUnchangedRuns(t *testing.T) {
 // the team and of a Package's profiles survive an edit elsewhere.
 func TestEditSettingsKeepsUnchangedFieldsVerbatim(t *testing.T) {
 	doc := `apiVersion: markitect.execution/v1
-strategy: recursive-passes-v1
+strategy: direct
 budget:
   executionTime: 25m
   turnTimeout: 10m

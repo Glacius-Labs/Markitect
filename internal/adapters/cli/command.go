@@ -66,7 +66,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply [options]          realize the bound model: Plan, Prepare, Implement, Verify
+  apply [options]          realize the bound model: direct or staged work, then Verify
   extract [options]        derive a model candidate from the existing artifacts
   answer <question> --run RUN --text ANSWER --run-config PATH
                             answer a question of the running Apply or Extract

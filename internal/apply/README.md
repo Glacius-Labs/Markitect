@@ -18,16 +18,20 @@ publication guard.
 
 ## Execution settings
 
-`.markitect/execution.yaml` (`apiVersion: markitect.execution/v1`, strategy
-`recursive-passes-v1`) is a closed document; unknown, duplicate or
-representation-limited fields are refused with their exact source coordinates.
+`.markitect/execution.yaml` (`apiVersion: markitect.execution/v1`) is a closed document;
+unknown, duplicate or representation-limited fields are refused with their exact source
+coordinates. Its required `strategy` selects the work composition the Run binds: `direct`
+or `staged` (see Apply below); any other value, including the replaced
+`recursive-passes-v1`, is refused. A project migrating from `recursive-passes-v1` writes
+`staged` for the previous composition or `direct` for the provisional baseline.
 
 ```yaml
+strategy: direct       # direct or staged
 budget:
   executionTime: 60m   # whole run wall clock
   turnTimeout: 8m      # one Agent turn
   agentTurns: 220      # every turn of Managers, reviewers and helpers
-  passes: 10           # Plan, Prepare, Implement, Verify and every repetition
+  passes: 10           # every work Pass, Verify and every repetition
 profiles: {execute: library-agent, verify: library-agent}
 instructions: {execute: [], verify: []}   # optional project instruction files
 packages: {}           # exact per-Package overrides of profiles and instructions
@@ -45,12 +49,13 @@ scope: []              # optional modeled scope selectors [{kind, property}]
 checks: []             # required checks (id, profile, directory, args, requiredBy, timeout)
 ```
 
-The product defaults (`strategy_defaults.yaml`, embedded) supply the empty instruction
-lists an authored file omits and the standard team: one `worker` role with writes,
-bound to each Manager's Execute profile, at most one active helper. Every value keeps
-its `Setting` provenance. After a successful preparation, `Settings()` holds the resolved
-per-Manager roles and helpers, `Budget()` the authored budget, `Checks()` the required
-checks and `FileCheck().Layout()` the validated ownership.
+The product defaults (`strategy_defaults.yaml`, embedded, `strategies: [direct, staged]`)
+serve both strategies alike: the empty instruction lists an authored file omits and the
+standard team, one `worker` role with writes, bound to each Manager's Execute profile, at
+most one active helper. Every value keeps its `Setting` provenance. After a successful
+preparation, `Settings()` holds the resolved per-Manager roles and helpers, `Budget()` the
+authored budget, `Strategy()` the authored strategy, `Checks()` the required checks and
+`FileCheck().Layout()` the validated ownership.
 
 ## Ownership
 
@@ -78,23 +83,45 @@ in the start stand is refused with `ErrUnsupportedOwnership`.
 
 ## Apply
 
-`Apply(ctx, ApplyRequest)` binds the organization (Briefs, own obligations, write plans,
-helpers), the required checks, the gates, the owner channel and the budget, requires the
-container engine's volume-subpath support, and composes the Passes on `run`: Plan,
-Prepare and Implement, then Verify; a Pass that needs correction restarts the work at the
-earliest purpose its findings name and a fresh complete Verify follows; a Verify that only
-fresh disputes or disproofs awaiting an independent assessment keep from being clean is
-repeated on the unchanged candidate. Only a
+`Apply(ctx, ApplyRequest)` binds the strategy, the organization (Briefs, own obligations,
+write plans, helpers), the required checks, the gates, the owner channel and the budget,
+requires the container engine's volume-subpath support, and composes the Passes on `run`.
+The strategy only selects the work Passes before Verify; ownership, gates, evidence, Verify
+and publication are the same, and `run.start` and the report record it:
+
+- `direct`, the provisional baseline: Implement, in which every Manager settles its own
+  approach and lays its own foundation, submits a basis its children start on, and
+  realizes its part, then Verify. Its waits declare its dependencies (`BindWaits`): a wait
+  on another Manager outside its own line binds the accepted version, and a revision
+  resets or reopens what built on it. Every correction is a new Implement.
+- `staged`, kept for comparison: Plan, Prepare and Implement, then Verify; dependencies
+  are those of the accepted plans, and a correction restarts at the earliest purpose its
+  findings name.
+
+`Apply` and `VerifyCaptured` bind through one `applyConfig`, which needs `ApplyRequest.Build`,
+the implementation identity of the running product, and returns a `RunBinding`: the entry,
+the strategy with its work sequence (none for `VerifyCaptured`), correction purposes and
+the `composition` digest of its Pass declarations and Root duty, the build, the content
+identities of the execution settings and product defaults, the budget and deadline, every
+Manager's resolved profiles, helpers and instructions, and the required checks. `run.start`
+records it and `ApplyResult.Binding` returns it for the report. Everything but the work
+Passes and Root's acceptance wording (a plan in `staged`, any submission in `direct`) is shared: entry and Pass-boundary gates, writer-stop proof, Verify, finding closure
+and publication.
+
+A Pass that needs correction restarts the work as its strategy allows and a fresh complete
+Verify follows; a Verify that only fresh disputes or disproofs awaiting an independent
+assessment keep from being clean is repeated on the unchanged candidate. Only a
 Verified outcome is published, through the guarded `Publisher` with read-back; the shared
 work volume is closed only after an applied or unchanged receipt and kept as
 `RetainedWork` otherwise. Apply never commits. Each required check also passes the number
 of its execution profile's own arguments to `run`, so a probe can reuse that profile with
 its own arguments.
 
-The mandates ask Plan for the needed dependency stage and to keep existing conforming
-artifacts as their own evidence; Implement to test the changes it makes rather than add
-coverage of conforming behavior, and to wait for another Manager's result instead of
-reporting progress; and Verify
+The mandates ask Plan (staged) or Implement (direct) for the needed dependency stage, to
+keep existing conforming artifacts as their own evidence and to route a public behavior the
+model leaves open to the user through Root instead of defaulting it; Implement to test the
+changes it makes rather than add coverage of conforming behavior, and to wait for another
+Manager's basis or result instead of reporting progress; and Verify
 to derive claims and permitted counterexamples from the bound model first, probe them at
 the public interface and cite receipts or inspected sources for their claims, with parents
 challenging their children's assertions.

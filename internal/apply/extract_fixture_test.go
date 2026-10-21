@@ -17,7 +17,7 @@ import (
 // project knows it (the overview file and the artifact tree belong to Root) and
 // a check without requiredBy.
 const extractExecution = `apiVersion: markitect.execution/v1
-strategy: recursive-passes-v1
+strategy: direct
 budget:
   executionTime: 25m
   turnTimeout: 10m
@@ -65,7 +65,7 @@ const extractOwnershipProposed = `ownership:
 // extractExecutionProposed is the same document with the ownership the
 // structure proposal adds: each Package gets the directory of its artifacts.
 const extractExecutionProposed = `apiVersion: markitect.execution/v1
-strategy: recursive-passes-v1
+strategy: direct
 budget:
   executionTime: 25m
   turnTimeout: 10m
