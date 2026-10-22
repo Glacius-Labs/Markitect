@@ -140,6 +140,13 @@ func (s *feedbackSession) Message(ctx context.Context, prompt string, timeout ti
 				}
 			case "other child":
 				call(run.AcceptChildTool, map[string]string{"child": "library/second"})
+			case "diagnostic bounds":
+				for range 100 {
+					answer := call(run.AcceptChildTool, map[string]string{"child": "library/first", strings.Repeat("unknown", 10000): "value"})
+					if !answer.Refused || len(answer.Text) > 1024 || !strings.Contains(answer.Text, "[diagnostic truncated]") {
+						return run.TurnResult{}, errors.New("tool diagnostic exceeded its byte bound or hid truncation")
+					}
+				}
 			case "multiple":
 				call(run.AcceptChildTool, map[string]string{"child": "library/first"})
 				call(run.ReturnChildTool, map[string]string{"child": "library/first", "correction": "conflicting decision"})
@@ -148,6 +155,12 @@ func (s *feedbackSession) Message(ctx context.Context, prompt string, timeout ti
 		}
 		if !strings.Contains(prompt, "Host decision feedback:") {
 			return run.TurnResult{}, errors.New("invalid review decision lacked concrete normal follow-up")
+		}
+		if a.mode == "diagnostic bounds" {
+			_, diagnostic, _ := strings.Cut(prompt, "\nTool feedback: ")
+			if len(diagnostic) > 9*1024 || strings.Count(diagnostic, "[diagnostic truncated]") != 7 || !strings.Contains(diagnostic, "[additional tool refusals omitted]") {
+				return run.TurnResult{}, errors.New("stored tool refusal diagnostics exceeded count/byte bound or omitted no marker")
+			}
 		}
 		a.feedbackSeen.Store(true)
 	}
@@ -170,7 +183,7 @@ func (g *bindingIntegration) Integrate(ctx context.Context, parent, child run.As
 }
 
 func TestAssignmentDecisionFeedbackBindsInspectedHandoffAndRecoversWithinBudget(t *testing.T) {
-	for _, mode := range []string{"commit", "same response", "other child", "missing", "multiple", "delegation", "exhaust", "allowance"} {
+	for _, mode := range []string{"commit", "same response", "other child", "missing", "multiple", "delegation", "exhaust", "allowance", "diagnostic bounds"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()

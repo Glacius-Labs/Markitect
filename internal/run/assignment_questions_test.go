@@ -22,7 +22,14 @@ type queuedAgents struct {
 	queued        atomic.Int32
 	uncooperative bool
 	queryReturned chan struct{}
+	longAnswer    bool
+	contextLimit  bool
 }
+
+const decisiveReplySuffix = "DECISIVE SUFFIX: child contract requires the complete answer"
+
+func longChildAnswer() string { return strings.Repeat("material answer; ", 2048) + decisiveReplySuffix }
+
 type queuedSession struct {
 	*concurrentSession
 	owner *queuedAgents
@@ -73,16 +80,25 @@ func (s *queuedSession) Message(ctx context.Context, prompt string, timeout time
 			}
 			return run.TurnResult{Completed: true, Final: "Questions queued; awaiting replies"}, nil
 		}
-		a.resumed.Store(true)
 		if !strings.Contains(prompt, "A1") || !strings.Contains(prompt, "A2") {
 			return run.TurnResult{}, errors.New("parent resumed without both ordered replies")
 		}
+		if a.longAnswer && !strings.Contains(prompt, longChildAnswer()) {
+			return run.TurnResult{}, errors.New("parent received a truncated material child answer")
+		}
+		if a.contextLimit {
+			return run.TurnResult{}, run.ErrContextLimit
+		}
+		a.resumed.Store(true)
 		return run.TurnResult{Completed: true, Final: "Reviewed with both child replies"}, call(run.AcceptChildTool, map[string]string{"child": "library/second"})
 	}
 	if s.manager.Path == "library/first" && strings.HasPrefix(prompt, "Your parent library asks: Q") {
 		question, answer := "Q1", "A1"
 		if strings.HasPrefix(prompt, "Your parent library asks: Q2") {
 			question, answer = "Q2", "A2"
+			if a.longAnswer {
+				answer += longChildAnswer()
+			}
 		}
 		a.questions <- question
 		if question == "Q2" {
@@ -99,7 +115,7 @@ func (s *queuedSession) Message(ctx context.Context, prompt string, timeout time
 }
 
 func TestAssignmentBusyChildQuestionsQueueInOrderAndResumeWithoutParentLock(t *testing.T) {
-	for _, mode := range []string{"success", "cancel", "close", "close blocked", "allowance"} {
+	for _, mode := range []string{"success", "long answer", "context limit", "cancel", "close", "close blocked", "allowance"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
@@ -108,6 +124,8 @@ func TestAssignmentBusyChildQuestionsQueueInOrderAndResumeWithoutParentLock(t *t
 			base.askNow = ask
 			base.workGates["library/first"] = firstWork
 			agents := &queuedAgents{concurrentAgents: base, reviewGate: review, replyGate: reply, questions: make(chan string, 4), uncooperative: mode == "close blocked", queryReturned: make(chan struct{})}
+			agents.longAnswer = mode == "long answer" || mode == "context limit"
+			agents.contextLimit = mode == "context limit"
 			git := &concurrentIntegration{agents: base, entered: make(chan string, 8), gates: map[string]<-chan struct{}{}}
 			options := run.AssignmentSchedule{IDPrefix: "fan", Task: "Implement", MaxMessages: 40, Timeout: time.Second, TranscriptDir: t.TempDir()}
 			if mode == "allowance" {
@@ -169,7 +187,7 @@ func TestAssignmentBusyChildQuestionsQueueInOrderAndResumeWithoutParentLock(t *t
 				close(reply)
 				<-agents.queryReturned
 			}
-			if mode == "success" {
+			if mode == "success" || mode == "long answer" {
 				if outcome.err != nil || outcome.result.ResultCommit == "" || !agents.resumed.Load() {
 					t.Fatalf("queued consultation did not complete: %v", outcome.err)
 				}
@@ -180,11 +198,23 @@ func TestAssignmentBusyChildQuestionsQueueInOrderAndResumeWithoutParentLock(t *t
 				if outcome.err == nil || outcome.result.ResultCommit != "" || agents.resumed.Load() || len(git.order) != 0 {
 					t.Fatalf("cancel/close/allowance accepted or resumed pending review: %v", outcome.err)
 				}
-				if agents.nativeCalls.Load() != 8 {
+				if mode != "context limit" && agents.nativeCalls.Load() != 8 {
 					t.Fatalf("cancel/Close/budget allowed another provider Message: %d", agents.nativeCalls.Load())
+				}
+				if mode == "context limit" && !errors.Is(outcome.err, run.ErrContextLimit) {
+					t.Fatalf("full answer channel refusal did not preserve context-limit failure: %v", outcome.err)
 				}
 				if mode == "allowance" && (agents.nativeCalls.Load() != 8 || !strings.Contains(outcome.err.Error(), "allowance exhausted")) {
 					t.Fatalf("consultation/resume escaped shared allowance: %d %v", agents.nativeCalls.Load(), outcome.err)
+				}
+			}
+			if agents.longAnswer {
+				retained := false
+				for _, observation := range outcome.flow.Observations("library/first") {
+					retained = retained || strings.Contains(observation.Final, longChildAnswer())
+				}
+				if !retained {
+					t.Fatal("full material child answer was not retained")
 				}
 			}
 			if agents.queued.Load() != 2 || base.overlapped.Load() || len(base.stopped) != 4 || outcome.flow.Workspace("library/first") == nil {

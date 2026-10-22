@@ -24,6 +24,20 @@ type assignmentCallKey struct{}
 type assignmentMessageStackKey struct{}
 type assignmentAnswerKey struct{}
 
+const assignmentDiagnosticBytes = 1024
+const assignmentRefusalEntries = 8
+const omittedAssignmentRefusals = "[additional tool refusals omitted]"
+
+// Only Host diagnostics may be shortened. Task, correction and answer content
+// must reach the provider intact or fail through its context-limit contract.
+func assignmentDiagnostic(text string) string {
+	const suffix = " [diagnostic truncated]"
+	if len(text) <= assignmentDiagnosticBytes {
+		return text
+	}
+	return strings.ToValidUTF8(text[:assignmentDiagnosticBytes-len(suffix)], "") + suffix
+}
+
 type assignmentMailbox struct {
 	mu        sync.Mutex
 	path      string
@@ -47,9 +61,14 @@ type childQuestion struct {
 func (m *assignmentMailbox) handle(ctx context.Context, name string, raw json.RawMessage) ToolAnswer {
 	call, _ := ctx.Value(assignmentCallKey{}).(*assignmentCall)
 	refuse := func(reason string) ToolAnswer {
+		reason = assignmentDiagnostic(reason)
 		if call != nil {
 			call.mu.Lock()
-			call.refusals = append(call.refusals, reason)
+			if len(call.refusals) < assignmentRefusalEntries {
+				call.refusals = append(call.refusals, reason)
+			} else {
+				call.refusals[assignmentRefusalEntries-1] = omittedAssignmentRefusals
+			}
 			call.mu.Unlock()
 		}
 		return ToolAnswer{Text: reason, Refused: true}
@@ -190,7 +209,7 @@ func (s *assignmentScheduler) interact(ctx context.Context, path, prompt string,
 				return response.observation, fmt.Errorf("Manager %q did not correct its decision after two feedback messages: %w", path, err)
 			}
 			feedback++
-			prompt = contextPrompt + "\nHost decision feedback: " + err.Error()
+			prompt = contextPrompt + "\nHost decision feedback: " + assignmentDiagnostic(err.Error())
 			if len(response.refusals) > 0 {
 				prompt += "\nTool feedback: " + strings.Join(response.refusals, "; ")
 			}
@@ -223,11 +242,7 @@ func (s *assignmentScheduler) waitReplies(ctx context.Context, questions []*chil
 			if reply.err != nil {
 				return "", fmt.Errorf("queued answer from %q: %w", question.child, reply.err)
 			}
-			text := reply.text
-			if len(text) > 16<<10 {
-				text = text[:16<<10] + " [truncated; full answer retained in observations/transcript]"
-			}
-			fmt.Fprintf(&replies, "\nQueued child answer from %s to %q: %s", question.child, question.question, text)
+			fmt.Fprintf(&replies, "\nQueued child answer from %s to %q: %s", question.child, question.question, reply.text)
 		case <-ctx.Done():
 			return "", ctx.Err()
 		case <-s.questionsCtx.Done():
