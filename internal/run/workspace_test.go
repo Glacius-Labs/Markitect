@@ -86,8 +86,14 @@ func TestDirectChildDelegationForksCurrentParentGitStand(t *testing.T) {
 	if err := flow.StartRoot(ctx, run.AssignmentRequest{ID: "root", Profile: "codex", Home: "root"}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := flow.Message(ctx, ".", "parent foundation", time.Second); err != nil {
+	answer, err := flow.Message(ctx, ".", "parent foundation", time.Second)
+	if err != nil {
 		t.Fatal(err)
+	}
+	answer.Commands[0].Status = "changed by caller"
+	*answer.Commands[0].ExitCode = 99
+	if retained := flow.Observations("."); retained[0].Commands[0].Status != "passed" || *retained[0].Commands[0].ExitCode != 0 {
+		t.Fatalf("returned response changed retained native observation: %+v", retained)
 	}
 	if err := flow.DelegateCurrent(ctx, ".", "child", run.AssignmentRequest{ID: "child", Profile: "codex", Home: "child"}); err != nil {
 		t.Fatal(err)
@@ -151,7 +157,8 @@ func (f *assignmentSessionFake) Message(ctx context.Context, text string, _ time
 		}
 		final = answer.Text
 	}
-	return run.TurnResult{Final: final, Completed: true, Conversation: f.spec.ID}, nil
+	exit := 0
+	return run.TurnResult{Final: final, Completed: true, Conversation: f.spec.ID, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed", ExitCode: &exit}}}, nil
 }
 
 func TestAssignmentConcurrentCloseKeepsAbortIncomplete(t *testing.T) {

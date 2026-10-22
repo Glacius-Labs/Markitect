@@ -239,7 +239,7 @@ func (f *AssignmentHandoffs) Message(ctx context.Context, path, message string, 
 	defer m.release()
 	result, err := a.Message(ctx, message, timeout)
 	f.mu.Lock()
-	m.observed = append(m.observed, result)
+	m.observed = append(m.observed, cloneTurnResult(result))
 	f.mu.Unlock()
 	return result, err
 }
@@ -279,17 +279,21 @@ func (f *AssignmentHandoffs) Observations(path string) []TurnResult {
 		return nil
 	}
 	results := make([]TurnResult, len(m.observed))
-	copy(results, m.observed)
-	for i := range results {
-		results[i].Commands = append([]CommandObservation(nil), results[i].Commands...)
-		for j := range results[i].Commands {
-			if code := results[i].Commands[j].ExitCode; code != nil {
-				value := *code
-				results[i].Commands[j].ExitCode = &value
-			}
-		}
+	for i, observed := range m.observed {
+		results[i] = cloneTurnResult(observed)
 	}
 	return results
+}
+
+func cloneTurnResult(result TurnResult) TurnResult {
+	result.Commands = append([]CommandObservation(nil), result.Commands...)
+	for i := range result.Commands {
+		if code := result.Commands[i].ExitCode; code != nil {
+			value := *code
+			result.Commands[i].ExitCode = &value
+		}
+	}
+	return result
 }
 
 // RetainedWorkspace exposes a partial starting copy after setup failure. It
