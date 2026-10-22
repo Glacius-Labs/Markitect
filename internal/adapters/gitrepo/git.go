@@ -16,16 +16,19 @@ import (
 )
 
 type boundedOutput struct {
-	bytes.Buffer
+	data  bytes.Buffer
 	limit int64
 }
 
 func (b *boundedOutput) Write(p []byte) (int, error) {
-	if int64(len(p)) > b.limit-int64(b.Len()) {
+	if int64(len(p)) > b.limit-int64(b.data.Len()) {
 		return 0, ErrLimit
 	}
-	return b.Buffer.Write(p)
+	return b.data.Write(p)
 }
+
+func (b *boundedOutput) Bytes() []byte  { return b.data.Bytes() }
+func (b *boundedOutput) String() string { return b.data.String() }
 
 type gitEntry struct {
 	path, mode, kind, oid string
