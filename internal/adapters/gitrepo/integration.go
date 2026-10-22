@@ -66,8 +66,9 @@ func (w *Workspaces) checkedHandoff(ctx context.Context, copy run.AssignmentWork
 }
 
 // Changes reads the fixed result's actual Git difference, independent of any
-// subsequent child edits. A result too large to deliver for parent review is
-// refused explicitly rather than silently shortened.
+// subsequent child edits. Git names binary changes without embedding their
+// opaque contents in the Manager prompt. A result too large to deliver for
+// parent review is refused explicitly rather than silently shortened.
 func (w *Workspaces) Changes(ctx context.Context, copy run.AssignmentWorkspace, handoff run.AssignmentHandoff) (string, error) {
 	a, _, err := w.checkedHandoff(ctx, copy, handoff, "")
 	if err != nil {
@@ -82,7 +83,7 @@ func (w *Workspaces) Changes(ctx context.Context, copy run.AssignmentWorkspace, 
 	spec := w.spec(a.volume, true)
 	var output reviewOutput
 	output.limit = 8 << 20
-	err = w.runGit(ctx, spec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", handoff.StartingCommit, handoff.ResultCommit, "--"), nil, &output)
+	err = w.runGit(ctx, spec, assignmentGitArgs("diff", "--no-ext-diff", "--no-textconv", handoff.StartingCommit, handoff.ResultCommit, "--"), nil, &output)
 	w.mu.Unlock()
 	if output.exceeded {
 		return "", fmt.Errorf("child Git difference exceeds the parent review delivery limit")

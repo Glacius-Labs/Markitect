@@ -5,7 +5,38 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"unicode/utf8"
 )
+
+// The Codex channel checks the complete JSON frame, where characters such as
+// '&' can expand sixfold. A 128 KiB raw part stays below its 1 MiB frame limit
+// even with that expansion and the fixed review prompt around it. All parts go
+// to the same Manager conversation before a decision is offered.
+const reviewChangeChunkBytes = 128 << 10
+const reviewSummaryBytes = 8 << 10
+
+func reviewTextParts(value, label string) ([]string, error) {
+	if !utf8.ValidString(value) {
+		return nil, fmt.Errorf("%s contains invalid UTF-8 and cannot be delivered for parent review", label)
+	}
+	if len(value) <= reviewChangeChunkBytes {
+		return []string{value}, nil
+	}
+	parts := make([]string, 0, 1+len(value)/reviewChangeChunkBytes)
+	for len(value) > reviewChangeChunkBytes {
+		cut := reviewChangeChunkBytes
+		if line := strings.LastIndexByte(value[:cut], '\n'); line >= cut-(16<<10) {
+			cut = line + 1
+		} else {
+			for cut > 0 && !utf8.RuneStart(value[cut]) {
+				cut--
+			}
+		}
+		parts = append(parts, value[:cut])
+		value = value[cut:]
+	}
+	return append(parts, value), nil
+}
 
 func (s *assignmentScheduler) taskPrompt(path, task string) string {
 	manager := s.team[path]
@@ -86,7 +117,35 @@ func (s *assignmentScheduler) reviewResult(ctx context.Context, parent, child st
 	if err != nil {
 		return "", err
 	}
-	prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nObserved commands delivered with this result:\n%s\nActual Git changes:\n%s\nInspect conformance and tests. Use accept_child with only child to accept this presented result, or return_child with a concrete correction. The Host binds the exact reviewed handoff; do not supply a commit. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, handoff.Summary, s.commandObservations(child, handoff.ResultCommit), changes)
+	parts, err := reviewTextParts(changes, "child Git difference")
+	if err != nil {
+		return "", err
+	}
+	summary := handoff.Summary
+	if len(summary) > reviewSummaryBytes {
+		summaryParts, err := reviewTextParts(summary, "child summary")
+		if err != nil {
+			return "", err
+		}
+		for i, part := range summaryParts {
+			prompt := fmt.Sprintf("Fixed child summary from %s, result %s, part %d of %d:\n%s\nRead this part. More review material follows in this same conversation. Do not decide yet; accept_child and return_child are available only after the final Git-difference part.", child, handoff.ResultCommit, i+1, len(summaryParts), part)
+			if _, err := s.interact(ctx, parent, prompt, nil); err != nil {
+				return "", err
+			}
+		}
+		summary = "[Full child summary delivered in preceding messages.]"
+	}
+	for i, part := range parts[:len(parts)-1] {
+		prompt := fmt.Sprintf("Fixed Git difference from direct child %s, result %s from %s, part %d of %d:\n%s\nRead this part. More parts follow in this same conversation. Do not decide yet; accept_child and return_child are available only after the final part.", child, handoff.ResultCommit, handoff.StartingCommit, i+1, len(parts), part)
+		if _, err := s.interact(ctx, parent, prompt, nil); err != nil {
+			return "", err
+		}
+	}
+	changeLabel := "Actual Git changes"
+	if len(parts) > 1 {
+		changeLabel = fmt.Sprintf("Actual Git changes, final part %d of %d (earlier parts are in this conversation)", len(parts), len(parts))
+	}
+	prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nObserved commands delivered with this result:\n%s\n%s:\n%s\nInspect conformance and tests. Binary changes are named by Git without embedding their opaque contents. Use accept_child with only child to accept this presented result, or return_child with a concrete correction. The Host binds the exact reviewed handoff; do not supply a commit. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, summary, s.commandObservations(child, handoff.ResultCommit), changeLabel, parts[len(parts)-1])
 	var conflict error
 	_, err = s.interact(ctx, parent, prompt, func(ctx context.Context, _ TurnResult, actions []assignmentAction) error {
 		if len(actions) != 1 || actions[0].child != child || (actions[0].name != AcceptChildTool && actions[0].name != ReturnChildTool) {

@@ -12,6 +12,7 @@ import (
 	"testing"
 	"time"
 
+	codexappserver "github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -24,6 +25,7 @@ type scheduledAgents struct {
 	repeatQuestions bool
 	crossArea       bool
 	cycleConsult    bool
+	largeReviewMeta bool
 	failID          string
 	blockCloseID    string
 	unblockClose    chan struct{}
@@ -41,13 +43,17 @@ type scheduledSession struct {
 	timeouts        []time.Duration
 	correction      string
 	reviews         []string
+	prompts         []string
 	repeatQuestions bool
 	crossArea       bool
 	cycleConsult    bool
+	largeReviewMeta bool
 	consulted       bool
 	fail            bool
 	unblockClose    chan struct{}
 }
+
+const reviewOpenMatter = "\nOPEN MATTER: admission-limit regression remains; this handoff is not conforming."
 
 func (a *scheduledAgents) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
 	a.mu.Lock()
@@ -56,7 +62,7 @@ func (a *scheduledAgents) OpenAssignment(_ context.Context, spec run.AssignmentS
 		a.opened = map[string]*scheduledSession{}
 		a.lendingReady = make(chan struct{})
 	}
-	s := &scheduledSession{owner: a, spec: spec, handler: handler, messages: &a.messages, repeatQuestions: a.repeatQuestions, crossArea: a.crossArea, cycleConsult: a.cycleConsult, fail: spec.ID == a.failID}
+	s := &scheduledSession{owner: a, spec: spec, handler: handler, messages: &a.messages, repeatQuestions: a.repeatQuestions, crossArea: a.crossArea, cycleConsult: a.cycleConsult, largeReviewMeta: a.largeReviewMeta, fail: spec.ID == a.failID}
 	if spec.ID == a.blockCloseID {
 		s.unblockClose = a.unblockClose
 	}
@@ -69,6 +75,7 @@ var reviewedResult = regexp.MustCompile(`result ([0-9a-f]{40})`)
 func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout time.Duration) (run.TurnResult, error) {
 	s.messages.Add(1)
 	s.timeouts = append(s.timeouts, timeout)
+	s.prompts = append(s.prompts, prompt)
 	call := func(name string, args any) error {
 		body, _ := json.Marshal(args)
 		answer := s.handler(ctx, name, body)
@@ -172,7 +179,115 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 		s.correction = prompt
 	}
 	exit := 0
+	if s.largeReviewMeta && s.spec.ID == "trial-1" {
+		commands := make([]run.CommandObservation, 5)
+		for i := range commands {
+			commands[i] = run.CommandObservation{Command: "check", Status: "passed", ExitCode: &exit, Output: strings.Repeat("&", 4096)}
+		}
+		return run.TurnResult{Final: strings.Repeat("&", 140<<10) + reviewOpenMatter, Completed: true, Commands: commands}, nil
+	}
 	return run.TurnResult{Final: "Completed " + s.spec.ID, Completed: true, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed", ExitCode: &exit}}}, nil
+}
+
+type largeReviewIntegration struct {
+	handoffIntegrationFake
+	diff string
+}
+
+func (g *largeReviewIntegration) Changes(_ context.Context, copy run.AssignmentWorkspace, _ run.AssignmentHandoff) (string, error) {
+	if copy.ID() == "trial-1" {
+		return g.diff, nil
+	}
+	return "small child diff", nil
+}
+
+func TestAssignmentSchedulerDeliversLargeReviewInOneConversationBeforeDecision(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		diff string
+	}{
+		{"utf8-boundary", strings.Repeat("a", (128<<10)-1) + "✓" + strings.Repeat("b", 300<<10) + "END"},
+		{"json-escaping", strings.Repeat("&", 300<<10) + "END"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+			defer cancel()
+			team := []run.Manager{
+				{Path: ".", Children: []string{"library"}, ExecuteProfile: "exec"},
+				{Path: "library", Parent: ".", Children: []string{"library/lending", "library/storage"}, ExecuteProfile: "exec"},
+				{Path: "library/lending", Parent: "library", ExecuteProfile: "exec"},
+				{Path: "library/storage", Parent: "library", ExecuteProfile: "exec"},
+			}
+			git := &largeReviewIntegration{diff: tc.diff}
+			agents := &scheduledAgents{largeReviewMeta: tc.name == "json-escaping"}
+			result, _, err := run.RunAssignmentTree(ctx, team, &assignmentWorkspacesFake{}, agents, git, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement", MaxMessages: 25, Timeout: time.Second, TranscriptDir: t.TempDir()})
+			if err != nil || result.ResultCommit == "" || len(git.accepted) != 3 {
+				t.Fatalf("large fixed diff was not reviewed and accepted: %+v %v, accepted=%v", result, err, git.accepted)
+			}
+			codec, err := codexappserver.NewCodec(1 << 20)
+			if err != nil {
+				t.Fatal(err)
+			}
+			var delivered, summaryDelivered strings.Builder
+			parts, summaries, decisions := 0, 0, 0
+			for _, prompt := range agents.opened["trial-0"].prompts {
+				if _, err := codec.EncodeTurnStart(codexappserver.IntegerRequestID(1), codexappserver.TurnStartParams{Thread: "review-thread", Text: prompt, Effort: "high"}); err != nil {
+					t.Fatalf("actual Codex JSON frame cannot carry review prompt of %d bytes: %v", len(prompt), err)
+				}
+				if strings.HasPrefix(prompt, "Fixed child summary from") {
+					summaries++
+					start := strings.Index(prompt, ":\n") + 2
+					end := strings.LastIndex(prompt, "\nRead this part.")
+					if start < 2 || end < start {
+						t.Fatal("malformed child summary part")
+					}
+					summaryDelivered.WriteString(prompt[start:end])
+				}
+				if strings.HasPrefix(prompt, "Fixed Git difference from direct child") {
+					parts++
+					start := strings.Index(prompt, ":\n") + 2
+					end := strings.LastIndex(prompt, "\nRead this part.")
+					if start < 2 || end < start {
+						t.Fatalf("malformed intermediate review part: %q", prompt[:min(100, len(prompt))])
+					}
+					delivered.WriteString(prompt[start:end])
+				}
+				if strings.HasPrefix(prompt, "Review your direct child") {
+					decisions++
+					start := strings.Index(prompt, "\nActual Git changes, final part")
+					start = strings.Index(prompt[start:], ":\n") + start + 2
+					end := strings.LastIndex(prompt, "\nInspect conformance")
+					if start < 2 || end < start {
+						t.Fatal("malformed final review part")
+					}
+					delivered.WriteString(prompt[start:end])
+				}
+			}
+			if parts < 2 || decisions != 1 || delivered.String() != git.diff {
+				t.Fatalf("review omitted or duplicated fixed diff: parts=%d decisions=%d bytes=%d/%d", parts, decisions, delivered.Len(), len(git.diff))
+			}
+			if tc.name == "json-escaping" && (summaries < 2 || summaryDelivered.String() != strings.Repeat("&", 140<<10)+reviewOpenMatter) {
+				t.Fatalf("review lost a child summary matter: summary parts=%d bytes=%d", summaries, summaryDelivered.Len())
+			}
+		})
+	}
+}
+
+func TestAssignmentSchedulerRejectsInvalidUTF8DiffWithoutReviewDecision(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	team := []run.Manager{
+		{Path: ".", Children: []string{"library"}, ExecuteProfile: "exec"},
+		{Path: "library", Parent: ".", Children: []string{"library/lending", "library/storage"}, ExecuteProfile: "exec"},
+		{Path: "library/lending", Parent: "library", ExecuteProfile: "exec"},
+		{Path: "library/storage", Parent: "library", ExecuteProfile: "exec"},
+	}
+	git := &largeReviewIntegration{diff: strings.Repeat("\x80", 300<<10) + "\n"}
+	agents := &scheduledAgents{}
+	_, _, err := run.RunAssignmentTree(ctx, team, &assignmentWorkspacesFake{}, agents, git, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement", MaxMessages: 25, Timeout: time.Second, TranscriptDir: t.TempDir()})
+	if err == nil || !strings.Contains(err.Error(), "invalid UTF-8") || len(git.accepted) != 2 {
+		t.Fatalf("invalid diff was not rejected before root review decision: %v, accepted=%v", err, git.accepted)
+	}
 }
 
 type conflictOnceIntegration struct {

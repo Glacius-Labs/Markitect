@@ -387,6 +387,20 @@ func TestParentReviewDiffIsBoundedBeforeHostAllocation(t *testing.T) {
 	}
 }
 
+func TestParentReviewNamesBinaryChangeWithoutEmbeddingPatch(t *testing.T) {
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "library")
+	data := bytes.Repeat([]byte{0, 1, 2, 3, 4, 5, 6, 7}, 400000)
+	if err := os.WriteFile(filepath.Join(roots["library"], "library"), data, 0644); err != nil {
+		t.Fatal(err)
+	}
+	child := integrationHandoff(t, copies["library"])
+	diff, err := w.Changes(ctx, copies["library"], child)
+	if err != nil || len(diff) > 2000 || !strings.Contains(diff, "Binary files") || !strings.Contains(diff, "library") {
+		t.Fatalf("binary review diff was not a compact, explicit change: %d bytes, %q, %v", len(diff), diff, err)
+	}
+}
+
 type scriptedCopies struct {
 	copies map[run.WorkspaceID]*assignmentWorkspace
 }
