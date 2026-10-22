@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assignment_children.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Starts required children concurrently and serially reviews completed Git handoffs in arrival order, retaining cancelled or uncertain work."
+  - path: "internal/run/assignment_concurrency_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Proves overlapping child starts and work, completion-order parent review, queued questions and retained cancellation or startup failures."
   - path: "internal/run/assignment_correction_test.go"
     form: test
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]

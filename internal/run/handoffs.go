@@ -73,10 +73,13 @@ func (m *assignmentMember) acquire(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
+	if m.held(ctx) {
+		return nil
+	}
 	select {
 	case m.messages <- struct{}{}:
 		if err := ctx.Err(); err != nil {
-			m.release()
+			m.release(ctx)
 			return err
 		}
 		return nil
@@ -85,7 +88,53 @@ func (m *assignmentMember) acquire(ctx context.Context) error {
 	}
 }
 
-func (m *assignmentMember) release() { <-m.messages }
+type assignmentLockKey struct{}
+
+func (m *assignmentMember) held(ctx context.Context) bool {
+	held, _ := ctx.Value(assignmentLockKey{}).([]*assignmentMember)
+	return slices.Contains(held, m)
+}
+
+func (m *assignmentMember) release(ctx context.Context) {
+	if !m.held(ctx) {
+		<-m.messages
+	}
+}
+
+// serial keeps one parent's conversation and Git copy together through a
+// review decision and its integration. Questions wait on the same queue.
+func (f *AssignmentHandoffs) serial(ctx context.Context, path string, work func(context.Context) error) error {
+	m := f.team[path]
+	if err := m.acquire(ctx); err != nil {
+		return err
+	}
+	defer m.release(ctx)
+	held, _ := ctx.Value(assignmentLockKey{}).([]*assignmentMember)
+	return work(context.WithValue(ctx, assignmentLockKey{}, append(append([]*assignmentMember(nil), held...), m)))
+}
+
+// A parent must not wait on a working child while holding its own queue: that
+// child could already be waiting for an answer from this parent.
+func (f *AssignmentHandoffs) consult(ctx context.Context, path string, work func(context.Context) error) error {
+	m := f.team[path]
+	if m == nil {
+		return fmt.Errorf("Manager %q has no assignment", path)
+	}
+	if m.held(ctx) {
+		return work(ctx)
+	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	select {
+	case m.messages <- struct{}{}:
+		defer m.release(ctx)
+		held, _ := ctx.Value(assignmentLockKey{}).([]*assignmentMember)
+		return work(context.WithValue(ctx, assignmentLockKey{}, append(append([]*assignmentMember(nil), held...), m)))
+	default:
+		return fmt.Errorf("child %q is working or waiting; consult its fixed result when available instead of waiting inside a parent answer", path)
+	}
+}
 
 // AssignmentHandoffs routes work through the model-derived Manager tree. The
 // parent owns the substantive review decision; this type enforces only direct
@@ -164,15 +213,25 @@ func (f *AssignmentHandoffs) Delegate(ctx context.Context, parent, child string,
 // DelegateCurrent starts a direct child from its parent's fixed current Git
 // stand. The parent keeps its own copy and conversation while the child works.
 func (f *AssignmentHandoffs) DelegateCurrent(ctx context.Context, parent, child string, request AssignmentRequest) error {
+	prepared, err := f.prepareChild(ctx, parent, child, request)
+	if err != nil {
+		return err
+	}
+	return f.openReserved(ctx, parent, child, prepared)
+}
+
+// Prepare sibling foundations under the parent's queue before opening their
+// containers in parallel. A prepared copy remains inspectable if startup aborts.
+func (f *AssignmentHandoffs) prepareChild(ctx context.Context, parent, child string, request AssignmentRequest) (AssignmentRequest, error) {
 	forks, ok := f.workspaces.(AssignmentForks)
 	if !ok {
-		return errors.New("assignment workspaces cannot fork a parent's Git stand")
+		return request, errors.New("assignment workspaces cannot fork a parent's Git stand")
 	}
 	f.mu.Lock()
 	m, p := f.team[child], f.team[parent]
 	if m == nil || p == nil || m.manager.Parent != parent || m.agent != nil || m.starting || p.agent == nil || p.starting {
 		f.mu.Unlock()
-		return fmt.Errorf("Manager %q cannot start under %q", child, parent)
+		return request, fmt.Errorf("Manager %q cannot start under %q", child, parent)
 	}
 	m.starting = true
 	f.mu.Unlock()
@@ -183,9 +242,9 @@ func (f *AssignmentHandoffs) DelegateCurrent(ctx context.Context, parent, child 
 		f.mu.Lock()
 		m.starting = false
 		f.mu.Unlock()
-		return err
+		return request, err
 	}
-	defer p.release()
+	defer p.release(ctx)
 	prepared, err := forks.ForkAssignment(ctx, p.agent.Workspace(), request.ID)
 	if err != nil {
 		f.mu.Lock()
@@ -194,10 +253,13 @@ func (f *AssignmentHandoffs) DelegateCurrent(ctx context.Context, parent, child 
 		}
 		m.starting = false
 		f.mu.Unlock()
-		return err
+		return request, err
 	}
 	request.Prepared = prepared
-	return f.openReserved(ctx, parent, child, request)
+	f.mu.Lock()
+	m.partial = &Assignment{work: prepared}
+	f.mu.Unlock()
+	return request, nil
 }
 
 func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, request AssignmentRequest) error {
@@ -235,7 +297,7 @@ func (f *AssignmentHandoffs) openReserved(ctx context.Context, parent, path stri
 			if err := p.acquire(ctx); err != nil {
 				return "", err
 			}
-			defer p.release()
+			defer p.release(ctx)
 			answer, err := p.agent.Message(ctx, fmt.Sprintf("Your direct child %s asks: %s", path, question), time.Minute)
 			if err == nil && !answer.Completed {
 				err = fmt.Errorf("parent %q did not complete its answer", parent)
@@ -247,7 +309,8 @@ func (f *AssignmentHandoffs) openReserved(ctx context.Context, parent, path stri
 	f.mu.Lock()
 	if err == nil {
 		m.agent = a
-	} else {
+		m.partial = nil
+	} else if a != nil {
 		m.partial = a
 	}
 	m.starting = false
@@ -270,7 +333,7 @@ func (f *AssignmentHandoffs) Message(ctx context.Context, path, message string, 
 	if err := m.acquire(ctx); err != nil {
 		return TurnResult{}, err
 	}
-	defer m.release()
+	defer m.release(ctx)
 	result, err := a.Message(ctx, message, timeout)
 	f.mu.Lock()
 	m.observed = append(m.observed, cloneTurnResult(result))
@@ -370,7 +433,7 @@ func (f *AssignmentHandoffs) Submit(ctx context.Context, path string) (Assignmen
 	if err := m.acquire(ctx); err != nil {
 		return AssignmentHandoff{}, err
 	}
-	defer m.release()
+	defer m.release(ctx)
 	f.mu.Lock()
 	for _, child := range m.manager.Children {
 		if !f.childIntegrated(m, child) {
@@ -460,7 +523,7 @@ func (f *AssignmentHandoffs) Accept(ctx context.Context, parent, child, inspecte
 	if err := m.acquire(ctx); err != nil {
 		return "", err
 	}
-	defer m.release()
+	defer m.release(ctx)
 	f.mu.Lock()
 	c := f.team[child]
 	if m == nil || c == nil || c.manager.Parent != parent || c.handoff.ResultCommit == "" || c.returned || inspectedCommit != c.inspected || inspectedCommit != c.handoff.ResultCommit || m.accepted[child] == inspectedCommit || m.agent == nil {

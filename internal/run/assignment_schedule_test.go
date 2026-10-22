@@ -7,6 +7,8 @@ import (
 	"fmt"
 	"regexp"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -14,6 +16,10 @@ import (
 )
 
 type scheduledAgents struct {
+	mu              sync.Mutex
+	lendingReady    chan struct{}
+	readyOnce       sync.Once
+	messages        atomic.Int32
 	opened          map[string]*scheduledSession
 	repeatQuestions bool
 	crossArea       bool
@@ -24,11 +30,13 @@ type scheduledAgents struct {
 }
 
 type scheduledSession struct {
+	owner           *scheduledAgents
 	spec            run.AssignmentSpec
 	handler         run.ToolHandler
 	corrected       bool
 	asked           bool
-	closed          bool
+	closed          atomic.Bool
+	messages        *atomic.Int32
 	questions       []string
 	timeouts        []time.Duration
 	correction      string
@@ -42,10 +50,13 @@ type scheduledSession struct {
 }
 
 func (a *scheduledAgents) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if a.opened == nil {
 		a.opened = map[string]*scheduledSession{}
+		a.lendingReady = make(chan struct{})
 	}
-	s := &scheduledSession{spec: spec, handler: handler, repeatQuestions: a.repeatQuestions, crossArea: a.crossArea, cycleConsult: a.cycleConsult, fail: spec.ID == a.failID}
+	s := &scheduledSession{owner: a, spec: spec, handler: handler, messages: &a.messages, repeatQuestions: a.repeatQuestions, crossArea: a.crossArea, cycleConsult: a.cycleConsult, fail: spec.ID == a.failID}
 	if spec.ID == a.blockCloseID {
 		s.unblockClose = a.unblockClose
 	}
@@ -56,6 +67,7 @@ func (a *scheduledAgents) OpenAssignment(_ context.Context, spec run.AssignmentS
 var reviewedResult = regexp.MustCompile(`result ([a-f]{40})`)
 
 func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout time.Duration) (run.TurnResult, error) {
+	s.messages.Add(1)
 	s.timeouts = append(s.timeouts, timeout)
 	call := func(name string, args any) error {
 		body, _ := json.Marshal(args)
@@ -102,9 +114,14 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 				}
 			}
 		case "trial-3":
+			if s.crossArea {
+				if err := waitGate(ctx, s.owner.lendingReady); err != nil {
+					return run.TurnResult{}, err
+				}
+			}
 			count := 1
 			if s.repeatQuestions {
-				count = 2
+				count = 20
 			}
 			for i := 0; i < count; i++ {
 				question, expected := "Which contract?", "Use the public storage contract."
@@ -137,8 +154,13 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 			if err := call(run.ReturnChildTool, map[string]string{"child": child, "correction": "Repair the lending limit test"}); err != nil {
 				return run.TurnResult{}, err
 			}
-		} else if err := call(run.AcceptChildTool, map[string]string{"child": child, "commit": found[1]}); err != nil {
-			return run.TurnResult{}, err
+		} else {
+			if err := call(run.AcceptChildTool, map[string]string{"child": child, "commit": found[1]}); err != nil {
+				return run.TurnResult{}, err
+			}
+			if child == "library/lending" {
+				s.owner.readyOnce.Do(func() { close(s.owner.lendingReady) })
+			}
 		}
 	case strings.Contains(prompt, "Git found a real conflict"):
 		if err := call(run.ReturnChildTool, map[string]string{"child": "library/storage", "correction": "Rebase storage against the current parent interface"}); err != nil {
@@ -194,7 +216,7 @@ func (s *scheduledSession) Close(context.Context) (run.TurnResult, error) {
 	if s.unblockClose != nil {
 		<-s.unblockClose
 	}
-	s.closed = true
+	s.closed.Store(true)
 	return run.TurnResult{Stopped: true}, nil
 }
 
@@ -233,7 +255,7 @@ func TestAssignmentSchedulerDelegatesAnswersReviewsReturnsAndIntegrates(t *testi
 		t.Fatalf("caller changed retained native exit code to %d", code)
 	}
 	for id, agent := range agents.opened {
-		if !agent.closed {
+		if !agent.closed.Load() {
 			t.Fatalf("Agent %s was not closed", id)
 		}
 	}
@@ -253,8 +275,8 @@ func TestAssignmentSchedulerCountsDirectParentAnswers(t *testing.T) {
 	if err == nil || !strings.Contains(err.Error(), "assignment message allowance exhausted") {
 		t.Fatalf("repeated question bypassed common allowance: %v", err)
 	}
-	if got := len(agents.opened["trial-1"].questions); got != 1 {
-		t.Fatalf("parent answered %d questions beyond allowance", got)
+	if got := agents.messages.Load(); got > 8 || len(agents.opened["trial-1"].questions) >= 20 {
+		t.Fatalf("parent answers bypassed allowance: %d total messages", got)
 	}
 	for _, timeout := range agents.opened["trial-1"].timeouts {
 		if timeout != time.Second {
@@ -281,7 +303,11 @@ func TestAssignmentSchedulerConsultsSiblingThroughCommonParent(t *testing.T) {
 		t.Fatalf("cross-area question was not routed through Library to Lending and back: %+v %v", result, err)
 	}
 	observed := flow.Observations("library/lending")
-	if len(observed) != 3 || observed[2].Final != "Use the Lending v1 contract." {
+	consultation := false
+	for _, response := range observed {
+		consultation = consultation || response.Final == "Use the Lending v1 contract."
+	}
+	if len(observed) != 3 || !consultation {
 		t.Fatalf("Lending consultation was not retained as an Agent message: %+v", observed)
 	}
 	agents = &scheduledAgents{crossArea: true}
@@ -318,7 +344,7 @@ func TestAssignmentSchedulerRetainsFailedChildCopyAndObservation(t *testing.T) {
 		t.Fatalf("partial command observation was discarded: %+v", observed)
 	}
 	for id, agent := range agents.opened {
-		if !agent.closed {
+		if !agent.closed.Load() {
 			t.Fatalf("failed run left Agent %s open", id)
 		}
 	}
@@ -340,7 +366,7 @@ func TestAssignmentSchedulerAttemptsOtherStopsWhenOneBlocks(t *testing.T) {
 	if result.ResultCommit == "" || err == nil || !strings.Contains(err.Error(), "close outcome uncertain") {
 		t.Fatalf("blocking stop was not reported with retained result: %+v %v", result, err)
 	}
-	if !agents.opened["trial-1"].closed || !agents.opened["trial-2"].closed || !agents.opened["trial-3"].closed || flow.Workspace(".") == nil {
+	if !agents.opened["trial-1"].closed.Load() || !agents.opened["trial-2"].closed.Load() || !agents.opened["trial-3"].closed.Load() || flow.Workspace(".") == nil {
 		t.Fatal("blocked Root stop prevented sibling stop or lost its copy")
 	}
 }

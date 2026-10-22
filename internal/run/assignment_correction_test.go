@@ -88,7 +88,7 @@ func TestOpenAssignmentTreeRoutesFinalCorrectionWithoutRestartingUnaffectedAgent
 	storageBefore := tree.Flow.Observations("library/storage")
 	storageCopy := tree.Flow.Workspace("library/storage")
 	for id, s := range agents.opened {
-		if s.closed {
+		if s.closed.Load() {
 			t.Fatalf("%s closed before independent Verify could return a correction", id)
 		}
 	}
@@ -116,7 +116,7 @@ func TestOpenAssignmentTreeRoutesFinalCorrectionWithoutRestartingUnaffectedAgent
 		t.Fatal("corrected a closed assignment")
 	}
 	for id, s := range agents.opened {
-		if !s.closed {
+		if !s.closed.Load() {
 			t.Fatalf("%s was not closed", id)
 		}
 	}

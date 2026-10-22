@@ -6,6 +6,7 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -17,6 +18,7 @@ import (
 // These ports test control flow against the actual prepared Library model.
 // They do not establish that a provider recognizes a semantic defect.
 type realizationCopies struct {
+	mu       sync.Mutex
 	t        *testing.T
 	copies   map[run.WorkspaceID]*realizationCopy
 	trees    map[string]snapshot.Tree
@@ -33,17 +35,26 @@ func (w *realizationCopy) ID() run.WorkspaceID    { return w.id }
 func (w *realizationCopy) Volume() string         { return string(w.id) }
 func (w *realizationCopy) StartingCommit() string { return w.start }
 func (w *realizationCopy) Commit(context.Context, string) (string, error) {
+	w.owner.mu.Lock()
+	defer w.owner.mu.Unlock()
+	return w.commitLocked()
+}
+func (w *realizationCopy) commitLocked() (string, error) {
 	w.owner.sequence++
 	id := fmt.Sprintf("%040x", w.owner.sequence)
 	w.owner.trees[id] = w.live
 	return id, nil
 }
 func (w *realizationCopy) ContainsCommit(_ context.Context, id string) (bool, error) {
+	w.owner.mu.Lock()
+	defer w.owner.mu.Unlock()
 	_, ok := w.owner.trees[id]
 	return ok, nil
 }
 func (w *realizationCopy) Close(context.Context) error { return nil }
 func (w *realizationCopies) PrepareAssignment(ctx context.Context, spec run.WorkspaceSpec) (run.AssignmentWorkspace, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	if w.copies == nil {
 		w.copies = make(map[run.WorkspaceID]*realizationCopy)
 		w.trees = make(map[string]snapshot.Tree)
@@ -53,7 +64,7 @@ func (w *realizationCopies) PrepareAssignment(ctx context.Context, spec run.Work
 	}
 	c := &realizationCopy{owner: w, id: spec.ID, live: spec.Tree}
 	w.copies[spec.ID] = c
-	c.start, _ = c.Commit(ctx, "start")
+	c.start, _ = c.commitLocked()
 	return c, nil
 }
 func (w *realizationCopies) ForkAssignment(ctx context.Context, source run.AssignmentWorkspace, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
@@ -64,6 +75,8 @@ func (w *realizationCopies) ForkAssignment(ctx context.Context, source run.Assig
 	return w.ForkAssignmentCommit(ctx, source, commit, id)
 }
 func (w *realizationCopies) ForkAssignmentCommit(_ context.Context, _ run.AssignmentWorkspace, commit string, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	if w.copies[id] != nil {
 		return nil, errors.New("copy already exists")
 	}
@@ -76,6 +89,8 @@ func (w *realizationCopies) ForkAssignmentCommit(_ context.Context, _ run.Assign
 	return c, nil
 }
 func (w *realizationCopies) ReadAssignmentCommit(_ context.Context, r run.AssignmentCommitRequest) (snapshot.Tree, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	tree, ok := w.trees[r.Commit]
 	if !ok {
 		return tree, errors.New("commit unavailable")
@@ -86,6 +101,8 @@ func (w *realizationCopies) Changes(_ context.Context, _ run.AssignmentWorkspace
 	return "actual controlled difference for result " + h.ResultCommit, nil
 }
 func (w *realizationCopies) Integrate(ctx context.Context, parent, child run.AssignmentWorkspace, h run.AssignmentHandoff, previous string) (string, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	base := h.StartingCommit
 	if previous != "" {
 		base = previous
@@ -102,10 +119,11 @@ func (w *realizationCopies) Integrate(ctx context.Context, parent, child run.Ass
 	}
 	p := parent.(*realizationCopy)
 	p.live = change(w.t, p.live, updates)
-	return p.Commit(ctx, "integrate")
+	return p.commitLocked()
 }
 
 type realizationAgents struct {
+	mu                                                          sync.Mutex
 	t                                                           *testing.T
 	copies                                                      *realizationCopies
 	opened                                                      map[string]*realizationAgent
@@ -123,6 +141,8 @@ type realizationAgent struct {
 }
 
 func (a *realizationAgents) OpenAssignment(_ context.Context, spec run.AssignmentSpec, h run.ToolHandler) (run.AssignmentSession, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if a.opened == nil {
 		a.opened = make(map[string]*realizationAgent)
 	}
@@ -147,7 +167,9 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 		}
 		return nil
 	}
+	s.owner.copies.mu.Lock()
 	copy := s.owner.copies.copies[run.WorkspaceID(s.spec.Workspace)]
+	s.owner.copies.mu.Unlock()
 	if s.mode == "assess" {
 		s.owner.assessmentPromptBytes = len(prompt)
 		if s.owner.gap {
@@ -218,7 +240,10 @@ func realizationRequest(t *testing.T) (apply.AssignmentRealizationRequest, *real
 	work := &realizationCopies{t: t}
 	agents := &realizationAgents{t: t, copies: work}
 	homes := make(map[string]bool)
+	var homesMu sync.Mutex
 	return apply.AssignmentRealizationRequest{ID: "controlled", Build: "test-build", Prepared: legacy.Prepared, OwnerRequest: "Realize the fixed model", MaxMessages: 50, MessageTimeout: time.Second, MaxEntries: 1000, MaxBytes: 1 << 20, TranscriptDir: t.TempDir(), Workspaces: work, Agents: agents, Integration: work, Checks: &passingRunner{}, CheckRequest: checkRequest, CreateHome: func(_ context.Context, home string) error {
+		homesMu.Lock()
+		defer homesMu.Unlock()
 		if homes[home] {
 			return errors.New("home exists")
 		}

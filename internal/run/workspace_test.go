@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -12,12 +13,15 @@ import (
 )
 
 type assignmentWorkspacesFake struct {
+	mu         sync.Mutex
 	copies     map[run.WorkspaceID]*assignmentCopyFake
 	prepareErr error
 	forks      int
 }
 
 func (f *assignmentWorkspacesFake) ForkAssignment(ctx context.Context, parent run.AssignmentWorkspace, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.copies[id] != nil {
 		return nil, errors.New("duplicate child copy")
 	}
@@ -38,6 +42,8 @@ type assignmentCopyFake struct {
 }
 
 func (f *assignmentWorkspacesFake) PrepareAssignment(_ context.Context, spec run.WorkspaceSpec) (run.AssignmentWorkspace, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.copies == nil {
 		f.copies = map[run.WorkspaceID]*assignmentCopyFake{}
 	}
@@ -121,6 +127,7 @@ func (f *assignmentCopyFake) ContainsCommit(_ context.Context, id string) (bool,
 func (f *assignmentCopyFake) Close(context.Context) error { f.closed = true; return nil }
 
 type assignmentAgentsFake struct {
+	mu     sync.Mutex
 	opened map[string]*assignmentSessionFake
 }
 type assignmentSessionFake struct {
@@ -132,6 +139,8 @@ type assignmentSessionFake struct {
 }
 
 func (f *assignmentAgentsFake) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.opened == nil {
 		f.opened = map[string]*assignmentSessionFake{}
 	}

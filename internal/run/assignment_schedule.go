@@ -43,6 +43,7 @@ type AssignmentSchedule struct {
 	PreparedRoot  AssignmentWorkspace
 	// CreateHome exclusively creates the new home before an Agent opens. The
 	// legacy RunAssignmentTree wrapper permits nil; OpenAssignmentTree requires it.
+	// Independent branches can call it concurrently with distinct home names.
 	CreateHome func(context.Context, string) error
 }
 
@@ -72,6 +73,9 @@ func (m *assignmentMailbox) handle(ctx context.Context, name string, args json.R
 		return ToolAnswer{Text: "a direct child is required", Refused: true}
 	}
 	action := assignmentAction{name: name, child: a.Child, task: strings.TrimSpace(a.Task), commit: a.Commit, correction: strings.TrimSpace(a.Correction)}
+	if answerOnly, _ := ctx.Value(assignmentAnswerKey{}).(bool); answerOnly && name != AskChildTool {
+		return ToolAnswer{Text: "answer this question without new work decisions", Refused: true}
+	}
 	switch name {
 	case AskChildTool:
 		if strings.TrimSpace(a.Question) == "" || a.Task != "" || a.Commit != "" || a.Correction != "" || m.consult == nil {
@@ -225,6 +229,8 @@ func (t *AssignmentTree) Homes() []string {
 	if t == nil {
 		return nil
 	}
+	t.scheduler.mu.Lock()
+	defer t.scheduler.mu.Unlock()
 	return append([]string(nil), t.scheduler.homes...)
 }
 
@@ -259,7 +265,9 @@ func (t *AssignmentTree) Close() error {
 func (s *assignmentScheduler) request(ctx context.Context, path string) (AssignmentRequest, error) {
 	id := s.ids[path]
 	home := string(id) + "-home"
+	s.mu.Lock()
 	s.homes = append(s.homes, home)
+	s.mu.Unlock()
 	if s.options.CreateHome != nil {
 		if err := s.options.CreateHome(ctx, home); err != nil {
 			return AssignmentRequest{}, err
@@ -297,6 +305,9 @@ func (s *assignmentScheduler) reserveMessage() error {
 	if s.used >= s.options.MaxMessages {
 		return errors.New("assignment message allowance exhausted")
 	}
+	if s.closed {
+		return errors.New("assignment tree is closing")
+	}
 	s.used++
 	return nil
 }
@@ -329,6 +340,7 @@ func (s *assignmentScheduler) messageResult(ctx context.Context, path, prompt st
 }
 
 type assignmentMessageStackKey struct{}
+type assignmentAnswerKey struct{}
 
 func (s *assignmentScheduler) message(ctx context.Context, path, prompt string) error {
 	_, err := s.messageResult(ctx, path, prompt)
@@ -336,6 +348,7 @@ func (s *assignmentScheduler) message(ctx context.Context, path, prompt string) 
 }
 
 func (s *assignmentScheduler) parentAnswer(ctx context.Context, parent, child, question string) (string, error) {
+	ctx = context.WithValue(ctx, assignmentAnswerKey{}, true)
 	answer, err := s.messageResult(ctx, parent, fmt.Sprintf("Your direct child %s asks: %s", child, question))
 	return answer.Final, err
 }
@@ -344,7 +357,13 @@ func (s *assignmentScheduler) consultChild(ctx context.Context, parent, child, q
 	if s.team[child].Parent != parent || child == parent {
 		return "", fmt.Errorf("Manager %q can ask only a direct child, not %q", parent, child)
 	}
-	answer, err := s.messageResult(ctx, child, fmt.Sprintf("Your parent %s asks: %s", parent, question))
+	ctx = context.WithValue(ctx, assignmentAnswerKey{}, true)
+	var answer TurnResult
+	err := s.flow.consult(ctx, child, func(ctx context.Context) error {
+		var err error
+		answer, err = s.messageResult(ctx, child, fmt.Sprintf("Your parent %s asks: %s. Answer the consultation without changing work or making new work decisions.", parent, question))
+		return err
+	})
 	return answer.Final, err
 }
 
@@ -357,13 +376,23 @@ type assignmentClose struct {
 }
 
 func (s *assignmentScheduler) closeAgents(team []Manager) error {
+	paths := make([]string, 0, len(team))
+	for i := len(team) - 1; i >= 0; i-- {
+		paths = append(paths, team[i].Path)
+	}
+	return s.closePaths(paths)
+}
+
+func (s *assignmentScheduler) closePaths(paths []string) error {
 	limit := min(s.options.Timeout, time.Minute)
 	ctx, cancel := context.WithTimeout(context.Background(), limit)
 	defer cancel()
 	var attempts []assignmentClose
-	for i := len(team) - 1; i >= 0; i-- {
-		path := team[i].Path
-		if s.flow.team[path].agent == nil {
+	for _, path := range paths {
+		s.flow.mu.Lock()
+		started := s.flow.team[path].agent != nil
+		s.flow.mu.Unlock()
+		if !started {
 			continue
 		}
 		attempt := assignmentClose{path: path, done: make(chan struct {
@@ -397,10 +426,23 @@ func (s *assignmentScheduler) closeAgents(team []Manager) error {
 func (s *assignmentScheduler) work(ctx context.Context, path, task string) (AssignmentHandoff, error) {
 	manager := s.team[path]
 	prompt := fmt.Sprintf("Your responsibility is %s. %s\nTask from your parent: %s\nRequired direct children: %s. Give each child a concrete task using delegate_child. Work in your own Git copy; the Host will later show each fixed child result for your review.", manager.Role, manager.Brief, task, strings.Join(manager.Children, ", "))
-	if err := s.message(ctx, path, prompt); err != nil {
+	var delegations []assignmentAction
+	var result AssignmentHandoff
+	err := s.flow.serial(ctx, path, func(ctx context.Context) error {
+		if err := s.message(ctx, path, prompt); err != nil {
+			return err
+		}
+		delegations = s.mailboxes[path].take()
+		if len(manager.Children) == 0 && len(delegations) == 0 {
+			var err error
+			result, err = s.flow.Submit(ctx, path)
+			return err
+		}
+		return nil
+	})
+	if err != nil {
 		return AssignmentHandoff{}, err
 	}
-	delegations := s.mailboxes[path].take()
 	seen := make(map[string]bool)
 	for _, action := range delegations {
 		if action.name != DelegateChildTool || s.team[action.child].Parent != path || seen[action.child] {
@@ -411,41 +453,45 @@ func (s *assignmentScheduler) work(ctx context.Context, path, task string) (Assi
 	if len(seen) != len(manager.Children) {
 		return AssignmentHandoff{}, fmt.Errorf("Manager %q did not delegate every required child", path)
 	}
-	for _, action := range delegations {
-		request, err := s.request(ctx, action.child)
-		if err != nil {
-			return AssignmentHandoff{}, err
-		}
-		if err := s.flow.DelegateCurrent(ctx, path, action.child, request); err != nil {
-			return AssignmentHandoff{}, err
-		}
+	if len(manager.Children) == 0 {
+		return result, nil
 	}
-	for _, action := range delegations {
-		if _, err := s.work(ctx, action.child, action.task); err != nil {
-			return AssignmentHandoff{}, err
-		}
-		if err := s.review(ctx, path, action.child); err != nil {
-			return AssignmentHandoff{}, err
-		}
+	if err := s.children(ctx, path, delegations); err != nil {
+		return AssignmentHandoff{}, err
 	}
-	if len(manager.Children) != 0 {
+	err = s.flow.serial(ctx, path, func(ctx context.Context) error {
 		if err := s.message(ctx, path, "All direct-child results are integrated. Check the composition and relevant tests in your Git copy. Summarize your result, observations and open matters for your parent."); err != nil {
-			return AssignmentHandoff{}, err
+			return err
 		}
 		if actions := s.mailboxes[path].take(); len(actions) != 0 {
-			return AssignmentHandoff{}, fmt.Errorf("Manager %q made an unexpected decision after integration", path)
+			return fmt.Errorf("Manager %q made an unexpected decision after integration", path)
 		}
-	}
-	return s.flow.Submit(ctx, path)
+		var err error
+		result, err = s.flow.Submit(ctx, path)
+		return err
+	})
+	return result, err
 }
 
 func (s *assignmentScheduler) review(ctx context.Context, parent, child string) error {
 	for {
+		correction, err := s.reviewResult(ctx, parent, child)
+		if err != nil || correction == "" {
+			return err
+		}
+		if err := s.correct(ctx, parent, child, correction); err != nil {
+			return err
+		}
+	}
+}
+
+func (s *assignmentScheduler) reviewResult(ctx context.Context, parent, child string) (correction string, err error) {
+	err = s.flow.serial(ctx, parent, func(ctx context.Context) error {
 		changes, handoff, err := s.flow.Changes(ctx, parent, child)
 		if err != nil {
 			return err
 		}
-		prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nObserved commands from its latest response:\n%s\nActual Git changes:\n%s\nInspect conformance and tests. Use accept_child with that commit or return_child with a concrete correction. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, handoff.Summary, s.commandObservations(child), changes)
+		prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nObserved commands delivered with this result:\n%s\nActual Git changes:\n%s\nInspect conformance and tests. Use accept_child with that commit or return_child with a concrete correction. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, handoff.Summary, s.commandObservations(child, handoff.ResultCommit), changes)
 		if err := s.message(ctx, parent, prompt); err != nil {
 			return err
 		}
@@ -456,9 +502,8 @@ func (s *assignmentScheduler) review(ctx context.Context, parent, child string) 
 		a := decision[0]
 		switch a.name {
 		case ReturnChildTool:
-			if err := s.correct(ctx, parent, child, a.correction); err != nil {
-				return err
-			}
+			correction = a.correction
+			return nil
 		case AcceptChildTool:
 			if a.commit != handoff.ResultCommit {
 				return fmt.Errorf("Manager %q accepted a different commit for %q", parent, child)
@@ -468,23 +513,28 @@ func (s *assignmentScheduler) review(ctx context.Context, parent, child string) 
 				if err := s.message(ctx, parent, fmt.Sprintf("Git found a real conflict integrating %s at %s: %v. Give the owning child a concrete correction using return_child.", child, a.commit, err)); err != nil {
 					return err
 				}
-				correction := s.mailboxes[parent].take()
-				if len(correction) != 1 || correction[0].name != ReturnChildTool || correction[0].child != child {
+				decisions := s.mailboxes[parent].take()
+				if len(decisions) != 1 || decisions[0].name != ReturnChildTool || decisions[0].child != child {
 					return fmt.Errorf("Manager %q did not route the Git conflict to %q", parent, child)
 				}
-				if err := s.correct(ctx, parent, child, correction[0].correction); err != nil {
-					return err
-				}
-				continue
+				correction = decisions[0].correction
+				return nil
 			}
 			return err
 		default:
 			return fmt.Errorf("Manager %q made no acceptance or return decision for %q", parent, child)
 		}
-	}
+	})
+	return correction, err
 }
 
 func (s *assignmentScheduler) correct(ctx context.Context, parent, child, correction string) error {
+	return s.flow.serial(ctx, child, func(ctx context.Context) error {
+		return s.correctLocked(ctx, parent, child, correction)
+	})
+}
+
+func (s *assignmentScheduler) correctLocked(ctx context.Context, parent, child, correction string) error {
 	stack, _ := ctx.Value(assignmentMessageStackKey{}).([]string)
 	for _, active := range stack {
 		if active == child {
@@ -538,31 +588,41 @@ func (s *assignmentScheduler) finishCorrection(ctx context.Context, path string)
 	return s.flow.Submit(ctx, path)
 }
 
-func (s *assignmentScheduler) commandObservations(path string) string {
-	observed := s.flow.Observations(path)
-	if len(observed) == 0 || len(observed[len(observed)-1].Commands) == 0 {
+func (s *assignmentScheduler) commandObservations(path, commit string) string {
+	var observed []TurnResult
+	for _, result := range s.flow.Results() {
+		if result.Manager == path && result.Handoff.ResultCommit == commit {
+			observed = result.Observations
+		}
+	}
+	if len(observed) == 0 {
 		return "No command observations reported."
 	}
 	var b strings.Builder
-	for _, command := range observed[len(observed)-1].Commands {
-		name, output := command.Command, command.Output
-		if len(name) > 2048 {
-			name = name[:2048] + " [truncated]"
+	for _, response := range observed {
+		for _, command := range response.Commands {
+			name, output := command.Command, command.Output
+			if len(name) > 2048 {
+				name = name[:2048] + " [truncated]"
+			}
+			if len(output) > 4096 {
+				output = output[:4096] + " [truncated]"
+			}
+			fmt.Fprintf(&b, "- %s: %s", name, command.Status)
+			if command.ExitCode != nil {
+				fmt.Fprintf(&b, " (exit %d)", *command.ExitCode)
+			}
+			if output != "" {
+				fmt.Fprintf(&b, ": %s", output)
+			}
+			b.WriteByte('\n')
+			if b.Len() > 16<<10 {
+				return b.String()[:16<<10] + "\n[command observations truncated]"
+			}
 		}
-		if len(output) > 4096 {
-			output = output[:4096] + " [truncated]"
-		}
-		fmt.Fprintf(&b, "- %s: %s", name, command.Status)
-		if command.ExitCode != nil {
-			fmt.Fprintf(&b, " (exit %d)", *command.ExitCode)
-		}
-		if output != "" {
-			fmt.Fprintf(&b, ": %s", output)
-		}
-		b.WriteByte('\n')
-		if b.Len() > 16<<10 {
-			return b.String()[:16<<10] + "\n[command observations truncated]"
-		}
+	}
+	if b.Len() == 0 {
+		return "No command observations reported."
 	}
 	return b.String()
 }
