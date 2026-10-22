@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/proportionate-agent-process-20261022.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner's practical Agent trust baseline, concept simplification request and implementation coordination boundary.
   - path: "docs/validation/ccf-apply-preparation-20261021.md"
     form: doc
     realizes: [documentation/current-guidance]

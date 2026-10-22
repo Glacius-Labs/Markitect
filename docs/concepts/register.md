@@ -144,6 +144,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-002 Trust is measured against today's practice
 
+**Reaffirmed by the owner, 22 October 2026:** [the ordinary coding-Agent baseline](sources/proportionate-agent-process-20261022.md) calls for a proportionate process that earns trust through responsibilities, independent perspectives and integration, not an expanding proof protocol. [Vision](../vision.md#proportionate-agent-process) owns the guideline; the [Apply review](../design/canonical-model/manager-apply-workflow.md#proportionate-process-review-22-october-2026) lists concrete recommendations separately from adopted runtime behavior.
+
 - **Status:** Accepted, owner, 10 October 2026 ([owner response, point 1](sources/idea-review-20261010.md#owner-response-to-the-five-points)).
 - **Statement:** The baseline for trust is today's common practice:
   - an agent implements a work item;
@@ -776,6 +778,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Amends:** Owner questions of [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace) and run-wide owner decisions of [DEC-053](#dec-053-owner-decisions-bind-the-whole-run). Bound owner decisions remain for decisions within the model and no longer settle a contradiction or a boundary gap of the model. Mid-run owner questions no longer exist in Apply.
 
 ### DEC-064 Checked recursive Apply passes and Manager teams
+
+**Proportionate-process review, 22 October 2026:** the owner reaffirmed DEC-002 and commissioned [concrete simplification proposals](../design/canonical-model/manager-apply-workflow.md#proportionate-process-review-22-october-2026). The principle is accepted; changes to basis approval, the review barrier, evidence reuse or probe-error closure remain recommendations until explicitly dispositioned. The documentation-only boundary applies to the concept chat, not to the Apply planning chat's implementation authority ([source](sources/proportionate-agent-process-20261022.md#scope-clarification)).
 
 **Evidence-backed acceptance, owner 21 October 2026:** the [accepted amendment](../design/canonical-model/manager-apply-workflow.md#evidence-backed-acceptance-after-the-codex-retest), with [owner source](sources/apply-conformance-acceptance-20261021.md), requires material-condition coverage, candidate-bound Implement behavioral evidence, explicit parent integration including an obligation-free Root, independently derived Verify counterexamples and finite review/cleanup reserve. The [Codex retest](../validation/apply-codex-conformance-20261021.md) had an incorrect Implement completeness claim, two incomplete Verify workflows and a correct model-gap stop; it had no publication. The [bounded new handoff](../development/codex-apply-conformance-handoff-20261021.md) is subsequent work, not implemented/runtime-proven behavior or a replenishment of the exhausted series.
 
