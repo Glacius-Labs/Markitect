@@ -3,6 +3,7 @@
 Usage: python3 -B night_run.py GROUP_MANIFEST COORDINATOR_GATE GROUP_POSITION
 The final manifest and gate are deliberately absent during preparation.
 """
+import ctypes
 import datetime as dt
 import fcntl
 import hashlib
@@ -199,6 +200,26 @@ def process_identity(pid):
         return None
 
 
+def arm_supervisor_liveness_guard():
+    """Make an abruptly orphaned bounded child stop through its normal handler."""
+    raw = os.environ.get('MARKITECT_NIGHT_SUPERVISOR_IDENTITY')
+    require(raw, 'supervisor process identity is required')
+    identity = json.loads(raw)
+    require(set(identity) == {'pid', 'group', 'start'} and type(identity['pid']) is int
+            and type(identity['group']) is int and type(identity['start']) is str
+            and identity['pid'] > 1, 'supervisor process identity is invalid')
+    require(sys.platform.startswith('linux'), 'parent-death supervision requires Linux')
+    require(os.getppid() == identity['pid'] and process_identity(identity['pid']) == identity,
+            'supervisor identity changed before child setup')
+    libc = ctypes.CDLL(None, use_errno=True)
+    if libc.prctl(1, signal.SIGTERM, 0, 0, 0) != 0:  # PR_SET_PDEATHSIG
+        error = ctypes.get_errno()
+        raise OSError(error, os.strerror(error))
+    # Close the race where the supervisor exited before prctl took effect.
+    require(os.getppid() == identity['pid'] and process_identity(identity['pid']) == identity,
+            'supervisor exited while child setup was arming parent-death supervision')
+
+
 def track_process(path, pid):
     identity = process_identity(pid)
     require(identity is not None and identity['group'] == pid, 'owned process group not established')
@@ -317,13 +338,15 @@ def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None)
                        'group': manifest['group'], 'startedUtc': host_utc(started).isoformat(),
                        'startedHostClock': started, 'status': 'running', 'chargedSeconds': 2700,
                        'manifestSha256': sha(manifest_path)}
+        supervisor_identity = process_identity(os.getpid())
+        require(supervisor_identity is not None, 'supervisor process identity is unavailable')
         # Either retained marker blocks another dispatch if a later write fails.
         # All three records are durable before a process capable of inference exists.
         if state is not None:
             state.update(reservationState='write-uncertain', attempt=packet['name'], phase='reservation writes')
         with (root / 'ACTIVE-SUPERVISOR').open('x') as stream:
             json.dump({'attempt': packet['name'], 'startedHostClock': started,
-                       'reservation': reservation}, stream)
+                       'reservation': reservation, 'supervisorIdentity': supervisor_identity}, stream)
             stream.flush()
             os.fsync(stream.fileno())
         sync_dir(root)
@@ -385,8 +408,10 @@ def supervise(manifest_path, gate_path, position):
         stream.flush()
         os.fsync(stream.fileno())
     sync_dir(root)
+    supervisor_identity = json.loads(supervisor_active.read_text())['supervisorIdentity']
     environment = dict(os.environ, MARKITECT_NIGHT_PROCESS_REGISTRY=str(registry),
-                       MARKITECT_NIGHT_STARTED_HOST=json.dumps(started))
+                       MARKITECT_NIGHT_STARTED_HOST=json.dumps(started),
+                       MARKITECT_NIGHT_SUPERVISOR_IDENTITY=json.dumps(supervisor_identity))
     child_output = root / ('supervisor-child-' + packet['name'] + '.jsonl')
     SUPERVISION['phase'] = 'child output preparation'
     output = child_output.open('x')
@@ -429,7 +454,9 @@ def supervise(manifest_path, gate_path, position):
                 'child closed record differs from its full charged reservation')
         marker = json.loads(supervisor_active.read_text())
         require(marker['attempt'] == packet['name'] and marker['reservation'] == reservation
-                and marker['startedHostClock'] == started,
+                and marker['startedHostClock'] == started
+                and marker['supervisorIdentity'] == supervisor_identity
+                and process_identity(os.getpid()) == supervisor_identity,
                 'supervisor marker differs from this owned dispatch before release')
     except Exception as error:
         return force_supervised_stop(child, registry, root, packet,
@@ -804,6 +831,7 @@ def bounded_child():
     require(os.environ.get('MARKITECT_NIGHT_PROCESS_REGISTRY'), 'independent supervisor is required')
     signal.signal(signal.SIGTERM, interrupt)
     signal.signal(signal.SIGINT, interrupt)
+    arm_supervisor_liveness_guard()
     process_started = time.monotonic()
     process_started_utc = dt.datetime.now(dt.timezone.utc)
     process_started_host = json.loads(os.environ['MARKITECT_NIGHT_STARTED_HOST'])

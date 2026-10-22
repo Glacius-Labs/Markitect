@@ -200,3 +200,20 @@ Controls cover the slower cadence across the unchanged deadline and a clock
 timeout's full charge, stopped child, owned cleanup and retained blockers. Current
 bridge/cleanup controls support this bounded hypothesis; only a new released
 provider attempt can show whether it improves the complete workflow.
+
+N4-01's recovered process evidence shows the supervisor absent while its bounded
+child had become an orphan; the original launcher identity and termination
+boundary were not retained, so the historical cause remains unknown. The durable
+supervisor marker previously identified only the attempt and reservation, and the
+child had no parent-death signal. The runner now records the supervisor's Linux
+PID, process group and kernel start identity in that marker. Before productive
+work, the child arms Linux `PR_SET_PDEATHSIG(SIGTERM)` and rechecks the saved
+identity to close the parent-exit race. The existing child interrupt path then
+performs its bounded cleanup; if death occurs before that path has established
+its stop target, the durable active reservation still blocks a new start. A
+provider-free control exercises abrupt supervisor `SIGKILL` through the real
+launch path and verifies the exact child exits with the reservation retained.
+This closes the observed orphaning path when the supervisor exits; it does not
+reconstruct N4's cause or establish a complete provider workflow. It also keeps
+the existing limitation: enforcement requires the Linux child and host-side
+supervision environment to remain schedulable.
