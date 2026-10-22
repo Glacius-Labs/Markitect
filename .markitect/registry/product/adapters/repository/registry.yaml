@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/integration.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Transfers fixed child Git deltas into a parent's independent assignment copy and reports actual integration conflicts."
+  - path: "internal/adapters/gitrepo/integration_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Exercises independent Git histories, two-child integration, correction and conflict preservation with real local Git repositories."
   - path: "internal/adapters/gitrepo/WORKSPACES.md"
     form: doc
     realizes: [product/adapters/repository/repository-boundaries]

@@ -15,6 +15,7 @@ type handoffIntegrationFake struct {
 	conflict string
 	entered  chan struct{}
 	release  chan struct{}
+	cleanup  error
 }
 
 func (f *handoffIntegrationFake) Changes(_ context.Context, _ run.AssignmentWorkspace, handoff run.AssignmentHandoff) (string, error) {
@@ -30,7 +31,7 @@ func (f *handoffIntegrationFake) Integrate(_ context.Context, parent, child run.
 		return "", errors.New("Git conflict")
 	}
 	f.accepted = append(f.accepted, string(parent.ID())+"<-"+string(child.ID())+":"+previous+":"+handoff.ResultCommit)
-	return strings.Repeat("f", 40), nil
+	return strings.Repeat("f", 40), f.cleanup
 }
 
 func TestAssignmentHandoffsRouteQuestionCorrectionAndRequiredChildren(t *testing.T) {
@@ -111,6 +112,9 @@ func TestAssignmentHandoffsRouteQuestionCorrectionAndRequiredChildren(t *testing
 	}
 	if _, err := f.Accept(ctx, "library", "library/lending", corrected.ResultCommit); err != nil {
 		t.Fatal(err)
+	}
+	if _, err := f.Accept(ctx, "library", "library/lending", corrected.ResultCommit); err == nil {
+		t.Fatal("same child commit was integrated twice")
 	}
 	_, storage, err := f.Changes(ctx, "library", "library/storage")
 	if err != nil {
@@ -260,6 +264,39 @@ func TestAssignmentHandoffsSerializesParentGitWorkAndRechecksChild(t *testing.T)
 	}
 	if _, err := f.Submit(ctx, "."); err == nil {
 		t.Fatal("parent submitted returned child after an integration race")
+	}
+}
+
+func TestAssignmentHandoffsRecordsIntegratedCommitEvenIfCleanupFails(t *testing.T) {
+	ctx := context.Background()
+	work, agents := &assignmentWorkspacesFake{}, &assignmentAgentsFake{}
+	git := &handoffIntegrationFake{cleanup: errors.New("temporary worktree cleanup failed")}
+	f, err := run.NewAssignmentHandoffs([]run.Manager{{Path: ".", Children: []string{"child"}}, {Path: "child", Parent: "."}}, work, agents, git)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.StartRoot(ctx, run.AssignmentRequest{ID: "root", Profile: "codex", Home: "root"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Delegate(ctx, ".", "child", run.AssignmentRequest{ID: "child", Profile: "codex", Home: "child"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Message(ctx, "child", "result", time.Second); err != nil {
+		t.Fatal(err)
+	}
+	handoff, err := f.Submit(ctx, "child")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := f.Changes(ctx, ".", "child"); err != nil {
+		t.Fatal(err)
+	}
+	result, err := f.Accept(ctx, ".", "child", handoff.ResultCommit)
+	if result == "" || !errors.Is(err, git.cleanup) {
+		t.Fatalf("integrated result and cleanup error were not both retained: %q %v", result, err)
+	}
+	if _, err := f.Accept(ctx, ".", "child", handoff.ResultCommit); err == nil || len(git.accepted) != 1 {
+		t.Fatalf("cleanup retry reapplied the same child delta: %v %v", err, git.accepted)
 	}
 }
 

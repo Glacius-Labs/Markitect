@@ -38,11 +38,12 @@ const workspaceOwnerLabel = "markitect.workspace-owner"
 // receipts stay in this adapter instance; reconstruction cannot claim an
 // existing volume. Failed or uncertain operations retain their volume.
 type Workspaces struct {
-	mu      sync.Mutex
-	runtime WorkspaceRuntime
-	helper  container.ContainerSpec
-	owned   map[run.WorkspaceID]string
-	seq     uint64
+	mu        sync.Mutex
+	runtime   WorkspaceRuntime
+	helper    container.ContainerSpec
+	owned     map[run.WorkspaceID]string
+	uncertain map[run.WorkspaceID]bool
+	seq       uint64
 }
 
 var _ run.Workspaces = (*Workspaces)(nil)
@@ -234,7 +235,7 @@ func (a *assignmentWorkspace) git(ctx context.Context, args ...string) (string, 
 	}
 	spec := w.spec(a.volume, false)
 	var output strings.Builder
-	argv := append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=Markitect", "-c", "user.email=assignment@markitect.invalid", "-C", "/work"}, args...)
+	argv := assignmentGitArgs(args...)
 	if err := w.runtime.RunHelper(ctx, spec, argv, nil, &output); err != nil {
 		return "", err
 	}
