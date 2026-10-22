@@ -368,8 +368,8 @@
   "experiments/apply-trials/hall/snapshots/h1/model/hall/storage.yaml": "4471d295803a05582d00853532c07d2fee0f9b863d5cc344794edffdf8d65b73",
   "experiments/apply-trials/hall/snapshots/h1/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
   "experiments/apply-trials/materialize.py": "5aca383e000d1caa962099bd07575fc781142814be438d1b67cb4a9b92ddfe14",
-  "experiments/apply-trials/night_run.py": "9ddfc0f54b25659d52619726d5f4f1246c665d46ea88b7f04b1d408b184b2958",
-  "experiments/apply-trials/night_run_test.py": "5be9dd3b050dcc7f67cb637e25a6eebbeddaa0adc5e29ad2b5a8e8d80a9c3f42",
+  "experiments/apply-trials/night_run.py": "a4e291499361c7c05b481143923c5a9ce12f5511550730dd1e41e16153f71709",
+  "experiments/apply-trials/night_run_test.py": "16e7f1c8b7ac73843d44f5c06503a8350df69cf5103b4f1b5ce51eb7f7db001a",
   "experiments/apply-trials/oracle.py": "385d8d709a1fa4f992f927967858089298afe46cc46ed1d43804d57019b545fd",
   "experiments/apply-trials/plan_arm.py": "1d0dc147a9a12b410fcceefc233fc30824e4526a860032f884e1f55e67b47f1b",
   "experiments/apply-trials/plan_packet.py": "c3877a0d5c2e7ca70b2245a36bb3245b546f7cc182acf5c4735c68e42bf2c6ac",
@@ -489,7 +489,7 @@
   "experiments/apply-trials/workshop/snapshots/w1/model/shop/system.yaml": "dd496d40ddd2e53d9aeaf1bc9bd1fa56336af0ab7dcd1cbb7cf02070c93ba803",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "455f22e03632614c640084f1053068f274309d0540c81c09a96e31dd24629216",
+ "kitDigest": "7f48eaf3720bf1f47b84ef90aa04c86d1919bae1a810ca6074f19700df8dcb20",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
