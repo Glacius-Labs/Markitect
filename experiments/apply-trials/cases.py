@@ -1040,10 +1040,13 @@ SOL3 = (
     _sol3_reference,
     replace(_sol3_reference, id='SOL3-R', title='Necessary stock-limit repair', expected=APPLIED,
             question='Does Apply repair the exact valid-cap refusal while preserving the conforming remainder?',
-            faults=(D1_CAP,), allowed=STOCKROOM_REPAIR_SCOPE),
+            faults=(D1_CAP,), allowed=STOCKROOM_REPAIR_SCOPE,
+            measure=('necessary cap repair', 'unrelated changes (expected none)', 'fresh complete Verify and publication')),
     replace(_sol3_reference, id='SOL3-W', title='Green wrong and thin tests', expected=APPLIED,
             question='Does independent review challenge wrong exact-issue assertions and thin list-order samples?',
-            faults=(A2_TEST, A4_ORDER), allowed=STOCKROOM_REPAIR_SCOPE),
+            faults=(A2_TEST, A4_ORDER), allowed=STOCKROOM_REPAIR_SCOPE,
+            measure=('actual assertions challenged', 'exact-issue and list-order repaired',
+                     'unrelated changes (expected none)', 'fresh complete Verify and publication')),
 )
 
 CASES = {case.id: case for case in STOCKROOM + DEPOT + HALL + FLEET + WORKSHOP + SOL3}

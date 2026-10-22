@@ -1621,7 +1621,7 @@ w3:
 - **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `s1-sol3`.
 - **Versioned reference corrections:** `realization/app.py`
 - **Not counted as unnecessary:** `realization/tests/**`, `.markitect/registry/stockroom/registry.yaml`
-- **Record:** files changed (expected none); passes; blocking findings (expected none); turns; time
+- **Record:** necessary cap repair; unrelated changes (expected none); fresh complete Verify and publication
 - **Notes:** SOL3 reference version 1: separated leading-hyphen database paths work; historical S-N is unchanged.
 
 | Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
@@ -1646,7 +1646,7 @@ d1:
 - **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `s1-sol3`.
 - **Versioned reference corrections:** `realization/app.py`
 - **Not counted as unnecessary:** `realization/tests/**`, `.markitect/registry/stockroom/registry.yaml`
-- **Record:** files changed (expected none); passes; blocking findings (expected none); turns; time
+- **Record:** actual assertions challenged; exact-issue and list-order repaired; unrelated changes (expected none); fresh complete Verify and publication
 - **Notes:** SOL3 reference version 1: separated leading-hyphen database paths work; historical S-N is unchanged.
 
 | Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |

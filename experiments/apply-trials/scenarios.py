@@ -435,6 +435,12 @@ SCENARIOS = tuple(SCENARIOS) + tuple(
             hypothesis='The current direct workflow completes the bound preservation or necessary repair.',
             statement='Source-bound evidence for this small Stockroom case, not a reliability estimate.',
             control='Same corrected reference with no fault, D1_CAP, or A2_TEST+A4_ORDER.',
+            success=('oracle s1-sol3 and project tests pass', 'fresh complete independent Verify',
+                     'no_change with no edits' if name == 'SOL3-P' else 'necessary repairs published with the conforming remainder preserved'),
+            failure=('a false model stop or blocker', 'unrelated optional edits',
+                     'a conforming stand changed' if name == 'SOL3-P' else 'a seeded fault remains'),
+            incomplete=('the complete workflow is not finished within the finite bound',),
+            freedom='Internal structure remains free; only model-required repairs and adequate evidence are assigned.',
             arms=('direct',), sessions=('SOL3',), process=(),
             lineage='SOL3-20261022 v1: shared corrected Stockroom reference; historical cases and scores preserved')
     for name in ('SOL3-P', 'SOL3-R', 'SOL3-W'))

@@ -228,7 +228,7 @@
  "kit": {
   "experiments/apply-trials/assess.py": "8e3c4b6600bcf110cf9a2135ef786e7db3cbed5379cece66240cda85e0d4cb7e",
   "experiments/apply-trials/bind_profiles.py": "756e8cffbdb085a8c1fd587606ab76aebb260da7d9e608387605c08de9489382",
-  "experiments/apply-trials/cases.py": "aa3e2b037237054a671120c5f1fc4cbb004587d0228ebace110db18e03925c16",
+  "experiments/apply-trials/cases.py": "d6621b5340dafd951a402fb46c946bd22f70092787b7a33f11d6c0da5e92ee91",
   "experiments/apply-trials/ccf_metadata.py": "adb1125bf529808d1a45de0c12bcc34417ca1d00148957b2762e4569061015ce",
   "experiments/apply-trials/ccf_run.py": "d28bf73188f0aab1c434893f55e868311fdd9b8a893c7f0a05e92378dbccd10c",
   "experiments/apply-trials/context/execution.yaml": "e47f39ebf1401f09912b34da26f9b860de7b002542647c0ca71f2143cab1052c",
@@ -381,7 +381,7 @@
   "experiments/apply-trials/run/plan-profile.example.json": "31f0d25c82db676164ac88e8b0df51c3773081e994b5f5dce7d6ae183a1932d3",
   "experiments/apply-trials/run/reassess.sh": "63ecc415df3108210fb1e18852e427f894bfed67f5bf795dc7f294c46b583e24",
   "experiments/apply-trials/run/run_case.sh": "71cbb7334c4159c9c2bda685477527fbe6651a9f3d9bb13fa753e83da9179354",
-  "experiments/apply-trials/scenarios.py": "c409b6184b2576bc6058d9461dc2bbcfbfe55b6d107f0d6188f1f2e08a9ae284",
+  "experiments/apply-trials/scenarios.py": "1c15928c63a9c5ce896f90b2faeed1a33fd31cdde2f6c062316e5dcb8e1c556a",
   "experiments/apply-trials/selfcheck.py": "853dd302ace602485e614d8c53bc5f7281c9659401c271043c6b5696f59931a1",
   "experiments/apply-trials/stockroom/checks.py": "ac63e720a368e7a62b783b5ab4dfad79ef35c18bf7a926de9c7fb56c233492e6",
   "experiments/apply-trials/stockroom/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
@@ -489,7 +489,7 @@
   "experiments/apply-trials/workshop/snapshots/w1/model/shop/system.yaml": "dd496d40ddd2e53d9aeaf1bc9bd1fa56336af0ab7dcd1cbb7cf02070c93ba803",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "24f428ed6124e8851fcc2359854e123ea7c3e2f3c2dd7a80cf2f1d7d9a684222",
+ "kitDigest": "4c4a111aa012ad79f07ef879b0a96e3779750042c10a61189717d0b45b25f8d0",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
