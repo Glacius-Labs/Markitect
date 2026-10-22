@@ -39,7 +39,15 @@ def failure_diagnostic(error, phase):
     value = {'phase': phase, 'errorType': type(error).__name__}
     if isinstance(error, GuardRefusal):
         value['failedGuard'] = error.diagnostic
+    if is_host_clock_timeout(error):
+        value['failedProbe'] = {'component': 'independent Windows host clock',
+                                'configuredTimeoutSeconds': HOST_CLOCK_TIMEOUT_SECONDS}
     return value
+
+
+def is_host_clock_timeout(error):
+    return (isinstance(error, subprocess.TimeoutExpired) and isinstance(error.cmd, (list, tuple))
+            and bool(error.cmd) and error.cmd[0] == HOST_CLOCK)
 
 
 def supervisor_failure(error):
@@ -55,6 +63,8 @@ def supervisor_failure(error):
     return value
 
 HOST_CLOCK = '/mnt/c/Windows/System32/WindowsPowerShell/v1.0/powershell.exe'
+HOST_CLOCK_TIMEOUT_SECONDS = 5
+SUPERVISOR_POLL_SECONDS = 1
 ABSOLUTE_START_CUTOFF = dt.datetime(2026, 10, 22, 4, 0, tzinfo=dt.timezone.utc)
 ABSOLUTE_ATTEMPT_STOP = dt.datetime(2026, 10, 22, 4, 45, tzinfo=dt.timezone.utc)
 
@@ -64,7 +74,7 @@ def host_clock():
                'ticks=[Diagnostics.Stopwatch]::GetTimestamp();frequency=[Diagnostics.Stopwatch]::Frequency}'
                '|ConvertTo-Json -Compress))')
     done = subprocess.run([HOST_CLOCK, '-NoLogo', '-NoProfile', '-NonInteractive', '-Command', command],
-                          capture_output=True, check=True, timeout=5)
+                          capture_output=True, check=True, timeout=HOST_CLOCK_TIMEOUT_SECONDS)
     value = json.loads(done.stdout.decode('utf-8-sig'))
     require(value['frequency'] > 0, 'host clock frequency is not positive')
     return value
@@ -395,12 +405,14 @@ def supervise(manifest_path, gate_path, position):
             elapsed = (sample['ticks'] - started['ticks']) / sample['frequency']
             if elapsed >= 2670 or host_utc(sample) >= ABSOLUTE_ATTEMPT_STOP - dt.timedelta(seconds=30):
                 return force_supervised_stop(child, registry, root, packet, 'independent host-clock supervisor deadline', sample)
-            time.sleep(0.1)
+            time.sleep(SUPERVISOR_POLL_SECONDS)
     except BaseException as error:
         if child is None:
             raise  # no child object exists; full reservation and blockers remain
+        reason = ('independent Windows host-clock probe exceeded configured 5-second query timeout'
+                  if is_host_clock_timeout(error) else 'supervisor failure ' + type(error).__name__)
         return force_supervised_stop(child, registry, root, packet,
-                                     'supervisor failure ' + type(error).__name__)
+                                     reason)
     finally:
         output.flush()
         os.fsync(output.fileno())

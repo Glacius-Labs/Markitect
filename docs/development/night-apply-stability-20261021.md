@@ -177,3 +177,26 @@ check child-bootstrap payload suppression, preserve a changed supervisor marker,
 and deliver a signal between reservation validation and the next live guard.
 They also interrupt immediately after launch and queue a second interrupt during
 forced cessation to check that owned Docker cleanup and recovery evidence finish.
+
+N3-01 on Main `a41474ce` began actual provider review. Root's model-only basis
+completed; five independent owner Turns then started, but none completed before
+the supervisor stopped execution after a Windows clock subprocess exceeded its
+five-second query timeout. No candidate review or final Verify report was sealed.
+Emergency cessation left no owned process group or container; normal Turn stops
+remain unproved. The full third charge is closed, original markers and raw
+artifacts are retained for recovery adjudication, and N3-02 through N3-04 are
+not authorized further. Billing and exact host/guest elapsed duration are unknown.
+
+The supervisor previously launched a fresh PowerShell clock process after each
+sample plus a 100 ms sleep. A bounded read-only probe of 42 serial/concurrent
+queries subsequently passed, so the historical stall's underlying cause remains
+unknown. The next correction changes only that supervisor sleep to one second,
+reducing repeated bridge launches. A poll includes that sleep plus clock-query
+latency; the sleep does not establish a one-second detection bound. The
+five-second query timeout still stops immediately
+without retry, and all existing deadline triggers, child alarm and cleanup reserves
+remain. Fixed diagnostics identify the clock probe without echoing its command.
+Controls cover the slower cadence across the unchanged deadline and a clock
+timeout's full charge, stopped child, owned cleanup and retained blockers. Current
+bridge/cleanup controls support this bounded hypothesis; only a new released
+provider attempt can show whether it improves the complete workflow.
