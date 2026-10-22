@@ -4,11 +4,13 @@
 """
 import json
 import copy
+import os
 from pathlib import Path
 import signal
 import subprocess
 import sys
 import tempfile
+import time
 import unittest
 from unittest.mock import patch
 
@@ -16,6 +18,89 @@ import night_run as runner
 
 
 class SupervisorControls(unittest.TestCase):
+    def test_abrupt_supervisor_death_stops_the_exact_bounded_child(self):
+        if not sys.platform.startswith('linux'):
+            self.skipTest('NIGHT runner lifecycle is Linux-only')
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            manifest, path = self.dispatch_manifest(root, 'parent-abort')
+            child_script = root / 'bounded-child.py'
+            ready = root / 'child-ready'
+            module_dir = str(Path(runner.__file__).resolve().parent)
+            child_script.write_text(
+                'import sys, time\n'
+                'sys.path.insert(0, ' + repr(module_dir) + ')\n'
+                'import night_run as runner\n'
+                'def work():\n'
+                '    open(' + repr(str(ready)) + ', "w").close()\n'
+                '    while True: time.sleep(1)\n'
+                'runner.main = work\n'
+                'try: runner.bounded_child()\n'
+                'except InterruptedError: sys.exit(0)\n')
+            parent_script = root / 'supervisor.py'
+            parent_script.write_text(
+                'import json, sys\n'
+                'from pathlib import Path\n'
+                'sys.path.insert(0, ' + repr(module_dir) + ')\n'
+                'import night_run as runner\n'
+                'root = Path(' + repr(str(root)) + ')\n'
+                'manifest = json.loads(Path(' + repr(path) + ').read_text())\n'
+                'runner.__file__ = ' + repr(str(child_script)) + '\n'
+                'runner.validate = lambda *args, **kwargs: manifest\n'
+                'runner.host_clock = lambda: {"utc": 1792620000000, "ticks": 0, "frequency": 1000}\n'
+                'runner.supervise(' + repr(path) + ', "gate", "1")\n')
+            env = dict(os.environ, PYTHONPATH=module_dir)
+            parent = subprocess.Popen([sys.executable, '-B', str(parent_script)], cwd=root, env=env,
+                                      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+            child_identity = None
+            try:
+                registry = root / 'process-groups-parent-abort.jsonl'
+                for _ in range(500):
+                    if child_identity is None and registry.exists() and registry.stat().st_size:
+                        child_identity = json.loads(registry.read_text().splitlines()[0])
+                    if ready.exists() and child_identity is not None:
+                        break
+                    if parent.poll() is not None:
+                        self.fail('supervisor exited before child reached its bounded work phase')
+                    time.sleep(0.01)
+                self.assertIsNotNone(child_identity, 'bounded child did not become ready')
+                marker = json.loads((root / 'ACTIVE-SUPERVISOR').read_text())
+                self.assertEqual(marker['supervisorIdentity']['pid'], parent.pid)
+                os.kill(parent.pid, signal.SIGKILL)
+                parent.wait(timeout=5)
+                pid = child_identity['pid']
+                stopped = False
+                for _ in range(500):
+                    current = runner.process_identity(pid)
+                    if current != child_identity:
+                        stopped = True
+                    else:
+                        fields = Path('/proc/%d/stat' % pid).read_text().rsplit(')', 1)[1].split()
+                        stopped = fields[0] == 'Z'
+                    if stopped:
+                        break
+                    time.sleep(0.01)
+                self.assertTrue(stopped, 'bounded child survived abrupt supervisor death')
+                self.assertFalse((root / 'STOP-SERIES').exists())
+                self.assertTrue((root / 'ACTIVE-ATTEMPT').exists(), 'unclosed reservation must remain blocking')
+            finally:
+                if parent.poll() is None:
+                    parent.kill()
+                    parent.wait(timeout=5)
+                if child_identity is not None:
+                    try:
+                        pidfd = os.pidfd_open(child_identity['pid'])
+                    except ProcessLookupError:
+                        pidfd = None
+                    if pidfd is not None:
+                        try:
+                            if runner.process_identity(child_identity['pid']) == child_identity:
+                                signal.pidfd_send_signal(pidfd, signal.SIGKILL)
+                        except ProcessLookupError:
+                            pass
+                        finally:
+                            os.close(pidfd)
+
     def test_prelaunch_failures_report_committed_or_uncertain_reservation(self):
         for phase in ('partial-write', 'registry', 'output', 'launch'):
             with self.subTest(phase=phase), tempfile.TemporaryDirectory() as folder:
