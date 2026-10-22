@@ -1,4 +1,4 @@
-"""One source-released NIGHT or SOL3 attempt. No automatic retry or model fallback.
+"""One source-released NIGHT, SOL3 or PRW repeat attempt. No automatic retry or model fallback.
 
 Usage: python3 -B night_run.py GROUP_MANIFEST COORDINATOR_GATE GROUP_POSITION
 The final manifest and gate are deliberately absent during preparation.
@@ -71,33 +71,41 @@ ABSOLUTE_START_CUTOFF = dt.datetime(2026, 10, 22, 4, 0, tzinfo=dt.timezone.utc)
 ABSOLUTE_ATTEMPT_STOP = dt.datetime(2026, 10, 22, 4, 45, tzinfo=dt.timezone.utc)
 
 
+APPEND_ONLY_SERIES = ('SOL3-20261022', 'PRW-REPEAT-20261022')
+
+
+def append_only(manifest):
+    return manifest.get('series') in APPEND_ONLY_SERIES
+
+
 def series_bounds(manifest):
-    """Two explicit grants; the historical NIGHT identity is never reinterpreted."""
+    """Explicit finite grants; no closed identity or ledger is reinterpreted."""
     if manifest.get('series', 'NIGHT-20261021') == 'NIGHT-20261021':
         return 6, 16200, None, ABSOLUTE_START_CUTOFF, ABSOLUTE_ATTEMPT_STOP
-    require(manifest['series'] == 'SOL3-20261022', 'unknown series grant')
+    require(append_only(manifest), 'unknown series grant')
+    starts, summed = (6, 16200) if manifest['series'] == 'PRW-REPEAT-20261022' else (3, 8100)
     def utc(key):
         return dt.datetime.strptime(manifest[key], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=dt.timezone.utc)
     release, cutoff, end = utc('operatorReleaseUtc'), utc('absoluteStartCutoffUtc'), utc('absoluteAttemptStopUtc')
-    require(end - release == dt.timedelta(seconds=8100)
+    require(end - release == dt.timedelta(seconds=summed)
             and end - cutoff == dt.timedelta(seconds=2700)
-            and utc('writersStoppedByUtc') == end, 'SOL3 absolute bounds differ from the finite grant')
-    return 3, 8100, release, cutoff, end
+            and utc('writersStoppedByUtc') == end, 'absolute bounds differ from the finite grant')
+    return starts, summed, release, cutoff, end
 
 
 def series_root(manifest):
-    return Path(manifest['seriesRoot'] if manifest.get('series') == 'SOL3-20261022' else manifest['nightRoot'])
+    return Path(manifest['seriesRoot'] if append_only(manifest) else manifest['nightRoot'])
 
 
 def read_ledger(path, manifest):
     rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
-    if manifest.get('series') != 'SOL3-20261022':
+    if not append_only(manifest):
         return rows
-    # SOL3 appends a reservation and, later, its terminal observation. Folding
+    # Fresh grants append a reservation and, later, its terminal observation. Folding
     # reads never rewrites a consumed start or hides an unfinished reservation.
     records = []
     for row in rows:
-        require(row.get('series') == manifest['series'], 'foreign series in SOL3 ledger')
+        require(row.get('series') == manifest['series'], 'foreign series in series ledger')
         if row['status'] == 'running':
             require(not records or records[-1]['status'] == 'closed', 'unfinished reservation blocks the ledger')
             require(row['name'] not in [r['name'] for r in records], 'attempt already reserved')
@@ -112,7 +120,7 @@ def read_ledger(path, manifest):
 
 def close_ledger(path, previous, terminal, manifest):
     path = Path(path)
-    if manifest.get('series') == 'SOL3-20261022':
+    if append_only(manifest):
         with path.open('a') as stream:
             stream.write(json.dumps(terminal) + '\n')
             stream.flush()
@@ -250,15 +258,15 @@ def validate_quota(metadata, minimum):
 def validate(manifest_path, gate_path, files=True):
     m = json.loads(Path(manifest_path).read_text())
     g = json.loads(Path(gate_path).read_text())
-    if m.get('series') == 'SOL3-20261022':
+    if append_only(m):
         # Source/packet freeze is immutable; the one coordinator gate supplies
         # its actual UTC release and derived absolute bounds, not the Host TZ.
         for key in ('operatorReleaseUtc', 'absoluteStartCutoffUtc', 'absoluteAttemptStopUtc', 'writersStoppedByUtc'):
-            require(key not in m, 'SOL3 release times belong to the coordinator gate')
+            require(key not in m, 'Release times belong to the coordinator gate')
             m[key] = g[key]
         m['gateSha256'] = sha(gate_path)
     starts, summed, release, cutoff, stop = series_bounds(m)
-    require(m['series'] in ('NIGHT-20261021', 'SOL3-20261022') and m['group'])
+    require(m['series'] in ('NIGHT-20261021', *APPEND_ONLY_SERIES) and m['group'])
     require(m['status'] == 'frozen' and g['startAuthorized'] is True)
     require(g['manifestSha256'] == sha(manifest_path) and g['sourceCommit'] == m['sourceCommit'])
     require(g['cReady'] is True and g['dockerSlotApproved'] is True and g['codexQuotaReserveApproved'] is True)
@@ -271,25 +279,37 @@ def validate(manifest_path, gate_path, files=True):
     else:
         root = series_root(m)
         require(root.is_absolute() and str(root.resolve()) == str(root)
-                and g['series'] == m['series'] and g['seriesRoot'] == str(root), 'SOL3 release/root binding differs')
+                and g['series'] == m['series'] and g['seriesRoot'] == str(root), 'Series release/root binding differs')
         require(sha(root / 'authority.json') == m['authoritySha256'], 'series authority differs')
         authority = json.loads((root / 'authority.json').read_text())
         require(authority['series'] == m['series'] and authority['seriesRoot'] == str(root)
                 and authority['starts'] == starts and authority['summedSeconds'] == summed,
-                'SOL3 authority does not bind this fresh root and grant')
-    expected_model = 'gpt-6-luna' if m['series'] == 'SOL3-20261022' else 'gpt-6.1-sol'
+                'Series authority does not bind this fresh root and grant')
+    expected_model = 'gpt-6-luna' if append_only(m) else 'gpt-6.1-sol'
     require(m['provider']['name'] == 'codex-app-server' and m['provider']['model'] == expected_model)
     require(m['provider']['effort'] == 'high' and m['provider']['credentialMode'] == 'dedicated-runtime-login')
     require(m['provider']['credentialSourceVolume'] == 'mk-codex-runtime-auth')
-    require(m['provider']['minimumRemainingQuotaPercent'] == (10 if m['series'] == 'SOL3-20261022' else 25))
+    if m['series'] == 'PRW-REPEAT-20261022':
+        # A new owner-bound reserve, never the SOL3-only exception. Manifest and
+        # source-bound coordinator release also bind this authority's hash.
+        floor = authority['minimumRemainingQuotaPercent']
+        require(type(floor) is int and 1 <= floor <= 100
+                and m['provider']['minimumRemainingQuotaPercent'] == floor,
+                'repeat quota reserve differs from its new authority')
+    else:
+        require(m['provider']['minimumRemainingQuotaPercent'] == (10 if m['series'] == 'SOL3-20261022' else 25))
     require(1 <= len(m['packets']) <= starts)
-    scenarios = ('SOL3-P', 'SOL3-R', 'SOL3-W') if m['series'] == 'SOL3-20261022' else ('NIGHT-VN', 'NIGHT-VS', 'NIGHT-P', 'NIGHT-R')
+    scenarios = ('SOL3-P', 'SOL3-R', 'SOL3-W') if append_only(m) else ('NIGHT-VN', 'NIGHT-VS', 'NIGHT-P', 'NIGHT-R')
     require(all(p['scenario'] in scenarios for p in m['packets']))
-    if m['series'] == 'SOL3-20261022':
-        require([p['scenario'] for p in m['packets']] == list(scenarios)
+    if append_only(m):
+        require([p['scenario'] for p in m['packets']] == list(scenarios) * (2 if m['series'] == 'PRW-REPEAT-20261022' else 1)
                 and all(p['mode'] == 'apply' and p['startNumber'] == i for i, p in enumerate(m['packets'], 1))
-                and len({p['name'] for p in m['packets']}) == 3
-                and len({p['store'] for p in m['packets']}) == 3, 'SOL3 ordered attempts differ')
+                and len({p['name'] for p in m['packets']}) == starts
+                and len({p['store'] for p in m['packets']}) == starts, 'Series ordered attempts differ')
+    if m['series'] == 'PRW-REPEAT-20261022':
+        require([p['name'] for p in m['packets']] ==
+                ['PRW-R%d-%s' % (round_number, case) for round_number in (1, 2) for case in ('P', 'R', 'W')],
+                'repeat attempts differ from the two named rounds')
     require(all(p['mode'] in ('verify', 'apply') for p in m['packets']))
     require(m['ceilings']['starts'] == starts and m['ceilings']['attemptSeconds'] == 2700)
     require(m['ceilings']['summedSeconds'] == summed and m['ceilings']['retries'] == 0)
@@ -503,9 +523,9 @@ def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None,
                        'startedHostClock': started, 'status': 'running', 'chargedSeconds': 2700,
                        'manifestSha256': sha(manifest_path)}
         reservation['startedMonotonicSeconds'] = time.monotonic() if monotonic_start is None else monotonic_start
-        if manifest.get('series') == 'SOL3-20261022':
+        if append_only(manifest):
             require(all(row['gateSha256'] == manifest['gateSha256'] and row['manifestSha256'] == sha(manifest_path)
-                        for row in previous), 'SOL3 source/group release changed after a consumed start')
+                        for row in previous), 'Source/group release changed after a consumed start')
             reservation.update(series=manifest['series'], gateSha256=manifest['gateSha256'])
         supervisor_identity = process_identity(os.getpid())
         require(supervisor_identity is not None, 'supervisor process identity is unavailable')
@@ -547,7 +567,7 @@ def reserved_dispatch(root, packet, manifest_path, records, manifest=None):
             and reservation['scenario'] == packet['scenario'] and reservation['mode'] == packet['mode']
             and reservation['chargedSeconds'] == 2700 and reservation['manifestSha256'] == sha(manifest_path),
             'current charged reservation differs from this released dispatch')
-    if manifest and manifest.get('series') == 'SOL3-20261022':
+    if manifest and append_only(manifest):
         require(reservation['series'] == manifest['series'] and reservation['gateSha256'] == manifest['gateSha256'],
                 'child coordinator release differs from its reservation')
     active = json.loads((root / 'ACTIVE-ATTEMPT').read_text())

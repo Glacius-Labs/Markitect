@@ -18,6 +18,90 @@ import night_run as runner
 
 
 class SupervisorControls(unittest.TestCase):
+    def repeat_manifest(self, root):
+        path, gate, m, g = self.sol3_manifest(root)
+        m.update(series='PRW-REPEAT-20261022', group='core-submission-repeat-v1')
+        m['ceilings'].update(starts=6, summedSeconds=16200)
+        m['provider']['minimumRemainingQuotaPercent'] = 25
+        m['packets'] = [{'name': 'PRW-R%d-%s' % (round_number, case), 'scenario': 'SOL3-' + case,
+                         'store': 'owned-r%d-%s' % (round_number, case.lower()), 'mode': 'apply', 'startNumber': i}
+                        for i, (round_number, case) in enumerate(
+                            [(r, c) for r in (1, 2) for c in ('P', 'R', 'W')], 1)]
+        runner.write(root / 'authority.json', {'series': m['series'], 'seriesRoot': str(root),
+                     'starts': 6, 'summedSeconds': 16200, 'minimumRemainingQuotaPercent': 25})
+        m['authoritySha256'] = runner.sha(root / 'authority.json')
+        runner.write(path, m)
+        g.update(series=m['series'], manifestSha256=runner.sha(path),
+                 authorizedAttempts=[p['name'] for p in m['packets']],
+                 absoluteStartCutoffUtc='2026-10-22T13:45:00Z',
+                 absoluteAttemptStopUtc='2026-10-22T14:30:00Z', writersStoppedByUtc='2026-10-22T14:30:00Z')
+        runner.write(gate, g)
+        return path, gate, m, g
+
+    def test_repeat_exact_two_rounds_and_new_authority_quota_cannot_inherit_sol3_exception(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); path, gate, m, g = self.repeat_manifest(root)
+            checked = runner.validate(path, gate, files=False)
+            self.assertEqual(runner.series_bounds(checked)[:2], (6, 16200))
+            for variant in ('seven', 'reordered', 'alias', 'duplicate-store', 'old-quota', 'retry', 'unsigned'):
+                altered, release = copy.deepcopy(m), copy.deepcopy(g)
+                if variant == 'seven':
+                    altered['packets'].append(dict(altered['packets'][-1], name='PRW-R3-P', startNumber=7))
+                elif variant == 'reordered':
+                    altered['packets'][3]['scenario'] = 'SOL3-W'
+                elif variant == 'alias':
+                    altered['packets'][0]['name'] = 'SOL3-P'
+                elif variant == 'duplicate-store':
+                    altered['packets'][3]['store'] = altered['packets'][0]['store']
+                elif variant == 'old-quota':
+                    altered['provider']['minimumRemainingQuotaPercent'] = 10
+                elif variant == 'retry':
+                    altered['ceilings']['retries'] = 1
+                else:
+                    release['startAuthorized'] = False
+                runner.write(path, altered)
+                release.update(manifestSha256=runner.sha(path), authorizedAttempts=[p['name'] for p in altered['packets']])
+                runner.write(gate, release)
+                with self.subTest(variant=variant), self.assertRaises(runner.GuardRefusal):
+                    runner.validate(path, gate, files=False)
+
+    def test_repeat_six_full_append_only_charges_include_failed_start_and_refuse_seventh(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder); path, gate, _, _ = self.repeat_manifest(root)
+            m = runner.validate(path, gate, files=False)
+            clock = {'utc': 1792663200000, 'ticks': 1, 'frequency': 1000}
+            ledger = root / 'attempts.jsonl'
+            for packet in m['packets']:
+                before = ledger.read_bytes()
+                reservation = runner.reserve_dispatch(root, packet, m, path, clock)
+                self.assertEqual(reservation['chargedSeconds'], 2700)
+                with self.assertRaises(runner.GuardRefusal):
+                    runner.reserve_dispatch(root, packet, m, path, clock)
+                records = runner.read_ledger(ledger, m)
+                runner.reserved_dispatch(root, packet, path, records, m)
+                runner.close_ledger(ledger, records[:-1], dict(reservation, status='closed',
+                    result={'classification': 'technical-incomplete' if packet['startNumber'] == 1 else 'completed'}), m)
+                self.assertTrue(ledger.read_bytes().startswith(before))
+                (root / 'ACTIVE-ATTEMPT').unlink(); (root / 'ACTIVE-SUPERVISOR').unlink()
+                if packet['startNumber'] == 1:
+                    with self.assertRaises(runner.GuardRefusal):
+                        runner.reserve_dispatch(root, m['packets'][1], dict(m, gateSha256='changed'), path, clock)
+            self.assertEqual(len(ledger.read_text().splitlines()), 12)
+            self.assertEqual(sum(r['chargedSeconds'] for r in runner.read_ledger(ledger, m)), 16200)
+            with self.assertRaises(runner.GuardRefusal):
+                runner.reserve_dispatch(root, dict(m['packets'][-1], name='PRW-R3-P', startNumber=7), m, path, clock)
+
+    def test_conservative_quota_boundary_checks_both_windows(self):
+        for primary, secondary, accepted in ((75, None, True), (76, None, False), (74, 76, False)):
+            quota = {'primary': {'usedPercent': primary}, 'secondary': None if secondary is None else {'usedPercent': secondary},
+                     'rateLimitReachedType': None}
+            metadata = {'quota': {'rateLimitsByLimitId': {'codex': quota}, 'rateLimits': None}}
+            if accepted:
+                runner.validate_quota(metadata, 25)
+            else:
+                with self.assertRaises(runner.GuardRefusal):
+                    runner.validate_quota(metadata, 25)
+
     def sol3_manifest(self, root):
         runner.write(root / 'authority.json', {'series': 'SOL3-20261022', 'seriesRoot': str(root),
                                              'starts': 3, 'summedSeconds': 8100})

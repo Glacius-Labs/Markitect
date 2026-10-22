@@ -48,8 +48,7 @@ leading-hyphen database paths. P has no fault, R has only `d1`, W has `a2` and
 list-order checks fail. Historical cases, scores and NIGHT/CCF freezes keep their
 identities. Hidden controls and the input-selection rationale never enter packets.
 
-The existing runner accepts only this explicit new grant or the unchanged
-historical NIGHT contract. SOL3 has its own bound `seriesRoot`/authority and an
+SOL3 has its own bound `seriesRoot`/authority and an
 append-only reservation/terminal ledger. The one source-bound coordinator gate
 supplies actual `operatorReleaseUtc`; its absolute end is exactly 8,100 seconds
 later, and its last-start cutoff is 2,700 seconds before that end. Changing the
@@ -64,6 +63,36 @@ and green controls do not authorize execution or establish Agent effectiveness.
 Provider-free input discrimination uses `selfcheck.check_sol3`; runner lifecycle,
 UTC and append-only accounting controls use `night_run_test.py`. The official
 `freeze.py lock`/`check` binds the new packets and unchanged historical scenarios.
+
+## P/R/W core repeat, 22 October 2026
+
+`PRW-REPEAT-20261022` is a separate six-start grant in the existing runner:
+`PRW-R1-P`, `PRW-R1-R`, `PRW-R1-W`, `PRW-R2-P`, `PRW-R2-R`, `PRW-R2-W`.
+Each is a fresh Apply from the respective original `SOL3-P/R/W` input, on one
+unchanged integrated Core/binary freeze. Each start, including failed setup,
+consumes 2,700 seconds; the ceiling is 16,200 seconds (270 minutes), no retries
+and no third round. This changes no closed NIGHT, SOL3 or CCF grant or evidence.
+
+The new root/authority and append-only reserve/terminal ledger use the existing
+source-bound coordinator release. The gate binds the six names and actual UTC
+release, with absolute end exactly 16,200 seconds later and the exclusive last
+start cutoff 2,700 seconds before the end. Work/Verify/stop/cleanup and all
+existing process/UTC/credential guards remain unchanged. Auth and every actual
+role use dedicated native `gpt-6-luna`/`high`; there is no fallback. The new
+authority binds its own quota reserve, initially **25%** in every available
+window before each start. A different reserve requires explicit owner authority
+and a new freeze/release before any start; the SOL3-only 10% exception is not
+inherited. Changed release/source after a consumed reservation is refused.
+
+Keep the existing strict raw evaluator unchanged. Record the owner's 22 October
+semantic scope adjudication separately against the frozen actual result:
+small true, model-faithful documentation/test additions are advisory; unnecessary
+behavior changes, regressions or removed content, false/model-contradicting
+promises and large unassigned restructuring fail. Missing completion, Verify or
+publication remains incomplete. A benign small change needs an honest applied
+publication/read-back; do not demand a false no-change. Retain both the strict
+raw verdict and this explicit independent adjudication. No Readinglog WIP,
+new runner, new oracle or broad matrix is part of this repeat.
 
 ## Contents
 
