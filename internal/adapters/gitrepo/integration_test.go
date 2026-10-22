@@ -322,6 +322,21 @@ func TestPostOutputChildPatchFailureStaysTechnicalDespiteConflict(t *testing.T) 
 	}
 }
 
+func TestParentReviewDiffIsBoundedBeforeHostAllocation(t *testing.T) {
+	var sink reviewOutput
+	sink.limit = 3
+	if n, err := sink.Write([]byte("123456789")); err != nil || n != 9 || !sink.exceeded || sink.Len() != 3 {
+		t.Fatalf("bounded writer retained too much or failed to drain: %d %v %+v", n, err, sink)
+	}
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "lending")
+	integrationWrite(t, roots["lending"], "large.txt", strings.Repeat("x", 8<<20)+"overflow\n")
+	child := integrationHandoff(t, copies["lending"])
+	if diff, err := w.Changes(ctx, copies["lending"], child); err == nil || diff != "" || !strings.Contains(err.Error(), "delivery limit") {
+		t.Fatalf("over-limit real Git diff was allocated/delivered: %d bytes, %v", len(diff), err)
+	}
+}
+
 type scriptedCopies struct {
 	copies map[run.WorkspaceID]*assignmentWorkspace
 }

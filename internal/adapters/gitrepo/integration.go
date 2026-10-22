@@ -1,6 +1,7 @@
 package gitrepo
 
 import (
+	"bytes"
 	"context"
 	"crypto/rand"
 	"encoding/hex"
@@ -69,14 +70,47 @@ func (w *Workspaces) Changes(ctx context.Context, copy run.AssignmentWorkspace, 
 	if err != nil {
 		return "", err
 	}
-	diff, err := a.git(ctx, "diff", "--binary", "--no-ext-diff", "--no-textconv", a.start, handoff.ResultCommit, "--")
+	w.mu.Lock()
+	volume, observed, err := w.ownedVolume(ctx, a.id)
+	if err != nil || volume != a.volume || !observed.Exists {
+		w.mu.Unlock()
+		return "", errors.Join(err, fmt.Errorf("child workspace changed before review"))
+	}
+	spec := w.spec(a.volume, true)
+	var output reviewOutput
+	output.limit = 8 << 20
+	err = w.runtime.RunHelper(ctx, spec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", a.start, handoff.ResultCommit, "--"), nil, &output)
+	w.mu.Unlock()
+	if output.exceeded {
+		return "", fmt.Errorf("child Git difference exceeds the parent review delivery limit")
+	}
 	if err != nil {
 		return "", err
 	}
-	if len(diff) > 8<<20 {
-		return "", fmt.Errorf("child Git difference exceeds the parent review delivery limit")
+	return strings.TrimSpace(output.String()), nil
+}
+
+type reviewOutput struct {
+	// Keep Buffer named: embedding would promote ReaderFrom, letting io.Copy
+	// bypass the bounded Write method used by the helper's stdout stream.
+	data     bytes.Buffer
+	limit    int
+	exceeded bool
+}
+
+func (b *reviewOutput) Len() int       { return b.data.Len() }
+func (b *reviewOutput) String() string { return b.data.String() }
+
+func (b *reviewOutput) Write(p []byte) (int, error) {
+	room := b.limit - b.Len()
+	if room < len(p) {
+		b.exceeded = true
+		if room > 0 {
+			_, _ = b.data.Write(p[:room])
+		}
+		return len(p), nil // drain the helper without retaining unbounded output
 	}
-	return diff, nil
+	return b.data.Write(p)
 }
 
 // Integrate transfers the child's fixed Git delta into the parent's own copy
@@ -204,10 +238,13 @@ func (w *Workspaces) integrationGit(ctx context.Context, spec container.Containe
 }
 
 func (w *Workspaces) integrationGitAt(ctx context.Context, spec container.ContainerSpec, directory string, args ...string) (string, error) {
-	var output boundedOutput
+	var output reviewOutput
 	output.limit = 16 << 10
 	if err := w.runtime.RunHelper(ctx, spec, assignmentGitArgsAt(directory, args...), nil, &output); err != nil {
 		return "", err
+	}
+	if output.exceeded {
+		return "", ErrLimit
 	}
 	return strings.TrimSpace(output.String()), nil
 }
@@ -222,10 +259,13 @@ func (w *Workspaces) patch(ctx context.Context, childSpec, parentSpec container.
 		_ = writer.CloseWithError(err)
 		done <- err
 	}()
-	var output boundedOutput
+	var output reviewOutput
 	output.limit = 16 << 10
 	applyErr := w.runtime.RunHelper(ctx, parentSpec, assignmentGitArgsAt(directory, "apply", "--3way", "--index", "-"), reader, &output)
 	_ = reader.CloseWithError(applyErr)
 	childErr := <-done
+	if output.exceeded {
+		applyErr = errors.Join(applyErr, ErrLimit)
+	}
 	return applyErr, childErr
 }
