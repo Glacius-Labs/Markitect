@@ -10,6 +10,7 @@ import (
 )
 
 var _ run.AssignmentForks = (*Workspaces)(nil)
+var _ run.AssignmentCommitForks = (*Workspaces)(nil)
 
 // ForkAssignment secures the parent's current Git stand and clones it into a
 // fresh volume. The child shares Git history, not a working directory or live
@@ -26,6 +27,27 @@ func (w *Workspaces) ForkAssignment(ctx context.Context, parent run.AssignmentWo
 	if err != nil {
 		return nil, err
 	}
+	return w.forkAssignmentCommit(ctx, p, parentCommit, id)
+}
+
+// ForkAssignmentCommit copies the named Git stand for independent review. It
+// never commits the source or reads its live files into the review result.
+func (w *Workspaces) ForkAssignmentCommit(ctx context.Context, source run.AssignmentWorkspace, commit string, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	p, err := w.assignment(source)
+	if err != nil {
+		return nil, err
+	}
+	if id == p.id || !(run.WorkspaceSpec{ID: id}).Valid() {
+		return nil, errors.New("review assignment needs a distinct valid workspace ID")
+	}
+	present, err := p.ContainsCommit(ctx, commit)
+	if err != nil || !present {
+		return nil, errors.Join(err, errors.New("commissioned Git commit is unavailable"))
+	}
+	return w.forkAssignmentCommit(ctx, p, commit, id)
+}
+
+func (w *Workspaces) forkAssignmentCommit(ctx context.Context, p *assignmentWorkspace, parentCommit string, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
 	observed, err := w.Materialize(ctx, run.WorkspaceSpec{ID: id})
 	var child *assignmentWorkspace
 	if observed.Volume != "" {
@@ -38,6 +60,9 @@ func (w *Workspaces) ForkAssignment(ctx context.Context, parent run.AssignmentWo
 		return nil, errors.New("child workspace volume was not established")
 	}
 	if err := w.cloneAssignment(ctx, p, child); err != nil {
+		return child, err
+	}
+	if _, err := child.git(ctx, "checkout", "--detach", parentCommit); err != nil {
 		return child, err
 	}
 	start, err := child.git(ctx, "rev-parse", "HEAD")

@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/commit_review_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Uses actual local Git to verify an exact retained commit independently without changing later source commits or dirty work, and retains failed clones."
   - path: "internal/adapters/gitrepo/fork.go"
     form: code
     realizes: [product/adapters/repository/repository-boundaries]

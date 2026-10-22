@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assignment_review.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Runs a focused model assessment or independent Verify in a fresh copy of a named Git result, retaining ordinary observations and a separate substantive decision."
+  - path: "internal/run/assignment_review_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks exact-commit review judgment, model blockers, retained incomplete results, ordinary command observations and fresh review copies without providers."
   - path: "internal/run/assignment_schedule.go"
     form: code
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
