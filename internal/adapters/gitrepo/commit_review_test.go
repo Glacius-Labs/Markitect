@@ -22,12 +22,14 @@ type commitReviewRuntime struct {
 	git       *integrationRuntime
 	t         *testing.T
 	failClone bool
+	paths     map[string]string
 }
 
 func (f *commitReviewRuntime) CreateVolumeExclusive(ctx context.Context, name string, labels map[string]string) (container.VolumeObservation, error) {
 	v, err := f.workspaceFake.CreateVolumeExclusive(ctx, name, labels)
 	if err == nil {
 		f.git.roots[name] = f.t.TempDir()
+		f.paths[name] = "/assignments/" + name
 	}
 	return v, err
 }
@@ -77,7 +79,7 @@ func TestIndependentReviewForksExactCommitWithoutMutatingSource(t *testing.T) {
 	_, volumeFake := workspaceAdapter(t)
 	volume := copies["source"].Volume()
 	volumeFake.volumes[volume] = container.VolumeObservation{Name: volume, Exists: true, Labels: map[string]string{workspaceOwnerLabel: "owned"}}
-	runtime := &commitReviewRuntime{workspaceFake: volumeFake, git: git, t: t}
+	runtime := &commitReviewRuntime{workspaceFake: volumeFake, git: git, t: t, paths: w.gitPaths}
 	w.runtime = runtime
 	commissioned := copies["source"].StartingCommit()
 	integrationWrite(t, roots["source"], "common.txt", "later committed correction\n")

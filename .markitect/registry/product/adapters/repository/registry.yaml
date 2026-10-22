@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/git_session_engine_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Opt-in provider-free real-engine smoke proves fixed 47-volume mounting, ordinary identity, cloning, parent integration and independent named-commit reading through one Git exec container with observed cleanup."
+  - path: "internal/adapters/gitrepo/git_session.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Reserves complete Apply Git workspaces and executes all assignment Git operations inside one retained container without deleting evidence volumes."
+  - path: "internal/adapters/gitrepo/git_session_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks fixed service mounts, ordinary Git through exec, foreign mount refusal, retained shutdown and compatibility with disposable check copies."
   - path: "internal/adapters/gitrepo/assignment_identity_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]

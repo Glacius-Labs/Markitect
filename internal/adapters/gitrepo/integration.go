@@ -82,7 +82,7 @@ func (w *Workspaces) Changes(ctx context.Context, copy run.AssignmentWorkspace, 
 	spec := w.spec(a.volume, true)
 	var output reviewOutput
 	output.limit = 8 << 20
-	err = w.runtime.RunHelper(ctx, spec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", handoff.StartingCommit, handoff.ResultCommit, "--"), nil, &output)
+	err = w.runGit(ctx, spec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", handoff.StartingCommit, handoff.ResultCommit, "--"), nil, &output)
 	w.mu.Unlock()
 	if output.exceeded {
 		return "", fmt.Errorf("child Git difference exceeds the parent review delivery limit")
@@ -260,7 +260,7 @@ func (w *Workspaces) integrationGit(ctx context.Context, spec container.Containe
 func (w *Workspaces) integrationGitAt(ctx context.Context, spec container.ContainerSpec, directory string, args ...string) (string, error) {
 	var output reviewOutput
 	output.limit = 16 << 10
-	if err := w.runtime.RunHelper(ctx, spec, assignmentGitArgsAt(directory, args...), nil, &output); err != nil {
+	if err := w.runGit(ctx, spec, assignmentGitArgsAt(directory, args...), nil, &output); err != nil {
 		return "", err
 	}
 	if output.exceeded {
@@ -275,13 +275,13 @@ func (w *Workspaces) patch(ctx context.Context, childSpec, parentSpec container.
 	reader, writer := io.Pipe()
 	done := make(chan error, 1)
 	go func() {
-		err := w.runtime.RunHelper(ctx, childSpec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", base, result, "--"), nil, writer)
+		err := w.runGit(ctx, childSpec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", base, result, "--"), nil, writer)
 		_ = writer.CloseWithError(err)
 		done <- err
 	}()
 	var output reviewOutput
 	output.limit = 16 << 10
-	applyErr := w.runtime.RunHelper(ctx, parentSpec, assignmentGitArgsAt(directory, "apply", "--3way", "--index", "-"), reader, &output)
+	applyErr := w.runGit(ctx, parentSpec, assignmentGitArgsAt(directory, "apply", "--3way", "--index", "-"), reader, &output)
 	_ = reader.CloseWithError(applyErr)
 	childErr := <-done
 	if output.exceeded {

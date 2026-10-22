@@ -39,6 +39,9 @@ func (f assignmentGitRuntime) RunHelper(ctx context.Context, _ container.Contain
 	}
 	args := slices.Clone(argv[1:])
 	for i := range args {
+		if i > 0 && (args[i-1] == "-m" || args[i-1] == "--message") {
+			continue
+		}
 		if args[i] == "/work" {
 			args[i] = f.root
 		}
@@ -64,6 +67,7 @@ func TestAssignmentGitCommitsRemainFixedAfterCorrection(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := &Workspaces{runtime: assignmentGitRuntime{root: root}, helper: container.ContainerSpec{Name: "test", Labels: map[string]string{"markitect.store": "test"}}, owned: map[run.WorkspaceID]string{"agent": "owned"}}
+	attachTestGit(w)
 	a := &assignmentWorkspace{owner: w, id: "agent", volume: w.volume("agent")}
 	if _, err := a.git(ctx, "init", "-b", "assignment"); err != nil {
 		t.Fatal(err)
@@ -136,6 +140,7 @@ func TestAssignmentGitKeepsRegularStateFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	w := &Workspaces{runtime: assignmentGitRuntime{root: root}, helper: container.ContainerSpec{Name: "test", Labels: map[string]string{"markitect.store": "test"}}, owned: map[run.WorkspaceID]string{"agent": "owned"}}
+	attachTestGit(w)
 	a := &assignmentWorkspace{owner: w, id: "agent", volume: w.volume("agent")}
 	if _, err := a.git(ctx, "init", "-b", "assignment"); err != nil {
 		t.Fatal(err)

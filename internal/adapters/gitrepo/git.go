@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/hex"
+	"errors"
 	"fmt"
 	"os"
 	"os/exec"
@@ -16,15 +17,28 @@ import (
 )
 
 type boundedOutput struct {
-	data  bytes.Buffer
-	limit int64
+	data          bytes.Buffer
+	limit         int64
+	limitExceeded bool
 }
 
 func (b *boundedOutput) Write(p []byte) (int, error) {
 	if int64(len(p)) > b.limit-int64(b.data.Len()) {
+		b.limitExceeded = true
 		return 0, ErrLimit
 	}
 	return b.data.Write(p)
+}
+
+// A subprocess may exit on SIGPIPE before os/exec returns its copy error.
+// Preserve the observed output limit in either ordering.
+func boundedCommandError(err error, outputs ...*boundedOutput) error {
+	for _, output := range outputs {
+		if output != nil && output.limitExceeded {
+			return errors.Join(ErrLimit, err)
+		}
+	}
+	return err
 }
 
 func (b *boundedOutput) Bytes() []byte  { return b.data.Bytes() }
@@ -66,7 +80,7 @@ func (g *gitRepository) run(args ...string) ([]byte, error) {
 	cmd := g.command(args...)
 	out, stderr := &boundedOutput{limit: 64 << 20}, &boundedOutput{limit: 16 << 10}
 	cmd.Stdout, cmd.Stderr = out, stderr
-	if err := cmd.Run(); err != nil {
+	if err := boundedCommandError(cmd.Run(), out, stderr); err != nil {
 		if g.ctx.Err() != nil {
 			return nil, g.ctx.Err()
 		}

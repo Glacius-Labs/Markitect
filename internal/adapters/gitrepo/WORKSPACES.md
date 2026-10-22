@@ -11,6 +11,49 @@ The trusted runtime image must contain `/bin/tar` and `/usr/local/bin/node`, as
 the current runtime image does. A check adapter can receive this implementation
 through `run.Workspaces`; its actual check image remains a separate choice.
 
+## One Git container per Apply
+
+Before creating assignments, the caller passes every possible assignment ID to
+`StartGit(ctx, ids)`: the complete Manager tree, assessment, and the finite
+maximum of fresh Verify copies. Volumes are created exclusively and labeled
+without starting preparation helpers. One retained Git container mounts all of
+them at fixed `/assignments/<ID>` paths. Initialization verifies empty roots and
+sets ownership once in that same container. `PrepareAssignment` and forks claim
+these reserved volumes; every Host Git operation uses engine `exec`, including
+clone, commit reads, parent integration and child updates. There is no fallback
+to a short-lived Git helper. Ordinary Agent Git stays in its own Agent container.
+
+The Git service alone uses `StartOwnedExec`: default hardening plus `CAP_CHOWN`
+for one fixed root initialization command over exactly its private mount roots.
+The roots remain mode 0755, owned by 1000:1000. The returned session executes only
+as its non-root configured user and exposes no root override. Normal engine,
+Agent and check launches retain `--cap-drop ALL` and `no-new-privileges`.
+`CAP_CHOWN` remains in this service's bounding set; ordinary non-root execs have
+zero effective capabilities. This explicit exception avoids dozens of startup
+containers. A real probe showed that root chown without the capability fails;
+chmod 0777 permits creation but ordinary Git then rejects the root-owned working
+copy as dubious ownership. No global safe-directory exception is installed.
+
+The caller closes all Agent assignments and then calls `CloseGit` before final
+reporting. It removes only the observed Git container; retained volumes remain
+for evidence. Cleanup errors remain technical failures. Cancellation of an exec
+also removes this container, because killing the engine CLI alone does not prove
+the remote Git process stopped. No command is retried. `GitContainerID` retains
+the full observed ID after close; `GitExecCount` counts engine CLI processes
+started for Git execs, separately from remote Git start, exit or success.
+
+The service's own exact container ID is allowed in workspace mount observations;
+foreign mounts still refuse materialization/census. Disposable project-check
+copies use ordinary `Materialize` and `Close` with unreserved IDs and may still
+use non-Git helpers. They are not mounted into, or usable through, the Git
+service. Reserved assignment volumes cannot be removed before `CloseGit`.
+
+The opt-in `TestRealApplyGitContainer` uses an existing immutable image and
+`MARKITECT_TEST_ENGINE` / `MARKITECT_TEST_GIT_IMAGE`. It exercises 47 fixed mounts,
+zero StartGit preparation helpers, normal non-root capability state, ordinary
+commit identity, cloning, parent integration and independent commit reading,
+then observes service removal and retained volumes. It starts no providers.
+
 ## Materialization and ownership
 
 `PrepareAssignment` sets repository-local `user.name=Markitect` and

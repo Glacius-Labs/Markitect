@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/container/exec_session.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: "Retains one hardened container for literal engine-exec commands with observed identity and cancellation-safe whole-container cleanup."
+  - path: "internal/adapters/container/exec_session_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: "Checks one retained hardened container, repeated literal exec calls, partial startup, ownership-safe removal and remote cancellation cleanup."
   - path: "cmd/markitect-agentd/main.go"
     form: code
     realizes: [product/runtime/container-runtime]

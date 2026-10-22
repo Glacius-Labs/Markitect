@@ -67,6 +67,9 @@ func TestMain(m *testing.M) {
 		if len(os.Args) > 1 && os.Args[1] == "start" {
 			_ = os.WriteFile(filepath.Join(dir, "attach-ready"), []byte("ready"), 0600)
 		}
+		if len(os.Args) > 1 && os.Args[1] == "exec" {
+			_ = os.WriteFile(filepath.Join(dir, "exec-ready"), []byte("ready"), 0600)
+		}
 		if strings.Contains(step.Out, "CREATION_TOKEN") {
 			data, _ := os.ReadFile(filepath.Join(dir, "calls"))
 			for _, line := range strings.Split(strings.TrimSpace(string(data)), "\n") {

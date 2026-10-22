@@ -16,6 +16,7 @@ func warmGitCopy(t *testing.T, w *Workspaces, source *assignmentWorkspace, id ru
 	root := t.TempDir()
 	volume := w.volume(id)
 	w.runtime.(*integrationRuntime).roots[volume], w.owned[id] = root, "owned"
+	registerTestGitVolume(w, volume)
 	copy := &assignmentWorkspace{owner: w, id: id, volume: volume}
 	if err := w.cloneAssignment(context.Background(), source, copy); err != nil {
 		t.Fatal(err)
