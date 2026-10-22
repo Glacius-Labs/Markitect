@@ -20,6 +20,14 @@ not enter the independent review copy. Clone and checkout failures return the
 available partial copy for inspection. `ForkAssignment` remains the separate
 delegation operation that first secures the parent's current foundation.
 
+`ReadAssignmentCommit` returns the named commit's exact regular/executable blob
+content for accounting and project checks. It reads Git tree metadata and raw
+blobs through bounded helpers, first resolving the exact full commit identity.
+It verifies each object hash and rejects unsupported
+entries, partial output or an exhausted limit. Checkout conversion and archive
+attributes (`export-ignore` and `export-subst`) do not change the returned bytes.
+Neither reading nor forking a named commit publishes to the owner's repository.
+
 `Materialize` creates a new volume through `CreateVolumeExclusive`, writes the
 supplied tree as a tar stream, then harvests and compares exact paths, content
 and regular/executable mode. It returns the observed tree identity only after a
