@@ -121,7 +121,7 @@ func TestEarliestNamesTheFirstWorkPurposeInPassOrder(t *testing.T) {
 // their documented intent, where the proposal is never evidence for itself
 // (carried over from draft PR #536 and adapted to the receipt contract).
 func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
-	if mandate := Direct.verify().Mandate; !strings.Contains(mandate, "against the bound model") || !strings.Contains(mandate, "probes with the tool check") {
+	if mandate := Direct.verify().Mandate; !strings.Contains(mandate, "against the bound model") || !strings.Contains(mandate, "check with existing: true") || !strings.Contains(mandate, "probes for material gaps") {
 		t.Fatalf("Apply review lacks its bound-model expectations or probes: %s", mandate)
 	}
 	// A public behavior the model leaves open is a model problem, not a default

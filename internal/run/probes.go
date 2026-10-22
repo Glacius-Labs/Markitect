@@ -86,6 +86,7 @@ type ProbeReceipt struct {
 	Args          []string `json:"args"`
 	Directory     string   `json:"directory"`
 	Started       bool     `json:"started"`
+	Matched       bool     `json:"matched"`
 	Exited        bool     `json:"exited"`
 	ExitCode      int      `json:"exitCode"`
 	TimedOut      bool     `json:"timedOut"`
@@ -118,6 +119,9 @@ type ProbeDisposition struct {
 	// passing receipt of the same obligation on the same stand that establishes
 	// the claim without the erring probe.
 	Passing string `json:"passing,omitempty"`
+	// Setup records the reviewer's evidence that the script failed before
+	// candidate execution. It is a semantic assessment, not a Runtime fact.
+	Setup   string `json:"setup,omitempty"`
 	Pending bool   `json:"pending,omitempty"`
 }
 
@@ -127,6 +131,7 @@ func (r *ProbeReceipt) adverse() bool { return r.Outcome != ProbePassed }
 func (r *ProbeReceipt) disposed() bool { return r.Disposition != nil && !r.Disposition.Pending }
 
 type probeIn struct {
+	Existing   bool     `json:"existing"`
 	Obligation string   `json:"obligation"`
 	Claim      string   `json:"claim"`
 	Boundary   string   `json:"boundary"`
@@ -141,6 +146,7 @@ type probeIn struct {
 
 // probeSpec is a validated probe: what runs and what it claims.
 type probeSpec struct {
+	existing   bool
 	definition ModelDefinition
 	claim      string
 	boundary   string
@@ -177,6 +183,7 @@ type dispositionIn struct {
 	Evidence string `json:"evidence"`
 	Rerun    string `json:"rerun"`
 	Passing  string `json:"passing"`
+	Setup    string `json:"setup"`
 }
 
 // probesAvailable reports whether a required check offers an execution profile
@@ -231,7 +238,7 @@ func (e *engine) probe(ctx context.Context, m *member, ts *turnState, in probeIn
 // rerunSpec is the exact probe of an error receipt, for a review of the same
 // candidate.
 func (e *engine) rerunSpec(m *member, in probeIn) (probeSpec, string) {
-	if in.Obligation != "" || in.Claim != "" || in.Boundary != "" || in.Expected != "" || in.Check != "" || in.Path != "" || in.Content != "" || in.Args != nil || in.Proposal != "" {
+	if in.Existing || in.Obligation != "" || in.Claim != "" || in.Boundary != "" || in.Expected != "" || in.Check != "" || in.Path != "" || in.Content != "" || in.Args != nil || in.Proposal != "" {
 		return probeSpec{}, "A rerun repeats a receipt's probe exactly; give only probe.rerun."
 	}
 	e.mu.Lock()
@@ -263,7 +270,7 @@ func (e *engine) rerunSpec(m *member, in probeIn) (probeSpec, string) {
 	if chk == nil || err != nil || len(r.Args) < chk.ProfileArgs {
 		return probeSpec{}, fmt.Sprintf("%s cannot be repeated.", r.ID)
 	}
-	return probeSpec{definition: d, claim: r.Claim, boundary: r.Boundary, expected: r.Expected, check: chk, path: path, content: r.Content, args: slices.Clone(r.Args[chk.ProfileArgs:]), rerun: r.ID}, ""
+	return probeSpec{existing: r.Tree == r.Stand, definition: d, claim: r.Claim, boundary: r.Boundary, expected: r.Expected, check: chk, path: path, content: r.Content, args: slices.Clone(r.Args[chk.ProfileArgs:]), rerun: r.ID}, ""
 }
 
 // probeSpecOf validates a new probe.
@@ -299,7 +306,10 @@ func (e *engine) probeSpecOf(m *member, in probeIn) (probeSpec, string) {
 		}
 		return probeSpec{}, fmt.Sprintf("probe.check names the required check whose execution profile runs the probe: one of %s.", strings.Join(names, ", "))
 	}
-	if in.Content == "" || len(in.Content) > maxProbeBytes || !utf8.ValidString(in.Content) || strings.ContainsRune(in.Content, 0) {
+	if in.Existing && in.Content != "" {
+		return probeSpec{}, "An existing test uses its captured bytes; omit probe.content."
+	}
+	if !in.Existing && (in.Content == "" || len(in.Content) > maxProbeBytes || !utf8.ValidString(in.Content) || strings.ContainsRune(in.Content, 0)) {
 		return probeSpec{}, fmt.Sprintf("probe.content must be non-empty text of at most %d bytes.", maxProbeBytes)
 	}
 	if len(in.Args) > maxProbeArgs {
@@ -328,7 +338,11 @@ func (e *engine) probeSpecOf(m *member, in probeIn) (probeSpec, string) {
 			return probeSpec{}, err.Error()
 		}
 	}
-	return probeSpec{definition: d, claim: claim, boundary: boundary, expected: expected, check: chk, path: path, content: in.Content, args: in.Args, proposal: strings.TrimSpace(in.Proposal)}, ""
+	args := in.Args
+	if in.Existing && args == nil {
+		args = slices.Clone(chk.Request.Args[chk.ProfileArgs:])
+	}
+	return probeSpec{existing: in.Existing, definition: d, claim: claim, boundary: boundary, expected: expected, check: chk, path: path, content: in.Content, args: args, proposal: strings.TrimSpace(in.Proposal)}, ""
 }
 
 // runProbe places a validated probe on its stand, runs it and records the
@@ -365,16 +379,29 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		}
 		stand = live
 	}
-	if _, exists := stand.Lookup(path); exists {
-		return refuse("%s exists in the stand; a probe never replaces a project file. Choose another probe.path.", path)
-	}
-	entry, err := snapshot.NewEntry(path, snapshot.Regular, []byte(spec.content))
-	if err != nil {
-		return refuse("probe.path: %v", err)
-	}
-	tree, err := snapshot.NewTree(append(stand.Entries(), entry))
-	if err != nil {
-		return refuse("probe.path %s cannot be added to the stand: %v", path, err)
+	tree := stand
+	entry, exists := stand.Lookup(path)
+	if spec.existing {
+		if !exists || entry.ByteLength() > maxProbeBytes {
+			return refuse("An existing test names a captured file of at most %d bytes: %s.", maxProbeBytes, path)
+		}
+		spec.content = string(entry.Bytes())
+		if !utf8.ValidString(spec.content) || strings.ContainsRune(spec.content, 0) {
+			return refuse("An existing test must be text: %s.", path)
+		}
+	} else {
+		if exists {
+			return refuse("%s exists in the stand; a probe never replaces a project file. Choose another probe.path or use existing: true.", path)
+		}
+		var err error
+		entry, err = snapshot.NewEntry(path, snapshot.Regular, []byte(spec.content))
+		if err != nil {
+			return refuse("probe.path: %v", err)
+		}
+		tree, err = snapshot.NewTree(append(stand.Entries(), entry))
+		if err != nil {
+			return refuse("probe.path %s cannot be added to the stand: %v", path, err)
+		}
 	}
 	sum := sha256.Sum256([]byte(spec.content))
 	e.mu.Lock()
@@ -405,6 +432,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	r.Started, r.Exited, r.ExitCode, r.TimedOut, r.Uncertain = rec.Started, rec.Exited, rec.ExitCode, rec.TimedOut, rec.Uncertain
+	r.Matched = rec.ID == req.ID && rec.ImageID == req.ImageID && rec.Tree == req.Tree.Digest() && runErr == nil
 	r.Output, r.Truncated, r.Reason, r.At = tail(rec.Output, outputTail), rec.Truncated, rec.Reason, e.now()
 	if rec.ImageID != "" {
 		r.ImageID = rec.ImageID
@@ -436,7 +464,7 @@ func (e *engine) runProbe(ctx context.Context, m *member, ts *turnState, spec pr
 		fmt.Fprintf(&b, "\nOutput:\n%s", r.Output)
 	}
 	if r.Outcome != ProbePassed && p.spec.Review {
-		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. An error within the probe's own execution, such as a probe too large for the check's time limit, is an expectation_error with reason, evidence and a passing receipt of the same obligation on this candidate; a timeout or a kill can also be a hang or crash of the candidate, so that passing probe must establish the claim itself. An error that points at the candidate, such as a hang, is a genuine finding.")
+		b.WriteString("\nThis adverse receipt stays on record. Before a clean assessment, cite it in a genuine finding when it shows a violation, or dispose of it in your report as expectation_error with reason and evidence when your expectation or assertion was wrong; when it assesses a child's obligation, that child's reviewer judges it instead (return or reopen its proposal with the receipt), which avoids a further Verify for your own disproof. A Runtime error can be repeated exactly with probe.rerun; if the rerun passes, dispose of the error as rerun. An error within the probe's own execution, such as a probe too large for the check's time limit, is an expectation_error with reason, evidence and a passing receipt of the same obligation on this candidate; a timeout or a kill can also be a hang or crash of the candidate, so that passing probe must establish the claim itself. For a demonstrated script setup failure before candidate execution, report the retained failure evidence in setup and the corrected same-claim passing receipt; ordinary review handles it without another whole Verify solely for that script. Ambiguous hangs and uncertain execution do not use that exception. An error that points at the candidate, such as a hang, is a genuine finding.")
 	}
 	return ToolAnswer{Text: b.String()}
 }
@@ -525,7 +553,7 @@ func describeOutcome(r *ProbeReceipt) string {
 func short(digest string) string { return digest[:min(12, len(digest))] }
 
 // evidenceOf validates the evidence items of one coverage entry. A receipt must
-// be the submitter's own, for this Definition, passed, and run on the stand the
+// be relevant within the submitter's responsibility, passed, and run on the stand the
 // submission is bound to; stand is empty in a Pass with writes, whose stand is
 // known only after the submitter's writers stopped (bindEvidence completes the
 // check then). A source names a file and the inspected location with the
@@ -546,15 +574,12 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree) 
 			switch {
 			case r == nil:
 				return nil, fmt.Errorf("%s: %q is no probe receipt of this run; a receipt comes only from the tool check", name, item.Receipt)
-			case r.Requester != m.Path:
-				return nil, fmt.Errorf("%s: %s was requested by %s; cite your own receipts", name, r.ID, r.Requester)
+			case !e.answersForLocked(r, m.Path):
+				return nil, fmt.Errorf("%s: %s is outside your responsibility", name, r.ID)
 			case r.Outcome != ProbePassed:
 				return nil, fmt.Errorf("%s: %s %s; an adverse receipt cannot support %s coverage. Remove it from this evidence array; if it demonstrates a violation, cite it in a genuine finding and leave the affected coverage open with a note. Otherwise give its reasoned disposition", name, r.ID, describeOutcome(r), c.Status)
 			case stand != nil && r.Stand != stand.Digest().String():
 				return nil, fmt.Errorf("%s: %s ran on the stand %s, not on %s; a stale receipt supports nothing here", name, r.ID, short(r.Stand), short(stand.Digest().String()))
-			}
-			if c.Definition == "" && !e.within(e.byPath[r.Requester].Path, m.Path) {
-				return nil, fmt.Errorf("%s: receipt outside your integration responsibility", name)
 			}
 			if evidenceRequired(m.p.spec) {
 				if item.Kind != "public_behavior" {
@@ -626,7 +651,8 @@ func (e *engine) bindEvidence(pr *proposal, stand snapshot.Tree) []Finding {
 	m := pr.member
 	digest := stand.Digest().String()
 	var out []Finding
-	entries := make([]*coverage, 0, len(pr.env.Obligations)+1)
+	shared := coverage{Evidence: pr.env.Support}
+	entries := []*coverage{&shared}
 	for i := range pr.env.Obligations {
 		entries = append(entries, &pr.env.Obligations[i])
 	}
@@ -691,6 +717,9 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 		}
 		listed[r.ID] = true
 		x := ProbeDisposition{As: d.As, By: m.Path, Pass: m.p.id}
+		if d.Setup != "" && d.As != DisposedExpectationError {
+			return nil, fmt.Errorf("%s: setup evidence belongs to an expectation_error", name)
+		}
 		switch d.As {
 		case DisposedExpectationError:
 			// A failed assertion, or an error within the probe's own execution
@@ -721,7 +750,24 @@ func (e *engine) dispositionsOf(m *member, in []dispositionIn) (map[string]Probe
 			// Root's disproof of its own expectation in the same Pass has no
 			// independent assessor yet.
 			x.Pending = r.Requester == m.Path && r.Pass == m.p.id && m.Parent == ""
-			if r.Outcome == ProbeError {
+			if d.Setup != "" {
+				setup, err := toolText(name+".setup", d.Setup)
+				if err != nil {
+					return nil, err
+				}
+				passing := e.receiptLocked(strings.TrimSpace(d.Passing))
+				if !r.Matched || !r.Started || !r.Exited || r.TimedOut || r.Uncertain || r.ExitCode == 0 || r.ExitCode >= 128 || r.Output == "" {
+					return nil, fmt.Errorf("%s: setup correction needs an observed failed script exit and evidence before candidate execution; hangs, uncertain stops and Runtime non-starts remain unresolved", name)
+				}
+				if passing == nil || passing.Outcome != ProbePassed || !e.answersForLocked(passing, m.Path) || slices.Index(e.receipts, passing) <= slices.Index(e.receipts, r) ||
+					passing.Stand != r.Stand || passing.Obligation != r.Obligation || passing.Claim != r.Claim || passing.Expected != r.Expected ||
+					passing.Boundary != r.Boundary || passing.Check != r.Check || passing.Executable != r.Executable || passing.Directory != r.Directory ||
+					passing.Path != r.Path || !slices.Equal(passing.Args, r.Args) || passing.ContentDigest == r.ContentDigest {
+					return nil, fmt.Errorf("%s: setup correction names a passing corrected script with unchanged candidate, claim, expectation, boundary, check and invocation", name)
+				}
+				x.Setup, x.Passing, x.Pending = setup, passing.ID, false
+			}
+			if r.Outcome == ProbeError && x.Setup == "" {
 				for _, y := range e.erringRepetitionsLocked(r, m.Path) {
 					if !listed[y.ID] && probeCaused(y) {
 						out[y.ID] = x
@@ -888,6 +934,7 @@ func writeReceipt(b *strings.Builder, r *ProbeReceipt, full bool) {
 		stand += " (" + r.Proposal + ")"
 	}
 	fmt.Fprintf(b, "  Ran on: %s; probe %s (sha256 %s) with %s %s in %s\n", stand, r.Path, short(r.ContentDigest), r.Executable, strings.Join(r.Args, " "), r.Directory)
+	fmt.Fprintf(b, "  Runtime receipt matched request without error: %t\n", r.Matched)
 	if d := r.Disposition; d != nil {
 		status := d.As + " by " + d.By + " in " + d.Pass
 		if d.Pending {
@@ -902,6 +949,9 @@ func writeReceipt(b *strings.Builder, r *ProbeReceipt, full bool) {
 			status += ": " + d.Reason + " Evidence: " + d.Evidence
 		}
 		fmt.Fprintf(b, "  Disposition: %s\n", status)
+		if d.Setup != "" {
+			fmt.Fprintf(b, "  Assessed setup failure before candidate execution: %s; corrected script receipt %s\n", d.Setup, d.Passing)
+		}
 	} else if r.adverse() {
 		b.WriteString("  Disposition: none\n")
 	}

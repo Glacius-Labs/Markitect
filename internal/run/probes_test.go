@@ -26,6 +26,8 @@ func probeOutcomes(r CheckRequest) (CheckReceipt, error, bool) {
 		switch string(e.Bytes()) {
 		case "FAIL":
 			rec.ExitCode, rec.Output = 1, []byte("AssertionError: expected exit 0, got 2")
+		case "BROKEN_SETUP":
+			rec.ExitCode, rec.Output = 1, []byte("SyntaxError at line 1: unexpected end of setup script; no statements executed")
 		case "HANG":
 			rec.Exited, rec.TimedOut, rec.Uncertain, rec.Reason = false, true, true, "the probe timed out"
 		case "NOSTART":
@@ -913,7 +915,7 @@ func TestTheChildJudgesRootsFailedProbeOfItsClaim(t *testing.T) {
 // conditions or prove that a real reviewer finds a semantic omission.
 func TestImplementNeedsDiscriminatingEvidenceAtTheDeclaredEntry(t *testing.T) {
 	f := probeFixture(t)
-	var missing, sourceOnly, privateOnly, noConditions, wrongBoundary ToolAnswer
+	var missing, sourceOnly, privateOnly, wrongBoundary ToolAnswer
 	f.agents.script = func(c *call) error {
 		if c.turn.Manager == "library" && c.turn.Kind == ExecuteTurn && strings.HasPrefix(c.now(), "work on") {
 			cov := c.coverage()
@@ -928,12 +930,10 @@ func TestImplementNeedsDiscriminatingEvidenceAtTheDeclaredEntry(t *testing.T) {
 			privateOnly = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, privateID)}))
 			publicID := receiptOf(t, c.must(toolCheck, probe("library/interface", "model-permitted inputs cross the declared entry and persist", "public.py", "PASS")))
 			cov = withEvidence(c, publicID)
-			delete(cov[0], "conditions")
-			noConditions = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
-			cov = withEvidence(c, publicID)
 			cov[0]["evidence"].([]map[string]string)[0]["boundary"] = "another entry"
 			wrongBoundary = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
 			delete(cov[0]["evidence"].([]map[string]string)[0], "boundary")
+			delete(cov[0], "conditions")
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
 			return nil
 		}
@@ -946,7 +946,7 @@ func TestImplementNeedsDiscriminatingEvidenceAtTheDeclaredEntry(t *testing.T) {
 	if result.Stopped || result.Verdict != Satisfied || out.Status == Verified {
 		t.Fatalf("implementation result %+v, outcome %+v", result, out)
 	}
-	for name, a := range map[string]ToolAnswer{"suite-only": missing, "source for public behavior": sourceOnly, "private receipt": privateOnly, "Definition IDs without conditions": noConditions, "mismatched boundary": wrongBoundary} {
+	for name, a := range map[string]ToolAnswer{"suite-only": missing, "source for public behavior": sourceOnly, "private receipt": privateOnly, "mismatched boundary": wrongBoundary} {
 		if !a.Refused {
 			t.Errorf("%s was accepted: %+v", name, a)
 		}
@@ -992,16 +992,17 @@ func TestEmptyRootCannotCloseIntegrationByAggregatingGreenChildren(t *testing.T)
 	}
 }
 
-func TestFreshReviewerMustRecordModelConditionsBeyondDefinitionIDs(t *testing.T) {
+func TestFreshReviewerAssessesConditionsWithoutMandatoryMapping(t *testing.T) {
 	f := newFixture(t)
-	var refused ToolAnswer
+	var accepted ToolAnswer
 	var independent bool
 	f.agents.script = func(c *call) error {
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
 			independent = strings.Contains(c.turn.Prompt, "Before assessing author claims") && strings.Contains(c.turn.Prompt, "valid inputs wrongly refused") && c.turn.Resume == ""
 			cov := c.coverage()
 			delete(cov[0], "conditions")
-			refused = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
+			accepted = c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
+			return nil
 		}
 		c.protocol()
 		return nil
@@ -1010,8 +1011,8 @@ func TestFreshReviewerMustRecordModelConditionsBeyondDefinitionIDs(t *testing.T)
 	r.Pass(implementSpec())
 	r.Pass(verifySpec())
 	out := f.finish(r, "")
-	if out.Status != Verified || !refused.Refused || !independent {
-		t.Fatalf("status %s, refusal %+v, independent mandate %v", out.Status, refused, independent)
+	if out.Status != Verified || accepted.Refused || accepted.Text == "" || !independent {
+		t.Fatalf("status %s, report %+v, independent mandate %v", out.Status, accepted, independent)
 	}
 }
 
@@ -1063,5 +1064,138 @@ func TestPrepareParentIntegrationNeedsActualFoundationEvidence(t *testing.T) {
 	f.finish(r, "")
 	if res.Stopped || !refused.Refused {
 		t.Fatalf("Prepare integration %+v, missing evidence %+v", res, refused)
+	}
+}
+
+func TestConciseResultsShareExistingTestEvidenceWithoutCoverageMatrix(t *testing.T) {
+	f := probeFixture(t)
+	f.cfg.Start = treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "a", "lending/l.go": "l", "lending/reminders/r.go": "r", "realization/test_entry.py": "existing public-entry assertions"})
+	var id string
+	var existingEdit, fabricated, unresolved ToolAnswer
+	f.agents.script = func(c *call) error {
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
+			req := probe("library/interface", "public contract cases", "test_entry.py", "replacement")
+			pr := req["probe"].(map[string]any)
+			pr["existing"] = true
+			existingEdit = c.tool(toolCheck, req)
+			delete(pr, "content")
+			delete(pr, "args")
+			id = receiptOf(t, c.must(toolCheck, req))
+			args := map[string]any{"kind": kindResult, "summary": "Existing assertions cover the required public cases; no material gaps found.", "verdict": string(Satisfied), "support": []map[string]string{{"kind": "public_behavior", "receipt": "R999"}}}
+			fabricated = c.tool(toolReport, args)
+			args["support"] = []map[string]string{{"kind": "public_behavior", "receipt": id}}
+			args["unresolved"] = []string{"required rejected-input behavior remains untested"}
+			unresolved = c.tool(toolReport, args)
+			delete(args, "unresolved")
+			c.must(toolReport, args)
+			return nil
+		}
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && c.resultTurn() {
+			c.must(toolReport, map[string]any{"kind": kindResult, "summary": "Inspected child assertions and shared entry compatibility; no integration gap found.", "verdict": string(Satisfied), "support": []map[string]string{{"kind": "public_behavior", "receipt": id, "claim": "assessed shared entry composition"}}})
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	res := r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if res.Stopped || out.Status != Verified || !existingEdit.Refused || !fabricated.Refused || !unresolved.Refused {
+		t.Fatalf("result %+v, status %s, refusals %+v %+v %+v", res, out.Status, existingEdit, fabricated, unresolved)
+	}
+	if len(out.Probes) != 1 {
+		t.Fatalf("parent repeated child execution: %d", len(out.Probes))
+	}
+	got := out.Probes[0]
+	if got.ID != id || got.Tree != got.Stand || got.Content != "existing public-entry assertions" || got.ContentDigest == "" || !slices.Equal(got.Args, []string{"-B", "-m", "unittest"}) {
+		t.Fatalf("existing test binding changed: %+v", got)
+	}
+	var leaf, parent bool
+	for _, ev := range f.ev.events {
+		if ev.Kind != "proposal.submitted" || ev.Pass != "p2" && ev.Pass != "run1-p2" {
+			continue
+		}
+		data, ok := ev.Data.(map[string]any)
+		if !ok || data["kind"] != kindResult {
+			continue
+		}
+		env, ok := data["envelope"].(envelope)
+		if !ok {
+			t.Fatal("missing envelope")
+		}
+		if ev.Manager == "library" {
+			leaf = slices.Equal(env.Scope, []string{"library/interface"}) && len(env.Support) == 1 && len(env.Obligations) == 0 && env.Support[0].Stand == got.Stand
+		}
+		if ev.Manager == "." {
+			parent = len(env.Support) == 1 && env.Integration == nil && env.Support[0].Receipt == id
+		}
+	}
+	if !leaf || !parent {
+		t.Fatalf("shared support/scope lost: leaf %v parent %v", leaf, parent)
+	}
+}
+
+func TestSetupCorrectionDoesNotRequireAnotherWholeVerify(t *testing.T) {
+	f := probeFixture(t)
+	f.agents.script = func(c *call) error {
+		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && c.resultTurn() {
+			bad := receiptOf(t, c.must(toolCheck, probe("library/interface", "public contract", "setup.py", "BROKEN_SETUP")))
+			good := receiptOf(t, c.must(toolCheck, probe("library/interface", "public contract", "setup.py", "PASS")))
+			c.must(toolReport, c.envelope(kindResult, map[string]any{"dispositions": []map[string]string{{"receipt": bad, "as": DisposedExpectationError, "reason": "Syntax error before candidate invocation", "evidence": "Retained SyntaxError and corrected same-claim execution", "setup": "Line 1 parse failure prevents every statement, including the candidate invocation", "passing": good}}}))
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	r.Pass(implementSpec())
+	res := r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if res.Stopped || r.Reassess() || out.Status != Verified || len(out.Probes) != 2 {
+		t.Fatalf("setup correction forced another Verify: %+v %s", res, out.Status)
+	}
+	bad := out.Probes[0]
+	if bad.Outcome != ProbeFailed || bad.Content != "BROKEN_SETUP" || bad.Disposition == nil || bad.Disposition.Setup == "" || bad.Disposition.Pending || bad.Disposition.Passing != out.Probes[1].ID {
+		t.Fatalf("failure/correction evidence lost: %+v", bad)
+	}
+}
+
+func TestSetupCorrectionCannotHideUncertainOrDifferentExecution(t *testing.T) {
+	f := probeFixture(t)
+	r := f.open()
+	defer f.finish(r, "bounded disposition controls")
+	e := r.e
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	p := e.newPassLocked(verifySpec())
+	m := p.byPath["."]
+	bad := ProbeReceipt{ID: "R1", Pass: p.id, Requester: ".", Obligation: "library/interface", Claim: "claim", Expected: "expected", Boundary: "public", Check: "tests", Stand: p.tree.Digest().String(), Path: "setup.py", ContentDigest: "bad", Matched: true, Started: true, Exited: true, ExitCode: 1, Output: "SyntaxError", Outcome: ProbeFailed}
+	good := bad
+	good.ID, good.Outcome, good.ContentDigest, good.ExitCode = "R2", ProbePassed, "corrected", 0
+	input := []dispositionIn{{Receipt: bad.ID, As: DisposedExpectationError, Reason: "script parse failure", Evidence: "SyntaxError before candidate invocation", Setup: "line 1 parse failure", Passing: good.ID}}
+	for name, mutate := range map[string]func(*ProbeReceipt, *ProbeReceipt){
+		"hang":                 func(b, g *ProbeReceipt) { b.TimedOut = true },
+		"uncertain":            func(b, g *ProbeReceipt) { b.Uncertain = true },
+		"not started":          func(b, g *ProbeReceipt) { b.Started = false },
+		"mismatched request":   func(b, g *ProbeReceipt) { b.Matched = false },
+		"earlier correction":   func(b, g *ProbeReceipt) {},
+		"candidate":            func(b, g *ProbeReceipt) { g.Stand = "other" },
+		"claim":                func(b, g *ProbeReceipt) { g.Claim = "weaker" },
+		"check":                func(b, g *ProbeReceipt) { g.Check = "other" },
+		"assertions unchanged": func(b, g *ProbeReceipt) { g.ContentDigest = b.ContentDigest },
+		"genuine finding":      func(b, g *ProbeReceipt) { b.Disposition = &ProbeDisposition{As: DisposedViolation, Finding: "F1"} },
+	} {
+		t.Run(name, func(t *testing.T) {
+			b, g := bad, good
+			mutate(&b, &g)
+			e.receipts = []*ProbeReceipt{&b, &g}
+			if name == "earlier correction" {
+				e.receipts = []*ProbeReceipt{&g, &b}
+			}
+			if _, err := e.dispositionsOf(m, input); err == nil {
+				t.Fatal("invalid setup correction accepted")
+			}
+		})
 	}
 }

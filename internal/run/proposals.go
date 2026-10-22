@@ -83,17 +83,20 @@ type proposal struct {
 // planning Pass; Artifacts and Evidence are the payload of the other purposes.
 // Findings and Closed are the finding references the submission recorded.
 type envelope struct {
-	Summary     string     `json:"summary"`
-	Obligations []coverage `json:"obligations"`
-	Integration *coverage  `json:"integration,omitempty"`
-	Plan        *plan      `json:"plan,omitempty"`
-	Artifacts   []string   `json:"artifacts,omitempty"`
-	Evidence    []string   `json:"evidence,omitempty"`
-	Verdict     Verdict    `json:"verdict,omitempty"`
-	Findings    []string   `json:"findings,omitempty"`
-	Closed      []string   `json:"closed,omitempty"`
-	Disputed    []string   `json:"disputed,omitempty"`
-	Children    []string   `json:"children,omitempty"`
+	Summary     string         `json:"summary"`
+	Scope       []string       `json:"scope,omitempty"`
+	Support     []evidenceItem `json:"support,omitempty"`
+	Unresolved  []string       `json:"unresolved,omitempty"`
+	Obligations []coverage     `json:"obligations"`
+	Integration *coverage      `json:"integration,omitempty"`
+	Plan        *plan          `json:"plan,omitempty"`
+	Artifacts   []string       `json:"artifacts,omitempty"`
+	Evidence    []string       `json:"evidence,omitempty"`
+	Verdict     Verdict        `json:"verdict,omitempty"`
+	Findings    []string       `json:"findings,omitempty"`
+	Closed      []string       `json:"closed,omitempty"`
+	Disputed    []string       `json:"disputed,omitempty"`
+	Children    []string       `json:"children,omitempty"`
 }
 
 // coverage is the status of one own obligation with the evidence items that
@@ -171,6 +174,8 @@ type closure struct {
 type reportIn struct {
 	Kind         string          `json:"kind"`
 	Summary      string          `json:"summary"`
+	Support      []evidenceItem  `json:"support"`
+	Unresolved   []string        `json:"unresolved"`
 	For          string          `json:"for"`
 	Proposal     string          `json:"proposal"`
 	Child        string          `json:"child"`
@@ -195,8 +200,8 @@ type reportIn struct {
 var reportFields = map[string][]string{
 	kindProgress: {"summary"},
 	kindWait:     {"for", "reason", "stage"},
-	kindBasis:    {"summary", "obligations", "integration", "plan", "artifacts", "evidence", "findings", "closed", "disputed", "dispositions"},
-	kindResult:   {"summary", "obligations", "integration", "plan", "artifacts", "evidence", "verdict", "findings", "closed", "disputed", "dispositions"},
+	kindBasis:    {"summary", "support", "unresolved", "obligations", "integration", "plan", "artifacts", "evidence", "findings", "closed", "disputed", "dispositions"},
+	kindResult:   {"summary", "support", "unresolved", "obligations", "integration", "plan", "artifacts", "evidence", "verdict", "findings", "closed", "disputed", "dispositions"},
 	kindAccept:   {"proposal"},
 	kindReturn:   {"proposal", "reason"},
 	kindReopen:   {"child", "reason"},
@@ -213,6 +218,8 @@ func (in reportIn) present() []string {
 		}
 	}
 	add("summary", in.Summary != "")
+	add("support", in.Support != nil)
+	add("unresolved", in.Unresolved != nil)
 	add("for", in.For != "")
 	add("proposal", in.Proposal != "")
 	add("child", in.Child != "")
@@ -459,7 +466,20 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 	if err != nil {
 		return refuse("%v", err)
 	}
-	env := envelope{Summary: summary}
+	env := envelope{Summary: summary, Scope: slices.Clone(m.Obligations)}
+	if len(in.Unresolved) > maxToolItems {
+		return refuse("At most %d unresolved gaps per report.", maxToolItems)
+	}
+	if env.Support, err = e.evidenceOf(m, -1, coverage{Evidence: in.Support}, e.boundStandLocked(p)); err != nil {
+		return refuse("support: %v", err)
+	}
+	for _, gap := range in.Unresolved {
+		text, err := toolText("unresolved", gap)
+		if err != nil {
+			return refuse("%v", err)
+		}
+		env.Unresolved = append(env.Unresolved, text)
+	}
 	if env.Obligations, err = e.coverageOf(m, in); err != nil {
 		return refuse("%v", err)
 	}
@@ -513,6 +533,13 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		default:
 			return refuse("verdict must be %q or %q.", Satisfied, NeedsCorrection)
 		}
+		if env.Verdict == Satisfied && len(env.Unresolved) > 0 {
+			return refuse("A satisfied result cannot leave required work or evidence unresolved; raise the concrete finding or resolve the gap first.")
+		}
+		needsSupport := evidenceRequired(p.spec) || !p.spec.Plans && !p.spec.Assesses && (m.Parent == "" || len(m.Children) > 0)
+		if env.Verdict == Satisfied && needsSupport && !hasResultSupport(m, env) {
+			return refuse("A satisfied result needs relevant support for its assessment of the bound scope and integration; a success label or suite total alone is insufficient.")
+		}
 		for _, q := range e.questions {
 			if q.From == m.Path && !q.Answered && !q.Lapsed {
 				return refuse("Your question %s is unanswered; a complete result cannot hide it. Wait for the answer first.", q.ID)
@@ -547,8 +574,8 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 
 // coverageOf validates the obligation coverage of a submission: every entry is
 // an own obligation once, with a known status and a note where one is needed.
-// A complete result covers every own obligation; a planning Pass needs the
-// method and intended evidence of each covered obligation.
+// Detailed entries are optional; the concise result assesses the Host-bound
+// scope. No receipt is mechanically expanded into satisfied Definitions.
 func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 	seen := map[string]bool{}
 	var out []coverage
@@ -576,15 +603,12 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 			}
 		}
 		claimed := c.Status == coverDone || c.Status == coverPreserved
-		if evidenceRequired(m.p.spec) && strings.TrimSpace(c.Conditions) == "" {
-			return nil, fmt.Errorf("obligations[%d]: conditions must justify material conditions, exceptions and interactions from this Definition and required contracts, including uncovered cases", i)
-		}
 		if c.Conditions != "" {
 			if _, err := toolText("conditions", c.Conditions); err != nil {
 				return nil, err
 			}
 		}
-		if (m.p.spec.Review || evidenceRequired(m.p.spec)) && claimed && len(c.Evidence) == 0 {
+		if (m.p.spec.Review || evidenceRequired(m.p.spec)) && claimed && len(c.Evidence) == 0 && len(in.Support) == 0 {
 			return nil, fmt.Errorf("obligations[%d]: %s needs evidence for %s: per claim a probe receipt of the tool check or an inspected source location with reasoning; a suite total alone is no coverage", i, c.Status, c.Definition)
 		}
 		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p))
@@ -593,18 +617,24 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 		}
 		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Conditions: c.Conditions, Evidence: evidence})
 	}
-	if in.Kind == kindResult {
-		var missing []string
-		for _, id := range m.Obligations {
-			if !seen[id] {
-				missing = append(missing, id)
-			}
-		}
-		if len(missing) > 0 {
-			return nil, fmt.Errorf("a complete result covers every own obligation; missing: %s", strings.Join(missing, ", "))
+	return out, nil
+}
+
+// hasResultSupport is a structural minimum, not a semantic completeness proof.
+// Parents assess interfaces and invariants even when they own no Definitions.
+func hasResultSupport(m *member, env envelope) bool {
+	if len(env.Support) > 0 || env.Integration != nil && len(env.Integration.Evidence) > 0 {
+		return true
+	}
+	for _, c := range env.Obligations {
+		if len(c.Evidence) > 0 {
+			return true
 		}
 	}
-	return out, nil
+	if m.Parent == "" || len(m.Children) > 0 {
+		return false
+	}
+	return len(env.Obligations) == len(m.Obligations) && slices.IndexFunc(env.Obligations, func(c coverage) bool { return c.Status != coverNotApplicable }) < 0
 }
 
 // evidenceRequired applies realized-claim evidence to Implement and independent
@@ -620,9 +650,6 @@ func (e *engine) integrationOf(m *member, in reportIn) (*coverage, error) {
 	required := !m.p.spec.Assesses && (m.Parent == "" || len(m.Children) > 0)
 	c := in.Integration
 	if c == nil {
-		if required {
-			return nil, fmt.Errorf("integration is required for every parent, including Root with no own Definitions: justify composed workflows and global invariants")
-		}
 		return nil, nil
 	}
 	if !required {
@@ -634,13 +661,15 @@ func (e *engine) integrationOf(m *member, in reportIn) (*coverage, error) {
 	if c.Status != coverDone && c.Status != coverPreserved && c.Status != coverOpen {
 		return nil, fmt.Errorf("integration.status must be done, preserved or open; every parent owns integration")
 	}
-	if _, err := toolText("integration.conditions", c.Conditions); err != nil {
-		return nil, err
+	if c.Conditions != "" {
+		if _, err := toolText("integration.conditions", c.Conditions); err != nil {
+			return nil, err
+		}
 	}
 	if _, err := toolText("integration.note", c.Note); err != nil {
 		return nil, err
 	}
-	if in.Kind == kindResult && c.Status != coverOpen && !m.p.spec.Plans && len(c.Evidence) == 0 {
+	if in.Kind == kindResult && c.Status != coverOpen && !m.p.spec.Plans && len(c.Evidence) == 0 && len(in.Support) == 0 {
 		return nil, fmt.Errorf("integration needs your own discriminating evidence; accepted child reports alone do not establish composition")
 	}
 	out := *c
@@ -907,6 +936,9 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 	spec := m.p.spec
 	var out []Finding
 	for i, f := range in {
+		if f.Owner == "" {
+			f.Owner = m.Path
+		}
 		if f.Blocking == nil {
 			return nil, fmt.Errorf("findings[%d]: blocking is required", i)
 		}

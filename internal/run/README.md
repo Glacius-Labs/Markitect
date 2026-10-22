@@ -100,27 +100,30 @@ need it or asks its parent, and a Pass that still cannot advance ends as stalled
 
 ## Envelope and verdicts
 
-`report kind basis|result` carries the shared envelope: summary, obligation coverage
-(`done`, `preserved`, `not_applicable`, `open`, with notes and evidence items), the purpose
-payload (`plan` in a planning Pass; `artifacts` and `evidence` otherwise), findings,
-closures, disputes, dispositions of adverse probe receipts and, for a result, the verdict. A result covers every own obligation; a verdict contradicting
+`report kind basis|result` carries a concise summary, shared `support`, concrete
+`unresolved` gaps, the purpose payload (`plan` in planning), findings, closures,
+disputes, adverse-receipt dispositions and, for a result, the verdict. The Host adds
+the exact obligation `scope` and technical identities; it does not expand a receipt
+into satisfied Definitions. Optional `obligations` entries localize detailed claims,
+gaps or inapplicability. A verdict contradicting
 the open genuine findings within the responsibility is refused; a result is refused while
 the Manager's own question is unanswered. Plans are validated (approach, method and
-evidence per obligation, owners of inputs and outputs, dependencies without a cycle with
+evidence, owners of inputs and outputs, dependencies without a cycle with
 the integration order).
 
-In Implement and artifact review, every coverage entry has `conditions`: concise
-references to material conditions, exceptions and interactions in the bound authority,
-why the evidence covers them, and anything still uncovered. Definition IDs alone are not
-coverage. A fresh reviewer derives its own conditions/counterexamples in its basis before
-assessing author coverage, including valid inputs wrongly refused and invalid inputs
-wrongly accepted. Extract retains fixed artifacts/documented intent as authority; its
-proposed model is work product.
+Implement and artifact reviewers assess material conditions, exceptions and interactions
+from the bound authority, explain relevant evidence and gaps, and challenge valid inputs
+wrongly refused and invalid inputs wrongly accepted. No `conditions` field or
+per-obligation mapping artifact is mandatory. Structural evidence validation does not
+establish semantic completeness. Extract retains fixed artifacts/documented intent as
+authority; its proposed model is work product.
 
-Every parent, including Root without own Definitions, carries `integration` in the same
-basis/result envelope: `status`, `conditions`, `note`, and evidence of composed workflows/global invariants.
-The basis and a Plan result state intended integration and its planned evidence; every
-non-Plan result establishes actual integration with evidence beyond accepted child reports. Integration grants no sibling writes.
+Every parent, including Root without own Definitions, assesses composed workflows,
+interfaces and shared invariants in its concise result. Relevant child receipts may be
+reused after assessing their assertions; extra checks address concrete gaps rather than
+routine repetition. Accepted-child labels alone are insufficient. `integration` remains
+optional detail; shared `support` is sufficient structurally, while adequacy is a semantic
+judgment. Integration grants no sibling writes.
 Source evidence cites a real Definition in `authority`, or `pass_mandate` for the already
 bound integration task where no Definition supplies it; this is no synthetic Definition
 or new authority. Open integration cannot yield a satisfied result/Pass.
@@ -169,15 +172,18 @@ is standalone: include all imports, setup and helpers in its content; another pr
 files or process state do not carry over. Each Agent Turn also uses a fresh container.
 Its conversation and provider-home files persist, but tool/REPL variables and `/tmp`
 do not. Save a recipe in the provider home or send its complete content again.
-Plan one bounded probe per reviewer Turn; attempt a second only when observed tool
-latency leaves conservative time for a valid report and any repair. Receipts report
-the remaining Turn time. A late-check refusal means report progress (`kind` and
-`summary` only) and end the Turn; it does not invite another probe.
+The Runtime bounds checks and reserves time for a report; it refuses a check that
+cannot fit. The Manager reports progress and continues in a later Turn. The prompt
+does not prescribe probe counts or require the Agent to schedule Runtime cleanup.
 The probe names its obligation (own or a descendant's), claim and expected outcome; they are recorded
 (`probe.requested`) before it runs. It runs on a stable stand: the candidate in a review,
 the accepted stand in a Pass without writes, a child's checked proposal, or in a Pass with
 writes the caller's live area composed with the accepted stand. The file is added to that
-stand in the check's directory and never replaces a project file. The Orchestrator keeps
+stand in the check's directory and never replaces a project file. With `existing: true`,
+`path` selects a captured test file unchanged, `content` is omitted, and omitted `args`
+uses the configured check invocation. Its original bytes and digest are retained and
+the executed tree equals the stand; its actual assertions still require assessment.
+The Orchestrator keeps
 the receipt (`probe.receipt`, `Outcome.Probes`): the binding, the probe bytes and digest,
 the invocation and what the Runtime observed. Its outcome is the probe's own assertion
 verdict: `passed` for an observed zero exit of exactly that request, `failed` for an
@@ -186,7 +192,7 @@ started, timed out, uncertain, mismatched, not executable with exit 126 or 127, 
 by a signal with exit 128 or above), which never counts as a pass or as an expected
 refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
 Implement and artifact-review `done`/`preserved` claims require typed evidence.
-`kind: public_behavior` cites an own passing receipt with a nonempty `probe.boundary`.
+`kind: public_behavior` cites a passing receipt within the responsibility with a nonempty `probe.boundary`.
 A passing execution may support several assessed claims and Definitions. Explain
 its actual support and gaps; the retained invocation and assertions remain unchanged. A failed receipt belongs in a genuine finding (or its
 reasoned disposition), not in coverage evidence. A failure of an own public
@@ -226,11 +232,12 @@ before that point; late in a turn it is refused rather than letting the timeout 
 turn.
 A helper runs no probe; `look_up topic probe` returns a whole receipt.
 
-A coverage entry's evidence items each support one claim: a receipt (the caller's own,
-for that Definition, passed), which brings its own claim and supports one item of a
-submission, or an inspected source file with claim, location and reasoning. In a review
-every `done` or `preserved` obligation needs at least one item; a suite total is no item,
-and whether the items cover the Definition's claims is the parent's judgment. Items bind to the stand of the submission: the candidate or the unchanged accepted
+Evidence items support assessed conclusions through a passing receipt or an inspected
+source file with claim, location and reasoning. Shared support is retained once; a
+receipt can support multiple conclusions without mandatory duplicate entries. A bare
+satisfied result or suite total is insufficient, and concrete unresolved required gaps
+cannot be satisfied. Whether the evidence covers the bound scope is the reviewer's and
+parent's judgment. Items bind to the stand of the submission: the candidate or the unchanged accepted
 stand at once, in a Pass with writes the checked stand after the writers stopped, where a
 receipt of another stand returns the submission to its owner. A parent's proposal view
 shows the child's evidence and every probe it ran in the Pass, adverse ones included.
@@ -251,7 +258,16 @@ that submission is reopened or invalidated; a parent's acceptance is the indepen
 assessment of a child's own disproof. The reviewer of an obligation's owner may also judge
 an ancestor's adverse receipt about that obligation, as an independent context, so Root
 returns or reopens a child's proposal for its own failed probe of the child's claim.
-Root's disproof of its own receipt in the same Pass awaits a fresh review: the Pass verdict needs correction and `Reassess` runs a new Verify of
+For a demonstrated script setup failure before candidate execution, the existing
+`expectation_error` disposition may include `setup` evidence and the `passing` corrected
+script receipt. The candidate, claim, expectation, boundary, check and invocation must
+match; the observed failed exit and corrected bytes are retained. `setup` is explicitly
+the reviewer's semantic assessment, not a Host certification of nonexecution. Ordinary
+review and parent integration assess it; it does not force another whole Verify solely
+to disprove that broken script, including at Root. Hangs, uncertain stops, Runtime
+non-starts and genuine findings do not use this exception; required-check failures stay
+blocking. Other Root disproofs of its own receipt in the same Pass await a fresh review:
+the Pass verdict needs correction and `Reassess` runs a new Verify of
 the unchanged candidate, whose Root reviewer confirms it or raises a finding. A done claim
 with an undisposed adverse receipt of its own and a satisfied result with one within the
 responsibility are refused.
