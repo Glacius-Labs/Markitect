@@ -26,7 +26,7 @@ class SupervisorControls(unittest.TestCase):
              'authoritySha256': runner.sha(root / 'authority.json'),
              'provider': {'name': 'codex-app-server', 'model': 'gpt-6-luna', 'effort': 'high',
                           'credentialMode': 'dedicated-runtime-login', 'credentialSourceVolume': 'mk-codex-runtime-auth',
-                          'minimumRemainingQuotaPercent': 25},
+                          'minimumRemainingQuotaPercent': 10},
              'ceilings': {'starts': 3, 'attemptSeconds': 2700, 'summedSeconds': 8100, 'retries': 0,
                           'workDeadlineFromAttemptStartSeconds': 1740, 'providerDeadlineFromAttemptStartSeconds': 2460,
                           'outerProcessDeadlineFromAttemptStartSeconds': 2490, 'writerStopCleanupReserveSeconds': 180,
@@ -97,6 +97,46 @@ class SupervisorControls(unittest.TestCase):
             self.assertEqual(sum(r['chargedSeconds'] for r in runner.read_ledger(ledger, m)), 8100)
             with self.assertRaises(runner.GuardRefusal):
                 runner.reserve_dispatch(root, dict(m['packets'][2], name='fourth', startNumber=4), m, path, clock)
+
+    def test_actual_quota_reserve_boundary_and_account_limits(self):
+        quota = {'primary': {'usedPercent': 90}, 'secondary': None, 'rateLimitReachedType': None}
+        metadata = {'quota': {'rateLimitsByLimitId': {'codex': quota}, 'rateLimits': None}}
+        runner.validate_quota(metadata, 10)
+        for changed in ({'primary': {'usedPercent': 91}}, {'secondary': {'usedPercent': 91}},
+                        {'rateLimitReachedType': 'limit'}, {'spendControlReached': True}):
+            with self.subTest(change=changed), self.assertRaises(runner.GuardRefusal):
+                runner.validate_quota({'quota': {'rateLimitsByLimitId': {'codex': dict(quota, **changed)},
+                                                'rateLimits': None}}, 10)
+        with self.assertRaises(runner.GuardRefusal):
+            runner.validate_quota(metadata, 25)
+
+    def test_only_sol3_authorizes_ten_percent_reserve(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, gate, m, g = self.sol3_manifest(root)
+            runner.validate(path, gate, files=False)
+            for invalid in (9, 25):
+                altered = copy.deepcopy(m)
+                altered['provider']['minimumRemainingQuotaPercent'] = invalid
+                runner.write(path, altered)
+                runner.write(gate, dict(g, manifestSha256=runner.sha(path)))
+                with self.subTest(reserve=invalid), self.assertRaises(runner.GuardRefusal):
+                    runner.validate(path, gate, files=False)
+            m.update(series='NIGHT-20261021', nightRoot=str(root),
+                     absoluteStartCutoffUtc='2026-10-22T04:00:00Z',
+                     absoluteAttemptStopUtc='2026-10-22T04:45:00Z', writersStoppedByUtc='2026-10-22T04:55:00Z')
+            m['provider'].update(model='gpt-6.1-sol', minimumRemainingQuotaPercent=25)
+            m['ceilings'].update(starts=6, summedSeconds=16200)
+            for packet in m['packets']:
+                packet['scenario'] = 'NIGHT-P'
+            runner.write(path, m)
+            runner.write(gate, dict(g, manifestSha256=runner.sha(path)))
+            runner.validate(path, gate, files=False)
+            m['provider']['minimumRemainingQuotaPercent'] = 10
+            runner.write(path, m)
+            runner.write(gate, dict(g, manifestSha256=runner.sha(path)))
+            with self.assertRaises(runner.GuardRefusal):
+                runner.validate(path, gate, files=False)
 
     def test_sol3_refuses_sol_or_an_unbound_effort_after_luna_owner_change(self):
         with tempfile.TemporaryDirectory() as folder:
