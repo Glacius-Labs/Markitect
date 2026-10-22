@@ -227,12 +227,17 @@ func (w *Workspaces) Integrate(ctx context.Context, parent, child run.Assignment
 	return result, nil
 }
 
+const (
+	assignmentGitName  = "Markitect"
+	assignmentGitEmail = "assignment@markitect.invalid"
+)
+
 func assignmentGitArgs(args ...string) []string {
 	return assignmentGitArgsAt("/work", args...)
 }
 
 func assignmentGitArgsAt(directory string, args ...string) []string {
-	return append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=Markitect", "-c", "user.email=assignment@markitect.invalid", "-C", directory}, args...)
+	return append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=" + assignmentGitName, "-c", "user.email=" + assignmentGitEmail, "-C", directory}, args...)
 }
 
 // integrationGit runs while Workspaces.mu holds both volume ownerships stable.
