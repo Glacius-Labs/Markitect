@@ -135,7 +135,10 @@ func writable(mounts []run.PathMount) bool {
 }
 
 func providerArgv(mode string) []string {
+	// Luna's model metadata can select V2 despite features.multi_agent=false.
+	// agents.enabled=false overrides that metadata; explicit V2 must be off too.
 	args := []string{"/usr/local/bin/codex", "app-server", "--disable", "apps", "--disable", "memories",
+		"--disable", "multi_agent", "--disable", "multi_agent_v2", "-c", "agents.enabled=false",
 		"--disable", "image_generation", "--disable", "browser_use", "--disable", "computer_use",
 		"-c", `mcp_servers={markitect={command="/usr/local/bin/markitect-agentd",args=["mcp"]}}`,
 		"-c", `cli_auth_credentials_store="file"`}
