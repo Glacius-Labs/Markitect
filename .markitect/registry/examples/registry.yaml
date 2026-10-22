@@ -1644,6 +1644,14 @@ artifacts:
     form: doc
     realizes: [examples/independent-oracles]
     why: Gives one coding Agent a neutral instruction to restore the actual existing Readinglog application to the selected visible baseline requirements.
+  - path: "experiments/test-projects/comparison/readinglog/01-finish-status/requirements.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Supplies the complete ordinary Readinglog 0.2 requirements, preserving baseline semantics and adding finish and status filtering for own-result continuation.
+  - path: "experiments/test-projects/comparison/readinglog/01-finish-status/implementation-prompt.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Gives one coding Agent a neutral instruction to update its own actual prior Readinglog result to the current requirements.
   - path: "experiments/test-projects/readinglog/oracle/checks.py"
     form: code
     realizes: [examples/independent-oracles]
