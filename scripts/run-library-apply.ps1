@@ -6,6 +6,7 @@ Build and run one fresh Library r2 Apply through the product command.
 ##>
 param(
     [Parameter(Mandatory = $true)][string]$CredentialPath,
+    [string]$RunName = '',
     [string]$OutputRoot = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Codex\Markitect-Library-Runs'),
     [int]$MaxMessages = 40,
     [int]$Minutes = 45,
@@ -25,8 +26,11 @@ if (-not (Test-Path -LiteralPath $CredentialPath -PathType Leaf)) { throw 'The d
 # Every invocation creates a new directory before a build or provider effect.
 $OutputRoot = [IO.Path]::GetFullPath($OutputRoot)
 New-Item -ItemType Directory -Path $OutputRoot -Force | Out-Null
-$runName = 'library-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '-' + [Guid]::NewGuid().ToString('N').Substring(0, 8)
+$runName = $RunName
+if ($runName -eq '') { $runName = 'library-' + [DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ') + '-' + [Guid]::NewGuid().ToString('N').Substring(0, 8) }
+if ($runName.Length -gt 50 -or $runName -cnotmatch '^[a-zA-Z0-9][a-zA-Z0-9_.-]*$') { throw 'RunName must be a safe unique name of at most 50 characters.' }
 $runDir = Join-Path $OutputRoot $runName
+if (Test-Path -LiteralPath $runDir) { throw "Run directory already exists: $runDir" }
 New-Item -ItemType Directory -Path $runDir -ErrorAction Stop | Out-Null
 $source = Join-Path $runDir 'source'
 $fixture = Join-Path $runDir 'fixture'
