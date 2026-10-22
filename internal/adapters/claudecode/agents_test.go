@@ -52,13 +52,15 @@ func (f *fakeStream) close() { f.once.Do(func() { close(f.done) }) }
 // fakeRuntime plays one provider: it acknowledges initialize, answers the
 // prompt with init, the scripted Orchestrator tool calls and a result.
 type fakeRuntime struct {
-	mu      sync.Mutex
-	stream  *fakeStream
-	tools   chan frame.ToolCall
-	spec    container.ContainerSpec
-	start   frame.Start
-	writes  [][]byte
-	replies []frame.ToolReply
+	mu           sync.Mutex
+	stream       *fakeStream
+	tools        chan frame.ToolCall
+	spec         container.ContainerSpec
+	start        frame.Start
+	starts       []frame.Start
+	writes       [][]byte
+	replies      []frame.ToolReply
+	roundReplies int
 
 	session   string // init session_id
 	calls     []frame.ToolCall
@@ -84,7 +86,12 @@ func (f *fakeRuntime) emit(line string) { f.stream.chunks <- []byte(line + "\n")
 func (f *fakeRuntime) StartProvider(_ context.Context, s frame.Start) (frame.Started, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
+	if len(f.starts) > 0 {
+		f.stream = &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}
+		f.roundReplies = 0
+	}
 	f.start = s
+	f.starts = append(f.starts, s)
 	return frame.Started{PID: 7}, f.startErr
 }
 func (f *fakeRuntime) Stdout() io.Reader                { return f.stream }
@@ -134,7 +141,8 @@ func (f *fakeRuntime) finish() {
 func (f *fakeRuntime) Reply(r frame.ToolReply) error {
 	f.mu.Lock()
 	f.replies = append(f.replies, r)
-	n := len(f.replies)
+	f.roundReplies++
+	n := f.roundReplies
 	f.mu.Unlock()
 	if n == len(f.calls) {
 		f.finish()
@@ -145,6 +153,7 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.stopCalls++
+	f.stream.close()
 	if f.stopErr != nil {
 		return frame.Exited{}, f.stopErr
 	}
@@ -203,6 +212,133 @@ func echoHandler(calls *[]string) run.ToolHandler {
 	return func(_ context.Context, name string, args json.RawMessage) run.ToolAnswer {
 		*calls = append(*calls, name+" "+string(args))
 		return run.ToolAnswer{Text: "orchestrator says ok"}
+	}
+}
+
+func TestAssignmentKeepsContainerAndResumesClaudeBetweenMessages(t *testing.T) {
+	rt := newFakeRuntime()
+	rt.calls = []frame.ToolCall{{ID: 1, Name: "ask_parent", Arguments: json.RawMessage(`{"question":"which scope?"}`)}}
+	h := newHarness(t, rt, validProfile())
+	var seen []string
+	session, err := h.agents.OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "agent-1", Profile: "claude", Workspace: "agent-ws", Home: "agent-home",
+		Tools: []run.ToolSpec{{Name: "ask_parent", Description: "Ask parent", InputSchema: json.RawMessage(`{"type":"object"}`)}},
+	}, echoHandler(&seen))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := session.Message(context.Background(), strings.Repeat("x", 1<<20), 0); !errors.Is(err, run.ErrContextLimit) || len(rt.starts) != 0 {
+		t.Fatalf("oversized message started a provider: %v starts=%d", err, len(rt.starts))
+	}
+	first, err := session.Message(context.Background(), "build the scope", 0)
+	if err != nil || !first.Completed || first.Stopped || first.Conversation != "conversation-1" || rt.closed {
+		t.Fatalf("first response = %+v, %v closed=%v", first, err, rt.closed)
+	}
+	second, err := session.Message(context.Background(), "correct the scope", 0)
+	if err != nil || !second.Completed || second.Stopped || second.Conversation != "conversation-1" || rt.closed {
+		t.Fatalf("second response = %+v, %v closed=%v", second, err, rt.closed)
+	}
+	if h.starts != 1 || len(rt.starts) != 2 || rt.stopCalls != 2 || argAfter(rt.starts[0].Argv, "--resume") != "<absent>" ||
+		argAfter(rt.starts[1].Argv, "--resume") != "conversation-1" || !strings.Contains(string(rt.writes[3]), "correct the scope") || len(seen) != 2 {
+		t.Fatalf("continuation: containers=%d providers=%d stops=%d writes=%q questions=%v", h.starts, len(rt.starts), rt.stopCalls, rt.writes, seen)
+	}
+	if rt.spec.Mounts[0].Volume != "agent-ws" || rt.spec.Mounts[1].Volume != "agent-home" {
+		t.Fatalf("assignment mounts = %+v", rt.spec.Mounts)
+	}
+	closed, err := session.Close(context.Background())
+	if err != nil || !closed.Stopped || !rt.closed {
+		t.Fatalf("close = %+v, %v runtime closed=%v", closed, err, rt.closed)
+	}
+}
+
+func TestAssignmentAbortsWaitingProviderAndKeepsOtherAgentSeparate(t *testing.T) {
+	stalled := newFakeRuntime()
+	stalled.silent = true
+	h1 := newHarness(t, stalled, validProfile())
+	first, err := h1.agents.OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "agent-1", Profile: "claude", Workspace: "ws-one", Home: "home-one",
+	}, echoHandler(new([]string)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	finished := make(chan error, 1)
+	go func() { _, err := first.Message(context.Background(), "wait", 0); finished <- err }()
+	deadline := time.After(5 * time.Second)
+	for {
+		stalled.mu.Lock()
+		started := len(stalled.starts) > 0
+		stalled.mu.Unlock()
+		if started {
+			break
+		}
+		select {
+		case <-deadline:
+			t.Fatal("provider did not start")
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
+	closed, err := first.Close(context.Background())
+	if err == nil || !errors.Is(err, context.Canceled) || !closed.Stopped || !stalled.closed {
+		t.Fatalf("abort = %+v, %v runtime closed=%v", closed, err, stalled.closed)
+	}
+	if err := <-finished; !errors.Is(err, context.Canceled) {
+		t.Fatalf("message after abort = %v", err)
+	}
+	other := newFakeRuntime()
+	h2 := newHarness(t, other, validProfile())
+	second, err := h2.agents.OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "agent-2", Profile: "claude", Workspace: "ws-two", Home: "home-two",
+	}, echoHandler(new([]string)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := second.Message(context.Background(), "independent work", 0)
+	if err != nil || !result.Completed || h1.starts != 1 || h2.starts != 1 || other.spec.Mounts[0].Volume != "ws-two" || argAfter(other.starts[0].Argv, "--resume") != "<absent>" {
+		t.Fatalf("independent assignment = %+v, %v spec=%+v", result, err, other.spec)
+	}
+	if _, err := second.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAssignmentCloseInterruptsParentQuestion(t *testing.T) {
+	rt := newFakeRuntime()
+	rt.calls = []frame.ToolCall{{ID: 1, Name: "ask_parent", Arguments: json.RawMessage(`{"question":"what now?"}`)}}
+	h := newHarness(t, rt, validProfile())
+	entered := make(chan struct{})
+	release := make(chan struct{})
+	session, err := h.agents.OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "agent-1", Profile: "claude", Workspace: "agent-ws", Home: "agent-home",
+		Tools: []run.ToolSpec{{Name: "ask_parent", Description: "Ask parent", InputSchema: json.RawMessage(`{"type":"object"}`)}},
+	}, func(context.Context, string, json.RawMessage) run.ToolAnswer {
+		close(entered)
+		<-release
+		return run.ToolAnswer{Text: "too late"}
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	messageDone := make(chan error, 1)
+	go func() { _, err := session.Message(context.Background(), "question", 0); messageDone <- err }()
+	select {
+	case <-entered:
+	case <-time.After(5 * time.Second):
+		t.Fatal("parent question was not delivered")
+	}
+	closeDone := make(chan error, 1)
+	go func() { _, err := session.Close(context.Background()); closeDone <- err }()
+	select {
+	case err := <-closeDone:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("close = %v", err)
+		}
+	case <-time.After(5 * time.Second):
+		t.Fatal("close waited for the parent answer")
+	}
+	close(release)
+	if err := <-messageDone; !errors.Is(err, context.Canceled) || !rt.closed {
+		t.Fatalf("message = %v closed=%v", err, rt.closed)
 	}
 }
 

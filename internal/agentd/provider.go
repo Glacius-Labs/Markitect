@@ -35,8 +35,9 @@ type provider struct {
 	inClosed bool
 	inBroken bool
 
-	done chan struct{}
-	exit frame.Exited
+	done     chan struct{}
+	reported chan struct{}
+	exit     frame.Exited
 }
 
 // startProvider starts cmd. The caller holds out's lock, so no provider
