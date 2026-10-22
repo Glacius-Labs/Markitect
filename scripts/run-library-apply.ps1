@@ -76,6 +76,10 @@ try {
     Invoke-NativeChecked 'fixture init' { & $git -C $fixture init --initial-branch=dev/library-r2 }
     Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local user.name 'Markitect Library Fixture' }
     Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local user.email 'fixture@markitect.invalid' }
+    Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local author.name 'Markitect Library Fixture' }
+    Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local author.email 'fixture@markitect.invalid' }
+    Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local committer.name 'Markitect Library Fixture' }
+    Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local committer.email 'fixture@markitect.invalid' }
     Invoke-NativeChecked 'fixture add' { & $git -C $fixture add --all }
     Invoke-NativeChecked 'fixture commit' { & $git -C $fixture commit -m 'Library r2 requirement baseline' }
     $fixtureHead = (& $git -C $fixture rev-parse HEAD).Trim()
