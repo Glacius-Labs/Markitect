@@ -75,6 +75,7 @@ type fakeRuntime struct {
 	commandItems   []map[string]any
 	terminalStatus string
 	resumeMismatch bool
+	threadError    bool
 	errorText      string
 	stopFail       bool
 	notifications  []string
@@ -106,6 +107,10 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	case "initialize":
 		f.emit(`{"id":1,"result":` + codecInitialization + `}`)
 	case "thread/start", "thread/resume":
+		if f.threadError {
+			f.emit(`{"id":2,"error":{"code":-32000,"message":"thread unavailable"}}`)
+			break
+		}
 		thread := codecThread
 		if f.resumeMismatch {
 			thread = strings.ReplaceAll(thread, string(codecThreadID), "wrong-thread")

@@ -97,13 +97,30 @@ The upstream root `LICENSE` at the same commit is Apache-2.0, SHA-256 `d17f227e4
 
 `Run(ctx, turn, handler)` admits the turn before anything starts: a known profile, plain volume names for workspace and home, a read-only workspace and no writable mount for a Verify turn (which may resume only its own reviewer thread of the same review Pass), distinct clean relative `Turn.Mounts` paths, and offered tools with unique names, descriptions and object schemas. A refused turn starts no container and reports `Stopped`. Otherwise one turn is one container:
 
-- The workspace volume is mounted at `/work` with `NoCopy`, read-only when `turn.ReadOnly`, followed by one `NoCopy` overlay per `turn.Mounts` entry (the same volume's subpath `Path` at `/work/Path`, read-only unless `Writable`); the home volume at `/home/agent`; user `1000:1000`; resource limits and network from the profile. Codex runs `/usr/local/bin/codex app-server` with native delegation and unrelated UI features disabled and the offered tools served through `/usr/local/bin/markitect-agentd mcp`. Approval policy is `never` and Codex's own sandbox is `danger-full-access` inside the hardened container, so a read-only turn is read-only because its workspace mount is.
+- The workspace volume is mounted at `/work` with `NoCopy`, read-only when `turn.ReadOnly`, followed by one `NoCopy` overlay per `turn.Mounts` entry (the same volume's subpath `Path` at `/work/Path`, read-only unless `Writable`); the home volume at `/home/agent`; user `1000:1000`; resource limits and network from the profile. Codex runs `/usr/local/bin/codex app-server` with unrelated UI features disabled and the offered tools served through `/usr/local/bin/markitect-agentd mcp`. Approval policy is `never` and Codex's own sandbox is `danger-full-access` inside the hardened container, so a read-only turn is read-only because its workspace mount is.
 - The handshake is `initialize`, `initialized` and either persistent `thread/start` or `thread/resume` naming only `turn.Resume`, whose returned thread must match exactly. One `turn/start` carries `turn.Prompt` and the profile's effort.
 - Every Orchestrator tool call is answered through the handler, one at a time, with known secrets removed from its arguments. The call must name an offered tool and carry the turn's own thread ID. The answer text becomes the MCP text; a refused answer is reported to the provider as `isError:true` and does not fail the turn. The turn ends at Codex's terminal status: `completed` is success, `failed` and `interrupted` return an error with the conversation kept. A non-retrying provider `error` notification, or a terminal event with an unanswered tool call, is a protocol error.
 - `Conversation` is the thread ID. `Final` contains only an `agentMessage` whose native phase is `final_answer`; commentary and a missing phase supply no final assessment. `Completed` is set only by a successful native Turn completion, separately from container `Stopped` and returned errors. Completed command items retain their native identity, invocation, status, exit and output in `Commands`, with known secrets redacted; a recovered shell error is not itself a failed native Turn. Command observations are not candidate-bound conformance receipts. `Usage` sums the `thread/tokenUsage/updated` reports of the turn (`last`, one per model request): cached input is reported as `CacheReadTokens` and removed from `InputTokens`, `cacheWriteInputTokens` is `CacheCreationTokens`, each report counts one `ProviderTurns`, the model comes from the thread response, and there is no cost. A turn that reports nothing has zero usage.
 - When the provider turn ends, the timeout passes or the context ends, the adapter asks agentd to stop the provider's process group and closes the connection, which ends the container. `Stopped` is true only when agentd's exit was observed and `Close` ended the container without having to remove it by force, or when no container was ever started; a failed container creation is uncertain and not stopped. Cancellation and connection close alone do not prove termination. A failed write may have been partial and is never repeated.
 
 `turn.Transcript`, when set, is an absolute path opened in append mode. It receives one JSON line per exchange (`at`, `direction`, `data`): Orchestrator writes, provider output lines, tool calls and replies and the observed exit, each with known secrets redacted. A transcript that could not be written fails the turn.
+
+## Persistent assignments: `run.AssignmentAgents`
+
+`OpenAssignment` starts one container and App Server process and completes only
+`initialize` / `initialized`. It sends no `thread/start`, `thread/resume` or
+`turn/start` until the first `Message`. This allows the Host to prepare dormant
+Manager containers concurrently before giving them assignments. The first
+message starts the thread; later messages, including corrections after Verify,
+reuse that thread, process, home and mounted workspace until `Close`.
+
+Closing a dormant assignment stops its process and container without reporting a
+conversation, completed response or usage. A pre-cancelled first message starts
+no thread. Failed thread creation closes the assignment and retains its partial
+transcript and cleanup observation; it never starts a turn. These are fake-runtime
+source checks, not evidence of provider or Apply execution. The single-turn
+`Run` entrypoint still initializes, starts/resumes its thread and executes its
+prompt immediately, then closes its container.
 
 ### Native subagent notifications
 

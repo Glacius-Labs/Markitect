@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/codexappserver/agents_lazy_thread_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: "Proves dormant assignment initialization, first-message thread start, persistent reuse with native children, and retained cleanup evidence before a conversation or after failed thread creation."
   - path: "internal/adapters/codexappserver/agents_subagents_test.go"
     form: test
     realizes: [product/ports-and-adapters]
