@@ -123,8 +123,10 @@ The retained identity bytes are bounded by the protocol byte limit. Recognized
 child thread/turn lifecycle, item and child-local error notifications remain in
 the transcript and do not change the Manager's turn ID, Final, commands or usage.
 Only the bound Manager's own terminal event can complete its response. Unrelated
-thread events, mismatched Manager turns and foreign/unoffered Orchestrator tool
-calls remain protocol errors. This is provider event correlation, not semantic
+thread-start, turn lifecycle and item notifications, mismatched Manager turns
+and foreign/unoffered Orchestrator tool calls remain protocol errors. Foreign
+usage reports and other unconsumed notifications remain best-effort observations
+that are ignored. This is provider event correlation, not semantic
 acceptance of the resulting work. Regression tests establish adapter behavior;
 a new coordinated provider attempt supplies separate runtime evidence.
 
