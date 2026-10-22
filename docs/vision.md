@@ -49,6 +49,14 @@ Three prerequisites belong to that goal: the model can adequately express the in
 
 The [workflow](design/canonical-model/manager-apply-workflow.md#semantic-coverage-and-parent-integration) defines the semantic obligation; [measurement](measurement.md#evidence-for-the-primary-goal) defines discriminating evidence. Neither complete Definition IDs nor successful tests alone establish that every material condition is realized.
 
+## Proportionate Agent process
+
+The owner's [22 October clarification](concepts/sources/proportionate-agent-process-20261022.md) reaffirms DEC-002: the practical baseline is giving a coding Agent a task and trusting its work. Markitect should improve that trust through explicit model intent, bounded ownership, independent perspectives and parent integration. It is not a formal proof system. Agents judge meaning; the Host guarantees the required participation, authority boundaries and controlled completion.
+
+Use the smallest process that supports those responsibilities. More report fields, mandatory probes or completeness declarations do not themselves improve correctness. Tests and inspected artifacts support professional judgment; uncertainty about a concrete required property remains visible, but an imagined possibility of another defect must not create endless review. Parents assess composition and challenge relevant child evidence without routinely repeating all child work. Judge the method by actual consistency, detected and repaired defects, false findings, completed workflows and human intervention against the ordinary Agent baseline.
+
+The [Apply simplification review](design/canonical-model/manager-apply-workflow.md#proportionate-process-review-22-october-2026) proposes specific removals. The principle is accepted; those proposals are not silently substituted for current contracts or claimed as implemented.
+
 ## The thesis
 
 > **Define the desired project world once. Reconcile its representations without losing intent.**

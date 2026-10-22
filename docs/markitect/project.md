@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:59597d5f328837b29de1ed6ff989cb19276cd3366cafab2716bdc8e61e11e6a1`.
+Canonical model digest: `sha256:ed68a2ae12e51408a277ba217291233843ef22e5e8a6efa96c0bfe03221aa64e`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -244,13 +244,15 @@ People maintain the canonical intended world. Artifacts realize its obligations.
 
 ### repository/learning-driven-workflow
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/repository/learning-driven-workflow.yaml` (original bytes `sha256:f050bb80233c979e76ecbe8f4c4e181bad5b390e263f26df5a62921b59031658`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/repository/learning-driven-workflow.yaml` (original bytes `sha256:92548c9c56e72b8d54d69883ca366df1a8363a15cff1ed8ebcc0c7e4c8ef8f3b`).
 
 Develop Markitect through explicit learning and complete user workflows. Separate observed facts, owner reports, assistant assessments, recommendations and accepted decisions. Similar independent-looking designs are evidence of conceptual stability, not proof that the method works.
 
 Before a substantial redesign, record briefly in the existing owning design or decision document: the new observation, the prior assumption it challenges, the resulting design change, and the observable result that would demonstrate improvement. An accepted foundation gets a coherent period of actual use. Keep the current complete-workflow target stable; fix concrete failures, missing accepted obligations and necessary blocked steps before unrelated generalization. New evidence can justify a bounded correction or an owner decision; this is not a ban on necessary redesign.
 
 Investigate a consequential uncertain technical boundary early with the smallest useful real probe before dependent design or implementation hardens. Record its observations and limits, and preserve separate finite authority for provider runs, studies, releases and deployments. Independent design review examines whether each added mechanism addresses an observed failure or accepted obligation and whether a simpler approach would serve it. Existing quality, review, evidence and write safeguards remain in force.
+
+Evaluate the Agent process against ordinary delegated coding practice. Prefer the smallest process that improves trust through model intent, clear responsibilities, independent perspectives and parent integration. Do not substitute expanding prompts, mandatory evidence fields or completeness declarations for semantic judgment. Review removals as well as additions when protocol work obstructs the complete workflow. Separate an accepted guideline from proposed contract changes and their actual implementation; technical supervision failures are not evidence that semantic review failed.
 
 At design and delivery milestones, the responsible chat gives the owner a short workflow-oriented account: what the owner can now do, what Markitect takes over, where human intervention remains, and which next observation could change the assessment. Derive this account from existing sources and exact evidence; do not create a parallel status system, mandatory periodic automation or another standing approval gate. Keep one current owner per knowledge subject, date historical status and link to current owners.
 
