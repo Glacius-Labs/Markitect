@@ -8,14 +8,30 @@ import (
 	"unicode/utf8"
 )
 
-// Keep each Git-difference message well below the smallest provider channel
-// limit. All parts go to the same Manager conversation before a decision is
-// offered; no part of a fixed text difference is silently omitted.
-const reviewChangeChunkBytes = 256 << 10
+// The Codex channel checks the complete JSON frame, where characters such as
+// '&' can expand sixfold. A 128 KiB raw part stays below its 1 MiB frame limit
+// even with that expansion and the fixed review prompt around it. All parts go
+// to the same Manager conversation before a decision is offered.
+const reviewChangeChunkBytes = 128 << 10
+const reviewSummaryBytes = 8 << 10
 
-func reviewChangeParts(changes string) []string {
+func boundedReviewSummary(summary string) string {
+	if len(summary) <= reviewSummaryBytes {
+		return summary
+	}
+	cut := reviewSummaryBytes
+	for cut > 0 && !utf8.RuneStart(summary[cut]) {
+		cut--
+	}
+	return summary[:cut] + "\n[child summary truncated for review delivery; inspect the fixed Git difference]"
+}
+
+func reviewChangeParts(changes string) ([]string, error) {
+	if !utf8.ValidString(changes) {
+		return nil, errors.New("child Git difference contains invalid UTF-8 and cannot be delivered for parent review")
+	}
 	if len(changes) <= reviewChangeChunkBytes {
-		return []string{changes}
+		return []string{changes}, nil
 	}
 	parts := make([]string, 0, 1+len(changes)/reviewChangeChunkBytes)
 	for len(changes) > reviewChangeChunkBytes {
@@ -30,7 +46,7 @@ func reviewChangeParts(changes string) []string {
 		parts = append(parts, changes[:cut])
 		changes = changes[cut:]
 	}
-	return append(parts, changes)
+	return append(parts, changes), nil
 }
 
 func (s *assignmentScheduler) taskPrompt(path, task string) string {
@@ -112,7 +128,10 @@ func (s *assignmentScheduler) reviewResult(ctx context.Context, parent, child st
 	if err != nil {
 		return "", err
 	}
-	parts := reviewChangeParts(changes)
+	parts, err := reviewChangeParts(changes)
+	if err != nil {
+		return "", err
+	}
 	for i, part := range parts[:len(parts)-1] {
 		prompt := fmt.Sprintf("Fixed Git difference from direct child %s, result %s from %s, part %d of %d:\n%s\nRead this part. More parts follow in this same conversation. Do not decide yet; accept_child and return_child are available only after the final part.", child, handoff.ResultCommit, handoff.StartingCommit, i+1, len(parts), part)
 		if _, err := s.interact(ctx, parent, prompt, nil); err != nil {
@@ -123,7 +142,7 @@ func (s *assignmentScheduler) reviewResult(ctx context.Context, parent, child st
 	if len(parts) > 1 {
 		changeLabel = fmt.Sprintf("Actual Git changes, final part %d of %d (earlier parts are in this conversation)", len(parts), len(parts))
 	}
-	prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nObserved commands delivered with this result:\n%s\n%s:\n%s\nInspect conformance and tests. Binary changes are named by Git without embedding their opaque contents. Use accept_child with only child to accept this presented result, or return_child with a concrete correction. The Host binds the exact reviewed handoff; do not supply a commit. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, handoff.Summary, s.commandObservations(child, handoff.ResultCommit), changeLabel, parts[len(parts)-1])
+	prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nObserved commands delivered with this result:\n%s\n%s:\n%s\nInspect conformance and tests. Binary changes are named by Git without embedding their opaque contents. Use accept_child with only child to accept this presented result, or return_child with a concrete correction. The Host binds the exact reviewed handoff; do not supply a commit. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, boundedReviewSummary(handoff.Summary), s.commandObservations(child, handoff.ResultCommit), changeLabel, parts[len(parts)-1])
 	var conflict error
 	_, err = s.interact(ctx, parent, prompt, func(ctx context.Context, _ TurnResult, actions []assignmentAction) error {
 		if len(actions) != 1 || actions[0].child != child || (actions[0].name != AcceptChildTool && actions[0].name != ReturnChildTool) {
