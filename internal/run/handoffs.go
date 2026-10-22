@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
 	"strings"
 	"sync"
 	"time"
@@ -22,17 +23,50 @@ type AssignmentIntegration interface {
 }
 
 type assignmentMember struct {
-	manager    Manager
-	agent      *Assignment
-	partial    *Assignment
-	transcript string
-	observed   []TurnResult
-	starting   bool
-	handoff    AssignmentHandoff
-	inspected  string
-	returned   bool
-	accepted   map[string]string
-	messages   chan struct{}
+	manager      Manager
+	agent        *Assignment
+	partial      *Assignment
+	transcript   string
+	observed     []TurnResult
+	results      []AssignmentResult
+	observedFrom int
+	starting     bool
+	handoff      AssignmentHandoff
+	inspected    string
+	returned     bool
+	accepted     map[string]string
+	messages     chan struct{}
+}
+
+// AssignmentResult retains the native observations delivered since the prior
+// handoff with the commit that received them. Commands may precede later edits;
+// their relevance to this result remains a review judgment.
+type AssignmentResult struct {
+	Manager      string
+	Handoff      AssignmentHandoff
+	Observations []TurnResult
+	Transcript   string
+}
+
+func (f *AssignmentHandoffs) Results() []AssignmentResult {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	var paths []string
+	for path := range f.team {
+		paths = append(paths, path)
+	}
+	slices.Sort(paths)
+	var results []AssignmentResult
+	for _, path := range paths {
+		for _, r := range f.team[path].results {
+			r.Observations = append([]TurnResult(nil), r.Observations...)
+			for i := range r.Observations {
+				r.Observations[i] = cloneTurnResult(r.Observations[i])
+			}
+			results = append(results, r)
+		}
+	}
+	return results
 }
 
 func (m *assignmentMember) acquire(ctx context.Context) error {
@@ -358,6 +392,12 @@ func (f *AssignmentHandoffs) Submit(ctx context.Context, path string) (Assignmen
 		}
 	}
 	m.handoff = handoff
+	result := AssignmentResult{Manager: path, Handoff: handoff, Transcript: m.transcript}
+	for _, o := range m.observed[m.observedFrom:] {
+		result.Observations = append(result.Observations, cloneTurnResult(o))
+	}
+	m.results = append(m.results, result)
+	m.observedFrom = len(m.observed)
 	m.inspected = ""
 	m.returned = false
 	f.mu.Unlock()

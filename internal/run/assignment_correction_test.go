@@ -11,15 +11,21 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-type finalCorrectionAgents struct{ scheduledAgents }
-type finalCorrectionSession struct{ *scheduledSession }
+type finalCorrectionAgents struct {
+	scheduledAgents
+	cycleDuringCorrection bool
+}
+type finalCorrectionSession struct {
+	*scheduledSession
+	owner *finalCorrectionAgents
+}
 
 func (a *finalCorrectionAgents) OpenAssignment(ctx context.Context, spec run.AssignmentSpec, h run.ToolHandler) (run.AssignmentSession, error) {
 	s, err := a.scheduledAgents.OpenAssignment(ctx, spec, h)
 	if err != nil {
 		return nil, err
 	}
-	return &finalCorrectionSession{s.(*scheduledSession)}, nil
+	return &finalCorrectionSession{scheduledSession: s.(*scheduledSession), owner: a}, nil
 }
 func (s *finalCorrectionSession) Message(ctx context.Context, prompt string, timeout time.Duration) (run.TurnResult, error) {
 	var child, task string
@@ -29,8 +35,20 @@ func (s *finalCorrectionSession) Message(ctx context.Context, prompt string, tim
 	case prompt == "Route final lending defect":
 		child, task = "library/lending", "Repair final lending defect"
 	case prompt == "Repair final lending defect":
+		if s.owner.cycleDuringCorrection {
+			answer := s.handler(ctx, run.AskParentTool, json.RawMessage(`{"question":"Need final boundary contract"}`))
+			if answer.Refused {
+				return run.TurnResult{}, errors.New(answer.Text)
+			}
+		}
 		s.correction = prompt
 		return run.TurnResult{Completed: true, Final: "Corrected the actual loan-limit defect and tested the boundary."}, nil
+	case strings.Contains(prompt, "Your direct child library/lending asks:") && s.owner.cycleDuringCorrection:
+		answer := s.handler(ctx, run.AskChildTool, json.RawMessage(`{"child":"library/lending","question":"Repeat the contract while answering"}`))
+		if answer.Refused {
+			return run.TurnResult{}, errors.New(answer.Text)
+		}
+		return run.TurnResult{Completed: true, Final: answer.Text}, nil
 	default:
 		return s.scheduledSession.Message(ctx, prompt, timeout)
 	}
@@ -86,6 +104,10 @@ func TestOpenAssignmentTreeRoutesFinalCorrectionWithoutRestartingUnaffectedAgent
 	}
 	if agents.opened["trial-2"].correction != "Repair final lending defect" || len(git.accepted) != 5 {
 		t.Fatalf("correction was not reviewed/integrated upward: %v", git.accepted)
+	}
+	agents.cycleDuringCorrection = true
+	if _, err := tree.Correct(ctx, "A second concrete lending correction"); err == nil || !strings.Contains(err.Error(), "already answering in this question chain") {
+		t.Fatalf("a correction-question cycle was not refused before waiting: %v", err)
 	}
 	if err := tree.Close(); err != nil {
 		t.Fatal(err)

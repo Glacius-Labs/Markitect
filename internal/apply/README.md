@@ -81,7 +81,58 @@ overlays of its own areas and registry writable, `.markitect`, protected inputs 
 owners' areas read-only. An exact-file area that needs its own overlay but does not exist
 in the start stand is refused with `ErrUnsupportedOwnership`.
 
-## Apply
+## Assignment realization caller boundary
+
+`RealizeAssignments(ctx, AssignmentRealizationRequest)` is the callable DEC-067
+use case. A passed captured settings preparation supplies the fixed model,
+required Manager tree, ownership, profiles and check declarations. Explicit
+caller values supply a unique invocation ID, build identity, absolute transcript
+directory, one finite context, message timeout and total message allowance.
+Assessment, Implement, questions, corrections and independent Verify consume that
+same allowance. This API does not reinterpret the legacy Pass/Turn settings.
+
+The use case assesses the model in a separate assignment before opening the
+Implement Agent. A material model problem stops affected work; corrections to
+intent happen outside execution. Implement realizes the required organization,
+preserving conforming artifacts. Root's named Git commit is read through
+`ReadAssignmentCommit` for model/accounting validation and mandatory project
+checks. A fresh independent reviewer receives the fixed model, exact Root
+commit, actual child results, ordinary command observations and check outputs.
+Concrete corrections return through Root to their owners in the existing
+assignments. Relevant checks and independent review assess the revised commit;
+there is no whole-tree work restart or custom probe/disposition protocol.
+
+Inject these concrete ports for a source-bound runner:
+
+- `Workspaces`: the same `gitrepo.Workspaces` instance implements assignment
+  preparation, current/exact forks and named commit reads.
+- `Integration`: that same instance supplies ordinary Git review/integration.
+- `Agents`: an assignment-capable provider adapter, such as the existing Codex
+  adapter with an explicitly selected normal CLI profile and login.
+- `Checks`: the existing `checks.Runner`, with `CheckRequest` built from each
+  selected prepared check profile. The declared project arguments are retained.
+- `CreateHome`: exclusively create and check the requested home using the
+  engine's `CreateVolumeExclusive` with caller-owned labels. Existing or
+  uncertain homes are refused. Credentials and limits remain caller-owned.
+
+`AssignmentRealizationResult` returns the assessment, retained starting copy and
+Implement tree, fixed Root handoff, commit-bound candidate/checks, prior reviews,
+ordinary result observations and message use. `AcceptedCommit` is set only for
+the independently accepted Root result after observed assignment shutdown.
+Errors clear acceptance while keeping available work; `TreeCommit` states which
+stand the last available candidate represents. The caller owns later workspace
+and home cleanup, including inspection of uncertain creation or shutdown.
+
+There is no Publisher parameter, publication permit or legacy `run.Outcome`.
+The API transfers nothing to the owner's repository. A4 owns explicit invocation,
+CLI/Bootstrap/report migration and the existing guarded publication boundary.
+The existing `Apply`, `AssessCaptured`, `VerifyCaptured` and Extract consumers
+remain on their source-bound Pass path below until that caller migration.
+Source tests of the new seam are controlled local evidence; actual provider
+recognition of model gaps, weak tests and realization defects needs a separately
+coordinated run.
+
+## Legacy Apply
 
 `Apply(ctx, ApplyRequest)` binds the strategy, the organization (Briefs, own obligations,
 write plans, helpers), the required checks, the gates and the budget, requires the container

@@ -27,6 +27,12 @@ original message allowance. The caller serializes these operations and calls
 for inspection and later cleanup. It requires exclusive fresh home creation;
 an optional `PreparedRoot` can keep the assessed starting commit as Root's base.
 The existing `RunAssignmentTree` wrapper still closes its Agents on return.
+`Flow.Results()` retains each Git handoff with the native observations received
+since its predecessor; a command may precede later edits, so association is not
+proof it tested the final bytes. Independent review judges its relevance.
+Root can use `model_problem` to confirm a material intent defect discovered
+during work. The tree retains that problem and stops affected work; it cannot
+repair intent or continue by choosing an unstated policy.
 
 These APIs neither publish nor project their results as a legacy `Outcome`.
 The Apply caller transition is separate work. The remaining sections describe
