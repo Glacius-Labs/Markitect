@@ -585,10 +585,16 @@ func TestAssignmentChildFailureCancelsWorkAndRetainsEveryCopy(t *testing.T) {
 type updateControlledCopies struct {
 	assignmentWorkspacesFake
 	conflict bool
+	later    bool
+	calls    atomic.Int32
 }
 
 func (w *updateControlledCopies) UpdateAssignment(ctx context.Context, target, source run.AssignmentWorkspace, commit, previous string) error {
 	if target.ID() == "fan-2" {
+		call := w.calls.Add(1)
+		if w.later && call == 1 {
+			return w.assignmentWorkspacesFake.UpdateAssignment(ctx, target, source, commit, previous)
+		}
 		if !w.conflict {
 			return errors.New("controlled parent refresh failure")
 		}
@@ -598,6 +604,36 @@ func (w *updateControlledCopies) UpdateAssignment(ctx context.Context, target, s
 		return run.ErrAssignmentUpdateConflict
 	}
 	return w.assignmentWorkspacesFake.UpdateAssignment(ctx, target, source, commit, previous)
+}
+
+func TestAssignmentLaterRefreshFailureRetainsOldResultButCannotSatisfyNewTask(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, a := concurrentFixture()
+	a.laterChild = "library/first"
+	g := &concurrentIntegration{agents: a, entered: make(chan string, 8), gates: map[string]<-chan struct{}{}}
+	result, flow, err := run.RunAssignmentTree(ctx, a.team, &updateControlledCopies{later: true}, a, g, run.AssignmentSchedule{IDPrefix: "fan", Task: "Implement", MaxMessages: 40, Timeout: time.Second, TranscriptDir: t.TempDir()})
+	if err == nil || result.ResultCommit != "" || len(flow.Observations("library/first")) != 1 {
+		t.Fatalf("failed refresh started another task or returned success: %v", err)
+	}
+	var old run.AssignmentHandoff
+	for _, result := range flow.Results() {
+		if result.Manager == "library/first" {
+			old = result.Handoff
+		}
+	}
+	if old.ResultCommit == "" || len(g.order) != 2 {
+		t.Fatal("earlier accepted child result or integration was lost")
+	}
+	if present, err := flow.Workspace("library/first").ContainsCommit(ctx, old.ResultCommit); err != nil || !present {
+		t.Fatal("old Git result no longer readable")
+	}
+	if _, retained, err := flow.Changes(ctx, "library", "library/first"); err != nil || retained != old {
+		t.Fatalf("old result/base changed: %+v %v", retained, err)
+	}
+	if _, err := flow.Submit(ctx, "library"); err == nil || !strings.Contains(err.Error(), "has not integrated required child") {
+		t.Fatalf("old acceptance satisfied failed new task: %v", err)
+	}
 }
 
 func TestAssignmentUpdateFailureStopsTaskWhileRealConflictIsAssignedToChild(t *testing.T) {

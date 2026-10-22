@@ -168,3 +168,54 @@ func TestAssignmentUpdateBindsEachTaskAfterSiblingIntegrationWithoutReapplyingOl
 		t.Fatalf("earlier fixed result/base changed: %s %v", retained, err)
 	}
 }
+
+func TestAssignmentUpdateTechnicalFailureRetainsEarlierResultAndOwnCheckpoint(t *testing.T) {
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "parent")
+	parent := copies["parent"]
+	child, root := warmGitCopy(t, w, parent, "child")
+	integrationWrite(t, roots["parent"], "interface.txt", "Go interface\n")
+	base, err := parent.Commit(ctx, "Parent Go")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := w.UpdateAssignment(ctx, child, parent, base, child.StartingCommit()); err != nil {
+		t.Fatal(err)
+	}
+	integrationWrite(t, root, "lending.txt", "accepted child work\n")
+	result, err := child.Commit(ctx, "First child result")
+	if err != nil {
+		t.Fatal(err)
+	}
+	old := run.AssignmentHandoff{StartingCommit: base, ResultCommit: result}
+	before, err := w.Changes(ctx, child, old)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := w.Integrate(ctx, parent, child, old, ""); err != nil {
+		t.Fatal(err)
+	}
+	integrationWrite(t, roots["parent"], "catalog.txt", "new sibling result\n")
+	next, err := parent.Commit(ctx, "Sibling integrated")
+	if err != nil {
+		t.Fatal(err)
+	}
+	integrationWrite(t, root, "own-pending.txt", "preserve pending own work\n")
+	w.runtime.(*integrationRuntime).failUpdateFetch = true
+	err = w.UpdateAssignment(ctx, child, parent, next, base)
+	if err == nil || errors.Is(err, run.ErrAssignmentUpdateConflict) || !strings.Contains(err.Error(), "parent fetch failure") {
+		t.Fatalf("technical refresh was accepted or treated as a real conflict: %v", err)
+	}
+	if after, err := w.Changes(ctx, child, old); err != nil || after != before {
+		t.Fatalf("failed refresh rewrote old result evidence: %v", err)
+	}
+	if got, err := os.ReadFile(filepath.Join(root, "own-pending.txt")); err != nil || string(got) != "preserve pending own work\n" {
+		t.Fatalf("checkpointed own work lost: %q %v", got, err)
+	}
+	if got, err := child.git(ctx, "show", "HEAD:own-pending.txt"); err != nil || got != "preserve pending own work" {
+		t.Fatalf("own checkpoint not retained: %q %v", got, err)
+	}
+	if head, _ := parent.git(ctx, "rev-parse", "HEAD"); head != next {
+		t.Fatal("failed child update changed the source parent")
+	}
+}

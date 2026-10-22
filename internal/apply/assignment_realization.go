@@ -17,6 +17,7 @@ import (
 type RealizationWorkspaces interface {
 	run.ReviewWorkspaces
 	run.AssignmentForks
+	run.AssignmentUpdates
 	run.AssignmentCommitReader
 }
 

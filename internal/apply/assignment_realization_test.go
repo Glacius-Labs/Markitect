@@ -198,6 +198,13 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 		return run.TurnResult{Completed: true, Final: "No model blocker identified."}, call(run.AcceptModelTool, map[string]string{"commit": copy.start, "reason": "Inspected the fixed model and delegated freedom."})
 	}
 	if s.mode == "verify" {
+		s.owner.mu.Lock()
+		for id, implementing := range s.owner.opened {
+			if implementing.mode == "implement" && implementing.closed {
+				s.owner.t.Errorf("Implement Agent %s closed before final Verify/correction completed", id)
+			}
+		}
+		s.owner.mu.Unlock()
 		if s.owner.oversizedOutput && (len(prompt) > s.owner.assessmentPromptBytes+(40<<10) || !strings.Contains(prompt, "[truncated; full observation retained by Host]")) {
 			s.owner.t.Fatal("oversized native output was not bounded explicitly in the Verify prompt")
 		}
