@@ -425,7 +425,7 @@ func (s *assignmentScheduler) closePaths(paths []string) error {
 
 func (s *assignmentScheduler) work(ctx context.Context, path, task, stand string) (AssignmentHandoff, error) {
 	manager := s.team[path]
-	prompt := fmt.Sprintf("Your responsibility is %s. %s\nTask from your parent: %s\nRequired direct children: %s. Give each child a concrete task using delegate_child. Work in your own Git copy; the Host will later show each fixed child result for your review.", manager.Role, manager.Brief, task, strings.Join(manager.Children, ", "))
+	prompt := fmt.Sprintf("Your responsibility is %s. %s\nTask from your parent: %s\nEstablish sibling interfaces in your own workspace and conversation before Go. This is part of this Implement task, with no separate plan run or stage. Give each direct child the interfaces and bounded responsibility it needs; the Host will deliver all child tasks concurrently after your Go.\nRequired direct children: %s. Give each child a concrete task using delegate_child. Work in your own Git copy; the Host will later show each fixed child result for your review.", manager.Role, manager.Brief, task, strings.Join(manager.Children, ", "))
 	var delegations []assignmentAction
 	var result AssignmentHandoff
 	err := s.flow.serial(ctx, path, func(ctx context.Context) error {
