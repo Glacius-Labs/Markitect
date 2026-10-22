@@ -41,6 +41,19 @@ type AssignmentCommitForks interface {
 	ForkAssignmentCommit(context.Context, AssignmentWorkspace, string, WorkspaceID) (AssignmentWorkspace, error)
 }
 
+// AssignmentCommitReader reads the exact retained Git objects for checks and
+// accounting. Live edits and checkout/attribute conversions cannot enter it.
+type AssignmentCommitReader interface {
+	ReadAssignmentCommit(context.Context, AssignmentCommitRequest) (snapshot.Tree, error)
+}
+
+type AssignmentCommitRequest struct {
+	Source     AssignmentWorkspace
+	Commit     string
+	MaxEntries int
+	MaxBytes   int64
+}
+
 // Workspaces materializes step workspaces on runtime volumes and observes them.
 // It knows no ownership, reviews or tasks: run decides what a workspace holds
 // (core rule D3) and what its observed change means (core rule S4), and run

@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/assignment_commit.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Reads a named retained assignment commit through bounded Git object helpers for final accounting and checks, without consulting or changing live files."
+  - path: "internal/adapters/gitrepo/assignment_commit_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Uses actual local Git to check named bytes, modes, archive attributes, source preservation, limits and failed or corrupt object reads."
   - path: "internal/adapters/gitrepo/commit_review_test.go"
     form: test
     realizes: [product/adapters/repository/repository-boundaries]
