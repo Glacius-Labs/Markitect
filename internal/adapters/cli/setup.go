@@ -124,6 +124,10 @@ func (c *Command) setupVerb(ctx context.Context, args []string, stdout, stderr i
 		fmt.Fprintln(stderr, "setup requires --runtime, --image, --credential and --agent-model; see help")
 		return 2
 	}
+	if *maxMessages < 1 || *maxMessages > 128 || *messageTimeout < 1 || *messageTimeout > 3600 {
+		fmt.Fprintln(stderr, "setup requires 1..128 messages and 1..3600 seconds per message")
+		return 2
+	}
 	for _, path := range []string{*runtimeDir, *credential, *engine} {
 		if !filepath.IsAbs(path) || filepath.Clean(path) != path {
 			fmt.Fprintln(stderr, "--runtime, --credential and --engine require explicit absolute native paths")

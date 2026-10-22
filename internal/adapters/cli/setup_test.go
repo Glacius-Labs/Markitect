@@ -31,12 +31,12 @@ func TestSetupParsesFlagsAndReportsTheApplyCommand(t *testing.T) {
 		got = r
 		return SetupReport{Status: model.Passed, Files: []SetupFile{{Path: filepath.Join(runtimeDir, "runtime.yaml"), SHA256: "ab", Action: "written"}}}, nil
 	})
-	args = append(args, "--check", "go=/usr/local/go/bin/go", "--check", "lint=/bin/lint", "--deadline", "2030-01-01T00:00:00Z", "--store", "s", "--request", "R", "--dependency", "dep/model.yaml")
+	args = append(args, "--check", "go=/usr/local/go/bin/go", "--check", "lint=/bin/lint", "--deadline", "2030-01-01T00:00:00Z", "--store", "s", "--request", "R", "--dependency", "dep/model.yaml", "--max-messages", "36", "--message-timeout-seconds", "90")
 	code, out, errout := runSetup(c, args...)
 	if code != 0 {
 		t.Fatalf("exit %d\n%s\n%s", code, out, errout)
 	}
-	if got.RuntimeDir != runtimeDir || got.Credential != credential || got.Image != "runtime:1" || got.AgentModel != "claude-haiku-5-5" || got.Effort != "high" || !strings.HasSuffix(got.Engine, "docker") || got.Store != "s" || got.OwnerRequest != "R" || got.Deadline != "2030-01-01T00:00:00Z" || got.ProductBuild == "" ||
+	if got.RuntimeDir != runtimeDir || got.Credential != credential || got.Image != "runtime:1" || got.AgentModel != "claude-haiku-5-5" || got.Effort != "high" || !strings.HasSuffix(got.Engine, "docker") || got.Store != "s" || got.OwnerRequest != "R" || got.Deadline != "2030-01-01T00:00:00Z" || got.MaxMessages != 36 || got.MessageTimeoutSeconds != 90 || got.ProductBuild == "" ||
 		!reflect.DeepEqual(got.Checks, map[string]string{"go": "/usr/local/go/bin/go", "lint": "/bin/lint"}) || len(got.Selection.Dependencies) != 1 || got.Selection.Local.ManifestPath.String() != ".markitect/model.yaml" {
 		t.Fatalf("%+v", got)
 	}
@@ -66,6 +66,8 @@ func TestSetupRefusesInvalidInvocationsBeforeAnyEffect(t *testing.T) {
 		"stray argument":             append(append([]string{}, args...), "stray"),
 		"unknown flag":               append(append([]string{}, args...), "--unknown"),
 		"retired owner decision":     append(append([]string{}, args...), "--decision", "Use euro."),
+		"zero message allowance":     append(append([]string{}, args...), "--max-messages", "0"),
+		"zero message timeout":       append(append([]string{}, args...), "--message-timeout-seconds", "0"),
 	} {
 		if code, out, _ := runSetup(c, bad...); code != 2 || called {
 			t.Errorf("%s: exit %d called=%v %s", name, code, called, out)
