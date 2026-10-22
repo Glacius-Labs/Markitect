@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/assignment_identity_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Uses real Git behind controlled workspace peers to prove local deterministic identity before ordinary Agent commits in initial, Manager and independent review copies, without global user config changes, and retains partial copies on setup failure."
   - path: "internal/adapters/gitrepo/assignment_update.go"
     form: code
     realizes: [product/run/confirmed-run-history]

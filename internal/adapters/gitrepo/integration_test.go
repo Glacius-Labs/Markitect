@@ -44,7 +44,11 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 	if len(spec.Mounts) < 1 || len(spec.Mounts) > 2 || len(argv) < 2 || argv[0] != "/usr/bin/git" {
 		return errors.New("unexpected Git helper")
 	}
-	if f.failUpdateFetch && len(argv) >= 10 && argv[9] == "fetch" {
+	var directory, command string
+	if index := slices.Index(argv, "-C"); index >= 0 && index+2 < len(argv) {
+		directory, command = argv[index+1], argv[index+2]
+	}
+	if f.failUpdateFetch && command == "fetch" {
 		return errors.New("controlled parent fetch failure")
 	}
 	root := f.roots[spec.Mounts[0].Volume]
@@ -57,16 +61,16 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 			sourceRoot = f.roots[mount.Volume]
 		}
 	}
-	if f.failPatchRead && len(argv) >= 10 && argv[9] == "diff" {
+	if f.failPatchRead && command == "diff" {
 		if _, ok := stdout.(*io.PipeWriter); ok {
 			return errors.New("child patch read failed")
 		}
 	}
-	if f.failMergeReadback && f.afterMerge && len(argv) >= 10 && argv[9] == "rev-parse" {
+	if f.failMergeReadback && f.afterMerge && command == "rev-parse" {
 		return errors.New("parent head readback failed")
 	}
-	if len(argv) >= 10 && strings.Contains(argv[8], "markitect-integration-") {
-		if argv[9] == "apply" {
+	if strings.Contains(directory, "markitect-integration-") {
+		if command == "apply" {
 			if f.backgroundChange != "" {
 				if err := os.WriteFile(filepath.Join(root, "common.txt"), []byte(f.backgroundChange), 0644); err != nil {
 					return err
@@ -77,7 +81,7 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 				return errors.New("parent apply helper failed")
 			}
 		}
-		if argv[9] == "commit" && f.failTempCommit {
+		if command == "commit" && f.failTempCommit {
 			return errors.New("temporary commit helper failed")
 		}
 	}
@@ -98,12 +102,12 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 	if err := cmd.Run(); err != nil {
 		return errors.New(strings.TrimSpace(stderr.String()) + ": " + err.Error())
 	}
-	if f.failPatchAfterOutput && len(argv) >= 10 && argv[9] == "diff" {
+	if f.failPatchAfterOutput && command == "diff" {
 		if _, ok := stdout.(*io.PipeWriter); ok {
 			return errors.New("child patch producer failed after output")
 		}
 	}
-	if f.mergeSucceededError && len(argv) >= 10 && argv[9] == "merge" {
+	if f.mergeSucceededError && command == "merge" {
 		f.afterMerge = true
 		return errors.New("merge helper lost its success response")
 	}

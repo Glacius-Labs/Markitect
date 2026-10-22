@@ -34,7 +34,7 @@ type concurrentAgents struct {
 	failWork          string
 	lateOpen          string
 	consultBusy       bool
-	consultRefused    atomic.Bool
+	consultQueued     atomic.Bool
 	returnChild       string
 	laterChild        string
 	laterIssued       atomic.Bool
@@ -165,13 +165,13 @@ func (s *concurrentSession) Message(ctx context.Context, prompt string, _ time.D
 				return result, err
 			}
 		}
-		if a.consultBusy && child == "library/second" {
+		if a.consultBusy && child == "library/second" && !strings.Contains(prompt, "Queued child answer from") {
 			args, _ := json.Marshal(map[string]string{"child": "library/first", "question": "Confirm the cross-area contract"})
 			answer := s.handler(ctx, run.AskChildTool, args)
-			if !answer.Refused || !strings.Contains(answer.Text, "working or waiting") {
-				return result, fmt.Errorf("busy child consultation did not refuse safely: %+v", answer)
+			if answer.Refused || !strings.Contains(answer.Text, "queued") {
+				return result, fmt.Errorf("busy child consultation was not queued: %+v", answer)
 			}
-			a.consultRefused.Store(true)
+			a.consultQueued.Store(true)
 		}
 		if child == a.returnChild && a.returned.CompareAndSwap(false, true) {
 			return result, call(run.ReturnChildTool, map[string]string{"child": child, "correction": "Repair " + child})
@@ -180,7 +180,7 @@ func (s *concurrentSession) Message(ctx context.Context, prompt string, _ time.D
 		if len(commit) != 2 {
 			return result, errors.New("missing fixed child result")
 		}
-		if err := call(run.AcceptChildTool, map[string]string{"child": child, "commit": commit[1]}); err != nil {
+		if err := call(run.AcceptChildTool, map[string]string{"child": child}); err != nil {
 			return result, err
 		}
 	case strings.Contains(prompt, " asks:"):
@@ -383,7 +383,7 @@ func TestAssignmentChildrenCrossedQuestionAndConsultationDoNotDeadlock(t *testin
 	}
 	close(first)
 	outcome := <-done
-	if outcome.err != nil || !a.consultRefused.Load() || a.overlapped.Load() {
+	if outcome.err != nil || !a.consultQueued.Load() || a.overlapped.Load() {
 		t.Fatalf("crossed questions: %+v", outcome)
 	}
 }

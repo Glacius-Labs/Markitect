@@ -122,17 +122,52 @@ source checks, not evidence of provider or Apply execution. The single-turn
 `Run` entrypoint still initializes, starts/resumes its thread and executes its
 prompt immediately, then closes its container.
 
-### Native subagent notifications
+### Native delegation is disabled
 
-A Codex Agent may use native subagents inside its assignment container and
-working copy. The owning Manager still reviews and hands off the resulting Git
-stand. Native delegation creates no extra Markitect Manager, assignment or outer
-message. The launch command no longer force-disables `multi_agent`; no additional
-enable flag or configuration format is introduced. The CLI documents `--disable`
-as a feature-flag override ([official reference](https://learn.chatgpt.com/docs/developer-commands?surface=cli)).
-That flag was present in the retained RunID03 Library attempt even though native
-`subAgentActivity` and child turn notifications were observed; its presence did
-not establish absence of native delegation.
+Managers delegate required responsibilities through Markitect's `delegate_child`
+tool, with their own Manager assignments and working copies. In the retained
+22 October Library Run04, a native `/root/reminders` child performed work while
+the required Markitect `lending/reminders` Manager received no message. Native
+Codex delegation must therefore be unavailable in the Manager's tool surface.
+
+Both `Run` and `OpenAssignment`, in either credential mode, launch App Server
+with `--disable multi_agent --disable multi_agent_v2 -c agents.enabled=false`.
+The [official agent guide](https://learn.chatgpt.com/docs/agent-configuration/subagents)
+and [configuration reference](https://learn.chatgpt.com/docs/config-file/config-reference)
+document the agent tool switch. The pinned CLI 0.162.0 source at
+[`c1382380`, `Config::multi_agent_version_override`](https://github.com/openai/codex/blob/c1382380de69521303b416720a52f42d51af6248/codex-rs/core/src/config/mod.rs)
+explains the two additional boundaries: Luna's model metadata selects V2 even
+when `features.multi_agent` is false, and an explicitly enabled
+`features.multi_agent_v2` takes precedence over `agents.enabled=false`. The launch
+overrides all three values, including inherited home configuration.
+
+`TestRuntimeNativeAgentTools` checks the installed CLI and effective App Server
+`config/read` values in a fresh, credential-free, `network=none` container. A
+local HTTP recorder captures the first model request and returns a synthetic
+400; each case has one local `turn/start` and no external provider or inference
+call. On image
+`sha256:29f746d51945608382f3dc74725800fe27dd42375d41f146939e22a78387d92f`
+with CLI 0.162.0, the feature-only and explicit-V2 counterexamples expose
+`collaboration.spawn_agent`; the actual launch exposes no native collaboration
+tools. Ordinary shell and file tools remain in `functions.exec`'s declaration.
+The same session's `mcpServerStatus/list` retains Markitect's `delegate_child`
+with its schema. MCP tools are deferred: `functions.exec` documents `ALL_TOOLS`
+discovery, while their individual signatures are absent from that first model
+declaration. Existing handler regressions separately cover Orchestrator calls
+and replies. This is local tool/config evidence, not a real provider or Apply run.
+
+Repeat that bounded offline check for a changed CLI/image:
+
+```powershell
+$env:MARKITECT_TEST_ENGINE = 'C:\Program Files\Docker\Docker\resources\bin\docker.exe'
+$env:MARKITECT_TEST_RUNTIME_IMAGE = 'sha256:29f746d51945608382f3dc74725800fe27dd42375d41f146939e22a78387d92f'
+go test ./internal/adapters/codexappserver -run '^TestRuntimeNativeAgentTools$' -count=1 -timeout=3m -v
+```
+
+### Retained native subagent notifications
+
+Correlation of native child notifications remains defensive protocol handling
+for older evidence or unexpected provider output; it grants no native tools.
 
 The adapter recognizes native child IDs only from a `subAgentActivity` with
 `kind: started` in its bound Manager turn or an already recognized native child.

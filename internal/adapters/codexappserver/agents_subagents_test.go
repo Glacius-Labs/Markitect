@@ -11,6 +11,23 @@ import (
 
 const nativeChildThread = "native-catalog-review"
 
+func TestProviderCommandDisablesNativeDelegation(t *testing.T) {
+	for _, mode := range []string{"api-key", "dedicated-runtime-login"} {
+		t.Run(mode, func(t *testing.T) {
+			argv := providerArgv(mode)
+			for _, pair := range [][2]string{{"-c", "agents.enabled=false"}, {"--disable", "multi_agent"}, {"--disable", "multi_agent_v2"}} {
+				found := false
+				for i := 0; i+1 < len(argv); i++ {
+					found = found || argv[i] == pair[0] && argv[i+1] == pair[1]
+				}
+				if !found {
+					t.Fatalf("missing native delegation guard %v: %v", pair, argv)
+				}
+			}
+		})
+	}
+}
+
 func nativeNotification(method, thread string, fields map[string]any) string {
 	if fields == nil {
 		fields = make(map[string]any)
@@ -59,9 +76,6 @@ func TestRunKeepsAnnouncedNativeChildLifecycleSeparateFromManager(t *testing.T) 
 			}
 			if res.Usage.ProviderTurns != 1 || res.Usage.InputTokens != 60 || res.Usage.OutputTokens != 50 {
 				t.Fatalf("child usage contaminated Manager accounting: %+v", res.Usage)
-			}
-			if strings.Contains(strings.Join(rt.start.Argv, " "), "--disable multi_agent") {
-				t.Fatal("launch still force-disables permitted native delegation")
 			}
 		})
 	}

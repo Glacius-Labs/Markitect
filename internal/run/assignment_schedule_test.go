@@ -78,6 +78,8 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 		return nil
 	}
 	switch {
+	case s.crossArea && strings.Contains(prompt, "Queued child answer from library/lending"):
+		return run.TurnResult{Final: "Use the Lending v1 contract.", Completed: true}, nil
 	case strings.Contains(prompt, "Your direct child library/storage asks:"):
 		s.questions = append(s.questions, prompt)
 		if s.crossArea {
@@ -155,7 +157,7 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 				return run.TurnResult{}, err
 			}
 		} else {
-			if err := call(run.AcceptChildTool, map[string]string{"child": child, "commit": found[1]}); err != nil {
+			if err := call(run.AcceptChildTool, map[string]string{"child": child}); err != nil {
 				return run.TurnResult{}, err
 			}
 			if child == "library/lending" {
