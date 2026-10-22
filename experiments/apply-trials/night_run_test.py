@@ -18,6 +18,100 @@ import night_run as runner
 
 
 class SupervisorControls(unittest.TestCase):
+    def assert_process_stopped(self, identity):
+        for _ in range(500):
+            if runner.process_identity(identity['pid']) != identity:
+                return
+            fields = Path('/proc/%d/stat' % identity['pid']).read_text().rsplit(')', 1)[1].split()
+            if fields[0] == 'Z':
+                return  # exited orphan awaiting the system reaper, not a writer
+            time.sleep(0.01)
+        self.fail('owned process still live: %s' % identity)
+
+    def test_direct_command_timeout_stops_term_resistant_grandchild_and_preserves_foreign_process(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            ready = root / 'grandchild.json'
+            registry = root / 'groups'
+            registry.touch()
+            module_dir = str(Path(runner.__file__).resolve().parent)
+            grandchild = ('import sys,signal,time,json\n'
+                          'sys.path.insert(0, ' + repr(module_dir) + ')\n'
+                          'import night_run as runner\n'
+                          'signal.signal(signal.SIGTERM, signal.SIG_IGN)\n'
+                          'open(' + repr(str(ready)) + ', "w").write(json.dumps(runner.process_identity(runner.os.getpid())))\n'
+                          'time.sleep(60)\n')
+            parent = ('import subprocess,sys,time\n'
+                      'subprocess.Popen([sys.executable,"-B","-c",' + repr(grandchild) + '])\n'
+                      'time.sleep(60)\n')
+            foreign = subprocess.Popen([sys.executable, '-c', 'import time; time.sleep(60)'], start_new_session=True)
+            timing = runner.AttemptTiming(time.monotonic(), 'execution')
+            try:
+                with patch.object(runner, 'host_clock', side_effect=AssertionError('no bridge in command/stop')):
+                    with self.assertRaises(subprocess.TimeoutExpired):
+                        runner.run_tracked([sys.executable, '-B', '-c', parent], registry, 0.5, timing,
+                                           capture_output=True)
+                self.assertTrue(ready.exists(), 'timeout did not exercise a live grandchild')
+                self.assert_process_stopped(json.loads(ready.read_text()))
+                self.assert_process_stopped(json.loads(registry.read_text()))
+                self.assertIsNone(foreign.poll())
+                self.assertGreater(timing.seconds['stop'], 0)
+            finally:
+                foreign.terminate()
+                foreign.wait(timeout=5)
+                if ready.exists():
+                    identity = json.loads(ready.read_text())
+                    if runner.process_identity(identity['pid']) == identity:
+                        os.kill(identity['pid'], signal.SIGKILL)
+
+    def test_direct_command_success_and_nonzero_are_not_timeout_success(self):
+        with tempfile.TemporaryDirectory() as folder:
+            registry = Path(folder) / 'groups'
+            timing = runner.AttemptTiming(time.monotonic())
+            for code in (0, 7):
+                done = runner.run_tracked([sys.executable, '-c', 'print("done"); exit(%d)' % code],
+                                          registry, 5, timing, capture_output=True)
+                self.assertEqual(done.returncode, code)
+                self.assertEqual(done.stdout, b'done\n')
+
+    def test_local_command_cap_counts_setup_without_clock_queries(self):
+        with patch.object(runner.time, 'monotonic', return_value=150), \
+                patch.object(runner, 'host_clock', side_effect=AssertionError('supervisor owns polling')):
+            self.assertEqual(runner.remaining_seconds(100, 60), 10)
+            with self.assertRaises(TimeoutError):
+                runner.remaining_seconds(100, 50)
+
+    def test_phase_measurements_are_exclusive_monotonic_intervals(self):
+        timing = runner.AttemptTiming(100)
+        with patch.object(runner.time, 'monotonic', side_effect=[105, 115, 118, 120, 122]):
+            timing.enter('execution')
+            timing.enter('stop')
+            timing.enter('cleanup')
+            timing.enter('finalization')
+            measured = timing.snapshot()['seconds']
+        self.assertEqual(measured, dict(setup=5, execution=10, stop=3, cleanup=2, evaluation=0, finalization=2))
+
+    def test_absolute_start_cutoff_uses_utc_even_with_foreign_host_timezone(self):
+        with tempfile.TemporaryDirectory() as folder, patch.dict(os.environ, TZ='Pacific/Honolulu'):
+            root = Path(folder)
+            manifest, path = self.dispatch_manifest(root, 'utc')
+            clock = {'utc': runner.ABSOLUTE_START_CUTOFF.timestamp() * 1000, 'ticks': 1, 'frequency': 1000}
+            with self.assertRaises(runner.GuardRefusal):
+                runner.reserve_dispatch(root, manifest['packets'][0], manifest, path, clock)
+            self.assertFalse((root / 'ACTIVE-SUPERVISOR').exists())
+            self.assertEqual((root / 'attempts.jsonl').read_text(), '')
+
+    def test_child_alarm_deducts_supervisor_setup_time(self):
+        started = {'utc': 1792620000000, 'ticks': 1, 'frequency': 1000}
+        with patch.dict(os.environ, MARKITECT_NIGHT_PROCESS_REGISTRY='unused',
+                        MARKITECT_NIGHT_STARTED_MONOTONIC='100', MARKITECT_NIGHT_STARTED_HOST=json.dumps(started)), \
+                patch.object(runner, 'arm_supervisor_liveness_guard'), \
+                patch.object(runner.time, 'monotonic', return_value=150), \
+                patch.object(runner.signal, 'signal'), patch.object(runner.signal, 'setitimer') as timer, \
+                patch.object(runner, 'main', return_value=0):
+            self.assertEqual(runner.bounded_child(), 0)
+        timer.assert_called_once_with(signal.ITIMER_REAL, 2620)
+
     def test_abrupt_supervisor_death_stops_the_exact_bounded_child(self):
         if not sys.platform.startswith('linux'):
             self.skipTest('NIGHT runner lifecycle is Linux-only')
@@ -33,7 +127,8 @@ class SupervisorControls(unittest.TestCase):
                 'import night_run as runner\n'
                 'def work():\n'
                 '    open(' + repr(str(ready)) + ', "w").close()\n'
-                '    while True: time.sleep(1)\n'
+                '    runner.run_tracked([sys.executable, "-c", "import time; time.sleep(60)"],\n'
+                '        runner.os.environ["MARKITECT_NIGHT_PROCESS_REGISTRY"], 60, runner.AttemptTiming(time.monotonic()))\n'
                 'runner.main = work\n'
                 'try: runner.bounded_child()\n'
                 'except InterruptedError: sys.exit(0)\n')
@@ -58,7 +153,7 @@ class SupervisorControls(unittest.TestCase):
                 for _ in range(500):
                     if child_identity is None and registry.exists() and registry.stat().st_size:
                         child_identity = json.loads(registry.read_text().splitlines()[0])
-                    if ready.exists() and child_identity is not None:
+                    if ready.exists() and child_identity is not None and len(registry.read_text().splitlines()) == 2:
                         break
                     if parent.poll() is not None:
                         self.fail('supervisor exited before child reached its bounded work phase')
@@ -81,6 +176,8 @@ class SupervisorControls(unittest.TestCase):
                         break
                     time.sleep(0.01)
                 self.assertTrue(stopped, 'bounded child survived abrupt supervisor death')
+                command_identity = json.loads(registry.read_text().splitlines()[1])
+                self.assert_process_stopped(command_identity)
                 self.assertFalse((root / 'STOP-SERIES').exists())
                 self.assertTrue((root / 'ACTIVE-ATTEMPT').exists(), 'unclosed reservation must remain blocking')
             finally:
@@ -447,6 +544,32 @@ class SupervisorControls(unittest.TestCase):
     def test_clock_probe_timeout_stops_without_retry_and_retains_full_charge(self):
         self.supervise_failure('timeout')
 
+    def test_unknown_container_cessation_retains_charge_and_blocks_another_start(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            script = root / 'refuse.py'
+            script.write_text('raise SystemExit(3)\n')
+            manifest, path = self.dispatch_manifest(root, 'unknown-stop')
+            clock = {'utc': 1792620000000, 'ticks': 0, 'frequency': 1000}
+            with patch.object(runner, '__file__', str(script)), \
+                    patch.object(runner, 'validate', return_value=manifest), \
+                    patch.object(runner, 'host_clock', return_value=clock), \
+                    patch.object(runner.subprocess, 'run', side_effect=subprocess.TimeoutExpired('owned Docker query', 2)):
+                self.assertEqual(runner.supervise(path, 'gate', '1'), 4)
+                before = (root / 'attempts.jsonl').read_bytes()
+                with patch.object(runner.subprocess, 'Popen') as launch, self.assertRaises(runner.GuardRefusal):
+                    runner.supervise(path, 'gate', '1')
+                launch.assert_not_called()
+            evidence = json.loads((root / 'forced-cleanup-unknown-stop.json').read_text())
+            self.assertIsNone(evidence['runningAfter'])
+            self.assertFalse(evidence['normalTurnStopsProved'])
+            self.assertIn('TimeoutExpired', evidence['errors'])
+            self.assertEqual((root / 'attempts.jsonl').read_bytes(), before)
+            self.assertEqual(json.loads(before)['chargedSeconds'], 2700)
+            self.assertTrue((root / 'ACTIVE-SUPERVISOR').exists())
+            self.assertTrue((root / 'ACTIVE-ATTEMPT').exists())
+            self.assertTrue((root / 'STOP-SERIES').exists())
+
     def test_host_deadline_forces_stop_with_guest_process_still_live(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -455,13 +578,14 @@ class SupervisorControls(unittest.TestCase):
             manifest, path = self.dispatch_manifest(root, 'deadline')
             base = {'utc': 1792620000000, 'ticks': 0, 'frequency': 1000}
             # Poll just before the unchanged deadline, then 0.9 s after it.
-            samples = [base, dict(base, ticks=2669900), dict(base, ticks=2670900), dict(base, ticks=2685900)]
+            samples = [base, dict(base, ticks=2669900), dict(base, ticks=2670900)]
             with patch.object(runner, '__file__', str(script)), \
                     patch.object(runner, 'validate', return_value=manifest), \
-                    patch.object(runner, 'host_clock', side_effect=samples), \
+                    patch.object(runner, 'host_clock', side_effect=samples) as clock_query, \
                     patch.object(runner.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', b'')), \
                     patch.object(runner.time, 'sleep') as sleep:
                 self.assertEqual(runner.supervise(path, 'gate', '1'), 4)
+            self.assertEqual(clock_query.call_count, 3, 'stop/cleanup must not restart the host bridge')
             # Popen.wait also uses this shared time module for subsecond reaping.
             self.assertEqual(sleep.call_args_list[0].args, (1,))
             self.assertEqual(sum(call.args == (1,) for call in sleep.call_args_list), 1)
