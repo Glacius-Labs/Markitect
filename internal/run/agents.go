@@ -4,13 +4,181 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"regexp"
 	"time"
+
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // ErrContextLimit reports a turn whose prompt or Orchestrator answer the
 // provider channel cannot carry. Agents return it instead of cutting the
 // content; the Orchestrator does not repeat such a turn.
 var ErrContextLimit = errors.New("the context exceeds what the provider channel carries")
+
+var assignmentName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,89}$`)
+
+// AssignmentSpec names one Agent's long-lived runtime. The caller supplies a
+// fresh workspace and home for every assignment, including independent Verify.
+// Provider responses do not replace this identity or close its container.
+type AssignmentSpec struct {
+	ID         string
+	Profile    string
+	Workspace  string
+	Home       string
+	Tools      []ToolSpec
+	Transcript string
+}
+
+// AssignmentSession keeps one provider conversation in one container. Message
+// returns a native provider observation; it does not decide whether the work
+// should be accepted. Close ends the container even after cancellation.
+type AssignmentSession interface {
+	Message(context.Context, string, time.Duration) (TurnResult, error)
+	Close(context.Context) (TurnResult, error)
+}
+
+// AssignmentAgents starts one independent Agent runtime. Legacy Agents.Run
+// remains for the implemented Pass path until its consumers migrate.
+type AssignmentAgents interface {
+	OpenAssignment(context.Context, AssignmentSpec, ToolHandler) (AssignmentSession, error)
+}
+
+// AssignmentQuestion is the sole special communication signal in this slice.
+// A parent can answer directly or arrange a later reply through its caller.
+type AssignmentQuestion func(context.Context, string) (string, error)
+
+const AskParentTool = "ask_parent"
+
+var askParentSpec = ToolSpec{
+	Name: AskParentTool, Description: "Ask the parent Manager a question about this assignment.",
+	InputSchema: json.RawMessage(`{"type":"object","properties":{"question":{"type":"string"}},"required":["question"],"additionalProperties":false}`),
+}
+
+// AssignmentRequest has no report format or completion phrase. The Host fixes
+// a result commit when Submit is called; the Agent's last native final message
+// is the summary that travels with that result.
+type AssignmentRequest struct {
+	ID         WorkspaceID
+	Profile    string
+	Tree       snapshot.Tree
+	Home       string
+	Transcript string
+	Tools      []ToolSpec
+	Handler    ToolHandler
+	AskParent  AssignmentQuestion
+}
+
+type AssignmentHandoff struct {
+	StartingCommit string
+	ResultCommit   string
+	Summary        string
+}
+
+// Assignment owns a running Agent and its independent Git copy. The caller
+// closes the Agent when accepted or aborted and separately releases retained
+// workspace data when it is no longer needed.
+type Assignment struct {
+	session  AssignmentSession
+	work     AssignmentWorkspace
+	last     TurnResult
+	ready    bool
+	closed   bool
+	closing  TurnResult
+	closeErr error
+}
+
+func StartAssignment(ctx context.Context, workspaces AssignmentWorkspaces, agents AssignmentAgents, request AssignmentRequest) (*Assignment, error) {
+	if workspaces == nil || agents == nil || !assignmentName.MatchString(string(request.ID)) || request.Profile == "" || request.Home == "" {
+		return nil, errors.New("invalid Agent assignment")
+	}
+	tools := append([]ToolSpec(nil), request.Tools...)
+	handler := request.Handler
+	if handler == nil {
+		handler = func(context.Context, string, json.RawMessage) ToolAnswer {
+			return ToolAnswer{Text: "unknown assignment tool", Refused: true}
+		}
+	}
+	if request.AskParent != nil {
+		for _, tool := range tools {
+			if tool.Name == AskParentTool {
+				return nil, errors.New("ask_parent is reserved for assignment questions")
+			}
+		}
+		tools = append(tools, askParentSpec)
+		handler = func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
+			if name != AskParentTool {
+				if request.Handler == nil {
+					return ToolAnswer{Text: "unknown assignment tool", Refused: true}
+				}
+				return request.Handler(ctx, name, args)
+			}
+			var question struct {
+				Question string `json:"question"`
+			}
+			if err := json.Unmarshal(args, &question); err != nil || question.Question == "" {
+				return ToolAnswer{Text: "a non-empty question is required", Refused: true}
+			}
+			answer, err := request.AskParent(ctx, question.Question)
+			if err != nil {
+				return ToolAnswer{Text: err.Error(), Refused: true}
+			}
+			return ToolAnswer{Text: answer}
+		}
+	}
+	work, err := workspaces.PrepareAssignment(ctx, WorkspaceSpec{ID: request.ID, Tree: request.Tree})
+	if err != nil {
+		return nil, err
+	}
+	session, err := agents.OpenAssignment(ctx, AssignmentSpec{ID: string(request.ID), Profile: request.Profile, Workspace: work.Volume(), Home: request.Home, Tools: tools, Transcript: request.Transcript}, handler)
+	if err != nil {
+		return &Assignment{work: work}, err
+	}
+	return &Assignment{session: session, work: work}, nil
+}
+
+func (a *Assignment) Message(ctx context.Context, text string, timeout time.Duration) (TurnResult, error) {
+	if a == nil || a.closed || a.session == nil {
+		return TurnResult{}, errors.New("Agent assignment is closed")
+	}
+	result, err := a.session.Message(ctx, text, timeout)
+	a.last, a.ready = result, err == nil && result.Completed
+	return result, err
+}
+
+// Submit fixes the current Git contents without freezing the working copy.
+// Corrections can produce another commit in the same assignment afterward.
+func (a *Assignment) Submit(ctx context.Context) (AssignmentHandoff, error) {
+	if a == nil || a.closed || a.work == nil || !a.ready {
+		return AssignmentHandoff{}, errors.New("no completed Agent response to submit")
+	}
+	commit, err := a.work.Commit(ctx, "Agent assignment result")
+	if err != nil {
+		return AssignmentHandoff{}, err
+	}
+	a.ready = false
+	return AssignmentHandoff{StartingCommit: a.work.StartingCommit(), ResultCommit: commit, Summary: a.last.Final}, nil
+}
+
+// Close ends the container. The Git copy remains retained, including on error
+// or cancellation, so an incomplete assignment stays inspectable.
+func (a *Assignment) Close(ctx context.Context) (TurnResult, error) {
+	if a == nil || a.session == nil {
+		return TurnResult{}, nil
+	}
+	if a.closed {
+		return a.closing, a.closeErr
+	}
+	a.closed = true
+	a.closing, a.closeErr = a.session.Close(ctx)
+	return a.closing, a.closeErr
+}
+
+func (a *Assignment) Workspace() AssignmentWorkspace {
+	if a == nil {
+		return nil
+	}
+	return a.work
+}
 
 // Agents runs one Agent turn. A turn is one fresh container from the turn
 // profile's image with Workspace mounted at /work (read-only when ReadOnly)

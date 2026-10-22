@@ -60,6 +60,7 @@ type fakeRuntime struct {
 	writes  []string
 	replies []frame.ToolReply
 	stops   int
+	starts  int
 	closed  bool
 
 	closeErr       error
@@ -86,6 +87,7 @@ func (f *fakeRuntime) StartProvider(_ context.Context, s frame.Start) (frame.Sta
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.start = s
+	f.starts++
 	return frame.Started{PID: 123}, nil
 }
 func (f *fakeRuntime) Stdout() io.Reader                { return f.stream }
@@ -96,6 +98,7 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	f.mu.Unlock()
 	var m struct {
 		Method string
+		ID     int
 	}
 	_ = json.Unmarshal(data, &m)
 	switch m.Method {
@@ -108,7 +111,7 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		}
 		f.emit(`{"id":2,"result":{"thread":` + thread + `,"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"admitted-model","modelProvider":"markitect","sandbox":{"type":"dangerFullAccess"}}}`)
 	case "turn/start":
-		f.emit(`{"id":3,"result":{"turn":{"id":"` + string(codecTurnID) + `","status":"inProgress","items":[],"error":null}}}`)
+		f.emit(fmt.Sprintf(`{"id":%d,"result":{"turn":{"id":"%s","status":"inProgress","items":[],"error":null}}}`, m.ID, codecTurnID))
 		switch {
 		case f.errorText != "":
 			f.emit(`{"method":"error","params":{"error":{"message":"` + f.errorText + `"},"willRetry":false}}`)
@@ -263,6 +266,55 @@ func TestRunExecuteTurn(t *testing.T) {
 		if !directions[d] {
 			t.Fatalf("transcript lacks %s lines", d)
 		}
+	}
+}
+
+func TestAssignmentKeepsOneContainerAndThreadAcrossResponses(t *testing.T) {
+	rt := newRuntime()
+	rt.finalText = "first result"
+	agents := agentsFor(t, rt)
+	session, err := agents.OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "assignment-1", Profile: "codex", Workspace: "git-work", Home: "agent-home",
+	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
+	if err != nil {
+		t.Fatal(err)
+	}
+	first, err := session.Message(context.Background(), "work", time.Second)
+	if err != nil || !first.Completed || first.Stopped || first.Final != "first result" {
+		t.Fatalf("first response %+v %v", first, err)
+	}
+	rt.finalText = "corrected result"
+	second, err := session.Message(context.Background(), "correct the result", time.Second)
+	if err != nil || !second.Completed || second.Stopped || second.Final != "corrected result" || second.Conversation != first.Conversation {
+		t.Fatalf("second response %+v %v", second, err)
+	}
+	if rt.starts != 1 || rt.stops != 0 || rt.closed {
+		t.Fatalf("provider/container ended between messages: starts=%d stops=%d closed=%t", rt.starts, rt.stops, rt.closed)
+	}
+	closed, err := session.Close(context.Background())
+	if err != nil || !closed.Stopped || rt.stops != 1 || !rt.closed {
+		t.Fatalf("close %+v %v, starts=%d stops=%d", closed, err, rt.starts, rt.stops)
+	}
+}
+
+func TestAssignmentCancellationClosesAndRetainsPartialObservation(t *testing.T) {
+	rt := newRuntime()
+	rt.hang = true
+	session, err := agentsFor(t, rt).OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "assignment-cancel", Profile: "codex", Workspace: "git-work", Home: "agent-home",
+	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	partial, err := session.Message(ctx, "unfinished work", time.Second)
+	if !errors.Is(err, context.Canceled) || !partial.Stopped || !rt.closed || rt.stops != 1 {
+		t.Fatalf("cancellation %+v %v, stops=%d closed=%t", partial, err, rt.stops, rt.closed)
+	}
+	closed, closeErr := session.Close(context.Background())
+	if !errors.Is(closeErr, context.Canceled) || closed.Stopped != partial.Stopped || rt.stops != 1 {
+		t.Fatalf("retained closure %+v %v", closed, closeErr)
 	}
 }
 

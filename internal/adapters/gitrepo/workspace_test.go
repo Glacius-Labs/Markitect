@@ -9,6 +9,9 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"os"
+	"os/exec"
+	"path/filepath"
 	"slices"
 	"strings"
 	"testing"
@@ -17,6 +20,88 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
+
+type assignmentGitRuntime struct{ root string }
+
+func (f assignmentGitRuntime) InspectVolume(context.Context, string) (container.VolumeObservation, error) {
+	return container.VolumeObservation{}, nil
+}
+func (f assignmentGitRuntime) CreateVolumeExclusive(context.Context, string, map[string]string) (container.VolumeObservation, error) {
+	return container.VolumeObservation{}, errors.New("unused")
+}
+func (f assignmentGitRuntime) VolumeMounts(context.Context, string) ([]string, error) {
+	return nil, nil
+}
+func (f assignmentGitRuntime) RemoveVolume(context.Context, string) error { return nil }
+func (f assignmentGitRuntime) RunHelper(ctx context.Context, _ container.ContainerSpec, argv []string, stdin io.Reader, stdout io.Writer) error {
+	if len(argv) < 2 || argv[0] != "/usr/bin/git" {
+		return errors.New("not a Git helper")
+	}
+	args := slices.Clone(argv[1:])
+	for i := range args {
+		if args[i] == "/work" {
+			args[i] = f.root
+		}
+	}
+	cmd := exec.CommandContext(ctx, "git", args...)
+	cmd.Stdin, cmd.Stdout = stdin, stdout
+	var stderr bytes.Buffer
+	cmd.Stderr = &stderr
+	if err := cmd.Run(); err != nil {
+		return errors.New(stderr.String() + ": " + err.Error())
+	}
+	return nil
+}
+
+func TestAssignmentGitCommitsRemainFixedAfterCorrection(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("Git unavailable")
+	}
+	ctx := context.Background()
+	root := t.TempDir()
+	file := filepath.Join(root, "result.txt")
+	if err := os.WriteFile(file, []byte("first"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	w := &Workspaces{runtime: assignmentGitRuntime{root: root}, helper: container.ContainerSpec{Name: "test", Labels: map[string]string{"markitect.store": "test"}}, owned: map[run.WorkspaceID]string{"agent": "owned"}}
+	a := &assignmentWorkspace{owner: w, id: "agent", volume: w.volume("agent")}
+	if _, err := a.git(ctx, "init", "-b", "assignment"); err != nil {
+		t.Fatal(err)
+	}
+	base, err := a.commit(ctx, "starting stand")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(file, []byte("corrected"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	state := filepath.Join(root, ".markitect", "state")
+	if err := os.MkdirAll(state, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(state, "private.json"), []byte("runtime only"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	result, err := a.Commit(ctx, "Agent result")
+	if err != nil || result == base {
+		t.Fatalf("result commit %q after base %q: %v", result, base, err)
+	}
+	if has, err := a.ContainsCommit(ctx, base); err != nil || !has {
+		t.Fatalf("base lost: %t %v", has, err)
+	}
+	if has, err := a.ContainsCommit(ctx, result); err != nil || !has {
+		t.Fatalf("result lost: %t %v", has, err)
+	}
+	cmd := exec.CommandContext(ctx, "git", "-C", root, "show", base+":result.txt")
+	old, err := cmd.Output()
+	if err != nil || string(old) != "first" {
+		t.Fatalf("earlier commit changed: %q %v", old, err)
+	}
+	listed, err := exec.CommandContext(ctx, "git", "-C", root, "ls-tree", "-r", "--name-only", result).Output()
+	if err != nil || strings.Contains(string(listed), ".markitect/state") {
+		t.Fatalf("private state entered handoff: %q %v", listed, err)
+	}
+}
 
 type workspaceFake struct {
 	volumes                                   map[string]container.VolumeObservation
