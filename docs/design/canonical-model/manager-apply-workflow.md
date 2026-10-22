@@ -39,11 +39,13 @@ A Manager gives a bounded task and starting stand to each required direct child.
 
 Questions and answers travel along direct parent/child edges. A cross-area question goes through the common parent, which settles it or consults the relevant child. If a Manager cannot decide within its model mandate, it escalates to its own parent. Root reports a material unresolved intent decision outside the run; it cannot invent policy.
 
+A question needs an explicit signal so the Host can route it to the parent and return the answer. Ordinary work completion needs no separate Agent handoff tool or status message protocol.
+
 A needed interface or contract may be supplied early as a named Git stand or an explicit decision. There is no universal basis submission or parent preapproval before local work. If a supplied foundation changes, the parent gives affected children a concrete update or correction task. The Host does not maintain a global basis/result dependency graph or automatically invalidate a tree of work.
 
 ## Handoffs and parent integration
 
-A handoff names the starting Git commit and an internal result commit and gives a short account of the result, relevant tests and open matters. The commits identify the submitted changes. Further work creates another stand; it cannot alter the content named by an earlier commit. Internal work commits do not commit or push the owner's repository.
+When an Agent finishes its work, its current Git working stand is the handoff and its last message summarizes the result, relevant tests and open matters. The Host may secure that stand with an ordinary internal Git commit so the parent can inspect a fixed result against its starting commit. Further work creates another stand; it cannot alter an earlier result commit. No separate submission tool, mandatory JSON or status word is needed to receive the work. The parent decides acceptance or correction from the actual stand and summary. Internal work commits do not commit or push the owner's repository.
 
 The Agent may test with its normal tools. The Host retains actual available commands, outputs and logs, distinguishing them from prose claims. Tests performed before later changes remain earlier observations. There is no mandatory per-Definition evidence matrix, custom receipt language or preregistration of every test expectation. The parent judges the assertions and whether the evidence is relevant to the submitted stand.
 
