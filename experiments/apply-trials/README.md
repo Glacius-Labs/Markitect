@@ -4,6 +4,29 @@ The separate [NIGHT stabilization handoff](../../docs/development/night-apply-st
 binds model-first independent Verify, the new usable-path reference controls and a
 source-released finite overnight ledger. Historical CCF-v1 packets and results remain closed.
 
+The NIGHT series is closed. The 22 October runner correction changes future source
+only; it does not reopen any grant, frozen attempt or recovery adjudication.
+N3 stopped on a Windows clock-query timeout; N4 lost its supervisor for an unknown
+reason. The runner retains the independent host-clock supervisor and the existing
+parent-death guard. Child commands now use the remaining monotonic budget anchored
+before supervisor setup, without a Windows query for every command. The live UTC
+start check remains, and the supervisor still enforces absolute UTC and host elapsed
+limits. Direct tracked subprocesses replace the GNU `timeout` intermediary; TERM/KILL
+finishes before reaping the group leader so TERM-resistant descendants are stopped.
+Forced cleanup does not launch further clock queries. The known WSL clock drift
+means guest durations remain distinct from host duration, with no clock substitution.
+
+`result.json` and forced-cleanup evidence include exclusive Linux-monotonic phase
+durations: setup, execution, runner-requested stop, cleanup, evaluation and
+finalization through the measurement snapshot (excluding its persistence). Execution
+includes product-internal Turn stops; this runner cannot measure those separately.
+Forced-cleanup timings cover only that cessation sequence. These measurements grant
+no normal Turn-stop proof; emergency or unknown cessation retains the full charge
+and blocks new starts. Linux provider-free controls exercise real owned processes,
+TERM-resistant descendants, parent death, foreign-process preservation, UTC cutoffs,
+setup-inclusive caps and persistence failures:
+`python3 -B -m unittest discover -s experiments/apply-trials -p night_run_test.py`.
+
 D's [four-slot preparation](d-preparation-20261021.md) reuses preservation, artifact and parent-semantic controls, adds the one bounded Workshop R1 input, and supplies a finite ledger and single-conversation ordinary-Agent Driver. It is provider-free preparation, with explicit real-transport/profile dependencies.
 
 The [offline report-contract correction](report-contract-validation-20261021.md) binds A's historical reports, reproduces the old and #564 parser/scoring gaps, and records a separate outcome-only re-evaluation. Its focused regression command runs no oracle, Agent or provider.

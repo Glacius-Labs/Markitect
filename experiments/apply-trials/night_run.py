@@ -9,6 +9,7 @@ import fcntl
 import hashlib
 import importlib.util
 import json
+import math
 import os
 from pathlib import Path
 import shutil
@@ -87,6 +88,77 @@ def host_elapsed(sample=None):
     sample = sample or host_clock()
     require(sample['frequency'] == process_started_host['frequency'], 'host clock frequency changed after dispatch')
     return (sample['ticks'] - process_started_host['ticks']) / sample['frequency']
+
+
+class AttemptTiming:
+    """Exclusive guest-monotonic phases; never substitute for host enforcement."""
+    def __init__(self, started, phase='setup'):
+        self.since, self.phase = started, phase
+        self.seconds = dict.fromkeys(('setup', 'execution', 'stop', 'cleanup', 'evaluation', 'finalization'), 0.0)
+
+    def enter(self, phase):
+        now = time.monotonic()
+        self.seconds[self.phase] += now - self.since
+        self.since, self.phase = now, phase
+
+    def snapshot(self):
+        self.enter(self.phase)
+        return {'clock': 'Linux monotonic; host duration reported separately',
+                'seconds': {key: round(value, 3) for key, value in self.seconds.items()}}
+
+
+def remaining_seconds(start, bound):
+    # The supervisor alone polls independent host time/absolute UTC. Guest
+    # timers can stop earlier (observed WSL drift); they never extend its cap.
+    seconds = bound - (time.monotonic() - start)
+    if seconds < 1:
+        raise TimeoutError('finite attempt budget exhausted')
+    return seconds
+
+
+def wait_without_reaping(pid, seconds):
+    """Keep the leader's kernel identity reserved until its group is killed."""
+    deadline = time.monotonic() + seconds
+    while os.waitid(os.P_PID, pid, os.WEXITED | os.WNOHANG | os.WNOWAIT) is None:
+        if time.monotonic() >= deadline:
+            return
+        time.sleep(min(0.01, max(0, deadline - time.monotonic())))
+
+
+def run_tracked(args, registry, limit, timing, **kwargs):
+    """One process owner for command execution and TERM/KILL; no timeout wrapper."""
+    check, capture = kwargs.pop('check', False), kwargs.pop('capture_output', False)
+    payload = kwargs.pop('input', None)
+    if capture:
+        kwargs['stdout'] = kwargs['stderr'] = subprocess.PIPE
+    if payload is not None:
+        kwargs['stdin'] = subprocess.PIPE
+    if kwargs.pop('text', False) and isinstance(payload, str):
+        payload = payload.encode()
+    with subprocess.Popen(args, start_new_session=True, **kwargs) as peer:
+        identity = process_identity(peer.pid)
+        try:
+            track_process(registry, peer.pid)
+            stdout, stderr = peer.communicate(payload, timeout=limit)
+        except BaseException:
+            phase = timing.phase
+            timing.enter('stop')
+            try:
+                if identity is not None and process_identity(peer.pid) == identity:
+                    os.killpg(peer.pid, signal.SIGTERM)
+                    wait_without_reaping(peer.pid, 5)
+                    # Even when TERM ended the leader, its children can still
+                    # run. Kill before reaping so the group ID cannot be reused.
+                    os.killpg(peer.pid, signal.SIGKILL)
+                    peer.communicate(timeout=1)
+                else:
+                    require(peer.returncode is not None, 'command cessation identity is unknown')
+            finally:
+                timing.enter(phase)
+            raise
+        if check and peer.returncode:
+            raise subprocess.CalledProcessError(peer.returncode, args)
+        return subprocess.CompletedProcess(args, peer.returncode, stdout, stderr)
 
 
 def validate_profile(path, packet, manifest):
@@ -266,6 +338,7 @@ def force_supervised_stop(child, registry, root, packet, reason, stop_sample=Non
 def forced_cleanup(child, registry, root, packet, reason, stop_sample):
     """Cessation continues even if recovery or process-registry writes failed."""
     errors = []
+    timing = AttemptTiming(time.monotonic(), 'stop')
     marker = recovery(root, packet['name'], reason + '; cleanup not yet proved')
     def cease(signum):
         try:
@@ -273,29 +346,32 @@ def forced_cleanup(child, registry, root, packet, reason, stop_sample):
         except Exception as error:
             errors.append(type(error).__name__)
         # Popen still owns this unreaped identity even if its registry failed.
-        if child.poll() is None:
+        if child.returncode is None:
             try:
                 os.killpg(child.pid, signum)
             except ProcessLookupError:
                 pass
     cease(signal.SIGTERM)
     try:
-        # Reuse the supervisor's last clock sample. Clock/registry failures
-        # receive no grace: do not block on another uncertain clock query.
-        while stop_sample is not None and child.poll() is None:
-            sample = host_clock()
-            require(sample['frequency'] == stop_sample['frequency'] and sample['ticks'] >= stop_sample['ticks'])
-            if (sample['ticks'] - stop_sample['ticks']) / sample['frequency'] >= 15:
-                break
-            time.sleep(0.1)
+        # A known deadline permits bounded TERM grace. A failed clock/registry
+        # permits none. Cleanup never depends on restarting the Windows bridge.
+        if stop_sample is not None:
+            wait_without_reaping(child.pid, 15)
+    except ChildProcessError:
+        pass
     except Exception as error:
-        errors.append(type(error).__name__)  # clock uncertainty escalates now
+        errors.append(type(error).__name__)
     finally:
         cease(signal.SIGKILL)
+    try:
+        child.wait(timeout=1)
+    except subprocess.TimeoutExpired:
+        errors.append('runner-stop-unknown')
     # Stop only the exact reserved store; never credit emergency cessation as
     # normal Turn stop. Retain ACTIVE/full reservation and every volume.
     remaining = None
     docker = '/usr/bin/docker'
+    timing.enter('cleanup')
     try:
         found = subprocess.run([docker, 'ps', '-q', '--filter', 'label=markitect.store=' + packet['store']],
                                capture_output=True, check=True, timeout=2).stdout.decode().split()
@@ -306,19 +382,15 @@ def forced_cleanup(child, registry, root, packet, reason, stop_sample):
     except Exception as error:
         errors.append(type(error).__name__)
     try:
-        child.wait(timeout=1)
-    except subprocess.TimeoutExpired:
-        errors.append('runner-stop-unknown')
-    try:
         write(root / ('forced-cleanup-' + packet['name'] + '.json'),
               {'forced': True, 'runningAfter': remaining, 'normalTurnStopsProved': False,
-               'recoveryMarkerDurable': marker, 'errors': errors})
+               'recoveryMarkerDurable': marker, 'errors': errors, 'timing': timing.snapshot()})
     except OSError:
         pass  # unresolved ACTIVE/full charge remains authoritative
     return 4
 
 
-def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None):
+def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None, monotonic_start=None):
     """Charge an eligible authorized dispatch before any child-only check."""
     with (root / 'series.lock').open('a') as lock:
         fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -338,6 +410,7 @@ def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None)
                        'group': manifest['group'], 'startedUtc': host_utc(started).isoformat(),
                        'startedHostClock': started, 'status': 'running', 'chargedSeconds': 2700,
                        'manifestSha256': sha(manifest_path)}
+        reservation['startedMonotonicSeconds'] = time.monotonic() if monotonic_start is None else monotonic_start
         supervisor_identity = process_identity(os.getpid())
         require(supervisor_identity is not None, 'supervisor process identity is unavailable')
         # Either retained marker blocks another dispatch if a later write fails.
@@ -393,6 +466,7 @@ def supervise(manifest_path, gate_path, position):
     """
     SUPERVISION.clear()
     SUPERVISION.update(reservationState='absent', phase='supervisor authorization', childLaunched=False)
+    monotonic_start = time.monotonic()
     started = host_clock()
     m = validate(manifest_path, gate_path, files=False)
     require(1 <= int(position) <= len(m['packets']), 'group position is outside the frozen packet list')
@@ -401,7 +475,7 @@ def supervise(manifest_path, gate_path, position):
     # Reserve before launching the child: an early refusal is a charged dispatch
     # too. Independent ownership also survives child-finalization/storage races.
     supervisor_active = root / 'ACTIVE-SUPERVISOR'
-    reservation = reserve_dispatch(root, packet, m, manifest_path, started, SUPERVISION)
+    reservation = reserve_dispatch(root, packet, m, manifest_path, started, SUPERVISION, monotonic_start)
     SUPERVISION['phase'] = 'process registry preparation'
     registry = root / ('process-groups-' + packet['name'] + '.jsonl')
     with registry.open('x') as stream:
@@ -411,6 +485,7 @@ def supervise(manifest_path, gate_path, position):
     supervisor_identity = json.loads(supervisor_active.read_text())['supervisorIdentity']
     environment = dict(os.environ, MARKITECT_NIGHT_PROCESS_REGISTRY=str(registry),
                        MARKITECT_NIGHT_STARTED_HOST=json.dumps(started),
+                       MARKITECT_NIGHT_STARTED_MONOTONIC=str(monotonic_start),
                        MARKITECT_NIGHT_SUPERVISOR_IDENTITY=json.dumps(supervisor_identity))
     child_output = root / ('supervisor-child-' + packet['name'] + '.jsonl')
     SUPERVISION['phase'] = 'child output preparation'
@@ -504,44 +579,18 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
                           capture_output=True, check=True, timeout=15)
     require(not busy.stdout.strip(), 'Docker host is busy')
     start = process_started
+    require(reservation['startedMonotonicSeconds'] == start,
+            'child monotonic anchor differs from the supervised reservation')
+    timing = AttemptTiming(start)
     started = dt.datetime.fromisoformat(reservation['startedUtc'])
     credential_created = False
     unsafe = False
     result = {'classification': 'technical-incomplete', 'name': p['name']}
     def remaining(bound):
-        host = host_clock()
-        seconds = min(bound - (time.monotonic() - start), bound - host_elapsed(host),
-                      (ABSOLUTE_ATTEMPT_STOP - host_utc(host)).total_seconds())
-        if seconds < 1:
-            raise TimeoutError('finite attempt budget exhausted')
-        return seconds
+        return remaining_seconds(start, bound)
     def run(args, **kwargs):
         limit = min(remaining(2680), kwargs.pop('timeout', 30))
-        check, capture = kwargs.pop('check', False), kwargs.pop('capture_output', False)
-        payload = kwargs.pop('input', None)
-        if capture:
-            kwargs['stdout'] = kwargs['stderr'] = subprocess.PIPE
-        if payload is not None:
-            kwargs['stdin'] = subprocess.PIPE
-        if kwargs.pop('text', False) and isinstance(payload, str):
-            payload = payload.encode()
-        with subprocess.Popen(args, start_new_session=True, **kwargs) as peer:
-            try:
-                track_process(os.environ['MARKITECT_NIGHT_PROCESS_REGISTRY'], peer.pid)
-                stdout, stderr = peer.communicate(payload, timeout=limit)
-            except BaseException:
-                if peer.poll() is None:
-                    os.killpg(peer.pid, signal.SIGTERM)
-                    try:
-                        peer.communicate(timeout=5)
-                    except subprocess.TimeoutExpired:
-                        os.killpg(peer.pid, signal.SIGKILL)
-                        peer.communicate(timeout=1)
-                raise
-            completed = subprocess.CompletedProcess(args, peer.returncode, stdout, stderr)
-            if check and peer.returncode:
-                raise subprocess.CalledProcessError(peer.returncode, args)
-            return completed
+        return run_tracked(args, os.environ['MARKITECT_NIGHT_PROCESS_REGISTRY'], limit, timing, **kwargs)
     def cleanup():
         nonlocal unsafe
         found = run([docker, 'ps', '-q', '--filter', 'label=markitect.store=' + p['store']],
@@ -657,11 +706,13 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
         raw_path = attempt / 'out/provider-output.txt'
         require(host_utc(host_clock()) < ABSOLUTE_START_CUTOFF, 'absolute cutoff reached before productive dispatch')
         with raw_path.open('wb') as stdout, (attempt / 'out/apply.stderr').open('wb') as stderr:
-            done = run(['/usr/bin/timeout', '--signal=TERM', '--kill-after=20s', str(int(remaining(2490))), *args],
-                       stdout=stdout, stderr=stderr, timeout=2540, env=environment)
+            timing.enter('execution')
+            done = run(args, stdout=stdout, stderr=stderr, timeout=remaining(2490), env=environment)
         result['applyExit'] = done.returncode
-        unsafe = done.returncode in (124, 137)
+        unsafe = done.returncode < 0 or done.returncode in (124, 137)
+        timing.enter('cleanup')
         first_cleanup = cleanup()
+        timing.enter('evaluation')
         state = attempt / 'state-run'
         run_id = (state / 'current-run').read_text().strip()
         evidence = state / 'runs' / run_id
@@ -719,6 +770,7 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
             unsafe = True
     finally:
         INTERRUPT['finalizing'] = True
+        timing.enter('cleanup')
         try:
             result['finalCleanup'] = cleanup()
         except Exception as error:
@@ -731,6 +783,7 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
             unsafe = True
             result['credentialCleanupErrorType'] = type(error).__name__
         unsafe = unsafe or INTERRUPT['seen']
+        timing.enter('finalization')
         result['unsafeOrUnknownCleanup'] = unsafe
         result['recoveryRequired'] = unsafe or INTERRUPT['markerWriteFailed']
         if unsafe:
@@ -747,6 +800,7 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
             result['unsafeOrUnknownCleanup'] = True
             result['recoveryRequired'] = True
             result['classification'] = 'technical-incomplete'
+        result['timing'] = timing.snapshot()
         try:
             write(attempt / 'result.json', result)
         except Exception as error:
@@ -832,7 +886,9 @@ def bounded_child():
     signal.signal(signal.SIGTERM, interrupt)
     signal.signal(signal.SIGINT, interrupt)
     arm_supervisor_liveness_guard()
-    process_started = time.monotonic()
+    process_started = float(os.environ['MARKITECT_NIGHT_STARTED_MONOTONIC'])
+    require(math.isfinite(process_started) and 0 <= process_started <= time.monotonic(),
+            'supervised monotonic anchor is invalid')
     process_started_utc = dt.datetime.now(dt.timezone.utc)
     process_started_host = json.loads(os.environ['MARKITECT_NIGHT_STARTED_HOST'])
     def deadline(signum, frame):
@@ -841,7 +897,7 @@ def bounded_child():
         signal.setitimer(signal.ITIMER_REAL, max(0.001, 2700 - (time.monotonic() - process_started)))
         interrupt(signum, frame)
     signal.signal(signal.SIGALRM, deadline)
-    signal.setitimer(signal.ITIMER_REAL, 2670)
+    signal.setitimer(signal.ITIMER_REAL, max(0.001, 2670 - (time.monotonic() - process_started)))
     return main()
 
 
