@@ -55,7 +55,7 @@ The owner's [22 October clarification](concepts/sources/proportionate-agent-proc
 
 Use the smallest process that supports those responsibilities. More report fields, mandatory probes or completeness declarations do not themselves improve correctness. Tests and inspected artifacts support professional judgment; uncertainty about a concrete required property remains visible, but an imagined possibility of another defect must not create endless review. Parents assess composition and challenge relevant child evidence without routinely repeating all child work. Judge the method by actual consistency, detected and repaired defects, false findings, completed workflows and human intervention against the ordinary Agent baseline.
 
-The [Apply simplification review](design/canonical-model/manager-apply-workflow.md#proportionate-process-review-22-october-2026) proposes specific removals. The principle is accepted; those proposals are not silently substituted for current contracts or claimed as implemented.
+The [Apply simplification review](design/canonical-model/manager-apply-workflow.md#proportionate-process-review-22-october-2026) records the seven adopted simplifications, including removal of separate Verify preapproval. They supersede the corresponding older target rules; implementation and demonstrated benefit remain separate.
 
 ## The thesis
 
