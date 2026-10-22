@@ -112,6 +112,9 @@ func TestAssignmentHandoffsRouteQuestionCorrectionAndRequiredChildren(t *testing
 	if _, err := f.Accept(ctx, "library", "library/lending", corrected.ResultCommit); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := f.Accept(ctx, "library", "library/lending", corrected.ResultCommit); err == nil {
+		t.Fatal("same child commit was integrated twice")
+	}
 	_, storage, err := f.Changes(ctx, "library", "library/storage")
 	if err != nil {
 		t.Fatal(err)

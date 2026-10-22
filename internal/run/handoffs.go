@@ -310,7 +310,7 @@ func (f *AssignmentHandoffs) Accept(ctx context.Context, parent, child, inspecte
 	defer m.release()
 	f.mu.Lock()
 	c := f.team[child]
-	if m == nil || c == nil || c.manager.Parent != parent || c.handoff.ResultCommit == "" || c.returned || inspectedCommit != c.inspected || inspectedCommit != c.handoff.ResultCommit || m.agent == nil {
+	if m == nil || c == nil || c.manager.Parent != parent || c.handoff.ResultCommit == "" || c.returned || inspectedCommit != c.inspected || inspectedCommit != c.handoff.ResultCommit || m.accepted[child] == inspectedCommit || m.agent == nil {
 		f.mu.Unlock()
 		return "", fmt.Errorf("no inspected direct-child result %q for %q", child, parent)
 	}

@@ -234,7 +234,7 @@ func (a *assignmentWorkspace) git(ctx context.Context, args ...string) (string, 
 	}
 	spec := w.spec(a.volume, false)
 	var output strings.Builder
-	argv := append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=Markitect", "-c", "user.email=assignment@markitect.invalid", "-C", "/work"}, args...)
+	argv := assignmentGitArgs(args...)
 	if err := w.runtime.RunHelper(ctx, spec, argv, nil, &output); err != nil {
 		return "", err
 	}
