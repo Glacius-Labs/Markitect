@@ -12,7 +12,8 @@ import (
 )
 
 type assignmentWorkspacesFake struct {
-	copies map[run.WorkspaceID]*assignmentCopyFake
+	copies     map[run.WorkspaceID]*assignmentCopyFake
+	prepareErr error
 }
 type assignmentCopyFake struct {
 	id      run.WorkspaceID
@@ -29,7 +30,19 @@ func (f *assignmentWorkspacesFake) PrepareAssignment(_ context.Context, spec run
 	}
 	copy := &assignmentCopyFake{id: spec.ID, commits: []string{strings.Repeat(string(spec.ID[0]), 40)}}
 	f.copies[spec.ID] = copy
-	return copy, nil
+	return copy, f.prepareErr
+}
+
+func TestAssignmentStartRetainsPartialWorkspace(t *testing.T) {
+	work := &assignmentWorkspacesFake{prepareErr: errors.New("workspace initialization incomplete")}
+	agents := &assignmentAgentsFake{}
+	partial, err := run.StartAssignment(context.Background(), work, agents, run.AssignmentRequest{ID: "agent", Profile: "codex", Home: "home"})
+	if err == nil || partial == nil || partial.Workspace() == nil || partial.Workspace().Volume() != "volume-agent" {
+		t.Fatalf("partial assignment %+v: %v", partial, err)
+	}
+	if len(agents.opened) != 0 {
+		t.Fatal("Agent started on an incomplete working copy")
+	}
 }
 func (f *assignmentCopyFake) ID() run.WorkspaceID    { return f.id }
 func (f *assignmentCopyFake) Volume() string         { return "volume-" + string(f.id) }

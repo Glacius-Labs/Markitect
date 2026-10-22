@@ -132,7 +132,13 @@ func StartAssignment(ctx context.Context, workspaces AssignmentWorkspaces, agent
 	}
 	work, err := workspaces.PrepareAssignment(ctx, WorkspaceSpec{ID: request.ID, Tree: request.Tree})
 	if err != nil {
+		if work != nil {
+			return &Assignment{work: work}, err
+		}
 		return nil, err
+	}
+	if work == nil {
+		return nil, errors.New("assignment workspace was not established")
 	}
 	session, err := agents.OpenAssignment(ctx, AssignmentSpec{ID: string(request.ID), Profile: request.Profile, Workspace: work.Volume(), Home: request.Home, Tools: tools, Transcript: request.Transcript}, handler)
 	if err != nil {

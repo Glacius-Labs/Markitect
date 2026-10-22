@@ -150,6 +150,18 @@ func TestAssignmentGitKeepsRegularStateFile(t *testing.T) {
 	}
 }
 
+func TestAssignmentPrepareRetainsVolumeAfterCreationFailure(t *testing.T) {
+	w, runtime := workspaceAdapter(t)
+	runtime.createErr = errors.New("creation response was incomplete")
+	partial, err := w.PrepareAssignment(context.Background(), run.WorkspaceSpec{ID: "agent", Tree: workspaceTree(t, workspaceEntry(t, "work.txt", snapshot.Regular, "work"))})
+	if err == nil || partial == nil || partial.Volume() == "" || partial.StartingCommit() != "" {
+		t.Fatalf("partial workspace %+v: %v", partial, err)
+	}
+	if !runtime.volumes[partial.Volume()].Exists {
+		t.Fatal("created volume identity was lost")
+	}
+}
+
 type workspaceFake struct {
 	volumes                                   map[string]container.VolumeObservation
 	trees                                     map[string]snapshot.Tree

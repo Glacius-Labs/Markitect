@@ -197,15 +197,18 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 // committed or pushed. The volume is retained on a later failure for inspection.
 func (w *Workspaces) PrepareAssignment(ctx context.Context, request run.WorkspaceSpec) (run.AssignmentWorkspace, error) {
 	observed, err := w.Materialize(ctx, request)
-	if err != nil {
-		return nil, err
+	var a *assignmentWorkspace
+	if observed.Volume != "" {
+		a = &assignmentWorkspace{owner: w, id: request.ID, volume: observed.Volume}
 	}
-	a := &assignmentWorkspace{owner: w, id: request.ID, volume: observed.Volume}
+	if err != nil {
+		return a, err
+	}
 	if _, err = a.git(ctx, "init", "-b", "assignment"); err != nil {
-		return nil, err
+		return a, err
 	}
 	if a.start, err = a.commit(ctx, "Agent assignment starting stand"); err != nil {
-		return nil, err
+		return a, err
 	}
 	return a, nil
 }
