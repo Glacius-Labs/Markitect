@@ -52,8 +52,8 @@ type applyPorts struct {
 	Publisher             apply.Publisher
 	Control               apply.ControlCheck
 	RemoveHome            func(context.Context, string) error
-	// RequireVolumeSubpaths checks the container engine for volume subpath
-	// mounts, which enforced ownership needs.
+	// RequireVolumeSubpaths remains for the legacy Turn-based Extract path.
+	// Assignment Apply mounts complete, independent workspace volumes.
 	RequireVolumeSubpaths func(context.Context) error
 	Harvest               harvestLimits
 	// Deadline is the operator's absolute wall-clock limit; zero means none.
@@ -133,14 +133,8 @@ func (s *executionService) realizeAndPublish(ctx context.Context, request cli.Ap
 	}
 	bounded, cancel := context.WithDeadline(ctx, deadline)
 	defer cancel()
-	if ports.RequireVolumeSubpaths == nil {
-		return apply.AssignmentRealizationResult{}, nil, errors.New("assignment Apply requires enforced volume subpaths")
-	}
 	if ports.CleanupHome == nil {
 		return result, nil, errors.New("assignment Apply requires observed provider home cleanup")
-	}
-	if err := ports.RequireVolumeSubpaths(bounded); err != nil {
-		return apply.AssignmentRealizationResult{}, nil, err
 	}
 	git, ok := ports.AssignmentWorkspaces.(interface {
 		StartGit(context.Context, []runport.WorkspaceID) error
