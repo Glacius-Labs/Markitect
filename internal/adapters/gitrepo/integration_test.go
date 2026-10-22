@@ -87,6 +87,9 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 	}
 	args := slices.Clone(argv[1:])
 	for i := range args {
+		if i > 0 && (args[i-1] == "-m" || args[i-1] == "--message") {
+			continue
+		}
 		if args[i] == "/work" {
 			args[i] = root
 		} else if strings.HasPrefix(args[i], "/work/") {
@@ -121,6 +124,7 @@ func integrationFixture(t *testing.T, ids ...run.WorkspaceID) (*Workspaces, map[
 	}
 	runtime := &integrationRuntime{roots: make(map[string]string)}
 	w := &Workspaces{runtime: runtime, helper: container.ContainerSpec{Name: "test", Labels: map[string]string{"markitect.store": "test"}}, owned: make(map[run.WorkspaceID]string)}
+	attachTestGit(w)
 	copies, roots := make(map[run.WorkspaceID]*assignmentWorkspace), make(map[run.WorkspaceID]string)
 	for _, id := range ids {
 		root := t.TempDir()
@@ -129,6 +133,7 @@ func integrationFixture(t *testing.T, ids ...run.WorkspaceID) (*Workspaces, map[
 		}
 		volume := w.volume(id)
 		runtime.roots[volume], roots[id], w.owned[id] = root, root, "owned"
+		registerTestGitVolume(w, volume)
 		a := &assignmentWorkspace{owner: w, id: id, volume: volume}
 		if _, err := a.git(context.Background(), "init", "-b", "assignment"); err != nil {
 			t.Fatal(err)
@@ -172,6 +177,7 @@ func TestChildGitCloneHasFixedFoundationAndSeparateLiveFiles(t *testing.T) {
 	childVolume := w.volume(childID)
 	w.runtime.(*integrationRuntime).roots[childVolume] = childRoot
 	w.owned[childID] = "owned"
+	registerTestGitVolume(w, childVolume)
 	child := &assignmentWorkspace{owner: w, id: childID, volume: childVolume}
 	if err := w.cloneAssignment(ctx, copies["parent"], child); err != nil {
 		t.Fatal(err)

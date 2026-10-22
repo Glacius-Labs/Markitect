@@ -3,7 +3,6 @@ package gitrepo
 import (
 	"archive/tar"
 	"context"
-	"crypto/rand"
 	"crypto/sha256"
 	"encoding/hex"
 	"errors"
@@ -38,12 +37,17 @@ const workspaceOwnerLabel = "markitect.workspace-owner"
 // receipts stay in this adapter instance; reconstruction cannot claim an
 // existing volume. Failed or uncertain operations retain their volume.
 type Workspaces struct {
-	mu        sync.Mutex
-	runtime   WorkspaceRuntime
-	helper    container.ContainerSpec
-	owned     map[run.WorkspaceID]string
-	uncertain map[run.WorkspaceID]bool
-	seq       uint64
+	mu          sync.Mutex
+	runtime     WorkspaceRuntime
+	helper      container.ContainerSpec
+	owned       map[run.WorkspaceID]string
+	uncertain   map[run.WorkspaceID]bool
+	seq         uint64
+	git         container.ExecSession
+	gitPaths    map[string]string
+	reserved    map[run.WorkspaceID]bool
+	gitClosed   bool
+	gitCloseErr error
 }
 
 var _ run.Workspaces = (*Workspaces)(nil)
@@ -111,23 +115,12 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 	if err != nil {
 		return result, err
 	}
-	var secret [32]byte
-	if _, err = rand.Read(secret[:]); err != nil {
-		return result, err
-	}
-	token := hex.EncodeToString(secret[:])
-	labels := cloneWorkspaceLabels(w.helper.Labels)
-	labels[workspaceOwnerLabel] = token
-	observed, createErr := w.runtime.CreateVolumeExclusive(ctx, result.Volume, labels)
-	if observed.Exists && observed.Name == result.Volume && observed.Labels[workspaceOwnerLabel] == token {
-		w.owned[request.ID] = token
-	}
-	if createErr != nil {
-		result.Uncertain, result.Reason = true, createErr.Error()
-		return result, createErr
-	}
-	if w.owned[request.ID] != token {
-		err = fmt.Errorf("runtime did not establish ownership of new workspace volume")
+	if claimed, reserved := w.reserved[request.ID]; reserved {
+		if claimed || w.git == nil || w.gitClosed {
+			return result, fmt.Errorf("workspace was not reserved for this Apply or was already materialized")
+		}
+		w.reserved[request.ID] = true
+	} else if err = w.createOwnedWorkspace(ctx, request.ID); err != nil {
 		result.Uncertain, result.Reason = true, err.Error()
 		return result, err
 	}
@@ -250,7 +243,7 @@ func (a *assignmentWorkspace) git(ctx context.Context, args ...string) (string, 
 	spec := w.spec(a.volume, false)
 	var output strings.Builder
 	argv := assignmentGitArgs(args...)
-	if err := w.runtime.RunHelper(ctx, spec, argv, nil, &output); err != nil {
+	if err := w.runGit(ctx, spec, argv, nil, &output); err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(output.String()), nil
@@ -332,8 +325,10 @@ func (w *Workspaces) unmounted(ctx context.Context, volume string) error {
 	if err != nil {
 		return err
 	}
-	if len(mounts) != 0 {
-		return fmt.Errorf("workspace volume remains mounted by %d container(s)", len(mounts))
+	for _, mounted := range mounts {
+		if w.git == nil || mounted != w.git.ID() {
+			return fmt.Errorf("workspace volume remains mounted by a foreign container")
+		}
 	}
 	return nil
 }
@@ -419,6 +414,9 @@ func (w *Workspaces) Close(ctx context.Context, id run.WorkspaceID) (result run.
 	w.mu.Lock()
 	defer w.mu.Unlock()
 	result.ID = id
+	if _, reserved := w.reserved[id]; reserved && w.git != nil && (!w.gitClosed || w.gitCloseErr != nil) {
+		return result, fmt.Errorf("close the Apply Git container before removing a reserved workspace")
+	}
 	defer func() {
 		if err != nil {
 			result.Uncertain, result.Reason = true, err.Error()

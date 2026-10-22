@@ -21,6 +21,29 @@ type identityRuntime struct {
 	git          *integrationRuntime
 	t            *testing.T
 	failIdentity string
+	work         *Workspaces
+	starts       int
+	startSpec    container.ContainerSpec
+	session      *observedAssignmentExec
+	failStart    bool
+}
+
+func (f *identityRuntime) StartOwnedExec(_ context.Context, spec container.ContainerSpec, _ []string) (container.ExecSession, error) {
+	f.starts++
+	f.startSpec = spec
+	if f.failStart {
+		return nil, errors.New("controlled service start failure")
+	}
+	f.session = &observedAssignmentExec{ExecSession: &testAssignmentExec{work: f.work}}
+	return f.session, nil
+}
+
+func (f *identityRuntime) VolumeMounts(context.Context, string) ([]string, error) {
+	mounts := append([]string(nil), f.workspaceFake.mounts...)
+	if f.session != nil && !f.session.closed {
+		mounts = append(mounts, f.session.ID())
+	}
+	return mounts, nil
 }
 
 func (f *identityRuntime) CreateVolumeExclusive(ctx context.Context, name string, labels map[string]string) (container.VolumeObservation, error) {
@@ -41,7 +64,7 @@ func (f *identityRuntime) RunHelper(ctx context.Context, spec container.Containe
 	return f.git.RunHelper(ctx, spec, argv, stdin, stdout)
 }
 
-func identityFixture(t *testing.T) (*Workspaces, *identityRuntime) {
+func identityRuntimeFixture(t *testing.T) (*Workspaces, *identityRuntime) {
 	t.Helper()
 	if _, err := exec.LookPath("git"); err != nil {
 		t.Skip("Git unavailable")
@@ -49,6 +72,17 @@ func identityFixture(t *testing.T) (*Workspaces, *identityRuntime) {
 	w, fake := workspaceAdapter(t)
 	runtime := &identityRuntime{workspaceFake: fake, git: &integrationRuntime{roots: make(map[string]string)}, t: t}
 	w.runtime = runtime
+	runtime.work = w
+	return w, runtime
+}
+
+func identityFixture(t *testing.T) (*Workspaces, *identityRuntime) {
+	t.Helper()
+	w, runtime := identityRuntimeFixture(t)
+	if err := w.StartGit(context.Background(), []run.WorkspaceID{"root", "manager", "review", "partial", "source", "partial-review"}); err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = w.CloseGit(context.Background()) })
 	return w, runtime
 }
 
