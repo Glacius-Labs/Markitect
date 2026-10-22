@@ -94,6 +94,9 @@ try {
     Invoke-NativeChecked 'fixture add' { & $git -C $fixture add --all }
     Invoke-NativeChecked 'fixture commit' { & $git -C $fixture commit -m 'Library r2 requirement baseline' }
     $fixtureHead = (& $git -C $fixture rev-parse HEAD).Trim()
+    $fixtureCheck = Join-Path $runDir 'fixture-check.json'
+    & $binary check --repo $fixture --model .markitect/model.yaml --dependency .markitect/dependencies/software/model.yaml --dependency .markitect/dependencies/core/model.yaml --revision HEAD 1> $fixtureCheck
+    if ($LASTEXITCODE -ne 0) { throw 'Fresh Library fixture failed structural preparation.' }
     New-Item -ItemType Directory -Path $state -ErrorAction Stop | Out-Null
 
     $engineLiteral = $docker.Replace("'", "''")
@@ -158,6 +161,7 @@ checkProfiles:
         productExecutableSha256 = (Get-FileHash -LiteralPath $binary -Algorithm SHA256).Hash.ToLowerInvariant()
         runtimeProfileSha256 = (Get-FileHash -LiteralPath $profilePath -Algorithm SHA256).Hash.ToLowerInvariant()
         runConfigSha256 = (Get-FileHash -LiteralPath $configPath -Algorithm SHA256).Hash.ToLowerInvariant()
+        fixtureCheckSha256 = (Get-FileHash -LiteralPath $fixtureCheck -Algorithm SHA256).Hash.ToLowerInvariant()
         baseImage = $baseImage; goImage = $goImage; runDirectory = $runDir
         deadline = $deadline; maxMessages = $MaxMessages; messageTimeoutSeconds = $MessageTimeoutSeconds
     }
