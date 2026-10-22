@@ -63,6 +63,7 @@ type AssignmentRequest struct {
 	ID         WorkspaceID
 	Profile    string
 	Tree       snapshot.Tree
+	Prepared   AssignmentWorkspace
 	Home       string
 	Transcript string
 	Tools      []ToolSpec
@@ -130,7 +131,16 @@ func StartAssignment(ctx context.Context, workspaces AssignmentWorkspaces, agent
 			return ToolAnswer{Text: answer}
 		}
 	}
-	work, err := workspaces.PrepareAssignment(ctx, WorkspaceSpec{ID: request.ID, Tree: request.Tree})
+	var work AssignmentWorkspace
+	var err error
+	if request.Prepared != nil {
+		work = request.Prepared
+		if work.ID() != request.ID || work.Volume() == "" || work.StartingCommit() == "" {
+			return nil, errors.New("prepared assignment copy does not match the requested complete workspace")
+		}
+	} else {
+		work, err = workspaces.PrepareAssignment(ctx, WorkspaceSpec{ID: request.ID, Tree: request.Tree})
+	}
 	if err != nil {
 		if work != nil {
 			return &Assignment{work: work}, err

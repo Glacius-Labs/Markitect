@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+// ErrIntegrationConflict distinguishes an ordinary Git conflict from an
+// integration failure whose outcome is incomplete or uncertain.
+var ErrIntegrationConflict = errors.New("child Git result conflicts with parent stand")
+
 // AssignmentIntegration supplies the Git operations needed when a parent
 // inspects and accepts a child's fixed result. It never changes the owner's
 // repository; both copies are internal Agent workspaces.
@@ -120,6 +124,45 @@ func (f *AssignmentHandoffs) Delegate(ctx context.Context, parent, child string,
 	return f.start(ctx, parent, child, request)
 }
 
+// DelegateCurrent starts a direct child from its parent's fixed current Git
+// stand. The parent keeps its own copy and conversation while the child works.
+func (f *AssignmentHandoffs) DelegateCurrent(ctx context.Context, parent, child string, request AssignmentRequest) error {
+	forks, ok := f.workspaces.(AssignmentForks)
+	if !ok {
+		return errors.New("assignment workspaces cannot fork a parent's Git stand")
+	}
+	f.mu.Lock()
+	m, p := f.team[child], f.team[parent]
+	if m == nil || p == nil || m.manager.Parent != parent || m.agent != nil || m.starting || p.agent == nil || p.starting {
+		f.mu.Unlock()
+		return fmt.Errorf("Manager %q cannot start under %q", child, parent)
+	}
+	m.starting = true
+	f.mu.Unlock()
+	if request.ID == "" {
+		request.ID = WorkspaceID("assignment-" + strings.ReplaceAll(child, "/", "-"))
+	}
+	if err := p.acquire(ctx); err != nil {
+		f.mu.Lock()
+		m.starting = false
+		f.mu.Unlock()
+		return err
+	}
+	defer p.release()
+	prepared, err := forks.ForkAssignment(ctx, p.agent.Workspace(), request.ID)
+	if err != nil {
+		f.mu.Lock()
+		if prepared != nil {
+			m.partial = &Assignment{work: prepared}
+		}
+		m.starting = false
+		f.mu.Unlock()
+		return err
+	}
+	request.Prepared = prepared
+	return f.openReserved(ctx, parent, child, request)
+}
+
 func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, request AssignmentRequest) error {
 	f.mu.Lock()
 	m := f.team[path]
@@ -133,6 +176,11 @@ func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, req
 	if request.ID == "" {
 		request.ID = WorkspaceID("assignment-" + strings.ReplaceAll(path, "/", "-"))
 	}
+	return f.openReserved(ctx, parent, path, request)
+}
+
+func (f *AssignmentHandoffs) openReserved(ctx context.Context, parent, path string, request AssignmentRequest) error {
+	m := f.team[path]
 	if parent != "" {
 		request.AskParent = func(ctx context.Context, question string) (string, error) {
 			f.mu.Lock()

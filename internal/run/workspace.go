@@ -29,6 +29,12 @@ type AssignmentWorkspaces interface {
 	PrepareAssignment(context.Context, WorkspaceSpec) (AssignmentWorkspace, error)
 }
 
+// AssignmentForks starts a direct child from its parent's fixed current Git
+// stand in a fresh copy. It retains a partially created child copy on error.
+type AssignmentForks interface {
+	ForkAssignment(context.Context, AssignmentWorkspace, WorkspaceID) (AssignmentWorkspace, error)
+}
+
 // Workspaces materializes step workspaces on runtime volumes and observes them.
 // It knows no ownership, reviews or tasks: run decides what a workspace holds
 // (core rule D3) and what its observed change means (core rule S4), and run

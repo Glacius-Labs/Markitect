@@ -40,12 +40,18 @@ func (*integrationRuntime) CreateVolumeExclusive(context.Context, string, map[st
 func (*integrationRuntime) VolumeMounts(context.Context, string) ([]string, error) { return nil, nil }
 func (*integrationRuntime) RemoveVolume(context.Context, string) error             { return nil }
 func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.ContainerSpec, argv []string, stdin io.Reader, stdout io.Writer) error {
-	if len(spec.Mounts) != 1 || len(argv) < 2 || argv[0] != "/usr/bin/git" {
+	if len(spec.Mounts) < 1 || len(spec.Mounts) > 2 || len(argv) < 2 || argv[0] != "/usr/bin/git" {
 		return errors.New("unexpected Git helper")
 	}
 	root := f.roots[spec.Mounts[0].Volume]
 	if root == "" {
 		return errors.New("unknown assignment volume")
+	}
+	sourceRoot := ""
+	for _, mount := range spec.Mounts[1:] {
+		if mount.Target == "/source" {
+			sourceRoot = f.roots[mount.Volume]
+		}
 	}
 	if f.failPatchRead && len(argv) >= 10 && argv[9] == "diff" {
 		if _, ok := stdout.(*io.PipeWriter); ok {
@@ -77,6 +83,8 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 			args[i] = root
 		} else if strings.HasPrefix(args[i], "/work/") {
 			args[i] = filepath.Join(root, filepath.FromSlash(strings.TrimPrefix(args[i], "/work/")))
+		} else if args[i] == "/source" {
+			args[i] = sourceRoot
 		}
 	}
 	cmd := exec.CommandContext(ctx, "git", args...)
@@ -141,6 +149,34 @@ func integrationHandoff(t *testing.T, a *assignmentWorkspace) run.AssignmentHand
 		t.Fatal(err)
 	}
 	return run.AssignmentHandoff{StartingCommit: a.start, ResultCommit: result, Summary: "Changed and tested own area"}
+}
+
+func TestChildGitCloneHasFixedFoundationAndSeparateLiveFiles(t *testing.T) {
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "parent")
+	integrationWrite(t, roots["parent"], "foundation.txt", "public contract\n")
+	foundation, err := copies["parent"].Commit(ctx, "Parent foundation")
+	if err != nil {
+		t.Fatal(err)
+	}
+	childRoot := t.TempDir()
+	childID := run.WorkspaceID("child")
+	childVolume := w.volume(childID)
+	w.runtime.(*integrationRuntime).roots[childVolume] = childRoot
+	w.owned[childID] = "owned"
+	child := &assignmentWorkspace{owner: w, id: childID, volume: childVolume}
+	if err := w.cloneAssignment(ctx, copies["parent"], child); err != nil {
+		t.Fatal(err)
+	}
+	child.start, err = child.git(ctx, "rev-parse", "HEAD")
+	if err != nil || child.start != foundation {
+		t.Fatalf("child did not start from exact parent Git stand: %q %v", child.start, err)
+	}
+	integrationWrite(t, roots["parent"], "foundation.txt", "later parent edit\n")
+	got, err := os.ReadFile(filepath.Join(childRoot, "foundation.txt"))
+	if err != nil || string(got) != "public contract\n" {
+		t.Fatalf("parent's later edit leaked into child copy: %q %v", got, err)
+	}
 }
 
 func TestIndependentAssignmentGitResultsIntegrateIntoParent(t *testing.T) {

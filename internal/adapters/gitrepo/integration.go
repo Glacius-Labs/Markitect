@@ -16,7 +16,7 @@ import (
 
 // ErrIntegrationConflict means Git could not apply a child's change to a
 // temporary copy of the parent's fixed stand. The live parent is untouched.
-var ErrIntegrationConflict = errors.New("child Git result conflicts with parent stand")
+var ErrIntegrationConflict = run.ErrIntegrationConflict
 
 // ErrIntegrationUncertain stops retries when Git's final transfer could not
 // be read back as either the old parent head or the integrated result.
