@@ -163,6 +163,16 @@ class SupervisorControls(unittest.TestCase):
         self.assertEqual(diagnostic['failedGuard']['source'], 'night_run.py')
         self.assertIsInstance(diagnostic['failedGuard']['line'], int)
 
+    def test_clock_query_keeps_five_second_bound_and_safe_origin_diagnostic(self):
+        error = subprocess.TimeoutExpired([runner.HOST_CLOCK, 'PRIVATE-PAYLOAD'], 5)
+        with patch.object(runner.subprocess, 'run', side_effect=error) as query:
+            with self.assertRaises(subprocess.TimeoutExpired):
+                runner.host_clock()
+        self.assertEqual(query.call_args.kwargs['timeout'], 5)
+        diagnostic = runner.failure_diagnostic(error, 'controlled clock query')
+        self.assertEqual(diagnostic['failedProbe']['configuredTimeoutSeconds'], 5)
+        self.assertNotIn('PRIVATE-PAYLOAD', json.dumps(diagnostic))
+
     def test_first_position_of_later_group_consumes_global_reservation_once(self):
         with tempfile.TemporaryDirectory() as folder:
             root = Path(folder)
@@ -316,10 +326,12 @@ class SupervisorControls(unittest.TestCase):
             script.write_text('import time\ntime.sleep(60)\n')
             manifest, path = self.dispatch_manifest(root, 'test')
             clock = {'utc': 1792620000000, 'ticks': 100, 'frequency': 1000}
-            samples = [clock, OSError('injected host bridge failure')] if failure == 'clock' else [clock]
+            error = (subprocess.TimeoutExpired([runner.HOST_CLOCK, 'PRIVATE-PAYLOAD'], 5)
+                     if failure == 'timeout' else OSError('injected host bridge failure'))
+            samples = [clock, error] if failure in ('clock', 'timeout') else [clock]
             with patch.object(runner, '__file__', str(script)), \
                     patch.object(runner, 'validate', return_value=manifest), \
-                    patch.object(runner, 'host_clock', side_effect=samples), \
+                    patch.object(runner, 'host_clock', side_effect=samples) as clock_query, \
                     patch.object(runner.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', b'')):
                 if failure == 'registry':
                     with patch.object(runner, 'track_process', side_effect=OSError('injected fsync failure')):
@@ -332,12 +344,23 @@ class SupervisorControls(unittest.TestCase):
             self.assertTrue((root / 'ACTIVE-SUPERVISOR').exists())
             self.assertFalse(evidence['normalTurnStopsProved'])
             self.assertNotIn('runner-stop-unknown', evidence['errors'])
+            rows = [json.loads(x) for x in (root / 'attempts.jsonl').read_text().splitlines()]
+            self.assertEqual(len(rows), 1)
+            self.assertEqual(rows[0]['chargedSeconds'], 2700)
+            self.assertTrue((root / 'ACTIVE-ATTEMPT').exists())
+            if failure == 'timeout':
+                self.assertEqual(clock_query.call_count, 2)  # one initial sample, one failed poll; no retry
+                self.assertIn('host-clock probe', marker['reason'])
+                self.assertNotIn('PRIVATE-PAYLOAD', json.dumps(marker))
 
     def test_registry_failure_after_launch_stops_the_child(self):
         self.supervise_failure('registry')
 
     def test_clock_failure_stops_without_another_clock_query(self):
         self.supervise_failure('clock')
+
+    def test_clock_probe_timeout_stops_without_retry_and_retains_full_charge(self):
+        self.supervise_failure('timeout')
 
     def test_host_deadline_forces_stop_with_guest_process_still_live(self):
         with tempfile.TemporaryDirectory() as folder:
@@ -346,12 +369,17 @@ class SupervisorControls(unittest.TestCase):
             script.write_text('import time\ntime.sleep(60)\n')
             manifest, path = self.dispatch_manifest(root, 'deadline')
             base = {'utc': 1792620000000, 'ticks': 0, 'frequency': 1000}
-            samples = [base, dict(base, ticks=2670000), dict(base, ticks=2686000)]
+            # Poll just before the unchanged deadline, then 0.9 s after it.
+            samples = [base, dict(base, ticks=2669900), dict(base, ticks=2670900), dict(base, ticks=2685900)]
             with patch.object(runner, '__file__', str(script)), \
                     patch.object(runner, 'validate', return_value=manifest), \
                     patch.object(runner, 'host_clock', side_effect=samples), \
-                    patch.object(runner.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', b'')):
+                    patch.object(runner.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0, b'', b'')), \
+                    patch.object(runner.time, 'sleep') as sleep:
                 self.assertEqual(runner.supervise(path, 'gate', '1'), 4)
+            # Popen.wait also uses this shared time module for subsecond reaping.
+            self.assertEqual(sleep.call_args_list[0].args, (1,))
+            self.assertEqual(sum(call.args == (1,) for call in sleep.call_args_list), 1)
             marker = json.loads((root / 'STOP-SERIES').read_text())
             self.assertIn('deadline', marker['reason'])
             evidence = json.loads((root / 'forced-cleanup-deadline.json').read_text())
