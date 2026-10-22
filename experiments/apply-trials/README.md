@@ -37,6 +37,33 @@ Trial cases for real Apply runs, each answering one question about where Apply w
 
 Unlike Roombook and Readinglog, this directory holds known-correct reference realizations. That is deliberate: most cases start from a correct stand, so the reference is the starting input of their packets. For S-G and D-G the reference is also one correct answer, and the `s2` and `o` validation overlays are correct answers for S-C and S-O; none of them enters those cases' packets, and the executing Agents never see this repository.
 
+## SOL3, 22 October 2026
+
+The separate owner grant `SOL3-20261022` permits at most three serial Apply
+dispatches, including failed starts: `SOL3-P`, `SOL3-R`, `SOL3-W`, each fully
+charged 2,700 seconds including setup/stop/cleanup, at most 8,100 seconds total.
+Their version 1 Stockroom inputs share a reference correction for separated
+leading-hyphen database paths. P has no fault, R has only `d1`, W has `a2` and
+`a4`: the complete W project suite is green while independent exact-issue and
+list-order checks fail. Historical cases, scores and NIGHT/CCF freezes keep their
+identities. Hidden controls and the input-selection rationale never enter packets.
+
+The existing runner accepts only this explicit new grant or the unchanged
+historical NIGHT contract. SOL3 has its own bound `seriesRoot`/authority and an
+append-only reservation/terminal ledger. The one source-bound coordinator gate
+supplies actual `operatorReleaseUtc`; its absolute end is exactly 8,100 seconds
+later, and its last-start cutoff is 2,700 seconds before that end. Changing the
+gate after a consumed start is refused. Productive starts require that gate,
+fresh dedicated-account metadata with at least 25% remaining quota, a free host
+slot and actual Luna High profiles (`gpt-6-luna` in the native catalog). Auth/quota uncertainty and unknown or emergency
+cessation block subsequent starts. Work ends at 1,740 seconds, leaving 720 seconds
+before the provider cutoff and at least 180 seconds for stop/cleanup. Preparation
+and green controls do not authorize execution or establish Agent effectiveness.
+
+Provider-free input discrimination uses `selfcheck.check_sol3`; runner lifecycle,
+UTC and append-only accounting controls use `night_run_test.py`. The official
+`freeze.py lock`/`check` binds the new packets and unchanged historical scenarios.
+
 ## Contents
 
 | Path | Purpose |

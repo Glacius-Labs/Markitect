@@ -546,7 +546,7 @@ def evaluate(scenario_id, arm, repo, report=None, events=None, final=None, pytho
                                 "failed": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "fail"},
                                 "skipped": {item["id"]: item["detail"] for item in checked["checks"] if item["status"] == "skip"}}
     summary = assess.summarize_report(report_data) if report_data is not None else None
-    if summary is not None and scenario.id.startswith(("CCF-", "NIGHT-")):
+    if summary is not None and scenario.id.startswith(("CCF-", "NIGHT-", "SOL3-")):
         # Provider token usage is retained; an unpriced numeric zero from the
         # shared report is not evidence that this ChatGPT session cost nothing.
         summary["reportedCostUSDRaw"] = ((report_data or {}).get("run") or {}).get("usage", {}).get("costUSD")

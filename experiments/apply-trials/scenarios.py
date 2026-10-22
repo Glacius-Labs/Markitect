@@ -427,6 +427,17 @@ SCENARIOS = tuple(SCENARIOS) + (
 )
 
 BOUNDED_DEPOT = ("CCF-P", "CCF-R", "NIGHT-P", "NIGHT-R", "NIGHT-VN", "NIGHT-VS")
+_sol3_budget = Budget('42m', '5m', 240, 8)
+SCENARIOS = tuple(SCENARIOS) + tuple(
+    replace(_original['A2'] if name == 'SOL3-P' else _original['ARTIFACTS'],
+            id=name, case=name, profile='s1-sol3', budget=_sol3_budget, version=1,
+            question=CASES[name].question,
+            hypothesis='The current direct workflow completes the bound preservation or necessary repair.',
+            statement='Source-bound evidence for this small Stockroom case, not a reliability estimate.',
+            control='Same corrected reference with no fault, D1_CAP, or A2_TEST+A4_ORDER.',
+            arms=('direct',), sessions=('SOL3',), process=(),
+            lineage='SOL3-20261022 v1: shared corrected Stockroom reference; historical cases and scores preserved')
+    for name in ('SOL3-P', 'SOL3-R', 'SOL3-W'))
 BY_ID = {scenario.id: scenario for scenario in SCENARIOS}
 DEFECT_TERMS = {STOP_GAP: NAME_TERMS, STOP_ERROR: SKU_TERMS}
 
