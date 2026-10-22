@@ -26,7 +26,8 @@ var errRunConfigIO = errors.New("run configuration file could not be completely 
 // operator's assertion identifying the frozen build, not a verified source SHA.
 // Harvest bounds every observation of a shared working tree. Deadline is the
 // optional absolute wall-clock limit (RFC 3339, UTC) that the run must finish
-// before; the project's own budget still applies.
+// before; the project's own executionTime still applies. MaxMessages and
+// MessageTimeoutSeconds bound the whole assignment invocation and one message.
 type runConfig struct {
 	FormatVersion         int                         `json:"formatVersion"`
 	RepositoryIdentity    string                      `json:"repositoryIdentity"`

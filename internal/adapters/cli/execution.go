@@ -24,8 +24,8 @@ type ApplyRequest struct {
 	Build     string
 }
 
-// ApplyReport projects the observations of one Apply: the preparation, the
-// run with its Passes, the publication and where the evidence is kept.
+// ApplyReport projects preparation, the assignment lifecycle, publication and
+// retained evidence. Run is retained for historical report consumers.
 // ReportValue derives its JSON outcome from Status for both stdout and retained
 // evidence: success only for a clean Verify with an applied or no-change
 // publication and read-back, failed for a definite rejection, incomplete otherwise.
@@ -60,6 +60,8 @@ type AssignmentReport struct {
 	Assessment        AssignmentReviewReport   `json:"assessment"`
 	Homes             []string                 `json:"homes"`
 	HomesRemoved      []string                 `json:"homesRemoved"`
+	GitContainerID    string                   `json:"gitContainerID,omitempty"`
+	GitExecCount      int                      `json:"gitExecCount"`
 	Reviews           []AssignmentReviewReport `json:"reviews"`
 	Checks            []AssignmentCheckReport  `json:"checks"`
 }

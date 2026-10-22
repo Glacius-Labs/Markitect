@@ -91,6 +91,13 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 	evidence = ports.Evidence
 	result, receipt, runErr := s.realizeAndPublish(ctx, request, prepared, session.cfg, ports)
 	report.Assignment = cli.NewAssignmentReport(result)
+	if observation, ok := ports.AssignmentWorkspaces.(interface {
+		GitContainerID() string
+		GitExecCount() int
+	}); ok {
+		report.Assignment.GitContainerID = observation.GitContainerID()
+		report.Assignment.GitExecCount = observation.GitExecCount()
+	}
 	report.Publication = receipt
 	report.Status = cli.AssignmentApplyStatus(result, receipt, runErr)
 	err = runErr
@@ -317,20 +324,8 @@ func (s *executionService) open(ctx context.Context, repository, runConfigPath s
 	return runSession{cfg: cfg, lock: lock, runID: runID}, false, nil
 }
 
-// applyAndPublish runs the Apply use case over the captured preparation with
-// the composed ports.
-func (s *executionService) applyAndPublish(ctx context.Context, request cli.ApplyRequest, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ApplyResult, error) {
-	prepared, ok := captured.Prepared()
-	if !ok {
-		return apply.ApplyResult{}, errors.New("complete captured settings are required")
-	}
-	return apply.Apply(ctx, applyRequest(request, prepared, cfg, ports))
-}
-
-// applyRequest is the one request every entry of an Apply runs with, the
-// product command and the evaluation harness alike: the captured preparation
-// with its strategy and settings, the invocation's build identity and bounds,
-// and the composed ports.
+// applyRequest keeps the legacy captured-run evaluation entries wired while
+// the product Apply uses persistent assignments through realizeAndPublish.
 func applyRequest(request cli.ApplyRequest, prepared apply.CapturedSettingsAttempt, cfg runConfig, ports applyPorts) apply.ApplyRequest {
 	return apply.ApplyRequest{
 		RunID: ports.RunID, Prepared: prepared, Selection: request.Selection, Build: request.Build,
