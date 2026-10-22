@@ -62,6 +62,13 @@ func TestReadAssignmentCommitUsesNamedObjectsAndIgnoresArchiveAttributes(t *test
 	if _, err = w.ReadAssignmentCommit(ctx, request); err == nil {
 		t.Fatal("read an unavailable commit")
 	}
+	request.Commit, err = source.git(ctx, "rev-parse", commit+"^{tree}")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err = w.ReadAssignmentCommit(ctx, request); err == nil {
+		t.Fatal("accepted a raw tree object as a submitted commit")
+	}
 }
 
 type damagedCommitRuntime struct {

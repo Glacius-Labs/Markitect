@@ -20,7 +20,7 @@ import (
 var _ run.AssignmentCommitReader = (*Workspaces)(nil)
 
 // ReadAssignmentCommit reads Git objects, never the live working tree or an
-// attribute-sensitive archive. Both helper outputs are bounded. It does not
+// attribute-sensitive archive. Every helper output is bounded. It does not
 // commit, check out, publish or alter the source's index or files.
 func (w *Workspaces) ReadAssignmentCommit(ctx context.Context, request run.AssignmentCommitRequest) (snapshot.Tree, error) {
 	if !commitIDPattern.MatchString(request.Commit) || request.MaxEntries < 1 || request.MaxEntries > 1<<20 || request.MaxBytes < 1 || request.MaxBytes > 1<<32 {
@@ -29,6 +29,10 @@ func (w *Workspaces) ReadAssignmentCommit(ctx context.Context, request run.Assig
 	a, err := w.assignment(request.Source)
 	if err != nil {
 		return snapshot.Tree{}, err
+	}
+	resolved, err := w.assignmentOutput(ctx, a, nil, 128, "rev-parse", "--verify", request.Commit+"^{commit}")
+	if err != nil || strings.TrimSpace(string(resolved)) != request.Commit {
+		return snapshot.Tree{}, errors.Join(err, errors.New("named Git source is not the exact full commit identity"))
 	}
 	listed, err := w.assignmentOutput(ctx, a, nil, 64<<20, "ls-tree", "-r", "-z", "--full-tree", "--long", request.Commit, "--")
 	if err != nil {
