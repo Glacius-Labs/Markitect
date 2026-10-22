@@ -38,6 +38,10 @@ type AssignmentSchedule struct {
 	MaxMessages   int
 	Timeout       time.Duration
 	TranscriptDir string
+	PreparedRoot  AssignmentWorkspace
+	// CreateHome exclusively creates the new home before an Agent opens. The
+	// legacy RunAssignmentTree wrapper permits nil; OpenAssignmentTree requires it.
+	CreateHome func(context.Context, string) error
 }
 
 type assignmentAction struct {
@@ -113,23 +117,58 @@ type assignmentScheduler struct {
 	options   AssignmentSchedule
 	mu        sync.Mutex
 	used      int
+	homes     []string
+}
+
+// AssignmentTree keeps the Implement assignments alive for targeted correction
+// after independent Verify. The caller serializes work/correction operations,
+// closes the tree once finished, and owns the retained workspaces and homes.
+type AssignmentTree struct {
+	Flow      *AssignmentHandoffs
+	scheduler *assignmentScheduler
+	team      []Manager
+	ready     bool
+	begun     bool
+	closed    bool
+	closeErr  error
+}
+
+func OpenAssignmentTree(ctx context.Context, team []Manager, workspaces AssignmentWorkspaces, agents AssignmentAgents, integration AssignmentIntegration, options AssignmentSchedule) (*AssignmentTree, error) {
+	if options.CreateHome == nil {
+		return nil, errors.New("assignment tree needs exclusive fresh home creation")
+	}
+	return openAssignmentTree(ctx, team, workspaces, agents, integration, options)
 }
 
 // RunAssignmentTree lets each Manager delegate, answer questions, inspect and
 // decide on its direct children. It returns the fixed Root result and retained
 // workspaces; A3 owns invoking it around assessment and final Verify.
 func RunAssignmentTree(ctx context.Context, team []Manager, workspaces AssignmentWorkspaces, agents AssignmentAgents, integration AssignmentIntegration, options AssignmentSchedule) (result AssignmentHandoff, flow *AssignmentHandoffs, err error) {
-	if _, bounded := ctx.Deadline(); !bounded || !assignmentName.MatchString(options.IDPrefix) || len(options.IDPrefix) > 75 || options.MaxMessages < 1 || options.Timeout <= 0 || strings.TrimSpace(options.Task) == "" || !filepath.IsAbs(options.TranscriptDir) {
-		return AssignmentHandoff{}, nil, errors.New("assignment tree needs an identity, task, absolute transcript directory and finite message and time bounds")
-	}
-	flow, err = NewAssignmentHandoffs(team, workspaces, agents, integration)
-	if err != nil {
+	tree, err := openAssignmentTree(ctx, team, workspaces, agents, integration, options)
+	if tree == nil {
 		return AssignmentHandoff{}, nil, err
 	}
+	defer func() { err = errors.Join(err, tree.Close()) }()
+	if err != nil {
+		return AssignmentHandoff{}, tree.Flow, err
+	}
+	result, err = tree.Implement(ctx)
+	return result, tree.Flow, err
+}
+
+func openAssignmentTree(ctx context.Context, team []Manager, workspaces AssignmentWorkspaces, agents AssignmentAgents, integration AssignmentIntegration, options AssignmentSchedule) (*AssignmentTree, error) {
+	if _, bounded := ctx.Deadline(); !bounded || !assignmentName.MatchString(options.IDPrefix) || len(options.IDPrefix) > 75 || options.MaxMessages < 1 || options.Timeout <= 0 || strings.TrimSpace(options.Task) == "" || !filepath.IsAbs(options.TranscriptDir) {
+		return nil, errors.New("assignment tree needs an identity, task, absolute transcript directory and finite message and time bounds")
+	}
+	flow, err := NewAssignmentHandoffs(team, workspaces, agents, integration)
+	if err != nil {
+		return nil, err
+	}
 	s := &assignmentScheduler{flow: flow, team: make(map[string]Manager), mailboxes: make(map[string]*assignmentMailbox), ids: make(map[string]WorkspaceID), options: options}
+	tree := &AssignmentTree{Flow: flow, scheduler: s, team: append([]Manager(nil), team...)}
 	for i, manager := range team {
 		if manager.ExecuteProfile == "" {
-			return AssignmentHandoff{}, flow, fmt.Errorf("Manager %q has no Execute profile", manager.Path)
+			return tree, fmt.Errorf("Manager %q has no Execute profile", manager.Path)
 		}
 		s.team[manager.Path] = manager
 		s.mailboxes[manager.Path] = &assignmentMailbox{}
@@ -140,21 +179,72 @@ func RunAssignmentTree(ctx context.Context, team []Manager, workspaces Assignmen
 		s.ids[manager.Path] = WorkspaceID(options.IDPrefix + "-" + strconv.Itoa(i))
 	}
 	flow.parentAnswer = s.parentAnswer
-	defer func() {
-		err = errors.Join(err, s.closeAgents(team))
-	}()
-	root := s.request(".")
-	root.Tree = options.Tree
-	if err = flow.StartRoot(ctx, root); err != nil {
-		return AssignmentHandoff{}, flow, err
+	root, err := s.request(ctx, ".")
+	if err != nil {
+		return tree, err
 	}
-	result, err = s.work(ctx, ".", options.Task)
-	return result, flow, err
+	root.Tree = options.Tree
+	root.Prepared = options.PreparedRoot
+	if err = flow.StartRoot(ctx, root); err != nil {
+		return tree, err
+	}
+	return tree, nil
 }
 
-func (s *assignmentScheduler) request(path string) AssignmentRequest {
+func (t *AssignmentTree) Implement(ctx context.Context) (AssignmentHandoff, error) {
+	if t == nil || t.closed || t.begun {
+		return AssignmentHandoff{}, errors.New("assignment tree cannot start this work")
+	}
+	t.begun = true
+	result, err := t.scheduler.work(ctx, ".", t.scheduler.options.Task)
+	t.ready = err == nil
+	return result, err
+}
+
+// Correct asks Root to route concrete corrections through its direct owners.
+// Unaffected children keep their assignments, commits and accepted integration.
+func (t *AssignmentTree) Correct(ctx context.Context, correction string) (AssignmentHandoff, error) {
+	if t == nil || t.closed || !t.ready || strings.TrimSpace(correction) == "" {
+		return AssignmentHandoff{}, errors.New("correction needs a completed open assignment tree and concrete task")
+	}
+	t.ready = false
+	s := t.scheduler
+	if err := s.message(ctx, ".", "Independent Verify returned required corrections. Correct your own work and use return_child for work owned below you; do not take over another owner's responsibility. Preserve unaffected results.\n"+correction); err != nil {
+		return AssignmentHandoff{}, err
+	}
+	result, err := s.finishCorrection(ctx, ".")
+	t.ready = err == nil
+	return result, err
+}
+
+func (t *AssignmentTree) Homes() []string {
+	if t == nil {
+		return nil
+	}
+	return append([]string(nil), t.scheduler.homes...)
+}
+
+func (t *AssignmentTree) Close() error {
+	if t == nil {
+		return nil
+	}
+	if !t.closed {
+		t.closed = true
+		t.closeErr = t.scheduler.closeAgents(t.team)
+	}
+	return t.closeErr
+}
+
+func (s *assignmentScheduler) request(ctx context.Context, path string) (AssignmentRequest, error) {
 	id := s.ids[path]
-	return AssignmentRequest{ID: id, Profile: s.team[path].ExecuteProfile, Home: string(id) + "-home", Transcript: filepath.Join(s.options.TranscriptDir, string(id)+".jsonl"), Tools: assignmentDecisionTools, Handler: s.mailboxes[path].handle}
+	home := string(id) + "-home"
+	s.homes = append(s.homes, home)
+	if s.options.CreateHome != nil {
+		if err := s.options.CreateHome(ctx, home); err != nil {
+			return AssignmentRequest{}, err
+		}
+	}
+	return AssignmentRequest{ID: id, Profile: s.team[path].ExecuteProfile, Home: home, Transcript: filepath.Join(s.options.TranscriptDir, string(id)+".jsonl"), Tools: assignmentDecisionTools, Handler: s.mailboxes[path].handle}, nil
 }
 
 func (s *assignmentScheduler) reserveMessage() error {
@@ -272,7 +362,11 @@ func (s *assignmentScheduler) work(ctx context.Context, path, task string) (Assi
 		return AssignmentHandoff{}, fmt.Errorf("Manager %q did not delegate every required child", path)
 	}
 	for _, action := range delegations {
-		if err := s.flow.DelegateCurrent(ctx, path, action.child, s.request(action.child)); err != nil {
+		request, err := s.request(ctx, action.child)
+		if err != nil {
+			return AssignmentHandoff{}, err
+		}
+		if err := s.flow.DelegateCurrent(ctx, path, action.child, request); err != nil {
 			return AssignmentHandoff{}, err
 		}
 	}
@@ -351,11 +445,34 @@ func (s *assignmentScheduler) correct(ctx context.Context, parent, child, correc
 	if !answer.Completed {
 		return fmt.Errorf("Manager %q did not complete its correction", child)
 	}
-	if actions := s.mailboxes[child].take(); len(actions) != 0 {
-		return fmt.Errorf("Manager %q made an unexpected new delegation during correction", child)
-	}
-	_, err = s.flow.Submit(ctx, child)
+	_, err = s.finishCorrection(ctx, child)
 	return err
+}
+
+func (s *assignmentScheduler) finishCorrection(ctx context.Context, path string) (AssignmentHandoff, error) {
+	actions := s.mailboxes[path].take()
+	seen := make(map[string]bool)
+	for _, a := range actions {
+		if a.name != ReturnChildTool || s.team[a.child].Parent != path || seen[a.child] {
+			return AssignmentHandoff{}, fmt.Errorf("Manager %q must route each correction to a distinct direct child", path)
+		}
+		seen[a.child] = true
+		if err := s.correct(ctx, path, a.child, a.correction); err != nil {
+			return AssignmentHandoff{}, err
+		}
+		if err := s.review(ctx, path, a.child); err != nil {
+			return AssignmentHandoff{}, err
+		}
+	}
+	if len(actions) > 0 {
+		if err := s.message(ctx, path, "Corrected child results are integrated. Check the changed composition and relevant tests; preserve unaffected work. Summarize the corrected Git result and any open matters."); err != nil {
+			return AssignmentHandoff{}, err
+		}
+		if len(s.mailboxes[path].take()) != 0 {
+			return AssignmentHandoff{}, fmt.Errorf("Manager %q left unresolved correction decisions after integration", path)
+		}
+	}
+	return s.flow.Submit(ctx, path)
 }
 
 func (s *assignmentScheduler) commandObservations(path string) string {
