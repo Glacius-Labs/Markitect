@@ -105,6 +105,35 @@ The upstream root `LICENSE` at the same commit is Apache-2.0, SHA-256 `d17f227e4
 
 `turn.Transcript`, when set, is an absolute path opened in append mode. It receives one JSON line per exchange (`at`, `direction`, `data`): Orchestrator writes, provider output lines, tool calls and replies and the observed exit, each with known secrets redacted. A transcript that could not be written fails the turn.
 
+### Native subagent notifications
+
+A Codex Agent may use native subagents inside its assignment container and
+working copy. The owning Manager still reviews and hands off the resulting Git
+stand. Native delegation creates no extra Markitect Manager, assignment or outer
+message. The launch command no longer force-disables `multi_agent`; no additional
+enable flag or configuration format is introduced. The CLI documents `--disable`
+as a feature-flag override ([official reference](https://learn.chatgpt.com/docs/developer-commands?surface=cli)).
+That flag was present in the retained RunID03 Library attempt even though native
+`subAgentActivity` and child turn notifications were observed; its presence did
+not establish absence of native delegation.
+
+The adapter recognizes native child IDs only from a `subAgentActivity` with
+`kind: started` in its bound Manager turn or an already recognized native child.
+The retained identity bytes are bounded by the protocol byte limit. Recognized
+child thread/turn lifecycle, item and child-local error notifications remain in
+the transcript and do not change the Manager's turn ID, Final, commands or usage.
+Only the bound Manager's own terminal event can complete its response. Unrelated
+thread events, mismatched Manager turns and foreign/unoffered Orchestrator tool
+calls remain protocol errors. This is provider event correlation, not semantic
+acceptance of the resulting work. Regression tests establish adapter behavior;
+a new coordinated provider attempt supplies separate runtime evidence.
+
+`TurnResult.Usage` includes only the bound Manager thread's usage reports.
+`ProviderTurns` counts those reports, not all provider requests or native child
+work. These fields therefore do not measure total provider consumption when
+native subagents run. No child usage is silently added to the Manager; without
+billing evidence total cost remains unknown, including when `CostUSD` is zero.
+
 ### Runtime credentials
 
 The adapter resolves only the profile's `CredentialRef` through the caller's `CredentialResolver`. `RuntimeCredential.Mode` must explicitly be one of:

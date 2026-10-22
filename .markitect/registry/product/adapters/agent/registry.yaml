@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/codexappserver/agents_subagents_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: "Replays announced native subagent lifecycle events without providers and proves they neither abort nor complete or contaminate their Manager's own result, while unrelated notifications remain refused."
   - path: "internal/adapters/claudecode/README.md"
     form: doc
     realizes: [product/ports-and-adapters]
