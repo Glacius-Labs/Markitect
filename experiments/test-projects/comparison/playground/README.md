@@ -129,6 +129,18 @@ normal reading, implementation, testing and revision tools; no supplied second
 reviewer or Manager organization. Markitect uses its current product process,
 including mandatory assessment, internal correction and fresh Verify. Both may
 debug, test and revise inside their one bounded assignment before submission.
+Before freezing packets, append this same visible task instruction to both
+arms at both stages, alongside the current requirements and neutral task:
+
+> Change only observed conformance gaps and the evidence needed for this task.
+> Preserve already conforming artifacts. Note optional improvements separately;
+> do not implement them as part of this assignment.
+
+Bind those exact instruction bytes in both packet inventories. This operator
+guide itself remains excluded. For Markitect this instruction agrees with the
+existing conformance mandate; it adds no reviewer organization to the ordinary
+arm. A packet missing the common instruction is not ready for release.
+
 No external findings, human repair, reassurance review or corrective prompt is
 provided to either writer before the whole trajectory ends. Stop/control and
 intent delivery are operator actions and are logged separately from assistance.
@@ -165,16 +177,32 @@ Continue each arm's actual prior artifacts and data, including defects; never
 supply a gold implementation. To exercise data carry-forward, after freezing
 stage 0 use a separate continuation copy and the same ordinary CLI operations
 in each arm: add `alpha`/`First`/`Reader`/10 pages, then
-`beta`/`Second`/`Reader`/20 pages, using explicit `--db continuation-db.json`.
+`beta`/`Second`/`Reader`/20 pages, from `realization/` using explicit
+`--db continuation-db.json` (repository path `realization/continuation-db.json`).
 Preserve actual output, exit codes and resulting bytes, including a missing or
 faulty result. Do not synthesize successful records or repair data. These are
 fixed operator lifecycle interactions, not a writer hint or oracle feedback.
 Bind both frozen submission and derived continuation hashes before stage 1;
-keep stage-0 freeze immutable. Preserve any other arm-owned data too.
+keep stage-0 freeze immutable. Preserve any other arm-owned data too. The shared
+state path must be accessible to each arm's actual writer and checks and remain
+in the captured stage-1 inputs. Before release, bind the observed file's exact
+bytes/mode/path and access/mount arrangement, including Markitect accounting
+within the `realization/` Readinglog ownership. One concrete proposed accounting
+is an exact `form: test` entry for that actually present continuation-state file,
+linked to `readinglog/storage` and `readinglog/book`, with the reason that it
+carries actual CLI-generated state for preservation testing. This is transparent
+operator packet preparation, charged to setup/attention, not a repair of code,
+tests or data. Never register a missing file or claim that an ignore alone
+proves capture. Record actual structural/capture preparation before release;
+if accounting, capture or access remains unbound, stage 1 is dependency-blocked.
+No data, ignore or domain registry is created by this proposal.
 
-An absent usable prior application makes the next stage dependency-blocked
-and the sequence unsuccessful; record the unused slot, never convert it to a
-retry. A runnable but faulty prior application continues as-is. Unverified
+A usable prior result requires completed native ordinary submission or a
+completed Markitect Apply with its final published/no-change target read back.
+A technically incomplete prior dispatch, even if its partial code or unchanged
+target is runnable, makes the next stage dependency-blocked and the sequence
+unsuccessful; record the unused slot, never convert it to a
+retry. A completed, runnable but semantically faulty prior submission continues as-is. Unverified
 Markitect retained work is evidence, not a published continuation result.
 Neither native session history nor writer packets receive future intent,
 operator metadata, seed locations, oracle code, expected answers or comparison
@@ -182,7 +210,11 @@ results. Stage 1 receives only its current full intent and its own prior work.
 
 ### Submission, assessment and primary decision
 
-Freeze the first declared final submission or technical ending immediately:
+For the ordinary arm, freeze its first native final submission or technical
+ending immediately. For Markitect, freeze at the terminal Apply report/Run end,
+not an internal Manager submission, intermediate acceptance or candidate:
+normal internal correction and fresh Verify may finish before that boundary.
+In each case freeze
 artifact paths/modes/content, state, source/model/profile/image identities,
 provider session IDs, actual final text, checks and lifecycle evidence. For
 Markitect bind the actual published target separately from any unpublished
@@ -277,7 +309,7 @@ results or establish runtime readiness.
 | Assessment isolation | **UNBOUND.** `oracle_kit.py` invokes submitted code directly with inherited environment and captured output. It is not a safe host assessment boundary. Reuse the bounded, credential-free container pattern in `night_run.py`, adapting only the Readinglog entrypoint/paths after separately agreeing its exact small diff; do not run submitted code on the operator host. |
 | Whole-arm resources | **UNBOUND.** Existing per-container CPU/RAM limits do not prove aggregate enforcement, disk/output bounds or parity. Bind a common enforced arm envelope and its observation/cessation evidence before claiming execution readiness. |
 | Profile/runtime | **UNBOUND for this pilot.** SOL3 observed native Luna High in Markitect, not the ordinary arm's resume/finish. Pin dedicated auth, actual resolved role settings, CLI/tools/images and equal permissions; no fallback or desktop-auth substitution. |
-| Own-result stage 1 | **UNBOUND by design** until each stage-0 submission exists. Hash actual artifacts, continuation data and native ordinary session state; do not manufacture a prior result. |
+| Own-result stage 1 | **UNBOUND by design** until each completed stage-0 submission exists. Hash actual artifacts, continuation data and native ordinary session state; bind observed state accounting, capture and equal writer/check access before release. Missing bindings or an incomplete predecessor are dependency-blocked; do not manufacture or repair a prior result. |
 | Grant/release | **NONE.** A reviewed proposal and source preparation do not dispatch. Coordinator requests a fresh finite owner grant only against the concrete reviewed plan, then freezes the actual UTC/source gate and append-only ledger. |
 
 SOL3 is closed: P met the bounded preservation task; R repaired behavior but
