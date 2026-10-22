@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/apply/assignment_realization.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Executes separate model assessment, Implement assignments and independent final Verify over named Git results with shared finite bounds and targeted correction, without publication or legacy Outcome projection."
+  - path: "internal/apply/assignment_context.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: "Builds focused assignment briefs and independent review context from actual model selections, required checks, ownership and ordinary retained Git handoffs."
+  - path: "internal/apply/assignment_realization_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Controls assignment ports against prepared model inputs to verify blocker stops, preservation, correction, named final checks, one invocation allowance and retained incomplete work; it is not provider evidence."
   - path: "internal/apply/README.md"
     form: doc
     realizes: [product/ports-and-adapters, product/apply/read-only-preparation]

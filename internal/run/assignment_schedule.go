@@ -21,6 +21,8 @@ const (
 	AskChildTool      = "ask_child"
 )
 
+var ErrAssignmentModelProblem = errors.New("Root confirmed a material problem of the fixed model")
+
 var assignmentDecisionTools = []ToolSpec{
 	{Name: DelegateChildTool, Description: "Give a required direct child its task and a copy of your current Git stand.", InputSchema: json.RawMessage(`{"type":"object","properties":{"child":{"type":"string"},"task":{"type":"string"}},"required":["child","task"],"additionalProperties":false}`)},
 	{Name: AcceptChildTool, Description: "Accept the reviewed fixed child commit and integrate it into your Git copy.", InputSchema: json.RawMessage(`{"type":"object","properties":{"child":{"type":"string"},"commit":{"type":"string"}},"required":["child","commit"],"additionalProperties":false}`)},
@@ -118,6 +120,8 @@ type assignmentScheduler struct {
 	mu        sync.Mutex
 	used      int
 	homes     []string
+	problem   *ReviewIssue
+	closed    bool
 }
 
 // AssignmentTree keeps the Implement assignments alive for targeted correction
@@ -224,12 +228,29 @@ func (t *AssignmentTree) Homes() []string {
 	return append([]string(nil), t.scheduler.homes...)
 }
 
+func (t *AssignmentTree) ModelProblem() *ReviewIssue {
+	if t == nil {
+		return nil
+	}
+	s := t.scheduler
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.problem == nil {
+		return nil
+	}
+	issue := *s.problem
+	return &issue
+}
+
 func (t *AssignmentTree) Close() error {
 	if t == nil {
 		return nil
 	}
 	if !t.closed {
 		t.closed = true
+		t.scheduler.mu.Lock()
+		t.scheduler.closed = true
+		t.scheduler.mu.Unlock()
 		t.closeErr = t.scheduler.closeAgents(t.team)
 	}
 	return t.closeErr
@@ -244,7 +265,30 @@ func (s *assignmentScheduler) request(ctx context.Context, path string) (Assignm
 			return AssignmentRequest{}, err
 		}
 	}
-	return AssignmentRequest{ID: id, Profile: s.team[path].ExecuteProfile, Home: home, Transcript: filepath.Join(s.options.TranscriptDir, string(id)+".jsonl"), Tools: assignmentDecisionTools, Handler: s.mailboxes[path].handle}, nil
+	tools, handler := assignmentDecisionTools, s.mailboxes[path].handle
+	if path == "." {
+		tools = append(append([]ToolSpec(nil), tools...), ToolSpec{Name: ModelProblemTool, Description: "End affected implementation for a material fixed-model problem you confirm, naming its statements and incompatible outcomes.", InputSchema: reviewIssueSchema()})
+		handler = func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
+			if name != ModelProblemTool {
+				return s.mailboxes[path].handle(ctx, name, args)
+			}
+			var issue ReviewIssue
+			if json.Unmarshal(args, &issue) != nil || strings.TrimSpace(issue.Owner) == "" || strings.TrimSpace(issue.Obligation) == "" || strings.TrimSpace(issue.Expected) == "" || strings.TrimSpace(issue.Observed) == "" || ctx.Err() != nil {
+				return ToolAnswer{Text: "a confirmed model problem needs its owner, statements and material alternatives", Refused: true}
+			}
+			s.mu.Lock()
+			if s.closed {
+				s.mu.Unlock()
+				return ToolAnswer{Text: "assignment tree is closing", Refused: true}
+			}
+			if s.problem == nil {
+				s.problem = &issue
+			}
+			s.mu.Unlock()
+			return ToolAnswer{Text: "Confirmed model problem retained; affected work ends without acceptance."}
+		}
+	}
+	return AssignmentRequest{ID: id, Profile: s.team[path].ExecuteProfile, Home: home, Transcript: filepath.Join(s.options.TranscriptDir, string(id)+".jsonl"), Tools: tools, Handler: handler}, nil
 }
 
 func (s *assignmentScheduler) reserveMessage() error {
@@ -271,6 +315,12 @@ func (s *assignmentScheduler) messageResult(ctx context.Context, path, prompt st
 	answer, err := s.flow.Message(ctx, path, prompt, s.options.Timeout)
 	if err != nil {
 		return answer, err
+	}
+	s.mu.Lock()
+	problem := s.problem != nil
+	s.mu.Unlock()
+	if problem {
+		return answer, ErrAssignmentModelProblem
 	}
 	if !answer.Completed {
 		return answer, fmt.Errorf("Manager %q did not complete its response", path)
@@ -435,15 +485,28 @@ func (s *assignmentScheduler) review(ctx context.Context, parent, child string) 
 }
 
 func (s *assignmentScheduler) correct(ctx context.Context, parent, child, correction string) error {
+	stack, _ := ctx.Value(assignmentMessageStackKey{}).([]string)
+	for _, active := range stack {
+		if active == child {
+			return fmt.Errorf("Manager %q is already answering in this question chain", child)
+		}
+	}
+	messageCtx := context.WithValue(ctx, assignmentMessageStackKey{}, append(append([]string(nil), stack...), child))
 	if err := s.reserveMessage(); err != nil {
 		return err
 	}
-	answer, err := s.flow.Return(ctx, parent, child, correction, s.options.Timeout)
+	answer, err := s.flow.Return(messageCtx, parent, child, correction, s.options.Timeout)
 	if err != nil {
 		return err
 	}
 	if !answer.Completed {
 		return fmt.Errorf("Manager %q did not complete its correction", child)
+	}
+	s.mu.Lock()
+	problem := s.problem != nil
+	s.mu.Unlock()
+	if problem {
+		return ErrAssignmentModelProblem
 	}
 	_, err = s.finishCorrection(ctx, child)
 	return err
