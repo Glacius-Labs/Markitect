@@ -77,6 +77,7 @@ type fakeRuntime struct {
 	resumeMismatch bool
 	errorText      string
 	stopFail       bool
+	notifications  []string
 }
 
 func newRuntime() *fakeRuntime {
@@ -112,6 +113,9 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		f.emit(`{"id":2,"result":{"thread":` + thread + `,"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"admitted-model","modelProvider":"markitect","sandbox":{"type":"dangerFullAccess"}}}`)
 	case "turn/start":
 		f.emit(fmt.Sprintf(`{"id":%d,"result":{"turn":{"id":"%s","status":"inProgress","items":[],"error":null}}}`, m.ID, codecTurnID))
+		for _, notification := range f.notifications {
+			f.emit(notification)
+		}
 		switch {
 		case f.errorText != "":
 			f.emit(`{"method":"error","params":{"error":{"message":"` + f.errorText + `"},"willRetry":false}}`)
