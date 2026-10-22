@@ -135,7 +135,7 @@ func writable(mounts []run.PathMount) bool {
 }
 
 func providerArgv(mode string) []string {
-	args := []string{"/usr/local/bin/codex", "app-server", "--disable", "apps", "--disable", "memories", "--disable", "multi_agent",
+	args := []string{"/usr/local/bin/codex", "app-server", "--disable", "apps", "--disable", "memories",
 		"--disable", "image_generation", "--disable", "browser_use", "--disable", "computer_use",
 		"-c", `mcp_servers={markitect={command="/usr/local/bin/markitect-agentd",args=["mcp"]}}`,
 		"-c", `cli_auth_credentials_store="file"`}

@@ -91,6 +91,10 @@ type turnRun struct {
 	commands    []run.CommandObservation
 	usage       run.Usage
 	nextRequest int64
+	// Native children share this provider runtime, not the outer Manager
+	// assignment. Only an observed subAgentActivity establishes their identity.
+	children     map[ThreadID]bool
+	childIDBytes int
 }
 
 // Run runs one turn. It always stops the container before it returns; Stopped
@@ -455,7 +459,13 @@ func (t *turnRun) observe(m Message, request RequestID, responseSeen *bool) (Tur
 		}
 	case TurnStartedMessage, TurnCompletedMessage:
 		o := m.Turn()
-		if o.Thread != t.thread || t.turnID != "" && t.turnID != o.Turn {
+		if o.Thread != t.thread {
+			if t.children[o.Thread] {
+				return "", nil
+			}
+			return "", ErrProtocol
+		}
+		if t.turnID != "" && t.turnID != o.Turn {
 			return "", ErrProtocol
 		}
 		t.turnID = o.Turn
@@ -463,7 +473,7 @@ func (t *turnRun) observe(m Message, request RequestID, responseSeen *bool) (Tur
 			return o.Status, nil
 		}
 	case ThreadStartedMessage:
-		if m.Thread() != t.thread {
+		if m.Thread() != t.thread && !t.children[m.Thread()] {
 			return "", ErrProtocol
 		}
 	case UnknownNotification:
@@ -480,31 +490,71 @@ func (t *turnRun) notification(m Message) error {
 	switch m.method {
 	case "error":
 		var e struct {
-			Error struct {
+			Thread ThreadID `json:"threadId"`
+			Error  struct {
 				Message string `json:"message"`
 			} `json:"error"`
 			WillRetry bool `json:"willRetry"`
 		}
-		if json.Unmarshal(m.body, &e) != nil || !e.WillRetry {
+		if err := json.Unmarshal(m.body, &e); err != nil {
+			return ErrProtocol
+		}
+		if e.Thread != "" && e.Thread != t.thread {
+			if t.children[e.Thread] {
+				return nil
+			}
+			return ErrProtocol
+		}
+		if !e.WillRetry {
 			return fmt.Errorf("%w: provider error: %s", ErrProtocol, t.redact([]byte(e.Error.Message)))
 		}
-	case "item/completed":
+	case "item/started", "item/completed":
 		var n struct {
 			Thread string `json:"threadId"`
 			Turn   string `json:"turnId"`
 			Item   struct {
-				ID       string `json:"id"`
-				Type     string `json:"type"`
-				Text     string `json:"text"`
-				Phase    string `json:"phase"`
-				Command  string `json:"command"`
-				Status   string `json:"status"`
-				ExitCode *int   `json:"exitCode"`
-				Output   string `json:"aggregatedOutput"`
+				ID       string   `json:"id"`
+				Type     string   `json:"type"`
+				Text     string   `json:"text"`
+				Phase    string   `json:"phase"`
+				Command  string   `json:"command"`
+				Status   string   `json:"status"`
+				ExitCode *int     `json:"exitCode"`
+				Output   string   `json:"aggregatedOutput"`
+				Kind     string   `json:"kind"`
+				Child    ThreadID `json:"agentThreadId"`
 			} `json:"item"`
 		}
-		if json.Unmarshal(m.body, &n) != nil || n.Thread != string(t.thread) || t.turnID != "" && n.Turn != string(t.turnID) {
+		if json.Unmarshal(m.body, &n) != nil {
 			return ErrProtocol
+		}
+		main := n.Thread == string(t.thread)
+		if main {
+			if t.turnID != "" && n.Turn != string(t.turnID) {
+				return ErrProtocol
+			}
+		} else if !t.children[ThreadID(n.Thread)] {
+			return ErrProtocol
+		}
+		if n.Item.Type == "subAgentActivity" && n.Item.Kind == "started" {
+			if n.Turn == "" || main && t.turnID == "" || n.Item.Child == "" || n.Item.Child == t.thread || n.Item.Child == ThreadID(n.Thread) {
+				return ErrProtocol
+			}
+			if !t.children[n.Item.Child] {
+				// Bound retained native identities by the existing protocol byte
+				// budget; no unbounded notification stream can grow this set.
+				if len(n.Item.Child) > maxProtocolMessage-t.childIDBytes {
+					return ErrProtocolLimit
+				}
+				if t.children == nil {
+					t.children = make(map[ThreadID]bool)
+				}
+				t.children[n.Item.Child] = true
+				t.childIDBytes += len(n.Item.Child)
+			}
+		}
+		if !main || m.method != "item/completed" {
+			return nil
 		}
 		if n.Item.Type == "agentMessage" && n.Item.Phase == "final_answer" {
 			t.final = n.Item.Text
