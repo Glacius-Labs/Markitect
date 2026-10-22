@@ -10,6 +10,7 @@ import (
 	"io"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
@@ -25,6 +26,61 @@ func TestForbiddenGitProgramHelper(t *testing.T) {
 			_, _ = io.Copy(os.Stdout, os.Stdin)
 			os.Exit(0)
 		}
+	}
+}
+
+func TestBoundedOutputProcess(t *testing.T) {
+	for i, arg := range os.Args {
+		if arg != "--gitrepo-bounded-output" || i+1 >= len(os.Args) {
+			continue
+		}
+		var output *os.File
+		switch os.Args[i+1] {
+		case "stdout":
+			output = os.Stdout
+		case "stderr":
+			output = os.Stderr
+		default:
+			os.Exit(2)
+		}
+		chunk := bytes.Repeat([]byte("x"), 1<<20)
+		_, _ = output.Write(chunk)
+		os.Exit(0)
+	}
+}
+
+func TestBoundedOutputEnforcesExecPipeLimit(t *testing.T) {
+	for _, stream := range []string{"stdout", "stderr"} {
+		t.Run(stream, func(t *testing.T) {
+			const limit = 1024
+			output := &boundedOutput{limit: limit}
+			cmd := exec.Command(os.Args[0], "-test.run=^TestBoundedOutputProcess$", "--", "--gitrepo-bounded-output", stream)
+			cmd.Stdout, cmd.Stderr = io.Discard, io.Discard
+			if stream == "stdout" {
+				cmd.Stdout = output
+			} else {
+				cmd.Stderr = output
+			}
+			if err := cmd.Run(); !errors.Is(err, ErrLimit) {
+				t.Fatalf("over-limit %s error = %v, want ErrLimit", stream, err)
+			}
+			if got := int64(len(output.Bytes())); got > limit {
+				t.Fatalf("retained %s bytes = %d, limit = %d", stream, got, limit)
+			}
+		})
+	}
+}
+
+func TestBoundedOutputWriteKeepsLimitAndAccessors(t *testing.T) {
+	output := &boundedOutput{limit: 3}
+	if n, err := output.Write([]byte("abc")); n != 3 || err != nil {
+		t.Fatalf("write at limit = (%d, %v)", n, err)
+	}
+	if n, err := output.Write([]byte("d")); n != 0 || !errors.Is(err, ErrLimit) {
+		t.Fatalf("write beyond limit = (%d, %v), want ErrLimit", n, err)
+	}
+	if got := string(output.Bytes()); got != "abc" || output.String() != got {
+		t.Fatalf("retained bytes=%q string=%q, want abc", got, output.String())
 	}
 }
 
