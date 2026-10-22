@@ -261,7 +261,7 @@ func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 	if m.stage == stageStart {
 		return refuse("Your work in this Pass was reset; wait until it starts again.")
 	}
-	if m.stage == stageBlocked && in.Kind != kindWait && in.Kind != kindProblem {
+	if (ts.blocked || m.stage == stageBlocked) && in.Kind != kindWait && in.Kind != kindProblem {
 		return refuse("Your own work waits for %s. Until then you may answer, ask, wait or report a problem; you cannot submit, report progress or decide.", m.waiting)
 	}
 	var answer ToolAnswer

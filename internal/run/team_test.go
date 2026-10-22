@@ -1,11 +1,54 @@
 package run
 
 import (
+	"encoding/json"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
 )
+
+func TestBlockedTurnCannotDecideAfterDependencyRelease(t *testing.T) {
+	f := newFixture(t)
+	r := f.open()
+	defer f.finish(r, "bounded Turn permission regression")
+	e := r.e
+	e.mu.Lock()
+	p := e.newPassLocked(bindingSpec())
+	owner, consumer, child := p.byPath["library"], p.byPath["lending"], p.byPath["lending/reminders"]
+	consumer.stage = stageBlocked
+	consumer.bound = []binding{{target: waitTarget{manager: owner.Path, stage: stageNameBasis}, serves: eventBasis}}
+	blocked := &turnState{m: consumer, id: "communication-turn", blocked: true}
+	owner.basis = &proposal{id: "new-contract", kind: kindBasis, member: owner, status: proposalAccepted}
+	e.releaseLocked(consumer, "prerequisite accepted during communication Turn")
+	pr := &proposal{id: "child-proposal", kind: kindBasis, member: child, status: proposalChecked}
+	child.pending = pr
+	p.proposals = append(p.proposals, pr)
+	e.mu.Unlock()
+	if consumer.stage != stageOwn {
+		t.Fatalf("dependency did not release consumer: %s", consumer.stage)
+	}
+	for _, args := range []string{
+		`{"kind":"accept","proposal":"child-proposal"}`,
+		`{"kind":"return","proposal":"child-proposal","reason":"missing contract case"}`,
+		`{"kind":"progress","summary":"working"}`,
+		`{"kind":"revise","reason":"new contract"}`,
+	} {
+		if a := e.report(consumer, blocked, json.RawMessage(args)); !a.Refused {
+			t.Fatalf("communication Turn acquired productive rights: %s", args)
+		}
+	}
+	if pr.status != proposalChecked || blocked.decided {
+		t.Fatal("refused decision changed child proposal")
+	}
+	fresh := &turnState{m: consumer, id: "productive-turn"}
+	if a := e.report(consumer, fresh, json.RawMessage(`{"kind":"return","proposal":"child-proposal","reason":"missing contract case"}`)); a.Refused {
+		t.Fatal(a.Text)
+	}
+	if pr.status != proposalReturned || !fresh.decided {
+		t.Fatal("new productive Turn did not decide")
+	}
+}
 
 func withWorker(f *fixture, manager string, roles ...Helper) {
 	for i := range f.cfg.Team {
