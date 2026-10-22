@@ -6,6 +6,32 @@ import (
 	"testing"
 )
 
+func TestProposalDeliveredInToolResponseRemainsDemandedNextTurn(t *testing.T) {
+	f := newFixture(t)
+	r := f.open()
+	defer f.finish(r, "bounded late delivery regression")
+	e := r.e
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	p := e.newPassLocked(implementSpec())
+	parent, child := p.byPath["."], p.byPath["library"]
+	parent.stage, parent.running = stageDelegated, true
+	ts := &turnState{m: parent, id: "already-running", demands: e.demandsLocked(parent)}
+	pr := &proposal{id: "late-proposal", kind: kindBasis, member: child, status: proposalChecked}
+	child.pending = pr
+	p.proposals = append(p.proposals, pr)
+	e.deliverLocked(parent, item{text: e.renderProposalLocked(pr)})
+	answer := e.takeItemsLocked(parent, ts)
+	if !strings.Contains(answer, pr.id) || len(parent.items) != 0 {
+		t.Fatal("late proposal was not delivered through the tool response")
+	}
+	e.turnEndedLocked(parent, ts)
+	if !e.runnableLocked(parent) || !strings.Contains(parent.items[len(parent.items)-1].text, pr.id) || pr.status != proposalChecked {
+		t.Fatalf("undecided delivered proposal lost its wakeup: %+v", parent.items)
+	}
+	parent.running = false
+}
+
 // A cross-branch question travels only along tree edges: lending asks Root,
 // Root forwards it to library with a correlated question, library answers Root
 // and Root answers lending. A sibling address is refused.

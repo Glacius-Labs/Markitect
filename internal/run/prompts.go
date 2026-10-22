@@ -70,6 +70,11 @@ func list(b *strings.Builder, title string, lines []string) {
 // writeEnvelope renders the content of a submission.
 func writeEnvelope(b *strings.Builder, env envelope, findings func(string) *Finding) {
 	fmt.Fprintf(b, "  Summary: %s\n", env.Summary)
+	if len(env.Scope) > 0 {
+		fmt.Fprintf(b, "  Bound scope (not a coverage verdict): %s\n", strings.Join(env.Scope, ", "))
+	}
+	writeEvidence(b, env.Support)
+	list(b, "Unresolved:", env.Unresolved)
 	for _, c := range env.Obligations {
 		line := fmt.Sprintf("  Obligation %s: %s", c.Definition, c.Status)
 		if c.Note != "" {
@@ -160,6 +165,10 @@ func (e *engine) renderProposalLocked(pr *proposal) string {
 	}
 	for _, id := range slices.Sorted(mapKeys(pr.dispositions)) {
 		d := pr.dispositions[id]
+		if d.Setup != "" {
+			fmt.Fprintf(&b, "  Assessed script setup failure %s, corrected by %s: %s\n    Reviewer evidence before candidate execution (not a Runtime certification): %s\n", id, d.Passing, d.Reason, d.Setup)
+			continue
+		}
 		if d.As == DisposedRerun {
 			fmt.Fprintf(&b, "  Disposes of the adverse receipt %s: replaced by the passing rerun %s\n", id, d.Rerun)
 			continue
@@ -179,18 +188,24 @@ func (e *engine) renderProposalLocked(pr *proposal) string {
 	}
 	// Every probe the child ran in this Pass, whatever its report cites, so
 	// that the parent judges the actual assertions and the adverse ones too.
-	if probes := e.probesOfLocked(pr.member.Path, pr.member.p.id); len(probes) > 0 {
+	probes := e.probesOfLocked(pr.member.Path, pr.member.p.id)
+	support := slices.Clone(pr.env.Support)
+	for _, c := range pr.env.Obligations {
+		support = append(support, c.Evidence...)
+	}
+	if pr.env.Integration != nil {
+		support = append(support, pr.env.Integration.Evidence...)
+	}
+	for _, ev := range support {
+		if r := e.receiptLocked(ev.Receipt); r != nil && !slices.Contains(probes, r) {
+			probes = append(probes, r)
+		}
+	}
+	if len(probes) > 0 {
 		b.WriteString("  Probes it ran in this Pass: judge the model authority for the expected outcome and which material case could still pass each script. Relied-on probes are shown in full within a 32 KiB budget; retrieve any cut receipt with look_up topic probe before relying on it.\n")
 		relied := map[string]bool{}
-		for _, c := range pr.env.Obligations {
-			for _, ev := range c.Evidence {
-				relied[ev.Receipt] = true
-			}
-		}
-		if c := pr.env.Integration; c != nil {
-			for _, ev := range c.Evidence {
-				relied[ev.Receipt] = true
-			}
+		for _, ev := range support {
+			relied[ev.Receipt] = true
 		}
 		remaining := 32 << 10
 		for _, r := range probes {
@@ -273,7 +288,7 @@ func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, 
 	fmt.Fprintf(&b, "This Agent Turn has a finite limit of %s. End after submitting basis/result; if work remains, report concise progress before the limit and continue in a later Turn. Use wait for a missing named submission or answer instead of polling it.\n", e.cfg.Budget.TurnTimeout)
 	b.WriteString("Each Turn uses a fresh container: conversation and the provider home persist, but in-memory tool/REPL variables and /tmp do not. Save recipes in provider-home files or resend their complete content; never rely on an earlier Turn's variables. A probe is a separate execution and must include all its own setup and helpers.\n")
 	if p.spec.Review {
-		b.WriteString("Plan one highest-value bounded probe for this Turn, then leave time to report and end. Start a second only when the observed tool latency still leaves a conservative reserve for a valid report and any repair; a short script can take minutes including Runtime setup. If a check refuses for remaining time, do not try another: report progress with only kind and summary, then end. For result evidence, one passing execution may support several conclusions when its actual assertions support them; explain support and gaps. Keep unsupported conditions open with a note; cite failed receipts in findings, not coverage evidence. Report a demonstrated failure of your own public contract under that own obligation, even when its implementation cause is a dependency; coordinate required work outside your ownership through your parent. In parent integration, independently assess such cross-area failures and record the necessary finding for the actual correction owner within your subtree; accepting the caller's contract finding alone does not route that correction.\n")
+		b.WriteString("The Runtime bounds checks and reserves time for a report. If it refuses further execution for this Turn, report progress and continue in a later Turn. For result evidence, one passing execution may support several conclusions when its actual assertions support them; explain support and gaps. Keep unsupported conditions open with a note; cite failed receipts in findings, not coverage evidence. Report a demonstrated failure of your own public contract under that own obligation, even when its implementation cause is a dependency; coordinate required work outside your ownership through your parent. In parent integration, independently assess such cross-area failures and record the necessary finding for the actual correction owner within your subtree; accepting the caller's contract finding alone does not route that correction.\n")
 	}
 	switch {
 	case !p.spec.Review && !p.spec.Writes:
@@ -334,7 +349,7 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 	fmt.Fprintf(b, "\nPass %s: %s\n%s\n", p.id, p.spec.Purpose, strings.TrimSpace(p.spec.Mandate))
 	if evidenceRequired(p.spec) {
 		b.WriteString(semanticAssessment + "\n")
-		b.WriteString("Derive and record material conditions, exceptions and interactions from the authority this Pass binds and required contracts in coverage.conditions (Apply: bound Definitions; Extract: fixed artifacts and documented intent, with the proposed model as work product); justify which evidence covers them and what remains open. For executable public behavior, done/preserved requires candidate-bound public_behavior receipts through the real declared entry, not private validators, source reassurance or suite counts. Static/documentary claims use reasoned source inspection. Missing required execution remains open. Every parent, including Root with no own Definitions, reports its own integration conditions and evidence; green children alone cannot establish global invariants. Implement satisfied means implementation submitted to independent Verify, not verified conformance.\n")
+		b.WriteString("Assess material conditions, exceptions and interactions from the authority this Pass binds and required contracts (Apply: bound Definitions; Extract: fixed artifacts and documented intent, with the proposed model as work product); justify which evidence covers them and what remains open. For executable public behavior, done/preserved requires candidate-bound public_behavior receipts through the real declared entry, not private validators, source reassurance or suite counts. Static/documentary claims use reasoned source inspection. Missing required execution remains open. Every parent, including Root with no own Definitions, assesses integration using relevant child evidence and concrete challenges; green child labels alone cannot establish global invariants. No per-obligation mapping or separate integration form is required. Implement satisfied means implementation submitted to independent Verify, not verified conformance.\n")
 		if p.spec.Review {
 			b.WriteString("Before assessing author claims or coverage, derive your own conditions and counterexamples from that authority. Challenge omissions inside each Definition: valid inputs wrongly refused, invalid inputs wrongly accepted, boundaries, exceptions, artifact contradictions and child interactions. Then compare the candidate and author coverage against those expectations. Never use author claims as the complete checklist.\n")
 		}

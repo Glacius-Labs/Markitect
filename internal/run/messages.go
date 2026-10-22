@@ -207,6 +207,16 @@ func (e *engine) takeItemsLocked(m *member, ts *turnState) string {
 	}
 	m.consumed = append(m.consumed, taken...)
 	m.items = slices.DeleteFunc(m.items, func(it item) bool { return !stays(it) })
+	// These obligations were delivered during this Turn, just like those in
+	// its initial prompt. Retain them for the end-of-Turn reminder if undecided.
+	// A blocked Turn only drains messages; productive items remain queued.
+	if !ts.blocked {
+		for _, d := range e.demandsLocked(m) {
+			if !slices.Contains(ts.demands, d) {
+				ts.demands = append(ts.demands, d)
+			}
+		}
+	}
 	var b strings.Builder
 	list(&b, "New items for you:", texts)
 	return " " + b.String()

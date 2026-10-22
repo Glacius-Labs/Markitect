@@ -177,8 +177,8 @@ func TestTurnEndWithoutReportIsNeverCompletion(t *testing.T) {
 	}
 }
 
-// A complete result covers every own obligation; a missing one is refused.
-func TestResultMustCoverEveryOwnObligation(t *testing.T) {
+// A concise result still needs assessed evidence, not a bare success label.
+func TestSatisfiedResultNeedsRelevantSupport(t *testing.T) {
 	f := newFixture(t)
 	var refusal string
 	f.agents.script = func(c *call) error {
@@ -195,8 +195,8 @@ func TestResultMustCoverEveryOwnObligation(t *testing.T) {
 	r := f.open()
 	r.Pass(implementSpec())
 	f.finish(r, "")
-	if !strings.Contains(refusal, "library/interface") {
-		t.Errorf("refusal %q does not name the missing obligation", refusal)
+	if !strings.Contains(refusal, "relevant support") {
+		t.Errorf("refusal %q does not explain missing support", refusal)
 	}
 }
 

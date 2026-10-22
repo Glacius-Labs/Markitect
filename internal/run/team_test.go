@@ -947,6 +947,34 @@ func TestReportActionsExposeOnlyTheirOwnFields(t *testing.T) {
 	}
 }
 
+func TestReportSchemaOnlyExposesApplicableRoleFields(t *testing.T) {
+	for _, spec := range []PassSpec{implementSpec(), verifySpec(), {Review: true, Assesses: true}} {
+		for _, blocked := range []bool{false, true} {
+			m := &member{mgr: &mgr{Manager: Manager{Path: "leaf", Parent: "."}}, p: &pass{spec: spec}, stage: stageOwn}
+			if blocked {
+				m.stage = stageBlocked
+			}
+			for _, action := range memberReportSchema(m)["oneOf"].([]schema) {
+				fields := action["properties"].(schema)
+				kind := fields["kind"].(schema)["enum"].([]string)[0]
+				if kind == kindAccept || kind == kindReturn || kind == kindReopen || blocked && kind != kindWait && kind != kindProblem {
+					t.Fatalf("inapplicable leaf action %s (blocked %v)", kind, blocked)
+				}
+				for _, field := range []string{"integration", "abort", "scope", "manager", "candidate"} {
+					if _, ok := fields[field]; ok {
+						t.Fatalf("inapplicable/Host field %s", field)
+					}
+				}
+				if spec.Assesses {
+					if _, ok := fields["dispositions"]; ok {
+						t.Fatal("assessment exposed probe dispositions")
+					}
+				}
+			}
+		}
+	}
+}
+
 // A new dependency version may be accepted before the old consumer Turn ends.
 // Its pending report still belongs to the invalidated version and must not stand.
 func TestResetWithdrawsRunningSubmissionAfterDependencyReacceptance(t *testing.T) {

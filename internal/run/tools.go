@@ -58,14 +58,14 @@ func reportSchema(spec PassSpec) schema {
 	finding := schema{
 		"kind":       schema{"type": "string", "enum": kinds, "description": "What you claim. deviation: a binding obligation or required check is violated, or a required realization or evidence is missing; it blocks and names its correction. model: a material model problem (Model assessment only); it blocks. suspected: a concrete, plausible violation of a named obligation you could not settle yet; it blocks until a review investigates and classifies it, and names no correction. suggestion: an optional idea beyond what the mandate requires; it never blocks, never causes a correction and grants no write. Default: deviation (model in the assessment) when blocking, suggestion otherwise."},
 		"expected":   str("deviation, suspected: the outcome the obligation requires, which the observed text contradicts or for which proof is missing."),
-		"owner":      str("Path of the Manager that must act: yourself or one of your descendants."),
+		"owner":      str("Manager that must act; defaults to yourself, or name a descendant."),
 		"obligation": str("The model obligation that is violated or lacks evidence."),
 		"observed":   str("The observed behavior or source evidence."),
 		"blocking":   schema{"type": "boolean", "description": "true for a genuine finding: a model violation, a missing required realization or evidence, a failed required check. false for an optional note."},
 		"correction": schema{"type": "string", "enum": corrections, "description": "The earliest kind of work its correction needs; the last one is the default."},
 		"receipts":   strs("Probe receipts (R...) that show it; a genuine finding citing an adverse receipt disposes of that receipt as a violation."),
 	}
-	required := []string{"owner", "obligation", "observed", "blocking"}
+	required := []string{"obligation", "observed", "blocking"}
 	if spec.ArtifactFindingsAdvisory {
 		finding["subject"] = schema{"type": "string", "enum": []string{subjectArtifact, subjectModel}, "description": "artifact: an artifact does not conform to the model. model: the model itself is defective."}
 		finding["definition"] = str("Required when subject is artifact: the identity of the Definition the artifact deviates from.")
@@ -73,23 +73,25 @@ func reportSchema(spec PassSpec) schema {
 	}
 	properties := schema{
 		"kind": schema{"type": "string", "enum": []string{kindProgress, kindWait, kindBasis, kindResult, kindAccept, kindReturn, kindReopen, kindRevise, kindProblem},
-			"description": "progress: you continue in a later turn. wait: you need the named answer, child or another Manager's accepted basis or result first. basis: what your children need from you before they start. result: your complete integrated result. accept or return: your decision on a child's proposal. reopen: return a child's accepted result. revise: change your accepted basis. problem: record a classified problem."},
-		"summary":  str("progress, basis, result: what you did, what it provides and what is still open."),
-		"for":      str("wait: the question ID you asked, the path of a child, or the path of another Manager whose accepted basis or result you need first; you are woken when it is accepted."),
-		"stage":    schema{"type": "string", "enum": []string{stageNameBasis, stageNameResult}, "description": "wait for another Manager: its accepted basis or (default) result."},
-		"proposal": str("accept, return: the proposal ID (P...) of your child."),
-		"child":    str("reopen: the path of the child."),
-		"reason":   str("return, reopen, revise, wait: why."),
-		"obligations": schema{"type": "array", "description": "basis, result: your own obligations; a result covers every one.", "items": object([]string{"definition", "status"}, schema{
+			"description": "progress: you continue in a later turn. wait: you need the named answer, child or another Manager's accepted basis or result first. basis: an optional contract that an actual consumer needs. result: your complete integrated result. accept or return: your decision on a child's proposal. reopen: return a child's accepted result. revise: change your accepted basis. problem: record a classified problem."},
+		"summary":    str("progress, basis, result: what you did, what it provides and what is still open."),
+		"support":    evidenceSchema(spec),
+		"unresolved": strs("Concrete gaps in required work or evidence. A satisfied result has none; report genuine findings for unresolved required corrections."),
+		"for":        str("wait: the question ID you asked, the path of a child, or the path of another Manager whose accepted basis or result you need first; you are woken when it is accepted."),
+		"stage":      schema{"type": "string", "enum": []string{stageNameBasis, stageNameResult}, "description": "wait for another Manager: its accepted basis or (default) result."},
+		"proposal":   str("accept, return: the proposal ID (P...) of your child."),
+		"child":      str("reopen: the path of the child."),
+		"reason":     str("return, reopen, revise, wait: why."),
+		"obligations": schema{"type": "array", "description": "Optional detail for particular own obligations, such as a local gap or inapplicability. Your concise summary and shared support assess the whole Host-bound scope; no per-obligation matrix is required.", "items": object([]string{"definition", "status"}, schema{
 			"definition": str("Identity of one of your own Definitions."),
 			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverNotApplicable, coverOpen}},
 			"note":       str("How it is met and with which evidence; required for not_applicable and open, and for every entry of a plan."),
-			"conditions": str("Derive material conditions, exceptions and interactions from this Definition and required bound contracts; give concise source references, explain coverage and any uncovered conditions. Required in Implement and artifact review, including the reviewer basis before considering author coverage."),
+			"conditions": str("Optional detail on material conditions, exceptions or interactions; the result may explain relevant evidence and gaps concisely in summary."),
 			"evidence":   evidenceSchema(spec),
 		})},
-		"integration": object([]string{"status", "conditions", "note"}, schema{
+		"integration": object([]string{"status", "note"}, schema{
 			"status":     schema{"type": "string", "enum": []string{coverDone, coverPreserved, coverOpen}},
-			"conditions": str("Every parent, including Root without own Definitions: your authority-derived composed workflows/global invariants, source references and discriminating cases. Basis and Plan result state intended integration; every non-Plan result justifies actual integration with evidence beyond child reports."),
+			"conditions": str("Optional detail on composed workflows, interfaces and shared invariants. Parents can explain integration in summary with shared support, including assessed child receipts; accepted-child labels alone are insufficient."),
 			"note":       str("What your integration establishes and what remains uncovered; route corrections to actual owners."),
 			"evidence":   evidenceSchema(spec),
 		}),
@@ -120,6 +122,7 @@ func reportSchema(spec PassSpec) schema {
 			"evidence": str("expectation_error: the evidence of the disproof, such as the Definition text and a corrected or narrower passing receipt."),
 			"rerun":    str("rerun: the passing receipt that repeated it with probe.rerun."),
 			"passing":  str("expectation_error of an error receipt: a passing receipt of the same obligation on this candidate that establishes the claim without the erring probe."),
+			"setup":    str("Only for a demonstrated script setup failure before candidate execution: cite the retained failure output and script location showing why the candidate was never exercised. Supply passing for the corrected script with unchanged claim, expectation, boundary, check and invocation. This is your evidence-based assessment under ordinary review, never a Host-certified fact. It avoids a new whole Verify solely for that broken script; product findings, ambiguous hangs, uncertain execution and mandatory-check failures remain unresolved."),
 		})}
 	}
 	if spec.Plans {
@@ -202,7 +205,7 @@ var lookUpSchema = object([]string{"topic"}, schema{
 // evidenceText describes the evidence items of a coverage entry for one Pass.
 func evidenceText(spec PassSpec) string {
 	if spec.Review || evidenceRequired(spec) {
-		return "Required for done and preserved: per distinct claim, a passing probe receipt on this candidate or an inspected source location; a suite total alone is no coverage. One execution may support several claims and Definitions when its actual assertions support them; explain that support and remaining gaps. Open conditions may omit unsupported evidence. Adverse receipts belong in genuine findings or reasoned dispositions, never in coverage evidence."
+		return "Relevant shared support for the assessed result: passing receipts on this candidate or inspected source locations. A suite total alone is no coverage. One execution may support several claims and Definitions when its actual assertions support them; explain that support and remaining gaps. Open conditions may omit unsupported evidence. Adverse receipts belong in genuine findings or reasoned dispositions, never in coverage evidence."
 	}
 	return "Optional: per claim, a passing probe receipt run on the stand you submit, or an inspected source location."
 }
@@ -232,6 +235,7 @@ func checkSchema(spec PassSpec) schema {
 			"expected":   str("The outcome the model requires, stated before the probe runs."),
 			"check":      str("The required check whose execution profile (image, executable, environment, limits) runs the probe."),
 			"path":       str("Where the probe file is placed, relative to that check's directory; it must not exist in the stand."),
+			"existing":   schema{"type": "boolean", "description": "Use the existing test at path unchanged on the captured stand; omit content. Omitted args uses the required check's configured invocation. Inspect actual assertions for the claimed behavior; passing suite totals alone do not establish it."},
 			"content":    str("The complete standalone probe file, with its own imports, setup and helpers; no variables, files or helper state carry from another probe. Its assertions exit 0 when the expected outcome is observed, nonzero otherwise. An expected refusal of the application passes when the probe asserts it."),
 			"args":       strs("Arguments after the profile's fixed arguments, such as the probe file to run."),
 			"proposal":   str("Optional, Pass with writes: the checked proposal (P...) of one of your children to probe its submitted stand."),
@@ -241,6 +245,35 @@ func checkSchema(spec PassSpec) schema {
 		properties["scope"] = schema{"type": "string", "enum": []string{"own", "all"}, "description": "File check: own (default): your findings in full and the number of others. all: the findings of other Managers too."}
 	}
 	return object(nil, properties)
+}
+
+// memberReportSchema narrows the action payloads to this Turn's role. Runtime
+// validation still guards rights if dependencies change during the Turn.
+func memberReportSchema(m *member) schema {
+	s := reportSchema(m.p.spec)
+	var actions []schema
+	for _, action := range s["oneOf"].([]schema) {
+		fields := action["properties"].(schema)
+		kind := fields["kind"].(schema)["enum"].([]string)[0]
+		if m.stage == stageBlocked && kind != kindWait && kind != kindProblem {
+			continue
+		}
+		if len(m.Children) == 0 && (kind == kindAccept || kind == kindReturn || kind == kindReopen) {
+			continue
+		}
+		if len(m.Children) == 0 {
+			delete(fields, "integration")
+		}
+		if m.Parent != "" {
+			delete(fields, "abort")
+		}
+		if m.p.spec.Assesses {
+			delete(fields, "dispositions")
+		}
+		actions = append(actions, action)
+	}
+	s["oneOf"] = actions
+	return s
 }
 
 var fileCheckSchema = object(nil, schema{
@@ -265,7 +298,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 		sendText = "Send a question, an answer or information to a direct child; other Managers are reached through them. Nobody outside the tree answers during the run."
 	}
 	tools := []ToolSpec{
-		{Name: toolReport, Description: "Report to the Orchestrator: progress, a named wait, your basis or complete result, a decision on a child's proposal, a reopened child result, a revised basis or a problem. End every turn in which you work on your own contribution with one.", InputSchema: raw(reportSchema(spec))},
+		{Name: toolReport, Description: "Report progress, wait, a concise result with relevant support and gaps, an optional needed contract basis, or an applicable decision/problem. End every productive turn with a report.", InputSchema: raw(memberReportSchema(m))},
 		{Name: toolSend, Description: sendText, InputSchema: raw(sendSchema)},
 		{Name: toolEscalate, Description: "Escalate a classified problem and the decision you need to your parent as a question. Root has nobody above it: it reports a model problem with report kind problem.", InputSchema: raw(escalateSchema)},
 		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
