@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"reflect"
+	"sync"
 	"testing"
 	"time"
 
@@ -21,6 +22,7 @@ func (p commandPeer) RunCommand(ctx context.Context, s container.ContainerSpec, 
 }
 
 type workspacePeer struct {
+	closedMu    sync.Mutex
 	request     run.WorkspaceSpec
 	requests    []run.WorkspaceSpec
 	materialize func(run.WorkspaceSpec) (run.WorkspaceObservation, error)
@@ -49,7 +51,9 @@ func (p *workspacePeer) Peek(context.Context, run.HarvestRequest) (run.Workspace
 	panic("check does not peek its mutated copy")
 }
 func (p *workspacePeer) Close(ctx context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+	p.closedMu.Lock()
 	p.closed++
+	p.closedMu.Unlock()
 	if p.close != nil {
 		return p.close(ctx, id)
 	}
@@ -299,7 +303,10 @@ func TestRunnerRefusesUnverifiedHomeAndClosesBothCopies(t *testing.T) {
 				return o, nil
 			}
 			var first context.Context
+			var firstMu sync.Mutex
 			w.close = func(ctx context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+				firstMu.Lock()
+				defer firstMu.Unlock()
 				if first == nil {
 					first = ctx
 				} else if first == ctx || ctx.Err() != nil {
