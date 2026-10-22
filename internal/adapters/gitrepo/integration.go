@@ -17,6 +17,10 @@ import (
 // temporary copy of the parent's fixed stand. The live parent is untouched.
 var ErrIntegrationConflict = errors.New("child Git result conflicts with parent stand")
 
+// ErrIntegrationUncertain stops retries when Git's final transfer could not
+// be read back as either the old parent head or the integrated result.
+var ErrIntegrationUncertain = errors.New("parent Git integration outcome is uncertain")
+
 var _ run.AssignmentIntegration = (*Workspaces)(nil)
 
 func (w *Workspaces) assignment(copy run.AssignmentWorkspace) (*assignmentWorkspace, error) {
@@ -92,6 +96,12 @@ func (w *Workspaces) Integrate(ctx context.Context, parent, child run.Assignment
 	if p == c {
 		return "", errors.New("a child result cannot integrate into its own workspace")
 	}
+	w.mu.Lock()
+	blocked := w.uncertain[p.id]
+	w.mu.Unlock()
+	if blocked {
+		return "", ErrIntegrationUncertain
+	}
 	// Fix the parent's own work before applying the child's delta. This is an
 	// internal commit; no owner repository receives a commit or push.
 	parentBefore, err := p.Commit(ctx, "Parent stand before child integration")
@@ -130,7 +140,7 @@ func (w *Workspaces) Integrate(ctx context.Context, parent, child run.Assignment
 	if applyErr != nil || sourceErr != nil {
 		unmerged, inspectErr := w.integrationGitAt(ctx, parentSpec, temporary, "diff", "--name-only", "--diff-filter=U")
 		cleanupErr := removeTemporary()
-		if inspectErr == nil && cleanupErr == nil && unmerged != "" && applyErr != nil {
+		if inspectErr == nil && cleanupErr == nil && sourceErr == nil && unmerged != "" && applyErr != nil {
 			return "", fmt.Errorf("%w on %s: %v", ErrIntegrationConflict, unmerged, applyErr)
 		}
 		return "", fmt.Errorf("temporary Git integration failed: %w", errors.Join(applyErr, sourceErr, inspectErr, cleanupErr))
@@ -153,9 +163,26 @@ func (w *Workspaces) Integrate(ctx context.Context, parent, child run.Assignment
 		cleanupErr := removeTemporary()
 		return "", errors.Join(err, cleanupErr, fmt.Errorf("parent Git head changed during child integration"))
 	}
-	if _, err := w.integrationGit(ctx, parentSpec, "merge", "--ff-only", result); err != nil {
+	beforeStatus, err := w.integrationGit(ctx, parentSpec, "status", "--porcelain")
+	if err != nil {
 		cleanupErr := removeTemporary()
-		return "", fmt.Errorf("parent Git stand could not fast-forward without losing live work: %w", errors.Join(err, cleanupErr))
+		return "", errors.Join(err, cleanupErr)
+	}
+	if _, mergeErr := w.integrationGit(ctx, parentSpec, "merge", "--ff-only", result); mergeErr != nil {
+		afterHead, headErr := w.integrationGit(ctx, parentSpec, "rev-parse", "HEAD")
+		afterStatus, statusErr := w.integrationGit(ctx, parentSpec, "status", "--porcelain")
+		cleanupErr := removeTemporary()
+		if headErr == nil && afterHead == result {
+			return result, fmt.Errorf("parent Git integrated the child but reported a helper error: %w", errors.Join(mergeErr, statusErr, cleanupErr))
+		}
+		if headErr == nil && statusErr == nil && afterHead == parentBefore && afterStatus == beforeStatus {
+			return "", fmt.Errorf("parent Git refused the fast-forward without changing its stand: %w", errors.Join(mergeErr, cleanupErr))
+		}
+		if w.uncertain == nil {
+			w.uncertain = make(map[run.WorkspaceID]bool)
+		}
+		w.uncertain[p.id] = true
+		return "", fmt.Errorf("%w: %v", ErrIntegrationUncertain, errors.Join(mergeErr, headErr, statusErr, cleanupErr))
 	}
 	if err := removeTemporary(); err != nil {
 		return result, fmt.Errorf("integrated parent commit %s but temporary Git worktree remains: %w", result, err)

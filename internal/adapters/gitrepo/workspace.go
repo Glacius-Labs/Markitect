@@ -38,11 +38,12 @@ const workspaceOwnerLabel = "markitect.workspace-owner"
 // receipts stay in this adapter instance; reconstruction cannot claim an
 // existing volume. Failed or uncertain operations retain their volume.
 type Workspaces struct {
-	mu      sync.Mutex
-	runtime WorkspaceRuntime
-	helper  container.ContainerSpec
-	owned   map[run.WorkspaceID]string
-	seq     uint64
+	mu        sync.Mutex
+	runtime   WorkspaceRuntime
+	helper    container.ContainerSpec
+	owned     map[run.WorkspaceID]string
+	uncertain map[run.WorkspaceID]bool
+	seq       uint64
 }
 
 var _ run.Workspaces = (*Workspaces)(nil)

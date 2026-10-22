@@ -19,11 +19,15 @@ import (
 )
 
 type integrationRuntime struct {
-	roots            map[string]string
-	failPatchRead    bool
-	failParentApply  bool
-	failTempCommit   bool
-	backgroundChange string
+	roots                map[string]string
+	failPatchRead        bool
+	failParentApply      bool
+	failTempCommit       bool
+	backgroundChange     string
+	failPatchAfterOutput bool
+	mergeSucceededError  bool
+	failMergeReadback    bool
+	afterMerge           bool
 }
 
 func (f *integrationRuntime) InspectVolume(_ context.Context, name string) (container.VolumeObservation, error) {
@@ -47,6 +51,9 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 		if _, ok := stdout.(*io.PipeWriter); ok {
 			return errors.New("child patch read failed")
 		}
+	}
+	if f.failMergeReadback && f.afterMerge && len(argv) >= 10 && argv[9] == "rev-parse" {
+		return errors.New("parent head readback failed")
 	}
 	if len(argv) >= 10 && strings.Contains(argv[8], "markitect-integration-") {
 		if argv[9] == "apply" {
@@ -78,6 +85,15 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 	cmd.Stderr = &stderr
 	if err := cmd.Run(); err != nil {
 		return errors.New(strings.TrimSpace(stderr.String()) + ": " + err.Error())
+	}
+	if f.failPatchAfterOutput && len(argv) >= 10 && argv[9] == "diff" {
+		if _, ok := stdout.(*io.PipeWriter); ok {
+			return errors.New("child patch producer failed after output")
+		}
+	}
+	if f.mergeSucceededError && len(argv) >= 10 && argv[9] == "merge" {
+		f.afterMerge = true
+		return errors.New("merge helper lost its success response")
 	}
 	return nil
 }
@@ -250,6 +266,59 @@ func TestLiveParentEditDuringIntegrationIsPreserved(t *testing.T) {
 	}
 	if status, statusErr := copies["library"].git(ctx, "status", "--porcelain"); statusErr != nil || !strings.Contains(status, "common.txt") {
 		t.Fatalf("live parent edit not retained as work: %q %v", status, statusErr)
+	}
+}
+
+func TestCompletedMergeWithLostHelperResponseRetainsParentCommit(t *testing.T) {
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "library", "lending")
+	integrationWrite(t, roots["lending"], "lending.txt", "child result\n")
+	child := integrationHandoff(t, copies["lending"])
+	w.runtime.(*integrationRuntime).mergeSucceededError = true
+	result, err := w.Integrate(ctx, copies["library"], copies["lending"], child, "")
+	if result == "" || err == nil || errors.Is(err, ErrIntegrationConflict) {
+		t.Fatalf("ambiguous merge lost its applied parent commit: %q %v", result, err)
+	}
+	head, headErr := copies["library"].git(ctx, "rev-parse", "HEAD")
+	if headErr != nil || head != result {
+		t.Fatalf("read-back parent commit %q differs from applied %q: %v", head, result, headErr)
+	}
+	got, readErr := os.ReadFile(filepath.Join(roots["library"], "lending.txt"))
+	if readErr != nil || string(got) != "child result\n" {
+		t.Fatalf("applied child content absent: %q %v", got, readErr)
+	}
+}
+
+func TestUnreadableAmbiguousMergeBlocksRetry(t *testing.T) {
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "library", "lending")
+	integrationWrite(t, roots["lending"], "lending.txt", "child result\n")
+	child := integrationHandoff(t, copies["lending"])
+	runtime := w.runtime.(*integrationRuntime)
+	runtime.mergeSucceededError, runtime.failMergeReadback = true, true
+	if _, err := w.Integrate(ctx, copies["library"], copies["lending"], child, ""); !errors.Is(err, ErrIntegrationUncertain) {
+		t.Fatalf("unknown merge outcome was not guarded: %v", err)
+	}
+	runtime.mergeSucceededError, runtime.failMergeReadback = false, false
+	if _, err := w.Integrate(ctx, copies["library"], copies["lending"], child, ""); !errors.Is(err, ErrIntegrationUncertain) {
+		t.Fatalf("ordinary retry bypassed unknown parent result: %v", err)
+	}
+}
+
+func TestPostOutputChildPatchFailureStaysTechnicalDespiteConflict(t *testing.T) {
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "library", "lending")
+	integrationWrite(t, roots["library"], "common.txt", "parent decision\n")
+	integrationWrite(t, roots["lending"], "common.txt", "child decision\n")
+	child := integrationHandoff(t, copies["lending"])
+	w.runtime.(*integrationRuntime).failPatchAfterOutput = true
+	_, err := w.Integrate(ctx, copies["library"], copies["lending"], child, "")
+	if err == nil || errors.Is(err, ErrIntegrationConflict) || !strings.Contains(err.Error(), "producer failed") {
+		t.Fatalf("technical child read was blamed as a Git conflict: %v", err)
+	}
+	got, readErr := os.ReadFile(filepath.Join(roots["library"], "common.txt"))
+	if readErr != nil || string(got) != "parent decision\n" {
+		t.Fatalf("technical source failure changed live parent: %q %v", got, readErr)
 	}
 }
 
