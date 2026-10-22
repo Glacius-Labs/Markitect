@@ -28,6 +28,7 @@ type integrationRuntime struct {
 	mergeSucceededError  bool
 	failMergeReadback    bool
 	afterMerge           bool
+	failUpdateFetch      bool
 }
 
 func (f *integrationRuntime) InspectVolume(_ context.Context, name string) (container.VolumeObservation, error) {
@@ -42,6 +43,9 @@ func (*integrationRuntime) RemoveVolume(context.Context, string) error          
 func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.ContainerSpec, argv []string, stdin io.Reader, stdout io.Writer) error {
 	if len(spec.Mounts) < 1 || len(spec.Mounts) > 2 || len(argv) < 2 || argv[0] != "/usr/bin/git" {
 		return errors.New("unexpected Git helper")
+	}
+	if f.failUpdateFetch && len(argv) >= 10 && argv[9] == "fetch" {
+		return errors.New("controlled parent fetch failure")
 	}
 	root := f.roots[spec.Mounts[0].Volume]
 	if root == "" {

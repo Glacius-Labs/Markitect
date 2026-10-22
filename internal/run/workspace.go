@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -12,6 +13,8 @@ type WorkspaceID string
 
 // AssignmentWorkspace is one Agent's independent Git working copy. A submitted
 // commit remains addressable after the Agent continues editing the same copy.
+// StartingCommit is the immutable initial copy identity; each later task's
+// delivered parent base is recorded separately in its AssignmentHandoff.
 // Closing the Agent does not remove this workspace: incomplete work and earlier
 // submissions remain available for inspection until the caller releases it.
 type AssignmentWorkspace interface {
@@ -39,6 +42,18 @@ type AssignmentForks interface {
 // source HEAD, index or working files. Later source work does not change it.
 type AssignmentCommitForks interface {
 	ForkAssignmentCommit(context.Context, AssignmentWorkspace, string, WorkspaceID) (AssignmentWorkspace, error)
+}
+
+// ErrAssignmentUpdateConflict means a normal parent-to-child Git merge left
+// conflicts in the child's own copy. Its next task must resolve them.
+var ErrAssignmentUpdateConflict = errors.New("parent Git update conflicts in child workspace")
+
+// AssignmentUpdates delivers an exact parent stand into an existing, idle
+// child copy without replacing its volume or Agent. A child with no own delta
+// from previous switches to commit; otherwise its work is retained and merged.
+// Technical failures and real conflicts preserve the copy for inspection.
+type AssignmentUpdates interface {
+	UpdateAssignment(ctx context.Context, target, source AssignmentWorkspace, commit, previous string) error
 }
 
 // AssignmentCommitReader reads the exact retained Git objects for checks and

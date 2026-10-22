@@ -6,10 +6,12 @@ import (
 	"errors"
 	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -17,6 +19,7 @@ import (
 // These ports test control flow against the actual prepared Library model.
 // They do not establish that a provider recognizes a semantic defect.
 type realizationCopies struct {
+	mu       sync.Mutex
 	t        *testing.T
 	copies   map[run.WorkspaceID]*realizationCopy
 	trees    map[string]snapshot.Tree
@@ -33,17 +36,26 @@ func (w *realizationCopy) ID() run.WorkspaceID    { return w.id }
 func (w *realizationCopy) Volume() string         { return string(w.id) }
 func (w *realizationCopy) StartingCommit() string { return w.start }
 func (w *realizationCopy) Commit(context.Context, string) (string, error) {
+	w.owner.mu.Lock()
+	defer w.owner.mu.Unlock()
+	return w.commitLocked()
+}
+func (w *realizationCopy) commitLocked() (string, error) {
 	w.owner.sequence++
 	id := fmt.Sprintf("%040x", w.owner.sequence)
 	w.owner.trees[id] = w.live
 	return id, nil
 }
 func (w *realizationCopy) ContainsCommit(_ context.Context, id string) (bool, error) {
+	w.owner.mu.Lock()
+	defer w.owner.mu.Unlock()
 	_, ok := w.owner.trees[id]
 	return ok, nil
 }
 func (w *realizationCopy) Close(context.Context) error { return nil }
 func (w *realizationCopies) PrepareAssignment(ctx context.Context, spec run.WorkspaceSpec) (run.AssignmentWorkspace, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	if w.copies == nil {
 		w.copies = make(map[run.WorkspaceID]*realizationCopy)
 		w.trees = make(map[string]snapshot.Tree)
@@ -53,7 +65,7 @@ func (w *realizationCopies) PrepareAssignment(ctx context.Context, spec run.Work
 	}
 	c := &realizationCopy{owner: w, id: spec.ID, live: spec.Tree}
 	w.copies[spec.ID] = c
-	c.start, _ = c.Commit(ctx, "start")
+	c.start, _ = c.commitLocked()
 	return c, nil
 }
 func (w *realizationCopies) ForkAssignment(ctx context.Context, source run.AssignmentWorkspace, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
@@ -64,6 +76,8 @@ func (w *realizationCopies) ForkAssignment(ctx context.Context, source run.Assig
 	return w.ForkAssignmentCommit(ctx, source, commit, id)
 }
 func (w *realizationCopies) ForkAssignmentCommit(_ context.Context, _ run.AssignmentWorkspace, commit string, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	if w.copies[id] != nil {
 		return nil, errors.New("copy already exists")
 	}
@@ -76,16 +90,37 @@ func (w *realizationCopies) ForkAssignmentCommit(_ context.Context, _ run.Assign
 	return c, nil
 }
 func (w *realizationCopies) ReadAssignmentCommit(_ context.Context, r run.AssignmentCommitRequest) (snapshot.Tree, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	tree, ok := w.trees[r.Commit]
 	if !ok {
 		return tree, errors.New("commit unavailable")
 	}
 	return tree, nil
 }
+func (w *realizationCopies) UpdateAssignment(_ context.Context, target, _ run.AssignmentWorkspace, commit, previous string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	updates := map[string]*string{}
+	for _, delta := range snapshot.Compare(w.trees[previous], w.trees[commit]) {
+		entry, ok := delta.After()
+		if ok {
+			value := string(entry.Bytes())
+			updates[delta.Path().String()] = &value
+		} else {
+			updates[delta.Path().String()] = nil
+		}
+	}
+	c := target.(*realizationCopy)
+	c.live = change(w.t, c.live, updates)
+	return nil
+}
 func (w *realizationCopies) Changes(_ context.Context, _ run.AssignmentWorkspace, h run.AssignmentHandoff) (string, error) {
 	return "actual controlled difference for result " + h.ResultCommit, nil
 }
 func (w *realizationCopies) Integrate(ctx context.Context, parent, child run.AssignmentWorkspace, h run.AssignmentHandoff, previous string) (string, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
 	base := h.StartingCommit
 	if previous != "" {
 		base = previous
@@ -102,10 +137,11 @@ func (w *realizationCopies) Integrate(ctx context.Context, parent, child run.Ass
 	}
 	p := parent.(*realizationCopy)
 	p.live = change(w.t, p.live, updates)
-	return p.Commit(ctx, "integrate")
+	return p.commitLocked()
 }
 
 type realizationAgents struct {
+	mu                                                          sync.Mutex
 	t                                                           *testing.T
 	copies                                                      *realizationCopies
 	opened                                                      map[string]*realizationAgent
@@ -115,14 +151,17 @@ type realizationAgents struct {
 	assessmentPromptBytes                                       int
 }
 type realizationAgent struct {
-	owner   *realizationAgents
-	spec    run.AssignmentSpec
-	handler run.ToolHandler
-	closed  bool
-	mode    string
+	owner    *realizationAgents
+	spec     run.AssignmentSpec
+	handler  run.ToolHandler
+	closed   bool
+	mode     string
+	messages int
 }
 
 func (a *realizationAgents) OpenAssignment(_ context.Context, spec run.AssignmentSpec, h run.ToolHandler) (run.AssignmentSession, error) {
+	a.mu.Lock()
+	defer a.mu.Unlock()
 	if a.opened == nil {
 		a.opened = make(map[string]*realizationAgent)
 	}
@@ -139,6 +178,7 @@ func (a *realizationAgents) OpenAssignment(_ context.Context, spec run.Assignmen
 	return s, nil
 }
 func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Duration) (run.TurnResult, error) {
+	s.messages++
 	call := func(name string, value any) error {
 		body, _ := json.Marshal(value)
 		answer := s.handler(ctx, name, body)
@@ -147,7 +187,9 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 		}
 		return nil
 	}
+	s.owner.copies.mu.Lock()
 	copy := s.owner.copies.copies[run.WorkspaceID(s.spec.Workspace)]
+	s.owner.copies.mu.Unlock()
 	if s.mode == "assess" {
 		s.owner.assessmentPromptBytes = len(prompt)
 		if s.owner.gap {
@@ -156,6 +198,13 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 		return run.TurnResult{Completed: true, Final: "No model blocker identified."}, call(run.AcceptModelTool, map[string]string{"commit": copy.start, "reason": "Inspected the fixed model and delegated freedom."})
 	}
 	if s.mode == "verify" {
+		s.owner.mu.Lock()
+		for id, implementing := range s.owner.opened {
+			if implementing.mode == "implement" && implementing.closed {
+				s.owner.t.Errorf("Implement Agent %s closed before final Verify/correction completed", id)
+			}
+		}
+		s.owner.mu.Unlock()
 		if s.owner.oversizedOutput && (len(prompt) > s.owner.assessmentPromptBytes+(40<<10) || !strings.Contains(prompt, "[truncated; full observation retained by Host]")) {
 			s.owner.t.Fatal("oversized native output was not bounded explicitly in the Verify prompt")
 		}
@@ -192,7 +241,7 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 		if err := call(run.ReturnChildTool, map[string]string{"child": "lending", "correction": "Repair the controlled borrowing boundary defect"}); err != nil {
 			return run.TurnResult{}, err
 		}
-	} else if prompt == "Repair the controlled borrowing boundary defect" {
+	} else if strings.HasPrefix(prompt, "Repair the controlled borrowing boundary defect") {
 		copy.live = change(s.owner.t, copy.live, map[string]*string{"realization/lending/borrow.go": text("package lending // corrected required borrowing boundary\n")})
 	}
 	if strings.Contains(prompt, "everything else in /work is read-only") || strings.Contains(prompt, "get the Orchestrator's receipt") {
@@ -218,7 +267,10 @@ func realizationRequest(t *testing.T) (apply.AssignmentRealizationRequest, *real
 	work := &realizationCopies{t: t}
 	agents := &realizationAgents{t: t, copies: work}
 	homes := make(map[string]bool)
+	var homesMu sync.Mutex
 	return apply.AssignmentRealizationRequest{ID: "controlled", Build: "test-build", Prepared: legacy.Prepared, OwnerRequest: "Realize the fixed model", MaxMessages: 50, MessageTimeout: time.Second, MaxEntries: 1000, MaxBytes: 1 << 20, TranscriptDir: t.TempDir(), Workspaces: work, Agents: agents, Integration: work, Checks: &passingRunner{}, CheckRequest: checkRequest, CreateHome: func(_ context.Context, home string) error {
+		homesMu.Lock()
+		defer homesMu.Unlock()
 		if homes[home] {
 			return errors.New("home exists")
 		}
@@ -286,8 +338,28 @@ func TestAssignmentRealizationStopsNewModelProblemsDuringWorkOrVerify(t *testing
 			if result.ModelProblem == nil || result.AcceptedCommit != "" || result.Work == nil {
 				t.Fatalf("model problem was lost: %+v %v", result, err)
 			}
-			if where == "implement" && (!errors.Is(err, run.ErrAssignmentModelProblem) || len(result.Checks) != 0 || len(agents.opened) != 2) {
+			if where == "implement" && (!errors.Is(err, run.ErrAssignmentModelProblem) || len(result.Checks) != 0) {
 				t.Fatal("confirmed intent problem did not stop implementation immediately")
+			}
+			if where == "implement" {
+				topology, topologyErr := organization.BuildTopology(req.Prepared.Structural().Model().Checked())
+				if topologyErr != nil || len(agents.opened) != len(topology.Managers())+1 || len(result.Reviews) != 0 {
+					t.Fatalf("whole dormant tree/assessment startup or Verify stop incorrect: %d Agents, %v", len(agents.opened), topologyErr)
+				}
+				for id, agent := range agents.opened {
+					if agent.mode == "implement" && !strings.HasSuffix(id, "-work-0") && agent.messages != 0 {
+						t.Fatalf("dormant child %s began work after Root's model problem", id)
+					}
+					if !agent.closed || agents.copies.copies[run.WorkspaceID(agent.spec.Workspace)] == nil {
+						t.Fatalf("model problem lost cleanup or retained copy for %s", id)
+					}
+					if (agent.mode == "assess" || strings.HasSuffix(id, "-work-0")) && agent.messages != 1 {
+						t.Fatalf("assessment/Root message count changed: %s=%d", id, agent.messages)
+					}
+				}
+				if len(result.Work.Flow.Observations(".")) != 1 || !strings.Contains(result.Work.Flow.Observations(".")[0].Final, "model problem") {
+					t.Fatal("Root model-problem observation was discarded")
+				}
 			}
 			if where == "verify" && (err != nil || len(result.Reviews) != 1) {
 				t.Fatal("final Verify model problem was not retained separately")

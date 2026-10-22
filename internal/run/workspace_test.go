@@ -2,9 +2,12 @@ package run_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -12,12 +15,15 @@ import (
 )
 
 type assignmentWorkspacesFake struct {
+	mu         sync.Mutex
 	copies     map[run.WorkspaceID]*assignmentCopyFake
 	prepareErr error
 	forks      int
 }
 
 func (f *assignmentWorkspacesFake) ForkAssignment(ctx context.Context, parent run.AssignmentWorkspace, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.copies[id] != nil {
 		return nil, errors.New("duplicate child copy")
 	}
@@ -31,6 +37,29 @@ func (f *assignmentWorkspacesFake) ForkAssignment(ctx context.Context, parent ru
 	return child, nil
 }
 
+func (f *assignmentWorkspacesFake) ForkAssignmentCommit(_ context.Context, _ run.AssignmentWorkspace, commit string, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.copies[id] != nil {
+		return nil, errors.New("duplicate child copy")
+	}
+	f.forks++
+	child := &assignmentCopyFake{id: id, commits: []string{commit}}
+	f.copies[id] = child
+	return child, nil
+}
+
+func (f *assignmentWorkspacesFake) UpdateAssignment(ctx context.Context, target, _ run.AssignmentWorkspace, commit, _ string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	c := target.(*assignmentCopyFake)
+	c.commits = append(c.commits, commit)
+	return nil
+}
+
 type assignmentCopyFake struct {
 	id      run.WorkspaceID
 	commits []string
@@ -38,6 +67,8 @@ type assignmentCopyFake struct {
 }
 
 func (f *assignmentWorkspacesFake) PrepareAssignment(_ context.Context, spec run.WorkspaceSpec) (run.AssignmentWorkspace, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.copies == nil {
 		f.copies = map[run.WorkspaceID]*assignmentCopyFake{}
 	}
@@ -106,7 +137,7 @@ func (f *assignmentCopyFake) ID() run.WorkspaceID    { return f.id }
 func (f *assignmentCopyFake) Volume() string         { return "volume-" + string(f.id) }
 func (f *assignmentCopyFake) StartingCommit() string { return f.commits[0] }
 func (f *assignmentCopyFake) Commit(context.Context, string) (string, error) {
-	id := strings.Repeat(string('a'+rune(len(f.commits))), 40)
+	id := fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s:%d", f.id, len(f.commits)))))[:40]
 	f.commits = append(f.commits, id)
 	return id, nil
 }
@@ -121,6 +152,7 @@ func (f *assignmentCopyFake) ContainsCommit(_ context.Context, id string) (bool,
 func (f *assignmentCopyFake) Close(context.Context) error { f.closed = true; return nil }
 
 type assignmentAgentsFake struct {
+	mu     sync.Mutex
 	opened map[string]*assignmentSessionFake
 }
 type assignmentSessionFake struct {
@@ -132,6 +164,8 @@ type assignmentSessionFake struct {
 }
 
 func (f *assignmentAgentsFake) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
 	if f.opened == nil {
 		f.opened = map[string]*assignmentSessionFake{}
 	}

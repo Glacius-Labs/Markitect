@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"strings"
+	"sync"
 	"testing"
 	"time"
 
@@ -11,6 +12,7 @@ import (
 )
 
 type handoffIntegrationFake struct {
+	mu       sync.Mutex
 	accepted []string
 	conflict string
 	entered  chan struct{}
@@ -30,7 +32,9 @@ func (f *handoffIntegrationFake) Integrate(_ context.Context, parent, child run.
 	if child.ID() == run.WorkspaceID(f.conflict) {
 		return "", errors.New("Git conflict")
 	}
+	f.mu.Lock()
 	f.accepted = append(f.accepted, string(parent.ID())+"<-"+string(child.ID())+":"+previous+":"+handoff.ResultCommit)
+	f.mu.Unlock()
 	return strings.Repeat("f", 40), f.cleanup
 }
 

@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/assignment_update.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Advances an existing Agent copy to an exact parent commit, switching clean work or merging own changes with conflicts retained for the child."
+  - path: "internal/adapters/gitrepo/assignment_update_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks real Git clean switch, own-work preservation, child-owned conflicts and immutable result bases across sibling integration and later tasks."
   - path: "internal/adapters/gitrepo/assignment_commit.go"
     form: code
     realizes: [product/adapters/repository/repository-boundaries]

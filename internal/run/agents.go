@@ -38,8 +38,10 @@ type AssignmentSession interface {
 	Close(context.Context) (TurnResult, error)
 }
 
-// AssignmentAgents starts one independent Agent runtime. Legacy Agents.Run
-// remains for the implemented Pass path until its consumers migrate.
+// AssignmentAgents starts one independent container without starting its
+// conversation. The first Message starts that conversation; further tasks
+// keep the same container and conversation until Close. Independent Opens may
+// run concurrently. Legacy Agents.Run remains for unmigrated Pass consumers.
 type AssignmentAgents interface {
 	OpenAssignment(context.Context, AssignmentSpec, ToolHandler) (AssignmentSession, error)
 }
@@ -72,6 +74,8 @@ type AssignmentRequest struct {
 }
 
 type AssignmentHandoff struct {
+	// StartingCommit is the parent stand delivered for this task. Earlier
+	// handoffs keep their own base when the same copy receives a later task.
 	StartingCommit string
 	ResultCommit   string
 	Summary        string
