@@ -238,6 +238,15 @@ def validate_profile(path, packet, manifest):
                 and check['container']['engineExecutable'] == '/usr/bin/docker',
                 'actual check profile image differs from frozen binding')
 
+
+def validate_quota(metadata, minimum):
+    quota = (metadata['quota']['rateLimitsByLimitId'] or {}).get('codex') or metadata['quota']['rateLimits']
+    require(quota is not None and quota['primary'] is not None and quota['rateLimitReachedType'] is None)
+    require(not quota.get('spendControlReached', False))
+    require(all(100 - window['usedPercent'] >= minimum
+                for window in (quota.get('primary'), quota.get('secondary')) if window is not None),
+            'fresh dedicated-account quota is below the bound reserve')
+
 def validate(manifest_path, gate_path, files=True):
     m = json.loads(Path(manifest_path).read_text())
     g = json.loads(Path(gate_path).read_text())
@@ -272,7 +281,7 @@ def validate(manifest_path, gate_path, files=True):
     require(m['provider']['name'] == 'codex-app-server' and m['provider']['model'] == expected_model)
     require(m['provider']['effort'] == 'high' and m['provider']['credentialMode'] == 'dedicated-runtime-login')
     require(m['provider']['credentialSourceVolume'] == 'mk-codex-runtime-auth')
-    require(m['provider']['minimumRemainingQuotaPercent'] == 25)
+    require(m['provider']['minimumRemainingQuotaPercent'] == (10 if m['series'] == 'SOL3-20261022' else 25))
     require(1 <= len(m['packets']) <= starts)
     scenarios = ('SOL3-P', 'SOL3-R', 'SOL3-W') if m['series'] == 'SOL3-20261022' else ('NIGHT-VN', 'NIGHT-VS', 'NIGHT-P', 'NIGHT-R')
     require(all(p['scenario'] in scenarios for p in m['packets']))
@@ -757,11 +766,7 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
         require(metadata['requestedModel'] == m['provider']['model'] and metadata['requestedEffort'] == 'high')
         require(any(item['model'] == m['provider']['model'] and any(effort['reasoningEffort'] == 'high'
                     for effort in item['supportedReasoningEfforts']) for item in metadata['selected']))
-        quota = (metadata['quota']['rateLimitsByLimitId'] or {}).get('codex') or metadata['quota']['rateLimits']
-        require(quota is not None and quota['primary'] is not None and quota['rateLimitReachedType'] is None)
-        require(not quota.get('spendControlReached', False))
-        require(all(100 - window['usedPercent'] >= m['provider']['minimumRemainingQuotaPercent']
-                    for window in (quota.get('primary'), quota.get('secondary')) if window is not None))
+        validate_quota(metadata, m['provider']['minimumRemainingQuotaPercent'])
         require(not run([docker, 'ps', '-aq', '--filter', 'name=^/' + p['store'] + '-metadata$'], capture_output=True, check=True).stdout.strip(),
                 'metadata container cessation/removal unconfirmed')
         unsafe = False

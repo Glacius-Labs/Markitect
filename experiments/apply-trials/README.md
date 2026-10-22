@@ -54,7 +54,8 @@ append-only reservation/terminal ledger. The one source-bound coordinator gate
 supplies actual `operatorReleaseUtc`; its absolute end is exactly 8,100 seconds
 later, and its last-start cutoff is 2,700 seconds before that end. Changing the
 gate after a consumed start is refused. Productive starts require that gate,
-fresh dedicated-account metadata with at least 25% remaining quota, a free host
+fresh dedicated-account metadata with at least 10% remaining quota (the owner's
+22 October amendment for this series only; historical NIGHT remains at 25%), a free host
 slot and actual Luna High profiles (`gpt-6-luna` in the native catalog). Auth/quota uncertainty and unknown or emergency
 cessation block subsequent starts. Work ends at 1,740 seconds, leaving 720 seconds
 before the provider cutoff and at least 180 seconds for stop/cleanup. Preparation
