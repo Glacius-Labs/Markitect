@@ -72,7 +72,7 @@ func ordinaryAssignmentGit(t *testing.T, root string, args ...string) string {
 }
 
 func TestAssignmentCopiesHaveLocalIdentityBeforeOrdinaryGit(t *testing.T) {
-	for _, global := range []string{"", "[user]\n name = Private User\n email = private@example.test\n"} {
+	for _, global := range []string{"", "[user]\n name = Private User\n email = private@example.test\n[author]\n name = Private Author\n email = author@example.test\n[committer]\n name = Private Committer\n email = committer@example.test\n"} {
 		t.Run(map[bool]string{true: "absent", false: "conflicting"}[global == ""], func(t *testing.T) {
 			config := filepath.Join(t.TempDir(), "global.gitconfig")
 			if err := os.WriteFile(config, []byte(global), 0600); err != nil {
@@ -97,13 +97,20 @@ func TestAssignmentCopiesHaveLocalIdentityBeforeOrdinaryGit(t *testing.T) {
 			}
 			for _, copy := range []run.AssignmentWorkspace{root, child, review} {
 				directory := runtime.git.roots[copy.Volume()]
-				for key, want := range map[string]string{"user.name": assignmentGitName, "user.email": assignmentGitEmail} {
+				for key, want := range map[string]string{
+					"user.name": assignmentGitName, "user.email": assignmentGitEmail,
+					"author.name": assignmentGitName, "author.email": assignmentGitEmail,
+					"committer.name": assignmentGitName, "committer.email": assignmentGitEmail,
+				} {
 					if got := ordinaryAssignmentGit(t, directory, "config", "--local", "--get", key); got != want {
 						t.Fatalf("%s local %s = %q, want %q", copy.ID(), key, got, want)
 					}
 				}
-				ordinaryAssignmentGit(t, directory, "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "ordinary Agent commit")
 				want := assignmentGitName + "|" + assignmentGitEmail + "|" + assignmentGitName + "|" + assignmentGitEmail
+				if got := ordinaryAssignmentGit(t, directory, "log", "-1", "--format=%an|%ae|%cn|%ce", copy.StartingCommit()); got != want {
+					t.Fatalf("%s Host starting commit identity = %q, want %q", copy.ID(), got, want)
+				}
+				ordinaryAssignmentGit(t, directory, "-c", "commit.gpgsign=false", "commit", "--allow-empty", "-m", "ordinary Agent commit")
 				if got := ordinaryAssignmentGit(t, directory, "log", "-1", "--format=%an|%ae|%cn|%ce"); got != want {
 					t.Fatalf("%s ordinary commit identity = %q, want %q", copy.ID(), got, want)
 				}
@@ -112,6 +119,27 @@ func TestAssignmentCopiesHaveLocalIdentityBeforeOrdinaryGit(t *testing.T) {
 				t.Fatalf("global user config changed: %q %v", data, err)
 			}
 		})
+	}
+}
+
+func TestAssignmentHostIdentityOverridesSpecificGlobalSettings(t *testing.T) {
+	config := filepath.Join(t.TempDir(), "global.gitconfig")
+	global := "[author]\n name = Private Author\n email = author@example.test\n[committer]\n name = Private Committer\n email = committer@example.test\n"
+	if err := os.WriteFile(config, []byte(global), 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("GIT_CONFIG_GLOBAL", config)
+	t.Setenv("GIT_CONFIG_NOSYSTEM", "1")
+	t.Setenv("GIT_CONFIG_COUNT", "0")
+	// This fixture initializes without local identity; its real Host commits
+	// therefore exercise command overrides, also used in temporary integration.
+	_, copies, roots := integrationFixture(t, "host")
+	want := assignmentGitName + "|" + assignmentGitEmail + "|" + assignmentGitName + "|" + assignmentGitEmail
+	if got := ordinaryAssignmentGit(t, roots["host"], "log", "-1", "--format=%an|%ae|%cn|%ce", copies["host"].StartingCommit()); got != want {
+		t.Fatalf("Host identity = %q, want %q", got, want)
+	}
+	if data, err := os.ReadFile(config); err != nil || string(data) != global {
+		t.Fatalf("global user config changed: %q %v", data, err)
 	}
 }
 

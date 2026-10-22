@@ -231,7 +231,7 @@ func (a *assignmentWorkspace) StartingCommit() string { return a.start }
 // configureIdentity makes ordinary Agent Git commands independent of the
 // provider home's global config, without copying or changing user config.
 func (a *assignmentWorkspace) configureIdentity(ctx context.Context) error {
-	for _, setting := range [][2]string{{"user.name", assignmentGitName}, {"user.email", assignmentGitEmail}} {
+	for _, setting := range assignmentGitIdentity() {
 		if _, err := a.git(ctx, "config", "--local", "--replace-all", setting[0], setting[1]); err != nil {
 			return fmt.Errorf("configure assignment Git %s: %w", setting[0], err)
 		}

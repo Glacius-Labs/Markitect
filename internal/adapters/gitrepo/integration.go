@@ -232,12 +232,24 @@ const (
 	assignmentGitEmail = "assignment@markitect.invalid"
 )
 
+func assignmentGitIdentity() [6][2]string {
+	return [6][2]string{
+		{"user.name", assignmentGitName}, {"user.email", assignmentGitEmail},
+		{"author.name", assignmentGitName}, {"author.email", assignmentGitEmail},
+		{"committer.name", assignmentGitName}, {"committer.email", assignmentGitEmail},
+	}
+}
+
 func assignmentGitArgs(args ...string) []string {
 	return assignmentGitArgsAt("/work", args...)
 }
 
 func assignmentGitArgsAt(directory string, args ...string) []string {
-	return append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=" + assignmentGitName, "-c", "user.email=" + assignmentGitEmail, "-C", directory}, args...)
+	argv := []string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null"}
+	for _, setting := range assignmentGitIdentity() {
+		argv = append(argv, "-c", setting[0]+"="+setting[1])
+	}
+	return append(append(argv, "-C", directory), args...)
 }
 
 // integrationGit runs while Workspaces.mu holds both volume ownerships stable.

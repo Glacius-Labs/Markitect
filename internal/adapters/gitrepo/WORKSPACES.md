@@ -14,12 +14,15 @@ through `run.Workspaces`; its actual check image remains a separate choice.
 ## Materialization and ownership
 
 `PrepareAssignment` sets repository-local `user.name=Markitect` and
-`user.email=assignment@markitect.invalid` immediately after Git initialization,
+`user.email=assignment@markitect.invalid`, plus matching `author.*` and
+`committer.*` values, immediately after Git initialization,
 before its starting commit. Every delegation and independent review fork sets
 the same local values after cloning, before checkout and before returning the
 copy for an Agent's first message. Ordinary Agent commits and merges therefore
 need no global identity or provider-home configuration. Host helpers use the
-same constants in their command-local overrides. No user Git configuration is
+same settings in their command-local overrides, including temporary integration
+copies. Specific global author/committer settings cannot override this identity.
+No user Git configuration is
 copied or changed. A failed identity setup returns the retained partial copy
 with an error, never an assignment ready for a conversation.
 
