@@ -13,6 +13,13 @@ through `run.Workspaces`; its actual check image remains a separate choice.
 
 ## Materialization and ownership
 
+`ForkAssignmentCommit` clones a named retained commit into a fresh assignment
+volume and checks out that exact commit. It does not commit the source or change
+its HEAD, index or working files. Later source commits and uncommitted work do
+not enter the independent review copy. Clone and checkout failures return the
+available partial copy for inspection. `ForkAssignment` remains the separate
+delegation operation that first secures the parent's current foundation.
+
 `Materialize` creates a new volume through `CreateVolumeExclusive`, writes the
 supplied tree as a tar stream, then harvests and compares exact paths, content
 and regular/executable mode. It returns the observed tree identity only after a

@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -27,7 +28,7 @@ type ReviewIssue struct {
 }
 
 // AssignmentReview commissions exactly one focused assessment or independent
-// Verify. Source must be quiescent. A fresh Git copy starts at Commit, with a
+// Verify. A fresh Git copy starts at the retained Commit, with a
 // fresh provider home and conversation; reviewer edits never become the result.
 type AssignmentReview struct {
 	ID         WorkspaceID
@@ -38,11 +39,15 @@ type AssignmentReview struct {
 	Context    string
 	Timeout    time.Duration
 	Transcript string
+	// CreateHome must exclusively create and verify the named fresh provider
+	// home (for example Engine.CreateVolumeExclusive), refusing an existing or
+	// uncertain volume. The caller owns retained homes and their later cleanup.
+	CreateHome func(context.Context, string) error
 }
 
 type ReviewWorkspaces interface {
 	AssignmentWorkspaces
-	AssignmentForks
+	AssignmentCommitForks
 }
 
 // AssignmentReviewResult retains the work and native observation even when no
@@ -51,10 +56,13 @@ type ReviewWorkspaces interface {
 // manufactured from a provider completion event.
 type AssignmentReviewResult struct {
 	Workspace      AssignmentWorkspace
+	Home           string
+	HomeReady      bool
 	Handoff        AssignmentHandoff
 	Observation    TurnResult
 	Closure        TurnResult
 	AcceptedCommit string
+	Reason         string
 	Issues         []ReviewIssue
 	ModelProblem   bool
 }
@@ -67,26 +75,35 @@ const finalVerifyTask = `Independently verify the named integrated Root commit a
 // separate decision tools express the review judgment, not work submission.
 // Missing judgment ends incomplete without a reminder or a hidden retry.
 func ReviewAssignment(ctx context.Context, workspaces ReviewWorkspaces, agents AssignmentAgents, options AssignmentReview) (result AssignmentReviewResult, err error) {
-	if _, bounded := ctx.Deadline(); !bounded || workspaces == nil || agents == nil || options.Source == nil || options.Commit == "" || options.Source.ID() == options.ID || options.Timeout <= 0 || !filepath.IsAbs(options.Transcript) || strings.TrimSpace(options.Context) == "" || (options.Purpose != Assess && options.Purpose != Verify) {
+	if _, bounded := ctx.Deadline(); !bounded || workspaces == nil || agents == nil || options.Source == nil || options.Commit == "" || !assignmentName.MatchString(string(options.ID)) || options.Profile == "" || options.CreateHome == nil || options.Source.ID() == options.ID || options.Timeout <= 0 || !filepath.IsAbs(options.Transcript) || strings.TrimSpace(options.Context) == "" || (options.Purpose != Assess && options.Purpose != Verify) {
 		return result, errors.New("focused review needs a fixed source, distinct identity, model context and finite bounds")
 	}
-	current, err := options.Source.Commit(ctx, "Stand supplied for independent review")
-	if err != nil || current != options.Commit {
-		return result, errors.Join(err, errors.New("source no longer names the commissioned review commit"))
+	present, err := options.Source.ContainsCommit(ctx, options.Commit)
+	if err != nil || !present {
+		return result, errors.Join(err, errors.New("commissioned review commit is unavailable"))
 	}
-	result.Workspace, err = workspaces.ForkAssignment(ctx, options.Source, options.ID)
+	result.Workspace, err = workspaces.ForkAssignmentCommit(ctx, options.Source, options.Commit, options.ID)
 	if err != nil {
 		return result, err
 	}
 	if result.Workspace == nil || result.Workspace.StartingCommit() != options.Commit {
 		return result, errors.New("independent review copy did not start at the commissioned commit")
 	}
+	result.Home = string(options.ID) + "-home"
+	if err = options.CreateHome(ctx, result.Home); err != nil {
+		return result, fmt.Errorf("fresh independent reviewer home was not established: %w", err)
+	}
+	result.HomeReady = true
 	accept := AcceptResultTool
 	task := finalVerifyTask
 	if options.Purpose == Assess {
 		accept, task = AcceptModelTool, modelAssessmentTask
 	}
 	accepted, decided := false, false
+	var decisionMu sync.Mutex
+	closing, modelProblem := false, false
+	var issues []ReviewIssue
+	var reason string
 	tools := []ToolSpec{
 		{Name: accept, Description: "Accept this exact commissioned stand, with your substantive reason.", InputSchema: raw(object([]string{"commit", "reason"}, schema{"commit": str("The commissioned commit."), "reason": str("Why the mandate is met.")}))},
 		{Name: ModelProblemTool, Description: "Report a material problem of the fixed model, with its statements and incompatible outcomes.", InputSchema: reviewIssueSchema()},
@@ -94,13 +111,19 @@ func ReviewAssignment(ctx context.Context, workspaces ReviewWorkspaces, agents A
 	if options.Purpose == Verify {
 		tools = append(tools, ToolSpec{Name: RequestCorrectionTool, Description: "Return a concrete defect or unresolved required matter to its responsible owner.", InputSchema: reviewIssueSchema()})
 	}
-	handler := func(_ context.Context, name string, args json.RawMessage) ToolAnswer {
+	handler := func(toolCtx context.Context, name string, args json.RawMessage) ToolAnswer {
+		decisionMu.Lock()
+		defer decisionMu.Unlock()
+		if closing || toolCtx.Err() != nil || ctx.Err() != nil {
+			return ToolAnswer{Text: "review is closing; no late judgment is accepted", Refused: true}
+		}
 		if name == accept {
 			var a struct{ Commit, Reason string }
-			if json.Unmarshal(args, &a) != nil || a.Commit != options.Commit || strings.TrimSpace(a.Reason) == "" || len(result.Issues) != 0 {
+			if json.Unmarshal(args, &a) != nil || a.Commit != options.Commit || strings.TrimSpace(a.Reason) == "" || len(issues) != 0 {
 				return ToolAnswer{Text: "acceptance needs this exact commit, a reason and no open required matters", Refused: true}
 			}
 			accepted, decided = true, true
+			reason = a.Reason
 			return ToolAnswer{Text: "Review judgment recorded for " + options.Commit}
 		}
 		if name != ModelProblemTool && (name != RequestCorrectionTool || options.Purpose != Verify) {
@@ -110,20 +133,32 @@ func ReviewAssignment(ctx context.Context, workspaces ReviewWorkspaces, agents A
 		if json.Unmarshal(args, &issue) != nil || strings.TrimSpace(issue.Owner) == "" || strings.TrimSpace(issue.Obligation) == "" || strings.TrimSpace(issue.Expected) == "" || strings.TrimSpace(issue.Observed) == "" {
 			return ToolAnswer{Text: "name the owner, obligation, expected outcome and observed problem", Refused: true}
 		}
-		result.Issues = append(result.Issues, issue)
-		result.ModelProblem = result.ModelProblem || name == ModelProblemTool
+		issues = append(issues, issue)
+		modelProblem = modelProblem || name == ModelProblemTool
 		accepted, decided = false, true
+		reason = ""
 		return ToolAnswer{Text: "Required matter retained for its owner."}
 	}
-	a, err := StartAssignment(ctx, workspaces, agents, AssignmentRequest{ID: options.ID, Prepared: result.Workspace, Profile: options.Profile, Home: string(options.ID) + "-home", Transcript: options.Transcript, Tools: tools, Handler: handler})
+	a, err := StartAssignment(ctx, workspaces, agents, AssignmentRequest{ID: options.ID, Prepared: result.Workspace, Profile: options.Profile, Home: result.Home, Transcript: options.Transcript, Tools: tools, Handler: handler})
 	if err != nil {
 		return result, err
 	}
 	defer func() {
 		closeCtx, cancel := context.WithTimeout(context.Background(), min(options.Timeout, time.Minute))
 		defer cancel()
+		type closed struct {
+			observation TurnResult
+			err         error
+		}
+		done := make(chan closed, 1)
+		go func() { observation, closeErr := a.Close(closeCtx); done <- closed{observation, closeErr} }()
 		var closeErr error
-		result.Closure, closeErr = a.Close(closeCtx)
+		select {
+		case close := <-done:
+			result.Closure, closeErr = cloneTurnResult(close.observation), close.err
+		case <-closeCtx.Done():
+			closeErr = fmt.Errorf("independent reviewer close outcome uncertain: %w", closeCtx.Err())
+		}
 		if !result.Closure.Stopped {
 			closeErr = errors.Join(closeErr, errors.New("independent reviewer stop was not observed"))
 		}
@@ -133,7 +168,13 @@ func ReviewAssignment(ctx context.Context, workspaces ReviewWorkspaces, agents A
 		}
 	}()
 	result.Observation, err = a.Message(ctx, fmt.Sprintf("%s\nCommissioned commit: %s\n%s", task, options.Commit, options.Context), options.Timeout)
+	decisionMu.Lock()
+	closing = true
+	result.Issues = append([]ReviewIssue(nil), issues...)
+	result.ModelProblem, result.Reason = modelProblem, reason
+	decisionMu.Unlock()
 	result.Observation = cloneTurnResult(result.Observation)
+	err = errors.Join(err, ctx.Err())
 	if err != nil {
 		return result, err
 	}

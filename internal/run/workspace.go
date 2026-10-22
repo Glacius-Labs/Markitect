@@ -35,6 +35,12 @@ type AssignmentForks interface {
 	ForkAssignment(context.Context, AssignmentWorkspace, WorkspaceID) (AssignmentWorkspace, error)
 }
 
+// AssignmentCommitForks copies one named retained commit without changing the
+// source HEAD, index or working files. Later source work does not change it.
+type AssignmentCommitForks interface {
+	ForkAssignmentCommit(context.Context, AssignmentWorkspace, string, WorkspaceID) (AssignmentWorkspace, error)
+}
+
 // Workspaces materializes step workspaces on runtime volumes and observes them.
 // It knows no ownership, reviews or tasks: run decides what a workspace holds
 // (core rule D3) and what its observed change means (core rule S4), and run

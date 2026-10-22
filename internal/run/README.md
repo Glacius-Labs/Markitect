@@ -5,10 +5,15 @@
 `RunAssignmentTree` executes the DEC-067 Implement organization with Agent-owned
 Git copies and substantive parent review. `ReviewAssignment` runs a separate
 focused model assessment or fresh final Verify. It forks the commissioned source
-commit into an independent copy and provider home. A native completion receives
+commit into an independent copy without committing or changing the source.
+The caller supplies exclusive, checked creation of the provider home through
+`AssignmentReview.CreateHome` (for example `Engine.CreateVolumeExclusive`);
+existing or uncertain homes refuse the review before Agent startup. The result
+names the retained home and whether fresh creation was established; the caller
+owns cleanup. A native completion receives
 the ordinary Git handoff and prose summary; it does not accept the work.
 Mandate-specific decision tools record acceptance of that exact commit or
-concrete required matters. Missing judgment, source drift and uncertain shutdown
+concrete required matters. Missing judgment, an unavailable commit and uncertain shutdown
 remain incomplete, with available work and observations returned to the caller.
 Reviewer edits are never integrated into the commissioned result.
 

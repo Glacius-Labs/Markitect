@@ -31,22 +31,55 @@ type reviewCopies struct {
 	forked  bool
 }
 
+func freshReviewHome(context.Context, string) error { return nil }
+
+func TestFocusedReviewRefusesExistingHomeBeforeOpeningAgent(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	commit := strings.Repeat("a", 40)
+	agent := &reviewAgent{}
+	result, err := run.ReviewAssignment(ctx, &reviewCopies{}, agent, run.AssignmentReview{CreateHome: func(context.Context, string) error { return errors.New("volume already exists") }, ID: "review", Purpose: run.Verify, Source: &reviewCopy{id: "source", head: commit}, Commit: commit, Profile: "review", Context: "Fixed model", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "log.jsonl")})
+	if err == nil || agent.spec.ID != "" || result.Home != "review-home" || result.HomeReady || result.Workspace == nil || result.AcceptedCommit != "" {
+		t.Fatalf("stale home: %+v %v", result, err)
+	}
+}
+
+func TestFocusedReviewRejectsLateDecisionAfterCancellation(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	commit := strings.Repeat("a", 40)
+	agent := &reviewAgent{stopped: true}
+	agent.decide = func(context.Context, run.ToolHandler) { cancel() }
+	result, err := run.ReviewAssignment(ctx, &reviewCopies{}, agent, run.AssignmentReview{CreateHome: freshReviewHome, ID: "review", Purpose: run.Verify, Source: &reviewCopy{id: "source", head: commit}, Commit: commit, Profile: "review", Context: "Fixed model", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "log.jsonl")})
+	if !errors.Is(err, context.Canceled) {
+		t.Fatal(err)
+	}
+	late := make(chan run.ToolAnswer, 1)
+	go func() {
+		late <- agent.handle(context.Background(), run.ModelProblemTool, json.RawMessage(`{"owner":".","obligation":"model/rule","expected":"fixed","observed":"late problem"}`))
+	}()
+	if answer := <-late; !answer.Refused || len(result.Issues) != 0 || result.AcceptedCommit != "" {
+		t.Fatalf("late decision changed a retained result: %+v %+v", answer, result)
+	}
+}
+
 func (w *reviewCopies) PrepareAssignment(context.Context, run.WorkspaceSpec) (run.AssignmentWorkspace, error) {
 	return nil, errors.New("review must fork the fixed Git result")
 }
-func (w *reviewCopies) ForkAssignment(_ context.Context, source run.AssignmentWorkspace, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+func (w *reviewCopies) ForkAssignmentCommit(_ context.Context, source run.AssignmentWorkspace, commit string, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
 	w.forked = true
-	return &reviewCopy{id: id, head: source.StartingCommit()}, w.forkErr
+	return &reviewCopy{id: id, head: commit}, w.forkErr
 }
 
 type reviewAgent struct {
-	spec     run.AssignmentSpec
-	handle   run.ToolHandler
-	decide   func(context.Context, run.ToolHandler)
-	closeErr error
-	stopped  bool
-	prompt   string
-	code     int
+	spec      run.AssignmentSpec
+	handle    run.ToolHandler
+	decide    func(context.Context, run.ToolHandler)
+	closeErr  error
+	stopped   bool
+	prompt    string
+	code      int
+	closeWait chan struct{}
 }
 
 func (a *reviewAgent) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handle run.ToolHandler) (run.AssignmentSession, error) {
@@ -61,7 +94,35 @@ func (a *reviewAgent) Message(ctx context.Context, prompt string, _ time.Duratio
 	return run.TurnResult{Completed: true, Final: "Ordinary prose summary with no status word or JSON.", Commands: []run.CommandObservation{{Command: "go test ./...", Status: "exited", ExitCode: &a.code, Output: "actual output"}}}, nil
 }
 func (a *reviewAgent) Close(context.Context) (run.TurnResult, error) {
+	if a.closeWait != nil {
+		<-a.closeWait
+	}
 	return run.TurnResult{Stopped: a.stopped}, a.closeErr
+}
+
+func TestFocusedReviewReturnsRetainedWorkWhenCloseIgnoresDeadline(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	commit := strings.Repeat("a", 40)
+	agent := &reviewAgent{stopped: true, closeWait: make(chan struct{})}
+	defer close(agent.closeWait)
+	agent.decide = func(ctx context.Context, h run.ToolHandler) {
+		body, _ := json.Marshal(map[string]string{"commit": commit, "reason": "reviewed"})
+		h(ctx, run.AcceptResultTool, body)
+	}
+	done := make(chan struct{})
+	go func() {
+		defer close(done)
+		result, err := run.ReviewAssignment(ctx, &reviewCopies{}, agent, run.AssignmentReview{CreateHome: freshReviewHome, ID: "review", Purpose: run.Verify, Source: &reviewCopy{id: "source", head: commit}, Commit: commit, Profile: "review", Context: "Fixed model", Timeout: 20 * time.Millisecond, Transcript: filepath.Join(t.TempDir(), "log.jsonl")})
+		if err == nil || !strings.Contains(err.Error(), "uncertain") || result.AcceptedCommit != "" || result.Workspace == nil || result.Handoff.ResultCommit == "" || result.Closure.Stopped {
+			t.Errorf("blocked close: %+v %v", result, err)
+		}
+	}()
+	select {
+	case <-done:
+	case <-ctx.Done():
+		t.Fatal("review could not return its incomplete work")
+	}
 }
 
 func TestFocusedReviewReceivesProseButNeedsCommitBoundJudgment(t *testing.T) {
@@ -86,7 +147,7 @@ func TestFocusedReviewReceivesProseButNeedsCommitBoundJudgment(t *testing.T) {
 					h(ctx, run.AcceptResultTool, body)
 				}
 			}
-			result, err := run.ReviewAssignment(ctx, copies, agent, run.AssignmentReview{ID: "verify", Purpose: run.Verify, Source: &reviewCopy{id: "implement", head: commit}, Commit: commit, Profile: "review", Context: "Model: preserve the loan limit. Child claims require independent assessment.", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "verify.jsonl")})
+			result, err := run.ReviewAssignment(ctx, copies, agent, run.AssignmentReview{CreateHome: freshReviewHome, ID: "verify", Purpose: run.Verify, Source: &reviewCopy{id: "implement", head: commit}, Commit: commit, Profile: "review", Context: "Model: preserve the loan limit. Child claims require independent assessment.", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "verify.jsonl")})
 			if (result.AcceptedCommit == commit) != tc.wantAccepted {
 				t.Fatalf("acceptance: %+v error %v", result, err)
 			}
@@ -134,7 +195,7 @@ func TestFocusedReviewRetainsRequiredMattersAndRejectsContradictoryAccept(t *tes
 					t.Fatal("accepted despite an open required matter")
 				}
 			}
-			result, err := run.ReviewAssignment(ctx, &reviewCopies{}, agent, run.AssignmentReview{ID: "review", Purpose: purpose, Source: &reviewCopy{id: "source", head: commit}, Commit: commit, Profile: "review", Context: "Fixed model", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "log.jsonl")})
+			result, err := run.ReviewAssignment(ctx, &reviewCopies{}, agent, run.AssignmentReview{CreateHome: freshReviewHome, ID: "review", Purpose: purpose, Source: &reviewCopy{id: "source", head: commit}, Commit: commit, Profile: "review", Context: "Fixed model", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "log.jsonl")})
 			if err != nil || len(result.Issues) != 1 || result.AcceptedCommit != "" || result.ModelProblem != (purpose == run.Assess) {
 				t.Fatalf("required matter: %+v %v", result, err)
 			}
@@ -148,7 +209,7 @@ func TestFocusedReviewRetainsRequiredMattersAndRejectsContradictoryAccept(t *tes
 func TestFocusedReviewRefusesDriftAndRetainsPartialFork(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
 	defer cancel()
-	options := run.AssignmentReview{ID: "review", Purpose: run.Verify, Source: &reviewCopy{id: "source", head: "new"}, Commit: "old", Profile: "review", Context: "Fixed model", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "log.jsonl")}
+	options := run.AssignmentReview{CreateHome: freshReviewHome, ID: "review", Purpose: run.Verify, Source: &reviewCopy{id: "source", head: "new"}, Commit: "old", Profile: "review", Context: "Fixed model", Timeout: time.Second, Transcript: filepath.Join(t.TempDir(), "log.jsonl")}
 	copies := &reviewCopies{}
 	if _, err := run.ReviewAssignment(ctx, copies, &reviewAgent{}, options); err == nil || copies.forked {
 		t.Fatal("stale source reached a reviewer")
