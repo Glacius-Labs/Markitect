@@ -62,6 +62,9 @@ func (w *Workspaces) forkAssignmentCommit(ctx context.Context, p *assignmentWork
 	if err := w.cloneAssignment(ctx, p, child); err != nil {
 		return child, err
 	}
+	if err := child.configureIdentity(ctx); err != nil {
+		return child, err
+	}
 	if _, err := child.git(ctx, "checkout", "--detach", parentCommit); err != nil {
 		return child, err
 	}

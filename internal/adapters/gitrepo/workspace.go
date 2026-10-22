@@ -208,6 +208,9 @@ func (w *Workspaces) PrepareAssignment(ctx context.Context, request run.Workspac
 	if _, err = a.git(ctx, "init", "-b", "assignment"); err != nil {
 		return a, err
 	}
+	if err = a.configureIdentity(ctx); err != nil {
+		return a, err
+	}
 	if a.start, err = a.commit(ctx, "Agent assignment starting stand"); err != nil {
 		return a, err
 	}
@@ -224,6 +227,17 @@ type assignmentWorkspace struct {
 func (a *assignmentWorkspace) ID() run.WorkspaceID    { return a.id }
 func (a *assignmentWorkspace) Volume() string         { return a.volume }
 func (a *assignmentWorkspace) StartingCommit() string { return a.start }
+
+// configureIdentity makes ordinary Agent Git commands independent of the
+// provider home's global config, without copying or changing user config.
+func (a *assignmentWorkspace) configureIdentity(ctx context.Context) error {
+	for _, setting := range assignmentGitIdentity() {
+		if _, err := a.git(ctx, "config", "--local", "--replace-all", setting[0], setting[1]); err != nil {
+			return fmt.Errorf("configure assignment Git %s: %w", setting[0], err)
+		}
+	}
+	return nil
+}
 
 func (a *assignmentWorkspace) git(ctx context.Context, args ...string) (string, error) {
 	w := a.owner
