@@ -13,8 +13,11 @@ import subprocess
 import sys
 import time
 
+requested_model = sys.argv[1] if len(sys.argv) == 2 else 'gpt-6.1-sol'
+if requested_model not in ('gpt-6.1-sol', 'gpt-6-luna'):
+    raise SystemExit('unsupported metadata model')
 result = {"kind": "metadata-only", "generationRequests": 0,
-          "requestedModel": "gpt-6.1-sol", "requestedEffort": "high",
+          "requestedModel": requested_model, "requestedEffort": "high",
           "credentialSource": "mk-codex-runtime-auth (read-only)",
           "checkedAtUtc": datetime.datetime.now(datetime.timezone.utc).isoformat()}
 peer = None
@@ -77,8 +80,8 @@ try:
     send({'id': 2, 'method': 'model/list', 'params': {'includeHidden': True, 'limit': 100}})
     catalog = response(2)
     models = catalog.get('data', [])
-    selected = [item for item in models if item.get('model') == 'gpt-6.1-sol'
-                or item.get('id') == 'gpt-6.1-sol']
+    selected = [item for item in models if item.get('model') == requested_model
+                or item.get('id') == requested_model]
     result['catalogCount'] = len(models)
     result['modelListed'] = bool(selected)
     result['catalogHasMore'] = catalog.get('nextCursor') is not None

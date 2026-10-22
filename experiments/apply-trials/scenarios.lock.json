@@ -228,8 +228,8 @@
  "kit": {
   "experiments/apply-trials/assess.py": "8e3c4b6600bcf110cf9a2135ef786e7db3cbed5379cece66240cda85e0d4cb7e",
   "experiments/apply-trials/bind_profiles.py": "756e8cffbdb085a8c1fd587606ab76aebb260da7d9e608387605c08de9489382",
-  "experiments/apply-trials/cases.py": "d219576d6a4cc11801dddf2e4efc67d8bd7e1f5397c6d10089456adebc787beb",
-  "experiments/apply-trials/ccf_metadata.py": "c7a1dc6fdbea918475afbf596ec7fa16557a4c7cdf2edb54fdf2372f26f00d21",
+  "experiments/apply-trials/cases.py": "d6621b5340dafd951a402fb46c946bd22f70092787b7a33f11d6c0da5e92ee91",
+  "experiments/apply-trials/ccf_metadata.py": "adb1125bf529808d1a45de0c12bcc34417ca1d00148957b2762e4569061015ce",
   "experiments/apply-trials/ccf_run.py": "d28bf73188f0aab1c434893f55e868311fdd9b8a893c7f0a05e92378dbccd10c",
   "experiments/apply-trials/context/execution.yaml": "e47f39ebf1401f09912b34da26f9b860de7b002542647c0ca71f2143cab1052c",
   "experiments/apply-trials/context/expected.json": "8b52172b41f2bf25fa4926c64f41a5953c50b1316aa4dfdc1e10b7a31933ccc7",
@@ -329,7 +329,7 @@
   "experiments/apply-trials/depot/snapshots/d1/model/stock/on-hand.yaml": "4b2da64249bb01954710ebe3d172ae5ada8181abff8ce210646f030e8ea12639",
   "experiments/apply-trials/depot/snapshots/d1/model/stock/receive.yaml": "b1c669349de27e84a90f84c83622dcde9ba2609df52d958937ba0d7d687d0223",
   "experiments/apply-trials/evalcheck.py": "5a3f2729879720f99ca5f772d7cc6a3171609f664f8c8fff1ea54637af39c41b",
-  "experiments/apply-trials/evaluate.py": "9a287de7bade330a9c888843c48df906c10edfe12a8300d46c8d2603e40cd066",
+  "experiments/apply-trials/evaluate.py": "fdc4dda7f5936c48e032bff7200d1f25568c0f999d1f2c83c0cf53f63d30d629",
   "experiments/apply-trials/fleet.py": "959bc914b3d9ec53d471bc9d2da2000489ec1a15d4c23f442661ec61f9ed6bd0",
   "experiments/apply-trials/fleet_checks.py": "a9d4a96e207ab9f1fd19592148c6f489a405b13fdf02d2a13060a3d96cc53626",
   "experiments/apply-trials/freeze.py": "0dca4193447d8b350b2881afdb965269935929a0d0e3fe357fcc26821f114e4f",
@@ -368,8 +368,8 @@
   "experiments/apply-trials/hall/snapshots/h1/model/hall/storage.yaml": "4471d295803a05582d00853532c07d2fee0f9b863d5cc344794edffdf8d65b73",
   "experiments/apply-trials/hall/snapshots/h1/model/hall/system.yaml": "60c4e57716d63336785541fe7ecbee42cf74db82473e99c1c09670290d23129a",
   "experiments/apply-trials/materialize.py": "5aca383e000d1caa962099bd07575fc781142814be438d1b67cb4a9b92ddfe14",
-  "experiments/apply-trials/night_run.py": "91627ef193ed0358db37d06cb3b62e2d93295785864bf3190eba3056a265e49f",
-  "experiments/apply-trials/night_run_test.py": "cef0e1ad0f5de9d9c420a8aa7807833cf633d6a4fe4b770abfbaa7e9458b7e77",
+  "experiments/apply-trials/night_run.py": "c03246df49af59cf4073d4c7790eba139e31bd26f61c21420da7d3444b9c869b",
+  "experiments/apply-trials/night_run_test.py": "b1c01a83ec50ef92ef46e015c3de623d882d2c5100471573de06747ef793cdf2",
   "experiments/apply-trials/oracle.py": "385d8d709a1fa4f992f927967858089298afe46cc46ed1d43804d57019b545fd",
   "experiments/apply-trials/plan_arm.py": "1d0dc147a9a12b410fcceefc233fc30824e4526a860032f884e1f55e67b47f1b",
   "experiments/apply-trials/plan_packet.py": "c3877a0d5c2e7ca70b2245a36bb3245b546f7cc182acf5c4735c68e42bf2c6ac",
@@ -381,9 +381,9 @@
   "experiments/apply-trials/run/plan-profile.example.json": "31f0d25c82db676164ac88e8b0df51c3773081e994b5f5dce7d6ae183a1932d3",
   "experiments/apply-trials/run/reassess.sh": "63ecc415df3108210fb1e18852e427f894bfed67f5bf795dc7f294c46b583e24",
   "experiments/apply-trials/run/run_case.sh": "71cbb7334c4159c9c2bda685477527fbe6651a9f3d9bb13fa753e83da9179354",
-  "experiments/apply-trials/scenarios.py": "14f39a9e731b5d72203aafd1d928d4f82bb8a99da81cc3b057fb57237e615372",
-  "experiments/apply-trials/selfcheck.py": "fcc18ecf96534fadeea929bbdc29dc2e36c288144eab4e2f51fe2a03b3798c3c",
-  "experiments/apply-trials/stockroom/checks.py": "2dddb68b7b9c935ac286c94cb0d91a87c512ce3be4034957f10ae0ebd2ad3bfd",
+  "experiments/apply-trials/scenarios.py": "1c15928c63a9c5ce896f90b2faeed1a33fd31cdde2f6c062316e5dcb8e1c556a",
+  "experiments/apply-trials/selfcheck.py": "853dd302ace602485e614d8c53bc5f7281c9659401c271043c6b5696f59931a1",
+  "experiments/apply-trials/stockroom/checks.py": "ac63e720a368e7a62b783b5ab4dfad79ef35c18bf7a926de9c7fb56c233492e6",
   "experiments/apply-trials/stockroom/execution.yaml": "fec19d3facc9bed955882429d754bfaaa6d46a5c6f711e15f3341ce6de3ef8e4",
   "experiments/apply-trials/stockroom/reference/realization/app.py": "b27fed55f5312e22a7fe7028f9235087c4d5ff3d92a856cb284cfd14c21a36b8",
   "experiments/apply-trials/stockroom/reference/realization/limits.json": "f2b2bafcb8a6aaeb8e04c01ad4f7a27a08c89970381c4f04e1ce235362e6cb83",
@@ -489,7 +489,7 @@
   "experiments/apply-trials/workshop/snapshots/w1/model/shop/system.yaml": "dd496d40ddd2e53d9aeaf1bc9bd1fa56336af0ab7dcd1cbb7cf02070c93ba803",
   "experiments/test-projects/oracle_kit.py": "aa92fb526c5f7c93a325a5ae6c2fb430e1c7c0bb123f818be26e529b0b350fa7"
  },
- "kitDigest": "a8b146efabda5c7dc3921560e284fa889bc5afb60e50e27747e202d1b746b019",
+ "kitDigest": "4c4a111aa012ad79f07ef879b0a96e3779750042c10a61189717d0b45b25f8d0",
  "planPrompt": "Read `plan.md` and implement it accordingly.\n\nDeliver the required implementation, automated tests and usage documentation\nin `realization/`. Use the ordinary implementation, build and test tools made\navailable in this workspace. Work as one coding Agent. plan.md is\nauthoritative: follow its requirements and use the implementation choices they\nleave open. Change the delivery only where a requirement is not yet fulfilled\nor required evidence is missing. Whatever already fulfills plan.md stays as it\nis, even where you would design it differently; optional cleanup, extra\nfeatures and speculative improvements are not part of this task, though you\nmay mention them in your report. If plan.md leaves a material decision open\nthat you would otherwise have to invent, or if two of its requirements\ncontradict each other, do not decide it and change nothing: end your reply\nwith one line per such problem that starts with `BLOCKER:` and names the\nrequirements involved. Nobody answers questions during this task. Report the\ndelivered files, checks actually performed and any unresolved requirement.\n",
  "policy": "mandatory-assessment-closed-runs-20261021",
  "scenarios": {
@@ -2621,6 +2621,249 @@
    "preflight": false,
    "sessions": [
     "D"
+   ],
+   "version": 1
+  },
+  "SOL3-P": {
+   "arms": [
+    "direct"
+   ],
+   "budget": {
+    "agentTurns": 240,
+    "executionTime": "42m",
+    "passes": 8,
+    "turnTimeout": "5m"
+   },
+   "case": "SOL3-P",
+   "expect": "apply-preserves",
+   "internalRoute": [],
+   "markitect": {
+    "direct": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "3d185254e6fab314be4391f9c6d543fc74aac735cd91bbff69bbc97d5bfb712a",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "8900a18f7d3ed82be37d2094752d69a20a3f1c383fa21c8f9d3fe56603e9a924",
+      "realization/app.py": "660d6c0d2d449ffbd1fc8a79eacfea915f2c62718dd1952b9eec4e9afa41354d",
+      "realization/limits.json": "f2b2bafcb8a6aaeb8e04c01ad4f7a27a08c89970381c4f04e1ce235362e6cb83",
+      "realization/stockroom.py": "60d69eb7ef459878deb392649bbe895b1cbb257f3f7f691ea60e7c631d8ea9ce",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "7f36e04bb875f20822d64f34fbf55556a7efe429d743d6f6b96b16d07d51a4b8"
+     },
+     "head": "49f1c892a054954412f8d84069789192711ba3ff",
+     "tree": "96bc8d0f3681486c5b834cf91166ec68ad73e889"
+    },
+    "staged": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "77d390ed07a49410a3e7b45a4902a857080d90589de118957114eb19188a4843",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "8900a18f7d3ed82be37d2094752d69a20a3f1c383fa21c8f9d3fe56603e9a924",
+      "realization/app.py": "660d6c0d2d449ffbd1fc8a79eacfea915f2c62718dd1952b9eec4e9afa41354d",
+      "realization/limits.json": "f2b2bafcb8a6aaeb8e04c01ad4f7a27a08c89970381c4f04e1ce235362e6cb83",
+      "realization/stockroom.py": "60d69eb7ef459878deb392649bbe895b1cbb257f3f7f691ea60e7c631d8ea9ce",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "7f36e04bb875f20822d64f34fbf55556a7efe429d743d6f6b96b16d07d51a4b8"
+     },
+     "head": "7dff615e156e26e48c23151cc4a28205cd3c6039",
+     "tree": "b5b86980d183dba534dc1d36bf0c94cf51f6d5fb"
+    }
+   },
+   "preflight": false,
+   "sessions": [
+    "SOL3"
+   ],
+   "version": 1
+  },
+  "SOL3-R": {
+   "arms": [
+    "direct"
+   ],
+   "budget": {
+    "agentTurns": 240,
+    "executionTime": "42m",
+    "passes": 8,
+    "turnTimeout": "5m"
+   },
+   "case": "SOL3-R",
+   "expect": "apply-repairs",
+   "internalRoute": [],
+   "markitect": {
+    "direct": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "3d185254e6fab314be4391f9c6d543fc74aac735cd91bbff69bbc97d5bfb712a",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "8900a18f7d3ed82be37d2094752d69a20a3f1c383fa21c8f9d3fe56603e9a924",
+      "realization/app.py": "660d6c0d2d449ffbd1fc8a79eacfea915f2c62718dd1952b9eec4e9afa41354d",
+      "realization/limits.json": "f2b2bafcb8a6aaeb8e04c01ad4f7a27a08c89970381c4f04e1ce235362e6cb83",
+      "realization/stockroom.py": "d60cfcbc38515af6ddc44521188ca7c35d83c67383753d5dd6daf5b9cbbebf28",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "7f36e04bb875f20822d64f34fbf55556a7efe429d743d6f6b96b16d07d51a4b8"
+     },
+     "head": "9f2914256f5948c2da9eecfc2b234532bae0f952",
+     "tree": "01501a0e094fc2e515bbf9effd7b8d6f1674f502"
+    },
+    "staged": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "77d390ed07a49410a3e7b45a4902a857080d90589de118957114eb19188a4843",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "8900a18f7d3ed82be37d2094752d69a20a3f1c383fa21c8f9d3fe56603e9a924",
+      "realization/app.py": "660d6c0d2d449ffbd1fc8a79eacfea915f2c62718dd1952b9eec4e9afa41354d",
+      "realization/limits.json": "f2b2bafcb8a6aaeb8e04c01ad4f7a27a08c89970381c4f04e1ce235362e6cb83",
+      "realization/stockroom.py": "d60cfcbc38515af6ddc44521188ca7c35d83c67383753d5dd6daf5b9cbbebf28",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "7f36e04bb875f20822d64f34fbf55556a7efe429d743d6f6b96b16d07d51a4b8"
+     },
+     "head": "e10679d9f440b4a0edbad1c8f629329c51ffbad4",
+     "tree": "1079b2a08cc1d4dd64096486fa4c22956f1b03d0"
+    }
+   },
+   "preflight": false,
+   "sessions": [
+    "SOL3"
+   ],
+   "version": 1
+  },
+  "SOL3-W": {
+   "arms": [
+    "direct"
+   ],
+   "budget": {
+    "agentTurns": 240,
+    "executionTime": "42m",
+    "passes": 8,
+    "turnTimeout": "5m"
+   },
+   "case": "SOL3-W",
+   "expect": "apply-repairs",
+   "internalRoute": [],
+   "markitect": {
+    "direct": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "3d185254e6fab314be4391f9c6d543fc74aac735cd91bbff69bbc97d5bfb712a",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "8900a18f7d3ed82be37d2094752d69a20a3f1c383fa21c8f9d3fe56603e9a924",
+      "realization/app.py": "660d6c0d2d449ffbd1fc8a79eacfea915f2c62718dd1952b9eec4e9afa41354d",
+      "realization/limits.json": "f2b2bafcb8a6aaeb8e04c01ad4f7a27a08c89970381c4f04e1ce235362e6cb83",
+      "realization/stockroom.py": "286a1be7b2aec23e14d220d4ebd25c69b89119fd13596d0a3fce5a916cd1041b",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "a7d6aae33b81ff2a4c0c79cf9f50e630b2944a54b055bd8812aefa74455b28aa"
+     },
+     "head": "ee5028181b9e39121c518e6e64c58068912950ca",
+     "tree": "cdd2f233c6476f517abfc347e3ff157fbccf92e0"
+    },
+    "staged": {
+     "commits": 1,
+     "dependenciesDigest": "4565e2a4410f1b770b5965e240874911aee92f49f315829120d04140b709aab5",
+     "files": {
+      ".markitect/execution.yaml": "77d390ed07a49410a3e7b45a4902a857080d90589de118957114eb19188a4843",
+      ".markitect/model-lock.yaml": "924f3427a89a17703e0c7a402178df1c94221cf39dd362170c7a39f16b375ee5",
+      ".markitect/model.yaml": "f2cabfdf2b1a7d2f0a332c23c5d18173584aeec432760898a1f97c8d99fdedc6",
+      ".markitect/model/stockroom/add-item.yaml": "0613a55f14e710780cd2c3c8bf73bcd9c5462f7d4137b6e20d612766ebc0a0f6",
+      ".markitect/model/stockroom/inputs.yaml": "6d8ad1412a73931f3ed27845160affb2547af48b698d9c3b1e3a806df6dabcc0",
+      ".markitect/model/stockroom/interface.yaml": "d97c7d4068438a4cd3151b0159ec814fbd4d150184fc2a99ac458e87bfb38ad1",
+      ".markitect/model/stockroom/issue.yaml": "3cd1198e1e17b6a6b8e630d11aaf0818e3d38f9202263484a2326d0837fa811c",
+      ".markitect/model/stockroom/item.yaml": "510ddd7b3d93f34defa5ffb4231cd2bfb3e5d161e56054f0dc455a34c969e718",
+      ".markitect/model/stockroom/list.yaml": "32e5b6a4c43551008af58228751954a9f9199a93cdc3473612961c6b2b84df0a",
+      ".markitect/model/stockroom/realization.yaml": "29893d53d0a28f1d5f45a54b986f4e9f98328d777279ec6153d2afd284d633e7",
+      ".markitect/model/stockroom/receive.yaml": "e2bb381b1b106070c9f84116d55f63c26a536f8cf8f8cc849a14ff0b95193451",
+      ".markitect/model/stockroom/stock-limits.yaml": "aa3ab0ea5c1c70054c94b1c8e0b2ebe7ac67b1af5b458529fab96177fc42b68b",
+      ".markitect/model/stockroom/storage.yaml": "63ec0ae9d28adaaa59de9da52a6eae29708d7c1fe1ac2d1db6df0f98371be4e5",
+      ".markitect/model/stockroom/system.yaml": "73d622f49948f607d991662f67c6675e0b153e3ce8c4bb810dd6ad10d60e0cf5",
+      ".markitect/registry/stockroom/registry.yaml": "575e34bdd9371ae13579a26986e14f83273cc3575cd4158a314003b3b21355c9",
+      "realization/README.md": "8900a18f7d3ed82be37d2094752d69a20a3f1c383fa21c8f9d3fe56603e9a924",
+      "realization/app.py": "660d6c0d2d449ffbd1fc8a79eacfea915f2c62718dd1952b9eec4e9afa41354d",
+      "realization/limits.json": "f2b2bafcb8a6aaeb8e04c01ad4f7a27a08c89970381c4f04e1ce235362e6cb83",
+      "realization/stockroom.py": "286a1be7b2aec23e14d220d4ebd25c69b89119fd13596d0a3fce5a916cd1041b",
+      "realization/store.py": "9bc1041ef41695b0585ec27a1500d32f36b119090796c223654cc8929cb669ed",
+      "realization/tests/test_cli.py": "91372dfabe97041b48aa7e2ad601496804fd58784fb572462237971da7b2eba7",
+      "realization/tests/test_rules.py": "a7d6aae33b81ff2a4c0c79cf9f50e630b2944a54b055bd8812aefa74455b28aa"
+     },
+     "head": "e7d7a603a59a5c107fa2d4218a234d3ca2eee232",
+     "tree": "248fdd7fd1512f7c32e95e0dcd06bb90ab251cd0"
+    }
+   },
+   "preflight": false,
+   "sessions": [
+    "SOL3"
    ],
    "version": 1
   },

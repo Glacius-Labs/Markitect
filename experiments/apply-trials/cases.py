@@ -11,7 +11,7 @@ by exact text edits and inject artifact faults by exact text edits. Every
 edit names the exact number of occurrences it replaces, so a fixture that
 drifts from its edits fails loudly instead of silently changing the case.
 """
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 # Expected Apply outcomes.
 APPLIED = "verified-applied"  # Verified, publication applied, oracle profile passes
@@ -1023,7 +1023,33 @@ PROJECTS = {
 for _project in sorted({case.project for case in FLEET}):
     PROJECTS[_project] = {"profile": "f1", "packages": fleet.packages(_project), "exception": "hub"}
 
-CASES = {case.id: case for case in STOCKROOM + DEPOT + HALL + FLEET + WORKSHOP}
+SOL3_REFERENCE_EDITS = (
+    Edit(RZ + 'app.py',
+         '    """Bind the token after --name to it, so that a name may start with a hyphen (such as -Bolt)."""',
+         '    """Bind name and database values, including values starting with a hyphen."""'),
+    Edit(RZ + 'app.py',
+         '        value = next(tokens, None) if token == "--name" else None\n'
+         '        attached.append(token if value is None else "--name=" + value)',
+         '        value = next(tokens, None) if token in ("--name", "--db") else None\n'
+         '        attached.append(token if value is None else token + "=" + value)'),
+)
+_sol3_reference = replace(STOCKROOM[0], id='SOL3-P', profile='s1-sol3',
+                         reference_edits=SOL3_REFERENCE_EDITS,
+                         notes='SOL3 reference version 1: separated leading-hyphen database paths work; historical S-N is unchanged.')
+SOL3 = (
+    _sol3_reference,
+    replace(_sol3_reference, id='SOL3-R', title='Necessary stock-limit repair', expected=APPLIED,
+            question='Does Apply repair the exact valid-cap refusal while preserving the conforming remainder?',
+            faults=(D1_CAP,), allowed=STOCKROOM_REPAIR_SCOPE,
+            measure=('necessary cap repair', 'unrelated changes (expected none)', 'fresh complete Verify and publication')),
+    replace(_sol3_reference, id='SOL3-W', title='Green wrong and thin tests', expected=APPLIED,
+            question='Does independent review challenge wrong exact-issue assertions and thin list-order samples?',
+            faults=(A2_TEST, A4_ORDER), allowed=STOCKROOM_REPAIR_SCOPE,
+            measure=('actual assertions challenged', 'exact-issue and list-order repaired',
+                     'unrelated changes (expected none)', 'fresh complete Verify and publication')),
+)
+
+CASES = {case.id: case for case in STOCKROOM + DEPOT + HALL + FLEET + WORKSHOP + SOL3}
 
 def expectation(case):
     if case.expected == APPLIED:

@@ -1,4 +1,4 @@
-"""One source-released NIGHT-20261021 attempt. No automatic retry or model fallback.
+"""One source-released NIGHT or SOL3 attempt. No automatic retry or model fallback.
 
 Usage: python3 -B night_run.py GROUP_MANIFEST COORDINATOR_GATE GROUP_POSITION
 The final manifest and gate are deliberately absent during preparation.
@@ -69,6 +69,62 @@ HOST_CLOCK_TIMEOUT_SECONDS = 5
 SUPERVISOR_POLL_SECONDS = 1
 ABSOLUTE_START_CUTOFF = dt.datetime(2026, 10, 22, 4, 0, tzinfo=dt.timezone.utc)
 ABSOLUTE_ATTEMPT_STOP = dt.datetime(2026, 10, 22, 4, 45, tzinfo=dt.timezone.utc)
+
+
+def series_bounds(manifest):
+    """Two explicit grants; the historical NIGHT identity is never reinterpreted."""
+    if manifest.get('series', 'NIGHT-20261021') == 'NIGHT-20261021':
+        return 6, 16200, None, ABSOLUTE_START_CUTOFF, ABSOLUTE_ATTEMPT_STOP
+    require(manifest['series'] == 'SOL3-20261022', 'unknown series grant')
+    def utc(key):
+        return dt.datetime.strptime(manifest[key], '%Y-%m-%dT%H:%M:%SZ').replace(tzinfo=dt.timezone.utc)
+    release, cutoff, end = utc('operatorReleaseUtc'), utc('absoluteStartCutoffUtc'), utc('absoluteAttemptStopUtc')
+    require(end - release == dt.timedelta(seconds=8100)
+            and end - cutoff == dt.timedelta(seconds=2700)
+            and utc('writersStoppedByUtc') == end, 'SOL3 absolute bounds differ from the finite grant')
+    return 3, 8100, release, cutoff, end
+
+
+def series_root(manifest):
+    return Path(manifest['seriesRoot'] if manifest.get('series') == 'SOL3-20261022' else manifest['nightRoot'])
+
+
+def read_ledger(path, manifest):
+    rows = [json.loads(line) for line in Path(path).read_text().splitlines()]
+    if manifest.get('series') != 'SOL3-20261022':
+        return rows
+    # SOL3 appends a reservation and, later, its terminal observation. Folding
+    # reads never rewrites a consumed start or hides an unfinished reservation.
+    records = []
+    for row in rows:
+        require(row.get('series') == manifest['series'], 'foreign series in SOL3 ledger')
+        if row['status'] == 'running':
+            require(not records or records[-1]['status'] == 'closed', 'unfinished reservation blocks the ledger')
+            require(row['name'] not in [r['name'] for r in records], 'attempt already reserved')
+            records.append(row)
+        else:
+            require(records and records[-1]['status'] == 'running' and row['status'] in ('closed', 'unsafe')
+                    and all(row.get(k) == v for k, v in records[-1].items() if k != 'status'),
+                    'terminal record differs from its reservation')
+            records[-1] = row
+    return records
+
+
+def close_ledger(path, previous, terminal, manifest):
+    path = Path(path)
+    if manifest.get('series') == 'SOL3-20261022':
+        with path.open('a') as stream:
+            stream.write(json.dumps(terminal) + '\n')
+            stream.flush()
+            os.fsync(stream.fileno())
+    else:
+        replacement = path.with_suffix('.new')
+        with replacement.open('w') as stream:
+            stream.write(''.join(json.dumps(row) + '\n' for row in [*previous, terminal]))
+            stream.flush()
+            os.fsync(stream.fileno())
+        os.replace(replacement, path)
+    sync_dir(path.parent)
 
 def host_clock():
     """Independent Windows wall/Stopwatch sample; no credentials or generation."""
@@ -185,24 +241,49 @@ def validate_profile(path, packet, manifest):
 def validate(manifest_path, gate_path, files=True):
     m = json.loads(Path(manifest_path).read_text())
     g = json.loads(Path(gate_path).read_text())
-    require(m['series'] == 'NIGHT-20261021' and m['group'])
+    if m.get('series') == 'SOL3-20261022':
+        # Source/packet freeze is immutable; the one coordinator gate supplies
+        # its actual UTC release and derived absolute bounds, not the Host TZ.
+        for key in ('operatorReleaseUtc', 'absoluteStartCutoffUtc', 'absoluteAttemptStopUtc', 'writersStoppedByUtc'):
+            require(key not in m, 'SOL3 release times belong to the coordinator gate')
+            m[key] = g[key]
+        m['gateSha256'] = sha(gate_path)
+    starts, summed, release, cutoff, stop = series_bounds(m)
+    require(m['series'] in ('NIGHT-20261021', 'SOL3-20261022') and m['group'])
     require(m['status'] == 'frozen' and g['startAuthorized'] is True)
     require(g['manifestSha256'] == sha(manifest_path) and g['sourceCommit'] == m['sourceCommit'])
     require(g['cReady'] is True and g['dockerSlotApproved'] is True and g['codexQuotaReserveApproved'] is True)
     require(g['coordinatorMessage'] and g['cEvidenceSha256'] and g['independentReviewEvidence'])
     require(g['authorizedAttempts'] == [p['name'] for p in m['packets']])
-    require(m['absoluteStartCutoffUtc'] == '2026-10-22T04:00:00Z')
-    require(m['absoluteAttemptStopUtc'] == '2026-10-22T04:45:00Z')
-    require(m['writersStoppedByUtc'] == '2026-10-22T04:55:00Z')
-    require(m['provider']['name'] == 'codex-app-server' and m['provider']['model'] == 'gpt-6.1-sol')
+    if m['series'] == 'NIGHT-20261021':
+        require(m['absoluteStartCutoffUtc'] == '2026-10-22T04:00:00Z')
+        require(m['absoluteAttemptStopUtc'] == '2026-10-22T04:45:00Z')
+        require(m['writersStoppedByUtc'] == '2026-10-22T04:55:00Z')
+    else:
+        root = series_root(m)
+        require(root.is_absolute() and str(root.resolve()) == str(root)
+                and g['series'] == m['series'] and g['seriesRoot'] == str(root), 'SOL3 release/root binding differs')
+        require(sha(root / 'authority.json') == m['authoritySha256'], 'series authority differs')
+        authority = json.loads((root / 'authority.json').read_text())
+        require(authority['series'] == m['series'] and authority['seriesRoot'] == str(root)
+                and authority['starts'] == starts and authority['summedSeconds'] == summed,
+                'SOL3 authority does not bind this fresh root and grant')
+    expected_model = 'gpt-6-luna' if m['series'] == 'SOL3-20261022' else 'gpt-6.1-sol'
+    require(m['provider']['name'] == 'codex-app-server' and m['provider']['model'] == expected_model)
     require(m['provider']['effort'] == 'high' and m['provider']['credentialMode'] == 'dedicated-runtime-login')
     require(m['provider']['credentialSourceVolume'] == 'mk-codex-runtime-auth')
     require(m['provider']['minimumRemainingQuotaPercent'] == 25)
-    require(1 <= len(m['packets']) <= 6)
-    require(all(p['scenario'] in ('NIGHT-VN', 'NIGHT-VS', 'NIGHT-P', 'NIGHT-R') for p in m['packets']))
+    require(1 <= len(m['packets']) <= starts)
+    scenarios = ('SOL3-P', 'SOL3-R', 'SOL3-W') if m['series'] == 'SOL3-20261022' else ('NIGHT-VN', 'NIGHT-VS', 'NIGHT-P', 'NIGHT-R')
+    require(all(p['scenario'] in scenarios for p in m['packets']))
+    if m['series'] == 'SOL3-20261022':
+        require([p['scenario'] for p in m['packets']] == list(scenarios)
+                and all(p['mode'] == 'apply' and p['startNumber'] == i for i, p in enumerate(m['packets'], 1))
+                and len({p['name'] for p in m['packets']}) == 3
+                and len({p['store'] for p in m['packets']}) == 3, 'SOL3 ordered attempts differ')
     require(all(p['mode'] in ('verify', 'apply') for p in m['packets']))
-    require(m['ceilings']['starts'] == 6 and m['ceilings']['attemptSeconds'] == 2700)
-    require(m['ceilings']['summedSeconds'] == 16200 and m['ceilings']['retries'] == 0)
+    require(m['ceilings']['starts'] == starts and m['ceilings']['attemptSeconds'] == 2700)
+    require(m['ceilings']['summedSeconds'] == summed and m['ceilings']['retries'] == 0)
     require(m['ceilings']['workDeadlineFromAttemptStartSeconds'] == 1740)
     require(m['ceilings']['providerDeadlineFromAttemptStartSeconds'] == 2460)
     require(m['ceilings']['outerProcessDeadlineFromAttemptStartSeconds'] == 2490)
@@ -214,8 +295,9 @@ def validate(manifest_path, gate_path, files=True):
     require(m['ceilings']['wrapperSoftSeconds'] + m['ceilings']['wrapperKillGraceSeconds'] < m['ceilings']['attemptSeconds'])
     if files:
         require(sha(Path(m['build']) / 'markitect') == m['cliSha256'])
-        require(sha(Path(m['build']) / 'verify-harness') == m['verifyHarnessSha256'])
-        require(sha(Path(m['nightRoot']) / 'authority.json') == m['authoritySha256'])
+        if any(p['mode'] == 'verify' for p in m['packets']):
+            require(sha(Path(m['build']) / 'verify-harness') == m['verifyHarnessSha256'])
+        require(sha(series_root(m) / 'authority.json') == m['authoritySha256'])
         for p in m['packets']:
             require(sha(p['profile']) == p['profileSha256'])
             validate_profile(p['profile'], p, m)
@@ -398,19 +480,24 @@ def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None,
                         ('ACTIVE-ATTEMPT', 'ACTIVE-SUPERVISOR', 'STOP-SERIES')),
                 'an unfinished dispatch or stop marker blocks a new reservation')
         ledger = root / 'attempts.jsonl'
-        previous = [json.loads(line) for line in ledger.read_text().splitlines()]
-        require(len(previous) == packet['startNumber'] - 1 and len(previous) < 6
+        previous = read_ledger(ledger, manifest)
+        starts, summed, release, cutoff, stop = series_bounds(manifest)
+        require(len(previous) == packet['startNumber'] - 1 and len(previous) < starts
                 and all(row['status'] == 'closed' and row['chargedSeconds'] == 2700 for row in previous),
                 'global ledger does not authorize this next start number')
-        require(sum(row['chargedSeconds'] for row in previous) + 2700 <= 16200,
+        require(sum(row['chargedSeconds'] for row in previous) + 2700 <= summed,
                 'global charged time ceiling would be exceeded')
-        require(host_utc(started) < ABSOLUTE_START_CUTOFF,
+        require(host_utc(started) < cutoff and (release is None or host_utc(started) >= release),
                 'absolute no-new-start cutoff reached before reservation')
         reservation = {'name': packet['name'], 'scenario': packet['scenario'], 'mode': packet['mode'],
                        'group': manifest['group'], 'startedUtc': host_utc(started).isoformat(),
                        'startedHostClock': started, 'status': 'running', 'chargedSeconds': 2700,
                        'manifestSha256': sha(manifest_path)}
         reservation['startedMonotonicSeconds'] = time.monotonic() if monotonic_start is None else monotonic_start
+        if manifest.get('series') == 'SOL3-20261022':
+            require(all(row['gateSha256'] == manifest['gateSha256'] and row['manifestSha256'] == sha(manifest_path)
+                        for row in previous), 'SOL3 source/group release changed after a consumed start')
+            reservation.update(series=manifest['series'], gateSha256=manifest['gateSha256'])
         supervisor_identity = process_identity(os.getpid())
         require(supervisor_identity is not None, 'supervisor process identity is unavailable')
         # Either retained marker blocks another dispatch if a later write fails.
@@ -438,18 +525,22 @@ def reserve_dispatch(root, packet, manifest, manifest_path, started, state=None,
         return reservation
 
 
-def reserved_dispatch(root, packet, manifest_path, records):
+def reserved_dispatch(root, packet, manifest_path, records, manifest=None):
     """The child consumes exactly the supervisor's durable charge, never another."""
     require(records and len(records) == packet['startNumber'],
             'supervised reservation is absent from the global ledger')
     previous, reservation = records[:-1], records[-1]
-    require(all(row['status'] == 'closed' and row['chargedSeconds'] == 2700 for row in previous) and len(records) <= 6
-            and sum(row['chargedSeconds'] for row in records) <= 16200,
+    starts, summed, _, _, _ = series_bounds(manifest or {})
+    require(all(row['status'] == 'closed' and row['chargedSeconds'] == 2700 for row in previous) and len(records) <= starts
+            and sum(row['chargedSeconds'] for row in records) <= summed,
             'previous dispatch or global charged ceiling blocks this child')
     require(reservation['name'] == packet['name'] and reservation['status'] == 'running'
             and reservation['scenario'] == packet['scenario'] and reservation['mode'] == packet['mode']
             and reservation['chargedSeconds'] == 2700 and reservation['manifestSha256'] == sha(manifest_path),
             'current charged reservation differs from this released dispatch')
+    if manifest and manifest.get('series') == 'SOL3-20261022':
+        require(reservation['series'] == manifest['series'] and reservation['gateSha256'] == manifest['gateSha256'],
+                'child coordinator release differs from its reservation')
     active = json.loads((root / 'ACTIVE-ATTEMPT').read_text())
     supervisor = json.loads((root / 'ACTIVE-SUPERVISOR').read_text())
     require(active == reservation and supervisor['attempt'] == packet['name']
@@ -471,7 +562,8 @@ def supervise(manifest_path, gate_path, position):
     m = validate(manifest_path, gate_path, files=False)
     require(1 <= int(position) <= len(m['packets']), 'group position is outside the frozen packet list')
     packet = m['packets'][int(position) - 1]
-    root = Path(m['nightRoot'])
+    root = series_root(m)
+    _, _, _, _, attempt_stop = series_bounds(m)
     # Reserve before launching the child: an early refusal is a charged dispatch
     # too. Independent ownership also survives child-finalization/storage races.
     supervisor_active = root / 'ACTIVE-SUPERVISOR'
@@ -503,7 +595,7 @@ def supervise(manifest_path, gate_path, position):
             require(sample['frequency'] == started['frequency'] and sample['ticks'] >= started['ticks'],
                     'independent host clock changed identity or moved backward')
             elapsed = (sample['ticks'] - started['ticks']) / sample['frequency']
-            if elapsed >= 2670 or host_utc(sample) >= ABSOLUTE_ATTEMPT_STOP - dt.timedelta(seconds=30):
+            if elapsed >= 2670 or host_utc(sample) >= attempt_stop - dt.timedelta(seconds=30):
                 return force_supervised_stop(child, registry, root, packet, 'independent host-clock supervisor deadline', sample)
             time.sleep(SUPERVISOR_POLL_SECONDS)
     except BaseException as error:
@@ -523,7 +615,7 @@ def supervise(manifest_path, gate_path, position):
         return force_supervised_stop(child, registry, root, packet,
                                      'child did not establish safe closed accounting; retained full charge')
     try:
-        records = [json.loads(line) for line in (root / 'attempts.jsonl').read_text().splitlines()]
+        records = read_ledger(root / 'attempts.jsonl', m)
         require(len(records) == packet['startNumber'] and records[-1]['status'] == 'closed'
                 and all(records[-1].get(key) == value for key, value in reservation.items() if key != 'status'),
                 'child closed record differs from its full charged reservation')
@@ -546,7 +638,7 @@ def main():
     m = validate(manifest_path, gate_path, files=False)
     position = int(position)
     require(1 <= position <= len(m['packets']), 'group position is outside the frozen packet list')
-    root = Path(m['nightRoot']).resolve()
+    root = series_root(m).resolve()
     # An authorized packet identifies recovery even during ledger/marker reads.
     # Before this point stopPath is unset, so the parent records recovery itself.
     INTERRUPT['attempt'] = m['packets'][position - 1]['name']
@@ -560,13 +652,14 @@ def main():
 def run_reserved_attempt(manifest_path, gate_path, position, m, root):
     active = root / 'ACTIVE-ATTEMPT'
     ledger = root / 'attempts.jsonl'
-    records = [json.loads(line) for line in ledger.read_text().splitlines()]
+    records = read_ledger(ledger, m)
     p = m['packets'][position - 1]
-    previous, reservation = reserved_dispatch(root, p, manifest_path, records)
+    previous, reservation = reserved_dispatch(root, p, manifest_path, records, m)
     INTERRUPT['attempt'] = p['name']
     require(reservation['startedHostClock'] == process_started_host,
             'child host-clock anchor differs from the supervised reservation')
-    require(host_utc(host_clock()) < ABSOLUTE_START_CUTOFF, 'absolute no-new-start cutoff reached')
+    _, _, _, start_cutoff, _ = series_bounds(m)
+    require(host_utc(host_clock()) < start_cutoff, 'absolute no-new-start cutoff reached')
     credential_path = Path(m['provider']['credentialPath'])
     require(not credential_path.exists(), 'unexpected credential file is preserved')
     attempt = root / 'attempts' / p['name']
@@ -646,6 +739,7 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
               'deadlineUtc': deadline, 'workDeadlineUtc': config['workDeadline'], 'verifyReserveSeconds': 720, 'cleanupReserveSeconds': 180, 'manifestSha256': sha(manifest_path)})
         # Nongenerative metadata is part of this charged attempt, never a hidden
         # inference preflight. Its script contains only the four read-only RPCs.
+        unsafe = True  # auth/quota uncertainty blocks later starts, even with no generation
         readiness = run([docker, 'run', '--rm', '--init', '--name', p['store'] + '-metadata',
             '--label', 'markitect.store=' + p['store'], '--read-only', '--user', '1000:1000',
             '--cap-drop', 'ALL', '--security-opt', 'no-new-privileges', '--cpus', '1',
@@ -653,14 +747,15 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
             '--tmpfs', '/tmp:rw,exec,nosuid,nodev,mode=1777,size=67108864',
             '--mount', 'type=volume,src=mk-codex-runtime-auth,dst=/auth,readonly',
             '--mount', 'type=bind,src=' + str(source / 'experiments/apply-trials/ccf_metadata.py') + ',dst=/metadata.py,readonly',
-            '--entrypoint', '/opt/markitect/bin/python', m['images']['agent'], '-B', '/metadata.py'],
+            '--entrypoint', '/opt/markitect/bin/python', m['images']['agent'], '-B', '/metadata.py', m['provider']['model']],
             capture_output=True, check=True, timeout=75)
         metadata = json.loads(readiness.stdout)
         require(metadata['generationRequests'] == 0 and metadata['accessValiditySeconds'] >= 2700)
         require(metadata['appServerStopped'] and metadata['temporaryCredentialRemoved'])
         require(metadata['loginStatusExit'] == 0 and metadata['loginReportsChatGPT'])
         require(metadata['account']['type'] == 'chatgpt' and not metadata['hasApiKey'] and not metadata['refreshTokenDelivered'])
-        require(any(item['model'] == 'gpt-6.1-sol' and any(effort['reasoningEffort'] == 'high'
+        require(metadata['requestedModel'] == m['provider']['model'] and metadata['requestedEffort'] == 'high')
+        require(any(item['model'] == m['provider']['model'] and any(effort['reasoningEffort'] == 'high'
                     for effort in item['supportedReasoningEfforts']) for item in metadata['selected']))
         quota = (metadata['quota']['rateLimitsByLimitId'] or {}).get('codex') or metadata['quota']['rateLimits']
         require(quota is not None and quota['primary'] is not None and quota['rateLimitReachedType'] is None)
@@ -669,6 +764,7 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
                     for window in (quota.get('primary'), quota.get('secondary')) if window is not None))
         require(not run([docker, 'ps', '-aq', '--filter', 'name=^/' + p['store'] + '-metadata$'], capture_output=True, check=True).stdout.strip(),
                 'metadata container cessation/removal unconfirmed')
+        unsafe = False
         write(attempt / 'readiness.json', {'manifestSha256': sha(manifest_path),
             'metadataScriptSha256': sha(source / 'experiments/apply-trials/ccf_metadata.py'),
             'observedMonotonicSeconds': round(time.monotonic() - start, 3), 'metadata': metadata})
@@ -704,7 +800,7 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
             environment['MARKITECT_VERIFY_EVALUATION_ARGS'] = json.dumps(args[1:])
             args = [str(attempt / 'verify-harness'), '-test.run=^TestVerifyEvaluationHarness$', '-test.v', '-test.timeout=42m']
         raw_path = attempt / 'out/provider-output.txt'
-        require(host_utc(host_clock()) < ABSOLUTE_START_CUTOFF, 'absolute cutoff reached before productive dispatch')
+        require(host_utc(host_clock()) < start_cutoff, 'absolute cutoff reached before productive dispatch')
         with raw_path.open('wb') as stdout, (attempt / 'out/apply.stderr').open('wb') as stderr:
             timing.enter('execution')
             done = run(args, stdout=stdout, stderr=stderr, timeout=remaining(2490), env=environment)
@@ -810,20 +906,14 @@ def run_reserved_attempt(manifest_path, gate_path, position, m, root):
             result['recoveryRequired'] = True
             result['classification'] = 'technical-incomplete'
             recovery(root, p['name'], 'result persistence failed; earlier snapshots do not establish completion')
-        records = [*previous, {**reservation, 'status': 'unsafe' if unsafe else 'closed',
+        terminal = {**reservation, 'status': 'unsafe' if unsafe else 'closed',
                               # Charge the full reservation, never a faster guest
                               # clock or an underestimate of final persistence.
                               # Actual observed durations remain separate above.
                               'chargedSeconds': 2700,
-                              'result': result}]
-        replacement = ledger.with_suffix('.new')
+                              'result': result}
         try:
-            with replacement.open('w') as f:
-                f.write(''.join(json.dumps(r) + '\n' for r in records))
-                f.flush()
-                os.fsync(f.fileno())
-            os.replace(replacement, ledger)
-            sync_dir(root)
+            close_ledger(ledger, previous, terminal, m)
         except Exception as error:
             unsafe = True
             result['ledgerWriteErrorType'] = type(error).__name__

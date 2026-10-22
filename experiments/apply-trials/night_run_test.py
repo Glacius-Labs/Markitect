@@ -18,6 +18,136 @@ import night_run as runner
 
 
 class SupervisorControls(unittest.TestCase):
+    def sol3_manifest(self, root):
+        runner.write(root / 'authority.json', {'series': 'SOL3-20261022', 'seriesRoot': str(root),
+                                             'starts': 3, 'summedSeconds': 8100})
+        m = {'series': 'SOL3-20261022', 'seriesRoot': str(root), 'group': 'SOL3-P-R-W', 'status': 'frozen',
+             'sourceCommit': 'frozen-source', 'runnerSha256': runner.sha(runner.__file__),
+             'authoritySha256': runner.sha(root / 'authority.json'),
+             'provider': {'name': 'codex-app-server', 'model': 'gpt-6-luna', 'effort': 'high',
+                          'credentialMode': 'dedicated-runtime-login', 'credentialSourceVolume': 'mk-codex-runtime-auth',
+                          'minimumRemainingQuotaPercent': 25},
+             'ceilings': {'starts': 3, 'attemptSeconds': 2700, 'summedSeconds': 8100, 'retries': 0,
+                          'workDeadlineFromAttemptStartSeconds': 1740, 'providerDeadlineFromAttemptStartSeconds': 2460,
+                          'outerProcessDeadlineFromAttemptStartSeconds': 2490, 'writerStopCleanupReserveSeconds': 180,
+                          'wrapperSoftSeconds': 2670, 'wrapperKillGraceSeconds': 15},
+             'limits': {'turnSeconds': 300, 'turns': 240, 'passes': 8, 'probesPerTurn': 12},
+             'packets': [{'name': name, 'scenario': name, 'store': 'owned-' + name.lower(), 'mode': 'apply',
+                          'startNumber': i} for i, name in enumerate(('SOL3-P', 'SOL3-R', 'SOL3-W'), 1)]}
+        path, gate = root / 'manifest.json', root / 'gate.json'
+        runner.write(path, m)
+        g = {'startAuthorized': True, 'manifestSha256': runner.sha(path), 'sourceCommit': m['sourceCommit'],
+             'cReady': True, 'dockerSlotApproved': True, 'codexQuotaReserveApproved': True,
+             'coordinatorMessage': 'source-bound independent release', 'cEvidenceSha256': 'review-digest',
+             'independentReviewEvidence': 'reviewed-head', 'authorizedAttempts': [p['name'] for p in m['packets']],
+             'series': m['series'], 'seriesRoot': str(root), 'operatorReleaseUtc': '2026-10-22T10:00:00Z',
+             'absoluteStartCutoffUtc': '2026-10-22T11:30:00Z', 'absoluteAttemptStopUtc': '2026-10-22T12:15:00Z',
+             'writersStoppedByUtc': '2026-10-22T12:15:00Z'}
+        runner.write(gate, g)
+        (root / 'attempts.jsonl').touch()
+        return path, gate, m, g
+
+    def test_sol3_release_binds_fresh_root_and_exact_finite_utc_grant(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, gate, m, g = self.sol3_manifest(root)
+            validated = runner.validate(path, gate, files=False)
+            starts, seconds, release, cutoff, end = runner.series_bounds(validated)
+            self.assertEqual((starts, seconds), (3, 8100))
+            self.assertEqual((end - release).total_seconds(), 8100)
+            self.assertEqual((end - cutoff).total_seconds(), 2700)
+            self.assertEqual(runner.series_root(validated), root)
+            for key, bad in (('series', 'NIGHT-20261021'), ('seriesRoot', str(root / 'other')),
+                             ('absoluteAttemptStopUtc', '2026-10-22T12:15:01Z')):
+                runner.write(gate, dict(g, **{key: bad}))
+                with self.subTest(key=key), self.assertRaises(runner.GuardRefusal):
+                    runner.validate(path, gate, files=False)
+            runner.write(gate, g)
+            for key, bad in (('starts', 4), ('summedSeconds', 10800),
+                             ('providerDeadlineFromAttemptStartSeconds', 2400), ('writerStopCleanupReserveSeconds', 179)):
+                altered = copy.deepcopy(m)
+                altered['ceilings'][key] = bad
+                runner.write(path, altered)
+                runner.write(gate, dict(g, manifestSha256=runner.sha(path)))
+                with self.subTest(ceiling=key), self.assertRaises(runner.GuardRefusal):
+                    runner.validate(path, gate, files=False)
+
+    def test_sol3_append_only_full_charges_refuse_fourth_start_and_changed_release(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, gate, _, _ = self.sol3_manifest(root)
+            m = runner.validate(path, gate, files=False)
+            clock = {'utc': 1792663200000, 'ticks': 1, 'frequency': 1000}  # 10:00 UTC
+            ledger = root / 'attempts.jsonl'
+            for packet in m['packets']:
+                before = ledger.read_bytes()
+                reservation = runner.reserve_dispatch(root, packet, m, path, clock)
+                reserved = ledger.read_bytes()
+                self.assertTrue(reserved.startswith(before))
+                records = runner.read_ledger(ledger, m)
+                runner.reserved_dispatch(root, packet, path, records, m)
+                runner.close_ledger(ledger, records[:-1], dict(reservation, status='closed', result={}), m)
+                self.assertTrue(ledger.read_bytes().startswith(reserved), 'closing rewrote a reservation')
+                (root / 'ACTIVE-ATTEMPT').unlink()
+                (root / 'ACTIVE-SUPERVISOR').unlink()
+                if packet['startNumber'] == 1:
+                    with self.assertRaises(runner.GuardRefusal):
+                        runner.reserve_dispatch(root, m['packets'][1], dict(m, gateSha256='different-release'), path, clock)
+            self.assertEqual(len(ledger.read_text().splitlines()), 6)
+            self.assertEqual(sum(r['chargedSeconds'] for r in runner.read_ledger(ledger, m)), 8100)
+            with self.assertRaises(runner.GuardRefusal):
+                runner.reserve_dispatch(root, dict(m['packets'][2], name='fourth', startNumber=4), m, path, clock)
+
+    def test_sol3_refuses_sol_or_an_unbound_effort_after_luna_owner_change(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, gate, m, g = self.sol3_manifest(root)
+            for key, value in (('model', 'gpt-6.1-sol'), ('model', 'gpt-6-astra'), ('effort', 'medium')):
+                altered = copy.deepcopy(m)
+                altered['provider'][key] = value
+                runner.write(path, altered)
+                runner.write(gate, dict(g, manifestSha256=runner.sha(path)))
+                with self.subTest(key=key, value=value), self.assertRaises(runner.GuardRefusal):
+                    runner.validate(path, gate, files=False)
+
+    def test_sol3_before_release_or_without_full_remaining_attempt_is_refused(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, gate, _, _ = self.sol3_manifest(root)
+            m = runner.validate(path, gate, files=False)
+            _, _, release, cutoff, _ = runner.series_bounds(m)
+            for instant in (release.timestamp() - 1, cutoff.timestamp(), cutoff.timestamp() + 1):
+                with self.subTest(utc=instant), self.assertRaises(runner.GuardRefusal):
+                    runner.reserve_dispatch(root, m['packets'][0], m, path,
+                                            {'utc': instant * 1000, 'ticks': 1, 'frequency': 1000})
+            self.assertEqual((root / 'attempts.jsonl').read_bytes(), b'')
+
+    def test_sol3_unsafe_or_partial_reservation_never_allows_a_following_start(self):
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            path, gate, _, _ = self.sol3_manifest(root)
+            m = runner.validate(path, gate, files=False)
+            clock = {'utc': 1792663200000, 'ticks': 1, 'frequency': 1000}
+            first = runner.reserve_dispatch(root, m['packets'][0], m, path, clock)
+            ledger = root / 'attempts.jsonl'
+            for status in (None, 'unsafe'):
+                if status:
+                    runner.close_ledger(ledger, [], dict(first, status=status, result={}), m)
+                for marker in ('ACTIVE-ATTEMPT', 'ACTIVE-SUPERVISOR'):
+                    (root / marker).unlink(missing_ok=True)  # even lost markers cannot reset the charge
+                with self.assertRaises(runner.GuardRefusal):
+                    runner.reserve_dispatch(root, m['packets'][1], m, path, clock)
+
+    def test_historical_night_bounds_remain_expired_and_unchanged(self):
+        self.assertEqual(runner.series_bounds({'series': 'NIGHT-20261021'})[:2], (6, 16200))
+        with tempfile.TemporaryDirectory() as folder:
+            root = Path(folder)
+            m, path = self.dispatch_manifest(root, 'old-night')
+            with self.assertRaises(runner.GuardRefusal):
+                runner.reserve_dispatch(root, m['packets'][0], m, path,
+                                        {'utc': 1792663200000, 'ticks': 1, 'frequency': 1000})
+            self.assertEqual((root / 'attempts.jsonl').read_bytes(), b'')
+
     def assert_process_stopped(self, identity):
         for _ in range(500):
             if runner.process_identity(identity['pid']) != identity:

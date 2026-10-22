@@ -1603,6 +1603,87 @@ w3:
 +LOW_STOCK = 2
 ```
 
+## SOL3-P: Conforming reference stays unchanged
+
+- **Question:** Does Apply leave a conforming, complete stand unchanged and verify it in one round?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, the known-correct reference realization and its registry
+- **Expected:** Verified, publication `no_change`; no file changes; the oracle profile passes on the stand. Oracle profile `s1-sol3`.
+- **Versioned reference corrections:** `realization/app.py`
+- **Record:** files changed (expected none); passes; blocking findings (expected none); turns; time
+- **Notes:** SOL3 reference version 1: separated leading-hyphen database paths work; historical S-N is unchanged.
+
+## SOL3-R: Necessary stock-limit repair
+
+- **Question:** Does Apply repair the exact valid-cap refusal while preserving the conforming remainder?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `s1-sol3`.
+- **Versioned reference corrections:** `realization/app.py`
+- **Not counted as unnecessary:** `realization/tests/**`, `.markitect/registry/stockroom/registry.yaml`
+- **Record:** necessary cap repair; unrelated changes (expected none); fresh complete Verify and publication
+- **Notes:** SOL3 reference version 1: separated leading-hyphen database paths work; historical S-N is unchanged.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| d1 | stockroom | behavior | receive refuses reaching exactly 9999 on hand (>= instead of >); the reference tests catch it | `receive-cap` | yes | informative |
+
+Fault edits:
+
+d1:
+
+```diff
+--- realization/stockroom.py
+-    if item["onHand"] + quantity > LIMITS["maxOnHand"]:
++    if item["onHand"] + quantity >= LIMITS["maxOnHand"]:
+```
+
+## SOL3-W: Green wrong and thin tests
+
+- **Question:** Does independent review challenge wrong exact-issue assertions and thin list-order samples?
+- **Project and level:** stockroom, level 1
+- **Start:** snapshot `s1`, the known-correct reference realization and its registry
+- **Expected:** Verified in the Apply report, publication `applied`; the oracle profile passes on the published realization; every fault is repaired; no change outside the fault files and the allowed paths. Oracle profile `s1-sol3`.
+- **Versioned reference corrections:** `realization/app.py`
+- **Not counted as unnecessary:** `realization/tests/**`, `.markitect/registry/stockroom/registry.yaml`
+- **Record:** actual assertions challenged; exact-issue and list-order repaired; unrelated changes (expected none); fresh complete Verify and publication
+- **Notes:** SOL3 reference version 1: separated leading-hyphen database paths work; historical S-N is unchanged.
+
+| Fault | Owner | Kind | What is wrong | Fails while present | Own tests fail | Regression test |
+| --- | --- | --- | --- | --- | --- | --- |
+| a2 | stockroom | test | issuing exactly the on-hand quantity is refused (>=), and the unit test was changed to expect that refusal; the README still says it leaves 0 | `issue-exact` | no | required |
+| a4 | stockroom | behavior | list sorts by name instead of SKU, while the README says SKU; the tests use names in SKU order | `list-order` | no | informative |
+
+Fault edits:
+
+a2:
+
+```diff
+--- realization/stockroom.py
+-    if quantity > item["onHand"]:
++    if quantity >= item["onHand"]:
+```
+
+```diff
+--- realization/tests/test_rules.py
+-    def test_issue_all_leaves_zero(self):
+-        stockroom.receive(self.data, "ABC-123", "10")
+-        self.assertEqual(stockroom.issue(self.data, "ABC-123", "10")["onHand"], 0)
++    def test_issue_all_is_refused(self):
++        stockroom.receive(self.data, "ABC-123", "10")
++        with self.assertRaises(StockError):
++            stockroom.issue(self.data, "ABC-123", "10")
++        self.assertEqual(self.data["ABC-123"]["onHand"], 10)
+```
+
+a4:
+
+```diff
+--- realization/stockroom.py
+-    return [record(data, key) for key in sorted(data)]
++    return [record(data, key) for key in sorted(data, key=lambda sku: data[sku]["name"])]
+```
+
 ## Profile shifts
 
 The reference realization fails exactly these checks under a changed or variant profile:

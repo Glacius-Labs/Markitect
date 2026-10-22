@@ -471,6 +471,29 @@ def check_ccf2(python, report):
     report.facts["CCF2 public truth table"] = facts
 
 
+def check_sol3(python, report):
+    """Only the three commissioned inputs and their discriminating controls."""
+    facts = {}
+    for name, expected_bad, expected_tests in (
+            ('SOL3-P', set(), True), ('SOL3-R', {'receive-cap'}, False),
+            ('SOL3-W', {'issue-exact', 'list-order'}, True)):
+        case = CASES[name]
+        with tempfile.TemporaryDirectory(prefix='sol3-control-') as folder:
+            realization = build(case.project, folder, faults=case.faults, stand=case.reference_edits)
+            bad, outcome = failing(case.project, case.profile, realization, python)
+            tests, output = assess.run_tests(realization, case.project, python)
+            report.expect(bad == expected_bad and tests == expected_tests,
+                          '%s failed %s, own tests %s, expected %s/%s; %s' %
+                          (name, sorted(bad), tests, sorted(expected_bad), expected_tests, output[-600:]))
+            facts[name] = {'failed': sorted(bad), 'projectTests': tests, 'oracle': outcome['summary']}
+    # The old reference must still expose the new path discriminator; a removed
+    # correction or a weakened oracle cannot make this control green.
+    with tempfile.TemporaryDirectory(prefix='sol3-old-reference-') as folder:
+        bad, _ = failing('stockroom', 's1-sol3', build('stockroom', folder), python)
+        report.expect(bad == {'db-path'}, 'uncorrected reference does not expose exactly db-path: %s' % sorted(bad))
+    report.facts['SOL3 controls'] = facts
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     parser.add_argument("--project", choices=sorted(PROJECTS), action="append")
@@ -497,6 +520,8 @@ def main(argv=None):
         check_model_change(project, python, report)
         if project == "depot":
             check_ccf2(python, report)
+        if project == 'stockroom':
+            check_sol3(python, report)
     print(json.dumps({"facts": facts, "problems": report.problems, "passed": not report.problems},
                      indent=2))
     return 0 if not report.problems else 1

@@ -13,6 +13,7 @@ import ast
 import json
 import re
 import shutil
+import subprocess
 import sys
 import tempfile
 from pathlib import Path
@@ -23,13 +24,14 @@ from trial_kit import Checks, Env, Skip, expect_equal, fail, no_crash, unusable_
 
 PROFILES = {
     "s1": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": 60},
+    "s1-sol3": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": 60},
     "s2": {"snapshot": "s2", "maxQty": 500, "reorder": True, "maxName": 60},
     "o": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": 60},
     "n40": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": 40},
     "free": {"snapshot": "s1", "maxQty": 1000, "reorder": False, "maxName": None, "nameRange": (40, 120)},
 }
-ALL = ["s1", "s2", "o", "n40", "free"]
-FIXED_NAME = ["s1", "s2", "o", "n40"]
+ALL = ["s1", "s1-sol3", "s2", "o", "n40", "free"]
+FIXED_NAME = ["s1", "s1-sol3", "s2", "o", "n40"]
 CHECKS = Checks("stockroom", PROFILES)
 check = CHECKS.check
 
@@ -73,6 +75,39 @@ def fill(env, sku, total, step):
 
 
 # -- every profile --------------------------------------------------------------------
+
+@check('db-path', ['s1-sol3'], ['stockroom/interface', 'stockroom/storage'],
+       'Separated leading-hyphen DB paths support public reads, changes and refusals')
+def _(env, p):
+    with tempfile.TemporaryDirectory(prefix='stockroom-path-') as folder:
+        realization = Path(folder) / 'realization'
+        shutil.copytree(env.realization, realization, ignore=shutil.ignore_patterns('__pycache__'))
+        path = realization / '-stock.json'
+        def call(options, args, code=0):
+            done = subprocess.run([*env.python, '-B', 'app.py', *options, *args], cwd=realization,
+                                  capture_output=True, timeout=15)
+            expect_equal(done.returncode, code, 'public DB-path command exit')
+            value = json.loads(done.stdout)
+            if code:
+                expect_equal(list(value), ['error'], 'refusal object')
+                if not isinstance(value['error'], str) or not value['error'].strip():
+                    fail('refusal must explain the failure')
+            return value
+        options = ['--db', '-stock.json']
+        expect_equal(call(options, ['list']), {'items': []}, 'missing-file query')
+        if path.exists():
+            fail('query created the data file')
+        expected = {'sku': 'ABC-123', 'name': '-Bolt', 'onHand': 0}
+        expect_equal(call(options, ['add-item', '--sku', 'ABC-123', '--name', '-Bolt']), expected, 'added item')
+        expect_equal(call(options, ['receive', '--sku', 'ABC-123', '--qty', '10'])['onHand'], 10, 'received stock')
+        expect_equal(call(options, ['issue', '--sku', 'ABC-123', '--qty', '3'])['onHand'], 7, 'issued stock')
+        before = path.read_bytes()
+        expected['onHand'] = 7
+        for spelling in (options, ['--db=-stock.json'], ['--db', './-stock.json']):
+            expect_equal(call(spelling, ['list']), {'items': [expected]}, 'same durable data through each spelling')
+        call(options, ['receive', '--sku', 'ABC-123', '--qty', '0'], 2)
+        call(['--db'], [], 2)
+        expect_equal(path.read_bytes(), before, 'queries/refusals preserve the file')
 
 @check("list-empty", ALL, ["stockroom/list", "stockroom/storage"], "A missing data file lists no items")
 def _(env, p):
