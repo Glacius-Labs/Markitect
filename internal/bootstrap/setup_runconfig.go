@@ -20,16 +20,18 @@ const setupCredentialRef = "markitect-claude-token"
 // it. Its field names are those of the decoder's closed contract; the optional
 // deadline is omitted when absent, because the decoder refuses an empty value.
 type runConfigDocument struct {
-	FormatVersion      int                         `json:"formatVersion"`
-	RepositoryIdentity string                      `json:"repositoryIdentity"`
-	ProductBuild       string                      `json:"productBuild"`
-	OwnerRequest       string                      `json:"ownerRequest"`
-	StateDirectory     string                      `json:"stateDirectory"`
-	Deadline           string                      `json:"deadline,omitempty"`
-	EngineExecutable   string                      `json:"engineExecutable"`
-	WorkspaceHelper    workspaceHelperDocument     `json:"workspaceHelper"`
-	Harvest            harvestLimits               `json:"harvest"`
-	Credentials        map[string]credentialSource `json:"credentials"`
+	FormatVersion         int                         `json:"formatVersion"`
+	RepositoryIdentity    string                      `json:"repositoryIdentity"`
+	ProductBuild          string                      `json:"productBuild"`
+	OwnerRequest          string                      `json:"ownerRequest"`
+	StateDirectory        string                      `json:"stateDirectory"`
+	Deadline              string                      `json:"deadline,omitempty"`
+	MaxMessages           int                         `json:"maxMessages"`
+	MessageTimeoutSeconds int                         `json:"messageTimeoutSeconds"`
+	EngineExecutable      string                      `json:"engineExecutable"`
+	WorkspaceHelper       workspaceHelperDocument     `json:"workspaceHelper"`
+	Harvest               harvestLimits               `json:"harvest"`
+	Credentials           map[string]credentialSource `json:"credentials"`
 }
 
 // workspaceHelperDocument is the helper container of the shared workspace.

@@ -294,12 +294,20 @@ func preparationDiagnostics(result apply.PreviewSettingsResult) string {
 
 // setupRunConfig composes the run configuration of the setup.
 func setupRunConfig(request cli.SetupRequest, imageID, store, stateDirectory string) runConfigDocument {
+	maxMessages, messageTimeout := request.MaxMessages, request.MessageTimeoutSeconds
+	if maxMessages == 0 {
+		maxMessages = 40
+	}
+	if messageTimeout == 0 {
+		messageTimeout = 120
+	}
 	ownerRequest := request.OwnerRequest
 	if ownerRequest == "" {
 		ownerRequest = defaultOwnerRequest
 	}
 	return runConfigDocument{
 		FormatVersion: 2, RepositoryIdentity: store, ProductBuild: request.ProductBuild, OwnerRequest: ownerRequest,
+		MaxMessages: maxMessages, MessageTimeoutSeconds: messageTimeout,
 		StateDirectory: stateDirectory, Deadline: request.Deadline,
 		EngineExecutable: request.Engine,
 		WorkspaceHelper: workspaceHelperDocument{

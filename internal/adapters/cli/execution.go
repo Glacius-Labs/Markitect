@@ -36,10 +36,90 @@ type ApplyReport struct {
 	Preparation       any                       `json:"preparation,omitempty"`
 	Binding           *apply.RunBinding         `json:"binding,omitempty"`
 	Run               *RunReport                `json:"run,omitempty"`
+	Assignment        *AssignmentReport         `json:"assignment,omitempty"`
 	Publication       *apply.PublicationReceipt `json:"publication,omitempty"`
 	RetainedWork      string                    `json:"retainedWork,omitempty"`
 	EvidenceDirectory string                    `json:"evidenceDirectory,omitempty"`
 	Error             string                    `json:"error,omitempty"`
+}
+
+// AssignmentReport names the observed lifecycle without projecting it as
+// legacy Passes or claiming publication from a provider completion event.
+type AssignmentReport struct {
+	ID                string                   `json:"id"`
+	ModelHead         string                   `json:"modelHead,omitempty"`
+	AssessmentCommit  string                   `json:"assessmentCommit,omitempty"`
+	RootCommit        string                   `json:"rootCommit,omitempty"`
+	AcceptedCommit    string                   `json:"acceptedCommit,omitempty"`
+	ReviewCount       int                      `json:"reviewCount"`
+	CheckCount        int                      `json:"checkCount"`
+	Messages          int                      `json:"messages"`
+	NoChange          bool                     `json:"noChange"`
+	ModelProblem      bool                     `json:"modelProblem,omitempty"`
+	ModelProblemIssue *run.ReviewIssue         `json:"modelProblemIssue,omitempty"`
+	Assessment        AssignmentReviewReport   `json:"assessment"`
+	Homes             []string                 `json:"homes"`
+	HomesRemoved      []string                 `json:"homesRemoved"`
+	Reviews           []AssignmentReviewReport `json:"reviews"`
+	Checks            []AssignmentCheckReport  `json:"checks"`
+}
+
+type AssignmentReviewReport struct {
+	AcceptedCommit string            `json:"acceptedCommit,omitempty"`
+	Reason         string            `json:"reason,omitempty"`
+	ModelProblem   bool              `json:"modelProblem,omitempty"`
+	Issues         []run.ReviewIssue `json:"issues"`
+}
+
+type AssignmentCheckReport struct {
+	Commit  string           `json:"commit"`
+	Name    string           `json:"name"`
+	Passed  bool             `json:"passed"`
+	Error   string           `json:"error,omitempty"`
+	Receipt run.CheckReceipt `json:"receipt"`
+}
+
+func NewAssignmentReport(r apply.AssignmentRealizationResult) *AssignmentReport {
+	out := &AssignmentReport{ID: r.ID, ModelHead: r.ModelHead, AssessmentCommit: r.Assessment.AcceptedCommit, RootCommit: r.Root.ResultCommit, AcceptedCommit: r.AcceptedCommit, ReviewCount: len(r.Reviews), CheckCount: len(r.Checks), Messages: r.Messages, NoChange: r.NoChange, ModelProblem: r.ModelProblem != nil, ModelProblemIssue: r.ModelProblem, Reviews: []AssignmentReviewReport{}, Checks: []AssignmentCheckReport{}}
+	out.Assessment = AssignmentReviewReport{AcceptedCommit: r.Assessment.AcceptedCommit, Reason: r.Assessment.Reason, ModelProblem: r.Assessment.ModelProblem, Issues: append([]run.ReviewIssue{}, r.Assessment.Issues...)}
+	out.Homes = []string{}
+	out.HomesRemoved = append([]string{}, r.HomesRemoved...)
+	seen := map[string]bool{}
+	addHome := func(name string) {
+		if name != "" && !seen[name] {
+			seen[name] = true
+			out.Homes = append(out.Homes, name)
+		}
+	}
+	addHome(r.Assessment.Home)
+	if r.Work != nil {
+		for _, name := range r.Work.Homes() {
+			addHome(name)
+		}
+	}
+	for _, review := range r.Reviews {
+		addHome(review.Home)
+	}
+	for _, review := range r.Reviews {
+		out.Reviews = append(out.Reviews, AssignmentReviewReport{AcceptedCommit: review.AcceptedCommit, Reason: review.Reason, ModelProblem: review.ModelProblem, Issues: append([]run.ReviewIssue{}, review.Issues...)})
+	}
+	for _, check := range r.Checks {
+		out.Checks = append(out.Checks, AssignmentCheckReport{Commit: check.Commit, Name: check.Name, Passed: check.Error == "" && check.Receipt.Passed(check.Request), Error: check.Error, Receipt: check.Receipt})
+	}
+	return out
+}
+
+func AssignmentApplyStatus(r apply.AssignmentRealizationResult, receipt *apply.PublicationReceipt, err error) model.Status {
+	if r.ModelProblem != nil || receipt != nil && receipt.Outcome == apply.PublicationFailed {
+		return model.Failed
+	}
+	if err != nil || r.AcceptedCommit == "" || receipt == nil {
+		return model.NotCompleted
+	}
+	if receipt.Outcome == apply.PublicationApplied || receipt.Outcome == apply.PublicationNoChange {
+		return model.Passed
+	}
+	return model.NotCompleted
 }
 
 // RunReport is the run's outcome without the candidate's bytes.

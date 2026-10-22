@@ -28,17 +28,19 @@ var errRunConfigIO = errors.New("run configuration file could not be completely 
 // optional absolute wall-clock limit (RFC 3339, UTC) that the run must finish
 // before; the project's own budget still applies.
 type runConfig struct {
-	FormatVersion      int                         `json:"formatVersion"`
-	RepositoryIdentity string                      `json:"repositoryIdentity"`
-	ProductBuild       string                      `json:"productBuild"`
-	OwnerRequest       string                      `json:"ownerRequest"`
-	StateDirectory     string                      `json:"stateDirectory"`
-	EngineExecutable   string                      `json:"engineExecutable"`
-	WorkspaceHelper    container.ContainerSpec     `json:"workspaceHelper"`
-	Harvest            harvestLimits               `json:"harvest"`
-	WorkDeadline       string                      `json:"workDeadline,omitempty"`
-	Deadline           string                      `json:"deadline,omitempty"`
-	Credentials        map[string]credentialSource `json:"credentials"`
+	FormatVersion         int                         `json:"formatVersion"`
+	RepositoryIdentity    string                      `json:"repositoryIdentity"`
+	ProductBuild          string                      `json:"productBuild"`
+	OwnerRequest          string                      `json:"ownerRequest"`
+	StateDirectory        string                      `json:"stateDirectory"`
+	EngineExecutable      string                      `json:"engineExecutable"`
+	WorkspaceHelper       container.ContainerSpec     `json:"workspaceHelper"`
+	Harvest               harvestLimits               `json:"harvest"`
+	WorkDeadline          string                      `json:"workDeadline,omitempty"`
+	Deadline              string                      `json:"deadline,omitempty"`
+	MaxMessages           int                         `json:"maxMessages,omitempty"`
+	MessageTimeoutSeconds int                         `json:"messageTimeoutSeconds,omitempty"`
+	Credentials           map[string]credentialSource `json:"credentials"`
 }
 
 // harvestLimits are the entry and byte bounds of one working-tree observation.
@@ -73,7 +75,7 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	// supplies model intent to a Run.
 	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "ownerRequest", "stateDirectory", "engineExecutable", "workspaceHelper", "harvest", "credentials"}
 	for key := range root {
-		if !slices.Contains(required, key) && key != "deadline" && key != "workDeadline" {
+		if !slices.Contains(required, key) && key != "deadline" && key != "workDeadline" && key != "maxMessages" && key != "messageTimeoutSeconds" {
 			return runConfig{}, errRunConfig
 		}
 	}
@@ -183,6 +185,9 @@ func (c runConfig) valid() bool {
 		if t, err := time.Parse(time.RFC3339, c.Deadline); err != nil || !strings.HasSuffix(c.Deadline, "Z") || t.IsZero() {
 			return false
 		}
+	}
+	if c.MaxMessages < 0 || c.MaxMessages > 128 || c.MessageTimeoutSeconds < 0 || c.MessageTimeoutSeconds > 3600 || (c.MaxMessages == 0) != (c.MessageTimeoutSeconds == 0) {
+		return false
 	}
 	h := c.WorkspaceHelper
 	if !(runport.HarvestRequest{ID: "harvest", MaxEntries: c.Harvest.MaxEntries, MaxBytes: c.Harvest.MaxBytes}).Valid() {

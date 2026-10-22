@@ -142,6 +142,30 @@ func TestApplyStatusNeverConvertsErrorOrUnpublishedRunsIntoSuccess(t *testing.T)
 	}
 }
 
+func TestAssignmentStatusNeedsVerifyAndPublicationReadback(t *testing.T) {
+	accepted := apply.AssignmentRealizationResult{AcceptedCommit: "integrated"}
+	applied := &apply.PublicationReceipt{Outcome: apply.PublicationApplied}
+	for _, tc := range []struct {
+		name    string
+		result  apply.AssignmentRealizationResult
+		receipt *apply.PublicationReceipt
+		err     error
+		want    model.Status
+	}{
+		{"accepted and applied", accepted, applied, nil, model.Passed},
+		{"accepted without publication", accepted, nil, nil, model.NotCompleted},
+		{"publication with technical error", accepted, applied, errors.New("cleanup"), model.NotCompleted},
+		{"publication without Verify", apply.AssignmentRealizationResult{}, applied, nil, model.NotCompleted},
+		{"stale", accepted, &apply.PublicationReceipt{Outcome: apply.PublicationStale}, nil, model.NotCompleted},
+		{"failed publication", accepted, &apply.PublicationReceipt{Outcome: apply.PublicationFailed}, nil, model.Failed},
+		{"material model problem", apply.AssignmentRealizationResult{ModelProblem: &run.ReviewIssue{Owner: "."}}, nil, nil, model.Failed},
+	} {
+		if got := AssignmentApplyStatus(tc.result, tc.receipt, tc.err); got != tc.want {
+			t.Errorf("%s: %s, want %s", tc.name, got, tc.want)
+		}
+	}
+}
+
 func TestExecutionExitCodesFollowTheReportedStatus(t *testing.T) {
 	dir := t.TempDir()
 	for _, tc := range []struct {

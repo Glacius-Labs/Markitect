@@ -14,6 +14,22 @@ type agentsRouter struct {
 	routes map[string]runport.Agents
 }
 
+// assignmentAgentsRouter uses the same captured profile routing for persistent
+// Manager and independent reviewer conversations.
+type assignmentAgentsRouter struct {
+	routes map[string]runport.AssignmentAgents
+}
+
+var _ runport.AssignmentAgents = assignmentAgentsRouter{}
+
+func (r assignmentAgentsRouter) OpenAssignment(ctx context.Context, spec runport.AssignmentSpec, handler runport.ToolHandler) (runport.AssignmentSession, error) {
+	agents, found := r.routes[spec.Profile]
+	if !found || agents == nil {
+		return nil, fmt.Errorf("%w: assignment %s names profile %q without an Agent adapter", runport.ErrInvalid, spec.ID, spec.Profile)
+	}
+	return agents.OpenAssignment(ctx, spec, handler)
+}
+
 var _ runport.Agents = agentsRouter{}
 
 func newAgentsRouter(routes map[string]runport.Agents) runport.Agents {

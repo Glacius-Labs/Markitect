@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "scripts/run-library-apply.ps1"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Creates one fresh Library fixture and bounded Luna Runtime from integrated Main, builds the product, starts apply and retains all evidence with one command.
   - path: "internal/adapters/cli/execution.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]

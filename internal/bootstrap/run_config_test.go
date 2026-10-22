@@ -25,6 +25,27 @@ func runConfigFixture(t *testing.T) map[string]any {
 	}
 }
 
+func TestAssignmentInvocationBoundsAreClosedAndFinite(t *testing.T) {
+	document := runConfigFixture(t)
+	document["maxMessages"], document["messageTimeoutSeconds"] = 40, 120
+	if cfg, err := decodeRunConfig(configBytes(t, document)); err != nil || cfg.MaxMessages != 40 || cfg.MessageTimeoutSeconds != 120 {
+		t.Fatalf("assignment bounds were not retained: %+v %v", cfg, err)
+	}
+	for _, value := range []any{0, -1, 129} {
+		document["maxMessages"] = value
+		if _, err := decodeRunConfig(configBytes(t, document)); err == nil {
+			t.Fatalf("admitted maxMessages %v", value)
+		}
+	}
+	document["maxMessages"] = 40
+	for _, value := range []any{0, -1, 3601} {
+		document["messageTimeoutSeconds"] = value
+		if _, err := decodeRunConfig(configBytes(t, document)); err == nil {
+			t.Fatalf("admitted messageTimeoutSeconds %v", value)
+		}
+	}
+}
+
 func configBytes(t *testing.T, document map[string]any) []byte {
 	t.Helper()
 	data, err := json.Marshal(document)
