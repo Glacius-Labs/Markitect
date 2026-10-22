@@ -53,6 +53,8 @@ type scheduledSession struct {
 	unblockClose    chan struct{}
 }
 
+const reviewOpenMatter = "\nOPEN MATTER: admission-limit regression remains; this handoff is not conforming."
+
 func (a *scheduledAgents) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
 	a.mu.Lock()
 	defer a.mu.Unlock()
@@ -182,7 +184,7 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 		for i := range commands {
 			commands[i] = run.CommandObservation{Command: "check", Status: "passed", ExitCode: &exit, Output: strings.Repeat("&", 4096)}
 		}
-		return run.TurnResult{Final: strings.Repeat("&", 1<<20), Completed: true, Commands: commands}, nil
+		return run.TurnResult{Final: strings.Repeat("&", 140<<10) + reviewOpenMatter, Completed: true, Commands: commands}, nil
 	}
 	return run.TurnResult{Final: "Completed " + s.spec.ID, Completed: true, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed", ExitCode: &exit}}}, nil
 }
@@ -226,11 +228,20 @@ func TestAssignmentSchedulerDeliversLargeReviewInOneConversationBeforeDecision(t
 			if err != nil {
 				t.Fatal(err)
 			}
-			var delivered strings.Builder
-			parts, decisions := 0, 0
+			var delivered, summaryDelivered strings.Builder
+			parts, summaries, decisions := 0, 0, 0
 			for _, prompt := range agents.opened["trial-0"].prompts {
 				if _, err := codec.EncodeTurnStart(codexappserver.IntegerRequestID(1), codexappserver.TurnStartParams{Thread: "review-thread", Text: prompt, Effort: "high"}); err != nil {
 					t.Fatalf("actual Codex JSON frame cannot carry review prompt of %d bytes: %v", len(prompt), err)
+				}
+				if strings.HasPrefix(prompt, "Fixed child summary from") {
+					summaries++
+					start := strings.Index(prompt, ":\n") + 2
+					end := strings.LastIndex(prompt, "\nRead this part.")
+					if start < 2 || end < start {
+						t.Fatal("malformed child summary part")
+					}
+					summaryDelivered.WriteString(prompt[start:end])
 				}
 				if strings.HasPrefix(prompt, "Fixed Git difference from direct child") {
 					parts++
@@ -254,6 +265,9 @@ func TestAssignmentSchedulerDeliversLargeReviewInOneConversationBeforeDecision(t
 			}
 			if parts < 2 || decisions != 1 || delivered.String() != git.diff {
 				t.Fatalf("review omitted or duplicated fixed diff: parts=%d decisions=%d bytes=%d/%d", parts, decisions, delivered.Len(), len(git.diff))
+			}
+			if tc.name == "json-escaping" && (summaries < 2 || summaryDelivered.String() != strings.Repeat("&", 140<<10)+reviewOpenMatter) {
+				t.Fatalf("review lost a child summary matter: summary parts=%d bytes=%d", summaries, summaryDelivered.Len())
 			}
 		})
 	}
