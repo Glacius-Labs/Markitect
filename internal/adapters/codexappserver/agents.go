@@ -81,11 +81,12 @@ type turnRun struct {
 	events         <-chan event
 	done           chan struct{}
 
-	thread ThreadID
-	turnID TurnID
-	model  string
-	final  string
-	usage  run.Usage
+	thread   ThreadID
+	turnID   TurnID
+	model    string
+	final    string
+	commands []run.CommandObservation
+	usage    run.Usage
 }
 
 // Run runs one turn. It always stops the container before it returns; Stopped
@@ -124,6 +125,7 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 		}
 	}
 	res.Conversation, res.Final, res.Usage = string(t.thread), string(t.redact([]byte(t.final))), t.usage
+	res.Commands = t.commands
 	if res.Usage.ProviderTurns > 0 {
 		res.Usage.Model = t.model
 	}
@@ -307,6 +309,7 @@ func (t *turnRun) runTurn(ctx context.Context, res *run.TurnResult) error {
 		if status != TurnCompleted {
 			return fmt.Errorf("%w: provider turn %s", ErrSession, status)
 		}
+		res.Completed = true
 		return nil
 	}
 }
@@ -374,15 +377,24 @@ func (t *turnRun) notification(m Message) error {
 			Thread string `json:"threadId"`
 			Turn   string `json:"turnId"`
 			Item   struct {
-				Type string `json:"type"`
-				Text string `json:"text"`
+				ID       string `json:"id"`
+				Type     string `json:"type"`
+				Text     string `json:"text"`
+				Phase    string `json:"phase"`
+				Command  string `json:"command"`
+				Status   string `json:"status"`
+				ExitCode *int   `json:"exitCode"`
+				Output   string `json:"aggregatedOutput"`
 			} `json:"item"`
 		}
 		if json.Unmarshal(m.body, &n) != nil || n.Thread != string(t.thread) || t.turnID != "" && n.Turn != string(t.turnID) {
 			return ErrProtocol
 		}
-		if n.Item.Type == "agentMessage" {
+		if n.Item.Type == "agentMessage" && n.Item.Phase == "final_answer" {
 			t.final = n.Item.Text
+		}
+		if n.Item.Type == "commandExecution" {
+			t.commands = append(t.commands, run.CommandObservation{ID: n.Item.ID, Command: string(t.redact([]byte(n.Item.Command))), Status: n.Item.Status, ExitCode: n.Item.ExitCode, Output: string(t.redact([]byte(n.Item.Output)))})
 		}
 	case "thread/tokenUsage/updated":
 		var n struct {

@@ -33,7 +33,7 @@ func TestReviewReceivesCandidateDirectlyWithoutBasis(t *testing.T) {
 			c.must(toolLookUp, map[string]any{"topic": "checks"})
 		}
 		for _, id := range c.pendingDecisions() {
-			c.must(toolReport, map[string]any{"kind": kindAccept, "proposal": id})
+			c.must(testAssessment, map[string]any{"kind": kindAccept, "proposal": id})
 		}
 		if strings.HasPrefix(c.now(), "your result") || strings.HasPrefix(c.now(), "your complete result is accepted") {
 			return nil
@@ -46,7 +46,7 @@ func TestReviewReceivesCandidateDirectlyWithoutBasis(t *testing.T) {
 				if m.Path == c.turn.Manager {
 					for _, child := range m.Children {
 						if f.ev.index("result.accepted", child, "", nil) < 0 {
-							c.must(toolReport, map[string]any{"kind": kindWait, "for": child, "reason": "integrate child result"})
+							c.must(testAssessment, map[string]any{"kind": kindWait, "for": child, "reason": "integrate child result"})
 							return nil
 						}
 					}

@@ -795,7 +795,7 @@ func (e *engine) verdictLocked(p *pass) Verdict {
 		}
 		// An accepted result that leaves an own obligation open needs
 		// correction, whatever finding it rests on.
-		if m.result != nil && (slices.ContainsFunc(m.result.env.Obligations, func(c coverage) bool { return c.Status == coverOpen }) || m.result.env.Integration != nil && m.result.env.Integration.Status == coverOpen) {
+		if m.result != nil && len(m.result.env.Unresolved) > 0 {
 			return NeedsCorrection
 		}
 	}

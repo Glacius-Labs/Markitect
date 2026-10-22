@@ -1,7 +1,6 @@
 package run
 
 import (
-	"encoding/json"
 	"errors"
 	"fmt"
 	"slices"
@@ -11,17 +10,15 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
-// Report kinds a Manager submits through the tool report.
+// Internal contribution stages and the actual coordination decisions.
 const (
-	kindProgress = "progress"
-	kindWait     = "wait"
-	kindBasis    = "basis"
-	kindResult   = "result"
-	kindAccept   = "accept"
-	kindReturn   = "return"
-	kindReopen   = "reopen"
-	kindRevise   = "revise"
-	kindProblem  = "problem"
+	kindWait   = "wait"
+	kindBasis  = "basis"
+	kindResult = "result"
+	kindAccept = "accept"
+	kindReturn = "return"
+	kindReopen = "reopen"
+	kindRevise = "revise"
 	// kindBind is recorded for a wait that only declared a dependency on an
 	// already accepted submission.
 	kindBind = "bind"
@@ -31,14 +28,6 @@ const (
 const (
 	stageNameBasis  = "basis"
 	stageNameResult = "result"
-)
-
-// Coverage statuses of an own obligation in a basis or result.
-const (
-	coverDone          = "done"
-	coverPreserved     = "preserved"
-	coverNotApplicable = "not_applicable"
-	coverOpen          = "open"
 )
 
 // Problem categories.
@@ -71,6 +60,7 @@ type proposal struct {
 	decidedBy string
 	reason    string
 	submitted time.Time
+	harvest   *WorkspaceHarvest
 	// raised, closing, disputes and dispositions are the submission's finding
 	// and probe effects; they take effect only when the proposal is accepted.
 	raised       []Finding
@@ -83,30 +73,19 @@ type proposal struct {
 // planning Pass; Artifacts and Evidence are the payload of the other purposes.
 // Findings and Closed are the finding references the submission recorded.
 type envelope struct {
-	Summary     string         `json:"summary"`
-	Scope       []string       `json:"scope,omitempty"`
-	Support     []evidenceItem `json:"support,omitempty"`
-	Unresolved  []string       `json:"unresolved,omitempty"`
-	Obligations []coverage     `json:"obligations"`
-	Integration *coverage      `json:"integration,omitempty"`
-	Plan        *plan          `json:"plan,omitempty"`
-	Artifacts   []string       `json:"artifacts,omitempty"`
-	Evidence    []string       `json:"evidence,omitempty"`
-	Verdict     Verdict        `json:"verdict,omitempty"`
-	Findings    []string       `json:"findings,omitempty"`
-	Closed      []string       `json:"closed,omitempty"`
-	Disputed    []string       `json:"disputed,omitempty"`
-	Children    []string       `json:"children,omitempty"`
-}
-
-// coverage is the status of one own obligation with the evidence items that
-// support its claims.
-type coverage struct {
-	Definition string         `json:"definition"`
-	Status     string         `json:"status"`
-	Note       string         `json:"note,omitempty"`
-	Conditions string         `json:"conditions,omitempty"`
-	Evidence   []evidenceItem `json:"evidence,omitempty"`
+	Commands   []CommandObservation `json:"commands,omitempty"`
+	Checks     []CheckResult        `json:"checks,omitempty"`
+	Summary    string               `json:"summary"`
+	Scope      []string             `json:"scope,omitempty"`
+	Support    []evidenceItem       `json:"support,omitempty"`
+	Unresolved []string             `json:"unresolved,omitempty"`
+	Plan       *plan                `json:"plan,omitempty"`
+	Artifacts  []string             `json:"artifacts,omitempty"`
+	Verdict    Verdict              `json:"verdict,omitempty"`
+	Findings   []string             `json:"findings,omitempty"`
+	Closed     []string             `json:"closed,omitempty"`
+	Disputed   []string             `json:"disputed,omitempty"`
+	Children   []string             `json:"children,omitempty"`
 }
 
 // plan is the payload of a planning Pass: the Manager's own concrete approach.
@@ -171,144 +150,20 @@ type closure struct {
 	reason, as, evidence string
 }
 
-type reportIn struct {
-	Kind         string          `json:"kind"`
-	Summary      string          `json:"summary"`
-	Support      []evidenceItem  `json:"support"`
-	Unresolved   []string        `json:"unresolved"`
-	For          string          `json:"for"`
-	Proposal     string          `json:"proposal"`
-	Child        string          `json:"child"`
-	Reason       string          `json:"reason"`
-	Obligations  []coverage      `json:"obligations"`
-	Integration  *coverage       `json:"integration"`
-	Plan         *plan           `json:"plan"`
-	Artifacts    []string        `json:"artifacts"`
-	Evidence     []string        `json:"evidence"`
-	Verdict      string          `json:"verdict"`
-	Findings     []findingIn     `json:"findings"`
-	Closed       []closeIn       `json:"closed"`
-	Disputed     []disputeIn     `json:"disputed"`
-	Dispositions []dispositionIn `json:"dispositions"`
-	Stage        string          `json:"stage"`
-	Category     string          `json:"category"`
-	Text         string          `json:"text"`
-	Abort        bool            `json:"abort"`
+type contribution struct {
+	Kind         string
+	Summary      string
+	Support      []evidenceItem
+	Unresolved   []string
+	Plan         *plan
+	Verdict      string
+	Findings     []findingIn
+	Closed       []closeIn
+	Disputed     []disputeIn
+	Dispositions []dispositionIn
 }
 
-// fields lists the fields a report kind may carry besides kind.
-var reportFields = map[string][]string{
-	kindProgress: {"summary"},
-	kindWait:     {"for", "reason", "stage"},
-	kindBasis:    {"summary", "support", "unresolved", "obligations", "integration", "plan", "artifacts", "evidence", "findings", "closed", "disputed", "dispositions"},
-	kindResult:   {"summary", "support", "unresolved", "obligations", "integration", "plan", "artifacts", "evidence", "verdict", "findings", "closed", "disputed", "dispositions"},
-	kindAccept:   {"proposal"},
-	kindReturn:   {"proposal", "reason"},
-	kindReopen:   {"child", "reason"},
-	kindRevise:   {"reason"},
-	kindProblem:  {"category", "text", "abort"},
-}
-
-// present lists the fields of a report that carry a value.
-func (in reportIn) present() []string {
-	var out []string
-	add := func(name string, set bool) {
-		if set {
-			out = append(out, name)
-		}
-	}
-	add("summary", in.Summary != "")
-	add("support", in.Support != nil)
-	add("unresolved", in.Unresolved != nil)
-	add("for", in.For != "")
-	add("proposal", in.Proposal != "")
-	add("child", in.Child != "")
-	add("reason", in.Reason != "")
-	add("obligations", in.Obligations != nil)
-	add("integration", in.Integration != nil)
-	add("plan", in.Plan != nil)
-	add("artifacts", in.Artifacts != nil)
-	add("evidence", in.Evidence != nil)
-	add("verdict", in.Verdict != "")
-	add("findings", in.Findings != nil)
-	add("closed", in.Closed != nil)
-	add("disputed", in.Disputed != nil)
-	add("dispositions", in.Dispositions != nil)
-	add("stage", in.Stage != "")
-	add("category", in.Category != "")
-	add("text", in.Text != "")
-	add("abort", in.Abort)
-	return out
-}
-
-// report serves the tool report of a Manager's turn.
-func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnswer {
-	var in reportIn
-	if err := decodeStrict(args, &in); err != nil {
-		return refuse("%v", err)
-	}
-	allowed, ok := reportFields[in.Kind]
-	if !ok {
-		return refuse("kind must be one of progress, wait, basis, result, accept, return, reopen, revise or problem.")
-	}
-	var unexpected []string
-	for _, field := range in.present() {
-		if !slices.Contains(allowed, field) {
-			unexpected = append(unexpected, field)
-		}
-	}
-	if len(unexpected) > 0 {
-		return refuse("Fields %s are not part of a report of kind %s. Allowed fields: kind, %s. Omit the other fields; put a progress update entirely in summary.", strings.Join(unexpected, ", "), in.Kind, strings.Join(allowed, ", "))
-	}
-	e.mu.Lock()
-	defer e.mu.Unlock()
-	if m.p != e.cur || m.p.sealed {
-		return refuse("This turn belongs to %s, which no longer accepts reports.", m.p.id)
-	}
-	if m.stage == stageStart {
-		return refuse("Your work in this Pass was reset; wait until it starts again.")
-	}
-	if (ts.blocked || m.stage == stageBlocked) && in.Kind != kindWait && in.Kind != kindProblem {
-		return refuse("Your own work waits for %s. Until then you may answer, ask, wait or report a problem; you cannot submit, report progress or decide.", m.waiting)
-	}
-	var answer ToolAnswer
-	kind := in.Kind
-	switch in.Kind {
-	case kindProgress:
-		answer = e.reportProgress(m, ts, in)
-	case kindWait:
-		answer, kind = e.reportWait(m, ts, in)
-	case kindBasis, kindResult:
-		answer = e.submit(m, ts, in)
-	case kindAccept, kindReturn:
-		answer = e.decide(m, ts, in)
-	case kindReopen:
-		answer = e.reopen(m, ts, in)
-	case kindRevise:
-		answer = e.revise(m, ts, in)
-	case kindProblem:
-		answer = e.problem(m, ts, in)
-	}
-	if !answer.Refused {
-		ts.reports = append(ts.reports, kind)
-	}
-	return answer
-}
-
-func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswer {
-	if m.stage != stageOwn && m.stage != stageIntegrate {
-		return refuse("progress is reported while you work on your basis or your complete result.")
-	}
-	summary, err := toolText("summary", in.Summary)
-	if err != nil {
-		return refuse("%v", err)
-	}
-	ts.progress = summary
-	_ = e.record(Event{Kind: "report.progress", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"summary": summary}})
-	return ToolAnswer{Text: "Progress recorded. You continue in your next turn."}
-}
-
-// reportWait records a named wait: an open question of the Manager, a child
+// declareWait records a named wait: an open question of the Manager, a child
 // that is not Done, or the accepted basis or result of another Manager of the
 // Pass. A wait on another Manager wakes the waiter when that submission is
 // accepted; nothing else re-queues it. In a Pass with BindWaits that accepted
@@ -317,9 +172,9 @@ func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswe
 // closes a cycle with the declared dependencies and the integration order
 // could never be satisfied: it is refused with the cycle, so the Manager can
 // submit what does not need it first or ask its parent; a Pass that still
-// cannot advance ends as stalled. It returns the answer and the report kind the
+// cannot advance ends as stalled. It returns the answer and the actual coordination action the
 // turn records.
-func (e *engine) reportWait(m *member, ts *turnState, in reportIn) (ToolAnswer, string) {
+func (e *engine) declareWait(m *member, ts *turnState, in actionIn) (ToolAnswer, string) {
 	answer, bound := e.waitLocked(m, ts, in)
 	if bound {
 		return answer, kindBind
@@ -327,7 +182,7 @@ func (e *engine) reportWait(m *member, ts *turnState, in reportIn) (ToolAnswer, 
 	return answer, kindWait
 }
 
-func (e *engine) waitLocked(m *member, ts *turnState, in reportIn) (ToolAnswer, bool) {
+func (e *engine) waitLocked(m *member, ts *turnState, in actionIn) (ToolAnswer, bool) {
 	what := strings.TrimSpace(in.For)
 	stage := strings.TrimSpace(in.Stage)
 	var on *waitTarget
@@ -441,115 +296,101 @@ func (e *engine) waitCycleLocked(m *member, on waitTarget) string {
 
 // submit validates and records a basis or a complete result. It is checked
 // and decided after the turn ended.
-func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
+// prepareContribution validates semantic content without recording a submission.
+func (e *engine) prepareContribution(m *member, ts *turnState, in contribution) (*proposal, error) {
 	p := m.p
 	switch {
 	case ts.proposal != nil:
-		return refuse("You already submitted %s in this turn.", ts.proposal.id)
+		return nil, fmt.Errorf("You already submitted %s in this turn.", ts.proposal.id)
 	case len(ts.delegations) > 0 || len(m.helpers) > 0:
-		return refuse("Your helpers are still working; submit after their results reached you.")
+		return nil, fmt.Errorf("Your helpers are still working; submit after their results reached you.")
 	case ts.blocked:
-		return refuse("This turn started while your own work was blocked, so it only answers what is asked of you; your work starts in your next turn.")
+		return nil, fmt.Errorf("This turn started while your own work was blocked, so it only answers what is asked of you; your work starts in your next turn.")
 	case in.Kind == kindBasis && (m.basis != nil || m.stage != stageOwn && m.stage != stageIntegrate):
-		return refuse("A basis is submitted while you work on your own contribution; you are at %s.", m.stage)
+		return nil, fmt.Errorf("A basis is submitted while you work on your own contribution; you are at %s.", m.stage)
 	case in.Kind == kindResult && m.stage != stageOwn && m.stage != stageIntegrate && m.stage != stageDelegated:
-		return refuse("A complete result is submitted while working on or integrating your contribution; you are at %s.", m.stage)
+		return nil, fmt.Errorf("A complete result is submitted while working on or integrating your contribution; you are at %s.", m.stage)
 	case in.Kind == kindResult && !m.childrenDoneLocked():
-		return refuse("Your complete result follows acceptance of all your children's results; integrate them first.")
+		return nil, fmt.Errorf("Your complete result follows acceptance of all your children's results; integrate them first.")
 	}
 	if in.Kind == kindResult {
 		if w := e.awaitedLocked(m); w != "" {
-			return refuse("Your complete result builds on %s, which is not accepted again yet; report wait for it, then integrate its new version.", w)
+			return nil, fmt.Errorf("Your complete result builds on %s, which is not accepted again yet; report wait for it, then integrate its new version.", w)
 		}
 	}
 	summary, err := toolText("summary", in.Summary)
 	if err != nil {
-		return refuse("%v", err)
+		return nil, fmt.Errorf("%v", err)
 	}
-	env := envelope{Summary: summary, Scope: slices.Clone(m.Obligations)}
+	env := envelope{Summary: summary, Scope: slices.Clone(m.Obligations), Commands: ts.commands, Checks: slices.Clone(p.checks)}
+	if ts.harvest != nil {
+		if tree, err := overlay(p.accepted, ts.harvest.Tree, m.Path, e.cfg.OwnerOf); err == nil {
+			for _, change := range snapshot.Compare(p.accepted, tree) {
+				env.Artifacts = append(env.Artifacts, change.Path().String())
+			}
+		}
+	}
 	if len(in.Unresolved) > maxToolItems {
-		return refuse("At most %d unresolved gaps per report.", maxToolItems)
+		return nil, fmt.Errorf("At most %d unresolved gaps per report.", maxToolItems)
 	}
-	if env.Support, err = e.evidenceOf(m, -1, coverage{Evidence: in.Support}, e.boundStandLocked(p)); err != nil {
-		return refuse("support: %v", err)
-	}
+	env.Support = in.Support
 	for _, gap := range in.Unresolved {
 		text, err := toolText("unresolved", gap)
 		if err != nil {
-			return refuse("%v", err)
+			return nil, fmt.Errorf("%v", err)
 		}
 		env.Unresolved = append(env.Unresolved, text)
 	}
-	if env.Obligations, err = e.coverageOf(m, in); err != nil {
-		return refuse("%v", err)
-	}
-	if env.Integration, err = e.integrationOf(m, in); err != nil {
-		return refuse("%v", err)
-	}
 	raised, err := e.findingsOf(m, in.Findings)
 	if err != nil {
-		return refuse("%v", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	dispositions, err := e.dispositionsOf(m, in.Dispositions)
 	if err != nil {
-		return refuse("%v", err)
+		return nil, fmt.Errorf("%v", err)
 	}
-	if err := e.adverseConsistent(m, in.Kind, Verdict(in.Verdict), env.Obligations, raised, dispositions); err != nil {
-		return refuse("%v", err)
+	if err := e.adverseConsistent(m, in.Kind, Verdict(in.Verdict), raised, dispositions); err != nil {
+		return nil, fmt.Errorf("%v", err)
 	}
 	if p.spec.Plans {
 		if in.Plan == nil {
-			return refuse("plan is required in this Pass.")
+			return nil, fmt.Errorf("plan is required in this Pass.")
 		}
 		if err := e.checkPlan(m, in.Plan); err != nil {
-			return refuse("plan: %v", err)
+			return nil, fmt.Errorf("plan: %v", err)
 		}
 		env.Plan = in.Plan
 	} else if in.Plan != nil {
-		return refuse("plan is only part of a planning Pass.")
-	}
-	if env.Artifacts, err = e.artifactsOf(m, in.Artifacts); err != nil {
-		return refuse("%v", err)
-	}
-	for i, ev := range in.Evidence {
-		text, err := toolText(fmt.Sprintf("evidence[%d]", i), ev)
-		if err != nil {
-			return refuse("%v", err)
-		}
-		env.Evidence = append(env.Evidence, text)
+		return nil, fmt.Errorf("plan is only part of a planning Pass.")
 	}
 	closing, err := e.closuresOf(m, in.Closed, raised)
 	if err != nil {
-		return refuse("%v", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	disputes, err := e.disputesOf(m, in.Disputed)
 	if err != nil {
-		return refuse("%v", err)
+		return nil, fmt.Errorf("%v", err)
 	}
 	if in.Kind == kindResult {
 		switch Verdict(in.Verdict) {
 		case Satisfied, NeedsCorrection:
 			env.Verdict = Verdict(in.Verdict)
 		default:
-			return refuse("verdict must be %q or %q.", Satisfied, NeedsCorrection)
+			return nil, fmt.Errorf("verdict must be %q or %q.", Satisfied, NeedsCorrection)
 		}
 		if env.Verdict == Satisfied && len(env.Unresolved) > 0 {
-			return refuse("A satisfied result cannot leave required work or evidence unresolved; raise the concrete finding or resolve the gap first.")
-		}
-		needsSupport := evidenceRequired(p.spec) || !p.spec.Plans && !p.spec.Assesses && (m.Parent == "" || len(m.Children) > 0)
-		if env.Verdict == Satisfied && needsSupport && !hasResultSupport(m, env) {
-			return refuse("A satisfied result needs relevant support for its assessment of the bound scope and integration; a success label or suite total alone is insufficient.")
+			return nil, fmt.Errorf("A satisfied result cannot leave required work or evidence unresolved; raise the concrete finding or resolve the gap first.")
 		}
 		for _, q := range e.questions {
 			if q.From == m.Path && !q.Answered && !q.Lapsed {
-				return refuse("Your question %s is unanswered; a complete result cannot hide it. Wait for the answer first.", q.ID)
+				return nil, fmt.Errorf("Your question %s is unanswered; a complete result cannot hide it. Wait for the answer first.", q.ID)
 			}
 		}
 		if err := e.verdictConsistent(m, env, raised, closing); err != nil {
-			return refuse("%v", err)
+			return nil, fmt.Errorf("%v", err)
 		}
 	} else if in.Verdict != "" {
-		return refuse("verdict belongs to a complete result.")
+		return nil, fmt.Errorf("verdict belongs to a complete result.")
 	}
 	if in.Kind == kindResult {
 		for _, c := range m.Children {
@@ -558,127 +399,31 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 			}
 		}
 	}
+	return &proposal{kind: in.Kind, member: m, env: env, status: proposalSubmitted, raised: raised, closing: closing, disputes: disputes, dispositions: dispositions}, nil
+}
+
+// submit is called once by the Host after the native Turn has ended.
+func (e *engine) submit(m *member, ts *turnState, in contribution) ToolAnswer {
+	pr, err := e.prepareContribution(m, ts, in)
+	if err != nil {
+		return refuse("%v", err)
+	}
 	e.nextProposal++
-	pr := &proposal{id: fmt.Sprintf("P%d", e.nextProposal), kind: in.Kind, member: m, env: env, status: proposalSubmitted, submitted: e.now(),
-		raised: raised, closing: closing, disputes: disputes, dispositions: dispositions}
+	pr.id, pr.submitted = fmt.Sprintf("P%d", e.nextProposal), e.now()
+	pr.harvest = ts.harvest
+	env, raised, closing, disputes, dispositions := pr.env, pr.raised, pr.closing, pr.disputes, pr.dispositions
+	p := m.p
 	p.proposals = append(p.proposals, pr)
 	ts.proposal = pr
 	_ = e.record(Event{Kind: "proposal.submitted", Pass: p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"proposal": pr.id, "kind": pr.kind, "purpose": p.spec.Purpose, "envelope": env,
 		"findings": raised, "closed": slices.Sorted(mapKeys(closing)), "disputed": slices.Sorted(mapKeys(disputes)), "dispositions": dispositions}})
-	text := fmt.Sprintf("Submitted %s %s. It is checked when this turn ends", in.Kind, pr.id)
-	if m.Parent != "" {
-		text += " and then decided by your parent"
-	}
-	return ToolAnswer{Text: text + ". End this Agent Turn now; do not continue probing or rewriting the submitted report. Your next work starts in a later Turn after its decision."}
-}
-
-// coverageOf validates the obligation coverage of a submission: every entry is
-// an own obligation once, with a known status and a note where one is needed.
-// Detailed entries are optional; the concise result assesses the Host-bound
-// scope. No receipt is mechanically expanded into satisfied Definitions.
-func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
-	seen := map[string]bool{}
-	var out []coverage
-	for i, c := range in.Obligations {
-		if !slices.Contains(m.Obligations, c.Definition) {
-			return nil, fmt.Errorf("obligations[%d]: %q is not one of your own obligations", i, c.Definition)
-		}
-		if seen[c.Definition] {
-			return nil, fmt.Errorf("obligations[%d]: %q is listed twice", i, c.Definition)
-		}
-		seen[c.Definition] = true
-		switch c.Status {
-		case coverDone, coverPreserved, coverNotApplicable, coverOpen:
-		default:
-			return nil, fmt.Errorf("obligations[%d]: status must be done, preserved, not_applicable or open", i)
-		}
-		note := strings.TrimSpace(c.Note)
-		needsNote := c.Status == coverNotApplicable || c.Status == coverOpen || m.p.spec.Plans
-		if needsNote && note == "" {
-			return nil, fmt.Errorf("obligations[%d]: a note is required for %s", i, c.Definition)
-		}
-		if note != "" {
-			if _, err := toolText(fmt.Sprintf("obligations[%d].note", i), note); err != nil {
-				return nil, err
-			}
-		}
-		claimed := c.Status == coverDone || c.Status == coverPreserved
-		if c.Conditions != "" {
-			if _, err := toolText("conditions", c.Conditions); err != nil {
-				return nil, err
-			}
-		}
-		if (m.p.spec.Review || evidenceRequired(m.p.spec)) && claimed && len(c.Evidence) == 0 && len(in.Support) == 0 {
-			return nil, fmt.Errorf("obligations[%d]: %s needs evidence for %s: per claim a probe receipt of the tool check or an inspected source location with reasoning; a suite total alone is no coverage", i, c.Status, c.Definition)
-		}
-		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p))
-		if err != nil {
-			return nil, err
-		}
-		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Conditions: c.Conditions, Evidence: evidence})
-	}
-	return out, nil
-}
-
-// hasResultSupport is a structural minimum, not a semantic completeness proof.
-// Parents assess interfaces and invariants even when they own no Definitions.
-func hasResultSupport(m *member, env envelope) bool {
-	if len(env.Support) > 0 || env.Integration != nil && len(env.Integration.Evidence) > 0 {
-		return true
-	}
-	for _, c := range env.Obligations {
-		if len(c.Evidence) > 0 {
-			return true
-		}
-	}
-	if m.Parent == "" || len(m.Children) > 0 {
-		return false
-	}
-	return len(env.Obligations) == len(m.Obligations) && slices.IndexFunc(env.Obligations, func(c coverage) bool { return c.Status != coverNotApplicable }) < 0
+	return ToolAnswer{Text: "Host recorded " + pr.id + "."}
 }
 
 // evidenceRequired applies realized-claim evidence to Implement and independent
 // artifact review. Model assessment judges intent rather than artifact behavior.
 func evidenceRequired(spec PassSpec) bool {
 	return !spec.Assesses && (spec.Purpose == Implement || spec.Review)
-}
-
-// integrationOf keeps the parent's own integration in the common submission,
-// including Root without own Definitions. Its authority is the real model,
-// never a fabricated Definition or a child's success label.
-func (e *engine) integrationOf(m *member, in reportIn) (*coverage, error) {
-	required := !m.p.spec.Assesses && (m.Parent == "" || len(m.Children) > 0)
-	c := in.Integration
-	if c == nil {
-		return nil, nil
-	}
-	if !required {
-		return nil, fmt.Errorf("integration belongs to a parent; cover your own obligations instead")
-	}
-	if c.Definition != "" {
-		return nil, fmt.Errorf("integration has no synthetic definition; cite real model authority in its evidence")
-	}
-	if c.Status != coverDone && c.Status != coverPreserved && c.Status != coverOpen {
-		return nil, fmt.Errorf("integration.status must be done, preserved or open; every parent owns integration")
-	}
-	if c.Conditions != "" {
-		if _, err := toolText("integration.conditions", c.Conditions); err != nil {
-			return nil, err
-		}
-	}
-	if _, err := toolText("integration.note", c.Note); err != nil {
-		return nil, err
-	}
-	if in.Kind == kindResult && c.Status != coverOpen && !m.p.spec.Plans && len(c.Evidence) == 0 && len(in.Support) == 0 {
-		return nil, fmt.Errorf("integration needs your own discriminating evidence; accepted child reports alone do not establish composition")
-	}
-	out := *c
-	var err error
-	out.Evidence, err = e.evidenceOf(m, -1, out, e.boundStandLocked(m.p))
-	if err != nil {
-		return nil, fmt.Errorf("integration: %w", err)
-	}
-	return &out, nil
 }
 
 // boundStandLocked is the stand a submission of the Pass is bound to when it is
@@ -701,21 +446,11 @@ func (e *engine) boundStandLocked(p *pass) *snapshot.Tree {
 // or erred without a disposition, or a satisfied result while any adverse
 // receipt within its responsibility has none. The submission's own findings
 // and dispositions count.
-func (e *engine) adverseConsistent(m *member, kind string, verdict Verdict, obligations []coverage, raised []Finding, dispositions map[string]ProbeDisposition) error {
+func (e *engine) adverseConsistent(m *member, kind string, verdict Verdict, raised []Finding, dispositions map[string]ProbeDisposition) error {
 	if !m.p.spec.Review {
 		return nil
 	}
 	open := e.undisposedLocked(m.p.tree.Digest().String(), m.Path, m.p.id, dispositions, raised)
-	for _, c := range obligations {
-		if c.Status != coverDone && c.Status != coverPreserved {
-			continue
-		}
-		for _, r := range open {
-			if r.Requester == m.Path && r.Obligation == c.Definition {
-				return fmt.Errorf("%s is %s, but your receipt %s for it %s and has no disposition: cite it in a genuine finding, dispose of it, or cover the obligation as open", c.Definition, c.Status, r.ID, describeOutcome(r))
-			}
-		}
-	}
 	if kind == kindResult && verdict == Satisfied && len(open) > 0 {
 		var ids []string
 		for _, r := range open {
@@ -909,26 +644,6 @@ func describeCycle(cycle []depNode) string {
 
 // artifactsOf validates the artifact references of a submission: in a work
 // Pass they name the submitter's own artifacts.
-func (e *engine) artifactsOf(m *member, artifacts []string) ([]string, error) {
-	var out []string
-	for i, a := range artifacts {
-		path, err := snapshot.NewPath(strings.TrimSuffix(a, "/"))
-		if err != nil {
-			return nil, fmt.Errorf("artifacts[%d] %q is not a repository-relative path", i, a)
-		}
-		if !m.p.spec.Review && !m.p.spec.Plans {
-			if owner := e.cfg.OwnerOf(path); owner != m.Path {
-				return nil, fmt.Errorf("artifacts[%d] %q is owned by %s, not by you; reference only your own artifacts", i, a, owner)
-			}
-		}
-		out = append(out, a)
-	}
-	return out, nil
-}
-
-// findingsOf validates the findings of a submission: each names the
-// submitter or a descendant as owner, the obligation, the observed evidence,
-// whether it is genuine and the correction purpose it needs.
 func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 	if len(in) > maxToolItems {
 		return nil, fmt.Errorf("at most %d findings per report", maxToolItems)
@@ -940,7 +655,8 @@ func (e *engine) findingsOf(m *member, in []findingIn) ([]Finding, error) {
 			f.Owner = m.Path
 		}
 		if f.Blocking == nil {
-			return nil, fmt.Errorf("findings[%d]: blocking is required", i)
+			blocking := f.Kind != string(Suggestion)
+			f.Blocking = &blocking
 		}
 		if !e.within(f.Owner, m.Path) {
 			return nil, fmt.Errorf("findings[%d]: owner %q must be you (%q) or one of your descendants", i, f.Owner, m.Path)
@@ -1214,7 +930,7 @@ func (e *engine) verdictConsistent(m *member, env envelope, raised []Finding, cl
 	for i := range raised {
 		count(&raised[i])
 	}
-	hasOpenCoverage := slices.ContainsFunc(env.Obligations, func(c coverage) bool { return c.Status == coverOpen }) || env.Integration != nil && env.Integration.Status == coverOpen
+	hasOpenCoverage := len(env.Unresolved) > 0
 	switch {
 	case env.Verdict == Satisfied && own > 0:
 		return fmt.Errorf("verdict satisfied, but %d genuine finding(s) raised within your responsibility stay open; close those you raised with a reason or report needs_correction", own)
@@ -1228,7 +944,7 @@ func (e *engine) verdictConsistent(m *member, env envelope, raised []Finding, cl
 
 // decide applies a parent's semantic decision on a checked proposal of one of
 // its direct children.
-func (e *engine) decide(m *member, ts *turnState, in reportIn) ToolAnswer {
+func (e *engine) decide(m *member, ts *turnState, in actionIn) ToolAnswer {
 	var pr *proposal
 	for _, x := range m.p.proposals {
 		if x.id == in.Proposal {
@@ -1259,7 +975,7 @@ func (e *engine) decide(m *member, ts *turnState, in reportIn) ToolAnswer {
 	return ToolAnswer{Text: fmt.Sprintf("Accepted %s of %s.", pr.id, pr.member.Path)}
 }
 
-func (e *engine) reopen(m *member, ts *turnState, in reportIn) ToolAnswer {
+func (e *engine) reopen(m *member, ts *turnState, in actionIn) ToolAnswer {
 	if m.stage != stageIntegrate {
 		return refuse("You reopen a child's accepted result while you integrate, before you submit your own result.")
 	}
@@ -1279,7 +995,7 @@ func (e *engine) reopen(m *member, ts *turnState, in reportIn) ToolAnswer {
 	return ToolAnswer{Text: fmt.Sprintf("Reopened the result of %s; you wait for its new result.", in.Child)}
 }
 
-func (e *engine) revise(m *member, ts *turnState, in reportIn) ToolAnswer {
+func (e *engine) revise(m *member, ts *turnState, in actionIn) ToolAnswer {
 	if (m.stage != stageDelegated && m.stage != stageIntegrate) || m.basis == nil {
 		return refuse("You revise an accepted basis while your children work on it or before you submit your result.")
 	}
@@ -1292,19 +1008,19 @@ func (e *engine) revise(m *member, ts *turnState, in reportIn) ToolAnswer {
 	return ToolAnswer{Text: "Your basis is revised: its consumers wait, and your area is writable again from your next turn."}
 }
 
-func (e *engine) problem(m *member, ts *turnState, in reportIn) ToolAnswer {
-	if !slices.Contains(problemCategories, in.Category) {
+func (e *engine) problem(m *member, ts *turnState, category, text string, abort bool) ToolAnswer {
+	if !slices.Contains(problemCategories, category) {
 		return refuse("category must be one of %s.", strings.Join(problemCategories, ", "))
 	}
-	text, err := toolText("text", in.Text)
+	text, err := toolText("text", text)
 	if err != nil {
 		return refuse("%v", err)
 	}
-	if in.Abort && (m.Parent != "" || in.Category != "model") {
+	if abort && (m.Parent != "" || category != "model") {
 		return refuse("Only Root ends a run, and only for a model that is erroneous or contradictory (category model).")
 	}
-	e.addProblemLocked(Problem{Manager: m.Path, Category: in.Category, Text: text, Abort: in.Abort})
-	if in.Abort {
+	e.addProblemLocked(Problem{Manager: m.Path, Category: category, Text: text, Abort: abort})
+	if abort {
 		e.reject(ModelErrorReason + text)
 		return ToolAnswer{Text: "Recorded. The run ends now without publishing anything."}
 	}
@@ -1358,7 +1074,12 @@ func (e *engine) checkSubmission(pr *proposal) {
 	e.mu.Unlock()
 	var findings []Finding
 	var composite snapshot.Tree
-	h, err := e.peek()
+	h, err := WorkspaceHarvest{}, error(nil)
+	if pr.harvest != nil {
+		h = *pr.harvest
+	} else {
+		h, err = e.peek()
+	}
 	if err != nil {
 		e.halt(fmt.Sprintf("the area of %s could not be observed for its submission %s: %v", m.Path, pr.id, err))
 	} else {

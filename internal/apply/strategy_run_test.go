@@ -46,7 +46,6 @@ type preservingAgents struct {
 	unstopped   string
 	finds       string
 	correction  string
-	refused     []string
 	lookups     map[string][]string
 	edits       map[string]string
 	ws          *treeWorkspaces
@@ -96,7 +95,20 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	if turn.Kind == run.VerifyTurn && (!turn.ReadOnly || slices.ContainsFunc(turn.Mounts, func(m run.PathMount) bool { return m.Writable })) {
 		a.t.Errorf("verify turn %s can write", turn.ID)
 	}
+	final := `{"status":"continue","summary":"coordinated pending work","findings":[],"open":[]}`
 	call := func(name string, args map[string]any) string {
+		if name == "finish" {
+			kind, _ := args["kind"].(string)
+			if kind == "accept" || kind == "return" || kind == "reopen" || kind == "revise" {
+				name = "decide"
+			} else if kind == "wait" {
+				name = "wait"
+				delete(args, "kind")
+			} else {
+				final = scriptedFinal(args)
+				return "native final assessment prepared"
+			}
+		}
 		data, _ := json.Marshal(args)
 		answer := tools(ctx, name, data)
 		if answer.Refused {
@@ -132,7 +144,7 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 		}
 	}
 	for _, m := range decideRE.FindAllStringSubmatch(turn.Prompt, -1) {
-		call("report", map[string]any{"kind": "accept", "proposal": m[1]})
+		call("finish", map[string]any{"kind": "accept", "proposal": m[1]})
 	}
 	a.mu.Lock()
 	aborts := turn.Kind == run.ExecuteTurn && turn.Manager == a.abort
@@ -141,12 +153,10 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	}
 	a.mu.Unlock()
 	if aborts {
-		call("report", map[string]any{"kind": "problem", "category": "model", "abort": true, "text": "lending/loan-policy and lending/borrow state different loan limits."})
-		return run.TurnResult{Conversation: "conv-" + turn.Home, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
+		call("finish", map[string]any{"kind": "problem", "category": "model", "abort": true, "text": "lending/loan-policy and lending/borrow state different loan limits."})
+		return run.TurnResult{Completed: true, Final: final, Conversation: "conv-" + turn.Home, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
 	}
-	plans := slices.ContainsFunc(turn.Tools, func(s run.ToolSpec) bool {
-		return s.Name == "report" && strings.Contains(string(s.InputSchema), `"plan":`)
-	})
+	plans := strings.Contains(turn.Prompt, ": plan\n") || strings.Contains(turn.Prompt, "In the plan Pass")
 	submission := func(kind string) map[string]any {
 		report := map[string]any{"kind": kind, "summary": kind + " of " + turn.Manager + "."}
 		raise := false
@@ -229,22 +239,11 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	now, _, _ := strings.Cut(rest, "\n")
 	switch {
 	case strings.HasPrefix(now, "work on your own contribution"):
-		call("report", submission("basis"))
+		call("finish", submission("basis"))
 	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
 		report := submission("result")
-		findings, _ := report["findings"].([]map[string]any)
-		if len(findings) == 1 && findings[0]["correction"] != "implement" {
-			data, _ := json.Marshal(report)
-			answer := tools(ctx, "report", data)
-			if !answer.Refused {
-				break
-			}
-			a.mu.Lock()
-			a.refused = append(a.refused, answer.Text)
-			a.mu.Unlock()
-			findings[0]["correction"] = "implement"
-		}
-		call("report", report)
+
+		call("finish", report)
 	}
 	stopped := true
 	if turn.Manager == a.unstopped && turn.Kind == run.ExecuteTurn {
@@ -263,7 +262,7 @@ func (a *preservingAgents) Run(ctx context.Context, turn run.Turn, tools run.Too
 	}
 	a.assessing[conversation] = assessing
 	a.mu.Unlock()
-	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: stopped, Compacted: compacted}, nil
+	return run.TurnResult{Completed: true, Final: final, Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: stopped, Compacted: compacted}, nil
 }
 
 // passingRunner runs every check of a candidate successfully.
@@ -480,12 +479,11 @@ func TestBothStrategiesCorrectAFindingThroughAFreshVerify(t *testing.T) {
 	for _, tc := range []struct {
 		strategy, correction string
 		passes               []run.Purpose
-		refused              bool
 	}{
 		// direct knows only implement: a finding that names plan is refused.
-		{"direct", "plan", []run.Purpose{run.Assess, run.Implement, run.Verify, run.Implement, run.Verify}, true},
+		{"direct", "implement", []run.Purpose{run.Assess, run.Implement, run.Verify, run.Implement, run.Verify}},
 		// staged restarts at the earliest purpose the finding names.
-		{"staged", "prepare", []run.Purpose{run.Assess, run.Plan, run.Prepare, run.Implement, run.Verify, run.Prepare, run.Implement, run.Verify}, false},
+		{"staged", "prepare", []run.Purpose{run.Assess, run.Plan, run.Prepare, run.Implement, run.Verify, run.Prepare, run.Implement, run.Verify}},
 	} {
 		t.Run(tc.strategy, func(t *testing.T) {
 			// Seven Passes of six Managers need more turns than the fixture's 120.
@@ -513,13 +511,40 @@ func TestBothStrategiesCorrectAFindingThroughAFreshVerify(t *testing.T) {
 			if !slices.Equal(purposes, tc.passes) || verify < 0 || verdicts[verify] != run.NeedsCorrection || verdicts[len(tc.passes)-1] != run.Satisfied {
 				t.Fatalf("passes %v verdicts %v", purposes, verdicts)
 			}
-			if refused := len(agents.refused) == 1 && strings.Contains(agents.refused[0], "correction"); refused != tc.refused {
-				t.Errorf("correction %s refused %v: %v", tc.correction, refused, agents.refused)
-			}
+
 			if len(result.Outcome.Findings) != 1 || !result.Outcome.Findings[0].Closed || result.Outcome.Findings[0].ClosedAs != "disproved" || len(publisher.requests) != 1 {
 				t.Fatalf("findings %+v, publications %d", result.Outcome.Findings, len(publisher.requests))
 			}
 		})
+	}
+}
+
+func TestNativeFinalWithUnknownCorrectionCannotPublish(t *testing.T) {
+	req := strategyRequestWithTurns(t, "direct", 200)
+	cfg, err := apply.BuildApplyConfig(req, time.Now())
+	if err != nil {
+		t.Fatal(err)
+	}
+	agents := &preservingAgents{t: t, obligations: map[string][]string{}, finds: "lending/reminders", correction: "plan"}
+	for _, m := range cfg.Team {
+		agents.obligations[m.Path] = m.Obligations
+	}
+	publisher := &fakePublisher{receipt: apply.PublicationReceipt{ID: "run-1", Outcome: apply.PublicationNoChange}}
+	evidence := &memoryEvidence{}
+	req.Agents, req.Workspaces, req.Runner, req.Evidence, req.Publisher = agents, &treeWorkspaces{}, &passingRunner{}, evidence, publisher
+	result, _ := apply.Apply(context.Background(), req)
+	if result.Outcome.Status != run.Incomplete || len(publisher.requests) != 0 {
+		t.Fatalf("unknown correction published: %+v", result.Outcome)
+	}
+	var observed bool
+	for _, ev := range evidence.events {
+		if ev.Kind == "assessment.unresolved" {
+			data, _ := json.Marshal(ev.Data)
+			observed = observed || strings.Contains(string(data), "correction")
+		}
+	}
+	if !observed {
+		t.Fatal("Host did not record the actual semantic correction failure")
 	}
 }
 
@@ -544,4 +569,27 @@ func TestApplyRefusesAnUnknownStrategyAndAMissingBuild(t *testing.T) {
 	if result, err := apply.Apply(context.Background(), req); err == nil || !strings.Contains(err.Error(), "implementation identity") || result.Outcome.Status != "" {
 		t.Fatalf("a run without a build identity: %+v %v", result, err)
 	}
+}
+
+// scriptedFinal is the existing scripted Agent's native semantic answer. No
+// report tool is called and no Host identity/evidence metadata is reproduced.
+func scriptedFinal(in map[string]any) string {
+	out := map[string]any{"status": "continue", "summary": in["summary"], "findings": []any{}, "open": []any{}}
+	for _, key := range []string{"findings", "closed", "disputed", "dispositions", "plan"} {
+		if value, ok := in[key]; ok {
+			out[key] = value
+		}
+	}
+	switch in["kind"] {
+	case "basis":
+		out["contract"] = true
+	case "result":
+		out["status"] = in["verdict"]
+	case "problem":
+		out["status"] = "blocked"
+		out["summary"] = in["text"]
+		out["problem"] = in["text"]
+	}
+	data, _ := json.Marshal(out)
+	return string(data)
 }

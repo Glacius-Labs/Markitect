@@ -42,7 +42,7 @@ func TestStrategiesComposeTheOnePassProcess(t *testing.T) {
 	}
 	// One Root duty in every strategy: a confirmed model problem ends the run,
 	// since nobody answers from outside the tree (closed Runs, PR #560).
-	if Direct.rootDuty() != Staged.rootDuty() || !strings.Contains(Direct.rootDuty(), "abort true") || !strings.Contains(Direct.rootDuty(), "instead of letting a Manager pick a default") ||
+	if Direct.rootDuty() != Staged.rootDuty() || !strings.Contains(Direct.rootDuty(), "final assessment problem field") || !strings.Contains(Direct.rootDuty(), "instead of letting a Manager pick a default") ||
 		!strings.Contains(Direct.rootDuty(), "a new run starts") || strings.Contains(Direct.rootDuty(), "ask the user") {
 		t.Errorf("Root duties: staged %q, direct %q", Staged.rootDuty(), Direct.rootDuty())
 	}

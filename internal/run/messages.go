@@ -45,7 +45,7 @@ func closedRun(spec PassSpec) string {
 	if spec.Assesses {
 		return closed + "A material decision the model leaves open without delegating it, an unusable contract, a contradiction or an erroneous statement is a genuine finding of this assessment, with the correction its guidance names; your integrated result confirms it."
 	}
-	return closed + "A public decision the model leaves open without delegating it, a contradiction or an error is a model problem: report kind problem, category model, abort true, naming the Definitions concerned; the model is corrected outside the run and a new run starts."
+	return closed + "A public decision the model leaves open without delegating it, a contradiction or an error is a model problem: state the confirmed problem in the final assessment problem field, naming the Definitions concerned; the model is corrected outside the run and a new run starts."
 }
 
 // send serves the tool send: a question, an answer to a question addressed to
@@ -128,7 +128,7 @@ func (e *engine) ask(ctx context.Context, m *member, ts *turnState, to, text, ab
 	target := m.p.byPath[to]
 	e.deliverLocked(target, item{kind: itemMessage, text: fmt.Sprintf("Question %s from %s: %s\n  Answer it with send kind answer, about %s; or ask your own contact first with about %s.", q.ID, relation(m.mgr, target.mgr), text, q.ID, q.ID)})
 	e.scheduleLocked()
-	answer := fmt.Sprintf("Asked %s. The answer reaches you as an item; report wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m, ts))
+	answer := fmt.Sprintf("Asked %s. The answer reaches you as an item; use wait with for %s when you cannot continue without it.%s", q.ID, q.ID, e.takeItemsLocked(m, ts))
 	e.mu.Unlock()
 	return ToolAnswer{Text: answer}, q.ID
 }

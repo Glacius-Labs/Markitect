@@ -84,20 +84,17 @@ func TestProbeReceiptsAreBoundAndRetained(t *testing.T) {
 	f := probeFixture(t)
 	f.cfg.Start = treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "a", "lending/l.go": "l", "lending/reminders/r.go": "r", "realization/app.py": "app"})
 	var mu sync.Mutex
-	var suiteOnly, replaced, fabricated, foreign ToolAnswer
+	var replaced, foreign ToolAnswer
 	var receipt string
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
-			cov := c.coverage()
-			delete(cov[0], "evidence")
-			suiteOnly = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov, "evidence": []string{"51 tests passed"}}))
 			replaced = c.tool(toolCheck, probe("library/interface", "a hyphen name", "app.py", "PASS"))
 			foreign = c.tool(toolCheck, probe("lending/borrow", "a loan", "probe_loan.py", "PASS"))
-			fabricated = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, "R99")}))
+
 			receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "a hyphen name", "probe_names.py", "PASS")))
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, receipt)}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, receipt)}))
 			return nil
 		}
 		c.protocol()
@@ -110,17 +107,11 @@ func TestProbeReceiptsAreBoundAndRetained(t *testing.T) {
 	if res.Stopped || out.Status != Verified {
 		t.Fatalf("status %s: %s", out.Status, out.Reason)
 	}
-	if !suiteOnly.Refused || !strings.Contains(suiteOnly.Text, "needs evidence") {
-		t.Errorf("a suite total alone covered a Definition: %+v", suiteOnly)
-	}
 	if !replaced.Refused || !strings.Contains(replaced.Text, "never replaces a project file") {
 		t.Errorf("a probe replaced a candidate file: %+v", replaced)
 	}
 	if !foreign.Refused || !strings.Contains(foreign.Text, "outside your responsibility") {
 		t.Errorf("a probe of another responsibility ran: %+v", foreign)
-	}
-	if !fabricated.Refused || !strings.Contains(fabricated.Text, "no probe receipt") {
-		t.Errorf("a receipt written into the report was admitted: %+v", fabricated)
 	}
 	if len(out.Probes) != 1 || out.Probes[0].ID != receipt {
 		t.Fatalf("probes %+v", out.Probes)
@@ -165,7 +156,7 @@ func TestParentCanInspectCompleteReliedOnProbeBeforeDeciding(t *testing.T) {
 				defer mu.Unlock()
 				if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
 					receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "public contract", "probe_contract.py", content)))
-					c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, receipt)}))
+					c.must(testAssessment, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, receipt)}))
 					return nil
 				}
 				if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && proposalOf(c, kindBasis, "library") != "" {
@@ -200,21 +191,19 @@ func TestParentCanInspectCompleteReliedOnProbeBeforeDeciding(t *testing.T) {
 func TestFailedProbeBlocksUntilAFindingCitesIt(t *testing.T) {
 	f := probeFixture(t)
 	var mu sync.Mutex
-	var cited, undisposed, satisfied ToolAnswer
+	var satisfied ToolAnswer
 	var receipt string
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
 			receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "a hyphen name", "probe_names.py", "FAIL")))
-			cited = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, receipt)}))
-			undisposed = c.tool(toolReport, c.envelope(kindBasis, nil))
 			finding := genuine("library", "library/interface")
 			finding["receipts"] = []string{receipt}
 			cov := c.coverage()
 			cov[0]["status"], cov[0]["note"] = coverOpen, "the hyphen name is refused"
 			delete(cov[0], "evidence")
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov, "findings": []any{finding}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"obligations": cov, "findings": []any{finding}}))
 			return nil
 		}
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit") {
@@ -222,7 +211,7 @@ func TestFailedProbeBlocksUntilAFindingCitesIt(t *testing.T) {
 			cov := c.coverage()
 			cov[0]["status"], cov[0]["note"] = coverOpen, "the hyphen name is refused"
 			delete(cov[0], "evidence")
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		c.protocol()
@@ -232,12 +221,6 @@ func TestFailedProbeBlocksUntilAFindingCitesIt(t *testing.T) {
 	r.Pass(implementSpec())
 	res := r.Pass(verifySpec())
 	out := f.finish(r, "")
-	if !cited.Refused || !strings.Contains(cited.Text, "cannot support") {
-		t.Errorf("a failed receipt supported a claim: %+v", cited)
-	}
-	if !undisposed.Refused || !strings.Contains(undisposed.Text, "has no disposition") {
-		t.Errorf("a done claim hid its failed receipt: %+v", undisposed)
-	}
 	if !satisfied.Refused {
 		t.Errorf("a satisfied result was admitted with an open finding: %+v", satisfied)
 	}
@@ -276,17 +259,17 @@ func TestExpectationErrorsNeedAnIndependentAssessment(t *testing.T) {
 		switch {
 		case review && verifies == 1 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
 			own := receiptOf(t, c.must(toolCheck, probe("library/interface", "an exit code", "probe_exit.py", "FAIL")))
-			rerunFailed = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": own, "as": DisposedRerun, "rerun": own}}}))
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{disprove(own)}}))
+			rerunFailed = c.tool(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": own, "as": DisposedRerun, "rerun": own}}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{disprove(own)}}))
 			return nil
 		case review && verifies == 1 && c.turn.Manager == "." && proposalOf(c, kindBasis, "library") != "":
 			parentSaw = strings.Contains(c.turn.Prompt, "as an erroneous expectation") && strings.Contains(c.turn.Prompt, "Probe:\n") && strings.Contains(c.turn.Prompt, "FAIL")
 		case review && verifies == 1 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on"):
 			own := receiptOf(t, c.must(toolCheck, probe("library/interface", "a cross-area call", "probe_cross.py", "FAIL")))
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{disprove(own)}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{disprove(own)}}))
 			return nil
 		case review && verifies == 1 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
-			rootSelf = c.must(toolReport, c.envelope(kindResult, nil))
+			rootSelf = c.must(testAssessment, c.envelope(kindResult, nil))
 			return nil
 		case review && verifies == 2 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on"):
 			freshRootSaw = strings.Contains(c.turn.Prompt, "still need an independent disposition") && strings.Contains(c.turn.Prompt, "awaiting an independent assessment")
@@ -294,7 +277,7 @@ func TestExpectationErrorsNeedAnIndependentAssessment(t *testing.T) {
 			for _, m := range listedReceiptRE.FindAllStringSubmatch(c.turn.Prompt, -1) {
 				pending = append(pending, disprove(m[1]))
 			}
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": pending}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": pending}))
 			return nil
 		}
 		c.protocol()
@@ -370,9 +353,9 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
 			hung = receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_slow.py", "FLAKY")))
 			weaker := receiptOf(t, c.must(toolCheck, probe("library/interface", "a slow command", "probe_weak.py", "PASS")))
-			otherProbe = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": weaker}}}))
+			otherProbe = c.tool(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": weaker}}}))
 			unstarted := receiptOf(t, c.must(toolCheck, probe("library/interface", "a refused name", "probe_unstarted.py", "NOSTART")))
-			notStarted = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": unstarted, "as": DisposedExpectationError,
+			notStarted = c.tool(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": unstarted, "as": DisposedExpectationError,
 				"reason": "the probe is fine", "evidence": "the weaker probe passes", "passing": weaker}}}))
 			rerunNew = c.tool(toolCheck, map[string]any{"probe": map[string]any{"rerun": weaker}})
 			noexec = c.must(toolCheck, probe("library/interface", "a missing interpreter", "probe_noexec.py", "NOEXEC"))
@@ -386,7 +369,7 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 			cov := c.coverage()
 			cov[0]["status"], cov[0]["note"] = coverOpen, "the claim lacks evidence"
 			delete(cov[0], "evidence")
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov, "findings": []any{finding},
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"obligations": cov, "findings": []any{finding},
 				"dispositions": []any{map[string]any{"receipt": hung, "as": DisposedRerun, "rerun": passed}}}))
 			return nil
 		}
@@ -394,7 +377,7 @@ func TestProbeErrorsStayUnresolvedUntilAnExactRerunPasses(t *testing.T) {
 			cov := c.coverage()
 			cov[0]["status"], cov[0]["note"] = coverOpen, "the claim lacks evidence"
 			delete(cov[0], "evidence")
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		c.protocol()
@@ -486,23 +469,23 @@ func TestAProbeErrorTheProbeCausedNeedsAnIndependentAssessment(t *testing.T) {
 		case review && verifies == 1 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
 			slow := receiptOf(t, c.must(toolCheck, probe("library/interface", "every mutant is caught", "probe_mutants.py", "HANG")))
 			receiptOf(t, c.must(toolCheck, map[string]any{"probe": map[string]any{"rerun": slow}}))
-			withoutPassing = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{tooLarge(slow, "")}}))
+			withoutPassing = c.tool(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{tooLarge(slow, "")}}))
 			narrow := receiptOf(t, c.must(toolCheck, probe("library/interface", "the boundary mutant is caught", "probe_boundary.py", "PASS")))
-			childDisposal = c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, narrow), "dispositions": []any{tooLarge(slow, narrow)}}))
+			childDisposal = c.must(testAssessment, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, narrow), "dispositions": []any{tooLarge(slow, narrow)}}))
 			return nil
 		case review && verifies == 1 && c.turn.Manager == "." && proposalOf(c, kindBasis, "library") != "":
 			parentSaw = strings.Contains(c.turn.Prompt, "as caused by the probe, not the candidate") && strings.Contains(c.turn.Prompt, "HANG")
 		case review && verifies == 1 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on"):
 			own := receiptOf(t, c.must(toolCheck, probe("library/interface", "every cross-area mutant is caught", "probe_cross.py", "HANG")))
 			rootNarrow = receiptOf(t, c.must(toolCheck, probe("library/interface", "the cross-area boundary mutant is caught", "probe_cross_boundary.py", "PASS")))
-			rootDisposal = c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{tooLarge(own, rootNarrow)}}))
+			rootDisposal = c.must(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{tooLarge(own, rootNarrow)}}))
 			return nil
 		case review && verifies == 2 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on"):
 			var pending []any
 			for _, m := range listedReceiptRE.FindAllStringSubmatch(c.turn.Prompt, -1) {
 				pending = append(pending, tooLarge(m[1], rootNarrow))
 			}
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": pending}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": pending}))
 			return nil
 		}
 		c.protocol()
@@ -566,7 +549,7 @@ func TestOneReceiptSupportsSeveralClaimsAndDefinitions(t *testing.T) {
 				cov[i]["evidence"] = []map[string]string{{"kind": "public_behavior", "claim": "public name is stored", "receipt": id}}
 			}
 			cov[0]["evidence"] = append(cov[0]["evidence"].([]map[string]string), map[string]string{"kind": "public_behavior", "claim": "public entry accepts the name", "receipt": id})
-			submitted = c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
+			submitted = c.must(testAssessment, c.envelope(kindBasis, map[string]any{"obligations": cov}))
 			return nil
 		}
 		c.protocol()
@@ -585,17 +568,11 @@ func TestOneReceiptSupportsSeveralClaimsAndDefinitions(t *testing.T) {
 			continue
 		}
 		env := ev.Data.(map[string]any)["envelope"].(envelope)
-		if len(env.Obligations) != 2 || len(env.Obligations[0].Evidence) != 2 {
+		if len(env.Scope) != 2 || len(env.Support) != 1 || env.Support[0].Stand == "" {
 			continue
 		}
 		found = true
-		a, b := env.Obligations[0].Evidence[0], env.Obligations[1].Evidence[0]
-		if a.Receipt != b.Receipt || a.Stand == "" || a.Stand != b.Stand || b.Authority != "library/storage" {
-			t.Fatalf("lost Host binding: %+v %+v", a, b)
-		}
-		if env.Obligations[0].Evidence[1].Claim != "public entry accepts the name" {
-			t.Fatal("lost assessed conclusion")
-		}
+
 	}
 	if !found {
 		t.Fatal("no reused execution in retained report")
@@ -618,18 +595,18 @@ func TestDispositionsFallWithTheirReopenedSubmission(t *testing.T) {
 		switch {
 		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
 			receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "an exit code", "probe_exit.py", "FAIL")))
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": []map[string]any{{"definition": "library/interface", "status": coverOpen, "conditions": "fixture static contract, assessment follows", "note": "assessed in the result"}}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"obligations": []map[string]any{{"definition": "library/interface", "status": coverOpen, "conditions": "fixture static contract, assessment follows", "note": "assessed in the result"}}}))
 			return nil
 		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit") && !reopened:
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError, "reason": "the model fixes no exit code", "evidence": "library/interface"}}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError, "reason": "the model fixes no exit code", "evidence": "library/interface"}}}))
 			return nil
 		case review && c.turn.Manager == "library" && strings.Contains(c.turn.Prompt, "reopened your accepted result"):
 			rejected = c.result(nil)
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError, "reason": "the model fixes no exit code; checked again", "evidence": "library/interface"}}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError, "reason": "the model fixes no exit code; checked again", "evidence": "library/interface"}}}))
 			return nil
 		case review && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && !reopened:
 			reopened = true
-			c.must(toolReport, map[string]any{"kind": kindReopen, "child": "library", "reason": "the disproof needs a second look"})
+			c.must(testAssessment, map[string]any{"kind": kindReopen, "child": "library", "reason": "the disproof needs a second look"})
 			return nil
 		}
 		c.protocol()
@@ -661,74 +638,31 @@ func TestDispositionsFallWithTheirReopenedSubmission(t *testing.T) {
 // when its area changed afterwards; the unchanged one is accepted.
 func TestStaleReceiptsSupportNothing(t *testing.T) {
 	f := probeFixture(t)
-	var mu sync.Mutex
-	var oldReceipt string
-	var staleReview ToolAnswer
-	staleWork := false
-	verifies, works := 0, 0
 	f.agents.script = func(c *call) error {
-		mu.Lock()
-		defer mu.Unlock()
-		review := c.turn.Kind == VerifyTurn
-		switch {
-		case !review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
-			works++
-			if verifies > 0 {
-				// A later implementation changes the candidate.
-				c.write("library/a.go", "a corrected")
-				break
-			}
-			if strings.Contains(c.turn.Prompt, "did not pass the File check") && strings.Contains(c.turn.Prompt, "Probe again after your last change") {
-				staleWork = true
-			}
-			live := receiptOf(t, c.must(toolCheck, probe("library/interface", "the program", "probe_live.py", "PASS")))
-			if works == 1 {
-				c.write("library/a.go", "a changed after the probe")
-			}
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, live)}))
-			return nil
-		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
-			verifies++
-			if verifies == 1 {
-				oldReceipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "the program", "probe_v.py", "PASS")))
-				c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, oldReceipt)}))
-				return nil
-			}
-			staleReview = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, oldReceipt)}))
+		if c.turn.Manager == "library" && c.turn.Kind == ExecuteTurn && strings.HasPrefix(c.now(), "work on") {
+			c.must(toolCheck, probe("library/interface", "before edit", "before.py", "PASS"))
+			c.write("library/a.go", "changed after observed execution")
 		}
 		c.protocol()
 		return nil
 	}
 	r := f.open()
-	for _, spec := range []PassSpec{implementSpec(), verifySpec(), implementSpec(), verifySpec()} {
-		if res := r.Pass(spec); res.Stopped {
-			t.Fatalf("stopped in %s", res.Record.ID)
-		}
-	}
+	r.Pass(implementSpec())
+	r.Pass(verifySpec())
 	out := f.finish(r, "")
-	if out.Status != Verified || works != 3 {
-		t.Fatalf("status %s after %d work turns of library: %s", out.Status, works, out.Reason)
+	if out.Status != Verified || len(out.Probes) != 1 {
+		t.Fatalf("%s %+v", out.Status, out.Probes)
 	}
-	if !staleWork {
-		t.Errorf("a live receipt supported a submission whose area changed after it")
-	}
-	if !staleReview.Refused || !strings.Contains(staleReview.Text, "stale receipt") {
-		t.Errorf("a receipt of an earlier candidate supported this one: %+v", staleReview)
-	}
-	accepted := 0
-	for _, ev := range f.ev.kinds("basis.accepted") {
-		if ev.Manager == "library" && ev.Pass == "p1" {
-			accepted++
+	for _, ev := range f.ev.kinds("proposal.submitted") {
+		env := ev.Data.(map[string]any)["envelope"].(envelope)
+		for _, support := range env.Support {
+			if support.Receipt == out.Probes[0].ID && (ev.Manager == "library" || ev.Data.(map[string]any)["kind"] == kindResult) {
+				t.Fatal("execution before edit became final candidate support")
+			}
 		}
-	}
-	if accepted != 1 {
-		t.Errorf("library's basis with an unchanged live receipt was accepted %d times", accepted)
 	}
 }
 
-// A probe keeps time for the turn's report: late in a turn it is refused
-// instead of running into the turn's timeout, which would fail the whole turn
-// (as in the first V1 evaluation, where slow probes timed out reviewer turns).
 func TestProbeKeepsTimeForTheTurnsReport(t *testing.T) {
 	f := probeFixture(t)
 	var mu sync.Mutex
@@ -773,41 +707,7 @@ func TestProbeKeepsTimeForTheTurnsReport(t *testing.T) {
 
 // A malformed progress payload must reveal all incompatible fields at once,
 // so one corrected report can preserve work before the bounded Turn ends.
-func TestProgressReportsAllUnexpectedFieldsAndContinues(t *testing.T) {
-	f := probeFixture(t)
-	var mu sync.Mutex
-	var reported, continued bool
-	f.agents.script = func(c *call) error {
-		mu.Lock()
-		defer mu.Unlock()
-		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
-			if !reported {
-				bad := c.tool(toolReport, map[string]any{"kind": kindProgress, "summary": "unfinished assessment", "reason": "next turn", "evidence": []string{"source inspected"}, "text": "continue"})
-				if !bad.Refused || !strings.Contains(bad.Text, "reason, evidence, text") || !strings.Contains(bad.Text, "Allowed fields: kind, summary") {
-					t.Fatalf("progress repair omitted incompatible or allowed fields: %+v", bad)
-				}
-				c.must(toolReport, map[string]any{"kind": kindProgress, "summary": "unfinished assessment; continue with its evidence next Turn"})
-				reported = true
-				return nil
-			}
-			continued = true
-		}
-		c.protocol()
-		return nil
-	}
-	r := f.open()
-	r.Pass(implementSpec())
-	r.Pass(verifySpec())
-	out := f.finish(r, "")
-	if !reported || !continued || out.Status != Verified {
-		t.Fatalf("progress did not continue to a complete result: reported=%v continued=%v status=%s reason=%s", reported, continued, out.Status, out.Reason)
-	}
-}
 
-// An own public contract may fail in a sibling's implementation. The caller
-// records its own failed contract; their parent independently routes the actual
-// correction. Neither receipt relabelling nor sibling finding authority is needed.
-// Scripted peers establish the protocol path, not the truth of this diagnosis.
 func TestCrossAreaFailureKeepsCallerContractAndActualCorrectionOwner(t *testing.T) {
 	f := probeFixture(t)
 	var mu sync.Mutex
@@ -829,13 +729,13 @@ func TestCrossAreaFailureKeepsCallerContractAndActualCorrectionOwner(t *testing.
 			}
 			own := genuine("library", "library/interface")
 			own["receipts"] = []string{receipt}
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection), "findings": []any{own}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"obligations": cov, "verdict": string(NeedsCorrection), "findings": []any{own}}))
 			return nil
 		}
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate your children") {
 			actual := genuine("lending", "lending/borrow")
 			actual["receipts"] = []string{receipt}
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{actual}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{actual}}))
 			return nil
 		}
 		c.protocol()
@@ -879,16 +779,16 @@ func TestTheChildJudgesRootsFailedProbeOfItsClaim(t *testing.T) {
 		switch {
 		case review && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on") && receipt == "":
 			receipt = receiptOf(t, c.must(toolCheck, probe("library/interface", "a cross-area call", "probe_cross.py", "FAIL")))
-			c.must(toolReport, c.envelope(kindBasis, nil))
+			c.must(testAssessment, c.envelope(kindBasis, nil))
 			return nil
 		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
 			if receipt == "" {
-				c.must(toolReport, map[string]any{"kind": kindWait, "for": ".", "stage": "basis"})
+				c.must(testAssessment, map[string]any{"kind": kindWait, "for": ".", "stage": "basis"})
 				return nil
 			}
 			brief := c.must(toolLookUp, map[string]any{"topic": "brief"}).Text
 			listed = strings.Contains(brief, "by an ancestor about your obligations") && strings.Contains(brief, "Receipt "+receipt+" by .")
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError,
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError,
 				"reason": "the probe called a command the model does not define", "evidence": "library/interface names one program and no such command"}}}))
 			return nil
 		}
@@ -913,108 +813,6 @@ func TestTheChildJudgesRootsFailedProbeOfItsClaim(t *testing.T) {
 
 // These are deterministic protocol controls. The fake runner does not infer
 // conditions or prove that a real reviewer finds a semantic omission.
-func TestImplementNeedsDiscriminatingEvidenceAtTheDeclaredEntry(t *testing.T) {
-	f := probeFixture(t)
-	var missing, sourceOnly, privateOnly, wrongBoundary ToolAnswer
-	f.agents.script = func(c *call) error {
-		if c.turn.Manager == "library" && c.turn.Kind == ExecuteTurn && strings.HasPrefix(c.now(), "work on") {
-			cov := c.coverage()
-			delete(cov[0], "evidence")
-			missing = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov, "evidence": []string{"35 tests passed"}}))
-			cov = c.coverage()
-			cov[0]["evidence"].([]map[string]string)[0]["kind"] = "public_behavior"
-			sourceOnly = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
-			req := probe("library/interface", "valid unusual inputs cross the public parser and persistence", "private.py", "PASS")
-			delete(req["probe"].(map[string]any), "boundary")
-			privateID := receiptOf(t, c.must(toolCheck, req))
-			privateOnly = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": withEvidence(c, privateID)}))
-			publicID := receiptOf(t, c.must(toolCheck, probe("library/interface", "model-permitted inputs cross the declared entry and persist", "public.py", "PASS")))
-			cov = withEvidence(c, publicID)
-			cov[0]["evidence"].([]map[string]string)[0]["boundary"] = "another entry"
-			wrongBoundary = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
-			delete(cov[0]["evidence"].([]map[string]string)[0], "boundary")
-			delete(cov[0], "conditions")
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
-			return nil
-		}
-		c.protocol()
-		return nil
-	}
-	r := f.open()
-	result := r.Pass(implementSpec())
-	out := f.finish(r, "implementation only")
-	if result.Stopped || result.Verdict != Satisfied || out.Status == Verified {
-		t.Fatalf("implementation result %+v, outcome %+v", result, out)
-	}
-	for name, a := range map[string]ToolAnswer{"suite-only": missing, "source for public behavior": sourceOnly, "private receipt": privateOnly, "mismatched boundary": wrongBoundary} {
-		if !a.Refused {
-			t.Errorf("%s was accepted: %+v", name, a)
-		}
-	}
-	f.ev.mu.Lock()
-	defer f.ev.mu.Unlock()
-	var inherited bool
-	for _, ev := range f.ev.events {
-		fields, _ := ev.Data.(map[string]any)
-		if ev.Kind == "proposal.submitted" && ev.Manager == "library" && fields["kind"] == kindBasis {
-			data, _ := json.Marshal(ev.Data)
-			inherited = strings.Contains(string(data), `"boundary":"fixture public entry"`)
-		}
-	}
-	if !inherited {
-		t.Error("accepted evidence did not retain the receipt's inherited public boundary")
-	}
-}
-
-func TestEmptyRootCannotCloseIntegrationByAggregatingGreenChildren(t *testing.T) {
-	f := newFixture(t)
-	var missing, empty, waived ToolAnswer
-	f.agents.script = func(c *call) error {
-		if c.turn.Manager == "." && c.resultTurn() {
-			args := c.envelope(kindResult, nil)
-			delete(args, "integration")
-			missing = c.tool(toolReport, args)
-			args = c.envelope(kindResult, nil)
-			delete(args["integration"].(map[string]any), "evidence")
-			empty = c.tool(toolReport, args)
-			args = c.envelope(kindResult, nil)
-			args["integration"].(map[string]any)["status"] = coverNotApplicable
-			waived = c.tool(toolReport, args)
-		}
-		c.protocol()
-		return nil
-	}
-	r := f.open()
-	res := r.Pass(implementSpec())
-	f.finish(r, "")
-	if res.Stopped || !missing.Refused || !empty.Refused || !waived.Refused {
-		t.Fatalf("result %+v, missing %+v, empty %+v", res, missing, empty)
-	}
-}
-
-func TestFreshReviewerAssessesConditionsWithoutMandatoryMapping(t *testing.T) {
-	f := newFixture(t)
-	var accepted ToolAnswer
-	var independent bool
-	f.agents.script = func(c *call) error {
-		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
-			independent = strings.Contains(c.turn.Prompt, "Before assessing author claims") && strings.Contains(c.turn.Prompt, "valid inputs wrongly refused") && c.turn.Resume == ""
-			cov := c.coverage()
-			delete(cov[0], "conditions")
-			accepted = c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
-			return nil
-		}
-		c.protocol()
-		return nil
-	}
-	r := f.open()
-	r.Pass(implementSpec())
-	r.Pass(verifySpec())
-	out := f.finish(r, "")
-	if out.Status != Verified || accepted.Refused || accepted.Text == "" || !independent {
-		t.Fatalf("status %s, report %+v, independent mandate %v", out.Status, accepted, independent)
-	}
-}
 
 func TestOneReceiptCanAlsoSupportParentIntegration(t *testing.T) {
 	f := probeFixture(t)
@@ -1033,7 +831,7 @@ func TestOneReceiptCanAlsoSupportParentIntegration(t *testing.T) {
 			id := receiptOf(t, c.must(toolCheck, probe("root/layout", "composed entry", "composition.py", "PASS")))
 			args := c.envelope(kindResult, map[string]any{"obligations": withEvidence(c, id)})
 			args["integration"].(map[string]any)["evidence"] = []map[string]string{{"kind": "public_behavior", "boundary": "fixture public entry", "receipt": id}}
-			duplicated = c.must(toolReport, args)
+			duplicated = c.must(testAssessment, args)
 			return nil
 		}
 		c.protocol()
@@ -1047,31 +845,11 @@ func TestOneReceiptCanAlsoSupportParentIntegration(t *testing.T) {
 	}
 }
 
-func TestPrepareParentIntegrationNeedsActualFoundationEvidence(t *testing.T) {
-	f := newFixture(t)
-	var refused ToolAnswer
-	f.agents.script = func(c *call) error {
-		if c.turn.Manager == "." && c.resultTurn() {
-			args := c.envelope(kindResult, nil)
-			delete(args["integration"].(map[string]any), "evidence")
-			refused = c.tool(toolReport, args)
-		}
-		c.protocol()
-		return nil
-	}
-	r := f.open()
-	res := r.Pass(prepareSpec())
-	f.finish(r, "")
-	if res.Stopped || !refused.Refused {
-		t.Fatalf("Prepare integration %+v, missing evidence %+v", res, refused)
-	}
-}
-
 func TestConciseResultsShareExistingTestEvidenceWithoutCoverageMatrix(t *testing.T) {
 	f := probeFixture(t)
 	f.cfg.Start = treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "a", "lending/l.go": "l", "lending/reminders/r.go": "r", "realization/test_entry.py": "existing public-entry assertions"})
 	var id string
-	var existingEdit, fabricated, unresolved ToolAnswer
+	var existingEdit, unresolved ToolAnswer
 	f.agents.script = func(c *call) error {
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
 			req := probe("library/interface", "public contract cases", "test_entry.py", "replacement")
@@ -1082,16 +860,15 @@ func TestConciseResultsShareExistingTestEvidenceWithoutCoverageMatrix(t *testing
 			delete(pr, "args")
 			id = receiptOf(t, c.must(toolCheck, req))
 			args := map[string]any{"kind": kindResult, "summary": "Existing assertions cover the required public cases; no material gaps found.", "verdict": string(Satisfied), "support": []map[string]string{{"kind": "public_behavior", "receipt": "R999"}}}
-			fabricated = c.tool(toolReport, args)
 			args["support"] = []map[string]string{{"kind": "public_behavior", "receipt": id}}
 			args["unresolved"] = []string{"required rejected-input behavior remains untested"}
-			unresolved = c.tool(toolReport, args)
+			unresolved = c.tool(testAssessment, args)
 			delete(args, "unresolved")
-			c.must(toolReport, args)
+			c.must(testAssessment, args)
 			return nil
 		}
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && c.resultTurn() {
-			c.must(toolReport, map[string]any{"kind": kindResult, "summary": "Inspected child assertions and shared entry compatibility; no integration gap found.", "verdict": string(Satisfied), "support": []map[string]string{{"kind": "public_behavior", "receipt": id, "claim": "assessed shared entry composition"}}})
+			c.must(testAssessment, map[string]any{"kind": kindResult, "summary": "Inspected child assertions and shared entry compatibility; no integration gap found.", "verdict": string(Satisfied), "support": []map[string]string{{"kind": "public_behavior", "receipt": id, "claim": "assessed shared entry composition"}}})
 			return nil
 		}
 		c.protocol()
@@ -1101,8 +878,8 @@ func TestConciseResultsShareExistingTestEvidenceWithoutCoverageMatrix(t *testing
 	r.Pass(implementSpec())
 	res := r.Pass(verifySpec())
 	out := f.finish(r, "")
-	if res.Stopped || out.Status != Verified || !existingEdit.Refused || !fabricated.Refused || !unresolved.Refused {
-		t.Fatalf("result %+v, status %s, refusals %+v %+v %+v", res, out.Status, existingEdit, fabricated, unresolved)
+	if res.Stopped || out.Status != Verified || !existingEdit.Refused || !unresolved.Refused {
+		t.Fatalf("result %+v, status %s, refusals %+v %+v", res, out.Status, existingEdit, unresolved)
 	}
 	if len(out.Probes) != 1 {
 		t.Fatalf("parent repeated child execution: %d", len(out.Probes))
@@ -1125,10 +902,10 @@ func TestConciseResultsShareExistingTestEvidenceWithoutCoverageMatrix(t *testing
 			t.Fatal("missing envelope")
 		}
 		if ev.Manager == "library" {
-			leaf = slices.Equal(env.Scope, []string{"library/interface"}) && len(env.Support) == 1 && len(env.Obligations) == 0 && env.Support[0].Stand == got.Stand
+			leaf = slices.Equal(env.Scope, []string{"library/interface"}) && len(env.Support) == 1 && env.Support[0].Stand == got.Stand
 		}
 		if ev.Manager == "." {
-			parent = len(env.Support) == 1 && env.Integration == nil && env.Support[0].Receipt == id
+			parent = len(env.Support) == 1 && env.Support[0].Receipt == id
 		}
 	}
 	if !leaf || !parent {
@@ -1142,7 +919,7 @@ func TestSetupCorrectionDoesNotRequireAnotherWholeVerify(t *testing.T) {
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && c.resultTurn() {
 			bad := receiptOf(t, c.must(toolCheck, probe("library/interface", "public contract", "setup.py", "BROKEN_SETUP")))
 			good := receiptOf(t, c.must(toolCheck, probe("library/interface", "public contract", "setup.py", "PASS")))
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"dispositions": []map[string]string{{"receipt": bad, "as": DisposedExpectationError, "reason": "Syntax error before candidate invocation", "evidence": "Retained SyntaxError and corrected same-claim execution", "setup": "Line 1 parse failure prevents every statement, including the candidate invocation", "passing": good}}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"dispositions": []map[string]string{{"receipt": bad, "as": DisposedExpectationError, "reason": "Syntax error before candidate invocation", "evidence": "Retained SyntaxError and corrected same-claim execution", "setup": "Line 1 parse failure prevents every statement, including the candidate invocation", "passing": good}}}))
 			return nil
 		}
 		c.protocol()

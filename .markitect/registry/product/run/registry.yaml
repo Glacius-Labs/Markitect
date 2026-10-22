@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assessment.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Captures each observed Turn end once and separates its short semantic assessment from Host-derived work and execution observations."
   - path: "experiments/apply-trials/night_run_test.py"
     form: test
     realizes: [product/run/confirmed-run-history]

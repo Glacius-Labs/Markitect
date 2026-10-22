@@ -83,7 +83,20 @@ func (a *assessingAgents) Run(ctx context.Context, turn run.Turn, tools run.Tool
 	a.mu.Lock()
 	a.turns = append(a.turns, turn)
 	a.mu.Unlock()
+	final := `{"status":"continue","summary":"coordinated pending work","findings":[],"open":[]}`
 	call := func(name string, args map[string]any) run.ToolAnswer {
+		if name == "finish" {
+			kind, _ := args["kind"].(string)
+			if kind == "accept" || kind == "return" || kind == "reopen" || kind == "revise" {
+				name = "decide"
+			} else if kind == "wait" {
+				name = "wait"
+				delete(args, "kind")
+			} else {
+				final = scriptedFinal(args)
+				return run.ToolAnswer{Text: "native final assessment prepared"}
+			}
+		}
 		data, _ := json.Marshal(args)
 		answer := tools(ctx, name, data)
 		if answer.Refused {
@@ -92,7 +105,7 @@ func (a *assessingAgents) Run(ctx context.Context, turn run.Turn, tools run.Tool
 		return answer
 	}
 	for _, m := range decideRE.FindAllStringSubmatch(turn.Prompt, -1) {
-		call("report", map[string]any{"kind": "accept", "proposal": m[1]})
+		call("finish", map[string]any{"kind": "accept", "proposal": m[1]})
 	}
 	_, rest, _ := strings.Cut(turn.Prompt, "\nNow: ")
 	now, _, _ := strings.Cut(rest, "\n")
@@ -108,10 +121,10 @@ func (a *assessingAgents) Run(ctx context.Context, turn run.Turn, tools run.Tool
 				a.refusal = answer.Text
 			}
 		}
-		call("report", map[string]any{"kind": "basis", "summary": "Assessment context of " + turn.Manager + "."})
+		call("finish", map[string]any{"kind": "basis", "summary": "Assessment context of " + turn.Manager + "."})
 	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
 		if root && a.abort != "" {
-			call("report", map[string]any{"kind": "problem", "category": "model", "text": a.abort, "abort": true})
+			call("finish", map[string]any{"kind": "problem", "category": "model", "text": a.abort, "abort": true})
 			break
 		}
 		var coverage []map[string]any
@@ -145,9 +158,9 @@ func (a *assessingAgents) Run(ctx context.Context, turn run.Turn, tools run.Tool
 				result["disputed"] = []map[string]any{{"id": id[1], "reason": "The limit is stated.", "evidence": a.source}}
 			}
 		}
-		call("report", result)
+		call("finish", result)
 	}
-	return run.TurnResult{Conversation: "conv-" + turn.ID, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
+	return run.TurnResult{Completed: true, Final: final, Conversation: "conv-" + turn.ID, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
 }
 
 // checkCounter fails every check and counts the requests: an assessment runs none.
