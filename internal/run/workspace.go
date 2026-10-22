@@ -10,6 +10,25 @@ import (
 // labels the volume with it.
 type WorkspaceID string
 
+// AssignmentWorkspace is one Agent's independent Git working copy. A submitted
+// commit remains addressable after the Agent continues editing the same copy.
+// Closing the Agent does not remove this workspace: incomplete work and earlier
+// submissions remain available for inspection until the caller releases it.
+type AssignmentWorkspace interface {
+	ID() WorkspaceID
+	Volume() string
+	StartingCommit() string
+	Commit(context.Context, string) (string, error)
+	ContainsCommit(context.Context, string) (bool, error)
+	Close(context.Context) error
+}
+
+// AssignmentWorkspaces prepares a fresh Git copy from a captured tree. It
+// refuses an existing ID and returns its initial internal commit.
+type AssignmentWorkspaces interface {
+	PrepareAssignment(context.Context, WorkspaceSpec) (AssignmentWorkspace, error)
+}
+
 // Workspaces materializes step workspaces on runtime volumes and observes them.
 // It knows no ownership, reviews or tasks: run decides what a workspace holds
 // (core rule D3) and what its observed change means (core rule S4), and run

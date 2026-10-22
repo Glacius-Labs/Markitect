@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -45,6 +46,7 @@ type Workspaces struct {
 }
 
 var _ run.Workspaces = (*Workspaces)(nil)
+var _ run.AssignmentWorkspaces = (*Workspaces)(nil)
 var _ WorkspaceRuntime = (*container.Engine)(nil)
 
 // NewWorkspaces binds the trusted helper image, numeric user and resource
@@ -188,6 +190,96 @@ func (w *Workspaces) Materialize(ctx context.Context, request run.WorkspaceSpec)
 		return result, err
 	}
 	return result, nil
+}
+
+// PrepareAssignment creates a new volume-backed Git working copy. Its initial
+// commit is an internal stand of the captured tree; no owner repository is
+// committed or pushed. The volume is retained on a later failure for inspection.
+func (w *Workspaces) PrepareAssignment(ctx context.Context, request run.WorkspaceSpec) (run.AssignmentWorkspace, error) {
+	observed, err := w.Materialize(ctx, request)
+	var a *assignmentWorkspace
+	if observed.Volume != "" {
+		a = &assignmentWorkspace{owner: w, id: request.ID, volume: observed.Volume}
+	}
+	if err != nil {
+		return a, err
+	}
+	if _, err = a.git(ctx, "init", "-b", "assignment"); err != nil {
+		return a, err
+	}
+	if a.start, err = a.commit(ctx, "Agent assignment starting stand"); err != nil {
+		return a, err
+	}
+	return a, nil
+}
+
+type assignmentWorkspace struct {
+	owner  *Workspaces
+	id     run.WorkspaceID
+	volume string
+	start  string
+}
+
+func (a *assignmentWorkspace) ID() run.WorkspaceID    { return a.id }
+func (a *assignmentWorkspace) Volume() string         { return a.volume }
+func (a *assignmentWorkspace) StartingCommit() string { return a.start }
+
+func (a *assignmentWorkspace) git(ctx context.Context, args ...string) (string, error) {
+	w := a.owner
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	volume, observed, err := w.ownedVolume(ctx, a.id)
+	if err != nil || volume != a.volume || !observed.Exists || w.owned[a.id] == "" {
+		return "", errors.Join(err, fmt.Errorf("assignment workspace volume is absent or not owned"))
+	}
+	spec := w.spec(a.volume, false)
+	var output strings.Builder
+	argv := append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=Markitect", "-c", "user.email=assignment@markitect.invalid", "-C", "/work"}, args...)
+	if err := w.runtime.RunHelper(ctx, spec, argv, nil, &output); err != nil {
+		return "", err
+	}
+	return strings.TrimSpace(output.String()), nil
+}
+
+var commitIDPattern = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
+
+func (a *assignmentWorkspace) commit(ctx context.Context, message string) (string, error) {
+	// The runtime's private state is outside the repository census even if an
+	// Agent created it. It must not enter a handoff commit.
+	if _, err := a.git(ctx, "add", "--all", "--force", "--", ".", ":(exclude,top,glob).markitect/state/**"); err != nil {
+		return "", err
+	}
+	if _, err := a.git(ctx, "commit", "--allow-empty", "-m", message); err != nil {
+		return "", err
+	}
+	id, err := a.git(ctx, "rev-parse", "HEAD")
+	if err != nil || !commitIDPattern.MatchString(id) {
+		return "", errors.Join(err, fmt.Errorf("internal Git commit was not observed"))
+	}
+	return id, nil
+}
+
+func (a *assignmentWorkspace) Commit(ctx context.Context, message string) (string, error) {
+	if strings.TrimSpace(message) == "" {
+		return "", fmt.Errorf("internal Git result needs a message")
+	}
+	return a.commit(ctx, message)
+}
+
+func (a *assignmentWorkspace) ContainsCommit(ctx context.Context, id string) (bool, error) {
+	if !commitIDPattern.MatchString(id) {
+		return false, fmt.Errorf("invalid commit identity")
+	}
+	got, err := a.git(ctx, "rev-parse", "--verify", id+"^{commit}")
+	if err != nil {
+		return false, err
+	}
+	return got == id, nil
+}
+
+func (a *assignmentWorkspace) Close(ctx context.Context) error {
+	_, err := a.owner.Close(ctx, a.id)
+	return err
 }
 
 // workspaceDirectories returns the requested empty directories and all their

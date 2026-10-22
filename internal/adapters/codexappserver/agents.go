@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"io"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
@@ -31,6 +32,8 @@ type Agents struct {
 	stopGrace   time.Duration
 	stopTimeout time.Duration
 }
+
+var _ run.AssignmentAgents = (*Agents)(nil)
 
 // NewAgents runs turns in containers of engine. profiles maps the Runtime profile
 // names a Turn refers to.
@@ -81,12 +84,13 @@ type turnRun struct {
 	events         <-chan event
 	done           chan struct{}
 
-	thread   ThreadID
-	turnID   TurnID
-	model    string
-	final    string
-	commands []run.CommandObservation
-	usage    run.Usage
+	thread      ThreadID
+	turnID      TurnID
+	model       string
+	final       string
+	commands    []run.CommandObservation
+	usage       run.Usage
+	nextRequest int64
 }
 
 // Run runs one turn. It always stops the container before it returns; Stopped
@@ -132,6 +136,109 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 	return res, t.finish(ctx, &res, err)
 }
 
+// OpenAssignment starts one container and one Codex App Server process for the
+// complete assignment. Subsequent Message calls use the same provider thread.
+func (a *Agents) OpenAssignment(ctx context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
+	turn := run.Turn{ID: spec.ID, Kind: run.ExecuteTurn, Profile: spec.Profile, Workspace: spec.Workspace,
+		Home: spec.Home, Tools: spec.Tools, Transcript: spec.Transcript}
+	profile, offered, err := a.admit(turn, handler)
+	if err != nil {
+		return nil, err
+	}
+	t := &turnRun{agents: a, turn: turn, profile: profile, handler: handler, name: "markitect-" + spec.ID,
+		offered: offered, done: make(chan struct{})}
+	if t.tr, err = openTranscript(spec.Transcript, t.redact); err != nil {
+		return nil, err
+	}
+	if err = t.open(ctx); err != nil {
+		res := run.TurnResult{Reason: "assignment start failed"}
+		return nil, t.finish(ctx, &res, err)
+	}
+	return &assignmentSession{turn: t}, nil
+}
+
+type assignmentSession struct {
+	mu           sync.Mutex
+	abortMu      sync.Mutex
+	activeCancel context.CancelFunc
+	closing      bool
+	turn         *turnRun
+	closed       bool
+	terminal     run.TurnResult
+	terminalErr  error
+}
+
+func (s *assignmentSession) Message(ctx context.Context, text string, timeout time.Duration) (res run.TurnResult, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed || strings.TrimSpace(text) == "" || timeout < 0 {
+		return res, ErrSession
+	}
+	res.Started = time.Now().UTC()
+	defer func() { res.Ended = time.Now().UTC() }()
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	s.abortMu.Lock()
+	if s.closing {
+		s.abortMu.Unlock()
+		return res, context.Canceled
+	}
+	s.activeCancel = cancel
+	s.abortMu.Unlock()
+	defer func() {
+		s.abortMu.Lock()
+		s.activeCancel = nil
+		s.abortMu.Unlock()
+	}()
+	t := s.turn
+	t.turn.Prompt, t.turnID, t.final = text, "", ""
+	t.commands, t.usage = nil, run.Usage{}
+	if timeout > 0 {
+		var timeoutCancel context.CancelFunc
+		runCtx, timeoutCancel = context.WithTimeout(runCtx, timeout)
+		defer timeoutCancel()
+	}
+	err = t.runTurn(runCtx, &res)
+	res.Conversation, res.Final, res.Commands, res.Usage = string(t.thread), string(t.redact([]byte(t.final))), t.commands, t.usage
+	if res.Usage.ProviderTurns > 0 {
+		res.Usage.Model = t.model
+	}
+	if errors.Is(err, run.ErrContextLimit) {
+		res.Reason = "message exceeds provider channel"
+		return res, err
+	}
+	if err != nil {
+		s.closed = true
+		if runCtx.Err() != nil {
+			res.Reason = runCtx.Err().Error()
+		}
+		err = t.finish(ctx, &res, err)
+		s.terminal, s.terminalErr = res, err
+	}
+	return res, err
+}
+
+func (s *assignmentSession) Close(ctx context.Context) (res run.TurnResult, err error) {
+	s.abortMu.Lock()
+	s.closing = true
+	cancel := s.activeCancel
+	s.abortMu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return s.terminal, s.terminalErr
+	}
+	s.closed = true
+	res.Reason = "assignment closed"
+	err = s.turn.finish(ctx, &res, nil)
+	res.Ended = time.Now().UTC()
+	s.terminal, s.terminalErr = res, err
+	return res, err
+}
+
 // admit checks the turn against the Runtime profile before anything runs.
 func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, map[string]bool, error) {
 	profile, ok := a.profiles[turn.Profile]
@@ -168,6 +275,13 @@ func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, map[str
 // exchange runs the container, the handshake and the turn until the provider
 // reports its end. Cleanup is finish's job.
 func (t *turnRun) exchange(ctx context.Context, res *run.TurnResult) error {
+	if err := t.open(ctx); err != nil {
+		return err
+	}
+	return t.runTurn(ctx, res)
+}
+
+func (t *turnRun) open(ctx context.Context) error {
 	credential, err := t.agents.credentials(ctx, t.profile.CredentialRef)
 	if err != nil {
 		return fmt.Errorf("%w: credential resolution failed", ErrSession)
@@ -206,7 +320,8 @@ func (t *turnRun) exchange(ctx context.Context, res *run.TurnResult) error {
 	if err = t.handshake(ctx); err != nil {
 		return err
 	}
-	return t.runTurn(ctx, res)
+	t.nextRequest = 2
+	return nil
 }
 
 // handshake initializes the connection and starts or resumes the thread.
@@ -257,7 +372,8 @@ func (t *turnRun) handshake(ctx context.Context) error {
 // status. Tool calls and provider output are separate queues; calls are
 // answered one at a time.
 func (t *turnRun) runTurn(ctx context.Context, res *run.TurnResult) error {
-	id := IntegerRequestID(3)
+	t.nextRequest++
+	id := IntegerRequestID(t.nextRequest)
 	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.turn.Prompt, Effort: t.profile.Session.Effort})
 	if errors.Is(err, ErrProtocolLimit) {
 		return fmt.Errorf("%w: the prompt of %d bytes exceeds the %d bytes the provider channel carries: %w", run.ErrContextLimit, len(t.turn.Prompt), t.profile.MaxWireBytes, err)
@@ -432,7 +548,15 @@ func (t *turnRun) answer(ctx context.Context, call frame.ToolCall) error {
 	if raw, err := frame.EncodeToolCall(call); err == nil {
 		t.tr.record("tool-call", raw)
 	}
-	answer := t.handler(ctx, call.Name, t.redact(call.Arguments))
+	answered := make(chan run.ToolAnswer, 1)
+	arguments := t.redact(call.Arguments)
+	go func() { answered <- t.handler(ctx, call.Name, arguments) }()
+	var answer run.ToolAnswer
+	select {
+	case answer = <-answered:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 	type text struct {
 		Type string `json:"type"`
 		Text string `json:"text"`
