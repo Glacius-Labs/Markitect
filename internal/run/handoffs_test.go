@@ -13,6 +13,8 @@ import (
 type handoffIntegrationFake struct {
 	accepted []string
 	conflict string
+	entered  chan struct{}
+	release  chan struct{}
 }
 
 func (f *handoffIntegrationFake) Changes(_ context.Context, _ run.AssignmentWorkspace, handoff run.AssignmentHandoff) (string, error) {
@@ -20,6 +22,10 @@ func (f *handoffIntegrationFake) Changes(_ context.Context, _ run.AssignmentWork
 }
 
 func (f *handoffIntegrationFake) Integrate(_ context.Context, parent, child run.AssignmentWorkspace, handoff run.AssignmentHandoff, previous string) (string, error) {
+	if f.entered != nil {
+		close(f.entered)
+		<-f.release
+	}
 	if child.ID() == run.WorkspaceID(f.conflict) {
 		return "", errors.New("Git conflict")
 	}
@@ -121,11 +127,139 @@ func TestAssignmentHandoffsRouteQuestionCorrectionAndRequiredChildren(t *testing
 	if _, err := f.Accept(ctx, "library", "library/storage", storage.ResultCommit); err != nil {
 		t.Fatal(err)
 	}
+	if _, err := f.Return(ctx, "library", "library/storage", "Fix storage integration", time.Second); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Submit(ctx, "library"); err == nil {
+		t.Fatal("Library submitted while accepted child had an open correction")
+	}
+	newStorage, err := f.Submit(ctx, "library/storage")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := f.Changes(ctx, "library", "library/storage"); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Accept(ctx, "library", "library/storage", newStorage.ResultCommit); err != nil {
+		t.Fatal(err)
+	}
 	if _, err := f.Submit(ctx, "library"); err != nil {
 		t.Fatalf("Library could not hand integrated work to Root: %v", err)
 	}
-	if len(git.accepted) != 2 || !strings.Contains(git.accepted[0], corrected.ResultCommit) {
+	if len(git.accepted) != 3 || !strings.Contains(git.accepted[0], corrected.ResultCommit) || !strings.Contains(git.accepted[2], storage.ResultCommit+":"+newStorage.ResultCommit) {
 		t.Fatalf("child integration history: %v", git.accepted)
+	}
+}
+
+func TestAssignmentHandoffsRetainsPartialStartWithoutRunnableParent(t *testing.T) {
+	ctx := context.Background()
+	work := &assignmentWorkspacesFake{prepareErr: errors.New("incomplete copy")}
+	f, err := run.NewAssignmentHandoffs([]run.Manager{{Path: ".", Children: []string{"child"}}, {Path: "child", Parent: "."}}, work, &assignmentAgentsFake{}, &handoffIntegrationFake{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.StartRoot(ctx, run.AssignmentRequest{ID: "failed", Profile: "codex", Home: "root"}); err == nil {
+		t.Fatal("partial root start appeared complete")
+	}
+	if retained := f.RetainedWorkspace("."); retained == nil || retained.ID() != "failed" {
+		t.Fatalf("partial copy was not retained: %+v", retained)
+	}
+	if err := f.Delegate(ctx, ".", "child", run.AssignmentRequest{ID: "child", Profile: "codex", Home: "child"}); err == nil {
+		t.Fatal("child started under a failed parent")
+	}
+	work.prepareErr = nil
+	if err := f.StartRoot(ctx, run.AssignmentRequest{ID: "retry", Profile: "codex", Home: "root"}); err != nil {
+		t.Fatalf("failed parent could not be restarted on a fresh copy: %v", err)
+	}
+}
+
+func TestAssignmentHandoffsCancelledQuestionWaitsForBusyParent(t *testing.T) {
+	ctx := context.Background()
+	work, agents := &assignmentWorkspacesFake{}, &assignmentAgentsFake{}
+	f, err := run.NewAssignmentHandoffs([]run.Manager{{Path: ".", Children: []string{"child"}}, {Path: "child", Parent: "."}}, work, agents, &handoffIntegrationFake{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range []struct{ path, id string }{{".", "root"}, {"child", "child"}} {
+		path, id := entry.path, entry.id
+		request := run.AssignmentRequest{ID: run.WorkspaceID(id), Profile: "codex", Home: id}
+		if path == "." {
+			err = f.StartRoot(ctx, request)
+		} else {
+			err = f.Delegate(ctx, ".", path, request)
+		}
+		if err != nil {
+			t.Fatal(err)
+		}
+	}
+	agents.opened["root"].onMessage = make(chan struct{})
+	busy, stopBusy := context.WithCancel(ctx)
+	parentDone := make(chan error, 1)
+	go func() { _, err := f.Message(busy, ".", "wait", time.Minute); parentDone <- err }()
+	<-agents.opened["root"].onMessage
+	questionCtx, cancelQuestion := context.WithCancel(ctx)
+	questionDone := make(chan error, 1)
+	go func() { _, err := f.Message(questionCtx, "child", "question", time.Minute); questionDone <- err }()
+	cancelQuestion()
+	select {
+	case err := <-questionDone:
+		if err == nil {
+			t.Fatal("cancelled child question was answered")
+		}
+	case <-time.After(time.Second):
+		t.Fatal("cancelled child question stayed blocked behind busy parent")
+	}
+	stopBusy()
+	<-parentDone
+}
+
+func TestAssignmentHandoffsSerializesParentGitWorkAndRechecksChild(t *testing.T) {
+	ctx := context.Background()
+	work, agents := &assignmentWorkspacesFake{}, &assignmentAgentsFake{}
+	git := &handoffIntegrationFake{entered: make(chan struct{}), release: make(chan struct{})}
+	f, err := run.NewAssignmentHandoffs([]run.Manager{{Path: ".", Children: []string{"child"}}, {Path: "child", Parent: "."}}, work, agents, git)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := f.StartRoot(ctx, run.AssignmentRequest{ID: "root", Profile: "codex", Home: "root"}); err != nil {
+		t.Fatal(err)
+	}
+	if err := f.Delegate(ctx, ".", "child", run.AssignmentRequest{ID: "child", Profile: "codex", Home: "child"}); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := f.Message(ctx, "child", "result", time.Second); err != nil {
+		t.Fatal(err)
+	}
+	handoff, err := f.Submit(ctx, "child")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, _, err := f.Changes(ctx, ".", "child"); err != nil {
+		t.Fatal(err)
+	}
+	acceptDone := make(chan error, 1)
+	go func() { _, err := f.Accept(ctx, ".", "child", handoff.ResultCommit); acceptDone <- err }()
+	<-git.entered
+	blocked, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, err := f.Message(blocked, ".", "parent edit", time.Second); !errors.Is(err, context.Canceled) {
+		t.Fatalf("concurrent parent edit was not held behind integration: %v", err)
+	}
+	if _, err := f.Submit(blocked, "."); !errors.Is(err, context.Canceled) {
+		t.Fatalf("concurrent parent submit was not held behind integration: %v", err)
+	}
+	if len(agents.opened["root"].messages) != 0 {
+		t.Fatal("parent Agent edited its stand during integration")
+	}
+	if _, err := f.Return(ctx, ".", "child", "correct changed interface", time.Second); err != nil {
+		t.Fatal(err)
+	}
+	close(git.release)
+	if err := <-acceptDone; err == nil || !strings.Contains(err.Error(), "changed") {
+		t.Fatalf("accepted a child returned during Git integration: %v", err)
+	}
+	if _, err := f.Submit(ctx, "."); err == nil {
+		t.Fatal("parent submitted returned child after an integration race")
 	}
 }
 

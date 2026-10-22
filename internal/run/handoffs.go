@@ -18,16 +18,34 @@ type AssignmentIntegration interface {
 }
 
 type assignmentMember struct {
-	manager     Manager
-	agent       *Assignment
-	starting    bool
-	handoff     AssignmentHandoff
-	inspected   string
-	returned    bool
-	accepted    map[string]string
-	integrating sync.Mutex
-	messaging   sync.Mutex
+	manager   Manager
+	agent     *Assignment
+	partial   *Assignment
+	starting  bool
+	handoff   AssignmentHandoff
+	inspected string
+	returned  bool
+	accepted  map[string]string
+	messages  chan struct{}
 }
+
+func (m *assignmentMember) acquire(ctx context.Context) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	select {
+	case m.messages <- struct{}{}:
+		if err := ctx.Err(); err != nil {
+			m.release()
+			return err
+		}
+		return nil
+	case <-ctx.Done():
+		return ctx.Err()
+	}
+}
+
+func (m *assignmentMember) release() { <-m.messages }
 
 // AssignmentHandoffs routes work through the model-derived Manager tree. The
 // parent owns the substantive review decision; this type enforces only direct
@@ -50,7 +68,7 @@ func NewAssignmentHandoffs(team []Manager, workspaces AssignmentWorkspaces, agen
 		if manager.Path == "" || f.team[manager.Path] != nil {
 			return nil, fmt.Errorf("repeated or empty Manager path %q", manager.Path)
 		}
-		f.team[manager.Path] = &assignmentMember{manager: manager, accepted: make(map[string]string)}
+		f.team[manager.Path] = &assignmentMember{manager: manager, accepted: make(map[string]string), messages: make(chan struct{}, 1)}
 	}
 	for _, manager := range team {
 		if manager.Path == "." {
@@ -123,15 +141,24 @@ func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, req
 			if p == nil || p.agent == nil {
 				return "", fmt.Errorf("parent %q is unavailable", parent)
 			}
-			p.messaging.Lock()
-			defer p.messaging.Unlock()
+			if err := p.acquire(ctx); err != nil {
+				return "", err
+			}
+			defer p.release()
 			answer, err := p.agent.Message(ctx, fmt.Sprintf("Your direct child %s asks: %s", path, question), time.Minute)
+			if err == nil && !answer.Completed {
+				err = fmt.Errorf("parent %q did not complete its answer", parent)
+			}
 			return answer.Final, err
 		}
 	}
 	a, err := StartAssignment(ctx, f.workspaces, f.agents, request)
 	f.mu.Lock()
-	m.agent = a
+	if err == nil {
+		m.agent = a
+	} else {
+		m.partial = a
+	}
 	m.starting = false
 	f.mu.Unlock()
 	return err
@@ -149,9 +176,22 @@ func (f *AssignmentHandoffs) Message(ctx context.Context, path, message string, 
 	if a == nil {
 		return TurnResult{}, fmt.Errorf("Manager %q has no assignment", path)
 	}
-	m.messaging.Lock()
-	defer m.messaging.Unlock()
+	if err := m.acquire(ctx); err != nil {
+		return TurnResult{}, err
+	}
+	defer m.release()
 	return a.Message(ctx, message, timeout)
+}
+
+// RetainedWorkspace exposes a partial starting copy after setup failure. It
+// cannot be used as a running parent; a later attempt needs a new assignment ID.
+func (f *AssignmentHandoffs) RetainedWorkspace(path string) AssignmentWorkspace {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if m := f.team[path]; m != nil && m.partial != nil {
+		return m.partial.Workspace()
+	}
+	return nil
 }
 
 // Close ends an Agent's container while preserving its fixed internal results
@@ -179,8 +219,14 @@ func (f *AssignmentHandoffs) Submit(ctx context.Context, path string) (Assignmen
 		f.mu.Unlock()
 		return AssignmentHandoff{}, fmt.Errorf("Manager %q has no assignment", path)
 	}
+	f.mu.Unlock()
+	if err := m.acquire(ctx); err != nil {
+		return AssignmentHandoff{}, err
+	}
+	defer m.release()
+	f.mu.Lock()
 	for _, child := range m.manager.Children {
-		if m.accepted[child] == "" || f.team[child].handoff.ResultCommit != m.accepted[child] {
+		if !f.childIntegrated(m, child) {
 			f.mu.Unlock()
 			return AssignmentHandoff{}, fmt.Errorf("Manager %q has not integrated required child %q", path, child)
 		}
@@ -192,11 +238,23 @@ func (f *AssignmentHandoffs) Submit(ctx context.Context, path string) (Assignmen
 		return AssignmentHandoff{}, err
 	}
 	f.mu.Lock()
+	for _, child := range m.manager.Children {
+		if !f.childIntegrated(m, child) {
+			f.mu.Unlock()
+			return AssignmentHandoff{}, fmt.Errorf("Manager %q changed required child %q during submission", path, child)
+		}
+	}
 	m.handoff = handoff
 	m.inspected = ""
 	m.returned = false
 	f.mu.Unlock()
 	return handoff, nil
+}
+
+// Caller holds f.mu.
+func (f *AssignmentHandoffs) childIntegrated(parent *assignmentMember, child string) bool {
+	c := f.team[child]
+	return c != nil && !c.returned && parent.accepted[child] != "" && c.handoff.ResultCommit == parent.accepted[child]
 }
 
 // Changes gives the parent the child's actual fixed Git difference before it
@@ -246,8 +304,10 @@ func (f *AssignmentHandoffs) Accept(ctx context.Context, parent, child, inspecte
 	if m == nil {
 		return "", fmt.Errorf("unknown parent %q", parent)
 	}
-	m.integrating.Lock()
-	defer m.integrating.Unlock()
+	if err := m.acquire(ctx); err != nil {
+		return "", err
+	}
+	defer m.release()
 	f.mu.Lock()
 	c := f.team[child]
 	if m == nil || c == nil || c.manager.Parent != parent || c.handoff.ResultCommit == "" || c.returned || inspectedCommit != c.inspected || inspectedCommit != c.handoff.ResultCommit || m.agent == nil {
@@ -262,6 +322,10 @@ func (f *AssignmentHandoffs) Accept(ctx context.Context, parent, child, inspecte
 	}
 	f.mu.Lock()
 	m.accepted[child] = handoff.ResultCommit
+	changed := c.returned || c.handoff.ResultCommit != handoff.ResultCommit
 	f.mu.Unlock()
+	if changed {
+		return result, fmt.Errorf("child %q changed while its Git result was integrated", child)
+	}
 	return result, nil
 }
