@@ -14,31 +14,44 @@ import (
 )
 
 type scheduledAgents struct {
-	opened map[string]*scheduledSession
+	opened          map[string]*scheduledSession
+	repeatQuestions bool
+	failID          string
+	blockCloseID    string
+	unblockClose    chan struct{}
 }
 
 type scheduledSession struct {
-	spec       run.AssignmentSpec
-	handler    run.ToolHandler
-	corrected  bool
-	asked      bool
-	closed     bool
-	questions  []string
-	correction string
+	spec            run.AssignmentSpec
+	handler         run.ToolHandler
+	corrected       bool
+	asked           bool
+	closed          bool
+	questions       []string
+	timeouts        []time.Duration
+	correction      string
+	reviews         []string
+	repeatQuestions bool
+	fail            bool
+	unblockClose    chan struct{}
 }
 
 func (a *scheduledAgents) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
 	if a.opened == nil {
 		a.opened = map[string]*scheduledSession{}
 	}
-	s := &scheduledSession{spec: spec, handler: handler}
+	s := &scheduledSession{spec: spec, handler: handler, repeatQuestions: a.repeatQuestions, fail: spec.ID == a.failID}
+	if spec.ID == a.blockCloseID {
+		s.unblockClose = a.unblockClose
+	}
 	a.opened[spec.ID] = s
 	return s, nil
 }
 
 var reviewedResult = regexp.MustCompile(`result ([a-f]{40})`)
 
-func (s *scheduledSession) Message(ctx context.Context, prompt string, _ time.Duration) (run.TurnResult, error) {
+func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout time.Duration) (run.TurnResult, error) {
+	s.timeouts = append(s.timeouts, timeout)
 	call := func(name string, args any) error {
 		body, _ := json.Marshal(args)
 		answer := s.handler(ctx, name, body)
@@ -52,6 +65,9 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, _ time.Du
 		s.questions = append(s.questions, prompt)
 		return run.TurnResult{Final: "Use the public storage contract.", Completed: true}, nil
 	case strings.Contains(prompt, "Your responsibility"):
+		if s.fail {
+			return run.TurnResult{Final: "failed work", Commands: []run.CommandObservation{{Command: "go test ./...", Status: "failed", Output: "assertion failed"}}}, errors.New("provider interrupted")
+		}
 		switch s.spec.ID {
 		case "trial-0":
 			if err := call(run.DelegateChildTool, map[string]string{"child": "library", "task": "Build the public application"}); err != nil {
@@ -64,13 +80,20 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, _ time.Du
 				}
 			}
 		case "trial-3":
-			answer := s.handler(ctx, run.AskParentTool, json.RawMessage(`{"question":"Which contract?"}`))
-			if answer.Refused || answer.Text != "Use the public storage contract." {
-				return run.TurnResult{}, fmt.Errorf("parent answer: %+v", answer)
+			count := 1
+			if s.repeatQuestions {
+				count = 2
 			}
-			s.asked = true
+			for i := 0; i < count; i++ {
+				answer := s.handler(ctx, run.AskParentTool, json.RawMessage(`{"question":"Which contract?"}`))
+				if answer.Refused || answer.Text != "Use the public storage contract." {
+					return run.TurnResult{}, fmt.Errorf("parent answer: %+v", answer)
+				}
+				s.asked = true
+			}
 		}
 	case strings.Contains(prompt, "Review your direct child"):
+		s.reviews = append(s.reviews, prompt)
 		found := reviewedResult.FindStringSubmatch(prompt)
 		if len(found) != 2 {
 			return run.TurnResult{}, fmt.Errorf("no fixed result in review prompt")
@@ -97,7 +120,7 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, _ time.Du
 	case strings.Contains(prompt, "Repair the lending limit test"), strings.Contains(prompt, "Rebase storage against"):
 		s.correction = prompt
 	}
-	return run.TurnResult{Final: "Completed " + s.spec.ID, Completed: true}, nil
+	return run.TurnResult{Final: "Completed " + s.spec.ID, Completed: true, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed"}}}, nil
 }
 
 type conflictOnceIntegration struct {
@@ -123,7 +146,7 @@ func TestAssignmentSchedulerRoutesGitConflictToOwningChild(t *testing.T) {
 		{Path: "library/storage", Parent: "library", ExecuteProfile: "exec"},
 	}
 	work, agents, git := &assignmentWorkspacesFake{}, &scheduledAgents{}, &conflictOnceIntegration{}
-	result, _, err := run.RunAssignmentTree(ctx, team, work, agents, git, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement the model", MaxMessages: 20, Timeout: time.Second})
+	result, _, err := run.RunAssignmentTree(ctx, team, work, agents, git, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement the model", MaxMessages: 20, Timeout: time.Second, TranscriptDir: t.TempDir()})
 	if err != nil || result.ResultCommit == "" || !git.conflicted || len(git.accepted) != 3 {
 		t.Fatalf("conflict correction was not integrated: %+v %v, accepted=%v", result, err, git.accepted)
 	}
@@ -133,13 +156,16 @@ func TestAssignmentSchedulerRoutesGitConflictToOwningChild(t *testing.T) {
 }
 
 func TestAssignmentSchedulerRejectsUnboundedInvocation(t *testing.T) {
-	_, _, err := run.RunAssignmentTree(context.Background(), []run.Manager{{Path: "."}}, &assignmentWorkspacesFake{}, &scheduledAgents{}, &handoffIntegrationFake{}, run.AssignmentSchedule{IDPrefix: "trial", Task: "Work", MaxMessages: 1, Timeout: time.Second})
+	_, _, err := run.RunAssignmentTree(context.Background(), []run.Manager{{Path: "."}}, &assignmentWorkspacesFake{}, &scheduledAgents{}, &handoffIntegrationFake{}, run.AssignmentSchedule{IDPrefix: "trial", Task: "Work", MaxMessages: 1, Timeout: time.Second, TranscriptDir: t.TempDir()})
 	if err == nil || errors.Is(err, context.DeadlineExceeded) {
 		t.Fatalf("unbounded assignment was allowed: %v", err)
 	}
 }
 
 func (s *scheduledSession) Close(context.Context) (run.TurnResult, error) {
+	if s.unblockClose != nil {
+		<-s.unblockClose
+	}
 	s.closed = true
 	return run.TurnResult{Stopped: true}, nil
 }
@@ -154,7 +180,7 @@ func TestAssignmentSchedulerDelegatesAnswersReviewsReturnsAndIntegrates(t *testi
 		{Path: "library/storage", Parent: "library", Role: "storage", ExecuteProfile: "exec"},
 	}
 	work, agents, git := &assignmentWorkspacesFake{}, &scheduledAgents{}, &handoffIntegrationFake{}
-	result, flow, err := run.RunAssignmentTree(ctx, team, work, agents, git, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement the model", MaxMessages: 20, Timeout: time.Second})
+	result, flow, err := run.RunAssignmentTree(ctx, team, work, agents, git, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement the model", MaxMessages: 20, Timeout: time.Second, TranscriptDir: t.TempDir()})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -170,9 +196,88 @@ func TestAssignmentSchedulerDelegatesAnswersReviewsReturnsAndIntegrates(t *testi
 	if agents.opened["trial-2"].correction == "" {
 		t.Fatal("lending correction was not delivered to its existing Agent")
 	}
+	if !strings.Contains(agents.opened["trial-1"].reviews[0], "go test ./...: passed") {
+		t.Fatal("parent did not receive observed child commands for review")
+	}
 	for id, agent := range agents.opened {
 		if !agent.closed {
 			t.Fatalf("Agent %s was not closed", id)
 		}
+	}
+}
+
+func TestAssignmentSchedulerCountsDirectParentAnswers(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	team := []run.Manager{
+		{Path: ".", Children: []string{"library"}, ExecuteProfile: "exec"},
+		{Path: "library", Parent: ".", Children: []string{"library/lending", "library/storage"}, ExecuteProfile: "exec"},
+		{Path: "library/lending", Parent: "library", ExecuteProfile: "exec"},
+		{Path: "library/storage", Parent: "library", ExecuteProfile: "exec"},
+	}
+	agents := &scheduledAgents{repeatQuestions: true}
+	_, flow, err := run.RunAssignmentTree(ctx, team, &assignmentWorkspacesFake{}, agents, &handoffIntegrationFake{}, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement", MaxMessages: 8, Timeout: time.Second, TranscriptDir: t.TempDir()})
+	if err == nil || !strings.Contains(err.Error(), "assignment message allowance exhausted") {
+		t.Fatalf("repeated question bypassed common allowance: %v", err)
+	}
+	if got := len(agents.opened["trial-1"].questions); got != 1 {
+		t.Fatalf("parent answered %d questions beyond allowance", got)
+	}
+	for _, timeout := range agents.opened["trial-1"].timeouts {
+		if timeout != time.Second {
+			t.Fatalf("parent answer used a different timeout: %s", timeout)
+		}
+	}
+	if flow.Workspace("library/storage") == nil || len(flow.Observations("library/storage")) != 1 {
+		t.Fatal("budget failure lost the child's retained copy or partial result")
+	}
+}
+
+func TestAssignmentSchedulerRetainsFailedChildCopyAndObservation(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	team := []run.Manager{
+		{Path: ".", Children: []string{"library"}, ExecuteProfile: "exec"},
+		{Path: "library", Parent: ".", Children: []string{"library/lending", "library/storage"}, ExecuteProfile: "exec"},
+		{Path: "library/lending", Parent: "library", ExecuteProfile: "exec"},
+		{Path: "library/storage", Parent: "library", ExecuteProfile: "exec"},
+	}
+	agents := &scheduledAgents{failID: "trial-2"}
+	_, flow, err := run.RunAssignmentTree(ctx, team, &assignmentWorkspacesFake{}, agents, &handoffIntegrationFake{}, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement", MaxMessages: 8, Timeout: time.Second, TranscriptDir: t.TempDir()})
+	if err == nil || !strings.Contains(err.Error(), "provider interrupted") {
+		t.Fatalf("child failure was hidden: %v", err)
+	}
+	if flow.Workspace("library/lending") == nil || flow.Workspace("library/lending").StartingCommit() == "" || flow.Transcript("library/lending") != agents.opened["trial-2"].spec.Transcript {
+		t.Fatal("failed child's copy or transcript path is not findable")
+	}
+	observed := flow.Observations("library/lending")
+	if len(observed) != 1 || observed[0].Commands[0].Output != "assertion failed" {
+		t.Fatalf("partial command observation was discarded: %+v", observed)
+	}
+	for id, agent := range agents.opened {
+		if !agent.closed {
+			t.Fatalf("failed run left Agent %s open", id)
+		}
+	}
+}
+
+func TestAssignmentSchedulerAttemptsOtherStopsWhenOneBlocks(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	team := []run.Manager{
+		{Path: ".", Children: []string{"library"}, ExecuteProfile: "exec"},
+		{Path: "library", Parent: ".", Children: []string{"library/lending", "library/storage"}, ExecuteProfile: "exec"},
+		{Path: "library/lending", Parent: "library", ExecuteProfile: "exec"},
+		{Path: "library/storage", Parent: "library", ExecuteProfile: "exec"},
+	}
+	unblock := make(chan struct{})
+	defer close(unblock)
+	agents := &scheduledAgents{blockCloseID: "trial-0", unblockClose: unblock}
+	result, flow, err := run.RunAssignmentTree(ctx, team, &assignmentWorkspacesFake{}, agents, &handoffIntegrationFake{}, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement", MaxMessages: 20, Timeout: 50 * time.Millisecond, TranscriptDir: t.TempDir()})
+	if result.ResultCommit == "" || err == nil || !strings.Contains(err.Error(), "close outcome uncertain") {
+		t.Fatalf("blocking stop was not reported with retained result: %+v %v", result, err)
+	}
+	if !agents.opened["trial-1"].closed || !agents.opened["trial-2"].closed || !agents.opened["trial-3"].closed || flow.Workspace(".") == nil {
+		t.Fatal("blocked Root stop prevented sibling stop or lost its copy")
 	}
 }

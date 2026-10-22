@@ -22,15 +22,17 @@ type AssignmentIntegration interface {
 }
 
 type assignmentMember struct {
-	manager   Manager
-	agent     *Assignment
-	partial   *Assignment
-	starting  bool
-	handoff   AssignmentHandoff
-	inspected string
-	returned  bool
-	accepted  map[string]string
-	messages  chan struct{}
+	manager    Manager
+	agent      *Assignment
+	partial    *Assignment
+	transcript string
+	observed   []TurnResult
+	starting   bool
+	handoff    AssignmentHandoff
+	inspected  string
+	returned   bool
+	accepted   map[string]string
+	messages   chan struct{}
 }
 
 func (m *assignmentMember) acquire(ctx context.Context) error {
@@ -56,11 +58,12 @@ func (m *assignmentMember) release() { <-m.messages }
 // relationships, fixed Git results and participation of every required child.
 // It is the Apply migration seam while Extract continues using Passes.
 type AssignmentHandoffs struct {
-	mu          sync.Mutex
-	team        map[string]*assignmentMember
-	workspaces  AssignmentWorkspaces
-	agents      AssignmentAgents
-	integration AssignmentIntegration
+	mu           sync.Mutex
+	team         map[string]*assignmentMember
+	workspaces   AssignmentWorkspaces
+	agents       AssignmentAgents
+	integration  AssignmentIntegration
+	parentAnswer func(context.Context, string, string, string) (string, error)
 }
 
 func NewAssignmentHandoffs(team []Manager, workspaces AssignmentWorkspaces, agents AssignmentAgents, integration AssignmentIntegration) (*AssignmentHandoffs, error) {
@@ -181,8 +184,14 @@ func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, req
 
 func (f *AssignmentHandoffs) openReserved(ctx context.Context, parent, path string, request AssignmentRequest) error {
 	m := f.team[path]
+	f.mu.Lock()
+	m.transcript = request.Transcript
+	f.mu.Unlock()
 	if parent != "" {
 		request.AskParent = func(ctx context.Context, question string) (string, error) {
+			if f.parentAnswer != nil {
+				return f.parentAnswer(ctx, parent, path, question)
+			}
 			f.mu.Lock()
 			p := f.team[parent]
 			f.mu.Unlock()
@@ -228,7 +237,53 @@ func (f *AssignmentHandoffs) Message(ctx context.Context, path, message string, 
 		return TurnResult{}, err
 	}
 	defer m.release()
-	return a.Message(ctx, message, timeout)
+	result, err := a.Message(ctx, message, timeout)
+	f.mu.Lock()
+	m.observed = append(m.observed, result)
+	f.mu.Unlock()
+	return result, err
+}
+
+// Workspace exposes a started or partially established Agent copy even after
+// failure or container shutdown. The caller owns its eventual release.
+func (f *AssignmentHandoffs) Workspace(path string) AssignmentWorkspace {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if m := f.team[path]; m != nil {
+		if m.agent != nil {
+			return m.agent.Workspace()
+		}
+		if m.partial != nil {
+			return m.partial.Workspace()
+		}
+	}
+	return nil
+}
+
+// Transcript names the ordinary provider log for this assignment.
+func (f *AssignmentHandoffs) Transcript(path string) string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if m := f.team[path]; m != nil {
+		return m.transcript
+	}
+	return ""
+}
+
+// Observations retains native responses, including a partial failed response.
+func (f *AssignmentHandoffs) Observations(path string) []TurnResult {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	m := f.team[path]
+	if m == nil {
+		return nil
+	}
+	results := make([]TurnResult, len(m.observed))
+	copy(results, m.observed)
+	for i := range results {
+		results[i].Commands = append([]CommandObservation(nil), results[i].Commands...)
+	}
+	return results
 }
 
 // RetainedWorkspace exposes a partial starting copy after setup failure. It

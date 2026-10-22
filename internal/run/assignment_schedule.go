@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"path/filepath"
 	"strconv"
 	"strings"
 	"sync"
@@ -26,14 +27,15 @@ var assignmentDecisionTools = []ToolSpec{
 }
 
 // AssignmentSchedule starts a model-derived Implement tree. MaxMessages bounds
-// the scheduler's Agent messages; the caller also supplies a finite context for
-// the whole assignment, including direct parent answers and Git operations.
+// all Host-to-Agent messages, including direct parent answers. The caller also
+// supplies a finite context for Git operations and an absolute log directory.
 type AssignmentSchedule struct {
-	IDPrefix    string
-	Tree        snapshot.Tree
-	Task        string
-	MaxMessages int
-	Timeout     time.Duration
+	IDPrefix      string
+	Tree          snapshot.Tree
+	Task          string
+	MaxMessages   int
+	Timeout       time.Duration
+	TranscriptDir string
 }
 
 type assignmentAction struct {
@@ -96,6 +98,7 @@ type assignmentScheduler struct {
 	mailboxes map[string]*assignmentMailbox
 	ids       map[string]WorkspaceID
 	options   AssignmentSchedule
+	mu        sync.Mutex
 	used      int
 }
 
@@ -103,8 +106,8 @@ type assignmentScheduler struct {
 // decide on its direct children. It returns the fixed Root result and retained
 // workspaces; A3 owns invoking it around assessment and final Verify.
 func RunAssignmentTree(ctx context.Context, team []Manager, workspaces AssignmentWorkspaces, agents AssignmentAgents, integration AssignmentIntegration, options AssignmentSchedule) (result AssignmentHandoff, flow *AssignmentHandoffs, err error) {
-	if _, bounded := ctx.Deadline(); !bounded || !assignmentName.MatchString(options.IDPrefix) || len(options.IDPrefix) > 75 || options.MaxMessages < 1 || options.Timeout <= 0 || strings.TrimSpace(options.Task) == "" {
-		return AssignmentHandoff{}, nil, errors.New("assignment tree needs an identity, task and finite message and time bounds")
+	if _, bounded := ctx.Deadline(); !bounded || !assignmentName.MatchString(options.IDPrefix) || len(options.IDPrefix) > 75 || options.MaxMessages < 1 || options.Timeout <= 0 || strings.TrimSpace(options.Task) == "" || !filepath.IsAbs(options.TranscriptDir) {
+		return AssignmentHandoff{}, nil, errors.New("assignment tree needs an identity, task, absolute transcript directory and finite message and time bounds")
 	}
 	flow, err = NewAssignmentHandoffs(team, workspaces, agents, integration)
 	if err != nil {
@@ -119,15 +122,9 @@ func RunAssignmentTree(ctx context.Context, team []Manager, workspaces Assignmen
 		s.mailboxes[manager.Path] = &assignmentMailbox{}
 		s.ids[manager.Path] = WorkspaceID(options.IDPrefix + "-" + strconv.Itoa(i))
 	}
+	flow.parentAnswer = s.parentAnswer
 	defer func() {
-		closeCtx, cancel := context.WithTimeout(context.Background(), time.Minute)
-		defer cancel()
-		for i := len(team) - 1; i >= 0; i-- {
-			if flow.team[team[i].Path].agent != nil {
-				_, closeErr := flow.Close(closeCtx, team[i].Path)
-				err = errors.Join(err, closeErr)
-			}
-		}
+		err = errors.Join(err, s.closeAgents(team))
 	}()
 	root := s.request(".")
 	root.Tree = options.Tree
@@ -140,22 +137,87 @@ func RunAssignmentTree(ctx context.Context, team []Manager, workspaces Assignmen
 
 func (s *assignmentScheduler) request(path string) AssignmentRequest {
 	id := s.ids[path]
-	return AssignmentRequest{ID: id, Profile: s.team[path].ExecuteProfile, Home: string(id) + "-home", Tools: assignmentDecisionTools, Handler: s.mailboxes[path].handle}
+	return AssignmentRequest{ID: id, Profile: s.team[path].ExecuteProfile, Home: string(id) + "-home", Transcript: filepath.Join(s.options.TranscriptDir, string(id)+".jsonl"), Tools: assignmentDecisionTools, Handler: s.mailboxes[path].handle}
 }
 
-func (s *assignmentScheduler) message(ctx context.Context, path, prompt string) error {
+func (s *assignmentScheduler) reserveMessage() error {
+	s.mu.Lock()
+	defer s.mu.Unlock()
 	if s.used >= s.options.MaxMessages {
 		return errors.New("assignment message allowance exhausted")
 	}
 	s.used++
+	return nil
+}
+
+func (s *assignmentScheduler) messageResult(ctx context.Context, path, prompt string) (TurnResult, error) {
+	if err := s.reserveMessage(); err != nil {
+		return TurnResult{}, err
+	}
 	answer, err := s.flow.Message(ctx, path, prompt, s.options.Timeout)
 	if err != nil {
-		return err
+		return answer, err
 	}
 	if !answer.Completed {
-		return fmt.Errorf("Manager %q did not complete its response", path)
+		return answer, fmt.Errorf("Manager %q did not complete its response", path)
 	}
-	return nil
+	return answer, nil
+}
+
+func (s *assignmentScheduler) message(ctx context.Context, path, prompt string) error {
+	_, err := s.messageResult(ctx, path, prompt)
+	return err
+}
+
+func (s *assignmentScheduler) parentAnswer(ctx context.Context, parent, child, question string) (string, error) {
+	answer, err := s.messageResult(ctx, parent, fmt.Sprintf("Your direct child %s asks: %s", child, question))
+	return answer.Final, err
+}
+
+type assignmentClose struct {
+	path string
+	done chan struct {
+		result TurnResult
+		err    error
+	}
+}
+
+func (s *assignmentScheduler) closeAgents(team []Manager) error {
+	limit := min(s.options.Timeout, time.Minute)
+	ctx, cancel := context.WithTimeout(context.Background(), limit)
+	defer cancel()
+	var attempts []assignmentClose
+	for i := len(team) - 1; i >= 0; i-- {
+		path := team[i].Path
+		if s.flow.team[path].agent == nil {
+			continue
+		}
+		attempt := assignmentClose{path: path, done: make(chan struct {
+			result TurnResult
+			err    error
+		}, 1)}
+		attempts = append(attempts, attempt)
+		go func(a assignmentClose) {
+			result, err := s.flow.Close(ctx, a.path)
+			a.done <- struct {
+				result TurnResult
+				err    error
+			}{result, err}
+		}(attempt)
+	}
+	var all error
+	for _, attempt := range attempts {
+		select {
+		case close := <-attempt.done:
+			if !close.result.Stopped {
+				all = errors.Join(all, fmt.Errorf("Agent %q stop was not observed", attempt.path))
+			}
+			all = errors.Join(all, close.err)
+		case <-ctx.Done():
+			all = errors.Join(all, fmt.Errorf("Agent %q close outcome uncertain: %w", attempt.path, ctx.Err()))
+		}
+	}
+	return all
 }
 
 func (s *assignmentScheduler) work(ctx context.Context, path, task string) (AssignmentHandoff, error) {
@@ -205,7 +267,7 @@ func (s *assignmentScheduler) review(ctx context.Context, parent, child string) 
 		if err != nil {
 			return err
 		}
-		prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nActual Git changes:\n%s\nInspect conformance and tests. Use accept_child with that commit or return_child with a concrete correction. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, handoff.Summary, changes)
+		prompt := fmt.Sprintf("Review your direct child %s's fixed result %s from %s. Child summary: %s\nObserved commands from its latest response:\n%s\nActual Git changes:\n%s\nInspect conformance and tests. Use accept_child with that commit or return_child with a concrete correction. Your decision must be yours.", child, handoff.ResultCommit, handoff.StartingCommit, handoff.Summary, s.commandObservations(child), changes)
 		if err := s.message(ctx, parent, prompt); err != nil {
 			return err
 		}
@@ -245,10 +307,9 @@ func (s *assignmentScheduler) review(ctx context.Context, parent, child string) 
 }
 
 func (s *assignmentScheduler) correct(ctx context.Context, parent, child, correction string) error {
-	if s.used >= s.options.MaxMessages {
-		return errors.New("assignment message allowance exhausted")
+	if err := s.reserveMessage(); err != nil {
+		return err
 	}
-	s.used++
 	answer, err := s.flow.Return(ctx, parent, child, correction, s.options.Timeout)
 	if err != nil {
 		return err
@@ -261,4 +322,33 @@ func (s *assignmentScheduler) correct(ctx context.Context, parent, child, correc
 	}
 	_, err = s.flow.Submit(ctx, child)
 	return err
+}
+
+func (s *assignmentScheduler) commandObservations(path string) string {
+	observed := s.flow.Observations(path)
+	if len(observed) == 0 || len(observed[len(observed)-1].Commands) == 0 {
+		return "No command observations reported."
+	}
+	var b strings.Builder
+	for _, command := range observed[len(observed)-1].Commands {
+		name, output := command.Command, command.Output
+		if len(name) > 2048 {
+			name = name[:2048] + " [truncated]"
+		}
+		if len(output) > 4096 {
+			output = output[:4096] + " [truncated]"
+		}
+		fmt.Fprintf(&b, "- %s: %s", name, command.Status)
+		if command.ExitCode != nil {
+			fmt.Fprintf(&b, " (exit %d)", *command.ExitCode)
+		}
+		if output != "" {
+			fmt.Fprintf(&b, ": %s", output)
+		}
+		b.WriteByte('\n')
+		if b.Len() > 16<<10 {
+			return b.String()[:16<<10] + "\n[command observations truncated]"
+		}
+	}
+	return b.String()
 }
