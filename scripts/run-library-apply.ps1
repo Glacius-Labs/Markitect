@@ -44,6 +44,11 @@ try {
     if ($LASTEXITCODE -ne 0 -or $mainHead -notmatch '^[0-9a-f]{40}$') { throw 'Cannot resolve an exact Main commit.' }
     Invoke-NativeChecked 'clean Main worktree' { & $git -C $sourceRepo worktree add --detach $source $mainHead }
     if ((& $git -C $source status --porcelain).Length -ne 0) { throw 'Fresh Main source is not clean.' }
+    $integratedScript = Join-Path $source 'scripts\run-library-apply.ps1'
+    if (-not (Test-Path -LiteralPath $integratedScript -PathType Leaf) -or
+        (Get-FileHash -LiteralPath $integratedScript -Algorithm SHA256).Hash -ne (Get-FileHash -LiteralPath $PSCommandPath -Algorithm SHA256).Hash) {
+        throw 'The launched script is not the exact version in integrated Main.'
+    }
     Push-Location $source
     try {
         Invoke-NativeChecked 'product build' { & $go build -trimpath -o $binary ./cmd/markitect }
