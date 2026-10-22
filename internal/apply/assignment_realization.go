@@ -71,6 +71,7 @@ type AssignmentRealizationResult struct {
 	AcceptedCommit    string
 	NoChange          bool
 	Messages          int
+	HomesRemoved      []string
 }
 
 var realizationID = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,49}$`)

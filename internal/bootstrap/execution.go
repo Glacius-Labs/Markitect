@@ -6,8 +6,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
@@ -37,16 +39,21 @@ func newExecution(preparation *apply.PreparationService, repository *gitrepo.Rep
 // applyPorts is everything one Apply runs with: the concrete adapters, the
 // run's evidence and the explicit bounds of the invocation.
 type applyPorts struct {
-	RunID      string
-	Agents     runport.Agents
-	Workspaces runport.Workspaces
-	Checks     runport.Checks
-	Evidence   *fileEvidence
-	Publisher  apply.Publisher
-	Control    apply.ControlCheck
-	RemoveHome func(context.Context, string) error
-	// RequireVolumeSubpaths checks the container engine for volume subpath
-	// mounts, which enforced ownership needs.
+	RunID                 string
+	Agents                runport.Agents
+	AssignmentAgents      runport.AssignmentAgents
+	AssignmentWorkspaces  apply.RealizationWorkspaces
+	AssignmentIntegration runport.AssignmentIntegration
+	CreateHome            func(context.Context, string) error
+	CleanupHome           func(context.Context, string) error
+	Workspaces            runport.Workspaces
+	Checks                runport.Checks
+	Evidence              *fileEvidence
+	Publisher             apply.Publisher
+	Control               apply.ControlCheck
+	RemoveHome            func(context.Context, string) error
+	// RequireVolumeSubpaths remains for the legacy Turn-based Extract path.
+	// Assignment Apply mounts complete, independent workspace volumes.
 	RequireVolumeSubpaths func(context.Context) error
 	Harvest               harvestLimits
 	// Deadline is the operator's absolute wall-clock limit; zero means none.
@@ -69,6 +76,12 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 	}
 	var evidence *fileEvidence
 	defer func() { err = finishApplyReport(&report, err, evidence, session.lock.Release) }()
+	if session.cfg.ProductBuild != request.Build {
+		return report, errors.New("run configuration product build differs from this executable")
+	}
+	if session.cfg.WorkDeadline != "" {
+		return report, errors.New("workDeadline is a legacy Pass limit and cannot bound assignment Apply; use deadline")
+	}
 	prepared, err := s.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
 	report.Preparation = capturedExecutionReport(prepared, session.cfg.ProductBuild)
 	if prepared.Status() != model.Passed || err != nil {
@@ -81,17 +94,128 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 	}
 	report.EvidenceDirectory = ports.Evidence.Dir()
 	evidence = ports.Evidence
-	result, err := s.applyAndPublish(ctx, request, prepared, session.cfg, ports)
-	if result.Binding.Strategy != "" {
-		report.Binding = &result.Binding
+	result, receipt, runErr := s.realizeAndPublish(ctx, request, prepared, session.cfg, ports)
+	report.Assignment = cli.NewAssignmentReport(result)
+	if observation, ok := ports.AssignmentWorkspaces.(interface {
+		GitContainerID() string
+		GitExecCount() int
+	}); ok {
+		report.Assignment.GitContainerID = observation.GitContainerID()
+		report.Assignment.GitExecCount = observation.GitExecCount()
 	}
-	if result.Outcome.Status != "" {
-		report.Run = cli.NewRunReport(ports.RunID, result.Outcome)
-	}
-	report.Publication = result.Receipt
-	report.RetainedWork = result.RetainedWork
-	report.Status = cli.ApplyStatus(result.Outcome, result.Receipt, err)
+	report.Publication = receipt
+	report.Status = cli.AssignmentApplyStatus(result, receipt, runErr)
+	err = runErr
 	return report, err
+}
+
+func (s *executionService) realizeAndPublish(ctx context.Context, request cli.ApplyRequest, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (result apply.AssignmentRealizationResult, receipt *apply.PublicationReceipt, err error) {
+	prepared, ok := captured.Prepared()
+	if !ok {
+		return apply.AssignmentRealizationResult{}, nil, errors.New("complete captured settings are required")
+	}
+	if cfg.ProductBuild != request.Build {
+		return apply.AssignmentRealizationResult{}, nil, errors.New("run configuration product build differs from this executable")
+	}
+	if cfg.MaxMessages == 0 || cfg.MessageTimeoutSeconds == 0 {
+		return apply.AssignmentRealizationResult{}, nil, errors.New("assignment Apply requires finite maxMessages and messageTimeoutSeconds")
+	}
+	budget, complete := prepared.Settings().Budget()
+	if !complete || budget.ExecutionTime.Value <= 0 {
+		return apply.AssignmentRealizationResult{}, nil, errors.New("assignment Apply requires the prepared whole-run execution time")
+	}
+	deadline := time.Now().Add(budget.ExecutionTime.Value)
+	if operator := cfg.deadline(); !operator.IsZero() && operator.Before(deadline) {
+		deadline = operator
+	}
+	if !time.Now().Before(deadline) {
+		return apply.AssignmentRealizationResult{}, nil, errors.New("assignment Apply deadline already passed")
+	}
+	bounded, cancel := context.WithDeadline(ctx, deadline)
+	defer cancel()
+	if ports.CleanupHome == nil {
+		return result, nil, errors.New("assignment Apply requires observed provider home cleanup")
+	}
+	git, ok := ports.AssignmentWorkspaces.(interface {
+		StartGit(context.Context, []runport.WorkspaceID) error
+		CloseGit(context.Context) error
+	})
+	if !ok {
+		return result, nil, errors.New("assignment workspaces need one persistent Git container")
+	}
+	ids, err := apply.AssignmentWorkspaceIDs(prepared, ports.RunID, cfg.MaxMessages)
+	if err != nil {
+		return result, nil, err
+	}
+	err = withPersistentGit(bounded, git, ids, func() error {
+		var runErr error
+		result, runErr = apply.RealizeAssignments(bounded, apply.AssignmentRealizationRequest{
+			ID: ports.RunID, Build: request.Build, Prepared: prepared, OwnerRequest: cfg.OwnerRequest,
+			MaxMessages: cfg.MaxMessages, MessageTimeout: time.Duration(cfg.MessageTimeoutSeconds) * time.Second,
+			MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
+			TranscriptDir: filepath.Join(ports.Evidence.Dir(), "transcripts"), Workspaces: ports.AssignmentWorkspaces,
+			Agents: ports.AssignmentAgents, Integration: ports.AssignmentIntegration, Checks: ports.Checks,
+			CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
+				return executionCheck(selected, cfg)
+			},
+			CreateHome: ports.CreateHome,
+		})
+		if runErr != nil || result.AcceptedCommit == "" {
+			return runErr
+		}
+		receipt, runErr = apply.PublishAssignment(bounded, ports.RunID, request.Selection, prepared, result, ports.Publisher, ports.Control)
+		if runErr == nil && receipt != nil && (receipt.Outcome == apply.PublicationApplied || receipt.Outcome == apply.PublicationNoChange) {
+			for _, home := range assignmentHomes(result) {
+				if cleanErr := ports.CleanupHome(bounded, home); cleanErr != nil {
+					runErr = errors.Join(runErr, fmt.Errorf("provider home %s: %w", home, cleanErr))
+				} else {
+					result.HomesRemoved = append(result.HomesRemoved, home)
+				}
+			}
+		}
+		return runErr
+	})
+	return result, receipt, err
+}
+
+type persistentGit interface {
+	StartGit(context.Context, []runport.WorkspaceID) error
+	CloseGit(context.Context) error
+}
+
+// A failed StartGit may already hold a container. Close it on every exit,
+// including failed startup, realization, publication, and home cleanup.
+func withPersistentGit(ctx context.Context, git persistentGit, ids []runport.WorkspaceID, work func() error) (err error) {
+	defer func() {
+		closeCtx, cancel := context.WithTimeout(context.Background(), time.Minute)
+		defer cancel()
+		err = errors.Join(err, git.CloseGit(closeCtx))
+	}()
+	if err := git.StartGit(ctx, ids); err != nil {
+		return err
+	}
+	return work()
+}
+
+func assignmentHomes(result apply.AssignmentRealizationResult) []string {
+	seen := map[string]bool{}
+	var homes []string
+	add := func(name string) {
+		if name != "" && !seen[name] {
+			seen[name] = true
+			homes = append(homes, name)
+		}
+	}
+	add(result.Assessment.Home)
+	if result.Work != nil {
+		for _, name := range result.Work.Homes() {
+			add(name)
+		}
+	}
+	for _, review := range result.Reviews {
+		add(review.Home)
+	}
+	return homes
 }
 
 // finishApplyReport includes event-log and lock failures before projecting the
@@ -214,20 +338,8 @@ func (s *executionService) open(ctx context.Context, repository, runConfigPath s
 	return runSession{cfg: cfg, lock: lock, runID: runID}, false, nil
 }
 
-// applyAndPublish runs the Apply use case over the captured preparation with
-// the composed ports.
-func (s *executionService) applyAndPublish(ctx context.Context, request cli.ApplyRequest, captured apply.CapturedSettingsResult, cfg runConfig, ports applyPorts) (apply.ApplyResult, error) {
-	prepared, ok := captured.Prepared()
-	if !ok {
-		return apply.ApplyResult{}, errors.New("complete captured settings are required")
-	}
-	return apply.Apply(ctx, applyRequest(request, prepared, cfg, ports))
-}
-
-// applyRequest is the one request every entry of an Apply runs with, the
-// product command and the evaluation harness alike: the captured preparation
-// with its strategy and settings, the invocation's build identity and bounds,
-// and the composed ports.
+// applyRequest keeps the legacy captured-run evaluation entries wired while
+// the product Apply uses persistent assignments through realizeAndPublish.
 func applyRequest(request cli.ApplyRequest, prepared apply.CapturedSettingsAttempt, cfg runConfig, ports applyPorts) apply.ApplyRequest {
 	return apply.ApplyRequest{
 		RunID: ports.RunID, Prepared: prepared, Selection: request.Selection, Build: request.Build,
@@ -324,6 +436,10 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 	if err != nil {
 		return applyPorts{}, err
 	}
+	assignmentAgents, err := newAssignmentAgents(engine, a.Settings().ProfileObservations(), cfg)
+	if err != nil {
+		return applyPorts{}, err
+	}
 	helper := cfg.WorkspaceHelper
 	helper.Workdir = "/work"
 	workspaces, err := gitrepo.NewWorkspaces(engine, helper)
@@ -338,7 +454,50 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 	if err != nil {
 		return applyPorts{}, err
 	}
-	return applyPorts{RunID: runID, Agents: agents, Workspaces: workspaces, Checks: checker, Evidence: evidence,
+	var homesMu sync.Mutex
+	createdHomes := map[string]map[string]string{}
+	createHome := func(ctx context.Context, name string) error {
+		observed, err := engine.CreateVolumeExclusive(ctx, name, map[string]string{"markitect.assignment-run": runID})
+		if err != nil {
+			return err
+		}
+		if !observed.Exists || observed.Name != name || observed.Labels["markitect.assignment-run"] != runID {
+			return errors.New("provider home creation ownership is not established")
+		}
+		homesMu.Lock()
+		createdHomes[name] = maps.Clone(observed.Labels)
+		homesMu.Unlock()
+		return nil
+	}
+	cleanupHome := func(ctx context.Context, name string) error {
+		homesMu.Lock()
+		expected, known := createdHomes[name]
+		expected = maps.Clone(expected)
+		homesMu.Unlock()
+		if !known {
+			return errors.New("provider home has no exact creation receipt")
+		}
+		observed, err := engine.InspectVolume(ctx, name)
+		if err != nil || !observed.Exists || observed.Name != name || !maps.Equal(observed.Labels, expected) {
+			return errors.Join(err, errors.New("provider home ownership is not established"))
+		}
+		mounts, err := engine.VolumeMounts(ctx, name)
+		if err != nil || len(mounts) != 0 {
+			return errors.Join(err, errors.New("provider home remains mounted or mount census failed"))
+		}
+		removeErr := engine.RemoveVolume(ctx, name)
+		after, inspectErr := engine.InspectVolume(ctx, name)
+		if inspectErr != nil || after.Exists {
+			return errors.Join(removeErr, inspectErr, errors.New("provider home removal is not established"))
+		}
+		if removeErr == nil {
+			homesMu.Lock()
+			delete(createdHomes, name)
+			homesMu.Unlock()
+		}
+		return removeErr
+	}
+	return applyPorts{RunID: runID, Agents: agents, AssignmentAgents: assignmentAgents, Workspaces: workspaces, AssignmentWorkspaces: workspaces, AssignmentIntegration: workspaces, CreateHome: createHome, CleanupHome: cleanupHome, Checks: checker, Evidence: evidence,
 		Publisher: s.repository, Control: lock, RemoveHome: engine.RemoveVolume, RequireVolumeSubpaths: engine.RequireVolumeSubpaths, Harvest: cfg.Harvest, Deadline: cfg.deadline(), WorkDeadline: cfg.workDeadline(), Clock: time.Now}, nil
 }
 
@@ -346,6 +505,35 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 // routes each profile to its adapter. The adapters resolve credentials only
 // when a turn starts.
 func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg runConfig) (runport.Agents, error) {
+	routes, err := newAgentRoutes(engine, observed, cfg)
+	if err != nil {
+		return nil, err
+	}
+	legacy := make(map[string]runport.Agents, len(routes))
+	for name, agent := range routes {
+		legacy[name] = agent
+	}
+	return newAgentsRouter(legacy), nil
+}
+
+type executionAgent interface {
+	runport.Agents
+	runport.AssignmentAgents
+}
+
+func newAssignmentAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg runConfig) (runport.AssignmentAgents, error) {
+	routes, err := newAgentRoutes(engine, observed, cfg)
+	if err != nil {
+		return nil, err
+	}
+	assignments := make(map[string]runport.AssignmentAgents, len(routes))
+	for name, agent := range routes {
+		assignments[name] = agent
+	}
+	return assignmentAgentsRouter{routes: assignments}, nil
+}
+
+func newAgentRoutes(engine *container.Engine, observed []apply.PreparedProfile, cfg runConfig) (map[string]executionAgent, error) {
 	codexCredentials, claudeCredentials, err := newCredentialResolvers(cfg.Credentials)
 	if err != nil {
 		return nil, err
@@ -380,7 +568,7 @@ func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg r
 			return nil, fmt.Errorf("agent profile %q: %w", input.Name(), err)
 		}
 	}
-	routes := map[string]runport.Agents{}
+	routes := map[string]executionAgent{}
 	if len(codexProfiles) > 0 {
 		codex, err := codexappserver.NewAgents(engine, codexProfiles, codexCredentials)
 		if err != nil {
@@ -399,7 +587,7 @@ func newAgents(engine *container.Engine, observed []apply.PreparedProfile, cfg r
 			routes[name] = claude
 		}
 	}
-	return newAgentsRouter(routes), nil
+	return routes, nil
 }
 
 // credentialMapped requires the explicit run configuration to map the profile's

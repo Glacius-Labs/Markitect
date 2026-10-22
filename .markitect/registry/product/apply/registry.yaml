@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/apply/assignment_publication.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Publishes only the exact independently verified assignment result through the existing guarded publisher and read-back.
+  - path: "internal/apply/assignment_publication_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Refuses publication when the accepted assignment commit differs from the integrated tree or final independent Verify decision.
+  - path: "internal/apply/assignment_workspace_ids.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Derives every possible Manager and independent reviewer Git workspace name from the prepared topology and finite invocation allowance for one Apply-lifetime Git container.
   - path: "internal/apply/assignment_realization.go"
     form: code
     realizes: [product/run/confirmed-run-history]
