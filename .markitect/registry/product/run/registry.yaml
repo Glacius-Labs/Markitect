@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assignment_correction_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks that final Verify corrections travel through the responsible parents in retained assignments while unaffected children keep their work and fresh homes are required."
   - path: "internal/run/assignment_review.go"
     form: code
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]

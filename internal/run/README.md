@@ -17,6 +17,17 @@ concrete required matters. Missing judgment, an unavailable commit and uncertain
 remain incomplete, with available work and observations returned to the caller.
 Reviewer edits are never integrated into the commissioned result.
 
+`OpenAssignmentTree` keeps the Implement Agents open until its caller has run
+independent Verify. `Implement` produces the first Root handoff; `Correct` asks
+Root to route a concrete correction through its direct children. Parents review
+and reintegrate the changed results using the same assignments; unaffected
+children keep their accepted commits and observations. Corrections share the
+original message allowance. The caller serializes these operations and calls
+`Close`, also after errors. The tree returns its `Flow` and attempted home names
+for inspection and later cleanup. It requires exclusive fresh home creation;
+an optional `PreparedRoot` can keep the assessed starting commit as Root's base.
+The existing `RunAssignmentTree` wrapper still closes its Agents on return.
+
 These APIs neither publish nor project their results as a legacy `Outcome`.
 The Apply caller transition is separate work. The remaining sections describe
 the Pass API still used by existing Apply and Extract callers; its receipt and
