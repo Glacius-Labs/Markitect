@@ -109,19 +109,6 @@ func (e *engine) assessTurnLocked(m *member, ts *turnState, final string) {
 	if err == nil && ts.captureError != "" {
 		err = fmt.Errorf("the work capture is unresolved: %s", ts.captureError)
 	}
-	// An acknowledgement after acceptance or an idle coordination Turn cannot
-	// create another result. Its captured unknown assessment does not undo an
-	// earlier independently accepted result either.
-	if err != nil && (ts.startedStage != stageOwn && ts.startedStage != stageIntegrate || ts.blocked || m.stage == stageStart || m.stage == stageBlocked || m.stage == stageDone || m.stage == stageDelegated) {
-		return
-	}
-	if err == nil && (ts.blocked || m.stage == stageBlocked) {
-		if a.Status == string(Satisfied) || a.Status == string(NeedsCorrection) || a.Contract {
-			err = fmt.Errorf("this Turn began blocked and cannot complete productive work")
-		} else {
-			return
-		}
-	}
 	if err == nil && a.Problem != "" {
 		answer := e.problem(m, ts, "model", a.Problem, m.Parent == "")
 		if answer.Refused {
@@ -130,6 +117,13 @@ func (e *engine) assessTurnLocked(m *member, ts *turnState, final string) {
 		if e.ctx.Err() != nil {
 			return
 		}
+	}
+	// Submission rights belong to the context this Turn started with, not its
+	// final wording. Coordination acknowledgements never resubmit accepted work
+	// or consume the productive assessment correction allowance. Actual actions
+	// and outstanding demands still pass through turnEndedLocked below.
+	if ts.startedStage != stageOwn && ts.startedStage != stageIntegrate || ts.blocked || m.stage == stageBlocked || m.stage == stageDone || m.stage == stageDelegated {
+		return
 	}
 	if err == nil && a.Status == "blocked" {
 		if ts.wait == "" && len(e.demandsLocked(m)) == 0 && e.awaitedLocked(m) == "" {

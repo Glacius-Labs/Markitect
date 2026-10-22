@@ -366,23 +366,28 @@ type Step struct {
 
 // TurnView is one Agent turn.
 type TurnView struct {
-	ID       string     `json:"id"`
-	Short    string     `json:"short"`
-	Pass     string     `json:"pass"`
-	Manager  string     `json:"manager"`
-	Role     string     `json:"role"`
-	Kind     string     `json:"kind"`
-	ReadOnly bool       `json:"readOnly"`
-	Profile  string     `json:"profile,omitempty"`
-	Resume   bool       `json:"resume,omitempty"`
-	StartSeq int        `json:"startSeq"`
-	Started  time.Time  `json:"started"`
-	EndSeq   int        `json:"endSeq,omitempty"`
-	Ended    time.Time  `json:"ended,omitzero"`
-	Stopped  *bool      `json:"stopped,omitempty"`
-	Reason   string     `json:"reason,omitempty"`
-	Reports  []string   `json:"reports,omitempty"`
-	Usage    *run.Usage `json:"usage,omitempty"`
+	ID              string     `json:"id"`
+	Short           string     `json:"short"`
+	Pass            string     `json:"pass"`
+	Manager         string     `json:"manager"`
+	Role            string     `json:"role"`
+	Kind            string     `json:"kind"`
+	ReadOnly        bool       `json:"readOnly"`
+	Profile         string     `json:"profile,omitempty"`
+	Resume          bool       `json:"resume,omitempty"`
+	StartSeq        int        `json:"startSeq"`
+	Started         time.Time  `json:"started"`
+	EndSeq          int        `json:"endSeq,omitempty"`
+	Ended           time.Time  `json:"ended,omitzero"`
+	Stopped         *bool      `json:"stopped,omitempty"`
+	Completed       *bool      `json:"completed,omitempty"`
+	Actions         []string   `json:"actions,omitempty"`
+	SubmissionSeq   int        `json:"submissionSeq,omitempty"`
+	DeclaredStatus  string     `json:"declaredStatus,omitempty"`
+	AssessmentIssue string     `json:"assessmentIssue,omitempty"`
+	Reason          string     `json:"reason,omitempty"`
+	Reports         []string   `json:"reports,omitempty"`
+	Usage           *run.Usage `json:"usage,omitempty"`
 	// Mode is what the turn was admitted for (work, communication,
 	// coordination, review or helper). Context says how it received its
 	// standing context: brief (a fresh conversation), history (a continued

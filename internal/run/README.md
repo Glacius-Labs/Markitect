@@ -225,7 +225,7 @@ mandatory review of intent. Optional contract dependencies use the same mechanis
 
 Relied-on probe files are delivered in full within the bounded assignment budget;
 larger files require `look_up probe`. That lookup records the exact delivered bytes'
-digest. The observed native end closes the Turn and records its current work; a submitted report never substitutes for its normal
+digest. The observed native end closes the Turn and records its current work; a captured submission never substitutes for its normal
 terminal event and observed stop. NIGHT's bounded operator validation is described in
 [the NIGHT handoff](../../docs/development/night-apply-stability-20261021.md).
 

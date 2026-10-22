@@ -30,6 +30,47 @@ func startWithBinding(s *scenario) {
 	})
 }
 
+func TestNativeTurnSubmissionAndUnresolvedAssessmentStayRecordBounded(t *testing.T) {
+	s := newScenario(t)
+	startWithBinding(s)
+	s.add("pass.start", "p1", "", "", map[string]any{"purpose": "implement", "writes": true, "tree": "t"})
+	const turn = "r-p1-root-m1"
+	s.add("turn.start", "p1", ".", turn, map[string]any{"role": "manager", "kind": "execute"})
+	s.add("turn.end", "p1", ".", turn, map[string]any{"completed": true, "stopped": true, "actions": []string{"wait"}})
+	s.add("turn.submitted", "p1", ".", turn, map[string]any{"completed": true, "stopped": true, "declaredStatus": "satisfied", "captureError": ""})
+	before := len(s.records())
+	s.add("assessment.unresolved", "p1", ".", turn, map[string]any{"reason": "required point remains open"})
+	records := s.records()
+	v := Project("r", records, len(records), Source{}, nil)
+	got := v.Turns[0]
+	if got.Completed == nil || !*got.Completed || got.Stopped == nil || !*got.Stopped || !slices.Equal(got.Actions, []string{"wait"}) || got.SubmissionSeq == 0 || got.DeclaredStatus != "satisfied" || got.AssessmentIssue != "required point remains open" {
+		t.Fatalf("native observations lost: %+v", got)
+	}
+	if slices.Contains(gapCodes(v), "record.kind") {
+		t.Fatalf("native records treated as unknown: %v", gapCodes(v))
+	}
+	prior := Project("r", records, before, Source{}, nil)
+	if prior.Turns[0].AssessmentIssue != "" {
+		t.Fatal("later semantic issue leaked into the earlier boundary")
+	}
+	if len(v.Proposals) != 0 || v.Passes[0].Candidate != "" {
+		t.Fatal("declared native assessment manufactured acceptance or a candidate")
+	}
+	texts := entryTexts(records)
+	for _, want := range []string{"native completion observed", "actions wait", "Host captured", "assessment unresolved"} {
+		if !anyContains(texts, want) {
+			t.Errorf("missing %q: %v", want, texts)
+		}
+	}
+	if anyContains(texts, "without a report") {
+		t.Fatal("new native completion was mislabeled as a missing report")
+	}
+	failed := entry(Record{Kind: "turn.end", Turn: turn, Data: []byte(`{"completed":false,"stopped":true}`)})
+	if !strings.Contains(failed.Text, "successful completion not observed") {
+		t.Fatalf("failed native end mislabeled: %+v", failed)
+	}
+}
+
 func TestProjectDecodesTheBindingAndEachManagersContext(t *testing.T) {
 	s := newScenario(t)
 	startWithBinding(s)

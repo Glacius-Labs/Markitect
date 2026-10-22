@@ -571,7 +571,12 @@ function turn(c) {
     t.profile && ["Profile", t.profile],
     ["Started", clock(t.started)],
     ["Ended", t.ended ? `${clock(t.ended)} after ${since(t.started, t.ended)}` : "still running at the boundary"],
-    t.ended && ["Reports", t.reports?.length ? t.reports.join(", ") : "none: the turn is incomplete work, not completion"],
+    t.ended && (t.completed == null
+      ? ["Reports", t.reports?.length ? t.reports.join(", ") : "none: the turn is incomplete work, not completion"]
+      : ["Native completion", t.completed ? "observed; acceptance is separate" : "successful completion not observed"]),
+    t.actions?.length && ["Actions", t.actions.join(", ")],
+    t.submissionSeq && ["Host submission", `captured; declared assessment ${t.declaredStatus || "unknown"}`],
+    t.assessmentIssue && ["Assessment unresolved", t.assessmentIssue],
     t.ended && ["Container stop", t.stopped ? "observed" : "not observed"],
     t.reason && ["End", t.reason],
     usage && ["Usage", `${usage.model || "model unknown"}, ${usage.outputTokens} output tokens, ${usage.providerTurns} provider steps${usage.costUSD ? `, ${usage.costUSD.toFixed(3)} USD reported` : ""}`],

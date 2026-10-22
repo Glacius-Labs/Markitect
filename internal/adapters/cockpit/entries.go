@@ -125,7 +125,18 @@ func entry(r Record) Entry {
 		var reports []string
 		_ = json.Unmarshal(d["reports"], &reports)
 		text := fmt.Sprintf("%s: turn %s ended", who, shortTurn(r.Turn))
-		if len(reports) > 0 {
+		if _, native := d["completed"]; native {
+			if flag("completed") {
+				text += ", native completion observed"
+			} else {
+				text += "; native successful completion not observed"
+			}
+			var actions []string
+			_ = json.Unmarshal(d["actions"], &actions)
+			if len(actions) > 0 {
+				text += "; actions " + strings.Join(actions, ", ")
+			}
+		} else if len(reports) > 0 {
 			text += ", reported " + strings.Join(reports, ", ")
 		} else {
 			text += " without a report"
@@ -137,6 +148,13 @@ func entry(r Record) Entry {
 			text += "; container stop not observed"
 		}
 		e.Class, e.Ref, e.Text = "work", "turn:"+r.Turn, text
+	case "turn.submitted":
+		e.Class, e.Ref, e.Text = "work", "turn:"+r.Turn, fmt.Sprintf("Host captured turn %s of %s; declared assessment %s", shortTurn(r.Turn), who, str("declaredStatus"))
+		if reason := str("captureError"); reason != "" {
+			e.Text += "; capture unresolved: " + reason
+		}
+	case "assessment.unresolved":
+		e.Class, e.Ref, e.Text = "problem", "turn:"+r.Turn, fmt.Sprintf("%s: final assessment unresolved: %s", who, str("reason"))
 	case "report.progress":
 		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), who+" reported progress"
 	case "report.wait":
@@ -253,6 +271,8 @@ func entry(r Record) Entry {
 		}
 	case "lookup.brief":
 		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), who+" looked up its Brief again"
+	case "lookup.probe":
+		e.Class, e.Ref, e.Text = "work", "seq:"+fmt.Sprint(r.Seq), fmt.Sprintf("%s looked up probe %s", who, str("id"))
 	case "dependency.bound":
 		e.Class, e.Ref, e.Text = "control", "seq:"+fmt.Sprint(r.Seq), fmt.Sprintf("%s's work now depends on the accepted %s of %s (%s)", who, str("stage"), labelOf(str("on")), str("proposal"))
 		if flag("rebound") {
