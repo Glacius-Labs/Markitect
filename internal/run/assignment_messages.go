@@ -128,11 +128,21 @@ func (m *assignmentMailbox) handle(ctx context.Context, name string, raw json.Ra
 			return refuse("ask_child needs only child and a non-empty question")
 		}
 		call.mu.Lock()
+		delegatedThisResponse := false
+		for _, pending := range call.actions {
+			if pending.name == DelegateChildTool && pending.child == args.Child {
+				delegatedThisResponse = true
+				break
+			}
+		}
 		if len(call.questions) >= m.scheduler.options.MaxMessages {
 			call.mu.Unlock()
 			return refuse("queued questions are limited by the assignment message allowance")
 		}
 		call.mu.Unlock()
+		if delegatedThisResponse {
+			return refuse("child " + args.Child + " starts only after you finish this response with Go. Complete shared interfaces and every required delegate_child task, then end this response; ask_child can follow after the Host starts the children")
+		}
 		question, err := m.scheduler.enqueueQuestion(call.ctx, m.path, args.Child, strings.TrimSpace(args.Question))
 		if err != nil {
 			return refuse(err.Error())
@@ -159,6 +169,9 @@ func (m *assignmentMailbox) handle(ctx context.Context, name string, raw json.Ra
 	call.mu.Lock()
 	call.actions = append(call.actions, action)
 	call.mu.Unlock()
+	if name == DelegateChildTool {
+		return ToolAnswer{Text: "Child task recorded for this response. The Host starts all direct children together only after you finish this response with Go. Complete every required delegation and end this response; do not wait for or consult children yet."}
+	}
 	return ToolAnswer{Text: "Decision received for this response; the Host will validate and apply it."}
 }
 
@@ -307,7 +320,7 @@ func (s *assignmentScheduler) enqueueQuestion(ctx context.Context, parent, child
 	assigned := s.flow.team[child].assigned
 	s.flow.mu.Unlock()
 	if !assigned {
-		return nil, fmt.Errorf("child %q has not received its first task; delegate its task before consulting it", child)
+		return nil, fmt.Errorf("child %q has not received its first task; delegate its task and finish that response with Go before consulting it", child)
 	}
 	// Lock ownership is local to the current serialized call. It must never
 	// cross into the new goroutine or survive the provider message boundary.

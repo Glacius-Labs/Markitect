@@ -120,6 +120,23 @@ func (s *feedbackSession) Message(ctx context.Context, prompt string, timeout ti
 		}
 		a.feedbackSeen.Store(true)
 	}
+	if path == "library" && strings.HasPrefix(prompt, "Your responsibility") && a.mode == "pre-go consultation" {
+		if !strings.Contains(prompt, "before calling delegate_child") || !strings.Contains(prompt, "finish this response with Go") || !strings.Contains(prompt, "Only then does the Host commit your stand") {
+			return run.TurnResult{}, errors.New("Go boundary was not explained to the parent")
+		}
+		for _, child := range []string{"library/first", "library/second"} {
+			answer := call(run.DelegateChildTool, map[string]string{"child": child, "task": child})
+			if answer.Refused || !strings.Contains(answer.Text, "finish this response with Go") {
+				return run.TurnResult{}, errors.New("delegation did not explain the Go boundary")
+			}
+		}
+		answer := call(run.AskChildTool, map[string]string{"child": "library/first", "question": "Can you start?"})
+		if !answer.Refused || !strings.Contains(answer.Text, "starts only after you finish this response with Go") {
+			return run.TurnResult{}, errors.New("pre-Go consultation did not return actionable feedback")
+		}
+		a.feedbackSeen.Store(true)
+		return run.TurnResult{Completed: true, Final: "Go after all child tasks"}, nil
+	}
 	if path == "library" && strings.HasPrefix(prompt, "Review your direct child library/first") && a.mode != "delegation" {
 		n := a.reviewCalls.Add(1)
 		if n == 1 || a.mode == "exhaust" {
@@ -183,7 +200,7 @@ func (g *bindingIntegration) Integrate(ctx context.Context, parent, child run.As
 }
 
 func TestAssignmentDecisionFeedbackBindsInspectedHandoffAndRecoversWithinBudget(t *testing.T) {
-	for _, mode := range []string{"commit", "same response", "other child", "missing", "multiple", "delegation", "exhaust", "allowance", "diagnostic bounds"} {
+	for _, mode := range []string{"commit", "same response", "other child", "missing", "multiple", "delegation", "pre-go consultation", "exhaust", "allowance", "diagnostic bounds"} {
 		t.Run(mode, func(t *testing.T) {
 			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 			defer cancel()
