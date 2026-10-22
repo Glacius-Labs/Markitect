@@ -13,6 +13,19 @@ through `run.Workspaces`; its actual check image remains a separate choice.
 
 ## Materialization and ownership
 
+`PrepareAssignment` sets repository-local `user.name=Markitect` and
+`user.email=assignment@markitect.invalid`, plus matching `author.*` and
+`committer.*` values, immediately after Git initialization,
+before its starting commit. Every delegation and independent review fork sets
+the same local values after cloning, before checkout and before returning the
+copy for an Agent's first message. Ordinary Agent commits and merges therefore
+need no global identity or provider-home configuration. Host helpers use the
+same settings in their command-local overrides, including temporary integration
+copies. Specific global author/committer settings cannot override this identity.
+No user Git configuration is
+copied or changed. A failed identity setup returns the retained partial copy
+with an error, never an assignment ready for a conversation.
+
 `ForkAssignmentCommit` clones a named retained commit into a fresh assignment
 volume and checks out that exact commit. It does not commit the source or change
 its HEAD, index or working files. Later source commits and uncommitted work do
