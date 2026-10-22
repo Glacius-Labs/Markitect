@@ -185,7 +185,7 @@ challenging their children's assertions.
 Implement and artifact review now require model-derived `conditions` and typed,
 stand-bound evidence for done/preserved claims. Parents supply explicit `integration`
 even without own Definitions; fresh Verify derives its cases before author coverage.
-See [the Run envelope](../run/README.md#envelope-and-verdicts). Implement satisfaction
+See [the legacy Run submission](../run/README.md#final-assessment-and-host-submission). Implement satisfaction
 is a submission to Verify, never verified conformance. `ApplyRequest.WorkDeadline`
 optionally binds an earlier cutoff for all non-Verify Passes, preserving the remaining
 whole-run window for Verify; its expiry leaves unfinished work Incomplete. Both effective
