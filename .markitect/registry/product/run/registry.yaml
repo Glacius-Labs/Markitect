@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assignment_schedule.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Runs the model-derived assignment tree through direct child tasks, parent questions, fixed Git review, correction and integration with finite caller bounds."
+  - path: "internal/run/assignment_schedule_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Exercises Agent-issued delegation, question routing, parent return, conflict correction and required upward Git handoffs."
   - path: "internal/run/handoffs.go"
     form: code
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]

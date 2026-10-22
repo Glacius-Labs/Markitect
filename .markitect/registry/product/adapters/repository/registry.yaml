@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/fork.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Clones a fixed parent Git foundation into a child's separate assignment volume without sharing live files."
   - path: "internal/adapters/gitrepo/integration.go"
     form: code
     realizes: [product/adapters/repository/repository-boundaries]

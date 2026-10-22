@@ -14,7 +14,23 @@ import (
 type assignmentWorkspacesFake struct {
 	copies     map[run.WorkspaceID]*assignmentCopyFake
 	prepareErr error
+	forks      int
 }
+
+func (f *assignmentWorkspacesFake) ForkAssignment(ctx context.Context, parent run.AssignmentWorkspace, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	if f.copies[id] != nil {
+		return nil, errors.New("duplicate child copy")
+	}
+	foundation, err := parent.Commit(ctx, "parent foundation")
+	if err != nil {
+		return nil, err
+	}
+	f.forks++
+	child := &assignmentCopyFake{id: id, commits: []string{foundation}}
+	f.copies[id] = child
+	return child, nil
+}
+
 type assignmentCopyFake struct {
 	id      run.WorkspaceID
 	commits []string
@@ -42,6 +58,48 @@ func TestAssignmentStartRetainsPartialWorkspace(t *testing.T) {
 	}
 	if len(agents.opened) != 0 {
 		t.Fatal("Agent started on an incomplete working copy")
+	}
+}
+
+func TestAssignmentStartsOnPreparedChildCopyWithoutRecreatingIt(t *testing.T) {
+	copy := &assignmentCopyFake{id: "child", commits: []string{strings.Repeat("a", 40)}}
+	work, agents := &assignmentWorkspacesFake{}, &assignmentAgentsFake{}
+	a, err := run.StartAssignment(context.Background(), work, agents, run.AssignmentRequest{ID: "child", Profile: "codex", Home: "home", Prepared: copy})
+	if err != nil || a.Workspace() != copy || len(work.copies) != 0 {
+		t.Fatalf("prepared copy was recreated: %+v %v", a, err)
+	}
+	if agents.opened["child"].spec.Workspace != "volume-child" {
+		t.Fatal("Agent did not mount its prepared child copy")
+	}
+	if _, err := run.StartAssignment(context.Background(), work, agents, run.AssignmentRequest{ID: "other", Profile: "codex", Home: "home", Prepared: copy}); err == nil {
+		t.Fatal("mismatched prepared copy was accepted")
+	}
+}
+
+func TestDirectChildDelegationForksCurrentParentGitStand(t *testing.T) {
+	ctx := context.Background()
+	work, agents, git := &assignmentWorkspacesFake{}, &assignmentAgentsFake{}, &handoffIntegrationFake{}
+	flow, err := run.NewAssignmentHandoffs([]run.Manager{{Path: ".", Children: []string{"child"}}, {Path: "child", Parent: "."}}, work, agents, git)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := flow.StartRoot(ctx, run.AssignmentRequest{ID: "root", Profile: "codex", Home: "root"}); err != nil {
+		t.Fatal(err)
+	}
+	answer, err := flow.Message(ctx, ".", "parent foundation", time.Second)
+	if err != nil {
+		t.Fatal(err)
+	}
+	answer.Commands[0].Status = "changed by caller"
+	*answer.Commands[0].ExitCode = 99
+	if retained := flow.Observations("."); retained[0].Commands[0].Status != "passed" || *retained[0].Commands[0].ExitCode != 0 {
+		t.Fatalf("returned response changed retained native observation: %+v", retained)
+	}
+	if err := flow.DelegateCurrent(ctx, ".", "child", run.AssignmentRequest{ID: "child", Profile: "codex", Home: "child"}); err != nil {
+		t.Fatal(err)
+	}
+	if work.forks != 1 || work.copies["child"].StartingCommit() != work.copies["root"].commits[len(work.copies["root"].commits)-1] || agents.opened["child"].spec.Workspace == agents.opened["root"].spec.Workspace {
+		t.Fatalf("child did not receive a separate copy of current parent stand: %+v", work.copies)
 	}
 }
 func (f *assignmentCopyFake) ID() run.WorkspaceID    { return f.id }
@@ -99,7 +157,8 @@ func (f *assignmentSessionFake) Message(ctx context.Context, text string, _ time
 		}
 		final = answer.Text
 	}
-	return run.TurnResult{Final: final, Completed: true, Conversation: f.spec.ID}, nil
+	exit := 0
+	return run.TurnResult{Final: final, Completed: true, Conversation: f.spec.ID, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed", ExitCode: &exit}}}, nil
 }
 
 func TestAssignmentConcurrentCloseKeepsAbortIncomplete(t *testing.T) {

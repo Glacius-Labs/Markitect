@@ -9,6 +9,10 @@ import (
 	"time"
 )
 
+// ErrIntegrationConflict distinguishes an ordinary Git conflict from an
+// integration failure whose outcome is incomplete or uncertain.
+var ErrIntegrationConflict = errors.New("child Git result conflicts with parent stand")
+
 // AssignmentIntegration supplies the Git operations needed when a parent
 // inspects and accepts a child's fixed result. It never changes the owner's
 // repository; both copies are internal Agent workspaces.
@@ -18,15 +22,17 @@ type AssignmentIntegration interface {
 }
 
 type assignmentMember struct {
-	manager   Manager
-	agent     *Assignment
-	partial   *Assignment
-	starting  bool
-	handoff   AssignmentHandoff
-	inspected string
-	returned  bool
-	accepted  map[string]string
-	messages  chan struct{}
+	manager    Manager
+	agent      *Assignment
+	partial    *Assignment
+	transcript string
+	observed   []TurnResult
+	starting   bool
+	handoff    AssignmentHandoff
+	inspected  string
+	returned   bool
+	accepted   map[string]string
+	messages   chan struct{}
 }
 
 func (m *assignmentMember) acquire(ctx context.Context) error {
@@ -52,11 +58,12 @@ func (m *assignmentMember) release() { <-m.messages }
 // relationships, fixed Git results and participation of every required child.
 // It is the Apply migration seam while Extract continues using Passes.
 type AssignmentHandoffs struct {
-	mu          sync.Mutex
-	team        map[string]*assignmentMember
-	workspaces  AssignmentWorkspaces
-	agents      AssignmentAgents
-	integration AssignmentIntegration
+	mu           sync.Mutex
+	team         map[string]*assignmentMember
+	workspaces   AssignmentWorkspaces
+	agents       AssignmentAgents
+	integration  AssignmentIntegration
+	parentAnswer func(context.Context, string, string, string) (string, error)
 }
 
 func NewAssignmentHandoffs(team []Manager, workspaces AssignmentWorkspaces, agents AssignmentAgents, integration AssignmentIntegration) (*AssignmentHandoffs, error) {
@@ -120,6 +127,45 @@ func (f *AssignmentHandoffs) Delegate(ctx context.Context, parent, child string,
 	return f.start(ctx, parent, child, request)
 }
 
+// DelegateCurrent starts a direct child from its parent's fixed current Git
+// stand. The parent keeps its own copy and conversation while the child works.
+func (f *AssignmentHandoffs) DelegateCurrent(ctx context.Context, parent, child string, request AssignmentRequest) error {
+	forks, ok := f.workspaces.(AssignmentForks)
+	if !ok {
+		return errors.New("assignment workspaces cannot fork a parent's Git stand")
+	}
+	f.mu.Lock()
+	m, p := f.team[child], f.team[parent]
+	if m == nil || p == nil || m.manager.Parent != parent || m.agent != nil || m.starting || p.agent == nil || p.starting {
+		f.mu.Unlock()
+		return fmt.Errorf("Manager %q cannot start under %q", child, parent)
+	}
+	m.starting = true
+	f.mu.Unlock()
+	if request.ID == "" {
+		request.ID = WorkspaceID("assignment-" + strings.ReplaceAll(child, "/", "-"))
+	}
+	if err := p.acquire(ctx); err != nil {
+		f.mu.Lock()
+		m.starting = false
+		f.mu.Unlock()
+		return err
+	}
+	defer p.release()
+	prepared, err := forks.ForkAssignment(ctx, p.agent.Workspace(), request.ID)
+	if err != nil {
+		f.mu.Lock()
+		if prepared != nil {
+			m.partial = &Assignment{work: prepared}
+		}
+		m.starting = false
+		f.mu.Unlock()
+		return err
+	}
+	request.Prepared = prepared
+	return f.openReserved(ctx, parent, child, request)
+}
+
 func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, request AssignmentRequest) error {
 	f.mu.Lock()
 	m := f.team[path]
@@ -133,8 +179,19 @@ func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, req
 	if request.ID == "" {
 		request.ID = WorkspaceID("assignment-" + strings.ReplaceAll(path, "/", "-"))
 	}
+	return f.openReserved(ctx, parent, path, request)
+}
+
+func (f *AssignmentHandoffs) openReserved(ctx context.Context, parent, path string, request AssignmentRequest) error {
+	m := f.team[path]
+	f.mu.Lock()
+	m.transcript = request.Transcript
+	f.mu.Unlock()
 	if parent != "" {
 		request.AskParent = func(ctx context.Context, question string) (string, error) {
+			if f.parentAnswer != nil {
+				return f.parentAnswer(ctx, parent, path, question)
+			}
 			f.mu.Lock()
 			p := f.team[parent]
 			f.mu.Unlock()
@@ -180,7 +237,63 @@ func (f *AssignmentHandoffs) Message(ctx context.Context, path, message string, 
 		return TurnResult{}, err
 	}
 	defer m.release()
-	return a.Message(ctx, message, timeout)
+	result, err := a.Message(ctx, message, timeout)
+	f.mu.Lock()
+	m.observed = append(m.observed, cloneTurnResult(result))
+	f.mu.Unlock()
+	return result, err
+}
+
+// Workspace exposes a started or partially established Agent copy even after
+// failure or container shutdown. The caller owns its eventual release.
+func (f *AssignmentHandoffs) Workspace(path string) AssignmentWorkspace {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if m := f.team[path]; m != nil {
+		if m.agent != nil {
+			return m.agent.Workspace()
+		}
+		if m.partial != nil {
+			return m.partial.Workspace()
+		}
+	}
+	return nil
+}
+
+// Transcript names the ordinary provider log for this assignment.
+func (f *AssignmentHandoffs) Transcript(path string) string {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if m := f.team[path]; m != nil {
+		return m.transcript
+	}
+	return ""
+}
+
+// Observations retains native responses, including a partial failed response.
+func (f *AssignmentHandoffs) Observations(path string) []TurnResult {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	m := f.team[path]
+	if m == nil {
+		return nil
+	}
+	results := make([]TurnResult, len(m.observed))
+	for i, observed := range m.observed {
+		results[i] = cloneTurnResult(observed)
+	}
+	return results
+}
+
+func cloneTurnResult(result TurnResult) TurnResult {
+	result.Commands = append([]CommandObservation(nil), result.Commands...)
+	for i := range result.Commands {
+		if code := result.Commands[i].ExitCode; code != nil {
+			value := *code
+			result.Commands[i].ExitCode = &value
+		}
+	}
+	return result
 }
 
 // RetainedWorkspace exposes a partial starting copy after setup failure. It
