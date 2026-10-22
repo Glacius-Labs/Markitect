@@ -125,7 +125,7 @@ func (s *concurrentSession) Message(ctx context.Context, prompt string, _ time.D
 	switch {
 	case strings.HasPrefix(prompt, "Your responsibility"):
 		if len(s.manager.Children) > 0 {
-			if !strings.Contains(prompt, "Establish sibling interfaces in your own workspace and conversation before Go") || !strings.Contains(prompt, "no separate plan run or stage") {
+			if !strings.Contains(prompt, "Establish the shared sibling interfaces in your own workspace before calling delegate_child") || !strings.Contains(prompt, "no separate plan run or stage") {
 				return result, errors.New("parent task omitted interface preparation before concurrent Go")
 			}
 			a.interfaceBriefs.Add(1)
