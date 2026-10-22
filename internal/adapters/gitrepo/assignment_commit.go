@@ -132,7 +132,7 @@ func (w *Workspaces) assignmentOutput(ctx context.Context, a *assignmentWorkspac
 	}
 	output := &reviewOutput{limit: limit}
 	argv := assignmentGitArgs(append([]string{"--no-replace-objects"}, args...)...)
-	err = w.runtime.RunHelper(ctx, w.spec(volume, true), argv, input, output)
+	err = w.runGit(ctx, w.spec(volume, true), argv, input, output)
 	if output.exceeded {
 		return nil, ErrLimit
 	}

@@ -8,7 +8,9 @@ This package is the Orchestrator's client of the container engine ([DEC-037](../
 | --- | --- |
 | `NewEngine(path)` | Binds the absolute engine executable. The Orchestrator never searches PATH. |
 | `Engine.Start(ctx, spec)` | Runs one session container with agentd and returns its `Session` after agentd's hello. |
-| `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `git`, `/usr/bin/tee`, `/bin/cat` or a project check. |
+| `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `/usr/bin/tee`, `/bin/cat` or a project check. Assignment Git uses the retained exec service. |
+| `Engine.StartExec` / `ExecSession.Exec`, `Close` | Holds one hardened container with fixed mounts and executes literal commands as its configured non-root user. Cancellation removes the owned container so remote processes cannot outlive the failed exec. |
+| `Engine.StartOwnedExec` | The explicit Apply Git exception: adds only `CAP_CHOWN`, verifies empty private assignment roots and initializes their ownership with one fixed root exec before returning a non-root-only session. Ordinary engine/Agent/check launches are unchanged; [Workspaces](../gitrepo/WORKSPACES.md#one-git-container-per-apply) records the trade-off and lifecycle. |
 | `Engine.RunCommand(ctx, spec, argv, env, maxOutputBytes)` | Runs a literal command with fixed environment additions, observes actual container start, terminal state and image, and retains bounded combined output with truncation. A known target nonzero exit is a result. |
 | `Engine.InspectVolume`, `VolumeMounts`, `CreateVolumeExclusive` | Observes volume labels and every container mounting the exact volume, and refuses adoption of preexisting volumes. Exclusive creation verifies a private random label after Docker's idempotent create; Docker provides no atomic exclusive-create primitive. |
 | `Engine.Pause` / `Engine.Unpause` | Freezes and resumes every process in a container; the write barrier for a workspace-basis transition. |

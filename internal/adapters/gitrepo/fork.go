@@ -89,7 +89,7 @@ func (w *Workspaces) cloneAssignment(ctx context.Context, parent, child *assignm
 	spec.Mounts = append(spec.Mounts, container.Mount{Volume: parent.volume, Target: "/source", ReadOnly: true})
 	var output reviewOutput
 	output.limit = 16 << 10
-	if err := w.runtime.RunHelper(ctx, spec, []string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "clone", "--no-hardlinks", "/source", "/work"}, nil, &output); err != nil {
+	if err := w.runGit(ctx, spec, []string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "clone", "--no-hardlinks", "/source", "/work"}, nil, &output); err != nil {
 		return err
 	}
 	if output.exceeded {
