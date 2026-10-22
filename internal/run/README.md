@@ -1,5 +1,24 @@
 # Run
 
+## Assignment migration
+
+`RunAssignmentTree` executes the DEC-067 Implement organization with Agent-owned
+Git copies and substantive parent review. `ReviewAssignment` runs a separate
+focused model assessment or fresh final Verify. It forks the commissioned source
+commit into an independent copy and provider home. A native completion receives
+the ordinary Git handoff and prose summary; it does not accept the work.
+Mandate-specific decision tools record acceptance of that exact commit or
+concrete required matters. Missing judgment, source drift and uncertain shutdown
+remain incomplete, with available work and observations returned to the caller.
+Reviewer edits are never integrated into the commissioned result.
+
+These APIs neither publish nor project their results as a legacy `Outcome`.
+The Apply caller transition is separate work. The remaining sections describe
+the Pass API still used by existing Apply and Extract callers; its receipt and
+disposition rules do not govern the assignment APIs.
+
+## Legacy Pass process
+
 This package is the Orchestrator of Apply and Extract
 ([DEC-064](../../docs/concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams),
 [accepted workflow](../../docs/design/canonical-model/manager-apply-workflow.md)). It runs
