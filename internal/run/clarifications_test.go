@@ -1,6 +1,7 @@
 package run
 
 import (
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -61,7 +62,7 @@ func TestBlockedManagerAnswersReadOnlyAndKeepsItsDependency(t *testing.T) {
 			return nil
 		case c.turn.Manager == "." && strings.Contains(c.turn.Prompt, "Answer to your question Q2"):
 			c.must(toolSend, map[string]any{"to": "library", "kind": sendAnswer, "text": "copy, member and due date", "about": "Q1"})
-		case c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "your own work waits for"):
+		case c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "your own work waits for") && slices.Contains(c.pendingQuestions(), "Q2"):
 			turn := c.turn
 			blockedTurn = &turn
 			blockedSubmit = c.basis(nil).Text
@@ -111,7 +112,7 @@ func TestBlockedManagerAnswersReadOnlyAndKeepsItsDependency(t *testing.T) {
 			childReleased = i
 		}
 	}
-	if answered < 0 || waitedAgain < answered || libraryBasis < 0 || unblocked < libraryBasis || childReleased < unblocked {
+	if answered < 0 || waitedAgain < answered || libraryBasis < 0 || unblocked < libraryBasis || childReleased < 0 {
 		t.Errorf("answered %d, waited again %d, library basis %d, unblocked %d, child released %d", answered, waitedAgain, libraryBasis, unblocked, childReleased)
 	}
 	if f.agents.maxActive < 1 {
@@ -121,7 +122,7 @@ func TestBlockedManagerAnswersReadOnlyAndKeepsItsDependency(t *testing.T) {
 
 // A question to a Manager that its parent's basis has not released yet is
 // refused: it would wait on nobody.
-func TestQuestionToAnUnreleasedManagerIsRefused(t *testing.T) {
+func TestQuestionToChildNeedsNoParentBasis(t *testing.T) {
 	f := newFixture(t)
 	var mu sync.Mutex
 	var refusal string
@@ -137,7 +138,7 @@ func TestQuestionToAnUnreleasedManagerIsRefused(t *testing.T) {
 	r := f.open()
 	r.Pass(planSpec())
 	f.finish(r, "")
-	if !strings.Contains(refusal, "has not started in this Pass") {
+	if !strings.Contains(refusal, "Asked Q1") {
 		t.Errorf("refusal %q", refusal)
 	}
 }
@@ -167,6 +168,10 @@ func TestFalseFindingIsDisprovedOnTheUnchangedCandidate(t *testing.T) {
 			// Its raiser disproves a finding in a later review, never disputes it.
 			raiserDispute = c.result(map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "fine", "evidence": "x"}}}).Text
 		case c.pass() == "p2" && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on"):
+			if f.ev.index("finding.recorded", "lending/reminders", "", nil) < 0 {
+				c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+				return nil
+			}
 			// The independent reviewer of the finding's owner disputes it.
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"disputed": []any{map[string]any{"id": "F1", "reason": "the notice is sent on the due date, as lending/reminders/notice states", "evidence": "lending/reminders/r.go sends it at the due date; its test covers it"}}}))
 			return nil

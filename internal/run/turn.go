@@ -79,17 +79,12 @@ func (e *engine) startTurnLocked(m *member) {
 	}
 	items := m.items
 	m.items = nil
-	if p.spec.ModelBasis && p.modelBasisReady.Load() && !m.candidateIntroduced {
-		items = append([]item{{kind: itemAssignment}}, items...)
-		m.candidateIntroduced = true
-		_ = e.record(Event{Kind: "review.candidate_opened", Pass: p.id, Manager: m.Path, Data: map[string]any{"basis": m.basis.id, "tree": p.tree.Digest().String(), "workspace": p.candidate}})
-	}
 	if m.stage == stageBlocked {
 		// A communication-only turn leaves the findings to correct for the
 		// productive work.
 		var deliver, keep []item
 		for _, it := range items {
-			if it.kind == itemFinding {
+			if it.kind != itemMessage && it.kind != itemAssignment {
 				keep = append(keep, it)
 			} else {
 				deliver = append(deliver, it)
@@ -118,9 +113,6 @@ func (e *engine) startTurnLocked(m *member) {
 	readOnly, mounts := e.mountsLocked(m)
 	turn := Turn{Kind: kind, Profile: profile, Workspace: p.volume, ReadOnly: readOnly, Mounts: mounts, Home: home, Resume: resume,
 		Prompt: e.promptLocked(m, items, standing, readOnly, mounts), Tools: e.memberTools(m)}
-	if m.candidateHidden() {
-		turn.Workspace, turn.ReadOnly, turn.Mounts = p.modelBasisVolume, true, nil
-	}
 	e.useHomeLocked(home)
 	e.recordStateLocked(m, "a turn started")
 	e.wg.Add(1)
@@ -285,11 +277,8 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	}
 	submitted := false
 	if pr := ts.proposal; pr != nil && pr.status == proposalSubmitted {
-		wantStage := stageOwn
-		if pr.kind == kindResult {
-			wantStage = stageIntegrate
-		}
-		if m.stage == wantStage {
+		canSubmit := m.stage == stageOwn || m.stage == stageIntegrate || pr.kind == kindResult && m.stage == stageDelegated
+		if canSubmit && (pr.kind != kindResult || m.childrenDoneLocked()) {
 			submitted = true
 			m.pending = pr
 			m.stage = stageBasis
@@ -325,11 +314,11 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 			}
 		}
 	}
-	working := m.stage == stageOwn || !m.candidateHidden() && m.stage == stageIntegrate
+	working := m.stage == stageOwn || m.stage == stageIntegrate
 	// An accepted parent's delegated stage remains coordination: a candidate
 	// introduction alone must not manufacture repeated empty work turns while
 	// its children assess. Explicit productive progress may continue there.
-	continuing := working || p.spec.ModelBasis && !m.candidateHidden() && m.stage == stageDelegated
+	continuing := working
 	// A progress summary the Manager already reported in this Pass is no
 	// progress: it is not continued automatically and counts as an empty turn.
 	repeated := ts.progress != "" && slices.Contains(m.progressed, ts.progress)
@@ -390,7 +379,7 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 func (e *engine) demandsLocked(m *member) []string {
 	var out []string
 	for _, c := range m.Children {
-		if pr := m.p.byPath[c].pending; pr != nil && pr.status == proposalChecked {
+		if pr := m.p.byPath[c].pending; m.stage != stageBlocked && pr != nil && pr.status == proposalChecked {
 			out = append(out, fmt.Sprintf("decide %s, the %s of %s", pr.id, pr.kind, c))
 		}
 	}
@@ -474,9 +463,6 @@ func (e *engine) memberHandler(m *member, ts *turnState) ToolHandler {
 
 func (e *engine) memberTool(m *member, ts *turnState) ToolHandler {
 	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
-		if m.candidateHidden() && (name == toolCheck || name == toolDelegate) {
-			return refuse("First derive your conditions and intended cases from the bound model and submit the open review basis. Candidate access, probes and helpers open only after basis acceptance.")
-		}
 		if ts.proposal != nil && (name == toolCheck || name == toolDelegate) {
 			return refuse("You already submitted %s. End this Turn now; further work belongs after the proposal's decision, in a later Turn.", ts.proposal.id)
 		}

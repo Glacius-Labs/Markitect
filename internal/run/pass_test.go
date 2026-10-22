@@ -58,30 +58,21 @@ func TestForwardPassesUseOneBaseProcessForEveryPurpose(t *testing.T) {
 	}
 }
 
-// Children start only after their parent's basis is accepted, and a
-// grandchild only after its own parent's basis was accepted by Root: never on a
-// mere turn exit.
-func TestChildrenStartOnlyOnAnAcceptedParentBasis(t *testing.T) {
+// Every Manager receives its assignment without an unrelated parent preapproval.
+func TestChildrenStartWithoutParentBasis(t *testing.T) {
 	f := newFixture(t)
 	r := f.open()
 	res := r.Pass(prepareSpec())
 	f.finish(r, "")
 	if res.Stopped {
-		t.Fatalf("stopped")
+		t.Fatal("stopped")
 	}
-	accepted := func(manager string) int { return f.ev.index("basis.accepted", manager, "", nil) }
-	released := func(manager string) int { return f.ev.index("manager.release", manager, "", nil) }
-	firstTurn := func(manager string) int { return f.ev.index("turn.start", manager, "", nil) }
 	for _, pair := range [][2]string{{".", "lending"}, {".", "library"}, {"lending", "lending/reminders"}} {
-		parent, child := pair[0], pair[1]
-		if !(accepted(parent) >= 0 && accepted(parent) < released(child) && released(child) < firstTurn(child)) {
-			t.Errorf("%s started at %d, released at %d, before its parent's basis acceptance at %d", child, firstTurn(child), released(child), accepted(parent))
+		released := f.ev.index("manager.release", pair[1], "", nil)
+		accepted := f.ev.index("basis.accepted", pair[0], "", nil)
+		if released < 0 || accepted < released {
+			t.Fatalf("child %s waited for parent: release %d basis %d", pair[1], released, accepted)
 		}
-	}
-	// The grandchild's release needs lending's basis accepted by Root's decision.
-	decision := f.ev.index("basis.accepted", "lending", "by", ".")
-	if decision < 0 || decision > released("lending/reminders") {
-		t.Errorf("lending's basis was not accepted by Root before its child started: %d vs %d", decision, released("lending/reminders"))
 	}
 }
 
@@ -113,7 +104,7 @@ func TestProposalWakesTheParentBeforeTheChildIsDone(t *testing.T) {
 
 // A returned basis goes back to its owner within the Pass and releases no
 // descendant; the owner submits again.
-func TestReturnedBasisStaysWithItsOwnerAndReleasesNoChild(t *testing.T) {
+func TestReturnedOptionalBasisDoesNotBlockIndependentChild(t *testing.T) {
 	f := newFixture(t)
 	returned := false
 	var mu sync.Mutex
@@ -139,8 +130,8 @@ func TestReturnedBasisStaysWithItsOwnerAndReleasesNoChild(t *testing.T) {
 	}
 	ret := f.ev.index("basis.returned", "lending", "", nil)
 	rel := f.ev.index("manager.release", "lending/reminders", "", nil)
-	if ret < 0 || rel < ret {
-		t.Errorf("the grandchild was released at %d, before or without the return at %d", rel, ret)
+	if ret < 0 || rel < 0 || rel > ret {
+		t.Errorf("independent grandchild release %d waited for optional basis return %d", rel, ret)
 	}
 	if n := len(f.ev.kinds("basis.accepted")); n != 4 {
 		t.Errorf("%d accepted bases; want 4 after the resubmission", n)

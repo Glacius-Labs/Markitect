@@ -261,7 +261,7 @@ func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 	if m.stage == stageStart {
 		return refuse("Your work in this Pass was reset; wait until it starts again.")
 	}
-	if m.stage == stageBlocked && in.Kind != kindWait && in.Kind != kindProblem {
+	if (ts.blocked || m.stage == stageBlocked) && in.Kind != kindWait && in.Kind != kindProblem {
 		return refuse("Your own work waits for %s. Until then you may answer, ask, wait or report a problem; you cannot submit, report progress or decide.", m.waiting)
 	}
 	var answer ToolAnswer
@@ -289,7 +289,7 @@ func (e *engine) report(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 }
 
 func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswer {
-	if m.stage != stageOwn && m.stage != stageIntegrate && !(m.p.spec.ModelBasis && m.stage == stageDelegated) {
+	if m.stage != stageOwn && m.stage != stageIntegrate {
 		return refuse("progress is reported while you work on your basis or your complete result.")
 	}
 	summary, err := toolText("summary", in.Summary)
@@ -307,7 +307,7 @@ func (e *engine) reportProgress(m *member, ts *turnState, in reportIn) ToolAnswe
 // accepted; nothing else re-queues it. In a Pass with BindWaits that accepted
 // submission, or one that is already accepted when the wait is reported, is
 // bound to the waiter's work (kind "bind" in the turn record). A wait that
-// closes a cycle with the declared dependencies and the parent-first order
+// closes a cycle with the declared dependencies and the integration order
 // could never be satisfied: it is refused with the cycle, so the Manager can
 // submit what does not need it first or ask its parent; a Pass that still
 // cannot advance ends as stalled. It returns the answer and the report kind the
@@ -405,29 +405,31 @@ func (e *engine) waitCycleLocked(m *member, on waitTarget) string {
 		}
 		return x.result != nil
 	}
-	waiter := func(x *member) depNode {
-		if x.stage >= stageDelegated {
-			return depNode{x.Path, eventResult}
+	waiter := func(x *member, on waitTarget) {
+		target := depNode{on.manager, eventOf(on.stage)}
+		result := depNode{x.Path, eventResult}
+		edges[result] = append(edges[result], target)
+		if x.basis == nil && x.stage == stageOwn {
+			basis := depNode{x.Path, eventBasis}
+			edges[basis] = append(edges[basis], target)
 		}
-		return depNode{x.Path, eventBasis}
 	}
 	for _, x := range p.members {
 		if x.waitOn != nil {
-			edges[waiter(x)] = append(edges[waiter(x)], depNode{x.waitOn.manager, eventOf(x.waitOn.stage)})
+			waiter(x, *x.waitOn)
 		}
 		for _, b := range x.bound {
 			from := b.source(x.Path)
 			edges[from] = append(edges[from], depNode{b.target.manager, eventOf(b.target.stage)})
 		}
 	}
-	from := waiter(m)
-	edges[from] = append(edges[from], depNode{on.manager, eventOf(on.stage)})
+	waiter(m, on)
 	for n := range edges {
 		if done(n) {
 			delete(edges, n)
 		}
 	}
-	return describeCycle(findCycle(e.team, edges, &from))
+	return describeCycle(findCycle(e.team, edges, nil))
 }
 
 // submit validates and records a basis or a complete result. It is checked
@@ -441,15 +443,12 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		return refuse("Your helpers are still working; submit after their results reached you.")
 	case ts.blocked:
 		return refuse("This turn started while your own work was blocked, so it only answers what is asked of you; your work starts in your next turn.")
-	case in.Kind == kindResult && m.candidateHidden():
-		return refuse("Candidate assessment starts in a fresh Turn after every required reviewer's model-first basis is accepted. Coordinate model questions and child bases meanwhile.")
-	case in.Kind == kindBasis && m.stage != stageOwn:
+	case in.Kind == kindBasis && (m.basis != nil || m.stage != stageOwn && m.stage != stageIntegrate):
 		return refuse("A basis is submitted while you work on your own contribution; you are at %s.", m.stage)
-	case in.Kind == kindResult && m.stage != stageIntegrate:
-		if m.stage == stageOwn {
-			return refuse("Submit your basis first: your children start from it. Your complete result follows after their results are accepted.")
-		}
-		return refuse("A complete result is submitted after all your children's results are accepted; you are at %s.", m.stage)
+	case in.Kind == kindResult && m.stage != stageOwn && m.stage != stageIntegrate && m.stage != stageDelegated:
+		return refuse("A complete result is submitted while working on or integrating your contribution; you are at %s.", m.stage)
+	case in.Kind == kindResult && !m.childrenDoneLocked():
+		return refuse("Your complete result follows acceptance of all your children's results; integrate them first.")
 	}
 	if in.Kind == kindResult {
 		if w := e.awaitedLocked(m); w != "" {
@@ -458,9 +457,6 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 	}
 	summary, err := toolText("summary", in.Summary)
 	if err != nil {
-		return refuse("%v", err)
-	}
-	if err := modelBasisOf(m, in); err != nil {
 		return refuse("%v", err)
 	}
 	env := envelope{Summary: summary}
@@ -597,7 +593,7 @@ func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 		}
 		out = append(out, coverage{Definition: c.Definition, Status: c.Status, Note: note, Conditions: c.Conditions, Evidence: evidence})
 	}
-	if in.Kind == kindResult || m.modelBasisPending() && in.Kind == kindBasis {
+	if in.Kind == kindResult {
 		var missing []string
 		for _, id := range m.Obligations {
 			if !seen[id] {
@@ -746,7 +742,7 @@ func (e *engine) checkPlan(m *member, pl *plan) error {
 		}
 	}
 	if cycle := e.planCycleLocked(m, pl); cycle != "" {
-		return fmt.Errorf("the dependencies form a cycle with the accepted plans and the parent-first order: %s", cycle)
+		return fmt.Errorf("the dependencies form a cycle with the accepted plans and the integration order: %s", cycle)
 	}
 	return nil
 }
@@ -797,21 +793,23 @@ func eventOf(stage string) int {
 	return eventBasis
 }
 
-// dependencyEdges returns what each event needs in a Pass of the purpose: a
-// basis follows the start, a result follows the basis and every child's result,
-// a child starts after its parent's basis, and every declared dependency of the
-// plans precedes its Manager's start.
+// dependencyEdges includes start, optional contracts, mandatory child results
+// and actual declared prerequisites. There is no universal parent-basis edge.
 func dependencyEdges(team []*mgr, purpose Purpose, plans map[string]*plan) map[depNode][]depNode {
 	edges := map[depNode][]depNode{}
 	for _, x := range team {
 		start, basis, result := depNode{x.Path, eventStart}, depNode{x.Path, eventBasis}, depNode{x.Path, eventResult}
 		edges[basis] = append(edges[basis], start)
-		edges[result] = append(edges[result], basis)
+		edges[result] = append(edges[result], start)
+		// A blocked parent cannot accept a child's submission. This constrains
+		// acceptance, never the independent start of that child.
+		if x.Parent != "" {
+			parent := depNode{x.Parent, eventStart}
+			edges[basis] = append(edges[basis], parent)
+			edges[result] = append(edges[result], parent)
+		}
 		for _, c := range x.Children {
 			edges[result] = append(edges[result], depNode{c, eventResult})
-		}
-		if x.Parent != "" {
-			edges[start] = append(edges[start], depNode{x.Parent, eventBasis})
 		}
 		if pl := plans[x.Path]; pl != nil {
 			for _, d := range pl.Dependencies {
@@ -1250,9 +1248,6 @@ func (e *engine) reopen(m *member, ts *turnState, in reportIn) ToolAnswer {
 }
 
 func (e *engine) revise(m *member, ts *turnState, in reportIn) ToolAnswer {
-	if m.p.spec.ModelBasis && m.p.modelBasisReady.Load() && m.basis != nil {
-		return refuse("Your accepted model-first basis remains the precommitment for this immutable candidate. Add newly discovered conditions to the result and account for the original basis; do not replace it after seeing the candidate.")
-	}
 	if (m.stage != stageDelegated && m.stage != stageIntegrate) || m.basis == nil {
 		return refuse("You revise an accepted basis while your children work on it or before you submit your result.")
 	}

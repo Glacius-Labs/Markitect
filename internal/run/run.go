@@ -379,10 +379,6 @@ type PassSpec struct {
 	ArtifactFindingsAdvisory bool
 	BindWaits                bool
 	Assesses                 bool
-	// ModelBasis hides the artifact candidate until all reviewers' existing
-	// bases are accepted. Apply binds it; fixed-artifact-authority Extract does
-	// not. It changes exposure within the common Pass, not its lifecycle.
-	ModelBasis bool
 }
 
 // Status is the result of a run.

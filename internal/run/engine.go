@@ -557,6 +557,13 @@ func (e *engine) addFindingLocked(f Finding) *Finding {
 	p := &f
 	e.findings = append(e.findings, p)
 	_ = e.record(Event{Kind: "finding.recorded", Pass: f.Pass, Manager: f.Owner, Data: *p})
+	// Managers now start independently. A finding raised later must still reach
+	// its active owner; blocked communication keeps it queued for productive work.
+	if e.cur != nil && f.Blocking && f.RaisedBy != f.Owner {
+		if owner := e.cur.byPath[f.Owner]; owner != nil && (owner.stage == stageBlocked || owner.stage == stageOwn || owner.stage == stageIntegrate) {
+			e.deliverLocked(owner, item{kind: itemFinding, finding: f.ID, text: renderFinding(p)})
+		}
+	}
 	return p
 }
 

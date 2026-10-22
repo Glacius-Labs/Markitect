@@ -1,11 +1,54 @@
 package run
 
 import (
+	"encoding/json"
 	"slices"
 	"strings"
 	"sync"
 	"testing"
 )
+
+func TestBlockedTurnCannotDecideAfterDependencyRelease(t *testing.T) {
+	f := newFixture(t)
+	r := f.open()
+	defer f.finish(r, "bounded Turn permission regression")
+	e := r.e
+	e.mu.Lock()
+	p := e.newPassLocked(bindingSpec())
+	owner, consumer, child := p.byPath["library"], p.byPath["lending"], p.byPath["lending/reminders"]
+	consumer.stage = stageBlocked
+	consumer.bound = []binding{{target: waitTarget{manager: owner.Path, stage: stageNameBasis}, serves: eventBasis}}
+	blocked := &turnState{m: consumer, id: "communication-turn", blocked: true}
+	owner.basis = &proposal{id: "new-contract", kind: kindBasis, member: owner, status: proposalAccepted}
+	e.releaseLocked(consumer, "prerequisite accepted during communication Turn")
+	pr := &proposal{id: "child-proposal", kind: kindBasis, member: child, status: proposalChecked}
+	child.pending = pr
+	p.proposals = append(p.proposals, pr)
+	e.mu.Unlock()
+	if consumer.stage != stageOwn {
+		t.Fatalf("dependency did not release consumer: %s", consumer.stage)
+	}
+	for _, args := range []string{
+		`{"kind":"accept","proposal":"child-proposal"}`,
+		`{"kind":"return","proposal":"child-proposal","reason":"missing contract case"}`,
+		`{"kind":"progress","summary":"working"}`,
+		`{"kind":"revise","reason":"new contract"}`,
+	} {
+		if a := e.report(consumer, blocked, json.RawMessage(args)); !a.Refused {
+			t.Fatalf("communication Turn acquired productive rights: %s", args)
+		}
+	}
+	if pr.status != proposalChecked || blocked.decided {
+		t.Fatal("refused decision changed child proposal")
+	}
+	fresh := &turnState{m: consumer, id: "productive-turn"}
+	if a := e.report(consumer, fresh, json.RawMessage(`{"kind":"return","proposal":"child-proposal","reason":"missing contract case"}`)); a.Refused {
+		t.Fatal(a.Text)
+	}
+	if pr.status != proposalReturned || !fresh.decided {
+		t.Fatal("new productive Turn did not decide")
+	}
+}
 
 func withWorker(f *fixture, manager string, roles ...Helper) {
 	for i := range f.cfg.Team {
@@ -107,7 +150,7 @@ func TestManagerTurnsMountHelperSubsetsReadOnly(t *testing.T) {
 
 // A plan's dependency becomes a start condition of the later Pass: library
 // starts its Implement work only after lending's accepted Implement basis.
-// A cycle with the parent-first order is refused.
+// A cycle with the integration order is refused.
 func TestPlanDependenciesBecomeStartConditions(t *testing.T) {
 	f := newFixture(t)
 	var mu sync.Mutex
@@ -171,20 +214,27 @@ func TestPlanDependenciesBecomeStartConditions(t *testing.T) {
 func TestRevisedBasisResetsItsConsumers(t *testing.T) {
 	f := newFixture(t)
 	var mu sync.Mutex
-	revised := false
+	revised, bound := false, false
 	f.agents.script = func(c *call) error {
 		mu.Lock()
 		defer mu.Unlock()
+		if c.turn.Manager == "lending/reminders" && !bound && strings.HasPrefix(c.now(), "work on") {
+			bound = true
+			a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			if !strings.Contains(a.Text, "recorded dependency") {
+				return nil
+			}
+		}
 		if c.turn.Manager == "lending" && !revised && f.ev.index("basis.accepted", "lending/reminders", "", nil) >= 0 {
 			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the reminder needs the due date"})
 			revised = true
 			return nil
 		}
-		c.protocol()
+		tolerant(c)
 		return nil
 	}
 	r := f.open()
-	res := r.Pass(implementSpec())
+	res := r.Pass(bindingSpec())
 	out := f.finish(r, "")
 	if res.Stopped || !revised {
 		t.Fatalf("stopped %v revised %v: %s", res.Stopped, revised, out.Reason)
@@ -339,7 +389,7 @@ func TestStaleReportsOfASealedPassAreRefused(t *testing.T) {
 	}
 }
 
-// The existing cycle guard includes the implicit parent-first and integration
+// The existing cycle guard includes the implicit explicit-dependency and integration
 // edges, which the Haiku Depot trace needed (regression carried over from draft
 // PR #536): a result needs every child's result without a declared dependency.
 func TestPlanRejectsImplicitIntegrationCycles(t *testing.T) {
@@ -707,7 +757,7 @@ func TestRevisionReopensOnlyAResultBuiltOnIt(t *testing.T) {
 // Two siblings may build on each other's accepted bases when one of them needs
 // the other only for its result: a revision then resets both without a
 // deadlock (the review's mutual-binding scenario). A real cycle among bindings
-// and the parent-first and integration order is refused before it is bound,
+// and the explicit-dependency and integration order is refused before it is bound,
 // whether or not its events already happened.
 func TestBindingsNeverCloseACycle(t *testing.T) {
 	f := newFixture(t)
@@ -828,7 +878,7 @@ func TestWaitThatClosesACycleIsRefused(t *testing.T) {
 	r.Pass(planSpec())
 	res := r.Pass(implementSpec())
 	out := f.finish(r, "")
-	if !refused.Refused || !strings.Contains(refused.Text, "library start needs lending result") {
+	if !refused.Refused || !strings.Contains(refused.Text, "closes a cycle") {
 		t.Fatalf("the cyclic wait was not refused with its cycle: %+v", refused)
 	}
 	if res.Stopped || res.Verdict != Satisfied {
@@ -895,4 +945,41 @@ func TestReportActionsExposeOnlyTheirOwnFields(t *testing.T) {
 			}
 		}
 	}
+}
+
+// A new dependency version may be accepted before the old consumer Turn ends.
+// Its pending report still belongs to the invalidated version and must not stand.
+func TestResetWithdrawsRunningSubmissionAfterDependencyReacceptance(t *testing.T) {
+	f := newFixture(t)
+	r := f.open()
+	defer f.finish(r, "bounded reset regression")
+	e := r.e
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	p := e.newPassLocked(bindingSpec())
+	owner, consumer := p.byPath["lending"], p.byPath["library"]
+	old := &proposal{id: "old-contract", kind: kindBasis, member: owner, status: proposalAccepted}
+	owner.basis = old
+	consumer.stage, consumer.running = stageOwn, true
+	consumer.bound = []binding{{target: waitTarget{manager: owner.Path, stage: stageNameBasis}, serves: eventBasis, proposal: old.id}}
+	ts := &turnState{m: consumer, id: "old-turn"}
+	if a := e.submit(consumer, ts, reportIn{Kind: kindBasis, Summary: "built on old contract"}); a.Refused {
+		t.Fatal(a.Text)
+	}
+	submitted := ts.proposal
+	owner.basis = nil
+	e.resetLocked(consumer, "contract was revised")
+	if consumer.stage != stageBlocked {
+		t.Fatalf("missing real prerequisite did not block: %s", consumer.stage)
+	}
+	owner.basis = &proposal{id: "new-contract", kind: kindBasis, member: owner, status: proposalAccepted}
+	e.releaseLocked(consumer, "new contract accepted")
+	if consumer.stage != stageOwn {
+		t.Fatalf("new contract did not release consumer: %s", consumer.stage)
+	}
+	e.turnEndedLocked(consumer, ts)
+	if submitted.status != proposalWithdrawn || consumer.pending != nil || consumer.basis != nil || len(consumer.items) == 0 {
+		t.Fatalf("stale report survived: %s pending=%v basis=%v items=%d", submitted.status, consumer.pending, consumer.basis, len(consumer.items))
+	}
+	consumer.running = false
 }
