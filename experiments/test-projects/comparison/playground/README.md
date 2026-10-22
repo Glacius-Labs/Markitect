@@ -120,7 +120,7 @@ deferred; this proposal creates no new harness, core engine or factor matrix.
 | --- | --- | --- |
 | 1 | Ordinary: restore 0.1 conformance | Genuine add/list application and public baseline test; complete ordinary baseline requirements. Fresh native coding conversation. |
 | 2 | Markitect: restore 0.1 conformance | Identical application/test bytes and initial state; complete canonical baseline snapshot and current Apply controls. Fresh Run and role conversations. |
-| 3 | Markitect: implement 0.2 finish/status | Its own actual published stage-0 result, tests/docs/registry and carried data; replace only current intent with complete 0.2 snapshot. New Apply Run. |
+| 3 | Markitect: implement 0.2 finish/status | Its own actual regular stage-0 target readback, tests/docs/registry and carried data; replace only current intent with complete 0.2 snapshot. New Apply Run. |
 | 4 | Ordinary: implement 0.2 finish/status | Its own actual stage-0 result, tests/docs and carried data; complete ordinary 0.2 requirements. Native continuation of dispatch 1. |
 
 This fixed O/M then M/O order is one trajectory per arm, no repeats, sweeps,
@@ -132,7 +132,7 @@ debug, test and revise inside their one bounded assignment before submission.
 Before freezing packets, append this same visible task instruction to both
 arms at both stages, alongside the current requirements and neutral task:
 
-> Change only observed conformance gaps and the evidence needed for this task.
+> Change only material observed contract gaps and the evidence needed for this task.
 > Preserve already conforming artifacts. Note optional improvements separately;
 > do not implement them as part of this assignment.
 
@@ -197,13 +197,18 @@ proves capture. Record actual structural/capture preparation before release;
 if accounting, capture or access remains unbound, stage 1 is dependency-blocked.
 No data, ignore or domain registry is created by this proposal.
 
-A usable prior result requires completed native ordinary submission or a
-completed Markitect Apply with its final published/no-change target read back.
-A technically incomplete prior dispatch, even if its partial code or unchanged
-target is runnable, makes the next stage dependency-blocked and the sequence
-unsuccessful; record the unused slot, never convert it to a
-retry. A completed, runnable but semantically faulty prior submission continues as-is. Unverified
-Markitect retained work is evidence, not a published continuation result.
+A technically incomplete stage 0 already makes the primary sequence fail.
+For a descriptive stage-1 follow-up, a safe usable regular Markitect target
+readback may continue even if stage 0 did not publish or left the target
+unchanged. Never promote unverified retained work into that target. The ordinary
+arm analogously continues its actual frozen submitted/captured working stand,
+including defects, when safe and usable. Preserve the original failed freezes
+and distinguish these follow-up outcomes from a complete successful sequence.
+Markitect's unpublished internal work not appearing in its delivered target is
+method behavior, reported explicitly. Unclear writer cessation, missing state,
+unavailable native continuation or an unusable application makes the next stage
+dependency-blocked. Record the unused slot; never convert it to a retry. No
+supplied correct reset or human repair is allowed.
 Neither native session history nor writer packets receive future intent,
 operator metadata, seed locations, oracle code, expected answers or comparison
 results. Stage 1 receives only its current full intent and its own prior work.
@@ -309,7 +314,7 @@ results or establish runtime readiness.
 | Assessment isolation | **UNBOUND.** `oracle_kit.py` invokes submitted code directly with inherited environment and captured output. It is not a safe host assessment boundary. Reuse the bounded, credential-free container pattern in `night_run.py`, adapting only the Readinglog entrypoint/paths after separately agreeing its exact small diff; do not run submitted code on the operator host. |
 | Whole-arm resources | **UNBOUND.** Existing per-container CPU/RAM limits do not prove aggregate enforcement, disk/output bounds or parity. Bind a common enforced arm envelope and its observation/cessation evidence before claiming execution readiness. |
 | Profile/runtime | **UNBOUND for this pilot.** SOL3 observed native Luna High in Markitect, not the ordinary arm's resume/finish. Pin dedicated auth, actual resolved role settings, CLI/tools/images and equal permissions; no fallback or desktop-auth substitution. |
-| Own-result stage 1 | **UNBOUND by design** until each completed stage-0 submission exists. Hash actual artifacts, continuation data and native ordinary session state; bind observed state accounting, capture and equal writer/check access before release. Missing bindings or an incomplete predecessor are dependency-blocked; do not manufacture or repair a prior result. |
+| Own-result stage 1 | **UNBOUND by design** until each stage-0 freeze and safe usable continuation stand exists. Hash actual artifacts, continuation data and native ordinary session state; bind observed state accounting, capture and equal writer/check access before release. Missing bindings, uncertain cessation or unusable state are dependency-blocked; an incomplete predecessor has already failed the primary sequence but may have a descriptive follow-up under the rule above; do not manufacture or repair a prior result. |
 | Grant/release | **NONE.** A reviewed proposal and source preparation do not dispatch. Coordinator requests a fresh finite owner grant only against the concrete reviewed plan, then freezes the actual UTC/source gate and append-only ledger. |
 
 SOL3 is closed: P met the bounded preservation task; R repaired behavior but
