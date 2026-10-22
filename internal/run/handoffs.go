@@ -115,35 +115,6 @@ func (f *AssignmentHandoffs) serial(ctx context.Context, path string, work func(
 	return work(context.WithValue(ctx, assignmentLockKey{}, append(append([]*assignmentMember(nil), held...), m)))
 }
 
-// A parent must not wait on a working child while holding its own queue: that
-// child could already be waiting for an answer from this parent.
-func (f *AssignmentHandoffs) consult(ctx context.Context, path string, work func(context.Context) error) error {
-	m := f.team[path]
-	if m == nil {
-		return fmt.Errorf("Manager %q has no assignment", path)
-	}
-	f.mu.Lock()
-	assigned := m.assigned
-	f.mu.Unlock()
-	if !assigned {
-		return fmt.Errorf("child %q has not received its first task", path)
-	}
-	if m.held(ctx) {
-		return work(ctx)
-	}
-	if err := ctx.Err(); err != nil {
-		return err
-	}
-	select {
-	case m.messages <- struct{}{}:
-		defer m.release(ctx)
-		held, _ := ctx.Value(assignmentLockKey{}).([]*assignmentMember)
-		return work(context.WithValue(ctx, assignmentLockKey{}, append(append([]*assignmentMember(nil), held...), m)))
-	default:
-		return fmt.Errorf("child %q is working or waiting; consult its fixed result when available instead of waiting inside a parent answer", path)
-	}
-}
-
 // AssignmentHandoffs routes work through the model-derived Manager tree. The
 // parent owns the substantive review decision; this type enforces only direct
 // relationships, fixed Git results and participation of every required child.

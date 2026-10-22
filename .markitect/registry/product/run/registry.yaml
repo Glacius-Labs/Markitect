@@ -1,5 +1,21 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assignment_messages.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Routes FIFO child questions and response-scoped decisions, releasing parent queues while awaiting answers and bounding concrete decision feedback."
+  - path: "internal/run/assignment_tasks.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Gives parents and leaves focused mandates and binds parent acceptance to the inspected fixed child handoff."
+  - path: "internal/run/assignment_feedback_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Replays differing Agent/fixed Git identities and invalid decisions with finite feedback, Host-bound integration and leaf prompt checks."
+  - path: "internal/run/assignment_questions_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Proves queued busy-child questions, ordered replies, crossed parent waits, deferred acceptance and bounded cancel/Close/budget behavior."
   - path: "internal/run/assignment_start.go"
     form: code
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]

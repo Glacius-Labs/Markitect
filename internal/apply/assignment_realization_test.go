@@ -233,8 +233,7 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 	} else if strings.HasPrefix(prompt, "Review your direct child") {
 		fields := strings.Fields(prompt)
 		child := strings.TrimSuffix(fields[4], "'s")
-		commit := fields[7]
-		if err := call(run.AcceptChildTool, map[string]string{"child": child, "commit": commit}); err != nil {
+		if err := call(run.AcceptChildTool, map[string]string{"child": child}); err != nil {
 			return run.TurnResult{}, err
 		}
 	} else if strings.HasPrefix(prompt, "Independent Verify returned") && strings.Contains(prompt, "Owner lending;") {
