@@ -120,7 +120,8 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 	case strings.Contains(prompt, "Repair the lending limit test"), strings.Contains(prompt, "Rebase storage against"):
 		s.correction = prompt
 	}
-	return run.TurnResult{Final: "Completed " + s.spec.ID, Completed: true, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed"}}}, nil
+	exit := 0
+	return run.TurnResult{Final: "Completed " + s.spec.ID, Completed: true, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed", ExitCode: &exit}}}, nil
 }
 
 type conflictOnceIntegration struct {
@@ -198,6 +199,11 @@ func TestAssignmentSchedulerDelegatesAnswersReviewsReturnsAndIntegrates(t *testi
 	}
 	if !strings.Contains(agents.opened["trial-1"].reviews[0], "go test ./...: passed") {
 		t.Fatal("parent did not receive observed child commands for review")
+	}
+	observed := flow.Observations("library/lending")
+	*observed[0].Commands[0].ExitCode = 99
+	if code := *flow.Observations("library/lending")[0].Commands[0].ExitCode; code != 0 {
+		t.Fatalf("caller changed retained native exit code to %d", code)
 	}
 	for id, agent := range agents.opened {
 		if !agent.closed {

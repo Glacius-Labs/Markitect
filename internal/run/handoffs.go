@@ -282,6 +282,12 @@ func (f *AssignmentHandoffs) Observations(path string) []TurnResult {
 	copy(results, m.observed)
 	for i := range results {
 		results[i].Commands = append([]CommandObservation(nil), results[i].Commands...)
+		for j := range results[i].Commands {
+			if code := results[i].Commands[j].ExitCode; code != nil {
+				value := *code
+				results[i].Commands[j].ExitCode = &value
+			}
+		}
 	}
 	return results
 }
