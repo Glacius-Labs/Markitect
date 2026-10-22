@@ -30,17 +30,6 @@ func (e *engine) lookUp(m *member, ts *turnState, args json.RawMessage) ToolAnsw
 	if !slices.Contains(lookUpTopics, in.Topic) {
 		return refuse("topic must be one of %s.", strings.Join(lookUpTopics, ", "))
 	}
-	if m.candidateHidden() {
-		switch in.Topic {
-		case "brief", "definition", "owner", "method":
-		case "basis":
-			if in.Manager != "" && in.Manager != m.Parent {
-				return refuse("Before candidate introduction, only your parent's model-derived basis is available.")
-			}
-		default:
-			return refuse("Candidate or author information (%s) opens in a fresh Turn after all required model-first bases are accepted. Derive conditions and intended cases from the bound Definitions first.", in.Topic)
-		}
-	}
 	switch in.Topic {
 	case "method":
 		text, ok := methods[strings.TrimSpace(in.ID)]

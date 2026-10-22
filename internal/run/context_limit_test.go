@@ -12,17 +12,25 @@ import (
 func TestAContextLimitEndsTheRunWithoutRetry(t *testing.T) {
 	f := newFixture(t)
 	turns := 0
+	var mu sync.Mutex
+	seen := map[string]bool{}
 	f.agents.script = func(c *call) error {
+		mu.Lock()
 		turns++
+		if seen[c.turn.Manager] {
+			t.Error("context-limited Manager retried")
+		}
+		seen[c.turn.Manager] = true
+		mu.Unlock()
 		return fmt.Errorf("%w: the prompt of 2000000 bytes exceeds the 1048576 bytes the provider channel carries", ErrContextLimit)
 	}
 	r := f.open()
 	r.Pass(implementSpec())
 	out := f.finish(r, "")
-	if out.Status != Incomplete || !strings.Contains(out.Reason, "exceeds the 1048576 bytes") || turns != 1 {
+	if out.Status != Incomplete || !strings.Contains(out.Reason, "exceeds the 1048576 bytes") || turns < 1 || turns > len(teamPaths) {
 		t.Fatalf("status %s reason %q after %d turns", out.Status, out.Reason, turns)
 	}
-	if len(out.Problems) != 1 || !strings.Contains(out.Problems[0].Text, "2000000 bytes") {
+	if len(out.Problems) < 1 || !strings.Contains(out.Problems[0].Text, "2000000 bytes") {
 		t.Fatalf("problems %+v", out.Problems)
 	}
 }

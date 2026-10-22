@@ -48,33 +48,22 @@ model review).
 
 ## The base process
 
-Every Manager, Root and leaves alike, goes through the stages of `pass.go`:
+Every required Manager receives its assignment at Pass start. Only actual declared
+or previously bound prerequisites put it in **blocked**, with read-only communication
+and no productive submission. Independent children can work while a parent is blocked.
 
-1. **start**: waiting for the parent's accepted basis (Root starts at once).
-2. **blocked**: released by the parent's basis, but the dependencies of its accepted plan
-   for this purpose, or after a reset the submissions its basis was bound to, are not
-   accepted yet. It may answer routed questions in
-   communication-only turns with a read-only project; it cannot submit, report progress,
-   decide or release children.
-3. **own**: works on its own contribution and submits its **basis** with `report`.
-4. **basis**: the basis is checked technically after the turn ended (writers stopped):
-   the submitter's stable area is composed with the accepted stand and File checked; a
-   finding addressed to the submitter returns it to the owner (the whole stand is
-   checked at the Pass's exit). The direct parent then accepts or returns it with
-   `report kind accept|return`; Root's basis is accepted by the Orchestrator against the
-   declared Pass requirements.
-5. **delegated**: the basis is accepted and the children are released; the Manager's own
-   area is read-only, it decides its children's proposals and answers questions. A
-   submitted child proposal wakes it before the child is Done.
-6. **integrate**: every child's result is accepted (at once for a leaf); the Manager
-   integrates and submits its complete **result** with every own obligation covered and a
-   verdict.
-7. **result** and **done**: the result is checked and decided like the basis; Done means
-   the complete responsibility is accepted.
+In **own**, a Manager works on its contribution and may submit its complete result
+as soon as its children are accepted. No universal basis or parent preapproval is
+required. An optional **basis** supplies a contract another Manager actually needs;
+its stopped Turn is technically checked and its parent accepts or returns it. That
+acceptance releases only declared consumers. In **delegated**, the Manager handles
+child proposals; **integrate** follows accepted child results. A result is checked and
+decided by its parent (Root by the Orchestrator); **done** means the whole responsibility
+is accepted. A child proposal wakes its parent before the child is Done.
 
 A returned proposal goes back to its owner within the Pass. `reopen` lets a parent reopen
 a Done child before closure; `revise` lets a Manager revise its accepted basis, which
-resets its children and declared dependents explicitly and unsettles results built on
+resets its actual declared or bound consumers explicitly and unsettles results built on
 it. The Pass closes when every Manager is Done and nothing runs; its exit gates harvest
 the quiescent shared tree, require it to equal the accepted stand and run the Model check
 and the File check; any failure ends the run Failed without a repair Pass.
@@ -94,8 +83,8 @@ unchanged wait starts no turn. In a Pass with `BindWaits` (Implement of Apply's 
 which has no planning Pass before it), the accepted submission a wait named, or one already accepted
 when the wait is reported (recorded as report kind `bind`), becomes a **bound dependency**
 of the event the waiter works toward, its basis or its result (`dependency.bound`, with
-proposal and stand). Only Managers outside the waiter's own line bind: ancestors and
-descendants are already related by the parent-first and integration order. A binding that
+proposal and stand). An explicitly needed ancestor contract binds too. Descendant results already
+participate in mandatory parent integration and need no duplicate binding. A binding that
 would close a cycle among all start, basis and result events, whether or not they already
 happened, is refused or skipped (`dependency.unbound`). A revision or reopening of a bound
 submission resets a waiter whose basis built on it, like a declared consumer, and its
@@ -104,7 +93,7 @@ on it keeps its basis and its children's work and integrates again: its submitte
 is invalidated, an accepted one reopened with its consumers, and the submission of a turn
 running meanwhile withdrawn; that turn's helper delegations stand. Verify and Extract bind nothing. A wait
 on another Manager that closes a cycle with the accepted plans' dependencies, the bindings
-and the parent-first and integration order could never be
+and the integration order could never be
 satisfied, so it is refused with the cycle named; the Manager submits first what does not
 need it or asks its parent, and a Pass that still cannot advance ends as stalled. Every turn records its `mode`: `work`, `communication` (blocked), `coordination`
 (decisions and answers after the basis), `review` or `helper`.
@@ -118,7 +107,7 @@ closures, disputes, dispositions of adverse probe receipts and, for a result, th
 the open genuine findings within the responsibility is refused; a result is refused while
 the Manager's own question is unanswered. Plans are validated (approach, method and
 evidence per obligation, owners of inputs and outputs, dependencies without a cycle with
-the parent-first order).
+the integration order).
 
 In Implement and artifact review, every coverage entry has `conditions`: concise
 references to material conditions, exceptions and interactions in the bound authority,
@@ -198,9 +187,8 @@ by a signal with exit 128 or above), which never counts as a pass or as an expec
 refusal. `probe.rerun` repeats the exact probe of an error receipt on the same candidate.
 Implement and artifact-review `done`/`preserved` claims require typed evidence.
 `kind: public_behavior` cites an own passing receipt with a nonempty `probe.boundary`.
-In coverage evidence, each passing receipt supports one claim per submission,
-only under its recorded obligation. Keep unsupported conditions `open` with a note instead of duplicating
-or relabelling a receipt. A failed receipt belongs in a genuine finding (or its
+A passing execution may support several assessed claims and Definitions. Explain
+its actual support and gaps; the retained invocation and assertions remain unchanged. A failed receipt belongs in a genuine finding (or its
 reasoned disposition), not in coverage evidence. A failure of an own public
 contract is reported under that own obligation; coordinate a dependency's required
 implementation change through the parent, preserving the dependency's write owner.
@@ -215,26 +203,17 @@ is refused. The stored evidence retains the boundary, through the actual public 
 persistence. `kind: static` cites source, location and reasoning explaining why execution
 is inapplicable. Neither private-validator execution, source reassurance for executable
 behavior nor a suite total closes a public behavior claim. Missing required execution
-stays open. One receipt supports only one claim across the entire envelope, integration
-included. Sources/receipts bind to the submitted stand after writers stopped. Tooling
+stays open. One receipt may support both local claims and integration. Sources/receipts bind to the submitted stand after writers stopped. Tooling
 checks structure and bindings; Managers/reviewers judge authority, actual entry use,
 assertions and semantic adequacy. Repeating a boundary label proves no such adequacy.
 
-Apply Verify sets `PassSpec.ModelBasis`: every required reviewer derives an open basis
-from the bound model before receiving candidate or author observations. Its `/work` is
-an empty read-only snapshot, and candidate lookups, probes and helpers are unavailable.
-Normal model questions, answers, child-basis decisions and future named waits remain
-available. Accepted leaves wait without consuming turns until all required bases have
-been accepted after normal Turn completion and observed stop. Then one assignment wakes
-each reviewer, and a fresh Turn introduces the immutable candidate in its existing
-independent conversation and Home (`review.candidate_opened`). An in-flight model-only
-Turn remains blind even when its last child acceptance opens the shared barrier.
-An incomplete required basis keeps the barrier closed. A result cannot be submitted
-before that reviewer's candidate introduction; the original basis stays visible and
-cannot be replaced after exposure. Extract does not select this model-authority gate.
+Fresh independent reviewers receive the bound model and immutable candidate directly.
+There is no empty model-only workspace, pre-candidate basis artifact, parent preapproval
+or global waiting barrier. They derive their own expectations before assessing author
+assertions; the Host enforces independent conversations, participation and candidate
+binding rather than candidate-blind preregistration. Model assessment remains its own
+mandatory review of intent. Optional contract dependencies use the same mechanism.
 
-This enforces ordering and exposure, not semantic completeness. Reviewers still judge
-model classes, exact interface forms, the actual probe assertions and missing proof.
 Relied-on probe files are delivered in full within the bounded assignment budget;
 larger files require `look_up probe`. That lookup records the exact delivered bytes'
 digest. A valid report submission ends probing/helper work in that Turn and explicitly

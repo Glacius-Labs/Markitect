@@ -143,10 +143,6 @@ func writePlan(b *strings.Builder, pl *plan) {
 func (e *engine) renderProposalLocked(pr *proposal) string {
 	var b strings.Builder
 	fmt.Fprintf(&b, "Your child %s submitted its %s %s for your decision: report kind accept or return with proposal %s.\n", contactOf(pr.member.mgr), pr.kind, pr.id, pr.id)
-	if pr.member.p.spec.ModelBasis && pr.kind == kindResult && pr.member.basis != nil {
-		fmt.Fprintf(&b, "Its model-first basis %s was accepted before candidate access. Compare these original expectations with the result; new findings may add cases but do not erase the original conditions:\n", pr.member.basis.id)
-		writeEnvelope(&b, pr.member.basis.env, e.findingLocked)
-	}
 	writeEnvelope(&b, pr.env, e.findingLocked)
 	// Its finding effects take effect only with your acceptance.
 	for i := range pr.raised {
@@ -276,7 +272,7 @@ func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, 
 	b.WriteString("\nNow: " + e.taskLocked(m) + "\n")
 	fmt.Fprintf(&b, "This Agent Turn has a finite limit of %s. End after submitting basis/result; if work remains, report concise progress before the limit and continue in a later Turn. Use wait for a missing named submission or answer instead of polling it.\n", e.cfg.Budget.TurnTimeout)
 	b.WriteString("Each Turn uses a fresh container: conversation and the provider home persist, but in-memory tool/REPL variables and /tmp do not. Save recipes in provider-home files or resend their complete content; never rely on an earlier Turn's variables. A probe is a separate execution and must include all its own setup and helpers.\n")
-	if p.spec.Review && !m.candidateHidden() {
+	if p.spec.Review {
 		b.WriteString("Plan one highest-value bounded probe for this Turn, then leave time to report and end. Start a second only when the observed tool latency still leaves a conservative reserve for a valid report and any repair; a short script can take minutes including Runtime setup. If a check refuses for remaining time, do not try another: report progress with only kind and summary, then end. For result evidence, one passing execution may support several conclusions when its actual assertions support them; explain support and gaps. Keep unsupported conditions open with a note; cite failed receipts in findings, not coverage evidence. Report a demonstrated failure of your own public contract under that own obligation, even when its implementation cause is a dependency; coordinate required work outside your ownership through your parent. In parent integration, independently assess such cross-area failures and record the necessary finding for the actual correction owner within your subtree; accepting the caller's contract finding alone does not route that correction.\n")
 	}
 	switch {
@@ -302,7 +298,7 @@ func (e *engine) standingLocked(b *strings.Builder, m *member) {
 	if m.Brief != "" {
 		fmt.Fprintf(b, "\n%s\n", strings.TrimSpace(m.Brief))
 	}
-	if e.cfg.OwnerRequest != "" && !m.candidateHidden() {
+	if e.cfg.OwnerRequest != "" {
 		fmt.Fprintf(b, "\nOwner request: %s\n", strings.TrimSpace(e.cfg.OwnerRequest))
 	}
 	var contacts []string
@@ -336,33 +332,11 @@ func (e *engine) standingLocked(b *strings.Builder, m *member) {
 func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 	p := m.p
 	fmt.Fprintf(b, "\nPass %s: %s\n%s\n", p.id, p.spec.Purpose, strings.TrimSpace(p.spec.Mandate))
-	if m.candidateHidden() {
-		if m.modelBasisPending() {
-			b.WriteString("MODEL-FIRST BASIS: /work is an empty read-only authority view. The immutable candidate, author coverage, check results and prior receipts are withheld until every required reviewer's model-first basis is accepted after normal Turn completion. Use your delivered bound model and look_up definition to derive material valid/invalid classes, exact interface forms, expected outcomes, exceptions and composed cases. Record every own obligation as open with these conditions and a note that candidate assessment is pending; parents also record open integration. Supply no candidate evidence, artifacts or findings in this basis. Coordinate model questions through the tree; retain unresolved model questions explicitly in your conditions. End the Turn immediately after submission.\n")
-		} else {
-			b.WriteString("MODEL-ONLY COORDINATION: Your model-first basis is accepted. Every reviewer remains blind to the candidate until all required bases are accepted and a fresh candidate Turn starts. Decide child model-first bases and answer model questions; candidate results and probes are unavailable.\n")
-			b.WriteString(e.renderAcceptedLocked(m.basis) + "\n")
-		}
-		b.WriteString(semanticAssessment + "\n")
-		if m.Parent != "" {
-			if parent := p.byPath[m.Parent]; parent.basis != nil {
-				b.WriteString("\nYour parent's model-first " + e.renderAcceptedLocked(parent.basis) + "\n")
-			}
-		}
-		return
-	}
-	if p.spec.ModelBasis && m.basis != nil {
-		b.WriteString("Candidate access is now open on the immutable review stand. Your accepted precommitment follows; compare each original condition with the actual setup, public action and assertions, execute your own discriminating cases, and account for every original condition in your result or leave its missing evidence open. Add discoveries without replacing the precommitment.\n")
-		b.WriteString(e.renderAcceptedLocked(m.basis) + "\n")
-		if e.cfg.OwnerRequest != "" {
-			b.WriteString("Bound owner request: " + e.cfg.OwnerRequest + "\n")
-		}
-	}
 	if evidenceRequired(p.spec) {
 		b.WriteString(semanticAssessment + "\n")
 		b.WriteString("Derive and record material conditions, exceptions and interactions from the authority this Pass binds and required contracts in coverage.conditions (Apply: bound Definitions; Extract: fixed artifacts and documented intent, with the proposed model as work product); justify which evidence covers them and what remains open. For executable public behavior, done/preserved requires candidate-bound public_behavior receipts through the real declared entry, not private validators, source reassurance or suite counts. Static/documentary claims use reasoned source inspection. Missing required execution remains open. Every parent, including Root with no own Definitions, reports its own integration conditions and evidence; green children alone cannot establish global invariants. Implement satisfied means implementation submitted to independent Verify, not verified conformance.\n")
 		if p.spec.Review {
-			b.WriteString("Before assessing author claims or coverage, derive your own conditions and counterexamples from that authority in your basis. Challenge omissions inside each Definition: valid inputs wrongly refused, invalid inputs wrongly accepted, boundaries, exceptions, artifact contradictions and child interactions. Then compare the candidate and author coverage against those expectations. Never use author claims as the complete checklist.\n")
+			b.WriteString("Before assessing author claims or coverage, derive your own conditions and counterexamples from that authority. Challenge omissions inside each Definition: valid inputs wrongly refused, invalid inputs wrongly accepted, boundaries, exceptions, artifact contradictions and child interactions. Then compare the candidate and author coverage against those expectations. Never use author claims as the complete checklist.\n")
 		}
 	}
 	if p.spec.Review {
@@ -457,20 +431,14 @@ func (e *engine) assignmentLocked(b *strings.Builder, m *member) {
 
 // taskLocked states what the Manager is to do in its current stage.
 func (e *engine) taskLocked(m *member) string {
-	if m.candidateHidden() && !m.modelBasisPending() {
-		return "coordinate model questions and decisions on child bases; await all required model-first bases before candidate assessment."
-	}
 	switch m.stage {
 	case stageBlocked:
 		return fmt.Sprintf("your own work waits for %s. Until then answer what is asked of you; your project access is read-only.", m.waiting)
 	case stageOwn:
-		if m.modelBasisPending() {
-			return "work on your own contribution: derive the model-first review basis before candidate access, keep coverage open and submit report kind basis."
-		}
 		if len(m.Children) == 0 {
-			return "work on your own contribution and submit it as your basis (report kind basis)."
+			return "work on your own contribution and submit its complete result (report kind result). A basis is optional only when another Manager needs a contract before your result."
 		}
-		return "work on your own contribution and submit your basis (report kind basis): what your children need from you before they start. Do not do their work."
+		return "work on your own contribution, supply contracts or decisions your children actually need, accept their results and integrate them into your result. A separate basis is optional; it never gates unrelated work. Do not do their work."
 	case stageIntegrate:
 		var results []string
 		for _, c := range m.Children {
@@ -486,9 +454,6 @@ func (e *engine) taskLocked(m *member) string {
 	case stageBasis, stageResult:
 		return fmt.Sprintf("your %s %s awaits its decision; answer what is asked of you.", m.pending.kind, m.pending.id)
 	case stageDelegated:
-		if m.p.spec.ModelBasis {
-			return "assess your own candidate conditions while your children review; decide their proposals and answer their questions. Report progress to continue later, or wait for a named child after your own assessment; integrate only after their results are accepted."
-		}
 		return "your children work on your accepted basis; decide their proposals and answer their questions."
 	case stageDone:
 		return "your complete result is accepted; answer what is asked of you."

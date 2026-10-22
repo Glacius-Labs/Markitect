@@ -27,12 +27,10 @@ func (b binding) source(manager string) depNode {
 	return depNode{manager, eventResult}
 }
 
-// bindableLocked reports whether a wait of m on target binds: only in a Pass
-// with BindWaits, and only on a Manager that is neither m's ancestor nor its
-// descendant, whose bases and results the parent-first and integration order
-// already relate to m's work.
+// bindableLocked binds actual dependencies, including ancestor contracts.
+// Descendant results already participate in mandatory parent integration.
 func (e *engine) bindableLocked(m *member, target waitTarget) bool {
-	return m.p.spec.BindWaits && !e.within(target.manager, m.Path) && !e.within(m.Path, target.manager)
+	return m.p.spec.BindWaits && target.manager != m.Path && !(target.stage == stageNameResult && e.within(target.manager, m.Path))
 }
 
 // servesLocked is the event of m's work that a wait reported now serves.
@@ -44,7 +42,7 @@ func servesLocked(m *member) int {
 }
 
 // bindCycleLocked reports the cycle a new binding of m would close among the
-// start, basis and result events of the Pass: the parent-first and integration
+// start, basis and result events of the Pass: the explicit-dependency and integration
 // order, the accepted plans' dependencies for this purpose and every binding,
 // whether or not its events already happened, because a reset can undo them.
 func (e *engine) bindCycleLocked(m *member, b binding) string {

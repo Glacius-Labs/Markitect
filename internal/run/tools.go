@@ -271,7 +271,6 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 		{Name: toolLookUp, Description: "Look up structural facts: your standing context again (brief), a Definition of the bound model in full, the owner of a path, the derived registry view, the states of the Pass, accepted plans and bases, open findings, checks, probe receipts and your questions; and method guidance.", InputSchema: raw(lookUpSchema)},
 	}
 	switch probes := e.probesAvailable(spec); {
-	case m.candidateHidden():
 	case spec.Writes && probes:
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Without probe: File check of your current area against the accepted stand (unregistered or wrongly registered files, invalid registry entries, missing owners), advice while you work. With probe: run one behavioral probe file in its own container on a stable stand and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
 	case spec.Writes:
@@ -279,7 +278,7 @@ func (e *engine) memberTools(m *member) []ToolSpec {
 	case probes:
 		tools = append(tools, ToolSpec{Name: toolCheck, Description: "Run one behavioral probe file in its own container on the stand of this Pass and get the Orchestrator's receipt (R...) of its claim, expectation, bytes, invocation and outcome.", InputSchema: raw(checkSchema(spec))})
 	}
-	if !m.candidateHidden() && len(m.Helpers) > 0 {
+	if len(m.Helpers) > 0 {
 		tools = append(tools, ToolSpec{Name: toolDelegate, Description: "Delegate a bounded task to one of your helper roles; it runs in its own container after this turn and reports its result to you.", InputSchema: raw(delegateSchema)})
 	}
 	return tools

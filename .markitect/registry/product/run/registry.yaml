@@ -16,10 +16,6 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: "Distinguishes authority-only derivation from accepted-basis candidate access and checks blocked bypasses."
-  - path: "internal/run/review_basis.go"
-    form: code
-    realizes: [product/run/confirmed-run-history]
-    why: "Separates model-derived review conditions from candidate access within the existing accepted-basis boundary."
   - path: "experiments/recursive-apply-demo/README.md"
     form: doc
     realizes: [product/run/confirmed-run-history]

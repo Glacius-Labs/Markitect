@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"slices"
 	"strings"
-	"sync/atomic"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -16,9 +15,9 @@ import (
 type stage int
 
 const (
-	// stageStart: waiting for the parent's accepted basis; not yet released.
+	// stageStart: not yet assigned, or reset before prerequisites are re-established.
 	stageStart stage = iota
-	// stageBlocked: released by the parent's accepted basis, but its productive
+	// stageBlocked: assigned, but its productive
 	// work waits for declared dependencies. It may handle permitted messages in
 	// communication-only turns with read-only project access.
 	stageBlocked
@@ -94,10 +93,8 @@ type member struct {
 	// pending is its submitted basis or result until it is decided.
 	pending       *proposal
 	basis, result *proposal
-	// candidateIntroduced records delivery of the post-basis assignment.
-	candidateIntroduced bool
-	turns               int
-	empty               int
+	turns         int
+	empty         int
 	// reviewHome and reviewConversation hold the fresh reviewer of a review
 	// Pass; they never carry over to another Pass.
 	reviewHome string
@@ -120,10 +117,6 @@ type pass struct {
 	volume string
 	// candidate is the review Pass's read-only volume.
 	candidate WorkspaceID
-	// The empty immutable workspace used while deriving an Apply review basis.
-	modelBasisID     WorkspaceID
-	modelBasisVolume string
-	modelBasisReady  atomic.Bool
 	// accepted is the stand assembled from the entry stand and every accepted
 	// submission's checked area; only the Orchestrator writes it.
 	accepted  snapshot.Tree
@@ -166,8 +159,6 @@ func validateSpec(spec PassSpec) error {
 		return bad("a review Pass is read-only, plans nothing and binds no dependency")
 	case spec.Assesses && (!spec.Review || spec.ArtifactFindingsAdvisory):
 		return bad("a model assessment is a review Pass of the model, without artifact findings")
-	case spec.ModelBasis && (!spec.Review || spec.Assesses || spec.ArtifactFindingsAdvisory):
-		return bad("a model-first basis belongs to model-authoritative artifact review")
 	case spec.Review && strings.TrimSpace(spec.Guidance) == "":
 		return bad("a review Pass needs guidance on what a genuine finding is")
 	case !spec.Review && spec.ArtifactFindingsAdvisory:
@@ -243,19 +234,12 @@ func (e *engine) runPass(spec PassSpec) PassResult {
 	if spec.Review && !e.prepareReview(p) {
 		return e.passEnded(p)
 	}
-	if !e.prepareModelBasis(p) {
-		return e.passEnded(p)
-	}
-	if p.modelBasisID != "" {
-		defer e.closeVolume(p.modelBasisID)
-	}
 	e.mu.Lock()
-	_ = e.record(Event{Kind: "pass.start", Pass: p.id, Data: map[string]any{"purpose": spec.Purpose, "review": spec.Review, "writes": spec.Writes, "tree": p.tree.Digest().String(), "modelBasis": spec.ModelBasis}})
+	_ = e.record(Event{Kind: "pass.start", Pass: p.id, Data: map[string]any{"purpose": spec.Purpose, "review": spec.Review, "writes": spec.Writes, "tree": p.tree.Digest().String()}})
 	for _, m := range p.members {
-		m.waiting = e.parentWaitLocked(m)
 		e.recordStateLocked(m, "the Pass started")
 	}
-	e.releaseLocked(p.members[0], "the Pass started")
+	e.releaseWaitingLocked(p, "the Pass started")
 	e.scheduleLocked()
 	for e.ctx.Err() == nil && !p.closableLocked() {
 		if reason := e.stalledLocked(p); reason != "" {
@@ -334,17 +318,6 @@ func (e *engine) stalledLocked(p *pass) string {
 	return "the Pass cannot advance: " + strings.Join(waits, "; ")
 }
 
-// parentWaitLocked names the accepted parent basis a Manager still needs before
-// it is released in its Pass, or is empty.
-func (e *engine) parentWaitLocked(m *member) string {
-	if m.Parent != "" {
-		if parent := m.p.byPath[m.Parent]; parent.basis == nil {
-			return "the accepted basis of " + labelOf(parent.mgr)
-		}
-	}
-	return ""
-}
-
 // dependencyWaitLocked names the first declared dependency, or after a reset
 // the first submission its basis was bound to, that a released Manager's
 // productive work still needs, or is empty.
@@ -381,7 +354,7 @@ func (e *engine) dependenciesLocked(m *member) []dependency {
 }
 
 // releaseLocked advances a Manager in its Pass as far as its conditions allow.
-// The accepted parent basis releases it: its assignment is delivered first,
+// Its assignment is delivered first,
 // then the open genuine findings it owns for a work Pass, then what reached it
 // while it waited. Its productive work starts once the dependencies of its
 // accepted plan for this purpose, and after a reset the submissions its basis
@@ -392,11 +365,6 @@ func (e *engine) releaseLocked(m *member, why string) {
 		return
 	}
 	if m.stage == stageStart {
-		if w := e.parentWaitLocked(m); w != "" {
-			m.waiting = w
-			e.recordStateLocked(m, "its parent's basis is not accepted yet")
-			return
-		}
 		m.stage = stageBlocked
 		front := []item{{kind: itemAssignment}}
 		if !m.p.spec.Review {
@@ -475,8 +443,6 @@ func (e *engine) computeState(m *member) (State, string) {
 		return Waiting, m.waiting
 	case e.runnableLocked(m):
 		return Ready, ""
-	case m.p.spec.ModelBasis && !m.p.modelBasisReady.Load() && m.basis != nil:
-		return Waiting, "the accepted model-first bases of all required reviewers"
 	case m.stage == stageBasis || m.stage == stageResult:
 		parent := "the Orchestrator"
 		if m.Parent != "" {
@@ -565,11 +531,6 @@ func (e *engine) runnableLocked(m *member) bool {
 	case stageBlocked:
 		return slices.ContainsFunc(m.items, func(it item) bool { return it.kind == itemMessage }) || len(e.demandsLocked(m)) > 0
 	}
-	if m.p.spec.ModelBasis && !m.p.modelBasisReady.Load() && m.basis != nil {
-		// Child-basis proposals and model questions still need parent decisions.
-		// A leaf's note to complete its result waits for the shared candidate.
-		return len(e.demandsLocked(m)) > 0 || slices.ContainsFunc(m.items, func(it item) bool { return it.kind == itemMessage })
-	}
 	return len(m.items) > 0
 }
 
@@ -628,9 +589,9 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 	switch pr.kind {
 	case kindBasis:
 		m.basis = pr
-		if len(m.Children) == 0 {
+		if m.childrenDoneLocked() {
 			m.stage = stageIntegrate
-			e.deliverLocked(m, item{text: fmt.Sprintf("Your basis %s is accepted. You have no children: complete your own contribution of this %s Pass and submit your complete result as its mandate defines it.", pr.id, p.spec.Purpose)})
+			e.deliverLocked(m, item{text: fmt.Sprintf("Your basis %s is accepted. Your child results are accepted: complete your own contribution of this %s Pass and submit your complete result as its mandate defines it.", pr.id, p.spec.Purpose)})
 		} else {
 			m.stage = stageDelegated
 			e.recordStateLocked(m, "basis accepted")
@@ -643,13 +604,12 @@ func (e *engine) acceptLocked(pr *proposal, by string) {
 		m.stage = stageDone
 		e.recordStateLocked(m, "result accepted")
 		if m.Parent != "" {
-			if parent := p.byPath[m.Parent]; parent.stage == stageDelegated && parent.childrenDoneLocked() {
+			if parent := p.byPath[m.Parent]; (parent.stage == stageDelegated || parent.stage == stageOwn && parent.basis == nil) && parent.childrenDoneLocked() {
 				parent.stage = stageIntegrate
 				e.deliverLocked(parent, item{text: "The complete results of all your children are accepted. Integrate them with your own contribution and submit your complete result."})
 			}
 		}
 	}
-	e.openModelCandidateLocked(p)
 	e.releaseWaitingLocked(p, fmt.Sprintf("%s of %s was accepted", pr.id, m.Path))
 	e.scheduleLocked()
 }
@@ -710,7 +670,7 @@ func (e *engine) reopenLocked(parent, child *member, reason string) {
 }
 
 // reviseLocked lets a Manager revise its accepted basis: the basis and every
-// consumer built on it are explicitly invalidated, and the Manager works on its
+// actual consumer built on it are explicitly invalidated, and the Manager works on its
 // basis again.
 func (e *engine) reviseLocked(m *member, reason string) {
 	old := m.basis
@@ -721,23 +681,15 @@ func (e *engine) reviseLocked(m *member, reason string) {
 	e.voidDispositionsLocked(old, "its basis was revised")
 	e.invalidateConsumersLocked(m, true, fmt.Sprintf("%s revises its basis %s: %s", m.Path, old.id, reason))
 	e.deliverLocked(m, item{text: fmt.Sprintf("You revise your accepted basis %s (%s). Rework it and submit the revised basis; your children and dependents wait for it.", old.id, reason)})
-	if m.p.spec.ModelBasis {
-		e.deliverLocked(m, item{kind: itemAssignment})
-	}
 	e.scheduleLocked()
 }
 
 // invalidateConsumersLocked resets every Manager that started on m's basis (its
-// children and its declared or bound dependents) or, when basis is false, on
+// declared or bound dependents) or, when basis is false, on
 // its result, together with their own consumers, and unsettles their parents.
 func (e *engine) invalidateConsumersLocked(m *member, basis bool, why string) {
 	p := m.p
 	var consumers []*member
-	if basis {
-		for _, c := range m.Children {
-			consumers = append(consumers, p.byPath[c])
-		}
-	}
 	for _, z := range p.members {
 		for _, d := range e.dependenciesLocked(z) {
 			if d.Owner == m.Path && (basis && d.Stage == stageNameBasis || !basis && d.Stage == stageNameResult) && !slices.Contains(consumers, z) {
@@ -789,7 +741,7 @@ func (e *engine) resetLocked(z *member, why string) {
 		e.invalidateConsumersLocked(z, false, why)
 	}
 	e.unsettleParentLocked(z, why)
-	z.waiting = e.parentWaitLocked(z)
+	z.waiting = ""
 	e.recordStateLocked(z, why)
 	e.releaseLocked(z, why)
 }

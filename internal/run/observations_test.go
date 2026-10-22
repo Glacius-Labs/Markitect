@@ -213,6 +213,10 @@ func TestASettledFindingIsNotReopenedWithoutNewEvidence(t *testing.T) {
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		case c.pass() == "p2" && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on"):
+			if len(f.ev.kinds("finding.recorded")) == 0 {
+				c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+				return nil
+			}
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"disputed": []any{map[string]any{"id": "F1", "reason": "the notice is sent on the due date", "evidence": "r.go and its test"}}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on"):

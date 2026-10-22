@@ -508,7 +508,7 @@ func TestBlockedManagerKeepsItsFindingsAcrossASend(t *testing.T) {
 			return nil
 		case c.turn.Manager == "." && strings.Contains(c.turn.Prompt, "Answer to your question Q2"):
 			c.must(toolSend, map[string]any{"to": "library", "kind": sendAnswer, "text": "copy, member and due date", "about": "Q1"})
-		case c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "your own work waits for"):
+		case c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "your own work waits for") && slices.Contains(c.pendingQuestions(), "Q2"):
 			blockedPrompt = c.turn.Prompt
 			blockedSend = c.must(toolSend, map[string]any{"to": "parent", "kind": sendAnswer, "text": "copy, member and due date", "about": "Q2"}).Text
 			return nil
@@ -573,6 +573,9 @@ func TestDisputesNeedAReviewFindingAndAnEntitledDisputer(t *testing.T) {
 			}
 			say("sibling", c.basis(map[string]any{"disputed": dispute("F1")}).Text)
 		case c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on"):
+			if err := c.pollUntil(func() bool { return len(f.ev.kinds("finding.recorded")) > 0 }); err != nil {
+				return err
+			}
 			// Twice in one report is a second dispute on the same candidate.
 			say("twice", c.basis(map[string]any{"disputed": dispute("F1", "F1")}).Text)
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"disputed": dispute("F1")}))

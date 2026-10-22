@@ -842,7 +842,6 @@ func TestCrossAreaFailureKeepsCallerContractAndActualCorrectionOwner(t *testing.
 	r := f.open()
 	r.Pass(implementSpec())
 	spec := verifySpec()
-	spec.ModelBasis = true
 	res := r.Pass(spec)
 	out := f.finish(r, "")
 	if res.Stopped || res.Verdict != NeedsCorrection || len(out.Findings) != 2 || !outside.Refused {
@@ -881,7 +880,12 @@ func TestTheChildJudgesRootsFailedProbeOfItsClaim(t *testing.T) {
 			c.must(toolReport, c.envelope(kindBasis, nil))
 			return nil
 		case review && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
-			listed = strings.Contains(c.turn.Prompt, "by an ancestor about your obligations") && strings.Contains(c.turn.Prompt, "Receipt "+receipt+" by .")
+			if receipt == "" {
+				c.must(toolReport, map[string]any{"kind": kindWait, "for": ".", "stage": "basis"})
+				return nil
+			}
+			brief := c.must(toolLookUp, map[string]any{"topic": "brief"}).Text
+			listed = strings.Contains(brief, "by an ancestor about your obligations") && strings.Contains(brief, "Receipt "+receipt+" by .")
 			c.must(toolReport, c.envelope(kindBasis, map[string]any{"dispositions": []any{map[string]any{"receipt": receipt, "as": DisposedExpectationError,
 				"reason": "the probe called a command the model does not define", "evidence": "library/interface names one program and no such command"}}}))
 			return nil

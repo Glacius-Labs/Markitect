@@ -78,7 +78,7 @@ func (e *engine) send(ctx context.Context, m *member, ts *turnState, args json.R
 	}
 	if target := m.p.byPath[to]; target != nil && target.stage == stageStart && in.Kind == sendQuestion {
 		e.mu.Unlock()
-		return refuse("%s has not started in this Pass: it starts once its parent's basis is accepted. Ask it then, or share information.", to)
+		return refuse("%s has not started in this Pass: its actual prerequisites are being re-established. Ask it then, or share information.", to)
 	}
 	switch in.Kind {
 	case sendQuestion:
