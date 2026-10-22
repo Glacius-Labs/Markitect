@@ -122,6 +122,9 @@ the independently accepted Root result after observed assignment shutdown.
 Errors clear acceptance while keeping available work; `TreeCommit` states which
 stand the last available candidate represents. The caller owns later workspace
 and home cleanup, including inspection of uncertain creation or shutdown.
+The Verify prompt includes bounded, explicitly marked excerpts of summaries and
+ordinary outputs (at most 32 KiB of result projection in total); the fixed model
+context and complete retained result/check/review observations are not clipped.
 
 There is no Publisher parameter, publication permit or legacy `run.Outcome`.
 The API transfers nothing to the owner's repository. A4 owns explicit invocation,

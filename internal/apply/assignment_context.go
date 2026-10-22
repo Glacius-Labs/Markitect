@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"slices"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -96,33 +97,73 @@ func renderAssignmentBrief(in briefInput) string {
 }
 
 func assignmentVerifyContext(modelContext string, result AssignmentRealizationResult) string {
-	var b strings.Builder
-	b.WriteString(modelContext)
-	fmt.Fprintf(&b, "\nIntegrated Root result %s, summary: %s\n", result.Root.ResultCommit, result.Root.Summary)
-	for _, r := range result.Work.Flow.Results() {
-		fmt.Fprintf(&b, "\nManager %s handed off %s from %s: %s\n", r.Manager, r.Handoff.ResultCommit, r.Handoff.StartingCommit, r.Handoff.Summary)
-		b.WriteString("Native observations during that work (commands can precede later edits; judge their relevance to the named result):\n")
+	var b assignmentPromptProjection
+	fmt.Fprintf(&b, "\nIntegrated Root result %s, summary: %s\n", result.Root.ResultCommit, assignmentExcerpt(result.Root.Summary, 2048))
+	for _, check := range result.Checks {
+		if check.Commit == result.Root.ResultCommit {
+			fmt.Fprintf(&b, "\nRequired check %s on this commit: started=%t exited=%t exit=%d uncertain=%t\n%s\n", check.Name, check.Receipt.Started, check.Receipt.Exited, check.Receipt.ExitCode, check.Receipt.Uncertain, assignmentExcerpt(string(check.Receipt.Output), 4096))
+		}
+	}
+	for _, prior := range result.Reviews {
+		fmt.Fprintf(&b, "\nPrevious independent review: %s\n", assignmentExcerpt(prior.Handoff.Summary, 2048))
+		for _, issue := range prior.Issues {
+			fmt.Fprintf(&b, "Prior required matter for %s, %s: expected %s; observed %s\n", assignmentExcerpt(issue.Owner, 512), assignmentExcerpt(issue.Obligation, 1024), assignmentExcerpt(issue.Expected, 2048), assignmentExcerpt(issue.Observed, 4096))
+		}
+	}
+	results := result.Work.Flow.Results()
+	for _, r := range results {
+		fmt.Fprintf(&b, "\nManager %s handed off %s from %s: %s\n", r.Manager, r.Handoff.ResultCommit, r.Handoff.StartingCommit, assignmentExcerpt(r.Handoff.Summary, 2048))
+	}
+	fmt.Fprint(&b, "Native observations during the handed-off work (commands can precede later edits; judge their relevance to the named result):\n")
+	for _, r := range results {
 		for _, o := range r.Observations {
 			for _, command := range o.Commands {
 				exit := "unreported"
 				if command.ExitCode != nil {
 					exit = fmt.Sprint(*command.ExitCode)
 				}
-				fmt.Fprintf(&b, "Command %s; status %s; exit %s; output %s\n", command.Command, command.Status, exit, command.Output)
+				fmt.Fprintf(&b, "%s at handoff %s: command %s; status %s; exit %s; output %s\n", r.Manager, r.Handoff.ResultCommit, assignmentExcerpt(command.Command, 2048), assignmentExcerpt(command.Status, 512), exit, assignmentExcerpt(command.Output, 4096))
 			}
 		}
 	}
-	for _, check := range result.Checks {
-		if check.Commit == result.Root.ResultCommit {
-			fmt.Fprintf(&b, "\nRequired check %s on this commit: started=%t exited=%t exit=%d uncertain=%t\n%s\n", check.Name, check.Receipt.Started, check.Receipt.Exited, check.Receipt.ExitCode, check.Receipt.Uncertain, check.Receipt.Output)
-		}
+	return modelContext + b.text.String() + "\nJudge relevant follow-up from the actual changes. Earlier passing tests and an unchanged summary cannot approve a different commit. Prompt excerpts do not replace full retained observations; inspect the named artifacts and run focused checks where needed.\n"
+}
+
+const assignmentTruncation = "\n[truncated; full observation retained by Host]\n"
+
+func assignmentExcerpt(text string, limit int) string {
+	if len(text) <= limit {
+		return text
 	}
-	for _, prior := range result.Reviews {
-		fmt.Fprintf(&b, "\nPrevious independent review: %s\n", prior.Handoff.Summary)
-		for _, issue := range prior.Issues {
-			fmt.Fprintf(&b, "Prior required matter for %s, %s: expected %s; observed %s\n", issue.Owner, issue.Obligation, issue.Expected, issue.Observed)
-		}
+	cut := limit - len(assignmentTruncation)
+	for cut > 0 && !utf8.RuneStart(text[cut]) {
+		cut--
 	}
-	b.WriteString("Judge relevant follow-up from the actual changes. Earlier passing tests and an unchanged summary cannot approve a different commit.\n")
-	return b.String()
+	return text[:cut] + assignmentTruncation
+}
+
+// Only the prompt projection is bounded; native result/check/review values are
+// kept in full. The fixed model context is supplied separately without clipping.
+type assignmentPromptProjection struct {
+	text    strings.Builder
+	clipped bool
+}
+
+func (p *assignmentPromptProjection) Write(data []byte) (int, error) {
+	n := len(data)
+	if p.clipped {
+		return n, nil
+	}
+	room := (32 << 10) - len(assignmentTruncation) - p.text.Len()
+	if n > room {
+		for room > 0 && !utf8.RuneStart(data[room]) {
+			room--
+		}
+		p.text.Write(data[:room])
+		p.text.WriteString(assignmentTruncation)
+		p.clipped = true
+	} else {
+		p.text.Write(data)
+	}
+	return n, nil
 }

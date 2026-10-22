@@ -111,6 +111,8 @@ type realizationAgents struct {
 	opened                                                      map[string]*realizationAgent
 	gap, returnOnce, closeFailure, implementationGap, verifyGap bool
 	verifications                                               int
+	oversizedOutput                                             bool
+	assessmentPromptBytes                                       int
 }
 type realizationAgent struct {
 	owner   *realizationAgents
@@ -147,12 +149,16 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 	}
 	copy := s.owner.copies.copies[run.WorkspaceID(s.spec.Workspace)]
 	if s.mode == "assess" {
+		s.owner.assessmentPromptBytes = len(prompt)
 		if s.owner.gap {
 			return run.TurnResult{Completed: true, Final: "A material public decision is unresolved."}, call(run.ModelProblemTool, run.ReviewIssue{Owner: "lending", Obligation: "lending/borrow", Expected: "The model settles or delegates the public boundary.", Observed: "Concrete incompatible outcomes are left materially open."})
 		}
 		return run.TurnResult{Completed: true, Final: "No model blocker identified."}, call(run.AcceptModelTool, map[string]string{"commit": copy.start, "reason": "Inspected the fixed model and delegated freedom."})
 	}
 	if s.mode == "verify" {
+		if s.owner.oversizedOutput && (len(prompt) > s.owner.assessmentPromptBytes+(40<<10) || !strings.Contains(prompt, "[truncated; full observation retained by Host]")) {
+			s.owner.t.Fatal("oversized native output was not bounded explicitly in the Verify prompt")
+		}
 		s.owner.verifications++
 		if s.owner.verifyGap {
 			return run.TurnResult{Completed: true, Final: "A material intent contradiction prevents acceptance."}, call(run.ModelProblemTool, run.ReviewIssue{Owner: ".", Obligation: "library/callable-interface", Expected: "Consistent public behavior.", Observed: "Concrete incompatible fixed-model statements."})
@@ -193,7 +199,11 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 		s.owner.t.Fatal("legacy enforcement or receipt mandate leaked into an assignment brief")
 	}
 	exit := 0
-	return run.TurnResult{Completed: true, Final: "Completed own work and relevant integration.", Commands: []run.CommandObservation{{Command: "go test ./...", Status: "exited", ExitCode: &exit, Output: "controlled ordinary observation"}}}, nil
+	output := "controlled ordinary observation"
+	if s.owner.oversizedOutput {
+		output = strings.Repeat("large native test output\n", 1<<16)
+	}
+	return run.TurnResult{Completed: true, Final: "Completed own work and relevant integration.", Commands: []run.CommandObservation{{Command: "go test ./...", Status: "exited", ExitCode: &exit, Output: output}}}, nil
 }
 func (s *realizationAgent) Close(context.Context) (run.TurnResult, error) {
 	s.closed = true
@@ -248,6 +258,20 @@ func TestAssignmentRealizationSeparatesAssessmentWorkAndVerify(t *testing.T) {
 	*records[0].Observations[0].Commands[0].ExitCode = 99
 	if *result.Work.Flow.Results()[0].Observations[0].Commands[0].ExitCode != 0 {
 		t.Fatal("caller changed a retained native result")
+	}
+}
+
+func TestAssignmentRealizationBoundsVerifyProjectionAndRetainsFullNativeOutput(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	req, agents := realizationRequest(t)
+	agents.oversizedOutput = true
+	result, err := apply.RealizeAssignments(ctx, req)
+	if err != nil || result.AcceptedCommit == "" {
+		t.Fatalf("bounded review: %v", err)
+	}
+	if len(result.Work.Flow.Results()[0].Observations[0].Commands[0].Output) < 1<<20 {
+		t.Fatal("prompt projection clipped the retained native result")
 	}
 }
 
