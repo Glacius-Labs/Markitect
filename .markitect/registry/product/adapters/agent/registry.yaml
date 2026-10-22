@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/codexappserver/agents_tools_runtime_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: "Checks the pinned CLI's effective App Server config and model-visible tools through a network-none local HTTP recorder, including native-delegation counterexamples and preserved Markitect delegation and ordinary tools, without credentials or inference."
   - path: "internal/adapters/codexappserver/agents_lazy_thread_test.go"
     form: test
     realizes: [product/ports-and-adapters]
@@ -7,7 +11,7 @@ artifacts:
   - path: "internal/adapters/codexappserver/agents_subagents_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: "Replays announced native subagent lifecycle events without providers and proves they neither abort nor complete or contaminate their Manager's own result, while unrelated notifications remain refused."
+    why: "Checks native-delegation launch guards in both credential modes and retains defensive correlation of announced native lifecycle events without contaminating the Manager's result or admitting unrelated notifications."
   - path: "internal/adapters/claudecode/README.md"
     form: doc
     realizes: [product/ports-and-adapters]
