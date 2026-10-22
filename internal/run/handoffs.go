@@ -31,6 +31,8 @@ type assignmentMember struct {
 	results      []AssignmentResult
 	observedFrom int
 	starting     bool
+	assigned     bool
+	base         string
 	handoff      AssignmentHandoff
 	inspected    string
 	returned     bool
@@ -119,6 +121,12 @@ func (f *AssignmentHandoffs) consult(ctx context.Context, path string, work func
 	m := f.team[path]
 	if m == nil {
 		return fmt.Errorf("Manager %q has no assignment", path)
+	}
+	f.mu.Lock()
+	assigned := m.assigned
+	f.mu.Unlock()
+	if !assigned {
+		return fmt.Errorf("child %q has not received its first task", path)
 	}
 	if m.held(ctx) {
 		return work(ctx)
@@ -310,6 +318,9 @@ func (f *AssignmentHandoffs) openReserved(ctx context.Context, parent, path stri
 	if err == nil {
 		m.agent = a
 		m.partial = nil
+		if m.base == "" {
+			m.base = a.Workspace().StartingCommit()
+		}
 	} else if a != nil {
 		m.partial = a
 	}
@@ -334,6 +345,9 @@ func (f *AssignmentHandoffs) Message(ctx context.Context, path, message string, 
 		return TurnResult{}, err
 	}
 	defer m.release(ctx)
+	f.mu.Lock()
+	m.assigned = true
+	f.mu.Unlock()
 	result, err := a.Message(ctx, message, timeout)
 	f.mu.Lock()
 	m.observed = append(m.observed, cloneTurnResult(result))
@@ -448,6 +462,9 @@ func (f *AssignmentHandoffs) Submit(ctx context.Context, path string) (Assignmen
 		return AssignmentHandoff{}, err
 	}
 	f.mu.Lock()
+	if m.base != "" {
+		handoff.StartingCommit = m.base
+	}
 	for _, child := range m.manager.Children {
 		if !f.childIntegrated(m, child) {
 			f.mu.Unlock()
@@ -465,6 +482,33 @@ func (f *AssignmentHandoffs) Submit(ctx context.Context, path string) (Assignmen
 	m.returned = false
 	f.mu.Unlock()
 	return handoff, nil
+}
+
+// deliver advances the same idle child copy before its first or later task.
+// A new delivered base invalidates its pending acceptance, while old results
+// and their immutable bases remain in Results and in Git history.
+func (f *AssignmentHandoffs) deliver(ctx context.Context, parent, child, commit string) error {
+	updates, ok := f.workspaces.(AssignmentUpdates)
+	if !ok {
+		return errors.New("assignment workspaces cannot update a retained child")
+	}
+	f.mu.Lock()
+	p, c := f.team[parent], f.team[child]
+	if p == nil || c == nil || c.manager.Parent != parent || p.agent == nil || c.agent == nil {
+		f.mu.Unlock()
+		return fmt.Errorf("no running direct child %q for %q", child, parent)
+	}
+	source, target, previous := p.agent.Workspace(), c.agent.Workspace(), c.base
+	c.returned, c.inspected = true, ""
+	delete(p.accepted, child)
+	f.mu.Unlock()
+	err := updates.UpdateAssignment(ctx, target, source, commit, previous)
+	if err == nil || errors.Is(err, ErrAssignmentUpdateConflict) {
+		f.mu.Lock()
+		c.base = commit
+		f.mu.Unlock()
+	}
+	return err
 }
 
 // Caller holds f.mu.

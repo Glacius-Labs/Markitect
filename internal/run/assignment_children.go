@@ -2,9 +2,7 @@ package run
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"time"
 )
 
 type childCompletion struct {
@@ -12,31 +10,17 @@ type childCompletion struct {
 	err  error
 }
 
-// children prepares fixed foundations under the parent's queue, then starts
-// every child independently. Fixed results rejoin in observed completion order;
+// children fixes the parent's Go stand and delivers tasks to its already warm
+// children concurrently. Fixed results rejoin in observed completion order;
 // a returned correction joins that same queue while siblings keep working.
 func (s *assignmentScheduler) children(ctx context.Context, parent string, tasks []assignmentAction) error {
-	requests := make(map[string]AssignmentRequest, len(tasks))
+	var stand string
 	err := s.flow.serial(ctx, parent, func(ctx context.Context) error {
-		for _, task := range tasks {
-			request, err := s.request(ctx, task.child)
-			if err != nil {
-				return err
-			}
-			request, err = s.flow.prepareChild(ctx, parent, task.child, request)
-			if err != nil {
-				return err
-			}
-			requests[task.child] = request
-		}
-		return nil
+		var err error
+		stand, err = s.flow.Workspace(parent).Commit(ctx, "Parent Go for concurrent child tasks")
+		return err
 	})
 	if err != nil {
-		s.flow.mu.Lock()
-		for path := range requests {
-			s.flow.team[path].starting = false
-		}
-		s.flow.mu.Unlock()
 		return err
 	}
 	childCtx, cancel := context.WithCancel(ctx)
@@ -45,45 +29,17 @@ func (s *assignmentScheduler) children(ctx context.Context, parent string, tasks
 	pending := 0
 	launch := func(path string, work func() error) {
 		pending++
-		go func() {
-			err := work()
-			// Close may already have returned an uncertain outcome while an
-			// uncooperative Open/Message was still running. A late start must
-			// also receive a stop attempt, with its copy retained in Flow.
-			s.mu.Lock()
-			closed := s.closed
-			s.mu.Unlock()
-			if closed {
-				err = errors.Join(err, s.closePaths([]string{path}))
-			}
-			completed <- childCompletion{path, err}
-		}()
+		go s.worker(path, work, completed)
 	}
 	for _, task := range tasks {
 		launch(task.child, func() error {
-			if err := s.flow.openReserved(childCtx, parent, task.child, requests[task.child]); err != nil {
-				return err
-			}
-			_, err := s.work(childCtx, task.child, task.task)
+			_, err := s.work(childCtx, task.child, task.task, stand)
 			return err
 		})
 	}
 	abort := func(cause error) error {
 		cancel()
-		joinCtx, stop := context.WithTimeout(context.Background(), min(s.options.Timeout, time.Minute))
-		defer stop()
-		for pending > 0 {
-			select {
-			case result := <-completed:
-				pending--
-				if result.err != nil {
-					cause = errors.Join(cause, fmt.Errorf("child %q: %w", result.path, result.err))
-				}
-			case <-joinCtx.Done():
-				return errors.Join(cause, fmt.Errorf("%d child outcomes remain uncertain after cancellation: %w", pending, joinCtx.Err()))
-			}
-		}
-		return cause
+		return s.joinCancelled(completed, pending, cause)
 	}
 	for unresolved := len(tasks); unresolved > 0; {
 		select {

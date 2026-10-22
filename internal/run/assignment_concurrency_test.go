@@ -36,11 +36,15 @@ type concurrentAgents struct {
 	consultBusy       bool
 	consultRefused    atomic.Bool
 	returnChild       string
+	laterChild        string
+	laterIssued       atomic.Bool
+	integrated        map[string]bool
 	returned          atomic.Bool
 	correctionEntered chan string
 	correctionGate    <-chan struct{}
 	parentBusy        atomic.Int32
 	overlapped        atomic.Bool
+	conflictSeen      atomic.Bool
 }
 
 func concurrentFixture() ([]run.Manager, *concurrentAgents) {
@@ -50,7 +54,7 @@ func concurrentFixture() ([]run.Manager, *concurrentAgents) {
 		{Path: "library/first", Parent: "library", ExecuteProfile: "exec"},
 		{Path: "library/second", Parent: "library", ExecuteProfile: "exec"},
 	}
-	a := &concurrentAgents{team: team, opened: map[string]*concurrentSession{}, openEntered: make(chan string, 16), workEntered: make(chan string, 16), reviewEntered: make(chan string, 16), questionEntered: make(chan string, 16), questionCalled: make(chan struct{}, 1), questionAnswered: make(chan struct{}, 1), cancelled: make(chan string, 16), stopped: make(chan string, 16), correctionEntered: make(chan string, 8), openGates: map[string]<-chan struct{}{}, workGates: map[string]<-chan struct{}{}, reviewGates: map[string]<-chan struct{}{}}
+	a := &concurrentAgents{team: team, opened: map[string]*concurrentSession{}, integrated: map[string]bool{}, openEntered: make(chan string, 16), workEntered: make(chan string, 16), reviewEntered: make(chan string, 16), questionEntered: make(chan string, 16), questionCalled: make(chan struct{}, 1), questionAnswered: make(chan struct{}, 1), cancelled: make(chan string, 16), stopped: make(chan string, 16), correctionEntered: make(chan string, 8), openGates: map[string]<-chan struct{}{}, workGates: map[string]<-chan struct{}{}, reviewGates: map[string]<-chan struct{}{}}
 	return team, a
 }
 
@@ -114,6 +118,9 @@ func (s *concurrentSession) Message(ctx context.Context, prompt string, _ time.D
 		return nil
 	}
 	result := run.TurnResult{Completed: true, Final: "Result of " + path, Commands: []run.CommandObservation{{Command: "test " + path, Status: "passed"}}}
+	if strings.Contains(prompt, "Resolve the normal Git merge conflicts") {
+		a.conflictSeen.Store(true)
+	}
 	switch {
 	case strings.HasPrefix(prompt, "Your responsibility"):
 		a.workEntered <- path
@@ -177,6 +184,14 @@ func (s *concurrentSession) Message(ctx context.Context, prompt string, _ time.D
 		if err := waitGate(ctx, a.correctionGate); err != nil {
 			return result, err
 		}
+	case strings.HasPrefix(prompt, "All direct-child results are integrated") && path == "library" && a.laterChild != "" && a.laterIssued.CompareAndSwap(false, true):
+		a.mu.Lock()
+		integrated := a.integrated["library/first"] && a.integrated["library/second"]
+		a.mu.Unlock()
+		if !integrated {
+			return result, errors.New("later task preceded sibling acceptance/integration")
+		}
+		return result, call(run.ReturnChildTool, map[string]string{"child": a.laterChild, "correction": "Repair borrowing against integrated sibling results"})
 	}
 	return result, nil
 }
@@ -187,17 +202,18 @@ func (s *concurrentSession) Close(context.Context) (run.TurnResult, error) {
 }
 
 type concurrentIntegration struct {
-	agents  *concurrentAgents
-	entered chan string
-	gates   map[string]<-chan struct{}
-	mu      sync.Mutex
-	order   []string
+	agents   *concurrentAgents
+	entered  chan string
+	gates    map[string]<-chan struct{}
+	mu       sync.Mutex
+	order    []string
+	previous []string
 }
 
 func (g *concurrentIntegration) Changes(_ context.Context, _ run.AssignmentWorkspace, h run.AssignmentHandoff) (string, error) {
 	return "actual diff " + h.ResultCommit, nil
 }
-func (g *concurrentIntegration) Integrate(ctx context.Context, parent, child run.AssignmentWorkspace, _ run.AssignmentHandoff, _ string) (string, error) {
+func (g *concurrentIntegration) Integrate(ctx context.Context, parent, child run.AssignmentWorkspace, _ run.AssignmentHandoff, previous string) (string, error) {
 	if parent.ID() == "fan-1" {
 		defer g.agents.enterParent()()
 	}
@@ -216,7 +232,11 @@ func (g *concurrentIntegration) Integrate(ctx context.Context, parent, child run
 	}
 	g.mu.Lock()
 	g.order = append(g.order, path)
+	g.previous = append(g.previous, previous)
 	g.mu.Unlock()
+	g.agents.mu.Lock()
+	g.agents.integrated[path] = true
+	g.agents.mu.Unlock()
 	return strings.Repeat("f", 40), nil
 }
 
@@ -383,7 +403,46 @@ func TestAssignmentChildrenReturnedCorrectionRejoinsAfterReadySibling(t *testing
 	}
 }
 
-func TestAssignmentChildrenRecursiveBranchesCreateAndRetainHomesConcurrently(t *testing.T) {
+func TestAssignmentLaterSiblingDependentTaskRefreshesSameChildAfterIntegration(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	defer cancel()
+	_, a := concurrentFixture()
+	a.laterChild = "library/first"
+	correct := make(chan struct{})
+	close(correct)
+	a.correctionGate = correct
+	g := &concurrentIntegration{agents: a, entered: make(chan string, 8), gates: map[string]<-chan struct{}{}}
+	outcome := <-startConcurrentTree(t, ctx, a, g, time.Second)
+	if outcome.err != nil || !a.laterIssued.Load() || len(a.opened) != 4 {
+		t.Fatalf("later task replaced or failed the existing child: %v", outcome.err)
+	}
+	var first []run.AssignmentResult
+	secondCount := 0
+	for _, result := range outcome.flow.Results() {
+		if result.Manager == "library/first" {
+			first = append(first, result)
+		}
+		if result.Manager == "library/second" {
+			secondCount++
+		}
+	}
+	if len(first) != 2 || secondCount != 1 || first[0].Handoff.StartingCommit == first[1].Handoff.StartingCommit {
+		t.Fatalf("later task lost a new delivered base or reran sibling: %+v", first)
+	}
+	if first[1].Handoff.StartingCommit == outcome.flow.Workspace("library/first").StartingCommit() {
+		t.Fatal("later result still uses original warm-copy start")
+	}
+	for _, previous := range g.previous {
+		if previous != "" {
+			t.Fatalf("old accepted child result was reused as a refreshed task diff base: %s", previous)
+		}
+	}
+	if len(g.order) != 4 || g.order[2] != "library/first" {
+		t.Fatalf("later task preceded sibling integration: %v", g.order)
+	}
+}
+
+func TestAssignmentAllManagersStartDormantBeforeAnyTask(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()
 	_, a := concurrentFixture()
@@ -394,26 +453,60 @@ func TestAssignmentChildrenRecursiveBranchesCreateAndRetainHomesConcurrently(t *
 		{Path: "left/leaf", Parent: "left", ExecuteProfile: "exec"},
 		{Path: "right/leaf", Parent: "right", ExecuteProfile: "exec"},
 	}
-	entered, release := make(chan string, 2), make(chan struct{})
-	g := &concurrentIntegration{agents: a, entered: make(chan string, 8), gates: map[string]<-chan struct{}{}}
-	tree, err := run.OpenAssignmentTree(ctx, a.team, &assignmentWorkspacesFake{}, a, g, run.AssignmentSchedule{IDPrefix: "fan", Task: "Implement", MaxMessages: 40, Timeout: time.Second, TranscriptDir: t.TempDir(), CreateHome: func(ctx context.Context, home string) error {
-		if home == "fan-3-home" || home == "fan-4-home" {
-			entered <- home
-			return waitGate(ctx, release)
-		}
-		return nil
-	}})
-	if err != nil {
-		t.Fatal(err)
+	open, rootGo, managersGo, leavesGo := make(chan struct{}), make(chan struct{}), make(chan struct{}), make(chan struct{})
+	for _, manager := range a.team {
+		a.openGates[manager.Path] = open
 	}
+	a.workGates["."] = rootGo
+	a.workGates["left"], a.workGates["right"] = managersGo, managersGo
+	a.workGates["left/leaf"], a.workGates["right/leaf"] = leavesGo, leavesGo
+	g := &concurrentIntegration{agents: a, entered: make(chan string, 8), gates: map[string]<-chan struct{}{}}
+	type opened struct {
+		tree *run.AssignmentTree
+		err  error
+	}
+	ready := make(chan opened, 1)
+	logs := t.TempDir()
+	go func() {
+		tree, err := run.OpenAssignmentTree(ctx, a.team, &assignmentWorkspacesFake{}, a, g, run.AssignmentSchedule{IDPrefix: "fan", Task: "Implement", MaxMessages: 40, Timeout: time.Second, TranscriptDir: logs, CreateHome: func(context.Context, string) error { return nil }})
+		ready <- opened{tree, err}
+	}()
+	started := map[string]bool{}
+	for len(started) < 5 {
+		select {
+		case path := <-a.openEntered:
+			started[path] = true
+		case <-ctx.Done():
+			t.Fatalf("whole-tree starts did not overlap: %v", started)
+		}
+	}
+	if len(a.workEntered) != 0 {
+		t.Fatal("conversation started while opening dormant containers")
+	}
+	close(open)
+	op := <-ready
+	if op.err != nil {
+		t.Fatal(op.err)
+	}
+	tree := op.tree
 	defer tree.Close()
 	done := make(chan error, 1)
 	go func() { _, err := tree.Implement(ctx); done <- err }()
-	receivePair(t, entered, "fan-3-home", "fan-4-home")
+	receivePath(t, a.workEntered, ".")
+	if len(a.workEntered) != 0 {
+		t.Fatal("child conversation began before parent Go")
+	}
+	close(rootGo)
+	receivePair(t, a.workEntered, "left", "right")
+	if len(a.workEntered) != 0 {
+		t.Fatal("grandchild conversation began before its parent Go")
+	}
+	close(managersGo)
+	receivePair(t, a.workEntered, "left/leaf", "right/leaf")
 	if len(tree.Homes()) != 5 {
 		t.Fatalf("concurrent home bookkeeping lost a branch: %v", tree.Homes())
 	}
-	close(release)
+	close(leavesGo)
 	if err := <-done; err != nil {
 		t.Fatal(err)
 	}
@@ -463,6 +556,9 @@ func TestAssignmentChildFailureCancelsWorkAndRetainsEveryCopy(t *testing.T) {
 			if outcome.err == nil || outcome.result.ResultCommit != "" {
 				t.Fatalf("failure accepted: %+v", outcome)
 			}
+			if (phase == "open" || phase == "late open") && len(a.workEntered) != 0 {
+				t.Fatal("Implement conversation began before startup joined successfully")
+			}
 			for _, path := range []string{"library/first", "library/second"} {
 				if outcome.flow.Workspace(path) == nil {
 					t.Fatalf("lost %s copy", path)
@@ -481,6 +577,46 @@ func TestAssignmentChildFailureCancelsWorkAndRetainsEveryCopy(t *testing.T) {
 				if len(a.stopped) != opened {
 					t.Fatalf("stopped %d of %d opened Agents", len(a.stopped), opened)
 				}
+			}
+		})
+	}
+}
+
+type updateControlledCopies struct {
+	assignmentWorkspacesFake
+	conflict bool
+}
+
+func (w *updateControlledCopies) UpdateAssignment(ctx context.Context, target, source run.AssignmentWorkspace, commit, previous string) error {
+	if target.ID() == "fan-2" {
+		if !w.conflict {
+			return errors.New("controlled parent refresh failure")
+		}
+		if err := w.assignmentWorkspacesFake.UpdateAssignment(ctx, target, source, commit, previous); err != nil {
+			return err
+		}
+		return run.ErrAssignmentUpdateConflict
+	}
+	return w.assignmentWorkspacesFake.UpdateAssignment(ctx, target, source, commit, previous)
+}
+
+func TestAssignmentUpdateFailureStopsTaskWhileRealConflictIsAssignedToChild(t *testing.T) {
+	for _, conflict := range []bool{false, true} {
+		t.Run(fmt.Sprint(conflict), func(t *testing.T) {
+			ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+			defer cancel()
+			_, a := concurrentFixture()
+			g := &concurrentIntegration{agents: a, entered: make(chan string, 8), gates: map[string]<-chan struct{}{}}
+			result, flow, err := run.RunAssignmentTree(ctx, a.team, &updateControlledCopies{conflict: conflict}, a, g, run.AssignmentSchedule{IDPrefix: "fan", Task: "Implement", MaxMessages: 40, Timeout: time.Second, TranscriptDir: t.TempDir()})
+			if conflict {
+				if err != nil || result.ResultCommit == "" || !a.conflictSeen.Load() {
+					t.Fatalf("real merge conflict was not assigned to owning child: %v", err)
+				}
+			} else if err == nil || result.ResultCommit != "" || len(flow.Observations("library/first")) != 0 {
+				t.Fatalf("technical refresh failure still began child work: %v", err)
+			}
+			if flow.Workspace("library/first") == nil || len(a.stopped) != len(a.opened) {
+				t.Fatal("refresh outcome lost copies or cleanup")
 			}
 		})
 	}

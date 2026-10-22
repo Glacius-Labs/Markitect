@@ -168,6 +168,9 @@ func openAssignmentTree(ctx context.Context, team []Manager, workspaces Assignme
 	if _, bounded := ctx.Deadline(); !bounded || !assignmentName.MatchString(options.IDPrefix) || len(options.IDPrefix) > 75 || options.MaxMessages < 1 || options.Timeout <= 0 || strings.TrimSpace(options.Task) == "" || !filepath.IsAbs(options.TranscriptDir) {
 		return nil, errors.New("assignment tree needs an identity, task, absolute transcript directory and finite message and time bounds")
 	}
+	if _, ok := workspaces.(AssignmentUpdates); !ok {
+		return nil, errors.New("assignment tree needs retained workspace updates")
+	}
 	flow, err := NewAssignmentHandoffs(team, workspaces, agents, integration)
 	if err != nil {
 		return nil, err
@@ -187,13 +190,7 @@ func openAssignmentTree(ctx context.Context, team []Manager, workspaces Assignme
 		s.ids[manager.Path] = WorkspaceID(options.IDPrefix + "-" + strconv.Itoa(i))
 	}
 	flow.parentAnswer = s.parentAnswer
-	root, err := s.request(ctx, ".")
-	if err != nil {
-		return tree, err
-	}
-	root.Tree = options.Tree
-	root.Prepared = options.PreparedRoot
-	if err = flow.StartRoot(ctx, root); err != nil {
+	if err = s.openAll(ctx, team); err != nil {
 		return tree, err
 	}
 	return tree, nil
@@ -204,7 +201,7 @@ func (t *AssignmentTree) Implement(ctx context.Context) (AssignmentHandoff, erro
 		return AssignmentHandoff{}, errors.New("assignment tree cannot start this work")
 	}
 	t.begun = true
-	result, err := t.scheduler.work(ctx, ".", t.scheduler.options.Task)
+	result, err := t.scheduler.work(ctx, ".", t.scheduler.options.Task, "")
 	t.ready = err == nil
 	return result, err
 }
@@ -307,6 +304,9 @@ func (s *assignmentScheduler) reserveMessage() error {
 	}
 	if s.closed {
 		return errors.New("assignment tree is closing")
+	}
+	if s.problem != nil {
+		return ErrAssignmentModelProblem
 	}
 	s.used++
 	return nil
@@ -423,12 +423,22 @@ func (s *assignmentScheduler) closePaths(paths []string) error {
 	return all
 }
 
-func (s *assignmentScheduler) work(ctx context.Context, path, task string) (AssignmentHandoff, error) {
+func (s *assignmentScheduler) work(ctx context.Context, path, task, stand string) (AssignmentHandoff, error) {
 	manager := s.team[path]
 	prompt := fmt.Sprintf("Your responsibility is %s. %s\nTask from your parent: %s\nRequired direct children: %s. Give each child a concrete task using delegate_child. Work in your own Git copy; the Host will later show each fixed child result for your review.", manager.Role, manager.Brief, task, strings.Join(manager.Children, ", "))
 	var delegations []assignmentAction
 	var result AssignmentHandoff
 	err := s.flow.serial(ctx, path, func(ctx context.Context) error {
+		if stand != "" {
+			updateErr := s.flow.deliver(ctx, manager.Parent, path, stand)
+			if updateErr != nil && !errors.Is(updateErr, ErrAssignmentUpdateConflict) {
+				return updateErr
+			}
+			prompt += "\nParent Git stand delivered for this task: " + stand
+			if updateErr != nil {
+				prompt += "\nResolve the normal Git merge conflicts in your own copy before completing this task: " + updateErr.Error()
+			}
+		}
 		if err := s.message(ctx, path, prompt); err != nil {
 			return err
 		}
@@ -460,14 +470,11 @@ func (s *assignmentScheduler) work(ctx context.Context, path, task string) (Assi
 		return AssignmentHandoff{}, err
 	}
 	err = s.flow.serial(ctx, path, func(ctx context.Context) error {
-		if err := s.message(ctx, path, "All direct-child results are integrated. Check the composition and relevant tests in your Git copy. Summarize your result, observations and open matters for your parent."); err != nil {
+		if err := s.message(ctx, path, "All direct-child results are integrated. Check the composition and relevant tests in your Git copy. If completed sibling work requires a later task, use return_child now for that owning child; its same copy will first receive your integrated stand. Otherwise summarize your result, observations and open matters for your parent."); err != nil {
 			return err
 		}
-		if actions := s.mailboxes[path].take(); len(actions) != 0 {
-			return fmt.Errorf("Manager %q made an unexpected decision after integration", path)
-		}
 		var err error
-		result, err = s.flow.Submit(ctx, path)
+		result, err = s.finishCorrection(ctx, path)
 		return err
 	})
 	return result, err
@@ -529,7 +536,23 @@ func (s *assignmentScheduler) reviewResult(ctx context.Context, parent, child st
 }
 
 func (s *assignmentScheduler) correct(ctx context.Context, parent, child, correction string) error {
+	var stand string
+	if err := s.flow.serial(ctx, parent, func(ctx context.Context) error {
+		var err error
+		stand, err = s.flow.Workspace(parent).Commit(ctx, "Parent integrated stand for later child task")
+		return err
+	}); err != nil {
+		return err
+	}
 	return s.flow.serial(ctx, child, func(ctx context.Context) error {
+		updateErr := s.flow.deliver(ctx, parent, child, stand)
+		if updateErr != nil && !errors.Is(updateErr, ErrAssignmentUpdateConflict) {
+			return updateErr
+		}
+		correction += "\nParent Git stand delivered for this task: " + stand
+		if updateErr != nil {
+			correction += "\nResolve the normal Git merge conflicts in your own copy before completing this task: " + updateErr.Error()
+		}
 		return s.correctLocked(ctx, parent, child, correction)
 	})
 }

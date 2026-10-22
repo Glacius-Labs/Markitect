@@ -32,9 +32,9 @@ func (s *finalCorrectionSession) Message(ctx context.Context, prompt string, tim
 	switch {
 	case strings.HasPrefix(prompt, "Independent Verify returned"):
 		child, task = "library", "Route final lending defect"
-	case prompt == "Route final lending defect":
+	case strings.HasPrefix(prompt, "Route final lending defect"):
 		child, task = "library/lending", "Repair final lending defect"
-	case prompt == "Repair final lending defect":
+	case strings.HasPrefix(prompt, "Repair final lending defect"):
 		if s.owner.cycleDuringCorrection {
 			answer := s.handler(ctx, run.AskParentTool, json.RawMessage(`{"question":"Need final boundary contract"}`))
 			if answer.Refused {
@@ -102,7 +102,7 @@ func TestOpenAssignmentTreeRoutesFinalCorrectionWithoutRestartingUnaffectedAgent
 	if tree.Flow.Workspace("library/storage") != storageCopy || len(tree.Flow.Observations("library/storage")) != len(storageBefore) {
 		t.Fatal("unaffected Storage was rerun or replaced")
 	}
-	if agents.opened["trial-2"].correction != "Repair final lending defect" || len(git.accepted) != 5 {
+	if !strings.HasPrefix(agents.opened["trial-2"].correction, "Repair final lending defect") || len(git.accepted) != 5 {
 		t.Fatalf("correction was not reviewed/integrated upward: %v", git.accepted)
 	}
 	agents.cycleDuringCorrection = true

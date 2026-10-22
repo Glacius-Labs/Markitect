@@ -11,6 +11,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -97,6 +98,23 @@ func (w *realizationCopies) ReadAssignmentCommit(_ context.Context, r run.Assign
 	}
 	return tree, nil
 }
+func (w *realizationCopies) UpdateAssignment(_ context.Context, target, _ run.AssignmentWorkspace, commit, previous string) error {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	updates := map[string]*string{}
+	for _, delta := range snapshot.Compare(w.trees[previous], w.trees[commit]) {
+		entry, ok := delta.After()
+		if ok {
+			value := string(entry.Bytes())
+			updates[delta.Path().String()] = &value
+		} else {
+			updates[delta.Path().String()] = nil
+		}
+	}
+	c := target.(*realizationCopy)
+	c.live = change(w.t, c.live, updates)
+	return nil
+}
 func (w *realizationCopies) Changes(_ context.Context, _ run.AssignmentWorkspace, h run.AssignmentHandoff) (string, error) {
 	return "actual controlled difference for result " + h.ResultCommit, nil
 }
@@ -133,11 +151,12 @@ type realizationAgents struct {
 	assessmentPromptBytes                                       int
 }
 type realizationAgent struct {
-	owner   *realizationAgents
-	spec    run.AssignmentSpec
-	handler run.ToolHandler
-	closed  bool
-	mode    string
+	owner    *realizationAgents
+	spec     run.AssignmentSpec
+	handler  run.ToolHandler
+	closed   bool
+	mode     string
+	messages int
 }
 
 func (a *realizationAgents) OpenAssignment(_ context.Context, spec run.AssignmentSpec, h run.ToolHandler) (run.AssignmentSession, error) {
@@ -159,6 +178,7 @@ func (a *realizationAgents) OpenAssignment(_ context.Context, spec run.Assignmen
 	return s, nil
 }
 func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Duration) (run.TurnResult, error) {
+	s.messages++
 	call := func(name string, value any) error {
 		body, _ := json.Marshal(value)
 		answer := s.handler(ctx, name, body)
@@ -214,7 +234,7 @@ func (s *realizationAgent) Message(ctx context.Context, prompt string, _ time.Du
 		if err := call(run.ReturnChildTool, map[string]string{"child": "lending", "correction": "Repair the controlled borrowing boundary defect"}); err != nil {
 			return run.TurnResult{}, err
 		}
-	} else if prompt == "Repair the controlled borrowing boundary defect" {
+	} else if strings.HasPrefix(prompt, "Repair the controlled borrowing boundary defect") {
 		copy.live = change(s.owner.t, copy.live, map[string]*string{"realization/lending/borrow.go": text("package lending // corrected required borrowing boundary\n")})
 	}
 	if strings.Contains(prompt, "everything else in /work is read-only") || strings.Contains(prompt, "get the Orchestrator's receipt") {
@@ -311,8 +331,28 @@ func TestAssignmentRealizationStopsNewModelProblemsDuringWorkOrVerify(t *testing
 			if result.ModelProblem == nil || result.AcceptedCommit != "" || result.Work == nil {
 				t.Fatalf("model problem was lost: %+v %v", result, err)
 			}
-			if where == "implement" && (!errors.Is(err, run.ErrAssignmentModelProblem) || len(result.Checks) != 0 || len(agents.opened) != 2) {
+			if where == "implement" && (!errors.Is(err, run.ErrAssignmentModelProblem) || len(result.Checks) != 0) {
 				t.Fatal("confirmed intent problem did not stop implementation immediately")
+			}
+			if where == "implement" {
+				topology, topologyErr := organization.BuildTopology(req.Prepared.Structural().Model().Checked())
+				if topologyErr != nil || len(agents.opened) != len(topology.Managers())+1 || len(result.Reviews) != 0 {
+					t.Fatalf("whole dormant tree/assessment startup or Verify stop incorrect: %d Agents, %v", len(agents.opened), topologyErr)
+				}
+				for id, agent := range agents.opened {
+					if agent.mode == "implement" && !strings.HasSuffix(id, "-work-0") && agent.messages != 0 {
+						t.Fatalf("dormant child %s began work after Root's model problem", id)
+					}
+					if !agent.closed || agents.copies.copies[run.WorkspaceID(agent.spec.Workspace)] == nil {
+						t.Fatalf("model problem lost cleanup or retained copy for %s", id)
+					}
+					if (agent.mode == "assess" || strings.HasSuffix(id, "-work-0")) && agent.messages != 1 {
+						t.Fatalf("assessment/Root message count changed: %s=%d", id, agent.messages)
+					}
+				}
+				if len(result.Work.Flow.Observations(".")) != 1 || !strings.Contains(result.Work.Flow.Observations(".")[0].Final, "model problem") {
+					t.Fatal("Root model-problem observation was discarded")
+				}
 			}
 			if where == "verify" && (err != nil || len(result.Reviews) != 1) {
 				t.Fatal("final Verify model problem was not retained separately")

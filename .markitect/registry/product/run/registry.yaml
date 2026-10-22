@@ -1,9 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/assignment_start.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Prepares the entire Manager tree and opens all independent dormant containers concurrently before delivering any Implement task."
   - path: "internal/run/assignment_children.go"
     form: code
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
-    why: "Starts required children concurrently and serially reviews completed Git handoffs in arrival order, retaining cancelled or uncertain work."
+    why: "Delivers direct-child tasks concurrently and serially reviews completed Git handoffs in arrival order, retaining cancelled or uncertain work."
   - path: "internal/run/assignment_concurrency_test.go"
     form: test
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]

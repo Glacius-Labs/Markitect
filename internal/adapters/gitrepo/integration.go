@@ -37,10 +37,13 @@ func (w *Workspaces) checkedHandoff(ctx context.Context, copy run.AssignmentWork
 	if err != nil {
 		return nil, "", err
 	}
-	if handoff.StartingCommit != a.start || !commitIDPattern.MatchString(handoff.ResultCommit) {
+	if !commitIDPattern.MatchString(handoff.StartingCommit) || !commitIDPattern.MatchString(handoff.ResultCommit) {
 		return nil, "", errors.New("child handoff does not name this workspace's fixed starting and result commits")
 	}
-	base := a.start
+	if _, err := a.git(ctx, "merge-base", "--is-ancestor", a.start, handoff.StartingCommit); err != nil {
+		return nil, "", fmt.Errorf("delivered parent base is outside this copy's lineage: %w", err)
+	}
+	base := handoff.StartingCommit
 	if previous != "" {
 		if !commitIDPattern.MatchString(previous) {
 			return nil, "", errors.New("previous child result is not a full commit identity")
@@ -79,7 +82,7 @@ func (w *Workspaces) Changes(ctx context.Context, copy run.AssignmentWorkspace, 
 	spec := w.spec(a.volume, true)
 	var output reviewOutput
 	output.limit = 8 << 20
-	err = w.runtime.RunHelper(ctx, spec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", a.start, handoff.ResultCommit, "--"), nil, &output)
+	err = w.runtime.RunHelper(ctx, spec, assignmentGitArgs("diff", "--binary", "--no-ext-diff", "--no-textconv", handoff.StartingCommit, handoff.ResultCommit, "--"), nil, &output)
 	w.mu.Unlock()
 	if output.exceeded {
 		return "", fmt.Errorf("child Git difference exceeds the parent review delivery limit")
@@ -114,10 +117,10 @@ func (b *reviewOutput) Write(p []byte) (int, error) {
 }
 
 // Integrate transfers the child's fixed Git delta into the parent's own copy
-// with Git's three-way patch handling. The two assignment repositories have
-// independent root commits, so a direct merge is not available. A successful
-// integration is secured as a named parent commit. previous is the last child
-// result integrated by this parent, or empty on the first handoff.
+// with Git's three-way patch handling and secures a named parent commit. A new
+// delivered task uses its fixed parent base, including already integrated
+// sibling work. previous applies only to a continued result on the same base;
+// the Host clears it when delivering a new parent stand to that child.
 func (w *Workspaces) Integrate(ctx context.Context, parent, child run.AssignmentWorkspace, handoff run.AssignmentHandoff, previous string) (string, error) {
 	p, err := w.assignment(parent)
 	if err != nil {

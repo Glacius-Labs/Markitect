@@ -2,8 +2,10 @@ package run_test
 
 import (
 	"context"
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
@@ -33,6 +35,29 @@ func (f *assignmentWorkspacesFake) ForkAssignment(ctx context.Context, parent ru
 	child := &assignmentCopyFake{id: id, commits: []string{foundation}}
 	f.copies[id] = child
 	return child, nil
+}
+
+func (f *assignmentWorkspacesFake) ForkAssignmentCommit(_ context.Context, _ run.AssignmentWorkspace, commit string, id run.WorkspaceID) (run.AssignmentWorkspace, error) {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	if f.copies[id] != nil {
+		return nil, errors.New("duplicate child copy")
+	}
+	f.forks++
+	child := &assignmentCopyFake{id: id, commits: []string{commit}}
+	f.copies[id] = child
+	return child, nil
+}
+
+func (f *assignmentWorkspacesFake) UpdateAssignment(ctx context.Context, target, _ run.AssignmentWorkspace, commit, _ string) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	c := target.(*assignmentCopyFake)
+	c.commits = append(c.commits, commit)
+	return nil
 }
 
 type assignmentCopyFake struct {
@@ -112,7 +137,7 @@ func (f *assignmentCopyFake) ID() run.WorkspaceID    { return f.id }
 func (f *assignmentCopyFake) Volume() string         { return "volume-" + string(f.id) }
 func (f *assignmentCopyFake) StartingCommit() string { return f.commits[0] }
 func (f *assignmentCopyFake) Commit(context.Context, string) (string, error) {
-	id := strings.Repeat(string('a'+rune(len(f.commits))), 40)
+	id := fmt.Sprintf("%x", sha256.Sum256([]byte(fmt.Sprintf("%s:%d", f.id, len(f.commits)))))[:40]
 	f.commits = append(f.commits, id)
 	return id, nil
 }

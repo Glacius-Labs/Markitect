@@ -64,7 +64,7 @@ func (a *scheduledAgents) OpenAssignment(_ context.Context, spec run.AssignmentS
 	return s, nil
 }
 
-var reviewedResult = regexp.MustCompile(`result ([a-f]{40})`)
+var reviewedResult = regexp.MustCompile(`result ([0-9a-f]{40})`)
 
 func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout time.Duration) (run.TurnResult, error) {
 	s.messages.Add(1)
