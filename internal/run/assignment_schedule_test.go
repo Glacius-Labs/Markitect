@@ -41,6 +41,7 @@ type scheduledSession struct {
 	timeouts        []time.Duration
 	correction      string
 	reviews         []string
+	prompts         []string
 	repeatQuestions bool
 	crossArea       bool
 	cycleConsult    bool
@@ -69,6 +70,7 @@ var reviewedResult = regexp.MustCompile(`result ([0-9a-f]{40})`)
 func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout time.Duration) (run.TurnResult, error) {
 	s.messages.Add(1)
 	s.timeouts = append(s.timeouts, timeout)
+	s.prompts = append(s.prompts, prompt)
 	call := func(name string, args any) error {
 		body, _ := json.Marshal(args)
 		answer := s.handler(ctx, name, body)
@@ -173,6 +175,64 @@ func (s *scheduledSession) Message(ctx context.Context, prompt string, timeout t
 	}
 	exit := 0
 	return run.TurnResult{Final: "Completed " + s.spec.ID, Completed: true, Commands: []run.CommandObservation{{Command: "go test ./...", Status: "passed", ExitCode: &exit}}}, nil
+}
+
+type largeReviewIntegration struct {
+	handoffIntegrationFake
+	diff string
+}
+
+func (g *largeReviewIntegration) Changes(_ context.Context, copy run.AssignmentWorkspace, _ run.AssignmentHandoff) (string, error) {
+	if copy.ID() == "trial-1" {
+		return g.diff, nil
+	}
+	return "small child diff", nil
+}
+
+func TestAssignmentSchedulerDeliversLargeReviewInOneConversationBeforeDecision(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Second)
+	defer cancel()
+	team := []run.Manager{
+		{Path: ".", Children: []string{"library"}, ExecuteProfile: "exec"},
+		{Path: "library", Parent: ".", Children: []string{"library/lending", "library/storage"}, ExecuteProfile: "exec"},
+		{Path: "library/lending", Parent: "library", ExecuteProfile: "exec"},
+		{Path: "library/storage", Parent: "library", ExecuteProfile: "exec"},
+	}
+	git := &largeReviewIntegration{diff: strings.Repeat("a", (256<<10)-1) + "✓" + strings.Repeat("b", 300<<10) + "END"}
+	agents := &scheduledAgents{}
+	result, _, err := run.RunAssignmentTree(ctx, team, &assignmentWorkspacesFake{}, agents, git, run.AssignmentSchedule{IDPrefix: "trial", Task: "Implement", MaxMessages: 25, Timeout: time.Second, TranscriptDir: t.TempDir()})
+	if err != nil || result.ResultCommit == "" || len(git.accepted) != 3 {
+		t.Fatalf("large fixed diff was not reviewed and accepted: %+v %v, accepted=%v", result, err, git.accepted)
+	}
+	var delivered strings.Builder
+	parts, decisions := 0, 0
+	for _, prompt := range agents.opened["trial-0"].prompts {
+		if len(prompt) >= 1<<20 {
+			t.Fatalf("review prompt exceeds provider channel: %d bytes", len(prompt))
+		}
+		if strings.HasPrefix(prompt, "Fixed Git difference from direct child") {
+			parts++
+			start := strings.Index(prompt, ":\n") + 2
+			end := strings.LastIndex(prompt, "\nRead this part.")
+			if start < 2 || end < start {
+				t.Fatalf("malformed intermediate review part: %q", prompt[:min(100, len(prompt))])
+			}
+			delivered.WriteString(prompt[start:end])
+		}
+		if strings.HasPrefix(prompt, "Review your direct child") {
+			decisions++
+			start := strings.Index(prompt, "\nActual Git changes, final part")
+			start = strings.Index(prompt[start:], ":\n") + start + 2
+			end := strings.LastIndex(prompt, "\nInspect conformance")
+			if start < 2 || end < start {
+				t.Fatal("malformed final review part")
+			}
+			delivered.WriteString(prompt[start:end])
+		}
+	}
+	if parts != 2 || decisions != 1 || delivered.String() != git.diff {
+		t.Fatalf("review omitted or duplicated fixed diff: parts=%d decisions=%d bytes=%d/%d", parts, decisions, delivered.Len(), len(git.diff))
+	}
 }
 
 type conflictOnceIntegration struct {
