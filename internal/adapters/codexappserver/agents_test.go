@@ -318,6 +318,116 @@ func TestAssignmentCancellationClosesAndRetainsPartialObservation(t *testing.T) 
 	}
 }
 
+func TestAssignmentCloseInterruptsRunningMessageWithoutMessageTimeout(t *testing.T) {
+	rt := newRuntime()
+	rt.hang = true
+	session, err := agentsFor(t, rt).OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "assignment-abort", Profile: "codex", Workspace: "git-work", Home: "agent-home",
+	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
+	if err != nil {
+		t.Fatal(err)
+	}
+	messageCtx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	messageDone := make(chan error, 1)
+	go func() { _, err := session.Message(messageCtx, "work", 0); messageDone <- err }()
+	deadline := time.After(2 * time.Second)
+	for {
+		rt.mu.Lock()
+		started := len(rt.writes) >= 4
+		rt.mu.Unlock()
+		if started {
+			break
+		}
+		select {
+		case <-deadline:
+			t.Fatal("message did not start")
+		default:
+			time.Sleep(time.Millisecond)
+		}
+	}
+	closeDone := make(chan error, 1)
+	go func() { _, err := session.Close(context.Background()); closeDone <- err }()
+	select {
+	case err := <-closeDone:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("close: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		cancel()
+		t.Fatal("Close could not interrupt a running Message")
+	}
+	if err := <-messageDone; !errors.Is(err, context.Canceled) || !rt.closed || rt.stops != 1 {
+		t.Fatalf("message/stop %v, stops=%d closed=%t", err, rt.stops, rt.closed)
+	}
+}
+
+func TestAssignmentCanRetryLocallyOversizedMessage(t *testing.T) {
+	rt := newRuntime()
+	rt.finalText = "short prompt result"
+	agents := agentsFor(t, rt)
+	profile := agents.profiles["codex"]
+	profile.MaxWireBytes = 4096
+	agents.profiles["codex"] = profile
+	session, err := agents.OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "assignment-limit", Profile: "codex", Workspace: "git-work", Home: "agent-home",
+	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := session.Message(context.Background(), strings.Repeat("x", 5000), time.Second); !errors.Is(err, run.ErrContextLimit) {
+		t.Fatalf("oversized prompt: %v", err)
+	}
+	if rt.stops != 0 || rt.closed {
+		t.Fatal("local prompt rejection closed the assignment")
+	}
+	result, err := session.Message(context.Background(), "shorter correction", time.Second)
+	if err != nil || !result.Completed || result.Final != "short prompt result" {
+		t.Fatalf("retry %+v %v", result, err)
+	}
+	if _, err := session.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestAssignmentCloseInterruptsParentAnswerWait(t *testing.T) {
+	rt := newRuntime()
+	rt.useTool, rt.toolName, rt.toolArgs = true, "ask_parent", `{"question":"Which contract?"}`
+	entered, release := make(chan struct{}), make(chan struct{})
+	defer close(release)
+	session, err := agentsFor(t, rt).OpenAssignment(context.Background(), run.AssignmentSpec{
+		ID: "assignment-question", Profile: "codex", Workspace: "git-work", Home: "agent-home",
+		Tools: []run.ToolSpec{{Name: "ask_parent", Description: "Ask parent", InputSchema: json.RawMessage(`{"type":"object"}`)}},
+	}, func(context.Context, string, json.RawMessage) run.ToolAnswer {
+		close(entered)
+		<-release
+		return run.ToolAnswer{Text: "late answer"}
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	done := make(chan error, 1)
+	go func() { _, err := session.Message(context.Background(), "ask", 0); done <- err }()
+	select {
+	case <-entered:
+	case <-time.After(2 * time.Second):
+		t.Fatal("question handler did not start")
+	}
+	closed := make(chan error, 1)
+	go func() { _, err := session.Close(context.Background()); closed <- err }()
+	select {
+	case err := <-closed:
+		if !errors.Is(err, context.Canceled) {
+			t.Fatalf("close: %v", err)
+		}
+	case <-time.After(2 * time.Second):
+		t.Fatal("Close waited for parent response")
+	}
+	if err := <-done; !errors.Is(err, context.Canceled) {
+		t.Fatalf("message: %v", err)
+	}
+}
+
 func TestRunReportsNoUsageWhenProtocolReportsNone(t *testing.T) {
 	rt := newRuntime()
 	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))

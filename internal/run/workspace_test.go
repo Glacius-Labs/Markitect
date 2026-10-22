@@ -53,10 +53,11 @@ type assignmentAgentsFake struct {
 	opened map[string]*assignmentSessionFake
 }
 type assignmentSessionFake struct {
-	spec     run.AssignmentSpec
-	handler  run.ToolHandler
-	closed   bool
-	messages []string
+	spec      run.AssignmentSpec
+	handler   run.ToolHandler
+	closed    bool
+	messages  []string
+	onMessage chan struct{}
 }
 
 func (f *assignmentAgentsFake) OpenAssignment(_ context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
@@ -68,6 +69,11 @@ func (f *assignmentAgentsFake) OpenAssignment(_ context.Context, spec run.Assign
 	return session, nil
 }
 func (f *assignmentSessionFake) Message(ctx context.Context, text string, _ time.Duration) (run.TurnResult, error) {
+	if text == "wait" {
+		close(f.onMessage)
+		<-ctx.Done()
+		return run.TurnResult{Reason: "cancelled"}, ctx.Err()
+	}
 	if err := ctx.Err(); err != nil {
 		return run.TurnResult{Reason: "cancelled"}, err
 	}
@@ -82,6 +88,33 @@ func (f *assignmentSessionFake) Message(ctx context.Context, text string, _ time
 	}
 	return run.TurnResult{Final: final, Completed: true, Conversation: f.spec.ID}, nil
 }
+
+func TestAssignmentConcurrentCloseKeepsAbortIncomplete(t *testing.T) {
+	ctx := context.Background()
+	work := &assignmentWorkspacesFake{}
+	agents := &assignmentAgentsFake{}
+	a, err := run.StartAssignment(ctx, work, agents, run.AssignmentRequest{ID: "parallel", Profile: "codex", Home: "home"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	session := agents.opened["parallel"]
+	session.onMessage = make(chan struct{})
+	messageCtx, cancel := context.WithCancel(ctx)
+	done := make(chan error, 1)
+	go func() { _, err := a.Message(messageCtx, "wait", 0); done <- err }()
+	<-session.onMessage
+	closed, err := a.Close(ctx)
+	if err != nil || !closed.Stopped {
+		t.Fatalf("close %+v %v", closed, err)
+	}
+	cancel()
+	if err := <-done; !errors.Is(err, context.Canceled) {
+		t.Fatalf("message: %v", err)
+	}
+	if _, err := a.Submit(ctx); err == nil {
+		t.Fatal("cancelled work became a complete handoff")
+	}
+}
 func (f *assignmentSessionFake) Close(context.Context) (run.TurnResult, error) {
 	f.closed = true
 	return run.TurnResult{Stopped: true}, nil
@@ -91,10 +124,12 @@ func TestAssignmentQuestionHandoffCorrectionAndIndependentCopy(t *testing.T) {
 	ctx := context.Background()
 	work := &assignmentWorkspacesFake{}
 	agents := &assignmentAgentsFake{}
+	questions := 0
 	start := func(id run.WorkspaceID) *run.Assignment {
 		assignment, err := run.StartAssignment(ctx, work, agents, run.AssignmentRequest{
 			ID: id, Profile: "codex", Home: "home-" + string(id), Handler: func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} },
 			AskParent: func(_ context.Context, q string) (string, error) {
+				questions++
 				if q != "Which contract?" {
 					t.Fatalf("question %q", q)
 				}
@@ -112,9 +147,12 @@ func TestAssignmentQuestionHandoffCorrectionAndIndependentCopy(t *testing.T) {
 		t.Fatal("shared working copy")
 	}
 	for _, message := range []string{"work", "question", "first delivery"} {
-		if result, err := first.Message(ctx, message, time.Second); err != nil || !result.Completed {
+		if result, err := first.Message(ctx, message, time.Second); err != nil || !result.Completed || message == "question" && result.Final != "Use the public interface" {
 			t.Fatalf("message %q: %+v %v", message, result, err)
 		}
+	}
+	if questions != 1 {
+		t.Fatalf("parent received %d questions, want one", questions)
 	}
 	firstHandoff, err := first.Submit(ctx)
 	if err != nil || firstHandoff.Summary != "first delivery" || firstHandoff.StartingCommit == firstHandoff.ResultCommit {
@@ -133,14 +171,18 @@ func TestAssignmentQuestionHandoffCorrectionAndIndependentCopy(t *testing.T) {
 	if _, err := second.Message(ctx, "other area", time.Second); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := second.Submit(ctx); err != nil {
-		t.Fatal(err)
-	}
 	if closed, err := first.Close(ctx); err != nil || !closed.Stopped || !agents.opened["agent-a"].closed || work.copies["agent-a"].closed {
 		t.Fatal("closing Agent lost workspace or failed to stop container")
 	}
 	if agents.opened["agent-b"].closed {
 		t.Fatal("closing one Agent stopped another")
+	}
+	if closed, err := second.Close(ctx); err != nil || !closed.Stopped {
+		t.Fatalf("second close %+v %v", closed, err)
+	}
+	final, err := second.Submit(ctx)
+	if err != nil || final.Summary != "other area" || final.ResultCommit == "" {
+		t.Fatalf("handoff after close %+v %v", final, err)
 	}
 }
 

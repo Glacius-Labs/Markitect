@@ -225,8 +225,9 @@ func (a *assignmentWorkspace) git(ctx context.Context, args ...string) (string, 
 	w := a.owner
 	w.mu.Lock()
 	defer w.mu.Unlock()
-	if w.owned[a.id] == "" || w.volume(a.id) != a.volume {
-		return "", fmt.Errorf("assignment workspace is not owned")
+	volume, observed, err := w.ownedVolume(ctx, a.id)
+	if err != nil || volume != a.volume || !observed.Exists || w.owned[a.id] == "" {
+		return "", errors.Join(err, fmt.Errorf("assignment workspace volume is absent or not owned"))
 	}
 	spec := w.spec(a.volume, false)
 	var output strings.Builder
@@ -242,7 +243,7 @@ var commitIDPattern = regexp.MustCompile(`^(?:[0-9a-f]{40}|[0-9a-f]{64})$`)
 func (a *assignmentWorkspace) commit(ctx context.Context, message string) (string, error) {
 	// The runtime's private state is outside the repository census even if an
 	// Agent created it. It must not enter a handoff commit.
-	if _, err := a.git(ctx, "add", "--all", "--force", "--", ".", ":(exclude).markitect/state"); err != nil {
+	if _, err := a.git(ctx, "add", "--all", "--force", "--", ".", ":(exclude,top,glob).markitect/state/**"); err != nil {
 		return "", err
 	}
 	if _, err := a.git(ctx, "commit", "--allow-empty", "-m", message); err != nil {

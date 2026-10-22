@@ -158,11 +158,14 @@ func (a *Agents) OpenAssignment(ctx context.Context, spec run.AssignmentSpec, ha
 }
 
 type assignmentSession struct {
-	mu          sync.Mutex
-	turn        *turnRun
-	closed      bool
-	terminal    run.TurnResult
-	terminalErr error
+	mu           sync.Mutex
+	abortMu      sync.Mutex
+	activeCancel context.CancelFunc
+	closing      bool
+	turn         *turnRun
+	closed       bool
+	terminal     run.TurnResult
+	terminalErr  error
 }
 
 func (s *assignmentSession) Message(ctx context.Context, text string, timeout time.Duration) (res run.TurnResult, err error) {
@@ -173,19 +176,36 @@ func (s *assignmentSession) Message(ctx context.Context, text string, timeout ti
 	}
 	res.Started = time.Now().UTC()
 	defer func() { res.Ended = time.Now().UTC() }()
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	s.abortMu.Lock()
+	if s.closing {
+		s.abortMu.Unlock()
+		return res, context.Canceled
+	}
+	s.activeCancel = cancel
+	s.abortMu.Unlock()
+	defer func() {
+		s.abortMu.Lock()
+		s.activeCancel = nil
+		s.abortMu.Unlock()
+	}()
 	t := s.turn
 	t.turn.Prompt, t.turnID, t.final = text, "", ""
 	t.commands, t.usage = nil, run.Usage{}
-	runCtx := ctx
 	if timeout > 0 {
-		var cancel context.CancelFunc
-		runCtx, cancel = context.WithTimeout(ctx, timeout)
-		defer cancel()
+		var timeoutCancel context.CancelFunc
+		runCtx, timeoutCancel = context.WithTimeout(runCtx, timeout)
+		defer timeoutCancel()
 	}
 	err = t.runTurn(runCtx, &res)
 	res.Conversation, res.Final, res.Commands, res.Usage = string(t.thread), string(t.redact([]byte(t.final))), t.commands, t.usage
 	if res.Usage.ProviderTurns > 0 {
 		res.Usage.Model = t.model
+	}
+	if errors.Is(err, run.ErrContextLimit) {
+		res.Reason = "message exceeds provider channel"
+		return res, err
 	}
 	if err != nil {
 		s.closed = true
@@ -199,6 +219,13 @@ func (s *assignmentSession) Message(ctx context.Context, text string, timeout ti
 }
 
 func (s *assignmentSession) Close(ctx context.Context) (res run.TurnResult, err error) {
+	s.abortMu.Lock()
+	s.closing = true
+	cancel := s.activeCancel
+	s.abortMu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
 	s.mu.Lock()
 	defer s.mu.Unlock()
 	if s.closed {
@@ -521,7 +548,15 @@ func (t *turnRun) answer(ctx context.Context, call frame.ToolCall) error {
 	if raw, err := frame.EncodeToolCall(call); err == nil {
 		t.tr.record("tool-call", raw)
 	}
-	answer := t.handler(ctx, call.Name, t.redact(call.Arguments))
+	answered := make(chan run.ToolAnswer, 1)
+	arguments := t.redact(call.Arguments)
+	go func() { answered <- t.handler(ctx, call.Name, arguments) }()
+	var answer run.ToolAnswer
+	select {
+	case answer = <-answered:
+	case <-ctx.Done():
+		return ctx.Err()
+	}
 	type text struct {
 		Type string `json:"type"`
 		Text string `json:"text"`

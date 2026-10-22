@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"regexp"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -45,6 +46,7 @@ type AssignmentAgents interface {
 
 // AssignmentQuestion is the sole special communication signal in this slice.
 // A parent can answer directly or arrange a later reply through its caller.
+// The callback should honor ctx so an aborted assignment leaves no waiter.
 type AssignmentQuestion func(context.Context, string) (string, error)
 
 const AskParentTool = "ask_parent"
@@ -78,13 +80,16 @@ type AssignmentHandoff struct {
 // closes the Agent when accepted or aborted and separately releases retained
 // workspace data when it is no longer needed.
 type Assignment struct {
-	session  AssignmentSession
-	work     AssignmentWorkspace
-	last     TurnResult
-	ready    bool
-	closed   bool
-	closing  TurnResult
-	closeErr error
+	mu        sync.Mutex
+	session   AssignmentSession
+	work      AssignmentWorkspace
+	last      TurnResult
+	ready     bool
+	active    bool
+	closed    bool
+	closing   TurnResult
+	closeErr  error
+	closeDone chan struct{}
 }
 
 func StartAssignment(ctx context.Context, workspaces AssignmentWorkspaces, agents AssignmentAgents, request AssignmentRequest) (*Assignment, error) {
@@ -137,26 +142,50 @@ func StartAssignment(ctx context.Context, workspaces AssignmentWorkspaces, agent
 }
 
 func (a *Assignment) Message(ctx context.Context, text string, timeout time.Duration) (TurnResult, error) {
-	if a == nil || a.closed || a.session == nil {
+	if a == nil || a.session == nil {
 		return TurnResult{}, errors.New("Agent assignment is closed")
 	}
+	a.mu.Lock()
+	if a.closed || a.active {
+		a.mu.Unlock()
+		return TurnResult{}, errors.New("Agent assignment is closed or busy")
+	}
+	a.active = true
+	a.mu.Unlock()
 	result, err := a.session.Message(ctx, text, timeout)
+	a.mu.Lock()
+	a.active = false
 	a.last, a.ready = result, err == nil && result.Completed
+	a.mu.Unlock()
 	return result, err
 }
 
 // Submit fixes the current Git contents without freezing the working copy.
-// Corrections can produce another commit in the same assignment afterward.
+// It also works after a normal Close, using the last completed message as the
+// summary. Corrections can produce another commit in the same assignment.
 func (a *Assignment) Submit(ctx context.Context) (AssignmentHandoff, error) {
-	if a == nil || a.closed || a.work == nil || !a.ready {
+	if a == nil || a.work == nil {
 		return AssignmentHandoff{}, errors.New("no completed Agent response to submit")
 	}
+	a.mu.Lock()
+	if a.active || !a.ready || a.closed && (a.closeErr != nil || !a.closing.Stopped) {
+		a.mu.Unlock()
+		return AssignmentHandoff{}, errors.New("no completed Agent response to submit")
+	}
+	a.active = true
+	summary := a.last.Final
+	a.mu.Unlock()
 	commit, err := a.work.Commit(ctx, "Agent assignment result")
+	a.mu.Lock()
+	a.active = false
+	if err == nil {
+		a.ready = false
+	}
+	a.mu.Unlock()
 	if err != nil {
 		return AssignmentHandoff{}, err
 	}
-	a.ready = false
-	return AssignmentHandoff{StartingCommit: a.work.StartingCommit(), ResultCommit: commit, Summary: a.last.Final}, nil
+	return AssignmentHandoff{StartingCommit: a.work.StartingCommit(), ResultCommit: commit, Summary: summary}, nil
 }
 
 // Close ends the container. The Git copy remains retained, including on error
@@ -165,12 +194,27 @@ func (a *Assignment) Close(ctx context.Context) (TurnResult, error) {
 	if a == nil || a.session == nil {
 		return TurnResult{}, nil
 	}
+	a.mu.Lock()
 	if a.closed {
+		done := a.closeDone
+		a.mu.Unlock()
+		if done != nil {
+			<-done
+		}
 		return a.closing, a.closeErr
 	}
 	a.closed = true
-	a.closing, a.closeErr = a.session.Close(ctx)
-	return a.closing, a.closeErr
+	a.closeDone = make(chan struct{})
+	a.mu.Unlock()
+	closing, closeErr := a.session.Close(ctx)
+	a.mu.Lock()
+	a.closing, a.closeErr = closing, closeErr
+	if closeErr != nil || !closing.Stopped {
+		a.ready = false
+	}
+	close(a.closeDone)
+	a.mu.Unlock()
+	return closing, closeErr
 }
 
 func (a *Assignment) Workspace() AssignmentWorkspace {

@@ -23,8 +23,8 @@ import (
 
 type assignmentGitRuntime struct{ root string }
 
-func (f assignmentGitRuntime) InspectVolume(context.Context, string) (container.VolumeObservation, error) {
-	return container.VolumeObservation{}, nil
+func (f assignmentGitRuntime) InspectVolume(_ context.Context, name string) (container.VolumeObservation, error) {
+	return container.VolumeObservation{Name: name, Exists: true, Labels: map[string]string{workspaceOwnerLabel: "owned"}}, nil
 }
 func (f assignmentGitRuntime) CreateVolumeExclusive(context.Context, string, map[string]string) (container.VolumeObservation, error) {
 	return container.VolumeObservation{}, errors.New("unused")
@@ -100,6 +100,53 @@ func TestAssignmentGitCommitsRemainFixedAfterCorrection(t *testing.T) {
 	listed, err := exec.CommandContext(ctx, "git", "-C", root, "ls-tree", "-r", "--name-only", result).Output()
 	if err != nil || strings.Contains(string(listed), ".markitect/state") {
 		t.Fatalf("private state entered handoff: %q %v", listed, err)
+	}
+}
+
+func TestAssignmentGitRefusesReplacedVolumeBeforeHelper(t *testing.T) {
+	w, runtime := workspaceAdapter(t)
+	id := run.WorkspaceID("agent")
+	observed, err := w.Materialize(context.Background(), run.WorkspaceSpec{ID: id, Tree: workspaceTree(t, workspaceEntry(t, "work.txt", snapshot.Regular, "original"))})
+	if err != nil {
+		t.Fatal(err)
+	}
+	volume := runtime.volumes[observed.Volume]
+	volume.Labels[workspaceOwnerLabel] = "another owner"
+	runtime.volumes[observed.Volume] = volume
+	before := len(runtime.helpers)
+	a := &assignmentWorkspace{owner: w, id: id, volume: observed.Volume}
+	if _, err := a.git(context.Background(), "init"); err == nil {
+		t.Fatal("replaced volume was writable")
+	}
+	if len(runtime.helpers) != before {
+		t.Fatal("Git helper started on a replacement volume")
+	}
+}
+
+func TestAssignmentGitKeepsRegularStateFile(t *testing.T) {
+	if _, err := exec.LookPath("git"); err != nil {
+		t.Skip("Git unavailable")
+	}
+	ctx := context.Background()
+	root := t.TempDir()
+	if err := os.MkdirAll(filepath.Join(root, ".markitect"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(root, ".markitect", "state"), []byte("a regular source file"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	w := &Workspaces{runtime: assignmentGitRuntime{root: root}, helper: container.ContainerSpec{Name: "test", Labels: map[string]string{"markitect.store": "test"}}, owned: map[run.WorkspaceID]string{"agent": "owned"}}
+	a := &assignmentWorkspace{owner: w, id: "agent", volume: w.volume("agent")}
+	if _, err := a.git(ctx, "init", "-b", "assignment"); err != nil {
+		t.Fatal(err)
+	}
+	base, err := a.commit(ctx, "starting stand")
+	if err != nil {
+		t.Fatal(err)
+	}
+	content, err := exec.CommandContext(ctx, "git", "-C", root, "show", base+":.markitect/state").Output()
+	if err != nil || string(content) != "a regular source file" {
+		t.Fatalf("regular source file missing from start commit: %q %v", content, err)
 	}
 }
 
