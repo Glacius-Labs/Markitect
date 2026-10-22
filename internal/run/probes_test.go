@@ -538,23 +538,33 @@ func TestAProbeErrorTheProbeCausedNeedsAnIndependentAssessment(t *testing.T) {
 	}
 }
 
-// Evidence binds claims to receipts: a receipt item carries the receipt's own
-// claim, and one receipt cannot be cited for two claims. Before the review fix
-// one trivial passing receipt could be cited under every claim.
-func TestOneReceiptSupportsOneClaim(t *testing.T) {
+// Actual assertions, assessed independently, determine how many conclusions an
+// execution supports. Host binding must survive reuse across claims and Definitions.
+func TestOneReceiptSupportsSeveralClaimsAndDefinitions(t *testing.T) {
 	f := probeFixture(t)
-	var mu sync.Mutex
-	var twice ToolAnswer
+	for i := range f.cfg.Team {
+		if f.cfg.Team[i].Path == "library" {
+			f.cfg.Team[i].Obligations = []string{"library/interface", "library/storage"}
+		}
+	}
+	f.agents.obligations["library"] = []string{"library/interface", "library/storage"}
+	definition := f.cfg.Definition
+	f.cfg.Definition = func(id string) (ModelDefinition, bool) {
+		if id == "library/storage" {
+			return ModelDefinition{ID: id, Owner: "library", Text: "store the public name"}, true
+		}
+		return definition(id)
+	}
+	var submitted ToolAnswer
 	f.agents.script = func(c *call) error {
-		mu.Lock()
-		defer mu.Unlock()
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
-			id := receiptOf(t, c.must(toolCheck, probe("library/interface", "an ordinary name is stored", "probe_names.py", "PASS")))
+			id := receiptOf(t, c.must(toolCheck, probe("library/interface", "public name is stored", "probe_names.py", "PASS")))
 			cov := c.coverage()
-			cov[0]["evidence"] = []map[string]string{{"kind": "public_behavior", "boundary": "fixture public entry", "claim": "every input class", "receipt": id}, {"kind": "public_behavior", "boundary": "fixture public entry", "claim": "the hyphen name", "receipt": id}}
-			twice = c.tool(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
-			cov[0]["evidence"] = []map[string]string{{"kind": "public_behavior", "boundary": "fixture public entry", "claim": "every input class", "receipt": id}}
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
+			for i := range cov {
+				cov[i]["evidence"] = []map[string]string{{"kind": "public_behavior", "claim": "public name is stored", "receipt": id}}
+			}
+			cov[0]["evidence"] = append(cov[0]["evidence"].([]map[string]string), map[string]string{"kind": "public_behavior", "claim": "public entry accepts the name", "receipt": id})
+			submitted = c.must(toolReport, c.envelope(kindBasis, map[string]any{"obligations": cov}))
 			return nil
 		}
 		c.protocol()
@@ -562,25 +572,31 @@ func TestOneReceiptSupportsOneClaim(t *testing.T) {
 	}
 	r := f.open()
 	r.Pass(implementSpec())
-	r.Pass(verifySpec())
+	res := r.Pass(verifySpec())
 	f.finish(r, "")
-	if !twice.Refused || !strings.Contains(twice.Text, "one receipt supports one claim") {
-		t.Errorf("one receipt supported two claims: %+v", twice)
+	if res.Stopped || submitted.Text == "" {
+		t.Fatalf("result %+v, submission %+v", res, submitted)
 	}
-	var claims []string
+	found := false
 	for _, ev := range f.ev.kinds("proposal.submitted") {
 		if ev.Manager != "library" || ev.Pass != "p2" {
 			continue
 		}
 		env := ev.Data.(map[string]any)["envelope"].(envelope)
-		for _, c := range env.Obligations {
-			for _, item := range c.Evidence {
-				claims = append(claims, item.Claim)
-			}
+		if len(env.Obligations) != 2 || len(env.Obligations[0].Evidence) != 2 {
+			continue
+		}
+		found = true
+		a, b := env.Obligations[0].Evidence[0], env.Obligations[1].Evidence[0]
+		if a.Receipt != b.Receipt || a.Stand == "" || a.Stand != b.Stand || b.Authority != "library/storage" {
+			t.Fatalf("lost Host binding: %+v %+v", a, b)
+		}
+		if env.Obligations[0].Evidence[1].Claim != "public entry accepts the name" {
+			t.Fatal("lost assessed conclusion")
 		}
 	}
-	if !slices.Contains(claims, "an ordinary name is stored") || slices.Contains(claims, "every input class") {
-		t.Errorf("evidence claims %q are not the receipt's", claims)
+	if !found {
+		t.Fatal("no reused execution in retained report")
 	}
 }
 
@@ -995,7 +1011,7 @@ func TestFreshReviewerMustRecordModelConditionsBeyondDefinitionIDs(t *testing.T)
 	}
 }
 
-func TestOneReceiptCannotAlsoDischargeParentIntegration(t *testing.T) {
+func TestOneReceiptCanAlsoSupportParentIntegration(t *testing.T) {
 	f := probeFixture(t)
 	f.cfg.Team[0].Obligations = []string{"root/layout"}
 	f.agents.obligations["."] = []string{"root/layout"}
@@ -1012,7 +1028,8 @@ func TestOneReceiptCannotAlsoDischargeParentIntegration(t *testing.T) {
 			id := receiptOf(t, c.must(toolCheck, probe("root/layout", "composed entry", "composition.py", "PASS")))
 			args := c.envelope(kindResult, map[string]any{"obligations": withEvidence(c, id)})
 			args["integration"].(map[string]any)["evidence"] = []map[string]string{{"kind": "public_behavior", "boundary": "fixture public entry", "receipt": id}}
-			duplicated = c.tool(toolReport, args)
+			duplicated = c.must(toolReport, args)
+			return nil
 		}
 		c.protocol()
 		return nil
@@ -1020,7 +1037,7 @@ func TestOneReceiptCannotAlsoDischargeParentIntegration(t *testing.T) {
 	r := f.open()
 	res := r.Pass(implementSpec())
 	f.finish(r, "")
-	if res.Stopped || !duplicated.Refused || !strings.Contains(duplicated.Text, "one receipt supports one claim") {
+	if res.Stopped || duplicated.Refused || duplicated.Text == "" {
 		t.Fatalf("result %+v, reused receipt %+v", res, duplicated)
 	}
 }

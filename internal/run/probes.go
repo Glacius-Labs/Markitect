@@ -529,9 +529,9 @@ func short(digest string) string { return digest[:min(12, len(digest))] }
 // submission is bound to; stand is empty in a Pass with writes, whose stand is
 // known only after the submitter's writers stopped (bindEvidence completes the
 // check then). A source names a file and the inspected location with the
-// reasoning; inference alone is no item. A receipt item takes its claim from
-// the receipt, and one receipt supports one item of a submission (cited).
-func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, cited map[string]bool) ([]evidenceItem, error) {
+// reasoning; inference alone is no item. One execution may support several
+// claims. The reviewer judges its actual assertions, not a uniqueness rule.
+func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree) ([]evidenceItem, error) {
 	if len(c.Evidence) > maxToolItems {
 		return nil, fmt.Errorf("obligations[%d]: at most %d evidence items", i, maxToolItems)
 	}
@@ -548,14 +548,10 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, 
 				return nil, fmt.Errorf("%s: %q is no probe receipt of this run; a receipt comes only from the tool check", name, item.Receipt)
 			case r.Requester != m.Path:
 				return nil, fmt.Errorf("%s: %s was requested by %s; cite your own receipts", name, r.ID, r.Requester)
-			case c.Definition != "" && r.Obligation != c.Definition:
-				return nil, fmt.Errorf("%s: %s assesses %s, not %s; cite it only under its recorded obligation, once in this submission. Omit it here and leave unsupported conditions open; a different executable claim needs its own passing probe", name, r.ID, r.Obligation, c.Definition)
 			case r.Outcome != ProbePassed:
 				return nil, fmt.Errorf("%s: %s %s; an adverse receipt cannot support %s coverage. Remove it from this evidence array; if it demonstrates a violation, cite it in a genuine finding and leave the affected coverage open with a note. Otherwise give its reasoned disposition", name, r.ID, describeOutcome(r), c.Status)
 			case stand != nil && r.Stand != stand.Digest().String():
 				return nil, fmt.Errorf("%s: %s ran on the stand %s, not on %s; a stale receipt supports nothing here", name, r.ID, short(r.Stand), short(stand.Digest().String()))
-			case cited[r.ID]:
-				return nil, fmt.Errorf("%s: %s is already cited for another claim; one receipt supports one claim. Keep it only under its recorded obligation; leave other unsupported conditions open instead of duplicating it", name, r.ID)
 			}
 			if c.Definition == "" && !e.within(e.byPath[r.Requester].Path, m.Path) {
 				return nil, fmt.Errorf("%s: receipt outside your integration responsibility", name)
@@ -569,9 +565,16 @@ func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree, 
 				}
 				item.Boundary = r.Boundary
 			}
-			item.Authority = r.Obligation
-			cited[r.ID] = true
-			item.Claim, item.Receipt, item.Source, item.Location, item.Reasoning = r.Claim, r.ID, "", "", ""
+			item.Authority = c.Definition
+			if item.Authority == "" {
+				item.Authority = r.Obligation
+			}
+			if strings.TrimSpace(item.Claim) == "" {
+				item.Claim = r.Claim
+			} else if _, err := toolText(name+".claim", item.Claim); err != nil {
+				return nil, err
+			}
+			item.Receipt, item.Source, item.Location = r.ID, "", ""
 			item.Stand = r.Stand
 		case item.Source != "":
 			if evidenceRequired(m.p.spec) && item.Kind != "static" {
