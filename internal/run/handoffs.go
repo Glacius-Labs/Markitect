@@ -23,8 +23,10 @@ type assignmentMember struct {
 	starting    bool
 	handoff     AssignmentHandoff
 	inspected   string
+	returned    bool
 	accepted    map[string]string
 	integrating sync.Mutex
+	messaging   sync.Mutex
 }
 
 // AssignmentHandoffs routes work through the model-derived Manager tree. The
@@ -116,12 +118,14 @@ func (f *AssignmentHandoffs) start(ctx context.Context, parent, path string, req
 	if parent != "" {
 		request.AskParent = func(ctx context.Context, question string) (string, error) {
 			f.mu.Lock()
-			p := f.team[parent].agent
+			p := f.team[parent]
 			f.mu.Unlock()
-			if p == nil {
+			if p == nil || p.agent == nil {
 				return "", fmt.Errorf("parent %q is unavailable", parent)
 			}
-			answer, err := p.Message(ctx, fmt.Sprintf("Your direct child %s asks: %s", path, question), time.Minute)
+			p.messaging.Lock()
+			defer p.messaging.Unlock()
+			answer, err := p.agent.Message(ctx, fmt.Sprintf("Your direct child %s asks: %s", path, question), time.Minute)
 			return answer.Final, err
 		}
 	}
@@ -145,6 +149,8 @@ func (f *AssignmentHandoffs) Message(ctx context.Context, path, message string, 
 	if a == nil {
 		return TurnResult{}, fmt.Errorf("Manager %q has no assignment", path)
 	}
+	m.messaging.Lock()
+	defer m.messaging.Unlock()
 	return a.Message(ctx, message, timeout)
 }
 
@@ -188,6 +194,7 @@ func (f *AssignmentHandoffs) Submit(ctx context.Context, path string) (Assignmen
 	f.mu.Lock()
 	m.handoff = handoff
 	m.inspected = ""
+	m.returned = false
 	f.mu.Unlock()
 	return handoff, nil
 }
@@ -225,11 +232,9 @@ func (f *AssignmentHandoffs) Return(ctx context.Context, parent, child, correcti
 		f.mu.Unlock()
 		return TurnResult{}, fmt.Errorf("no submitted direct-child result %q for %q", child, parent)
 	}
-	c.handoff = AssignmentHandoff{}
-	c.inspected = ""
-	a := c.agent
+	c.returned = true
 	f.mu.Unlock()
-	return a.Message(ctx, correction, timeout)
+	return f.Message(ctx, child, correction, timeout)
 }
 
 // Accept integrates only the result the parent inspected. A conflict returns
@@ -245,7 +250,7 @@ func (f *AssignmentHandoffs) Accept(ctx context.Context, parent, child, inspecte
 	defer m.integrating.Unlock()
 	f.mu.Lock()
 	c := f.team[child]
-	if m == nil || c == nil || c.manager.Parent != parent || c.handoff.ResultCommit == "" || inspectedCommit != c.inspected || inspectedCommit != c.handoff.ResultCommit || m.agent == nil {
+	if m == nil || c == nil || c.manager.Parent != parent || c.handoff.ResultCommit == "" || c.returned || inspectedCommit != c.inspected || inspectedCommit != c.handoff.ResultCommit || m.agent == nil {
 		f.mu.Unlock()
 		return "", fmt.Errorf("no inspected direct-child result %q for %q", child, parent)
 	}

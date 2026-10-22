@@ -79,6 +79,17 @@ func TestAssignmentHandoffsRouteQuestionCorrectionAndRequiredChildren(t *testing
 	if _, err := f.Accept(ctx, "library", "library/lending", "uninspected"); err == nil {
 		t.Fatal("accepted a result other than the inspected commit")
 	}
+	cancelled, cancel := context.WithCancel(ctx)
+	cancel()
+	if _, err := f.Return(cancelled, "library", "library/lending", "Correct the loan limit test", time.Second); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancelled correction: %v", err)
+	}
+	if _, retained, err := f.Changes(ctx, "library", "library/lending"); err != nil || retained.ResultCommit != first.ResultCommit {
+		t.Fatalf("failed correction hid the fixed result: %+v %v", retained, err)
+	}
+	if _, err := f.Accept(ctx, "library", "library/lending", first.ResultCommit); err == nil {
+		t.Fatal("returned work was accepted after its correction failed")
+	}
 	if _, err := f.Return(ctx, "library", "library/lending", "Correct the loan limit test", time.Second); err != nil {
 		t.Fatal(err)
 	}
