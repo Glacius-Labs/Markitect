@@ -43,6 +43,59 @@ func TestExecuteRefusesAnInvalidRunConfigurationBeforeAnyEffect(t *testing.T) {
 	}
 }
 
+func TestAssignmentApplyRefusesLegacyWorkDeadlineBeforePreparation(t *testing.T) {
+	document := runConfigFixture(t)
+	document["workDeadline"] = "2029-01-01T00:00:00Z"
+	document["deadline"] = "2030-01-01T00:00:00Z"
+	service := newExecution(apply.NewPreparationService(apply.NewModelService(nil, nil)), &gitrepo.Repository{}, nil, nil)
+	report, err := service.Execute(context.Background(), cli.ApplyRequest{Selection: apply.InputSelection{Repository: testkit.TempDir(t)}, RunConfig: writeRunConfig(t, document), Build: document["productBuild"].(string)})
+	if err == nil || !strings.Contains(err.Error(), "workDeadline") || report.Preparation != nil || report.EvidenceDirectory != "" || report.Status != model.NotCompleted {
+		t.Fatalf("legacy work deadline reached assignment preparation: %v %+v", err, report)
+	}
+}
+
+type controlledGitLifetime struct {
+	started, closed, worked int
+	startErr, closeErr      error
+	ids                     []runport.WorkspaceID
+}
+
+func (g *controlledGitLifetime) StartGit(_ context.Context, ids []runport.WorkspaceID) error {
+	g.started++
+	g.ids = append([]runport.WorkspaceID(nil), ids...)
+	return g.startErr
+}
+func (g *controlledGitLifetime) CloseGit(context.Context) error {
+	g.closed++
+	return g.closeErr
+}
+
+func TestAssignmentGitLifetimeClosesOnEveryExitAndRetainsErrors(t *testing.T) {
+	startErr, workErr, closeErr := errors.New("start"), errors.New("work"), errors.New("close")
+	for _, tc := range []struct {
+		name               string
+		start, work, close error
+		wantWork           int
+	}{
+		{name: "success", wantWork: 1},
+		{name: "failed start", start: startErr},
+		{name: "failed realization or publication", work: workErr, wantWork: 1},
+		{name: "failed cleanup", close: closeErr, wantWork: 1},
+		{name: "both failures", work: workErr, close: closeErr, wantWork: 1},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			git := &controlledGitLifetime{startErr: tc.start, closeErr: tc.close}
+			ids := []runport.WorkspaceID{"run-work-0", "run-verify-1"}
+			err := withPersistentGit(context.Background(), git, ids, func() error { git.worked++; return tc.work })
+			if git.started != 1 || git.closed != 1 || git.worked != tc.wantWork || !reflect.DeepEqual(git.ids, ids) ||
+				(tc.start != nil && !errors.Is(err, tc.start)) || (tc.work != nil && !errors.Is(err, tc.work)) ||
+				(tc.close != nil && !errors.Is(err, tc.close)) || (tc.start == nil && tc.work == nil && tc.close == nil && err != nil) {
+				t.Fatalf("git lifecycle: %+v, error: %v", git, err)
+			}
+		})
+	}
+}
+
 func TestExecuteRefusesAHeldStateDirectoryBeforePreparation(t *testing.T) {
 	document := runConfigFixture(t)
 	state := document["stateDirectory"].(string)

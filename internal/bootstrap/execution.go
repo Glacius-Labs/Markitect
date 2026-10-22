@@ -6,8 +6,10 @@ import (
 	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"path/filepath"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
@@ -76,6 +78,9 @@ func (s *executionService) Execute(ctx context.Context, request cli.ApplyRequest
 	defer func() { err = finishApplyReport(&report, err, evidence, session.lock.Release) }()
 	if session.cfg.ProductBuild != request.Build {
 		return report, errors.New("run configuration product build differs from this executable")
+	}
+	if session.cfg.WorkDeadline != "" {
+		return report, errors.New("workDeadline is a legacy Pass limit and cannot bound assignment Apply; use deadline")
 	}
 	prepared, err := s.preparation.CaptureSettings(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
 	report.Preparation = capturedExecutionReport(prepared, session.cfg.ProductBuild)
@@ -148,39 +153,54 @@ func (s *executionService) realizeAndPublish(ctx context.Context, request cli.Ap
 	if err != nil {
 		return result, nil, err
 	}
+	err = withPersistentGit(bounded, git, ids, func() error {
+		var runErr error
+		result, runErr = apply.RealizeAssignments(bounded, apply.AssignmentRealizationRequest{
+			ID: ports.RunID, Build: request.Build, Prepared: prepared, OwnerRequest: cfg.OwnerRequest,
+			MaxMessages: cfg.MaxMessages, MessageTimeout: time.Duration(cfg.MessageTimeoutSeconds) * time.Second,
+			MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
+			TranscriptDir: filepath.Join(ports.Evidence.Dir(), "transcripts"), Workspaces: ports.AssignmentWorkspaces,
+			Agents: ports.AssignmentAgents, Integration: ports.AssignmentIntegration, Checks: ports.Checks,
+			CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
+				return executionCheck(selected, cfg)
+			},
+			CreateHome: ports.CreateHome,
+		})
+		if runErr != nil || result.AcceptedCommit == "" {
+			return runErr
+		}
+		receipt, runErr = apply.PublishAssignment(bounded, ports.RunID, request.Selection, prepared, result, ports.Publisher, ports.Control)
+		if runErr == nil && receipt != nil && (receipt.Outcome == apply.PublicationApplied || receipt.Outcome == apply.PublicationNoChange) {
+			for _, home := range assignmentHomes(result) {
+				if cleanErr := ports.CleanupHome(bounded, home); cleanErr != nil {
+					runErr = errors.Join(runErr, fmt.Errorf("provider home %s: %w", home, cleanErr))
+				} else {
+					result.HomesRemoved = append(result.HomesRemoved, home)
+				}
+			}
+		}
+		return runErr
+	})
+	return result, receipt, err
+}
+
+type persistentGit interface {
+	StartGit(context.Context, []runport.WorkspaceID) error
+	CloseGit(context.Context) error
+}
+
+// A failed StartGit may already hold a container. Close it on every exit,
+// including failed startup, realization, publication, and home cleanup.
+func withPersistentGit(ctx context.Context, git persistentGit, ids []runport.WorkspaceID, work func() error) (err error) {
 	defer func() {
 		closeCtx, cancel := context.WithTimeout(context.Background(), time.Minute)
 		defer cancel()
 		err = errors.Join(err, git.CloseGit(closeCtx))
 	}()
-	if err = git.StartGit(bounded, ids); err != nil {
-		return result, nil, err
+	if err := git.StartGit(ctx, ids); err != nil {
+		return err
 	}
-	result, err = apply.RealizeAssignments(bounded, apply.AssignmentRealizationRequest{
-		ID: ports.RunID, Build: request.Build, Prepared: prepared, OwnerRequest: cfg.OwnerRequest,
-		MaxMessages: cfg.MaxMessages, MessageTimeout: time.Duration(cfg.MessageTimeoutSeconds) * time.Second,
-		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
-		TranscriptDir: filepath.Join(ports.Evidence.Dir(), "transcripts"), Workspaces: ports.AssignmentWorkspaces,
-		Agents: ports.AssignmentAgents, Integration: ports.AssignmentIntegration, Checks: ports.Checks,
-		CheckRequest: func(selected apply.CheckSelection) (runport.CheckRequest, error) {
-			return executionCheck(selected, cfg)
-		},
-		CreateHome: ports.CreateHome,
-	})
-	if err != nil || result.AcceptedCommit == "" {
-		return result, nil, err
-	}
-	receipt, err = apply.PublishAssignment(bounded, ports.RunID, request.Selection, prepared, result, ports.Publisher, ports.Control)
-	if err == nil && receipt != nil && (receipt.Outcome == apply.PublicationApplied || receipt.Outcome == apply.PublicationNoChange) {
-		for _, home := range assignmentHomes(result) {
-			if cleanErr := ports.CleanupHome(bounded, home); cleanErr != nil {
-				err = errors.Join(err, fmt.Errorf("provider home %s: %w", home, cleanErr))
-			} else {
-				result.HomesRemoved = append(result.HomesRemoved, home)
-			}
-		}
-	}
-	return result, receipt, err
+	return work()
 }
 
 func assignmentHomes(result apply.AssignmentRealizationResult) []string {
@@ -440,13 +460,31 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 	if err != nil {
 		return applyPorts{}, err
 	}
+	var homesMu sync.Mutex
+	createdHomes := map[string]map[string]string{}
 	createHome := func(ctx context.Context, name string) error {
-		_, err := engine.CreateVolumeExclusive(ctx, name, map[string]string{"markitect.assignment-run": runID})
-		return err
+		observed, err := engine.CreateVolumeExclusive(ctx, name, map[string]string{"markitect.assignment-run": runID})
+		if err != nil {
+			return err
+		}
+		if !observed.Exists || observed.Name != name || observed.Labels["markitect.assignment-run"] != runID {
+			return errors.New("provider home creation ownership is not established")
+		}
+		homesMu.Lock()
+		createdHomes[name] = maps.Clone(observed.Labels)
+		homesMu.Unlock()
+		return nil
 	}
 	cleanupHome := func(ctx context.Context, name string) error {
+		homesMu.Lock()
+		expected, known := createdHomes[name]
+		expected = maps.Clone(expected)
+		homesMu.Unlock()
+		if !known {
+			return errors.New("provider home has no exact creation receipt")
+		}
 		observed, err := engine.InspectVolume(ctx, name)
-		if err != nil || !observed.Exists || observed.Labels["markitect.assignment-run"] != runID {
+		if err != nil || !observed.Exists || observed.Name != name || !maps.Equal(observed.Labels, expected) {
 			return errors.Join(err, errors.New("provider home ownership is not established"))
 		}
 		mounts, err := engine.VolumeMounts(ctx, name)
@@ -457,6 +495,11 @@ func (s *executionService) ports(cfg runConfig, prepared apply.CapturedSettingsR
 		after, inspectErr := engine.InspectVolume(ctx, name)
 		if inspectErr != nil || after.Exists {
 			return errors.Join(removeErr, inspectErr, errors.New("provider home removal is not established"))
+		}
+		if removeErr == nil {
+			homesMu.Lock()
+			delete(createdHomes, name)
+			homesMu.Unlock()
 		}
 		return removeErr
 	}

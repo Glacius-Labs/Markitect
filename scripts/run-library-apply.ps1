@@ -15,7 +15,10 @@ param(
 
 $ErrorActionPreference = 'Stop'
 Set-StrictMode -Version Latest
-if ($MaxMessages -lt 1 -or $Minutes -lt 1 -or $MessageTimeoutSeconds -lt 1) { throw 'All invocation limits must be positive.' }
+if ($MaxMessages -lt 1 -or $MaxMessages -gt 128 -or $Minutes -lt 1 -or
+    $MessageTimeoutSeconds -lt 1 -or $MessageTimeoutSeconds -gt 3600) {
+    throw 'Invocation limits require 1..128 messages, positive minutes, and 1..3600 seconds per message.'
+}
 $sourceRepo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $docker = (Get-Command docker -ErrorAction Stop).Source
 $git = (Get-Command git -ErrorAction Stop).Source
@@ -57,7 +60,26 @@ try {
     }
     Push-Location $source
     try {
-        Invoke-NativeChecked 'product build' { & $go build -trimpath -o $binary ./cmd/markitect }
+        # The source hash only binds the build when ambient Go settings cannot
+        # replace files or modules (for example GOFLAGS=-overlay=...).
+        $goInputNames = @((Get-ChildItem Env: | Where-Object {
+            $_.Name -match '^(GO[A-Z0-9_]*|CGO_[A-Z0-9_]*)$'
+        } | ForEach-Object { $_.Name }))
+        $goInputs = @{}
+        foreach ($name in $goInputNames) {
+            $goInputs[$name] = [Environment]::GetEnvironmentVariable($name, 'Process')
+            Remove-Item -LiteralPath "Env:$name"
+        }
+        try {
+            $env:GOFLAGS = ''
+            $env:GOWORK = 'off'
+            $env:GOENV = 'off'
+            $env:CGO_ENABLED = '0'
+            Invoke-NativeChecked 'product build' { & $go build -trimpath -buildvcs=true -o $binary ./cmd/markitect }
+        } finally {
+            foreach ($name in @('GOFLAGS', 'GOWORK', 'GOENV', 'CGO_ENABLED')) { Remove-Item -LiteralPath "Env:$name" -ErrorAction SilentlyContinue }
+            foreach ($name in $goInputNames) { [Environment]::SetEnvironmentVariable($name, $goInputs[$name], 'Process') }
+        }
         $version = ((& $binary version) | ConvertFrom-Json).version
         if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($version)) { throw 'Cannot read product build version.' }
         $productBuild = "$version+$mainHead"
