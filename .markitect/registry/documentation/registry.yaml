@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/agent-workspaces-and-handoffs-20261022.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner adoption of Agent workspaces, reviewed handoffs, no domain Turns and proportionate technical enforcement, with documentation-only scope.
   - path: "docs/concepts/sources/proportionate-agent-process-20261022.md"
     form: doc
     realizes: [documentation/current-guidance]
@@ -67,7 +71,7 @@ artifacts:
   - path: "docs/design/canonical-model/manager-apply-workflow.md"
     form: doc
     realizes: [documentation/current-guidance]
-    why: Owns the accepted recursive Apply workflow, strict checks, ownership, Passes, results, tools and Manager teams while distinguishing the target from implementation evidence.
+    why: Owns the accepted Agent assignment, workspace, delegation and reviewed Git handoff target while distinguishing it from the existing Pass implementation and evidence.
   - path: "docs/concepts/sources/terminology-and-file-accounting-20261020.md"
     form: doc
     realizes: [documentation/current-guidance]

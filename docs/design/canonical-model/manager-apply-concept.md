@@ -1,5 +1,7 @@
 # Manager organization and reliable Apply
 
+**Current target, 22 October 2026:** [DEC-067](../../concepts/register.md#dec-067-agent-workspaces-and-reviewed-handoffs) and [Agent workspaces and reviewed handoffs](manager-apply-workflow.md) replace conflicting process mechanics below. The [delivery plan](../../implementation-plan.md#apply-rebuild-plan) owns the new rebuild sequence. This page retains its dated prior design and evidence; its old handoff is not a current implementation dispatch.
+
 **Superseded target:** the [accepted workflow of 20 October 2026](manager-apply-workflow.md) now owns Apply behavior under [DEC-064](../../concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams). Use its [Claude handoff](../../development/claude-apply-implementation-handoff-20261020.md). This page preserves the earlier concept and stable anchors; its conflicting rules and old handoff do not dispatch the new implementation. The runtime contract separately records earlier implemented behavior.
 
 ## Current agreed concept — 19 October 2026

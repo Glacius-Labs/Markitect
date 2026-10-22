@@ -18,12 +18,13 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-**Current accepted target, 20 October 2026:** [Apply workflow and recursive Manager passes](manager-apply-workflow.md), adopted in [DEC-064](../../concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), is the behavioral owner. Read it first, then the [Claude implementation handoff](../../development/claude-apply-implementation-handoff-20261020.md). Execute contains Plan, Prepare and Implement; independent Verify is a separate Pass. Strict Model/File gates, checked local registry composition, explicit lifecycle/events, tree-routed questions and bounded configurable Manager teams are accepted. These decisions are not yet implemented by the inspected Main baseline.
+**Current accepted target, 22 October 2026:** [Agent workspaces and reviewed handoffs](manager-apply-workflow.md), adopted in [DEC-067](../../concepts/register.md#dec-067-agent-workspaces-and-reviewed-handoffs), is the behavioral owner. One Agent has one assignment container and its own working copy; Managers delegate, answer questions, review Git handoffs and integrate upward. There are no domain Turns or mandatory per-write protection/evidence protocols. Read the [rebuild plan](../../implementation-plan.md#apply-rebuild-plan) next. This is a documentation-only target; the executable and canonical self-model remain the Pass implementation until explicitly migrated.
 
 | Document | Owns |
 | --- | --- |
-| [Accepted Apply workflow](manager-apply-workflow.md) | Current behavior, vocabulary, common Pass mechanism, ownership, questions, results, tools, teams and supersession. |
-| [Claude implementation handoff](../../development/claude-apply-implementation-handoff-20261020.md) | Bounded assignment, source map, delivery sequence, acceptance scenarios and evidence requirements. |
+| [Accepted Apply workflow](manager-apply-workflow.md) | Target mandates, Agent workspaces/containers, delegation, questions, reviewed Git handoffs, final verification and supersession. |
+| [Apply rebuild plan](../../implementation-plan.md#apply-rebuild-plan) | Future bounded slices, source seams, dependencies, removals and acceptance; no implementation grant. |
+| [Earlier Claude handoff](../../development/claude-apply-implementation-handoff-20261020.md) | Dated DEC-064 assignment, superseded where it conflicts with DEC-067. |
 | [Implemented runtime contract](manager-apply-runtime.md) | Earlier implemented behavior and limits. Old names and differing rules are not exceptions to the accepted target. |
 | [Prior Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) | Dated 19 October direction and earlier design history; superseded where DEC-064 differs. |
 | [Prior Library walkthrough](manager-apply-library-flow.md#current-library-walkthrough) | Earlier exchange sequence; the accepted workflow now contains the updated target walkthrough. |
@@ -34,7 +35,7 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 | [Library M1](library-example/README.md) | Example model and [outside evaluation contract](library-example/evaluation-contract.md). |
 | [North star](manager-realization-north-star.md) | Remaining unselected ideas and later extensions; DEC-064 adopts the conversation's Manager-team direction. |
 
-Earlier detailed protocols and their failed attempts remain in [Apply design before DEC-056](../../history/apply-design-before-dec-056/README.md). DEC-056 replaced their conflicting mechanics; DEC-058 made every Apply Execute-first; DEC-064 now refines that sequence and supersedes the initial-accounting and owner-question exceptions. Historical records retain their original wording. They cannot override the current target or dispatch new work.
+DEC-067 replaces conflicting DEC-064 Pass/Turn, shared-tree and per-write-enforcement mechanics. Original decisions and evidence keep their dates and scope. Earlier detailed protocols and their failed attempts remain in [Apply design before DEC-056](../../history/apply-design-before-dec-056/README.md). DEC-056 replaced their conflicting mechanics; DEC-058 made every Apply Execute-first; DEC-064 now refines that sequence and supersedes the initial-accounting and owner-question exceptions. Historical records retain their original wording. They cannot override the current target or dispatch new work.
 
 Concrete Go signatures, event identifiers and versioned formats are implementation choices within the accepted behavioral requirements. The [delivery plan](../../implementation-plan.md) owns assignments and shared-file coordination. Implementation, local validation, actual runtime evidence, Main composition and human acceptance remain separate.
 
