@@ -61,7 +61,7 @@ func TestBoundedOutputEnforcesExecPipeLimit(t *testing.T) {
 			} else {
 				cmd.Stderr = output
 			}
-			if err := cmd.Run(); !errors.Is(err, ErrLimit) {
+			if err := boundedCommandError(cmd.Run(), output); !errors.Is(err, ErrLimit) || !output.limitExceeded {
 				t.Fatalf("over-limit %s error = %v, want ErrLimit", stream, err)
 			}
 			if got := int64(len(output.Bytes())); got > limit {

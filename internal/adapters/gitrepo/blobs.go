@@ -108,7 +108,7 @@ func (g *gitRepository) finishBlobs(success bool) error {
 			trailing = fmt.Errorf("%w: unexpected trailing blob output", ErrUnsafe)
 		}
 	}
-	err := b.cmd.Wait()
+	err := boundedCommandError(b.cmd.Wait(), b.stderr)
 	b.waited = true
 	if g.ctx.Err() != nil && success {
 		return g.ctx.Err()

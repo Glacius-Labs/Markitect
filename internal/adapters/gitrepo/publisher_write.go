@@ -48,7 +48,7 @@ func (c *publicationConverter) run(data []byte, args ...string) ([]byte, error) 
 	cmd.Stdin = bytes.NewReader(data)
 	output, stderr := &boundedOutput{limit: c.limits.FileBytes}, &boundedOutput{limit: 16 << 10}
 	cmd.Stdout, cmd.Stderr, cmd.WaitDelay = output, stderr, time.Second
-	if err := cmd.Run(); err != nil {
+	if err := boundedCommandError(cmd.Run(), output, stderr); err != nil {
 		return nil, fmt.Errorf("publication conversion: %w: %s", err, strings.TrimSpace(stderr.String()))
 	}
 	return output.Bytes(), nil
