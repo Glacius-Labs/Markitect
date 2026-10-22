@@ -1,8 +1,10 @@
 # Concept register
 
+**Latest accepted target, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) replaces conflicting shared-tree, Pass/Turn, evidence-protocol and per-write-enforcement directions. The [workflow](../design/canonical-model/manager-apply-workflow.md) owns the target and the [delivery plan](../implementation-plan.md#apply-rebuild-plan) owns future slices. Current code and canonical self-model are unchanged; this is documentation adoption, not implementation or runtime evidence.
+
 This register records Markitect's long-term vision, product-level decisions, clarifications, endorsed directions, promises, assumptions, concepts, future enhancements, ideas and open questions. Each entry has a status and an origin. "Owner" means Markitect's product owner. The [concept record guide](README.md) defines entry types, statuses and the rules for changing entries. The [vision](../vision.md) presents the thesis these entries support. Earlier collections from the Concepts and Ideas chats are preserved in the [sources](sources/README.md) and mapped [below](#imported-collections).
 
-**Current Apply reading:** [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) and the [accepted workflow](../design/canonical-model/manager-apply-workflow.md) own Apply. Main #530 integrated the base Pass process; the [first real runs](../validation/apply-pass-process-20261020.md) include a false-success Depot and blocked Haiku work. The owner has adopted [evidence-driven hardening](../design/canonical-model/manager-apply-workflow.md#evidence-driven-hardening-adopted-20-october-2026): active counterexamples, tool-produced receipts, challenged child evidence, precise dependencies and honest unresolved policy. The [new Claude handoff](../development/claude-apply-hardening-handoff-20261020.md) prepares implementation and bounded evaluation; these refinements are not new runtime evidence. The runtime guide describes the base implementation; the canonical self-model includes adopted target intent. Dated decisions and old-core results keep their scope.
+**Current Apply reading:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) and the [accepted workflow](../design/canonical-model/manager-apply-workflow.md) own the target. DEC-064 and Main #530 describe the implemented Pass baseline; its [first real runs](../validation/apply-pass-process-20261020.md) and [hardening evidence](../validation/apply-hardening-20261020.md) retain their original outcomes, including false success and incomplete work. The [runtime guide](../design/canonical-model/manager-apply-runtime.md) and canonical self-model remain source-bound until migration. The old Claude handoffs do not dispatch the new architecture. Target acceptance does not establish implementation or runtime acceptance.
 
 ## Index
 
@@ -79,6 +81,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Base integrated; evidence-driven hardening adopted, implementation and new evidence pending |
 | [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) | Decision | Work through the cockpit: agent-proposed model changes and configuration | Accepted by the owner; implementation started |
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded |
+| [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted target; concept and rebuild plan only, implementation pending |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -489,6 +492,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-037 Agent sessions and checks run in Linux containers
 
+**Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
+
 **Lifecycle amendment, owner 21 October 2026:** [one fresh container per Agent Turn](../design/canonical-model/manager-apply-workflow.md#per-turn-container-baseline) is the selected baseline again. The owner [withdrew reuse and requested a targeted rollback](sources/per-turn-container-decision-20261021.md#owner-decision), retaining unrelated improvements and enforced isolation/cessation. [A's assignment](../development/claude-direct-runtime-handoff-20261021.md#container-decision-one-fresh-instance-per-turn) removes reuse-only machinery; logical Manager/conversation continuity is preserved. #572 remains implemented source until that rollback lands; this decision alone is not runtime evidence.
 
 - **Status:** Accepted, owner, 17 October 2026 ([source](sources/runtime-discussion-20261017.md)), after a real handshake with both CLIs ([record](../validation/runtime-handshake-20261017.md)).
@@ -513,6 +518,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Boundary:** Adoption does not make the assistant's historical assessments measured facts, prove product benefit, waive review/CI/safeguards, create routine approval gates or authorize provider runs, studies or releases. This governs Markitect's own development; it does not impose a new product contract on adopting projects. It preserves DEC-031's two-Apply target and DEC-032's quality priorities.
 
 ### DEC-039 Deterministic Manager process
+
+**Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
 
 **Updated by [DEC-041](#dec-041-core-protocol-choices):** cross-area requests are forwarded by the Orchestrator instead of dispatched hop by hop. Warm retention and quiescent basis advances are deferred beyond the first Apply. The statement below records the decision as accepted.
 
@@ -649,6 +656,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-051 Agents get tasks; the Orchestrator owns the process
 
+**Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
+
 - **Status:** Accepted, owner, 18 October 2026 ([owner instruction](sources/agents-get-tasks-20261018.md)).
 - **Decision:** A step's input gives its agent a clear task: its role, the binding Definitions, its files, its children's results, its open findings and review cases, its messages and the answer it must return. Admission, barriers, waits, limits, acceptance and routing to the owner belong to the Orchestrator and are not explained to agents. A process gap is closed in the Orchestrator, through state, structured answers and refusal reasons, not with more prompt text.
 - **Reason:** The step inputs had accumulated the Host's rules: admission order, the write barrier, the rejection allowance, owner-question mechanics. The owner expects results to become less reliable as prompts take over organization and orchestration, and wants that loop stopped.
@@ -694,6 +703,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-056 Recursive reconciliation with a shared workspace
 
+**Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
+
 **Current disposition, 20 October 2026:** DEC-058 removed initial Verify; DEC-064 now specifies the accepted common Pass mechanism and Execute decomposition. Read the current workflow before implementing this dated entry.
 
 - **Status:** Accepted direction, owner, 19 October 2026 ([verbatim owner source](sources/recursive-apply-simplification-20261019.md)). Implemented under the owner's [implementation dispatch](sources/recursive-apply-implementation-20261019.md) and merged (PR #463); pending owner acceptance. The implemented technical contract is [manager-apply-runtime.md](../design/canonical-model/manager-apply-runtime.md); real library runs are recorded in the [demonstration](../validation/recursive-apply-demonstration-20261019.md) and the [repetitions](../validation/recursive-apply-repetitions-20261019.md).
@@ -731,6 +742,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Supersession and evidence:** Amends the entry order of [DEC-056](#dec-056-recursive-reconciliation-with-a-shared-workspace), keeping [DEC-057](#dec-057-three-fundamental-starting-situations)'s three starting situations and two processes. The [current concept](../design/canonical-model/manager-apply-concept.md#shared-working-tree-and-reconciliation-cycle) owns the accepted target; the [runtime contract](../design/canonical-model/manager-apply-runtime.md) and canonical self-model record its implementation. The decision itself created no runtime change, provider run or demonstration result.
 
 ### DEC-059 Enforced responsibilities, build start and an outside oracle
+
+**Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
 
 **Current disposition, 20 October 2026:** DEC-064 preserves enforcement and the outside oracle while replacing the mirrored/default and Root-only exact-file restrictions with explicit most-specific directory/file ownership for all Managers.
 
@@ -779,6 +792,8 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 
 ### DEC-064 Checked recursive Apply passes and Manager teams
 
+**Target update, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) supersedes the conflicting process/enforcement mechanics below. This entry retains its original decision and evidence; the executable migration is pending.
+
 **Proportionate-process review, 22 October 2026:** the owner reaffirmed DEC-002 and adopted the [concrete process simplifications](../design/canonical-model/manager-apply-workflow.md#proportionate-process-review-22-october-2026). The owner subsequently adopted all seven changes, explicitly including removal of separate Verify preapproval. They replace the corresponding earlier target rules; implementation and new runtime evidence remain outstanding. The documentation-only boundary applies to the concept chat, not to the Apply planning chat's implementation authority ([source](sources/proportionate-agent-process-20261022.md#scope-clarification)).
 
 **Evidence-backed acceptance, owner 21 October 2026:** the [accepted amendment](../design/canonical-model/manager-apply-workflow.md#evidence-backed-acceptance-after-the-codex-retest), with [owner source](sources/apply-conformance-acceptance-20261021.md), requires material-condition coverage, candidate-bound Implement behavioral evidence, explicit parent integration including an obligation-free Root, independently derived Verify counterexamples and finite review/cleanup reserve. The [Codex retest](../validation/apply-codex-conformance-20261021.md) had an incorrect Implement completeness claim, two incomplete Verify workflows and a correct model-gap stop; it had no publication. The [bounded new handoff](../development/codex-apply-conformance-handoff-20261021.md) is subsequent work, not implemented/runtime-proven behavior or a replenishment of the exhausted series.
@@ -823,6 +838,15 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Boundaries:** Only the owner starts a run, with an explicit confirmation that names the execution budget, the deadline and the Agent profile; the cockpit never starts Apply by itself, not after an accepted proposal and not on a schedule. A run started in the cockpit is the same Apply as `markitect apply` with the same inputs, checks, budget and evidence; the cockpit changes no Apply semantics. Stopping is always available for a run the cockpit started and ends it incomplete with its evidence, as an interrupted `markitect apply` does; nothing is restored. One run holds a state directory at a time. Setup writes only what `markitect setup` writes, and their formats stay owned by setup. Real provider spending happens only through a run or a model session the owner starts.
 - **Sequence:** starting and stopping on the existing configuration first, because it is the boundary the rest depends on; notifications and the app window alongside; then the project list and guided setup. Installer and automatic updates come with the pinned pilot build ([#503](https://github.com/Glacius-Labs/Markitect/issues/503)), so that one installable Markitect carries the cockpit.
 - **Behavior owner:** the [cockpit concept](../design/cockpit.md#the-cockpit-as-desktop-app). Related: [VIS-001](#vis-001-cockpit-personal-ai-and-autonomous-project-organization), [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers).
+
+### DEC-067 Agent workspaces and reviewed handoffs
+
+- **Status:** Accepted by the owner, 22 October 2026 ([verbatim source](sources/agent-workspaces-and-handoffs-20261022.md#adoption-and-documentation-scope)). The owner commissioned updates to existing concept documents and a concrete Apply rebuild plan, explicitly no implementation.
+- **Decision:** Use one container and independent working copy per Agent assignment. A Manager is an Agent with direct-child delegation, questions/escalation and substantive review/integration. Children submit named internal Git results; parents accept or return concrete corrections and pass integrated results upward. Model assessment, Implement and Verify have precise separate mandates; optional improvement analysis requires an explicit commission. A fresh independent Agent verifies Root's complete result without requiring a second full Manager tree.
+- **Proportionate enforcement:** Ownership, fixed intent and review independence are working rules checked through normal review. Per-file write overlays, read-only reviewer mounts, container freezing and custom proof/evidence protocols are not required. Ordinary command observations and tests remain available for judgment; Git commits identify the reviewed result. The Host supplies execution, communication, retained results and finite limits.
+- **Replaced mechanics:** No domain Turns, repeated-progress/empty-Turn rules, shared writable stand, universal basis approval, general basis/result invalidation graph, mandatory probe-receipt/dispute/disposition system or automatic whole-tree correction loop. Provider conversation events remain internal adapter facts. This supersedes conflicting mechanics in DEC-037, DEC-039, DEC-051, DEC-056, DEC-059 and DEC-064, without deleting their original sources or invalidating historical evidence.
+- **Retained intent:** Model authority, required Package responsibility, strict initial file accounting, preservation, parent/child communication, meaningful independent review and integration, required final checks, honest incomplete outcomes and transfer without an automatic owner commit/push. Confirmed model problems still end execution and are corrected outside it. Extract keeps its distinct authority and separately owned workflow.
+- **Owners and scope:** [Accepted workflow](../design/canonical-model/manager-apply-workflow.md); [Apply rebuild plan](../implementation-plan.md#apply-rebuild-plan). Current executable/configuration/canonical self-model migrate only with explicitly commissioned implementation slices. No provider allowance, new study, release or deployment is granted. The old reuse rollback is history, not the implementation plan for this different workspace architecture.
 
 ## Promises
 
@@ -1146,7 +1170,7 @@ The ideas below come from the owner's contributions of 9 October 2026. The produ
 
 - **Status:** Withdrawn from the current direction by the owner, 21 October 2026. [Return to one container per Turn](sources/per-turn-container-decision-20261021.md#owner-decision) supersedes the earlier selection. Reuse was implemented in #572; A now owns its targeted rollback while preserving other improvements. No further reuse fixes, B2 optimization or reuse comparison is assigned.
 - **Historical idea:** Reuse Manager working containers across Turns within a Run while preserving activity-specific rights, observed writer cessation and fresh independent review. The initial source and real-container checks passed, but the selected B1 preservation run stopped at capture with retained workspace mounts; no reliable whole-workflow benefit was established. Preserve the observations and external-evaluation limitations in the new source record.
-- **Current target:** [DEC-037](#dec-037-agent-sessions-and-checks-run-in-linux-containers) and the [per-Turn baseline](../design/canonical-model/manager-apply-workflow.md#per-turn-container-baseline). Reconsideration requires a demonstrated lifecycle bottleneck and a new owner decision, not completion of an old checklist.
+- **Later target, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) adopts one assignment container with an independent working copy. This is a new collaboration architecture, not a restart of the old shared-volume reuse experiment. The withdrawal and rollback above retain their historical scope; the documentation decision grants no runtime work.
 - **History and delivery:** [Original owner sequence](sources/terminology-and-file-accounting-20261020.md#owner-sequencing-manager-container-reuse), [rollback assignment](../development/claude-direct-runtime-handoff-20261021.md#container-decision-one-fresh-instance-per-turn), [delivery plan](../implementation-plan.md#per-turn-container-rollback).
 
 ## Imported collections

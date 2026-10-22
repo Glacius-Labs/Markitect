@@ -1,5 +1,7 @@
 # Acceptance gates for the first reliable Apply
 
+**Current target, 22 October 2026:** [DEC-067](../../concepts/register.md#dec-067-agent-workspaces-and-reviewed-handoffs) and [Agent workspaces and reviewed handoffs](manager-apply-workflow.md) replace conflicting process mechanics below. The [delivery plan](../../implementation-plan.md#apply-rebuild-plan) owns the new rebuild sequence. This page retains its dated prior design and evidence; its old handoff is not a current implementation dispatch.
+
 **Dated prior design:** [DEC-064 and the accepted workflow](manager-apply-workflow.md) supersede conflicting process rules here. The [Claude handoff](../../development/claude-apply-implementation-handoff-20261020.md) owns the new assignment and acceptance cases. Preserve this page's earlier sequence/evidence; do not treat it as the current target.
 
 > **Historical, 19 October 2026:** [manager-apply-runtime.md](manager-apply-runtime.md) owns the implemented contract of Apply ([DEC-056](../../concepts/register.md#dec-056-recursive-reconciliation-with-a-shared-workspace)). The text below describes the earlier design and is kept as history; do not implement it or read it as current behavior.

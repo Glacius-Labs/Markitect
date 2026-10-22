@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Agent workspaces and reviewed handoffs](agent-workspaces-and-handoffs-20261022.md) | Direct owner statements and adoption, 22 October 2026 | Separate mandates, one container/own stand per Agent, no domain Turns, delegation/questions and reviewed Git handoffs; proportionate protection and documentation-only rebuild plan |
 | [Proportionate Agent process](proportionate-agent-process-20261022.md) | Direct owner statements, 22 October 2026 | Ordinary coding-Agent trust baseline, adoption of all seven simplifications including removal of Verify preapproval, and the Apply planning chat's implementation authority |
 | [Return to one container per Turn](per-turn-container-decision-20261021.md) | Direct owner decision, 21 October 2026; labeled evidence notes | Supersedes Manager-container reuse, preserves other improvements, assigns targeted rollback to A and asks the Apply planning chat for the Claude prompt |
 | [Primary goal and conformance evaluation](primary-goal-and-conformance-evaluation-20261021.md) | Direct owner goal and adoption, 21 October 2026; labeled coordination notes | Trust through complete model-to-artifact conformance, independent semantic coverage and parent integration, refined A–D evidence priorities and bounded handoff |
