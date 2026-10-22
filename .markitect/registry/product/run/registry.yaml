@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/handoffs.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Routes required Manager assignments, parent questions and fixed child Git results through the model-derived tree during the Apply migration."
+  - path: "internal/run/handoffs_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks direct-child participation, question routing, corrected handoffs and explicit parent integration decisions with controlled assignment ports."
   - path: "internal/run/assessment.go"
     form: code
     realizes: [product/run/confirmed-run-history]
