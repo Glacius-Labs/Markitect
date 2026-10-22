@@ -317,7 +317,10 @@ func (f *AssignmentHandoffs) Accept(ctx context.Context, parent, child, inspecte
 	pwork, cwork, handoff, previous := m.agent.Workspace(), c.agent.Workspace(), c.handoff, m.accepted[child]
 	f.mu.Unlock()
 	result, err := f.integration.Integrate(ctx, pwork, cwork, handoff, previous)
-	if err != nil {
+	if result == "" {
+		if err == nil {
+			err = errors.New("Git integration returned no parent result commit")
+		}
 		return "", err
 	}
 	f.mu.Lock()
@@ -325,7 +328,7 @@ func (f *AssignmentHandoffs) Accept(ctx context.Context, parent, child, inspecte
 	changed := c.returned || c.handoff.ResultCommit != handoff.ResultCommit
 	f.mu.Unlock()
 	if changed {
-		return result, fmt.Errorf("child %q changed while its Git result was integrated", child)
+		return result, errors.Join(err, fmt.Errorf("child %q changed while its Git result was integrated", child))
 	}
-	return result, nil
+	return result, err
 }

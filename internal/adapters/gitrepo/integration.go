@@ -2,6 +2,8 @@ package gitrepo
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"errors"
 	"fmt"
 	"io"
@@ -11,9 +13,8 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-// ErrIntegrationConflict means Git could not apply a child's change to its
-// parent's current stand. The owning child receives a concrete correction;
-// the parent is restored to its fixed pre-integration internal commit.
+// ErrIntegrationConflict means Git could not apply a child's change to a
+// temporary copy of the parent's fixed stand. The live parent is untouched.
 var ErrIntegrationConflict = errors.New("child Git result conflicts with parent stand")
 
 var _ run.AssignmentIntegration = (*Workspaces)(nil)
@@ -113,57 +114,80 @@ func (w *Workspaces) Integrate(ctx context.Context, parent, child run.Assignment
 		}
 	}
 	parentSpec, childSpec := w.spec(p.volume, false), w.spec(c.volume, true)
-	applyErr, sourceErr := w.patch(ctx, childSpec, parentSpec, base, handoff.ResultCommit, true)
-	if sourceErr != nil {
-		return "", fmt.Errorf("child patch could not be read: %w", sourceErr)
-	}
-	if applyErr != nil {
-		return "", fmt.Errorf("%w: %v", ErrIntegrationConflict, applyErr)
-	}
-	applyErr, sourceErr = w.patch(ctx, childSpec, parentSpec, base, handoff.ResultCommit, false)
-	if applyErr != nil || sourceErr != nil {
-		if applyErr != nil {
-			unmerged, inspectErr := w.integrationGit(ctx, parentSpec, "diff", "--name-only", "--diff-filter=U")
-			if inspectErr == nil && unmerged != "" {
-				if _, resetErr := w.integrationGit(ctx, parentSpec, "reset", "--hard", parentBefore); resetErr != nil {
-					return "", fmt.Errorf("Git conflict left an uncertain parent stand: %w", errors.Join(applyErr, resetErr))
-				}
-				return "", fmt.Errorf("%w on %s: %v", ErrIntegrationConflict, unmerged, applyErr)
-			}
-		}
-		return "", fmt.Errorf("Git integration changed after its successful check: %w", errors.Join(applyErr, sourceErr))
-	}
-	if _, err := w.integrationGit(ctx, parentSpec, "commit", "-m", "Integrate child result "+handoff.ResultCommit); err != nil {
-		return "", fmt.Errorf("applied child changes remain in parent workspace without a result commit: %w", err)
-	}
-	result, err := w.integrationGit(ctx, parentSpec, "rev-parse", "HEAD")
-	if err != nil {
+	var nonce [16]byte
+	if _, err := rand.Read(nonce[:]); err != nil {
 		return "", err
 	}
+	temporary := "/work/.git/markitect-integration-" + hex.EncodeToString(nonce[:])
+	if _, err := w.integrationGit(ctx, parentSpec, "worktree", "add", "--detach", temporary, parentBefore); err != nil {
+		return "", fmt.Errorf("temporary parent Git stand could not start: %w", err)
+	}
+	removeTemporary := func() error {
+		_, err := w.integrationGit(ctx, parentSpec, "worktree", "remove", "--force", temporary)
+		return err
+	}
+	applyErr, sourceErr := w.patch(ctx, childSpec, parentSpec, temporary, base, handoff.ResultCommit)
+	if applyErr != nil || sourceErr != nil {
+		unmerged, inspectErr := w.integrationGitAt(ctx, parentSpec, temporary, "diff", "--name-only", "--diff-filter=U")
+		cleanupErr := removeTemporary()
+		if inspectErr == nil && cleanupErr == nil && unmerged != "" && applyErr != nil {
+			return "", fmt.Errorf("%w on %s: %v", ErrIntegrationConflict, unmerged, applyErr)
+		}
+		return "", fmt.Errorf("temporary Git integration failed: %w", errors.Join(applyErr, sourceErr, inspectErr, cleanupErr))
+	}
+	if _, err := w.integrationGitAt(ctx, parentSpec, temporary, "commit", "-m", "Integrate child result "+handoff.ResultCommit); err != nil {
+		cleanupErr := removeTemporary()
+		return "", fmt.Errorf("temporary parent commit failed: %w", errors.Join(err, cleanupErr))
+	}
+	result, err := w.integrationGitAt(ctx, parentSpec, temporary, "rev-parse", "HEAD")
+	if err != nil {
+		cleanupErr := removeTemporary()
+		return "", errors.Join(err, cleanupErr)
+	}
 	if !commitIDPattern.MatchString(result) || result == parentBefore {
-		return "", errors.New("parent integration commit was not observed")
+		cleanupErr := removeTemporary()
+		return "", errors.Join(errors.New("parent integration commit was not observed"), cleanupErr)
+	}
+	current, err := w.integrationGit(ctx, parentSpec, "rev-parse", "HEAD")
+	if err != nil || current != parentBefore {
+		cleanupErr := removeTemporary()
+		return "", errors.Join(err, cleanupErr, fmt.Errorf("parent Git head changed during child integration"))
+	}
+	if _, err := w.integrationGit(ctx, parentSpec, "merge", "--ff-only", result); err != nil {
+		cleanupErr := removeTemporary()
+		return "", fmt.Errorf("parent Git stand could not fast-forward without losing live work: %w", errors.Join(err, cleanupErr))
+	}
+	if err := removeTemporary(); err != nil {
+		return result, fmt.Errorf("integrated parent commit %s but temporary Git worktree remains: %w", result, err)
 	}
 	return result, nil
 }
 
 func assignmentGitArgs(args ...string) []string {
-	return append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=Markitect", "-c", "user.email=assignment@markitect.invalid", "-C", "/work"}, args...)
+	return assignmentGitArgsAt("/work", args...)
+}
+
+func assignmentGitArgsAt(directory string, args ...string) []string {
+	return append([]string{"/usr/bin/git", "-c", "core.hooksPath=/dev/null", "-c", "user.name=Markitect", "-c", "user.email=assignment@markitect.invalid", "-C", directory}, args...)
 }
 
 // integrationGit runs while Workspaces.mu holds both volume ownerships stable.
 func (w *Workspaces) integrationGit(ctx context.Context, spec container.ContainerSpec, args ...string) (string, error) {
+	return w.integrationGitAt(ctx, spec, "/work", args...)
+}
+
+func (w *Workspaces) integrationGitAt(ctx context.Context, spec container.ContainerSpec, directory string, args ...string) (string, error) {
 	var output boundedOutput
 	output.limit = 16 << 10
-	if err := w.runtime.RunHelper(ctx, spec, assignmentGitArgs(args...), nil, &output); err != nil {
+	if err := w.runtime.RunHelper(ctx, spec, assignmentGitArgsAt(directory, args...), nil, &output); err != nil {
 		return "", err
 	}
 	return strings.TrimSpace(output.String()), nil
 }
 
-// patch streams one fixed child diff to Git in the parent copy. The check
-// phase does not mutate the parent. Git may still discover a three-way
-// conflict during the applying phase; Integrate restores the parent then.
-func (w *Workspaces) patch(ctx context.Context, childSpec, parentSpec container.ContainerSpec, base, result string, check bool) (error, error) {
+// patch streams one fixed child diff into the temporary parent Git worktree.
+// A conflict cannot change the live parent's index or working files.
+func (w *Workspaces) patch(ctx context.Context, childSpec, parentSpec container.ContainerSpec, directory, base, result string) (error, error) {
 	reader, writer := io.Pipe()
 	done := make(chan error, 1)
 	go func() {
@@ -171,14 +195,9 @@ func (w *Workspaces) patch(ctx context.Context, childSpec, parentSpec container.
 		_ = writer.CloseWithError(err)
 		done <- err
 	}()
-	args := []string{"apply", "--3way", "--index"}
-	if check {
-		args = append(args, "--check")
-	}
-	args = append(args, "-")
 	var output boundedOutput
 	output.limit = 16 << 10
-	applyErr := w.runtime.RunHelper(ctx, parentSpec, assignmentGitArgs(args...), reader, &output)
+	applyErr := w.runtime.RunHelper(ctx, parentSpec, assignmentGitArgsAt(directory, "apply", "--3way", "--index", "-"), reader, &output)
 	_ = reader.CloseWithError(applyErr)
 	childErr := <-done
 	return applyErr, childErr

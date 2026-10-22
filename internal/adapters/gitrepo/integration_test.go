@@ -19,8 +19,11 @@ import (
 )
 
 type integrationRuntime struct {
-	roots         map[string]string
-	failPatchRead bool
+	roots            map[string]string
+	failPatchRead    bool
+	failParentApply  bool
+	failTempCommit   bool
+	backgroundChange string
 }
 
 func (f *integrationRuntime) InspectVolume(_ context.Context, name string) (container.VolumeObservation, error) {
@@ -45,10 +48,28 @@ func (f *integrationRuntime) RunHelper(ctx context.Context, spec container.Conta
 			return errors.New("child patch read failed")
 		}
 	}
+	if len(argv) >= 10 && strings.Contains(argv[8], "markitect-integration-") {
+		if argv[9] == "apply" {
+			if f.backgroundChange != "" {
+				if err := os.WriteFile(filepath.Join(root, "common.txt"), []byte(f.backgroundChange), 0644); err != nil {
+					return err
+				}
+				f.backgroundChange = ""
+			}
+			if f.failParentApply {
+				return errors.New("parent apply helper failed")
+			}
+		}
+		if argv[9] == "commit" && f.failTempCommit {
+			return errors.New("temporary commit helper failed")
+		}
+	}
 	args := slices.Clone(argv[1:])
 	for i := range args {
 		if args[i] == "/work" {
 			args[i] = root
+		} else if strings.HasPrefix(args[i], "/work/") {
+			args[i] = filepath.Join(root, filepath.FromSlash(strings.TrimPrefix(args[i], "/work/")))
 		}
 	}
 	cmd := exec.CommandContext(ctx, "git", args...)
@@ -182,6 +203,53 @@ func TestIndependentAssignmentPatchReadFailureIsNotAConflict(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(roots["library"], "lending.txt")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("failed patch changed parent file: %v", err)
+	}
+}
+
+func TestTemporaryIntegrationFailureLeavesParentRetryable(t *testing.T) {
+	for _, phase := range []string{"apply", "commit"} {
+		t.Run(phase, func(t *testing.T) {
+			ctx := context.Background()
+			w, copies, roots := integrationFixture(t, "library", "lending")
+			integrationWrite(t, roots["lending"], "lending.txt", "child behavior\n")
+			child := integrationHandoff(t, copies["lending"])
+			runtime := w.runtime.(*integrationRuntime)
+			runtime.failParentApply = phase == "apply"
+			runtime.failTempCommit = phase == "commit"
+			if _, err := w.Integrate(ctx, copies["library"], copies["lending"], child, ""); err == nil || errors.Is(err, ErrIntegrationConflict) {
+				t.Fatalf("temporary %s failure was accepted or misclassified: %v", phase, err)
+			}
+			if _, err := os.Stat(filepath.Join(roots["library"], "lending.txt")); !errors.Is(err, os.ErrNotExist) {
+				t.Fatalf("failed %s changed live parent: %v", phase, err)
+			}
+			runtime.failParentApply, runtime.failTempCommit = false, false
+			if result, err := w.Integrate(ctx, copies["library"], copies["lending"], child, ""); err != nil || result == "" {
+				t.Fatalf("clean retry after temporary %s failure: %q %v", phase, result, err)
+			}
+			got, err := os.ReadFile(filepath.Join(roots["library"], "lending.txt"))
+			if err != nil || string(got) != "child behavior\n" {
+				t.Fatalf("retry after %s: %q %v", phase, got, err)
+			}
+		})
+	}
+}
+
+func TestLiveParentEditDuringIntegrationIsPreserved(t *testing.T) {
+	ctx := context.Background()
+	w, copies, roots := integrationFixture(t, "library", "lending")
+	integrationWrite(t, roots["lending"], "common.txt", "child decision\n")
+	child := integrationHandoff(t, copies["lending"])
+	w.runtime.(*integrationRuntime).backgroundChange = "new live parent work\n"
+	_, err := w.Integrate(ctx, copies["library"], copies["lending"], child, "")
+	if err == nil || errors.Is(err, ErrIntegrationConflict) {
+		t.Fatalf("live parent drift became a child conflict or success: %v", err)
+	}
+	got, readErr := os.ReadFile(filepath.Join(roots["library"], "common.txt"))
+	if readErr != nil || string(got) != "new live parent work\n" {
+		t.Fatalf("live parent edit was discarded: %q %v", got, readErr)
+	}
+	if status, statusErr := copies["library"].git(ctx, "status", "--porcelain"); statusErr != nil || !strings.Contains(status, "common.txt") {
+		t.Fatalf("live parent edit not retained as work: %q %v", status, statusErr)
 	}
 }
 
