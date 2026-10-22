@@ -1,10 +1,94 @@
 package run
 
 import (
+	"fmt"
 	"strings"
 	"sync"
 	"testing"
 )
+
+// An accepted Manager can answer repeated routed follow-ups without its valid
+// final acknowledgement becoming another productive result or a retry failure.
+func TestAcceptedManagerAnswersFollowUpsWithoutResubmitting(t *testing.T) {
+	f := newFixture(t)
+	var mu sync.Mutex
+	asked := 0
+	acks := map[string]bool{}
+	var accepted *proposal
+	f.agents.script = func(c *call) error {
+		mu.Lock()
+		defer mu.Unlock()
+		if c.turn.Manager == "library" && len(c.pendingQuestions()) > 0 {
+			c.ag.e.mu.Lock()
+			m := c.ag.e.cur.byPath["library"]
+			if m.stage != stageDone || m.result == nil || m.result != accepted {
+				t.Errorf("follow-up did not reach the unchanged accepted result")
+			}
+			c.ag.e.mu.Unlock()
+			for _, q := range c.pendingQuestions() {
+				c.answerQuestion(q)
+			}
+			acks[c.turn.ID] = true
+			c.final = `{"status":"satisfied","summary":"Answered the parent's follow-up about the accepted result.","findings":[],"open":[]}`
+			return nil
+		}
+		if c.turn.Manager == "." {
+			for _, id := range c.pendingDecisions() {
+				c.must(testAssessment, map[string]any{"kind": kindAccept, "proposal": id})
+			}
+			c.ag.e.mu.Lock()
+			accepted = c.ag.e.cur.byPath["library"].result
+			answered := asked == 0
+			for _, q := range c.ag.e.questions {
+				if q.ID == fmt.Sprintf("Q%d", asked) {
+					answered = q.Answered
+				}
+			}
+			c.ag.e.mu.Unlock()
+			if accepted != nil && (asked < 2 || !answered) {
+				if answered {
+					asked++
+					c.must(toolSend, map[string]any{"to": "library", "kind": sendQuestion, "text": fmt.Sprintf("Explain accepted behavior %d", asked)})
+				}
+				c.must(toolWait, map[string]any{"for": fmt.Sprintf("Q%d", asked)})
+				return nil
+			}
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	res := r.Pass(implementSpec())
+	out := f.finish(r, "")
+	if res.Stopped || res.Verdict != Satisfied || len(acks) != 2 {
+		t.Fatalf("stopped %v, verdict %s, acknowledgements %d: %s", res.Stopped, res.Verdict, len(acks), out.Reason)
+	}
+	acceptedCount := 0
+	for _, ev := range f.ev.kinds("result.accepted") {
+		if ev.Manager == "library" {
+			acceptedCount++
+		}
+	}
+	if acceptedCount != 1 {
+		t.Errorf("library result accepted %d times", acceptedCount)
+	}
+	for id := range acks {
+		captured := 0
+		for _, ev := range f.ev.kinds("turn.submitted") {
+			if ev.Turn == id {
+				captured++
+			}
+		}
+		if captured != 1 {
+			t.Errorf("acknowledgement %s captured %d times", id, captured)
+		}
+		for _, ev := range f.ev.kinds("assessment.unresolved") {
+			if ev.Turn == id {
+				t.Errorf("coordination acknowledgement %s consumed a productive correction", id)
+			}
+		}
+	}
+}
 
 func TestProposalDeliveredInToolResponseRemainsDemandedNextTurn(t *testing.T) {
 	f := newFixture(t)
@@ -52,14 +136,14 @@ func TestCrossBranchQuestionTakesTheAncestorRouteBothWays(t *testing.T) {
 			}
 			c.must(toolSend, map[string]any{"to": "parent", "kind": sendQuestion, "text": "how does library print a loan?"})
 			asked = "Q1"
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "Q1"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "Q1"})
 			return nil
 		case c.turn.Manager == "." && strings.Contains(c.turn.Prompt, "Question Q1 from your child lending") && forwarded == "":
 			c.must(toolSend, map[string]any{"to": "library", "kind": sendQuestion, "text": "lending asks how you print a loan", "about": "Q1"})
 			forwarded = "Q2"
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "Q2"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "Q2"})
 			for _, id := range c.pendingDecisions() {
-				c.must(toolReport, map[string]any{"kind": kindAccept, "proposal": id})
+				c.must(testAssessment, map[string]any{"kind": kindAccept, "proposal": id})
 			}
 			return nil
 		case c.turn.Manager == "." && strings.Contains(c.turn.Prompt, "Answer to your question Q2"):
@@ -144,7 +228,7 @@ func TestOpenQuestionBlocksTheCompleteResult(t *testing.T) {
 			if !a.Refused {
 				t.Errorf("a result with an open question was accepted")
 			}
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "Q1"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "Q1"})
 			return nil
 		}
 		c.protocol()
@@ -171,17 +255,17 @@ func TestRootModelErrorEndsTheRunFailed(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Manager == "lending" && childAbort == "" {
-			a := c.tool(toolReport, map[string]any{"kind": kindProblem, "category": "model", "text": "contradiction", "abort": true})
+			a := c.tool(testAssessment, map[string]any{"kind": kindProblem, "category": "model", "text": "contradiction", "abort": true})
 			childAbort = a.Text
 			if !a.Refused {
 				t.Errorf("a child ended the run")
 			}
 			c.must(toolEscalate, map[string]any{"category": "model", "text": "borrow and reminders contradict each other"})
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "Q1"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "Q1"})
 			return nil
 		}
 		if c.turn.Manager == "." && strings.Contains(c.turn.Prompt, "Escalated model problem") {
-			c.must(toolReport, map[string]any{"kind": kindProblem, "category": "model", "text": "lending/borrow contradicts lending/reminders/notice", "abort": true})
+			c.must(testAssessment, map[string]any{"kind": kindProblem, "category": "model", "text": "lending/borrow contradicts lending/reminders/notice", "abort": true})
 			return nil
 		}
 		c.protocol()
@@ -235,7 +319,7 @@ func TestNobodyOutsideTheTreeAnswersDuringARun(t *testing.T) {
 	r.Pass(planSpec())
 	f.finish(r, "")
 	for _, refusal := range refusals {
-		if !strings.Contains(refusal, "Nobody outside the Manager tree answers") || !strings.Contains(refusal, "category model, abort true") {
+		if !strings.Contains(refusal, "Nobody outside the Manager tree answers") || !strings.Contains(refusal, "final assessment problem field") {
 			t.Errorf("refusal %q", refusal)
 		}
 	}
@@ -257,12 +341,12 @@ func TestOrphanedWaitEndsVisiblyIncomplete(t *testing.T) {
 		switch {
 		case c.turn.Manager == "library" && !asked:
 			c.must(toolSend, map[string]any{"to": "parent", "kind": sendQuestion, "text": "what now?"})
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "Q1"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "Q1"})
 			asked = true
 			return nil
 		case c.turn.Manager == "." && len(c.pendingQuestions()) > 0:
 			// Root forwards to the user... no: it waits for library itself.
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "library"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "library"})
 			return nil
 		}
 		c.protocol()

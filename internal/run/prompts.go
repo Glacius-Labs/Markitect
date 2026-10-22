@@ -74,30 +74,22 @@ func writeEnvelope(b *strings.Builder, env envelope, findings func(string) *Find
 		fmt.Fprintf(b, "  Bound scope (not a coverage verdict): %s\n", strings.Join(env.Scope, ", "))
 	}
 	writeEvidence(b, env.Support)
+	for _, cmd := range env.Commands {
+		exit := "unknown"
+		if cmd.ExitCode != nil {
+			exit = fmt.Sprint(*cmd.ExitCode)
+		}
+		fmt.Fprintf(b, "  Observed command %s: %s; status %s; exit %s (not a candidate-bound conformance receipt)\n", cmd.ID, cmd.Command, cmd.Status, exit)
+	}
+	for _, check := range env.Checks {
+		fmt.Fprintf(b, "  Required candidate check %s (%s): passed %t\n", check.ID, check.Name, check.Passed)
+	}
 	list(b, "Unresolved:", env.Unresolved)
-	for _, c := range env.Obligations {
-		line := fmt.Sprintf("  Obligation %s: %s", c.Definition, c.Status)
-		if c.Note != "" {
-			line += " (" + c.Note + ")"
-		}
-		b.WriteString(strings.ReplaceAll(line, "\n", "\n    ") + "\n")
-		if c.Conditions != "" {
-			fmt.Fprintf(b, "    Conditions and coverage: %s\n", c.Conditions)
-		}
-		writeEvidence(b, c.Evidence)
-	}
-	if c := env.Integration; c != nil {
-		fmt.Fprintf(b, "  Parent integration: %s; conditions: %s; reasoning: %s\n", c.Status, c.Conditions, c.Note)
-		writeEvidence(b, c.Evidence)
-	}
 	if pl := env.Plan; pl != nil {
 		writePlan(b, pl)
 	}
 	if len(env.Artifacts) > 0 {
 		fmt.Fprintf(b, "  Artifacts: %s\n", strings.Join(env.Artifacts, ", "))
-	}
-	for _, ev := range env.Evidence {
-		fmt.Fprintf(b, "  Evidence: %s\n", ev)
 	}
 	if env.Verdict != "" {
 		fmt.Fprintf(b, "  Verdict: %s\n", env.Verdict)
@@ -147,7 +139,7 @@ func writePlan(b *strings.Builder, pl *plan) {
 // submission.
 func (e *engine) renderProposalLocked(pr *proposal) string {
 	var b strings.Builder
-	fmt.Fprintf(&b, "Your child %s submitted its %s %s for your decision: report kind accept or return with proposal %s.\n", contactOf(pr.member.mgr), pr.kind, pr.id, pr.id)
+	fmt.Fprintf(&b, "Your child %s submitted its %s %s for your decision: use decide kind accept or return with proposal %s.\n", contactOf(pr.member.mgr), pr.kind, pr.id, pr.id)
 	writeEnvelope(&b, pr.env, e.findingLocked)
 	// Its finding effects take effect only with your acceptance.
 	for i := range pr.raised {
@@ -190,12 +182,6 @@ func (e *engine) renderProposalLocked(pr *proposal) string {
 	// that the parent judges the actual assertions and the adverse ones too.
 	probes := e.probesOfLocked(pr.member.Path, pr.member.p.id)
 	support := slices.Clone(pr.env.Support)
-	for _, c := range pr.env.Obligations {
-		support = append(support, c.Evidence...)
-	}
-	if pr.env.Integration != nil {
-		support = append(support, pr.env.Integration.Evidence...)
-	}
 	for _, ev := range support {
 		if r := e.receiptLocked(ev.Receipt); r != nil && !slices.Contains(probes, r) {
 			probes = append(probes, r)
@@ -285,10 +271,11 @@ func (e *engine) promptLocked(m *member, items []item, standing, readOnly bool, 
 		texts = append(texts, it.text)
 	}
 	b.WriteString("\nNow: " + e.taskLocked(m) + "\n")
-	fmt.Fprintf(&b, "This Agent Turn has a finite limit of %s. End after submitting basis/result; if work remains, report concise progress before the limit and continue in a later Turn. Use wait for a missing named submission or answer instead of polling it.\n", e.cfg.Budget.TurnTimeout)
+	b.WriteString(finalAssessmentInstruction + "\n")
+	fmt.Fprintf(&b, "This Agent Turn has a finite limit of %s. End with a short final assessment; use status continue when work remains. Use wait for a missing named submission or answer instead of polling it.\n", e.cfg.Budget.TurnTimeout)
 	b.WriteString("Each Turn uses a fresh container: conversation and the provider home persist, but in-memory tool/REPL variables and /tmp do not. Save recipes in provider-home files or resend their complete content; never rely on an earlier Turn's variables. A probe is a separate execution and must include all its own setup and helpers.\n")
 	if p.spec.Review {
-		b.WriteString("The Runtime bounds checks and reserves time for a report. If it refuses further execution for this Turn, report progress and continue in a later Turn. For result evidence, one passing execution may support several conclusions when its actual assertions support them; explain support and gaps. Keep unsupported conditions open with a note; cite failed receipts in findings, not coverage evidence. Report a demonstrated failure of your own public contract under that own obligation, even when its implementation cause is a dependency; coordinate required work outside your ownership through your parent. In parent integration, independently assess such cross-area failures and record the necessary finding for the actual correction owner within your subtree; accepting the caller's contract finding alone does not route that correction.\n")
+		b.WriteString("The Runtime bounds checks and reserves time for a report. If it refuses further execution for this Turn, end with status continue. For result evidence, one passing execution may support several conclusions when its actual assertions support them; explain support and gaps. Keep unsupported conditions open with a note; cite failed receipts in findings, not coverage evidence. Report a demonstrated failure of your own public contract under that own obligation, even when its implementation cause is a dependency; coordinate required work outside your ownership through your parent. In parent integration, independently assess such cross-area failures and record the necessary finding for the actual correction owner within your subtree; accepting the caller's contract finding alone does not route that correction.\n")
 	}
 	switch {
 	case !p.spec.Review && !p.spec.Writes:
@@ -451,7 +438,7 @@ func (e *engine) taskLocked(m *member) string {
 		return fmt.Sprintf("your own work waits for %s. Until then answer what is asked of you; your project access is read-only.", m.waiting)
 	case stageOwn:
 		if len(m.Children) == 0 {
-			return "work on your own contribution and submit its complete result (report kind result). A basis is optional only when another Manager needs a contract before your result."
+			return "work on your own contribution and submit its complete result in your final assessment. A basis is optional only when another Manager needs a contract before your result."
 		}
 		return "work on your own contribution, supply contracts or decisions your children actually need, accept their results and integrate them into your result. A separate basis is optional; it never gates unrelated work. Do not do their work."
 	case stageIntegrate:
@@ -461,7 +448,7 @@ func (e *engine) taskLocked(m *member) string {
 				results = append(results, fmt.Sprintf("%s by %s: %s (verdict %s)", r.id, c, r.env.Summary, r.env.Verdict))
 			}
 		}
-		text := fmt.Sprintf("submit your complete result of this %s Pass (report kind result) as its mandate defines it, with every own obligation covered and your verdict.", m.p.spec.Purpose)
+		text := fmt.Sprintf("submit your complete result of this %s Pass in your final assessment as its mandate defines it, with every own obligation covered and your verdict.", m.p.spec.Purpose)
 		if len(results) > 0 {
 			text = "integrate your children's accepted results with your own contribution and the interactions between them, then " + text + " Accepted child results: " + strings.Join(results, "; ") + "."
 		}
@@ -497,6 +484,6 @@ func (e *engine) helperPromptLocked(h *helperRun) string {
 	} else {
 		fmt.Fprintf(&b, "You may read the whole project and change only %s; the registry stays with your Manager.\n", strings.Join(paths, ", "))
 	}
-	b.WriteString(modelAuthority + " " + methodIndex() + "\nWhen your task is done, report your result with the tool report.\n")
+	b.WriteString(modelAuthority + " " + methodIndex() + "\n" + finalAssessmentInstruction + "\n")
 	return b.String()
 }

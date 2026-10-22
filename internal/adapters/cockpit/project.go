@@ -61,6 +61,7 @@ func ending(v View) string {
 var listedOnly = map[string]bool{
 	"manager.unblocked":     true,
 	"report.progress":       true,
+	"lookup.probe":          true,
 	"check.requested":       true,
 	"workspace.materialize": true,
 	"workspace.close":       true,
@@ -316,6 +317,8 @@ func (p *projector) apply(r Record) {
 	case "turn.end":
 		d := decode[struct {
 			Stopped   bool       `json:"stopped"`
+			Completed *bool      `json:"completed"`
+			Actions   []string   `json:"actions"`
 			Reason    string     `json:"reason"`
 			Reports   []string   `json:"reports"`
 			Usage     *run.Usage `json:"usage"`
@@ -326,6 +329,7 @@ func (p *projector) apply(r Record) {
 			stopped := d.Stopped
 			t.EndSeq, t.Ended, t.Stopped, t.Reason, t.Reports, t.Usage = r.Seq, r.At, &stopped, d.Reason, d.Reports, d.Usage
 			t.Compacted, t.Probes = d.Compacted, d.Probes
+			t.Completed, t.Actions = d.Completed, d.Actions
 			if pv := p.byPass[r.Pass]; pv != nil {
 				pv.Turns++
 				if d.Usage != nil {
@@ -336,6 +340,21 @@ func (p *projector) apply(r Record) {
 		}
 		if m := p.managers[r.Manager]; m != nil && m.Turn != nil && m.Turn.ID == r.Turn {
 			m.Turn = nil
+		}
+	case "turn.submitted":
+		d := decode[struct {
+			DeclaredStatus string `json:"declaredStatus"`
+			CaptureError   string `json:"captureError"`
+		}](p, r)
+		if t := p.byTurn[r.Turn]; t != nil {
+			t.SubmissionSeq, t.DeclaredStatus, t.AssessmentIssue = r.Seq, d.DeclaredStatus, d.CaptureError
+		}
+	case "assessment.unresolved":
+		d := decode[struct {
+			Reason string `json:"reason"`
+		}](p, r)
+		if t := p.byTurn[r.Turn]; t != nil {
+			t.AssessmentIssue = d.Reason
 		}
 	case "helper.delegated", "helper.start", "helper.end":
 		d := decode[struct {

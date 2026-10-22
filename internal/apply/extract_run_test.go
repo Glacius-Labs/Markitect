@@ -134,7 +134,20 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		}
 	}
 
+	final := `{"status":"continue","summary":"coordinated pending work","findings":[],"open":[]}`
 	call := func(name string, args map[string]any) run.ToolAnswer {
+		if name == "finish" {
+			kind, _ := args["kind"].(string)
+			if kind == "accept" || kind == "return" || kind == "reopen" || kind == "revise" {
+				name = "decide"
+			} else if kind == "wait" {
+				name = "wait"
+				delete(args, "kind")
+			} else {
+				final = scriptedFinal(args)
+				return run.ToolAnswer{Text: "native final assessment prepared"}
+			}
+		}
 		data, _ := json.Marshal(args)
 		answer := tools(ctx, name, data)
 		if answer.Refused {
@@ -143,7 +156,7 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		return answer
 	}
 	for _, m := range decideRE.FindAllStringSubmatch(turn.Prompt, -1) {
-		call("report", map[string]any{"kind": "accept", "proposal": m[1]})
+		call("finish", map[string]any{"kind": "accept", "proposal": m[1]})
 	}
 	for _, m := range answerRE.FindAllStringSubmatch(turn.Prompt, -1) {
 		// Nobody asks a Manager anything in these scripts but the Orchestrator's own forwards.
@@ -170,7 +183,7 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		if !assessing && (turn.Manager == "." || turn.Manager == "lending") {
 			basis["integration"] = map[string]any{"status": "open", "conditions": "structure/model composition from mandate", "note": "will assess in result"}
 		}
-		call("report", basis)
+		call("finish", basis)
 	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
 		result := map[string]any{"kind": "result", "summary": "Described " + turn.Manager + ".", "verdict": "satisfied"}
 		if turn.Kind == run.VerifyTurn {
@@ -186,7 +199,7 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 		if !assessing && (turn.Manager == "." || turn.Manager == "lending") {
 			result["integration"] = map[string]any{"status": "done", "conditions": "structure/model composition from Extract mandate", "note": "static fixture metadata", "evidence": []map[string]any{{"kind": "static", "authority": "pass_mandate", "claim": "fixture metadata composes", "source": "README.md", "location": "whole file", "reasoning": "static fixture evidence; no runtime claim"}}}
 		}
-		call("report", result)
+		call("finish", result)
 	}
 	conversation := turn.Resume
 	if conversation == "" {
@@ -195,7 +208,7 @@ func (a *scriptedAgents) Run(ctx context.Context, turn run.Turn, tools run.ToolH
 	a.mu.Lock()
 	a.assessed[conversation] = assessing
 	a.mu.Unlock()
-	return run.TurnResult{Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
+	return run.TurnResult{Completed: true, Final: final, Conversation: conversation, Usage: run.Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}, Stopped: true}, nil
 }
 
 // bothPhases scripts an Extract whose two phases both verify: Root writes the

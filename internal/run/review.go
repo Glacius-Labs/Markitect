@@ -80,7 +80,7 @@ func (e *engine) runCheck(p *pass, tree snapshot.Tree, c Check) CheckResult {
 	req := c.Request
 	req.ID, req.Tree = CheckID(fmt.Sprintf("%s-%s-%s", e.cfg.RunID, p.id, c.Name)), tree
 	rec, err := e.cfg.Runner.Run(e.ctx, req)
-	res := CheckResult{Name: c.Name, Passed: err == nil && rec.Passed(req), ExitCode: rec.ExitCode, Output: tail(rec.Output, outputTail)}
+	res := CheckResult{ID: req.ID, Name: c.Name, Passed: err == nil && rec.Passed(req), ExitCode: rec.ExitCode, Output: tail(rec.Output, outputTail)}
 	switch {
 	case err != nil:
 		// A check that cannot run on a candidate, such as a missing check

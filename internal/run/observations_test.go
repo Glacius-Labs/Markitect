@@ -58,7 +58,7 @@ func TestSuggestionsAloneLetTheRunVerify(t *testing.T) {
 	f := newFixture(t)
 	f.agents.script = func(c *call) error {
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "lending" && c.resultTurn() {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"findings": []any{suggestion("lending", "lending/borrow"), suggestion("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"findings": []any{suggestion("lending", "lending/borrow"), suggestion("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		}
 		c.protocol()
@@ -93,11 +93,11 @@ func TestAGenuineDeviationIsRetained(t *testing.T) {
 		defer mu.Unlock()
 		switch {
 		case c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn():
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		case c.pass() == "p4" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on"):
 			confirmRefusal = c.basis(map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedConfirmed, "reason": "now a note", "evidence": "x"}}, "findings": []any{suggestion("lending/reminders", "lending/reminders/notice")}}).Text
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{suggestion("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{suggestion("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		}
 		c.protocol()
@@ -114,11 +114,11 @@ func TestAGenuineDeviationIsRetained(t *testing.T) {
 		defer mu.Unlock()
 		if c.pass() == "p4" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on") && confirmRefusal == "" {
 			confirmRefusal = c.basis(map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedConfirmed, "reason": "now a note", "evidence": "x"}}, "findings": []any{suggestion("lending/reminders", "lending/reminders/notice")}}).Text
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{suggestion("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{suggestion("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		}
 		if c.pass() == "p4" && c.turn.Manager == "lending" && c.resultTurn() {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		c.protocol()
@@ -151,7 +151,7 @@ func TestASuspicionIsInvestigatedNotWorkedOn(t *testing.T) {
 			defer mu.Unlock()
 			switch {
 			case c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn():
-				c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{suspicion("lending/reminders", "lending/reminders/notice")}}))
+				c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{suspicion("lending/reminders", "lending/reminders/notice")}}))
 				return nil
 			case c.pass() != "p2" && c.turn.Kind == VerifyTurn && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on"):
 				extra := map[string]any{}
@@ -159,10 +159,10 @@ func TestASuspicionIsInvestigatedNotWorkedOn(t *testing.T) {
 					extra["closed"] = []any{map[string]any{"id": "F1", "as": ClosedConfirmed, "reason": "the boundary probe shows the late notice", "evidence": "r.go sends it the day after the due date"}}
 					extra["findings"] = []any{genuine("lending/reminders", "lending/reminders/notice")}
 				}
-				c.must(toolReport, c.envelope(kindBasis, extra))
+				c.must(testAssessment, c.envelope(kindBasis, extra))
 				return nil
 			case c.pass() != "p2" && c.turn.Kind == VerifyTurn && c.turn.Manager == "lending" && c.resultTurn():
-				c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+				c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 				return nil
 			}
 			c.protocol()
@@ -210,17 +210,17 @@ func TestASettledFindingIsNotReopenedWithoutNewEvidence(t *testing.T) {
 		}
 		switch {
 		case c.pass() == "p2" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		case c.pass() == "p2" && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on"):
 			if len(f.ev.kinds("finding.recorded")) == 0 {
-				c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+				c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
 				return nil
 			}
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"disputed": []any{map[string]any{"id": "F1", "reason": "the notice is sent on the due date", "evidence": "r.go and its test"}}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"disputed": []any{map[string]any{"id": "F1", "reason": "the notice is sent on the due date", "evidence": "r.go and its test"}}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the timing conforms", "evidence": "r.go and its test on this candidate"}}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the timing conforms", "evidence": "r.go and its test on this candidate"}}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && reopened == "":
 			again := genuine("lending/reminders", "Lending/Reminders/Notice ")
@@ -253,7 +253,7 @@ func TestASuspicionNextToADeviationIsNotWorkedOn(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn() {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice"), suspicion("lending/reminders", "lending/reminders/boundary")}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice"), suspicion("lending/reminders", "lending/reminders/boundary")}}))
 			return nil
 		}
 		c.protocol()
@@ -292,7 +292,7 @@ func TestAResolvedFindingCanBeRaisedAgain(t *testing.T) {
 		defer mu.Unlock()
 		switch {
 		case c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn():
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on"):
 			c.write("lending/reminders/r.go", "r2")
@@ -325,12 +325,12 @@ func TestAConfirmationNamesTheSameObligation(t *testing.T) {
 		defer mu.Unlock()
 		switch {
 		case c.pass() == "p2" && c.turn.Manager == "lending" && c.resultTurn():
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{suspicion("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{suspicion("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on") && refusal == "":
 			refusal = c.basis(map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedConfirmed, "reason": "another defect", "evidence": "r.go"}}, "findings": []any{genuine("lending/reminders", "lending/reminders/other")}}).Text
 			// The suspicion stays open for the next review.
-			c.must(toolReport, c.envelope(kindBasis, nil))
+			c.must(testAssessment, c.envelope(kindBasis, nil))
 			return nil
 		}
 		c.protocol()
@@ -357,7 +357,7 @@ func TestAnAdvisoryArtifactFindingNamesNoCorrection(t *testing.T) {
 	spec.ArtifactFindingsAdvisory = true
 	f.agents.script = func(c *call) error {
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "lending" && c.resultTurn() {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"findings": []any{map[string]any{"subject": "artifact", "definition": "lending/borrow", "owner": "lending", "obligation": "lending/borrow", "expected": "five loans at most", "observed": "borrow admits a sixth loan", "blocking": true}}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"findings": []any{map[string]any{"subject": "artifact", "definition": "lending/borrow", "owner": "lending", "obligation": "lending/borrow", "expected": "five loans at most", "observed": "borrow admits a sixth loan", "blocking": true}}}))
 			return nil
 		}
 		c.protocol()
@@ -390,16 +390,16 @@ func TestOnlyAFailedReceiptReopensADisprovedFinding(t *testing.T) {
 		}
 		switch {
 		case c.pass() == "p2" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
 			return nil
 		case c.pass() == "p2" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
 			for _, id := range c.pendingDecisions() {
 				c.accept(id)
 			}
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "the interface conforms", "evidence": "library/a.go"}}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "the interface conforms", "evidence": "library/a.go"}}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the interface conforms", "evidence": "library/a.go on this candidate"}}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the interface conforms", "evidence": "library/a.go on this candidate"}}}))
 			return nil
 		case c.pass() == "p3" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && failing.Text == "":
 			for _, id := range c.pendingDecisions() {

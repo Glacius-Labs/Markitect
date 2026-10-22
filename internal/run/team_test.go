@@ -2,7 +2,7 @@ package run
 
 import (
 	"encoding/json"
-	"slices"
+
 	"strings"
 	"sync"
 	"testing"
@@ -34,7 +34,7 @@ func TestBlockedTurnCannotDecideAfterDependencyRelease(t *testing.T) {
 		`{"kind":"progress","summary":"working"}`,
 		`{"kind":"revise","reason":"new contract"}`,
 	} {
-		if a := e.report(consumer, blocked, json.RawMessage(args)); !a.Refused {
+		if a := e.act(consumer, blocked, toolDecide, json.RawMessage(args)); !a.Refused {
 			t.Fatalf("communication Turn acquired productive rights: %s", args)
 		}
 	}
@@ -42,7 +42,7 @@ func TestBlockedTurnCannotDecideAfterDependencyRelease(t *testing.T) {
 		t.Fatal("refused decision changed child proposal")
 	}
 	fresh := &turnState{m: consumer, id: "productive-turn"}
-	if a := e.report(consumer, fresh, json.RawMessage(`{"kind":"return","proposal":"child-proposal","reason":"missing contract case"}`)); a.Refused {
+	if a := e.act(consumer, fresh, toolDecide, json.RawMessage(`{"kind":"return","proposal":"child-proposal","reason":"missing contract case"}`)); a.Refused {
 		t.Fatal(a.Text)
 	}
 	if pr.status != proposalReturned || !fresh.decided {
@@ -163,13 +163,13 @@ func TestPlanDependenciesBecomeStartConditions(t *testing.T) {
 			pl["dependencies"] = []any{map[string]any{"owner": ".", "need": "the result of Root", "pass": "implement", "stage": "result"}}
 			cycle = c.basis(map[string]any{"plan": pl}).Text
 			pl["dependencies"] = []any{map[string]any{"owner": "lending", "need": "the loan type", "pass": "implement", "stage": "basis"}}
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"plan": pl}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"plan": pl}))
 			return nil
 		}
 		if c.planning() && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit") {
 			pl := samplePlan()
 			pl["dependencies"] = []any{map[string]any{"owner": "lending", "need": "the loan type", "pass": "implement", "stage": "basis"}}
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"plan": pl}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"plan": pl}))
 			return nil
 		}
 		c.protocol()
@@ -220,13 +220,13 @@ func TestRevisedBasisResetsItsConsumers(t *testing.T) {
 		defer mu.Unlock()
 		if c.turn.Manager == "lending/reminders" && !bound && strings.HasPrefix(c.now(), "work on") {
 			bound = true
-			a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			a := c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
 			if !strings.Contains(a.Text, "recorded dependency") {
 				return nil
 			}
 		}
 		if c.turn.Manager == "lending" && !revised && f.ev.index("basis.accepted", "lending/reminders", "", nil) >= 0 {
-			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the reminder needs the due date"})
+			c.must(testAssessment, map[string]any{"kind": kindRevise, "reason": "the reminder needs the due date"})
 			revised = true
 			return nil
 		}
@@ -266,7 +266,7 @@ func TestParentReopensAChildResult(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && !reopened {
-			c.must(toolReport, map[string]any{"kind": kindReopen, "child": "library", "reason": "its output does not match lending's"})
+			c.must(testAssessment, map[string]any{"kind": kindReopen, "child": "library", "reason": "its output does not match lending's"})
 			reopened = true
 			return nil
 		}
@@ -315,8 +315,8 @@ func TestFailedTurnsAreRetriedThenStopTheRun(t *testing.T) {
 			withdrawn++
 		}
 	}
-	if withdrawn != 2 {
-		t.Errorf("%d failed submissions of library were withdrawn; want 2", withdrawn)
+	if withdrawn != 0 {
+		t.Errorf("%d failed Turns manufactured proposals; want 0", withdrawn)
 	}
 }
 
@@ -362,7 +362,7 @@ func TestBudgetsEndTheRunIncomplete(t *testing.T) {
 
 // A report of an earlier, sealed Pass is refused: every repetition has a new
 // identity and its own state.
-func TestStaleReportsOfASealedPassAreRefused(t *testing.T) {
+func TestStaleActionsOfASealedPassAreRefused(t *testing.T) {
 	f := newFixture(t)
 	var mu sync.Mutex
 	var stale ToolHandler
@@ -374,8 +374,7 @@ func TestStaleReportsOfASealedPassAreRefused(t *testing.T) {
 			stale = c.h
 		}
 		if c.pass() == "p2" && c.turn.Manager == "library" && staleAnswer == "" && stale != nil {
-			old := &call{t: t, ctx: c.ctx, turn: c.turn, h: stale, ag: c.ag}
-			staleAnswer = old.basis(nil).Text
+			staleAnswer = stale(c.ctx, toolWait, json.RawMessage(`{"for":"lending"}`)).Text
 		}
 		c.protocol()
 		return nil
@@ -384,7 +383,7 @@ func TestStaleReportsOfASealedPassAreRefused(t *testing.T) {
 	r.Pass(implementSpec())
 	r.Pass(implementSpec())
 	out := f.finish(r, "")
-	if out.Passes[0].ID == out.Passes[1].ID || !strings.Contains(staleAnswer, "no longer accepts reports") {
+	if out.Passes[0].ID == out.Passes[1].ID || !strings.Contains(staleAnswer, "no longer accepts actions") {
 		t.Errorf("passes %s %s, stale answer %q", out.Passes[0].ID, out.Passes[1].ID, staleAnswer)
 	}
 }
@@ -451,7 +450,7 @@ func TestWaitForAnotherManagerWakesOnItsAcceptance(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") && waited.Text == "" {
-			waited = c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "reason": "the program integrates the lending result"})
+			waited = c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "reason": "the program integrates the lending result"})
 			return nil
 		}
 		if c.turn.Manager == "library" && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted") {
@@ -523,19 +522,19 @@ func TestWaitBindsTheAcceptedSubmissionAndItsRevisionResetsTheWaiter(t *testing.
 		case c.turn.Manager == "library" && !waited && strings.HasPrefix(c.now(), "work on"):
 			waited = true
 			// Lending's basis may already be accepted: then the wait binds at once.
-			if a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis", "reason": "the program uses the loan contract"}); strings.Contains(a.Text, "recorded dependency") {
+			if a := c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis", "reason": "the program uses the loan contract"}); strings.Contains(a.Text, "recorded dependency") {
 				again = a
 				c.basis(nil)
 			}
 			return nil
 		case c.turn.Manager == "library" && again.Text == "" && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted"):
-			again = c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			again = c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
 			c.basis(nil)
 			return nil
 		case c.turn.Manager == "lending" && !revised && f.ev.index("dependency.bound", "library", "on", "lending") >= 0 &&
 			(strings.HasPrefix(c.now(), "your children work") || strings.HasPrefix(c.now(), "integrate")):
 			revised = true
-			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the loan contract needs the due date"})
+			c.must(testAssessment, map[string]any{"kind": kindRevise, "reason": "the loan contract needs the due date"})
 			return nil
 		}
 		tolerant(c)
@@ -607,10 +606,10 @@ func TestWaitsBindNothingWithoutBindWaits(t *testing.T) {
 		switch {
 		case c.turn.Manager == "library" && !waited && strings.HasPrefix(c.now(), "work on"):
 			waited = true
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
 			return nil
 		case c.turn.Manager == "library" && again.Text == "" && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted"):
-			again = c.tool(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			again = c.tool(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
 		}
 		c.protocol()
 		return nil
@@ -640,7 +639,7 @@ func TestWaitsBindNoAncestorOrDescendant(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Manager == "lending" && own.Text == "" && strings.HasPrefix(c.now(), "integrate") {
-			own = c.tool(toolReport, map[string]any{"kind": kindWait, "for": "lending/reminders", "stage": "result"})
+			own = c.tool(testAssessment, map[string]any{"kind": kindWait, "for": "lending/reminders", "stage": "result"})
 		}
 		c.protocol()
 		return nil
@@ -680,21 +679,21 @@ func TestRevisionReopensOnlyAResultBuiltOnIt(t *testing.T) {
 					t.Errorf("unexpected refusal: %s", a.Text)
 				}
 			}
-			if a := c.tool(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"}); !a.Refused && strings.Contains(a.Text, "recorded dependency") {
+			if a := c.tool(testAssessment, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"}); !a.Refused && strings.Contains(a.Text, "recorded dependency") {
 				c.result(nil)
 			}
 			return nil
 		case c.turn.Manager == "library" && !libraryWaited && strings.HasPrefix(now, "submit your complete result"):
 			libraryWaited = true
 			// Lending's result may already be accepted: then it binds at once.
-			if a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "result"}); strings.Contains(a.Text, "recorded dependency") {
+			if a := c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "result"}); strings.Contains(a.Text, "recorded dependency") {
 				revised = true
-				c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the program's contract changes"})
+				c.must(testAssessment, map[string]any{"kind": kindRevise, "reason": "the program's contract changes"})
 			}
 			return nil
 		case c.turn.Manager == "library" && !revised && strings.Contains(c.turn.Prompt, "The submission you waited for is accepted"):
 			revised = true
-			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the program's contract changes"})
+			c.must(testAssessment, map[string]any{"kind": kindRevise, "reason": "the program's contract changes"})
 			return nil
 		case c.turn.Manager == "library" && revised && strings.HasPrefix(now, "submit your complete result") && !strings.Contains(c.turn.Prompt, "The submission you waited for is accepted") && !strings.Contains(c.turn.Prompt, "builds on is accepted"):
 			// Its result built on lending's reopened result: it is refused until
@@ -703,7 +702,7 @@ func TestRevisionReopensOnlyAResultBuiltOnIt(t *testing.T) {
 				if !strings.Contains(a.Text, "not accepted again yet") {
 					t.Errorf("unexpected refusal: %s", a.Text)
 				}
-				if w := c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "result"}); strings.Contains(w.Text, "recorded dependency") {
+				if w := c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "result"}); strings.Contains(w.Text, "recorded dependency") {
 					c.result(nil)
 				}
 			}
@@ -770,19 +769,19 @@ func TestBindingsNeverCloseACycle(t *testing.T) {
 		case c.turn.Manager == "lending/reminders" && !remindersWaited && strings.HasPrefix(c.now(), "work on"):
 			// Its parent decides it only after library's basis is accepted.
 			remindersWaited = true
-			if a := c.must(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"}); strings.Contains(a.Text, "recorded dependency") {
+			if a := c.must(testAssessment, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"}); strings.Contains(a.Text, "recorded dependency") {
 				c.basis(nil)
 			}
 			return nil
 		case stage == 0 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
 			stage = 1
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "lending", "stage": "basis"})
 			return nil
 		case stage == 1 && c.turn.Manager == "lending" && f.ev.index("basis.accepted", "library", "", nil) >= 0 &&
 			(strings.HasPrefix(c.now(), "your children work") || strings.HasPrefix(c.now(), "integrate")):
 			stage = 2
-			c.must(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"})
-			c.must(toolReport, map[string]any{"kind": kindRevise, "reason": "the loan contract changes"})
+			c.must(testAssessment, map[string]any{"kind": kindWait, "for": "library", "stage": "basis"})
+			c.must(testAssessment, map[string]any{"kind": kindRevise, "reason": "the loan contract changes"})
 			return nil
 		}
 		tolerant(c)
@@ -837,10 +836,10 @@ func TestBindingsNeverCloseACycle(t *testing.T) {
 	library.stage = stageOwn
 	ts := &turnState{m: library, id: "wb"}
 	e.mu.Unlock()
-	a := e.report(library, ts, []byte(`{"kind":"wait","for":"lending","stage":"basis"}`))
+	a := e.act(library, ts, toolWait, []byte(`{"kind":"wait","for":"lending","stage":"basis"}`))
 	e.mu.Lock()
-	if a.Refused || !strings.Contains(a.Text, "recorded dependency") || len(ts.reports) != 1 || ts.reports[0] != kindBind || ts.wait != "" {
-		t.Errorf("immediate binding: %+v, reports %v, wait %q", a, ts.reports, ts.wait)
+	if a.Refused || !strings.Contains(a.Text, "recorded dependency") || len(ts.actions) != 1 || ts.actions[0] != kindBind || ts.wait != "" {
+		t.Errorf("immediate binding: %+v, reports %v, wait %q", a, ts.actions, ts.wait)
 	}
 	if len(library.bound) != 1 || library.bound[0] != (binding{target: basisOf("lending"), serves: eventBasis, proposal: "P1"}) {
 		t.Errorf("library bound %+v", library.bound)
@@ -865,11 +864,11 @@ func TestWaitThatClosesACycleIsRefused(t *testing.T) {
 			if strings.HasPrefix(c.now(), "submit") {
 				kind = kindResult
 			}
-			c.must(toolReport, c.envelope(kind, map[string]any{"plan": pl}))
+			c.must(testAssessment, c.envelope(kind, map[string]any{"plan": pl}))
 			return nil
 		}
 		if !c.planning() && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on") && refused.Text == "" {
-			refused = c.tool(toolReport, map[string]any{"kind": kindWait, "for": "library", "stage": "result"})
+			refused = c.tool(testAssessment, map[string]any{"kind": kindWait, "for": "library", "stage": "result"})
 		}
 		c.protocol()
 		return nil
@@ -896,7 +895,7 @@ func TestRepeatedProgressIsNoProgress(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Manager == "library" && (strings.HasPrefix(c.now(), "work on") || strings.Contains(c.turn.Prompt, "repeats an earlier one")) {
-			c.must(toolReport, map[string]any{"kind": kindProgress, "summary": "still integrating the parts"})
+			c.must(testAssessment, map[string]any{"kind": kindProgress, "summary": "still integrating the parts"})
 			return nil
 		}
 		c.protocol()
@@ -905,73 +904,11 @@ func TestRepeatedProgressIsNoProgress(t *testing.T) {
 	r := f.open()
 	res := r.Pass(implementSpec())
 	out := f.finish(r, "")
-	if !res.Stopped || out.Status != Incomplete || !strings.Contains(out.Reason, "without the report its work needs") {
+	if !res.Stopped || out.Status != Incomplete || !strings.Contains(out.Reason, "left work or decisions unresolved") {
 		t.Fatalf("stopped %v, status %s: %s", res.Stopped, out.Status, out.Reason)
 	}
 	if n := len(f.agents.turnsOf("library")); n != maxEmptyTurns+2 {
 		t.Errorf("library ran %d turns", n)
-	}
-}
-
-func TestReportActionsExposeOnlyTheirOwnFields(t *testing.T) {
-	for _, spec := range []PassSpec{implementSpec(), verifySpec(), planSpec()} {
-		s := reportSchema(spec)
-		if _, broad := s["properties"]; broad {
-			t.Fatal("broad report envelope exposed")
-		}
-		for _, action := range s["oneOf"].([]schema) {
-			fields := action["properties"].(schema)
-			kind := fields["kind"].(schema)["enum"].([]string)[0]
-			for name := range fields {
-				if name != "kind" && !slices.Contains(reportFields[kind], name) {
-					t.Fatalf("%s exposed %s", kind, name)
-				}
-			}
-			if kind == kindProgress && len(fields) != 2 {
-				t.Fatalf("progress fields: %+v", fields)
-			}
-			if kind == kindAccept && len(fields) != 2 {
-				t.Fatalf("accept fields: %+v", fields)
-			}
-			for _, identity := range []string{"run", "pass", "manager", "turn", "stand", "candidate", "children"} {
-				if _, ok := fields[identity]; ok {
-					t.Fatalf("agent asked for Host identity %s", identity)
-				}
-			}
-			if !spec.Plans {
-				if _, ok := fields["plan"]; ok {
-					t.Fatal("work/review requested plan payload")
-				}
-			}
-		}
-	}
-}
-
-func TestReportSchemaOnlyExposesApplicableRoleFields(t *testing.T) {
-	for _, spec := range []PassSpec{implementSpec(), verifySpec(), {Review: true, Assesses: true}} {
-		for _, blocked := range []bool{false, true} {
-			m := &member{mgr: &mgr{Manager: Manager{Path: "leaf", Parent: "."}}, p: &pass{spec: spec}, stage: stageOwn}
-			if blocked {
-				m.stage = stageBlocked
-			}
-			for _, action := range memberReportSchema(m)["oneOf"].([]schema) {
-				fields := action["properties"].(schema)
-				kind := fields["kind"].(schema)["enum"].([]string)[0]
-				if kind == kindAccept || kind == kindReturn || kind == kindReopen || blocked && kind != kindWait && kind != kindProblem {
-					t.Fatalf("inapplicable leaf action %s (blocked %v)", kind, blocked)
-				}
-				for _, field := range []string{"integration", "abort", "scope", "manager", "candidate"} {
-					if _, ok := fields[field]; ok {
-						t.Fatalf("inapplicable/Host field %s", field)
-					}
-				}
-				if spec.Assesses {
-					if _, ok := fields["dispositions"]; ok {
-						t.Fatal("assessment exposed probe dispositions")
-					}
-				}
-			}
-		}
 	}
 }
 
@@ -991,7 +928,7 @@ func TestResetWithdrawsRunningSubmissionAfterDependencyReacceptance(t *testing.T
 	consumer.stage, consumer.running = stageOwn, true
 	consumer.bound = []binding{{target: waitTarget{manager: owner.Path, stage: stageNameBasis}, serves: eventBasis, proposal: old.id}}
 	ts := &turnState{m: consumer, id: "old-turn"}
-	if a := e.submit(consumer, ts, reportIn{Kind: kindBasis, Summary: "built on old contract"}); a.Refused {
+	if a := e.submit(consumer, ts, contribution{Kind: kindBasis, Summary: "built on old contract"}); a.Refused {
 		t.Fatal(a.Text)
 	}
 	submitted := ts.proposal

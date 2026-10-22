@@ -70,6 +70,8 @@ type fakeRuntime struct {
 	hang           bool
 	usage          bool
 	finalText      string
+	finalPhase     *string
+	commandItems   []map[string]any
 	terminalStatus string
 	resumeMismatch bool
 	errorText      string
@@ -127,7 +129,15 @@ func (f *fakeRuntime) finish() {
 	if f.usage {
 		f.emit(`{"method":"thread/tokenUsage/updated","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","tokenUsage":{"total":{"totalTokens":0,"inputTokens":0,"cachedInputTokens":0,"outputTokens":0,"reasoningOutputTokens":0},"last":{"totalTokens":150,"inputTokens":100,"cachedInputTokens":40,"outputTokens":50,"reasoningOutputTokens":10,"cacheWriteInputTokens":5}}}}`)
 	}
-	item, _ := json.Marshal(map[string]any{"method": "item/completed", "params": map[string]any{"threadId": codecThreadID, "turnId": codecTurnID, "item": map[string]any{"id": "answer", "type": "agentMessage", "text": f.finalText}}})
+	phase := "final_answer"
+	if f.finalPhase != nil {
+		phase = *f.finalPhase
+	}
+	for _, command := range f.commandItems {
+		data, _ := json.Marshal(map[string]any{"method": "item/completed", "params": map[string]any{"threadId": codecThreadID, "turnId": codecTurnID, "item": command}})
+		f.emit(string(data))
+	}
+	item, _ := json.Marshal(map[string]any{"method": "item/completed", "params": map[string]any{"threadId": codecThreadID, "turnId": codecTurnID, "item": map[string]any{"id": "answer", "type": "agentMessage", "phase": phase, "text": f.finalText}}})
 	f.emit(string(item))
 	status := f.terminalStatus
 	if status == "" {
@@ -208,7 +218,7 @@ func TestRunExecuteTurn(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if res.Conversation != string(codecThreadID) || res.Final != "all done [REDACTED]" || !res.Stopped || res.Reason != "provider turn completed" || res.Started.IsZero() || res.Ended.Before(res.Started) {
+	if res.Conversation != string(codecThreadID) || res.Final != "all done [REDACTED]" || !res.Completed || !res.Stopped || res.Reason != "provider turn completed" || res.Started.IsZero() || res.Ended.Before(res.Started) {
 		t.Fatalf("result %+v", res)
 	}
 	if want := (run.Usage{Model: "admitted-model", InputTokens: 60, OutputTokens: 50, CacheReadTokens: 40, CacheCreationTokens: 5, ProviderTurns: 1}); res.Usage != want {
@@ -388,9 +398,33 @@ func TestRunProviderFailureKeepsConversation(t *testing.T) {
 		rt := newRuntime()
 		rt.terminalStatus = status
 		res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
-		if !errors.Is(err, ErrSession) || res.Conversation != string(codecThreadID) || res.Reason != "provider turn "+status || !res.Stopped {
+		if !errors.Is(err, ErrSession) || res.Conversation != string(codecThreadID) || res.Reason != "provider turn "+status || res.Completed || !res.Stopped {
 			t.Fatalf("%s: %+v %v", status, res, err)
 		}
+	}
+}
+
+func TestNativeCompletionSeparatesFinalAssessmentAndCommandObservations(t *testing.T) {
+	for _, phase := range []string{"final_answer", "commentary", ""} {
+		t.Run(phase, func(t *testing.T) {
+			rt := newRuntime()
+			rt.finalPhase = &phase
+			rt.finalText = "native semantic assessment"
+			rt.commandItems = []map[string]any{
+				{"type": "commandExecution", "id": "setup", "command": "python missing.py", "status": "completed", "exitCode": 2, "aggregatedOutput": "missing script"},
+				{"type": "commandExecution", "id": "test", "command": "python -m unittest", "status": "completed", "exitCode": 0, "aggregatedOutput": "OK"},
+			}
+			res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
+			if err != nil || !res.Completed || !res.Stopped || len(res.Commands) != 2 {
+				t.Fatalf("%+v %v", res, err)
+			}
+			if res.Commands[0].ExitCode == nil || *res.Commands[0].ExitCode != 2 || res.Commands[1].ID != "test" || *res.Commands[1].ExitCode != 0 {
+				t.Fatalf("commands lost: %+v", res.Commands)
+			}
+			if (res.Final != "") != (phase == "final_answer") {
+				t.Fatalf("phase %q promoted commentary/transport into final: %q", phase, res.Final)
+			}
+		})
 	}
 }
 

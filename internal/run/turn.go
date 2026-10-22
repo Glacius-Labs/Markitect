@@ -20,8 +20,8 @@ type turnState struct {
 	id   string
 	role string
 	kind TurnKind
-	// reports lists the kinds of the turn's accepted report calls.
-	reports     []string
+	// actions lists the necessary decisions and waits actually performed.
+	actions     []string
 	proposal    *proposal
 	wait        string
 	waitOn      *waitTarget
@@ -32,11 +32,10 @@ type turnState struct {
 	// demands are the decisions and answers the turn's prompt asked for; only
 	// those count as left open when the turn ends.
 	demands []string
-	// helperSummary is a helper's reported result.
-	helperSummary string
 	// blocked says that the turn started while the Manager's productive work
 	// was blocked: a communication-only turn.
-	blocked bool
+	blocked      bool
+	startedStage stage
 	// mode is what the turn was admitted for (TurnRecord.Mode).
 	mode string
 	// context says how the turn received its standing context
@@ -44,8 +43,12 @@ type turnState struct {
 	context string
 	// probes counts the probes the turn ran; deadline is when its timeout ends
 	// it at the latest.
-	probes   int
-	deadline time.Time
+	probes          int
+	deadline        time.Time
+	harvest         *WorkspaceHarvest
+	captureError    string
+	commands        []CommandObservation
+	semanticMissing bool
 }
 
 // acceptedOf returns a Manager's accepted basis or result of its Pass.
@@ -103,7 +106,7 @@ func (e *engine) startTurnLocked(m *member) {
 		role, kind, profile, home, resume, letter = "reviewer", VerifyTurn, m.VerifyProfile, m.reviewHome, m.reviewConversation, "r"
 		standing = m.reviewConversation == "" || m.reviewRehydrate
 	}
-	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked, mode: turnMode(m),
+	ts := &turnState{m: m, id: fmt.Sprintf("%s-%s-%s-%s%d", e.cfg.RunID, p.id, m.slug, letter, m.turns), role: role, kind: kind, demands: e.demandsLocked(m), blocked: m.stage == stageBlocked, startedStage: m.stage, mode: turnMode(m),
 		deadline: e.now().Add(e.cfg.Budget.TurnTimeout), context: contextDelivery(standing, resume)}
 	if ts.context == contextRehydrated && !slices.ContainsFunc(items, func(it item) bool { return it.kind == itemAssignment }) {
 		// A conversation that may have lost its context gets the Pass assignment
@@ -144,6 +147,7 @@ func (e *engine) mountsLocked(m *member) (bool, []PathMount) {
 func (e *engine) memberTurn(m *member, ts *turnState, turn Turn) {
 	defer e.wg.Done()
 	res, err := e.runTurn(ts, turn, e.memberHandler(m, ts))
+	e.captureTurn(ts, res, err)
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	defer e.cond.Broadcast()
@@ -194,7 +198,10 @@ func (e *engine) memberTurn(m *member, ts *turnState, turn Turn) {
 		m.introduced = true
 	}
 	m.failures = 0
-	e.turnEndedLocked(m, ts)
+	e.assessTurnLocked(m, ts, res.Final)
+	if e.ctx.Err() == nil {
+		e.turnEndedLocked(m, ts)
+	}
 	e.scheduleLocked()
 }
 
@@ -253,11 +260,9 @@ func (e *engine) turnFailedLocked(m *member, ts *turnState, err error) {
 	e.recordStateLocked(m, "the turn failed")
 }
 
-// turnEndedLocked processes a turn that ended normally. A provider exit never
-// completes work: a submission is now checked and decided, a wait or progress
-// report sets the next state, and a turn that worked on its own contribution
-// without any report, or left a decision or question to it open without a
-// wait, is incomplete work that is returned to it with a note.
+// turnEndedLocked routes the captured semantic contribution through the existing
+// checks and parent decision, or records actual waits and continuation. The
+// native completion itself never establishes task success or publication.
 func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 	p := m.p
 	if m.stage == stageStart {
@@ -314,6 +319,10 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 			}
 		}
 	}
+	if ts.semanticMissing {
+		e.recordStateLocked(m, "its captured assessment needs correction")
+		return
+	}
 	working := m.stage == stageOwn || m.stage == stageIntegrate
 	// An accepted parent's delegated stage remains coordination: a candidate
 	// introduction alone must not manufacture repeated empty work turns while
@@ -349,26 +358,23 @@ func (e *engine) turnEndedLocked(m *member, ts *turnState) {
 		} else {
 			m.empty++
 		}
-		m.items = append(m.items, item{text: "Still open for you: " + strings.Join(demands, "; ") + ". Decide or answer them, or report wait for what you need first."})
+		m.items = append(m.items, item{text: "Still open for you: " + strings.Join(demands, "; ") + ". Decide or answer them, or use wait for what you need first."})
 	case working && !handled && len(m.helpers) > 0:
 		// Its helpers report to it; their results start its next turn.
 		m.empty = 0
 	case repeated && continuing && !handled:
 		m.empty++
-		m.items = append(m.items, item{text: "Your progress report repeats an earlier one of this Pass, so it shows no progress. If you cannot continue before another Manager's basis or result is accepted, report wait for that Manager; if you need a decision, ask your parent; otherwise submit."})
+		m.items = append(m.items, item{text: "Your continuation repeats an earlier one of this Pass, so it shows no progress. If you cannot continue before another Manager's basis or result is accepted, use wait for that Manager; if you need a decision, ask your parent; otherwise submit."})
 	case working && !handled:
-		m.empty++
-		next := "your basis"
-		if m.stage == stageIntegrate {
-			next = "your complete result"
-		}
-		m.items = append(m.items, item{text: fmt.Sprintf("Your turn ended without a report. Continue and end the turn with report: progress when you continue later, wait when you need a named answer, child or another Manager's accepted basis or result, or %s.", next)})
+		// Productive work may have become available during a read-only
+		// coordination Turn. Supply the new context in a productive Turn.
+		m.items = append(m.items, item{text: "Your work is ready to continue in a productive Turn with its current dependency context."})
 	default:
 		m.empty = 0
 	}
 	if m.empty > maxEmptyTurns {
-		e.addProblemLocked(Problem{Manager: m.Path, Category: "technical", Text: fmt.Sprintf("%d consecutive turns ended without the report its work needs", m.empty)})
-		e.halt(fmt.Sprintf("manager %q ended %d consecutive turns without the report its work needs", m.Path, m.empty))
+		e.addProblemLocked(Problem{Manager: m.Path, Category: "technical", Text: fmt.Sprintf("%d consecutive turns left work or decisions unresolved", m.empty)})
+		e.halt(fmt.Sprintf("manager %q left work or decisions unresolved for %d consecutive turns", m.Path, m.empty))
 		return
 	}
 	e.recordStateLocked(m, "its turn ended")
@@ -420,8 +426,11 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 		return TurnResult{Stopped: true}, e.ctx.Err()
 	}
 	res, err := e.cfg.Agents.Run(e.ctx, turn, handler)
+	if err == nil && !res.Completed {
+		err = fmt.Errorf("native successful Turn completion was not observed")
+	}
 	e.mu.Lock()
-	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Context: ts.context, Compacted: res.Compacted, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Reports: slices.Clone(ts.reports), Reason: res.Reason}
+	rec := TurnRecord{ID: ts.id, Manager: manager, Role: ts.role, Pass: pass, Kind: turn.Kind, Mode: ts.mode, Context: ts.context, Compacted: res.Compacted, Started: res.Started, Ended: res.Ended, Usage: res.Usage, Stopped: res.Stopped, Completed: res.Completed, Actions: slices.Clone(ts.actions), Reason: res.Reason}
 	if rec.Started.IsZero() {
 		rec.Started = started
 	}
@@ -433,7 +442,7 @@ func (e *engine) runTurn(ts *turnState, turn Turn, handler ToolHandler) (TurnRes
 	}
 	e.turns = append(e.turns, rec)
 	e.usage = e.usage.Add(res.Usage)
-	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "mode": rec.Mode, "usage": rec.Usage, "stopped": rec.Stopped, "reports": rec.Reports, "probes": ts.probes, "reason": rec.Reason, "conversation": res.Conversation, "compacted": res.Compacted}})
+	_ = e.record(Event{Kind: "turn.end", Pass: pass, Manager: manager, Turn: ts.id, Data: map[string]any{"role": ts.role, "kind": rec.Kind, "mode": rec.Mode, "usage": rec.Usage, "stopped": rec.Stopped, "completed": res.Completed, "actions": rec.Actions, "probes": ts.probes, "reason": rec.Reason, "conversation": res.Conversation, "compacted": res.Compacted}})
 	e.mu.Unlock()
 	if !res.Stopped {
 		e.halt(fmt.Sprintf("turn %s ended without an observed container stop; quiescence is uncertain", ts.id))
@@ -467,8 +476,8 @@ func (e *engine) memberTool(m *member, ts *turnState) ToolHandler {
 			return refuse("You already submitted %s. End this Turn now; further work belongs after the proposal's decision, in a later Turn.", ts.proposal.id)
 		}
 		switch name {
-		case toolReport:
-			return e.report(m, ts, args)
+		case toolWait, toolDecide:
+			return e.act(m, ts, name, args)
 		case toolSend:
 			return e.send(ctx, m, ts, args)
 		case toolEscalate:

@@ -552,132 +552,15 @@ func describeOutcome(r *ProbeReceipt) string {
 
 func short(digest string) string { return digest[:min(12, len(digest))] }
 
-// evidenceOf validates the evidence items of one coverage entry. A receipt must
-// be relevant within the submitter's responsibility, passed, and run on the stand the
-// submission is bound to; stand is empty in a Pass with writes, whose stand is
-// known only after the submitter's writers stopped (bindEvidence completes the
-// check then). A source names a file and the inspected location with the
-// reasoning; inference alone is no item. One execution may support several
-// claims. The reviewer judges its actual assertions, not a uniqueness rule.
-func (e *engine) evidenceOf(m *member, i int, c coverage, stand *snapshot.Tree) ([]evidenceItem, error) {
-	if len(c.Evidence) > maxToolItems {
-		return nil, fmt.Errorf("obligations[%d]: at most %d evidence items", i, maxToolItems)
-	}
-	var out []evidenceItem
-	for j, item := range c.Evidence {
-		name := fmt.Sprintf("obligations[%d].evidence[%d]", i, j)
-		switch {
-		case item.Receipt != "" && item.Source != "":
-			return nil, fmt.Errorf("%s cites either a receipt or a source, not both", name)
-		case item.Receipt != "":
-			r := e.receiptLocked(strings.TrimSpace(item.Receipt))
-			switch {
-			case r == nil:
-				return nil, fmt.Errorf("%s: %q is no probe receipt of this run; a receipt comes only from the tool check", name, item.Receipt)
-			case !e.answersForLocked(r, m.Path):
-				return nil, fmt.Errorf("%s: %s is outside your responsibility", name, r.ID)
-			case r.Outcome != ProbePassed:
-				return nil, fmt.Errorf("%s: %s %s; an adverse receipt cannot support %s coverage. Remove it from this evidence array; if it demonstrates a violation, cite it in a genuine finding and leave the affected coverage open with a note. Otherwise give its reasoned disposition", name, r.ID, describeOutcome(r), c.Status)
-			case stand != nil && r.Stand != stand.Digest().String():
-				return nil, fmt.Errorf("%s: %s ran on the stand %s, not on %s; a stale receipt supports nothing here", name, r.ID, short(r.Stand), short(stand.Digest().String()))
-			}
-			if evidenceRequired(m.p.spec) {
-				if item.Kind != "public_behavior" {
-					return nil, fmt.Errorf("%s: executed evidence declares kind public_behavior and its real public boundary", name)
-				}
-				if r.Boundary == "" || item.Boundary != "" && item.Boundary != r.Boundary {
-					return nil, fmt.Errorf("%s: public behavior needs a receipt declaring the same real entry boundary; private-validator execution alone cannot close it", name)
-				}
-				item.Boundary = r.Boundary
-			}
-			item.Authority = c.Definition
-			if item.Authority == "" {
-				item.Authority = r.Obligation
-			}
-			if strings.TrimSpace(item.Claim) == "" {
-				item.Claim = r.Claim
-			} else if _, err := toolText(name+".claim", item.Claim); err != nil {
-				return nil, err
-			}
-			item.Receipt, item.Source, item.Location = r.ID, "", ""
-			item.Stand = r.Stand
-		case item.Source != "":
-			if evidenceRequired(m.p.spec) && item.Kind != "static" {
-				return nil, fmt.Errorf("%s: source inspection only establishes kind static with reasoned inapplicability of execution; public_behavior requires a probe receipt at its entry boundary", name)
-			}
-			claim, err := toolText(name+".claim", item.Claim)
-			if err != nil {
-				return nil, err
-			}
-			item.Claim = claim
-			if item.Authority == "" {
-				item.Authority = c.Definition
-			}
-			if evidenceRequired(m.p.spec) {
-				if _, ok := e.cfg.Definition(item.Authority); !ok && !(c.Definition == "" && item.Authority == "pass_mandate") && (c.Definition == "" || item.Authority != c.Definition) {
-					return nil, fmt.Errorf("%s: authority must name a bound Definition (or pass_mandate for integration of the bound Pass task)", name)
-				}
-			}
-			path, err := snapshot.NewPath(strings.TrimSpace(item.Source))
-			if err != nil {
-				return nil, fmt.Errorf("%s.source must be a repository-relative file path", name)
-			}
-			if item.Location, err = toolText(name+".location", item.Location); err != nil {
-				return nil, err
-			}
-			if item.Reasoning, err = toolText(name+".reasoning", item.Reasoning); err != nil {
-				return nil, err
-			}
-			item.Source = path.String()
-			if stand != nil {
-				entry, ok := stand.Lookup(path)
-				if !ok {
-					return nil, fmt.Errorf("%s: %s is no file of the stand %s", name, path, short(stand.Digest().String()))
-				}
-				item.Stand, item.Digest = stand.Digest().String(), entry.ContentID().String()
-			}
-		default:
-			return nil, fmt.Errorf("%s cites a probe receipt (receipt) or an inspected source (source, location, reasoning)", name)
-		}
-		out = append(out, item)
-	}
-	return out, nil
-}
-
-// bindEvidence binds the evidence of a submission to its checked stand: every
-// cited receipt ran on exactly that stand and every cited source is a file of
-// it. It returns the findings that return the submission to its owner.
+// bindEvidence checks only Host-selected actual receipts against the captured
+// submission. Observed commands are kept separately and never become receipts.
 func (e *engine) bindEvidence(pr *proposal, stand snapshot.Tree) []Finding {
-	m := pr.member
-	digest := stand.Digest().String()
-	var out []Finding
-	shared := coverage{Evidence: pr.env.Support}
-	entries := []*coverage{&shared}
-	for i := range pr.env.Obligations {
-		entries = append(entries, &pr.env.Obligations[i])
-	}
-	if pr.env.Integration != nil {
-		entries = append(entries, pr.env.Integration)
-	}
-	for _, c := range entries {
-		for j := range c.Evidence {
-			item := &c.Evidence[j]
-			if item.Receipt != "" {
-				if item.Stand != digest {
-					out = append(out, Finding{Owner: m.Path, Obligation: "cited receipts ran on the submitted stand", Observed: fmt.Sprintf("%s of %s ran on %s; your submitted area composed with the accepted stand is %s. Probe again after your last change, or cite another item.", item.Receipt, c.Definition, short(item.Stand), short(digest))})
-				}
-				continue
-			}
-			path, _ := snapshot.NewPath(item.Source)
-			entry, ok := stand.Lookup(path)
-			if !ok {
-				out = append(out, Finding{Owner: m.Path, Obligation: "cited sources exist in the submitted stand", Observed: fmt.Sprintf("%s cited for %s is no file of the submitted stand", item.Source, c.Definition)})
-				continue
-			}
-			item.Stand, item.Digest = digest, entry.ContentID().String()
+	for _, item := range pr.env.Support {
+		if item.Stand != stand.Digest().String() {
+			return []Finding{{Owner: pr.member.Path, Obligation: "executed support belongs to the submitted stand", Observed: "The stand changed after the observation; it is not final candidate evidence."}}
 		}
 	}
-	return out
+	return nil
 }
 
 // dispositionsOf validates the dispositions of adverse receipts a review
@@ -983,7 +866,7 @@ func cutText(s string, n int, mark string) string {
 	return s[:cut] + mark
 }
 
-// writeEvidence renders the evidence items of one coverage entry.
+// writeEvidence renders Host-selected observed support without claiming scope completeness.
 func writeEvidence(b *strings.Builder, items []evidenceItem) {
 	for _, item := range items {
 		claim := strings.ReplaceAll(item.Claim, "\n", " ")

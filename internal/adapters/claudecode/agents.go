@@ -542,6 +542,7 @@ func (c *conversation) finish(m Message) error {
 	if result.IsError {
 		return fmt.Errorf("%w: provider reported %s (%s) %s", ErrSession, result.Subtype, result.TerminalReason, strings.Join(result.Errors, "; "))
 	}
+	c.res.Completed = true
 	return nil
 }
 

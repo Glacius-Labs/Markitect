@@ -166,7 +166,22 @@ func (w *fakeWS) isClosed(id WorkspaceID) bool {
 
 // fakeAgents runs scripted turns. The script calls the tool handler like a
 // provider would; without a script every turn follows the protocol.
+const (
+	coverDone          = "done"
+	coverPreserved     = "preserved"
+	coverOpen          = "open"
+	coverNotApplicable = "not_applicable"
+)
+
+const (
+	kindProgress = "progress"
+	kindProblem  = "problem"
+)
+
+const testAssessment = "assessment-preview" // test-only semantic validator, never an offered tool
+
 type fakeAgents struct {
+	e           *engine
 	t           testing.TB
 	ws          *fakeWS
 	obligations map[string][]string
@@ -175,15 +190,21 @@ type fakeAgents struct {
 	turns       []Turn
 	active      int
 	maxActive   int
+	toolCalls   map[string]int
 }
 
 type call struct {
-	t      testing.TB
-	ctx    context.Context
-	turn   Turn
-	h      ToolHandler
-	ag     *fakeAgents
-	noStop bool
+	t                testing.TB
+	ctx              context.Context
+	turn             Turn
+	h                ToolHandler
+	ag               *fakeAgents
+	noStop           bool
+	final            string
+	nativeIncomplete bool
+	commands         []CommandObservation
+	blocked          bool
+	delegated        bool
 	// conversation overrides the resumable conversation the turn reports.
 	conversation *string
 	// decided lists the proposals the script already decided in this turn.
@@ -206,7 +227,19 @@ func (a *fakeAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnRes
 	if writes {
 		a.ws.mount(turn.Workspace, 1)
 	}
-	c := &call{t: a.t, ctx: ctx, turn: turn, h: h, ag: a}
+	observedHandler := func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
+		a.mu.Lock()
+		if a.toolCalls == nil {
+			a.toolCalls = map[string]int{}
+		}
+		a.toolCalls[turn.ID]++
+		a.mu.Unlock()
+		return h(ctx, name, args)
+	}
+	c := &call{t: a.t, ctx: ctx, turn: turn, h: observedHandler, ag: a}
+	a.e.mu.Lock()
+	c.blocked = a.e.cur.byPath[turn.Manager].stage == stageBlocked
+	a.e.mu.Unlock()
 	var err error
 	if a.script != nil {
 		err = a.script(c)
@@ -219,7 +252,7 @@ func (a *fakeAgents) Run(ctx context.Context, turn Turn, h ToolHandler) (TurnRes
 	a.mu.Lock()
 	a.active--
 	a.mu.Unlock()
-	res := TurnResult{Stopped: !c.noStop, Started: time.Now(), Ended: time.Now(), Usage: Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}}
+	res := TurnResult{Completed: err == nil && !c.nativeIncomplete, Final: c.final, Commands: c.commands, Stopped: !c.noStop, Started: time.Now(), Ended: time.Now(), Usage: Usage{Model: "m", InputTokens: 10, OutputTokens: 5, ProviderTurns: 1}}
 	res.Conversation = turn.Resume
 	if res.Conversation == "" {
 		res.Conversation = "conv-" + turn.ID
@@ -247,20 +280,31 @@ func (a *fakeAgents) turnsOf(manager string) []Turn {
 }
 
 func (c *call) tool(name string, args any) ToolAnswer {
+	if c.final == "" {
+		c.final = `{"status":"continue","summary":"coordinated pending work","findings":[],"open":[]}`
+	}
 	raw, err := json.Marshal(args)
 	if err != nil {
 		c.t.Fatal(err)
 	}
-	a := c.h(c.ctx, name, raw)
+	var a ToolAnswer
+	if name == testAssessment {
+		a = c.assessmentPreview(raw)
+	} else {
+		a = c.h(c.ctx, name, raw)
+	}
 	// Remember what this turn already decided or answered, so that the
 	// protocol does not act on its prompt's stale list again.
 	var in struct{ Kind, Proposal, About string }
+	if !a.Refused && name == toolDelegate {
+		c.delegated = true
+	}
 	if !a.Refused && json.Unmarshal(raw, &in) == nil {
 		if c.decided == nil {
 			c.decided = map[string]bool{}
 		}
 		switch {
-		case name == toolReport && (in.Kind == kindAccept || in.Kind == kindReturn):
+		case name == testAssessment && (in.Kind == kindAccept || in.Kind == kindReturn):
 			c.decided[in.Proposal] = true
 		case name == toolSend && in.Kind == sendAnswer:
 			c.decided[in.About] = true
@@ -295,27 +339,77 @@ func (c *call) now() string {
 }
 
 func (c *call) hasReportField(field string) bool {
-	for _, tool := range c.turn.Tools {
-		if tool.Name == toolReport {
-			var s struct {
-				OneOf []struct {
-					Properties map[string]any `json:"properties"`
-				} `json:"oneOf"`
-			}
-			if err := json.Unmarshal(tool.InputSchema, &s); err != nil {
-				c.t.Fatal(err)
-			}
-			for _, action := range s.OneOf {
-				if _, ok := action.Properties[field]; ok {
-					return true
-				}
-			}
-		}
-	}
-	return false
+	return field == "integration" && !c.ag.e.cur.spec.Assesses || field == "plan" && c.planning()
+}
+func (c *call) planning() bool {
+	return strings.Contains(c.turn.Prompt, ": plan\n") || strings.Contains(c.turn.Prompt, "In the plan Pass")
 }
 
-func (c *call) planning() bool { return c.hasReportField("plan") }
+func (c *call) assessmentPreview(raw json.RawMessage) ToolAnswer {
+	var in contribution
+	var action struct {
+		actionIn
+		Text  string
+		Abort bool
+	}
+	_ = json.Unmarshal(raw, &action)
+	if err := json.Unmarshal(raw, &in); err != nil {
+		return refuse("%v", err)
+	}
+	switch in.Kind {
+	case kindWait:
+		data, _ := json.Marshal(actionIn{For: action.For, Stage: action.Stage, Reason: action.Reason})
+		return c.h(c.ctx, toolWait, data)
+	case kindAccept, kindReturn, kindReopen, kindRevise:
+		data, _ := json.Marshal(actionIn{Kind: in.Kind, Proposal: action.Proposal, Child: action.Child, Reason: action.Reason})
+		return c.h(c.ctx, toolDecide, data)
+	}
+	a := assessment{Status: "continue", Summary: in.Summary, Findings: in.Findings, Open: in.Unresolved, Contract: in.Kind == kindBasis, Plan: in.Plan, Closed: in.Closed, Disputed: in.Disputed, Dispositions: in.Dispositions}
+	if a.Findings == nil {
+		a.Findings = []findingIn{}
+	}
+	if a.Open == nil {
+		a.Open = []string{}
+	}
+	if in.Kind == kindResult {
+		a.Status = in.Verdict
+	}
+	if in.Kind == kindProblem {
+		a.Status = "blocked"
+		a.Summary = action.Text
+		a.Problem = action.Text
+	}
+	if c.helper() {
+		a.Status = string(Satisfied)
+	}
+	e := c.ag.e
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	m := e.cur.byPath[c.turn.Manager]
+	if m.p.id != c.pass() {
+		return refuse("This Pass no longer accepts assessments")
+	}
+	if in.Kind == kindProblem && action.Abort && m.Parent != "" {
+		return refuse("Only Root ends a run")
+	}
+	if c.blocked && (in.Kind == kindProgress || in.Kind == kindBasis || in.Kind == kindResult) {
+		return refuse("your work waits for its prerequisite")
+	}
+	if in.Kind == kindBasis || in.Kind == kindResult {
+		preview := &turnState{m: m, id: c.turn.ID, blocked: c.blocked}
+		if c.delegated {
+			preview.delegations = []*helperRun{{}}
+		}
+		if _, err := e.prepareContribution(m, preview, in); err != nil {
+			return refuse("%v", err)
+		}
+	} else if a.Summary == "" {
+		return refuse("summary is required")
+	}
+	data, _ := json.Marshal(a)
+	c.final = string(data)
+	return ToolAnswer{Text: "Assessment prepared for the observed native end."}
+}
 
 func (c *call) helper() bool {
 	return !slices.ContainsFunc(c.turn.Tools, func(t ToolSpec) bool { return t.Name == toolSend })
@@ -407,15 +501,15 @@ func (c *call) envelope(kind string, extra map[string]any) map[string]any {
 }
 
 func (c *call) basis(extra map[string]any) ToolAnswer {
-	return c.tool(toolReport, c.envelope(kindBasis, extra))
+	return c.tool(testAssessment, c.envelope(kindBasis, extra))
 }
 
 func (c *call) result(extra map[string]any) ToolAnswer {
-	return c.tool(toolReport, c.envelope(kindResult, extra))
+	return c.tool(testAssessment, c.envelope(kindResult, extra))
 }
 
 func (c *call) accept(id string) ToolAnswer {
-	return c.tool(toolReport, map[string]any{"kind": kindAccept, "proposal": id})
+	return c.tool(testAssessment, map[string]any{"kind": kindAccept, "proposal": id})
 }
 
 func (c *call) send(to, kind, text, about string) ToolAnswer {
@@ -431,13 +525,14 @@ func (c *call) send(to, kind, text, about string) ToolAnswer {
 // complete result its stage asks for. A reviewer closes the findings it raised
 // earlier. A helper reports its task done.
 func (c *call) protocol() {
+	c.final = `{"status":"continue","summary":"coordinated pending work","findings":[],"open":[]}`
 	if c.helper() {
-		c.must(toolReport, map[string]any{"summary": "did the task"})
+		c.must(testAssessment, map[string]any{"summary": "did the task"})
 		return
 	}
 	for _, id := range c.pendingDecisions() {
 		if !c.decided[id] {
-			c.must(toolReport, map[string]any{"kind": kindAccept, "proposal": id})
+			c.must(testAssessment, map[string]any{"kind": kindAccept, "proposal": id})
 		}
 	}
 	for _, q := range c.pendingQuestions() {
@@ -456,12 +551,12 @@ func (c *call) protocol() {
 			}
 			extra["closed"] = closed
 		}
-		c.must(toolReport, c.envelope(kindBasis, extra))
+		c.must(testAssessment, c.envelope(kindBasis, extra))
 	case strings.HasPrefix(now, "submit your complete result"), strings.HasPrefix(now, "integrate your children"):
 		// A genuine finding within the responsibility keeps the verdict at
 		// needs_correction.
 		if a := c.result(nil); a.Refused && strings.Contains(a.Text, "stay open") {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 		} else if a.Refused {
 			c.t.Errorf("turn %s: result refused: %s", c.turn.ID, a.Text)
 		}
@@ -703,6 +798,7 @@ func (f *fixture) open() *Run {
 	if err != nil {
 		f.t.Fatalf("open: %v", err)
 	}
+	f.agents.e = r.e
 	return r
 }
 

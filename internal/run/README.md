@@ -68,20 +68,20 @@ it. The Pass closes when every Manager is Done and nothing runs; its exit gates 
 the quiescent shared tree, require it to equal the accepted stand and run the Model check
 and the File check; any failure ends the run Failed without a repair Pass.
 
-States per Pass are `ready`, `working`, `waiting` and `done`, recorded as
-`manager.state_changed` with the stage and what a Manager waits for. A turn that ends
-without the report its work needs gets a note and counts as empty; so does a turn whose
-only report repeats an earlier progress summary of the Pass, which is not continued
-automatically. Repeated empty turns, repeated failed turns and a turn without an observed
-container stop end the run Incomplete. A wait that nothing can resolve ends it Incomplete
-with the named waits.
+States per Pass are `ready`, `working`, `waiting` and `done`. Every native Turn end
+is captured once as `turn.submitted`, including incomplete or unknown semantic content.
+`Completed` means an observed successful native provider end, while `Stopped` is the
+separate observed container stop. Only both, without native/cleanup error, allow semantic
+acceptance. An unclear productive final gets one targeted correction and then ends
+Incomplete; no missing-report reminder loop exists. Actual unresolved decisions, repeated
+unchanged continuation, finite limits and unknown cessation retain their bounded stops.
 
-`report kind wait` names an own open question, a child, or the accepted basis or result
+`wait` names an own open question, a child, or the accepted basis or result
 (`stage`) of any other Manager of the Pass. Only an actual event wakes a waiting Manager:
 the accepted submission it named, an answer, a message or a decision it must make; an
 unchanged wait starts no turn. In a Pass with `BindWaits` (Implement of Apply's `direct`,
 which has no planning Pass before it), the accepted submission a wait named, or one already accepted
-when the wait is reported (recorded as report kind `bind`), becomes a **bound dependency**
+when the wait is reported (recorded as an actual `bind` action), becomes a **bound dependency**
 of the event the waiter works toward, its basis or its result (`dependency.bound`, with
 proposal and stand). An explicitly needed ancestor contract binds too. Descendant results already
 participate in mandatory parent integration and need no duplicate binding. A binding that
@@ -98,35 +98,38 @@ satisfied, so it is refused with the cycle named; the Manager submits first what
 need it or asks its parent, and a Pass that still cannot advance ends as stalled. Every turn records its `mode`: `work`, `communication` (blocked), `coordination`
 (decisions and answers after the basis), `review` or `helper`.
 
-## Envelope and verdicts
+## Final assessment and Host submission
 
-`report kind basis|result` carries a concise summary, shared `support`, concrete
-`unresolved` gaps, the purpose payload (`plan` in planning), findings, closures,
-disputes, adverse-receipt dispositions and, for a result, the verdict. The Host adds
-the exact obligation `scope` and technical identities; it does not expand a receipt
-into satisfied Definitions. Optional `obligations` entries localize detailed claims,
-gaps or inapplicability. A verdict contradicting
-the open genuine findings within the responsibility is refused; a result is refused while
-the Manager's own question is unanswered. Plans are validated (approach, method and
-evidence, owners of inputs and outputs, dependencies without a cycle with
-the integration order).
+Ending the native Turn submits the work. The final answer contains a short semantic
+assessment, normally:
 
-Implement and artifact reviewers assess material conditions, exceptions and interactions
-from the bound authority, explain relevant evidence and gaps, and challenge valid inputs
-wrongly refused and invalid inputs wrongly accepted. No `conditions` field or
-per-obligation mapping artifact is mandatory. Structural evidence validation does not
-establish semantic completeness. Extract retains fixed artifacts/documented intent as
-authority; its proposed model is work product.
+```json
+{"status":"satisfied","summary":"What is established and why","findings":[],"open":[]}
+```
 
-Every parent, including Root without own Definitions, assesses composed workflows,
-interfaces and shared invariants in its concise result. Relevant child receipts may be
-reused after assessing their assertions; extra checks address concrete gaps rather than
-routine repetition. Accepted-child labels alone are insufficient. `integration` remains
-optional detail; shared `support` is sufficient structurally, while adequacy is a semantic
-judgment. Integration grants no sibling writes.
-Source evidence cites a real Definition in `authority`, or `pass_mandate` for the already
-bound integration task where no Definition supplies it; this is no synthetic Definition
-or new authority. Open integration cannot yield a satisfied result/Pass.
+`satisfied` explicitly judges the current mandate; `needs_correction` records genuine
+findings, `continue` retains unfinished work and `blocked` names actual prerequisites or
+problems. Open required points cannot yield satisfied. Unknown or missing meaning is
+never defaulted to success. Findings retain their required outcome, observation, owner
+and normal independent closure. Specific `closed`, `disputed` and `dispositions` are
+only needed for existing findings/adverse observations; `plan` belongs only to a Plan
+Pass. An optional `contract:true` accompanies `continue` when another Manager actually
+needs an early contract. No universal basis is introduced.
+
+The Host derives Run/Pass/Manager/Turn identities, captured stand and changed paths,
+actual command observations, configured check identities and matching passing probe
+receipts. These are retained once in the submission and shown to the parent. An Agent
+never has to restate the diff, candidate, executed tests or receipt IDs as an evidence
+matrix. Observed shell commands remain separate from candidate-bound receipts: a run
+before the last edit is not final candidate proof, and prose claiming a test ran creates
+no receipt. Relevant assertions and semantic completeness remain the reviewer/parent's
+judgment. Source inspection is explained in the short assessment against captured files.
+
+Only actual actions use tools: execution/checks, communication, waits and necessary
+parent decisions (`decide` accept/return/reopen/revise). Parents still assess composed
+interfaces and shared invariants, challenge child evidence and accept their real
+submissions. Model assessment, fresh immutable read-only Verify and publication gates
+keep the same responsibilities. Helpers also leave a native final assessment.
 
 Implement `satisfied` means a checked implementation submission to independent Verify.
 It does not establish verified conformance or permit publication.
@@ -222,8 +225,7 @@ mandatory review of intent. Optional contract dependencies use the same mechanis
 
 Relied-on probe files are delivered in full within the bounded assignment budget;
 larger files require `look_up probe`. That lookup records the exact delivered bytes'
-digest. A valid report submission ends probing/helper work in that Turn and explicitly
-asks the provider to end the Turn; a submitted report never substitutes for its normal
+digest. The observed native end closes the Turn and records its current work; a captured submission never substitutes for its normal
 terminal event and observed stop. NIGHT's bounded operator validation is described in
 [the NIGHT handoff](../../docs/development/night-apply-stability-20261021.md).
 

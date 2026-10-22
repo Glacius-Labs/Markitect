@@ -35,7 +35,7 @@ func raiseGap(c *call, raised *bool) bool {
 		return false
 	}
 	*raised = true
-	c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []map[string]any{libraryGap}}))
+	c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []map[string]any{libraryGap}}))
 	return true
 }
 
@@ -143,7 +143,7 @@ func disputeGap(c *call) bool {
 	for _, id := range c.pendingDecisions() {
 		c.accept(id)
 	}
-	c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "library/interface fixes the limit by its wording", "evidence": "library/interface, its first statement"}}}))
+	c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "library/interface fixes the limit by its wording", "evidence": "library/interface, its first statement"}}}))
 	return true
 }
 
@@ -159,7 +159,7 @@ func TestADisputedFindingIsReassessedBeforeTheWork(t *testing.T) {
 		switch {
 		case raiseGap(c, &raised), disputeGap(c):
 		case c.pass() == "p2" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the wording of library/interface fixes the limit", "evidence": "library/interface, its first statement"}}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the wording of library/interface fixes the limit", "evidence": "library/interface, its first statement"}}}))
 		default:
 			c.protocol()
 		}
@@ -260,9 +260,9 @@ func TestAFindingUpheldInTheNextAssessmentIsConfirmed(t *testing.T) {
 		case raiseGap(c, &raised), disputeGap(c):
 		case c.pass() == "p2" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
 			// The fresh reviewer keeps its finding: it neither closes nor softens it.
-			c.must(toolReport, c.envelope(kindBasis, nil))
+			c.must(testAssessment, c.envelope(kindBasis, nil))
 		case c.pass() == "p2" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit your complete result"):
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 		default:
 			c.protocol()
 		}
@@ -292,14 +292,14 @@ func TestAVerifiedCandidateStaysVerifiedThroughItsAssessment(t *testing.T) {
 		switch {
 		case c.pass() == "p3" && c.turn.Manager == "library" && c.resultTurn() && !raised:
 			raised = true
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []map[string]any{libraryGap}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []map[string]any{libraryGap}}))
 		case c.pass() == "p3" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate your children"):
 			for _, id := range c.pendingDecisions() {
 				c.accept(id)
 			}
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "the wording fixes the limit", "evidence": "library/interface"}}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "disputed": []any{map[string]any{"id": "F1", "reason": "the wording fixes the limit", "evidence": "library/interface"}}}))
 		case c.pass() == "p4" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the wording fixes the limit", "evidence": "library/interface"}}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"closed": []any{map[string]any{"id": "F1", "as": ClosedDisproved, "reason": "the wording fixes the limit", "evidence": "library/interface"}}}))
 		default:
 			c.protocol()
 		}
@@ -334,7 +334,7 @@ func TestTheAssessmentReasonShortensLongFindings(t *testing.T) {
 		if c.pass() == "p1" && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit your complete result") && !raised {
 			raised = true
 			gap := map[string]any{"owner": "library", "obligation": "library/interface", "observed": long, "blocking": true, "correction": "model_gap"}
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{gap}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection), "findings": []any{gap}}))
 			return nil
 		}
 		c.protocol()

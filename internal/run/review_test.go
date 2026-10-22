@@ -31,22 +31,22 @@ func TestVerifyFindingsStayOpenUntilAnIndependentClosure(t *testing.T) {
 			verifies++
 			switch verifies {
 			case 1:
-				c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+				c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
 				return nil
 			case 2:
 				// A fresh reviewer that omits the finding does not close it.
-				c.must(toolReport, c.envelope(kindBasis, nil))
+				c.must(testAssessment, c.envelope(kindBasis, nil))
 				return nil
 			}
 		}
 		if review && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "integrate") && verifies == 1 {
 			a := c.result(map[string]any{"closed": []any{map[string]string{"id": "F1", "reason": "looks fine now"}}})
 			sameCandidateClose = a.Text
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		if review && c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "integrate") && verifies == 2 {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		if !review && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on") && verifies >= 1 {
@@ -61,7 +61,7 @@ func TestVerifyFindingsStayOpenUntilAnIndependentClosure(t *testing.T) {
 			}
 		}
 		if review && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && verifies <= 2 {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		c.protocol()
@@ -124,7 +124,7 @@ func TestFailedRequiredCheckBlocksTheReview(t *testing.T) {
 	f.checks.fail = failingIn("unit", "p2")
 	f.agents.script = func(c *call) error {
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") && c.pass() == "p2" {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		c.protocol()
@@ -163,19 +163,19 @@ func TestVerdictMustMatchTheOpenFindings(t *testing.T) {
 		mu.Lock()
 		defer mu.Unlock()
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on") {
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
 			return nil
 		}
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit") {
 			satisfied = c.result(nil).Text
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "submit") {
 			needs = c.result(map[string]any{"verdict": string(NeedsCorrection)}).Text
 		}
 		if c.turn.Kind == VerifyTurn && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate") {
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		c.protocol()
@@ -216,18 +216,18 @@ func TestChildReportsSatisfiedWhileItsAncestorsFindingAwaitsTheAncestor(t *testi
 				extra = map[string]any{"findings": []any{genuine("library", "library/interface")}}
 			}
 			// Root's basis precedes its assessment of the correction.
-			c.must(toolReport, c.envelope(kindBasis, extra))
+			c.must(testAssessment, c.envelope(kindBasis, extra))
 			return nil
 		case review && verifies == 1 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		case review && verifies == 2 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit"):
 			if childSatisfied = c.result(nil); childSatisfied.Refused {
-				c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+				c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			}
 			return nil
 		case review && verifies == 2 && c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"closed": []any{map[string]string{"id": "F1", "reason": "the corrected interface conforms", "evidence": "library/a.go on this candidate"}}}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"closed": []any{map[string]string{"id": "F1", "reason": "the corrected interface conforms", "evidence": "library/a.go on this candidate"}}}))
 			return nil
 		case !review && verifies == 1 && c.turn.Manager == "library" && strings.HasPrefix(c.now(), "work on"):
 			c.write("library/a.go", "a corrected")
@@ -271,24 +271,24 @@ func TestOnlyAnAncestorsFindingLeavesSatisfiedOpen(t *testing.T) {
 		}
 		switch {
 		case c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on your own contribution"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("library", "library/interface")}}))
 			return nil
 		case c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "work on your own contribution"):
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{genuine("lending/reminders", "lending/reminders/notice")}}))
 			return nil
 		case c.turn.Manager == "lending/reminders" && strings.HasPrefix(c.now(), "submit"):
 			leafSatisfied = c.result(nil)
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		case c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "integrate"):
 			parentSatisfied = c.result(nil)
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		case c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit"):
-			inheritedNeeds = c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			inheritedNeeds = c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		case c.turn.Manager == "." && strings.HasPrefix(c.now(), "integrate"):
-			c.must(toolReport, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
+			c.must(testAssessment, c.envelope(kindResult, map[string]any{"verdict": string(NeedsCorrection)}))
 			return nil
 		}
 		c.protocol()
@@ -382,7 +382,7 @@ func TestAdvisoryArtifactFindingsNeverBlock(t *testing.T) {
 			refusal = bad.Text
 			art := genuine("library", "library/interface")
 			art["subject"], art["definition"] = subjectArtifact, "library/interface"
-			c.must(toolReport, c.envelope(kindBasis, map[string]any{"findings": []any{art}}))
+			c.must(testAssessment, c.envelope(kindBasis, map[string]any{"findings": []any{art}}))
 			return nil
 		}
 		c.protocol()

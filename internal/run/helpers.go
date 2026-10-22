@@ -209,18 +209,30 @@ func helperMounts(plan WritePlan, paths []PathMount) []PathMount {
 func (e *engine) helperTurn(h *helperRun, ts *turnState, turn Turn) {
 	defer e.wg.Done()
 	res, err := e.runTurn(ts, turn, e.helperHandler(h, ts))
+	e.captureTurn(ts, res, err)
 	e.mu.Lock()
 	defer e.mu.Unlock()
 	defer e.cond.Broadcast()
 	m := h.m
 	m.p.running--
 	m.helpers = slices.DeleteFunc(m.helpers, func(x *helperRun) bool { return x == h })
-	outcome := "reported: " + ts.helperSummary
+	assessment, semanticErr := readAssessment(res.Final)
+	outcome := "submitted: " + assessment.Summary
 	switch {
 	case err != nil:
 		outcome = fmt.Sprintf("failed: %v", err)
-	case ts.helperSummary == "":
-		outcome = "ended without a report"
+	case semanticErr != nil:
+		outcome = "submitted with unresolved semantic assessment: " + semanticErr.Error()
+	case assessment.Status != string(Satisfied):
+		outcome = "submitted with " + assessment.Status + ": " + assessment.Summary
+	}
+	if err == nil && semanticErr == nil {
+		for _, finding := range assessment.Findings {
+			outcome += fmt.Sprintf("\nFinding under %s: expected %s; observed %s", finding.Obligation, finding.Expected, finding.Observed)
+		}
+		for _, point := range assessment.Open {
+			outcome += "\nOpen: " + point
+		}
 	}
 	_ = e.record(Event{Kind: "helper.end", Pass: m.p.id, Manager: m.Path, Turn: ts.id, Data: map[string]any{"helper": h.id, "role": h.role.Role, "outcome": outcome}})
 	if e.ctx.Err() != nil || !res.Stopped {
@@ -242,22 +254,6 @@ func (e *engine) helperHandler(h *helperRun, ts *turnState) ToolHandler {
 func (e *engine) helperTool(h *helperRun, ts *turnState) ToolHandler {
 	return func(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
 		switch name {
-		case toolReport:
-			var in struct {
-				Summary string `json:"summary"`
-			}
-			if err := decodeStrict(args, &in); err != nil {
-				return refuse("%v", err)
-			}
-			summary, err := toolText("summary", in.Summary)
-			if err != nil {
-				return refuse("%v", err)
-			}
-			e.mu.Lock()
-			ts.helperSummary = summary
-			ts.reports = append(ts.reports, "result")
-			e.mu.Unlock()
-			return ToolAnswer{Text: "Recorded for your Manager. A later report in this turn replaces it."}
 		case toolLookUp:
 			return e.lookUp(h.m, ts, args)
 		case toolCheck:

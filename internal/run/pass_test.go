@@ -1,6 +1,7 @@
 package run
 
 import (
+	"context"
 	"strings"
 	"sync"
 	"testing"
@@ -8,6 +9,143 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
+
+// W's native turns changed code/tests and ended normally without ANY MCP call.
+// The native final assessment now suffices for Host submission, never Verify.
+func TestNativeCompletedChildSubmitsWorkWithoutAnyMCPCall(t *testing.T) {
+	f := probeFixture(t)
+	f.cfg.Start = treeOf(t, map[string]string{"go.mod": "module x\n", "library/a.go": "broken boundary", "library/test.go": "weak assertions", "lending/l.go": "l", "lending/reminders/r.go": "r"})
+	var nativeTurn string
+	f.agents.script = func(c *call) error {
+		if c.turn.Manager == "library" && c.turn.Kind == ExecuteTurn {
+			nativeTurn = c.turn.ID
+			c.write("library/a.go", "correct inclusive boundary")
+			c.write("library/test.go", "assert the inclusive boundary and invalid input")
+			bad, good := 2, 0
+			c.commands = []CommandObservation{{ID: "cmd-setup", Command: "python missing.py", Status: "completed", ExitCode: &bad}, {ID: "cmd-tests", Command: "python -m unittest", Status: "completed", ExitCode: &good, Output: "two discriminating assertions passed"}}
+			c.final = `{"status":"satisfied","summary":"Corrected the boundary and its weak assertions; ready for independent review.","findings":[],"open":[]}`
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	work := r.Pass(implementSpec())
+	if work.Stopped || work.Verdict != Satisfied || r.e.verified != nil {
+		t.Fatalf("work skipped normal review: %+v", work)
+	}
+	review := r.Pass(verifySpec())
+	out := f.finish(r, "")
+	if review.Stopped || out.Status != Verified || len(f.agents.turnsOf("library")) != 3 {
+		t.Fatalf("workflow %+v %s: %s", review, out.Status, out.Reason)
+	}
+	if f.agents.toolCalls[nativeTurn] != 0 {
+		t.Fatalf("native child used %d MCP calls", f.agents.toolCalls[nativeTurn])
+	}
+	counts := map[string]int{}
+	var captured bool
+	for _, ev := range f.ev.kinds("turn.submitted") {
+		counts[ev.Turn]++
+		if ev.Turn == nativeTurn {
+			data := ev.Data.(map[string]any)
+			paths := data["changedPaths"].([]string)
+			captured = data["completed"] == true && data["candidate"] != "" && len(paths) == 2 && len(data["commands"].([]CommandObservation)) == 2
+		}
+	}
+	for _, turn := range out.Turns {
+		if counts[turn.ID] != 1 {
+			t.Fatalf("%s has %d submissions", turn.ID, counts[turn.ID])
+		}
+	}
+	if !captured || len(out.Probes) != 0 {
+		t.Fatalf("captured=%v fabricated probe receipts=%d", captured, len(out.Probes))
+	}
+	checks := out.Passes[1].Checks
+	if len(checks) != 1 || checks[0].ID != "run1-p2-tests" || !checks[0].Passed {
+		t.Fatalf("required checks not bound: %+v", checks)
+	}
+	for _, turn := range f.agents.all() {
+		for _, tool := range turn.Tools {
+			if tool.Name == "report" {
+				t.Fatal("mandatory report tool survived")
+			}
+		}
+		if turn.Kind == VerifyTurn && (!turn.ReadOnly || turn.Resume != "" && turn.Manager == "library" && strings.HasSuffix(turn.ID, "r1")) {
+			t.Fatal("review independence changed")
+		}
+		if strings.Contains(turn.Prompt, "ended without a report") {
+			t.Fatal("missing-report reminder loop survived")
+		}
+	}
+}
+
+func TestNativeEndCannotInventSemanticOrTechnicalSuccess(t *testing.T) {
+	for _, tc := range []struct {
+		name, final              string
+		nativeIncomplete, noStop bool
+		failure                  error
+	}{
+		{name: "announcement", final: "Submitted for Verify; all tests green."},
+		{name: "empty"},
+		{name: "open required point", final: `{"status":"satisfied","summary":"done","findings":[],"open":["required boundary remains unknown"]}`},
+		{name: "blocked", final: `{"status":"blocked","summary":"prerequisite unresolved","findings":[],"open":["unknown"]}`},
+		{name: "no native end", nativeIncomplete: true, final: `{"status":"satisfied","summary":"done","findings":[],"open":[]}`},
+		{name: "native error", failure: errTest, final: `{"status":"satisfied","summary":"done","findings":[],"open":[]}`},
+		{name: "timeout", failure: context.DeadlineExceeded, final: `{"status":"satisfied","summary":"done","findings":[],"open":[]}`},
+		{name: "unknown stop", noStop: true, final: `{"status":"satisfied","summary":"done","findings":[],"open":[]}`},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			f := newFixture(t)
+			f.agents.script = func(c *call) error {
+				if c.turn.Manager == "library" {
+					c.final = tc.final
+					c.nativeIncomplete = tc.nativeIncomplete
+					c.noStop = tc.noStop
+					return tc.failure
+				}
+				c.protocol()
+				return nil
+			}
+			r := f.open()
+			result := r.Pass(implementSpec())
+			out := f.finish(r, "")
+			if !result.Stopped || out.Status != Incomplete {
+				t.Fatalf("%s promoted to success: %+v %s", tc.name, result, out.Status)
+			}
+			for _, m := range out.Passes[0].Managers {
+				if m.Manager == "library" && m.State == Done {
+					t.Fatal("unknown child became Done")
+				}
+			}
+		})
+	}
+}
+
+func TestClaimedTestAndReceiptIDsDoNotCreateExecutionEvidence(t *testing.T) {
+	f := newFixture(t)
+	f.agents.script = func(c *call) error {
+		if c.turn.Manager == "library" && c.turn.Kind == ExecuteTurn {
+			c.final = `{"status":"satisfied","summary":"Inspected the static fixture; claimed tests passed","findings":[],"open":[],"support":[{"receipt":"R999"}],"tests":["claimed-check"]}`
+			return nil
+		}
+		c.protocol()
+		return nil
+	}
+	r := f.open()
+	result := r.Pass(implementSpec())
+	out := f.finish(r, "implementation only")
+	if result.Stopped || out.Status == Verified || len(out.Probes) != 0 {
+		t.Fatalf("claim manufactured verification: %+v", out)
+	}
+	for _, ev := range f.ev.kinds("proposal.submitted") {
+		if ev.Manager == "library" {
+			env := ev.Data.(map[string]any)["envelope"].(envelope)
+			if len(env.Support) != 0 || len(env.Commands) != 0 || len(env.Checks) != 0 {
+				t.Fatalf("claim created Host observations: %+v", env)
+			}
+		}
+	}
+}
 
 // The forward sequence Plan, Prepare, Implement and Verify runs through one
 // base process: every Manager, Root and the leaves included, submits a basis
@@ -114,7 +252,7 @@ func TestReturnedOptionalBasisDoesNotBlockIndependentChild(t *testing.T) {
 		if c.turn.Manager == "." && !returned {
 			for _, id := range c.pendingDecisions() {
 				if strings.Contains(c.turn.Prompt, "lending submitted its basis "+id) || strings.Contains(c.turn.Prompt, "lending (loans) submitted its basis "+id) {
-					c.must(toolReport, map[string]any{"kind": kindReturn, "proposal": id, "reason": "the loan interface is missing"})
+					c.must(testAssessment, map[string]any{"kind": kindReturn, "proposal": id, "reason": "the loan interface is missing"})
 					returned = true
 				}
 			}
@@ -150,9 +288,9 @@ func promptOf(f *fixture, manager, text string) string {
 	return ""
 }
 
-// A turn that ends without a report is incomplete work: it is returned with a
-// note, and repeated empty turns end the run Incomplete, never Done.
-func TestTurnEndWithoutReportIsNeverCompletion(t *testing.T) {
+// Missing final semantic content stays unknown. One targeted correction is
+// allowed before a visible Incomplete outcome; no report call is requested.
+func TestMissingFinalAssessmentRemainsIncompleteAfterOneCorrection(t *testing.T) {
 	f := newFixture(t)
 	f.agents.script = func(c *call) error {
 		if c.turn.Manager == "library" {
@@ -164,45 +302,21 @@ func TestTurnEndWithoutReportIsNeverCompletion(t *testing.T) {
 	r := f.open()
 	res := r.Pass(implementSpec())
 	out := f.finish(r, "")
-	if !res.Stopped || out.Status != Incomplete || !strings.Contains(out.Reason, `"library"`) {
+	if !res.Stopped || out.Status != Incomplete || !strings.Contains(out.Reason, `library`) {
 		t.Fatalf("status %s: %s", out.Status, out.Reason)
 	}
 	for _, m := range out.Passes[0].Managers {
 		if m.Manager == "library" && m.State == Done || m.Manager == "." && m.State == Done {
-			t.Errorf("%s is Done without a report", m.Manager)
+			t.Errorf("%s is Done without a final assessment", m.Manager)
 		}
 	}
-	if !strings.Contains(promptOf(f, "library", "ended without a report"), "Your turn ended without a report") {
+	if len(f.agents.turnsOf("library")) != 2 || !strings.Contains(promptOf(f, "library", "Correct only"), "Your work was captured") {
 		t.Errorf("no note reached library")
 	}
 }
 
 // A concise result still needs assessed evidence, not a bare success label.
-func TestSatisfiedResultNeedsRelevantSupport(t *testing.T) {
-	f := newFixture(t)
-	var refusal string
-	f.agents.script = func(c *call) error {
-		if c.turn.Manager == "library" && strings.HasPrefix(c.now(), "submit your complete result") && refusal == "" {
-			a := c.tool(toolReport, map[string]any{"kind": kindResult, "summary": "done", "verdict": "satisfied", "obligations": []any{}})
-			refusal = a.Text
-			if !a.Refused {
-				t.Errorf("a result without coverage was accepted")
-			}
-		}
-		c.protocol()
-		return nil
-	}
-	r := f.open()
-	r.Pass(implementSpec())
-	f.finish(r, "")
-	if !strings.Contains(refusal, "relevant support") {
-		t.Errorf("refusal %q does not explain missing support", refusal)
-	}
-}
 
-// A submission whose area fails the File check is returned to its owner, and
-// the check composes the accepted stand with the submitter's own area only:
-// another Manager's unaccepted live work never enters it.
 func TestSubmissionGateChecksOnlyTheSubmittersStableArea(t *testing.T) {
 	f := newFixture(t)
 	f.cfg.FileCheck = func(tree snapshot.Tree) []Finding {
@@ -229,7 +343,7 @@ func TestSubmissionGateChecksOnlyTheSubmittersStableArea(t *testing.T) {
 		case c.turn.Manager == "lending" && strings.HasPrefix(c.now(), "work on your own contribution"):
 			if !strings.Contains(c.turn.Prompt, "Continue your work") {
 				c.write("lending/wip.go", "work in progress")
-				c.must(toolReport, map[string]any{"kind": kindProgress, "summary": "half done"})
+				c.must(testAssessment, map[string]any{"kind": kindProgress, "summary": "half done"})
 				return nil
 			}
 			if err := c.wait(libraryDone); err != nil {

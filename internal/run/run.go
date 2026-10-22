@@ -445,11 +445,12 @@ type ManagerRecord struct {
 
 // CheckResult is one required check on a review Pass's candidate.
 type CheckResult struct {
-	Name     string `json:"name"`
-	Passed   bool   `json:"passed"`
-	ExitCode int    `json:"exitCode"`
-	Output   string `json:"output,omitempty"`
-	Reason   string `json:"reason,omitempty"`
+	ID       CheckID `json:"id"`
+	Name     string  `json:"name"`
+	Passed   bool    `json:"passed"`
+	ExitCode int     `json:"exitCode"`
+	Output   string  `json:"output,omitempty"`
+	Reason   string  `json:"reason,omitempty"`
 }
 
 // TurnRecord is one Agent turn as the Orchestrator observed it. Role is
@@ -475,7 +476,8 @@ type TurnRecord struct {
 	Ended     time.Time `json:"ended"`
 	Usage     Usage     `json:"usage"`
 	Stopped   bool      `json:"stopped"`
-	Reports   []string  `json:"reports,omitempty"`
+	Actions   []string  `json:"actions,omitempty"`
+	Completed bool      `json:"completed"`
 	Reason    string    `json:"reason,omitempty"`
 }
 

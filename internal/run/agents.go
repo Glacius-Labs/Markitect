@@ -90,20 +90,36 @@ type ToolAnswer struct {
 
 // TurnResult is what the implementation observed. Conversation is the
 // provider conversation identity a later Execute turn may resume. Final is the
-// provider's final text; it carries no outcome, which arrives only through
-// tool calls. Stopped reports the observed end of the container. Compacted
+// provider's final-answer assessment; the Host captures work at the observed
+// native end and validates its meaning separately. Stopped reports the observed
+// end of the container. Compacted
 // reports that the provider observably compacted the conversation during the
 // turn, so earlier context such as the standing Brief may survive only in its
 // summary; a provider that hides compaction never sets it.
 type TurnResult struct {
 	Conversation string
 	Final        string
-	Usage        Usage
-	Started      time.Time
-	Ended        time.Time
-	Stopped      bool
-	Compacted    bool
-	Reason       string
+	// Completed is a successful native provider end event, independently of
+	// transport closure and observed container stop. Final is final-answer text,
+	// never commentary. Neither field establishes semantic success.
+	Completed bool
+	Commands  []CommandObservation
+	Usage     Usage
+	Started   time.Time
+	Ended     time.Time
+	Stopped   bool
+	Compacted bool
+	Reason    string
+}
+
+// CommandObservation is an actual completed provider command item. It is not
+// a candidate-bound conformance receipt and says nothing about relevance.
+type CommandObservation struct {
+	ID       string `json:"id"`
+	Command  string `json:"command"`
+	Status   string `json:"status"`
+	ExitCode *int   `json:"exitCode,omitempty"`
+	Output   string `json:"output,omitempty"`
 }
 
 // Usage is what the provider reported for one turn. CostUSD is the provider's

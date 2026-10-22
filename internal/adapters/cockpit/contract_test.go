@@ -25,7 +25,9 @@ var consumedKeys = map[string][]string{
 	"manager.state_changed": {"from", "to", "stage", "why", "waitingFor"},
 	"manager.release":       {"why", "parent"},
 	"turn.start":            {"role", "kind", "profile", "readOnly", "resume", "mode", "context"},
-	"turn.end":              {"role", "kind", "usage", "stopped", "reports", "reason", "compacted", "probes"},
+	"turn.end":              {"role", "kind", "usage", "stopped", "completed", "actions", "reason", "compacted", "probes"},
+	"turn.submitted":        {"declaredStatus", "captureError"},
+	"assessment.unresolved": {"reason"},
 	"probe.requested":       {"id", "obligation", "claim", "expected", "check", "standKind", "proposal", "stand", "path", "rerun"},
 	"probe.disposed":        {"receipt", "disposition", "voided", "why"},
 	"dependency.bound":      {"on", "stage", "serves", "proposal", "rebound"},
@@ -48,7 +50,8 @@ var consumedKeys = map[string][]string{
 }
 
 // consumedFields are the JSON fields of the submission envelope and its plan
-// payload the projection reads.
+// payload the current projection reads. Historical report/coverage/evidence
+// fields remain decoded for older records and are exercised by retained fixtures.
 var consumedFields = map[string][]string{
 	"RunBinding":       {"head", "strategy", "build", "work", "corrections", "execution", "defaults", "budget", "managers", "checks"},
 	"BudgetBinding":    {"executionTime", "turnTimeout"},
@@ -60,12 +63,11 @@ var consumedFields = map[string][]string{
 	"envelope":         {"summary", "verdict", "children", "plan"},
 	"plan":             {"dependencies"},
 	"dependency":       {"owner", "need", "pass", "stage"},
-	"coverage":         {"definition", "status", "note", "evidence"},
 	"evidenceItem":     {"claim", "receipt", "source", "location", "reasoning"},
 	"ProbeReceipt":     {"id", "pass", "requester", "turn", "obligation", "claim", "expected", "check", "standKind", "proposal", "stand", "path", "outcome", "exitCode", "timedOut", "uncertain", "reason", "rerun", "disposition"},
 	"ProbeDisposition": {"as", "by", "pass", "proposal", "reason", "evidence", "finding", "rerun", "passing", "pending"},
 	"Finding":          {"id", "owner", "raisedBy", "obligation", "observed", "blocking", "correction", "kind", "expected", "pass", "review", "candidate", "disputes", "closed", "closedPass", "closedReason", "closedAs", "closedEvidence", "subject", "definition", "receipts"},
-	"TurnRecord":       {"id", "manager", "role", "pass", "kind", "mode", "context", "compacted", "usage", "stopped", "reports", "reason"},
+	"TurnRecord":       {"id", "manager", "role", "pass", "kind", "mode", "context", "compacted", "usage", "stopped", "completed", "actions", "reason"},
 }
 
 func TestProjectionReadsOnlyKeysTheRunEngineRecords(t *testing.T) {
