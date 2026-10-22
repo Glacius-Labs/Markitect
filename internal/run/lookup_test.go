@@ -1,6 +1,7 @@
 package run
 
 import (
+	"encoding/json"
 	"strings"
 	"sync"
 	"testing"
@@ -13,7 +14,13 @@ func TestLookUpAnswersStructuralFactsAndMethods(t *testing.T) {
 	f := newFixture(t)
 	var mu sync.Mutex
 	answers := map[string]string{}
+	looked := make(chan struct{})
 	f.agents.script = func(c *call) error {
+		if c.pass() == "p2" && c.turn.Manager == "." && strings.HasPrefix(c.now(), "work on") {
+			if err := c.wait(looked); err != nil {
+				return err
+			}
+		}
 		mu.Lock()
 		defer mu.Unlock()
 		if c.pass() == "p2" && c.turn.Manager == "lending" && len(answers) == 0 {
@@ -29,6 +36,7 @@ func TestLookUpAnswersStructuralFactsAndMethods(t *testing.T) {
 			look("basis", map[string]any{"topic": "basis"})
 			look("method", map[string]any{"topic": "method", "id": "reviewing"})
 			look("bad method", map[string]any{"topic": "method", "id": "guessing"})
+			close(looked)
 		}
 		c.protocol()
 		return nil
@@ -38,6 +46,7 @@ func TestLookUpAnswersStructuralFactsAndMethods(t *testing.T) {
 	r := f.open()
 	r.Pass(planSpec())
 	r.Pass(prepareSpec())
+	answers["accepted basis"] = r.e.lookUp(r.e.cur.byPath["lending"], nil, json.RawMessage(`{"topic":"basis"}`)).Text
 	f.finish(r, "")
 	// The standing context of a fresh conversation names the methods.
 	if first := f.agents.turnsOf("lending")[0]; !strings.Contains(first.Prompt, "Method guidance with look_up topic method") || strings.Contains(first.Prompt, rootDuty) {
@@ -48,15 +57,16 @@ func TestLookUpAnswersStructuralFactsAndMethods(t *testing.T) {
 		t.Errorf("Root's standing context lacks its guidance:\n%s", first.Prompt)
 	}
 	for key, want := range map[string]string{
-		"own":        "your own obligation",
-		"foreign":    "context owned by library",
-		"missing":    "no Definition of the bound model",
-		"owner":      "owned by lending/reminders",
-		"state":      "Pass p2 (prepare)",
-		"plan":       "Accepted plan",
-		"basis":      "Accepted basis",
-		"method":     "authority of this run",
-		"bad method": "id names a method",
+		"own":            "your own obligation",
+		"foreign":        "context owned by library",
+		"missing":        "no Definition of the bound model",
+		"owner":          "owned by lending/reminders",
+		"state":          "Pass p2 (prepare)",
+		"plan":           "Accepted plan",
+		"basis":          "No accepted basis",
+		"accepted basis": "Accepted basis",
+		"method":         "authority of this run",
+		"bad method":     "id names a method",
 	} {
 		if !strings.Contains(answers[key], want) {
 			t.Errorf("%s: %q lacks %q", key, answers[key], want)

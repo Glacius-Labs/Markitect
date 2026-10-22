@@ -720,6 +720,9 @@ func (e *engine) resetLocked(z *member, why string) {
 	if z.stage == stageStart {
 		return
 	}
+	if z.running {
+		z.stale = why
+	}
 	hadBasis, hadResult := z.basis != nil, z.result != nil
 	for _, pr := range []*proposal{z.pending, z.basis, z.result} {
 		if pr != nil && pr.status != proposalInvalidated {

@@ -903,3 +903,40 @@ func TestReportActionsExposeOnlyTheirOwnFields(t *testing.T) {
 		}
 	}
 }
+
+// A new dependency version may be accepted before the old consumer Turn ends.
+// Its pending report still belongs to the invalidated version and must not stand.
+func TestResetWithdrawsRunningSubmissionAfterDependencyReacceptance(t *testing.T) {
+	f := newFixture(t)
+	r := f.open()
+	defer f.finish(r, "bounded reset regression")
+	e := r.e
+	e.mu.Lock()
+	defer e.mu.Unlock()
+	p := e.newPassLocked(bindingSpec())
+	owner, consumer := p.byPath["lending"], p.byPath["library"]
+	old := &proposal{id: "old-contract", kind: kindBasis, member: owner, status: proposalAccepted}
+	owner.basis = old
+	consumer.stage, consumer.running = stageOwn, true
+	consumer.bound = []binding{{target: waitTarget{manager: owner.Path, stage: stageNameBasis}, serves: eventBasis, proposal: old.id}}
+	ts := &turnState{m: consumer, id: "old-turn"}
+	if a := e.submit(consumer, ts, reportIn{Kind: kindBasis, Summary: "built on old contract"}); a.Refused {
+		t.Fatal(a.Text)
+	}
+	submitted := ts.proposal
+	owner.basis = nil
+	e.resetLocked(consumer, "contract was revised")
+	if consumer.stage != stageBlocked {
+		t.Fatalf("missing real prerequisite did not block: %s", consumer.stage)
+	}
+	owner.basis = &proposal{id: "new-contract", kind: kindBasis, member: owner, status: proposalAccepted}
+	e.releaseLocked(consumer, "new contract accepted")
+	if consumer.stage != stageOwn {
+		t.Fatalf("new contract did not release consumer: %s", consumer.stage)
+	}
+	e.turnEndedLocked(consumer, ts)
+	if submitted.status != proposalWithdrawn || consumer.pending != nil || consumer.basis != nil || len(consumer.items) == 0 {
+		t.Fatalf("stale report survived: %s pending=%v basis=%v items=%d", submitted.status, consumer.pending, consumer.basis, len(consumer.items))
+	}
+	consumer.running = false
+}

@@ -15,7 +15,7 @@ artifacts:
   - path: "internal/run/review_basis_test.go"
     form: test
     realizes: [product/run/confirmed-run-history]
-    why: "Distinguishes authority-only derivation from accepted-basis candidate access and checks blocked bypasses."
+    why: "Tests direct immutable candidate access without preliminary basis approval and independent reviewer participation."
   - path: "experiments/recursive-apply-demo/README.md"
     form: doc
     realizes: [product/run/confirmed-run-history]
