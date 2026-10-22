@@ -19,7 +19,7 @@ ownership:
     owner: lending
   - path: realization/lending/reminders/
     owner: lending/reminders
-  - path: realization/library/
+  - path: realization/application/
     owner: library
   - path: realization/members/
     owner: members
