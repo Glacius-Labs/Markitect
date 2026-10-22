@@ -21,9 +21,8 @@ const (
 	stopTimeout = 20 * time.Second
 )
 
-// Agents runs one Codex App Server turn per container. It holds no state
-// between turns: a resumed conversation lives in the provider home the caller
-// mounts.
+// Agents supports single turns and persistent assignments. Each assignment
+// retains its own container and provider thread until Close.
 type Agents struct {
 	start       RuntimeStarter
 	helper      RuntimeHelper
@@ -141,7 +140,8 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 }
 
 // OpenAssignment starts one container and one Codex App Server process for the
-// complete assignment. Subsequent Message calls use the same provider thread.
+// complete assignment, initializing only the connection. The first Message
+// starts the provider thread; subsequent Messages use that same thread.
 func (a *Agents) OpenAssignment(ctx context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
 	turn := run.Turn{ID: spec.ID, Kind: run.ExecuteTurn, Profile: spec.Profile, Workspace: spec.Workspace,
 		Home: spec.Home, Tools: spec.Tools, Transcript: spec.Transcript}
@@ -328,9 +328,8 @@ func (t *turnRun) open(ctx context.Context) error {
 	return nil
 }
 
-// handshake initializes the connection and starts or resumes the thread.
+// handshake initializes the connection without starting a conversation.
 func (t *turnRun) handshake(ctx context.Context) error {
-	session := t.profile.Session
 	id := IntegerRequestID(1)
 	raw, err := t.enc.EncodeInitialize(id, ClientInfo{Name: "markitect", Version: "1"})
 	if err != nil {
@@ -345,13 +344,17 @@ func (t *turnRun) handshake(ctx context.Context) error {
 	if raw, err = t.enc.EncodeInitialized(); err != nil {
 		return err
 	}
-	if err = t.send(ctx, raw); err != nil {
-		return err
-	}
-	id = IntegerRequestID(2)
+	return t.send(ctx, raw)
+}
+
+// startThread starts or resumes the conversation on its first message.
+func (t *turnRun) startThread(ctx context.Context) error {
+	session := t.profile.Session
+	id := IntegerRequestID(2)
 	params := ThreadStartParams{Model: session.Model, Cwd: "/work", ApprovalPolicy: "never", Sandbox: "danger-full-access",
 		BaseInstructions: session.BaseInstructions, DeveloperInstructions: session.DeveloperInstructions}
-	if raw, err = t.enc.EncodePersistentThread(id, params, ThreadID(t.turn.Resume)); err != nil {
+	raw, err := t.enc.EncodePersistentThread(id, params, ThreadID(t.turn.Resume))
+	if err != nil {
 		return err
 	}
 	if err = t.send(ctx, raw); err != nil {
@@ -376,6 +379,14 @@ func (t *turnRun) handshake(ctx context.Context) error {
 // status. Tool calls and provider output are separate queues; calls are
 // answered one at a time.
 func (t *turnRun) runTurn(ctx context.Context, res *run.TurnResult) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	if t.thread == "" {
+		if err := t.startThread(ctx); err != nil {
+			return err
+		}
+	}
 	t.nextRequest++
 	id := IntegerRequestID(t.nextRequest)
 	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.turn.Prompt, Effort: t.profile.Session.Effort})
