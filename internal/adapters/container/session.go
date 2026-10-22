@@ -42,14 +42,16 @@ type Session struct {
 	ended   chan struct{}
 	closing chan struct{}
 
-	mu          sync.Mutex
-	nextRequest uint64
-	replies     map[uint64]chan frame.ControlMessage
-	diagnostics []byte
-	failure     string
-	err         error
-	closeOnce   sync.Once
-	closeErr    error
+	mu              sync.Mutex
+	nextRequest     uint64
+	replies         map[uint64]chan frame.ControlMessage
+	diagnostics     []byte
+	failure         string
+	err             error
+	closeOnce       sync.Once
+	closeErr        error
+	providerStarted bool
+	restartReady    bool
 }
 
 // newSession reads agentd's hello and starts demultiplexing. wait reports
@@ -120,12 +122,12 @@ func (s *Session) demux(out io.Reader) {
 			if !errors.Is(err, io.EOF) {
 				s.fail(fmt.Errorf("read agentd frame: %w", err))
 			}
-			s.stdout.close()
+			s.currentOutput().close()
 			return
 		}
 		switch f.Channel {
 		case frame.ProviderOut:
-			if _, err := s.stdout.Write(f.Payload); err != nil {
+			if _, err := s.currentOutput().Write(f.Payload); err != nil {
 				s.fail(fmt.Errorf("deliver provider output: %w", err))
 			}
 		case frame.ProviderErr:
@@ -148,8 +150,11 @@ func (s *Session) demux(out io.Reader) {
 			}
 			switch c.Type {
 			case frame.TypeExited:
-				s.exited <- *c.Exited
-				s.stdout.close()
+				s.mu.Lock()
+				exited, output := s.exited, s.stdout
+				s.mu.Unlock()
+				exited <- *c.Exited
+				output.close()
 			case frame.TypeFailure:
 				if c.Request == 0 {
 					// A failure agentd sends on its own ends the session.
@@ -217,14 +222,40 @@ func (s *Session) request(ctx context.Context, c frame.ControlMessage, purpose s
 // StartProvider asks agentd to start the provider and returns its process ID.
 // A refused start returns the provider's reported reason.
 func (s *Session) StartProvider(ctx context.Context, req frame.Start) (frame.Started, error) {
+	s.mu.Lock()
+	select {
+	case <-s.closing:
+		s.mu.Unlock()
+		return frame.Started{}, errors.New("container session is closing")
+	default:
+	}
+	if s.providerStarted && !s.restartReady {
+		s.mu.Unlock()
+		return frame.Started{}, errors.New("the previous provider has not ended")
+	}
+	if s.restartReady {
+		s.stdout = newOutputBuffer()
+		s.exited = make(chan frame.Exited, 1)
+	}
+	s.providerStarted, s.restartReady = true, false
+	s.mu.Unlock()
 	r, err := s.request(ctx, frame.ControlMessage{Type: frame.TypeStart, Start: &req}, "start")
 	if err != nil {
+		s.mu.Lock()
+		s.providerStarted, s.restartReady = false, true
+		s.mu.Unlock()
 		return frame.Started{}, err
 	}
 	if r.Type != frame.TypeStarted {
 		return frame.Started{}, fmt.Errorf("agentd answered the start with %q", r.Type)
 	}
 	return *r.Started, nil
+}
+
+func (s *Session) currentOutput() *outputBuffer {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.stdout
 }
 
 // Census returns the processes running in the container besides agentd and
@@ -243,7 +274,7 @@ func (s *Session) Census(ctx context.Context) ([]frame.Process, error) {
 
 // Stdout is the provider's standard output. It ends when the provider exits
 // or the connection ends.
-func (s *Session) Stdout() io.Reader { return s.stdout }
+func (s *Session) Stdout() io.Reader { return s.currentOutput() }
 
 // WriteInput sends bytes to the provider's standard input.
 func (s *Session) WriteInput(b []byte) error {
@@ -278,16 +309,24 @@ func (s *Session) Reply(r frame.ToolReply) error {
 }
 
 // Exited delivers the provider's observed exit once.
-func (s *Session) Exited() <-chan frame.Exited { return s.exited }
+func (s *Session) Exited() <-chan frame.Exited {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	return s.exited
+}
 
 // Stop asks agentd to stop the provider's process group within grace and
 // waits for the observed exit.
 func (s *Session) Stop(ctx context.Context, graceMillis int64) (frame.Exited, error) {
+	exited := s.Exited()
 	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeStop, Stop: &frame.Stop{GraceMillis: graceMillis}}); err != nil {
 		return frame.Exited{}, err
 	}
 	select {
-	case e := <-s.exited:
+	case e := <-exited:
+		s.mu.Lock()
+		s.restartReady = true
+		s.mu.Unlock()
 		return e, nil
 	case <-s.ended:
 		return frame.Exited{}, s.endError("before the provider's exit was observed")
@@ -319,7 +358,7 @@ func (s *Session) Err() error {
 func (s *Session) Close() error {
 	s.closeOnce.Do(func() {
 		close(s.closing)
-		s.stdout.detach()
+		s.currentOutput().detach()
 		_ = s.in.Close()
 		var forced error
 		select {

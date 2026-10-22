@@ -325,6 +325,19 @@ func TestProviderStreamsRelayAndExit(t *testing.T) {
 	}
 }
 
+func TestTwoProviderProcessesShareAnAgentdConnection(t *testing.T) {
+	h := newHarness(t)
+	for _, message := range []string{"first", "correction"} {
+		h.start("echo")
+		h.send(frame.Frame{Channel: frame.ProviderIn, Payload: []byte(message + "\n")})
+		if got := h.output(frame.ProviderOut, "echo: "+message); !strings.Contains(got, "echo: "+message) {
+			t.Fatalf("provider output = %q", got)
+		}
+		h.sendControl(frame.ControlMessage{Type: frame.TypeStop, Stop: &frame.Stop{GraceMillis: 100}})
+		h.control(frame.TypeExited)
+	}
+}
+
 func TestToolCallReachesTheOrchestratorThroughTheBridge(t *testing.T) {
 	h := newHarness(t)
 	h.start("client", submitWork)

@@ -132,8 +132,14 @@ func (s *server) handle(f frame.Frame) error {
 func (s *server) start(request uint64, req frame.Start) error {
 	s.mu.Lock()
 	if s.provider != nil {
-		s.mu.Unlock()
-		return errors.New("the provider was already started")
+		select {
+		case <-s.provider.reported:
+			// The previous provider and its exit report ended. The Agent's
+			// container and connection stay alive for another provider process.
+		default:
+			s.mu.Unlock()
+			return errors.New("the provider was already started")
+		}
 	}
 	tools := make(map[string]frame.ToolSpec, len(req.Tools))
 	for _, t := range req.Tools {
@@ -147,20 +153,23 @@ func (s *server) start(request uint64, req frame.Start) error {
 		}
 		tools[t.Name] = t
 	}
+	needsListener := s.listener == nil
+	s.provider = nil
 	s.tools, s.toolList = tools, append([]frame.ToolSpec(nil), req.Tools...)
 	s.mu.Unlock()
-
-	if err := os.Remove(s.cfg.SocketPath); err != nil && !errors.Is(err, os.ErrNotExist) {
-		return fmt.Errorf("prepare MCP socket: %w", err)
+	if needsListener {
+		if err := os.Remove(s.cfg.SocketPath); err != nil && !errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("prepare MCP socket: %w", err)
+		}
+		l, err := net.Listen("unix", s.cfg.SocketPath)
+		if err != nil {
+			return fmt.Errorf("listen for MCP bridges: %w", err)
+		}
+		s.mu.Lock()
+		s.listener = l
+		s.mu.Unlock()
+		go s.acceptBridges(l)
 	}
-	l, err := net.Listen("unix", s.cfg.SocketPath)
-	if err != nil {
-		return fmt.Errorf("listen for MCP bridges: %w", err)
-	}
-	s.mu.Lock()
-	s.listener = l
-	s.mu.Unlock()
-	go s.acceptBridges(l)
 
 	cmd := exec.Command(req.Argv[0], req.Argv[1:]...)
 	cmd.Dir = req.Dir
@@ -182,11 +191,13 @@ func (s *server) start(request uint64, req frame.Start) error {
 	s.out.mu.Unlock()
 	s.mu.Lock()
 	s.provider = p
+	p.reported = make(chan struct{})
 	s.mu.Unlock()
 	s.reports.Add(1)
 	go func() {
 		defer s.reports.Done()
 		exit := p.wait()
+		close(p.reported)
 		_ = s.sendControl(frame.ControlMessage{Type: frame.TypeExited, Exited: &exit})
 	}()
 	return err

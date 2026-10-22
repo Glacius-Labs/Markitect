@@ -9,6 +9,7 @@ import (
 	"slices"
 	"strconv"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
@@ -28,7 +29,7 @@ const (
 	mcpOutputTokens = "MAX_MCP_OUTPUT_TOKENS=262144"
 )
 
-// Agents runs one Claude Code turn per container. It implements run.Agents.
+// Agents runs legacy turns and long-lived Agent assignments with Claude Code.
 type Agents struct {
 	start       RuntimeStarter
 	profiles    map[string]Profile
@@ -36,6 +37,7 @@ type Agents struct {
 }
 
 var _ run.Agents = (*Agents)(nil)
+var _ run.AssignmentAgents = (*Agents)(nil)
 
 func NewAgents(engine *container.Engine, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
 	if engine == nil {
@@ -162,6 +164,178 @@ func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler
 	return res, redact.err(errors.Join(runErr, stopErr, closeErr))
 }
 
+// OpenAssignment keeps one container and workspace for the Agent. Each native
+// Claude response may end its provider process; the next message resumes the
+// same Claude conversation in a new process inside that container.
+func (a *Agents) OpenAssignment(ctx context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
+	turn := run.Turn{ID: spec.ID, Kind: run.ExecuteTurn, Profile: spec.Profile, Workspace: spec.Workspace,
+		Home: spec.Home, Prompt: "assignment", Tools: spec.Tools, Transcript: spec.Transcript}
+	profile, tools, err := a.admit(turn, handler)
+	if err != nil {
+		return nil, err
+	}
+	codec, err := NewCodec(int(profile.MaxWireBytes))
+	if err != nil {
+		return nil, err
+	}
+	if _, err := codec.EncodeInitialize(ControlRequestID("markitect-initialize")); err != nil {
+		return nil, err
+	}
+	credential, err := a.credentials(ctx, profile.CredentialRef)
+	if err != nil || credential.Token == "" {
+		return nil, fmt.Errorf("%w: credential %q unavailable", ErrSession, profile.CredentialRef)
+	}
+	redact := redactor{token: credential.Token}
+	log, err := openTranscript(spec.Transcript, redact)
+	if err != nil {
+		return nil, err
+	}
+	peer, err := a.start(ctx, turnSpec(turn, profile))
+	if err == nil && peer == nil {
+		err = ErrSession
+	}
+	if err != nil {
+		return nil, errors.Join(redact.err(err), log.close())
+	}
+	return &assignmentSession{peer: peer, turn: turn, profile: profile, tools: tools, handler: handler,
+		credential: credential, redact: redact, log: log}, nil
+}
+
+type assignmentSession struct {
+	mu           sync.Mutex
+	abortMu      sync.Mutex
+	activeCancel context.CancelFunc
+	closing      bool
+	closed       bool
+	terminal     run.TurnResult
+	terminalErr  error
+	peer         RuntimeSession
+	turn         run.Turn
+	profile      Profile
+	tools        []frame.ToolSpec
+	handler      run.ToolHandler
+	credential   RuntimeCredential
+	redact       redactor
+	log          *transcript
+	resume       string
+}
+
+func (s *assignmentSession) Message(ctx context.Context, text string, timeout time.Duration) (res run.TurnResult, err error) {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed || strings.TrimSpace(text) == "" || timeout < 0 {
+		return res, ErrSession
+	}
+	res.Started = time.Now().UTC()
+	defer func() {
+		res.Ended = time.Now().UTC()
+		if s.closed {
+			s.terminal = res
+		}
+	}()
+	runCtx, cancel := context.WithCancel(ctx)
+	defer cancel()
+	s.abortMu.Lock()
+	if s.closing {
+		s.abortMu.Unlock()
+		return res, context.Canceled
+	}
+	s.activeCancel = cancel
+	s.abortMu.Unlock()
+	defer func() {
+		s.abortMu.Lock()
+		s.activeCancel = nil
+		s.abortMu.Unlock()
+	}()
+	if timeout > 0 {
+		var timeoutCancel context.CancelFunc
+		runCtx, timeoutCancel = context.WithTimeout(runCtx, timeout)
+		defer timeoutCancel()
+	}
+	codec, err := NewCodec(int(s.profile.MaxWireBytes))
+	if err != nil {
+		return res, err
+	}
+	initID := ControlRequestID("markitect-initialize")
+	initRaw, err := codec.EncodeInitialize(initID)
+	if err != nil {
+		return res, err
+	}
+	promptRaw, err := codec.EncodeUser(UserInput{Text: text})
+	if errors.Is(err, ErrLimit) {
+		return res, fmt.Errorf("%w: the prompt of %d bytes exceeds the %d bytes the provider channel carries: %w", run.ErrContextLimit, len(text), s.profile.MaxWireBytes, err)
+	}
+	if err != nil {
+		return res, err
+	}
+	turn := s.turn
+	turn.Prompt, turn.Resume, turn.Timeout = text, s.resume, timeout
+	c := &conversation{turn: turn, peer: s.peer, codec: codec, handler: s.handler, log: s.log, redact: s.redact,
+		tools: s.tools, initID: initID, initRaw: initRaw, promptRaw: promptRaw, res: &res, done: make(chan struct{})}
+	runErr := c.run(runCtx, frame.Start{Argv: turnArgv(turn, s.profile, s.tools), Dir: "/work",
+		Env: []string{"CLAUDE_CODE_OAUTH_TOKEN=" + s.credential.Token, mcpOutputTokens}, Tools: s.tools})
+	close(c.done)
+	var stopErr error
+	var exit frame.Exited
+	if c.started {
+		stopCtx, stopCancel := context.WithTimeout(context.WithoutCancel(runCtx), stopGrace+stopMargin)
+		exit, stopErr = s.peer.Stop(stopCtx, stopGrace.Milliseconds())
+		stopCancel()
+	}
+	res.Conversation = s.redact.text(res.Conversation)
+	res.Final = s.redact.text(res.Final)
+	res.Stopped = false // the assignment container remains alive
+	if runErr == nil && stopErr == nil && c.started {
+		s.resume = res.Conversation
+		res.Reason = "provider result; provider exit observed code=" + strconv.Itoa(exit.Code)
+		if c.usage != usageFinal {
+			res.Reason += "; " + c.usage.partial()
+		}
+		return res, nil
+	}
+	res.Reason = "provider response incomplete"
+	if stopErr != nil {
+		res.Reason += "; provider exit not observed"
+	}
+	closeErr := s.end(&res)
+	s.closed = true
+	err = s.redact.err(errors.Join(runErr, stopErr, closeErr))
+	s.terminal, s.terminalErr = res, err
+	return res, err
+}
+
+func (s *assignmentSession) Close(ctx context.Context) (res run.TurnResult, err error) {
+	s.abortMu.Lock()
+	s.closing = true
+	cancel := s.activeCancel
+	s.abortMu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.closed {
+		return s.terminal, s.terminalErr
+	}
+	s.closed = true
+	res.Started = time.Now().UTC()
+	res.Reason = "assignment closed"
+	err = s.end(&res)
+	res.Ended = time.Now().UTC()
+	s.terminal, s.terminalErr = res, err
+	return res, err
+}
+
+func (s *assignmentSession) end(res *run.TurnResult) error {
+	closeErr := s.peer.Close()
+	logErr := s.log.close()
+	res.Stopped = closeErr == nil
+	if closeErr != nil {
+		res.Reason += "; container end not observed"
+	}
+	return s.redact.err(errors.Join(closeErr, logErr))
+}
+
 // admit resolves the turn's profile and validates everything that can be
 // checked before a container starts. It returns the Orchestrator tools in agentd form.
 func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, []frame.ToolSpec, error) {
@@ -282,6 +456,7 @@ type conversation struct {
 	promptRaw []byte
 	res       *run.TurnResult
 	done      chan struct{}
+	started   bool
 
 	// usage says what res.Usage holds; streamed holds the usage of each
 	// assistant message by its ID, which the provider repeats per content block.
@@ -322,6 +497,7 @@ func (c *conversation) run(ctx context.Context, start frame.Start) error {
 	if err := doCtx(ctx, func() error { _, err := c.peer.StartProvider(ctx, start); return err }); err != nil {
 		return err
 	}
+	c.started = true
 	events := make(chan streamEvent)
 	go c.read(events)
 	if err := c.write(ctx, c.initRaw); err != nil {
@@ -480,7 +656,14 @@ func (c *conversation) answer(ctx context.Context, call frame.ToolCall) error {
 	if !slices.ContainsFunc(c.tools, func(t frame.ToolSpec) bool { return t.Name == call.Name }) {
 		reply = frame.ToolReply{ID: call.ID, Error: &frame.ToolError{Code: -32601, Message: "unknown Orchestrator tool"}}
 	} else {
-		a := c.handler(ctx, call.Name, c.redact.bytes(call.Arguments))
+		answer := make(chan run.ToolAnswer, 1)
+		go func() { answer <- c.handler(ctx, call.Name, c.redact.bytes(call.Arguments)) }()
+		var a run.ToolAnswer
+		select {
+		case a = <-answer:
+		case <-ctx.Done():
+			return ctx.Err()
+		}
 		if err := ctx.Err(); err != nil {
 			return err
 		}

@@ -130,6 +130,47 @@ func TestSessionCarriesAProviderLifetime(t *testing.T) {
 	}
 }
 
+func TestSessionRestartsProviderAfterObservedExit(t *testing.T) {
+	s, a, err := connect(t, frame.ProtocolVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer s.Close()
+	go func() {
+		for i, word := range []string{"first", "second"} {
+			start, _ := frame.DecodeControl(a.read().Payload)
+			if start.Type != frame.TypeStart {
+				t.Errorf("round %d start = %+v", i, start)
+				return
+			}
+			a.control(frame.ControlMessage{Type: frame.TypeStarted, Request: start.Request, Started: &frame.Started{PID: i + 1}})
+			a.send(frame.Frame{Channel: frame.ProviderOut, Payload: []byte(word)})
+			stop, _ := frame.DecodeControl(a.read().Payload)
+			if stop.Type != frame.TypeStop {
+				t.Errorf("round %d stop = %+v", i, stop)
+				return
+			}
+			a.control(frame.ControlMessage{Type: frame.TypeExited, Exited: &frame.Exited{Code: i}})
+		}
+		a.finish()
+	}()
+	for i, word := range []string{"first", "second"} {
+		if _, err := s.StartProvider(context.Background(), frame.Start{Argv: []string{"provider"}, Dir: "/work"}); err != nil {
+			t.Fatal(err)
+		}
+		if _, err := s.StartProvider(context.Background(), frame.Start{Argv: []string{"overlap"}, Dir: "/work"}); err == nil {
+			t.Fatal("overlapping provider start accepted")
+		}
+		out := s.Stdout()
+		if exit, err := s.Stop(context.Background(), 100); err != nil || exit.Code != i {
+			t.Fatalf("round %d exit = %+v, %v", i, exit, err)
+		}
+		if got, err := io.ReadAll(out); err != nil || string(got) != word {
+			t.Fatalf("round %d output = %q, %v", i, got, err)
+		}
+	}
+}
+
 func TestSessionRefusesAnotherFrameProtocol(t *testing.T) {
 	if _, _, err := connect(t, frame.ProtocolVersion+1); err == nil || !strings.Contains(err.Error(), "frame protocol") {
 		t.Fatalf("connect = %v", err)
