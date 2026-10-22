@@ -18,12 +18,14 @@ const (
 	DelegateChildTool = "delegate_child"
 	AcceptChildTool   = "accept_child"
 	ReturnChildTool   = "return_child"
+	AskChildTool      = "ask_child"
 )
 
 var assignmentDecisionTools = []ToolSpec{
 	{Name: DelegateChildTool, Description: "Give a required direct child its task and a copy of your current Git stand.", InputSchema: json.RawMessage(`{"type":"object","properties":{"child":{"type":"string"},"task":{"type":"string"}},"required":["child","task"],"additionalProperties":false}`)},
 	{Name: AcceptChildTool, Description: "Accept the reviewed fixed child commit and integrate it into your Git copy.", InputSchema: json.RawMessage(`{"type":"object","properties":{"child":{"type":"string"},"commit":{"type":"string"}},"required":["child","commit"],"additionalProperties":false}`)},
 	{Name: ReturnChildTool, Description: "Return a reviewed result to its child with a concrete correction.", InputSchema: json.RawMessage(`{"type":"object","properties":{"child":{"type":"string"},"correction":{"type":"string"}},"required":["child","correction"],"additionalProperties":false}`)},
+	{Name: AskChildTool, Description: "Ask a different direct child for information needed to answer or integrate work.", InputSchema: json.RawMessage(`{"type":"object","properties":{"child":{"type":"string"},"question":{"type":"string"}},"required":["child","question"],"additionalProperties":false}`)},
 }
 
 // AssignmentSchedule starts a model-derived Implement tree. MaxMessages bounds
@@ -49,30 +51,41 @@ type assignmentAction struct {
 type assignmentMailbox struct {
 	mu      sync.Mutex
 	actions []assignmentAction
+	consult func(context.Context, string, string) (string, error)
 }
 
-func (m *assignmentMailbox) handle(_ context.Context, name string, args json.RawMessage) ToolAnswer {
+func (m *assignmentMailbox) handle(ctx context.Context, name string, args json.RawMessage) ToolAnswer {
 	var a struct {
 		Child      string `json:"child"`
 		Task       string `json:"task"`
 		Commit     string `json:"commit"`
 		Correction string `json:"correction"`
+		Question   string `json:"question"`
 	}
 	if err := json.Unmarshal(args, &a); err != nil || strings.TrimSpace(a.Child) == "" {
 		return ToolAnswer{Text: "a direct child is required", Refused: true}
 	}
 	action := assignmentAction{name: name, child: a.Child, task: strings.TrimSpace(a.Task), commit: a.Commit, correction: strings.TrimSpace(a.Correction)}
 	switch name {
+	case AskChildTool:
+		if strings.TrimSpace(a.Question) == "" || a.Task != "" || a.Commit != "" || a.Correction != "" || m.consult == nil {
+			return ToolAnswer{Text: "consultation needs a direct child and question", Refused: true}
+		}
+		answer, err := m.consult(ctx, a.Child, strings.TrimSpace(a.Question))
+		if err != nil {
+			return ToolAnswer{Text: err.Error(), Refused: true}
+		}
+		return ToolAnswer{Text: answer}
 	case DelegateChildTool:
-		if action.task == "" || a.Commit != "" || a.Correction != "" {
+		if action.task == "" || a.Commit != "" || a.Correction != "" || a.Question != "" {
 			return ToolAnswer{Text: "delegation needs a task", Refused: true}
 		}
 	case AcceptChildTool:
-		if action.commit == "" || a.Task != "" || a.Correction != "" {
+		if action.commit == "" || a.Task != "" || a.Correction != "" || a.Question != "" {
 			return ToolAnswer{Text: "acceptance needs the inspected commit", Refused: true}
 		}
 	case ReturnChildTool:
-		if action.correction == "" || a.Task != "" || a.Commit != "" {
+		if action.correction == "" || a.Task != "" || a.Commit != "" || a.Question != "" {
 			return ToolAnswer{Text: "return needs a concrete correction", Refused: true}
 		}
 	default:
@@ -120,6 +133,10 @@ func RunAssignmentTree(ctx context.Context, team []Manager, workspaces Assignmen
 		}
 		s.team[manager.Path] = manager
 		s.mailboxes[manager.Path] = &assignmentMailbox{}
+		path := manager.Path
+		s.mailboxes[path].consult = func(ctx context.Context, child, question string) (string, error) {
+			return s.consultChild(ctx, path, child, question)
+		}
 		s.ids[manager.Path] = WorkspaceID(options.IDPrefix + "-" + strconv.Itoa(i))
 	}
 	flow.parentAnswer = s.parentAnswer
@@ -151,9 +168,16 @@ func (s *assignmentScheduler) reserveMessage() error {
 }
 
 func (s *assignmentScheduler) messageResult(ctx context.Context, path, prompt string) (TurnResult, error) {
+	stack, _ := ctx.Value(assignmentMessageStackKey{}).([]string)
+	for _, active := range stack {
+		if active == path {
+			return TurnResult{}, fmt.Errorf("Manager %q is already answering in this question chain", path)
+		}
+	}
 	if err := s.reserveMessage(); err != nil {
 		return TurnResult{}, err
 	}
+	ctx = context.WithValue(ctx, assignmentMessageStackKey{}, append(append([]string(nil), stack...), path))
 	answer, err := s.flow.Message(ctx, path, prompt, s.options.Timeout)
 	if err != nil {
 		return answer, err
@@ -164,6 +188,8 @@ func (s *assignmentScheduler) messageResult(ctx context.Context, path, prompt st
 	return answer, nil
 }
 
+type assignmentMessageStackKey struct{}
+
 func (s *assignmentScheduler) message(ctx context.Context, path, prompt string) error {
 	_, err := s.messageResult(ctx, path, prompt)
 	return err
@@ -171,6 +197,14 @@ func (s *assignmentScheduler) message(ctx context.Context, path, prompt string) 
 
 func (s *assignmentScheduler) parentAnswer(ctx context.Context, parent, child, question string) (string, error) {
 	answer, err := s.messageResult(ctx, parent, fmt.Sprintf("Your direct child %s asks: %s", child, question))
+	return answer.Final, err
+}
+
+func (s *assignmentScheduler) consultChild(ctx context.Context, parent, child, question string) (string, error) {
+	if s.team[child].Parent != parent || child == parent {
+		return "", fmt.Errorf("Manager %q can ask only a direct child, not %q", parent, child)
+	}
+	answer, err := s.messageResult(ctx, child, fmt.Sprintf("Your parent %s asks: %s", parent, question))
 	return answer.Final, err
 }
 
