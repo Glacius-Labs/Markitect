@@ -14,7 +14,7 @@ derivations:
   - target: project/.markitect/model/lending/borrow.yaml
     change: Resolve the previously unspecified unrepresentable due-date boundary with an unchanged-state refusal; preserve the exact interval, wire range and existing error taxonomy.
   - target: project/.markitect/execution.yaml
-    change: Express the original illustrative preparation settings in the shared-workspace execution shape (budget, profiles, checks).
+    change: Express the original illustrative preparation settings in the shared-workspace execution shape (budget, profiles, checks). Give the library Manager realization/application/ so the required Go build can write its library executable without colliding with a source directory.
 sources:
   - source: docs/design/canonical-model/library-example/m1/model/catalog/availability.yaml
     target: project/.markitect/model/catalog/availability.yaml
