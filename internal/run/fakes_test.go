@@ -298,33 +298,24 @@ func (c *call) hasReportField(field string) bool {
 	for _, tool := range c.turn.Tools {
 		if tool.Name == toolReport {
 			var s struct {
-				Properties map[string]any `json:"properties"`
+				OneOf []struct {
+					Properties map[string]any `json:"properties"`
+				} `json:"oneOf"`
 			}
 			if err := json.Unmarshal(tool.InputSchema, &s); err != nil {
 				c.t.Fatal(err)
 			}
-			_, ok := s.Properties[field]
-			return ok
+			for _, action := range s.OneOf {
+				if _, ok := action.Properties[field]; ok {
+					return true
+				}
+			}
 		}
 	}
 	return false
 }
 
-func (c *call) planning() bool {
-	for _, tool := range c.turn.Tools {
-		if tool.Name == toolReport {
-			var s struct {
-				Properties map[string]any `json:"properties"`
-			}
-			if err := json.Unmarshal(tool.InputSchema, &s); err != nil {
-				c.t.Fatal(err)
-			}
-			_, ok := s.Properties["plan"]
-			return ok
-		}
-	}
-	return false
-}
+func (c *call) planning() bool { return c.hasReportField("plan") }
 
 func (c *call) helper() bool {
 	return !slices.ContainsFunc(c.turn.Tools, func(t ToolSpec) bool { return t.Name == toolSend })

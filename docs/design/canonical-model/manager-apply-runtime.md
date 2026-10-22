@@ -138,7 +138,7 @@ Reviewers derive claims and counterexamples from the bound model and run behavio
 
 | Tool | Purpose |
 | --- | --- |
-| `report` | Progress, a named wait, a basis or complete result (shared envelope: coverage with claim-level evidence, purpose payload, findings, closures, disputes, dispositions of adverse receipts, verdict), a decision on a child's proposal, a reopened child result, a revised basis, a problem. |
+| `report` | Progress, a named wait, a basis or complete result (action-specific payload: assessment, relevant evidence, findings, closures, disputes, dispositions and verdict), a decision on a child's proposal, a reopened child result, a revised basis, a problem. |
 | `send` | Question, answer or information along one direct edge. |
 | `escalate` | A classified problem and the decision needed, as a question to the parent. |
 | `look_up` | Its own standing context again (`brief`), Definitions of the bound model, owners, the derived registry view, states, accepted plans and bases, findings, checks, probe receipts, questions, and the reusable method guidance (planning, preparing, implementing, integrating, reviewing, escalating), which the standing context names and which grants no right. |
@@ -235,3 +235,18 @@ Nobody outside the tree answers in either phase. A gap or contradiction Root con
 - Dependencies are enforced only as declared: in `staged` by accepted plans, in `direct` by waits. Reading another Manager's accepted basis through `look_up` alone does not bind it. A binding that would close a cycle is skipped and named to the waiter; a later change of that submission invalidates nothing. A binding made in a turn that later fails stays, which can only cause an additional reset. A work-phase cross-Manager dependency has not been exercised in a provider run of either strategy.
 - No restore of an interrupted run; a new Apply starts again from the committed repository.
 - Every Pass involves every Manager; unaffected owners preserve explicitly rather than being skipped.
+
+## Reporting and evidence reuse, 22 October 2026
+
+The report tool describes a closed schema for each action. Progress needs only its
+summary; accepting a child needs its proposal reference. The Host records Run, Pass,
+Manager, Turn, candidate and accepted-child identities. Agents provide semantic content,
+not copies of those technical bindings.
+
+One passing recorded execution may support several conclusions and Definitions,
+including integration, when its actual assertions support them. A citation may state
+its assessed conclusion; omitting it retains the original recorded claim. The original
+invocation, assertion bytes, outcome and stand remain unchanged and inspectable.
+Adverse or stale receipts cannot support success. Reuse does not establish semantic
+coverage: the independent reviewer still judges the assertions and remaining gaps.
+This source change has provider-free tests only; it is no new Apply or provider result.

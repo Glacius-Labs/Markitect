@@ -464,11 +464,10 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 		return refuse("%v", err)
 	}
 	env := envelope{Summary: summary}
-	cited := map[string]bool{}
-	if env.Obligations, err = e.coverageOf(m, in, cited); err != nil {
+	if env.Obligations, err = e.coverageOf(m, in); err != nil {
 		return refuse("%v", err)
 	}
-	if env.Integration, err = e.integrationOf(m, in, cited); err != nil {
+	if env.Integration, err = e.integrationOf(m, in); err != nil {
 		return refuse("%v", err)
 	}
 	raised, err := e.findingsOf(m, in.Findings)
@@ -554,7 +553,7 @@ func (e *engine) submit(m *member, ts *turnState, in reportIn) ToolAnswer {
 // an own obligation once, with a known status and a note where one is needed.
 // A complete result covers every own obligation; a planning Pass needs the
 // method and intended evidence of each covered obligation.
-func (e *engine) coverageOf(m *member, in reportIn, cited map[string]bool) ([]coverage, error) {
+func (e *engine) coverageOf(m *member, in reportIn) ([]coverage, error) {
 	seen := map[string]bool{}
 	var out []coverage
 	for i, c := range in.Obligations {
@@ -592,7 +591,7 @@ func (e *engine) coverageOf(m *member, in reportIn, cited map[string]bool) ([]co
 		if (m.p.spec.Review || evidenceRequired(m.p.spec)) && claimed && len(c.Evidence) == 0 {
 			return nil, fmt.Errorf("obligations[%d]: %s needs evidence for %s: per claim a probe receipt of the tool check or an inspected source location with reasoning; a suite total alone is no coverage", i, c.Status, c.Definition)
 		}
-		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p), cited)
+		evidence, err := e.evidenceOf(m, i, c, e.boundStandLocked(m.p))
 		if err != nil {
 			return nil, err
 		}
@@ -621,7 +620,7 @@ func evidenceRequired(spec PassSpec) bool {
 // integrationOf keeps the parent's own integration in the common submission,
 // including Root without own Definitions. Its authority is the real model,
 // never a fabricated Definition or a child's success label.
-func (e *engine) integrationOf(m *member, in reportIn, cited map[string]bool) (*coverage, error) {
+func (e *engine) integrationOf(m *member, in reportIn) (*coverage, error) {
 	required := !m.p.spec.Assesses && (m.Parent == "" || len(m.Children) > 0)
 	c := in.Integration
 	if c == nil {
@@ -650,7 +649,7 @@ func (e *engine) integrationOf(m *member, in reportIn, cited map[string]bool) (*
 	}
 	out := *c
 	var err error
-	out.Evidence, err = e.evidenceOf(m, -1, out, e.boundStandLocked(m.p), cited)
+	out.Evidence, err = e.evidenceOf(m, -1, out, e.boundStandLocked(m.p))
 	if err != nil {
 		return nil, fmt.Errorf("integration: %w", err)
 	}

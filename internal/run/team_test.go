@@ -1,6 +1,7 @@
 package run
 
 import (
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -859,5 +860,39 @@ func TestRepeatedProgressIsNoProgress(t *testing.T) {
 	}
 	if n := len(f.agents.turnsOf("library")); n != maxEmptyTurns+2 {
 		t.Errorf("library ran %d turns", n)
+	}
+}
+
+func TestReportActionsExposeOnlyTheirOwnFields(t *testing.T) {
+	for _, spec := range []PassSpec{implementSpec(), verifySpec(), planSpec()} {
+		s := reportSchema(spec)
+		if _, broad := s["properties"]; broad {
+			t.Fatal("broad report envelope exposed")
+		}
+		for _, action := range s["oneOf"].([]schema) {
+			fields := action["properties"].(schema)
+			kind := fields["kind"].(schema)["enum"].([]string)[0]
+			for name := range fields {
+				if name != "kind" && !slices.Contains(reportFields[kind], name) {
+					t.Fatalf("%s exposed %s", kind, name)
+				}
+			}
+			if kind == kindProgress && len(fields) != 2 {
+				t.Fatalf("progress fields: %+v", fields)
+			}
+			if kind == kindAccept && len(fields) != 2 {
+				t.Fatalf("accept fields: %+v", fields)
+			}
+			for _, identity := range []string{"run", "pass", "manager", "turn", "stand", "candidate", "children"} {
+				if _, ok := fields[identity]; ok {
+					t.Fatalf("agent asked for Host identity %s", identity)
+				}
+			}
+			if !spec.Plans {
+				if _, ok := fields["plan"]; ok {
+					t.Fatal("work/review requested plan payload")
+				}
+			}
+		}
 	}
 }

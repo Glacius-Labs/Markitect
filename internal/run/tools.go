@@ -44,8 +44,8 @@ func raw(s schema) json.RawMessage {
 	return b
 }
 
-// reportSchema is the schema of report for one Pass: the shared envelope with
-// the purpose payload of the Pass.
+// reportSchema exposes one closed payload per action. Technical identities and
+// candidate bindings are supplied by the Host when it records the submission.
 func reportSchema(spec PassSpec) schema {
 	var corrections []string
 	for _, c := range spec.Corrections {
@@ -148,7 +148,36 @@ func reportSchema(spec PassSpec) schema {
 	if spec.Assesses {
 		delete(properties, "integration")
 	}
-	return object([]string{"kind"}, properties)
+	var actions []schema
+	for _, kind := range []string{kindProgress, kindWait, kindBasis, kindResult, kindAccept, kindReturn, kindReopen, kindRevise, kindProblem} {
+		fields := schema{"kind": schema{"type": "string", "enum": []string{kind}}}
+		for _, name := range reportFields[kind] {
+			if value, ok := properties[name]; ok {
+				fields[name] = value
+			}
+		}
+		required := []string{"kind"}
+		switch kind {
+		case kindProgress, kindBasis:
+			required = append(required, "summary")
+		case kindResult:
+			required = append(required, "summary", "verdict")
+		case kindWait:
+			required = append(required, "for", "reason")
+		case kindAccept:
+			required = append(required, "proposal")
+		case kindReturn:
+			required = append(required, "proposal", "reason")
+		case kindReopen:
+			required = append(required, "child", "reason")
+		case kindRevise:
+			required = append(required, "reason")
+		case kindProblem:
+			required = append(required, "category", "text")
+		}
+		actions = append(actions, object(required, fields))
+	}
+	return schema{"type": "object", "oneOf": actions}
 }
 
 var sendSchema = object([]string{"to", "kind", "text"}, schema{
@@ -173,7 +202,7 @@ var lookUpSchema = object([]string{"topic"}, schema{
 // evidenceText describes the evidence items of a coverage entry for one Pass.
 func evidenceText(spec PassSpec) string {
 	if spec.Review || evidenceRequired(spec) {
-		return "Required for done and preserved: per distinct claim, a passing probe receipt on this candidate or an inspected source location; a suite total alone is no coverage. Each receipt is cited once per submission, only for its recorded obligation. Open conditions may omit unsupported evidence. Adverse receipts belong in genuine findings or reasoned dispositions, never in coverage evidence."
+		return "Required for done and preserved: per distinct claim, a passing probe receipt on this candidate or an inspected source location; a suite total alone is no coverage. One execution may support several claims and Definitions when its actual assertions support them; explain that support and remaining gaps. Open conditions may omit unsupported evidence. Adverse receipts belong in genuine findings or reasoned dispositions, never in coverage evidence."
 	}
 	return "Optional: per claim, a passing probe receipt run on the stand you submit, or an inspected source location."
 }
@@ -183,8 +212,8 @@ func evidenceSchema(spec PassSpec) schema {
 		"kind":      schema{"type": "string", "enum": []string{"public_behavior", "static"}, "description": "Required in Implement and artifact review. public_behavior needs a passing receipt at the actual declared public entry; static needs inspected source and why execution is inapplicable. Never relabel executable public behavior static to waive evidence."},
 		"authority": str("Bound model Definition identity; implicit own obligation, required for integration source inspection (pass_mandate refers to the already bound Pass task where no Definition supplies that integration duty, never a new Definition or permission to override the model). State the precise condition/source reference in claim/conditions."),
 		"boundary":  str("public_behavior: actual declared public entry exercised by the receipt; omit to inherit probe.boundary, or supply the same value. Inspect the probe's assertions and invocation; a label alone proves no semantic adequacy."),
-		"claim":     str("Distinct model-derived condition and case/input class. A receipt supplies its recorded claim."),
-		"receipt":   str("Your passing tool-produced receipt for this obligation on this submitted stand; private-validator or suite totals cannot establish the public composition."),
+		"claim":     str("Distinct model-derived condition and case/input class. Omit to use the recorded claim; when reusing a receipt, state the actual supported conclusion."),
+		"receipt":   str("A passing tool-produced receipt on this submitted stand; private-validator or suite totals cannot establish the public composition."),
 		"source":    str("static: inspected repository-relative source file."),
 		"location":  str("static: precise inspected location."),
 		"reasoning": str("static: why this location establishes the claim and why behavioral execution is inapplicable."),
