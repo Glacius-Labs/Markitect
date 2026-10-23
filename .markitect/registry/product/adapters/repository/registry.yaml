@@ -168,3 +168,7 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
     why: Actual Git conflict returns to the owning Manager and requires repair and renewed exact review before integration.
+  - path: "internal/adapters/gitrepo/linux_native_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Explicitly dispatched actual LinuxGit copy proof for file modes, Manager isolation, empty Packages, disposable check copies, retained candidates and observed closure; no provider or full Run qualification."
