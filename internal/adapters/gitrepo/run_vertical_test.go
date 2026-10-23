@@ -28,24 +28,27 @@ type notesReadingSessions struct {
 }
 
 type accountingRepairSessions struct {
-	controlled *controlledManagers
-	child      *accountingRepairSession
-	accounting bool
+	controlled               *controlledManagers
+	child                    *accountingRepairSession
+	accounting               bool
+	omitContinuationJudgment bool
 }
 
 type accountingRepairSession struct {
 	run.Session
-	spec                  run.SessionSpec
-	attempts, assignments int
-	accounting            bool
-	question              string
+	spec                     run.SessionSpec
+	attempts, assignments    int
+	accounting               bool
+	question                 string
+	omitContinuationJudgment bool
+	judgments                int
 }
 
 func (s *accountingRepairSessions) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
 	if spec.Manager.Package != "a/deep" {
 		return s.controlled.Open(ctx, spec)
 	}
-	child := &accountingRepairSession{spec: spec, accounting: s.accounting}
+	child := &accountingRepairSession{spec: spec, accounting: s.accounting, omitContinuationJudgment: s.omitContinuationJudgment}
 	await := spec.Tools.Await
 	spec.Tools.Await = func(ctx context.Context) (run.Event, error) {
 		event, err := await(ctx)
@@ -95,9 +98,20 @@ func (s *accountingRepairSession) Exchange(ctx context.Context, message run.Mess
 			if err != nil || event.Answer == nil || event.Answer.ID != s.question {
 				return run.Response{}, fmt.Errorf("continuation did not resolve the actual pending question: %v", err)
 			}
+			// Match the retained lending exchange: the previous response judged
+			// the assignment, while this response only consumes its pending Answer.
+			// The scripted consumer judges again only when the host expressly asks
+			// for a fresh judgment, even for question-only continuation feedback.
+			fresh := strings.Contains(message.Task, "fresh mandate-appropriate judgment") && strings.Contains(message.Task, "even if they only resolve pending questions or answers")
+			if !fresh || s.omitContinuationJudgment {
+				return run.Response{}, nil
+			}
 		}
 	}
 	response, err := s.Session.Exchange(ctx, message)
+	if response.Decision != "" {
+		s.judgments++
+	}
 	if err == nil && s.attempts == 1 {
 		if s.accounting {
 			err = os.WriteFile(filepath.Join(root, "out/unregistered.txt"), []byte("child artifact\n"), 0600)
@@ -112,23 +126,40 @@ func (s *accountingRepairSession) Exchange(ctx context.Context, message run.Mess
 
 func TestRejectedChildCandidateRepairsActiveAssignmentAndReachesParent(t *testing.T) {
 	for _, scenario := range []struct {
-		mandate    run.Mandate
-		accounting bool
-	}{{run.Implement, true}, {run.Implement, false}, {run.Assessment, false}, {run.Verify, false}} {
-		t.Run(fmt.Sprintf("%s/accounting=%v", scenario.mandate, scenario.accounting), func(t *testing.T) {
+		mandate                  run.Mandate
+		accounting               bool
+		omitContinuationJudgment bool
+	}{{run.Implement, true, false}, {run.Implement, false, false}, {run.Assessment, false, false}, {run.Verify, false, false}, {run.Implement, false, true}, {run.Assessment, false, true}, {run.Verify, false, true}} {
+		t.Run(fmt.Sprintf("%s/accounting=%v/omit=%v", scenario.mandate, scenario.accounting, scenario.omitContinuationJudgment), func(t *testing.T) {
 			_, prepared, git, input := runFixture(t)
 			records, err := runstore.New(git.StateRoot)
 			if err != nil {
 				t.Fatal(err)
 			}
-			sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, accounting: scenario.accounting}
+			sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, accounting: scenario.accounting, omitContinuationJudgment: scenario.omitContinuationJudgment}
 			request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: scenario.mandate, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 			result, err := (&run.Executor{Sessions: sessions, Workspaces: git, Records: records}).Execute(context.Background(), request)
+			if scenario.omitContinuationJudgment {
+				if err == nil || !strings.Contains(err.Error(), "Manager a/deep supplied no semantic result") || result.Technical == run.Completed || result.Candidate != nil || sessions.child.judgments != 1 {
+					t.Fatal("an old judgment was reused for an empty active response", result.Technical, err, sessions.child.judgments)
+				}
+				for _, closure := range result.Cleanup {
+					if !closure.Closed {
+						t.Fatal("empty active response left a live resource", closure)
+					}
+				}
+				return
+			}
 			if err != nil || result.Technical != run.Completed || result.Candidate == nil {
 				t.Fatalf("child repair did not complete: %s %v", result.Technical, err)
 			}
-			if sessions.child.attempts != 2 || sessions.child.assignments != 1 || len(result.Handoffs) != 5 || len(sessions.controlled.sessions) != 5 {
+			if sessions.child.attempts != 2 || sessions.child.assignments != 1 || sessions.child.judgments != 2 || len(result.Handoffs) != 5 || len(sessions.controlled.sessions) != 5 {
 				t.Fatal("repair replaced the Session/assignment or lost the full hierarchy", sessions.child.attempts, sessions.child.assignments, len(result.Handoffs))
+			}
+			// Ordinary post-handoff question replies return an empty Response in
+			// controlledManager. They must still complete without another judgment.
+			if sessions.controlled.receiptCalls < 4 {
+				t.Fatal("fixed handoff receipt-only wakeups were not exercised", sessions.controlled.receiptCalls)
 			}
 			for _, closure := range result.Cleanup {
 				if !closure.Closed {
