@@ -220,3 +220,7 @@ artifacts:
     form: test
     realizes: [product/runtime/container-runtime]
     why: "Checks private initialization order, exclusive safe paths, permissions, refusal, disconnect cleanup and observable cleanup failure without a container or provider."
+  - path: "internal/adapters/container/bind_native_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: "Prepares an explicitly dispatched credential-free local directory mapping probe through actual agentd, with bidirectional nonce readback, read-only refusal, native 0644/0755 observations and owned resource closure; default tests never execute it."
