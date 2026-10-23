@@ -331,6 +331,33 @@ func openSession(t *testing.T, rt *fakeRuntime, spec run.SessionSpec) *nativeSes
 	t.Cleanup(func() { _ = s.Close(context.Background()) })
 	return s.(*nativeSession)
 }
+func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
+	a := agentsFor(t, newRuntime())
+	spec := testSessionSpec(t)
+	for _, mandate := range []run.Mandate{run.Implement, run.Assessment, run.Verify} {
+		spec.Mandate = mandate
+		doc, e := a.documentFor(spec)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if !strings.Contains(doc.Base, "every Manager including Root") || !strings.Contains(doc.Base, "Reject and model_blocker require concrete Findings") || !strings.Contains(doc.Base, "parent responsibility") {
+			t.Fatal("working rules omit assignment/review responsibility", mandate)
+		}
+		if mandate == run.Implement {
+			if !strings.Contains(doc.Developer, "every Manager including Root uses submitted") || !strings.Contains(doc.Developer, "Your own judge decision cannot be approve") {
+				t.Fatal("Implement native renderer does not communicate admitted judgment")
+			}
+		} else if !strings.Contains(doc.Developer, "use approve or reject") || !strings.Contains(doc.Developer, "Do not use submitted") {
+			t.Fatal("review renderer does not communicate admitted judgment", mandate)
+		}
+	}
+	for _, tool := range toolSpecs() {
+		if tool.Name == "judge" && (!strings.Contains(tool.Description, "including Root uses submitted") || !strings.Contains(tool.Description, "Assessment/Verify") || !strings.Contains(tool.Description, "model_blocker require concrete Findings")) {
+			t.Fatal("native judge tool contradicts mandate rules")
+		}
+	}
+}
+
 func TestSessionUsesHarnessCopySubpathAndPersistentNativeThread(t *testing.T) {
 	rt := newRuntime()
 	s := openSession(t, rt, testSessionSpec(t))
