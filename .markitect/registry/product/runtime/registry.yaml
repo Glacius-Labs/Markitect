@@ -192,3 +192,11 @@ artifacts:
     form: build
     realizes: [product/runtime/container-runtime]
     why: Builds the example Python project runtime image on the base image.
+  - path: "internal/agentd/private_home.go"
+    form: code
+    realizes: [product/runtime/container-runtime]
+    why: "Initializes the fixed private login path over the existing agentd connection before provider startup and reports cleanup failures without secret data."
+  - path: "internal/agentd/private_home_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime]
+    why: "Checks private initialization order, exclusive safe paths, permissions, refusal, disconnect cleanup and observable cleanup failure without a container or provider."

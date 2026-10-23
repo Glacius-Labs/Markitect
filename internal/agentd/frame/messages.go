@@ -13,6 +13,12 @@ type ControlType string
 const (
 	// TypeHello is agentd's first message: its frame-protocol version.
 	TypeHello ControlType = "hello"
+	// TypeInitialize installs private login data before the first provider starts.
+	TypeInitialize  ControlType = "initialize"
+	TypeInitialized ControlType = "initialized"
+	// TypeClearPrivateHome removes the installed login after provider exit.
+	TypeClearPrivateHome   ControlType = "clear-private-home"
+	TypePrivateHomeCleared ControlType = "private-home-cleared"
 	// TypeStart asks agentd to start the provider CLI.
 	TypeStart ControlType = "start"
 	// TypeStarted reports the started provider process.
@@ -29,19 +35,38 @@ const (
 
 // ControlMessage is one control message. Exactly the field named by Type is
 // set. Request numbers an Orchestrator request; agentd copies it into the reply
-// (started, failure or census), and leaves it zero on messages it sends on
+// (started, initialized, private-home-cleared, failure or census), and leaves
+// it zero on messages it sends on
 // its own, such as hello, exited or a failure that ends the session.
 type ControlMessage struct {
-	Type    ControlType `json:"type"`
-	Request uint64      `json:"request,omitempty"`
-	Hello   *Hello      `json:"hello,omitempty"`
-	Start   *Start      `json:"start,omitempty"`
-	Started *Started    `json:"started,omitempty"`
-	Stop    *Stop       `json:"stop,omitempty"`
-	Exited  *Exited     `json:"exited,omitempty"`
-	Failure *Failure    `json:"failure,omitempty"`
-	Census  *Census     `json:"census,omitempty"`
+	Type               ControlType         `json:"type"`
+	Request            uint64              `json:"request,omitempty"`
+	Hello              *Hello              `json:"hello,omitempty"`
+	Start              *Start              `json:"start,omitempty"`
+	Started            *Started            `json:"started,omitempty"`
+	Stop               *Stop               `json:"stop,omitempty"`
+	Exited             *Exited             `json:"exited,omitempty"`
+	Failure            *Failure            `json:"failure,omitempty"`
+	Census             *Census             `json:"census,omitempty"`
+	Initialize         *Initialize         `json:"initialize,omitempty"`
+	Initialized        *Initialized        `json:"initialized,omitempty"`
+	ClearPrivateHome   *ClearPrivateHome   `json:"clearPrivateHome,omitempty"`
+	PrivateHomeCleared *PrivateHomeCleared `json:"privateHomeCleared,omitempty"`
 }
+
+// Initialize carries only the allowlisted Codex auth file, never a path or
+// shell command. The payload is private transport, excluded from transcripts.
+// Its JSON encoding (including base64 expansion) must fit one bounded frame.
+type Initialize struct {
+	CodexAuth []byte `json:"codexAuth"`
+}
+
+type Initialized struct{}
+type ClearPrivateHome struct{}
+type PrivateHomeCleared struct{}
+
+// MaxPrivateAuthBytes leaves room for JSON/base64 inside MaxPayload.
+const MaxPrivateAuthBytes = 512 << 10
 
 // Hello announces agentd. Version is informational; only Protocol must match.
 type Hello struct {
@@ -205,7 +230,7 @@ func (r ToolReply) validate() error {
 
 func (c ControlMessage) validate() error {
 	set := 0
-	for _, present := range []bool{c.Hello != nil, c.Start != nil, c.Started != nil, c.Stop != nil, c.Exited != nil, c.Failure != nil, c.Census != nil} {
+	for _, present := range []bool{c.Hello != nil, c.Start != nil, c.Started != nil, c.Stop != nil, c.Exited != nil, c.Failure != nil, c.Census != nil, c.Initialize != nil, c.Initialized != nil, c.ClearPrivateHome != nil, c.PrivateHomeCleared != nil} {
 		if present {
 			set++
 		}
@@ -214,6 +239,14 @@ func (c ControlMessage) validate() error {
 	switch c.Type {
 	case TypeHello:
 		matches = c.Hello != nil
+	case TypeInitialize:
+		matches = c.Initialize != nil && len(c.Initialize.CodexAuth) > 0 && len(c.Initialize.CodexAuth) <= MaxPrivateAuthBytes
+	case TypeInitialized:
+		matches = c.Initialized != nil
+	case TypeClearPrivateHome:
+		matches = c.ClearPrivateHome != nil
+	case TypePrivateHomeCleared:
+		matches = c.PrivateHomeCleared != nil
 	case TypeStart:
 		matches = c.Start != nil && len(c.Start.Argv) != 0 && c.Start.Dir != ""
 	case TypeStarted:

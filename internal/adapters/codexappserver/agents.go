@@ -25,7 +25,6 @@ const (
 // retains its own container and provider thread until Close.
 type Agents struct {
 	start       RuntimeStarter
-	helper      RuntimeHelper
 	profiles    map[string]Profile
 	credentials CredentialResolver
 	stopGrace   time.Duration
@@ -46,12 +45,12 @@ func NewAgents(engine *container.Engine, profiles map[string]Profile, credential
 			return nil, err
 		}
 		return s, nil
-	}, engine.RunHelper, profiles, credentials)
+	}, profiles, credentials)
 }
 
 // NewAgentsWithRuntime permits an Orchestrator-supplied runtime peer. Production peers
 // must preserve Engine.Start and Session's exit semantics.
-func NewAgentsWithRuntime(start RuntimeStarter, helper RuntimeHelper, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
+func NewAgentsWithRuntime(start RuntimeStarter, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
 	if start == nil || credentials == nil {
 		return nil, ErrSession
 	}
@@ -62,7 +61,7 @@ func NewAgentsWithRuntime(start RuntimeStarter, helper RuntimeHelper, profiles m
 		}
 		copied[name] = p
 	}
-	return &Agents{start: start, helper: helper, profiles: copied, credentials: credentials, stopGrace: stopGrace, stopTimeout: stopTimeout}, nil
+	return &Agents{start: start, profiles: copied, credentials: credentials, stopGrace: stopGrace, stopTimeout: stopTimeout}, nil
 }
 
 // turnRun is the state of one Run call.
@@ -75,13 +74,14 @@ type turnRun struct {
 	offered map[string]bool
 	tr      *transcript
 
-	secrets        [][]byte
-	loginInstalled bool
-	attempted      bool
-	peer           RuntimeSession
-	enc            *Codec
-	events         <-chan event
-	done           chan struct{}
+	secrets           [][]byte
+	loginInstalled    bool
+	providerAttempted bool
+	attempted         bool
+	peer              RuntimeSession
+	enc               *Codec
+	events            <-chan event
+	done              chan struct{}
 
 	thread      ThreadID
 	turnID      TurnID
@@ -312,11 +312,15 @@ func (t *turnRun) open(ctx context.Context) error {
 		return ErrSession
 	}
 	t.peer = peer
+	if err := t.installCredential(ctx, credential); err != nil {
+		return err
+	}
 	specs := make([]frame.ToolSpec, len(t.turn.Tools))
 	for i, tool := range t.turn.Tools {
 		specs[i] = frame.ToolSpec{Name: tool.Name, Description: tool.Description, InputSchema: tool.InputSchema}
 	}
 	start := frame.Start{Argv: providerArgv(credential.Mode), Dir: "/work", Env: env, Tools: specs}
+	t.providerAttempted = true // a lost start reply may still have started it
 	if err = within(ctx, func() error { _, startErr := peer.StartProvider(ctx, start); return startErr }); err != nil {
 		return t.safe(err)
 	}
@@ -705,19 +709,33 @@ func (t *turnRun) accept(e event, open bool) (Message, error) {
 	return e.msg, t.safe(e.err)
 }
 
-// finish stops the container, removes the login copy once the provider has
-// certainly ended and closes the transcript. It returns err joined with every
+// finish removes private login data after observed provider exit, closes the
+// container and transcript, and returns err joined with every
 // cleanup failure.
 func (t *turnRun) finish(ctx context.Context, res *run.TurnResult, err error) error {
 	close(t.done)
 	observed, closed := false, false
 	if t.peer != nil {
-		stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
-		exit, stopErr := stopProvider(stopCtx, t.peer, t.agents.stopGrace)
-		cancel()
-		if stopErr == nil {
-			observed = true
-			t.tr.record("exit", []byte(fmt.Sprintf("code=%d signal=%s", exit.Code, exit.Signal)))
+		observed = !t.providerAttempted
+		var stopErr error
+		if t.providerAttempted {
+			stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
+			var exit frame.Exited
+			exit, stopErr = stopProvider(stopCtx, t.peer, t.agents.stopGrace)
+			cancel()
+			if stopErr == nil {
+				observed = true
+				t.tr.record("exit", []byte(fmt.Sprintf("code=%d signal=%s", exit.Code, exit.Signal)))
+			}
+		}
+		if t.loginInstalled && observed {
+			cleanCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
+			cleanErr := t.removeCredential(cleanCtx)
+			cancel()
+			if cleanErr != nil {
+				res.Reason += "; runtime login cleanup incomplete"
+				err = errors.Join(err, cleanErr)
+			}
 		}
 		// The container really ends in Close: Stopped also needs a Close that did
 		// not have to give up on it.
@@ -733,15 +751,6 @@ func (t *turnRun) finish(ctx context.Context, res *run.TurnResult, err error) er
 	}
 	ended := observed && closed
 	res.Stopped = ended || !t.attempted
-	if ended || t.peer == nil {
-		cleanCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
-		cleanErr := t.removeCredential(cleanCtx)
-		cancel()
-		if cleanErr != nil {
-			res.Reason += "; runtime login cleanup incomplete"
-			err = errors.Join(err, cleanErr)
-		}
-	}
 	return errors.Join(err, t.tr.close())
 }
 

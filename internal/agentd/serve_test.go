@@ -166,6 +166,7 @@ func abandonCall() int {
 type harness struct {
 	t      *testing.T
 	socket string
+	home   string
 	toAgnt *io.PipeWriter
 	frames chan frame.Frame
 	served chan error
@@ -197,12 +198,13 @@ func newHarness(t *testing.T) *harness {
 	h := &harness{
 		t:      t,
 		socket: shortSocketPath(t),
+		home:   t.TempDir(),
 		toAgnt: orchestratorW,
 		frames: make(chan frame.Frame, 64),
 		served: make(chan error, 1),
 	}
 	go func() {
-		h.served <- agentd.Serve(context.Background(), orchestratorR, agentW, agentd.Config{Version: "test", SocketPath: h.socket, StopGrace: 2 * time.Second})
+		h.served <- agentd.Serve(context.Background(), orchestratorR, agentW, agentd.Config{Version: "test", SocketPath: h.socket, StopGrace: 2 * time.Second, PrivateHome: h.home})
 		_ = agentW.Close()
 	}()
 	go func() {

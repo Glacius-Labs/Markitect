@@ -8,6 +8,8 @@ This package is the Orchestrator's client of the container engine ([DEC-037](../
 | --- | --- |
 | `NewEngine(path)` | Binds the absolute engine executable. The Orchestrator never searches PATH. |
 | `Engine.Start(ctx, spec)` | Runs one session container with agentd and returns its `Session` after agentd's hello. |
+| `Session.Initialize(ctx, req)` | Installs the bounded fixed private login file over that connection before provider startup; no shell, supplied path or extra container. |
+| `Session.ClearPrivateHome(ctx)` | Confirms removal of the installed login after provider exit and before container closure. agentd retries cleanup on disconnect and reports failures. |
 | `Engine.RunHelper(ctx, spec, argv, stdin, stdout)` | Runs one command in a fresh container under the same hardening, for example `/usr/bin/tee`, `/bin/cat` or a project check. Assignment Git uses the retained exec service. |
 | `Engine.StartExec` / `ExecSession.Exec`, `Close` | Holds one hardened container with fixed mounts and executes literal commands as its configured non-root user. Cancellation removes the owned container so remote processes cannot outlive the failed exec. |
 | `Engine.StartOwnedExec` | The explicit Apply Git exception: adds only `CAP_CHOWN`, verifies empty private assignment roots and initializes their ownership with one fixed root exec before returning a non-root-only session. Ordinary engine/Agent/check launches are unchanged; [Workspaces](../gitrepo/WORKSPACES.md#one-git-container-per-apply) records the trade-off and lifecycle. |
