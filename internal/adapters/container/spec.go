@@ -2,11 +2,15 @@ package container
 
 import (
 	"fmt"
+	"os"
 	"path"
+	"path/filepath"
 	"regexp"
 	"sort"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // AgentdPath is where the runtime image installs the session helper.
@@ -21,13 +25,18 @@ var (
 	userPattern        = regexp.MustCompile(`^([1-9][0-9]{0,9}):([1-9][0-9]{0,9})$`)
 )
 
-// Mount gives a container one named volume, or with Subpath one directory of
-// it. A Subpath directory must exist in the volume when the container starts.
+// Mount gives a container exactly one named volume or explicit local directory.
+// The caller owns selecting a private Run copy, not the source repository.
+// A volume Subpath directory must exist when the container starts.
 type Mount struct {
-	Volume   string
-	Target   string
-	Subpath  string
-	ReadOnly bool
+	Volume string
+	// BindDirectory is an existing canonical absolute local host directory.
+	// It requires a local engine or a separately verified Desktop host mapping;
+	// it is never interpreted as a volume name or created by this adapter.
+	BindDirectory string
+	Target        string
+	Subpath       string
+	ReadOnly      bool
 	// NoCopy prevents Docker from populating an empty volume with files from
 	// the image at Target. Use it when the volume already represents exact bytes.
 	NoCopy bool
@@ -45,7 +54,7 @@ type ContainerSpec struct {
 	Labels map[string]string
 	// User is the numeric "uid:gid"; uid 0 and gid 0 are refused.
 	User string
-	// Mounts are the only volumes the container receives.
+	// Mounts are the only host directories or volumes the container receives.
 	Mounts []Mount
 	// Workdir is the provider's working directory inside the container.
 	Workdir string
@@ -109,9 +118,6 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 	args = append(args, labels...)
 	targets := map[string]bool{"/tmp": true}
 	for _, m := range s.Mounts {
-		if !namePattern.MatchString(m.Volume) {
-			return nil, fmt.Errorf("volume %q is not a plain engine name", m.Volume)
-		}
 		if !absolute(m.Target) || strings.ContainsAny(m.Target, ",=") {
 			return nil, fmt.Errorf("mount target %q is not a plain absolute container path", m.Target)
 		}
@@ -119,15 +125,32 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 			return nil, fmt.Errorf("mount target %q is used twice", m.Target)
 		}
 		targets[m.Target] = true
-		mount := "type=volume,src=" + m.Volume + ",dst=" + m.Target
-		if m.Subpath != "" {
-			if !ValidSubpath(m.Subpath) {
-				return nil, fmt.Errorf("volume subpath %q is not a plain relative path", m.Subpath)
-			}
-			mount += ",volume-subpath=" + m.Subpath
+		if (m.Volume == "") == (m.BindDirectory == "") {
+			return nil, fmt.Errorf("mount needs exactly one volume or local bind directory")
 		}
-		if m.NoCopy {
-			mount += ",volume-nocopy"
+		var mount string
+		if m.BindDirectory != "" {
+			if m.Subpath != "" || m.NoCopy {
+				return nil, fmt.Errorf("bind directory cannot use volume subpath or copy-up options")
+			}
+			if err := validateBindDirectory(m.BindDirectory); err != nil {
+				return nil, err
+			}
+			mount = "type=bind,src=" + m.BindDirectory + ",dst=" + m.Target
+		} else {
+			if !namePattern.MatchString(m.Volume) {
+				return nil, fmt.Errorf("volume %q is not a plain engine name", m.Volume)
+			}
+			mount = "type=volume,src=" + m.Volume + ",dst=" + m.Target
+			if m.Subpath != "" {
+				if !ValidSubpath(m.Subpath) {
+					return nil, fmt.Errorf("volume subpath %q is not a plain relative path", m.Subpath)
+				}
+				mount += ",volume-subpath=" + m.Subpath
+			}
+			if m.NoCopy {
+				mount += ",volume-nocopy"
+			}
 		}
 		if m.ReadOnly {
 			mount += ",readonly"
@@ -139,6 +162,27 @@ func (s ContainerSpec) runArgs(entry []string) ([]string, error) {
 	}
 	args = append(args, "--entrypoint", entry[0], s.Image)
 	return append(args, entry[1:]...), nil
+}
+
+// Refuse aliases rather than silently replacing the caller's source. This
+// checks the declared local path; it does not certify an engine endpoint or
+// guard against a concurrent replacement before the engine binds it. The
+// caller must retain ownership/lifetime of the private directory throughout.
+func validateBindDirectory(source string) error {
+	if len(source) > 4096 || !utf8.ValidString(source) || strings.TrimSpace(source) != source ||
+		!filepath.IsAbs(source) || filepath.Clean(source) != source || filepath.Dir(source) == source ||
+		strings.HasPrefix(source, `\\`) || strings.ContainsAny(source, ",=\"") || strings.ContainsFunc(source, unicode.IsControl) {
+		return fmt.Errorf("bind source must be a plain canonical absolute local directory below a filesystem root")
+	}
+	info, err := os.Lstat(source)
+	if err != nil || !info.IsDir() || info.Mode()&os.ModeSymlink != 0 {
+		return fmt.Errorf("bind source must be an existing non-redirected directory")
+	}
+	canonical, err := filepath.EvalSymlinks(source)
+	if err != nil || canonical != source {
+		return fmt.Errorf("bind source or its ancestors redirect the selected local directory")
+	}
+	return nil
 }
 
 // ValidSubpath reports whether p is a clean relative path inside a volume: not
