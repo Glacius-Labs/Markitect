@@ -355,6 +355,10 @@ func (x *execution) tools(s *managerState) Tools {
 				base, err = s.copy.Snapshot(ctx)
 				if err == nil {
 					err = target.copy.Update(ctx, s.copy, base)
+					if errors.Is(err, ErrMergeConflict) {
+						feedback = append(append([]Finding(nil), feedback...), Finding{Manager: s.manager.Package, Text: "Resolve the preserved child-side Git merge conflict against the current parent baseline: " + err.Error()})
+						err = nil
+					}
 				}
 			}
 			s.mu.Unlock()
@@ -518,6 +522,10 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 			continue
 		}
 		commit, err := s.copy.Snapshot(x.ctx)
+		if errors.Is(err, ErrMergeConflict) {
+			feedback = []Finding{{Manager: s.manager.Package, Text: err.Error()}}
+			continue
+		}
 		if err != nil {
 			return Handoff{}, err
 		}

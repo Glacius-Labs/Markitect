@@ -21,7 +21,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-run` | One closed complete Manager hierarchy over direct Sessions, Git, checks and records. | `apply-run` | 1 |
 | `apply-project` | Checked structural input and immutable model-derived context. | `apply-project` | 1 |
 | `runtime-config` | Closed static native and check profile metadata. | `runtime-config` | 1 |
-| `native-harness` | Model-derived instructions and tools for concrete native Sessions. | `native-harness` | 0 |
+| `native-harness` | Model-derived instructions and tools for concrete native Sessions. | `native-harness` | 1 |
 | `apply-usecase` | Product workflow composition; unavailable at the S2 source boundary. | `apply-usecase` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
 | `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 8 |
@@ -78,6 +78,12 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 |---|---|---|
 | `internal/runtimeconfig` | Closed acquired Runtime envelopes and source-bound static native or check image observations. | [docs/development/modules.md](modules.md) |
 
+## Native harness
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/harness` | Pure complete model-derived instructions for native Manager Sessions. | [internal/harness/README.md](../../internal/harness/README.md) |
+
 ## Apply
 
 | Package | Purpose | Owning document |
@@ -95,9 +101,9 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/adapters/checks` | Check profile metadata and bounded container execution. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/claudecode` | Claude Code stream protocol and one-turn Agent adaptation through the container runtime. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
+| `internal/adapters/claudecode` | Claude static image metadata and retained protocol codecs; native Run Sessions are explicitly unavailable. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
 | `internal/adapters/cli` | Command parsing and JSON reports for check, context, docs and explicit Apply. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/codexappserver` | Prepares Codex image metadata and implements one-turn Agents through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
+| `internal/adapters/codexappserver` | Codex native Manager Sessions, model-derived harness loading and direct Run tools in private assignment volumes. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/gitrepo` | Complete repository capture, isolated Run Git copies and independently reopenable stored candidates. | [docs/development/modules.md](modules.md) |

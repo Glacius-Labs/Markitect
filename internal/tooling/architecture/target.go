@@ -76,13 +76,13 @@ var responsibilityImports = map[string][]string{
 	"cmd/markitect-release":            {"internal/tooling/releasecli"},
 	"internal/adapters/checks":         {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/cli":            {"internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot", "internal/tooling/licenses"},
-	"internal/adapters/codexappserver": {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/adapters/container", "internal/run", "internal/agentd/frame"},
-	"internal/adapters/claudecode":     {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/run", "internal/adapters/container", "internal/agentd/frame"},
+	"internal/adapters/codexappserver": {"internal/adapters/container", "internal/agentd/frame", "internal/harness", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
+	"internal/adapters/claudecode":     {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
 	"internal/adapters/gitrepo":        {"internal/adapters/container", "internal/model", "internal/project", "internal/run", "internal/snapshot"},
 	"internal/agentd":                  {"internal/agentd/frame"},
-	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization", "internal/run"},
+	"internal/harness":                 {"internal/model", "internal/organization", "internal/project"},
 	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/claudecode", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/model", "internal/modeldocs", "internal/project", "internal/runtimeconfig"},
 	"internal/modeldocs":               {"internal/model", "internal/project", "internal/snapshot"},
 	"internal/organization":            {"internal/model", "internal/snapshot"},
@@ -101,7 +101,8 @@ var responsibilityImports = map[string][]string{
 // Only concrete fixture and composition needs receive test-only edges;
 // production keeps its separately declared responsibility imports.
 var responsibilityTestImports = map[string][]string{
-	"internal/adapters/gitrepo": {"internal/adapters/runstore", "internal/adapters/checks", "internal/runtimeconfig", "internal/organization", "internal/realization"},
+	"internal/adapters/codexappserver": {"internal/adapters/gitrepo"},
+	"internal/adapters/gitrepo":        {"internal/adapters/runstore", "internal/adapters/checks", "internal/runtimeconfig", "internal/organization", "internal/realization"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.

@@ -164,3 +164,7 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
     why: "Verifies actual file copies, empty Package retention, provided session/check persistence, serialized input boundaries and late correction through exact Git integration with controlled command transport."
+  - path: "internal/adapters/gitrepo/run_conflict_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: Actual Git conflict returns to the owning Manager and requires repair and renewed exact review before integration.

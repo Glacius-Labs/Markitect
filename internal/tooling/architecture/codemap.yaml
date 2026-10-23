@@ -27,6 +27,10 @@ packages:
     layer: runtime-config
     purpose: Closed acquired Runtime envelopes and source-bound static native or check image observations.
     doc: docs/development/modules.md
+  - path: internal/harness
+    layer: native-harness
+    purpose: Pure complete model-derived instructions for native Manager Sessions.
+    doc: internal/harness/README.md
   - path: internal/apply
     layer: apply-usecase
     purpose: Explicit unavailable Apply boundary until S3 workflow composition.
@@ -41,7 +45,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/claudecode
     layer: apply-adapter
-    purpose: Claude Code stream protocol and one-turn Agent adaptation through the container runtime.
+    purpose: Claude static image metadata and retained protocol codecs; native Run Sessions are explicitly unavailable.
     doc: internal/adapters/claudecode/README.md
   - path: internal/adapters/cli
     layer: apply-adapter
@@ -49,7 +53,7 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/codexappserver
     layer: apply-adapter
-    purpose: Prepares Codex image metadata and implements one-turn Agents through the container runtime.
+    purpose: Codex native Manager Sessions, model-derived harness loading and direct Run tools in private assignment volumes.
     doc: internal/adapters/codexappserver/README.md
   - path: internal/adapters/container
     layer: apply-adapter

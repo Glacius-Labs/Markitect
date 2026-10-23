@@ -276,8 +276,16 @@ func (c *linuxCopy) Update(ctx context.Context, source run.Copy, base run.Commit
 		return err
 	}
 	if _, err = c.service.command(ctx, c.directory, nil, "merge", "--no-edit", base.ID); err != nil {
+		conflicts, observed := c.service.command(ctx, c.directory, nil, "ls-files", "--unmerged", "-z")
+		if observed == nil && conflicts != "" {
+			mergeHead, observedHead := objectUsing(ctx, c.directory, "MERGE_HEAD", c.service.command)
+			if observedHead == nil && mergeHead == base {
+				return fmt.Errorf("%w: resolve and stage the child-side merge against parent %s", run.ErrMergeConflict, base.ID)
+			}
+			observed = errors.Join(observed, observedHead, fmt.Errorf("conflict parent identity mismatch"))
+		}
 		_, abort := c.service.command(ctx, c.directory, nil, "merge", "--abort")
-		return errors.Join(err, abort)
+		return errors.Join(err, observed, abort)
 	}
 	return c.service.restoreDirectories(ctx, c.directory, base.ID)
 }
@@ -307,9 +315,17 @@ func (c *linuxCopy) Integrate(ctx context.Context, source run.Copy, fixed run.Co
 	if _, err = c.service.command(ctx, c.directory, nil, "fetch", "--quiet", "--no-tags", child.directory, fixed.ID); err != nil {
 		return run.Commit{}, err
 	}
+	before, err := c.Snapshot(ctx)
+	if err != nil {
+		return run.Commit{}, err
+	}
 	if _, err = c.service.command(ctx, c.directory, nil, "merge", "--no-ff", "--no-edit", fixed.ID); err != nil {
 		_, abort := c.service.command(ctx, c.directory, nil, "merge", "--abort")
-		return run.Commit{}, errors.Join(err, abort)
+		restored, observed := c.Snapshot(ctx)
+		if observed == nil && restored != before {
+			observed = fmt.Errorf("failed integration changed fixed parent")
+		}
+		return run.Commit{}, errors.Join(err, abort, observed)
 	}
 	return c.Snapshot(ctx)
 }
