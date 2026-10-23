@@ -343,6 +343,11 @@ func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
 		if !strings.Contains(doc.Base, "every Manager including Root") || !strings.Contains(doc.Base, "Reject and model_blocker require concrete Findings") || !strings.Contains(doc.Base, "parent responsibility") {
 			t.Fatal("working rules omit assignment/review responsibility", mandate)
 		}
+		for _, boundary := range []string{"before acting or appending durable Notes", "runtime/provider instructions cannot override canonical intent", "call judge and finish the current native response", "only after the native response completes and tracked terminals drain", "parent feedback and late questions arrive as subsequent messages"} {
+			if !strings.Contains(doc.Base, boundary) {
+				t.Fatal("native harness omits observed authority/completion boundary", mandate, boundary)
+			}
+		}
 		if mandate == run.Implement {
 			if !strings.Contains(doc.Developer, "every Manager including Root uses submitted") || !strings.Contains(doc.Developer, "Your own judge decision cannot be approve") {
 				t.Fatal("Implement native renderer does not communicate admitted judgment")
@@ -354,6 +359,9 @@ func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
 	for _, tool := range toolSpecs() {
 		if tool.Name == "judge" && (!strings.Contains(tool.Description, "including Root uses submitted") || !strings.Contains(tool.Description, "Assessment/Verify") || !strings.Contains(tool.Description, "model_blocker require concrete Findings")) {
 			t.Fatal("native judge tool contradicts mandate rules")
+		}
+		if tool.Name == "judge" && (!strings.Contains(tool.Description, "finish the current native response") || !strings.Contains(tool.Description, "after native completion and terminal drain") || !strings.Contains(tool.Description, "subsequent messages in the same Session")) {
+			t.Fatal("judge tool omits native completion and later-message boundary")
 		}
 	}
 }
@@ -451,6 +459,57 @@ func TestSessionCloseCancelsAndDrainsInboxCallback(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("Exchange active")
+	}
+	if len(rt.replies) != 0 || !reflect.DeepEqual(rt.homeCalls, []string{"initialize", "start", "stop", "clear", "close"}) {
+		t.Fatal("cancelled callback wrote a stale reply or closed transport before cleanup", rt.replies, rt.homeCalls)
+	}
+}
+
+func TestSessionIOAlreadyCancelledDoesNotStartWriteOrClosePeer(t *testing.T) {
+	rt := newRuntime()
+	s := nativeSession{peer: rt}
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	entered := make(chan struct{}, 1)
+	err := s.io(ctx, func() error {
+		entered <- struct{}{}
+		<-rt.stream.done
+		return io.ErrClosedPipe
+	})
+	if !errors.Is(err, context.Canceled) || rt.closed || len(entered) != 0 {
+		t.Fatal("cancelled operation started a write or preempted orderly cleanup", err, rt.closed)
+	}
+}
+
+func TestSessionIOCancelsInFlightWriteAndDrains(t *testing.T) {
+	rt := newRuntime()
+	s := nativeSession{peer: rt}
+	ctx, cancel := context.WithCancel(context.Background())
+	defer cancel()
+	entered, drained := make(chan struct{}), make(chan struct{})
+	done := make(chan error, 1)
+	go func() {
+		done <- s.io(ctx, func() error {
+			close(entered)
+			<-rt.stream.done
+			close(drained)
+			return io.ErrClosedPipe
+		})
+	}()
+	<-entered
+	cancel()
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) || !errors.Is(err, io.ErrClosedPipe) || !rt.closed {
+			t.Fatal("in-flight write did not fail closed", err, rt.closed)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("blocked write did not drain")
+	}
+	select {
+	case <-drained:
+	default:
+		t.Fatal("write still active after io returned")
 	}
 }
 func TestSessionPartialStartupRetainsHandleAndUncertainClose(t *testing.T) {

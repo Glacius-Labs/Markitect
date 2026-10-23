@@ -320,6 +320,9 @@ func (t *nativeSession) finish(ctx context.Context) error {
 // io cancels a blocked transport write by closing the owned peer, then waits for
 // that write to drain. Runtime peers must release writes when Close returns.
 func (t *nativeSession) io(ctx context.Context, f func() error) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	done := make(chan error, 1)
 	go func() { done <- f() }()
 	select {
