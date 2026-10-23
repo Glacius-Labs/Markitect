@@ -1,0 +1,14 @@
+apiVersion: markitect.strategy-defaults/v1
+strategies: [direct, staged]
+defaults:
+  instructions:
+    execute: []
+    verify: []
+  # The standard local team: every Manager may delegate bounded tasks to one
+  # Worker at a time, bound to the Manager's own Execute profile. The fresh
+  # Verify reviewer is the Manager's Verify role.
+  team:
+    maxHelpers: 1
+    helpers:
+      - role: worker
+        writes: true

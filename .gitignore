@@ -1,0 +1,8 @@
+/bin/
+.cache/
+/.gocache/
+/.artifacts/
+*.test
+coverage.out
+__pycache__/
+*.py[cod]

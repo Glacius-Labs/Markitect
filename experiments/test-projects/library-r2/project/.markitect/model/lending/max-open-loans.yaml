@@ -1,0 +1,13 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: maxOpenLoans
+kind: Core.Property
+body: >-
+  Positive integer giving the maximum resulting count of currently open loans
+  per member when admitting a new loan. It is an admission limit, not permission
+  to remove existing loans when they exceed a later lower limit.
+spec:
+  type: integer
+  minCount: 1
+  maxCount: 1

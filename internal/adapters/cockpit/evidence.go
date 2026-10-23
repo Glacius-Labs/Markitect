@@ -1,0 +1,343 @@
+package cockpit
+
+import (
+	"bytes"
+	"crypto/sha256"
+	"encoding/hex"
+	"encoding/json"
+	"errors"
+	"fmt"
+	"hash"
+	"io"
+	"os"
+	"path/filepath"
+	"regexp"
+	"sort"
+	"strings"
+	"sync"
+	"time"
+)
+
+// Bounds of one read. Evidence beyond them is reported as a limitation, never
+// silently truncated into a smaller history.
+const (
+	maxEventBytes      = 64 << 20
+	maxReportBytes     = 16 << 20
+	maxTranscriptBytes = 32 << 20
+)
+
+// safeName admits the run, turn and question identities the producer uses as
+// path elements; nothing else may steer a path.
+var safeName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
+
+// Record is one complete line of a run's events.jsonl. Seq is its 1-based line
+// number, which is the observation order. A line that does not decode keeps its
+// place with Invalid set, so later sequence numbers never shift.
+type Record struct {
+	Seq     int
+	At      time.Time
+	Kind    string
+	Pass    string
+	Manager string
+	Turn    string
+	Data    json.RawMessage
+	Invalid string
+	// Mark identifies the line's bytes, so a client resuming after this
+	// record can be told whether the history it holds is still this one.
+	Mark string
+}
+
+// Source identifies exactly what a view was projected from: the consumed bytes
+// of complete event lines and their digest, a trailing partial line, and the
+// report's presence. Replaced reports that the file no longer starts with the
+// bytes read before; the history was then read again from its start.
+type Source struct {
+	EventBytes  int64     `json:"eventBytes"`
+	EventDigest string    `json:"eventDigest"`
+	Records     int       `json:"records"`
+	TailBytes   int       `json:"tailBytes"`
+	Report      bool      `json:"report"`
+	Replaced    int       `json:"replaced"`
+	ReadAt      time.Time `json:"readAt"`
+	Error       string    `json:"error,omitempty"`
+}
+
+// runLog is the incrementally read evidence of one run directory. Records are
+// append-only: an element once read is never changed, so a slice of them can
+// be handed out under the lock.
+type runLog struct {
+	state, id, dir string
+
+	mu       sync.Mutex
+	records  []Record
+	consumed int64
+	hash     hash.Hash // sha256 over the consumed bytes
+	digest   []byte
+	last     []byte // the last consumed bytes, to check an append's seam
+	tail     int
+	file     os.FileInfo
+	replaced int
+	report   *Report
+	reportAt time.Time
+	readAt   time.Time
+	err      error
+}
+
+func newRunLog(state, id string) *runLog {
+	l := &runLog{state: state, id: id, dir: filepath.Join(state, "runs", id)}
+	l.reset()
+	return l
+}
+
+// snapshot returns the records read so far and the source identity they form.
+func (l *runLog) snapshot() ([]Record, Source, *Report) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	src := Source{EventBytes: l.consumed, EventDigest: hex.EncodeToString(l.digest), Records: len(l.records), TailBytes: l.tail, Report: l.report != nil, Replaced: l.replaced, ReadAt: l.readAt}
+	if l.err != nil {
+		src.Error = l.err.Error()
+	}
+	return l.records[:len(l.records):len(l.records)], src, l.report
+}
+
+// refresh reads what was appended since the last read. It reports whether the
+// records or the report changed. An append is accepted when the file is the
+// same file, not shorter than what was consumed and continues the last
+// consumed bytes; otherwise the file is read again from its start and, unless
+// its beginning is the consumed history, counted as replaced and read as a new
+// history. An in-place rewrite of earlier bytes that keeps the file's identity
+// and its last consumed bytes is not detected; the producer only appends.
+func (l *runLog) refresh() (bool, error) {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+	l.readAt = time.Now().UTC()
+	// The report is written after the last record, so reading it first and the
+	// events after it never pairs a report with an incomplete record.
+	report, rerr := l.refreshReportLocked()
+	events, err := l.refreshEventsLocked()
+	l.err = errors.Join(err, rerr)
+	return events || report, l.err
+}
+
+func (l *runLog) refreshEventsLocked() (bool, error) {
+	path := filepath.Join(l.dir, "events.jsonl")
+	info, err := os.Stat(path)
+	if err != nil {
+		return false, err
+	}
+	// Windows loads a file's identity lazily from its path; load it now, so a
+	// later comparison sees the file that was read, not the one at the path then.
+	os.SameFile(info, info)
+	if l.file != nil && info.Size() == l.file.Size() && info.ModTime().Equal(l.file.ModTime()) && os.SameFile(info, l.file) {
+		return false, nil
+	}
+	if info.Size() > maxEventBytes {
+		return false, fmt.Errorf("events.jsonl has %d bytes, more than the cockpit reads (%d)", info.Size(), maxEventBytes)
+	}
+	// The producer only appends. Reading from just before the consumed end
+	// checks the seam; anything else is read again from the start.
+	from := max(l.consumed-int64(len(l.last)), 0)
+	appended := l.file != nil && os.SameFile(info, l.file) && info.Size() >= l.consumed
+	data, err := readFrom(path, from)
+	if err == nil && appended && !bytes.HasPrefix(data, l.last) {
+		appended = false
+	}
+	if err == nil && !appended && l.consumed > 0 {
+		from = 0
+		data, err = readFrom(path, 0)
+	}
+	if err != nil {
+		return false, err
+	}
+	if !appended && l.consumed > 0 {
+		if int64(len(data)) < l.consumed || !bytes.Equal(sum(data[:l.consumed]), l.digest) {
+			l.records = nil
+			l.reset()
+			l.replaced++
+		}
+	}
+	l.file = info
+	rest := data[l.consumed-from:]
+	before := len(l.records)
+	for {
+		i := bytes.IndexByte(rest, '\n')
+		if i < 0 {
+			break
+		}
+		l.records = append(l.records, decodeRecord(len(l.records)+1, rest[:i]))
+		l.hash.Write(rest[:i+1])
+		l.consumed += int64(i + 1)
+		rest = rest[i+1:]
+	}
+	l.digest = l.hash.Sum(nil)
+	consumed := data[:int64(len(data))-int64(len(rest))]
+	l.last = append(l.last[:0], consumed[max(len(consumed)-seam, 0):]...)
+	tail := len(rest)
+	changed := len(l.records) != before || tail != l.tail
+	l.tail = tail
+	return changed, nil
+}
+
+// seam is how many consumed bytes an incremental read checks again.
+const seam = 64
+
+func (l *runLog) reset() {
+	l.consumed, l.hash, l.last = 0, sha256.New(), nil
+	l.digest = l.hash.Sum(nil)
+}
+
+// readFrom reads a file from an offset, bounded by maxEventBytes.
+func readFrom(path string, offset int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	if _, err := f.Seek(offset, io.SeekStart); err != nil {
+		return nil, err
+	}
+	data, err := io.ReadAll(io.LimitReader(f, maxEventBytes+1))
+	if err != nil {
+		return nil, err
+	}
+	if offset+int64(len(data)) > maxEventBytes {
+		return nil, fmt.Errorf("events.jsonl exceeds %d bytes", maxEventBytes)
+	}
+	return data, nil
+}
+
+func (l *runLog) refreshReportLocked() (bool, error) {
+	path := filepath.Join(l.dir, "report.json")
+	info, err := os.Stat(path)
+	if errors.Is(err, os.ErrNotExist) {
+		changed := l.report != nil
+		l.report, l.reportAt = nil, time.Time{}
+		return changed, nil
+	}
+	if err != nil {
+		return false, err
+	}
+	if l.report != nil && info.ModTime().Equal(l.reportAt) {
+		return false, nil
+	}
+	data, err := readBounded(path, maxReportBytes)
+	if err != nil {
+		return false, err
+	}
+	report, err := decodeReport(data)
+	if err != nil {
+		return false, fmt.Errorf("report.json: %w", err)
+	}
+	l.report, l.reportAt = report, info.ModTime()
+	return true, nil
+}
+
+func sum(data []byte) []byte {
+	s := sha256.Sum256(data)
+	return s[:]
+}
+
+func readBounded(path string, limit int64) ([]byte, error) {
+	f, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	defer f.Close()
+	data, err := io.ReadAll(io.LimitReader(f, limit+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > limit {
+		return nil, fmt.Errorf("%s exceeds %d bytes", filepath.Base(path), limit)
+	}
+	return data, nil
+}
+
+func decodeRecord(seq int, line []byte) Record {
+	var raw struct {
+		At      time.Time       `json:"at"`
+		Kind    string          `json:"kind"`
+		Pass    string          `json:"pass"`
+		Manager string          `json:"manager"`
+		Turn    string          `json:"turn"`
+		Data    json.RawMessage `json:"data"`
+	}
+	r := Record{Seq: seq, Mark: hex.EncodeToString(sum(line)[:8])}
+	if err := json.Unmarshal(bytes.TrimSuffix(line, []byte("\r")), &raw); err != nil {
+		r.Invalid = err.Error()
+		return r
+	}
+	if raw.Kind == "" {
+		r.Invalid = "the record has no kind"
+		return r
+	}
+	r.At, r.Kind, r.Pass, r.Manager, r.Turn, r.Data = raw.At, raw.Kind, raw.Pass, raw.Manager, raw.Turn, raw.Data
+	return r
+}
+
+// stateDirectory is one state directory the cockpit observes read-only.
+type stateDirectory struct {
+	dir  string
+	mu   sync.Mutex
+	runs map[string]*runLog
+
+	probe    sync.Mutex
+	probedAt time.Time
+	heldNow  bool
+	probeErr error
+}
+
+// RunEntry is one run found in a state directory.
+type RunEntry struct {
+	ID      string `json:"id"`
+	State   string `json:"state"`
+	Current bool   `json:"current"`
+}
+
+// list finds the runs of the state directory: directories under runs/ with
+// an events.jsonl. current-run names the run that last took the state
+// directory; it does not by itself say that run is still running.
+func (s *stateDirectory) list() ([]RunEntry, error) {
+	entries, err := os.ReadDir(filepath.Join(s.dir, "runs"))
+	if errors.Is(err, os.ErrNotExist) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	current := s.currentRun()
+	var out []RunEntry
+	for _, e := range entries {
+		if !e.IsDir() || !safeName.MatchString(e.Name()) {
+			continue
+		}
+		if _, err := os.Stat(filepath.Join(s.dir, "runs", e.Name(), "events.jsonl")); err != nil {
+			continue
+		}
+		out = append(out, RunEntry{ID: e.Name(), State: s.dir, Current: e.Name() == current})
+	}
+	sort.Slice(out, func(i, j int) bool { return out[i].ID > out[j].ID })
+	return out, nil
+}
+
+func (s *stateDirectory) currentRun() string {
+	data, err := readBounded(filepath.Join(s.dir, "current-run"), 4096)
+	if err != nil {
+		return ""
+	}
+	return strings.TrimSpace(string(data))
+}
+
+func (s *stateDirectory) log(id string) *runLog {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	if s.runs == nil {
+		s.runs = map[string]*runLog{}
+	}
+	if l := s.runs[id]; l != nil {
+		return l
+	}
+	l := newRunLog(s.dir, id)
+	s.runs[id] = l
+	return l
+}

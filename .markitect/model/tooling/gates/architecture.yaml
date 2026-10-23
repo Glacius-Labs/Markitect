@@ -1,0 +1,8 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: architecture
+kind: Vocab.Check
+body: "Run the declared architecture source maintenance check and retain failures separately from runtime and acceptance evidence."
+spec:
+  command: "go run ./cmd/markitect-check-architecture --repo ."

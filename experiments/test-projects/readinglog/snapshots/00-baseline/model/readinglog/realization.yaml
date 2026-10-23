@@ -1,0 +1,16 @@
+imports:
+  - package: software
+    as: Software
+id: realization
+kind: Software.Rule
+body: |-
+  Deliver working code, meaningful CLI and regression tests, and concise usage,
+  failure/state behavior and honest limitation documentation for [[system]].
+  Retain the supplied existing add/list application and its public baseline test
+  as the actual starting realization; preserve the accepted [[add]], [[list]],
+  [[book]], [[inputs]] and [[storage]] contracts while completing current intent.
+  The copied baseline is not an implementation of later features. [[interface]]
+  fixes the CLI/Python boundary. From realization/, `python -B -m unittest discover
+  -s tests` runs tests. Internal code and test organization remain choices within
+  that boundary. A successful source check does not prove behavior or acceptance.
+spec: {}

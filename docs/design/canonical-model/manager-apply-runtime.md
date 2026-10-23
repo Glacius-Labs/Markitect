@@ -1,0 +1,259 @@
+# Implemented runtime contract of Apply
+
+**Target/source boundary, 22 October 2026:** the owner accepted [Agent workspaces and reviewed handoffs](manager-apply-workflow.md) and its [documentation-only rebuild plan](../../implementation-plan.md#apply-rebuild-plan). The target uses one container/working copy per Agent assignment, reviewed Git handoffs and no domain Turns or required per-write enforcement. The executable instructions below describe the existing Pass implementation until migrated; they do not make the target available.
+
+**Accepted target update, 22 October 2026:** the owner adopted the [proportionate-process changes](manager-apply-workflow.md#proportionate-process-review-22-october-2026), including removal of universal basis approval, separate Verify preapproval and the global review barrier. The implementation descriptions below retain their source-bound status until migrated; they are not reasons to preserve superseded target rules. Adoption alone does not establish runtime completion or benefit.
+
+**Status, 20 October 2026:** this page describes the base Pass implementation integrated by PR #530, Main `780dccb7`, of the [accepted workflow](manager-apply-workflow.md) ([DEC-064](../../concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams)), with the [evidence-driven hardening](manager-apply-workflow.md#evidence-driven-hardening-adopted-20-october-2026) of the [hardening assignment](../../development/claude-apply-hardening-handoff-20261020.md): Orchestrator-produced probe receipts, claim-level evidence, independent dispositions of adverse receipts, active counterexample mandates, waits on any Manager and early ends of unsatisfiable waits. It supersedes draft PR #536, whose observation fields and cycle regression it carries in changed form. Its [first provider runs](../../validation/apply-pass-process-20261020.md) include successes and a Verified result retaining a genuine defect; the bounded hardening evaluation is recorded in the [hardening report](../../validation/apply-hardening-20261020.md). Stable Apply and owner acceptance are not established. **Strategies, 21 October 2026:** following the owner's [provisional direct baseline](manager-apply-workflow.md#provisional-direct-baseline-21-october-2026), the reviewed direct composition of draft PR #545 is integrated with the later shared fixes (#553 and the public-choice routing) as the `direct` strategy, and the earlier composition is kept as `staged` on the same core; the provider evidence of #545 ran on its own builds and is not evidence for this integration. The earlier contract (one Execute phase, Verify rounds, start-drift repair, question ban and `model_defect`) remains in [Git at Main b59abad3](https://github.com/Glacius-Labs/Markitect/blob/b59abad30409601075f4a597457b707cbf47ba72/docs/design/canonical-model/manager-apply-runtime.md); its earlier real runs retain their original build scope.
+
+**Implemented, 21 October 2026:** the [mandatory assessment/closed-Run amendment](manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs). Apply and Extract run the read-only [Model assessment](#model-assessment) through this same Pass mechanism before any work; no question or answer crosses Root during a Run and no preloaded owner decision exists. Root-confirmed material gaps or errors end the Run Failed without publication; corrected model input starts a new Run. Every production strategy retains Managers. The assessment's mandate and guidance are [Session C's method](../../../experiments/model-assessment/contract.md); source tests show the gate, not the method's quality.
+
+The packages own their details: [run](../../../internal/run/README.md), [apply](../../../internal/apply/README.md), [realization](../../../internal/realization/doc.go), the [Claude](../../../internal/adapters/claudecode/README.md) and [Codex](../../../internal/adapters/codexappserver/README.md) adapters.
+
+**Source implementation, 22 October simplification:** action-specific reporting and
+receipt reuse replace the broad envelope and uniqueness restriction. Fresh independent
+Verify reviewers receive the bound model and immutable candidate directly; the former
+model-only workspace, pre-candidate basis and whole-tree barrier are removed. Every
+Manager starts when its actual prerequisites are available. Optional contracts retain
+acceptance, version binding and invalidation for their actual consumers. Model assessment,
+independent review, findings, observed writer cessation and guarded publication remain.
+The earlier CCF/NIGHT records keep their original evidence scope. Provider-free source
+checks do not establish better semantic Agent behavior or authorize another series.
+
+## Organization and Briefs
+
+The organization is derived, not planned: Root (`.`) and one Manager per local Package, including empty and intermediate ones, with parents from the model hierarchy. Every Manager takes part in every Pass. `run.Config` lists Root first and every parent before its children.
+
+Apply renders each Manager's Brief from the captured model: its own Definitions (its obligations; every result covers each of them), included Definitions labeled with their owning Package, its areas, its local registry and the required checks. Root also receives the project obligations explicitly: every local Definition with its kind, title and owner, and the full text of the Definitions the required checks name. A parent's Brief names each child's areas and Definitions and the Managers below them. Prompts carry the task, inputs and answer format; the process belongs to the Orchestrator ([DEC-051](../../concepts/register.md#dec-051-agents-get-tasks-the-orchestrator-owns-the-process)).
+
+### Model context delivery
+
+This implements the [accepted context delivery](manager-apply-workflow.md#model-context-delivery-and-completeness) at four boundaries; the source tests check each against expectations read off the library model, with faulty variants.
+
+- **Selection** is unchanged: own Definitions, their direct outgoing links, direct local incoming links, the Definitions an explicit modeled `scope` selects, and the type contracts of everything selected, closed over the contracts' own types (Core's Kind and Property contracts included); a link of a selected foreign Definition is not followed further.
+- **Representation:** the Brief states every selected Definition in full: identity, kind, title, the complete body, `body links:` pairing each body link as written (through the source's own import aliases) with the identity it resolves to, every `spec` field with its exact value (decimals in plain notation, strings and enums quoted, objects and lists in full, references by identity), and for foreign context its owner and inclusion reasons. Root's `Project obligations` and a parent's lines about its children's Definitions are reference-only; Root's full entries are the Definitions of the required checks. The Run binding records the captured `head`, the digest of the owner `request` and per Manager the Brief's digest and which identities it states in full and which only by reference (`context`); everything else is available through `look_up`.
+- **Delivery:** a new work conversation and the first turn of every fresh reviewer conversation receive the standing context with the Brief; a continued conversation relies on its history; a helper's single turn receives its Manager's Brief. `turn.start` records how (`context`: `brief`, `history` or `rehydrated`) with the digest and size of the prompt handed to the adapter; the transcript holds the bytes the adapter wrote. `look_up definition` answers from the bound model, never the working tree, `look_up brief` returns the standing context with the current Pass assignment (a helper's: its own turn's prompt), and `lookup.definition` and `lookup.brief` record the digest and size of the answer as the Agents port receives it; the recorded digest does not cover the note an adapter appends to an answer after a compaction, which only the transcript shows. Nothing is cut to fit: a prompt a provider channel cannot carry fails the turn with `run.ErrContextLimit` naming the sizes, before any container starts with Claude and after the session started, before the turn, with Codex, and the run ends Incomplete without repeating the turn; the Orchestrator refuses any answer above 256 KiB to the Agent with its size and records the refusal. The Claude adapter raises the provider's own cap on a tool result (`MAX_MCP_OUTPUT_TOKENS`) to one token per byte of that bound; whether the pinned CLI applies the setting is not shown by source tests.
+- **Continuity:** a resumed Claude turn whose provider starts another conversation fails before any tool call is served (as the Codex adapter's already did). After such a lost conversation, a reported compaction (`compact_boundary`) or a failed turn that had carried the standing context, the next turn of that conversation receives the standing context and the current Pass assignment again (`rehydrated`); the turn record carries `compacted`, and the Agent's next tool answer after a compaction names it and points to `look_up brief`. The rest of a turn after an in-turn compaction works on the provider's summary until then. Whether the provider kept the Brief otherwise is not observable: the Codex adapter reports no compaction, and a continued conversation's retention stays an evidence gap. Complete delivery shows what an Agent received, not that it followed it.
+
+## Ownership, local registries and file accounting
+
+<a id="candidate-accounting-and-protected-inputs"></a>
+
+The Run's authority inputs, the model and its dependency locks, the ownership, the execution settings, the ignore policy and the invocation's authority, are immutable. Ownership is the `ownership` list of `.markitect/execution.yaml`: repository-relative areas, each an exact file, a directory ending in `/` or `./` for the whole repository, owned by Root or one local Package. The most specific area owns a path: an exact file above any directory, a deeper directory above a shallower one. Two areas on one path, a path declared as both file and directory, anything under `.markitect` or `.git` and letter-case collisions are refused. A file no area covers has no owner and fails File check as `layout.no_owner`. `look_up` gives every Manager the same owner for any path, including a new one.
+
+Each Manager writes only its own local registry, `.markitect/registry/registry.yaml` for Root and `.markitect/registry/<package>/registry.yaml` otherwise. Registries are owner-writable Markitect metadata, not authority inputs: an owner changes its registry in a write-enabled Pass, and acceptance binds the shard with its artifacts. An entry is an exact file or a directory ending in `/`; a directory entry covers only its registrant's eligible files below it, other owners' areas are excluded, and the most specific entry registers a file. An entry outside its registrant's area, a missing file, a directory that registers nothing, an unknown Definition, a duplicate entry path and an unexplained file block, each addressed to the Manager that must act.
+
+File check is strict at the start: every accounting finding fails the preparation, and Apply starts nothing. There is no tolerated start drift ([DEC-062](../../concepts/register.md#dec-062-start-stand-drift-is-the-owners-first-work) is superseded). `markitect check` applies the same accounting; without declared ownership it accepts registry-only accounting, which Apply refuses.
+
+Only the Orchestrator assembles the derived registry view (`run.RegistryView`): the content version of every included shard and the effective registration of every artifact. Every acceptance records the shard versions it binds, every Pass seal the full view; `look_up registry` exposes it read-only.
+
+## Write plans and enforcement
+
+Every turn of every Agent runs in its own container with the shared tree at `/work`. A turn may write only in a Pass with writes while its Manager works on its own basis or result. Its write plan mounts `/work` read-only (or writable for an owner of `./`) and overlays, parents before descendants and only where writability changes, its own directory and exact-file areas and its registry directory writable, and `.markitect`, protected inputs and every other owner's areas inside them, directories and exact files, read-only. An exact-file area that needs its own overlay must exist in the start stand: a missing file cannot be mounted, so Apply refuses that ownership shape with `ErrUnsupportedOwnership` instead of trusting prompts. Apply also refuses to start when the container engine does not mount volume subpaths (Docker server 26 or newer). `TestRealEngineEnforcesFileAndDirectoryOverlays` shows on a real engine (Docker 29.4.1) that writes, removals and renames through read-only file and directory overlays fail, that a writable directory still accepts new files, and that a writable file overlay changes its file but cannot create a neighbour.
+
+## Per-Turn containers
+
+<a id="per-turn-containers"></a>
+
+Every Agent Turn starts a fresh container (`markitect-<turn ID>`, owner decision of 21 October 2026, [per-Turn baseline](manager-apply-workflow.md#per-turn-container-baseline)); no container outlives its Turn. Container lifetime is separate from what continues:
+
+- **Manager identity and conversation.** A Manager's work Turns keep one provider home volume (`<RunID>-<slug>-m`) and continue one provider conversation across the work Passes (`Turn.Resume`); a reviewer has a fresh home and conversation in every review Pass (`<RunID>-<pass>-<slug>-r`), the Model assessment included, and never inherits an author's; a helper's single Turn has its own home. A resume that the provider answers with another conversation fails before any tool call, and the Orchestrator then delivers the standing context again ([context delivery](#model-context-delivery)).
+- **Rights.** Each Turn's container mounts exactly that Turn's capabilities: a read-only base with its owned overlays in a write Pass, read-only for blocked communication and reviews, helpers' subsets excluded from their parent.
+- **Cessation.** Before `Run` returns, the provider is stopped and the container ends; `Stopped` is true only when that end was observed, and a forced removal does not count. An escaped background writer ends with its container. Without an observed end, the Turn's submission is not accepted and the Run does not capture or publish.
+- **Capture.** The capture of a work Pass's stand and the candidate of a review Pass require that no container mounts the volume; a mount that remains makes the capture uncertain, and the Run ends Incomplete.
+- **Checks and probes** keep their own containers on disposable copies.
+
+The Run's scheduling depends only on the `run.Agents` port, never on Docker commands or host paths; a later backend, such as one Kubernetes Pod per Turn, must preserve the observed end of every process (a deletion request is not one) and a shared tree whose capture admits no live writer.
+
+The B1 reuse of held per-Manager containers (#572) was removed again by this decision; its evidence stays with its builds ([validation](../../validation/session-a-b0-b1-runs-20261021.md)).
+
+## Workflow composition
+
+`apply.Apply` checks the capture, binds the strategy, organization, write plans, checks and budget, opens the run and composes the Passes. It first runs the [Model assessment](#model-assessment), the same in every strategy; only an accepted assessment releases the work. The `strategy` of `.markitect/execution.yaml` is captured with the other authority inputs and fixed for the Run; it selects only the work Passes:
+
+1. Work. `direct` (the provisional baseline): Implement (owned writes), in which every Manager first settles its own approach, supplies only contracts and foundations its children actually need, and then realizes and integrates; no separate Pass plans or prepares for the whole tree. `staged` (comparison): Plan (read-only, plan payload), Prepare and Implement (owned writes), each a Pass of the one process.
+2. Verify on the captured stand of the last work Pass, with fresh reviewers; the same mandate, guidance and gates in both strategies.
+3. After a work Pass, open genuine findings of work Passes that name its purpose or an earlier one repeat it or restart there; a later purpose they name comes in order, so no forward Pass is skipped and no Verify starts while a work finding is open. A Verify that needs correction restarts the work at the earliest purpose its open genuine findings name: `implement` is the only correction purpose in `direct`; `plan`, `prepare` or `implement` (`implement` by default) in `staged`. A complete fresh Verify follows.
+4. When only fresh disputes keep a Verify from being clean, a new complete Verify with a new Pass identity assesses the same unchanged candidate instead of an artificial correction.
+5. A clean Verify ends the run Verified; Apply publishes that candidate. The Pass budget bounds every repetition.
+
+Extract composes its own work purposes with Verify the same way, with a Model assessment of its mandate before the structure and of its verified candidate before publication.
+
+### Strategy boundary and run binding
+
+`apply.Strategy` holds the only strategy-specific code: the work Pass declarations with their mandates, the correction purposes and Root's acceptance duty. The rest is shared and not strategy policy. `applyConfig` is the one binding path of `Apply`, `VerifyCaptured`, `AssessCaptured` and their source tests; the product command and the Verify evaluation harness build the same request (`bootstrap.applyRequest`). Before any Agent work it refuses a strategy this build does not implement and a request without the implementation identity of the product build, and binds a `RunBinding`: the entry (`apply`; `verify-captured`, which runs no work Pass; or `model-assessment`, which runs only the Model assessment and no check), the strategy, its work sequence and correction purposes, the digest of its Pass declarations and Root duty (`composition`, which tells builds apart that the build identity alone cannot, such as a modified tree), the build, the content identities of the execution settings and the product defaults, the budget with the effective deadline, every Manager's resolved Execute, Verify and helper profiles with their prepared identities and instruction contents, and every required check as it runs. `run.start` records it and the report repeats it as `binding`. Root's duty differs only in what it accepts once a public choice is settled: a plan in `staged`, any submission in `direct`. The strict entry checks, the Pass-boundary gates, the proof of writer cessation, the strategy's identical Verify with candidate checks and fresh reviewers, finding closure and the guarded publication with read-back are the same in both strategies. Provider and model choice (Runtime profiles) and the container backend are separate configuration. No invocation override exists; a later one must resolve through this preparation and binding.
+
+**Execution rights stay with the Managers.** One logical Manager per required Package executes that Package's work in every strategy, and its execution rights are exactly its ownership: `Candidates.WritePlan` of the Package becomes `run.Manager.Write`, enforced as container overlays per turn. Ownership and accounting (`OwnerOf`, the File check, the local registry shards) answer who is responsible for a path; the Manager with its write plan answers who may write in a turn. The earlier future direction of a single-Agent product strategy, which would have separated the two, is withdrawn by the [owner's amendment](manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs); no strategy name is reserved, and the ordinary-Agent evaluation arm stays an external comparator.
+
+## The Pass process
+
+<a id="reconcile-cycle"></a>
+
+Every Pass has a new identity `p<N>` and runs one common process for every Manager.
+All required Managers receive their assignments; actual prerequisites alone block
+productive work. A Manager may submit its complete result without a prior basis once
+its children are accepted. Parents provide needed contracts, decide child results and
+integrate. Optional basis submissions are checked after observed Turn cessation and
+accepted by the parent, but release only their actual consumers. Revisions invalidate
+those consumers; unrelated children keep their work. Returned proposals stay with their
+owner. Whole-stand Model/File checks, exact accepted composition and explicit completion
+remain required (details in [run](../../../internal/run/README.md#the-base-process)).
+
+The Host captures the work and native final assessment once at observed Turn end. A missing or ambiguous productive assessment gets one targeted correction and then ends Incomplete; no report-tool call or repeated missing-report reminder is required. Submission does not establish accepted task completion or Verified publication; a continuation assessment that repeats an earlier one of the Pass counts as empty and is not continued automatically. So do repeated failed turns of a required Manager, a turn without an observed container stop, an unresolvable wait and the deadline. A Manager may wait for an own question, a child or the accepted basis or result of any other Manager; only the named acceptance or other actual work wakes it, so an unchanged wait starts no turn. In the Implement of `direct` (`BindWaits`), the accepted submission a wait named, or one already accepted when the wait is reported, becomes a bound dependency of the waiter's basis or result (`dependency.bound`, with proposal and stand), including an explicitly needed ancestor contract and only when it closes no cycle among all start, basis and result events (`dependency.unbound` otherwise). Its revision or reopening resets a waiter whose basis built on it, like a declared consumer, and that basis waits for the newly accepted version (rebound); a waiter whose result alone built on it keeps its basis and children and only integrates again: its submitted result is invalidated, an accepted one reopened with its consumers, and a submission of a turn running meanwhile withdrawn while that turn's helper delegations stand. Verify, `staged` and Extract bind nothing. A wait that closes a cycle with the accepted plans' dependencies, the bindings and the integration order is refused with the cycle named; a Pass that still cannot advance ends Incomplete as stalled. Every turn records its mode (`work`, `communication`, `coordination`, `review`, `helper`). The Pass closes when every Manager is Done and nothing runs: the quiescent shared tree is harvested and must equal the accepted stand, and the Model check and the File check run on it. Any failure ends the run Failed without a repair Pass. All participants then receive the sealed verdict in their next Pass.
+
+## Model assessment
+
+<a id="model-assessment"></a>
+
+After the strict Model check and File check of the capture and before any work Pass, Apply runs the Pass `assess`: a review Pass (`Assesses`) in which every required Manager is a fresh read-only reviewer of its own obligations on the captured stand, with parent challenge and integration and a sealed common result. It runs no gate or required check on its candidate and offers no probe, because the entry checks already passed and a check judges artifacts; the reviewers are framed as assessing the bound model before anything is realized. The mandate and guidance are Session C's method, verbatim; a genuine finding is a material model problem, and its `correction` carries its class: `model_error`, `model_gap` or `unclassified` (the default, so an omitted class stays visible).
+
+- **Accepted:** a sealed `satisfied` releases the strategy's work Passes. It verifies no candidate of its own; in Extract, a clean assessment of the candidate a clean Verify just verified keeps it verified.
+- **Confirmed model problem:** a sealed `needs_correction` with a confirmed finding, one that is open, genuine, raised by the team and not disputed in that Pass, ends the Run Failed at once with `the model assessment confirmed a material model problem: ` followed by each finding with its owner and class. No Pass of the Run corrects the model, nothing is published, and the model is corrected outside the Run for a new one.
+- **Disputed only:** when only findings disputed in the Pass keep it from being clean, a new complete assessment of the unchanged stand decides them, within the Pass budget, as Verify does. An assessment that reaches no clean Pass within the limits ends the Run Incomplete (`the model assessment did not reach a clean Pass`), never as a model conclusion; a technical failure keeps its own classification.
+- **Later problems:** a material problem Root confirms during the work, after an accepted assessment, ends the Run Failed through Root's final assessment `problem` field as before.
+
+The assessment runs once per Run on the bound model; it is not repeated before a correction Pass on unchanged authority. The strategy's composition digest covers its declaration, and the Run binding's work sequence begins with `assess`. `apply.AssessCaptured` runs only the assessment of a captured stand, without checks or publication, as the evaluation entry of the method's trial; no Command uses it.
+
+## Verify, findings and disputes
+
+A Verify materializes the sealed stand of the last work Pass as an immutable read-only candidate, runs the Model check, the File check and every required check on it, and runs fresh reviewers in the same base process. Failed checks are genuine findings of the Orchestrator owned by the check's owner; they hold for their candidate. Reviewer findings name the owner, the obligation, the observed evidence, whether they are genuine or notes and the earliest correction they need. A submission's findings, closures and disputes take effect only when its parent (for Root, the Orchestrator) accepts it; a submission returned, failed or withdrawn before its acceptance changes no finding, and an accepted effect stays even when that submission is invalidated later; a recorded finding cannot be withdrawn. A finding closes only through a later accepted review submission of its raising responsibility, with reason and evidence: `resolved` on a changed candidate, or `disproved` on the unchanged one. The finding keeps the chain of its bindings: the candidate it was raised on (`candidate`), each dispute's Pass and candidate, and the Pass and candidate of the fresh Verify that closed it (`closedPass`, `closedCandidate`). Any other reviewer whose responsibility holds the raiser or the finding's owner may dispute a review finding once per candidate with reason and evidence; the dispute keeps it open and blocking until a fresh reviewer of its responsibility disposes of it. A failed required check cannot be disputed. A sealed Verify is never rewritten. A reviewer can be Done with findings; the Run is then not Verified.
+
+<a id="observation-kinds"></a>
+
+Every finding carries its kind ([conformance mandate](manager-apply-workflow.md#conformance-mandate-and-observation-kinds)); the code enforces each kind's declared effect, never the truth of the classification. A `deviation` blocks, states `expected`, the outcome its obligation requires, and names the correction purpose the work restarts at. A `suspected` deviation, raised only in a review, blocks too and states `expected`, but names no correction and is never handed to a work Pass: when only suspicions and fresh disputes keep a Verify from being clean, a new complete Verify of the unchanged candidate investigates instead of a work Pass, bounded by the Pass budget, so an unresolved suspicion at the limit ends the Run Incomplete. Its raiser closes it as `disproved` with evidence, or as `confirmed` together with the deviation it raises for the same owner and obligation, which then names the correction. A `suggestion` never blocks, names no correction and grants no write; a Run with only suggestions open verifies. A `model` problem exists only in the [Model assessment](#model-assessment). Without a kind, a genuine finding is a deviation (a model problem in the assessment) and a note a suggestion. Once a review of a candidate disproved a finding, a blocking review finding of the same owner and obligation on that unchanged candidate is refused unless it cites a failed probe receipt of its own Pass: a new reviewer is no new evidence. The guard compares the obligation text regardless of case and spacing, so it catches repeats; that a rewording is no new evidence either is the reviewers' guidance, not a check. A failed required check is a deviation of the Orchestrator. The work mandates bound changes to fulfillment: a conforming stand is preserved against mere permission, necessary refactoring stays allowed, and a result names per group of changes the fulfillment it serves. Extract's artifact findings keep their kind, remain advisory and name no correction.
+
+<a id="probe-receipts"></a>
+
+Reviewers derive claims and counterexamples from the bound model and run behavioral probes with `check`. A probe runs in its own container with the execution profile of a required check (image, executable, fixed arguments, environment, limits), without network, on a disposable copy of the candidate with a new probe file added in the check's directory, or with `existing: true` selecting an unchanged captured test and its actual invocation; it never replaces a project file. Its claim and expected outcome are recorded before it runs. The Orchestrator records the receipt: the candidate, probe bytes and digest, invocation, observed start, exit, timeout and certainty, output and outcome (`passed`, `failed` for the probe's own assertions, or `error` for anything not established, including an unexecutable or killed probe). A concise result assesses the Host-bound scope with shared support and concrete gaps. Support is a passing receipt on its candidate or an inspected source location with reasoning; one execution can support multiple conclusions, without a per-obligation mapping artifact. Relevant child receipts may be reused after assessing their assertions. Fabricated, stale, adverse or out-of-responsibility receipts support nothing. Parents see each child's evidence and every probe it ran. An adverse receipt on the candidate keeps the Verify from being clean until it is disposed of: a genuine finding citing it, a reasoned expectation error, when the probe itself was wrong (a failed assertion, or an error within the probe's own execution, such as an exceeded time limit, with a passing receipt of the same obligation on the candidate), from or accepted by an independent assessor (the parent, the reviewer of the obligation's owner for an ancestor's probe, or for Root's own otherwise a fresh Root reviewer in a new Verify of the unchanged candidate), or a passing exact rerun (`probe.rerun`) for a Runtime error. A demonstrated script setup failure before candidate execution may use the same expectation-error disposition with `setup` evidence and a passing corrected script under the unchanged candidate, claim, expectation, boundary, check and invocation. This remains the reviewer's evidence-based assessment, not Host proof of nonexecution. The retained failed exit and corrected execution allow ordinary review and parent integration in the same Verify, including at Root. Hangs, uncertain stops, real findings and mandatory-check failures receive no such exception. Such a disposition falls when its submission is reopened or invalidated. A receipt records an observation; it neither proves the model nor the completeness of the chosen cases.
+
+## Questions and escalation
+
+`send` reaches only the direct parent and children; answers travel back the edge their question came, and a forwarded question correlates with the question it serves (`about`), so a cross-branch exchange takes the ancestor route both ways. A child may answer routed questions while its actual productive prerequisite is blocked. A Run is closed: nobody outside the Manager tree answers during it, there is no owner channel, answer command or preloaded owner decision, and Root's `send` or `escalate` beyond the tree is refused with the route that applies, a genuine finding in the Model assessment and Root's problem stop in every other Pass. A result is refused while its Manager's own question is open; open questions lapse when their Pass closes. `escalate` sends a classified problem as a question to the parent. Answers clarify within the model; Root ends the run Failed with the final assessment `problem` field when it confirms that the model is erroneous, contradictory or leaves a public behavior materially open without delegating it.
+
+## Orchestrator tools
+
+<a id="host-tools"></a>
+
+| Tool | Purpose |
+| --- | --- |
+| `wait` | Declare an actual named prerequisite without polling. |
+| `decide` | Accept or return a checked child contribution, reopen a child result, or revise a bound contract. |
+| `send` | Question, answer or information along one direct edge. |
+| `escalate` | A classified problem and the decision needed, as a question to the parent. |
+| `look_up` | Its own standing context again (`brief`), Definitions of the bound model, owners, the derived registry view, states, accepted plans and bases, findings, checks, probe receipts, questions, and the reusable method guidance (planning, preparing, implementing, integrating, reviewing, escalating), which the standing context names and which grants no right. |
+| `check` | Advisory File check of the caller's live area composed with the accepted stand (write Passes), or one behavioral [probe](#probe-receipts) with an Orchestrator receipt when the project declares a check; not offered in the Model assessment. |
+| `delegate` | A bounded task for one of the Manager's helper roles. |
+
+The provider's own read, edit and shell tools stay available; the Claude adapter withholds `Write` and `Edit` from turns that can write nowhere.
+
+## Local teams
+
+The standard team is the Manager role (Execute profile), a Worker helper and the fresh Verify reviewer (Verify profile). The product default team binds one `worker` role with writes to the Manager's Execute profile and allows one active helper; `team` in `execution.yaml` replaces it with explicit roles (`role`, optional `profile`, `writes`, optional `instructions`) and `maxHelpers`. A delegation names an existing file or directory of the Manager's own writable area outside `.markitect`, disjoint from every other active helper's; the helper starts after the delegating turn ended, runs one turn in its own container with its own home, reads the whole stand, writes only its subset and reports to its Manager. While it works, its subset is read-only for the Manager. Read-only roles, such as an architect, advise only. Helpers add no owner, no registry writes and no tree channel, and their completion completes nothing.
+
+## Budget and stopping
+
+The budget bounds the whole run (`executionTime`, with the operator's earlier `deadline`), each turn (`turnTimeout`), all Agent turns of Managers, reviewers and helpers (`agentTurns`) and the number of Passes (`passes`). The deadline cancels running turns and checks. The invocation may additionally supply
+`workDeadline`, strictly earlier than its explicit `deadline` (and the effective product
+execution deadline). It is bound as `Budget.WorkDeadline`/`binding.budget.workDeadline`.
+An active non-Verify Pass is canceled there and ends Incomplete rather than consuming the
+reserved review window or sending unfinished work to Verify. Verify can use the remaining
+window. Setup leaves this optional cutoff unset; CCF's frozen invocation sets it explicitly.
+The CCF grant separately requires at least 12 minutes between the effective work and
+Verify cutoffs plus 3 minutes for observed stop/cleanup; those series-specific minima are
+checked in its frozen runner, not imposed as universal project policy. Every limit ends the run Incomplete with its evidence; nothing is published.
+
+## Ports and adapters
+
+| Port (owner) | Adapter | Notes |
+| --- | --- | --- |
+| `run.Agents` | `claudecode.Agents`, `codexappserver.Agents`, selected per profile by the bootstrap router | One fresh container per turn with `/work` and `/home/agent` volumes, user `1000:1000`; overlays of directories and files of the work volume; a Verify turn is read-only and may continue only its own reviewer conversation of the same review Pass. The container is stopped before `Run` returns and `Stopped` reports whether its end was observed. |
+| `run.Workspaces` | `gitrepo.Workspaces` on container volumes | Materialize with read-back, Harvest, Peek, Close. |
+| `run.Checks` | `checks.Runner` | One container per check on a disposable copy of the candidate. |
+| `run.Evidence` | bootstrap file evidence | Append-only events, transcripts, report. |
+| `apply.Publisher` | `gitrepo` publisher | Preflight against the captured source guard, Publish, read-back. |
+
+## Configuration
+
+`.markitect/execution.yaml` (`apiVersion: markitect.execution/v1`, `strategy: direct` or `staged`) is closed; every other strategy value, including the replaced `recursive-passes-v1`, is refused (migration: `staged` keeps the earlier composition, `direct` selects the baseline). Its fields: `budget {executionTime, turnTimeout, agentTurns, passes}`, `profiles {execute, verify}`, optional `instructions`, per-Package `packages` overrides, `ownership`, optional `team {maxHelpers, helpers}`, optional `scope` and `checks`. The [apply guide](../../../internal/apply/README.md#execution-settings) shows the shape and the embedded product defaults. The run configuration is the separate closed JSON file of the [project workflow](../../project-workflow.md#invocation-configuration).
+
+## Evidence and state
+
+<a id="evidence-and-state"></a>
+
+The state directory is held by one run at a time (`apply.lock`) and lies outside the repository.
+
+```text
+<state>/apply.lock
+<state>/current-run                          run identity of the run holding the lock
+<state>/runs/<runID>/events.jsonl            append-only, synced per event
+<state>/runs/<runID>/transcripts/<turn>.jsonl  provider stream, secrets redacted
+<state>/runs/<runID>/report.json             written once at the end
+```
+
+Events: `run.start`, `pass.start`, `manager.release`, `manager.unblocked`, `manager.state_changed`, `turn.start`, `turn.end`, `turn.submitted`, `assessment.unresolved`, `report.wait`, `lookup.definition`, `dependency.bound`, `dependency.unbound`, `proposal.submitted`, `proposal.checked`, `proposal.withdrawn`, `proposal.invalidated`, `basis.accepted`, `basis.returned`, `basis.invalidated`, `result.accepted`, `result.returned`, `result.reopened`, `finding.recorded`, `finding.closed`, `finding.disputed`, `question.asked`, `question.answered`, `question.lapsed`, `message`, `problem.raised`, `helper.delegated`, `helper.start`, `helper.end`, `check.requested`, `probe.requested`, `probe.receipt`, `probe.disposed`, `candidate`, `check`, `gate`, `pass.sealed`, `registry.view`, `manager.disabled`, `workspace.materialize`, `workspace.close`, `home.remove`, `outcome`. `run.start` carries the Apply's `binding` (strategy, effective settings, build) and the report repeats it. Events carry the Pass, Manager and turn they belong to; `turn.start` and `turn.end` carry the turn's mode; `turn.start` also its context delivery and prompt digest, `turn.end` a reported compaction. The report's run lists every probe receipt with its disposition. A failed record write ends the run Incomplete.
+
+The Apply command's stdout and retained `report.json` use one JSON projection: top-level `outcome` is derived from the command `status` (`passed` → `success`, `failed` → `failed`, otherwise `incomplete`). Earlier builds added that field only at CLI printing, so their files can lack it; historical evidence is left unchanged. Nested `run.status` and `run.reason` describe execution, while `publication.Outcome` describes guarded publication (`applied`, `no_change` and refusal/uncertainty outcomes). They are distinct: a Verified run without a confirmed publication is not Apply success, and technical Incomplete is no model rejection. The model-only assessment and Verify evaluation harnesses reuse this report projection under their own `operation`; their passing command status means their assessment/evaluation passed, without claiming publication. Extract retains its separate report with structure/model phases and model completion.
+
+Apply closes its event log and releases its lock before writing the final report, so those errors appear in both the file and stdout. A technical finalization error prevents command success; an already definite rejection remains failed, and the recorded run conclusion and publication receipt do not change. A failure to write the report itself is returned with its diagnostic; the file cannot attest to its own failed write. Preparation refusals before evidence creation still create no report file.
+
+## Publication and read-back
+
+Only a Verified outcome is published, as the exact verified candidate against the committed source captured at the start. The publisher refuses a source that changed since capture and a change set the target cannot represent, writes the changes and reads every path back. Multi-file publication is not atomic; a partial write stays visible and unsuccessful. Apply closes the shared work volume only after an applied or no-change receipt; otherwise it keeps the work as retained. The report's `outcome` is `success` only for an applied or no-change read-back after a clean Verify, `failed` for a definite rejection and `incomplete` otherwise. Apply never commits, merges or pushes.
+
+## Extract: first bounded implementation
+
+<a id="extract-first-bounded-implementation"></a>
+
+Extract (Artifacts → Model, [DEC-057](../../concepts/register.md#dec-057-three-fundamental-starting-situations)) keeps its own mandates, accounting and model-only publication and runs them on the same Pass process. Its start is a committed repository with artifacts, the imported vocabulary, a manifest and lock without local Definitions and `.markitect/execution.yaml` with budget, profiles, ownership areas for the artifacts and checks without `requiredBy`; Extract refuses a model that already has Definitions and a start without ownership areas. Unregistered artifacts and artifacts no area covers yet do not fail its preparation.
+
+**Phase one, structure:** Root alone first assesses the mandate and the fixed inputs (owner request, imported vocabulary, manifest, lock, execution document) in a Model assessment of its own text, then runs the work Pass `structure`, writing `.markitect` except the dependency models: it proposes Packages with one overview Definition each, the `ownership` areas that give each Package its artifacts (the Package owning the project as a whole also owns the project-level artifacts), and proposed checks from documented commands. Everything outside its writable inputs stays byte-identical; in `execution.yaml` only `ownership` and added `checks` may change. A fresh Verify assesses the proposal against the artifacts.
+
+**Phase two, model:** the verified proposal is prepared again, and its Manager tree runs the work Pass `model`: each Manager derives the Definitions of its Package from the artifacts and registers its artifacts in its own registry, writing only its model directory and registry minus its descendants'. Its Verify reports an artifact that deviates from a justified statement as a non-blocking finding with subject `artifact` and its Definition (`ArtifactFindingsAdvisory`), and blocks model defects. A conflict the artifacts do not settle is reported as a model problem, never asked. After a clean Verify the candidate receives the Model assessment of Apply; only an accepted assessment lets it publish.
+
+Nobody outside the tree answers in either phase. A gap or contradiction Root confirms in an assessment, or reports with abort during the work, ends the phase Failed with the unaccepted draft retained, for model authoring outside the run. Both phases share the deadline; the structure phase may use at most half of the agent turns (at least 12 in total). A Verified second phase publishes only `.markitect/model`, `.markitect/registry` and `.markitect/execution.yaml`; an artifact is never published or changed, and Extract never commits. The report lists model completion, the last Verify Pass with each Manager's verdict, the deviations per Definition, the proposed checks, both phases' Passes, turns and usage, and the publication. Restructuring between rounds, handing findings to Apply and running the project's checks in Extract are not implemented.
+
+## Trusted and enforced
+
+| Enforced by the code | Trusted |
+| --- | --- |
+| Strict Model check and File check before work, on every submission's area and at every Pass boundary; unchanged authority inputs. | The Managers' and reviewers' semantic judgment of obligations, fit and findings. |
+| Ownership by most specific area, with directory and exact-file overlays per Agent container; unsupported shapes refused. | That a parent's acceptance reflects a real review of its child's proposal. |
+| Actual-prerequisite release, explicit reports, parent acceptance, no completion by a turn ending, stale and duplicate reports refused. | That plans (`staged`) or waits (`direct`) name the dependencies the work actually uses; only declared ones are enforced, and a binding skipped for a cycle is named to the waiter but invalidates nothing. |
+| Tree-only routing with correlation; questions beyond the tree refused; lapsed questions recorded. | That answers stay within the model's rules. |
+| No work before an accepted Model assessment; a confirmed assessment finding ends the Run Failed without publication; the assessment runs no check or probe. | That the assessment finds the material gaps and invents none; an accepted assessment proves no completeness. |
+| Fresh read-only reviewers on one immutable candidate, findings retained until independent closure, required checks on that candidate. | That the chosen probes and claims are the relevant counterexamples; a receipt shows what ran, not that the cases are complete. |
+| Probe receipts made only by the Orchestrator, bound to their stand and bytes; shared evidence bound once to the assessed scope; adverse receipts retained and blocking until a valid disposition. | That a source-inspection reasoning or an expectation-error disproof is sound; the parent or a fresh reviewer judges it. |
+| Waits wake only on named events and, in `direct`, bind the accepted version; unsatisfiable waits and cyclic bindings are refused, stalled Passes and repeated progress end the run within limits. | That every used contract is declared; reading another Manager's basis without a wait binds nothing. |
+| Nothing publishes unless Verified, with evidence recorded. | |
+
+## Known limits
+
+- Provider evidence covers few small projects and runs per build; reliability, cost, turn budgets and the usefulness of helpers are not established. The example budgets are unvalidated starting values.
+- Probes need a declared check whose profile can run them; without one, only genuinely static claims can close by inspected source; a required public behavior stays open. A probe runs synchronously inside its tool call and only while its turn keeps time for the report; a parent can probe a child's checked proposal but not its unsubmitted work. Joint submission of a basis and a complete result is not implemented (deferred; see the hardening report).
+- An exact-file area owned apart from its directory's owner must exist in the start stand; its owner can change it but not delete or create it.
+- Dependencies are enforced only as declared: in `staged` by accepted plans, in `direct` by waits. Reading another Manager's accepted basis through `look_up` alone does not bind it. A binding that would close a cycle is skipped and named to the waiter; a later change of that submission invalidates nothing. A binding made in a turn that later fails stays, which can only cause an additional reset. A work-phase cross-Manager dependency has not been exercised in a provider run of either strategy.
+- No restore of an interrupted run; a new Apply starts again from the committed repository.
+- Every Pass involves every Manager; unaffected owners preserve explicitly rather than being skipped.
+
+## Turn-end submission, owner update 22 October 2026
+
+SOL3 P/R completed with 50/54 failed report calls; W's three child Turns ended normally
+with code/test changes and final-answer submission announcements, but zero MCP calls.
+The Host ignored those final answers and stopped after three missing-report reminders.
+Those observations challenge the assumption that a separate report-tool call is a
+reliable handoff. The owner makes actual Turn end the handoff instead.
+
+`TurnResult.Completed` records the native successful end separately from container
+`Stopped`, errors and final-answer text. Commentary or transport closure supplies no
+semantic assessment. Each Turn has one `turn.submitted` observation containing Host
+identities, captured work/changed paths, actual command observations and check/receipt
+bindings. Commands are observations, not candidate-bound conformance receipts. A short
+final assessment supplies status, findings and open points; there are no nine report
+kinds or mandatory evidence-mapping payloads. Unknown meaning stays unknown, with at
+most one specific productive correction. Helpers follow the same handoff.
+
+Real waits and parent decisions remain actions. Acceptance, Model assessment, actual
+prerequisites and invalidation, fresh immutable Verify, finding closure, finite limits,
+one fresh container per Turn and guarded publication keep their existing duties. The
+provider-free W control must reach that normal route with zero child MCP calls; only
+later authorized real P/R/W repetitions can establish reduced report friction in use.

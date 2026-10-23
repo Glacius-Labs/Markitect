@@ -1,0 +1,414 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "docs/validation/assets/cockpit-organization-20261021/organization-390.png"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/assets/cockpit-organization-20261021/organization-860.png"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/assets/cockpit-organization-20261021/organization-1440.png"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/assets/cockpit-organization-20261021/one-package-1440.png"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-verified-1440.png"
+    form: doc
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-incomplete-1440.png"
+    form: doc
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-failed-probe-1440.png"
+    form: doc
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-model-problem-chart-390.png"
+    form: doc
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Retains an actual embedded cockpit screenshot for the organization chart validation, with its source and evidence limits in the finishing record."
+  - path: "docs/validation/cockpit-organization-finish-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Records the cached hub thumbnail, focused delivery checks, actual viewport screenshots and read-only recorded-Run UI evidence, separately from synthetic cases and provider or owner acceptance."
+  - path: "internal/adapters/cockpit/organization_binding_test.go"
+    form: test
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Checks the Run boundary's recorded profiles, helpers, zero versus absent helper limit, checks and historical missing binding without consulting current project settings."
+  - path: "internal/adapters/cockpit/web/js/run-organization-facts.js"
+    form: code
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Projects recorded Manager/Turn facts into chart cards and explicit prefix-bound exchanges, reported usage and deterministic routes without inventing execution or provider facts."
+  - path: "internal/adapters/cockpit/web/js/run-organization.js"
+    form: code
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Reuses the organization chart for the inspector's recorded binding and clock, retains closed-Run owner context and historical exchanges, and supplies pause-bound motion plus keyboard exchange navigation."
+  - path: "internal/adapters/cockpit/run-organization.test.mjs"
+    form: test
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Locally checks synthetic recorded binding and usage separation, reviewer/helper states, observations, adverse probes, historical absence, prefix and owner boundaries, frozen progress and directional routes."
+  - path: "docs/validation/cockpit-run-organization-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization, product/cockpit/observed-run-inspection]
+    why: "Separates the recorded-Run chart's lightweight source preparation from unrun Go gates, deferred browser acceptance and actual provider evidence."
+  - path: "internal/adapters/cockpit/web/js/organization-facts.js"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Turns explicit project organization facts into leadership and Manager presentation nodes and exact Browse/Settings navigation, preserving declared and resolved values."
+  - path: "internal/adapters/cockpit/web/js/organization.js"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Shows the Organization tab from project observation with explicit Runtime resolution, responsibility details and navigation through the existing settings proposal flow."
+  - path: "internal/adapters/cockpit/organization-facts.test.mjs"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Locally checks synthetic one-Package and large organization presentation, source parents, profile absence, reviewer descriptions, helper limits and exact link encoding."
+  - path: "docs/validation/cockpit-organization-tab-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Records the Organization tab's lightweight preparation separately from deferred structural checks, browser demonstrations and Main integration."
+  - path: "internal/adapters/cockpit/web/js/org-layout.js"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Lays out explicit presentation trees deterministically with reviewer space, orthogonal connectors and collapse ancestry, without deriving product organization."
+  - path: "internal/adapters/cockpit/web/js/orgchart.js"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Renders reusable people cards, independent reviewer seats, pan and zoom, responsive tree and keyboard access using the existing cockpit language."
+  - path: "internal/adapters/cockpit/org-layout.test.mjs"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Locally verifies deterministic layout, reserved reviewer space, collapse ancestry and invalid-topology refusal without dependencies or a CI Node requirement."
+  - path: "docs/validation/cockpit-organization-chart-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Records the reusable chart's source and local layout checks separately from deferred browser acceptance."
+  - path: "internal/adapters/cockpit/organization.go"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Serves declared organization from the project observation and explicit asynchronous resolution through a bootstrap port, with progress and refusals."
+  - path: "internal/adapters/cockpit/organization_test.go"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Checks that resolution is explicit, shared while running, read-only and honest about unavailable Runtime and capture refusals."
+  - path: "internal/bootstrap/cockpit_organization.go"
+    form: code
+    realizes: [product/cockpit/observed-organization]
+    why: "Projects the product topology and ownership layout plus declared or captured settings into organization facts without duplicating hierarchy or specificity rules."
+  - path: "internal/bootstrap/cockpit_organization_test.go"
+    form: test
+    realizes: [product/cockpit/observed-organization]
+    why: "Compares resolved profiles and helpers with the actual run.start binding using ports that stop before workspace, Agent or check execution, and checks declaration provenance and ownership exclusions."
+  - path: "docs/validation/cockpit-organization-read-model-20261021.md"
+    form: doc
+    realizes: [product/cockpit/observed-organization]
+    why: "Records the organization read model source checks and their provider-free evidence boundary."
+  - path: "internal/adapters/cockpit/evidence.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads a state directory's run evidence incrementally as consistent prefixes of complete lines, keeps unreadable lines in place and detects replaced files and partial tails without writing anything."
+  - path: "internal/adapters/cockpit/report.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Decodes the run report's command status, the Run's own status with its problems, turn count and probe counts, and the publication read-back, and maps an outcome the producer does not write from the command status."
+  - path: "internal/adapters/cockpit/view.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Defines the boundary-bound view of a run: the binding with each Manager's context, Passes with their turns and cost, Managers, waits, turns, spans, proposals with a Model assessment's coverage, findings by kind, questions, problems, probes, lookups, dependency bindings and limitations."
+  - path: "internal/adapters/cockpit/project.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Projects exactly the records up to a boundary into the view, derives the organization from Package paths, applies the observation kinds and the closed model-problem ending, lists only unknown kinds and lists what the record does not establish."
+  - path: "internal/adapters/cockpit/waits.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads the Orchestrator's recorded waits including the accepted submission of a Manager the waiter named, names what they depend on, follows their causes, marks waits the record shows fulfilled as outdated and states the account with the closed model-problem ending."
+  - path: "internal/adapters/cockpit/entries.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Describes every record for the timeline, including observation kinds, probes, lookups and dependency bindings, and marks exchanges with direction and Agent, submission, Orchestrator or owner channel without claiming delivery."
+  - path: "internal/adapters/cockpit/detail.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Selects the complete records that concern one reference, including a probe, up to the boundary."
+  - path: "internal/adapters/cockpit/transcript.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Presents a turn's recorded provider stream cut at the boundary's recorded time, bounded and with unreadable lines counted."
+  - path: "internal/adapters/cockpit/server.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Serves the embedded page, the read interface, the model view, the owner's write routes and the run control routes of one project on a loopback address, refuses requests addressed to other hosts, and offers the listening and the host guard the project host reuses."
+  - path: "internal/adapters/cockpit/README.md"
+    form: doc
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
+    why: "Documents the cockpit's read boundary, projection, limitations, browser interaction, the start and stop of the one run the cockpit runs, and the project list with guided setup and the two ways to open the cockpit."
+  - path: "internal/adapters/cockpit/fixture_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Builds synthetic run records in the run engine's event shapes for the cockpit tests; they describe no real run."
+  - path: "internal/adapters/cockpit/project_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies boundary isolation, correction with fresh Verify on a changed candidate, parallel work, routed questions, lapses, outdated waits, no-change and interrupted runs."
+  - path: "internal/adapters/cockpit/concepts_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies the binding and context coverage, probes with receipts and dispositions, observation kinds and their effect, a re-Verify of an unchanged candidate, the Model assessment verdict and the closed model-problem ending, the named wait form and the report without an outcome."
+  - path: "internal/adapters/cockpit/evidence_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies partial tails, appended and replaced event files, late reports, mapped earlier outcomes and run listing."
+  - path: "internal/adapters/cockpit/server_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies bounded views, entries and transcripts, refused foreign hosts and non-GET methods, and loopback-only listening."
+  - path: "internal/adapters/cockpit/web/index.html"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Is the cockpit page shell that loads only same-origin styles and modules."
+  - path: "internal/adapters/cockpit/web/cockpit.css"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Defines the cockpit's presentation as modern cards in the Glacius Labs colors: the hub with its area tiles, the top bar with the project name and the notification bell icon, the common page header with its collapsed explanation, the areas' accents, split views, the session's single column, model browser, the run control card, the project cards and setup form, state lamps, exchange channels, responsive layout and reduced motion."
+  - path: "internal/adapters/cockpit/web/js/main.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Routes between the hub, the areas and the project list, keeps the run, its boundary and selection, the Definition, the question and the proposal in the address, leads every place to the project list while no project is open, and names where Escape leads."
+  - path: "internal/adapters/cockpit/web/js/api.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Calls the cockpit's read interface and its write routes, including the run control and the project list with its setup, each with the cockpit's request header."
+  - path: "internal/adapters/cockpit/web/js/dom.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Builds DOM and SVG nodes with text nodes only, so recorded Agent text is never interpreted as markup, and draws the icons, the common page header, the collapsed explanation and the empty state."
+  - path: "internal/adapters/cockpit/web/js/runs.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Renders the run history with outcomes, strategy, publication, organization, source and reported usage, and places the run control card above the runs that run now."
+  - path: "internal/adapters/cockpit/web/js/runfacts.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Words the outcome pill, publication, strategy, build and the turns and cost of a Pass for the inspector and the run list, so both say a closed Run the same way."
+  - path: "internal/adapters/cockpit/web/js/playback.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Moves a presentation boundary through the record with play, pause and speed; it never reaches the run."
+  - path: "internal/adapters/cockpit/web/js/inspector.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Composes the run inspector: the condensed header with strategy, outcome and live chip, the Pass rail with turns and cost, boundary views, account, lists, transport, keyboard control, selection that pauses replay, the transcript dialog and the stop of the run the cockpit started."
+  - path: "internal/adapters/cockpit/web/js/timeline.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Draws one time axis with Pass bands whose labels never overlap, state spans, turns and exchange, finding, probe and check marks up to the boundary."
+  - path: "internal/adapters/cockpit/web/js/detail.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Renders the selected Manager with its context coverage, wait cause, proposal, finding by kind, probe, question, turn, Pass (the Model assessment's verdict, probes, observations), check, problem, message, lookup or run outcome as recorded."
+  - path: "internal/adapters/cli/cockpit.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
+    why: "Parses the cockpit command's state directories, run configuration, Runtime profile, repository with its model and dependency models, listen address, the product build identity a started run binds and --no-open, opens the per-user project list when none of the project flags is given, reports where the cockpit serves and opens that address in a window through the installed opener, reporting a failure on stderr without stopping the cockpit."
+  - path: "internal/bootstrap/cockpit.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/accepted-proposals]
+    why: "Composes a project's cockpit over the selected state directories with the state lock probe, structural preparation of the repository, the proposal service fenced by every observed state lock and the start and stop of an Apply through the execution function of markitect apply, and serves the project the flags name or the per-user project list through the project host."
+  - path: "internal/adapters/cli/cockpit_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection, product/cockpit/desktop-app]
+    why: "Verifies the cockpit command's selection and build identity, its refusals before serving, the rule that no project flag opens the project list and any project flag opens that project directly, that failures and an unconfigured cockpit never report success, and that the window opens by default, not with --no-open, and that a failed opening is reported without failing the command."
+  - path: "internal/adapters/cockpit/contract_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads the run engine's, Apply's and the report producer's source and fails when a data key or envelope field the projection decodes is no longer recorded, when a recorded event kind is neither projected nor on the listed-only allowlist, or when the report fields the cockpit reads are not the producer's."
+  - path: "internal/adapters/cockpit/live.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Streams appended records and the run's current health as server-sent events, resumes after the last record received and ends on a replaced events file."
+  - path: "internal/adapters/cockpit/live_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies appended records arrive once, a reconnect resumes after Last-Event-ID, a replaced file ends the stream, run health is classified from report, lock and current-run, and the lock probe is rate-limited."
+  - path: "internal/adapters/cockpit/web/js/live.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Holds the live link: appended records, health, reconnection and staleness, without any effect on the run."
+  - path: "internal/adapters/cockpit/overview.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Observes the project in the background and offers the cockpit's own-request guard for writes; it lists and answers no question of a run."
+  - path: "internal/adapters/cockpit/overview_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies that no route lists or answers a question of a run, the cockpit's own-request guard for writes and the background project observation."
+  - path: "internal/adapters/cockpit/proposals.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Serves the execution settings, makes settings proposals and accepts or discards a proposal, writing only through the cockpit's own JSON request."
+  - path: "internal/adapters/cockpit/proposals_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that proposals need a repository, that writes need the cockpit's own JSON request, and that a fenced or partly applied acceptance is never reported as accepted."
+  - path: "internal/adapters/cockpit/web/js/settings.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Offers the execution settings form whose result is a proposal: budget, role profiles, per-Package profile overrides and team."
+  - path: "internal/adapters/cockpit/web/js/proposal.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Shows a proposal in any pane: its structural check, line difference, the Agent's summary and publication receipt, and offers the two-step acceptance only for a passed check."
+  - path: "internal/authoring/README.md"
+    form: doc
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Documents the one proposal path from capture through check, review and the owner's decision, and the execution settings the form edits."
+  - path: "internal/authoring/service.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Makes proposals from the committed capture, keeps them for the cockpit and publishes an accepted one under the state fence through Apply's guarded publisher."
+  - path: "internal/authoring/settings.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Reads the committed execution settings and changes only their budget, role profiles, per-Package profile overrides and team in the YAML node tree."
+  - path: "internal/authoring/diff.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Computes each changed file's line difference with cut context for review."
+  - path: "internal/authoring/settings_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that a settings edit changes only the edited fields and keeps comments, order and every other field."
+  - path: "internal/authoring/diff_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies line differences, cut context and added, removed and unchanged files."
+  - path: "internal/bootstrap/cockpit_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies on a repository that an accepted settings proposal is written under the state lock with read-back and is not committed, and that neither a proposal failing its check nor one whose source changed since is written."
+  - path: "internal/authoring/service_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that only an applied or no-change publication accepts a proposal, that partial, unknown and stale ones fail with their receipt, that a fenced one stays open and that an unchecked one is never published."
+  - path: "internal/authoring/session.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Runs model sessions: an Agent of Root's Execute profile works on a workspace of the committed source with only the model and registry writable, answers its check and submit tools, continues its conversation across the owner's prompts within the turn timeout and Agent-turn limit, and records its evidence."
+  - path: "internal/bootstrap/cockpit_session_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies on a repository that a model session's turn has only the model and registry writable, that its check and submit answer from the workspace and propose only model changes, that prompts resume the conversation within the limit and that closing stops a working turn and releases the workspace."
+  - path: "internal/adapters/cockpit/web/js/session.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Offers the model session as a split view, or one inviting column with a stepper before the first session: a deliberate start with the provider-usage note, the owner's prompts and the Agent's answers as its own text, tool uses, limits and reported usage on the left, the session's latest proposal with its decision on the right, and closing; a project without a runtime is pointed to its guided setup."
+  - path: "internal/authoring/session_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that a session states its turn timeout in the execution settings' notation."
+  - path: "internal/adapters/cockpit/modelview.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Defines the read-only model view of the project observation and serves it: model scopes, Packages, Definitions with body links and fields, and the registry."
+  - path: "internal/adapters/cockpit/modelview_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies that the model view is served from the project observation, refused without a repository and reported as pending while the observation runs."
+  - path: "internal/bootstrap/cockpit_model.go"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Turns the structural preparation's checked model and registry records into the cockpit's model view."
+  - path: "internal/adapters/cockpit/web/js/store.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Reads the open project, the runs, proposals, sessions, the run this cockpit started and the project list together while the page is visible, or hidden once notifications are allowed, reads only the list while no project is open, and shares them with the top bar, the hub and the pages."
+  - path: "internal/adapters/cockpit/web/js/shell.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Frames the cockpit as a hub and areas: the top bar with the open project's name as a link to the project list, the way back, the area, its tabs and the open item, what waits for the owner, running runs and the check, the notification bell, the window title through the notification module, and the keys that enter and leave the areas."
+  - path: "internal/adapters/cockpit/web/js/notify.js"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Compares each new observation with the previous one and notifies, with the owner's permission, when a run ended, the model session answered or halted or a proposal waits for a decision, per part of the observation and only when the window is not in the owner's sight; owns the bell, an icon with a status dot that asks for permission, and the count in the window title; the first observation only sets the baseline."
+  - path: "internal/adapters/cockpit/window.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Chooses, as a pure function of platform, environment and installed programs, the ways to open the cockpit's address in an app window of Edge or Chrome and in the default browser, and starts the first that works detached without waiting for it."
+  - path: "internal/adapters/cockpit/window_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies the choice and order of the opening commands for Windows, macOS, Linux, WSL and the default-browser fallback."
+  - path: "internal/adapters/cockpit/web/js/hub.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Renders the hub: the project's observed state, the one next step that needs the owner, and the tiles of the areas with their live state or, without figures, what the area holds."
+  - path: "internal/adapters/cockpit/web/js/modelview.js"
+    form: code
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Browses the checked model: Packages, their Definitions, a Definition's body with links to their targets, its fields, the registered files that realize it and the Definitions that link to it."
+  - path: "internal/adapters/cockpit/web/js/decisions.js"
+    form: code
+    realizes: [product/cockpit/accepted-proposals, product/cockpit/observed-run-inspection]
+    why: "Lists this cockpit's proposals beside the chosen one with its check, difference and the owner's decision."
+  - path: "internal/bootstrap/cockpit_model_test.go"
+    form: test
+    realizes: [product/cockpit/observed-run-inspection]
+    why: "Verifies that the model view links only the body text the model check located and keeps a body whose links are not located as text."
+  - path: "internal/adapters/cockpit/runcontrol.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Holds the one run the cockpit starts in its own process: refuses a start while a run it started is active, something holds the state directory, the cockpit ends or the confirmation's head is stale, names a run only once it is attributable, shares concurrent fact reads, cancels the run's context on stop, keeps the result until Execute returned, waits for it when the cockpit ends, and serves the run control routes with the cockpit's own request header."
+  - path: "internal/adapters/cockpit/runcontrol_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies with an injected execution function that a start runs, a stop cancels its context and the result is kept, that a held state directory, an active run, a stale head and a closed controller refuse a start, that a stop in preparation is a stop, that a foreign run is not taken for the cockpit's, that a stopping cockpit cancels and waits, and that the routes admit only POST with the cockpit's own header, origin and host."
+  - path: "internal/adapters/cockpit/web/js/runcontrol.js"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Offers the two-step start with the budget, deadline and Agent profile and a provider usage warning, and the two-step stop of the run the cockpit started, on the Runs card and in the inspector's head, redrawing only on change so focus stays, and points a project without a runtime to its guided setup."
+  - path: "internal/bootstrap/cockpit_run.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Composes the cockpit's run control from the execution function of markitect apply with the cockpit's own selection, run configuration and Runtime profile, probes the state lock and the publication fence and reads HEAD before a start, and reads the confirmation facts, including every distinct Execute profile, with the product's settings and profile decoders."
+  - path: "internal/bootstrap/cockpit_run_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies on a repository with a prepared Runtime that the confirmation facts come from the committed settings and Runtime profile, that a start passes Apply's inputs and a stop cancels it, that a held state directory, a publication or a later commit refuses a start, and that a stopping cockpit ends its run."
+  - path: "internal/adapters/cockpit/projects.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Keeps the per-user project list in one JSON file: reads a missing file as an empty list, replaces the file atomically with mode 0600, refuses and never overwrites a file with an unknown format version, malformed content, repeated names or relative paths, and validates a project's repository, model, dependency models and runtime directory."
+  - path: "internal/adapters/cockpit/projects_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies the list's file format, creation of its directories, atomic write without leftovers, that every unusable file is reported and left unchanged by loads and updates, that a refused update changes nothing, and the validation of a project's entry."
+  - path: "internal/adapters/cockpit/host.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Owns the cockpit's one HTTP handler and one swappable project: serves the page and the project routes, delegates every other API route to the current project's server or answers 409 without one, refuses to switch or remove the open project while it is busy or being set up, admits and counts writes so that a switch drains them before it swaps and closes, builds the new project before it closes the old one, joins a switch and a setup under way when it ends, and calls the function behind markitect setup for a project and stores its runtime on success."
+  - path: "internal/adapters/cockpit/host_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies with fake projects that the host serves the page, answers 409 without a project, admits writes only with the cockpit's own header and origin, validates adds, delegates to the open project, remembers the last one, refuses switching and removing while a run, a model session, a publication or a setup is busy and allows it otherwise, drains admitted writes before a switch, waits for a switch when it ends, keeps the open project when another cannot be built, keeps a project opened by flags, passes the form to an injected setup, shows its refusals as they are and closes the project when it ends."
+  - path: "internal/adapters/cockpit/busy.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "States why a project must not be left: a run the cockpit started is active, a model session prepares, works or closes, or an accepted proposal is being written."
+  - path: "internal/adapters/cockpit/web/js/projects.js"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Offers the project list as cards in the hub tiles' language, with an initial and a set-up lamp, that open, set up or remove a project with a two-step removal, a card to add a project, the offer to keep a project opened by flags, and the guided setup form with a two-step confirmation that shows setup's refusals as they are, redrawing the cards only on change so focus and typed values stay."
+  - path: "internal/bootstrap/cockpit_projects.go"
+    form: code
+    realizes: [product/cockpit/desktop-app]
+    why: "Composes the project host: the list under the user configuration directory, the opener that builds a listed project's server as the flags would from its repository, model, dependency models and runtime directory, the entry of a project the flags opened, and the guided setup as a call of the function behind markitect setup without an owner request."
+  - path: "internal/bootstrap/cockpit_projects_test.go"
+    form: test
+    realizes: [product/cockpit/desktop-app]
+    why: "Verifies on a repository with a fake engine that the list sits under the user configuration directory, that a project without a runtime is observed and starts no run, that the guided setup writes the same bytes as markitect setup, reopens the project with runs and sessions, shows setup's own refusals and sends no owner request, and that a project opened by flags is described for keeping."

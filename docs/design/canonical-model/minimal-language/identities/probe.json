@@ -1,0 +1,105 @@
+{
+  "scope": "Bounded standalone package-binding, reference-resolution and stable-inline-ID probe using the earlier independent structural prototype; NOT product loader support or Connector execution.",
+  "sourceRevision": "e6b4fc67675d70e63b08bf09844d770d155874a8",
+  "inputSha256": {
+    "core-1.0.0.yaml": "e4365016227e5de36dbf42e8dc0adda890e9d342080f01ece4a54cf7ee1554f0",
+    "locks.yaml": "207d3b5f3527081bc7e761097aa913de6f81c45f19941d552c060cd6caf35f5c",
+    "project-a.yaml": "9e1534303f16ba7f811bc66cf5269ad012380b33c9c3a40f97f4875787c88719",
+    "project-b.yaml": "58139e0a220752f0b3b083f0a2a1fd9bae54875564e63ad386e438f9cbfdba06",
+    "project-c-stale.yaml": "4eced9b862f464850281e99eb4092d29abe88d03be72cba49922a6832f35866b",
+    "project-c.yaml": "219bf407574458527fd792fff9fbde3e0f9a6d32406f20b9eae9f6075eda1440",
+    "vocabulary-1.0.0.yaml": "961ee3ce1c2f10fda156543e3e7438cae73a3294f2acbb94a5889bdbe4df8c52",
+    "vocabulary-1.1.0.yaml": "55fc6436d1ff6c3d6c1506725f08e010ae82e0a051aae97f3cdc9f11f8e5b4bf",
+    "vocabulary-2.0.0.yaml": "bdb0dff6010d72f4016c783a68322811a0199159bcaf6d3e240c8d1930f78f7e"
+  },
+  "resolverPrototypeSha256": "7fe131377091bb06c1d70a5cc0e9324d393579240397ff6bba629107b8deaf84",
+  "structuralPrototypeSha256": "297d0c3c27f22efc96c1c154c2a44612ebcff77b723126edb5690af616a5097e",
+  "canonicalIdentityEncoding": "JSON pair [package,id]; alias strings are resolved in the declaring package before structural validation.",
+  "states": {
+    "a": {
+      "snapshotDigest": "7a3328545105e67f529601873fe38dbb5b14fa9c8e41bb1e0067ef4de59d45b4",
+      "graphDigest": "9ee6e1dc3f1bb7ba167576952ab09dad1aa5430c4ed044728fbf6098af7c79b8",
+      "bindings": [
+        {
+          "package": "example/connector-vocabulary",
+          "version": "1.0.0",
+          "sha256": "961ee3ce1c2f10fda156543e3e7438cae73a3294f2acbb94a5889bdbe4df8c52"
+        },
+        {
+          "package": "markitect/core",
+          "version": "1.0.0",
+          "sha256": "e4365016227e5de36dbf42e8dc0adda890e9d342080f01ece4a54cf7ee1554f0"
+        }
+      ],
+      "definitions": 51,
+      "edges": 113
+    },
+    "b": {
+      "snapshotDigest": "4bacecd1e4f237db49cd24c476378eae3e7ba0f88048547bb41471d0f728dd29",
+      "graphDigest": "b2f3d4437465ce979756b5e0dda905049edcd59cc1df8d4c3bdf669bcf4677d2",
+      "bindings": [
+        {
+          "package": "example/connector-vocabulary",
+          "version": "1.1.0",
+          "sha256": "55fc6436d1ff6c3d6c1506725f08e010ae82e0a051aae97f3cdc9f11f8e5b4bf"
+        },
+        {
+          "package": "markitect/core",
+          "version": "1.0.0",
+          "sha256": "e4365016227e5de36dbf42e8dc0adda890e9d342080f01ece4a54cf7ee1554f0"
+        }
+      ],
+      "definitions": 51,
+      "edges": 113
+    },
+    "c": {
+      "snapshotDigest": "6c8ebc3405e8dcc6d12af6c92fc810fc9b382d3ad1490a61da7f4699d3c84ad1",
+      "graphDigest": "69df31f38f35971be0028f21557dd66547610490e8beb32e341c4d51b0f74d68",
+      "bindings": [
+        {
+          "package": "example/connector-vocabulary",
+          "version": "2.0.0",
+          "sha256": "bdb0dff6010d72f4016c783a68322811a0199159bcaf6d3e240c8d1930f78f7e"
+        },
+        {
+          "package": "markitect/core",
+          "version": "1.0.0",
+          "sha256": "e4365016227e5de36dbf42e8dc0adda890e9d342080f01ece4a54cf7ee1554f0"
+        }
+      ],
+      "definitions": 51,
+      "edges": 113
+    }
+  },
+  "negativeCounterexamples": {
+    "version-2-with-old-project-field": "spec.unknown-property",
+    "new-import-with-old-lock": "import.lock-mismatch",
+    "unavailable-exact-version": "import.unavailable-version",
+    "two-versions-of-one-package": "import.version-conflict",
+    "same-version-different-content": "import.content-mismatch",
+    "unknown-import-alias": "import.unknown-alias",
+    "no-global-search-for-unqualified-kind": "kind.unresolved",
+    "library-cannot-use-roots-import-alias": "import.unknown-alias",
+    "kind-definition-is-not-container-instance": "reference.target-kind"
+  },
+  "sameLogicalIdentitiesAcrossThreeStates": true,
+  "version11ChangesBodyButNotFieldsOrReferenceEdges": true,
+  "newRuntimeTimingObligationVerified": false,
+  "samePropertyIdentityAfterFieldRename": [
+    "example/connector-vocabulary",
+    "Exchange/sender"
+  ],
+  "propertyFieldNames": {
+    "a": "sender",
+    "b": "sender",
+    "c": "requester"
+  },
+  "referenceToPropertyResolvesInAllStates": true,
+  "aliasRenamePreservesSnapshotDigest": true,
+  "forgottenStableIdCounterexample": "The migrated project remains structurally valid, but Exchange/sender is absent and Exchange/requester is new; old references would be unresolved.",
+  "limitations": [
+    "No generic body-link parser or free-text rewrite.",
+    "No package registry, network fetching, signatures or production input hardening.",
+    "No semantic completeness, backward compatibility or runtime conformance proof."
+  ]
+}

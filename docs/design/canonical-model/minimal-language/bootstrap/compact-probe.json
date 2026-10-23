@@ -1,0 +1,137 @@
+{
+  "scope": "Bounded standalone normalization and design-compiler probe; NOT current Markitect product support.",
+  "sourceRevision": "e6b4fc67675d70e63b08bf09844d770d155874a8",
+  "inputSha256": {
+    "core.yaml": "91abb4af47f1ed59bf602562f83072551103cfaee5091cf312d1451bb8f2de18",
+    "connector.yaml": "5041106806343ac7d6af1732b00b2a59e74a5a9a2dc00db48414924b74d41eab",
+    "connector-compact.yaml": "95752864a2910687daa5e01dddad09f658006695835b7082bd9f603f575c1fe3"
+  },
+  "normalizerPrototypeSha256": "3b66ca7e8e7f4f2e28f4f105f919743bb329da8cad1e1a1e10114af883bebdc0",
+  "bootstrapPrototypeSha256": "297d0c3c27f22efc96c1c154c2a44612ebcff77b723126edb5690af616a5097e",
+  "baseline": "passed",
+  "compactTopLevelDefinitions": 21,
+  "generatedPropertyDefinitions": 20,
+  "normalizedProjectDefinitions": 41,
+  "sameNormalizedDefinitions": "passed",
+  "sameModelDigest": "passed",
+  "sameEdges": "passed",
+  "modelDigest": "5b32ed494f03cd0143aceba55f7c4649e6985425931d55e0b09efcc56c16e0e0",
+  "definitionsWithFixedCore": 51,
+  "edges": 113,
+  "negativeCounterexamples": {
+    "inline-id-override": "inline.unknown-field",
+    "inline-kind-override": "inline.unknown-field",
+    "inline-name-override": "inline.unknown-field",
+    "missing-inline-body": "inline.required-body",
+    "invalid-inline-name": "inline.name",
+    "invalid-inline-shape": "inline.shape",
+    "derived-id-collision": "definition.duplicate",
+    "shared-property-alias": "inline.reference-name",
+    "duplicate-yaml-key": "author.duplicate-key"
+  },
+  "sharedPropertyWithoutCopy": "passed",
+  "nestedObjectNormalization": "passed",
+  "domainFieldNamedPropertiesUnchanged": "passed",
+  "derivedPropertyOrigins": [
+    {
+      "owner": "connector/v1/System",
+      "key": "containers",
+      "generatedId": "connector/v1/System/containers"
+    },
+    {
+      "owner": "connector/v1/System",
+      "key": "exchanges",
+      "generatedId": "connector/v1/System/exchanges"
+    },
+    {
+      "owner": "connector/v1/System",
+      "key": "provides",
+      "generatedId": "connector/v1/System/provides"
+    },
+    {
+      "owner": "connector/v1/Container",
+      "key": "location",
+      "generatedId": "connector/v1/Container/location"
+    },
+    {
+      "owner": "connector/v1/Container",
+      "key": "components",
+      "generatedId": "connector/v1/Container/components"
+    },
+    {
+      "owner": "connector/v1/Component",
+      "key": "provides",
+      "generatedId": "connector/v1/Component/provides"
+    },
+    {
+      "owner": "connector/v1/Component",
+      "key": "consumes",
+      "generatedId": "connector/v1/Component/consumes"
+    },
+    {
+      "owner": "connector/v1/Component",
+      "key": "emits",
+      "generatedId": "connector/v1/Component/emits"
+    },
+    {
+      "owner": "connector/v1/Component",
+      "key": "handles",
+      "generatedId": "connector/v1/Component/handles"
+    },
+    {
+      "owner": "connector/v1/Channel",
+      "key": "topicPattern",
+      "generatedId": "connector/v1/Channel/topicPattern"
+    },
+    {
+      "owner": "connector/v1/Channel",
+      "key": "delivery",
+      "generatedId": "connector/v1/Channel/delivery"
+    },
+    {
+      "owner": "connector/v1/Channel",
+      "key": "broker",
+      "generatedId": "connector/v1/Channel/broker"
+    },
+    {
+      "owner": "connector/v1/Command",
+      "key": "operationId",
+      "generatedId": "connector/v1/Command/operationId"
+    },
+    {
+      "owner": "connector/v1/Exchange",
+      "key": "sender",
+      "generatedId": "connector/v1/Exchange/sender"
+    },
+    {
+      "owner": "connector/v1/Exchange",
+      "key": "receiver",
+      "generatedId": "connector/v1/Exchange/receiver"
+    },
+    {
+      "owner": "connector/v1/Exchange",
+      "key": "command",
+      "generatedId": "connector/v1/Exchange/command"
+    },
+    {
+      "owner": "connector/v1/Exchange",
+      "key": "requestChannel",
+      "generatedId": "connector/v1/Exchange/requestChannel"
+    },
+    {
+      "owner": "connector/v1/Exchange",
+      "key": "replyChannel",
+      "generatedId": "connector/v1/Exchange/replyChannel"
+    },
+    {
+      "owner": "connector/v1/Exchange",
+      "key": "timeoutSeconds",
+      "generatedId": "connector/v1/Exchange/timeoutSeconds"
+    },
+    {
+      "owner": "connector/v1/Exchange",
+      "key": "maxAttempts",
+      "generatedId": "connector/v1/Exchange/maxAttempts"
+    }
+  ]
+}

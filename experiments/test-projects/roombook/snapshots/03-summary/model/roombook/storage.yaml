@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+id: storage
+kind: Software.Rule
+body: |-
+  [[system]] stores durable UTF-8 JSON at the explicit --db path. A missing data
+  file represents empty state. Malformed existing data fails clearly through
+  [[interface]] and must not be overwritten. Preserve the recorded identities,
+  values, statuses and history of [[reservation|reservations]]. Successful
+  mutations commit by atomic replacement, and a later process on the same data
+  observes committed results. Any invalid input or conflict leaves stored state
+  unchanged; reads do not mutate data. The internal JSON storage organization is
+  an implementation choice consistent with the public records. Concurrent
+  independent writers are outside this small contract; [[realization]] must state
+  that limitation rather than claim a distributed booking system.
+spec: {}

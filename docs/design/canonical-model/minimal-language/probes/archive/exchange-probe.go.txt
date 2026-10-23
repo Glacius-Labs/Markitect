@@ -1,0 +1,40 @@
+package main
+import (
+ "encoding/json"
+ "bytes"
+ "fmt"
+ "os"
+ core "github.com/Glacius-Labs/Markitect/src/internal/core"
+)
+type inputs struct { Schemas []core.Schema `json:"schemas"`; Definitions []core.Definition `json:"definitions"` }
+func main() {
+ raw, err := os.ReadFile(os.Args[1]); if err != nil { panic(err) }
+ load := func() inputs { var v inputs; dec := json.NewDecoder(bytes.NewReader(raw)); dec.UseNumber(); if err := dec.Decode(&v); err != nil { panic(err) }; return v }
+ good := load(); model, diagnostics := core.Compile(good.Schemas,good.Definitions,"design-probe")
+ if len(diagnostics)>0 { panic(fmt.Sprintf("baseline: %+v",diagnostics)) }
+ if len(model.Definitions)!=13 || len(model.Edges)!=17 { panic(fmt.Sprintf("unexpected model size: %d definitions, %d edges",len(model.Definitions),len(model.Edges))) }
+ report:=map[string]any{"kinds":len(model.Schemas[0].Kinds),"definitions":len(model.Definitions),"edges":len(model.Edges),"baseline":"passed"}
+ find:=func(v *inputs,name string)*core.Definition { for i:=range v.Definitions { if v.Definitions[i].Metadata.Name==name && v.Definitions[i].Kind=="Exchange" { return &v.Definitions[i] } }; panic("missing exchange") }
+ failures:=map[string]func(*inputs){
+  "missing-required-relation":func(v *inputs){ delete(find(v,"list-documents").Spec,"replyChannel") },
+  "wrong-target-kind":func(v *inputs){ find(v,"list-documents").Spec["sender"].(map[string]any)["kind"]="Component" },
+  "unknown-spec-field":func(v *inputs){ find(v,"list-documents").Spec["unexpected"]=true },
+  "unresolvable-target":func(v *inputs){ find(v,"list-documents").Spec["replyChannel"].(map[string]any)["name"]="absent" },
+  "unknown-definition-kind":func(v *inputs){ v.Definitions[0].Kind="UnknownKind" },
+  "duplicate-identity":func(v *inputs){ v.Definitions=append(v.Definitions,v.Definitions[0]) },
+ }
+ codes:=map[string][]string{}
+ for name,mutate:=range failures { v:=load(); mutate(&v); _,ds:=core.Compile(v.Schemas,v.Definitions,"design-probe"); if len(ds)==0 { panic(name+" was accepted") }; for _,d:=range ds { codes[name]=append(codes[name],d.Code) } }
+ report["rejected-counterexamples"]=codes
+ body:=load(); body.Definitions[0].Purpose+=" An additional intended obligation."; changed,ds:=core.Compile(body.Schemas,body.Definitions,"design-probe"); if len(ds)>0 || changed.Digest==model.Digest { panic("definition body lost") }
+ meaning:=load(); k:=meaning.Schemas[0].Kinds["Exchange"]; k.Purpose+=" An additional type obligation."; meaning.Schemas[0].Kinds["Exchange"]=k; changed,ds=core.Compile(meaning.Schemas,meaning.Definitions,"design-probe"); if len(ds)>0 || changed.Digest==model.Digest { panic("kind meaning lost") }
+ relation:=load(); k=relation.Schemas[0].Kinds["Exchange"]; p:=k.Properties["sender"]; p.Purpose+=" An additional relation obligation."; k.Properties["sender"]=p; relation.Schemas[0].Kinds["Exchange"]=k; changed,ds=core.Compile(relation.Schemas,relation.Definitions,"design-probe"); if len(ds)>0 || changed.Digest==model.Digest { panic("relation meaning lost") }
+ report["body-kind-relation-meaning-in-digest"]="passed"
+ bounds:=load(); find(&bounds,"list-documents").Spec["maxAttempts"]=0; _,ds=core.Compile(bounds.Schemas,bounds.Definitions,"design-probe"); if len(ds)>0 { panic("unexpected integer range validation") }
+ report["semantic-limit-counterexample"]="maxAttempts=0 passes structural integer validation; positivity is not proved"
+ swapped:=load(); find(&swapped,"list-documents").Spec["replyChannel"].(map[string]any)["name"]="requests"; _,ds=core.Compile(swapped.Schemas,swapped.Definitions,"design-probe"); if len(ds)>0 { panic("unexpected semantic channel validation") }
+ report["same-kind-semantic-counterexample"]="replyChannel=requests passes structural target validation; compatibility with the instance-bound reply contract requires semantic review"
+ for _,d:=range model.Definitions { if d.Kind=="Exchange" && d.Metadata.Name=="list-documents" { report["exchangeIdentity"]=d.Identity(); report["resolvedExchangeValues"]=d.Spec; edges:=[]core.Edge{}; for _,e:=range model.Edges { if e.From==d.Identity().Key() { edges=append(edges,e) } }; report["exchangeOutgoingEdges"]=edges } }
+ report["no-special-requirement-fields"]=true
+ enc:=json.NewEncoder(os.Stdout); enc.SetIndent("","  "); if err:=enc.Encode(report);err!=nil{panic(err)}
+}

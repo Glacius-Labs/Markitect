@@ -1,0 +1,10 @@
+id: properties
+kind: Property
+body: >-
+  Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts.
+  Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.
+spec:
+  type: reference
+  target: Property
+  minCount: 0
+  maxCount: -1

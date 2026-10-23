@@ -1,0 +1,242 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/model/binding.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/binding_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/body_coordinates.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/body_coordinates_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/body_html.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/body_html_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/body_limits.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/body_links.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/body_links_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/body_parser.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/body_parser_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/canonical.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/canonical_core_vector_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/canonical_integration_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/canonical_json.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/canonical_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/commonmark_corpus_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/check.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/check_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/content.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/contract_cycles.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/contracts.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/contracts_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/core.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/core_fixture_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/dependencies.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/dependencies_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/finalize.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/generate_unicode.py"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/identities.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/identities_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/lock.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/lock_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/manifest.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/manifest_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/model.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/name_key_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/names.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/names_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/packages_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/testdata/commonmark-0.31.2/LICENSE.txt"
+    form: doc
+    realizes: [product/model/language-v1]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "internal/model/testdata/commonmark-0.31.2/README.md"
+    form: doc
+    realizes: [product/model/language-v1]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "internal/model/testdata/commonmark-0.31.2/spec.json"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/model/testdata/unicode-15.1.0/CaseFolding.txt.gz"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/model/testdata/unicode-15.1.0/DerivedCoreProperties.txt.gz"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/model/testdata/unicode-15.1.0/DerivedNormalizationProps.txt.gz"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/model/testdata/unicode-15.1.0/NormalizationTest.txt.gz"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/model/testdata/unicode-15.1.0/README.md"
+    form: doc
+    realizes: [product/model/language-v1]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "internal/model/testdata/unicode-15.1.0/UNICODE-LICENSE-V3.txt"
+    form: doc
+    realizes: [product/model/language-v1]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "internal/model/testdata/unicode-15.1.0/UnicodeData.txt.gz"
+    form: config
+    realizes: [product/model/language-v1]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/model/unicode.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/unicode_corpus_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/unicode_tables.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/unicode_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/value.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/value_references_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/values.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/values_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/model/yaml.go"
+    form: code
+    realizes: [product/model/language-v1]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/model/yaml_test.go"
+    form: test
+    realizes: [product/model/language-v1]
+    why: Tests the stated responsibility and retains negative boundaries.

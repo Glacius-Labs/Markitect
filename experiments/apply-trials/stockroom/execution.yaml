@@ -1,0 +1,25 @@
+apiVersion: markitect.execution/v1
+strategy: staged
+budget:
+  executionTime: 40m
+  turnTimeout: 8m
+  agentTurns: 120
+  passes: 12
+profiles:
+  execute: project-agent
+  verify: project-agent
+packages: {}
+ownership:
+  - path: ./
+    owner: .
+    reason: Root coordinates and owns the files outside the delivery directory.
+  - path: realization/
+    owner: stockroom
+    reason: The fixed delivery boundary puts app.py, README.md and tests/ directly in realization/; the single domain Package realizes them and Root keeps only coordination.
+checks:
+  - id: project-tests
+    profile: python-tests
+    directory: realization
+    args: [-B, -m, unittest, discover, -s, tests]
+    requiredBy: stockroom/interface
+    timeout: 2m

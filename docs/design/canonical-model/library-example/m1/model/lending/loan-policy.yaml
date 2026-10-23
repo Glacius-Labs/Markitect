@@ -1,0 +1,14 @@
+id: loan-policy
+kind: LendingPolicy
+body: >-
+  For [[borrow]], the resulting current open-loan count of the member must not
+  exceed the value of [[maxOpenLoans]] in this definition's spec. Count every
+  open [[loan]], including overdue loans, and exclude closed loans. An overdue
+  loan adds no separate borrowing restriction. A new loan's due date is its
+  borrowing date plus the value of [[loanPeriodDays]] in this definition's spec.
+  [[return]] remains possible regardless of the current limit or overdue state.
+  A lower limit neither deletes existing loans nor forces their return; while
+  at or above that limit, the member cannot start another loan.
+spec:
+  maxOpenLoans: 5
+  loanPeriodDays: 14

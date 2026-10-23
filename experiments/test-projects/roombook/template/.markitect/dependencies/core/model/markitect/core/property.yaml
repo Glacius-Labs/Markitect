@@ -1,0 +1,15 @@
+id: Property
+kind: Kind
+body: >-
+  Deklariert einen Feldvertrag mit Werttyp und Kardinalität.
+  Der body beschreibt die Bedeutung seiner Werte oder Beziehungen.
+  Bei type object benennt properties die erlaubten Felder des Objektwerts.
+spec:
+  properties:
+    - name
+    - type
+    - minCount
+    - maxCount
+    - values
+    - target
+    - properties

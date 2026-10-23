@@ -1,0 +1,25 @@
+designVersion: project-world/0.1
+resources:
+  - kind: Concept
+    id: sales/order
+    owner: orders-manager
+    area: orders
+    purpose: Den angenommenen Kaufauftrag mit Positionen und Lebenszyklus beschreiben.
+    module: sales-domain
+    namespace: sales
+    meaning: Eine Order hat eine stabile Identität und Positionen mit Artikel und Menge.
+    uses: [sales/confirmed, sales/shipped]
+  - {kind: State, id: sales/confirmed, owner: orders-manager, area: orders, purpose: Angenommene und noch nicht versandte Bestellungen unterscheiden., module: sales-domain, namespace: sales, meaning: Die Order ist angenommen und noch nicht an den Versand übergeben.}
+  - {kind: State, id: sales/shipped, owner: orders-manager, area: orders, purpose: Den Versand als Grenze der Stornierbarkeit benennen., module: sales-domain, namespace: sales, meaning: Die Order wurde an den Versand übergeben.}
+  - kind: UseCase
+    id: sales/create-order
+    owner: commerce-manager
+    area: commerce
+    purpose: Einen Kaufauftrag mit ausreichendem Bestand annehmen.
+    module: sales-domain
+    namespace: sales
+    actor: Kunde
+    uses: [sales/order, sales/confirmed, inventory/stock, inventory/reservation]
+    rules: [commerce/create-reserves-stock, inventory/no-overbooking]
+    requiresRealization: [commerce/create-reserves-stock, inventory/no-overbooking]
+    outcome: Bestätigte Order und aktive Reservierung oder nachvollziehbare Ablehnung.

@@ -1,0 +1,28 @@
+designVersion: project-world/0.1
+resources:
+  - kind: Rule
+    id: commerce/create-reserves-stock
+    owner: commerce-manager
+    area: commerce
+    purpose: Eine Order nur zusammen mit ihrer Bestandszusage annehmen.
+    module: commerce-domain
+    namespace: commerce-language
+    uses: [sales/order, sales/confirmed, inventory/reservation, inventory/no-overbooking]
+    condition: Eine neue Order wird nur bei ausreichendem Bestand bestätigt.
+    outcome: Order und Reservierung entstehen gemeinsam oder überhaupt nicht.
+    architecture: engineering/shop-monolith
+  - kind: Rule
+    id: commerce/cancellation-releases-reservation
+    owner: commerce-manager
+    area: commerce
+    purpose: Nach einer Stornierung keinen Bestand für die aufgehobene Order blockieren.
+    module: commerce-domain
+    namespace: commerce-language
+    uses: [sales/cancellation, sales/cancel-before-shipped, inventory/reservation, inventory/release]
+    condition: Eine zulässige Order-Stornierung hebt alle ihre aktiven Reservierungen auf.
+    outcome: Zustandswechsel und Freigabe werden in derselben Datenbanktransaktion übernommen.
+    architecture: engineering/shop-monolith
+    expectations:
+      - Wiederholung gibt keine Menge doppelt frei.
+      - Fehler vor Commit hinterlassen weder einen alleinigen Zustandswechsel noch eine alleinige Freigabe.
+      - Der tatsächliche Bestand bleibt gleich; nur seine verfügbare Menge steigt.

@@ -1,0 +1,14 @@
+imports:
+  - package: example/connector/vocabulary
+    as: Connector
+id: requests
+kind: Channel
+body: >-
+  tenantId bezeichnet die autorisierte Zielumgebung. Die Adresse bestimmt den Empfängerbereich;
+  die Operation wird durch die Operationskennung der Nachricht bestimmt. Connector-Replikas
+  verwenden eine gemeinsame Shared Subscription. Jeder mögliche Empfänger dieses Pools muss
+  die Operation bearbeiten können.
+spec:
+  topicPattern: bridge/{tenantId}/requests
+  delivery: at-least-once
+  broker: messaging

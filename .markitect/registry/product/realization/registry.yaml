@@ -1,0 +1,42 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/realization/accounting.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/accounting_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/realization/artifact.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/doc.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/layout.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Fixes the persistent ownership layout, validates it and answers who owns a path.
+  - path: "internal/realization/layout_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Checks the deepest-owner rule, layout refusals including letter-case ambiguity and the registration-in-owner-shard rule.
+  - path: "internal/realization/model.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/protection.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/registry.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/realization/registry_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Tests the stated responsibility and retains negative boundaries.

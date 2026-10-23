@@ -1,0 +1,11 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: operationId
+kind: Property
+body: >-
+  Stabile Kennung der versionierten Operation.
+spec:
+  type: string
+  minCount: 1
+  maxCount: 1

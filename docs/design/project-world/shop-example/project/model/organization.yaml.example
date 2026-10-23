@@ -1,0 +1,42 @@
+designVersion: project-world/0.1
+resources:
+  - {kind: Area, id: shop, owner: ceo, area: shop, purpose: Gesamtprojekt verantworten., parent: null, manager: ceo}
+  - {kind: Area, id: commerce, owner: commerce-manager, area: commerce, purpose: Bestellungen und Bestand gemeinsam konsistent halten., parent: shop, manager: commerce-manager}
+  - {kind: Area, id: orders, owner: orders-manager, area: orders, purpose: Bedeutung und Lebenszyklus der Bestellungen verantworten., parent: commerce, manager: orders-manager}
+  - {kind: Area, id: inventory, owner: inventory-manager, area: inventory, purpose: Bestand und Reservierungen verantworten., parent: commerce, manager: inventory-manager}
+  - {kind: Area, id: platform, owner: platform-manager, area: platform, purpose: Build und Betrieb der Anwendung ermöglichen., parent: shop, manager: platform-manager}
+  - kind: Manager
+    id: ceo
+    owner: ceo
+    area: shop
+    purpose: Projektziele entscheiden und Gesamtergebnisse verantworten.
+    manages: shop
+    specialization: Ziele, Delegation und Integration direkter Bereiche; Nutzerfragen verdichten.
+  - kind: Manager
+    id: commerce-manager
+    owner: commerce-manager
+    area: commerce
+    purpose: Das Zusammenspiel von Bestellungen und Bestand entscheiden und prüfen.
+    manages: commerce
+    specialization: Fachliche Verträge und Ende-zu-Ende-Verhalten der direkten Bereiche.
+  - kind: Manager
+    id: orders-manager
+    owner: orders-manager
+    area: orders
+    purpose: Bestellregeln in konsistente lokale Ergebnisse übersetzen.
+    manages: orders
+    specialization: Bestellzustände, Schnittstellen und lokale Umsetzung und Prüfung.
+  - kind: Manager
+    id: inventory-manager
+    owner: inventory-manager
+    area: inventory
+    purpose: Bestandsregeln in konsistente lokale Ergebnisse übersetzen.
+    manages: inventory
+    specialization: Reservierungen, verfügbare Mengen und lokale Umsetzung und Prüfung.
+  - kind: Manager
+    id: platform-manager
+    owner: platform-manager
+    area: platform
+    purpose: Reproduzierbare Builds und Betriebskonfiguration verantworten.
+    manages: platform
+    specialization: Build, Container, Datenbankbereitstellung und Pipelineverträge.

@@ -1,0 +1,18 @@
+apiVersion: markitect.execution/v1
+strategy: direct
+budget:
+  executionTime: 25m
+  turnTimeout: 10m
+  agentTurns: 120
+  passes: 12
+profiles:
+  execute: markitect-agent
+  verify: markitect-agent
+packages: {}
+checks:
+  - id: go-tests
+    profile: go
+    directory: .
+    args: [test, ./..., -count=1]
+    requiredBy: tooling/gates/go-tests
+    timeout: 10m

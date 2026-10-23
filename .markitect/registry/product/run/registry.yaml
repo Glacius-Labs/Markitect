@@ -1,0 +1,302 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/run/assignment_messages.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Routes FIFO child questions and response-scoped decisions, releasing parent queues while awaiting answers and bounding concrete decision feedback."
+  - path: "internal/run/assignment_tasks.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Gives parents and leaves focused mandates and binds parent acceptance to the inspected fixed child handoff."
+  - path: "internal/run/assignment_feedback_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Replays differing Agent/fixed Git identities and invalid decisions with finite feedback, Host-bound integration and leaf prompt checks."
+  - path: "internal/run/assignment_questions_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Proves queued busy-child questions, ordered replies, crossed parent waits, deferred acceptance and bounded cancel/Close/budget behavior."
+  - path: "internal/run/assignment_start.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Prepares the entire Manager tree and opens all independent dormant containers concurrently before delivering any Implement task."
+  - path: "internal/run/assignment_children.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Delivers direct-child tasks concurrently and serially reviews completed Git handoffs in arrival order, retaining cancelled or uncertain work."
+  - path: "internal/run/assignment_concurrency_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Proves overlapping child starts and work, completion-order parent review, queued questions and retained cancellation or startup failures."
+  - path: "internal/run/assignment_correction_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks that final Verify corrections travel through the responsible parents in retained assignments while unaffected children keep their work and fresh homes are required."
+  - path: "internal/run/assignment_review.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Runs a focused model assessment or independent Verify in a fresh copy of a named Git result, retaining ordinary observations and a separate substantive decision."
+  - path: "internal/run/assignment_review_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks exact-commit review judgment, model blockers, retained incomplete results, ordinary command observations and fresh review copies without providers."
+  - path: "internal/run/assignment_schedule.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Runs the model-derived assignment tree through direct child tasks, parent questions, fixed Git review, correction and integration with finite caller bounds."
+  - path: "internal/run/assignment_schedule_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Exercises Agent-issued delegation, question routing, parent return, conflict correction and required upward Git handoffs."
+  - path: "internal/run/handoffs.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Routes required Manager assignments, parent questions and fixed child Git results through the model-derived tree during the Apply migration."
+  - path: "internal/run/handoffs_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks direct-child participation, question routing, corrected handoffs and explicit parent integration decisions with controlled assignment ports."
+  - path: "internal/run/assessment.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Captures each observed Turn end once and separates its short semantic assessment from Host-derived work and execution observations."
+  - path: "experiments/apply-trials/night_run_test.py"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Stops real owned subprocesses under injected registry, clock and recovery-marker failures without Docker or provider generation."
+  - path: "docs/development/night-apply-stability-20261021.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Binds the separate NIGHT stabilization scope, model-first review gate, corrected controls and finite operator validation."
+  - path: "experiments/apply-trials/night_run.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Bounds separately released NIGHT groups against one durable six-start ledger, independent host time and the absolute overnight stop."
+  - path: "internal/run/review_basis_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Tests direct immutable candidate access without preliminary basis approval and independent reviewer participation."
+  - path: "experiments/recursive-apply-demo/README.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Explains the real library demonstration harness and its timed and untimed steps."
+  - path: "experiments/recursive-apply-demo/analyze.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Summarizes one Apply's evidence: rounds, turns, parallelism, findings and usage."
+  - path: "experiments/recursive-apply-demo/extract-checklist.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Fixes the rubric an independent assessor scores an extracted library model with, including the seeded and conflict expectations."
+  - path: "experiments/recursive-apply-demo/extract-checklist-readinglog.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: "Fixes the rubric for the second Extract project, Readinglog, marking reference obligations its two files cannot show."
+  - path: "experiments/recursive-apply-demo/extract-execution.yaml"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: "Declares the Extract run controls of the library case-3 target: ownership of the artifacts, budget and no required checks."
+  - path: "experiments/recursive-apply-demo/library-execution.yaml"
+    form: config
+    realizes: [product/run/confirmed-run-history]
+    why: "Declares the library target's ownership, budget, profiles and required checks for the demonstration."
+  - path: "experiments/recursive-apply-demo/nochange_apply.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs the separate no-change Apply on the accepted A2 outside the timed demonstration."
+  - path: "experiments/recursive-apply-demo/ra_assess.sh"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: "Assesses the published A1 and A2 with the independent oracle after the timed run."
+  - path: "experiments/recursive-apply-demo/ra_bind.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Binds an attempt to one build with Sonnet Runtime profiles, check profiles, token file and frozen scripts."
+  - path: "experiments/recursive-apply-demo/ra_build.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Builds the runtime, project and oracle images and the CLI from one exact commit."
+  - path: "experiments/recursive-apply-demo/ra_cleanup.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Stops the remaining containers of the attempt's own store label within the hard limit."
+  - path: "experiments/recursive-apply-demo/ra_demo.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Enforces the hard wall-clock limit of the timed demonstration outside every prompt."
+  - path: "experiments/recursive-apply-demo/ra_extract.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs the timed library Extract with the scripted owner, the scripted adoption and, optionally, the rebuild from the extracted model judged by the oracle."
+  - path: "experiments/recursive-apply-demo/ra_extract_project.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Projects the case-3 target: a published library realization with vocabulary but without any model."
+  - path: "experiments/recursive-apply-demo/ra_inner.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Projects the target, runs both Applies and performs the owner's commit and model change between them."
+  - path: "experiments/recursive-apply-demo/ra_project.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Creates the model-only Library M1 target repository."
+  - path: "experiments/recursive-apply-demo/ra_runconfig.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Writes each Apply's run configuration with the owner request and the shared deadline."
+  - path: "experiments/recursive-apply-demo/rx_collect.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Summarizes Extract attempts: phases, rounds, Verify depth, questions, deviations, model size, rebuild and oracle."
+  - path: "experiments/recursive-apply-demo/rx_python_profile.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Switches a bound attempt to the Python example runtime image and offers a Python check profile, for the Readinglog Extract runs."
+  - path: "experiments/recursive-apply-demo/rx_rebuild_project.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Projects a case-1 target from an adopted Extract, so Apply can rebuild the realization from the extracted model alone."
+  - path: "experiments/recursive-apply-demo/rx_seed.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Plants known defects and source conflicts in a library realization, each with an expected Extract outcome."
+  - path: "experiments/recursive-apply-demo/smoke_apply.sh"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs one Apply with a short deadline as a plumbing smoke outside the timed demonstration."
+  - path: "experiments/recursive-apply-demo/writes.py"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Approximates which areas each Manager wrote, from Execute transcripts."
+  - path: "internal/run/agents.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Defines the Agents port, the Turn and tool contract and the usage a provider reports."
+  - path: "internal/run/run.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Defines the Run contract: Config, Manager, helpers, write plans, Pass specs, findings, questions, problems, outcomes and Open, Pass, Reassess, Corrections and Finish."
+  - path: "internal/run/context_limit_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history, product/organization/delegated-context]
+    why: Checks that a turn whose input the provider channel cannot carry ends the run Incomplete at once with its sizes instead of being repeated.
+  - path: "internal/run/engine.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Validates the configuration, opens and finishes the run and owns its stop, evidence, volumes and shared records."
+  - path: "internal/run/pass.go"
+    form: code
+    realizes: [product/run/confirmed-run-history, product/organization/delegated-context]
+    why: "Runs the one recursive base process of every Pass: stages and states, release, acceptance, returns, reopening, revision and invalidation, closure and the whole-stand exit gates."
+  - path: "internal/run/bindings.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Binds the dependencies a Manager declares through waits in a Pass without a planning Pass to their accepted versions, refuses bindings that close a cycle, and resets or reintegrates the work built on a revised or reopened submission."
+  - path: "internal/run/proposals.go"
+    form: code
+    realizes: [product/run/confirmed-run-history, product/realization/artifact-accounting]
+    why: "Serves the report tool: the shared result envelope with purpose payloads, coverage, plans, findings, closures and disputes, verdicts, parent decisions and the technical File check of a submitted area."
+  - path: "internal/run/messages.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: "Routes questions, answers and information along direct tree edges with correlation, escalates through the parent and refuses Root's messages beyond the tree."
+  - path: "internal/run/helpers.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/realization/artifact-accounting]
+    why: "Delegates bounded tasks to helper roles with disjoint write subsets of their Manager's area and runs their turns."
+  - path: "internal/run/review.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Binds a review Pass to one immutable candidate with the gates and the required checks."
+  - path: "internal/run/lookup.go"
+    form: code
+    realizes: [product/run/confirmed-run-history, product/realization/artifact-accounting]
+    why: "Serves the look_up tool and the advisory check tool from the Orchestrator's state and the derived registry view."
+  - path: "internal/run/methods.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: "Holds the reusable method guidance every role may look up: names in the standing context, details on request, granting no right."
+  - path: "internal/run/turn.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Starts, mounts, runs and ends Manager and reviewer turns without implicit completion and checks tool arguments."
+  - path: "internal/run/tools.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Defines the Orchestrator tool schemas, the report schema per Pass purpose and the tools of each role."
+  - path: "internal/run/prompts.go"
+    form: code
+    realizes: [product/run/confirmed-run-history, product/organization/delegated-context]
+    why: "Renders the standing context, the Pass assignment, the task of each stage, proposals and helper prompts."
+  - path: "internal/run/values.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Holds the shared validation helpers for identifiers, text and image identities."
+  - path: "internal/run/workspace.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Defines the consumer-owned Workspaces port that materializes, harvests and closes volumes."
+  - path: "internal/run/checks.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Defines the consumer-owned Checks port and what a check receipt establishes."
+  - path: "internal/run/probes.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Runs behavioral probes through the check port on stable stands, keeps every receipt, binds cited evidence to its stand and enforces independent dispositions of adverse receipts."
+  - path: "internal/run/workspace_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks the bounds of workspace requests and when a harvest is complete."
+  - path: "internal/run/checks_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks that check requests are complete and bounded and when a receipt passes."
+  - path: "internal/run/fakes_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Supplies protocol-following scripted Agents, in-memory Workspaces, Checks, Owner and recording Evidence for the Pass tests."
+  - path: "internal/run/pass_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks the forward Passes on one base process, parent-first release, proposals waking parents, returns, no completion on a turn ending, coverage and the scoped submission gate."
+  - path: "internal/run/routing_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: "Checks tree-only and cross-branch questions, parent questions, the user channel, open questions blocking results, Root's model-error abort and orphaned waits."
+  - path: "internal/run/review_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks retained findings until independent closure, fresh reviewer homes, failed required checks, verdict consistency, strict exit gates and advisory artifact findings."
+  - path: "internal/run/observations_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks the finding kinds' declared effects: suggestions never block or cause work, a retained deviation cannot be softened, a suspicion is investigated by a fresh review and ends Incomplete at the limit or hands its confirmed deviation to the work, and a settled finding is not reopened without new evidence."
+  - path: "internal/run/assess_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Checks the Model assessment Pass: fresh read-only reviewers without checks or probes, release only on a clean seal, a Failed run on a confirmed finding with its class, reassessment of disputed findings, Incomplete at the limit and for technical failures, and the closed-run refusal text."
+  - path: "internal/run/team_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/realization/artifact-accounting]
+    why: "Checks helper write subsets and read-only overlays, plan dependencies as start conditions, basis revision and reopening, failed turns, unobserved stops, budgets and stale reports."
+  - path: "internal/run/clarifications_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks read-only answers of blocked Managers, refused questions to unreleased Managers and the disproof of a false finding on the unchanged candidate in a new Verify."
+  - path: "internal/run/fixes_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks that finding effects take effect only on acceptance, the acceptance re-check of a stale composite, the Pass verdict after a parent's closure or with open coverage, the routing by open work findings, partial decisions, helper waits, blocked findings across a send, dispute and closure rules."
+  - path: "internal/run/lookup_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks that look_up answers Definitions with their owners, path owners, states, accepted plans and bases and the method guidance."
+  - path: "internal/run/probes_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Discriminates bound and retained receipts, stale and fabricated evidence, adverse receipts that need a finding or an independent disproof, Root's pending disproof and Runtime errors from the earlier unbound evidence."
+  - path: "internal/run/README.md"
+    form: doc
+    realizes: [product/run/confirmed-run-history]
+    why: Documents the Orchestrator's one Pass process, its ports, tools, findings and stopping rules.

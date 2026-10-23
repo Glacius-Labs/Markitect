@@ -1,0 +1,155 @@
+# Runtime workspaces
+
+`NewWorkspaces` implements `run.Workspaces` through an injected container engine
+and a trusted helper `container.ContainerSpec`. The helper image is an exact
+engine image ID. Its configured user, CPU, memory, process and temporary-space
+limits apply to every helper. The adapter supplies a single `/work` volume mount;
+harvest mounts it read-only. The runtime validates the complete container spec.
+No project process, provider, credential or host repository path is involved.
+
+The trusted runtime image must contain `/bin/tar` and `/usr/local/bin/node`, as
+the current runtime image does. A check adapter can receive this implementation
+through `run.Workspaces`; its actual check image remains a separate choice.
+
+## One Git container per Apply
+
+Before creating assignments, the caller passes every possible assignment ID to
+`StartGit(ctx, ids)`: the complete Manager tree, assessment, and the finite
+maximum of fresh Verify copies. Volumes are created exclusively and labeled
+without starting preparation helpers. One retained Git container mounts all of
+them at fixed `/assignments/<ID>` paths. Initialization verifies empty roots and
+sets ownership once in that same container. `PrepareAssignment` and forks claim
+these reserved volumes; every Host Git operation uses engine `exec`, including
+clone, commit reads, parent integration and child updates. There is no fallback
+to a short-lived Git helper. Ordinary Agent Git stays in its own Agent container.
+
+The Git service alone uses `StartOwnedExec`: default hardening plus `CAP_CHOWN`
+for one fixed root initialization command over exactly its private mount roots.
+The roots remain mode 0755, owned by 1000:1000. The returned session executes only
+as its non-root configured user and exposes no root override. Normal engine,
+Agent and check launches retain `--cap-drop ALL` and `no-new-privileges`.
+`CAP_CHOWN` remains in this service's bounding set; ordinary non-root execs have
+zero effective capabilities. This explicit exception avoids dozens of startup
+containers. A real probe showed that root chown without the capability fails;
+chmod 0777 permits creation but ordinary Git then rejects the root-owned working
+copy as dubious ownership. No global safe-directory exception is installed.
+
+The caller closes all Agent assignments and then calls `CloseGit` before final
+reporting. It removes only the observed Git container; retained volumes remain
+for evidence. Cleanup errors remain technical failures. Cancellation of an exec
+also removes this container, because killing the engine CLI alone does not prove
+the remote Git process stopped. No command is retried. `GitContainerID` retains
+the full observed ID after close; `GitExecCount` counts engine CLI processes
+started for Git execs, separately from remote Git start, exit or success.
+
+The service's own exact container ID is allowed in workspace mount observations;
+foreign mounts still refuse materialization/census. Disposable project-check
+copies use ordinary `Materialize` and `Close` with unreserved IDs and may still
+use non-Git helpers. They are not mounted into, or usable through, the Git
+service. Reserved assignment volumes cannot be removed before `CloseGit`.
+
+The opt-in `TestRealApplyGitContainer` uses an existing immutable image and
+`MARKITECT_TEST_ENGINE` / `MARKITECT_TEST_GIT_IMAGE`. It exercises 47 fixed mounts,
+zero StartGit preparation helpers, normal non-root capability state, ordinary
+commit identity, cloning, parent integration and independent commit reading,
+then observes service removal and retained volumes. It starts no providers.
+
+## Materialization and ownership
+
+`PrepareAssignment` sets repository-local `user.name=Markitect` and
+`user.email=assignment@markitect.invalid`, plus matching `author.*` and
+`committer.*` values, immediately after Git initialization,
+before its starting commit. Every delegation and independent review fork sets
+the same local values after cloning, before checkout and before returning the
+copy for an Agent's first message. Ordinary Agent commits and merges therefore
+need no global identity or provider-home configuration. Host helpers use the
+same settings in their command-local overrides, including temporary integration
+copies. Specific global author/committer settings cannot override this identity.
+No user Git configuration is
+copied or changed. A failed identity setup returns the retained partial copy
+with an error, never an assignment ready for a conversation.
+
+`ForkAssignmentCommit` clones a named retained commit into a fresh assignment
+volume and checks out that exact commit. It does not commit the source or change
+its HEAD, index or working files. Later source commits and uncommitted work do
+not enter the independent review copy. Clone and checkout failures return the
+available partial copy for inspection. `ForkAssignment` remains the separate
+delegation operation that first secures the parent's current foundation.
+
+`ReadAssignmentCommit` returns the named commit's exact regular/executable blob
+content for accounting and project checks. It reads Git tree metadata and raw
+blobs through bounded helpers, first resolving the exact full commit identity.
+It verifies each object hash and rejects unsupported
+entries, partial output or an exhausted limit. Checkout conversion and archive
+attributes (`export-ignore` and `export-subst`) do not change the returned bytes.
+Neither reading nor forking a named commit publishes to the owner's repository.
+
+`Materialize` creates a new volume through `CreateVolumeExclusive`, writes the
+supplied tree as a tar stream, then harvests and compares exact paths, content
+and regular/executable mode. It returns the observed tree identity only after a
+complete readback. A different complete readback is retained and reported as
+uncertain. Inputs that contain excluded Git administration or state descendants
+are refused before creation, since those bytes cannot enter the repository
+census. A regular file named `.markitect/state` remains observable.
+`WorkspaceSpec.Directories` are created as empty directories (tar directory headers, mode 0755, owned like the extracted files) together with their ancestors, parents first, so mount overlays of a write plan have their subpath. A path that is invalid, excluded or equal to or below a file of the tree is refused before creation. Empty directories stay outside the read-back identity.
+Before extraction it observes the new volume as empty, since the engine can
+initialize a new volume with the helper image's `/work` files. Unexpected initial
+content is retained and refused before any extraction.
+
+The volume name derives from the configured helper name and WorkspaceID. Each
+creation carries a random ownership label. The engine verifies its own fresh
+creation token as well. Existing IDs are refused before any helper writes.
+Only a matching observed creation receipt permits later harvest or removal.
+Receipts belong to the adapter instance; a reconstructed instance refuses an
+existing volume. Retained volumes therefore need the original instance or
+separately authorized recovery. No receipt is inferred from a failed inspect.
+
+Errors never cause automatic deletion. A failed write, incomplete readback,
+mount census failure or changed ownership leaves the volume retained and reports
+uncertainty. The returned volume identity permits the Orchestrator to retain the actual
+effect even when the tree could not be established.
+
+## Harvest
+
+Before and after the helper, the engine observes all containers mounting the
+volume, including stopped containers and read-only mounts. Any mount or failed
+census makes the result uncertain. The Orchestrator must end the step's container before
+harvest and must not start another user of that volume during observation.
+These observations do not provide an engine-wide lock against unrelated clients.
+
+The Linux helper walks with bounded directory buffers and counts directories,
+regular files and unsupported entries against `MaxEntries`. It bounds total
+regular-file bytes by `MaxBytes`. Empty directories have no snapshot entry.
+Regular files use exactly the owner execute bit for their snapshot mode; other
+permission bits are ignored. File identity, mode, size and timestamps are checked
+around each no-follow read. The stream carries raw path bytes, metadata and exact
+content, followed by an explicit terminal frame. Truncation, helper failure,
+budget exhaustion, duplicate paths or malformed output makes it uncertain.
+
+The exclusions match repository acquisition: every `.git` path component and
+the root `.markitect/state` directory with its descendants. No Gitignore or
+semantic ownership rule filters files. Symlinks, devices, sockets and other
+nonregular entries are reported in `Unsupported`; their targets are never read.
+Invalid snapshot paths are also reported. Invalid UTF-8 names use `bytes:` plus
+their exact hexadecimal path bytes. Unsupported entries do not stop the census
+or disappear from the result. The Orchestrator decides what the observation means.
+
+`Peek` takes the same census while the step may still write: it skips the two
+unmounted-volume checks and keeps the ownership and existence checks, and the
+helper still mounts the volume read-only. Its tree is advisory; only `Harvest`
+after the step's container stopped can yield a candidate.
+
+## Close and evidence
+
+`Close` reports an observed absent volume as closed, including repeat calls.
+It removes an existing volume only after its ownership receipt and an empty
+all-container mount census are established. It reads back absence after removal.
+A failed removal response remains an error and uncertain even if absence was
+subsequently established. An existing unowned or replaced volume is retained.
+
+The source tests exercise exact tar data, mode and readback, unsupported census
+entries, budgets, mounted and replaced volumes, partial effects and close
+observations through fake runtime transports. They establish adapter behavior;
+they do not establish real Docker, helper-image, provider, Apply or release
+acceptance. The constructor is available for Orchestrator injection; this slice adds no
+bootstrap or CLI wiring.

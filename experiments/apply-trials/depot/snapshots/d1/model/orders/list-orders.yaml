@@ -1,0 +1,14 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+id: list-orders
+kind: Software.UseCase
+body: |-
+  At [[Depot.interface]], `orders [--status open|fulfilled|cancelled]` returns
+  an object whose orders field holds the [[order]] records in ascending id
+  order, or only those with the given status. Any other status value is invalid
+  input. A missing data file is an empty result under [[Depot.storage]]. The
+  query never changes stored data.
+spec: {}

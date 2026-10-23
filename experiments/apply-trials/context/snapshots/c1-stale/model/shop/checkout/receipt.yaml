@@ -1,0 +1,10 @@
+imports:
+  - package: software
+    as: Software
+id: receipt
+kind: Software.Concept
+title: Receipt
+body: |-
+  A receipt lists every paid cart line with its charged amount and is kept
+  for ten years.
+spec: {}

@@ -1,0 +1,21 @@
+imports:
+  - package: software
+    as: Software
+  - package: depot
+    as: Depot
+  - package: catalog
+    as: Catalog
+  - package: stock
+    as: Stock
+  - package: orders
+    as: Orders
+id: stock-view
+kind: Software.UseCase
+body: |-
+  At [[Depot.interface]], `items` returns an object whose items field holds one
+  entry per [[Catalog.item]], sorted by SKU in ascending code-point order. An
+  entry is a JSON object with exactly sku, name and reorderPoint from the
+  catalog, onHand from [[Stock.on-hand]], and reserved and available under
+  [[Orders.availability]]. A missing data file is an empty result under
+  [[Depot.storage]]. The query never changes stored data.
+spec: {}

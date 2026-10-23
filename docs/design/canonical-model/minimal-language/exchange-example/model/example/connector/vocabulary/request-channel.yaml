@@ -1,0 +1,12 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: requestChannel
+kind: Property
+body: >-
+  Kommunikationsweg für Aufträge.
+spec:
+  type: reference
+  target: Channel
+  minCount: 1
+  maxCount: 1

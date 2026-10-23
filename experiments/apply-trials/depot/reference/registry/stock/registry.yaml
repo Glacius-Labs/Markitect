@@ -1,0 +1,14 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/stock/__init__.py
+    form: code
+    realizes: [stock/on-hand]
+    why: Makes the stock an importable package.
+  - path: realization/stock/ledger.py
+    form: code
+    realizes: [stock/on-hand, stock/limits, stock/receive]
+    why: Keeps on-hand quantities, receives goods within the limit and takes fulfilled lines out of stock.
+  - path: realization/stock/test_ledger.py
+    form: test
+    realizes: [stock/on-hand, stock/limits, stock/receive]
+    why: Tests receiving, its limit and taking stock.

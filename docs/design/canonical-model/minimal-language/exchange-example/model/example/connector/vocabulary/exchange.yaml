@@ -1,0 +1,18 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: Exchange
+kind: Kind
+body: >-
+  Beschreibt einen Request-/Reply-Vertrag zwischen requester und receiver. Antworten behalten
+  die MessageId des Requests. timeoutSeconds gilt pro Versuch; maxAttempts zählt den ersten
+  Versuch mit.
+spec:
+  properties:
+  - requester
+  - receiver
+  - command
+  - requestChannel
+  - replyChannel
+  - timeoutSeconds
+  - maxAttempts

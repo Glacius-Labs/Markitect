@@ -1,0 +1,28 @@
+# Vorgeschlagenes Laufzeitformat, getrennt von fachlicher Bedeutung.
+designVersion: project-world/0.1
+roles:
+  - {manager: ceo, context: separate, workers: delegate, verifier: separate}
+  - {manager: commerce-manager, context: separate, workers: delegate, verifier: separate}
+  - {manager: orders-manager, context: separate, workers: delegate, verifier: separate}
+  - {manager: inventory-manager, context: separate, workers: delegate, verifier: separate}
+  - {manager: platform-manager, context: separate, workers: delegate, verifier: separate}
+contexts:
+  include: [own-mandate, relevant-definitions, direct-child-contracts, relevant-reports, own-run-state]
+  includeChildTranscripts: false
+  includeDescendantContexts: false
+  clarification: ask-responsible-child
+candidates:
+  childIsolation: git-worktree
+  sharedPathWriter: assigned-by-parent
+  integration: new-candidate-per-parent
+execution:
+  start: explicit
+  scope: accepted-model-and-repository-snapshot
+  parallelWorkers: 2
+  maxAgentStarts: 16
+  timeoutMinutes: 30
+  repairAttemptsPerTask: 2
+  onLimit: report-and-checkpoint
+result:
+  decision: ceo-within-delegation
+  deployment: separate-order

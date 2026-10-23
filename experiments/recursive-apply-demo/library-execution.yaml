@@ -1,0 +1,41 @@
+apiVersion: markitect.execution/v1
+strategy: staged
+budget:
+  executionTime: 60m
+  turnTimeout: 8m
+  agentTurns: 220
+  passes: 10
+profiles:
+  execute: library-agent
+  verify: library-agent
+packages: {}
+ownership:
+  - path: ./
+    owner: .
+    reason: Root owns the project-level files, such as the Go module and the documentation of the whole realization.
+  - path: realization/catalog/
+    owner: catalog
+  - path: realization/lending/
+    owner: lending
+  - path: realization/lending/reminders/
+    owner: lending/reminders
+  - path: realization/library/
+    owner: library
+  - path: realization/members/
+    owner: members
+  - path: realization/cmd/library/
+    owner: library
+    reason: library/callable-interface fixes the executable at realization/cmd/library.
+checks:
+  - id: project-tests
+    profile: library-go
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/realization
+    timeout: 3m
+  - id: project-build
+    profile: library-go
+    directory: realization
+    args: [build, -o, /tmp/library, ./cmd/library]
+    requiredBy: library/callable-interface
+    timeout: 3m

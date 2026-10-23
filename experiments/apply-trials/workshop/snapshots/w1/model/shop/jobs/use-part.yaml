@@ -1,0 +1,19 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop
+    as: Shop
+  - package: shop/parts
+    as: Parts
+id: use-part
+kind: Software.UseCase
+title: Use a part on a job
+body: |-
+  At [[Shop.interface]], `use-part --job ID --sku SKU --qty N` reserves N units
+  of the existing [[Parts.part]] with that normalized SKU for the existing
+  open [[job]] under [[Parts.stock]]: the part's reserved quantity and the
+  job's quantity of that SKU both grow by N. It commits both changes through
+  [[Shop.storage]] and returns the job record. An unknown or closed job, an
+  invalid or unknown SKU, an invalid quantity or a quantity above the part's
+  available quantity is refused with stored data unchanged.
+spec: {}

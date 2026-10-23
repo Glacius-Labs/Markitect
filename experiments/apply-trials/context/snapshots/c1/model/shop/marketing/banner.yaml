@@ -1,0 +1,11 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop/catalog
+    as: Catalog
+id: banner
+kind: Software.UseCase
+title: Show a banner
+body: |-
+  A banner advertises one [[Catalog.product]] for at most fourteen days.
+spec: {}

@@ -1,0 +1,474 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/apply/assignment_publication.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Publishes only the exact independently verified assignment result through the existing guarded publisher and read-back.
+  - path: "internal/apply/assignment_publication_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Refuses publication when the accepted assignment commit differs from the integrated tree or final independent Verify decision.
+  - path: "internal/apply/assignment_workspace_ids.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Derives every possible Manager and independent reviewer Git workspace name from the prepared topology and finite invocation allowance for one Apply-lifetime Git container.
+  - path: "internal/apply/assignment_realization.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Executes separate model assessment, Implement assignments and independent final Verify over named Git results with shared finite bounds and targeted correction, without publication or legacy Outcome projection."
+  - path: "internal/apply/assignment_context.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: "Builds focused assignment briefs and independent review context from actual model selections, required checks, ownership and ordinary retained Git handoffs."
+  - path: "internal/apply/assignment_realization_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: "Controls assignment ports against prepared model inputs to verify blocker stops, preservation, correction, named final checks, one invocation allowance and retained incomplete work; it is not provider evidence."
+  - path: "internal/apply/README.md"
+    form: doc
+    realizes: [product/ports-and-adapters, product/apply/read-only-preparation]
+    why: Documents captured preparation, the controlled state consumer and outstanding physical adapter obligations.
+  - path: "internal/apply/brief.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Renders each Manager's standing Brief from its context selection, areas, registry shard, required checks and configured instructions.
+  - path: "internal/apply/brief_values_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Checks against a tiny hand-written model that a stated Definition keeps every value kind exactly, its final sentence and each body link with the identity its alias resolves to, and that dropping any of them is detected.
+  - path: "internal/apply/apply.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Binds the run and its strategy from one passed capture, composes the direct or staged work Passes and Verify with corrections and reassessment, and publishes a verified candidate through the guarded Publisher.
+  - path: "internal/apply/assess.go"
+    form: code
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: The mandatory Model assessment before any work, with Session C's method and the model problem classes, Extract's assessment of its mandate, and the evaluation entry that runs only the assessment.
+  - path: "internal/apply/apply_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Tests the organization, briefs, checks, budget deadline, gates and write plans of the run configuration, publication refusals and an unverified run with fake ports.
+  - path: "internal/apply/assessment_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Tests the production assessment entry's frozen method reference, read-only reviewers without checks or publication, closed Run, confirmed finding classes and fresh reassessment of a disputed finding.
+  - path: "internal/apply/binding.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Records what an Apply binds its Run to before any Agent work, the strategy with its work sequence, the effective settings and the implementation identity, for run.start and the report.
+  - path: "internal/apply/compose_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Checks that direct runs Implement before Verify with Implement as its only correction, that staged runs Plan, Prepare and Implement, that both share Verify, and that work Passes repeat or restart only at an earlier purpose their own findings name and never skip a forward Pass.
+  - path: "internal/apply/export_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Exposes the use case's configuration and publication steps to the external tests.
+  - path: "internal/apply/extract.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: Runs the two Extract phases over the Apply engine and publishes a verified model as the changed model, registry and layout files, never an artifact.
+  - path: "internal/apply/extract_prepare.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Validates the start of an Extract and prepares each phase from its start tree, the captured repository or the verified structure candidate.
+  - path: "internal/apply/extract_account.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Accounts the candidates of both Extract phases (compiled model, layout, Package inventory, registration, protected inputs) and gives each phase its write plan.
+  - path: "internal/apply/extract_brief.go"
+    form: code
+    realizes: [product/organization/delegated-context]
+    why: Renders the Briefs of the Extract phases with the artifact areas, the registry shard and the language authoring guide.
+  - path: "internal/apply/extract_texts.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: States the mandates and Verify guidance of the two Extract phases.
+  - path: "internal/apply/extract_fixture_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Provides the library case 3 start stand and the structure and registered-model candidates for the Extract tests.
+  - path: "internal/apply/extract_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Tests Extract preparation, write plans, teams, briefs and the accounting findings of both phases, including concurrent accounting.
+  - path: "internal/apply/extract_run_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Runs both Extract phases and the publication with scripted fake ports, and an unverified structure phase.
+  - path: "internal/apply/candidates.go"
+    form: code
+    realizes: [product/realization/artifact-accounting]
+    why: Accounts candidate trees against the captured start, owner by owner, for the closing structural gate.
+  - path: "internal/apply/candidates_test.go"
+    form: test
+    realizes: [product/realization/artifact-accounting]
+    why: Checks candidate ownership, areas and findings on the library layout, including a registration in the wrong shard.
+  - path: "internal/apply/config_yaml.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/context.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/context_copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_fixture_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_scope_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/context_delivery_test.go"
+    form: test
+    realizes: [product/organization/delegated-context]
+    why: Checks the context chain against expectations read off the library model, with faulty variants, from selection through full and reference-only rendering and the coverage record to the prompts and lookups the Agents port receives in new, continued, rehydrated and fresh Verify contexts.
+  - path: "internal/apply/context_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_budget.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_fixture_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Holds the documented execution settings that the decoding tests mutate.
+  - path: "internal/apply/publisher.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Defines the consumer-owned Publisher port for guarded publication and read-back.
+  - path: "internal/apply/runtime_profiles_sections_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Checks that each profile selects one adapter section and binds the image evidence of that section.
+  - path: "internal/apply/registry_encode.go"
+    form: code
+    realizes: [product/ports-and-adapters]
+    why: Regenerates the registry shards whose records the verified aggregate changed.
+  - path: "internal/apply/registry_encode_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: Checks that only changed shards are regenerated, in their captured record order.
+  - path: "internal/apply/copy.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_contract_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_copy.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_duration.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_numbers_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_roles.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_selections.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/execution_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/execution_yaml.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_copy_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_fixture_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_ignore.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_ignore_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_inputs.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_instructions.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_instructions_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_protection_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/file_check_run.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/file_check_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/runtime_profile_image_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Checks truthful image metadata evidence and its literal identity binding without runtime readiness claims.
+  - path: "internal/apply/runtime_profiles.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/runtime_profiles_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/runtime_profiles_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/runtime_profiles_observe.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/runtime_profiles_observe_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/runtime_profiles_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/input_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/manifest_error.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/manifest_error_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/model.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/model_area_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/model_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/model_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_capture.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_closure.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_closure_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_settings.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/preparation_settings_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_settings_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_settings_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_status_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/preparation_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry_prepare.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_record.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/registry_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/registry_yaml_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/settings_preparation.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/settings_preparation_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/settings_preparation_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/settings_preparation_resolve.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/settings_preparation_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/source.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/source_binding.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_run_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: Runs both strategies through the product preparation and checks their work sequences with the same Pass-boundary gates, candidate check, fresh read-only Verify, publication, recorded binding and writer-stop guard, and the refusal of an unknown strategy or a missing build identity.
+  - path: "internal/apply/assess_run_test.go"
+    form: test
+    realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
+    why: Checks through the product preparation that no work starts before an accepted Model assessment, that a confirmed gap or a model problem during the work ends the run Failed without publication, that a later run assesses again, that the assessment runs no check or probe, and that the evaluation entry runs only the assessment.
+  - path: "internal/apply/strategy_defaults.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_defaults.yaml"
+    form: config
+    realizes: [product/apply/read-only-preparation]
+    why: Supplies exact configuration, fixtures or retained evidence for this responsibility.
+  - path: "internal/apply/strategy_defaults_binding_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/strategy_defaults_decode.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_defaults_decode_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/strategy_defaults_failures_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/strategy_defaults_settings.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/apply/strategy_defaults_test.go"
+    form: test
+    realizes: [product/apply/read-only-preparation]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/apply/proposal.go"
+    form: code
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Prepares a proposed tree against a captured start as markitect check prepares the repository, reports every finding with its stage and location, and reads a model session's basis from a passed capture with settings."
+  - path: "internal/apply/proposal_test.go"
+    form: test
+    realizes: [product/cockpit/accepted-proposals]
+    why: "Verifies that a model session's basis names Root's Execute profile, the execution budget's turn timeout and Agent-turn limit, and the language guide of the model's vocabulary."

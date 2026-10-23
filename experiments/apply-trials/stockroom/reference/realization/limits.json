@@ -1,0 +1,5 @@
+{
+  "maxQuantity": 1000,
+  "maxOnHand": 9999,
+  "maxNameLength": 60
+}

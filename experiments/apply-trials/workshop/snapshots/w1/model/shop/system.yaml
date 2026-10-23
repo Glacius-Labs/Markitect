@@ -1,0 +1,31 @@
+imports:
+  - package: software
+    as: Software
+  - package: shop/customers
+    as: Customers
+  - package: shop/parts
+    as: Parts
+  - package: shop/jobs
+    as: Jobs
+  - package: shop/billing
+    as: Billing
+  - package: shop/reports
+    as: Reports
+id: system
+kind: Software.Concept
+title: Bicycle workshop
+body: |-
+  A small local CLI with which one operator runs a bicycle repair workshop.
+  The customers part registers [[Customers.customer|customers]] and shows
+  their [[Customers.loyalty|tier]]. The parts part keeps the
+  [[Parts.part|parts]] in [[Parts.stock|stock]]. The jobs part opens a
+  [[Jobs.job|repair job]] for a customer's bicycle, records its labor and the
+  parts it uses, and closes it. The billing part writes an
+  [[Billing.invoice|invoice]] for a closed job under
+  [[Billing.pricing|pricing]] and records its payment. The reports part
+  summarizes the workshop in [[Reports.report]]. [[inputs]], [[storage]] and
+  [[interface]] govern every command, and [[realization]] requires code,
+  meaningful tests and usage documentation. Use the Python 3.13 standard
+  library, with no service, network or package installation. There are no
+  dates, appointments, users, refunds, price changes, editing or deletion.
+spec: {}

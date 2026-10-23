@@ -1,0 +1,7 @@
+imports:
+  - package: vocabulary
+    as: Vocab
+id: honest-read-only-interface
+kind: Vocab.Rule
+body: "Expose check and context over actual PreparationService reports, with structural preparation as the default requested stage and explicitly selected Orchestrator metadata as an additional stage. Preserve actual statuses, sources and inclusion reasons. Apply and extract act only with an explicit Runtime profile and run configuration and report the actual run status, Passes, findings, questions, publication, Run outcome and retained work. A Run is closed: the command line offers no way to answer a question of a run or to preload an owner decision, and a run configuration with an unknown key, ownerDecisions included, is refused. Usage, known failure and incomplete work have distinct exit statuses."
+spec: {}

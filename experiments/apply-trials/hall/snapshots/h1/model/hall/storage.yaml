@@ -1,0 +1,18 @@
+imports:
+  - package: software
+    as: Software
+id: storage
+kind: Software.Rule
+body: |-
+  [[system]] keeps the data of all its parts as durable UTF-8 JSON in the one
+  file named by --db. A missing file is empty data. The directory that holds
+  the file is not created: when it does not exist, a changing command fails
+  through [[interface]] and a query sees empty data. Malformed
+  existing data fails clearly through [[interface]] and is not overwritten. A
+  successful command commits all of its changes together by one atomic
+  replacement of the file, and a later process using the same file observes
+  them. A failed command leaves the file unchanged, and queries never write
+  it. The organization of the JSON inside the file is an implementation
+  choice. Concurrent independent writers are outside this contract;
+  [[realization]] documents that limitation.
+spec: {}

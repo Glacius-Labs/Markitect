@@ -1,0 +1,141 @@
+# Synthetic design fixture; not supported by the current product loader.
+package: example/connector-project
+imports:
+  core:
+    package: markitect/core
+    version: 1.0.0
+  connector:
+    package: example/connector-vocabulary
+    version: 1.0.0
+definitions:
+- id: platform
+  kind: connector:System
+  body: Die Connector-Plattform macht ausgewaehlte Funktionen lokaler Systeme ueber
+    eine gemeinsame Cloud-API verfuegbar. Die API und der Connector sind getrennte
+    Anwendungen. Der Kunde benoetigt fuer die MQTT-Verbindung keinen eingehenden Listener
+    am Connector. Zunaechst wird das Auflisten von DMS-Dokumenten beschrieben.
+  spec:
+    containers:
+    - api
+    - onprem
+    exchanges:
+    - list-documents
+- id: dms
+  kind: connector:System
+  body: Eigenstaendige Dokumentenverwaltung in der Kundenumgebung. Ihre angebotene
+    Lesefunktion und ihre lokalen Zugriffsregeln sind die Integrationsgrenze. Ihre
+    interne Architektur wird durch dieses Projekt nicht festgelegt.
+  spec:
+    provides:
+    - dms-access
+- id: api
+  kind: connector:Container
+  body: Die Cloud-Anwendung stellt den HTTP-Zugang bereit, bestimmt den Mandanten
+    aus dem authentifizierten Kontext und wartet auf das Resultat des Auftrags. Ihre
+    Prozessinstanzen besitzen unterschiedliche Antwortadressen. Ein Neustart uebernimmt
+    in diesem kleinen Entwurf keinen vorherigen Wartezustand.
+  spec:
+    location: cloud
+    components:
+    - http-edge
+- id: onprem
+  kind: connector:Container
+  body: Die Anwendung in der Kundenumgebung baut ihre MQTT-Verbindung ausgehend auf.
+    Sie verarbeitet nur fuer ihre autorisierte Umgebung bestimmte Auftraege. Ihre
+    Kommunikation mit DMS findet innerhalb der Kundenumgebung statt.
+  spec:
+    location: onprem
+    components:
+    - dms-handler
+- id: http-edge
+  kind: connector:Component
+  body: Der HTTP-Endpunkt bildet einen gueltigen Request auf den beschriebenen Dokumentlisten-Command
+    ab und das Resultat wieder auf eine HTTP-Response. Eine frei gesetzte Mandantenangabe
+    ersetzt nicht den authentifizierten Kontext.
+  spec:
+    provides:
+    - public-api
+    emits:
+    - list-documents-command
+- id: dms-handler
+  kind: connector:Component
+  body: Die Auftragsbearbeitung liest die Dokumentmetadaten des gewaehlten Ordners
+    ueber den DMS-Vertrag. Sie erhaelt die geltenden lokalen Benutzerberechtigungen
+    und erzeugt das beschriebene Resultat oder einen fachlichen Fehler.
+  spec:
+    consumes:
+    - dms-access
+    handles:
+    - list-documents-command
+- id: public-api
+  kind: connector:Interface
+  body: POST /v1/dms/documents/list akzeptiert einen Ordnerbezug und optionale Seitengroesse
+    und Fortsetzungsinformation. Der Aufrufer muss authentifiziert und zum Lesen im
+    gewaehlten Mandanten berechtigt sein. Erfolg liefert Dokumentmetadaten und gegebenenfalls
+    eine Fortsetzungsinformation. Ungueltige Eingaben werden als HTTP 400, fehlende
+    Berechtigung als 403, ausbleibende Antwort als 504 und ein technischer Fehler
+    als 502 beschrieben.
+  spec: {}
+- id: dms-access
+  kind: connector:Interface
+  body: Der DMS-Zugriff liefert die Metadaten der fuer den Benutzer lesbaren Dokumente
+    eines Ordners. Ein fehlender Zugriff wird als fachlicher Fehler gemeldet. Die
+    gewuenschte Pagination des Cloud-Vertrags muss auf die angebotenen DMS-Funktionen
+    abgebildet werden; konkrete SDK- oder Dateinamen sind offen.
+  spec: {}
+- id: messaging
+  kind: connector:MqttService
+  body: Ein eigener MQTT-Dienst ist aus Cloud und Kundenumgebung erreichbar. Seine
+    Laufzeit ist von API und On-Premise-Connector getrennt. Zugriffsvorgaben begrenzen
+    Publikation und Abonnements auf die autorisierten Adressen. Die konkrete Brokerimplementierung
+    und Bereitstellung bleiben offen.
+  spec: {}
+- id: requests
+  kind: connector:Channel
+  body: tenantId wird aus der autorisierten Zielumgebung eingesetzt. Die Adresse bestimmt
+    wohin ein Auftrag gelangt; die Operation steht im Command-Vertrag beziehungsweise
+    in der Nachrichtenhuelle. Connector-Replikas abonnieren die Zieladresse ueber
+    eine gemeinsame Shared Subscription. Jeder moegliche Empfaenger dieses Pools muss
+    die in diesem Entwurf verteilte Operation beherrschen.
+  spec:
+    topicPattern: bridge/{tenantId}/requests
+    delivery: at-least-once
+    broker: messaging
+- id: replies
+  kind: connector:Channel
+  body: senderInstanceId bezeichnet die ausstellende API-Prozessinstanz. Der Sender
+    uebergibt die konkrete Antwortadresse im Auftrag. Antworten werden an diese Adresse
+    geschickt und innerhalb der Instanz ueber die MessageId zugeordnet. Fuer diese
+    Antwortadresse wird keine konkurrierende Shared Subscription verwendet.
+  spec:
+    topicPattern: bridge/replies/{senderInstanceId}
+    delivery: at-least-once
+    broker: messaging
+- id: list-documents-command
+  kind: connector:Command
+  body: Der Auftrag fordert die fuer den Benutzer lesbaren Dokumentmetadaten eines
+    Ordners an. Eingaben sind FolderId, optionale PageSize und ContinuationToken.
+    Das Resultat enthaelt Dokumentmetadaten und gegebenenfalls NextContinuationToken
+    oder einen beschriebenen fachlichen Fehler. Der Auftrag veraendert keine Dokumente.
+    Konkrete Commands erhalten ihre Laufzeitdaten erst bei der Ausfuehrung.
+  spec:
+    operationId: dms.documents.list.v1
+- id: list-documents
+  kind: connector:Exchange
+  body: Die API bestimmt den autorisierten Mandanten, bildet den Command und registriert
+    den wartenden Austausch vor der Publikation. Der Connector waehlt anhand der Operationskennung
+    die Auftragsbearbeitung. Der Transporterfolg und der fachliche Resultstatus werden
+    unterschieden. Wiederholungen verwenden dieselbe MessageId; spaete Antworten ohne
+    Wartezustand werden verworfen. Dieser lesende Durchstich verlangt keine globale
+    Exactly-once-Garantie. Bei schreibenden Operationen ist die erlaubte Wiederholungswirkung
+    gesondert zu entscheiden. Die Versuchszahl ist ein endliches Budget; ein Timeout
+    beweist keine Nichtausfuehrung. Eine Gesamtfrist und Retry-Verzoegerung sind in
+    dieser minimalen Instanz noch offen.
+  spec:
+    sender: api
+    receiver: onprem
+    command: list-documents-command
+    requestChannel: requests
+    replyChannel: replies
+    timeoutSeconds: 30
+    maxAttempts: 2

@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+id: system
+kind: Software.Concept
+body: |-
+  A local Readinglog records [[book|books]] for one operator through [[add]] and
+  [[list]], and [[finish]]. Preserve the existing add/list command names, record shape and default
+  listing semantics. [[inputs]], [[storage]] and [[interface]] apply to every
+  operation; [[realization]] governs code, tests and usage documentation. This is
+  an existing Python standard-library CLI, with no network or external package.
+  Internal implementation organization is free within the fixed public interface.
+  [[import]] adds books as one validated atomic operation.
+  [[summary]] reports author totals from current records without mutation.
+spec: {}

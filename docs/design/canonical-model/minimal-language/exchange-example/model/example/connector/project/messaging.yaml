@@ -1,0 +1,11 @@
+imports:
+  - package: example/connector/vocabulary
+    as: Connector
+id: messaging
+kind: MqttService
+body: >-
+  Der MQTT-Dienst ist aus Cloud und Kundenumgebung erreichbar. Seine Laufzeit ist von API
+  und On-Premise-Connector getrennt. Zugriffsvorgaben begrenzen Publikation und Abonnements
+  auf die jeweils autorisierten Adressen. Brokerimplementierung und konkrete Bereitstellung
+  bleiben offen.
+spec: {}

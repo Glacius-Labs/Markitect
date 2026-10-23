@@ -1,0 +1,214 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "internal/adapters/gitrepo/git_session_engine_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Opt-in provider-free real-engine smoke proves fixed 47-volume mounting, ordinary identity, cloning, parent integration and independent named-commit reading through one Git exec container with observed cleanup."
+  - path: "internal/adapters/gitrepo/git_session.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Reserves complete Apply Git workspaces and executes all assignment Git operations inside one retained container without deleting evidence volumes."
+  - path: "internal/adapters/gitrepo/git_session_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks fixed service mounts, ordinary Git through exec, foreign mount refusal, retained shutdown and compatibility with disposable check copies."
+  - path: "internal/adapters/gitrepo/assignment_identity_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Uses real Git behind controlled workspace peers to prove local deterministic identity before ordinary Agent commits in initial, Manager and independent review copies, without global user config changes, and retains partial copies on setup failure."
+  - path: "internal/adapters/gitrepo/assignment_update.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Advances an existing Agent copy to an exact parent commit, switching clean work or merging own changes with conflicts retained for the child."
+  - path: "internal/adapters/gitrepo/assignment_update_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Checks real Git clean switch, own-work preservation, child-owned conflicts and immutable result bases across sibling integration and later tasks."
+  - path: "internal/adapters/gitrepo/assignment_commit.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Reads a named retained assignment commit through bounded Git object helpers for final accounting and checks, without consulting or changing live files."
+  - path: "internal/adapters/gitrepo/assignment_commit_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Uses actual local Git to check named bytes, modes, archive attributes, source preservation, limits and failed or corrupt object reads."
+  - path: "internal/adapters/gitrepo/commit_review_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Uses actual local Git to verify an exact retained commit independently without changing later source commits or dirty work, and retains failed clones."
+  - path: "internal/adapters/gitrepo/fork.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Clones a fixed parent Git foundation into a child's separate assignment volume without sharing live files."
+  - path: "internal/adapters/gitrepo/integration.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Transfers fixed child Git deltas into a parent's independent assignment copy and reports actual integration conflicts."
+  - path: "internal/adapters/gitrepo/integration_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Exercises independent Git histories, two-child integration, correction and conflict preservation with real local Git repositories."
+  - path: "internal/adapters/gitrepo/WORKSPACES.md"
+    form: doc
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Documents exact workspace materialization, census and retained volume ownership boundaries.
+  - path: "internal/adapters/gitrepo/acquisition.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/blobs.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/census.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/copy_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/directory_identity_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/disk.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/drift_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/entry_budget_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/file_check_cases_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/file_check_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/fixture_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/git.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/git_safety_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/guard.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/models.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/PUBLISHER.md"
+    form: doc
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Documents guarded working-tree publication, source refusals and retained partial-write observations.
+  - path: "internal/adapters/gitrepo/publisher.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements Apply publication preflight and exact request permits over the retained capture guard.
+  - path: "internal/adapters/gitrepo/publisher_capture.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Retains capture provenance and physical repository identities for guarded publication comparison.
+  - path: "internal/adapters/gitrepo/publisher_observe.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Rechecks the source, checkout policy and complete index and observes publication effects.
+  - path: "internal/adapters/gitrepo/publisher_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Verifies publication guards, exact working-tree effects and refusal of unsafe or uncertain writes.
+  - path: "internal/adapters/gitrepo/publisher_write.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Writes only permitted paths through rooted identities and preserves unrelated Git and filesystem state.
+  - path: "internal/adapters/gitrepo/preflight_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_history_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_settings_refusal_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/preparation_settings_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/redirect_other.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/redirect_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/redirect_windows.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/registry_seam_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/repository.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/repository_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/revision.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/gitrepo/revision_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/root_dot_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/scope_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "internal/adapters/gitrepo/repository_alias_windows_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Verifies confirmed native-root aliases without weakening exact spelling or historical external-source refusal.
+  - path: "internal/adapters/gitrepo/workspace.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Implements Run workspace materialization, exact harvest and guarded volume lifetime through the container API.
+  - path: "internal/adapters/gitrepo/workspace_census.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Captures bounded workspace paths, modes and content without importing repository administration or excluded state.
+  - path: "internal/adapters/gitrepo/workspace_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: Verifies exact workspace readback, volume ownership and refusal of uncertain or unowned operations.

@@ -1,0 +1,13 @@
+imports:
+  - package: example/connector/vocabulary
+    as: Connector
+id: list-documents-command
+kind: example/connector/vocabulary/Command
+body: >-
+  Fordert die für den Benutzer lesbaren Dokumentmetadaten eines Ordners an. Eingaben sind
+  FolderId sowie optional PageSize und ContinuationToken. Das Ergebnis enthält Dokumentmetadaten
+  und gegebenenfalls NextContinuationToken. Ungültige Eingaben, ein nicht vorhandener Ordner
+  und fehlende Leseberechtigung werden als fachliche Fehler unterschieden. Der Auftrag verändert
+  keine Dokumente.
+spec:
+  operationId: dms.documents.list.v1

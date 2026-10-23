@@ -1,0 +1,716 @@
+# Bibliothek: vollständiger Fach- und Architekturentwurf
+
+Aktualisiert am 14. Oktober 2026. Status: zusammenhängendes Gesprächsbeispiel zum [Konzept](canonical-model-proposal.md). Gewählt sind `mandate.yaml` mit Kind Mandate, Concept, Rule, UseCase und die ergänzten Architektur-Kinds System, Component, Module und Interface. `vNext`, Referenz- und Feldregeln sind Vertragskandidaten, keine unterstützte Version oder kompilierte Fixture.
+
+Der Project-Kandidat, Modellordner, Fachdefinitionen, Mandat, Artefakte und Checks stehen hier. Die aktuellen Architekturdefinitionen werden ausschließlich im [Architektur-YAML](library-architecture-example.md) ausgeschrieben. Zusammen zeigen beide Dokumente 35 Modelldefinitionen: 1 Project, 1 Mandate, 1 System, 3 Components, 6 Modules, 5 Interfaces, 5 Concepts, 4 Rules, 2 UseCases, 5 Artifacts und 2 Checks.
+
+## Umfang und Fachentscheidungen
+
+Ausleihe und Rückgabe bilden den fachlichen Ausschnitt; Beschaffung, Gebühren und Mahnungen liegen außerhalb. Berechtigung über aktiven Mitgliedsstatus und unveränderte Wiederholungsrückgabe sind Fachvorschläge. Fristberechnung, unbekannte Kennungen und Datenbereitstellung müssen vor Umsetzung geklärt werden.
+
+Die Architektur ergänzt Webfrontend, Backend, einen Datenbankdienst und die benannten Verträge. Frameworks, konkrete Datenbank, Betriebsumgebung und Authentisierung bleiben festzulegen oder ausdrücklich zu delegieren. Build-, Start- und Bereitstellungsbeiträge folgen diesen Entscheidungen.
+
+| Fachdefinition | Kind | Rolle |
+| --- | --- | --- |
+| `title` | `Concept` | Fach- oder Zustandsbegriff als Prosa. |
+| `copy` | `Concept` | Fach- oder Zustandsbegriff als Prosa. |
+| `member` | `Concept` | Fach- oder Zustandsbegriff als Prosa. |
+| `loan` | `Concept` | Fach- oder Zustandsbegriff als Prosa. |
+| `active-loan` | `Concept` | Fach- oder Zustandsbegriff als Prosa. |
+| `eligible-member` | `Rule` | Normative Bedingung oder Invariante. |
+| `available-copy` | `Rule` | Normative Bedingung oder Invariante. |
+| `one-active-loan` | `Rule` | Normative Bedingung oder Invariante. |
+| `borrow` | `UseCase` | Verhaltensvertrag als Prosa. |
+| `return` | `UseCase` | Verhaltensvertrag als Prosa. |
+
+Die bisher als Concept gezeigte Übersicht `library-system` ist jetzt ein System; ihre Identität und alle aktuellen Referenzen ändern sich entsprechend. Concept, Rule und UseCase behalten ihre Bedeutung. Architekturzugehörigkeit verleiht keine Agentenbefugnis; der Auftrag steht in `mandate.yaml` mit dem gewählten Kind Mandate. Dieser ersetzt Manager im aktuellen Entwurf, benennt aber keine ausführende Runtime-Rolle um.
+
+## Modellordner und automatische Symbolerfassung
+
+```text
+.markitect/
+└── model/
+    ├── project.yaml
+    ├── mandate.yaml
+    └── library/
+        ├── library-system.yaml
+        ├── title.yaml
+        ├── copy.yaml
+        ├── member.yaml
+        ├── loan.yaml
+        ├── active-loan.yaml
+        ├── eligible-member.yaml
+        ├── available-copy.yaml
+        ├── one-active-loan.yaml
+        ├── borrow.yaml
+        ├── return.yaml
+        ├── frontend.yaml
+        ├── backend.yaml
+        ├── database.yaml
+        ├── lending-ui.yaml
+        ├── inventory.yaml
+        ├── membership.yaml
+        ├── circulation.yaml
+        ├── http-adapter.yaml
+        ├── persistence-adapter.yaml
+        ├── library-api.yaml
+        ├── inventory-access.yaml
+        ├── member-access.yaml
+        ├── loan-storage.yaml
+        ├── database-access.yaml
+        ├── domain-independent-of-storage.yaml
+        ├── frontend-implementation.yaml
+        ├── backend-implementation.yaml
+        ├── database-configuration.yaml
+        ├── library-verification.yaml
+        ├── library-documentation.yaml
+        ├── library-contract-check.yaml
+        └── architecture-contract-check.yaml
+```
+
+Eine Definition pro Datei und Namespace aus dem Verzeichnis übernehmen die bisher untersuchte Ladeform. Project und Wurzelmandat liegen im leeren Namespace; alle anderen Definitionen im Namespace library. Die Anwendung muss diese Ablage nicht spiegeln. Zusammensetzung ist über `contains` mit ausdrücklichem Zielkind erklärt, nicht durch diesen flachen Modellordner.
+
+Markitect liest die YAML-Definitionen im Modellordner rekursiv ein und erfasst ihre Symbole. Referenzen werden anschließend gegen die deklarierte Identität aufgelöst. Hinzufügen einer Datei genügt für ihre Aufnahme; eine modelFiles-Liste wird nicht gepflegt. Der gefundene Dateibestand wird an den untersuchten Repositorystand gebunden. Artefaktpfade ordnen Realisierungsbereiche zu; eine gesonderte Coverage-Prüfung ist in diesem Entwurf nicht vorgesehen.
+
+### `model/project.yaml` — Project-Kandidat
+
+Project beschreibt das Gesamtprojekt. Die gemeinsame Hülle erhält jetzt einen eigenständigen Definitionskörper; metadata enthält Name und Namespace. Der Feldname definition ist ein Syntaxkandidat für diesen Körper. Die kindspezifischen spec-Felder, hier die System-Zuordnung, werden im Typreview geprüft. Die Darstellung ist kein bereits implementiertes Schema. Markitect-Konfiguration, Dateilisten, Coverage-Modus und ein Dokumentationszielpfad sind hier nicht enthalten.
+
+Unter der [programmiernahen Richtung](canonical-model-proposal.md#23-programmiernahe-arbeitsrichtung-typisierte-prosa) ist dieses YAML eine Projektdeklaration: Der Compiler erkennt den gemeinsamen Rahmen und löst den Systemverweis auf; Agents richten die Repositorybeiträge an Zweck, Umfang und Grenzen aus. Fachdetails bleiben in den eigenen Definitionen. Contains ist hier noch die bisherige Beziehungsform, während die minimale Einordnung-/Referenzsprache weiter diskutiert wird.
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Project
+metadata:
+  namespace: ""
+  name: library
+definition: |
+  Unterstützt eine Bibliothek bei der nachvollziehbaren
+  Ausleihe und Rückgabe ihrer vorhandenen Exemplare.
+spec:
+  contains:
+    - kind: System
+      namespace: library
+      name: library-system
+```
+
+## Auftrag: `model/mandate.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Mandate
+metadata:
+  namespace: ""
+  name: library-project
+definition: |
+  Legt den Auftrag zur Realisierung des Bibliotheksausschnitts und zur Prüfung seiner Regeln fest.
+spec:
+  owns:
+    - .
+  instructions: |
+    Prüfe fachliche Vollständigkeit und explizite Beziehungen bei Modelländerungen.
+    Prüfe Umsetzung und Nachweise unabhängig anhand der betroffenen Aussagen.
+    Melde offene Frist-, Fehler- und Autorisierungsentscheidungen vor ihrer Umsetzung.
+    Entscheide technische Details innerhalb der ausdrücklich beschriebenen Freiräume.
+```
+
+Die Anweisungen formulieren Pflichten und Entscheidungsspielräume, beweisen aber weder authentifizierte Autorisierung noch ihre Einhaltung. Runtime-/Agentenbindung bleibt zusätzlich zu konfigurieren.
+
+## Fachliche Concepts, Rules und UseCases
+
+Der Definitionskörper ist der verbindliche Inhalt einer Definition. `definition` und `[[symbol|Anzeigetext]]` sind Syntaxkandidaten für die vereinbarte Richtung, keine unterstützte Sprache. In allen aktuellen YAML-Beispielen ist der Körper aus metadata herausgezogen; Name und Namespace bleiben dort. Die folgenden Concepts copy, member und loan erproben zusätzlich die expliziten Links. Die übrigen Definitionen behalten vorerst ihre bisherigen Referenzfelder zur weiteren Diskussion; daraus folgt keine endgültige Entscheidung über die Relationssprache. Auch public ist ein noch zu prüfender Feldkandidat.
+
+In diesen drei Concepts ersetzt der aufgelöste Link eine gleichbedeutende uses-Zeile. Für loan entstehen die Referenzen auf member und copy, für copy auf title, jeweils im Namespace library. Es wird keine zweite Referenzliste gepflegt. Die Links verweisen auf Begriffsdefinitionen; die Kardinalität konkreter Anwendungsobjekte steht im Körper. Automatisch gefundene Begriffe werden als Linkvorschläge angeboten und erst nach Übernahme zu expliziten Referenzen. Title ist die bereits vorhandene Definition direkt unterhalb dieses Abschnitts.
+
+`uses` liefert Kontext; `UseCase.requires` benennt normative Verpflichtungen. Referenzen nennen ihren Zielkind bei mehreren zulässigen Ziel-Kinds und immer bei der einheitlichen Zusammensetzungsbeziehung `contains`: `uses` braucht `kind`, `requires` und `checks` erhalten den festen Zieltyp aus dem Schema. Auch eine aktuell rein fachliche `uses`-Liste bleibt typgemischt zulässig und nennt daher den Kind. Die API-Version folgt dem gemeinsamen versionierten Vertrag. Laufzeitinstanzen und deren Kardinalitäten bleiben von Modellreferenzen unterscheidbar.
+
+### `model/library/title.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Concept
+metadata:
+  namespace: library
+  name: title
+definition: |
+  Ein Titel beschreibt ein Werk beziehungsweise eine Ausgabe.
+  Mehrere physische Exemplare können demselben Titel zugeordnet sein.
+spec:
+  public: true
+```
+
+### `model/library/copy.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Concept
+metadata:
+  namespace: library
+  name: copy
+definition: |
+  Ein Exemplar ist ein physisches Buch mit einer eindeutigen Identität.
+  Es gehört genau einem [[title|Titel]].
+spec:
+  public: true
+```
+
+### `model/library/member.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Concept
+metadata:
+  namespace: library
+  name: member
+definition: |
+  Ein Mitglied besitzt eine eindeutige Identität und einen Status seiner Ausleihberechtigung.
+  Die Ausleihberechtigung ist aktiv oder nicht aktiv.
+spec:
+  public: true
+```
+
+### `model/library/loan.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Concept
+metadata:
+  namespace: library
+  name: loan
+definition: |
+  Eine Ausleihe verbindet genau ein [[member|Mitglied]]
+  mit genau einem [[copy|Exemplar]].
+  Sie besitzt eine Identität, einen Beginn, eine Fälligkeit
+  und einen optionalen Rückgabezeitpunkt.
+spec:
+  public: true
+```
+
+### `model/library/active-loan.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Concept
+metadata:
+  namespace: library
+  name: active-loan
+definition: |
+  Eine gespeicherte Ausleihe ist aktiv, solange kein Rückgabezeitpunkt erfasst ist.
+spec:
+  public: true
+  uses:
+    - kind: Concept
+      namespace: library
+      name: loan
+```
+
+### `model/library/eligible-member.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Rule
+metadata:
+  namespace: library
+  name: eligible-member
+definition: |
+  Ein Mitglied darf ausleihen, wenn es existiert und seine Ausleihberechtigung aktiv ist.
+  Die Bedingung wird bei der Vergabe geprüft.
+spec:
+  public: true
+  uses:
+    - kind: Concept
+      namespace: library
+      name: member
+```
+
+### `model/library/available-copy.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Rule
+metadata:
+  namespace: library
+  name: available-copy
+definition: |
+  Ein Exemplar ist für die Vergabe verfügbar, wenn es existiert und keine aktive Ausleihe besitzt.
+  Eine frühere Verfügbarkeitsabfrage allein garantiert keine erfolgreiche Vergabe.
+spec:
+  public: true
+  uses:
+    - kind: Concept
+      namespace: library
+      name: copy
+    - kind: Concept
+      namespace: library
+      name: active-loan
+```
+
+### `model/library/one-active-loan.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Rule
+metadata:
+  namespace: library
+  name: one-active-loan
+definition: |
+  Für jedes Exemplar besteht höchstens eine aktive Ausleihe.
+  Diese Regel gilt auch bei konkurrierenden Anfragen und muss nach erfolgreichen
+  sowie abgelehnten Operationen erhalten sein.
+spec:
+  public: true
+  uses:
+    - kind: Concept
+      namespace: library
+      name: copy
+    - kind: Concept
+      namespace: library
+      name: active-loan
+```
+
+### `model/library/borrow.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: UseCase
+metadata:
+  namespace: library
+  name: borrow
+definition: |
+  Ein berechtigtes Mitglied darf ein verfügbares Exemplar ausleihen.
+  Erfolg erzeugt eine dauerhaft gespeicherte aktive Ausleihe.
+  Ablehnung erzeugt keine neue Ausleihe.
+  Bei konkurrierenden Anfragen muss one-active-loan erhalten bleiben.
+  Die technische Umsetzung der atomaren Vergabe darf der verantwortliche Bereich wählen.
+spec:
+  public: true
+  uses:
+    - kind: Concept
+      namespace: library
+      name: member
+    - kind: Concept
+      namespace: library
+      name: copy
+    - kind: Concept
+      namespace: library
+      name: loan
+  requires:
+    - namespace: library
+      name: eligible-member
+    - namespace: library
+      name: available-copy
+    - namespace: library
+      name: one-active-loan
+```
+
+### `model/library/return.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: UseCase
+metadata:
+  namespace: library
+  name: return
+definition: |
+  Die Rückgabe einer aktiven Ausleihe wird dauerhaft durch einen Rückgabezeitpunkt erfasst.
+  Danach ist diese Ausleihe nicht mehr aktiv.
+  Eine wiederholte Rückgabe verändert den bereits erfassten Rückgabezeitpunkt nicht.
+  Die Behandlung einer unbekannten Ausleihkennung ist vor der Umsetzung festzulegen.
+spec:
+  public: true
+  uses:
+    - kind: Concept
+      namespace: library
+      name: loan
+    - kind: Concept
+      namespace: library
+      name: active-loan
+  requires:
+    - namespace: library
+      name: one-active-loan
+```
+
+## System, Components, Modules und Interfaces
+
+Die [Architekturdarstellung](library-architecture-example.md) definiert die im Modellordner gefundenen Ressourcen samt Provider-/Consumerverträgen, Zuordnung fachlicher Beiträge und Architekturregel. Jede aktuelle YAML-Definition wird dort genau einmal gezeigt.
+
+Das Ausleihmodul konsumiert Bestands-, Mitglieds- und Speicherverträge. Der HTTP-Adapter stellt die Bibliotheks-API bereit; der Persistenzadapter den fachlichen Speichervertrag. Der Datenbankdienst stellt einen davon getrennten technischen Vertrag bereit. Fachmodule müssen die konkrete Datenbanktechnik nicht importieren.
+
+## Repositorybeiträge und Nachweise
+
+Module.realizes ist eine architektonische Zuordnung gewünschter Beiträge. Artifact.realizes erklärt erwartete Repositoryrealisierung; erst konkrete Dateien, Reviews und ausgeführte Checks liefern Evidenz. Bedienung, Fachlogik, Adapter und Konfiguration können gemeinsam einen UseCase oder eine Rule tragen. Die Beschreibungen unterscheiden diese Beiträge.
+
+Realizes umfasst das direkte Ziel einschließlich aller über contains enthaltenen Definitionen, ohne scope-Feld. Frontend- und Backendartefakte nennen deshalb ihre Component statt deren Modules zusätzlich aufzuzählen. Dokumentations- und Verifikationsartefakte nennen für den technischen Gesamtbereich das System. Der abgeleitete Beitrag gilt entsprechend ihrer Rolle und beweist keine geprüfte Umsetzung. Fachdefinitionen und Interfaces liegen im aktuellen Beispiel außerhalb der contains-Struktur; deren ausdrücklich gewünschte Beiträge bleiben separat referenziert. Andere Beziehungen erweitern den enthaltenen Bereich nicht automatisch.
+
+Die Artefaktrolle konkretisiert den Beitrag: `implementation` implementiert Verhalten, `configuration` konfiguriert dessen technische Umgebung, `verification` stellt Prüfungen bereit und `documentation` erklärt das System. Ein Verifikations- oder Dokumentationsartefakt behauptet damit keine produktive Implementierung des referenzierten UseCase. Alle gezeigten Zuordnungen beschreiben erwartete Beiträge, keine bereits erbrachten Nachweise.
+
+### `model/library/frontend-implementation.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Artifact
+metadata:
+  namespace: library
+  name: frontend-implementation
+definition: |
+  Realisiert Bedienung und API-Verwendung des Frontends.
+spec:
+  role: implementation
+  realizes:
+    - kind: Component
+      namespace: library
+      name: frontend
+    - kind: UseCase
+      namespace: library
+      name: borrow
+    - kind: UseCase
+      namespace: library
+      name: return
+  paths:
+    - frontend/
+  checks:
+    - namespace: library
+      name: library-contract-check
+    - namespace: library
+      name: architecture-contract-check
+  required: true
+  reason: Realisiert Bedienung und API-Verwendung des Frontends.
+```
+
+### `model/library/backend-implementation.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Artifact
+metadata:
+  namespace: library
+  name: backend-implementation
+definition: |
+  Realisiert Backend, fachliche Abläufe und technische Adapter.
+spec:
+  role: implementation
+  realizes:
+    - kind: Component
+      namespace: library
+      name: backend
+    - kind: Interface
+      namespace: library
+      name: library-api
+    - kind: Interface
+      namespace: library
+      name: inventory-access
+    - kind: Interface
+      namespace: library
+      name: member-access
+    - kind: Interface
+      namespace: library
+      name: loan-storage
+    - kind: Concept
+      namespace: library
+      name: title
+    - kind: Concept
+      namespace: library
+      name: copy
+    - kind: Concept
+      namespace: library
+      name: member
+    - kind: Concept
+      namespace: library
+      name: loan
+    - kind: Concept
+      namespace: library
+      name: active-loan
+    - kind: Rule
+      namespace: library
+      name: eligible-member
+    - kind: Rule
+      namespace: library
+      name: available-copy
+    - kind: Rule
+      namespace: library
+      name: one-active-loan
+    - kind: UseCase
+      namespace: library
+      name: borrow
+    - kind: UseCase
+      namespace: library
+      name: return
+    - kind: Rule
+      namespace: library
+      name: domain-independent-of-storage
+  paths:
+    - backend/
+  checks:
+    - namespace: library
+      name: library-contract-check
+    - namespace: library
+      name: architecture-contract-check
+  required: true
+  reason: Realisiert Backend, fachliche Abläufe und technische Adapter.
+```
+
+### `model/library/database-configuration.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Artifact
+metadata:
+  namespace: library
+  name: database-configuration
+definition: |
+  Stellt Datenbankkonfiguration, Schema und nötige Migrationen bereit.
+spec:
+  role: configuration
+  realizes:
+    - kind: Component
+      namespace: library
+      name: database
+    - kind: Interface
+      namespace: library
+      name: database-access
+    - kind: Rule
+      namespace: library
+      name: one-active-loan
+  paths:
+    - deployment/database/
+  checks:
+    - namespace: library
+      name: library-contract-check
+    - namespace: library
+      name: architecture-contract-check
+  required: true
+  reason: Stellt Datenbankkonfiguration, Schema und nötige Migrationen bereit.
+```
+
+### `model/library/library-verification.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Artifact
+metadata:
+  namespace: library
+  name: library-verification
+definition: |
+  Liefert Prüfbeiträge zu Fachverträgen, Interfaces und Architektur.
+spec:
+  role: verification
+  realizes:
+    - kind: Rule
+      namespace: library
+      name: eligible-member
+    - kind: Rule
+      namespace: library
+      name: available-copy
+    - kind: Rule
+      namespace: library
+      name: one-active-loan
+    - kind: UseCase
+      namespace: library
+      name: borrow
+    - kind: UseCase
+      namespace: library
+      name: return
+    - kind: System
+      namespace: library
+      name: library-system
+    - kind: Interface
+      namespace: library
+      name: library-api
+    - kind: Interface
+      namespace: library
+      name: inventory-access
+    - kind: Interface
+      namespace: library
+      name: member-access
+    - kind: Interface
+      namespace: library
+      name: loan-storage
+    - kind: Interface
+      namespace: library
+      name: database-access
+    - kind: Rule
+      namespace: library
+      name: domain-independent-of-storage
+  paths:
+    - tests/
+  checks:
+    - namespace: library
+      name: library-contract-check
+    - namespace: library
+      name: architecture-contract-check
+  required: true
+  reason: Liefert Prüfbeiträge zu Fachverträgen, Interfaces und Architektur.
+```
+
+### `model/library/library-documentation.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Artifact
+metadata:
+  namespace: library
+  name: library-documentation
+definition: |
+  Erklärt System, Architektur, Bedienung und erklärten Prüfumfang.
+spec:
+  role: documentation
+  realizes:
+    - kind: System
+      namespace: library
+      name: library-system
+    - kind: Interface
+      namespace: library
+      name: library-api
+    - kind: Interface
+      namespace: library
+      name: inventory-access
+    - kind: Interface
+      namespace: library
+      name: member-access
+    - kind: Interface
+      namespace: library
+      name: loan-storage
+    - kind: Interface
+      namespace: library
+      name: database-access
+    - kind: UseCase
+      namespace: library
+      name: borrow
+    - kind: UseCase
+      namespace: library
+      name: return
+  paths:
+    - docs/library/
+    - docs/markitect/project.md
+    - README.md
+  required: true
+  reason: Erklärt System, Architektur, Bedienung und erklärten Prüfumfang.
+```
+
+Die Bereiche frontend/, backend/, deployment/database/, tests/ und docs/library/ sind bewusst deklarierte Zuordnung. Sie garantieren keinen engen Blast Radius und wählen keine einzelnen Funktionen aus. Das Wurzelmandat beschreibt die einzige Schreibzuständigkeit dieses kleinen Beispiels; seine Agentenbindung und ihre Einhaltung sind gesondert zu bestimmen. Keine dieser tatsächlichen Dateien wurde erzeugt.
+
+## Prüfanschlüsse
+
+### `model/library/library-contract-check.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Check
+metadata:
+  namespace: library
+  name: library-contract-check
+definition: |
+  Prüft die Ausleih- und Rückgabeverträge anhand konkreter Fälle.
+spec:
+  command:
+    - "<library-contract-check>"
+  uses:
+    - kind: UseCase
+      namespace: library
+      name: borrow
+    - kind: UseCase
+      namespace: library
+      name: return
+    - kind: Rule
+      namespace: library
+      name: eligible-member
+    - kind: Rule
+      namespace: library
+      name: available-copy
+    - kind: Rule
+      namespace: library
+      name: one-active-loan
+  limitation: |
+    Die ausführbare Datei ist hier ein Platzhalter und muss vor Nutzung ersetzt werden.
+    Ein späterer Check belegt nur seine tatsächlich untersuchten Fälle.
+    Er beweist weder Vollständigkeit der Beschreibung noch beliebige Produktionskonkurrenz.
+```
+
+### `model/library/architecture-contract-check.yaml`
+
+```yaml
+apiVersion: project.markitect.example.org/vNext
+kind: Check
+metadata:
+  namespace: library
+  name: architecture-contract-check
+definition: |
+  Untersucht Architektur- und Interfacepflichten am realisierten Stand.
+spec:
+  command:
+    - "<architecture-contract-check>"
+  uses:
+    - kind: System
+      namespace: library
+      name: library-system
+    - kind: Component
+      namespace: library
+      name: frontend
+    - kind: Component
+      namespace: library
+      name: backend
+    - kind: Component
+      namespace: library
+      name: database
+    - kind: Module
+      namespace: library
+      name: lending-ui
+    - kind: Module
+      namespace: library
+      name: inventory
+    - kind: Module
+      namespace: library
+      name: membership
+    - kind: Module
+      namespace: library
+      name: circulation
+    - kind: Module
+      namespace: library
+      name: http-adapter
+    - kind: Module
+      namespace: library
+      name: persistence-adapter
+    - kind: Interface
+      namespace: library
+      name: library-api
+    - kind: Interface
+      namespace: library
+      name: inventory-access
+    - kind: Interface
+      namespace: library
+      name: member-access
+    - kind: Interface
+      namespace: library
+      name: loan-storage
+    - kind: Interface
+      namespace: library
+      name: database-access
+    - kind: Rule
+      namespace: library
+      name: domain-independent-of-storage
+  limitation: |
+    Der Befehl ist ein nicht ausführbarer Platzhalter.
+    Vor Nutzung sind konkrete Vertrags-, Abhängigkeits- und Startprüfungen festzulegen.
+    Geprüfte Modellbeziehungen beweisen keine tatsächlich eingehaltenen Codeabhängigkeiten.
+```
+
+Beide Befehle sind nicht ausführbare Platzhalter. Vor Nutzung sind tatsächliche Prüfprogramme, deren Bindungen und geprüfte Fälle festzulegen. Check-Auswahl, Ausführung und Eignung sind getrennte Befunde.
+
+## Methodischer Prüfauftrag und Grenzen
+
+Modellreview untersucht Fachbeschreibung, offene Entscheidungen, vollständige Beziehungen, Architekturgrenzen, Verträge und die gewünschte Beitragsteilung. Ein unabhängiger Realisierungsreview prüft die tatsächlichen Kandidatendateien, Interfaceverträge, Fachregeln, Abhängigkeitsrichtung und belastbare Nachweise.
+
+Ein deklarierter Anbieter beweist noch keine korrekte Interfaceimplementierung. Eine deklarierte Abhängigkeit beweist keine tatsächliche Codeabhängigkeit. Eine Rule-Prosa ist kein ausgeführter Importvalidator. Strukturelle Gültigkeit, Fachkonformität und menschliche Zustimmung bleiben verschieden.
+
+Der [Überfälligkeitsdurchlauf](library-change-walkthrough.md) muss bei seiner Erweiterung auch die Modul-/Interfacezuordnung berücksichtigen: Eine fachliche Berechtigungsregel kann Mitglieds- und Ausleihkontext verbinden. Der Durchlauf ist keine aktuelle vollständige Impactliste dieser erweiterten Architektur.
+
+## Herkunft und Evidenzgrenze
+
+- Produktgespräch: `01a121f1-b948-7050-ae5d-9921b99db9c0`.
+- Worktree: `C:\Users\Consiliari\.codex\worktrees\product-model-concepts\Markitect`.
+- Branch: `docs/product-model-concepts`.
+- Eingang der Architekturergänzung: `ec7ba72d25c7f17cedcfb61e6b77f11d5cddb5ed`, beim Beginn sauber; ausdrücklich am 13. Oktober 2026 beauftragt.
+- [Methodische Vorstufe](library-methodical-alternative.md) und frühere Kind-Darstellung bleiben datierte Vorarbeit.
+- Keine Projektfixture, Modellkompilierung, Tests, Provider-, Agenten- oder Studienausführung.
+
+Alle YAML-Blöcke stehen ausschließlich in dieser Dokumentation. Vor Nutzung muss der neue Sprach- und Referenzvertrag versioniert spezifiziert und gegen die dann aktuelle Produktbasis implementiert und geprüft werden.

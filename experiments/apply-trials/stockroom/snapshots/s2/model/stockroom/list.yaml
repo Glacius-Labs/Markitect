@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+id: list
+kind: Software.UseCase
+body: |-
+  At [[interface]], `list [--low]` returns an object whose items field holds
+  every [[item]] record, sorted by normalized SKU in ascending code-point order.
+  With --low it holds only the items that are low, in the same order. With no
+  matching items the array is empty; a missing data file is such an empty
+  result under [[storage]]. The query never changes stored data.
+spec: {}

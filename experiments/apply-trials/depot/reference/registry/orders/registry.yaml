@@ -1,0 +1,14 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/orders/__init__.py
+    form: code
+    realizes: [orders/order]
+    why: Makes the orders an importable package.
+  - path: realization/orders/orderbook.py
+    form: code
+    realizes: [orders/order, orders/availability, orders/place-order, orders/fulfil-order, orders/cancel-order, orders/list-orders]
+    why: Defines reserved and available stock for every part and places, fulfils, cancels and lists orders.
+  - path: realization/orders/test_orders.py
+    form: test
+    realizes: [orders/availability, orders/place-order, orders/fulfil-order, orders/cancel-order, orders/list-orders]
+    why: Tests reservations, the order rules and the status changes.

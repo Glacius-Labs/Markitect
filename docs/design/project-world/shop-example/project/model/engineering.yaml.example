@@ -1,0 +1,52 @@
+designVersion: project-world/0.1
+resources:
+  - kind: Architecture
+    id: engineering/shop-monolith
+    owner: ceo
+    area: shop
+    purpose: Für das kleine System einfache und atomare Fachabläufe ermöglichen.
+    module: engineering-model
+    namespace: engineering-language
+    decisions:
+      - Eine Anwendung mit fachlichen Modulen Bestellungen und Bestand.
+      - Eine relationale Datenbank; gemeinsame Use Cases verwenden eine Datenbanktransaktion.
+      - Die Managementhierarchie schreibt keine separaten Dienste oder Deployments vor.
+  - kind: DecisionPolicy
+    id: engineering/decision-policy
+    owner: ceo
+    area: shop
+    purpose: Routineautonomie und nachvollziehbare Eskalation ermöglichen.
+    module: engineering-model
+    namespace: engineering-language
+    executive: ceo
+    localDecisions: Bereichsmanager entscheiden innerhalb ihres delegierten Fach- und Implementierungsumfangs selbst.
+    crossAreaDecisions: Der nächste gemeinsame befugte Vorfahr entscheidet Konflikte zwischen Bereichen.
+    userReserved:
+      - Neue Produktziele außerhalb des vereinbarten Shop-Umfangs.
+      - Neue externe Kostenverpflichtungen außerhalb des vereinbarten Budgets.
+    modelChanges: Manager dürfen eigene Fachdetails ändern; die Geschäftsführung darf die Projektarchitektur innerhalb des Nutzerauftrags ändern.
+  - kind: Process
+    id: engineering/model-change
+    owner: ceo
+    area: shop
+    purpose: Von einem Änderungsvorschlag zu nachvollziehbar übernommener Umsetzung kommen.
+    module: engineering-model
+    namespace: engineering-language
+    policy: engineering/decision-policy
+    workflow: engineering/change-workflow
+    stages: [Vorschlagen, Prüfen, Modell annehmen, Umsetzung starten, Delegieren, Integrieren, Übernehmen]
+  - kind: Workflow
+    id: engineering/change-workflow
+    owner: ceo
+    area: shop
+    purpose: Konkrete Zustandsübergänge der Modelländerung festlegen.
+    module: engineering-model
+    namespace: engineering-language
+    policy: engineering/decision-policy
+    steps:
+      - {name: draft, action: Änderungen sammeln; kein aktives Soll ändern.}
+      - {name: validate, action: Modell und Referenzen prüfen und Folgen anzeigen.}
+      - {name: accept-model, action: Befugter Entscheider nimmt den bezeichneten Modellstand an.}
+      - {name: start, action: Angenommenes Modell und Repositorybasis an einen Ausführungsauftrag binden.}
+      - {name: execute, action: Manager delegieren nach unten und integrieren Berichte und Kandidaten nach oben.}
+      - {name: accept-result, action: Geschäftsführung übernimmt den geprüften Kandidaten innerhalb des Auftrags.}

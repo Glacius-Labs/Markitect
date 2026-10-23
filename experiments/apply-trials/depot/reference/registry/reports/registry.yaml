@@ -1,0 +1,14 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: realization/reports/__init__.py
+    form: code
+    realizes: [reports/stock-view]
+    why: Makes the reports an importable package.
+  - path: realization/reports/test_views.py
+    form: test
+    realizes: [reports/stock-view, reports/reorder]
+    why: Tests the stock view and the reorder report.
+  - path: realization/reports/views.py
+    form: code
+    realizes: [reports/stock-view, reports/reorder]
+    why: Builds the stock view and the reorder report from the catalog, stock and availability of the orders.

@@ -1,0 +1,35 @@
+apiVersion: markitect.execution/v1
+strategy: direct
+budget:
+  executionTime: 180m
+  turnTimeout: 20m
+  agentTurns: 600
+  passes: 12
+profiles:
+  execute: project-agent
+  verify: project-agent
+packages: {}
+ownership:
+  - path: ./
+    owner: .
+    reason: Root coordinates and owns the files outside the delivery directory.
+  - path: realization/
+    owner: shop
+    reason: The fixed delivery boundary puts app.py, README.md and the end-to-end tests directly in realization/; the shop Package realizes them and the shared foundations in realization/shop/.
+  - path: realization/customers/
+    owner: shop/customers
+  - path: realization/parts/
+    owner: shop/parts
+  - path: realization/jobs/
+    owner: shop/jobs
+  - path: realization/billing/
+    owner: shop/billing
+  - path: realization/reports/
+    owner: shop/reports
+checks:
+  - id: project-tests
+    profile: python-tests
+    directory: realization
+    args: [-B, -m, unittest, discover, -s, ., -p, "test_*.py"]
+    requiredBy: shop/interface
+    timeout: 5m

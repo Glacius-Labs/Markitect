@@ -1,0 +1,174 @@
+apiVersion: markitect.registry/v1
+artifacts:
+  - path: "scripts/run-library-apply.ps1"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Creates one fresh Library fixture and bounded Luna Runtime from integrated Main, builds the product, starts apply and retains all evidence with one command.
+  - path: "internal/adapters/cli/execution.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Parses explicit Apply and owner-answer invocations and reports the run, its publication receipt and its evidence directory without admitting previews as execution.
+  - path: "internal/adapters/cli/execution_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies exact Apply input selection, answer arguments, run reporting, preview refusals and that errors, unpublished runs and incomplete results never become success.
+  - path: "internal/adapters/cli/extract.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Parses the explicit Extract invocation without a --model flag and reports both phases, model completion, the Verify result, deviations, open questions and the publication.
+  - path: "internal/adapters/cli/extract_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies Extract argument parsing, refused invocations and that only a published verified model reports success.
+  - path: "internal/bootstrap/run_config.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Decodes the closed explicit invocation configuration with its harvest bounds, helper resources and credential references without defaults or credential acquisition.
+  - path: "internal/bootstrap/run_config_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies complete explicit invocation values, closed JSON objects, refused historical sections and no referenced credential reads during parsing.
+  - path: "internal/bootstrap/execution.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Composes captured settings, the exclusive state lock, concrete container adapters, evidence and guarded publication for one Apply and records the run's identity.
+  - path: "internal/bootstrap/execution_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests refusal before effects for invalid configurations and held state directories and retained report evidence.
+  - path: "internal/bootstrap/verify_evaluation_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Grant-gated evaluation harness that runs only the independent Verify of a captured stand through the real preparation and adapters, without a Command or publication.
+  - path: "internal/bootstrap/model_assessment_evaluation_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Grant-gated harness of the Model assessment trial that runs one read-only assessment Pass of a captured stand through the real preparation and adapters, without a Command or publication.
+  - path: "internal/bootstrap/profile_router.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Routes each selected captured Agent profile section to its concrete metadata adapter without a provider fallback or duplicate decoder.
+  - path: "internal/bootstrap/runtime_credentials.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Binds exact explicit credential references to dedicated runtime files and defers bounded safe reads until a provider resolver is invoked.
+  - path: "internal/bootstrap/runtime_credentials_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests deferred credential reads, exact mapping, literal fake login bytes, finite bounds and safe failure diagnostics without real credentials.
+  - path: "internal/bootstrap/runtime_credentials_unix.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses redirected Unix credential paths and uses a nonblocking no-follow file open.
+  - path: "internal/bootstrap/runtime_credentials_unix_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests refusal of fake credential symlinks and nonregular FIFOs on Unix.
+  - path: "internal/bootstrap/runtime_credentials_windows.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses Windows reparse points while reading an explicitly selected runtime credential file.
+  - path: "internal/bootstrap/runtime_credentials_windows_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests refusal of a temporary credential junction, device paths, alternate streams and case aliases on Windows.
+  - path: "internal/bootstrap/runtime_credentials_other.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses credential reads on platforms without the supported native file safety guarantees.
+  - path: "cmd/markitect/main.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/command.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/json.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/report.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/bootstrap/main.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "internal/adapters/cli/command_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies actual consumer stages, source bindings and negative effect boundaries.
+  - path: "internal/bootstrap/main_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies actual consumer stages, source bindings and negative effect boundaries.
+  - path: "internal/bootstrap/documents_alias_windows_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests actual native-alias external-source write refusal and preserved target bytes through the composed product.
+  - path: "internal/bootstrap/state.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Defines the state directory layout, safe path elements and atomic exclusive or replacing file writes.
+  - path: "internal/bootstrap/lock.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Takes the exclusive operating-system lock that lets only one Apply run on a state directory.
+  - path: "internal/bootstrap/lock_unix.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Locks the state directory with a nonblocking flock.
+  - path: "internal/bootstrap/lock_windows.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Locks the state directory with a nonblocking exclusive file lock.
+  - path: "internal/bootstrap/lock_other.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Refuses state locking on platforms without a supported native locking primitive.
+  - path: "internal/bootstrap/lock_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests one holder at a time, release, and independent state directories.
+  - path: "internal/bootstrap/evidence.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Appends and syncs every run event, names transcript paths and writes the final report under the run's evidence directory.
+  - path: "internal/bootstrap/evidence_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Tests whole synced events under concurrency, refusal after close, safe transcript paths, no overwritten runs and the atomic report.
+  - path: "internal/bootstrap/agents_router.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Routes each turn to the provider adapter of its profile and refuses unrouted profiles without fallback.
+  - path: "internal/bootstrap/agents_router_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies routing by profile, unchanged adapter results and refusal without fallback using fake Agents.
+  - path: "internal/adapters/cli/setup.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Parses the explicit setup invocation, passes no credential bytes and reports the bound identities, the written files with their digests and the exact next apply command.
+  - path: "internal/adapters/cli/setup_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Verifies setup argument parsing, refusal of invalid invocations before any effect, status-driven exit codes and the reported apply command.
+  - path: "internal/bootstrap/setup.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: "Composes setup: profile selection from a structural preview, engine and image observation, validation with the Apply decoder and the metadata preparation, and the guarded write."
+  - path: "internal/bootstrap/setup_files.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Composes the Runtime profile document, checks the credential path without reading it and writes the private Runtime files under the state lock without replacing identical bytes.
+  - path: "internal/bootstrap/setup_runconfig.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface]
+    why: Encodes the closed formatVersion 2 run configuration deterministically and checks it with the decoder that Apply uses.
+  - path: "internal/bootstrap/setup_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface]
+    why: Runs setup end to end against a controlled engine and a sentinel credential and verifies the written files, the decoders, the refusals that leave files untouched and unchanged reruns.
