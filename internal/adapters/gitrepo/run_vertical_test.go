@@ -2,9 +2,11 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"io/fs"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"reflect"
 	"strings"
@@ -13,6 +15,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
+	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -314,7 +317,7 @@ func TestFreshRunManagersReadEarlierClosedRunNotesThroughActualTool(t *testing.T
 	}
 }
 
-func runFixture(t *testing.T) (*testkit.Repo, project.Prepared, *LocalGit, project.CandidateRef) {
+func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, project.Prepared, *LocalGit, project.CandidateRef) {
 	t.Helper()
 	r := testkit.NewRepo(t)
 	r.Git("switch", "-c", "codex/run-fixture")
@@ -346,6 +349,9 @@ func runFixture(t *testing.T) (*testkit.Repo, project.Prepared, *LocalGit, proje
 	r.Write(".markitect/registry/a/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: out/a.txt\n    form: code\n    realizes: [a/Thing]\n    why: Controlled parent artifact.\n  - path: out/accounted.ignored\n    form: code\n    realizes: [a/Thing]\n    why: Accounted Gitignored untracked input must survive capture.\n")
 	// Git permits explicit empty trees; the index does not. The fixture commits
 	// the empty Package as an actual tree, just as the production snapshot does.
+	for _, configure := range configure {
+		configure(r)
+	}
 	r.Commit("committed fixture")
 	ctx := context.Background()
 	tree := r.Git("rev-parse", "HEAD^{tree}")
@@ -853,3 +859,247 @@ func TestDurableCandidateRetentionAndReopenUnderLongPaths(t *testing.T) {
 }
 
 func fixturePathForControlled(s string) snapshot.Path { p, _ := snapshot.NewPath(s); return p }
+
+// This uses real local Git and the unchanged Go command on a disposable exact
+// candidate. The receipt's image identity is controlled; no container is started.
+type aggregateGoChecks struct{}
+
+func (aggregateGoChecks) Check(ctx context.Context, checks []project.ExecutionCheck, copy run.Copy, fixed run.Commit) ([]run.CheckObservation, error) {
+	if len(checks) == 0 {
+		return nil, nil
+	}
+	acquired, err := copy.Inspect(ctx, fixed)
+	if err != nil {
+		return nil, err
+	}
+	raw := acquired.Model().Inputs().Raw
+	dirs, err := project.CheckDirectories(raw)
+	if err != nil {
+		return nil, err
+	}
+	var observed []run.CheckObservation
+	for _, check := range checks {
+		input, err := copy.Materialize(ctx, raw.Census, dirs)
+		if err != nil {
+			return nil, err
+		}
+		command := exec.CommandContext(ctx, "go", check.Args.Value...)
+		command.Dir = filepath.Join(input.Location().Directory, check.Directory.Value.String())
+		command.Env = append(os.Environ(), "GOWORK=off", "GOTOOLCHAIN=local")
+		output, runErr := command.CombinedOutput()
+		closeErr := input.Close(ctx)
+		exit := 0
+		if runErr != nil {
+			var failed *exec.ExitError
+			if !errors.As(runErr, &failed) {
+				return nil, errors.Join(runErr, closeErr)
+			}
+			exit = failed.ExitCode()
+		}
+		if closeErr != nil {
+			return nil, closeErr
+		}
+		receipt := run.CheckReceipt{ID: run.CheckID(check.ID.Value), ImageID: "sha256:" + strings.Repeat("0", 64), Tree: raw.Census.Digest(), Started: true, Exited: true, ExitCode: exit, Output: output, CopiesClosed: true}
+		for _, directory := range dirs {
+			receipt.Directories = append(receipt.Directories, directory.String())
+		}
+		observed = append(observed, run.CheckObservation{ID: check.ID.Value, Commit: fixed.ID, Receipt: receipt})
+	}
+	return observed, nil
+}
+
+type partialLibrarySessions struct {
+	controlled      *controlledManagers
+	libraryAttempts int
+	fail            bool
+}
+type partialLibrarySession struct {
+	run.Session
+	owner *partialLibrarySessions
+	spec  run.SessionSpec
+}
+
+func (s *partialLibrarySessions) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
+	base, err := s.controlled.Open(ctx, spec)
+	if err != nil {
+		return nil, err
+	}
+	return &partialLibrarySession{Session: base, owner: s, spec: spec}, nil
+}
+func (s *partialLibrarySession) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
+	if strings.HasPrefix(message.Task, "Answer pending Manager questions") {
+		return s.Session.Exchange(ctx, message)
+	}
+	feedback := fmt.Sprint(message.Feedback)
+	if strings.Contains(feedback, "check project-tests exited") {
+		if s.spec.Manager.Package != "." {
+			return run.Response{}, fmt.Errorf("project-wide check blocked partial library before handoff: %s", feedback)
+		}
+		return run.Response{Decision: run.Reject, Findings: []run.Finding{{Text: "The exact aggregate Go suite failed; this candidate is not acceptable."}}}, nil
+	}
+	response, err := s.Session.Exchange(ctx, message)
+	if err != nil {
+		return response, err
+	}
+	root := s.spec.Workspace.Location().Directory
+	write := func(name, content string) error {
+		path := filepath.Join(root, filepath.FromSlash(name))
+		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+			return err
+		}
+		return os.WriteFile(path, []byte(content), 0600)
+	}
+	register := func(owner, name string) error {
+		shard := ".markitect/registry/registry.yaml"
+		if owner != "." {
+			shard = ".markitect/registry/" + owner + "/registry.yaml"
+		}
+		path := filepath.Join(root, filepath.FromSlash(shard))
+		content, err := os.ReadFile(path)
+		if errors.Is(err, os.ErrNotExist) {
+			content = []byte("apiVersion: markitect.registry/v1\nartifacts:\n")
+		} else if err != nil {
+			return err
+		}
+		content = []byte(strings.Replace(string(content), "artifacts: []", "artifacts:", 1))
+		form := "code"
+		if strings.HasSuffix(name, "_test.go") {
+			form = "test"
+		}
+		content = append(content, []byte("  - path: "+name+"\n    form: "+form+"\n    realizes: [a/Thing]\n    why: Controlled aggregate Go regression.\n")...)
+		return write(shard, string(content))
+	}
+	switch s.spec.Manager.Package {
+	case "a":
+		s.owner.libraryAttempts++
+		// Root scaffolding and peer code were authored after initial delegation.
+		// They must not appear through live propagation into this private copy.
+		for _, path := range []string{"realization/go.mod", "realization/peer/peer.go"} {
+			if _, err := os.Stat(filepath.Join(root, path)); !errors.Is(err, os.ErrNotExist) {
+				return run.Response{}, fmt.Errorf("partial library unexpectedly has %s: %v", path, err)
+			}
+		}
+		if s.owner.libraryAttempts == 1 {
+			if err := write("realization/library/library_test.go", "package library\nimport (\"testing\"; \"fixture/peer\")\nfunc TestIntegratedPeer(t *testing.T){if peer.Value()!=1{t.Fatal(\"peer integration failed\")}}\n"); err != nil {
+				return response, err
+			}
+			// First submission is deliberately unregistered: structural validation
+			// must still refuse it before a valid partial handoff can reach Root.
+		} else {
+			if !strings.Contains(feedback, "file.unexplained") || !strings.Contains(feedback, "realization/library/library_test.go") {
+				return run.Response{}, fmt.Errorf("missing child structural refusal: %s", feedback)
+			}
+			if err := register("a", "realization/library/library_test.go"); err != nil {
+				return response, err
+			}
+		}
+	case "b":
+		value := "1"
+		if s.owner.fail {
+			value = "2"
+		}
+		if err := write("realization/peer/peer.go", "package peer\nfunc Value()int{return "+value+"}\n"); err != nil {
+			return response, err
+		}
+		if err := register("b", "realization/peer/peer.go"); err != nil {
+			return response, err
+		}
+	case ".":
+		if err := write("realization/go.mod", "module fixture\ngo 1.23\n"); err != nil {
+			return response, err
+		}
+		if err := register(".", "realization/go.mod"); err != nil {
+			return response, err
+		}
+	}
+	return response, nil
+}
+
+// The failing path traverses the actual Apply/Workflow gate and must never
+// reach publication. Assessment still judges the fixed unrealized input.
+type partialLibraryExecutor struct {
+	sessions *partialLibrarySessions
+	git      *LocalGit
+	records  run.Records
+}
+
+func (e partialLibraryExecutor) Execute(ctx context.Context, request run.Request) (run.Result, error) {
+	var sessions run.Sessions = e.sessions
+	if request.Mandate == run.Assessment {
+		sessions = &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}
+	}
+	return (&run.Executor{Sessions: sessions, Workspaces: e.git, Records: e.records, Checks: aggregateGoChecks{}}).Execute(ctx, request)
+}
+
+func TestPartialLibraryHandoffDefersProjectSuiteToExactAggregateRoot(t *testing.T) {
+	for _, fail := range []bool{false, true} {
+		t.Run(fmt.Sprintf("failingRoot=%v", fail), func(t *testing.T) {
+			_, prepared, git, input := runFixture(t, func(r *testkit.Repo) {
+				r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nownership:\n  - {path: './', owner: .}\n  - {path: out/a.txt, owner: a}\n  - {path: out/accounted.ignored, owner: a}\n  - {path: out/deep.txt, owner: a/deep}\n  - {path: realization/library/, owner: a}\n  - {path: realization/peer/, owner: b}\nchecks:\n  - id: project-tests\n    profile: go\n    directory: realization\n    args: [test, ./...]\n    requiredBy: a/Thing\n    timeout: 2m\n")
+			})
+			records, err := runstore.New(git.StateRoot)
+			if err != nil {
+				t.Fatal(err)
+			}
+			sessions := &partialLibrarySessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, fail: fail}
+			request := run.Request{ID: "partial-library", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 100), MessageTimeout: time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+			executor := partialLibraryExecutor{sessions: sessions, git: git, records: records}
+			var result run.Result
+			if fail {
+				publisher := &unexpectedPublisher{}
+				report, applyErr := (&apply.Command{Executor: executor, Candidates: git, Records: records, Publisher: publisher}).Execute(context.Background(), request)
+				result, err = report.Workflow.Final, applyErr
+				if report.Status != model.Failed || report.Publication != nil || publisher.calls != 0 || len(report.Workflow.Runs) != 2 {
+					t.Fatal("failing aggregate crossed Apply publication gate", report.Status, publisher.calls, len(report.Workflow.Runs), applyErr)
+				}
+			} else {
+				result, err = executor.Execute(context.Background(), request)
+			}
+			if err != nil || result.Technical != run.Completed {
+				t.Fatalf("partial handoff did not reach checked aggregate: %s %v", result.Technical, err)
+			}
+			if sessions.libraryAttempts != 2 {
+				t.Fatal("invalid child was not repaired before delivery", sessions.libraryAttempts)
+			}
+			var root run.Handoff
+			for _, h := range result.Handoffs {
+				if h.Manager == "." {
+					root = h
+				}
+				if h.Manager == "a" && (h.Review == nil || h.Review.Decision != run.Approve) {
+					t.Fatal("partial library did not reach parent review", h)
+				}
+			}
+			if len(result.Checks) != 1 || result.Checks[0].Commit != root.Result.ID || result.Checks[0].ID != "project-tests" {
+				t.Fatal("full suite lost exact aggregate binding", result.Checks, root.Result)
+			}
+			check := result.Checks[0].Receipt
+			if !check.CopiesClosed || check.TimedOut || check.Uncertain || (check.ExitCode != 0) != fail {
+				t.Fatal("wrong actual Go observation", check)
+			}
+			if fail {
+				if result.Decision != run.Reject {
+					t.Fatal("failing Root suite yielded acceptance", result.Decision)
+				}
+			} else {
+				if result.Decision != run.Submitted || result.Candidate == nil || result.Candidate.Commit != root.Result.ID {
+					t.Fatal("passing aggregate not retained", result.Decision, result.Candidate)
+				}
+				destination := t.TempDir()
+				if err := git.Reopen(context.Background(), *result.Candidate, destination); err != nil {
+					t.Fatal(err)
+				}
+				for _, name := range []string{"realization/go.mod", "realization/peer/peer.go", "realization/library/library_test.go"} {
+					if _, err := os.Stat(filepath.Join(destination, name)); err != nil {
+						t.Fatal("aggregate missing after closure", name, err)
+					}
+				}
+			}
+			for _, closure := range result.Cleanup {
+				if !closure.Closed {
+					t.Fatal("unclosed resource", closure)
+				}
+			}
+		})
+	}
+}
