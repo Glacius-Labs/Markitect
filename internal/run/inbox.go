@@ -109,14 +109,15 @@ func (x *execution) finishedTask(s *managerState, err error) {
 // change to the already fixed Git handoff.
 func (x *execution) wakeLocked(s *managerState) {
 	x.mu.Lock()
-	needed := !x.closing && x.pendingInputLocked(s.manager.Package)
-	x.mu.Unlock()
+	needed := x.admissionErrorLocked() == nil && x.pendingInputLocked(s.manager.Package)
 	if s.running || !needed || !s.accepting {
+		x.mu.Unlock()
 		return
 	}
 	s.running = true
 	s.idle = make(chan struct{})
 	x.active.Add(1)
+	x.mu.Unlock()
 	go func() {
 		defer x.active.Done()
 		for {
@@ -155,7 +156,13 @@ type sessionResponse struct {
 
 func (x *execution) exchange(s *managerState, m Message) (Response, error) {
 	returned := make(chan sessionResponse, 1)
+	x.mu.Lock()
+	if err := x.admissionErrorLocked(); err != nil {
+		x.mu.Unlock()
+		return Response{}, err
+	}
 	x.calls.Add(1)
+	x.mu.Unlock()
 	go func() {
 		defer x.calls.Done()
 		r, err := s.session.Exchange(x.ctx, m)

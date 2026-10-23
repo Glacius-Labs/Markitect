@@ -3,8 +3,10 @@ package run
 import (
 	"context"
 	"errors"
+	"fmt"
 	"reflect"
 	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -252,5 +254,116 @@ func TestTerminalReceiptCutRejectsLateCallbacksAndDetachesStoredValues(t *testin
 	x.checks[0].Receipt.Directories[0] = "late"
 	if !reflect.DeepEqual(saved, terminal) {
 		t.Fatal("worker collection owns persisted/caller result")
+	}
+}
+
+type admissionSession struct{ calls atomic.Int32 }
+
+func (s *admissionSession) Exchange(context.Context, Message) (Response, error) {
+	s.calls.Add(1)
+	return Response{}, errors.New("unexpected admitted Session")
+}
+func (*admissionSession) Close(context.Context) error { return nil }
+
+type admissionCopy struct {
+	toolFailureCopy
+	entered, release chan struct{}
+}
+
+func (c admissionCopy) Update(context.Context, Copy, Commit) error {
+	close(c.entered)
+	<-c.release
+	return nil
+}
+
+func TestDelegateCannotPublishAssignmentAfterExternalGitReturnsToShutdown(t *testing.T) {
+	for _, correction := range []bool{false, true} {
+		for _, stop := range []string{"closing", "context"} {
+			t.Run(fmt.Sprintf("correction=%v/%s", correction, stop), func(t *testing.T) {
+				x, parent, child := inboxExecution()
+				defer x.cancel()
+				parent.done = make(chan completion, 1)
+				x.request.Mandate = Implement
+				parent.copy = toolFailureCopy{}
+				entered, release := make(chan struct{}), make(chan struct{})
+				child.copy = admissionCopy{entered: entered, release: release}
+				session := &admissionSession{}
+				child.session = session
+				child.assigned = correction
+				child.running = false
+				child.working = false
+				if correction {
+					child.delivered = true
+					child.handoff = Handoff{Manager: "a", Result: Commit{ID: "old", Tree: "old-tree"}, Review: &ParentReview{Decision: Approve}}
+				}
+				before := copyResult(Result{Handoffs: []Handoff{child.handoff}}).Handoffs[0]
+				oldIdle, oldBase := child.idle, child.base
+				returned := make(chan error, 1)
+				go func() {
+					returned <- x.tools(parent).Delegate(context.Background(), "a", "late task", []Finding{{Text: "concrete correction"}})
+				}()
+				<-entered
+				x.mu.Lock()
+				if stop == "closing" {
+					x.closing = true
+				} else {
+					x.cancel()
+				}
+				x.mu.Unlock()
+				close(release)
+				select {
+				case err := <-returned:
+					if err == nil {
+						t.Fatal("late delegation accepted")
+					}
+				case <-time.After(time.Second):
+					t.Fatal("admission kept lock across external Git")
+				}
+				x.active.Wait()
+				x.calls.Wait()
+				child.mu.Lock()
+				defer child.mu.Unlock()
+				if child.assigned != correction || child.running || child.working || child.idle != oldIdle || child.base != oldBase || !reflect.DeepEqual(before, child.handoff) || len(child.inbox) != 0 || session.calls.Load() != 0 {
+					t.Fatal("late delegation changed task state", child.handoff)
+				}
+			})
+		}
+	}
+}
+
+func TestShutdownRefusesWakeWorkerAndExchangeAdmission(t *testing.T) {
+	for _, stop := range []string{"closing", "context"} {
+		t.Run(stop, func(t *testing.T) {
+			x, parent, child := inboxExecution()
+			defer x.cancel()
+			parent.done = make(chan completion, 1)
+			child.running = false
+			child.working = false
+			session := &admissionSession{}
+			child.session = session
+			oldIdle := child.idle
+			x.questions["pending"] = Question{ID: "pending", From: ".", To: "a", Text: "queued question"}
+			x.mu.Lock()
+			if stop == "closing" {
+				x.closing = true
+			} else {
+				x.cancel()
+			}
+			x.mu.Unlock()
+			child.mu.Lock()
+			x.wakeLocked(child)
+			child.mu.Unlock()
+			if err := x.startWorker(child, "late initial worker", nil); err == nil {
+				t.Fatal("late worker admitted")
+			}
+			if _, err := x.exchange(child, Message{Task: "late exchange"}); err == nil {
+				t.Fatal("late Exchange admitted")
+			}
+			x.active.Wait()
+			x.calls.Wait()
+			if child.running || child.working || child.idle != oldIdle || session.calls.Load() != 0 {
+				t.Fatal("shutdown launched native work or changed conversation state")
+			}
+		})
 	}
 }

@@ -104,19 +104,24 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	}
 	var root Handoff
 	if workErr == nil {
+		// Reserve every primary conversation before a child can ask another Manager
+		// a question; wakeups must not start a second initial Exchange in that slot.
+		for _, state := range x.states {
+			state.running = true
+			state.working = true
+		}
+		x.states[organization.Root].assigned = true
 		for _, m := range r.Prepared.Topology().Managers() {
 			if m.Package == organization.Root {
 				continue
 			}
-			state := x.states[m.Package]
-			state.running = true
-			state.working = true
-			x.startWorker(state, "Receive your parent assignment with Await; respond to incoming questions while waiting.", nil)
+			if workErr = x.startWorker(x.states[m.Package], "Receive your parent assignment with Await; respond to incoming questions while waiting.", nil); workErr != nil {
+				break
+			}
 		}
-		x.states[organization.Root].assigned = true
-		x.states[organization.Root].running = true
-		x.states[organization.Root].working = true
-		root, workErr = x.work(x.states[organization.Root], "Complete the bound mandate with your complete Manager hierarchy.", r.Findings)
+		if workErr == nil {
+			root, workErr = x.work(x.states[organization.Root], "Complete the bound mandate with your complete Manager hierarchy.", r.Findings)
+		}
 		x.finishedTask(x.states[organization.Root], workErr)
 		if workErr == nil {
 			done := make(chan struct{})
@@ -193,6 +198,9 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	} else {
 		x.result.Technical = Completed
 	}
+	x.mu.Lock()
+	x.closing = true
+	x.mu.Unlock()
 	x.cancel()
 	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), r.CleanupTimeout)
 	defer cancel()
@@ -314,8 +322,8 @@ func (x *execution) stopPort(err error) {
 	}
 	x.mu.Lock()
 	x.asyncErr = errors.Join(x.asyncErr, err)
-	x.mu.Unlock()
 	x.cancel()
+	x.mu.Unlock()
 }
 
 func (x *execution) tools(s *managerState) Tools {
@@ -391,6 +399,16 @@ func (x *execution) tools(s *managerState) Tools {
 				return err
 			}
 
+			// Git may return after cancellation. Admission and state publication share
+			// the same lock as shutdown and every worker/call registration.
+			x.mu.Lock()
+			if err = ctx.Err(); err == nil {
+				err = x.admissionErrorLocked()
+			}
+			if err != nil {
+				x.mu.Unlock()
+				return err
+			}
 			if target.lateDecision == Reject {
 				target.lateDecision = ""
 			}
@@ -401,6 +419,7 @@ func (x *execution) tools(s *managerState) Tools {
 			target.delivered = false
 			target.handoff.Review = nil
 			if first {
+				x.mu.Unlock()
 				assignment := Assignment{task, append([]Finding(nil), feedback...), base}
 				select {
 				case target.inbox <- Event{Assignment: &assignment}:
@@ -414,7 +433,9 @@ func (x *execution) tools(s *managerState) Tools {
 			target.running = true
 			target.working = true
 			target.idle = make(chan struct{})
-			x.startWorker(target, task, feedback)
+			x.active.Add(1)
+			x.mu.Unlock()
+			x.launchWorker(target, task, feedback)
 			return nil
 		},
 
@@ -648,8 +669,35 @@ func (x *execution) check(s *managerState, commit Commit, required bool) error {
 	return nil
 }
 
-func (x *execution) startWorker(s *managerState, task string, feedback []Finding) {
+// x.mu serializes shutdown with all positive WaitGroup registrations.
+func (x *execution) admissionErrorLocked() error {
+	if err := x.ctx.Err(); err != nil {
+		return err
+	}
+	if x.closing {
+		return fmt.Errorf("%w: Run is closing", ErrObservationIncomplete)
+	}
+	return nil
+}
+func (x *execution) startWorker(s *managerState, task string, feedback []Finding) error {
+	s.mu.Lock()
+	x.mu.Lock()
+	if err := x.admissionErrorLocked(); err != nil {
+		x.mu.Unlock()
+		s.mu.Unlock()
+		return err
+	}
+	s.running = true
+	s.working = true
 	x.active.Add(1)
+	x.mu.Unlock()
+	s.mu.Unlock()
+	x.launchWorker(s, task, feedback)
+	return nil
+}
+
+// launchWorker starts only work already registered under the admission lock.
+func (x *execution) launchWorker(s *managerState, task string, feedback []Finding) {
 	go func() {
 		defer x.active.Done()
 		h, err := x.work(s, task, feedback)
