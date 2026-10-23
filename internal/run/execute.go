@@ -572,7 +572,8 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 			continue
 		}
 		if assignmentReceived {
-			task = "Continue your active assignment under its bound mandate using these Findings. Complete required child delegation and reviews, and resolve pending questions before completing. Continue in this same Session; do not await another initial parent assignment."
+			task = "Continue your active assignment under its bound mandate using these Findings. Complete required child delegation and reviews, and resolve pending questions before completing. Continue in this same Session; do not await another initial parent assignment. " +
+				"This is an active assignment continuation: return a fresh mandate-appropriate judgment after handling these Findings, even if they only resolve pending questions or answers. A judgment from an earlier exchange does not complete this continuation."
 		}
 		for _, child := range s.manager.Children {
 			c := x.states[child]
