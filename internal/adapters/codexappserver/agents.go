@@ -127,6 +127,8 @@ type enginePeer struct{ *container.Session }
 func (*enginePeer) ImageID() string { return "" } // only ownedRuntime reports a confirmed image
 
 type nativeSession struct {
+	judgment                          *run.Response
+	judgmentErr                       error
 	ready                             bool
 	agents                            *Agents
 	spec                              run.SessionSpec
@@ -284,19 +286,19 @@ func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (out 
 		return out, err
 	}
 	t.prompt, t.final, t.turnID = string(payload), "", ""
+	t.judgment, t.judgmentErr = nil, nil
 	if err = t.runTurn(active); err != nil {
 		return out, err
 	}
 	if err = t.drainTerminals(active); err != nil {
 		return out, err
 	}
-	if err = strictValue(t.redact([]byte(t.final)), &out); err != nil {
-		return out, fmt.Errorf("%w: native final response is not the required decision JSON", ErrSession)
+	if t.judgmentErr != nil {
+		return out, t.judgmentErr
 	}
-	switch out.Decision {
-	case run.Approve, run.Reject, run.Submitted, run.ModelBlocker:
-	default:
-		return run.Response{}, ErrSession
+	if t.judgment != nil {
+		out = *t.judgment
+		out.Findings = append([]run.Finding(nil), out.Findings...)
 	}
 	return out, nil
 }
@@ -371,8 +373,6 @@ func (t *nativeSession) startThread(ctx context.Context) error {
 	return nil
 }
 
-const responseSchema = `{"type":"object","properties":{"decision":{"type":"string","enum":["approve","reject","submitted","model_blocker"]},"findings":{"type":"array","items":{"type":"object","properties":{"manager":{"type":"string"},"text":{"type":"string"}},"required":["manager","text"],"additionalProperties":false}}},"required":["decision","findings"],"additionalProperties":false}`
-
 func (t *nativeSession) runTurn(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
@@ -384,7 +384,7 @@ func (t *nativeSession) runTurn(ctx context.Context) error {
 	}
 	t.nextRequest++
 	id := IntegerRequestID(t.nextRequest)
-	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.prompt, Effort: t.profile.Session.Effort, OutputSchema: json.RawMessage(responseSchema)})
+	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.prompt, Effort: t.profile.Session.Effort})
 	if err != nil {
 		return err
 	}
@@ -442,7 +442,20 @@ func (t *nativeSession) answer(ctx context.Context, call frame.ToolCall) error {
 	if raw, err := frame.EncodeToolCall(call); err == nil {
 		t.tr.record("tool-call", raw)
 	}
-	result, err := dispatch(ctx, t.spec.Tools, call.Name, t.redact(call.Arguments))
+	var result string
+	var err error
+	arguments := t.redact(call.Arguments)
+	if call.Name == "judge" {
+		err = t.recordJudgment(arguments)
+		if err != nil {
+			t.judgmentErr = err
+			result = err.Error()
+		} else {
+			result = `{"recorded":true}`
+		}
+	} else {
+		result, err = dispatch(ctx, t.spec.Tools, call.Name, arguments)
+	}
 	content, _ := json.Marshal(struct {
 		Content []map[string]string `json:"content"`
 		IsError bool                `json:"isError"`
@@ -646,6 +659,9 @@ func (t *nativeSession) response(ctx context.Context, id RequestID, method Reque
 			}
 			t.thread = m.Thread()
 		case UnknownNotification:
+			if err := t.notification(m); err != nil {
+				return Response{}, err
+			}
 		default:
 			return Response{}, fmt.Errorf("%w: %s", ErrProtocolUnsupported, m.kind)
 		}
@@ -797,5 +813,23 @@ func (t *nativeSession) drainTerminals(ctx context.Context) error {
 	if len(final.Terminals) != 0 {
 		return fmt.Errorf("%w: native background terminals remain after termination", ErrSession)
 	}
+	return nil
+}
+
+func (t *nativeSession) recordJudgment(raw []byte) error {
+	if err := validateArguments("judge", raw); err != nil {
+		return fmt.Errorf("%w: invalid semantic judgment", ErrSession)
+	}
+	var response run.Response
+	if strictValue(raw, &response) != nil {
+		return ErrSession
+	}
+	if t.judgment != nil {
+		return fmt.Errorf("%w: multiple or contradictory semantic judgments in one message", ErrSession)
+	}
+	if (response.Decision == run.Reject || response.Decision == run.ModelBlocker) && len(response.Findings) == 0 {
+		return fmt.Errorf("%w: negative semantic judgment requires concrete Findings", ErrSession)
+	}
+	t.judgment = &response
 	return nil
 }

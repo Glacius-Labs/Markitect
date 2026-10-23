@@ -1,6 +1,7 @@
 package codexappserver
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -31,12 +32,16 @@ func toolSpecs() []frame.ToolSpec {
 	add("ask", "Ask another Run Manager a question. Returns a new pending ID immediately; use await for its answer and any counter-question.", map[string]any{"to": text, "text": text}, "to", "text")
 	add("reply", "Answer the exact incoming question ID authored by another Manager.", map[string]any{"id": text, "text": text}, "id", "text")
 	add("read_notes", "Read durable project Notes, including earlier Runs. Notes do not override canonical intent.", map[string]any{})
+	add("judge", "Record your actual semantic judgment and concrete Findings for this assignment. Do not include commit IDs. Ordinary question-answer-only messages need no new judgment.", map[string]any{"decision": map[string]any{"type": "string", "enum": []string{"approve", "reject", "model_blocker", "submitted"}}, "findings": finding}, "decision", "findings")
 	add("append_note", "Append a durable observation with its context to shared project Notes. Never include credentials.", map[string]any{"context": text, "text": text}, "context", "text")
 	return out
 }
 func dispatch(ctx context.Context, t run.Tools, name string, raw []byte) (string, error) {
 	var value any
 	var err error
+	if err = validateArguments(name, raw); err != nil {
+		return err.Error(), err
+	}
 	switch name {
 	case "delegate":
 		var a struct {
@@ -91,4 +96,81 @@ func dispatch(ctx context.Context, t run.Tools, name string, raw []byte) (string
 	}
 	data, err := json.Marshal(value)
 	return string(data), err
+}
+
+// Validate the concrete native tool envelope before any callback or durable write.
+// These are closed provider-local inputs, not a general JSON Schema framework.
+func validateArguments(name string, raw []byte) error {
+	var keys []string
+	switch name {
+	case "delegate":
+		keys = []string{"manager", "task", "findings"}
+	case "await", "read_notes":
+		keys = []string{}
+	case "review":
+		keys = []string{"manager", "commit", "decision", "findings"}
+	case "ask":
+		keys = []string{"to", "text"}
+	case "reply":
+		keys = []string{"id", "text"}
+	case "append_note":
+		keys = []string{"context", "text"}
+	case "judge":
+		keys = []string{"decision", "findings"}
+	default:
+		return errUnknownTool
+	}
+	object, err := protocolObject(raw)
+	if err != nil || len(object) != len(keys) {
+		return ErrSession
+	}
+	for _, key := range keys {
+		value, ok := object[key]
+		if !ok {
+			return ErrSession
+		}
+		if key == "findings" {
+			if err = validateFindings(value); err != nil {
+				return err
+			}
+			continue
+		}
+		text, err := protocolString(value)
+		if err != nil {
+			return err
+		}
+		if key == "decision" && !oneOf(text, "approve", "reject", "model_blocker", "submitted") {
+			return ErrSession
+		}
+		if key == "decision" && name == "review" && text == "submitted" {
+			return ErrSession
+		}
+	}
+	return nil
+}
+func validateFindings(raw []byte) error {
+	raw = bytes.TrimSpace(raw)
+	if len(raw) == 0 || raw[0] != '[' {
+		return ErrSession
+	}
+	var items []json.RawMessage
+	if json.Unmarshal(raw, &items) != nil {
+		return ErrSession
+	}
+	for _, item := range items {
+		fields, err := protocolObject(item)
+		if err != nil || len(fields) != 2 {
+			return ErrSession
+		}
+		for _, key := range []string{"manager", "text"} {
+			value, ok := fields[key]
+			if !ok {
+				return ErrSession
+			}
+			if _, err = protocolString(value); err != nil {
+				return err
+			}
+		}
+	}
+	return nil
 }
