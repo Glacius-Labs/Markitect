@@ -39,7 +39,6 @@ type Command struct {
 	revisions   RevisionResolver
 	documents   Documents
 	apply       ApplyFunc
-	setup       SetupFunc
 }
 
 func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc) *Command {
@@ -57,8 +56,6 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
   apply [options]          realize the bound model through reviewed Manager assignments
-  setup --runtime DIR --image REF --credential FILE --agent-model M [options]
-                            prepare a Runtime directory with runtime.yaml and run.json
   version | licenses | help
 
 Common options:
@@ -97,25 +94,6 @@ apply options:
   decision the model lacks ends failed without publication and reports it;
   amend the model and start a new Run.
 
-setup options:
-  --runtime DIR            absolute Runtime directory, outside the repository; created
-                           private and holding runtime.yaml, run.json and state/
-  --image REF              runtime image; its ID and metadata are observed, never started
-  --credential FILE        absolute private Claude runtime token file; checked, never read
-  --check PROFILE=EXECUTABLE  absolute executable in the image for each check profile;
-                           repeat, one per profile the project selects
-  --agent-model M          model of every Agent profile, required (for example claude-haiku-5-5)
-  --effort E               low, medium or high (default high)
-  --engine PATH            container engine executable (default /usr/bin/docker)
-  --store LABEL            repository identity and store label (default: the model id)
-  --request TEXT           owner request (default: a neutral sentence)
-  --deadline RFC3339       absolute UTC wall-clock limit, ending in Z
-  --repo, --model and repeated --dependency select the project as for check.
-  Setup reads the profile names from the working draft, writes the two files
-  deterministically (unchanged files stay) and prints the files with their
-  SHA-256, the bound identities and the exact apply command. It refuses while an
-  Apply holds the state directory.
-
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.
 `
@@ -147,9 +125,6 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 			return 3
 		}
 		return 0
-	}
-	if verb == "setup" {
-		return c.setupVerb(ctx, args[1:], stdout, stderr, emit)
 	}
 	if verb == "apply" {
 		return c.applyVerb(ctx, args[1:], stdout, stderr, emit)

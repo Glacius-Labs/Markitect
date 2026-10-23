@@ -2,7 +2,7 @@
 
 **Target/source boundary, 23 October 2026:** the [approved V1 plan](implementation-plan.md#apply-rebuild-plan) commissions source replacement. The temporary public Apply already uses independent assignments, focused reviews and an Apply-wide Git lifetime. Fresh full-hierarchy Runs and closed-Run publication remain the S2/S3 target. Source implementation approval grants no real execution.
 
-Markitect's current command surface includes deterministic check/context/docs, explicit Apply and Setup during the S1 transition. Extract, Cockpit and interactive authoring are retired. Public Apply temporarily uses independent Manager assignments with focused model assessment/Verify and guarded publication. The [approved V1 plan](implementation-plan.md) replaces that runtime with fresh full-hierarchy Runs; source tests do not establish native readiness or owner acceptance.
+Markitect's current command surface includes deterministic check/context/docs and explicit Apply during the S1 transition. Extract, Cockpit, interactive authoring and Setup are retired. Public Apply temporarily uses independent Manager assignments with focused model assessment/Verify and guarded publication. The [approved V1 plan](implementation-plan.md) replaces that runtime with fresh full-hierarchy Runs; source tests do not establish native readiness or owner acceptance.
 
 **Closed Runs:** no question or answer crosses Root to the user or invoking AI. A material missing decision or contradiction ends Apply without publication; correct the model outside the Run. The [V1 architecture](design/v1-execution-architecture.md) owns the replacement target.
 
@@ -36,26 +36,26 @@ Read the nested `view` in the preview. `canonicalModelDigest` identifies checked
 
 Documentation previews may include explicitly selected external sources. For this increment, `docs --write` requires every acquired model, control and instruction source to have an actual repository binding. Otherwise it returns `not_completed` before effects because target disjointness has not been established. Repository-bound dependencies remain writable; an external source is not silently reclassified or followed through an alternate native spelling.
 
-## Set up a Runtime directory
+## Explicit Runtime and invocation files
 
-`setup` prepares a Runtime directory so that `apply` needs no harness scripts. Build or pull the runtime image first, then run:
+Setup is retired. Copy [runtime-profile.example.yaml](../examples/runtime-profile.example.yaml) and [run.example.json](../examples/run.example.json) into a private Runtime directory outside the repository, then replace every uppercase placeholder. These examples describe the retained S1 decoder contracts; S2/S3 replace that source composition together. They do not freeze provider-dependent V1 contracts.
 
-```text
-go run ./cmd/markitect setup --repo REPOSITORY --runtime ABSOLUTE_RUNTIME_DIR --image IMAGE_REFERENCE --credential ABSOLUTE_TOKEN_FILE --agent-model MODEL --check go=/usr/local/go/bin/go
-```
+- `ENGINE_EXECUTABLE`: the same native absolute engine path in both files. Quote native paths correctly for YAML and JSON; JSON backslashes must be escaped.
+- `IMAGE_ID`: an immutable image ID containing the selected provider, agentd, Git and the declared check executable. `AGENTD_BUILD` and `CODEX_SCHEMA_DIGEST` must match that image's observed `/opt/markitect/runtime.env` metadata.
+- `ACCOUNT_MODEL`: the explicitly selected model for the account. The examples use the profile names `markitect-agent` and `go` from this repository's execution settings; use the exact names your project selects.
+- `ACCOUNT_LOGIN_PATH`: a native absolute path to the selected dedicated normal account-login JSON, outside the repository. The `example-account` reference must match in both files. Native login provisioning, expiry and refresh remain provider-owned capabilities with their own evidence.
+- `STATE_DIRECTORY`: a native absolute state directory outside the repository. `PRODUCT_BUILD`: the exact build assertion for the binary you invoke. For a deterministic manual path, build with `go build -buildvcs=false -o ABSOLUTE_MARKITECT_BINARY ./cmd/markitect` and use that binary's `version` value as `PRODUCT_BUILD`; record the frozen source SHA separately. Invoke that same binary. A binary built with VCS metadata instead uses `VERSION+REVISION`, adding `-modified` for a dirty build; inspect `vcs.revision` and `vcs.modified` with `go version -m ABSOLUTE_MARKITECT_BINARY`.
 
-It reads which Agent profiles and check profiles the project selects from the working draft, so every check profile needs one `--check PROFILE=EXECUTABLE` (the executable inside the image) and an unused one is refused. It asks the container engine for its version and volume-subpath support (Docker 26 or newer), resolves the image to its immutable ID and reads `/opt/markitect/runtime.env` from a created, never started container. It checks the token file's path, type and owner-only mode without opening it; the file must be a regular file outside the repository and its bytes are never read, copied or printed.
+The examples include positive message limits, a non-root workspace helper, finite capture/resource limits and Go cache/temp paths. Choose limits for your actual project. An optional UTC `deadline` may further bound the invocation. Actual preparation uses immutable image observations; missing/incorrect image metadata or profile bindings refuse before Agent work.
 
-The Runtime directory must be outside the repository. Setup creates it private and writes `runtime.yaml` (every Agent profile as a Claude Code profile with the required `--agent-model` (there is no default model) and `--effort`, default `high`; every check profile as a container check on the image, with no `env`) and `run.json` (the [invocation configuration](#invocation-configuration), with `state/` in the same directory). Before writing, it decodes `run.json` as `apply` does and runs `runtime.yaml` through the settings and metadata preparation of `check --metadata --runtime-profile`. Optional `--store`, `--request`, `--deadline` and `--engine` fill the remaining fields; `--model` and `--dependency` select the project as for `check`. Known limit: a check container's `/tmp` holds 64 MiB, and setup cannot yet add `env`, so a Go check whose builds need more room (for example `GOTMPDIR=/home/agent`, as the library demonstration sets) needs that entry added to `runtime.yaml` by hand.
-
-The JSON report lists the bound image ID, agentd and Claude Code versions and engine version, both files with their SHA-256 and whether each was `written` or `unchanged`, and the exact `apply` command to run next. Running setup again with the same inputs changes nothing. It refuses while an Apply holds the state directory. `productBuild` carries the Git revision only for a binary built with `go build` in a checkout; `go run` writes the plain version, so bind frozen runs with a built binary.
+The [example test](../internal/bootstrap/configuration_examples_test.go) consumes these exact files through the real JSON/profile decoders, committed-source preparation and CLI routing. It supplies controlled image observations and stops at the execution port before runtime acquisition. Source validation alone does not qualify native account login or provider behavior.
 
 ## Execute, verify, and apply
 
 Use an existing committed repository, explicit dependency manifests, a Runtime profile document and an absolute invocation configuration path:
 
 ```text
-go run ./cmd/markitect apply --repo REPOSITORY --runtime-profile ABSOLUTE_RUNTIME_YAML --run-config ABSOLUTE_RUN_JSON
+ABSOLUTE_MARKITECT_BINARY apply --repo REPOSITORY --runtime-profile ABSOLUTE_RUNTIME_YAML --run-config ABSOLUTE_RUN_JSON
 ```
 
 `apply` accepts the same `--model` and repeated `--dependency` selections as preparation. It captures committed inputs and passes structural/settings preparation before starting the required independent Manager assignments. Parents delegate, review and integrate fixed Git handoffs; focused model assessment and independent Verify surround Implement. Publication uses the guarded source boundary and never creates a user commit. This temporary composition retains its earlier Apply-wide Git lifetime until S2/S3 replace it. `--revision` and `--metadata` are preview-only options. Missing explicit execution inputs refuse before acquisition; the state-directory lock prevents a second command from acquiring the same state.
@@ -129,7 +129,7 @@ Author the intended canonical v1 model and explicit dependencies, declare the `o
 
 There is no automatic conversion, scaffold or Brownfield runtime. Earlier workflows remain reproducible from their [immutable source](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).
 
-## Record setup and interrupted work
+## Record preparation and interrupted work
 
 Preparation and generated-document operations create no run, task, budget, candidate or execution journal. Preserve their acquisition diagnostics and generated-document completed-path reports. Apply instead uses the explicit state directory and its process lock. There is no journal and no restore: an interrupted Apply (deadline, signal or crash) ends incomplete, and a new Apply starts again from the committed repository, never by resuming earlier assignment copies. Evidence of every run stays under `STATE/runs/`. Preserve it and resolve the reported condition before starting again. No standalone recovery command is exposed here. The state directory must not be inside the repository or contain it.
 

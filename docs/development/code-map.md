@@ -81,7 +81,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 |---|---|---|
 | `internal/adapters/checks` | Check profile metadata and bounded container execution. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/claudecode` | Claude Code stream protocol and one-turn Agent adaptation through the container runtime. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
-| `internal/adapters/cli` | Command parsing and JSON reports for preparation, Apply and owner answers. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/cli` | Command parsing and JSON reports for check, context, docs and explicit Apply. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/codexappserver` | Prepares Codex image metadata and implements one-turn Agents through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |

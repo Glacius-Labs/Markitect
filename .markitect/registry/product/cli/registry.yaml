@@ -1,5 +1,17 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "examples/runtime-profile.example.yaml"
+    form: config
+    realizes: [product/cli/honest-read-only-interface]
+    why: "Provides explicit current-source Agent and Check profiles with account-login reference and operator-filled image, metadata and model values."
+  - path: "examples/run.example.json"
+    form: config
+    realizes: [product/cli/honest-read-only-interface]
+    why: "Provides the closed invocation configuration, finite message bounds and explicit normal account-login mapping without Setup."
+  - path: "internal/bootstrap/configuration_examples_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface, product/apply/read-only-preparation]
+    why: "Consumes the shipped examples through actual configuration decoding, fixed-source settings preparation, profile/check binding and CLI Apply routing with controlled image observations and no runtime acquisition."
   - path: "scripts/run-library-apply.ps1"
     form: code
     realizes: [product/cli/honest-read-only-interface]
@@ -7,11 +19,11 @@ artifacts:
   - path: "internal/adapters/cli/execution.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
-    why: Parses explicit Apply and owner-answer invocations and reports the run, its publication receipt and its evidence directory without admitting previews as execution.
+    why: Parses explicit Apply selection and reports its assignment result, publication receipt and retained evidence without admitting previews as execution.
   - path: "internal/adapters/cli/execution_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface]
-    why: Verifies exact Apply input selection, answer arguments, run reporting, preview refusals and that errors, unpublished runs and incomplete results never become success.
+    why: Verifies exact Apply input selection and reporting, preview refusals and that errors, unpublished work and incomplete results never become success.
   - path: "internal/bootstrap/run_config.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
@@ -140,27 +152,3 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Verifies routing by profile, unchanged adapter results and refusal without fallback using fake Agents.
-  - path: "internal/adapters/cli/setup.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Parses the explicit setup invocation, passes no credential bytes and reports the bound identities, the written files with their digests and the exact next apply command.
-  - path: "internal/adapters/cli/setup_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Verifies setup argument parsing, refusal of invalid invocations before any effect, status-driven exit codes and the reported apply command.
-  - path: "internal/bootstrap/setup.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: "Composes setup: profile selection from a structural preview, engine and image observation, validation with the Apply decoder and the metadata preparation, and the guarded write."
-  - path: "internal/bootstrap/setup_files.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Composes the Runtime profile document, checks the credential path without reading it and writes the private Runtime files under the state lock without replacing identical bytes.
-  - path: "internal/bootstrap/setup_runconfig.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Encodes the closed formatVersion 2 run configuration deterministically and checks it with the decoder that Apply uses.
-  - path: "internal/bootstrap/setup_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Runs setup end to end against a controlled engine and a sentinel credential and verifies the written files, the decoders, the refusals that leave files untouched and unchanged reruns.
