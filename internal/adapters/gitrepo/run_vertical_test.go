@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"testing"
@@ -18,6 +19,133 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
+
+type notesReadingSessions struct {
+	controlled *controlledManagers
+	expected   []run.Note
+	mu         sync.Mutex
+	read       map[string][]run.Note
+}
+type notesReadingSession struct {
+	run.Session
+	owner   *notesReadingSessions
+	spec    run.SessionSpec
+	once    sync.Once
+	readErr error
+}
+
+func (s *notesReadingSessions) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
+	session, err := s.controlled.Open(ctx, spec)
+	if session == nil {
+		return nil, err
+	}
+	return &notesReadingSession{Session: session, owner: s, spec: spec}, err
+}
+func (s *notesReadingSession) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
+	s.once.Do(func() {
+		notes, err := s.spec.Tools.ReadNotes(ctx)
+		if err != nil {
+			s.readErr = err
+			return
+		}
+		var earlier []run.Note
+		for _, note := range notes {
+			if note.Run == s.owner.expected[0].Run {
+				earlier = append(earlier, note)
+			}
+		}
+		if !reflect.DeepEqual(earlier, s.owner.expected) {
+			s.readErr = fmt.Errorf("Manager %s did not read the exact earlier Run Notes", s.spec.Manager.Package)
+			return
+		}
+		s.owner.mu.Lock()
+		s.owner.read[s.spec.Manager.Package] = earlier
+		s.owner.mu.Unlock()
+	})
+	if s.readErr != nil {
+		return run.Response{}, s.readErr
+	}
+	return s.Session.Exchange(ctx, message)
+}
+
+func TestFreshRunManagersReadEarlierClosedRunNotesThroughActualTool(t *testing.T) {
+	_, prepared, git, input := runFixture(t)
+	ctx := context.Background()
+	firstStore, err := runstore.New(git.StateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	firstSessions := &controlledManagers{crossed: make(chan struct{})}
+	request := run.Request{ID: "notes-first", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Assessment, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	first, err := (&run.Executor{Sessions: firstSessions, Workspaces: git, Records: firstStore}).Execute(ctx, request)
+	if err != nil || first.Technical != run.Completed || first.Decision != run.Approve || first.Candidate == nil {
+		t.Fatal(first.Technical, first.Decision, err)
+	}
+	for _, session := range firstSessions.sessions {
+		if !session.closed {
+			t.Fatal("first Run Session still live")
+		}
+		if _, err := os.Stat(session.spec.Workspace.Location().Directory); !os.IsNotExist(err) {
+			t.Fatal("first Run copy survived closure", err)
+		}
+	}
+	// New instances share only durable state, never a Session or workspace.
+	secondStore, err := runstore.New(git.StateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	expected, err := secondStore.Notes(ctx, "fixture")
+	if err != nil || len(expected) != 5 {
+		t.Fatal("first Run Notes unavailable after closure", len(expected), err)
+	}
+	writers := map[string]bool{}
+	for _, note := range expected {
+		if note.ID == "" || note.Project != "fixture" || note.Run != first.ID || note.Context != "controlled test" || note.Text != note.Manager+" participated" || writers[note.Manager] {
+			t.Fatal("first Run Note provenance changed", note)
+		}
+		writers[note.Manager] = true
+	}
+	for _, manager := range prepared.Topology().Managers() {
+		if !writers[manager.Package] {
+			t.Fatal("Manager did not append its attributed Note", manager.Package)
+		}
+	}
+	secondSessions := &notesReadingSessions{controlled: &controlledManagers{crossed: make(chan struct{})}, expected: expected, read: map[string][]run.Note{}}
+	request.ID, request.Mandate, request.Input = "notes-second", run.Verify, *first.Candidate
+	request.Allowance = run.NewAllowance(time.Now().Add(time.Minute), 100)
+	secondGit := &LocalGit{StateRoot: git.StateRoot, TempRoot: git.TempRoot}
+	second, err := (&run.Executor{Sessions: secondSessions, Workspaces: secondGit, Records: secondStore}).Execute(ctx, request)
+	if err != nil || second.Technical != run.Completed || second.Decision != run.Approve {
+		t.Fatal(second.Technical, second.Decision, err)
+	}
+	secondSessions.mu.Lock()
+	defer secondSessions.mu.Unlock()
+	if len(secondSessions.read) != 5 {
+		t.Fatal("fresh complete hierarchy did not read earlier Notes", len(secondSessions.read))
+	}
+	for _, manager := range prepared.Topology().Managers() {
+		if !reflect.DeepEqual(secondSessions.read[manager.Package], expected) {
+			t.Fatal("actual ReadNotes lost earlier provenance", manager.Package)
+		}
+	}
+	fresh, err := runstore.New(git.StateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	all, err := fresh.Notes(ctx, "fixture")
+	if err != nil || len(all) != 10 {
+		t.Fatal("later Run overwrote earlier Notes", len(all), err)
+	}
+	var retained []run.Note
+	for _, note := range all {
+		if note.Run == first.ID {
+			retained = append(retained, note)
+		}
+	}
+	if !reflect.DeepEqual(retained, expected) {
+		t.Fatal("earlier durable Notes changed")
+	}
+}
 
 func runFixture(t *testing.T) (*testkit.Repo, project.Prepared, *LocalGit, project.CandidateRef) {
 	t.Helper()
