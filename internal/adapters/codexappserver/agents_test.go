@@ -9,6 +9,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -830,5 +831,105 @@ func TestFatalNativeHandshakeErrorRetainsPartialHandleAndCloses(t *testing.T) {
 	}
 	if err = session.Close(context.Background()); err != nil || !rt.closed {
 		t.Fatal(err, rt.closed)
+	}
+}
+
+// Exercise the delivered Build document and actual registry preparation, not a
+// second test-only schema or an assertion against an unused instruction helper.
+func TestSessionHarnessAccountingExamplePreparesActualArtifacts(t *testing.T) {
+	spec := testSessionSpec(t)
+	root := spec.Prepared.Selection().Repository
+	write := func(path, content string) {
+		t.Helper()
+		full := filepath.Join(root, filepath.FromSlash(path))
+		if err := os.MkdirAll(filepath.Dir(full), 0o755); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.WriteFile(full, []byte(content), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	commit := func(message string) {
+		t.Helper()
+		testkit.Git(t, root, "add", "--all")
+		testkit.Git(t, root, "commit", "--quiet", "--no-verify", "--message", message)
+	}
+	write(".markitect/model/a/nested/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: Preserve the nested fixture obligation.\nspec: {}\n")
+	commit("nested accounting fixture")
+	repo, err := gitrepo.New(gitrepo.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	selection := spec.Prepared.Selection()
+	service := project.NewPreparationService(project.NewModelService(repo, repo))
+	capture := func() project.CapturedPreparation {
+		t.Helper()
+		result, err := service.Capture(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
+		if err != nil {
+			t.Fatal(err)
+		}
+		return result
+	}
+	initial := capture()
+	a, ok := initial.Prepared()
+	if !ok {
+		t.Fatalf("initial preparation: %s", initial.Status())
+	}
+	p, err := project.Prepare(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, tc := range []struct{ manager, shard, artifact string }{
+		{".", ".markitect/registry/registry.yaml", "realization/root.go"},
+		{"a/nested", ".markitect/registry/a/nested/registry.yaml", "realization/a/nested.go"},
+	} {
+		t.Run(tc.manager, func(t *testing.T) {
+			manager, ok := p.Topology().Manager(tc.manager)
+			if !ok {
+				t.Fatal("checked Manager missing")
+			}
+			doc, err := harness.Build(p, manager, "implement", nil)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !strings.Contains(doc.Developer, "Your registry shard is "+tc.shard+".") || !strings.Contains(doc.Developer, "Registry shards under .markitect/registry/ are writable realization accounting") {
+				t.Fatal("Implement omits owned writable accounting")
+			}
+			_, yaml, found := strings.Cut(doc.Developer, "```yaml\n")
+			if !found {
+				t.Fatal("Implement omits registry shape")
+			}
+			yaml, _, found = strings.Cut(yaml, "```\n")
+			if !found {
+				t.Fatal("registry shape is incomplete")
+			}
+			yaml = strings.NewReplacer("<exact repository-relative file path>", tc.artifact, "<existing Package/ID>", "a/nested/Thing", "<reason this artifact realizes those Definitions>", "Realizes the fixture obligation.").Replace(yaml)
+			write(tc.artifact, "package fixture\n")
+			commit("unregistered artifact")
+			if got := capture(); got.Status() != model.Failed {
+				t.Fatalf("unregistered artifact accepted: %s", got.Status())
+			} else {
+				attempts := got.Attempts()
+				accounting, available := attempts[len(attempts)-1].Files().Accounting()
+				unexplained := false
+				for _, finding := range accounting.Findings() {
+					unexplained = unexplained || finding.Code == "file.unexplained" && finding.Path.String() == tc.artifact
+				}
+				if !available || !unexplained {
+					t.Fatalf("missing actual unexplained artifact finding: %+v", accounting.Findings())
+				}
+			}
+			write(tc.shard, yaml)
+			commit("register artifact using delivered example")
+			if got := capture(); got.Status() != model.Passed {
+				t.Fatalf("delivered registry example rejected: %s %+v", got.Status(), got.Attempts())
+			}
+			for _, mandate := range []string{"assessment", "verify"} {
+				review, err := harness.Build(p, manager, mandate, nil)
+				if err != nil || strings.Contains(review.Developer, "Artifact accounting for Implement") {
+					t.Fatalf("review mandate received repair instructions: %s %v", mandate, err)
+				}
+			}
+		})
 	}
 }
