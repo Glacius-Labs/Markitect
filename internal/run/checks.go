@@ -2,11 +2,42 @@ package run
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"strings"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
+
+// ValidateCheckObservations is shared by fixed Run and publication checkpoints.
+// A physical observation failure remains technical; a known nonzero exit is
+// candidate invalidity and cannot be waived by an approval.
+func ValidateCheckObservations(declarations []project.ExecutionCheck, observed []CheckObservation, fixed Commit, tree snapshot.Tree, dirs []snapshot.Path) error {
+	expected := map[string]bool{}
+	var invalid error
+	for _, d := range declarations {
+		expected[d.ID.Value] = true
+	}
+	for _, c := range observed {
+		r := c.Receipt
+		if !expected[c.ID] || c.Commit != fixed.ID || r.ID != CheckID(c.ID) || r.Tree != tree.Digest() || !sameDirectories(r.Directories, dirs) {
+			return fmt.Errorf("%w: check %s fixed identity, directory inventory or multiplicity mismatch", ErrObservationIncomplete, c.ID)
+		}
+		if !r.Started || !r.Exited || r.Uncertain || r.TimedOut || !r.CopiesClosed || !imageIdentity(r.ImageID) || c.Error != "" {
+			return fmt.Errorf("%w: check %s physical observations", ErrObservationIncomplete, c.ID)
+		}
+		if r.ExitCode != 0 {
+			invalid = errors.Join(invalid, fmt.Errorf("%w: check %s exited %d", project.ErrCandidateInvalid, c.ID, r.ExitCode))
+		}
+		delete(expected, c.ID)
+	}
+	if len(expected) != 0 {
+		return fmt.Errorf("%w: declared check observations incomplete", ErrObservationIncomplete)
+	}
+	return invalid
+}
 
 // CheckID is the Orchestrator's identity of one check run.
 type CheckID string

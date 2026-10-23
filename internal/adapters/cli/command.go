@@ -56,7 +56,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply [options]          unavailable until V1 workflow/publication composition (S3)
+  apply [options]          closed Assessment, Implement, Verify and guarded publication
   version | licenses | help
 
 Common options:
@@ -87,9 +87,9 @@ apply options:
   Configuration formatVersion 3 requires a UTC deadline, Manager/message
   limits, message timeout, cleanup/persistence bounds, state/build assertions
   and dedicated normal-account credentials. No helper/harvest or API-key route.
-  At S2 Apply reports unavailable and creates no execution resources.
+  Apply preflight binds committed inputs and one explicit Codex account profile.
   Standalone Run has a closed hierarchy: questions remain inside that Run.
-  S3 must integrate the full workflow and stored-candidate publication.
+  Publication requires stored Verify approval after all Run resources close.
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.

@@ -654,6 +654,9 @@ func TestObserveImageFileStillReportsAnEngineCopyFailure(t *testing.T) {
 
 func TestObserveImageFileKeepsTheEnginesOwnReasonWhenItStopsTheCopy(t *testing.T) {
 	wrong := imageArchive(t, tar.Header{Name: "check", Typeflag: tar.TypeSymlink, Linkname: "elsewhere"}, "", false)
+	// Keep stdout larger than a pipe buffer: rejecting its first header must
+	// interrupt the producer, while its already-emitted diagnostic survives.
+	wrong = append(wrong, make([]byte, 1<<20)...)
 	e, _ := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{Out: string(wrong), Err: "no such file", LingerMillis: 20000}, engineStep{})
 	_, err := e.ObserveImageFile(context.Background(), commandImage, "/check", 100)
 	if err == nil || !strings.Contains(err.Error(), "needs exactly regular file") || !strings.Contains(err.Error(), "no such file") || strings.Contains(err.Error(), "killed") {

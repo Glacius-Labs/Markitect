@@ -645,6 +645,15 @@ func (w *Root) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, 
 }
 
 func (w *Root) LockWriter() (func(), error) {
+	// V1 administrative files are excluded from the complete source Census.
+	if manifest, err := w.Lstat(".markitect/model.yaml"); err == nil {
+		if IsReparsePoint(manifest) || !manifest.Mode().IsRegular() {
+			return nil, errors.New("V1 model manifest must be a regular file before selecting its writer lock")
+		}
+		return w.lockWriterAt(".markitect/state", "write.lock")
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("inspect V1 model manifest before selecting writer lock: %w", err)
+	}
 	lockDirectory := ".artifacts/markitect"
 	manifest, err := w.Lstat(".markitect/project.yaml")
 	if err == nil {

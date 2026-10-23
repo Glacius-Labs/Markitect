@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/workflow/apply.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Selects full closed Assessment, Implement and Verify Runs with shared allowance and mandatory correction Findings."
   - path: "internal/apply/README.md"
     form: doc
     realizes: [product/ports-and-adapters, product/apply/read-only-preparation]

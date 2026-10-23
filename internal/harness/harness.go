@@ -110,13 +110,21 @@ func Build(p project.Prepared, manager organization.Manager, mandate string, fin
 			}
 		}
 	}
-	b.WriteString("\nMandate duties: assessment examines realization needs without implementing; implement realizes and repairs; verify independently judges the fixed candidate. Every mandate uses the full hierarchy. Delegate direct children; review a fixed child commit by ID and accept or reject it with Findings. Await supplies tasks, questions, answers and child handoffs. Finish only after your required child work and inbox obligations are handled.\n")
-	if mandate == "implement" {
-		b.WriteString("Assignment judgment for this Implement mandate: every Manager including Root uses submitted for completed candidate work. Use reject or model_blocker with concrete Findings when warranted. Your own judge decision cannot be approve; parent review of a fixed child commit may approve it. Run aggregates the reviewed hierarchy's outcome and does not grant publication authority.\n")
-	} else {
-		b.WriteString("Assignment judgment for this review mandate: use approve or reject for the examined realization, or model_blocker for a material model defect. Reject and model_blocker require concrete Findings. Do not use submitted; review scratch edits never become the product candidate.\n")
-	}
+	b.WriteString("\nEvery mandate uses the full hierarchy. Delegate direct children; review a fixed child commit by ID and accept or reject it with Findings. Await supplies tasks, questions, answers and child handoffs. Finish only after your required child work and inbox obligations are handled.\n")
+	b.WriteString(mandateDuties(mandate))
 	return Document{Base: Rules, Developer: b.String()}, nil
+}
+
+func mandateDuties(mandate string) string {
+	switch mandate {
+	case "assessment":
+		return "Assessment examines the checked model's consistency, sufficiency and realizability with the full Manager hierarchy, without implementing. Missing or outdated artifacts are realization needs: report them as Findings; they are not grounds to reject model readiness. Assignment judgment for Assessment: use approve or reject for model readiness. Approve does not certify artifact conformity. An approved Assessment always proceeds through Implement, even when no artifact changes are needed. Material unresolved model decisions require model_blocker with concrete Findings. Reject also requires concrete Findings. Do not use submitted; review scratch edits never become the product candidate.\n"
+	case "implement":
+		return "Assignment judgment for this Implement mandate: every Manager including Root uses submitted for completed candidate work. Use reject or model_blocker with concrete Findings when warranted. Your own judge decision cannot be approve; parent review of a fixed child commit may approve it. Run aggregates the reviewed hierarchy's outcome and does not grant publication authority.\n"
+	case "verify":
+		return "Verify independently judges the fixed candidate's conformity to the checked model with the full Manager hierarchy. Do not repair the candidate during Verify. Realization Findings are returned to the host for a fresh Implement Run followed by a fresh Verify; you do not perform that repair in this Run. Assignment judgment for Verify: use approve or reject for the examined realization, or model_blocker for a material model defect. Reject and model_blocker require concrete Findings. Do not use submitted; review scratch edits never become the product candidate.\n"
+	}
+	return ""
 }
 
 // Digest binds exactly the native instruction strings, including provider profile

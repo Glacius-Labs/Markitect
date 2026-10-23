@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/run/check_observations_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Refuses substituted or incomplete fixed-candidate receipt identities, directory inventory, exits and closure at Run and publication checkpoints."
   - path: "experiments/apply-trials/night_run_test.py"
     form: test
     realizes: [product/run/confirmed-run-history]

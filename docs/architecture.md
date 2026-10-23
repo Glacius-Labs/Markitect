@@ -2,13 +2,15 @@
 
 **Current scope and proposed architecture, 23 October 2026:** the [latest owner instruction](concepts/sources/v1-scope-clarification-20261023.md) and [accepted V1 architecture](design/v1-execution-architecture.md) govern the [approved source implementation](concepts/sources/v1-source-implementation-approval-20261023.md). Full hierarchy in every mandate; runtime replacement is permitted; Extract/UI/authoring migration is excluded. The [counter-review](development/v1-architecture-audit-20261023.md) describes actual Main and the [plan](implementation-plan.md) owns coordinated source implementation and separate native execution gates. Remaining sections describe earlier source/design and impose no conflicting preservation requirement.
 
-## Current S2 source composition
+<a id="current-s2-source-composition"></a>
+
+## Current S3 source composition
 
 `cmd/markitect -> bootstrap -> CLI -> Project` supplies structural check/context and the guarded generated model view. Optional `runtimeconfig` preparation observes acquired static native/check profiles. It does not resolve model roles, strategies or execution budgets.
 
 The standalone Run consumes the complete checked Project hierarchy and direct Session, Git, check and record ports. Every mandate uses fresh Manager environments, exact reviewed child commits, asynchronous questions and durable Notes/candidates/results. `gitrepo.LocalGit` preserves the complete Census and explicit empty model directories in independently reopened Git bundles; `runstore` persists terminal records and concurrent Notes. [Run](../internal/run/README.md) describes source evidence and its limits.
 
-At this intermediate boundary CLI Apply returns unavailable before acquiring execution resources. The old runtime has no fallback path. S3 owns the complete workflow and stored-candidate publication. Native transport and provider qualification require their own bounded real evidence; controlled local Sessions do not establish that capability.
+Apply performs structural and target preflight, then Workflow sequences complete fresh Assessment, Implement and Verify Runs. Shared limits remain unchanged across correction Runs. After all Run resources close, Apply independently reopens stored Verify approval and host Git reconstructs and guards publication; declared publication checks receive fresh Linux copies. The old runtime has no fallback path. Native transport and provider qualification require their own bounded real evidence; controlled local Sessions do not establish that capability.
 
 ## Historical architecture and source descriptions
 
@@ -16,7 +18,7 @@ Everything below is retained source/design history. It is not the current V1 imp
 
 **Target/source boundary, 22 October 2026:** the owner accepted [Agent workspaces and reviewed handoffs](design/canonical-model/manager-apply-workflow.md) and its [documentation-only rebuild plan](implementation-plan.md#apply-rebuild-plan). The target uses one container/working copy per Agent assignment, reviewed Git handoffs and no domain Turns or required per-write enforcement. The executable instructions below describe the existing Pass implementation until migrated; they do not make the target available.
 
-Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. Current source implements complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), the selected `direct` work composition (Implement) or `staged` one (Plan, Prepare and Implement) and Verify as one recursive Pass process, plus a first Extract on the same process. Reliability and acceptance of that implementation remain unestablished; DEC-067 is an accepted replacement target awaiting implementation. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
+Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. The historical pre-V1 source implemented complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), the selected `direct` work composition (Implement) or `staged` one (Plan, Prepare and Implement) and Verify as one recursive Pass process, plus a first Extract on the same process. Reliability and acceptance of that implementation remain unestablished; DEC-067 subsequently replaced that runtime in the current S3 source. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
 
 ## Product flow
 

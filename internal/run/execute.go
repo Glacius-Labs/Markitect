@@ -173,7 +173,9 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		}
 		// Review scratch edits never become product. Invalid input can be rejected.
 		if r.Mandate != Implement {
-			checkErr := x.check(x.states[organization.Root], fixed, true)
+			// Assessment judges model readiness before realization exists. Keep
+			// fixed structural validation, but do not demand passing product tests.
+			checkErr := x.check(x.states[organization.Root], fixed, r.Mandate == Verify)
 			if checkErr != nil && (root.Decision == Approve || !errors.Is(checkErr, project.ErrCandidateInvalid)) {
 				workErr = checkErr
 			}
@@ -638,33 +640,11 @@ func (x *execution) check(s *managerState, commit Commit, required bool) error {
 		if checkErr != nil {
 			return checkErr
 		}
-		expected := map[string]bool{}
-		for _, d := range declarations {
-			expected[d.ID.Value] = true
+		dirs, err := project.CheckDirectories(a.Model().Inputs().Raw)
+		if err != nil {
+			return err
 		}
-		for _, c := range observed {
-			if !expected[c.ID] || c.Commit != commit.ID || c.Receipt.ID != CheckID(c.ID) || c.Receipt.Tree != a.Model().Inputs().Raw.Census.Digest() {
-				return fmt.Errorf("check %s did not pass exactly once on fixed commit", c.ID)
-			}
-			receipt := c.Receipt
-			dirs, err := project.CheckDirectories(a.Model().Inputs().Raw)
-			if err != nil {
-				return err
-			}
-			if !sameDirectories(receipt.Directories, dirs) {
-				return fmt.Errorf("%w: check directory inventory changed", ErrObservationIncomplete)
-			}
-			if !receipt.Started || !receipt.Exited || receipt.Uncertain || receipt.TimedOut || !receipt.CopiesClosed || !imageIdentity(receipt.ImageID) || c.Error != "" {
-				return fmt.Errorf("%w: check %s", ErrObservationIncomplete, c.ID)
-			}
-			if receipt.ExitCode != 0 {
-				return fmt.Errorf("%w: check %s exited %d", project.ErrCandidateInvalid, c.ID, receipt.ExitCode)
-			}
-			delete(expected, c.ID)
-		}
-		if len(expected) != 0 {
-			return fmt.Errorf("declared check observations incomplete")
-		}
+		return ValidateCheckObservations(declarations, observed, commit, a.Model().Inputs().Raw.Census, dirs)
 	}
 	return nil
 }

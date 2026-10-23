@@ -155,6 +155,12 @@ type sessionResponse struct {
 }
 
 func (x *execution) exchange(s *managerState, m Message) (Response, error) {
+	messageContext := x.ctx
+	cancel := func() {}
+	if x.request.MessageTimeout > 0 {
+		messageContext, cancel = context.WithTimeout(x.ctx, x.request.MessageTimeout)
+	}
+	defer cancel()
 	returned := make(chan sessionResponse, 1)
 	x.mu.Lock()
 	if err := x.admissionErrorLocked(); err != nil {
@@ -165,14 +171,17 @@ func (x *execution) exchange(s *managerState, m Message) (Response, error) {
 	x.mu.Unlock()
 	go func() {
 		defer x.calls.Done()
-		r, err := s.session.Exchange(x.ctx, m)
+		r, err := s.session.Exchange(messageContext, m)
 		returned <- sessionResponse{r, err}
 	}()
 	select {
 	case r := <-returned:
+		if err := messageContext.Err(); err != nil {
+			return Response{}, err
+		}
 		return r.response, r.err
-	case <-x.ctx.Done():
-		return Response{}, x.ctx.Err()
+	case <-messageContext.Done():
+		return Response{}, messageContext.Err()
 	}
 }
 

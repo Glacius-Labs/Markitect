@@ -16,7 +16,7 @@ import (
 const GuardedWritePackage = "internal/tooling/guardedwrite"
 
 var guardedWriteAPI = map[string]bool{
-	"OpenRoot": true, "CaptureFiles": true, "ApplyOrderedChecked": true, "Change": true, "Result": true,
+	"OpenRoot": true, "CaptureFiles": true, "CaptureV1Files": true, "ApplyOrderedChecked": true, "Change": true, "Result": true,
 }
 
 // CheckRepository runs every import rule over the repository at root: the

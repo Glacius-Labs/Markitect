@@ -19,7 +19,7 @@ docs/markitect/project.md    official generated readable view
 
 Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Runtime profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
 
-Standalone Run keeps durable candidates, terminal records and project Notes outside the repository in the explicitly selected state root. Temporary Manager and Git environments close before successful return; stored data can be reopened independently. See the [Run](../internal/run/README.md) and [workspace service](../internal/adapters/gitrepo/WORKSPACES.md). Public Apply is unavailable until S3 and Extract is retired. Read-only preparation creates no Run state.
+Standalone Run keeps durable candidates, terminal records and project Notes outside the repository in the explicitly selected state root. Temporary Manager and Git environments close before successful return; stored data can be reopened independently. See the [Run](../internal/run/README.md) and [workspace service](../internal/adapters/gitrepo/WORKSPACES.md). S3 source composes public Apply, independently reopened stored Verify approval and guarded publication. Native Apply qualification remains separate and Extract is retired. Read-only preparation creates no Run state.
 
 ## Ownership and boundaries
 
@@ -41,7 +41,8 @@ internal/project/             structural preparation and candidate validation
 internal/run/                 closed complete Manager hierarchy and its ports
 internal/runtimeconfig/       acquired static native/check profile envelopes
 internal/harness/             pure model-derived native instructions
-internal/apply/               unavailable public Apply boundary until S3
+internal/apply/               command preflight, closed workflow and durable publication
+internal/workflow/            direct complete Assessment, Implement and Verify sequence
 internal/modeldocs/           generated view and write plan
 internal/adapters/            explicit repository/profile/document adapters
 internal/bootstrap/           actual product composition
