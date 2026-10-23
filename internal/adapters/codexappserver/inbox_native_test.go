@@ -49,10 +49,10 @@ type nativeInboxProbe struct {
 	observed             nativeInboxEvidence
 }
 
-func newNativeInboxProbe(task, answer string) *nativeInboxProbe {
+func newNativeInboxProbe(task, answer, q2 string) *nativeInboxProbe {
 	return &nativeInboxProbe{task: "task-" + task, answer: "synthetic-answer-" + answer,
-		q1: "synthetic-Q1", q2: "synthetic-Q2",
-		observed: nativeInboxEvidence{SyntheticCounterpart: true, Q1: "synthetic-Q1", Q2: "synthetic-Q2"}}
+		q1: "synthetic-Q1", q2: q2,
+		observed: nativeInboxEvidence{SyntheticCounterpart: true, Q1: "synthetic-Q1", Q2: q2}}
 }
 
 func (*nativeInboxProbe) instructions() string {
@@ -220,6 +220,33 @@ func inboxFixtureCalls(p *nativeInboxProbe) []frame.ToolCall {
 	}
 }
 
+func TestInboxProbeDisclosesOpaqueCounterQuestionIDOnlyThroughAwait(t *testing.T) {
+	p := newNativeInboxProbe("task", "answer", smokeToken(t))
+	toolBytes, err := json.Marshal(p.tools())
+	if err != nil {
+		t.Fatal(err)
+	}
+	ask := p.handle(context.Background(), "inbox_ask", json.RawMessage(`{"to":"synthetic-counterpart","text":"question"}`))
+	if ask.Refused || strings.Contains(p.instructions()+string(toolBytes)+ask.Text, p.q2) {
+		t.Fatal("counter-question ID disclosed before Await")
+	}
+	await := p.handle(context.Background(), "inbox_await", json.RawMessage(`{}`))
+	var event struct {
+		Question *struct{ ID, From, To, Text string }
+	}
+	if await.Refused || strictValue([]byte(await.Text), &event) != nil || event.Question == nil || event.Question.ID != p.q2 {
+		t.Fatal("Await did not deliver the opaque counter-question ID")
+	}
+	// Echo only the received event's ID, as the native Manager must do.
+	reply, err := json.Marshal(map[string]string{"id": event.Question.ID, "text": p.task})
+	if err != nil || p.handle(context.Background(), "inbox_reply", reply).Refused {
+		t.Fatal("reply to the actually delivered question refused")
+	}
+	if p.handle(context.Background(), "inbox_await", json.RawMessage(`{}`)).Refused {
+		t.Fatal("original answer not released after correctly correlated reply")
+	}
+}
+
 // These deterministic checks protect the probe's oracle from false positives;
 // they supply no inference, engine or two-Manager evidence.
 func TestInboxProbeRejectsWrongOrderCorrelationAndPayload(t *testing.T) {
@@ -234,12 +261,14 @@ func TestInboxProbeRejectsWrongOrderCorrelationAndPayload(t *testing.T) {
 		{"duplicate-key", 0, "inbox_ask", `{"to":"synthetic-counterpart","text":"question","text":"other"}`},
 		{"answer-before-native-reply", 2, "inbox_await", `{}`},
 		{"foreign-question", 2, "inbox_reply", `{"id":"synthetic-Q1","text":"task-task"}`},
-		{"wrong-native-answer", 2, "inbox_reply", `{"id":"synthetic-Q2","text":"wrong"}`},
-		{"duplicate-reply", 3, "inbox_reply", `{"id":"synthetic-Q2","text":"task-task"}`},
+		{"predicted-old-id", 2, "inbox_reply", `{"id":"synthetic-Q2","text":"task-task"}`},
+		{"stale-question-id", 2, "inbox_reply", `{"id":"previous-q2-nonce","text":"task-task"}`},
+		{"wrong-native-answer", 2, "inbox_reply", `{"id":"current-q2-nonce","text":"wrong"}`},
+		{"duplicate-reply", 3, "inbox_reply", `{"id":"current-q2-nonce","text":"task-task"}`},
 		{"extra-call", 4, "inbox_await", `{}`},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			p := newNativeInboxProbe("task", "answer")
+			p := newNativeInboxProbe("task", "answer", "current-q2-nonce")
 			calls := inboxFixtureCalls(p)
 			for _, c := range calls[:tc.before] {
 				if p.handle(context.Background(), c.Name, c.Arguments).Refused {
@@ -254,7 +283,7 @@ func TestInboxProbeRejectsWrongOrderCorrelationAndPayload(t *testing.T) {
 			}
 		})
 	}
-	p := newNativeInboxProbe("task", "answer")
+	p := newNativeInboxProbe("task", "answer", "current-q2-nonce")
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
 	if !p.handle(ctx, "inbox_ask", inboxFixtureCalls(p)[0].Arguments).Refused {
@@ -265,7 +294,7 @@ func TestInboxProbeRejectsWrongOrderCorrelationAndPayload(t *testing.T) {
 func TestInboxProbeBindsActualTranscriptThreadAndReplies(t *testing.T) {
 	for _, mode := range []string{"valid", "foreign-thread", "duplicate-call", "foreign-reply", "missing-reply", "missing-recall"} {
 		t.Run(mode, func(t *testing.T) {
-			p := newNativeInboxProbe("task", "answer")
+			p := newNativeInboxProbe("task", "answer", "current-q2-nonce")
 			p.observed.Thread, p.observed.RetainedTask = "thread-actual", mode != "missing-recall"
 			var transcript bytes.Buffer
 			appendEntry := func(direction string, data []byte) {

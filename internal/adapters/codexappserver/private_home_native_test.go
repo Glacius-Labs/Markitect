@@ -149,7 +149,8 @@ func runPrivateNativeProbe(t *testing.T, inboxMode bool) {
 	profile.DeveloperInstructions = "On each message call native_receipt exactly once with instruction equal to " + canary + ". On a later message include the recall value from the preceding tool response."
 	var inbox *nativeInboxProbe
 	if inboxMode {
-		inbox = newNativeInboxProbe(smokeToken(t), smokeToken(t))
+		// Independent opaque Q2 ID is disclosed only in Await's actual Question.
+		inbox = newNativeInboxProbe(smokeToken(t), smokeToken(t), smokeToken(t))
 		profile.DeveloperInstructions = inbox.instructions()
 	}
 	effective, _ := json.Marshal(profile)
