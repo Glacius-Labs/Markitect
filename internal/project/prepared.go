@@ -211,9 +211,6 @@ func candidateStructuralError(a PreviewPreparationAttempt) error {
 	for _, d := range a.Model().Checked().Diagnostics {
 		add(d.Code, d.Source.Path, d.Message)
 	}
-	for _, d := range a.Execution().Diagnostics() {
-		add(d.Code, d.Source.File, d.Message)
-	}
 	for _, d := range a.Contexts().Diagnostics() {
 		add(d.Code, "", d.Message)
 	}
