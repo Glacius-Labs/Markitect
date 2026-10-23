@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/codexappserver/inbox_native_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: "Prepares an explicitly activated finite same-session Codex MCP inbox probe with a synthetic counterpart, counter-question/reply correlation, retained task and actual transcript checks; default tests validate its refusal oracle without engine or provider execution."
   - path: "internal/adapters/codexappserver/assignment_review_transport_test.go"
     form: test
     realizes: [product/ports-and-adapters, product/organization/delegated-context]
