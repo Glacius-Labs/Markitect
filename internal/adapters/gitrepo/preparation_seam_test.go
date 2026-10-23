@@ -5,7 +5,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
@@ -15,20 +15,20 @@ import (
 // same actual Git adapter. No source, classification or accounting is invented.
 type recordingPreparationGit struct {
 	repository      *Repository
-	captureRequests []apply.CaptureRequest
-	captures        []apply.CapturedInputs
-	previewRequests []apply.PreviewRequest
-	previews        []apply.PreviewedInputs
+	captureRequests []project.CaptureRequest
+	captures        []project.CapturedInputs
+	previewRequests []project.PreviewRequest
+	previews        []project.PreviewedInputs
 }
 
-func (r *recordingPreparationGit) Capture(ctx context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
+func (r *recordingPreparationGit) Capture(ctx context.Context, request project.CaptureRequest) (project.CapturedInputs, error) {
 	inputs, err := r.repository.Capture(ctx, request)
 	r.captureRequests = append(r.captureRequests, request)
 	r.captures = append(r.captures, inputs)
 	return inputs, err
 }
 
-func (r *recordingPreparationGit) CapturePreview(ctx context.Context, request apply.PreviewRequest) (apply.PreviewedInputs, error) {
+func (r *recordingPreparationGit) CapturePreview(ctx context.Context, request project.PreviewRequest) (project.PreviewedInputs, error) {
 	inputs, err := r.repository.CapturePreview(ctx, request)
 	r.previewRequests = append(r.previewRequests, request)
 	r.previews = append(r.previews, inputs)
@@ -51,14 +51,14 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 					wantCalls = 2
 				}
 				port := &recordingPreparationGit{repository: adapter(t)}
-				service := apply.NewPreparationService(apply.NewModelService(port, port))
-				var raw apply.RawInputs
+				service := project.NewPreparationService(project.NewModelService(port, port))
+				var raw project.RawInputs
 				var checked model.Result
-				var execution apply.AuthoredExecution
+				var execution project.AuthoredExecution
 				var accounting realization.Accounting
 				var contexts []organization.ContextSelection
 				if mode == "capture" {
-					request := apply.CaptureRequest{Selection: selection}
+					request := project.CaptureRequest{Selection: selection}
 					result, err := service.Capture(context.Background(), request, model.Limits{})
 					prepared, available := result.Prepared()
 					if err != nil || result.Status() != model.Passed || !available || !reflect.DeepEqual(result.Request(), request) || len(port.captures) != wantCalls || len(port.previews) != 0 || len(result.Attempts()) != wantCalls {
@@ -88,7 +88,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 						assertOriginalPreparationGap(t, port.captures[0].Raw, raw)
 					}
 				} else {
-					request := apply.PreviewRequest{Selection: selection}
+					request := project.PreviewRequest{Selection: selection}
 					if mode == "fixed" {
 						request.Revision = head
 					}
@@ -123,7 +123,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 				if checked.Status != model.Passed || len(checked.Models) != 3 || !checked.Models[0].Local || len(checked.Models[0].Definitions) != 22 || accounting.Status() != realization.Accounted || accounting.TreeID() != raw.Census.Digest() || len(accounting.Files()) != len(raw.Census.Entries()) || len(accounting.Findings()) != 0 {
 					t.Fatal("actual M1/Vocabulary/Core Model check or complete Census accounting missing")
 				}
-				if raw.Local.Selection != selection.Local || !reflect.DeepEqual([]apply.ModelSelection{raw.Dependencies[0].Selection, raw.Dependencies[1].Selection}, selection.Dependencies) {
+				if raw.Local.Selection != selection.Local || !reflect.DeepEqual([]project.ModelSelection{raw.Dependencies[0].Selection, raw.Dependencies[1].Selection}, selection.Dependencies) {
 					t.Fatal("explicit model/dependency boundaries changed")
 				}
 				assertPreparationFileClosure(t, raw)
@@ -150,7 +150,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 	}
 }
 
-func assertOriginalPreparationGap(t *testing.T, first, last apply.RawInputs) {
+func assertOriginalPreparationGap(t *testing.T, first, last project.RawInputs) {
 	t.Helper()
 	if len(first.Registry) != 0 || len(first.Ignore) != 0 || len(first.Instructions) != 0 || len(first.Execution) != 1 {
 		t.Fatal("earlier actual Raw gained later selected files")
@@ -165,10 +165,10 @@ func assertOriginalPreparationGap(t *testing.T, first, last apply.RawInputs) {
 	}
 }
 
-func assertPreparationFileClosure(t *testing.T, raw apply.RawInputs) {
+func assertPreparationFileClosure(t *testing.T, raw project.RawInputs) {
 	t.Helper()
 	for _, group := range []struct {
-		files []apply.SourceFile
+		files []project.SourceFile
 		paths []string
 	}{
 		{raw.Execution, []string{".markitect/execution.yaml"}},

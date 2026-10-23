@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
@@ -40,20 +40,20 @@ func TestActualLibraryRootDotPreservesInventoryAndExcludesStateMarker(t *testing
 	repo.Git("add", "--force", ".markitect/state/trace.yaml")
 	head := repo.Commit("Same actual library model rooted at manifest directory")
 	r := adapter(t)
-	service := apply.NewModelService(r, r)
-	captured, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	service := project.NewModelService(r, r)
+	captured, err := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || captured.Checked().Status != model.Passed {
 		t.Fatalf("root dot capture: %v %+v", err, captured.Checked().Diagnostics)
 	}
-	working, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
+	working, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection}, model.Limits{})
 	if err != nil || working.Checked().Status != model.Passed {
 		t.Fatalf("root dot working: %v %+v", err, working.Checked().Diagnostics)
 	}
-	fixed, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
+	fixed, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
 	if err != nil || fixed.Checked().Status != model.Passed {
 		t.Fatalf("root dot fixed: %v %+v", err, fixed.Checked().Diagnostics)
 	}
-	for _, source := range []apply.ModelSource{captured.Inputs().Raw.Local, working.Inputs().Raw.Local, fixed.Inputs().Raw.Local} {
+	for _, source := range []project.ModelSource{captured.Inputs().Raw.Local, working.Inputs().Raw.Local, fixed.Inputs().Raw.Local} {
 		if !source.Root.IsRoot() || source.RepositoryArea.String() != ".markitect" {
 			t.Fatal("root dot coordinates changed")
 		}

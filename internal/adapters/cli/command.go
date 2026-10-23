@@ -11,10 +11,11 @@ import (
 	"io"
 	"path/filepath"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/modeldocs"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/licenses"
 )
@@ -28,20 +29,20 @@ type RevisionResolver interface {
 // Documents owns v1 view generation and its independent source/target write
 // binding. PreviewSource never supplies a publication guard for this operation.
 type Documents interface {
-	Preview(context.Context, apply.PreviewRequest) (modeldocs.Preview, error)
-	Write(context.Context, apply.PreviewRequest, string) (modeldocs.Preview, error)
+	Preview(context.Context, project.PreviewRequest) (modeldocs.Preview, error)
+	Write(context.Context, project.PreviewRequest, string) (modeldocs.Preview, error)
 }
 
 type Command struct {
-	preparation *apply.PreparationService
-	agents      apply.AgentProfilePreparer
-	checks      apply.CheckProfilePreparer
+	preparation *project.PreparationService
+	agents      runtimeconfig.AgentProfilePreparer
+	checks      runtimeconfig.CheckProfilePreparer
 	revisions   RevisionResolver
 	documents   Documents
 	apply       ApplyFunc
 }
 
-func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc) *Command {
+func New(preparation *project.PreparationService, agents runtimeconfig.AgentProfilePreparer, checks runtimeconfig.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc) *Command {
 	return &Command{preparation: preparation, agents: agents, checks: checks, revisions: revisions, documents: documents, apply: applyRun}
 }
 
@@ -55,7 +56,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply [options]          realize the bound model through reviewed Manager assignments
+  apply [options]          unavailable until V1 workflow/publication composition (S3)
   version | licenses | help
 
 Common options:
@@ -169,7 +170,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		fmt.Fprintln(stderr, err)
 		return 2
 	}
-	selection := apply.InputSelection{Repository: root}
+	selection := project.InputSelection{Repository: root}
 	selection.Local, err = selectManifest(root, *manifest)
 	if err == nil {
 		for _, dependency := range dependencies {
@@ -187,7 +188,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 		} else {
 			var p snapshot.Path
 			p, err = snapshot.NewPath(filepath.Base(*runtimeProfile))
-			selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(*runtimeProfile), Path: p}}
+			selection.RuntimeProfiles = []project.SourceLocation{{Boundary: filepath.Dir(*runtimeProfile), Path: p}}
 		}
 	}
 	if err != nil {
@@ -206,7 +207,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 			return 3
 		}
 	}
-	request := apply.PreviewRequest{Selection: selection, Revision: resolved}
+	request := project.PreviewRequest{Selection: selection, Revision: resolved}
 	if verb == "docs" {
 		if c.documents == nil {
 			emit(map[string]string{"operation": "docs", "status": "not_completed", "error": "document service unavailable"})
@@ -238,22 +239,22 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	return exitStatus(report.Status, err)
 }
 
-func selectManifest(repository, literal string) (apply.ModelSelection, error) {
+func selectManifest(repository, literal string) (project.ModelSelection, error) {
 	// Relative manifest coordinates belong to the selected repository. Keep
 	// that relationship explicit instead of passing a second absolute spelling
 	// of its directory (for example a Windows short-name alias).
 	boundary := "."
 	if filepath.IsAbs(literal) {
 		if filepath.Clean(literal) != literal {
-			return apply.ModelSelection{}, errors.New("model manifest path cannot require normalization")
+			return project.ModelSelection{}, errors.New("model manifest path cannot require normalization")
 		}
 		boundary, literal = filepath.Dir(literal), filepath.Base(literal)
 	}
 	p, err := snapshot.NewPath(literal)
 	if err != nil {
-		return apply.ModelSelection{}, err
+		return project.ModelSelection{}, err
 	}
-	return apply.ModelSelection{Boundary: boundary, ManifestPath: p}, nil
+	return project.ModelSelection{Boundary: boundary, ManifestPath: p}, nil
 }
 
 func exitStatus(status model.Status, err error) int {

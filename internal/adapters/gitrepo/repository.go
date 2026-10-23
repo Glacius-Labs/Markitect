@@ -10,10 +10,9 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"sync"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
@@ -46,9 +45,6 @@ func DefaultLimits() Limits {
 // Each call owns its handles and Git processes. Construction performs no I/O.
 type Repository struct {
 	limits        Limits
-	publicationMu sync.Mutex
-	captures      map[apply.PublicationGuard]publicationCapture
-	permits       map[string]publicationPlan
 	// A private deterministic scheduling seam for acquisition/publication races.
 	observe func(event, path string)
 }
@@ -76,26 +72,25 @@ func New(limits Limits) (*Repository, error) {
 	return &Repository{limits: limits}, nil
 }
 
-var _ apply.Source = (*Repository)(nil)
-var _ apply.PreviewSource = (*Repository)(nil)
+var _ project.Source = (*Repository)(nil)
+var _ project.PreviewSource = (*Repository)(nil)
 
-func (r *Repository) Capture(ctx context.Context, request apply.CaptureRequest) (apply.CapturedInputs, error) {
+func (r *Repository) Capture(ctx context.Context, request project.CaptureRequest) (project.CapturedInputs, error) {
 	a, err := r.acquire(ctx, request.Selection, "", true)
 	if a == nil {
-		return apply.CapturedInputs{}, err
+		return project.CapturedInputs{}, err
 	}
-	result := apply.CapturedInputs{Raw: a.raw, Head: a.head}
+	result := project.CapturedInputs{Raw: a.raw, Head: a.head}
 	if err == nil {
 		result.Guard = a.guard()
-		r.rememberPublicationCapture(request.Selection, a)
 	}
 	return result, err
 }
 
-func (r *Repository) CapturePreview(ctx context.Context, request apply.PreviewRequest) (apply.PreviewedInputs, error) {
+func (r *Repository) CapturePreview(ctx context.Context, request project.PreviewRequest) (project.PreviewedInputs, error) {
 	a, err := r.acquire(ctx, request.Selection, request.Revision, false)
 	if a == nil {
-		return apply.PreviewedInputs{}, err
+		return project.PreviewedInputs{}, err
 	}
-	return apply.PreviewedInputs{Raw: a.raw, Head: a.head, Revision: a.revision}, err
+	return project.PreviewedInputs{Raw: a.raw, Head: a.head, Revision: a.revision}, err
 }

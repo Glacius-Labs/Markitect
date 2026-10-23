@@ -1,0 +1,532 @@
+package run
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"reflect"
+	"sync"
+)
+
+type completion struct {
+	handoff Handoff
+	err     error
+}
+type managerState struct {
+	manager                      organization.Manager
+	copy                         Copy
+	session                      Session
+	base                         Commit
+	handoff                      Handoff
+	mu                           sync.Mutex
+	running, delivered, assigned bool
+	accepting                    bool
+	done                         chan completion
+	inbox                        chan Event
+}
+type execution struct {
+	executor  *Executor
+	request   Request
+	ctx       context.Context
+	cancel    context.CancelFunc
+	workspace WorkspaceService
+	mu        sync.Mutex
+	states    map[string]*managerState
+	result    Result
+	active    sync.WaitGroup
+	questions map[string]Question
+	sequence  int
+}
+
+func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
+	x := &execution{executor: e, request: r, states: map[string]*managerState{}, questions: map[string]Question{}, result: Result{ID: r.ID, Project: r.Project, Binding: r.Prepared.Binding(), Mandate: r.Mandate, Technical: Incomplete}}
+	if err := validateRequest(r); err != nil {
+		return x.result, err
+	}
+	if e == nil || e.Sessions == nil || e.Workspaces == nil || e.Records == nil {
+		return x.result, fmt.Errorf("Run ports unavailable")
+	}
+	x.ctx, x.cancel = context.WithDeadline(ctx, r.Allowance.Deadline)
+	defer x.cancel()
+	for _, m := range r.Prepared.Topology().Managers() {
+		x.states[m.Package] = &managerState{manager: m, base: Commit{r.Input.Commit, r.Input.Tree}, done: make(chan completion, len(m.Children)), inbox: make(chan Event, 256), accepting: true}
+	}
+	used := r.Allowance.Used()
+	service, workErr := e.Workspaces.Open(x.ctx, r)
+	x.workspace = service
+	if workErr == nil && service == nil {
+		workErr = fmt.Errorf("workspace startup returned no handle")
+	}
+	// Complete environment and communication tree exists before ordinary work.
+	if workErr == nil {
+		for _, m := range r.Prepared.Topology().Managers() {
+			s := x.states[m.Package]
+			s.copy, workErr = service.Copy(x.ctx, m.Package, s.base)
+			if workErr != nil {
+				break
+			}
+			if s.copy == nil {
+				workErr = fmt.Errorf("missing Manager copy")
+				break
+			}
+			s.session, workErr = e.Sessions.Open(x.ctx, SessionSpec{RunID: r.ID, Manager: m, Mandate: r.Mandate, Prepared: r.Prepared, Workspace: s.copy, Findings: append([]Finding(nil), r.Findings...), Tools: x.tools(s)})
+			if workErr != nil {
+				break
+			}
+			if s.session == nil {
+				workErr = fmt.Errorf("missing Manager session")
+				break
+			}
+		}
+	}
+	var root Handoff
+	if workErr == nil {
+		for _, m := range r.Prepared.Topology().Managers() {
+			if m.Package == organization.Root {
+				continue
+			}
+			state := x.states[m.Package]
+			state.running = true
+			x.startWorker(state, "Receive your parent assignment with Await; respond to incoming questions while waiting.", nil)
+		}
+		x.states[organization.Root].assigned = true
+		x.states[organization.Root].running = true
+		root, workErr = x.work(x.states[organization.Root], "Complete the bound mandate with your complete Manager hierarchy.", r.Findings)
+	}
+
+	if workErr == nil {
+		x.result.Decision = root.Decision
+		fixed := root.Result
+		if r.Mandate != Implement {
+			fixed = Commit{r.Input.Commit, r.Input.Tree}
+		}
+		// Review scratch edits never become product. Invalid input can be rejected.
+		if r.Mandate != Implement {
+			checkErr := x.check(x.states[organization.Root], fixed, true)
+			if checkErr != nil && root.Decision == Approve {
+				workErr = checkErr
+			}
+		}
+		if workErr == nil {
+			ref, err := service.Retain(x.ctx, x.states[organization.Root].copy, fixed)
+			if err != nil {
+				workErr = fmt.Errorf("retain independent candidate: %w", err)
+			} else if ref.Commit != fixed.ID || ref.Tree != fixed.Tree || ref.Binding != r.Prepared.Binding() || ref.Project != r.Project {
+				workErr = fmt.Errorf("retained candidate binding mismatch")
+			} else {
+				x.result.Candidate = &ref
+			}
+		}
+	}
+	if workErr != nil {
+		x.result.Errors = append(x.result.Errors, workErr.Error())
+		x.result.Technical = Failed
+		if x.ctx.Err() != nil || errors.Is(workErr, ErrUnavailable) {
+			x.result.Technical = Incomplete
+		}
+	} else {
+		x.result.Technical = Completed
+	}
+	x.cancel()
+	cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), r.CleanupTimeout)
+	defer cancel()
+	closeOne := func(name string, close func(context.Context) error) {
+		err := close(cleanup)
+		c := Closure{Resource: name, Closed: err == nil}
+		if err != nil {
+			c.Error = err.Error()
+			x.result.Errors = append(x.result.Errors, "close "+name+": "+err.Error())
+			x.result.Technical = Incomplete
+		}
+		x.result.Cleanup = append(x.result.Cleanup, c)
+	}
+	for _, m := range r.Prepared.Topology().Managers() {
+		s := x.states[m.Package]
+		if s.session != nil {
+			closeOne("session:"+m.Package, s.session.Close)
+		}
+	}
+	drained := make(chan struct{})
+	go func() { x.active.Wait(); close(drained) }()
+	workersClosed := false
+	select {
+	case <-drained:
+		workersClosed = true
+	case <-cleanup.Done():
+		x.result.Technical = Incomplete
+		x.result.Errors = append(x.result.Errors, "Manager workers did not stop within cleanup bound")
+	}
+	x.result.Cleanup = append(x.result.Cleanup, Closure{Resource: "manager-workers", Closed: workersClosed})
+	for _, m := range r.Prepared.Topology().Managers() {
+		s := x.states[m.Package]
+		if s.copy != nil {
+			closeOne("copy:"+m.Package, s.copy.Close)
+		}
+		if workersClosed && s.handoff.Manager != "" {
+			x.result.Handoffs = append(x.result.Handoffs, s.handoff)
+			x.result.Findings = append(x.result.Findings, s.handoff.Findings...)
+			if s.handoff.Review != nil {
+				x.result.Findings = append(x.result.Findings, s.handoff.Review.Findings...)
+			}
+		}
+	}
+
+	if service != nil {
+		closeOne("git-service", service.Close)
+	}
+	x.result.Messages = r.Allowance.Used() - used
+	persist, persistCancel := context.WithTimeout(context.WithoutCancel(ctx), r.PersistenceTimeout)
+	defer persistCancel()
+	if err := e.Records.Save(persist, x.result); err != nil {
+		x.result.Technical = Incomplete
+		x.result.Errors = append(x.result.Errors, "save terminal result: "+err.Error())
+		return x.result, errors.Join(workErr, err)
+	}
+	stored, err := e.Records.Read(persist, r.Project, r.ID)
+	if err != nil || !reflect.DeepEqual(stored, x.result) {
+		if err == nil {
+			err = fmt.Errorf("terminal result readback mismatch")
+		}
+		x.result.Technical = Incomplete
+		x.result.Errors = append(x.result.Errors, err.Error())
+		return x.result, errors.Join(workErr, err)
+	}
+	if x.result.Technical != Completed && workErr == nil {
+		workErr = fmt.Errorf("Run resources not confirmed closed")
+	}
+	return stored, workErr
+}
+
+func (x *execution) toolContext(caller context.Context) (context.Context, func()) {
+	ctx, cancel := context.WithCancel(x.ctx)
+	stop := context.AfterFunc(caller, cancel)
+	return ctx, func() { stop(); cancel() }
+}
+func (x *execution) tools(s *managerState) Tools {
+	return Tools{
+		Ask: func(caller context.Context, to, text string) (string, error) {
+			ctx, stop := x.toolContext(caller)
+			defer stop()
+			target, ok := x.states[to]
+			if !ok || to == s.manager.Package || text == "" {
+				return "", fmt.Errorf("invalid Manager question")
+			}
+			if err := x.request.Allowance.take(); err != nil {
+				return "", err
+			}
+			target.mu.Lock()
+			closed := !target.accepting
+			if closed {
+				target.mu.Unlock()
+				return "", fmt.Errorf("question target completed its assignment")
+			}
+			x.mu.Lock()
+			x.sequence++
+			id := fmt.Sprintf("%s-q%d", x.request.ID, x.sequence)
+			q := Question{id, s.manager.Package, to, text}
+			x.questions[id] = q
+			x.mu.Unlock()
+			target.mu.Unlock()
+			select {
+			case target.inbox <- Event{Question: &q}:
+				return id, nil
+			case <-ctx.Done():
+				return "", ctx.Err()
+			}
+		},
+		Reply: func(caller context.Context, id, text string) error {
+			ctx, stop := x.toolContext(caller)
+			defer stop()
+			if text == "" {
+				return fmt.Errorf("empty Manager answer")
+			}
+			x.mu.Lock()
+			q, ok := x.questions[id]
+			if !ok || q.To != s.manager.Package {
+				x.mu.Unlock()
+				return fmt.Errorf("unknown, closed or foreign question")
+			}
+			x.mu.Unlock()
+			answer := Answer{id, s.manager.Package, text}
+			select {
+			case x.states[q.From].inbox <- Event{Answer: &answer}:
+				x.mu.Lock()
+				delete(x.questions, id)
+				x.mu.Unlock()
+				return nil
+			case <-ctx.Done():
+				return ctx.Err()
+			}
+		},
+
+		ReadNotes: func(caller context.Context) ([]Note, error) {
+			ctx, stop := x.toolContext(caller)
+			defer stop()
+			return x.executor.Records.Notes(ctx, x.request.Project)
+		},
+		AppendNote: func(caller context.Context, scope, text string) (Note, error) {
+			ctx, stop := x.toolContext(caller)
+			defer stop()
+			if text == "" {
+				return Note{}, fmt.Errorf("empty Note")
+			}
+			return x.executor.Records.Append(ctx, Note{Project: x.request.Project, Run: x.request.ID, Manager: s.manager.Package, Context: scope, Text: text})
+		},
+		Delegate: func(caller context.Context, child, task string, feedback []Finding) error {
+			ctx, stop := x.toolContext(caller)
+			defer stop()
+			target, ok := x.states[child]
+			if !ok || target.manager.Parent != s.manager.Package || task == "" {
+				return fmt.Errorf("delegation requires direct child and concrete task")
+			}
+			target.mu.Lock()
+			defer target.mu.Unlock()
+			if target.assigned && (target.running || !target.delivered || target.handoff.Review == nil || target.handoff.Review.Decision != Reject) {
+				return fmt.Errorf("child task active or accepted")
+			}
+			s.mu.Lock()
+			base := Commit{x.request.Input.Commit, x.request.Input.Tree}
+			var err error
+			if x.request.Mandate == Implement {
+				base, err = s.copy.Snapshot(ctx)
+				if err == nil {
+					err = target.copy.Update(ctx, s.copy, base)
+				}
+			}
+			s.mu.Unlock()
+			if err != nil {
+				return err
+			}
+			target.base = base
+			first := !target.assigned
+			target.assigned = true
+			target.accepting = true
+			target.delivered = false
+			target.handoff.Review = nil
+			if first {
+				assignment := Assignment{task, append([]Finding(nil), feedback...), base}
+				select {
+				case target.inbox <- Event{Assignment: &assignment}:
+					return nil
+				case <-ctx.Done():
+					return ctx.Err()
+				}
+			}
+			target.running = true
+			x.startWorker(target, task, feedback)
+			return nil
+		},
+
+		Await: func(caller context.Context) (Event, error) {
+			ctx, stop := x.toolContext(caller)
+			defer stop()
+			select {
+			case event := <-s.inbox:
+				return event, nil
+			case c := <-s.done:
+				if c.err != nil {
+					return Event{}, c.err
+				}
+				child := x.states[c.handoff.Manager]
+				child.mu.Lock()
+				child.delivered = true
+				child.mu.Unlock()
+				s.mu.Lock()
+				diff, err := s.copy.Review(ctx, child.copy, c.handoff.Base, c.handoff.Result)
+				s.mu.Unlock()
+				if err != nil {
+					return Event{}, err
+				}
+				c.handoff.Diff = diff
+				return Event{Handoff: &c.handoff}, nil
+			case <-ctx.Done():
+				return Event{}, ctx.Err()
+			}
+		},
+
+		Review: func(caller context.Context, child, commit string, decision Decision, findings []Finding) error {
+			ctx, stop := x.toolContext(caller)
+			defer stop()
+			target, ok := x.states[child]
+			if !ok || target.manager.Parent != s.manager.Package {
+				return fmt.Errorf("review requires direct child")
+			}
+			target.mu.Lock()
+			defer target.mu.Unlock()
+			if target.running || !target.delivered || target.handoff.Result.ID != commit || target.handoff.Review != nil {
+				return fmt.Errorf("review requires exact unreviewed fixed child")
+			}
+			if decision != Approve && decision != Reject && decision != ModelBlocker {
+				return fmt.Errorf("review decision missing")
+			}
+			if decision != Approve && len(findings) == 0 {
+				return fmt.Errorf("rejection/model blocker requires findings")
+			}
+			for i := range findings {
+				findings[i].Manager = s.manager.Package
+			}
+			if decision == Approve && x.request.Mandate == Implement && target.handoff.Decision == Submitted {
+				s.mu.Lock()
+				before, err := s.copy.Snapshot(ctx)
+				if err == nil {
+					var after Commit
+					after, err = s.copy.Integrate(ctx, target.copy, target.handoff.Result)
+					if err == nil {
+						s.handoff.Children = append(s.handoff.Children, Integration{child, target.handoff.Base, target.handoff.Result, before, after})
+					}
+				}
+				s.mu.Unlock()
+				if err != nil {
+					return err
+				}
+			}
+			target.handoff.Review = &ParentReview{decision, append([]Finding(nil), findings...)}
+			return nil
+		},
+	}
+}
+
+func (x *execution) work(s *managerState, task string, feedback []Finding) (Handoff, error) {
+	for {
+		if err := x.ctx.Err(); err != nil {
+			return Handoff{}, err
+		}
+		if err := x.request.Allowance.take(); err != nil {
+			return Handoff{}, err
+		}
+		r, err := s.session.Exchange(x.ctx, Message{Task: task, Feedback: feedback})
+		if err != nil {
+			return Handoff{}, err
+		}
+		if r.Decision != Approve && r.Decision != Reject && r.Decision != ModelBlocker && r.Decision != Submitted {
+			return Handoff{}, fmt.Errorf("Manager %s supplied no semantic result", s.manager.Package)
+		}
+		if x.request.Mandate != Implement && r.Decision == Submitted {
+			return Handoff{}, fmt.Errorf("review mandate requires judgment")
+		}
+		if x.request.Mandate == Implement && r.Decision == Approve {
+			return Handoff{}, fmt.Errorf("Implement submits candidate; cannot approve publication")
+		}
+		if r.Decision != Submitted && r.Decision != Approve && len(r.Findings) == 0 {
+			return Handoff{}, fmt.Errorf("rejection/model blocker requires findings")
+		}
+		feedback = nil
+
+		s.mu.Lock()
+		assigned := s.assigned
+		s.mu.Unlock()
+		if !assigned {
+			feedback = []Finding{{Manager: s.manager.Package, Text: "Await your direct parent assignment before submitting."}}
+			continue
+		}
+		for _, child := range s.manager.Children {
+			c := x.states[child]
+			c.mu.Lock()
+			if c.handoff.Manager == "" || c.handoff.Review == nil || c.running {
+				feedback = append(feedback, Finding{Manager: s.manager.Package, Text: "Complete delegation and review for child " + child})
+			}
+			c.mu.Unlock()
+		}
+		if len(feedback) != 0 {
+			continue
+		}
+		commit, err := s.copy.Snapshot(x.ctx)
+		if err != nil {
+			return Handoff{}, err
+		}
+		if x.request.Mandate == Implement && r.Decision == Submitted {
+			if err = x.check(s, commit, s.manager.Package == organization.Root); err != nil {
+				feedback = []Finding{{Manager: s.manager.Package, Text: err.Error()}}
+				continue
+			}
+		}
+		s.mu.Lock()
+		x.mu.Lock()
+		for _, q := range x.questions {
+			if q.From == s.manager.Package || q.To == s.manager.Package {
+				feedback = append(feedback, Finding{Manager: s.manager.Package, Text: "Resolve pending question " + q.ID + " before completing."})
+			}
+		}
+		if len(feedback) == 0 {
+			s.accepting = false
+		}
+		x.mu.Unlock()
+		s.mu.Unlock()
+		if len(feedback) != 0 {
+			continue
+		}
+		for i := range r.Findings {
+			r.Findings[i].Manager = s.manager.Package
+		}
+		h := s.handoff
+		h.Manager = s.manager.Package
+		h.Base = s.base
+		h.Result = commit
+		h.Findings = append(h.Findings, r.Findings...)
+		h.Decision = r.Decision
+		for _, child := range s.manager.Children {
+			c := x.states[child]
+			c.mu.Lock()
+			if c.handoff.Decision == ModelBlocker || c.handoff.Review.Decision == ModelBlocker {
+				h.Decision = ModelBlocker
+			} else if (c.handoff.Decision == Reject || c.handoff.Review.Decision == Reject) && h.Decision != ModelBlocker {
+				h.Decision = Reject
+			}
+			c.mu.Unlock()
+		}
+		s.handoff = h
+		return h, nil
+	}
+}
+func (x *execution) check(s *managerState, commit Commit, required bool) error {
+	a, err := s.copy.Inspect(x.ctx, commit)
+	if err == nil {
+		err = x.request.Prepared.ValidateCandidate(a)
+	}
+	if err != nil {
+		return err
+	}
+	if !required {
+		return nil
+	}
+	declarations := x.request.Prepared.Checks()
+	if len(declarations) != 0 && x.executor.Checks == nil {
+		return fmt.Errorf("declared checks require concrete runner")
+	}
+	if x.executor.Checks != nil {
+		observed, checkErr := x.executor.Checks.Check(x.ctx, x.request.Prepared, s.copy, commit)
+		x.mu.Lock()
+		x.result.Checks = append(x.result.Checks, observed...)
+		x.mu.Unlock()
+		if checkErr != nil {
+			return checkErr
+		}
+		expected := map[string]bool{}
+		for _, d := range declarations {
+			expected[d.ID.Value] = true
+		}
+		for _, c := range observed {
+			if !expected[c.ID] || c.Commit != commit.ID || !c.Passed {
+				return fmt.Errorf("check %s did not pass exactly once on fixed commit", c.ID)
+			}
+			delete(expected, c.ID)
+		}
+		if len(expected) != 0 {
+			return fmt.Errorf("declared check observations incomplete")
+		}
+	}
+	return nil
+}
+
+func (x *execution) startWorker(s *managerState, task string, feedback []Finding) {
+	x.active.Add(1)
+	go func() {
+		defer x.active.Done()
+		h, err := x.work(s, task, feedback)
+		s.mu.Lock()
+		s.running = false
+		s.mu.Unlock()
+		x.states[s.manager.Parent].done <- completion{h, err}
+	}()
+}

@@ -8,7 +8,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -22,7 +22,7 @@ const (
 	seamChildYAML  = "apiVersion: markitect.registry/v1\r\nartifacts:\r\n  - path: realization/lending.go\r\n    form: code\r\n    realizes: [lending/borrow]\r\n    why: Lending operation fixture.\r\n"
 )
 
-func registrySeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, string) {
+func registrySeamFixture(t *testing.T) (*testkit.Repo, project.InputSelection, string) {
 	t.Helper()
 	// Keep the actual M1, Vocabulary and Core bytes supplied by libraryFixture.
 	// These artifact bytes test structural registration, not semantic realization.
@@ -31,7 +31,7 @@ func registrySeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, str
 	repo.Write("realization/lending.go", "package lending\r\n")
 	repo.Write(seamRootShard, seamRootYAML)
 	repo.Write(seamChildShard, seamChildYAML)
-	selection.Registry = []apply.SourceLocation{
+	selection.Registry = []project.SourceLocation{
 		{Boundary: filepath.Join(repo.Dir, ".markitect", "registry"), Path: fixturePath(t, "registry.yaml")},
 		{Boundary: filepath.Join(repo.Dir, ".markitect", "registry", "lending"), Path: fixturePath(t, "registry.yaml")},
 	}
@@ -41,7 +41,7 @@ func registrySeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, str
 func TestCaptureRegistrySeamPreparesActualCommittedRootAndLendingShards(t *testing.T) {
 	_, selection, head := registrySeamFixture(t)
 	r := adapter(t)
-	stage, err := apply.NewModelService(r, r).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	stage, err := project.NewModelService(r, r).CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || stage.Checked().Status != model.Passed || len(stage.Checked().Models) != 3 {
 		t.Fatalf("actual M1 model capture failed: %v %+v", err, stage.Checked())
 	}
@@ -85,7 +85,7 @@ func TestCaptureRegistrySeamRetainsUnselectedCensusShardAsNotCompleted(t *testin
 	_, selection, head := registrySeamFixture(t)
 	selection.Registry = selection.Registry[:1]
 	r := adapter(t)
-	stage, err := apply.NewModelService(r, r).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	stage, err := project.NewModelService(r, r).CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || stage.Checked().Status != model.Passed {
 		t.Fatalf("actual M1 model capture failed: %v", err)
 	}
@@ -119,9 +119,9 @@ func TestCaptureRegistrySeamIgnoredUntrackedShardRemainsPreviewOnly(t *testing.T
 		t.Fatal("child shard is not an ignored untracked working file")
 	}
 	r := adapter(t)
-	service := apply.NewModelService(r, r)
+	service := project.NewModelService(r, r)
 	t.Run("committed-selected", func(t *testing.T) {
-		stage, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+		stage, err := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 		inputs := stage.Inputs()
 		if err == nil || stage.Checked().Status != model.NotCompleted || inputs.Head != head || inputs.Guard != "" {
 			t.Fatalf("today's untracked shard became committed input: %v", err)
@@ -136,7 +136,7 @@ func TestCaptureRegistrySeamIgnoredUntrackedShardRemainsPreviewOnly(t *testing.T
 		}
 	})
 	t.Run("working", func(t *testing.T) {
-		stage, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
+		stage, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection}, model.Limits{})
 		if err != nil || stage.Checked().Status != model.Passed {
 			t.Fatalf("working model preview failed: %v", err)
 		}
@@ -154,7 +154,7 @@ func TestCaptureRegistrySeamIgnoredUntrackedShardRemainsPreviewOnly(t *testing.T
 	t.Run("fixed", func(t *testing.T) {
 		historical := selection
 		historical.Registry = historical.Registry[:1]
-		stage, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: historical, Revision: head}, model.Limits{})
+		stage, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: historical, Revision: head}, model.Limits{})
 		if err != nil || stage.Checked().Status != model.Passed {
 			t.Fatalf("fixed model preview failed: %v", err)
 		}

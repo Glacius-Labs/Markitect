@@ -6,7 +6,7 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
@@ -17,17 +17,17 @@ const fileSeamIgnore = "apiVersion: markitect.ignore/v1\r\nfiles:\r\n  - path: .
 
 func fileSeamInstruction(name string) string { return "\xef\xbb\xbfGuidance for " + name + ".\r\n" }
 
-func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, string) {
+func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, project.InputSelection, string) {
 	t.Helper()
 	repo, selection, _ := registrySeamFixture(t)
 	// Replace the adapter-only opaque-input fixtures with actual authored inputs.
 	repo.Git("rm", "--", "config/execution.data", "config/registry.data", "config/ignore.data", "runtime/profile.data", "runtime/instruction.txt")
 	selection.RuntimeProfiles = nil
-	selected := func(name string) apply.SourceLocation {
-		return apply.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, name)}
+	selected := func(name string) project.SourceLocation {
+		return project.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, name)}
 	}
-	selection.Execution = []apply.SourceLocation{selected(".markitect/execution.yaml")}
-	selection.Ignore = []apply.SourceLocation{selected(".markitect/ignore.yaml")}
+	selection.Execution = []project.SourceLocation{selected(".markitect/execution.yaml")}
+	selection.Ignore = []project.SourceLocation{selected(".markitect/ignore.yaml")}
 	selection.Instructions = nil
 	for _, name := range []string{"ops/manager.md", "ops/reviewer.md", "ops/lending.md"} {
 		repo.Write(name, fileSeamInstruction(name))
@@ -68,8 +68,8 @@ checks:
 func TestM1GitFileCheckAccountsCompleteCaptureAndPreviews(t *testing.T) {
 	_, selection, head := fileCheckSeamFixture(t)
 	r := adapter(t)
-	service := apply.NewModelService(r, r)
-	stage, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	service := project.NewModelService(r, r)
+	stage, err := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || stage.Checked().Status != model.Passed || len(stage.Checked().Models) != 3 {
 		t.Fatalf("actual M1/Vocabulary/Core capture failed: %v %+v", err, stage.Checked().Diagnostics)
 	}
@@ -112,7 +112,7 @@ func TestM1GitFileCheckAccountsCompleteCaptureAndPreviews(t *testing.T) {
 		t.Fatal("actual child registration lost its Definition link")
 	}
 	for _, revision := range []string{"", head} {
-		preview, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: revision}, model.Limits{})
+		preview, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection, Revision: revision}, model.Limits{})
 		if err != nil {
 			t.Fatalf("actual preview %q failed: %v", revision, err)
 		}

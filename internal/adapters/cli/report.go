@@ -2,11 +2,12 @@ package cli
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
-	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 )
 
 // These values are CLI projections of actual bound producer reports. They are
@@ -31,51 +32,32 @@ type contextReport struct {
 	Definitions          []any  `json:"definitions"`
 }
 
-func (c *Command) prepare(ctx context.Context, request apply.PreviewRequest, operation, packagePath string, metadata bool) (preparationReport, error) {
+func (c *Command) prepare(ctx context.Context, request project.PreviewRequest, operation, packagePath string, metadata bool) (preparationReport, error) {
 	r := preparationReport{FormatVersion: 1, Operation: operation, RequestedStage: "structural", Status: model.NotCompleted, Stages: map[string]any{"metadata": map[string]any{"requested": false}, "settings": map[string]any{"requested": false}}}
-	var final apply.PreviewPreparationAttempt
+	var final project.PreviewPreparationAttempt
 	var err error
+	result, e := c.preparation.Preview(ctx, request, model.Limits{})
+	err = e
+	r.Status = result.Status()
+	for _, attempt := range result.Attempts() {
+		r.Attempts = append(r.Attempts, attemptReport(attempt))
+		final = attempt
+	}
 	if metadata {
 		r.RequestedStage = "metadata"
-		result, e := c.preparation.PreviewSettings(ctx, request, model.Limits{}, c.agents, c.checks)
-		err = e
-		r.Status = result.Status()
-		for _, attempt := range result.Attempts() {
-			s := attempt.Settings()
-			managers := []organization.ManagerSettings(nil)
-			if resolved, ok := s.Settings(); ok {
-				managers = resolved.Managers()
-			}
-			var profiles, checks []any
-			for _, p := range s.ProfileObservations() {
-				identity, complete := p.Identity()
-				input := p.Input()
-				profiles = append(profiles, map[string]any{"namespace": input.Namespace(), "name": input.Name(), "source": p.Source(), "observation": p.Observation(), "comparisonIdentity": identity, "identityAvailable": complete})
-			}
-			if selected, ok := s.Checks(); ok {
-				for _, check := range selected {
-					identity, _ := check.Profile().Identity()
-					checks = append(checks, map[string]any{"declaration": check.Declaration(), "comparisonIdentity": identity})
-				}
-			}
-			declarations, declared := attempt.Defaults().Declarations()
-			entry := map[string]any{"structural": attemptReport(attempt.Structural()), "defaults": map[string]any{"status": attempt.Defaults().Status(), "productSource": attempt.Defaults().ProductSource(), "declarationsAvailable": declared, "declarations": declarations, "diagnostics": attempt.Defaults().Diagnostics()}, "metadata": map[string]any{"requested": true, "status": s.Status(), "profiles": profiles, "requiredInstructions": s.RequiredInstructions(), "diagnostics": s.Diagnostics()}, "settings": map[string]any{"requested": true, "status": s.Status(), "managers": managers, "checks": checks}}
-			if attempt.Error() != nil {
-				entry["error"] = attempt.Error().Error()
-			}
-			r.Attempts = append(r.Attempts, entry)
-			r.Stages["metadata"], r.Stages["settings"], r.Stages["defaults"] = entry["metadata"], entry["settings"], entry["defaults"]
-			final = attempt.Structural()
+		observed, metadataErr := runtimeconfig.Prepare(ctx, final.Model().Inputs().Raw, c.agents, c.checks)
+		err = errors.Join(err, metadataErr)
+		var profiles []any
+		for _, p := range observed.Profiles {
+			id, complete := p.Identity()
+			profiles = append(profiles, map[string]any{"namespace": p.Input().Namespace(), "name": p.Input().Name(), "observation": p.Observation(), "comparisonIdentity": id, "identityAvailable": complete})
 		}
-	} else {
-		result, e := c.preparation.Preview(ctx, request, model.Limits{})
-		err = e
-		r.Status = result.Status()
-		for _, attempt := range result.Attempts() {
-			r.Attempts = append(r.Attempts, attemptReport(attempt))
-			final = attempt
+		r.Stages["metadata"] = map[string]any{"requested": true, "status": observed.Status, "profiles": profiles, "requiredInstructions": observed.RequiredInstructions, "diagnostics": observed.Diagnostics}
+		if observed.Status == model.Failed || r.Status != model.Failed && observed.Status != model.Passed {
+			r.Status = observed.Status
 		}
 	}
+
 	m := final.Model()
 	inputs := m.Inputs()
 	mode := "working_preview"
@@ -104,7 +86,7 @@ func (c *Command) prepare(ctx context.Context, request apply.PreviewRequest, ope
 	return r, err
 }
 
-func attemptReport(a apply.PreviewPreparationAttempt) map[string]any {
+func attemptReport(a project.PreviewPreparationAttempt) map[string]any {
 	checked := a.Model().Checked()
 	var models []any
 	for _, m := range checked.Models {

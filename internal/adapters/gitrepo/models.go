@@ -8,7 +8,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -61,7 +61,7 @@ func (a *acquisition) manifest(m *modelCapture) error {
 	}
 	inspection := model.InspectManifest(model.ManifestInput{Origin: s.Source.Origin, ManifestPath: s.Source.ManifestPath, Bytes: file.Bytes(), Limits: a.repository.limits.Manifest})
 	if inspection.Status != model.Passed || inspection.Root == "" {
-		return apply.NewManifestPreflightError(s.Selection, inspection)
+		return project.NewManifestPreflightError(s.Selection, inspection)
 	}
 	s.Root, err = directoryBoundary(appendRelative(path.Dir(s.Source.ManifestPath), inspection.Root))
 	return err

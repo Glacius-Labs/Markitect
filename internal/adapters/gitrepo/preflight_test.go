@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
@@ -37,11 +37,11 @@ func TestManifestFailureRetainsActualResultAndNeverReadsDefinitions(t *testing.T
 						reads = append(reads, p)
 					}
 				}
-				service := apply.NewModelService(r, r)
-				var raw apply.RawInputs
+				service := project.NewModelService(r, r)
+				var raw project.RawInputs
 				var status model.Status
 				if mode == "committed" {
-					result, e := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+					result, e := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 					err = e
 					raw = result.Inputs().Raw
 					status = result.Checked().Status
@@ -53,12 +53,12 @@ func TestManifestFailureRetainsActualResultAndNeverReadsDefinitions(t *testing.T
 					if mode == "fixed" {
 						revision = head
 					}
-					result, e := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: revision}, model.Limits{})
+					result, e := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection, Revision: revision}, model.Limits{})
 					err = e
 					raw = result.Inputs().Raw
 					status = result.Checked().Status
 				}
-				var failure *apply.ManifestPreflightError
+				var failure *project.ManifestPreflightError
 				if !errors.As(err, &failure) || status != model.NotCompleted {
 					t.Fatalf("missing actual manifest failure: %v status=%s", err, status)
 				}
@@ -125,13 +125,13 @@ func TestEveryPhysicalRootIsValidatedBeforeDefinitionBytes(t *testing.T) {
 				if err := os.MkdirAll(filepath.Join(root, "nested", "model"), 0o755); err != nil {
 					t.Fatal(err)
 				}
-				selection.Dependencies[0] = apply.ModelSelection{Boundary: filepath.Join(root, "nested"), ManifestPath: fixturePath(t, "model.yaml")}
+				selection.Dependencies[0] = project.ModelSelection{Boundary: filepath.Join(root, "nested"), ManifestPath: fixturePath(t, "model.yaml")}
 			case "excluded-state":
 				repo.Write(".markitect/model.yaml", "formatVersion: 1\nid: state\nroot: state\ndependencies: {}\n")
 				if err := os.MkdirAll(filepath.Join(repo.Dir, ".markitect", "state"), 0o755); err != nil {
 					t.Fatal(err)
 				}
-				selection.Local = apply.ModelSelection{Boundary: filepath.Join(repo.Dir, ".markitect"), ManifestPath: fixturePath(t, "model.yaml")}
+				selection.Local = project.ModelSelection{Boundary: filepath.Join(repo.Dir, ".markitect"), ManifestPath: fixturePath(t, "model.yaml")}
 			}
 			r := adapter(t)
 			var nonmanifest []string
@@ -140,11 +140,11 @@ func TestEveryPhysicalRootIsValidatedBeforeDefinitionBytes(t *testing.T) {
 					nonmanifest = append(nonmanifest, p)
 				}
 			}
-			result, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection})
+			result, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection})
 			if err == nil || len(nonmanifest) != 0 || result.Head == "" {
 				t.Fatalf("root preflight: err=%v nonmanifest=%v head=%s", err, nonmanifest, result.Head)
 			}
-			var manifest *apply.ManifestPreflightError
+			var manifest *project.ManifestPreflightError
 			if errors.As(err, &manifest) {
 				t.Fatalf("physical failure became language failure: %v", err)
 			}
@@ -158,7 +158,7 @@ func TestWorkingEmptyModelDirectoriesAreExplicitAndCannotBecomeCapture(t *testin
 		t.Fatal(err)
 	}
 	r := adapter(t)
-	working, err := apply.NewModelService(r, r).PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
+	working, err := project.NewModelService(r, r).PreviewModel(context.Background(), project.PreviewRequest{Selection: selection}, model.Limits{})
 	if err != nil || working.Checked().Status != model.Passed {
 		t.Fatalf("working empty dirs: %v %+v", err, working.Checked())
 	}
@@ -171,11 +171,11 @@ func TestWorkingEmptyModelDirectoriesAreExplicitAndCannotBecomeCapture(t *testin
 	if !contains(dirs, "model/empty") || !contains(dirs, "model/empty/child") {
 		t.Fatalf("empty directory entries dropped: %v", dirs)
 	}
-	refused, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	refused, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if !errors.Is(err, ErrUnrepresentable) || refused.Guard != "" || refused.Head != head {
 		t.Fatalf("nonrevision empty dirs promoted: %v %+v", err, refused)
 	}
-	fixed, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
+	fixed, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: head})
 	if err != nil {
 		t.Fatal(err)
 	}

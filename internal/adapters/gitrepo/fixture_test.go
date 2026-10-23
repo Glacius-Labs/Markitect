@@ -6,7 +6,7 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -22,7 +22,7 @@ func fixturePath(t *testing.T, p string) snapshot.Path {
 	return result
 }
 
-func libraryFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, string) {
+func libraryFixture(t *testing.T) (*testkit.Repo, project.InputSelection, string) {
 	t.Helper()
 	repo := testkit.NewRepo(t)
 	repo.Git("config", "core.filemode", "false")
@@ -52,26 +52,26 @@ func libraryFixture(t *testing.T) (*testkit.Repo, apply.InputSelection, string) 
 	}
 	repo.Write(".gitignore", "ignored/\nnode_modules/\n.markitect/state/\n*.ignored\n")
 	repo.Write("real/library.go", "\xef\xbb\xbfpackage library\r\n")
-	selection := apply.InputSelection{Repository: repo.Dir}
-	selected := func(boundary string) apply.ModelSelection {
-		return apply.ModelSelection{Boundary: filepath.Join(repo.Dir, filepath.FromSlash(boundary)), ManifestPath: fixturePath(t, "model.yaml")}
+	selection := project.InputSelection{Repository: repo.Dir}
+	selected := func(boundary string) project.ModelSelection {
+		return project.ModelSelection{Boundary: filepath.Join(repo.Dir, filepath.FromSlash(boundary)), ManifestPath: fixturePath(t, "model.yaml")}
 	}
 	selection.Local = selected("inputs/local")
-	selection.Dependencies = []apply.ModelSelection{selected("inputs/vocabulary"), selected("inputs/core")}
+	selection.Dependencies = []project.ModelSelection{selected("inputs/vocabulary"), selected("inputs/core")}
 	for i, p := range []string{"config/execution.data", "config/registry.data", "config/ignore.data", "runtime/profile.data", "runtime/instruction.txt"} {
 		repo.Write(p, "\xef\xbb\xbforiginal\x00\r\n"+p)
-		location := apply.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, p)}
+		location := project.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, p)}
 		switch i {
 		case 0:
-			selection.Execution = []apply.SourceLocation{location}
+			selection.Execution = []project.SourceLocation{location}
 		case 1:
-			selection.Registry = []apply.SourceLocation{location}
+			selection.Registry = []project.SourceLocation{location}
 		case 2:
-			selection.Ignore = []apply.SourceLocation{location}
+			selection.Ignore = []project.SourceLocation{location}
 		case 3:
-			selection.RuntimeProfiles = []apply.SourceLocation{location}
+			selection.RuntimeProfiles = []project.SourceLocation{location}
 		case 4:
-			selection.Instructions = []apply.SourceLocation{location}
+			selection.Instructions = []project.SourceLocation{location}
 		}
 	}
 	head := repo.Commit("Actual M1, vocabulary and Core source fixture")

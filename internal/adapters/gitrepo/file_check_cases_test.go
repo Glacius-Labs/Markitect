@@ -6,16 +6,16 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 )
 
-func fileSeamCaptured(t *testing.T, selection apply.InputSelection) apply.CapturedRegistryPreparation {
+func fileSeamCaptured(t *testing.T, selection project.InputSelection) project.CapturedRegistryPreparation {
 	t.Helper()
 	r := adapter(t)
-	stage, err := apply.NewModelService(r, r).CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	stage, err := project.NewModelService(r, r).CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || stage.Checked().Status != model.Passed {
 		t.Fatalf("real Git acquisition/model failed: %v %+v", err, stage.Checked().Diagnostics)
 	}
@@ -129,7 +129,7 @@ func TestM1GitFileCheckIgnoredUntrackedFileIsVisibleAndHistoricalPreviewIsFixed(
 		t.Fatal("current capture did not use current committed instructions")
 	}
 	r := adapter(t)
-	preview, err := apply.NewModelService(r, r).PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: historical}, model.Limits{})
+	preview, err := project.NewModelService(r, r).PreviewModel(context.Background(), project.PreviewRequest{Selection: selection, Revision: historical}, model.Limits{})
 	if err != nil {
 		t.Fatal(err)
 	}

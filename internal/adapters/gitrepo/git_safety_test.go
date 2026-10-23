@@ -15,7 +15,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -102,11 +102,11 @@ func TestCleanCaptureNeverRunsConfiguredFiltersOrFsmonitor(t *testing.T) {
 	repo.Git("config", "filter.forbidden.clean", command)
 	repo.Git("config", "core.fsmonitor", command)
 	r := adapter(t)
-	if _, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection}); err != nil {
+	if _, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection}); err != nil {
 		t.Fatal(err)
 	}
 	repo.Write("real/library.go", "dirty raw content requiring a real comparison")
-	result, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	result, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if !errors.Is(err, ErrDirty) || result.Guard != "" {
 		t.Fatalf("dirty file escaped raw comparison: %v", err)
 	}
@@ -124,7 +124,7 @@ func TestAmbientGitOverridesAndReplaceRefsCannotRedirectAcquisition(t *testing.T
 		t.Setenv(key, value)
 	}
 	r := adapter(t)
-	first, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	first, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if err != nil || first.Head != head {
 		t.Fatalf("ambient Git redirect: %v head=%s", err, first.Head)
 	}
@@ -132,7 +132,7 @@ func TestAmbientGitOverridesAndReplaceRefsCannotRedirectAcquisition(t *testing.T
 	repo.Write("inputs/local/model.yaml", "invalid replacement bytes")
 	replacement := repo.Commit("Replacement tree")
 	repo.Git("replace", head, replacement)
-	fixed, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
+	fixed, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: head})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -176,7 +176,7 @@ func TestCorruptBlobOIDAndMissingPromisorObjectRefuseWithoutEffects(t *testing.T
 				repo.Git("config", "protocol.ext.allow", "always")
 			}
 			before := directoryDigest(t, filepath.Join(repo.Dir, ".git"))
-			result, err := adapter(t).CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
+			result, err := adapter(t).CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: head})
 			if err == nil || result.Head != head || result.Revision != head {
 				t.Fatalf("unsafe object claimed successful source: %v", err)
 			}
@@ -250,7 +250,7 @@ func TestBoundaryCollisionsAreRejectedAndRechecked(t *testing.T) {
 					makeAlias()
 				}
 			}
-			_, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection})
+			_, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection})
 			if err == nil || !made {
 				t.Fatal("boundary collision accepted")
 			}

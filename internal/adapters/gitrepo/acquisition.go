@@ -10,7 +10,7 @@ import (
 	"path/filepath"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -20,7 +20,7 @@ type sourceBoundary struct {
 	disk *diskBoundary
 }
 type modelCapture struct {
-	target   *apply.ModelSource
+	target   *project.ModelSource
 	boundary *sourceBoundary
 	files    []snapshot.Entry
 	seen     map[string]snapshot.Entry
@@ -31,7 +31,7 @@ type acquisition struct {
 	git                    *gitRepository
 	head, revision, commit string
 	committed              bool
-	raw                    apply.RawInputs
+	raw                    project.RawInputs
 	boundaries             map[string]*sourceBoundary
 	models                 []*modelCapture
 	accounted              map[string]snapshot.Entry
@@ -42,7 +42,7 @@ type acquisition struct {
 	censusMetadata         []diskEntry
 }
 
-func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection, revision string, committed bool) (a *acquisition, err error) {
+func (r *Repository) acquire(ctx context.Context, selection project.InputSelection, revision string, committed bool) (a *acquisition, err error) {
 	if r == nil {
 		return nil, fmt.Errorf("%w: nil repository adapter", ErrUnsafe)
 	}
@@ -50,7 +50,7 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 	defer cancel()
 	a = &acquisition{ctx: ctx, repository: r, revision: revision, committed: committed, boundaries: make(map[string]*sourceBoundary), accounted: make(map[string]snapshot.Entry), entries: make(map[string]bool)}
 	a.raw.Local.Selection = selection.Local
-	a.raw.Dependencies = make([]apply.ModelSource, len(selection.Dependencies))
+	a.raw.Dependencies = make([]project.ModelSource, len(selection.Dependencies))
 	for i, dependency := range selection.Dependencies {
 		a.raw.Dependencies[i].Selection = dependency
 	}
@@ -111,7 +111,7 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 			return a, err
 		}
 	}
-	for _, target := range append([]*apply.ModelSource{&a.raw.Local}, modelPointers(a.raw.Dependencies)...) {
+	for _, target := range append([]*project.ModelSource{&a.raw.Local}, modelPointers(a.raw.Dependencies)...) {
 		m := &modelCapture{target: target, seen: make(map[string]snapshot.Entry)}
 		a.models = append(a.models, m)
 		if err = a.manifest(m); err != nil {
@@ -133,8 +133,8 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 		}
 	}
 	for _, group := range []struct {
-		locations []apply.SourceLocation
-		target    *[]apply.SourceFile
+		locations []project.SourceLocation
+		target    *[]project.SourceFile
 		local     bool
 	}{
 		{selection.Execution, &a.raw.Execution, true}, {selection.Registry, &a.raw.Registry, true}, {selection.Ignore, &a.raw.Ignore, true}, {selection.RuntimeProfiles, &a.raw.RuntimeProfiles, false}, {selection.Instructions, &a.raw.Instructions, false},
@@ -194,8 +194,8 @@ func (r *Repository) acquire(ctx context.Context, selection apply.InputSelection
 	return a, ctx.Err()
 }
 
-func modelPointers(sources []apply.ModelSource) []*apply.ModelSource {
-	result := make([]*apply.ModelSource, len(sources))
+func modelPointers(sources []project.ModelSource) []*project.ModelSource {
+	result := make([]*project.ModelSource, len(sources))
 	for i := range sources {
 		result[i] = &sources[i]
 	}
@@ -394,10 +394,10 @@ func (a *acquisition) account(key string, entry snapshot.Entry) error {
 	return nil
 }
 
-func (a *acquisition) selectedFiles(locations []apply.SourceLocation, target *[]apply.SourceFile, local bool) error {
+func (a *acquisition) selectedFiles(locations []project.SourceLocation, target *[]project.SourceFile, local bool) error {
 	seen := make(map[string]bool)
 	for _, location := range locations {
-		*target = append(*target, apply.SourceFile{Location: location})
+		*target = append(*target, project.SourceFile{Location: location})
 		observed := &(*target)[len(*target)-1]
 		b, err := a.boundary(location.Boundary)
 		if err != nil {

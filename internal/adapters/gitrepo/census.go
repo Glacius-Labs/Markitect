@@ -7,7 +7,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -161,7 +161,7 @@ func (a *acquisition) protectCommitted() error {
 			}
 		}
 	}
-	for _, group := range [][]apply.SourceFile{a.raw.Execution, a.raw.Registry, a.raw.Ignore, a.raw.RuntimeProfiles, a.raw.Instructions} {
+	for _, group := range [][]project.SourceFile{a.raw.Execution, a.raw.Registry, a.raw.Ignore, a.raw.RuntimeProfiles, a.raw.Instructions} {
 		for _, file := range group {
 			if file.RepositoryPath.String() != "" {
 				if err := check(file.RepositoryPath.String(), file.File); err != nil {

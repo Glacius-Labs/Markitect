@@ -10,7 +10,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -32,14 +32,14 @@ func TestCommittedSourceProtectsSelectedBytesAndIncludesIgnoredSiblings(t *testi
 				repo.Write("inputs/local/model/lending/extra.ignored", "extra protected bytes")
 			case "selected-uncommitted-ignored":
 				repo.Write("config/extra.ignored", "not a HEAD source")
-				selection.Execution = append(selection.Execution, apply.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, "config/extra.ignored")})
+				selection.Execution = append(selection.Execution, project.SourceLocation{Boundary: repo.Dir, Path: fixturePath(t, "config/extra.ignored")})
 			case "nonignored-untracked":
 				repo.Write("unknown.bin", "must not be silently ignored")
 			case "staged":
 				repo.Write("real/library.go", "staged change")
 				repo.Git("add", "real/library.go")
 			}
-			result, err := adapter(t).Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+			result, err := adapter(t).Capture(context.Background(), project.CaptureRequest{Selection: selection})
 			if err == nil || result.Guard != "" || result.Head != head {
 				t.Fatalf("committed protection failed: %v head=%s guard=%s", err, result.Head, result.Guard)
 			}
@@ -47,12 +47,12 @@ func TestCommittedSourceProtectsSelectedBytesAndIncludesIgnoredSiblings(t *testi
 	}
 	repo, selection, _ := libraryFixture(t)
 	r := adapter(t)
-	first, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	first, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if err != nil {
 		t.Fatal(err)
 	}
 	repo.Write("config/sibling.ignored", "not selected settings; still in census")
-	second, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	second, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -63,7 +63,7 @@ func TestCommittedSourceProtectsSelectedBytesAndIncludesIgnoredSiblings(t *testi
 		t.Fatal("ignored sibling lost from census")
 	}
 	repo.Write(".markitect/state/journal", "control-only change")
-	third, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	third, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -71,7 +71,7 @@ func TestCommittedSourceProtectsSelectedBytesAndIncludesIgnoredSiblings(t *testi
 		t.Fatal("excluded state changed source guard")
 	}
 	repo.Write(".markitect/stateful/retained.ignored", "ordinary censused source")
-	fourth, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	fourth, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -110,32 +110,32 @@ func TestExplicitExternalSourcesAreCurrentObservationsAndFixedPreviewRefuses(t *
 	if err := os.WriteFile(filepath.Join(externalRuntime, "profile.data"), []byte("\x00external\xff\r\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: externalRuntime, Path: fixturePath(t, "profile.data")}}
+	selection.RuntimeProfiles = []project.SourceLocation{{Boundary: externalRuntime, Path: fixturePath(t, "profile.data")}}
 	r := adapter(t)
-	service := apply.NewModelService(r, r)
-	actual, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	service := project.NewModelService(r, r)
+	actual, err := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || actual.Checked().Status != model.Passed {
 		t.Fatalf("external capture: %v %+v", err, actual.Checked())
 	}
 	if actual.Inputs().Raw.Dependencies[0].RepositoryArea.String() != "" || actual.Inputs().Raw.RuntimeProfiles[0].RepositoryPath.String() != "" || !bytes.Equal(actual.Inputs().Raw.RuntimeProfiles[0].File.Bytes(), []byte("\x00external\xff\r\n")) {
 		t.Fatal("external observation was rebound to repository or changed")
 	}
-	working, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
+	working, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection}, model.Limits{})
 	if err != nil || working.Checked().Status != model.Passed {
 		t.Fatalf("external working: %v", err)
 	}
-	refused, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
+	refused, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: head})
 	if !errors.Is(err, ErrUnsafe) || refused.Revision != head || refused.Raw.Dependencies[0].Selection.Boundary != external || len(refused.Raw.Dependencies[0].Files.Entries()) != 0 {
 		t.Fatalf("external source was claimed historical: %v %+v", err, refused)
 	}
 	selection.Dependencies[0].Boundary = filepath.Join(repo.Dir, "inputs", "vocabulary")
-	refused, err = r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
+	refused, err = r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: head})
 	if !errors.Is(err, ErrUnsafe) || len(refused.Raw.RuntimeProfiles) != 1 || refused.Raw.RuntimeProfiles[0].Location.Boundary != externalRuntime {
 		t.Fatalf("external Runtime selection lost on refusal: %v", err)
 	}
-	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: repo.Dir, Path: fixturePath(t, "runtime/profile.data")}}
+	selection.RuntimeProfiles = []project.SourceLocation{{Boundary: repo.Dir, Path: fixturePath(t, "runtime/profile.data")}}
 	selection.Execution[0].Boundary = externalRuntime
-	_, err = r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection})
+	_, err = r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection})
 	if !errors.Is(err, ErrUnsafe) {
 		t.Fatal("external execution source accepted")
 	}
@@ -147,13 +147,13 @@ func TestFixedRevisionUsesHistoricalDirectoriesAndRejectsSelectors(t *testing.T)
 		t.Fatal(err)
 	}
 	r := adapter(t)
-	service := apply.NewModelService(r, r)
-	fixed, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
+	service := project.NewModelService(r, r)
+	fixed, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
 	if err != nil || fixed.Checked().Status != model.Passed {
 		t.Fatalf("historical root required today's directory: %v", err)
 	}
 	for _, revision := range []string{"HEAD", head[:12], strings.ToUpper(head), "--help", strings.Repeat("0", len(head))} {
-		result, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: revision})
+		result, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: revision})
 		if err == nil || result.Head != head || result.Revision != revision {
 			t.Fatalf("revision substituted: %q %+v %v", revision, result, err)
 		}

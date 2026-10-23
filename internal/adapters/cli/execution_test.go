@@ -9,9 +9,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -112,24 +112,24 @@ func TestApplyRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 }
 
 func TestApplyStatusNeverConvertsErrorOrUnpublishedRunsIntoSuccess(t *testing.T) {
-	receipt := func(outcome apply.PublicationOutcome) *apply.PublicationReceipt {
-		return &apply.PublicationReceipt{Outcome: outcome}
+	receipt := func(outcome project.PublicationOutcome) *project.PublicationReceipt {
+		return &project.PublicationReceipt{Outcome: outcome}
 	}
 	for _, tc := range []struct {
 		name    string
 		outcome run.Outcome
-		receipt *apply.PublicationReceipt
+		receipt *project.PublicationReceipt
 		err     error
 		want    model.Status
 	}{
-		{"applied", run.Outcome{Status: run.Verified}, receipt(apply.PublicationApplied), nil, model.Passed},
-		{"no change", run.Outcome{Status: run.Verified}, receipt(apply.PublicationNoChange), nil, model.Passed},
-		{"applied with error", run.Outcome{Status: run.Verified}, receipt(apply.PublicationApplied), errors.New("read-back"), model.NotCompleted},
+		{"applied", run.Outcome{Status: run.Verified}, receipt(project.PublicationApplied), nil, model.Passed},
+		{"no change", run.Outcome{Status: run.Verified}, receipt(project.PublicationNoChange), nil, model.Passed},
+		{"applied with error", run.Outcome{Status: run.Verified}, receipt(project.PublicationApplied), errors.New("read-back"), model.NotCompleted},
 		{"verified without receipt", run.Outcome{Status: run.Verified}, nil, nil, model.NotCompleted},
-		{"stale", run.Outcome{Status: run.Verified}, receipt(apply.PublicationStale), nil, model.NotCompleted},
-		{"partial", run.Outcome{Status: run.Verified}, receipt(apply.PublicationPartial), nil, model.NotCompleted},
-		{"unknown", run.Outcome{Status: run.Verified}, receipt(apply.PublicationUnknown), nil, model.NotCompleted},
-		{"publication failed", run.Outcome{Status: run.Verified}, receipt(apply.PublicationFailed), nil, model.Failed},
+		{"stale", run.Outcome{Status: run.Verified}, receipt(project.PublicationStale), nil, model.NotCompleted},
+		{"partial", run.Outcome{Status: run.Verified}, receipt(project.PublicationPartial), nil, model.NotCompleted},
+		{"unknown", run.Outcome{Status: run.Verified}, receipt(project.PublicationUnknown), nil, model.NotCompleted},
+		{"publication failed", run.Outcome{Status: run.Verified}, receipt(project.PublicationFailed), nil, model.Failed},
 		{"incomplete", run.Outcome{Status: run.Incomplete}, nil, nil, model.NotCompleted},
 		{"failed", run.Outcome{Status: run.Failed}, nil, nil, model.Failed},
 		{"failed with the error that always comes with it", run.Outcome{Status: run.Failed}, nil, errors.New("rejection limit reached"), model.Failed},
@@ -143,22 +143,22 @@ func TestApplyStatusNeverConvertsErrorOrUnpublishedRunsIntoSuccess(t *testing.T)
 }
 
 func TestAssignmentStatusNeedsVerifyAndPublicationReadback(t *testing.T) {
-	accepted := apply.AssignmentRealizationResult{AcceptedCommit: "integrated"}
-	applied := &apply.PublicationReceipt{Outcome: apply.PublicationApplied}
+	accepted := project.AssignmentRealizationResult{AcceptedCommit: "integrated"}
+	applied := &project.PublicationReceipt{Outcome: project.PublicationApplied}
 	for _, tc := range []struct {
 		name    string
-		result  apply.AssignmentRealizationResult
-		receipt *apply.PublicationReceipt
+		result  project.AssignmentRealizationResult
+		receipt *project.PublicationReceipt
 		err     error
 		want    model.Status
 	}{
 		{"accepted and applied", accepted, applied, nil, model.Passed},
 		{"accepted without publication", accepted, nil, nil, model.NotCompleted},
 		{"publication with technical error", accepted, applied, errors.New("cleanup"), model.NotCompleted},
-		{"publication without Verify", apply.AssignmentRealizationResult{}, applied, nil, model.NotCompleted},
-		{"stale", accepted, &apply.PublicationReceipt{Outcome: apply.PublicationStale}, nil, model.NotCompleted},
-		{"failed publication", accepted, &apply.PublicationReceipt{Outcome: apply.PublicationFailed}, nil, model.Failed},
-		{"material model problem", apply.AssignmentRealizationResult{ModelProblem: &run.ReviewIssue{Owner: "."}}, nil, nil, model.Failed},
+		{"publication without Verify", project.AssignmentRealizationResult{}, applied, nil, model.NotCompleted},
+		{"stale", accepted, &project.PublicationReceipt{Outcome: project.PublicationStale}, nil, model.NotCompleted},
+		{"failed publication", accepted, &project.PublicationReceipt{Outcome: project.PublicationFailed}, nil, model.Failed},
+		{"material model problem", project.AssignmentRealizationResult{ModelProblem: &run.ReviewIssue{Owner: "."}}, nil, nil, model.Failed},
 	} {
 		if got := AssignmentApplyStatus(tc.result, tc.receipt, tc.err); got != tc.want {
 			t.Errorf("%s: %s, want %s", tc.name, got, tc.want)

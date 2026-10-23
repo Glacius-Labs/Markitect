@@ -14,7 +14,9 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/documents"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/modeldocs"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 func Run(ctx context.Context, args []string, stdout, stderr io.Writer) int {
@@ -27,11 +29,13 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 		fmt.Fprintln(stderr, err)
 		return 3
 	}
-	models := apply.NewModelService(repository, repository)
-	preparation := apply.NewPreparationService(models)
+	models := project.NewModelService(repository, repository)
+	preparation := project.NewPreparationService(models)
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(images), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
-	execution := newExecution(preparation, repository, agents, checker)
-	return cli.New(preparation, agents, checker, repository, views, execution.Execute).Run(ctx, args, stdout, stderr)
+	execution := func(context.Context, cli.ApplyRequest) (cli.ApplyReport, error) {
+		return cli.ApplyReport{Status: model.NotCompleted}, apply.ErrUnavailable
+	}
+	return cli.New(preparation, agents, checker, repository, views, execution).Run(ctx, args, stdout, stderr)
 }
