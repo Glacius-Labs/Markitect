@@ -390,6 +390,74 @@ func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
 	}
 }
 
+// This observes the delivered prompt and MCP metadata through the native
+// consumer. Actual copy updates are covered by the separate Run/Git regressions.
+func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
+	for _, mandate := range []run.Mandate{run.Implement, run.Assessment, run.Verify} {
+		t.Run(string(mandate), func(t *testing.T) {
+			rt := newRuntime()
+			spec := testSessionSpec(t)
+			spec.Mandate = mandate
+			decision := run.Approve
+			if mandate == run.Implement {
+				decision = run.Submitted
+			}
+			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[]}`, decision)
+			rt.useTool, rt.toolName = true, "delegate"
+			rt.toolArgs = `{"manager":"a","task":"Complete owned child work.","findings":[]}`
+			calls := 0
+			var child, task string
+			var findings []run.Finding
+			spec.Tools.Delegate = func(_ context.Context, manager, assignment string, feedback []run.Finding) error {
+				calls++
+				child, task, findings = manager, assignment, feedback
+				return nil
+			}
+			s := openSession(t, rt, spec)
+			if out, err := s.Exchange(context.Background(), run.Message{Task: "Complete the bound mandate."}); err != nil || out.Decision != decision {
+				t.Fatal(out, err)
+			}
+			if calls != 1 || child != "a" || task != "Complete owned child work." || len(findings) != 0 {
+				t.Fatal("native delegation callback changed", calls, child, task, findings)
+			}
+			starts := 0
+			for _, raw := range rt.writes {
+				var message struct {
+					Method string
+					Params struct{ BaseInstructions string }
+				}
+				if err := json.Unmarshal([]byte(raw), &message); err != nil {
+					t.Fatal(err)
+				}
+				if message.Method != "thread/start" {
+					continue
+				}
+				starts++
+				for _, boundary := range []string{"For Implement, delegate snapshots your current working copy", "within your ownership", "do not appear live", "After a fixed child handoff and parent review", "requires concrete Findings", "merges the then-current parent baseline", "does not reset the child's work", "Assessment and Verify retain their fixed input candidate", "Every active assignment continuation requires a fresh mandate-appropriate judge call"} {
+					if !strings.Contains(message.Params.BaseInstructions, boundary) {
+						t.Fatal("delivered native Rules omit copy boundary", boundary)
+					}
+				}
+			}
+			delegates := 0
+			for _, tool := range rt.start.Tools {
+				if tool.Name != "delegate" {
+					continue
+				}
+				delegates++
+				for _, boundary := range []string{"For Implement", "snapshots your current working copy", "owned shared prerequisites", "not propagated live", "fixed child handoff, parent review and concrete Findings", "merges the current parent baseline into existing child work", "Assessment and Verify retain their fixed input candidate"} {
+					if !strings.Contains(tool.Description, boundary) {
+						t.Fatal("delivered native delegate metadata omits copy boundary", boundary)
+					}
+				}
+			}
+			if starts != 1 || delegates != 1 {
+				t.Fatal("native prompt or delegate metadata not delivered", starts, delegates)
+			}
+		})
+	}
+}
+
 func TestSessionUsesHarnessCopySubpathAndPersistentNativeThread(t *testing.T) {
 	rt := newRuntime()
 	s := openSession(t, rt, testSessionSpec(t))
