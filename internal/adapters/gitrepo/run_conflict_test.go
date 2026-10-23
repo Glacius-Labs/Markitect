@@ -123,6 +123,17 @@ func (m *conflictManager) Exchange(ctx context.Context, message run.Message) (ru
 			if err = tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err == nil || !errors.Is(err, run.ErrMergeConflict) {
 				return run.Response{}, fmt.Errorf("actual conflict missing: %v", err)
 			}
+			// The native caller must learn that the failed approval already
+			// recorded Reject: no repair or replacement handoff starts until
+			// this parent delegates correction with concrete Findings.
+			for _, detail := range []string{"already recorded as rejected", "no child correction was started", "delegate", "concrete Findings"} {
+				if !strings.Contains(err.Error(), detail) {
+					return run.Response{}, fmt.Errorf("conflict feedback hides recorded review or next action (%s): %w", detail, err)
+				}
+			}
+			if repeated := tools.Review(ctx, h.Manager, h.Result.ID, run.Reject, []run.Finding{{Text: "Request conflict correction."}}); repeated == nil {
+				return run.Response{}, fmt.Errorf("already reviewed fixed child accepted another Review")
+			}
 			data, readErr := os.ReadFile(path)
 			if readErr != nil || string(data) != "parent conflict\n" {
 				return run.Response{}, fmt.Errorf("failed merge changed parent: %q %v", data, readErr)
