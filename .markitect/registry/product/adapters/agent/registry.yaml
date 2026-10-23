@@ -136,6 +136,10 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: "Exercises actual Project/Runtime prepared native Sessions, persistent conversation, harness observations, callback and background-writer drain, refusals and partial cleanup."
+  - path: "internal/adapters/codexappserver/agents_hierarchy_runtime_test.go"
+    form: test
+    realizes: [product/ports-and-adapters, product/adapters/agent/closed-agent-metadata]
+    why: "Prepares a checked five-Manager fixture and an explicitly dispatched native Run proof using production Git, Sessions, Notes and records, with loader conflicts, exact native observations, reviewed repair, same-Session questions and tracked-writer drain evidence."
   - path: "internal/adapters/claudecode/setup.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]

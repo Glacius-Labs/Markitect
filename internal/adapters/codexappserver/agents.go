@@ -162,31 +162,9 @@ func (a *Agents) Open(ctx context.Context, spec run.SessionSpec) (run.Session, e
 	if !ok || !reflect.DeepEqual(actual, spec.Manager) || !validTools(spec.Tools) {
 		return nil, ErrSession
 	}
-	findings := make([]harness.Finding, len(spec.Findings))
-	for i, f := range spec.Findings {
-		findings[i] = harness.Finding{Manager: f.Manager, Text: f.Text}
-	}
-	doc, err := harness.Build(spec.Prepared, spec.Manager, string(spec.Mandate), findings)
+	doc, err := a.documentFor(spec)
 	if err != nil {
 		return nil, err
-	}
-	doc.Developer += "\nSelected provider profile instructions (subject to canonical rules):\n" + a.profile.Session.BaseInstructions + "\n" + a.profile.Session.DeveloperInstructions + "\n"
-	for _, location := range a.prepared.Observation().Instructions {
-		found := false
-		for _, source := range a.prepared.Input().Instructions() {
-			if source.Location == location {
-				data := source.File.Bytes()
-				if !utf8.Valid(data) {
-					return nil, ErrSession
-				}
-				doc.Developer += fmt.Sprintf("\nCaptured runtime instruction %s (%s, %d bytes):\n%s\n", location.Path, source.File.ContentID(), len(data), data)
-				found = true
-				break
-			}
-		}
-		if !found {
-			return nil, fmt.Errorf("captured runtime instruction unavailable")
-		}
 	}
 	var nonce [16]byte
 	if _, err = rand.Read(nonce[:]); err != nil {
@@ -832,4 +810,34 @@ func (t *nativeSession) recordJudgment(raw []byte) error {
 	}
 	t.judgment = &response
 	return nil
+}
+
+func (a *Agents) documentFor(spec run.SessionSpec) (harness.Document, error) {
+	findings := make([]harness.Finding, len(spec.Findings))
+	for i, f := range spec.Findings {
+		findings[i] = harness.Finding{Manager: f.Manager, Text: f.Text}
+	}
+	doc, err := harness.Build(spec.Prepared, spec.Manager, string(spec.Mandate), findings)
+	if err != nil {
+		return harness.Document{}, err
+	}
+	doc.Developer += "\nSelected provider profile instructions (subject to canonical rules):\n" + a.profile.Session.BaseInstructions + "\n" + a.profile.Session.DeveloperInstructions + "\n"
+	for _, location := range a.prepared.Observation().Instructions {
+		found := false
+		for _, source := range a.prepared.Input().Instructions() {
+			if source.Location == location {
+				data := source.File.Bytes()
+				if !utf8.Valid(data) {
+					return harness.Document{}, ErrSession
+				}
+				doc.Developer += fmt.Sprintf("\nCaptured runtime instruction %s (%s, %d bytes):\n%s\n", location.Path, source.File.ContentID(), len(data), data)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return harness.Document{}, fmt.Errorf("captured runtime instruction unavailable")
+		}
+	}
+	return doc, nil
 }
