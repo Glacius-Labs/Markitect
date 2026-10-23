@@ -6,7 +6,15 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
+	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"io"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -14,13 +22,9 @@ import (
 	"sync"
 	"testing"
 	"time"
-
-	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-const testKey = "secret-key-for-runtime"
+const dedicatedLogin = `{"auth_mode":"chatgpt","tokens":{"id_token":"private-id","access_token":"private-access","refresh_token":"private-refresh","account_id":"selected-account"}}`
 
 type fakeStream struct {
 	chunks  chan []byte
@@ -86,7 +90,7 @@ type fakeRuntime struct {
 }
 
 func newRuntime() *fakeRuntime {
-	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), toolName: "submit", toolArgs: `{"summary":"done"}`}
+	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), toolName: "ask", toolArgs: `{"to":"a","text":"question"}`, finalText: `{"decision":"submitted","findings":[]}`}
 }
 func (f *fakeRuntime) emit(raw string) { f.stream.chunks <- []byte(raw + "\n") }
 func (f *fakeRuntime) Initialize(_ context.Context, req frame.Initialize) error {
@@ -201,623 +205,264 @@ func (f *fakeRuntime) Close() error {
 	return f.closeErr
 }
 
-func testProfile() Profile {
-	return Profile{ImageID: "sha256:" + strings.Repeat("a", 64), CredentialRef: "exact-credential", MaxWireBytes: 1 << 20,
-		Session: SessionProfile{Version: 1, Model: "admitted-model", Effort: "high", Store: "store", CPUs: 1, MemoryBytes: 1 << 30, Pids: 128, TmpBytes: 1 << 20}}
+func (f *fakeRuntime) ImageID() string { return fixtureImage }
+func testSessionSpec(t *testing.T) run.SessionSpec {
+	t.Helper()
+	r := testkit.NewRepo(t)
+	core := "../../../docs/design/canonical-model/minimal-language/exchange-example/dependencies/core"
+	if err := fs.WalkDir(os.DirFS(core), ".", func(p string, d fs.DirEntry, err error) error {
+		if err != nil || d.IsDir() {
+			return err
+		}
+		data, err := os.ReadFile(filepath.Join(core, filepath.FromSlash(p)))
+		if err == nil {
+			r.Write(".markitect/dependencies/core/"+p, string(data))
+		}
+		return err
+	}); err != nil {
+		t.Fatal(err)
+	}
+	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: native-fixture\nroot: model\ndependencies: {markitect-core: '1.0.0'}\n")
+	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.0.0', digest: 'sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1'}\n")
+	r.Write(".markitect/model/a/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: Preserve the native fixture obligation.\nspec: {}\n")
+	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\ninstructions: {'.': [guide.md]}\nchecks: []\n")
+	r.Write("guide.md", "SELECTED MANAGER GUIDANCE ✓\n")
+	r.Write(".markitect/registry/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts: []\n")
+	r.Commit("native fixture")
+	repo, err := gitrepo.New(gitrepo.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	result, err := project.NewPreparationService(project.NewModelService(repo, repo)).Capture(context.Background(), project.CaptureRequest{Selection: project.InputSelection{Repository: r.Dir, Local: project.ModelSelection{Boundary: ".", ManifestPath: testPath(t, ".markitect/model.yaml")}, Dependencies: []project.ModelSelection{{Boundary: ".markitect/dependencies/core", ManifestPath: testPath(t, "model.yaml")}}}}, model.Limits{})
+	a, ok := result.Prepared()
+	if err != nil || !ok {
+		t.Fatalf("actual fixture preparation: %v %s %+v", err, result.Status(), result.Attempts())
+	}
+	p, err := project.Prepare(a)
+	if err != nil {
+		t.Fatal(err)
+	}
+	manager, _ := p.Topology().Manager(".")
+	tools := run.Tools{Delegate: func(context.Context, string, string, []run.Finding) error { return nil }, Await: func(context.Context) (run.Event, error) {
+		return run.Event{Question: &run.Question{ID: "pending", From: "a", To: ".", Text: "counter-question"}}, nil
+	}, Review: func(context.Context, string, string, run.Decision, []run.Finding) error { return nil }, Ask: func(context.Context, string, string) (string, error) { return "new-id", nil }, Reply: func(context.Context, string, string) error { return nil }, ReadNotes: func(context.Context) ([]run.Note, error) { return nil, nil }, AppendNote: func(context.Context, string, string) (run.Note, error) { return run.Note{ID: "note"}, nil }}
+	return run.SessionSpec{RunID: "native-run", Manager: manager, Prepared: p, Mandate: run.Implement, Workspace: &sessionCopy{location: run.CopyLocation{Volume: "private-run-volume", Subpath: "copies/root"}}, Tools: tools}
 }
 
-func testTurn() run.Turn {
-	return run.Turn{ID: "turn-1", Manager: "lending", Kind: run.ExecuteTurn, Profile: "codex", Workspace: "workspace", Home: "provider-home", Prompt: "do the work",
-		Tools: []run.ToolSpec{{Name: "submit", Description: "Submit the outcome.", InputSchema: json.RawMessage(`{"type":"object"}`)}}, Timeout: 5 * time.Second}
+type sessionCopy struct {
+	run.Copy
+	location run.CopyLocation
 }
 
+func (c *sessionCopy) Location() run.CopyLocation { return c.location }
 func agentsFor(t *testing.T, rt *fakeRuntime) *Agents {
 	t.Helper()
-	a, err := NewAgentsWithRuntime(func(_ context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
-		rt.mu.Lock()
-		rt.spec = spec
-		rt.mu.Unlock()
+	p := preparedExecution(t, executionRuntimeProfile(filepath.Join(t.TempDir(), "engine")), imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}))
+	a, err := NewAgentsWithRuntime(func(_ context.Context, s container.ContainerSpec) (RuntimeSession, error) {
+		rt.spec = s
 		return rt, nil
-	}, map[string]Profile{"codex": testProfile()}, func(_ context.Context, ref string) (RuntimeCredential, error) {
-		if ref != "exact-credential" {
-			t.Errorf("unbound credential %s", ref)
+	}, p, func(_ context.Context, ref string) (RuntimeCredential, error) {
+		if ref != "exact-runtime-credential" {
+			t.Fatal("wrong reference")
 		}
-		return RuntimeCredential{Mode: "api-key", APIKey: testKey}, nil
+		return RuntimeCredential{Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(dedicatedLogin)}, nil
 	})
 	if err != nil {
 		t.Fatal(err)
 	}
-	a.stopGrace, a.stopTimeout = time.Second, time.Second
-	t.Cleanup(func() { _ = rt.Close() })
 	return a
 }
-
-func okHandler(calls *[]string) run.ToolHandler {
-	return func(_ context.Context, name string, args json.RawMessage) run.ToolAnswer {
-		*calls = append(*calls, name+" "+string(args))
-		return run.ToolAnswer{Text: "accepted"}
-	}
-}
-
-func TestRunExecuteTurn(t *testing.T) {
-	rt := newRuntime()
-	rt.useTool, rt.usage, rt.finalText = true, true, "all done "+testKey
-	path := filepath.Join(t.TempDir(), "turn.jsonl")
-	turn := testTurn()
-	turn.Transcript = path
-	var calls []string
-	res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(&calls))
+func openSession(t *testing.T, rt *fakeRuntime, spec run.SessionSpec) *nativeSession {
+	t.Helper()
+	s, err := agentsFor(t, rt).Open(context.Background(), spec)
 	if err != nil {
+		if s != nil {
+			_ = s.Close(context.Background())
+		}
 		t.Fatal(err)
 	}
-	if res.Conversation != string(codecThreadID) || res.Final != "all done [REDACTED]" || !res.Completed || !res.Stopped || res.Reason != "provider turn completed" || res.Started.IsZero() || res.Ended.Before(res.Started) {
-		t.Fatalf("result %+v", res)
+	t.Cleanup(func() { _ = s.Close(context.Background()) })
+	return s.(*nativeSession)
+}
+func TestSessionUsesHarnessCopySubpathAndPersistentNativeThread(t *testing.T) {
+	rt := newRuntime()
+	s := openSession(t, rt, testSessionSpec(t))
+	if rt.starts != 1 || len(rt.writes) != 2 {
+		t.Fatal("Open eagerly started inference", rt.starts, rt.writes)
 	}
-	if want := (run.Usage{Model: "admitted-model", InputTokens: 60, OutputTokens: 50, CacheReadTokens: 40, CacheCreationTokens: 5, ProviderTurns: 1}); res.Usage != want {
-		t.Fatalf("usage %+v", res.Usage)
+	if got := rt.spec.Mounts[0]; got != (container.Mount{Volume: "private-run-volume", Subpath: "copies/root", Target: "/work", NoCopy: true}) {
+		t.Fatal("copy projection", got)
 	}
-	if len(calls) != 1 || calls[0] != `submit {"summary":"done"}` {
-		t.Fatalf("handler calls %v", calls)
+	if rt.spec.Mounts[1].Target != "/home/agent" || rt.spec.Mounts[1].Volume == rt.spec.Mounts[0].Volume {
+		t.Fatal("home aliases workspace")
 	}
-	var result struct {
-		Content []struct{ Type, Text string }
-		IsError bool
-	}
-	if len(rt.replies) != 1 || json.Unmarshal(rt.replies[0].Result, &result) != nil || rt.replies[0].ID != 1 || len(result.Content) != 1 || result.Content[0].Text != "accepted" || result.IsError {
-		t.Fatalf("tool reply %+v", rt.replies)
-	}
-	spec := rt.spec
-	if spec.Name != "markitect-turn-1" || spec.Image != testProfile().ImageID || len(spec.Mounts) != 2 || spec.Mounts[0] != (container.Mount{Volume: "workspace", Target: "/work", NoCopy: true}) || spec.Mounts[1] != (container.Mount{Volume: "provider-home", Target: "/home/agent"}) || spec.Labels["markitect.store"] != "store" {
-		t.Fatalf("container spec %+v", spec)
-	}
-	if len(rt.start.Tools) != 1 || rt.start.Tools[0].Name != "submit" || rt.start.Dir != "/work" || strings.Join(rt.start.Env, " ") != "CODEX_HOME=/home/agent/.codex OPENAI_API_KEY="+testKey {
-		t.Fatalf("provider start %+v", rt.start)
-	}
-	if !strings.Contains(rt.writes[2], `"method":"thread/start"`) || strings.Contains(rt.writes[2], "threadId") || !strings.Contains(rt.writes[2], `"sandbox":"danger-full-access"`) || !strings.Contains(rt.writes[3], "do the work") || !strings.Contains(rt.writes[3], `"effort":"high"`) {
-		t.Fatalf("provider writes %q", rt.writes)
-	}
-	if rt.stops != 1 || !rt.closed {
-		t.Fatal("container not stopped")
-	}
-	data, err := os.ReadFile(path)
-	if err != nil || bytes.Contains(data, []byte(testKey)) || !bytes.Contains(data, []byte("[REDACTED]")) {
-		t.Fatalf("transcript leaked or missing: %v", err)
-	}
-	directions := map[string]bool{}
-	for _, line := range bytes.Split(bytes.TrimSpace(data), []byte("\n")) {
-		var l struct{ At, Direction, Data string }
-		if json.Unmarshal(line, &l) != nil || l.At == "" || l.Data == "" {
-			t.Fatalf("transcript line %q", line)
-		}
-		directions[l.Direction] = true
-	}
-	for _, d := range []string{"send", "receive", "tool-call", "tool-reply", "exit"} {
-		if !directions[d] {
-			t.Fatalf("transcript lacks %s lines", d)
+	for _, task := range []string{"first task", "recall first task"} {
+		res, err := s.Exchange(context.Background(), run.Message{Task: task})
+		if err != nil || res.Decision != run.Submitted {
+			t.Fatal(res, err)
 		}
 	}
-}
-
-func TestAssignmentKeepsOneContainerAndThreadAcrossResponses(t *testing.T) {
-	rt := newRuntime()
-	rt.finalText = "first result"
-	agents := agentsFor(t, rt)
-	session, err := agents.OpenAssignment(context.Background(), run.AssignmentSpec{
-		ID: "assignment-1", Profile: "codex", Workspace: "git-work", Home: "agent-home",
-	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
-	if err != nil {
-		t.Fatal(err)
-	}
-	first, err := session.Message(context.Background(), "work", time.Second)
-	if err != nil || !first.Completed || first.Stopped || first.Final != "first result" {
-		t.Fatalf("first response %+v %v", first, err)
-	}
-	rt.finalText = "corrected result"
-	second, err := session.Message(context.Background(), "correct the result", time.Second)
-	if err != nil || !second.Completed || second.Stopped || second.Final != "corrected result" || second.Conversation != first.Conversation {
-		t.Fatalf("second response %+v %v", second, err)
-	}
-	if rt.starts != 1 || rt.stops != 0 || rt.closed {
-		t.Fatalf("provider/container ended between messages: starts=%d stops=%d closed=%t", rt.starts, rt.stops, rt.closed)
-	}
-	closed, err := session.Close(context.Background())
-	if err != nil || !closed.Stopped || rt.stops != 1 || !rt.closed {
-		t.Fatalf("close %+v %v, starts=%d stops=%d", closed, err, rt.starts, rt.stops)
-	}
-}
-
-func TestAssignmentCancellationClosesAndRetainsPartialObservation(t *testing.T) {
-	rt := newRuntime()
-	rt.hang = true
-	session, err := agentsFor(t, rt).OpenAssignment(context.Background(), run.AssignmentSpec{
-		ID: "assignment-cancel", Profile: "codex", Workspace: "git-work", Home: "agent-home",
-	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx, cancel := context.WithCancel(context.Background())
-	cancel()
-	partial, err := session.Message(ctx, "unfinished work", time.Second)
-	if !errors.Is(err, context.Canceled) || !partial.Stopped || !rt.closed || rt.stops != 1 {
-		t.Fatalf("cancellation %+v %v, stops=%d closed=%t", partial, err, rt.stops, rt.closed)
-	}
-	closed, closeErr := session.Close(context.Background())
-	if !errors.Is(closeErr, context.Canceled) || closed.Stopped != partial.Stopped || rt.stops != 1 {
-		t.Fatalf("retained closure %+v %v", closed, closeErr)
-	}
-}
-
-func TestAssignmentCloseInterruptsRunningMessageWithoutMessageTimeout(t *testing.T) {
-	rt := newRuntime()
-	rt.hang = true
-	session, err := agentsFor(t, rt).OpenAssignment(context.Background(), run.AssignmentSpec{
-		ID: "assignment-abort", Profile: "codex", Workspace: "git-work", Home: "agent-home",
-	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
-	if err != nil {
-		t.Fatal(err)
-	}
-	messageCtx, cancel := context.WithCancel(context.Background())
-	defer cancel()
-	messageDone := make(chan error, 1)
-	go func() { _, err := session.Message(messageCtx, "work", 0); messageDone <- err }()
-	deadline := time.After(2 * time.Second)
-	for {
-		rt.mu.Lock()
-		started := len(rt.writes) >= 4
-		rt.mu.Unlock()
-		if started {
-			break
-		}
-		select {
-		case <-deadline:
-			t.Fatal("message did not start")
-		default:
-			time.Sleep(time.Millisecond)
-		}
-	}
-	closeDone := make(chan error, 1)
-	go func() { _, err := session.Close(context.Background()); closeDone <- err }()
-	select {
-	case err := <-closeDone:
-		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("close: %v", err)
-		}
-	case <-time.After(2 * time.Second):
-		cancel()
-		t.Fatal("Close could not interrupt a running Message")
-	}
-	if err := <-messageDone; !errors.Is(err, context.Canceled) || !rt.closed || rt.stops != 1 {
-		t.Fatalf("message/stop %v, stops=%d closed=%t", err, rt.stops, rt.closed)
-	}
-}
-
-func TestAssignmentCanRetryLocallyOversizedMessage(t *testing.T) {
-	rt := newRuntime()
-	rt.finalText = "short prompt result"
-	agents := agentsFor(t, rt)
-	profile := agents.profiles["codex"]
-	profile.MaxWireBytes = 4096
-	agents.profiles["codex"] = profile
-	session, err := agents.OpenAssignment(context.Background(), run.AssignmentSpec{
-		ID: "assignment-limit", Profile: "codex", Workspace: "git-work", Home: "agent-home",
-	}, func(context.Context, string, json.RawMessage) run.ToolAnswer { return run.ToolAnswer{} })
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := session.Message(context.Background(), strings.Repeat("x", 5000), time.Second); !errors.Is(err, run.ErrContextLimit) {
-		t.Fatalf("oversized prompt: %v", err)
-	}
-	if rt.stops != 0 || rt.closed {
-		t.Fatal("local prompt rejection closed the assignment")
-	}
-	result, err := session.Message(context.Background(), "shorter correction", time.Second)
-	if err != nil || !result.Completed || result.Final != "short prompt result" {
-		t.Fatalf("retry %+v %v", result, err)
-	}
-	if _, err := session.Close(context.Background()); err != nil {
-		t.Fatal(err)
-	}
-}
-
-func TestAssignmentCloseInterruptsParentAnswerWait(t *testing.T) {
-	rt := newRuntime()
-	rt.useTool, rt.toolName, rt.toolArgs = true, "ask_parent", `{"question":"Which contract?"}`
-	entered, release := make(chan struct{}), make(chan struct{})
-	defer close(release)
-	session, err := agentsFor(t, rt).OpenAssignment(context.Background(), run.AssignmentSpec{
-		ID: "assignment-question", Profile: "codex", Workspace: "git-work", Home: "agent-home",
-		Tools: []run.ToolSpec{{Name: "ask_parent", Description: "Ask parent", InputSchema: json.RawMessage(`{"type":"object"}`)}},
-	}, func(context.Context, string, json.RawMessage) run.ToolAnswer {
-		close(entered)
-		<-release
-		return run.ToolAnswer{Text: "late answer"}
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	done := make(chan error, 1)
-	go func() { _, err := session.Message(context.Background(), "ask", 0); done <- err }()
-	select {
-	case <-entered:
-	case <-time.After(2 * time.Second):
-		t.Fatal("question handler did not start")
-	}
-	closed := make(chan error, 1)
-	go func() { _, err := session.Close(context.Background()); closed <- err }()
-	select {
-	case err := <-closed:
-		if !errors.Is(err, context.Canceled) {
-			t.Fatalf("close: %v", err)
-		}
-	case <-time.After(2 * time.Second):
-		t.Fatal("Close waited for parent response")
-	}
-	if err := <-done; !errors.Is(err, context.Canceled) {
-		t.Fatalf("message: %v", err)
-	}
-}
-
-func TestRunReportsNoUsageWhenProtocolReportsNone(t *testing.T) {
-	rt := newRuntime()
-	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
-	if err != nil || res.Usage != (run.Usage{}) || res.Final != "" || !res.Stopped {
-		t.Fatalf("%+v %v", res, err)
-	}
-}
-
-func TestRunResumesOnlyTheNamedThread(t *testing.T) {
-	turn := testTurn()
-	turn.Resume = string(codecThreadID)
-	rt := newRuntime()
-	res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
-	if err != nil || res.Conversation != turn.Resume || !strings.Contains(rt.writes[2], `"method":"thread/resume"`) || !strings.Contains(rt.writes[2], `"threadId":"`+turn.Resume+`"`) {
-		t.Fatalf("%+v %v %q", res, err, rt.writes)
-	}
-	rt = newRuntime()
-	rt.resumeMismatch = true
-	res, err = agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
-	if !errors.Is(err, ErrProtocol) || res.Conversation != "" || !res.Stopped || rt.stops != 1 {
-		t.Fatalf("resumed another thread: %+v %v", res, err)
-	}
-}
-
-func TestRunVerifyTurnMayResumeItsThreadAndStaysReadOnly(t *testing.T) {
-	turn := testTurn()
-	turn.Kind, turn.ReadOnly, turn.Resume = run.VerifyTurn, true, string(codecThreadID)
-	rt := newRuntime()
-	res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
-	if err != nil || res.Conversation != turn.Resume || !strings.Contains(rt.writes[2], `"method":"thread/resume"`) {
-		t.Fatalf("a resuming verify turn failed: %+v %v %q", res, err, rt.writes)
-	}
-	if m := rt.spec.Mounts[0]; m.Target != "/work" || !m.ReadOnly || rt.spec.Mounts[1].ReadOnly {
-		t.Fatalf("the resumed verify turn can write the workspace: %+v", rt.spec.Mounts)
-	}
-}
-
-func TestRunVerifyTurnMountsReadOnly(t *testing.T) {
-	turn := testTurn()
-	turn.Kind, turn.ReadOnly = run.VerifyTurn, true
-	rt := newRuntime()
-	if _, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string))); err != nil {
-		t.Fatal(err)
-	}
-	if m := rt.spec.Mounts[0]; m.Target != "/work" || !m.ReadOnly || !m.NoCopy || rt.spec.Mounts[1].ReadOnly {
-		t.Fatalf("workspace must be read-only and the provider home writable: %+v", rt.spec.Mounts)
-	}
-}
-
-func TestRunTurnMountsOverlayTheWorkspaceVolumeInOrder(t *testing.T) {
-	root := []run.PathMount{{Path: "lending"}, {Path: "library"}}
-	child := []run.PathMount{{Path: "lending", Writable: true}, {Path: "lending/reminders"}}
-	for name, tc := range map[string]struct {
-		readOnly bool
-		mounts   []run.PathMount
-		want     []container.Mount
-	}{
-		"root style: writable base, read-only overlays": {false, root, []container.Mount{
-			{Volume: "workspace", Target: "/work", NoCopy: true},
-			{Volume: "workspace", Target: "/work/lending", Subpath: "lending", ReadOnly: true, NoCopy: true},
-			{Volume: "workspace", Target: "/work/library", Subpath: "library", ReadOnly: true, NoCopy: true},
-			{Volume: "provider-home", Target: "/home/agent"}}},
-		"child style: read-only base, writable overlays": {true, child, []container.Mount{
-			{Volume: "workspace", Target: "/work", ReadOnly: true, NoCopy: true},
-			{Volume: "workspace", Target: "/work/lending", Subpath: "lending", NoCopy: true},
-			{Volume: "workspace", Target: "/work/lending/reminders", Subpath: "lending/reminders", ReadOnly: true, NoCopy: true},
-			{Volume: "provider-home", Target: "/home/agent"}}},
-	} {
-		t.Run(name, func(t *testing.T) {
-			turn := testTurn()
-			turn.ReadOnly, turn.Mounts = tc.readOnly, tc.mounts
-			rt := newRuntime()
-			if _, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string))); err != nil {
-				t.Fatal(err)
+	starts := 0
+	for _, raw := range rt.writes {
+		var m struct {
+			Method string
+			Params struct {
+				BaseInstructions, DeveloperInstructions string
+				OutputSchema                            json.RawMessage
 			}
-			if !reflect.DeepEqual(rt.spec.Mounts, tc.want) {
-				t.Fatalf("mounts %+v", rt.spec.Mounts)
+		}
+		_ = json.Unmarshal([]byte(raw), &m)
+		if m.Method == "thread/start" {
+			starts++
+			for _, part := range []string{"Prepared binding:", "Complete Manager hierarchy", "SELECTED MANAGER GUIDANCE ✓", "Initial Findings", "implement"} {
+				if !strings.Contains(m.Params.DeveloperInstructions, part) {
+					t.Fatalf("missing harness %q", part)
+				}
 			}
-		})
+			if !strings.Contains(m.Params.BaseInstructions, "checked canonical model is authoritative") {
+				t.Fatal("rules absent")
+			}
+		}
+		if m.Method == "turn/start" && len(m.Params.OutputSchema) == 0 {
+			t.Fatal("result schema absent")
+		}
+	}
+	if starts != 1 {
+		t.Fatal("new native thread per Exchange", starts)
+	}
+	if err := s.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	if !reflect.DeepEqual(rt.homeCalls, []string{"initialize", "start", "stop", "clear", "close"}) {
+		t.Fatal(rt.homeCalls)
 	}
 }
-
-func TestRunVerifyTurnWithReadOnlyMountsStarts(t *testing.T) {
-	turn := testTurn()
-	turn.Kind, turn.ReadOnly, turn.Mounts = run.VerifyTurn, true, []run.PathMount{{Path: "lending"}}
-	rt := newRuntime()
-	if _, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string))); err != nil || len(rt.spec.Mounts) != 3 {
-		t.Fatalf("%v %+v", err, rt.spec.Mounts)
-	}
-}
-
-func TestRunRefusalIsAToolErrorNotATurnFailure(t *testing.T) {
+func TestSessionCloseCancelsAndDrainsInboxCallback(t *testing.T) {
 	rt := newRuntime()
 	rt.useTool = true
-	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), func(context.Context, string, json.RawMessage) run.ToolAnswer {
-		return run.ToolAnswer{Text: "Orchestrator refused this call", Refused: true}
-	})
-	var result struct {
-		Content []struct{ Text string }
-		IsError bool
+	rt.toolName = "await"
+	rt.toolArgs = "{}"
+	spec := testSessionSpec(t)
+	entered := make(chan struct{})
+	drained := make(chan struct{})
+	spec.Tools.Await = func(ctx context.Context) (run.Event, error) {
+		close(entered)
+		<-ctx.Done()
+		close(drained)
+		return run.Event{}, ctx.Err()
 	}
-	if err != nil || json.Unmarshal(rt.replies[0].Result, &result) != nil || !result.IsError || result.Content[0].Text != "Orchestrator refused this call" || res.Reason != "provider turn completed" {
-		t.Fatalf("%+v %v %+v", res, err, rt.replies)
+	s := openSession(t, rt, spec)
+	done := make(chan error, 1)
+	go func() { _, e := s.Exchange(context.Background(), run.Message{Task: "wait"}); done <- e }()
+	select {
+	case <-entered:
+	case <-time.After(3 * time.Second):
+		t.Fatal("no callback")
 	}
-}
-
-func TestRunRefusesForeignOrUnofferedToolCalls(t *testing.T) {
-	for name, set := range map[string]func(*fakeRuntime){
-		"foreign thread": func(f *fakeRuntime) { f.toolThread = "foreign-thread" },
-		"unoffered tool": func(f *fakeRuntime) { f.toolName = "other" },
-	} {
-		t.Run(name, func(t *testing.T) {
-			rt := newRuntime()
-			rt.useTool = true
-			set(rt)
-			called := false
-			res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), func(context.Context, string, json.RawMessage) run.ToolAnswer {
-				called = true
-				return run.ToolAnswer{}
-			})
-			if !errors.Is(err, ErrProtocol) || called || len(rt.replies) != 0 || !res.Stopped || rt.stops != 1 {
-				t.Fatalf("%+v %v called=%v", res, err, called)
-			}
-		})
-	}
-}
-
-func TestRunProviderFailureKeepsConversation(t *testing.T) {
-	for _, status := range []string{"failed", "interrupted"} {
-		rt := newRuntime()
-		rt.terminalStatus = status
-		res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
-		if !errors.Is(err, ErrSession) || res.Conversation != string(codecThreadID) || res.Reason != "provider turn "+status || res.Completed || !res.Stopped {
-			t.Fatalf("%s: %+v %v", status, res, err)
-		}
-	}
-}
-
-func TestNativeCompletionSeparatesFinalAssessmentAndCommandObservations(t *testing.T) {
-	for _, phase := range []string{"final_answer", "commentary", ""} {
-		t.Run(phase, func(t *testing.T) {
-			rt := newRuntime()
-			rt.finalPhase = &phase
-			rt.finalText = "native semantic assessment"
-			rt.commandItems = []map[string]any{
-				{"type": "commandExecution", "id": "setup", "command": "python missing.py", "status": "completed", "exitCode": 2, "aggregatedOutput": "missing script"},
-				{"type": "commandExecution", "id": "test", "command": "python -m unittest", "status": "completed", "exitCode": 0, "aggregatedOutput": "OK"},
-			}
-			res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
-			if err != nil || !res.Completed || !res.Stopped || len(res.Commands) != 2 {
-				t.Fatalf("%+v %v", res, err)
-			}
-			if res.Commands[0].ExitCode == nil || *res.Commands[0].ExitCode != 2 || res.Commands[1].ID != "test" || *res.Commands[1].ExitCode != 0 {
-				t.Fatalf("commands lost: %+v", res.Commands)
-			}
-			if (res.Final != "") != (phase == "final_answer") {
-				t.Fatalf("phase %q promoted commentary/transport into final: %q", phase, res.Final)
-			}
-		})
-	}
-}
-
-func TestRunProviderErrorTextIsRedacted(t *testing.T) {
-	rt := newRuntime()
-	rt.errorText = "bad key " + testKey
-	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
-	if err == nil || strings.Contains(err.Error(), testKey) || !strings.Contains(err.Error(), "[REDACTED]") || !res.Stopped {
-		t.Fatalf("%+v %v", res, err)
-	}
-}
-
-func TestRunTimeoutAndCancelStopTheContainer(t *testing.T) {
-	rt := newRuntime()
-	rt.hang = true
-	turn := testTurn()
-	turn.Timeout = 100 * time.Millisecond
-	res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
-	if !errors.Is(err, context.DeadlineExceeded) || res.Reason != "timeout" || !res.Stopped || rt.stops != 1 || !rt.closed || res.Conversation != string(codecThreadID) {
-		t.Fatalf("timeout: %+v %v", res, err)
-	}
-	rt = newRuntime()
-	rt.hang = true
-	ctx, cancel := context.WithCancel(context.Background())
-	time.AfterFunc(100*time.Millisecond, cancel)
-	res, err = agentsFor(t, rt).Run(ctx, testTurn(), okHandler(new([]string)))
-	if !errors.Is(err, context.Canceled) || res.Reason != "cancelled" || !res.Stopped || rt.stops != 1 || !rt.closed {
-		t.Fatalf("cancel: %+v %v", res, err)
-	}
-}
-
-func TestRunStoppedOnlyWhenExitWasObserved(t *testing.T) {
-	rt := newRuntime()
-	rt.stopFail = true
-	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
-	if err == nil || res.Stopped || !rt.closed {
-		t.Fatalf("unobserved exit reported as stopped: %+v %v", res, err)
-	}
-}
-
-func TestRunStoppedOnlyWhenTheContainerEndWasObserved(t *testing.T) {
-	rt := newRuntime()
-	rt.closeErr = errors.Join(container.ErrForcedClose, errors.New("engine "+testKey))
-	res, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(new([]string)))
-	if err == nil || !strings.Contains(err.Error(), "removed by force") || res.Stopped || !strings.Contains(res.Reason, "container end was not") || !rt.closed {
-		t.Fatalf("forced close reported as stopped: %+v %v", res, err)
-	}
-	if strings.Contains(err.Error(), testKey) || strings.Contains(res.Reason, testKey) {
-		t.Fatal("secret leaked")
-	}
-}
-
-func TestRunRedactsKnownSecretsFromToolArgumentsBeforeTheHandler(t *testing.T) {
-	rt := newRuntime()
-	rt.useTool, rt.toolArgs = true, `{"summary":"leak `+testKey+`"}`
-	var calls []string
-	if _, err := agentsFor(t, rt).Run(context.Background(), testTurn(), okHandler(&calls)); err != nil {
+	if err := s.Close(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	if len(calls) != 1 || strings.Contains(calls[0], testKey) || calls[0] != `submit {"summary":"leak [REDACTED]"}` {
-		t.Fatalf("handler saw %q", calls)
+	select {
+	case <-drained:
+	default:
+		t.Fatal("callback not drained")
 	}
-}
-
-func TestRunStartFailureBeforeAndAfterContainerCreation(t *testing.T) {
-	profiles := map[string]Profile{"codex": testProfile()}
-	starts := 0
-	failing := func(resolver CredentialResolver) *Agents {
-		a, err := NewAgentsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) {
-			starts++
-			return nil, errors.New("container creation result unknown")
-		}, profiles, resolver)
-		if err != nil {
+	select {
+	case err := <-done:
+		if !errors.Is(err, context.Canceled) {
 			t.Fatal(err)
 		}
-		return a
-	}
-	good := func(context.Context, string) (RuntimeCredential, error) {
-		return RuntimeCredential{Mode: "api-key", APIKey: testKey}, nil
-	}
-	res, err := failing(good).Run(context.Background(), testTurn(), okHandler(new([]string)))
-	if err == nil || res.Stopped || starts != 1 {
-		t.Fatalf("a failed container start is uncertain: %+v %v", res, err)
-	}
-	for name, resolver := range map[string]CredentialResolver{
-		"resolver error": func(context.Context, string) (RuntimeCredential, error) {
-			return RuntimeCredential{}, errors.New("failed")
-		},
-		"invalid": func(context.Context, string) (RuntimeCredential, error) {
-			return RuntimeCredential{Mode: "api-key"}, nil
-		},
-	} {
-		starts = 0
-		res, err = failing(resolver).Run(context.Background(), testTurn(), okHandler(new([]string)))
-		if !errors.Is(err, ErrSession) || !res.Stopped || starts != 0 {
-			t.Fatalf("%s: %+v %v starts=%d", name, res, err, starts)
-		}
+	case <-time.After(time.Second):
+		t.Fatal("Exchange active")
 	}
 }
-
-func TestRunRefusesInvalidTurnsBeforeStartingAnything(t *testing.T) {
-	for name, change := range map[string]func(*run.Turn){
-		"unknown profile":          func(t *run.Turn) { t.Profile = "other" },
-		"bad id":                   func(t *run.Turn) { t.ID = "a/b" },
-		"bad workspace":            func(t *run.Turn) { t.Workspace = "" },
-		"same volume":              func(t *run.Turn) { t.Home = t.Workspace },
-		"negative timeout":         func(t *run.Turn) { t.Timeout = -1 },
-		"unknown kind":             func(t *run.Turn) { t.Kind = "other" },
-		"writable verify":          func(t *run.Turn) { t.Kind = run.VerifyTurn },
-		"writable resuming verify": func(t *run.Turn) { t.Kind, t.Resume = run.VerifyTurn, "thread" },
-		"duplicate tool":           func(t *run.Turn) { t.Tools = append(t.Tools, t.Tools[0]) },
-		"tool without text":        func(t *run.Turn) { t.Tools[0].Description = " " },
-		"tool schema":              func(t *run.Turn) { t.Tools[0].InputSchema = json.RawMessage(`[]`) },
-		"relative transcript":      func(t *run.Turn) { t.Transcript = "turn.jsonl" },
-		"mount path escapes":       func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "../lending", Writable: true}} },
-		"mount path absolute":      func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "/lending"}} },
-		"mount path unclean":       func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "lending/./reminders"}} },
-		"mount path empty":         func(t *run.Turn) { t.Mounts = []run.PathMount{{}} },
-		"mount option inject":      func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a,readonly=false"}} },
-		"mount path twice":         func(t *run.Turn) { t.Mounts = []run.PathMount{{Path: "a"}, {Path: "a", Writable: true}} },
-		"verify writable mount": func(t *run.Turn) {
-			t.Kind, t.ReadOnly, t.Mounts = run.VerifyTurn, true, []run.PathMount{{Path: "lending", Writable: true}}
-		},
-	} {
-		t.Run(name, func(t *testing.T) {
-			turn := testTurn()
-			turn.Tools = append([]run.ToolSpec(nil), turn.Tools...)
-			change(&turn)
+func TestSessionPartialStartupRetainsHandleAndUncertainClose(t *testing.T) {
+	rt := newRuntime()
+	rt.initializeErr = errors.New("private-access startup")
+	rt.closeErr = errors.New("close uncertain")
+	s, err := agentsFor(t, rt).Open(context.Background(), testSessionSpec(t))
+	if s == nil || err == nil || strings.Contains(err.Error(), "private-access") {
+		t.Fatal(s, err)
+	}
+	if err := s.Close(context.Background()); err == nil || !strings.Contains(err.Error(), "close uncertain") {
+		t.Fatal(err)
+	}
+	if rt.starts != 0 || !rt.closed {
+		t.Fatal("failed setup started provider")
+	}
+}
+func TestSessionNativeFailuresCloseBeforeExchangeReturns(t *testing.T) {
+	for _, kind := range []string{"malformed", "decision", "provider", "secret"} {
+		t.Run(kind, func(t *testing.T) {
 			rt := newRuntime()
-			res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
-			if !errors.Is(err, ErrSession) || !res.Stopped || rt.spec.Name != "" {
-				t.Fatalf("%+v %v", res, err)
+			switch kind {
+			case "malformed":
+				rt.finalText = "not JSON"
+			case "decision":
+				rt.finalText = `{"decision":"success","findings":[]}`
+			case "provider":
+				rt.terminalStatus = "failed"
+			case "secret":
+				rt.errorText = "private-access"
+			}
+			s := openSession(t, rt, testSessionSpec(t))
+			_, err := s.Exchange(context.Background(), run.Message{Task: "work"})
+			if err == nil || !rt.closed || strings.Contains(err.Error(), "private-access") {
+				t.Fatal(err, rt.closed)
 			}
 		})
 	}
-	if _, err := agentsFor(t, newRuntime()).Run(context.Background(), testTurn(), nil); !errors.Is(err, ErrSession) {
-		t.Fatal("accepted a nil handler")
+}
+func TestSessionAdmissionRejectsDirectoryAndForgedManagerBeforeCredentials(t *testing.T) {
+	spec := testSessionSpec(t)
+	rt := newRuntime()
+	a := agentsFor(t, rt)
+	calls := 0
+	a.credentials = func(context.Context, string) (RuntimeCredential, error) { calls++; return RuntimeCredential{}, nil }
+	spec.Workspace = &sessionCopy{location: run.CopyLocation{Directory: t.TempDir()}}
+	if s, e := a.Open(context.Background(), spec); e == nil || s != nil || calls != 0 {
+		t.Fatal("Directory admitted")
+	}
+	spec.Workspace = &sessionCopy{location: run.CopyLocation{Volume: "volume", Subpath: "copy"}}
+	spec.Manager.Children = nil
+	if s, e := a.Open(context.Background(), spec); e == nil || s != nil || calls != 0 {
+		t.Fatal("forged Manager admitted")
 	}
 }
-
-func TestNewAgentsRefusesInvalidInputs(t *testing.T) {
-	resolver := func(context.Context, string) (RuntimeCredential, error) { return RuntimeCredential{}, nil }
-	start := func(context.Context, container.ContainerSpec) (RuntimeSession, error) { return nil, nil }
-	bad := func(change func(*Profile)) map[string]Profile {
-		p := testProfile()
-		change(&p)
-		return map[string]Profile{"codex": p}
-	}
-	for name, profiles := range map[string]map[string]Profile{
-		"image":      bad(func(p *Profile) { p.ImageID = "latest" }),
-		"credential": bad(func(p *Profile) { p.CredentialRef = "" }),
-		"wire":       bad(func(p *Profile) { p.MaxWireBytes = maxProtocolMessage + 1 }),
-		"settings":   bad(func(p *Profile) { p.Session.Effort = "max" }),
-		"name":       {"": testProfile()},
-	} {
-		if _, err := NewAgentsWithRuntime(start, profiles, resolver); !errors.Is(err, ErrSession) {
-			t.Fatalf("%s accepted", name)
-		}
-	}
-	if _, err := NewAgentsWithRuntime(nil, nil, resolver); err == nil {
-		t.Fatal("accepted missing starter")
-	}
-	if _, err := NewAgentsWithRuntime(start, nil, nil); err == nil {
-		t.Fatal("accepted missing resolver")
-	}
-	if _, err := NewAgents(nil, nil, resolver); err == nil {
-		t.Fatal("accepted missing engine")
-	}
-}
-
-func TestRunsMayOverlap(t *testing.T) {
-	var wg sync.WaitGroup
-	for i := range 4 {
-		wg.Add(1)
-		go func() {
-			defer wg.Done()
+func TestSessionInboxProjectionRefusalAndForeignCallRejection(t *testing.T) {
+	for _, kind := range []string{"ask", "await", "reply", "foreign thread", "foreign tool", "refused"} {
+		t.Run(kind, func(t *testing.T) {
 			rt := newRuntime()
 			rt.useTool = true
-			turn := testTurn()
-			turn.ID = "turn-" + string(rune('a'+i))
-			res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
-			if err != nil || !res.Stopped {
-				t.Errorf("%+v %v", res, err)
+			spec := testSessionSpec(t)
+			switch kind {
+			case "await":
+				rt.toolName = "await"
+				rt.toolArgs = "{}"
+			case "reply":
+				rt.toolName = "reply"
+				rt.toolArgs = `{"id":"incoming","text":"answer"}`
+			case "foreign thread":
+				rt.toolThread = "foreign"
+			case "foreign tool":
+				rt.toolName = "host_shell"
+			case "refused":
+				spec.Tools.Ask = func(context.Context, string, string) (string, error) { return "", errors.New("refused private-access") }
 			}
-		}()
-	}
-	wg.Wait()
-}
-
-// A prompt the provider channel cannot carry fails the turn as a context
-// limit naming both sizes; nothing is cut and the prompt is never sent.
-func TestRunPromptAboveTheChannelIsAContextLimit(t *testing.T) {
-	rt := newRuntime()
-	turn := testTurn()
-	turn.Prompt = strings.Repeat("x", 1<<20+1)
-	res, err := agentsFor(t, rt).Run(context.Background(), turn, okHandler(new([]string)))
-	if !errors.Is(err, run.ErrContextLimit) || !strings.Contains(err.Error(), fmt.Sprintf("%d bytes", 1<<20+1)) || !strings.Contains(err.Error(), fmt.Sprintf("%d bytes", 1<<20)) || !res.Stopped {
-		t.Fatalf("%+v %v", res, err)
-	}
-	for _, w := range rt.writes {
-		if strings.Contains(w, `"method":"turn/start"`) {
-			t.Fatal("the prompt was sent")
-		}
+			s := openSession(t, rt, spec)
+			_, err := s.Exchange(context.Background(), run.Message{Task: "coordinate"})
+			if strings.HasPrefix(kind, "foreign") {
+				if err == nil || len(rt.replies) != 0 {
+					t.Fatal("foreign call accepted")
+				}
+				return
+			}
+			if err != nil || len(rt.replies) != 1 || strings.Contains(string(rt.replies[0].Result), "private-access") {
+				t.Fatal(err, rt.replies)
+			}
+		})
 	}
 }

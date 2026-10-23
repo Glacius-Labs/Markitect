@@ -8,102 +8,85 @@ import (
 	"reflect"
 	"strings"
 	"testing"
-
-	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-const dedicatedLogin = `{"auth_mode":"chatgpt","OPENAI_API_KEY":null,"tokens":{"id_token":"dedicated-id-token","access_token":"dedicated-access-token","refresh_token":"dedicated-refresh-token","account_id":"runtime-account"},"last_refresh":"2026-10-17T12:00:00Z"}`
-
-func TestDedicatedRuntimeLoginCopyCleanupAndUncertainty(t *testing.T) {
-	for _, mode := range []string{"observed-exit", "uncertain-stop", "cleanup-failure", "install-failure", "container-start-failure"} {
-		t.Run(mode, func(t *testing.T) {
+func TestNormalLoginCopyClosureAndUncertainty(t *testing.T) {
+	for _, kind := range []string{"observed exit", "uncertain stop", "cleanup failure", "partial installation"} {
+		t.Run(kind, func(t *testing.T) {
 			rt := newRuntime()
-			rt.stopFail = mode == "uncertain-stop"
-			if mode == "cleanup-failure" {
-				rt.cleanupErr = errors.New("cleanup refused dedicated-access-token")
+			switch kind {
+			case "uncertain stop":
+				rt.stopFail = true
+			case "cleanup failure":
+				rt.cleanupErr = errors.New("cleanup refused private-access")
+			case "partial installation":
+				rt.initializeErr = errors.New("setup refused private-access")
 			}
-			if mode == "install-failure" {
-				rt.initializeErr = errors.New("partial setup dedicated-access-token")
+			s, openErr := agentsFor(t, rt).Open(context.Background(), testSessionSpec(t))
+			if s == nil {
+				t.Fatal(openErr)
 			}
-			started := 0
-			a, err := NewAgentsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) {
-				started++
-				if mode == "container-start-failure" {
-					return nil, errors.New("container refused")
-				}
-				return rt, nil
-			}, map[string]Profile{"codex": testProfile()}, func(_ context.Context, ref string) (RuntimeCredential, error) {
-				if ref != "exact-credential" {
-					t.Fatal("credential reference changed")
-				}
-				return RuntimeCredential{Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(dedicatedLogin)}, nil
-			})
-			if err != nil {
-				t.Fatal(err)
+			closeErr := s.Close(context.Background())
+			if kind == "observed exit" && (openErr != nil || closeErr != nil) {
+				t.Fatal(openErr, closeErr)
 			}
-			a.stopGrace, a.stopTimeout = 1e9, 1e9
-			t.Cleanup(func() { _ = rt.Close() })
-			res, err := a.Run(context.Background(), testTurn(), okHandler(new([]string)))
-			if started != 1 {
-				t.Fatal("more than one Manager container started")
+			if kind != "observed exit" && openErr == nil && closeErr == nil {
+				t.Fatal("uncertainty hidden")
 			}
-			if err != nil && strings.Contains(err.Error(), "dedicated-access-token") {
-				t.Fatal("secret escaped in error")
-			}
-			if mode == "container-start-failure" {
-				if err == nil || len(rt.homeCalls) != 0 {
-					t.Fatalf("setup ran without a container: %v %v", rt.homeCalls, err)
-				}
-				return
-			}
-			var copy runtimeLogin
-			if bytes.Contains(rt.installed, []byte("dedicated-refresh-token")) || json.Unmarshal(rt.installed, &copy) != nil || copy.Tokens.Refresh != "" || copy.Tokens.Access != "dedicated-access-token" {
-				t.Fatal("bad runtime login copy")
-			}
-			wantCalls := []string{"initialize", "start", "stop", "clear", "close"}
-			switch mode {
-			case "observed-exit":
-				if err != nil || !res.Stopped || len(rt.start.Env) != 1 || rt.start.Env[0] != "CODEX_HOME=/home/agent/.codex" || strings.Contains(strings.Join(rt.start.Argv, " "), "env_key") {
-					t.Fatalf("%+v %v start=%+v", res, err, rt.start)
-				}
-			case "uncertain-stop":
-				wantCalls = []string{"initialize", "start", "stop", "close"}
-				if err == nil || res.Stopped {
-					t.Fatalf("uncertain stop claimed success: %+v %v", res, err)
-				}
-			case "cleanup-failure":
-				if err == nil || !res.Stopped || !strings.Contains(res.Reason, "cleanup incomplete") {
-					t.Fatalf("cleanup failure hidden: %+v %v", res, err)
-				}
-			case "install-failure":
-				wantCalls = []string{"initialize", "clear", "close"}
-				if err == nil || rt.starts != 0 || !res.Stopped {
-					t.Fatalf("partial setup not closed: %+v %v", res, err)
+			for _, err := range []error{openErr, closeErr} {
+				if err != nil && strings.Contains(err.Error(), "private-access") {
+					t.Fatal("credential in error")
 				}
 			}
-			if !reflect.DeepEqual(rt.homeCalls, wantCalls) {
-				t.Fatalf("lifecycle = %v, want %v", rt.homeCalls, wantCalls)
+			var login runtimeLogin
+			if json.Unmarshal(rt.installed, &login) != nil || login.Tokens.Refresh != "" || login.Tokens.Access != "private-access" || bytes.Contains(rt.installed, []byte("private-refresh")) {
+				t.Fatal("bad login copy")
+			}
+			want := []string{"initialize", "start", "stop", "clear", "close"}
+			if kind == "uncertain stop" {
+				want = []string{"initialize", "start", "stop", "close"}
+			}
+			if kind == "partial installation" {
+				want = []string{"initialize", "clear", "close"}
+			}
+			if !reflect.DeepEqual(rt.homeCalls, want) {
+				t.Fatal(rt.homeCalls, want)
+			}
+			if rt.starts > 0 && (!reflect.DeepEqual(rt.start.Env, []string{"CODEX_HOME=/home/agent/.codex"}) || strings.Contains(strings.Join(rt.start.Argv, " "), "OPENAI_API_KEY")) {
+				t.Fatal("login leaked to environment or API route retained")
 			}
 		})
 	}
 }
-func TestCredentialModesFailClosedWithoutFallback(t *testing.T) {
-	for _, c := range []RuntimeCredential{{APIKey: "ambient-mode-not-admitted"}, {Mode: "api-key", APIKey: "key", RuntimeLogin: json.RawMessage(dedicatedLogin)}, {Mode: "desktop-login", RuntimeLogin: json.RawMessage(dedicatedLogin)}} {
-		turn := &turnRun{agents: &Agents{}}
-		if _, err := turn.credential(context.Background(), c); err == nil {
-			t.Fatalf("unsupported credential accepted %+v", c.Mode)
+func TestLoginRefusesOtherModesMalformedOrMixedAuthority(t *testing.T) {
+	for _, credential := range []RuntimeCredential{{}, {Mode: "api-key"}, {Mode: "desktop-login", RuntimeLogin: json.RawMessage(dedicatedLogin)}, {Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(`{}`)}, {Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(strings.Replace(dedicatedLogin, `"auth_mode":"chatgpt"`, `"auth_mode":"apikey"`, 1))}, {Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(strings.Replace(dedicatedLogin, `"tokens":`, `"OPENAI_API_KEY":"key","tokens":`, 1))}, {Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(strings.Replace(dedicatedLogin, `"access_token":"private-access"`, `"access_token":""`, 1))}, {Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(strings.Replace(dedicatedLogin, `"account_id":"selected-account"`, `"account_id":""`, 1))}} {
+		s := &nativeSession{}
+		if _, err := s.credential(context.Background(), credential); err == nil {
+			t.Fatalf("unsupported login admitted: %s", credential.Mode)
 		}
 	}
 }
-
-func TestRedactionCoversEveryLoginSecret(t *testing.T) {
-	turn := &turnRun{agents: &Agents{}, turn: run.Turn{Home: "home", Workspace: "work"}, profile: testProfile()}
-	if _, err := turn.credential(context.Background(), RuntimeCredential{Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(dedicatedLogin)}); err != nil {
+func TestLoginRedactsEveryTokenAndEscapedForm(t *testing.T) {
+	s := &nativeSession{}
+	if _, err := s.credential(context.Background(), RuntimeCredential{Mode: "dedicated-runtime-login", RuntimeLogin: json.RawMessage(dedicatedLogin)}); err != nil {
 		t.Fatal(err)
 	}
-	text := turn.redact([]byte(`dedicated-id-token dedicated-access-token dedicated-refresh-token runtime-account`))
-	if string(text) != `[REDACTED] [REDACTED] [REDACTED] runtime-account` {
-		t.Fatalf("%s", text)
+	if got := string(s.redact([]byte("private-id private-access private-refresh selected-account"))); got != "[REDACTED] [REDACTED] [REDACTED] selected-account" {
+		t.Fatal(got)
+	}
+	s.secrets = append(s.secrets, []byte("with\"quote"))
+	if got := string(s.redact([]byte(`with\"quote`))); got != "[REDACTED]" {
+		t.Fatal(got)
+	}
+}
+func TestNativeLaunchGuardsProjectLoadingAndNativeDelegation(t *testing.T) {
+	argv := strings.Join(providerArgv(), " ")
+	for _, required := range []string{"--disable multi_agent", "--disable multi_agent_v2", "agents.enabled=false", "project_doc_max_bytes=0", "project_doc_fallback_filenames=[]", `projects."/work".trust_level="untrusted"`, `model_provider="openai"`} {
+		if !strings.Contains(argv, required) {
+			t.Fatal("launch guard absent", required)
+		}
+	}
+	if strings.Contains(argv, "env_key") || strings.Contains(argv, "api.openai.com") {
+		t.Fatal("API-key route retained")
 	}
 }

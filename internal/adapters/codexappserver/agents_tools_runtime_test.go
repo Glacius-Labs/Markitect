@@ -2,6 +2,8 @@ package codexappserver
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"os"
@@ -69,7 +71,7 @@ func TestRuntimeNativeAgentTools(t *testing.T) {
 					t.Error(err)
 				}
 			}()
-			command := providerArgv("dedicated-runtime-login")
+			command := providerArgv()
 			if test.omitV2Guard {
 				for i := 0; i+1 < len(command); i++ {
 					if command[i] == "--disable" && command[i+1] == "multi_agent_v2" {
@@ -193,3 +195,12 @@ finally:
     proc.wait(timeout=5)
     server.shutdown()
 `
+
+func smokeToken(t *testing.T) string {
+	t.Helper()
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		t.Fatal(err)
+	}
+	return hex.EncodeToString(b[:])
+}

@@ -3,7 +3,6 @@ package codexappserver
 import (
 	"context"
 	"encoding/json"
-	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
@@ -23,15 +22,8 @@ type runtimeLogin struct {
 // credential validates the resolved credential, remembers its secrets for
 // redaction and returns the provider environment. No private file is written
 // until the Manager container has started and announced agentd.
-func (t *turnRun) credential(ctx context.Context, c RuntimeCredential) ([]string, error) {
-	if c.Mode == "api-key" {
-		if c.APIKey == "" || c.RuntimeLogin != nil || strings.ContainsAny(c.APIKey, "\r\n\x00") {
-			return nil, ErrSession
-		}
-		t.secrets = [][]byte{[]byte(c.APIKey)}
-		return []string{"CODEX_HOME=/home/agent/.codex", "OPENAI_API_KEY=" + c.APIKey}, nil
-	}
-	if c.Mode != "dedicated-runtime-login" || c.APIKey != "" || len(c.RuntimeLogin) > frame.MaxPrivateAuthBytes {
+func (t *nativeSession) credential(ctx context.Context, c RuntimeCredential) ([]string, error) {
+	if c.Mode != "dedicated-runtime-login" || len(c.RuntimeLogin) > frame.MaxPrivateAuthBytes {
 		return nil, ErrSession
 	}
 	var login runtimeLogin
@@ -46,7 +38,7 @@ func (t *turnRun) credential(ctx context.Context, c RuntimeCredential) ([]string
 	return []string{"CODEX_HOME=/home/agent/.codex"}, nil
 }
 
-func (t *turnRun) installCredential(ctx context.Context, c RuntimeCredential) error {
+func (t *nativeSession) installCredential(ctx context.Context, c RuntimeCredential) error {
 	if c.Mode != "dedicated-runtime-login" {
 		return nil
 	}
@@ -69,7 +61,7 @@ func (t *turnRun) installCredential(ctx context.Context, c RuntimeCredential) er
 	return nil
 }
 
-func (t *turnRun) removeCredential(ctx context.Context) error {
+func (t *nativeSession) removeCredential(ctx context.Context) error {
 	if !t.loginInstalled {
 		return nil
 	}
