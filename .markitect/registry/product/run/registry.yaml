@@ -47,7 +47,7 @@ artifacts:
   - path: "internal/run/assignment_schedule_test.go"
     form: test
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]
-    why: "Exercises Agent-issued delegation, question routing, parent return, conflict correction and required upward Git handoffs."
+    why: "Exercises provider-neutral delegation, question routing, parent return, conflict correction and complete large UTF-8 difference/summary delivery before upward Git handoff decisions."
   - path: "internal/run/handoffs.go"
     form: code
     realizes: [product/organization/delegated-context, product/run/confirmed-run-history]

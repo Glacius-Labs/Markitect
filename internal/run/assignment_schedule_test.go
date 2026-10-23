@@ -12,7 +12,6 @@ import (
 	"testing"
 	"time"
 
-	codexappserver "github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -224,16 +223,9 @@ func TestAssignmentSchedulerDeliversLargeReviewInOneConversationBeforeDecision(t
 			if err != nil || result.ResultCommit == "" || len(git.accepted) != 3 {
 				t.Fatalf("large fixed diff was not reviewed and accepted: %+v %v, accepted=%v", result, err, git.accepted)
 			}
-			codec, err := codexappserver.NewCodec(1 << 20)
-			if err != nil {
-				t.Fatal(err)
-			}
 			var delivered, summaryDelivered strings.Builder
 			parts, summaries, decisions := 0, 0, 0
 			for _, prompt := range agents.opened["trial-0"].prompts {
-				if _, err := codec.EncodeTurnStart(codexappserver.IntegerRequestID(1), codexappserver.TurnStartParams{Thread: "review-thread", Text: prompt, Effort: "high"}); err != nil {
-					t.Fatalf("actual Codex JSON frame cannot carry review prompt of %d bytes: %v", len(prompt), err)
-				}
 				if strings.HasPrefix(prompt, "Fixed child summary from") {
 					summaries++
 					start := strings.Index(prompt, ":\n") + 2
