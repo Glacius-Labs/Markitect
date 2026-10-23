@@ -1,5 +1,7 @@
-# Apply source boundary
+# Apply composition
 
-At S2 this package exposes the explicit unavailable boundary. Structural preparation and all retained consumers moved together to [Project](../project/README.md); the old Pass/Turn execution and publication contracts retired with their consumers.
+Apply consumes checked [Project](../project/README.md) capture. Workflow selects complete fresh Assessment, Implement and Verify Runs with one shared allowance and deadline. Implement submits; only final stored Verify approval permits publication. A rejection carries mandatory Findings into a fresh correction and Verify; model blockers and technical or cleanup uncertainty stop the command.
 
-The standalone [Run](../run/README.md) does not publish. S3 must compose Assessment, Implement, fresh Verify, bounded correction and stored-candidate publication before the CLI can claim a usable Apply path. See the [delivery plan](../../docs/implementation-plan.md).
+The standalone [Run](../run/README.md) closes all resources and persists its terminal result. Apply independently rereads final acceptance before handing a durable reference to publication. The publisher reopens exact Git objects and retained external inputs in a separate host repository, repeats structural and declared checks, compares complete captured Census, transfers guarded paths and reads back. No owner commit or push occurs. Partial transfer is reported with completed paths. Assessment approval enables Implement, including when Implement leaves the actual complete input unchanged; fresh Verify remains mandatory. Assessment rejection or model blocker stops without publication.
+
+The first controlled source vertical exercises real Git and Store, all five fixture Managers, parent corrections, closure and publication. Native command composition and broader qualification follow in S3; this intermediate checkpoint is not a provider or product acceptance claim. See the [delivery plan](../../docs/implementation-plan.md).

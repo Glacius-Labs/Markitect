@@ -167,10 +167,17 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 	if err != nil || metadata.Status != model.Passed {
 		t.Fatal(metadata, err)
 	}
-	for _, kind := range []string{"pass", "nonzero", "lost observation", "invalid observation"} {
+	for _, kind := range []string{"pass", "nonzero", "lost observation", "invalid observation", "assessment readiness"} {
 		t.Run(kind, func(t *testing.T) {
 			workspaces := &controlledCheckWorkspaces{Workspaces: g}
 			command := &controlledCheckCommand{owner: workspaces, kind: kind, t: t}
+			mandate := run.Verify
+			if kind == "assessment readiness" {
+				// The fixture has no realized Go project. A product check would
+				// fail before Implement, which must not reject model readiness.
+				mandate = run.Assessment
+				command.kind = "nonzero"
+			}
 			checker, err := checks.NewCandidateRunner(metadata.Profiles, command, nil)
 			if err != nil {
 				t.Fatal(err)
@@ -186,7 +193,7 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 			store, _ := runstore.New(g.StateRoot)
 			executor := run.Executor{Workspaces: workspaces, Sessions: sessions, Records: store, Checks: checker}
 			runID := strings.ReplaceAll(kind, " ", "-")
-			result, executeErr := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: runID, Project: "checked", Prepared: p, Input: ref, Mandate: run.Assessment, Allowance: run.NewAllowance(time.Now().Add(45*time.Second), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+			result, executeErr := executor.Execute(ctx, run.Request{MaxManagers: 5, ID: runID, Project: "checked", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(time.Now().Add(45*time.Second), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
 			if kind == "lost observation" || kind == "invalid observation" {
 				if executeErr == nil || result.Technical == run.Completed {
 					t.Fatal(result, executeErr)
@@ -194,7 +201,11 @@ func TestDeclaredCheckUsesFixedCopiesDirectoriesAndDurableObservations(t *testin
 			} else if executeErr != nil || result.Technical != run.Completed {
 				t.Fatal(result, executeErr)
 			}
-			if kind == "invalid observation" {
+			if kind == "assessment readiness" {
+				if result.Decision != run.Approve || command.calls != 0 || len(result.Checks) != 0 || len(result.Handoffs) != 5 {
+					t.Fatal("unrealized product blocked complete model-readiness Assessment", result, command.calls)
+				}
+			} else if kind == "invalid observation" {
 				if command.calls != 0 || len(result.Sessions) != 0 {
 					t.Fatal("invalid native identity reached command execution")
 				}

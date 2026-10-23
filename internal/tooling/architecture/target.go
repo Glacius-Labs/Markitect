@@ -50,6 +50,7 @@ var targetRoots = []struct{ path, layer string }{
 	{"internal/adapters/runstore", "apply-adapter"},
 	{"internal/harness", "native-harness"},
 	{"internal/apply", "apply-usecase"},
+	{"internal/workflow", "apply-workflow"},
 	{"internal/model", "apply-model"},
 	{"cmd/markitect", "apply-command"},
 	{"integration", "standalone"},
@@ -66,6 +67,8 @@ func targetLayer(p string) (string, string) {
 }
 
 var responsibilityImports = map[string][]string{
+	"internal/workflow":                {"internal/run"},
+	"internal/apply":                   {"internal/model", "internal/project", "internal/run", "internal/workflow"},
 	"internal/adapters/runstore":       {"internal/run"},
 	"internal/runtimeconfig":           {"internal/model", "internal/organization", "internal/project", "internal/snapshot"},
 	"internal/project":                 {"internal/model", "internal/organization", "internal/realization", "internal/snapshot"},
@@ -80,7 +83,7 @@ var responsibilityImports = map[string][]string{
 	"internal/adapters/claudecode":     {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
-	"internal/adapters/gitrepo":        {"internal/adapters/container", "internal/model", "internal/project", "internal/run", "internal/snapshot"},
+	"internal/adapters/gitrepo":        {"internal/adapters/container", "internal/apply", "internal/model", "internal/project", "internal/run", "internal/snapshot", "internal/tooling/guardedwrite"},
 	"internal/agentd":                  {"internal/agentd/frame"},
 	"internal/harness":                 {"internal/model", "internal/organization", "internal/project"},
 	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/claudecode", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/model", "internal/modeldocs", "internal/project", "internal/runtimeconfig"},

@@ -172,6 +172,9 @@ type Request struct {
 	Allowance          *Allowance
 	CleanupTimeout     time.Duration
 	PersistenceTimeout time.Duration
+	// Zero retains the standalone caller's whole-Run deadline. Apply supplies
+	// its explicit finite per-message limit.
+	MessageTimeout time.Duration
 }
 
 type Sessions interface {
@@ -342,6 +345,9 @@ func validID(s string) bool {
 	return s != "." && s != ".."
 }
 func validateRequest(r Request) error {
+	if r.MessageTimeout < 0 || r.MessageTimeout > time.Hour {
+		return fmt.Errorf("invalid per-message timeout")
+	}
 	if !validID(r.ID) || !validID(r.Project) || !r.Prepared.Valid() || r.Input.Project != r.Project || r.Input.Binding != r.Prepared.Binding() || r.Input.Commit == "" || r.Input.Tree == "" || !r.Allowance.valid() || r.MaxManagers <= 0 || len(r.Prepared.Topology().Managers()) > r.MaxManagers || !r.Allowance.minimum(len(r.Prepared.Topology().Managers())) || r.CleanupTimeout <= 0 || r.CleanupTimeout > time.Minute || r.PersistenceTimeout <= 0 || r.PersistenceTimeout > time.Minute {
 		return fmt.Errorf("invalid Run request, checked binding or finite limits")
 	}

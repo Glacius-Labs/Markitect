@@ -173,7 +173,9 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		}
 		// Review scratch edits never become product. Invalid input can be rejected.
 		if r.Mandate != Implement {
-			checkErr := x.check(x.states[organization.Root], fixed, true)
+			// Assessment judges model readiness before realization exists. Keep
+			// fixed structural validation, but do not demand passing product tests.
+			checkErr := x.check(x.states[organization.Root], fixed, r.Mandate == Verify)
 			if checkErr != nil && (root.Decision == Approve || !errors.Is(checkErr, project.ErrCandidateInvalid)) {
 				workErr = checkErr
 			}

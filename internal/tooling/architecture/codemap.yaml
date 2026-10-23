@@ -33,8 +33,12 @@ packages:
     doc: internal/harness/README.md
   - path: internal/apply
     layer: apply-usecase
-    purpose: Explicit unavailable Apply boundary until S3 workflow composition.
+    purpose: Checked capture, closed workflow and stored-candidate publication.
     doc: docs/development/modules.md
+  - path: internal/workflow
+    layer: apply-workflow
+    purpose: Direct Assessment, Implement and Verify sequence over fully closed Runs.
+    doc: internal/apply/README.md
   - path: internal/modeldocs
     layer: model-view
     purpose: Deterministic readable view and reviewed source-bound write plan.

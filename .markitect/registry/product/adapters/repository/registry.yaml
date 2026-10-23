@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/publication.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Reopens exact retained Verify-approved objects after Run closure and guards complete-source per-path publication and readback."
+  - path: "internal/adapters/gitrepo/apply_vertical_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Exercises complete controlled Apply with real Git, full Manager hierarchy, durable Store, closed Verify and owner-checkout publication."
   - path: "internal/adapters/gitrepo/WORKSPACES.md"
     form: doc
     realizes: [product/adapters/repository/repository-boundaries]
