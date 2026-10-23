@@ -1,6 +1,6 @@
 # Development
 
-Markitect is built around canonical language v1 and delegated realization. Current source retains read-only preparation, the guarded generated model view and a complete standalone hierarchical Run during the approved V1 rebuild; public Apply is explicitly unavailable until S3. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification.
+Markitect is built around canonical language v1 and delegated realization. Current source provides read-only preparation, the guarded generated model view, standalone hierarchical Runs and Apply through stored Verify approval and guarded publication. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification.
 
 ## Ownership and layout
 
@@ -49,7 +49,7 @@ $actual = 'sha256:' + (Get-FileHash -LiteralPath $view.path -Algorithm SHA256).H
 if ($actual -ne $view.contentDigest) { throw 'Generated model view is stale' }
 ```
 
-After model changes, use the preview's `previewDigest` for the guarded write in [AGENTS.md](AGENTS.md). Regenerate the code map officially when packages or their mapped guidance change:
+After model changes, use the preview's `previewDigest` for the guarded write in [AGENTS.md](AGENTS.md). Canonical working files must follow the repository's LF policy before preview: the view includes original-byte hashes, and staging CRLF files normalizes the index without changing those working bytes. After committing, also preview with `--revision HEAD` and compare its `contentDigest` with the committed view, as the CI freshness check does. Do not alter model hashing or hand-edit generated output to hide a byte mismatch. Regenerate the code map officially when packages or their mapped guidance change:
 
 ```text
 go test ./internal/tooling/architecture -run TestCodeMapPage -update
@@ -61,7 +61,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives actual Library M1/M2 preparation, static context, fixed-source refusals and Apply's explicit unavailable boundary before any acquisition. It starts no Agent or container, so it does not run an Apply, implement the Library or establish provider/Apply/release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives actual Library M1/M2 preparation, static context, fixed-source refusals and Apply's rejection of missing or legacy invocation configuration before resource acquisition. It starts no Agent or container, so it does not run an Apply, implement the Library or establish provider/Apply/release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 

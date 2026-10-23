@@ -194,8 +194,8 @@ func (s *smoke) libraryPreparation() error {
 	if err := requireAbsent(s.work, "never-created"); err != nil {
 		return err
 	}
-	// S2 Apply stays unavailable even with an old configuration path.
-	// Configuration loading and runtime acquisition wait for S3 composition.
+	// A legacy configuration cannot start Apply or acquire runtime resources.
+	// The closed invocation contract is checked before repository acquisition.
 	oldConfig := filepath.Join(s.work, "old-run.json")
 	state := filepath.Join(s.work, "never-created-state")
 	if err := os.WriteFile(oldConfig, []byte(fmt.Sprintf(`{"formatVersion":1,"stateDirectory":%q,"allocation":{"runs":1}}`, state)), 0644); err != nil {
