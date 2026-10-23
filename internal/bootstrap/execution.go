@@ -52,7 +52,7 @@ type applyPorts struct {
 	Publisher             apply.Publisher
 	Control               apply.ControlCheck
 	RemoveHome            func(context.Context, string) error
-	// RequireVolumeSubpaths remains for the legacy Turn-based Extract path.
+	// RequireVolumeSubpaths remains for captured-run evaluation entries.
 	// Assignment Apply mounts complete, independent workspace volumes.
 	RequireVolumeSubpaths func(context.Context) error
 	Harvest               harvestLimits
@@ -242,59 +242,6 @@ func finishApplyReport(report *cli.ApplyReport, err error, evidence *fileEvidenc
 		}
 	}
 	return err
-}
-
-// Extract prepares the committed repository as the start of an Extract, composes
-// the ports and runs both phases. Like Apply it starts nothing before the
-// preparation passed, and only one run holds a state directory at a time.
-func (s *executionService) Extract(ctx context.Context, request cli.ExtractRequest) (report cli.ExtractReport, err error) {
-	report.FormatVersion, report.Operation, report.Status = 1, "extract", model.NotCompleted
-	report.Deviations = []apply.ArtifactDeviation{}
-	session, failed, err := s.open(ctx, request.Selection.Repository, request.RunConfig)
-	if err != nil {
-		if failed {
-			report.Status = model.Failed
-		}
-		return report, err
-	}
-	defer func() { err = errors.Join(err, session.lock.Release()) }()
-	prepared, err := s.preparation.CaptureExtract(ctx, apply.CaptureRequest{Selection: request.Selection}, model.Limits{}, s.agents, s.checks)
-	report.Preparation = capturedExecutionReport(prepared, session.cfg.ProductBuild)
-	if prepared.Status() != model.Passed || err != nil {
-		report.Status = prepared.Status()
-		return report, err
-	}
-	ports, err := s.ports(session.cfg, prepared, session.lock, session.runID)
-	if err != nil {
-		return report, err
-	}
-	attempt, ok := prepared.Prepared()
-	if !ok {
-		return report, errors.New("complete captured settings are required")
-	}
-	preparation := report.Preparation
-	report.EvidenceDirectory = ports.Evidence.Dir()
-	defer func() {
-		if err != nil {
-			report.Error = err.Error()
-		}
-		if writeErr := ports.Evidence.WriteReport(cli.ReportValue(report)); writeErr != nil {
-			err = errors.Join(err, writeErr)
-			report.Status = model.NotCompleted
-		}
-		err = errors.Join(err, ports.Evidence.Close())
-	}()
-	result, err := apply.Extract(ctx, apply.ExtractRequest{
-		RunID: ports.RunID, Prepared: attempt, Selection: request.Selection,
-		OwnerRequest: session.cfg.OwnerRequest, Deadline: ports.Deadline,
-		MaxEntries: ports.Harvest.MaxEntries, MaxBytes: ports.Harvest.MaxBytes,
-		Agents: ports.Agents, Workspaces: ports.Workspaces, Evidence: ports.Evidence,
-		Publisher: ports.Publisher, Control: ports.Control, Clock: ports.Clock, RemoveHome: ports.RemoveHome, RequireVolumeSubpaths: ports.RequireVolumeSubpaths,
-	})
-	report = cli.NewExtractReport(ports.RunID, result)
-	report.FormatVersion, report.Operation, report.Preparation, report.EvidenceDirectory = 1, "extract", preparation, ports.Evidence.Dir()
-	report.Status = cli.ExtractStatus(result, err)
-	return report, err
 }
 
 // runSession is what every run command holds before it prepares: the run

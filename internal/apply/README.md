@@ -129,8 +129,8 @@ context and complete retained result/check/review observations are not clipped.
 There is no Publisher parameter, publication permit or legacy `run.Outcome`.
 The API transfers nothing to the owner's repository. A4 owns explicit invocation,
 CLI/Bootstrap/report migration and the existing guarded publication boundary.
-The existing `Apply`, `AssessCaptured`, `VerifyCaptured` and Extract consumers
-remain on their source-bound Pass path below until that caller migration.
+Public Apply uses assignments. `Apply`, `AssessCaptured` and `VerifyCaptured`
+remain for source-bound captured-run evaluation until S2 replaces the runtime.
 Source tests of the new seam are controlled local evidence; actual provider
 recognition of model gaps, weak tests and realization defects needs a separately
 coordinated run.
@@ -220,27 +220,7 @@ Brief names each child's areas and Definitions, the Managers below it and the ro
 statement: children realize their own areas, the parent supplies its own foundation,
 coordinates and integrates but cannot take over or waive a child's obligations.
 
-## Extract
-
-`PreparationService.CaptureExtract` prepares the start of an Extract (artifacts, no
-model) like `CaptureSettings`, except that unregistered artifacts (`file.unexplained`) and
-artifacts that no area covers yet (`layout.no_owner`) do not fail file checking.
-`Extract(ctx, ExtractRequest)` then runs two phases on the shared composition: a
-structure phase with Root alone, which proposes Packages with one overview Definition each,
-the ownership areas they need and the checks the artifacts document (a proposal for the
-owner's adoption), and a model phase with the Manager tree of the verified proposal, which
-derives each Package's model and registers the artifacts. Each phase is a work Pass of its
-own purpose (`structure`, `model`) followed by Verify. It refuses a start whose local
-model has Definitions or that declares no ownership areas, never changes an artifact, and
-publishes a verified model only as the changed `.markitect` model, registry and
-`execution.yaml`. `extractAccounting` runs the Model check on each candidate tree from
-scratch (pure, safe for concurrent use) and gives each phase its write plan. The model
-phase's Verify sets `ArtifactFindingsAdvisory` with a `ResolveDefinition` that runs the
-Model check on the candidate, so an artifact that deviates from a justified statement is
-a non-blocking finding with subject `artifact` and its Definition. `ExtractDeviations`
-groups the open such findings into one `ArtifactDeviation` per Definition. The
-[runtime contract](../../docs/design/canonical-model/manager-apply-runtime.md#extract-first-bounded-implementation)
-states the plans, accounting, budget and limits.
+Extract is retired from active source; its earlier implementation remains in the [verified archive](../../docs/development/v1-source-archive-20261023.md).
 
 ## Publication
 

@@ -452,3 +452,13 @@ func decimalText(d model.Decimal) string {
 	point := len(digits) + exp
 	return sign + digits[:point] + "." + digits[point:]
 }
+
+func writeProjectChecks(b *strings.Builder, checks []briefCheck) {
+	if len(checks) == 0 {
+		return
+	}
+	b.WriteString("\nThe project's declared checks of its artifacts\n")
+	for _, check := range checks {
+		fmt.Fprintf(b, "- %s: %s (directory %s)\n", check.Name, check.Command, check.Directory)
+	}
+}

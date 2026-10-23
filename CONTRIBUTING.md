@@ -1,6 +1,6 @@
 # Development
 
-Markitect is built around canonical language v1 and delegated realization. Current source provides actual read-only preparation, a guarded generated model view, the Apply of [DEC-064](docs/concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams) (the selected `direct` or `staged` work composition and Verify as one recursive Pass process) and a first Extract on the same process, pending provider evidence and owner acceptance ([runtime contract](docs/design/canonical-model/manager-apply-runtime.md)). [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations.
+Markitect is built around canonical language v1 and delegated realization. Current source retains read-only preparation, the guarded generated model view and a temporary assignment-based Apply during the approved V1 rebuild. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification.
 
 ## Ownership and layout
 

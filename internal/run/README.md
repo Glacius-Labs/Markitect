@@ -35,18 +35,18 @@ during work. The tree retains that problem and stops affected work; it cannot
 repair intent or continue by choosing an unstated policy.
 
 These APIs neither publish nor project their results as a legacy `Outcome`.
-The Apply caller transition is separate work. The remaining sections describe
-the Pass API still used by existing Apply and Extract callers; its receipt and
-disposition rules do not govern the assignment APIs.
+Public Apply uses the assignment APIs. The remaining Pass APIs are retained for
+captured-run evaluation until S2 replaces the runtime; Extract has no active caller.
+Their receipt and disposition rules do not govern the assignment APIs.
 
 ## Legacy Pass process
 
-This package is the Orchestrator of Apply and Extract
-([DEC-064](../../docs/concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams),
-[accepted workflow](../../docs/design/canonical-model/manager-apply-workflow.md)). It runs
-**one recursive Pass process** for every purpose: Apply's work Passes (Implement in its
-`direct` strategy; Plan, Prepare and Implement in `staged`) and Verify, and Extract's own
-work purposes. Only the mandate, the effects, the purpose
+The following describes the historical shared Pass runtime
+([DEC-064](../../docs/concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams)).
+It remains source context for captured-run evaluation, not the current public Apply
+contract or a new work order. Its earlier Apply/Extract composition ran
+**one recursive Pass process** for each purpose.
+Only the mandate, the effects, the purpose
 payload and the acceptance differ; every purpose uses the same stages, states, result
 envelope, routing and gates. It does no file or process I/O itself: everything goes
 through the ports in `Config`: `Agents` (one Agent turn), `Workspaces` (volumes),
