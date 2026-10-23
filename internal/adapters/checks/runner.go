@@ -118,10 +118,12 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 			}()
 		}
 		wg.Wait()
+		receipt.CopiesClosed = true
 		for i, identity := range identities {
 			closed, closeErr := closures[i].observed, closures[i].err
 			if closeErr != nil || closed.ID != identity || !closed.Closed || closed.Uncertain {
 				receipt.Uncertain = true
+				receipt.CopiesClosed = false
 				failure := fmt.Errorf("disposable check workspace %s closure unconfirmed: %s", identity, closed.Reason)
 				if closeErr != nil {
 					failure = fmt.Errorf("close disposable check workspace %s: %w", identity, closeErr)
@@ -137,7 +139,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 			receipt.Reason = err.Error()
 		}
 	}()
-	if materializeErr != nil || copy.ID != id || copy.Closed || copy.Uncertain || copy.Volume == "" || copy.Tree != req.Tree.Digest() {
+	if materializeErr != nil || copy.ID != id || copy.Closed || copy.Uncertain || !copy.usable() || copy.Tree != req.Tree.Digest() {
 		err = fmt.Errorf("disposable check tree was not confirmed: %s", copy.Reason)
 		if materializeErr != nil {
 			err = fmt.Errorf("materialize disposable check tree: %w", materializeErr)
@@ -153,7 +155,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	identities = append(identities, homeID)
 	empty := snapshot.Tree{}
 	home, homeErr := r.workspaces.Materialize(limited, CopySpec{ID: homeID, Tree: empty})
-	if homeErr != nil || home.ID != homeID || home.Closed || home.Uncertain || home.Volume == "" || home.Volume == copy.Volume || home.Tree != empty.Digest() {
+	if homeErr != nil || home.ID != homeID || home.Closed || home.Uncertain || !home.usable() || home.sameLocation(copy) || home.Tree != empty.Digest() {
 		err = fmt.Errorf("disposable check home was not confirmed: %s", home.Reason)
 		if homeErr != nil {
 			err = fmt.Errorf("materialize disposable check home: %w", homeErr)
@@ -170,7 +172,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	labels["markitect.check"] = string(req.ID)
 	spec := container.ContainerSpec{
 		Name: name, Image: req.ImageID, Labels: labels, User: "1000:1000",
-		Mounts: []container.Mount{{Volume: copy.Volume, Target: "/work", NoCopy: true}, {Volume: home.Volume, Target: "/home/agent", NoCopy: true}}, Workdir: workdir,
+		Mounts: []container.Mount{copy.mount("/work"), home.mount("/home/agent")}, Workdir: workdir,
 		CPUs: float64(req.Limits.MilliCPUs) / 1000, MemoryBytes: req.Limits.MemoryBytes, Pids: int(req.Limits.Processes),
 		TmpBytes: 64 << 20, Network: "none",
 	}

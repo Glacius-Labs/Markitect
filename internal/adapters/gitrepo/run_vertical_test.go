@@ -44,6 +44,9 @@ func runFixture(t *testing.T) (*testkit.Repo, project.Prepared, *LocalGit, proje
 		r.Write(a.path, "initial\n")
 		r.Write(".markitect/registry/"+a.owner+"/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: "+a.path+"\n    form: code\n    realizes: ["+a.definition+"]\n    why: Tiny controlled realization.\n")
 	}
+	r.Write(".gitignore", "*.ignored\n")
+	r.Write(".markitect/ignore.yaml", "apiVersion: markitect.ignore/v1\nfiles:\n  - path: .gitignore\n    reason: Git fixture exclusions do not supply accounting.\n")
+	r.Write(".markitect/registry/a/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts:\n  - path: out/a.txt\n    form: code\n    realizes: [a/Thing]\n    why: Controlled parent artifact.\n  - path: out/accounted.ignored\n    form: code\n    realizes: [a/Thing]\n    why: Accounted Gitignored untracked input must survive capture.\n")
 	// Git permits explicit empty trees; the index does not. The fixture commits
 	// the empty Package as an actual tree, just as the production snapshot does.
 	r.Commit("committed fixture")
@@ -61,6 +64,7 @@ func runFixture(t *testing.T) (*testkit.Repo, project.Prepared, *LocalGit, proje
 	if err = os.MkdirAll(filepath.Join(r.Dir, ".markitect/model/b/empty"), 0700); err != nil {
 		t.Fatal(err)
 	}
+	r.Write("out/accounted.ignored", "original ignored input\n")
 	selection := project.InputSelection{Repository: r.Dir, Local: project.ModelSelection{Boundary: ".", ManifestPath: fixturePath(t, ".markitect/model.yaml")}, Dependencies: []project.ModelSelection{{Boundary: ".markitect/dependencies/core", ManifestPath: fixturePath(t, "model.yaml")}}}
 	repo := adapter(t)
 	prepared, err := project.NewPreparationService(project.NewModelService(repo, repo)).Capture(ctx, project.CaptureRequest{Selection: selection}, model.Limits{})
@@ -138,8 +142,11 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 		if err != nil {
 			return run.Response{}, err
 		}
+		if event.Answer != nil {
+			return run.Response{}, nil
+		}
 		if event.Question == nil {
-			return run.Response{}, fmt.Errorf("receipt message lost question")
+			return run.Response{}, fmt.Errorf("receipt message lost event")
 		}
 		if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
 			return run.Response{}, err
@@ -286,7 +293,7 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 		}
 		if m.spec.Mandate == run.Implement && h.Manager == "a/deep" && !m.owner.acceptedRepair {
 			m.owner.acceptedRepair = true
-			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location(), "out/deep.txt"), []byte("parent revision\n"), 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "out/deep.txt"), []byte("parent revision\n"), 0600); err != nil {
 				return run.Response{}, err
 			}
 			findings := []run.Finding{{Text: "Correct accepted child work on the integrated parent baseline."}}
@@ -318,7 +325,7 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 			}
 		}
 		if path != "" {
-			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location(), filepath.FromSlash(path)), []byte(value), 0600); err != nil {
+			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, filepath.FromSlash(path)), []byte(value), 0600); err != nil {
 				return run.Response{}, err
 			}
 		}
@@ -326,7 +333,7 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 	}
 	// Review scratch is deliberately invalid product content; it must never
 	// replace the fixed input candidate returned by Assessment or Verify.
-	if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location(), "review-scratch.txt"), []byte("scratch"), 0600); err != nil {
+	if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "review-scratch.txt"), []byte("scratch"), 0600); err != nil {
 		return run.Response{}, err
 	}
 	if m.owner.forceDecision != "" {
@@ -366,7 +373,7 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 				if !s.closed {
 					t.Fatal("live returned session")
 				}
-				if _, err := os.Stat(s.spec.Workspace.Location()); !os.IsNotExist(err) {
+				if _, err := os.Stat(s.spec.Workspace.Location().Directory); !os.IsNotExist(err) {
 					t.Fatal("copy survived Execute")
 				}
 			}
@@ -386,6 +393,9 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 			}
 			if testkit.Git(t, destination, "rev-parse", "HEAD") != candidate.Commit || testkit.Git(t, destination, "rev-parse", "HEAD^{tree}") != candidate.Tree {
 				t.Fatal("durable object identity changed")
+			}
+			if data, err := os.ReadFile(filepath.Join(destination, "out/accounted.ignored")); err != nil || string(data) != "original ignored input\n" {
+				t.Fatal("accounted ignored input lost", err)
 			}
 			if mandate == run.Implement {
 				data, err := os.ReadFile(filepath.Join(destination, "out/deep.txt"))

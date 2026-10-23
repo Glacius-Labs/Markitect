@@ -2,6 +2,7 @@ package checks
 
 import (
 	"context"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -26,4 +27,15 @@ type CopyObservation struct {
 	Tree              snapshot.TreeID
 	Closed, Uncertain bool
 	Reason            string
+}
+
+func (c CopyObservation) usable() bool { return (c.Volume != "") != (c.Directory != "") }
+func (c CopyObservation) sameLocation(other CopyObservation) bool {
+	return c.Volume != "" && c.Volume == other.Volume || c.Directory != "" && c.Directory == other.Directory
+}
+func (c CopyObservation) mount(target string) container.Mount {
+	if c.Directory != "" {
+		return container.Mount{BindDirectory: c.Directory, Target: target}
+	}
+	return container.Mount{Volume: c.Volume, Target: target, NoCopy: true}
 }

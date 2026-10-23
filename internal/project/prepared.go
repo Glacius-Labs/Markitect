@@ -107,6 +107,10 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 		return fmt.Errorf("missing prepared project")
 	}
 	if a.Error() != nil {
+		var manifest *ManifestPreflightError
+		if errors.As(a.Error(), &manifest) && manifest.Inspection().Status == model.Failed {
+			return fmt.Errorf("%w: invalid candidate manifest: %v", ErrCandidateInvalid, a.Error())
+		}
 		return fmt.Errorf("candidate acquisition: %w", a.Error())
 	}
 	before, after := p.attempt.Model().Inputs().Raw, a.Model().Inputs().Raw
@@ -176,4 +180,16 @@ func sameSourceEntries(a, b []model.Entry) bool {
 	slices.SortFunc(a, less)
 	slices.SortFunc(b, less)
 	return reflect.DeepEqual(a, b)
+}
+
+// ChecksFor selects obligations for this Manager's subtree; Root rechecks the
+// complete declared suite on the final candidate, including cross-area changes.
+func (p Prepared) ChecksFor(manager string) []ExecutionCheck {
+	var selected []ExecutionCheck
+	for _, c := range p.Checks() {
+		if manager == organization.Root || c.RequiredBy != nil && (c.RequiredBy.Value.Package == manager || strings.HasPrefix(c.RequiredBy.Value.Package, manager+"/")) {
+			selected = append(selected, c)
+		}
+	}
+	return selected
 }

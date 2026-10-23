@@ -18,10 +18,13 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-snapshot` | Pure immutable repository tree values. | `apply-snapshot` | 1 |
 | `apply-organization` | Pure Manager topology, context selection and settings. | `apply-organization` | 1 |
 | `apply-realization` | Pure ownership, accounting and candidate rules. | `apply-realization` | 1 |
-| `apply-run` | Recursive Pass process of the Manager team, run by the Orchestrator over ports for Agents, workspaces, checks, owner and evidence. | `apply-run` | 1 |
-| `apply-usecase` | Read-only preparation through consumer-owned ports. | `apply-usecase` | 1 |
+| `apply-run` | One closed complete Manager hierarchy over direct Sessions, Git, checks and records. | `apply-run` | 1 |
+| `apply-project` | Checked structural input and immutable model-derived context. | `apply-project` | 1 |
+| `runtime-config` | Closed static native and check profile metadata. | `runtime-config` | 1 |
+| `native-harness` | Model-derived instructions and tools for concrete native Sessions. | `native-harness` | 0 |
+| `apply-usecase` | Product workflow composition; unavailable at the S2 source boundary. | `apply-usecase` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
-| `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 7 |
+| `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 8 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
 | `apply-command` | Thin entrypoint to product composition. | `apply-command` | 1 |
 | `agent-protocol` | Frame protocol between the Orchestrator and the session helper. | `agent-protocol` | 1 |
@@ -57,17 +60,29 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 |---|---|---|
 | `internal/realization` | Pure ownership, accounting and candidate rules. | [docs/development/modules.md](modules.md) |
 
-## Run engine
+## Run
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/run` | Orchestrator for the recursive Pass process over ports for Agents, workspaces, checks, owner and evidence. | [docs/development/modules.md](modules.md) |
+| `internal/run` | Complete closed Manager hierarchy with direct delegation, questions, fixed Git handoffs and durable results. | [docs/development/modules.md](modules.md) |
 
-## Preparation
+## Project
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/apply` | Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication. | [docs/development/modules.md](modules.md) |
+| `internal/project` | Structural model, registry, ownership, accounting, declared instructions and checks, and checked static Manager contexts. | [internal/project/README.md](../../internal/project/README.md) |
+
+## Runtime configuration
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/runtimeconfig` | Closed acquired Runtime envelopes and source-bound static native or check image observations. | [docs/development/modules.md](modules.md) |
+
+## Apply
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/apply` | Explicit unavailable Apply boundary until S3 workflow composition. | [docs/development/modules.md](modules.md) |
 
 ## Model view
 
@@ -85,13 +100,14 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `internal/adapters/codexappserver` | Prepares Codex image metadata and implements one-turn Agents through the container runtime. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/documents` | Concrete repository, profile metadata and document I/O. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/gitrepo` | Repository capture, workspace volumes and guarded publication. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/gitrepo` | Complete repository capture, isolated Run Git copies and independently reopenable stored candidates. | [docs/development/modules.md](modules.md) |
+| `internal/adapters/runstore` | Immutable terminal Run results and durable concurrent project Notes. | [internal/run/README.md](../../internal/run/README.md) |
 
 ## Composition
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Constructs actual services and adapters; owns the Agents router, file evidence and state lock. | [docs/development/modules.md](modules.md) |
+| `internal/bootstrap` | Composes structural Project, generated views, optional static metadata and the explicit unavailable Apply boundary. | [docs/development/modules.md](modules.md) |
 
 ## Product command
 

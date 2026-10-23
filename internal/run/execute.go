@@ -7,7 +7,9 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"reflect"
+	"strings"
 	"sync"
+	"time"
 )
 
 type completion struct {
@@ -29,25 +31,26 @@ type managerState struct {
 	inbox                        chan Event
 }
 type execution struct {
-	executor  *Executor
-	request   Request
-	ctx       context.Context
-	cancel    context.CancelFunc
-	workspace WorkspaceService
-	mu        sync.Mutex
-	states    map[string]*managerState
-	result    Result
-	active    sync.WaitGroup
-	questions map[string]Question
-	answered  map[string]bool
-	sequence  int
-	closing   bool
-	asyncErr  error
-	calls     sync.WaitGroup
+	executor     *Executor
+	request      Request
+	ctx          context.Context
+	cancel       context.CancelFunc
+	workspace    WorkspaceService
+	mu           sync.Mutex
+	states       map[string]*managerState
+	result       Result
+	active       sync.WaitGroup
+	questions    map[string]Question
+	answered     map[string]bool
+	sequence     int
+	closing      bool
+	asyncErr     error
+	lateDecision Decision
+	calls        sync.WaitGroup
 }
 
 func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
-	x := &execution{executor: e, request: r, states: map[string]*managerState{}, questions: map[string]Question{}, answered: map[string]bool{}, result: Result{ID: r.ID, Project: r.Project, Binding: r.Prepared.Binding(), Mandate: r.Mandate, Technical: Incomplete}}
+	x := &execution{executor: e, request: r, states: map[string]*managerState{}, questions: map[string]Question{}, answered: map[string]bool{}, result: Result{ID: r.ID, Project: r.Project, Binding: r.Prepared.Binding(), Mandate: r.Mandate, Input: r.Input, Technical: Incomplete}}
 	if err := validateRequest(r); err != nil {
 		return x.result, err
 	}
@@ -113,6 +116,9 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 			}
 		}
 		x.mu.Lock()
+		if x.lateDecision != "" {
+			root.Decision = x.lateDecision
+		}
 		if x.asyncErr != nil {
 			workErr = errors.Join(workErr, x.asyncErr)
 		}
@@ -176,13 +182,15 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		err  error
 	}
 	sessionClosures := make(chan sessionClosure, len(x.states))
+	sessionCleanup, sessionStop := context.WithTimeout(cleanup, r.CleanupTimeout/2)
+	defer sessionStop()
 	sessionCount := 0
 	for _, m := range r.Prepared.Topology().Managers() {
 		s := x.states[m.Package]
 		if s.session != nil {
 			sessionCount++
 			go func() {
-				sessionClosures <- sessionClosure{"session:" + s.manager.Package, boundedClose(cleanup, s.session.Close)}
+				sessionClosures <- sessionClosure{"session:" + s.manager.Package, boundedClose(sessionCleanup, s.session.Close)}
 			}()
 		}
 	}
@@ -208,10 +216,12 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	drained := make(chan struct{})
 	go func() { x.active.Wait(); x.calls.Wait(); close(drained) }()
 	workersClosed := false
+	drainCleanup, drainStop := context.WithDeadline(cleanup, time.Now().Add(r.CleanupTimeout/4))
+	defer drainStop()
 	select {
 	case <-drained:
 		workersClosed = true
-	case <-cleanup.Done():
+	case <-drainCleanup.Done():
 		x.result.Technical = Incomplete
 		x.result.Errors = append(x.result.Errors, "Manager workers did not stop within cleanup bound")
 	}
@@ -303,7 +313,7 @@ func (x *execution) tools(s *managerState) Tools {
 			if target.assigned && (target.running || !target.delivered || target.handoff.Review == nil) {
 				return fmt.Errorf("child task active or accepted")
 			}
-			if target.assigned && len(feedback) == 0 {
+			if target.assigned && !concreteFindings(feedback) {
 				return fmt.Errorf("correction of completed child requires findings")
 			}
 			s.mu.Lock()
@@ -399,7 +409,7 @@ func (x *execution) tools(s *managerState) Tools {
 			if decision != Approve && decision != Reject && decision != ModelBlocker {
 				return fmt.Errorf("review decision missing")
 			}
-			if decision != Approve && len(findings) == 0 {
+			if decision != Approve && !concreteFindings(findings) {
 				return fmt.Errorf("rejection/model blocker requires findings")
 			}
 			for i := range findings {
@@ -448,7 +458,7 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 		if x.request.Mandate == Implement && r.Decision == Approve {
 			return Handoff{}, fmt.Errorf("Implement submits candidate; cannot approve publication")
 		}
-		if r.Decision != Submitted && r.Decision != Approve && len(r.Findings) == 0 {
+		if r.Decision != Submitted && r.Decision != Approve && !concreteFindings(r.Findings) {
 			return Handoff{}, fmt.Errorf("rejection/model blocker requires findings")
 		}
 		feedback = nil
@@ -476,7 +486,7 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 			return Handoff{}, err
 		}
 		if x.request.Mandate == Implement && r.Decision == Submitted {
-			if err = x.check(s, commit, s.manager.Package == organization.Root); err != nil {
+			if err = x.check(s, commit, true); err != nil {
 				if !errors.Is(err, project.ErrCandidateInvalid) {
 					return Handoff{}, err
 				}
@@ -487,7 +497,7 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 		s.mu.Lock()
 		x.mu.Lock()
 		for _, q := range x.questions {
-			if q.From == s.manager.Package || q.To == s.manager.Package {
+			if q.From == s.manager.Package || q.To == s.manager.Package && !x.answered[q.ID] {
 				feedback = append(feedback, Finding{Manager: s.manager.Package, Text: "Resolve pending question " + q.ID + " before completing."})
 			}
 		}
@@ -530,12 +540,12 @@ func (x *execution) check(s *managerState, commit Commit, required bool) error {
 	if !required {
 		return nil
 	}
-	declarations := x.request.Prepared.Checks()
+	declarations := x.request.Prepared.ChecksFor(s.manager.Package)
 	if len(declarations) != 0 && x.executor.Checks == nil {
 		return fmt.Errorf("declared checks require concrete runner")
 	}
 	if x.executor.Checks != nil {
-		observed, checkErr := x.executor.Checks.Check(x.ctx, x.request.Prepared, s.copy, commit)
+		observed, checkErr := x.executor.Checks.Check(x.ctx, declarations, s.copy, commit)
 		x.mu.Lock()
 		x.result.Checks = append(x.result.Checks, observed...)
 		x.mu.Unlock()
@@ -547,8 +557,15 @@ func (x *execution) check(s *managerState, commit Commit, required bool) error {
 			expected[d.ID.Value] = true
 		}
 		for _, c := range observed {
-			if !expected[c.ID] || c.Commit != commit.ID || !c.Passed {
+			if !expected[c.ID] || c.Commit != commit.ID || c.Receipt.ID != CheckID(c.ID) || c.Receipt.Tree != a.Model().Inputs().Raw.Census.Digest() {
 				return fmt.Errorf("check %s did not pass exactly once on fixed commit", c.ID)
+			}
+			receipt := c.Receipt
+			if !receipt.Started || !receipt.Exited || receipt.Uncertain || receipt.TimedOut || !receipt.CopiesClosed || !imageIdentity(receipt.ImageID) || c.Error != "" {
+				return fmt.Errorf("check %s physical observations incomplete", c.ID)
+			}
+			if receipt.ExitCode != 0 {
+				return fmt.Errorf("%w: check %s exited %d", project.ErrCandidateInvalid, c.ID, receipt.ExitCode)
 			}
 			delete(expected, c.ID)
 		}
@@ -567,4 +584,13 @@ func (x *execution) startWorker(s *managerState, task string, feedback []Finding
 		x.finishedTask(s, err)
 		x.states[s.manager.Parent].done <- completion{h, err}
 	}()
+}
+
+func concreteFindings(findings []Finding) bool {
+	for _, f := range findings {
+		if strings.TrimSpace(f.Text) != "" {
+			return true
+		}
+	}
+	return false
 }

@@ -245,7 +245,7 @@ func TestDocumentationCannotOverwriteAuthoredInstructionEvenWhenMissing(t *testi
 			if err != nil {
 				t.Fatal(err)
 			}
-			repo.Write(".markitect/execution.yaml", strings.Replace(string(data), "packages:", "instructions:\n  execute: [docs/markitect/project.md]\npackages:", 1))
+			repo.Write(".markitect/execution.yaml", strings.Replace(string(data), "checks:", "instructions:\n  .: [docs/markitect/project.md]\nchecks:", 1))
 			if missing {
 				if err := os.Remove(filepath.Join(repo.Dir, "docs", "markitect", "project.md")); err != nil {
 					t.Fatal(err)

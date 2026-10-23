@@ -7,15 +7,12 @@ import (
 	"errors"
 	"path/filepath"
 	"testing"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
-	"github.com/Glacius-Labs/Markitect/internal/project"
-	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
+func TestApplyParsingPreservesSelectionAndReportsUnavailable(t *testing.T) {
 	dir := t.TempDir()
 	config, runtimeProfile := filepath.Join(dir, "run.json"), filepath.Join(dir, "runtime.yaml")
 	var observed ApplyRequest
@@ -23,63 +20,22 @@ func TestApplyParsingPreservesSelectionAndReportsTheRun(t *testing.T) {
 	c := New(nil, nil, nil, nil, nil, func(_ context.Context, request ApplyRequest) (ApplyReport, error) {
 		calls++
 		observed = request
-		started := time.Date(2026, 10, 19, 12, 0, 0, 0, time.UTC)
-		outcome := run.Outcome{
-			Status: run.Incomplete, Reason: "owner question stayed open",
-			Passes:    []run.PassRecord{{ID: "verify-1", Purpose: run.Verify, Review: true, Tree: "tree-1", Verdict: run.Satisfied, Sealed: true, Checks: []run.CheckResult{{Name: "unit", Passed: true}}, Managers: []run.ManagerRecord{{Manager: ".", State: run.Done, Result: "r1", Verdict: run.Satisfied, Summary: "fine"}}}},
-			Questions: []run.Question{{ID: "q1", Text: "Which currency?", Asked: started}},
-			Problems:  []run.Problem{{ID: "p1", Manager: "lending", Pass: "plan-1", Category: "model", Text: "The loan limit contradicts itself.", Escalated: true}},
-			Turns:     []run.TurnRecord{{ID: "t1", Manager: ".", Kind: run.VerifyTurn, Pass: "verify-1", Started: started, Ended: started.Add(time.Minute), Usage: run.Usage{InputTokens: 7}}},
-			Usage:     run.Usage{InputTokens: 7},
-		}
-		return ApplyReport{Status: ApplyStatus(outcome, nil, nil), Run: NewRunReport("run-1", outcome), EvidenceDirectory: filepath.Join(dir, "runs", "run-1")}, nil
+		return ApplyReport{Status: model.NotCompleted}, errors.New("Apply unavailable until S3")
 	})
 	var out, stderr bytes.Buffer
-	code := c.Run(context.Background(), []string{"apply", "--repo", dir, "--model", ".markitect/model.yaml", "--dependency", "vendor/model.yaml", "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr)
-	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || len(observed.Selection.Dependencies) != 1 || observed.Selection.Dependencies[0].ManifestPath.String() != "vendor/model.yaml" || len(observed.Selection.RuntimeProfiles) != 1 {
-		t.Fatalf("apply arguments changed: code=%d calls=%d stderr=%s", code, calls, stderr.String())
+	code := c.Run(context.Background(), []string{"apply", "--repo", dir, "--dependency", "vendor/model.yaml", "--runtime-profile", runtimeProfile, "--run-config", config}, &out, &stderr)
+	if code != 3 || calls != 1 || observed.RunConfig != config || observed.Selection.Repository != dir || len(observed.Selection.Dependencies) != 1 || observed.Selection.Dependencies[0].ManifestPath.String() != "vendor/model.yaml" || len(observed.Selection.RuntimeProfiles) != 1 || observed.Build != buildinfo.Build() {
+		t.Fatalf("code=%d calls=%d selected=%+v err=%s", code, calls, observed, stderr.String())
 	}
-	// The Run binds the identity of the build that runs it.
-	if observed.Build != buildinfo.Build() || observed.Build == "" {
-		t.Fatalf("apply runs without its build identity: %q", observed.Build)
-	}
-	var report struct {
-		Operation string `json:"operation"`
-		Status    string `json:"status"`
-		Outcome   string `json:"outcome"`
-		Run       struct {
-			ID     string `json:"id"`
-			Status string `json:"status"`
-			Reason string `json:"reason"`
-			Passes []struct {
-				ID       string
-				Verdict  string
-				Checks   []struct{ Name string }
-				Managers []struct{ Manager, State, Verdict string }
-			}
-			Problems  []struct{ Manager, Category string }
-			Questions []struct {
-				ID    string `json:"id"`
-				Asked string `json:"asked"`
-			}
-			Turns []struct {
-				Started string
-				Usage   struct{ InputTokens int }
-			}
-			Usage struct{ InputTokens int }
-		} `json:"run"`
-		EvidenceDirectory string `json:"evidenceDirectory"`
-	}
+	var report map[string]any
 	if err := json.Unmarshal(out.Bytes(), &report); err != nil {
-		t.Fatalf("%v: %s", err, out.String())
+		t.Fatal(err)
 	}
-	if report.Outcome != "incomplete" {
-		t.Fatalf("a not completed Apply must report the incomplete outcome: %s", out.String())
+	if report["operation"] != "apply" || report["status"] != "not_completed" || report["outcome"] != "incomplete" || report["error"] == "" {
+		t.Fatal(report)
 	}
-	if report.Operation != "apply" || report.Status != "not_completed" || report.Run.ID != "run-1" || report.Run.Status != "incomplete" || report.Run.Reason == "" ||
-		len(report.Run.Passes) != 1 || report.Run.Passes[0].ID != "verify-1" || report.Run.Passes[0].Verdict != "satisfied" || report.Run.Passes[0].Checks[0].Name != "unit" || report.Run.Passes[0].Managers[0].State != "done" || len(report.Run.Problems) != 1 || report.Run.Problems[0].Manager != "lending" || report.Run.Questions[0].ID != "q1" || report.Run.Questions[0].Asked != "2026-10-19T12:00:00Z" ||
-		report.Run.Turns[0].Started != "2026-10-19T12:00:00Z" || report.Run.Turns[0].Usage.InputTokens != 7 || report.Run.Usage.InputTokens != 7 || report.EvidenceDirectory == "" {
-		t.Fatalf("run was not reported: %s", out.String())
+	if _, exists := report["run"]; exists {
+		t.Fatal("unavailable command invented a Run", report)
 	}
 }
 
@@ -108,61 +64,6 @@ func TestApplyRefusesInvalidInvocationsWithoutDispatch(t *testing.T) {
 	}
 	if calls != 0 {
 		t.Fatal("invalid invocation reached execution")
-	}
-}
-
-func TestApplyStatusNeverConvertsErrorOrUnpublishedRunsIntoSuccess(t *testing.T) {
-	receipt := func(outcome project.PublicationOutcome) *project.PublicationReceipt {
-		return &project.PublicationReceipt{Outcome: outcome}
-	}
-	for _, tc := range []struct {
-		name    string
-		outcome run.Outcome
-		receipt *project.PublicationReceipt
-		err     error
-		want    model.Status
-	}{
-		{"applied", run.Outcome{Status: run.Verified}, receipt(project.PublicationApplied), nil, model.Passed},
-		{"no change", run.Outcome{Status: run.Verified}, receipt(project.PublicationNoChange), nil, model.Passed},
-		{"applied with error", run.Outcome{Status: run.Verified}, receipt(project.PublicationApplied), errors.New("read-back"), model.NotCompleted},
-		{"verified without receipt", run.Outcome{Status: run.Verified}, nil, nil, model.NotCompleted},
-		{"stale", run.Outcome{Status: run.Verified}, receipt(project.PublicationStale), nil, model.NotCompleted},
-		{"partial", run.Outcome{Status: run.Verified}, receipt(project.PublicationPartial), nil, model.NotCompleted},
-		{"unknown", run.Outcome{Status: run.Verified}, receipt(project.PublicationUnknown), nil, model.NotCompleted},
-		{"publication failed", run.Outcome{Status: run.Verified}, receipt(project.PublicationFailed), nil, model.Failed},
-		{"incomplete", run.Outcome{Status: run.Incomplete}, nil, nil, model.NotCompleted},
-		{"failed", run.Outcome{Status: run.Failed}, nil, nil, model.Failed},
-		{"failed with the error that always comes with it", run.Outcome{Status: run.Failed}, nil, errors.New("rejection limit reached"), model.Failed},
-		{"incomplete with error", run.Outcome{Status: run.Incomplete}, nil, errors.New("budget"), model.NotCompleted},
-		{"zero", run.Outcome{}, nil, nil, model.NotCompleted},
-	} {
-		if got := ApplyStatus(tc.outcome, tc.receipt, tc.err); got != tc.want {
-			t.Errorf("%s: %s, want %s", tc.name, got, tc.want)
-		}
-	}
-}
-
-func TestAssignmentStatusNeedsVerifyAndPublicationReadback(t *testing.T) {
-	accepted := project.AssignmentRealizationResult{AcceptedCommit: "integrated"}
-	applied := &project.PublicationReceipt{Outcome: project.PublicationApplied}
-	for _, tc := range []struct {
-		name    string
-		result  project.AssignmentRealizationResult
-		receipt *project.PublicationReceipt
-		err     error
-		want    model.Status
-	}{
-		{"accepted and applied", accepted, applied, nil, model.Passed},
-		{"accepted without publication", accepted, nil, nil, model.NotCompleted},
-		{"publication with technical error", accepted, applied, errors.New("cleanup"), model.NotCompleted},
-		{"publication without Verify", project.AssignmentRealizationResult{}, applied, nil, model.NotCompleted},
-		{"stale", accepted, &project.PublicationReceipt{Outcome: project.PublicationStale}, nil, model.NotCompleted},
-		{"failed publication", accepted, &project.PublicationReceipt{Outcome: project.PublicationFailed}, nil, model.Failed},
-		{"material model problem", project.AssignmentRealizationResult{ModelProblem: &run.ReviewIssue{Owner: "."}}, nil, nil, model.Failed},
-	} {
-		if got := AssignmentApplyStatus(tc.result, tc.receipt, tc.err); got != tc.want {
-			t.Errorf("%s: %s, want %s", tc.name, got, tc.want)
-		}
 	}
 }
 

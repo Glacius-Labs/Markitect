@@ -92,7 +92,7 @@ func walkSourceTree(moduleDir, start string, files *[]sourceFile) error {
 			return fmt.Errorf("refusing symlink in Markitect source tree: %s", rel)
 		}
 		ext := strings.ToLower(filepath.Ext(entry.Name()))
-		if ext != ".go" && !embeddedNotices(rel) && rel != embeddedStrategyDefaultsPath && !sourceTestData(rel) {
+		if ext != ".go" && !embeddedNotices(rel) && !sourceTestData(rel) {
 			return nil
 		}
 		return appendRegularFile(moduleDir, rel, files, true)
@@ -188,15 +188,10 @@ func normalizeTextSource(name string, data []byte) ([]byte, error) {
 	if bytes.IndexByte(data, 0) >= 0 {
 		return nil, fmt.Errorf("text source contains a NUL byte")
 	}
-	if name == embeddedStrategyDefaultsPath {
-		return data, nil
-	}
 	data = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
 	data = bytes.ReplaceAll(data, []byte("\r"), []byte("\n"))
 	return data, nil
 }
-
-const embeddedStrategyDefaultsPath = "internal/apply/strategy_defaults.yaml"
 
 func requireRealDirectory(dir string) error {
 	info, err := os.Lstat(dir)

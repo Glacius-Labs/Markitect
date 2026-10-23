@@ -56,19 +56,26 @@ func (x *execution) reply(caller context.Context, from *managerState, id, text s
 	// Keep the correlation locked until actual publication. A duplicate or
 	// canceled response can neither consume nor fabricate another Manager's ID.
 	x.mu.Lock()
-	defer x.mu.Unlock()
 	q, ok := x.questions[id]
 	if !ok || q.To != from.manager.Package || x.answered[id] {
+		x.mu.Unlock()
 		return fmt.Errorf("unknown, closed or foreign question")
 	}
 	answer := Answer{id, from.manager.Package, text}
+	target := x.states[q.From]
 	select {
-	case x.states[q.From].inbox <- Event{Answer: &answer}:
+	case target.inbox <- Event{Answer: &answer}:
 		x.answered[id] = true
+		x.mu.Unlock()
+		target.mu.Lock()
+		x.wakeLocked(target)
+		target.mu.Unlock()
 		return nil
-	case <-ctx.Done():
-		return ctx.Err()
+	default:
+		x.mu.Unlock()
+		return fmt.Errorf("Manager answer inbox full; retry the same question ID")
 	}
+
 }
 func (x *execution) hasQuestionsLocked(manager string) bool {
 	for _, q := range x.questions {
@@ -80,7 +87,7 @@ func (x *execution) hasQuestionsLocked(manager string) bool {
 }
 func (x *execution) pendingInputLocked(manager string) bool {
 	for id, q := range x.questions {
-		if q.To == manager && !x.answered[id] {
+		if q.To == manager && !x.answered[id] || q.From == manager && x.answered[id] {
 			return true
 		}
 	}
@@ -115,7 +122,11 @@ func (x *execution) wakeLocked(s *managerState) {
 		for {
 			err := x.request.Allowance.take()
 			if err == nil {
-				_, err = x.exchange(s, Message{Task: "Answer pending Manager questions using Await and Reply. Preserve the existing fixed handoff."})
+				var response Response
+				response, err = x.exchange(s, Message{Task: "Answer pending Manager questions using Await and Reply. Preserve the existing fixed handoff."})
+				if err == nil {
+					err = x.observeLate(s, response)
+				}
 			}
 			s.mu.Lock()
 			x.mu.Lock()
@@ -169,4 +180,47 @@ func boundedClose(ctx context.Context, close func(context.Context) error) error 
 	case <-ctx.Done():
 		return fmt.Errorf("resource closure unconfirmed: %w", ctx.Err())
 	}
+}
+
+// A later required finding remains semantic authority even when the Git result
+// was already accepted. Invalidate affected acceptance through the real parents.
+func (x *execution) observeLate(s *managerState, r Response) error {
+	if r.Decision != "" && r.Decision != Approve && r.Decision != Reject && r.Decision != ModelBlocker {
+		return fmt.Errorf("invalid late Manager judgment")
+	}
+	if r.Decision != Reject && r.Decision != ModelBlocker && !concreteFindings(r.Findings) {
+		return nil
+	}
+	if !concreteFindings(r.Findings) {
+		return fmt.Errorf("late rejection or blocker requires concrete findings")
+	}
+	decision := Reject
+	if r.Decision == ModelBlocker {
+		decision = ModelBlocker
+	}
+	findings := append([]Finding(nil), r.Findings...)
+	for i := range findings {
+		findings[i].Manager = s.manager.Package
+	}
+	for current := s; current != nil; current = x.states[current.manager.Parent] {
+		current.mu.Lock()
+		if current.handoff.Decision != ModelBlocker {
+			current.handoff.Decision = decision
+		}
+		current.handoff.Findings = append(current.handoff.Findings, findings...)
+		if current.handoff.Review != nil {
+			current.handoff.Review.Decision = decision
+			current.handoff.Review.Findings = append(current.handoff.Review.Findings, findings...)
+		}
+		current.mu.Unlock()
+		if current.manager.Package == "." {
+			break
+		}
+	}
+	x.mu.Lock()
+	if x.lateDecision != ModelBlocker {
+		x.lateDecision = decision
+	}
+	x.mu.Unlock()
+	return nil
 }

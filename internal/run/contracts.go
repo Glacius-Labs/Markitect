@@ -6,6 +6,8 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"path"
+	"path/filepath"
 	"strings"
 	"sync"
 	"time"
@@ -86,6 +88,7 @@ type Result struct {
 	Mandate   Mandate               `json:"mandate"`
 	Technical Technical             `json:"technical"`
 	Decision  Decision              `json:"decision,omitempty"`
+	Input     project.CandidateRef  `json:"input"`
 	Candidate *project.CandidateRef `json:"candidate,omitempty"`
 	Findings  []Finding             `json:"findings"`
 	Handoffs  []Handoff             `json:"handoffs"`
@@ -100,10 +103,10 @@ type Closure struct {
 	Error    string `json:"error,omitempty"`
 }
 type CheckObservation struct {
-	Commit string `json:"commit"`
-	ID     string `json:"id"`
-	Passed bool   `json:"passed"`
-	Error  string `json:"error,omitempty"`
+	Commit  string       `json:"commit"`
+	ID      string       `json:"id"`
+	Receipt CheckReceipt `json:"receipt"`
+	Error   string       `json:"error,omitempty"`
 }
 
 // Allowance is shared by every Run of a command, including later corrections.
@@ -225,8 +228,29 @@ type WorkspaceService interface {
 	Retain(context.Context, Copy, Commit) (project.CandidateRef, error)
 	Close(context.Context) error
 }
+
+// CopyLocation names one actual storage location. Directory is for local
+// controlled execution; native copies use an existing private Linux volume
+// subdirectory. It never names a synchronized second writable working copy.
+type CopyLocation struct{ Directory, Volume, Subpath string }
+
+func (l CopyLocation) Valid() bool {
+	if l.Directory != "" {
+		return l.Volume == "" && l.Subpath == "" && filepath.IsAbs(l.Directory) && filepath.Clean(l.Directory) == l.Directory
+	}
+	if !validID(l.Volume) || l.Subpath == "" || path.Clean(l.Subpath) != l.Subpath || strings.HasPrefix(l.Subpath, "/") || strings.Contains(l.Subpath, "\\") {
+		return false
+	}
+	for _, part := range strings.Split(l.Subpath, "/") {
+		if !validID(part) {
+			return false
+		}
+	}
+	return true
+}
+
 type Copy interface {
-	Location() string
+	Location() CopyLocation
 	Update(context.Context, Copy, Commit) error
 	Snapshot(context.Context) (Commit, error)
 	Inspect(context.Context, Commit) (project.PreviewPreparationAttempt, error)
@@ -241,7 +265,7 @@ type Records interface {
 	Append(context.Context, Note) (Note, error)
 }
 type CandidateChecks interface {
-	Check(context.Context, project.Prepared, Copy, Commit) ([]CheckObservation, error)
+	Check(context.Context, []project.ExecutionCheck, Copy, Commit) ([]CheckObservation, error)
 }
 
 type Executor struct {

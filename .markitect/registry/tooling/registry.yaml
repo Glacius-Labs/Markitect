@@ -200,10 +200,6 @@ artifacts:
     form: test
     realizes: [tooling/maintenance-boundaries]
     why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/tooling/release/strategy_defaults_test.go"
-    form: test
-    realizes: [tooling/maintenance-boundaries]
-    why: Tests the stated responsibility and retains negative boundaries.
   - path: "internal/tooling/releasecli/licenses_test.go"
     form: test
     realizes: [tooling/maintenance-boundaries]

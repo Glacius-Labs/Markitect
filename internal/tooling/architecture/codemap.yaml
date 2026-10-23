@@ -17,11 +17,19 @@ packages:
     doc: docs/development/modules.md
   - path: internal/run
     layer: apply-run
-    purpose: Orchestrator for the recursive Pass process over ports for Agents, workspaces, checks, owner and evidence.
+    purpose: Complete closed Manager hierarchy with direct delegation, questions, fixed Git handoffs and durable results.
+    doc: docs/development/modules.md
+  - path: internal/project
+    layer: apply-project
+    purpose: Structural model, registry, ownership, accounting, declared instructions and checks, and checked static Manager contexts.
+    doc: internal/project/README.md
+  - path: internal/runtimeconfig
+    layer: runtime-config
+    purpose: Closed acquired Runtime envelopes and source-bound static native or check image observations.
     doc: docs/development/modules.md
   - path: internal/apply
     layer: apply-usecase
-    purpose: Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication.
+    purpose: Explicit unavailable Apply boundary until S3 workflow composition.
     doc: docs/development/modules.md
   - path: internal/modeldocs
     layer: model-view
@@ -53,11 +61,15 @@ packages:
     doc: docs/development/modules.md
   - path: internal/adapters/gitrepo
     layer: apply-adapter
-    purpose: Repository capture, workspace volumes and guarded publication.
+    purpose: Complete repository capture, isolated Run Git copies and independently reopenable stored candidates.
     doc: docs/development/modules.md
+  - path: internal/adapters/runstore
+    layer: apply-adapter
+    purpose: Immutable terminal Run results and durable concurrent project Notes.
+    doc: internal/run/README.md
   - path: internal/bootstrap
     layer: apply-bootstrap
-    purpose: Constructs actual services and adapters; owns the Agents router, file evidence and state lock.
+    purpose: Composes structural Project, generated views, optional static metadata and the explicit unavailable Apply boundary.
     doc: docs/development/modules.md
   - path: cmd/markitect
     layer: apply-command
