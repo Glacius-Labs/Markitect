@@ -74,7 +74,7 @@ func TestImageMetadataUsesSelectedConfigurationAndWholeActualBytes(t *testing.T)
 	}
 }
 
-func TestApplyRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.T) {
+func TestRuntimePreparationRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.T) {
 	inline := imageProfile(filepath.Join(t.TempDir(), "engine"))
 	boundary := filepath.Join(t.TempDir(), "same-runtime")
 	identity := func(data string) string {
@@ -85,7 +85,7 @@ func TestApplyRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.
 		}
 		id, ok := profiles[0].Identity()
 		if !ok {
-			t.Fatal("actual Apply validator did not accept complete image evidence")
+			t.Fatal("actual Runtime preparation did not accept complete image evidence")
 		}
 		return id
 	}

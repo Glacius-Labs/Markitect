@@ -36,7 +36,7 @@ func preparedExecution(t *testing.T, inline string, port runtimeconfig.AgentProf
 	t.Helper()
 	profiles := consumeProfile(t, inline, nil, port).Profiles
 	if len(profiles) != 1 {
-		t.Fatalf("expected one actual Apply profile, got %d", len(profiles))
+		t.Fatalf("expected one actual Runtime profile, got %d", len(profiles))
 	}
 	return profiles[0]
 }
