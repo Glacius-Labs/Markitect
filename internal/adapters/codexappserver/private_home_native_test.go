@@ -78,6 +78,15 @@ func TestPrivateHomeNativeProbe(t *testing.T) {
 	if !*privateNative.enable {
 		t.Skip("UNEXECUTED: separate finite native grant required")
 	}
+	runPrivateNativeProbe(t, false)
+}
+
+// Both scenarios use the existing private initialization, image checks and
+// resource cleanup. Neither scenario defines a product Run or inbox port.
+func runPrivateNativeProbe(t *testing.T, inboxMode bool) {
+	if *privateNative.enable && *inboxNative {
+		t.Fatal("exactly one native probe scenario may be enabled")
+	}
 	if !filepath.IsAbs(*privateNative.engine) || !filepath.IsAbs(*privateNative.profile) || !filepath.IsAbs(*privateNative.evidence) || !imageName.MatchString(*privateNative.image) || *privateNative.agentd == "" {
 		t.Fatal("explicit source/image/profile/evidence bindings required")
 	}
@@ -138,6 +147,12 @@ func TestPrivateHomeNativeProbe(t *testing.T) {
 	canary, recall := "instruction-"+smokeToken(t), "recall-"+smokeToken(t)
 	profile.BaseInstructions = "This is a bounded technical transport probe. Do not modify the workspace, run shell commands, or read authentication files."
 	profile.DeveloperInstructions = "On each message call native_receipt exactly once with instruction equal to " + canary + ". On a later message include the recall value from the preceding tool response."
+	var inbox *nativeInboxProbe
+	if inboxMode {
+		// Independent opaque Q2 ID is disclosed only in Await's actual Question.
+		inbox = newNativeInboxProbe(smokeToken(t), smokeToken(t), smokeToken(t))
+		profile.DeveloperInstructions = inbox.instructions()
+	}
 	effective, _ := json.Marshal(profile)
 	effectiveSum := sha256.Sum256(effective)
 	stages := []string{}
@@ -182,6 +197,14 @@ func TestPrivateHomeNativeProbe(t *testing.T) {
 			}
 		}
 		status := "incomplete"
+		var inboxEvidence *nativeInboxEvidence
+		if inbox != nil {
+			if passed && inbox.verifyTranscript(filepath.Join(*privateNative.evidence, "transcript.jsonl")) != nil {
+				passed = false
+				t.Error("native inbox transcript correlation failed")
+			}
+			inboxEvidence = inbox.evidence()
+		}
 		if !slices.Equal(stages, []string{"agentd-hello", "private-initialized", "provider-started", "private-cleared", "container-closed"}) {
 			passed = false
 		}
@@ -194,9 +217,10 @@ func TestPrivateHomeNativeProbe(t *testing.T) {
 			Stages                                                                                                                []string
 			AttemptedVolumes                                                                                                      []string
 			Volumes                                                                                                               []container.VolumeObservation
+			Inbox                                                                                                                 *nativeInboxEvidence `json:",omitempty"`
 		}{status, name, *privateNative.image, *privateNative.agentd, supportedCodexVersion, profile.Model, profile.Effort,
 			*privateNative.profileSHA, hex.EncodeToString(effectiveSum[:]), *privateNative.metadataSHA,
-			started.Format(time.RFC3339Nano), time.Now().UTC().Format(time.RFC3339Nano), frame.ProtocolVersion, stages, attemptedVolumes, volumes}, "", "  ")
+			started.Format(time.RFC3339Nano), time.Now().UTC().Format(time.RFC3339Nano), frame.ProtocolVersion, stages, attemptedVolumes, volumes, inboxEvidence}, "", "  ")
 		if err := os.WriteFile(filepath.Join(*privateNative.evidence, "probe.json"), record, 0600); err != nil {
 			t.Error("native evidence write failed")
 		}
@@ -246,21 +270,39 @@ func TestPrivateHomeNativeProbe(t *testing.T) {
 	valid := true
 	tool := run.ToolSpec{Name: "native_receipt", Description: "Report the native instruction canary and previous tool recall value.",
 		InputSchema: json.RawMessage(`{"type":"object","properties":{"instruction":{"type":"string"},"recall":{"type":"string"}},"required":["instruction"],"additionalProperties":false}`)}
-	session, err = agents.OpenAssignment(ctx, run.AssignmentSpec{ID: name, Profile: "probe", Workspace: workspace, Home: home, Tools: []run.ToolSpec{tool}, Transcript: filepath.Join(*privateNative.evidence, "transcript.jsonl")},
-		func(_ context.Context, name string, args json.RawMessage) run.ToolAnswer {
-			mu.Lock()
-			defer mu.Unlock()
-			calls++
-			var receipt struct{ Instruction, Recall string }
-			if calls > 2 || name != tool.Name || json.Unmarshal(args, &receipt) != nil || receipt.Instruction != canary || calls == 2 && receipt.Recall != recall {
-				valid = false
+	tools := []run.ToolSpec{tool}
+	handler := func(_ context.Context, name string, args json.RawMessage) run.ToolAnswer {
+		mu.Lock()
+		defer mu.Unlock()
+		calls++
+		var receipt struct{ Instruction, Recall string }
+		if calls > 2 || name != tool.Name || json.Unmarshal(args, &receipt) != nil || receipt.Instruction != canary || calls == 2 && receipt.Recall != recall {
+			valid = false
+			cancel()
+			return run.ToolAnswer{Refused: true, Text: "probe aborted"}
+		}
+		return run.ToolAnswer{Text: `{"recall":"` + recall + `"}`}
+	}
+	if inbox != nil {
+		tools = inbox.tools()
+		handler = func(ctx context.Context, name string, args json.RawMessage) run.ToolAnswer {
+			answer := inbox.handle(ctx, name, args)
+			if answer.Refused {
 				cancel()
-				return run.ToolAnswer{Refused: true, Text: "probe aborted"}
 			}
-			return run.ToolAnswer{Text: `{"recall":"` + recall + `"}`}
-		})
+			return answer
+		}
+	}
+	session, err = agents.OpenAssignment(ctx, run.AssignmentSpec{ID: name, Profile: "probe", Workspace: workspace, Home: home, Tools: tools, Transcript: filepath.Join(*privateNative.evidence, "transcript.jsonl")}, handler)
 	if err != nil {
 		t.Fatal("native private initialization or provider startup failed")
+	}
+	if inbox != nil {
+		if err := inbox.exercise(ctx, session); err != nil {
+			t.Fatal(err)
+		}
+		passed = true
+		return
 	}
 	conversation := ""
 	for i, message := range []string{"Follow the native probe instructions and report once.", "Report once again and recall the value from the previous tool response."} {
