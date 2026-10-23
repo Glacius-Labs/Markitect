@@ -191,6 +191,7 @@ checkProfiles:
       env:
         - GOTOOLCHAIN=local
         - GOCACHE=/home/agent/.cache/go-build
+        - GOTMPDIR=/home/agent
       limits:
         milliCPUs: 1000
         memoryBytes: 2147483648

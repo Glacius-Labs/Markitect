@@ -1,6 +1,6 @@
 # Provider adapters
 
-The CLI exposes structural `check`, `context` and guarded `docs`, with explicitly requested static Runtime metadata. Public `apply` reports unavailable until S3. The standalone [Run](../internal/run/README.md) owns the complete Manager hierarchy and direct Session, Git, check and record ports. It provides no product publication path.
+The CLI exposes structural `check`, `context` and guarded `docs`, with explicitly requested static Runtime metadata. S3 source composes `apply` over complete fresh Runs and stored-candidate publication; full native Apply qualification and owner acceptance remain separate. The standalone [Run](../internal/run/README.md) owns the complete Manager hierarchy and direct Session, Git, check and record ports. It provides no product publication path.
 
 <a id="role-profiles"></a>
 

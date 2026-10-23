@@ -4,7 +4,7 @@ This folder holds the completed canonical language v1 and the design of the Mana
 
 ## Language v1
 
-Status: completed and confirmed by the owner on 16 October 2026. The [normative language specification v1](minimal-language/language-contract.md) is the sole owner of the canonical form. There are no open language decisions within its scope. The Go production compiler and a broader conformance corpus are implementation work.
+Status: completed and confirmed by the owner on 16 October 2026. The [normative language specification v1](minimal-language/language-contract.md) is the sole owner of the canonical form. There are no open language decisions within its scope. The Go production compiler is implemented; its source tests and delivery evidence describe conformance coverage and remaining work.
 
 | Document | Role |
 | --- | --- |
@@ -18,12 +18,12 @@ The baseline fixes the uniform definition form, nine Core definitions, values an
 
 ## Apply design
 
-**Current accepted target, 22 October 2026:** [Agent workspaces and reviewed handoffs](manager-apply-workflow.md), adopted in [DEC-067](../../concepts/register.md#dec-067-agent-workspaces-and-reviewed-handoffs), is the behavioral owner. One Agent has one assignment container and its own working copy; Managers delegate, answer questions, review Git handoffs and integrate upward. There are no domain Turns or mandatory per-write protection/evidence protocols. Read the [rebuild plan](../../implementation-plan.md#apply-rebuild-plan) next. This is a documentation-only target; the executable and canonical self-model remain the Pass implementation until explicitly migrated.
+**Current accepted target, 22 October 2026:** [Agent workspaces and reviewed handoffs](manager-apply-workflow.md), adopted in [DEC-067](../../concepts/register.md#dec-067-agent-workspaces-and-reviewed-handoffs), is the behavioral owner. One Agent has one assignment container and its own working copy; Managers delegate, answer questions, review Git handoffs and integrate upward. There are no domain Turns or mandatory per-write protection/evidence protocols. Read the [rebuild plan](../../implementation-plan.md#apply-rebuild-plan) next. The S3 source and canonical self-model now describe complete fresh Run hierarchies, durable closure and stored-candidate publication. Full native Apply qualification and owner acceptance remain separate. The former Pass implementation is retired source history.
 
 | Document | Owns |
 | --- | --- |
 | [Accepted Apply workflow](manager-apply-workflow.md) | Target mandates, Agent workspaces/containers, delegation, questions, reviewed Git handoffs, final verification and supersession. |
-| [Apply rebuild plan](../../implementation-plan.md#apply-rebuild-plan) | Future bounded slices, source seams, dependencies, removals and acceptance; no implementation grant. |
+| [Apply rebuild plan](../../implementation-plan.md#apply-rebuild-plan) | Approved bounded slices, source seams, dependencies, removals, integration and distinct source/native/owner evidence. |
 | [Earlier Claude handoff](../../development/claude-apply-implementation-handoff-20261020.md) | Dated DEC-064 assignment, superseded where it conflicts with DEC-067. |
 | [Implemented runtime contract](manager-apply-runtime.md) | Earlier implemented behavior and limits. Old names and differing rules are not exceptions to the accepted target. |
 | [Prior Apply concept](manager-apply-concept.md#current-agreed-concept--19-october-2026) | Dated 19 October direction and earlier design history; superseded where DEC-064 differs. |
