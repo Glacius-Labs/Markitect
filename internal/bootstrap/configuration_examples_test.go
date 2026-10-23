@@ -10,6 +10,7 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func TestExplicitAccountConfigurationExampleLoadsAndApplyRemainsUnavailable(t *testing.T) {
@@ -17,7 +18,7 @@ func TestExplicitAccountConfigurationExampleLoadsAndApplyRemainsUnavailable(t *t
 	if err != nil {
 		t.Fatal(err)
 	}
-	dir := t.TempDir()
+	dir := testkit.TempDir(t)
 	state := filepath.Join(dir, "state")
 	replacements := map[string]string{"PRODUCT_BUILD": "source-test-build", "STATE_DIRECTORY": state, "ENGINE_EXECUTABLE": filepath.Join(dir, "never-run-engine"), "DEADLINE_UTC": "2026-10-23T23:00:00Z", "ACCOUNT_LOGIN_PATH": filepath.Join(dir, "never-read-account-login.json")}
 	text := string(data)

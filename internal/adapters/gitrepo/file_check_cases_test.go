@@ -95,7 +95,7 @@ func TestM1GitFileCheckObservedButUncapturedInputsRemainIncomplete(t *testing.T)
 				if !found || !bytes.Equal(instruction.Bytes(), []byte(fileSeamInstruction("ops/manager.md"))) || len(inputs.Raw.Instructions) != 2 || accounting.Status() != realization.Accounted || len(diagnostics) != 3 {
 					t.Fatalf("actual uncaptured instruction or repeated references lost: %+v", diagnostics)
 				}
-				for i, field := range []string{"/instructions/execute/0", "/instructions/execute/2", "/packages/lending/instructions/verify/0"} {
+				for i, field := range []string{"/instructions/./0", "/instructions/./2", "/instructions/lending/1"} {
 					if diagnostics[i].Code != "files.instruction_uncaptured" || diagnostics[i].Source.File != ".markitect/execution.yaml" || diagnostics[i].Source.Field != field || diagnostics[i].Source.ContentID != inputs.Raw.Execution[0].File.ContentID() {
 						t.Fatalf("uncaptured instruction occurrence lost its authored source: %+v", diagnostics[i])
 					}
