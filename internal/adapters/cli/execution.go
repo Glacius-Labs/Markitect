@@ -88,6 +88,9 @@ func (c *Command) applyVerb(ctx context.Context, args []string, stdout, stderr i
 	report.FormatVersion, report.Operation = 1, verb
 	if err != nil {
 		report.Error = err.Error()
+		if report.Status != model.Failed {
+			report.Status = model.NotCompleted
+		}
 	}
 	if emit(report) != 0 {
 		return 3

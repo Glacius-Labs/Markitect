@@ -69,17 +69,18 @@ func (r CheckRequest) Valid() bool {
 // Tree the identity of the copy it ran on. Output is the combined output up to
 // the request's limit; Truncated marks a cut.
 type CheckReceipt struct {
-	ID        CheckID
-	ImageID   string
-	Tree      snapshot.TreeID
-	Started   bool
-	Exited    bool
-	ExitCode  int
-	TimedOut  bool
-	Output    []byte
-	Truncated bool
-	Uncertain bool
-	Reason    string
+	ID           CheckID
+	ImageID      string
+	Tree         snapshot.TreeID
+	Started      bool
+	Exited       bool
+	ExitCode     int
+	TimedOut     bool
+	Output       []byte
+	Truncated    bool
+	Uncertain    bool
+	CopiesClosed bool
+	Reason       string
 }
 
 // Passed reports whether the receipt establishes a passing run of exactly this
@@ -87,5 +88,5 @@ type CheckReceipt struct {
 // the same check, image and tree.
 func (r CheckReceipt) Passed(req CheckRequest) bool {
 	return r.ID == req.ID && r.ImageID == req.ImageID && r.Tree == req.Tree.Digest() &&
-		r.Started && r.Exited && r.ExitCode == 0 && !r.TimedOut && !r.Uncertain
+		r.Started && r.Exited && r.ExitCode == 0 && !r.TimedOut && !r.Uncertain && r.CopiesClosed
 }

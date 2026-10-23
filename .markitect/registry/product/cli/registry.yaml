@@ -32,22 +32,6 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Verifies complete explicit invocation values, closed JSON objects, refused historical sections and no referenced credential reads during parsing.
-  - path: "internal/bootstrap/execution.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Composes captured settings, the exclusive state lock, concrete container adapters, evidence and guarded publication for one Apply and records the run's identity.
-  - path: "internal/bootstrap/execution_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Tests refusal before effects for invalid configurations and held state directories and retained report evidence.
-  - path: "internal/bootstrap/verify_evaluation_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Grant-gated evaluation harness that runs only the independent Verify of a captured stand through the real preparation and adapters, without a Command or publication.
-  - path: "internal/bootstrap/model_assessment_evaluation_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Grant-gated harness of the Model assessment trial that runs one read-only assessment Pass of a captured stand through the real preparation and adapters, without a Command or publication.
   - path: "internal/bootstrap/profile_router.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]
@@ -136,19 +120,3 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Tests one holder at a time, release, and independent state directories.
-  - path: "internal/bootstrap/evidence.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Appends and syncs every run event, names transcript paths and writes the final report under the run's evidence directory.
-  - path: "internal/bootstrap/evidence_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Tests whole synced events under concurrency, refusal after close, safe transcript paths, no overwritten runs and the atomic report.
-  - path: "internal/bootstrap/agents_router.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Routes each turn to the provider adapter of its profile and refuses unrouted profiles without fallback.
-  - path: "internal/bootstrap/agents_router_test.go"
-    form: test
-    realizes: [product/cli/honest-read-only-interface]
-    why: Verifies routing by profile, unchanged adapter results and refusal without fallback using fake Agents.

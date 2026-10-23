@@ -361,7 +361,7 @@ func (s *localService) Copy(ctx context.Context, manager string, base run.Commit
 	err = restoreDirectories(ctx, p, base.ID)
 	return c, err
 }
-func (c *localCopy) Location() string { return c.location }
+func (c *localCopy) Location() run.CopyLocation { return run.CopyLocation{Directory: c.location} }
 func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 	if _, err := localCommand(ctx, c.location, nil, "add", "--force", "--all", "--", "."); err != nil {
 		return run.Commit{}, err

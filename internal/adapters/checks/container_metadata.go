@@ -56,8 +56,8 @@ func (r *EngineImageReaders) Reader(config EngineConfig) (ImageReader, error) {
 	return engine, nil
 }
 
-// NewMetadataPreparer composes container image observation. The zero value still
-// prepares process/v1; container/v1 requires this explicit factory.
+// NewMetadataPreparer composes pinned container image observation.
+// Preparation needs an explicit image-reader factory and executes no process.
 func NewMetadataPreparer(factory ImageReaderFactory) *MetadataPreparer {
 	return &MetadataPreparer{factory: factory}
 }

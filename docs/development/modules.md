@@ -4,15 +4,9 @@ The repository uses one Go module. Packages are organized by concrete responsibi
 
 ## Go capability packages
 
-Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Apply owns preparation and consumer ports; adapters implement concrete acquisition and metadata protocols. Bootstrap constructs actual services. Product and maintenance commands remain thin entrypoints with separate composition.
+Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Project owns structural acquisition, complete accounting and static model-derived contexts. Run consumes Project and organization directly, retaining one complete hierarchy per mandate. `runtimeconfig` owns closed static native/check metadata. Bootstrap composes actual services; public Apply is unavailable until S3.
 
-The container runtime runs every Agent session in its own Linux container ([DEC-037](../concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). `markitect-agentd`, built from `internal/agentd` by `cmd/markitect-agentd`, runs inside the container: it starts the provider CLI, relays its standard streams, serves the Orchestrator tools over MCP on a Unix socket and reports exits. The container adapter starts hardened session containers and owns the frame transport of `internal/agentd/frame` with agentd. The concrete Codex and Claude turn adapters may consume the frame DTOs exposed by that container API while implementing `run.Agents`. Each provider adapter keeps its own protocol handling and cannot import the other provider or agentd execution. The base image is defined in [packaging/runtime](../../packaging/runtime/README.md).
-
-Run owns the Orchestrator and the consumer ports `Agents`, `Workspaces`, `Checks` and `Evidence` ([contract](../design/canonical-model/manager-apply-runtime.md)). It keeps its state in memory, records only through the `Evidence` port, and has no SQL, repository acquisition, provider protocol or public execution path. Apply prepares its configuration from one complete capture and publishes through its own `Publisher` port. Bootstrap supplies the concrete adapters and the file evidence under the operator's state directory.
-
-Bootstrap's temporary Apply composition supplies a file evidence directory, an Agents router and an exclusive state-directory lock. Cockpit and interactive authoring are retired from V1; their earlier source remains in the [pre-cutover archive](v1-source-archive-20261023.md). Shared non-Extract preparation remains in Apply until S2 moves all retained callers together.
-
-The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../../internal/adapters/claudecode/README.md) metadata preparers use narrow image readers backed by the container adapter. Bootstrap injects their factories; only a selected source-bound profile supplies the engine executable and immutable image ID. Preparation consumes Apply's profile ports and pure model, organization and snapshot values. It inspects the image and copies its build metadata from a created, never started container. It starts no Session or provider and observes no schema inventory.
+Run owns Session, WorkspaceService, CandidateChecks and Records ports. The repository adapter implements real private Git copies and self-contained stored candidates. The check adapter binds declared checks to prepared pinned container profiles and disposable input/home copies. The file record adapter provides immutable terminal results and concurrent project Notes. The native harness and provider adapters remain governed by their separately reviewed source and bounded feasibility evidence.
 
 ## Dependency direction
 
@@ -20,25 +14,22 @@ The [Codex](../../internal/adapters/codexappserver/README.md) and [Claude](../..
 | --- | --- |
 | Model, snapshot | No other Markitect responsibility |
 | Organization, realization | Model, snapshot |
-| Run | Snapshot |
-| Apply | Model, snapshot, organization, realization, run |
-| Model view | Apply, model, snapshot |
-| Repository, workspace and publication adapter | Apply, Run, required pure values and container API |
-| Codex metadata and turn adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
-| Claude metadata and turn adapter | Apply, model, organization, snapshot, Run, container API and its agent frame DTOs |
-| Check metadata and execution adapter | Apply, model, organization, snapshot, Run and container API |
-| Container adapter | Agent frame protocol |
-| Session helper (agentd) | Agent frame protocol |
-| Agent frame protocol | No other Markitect responsibility |
-| CLI adapter | Apply, Run report values, pure report values, model view, build metadata and licenses |
-| Cockpit adapter | Run record values |
+| Project | Model, snapshot, organization, realization |
+| Run | Project, organization, snapshot |
+| Static runtime configuration | Project, model, organization, snapshot |
+| Model view | Project, model, snapshot |
+| Repository adapter | Project, Run, model, snapshot |
+| Check adapter | Project, static runtime configuration, Run, pure values, container API |
+| Record adapter | Run |
+| Provider adapters and native harness | Their exact inward consumers and physical transport, declared by the gate |
+| Container adapter and agentd | Agent frame protocol |
+| CLI | Project and static metadata reports, model view, pure report values, build metadata and licenses |
 | Document adapter | Model view and reviewed guarded-write API |
-| Product bootstrap | Its actual services and adapters |
-| Product command | Product bootstrap |
-| Runtime command | Session helper |
+| Bootstrap | Its actual services and adapters |
+| Product command | Bootstrap |
 | Maintenance command | Its specific maintenance CLI |
 
-Maintenance services have exact edges: release uses source/license values; publication uses release/source; installation uses release/source/guarded writes. Module checks consume actual v1 preparation and registry plus pure hook/pipeline checkers. Source, module checkers and architecture tooling have no product-execution privilege. A common parent such as `internal/tooling/` or `internal/adapters/` does not permit arbitrary sibling imports.
+The real-Git vertical test alone receives a test-only record-adapter edge. No sibling adapter or common tooling parent grants a general import exemption. Maintenance remains explicit: module checks consume structural Project preparation and pure hook/pipeline checkers; release uses source/license values; installation/publication use their own maintenance consumers.
 
 ## Apply target dependencies
 

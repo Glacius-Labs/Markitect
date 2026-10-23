@@ -2,6 +2,14 @@
 
 **Current scope and proposed architecture, 23 October 2026:** the [latest owner instruction](concepts/sources/v1-scope-clarification-20261023.md) and [accepted V1 architecture](design/v1-execution-architecture.md) govern the [approved source implementation](concepts/sources/v1-source-implementation-approval-20261023.md). Full hierarchy in every mandate; runtime replacement is permitted; Extract/UI/authoring migration is excluded. The [counter-review](development/v1-architecture-audit-20261023.md) describes actual Main and the [plan](implementation-plan.md) owns coordinated source implementation and separate native execution gates. Remaining sections describe earlier source/design and impose no conflicting preservation requirement.
 
+## Current S2 source composition
+
+`cmd/markitect -> bootstrap -> CLI -> Project` supplies structural check/context and the guarded generated model view. Optional `runtimeconfig` preparation observes acquired static native/check profiles. It does not resolve model roles, strategies or execution budgets.
+
+The standalone Run consumes the complete checked Project hierarchy and direct Session, Git, check and record ports. Every mandate uses fresh Manager environments, exact reviewed child commits, asynchronous questions and durable Notes/candidates/results. `gitrepo.LocalGit` preserves the complete Census and explicit empty model directories in independently reopened Git bundles; `runstore` persists terminal records and concurrent Notes. [Run](../internal/run/README.md) describes source evidence and its limits.
+
+At this intermediate boundary CLI Apply returns unavailable before acquiring execution resources. The old runtime has no fallback path. S3 owns the complete workflow and stored-candidate publication. Native transport and provider qualification require their own bounded real evidence; controlled local Sessions do not establish that capability.
+
 ## Historical architecture and source descriptions
 
 Everything below is retained source/design history. It is not the current V1 implementation entry or acceptance scope. Use the consolidated proposal and plan above, including the source audit for the actual assignment entrypoint.

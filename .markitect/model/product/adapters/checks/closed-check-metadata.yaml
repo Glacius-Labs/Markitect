@@ -3,5 +3,5 @@ imports:
     as: Vocab
 id: closed-check-metadata
 kind: Vocab.Rule
-body: "Parse only explicitly selected source-bound executable and Check profile metadata in closed formats. Preserve literal arguments, environment policy, finite limits and original identities. Preparation does not execute a check and cannot establish execution success."
+body: "Parse only explicitly acquired pinned container Check profile metadata in closed formats. Preserve literal arguments, fixed environment policy, finite resource and output limits, exact image/executable identities and source bindings. Static preparation starts no check and establishes no execution success. Execute each declared check against the exact fixed candidate on an independently verified disposable copy and empty private home; retain actual image, tree, start, exit, exit code, output, timeout and closure observations. Unknown or uncertain execution and cleanup cannot count as a passing check."
 spec: {}

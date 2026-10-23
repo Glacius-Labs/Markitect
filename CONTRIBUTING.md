@@ -1,10 +1,10 @@
 # Development
 
-Markitect is built around canonical language v1 and delegated realization. Current source retains read-only preparation, the guarded generated model view and a temporary assignment-based Apply during the approved V1 rebuild. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification.
+Markitect is built around canonical language v1 and delegated realization. Current source retains read-only preparation, the guarded generated model view and a complete standalone hierarchical Run during the approved V1 rebuild; public Apply is explicitly unavailable until S3. Extract, Cockpit and interactive authoring are retired. [AGENTS.md](AGENTS.md), the [delivery plan](docs/implementation-plan.md) and the bounded dispatch own authority and shared-file reservations. Source availability does not establish native runtime qualification.
 
 ## Ownership and layout
 
-All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`; pure model, snapshot, organization and realization values have no infrastructure dependency. `internal/apply` owns preparation and consumer ports. Concrete adapters implement repository capture, static profile metadata and document writes. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
+All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`; pure model, snapshot, organization and realization values have no infrastructure dependency. `internal/project` owns structural preparation and candidate validation. `internal/run` owns closed hierarchical execution; `internal/runtimeconfig` owns static native/check metadata. Concrete adapters implement repository capture, static profile metadata and document writes. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
 
 The [code map](docs/development/code-map.md), [architecture](docs/architecture.md) and [dependency rules](docs/development/modules.md) describe actual packages. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `integration` and source smoke in `tools/smoke` import no product package.
 
@@ -75,4 +75,4 @@ The retired v0.14.1 distribution and its [preserved source and guide](https://gi
 
 ## Release work
 
-[Operations](docs/operations.md) and [distribution](integration/README.md) own separate release work. Maintenance entrypoints are under `cmd/markitect-release`, `cmd/markitect-check-architecture` and `cmd/markitect-check-modules`. Source packages retain the root license, embedded [notices](internal/tooling/licenses/notices.md), strategy defaults and required test data. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.
+[Operations](docs/operations.md) and [distribution](integration/README.md) own separate release work. Maintenance entrypoints are under `cmd/markitect-release`, `cmd/markitect-check-architecture` and `cmd/markitect-check-modules`. Source packages retain the root license, embedded [notices](internal/tooling/licenses/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.

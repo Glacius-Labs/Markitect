@@ -64,10 +64,10 @@ Common options:
   --model PATH             explicit model.yaml (default .markitect/model.yaml)
   --dependency PATH        explicit dependency model.yaml; repeat as needed
   --revision REF           resolve once; inspect exactly that fixed commit
-  --metadata               request static profile/settings metadata preparation
+  --metadata               request static native/check profile metadata preparation
   --runtime-profile PATH   explicit absolute Runtime profile document path
 
-Without --metadata, metadata and settings are not requested. A structural pass
+Without --metadata, native/check metadata is not requested. A structural pass
 does not establish static profile metadata, rendered role context or runtime
 support. Fixed previews refuse unbound present-day external Runtime inputs.
 
@@ -148,7 +148,7 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	repo := flags.String("repo", ".", "repository root")
 	manifest := flags.String("model", ".markitect/model.yaml", "explicit model.yaml")
 	revision := flags.String("revision", "", "explicit fixed revision")
-	metadata := flags.Bool("metadata", false, "request static metadata and settings")
+	metadata := flags.Bool("metadata", false, "request static native/check profile metadata")
 	runtimeProfile := flags.String("runtime-profile", "", "explicit absolute Runtime profile document path")
 	write := flags.Bool("write", false, "write the guarded generated view")
 	expect := flags.String("expect", "", "expected source/target-bound previewDigest")
