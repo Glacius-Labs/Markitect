@@ -55,13 +55,19 @@ func (f *fakeStream) close() { f.once.Do(func() { close(f.done) }) }
 
 // fakeRuntime plays the provider side of one turn from a script of flags.
 type fakeRuntime struct {
-	background      bool
-	killEntered     chan struct{}
-	releaseKill     chan struct{}
-	terminalFailure bool
-	listPagination  bool
-	stream          *fakeStream
-	tools           chan frame.ToolCall
+	quiescenceError, handshakeError bool
+	autoJudge                       bool
+	judgeSent                       bool
+	judgmentText                    string
+	secondJudgment                  string
+	secondSent                      bool
+	background                      bool
+	killEntered                     chan struct{}
+	releaseKill                     chan struct{}
+	terminalFailure                 bool
+	listPagination                  bool
+	stream                          *fakeStream
+	tools                           chan frame.ToolCall
 
 	mu            sync.Mutex
 	spec          container.ContainerSpec
@@ -95,7 +101,7 @@ type fakeRuntime struct {
 }
 
 func newRuntime() *fakeRuntime {
-	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), toolName: "ask", toolArgs: `{"to":"a","text":"question"}`, finalText: `{"decision":"submitted","findings":[]}`}
+	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), autoJudge: true, judgmentText: `{"decision":"submitted","findings":[]}`, toolName: "ask", toolArgs: `{"to":"a","text":"question"}`, finalText: `{"decision":"submitted","findings":[]}`}
 }
 func (f *fakeRuntime) emit(raw string) { f.stream.chunks <- []byte(raw + "\n") }
 func (f *fakeRuntime) Initialize(_ context.Context, req frame.Initialize) error {
@@ -132,6 +138,9 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	_ = json.Unmarshal(data, &m)
 	switch m.Method {
 	case "initialize":
+		if f.handshakeError {
+			f.emit(`{"method":"error","params":{"error":{"message":"handshake failed private-access"},"willRetry":false}}`)
+		}
 		f.emit(`{"id":1,"result":` + codecInitialization + `}`)
 	case "thread/start", "thread/resume":
 		if f.threadError {
@@ -144,6 +153,9 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 		}
 		f.emit(`{"id":2,"result":{"thread":` + thread + `,"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"admitted-model","modelProvider":"markitect","sandbox":{"type":"dangerFullAccess"}}}`)
 	case "thread/backgroundTerminals/list":
+		if f.quiescenceError {
+			f.emit(`{"method":"error","params":{"threadId":"` + string(codecThreadID) + `","error":{"message":"drain failed private-access"},"willRetry":false}}`)
+		}
 		if f.listPagination {
 			f.emit(fmt.Sprintf(`{"id":%d,"result":{"data":[],"nextCursor":"more"}}`, m.ID))
 		} else if f.background {
@@ -163,6 +175,7 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 			f.emit(fmt.Sprintf(`{"id":%d,"result":{"terminated":true}}`, m.ID))
 		}
 	case "turn/start":
+		f.judgeSent, f.secondSent = false, false
 		f.emit(fmt.Sprintf(`{"id":%d,"result":{"turn":{"id":"%s","status":"inProgress","items":[],"error":null}}}`, m.ID, codecTurnID))
 		for _, notification := range f.notifications {
 			f.emit(notification)
@@ -184,6 +197,16 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 	return nil
 }
 func (f *fakeRuntime) finish() {
+	if f.autoJudge && !f.judgeSent {
+		f.judgeSent = true
+		f.tools <- frame.ToolCall{ID: 100, Name: "judge", Arguments: json.RawMessage(f.judgmentText), Meta: json.RawMessage(`{"threadId":"` + string(codecThreadID) + `"}`)}
+		return
+	}
+	if f.secondJudgment != "" && !f.secondSent {
+		f.secondSent = true
+		f.tools <- frame.ToolCall{ID: 101, Name: "judge", Arguments: json.RawMessage(f.secondJudgment), Meta: json.RawMessage(`{"threadId":"` + string(codecThreadID) + `"}`)}
+		return
+	}
 	if f.usage {
 		f.emit(`{"method":"thread/tokenUsage/updated","params":{"threadId":"` + string(codecThreadID) + `","turnId":"` + string(codecTurnID) + `","tokenUsage":{"total":{"totalTokens":0,"inputTokens":0,"cachedInputTokens":0,"outputTokens":0,"reasoningOutputTokens":0},"last":{"totalTokens":150,"inputTokens":100,"cachedInputTokens":40,"outputTokens":50,"reasoningOutputTokens":10,"cacheWriteInputTokens":5}}}}`)
 	}
@@ -347,8 +370,8 @@ func TestSessionUsesHarnessCopySubpathAndPersistentNativeThread(t *testing.T) {
 				t.Fatal("rules absent")
 			}
 		}
-		if m.Method == "turn/start" && len(m.Params.OutputSchema) == 0 {
-			t.Fatal("result schema absent")
+		if m.Method == "turn/start" && len(m.Params.OutputSchema) != 0 {
+			t.Fatal("ritual final response schema retained")
 		}
 	}
 	if starts != 1 {
@@ -424,9 +447,9 @@ func TestSessionNativeFailuresCloseBeforeExchangeReturns(t *testing.T) {
 			rt := newRuntime()
 			switch kind {
 			case "malformed":
-				rt.finalText = "not JSON"
+				rt.judgmentText = "not JSON"
 			case "decision":
-				rt.finalText = `{"decision":"success","findings":[]}`
+				rt.judgmentText = `{"decision":"success","findings":[]}`
 			case "provider":
 				rt.terminalStatus = "failed"
 			case "secret":
@@ -484,7 +507,7 @@ func TestSessionInboxProjectionRefusalAndForeignCallRejection(t *testing.T) {
 				}
 				return
 			}
-			if err != nil || len(rt.replies) != 1 || strings.Contains(string(rt.replies[0].Result), "private-access") {
+			if err != nil || len(rt.replies) != 2 || strings.Contains(string(rt.replies[0].Result), "private-access") {
 				t.Fatal(err, rt.replies)
 			}
 		})
@@ -609,7 +632,8 @@ func TestActualNativeObservationBindsHarnessAndPreparedProfile(t *testing.T) {
 
 func TestNativeFinalAndTranscriptRedactLoginTokens(t *testing.T) {
 	rt := newRuntime()
-	rt.finalText = `{"decision":"submitted","findings":[{"manager":".","text":"private-access private-refresh"}]}`
+	rt.judgmentText = `{"decision":"submitted","findings":[{"manager":".","text":"private-access private-refresh"}]}`
+	rt.finalText = "Independent final prose private-access"
 	a := agentsFor(t, rt)
 	a.TranscriptRoot = t.TempDir()
 	session, err := a.Open(context.Background(), testSessionSpec(t))
@@ -630,5 +654,72 @@ func TestNativeFinalAndTranscriptRedactLoginTokens(t *testing.T) {
 	data, err := os.ReadFile(filepath.Join(a.TranscriptRoot, files[0].Name()))
 	if err != nil || bytes.Contains(data, []byte("private-access")) || bytes.Contains(data, []byte("private-refresh")) || !bytes.Contains(data, []byte("[REDACTED]")) {
 		t.Fatal("transcript secret or missing evidence", err)
+	}
+}
+
+func TestOrdinaryAnswerOnlyMessageNeedsNoRitualJudgment(t *testing.T) {
+	rt := newRuntime()
+	rt.autoJudge = false
+	rt.finalText = "I answered the pending question."
+	s := openSession(t, rt, testSessionSpec(t))
+	out, err := s.Exchange(context.Background(), run.Message{Task: "answer a late question"})
+	if err != nil || out.Decision != "" || len(out.Findings) != 0 {
+		t.Fatal(out, err)
+	}
+}
+func TestMalformedOrContradictoryJudgmentNeverHandsOffSuccess(t *testing.T) {
+	for _, raw := range []string{`{"decision":"submitted"}`, `{"decision":"submitted","findings":null}`, `{"decision":"submitted","findings":[{}]}`, `{"decision":"submitted","findings":[{"manager":".","text":null}]}`, `{"Decision":"submitted","findings":[]}`, `{"decision":"submitted","findings":[],"commit":"invented"}`} {
+		t.Run(raw, func(t *testing.T) {
+			rt := newRuntime()
+			rt.judgmentText = raw
+			s := openSession(t, rt, testSessionSpec(t))
+			out, err := s.Exchange(context.Background(), run.Message{Task: "work"})
+			if err == nil || out.Decision != "" || !rt.closed {
+				t.Fatal("malformed judgment accepted", out, err)
+			}
+		})
+	}
+	rt := newRuntime()
+	rt.secondJudgment = `{"decision":"reject","findings":[{"manager":".","text":"contradictory"}]}`
+	s := openSession(t, rt, testSessionSpec(t))
+	out, err := s.Exchange(context.Background(), run.Message{Task: "work"})
+	if err == nil || out.Decision != "" {
+		t.Fatal("contradictory semantic judgment accepted", out, err)
+	}
+}
+func TestMissingRequiredToolFieldsCauseNoCallbackOrDurableWrite(t *testing.T) {
+	calls := 0
+	tools := run.Tools{AppendNote: func(context.Context, string, string) (run.Note, error) { calls++; return run.Note{}, nil }, Delegate: func(context.Context, string, string, []run.Finding) error { calls++; return nil }}
+	for _, tc := range []struct{ name, raw string }{{"append_note", `{"text":"note"}`}, {"append_note", `{"Context":"context","text":"note"}`}, {"append_note", `{"context":null,"text":"note"}`}, {"delegate", `{"manager":"a","task":"work"}`}, {"delegate", `{"manager":"a","task":"work","findings":null}`}} {
+		if _, err := dispatch(context.Background(), tools, tc.name, json.RawMessage(tc.raw)); err == nil {
+			t.Fatal("invalid native input admitted", tc)
+		}
+		if calls != 0 {
+			t.Fatal("invalid tool caused a callback", calls)
+		}
+	}
+}
+
+func TestFatalNativeErrorDuringDrainOverridesReportedJudgment(t *testing.T) {
+	rt := newRuntime()
+	rt.quiescenceError = true
+	s := openSession(t, rt, testSessionSpec(t))
+	out, err := s.Exchange(context.Background(), run.Message{Task: "work"})
+	if err == nil || out.Decision != "" || !rt.closed || !strings.Contains(err.Error(), "drain failed") || strings.Contains(err.Error(), "private-access") {
+		t.Fatal("reported judgment bypassed native failure", out, err, rt.closed)
+	}
+	if s.judgment == nil || s.judgment.Decision != run.Submitted {
+		t.Fatal("regression never reached a reported judgment")
+	}
+}
+func TestFatalNativeHandshakeErrorRetainsPartialHandleAndCloses(t *testing.T) {
+	rt := newRuntime()
+	rt.handshakeError = true
+	session, err := agentsFor(t, rt).Open(context.Background(), testSessionSpec(t))
+	if session == nil || err == nil || !strings.Contains(err.Error(), "handshake failed") || strings.Contains(err.Error(), "private-access") {
+		t.Fatal(session, err)
+	}
+	if err = session.Close(context.Background()); err != nil || !rt.closed {
+		t.Fatal(err, rt.closed)
 	}
 }

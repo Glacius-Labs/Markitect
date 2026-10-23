@@ -8,6 +8,10 @@ artifacts:
     form: code
     realizes: [product/runtime/container-runtime, product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
     why: "Composes static native and container-check metadata preparation over fixed captured inputs, retaining diagnostics and missing instruction coordinates."
+  - path: "internal/runtimeconfig/prepare_test.go"
+    form: test
+    realizes: [product/runtime/container-runtime, product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
+    why: "Checks closed captured Runtime inputs, exact request bindings, immutable returned observations and refusal of incomplete, mixed or mismatched static image evidence without execution."
   - path: "internal/runtimeconfig/runtime_profiles.go"
     form: code
     realizes: [product/runtime/container-runtime, product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
