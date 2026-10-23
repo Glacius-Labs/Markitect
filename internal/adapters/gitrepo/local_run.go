@@ -24,7 +24,10 @@ import (
 
 // LocalGit implements Run's Git responsibility with real local repositories.
 // It is useful for controlled execution; it claims no container isolation.
-type LocalGit struct{ StateRoot, TempRoot string }
+type LocalGit struct {
+	StateRoot, TempRoot string
+	MaxInputBytes       int64
+}
 type localService struct {
 	adapter    *LocalGit
 	request    run.Request
@@ -225,9 +228,16 @@ func (g *LocalGit) storeBundle(ctx context.Context, id string, p project.Prepare
 	if err = write(ctx, key, filepath.Join(pending, "candidate.bundle")); err != nil {
 		return ref, err
 	}
+	inputLimit, err := g.inputLimit()
+	if err != nil {
+		return ref, err
+	}
 	inputsData, err := json.Marshal(retainedFrom(p))
 	if err != nil {
 		return ref, err
+	}
+	if int64(len(inputsData)) > inputLimit {
+		return ref, ErrLimit
 	}
 	if err = os.WriteFile(filepath.Join(pending, "inputs.json"), inputsData, 0600); err != nil {
 		return ref, err
@@ -259,6 +269,9 @@ func (g *LocalGit) storeBundle(ctx context.Context, id string, p project.Prepare
 	}
 	defer os.RemoveAll(probe)
 	if err = verifyBundle(ctx, ref, pending, probe); err != nil {
+		return ref, err
+	}
+	if _, err = g.retainedAt(ctx, pending, p); err != nil {
 		return ref, err
 	}
 	if err = ctx.Err(); err != nil {
@@ -580,7 +593,37 @@ func inspectCandidate(ctx context.Context, p project.Prepared, directory string,
 	if len(attempts) == 0 {
 		return project.PreviewPreparationAttempt{}, err
 	}
+	if onlyInvalidManifest(err) {
+		return attempts[len(attempts)-1], nil
+	}
 	return attempts[len(attempts)-1], err
+}
+
+// A known-invalid language manifest is retained in the attempt; independent
+// acquisition/cleanup errors still travel as technical port errors.
+func onlyInvalidManifest(err error) bool {
+	if err == nil {
+		return false
+	}
+	if direct, ok := err.(*project.ManifestPreflightError); ok {
+		return direct.Inspection().Status == model.Failed
+	}
+	if joined, ok := err.(interface{ Unwrap() []error }); ok {
+		parts := joined.Unwrap()
+		if len(parts) == 0 {
+			return false
+		}
+		for _, part := range parts {
+			if !onlyInvalidManifest(part) {
+				return false
+			}
+		}
+		return true
+	}
+	if wrapped, ok := err.(interface{ Unwrap() error }); ok {
+		return onlyInvalidManifest(wrapped.Unwrap())
+	}
+	return false
 }
 func (c *localCopy) Integrate(ctx context.Context, source run.Copy, commit run.Commit) (run.Commit, error) {
 	child, ok := source.(*localCopy)

@@ -40,7 +40,7 @@ func TestConcurrentLateFindingCannotBeOverwrittenByCandidateCompletion(t *testin
 		parent.mu.Unlock()
 		done.Wait()
 		x.cancel()
-		if parent.handoff.Decision != ModelBlocker || len(parent.handoff.Findings) != 2 || x.lateDecision != ModelBlocker {
+		if parent.handoff.Decision != ModelBlocker || len(parent.handoff.Findings) != 2 {
 			t.Fatal("candidate completion lost concurrent required finding", parent.handoff)
 		}
 	}
@@ -112,7 +112,7 @@ func TestLateBlockerInvalidatesPreviouslyAcceptedHierarchy(t *testing.T) {
 	if err := x.observeLate(b, Response{Decision: ModelBlocker, Findings: []Finding{{Text: "required model condition contradicts itself"}}}); err != nil {
 		t.Fatal(err)
 	}
-	if x.lateDecision != ModelBlocker || a.handoff.Decision != ModelBlocker || b.handoff.Review.Decision != ModelBlocker || a.handoff.Findings[0].Manager != "a" {
+	if a.handoff.Decision != ModelBlocker || b.handoff.Review.Decision != ModelBlocker || a.handoff.Findings[0].Manager != "a" {
 		t.Fatal("late blocker was discarded")
 	}
 	if concreteFindings([]Finding{{Text: " \n"}}) {

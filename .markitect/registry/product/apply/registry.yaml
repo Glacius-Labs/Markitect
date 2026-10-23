@@ -256,3 +256,7 @@ artifacts:
     form: test
     realizes: [product/apply/read-only-preparation]
     why: "Supplies structural Project preparation, fixed input validation and source-bound regression coverage without runtime configuration resolution."
+  - path: "internal/project/check_directories.go"
+    form: code
+    realizes: [product/apply/read-only-preparation]
+    why: "Projects complete fixed canonical model directory inventory for physical checks without changing file-only snapshot semantics."

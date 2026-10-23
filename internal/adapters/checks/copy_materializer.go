@@ -17,7 +17,7 @@ type copyMaterializer struct {
 }
 
 func (m *copyMaterializer) Materialize(ctx context.Context, spec CopySpec) (CopyObservation, error) {
-	copy, err := m.source.Materialize(ctx, spec.Tree)
+	copy, err := m.source.Materialize(ctx, spec.Tree, spec.Directories)
 	o := CopyObservation{ID: spec.ID}
 	if copy != nil {
 		m.mu.Lock()
@@ -27,6 +27,7 @@ func (m *copyMaterializer) Materialize(ctx context.Context, spec CopySpec) (Copy
 		o.Volume = location.Volume
 		o.Subpath = location.Subpath
 		o.Tree = copy.Tree()
+		o.Directories = copy.Directories()
 		if !location.Valid() || location.Directory != "" {
 			return o, fmt.Errorf("container checks require a verified Linux volume copy")
 		}
@@ -45,6 +46,7 @@ func (m *copyMaterializer) Close(ctx context.Context, id CopyID) (CopyObservatio
 	o.Volume = l.Volume
 	o.Subpath = l.Subpath
 	o.Tree = copy.Tree()
+	o.Directories = copy.Directories()
 	err := copy.Close(ctx)
 	o.Closed = err == nil
 	if err != nil {

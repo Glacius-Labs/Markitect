@@ -266,11 +266,12 @@ func (l CopyLocation) Valid() bool {
 type DisposableCopy interface {
 	Location() CopyLocation
 	Tree() snapshot.TreeID
+	Directories() []snapshot.Path
 	Close(context.Context) error
 }
 
 type Copy interface {
-	Materialize(context.Context, snapshot.Tree) (DisposableCopy, error)
+	Materialize(context.Context, snapshot.Tree, []snapshot.Path) (DisposableCopy, error)
 	Location() CopyLocation
 	Update(context.Context, Copy, Commit) error
 	Snapshot(context.Context) (Commit, error)

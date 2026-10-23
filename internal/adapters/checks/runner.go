@@ -95,7 +95,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	identities := []CopyID{id}
 	limited, cancel := context.WithTimeout(ctx, req.Timeout)
 	defer cancel()
-	copy, materializeErr := r.workspaces.Materialize(limited, CopySpec{ID: id, Tree: req.Tree})
+	copy, materializeErr := r.workspaces.Materialize(limited, CopySpec{ID: id, Tree: req.Tree, Directories: req.Directories})
 	// Even a failed materialization may have created a volume. Close its exact
 	// private identity using a bounded context that survives caller cancellation.
 	defer func() {
@@ -139,7 +139,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 			receipt.Reason = err.Error()
 		}
 	}()
-	if materializeErr != nil || copy.ID != id || copy.Closed || copy.Uncertain || !copy.usable() || copy.Tree != req.Tree.Digest() {
+	if materializeErr != nil || copy.ID != id || copy.Closed || copy.Uncertain || !copy.usable() || copy.Tree != req.Tree.Digest() || !directoryPathsEqual(copy.Directories, req.Directories) {
 		err = fmt.Errorf("disposable check tree was not confirmed: %s", copy.Reason)
 		if materializeErr != nil {
 			err = fmt.Errorf("materialize disposable check tree: %w", materializeErr)
@@ -149,6 +149,9 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		return receipt, err
 	}
 	receipt.Tree = copy.Tree
+	for _, d := range copy.Directories {
+		receipt.Directories = append(receipt.Directories, d.String())
+	}
 	// The runtime image keeps tool caches in /home/agent. Give the check an
 	// independently verified empty disposable home without rewriting fixed Env.
 	homeID := CopyID(name + "-home")
@@ -202,4 +205,16 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		receipt.Reason = commandErr.Error()
 	}
 	return receipt, commandErr
+}
+
+func directoryPathsEqual(a, b []snapshot.Path) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }

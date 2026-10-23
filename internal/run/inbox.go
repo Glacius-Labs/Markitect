@@ -204,7 +204,9 @@ func (x *execution) observeLate(s *managerState, r Response) error {
 	}
 	for current := s; current != nil; current = x.states[current.manager.Parent] {
 		current.mu.Lock()
-		current.lateDecision = requiredDecision(current.lateDecision, decision)
+		if current == s || decision == ModelBlocker {
+			current.lateDecision = requiredDecision(current.lateDecision, decision)
+		}
 		if current.handoff.Decision != ModelBlocker {
 			current.handoff.Decision = decision
 		}
@@ -218,10 +220,6 @@ func (x *execution) observeLate(s *managerState, r Response) error {
 			break
 		}
 	}
-	x.mu.Lock()
-	if x.lateDecision != ModelBlocker {
-		x.lateDecision = decision
-	}
-	x.mu.Unlock()
+
 	return nil
 }

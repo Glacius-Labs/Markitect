@@ -36,6 +36,7 @@ type CheckLimits struct {
 type CheckRequest struct {
 	ID             CheckID
 	Tree           snapshot.Tree
+	Directories    []snapshot.Path
 	ImageID        string
 	Executable     string
 	Args           []string
@@ -53,6 +54,16 @@ func (r CheckRequest) Valid() bool {
 	}
 	if r.Limits.MilliCPUs <= 0 || r.Limits.MemoryBytes <= 0 || r.Limits.Processes <= 0 || r.Timeout <= 0 || r.MaxOutputBytes <= 0 || r.MaxOutputBytes > maxRecordBytes {
 		return false
+	}
+	dirs := map[string]bool{}
+	for _, d := range r.Directories {
+		if d.String() == "" || dirs[d.String()] {
+			return false
+		}
+		if _, exists := r.Tree.Lookup(d); exists {
+			return false
+		}
+		dirs[d.String()] = true
 	}
 	keys := map[string]bool{}
 	for _, entry := range r.Env {
@@ -72,6 +83,7 @@ type CheckReceipt struct {
 	ID           CheckID
 	ImageID      string
 	Tree         snapshot.TreeID
+	Directories  []string
 	Started      bool
 	Exited       bool
 	ExitCode     int
@@ -88,5 +100,17 @@ type CheckReceipt struct {
 // the same check, image and tree.
 func (r CheckReceipt) Passed(req CheckRequest) bool {
 	return r.ID == req.ID && r.ImageID == req.ImageID && r.Tree == req.Tree.Digest() &&
-		r.Started && r.Exited && r.ExitCode == 0 && !r.TimedOut && !r.Uncertain && r.CopiesClosed
+		r.Started && r.Exited && r.ExitCode == 0 && !r.TimedOut && !r.Uncertain && r.CopiesClosed && sameDirectories(r.Directories, req.Directories)
+}
+
+func sameDirectories(observed []string, required []snapshot.Path) bool {
+	if len(observed) != len(required) {
+		return false
+	}
+	for i, p := range required {
+		if observed[i] != p.String() {
+			return false
+		}
+	}
+	return true
 }

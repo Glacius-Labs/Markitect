@@ -152,3 +152,15 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
     why: "Preserves fixed Git candidates, retained external input bytes and complete inventories with isolated Run storage and bounded physical copy lifecycles."
+  - path: "internal/adapters/gitrepo/check_consumer_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Verifies actual file copies, empty Package retention, provided session/check persistence, serialized input boundaries and late correction through exact Git integration with controlled command transport."
+  - path: "internal/adapters/gitrepo/retained_limit_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Verifies actual file copies, empty Package retention, provided session/check persistence, serialized input boundaries and late correction through exact Git integration with controlled command transport."
+  - path: "internal/adapters/gitrepo/run_late_correction_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Verifies actual file copies, empty Package retention, provided session/check persistence, serialized input boundaries and late correction through exact Git integration with controlled command transport."
