@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
-	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/githooks"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/pipelines"
