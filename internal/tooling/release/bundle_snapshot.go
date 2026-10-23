@@ -30,7 +30,7 @@ func snapshotModuleFiles(snapshot *source.Input) (map[string][]byte, error) {
 		if err := safeArchivePath(relative); err != nil {
 			return nil, fmt.Errorf("unsafe source snapshot path %q: %w", name, err)
 		}
-		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE"
+		include := relative == "go.mod" || relative == "go.sum" || relative == "README.md" || relative == "LICENSE" || commandConfigurationExample(relative)
 		if sourceTreePath(relative) {
 			include = includeSourceTreeFile(relative)
 		}
@@ -66,7 +66,7 @@ func collectModuleSnapshot(files map[string][]byte) ([]sourceFile, error) {
 			continue
 		}
 		ext := strings.ToLower(path.Ext(name))
-		include := name == "README.md" || name == "LICENSE"
+		include := name == "README.md" || name == "LICENSE" || commandConfigurationExample(name)
 		if sourceTreePath(name) {
 			include = includeSourceTreeFile(name)
 		}

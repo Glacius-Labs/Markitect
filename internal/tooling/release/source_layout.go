@@ -8,6 +8,20 @@ import (
 	"strings"
 )
 
+var commandConfigurationExamples = []string{
+	"examples/runtime-profile.example.yaml",
+	"examples/run.example.json",
+}
+
+func commandConfigurationExample(name string) bool {
+	for _, path := range commandConfigurationExamples {
+		if name == path {
+			return true
+		}
+	}
+	return false
+}
+
 // Source archives contain one root module with these explicit responsibility
 // roots. Parent containers grant no privilege to unknown sibling packages.
 var sourceRoots = []string{

@@ -33,5 +33,5 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(images), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
 	execution := newExecution(preparation, repository, agents, checker)
-	return cli.New(preparation, agents, checker, repository, views, execution.Execute).WithSetup(newSetup(preparation, containerSetupEngine).Setup).Run(ctx, args, stdout, stderr)
+	return cli.New(preparation, agents, checker, repository, views, execution.Execute).Run(ctx, args, stdout, stderr)
 }

@@ -1,0 +1,29 @@
+{
+  "formatVersion": 2,
+  "repositoryIdentity": "markitect-example",
+  "productBuild": "PRODUCT_BUILD",
+  "ownerRequest": "Realize the committed model.",
+  "stateDirectory": "STATE_DIRECTORY",
+  "engineExecutable": "ENGINE_EXECUTABLE",
+  "maxMessages": 40,
+  "messageTimeoutSeconds": 120,
+  "workspaceHelper": {
+    "name": "markitect-example-git",
+    "image": "IMAGE_ID",
+    "labels": {"markitect.store": "markitect-example"},
+    "user": "1000:1000",
+    "cpus": 1,
+    "memoryBytes": 1073741824,
+    "pids": 64,
+    "tmpBytes": 268435456,
+    "network": ""
+  },
+  "harvest": {"maxEntries": 50000, "maxBytes": 268435456},
+  "credentials": {
+    "example-account": {
+      "provider": "codex-app-server",
+      "mode": "dedicated-runtime-login",
+      "path": "ACCOUNT_LOGIN_PATH"
+    }
+  }
+}

@@ -36,6 +36,21 @@ func collect(moduleDir string) ([]sourceFile, error) {
 			return nil, err
 		}
 	}
+	// The Bootstrap configuration test consumes the same two examples users
+	// copy. Include these exact data files without admitting another Go root.
+	examplesDir := filepath.Join(moduleDir, "examples")
+	if _, err := os.Lstat(examplesDir); err == nil {
+		if err := requireRealDirectory(examplesDir); err != nil {
+			return nil, fmt.Errorf("configuration examples directory: %w", err)
+		}
+		for _, name := range commandConfigurationExamples {
+			if err := appendRegularFile(moduleDir, name, &files, false); err != nil {
+				return nil, err
+			}
+		}
+	} else if !os.IsNotExist(err) {
+		return nil, fmt.Errorf("inspect configuration examples: %w", err)
+	}
 	schemaDir := filepath.Join(moduleDir, "schema")
 	if info, err := os.Lstat(schemaDir); err == nil {
 		if info.Mode()&os.ModeSymlink != 0 || !info.IsDir() {
@@ -163,7 +178,7 @@ func appendRegularFile(moduleDir, relative string, files *[]sourceFile, required
 func normalizeTextSource(name string, data []byte) ([]byte, error) {
 	base := strings.ToLower(filepath.Base(name))
 	ext := strings.ToLower(filepath.Ext(base))
-	isText := base == "go.mod" || base == "go.sum" || base == "license" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml"
+	isText := base == "go.mod" || base == "go.sum" || base == "license" || ext == ".go" || ext == ".md" || ext == ".yaml" || ext == ".yml" || commandConfigurationExample(name)
 	if !isText {
 		return data, nil
 	}

@@ -1,6 +1,6 @@
 # Project operations
 
-The current commands are `check`, `context`, `docs`, `apply`, `setup`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
+The current commands are `check`, `context`, `docs`, `apply`, `version`, `licenses` and `help`. Build from `cmd/markitect`; [Project workflow](project-workflow.md) owns the sequence and [CONTRIBUTING](../CONTRIBUTING.md) owns source gates.
 
 The later [command design](design/canonical-model/commands.md) records the accepted Verify, Extract, Optimize and other operation semantics. It adds none of them to the current executable surface. Extract, Cockpit and interactive authoring are retired from V1.
 
@@ -14,11 +14,11 @@ Metadata and settings are unrequested unless `--metadata` is selected. `--runtim
 
 `context <package> --repo PATH` selects one local Package, including intermediate or empty Packages from the Model check inventory; `.` selects the ordinary root. It reports actual Definition content, resolved values, provenance and inclusion reasons. Imported Packages are not local Managers. It creates no task prompt, mandate, run, budget or evidence record.
 
-## CLI, setup and current roots
+## CLI and current roots
 
 The default manifest is `.markitect/model.yaml`. Repeated `--dependency` flags select required manifests. Repository-relative coordinates remain relative to the selected repository; absolute manifests establish explicit acquisition boundaries. `--revision` resolves a ref once through the repository port and preserves its full commit. Fixed acquisition never falls back to current external Runtime profile or dependency bytes.
 
-The CLI has no MCP server and no automatic setup. The old generation remains in [Git](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). [Provider adapters](provider-adapters.md) describes the metadata and runtime boundary.
+Prepare [explicit Runtime and invocation files](project-workflow.md#explicit-runtime-and-invocation-files) for Apply. Setup, Extract and Cockpit are retired. The CLI has no MCP server. The old generation remains in [Git](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). [Provider adapters](provider-adapters.md) describes the metadata and runtime boundary.
 
 ## Apply
 

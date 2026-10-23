@@ -14,7 +14,7 @@ import (
 type resolver struct{ calls int }
 
 func TestRetiredOperationsAreAbsentFromDispatchAndHelp(t *testing.T) {
-	for _, verb := range []string{"cockpit", "extract"} {
+	for _, verb := range []string{"cockpit", "extract", "setup"} {
 		t.Run(verb, func(t *testing.T) {
 			var out, stderr bytes.Buffer
 			c := New(nil, nil, nil, nil, nil, nil)
