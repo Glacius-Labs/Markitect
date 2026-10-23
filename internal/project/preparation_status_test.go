@@ -20,7 +20,7 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 				selection, actual := fileCheckInputs(t)
 				preparationInstructions(t, &actual)
 				validExecution := string(actual.Execution[0].File.Bytes())
-				rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(validExecution, "direct", "unknown", 1))
+				rewriteFileCheckSource(t, &actual, &actual.Execution[0], strings.Replace(validExecution, "markitect.execution/v2", "unknown", 1))
 				calls := 0
 				observe := func(selected project.InputSelection) project.RawInputs {
 					calls++
@@ -102,10 +102,10 @@ func TestPreparationStillMissingClosurePreservesOnlyCurrentFailure(t *testing.T)
 				if !errors.Is(err, project.ErrPreparationClosure) || calls != 2 || status != want || firstStatus != model.Failed || secondStatus != wantExecution {
 					t.Fatalf("current second failure precedence: status=%s want=%s err=%v calls=%d first=%s second=%s", status, want, err, calls, firstStatus, secondStatus)
 				}
-				if firstExecution.Strategy.Value != "unknown" || len(firstDiagnostics) == 0 || len(secondDiagnostics) == 0 {
+				if firstExecution.APIVersion.Value != "unknown" || len(firstDiagnostics) == 0 || len(secondDiagnostics) == 0 {
 					t.Fatal("original attempts or reports replaced")
 				}
-				if currentFailure && secondExecution.Strategy.Value != "unknown" || !currentFailure && secondExecution.Strategy.Value != "direct" {
+				if currentFailure && secondExecution.APIVersion.Value != "unknown" || !currentFailure && secondExecution.APIVersion.Value != "markitect.execution/v2" {
 					t.Fatal("second current execution replaced by an old observation")
 				}
 				uncaptured := false

@@ -6,9 +6,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 )
 
@@ -32,20 +32,18 @@ func TestM1GitFileCheckRetainsAllAuthoredInstructionOccurrences(t *testing.T) {
 	checked := parent.CheckFiles()
 	inputs := checked.RegistryPreparation().Model().Inputs()
 	document, available := checked.RegistryPreparation().Model().DecodeExecution().Document()
-	if checked.Status() != model.Passed || !available || len(inputs.Raw.Instructions) != 3 || document.Packages == nil || len(document.Packages.Value) != 1 || document.Packages.Value[0].Package != "lending" {
+	if checked.Status() != model.Passed || !available || len(inputs.Raw.Instructions) != 3 || document.Instructions == nil || len(document.Instructions.Value) != 2 || document.Instructions.Value[1].Package.Value != "lending" {
 		t.Fatalf("complete real instruction acquisition failed: %+v", checked.Diagnostics())
 	}
 	for _, list := range []struct {
-		actual *organization.Setting[[]string]
+		actual organization.Setting[[]string]
 		field  string
 		want   []string
 	}{
-		{document.Defaults.Execute.Instructions, "/instructions/execute", []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md"}},
-		{document.Defaults.Verify.Instructions, "/instructions/verify", []string{"ops/reviewer.md"}},
-		{document.Packages.Value[0].Execute.Instructions, "/packages/lending/instructions/execute", []string{"ops/lending.md"}},
-		{document.Packages.Value[0].Verify.Instructions, "/packages/lending/instructions/verify", []string{"ops/manager.md", "ops/reviewer.md"}},
+		{document.Instructions.Value[0].Files, "/instructions/.", []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md", "ops/reviewer.md"}},
+		{document.Instructions.Value[1].Files, "/instructions/lending", []string{"ops/lending.md", "ops/manager.md", "ops/reviewer.md"}},
 	} {
-		if list.actual == nil || !reflect.DeepEqual(list.actual.Value, list.want) || list.actual.Source.Field != list.field || list.actual.Source.File != ".markitect/execution.yaml" || list.actual.Source.ContentID != inputs.Raw.Execution[0].File.ContentID() {
+		if !reflect.DeepEqual(list.actual.Value, list.want) || list.actual.Source.Field != list.field || list.actual.Source.File != ".markitect/execution.yaml" || list.actual.Source.ContentID != inputs.Raw.Execution[0].File.ContentID() {
 			t.Fatalf("authored instruction order, repetition or source changed at %s: %+v", list.field, list.actual)
 		}
 	}

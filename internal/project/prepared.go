@@ -1,11 +1,14 @@
 package project
 
 import (
+	"cmp"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"reflect"
+	"slices"
 	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -14,6 +17,8 @@ import (
 )
 
 // CandidateRef names self-contained stored Git objects. It owns no live resource.
+var ErrCandidateInvalid = errors.New("candidate violates fixed project intent or accounting")
+
 type CandidateRef struct {
 	Project string `json:"project"`
 	Key     string `json:"key"`
@@ -101,11 +106,45 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 	if !p.Valid() {
 		return fmt.Errorf("missing prepared project")
 	}
+	if a.Error() != nil {
+		return fmt.Errorf("candidate acquisition: %w", a.Error())
+	}
 	before, after := p.attempt.Model().Inputs().Raw, a.Model().Inputs().Raw
 	checked := a.Model().Checked()
+	if checked.Status == model.NotCompleted {
+		return fmt.Errorf("candidate Model observation incomplete")
+	}
 	t, err := organization.BuildTopology(checked)
 	if err != nil || !reflect.DeepEqual(p.topology.Managers(), t.Managers()) || p.topology.ModelID() != t.ModelID() || p.topology.ModelDigest() != t.ModelDigest() {
-		return fmt.Errorf("candidate changes checked model or complete Package inventory")
+		return fmt.Errorf("%w: changes checked model or complete Package inventory", ErrCandidateInvalid)
+	}
+	oldModels := append([]ModelSource{before.Local}, before.Dependencies...)
+	newModels := append([]ModelSource{after.Local}, after.Dependencies...)
+	if len(oldModels) != len(newModels) {
+		return fmt.Errorf("%w: dependency inventory changed", ErrCandidateInvalid)
+	}
+	for i, old := range oldModels {
+		next := newModels[i]
+		if old.Source.ManifestPath != next.Source.ManifestPath || old.Root != next.Root || old.Files.Digest() != next.Files.Digest() || !sameSourceEntries(old.Source.Entries, next.Source.Entries) {
+			return fmt.Errorf("%w: complete model source inventory changed", ErrCandidateInvalid)
+		}
+	}
+	// External selected instruction bytes cannot drift outside the repository
+	// Census while reusing this fixed binding.
+	for _, old := range before.Instructions {
+		if old.RepositoryPath.String() != "" {
+			continue
+		}
+		found := false
+		for _, next := range after.Instructions {
+			if next.Location == old.Location && next.RepositoryPath == old.RepositoryPath && next.File.Mode() == old.File.Mode() && next.File.ContentID() == old.File.ContentID() {
+				found = true
+				break
+			}
+		}
+		if !found {
+			return fmt.Errorf("%w: external instruction input changed", ErrCandidateInvalid)
+		}
 	}
 	protections, _ := p.attempt.Files().Protections()
 	for _, change := range snapshot.Compare(before.Census, after.Census) {
@@ -115,12 +154,26 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 		}
 		for _, protection := range protections {
 			if protection.Covers(path) {
-				return fmt.Errorf("candidate changes protected input %s", path)
+				return fmt.Errorf("%w: changes protected input %s", ErrCandidateInvalid, path)
 			}
 		}
 	}
-	if a.Error() != nil || structuralPreparationStatus(checked.Status, a.Registry().Status(), a.Files().Status(), a.Execution().Status(), a.Contexts().Status()) != model.Passed {
-		return fmt.Errorf("candidate structural checks failed")
+	status := structuralPreparationStatus(checked.Status, a.Registry().Status(), a.Files().Status(), a.Execution().Status(), a.Contexts().Status())
+	if status == model.Failed {
+		return fmt.Errorf("%w: structural checks failed", ErrCandidateInvalid)
+	}
+	if status != model.Passed {
+		return fmt.Errorf("candidate structural observation incomplete")
 	}
 	return nil
+}
+func sameSourceEntries(a, b []model.Entry) bool {
+	a = slices.Clone(a)
+	b = slices.Clone(b)
+	less := func(x, y model.Entry) int {
+		return cmp.Or(strings.Compare(x.Path, y.Path), strings.Compare(string(x.Kind), string(y.Kind)))
+	}
+	slices.SortFunc(a, less)
+	slices.SortFunc(b, less)
+	return reflect.DeepEqual(a, b)
 }

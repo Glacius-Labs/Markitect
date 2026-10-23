@@ -10,10 +10,7 @@ import (
 )
 
 func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
-	content := strings.ReplaceAll(documentedExecution(t), "\r\n", "\n")
-	content = strings.Replace(content, "profiles:\n  execute", "instructions: {execute: [one.md], verify: [two.md]}\nprofiles:\n  execute", 1)
-	content = strings.Replace(content, "    profiles: {verify: library-agent}", "    profiles: {execute: a, verify: b}\n    instructions: {execute: [three.md], verify: [four.md]}", 1)
-	content = strings.Replace(content, "checks:\n", libraryOwnershipYAML+libraryTeamYAML+"scope: [{kind: software/Rule, property: lending/maxOpenLoans}]\nchecks:\n", 1)
+	content := strings.Replace(documentedExecution(t), "checks:", "instructions: {'.': [one.md,two.md,one.md], lending: [three.md]}\n"+libraryOwnershipYAML+"scope: [{kind: software/Rule, property: lending/maxOpenLoans}]\nchecks:", 1)
 	result := executionResult(t, content)
 	original, ok := result.Document()
 	if !ok {
@@ -22,18 +19,9 @@ func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 	// This stage preserves reference selections. Effective scope semantics belong
 	// to organization context selection, not to this decoding observation.
 	changed, _ := result.Document()
-	changed.Defaults.Execute.Profile.Value = "changed"
-	changed.Defaults.Verify.Profile.Value = "changed"
-	changed.Defaults.Execute.Instructions.Value[0] = "changed"
-	changed.Defaults.Verify.Instructions.Value[0] = "changed"
-	p := &changed.Packages.Value[0]
-	p.Execute.Profile.Value, p.Verify.Profile.Value = "changed", "changed"
-	p.Execute.Instructions.Value[0], p.Verify.Instructions.Value[0] = "changed", "changed"
+	changed.Instructions.Value[0].Files.Value[0] = "changed"
+	changed.Instructions.Value[1].Package.Value = "changed"
 	changed.Ownership.Value[0].Path.Value = "changed/"
-	changed.Ownership.Value[4].Owner.Value = "changed"
-	changed.Team.Helpers[0].Instructions.Value[0] = "changed"
-	changed.Team.Helpers[0].Profile.Value = "changed"
-	changed.Team.Helpers[1].Writes.Value = false
 	changed.Scope.Value[0].Value.Kind = model.Identity{Package: "other", ID: "other"}
 	changed.Checks.Value[0].Args.Value[0] = "changed"
 	changed.Checks.Value[0].RequiredBy.Value = model.Identity{Package: "other", ID: "other"}
@@ -54,7 +42,7 @@ func TestExecutionAccessorsCopyNestedAuthoredValues(t *testing.T) {
 }
 
 func TestExecutionPartialDiagnosticsRemainIndependent(t *testing.T) {
-	content := strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: wrong", 1)
+	content := strings.Replace(documentedExecution(t), "timeout: 2m", "timeout: wrong", 1)
 	result := executionResult(t, content)
 	before := result.Diagnostics()
 	changed := result.Diagnostics()
@@ -67,7 +55,7 @@ func TestExecutionPartialDiagnosticsRemainIndependent(t *testing.T) {
 	}
 	partial := result.Partial()
 	partial.Checks.Value[0].Args.Value[0] = "changed"
-	if result.Partial().Checks.Value[0].Args.Value[0] != "test" || result.Partial().Budget.Passes.Value != 12 {
+	if result.Partial().Checks.Value[0].Args.Value[0] != "test" {
 		t.Fatal("partial known facts mutated or discarded")
 	}
 	var empty project.CapturedExecutionDecoding

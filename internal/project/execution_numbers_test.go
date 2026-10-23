@@ -8,44 +8,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 )
 
-func TestExecutionIntegerRepresentationLimitIsNotALanguageMaximum(t *testing.T) {
-	for _, literal := range []string{"9223372036854775808", "184467440737095516160", "999999999999999999999999999999999999999999999999999"} {
-		t.Run(literal, func(t *testing.T) {
-			content := strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: "+literal, 1)
-			selection, raw := executionInputs(t, content)
-			result := registryModel(t, selection, raw).DecodeExecution()
-			if result.Status() != model.NotCompleted || !executionDiagnostic(result.Diagnostics(), "execution.integer_range") {
-				t.Fatalf("representation limit misclassified: %s %+v", result.Status(), result.Diagnostics())
-			}
-			if _, ok := result.Document(); ok || string(result.Model().Inputs().Raw.Execution[0].File.Bytes()) != content || result.Partial().Budget.AgentTurns.Source.File != "" {
-				t.Fatal("unrepresentable integer became usable or original source lost")
-			}
-			for _, diagnostic := range result.Diagnostics() {
-				if diagnostic.Code == "execution.integer_range" && (diagnostic.Source.Field != "/budget/agentTurns" || diagnostic.Source.ContentID != raw.Execution[0].File.ContentID() || diagnostic.Position == nil) {
-					t.Fatal("representation diagnostic lost source")
-				}
-			}
-		})
-	}
-}
-
-func TestExecutionRejectsNonpositiveAndNonintegerCaps(t *testing.T) {
-	for _, literal := range []string{"0", "-1", "-184467440737095516160", "-0xffffffffffffffffffffffffffffffff", "1.0", ".inf", ".nan", `"5"`, "true", "!!int nope", "!!int 1.5"} {
-		t.Run(literal, func(t *testing.T) {
-			selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: "+literal, 1))
-			result := registryModel(t, selection, raw).DecodeExecution()
-			if result.Status() != model.Failed {
-				t.Fatalf("invalid integer accepted or treated as tool limit: %s %+v", result.Status(), result.Diagnostics())
-			}
-		})
-	}
-	selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "passes: 12", "passes: 0", 1))
-	result := registryModel(t, selection, raw).DecodeExecution()
-	if result.Status() != model.Failed || !executionDiagnostic(result.Diagnostics(), "execution.positive") {
-		t.Fatal("zero passes invented an off switch")
-	}
-}
-
 func TestExecutionDurationsAreExplicitPositiveStrings(t *testing.T) {
 	for _, tc := range []struct {
 		literal string
@@ -67,9 +29,9 @@ func TestExecutionDurationsAreExplicitPositiveStrings(t *testing.T) {
 		{"1.s", model.Passed, time.Second},
 	} {
 		t.Run(tc.literal, func(t *testing.T) {
-			selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "executionTime: 25m", "executionTime: "+tc.literal, 1))
+			selection, raw := executionInputs(t, strings.Replace(documentedExecution(t), "timeout: 2m", "timeout: "+tc.literal, 1))
 			result := registryModel(t, selection, raw).DecodeExecution()
-			if result.Status() != tc.status || result.Partial().Budget.ExecutionTime.Value != tc.want {
+			if result.Status() != tc.status || result.Partial().Checks.Value[0].Timeout.Value != tc.want {
 				t.Fatalf("duration status/value changed: %s %+v", result.Status(), result.Diagnostics())
 			}
 			if tc.status == model.NotCompleted && !executionDiagnostic(result.Diagnostics(), "execution.duration_range") {

@@ -8,9 +8,9 @@ import (
 	"sync"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -62,11 +62,11 @@ func NewMetadataPreparer(factory ImageReaderFactory) *MetadataPreparer {
 	return &MetadataPreparer{factory: factory}
 }
 
-var containerContract = apply.ProfileContract{Name: "markitect.container-check", Version: 1}
+var containerContract = runtimeconfig.ProfileContract{Name: "markitect.container-check", Version: 1}
 
 type containerPreparation struct {
-	input apply.ProfileInput
-	out   apply.ProfileObservation
+	input runtimeconfig.ProfileInput
+	out   runtimeconfig.ProfileObservation
 }
 
 func (p *containerPreparation) issue(status model.Status, code, field, message string) {
@@ -75,18 +75,18 @@ func (p *containerPreparation) issue(status model.Status, code, field, message s
 	}
 	doc := p.input.Document()
 	locator, _ := json.Marshal([2]string{doc.Location.Boundary, doc.Location.Path.String()})
-	p.out.Diagnostics = append(p.out.Diagnostics, apply.RuntimeProfileDiagnostic{
+	p.out.Diagnostics = append(p.out.Diagnostics, runtimeconfig.RuntimeProfileDiagnostic{
 		Code:    "container_check." + code,
 		Source:  organization.SettingSource{File: "source:" + string(locator), ContentID: doc.File.ContentID(), Field: p.input.Field() + field},
 		Message: message,
 	})
 }
 
-func (m MetadataPreparer) prepareContainer(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
-	p := containerPreparation{input: input, out: apply.ProfileObservation{
+func (m MetadataPreparer) prepareContainer(ctx context.Context, input runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
+	p := containerPreparation{input: input, out: runtimeconfig.ProfileObservation{
 		InputBinding: input.Binding(), Status: model.Passed, Contract: containerContract,
 	}}
-	incomplete := func(err error) (apply.ProfileObservation, error) {
+	incomplete := func(err error) (runtimeconfig.ProfileObservation, error) {
 		p.issue(model.NotCompleted, "acquisition", "/executable", err.Error())
 		return p.out, err
 	}
@@ -96,7 +96,7 @@ func (m MetadataPreparer) prepareContainer(ctx context.Context, input apply.Prof
 	if err := ctx.Err(); err != nil {
 		return incomplete(err)
 	}
-	if input.Namespace() != "checkProfiles" || input.Section() != "container" || input.Binding() == (apply.ProfileBinding{}) {
+	if input.Namespace() != "checkProfiles" || input.Section() != "container" || input.Binding() == (runtimeconfig.ProfileBinding{}) {
 		p.issue(model.Failed, "input", "", "An exact bound container Check profile section is required.")
 		return p.out, nil
 	}
@@ -143,7 +143,7 @@ func (m MetadataPreparer) prepareContainer(ctx context.Context, input apply.Prof
 		p.issue(model.Failed, "executable_evidence", "/executable", "Image reader must observe a complete nonempty regular file within 512 MiB.")
 		return p.out, nil
 	}
-	p.out.CheckImage = &apply.CheckImageObservation{ImageID: imageID, Executable: apply.AgentImageMetadataFile{
+	p.out.CheckImage = &runtimeconfig.CheckImageObservation{ImageID: imageID, Executable: runtimeconfig.AgentImageMetadataFile{
 		Path: config.profile.Executable, ContentID: snapshot.ContentID(file.SHA256), Size: file.Size,
 	}}
 	return p.out, nil
@@ -152,21 +152,21 @@ func (m MetadataPreparer) prepareContainer(ctx context.Context, input apply.Prof
 // ContainerProfileFromPrepared projects complete container/v1 evidence and its
 // captured configuration. It performs no acquisition or execution. Request then
 // combines these values with the selected declaration and actual immutable tree.
-func ContainerProfileFromPrepared(prepared apply.PreparedProfile) (ContainerProfile, error) {
+func ContainerProfileFromPrepared(prepared runtimeconfig.PreparedProfile) (ContainerProfile, error) {
 	input, observation := prepared.Input(), prepared.Observation()
 	refuse := func(reason string) (ContainerProfile, error) {
 		return ContainerProfile{}, fmt.Errorf("container check profile: %s", reason)
 	}
-	if _, ok := prepared.Identity(); !ok || observation.Status != model.Passed || input.Namespace() != "checkProfiles" || input.Section() != "container" || input.Binding() == (apply.ProfileBinding{}) || observation.InputBinding != input.Binding() {
+	if _, ok := prepared.Identity(); !ok || observation.Status != model.Passed || input.Namespace() != "checkProfiles" || input.Section() != "container" || input.Binding() == (runtimeconfig.ProfileBinding{}) || observation.InputBinding != input.Binding() {
 		return refuse("complete source-bound container Check preparation is required")
 	}
-	p := containerPreparation{input: input, out: apply.ProfileObservation{Status: model.Passed}}
+	p := containerPreparation{input: input, out: runtimeconfig.ProfileObservation{Status: model.Passed}}
 	config, ok := p.decode()
 	if !ok {
 		return refuse("captured container/v1 configuration is invalid")
 	}
 	image := observation.CheckImage
-	if observation.Contract != containerContract || image == nil || image.ImageID != config.profile.ImageID || image.Executable.Path != config.profile.Executable || image.Executable.ContentID == (snapshot.ContentID{}) || image.Executable.Size <= 0 || image.Executable.Size > container.MaxImageFileObservationBytes || observation.AgentImage != nil || len(observation.Files) != 0 || len(observation.Inventories) != 0 || len(observation.Instructions) != 0 || len(observation.RequiredInstructions) != 0 {
+	if observation.Contract != containerContract || image == nil || image.ImageID != config.profile.ImageID || image.Executable.Path != config.profile.Executable || image.Executable.ContentID == (snapshot.ContentID{}) || image.Executable.Size <= 0 || image.Executable.Size > container.MaxImageFileObservationBytes || observation.AgentImage != nil || len(observation.Instructions) != 0 || len(observation.RequiredInstructions) != 0 {
 		return refuse("prepared contract, image or executable evidence differs from captured container/v1 configuration")
 	}
 	return config.profile, nil

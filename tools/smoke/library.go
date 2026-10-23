@@ -24,19 +24,7 @@ func (s *smoke) version() error {
 }
 
 // libraryExecution is the smoke's own execution settings of the Library project.
-const libraryExecution = `apiVersion: markitect.execution/v1
-strategy: direct
-budget:
-  executionTime: 25m
-  turnTimeout: 10m
-  agentTurns: 120
-  passes: 12
-profiles:
-  execute: library-agent
-  verify: library-agent
-packages:
-  lending:
-    profiles: {verify: library-agent}
+const libraryExecution = `apiVersion: markitect.execution/v2
 checks:
   - id: project-tests
     profile: library-tests

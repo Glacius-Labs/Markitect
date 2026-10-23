@@ -2,9 +2,6 @@ package project
 
 import (
 	"fmt"
-	"math/big"
-	"regexp"
-	"strings"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
@@ -64,59 +61,6 @@ func (d *executionDecoder) text(field executionField, empty bool) (organization.
 	}
 	return organization.Setting[string]{Value: value, Source: d.provenance(field)}, true
 }
-
-func (d *executionDecoder) integer(field executionField) (organization.Setting[int64], bool) {
-	if field.node == nil {
-		return organization.Setting[int64]{}, false
-	}
-	// YAML resolves decimal integers beyond its own integer range as floats.
-	// Recognize their literal syntax without accepting floats or quoted numbers
-	// as integer caps. The original source remains the value's authority.
-	if field.node.Kind == yaml.ScalarNode && (field.node.Tag == "!!int" || field.node.Style == 0 && executionDecimal.MatchString(field.node.Value)) {
-		base := 0
-		if field.node.Tag != "!!int" {
-			base = 10
-		}
-		if value, ok := new(big.Int).SetString(strings.ReplaceAll(field.node.Value, "_", ""), base); ok {
-			if value.Sign() <= 0 {
-				d.issue(model.Failed, "execution.positive", field, "Declared caps must be positive.")
-				return organization.Setting[int64]{}, false
-			}
-			if !value.IsInt64() {
-				d.issue(model.NotCompleted, "execution.integer_range", field, "The declared integer exceeds this decoder's integer representation.")
-				return organization.Setting[int64]{}, false
-			}
-		}
-	}
-	if field.node.Kind != yaml.ScalarNode || field.node.Tag != "!!int" {
-		d.issue(model.Failed, "execution.integer", field, "Expected a positive integer cap.")
-		return organization.Setting[int64]{}, false
-	}
-	var value int64
-	if err := field.node.Decode(&value); err != nil {
-		d.issue(model.Failed, "execution.integer", field, "Expected a positive integer cap.")
-		return organization.Setting[int64]{}, false
-	}
-	if value <= 0 {
-		d.issue(model.Failed, "execution.positive", field, "Declared caps must be positive.")
-		return organization.Setting[int64]{}, false
-	}
-	return organization.Setting[int64]{Value: value, Source: d.provenance(field)}, true
-}
-
-func (d *executionDecoder) count(field executionField) (organization.Setting[int], bool) {
-	value, ok := d.integer(field)
-	if !ok {
-		return organization.Setting[int]{}, false
-	}
-	if int64(int(value.Value)) != value.Value {
-		d.issue(model.NotCompleted, "execution.integer_range", field, "The declared integer exceeds the producer's int representation.")
-		return organization.Setting[int]{}, false
-	}
-	return organization.Setting[int]{Value: int(value.Value), Source: value.Source}, true
-}
-
-var executionDecimal = regexp.MustCompile(`^[+-]?[0-9](?:_?[0-9])*$`)
 
 func (d *executionDecoder) strings(field executionField) (organization.Setting[[]string], bool) {
 	if field.node == nil {

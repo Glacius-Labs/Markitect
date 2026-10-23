@@ -5,9 +5,9 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 )
 
@@ -127,7 +127,7 @@ func TestM1GitPreparationAcquiresCompleteClosureWithoutExtendingEarlierInputs(t 
 					t.Fatal("explicit model/dependency boundaries changed")
 				}
 				assertPreparationFileClosure(t, raw)
-				if !reflect.DeepEqual(execution.Defaults.Execute.Instructions.Value, []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md"}) || !reflect.DeepEqual(execution.Defaults.Verify.Instructions.Value, []string{"ops/reviewer.md"}) || !reflect.DeepEqual(execution.Packages.Value[0].Execute.Instructions.Value, []string{"ops/lending.md"}) || !reflect.DeepEqual(execution.Packages.Value[0].Verify.Instructions.Value, []string{"ops/manager.md", "ops/reviewer.md"}) {
+				if execution.Instructions == nil || len(execution.Instructions.Value) != 2 || !reflect.DeepEqual(execution.Instructions.Value[0].Files.Value, []string{"ops/manager.md", "ops/reviewer.md", "ops/manager.md", "ops/reviewer.md"}) || !reflect.DeepEqual(execution.Instructions.Value[1].Files.Value, []string{"ops/lending.md", "ops/manager.md", "ops/reviewer.md"}) {
 					t.Fatal("authored instruction lists lost their order or repeats")
 				}
 				var packages []string

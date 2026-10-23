@@ -113,7 +113,7 @@ func decodeRuntime(raw project.RawInputs) runtimeEnvelope {
 	for _, ns := range []struct {
 		name     string
 		sections []string
-	}{{"agentProfiles", []string{"codexAppServer", "claudeCode"}}, {"checkProfiles", []string{"process", "container"}}} {
+	}{{"agentProfiles", []string{"codexAppServer", "claudeCode"}}, {"checkProfiles", []string{"container"}}} {
 		catalog := d.required(fields, root, ns.name)
 		entries := d.object(catalog)
 		names := make([]string, 0, len(entries))

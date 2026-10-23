@@ -65,25 +65,16 @@ func decodeExecution(checked model.Result, raw RawInputs) executionDecoding {
 	}
 	root := executionField{node: document.Content[0]}
 	d.restricted(root)
-	fields := d.object(root, "apiVersion", "strategy", "budget", "profiles", "instructions", "packages", "ownership", "team", "scope", "checks")
+	fields := d.object(root, "apiVersion", "instructions", "ownership", "scope", "checks")
 	r.authored.APIVersion, _ = d.text(d.required(fields, root, "apiVersion"), false)
-	if r.authored.APIVersion.Source.File != "" && r.authored.APIVersion.Value != "markitect.execution/v1" {
+	if r.authored.APIVersion.Source.File != "" && r.authored.APIVersion.Value != "markitect.execution/v2" {
 		d.issue(model.Failed, "execution.version", fields["apiVersion"], "Unsupported execution apiVersion.")
 	}
-	r.authored.Strategy, _ = d.text(d.required(fields, root, "strategy"), false)
-	if r.authored.Strategy.Source.File != "" && !slices.Contains([]string{"direct", "staged"}, r.authored.Strategy.Value) {
-		d.issue(model.Failed, "execution.strategy", fields["strategy"], "Unsupported execution strategy: direct or staged.")
-	}
-	r.authored.Budget = d.budget(d.required(fields, root, "budget"))
-	r.authored.Defaults.Execute, r.authored.Defaults.Verify = d.roles(fields, root, true)
-	if field, found := fields["packages"]; found {
-		r.authored.Packages = d.packages(field)
+	if field, found := fields["instructions"]; found {
+		r.authored.Instructions = d.instructions(field)
 	}
 	if field, found := fields["ownership"]; found {
 		r.authored.Ownership = d.ownership(field, checked)
-	}
-	if field, found := fields["team"]; found {
-		r.authored.Team = d.team(field)
 	}
 	if field, found := fields["scope"]; found {
 		r.authored.Scope = d.scope(field)

@@ -2,24 +2,11 @@ package project_test
 
 import "testing"
 
-// documentedExecution is the shape the Library walkthrough shows: complete
-// project budget and profiles, one exact package override and one check, no
-// layout (ownership then rests on the registry shards alone).
+// documentedExecution contains structural project policy only. Runtime
+// profiles and invocation limits are supplied outside Project.
 func documentedExecution(t *testing.T) string {
 	t.Helper()
-	return `apiVersion: markitect.execution/v1
-strategy: direct
-budget:
-  executionTime: 25m
-  turnTimeout: 10m
-  agentTurns: 120
-  passes: 12
-profiles:
-  execute: library-agent
-  verify: library-agent
-packages:
-  lending:
-    profiles: {verify: library-agent}
+	return `apiVersion: markitect.execution/v2
 checks:
   - id: project-tests
     profile: library-tests

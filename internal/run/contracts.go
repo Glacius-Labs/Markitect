@@ -124,7 +124,7 @@ func (a *Allowance) take() error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
 	if !time.Now().Before(a.Deadline) || a.remaining <= 0 {
-		return errors.New("Run allowance exhausted")
+		return ErrBudget
 	}
 	a.remaining--
 	a.used++
@@ -148,6 +148,7 @@ func (a *Allowance) valid() bool {
 }
 
 type Request struct {
+	MaxManagers        int
 	ID, Project        string
 	Prepared           project.Prepared
 	Input              project.CandidateRef
@@ -173,6 +174,9 @@ type SessionSpec struct {
 	Findings  []Finding
 	Tools     Tools
 }
+
+// Exchange returns only after its active writes and tool handlers have drained.
+// Close must interrupt an active Exchange and report actual process/home closure.
 type Session interface {
 	Exchange(context.Context, Message) (Response, error)
 	Close(context.Context) error
@@ -247,6 +251,7 @@ type Executor struct {
 	Checks     CandidateChecks
 }
 
+var ErrBudget = errors.New("Run allowance exhausted")
 var ErrUnavailable = errors.New("native sessions unavailable: adapter capability is not ready")
 
 type UnavailableSessions struct{}
@@ -285,11 +290,20 @@ func validID(s string) bool {
 	return s != "." && s != ".."
 }
 func validateRequest(r Request) error {
-	if !validID(r.ID) || !validID(r.Project) || !r.Prepared.Valid() || r.Input.Project != r.Project || r.Input.Binding != r.Prepared.Binding() || r.Input.Commit == "" || r.Input.Tree == "" || !r.Allowance.valid() || r.CleanupTimeout <= 0 || r.CleanupTimeout > time.Minute || r.PersistenceTimeout <= 0 || r.PersistenceTimeout > time.Minute {
+	if !validID(r.ID) || !validID(r.Project) || !r.Prepared.Valid() || r.Input.Project != r.Project || r.Input.Binding != r.Prepared.Binding() || r.Input.Commit == "" || r.Input.Tree == "" || !r.Allowance.valid() || r.MaxManagers <= 0 || len(r.Prepared.Topology().Managers()) > r.MaxManagers || !r.Allowance.minimum(len(r.Prepared.Topology().Managers())) || r.CleanupTimeout <= 0 || r.CleanupTimeout > time.Minute || r.PersistenceTimeout <= 0 || r.PersistenceTimeout > time.Minute {
 		return fmt.Errorf("invalid Run request, checked binding or finite limits")
 	}
 	if r.Mandate != Assessment && r.Mandate != Implement && r.Mandate != Verify {
 		return fmt.Errorf("invalid mandate")
 	}
 	return nil
+}
+
+func (a *Allowance) minimum(n int) bool {
+	if a == nil {
+		return false
+	}
+	a.mu.Lock()
+	defer a.mu.Unlock()
+	return a.remaining >= n
 }

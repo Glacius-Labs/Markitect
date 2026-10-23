@@ -13,8 +13,7 @@ import (
 
 func TestFileCheckClosesEveryAuthoredInstructionListAndPreservesRepeats(t *testing.T) {
 	selection, raw := fileCheckInputs(t)
-	content := strings.Replace(string(raw.Execution[0].File.Bytes()), "profiles:\n  execute", "instructions: {execute: [ops/one.md, ops/two.md, ops/one.md], verify: [ops/three.md]}\nprofiles:\n  execute", 1)
-	content = strings.Replace(content, "    profiles: {verify: library-agent}", "    instructions: {execute: [ops/four.md], verify: [ops/five.md]}\n    profiles: {verify: library-agent}", 1)
+	content := strings.Replace(string(raw.Execution[0].File.Bytes()), "checks:", "instructions: {'.': [ops/one.md, ops/two.md, ops/one.md, ops/three.md], lending: [ops/four.md, ops/five.md, ops/one.md]}\nchecks:", 1)
 	rewriteFileCheckSource(t, &raw, &raw.Execution[0], content)
 	for _, name := range []string{"ops/one.md", "ops/two.md", "ops/three.md", "ops/four.md", "ops/five.md"} {
 		fileCheckSource(t, &selection, &raw, "instruction", name, snapshot.Executable, "Original instructions.\r\n", true)
@@ -60,7 +59,7 @@ func TestFileCheckDoesNotResolveProjectInstructionsFromExternalLocators(t *testi
 			t.Fatal("external input became a repository classification")
 		}
 	}
-	rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "profiles:\n  execute", "instructions: {execute: [ops/one.md]}\nprofiles:\n  execute", 1))
+	rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "checks:", "instructions: {'.': [ops/one.md]}\nchecks:", 1))
 	censusFile(t, &raw, "ops/one.md", snapshot.Regular, []byte("actual project bytes"))
 	result = checkedFiles(t, selection, raw)
 	if result.Status() != model.NotCompleted || !fileDiagnostic(result, "files.instruction_uncaptured") {
@@ -71,14 +70,14 @@ func TestFileCheckDoesNotResolveProjectInstructionsFromExternalLocators(t *testi
 func TestFileCheckValidatesInstructionPathsAndUnusedOverrides(t *testing.T) {
 	for _, ref := range []string{"../escape.md", "ops/", "/absolute.md", "ops/missing.md"} {
 		selection, raw := fileCheckInputs(t)
-		content := strings.Replace(documentedExecution(t), "    profiles: {verify: library-agent}", "    instructions: {verify: ['"+ref+"']}\n    profiles: {verify: library-agent}", 1)
+		content := strings.Replace(documentedExecution(t), "checks:", "instructions: {lending: ['"+ref+"']}\nchecks:", 1)
 		rewriteFileCheckSource(t, &raw, &raw.Execution[0], content)
 		if result := checkedFiles(t, selection, raw); result.Status() != model.Failed {
 			t.Fatalf("invalid instruction reference passed: %s", ref)
 		}
 	}
 	selection, raw := fileCheckInputs(t)
-	content := strings.Replace(documentedExecution(t), "  lending:", "  unknown:\n    instructions: {verify: [ops/unavailable.md]}", 1)
+	content := strings.Replace(documentedExecution(t), "checks:", "instructions: {unknown: [ops/unavailable.md]}\nchecks:", 1)
 	rewriteFileCheckSource(t, &raw, &raw.Execution[0], content)
 	result := checkedFiles(t, selection, raw)
 	if result.Status() != model.Failed || !fileDiagnostic(result, "execution.package") || !fileDiagnostic(result, "files.instruction_missing") {
@@ -89,7 +88,7 @@ func TestFileCheckValidatesInstructionPathsAndUnusedOverrides(t *testing.T) {
 func TestFileCheckInstructionAbsenceAndUncapturedSources(t *testing.T) {
 	for _, present := range []bool{false, true} {
 		selection, raw := fileCheckInputs(t)
-		content := strings.Replace(string(raw.Execution[0].File.Bytes()), "profiles:\n  execute", "instructions: {execute: [ops/one.md]}\nprofiles:\n  execute", 1)
+		content := strings.Replace(string(raw.Execution[0].File.Bytes()), "checks:", "instructions: {'.': [ops/one.md]}\nchecks:", 1)
 		rewriteFileCheckSource(t, &raw, &raw.Execution[0], content)
 		if present {
 			censusFile(t, &raw, "ops/one.md", snapshot.Regular, []byte("observed, not captured"))
@@ -104,7 +103,7 @@ func TestFileCheckInstructionAbsenceAndUncapturedSources(t *testing.T) {
 			t.Fatalf("instruction closure lost: %s %+v", result.Status(), result.Diagnostics())
 		}
 		for _, diagnostic := range result.Diagnostics() {
-			if diagnostic.Code == code && (diagnostic.Source.Field != "/instructions/execute/0" || diagnostic.Source.ContentID != raw.Execution[0].File.ContentID()) {
+			if diagnostic.Code == code && (diagnostic.Source.Field != "/instructions/./0" || diagnostic.Source.ContentID != raw.Execution[0].File.ContentID()) {
 				t.Fatal("instruction reference source lost")
 			}
 		}
@@ -114,7 +113,7 @@ func TestFileCheckInstructionAbsenceAndUncapturedSources(t *testing.T) {
 func TestFileCheckInstructionCannotBecomeIgnoredOrRegistered(t *testing.T) {
 	for _, disposition := range []string{"ignored", "artifact"} {
 		selection, raw := fileCheckInputs(t)
-		rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(string(raw.Execution[0].File.Bytes()), "profiles:\n  execute", "instructions: {verify: [ops/one.md]}\nprofiles:\n  execute", 1))
+		rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(string(raw.Execution[0].File.Bytes()), "checks:", "instructions: {'.': [ops/one.md]}\nchecks:", 1))
 		censusFile(t, &raw, "ops/one.md", snapshot.Regular, []byte("uncaptured instructions"))
 		if disposition == "ignored" {
 			fileCheckSource(t, &selection, &raw, "ignore", ".markitect/ignore.yaml", snapshot.Regular, "apiVersion: markitect.ignore/v1\nfiles: [{path: ops/one.md, reason: conceal}]\n", true)

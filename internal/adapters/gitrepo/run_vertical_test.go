@@ -38,7 +38,7 @@ func runFixture(t *testing.T) (*testkit.Repo, project.Prepared, *LocalGit, proje
 	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.0.0', digest: 'sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1'}\n")
 	r.Write(".markitect/model/a/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: A tiny realization obligation.\nspec: {}\n")
 	r.Write(".markitect/model/a/deep/item.yaml", "imports: [{package: a}]\nid: item\nkind: a/Thing\nbody: A child artifact.\nspec: {}\n")
-	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v1\nstrategy: direct\nbudget: {executionTime: 1m, turnTimeout: 1m, agentTurns: 100, passes: 10}\nprofiles: {execute: controlled, verify: controlled}\nchecks: []\n")
+	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nchecks: []\n")
 	r.Write(".markitect/registry/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts: []\n")
 	for _, a := range []struct{ owner, path, definition string }{{"a", "out/a.txt", "a/Thing"}, {"a/deep", "out/deep.txt", "a/deep/item"}} {
 		r.Write(a.path, "initial\n")
@@ -93,6 +93,12 @@ type controlledManagers struct {
 	asked               int
 	corrections         int
 	failOpen, failClose bool
+	lateQuestions       int
+	receiptCalls        int
+	acceptedRepair      bool
+	forceDecision       run.Decision
+	exchangeBlock       <-chan struct{}
+	closeBlock          <-chan struct{}
 }
 type controlledManager struct {
 	owner  *controlledManagers
@@ -112,6 +118,9 @@ func (c *controlledManagers) Open(_ context.Context, s run.SessionSpec) (run.Ses
 	return m, nil
 }
 func (m *controlledManager) Close(context.Context) error {
+	if m.owner.closeBlock != nil && m.spec.Manager.Package == "a" {
+		<-m.owner.closeBlock
+	}
 	m.closed = true
 	if m.owner.failClose && m.spec.Manager.Package == "a" {
 		return fmt.Errorf("injected uncertain closure")
@@ -121,6 +130,25 @@ func (m *controlledManager) Close(context.Context) error {
 func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
 	m.calls++
 	tools := m.spec.Tools
+	if m.owner.exchangeBlock != nil && m.spec.Manager.Package == "." {
+		<-m.owner.exchangeBlock
+	}
+	if strings.HasPrefix(message.Task, "Answer pending Manager questions") {
+		event, err := tools.Await(ctx)
+		if err != nil {
+			return run.Response{}, err
+		}
+		if event.Question == nil {
+			return run.Response{}, fmt.Errorf("receipt message lost question")
+		}
+		if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
+			return run.Response{}, err
+		}
+		m.owner.mu.Lock()
+		m.owner.receiptCalls++
+		m.owner.mu.Unlock()
+		return run.Response{}, nil
+	}
 	if m.spec.Manager.Package != "." && m.calls == 1 {
 		for {
 			e, err := tools.Await(ctx)
@@ -211,6 +239,35 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 				continue
 			}
 		}
+		// The child already supplied a fixed handoff. Its same Session must
+		// remain reachable through an ordinary follow-up message.
+		id, err := tools.Ask(ctx, h.Manager, "Explain your completed fixed handoff.")
+		if err != nil {
+			return run.Response{}, err
+		}
+		for {
+			event, err := tools.Await(ctx)
+			if err != nil {
+				return run.Response{}, err
+			}
+			if event.Handoff != nil {
+				pending = append(pending, event.Handoff)
+			}
+			if event.Question != nil {
+				if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
+					return run.Response{}, err
+				}
+			}
+			if event.Answer != nil && event.Answer.ID == id {
+				if event.Answer.Text != "controlled answer from "+h.Manager {
+					return run.Response{}, fmt.Errorf("late answer mismatch")
+				}
+				break
+			}
+		}
+		m.owner.mu.Lock()
+		m.owner.lateQuestions++
+		m.owner.mu.Unlock()
 		if m.spec.Mandate == run.Implement && h.Manager == "a/deep" && strings.Contains(h.Diff, "+wrong") {
 			finding := []run.Finding{{Text: "The complete fixed diff shows wrong; correct the child artifact."}}
 			if err := tools.Review(ctx, h.Manager, h.Result.ID, run.Reject, finding); err != nil {
@@ -227,6 +284,20 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 		if err := tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err != nil {
 			return run.Response{}, err
 		}
+		if m.spec.Mandate == run.Implement && h.Manager == "a/deep" && !m.owner.acceptedRepair {
+			m.owner.acceptedRepair = true
+			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location(), "out/deep.txt"), []byte("parent revision\n"), 0600); err != nil {
+				return run.Response{}, err
+			}
+			findings := []run.Finding{{Text: "Correct accepted child work on the integrated parent baseline."}}
+			if err := tools.Delegate(ctx, h.Manager, "Repair after parent integration.", findings); err != nil {
+				return run.Response{}, err
+			}
+			m.owner.mu.Lock()
+			m.owner.corrections++
+			m.owner.mu.Unlock()
+			continue
+		}
 		remaining--
 	}
 	if _, err := tools.AppendNote(ctx, "controlled test", m.spec.Manager.Package+" participated"); err != nil {
@@ -241,6 +312,9 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 			path, value = "out/deep.txt", "wrong\n"
 			if len(message.Feedback) > 0 {
 				value = "corrected\n"
+				if message.Task == "Repair after parent integration." {
+					value = "repaired after integration\n"
+				}
 			}
 		}
 		if path != "" {
@@ -254,6 +328,9 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 	// replace the fixed input candidate returned by Assessment or Verify.
 	if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location(), "review-scratch.txt"), []byte("scratch"), 0600); err != nil {
 		return run.Response{}, err
+	}
+	if m.owner.forceDecision != "" {
+		return run.Response{Decision: m.owner.forceDecision, Findings: []run.Finding{{Text: "controlled semantic rejection"}}}, nil
 	}
 	return run.Response{Decision: run.Approve}, nil
 }
@@ -277,12 +354,12 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 			}
 			managers := &controlledManagers{crossed: make(chan struct{})}
 			executor := run.Executor{Sessions: managers, Workspaces: g, Records: store}
-			request := run.Request{ID: string(mandate), Project: "fixture", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(time.Now().Add(45*time.Second), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+			request := run.Request{MaxManagers: 5, ID: string(mandate), Project: "fixture", Prepared: p, Input: ref, Mandate: mandate, Allowance: run.NewAllowance(time.Now().Add(45*time.Second), 80), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 			result, err := executor.Execute(ctx, request)
 			if err != nil || result.Technical != run.Completed {
 				t.Fatalf("%+v error=%v", result, err)
 			}
-			if len(result.Handoffs) != 5 || len(result.Cleanup) != 12 || managers.asked != 2 {
+			if len(result.Handoffs) != 5 || len(result.Cleanup) != 12 || managers.asked != 2 || managers.lateQuestions < 4 || managers.receiptCalls < 4 {
 				t.Fatalf("incomplete hierarchy/closure/questions: %+v", result)
 			}
 			for _, s := range managers.sessions {
@@ -312,7 +389,7 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 			}
 			if mandate == run.Implement {
 				data, err := os.ReadFile(filepath.Join(destination, "out/deep.txt"))
-				if err != nil || string(data) != "corrected\n" || managers.corrections != 1 {
+				if err != nil || string(data) != "repaired after integration\n" || managers.corrections != 2 {
 					t.Fatal("reviewed correction missing", string(data), err)
 				}
 				for _, h := range result.Handoffs {

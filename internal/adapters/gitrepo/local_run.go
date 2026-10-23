@@ -16,8 +16,10 @@ import (
 	"sync"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // LocalGit implements Run's Git responsibility with real local repositories.
@@ -94,7 +96,85 @@ func (g *LocalGit) Capture(ctx context.Context, id string, p project.Prepared) (
 	if err != nil {
 		return project.CandidateRef{}, err
 	}
-	return g.retain(ctx, id, p.Binding(), p.Selection().Repository, c)
+	raw := p.Attempt().Model().Inputs().Raw
+	for _, m := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
+		if m.RepositoryArea.String() == "" {
+			return project.CandidateRef{}, fmt.Errorf("local Run source must be repository-bound")
+		}
+	}
+	seed, err := os.MkdirTemp(g.TempRoot, "markitect-input-")
+	if err != nil {
+		return project.CandidateRef{}, err
+	}
+	defer os.RemoveAll(seed)
+	format, err := localCommand(ctx, p.Selection().Repository, nil, "rev-parse", "--show-object-format")
+	if err != nil {
+		return project.CandidateRef{}, err
+	}
+	if _, err = localCommand(ctx, seed, nil, "init", "--quiet", "--object-format="+format); err != nil {
+		return project.CandidateRef{}, err
+	}
+	if _, err = localCommand(ctx, seed, nil, "fetch", "--quiet", "--no-tags", p.Selection().Repository, c.ID); err != nil {
+		return project.CandidateRef{}, err
+	}
+	if _, err = localCommand(ctx, seed, nil, "checkout", "--quiet", "--detach", c.ID); err != nil {
+		return project.CandidateRef{}, err
+	}
+	entries, err := os.ReadDir(seed)
+	if err != nil {
+		return project.CandidateRef{}, err
+	}
+	for _, e := range entries {
+		if e.Name() != ".git" {
+			if err = os.RemoveAll(filepath.Join(seed, e.Name())); err != nil {
+				return project.CandidateRef{}, err
+			}
+		}
+	}
+	for _, f := range raw.Census.Entries() {
+		path := filepath.Join(seed, filepath.FromSlash(f.Path().String()))
+		if err = os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+			return project.CandidateRef{}, err
+		}
+		mode := os.FileMode(0600)
+		if f.Mode() == snapshot.Executable {
+			mode = 0700
+		}
+		if err = os.WriteFile(path, f.Bytes(), mode); err != nil {
+			return project.CandidateRef{}, err
+		}
+	}
+	for _, m := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
+		for _, e := range m.Source.Entries {
+			if e.Kind == model.Directory {
+				base := m.RepositoryArea.String()
+				if base == "." {
+					base = ""
+				}
+				if err = os.MkdirAll(filepath.Join(seed, filepath.FromSlash(base), filepath.FromSlash(e.Path)), 0700); err != nil {
+					return project.CandidateRef{}, err
+				}
+			}
+		}
+	}
+	service := &localService{adapter: g, request: run.Request{Prepared: p}, root: filepath.Dir(seed)}
+	copy := &localCopy{service: service, location: seed}
+	fixed, err := copy.Snapshot(ctx)
+	if err != nil {
+		return project.CandidateRef{}, err
+	}
+	attempt, err := copy.Inspect(ctx, fixed)
+	if err != nil {
+		return project.CandidateRef{}, err
+	}
+	if err = p.ValidateCandidate(attempt); err != nil {
+		return project.CandidateRef{}, err
+	}
+	if attempt.Model().Inputs().Raw.Census.Digest() != raw.Census.Digest() {
+		return project.CandidateRef{}, fmt.Errorf("initial candidate does not preserve complete checked Census")
+	}
+	return g.retain(ctx, id, p.Binding(), seed, fixed)
+
 }
 func (g *LocalGit) retain(ctx context.Context, id, binding, repo string, c run.Commit) (project.CandidateRef, error) {
 	key, err := token()
@@ -283,7 +363,7 @@ func (s *localService) Copy(ctx context.Context, manager string, base run.Commit
 }
 func (c *localCopy) Location() string { return c.location }
 func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
-	if _, err := localCommand(ctx, c.location, nil, "add", "--all", "--", "."); err != nil {
+	if _, err := localCommand(ctx, c.location, nil, "add", "--force", "--all", "--", "."); err != nil {
 		return run.Commit{}, err
 	}
 	tree, err := localCommand(ctx, c.location, nil, "write-tree")

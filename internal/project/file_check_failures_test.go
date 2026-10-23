@@ -31,14 +31,14 @@ func TestFileCheckPreservesRegistryAndExecutionRefusals(t *testing.T) {
 			case "uncaptured registry":
 				selection.Registry, raw.Registry = selection.Registry[:1], raw.Registry[:1]
 			case "invalid execution":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: 0", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "timeout: 2m", "timeout: 0s", 1))
 			case "uncaptured execution":
 				selection.Execution, raw.Execution = nil, nil
 			case "execution tool limit":
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: 184467440737095516160", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "timeout: 2m", "timeout: 999999999999999999999h", 1))
 			case "missing policy plus invalid execution":
 				fileCheckSource(t, &selection, &raw, "ignore", ".markitect/ignore.yaml", snapshot.Regular, emptyFilePolicy, false)
-				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: false", 1))
+				rewriteFileCheckSource(t, &raw, &raw.Execution[0], strings.Replace(documentedExecution(t), "timeout: 2m", "timeout: false", 1))
 			}
 			parent := registryModel(t, selection, raw).PrepareRegistry()
 			result := parent.CheckFiles()

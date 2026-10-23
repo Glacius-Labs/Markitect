@@ -32,7 +32,7 @@ const closeBound = 45 * time.Second
 // no task or review state; run decides what the resulting receipt establishes.
 type Runner struct {
 	runtime    CommandRuntime
-	workspaces run.Workspaces
+	workspaces DisposableCopies
 	labels     map[string]string
 }
 
@@ -42,7 +42,7 @@ var _ run.Checks = (*Runner)(nil)
 // configured workspace adapter. Workspace helper images and check images have
 // separate identities; every check runs only in the request's exact image.
 // Ownership labels are copied into each command's container specification.
-func NewRunner(engine *container.Engine, workspaces run.Workspaces, labels map[string]string) (*Runner, error) {
+func NewRunner(engine *container.Engine, workspaces DisposableCopies, labels map[string]string) (*Runner, error) {
 	if engine == nil {
 		return nil, fmt.Errorf("check runner needs a container engine")
 	}
@@ -53,7 +53,7 @@ func NewRunner(engine *container.Engine, workspaces run.Workspaces, labels map[s
 // deterministic peers for source tests. A workspace must be private to Run
 // until its command has ended and Close has completed.
 // Labels are cloned at construction and per command; markitect.check is reserved.
-func NewRunnerWithRuntime(runtime CommandRuntime, workspaces run.Workspaces, labels map[string]string) (*Runner, error) {
+func NewRunnerWithRuntime(runtime CommandRuntime, workspaces DisposableCopies, labels map[string]string) (*Runner, error) {
 	if runtime == nil || workspaces == nil {
 		return nil, fmt.Errorf("check runner needs runtime and workspaces")
 	}
@@ -91,11 +91,11 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		return receipt, fmt.Errorf("allocate disposable check identity: %w", err)
 	}
 	name := "check-" + hex.EncodeToString(token)
-	id := run.WorkspaceID(name)
-	identities := []run.WorkspaceID{id}
+	id := CopyID(name)
+	identities := []CopyID{id}
 	limited, cancel := context.WithTimeout(ctx, req.Timeout)
 	defer cancel()
-	copy, materializeErr := r.workspaces.Materialize(limited, run.WorkspaceSpec{ID: id, Tree: req.Tree})
+	copy, materializeErr := r.workspaces.Materialize(limited, CopySpec{ID: id, Tree: req.Tree})
 	// Even a failed materialization may have created a volume. Close its exact
 	// private identity using a bounded context that survives caller cancellation.
 	defer func() {
@@ -103,7 +103,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		cancel()
 		// The volumes close concurrently, so cleanup takes at most one bound.
 		type closure struct {
-			observed run.WorkspaceObservation
+			observed CopyObservation
 			err      error
 		}
 		closures := make([]closure, len(identities))
@@ -149,10 +149,10 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	receipt.Tree = copy.Tree
 	// The runtime image keeps tool caches in /home/agent. Give the check an
 	// independently verified empty disposable home without rewriting fixed Env.
-	homeID := run.WorkspaceID(name + "-home")
+	homeID := CopyID(name + "-home")
 	identities = append(identities, homeID)
 	empty := snapshot.Tree{}
-	home, homeErr := r.workspaces.Materialize(limited, run.WorkspaceSpec{ID: homeID, Tree: empty})
+	home, homeErr := r.workspaces.Materialize(limited, CopySpec{ID: homeID, Tree: empty})
 	if homeErr != nil || home.ID != homeID || home.Closed || home.Uncertain || home.Volume == "" || home.Volume == copy.Volume || home.Tree != empty.Digest() {
 		err = fmt.Errorf("disposable check home was not confirmed: %s", home.Reason)
 		if homeErr != nil {

@@ -1,12 +1,9 @@
 package project_test
 
 import (
-	"context"
-	"reflect"
 	"strconv"
 	"strings"
 	"testing"
-	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -36,62 +33,6 @@ func executionDiagnostic(diagnostics []project.ExecutionDiagnostic, code string)
 	return false
 }
 
-func TestDocumentedExecutionDecodesWithoutInventingResolvedSettings(t *testing.T) {
-	content := documentedExecution(t)
-	selection, raw := executionInputs(t, content)
-	stage := registryModel(t, selection, raw)
-	result := stage.DecodeExecution()
-	document, ok := result.Document()
-	if result.Status() != model.Passed || !ok || len(result.Diagnostics()) != 0 {
-		t.Fatalf("documented execution failed: %s %+v", result.Status(), result.Diagnostics())
-	}
-	budget := document.Budget
-	if document.APIVersion.Value != "markitect.execution/v1" || document.Strategy.Value != "direct" || budget.ExecutionTime.Value != 25*time.Minute || budget.TurnTimeout.Value != 10*time.Minute || budget.AgentTurns.Value != 120 || budget.Passes.Value != 12 {
-		t.Fatal("declared budget changed")
-	}
-	if document.Defaults.Execute.Profile == nil || document.Defaults.Execute.Profile.Value != "library-agent" || document.Defaults.Execute.Profile.Source.Field != "/profiles/execute" || document.Defaults.Verify.Profile.Source.Field != "/profiles/verify" || document.Defaults.Execute.Instructions != nil || document.Defaults.Verify.Instructions != nil {
-		t.Fatal("profile selection or instruction absence was invented")
-	}
-	if document.Packages == nil || len(document.Packages.Value) != 1 || document.Packages.Value[0].Package != "lending" || document.Packages.Value[0].Verify.Profile.Value != "library-agent" || document.Packages.Value[0].Execute.Profile != nil || document.Ownership != nil || document.Team != nil || document.Scope != nil || document.Checks == nil || len(document.Checks.Value) != 1 || document.Checks.Value[0].RequiredBy.Value != (model.Identity{Package: "library", ID: "callable-interface"}) {
-		t.Fatal("authored selections changed")
-	}
-	if budget.AgentTurns.Source.ContentID != raw.Execution[0].File.ContentID() || budget.AgentTurns.Source.File != ".markitect/execution.yaml" || budget.AgentTurns.Source.Field != "/budget/agentTurns" || !reflect.DeepEqual(result.Model().Inputs(), stage.Inputs()) || string(result.Model().Inputs().Raw.Execution[0].File.Bytes()) != content {
-		t.Fatal("original source/binding changed")
-	}
-	source := controlledSource{preview: func(context.Context, project.PreviewRequest) (project.PreviewedInputs, error) {
-		return project.PreviewedInputs{Raw: raw, Head: fixtureHead, Revision: fixtureHead}, nil
-	}}
-	preview, err := project.NewModelService(nil, source).PreviewModel(context.Background(), project.PreviewRequest{Selection: selection, Revision: fixtureHead}, model.Limits{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	prepared := preview.DecodeExecution()
-	if prepared.Status() != model.Passed || prepared.Model().Inputs().Revision != fixtureHead {
-		t.Fatalf("fixed preview decoding failed: %+v", prepared.Diagnostics())
-	}
-}
-
-func TestExecutionFieldTypeFailureRetainsKnownAuthoredValues(t *testing.T) {
-	content := strings.Replace(documentedExecution(t), "agentTurns: 120", "agentTurns: many", 1)
-	selection, raw := executionInputs(t, content)
-	result := registryModel(t, selection, raw).DecodeExecution()
-	if _, ok := result.Document(); ok || result.Status() != model.Failed || !executionDiagnostic(result.Diagnostics(), "execution.integer") {
-		t.Fatalf("bad budget passed: %+v", result.Diagnostics())
-	}
-	partial := result.Partial()
-	if partial.Budget.AgentTurns.Source.File != "" || partial.Budget.Passes.Value != 12 || partial.Budget.TurnTimeout.Value != 10*time.Minute || string(result.Model().Inputs().Raw.Execution[0].File.Bytes()) != content {
-		t.Fatal("known values or malformed original bytes discarded")
-	}
-	for _, diagnostic := range result.Diagnostics() {
-		if diagnostic.Code == "execution.integer" && (diagnostic.Source.Field != "/budget/agentTurns" || diagnostic.Source.ContentID != raw.Execution[0].File.ContentID() || diagnostic.Position == nil) {
-			t.Fatal("type error lost exact source coordinates")
-		}
-	}
-}
-
-// libraryOwnershipYAML is the Library's declared ownership: Root owns the
-// artifact tree, each Package its own directory below it, and the callable
-// interface's executable location belongs to the library Package.
 const libraryOwnershipYAML = `ownership:
   - path: realization/
     owner: .
@@ -215,69 +156,3 @@ const libraryTeamYAML = `team:
     - role: worker
       writes: true
 `
-
-func withTeam(t *testing.T, team string) string {
-	t.Helper()
-	return strings.Replace(documentedExecution(t), "checks:\n", team+"checks:\n", 1)
-}
-
-func TestExecutionTeamDecodesWithSources(t *testing.T) {
-	result := executionResult(t, withTeam(t, libraryTeamYAML))
-	document, ok := result.Document()
-	if !ok || document.Team == nil {
-		t.Fatalf("team failed: %s %+v", result.Status(), result.Diagnostics())
-	}
-	team := document.Team
-	if team.MaxHelpers.Value != 2 || team.MaxHelpers.Source.Field != "/team/maxHelpers" || len(team.Helpers) != 2 {
-		t.Fatalf("team changed: %+v", team)
-	}
-	architect, worker := team.Helpers[0], team.Helpers[1]
-	if architect.Role.Value != "architect" || architect.Role.Source.Field != "/team/helpers/0/role" ||
-		architect.Profile == nil || architect.Profile.Value != "library-agent" || architect.Profile.Source.Field != "/team/helpers/0/profile" ||
-		architect.Writes.Value || architect.Writes.Source.Field != "/team/helpers/0/writes" ||
-		architect.Instructions == nil || !reflect.DeepEqual(architect.Instructions.Value, []string{"ops/architect.md"}) || architect.Instructions.Source.Field != "/team/helpers/0/instructions" {
-		t.Errorf("architect or its sources changed: %+v", architect)
-	}
-	if worker.Role.Value != "worker" || !worker.Writes.Value || worker.Writes.Source.Field != "/team/helpers/1/writes" || worker.Profile != nil || worker.Instructions != nil {
-		t.Errorf("an absent profile or instruction list was invented: %+v", worker)
-	}
-	absent, _ := executionResult(t, documentedExecution(t)).Document()
-	if absent.Team != nil {
-		t.Fatalf("an absent team was invented: %+v", absent.Team)
-	}
-	none := executionResult(t, withTeam(t, "team:\n  maxHelpers: 1\n  helpers: []\n"))
-	if document, ok := none.Document(); !ok || document.Team == nil || len(document.Team.Helpers) != 0 {
-		t.Fatalf("an explicitly empty helper list was refused: %s %+v", none.Status(), none.Diagnostics())
-	}
-}
-
-func TestExecutionTeamRefusals(t *testing.T) {
-	for _, tc := range []struct{ name, team, code string }{
-		{"team not a mapping", "team: [worker]\n", "execution.mapping"},
-		{"unknown key", "team:\n  maxHelpers: 1\n  helpers: []\n  size: 3\n", "execution.unknown_key"},
-		{"missing maxHelpers", "team:\n  helpers: []\n", "execution.field_missing"},
-		{"missing helpers", "team:\n  maxHelpers: 1\n", "execution.field_missing"},
-		{"helpers not a list", "team:\n  maxHelpers: 1\n  helpers: worker\n", "execution.list"},
-		{"maxHelpers not positive", "team:\n  maxHelpers: 0\n  helpers: []\n", "execution.positive"},
-		{"missing role", "team:\n  maxHelpers: 1\n  helpers:\n    - {writes: true}\n", "execution.field_missing"},
-		{"missing writes", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: worker}\n", "execution.field_missing"},
-		{"writes is not a boolean", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: worker, writes: 'yes'}\n", "execution.boolean"},
-		{"writes is a number", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: worker, writes: 1}\n", "execution.boolean"},
-		{"role manager", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: manager, writes: true}\n", "execution.helper_role"},
-		{"role reviewer", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: reviewer, writes: false}\n", "execution.helper_role"},
-		{"role not a name", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: Worker, writes: true}\n", "execution.helper_role"},
-		{"role with a path", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: ../worker, writes: true}\n", "execution.helper_role"},
-		{"duplicate role", "team:\n  maxHelpers: 2\n  helpers:\n    - {role: worker, writes: true}\n    - {role: worker, writes: false}\n", "execution.helper_role"},
-		{"unknown helper key", "team:\n  maxHelpers: 1\n  helpers:\n    - {role: worker, writes: true, budget: 5}\n", "execution.unknown_key"},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			result := executionResult(t, withTeam(t, tc.team))
-			if _, ok := result.Document(); ok || result.Status() != model.Failed || !executionDiagnostic(result.Diagnostics(), tc.code) {
-				t.Fatalf("invalid team accepted or wrong diagnostic: %s %+v", result.Status(), result.Diagnostics())
-			}
-		})
-	}
-}
-
-// teamSettings resolves the effective team of every Manager of the Library
-// fixture with the given execution document.

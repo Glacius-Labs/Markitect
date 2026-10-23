@@ -12,8 +12,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -256,22 +256,12 @@ func (s *Service) prepare(ctx context.Context, request project.PreviewRequest) (
 
 func documentationInstructionRefs(e project.AuthoredExecution) []string {
 	var result []string
-	if e.Defaults.Execute.Instructions != nil {
-		result = append(result, e.Defaults.Execute.Instructions.Value...)
-	}
-	if e.Defaults.Verify.Instructions != nil {
-		result = append(result, e.Defaults.Verify.Instructions.Value...)
-	}
-	if e.Packages != nil {
-		for _, override := range e.Packages.Value {
-			if override.Execute.Instructions != nil {
-				result = append(result, override.Execute.Instructions.Value...)
-			}
-			if override.Verify.Instructions != nil {
-				result = append(result, override.Verify.Instructions.Value...)
-			}
+	if e.Instructions != nil {
+		for _, instructions := range e.Instructions.Value {
+			result = append(result, instructions.Files.Value...)
 		}
 	}
+
 	return result
 }
 

@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
@@ -33,24 +33,10 @@ func fileCheckSeamFixture(t *testing.T) (*testkit.Repo, project.InputSelection, 
 		repo.Write(name, fileSeamInstruction(name))
 		selection.Instructions = append(selection.Instructions, selected(name))
 	}
-	execution := `apiVersion: markitect.execution/v1
-strategy: direct
-budget:
-  executionTime: 25m
-  turnTimeout: 10m
-  agentTurns: 120
-  passes: 12
-profiles:
-  execute: library-agent
-  verify: library-agent
+	execution := `apiVersion: markitect.execution/v2
 instructions:
-  execute: [ops/manager.md, ops/reviewer.md, ops/manager.md]
-  verify: [ops/reviewer.md]
-packages:
-  lending:
-    instructions:
-      execute: [ops/lending.md]
-      verify: [ops/manager.md, ops/reviewer.md]
+  .: [ops/manager.md, ops/reviewer.md, ops/manager.md, ops/reviewer.md]
+  lending: [ops/lending.md, ops/manager.md, ops/reviewer.md]
 checks:
   - id: project-tests
     profile: library-tests

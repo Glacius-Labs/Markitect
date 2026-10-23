@@ -23,14 +23,14 @@ func (p commandPeer) RunCommand(ctx context.Context, s container.ContainerSpec, 
 
 type workspacePeer struct {
 	closedMu    sync.Mutex
-	request     run.WorkspaceSpec
-	requests    []run.WorkspaceSpec
-	materialize func(run.WorkspaceSpec) (run.WorkspaceObservation, error)
-	close       func(context.Context, run.WorkspaceID) (run.WorkspaceObservation, error)
+	request     CopySpec
+	requests    []CopySpec
+	materialize func(CopySpec) (CopyObservation, error)
+	close       func(context.Context, CopyID) (CopyObservation, error)
 	closed      int
 }
 
-func (p *workspacePeer) Materialize(_ context.Context, s run.WorkspaceSpec) (run.WorkspaceObservation, error) {
+func (p *workspacePeer) Materialize(_ context.Context, s CopySpec) (CopyObservation, error) {
 	if p.request.ID == "" {
 		p.request = s
 	}
@@ -42,22 +42,16 @@ func (p *workspacePeer) Materialize(_ context.Context, s run.WorkspaceSpec) (run
 	if len(p.requests) > 1 {
 		volume = "private-home"
 	}
-	return run.WorkspaceObservation{ID: s.ID, Volume: volume, Tree: s.Tree.Digest()}, nil
+	return CopyObservation{ID: s.ID, Volume: volume, Tree: s.Tree.Digest()}, nil
 }
-func (p *workspacePeer) Harvest(context.Context, run.HarvestRequest) (run.WorkspaceHarvest, error) {
-	panic("check does not harvest its mutated copy")
-}
-func (p *workspacePeer) Peek(context.Context, run.HarvestRequest) (run.WorkspaceHarvest, error) {
-	panic("check does not peek its mutated copy")
-}
-func (p *workspacePeer) Close(ctx context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+func (p *workspacePeer) Close(ctx context.Context, id CopyID) (CopyObservation, error) {
 	p.closedMu.Lock()
 	p.closed++
 	p.closedMu.Unlock()
 	if p.close != nil {
 		return p.close(ctx, id)
 	}
-	return run.WorkspaceObservation{ID: id, Closed: true}, nil
+	return CopyObservation{ID: id, Closed: true}, nil
 }
 func checkRequest(t *testing.T) run.CheckRequest {
 	t.Helper()
@@ -153,8 +147,8 @@ func TestRunnerRefusesUnverifiedMaterializationAndClosesPartialCopy(t *testing.T
 	for _, kind := range []string{"identity", "tree", "uncertain", "closed", "volume", "error"} {
 		t.Run(kind, func(t *testing.T) {
 			req := checkRequest(t)
-			w := &workspacePeer{materialize: func(s run.WorkspaceSpec) (run.WorkspaceObservation, error) {
-				o := run.WorkspaceObservation{ID: s.ID, Volume: "private", Tree: s.Tree.Digest()}
+			w := &workspacePeer{materialize: func(s CopySpec) (CopyObservation, error) {
+				o := CopyObservation{ID: s.ID, Volume: "private", Tree: s.Tree.Digest()}
 				switch kind {
 				case "identity":
 					o.ID = "different"
@@ -233,11 +227,11 @@ func TestRunnerCancellationAndTimeoutCannotBecomePass(t *testing.T) {
 			if deadline {
 				req.Timeout = time.Millisecond
 			}
-			w := &workspacePeer{close: func(ctx context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+			w := &workspacePeer{close: func(ctx context.Context, id CopyID) (CopyObservation, error) {
 				if ctx.Err() != nil {
 					t.Fatal("cleanup inherited cancellation")
 				}
-				return run.WorkspaceObservation{ID: id, Closed: true}, nil
+				return CopyObservation{ID: id, Closed: true}, nil
 			}}
 			r, _ := NewRunnerWithRuntime(commandPeer{func(ctx context.Context, _ container.ContainerSpec, _ []string, _ []string, _ int64) (container.CommandResult, error) {
 				if !deadline {
@@ -257,8 +251,8 @@ func TestRunnerCleanupFailureCannotBecomePass(t *testing.T) {
 	for _, kind := range []string{"error", "identity", "not closed", "uncertain"} {
 		t.Run(kind, func(t *testing.T) {
 			req := checkRequest(t)
-			w := &workspacePeer{close: func(_ context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
-				o := run.WorkspaceObservation{ID: id, Closed: true}
+			w := &workspacePeer{close: func(_ context.Context, id CopyID) (CopyObservation, error) {
+				o := CopyObservation{ID: id, Closed: true}
 				switch kind {
 				case "error":
 					return o, errors.New("busy volume")
@@ -287,8 +281,8 @@ func TestRunnerRefusesUnverifiedHomeAndClosesBothCopies(t *testing.T) {
 		t.Run(kind, func(t *testing.T) {
 			req := checkRequest(t)
 			w := &workspacePeer{}
-			w.materialize = func(s run.WorkspaceSpec) (run.WorkspaceObservation, error) {
-				o := run.WorkspaceObservation{ID: s.ID, Volume: "private-copy", Tree: s.Tree.Digest()}
+			w.materialize = func(s CopySpec) (CopyObservation, error) {
+				o := CopyObservation{ID: s.ID, Volume: "private-copy", Tree: s.Tree.Digest()}
 				if len(w.requests) == 2 {
 					o.Volume = "private-home"
 					switch kind {
@@ -304,7 +298,7 @@ func TestRunnerRefusesUnverifiedHomeAndClosesBothCopies(t *testing.T) {
 			}
 			var first context.Context
 			var firstMu sync.Mutex
-			w.close = func(ctx context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+			w.close = func(ctx context.Context, id CopyID) (CopyObservation, error) {
 				firstMu.Lock()
 				defer firstMu.Unlock()
 				if first == nil {
@@ -312,7 +306,7 @@ func TestRunnerRefusesUnverifiedHomeAndClosesBothCopies(t *testing.T) {
 				} else if first == ctx || ctx.Err() != nil {
 					t.Fatal("closures share an expired context")
 				}
-				return run.WorkspaceObservation{ID: id, Closed: true}, nil
+				return CopyObservation{ID: id, Closed: true}, nil
 			}
 			r, _ := NewRunnerWithRuntime(commandPeer{func(context.Context, container.ContainerSpec, []string, []string, int64) (container.CommandResult, error) {
 				t.Fatal("unverified home executed")

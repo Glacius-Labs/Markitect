@@ -28,7 +28,7 @@ type CheckProfilePreparer interface {
 
 // ProfileInput can only be produced from an acquired Runtime profile document by Apply.
 // Section names the selected adapter section (codexAppServer or claudeCode
-// for an Agent, process or container for a check); Inline returns that
+// for an Agent or container for a check); Inline returns that
 // section, never a whole catalog to parse.
 type ProfileInput struct {
 	document                        project.SourceFile
@@ -50,25 +50,6 @@ func (p ProfileInput) Section() string                    { return p.section }
 func (p ProfileInput) Field() string                      { return p.field }
 func (p ProfileInput) Inline() *yaml.Node                 { return cloneRuntimeNode(p.inline) }
 func (p ProfileInput) Instructions() []project.SourceFile { return slices.Clone(p.instructions) }
-
-// ProfileMetadataFile records an observed regular file without retaining large
-// executable bytes. Location is an exact adapter acquisition coordinate, not a
-// request for Apply to read a path. ContentID is SHA-256 of actual whole bytes.
-type ProfileMetadataFile struct {
-	Location  project.SourceLocation
-	ContentID snapshot.ContentID
-	Size      int64
-	Mode      snapshot.Mode
-}
-
-// ProfileMetadataInventory is the complete regular-file inventory of an exact
-// schema boundary. Every file uses Boundary and a relative Path. Passed ports
-// must enumerate the complete set, including unused files, without redirects;
-// additions and deletions consequently change the comparison identity.
-type ProfileMetadataInventory struct {
-	Boundary string
-	Files    []ProfileMetadataFile
-}
 
 type RuntimeProfileDiagnostic struct {
 	Code     string
@@ -132,10 +113,8 @@ type CheckImageObservation struct {
 // capability or a provider DTO. InputBinding echoes ProfileInput.Binding();
 // Passed without that exact echo is rejected. Contract identifies the concrete
 // validation contract and its version. Passed requires exactly one evidence
-// mode: AgentImage for an Agent, whose provider matches its section, or
-// historical executable Files and complete agent schema Inventories for a
-// codexAppServer section; CheckImage for a container check, or executable
-// Files for a process check. Instructions select only captured inputs;
+// mode: AgentImage for an Agent or CheckImage for a container check.
+// Instructions select only captured inputs;
 // RequiredInstructions requests a NEW complete acquisition. Apply computes the
 // identity itself; callers cannot supply an arbitrary profile identity.
 type ProfileObservation struct {
@@ -144,8 +123,6 @@ type ProfileObservation struct {
 	Contract             ProfileContract
 	AgentImage           *AgentImageObservation `json:",omitempty"`
 	CheckImage           *CheckImageObservation `json:",omitempty"`
-	Files                []ProfileMetadataFile
-	Inventories          []ProfileMetadataInventory
 	Instructions         []project.SourceLocation
 	RequiredInstructions []project.SourceLocation
 	Diagnostics          []RuntimeProfileDiagnostic
@@ -216,11 +193,6 @@ func cloneProfileObservation(o ProfileObservation) ProfileObservation {
 	if o.CheckImage != nil {
 		image := *o.CheckImage
 		o.CheckImage = &image
-	}
-	o.Files = slices.Clone(o.Files)
-	o.Inventories = slices.Clone(o.Inventories)
-	for i := range o.Inventories {
-		o.Inventories[i].Files = slices.Clone(o.Inventories[i].Files)
 	}
 	o.Instructions = slices.Clone(o.Instructions)
 	o.RequiredInstructions = slices.Clone(o.RequiredInstructions)

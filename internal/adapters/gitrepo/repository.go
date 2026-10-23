@@ -12,8 +12,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 var (
@@ -44,7 +44,7 @@ func DefaultLimits() Limits {
 // Repository retains capture bindings and opaque publication permits in memory.
 // Each call owns its handles and Git processes. Construction performs no I/O.
 type Repository struct {
-	limits        Limits
+	limits Limits
 	// A private deterministic scheduling seam for acquisition/publication races.
 	observe func(event, path string)
 }

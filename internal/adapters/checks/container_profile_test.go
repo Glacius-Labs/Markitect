@@ -6,12 +6,12 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-func containerProfileInputs(t *testing.T) (ContainerProfile, apply.ExecutionCheck, run.CheckRequest) {
+func containerProfileInputs(t *testing.T) (ContainerProfile, project.ExecutionCheck, run.CheckRequest) {
 	t.Helper()
 	want := checkRequest(t)
 	profile := ContainerProfile{
@@ -19,7 +19,7 @@ func containerProfileInputs(t *testing.T) (ContainerProfile, apply.ExecutionChec
 		ArgumentPrefix: []string{want.Args[0]}, Env: append([]string(nil), want.Env...),
 		Limits: want.Limits, MaxOutputBytes: want.MaxOutputBytes,
 	}
-	check := apply.ExecutionCheck{
+	check := project.ExecutionCheck{
 		ID:      organization.Setting[string]{Value: string(want.ID)},
 		Profile: organization.Setting[string]{Value: "explicit-runtime-profile"},
 	}

@@ -1,16 +1,15 @@
 package runtimeconfig
 
 import (
-	"cmp"
 	"context"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/json"
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"hash"
 	"path"
 	"reflect"
-	"slices"
 	"strings"
 	"unicode"
 	"unicode/utf8"
@@ -18,8 +17,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
-
-const maxProfileMetadataFiles = 100000
 
 const (
 	maxAgentImageMetadataBytes = 1 << 20
@@ -81,10 +78,10 @@ func (p *PreparedProfile) problem(status model.Status, code, message string) {
 func (p *PreparedProfile) validateObservation() {
 	o := &p.observation
 	if o.InputBinding != (ProfileBinding{}) && o.InputBinding != p.input.Binding() || o.Status == model.Passed && o.InputBinding == (ProfileBinding{}) {
-		p.problem(model.Failed, "input_binding", "Metadata observation does not echo the exact supplied profile request binding.")
+		p.problem(model.Failed, "input_binding", "Metadata must echo the exact acquired request binding.")
 	}
-	if o.Status == model.Passed && (strings.TrimSpace(o.Contract.Name) == "" || o.Contract.Version == 0) {
-		p.problem(model.Failed, "contract", "Passed requires a nonempty literal adapter contract name and an explicit positive version.")
+	if o.Status == model.Passed && (!agentImageLiteral(o.Contract.Name) || o.Contract.Version == 0) {
+		p.problem(model.Failed, "contract", "Passed requires an explicit named versioned adapter contract.")
 	}
 	if o.AgentImage != nil {
 		p.validateAgentImage()
@@ -92,68 +89,28 @@ func (p *PreparedProfile) validateObservation() {
 	if o.CheckImage != nil {
 		p.validateCheckImage()
 	}
-	image := o.AgentImage != nil || o.CheckImage != nil
-	if o.Status == model.Passed && !image && (len(o.Files) == 0 || p.input.namespace == "agentProfiles" && len(o.Inventories) == 0) {
-		p.problem(model.Failed, "metadata_missing", "Passed requires executable metadata and agent schema inventories.")
+	if o.Status == model.Passed && ((p.input.namespace == "agentProfiles" && (o.AgentImage == nil || o.CheckImage != nil)) || (p.input.namespace == "checkProfiles" && (o.CheckImage == nil || o.AgentImage != nil))) {
+		p.problem(model.Failed, "image_missing", "Passed requires exactly the selected native or check image observation.")
 	}
-	if o.Status == model.Passed && !image && (p.input.section == "claudeCode" || p.input.section == "container") {
-		p.problem(model.Failed, "image_missing", "A claudeCode or container profile is bound to its image, not to Runtime files.")
-	}
-	count := len(o.Files)
-	for _, inventory := range o.Inventories {
-		count += len(inventory.Files)
-	}
-	if count > maxProfileMetadataFiles || len(o.Inventories) > maxRuntimeProfiles {
-		p.problem(model.NotCompleted, "metadata_limit", "Metadata exceeds the finite preparation inventory limit.")
+	if len(o.Instructions)+len(o.RequiredInstructions) > 10000 {
+		p.problem(model.NotCompleted, "instruction_limit", "Instruction observation exceeds finite count bound.")
 		return
 	}
-	seen := make(map[project.SourceLocation]bool)
-	validateFile := func(file ProfileMetadataFile) {
-		if file.Location.Boundary == "" || file.Location.Path.String() == "" || file.ContentID == (snapshot.ContentID{}) || file.Size < 0 || file.Mode != snapshot.Regular && file.Mode != snapshot.Executable {
-			p.problem(model.Failed, "metadata_file", "Metadata requires an exact location, content digest, nonnegative size and regular file mode.")
+	for _, ref := range o.Instructions {
+		if ref.Boundary == "" || ref.Path.String() == "" {
+			p.problem(model.Failed, "instruction_location", "Instruction coordinates must be explicit.")
+			continue
 		}
-		if seen[file.Location] {
-			p.problem(model.Failed, "metadata_duplicate", "Duplicate external metadata location.")
-		}
-		seen[file.Location] = true
-	}
-	less := func(a, b ProfileMetadataFile) int {
-		return cmp.Or(cmp.Compare(a.Location.Boundary, b.Location.Boundary), cmp.Compare(a.Location.Path.String(), b.Location.Path.String()))
-	}
-	for _, file := range o.Files {
-		validateFile(file)
-	}
-	slices.SortFunc(o.Files, less)
-	boundaries := make(map[string]bool)
-	for i := range o.Inventories {
-		inventory := &o.Inventories[i]
-		if inventory.Boundary == "" || boundaries[inventory.Boundary] {
-			p.problem(model.Failed, "inventory_boundary", "Schema inventory boundaries must be explicit and unique.")
-		}
-		boundaries[inventory.Boundary] = true
-		if o.Status == model.Passed && len(inventory.Files) == 0 {
-			p.problem(model.Failed, "inventory_empty", "A passed schema inventory cannot be empty.")
-		}
-		for _, file := range inventory.Files {
-			if file.Location.Boundary != inventory.Boundary {
-				p.problem(model.Failed, "inventory_location", "Inventory file must belong to its declared schema boundary.")
-			}
-			validateFile(file)
-		}
-		slices.SortFunc(inventory.Files, less)
-	}
-	slices.SortFunc(o.Inventories, func(a, b ProfileMetadataInventory) int { return cmp.Compare(a.Boundary, b.Boundary) })
-	for _, location := range o.Instructions {
-		if _, ok := p.instruction(location); !ok {
-			o.RequiredInstructions = append(o.RequiredInstructions, location)
-			p.problem(model.NotCompleted, "instruction_uncaptured", "Profile instruction requires a new complete source acquisition.")
+		if _, ok := p.instruction(ref); !ok {
+			p.problem(model.NotCompleted, "instruction_uncaptured", "Selected instructions require a new complete acquisition.")
 		}
 	}
-	for _, location := range o.RequiredInstructions {
-		if location.Boundary == "" || location.Path.String() == "" {
-			p.problem(model.Failed, "instruction_location", "Required instruction must name an explicit boundary and path.")
+	for _, ref := range o.RequiredInstructions {
+		if ref.Boundary == "" || ref.Path.String() == "" {
+			p.problem(model.Failed, "instruction_location", "Required instruction coordinates must be explicit.")
+		} else {
+			p.problem(model.NotCompleted, "instruction_required", "A complete new instruction acquisition is required.")
 		}
-		p.problem(model.NotCompleted, "instruction_required", "Runtime instruction is required in a new complete acquisition; existing inputs are unchanged.")
 	}
 }
 
@@ -161,7 +118,7 @@ func (p *PreparedProfile) validateAgentImage() {
 	o := &p.observation
 	image := o.AgentImage
 	complete := o.Status == model.Passed
-	if p.input.namespace != "agentProfiles" || len(o.Files) != 0 || len(o.Inventories) != 0 {
+	if p.input.namespace != "agentProfiles" || o.CheckImage != nil {
 		p.problem(model.Failed, "image_evidence", "Agent image evidence is agent-only and cannot mix with file/inventory evidence.")
 	}
 	if complete || image.Provider != "" {
@@ -213,7 +170,7 @@ func (p *PreparedProfile) validateCheckImage() {
 	o := &p.observation
 	image := o.CheckImage
 	complete := o.Status == model.Passed
-	if p.input.namespace != "checkProfiles" || p.input.section != "container" || o.AgentImage != nil || len(o.Files) != 0 || len(o.Inventories) != 0 {
+	if p.input.namespace != "checkProfiles" || p.input.section != "container" || o.AgentImage != nil {
 		p.problem(model.Failed, "image_evidence", "Check image evidence belongs to a container check and cannot mix with other evidence.")
 	}
 	if (complete || image.ImageID != "") && !profileSHA256(image.ImageID) {
@@ -303,68 +260,21 @@ func (p ProfileInput) Binding() ProfileBinding {
 
 func (p PreparedProfile) comparisonIdentity() string {
 	h := sha256.New()
-	text := func(value string) { runtimeHashText(h, value) }
-	location := func(value project.SourceLocation) { text(value.Boundary); text(value.Path.String()) }
-	metadata := func(value ProfileMetadataFile) {
-		location(value.Location)
-		text(value.ContentID.String())
-		text(fmt.Sprint(value.Size))
-		text(fmt.Sprint(value.Mode))
-	}
-	source := func(value project.SourceFile) {
-		location(value.Location)
-		text(value.RepositoryPath.String())
-		text(value.File.ContentID().String())
-		text(fmt.Sprint(value.File.Mode()))
-	}
-	switch {
-	case p.observation.CheckImage != nil:
-		text("markitect.runtime-profile/static-check-image-v1")
-	case p.observation.AgentImage == nil:
-		// Historical file/inventory identities retain their exact hash sequence.
-		text("markitect.runtime-profile/static-v1")
-	default:
-		text("markitect.runtime-profile/static-image-v1")
-	}
-	text(p.input.Binding().content.String())
-	source(p.input.document)
-	text(p.input.namespace)
-	text(p.input.name)
-	text(p.input.field)
-	text(p.observation.Contract.Name)
-	text(fmt.Sprint(p.observation.Contract.Version))
-	if image := p.observation.AgentImage; image != nil {
-		text(string(image.Provider))
-		text(image.ImageID)
-		text(image.Metadata.Path)
-		text(image.Metadata.ContentID.String())
-		text(fmt.Sprint(image.Metadata.Size))
-		text(image.CLIVersion)
-		text(image.AgentdVersion)
-		text(image.RecordedCodexSchemaDigest)
-	}
-	if image := p.observation.CheckImage; image != nil {
-		text(image.ImageID)
-		text(image.Executable.Path)
-		text(image.Executable.ContentID.String())
-		text(fmt.Sprint(image.Executable.Size))
-	}
-	text(fmt.Sprint(len(p.observation.Files)))
-	for _, file := range p.observation.Files {
-		metadata(file)
-	}
-	text(fmt.Sprint(len(p.observation.Inventories)))
-	for _, inventory := range p.observation.Inventories {
-		text(inventory.Boundary)
-		text(fmt.Sprint(len(inventory.Files)))
-		for _, file := range inventory.Files {
-			metadata(file)
-		}
-	}
-	text(fmt.Sprint(len(p.observation.Instructions)))
-	for _, ref := range p.observation.Instructions {
+	runtimeHashText(h, "markitect.runtime-profile/static-native-v2")
+	runtimeHashText(h, p.input.Binding().content.String())
+	o := p.observation
+	data, _ := json.Marshal(struct {
+		Contract ProfileContract
+		Agent    *AgentImageObservation
+		Check    *CheckImageObservation
+	}{o.Contract, o.AgentImage, o.CheckImage})
+	h.Write(data)
+	for _, ref := range o.Instructions {
 		file, _ := p.instruction(ref)
-		source(file)
+		runtimeHashText(h, ref.Boundary)
+		runtimeHashText(h, ref.Path.String())
+		runtimeHashText(h, file.File.ContentID().String())
+		runtimeHashText(h, fmt.Sprint(file.File.Mode()))
 	}
 	return fmt.Sprintf("sha256:%x", h.Sum(nil))
 }
