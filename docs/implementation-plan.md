@@ -8,6 +8,10 @@ The maintained entry is this page, the [source counter-review](development/v1-ar
 
 The historical planning base is `447ac3b152de79b52de80513e14dc94349a060bd`. The consolidated plan integrated through PR #635; source delivery now advances Main through separately reviewed slices. Every dispatch must revalidate its actual integrated base, clean/dirty state and exclusive write scope; historical planning coordinates are not the current source status.
 
+S1 retirement and S2 replacement are integrated. [PR #646](https://github.com/Glacius-Labs/Markitect/pull/646) merged reviewed head `4ebe694a7ed70dd822c4431d704151f5eaeb2514` as `d1f2887b50ab7bdbca67963a223b74952973e315`; clean Main readback has the same tree, `82c7be43c6cb4dc220af88248ad619d3f2e81be6`. The standalone Run and diagnostic commands are available; public Apply explicitly refuses execution pending S3. S3 starts immediately from that integrated base. This intermediate source is not a finished V1 candidate.
+
+The complete Go suite and packaged source smoke passed on `27de9f95`; subsequent native changes have their own complete Codex package, focused Run/native regressions, compilation, architecture and accounting results on `4ebe694a`. The [early native proof](design/v1-execution-architecture.md#early-native-evidence) passed on that exact head. The PR retains the complete review and validation attribution, including failed attempts. Hosted CI, Linux/race and final complete Apply qualification remain outstanding.
+
 ## Apply rebuild plan
 
 Preserve the canonical model/compiler/registry/ownership/accounting foundation. Build one new coherent Model -> Artifacts executor. Runtime APIs and code have no preservation right. Assessment, Implement and Verify use the same full hierarchy, including empty Packages. Fresh Run environments, durable candidates/results, Shared Notes and normal account login are mandatory. Extract, UI/Cockpit, interactive authoring and old-consumer migration are excluded. Their dependencies are retired explicitly, never imported into the new foundation.
