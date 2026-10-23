@@ -230,14 +230,41 @@ func sameSourceEntries(a, b []model.Entry) bool {
 	return reflect.DeepEqual(a, b)
 }
 
-// ChecksFor selects obligations for this Manager's subtree; Root rechecks the
-// complete declared suite on the final candidate, including cross-area changes.
+// ChecksFor retains obligation eligibility, but requiredBy alone cannot place
+// a check in a private copy. Its declared directory and every nested ownership
+// area must also belong to this Manager's subtree. Root runs the complete suite.
 func (p Prepared) ChecksFor(manager string) []ExecutionCheck {
 	var selected []ExecutionCheck
 	for _, c := range p.Checks() {
-		if manager == organization.Root || c.RequiredBy != nil && (c.RequiredBy.Value.Package == manager || strings.HasPrefix(c.RequiredBy.Value.Package, manager+"/")) {
+		if manager == organization.Root || c.RequiredBy != nil && packageWithin(c.RequiredBy.Value.Package, manager) && p.checkDirectoryWithin(c, manager) {
 			selected = append(selected, c)
 		}
 	}
 	return selected
+}
+
+func packageWithin(pkg, manager string) bool {
+	return pkg == manager || strings.HasPrefix(pkg, manager+"/")
+}
+
+func (p Prepared) checkDirectoryWithin(c ExecutionCheck, manager string) bool {
+	layout, ok := p.attempt.Files().Layout()
+	if !ok || c.Directory.Value.IsRoot() {
+		return false
+	}
+	directory := c.Directory.Value.String()
+	owner, ok := layout.DirectoryOwner(directory)
+	pkg, local := owner.Package()
+	if !ok || !local || !packageWithin(pkg, manager) {
+		return false
+	}
+	for _, area := range layout.Areas() {
+		if area.Path == directory || strings.HasPrefix(area.Path, directory+"/") {
+			pkg, local := area.Owner.Package()
+			if !local || !packageWithin(pkg, manager) {
+				return false
+			}
+		}
+	}
+	return true
 }
