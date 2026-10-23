@@ -101,7 +101,7 @@ var responsibilityImports = map[string][]string{
 // Only concrete fixture and composition needs receive test-only edges;
 // production keeps its separately declared responsibility imports.
 var responsibilityTestImports = map[string][]string{
-	"internal/adapters/codexappserver": {"internal/adapters/gitrepo"},
+	"internal/adapters/codexappserver": {"internal/adapters/gitrepo", "internal/adapters/runstore"},
 	"internal/adapters/gitrepo":        {"internal/adapters/runstore", "internal/adapters/checks", "internal/runtimeconfig", "internal/organization", "internal/realization"},
 }
 

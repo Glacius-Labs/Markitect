@@ -113,6 +113,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/codexappserver", "internal/agentd", false},
 		{"internal/adapters/codexappserver", "internal/adapters/claudecode", false},
 		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", false},
+		{"internal/adapters/codexappserver", "internal/adapters/runstore", false},
 		{"internal/adapters/codexappserver", "internal/tooling/source", false},
 		{"internal/bootstrap", "internal/adapters/container", false},
 		{"internal/bootstrap", "internal/adapters/claudecode", true},
@@ -147,7 +148,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.allowed
-			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" || tc.from == "internal/adapters/codexappserver" && tc.to == "internal/adapters/gitrepo" {
+			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" || tc.from == "internal/adapters/codexappserver" && (tc.to == "internal/adapters/gitrepo" || tc.to == "internal/adapters/runstore") {
 				allowed = test
 			} // Actual controlled declared-check composition is test-only.
 			got := Check([]Edge{{From: tc.from, To: tc.to, Test: test}})
