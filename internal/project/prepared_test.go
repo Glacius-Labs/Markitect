@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"reflect"
 	"strings"
 	"testing"
 	"unicode/utf8"
@@ -115,5 +116,62 @@ func TestCandidateAccountingFeedbackIsBoundedDeterministicAndExcludesFileContent
 			t.Fatal("same fixed candidate returned unstable feedback")
 		}
 		previous = text
+	}
+}
+
+// requiredBy identifies an obligation; private check execution also needs a
+// declared directory entirely inside the Manager's modeled responsibility.
+func TestChecksForConfinesExistingObligationsToOwnedDirectorySubtrees(t *testing.T) {
+	for _, tc := range []struct {
+		name, ownership, directory, requiredBy string
+		selected                               []string
+	}{
+		{"owned directory", libraryOwnershipYAML, "realization/library", "library/callable-interface", []string{"library"}},
+		{"project suite", libraryOwnershipYAML, "realization", "library/callable-interface", nil},
+		{"repository root", "ownership:\n  - {path: './', owner: library}\n", ".", "library/callable-interface", nil},
+		{"missing layout", "", "realization/library", "library/callable-interface", nil},
+		{"unowned directory", "ownership:\n  - {path: realization/library/, owner: library}\n", "elsewhere", "library/callable-interface", nil},
+		{"nested exact foreign file", libraryOwnershipYAML + "  - {path: realization/library/build.go, owner: .}\n", "realization/library", "library/callable-interface", nil},
+		{"nested foreign directory", libraryOwnershipYAML + "  - {path: realization/library/peer/, owner: lending}\n", "realization/library", "library/callable-interface", nil},
+		{"nested exact own file", libraryOwnershipYAML + "  - {path: realization/library/build.go, owner: library}\n", "realization/library", "library/callable-interface", []string{"library"}},
+		{"path prefix is not containment", libraryOwnershipYAML + "  - {path: realization/library-other/, owner: lending}\n", "realization/library", "library/callable-interface", []string{"library"}},
+		{"eligible aggregate ancestor", libraryOwnershipYAML, "realization/lending", "lending/reminders/assess-overdue", []string{"lending"}},
+		{"owned grandchild", libraryOwnershipYAML, "realization/lending/reminders", "lending/reminders/assess-overdue", []string{"lending", "lending/reminders"}},
+		{"nested exact ancestor file", libraryOwnershipYAML + "  - {path: realization/lending/reminders/build.go, owner: lending}\n", "realization/lending/reminders", "lending/reminders/assess-overdue", []string{"lending"}},
+		{"without obligation stays root only", libraryOwnershipYAML, "realization/library", "", nil},
+		{"owner does not add unrelated eligibility", libraryOwnershipYAML, "realization/lending", "library/callable-interface", nil},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			content := "apiVersion: markitect.execution/v2\n" + tc.ownership + "checks:\n  - id: project-tests\n    profile: library-tests\n    directory: " + tc.directory + "\n    args: [test, ./...]\n    timeout: 2m\n"
+			if tc.requiredBy != "" {
+				content += "    requiredBy: " + tc.requiredBy + "\n"
+			}
+			selection, raw := executionInputs(t, content)
+			registrySource(t, &selection, &raw, ".markitect/registry/registry.yaml", "apiVersion: markitect.registry/v1\nartifacts: []\n", true)
+			source := controlledSource{capture: func(context.Context, project.CaptureRequest) (project.CapturedInputs, error) {
+				return captured(raw), nil
+			}}
+			result, err := project.NewPreparationService(project.NewModelService(source, source)).Capture(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
+			attempt, ok := result.Prepared()
+			if err != nil || !ok {
+				t.Fatal(result.Status(), err)
+			}
+			p, err := project.Prepare(attempt)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(p.ChecksFor("."), p.Checks()) {
+				t.Fatal("Root lost or changed declared suite")
+			}
+			var selected []string
+			for _, manager := range []string{"library", "lending", "lending/reminders"} {
+				if len(p.ChecksFor(manager)) != 0 {
+					selected = append(selected, manager)
+				}
+			}
+			if !reflect.DeepEqual(selected, tc.selected) {
+				t.Fatalf("private check Managers=%v, want %v", selected, tc.selected)
+			}
+		})
 	}
 }

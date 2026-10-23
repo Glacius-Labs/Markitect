@@ -2,7 +2,7 @@
 
 `Executor.Execute` executes one Assessment, Implement or Verify with the complete checked Project hierarchy. It opens every Manager environment before ordinary work, gives each its own Git copy, and uses direct child delegation, asynchronous questions, exact child review and upward Git integration. Completed Managers remain reachable in their ordinary conversation. A late required finding invalidates affected acceptance.
 
-Each submitted Implement candidate passes structural validation and its scoped declared checks. Root runs the complete suite. Assessment and Verify retain their fixed input; review scratch cannot replace product bytes. Implement submission establishes no independent approval or publication.
+Each submitted Implement candidate passes structural validation. Its declared checks additionally require both obligation eligibility and directory ownership confined to the Manager subtree, including nested exact-file areas. Root runs the complete suite; checks without `requiredBy` remain Root-only. This placement does not infer build dependencies or propagate later parent/sibling changes into private copies. Assessment and Verify retain their fixed input; review scratch cannot replace product bytes. Implement submission establishes no independent approval or publication.
 
 The shared allowance bounds all productive messages and questions; the request bounds Manager count, cleanup and terminal persistence separately. Partial startup, blocked adapters, cancellation, observation failures and storage/read-back failures cannot produce successful technical completion. Cleanup records actual outcomes and uncertainty; a timeout never claims a process was killed.
 
