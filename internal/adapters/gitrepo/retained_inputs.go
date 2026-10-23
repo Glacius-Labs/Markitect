@@ -159,16 +159,33 @@ func (g *LocalGit) retained(ctx context.Context, ref project.CandidateRef, p pro
 	if err != nil {
 		return retainedInputs{}, err
 	}
+	return g.retainedAt(ctx, dir, p)
+}
+func (g *LocalGit) inputLimit() (int64, error) {
+	limit := g.MaxInputBytes
+	if limit == 0 {
+		limit = DefaultLimits().TotalBytes
+	}
+	if limit < 0 || limit > DefaultLimits().TotalBytes {
+		return 0, ErrLimit
+	}
+	return limit, nil
+}
+func (g *LocalGit) retainedAt(ctx context.Context, dir string, p project.Prepared) (retainedInputs, error) {
+	limit, err := g.inputLimit()
+	if err != nil {
+		return retainedInputs{}, err
+	}
 	f, err := os.Open(filepath.Join(dir, "inputs.json"))
 	if err != nil {
 		return retainedInputs{}, err
 	}
 	defer f.Close()
-	data, err := io.ReadAll(io.LimitReader(f, DefaultLimits().TotalBytes+1))
+	data, err := io.ReadAll(io.LimitReader(f, limit+1))
 	if err != nil {
 		return retainedInputs{}, err
 	}
-	if int64(len(data)) > DefaultLimits().TotalBytes {
+	if int64(len(data)) > limit {
 		return retainedInputs{}, ErrLimit
 	}
 	expected, err := json.Marshal(retainedFrom(p))

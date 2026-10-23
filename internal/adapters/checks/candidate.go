@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"maps"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -52,7 +53,14 @@ func (c *CandidateRunner) Check(ctx context.Context, declared []project.Executio
 	if a.Error() != nil {
 		return nil, a.Error()
 	}
+	if a.Model().Checked().Status != model.Passed || a.Registry().Status() != model.Passed || a.Files().Status() != model.Passed || a.Execution().Status() != model.Passed || a.Contexts().Status() != model.Passed {
+		return nil, fmt.Errorf("%w: check requires complete fixed structural observation", run.ErrObservationIncomplete)
+	}
 	tree := a.Model().Inputs().Raw.Census
+	dirs, err := project.CheckDirectories(a.Model().Inputs().Raw)
+	if err != nil {
+		return nil, err
+	}
 	var observations []run.CheckObservation
 	for _, d := range declared {
 		profile, exists := c.profiles[d.Profile.Value]
@@ -67,6 +75,7 @@ func (c *CandidateRunner) Check(ctx context.Context, declared []project.Executio
 		if err != nil {
 			return observations, err
 		}
+		req.Directories = dirs
 		receipt, commandErr := runner.Run(ctx, req)
 		o := run.CheckObservation{ID: d.ID.Value, Commit: fixed.ID, Receipt: receipt}
 		if commandErr != nil {

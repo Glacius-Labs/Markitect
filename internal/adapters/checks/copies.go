@@ -17,14 +17,16 @@ type DisposableCopies interface {
 
 type CopyID string
 type CopySpec struct {
-	ID   CopyID
-	Tree snapshot.Tree
+	ID          CopyID
+	Tree        snapshot.Tree
+	Directories []snapshot.Path
 }
 type CopyObservation struct {
 	ID                CopyID
 	Volume            string
 	Subpath           string
 	Tree              snapshot.TreeID
+	Directories       []snapshot.Path
 	Closed, Uncertain bool
 	Reason            string
 }

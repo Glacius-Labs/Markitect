@@ -137,8 +137,12 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"tools/smoke", "internal/bootstrap", false},
 	} {
 		for _, test := range []bool{false, true} {
+			allowed := tc.allowed
+			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" {
+				allowed = test
+			} // Actual controlled declared-check composition is test-only.
 			got := Check([]Edge{{From: tc.from, To: tc.to, Test: test}})
-			if (len(got) == 0) != tc.allowed {
+			if (len(got) == 0) != allowed {
 				t.Errorf("%s -> %s test=%v: %v", tc.from, tc.to, test, got)
 			}
 		}

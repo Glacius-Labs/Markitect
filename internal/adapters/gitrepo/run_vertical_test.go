@@ -15,6 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -101,6 +102,10 @@ type controlledManagers struct {
 	receiptCalls        int
 	acceptedRepair      bool
 	forceDecision       run.Decision
+	lateReject          bool
+	badManifest         bool
+	didLateReject       bool
+	observation         *run.SessionObservation
 	exchangeBlock       <-chan struct{}
 	closeBlock          <-chan struct{}
 }
@@ -119,8 +124,18 @@ func (c *controlledManagers) Open(_ context.Context, s run.SessionSpec) (run.Ses
 	if c.failOpen && s.Manager.Package == "a" {
 		return m, fmt.Errorf("injected partial session startup")
 	}
+	if c.observation != nil {
+		return observedControlledSession{Session: m, value: *c.observation}, nil
+	}
 	return m, nil
 }
+
+type observedControlledSession struct {
+	run.Session
+	value run.SessionObservation
+}
+
+func (s observedControlledSession) Observation() run.SessionObservation { return s.value }
 func (m *controlledManager) Close(context.Context) error {
 	if m.owner.closeBlock != nil && m.spec.Manager.Package == "a" {
 		<-m.owner.closeBlock
@@ -147,6 +162,12 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 		}
 		if event.Question == nil {
 			return run.Response{}, fmt.Errorf("receipt message lost event")
+		}
+		if event.Question.Text == "Reassess the already accepted handoff." {
+			if err = tools.Reply(ctx, event.Question.ID, "late required correction"); err != nil {
+				return run.Response{}, err
+			}
+			return run.Response{Decision: run.Reject, Findings: []run.Finding{{Text: "Late required correction discovered after accepted integration."}}}, nil
 		}
 		if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
 			return run.Response{}, err
@@ -291,7 +312,40 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 		if err := tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err != nil {
 			return run.Response{}, err
 		}
-		if m.spec.Mandate == run.Implement && h.Manager == "a/deep" && !m.owner.acceptedRepair {
+		if m.owner.lateReject && h.Manager == "a/deep" && !m.owner.didLateReject {
+			m.owner.didLateReject = true
+			id, err := tools.Ask(ctx, h.Manager, "Reassess the already accepted handoff.")
+			if err != nil {
+				return run.Response{}, err
+			}
+			for {
+				event, err := tools.Await(ctx)
+				if err != nil {
+					return run.Response{}, err
+				}
+				if event.Question != nil {
+					if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
+						return run.Response{}, err
+					}
+				}
+				if event.Handoff != nil {
+					pending = append(pending, event.Handoff)
+				}
+				if event.Answer != nil && event.Answer.ID == id {
+					if event.Answer.Text != "late required correction" {
+						return run.Response{}, fmt.Errorf("late finding not actually delivered")
+					}
+					break
+				}
+			}
+			findings := []run.Finding{{Text: "Correct the actual late required finding."}}
+			if err = tools.Delegate(ctx, h.Manager, "Correct late rejection.", findings); err != nil {
+				return run.Response{}, err
+			}
+			m.owner.corrections++
+			continue
+		}
+		if m.spec.Mandate == run.Implement && h.Manager == "a/deep" && !m.owner.acceptedRepair && !m.owner.lateReject {
 			m.owner.acceptedRepair = true
 			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "out/deep.txt"), []byte("parent revision\n"), 0600); err != nil {
 				return run.Response{}, err
@@ -310,6 +364,19 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 	if _, err := tools.AppendNote(ctx, "controlled test", m.spec.Manager.Package+" participated"); err != nil {
 		return run.Response{}, err
 	}
+	if m.spec.Mandate == run.Implement && m.owner.badManifest && m.spec.Manager.Package == "." {
+		entry, found := m.spec.Prepared.Attempt().Model().Inputs().Raw.Census.Lookup(fixturePathForControlled(".markitect/model.yaml"))
+		if !found {
+			return run.Response{}, fmt.Errorf("captured manifest absent")
+		}
+		data := entry.Bytes()
+		if m.calls == 1 {
+			data = []byte("formatVersion: invalid\nid: run-fixture\n")
+		}
+		if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, ".markitect/model.yaml"), data, 0600); err != nil {
+			return run.Response{}, err
+		}
+	}
 	if m.spec.Mandate == run.Implement {
 		path, value := "", ""
 		if m.spec.Manager.Package == "a" {
@@ -319,6 +386,9 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 			path, value = "out/deep.txt", "wrong\n"
 			if len(message.Feedback) > 0 {
 				value = "corrected\n"
+				if message.Task == "Correct late rejection." {
+					value = "late corrected\n"
+				}
 				if message.Task == "Repair after parent integration." {
 					value = "repaired after integration\n"
 				}
@@ -422,3 +492,5 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 		t.Fatal("candidate depended on original source", err)
 	}
 }
+
+func fixturePathForControlled(s string) snapshot.Path { p, _ := snapshot.NewPath(s); return p }

@@ -27,27 +27,27 @@ type managerState struct {
 	accepting                    bool
 	working                      bool
 	lateDecision                 Decision
+	judgment                     Decision
 	idle                         chan struct{}
 	done                         chan completion
 	inbox                        chan Event
 }
 type execution struct {
-	executor     *Executor
-	request      Request
-	ctx          context.Context
-	cancel       context.CancelFunc
-	workspace    WorkspaceService
-	mu           sync.Mutex
-	states       map[string]*managerState
-	result       Result
-	active       sync.WaitGroup
-	questions    map[string]Question
-	answered     map[string]bool
-	sequence     int
-	closing      bool
-	asyncErr     error
-	lateDecision Decision
-	calls        sync.WaitGroup
+	executor  *Executor
+	request   Request
+	ctx       context.Context
+	cancel    context.CancelFunc
+	workspace WorkspaceService
+	mu        sync.Mutex
+	states    map[string]*managerState
+	result    Result
+	active    sync.WaitGroup
+	questions map[string]Question
+	answered  map[string]bool
+	sequence  int
+	closing   bool
+	asyncErr  error
+	calls     sync.WaitGroup
 }
 
 func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
@@ -126,9 +126,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 			}
 		}
 		x.mu.Lock()
-		if x.lateDecision != "" {
-			root.Decision = x.lateDecision
-		}
+
 		if x.asyncErr != nil {
 			workErr = errors.Join(workErr, x.asyncErr)
 		}
@@ -137,6 +135,27 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		}
 		x.closing = true
 		x.mu.Unlock()
+	}
+
+	if workErr == nil {
+		root.Decision, workErr = x.aggregate(x.states[organization.Root])
+		if workErr == nil && r.Mandate == Implement {
+			for _, m := range r.Prepared.Topology().Managers() {
+				state := x.states[m.Package]
+				latest, err := state.copy.Snapshot(x.ctx)
+				if err != nil {
+					workErr = err
+					break
+				}
+				state.mu.Lock()
+				fixed := state.handoff.Result
+				state.mu.Unlock()
+				if latest != fixed {
+					workErr = fmt.Errorf("%w: Manager %s changed after its fixed handoff", ErrObservationIncomplete, m.Package)
+					break
+				}
+			}
+		}
 	}
 
 	if workErr == nil {
@@ -326,6 +345,9 @@ func (x *execution) tools(s *managerState) Tools {
 			if target.assigned && !concreteFindings(feedback) {
 				return fmt.Errorf("correction of completed child requires findings")
 			}
+			if target.lateDecision == ModelBlocker || target.judgment == ModelBlocker || target.handoff.Review != nil && target.handoff.Review.Decision == ModelBlocker {
+				return fmt.Errorf("a model blocker requires a new model and Run")
+			}
 			s.mu.Lock()
 			base := Commit{x.request.Input.Commit, x.request.Input.Tree}
 			var err error
@@ -338,6 +360,10 @@ func (x *execution) tools(s *managerState) Tools {
 			s.mu.Unlock()
 			if err != nil {
 				return err
+			}
+
+			if target.lateDecision == Reject {
+				target.lateDecision = ""
 			}
 			target.base = base
 			first := !target.assigned
@@ -563,6 +589,13 @@ func (x *execution) check(s *managerState, commit Commit, required bool) error {
 				return fmt.Errorf("check %s did not pass exactly once on fixed commit", c.ID)
 			}
 			receipt := c.Receipt
+			dirs, err := project.CheckDirectories(a.Model().Inputs().Raw)
+			if err != nil {
+				return err
+			}
+			if !sameDirectories(receipt.Directories, dirs) {
+				return fmt.Errorf("%w: check directory inventory changed", ErrObservationIncomplete)
+			}
 			if !receipt.Started || !receipt.Exited || receipt.Uncertain || receipt.TimedOut || !receipt.CopiesClosed || !imageIdentity(receipt.ImageID) || c.Error != "" {
 				return fmt.Errorf("%w: check %s", ErrObservationIncomplete, c.ID)
 			}
