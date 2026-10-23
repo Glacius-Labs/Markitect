@@ -78,7 +78,7 @@ artifacts:
     why: Prepares the owner-started bounded Apply hardening assignment, dispositions of prior proposals, frozen faulty/conforming controls and finite Haiku retest prompt without starting a session.
   - path: "docs/design/cockpit.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    realizes: [documentation/current-guidance]
     why: Records the owner-commissioned cockpit concept and evidence-bound views while keeping implementation and later extensions distinct.
   - path: "docs/development/claude-cockpit-handoff-20261020.md"
     form: doc
@@ -94,7 +94,7 @@ artifacts:
     why: Preserves the owner's cockpit visualization requests, Claude assignment and documentation delivery authority verbatim with labelled recorder context.
   - path: "docs/concepts/sources/cockpit-desktop-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    realizes: [documentation/current-guidance]
     why: Preserves the owner's decision that the cockpit is Markitect's desktop app and starts and stops Apply, verbatim with labelled recorder context.
   - path: "docs/concepts/sources/cockpit-org-chart-20261021.md"
     form: doc
@@ -1946,35 +1946,35 @@ artifacts:
     why: Documents the stated responsibility or preserves its historical evidence.
   - path: "docs/validation/cockpit-window-notify-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's app window, --no-open and notification slice: checks, what was exercised in a browser and what remains unproved."
   - path: "docs/validation/cockpit-entry-20261020.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit entry and owner answer slice: checks, a demonstration with a re-fed run and the owner channel, and what remains unproved."
   - path: "docs/validation/cockpit-configuration-20261020.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/accepted-proposals]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's configuration proposal slice: checks, a demonstration on a scratch clone and what remains unproved."
   - path: "docs/validation/cockpit-model-sessions-20261020.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/accepted-proposals]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's model session slice: checks with scripted Agents, a synthetic page demonstration and what remains unproved without a provider turn."
   - path: "docs/validation/cockpit-workbench-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit workbench: the desk rail, status bar, dashboard, model browser and split views, checks and a synthetic and recorded demonstration."
   - path: "docs/validation/cockpit-areas-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's rebuild as a hub with the areas Model, Runs, Decisions and Settings in modern cards, its keys, checks and a recorded demonstration."
   - path: "docs/validation/cockpit-run-control-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's start and stop of an Apply: checks with an injected execution function, a synthetic page demonstration and what remains unproved without a real run."
   - path: "docs/validation/cockpit-run-concepts-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    realizes: [documentation/current-guidance]
     why: "Records how the run inspector now reads the current Apply concept (Model assessment verdict, observation kinds, probes, context coverage, strategy, closed Runs), its checks, a demonstration on two real runs and what the record still does not establish."
   - path: "docs/validation/session-a-b0-b1-runs-20261021.md"
     form: doc
@@ -1982,23 +1982,23 @@ artifacts:
     why: "Records Session A's B0/B1 provider attempts bound to their actual builds, images and kit, with the B1 capture defect, the failed external scoring and the retained evidence."
   - path: "docs/validation/cockpit-projects-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's project list and guided setup: checks with fake projects and a fake engine, a recorded page demonstration and what remains unproved without a real image, credential and run."
   - path: "docs/validation/cockpit-polish-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's presentation polish: shorter page leads with a collapsed explanation, the notification bell as an icon, the compact hub, the project cards, the single-column session start, consistent headers and empty states, checks, screenshots taken and what remains unestablished."
   - path: "docs/validation/cockpit-desktop-acceptance-20261021.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/desktop-app]
+    realizes: [documentation/current-guidance]
     why: "Records the first real runs through the cockpit desktop app: setup through the cockpit, a verified run followed live and a deliberate stop, with costs and what remains unproved."
   - path: "docs/validation/cockpit-live-observation-20261020.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's live observation slice: checks, a demonstration with re-fed recorded evidence and what remains unproved."
   - path: "docs/validation/cockpit-run-inspector-20261020.md"
     form: doc
-    realizes: [documentation/current-guidance, product/cockpit/observed-run-inspection]
+    realizes: [documentation/current-guidance]
     why: "Records the cockpit's first slice on recorded runs: checks, UI behavior, real history inspection, the outdated-wait producer limitation and what remains unproved."
   - path: "docs/validation/apply-stability-20261020.md"
     form: doc
@@ -2092,3 +2092,55 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-selected Orchestrator name and the documentation-only scope.
+  - path: "docs/validation/assets/cockpit-organization-20261021/organization-390.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/assets/cockpit-organization-20261021/organization-860.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/assets/cockpit-organization-20261021/organization-1440.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/assets/cockpit-organization-20261021/one-package-1440.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-verified-1440.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-incomplete-1440.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-failed-probe-1440.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/assets/cockpit-organization-20261021/run-model-problem-chart-390.png"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/cockpit-organization-finish-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/cockpit-run-organization-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/cockpit-organization-tab-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/cockpit-organization-chart-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."
+  - path: "docs/validation/cockpit-organization-read-model-20261021.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: "Preserves dated Cockpit source and visual validation as historical evidence after V1 retirement."

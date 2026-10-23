@@ -1,6 +1,6 @@
 # Cockpit entry and owner answer — 20 October 2026
 
-**Scope:** the third slice of the [cockpit](../design/cockpit.md): the entry page with project identity, running runs, owner questions, run history and outcomes, and the owner's answer as the cockpit's one action, implemented in the [cockpit adapter](../../internal/adapters/cockpit/README.md#cockpit-entry-and-the-owners-answer). It builds on the [inspector](cockpit-run-inspector-20261020.md) and [live observation](cockpit-live-observation-20261020.md). No active Apply and no provider run were involved.
+**Scope:** the third slice of the [cockpit](../design/cockpit.md): the entry page with project identity, running runs, owner questions, run history and outcomes, and the owner's answer as the cockpit's one action, implemented in the [cockpit adapter](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/README.md#cockpit-entry-and-the-owners-answer). It builds on the [inspector](cockpit-run-inspector-20261020.md) and [live observation](cockpit-live-observation-20261020.md). No active Apply and no provider run were involved.
 
 ## What was built
 

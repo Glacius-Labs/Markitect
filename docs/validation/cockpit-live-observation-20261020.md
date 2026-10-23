@@ -1,6 +1,6 @@
 # Cockpit live observation — 20 October 2026
 
-**Scope:** the second slice of the [cockpit](../design/cockpit.md): live observation in `markitect cockpit` through the same projections as the [recorded run inspector](cockpit-run-inspector-20261020.md), implemented in the [cockpit adapter](../../internal/adapters/cockpit/README.md#live-observation). No active Apply was observed: that needs a provider run, and no applicable grant was used. This record separates source checks, a demonstration with re-fed recorded evidence and what remains unproved.
+**Scope:** the second slice of the [cockpit](../design/cockpit.md): live observation in `markitect cockpit` through the same projections as the [recorded run inspector](cockpit-run-inspector-20261020.md), implemented in the [cockpit adapter](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/README.md#live-observation). No active Apply was observed: that needs a provider run, and no applicable grant was used. This record separates source checks, a demonstration with re-fed recorded evidence and what remains unproved.
 
 ## What was built
 

@@ -1,6 +1,6 @@
 # Cockpit model sessions — 20 October 2026
 
-**Scope:** the fifth slice of the [cockpit](../design/cockpit.md#working-through-the-cockpit), adopted by the owner as [DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration): an Agent session that proposes model changes on the owner's prompts, implemented in [authoring](../../internal/authoring/README.md#model-sessions) and the [cockpit adapter](../../internal/adapters/cockpit/README.md#model-sessions). It reuses the [configuration proposals](cockpit-configuration-20261020.md) path. One real session ran with the owner's approval of a bounded test (at most two prompts, a repository copy).
+**Scope:** the fifth slice of the [cockpit](../design/cockpit.md#working-through-the-cockpit), adopted by the owner as [DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration): an Agent session that proposes model changes on the owner's prompts, implemented in [authoring](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/authoring/README.md#model-sessions) and the [cockpit adapter](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/README.md#model-sessions). It reuses the [configuration proposals](cockpit-configuration-20261020.md) path. One real session ran with the owner's approval of a bounded test (at most two prompts, a repository copy).
 
 ## What was built
 

@@ -1,6 +1,6 @@
 # Cockpit run inspector on recorded runs — 20 October 2026
 
-**Scope:** the first slice of the [cockpit](../design/cockpit.md): `markitect cockpit` over recorded run evidence, implemented in the [cockpit adapter](../../internal/adapters/cockpit/README.md). This record separates source checks, UI behavior, real history inspection and what remains unproved. It records no live observation, provider run or owner acceptance.
+**Scope:** the first slice of the [cockpit](../design/cockpit.md): `markitect cockpit` over recorded run evidence, implemented in the [cockpit adapter](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/README.md). This record separates source checks, UI behavior, real history inspection and what remains unproved. It records no live observation, provider run or owner acceptance.
 
 ## What was inspected
 

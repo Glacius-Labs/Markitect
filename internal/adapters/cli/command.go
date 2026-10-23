@@ -41,8 +41,6 @@ type Command struct {
 	apply       ApplyFunc
 	extract     ExtractFunc
 	setup       SetupFunc
-	cockpit     CockpitFunc
-	window      WindowOpener
 }
 
 func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc) *Command {
@@ -70,8 +68,6 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   extract [options]        derive a model candidate from the existing artifacts
   setup --runtime DIR --image REF --credential FILE --agent-model M [options]
                             prepare a Runtime directory with runtime.yaml and run.json
-  cockpit [--state DIR | --run-config PATH [--repo PATH]] [--listen ADDR] [--no-open]
-                            open the app window and observe runs in a local web view
   version | licenses | help
 
 Common options:
@@ -144,27 +140,6 @@ setup options:
   SHA-256, the bound identities and the exact apply command. It refuses while an
   Apply holds the state directory.
 
-cockpit options:
-  --state DIR              state directory whose runs to observe; repeat
-  --run-config PATH        observe the state directory of this run configuration
-  --repo PATH              repository to observe and propose settings for (default .)
-  --model PATH, --dependency PATH
-                           the model and dependency models, as for check
-  --runtime-profile PATH   with --run-config: enable model sessions with this Runtime profile
-  --listen ADDR            loopback address (default 127.0.0.1:7341)
-  Without --state, --run-config, --runtime-profile, --repo, --model and
-  --dependency, the cockpit opens the per-user project list (the last used
-  project, if any) and sets projects up in its window.
-  Serves a local web view of the recorded and running runs until interrupted.
-  It reads the evidence under STATE/runs. It writes only a settings or model
-  proposal the owner accepted after its structural check passed, through
-  Apply's guarded publication while no observed Apply runs; it answers no
-  question of a run, commits nothing, starts and stops no run, and replay,
-  pause or reconnect never affect a run. With --runtime-profile, the owner's
-  prompts start or continue a model session: an Agent of Root's Execute profile
-  in a container that may change only .markitect/model and .markitect/registry
-  of its workspace and proposes; each prompt is one provider turn.
-
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.
 `
@@ -199,9 +174,6 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	}
 	if verb == "setup" {
 		return c.setupVerb(ctx, args[1:], stdout, stderr, emit)
-	}
-	if verb == "cockpit" {
-		return c.cockpitVerb(ctx, args[1:], stdout, stderr, emit)
 	}
 	if verb == "apply" || verb == "extract" {
 		return c.execution(ctx, verb, args[1:], stdout, stderr, emit)

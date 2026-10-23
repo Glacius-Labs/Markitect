@@ -23,10 +23,6 @@ packages:
     layer: apply-usecase
     purpose: Preparation through consumer-owned ports and the Apply use case with team, Manager briefs, candidate accounting and guarded publication.
     doc: docs/development/modules.md
-  - path: internal/authoring
-    layer: apply-usecase
-    purpose: Owner proposals for the project's .markitect inputs and the model sessions that make them, checked like the repository and published only on acceptance.
-    doc: internal/authoring/README.md
   - path: internal/modeldocs
     layer: model-view
     purpose: Deterministic readable view and reviewed source-bound write plan.
@@ -43,10 +39,6 @@ packages:
     layer: apply-adapter
     purpose: Command parsing and JSON reports for preparation, Apply and owner answers.
     doc: docs/development/modules.md
-  - path: internal/adapters/cockpit
-    layer: apply-adapter
-    purpose: Local read-only web cockpit over recorded run evidence, with boundary-bound projections, replay and transcripts.
-    doc: internal/adapters/cockpit/README.md
   - path: internal/adapters/codexappserver
     layer: apply-adapter
     purpose: Prepares Codex image metadata and implements one-turn Agents through the container runtime.

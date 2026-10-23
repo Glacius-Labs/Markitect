@@ -1,6 +1,6 @@
 # Cockpit run control — 21 October 2026
 
-**Scope:** the owner adopted starting and stopping Apply from the cockpit ([DEC-066](../concepts/register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply), [design](../design/cockpit.md#the-cockpit-as-desktop-app)). This change implements it for a cockpit that has `--run-config`, `--runtime-profile` and `--repo`, as described in the [cockpit adapter](../../internal/adapters/cockpit/README.md#starting-and-stopping-a-run). It changes neither Apply, the run engine, the run configuration, the Runtime profile nor the owner channel. The project list, setup through the cockpit, the window and notifications of the desktop app are not part of it.
+**Scope:** the owner adopted starting and stopping Apply from the cockpit ([DEC-066](../concepts/register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply), [design](../design/cockpit.md#the-cockpit-as-desktop-app)). This change implements it for a cockpit that has `--run-config`, `--runtime-profile` and `--repo`, as described in the [cockpit adapter](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/README.md#starting-and-stopping-a-run). It changes neither Apply, the run engine, the run configuration, the Runtime profile nor the owner channel. The project list, setup through the cockpit, the window and notifications of the desktop app are not part of it.
 
 ## What was built
 
