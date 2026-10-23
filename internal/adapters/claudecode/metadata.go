@@ -9,9 +9,9 @@ import (
 	"errors"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/organization"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -29,11 +29,11 @@ func NewMetadataPreparer(factory ImageReaderFactory) *MetadataPreparer {
 	return &MetadataPreparer{factory: factory}
 }
 
-var _ apply.AgentProfilePreparer = (*MetadataPreparer)(nil)
+var _ runtimeconfig.AgentProfilePreparer = (*MetadataPreparer)(nil)
 
 type preparation struct {
-	input apply.ProfileInput
-	out   apply.ProfileObservation
+	input runtimeconfig.ProfileInput
+	out   runtimeconfig.ProfileObservation
 	err   error
 }
 
@@ -43,7 +43,7 @@ func (p *preparation) issue(status model.Status, code, field, message string) {
 	}
 	doc := p.input.Document()
 	locator, _ := json.Marshal([2]string{doc.Location.Boundary, doc.Location.Path.String()})
-	p.out.Diagnostics = append(p.out.Diagnostics, apply.RuntimeProfileDiagnostic{
+	p.out.Diagnostics = append(p.out.Diagnostics, runtimeconfig.RuntimeProfileDiagnostic{
 		Code:    "claude_image." + code,
 		Source:  organization.SettingSource{File: "source:" + string(locator), ContentID: doc.File.ContentID(), Field: p.input.Field() + field},
 		Message: message,
@@ -57,10 +57,10 @@ func (p *preparation) acquisition(err error) {
 	}
 }
 
-func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
-	p := preparation{input: input, out: apply.ProfileObservation{
+func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
+	p := preparation{input: input, out: runtimeconfig.ProfileObservation{
 		InputBinding: input.Binding(), Status: model.Passed,
-		Contract: apply.ProfileContract{Name: "markitect.claude-code.image-metadata", Version: 1},
+		Contract: runtimeconfig.ProfileContract{Name: "markitect.claude-code.image-metadata", Version: 1},
 	}}
 	if ctx == nil {
 		p.acquisition(errors.New("nil metadata preparation context"))
@@ -70,7 +70,7 @@ func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input apply.
 		p.acquisition(err)
 		return p.out, p.err
 	}
-	if input.Namespace() != "agentProfiles" || input.Section() != "claudeCode" || input.Binding() == (apply.ProfileBinding{}) {
+	if input.Namespace() != "agentProfiles" || input.Section() != "claudeCode" || input.Binding() == (runtimeconfig.ProfileBinding{}) {
 		p.issue(model.Failed, "input", "", "A bound Agent profile input is required.")
 		return p.out, nil
 	}
@@ -119,7 +119,7 @@ func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input apply.
 		p.issue(model.Failed, "image_identity", "/imageID", "Engine did not report an immutable sha256 image ID.")
 		return p.out, nil
 	}
-	p.out.AgentImage = &apply.AgentImageObservation{Provider: apply.AgentImageClaudeCode, ImageID: imageID}
+	p.out.AgentImage = &runtimeconfig.AgentImageObservation{Provider: runtimeconfig.AgentImageClaudeCode, ImageID: imageID}
 	if imageID != config.imageID {
 		p.issue(model.Failed, "image_mismatch", "/imageID", "Observed engine image ID differs from the selected immutable image ID.")
 		return p.out, nil
@@ -134,7 +134,7 @@ func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input apply.
 		return p.out, p.err
 	}
 	image := p.out.AgentImage
-	image.Metadata = apply.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID(sha256.Sum256(data)), Size: int64(len(data))}
+	image.Metadata = runtimeconfig.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID(sha256.Sum256(data)), Size: int64(len(data))}
 	if err := ctx.Err(); err != nil {
 		p.acquisition(err)
 		return p.out, p.err

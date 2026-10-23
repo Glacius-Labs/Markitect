@@ -2,6 +2,8 @@ package codexappserver
 
 import (
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"io"
 	"os"
@@ -69,7 +71,7 @@ func TestRuntimeNativeAgentTools(t *testing.T) {
 					t.Error(err)
 				}
 			}()
-			command := providerArgv("dedicated-runtime-login")
+			command := providerArgv()
 			if test.omitV2Guard {
 				for i := 0; i+1 < len(command); i++ {
 					if command[i] == "--disable" && command[i+1] == "multi_agent_v2" {
@@ -83,8 +85,7 @@ func TestRuntimeNativeAgentTools(t *testing.T) {
 				t.Fatal(err)
 			}
 			_, err = peer.StartProvider(ctx, frame.Start{Argv: []string{"/usr/bin/python3", "-c", offlineToolsProbe, string(argv)},
-				Dir: "/work", Tools: []frame.ToolSpec{{Name: "delegate_child", Description: "Assign a required child Manager through Markitect.",
-					InputSchema: json.RawMessage(`{"type":"object","properties":{}}`)}}})
+				Dir: "/work", Tools: toolSpecs()})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -125,7 +126,7 @@ func TestRuntimeNativeAgentTools(t *testing.T) {
 					}
 				}
 			}
-			t.Logf("version=%s model=%s agents.enabled=%t multi_agent=%t multi_agent_v2=%t tools=%v shell=%t files=%t Markitect_delegate_child_registered=%t ALL_TOOLS_catalog=%t MCP_deferred=%t", got.Version, got.Model, got.Agents, got.V1, got.V2, got.Names, got.Shell, got.Files, got.Host, got.Catalog, got.Deferred)
+			t.Logf("version=%s model=%s agents.enabled=%t multi_agent=%t multi_agent_v2=%t tools=%v shell=%t files=%t Markitect_Run_tools_registered=%t ALL_TOOLS_catalog=%t MCP_deferred=%t", got.Version, got.Model, got.Agents, got.V1, got.V2, got.Names, got.Shell, got.Files, got.Host, got.Catalog, got.Deferred)
 		})
 	}
 }
@@ -186,10 +187,19 @@ try:
         if item.get('type') == 'additional_tools':
             tools += item.get('tools', [])
     declaration = json.dumps(tools)
-    host = any(s['name'] == 'markitect' and s.get('toolsError') is None and s.get('tools', {}).get('delegate_child', {}).get('inputSchema') == {'type':'object','properties':{}} for s in mcp['data'])
-    print(json.dumps({'version':subprocess.check_output(['/usr/local/bin/codex','--version'],text=True).strip(), 'model':body['model'], 'agents':config['agents']['enabled'], 'v1':config['features']['multi_agent'], 'v2':config['features']['multi_agent_v2'], 'names':names(tools), 'shell':'exec_command' in declaration, 'files':'apply_patch' in declaration, 'host':host, 'catalog':'ALL_TOOLS' in declaration, 'deferred':'mcp__markitect__delegate_child' not in declaration}), flush=True)
+    host = any(s['name'] == 'markitect' and s.get('toolsError') is None and all(name in s.get('tools', {}) for name in ['delegate','await','review','ask','reply','read_notes','append_note']) for s in mcp['data'])
+    print(json.dumps({'version':subprocess.check_output(['/usr/local/bin/codex','--version'],text=True).strip(), 'model':body['model'], 'agents':config['agents']['enabled'], 'v1':config['features']['multi_agent'], 'v2':config['features']['multi_agent_v2'], 'names':names(tools), 'shell':'exec_command' in declaration, 'files':'apply_patch' in declaration, 'host':host, 'catalog':'ALL_TOOLS' in declaration, 'deferred':'mcp__markitect__delegate' not in declaration}), flush=True)
 finally:
     proc.kill()
     proc.wait(timeout=5)
     server.shutdown()
 `
+
+func smokeToken(t *testing.T) string {
+	t.Helper()
+	var b [16]byte
+	if _, err := rand.Read(b[:]); err != nil {
+		t.Fatal(err)
+	}
+	return hex.EncodeToString(b[:])
+}

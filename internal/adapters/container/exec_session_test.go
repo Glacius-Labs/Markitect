@@ -234,3 +234,39 @@ func TestExecSessionCancellationRemovesRemoteProcessContainer(t *testing.T) {
 		t.Fatalf("remote process cleanup not observed: %v", got)
 	}
 }
+
+func TestRunningImageRequiresActualRunningContainerIdentity(t *testing.T) {
+	valid := `[{"Id":"` + commandID + `","Name":"/owned-native","Image":"` + commandImage + `","State":{"Running":true}}]`
+	for _, kind := range []string{"valid", "wrong name", "missing identity", "stopped", "missing image", "incomplete state", "engine failure"} {
+		t.Run(kind, func(t *testing.T) {
+			out := valid
+			code := 0
+			switch kind {
+			case "wrong name":
+				out = strings.ReplaceAll(out, "/owned-native", "/foreign")
+			case "missing identity":
+				out = strings.ReplaceAll(out, commandID, "")
+			case "stopped":
+				out = strings.ReplaceAll(out, "true", "false")
+			case "missing image":
+				out = strings.ReplaceAll(out, commandImage, "")
+			case "incomplete state":
+				out = strings.ReplaceAll(out, `"Running":true`, ``)
+			case "engine failure":
+				code = 1
+			}
+			e, calls := fakeCommandEngine(t, engineStep{Out: out, Code: code})
+			image, err := e.RunningImage(context.Background(), "owned-native")
+			if kind == "valid" {
+				if err != nil || image != commandImage {
+					t.Fatal(image, err)
+				}
+			} else if err == nil || image != "" {
+				t.Fatal("unconfirmed image accepted", image, err)
+			}
+			if len(calls()) != 1 {
+				t.Fatal(calls())
+			}
+		})
+	}
+}

@@ -12,7 +12,7 @@ import (
 func TestCodecEncodesSelectedPinnedRequests(t *testing.T) {
 	c := testCodec(t, 4096)
 	initialize, err := c.EncodeInitialize(stringID(t, "orchestrator-request"), ClientInfo{Name: "markitect", Version: "synthetic"})
-	if err != nil || string(initialize) != "{\"id\":\"orchestrator-request\",\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"markitect\",\"version\":\"synthetic\"}}}\n" {
+	if err != nil || string(initialize) != "{\"id\":\"orchestrator-request\",\"method\":\"initialize\",\"params\":{\"clientInfo\":{\"name\":\"markitect\",\"version\":\"synthetic\"},\"capabilities\":{\"experimentalApi\":true}}}\n" {
 		t.Fatalf("initialize: %s %v", initialize, err)
 	}
 	initialized, err := c.EncodeInitialized()

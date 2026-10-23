@@ -8,6 +8,7 @@ import (
 	"archive/tar"
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"os"
@@ -250,6 +251,26 @@ func (e *Engine) ImageID(ctx context.Context, ref string) (string, error) {
 		return "", fmt.Errorf("engine reported image ID %q", id)
 	}
 	return id, nil
+}
+
+// RunningImage observes the immutable image of an actual running container.
+// name must be the fresh container name retained by its owning native caller.
+func (e *Engine) RunningImage(ctx context.Context, name string) (string, error) {
+	if !namePattern.MatchString(name) {
+		return "", fmt.Errorf("invalid owned container name")
+	}
+	out, err := e.output(ctx, "inspect", "--type", "container", name)
+	if err != nil {
+		return "", err
+	}
+	var rows []struct {
+		ID, Name, Image string
+		State           struct{ Running *bool }
+	}
+	if json.Unmarshal(out, &rows) != nil || len(rows) != 1 || !containerIDPattern.MatchString(rows[0].ID) || rows[0].Name != "/"+name || !imageIDPattern.MatchString(rows[0].Image) || rows[0].State.Running == nil || !*rows[0].State.Running {
+		return "", fmt.Errorf("running container image was not observed")
+	}
+	return rows[0].Image, nil
 }
 
 // minSubpathServerMajor is the first Docker server version that mounts a

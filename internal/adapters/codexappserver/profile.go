@@ -8,7 +8,6 @@ import (
 	"io"
 	"math"
 	"regexp"
-	"slices"
 	"strings"
 	"unicode/utf8"
 
@@ -17,7 +16,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
-var ErrSession = errors.New("Codex turn refused or incomplete")
+var ErrSession = errors.New("Codex session refused or incomplete")
 
 // Profile is everything a turn needs from one captured Agent profile of the Runtime profile:
 // the immutable image, the opaque credential reference the Orchestrator resolves, the
@@ -59,19 +58,17 @@ func validateProfile(p Profile) error {
 	return validateSessionProfile(p.Session)
 }
 
-// RuntimeCredential is resolved by the Orchestrator from exactly CredentialRef. Mode is
-// api-key or dedicated-runtime-login. RuntimeLogin must originate from a
-// dedicated runtime login, never a desktop login. Its refresh token is removed
-// before a turn copy is installed; this adapter does not refresh credentials.
+// RuntimeCredential contains only explicitly selected normal account login.
+// Refresh authority is not installed in a Manager copy by this adapter.
 type RuntimeCredential struct {
 	Mode         string
-	APIKey       string
 	RuntimeLogin json.RawMessage
 }
 type CredentialResolver func(context.Context, string) (RuntimeCredential, error)
 
 // RuntimeSession is the container Session surface used by this adapter.
 type RuntimeSession interface {
+	ImageID() string
 	Initialize(context.Context, frame.Initialize) error
 	ClearPrivateHome(context.Context) error
 	StartProvider(context.Context, frame.Start) (frame.Started, error)
@@ -100,42 +97,15 @@ func strictValue(data []byte, v any) error {
 	return nil
 }
 
-func turnSpec(name string, turn run.Turn, p Profile) container.ContainerSpec {
+func sessionSpec(name string, location run.CopyLocation, home string, p Profile) (container.ContainerSpec, error) {
+	if !location.Valid() || location.Directory != "" || !volumeName.MatchString(location.Volume) || !container.ValidSubpath(location.Subpath) || !volumeName.MatchString(home) || home == location.Volume {
+		return container.ContainerSpec{}, ErrSession
+	}
 	s := p.Session
-	return container.ContainerSpec{Name: name, Image: p.ImageID,
-		Labels: map[string]string{"markitect.store": s.Store}, User: "1000:1000", Workdir: "/work",
-		Mounts: append(workspaceMounts(turn), container.Mount{Volume: turn.Home, Target: "/home/agent"}),
-		CPUs:   s.CPUs, MemoryBytes: s.MemoryBytes, Pids: s.Pids, TmpBytes: s.TmpBytes, Network: s.Network}
+	return container.ContainerSpec{Name: name, Image: p.ImageID, Labels: map[string]string{"markitect.store": s.Store, "markitect.native-session": name}, User: "1000:1000", Workdir: "/work", Mounts: []container.Mount{{Volume: location.Volume, Subpath: location.Subpath, Target: "/work", NoCopy: true}, {Volume: home, Target: "/home/agent"}}, CPUs: s.CPUs, MemoryBytes: s.MemoryBytes, Pids: s.Pids, TmpBytes: s.TmpBytes, Network: s.Network}, nil
 }
 
-// workspaceMounts is the workspace volume at /work followed by the turn's
-// overlays: each a directory of the same volume at its own path below /work.
-func workspaceMounts(turn run.Turn) []container.Mount {
-	mounts := []container.Mount{{Volume: turn.Workspace, Target: "/work", ReadOnly: turn.ReadOnly, NoCopy: true}}
-	for _, m := range turn.Mounts {
-		mounts = append(mounts, container.Mount{Volume: turn.Workspace, Target: "/work/" + m.Path, Subpath: m.Path, ReadOnly: !m.Writable, NoCopy: true})
-	}
-	return mounts
-}
-
-// validMounts reports whether every overlay path is a distinct clean relative
-// directory path.
-func validMounts(mounts []run.PathMount) bool {
-	seen := map[string]bool{}
-	for _, m := range mounts {
-		if !container.ValidSubpath(m.Path) || seen[m.Path] {
-			return false
-		}
-		seen[m.Path] = true
-	}
-	return true
-}
-
-func writable(mounts []run.PathMount) bool {
-	return slices.ContainsFunc(mounts, func(m run.PathMount) bool { return m.Writable })
-}
-
-func providerArgv(mode string) []string {
+func providerArgv() []string {
 	// Luna's model metadata can select V2 despite features.multi_agent=false.
 	// agents.enabled=false overrides that metadata; explicit V2 must be off too.
 	args := []string{"/usr/local/bin/codex", "app-server", "--disable", "apps", "--disable", "memories",
@@ -143,8 +113,5 @@ func providerArgv(mode string) []string {
 		"--disable", "image_generation", "--disable", "browser_use", "--disable", "computer_use",
 		"-c", `mcp_servers={markitect={command="/usr/local/bin/markitect-agentd",args=["mcp"]}}`,
 		"-c", `cli_auth_credentials_store="file"`}
-	if mode == "api-key" {
-		return append(args, "-c", `model_provider="markitect"`, "-c", `model_providers.markitect={name="OpenAI API",base_url="https://api.openai.com/v1",env_key="OPENAI_API_KEY",wire_api="responses",requires_openai_auth=false}`)
-	}
-	return append(args, "-c", `model_provider="openai"`)
+	return append(args, "-c", `model_provider="openai"`, "-c", "project_doc_max_bytes=0", "-c", "project_doc_fallback_filenames=[]", "-c", `projects."/work".trust_level="untrusted"`)
 }

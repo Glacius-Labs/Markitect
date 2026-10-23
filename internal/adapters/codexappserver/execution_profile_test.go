@@ -7,8 +7,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -30,25 +31,25 @@ session:
 `
 }
 
-func preparedExecution(t *testing.T, inline string, port apply.AgentProfilePreparer) apply.PreparedProfile {
+func preparedExecution(t *testing.T, inline string, port runtimeconfig.AgentProfilePreparer) runtimeconfig.PreparedProfile {
 	t.Helper()
-	profiles := consumeProfile(t, inline, nil, port).ProfileObservations()
+	profiles := consumeProfile(t, inline, nil, port).Profiles
 	if len(profiles) != 1 {
-		t.Fatalf("expected one actual Apply profile, got %d", len(profiles))
+		t.Fatalf("expected one actual Runtime profile, got %d", len(profiles))
 	}
 	return profiles[0]
 }
 
 func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
 	inline := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
-	location := apply.SourceLocation{Boundary: "captured", Path: testPath(t, "instruction.md")}
+	location := project.SourceLocation{Boundary: "captured", Path: testPath(t, "instruction.md")}
 	entry, err := snapshot.NewEntry(location.Path, snapshot.Regular, []byte("Render this separately, once.\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	inline = strings.Replace(inline, "instructions: []", "instructions: [{boundary: captured, path: instruction.md}, {boundary: captured, path: instruction.md}]", 1)
 	fake := &fakeImages{data: []byte(fixtureMetadata)}
-	profiles := consumeProfile(t, inline, []apply.SourceFile{{Location: location, File: entry}}, imagesPreparer(fake)).ProfileObservations()
+	profiles := consumeProfile(t, inline, []project.SourceFile{{Location: location, File: entry}}, imagesPreparer(fake)).Profiles
 	if len(profiles) != 1 {
 		t.Fatal(profiles)
 	}
@@ -71,8 +72,8 @@ func TestExecutionProfileProjectsOnlyCapturedLiteralSettings(t *testing.T) {
 func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
 	inline := executionRuntimeProfile(filepath.Join(t.TempDir(), "engine"))
 	boundary := filepath.Join(t.TempDir(), "same-runtime")
-	prepare := func(text string, port apply.AgentProfilePreparer) apply.PreparedProfile {
-		return consumeProfileAt(t, text, nil, port, boundary).ProfileObservations()[0]
+	prepare := func(text string, port runtimeconfig.AgentProfilePreparer) runtimeconfig.PreparedProfile {
+		return consumeProfileAt(t, text, nil, port, boundary).Profiles[0]
 	}
 	first := prepare(inline, imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}))
 	changed := strings.Replace(inline, "effort: high", "effort: low", 1)
@@ -82,7 +83,7 @@ func TestExecutionProfileSourceChangesInvalidateStaticBinding(t *testing.T) {
 	if !ok || first.Input().Location() != second.Input().Location() || firstID == secondID || first.Input().Binding() == second.Input().Binding() {
 		t.Fatal("changed literal settings lost source binding")
 	}
-	cached := prepare(changed, captureProfile(func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error) {
+	cached := prepare(changed, captureProfile(func(context.Context, runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
 		return first.Observation(), nil
 	}))
 	if _, err := ProfileFromPrepared(cached); err == nil {
@@ -96,18 +97,18 @@ func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *te
 	if _, err := ProfileFromPrepared(v2); err == nil || !strings.Contains(err.Error(), "metadata-only") {
 		t.Fatal("v2 invented execution settings", err)
 	}
-	if _, err := ProfileFromPrepared(apply.PreparedProfile{}); err == nil {
+	if _, err := ProfileFromPrepared(runtimeconfig.PreparedProfile{}); err == nil {
 		t.Fatal("accepted missing prepared profile")
 	}
 	for _, scenario := range []string{"contract", "provider", "image", "CLI", "agentd", "schema", "instructions", "incomplete"} {
 		t.Run(scenario, func(t *testing.T) {
-			port := captureProfile(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+			port := captureProfile(func(ctx context.Context, input runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
 				o, err := imagesPreparer(&fakeImages{data: []byte(fixtureMetadata)}).PrepareAgentProfile(ctx, input)
 				switch scenario {
 				case "contract":
 					o.Contract.Version = 1
 				case "provider":
-					o.AgentImage.Provider = apply.AgentImageClaudeCode
+					o.AgentImage.Provider = runtimeconfig.AgentImageClaudeCode
 					o.AgentImage.RecordedCodexSchemaDigest = ""
 				case "image":
 					o.AgentImage.ImageID = "sha256:" + strings.Repeat("c", 64)
@@ -118,7 +119,7 @@ func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *te
 				case "schema":
 					o.AgentImage.RecordedCodexSchemaDigest = "sha256:" + strings.Repeat("c", 64)
 				case "instructions":
-					o.Instructions = []apply.SourceLocation{{Boundary: "missing", Path: testPath(t, "missing.md")}}
+					o.Instructions = []project.SourceLocation{{Boundary: "missing", Path: testPath(t, "missing.md")}}
 				case "incomplete":
 					o.Status = model.NotCompleted
 				}
