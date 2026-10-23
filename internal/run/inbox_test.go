@@ -119,3 +119,19 @@ func TestLateBlockerInvalidatesPreviouslyAcceptedHierarchy(t *testing.T) {
 		t.Fatal("blank finding authorized correction")
 	}
 }
+
+func TestOwnModelBlockerDominatesChildRejectAtCompletionAndAggregation(t *testing.T) {
+	x, parent, child := inboxExecution()
+	defer x.cancel()
+	child.working = false
+	child.judgment = Reject
+	child.handoff = Handoff{Manager: "a", Decision: Reject, Review: &ParentReview{Decision: Reject, Findings: []Finding{{Text: "child issue"}}}}
+	h := parent.finish(Commit{ID: "fixed", Tree: "tree"}, Response{Decision: ModelBlocker, Findings: []Finding{{Manager: ".", Text: "own fixed-model contradiction"}}}, Reject)
+	if h.Decision != ModelBlocker {
+		t.Fatal("child rejection downgraded own blocker", h)
+	}
+	decision, err := x.aggregate(parent)
+	if err != nil || decision != ModelBlocker || parent.handoff.Decision != ModelBlocker {
+		t.Fatal("aggregation downgraded own blocker", decision, err)
+	}
+}
