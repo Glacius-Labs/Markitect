@@ -8,7 +8,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 type resolver struct{ calls int }
@@ -36,19 +36,19 @@ func (r *resolver) ResolveRevision(context.Context, string, string) (string, err
 
 type unavailableSource struct {
 	calls   int
-	request apply.PreviewRequest
+	request project.PreviewRequest
 }
 
-func (s *unavailableSource) CapturePreview(_ context.Context, r apply.PreviewRequest) (apply.PreviewedInputs, error) {
+func (s *unavailableSource) CapturePreview(_ context.Context, r project.PreviewRequest) (project.PreviewedInputs, error) {
 	s.calls++
 	s.request = r
-	return apply.PreviewedInputs{Revision: r.Revision}, errors.New("controlled acquisition unavailable")
+	return project.PreviewedInputs{Revision: r.Revision}, errors.New("controlled acquisition unavailable")
 }
 
 func TestExplicitRevisionResolvedOnceWithoutExecution(t *testing.T) {
 	source := &unavailableSource{}
 	revision := &resolver{}
-	c := New(apply.NewPreparationService(apply.NewModelService(nil, source)), nil, nil, revision, nil, nil)
+	c := New(project.NewPreparationService(project.NewModelService(nil, source)), nil, nil, revision, nil, nil)
 	var out, errout bytes.Buffer
 	if code := c.Run(context.Background(), []string{"check", "--repo", t.TempDir(), "--revision", "HEAD"}, &out, &errout); code != 3 {
 		t.Fatalf("%d: %s %s", code, out.String(), errout.String())
@@ -64,7 +64,7 @@ func TestExplicitRevisionResolvedOnceWithoutExecution(t *testing.T) {
 func TestUnavailableApplyDoesNotAcquireOrResolveEvenWithInvalidArguments(t *testing.T) {
 	source := &unavailableSource{}
 	revision := &resolver{}
-	c := New(apply.NewPreparationService(apply.NewModelService(nil, source)), nil, nil, revision, nil, nil)
+	c := New(project.NewPreparationService(project.NewModelService(nil, source)), nil, nil, revision, nil, nil)
 	var out, errout bytes.Buffer
 	if code := c.Run(context.Background(), []string{"apply", "--repo", "absent", "--revision", "HEAD", "--unknown"}, &out, &errout); code != 3 || !strings.Contains(out.String(), "unavailable") {
 		t.Fatalf("%d %s", code, out.String())

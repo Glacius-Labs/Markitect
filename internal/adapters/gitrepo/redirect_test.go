@@ -9,7 +9,7 @@ import (
 	"runtime"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 func TestRedirectedManifestsRootsAndDefinitionFilesAreNotAcquired(t *testing.T) {
@@ -37,7 +37,7 @@ func TestRedirectedManifestsRootsAndDefinitionFilesAreNotAcquired(t *testing.T) 
 			} else if err := os.Symlink(real, p); err != nil {
 				t.Skipf("symlink unavailable: %v", err)
 			}
-			result, err := adapter(t).CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection})
+			result, err := adapter(t).CapturePreview(context.Background(), project.PreviewRequest{Selection: selection})
 			if !errors.Is(err, ErrUnsafe) || result.Head == "" {
 				t.Fatalf("redirect acquired: %v", err)
 			}
@@ -63,7 +63,7 @@ func TestExecutionBoundaryCollisionIsRejectedInEveryView(t *testing.T) {
 	for _, mode := range []string{"working", "committed", "fixed"} {
 		var err error
 		if mode == "committed" {
-			result, e := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+			result, e := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 			err = e
 			if result.Guard != "" {
 				t.Fatal("ambiguous source issued guard")
@@ -73,7 +73,7 @@ func TestExecutionBoundaryCollisionIsRejectedInEveryView(t *testing.T) {
 			if mode == "fixed" {
 				revision = head
 			}
-			_, err = r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: revision})
+			_, err = r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: revision})
 		}
 		if !errors.Is(err, ErrUnsafe) {
 			t.Fatalf("%s source collision: %v", mode, err)

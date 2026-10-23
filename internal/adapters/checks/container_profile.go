@@ -6,7 +6,7 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
@@ -27,7 +27,7 @@ type ContainerProfile struct {
 // Arguments remain literal, with the fixed prefix before project arguments.
 // No defaults, environment lookup, process execution or metadata observation
 // occurs here. Returned slices do not share the caller's backing arrays.
-func (p ContainerProfile) Request(check apply.ExecutionCheck, tree snapshot.Tree) (run.CheckRequest, error) {
+func (p ContainerProfile) Request(check project.ExecutionCheck, tree snapshot.Tree) (run.CheckRequest, error) {
 	req := run.CheckRequest{
 		ID: run.CheckID(check.ID.Value), Tree: tree,
 		ImageID: p.ImageID, Executable: p.Executable,

@@ -32,7 +32,7 @@ const closeBound = 45 * time.Second
 // no task or review state; run decides what the resulting receipt establishes.
 type Runner struct {
 	runtime    CommandRuntime
-	workspaces run.Workspaces
+	workspaces DisposableCopies
 	labels     map[string]string
 }
 
@@ -42,7 +42,7 @@ var _ run.Checks = (*Runner)(nil)
 // configured workspace adapter. Workspace helper images and check images have
 // separate identities; every check runs only in the request's exact image.
 // Ownership labels are copied into each command's container specification.
-func NewRunner(engine *container.Engine, workspaces run.Workspaces, labels map[string]string) (*Runner, error) {
+func NewRunner(engine *container.Engine, workspaces DisposableCopies, labels map[string]string) (*Runner, error) {
 	if engine == nil {
 		return nil, fmt.Errorf("check runner needs a container engine")
 	}
@@ -53,7 +53,7 @@ func NewRunner(engine *container.Engine, workspaces run.Workspaces, labels map[s
 // deterministic peers for source tests. A workspace must be private to Run
 // until its command has ended and Close has completed.
 // Labels are cloned at construction and per command; markitect.check is reserved.
-func NewRunnerWithRuntime(runtime CommandRuntime, workspaces run.Workspaces, labels map[string]string) (*Runner, error) {
+func NewRunnerWithRuntime(runtime CommandRuntime, workspaces DisposableCopies, labels map[string]string) (*Runner, error) {
 	if runtime == nil || workspaces == nil {
 		return nil, fmt.Errorf("check runner needs runtime and workspaces")
 	}
@@ -91,11 +91,11 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		return receipt, fmt.Errorf("allocate disposable check identity: %w", err)
 	}
 	name := "check-" + hex.EncodeToString(token)
-	id := run.WorkspaceID(name)
-	identities := []run.WorkspaceID{id}
+	id := CopyID(name)
+	identities := []CopyID{id}
 	limited, cancel := context.WithTimeout(ctx, req.Timeout)
 	defer cancel()
-	copy, materializeErr := r.workspaces.Materialize(limited, run.WorkspaceSpec{ID: id, Tree: req.Tree})
+	copy, materializeErr := r.workspaces.Materialize(limited, CopySpec{ID: id, Tree: req.Tree, Directories: req.Directories})
 	// Even a failed materialization may have created a volume. Close its exact
 	// private identity using a bounded context that survives caller cancellation.
 	defer func() {
@@ -103,7 +103,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		cancel()
 		// The volumes close concurrently, so cleanup takes at most one bound.
 		type closure struct {
-			observed run.WorkspaceObservation
+			observed CopyObservation
 			err      error
 		}
 		closures := make([]closure, len(identities))
@@ -118,10 +118,12 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 			}()
 		}
 		wg.Wait()
+		receipt.CopiesClosed = true
 		for i, identity := range identities {
 			closed, closeErr := closures[i].observed, closures[i].err
 			if closeErr != nil || closed.ID != identity || !closed.Closed || closed.Uncertain {
 				receipt.Uncertain = true
+				receipt.CopiesClosed = false
 				failure := fmt.Errorf("disposable check workspace %s closure unconfirmed: %s", identity, closed.Reason)
 				if closeErr != nil {
 					failure = fmt.Errorf("close disposable check workspace %s: %w", identity, closeErr)
@@ -137,7 +139,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 			receipt.Reason = err.Error()
 		}
 	}()
-	if materializeErr != nil || copy.ID != id || copy.Closed || copy.Uncertain || copy.Volume == "" || copy.Tree != req.Tree.Digest() {
+	if materializeErr != nil || copy.ID != id || copy.Closed || copy.Uncertain || !copy.usable() || copy.Tree != req.Tree.Digest() || !directoryPathsEqual(copy.Directories, req.Directories) {
 		err = fmt.Errorf("disposable check tree was not confirmed: %s", copy.Reason)
 		if materializeErr != nil {
 			err = fmt.Errorf("materialize disposable check tree: %w", materializeErr)
@@ -147,13 +149,16 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		return receipt, err
 	}
 	receipt.Tree = copy.Tree
+	for _, d := range copy.Directories {
+		receipt.Directories = append(receipt.Directories, d.String())
+	}
 	// The runtime image keeps tool caches in /home/agent. Give the check an
 	// independently verified empty disposable home without rewriting fixed Env.
-	homeID := run.WorkspaceID(name + "-home")
+	homeID := CopyID(name + "-home")
 	identities = append(identities, homeID)
 	empty := snapshot.Tree{}
-	home, homeErr := r.workspaces.Materialize(limited, run.WorkspaceSpec{ID: homeID, Tree: empty})
-	if homeErr != nil || home.ID != homeID || home.Closed || home.Uncertain || home.Volume == "" || home.Volume == copy.Volume || home.Tree != empty.Digest() {
+	home, homeErr := r.workspaces.Materialize(limited, CopySpec{ID: homeID, Tree: empty})
+	if homeErr != nil || home.ID != homeID || home.Closed || home.Uncertain || !home.usable() || home.sameLocation(copy) || home.Tree != empty.Digest() {
 		err = fmt.Errorf("disposable check home was not confirmed: %s", home.Reason)
 		if homeErr != nil {
 			err = fmt.Errorf("materialize disposable check home: %w", homeErr)
@@ -170,7 +175,7 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 	labels["markitect.check"] = string(req.ID)
 	spec := container.ContainerSpec{
 		Name: name, Image: req.ImageID, Labels: labels, User: "1000:1000",
-		Mounts: []container.Mount{{Volume: copy.Volume, Target: "/work", NoCopy: true}, {Volume: home.Volume, Target: "/home/agent", NoCopy: true}}, Workdir: workdir,
+		Mounts: []container.Mount{copy.mount("/work"), home.mount("/home/agent")}, Workdir: workdir,
 		CPUs: float64(req.Limits.MilliCPUs) / 1000, MemoryBytes: req.Limits.MemoryBytes, Pids: int(req.Limits.Processes),
 		TmpBytes: 64 << 20, Network: "none",
 	}
@@ -200,4 +205,16 @@ func (r *Runner) Run(ctx context.Context, req run.CheckRequest) (receipt run.Che
 		receipt.Reason = commandErr.Error()
 	}
 	return receipt, commandErr
+}
+
+func directoryPathsEqual(a, b []snapshot.Path) bool {
+	if len(a) != len(b) {
+		return false
+	}
+	for i := range a {
+		if a[i] != b[i] {
+			return false
+		}
+	}
+	return true
 }

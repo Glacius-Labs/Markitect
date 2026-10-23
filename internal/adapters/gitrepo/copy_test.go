@@ -7,13 +7,13 @@ import (
 	"sync"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 func TestReturnedSourceContainersAreIndependentAndConcurrentCallsShareNoState(t *testing.T) {
 	_, selection, _ := libraryFixture(t)
 	r := adapter(t)
-	first, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+	first, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -23,12 +23,12 @@ func TestReturnedSourceContainersAreIndependentAndConcurrentCallsShareNoState(t 
 	first.Raw.Execution[0].Location.Boundary = "changed returned container"
 	var wg sync.WaitGroup
 	wg.Add(2)
-	results := make([]apply.CapturedInputs, 2)
+	results := make([]project.CapturedInputs, 2)
 	errs := make([]error, 2)
 	for i := range results {
 		go func() {
 			defer wg.Done()
-			results[i], errs[i] = r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+			results[i], errs[i] = r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 		}()
 	}
 	wg.Wait()

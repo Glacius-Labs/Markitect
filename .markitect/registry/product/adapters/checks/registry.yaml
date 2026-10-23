@@ -24,27 +24,7 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Verifies literal request projection, defensive copies, existing Runner composition with controlled peers and refusal before effects.
-  - path: "internal/adapters/checks/file_other.go"
-    form: code
-    realizes: [product/adapters/checks/closed-check-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/checks/file_unix.go"
-    form: code
-    realizes: [product/adapters/checks/closed-check-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/checks/file_windows.go"
-    form: code
-    realizes: [product/adapters/checks/closed-check-metadata]
-    why: Implements the stated responsibility within its declared boundary.
   - path: "internal/adapters/checks/fixture_test.go"
-    form: test
-    realizes: [product/adapters/checks/closed-check-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/adapters/checks/metadata.go"
-    form: code
-    realizes: [product/adapters/checks/closed-check-metadata]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/checks/metadata_linux_test.go"
     form: test
     realizes: [product/adapters/checks/closed-check-metadata]
     why: Tests the stated responsibility and retains negative boundaries.
@@ -52,14 +32,6 @@ artifacts:
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "internal/adapters/checks/profile_failures_test.go"
-    form: test
-    realizes: [product/adapters/checks/closed-check-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
-  - path: "internal/adapters/checks/profile_test.go"
-    form: test
-    realizes: [product/adapters/checks/closed-check-metadata]
-    why: Tests the stated responsibility and retains negative boundaries.
   - path: "internal/adapters/checks/runner.go"
     form: code
     realizes: [product/ports-and-adapters]
@@ -68,10 +40,6 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Distinguishes literal command and resource binding, failed tree verification, known failed exits, cancellation and unconfirmed cleanup.
-  - path: "internal/adapters/checks/runtime_smoke_test.go"
-    form: test
-    realizes: [product/ports-and-adapters]
-    why: Defines an explicitly opted-in actual container Engine, repository Workspaces and Check Runner composition smoke with exact tree and image receipts, empty-volume copy-up challenges and observed disposable cleanup.
   - path: "internal/adapters/checks/container_setup.go"
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
@@ -80,3 +48,15 @@ artifacts:
     form: test
     realizes: [product/adapters/checks/closed-check-metadata]
     why: Round-trips the encoded container Runtime section through the metadata decoder and projection and verifies refusal of invalid profiles.
+  - path: "internal/adapters/checks/candidate.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: "Binds declared checks to closed static image metadata and exact disposable copies while retaining actual execution and cleanup observations."
+  - path: "internal/adapters/checks/copies.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: "Binds declared checks to closed static image metadata and exact disposable copies while retaining actual execution and cleanup observations."
+  - path: "internal/adapters/checks/copy_materializer.go"
+    form: code
+    realizes: [product/adapters/checks/closed-check-metadata]
+    why: "Consumes exact disposable trees from the existing Run service and retains physical check and closure observations."

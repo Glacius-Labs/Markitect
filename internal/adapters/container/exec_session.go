@@ -36,13 +36,17 @@ type execSession struct {
 
 // StartExec starts a long-lived command in a container with fixed mounts.
 // The caller owns its lifetime and must Close it, including after cancellation.
+// After observing a container ID, a failed start returns its closed handle and
+// the startup/cleanup error. The handle retains that ID and any closure error;
+// it cannot execute commands. Before observing an ID, the handle is nil.
 func (e *Engine) StartExec(ctx context.Context, spec ContainerSpec, argv []string) (ExecSession, error) {
 	return e.startExec(ctx, spec, argv, false)
 }
 
-// StartOwnedExec is the Apply Git service's explicit initialization exception.
+// StartOwnedExec is the Git service's explicit initialization exception.
 // Only this container receives CAP_CHOWN for one root exec over its empty
 // workspace mounts. The returned interface offers only non-root exec.
+// Failed starts retain the same observed handle as StartExec.
 func (e *Engine) StartOwnedExec(ctx context.Context, spec ContainerSpec, argv []string) (ExecSession, error) {
 	if spec.User != "1000:1000" || len(spec.Mounts) == 0 {
 		return nil, fmt.Errorf("owned exec requires user 1000:1000 and workspace mounts")
@@ -89,7 +93,7 @@ func (e *Engine) startExec(ctx context.Context, spec ContainerSpec, argv []strin
 	fail := func(cause error) (ExecSession, error) {
 		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), 15*time.Second)
 		defer cancel()
-		return nil, errors.Join(cause, session.Close(cleanup))
+		return session, errors.Join(cause, session.Close(cleanup))
 	}
 	if createErr != nil || strings.TrimSpace(string(out)) != id {
 		return fail(errors.Join(createErr, fmt.Errorf("exec container creation response was incomplete")))

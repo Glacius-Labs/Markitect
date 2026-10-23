@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"errors"
+	"os"
 	"path/filepath"
 	"strings"
 	"syscall"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
-	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
 func nativeRepositoryPaths(t *testing.T, root string) (string, string) {
@@ -40,7 +40,7 @@ func nativeRepositoryPaths(t *testing.T, root string) (string, string) {
 	return long, short
 }
 
-func repositoryAliasSelection(t *testing.T, selection apply.InputSelection, original, root string) apply.InputSelection {
+func repositoryAliasSelection(t *testing.T, selection project.InputSelection, original, root string) project.InputSelection {
 	t.Helper()
 	rewrite := func(boundary string) string {
 		rel, err := filepath.Rel(original, boundary)
@@ -51,12 +51,12 @@ func repositoryAliasSelection(t *testing.T, selection apply.InputSelection, orig
 	}
 	selection.Repository = root
 	selection.Local.Boundary = rewrite(selection.Local.Boundary)
-	selection.Dependencies = append([]apply.ModelSelection(nil), selection.Dependencies...)
+	selection.Dependencies = append([]project.ModelSelection(nil), selection.Dependencies...)
 	for i := range selection.Dependencies {
 		selection.Dependencies[i].Boundary = rewrite(selection.Dependencies[i].Boundary)
 	}
-	for _, group := range []*[]apply.SourceLocation{&selection.Execution, &selection.Registry, &selection.Ignore, &selection.Instructions, &selection.RuntimeProfiles} {
-		*group = append([]apply.SourceLocation(nil), (*group)...)
+	for _, group := range []*[]project.SourceLocation{&selection.Execution, &selection.Registry, &selection.Ignore, &selection.Instructions, &selection.RuntimeProfiles} {
+		*group = append([]project.SourceLocation(nil), (*group)...)
 		for i := range *group {
 			(*group)[i].Boundary = rewrite((*group)[i].Boundary)
 		}
@@ -82,15 +82,15 @@ func TestNativeRepositoryAliasCaptureAndPreviews(t *testing.T) {
 					selection.Local.Boundary = "inputs/local"
 				}
 				r := adapter(t)
-				var raw apply.RawInputs
+				var raw project.RawInputs
 				if mode == "capture" {
-					result, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+					result, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 					if err != nil || result.Head != head || result.Guard == "" {
 						t.Fatalf("alias Capture: head=%s guard=%q error=%v", result.Head, result.Guard, err)
 					}
 					raw = result.Raw
 				} else {
-					request := apply.PreviewRequest{Selection: selection}
+					request := project.PreviewRequest{Selection: selection}
 					if mode == "fixed" {
 						request.Revision = historical
 					}
@@ -115,44 +115,24 @@ func TestNativeRepositoryAliasCaptureAndPreviews(t *testing.T) {
 	}
 }
 
-func TestNativeRepositoryAliasSettingsPreparation(t *testing.T) {
-	repo, original, _, _ := gitSettingsFixture(t)
-	_, alias := nativeRepositoryPaths(t, repo.Dir)
-	for _, mode := range []string{"capture", "working"} {
-		t.Run(mode, func(t *testing.T) {
-			selection := repositoryAliasSelection(t, original, repo.Dir, alias)
-			selection.Local.Boundary = "inputs/local"
-			r := adapter(t)
-			service := apply.NewPreparationService(apply.NewModelService(r, r))
-			metadata := &gitSettingsMetadataPorts{t: t}
-			if mode == "capture" {
-				result, err := service.CaptureSettings(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{}, metadata, metadata)
-				if _, ok := result.Prepared(); err != nil || !ok || result.Status() != model.Passed {
-					t.Fatalf("alias Settings capture: status=%s error=%v", result.Status(), err)
-				}
-			} else {
-				result, err := service.PreviewSettings(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{}, metadata, metadata)
-				if _, ok := result.Prepared(); err != nil || !ok || result.Status() != model.Passed {
-					t.Fatalf("alias Settings preview: status=%s error=%v", result.Status(), err)
-				}
-			}
-		})
-	}
-}
-
 func TestNativeRepositoryAliasKeepsExternalFixedBoundariesRefused(t *testing.T) {
-	repo, original, head, _ := gitSettingsFixture(t)
+	repo, original, head := libraryFixture(t)
+	external := t.TempDir()
+	if err := os.WriteFile(filepath.Join(external, "runtime.yaml"), []byte("fixed external"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	original.RuntimeProfiles = []project.SourceLocation{{Boundary: external, Path: fixturePath(t, "runtime.yaml")}}
 	long, alias := nativeRepositoryPaths(t, repo.Dir)
 	r := adapter(t)
 	selection := repositoryAliasSelection(t, original, repo.Dir, alias)
-	result, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head})
+	result, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: head})
 	if !errors.Is(err, ErrUnsafe) || len(result.Raw.RuntimeProfiles) != 1 || len(result.Raw.RuntimeProfiles[0].File.Bytes()) != 0 || result.Raw.RuntimeProfiles[0].RepositoryPath.String() != "" {
 		t.Fatalf("external historical Runtime boundary was accepted: %v", err)
 	}
 	// A boundary under an unselected alias is not an inferred local coordinate.
 	selection = repositoryAliasSelection(t, original, repo.Dir, long)
 	selection.Local.Boundary = filepath.Join(alias, "inputs/local")
-	if _, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}); !errors.Is(err, ErrUnsafe) {
+	if _, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection, Revision: head}); !errors.Is(err, ErrUnsafe) {
 		t.Fatalf("unselected alias was inferred: %v", err)
 	}
 }

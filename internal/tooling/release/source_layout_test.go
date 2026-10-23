@@ -15,13 +15,16 @@ func rootLayoutFixture(t *testing.T) string {
 	for name, content := range map[string]string{
 		"go.mod": "module github.com/Glacius-Labs/Markitect\n", "go.sum": "", "LICENSE": "license\n",
 		"cmd/markitect/main.go": "package main\n", "internal/model/model.go": "package model\n",
-		"internal/run/engine.go":                      "package run\n",
+		"internal/project/prepared.go":                "package project\n",
+		"internal/runtimeconfig/prepare.go":           "package runtimeconfig\n",
+		"internal/adapters/runstore/store.go":         "package runstore\n",
+		"internal/harness/harness.go":                 "package harness\n",
+		"internal/run/execute.go":                     "package run\n",
 		"internal/adapters/gitrepo/git.go":            "package gitrepo\n",
 		"internal/apply/testdata/fixture.json":        "literal historical fixture\n",
 		"internal/adapters/documents/writer.go":       "package documents\n",
 		"internal/tooling/release/install/install.go": "package releaseinstall\n",
 		"internal/testkit/testdata/hostile.gitconfig": "[core]\n hooksPath=blocked\n",
-		"internal/apply/strategy_defaults.yaml":       "exact defaults\r\n",
 	} {
 		writeLayoutFile(t, root, name, content)
 	}
@@ -95,7 +98,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 		t.Fatal("live and fixed root selections differ")
 	}
 	contents := archiveContents(t, live)
-	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/run/engine.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig", "internal/apply/strategy_defaults.yaml"} {
+	for _, name := range []string{"cmd/markitect/main.go", "internal/model/vendor.go", "internal/project/prepared.go", "internal/runtimeconfig/prepare.go", "internal/adapters/runstore/store.go", "internal/harness/harness.go", "internal/run/execute.go", "internal/adapters/gitrepo/git.go", "internal/apply/testdata/fixture.json", "internal/adapters/documents/writer.go", "internal/tooling/release/install/install.go", "internal/testkit/testdata/hostile.gitconfig"} {
 		if _, ok := contents[name]; !ok {
 			t.Errorf("omitted %s", name)
 		}
@@ -105,9 +108,7 @@ func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 			t.Errorf("included %s", name)
 		}
 	}
-	if !bytes.Equal(contents[embeddedStrategyDefaultsPath], fixed.Files[embeddedStrategyDefaultsPath]) {
-		t.Fatal("embedded strategy bytes changed")
-	}
+
 	fixed.Files["internal/model/model.go"] = []byte("package model\n// fixed change\n")
 	changed, err := snapshotModuleFiles(fixed)
 	if err != nil {
@@ -171,7 +172,7 @@ func TestRootLayoutRejectsUnsupportedInputsBeforeFiltering(t *testing.T) {
 			}
 		})
 	}
-	for _, name := range []string{"internal/model/model.go", "internal/model/notes.txt", "cmd/markitect/main.go", "internal/apply/strategy_defaults.yaml"} {
+	for _, name := range []string{"internal/model/model.go", "internal/model/notes.txt", "cmd/markitect/main.go"} {
 		t.Run("mode "+name, func(t *testing.T) {
 			root := rootLayoutFixture(t)
 			writeLayoutFile(t, root, name, "bytes\n")

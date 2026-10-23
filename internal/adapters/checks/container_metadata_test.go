@@ -13,8 +13,9 @@ import (
 	"testing"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -46,23 +47,22 @@ func imageBytesReader(data []byte) imageReaderPeer {
 	}
 }
 
-type checkPreparerFunc func(context.Context, apply.ProfileInput) (apply.ProfileObservation, error)
+type checkPreparerFunc func(context.Context, runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error)
 
-func (f checkPreparerFunc) PrepareCheckProfile(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+func (f checkPreparerFunc) PrepareCheckProfile(ctx context.Context, input runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
 	return f(ctx, input)
 }
 
-func preparedContainer(t *testing.T, fields string, preparer apply.CheckProfilePreparer) (apply.PreparedProfile, error) {
+func preparedContainer(t *testing.T, fields string, preparer runtimeconfig.CheckProfilePreparer) (runtimeconfig.PreparedProfile, error) {
 	t.Helper()
-	files, defaults := m1SectionParents(t, "container", fields)
-	result, err := files.PrepareSettings(context.Background(), defaults, nil, preparer)
-	for _, profile := range result.ProfileObservations() {
+	result, err := runtimeconfig.Prepare(context.Background(), runtimeCheckInputs(t, fields), nil, preparer)
+	for _, profile := range result.Profiles {
 		if profile.Input().Namespace() == "checkProfiles" {
 			return profile, err
 		}
 	}
-	t.Fatalf("no actual selected Check profile: %v %+v", err, result.Diagnostics())
-	return apply.PreparedProfile{}, err
+	t.Fatalf("no actual selected Check profile: %v %+v", err, result.Diagnostics)
+	return runtimeconfig.PreparedProfile{}, err
 }
 
 func TestContainerMetadataBindsWholeImageExecutableAndProjectsExistingRequest(t *testing.T) {
@@ -97,8 +97,8 @@ func TestContainerMetadataBindsWholeImageExecutableAndProjectsExistingRequest(t 
 	})
 	prepared, err := preparedContainer(t, containerFields(engine), preparer)
 	o := prepared.Observation()
-	wantImage := apply.CheckImageObservation{ImageID: checkImageID, Executable: apply.AgentImageMetadataFile{Path: "/opt/check", ContentID: snapshot.ContentID(sha256.Sum256(data)), Size: int64(len(data))}}
-	if err != nil || o.Status != model.Passed || o.InputBinding != prepared.Input().Binding() || o.Contract != containerContract || o.CheckImage == nil || *o.CheckImage != wantImage || o.AgentImage != nil || len(o.Files)+len(o.Inventories)+len(o.Instructions)+len(o.RequiredInstructions) != 0 || factoryCalls != 1 || imageCalls != 1 || fileCalls != 1 {
+	wantImage := runtimeconfig.CheckImageObservation{ImageID: checkImageID, Executable: runtimeconfig.AgentImageMetadataFile{Path: "/opt/check", ContentID: snapshot.ContentID(sha256.Sum256(data)), Size: int64(len(data))}}
+	if err != nil || o.Status != model.Passed || o.InputBinding != prepared.Input().Binding() || o.Contract != containerContract || o.CheckImage == nil || *o.CheckImage != wantImage || o.AgentImage != nil || len(o.Instructions)+len(o.RequiredInstructions) != 0 || factoryCalls != 1 || imageCalls != 1 || fileCalls != 1 {
 		t.Fatalf("whole image evidence=%+v err=%v calls=%d/%d/%d", o, err, factoryCalls, imageCalls, fileCalls)
 	}
 	profile, err := ContainerProfileFromPrepared(prepared)
@@ -223,9 +223,8 @@ func TestContainerMetadataAcquisitionFailuresNeverBecomePassingEvidence(t *testi
 				}
 			}
 			// Acquire an actual opaque ProfileInput through Apply, without I/O.
-			files, defaults := m1SectionParents(t, "container", fields)
 			recorder := &recordingPreparer{}
-			_, err := files.PrepareSettings(context.Background(), defaults, nil, recorder)
+			_, err := runtimeconfig.Prepare(context.Background(), runtimeCheckInputs(t, fields), nil, recorder)
 			if err != nil || recorder.input.Section() != "container" {
 				t.Fatal("selected container input missing", err)
 			}
@@ -234,7 +233,7 @@ func TestContainerMetadataAcquisitionFailuresNeverBecomePassingEvidence(t *testi
 			if kind == "image mismatch" || kind == "empty digest" || kind == "empty file" || kind == "oversized" {
 				want = model.Failed
 			}
-			if o.Status != want || o.CheckImage != nil || len(o.Files) != 0 || len(o.Diagnostics) == 0 || (want == model.NotCompleted && err == nil) || (kind == "cancelled before" && calls != 0) {
+			if o.Status != want || o.CheckImage != nil || len(o.Diagnostics) == 0 || (want == model.NotCompleted && err == nil) || (kind == "cancelled before" && calls != 0) {
 				t.Fatalf("failure=%s observation=%+v err=%v", kind, o, err)
 			}
 		})
@@ -246,10 +245,10 @@ func TestContainerProfileProjectionRefusesDifferentPreparedBindings(t *testing.T
 	preparer := NewMetadataPreparer(func(EngineConfig) (ImageReader, error) { return imageBytesReader([]byte("whole file")), nil })
 	for _, kind := range []string{"contract name", "contract version", "image", "executable", "oversized", "input binding", "missing image", "mixed files", "extra instruction", "zero"} {
 		t.Run(kind, func(t *testing.T) {
-			var prepared apply.PreparedProfile
+			var prepared runtimeconfig.PreparedProfile
 			if kind != "zero" {
 				var err error
-				prepared, err = preparedContainer(t, fields, checkPreparerFunc(func(ctx context.Context, input apply.ProfileInput) (apply.ProfileObservation, error) {
+				prepared, err = preparedContainer(t, fields, checkPreparerFunc(func(ctx context.Context, input runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
 					o, err := preparer.PrepareCheckProfile(ctx, input)
 					switch kind {
 					case "contract name":
@@ -263,13 +262,13 @@ func TestContainerProfileProjectionRefusesDifferentPreparedBindings(t *testing.T
 					case "oversized":
 						o.CheckImage.Executable.Size = container.MaxImageFileObservationBytes + 1
 					case "input binding":
-						o.InputBinding = apply.ProfileBinding{}
+						o.InputBinding = runtimeconfig.ProfileBinding{}
 					case "missing image":
 						o.CheckImage = nil
 					case "mixed files":
-						o.Files = []apply.ProfileMetadataFile{{}}
+						o.AgentImage = &runtimeconfig.AgentImageObservation{}
 					case "extra instruction":
-						o.Instructions = []apply.SourceLocation{{Boundary: "uncaptured", Path: fixturePath(t, "instruction.md")}}
+						o.Instructions = []project.SourceLocation{{Boundary: "uncaptured", Path: fixturePath(t, "instruction.md")}}
 					}
 					return o, err
 				}))
@@ -295,16 +294,19 @@ func TestContainerMetadataRequiresExplicitEmptyListsAndPreservesLegacyProcess(t 
 	if err != nil || projectionErr != nil || len(profile.ArgumentPrefix) != 0 || len(profile.Env) != 0 {
 		t.Fatalf("explicit empty lists refused: %+v %v %v", profile, err, projectionErr)
 	}
-	// A process section still reaches the unchanged process/v1 validation.
-	input := processInput(t, "profileVersion: 2\nexecutable: not-read\nsha256: bad\n")
-	preparer.factory = func(EngineConfig) (ImageReader, error) {
-		t.Fatal("process profile reached image reader")
-		return nil, nil
+	// Retired host process profiles are rejected by the closed outer envelope,
+	// without executable or image acquisition.
+	raw := runtimeCheckInputs(t, "profileVersion: 1\n")
+	doc := strings.Replace(string(raw.RuntimeProfiles[0].File.Bytes()), "container:", "process:", 1)
+	raw.RuntimeProfiles[0].File = fixtureEntry(t, "runtime.yaml", []byte(doc))
+	result, err := runtimeconfig.Prepare(context.Background(), raw, nil, checkPreparerFunc(func(context.Context, runtimeconfig.ProfileInput) (runtimeconfig.ProfileObservation, error) {
+		t.Fatal("retired process route reached metadata")
+		return runtimeconfig.ProfileObservation{}, nil
+	}))
+	if err != nil || result.Status != model.Failed {
+		t.Fatal("retired process profile accepted", result, err)
 	}
-	o, err := preparer.PrepareCheckProfile(context.Background(), input)
-	if err != nil || o.Status != model.Failed || o.Contract.Name != "markitect.process-check" || o.CheckImage != nil {
-		t.Fatalf("legacy process path changed: %+v %v", o, err)
-	}
+
 }
 
 func TestEngineImageReadersShareOnlyWithinOneProvider(t *testing.T) {

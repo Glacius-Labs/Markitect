@@ -24,19 +24,7 @@ func (s *smoke) version() error {
 }
 
 // libraryExecution is the smoke's own execution settings of the Library project.
-const libraryExecution = `apiVersion: markitect.execution/v1
-strategy: direct
-budget:
-  executionTime: 25m
-  turnTimeout: 10m
-  agentTurns: 120
-  passes: 12
-profiles:
-  execute: library-agent
-  verify: library-agent
-packages:
-  lending:
-    profiles: {verify: library-agent}
+const libraryExecution = `apiVersion: markitect.execution/v2
 checks:
   - id: project-tests
     profile: library-tests
@@ -206,16 +194,15 @@ func (s *smoke) libraryPreparation() error {
 	if err := requireAbsent(s.work, "never-created"); err != nil {
 		return err
 	}
-	// A configuration of the removed sequential Apply (formatVersion 1) is refused
-	// as failed before the repository is acquired, the lock is taken or any
-	// container engine or provider is started.
+	// S2 Apply stays unavailable even with an old configuration path.
+	// Configuration loading and runtime acquisition wait for S3 composition.
 	oldConfig := filepath.Join(s.work, "old-run.json")
 	state := filepath.Join(s.work, "never-created-state")
 	if err := os.WriteFile(oldConfig, []byte(fmt.Sprintf(`{"formatVersion":1,"stateDirectory":%q,"allocation":{"runs":1}}`, state)), 0644); err != nil {
 		return err
 	}
 	out, err = s.run(repo, nil, s.tool("markitect"), "apply", "--repo", filepath.Join(s.work, "never-created"), "--runtime-profile", runtimeProfile, "--run-config", oldConfig)
-	if err == nil || !strings.Contains(out, `"status": "failed"`) || !strings.Contains(out, "formatVersion 2") {
+	if err == nil || !strings.Contains(out, `"status": "not_completed"`) || !strings.Contains(out, "unavailable") {
 		return fmt.Errorf("Apply accepted an invalid run configuration: %s", tail(out))
 	}
 	for _, name := range []string{"never-created", "never-created-state"} {

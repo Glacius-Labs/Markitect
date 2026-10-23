@@ -3,386 +3,358 @@ package codexappserver
 import (
 	"bytes"
 	"context"
+	"crypto/rand"
+	"encoding/hex"
 	"encoding/json"
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
+	"reflect"
 	"strings"
 	"sync"
 	"time"
+	"unicode/utf8"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
+	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 )
 
-const (
-	stopGrace   = 10 * time.Second
-	stopTimeout = 20 * time.Second
-)
+const stopGrace = 10 * time.Second
+const stopTimeout = 20 * time.Second
 
-// Agents supports single turns and persistent assignments. Each assignment
-// retains its own container and provider thread until Close.
+// Agents is one prepared native profile implementing the actual Run session consumer.
+// Outer composition selects the profile; Project/Run never resolve runtime profiles.
 type Agents struct {
-	start       RuntimeStarter
-	profiles    map[string]Profile
-	credentials CredentialResolver
-	stopGrace   time.Duration
-	stopTimeout time.Duration
+	// TranscriptRoot is an optional explicit absolute evidence directory, fixed before Open.
+	TranscriptRoot string
+	start          RuntimeStarter
+	prepared       runtimeconfig.PreparedProfile
+	profile        Profile
+	identity       string
+	credentials    CredentialResolver
 }
 
-var _ run.AssignmentAgents = (*Agents)(nil)
+var _ run.Sessions = (*Agents)(nil)
 
-// NewAgents runs turns in containers of engine. profiles maps the Runtime profile
-// names a Turn refers to.
-func NewAgents(engine *container.Engine, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
+func NewAgents(engine *container.Engine, prepared runtimeconfig.PreparedProfile, credentials CredentialResolver) (*Agents, error) {
 	if engine == nil {
 		return nil, ErrSession
 	}
 	return NewAgentsWithRuntime(func(ctx context.Context, spec container.ContainerSpec) (RuntimeSession, error) {
-		s, err := engine.Start(ctx, spec)
-		if err != nil {
-			return nil, err
-		}
-		return s, nil
-	}, profiles, credentials)
+		return startRuntime(ctx, engine, spec)
+	}, prepared, credentials)
 }
 
-// NewAgentsWithRuntime permits an Orchestrator-supplied runtime peer. Production peers
-// must preserve Engine.Start and Session's exit semantics.
-func NewAgentsWithRuntime(start RuntimeStarter, profiles map[string]Profile, credentials CredentialResolver) (*Agents, error) {
-	if start == nil || credentials == nil {
+// The supplied starter owns a fresh private home, confirms the actual running
+// image and returns partial handles on error. It never borrows a host login home.
+func NewAgentsWithRuntime(start RuntimeStarter, prepared runtimeconfig.PreparedProfile, credentials CredentialResolver) (*Agents, error) {
+	p, err := ProfileFromPrepared(prepared)
+	id, ok := prepared.Identity()
+	if err != nil || !ok || start == nil || credentials == nil {
+		return nil, errors.Join(ErrSession, err)
+	}
+	return &Agents{start: start, prepared: prepared, profile: p, identity: id, credentials: credentials}, nil
+}
+
+type ownedRuntime struct {
+	RuntimeSession
+	engine    *container.Engine
+	home      string
+	labels    map[string]string
+	image     string
+	closeOnce sync.Once
+	closeErr  error
+}
+
+func (r *ownedRuntime) ImageID() string { return r.image }
+func (r *ownedRuntime) Close() error {
+	r.closeOnce.Do(func() {
+		if r.RuntimeSession != nil {
+			r.closeErr = r.RuntimeSession.Close()
+		}
+		ctx, cancel := context.WithTimeout(context.Background(), stopTimeout)
+		defer cancel()
+		v, err := r.engine.InspectVolume(ctx, r.home)
+		r.closeErr = errors.Join(r.closeErr, err)
+		if err != nil || !v.Exists {
+			return
+		}
+		for k, want := range r.labels {
+			if v.Labels[k] != want {
+				r.closeErr = errors.Join(r.closeErr, fmt.Errorf("private home ownership unconfirmed"))
+				return
+			}
+		}
+		mounts, err := r.engine.VolumeMounts(ctx, r.home)
+		r.closeErr = errors.Join(r.closeErr, err)
+		if err != nil || len(mounts) != 0 {
+			r.closeErr = errors.Join(r.closeErr, fmt.Errorf("private home still mounted or census failed"))
+			return
+		}
+		r.closeErr = errors.Join(r.closeErr, r.engine.RemoveVolume(ctx, r.home))
+		v, err = r.engine.InspectVolume(ctx, r.home)
+		if err != nil || v.Exists {
+			r.closeErr = errors.Join(r.closeErr, err, fmt.Errorf("private home closure unconfirmed"))
+		}
+	})
+	return r.closeErr
+}
+func startRuntime(ctx context.Context, engine *container.Engine, spec container.ContainerSpec) (RuntimeSession, error) {
+	r := &ownedRuntime{engine: engine, home: spec.Mounts[1].Volume, labels: spec.Labels}
+	if _, err := engine.CreateVolumeExclusive(ctx, r.home, r.labels); err != nil {
+		return r, err
+	}
+	peer, err := engine.Start(ctx, spec)
+	if peer != nil {
+		r.RuntimeSession = &enginePeer{Session: peer}
+	}
+	if err != nil {
+		return r, err
+	}
+	r.image, err = engine.RunningImage(ctx, spec.Name)
+	if err == nil && r.image != spec.Image {
+		err = fmt.Errorf("native container image differs from prepared image")
+	}
+	return r, err
+}
+
+type enginePeer struct{ *container.Session }
+
+func (*enginePeer) ImageID() string { return "" } // only ownedRuntime reports a confirmed image
+
+type nativeSession struct {
+	judgment                          *run.Response
+	judgmentErr                       error
+	ready                             bool
+	agents                            *Agents
+	spec                              run.SessionSpec
+	profile                           Profile
+	document                          harness.Document
+	peer                              RuntimeSession
+	enc                               *Codec
+	events                            <-chan event
+	done                              chan struct{}
+	tr                                *transcript
+	secrets                           [][]byte
+	loginInstalled, providerAttempted bool
+	thread                            ThreadID
+	turnID                            TurnID
+	model, final, prompt              string
+	nextRequest                       int64
+	children                          map[ThreadID]bool
+	childIDBytes                      int
+	mu                                sync.Mutex
+	abortMu                           sync.Mutex
+	cancel                            context.CancelFunc
+	closing, closed                   bool
+	closeErr                          error
+}
+
+func (a *Agents) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
+	if ctx == nil || ctx.Err() != nil || a.TranscriptRoot != "" && !filepath.IsAbs(a.TranscriptRoot) || !spec.Prepared.Valid() || spec.Workspace == nil || strings.TrimSpace(spec.RunID) == "" {
 		return nil, ErrSession
 	}
-	copied := make(map[string]Profile, len(profiles))
-	for name, p := range profiles {
-		if name == "" || validateProfile(p) != nil {
-			return nil, ErrSession
-		}
-		copied[name] = p
+	actual, ok := spec.Prepared.Topology().Manager(spec.Manager.Package)
+	if !ok || !reflect.DeepEqual(actual, spec.Manager) || !validTools(spec.Tools) {
+		return nil, ErrSession
 	}
-	return &Agents{start: start, profiles: copied, credentials: credentials, stopGrace: stopGrace, stopTimeout: stopTimeout}, nil
-}
-
-// turnRun is the state of one Run call.
-type turnRun struct {
-	agents  *Agents
-	turn    run.Turn
-	profile Profile
-	handler run.ToolHandler
-	name    string
-	offered map[string]bool
-	tr      *transcript
-
-	secrets           [][]byte
-	loginInstalled    bool
-	providerAttempted bool
-	attempted         bool
-	peer              RuntimeSession
-	enc               *Codec
-	events            <-chan event
-	done              chan struct{}
-
-	thread      ThreadID
-	turnID      TurnID
-	model       string
-	final       string
-	commands    []run.CommandObservation
-	usage       run.Usage
-	nextRequest int64
-	// Native children share this provider runtime, not the outer Manager
-	// assignment. Only an observed subAgentActivity establishes their identity.
-	children     map[ThreadID]bool
-	childIDBytes int
-}
-
-// Run runs one turn. It always stops the container before it returns; Stopped
-// is true when the provider's exit and the end of the container were observed,
-// or when no container was ever started. Known secrets are removed from tool
-// call arguments before the handler sees them.
-func (a *Agents) Run(ctx context.Context, turn run.Turn, handler run.ToolHandler) (res run.TurnResult, err error) {
-	res.Started = time.Now().UTC()
-	defer func() { res.Ended = time.Now().UTC() }()
-	profile, offered, err := a.admit(turn, handler)
-	if err != nil {
-		res.Stopped, res.Reason = true, "turn refused before any container was started"
-		return res, err
-	}
-	t := &turnRun{agents: a, turn: turn, profile: profile, handler: handler, name: "markitect-" + turn.ID, offered: offered, done: make(chan struct{})}
-	if t.tr, err = openTranscript(turn.Transcript, t.redact); err != nil {
-		res.Stopped, res.Reason = true, "turn refused before any container was started"
-		return res, err
-	}
-	runCtx := ctx
-	if turn.Timeout > 0 {
-		var cancel context.CancelFunc
-		runCtx, cancel = context.WithTimeout(ctx, turn.Timeout)
-		defer cancel()
-	}
-	err = t.exchange(runCtx, &res)
-	if err != nil {
-		switch {
-		case ctx.Err() != nil:
-			res.Reason = "cancelled"
-		case runCtx.Err() != nil:
-			res.Reason = "timeout"
-			err = fmt.Errorf("%w: turn exceeded its %s timeout: %w", ErrSession, turn.Timeout, err)
-		case res.Reason == "":
-			res.Reason = "failed"
-		}
-	}
-	res.Conversation, res.Final, res.Usage = string(t.thread), string(t.redact([]byte(t.final))), t.usage
-	res.Commands = t.commands
-	if res.Usage.ProviderTurns > 0 {
-		res.Usage.Model = t.model
-	}
-	return res, t.finish(ctx, &res, err)
-}
-
-// OpenAssignment starts one container and one Codex App Server process for the
-// complete assignment, initializing only the connection. The first Message
-// starts the provider thread; subsequent Messages use that same thread.
-func (a *Agents) OpenAssignment(ctx context.Context, spec run.AssignmentSpec, handler run.ToolHandler) (run.AssignmentSession, error) {
-	turn := run.Turn{ID: spec.ID, Kind: run.ExecuteTurn, Profile: spec.Profile, Workspace: spec.Workspace,
-		Home: spec.Home, Tools: spec.Tools, Transcript: spec.Transcript}
-	profile, offered, err := a.admit(turn, handler)
+	doc, err := a.documentFor(spec)
 	if err != nil {
 		return nil, err
 	}
-	t := &turnRun{agents: a, turn: turn, profile: profile, handler: handler, name: "markitect-" + spec.ID,
-		offered: offered, done: make(chan struct{})}
-	if t.tr, err = openTranscript(spec.Transcript, t.redact); err != nil {
+	var nonce [16]byte
+	if _, err = rand.Read(nonce[:]); err != nil {
 		return nil, err
 	}
-	if err = t.open(ctx); err != nil {
-		res := run.TurnResult{Reason: "assignment start failed"}
-		return nil, t.finish(ctx, &res, err)
-	}
-	return &assignmentSession{turn: t}, nil
-}
-
-type assignmentSession struct {
-	mu           sync.Mutex
-	abortMu      sync.Mutex
-	activeCancel context.CancelFunc
-	closing      bool
-	turn         *turnRun
-	closed       bool
-	terminal     run.TurnResult
-	terminalErr  error
-}
-
-func (s *assignmentSession) Message(ctx context.Context, text string, timeout time.Duration) (res run.TurnResult, err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.closed || strings.TrimSpace(text) == "" || timeout < 0 {
-		return res, ErrSession
-	}
-	res.Started = time.Now().UTC()
-	defer func() { res.Ended = time.Now().UTC() }()
-	runCtx, cancel := context.WithCancel(ctx)
-	defer cancel()
-	s.abortMu.Lock()
-	if s.closing {
-		s.abortMu.Unlock()
-		return res, context.Canceled
-	}
-	s.activeCancel = cancel
-	s.abortMu.Unlock()
-	defer func() {
-		s.abortMu.Lock()
-		s.activeCancel = nil
-		s.abortMu.Unlock()
-	}()
-	t := s.turn
-	t.turn.Prompt, t.turnID, t.final = text, "", ""
-	t.commands, t.usage = nil, run.Usage{}
-	if timeout > 0 {
-		var timeoutCancel context.CancelFunc
-		runCtx, timeoutCancel = context.WithTimeout(runCtx, timeout)
-		defer timeoutCancel()
-	}
-	err = t.runTurn(runCtx, &res)
-	res.Conversation, res.Final, res.Commands, res.Usage = string(t.thread), string(t.redact([]byte(t.final))), t.commands, t.usage
-	if res.Usage.ProviderTurns > 0 {
-		res.Usage.Model = t.model
-	}
-	if errors.Is(err, run.ErrContextLimit) {
-		res.Reason = "message exceeds provider channel"
-		return res, err
-	}
+	name := "markitect-native-" + hex.EncodeToString(nonce[:])
+	cs, err := sessionSpec(name, spec.Workspace.Location(), name+"-home", a.profile)
 	if err != nil {
-		s.closed = true
-		if runCtx.Err() != nil {
-			res.Reason = runCtx.Err().Error()
-		}
-		err = t.finish(ctx, &res, err)
-		s.terminal, s.terminalErr = res, err
+		return nil, err
 	}
-	return res, err
-}
-
-func (s *assignmentSession) Close(ctx context.Context) (res run.TurnResult, err error) {
-	s.abortMu.Lock()
-	s.closing = true
-	cancel := s.activeCancel
-	s.abortMu.Unlock()
-	if cancel != nil {
-		cancel()
-	}
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	if s.closed {
-		return s.terminal, s.terminalErr
-	}
-	s.closed = true
-	res.Reason = "assignment closed"
-	err = s.turn.finish(ctx, &res, nil)
-	res.Ended = time.Now().UTC()
-	s.terminal, s.terminalErr = res, err
-	return res, err
-}
-
-// admit checks the turn against the Runtime profile before anything runs.
-func (a *Agents) admit(turn run.Turn, handler run.ToolHandler) (Profile, map[string]bool, error) {
-	profile, ok := a.profiles[turn.Profile]
-	if !ok || handler == nil || !volumeName.MatchString(turn.ID) || len(turn.ID) > 100 || !volumeName.MatchString(turn.Workspace) || !volumeName.MatchString(turn.Home) || turn.Workspace == turn.Home || turn.Timeout < 0 {
-		return Profile{}, nil, ErrSession
-	}
-	switch turn.Kind {
-	case run.ExecuteTurn:
-	case run.VerifyTurn:
-		// A verify turn may continue only its own reviewer's conversation of the
-		// same review Pass; the Orchestrator gives every review Pass fresh homes.
-		if !turn.ReadOnly || writable(turn.Mounts) {
-			return Profile{}, nil, ErrSession
-		}
-	default:
-		return Profile{}, nil, ErrSession
-	}
-	if !validMounts(turn.Mounts) {
-		return Profile{}, nil, ErrSession
-	}
-	offered := map[string]bool{}
-	for _, tool := range turn.Tools {
-		if tool.Name == "" || offered[tool.Name] || strings.TrimSpace(tool.Description) == "" {
-			return Profile{}, nil, ErrSession
-		}
-		if _, err := protocolObject(tool.InputSchema); err != nil {
-			return Profile{}, nil, ErrSession
-		}
-		offered[tool.Name] = true
-	}
-	return profile, offered, nil
-}
-
-// exchange runs the container, the handshake and the turn until the provider
-// reports its end. Cleanup is finish's job.
-func (t *turnRun) exchange(ctx context.Context, res *run.TurnResult) error {
-	if err := t.open(ctx); err != nil {
-		return err
-	}
-	return t.runTurn(ctx, res)
-}
-
-func (t *turnRun) open(ctx context.Context) error {
-	credential, err := t.agents.credentials(ctx, t.profile.CredentialRef)
+	t := &nativeSession{agents: a, spec: spec, profile: a.profile, document: doc, done: make(chan struct{})}
+	// Resolve only after all model/workspace/harness admission. Never log resolver errors.
+	credential, err := a.credentials(ctx, a.profile.CredentialRef)
 	if err != nil {
-		return fmt.Errorf("%w: credential resolution failed", ErrSession)
+		return nil, fmt.Errorf("%w: credential resolution failed", ErrSession)
 	}
 	env, err := t.credential(ctx, credential)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	limit := int(t.profile.MaxWireBytes)
-	if t.enc, err = NewCodec(limit); err != nil {
-		return err
+	if t.enc, err = NewCodec(int(a.profile.MaxWireBytes)); err != nil {
+		return nil, err
 	}
-	dec, err := NewCodec(limit)
+	dec, err := NewCodec(int(a.profile.MaxWireBytes))
 	if err != nil {
-		return err
+		return nil, err
 	}
-	// Even a failed container creation can leave runtime effects.
-	t.attempted = true
-	peer, err := t.agents.start(ctx, turnSpec(t.name, t.turn, t.profile))
+	if a.TranscriptRoot != "" {
+		if !filepath.IsAbs(a.TranscriptRoot) {
+			return nil, ErrSession
+		}
+		if t.tr, err = openTranscript(filepath.Join(a.TranscriptRoot, name+".jsonl"), t.redact); err != nil {
+			return nil, err
+		}
+	}
+	t.peer, err = a.start(ctx, cs)
 	if err != nil {
-		return t.safe(err)
+		return t, t.safe(err)
 	}
-	if peer == nil {
-		return ErrSession
+	if t.peer == nil {
+		return t, ErrSession
 	}
-	t.peer = peer
-	if err := t.installCredential(ctx, credential); err != nil {
-		return err
+	if t.peer.ImageID() != a.profile.ImageID {
+		return t, fmt.Errorf("%w: actual native image not confirmed", ErrSession)
 	}
-	specs := make([]frame.ToolSpec, len(t.turn.Tools))
-	for i, tool := range t.turn.Tools {
-		specs[i] = frame.ToolSpec{Name: tool.Name, Description: tool.Description, InputSchema: tool.InputSchema}
+	if err = t.installCredential(ctx, credential); err != nil {
+		return t, err
 	}
-	start := frame.Start{Argv: providerArgv(credential.Mode), Dir: "/work", Env: env, Tools: specs}
-	t.providerAttempted = true // a lost start reply may still have started it
-	if err = within(ctx, func() error { _, startErr := peer.StartProvider(ctx, start); return startErr }); err != nil {
-		return t.safe(err)
+	t.providerAttempted = true
+	if err = t.io(ctx, func() error {
+		_, e := t.peer.StartProvider(ctx, frame.Start{Argv: providerArgv(), Dir: "/work", Env: env, Tools: toolSpecs()})
+		return e
+	}); err != nil {
+		return t, err
 	}
-	t.events = readEvents(peer.Stdout(), dec, t.done)
+	t.events = readEvents(t.peer.Stdout(), dec, t.done)
 	if err = t.handshake(ctx); err != nil {
-		return err
+		return t, err
 	}
 	t.nextRequest = 2
-	return nil
+	t.ready = true
+	return t, nil
 }
 
-// handshake initializes the connection without starting a conversation.
-func (t *turnRun) handshake(ctx context.Context) error {
-	id := IntegerRequestID(1)
-	raw, err := t.enc.EncodeInitialize(id, ClientInfo{Name: "markitect", Version: "1"})
+// Exchange serializes one native message; direct inbox callbacks drain before
+// return. Close first cancels the active callback/message, then joins its closure.
+func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (out run.Response, err error) {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if !t.ready || t.closed || ctx == nil || strings.TrimSpace(message.Task) == "" {
+		return out, ErrSession
+	}
+	active, cancel := context.WithCancel(ctx)
+	defer cancel()
+	t.abortMu.Lock()
+	if t.closing {
+		t.abortMu.Unlock()
+		return out, context.Canceled
+	}
+	t.cancel = cancel
+	t.abortMu.Unlock()
+	defer func() {
+		t.abortMu.Lock()
+		t.cancel = nil
+		t.abortMu.Unlock()
+		if err != nil {
+			t.closed = true
+			t.closeErr = t.finish(active)
+			err = errors.Join(err, t.closeErr)
+		}
+	}()
+	payload, err := json.Marshal(struct {
+		Task     string        `json:"task"`
+		Feedback []run.Finding `json:"feedback"`
+	}{message.Task, message.Feedback})
 	if err != nil {
-		return err
+		return out, err
 	}
-	if err = t.send(ctx, raw); err != nil {
-		return err
+	t.prompt, t.final, t.turnID = string(payload), "", ""
+	t.judgment, t.judgmentErr = nil, nil
+	if err = t.runTurn(active); err != nil {
+		return out, err
 	}
-	if _, err = t.response(ctx, id, Initialize); err != nil {
-		return err
+	if err = t.drainTerminals(active); err != nil {
+		return out, err
 	}
-	if raw, err = t.enc.EncodeInitialized(); err != nil {
-		return err
+	if t.judgmentErr != nil {
+		return out, t.judgmentErr
 	}
-	return t.send(ctx, raw)
+	if t.judgment != nil {
+		out = *t.judgment
+		out.Findings = append([]run.Finding(nil), out.Findings...)
+	}
+	return out, nil
+}
+func (t *nativeSession) Close(ctx context.Context) error {
+	t.abortMu.Lock()
+	t.closing = true
+	cancel := t.cancel
+	t.abortMu.Unlock()
+	if cancel != nil {
+		cancel()
+	}
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	if t.closed {
+		return t.closeErr
+	}
+	t.closed = true
+	t.closeErr = t.finish(ctx)
+	return t.closeErr
+}
+func (t *nativeSession) finish(ctx context.Context) error {
+	close(t.done)
+	var err error
+	if t.peer != nil {
+		observed := !t.providerAttempted
+		cleanup, cancel := context.WithTimeout(context.WithoutCancel(ctx), stopTimeout)
+		defer cancel()
+		if t.providerAttempted {
+			_, e := t.peer.Stop(cleanup, stopGrace.Milliseconds())
+			observed = e == nil
+			err = errors.Join(err, t.safe(e))
+		}
+		if t.loginInstalled && observed {
+			err = errors.Join(err, t.removeCredential(cleanup))
+		}
+		err = errors.Join(err, t.safe(t.peer.Close()))
+	}
+	return errors.Join(err, t.tr.close())
 }
 
-// startThread starts or resumes the conversation on its first message.
-func (t *turnRun) startThread(ctx context.Context) error {
-	session := t.profile.Session
+// io cancels a blocked transport write by closing the owned peer, then waits for
+// that write to drain. Runtime peers must release writes when Close returns.
+func (t *nativeSession) io(ctx context.Context, f func() error) error {
+	if err := ctx.Err(); err != nil {
+		return err
+	}
+	done := make(chan error, 1)
+	go func() { done <- f() }()
+	select {
+	case err := <-done:
+		return t.safe(err)
+	case <-ctx.Done():
+		closeErr := t.peer.Close()
+		writeErr := <-done
+		return errors.Join(ctx.Err(), t.safe(closeErr), t.safe(writeErr))
+	}
+}
+func (t *nativeSession) startThread(ctx context.Context) error {
 	id := IntegerRequestID(2)
-	params := ThreadStartParams{Model: session.Model, Cwd: "/work", ApprovalPolicy: "never", Sandbox: "danger-full-access",
-		BaseInstructions: session.BaseInstructions, DeveloperInstructions: session.DeveloperInstructions}
-	raw, err := t.enc.EncodePersistentThread(id, params, ThreadID(t.turn.Resume))
+	raw, err := t.enc.EncodePersistentThread(id, ThreadStartParams{Model: t.profile.Session.Model, Cwd: "/work", ApprovalPolicy: "never", Sandbox: "danger-full-access", BaseInstructions: t.document.Base, DeveloperInstructions: t.document.Developer}, "")
 	if err != nil {
 		return err
 	}
 	if err = t.send(ctx, raw); err != nil {
 		return err
 	}
-	method := ThreadStart
-	if t.turn.Resume != "" {
-		method = ThreadResume
-	}
-	r, err := t.response(ctx, id, method)
+	r, err := t.response(ctx, id, ThreadStart)
 	if err != nil {
 		return err
 	}
-	if t.thread != "" && t.thread != r.Thread || t.turn.Resume != "" && string(r.Thread) != t.turn.Resume {
+	if t.thread != "" && t.thread != r.Thread {
 		return ErrProtocol
 	}
 	t.thread = r.Thread
 	return nil
 }
 
-// runTurn sends the prompt and serves the turn until the provider's terminal
-// status. Tool calls and provider output are separate queues; calls are
-// answered one at a time.
-func (t *turnRun) runTurn(ctx context.Context, res *run.TurnResult) error {
+func (t *nativeSession) runTurn(ctx context.Context) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
@@ -393,10 +365,7 @@ func (t *turnRun) runTurn(ctx context.Context, res *run.TurnResult) error {
 	}
 	t.nextRequest++
 	id := IntegerRequestID(t.nextRequest)
-	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.turn.Prompt, Effort: t.profile.Session.Effort})
-	if errors.Is(err, ErrProtocolLimit) {
-		return fmt.Errorf("%w: the prompt of %d bytes exceeds the %d bytes the provider channel carries: %w", run.ErrContextLimit, len(t.turn.Prompt), t.profile.MaxWireBytes, err)
-	}
+	raw, err := t.enc.EncodeTurnStart(id, TurnStartParams{Thread: t.thread, Text: t.prompt, Effort: t.profile.Session.Effort})
 	if err != nil {
 		return err
 	}
@@ -431,27 +400,76 @@ func (t *turnRun) runTurn(ctx context.Context, res *run.TurnResult) error {
 		if status == "" {
 			continue
 		}
-		// The two queues have no cross-channel order: never accept the end of
-		// the turn while a tool call is still waiting for its answer.
 		select {
 		case _, ok := <-tools:
 			if ok {
-				return fmt.Errorf("%w: provider ended the turn with a tool call unanswered", ErrProtocolIncomplete)
+				return fmt.Errorf("%w: unanswered tool at native completion", ErrProtocolIncomplete)
 			}
 		default:
 		}
-		res.Reason = "provider turn " + string(status)
 		if status != TurnCompleted {
 			return fmt.Errorf("%w: provider turn %s", ErrSession, status)
 		}
-		res.Completed = true
 		return nil
 	}
 }
+func (t *nativeSession) answer(ctx context.Context, call frame.ToolCall) error {
+	var meta struct {
+		Thread string `json:"threadId"`
+	}
+	if json.Unmarshal(call.Meta, &meta) != nil || meta.Thread != string(t.thread) {
+		return ErrProtocol
+	}
+	if raw, err := frame.EncodeToolCall(call); err == nil {
+		t.tr.record("tool-call", raw)
+	}
+	var result string
+	var err error
+	arguments := t.redact(call.Arguments)
+	if call.Name == "judge" {
+		err = t.recordJudgment(arguments)
+		if err != nil {
+			t.judgmentErr = err
+			result = err.Error()
+		} else {
+			result = `{"recorded":true}`
+		}
+	} else {
+		result, err = dispatch(ctx, t.spec.Tools, call.Name, arguments)
+	}
+	content, _ := json.Marshal(struct {
+		Content []map[string]string `json:"content"`
+		IsError bool                `json:"isError"`
+	}{[]map[string]string{{"type": "text", "text": string(t.redact([]byte(result)))}}, err != nil})
+	if errors.Is(err, errUnknownTool) {
+		return ErrProtocol
+	}
+	reply := frame.ToolReply{ID: call.ID, Result: content}
+	if raw, e := frame.EncodeToolReply(reply); e == nil {
+		t.tr.record("tool-reply", raw)
+	}
+	return t.io(ctx, func() error { return t.peer.Reply(reply) })
+}
 
-// observe applies one provider message to the turn. It returns the terminal
-// status when the message ends the turn.
-func (t *turnRun) observe(m Message, request RequestID, responseSeen *bool) (TurnStatus, error) {
+func (t *nativeSession) handshake(ctx context.Context) error {
+	id := IntegerRequestID(1)
+	raw, err := t.enc.EncodeInitialize(id, ClientInfo{Name: "markitect", Version: "1"})
+	if err != nil {
+		return err
+	}
+	if err = t.send(ctx, raw); err != nil {
+		return err
+	}
+	if _, err = t.response(ctx, id, Initialize); err != nil {
+		return err
+	}
+	if raw, err = t.enc.EncodeInitialized(); err != nil {
+		return err
+	}
+	return t.send(ctx, raw)
+}
+
+func (t *nativeSession) observe(m Message, request RequestID, responseSeen *bool) (TurnStatus, error) {
 	switch m.kind {
 	case ResponseMessage, ErrorMessage:
 		if got, _ := m.ID(); got != request || *responseSeen {
@@ -501,7 +519,7 @@ func (t *turnRun) observe(m Message, request RequestID, responseSeen *bool) (Tur
 
 // notification reads the item and usage notifications a turn reports; any
 // other notification is ignored, except a provider error that will not retry.
-func (t *turnRun) notification(m Message) error {
+func (t *nativeSession) notification(m Message) error {
 	switch m.method {
 	case "error":
 		var e struct {
@@ -574,85 +592,23 @@ func (t *turnRun) notification(m Message) error {
 		if n.Item.Type == "agentMessage" && n.Item.Phase == "final_answer" {
 			t.final = n.Item.Text
 		}
-		if n.Item.Type == "commandExecution" {
-			t.commands = append(t.commands, run.CommandObservation{ID: n.Item.ID, Command: string(t.redact([]byte(n.Item.Command))), Status: n.Item.Status, ExitCode: n.Item.ExitCode, Output: string(t.redact([]byte(n.Item.Output)))})
-		}
-	case "thread/tokenUsage/updated":
-		var n struct {
-			Thread string `json:"threadId"`
-			Usage  struct {
-				Last struct {
-					Input      int64 `json:"inputTokens"`
-					Cached     int64 `json:"cachedInputTokens"`
-					Output     int64 `json:"outputTokens"`
-					CacheWrite int64 `json:"cacheWriteInputTokens"`
-				} `json:"last"`
-			} `json:"tokenUsage"`
-		}
-		// Usage is best effort: a report this adapter cannot read counts as none.
-		if json.Unmarshal(m.body, &n) != nil || n.Thread != string(t.thread) {
-			return nil
-		}
-		// Codex counts cached input inside inputTokens; Usage keeps them apart.
-		last := n.Usage.Last
-		t.usage = t.usage.Add(run.Usage{InputTokens: max(last.Input-last.Cached, 0), OutputTokens: last.Output,
-			CacheReadTokens: last.Cached, CacheCreationTokens: last.CacheWrite, ProviderTurns: 1})
 	}
 	return nil
 }
 
-// answer serves one Orchestrator tool call through the handler. A refusal is a tool
-// error for the provider, not a failure of the turn.
-func (t *turnRun) answer(ctx context.Context, call frame.ToolCall) error {
-	var meta struct {
-		Thread string `json:"threadId"`
-	}
-	if !t.offered[call.Name] || json.Unmarshal(call.Meta, &meta) != nil || meta.Thread != string(t.thread) {
-		return ErrProtocol
-	}
-	if raw, err := frame.EncodeToolCall(call); err == nil {
-		t.tr.record("tool-call", raw)
-	}
-	answered := make(chan run.ToolAnswer, 1)
-	arguments := t.redact(call.Arguments)
-	go func() { answered <- t.handler(ctx, call.Name, arguments) }()
-	var answer run.ToolAnswer
-	select {
-	case answer = <-answered:
-	case <-ctx.Done():
-		return ctx.Err()
-	}
-	type text struct {
-		Type string `json:"type"`
-		Text string `json:"text"`
-	}
-	result, err := json.Marshal(struct {
-		Content []text `json:"content"`
-		IsError bool   `json:"isError"`
-	}{[]text{{"text", answer.Text}}, answer.Refused})
-	if err != nil {
-		return err
-	}
-	reply := frame.ToolReply{ID: call.ID, Result: result}
-	if raw, err := frame.EncodeToolReply(reply); err == nil {
-		t.tr.record("tool-reply", raw)
-	}
-	return t.safe(within(ctx, func() error { return t.peer.Reply(reply) }))
-}
-
 // send writes one NDJSON request. A failed write may have been partial and is
 // never repeated.
-func (t *turnRun) send(ctx context.Context, raw []byte) error {
+func (t *nativeSession) send(ctx context.Context, raw []byte) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
 	t.tr.record("send", raw)
-	return t.safe(within(ctx, func() error { return t.peer.WriteInput(raw) }))
+	return t.safe(t.io(ctx, func() error { return t.peer.WriteInput(raw) }))
 }
 
 // response waits for the response to request id, skipping notifications that
 // carry no obligation during the handshake.
-func (t *turnRun) response(ctx context.Context, id RequestID, method RequestMethod) (Response, error) {
+func (t *nativeSession) response(ctx context.Context, id RequestID, method RequestMethod) (Response, error) {
 	for {
 		var e event
 		var open bool
@@ -679,18 +635,21 @@ func (t *turnRun) response(ctx context.Context, id RequestID, method RequestMeth
 		case ErrorMessage:
 			return Response{}, t.rpcError(m)
 		case ThreadStartedMessage:
-			if t.thread != "" && t.thread != m.Thread() || t.turn.Resume != "" && string(m.Thread()) != t.turn.Resume {
+			if t.thread != "" && t.thread != m.Thread() {
 				return Response{}, ErrProtocol
 			}
 			t.thread = m.Thread()
 		case UnknownNotification:
+			if err := t.notification(m); err != nil {
+				return Response{}, err
+			}
 		default:
 			return Response{}, fmt.Errorf("%w: %s", ErrProtocolUnsupported, m.kind)
 		}
 	}
 }
 
-func (t *turnRun) rpcError(m Message) error {
+func (t *nativeSession) rpcError(m Message) error {
 	code, text, err := m.RPCError()
 	if err != nil {
 		return err
@@ -699,7 +658,7 @@ func (t *turnRun) rpcError(m Message) error {
 }
 
 // accept records one provider message and reports a closed or failed stream.
-func (t *turnRun) accept(e event, open bool) (Message, error) {
+func (t *nativeSession) accept(e event, open bool) (Message, error) {
 	if !open {
 		return Message{}, fmt.Errorf("%w: provider output ended before the turn finished", ErrProtocolIncomplete)
 	}
@@ -707,82 +666,6 @@ func (t *turnRun) accept(e event, open bool) (Message, error) {
 		t.tr.record("receive", e.msg.raw)
 	}
 	return e.msg, t.safe(e.err)
-}
-
-// finish removes private login data after observed provider exit, closes the
-// container and transcript, and returns err joined with every
-// cleanup failure.
-func (t *turnRun) finish(ctx context.Context, res *run.TurnResult, err error) error {
-	close(t.done)
-	observed, closed := false, false
-	if t.peer != nil {
-		observed = !t.providerAttempted
-		var stopErr error
-		if t.providerAttempted {
-			stopCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
-			var exit frame.Exited
-			exit, stopErr = stopProvider(stopCtx, t.peer, t.agents.stopGrace)
-			cancel()
-			if stopErr == nil {
-				observed = true
-				t.tr.record("exit", []byte(fmt.Sprintf("code=%d signal=%s", exit.Code, exit.Signal)))
-			}
-		}
-		if t.loginInstalled && observed {
-			cleanCtx, cancel := context.WithTimeout(context.WithoutCancel(ctx), t.agents.stopTimeout)
-			cleanErr := t.removeCredential(cleanCtx)
-			cancel()
-			if cleanErr != nil {
-				res.Reason += "; runtime login cleanup incomplete"
-				err = errors.Join(err, cleanErr)
-			}
-		}
-		// The container really ends in Close: Stopped also needs a Close that did
-		// not have to give up on it.
-		closeErr := t.safe(t.peer.Close())
-		closed = closeErr == nil
-		err = errors.Join(err, t.safe(stopErr), closeErr)
-		switch {
-		case !observed:
-			res.Reason = strings.TrimPrefix(res.Reason+"; provider exit not observed", "; ")
-		case !closed:
-			res.Reason = strings.TrimPrefix(res.Reason+"; provider exit observed but the container end was not", "; ")
-		}
-	}
-	ended := observed && closed
-	res.Stopped = ended || !t.attempted
-	return errors.Join(err, t.tr.close())
-}
-
-func stopProvider(ctx context.Context, peer RuntimeSession, grace time.Duration) (frame.Exited, error) {
-	type result struct {
-		exit frame.Exited
-		err  error
-	}
-	done := make(chan result, 1)
-	go func() {
-		exit, err := peer.Stop(ctx, grace.Milliseconds())
-		done <- result{exit, err}
-	}()
-	select {
-	case r := <-done:
-		return r.exit, r.err
-	case <-ctx.Done():
-		return frame.Exited{}, ctx.Err()
-	}
-}
-
-// within returns when f finished or ctx ended; f itself may outlive the call
-// until the connection is closed.
-func within(ctx context.Context, f func() error) error {
-	done := make(chan error, 1)
-	go func() { done <- f() }()
-	select {
-	case err := <-done:
-		return err
-	case <-ctx.Done():
-		return ctx.Err()
-	}
 }
 
 type event struct {
@@ -840,7 +723,7 @@ func readEvents(r io.Reader, codec *Codec, done <-chan struct{}) <-chan event {
 }
 
 // redact replaces every known secret and its JSON-escaped form.
-func (t *turnRun) redact(data []byte) []byte {
+func (t *nativeSession) redact(data []byte) []byte {
 	data = bytes.Clone(data)
 	marker := []byte("[REDACTED]")
 	for _, secret := range t.secrets {
@@ -855,7 +738,7 @@ func (t *turnRun) redact(data []byte) []byte {
 }
 
 // safe keeps err's identity unless its text carries a known secret.
-func (t *turnRun) safe(err error) error {
+func (t *nativeSession) safe(err error) error {
 	if err == nil {
 		return nil
 	}
@@ -866,4 +749,98 @@ func (t *turnRun) safe(err error) error {
 	return err
 }
 
-var _ run.Agents = (*Agents)(nil)
+// Observation is supplied only by an actually constructed native session.
+func (t *nativeSession) Observation() run.SessionObservation {
+	if !t.ready {
+		return run.SessionObservation{}
+	}
+	return run.SessionObservation{ProfileIdentity: t.agents.identity, ImageID: t.peer.ImageID(), HarnessDigest: t.document.Digest()}
+}
+func (t *nativeSession) drainTerminals(ctx context.Context) error {
+	list := func() (Response, error) {
+		t.nextRequest++
+		id := IntegerRequestID(t.nextRequest)
+		raw, err := t.enc.EncodeBackgroundList(id, t.thread)
+		if err != nil {
+			return Response{}, err
+		}
+		if err = t.send(ctx, raw); err != nil {
+			return Response{}, err
+		}
+		return t.response(ctx, id, BackgroundList)
+	}
+	first, err := list()
+	if err != nil {
+		return fmt.Errorf("%w: native background terminals unavailable: %v", ErrSession, err)
+	}
+	for _, terminal := range first.Terminals {
+		t.nextRequest++
+		id := IntegerRequestID(t.nextRequest)
+		raw, err := t.enc.EncodeBackgroundTerminate(id, t.thread, terminal.ProcessID)
+		if err != nil {
+			return err
+		}
+		if err = t.send(ctx, raw); err != nil {
+			return err
+		}
+		if _, err = t.response(ctx, id, BackgroundTerminate); err != nil {
+			return err
+		}
+	}
+	final, err := list()
+	if err != nil {
+		return err
+	}
+	if len(final.Terminals) != 0 {
+		return fmt.Errorf("%w: native background terminals remain after termination", ErrSession)
+	}
+	return nil
+}
+
+func (t *nativeSession) recordJudgment(raw []byte) error {
+	if err := validateArguments("judge", raw); err != nil {
+		return fmt.Errorf("%w: invalid semantic judgment", ErrSession)
+	}
+	var response run.Response
+	if strictValue(raw, &response) != nil {
+		return ErrSession
+	}
+	if t.judgment != nil {
+		return fmt.Errorf("%w: multiple or contradictory semantic judgments in one message", ErrSession)
+	}
+	if (response.Decision == run.Reject || response.Decision == run.ModelBlocker) && len(response.Findings) == 0 {
+		return fmt.Errorf("%w: negative semantic judgment requires concrete Findings", ErrSession)
+	}
+	t.judgment = &response
+	return nil
+}
+
+func (a *Agents) documentFor(spec run.SessionSpec) (harness.Document, error) {
+	findings := make([]harness.Finding, len(spec.Findings))
+	for i, f := range spec.Findings {
+		findings[i] = harness.Finding{Manager: f.Manager, Text: f.Text}
+	}
+	doc, err := harness.Build(spec.Prepared, spec.Manager, string(spec.Mandate), findings)
+	if err != nil {
+		return harness.Document{}, err
+	}
+	doc.Developer += "\nSelected provider profile instructions (subject to canonical rules):\n" + a.profile.Session.BaseInstructions + "\n" + a.profile.Session.DeveloperInstructions + "\n"
+	for _, location := range a.prepared.Observation().Instructions {
+		found := false
+		for _, source := range a.prepared.Input().Instructions() {
+			if source.Location == location {
+				data := source.File.Bytes()
+				if !utf8.Valid(data) {
+					return harness.Document{}, ErrSession
+				}
+				doc.Developer += fmt.Sprintf("\nCaptured runtime instruction %s (%s, %d bytes):\n%s\n", location.Path, source.File.ContentID(), len(data), data)
+				found = true
+				break
+			}
+		}
+		if !found {
+			return harness.Document{}, fmt.Errorf("captured runtime instruction unavailable")
+		}
+	}
+	return doc, nil
+}

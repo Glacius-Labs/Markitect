@@ -97,12 +97,40 @@ func TestOwnedExecInitializationFailureClosesObservedContainer(t *testing.T) {
 	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{}, engineStep{Out: commandState("running", true, 0)}, engineStep{Code: 1, Err: "root was not empty"}, engineStep{}, engineStep{})
 	spec := commandSpec()
 	spec.Mounts = []Mount{{Volume: "owned", Target: "/assignments/one", NoCopy: true}}
-	if session, err := e.StartOwnedExec(context.Background(), spec, []string{"/bin/sleep", "infinity"}); err == nil || session != nil || !strings.Contains(err.Error(), "root was not empty") {
-		t.Fatalf("failed initialization returned a session: %v %v", session, err)
+	session, err := e.StartOwnedExec(context.Background(), spec, []string{"/bin/sleep", "infinity"})
+	if err == nil || !strings.Contains(err.Error(), "root was not empty") || session == nil || session.ID() != commandID {
+		t.Fatalf("failed initialization lost its observed handle: %v %v", session, err)
+	}
+	if err := session.Close(context.Background()); err != nil {
+		t.Fatalf("successful cleanup became uncertain: %v", err)
+	}
+	if err := session.Exec(context.Background(), []string{"/usr/bin/git", "late"}, nil, &bytes.Buffer{}); err == nil {
+		t.Fatal("failed initialization allowed a command")
 	}
 	got := calls()
 	if got[4][0] != "rm" || got[4][2] != commandID || got[5][0] != "ps" {
 		t.Fatalf("failed init lost owned cleanup: %v", got)
+	}
+}
+
+func TestOwnedExecInitializationFailureRetainsUncertainClosure(t *testing.T) {
+	e, calls := fakeCommandEngine(t, engineStep{Out: commandID}, engineStep{}, engineStep{Out: commandState("running", true, 0)}, engineStep{Code: 1, Err: "root was not empty"}, engineStep{Code: 1, Err: "remove failed"}, engineStep{Out: commandID})
+	spec := commandSpec()
+	spec.Mounts = []Mount{{Volume: "owned", Target: "/assignments/one", NoCopy: true}}
+	session, err := e.StartOwnedExec(context.Background(), spec, []string{"/bin/sleep", "infinity"})
+	if session == nil || session.ID() != commandID || err == nil {
+		t.Fatalf("failed initialization lost its observed handle: %v %v", session, err)
+	}
+	for _, message := range []string{"root was not empty", "remove failed", "removal was not observed"} {
+		if !strings.Contains(err.Error(), message) {
+			t.Fatalf("lost startup or cleanup failure %q: %v", message, err)
+		}
+	}
+	if err := session.Close(context.Background()); err == nil || !strings.Contains(err.Error(), "remove failed") || !strings.Contains(err.Error(), "removal was not observed") {
+		t.Fatalf("closure uncertainty lost: %v", err)
+	}
+	if err := session.Exec(context.Background(), []string{"/usr/bin/git", "late"}, nil, &bytes.Buffer{}); err == nil || len(calls()) != 6 {
+		t.Fatal("failed initialization allowed another command or retried cleanup")
 	}
 }
 
@@ -138,8 +166,24 @@ func TestExecSessionStartFailuresOnlyRemoveObservedOwnID(t *testing.T) {
 	} {
 		t.Run(name, func(t *testing.T) {
 			e, calls := fakeCommandEngine(t, steps...)
-			if session, err := e.StartExec(context.Background(), commandSpec(), []string{"/bin/sleep", "infinity"}); err == nil || session != nil {
-				t.Fatalf("accepted failed start %v %v", session, err)
+			session, err := e.StartExec(context.Background(), commandSpec(), []string{"/bin/sleep", "infinity"})
+			if err == nil {
+				t.Fatalf("accepted failed start: %v", session)
+			}
+			if name == "name conflict" {
+				if session != nil {
+					t.Fatalf("returned an unobserved handle: %v", session)
+				}
+			} else {
+				if session == nil || session.ID() != commandID {
+					t.Fatalf("lost observed handle: %v", session)
+				}
+				if err := session.Close(context.Background()); err != nil {
+					t.Fatalf("successful cleanup became uncertain: %v", err)
+				}
+				if err := session.Exec(context.Background(), []string{"/usr/bin/git", "late"}, nil, &bytes.Buffer{}); err == nil {
+					t.Fatal("failed start allowed a command")
+				}
 			}
 			for _, call := range calls() {
 				if call[0] == "rm" && call[len(call)-1] != commandID {
@@ -188,5 +232,41 @@ func TestExecSessionCancellationRemovesRemoteProcessContainer(t *testing.T) {
 	got := calls()
 	if got[len(got)-2][0] != "rm" || got[len(got)-1][0] != "ps" {
 		t.Fatalf("remote process cleanup not observed: %v", got)
+	}
+}
+
+func TestRunningImageRequiresActualRunningContainerIdentity(t *testing.T) {
+	valid := `[{"Id":"` + commandID + `","Name":"/owned-native","Image":"` + commandImage + `","State":{"Running":true}}]`
+	for _, kind := range []string{"valid", "wrong name", "missing identity", "stopped", "missing image", "incomplete state", "engine failure"} {
+		t.Run(kind, func(t *testing.T) {
+			out := valid
+			code := 0
+			switch kind {
+			case "wrong name":
+				out = strings.ReplaceAll(out, "/owned-native", "/foreign")
+			case "missing identity":
+				out = strings.ReplaceAll(out, commandID, "")
+			case "stopped":
+				out = strings.ReplaceAll(out, "true", "false")
+			case "missing image":
+				out = strings.ReplaceAll(out, commandImage, "")
+			case "incomplete state":
+				out = strings.ReplaceAll(out, `"Running":true`, ``)
+			case "engine failure":
+				code = 1
+			}
+			e, calls := fakeCommandEngine(t, engineStep{Out: out, Code: code})
+			image, err := e.RunningImage(context.Background(), "owned-native")
+			if kind == "valid" {
+				if err != nil || image != commandImage {
+					t.Fatal(image, err)
+				}
+			} else if err == nil || image != "" {
+				t.Fatal("unconfirmed image accepted", image, err)
+			}
+			if len(calls()) != 1 {
+				t.Fatal(calls())
+			}
+		})
 	}
 }

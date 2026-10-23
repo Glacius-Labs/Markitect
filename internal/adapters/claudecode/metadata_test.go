@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -62,10 +62,10 @@ func TestImageMetadataUsesSelectedConfigurationAndWholeActualBytes(t *testing.T)
 	if err != nil || out.Status != model.Passed {
 		t.Fatalf("%v %+v", err, out)
 	}
-	want := &apply.AgentImageObservation{Provider: apply.AgentImageClaudeCode, ImageID: fixtureImage,
-		Metadata:   apply.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID(sha256.Sum256([]byte(fixtureMetadata))), Size: int64(len(fixtureMetadata))},
+	want := &runtimeconfig.AgentImageObservation{Provider: runtimeconfig.AgentImageClaudeCode, ImageID: fixtureImage,
+		Metadata:   runtimeconfig.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID(sha256.Sum256([]byte(fixtureMetadata))), Size: int64(len(fixtureMetadata))},
 		CLIVersion: supportedClaudeVersion, AgentdVersion: "development"}
-	if config.Executable != engine || !reflect.DeepEqual(out.AgentImage, want) || out.InputBinding != input.Binding() || out.Contract != (apply.ProfileContract{Name: "markitect.claude-code.image-metadata", Version: 1}) || len(out.Files) != 0 || len(out.Inventories) != 0 {
+	if config.Executable != engine || !reflect.DeepEqual(out.AgentImage, want) || out.InputBinding != input.Binding() || out.Contract != (runtimeconfig.ProfileContract{Name: "markitect.claude-code.image-metadata", Version: 1}) {
 		t.Fatalf("configuration/binding/evidence: %+v %+v", config, out)
 	}
 	wantCalls := []string{"inspect:" + fixtureImage, "read:" + fixtureImage + ":" + runtimeMetadataPath, "inspect:" + fixtureImage}
@@ -74,18 +74,18 @@ func TestImageMetadataUsesSelectedConfigurationAndWholeActualBytes(t *testing.T)
 	}
 }
 
-func TestApplyRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.T) {
+func TestRuntimePreparationRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.T) {
 	inline := imageProfile(filepath.Join(t.TempDir(), "engine"))
 	boundary := filepath.Join(t.TempDir(), "same-runtime")
 	identity := func(data string) string {
 		prepared := consumeProfileAt(t, inline, nil, imagesPreparer(&fakeImages{data: []byte(data)}), boundary)
-		profiles := prepared.ProfileObservations()
+		profiles := prepared.Profiles
 		if len(profiles) != 1 || profiles[0].Observation().Status != model.Passed {
 			t.Fatalf("%+v", profiles)
 		}
 		id, ok := profiles[0].Identity()
 		if !ok {
-			t.Fatal("actual Apply validator did not accept complete image evidence")
+			t.Fatal("actual Runtime preparation did not accept complete image evidence")
 		}
 		return id
 	}

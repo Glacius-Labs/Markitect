@@ -12,8 +12,8 @@ import (
 	"slices"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -62,21 +62,21 @@ type Writer interface {
 }
 
 type Service struct {
-	models      *apply.ModelService
-	preparation *apply.PreparationService
+	models      *project.ModelService
+	preparation *project.PreparationService
 	writer      Writer
 }
 
-func New(models *apply.ModelService, preparation *apply.PreparationService, writer Writer) *Service {
+func New(models *project.ModelService, preparation *project.PreparationService, writer Writer) *Service {
 	return &Service{models, preparation, writer}
 }
 
-func (s *Service) Preview(ctx context.Context, request apply.PreviewRequest) (Preview, error) {
+func (s *Service) Preview(ctx context.Context, request project.PreviewRequest) (Preview, error) {
 	p, _, _, err := s.prepare(ctx, request)
 	return p, err
 }
 
-func (s *Service) Write(ctx context.Context, request apply.PreviewRequest, expected string) (Preview, error) {
+func (s *Service) Write(ctx context.Context, request project.PreviewRequest, expected string) (Preview, error) {
 	p, _, controlsPassed, err := s.prepare(ctx, request)
 	if err != nil || p.Status != model.Passed {
 		return p, err
@@ -133,11 +133,11 @@ func (s *Service) Write(ctx context.Context, request apply.PreviewRequest, expec
 	return p, nil
 }
 
-func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Preview, apply.PreviewedModel, bool, error) {
+func (s *Service) prepare(ctx context.Context, request project.PreviewRequest) (Preview, project.PreviewedModel, bool, error) {
 	p := Preview{Status: model.NotCompleted, Path: ViewPath}
 	m, err := s.models.PreviewModel(ctx, request, model.Limits{})
 	if err != nil {
-		var manifest *apply.ManifestPreflightError
+		var manifest *project.ManifestPreflightError
 		if errors.As(err, &manifest) {
 			inspection := manifest.Inspection()
 			p.Status, p.Diagnostics = inspection.Status, inspection.Diagnostics
@@ -176,7 +176,7 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 			return p, m, false, errors.New("documentation target is an authored instruction input")
 		}
 	}
-	for _, input := range append([]apply.ModelSource{raw.Local}, raw.Dependencies...) {
+	for _, input := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
 		root := repoPath(input.RepositoryArea.String(), input.Root.String())
 		if root != "" && (root == "." || ViewPath == root || strings.HasPrefix(ViewPath, root+"/")) {
 			p.Status = model.Failed
@@ -186,7 +186,7 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 			p.Sources = append(p.Sources, Source{Boundary: input.Selection.Boundary, Path: file.Path().String(), RepositoryPath: repoPath(input.RepositoryArea.String(), file.Path().String()), ContentDigest: file.ContentID().String(), Mode: file.Mode()})
 		}
 	}
-	for _, group := range [][]apply.SourceFile{raw.Execution, raw.Registry, raw.Ignore, raw.RuntimeProfiles, raw.Instructions} {
+	for _, group := range [][]project.SourceFile{raw.Execution, raw.Registry, raw.Ignore, raw.RuntimeProfiles, raw.Instructions} {
 		for _, file := range group {
 			if file.RepositoryPath.String() == ViewPath {
 				p.Status = model.Failed
@@ -254,24 +254,14 @@ func (s *Service) prepare(ctx context.Context, request apply.PreviewRequest) (Pr
 	return p, m, controlsPassed, nil
 }
 
-func documentationInstructionRefs(e apply.AuthoredExecution) []string {
+func documentationInstructionRefs(e project.AuthoredExecution) []string {
 	var result []string
-	if e.Defaults.Execute.Instructions != nil {
-		result = append(result, e.Defaults.Execute.Instructions.Value...)
-	}
-	if e.Defaults.Verify.Instructions != nil {
-		result = append(result, e.Defaults.Verify.Instructions.Value...)
-	}
-	if e.Packages != nil {
-		for _, override := range e.Packages.Value {
-			if override.Execute.Instructions != nil {
-				result = append(result, override.Execute.Instructions.Value...)
-			}
-			if override.Verify.Instructions != nil {
-				result = append(result, override.Verify.Instructions.Value...)
-			}
+	if e.Instructions != nil {
+		for _, instructions := range e.Instructions.Value {
+			result = append(result, instructions.Files.Value...)
 		}
 	}
+
 	return result
 }
 

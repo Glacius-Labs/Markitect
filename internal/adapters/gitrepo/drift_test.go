@@ -9,7 +9,7 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -28,7 +28,7 @@ func TestConfirmationDetectsSameSizeRewriteWithRestoredTimestamp(t *testing.T) {
 				if err := os.WriteFile(target, []byte("external bytes"), 0o644); err != nil {
 					t.Fatal(err)
 				}
-				selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: dir, Path: fixturePath(t, "profile.data")}}
+				selection.RuntimeProfiles = []project.SourceLocation{{Boundary: dir, Path: fixturePath(t, "profile.data")}}
 			case "external-model":
 				dir := testkit.TempDir(t)
 				copyBoundary(t, selection.Dependencies[0].Boundary, dir)
@@ -58,7 +58,7 @@ func TestConfirmationDetectsSameSizeRewriteWithRestoredTimestamp(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			result, err := r.CapturePreview(context.Background(), apply.PreviewRequest{Selection: selection})
+			result, err := r.CapturePreview(context.Background(), project.PreviewRequest{Selection: selection})
 			if !mutated || !errors.Is(err, ErrChanged) || result.Head == "" || len(result.Raw.Local.Source.Entries) == 0 {
 				t.Fatalf("restored timestamp hid drift: %v mutated=%v", err, mutated)
 			}
@@ -78,7 +78,7 @@ func TestExternalModeAndCensusMembershipChangesAreDetected(t *testing.T) {
 			if err := os.WriteFile(target, []byte("original instructions"), 0o644); err != nil {
 				t.Fatal(err)
 			}
-			selection.Instructions = []apply.SourceLocation{{Boundary: dir, Path: fixturePath(t, "instruction.txt")}}
+			selection.Instructions = []project.SourceLocation{{Boundary: dir, Path: fixturePath(t, "instruction.txt")}}
 			r := adapter(t)
 			changed := false
 			r.observe = func(event, p string) {
@@ -92,7 +92,7 @@ func TestExternalModeAndCensusMembershipChangesAreDetected(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
-			result, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+			result, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 			if !changed || !errors.Is(err, ErrChanged) || result.Guard != "" {
 				t.Fatalf("membership/mode drift escaped: %v", err)
 			}
@@ -144,7 +144,7 @@ func TestFileIdentityChangeAndCancellationPreserveKnownInputs(t *testing.T) {
 					}
 				}
 			}
-			result, err := r.CapturePreview(ctx, apply.PreviewRequest{Selection: selection})
+			result, err := r.CapturePreview(ctx, project.PreviewRequest{Selection: selection})
 			wanted := ErrChanged
 			if kind == "cancel-after-roots" {
 				wanted = context.Canceled
@@ -165,7 +165,7 @@ func TestAdmissionLimitsAndAlreadyCanceledContext(t *testing.T) {
 	_, selection, head := libraryFixture(t)
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	result, err := adapter(t).Capture(ctx, apply.CaptureRequest{Selection: selection})
+	result, err := adapter(t).Capture(ctx, project.CaptureRequest{Selection: selection})
 	if !errors.Is(err, context.Canceled) || result.Guard != "" || result.Head != "" {
 		t.Fatal("canceled call performed acquisition")
 	}
@@ -174,7 +174,7 @@ func TestAdmissionLimitsAndAlreadyCanceledContext(t *testing.T) {
 		if err != nil {
 			t.Fatal(err)
 		}
-		result, err := r.Capture(context.Background(), apply.CaptureRequest{Selection: selection})
+		result, err := r.Capture(context.Background(), project.CaptureRequest{Selection: selection})
 		if !errors.Is(err, ErrLimit) || result.Head != head || result.Guard != "" {
 			t.Fatalf("admission lost observations: %v head=%s", err, result.Head)
 		}

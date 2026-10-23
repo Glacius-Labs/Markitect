@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
@@ -25,12 +25,12 @@ func TestEntryBudgetIncludesDirectoriesAcrossExternalModels(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	service := apply.NewModelService(r, r)
-	baseline, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	service := project.NewModelService(r, r)
+	baseline, err := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil || baseline.Checked().Status != model.Passed {
 		t.Fatalf("valid M1 capture within entry budget: %v", err)
 	}
-	preview, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
+	preview, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection}, model.Limits{})
 	if err != nil || preview.Checked().Status != model.Passed {
 		t.Fatalf("valid M1 preview within entry budget: %v", err)
 	}
@@ -53,7 +53,7 @@ func TestEntryBudgetIncludesDirectoriesAcrossExternalModels(t *testing.T) {
 		t.Fatal("acquired manifest missing")
 		return nil
 	}
-	assertPartial := func(raw apply.RawInputs) {
+	assertPartial := func(raw project.RawInputs) {
 		t.Helper()
 		if len(raw.Dependencies) != 2 || !bytes.Equal(manifest(raw.Local.Source), manifest(baseline.Inputs().Raw.Local.Source)) {
 			t.Fatal("entry refusal lost known model observations")
@@ -74,14 +74,14 @@ func TestEntryBudgetIncludesDirectoriesAcrossExternalModels(t *testing.T) {
 		}
 	}
 	t.Run("committed", func(t *testing.T) {
-		result, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+		result, err := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 		if !errors.Is(err, ErrLimit) || result.Checked().Status != model.NotCompleted || result.Inputs().Head != head || result.Inputs().Guard != "" {
 			t.Fatalf("aggregate model directories escaped budget: %v status=%s", err, result.Checked().Status)
 		}
 		assertPartial(result.Inputs().Raw)
 	})
 	t.Run("working", func(t *testing.T) {
-		result, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
+		result, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection}, model.Limits{})
 		if !errors.Is(err, ErrLimit) || result.Checked().Status != model.NotCompleted || result.Inputs().Head != head {
 			t.Fatalf("aggregate preview directories escaped budget: %v status=%s", err, result.Checked().Status)
 		}

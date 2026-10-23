@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/realization"
 )
 
@@ -26,12 +26,12 @@ func TestM1GitPreparationRetainsIgnoredUntrackedCensusAndHistoricalInstructions(
 	for _, mode := range []string{"capture", "working", "fixed"} {
 		t.Run(mode, func(t *testing.T) {
 			port := &recordingPreparationGit{repository: adapter(t)}
-			service := apply.NewPreparationService(apply.NewModelService(port, port))
-			var first, last apply.RawInputs
+			service := project.NewPreparationService(project.NewModelService(port, port))
+			var first, last project.RawInputs
 			var accounting realization.Accounting
 			var status model.Status
 			if mode == "capture" {
-				result, err := service.Capture(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+				result, err := service.Capture(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 				if err != nil || len(result.Attempts()) != 2 || len(port.captures) != 2 {
 					t.Fatalf("actual ignored-file capture: %v", err)
 				}
@@ -51,7 +51,7 @@ func TestM1GitPreparationRetainsIgnoredUntrackedCensusAndHistoricalInstructions(
 					t.Fatal("capture lost its actual current HEAD/opaque guard")
 				}
 			} else {
-				request := apply.PreviewRequest{Selection: selection}
+				request := project.PreviewRequest{Selection: selection}
 				if mode == "fixed" {
 					request.Revision = historical
 				}
@@ -75,14 +75,14 @@ func TestM1GitPreparationRetainsIgnoredUntrackedCensusAndHistoricalInstructions(
 			}
 			assertOriginalPreparationGap(t, first, last)
 			assertPreparationFileClosure(t, last)
-			var manager apply.SourceFile
+			var manager project.SourceFile
 			for _, source := range last.Instructions {
 				if source.RepositoryPath.String() == "ops/manager.md" {
 					manager = source
 				}
 			}
 			if mode == "fixed" {
-				for _, raw := range []apply.RawInputs{first, last} {
+				for _, raw := range []project.RawInputs{first, last} {
 					if _, present := raw.Census.Lookup(fixturePath(t, today)); present {
 						t.Fatal("historical recapture imported today's ignored untracked file")
 					}
@@ -91,7 +91,7 @@ func TestM1GitPreparationRetainsIgnoredUntrackedCensusAndHistoricalInstructions(
 					t.Fatal("historical preparation imported today's instruction bytes")
 				}
 			} else {
-				for _, raw := range []apply.RawInputs{first, last} {
+				for _, raw := range []project.RawInputs{first, last} {
 					file, present := raw.Census.Lookup(fixturePath(t, today))
 					if !present || !bytes.Equal(file.Bytes(), []byte(untracked)) {
 						t.Fatal("ordinary Gitignore hid actual Census bytes")

@@ -6,8 +6,8 @@ import (
 	"reflect"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -17,8 +17,8 @@ func TestActualLibraryCaptureAndBothPreviews(t *testing.T) {
 	repo.Write("node_modules/payload.bin", "also part of census")
 	repo.Write(".markitect/state/trace", "excluded control observation")
 	r := adapter(t)
-	service := apply.NewModelService(r, r)
-	captured, err := service.CaptureModel(context.Background(), apply.CaptureRequest{Selection: selection}, model.Limits{})
+	service := project.NewModelService(r, r)
+	captured, err := service.CaptureModel(context.Background(), project.CaptureRequest{Selection: selection}, model.Limits{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -45,11 +45,11 @@ func TestActualLibraryCaptureAndBothPreviews(t *testing.T) {
 	if !bytes.Equal(inputs.Raw.Execution[0].File.Bytes(), []byte("\xef\xbb\xbforiginal\x00\r\nconfig/execution.data")) {
 		t.Fatal("selected source bytes changed")
 	}
-	working, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection}, model.Limits{})
+	working, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection}, model.Limits{})
 	if err != nil || working.Checked().Status != model.Passed {
 		t.Fatalf("working: %v %+v", err, working.Checked())
 	}
-	fixed, err := service.PreviewModel(context.Background(), apply.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
+	fixed, err := service.PreviewModel(context.Background(), project.PreviewRequest{Selection: selection, Revision: head}, model.Limits{})
 	if err != nil || fixed.Checked().Status != model.Passed {
 		t.Fatalf("fixed: %v %+v", err, fixed.Checked())
 	}

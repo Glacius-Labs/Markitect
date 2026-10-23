@@ -45,6 +45,10 @@ var targetRoots = []struct{ path, layer string }{
 	{"internal/agentd", "agent-runtime"},
 	{"internal/testkit", "test-support"},
 	{"internal/run", "apply-run"},
+	{"internal/project", "apply-project"},
+	{"internal/runtimeconfig", "runtime-config"},
+	{"internal/adapters/runstore", "apply-adapter"},
+	{"internal/harness", "native-harness"},
 	{"internal/apply", "apply-usecase"},
 	{"internal/model", "apply-model"},
 	{"cmd/markitect", "apply-command"},
@@ -62,28 +66,31 @@ func targetLayer(p string) (string, string) {
 }
 
 var responsibilityImports = map[string][]string{
+	"internal/adapters/runstore":       {"internal/run"},
+	"internal/runtimeconfig":           {"internal/model", "internal/organization", "internal/project", "internal/snapshot"},
+	"internal/project":                 {"internal/model", "internal/organization", "internal/realization", "internal/snapshot"},
 	"cmd/markitect":                    {"internal/bootstrap"},
 	"cmd/markitect-agentd":             {"internal/agentd"},
 	"cmd/markitect-check-architecture": {"internal/tooling/architecturecli"},
 	"cmd/markitect-check-modules":      {"internal/tooling/modulecli"},
 	"cmd/markitect-release":            {"internal/tooling/releasecli"},
-	"internal/adapters/checks":         {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/run", "internal/adapters/container"},
-	"internal/adapters/cli":            {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/run", "internal/snapshot", "internal/modeldocs", "internal/buildinfo", "internal/tooling/licenses"},
-	"internal/adapters/codexappserver": {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/adapters/container", "internal/run", "internal/agentd/frame"},
-	"internal/adapters/claudecode":     {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/run", "internal/adapters/container", "internal/agentd/frame"},
+	"internal/adapters/checks":         {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
+	"internal/adapters/cli":            {"internal/buildinfo", "internal/model", "internal/modeldocs", "internal/project", "internal/realization", "internal/runtimeconfig", "internal/snapshot", "internal/tooling/licenses"},
+	"internal/adapters/codexappserver": {"internal/adapters/container", "internal/agentd/frame", "internal/harness", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
+	"internal/adapters/claudecode":     {"internal/adapters/container", "internal/model", "internal/organization", "internal/project", "internal/run", "internal/runtimeconfig", "internal/snapshot"},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
-	"internal/adapters/gitrepo":        {"internal/apply", "internal/model", "internal/organization", "internal/realization", "internal/snapshot", "internal/run", "internal/adapters/container"},
+	"internal/adapters/gitrepo":        {"internal/adapters/container", "internal/model", "internal/project", "internal/run", "internal/snapshot"},
 	"internal/agentd":                  {"internal/agentd/frame"},
-	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization", "internal/run"},
-	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/claudecode", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/container", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/model", "internal/modeldocs", "internal/organization", "internal/realization", "internal/run", "internal/snapshot"},
-	"internal/modeldocs":               {"internal/apply", "internal/model", "internal/snapshot"},
+	"internal/harness":                 {"internal/model", "internal/organization", "internal/project"},
+	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/claudecode", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/model", "internal/modeldocs", "internal/project", "internal/runtimeconfig"},
+	"internal/modeldocs":               {"internal/model", "internal/project", "internal/snapshot"},
 	"internal/organization":            {"internal/model", "internal/snapshot"},
 	"internal/realization":             {"internal/model", "internal/snapshot"},
-	"internal/run":                     {"internal/snapshot"},
+	"internal/run":                     {"internal/organization", "internal/project", "internal/snapshot"},
 	"internal/tooling/architecturecli": {"internal/tooling/architecture"},
 	"internal/tooling/guardedwrite":    {"internal/tooling/source"},
-	"internal/tooling/modulechecks":    {"internal/adapters/gitrepo", "internal/apply", "internal/model", "internal/snapshot", "internal/tooling/modules/githooks", "internal/tooling/modules/pipelines"},
+	"internal/tooling/modulechecks":    {"internal/adapters/gitrepo", "internal/model", "internal/project", "internal/snapshot", "internal/tooling/modules/githooks", "internal/tooling/modules/pipelines"},
 	"internal/tooling/modulecli":       {"internal/tooling/modulechecks"},
 	"internal/tooling/publish":         {"internal/tooling/source", "internal/tooling/release"},
 	"internal/tooling/release":         {"internal/tooling/source", "internal/tooling/licenses"},
@@ -94,7 +101,8 @@ var responsibilityImports = map[string][]string{
 // Only concrete fixture and composition needs receive test-only edges;
 // production keeps its separately declared responsibility imports.
 var responsibilityTestImports = map[string][]string{
-	"internal/adapters/checks": {"internal/adapters/gitrepo"},
+	"internal/adapters/codexappserver": {"internal/adapters/gitrepo", "internal/adapters/runstore"},
+	"internal/adapters/gitrepo":        {"internal/adapters/runstore", "internal/adapters/checks", "internal/runtimeconfig", "internal/organization", "internal/realization"},
 }
 
 // Edge.Test alone cannot distinguish internal from external Go tests.

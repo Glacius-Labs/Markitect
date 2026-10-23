@@ -53,11 +53,13 @@ type TurnID string
 type RequestMethod string
 
 const (
-	Initialize    RequestMethod = "initialize"
-	ThreadStart   RequestMethod = "thread/start"
-	ThreadResume  RequestMethod = "thread/resume"
-	TurnStart     RequestMethod = "turn/start"
-	TurnInterrupt RequestMethod = "turn/interrupt"
+	Initialize          RequestMethod = "initialize"
+	ThreadStart         RequestMethod = "thread/start"
+	ThreadResume        RequestMethod = "thread/resume"
+	TurnStart           RequestMethod = "turn/start"
+	TurnInterrupt       RequestMethod = "turn/interrupt"
+	BackgroundList      RequestMethod = "thread/backgroundTerminals/list"
+	BackgroundTerminate RequestMethod = "thread/backgroundTerminals/terminate"
 )
 
 type ClientInfo struct {
@@ -109,8 +111,13 @@ func (c *Codec) EncodeInitialize(id RequestID, client ClientInfo) ([]byte, error
 		return nil, err
 	}
 	return c.request(id, Initialize, struct {
-		ClientInfo ClientInfo `json:"clientInfo"`
-	}{client})
+		ClientInfo   ClientInfo `json:"clientInfo"`
+		Capabilities struct {
+			ExperimentalAPI bool `json:"experimentalApi"`
+		} `json:"capabilities"`
+	}{client, struct {
+		ExperimentalAPI bool `json:"experimentalApi"`
+	}{true}})
 }
 func (c *Codec) EncodeInitialized() ([]byte, error) {
 	return c.encode(struct {
@@ -264,7 +271,12 @@ type TurnObservation struct {
 	Status TurnStatus
 }
 type InitializeResponse struct{ CodexHome, PlatformFamily, PlatformOS, UserAgent string }
+type BackgroundTerminal struct {
+	ProcessID string `json:"processId"`
+}
 type Response struct {
+	Terminals  []BackgroundTerminal
+	Terminated bool
 	Method     RequestMethod
 	Initialize InitializeResponse
 	Thread     ThreadID
@@ -475,6 +487,20 @@ func (m Message) ReadResponse(expected RequestID, method RequestMethod) (Respons
 		}
 	case TurnStart:
 		r.Turn, err = parseTurn(o["turn"])
+	case BackgroundList:
+		if requireFields(o, "data", "nextCursor") != nil || string(o["nextCursor"]) != "null" || json.Unmarshal(o["data"], &r.Terminals) != nil || string(o["data"]) == "null" {
+			err = ErrProtocol
+			break
+		}
+		for _, terminal := range r.Terminals {
+			if terminal.ProcessID == "" {
+				err = ErrProtocol
+			}
+		}
+	case BackgroundTerminate:
+		if requireFields(o, "terminated") != nil || json.Unmarshal(o["terminated"], &r.Terminated) != nil || !r.Terminated {
+			err = ErrProtocol
+		}
 	case TurnInterrupt:
 		if len(o) != 0 {
 			err = ErrProtocolUnsupported
@@ -711,4 +737,25 @@ func protocolObject(data []byte) (map[string]json.RawMessage, error) {
 		return nil, ErrProtocol
 	}
 	return o, nil
+}
+
+// EncodeBackgroundList requests a complete bounded snapshot. A paginated reply
+// is refused rather than treating its first page as an absence observation.
+func (c *Codec) EncodeBackgroundList(id RequestID, thread ThreadID) ([]byte, error) {
+	if thread == "" {
+		return nil, ErrProtocol
+	}
+	return c.request(id, BackgroundList, struct {
+		Thread string `json:"threadId"`
+		Limit  int    `json:"limit"`
+	}{string(thread), 100})
+}
+func (c *Codec) EncodeBackgroundTerminate(id RequestID, thread ThreadID, process string) ([]byte, error) {
+	if thread == "" || process == "" {
+		return nil, ErrProtocol
+	}
+	return c.request(id, BackgroundTerminate, struct {
+		Thread  string `json:"threadId"`
+		Process string `json:"processId"`
+	}{string(thread), process})
 }

@@ -14,7 +14,7 @@ import (
 
 func TestRuntimeCredentialResolversDeferReadsAndFreezeMappings(t *testing.T) {
 	path := filepath.Join(testkit.TempDir(t), "dedicated-key")
-	sources := map[string]credentialSource{"selected": {Provider: "codex-app-server", Mode: "api-key", Path: path}}
+	sources := map[string]credentialSource{"selected": {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: path}}
 	codex, claude, err := newCredentialResolvers(sources)
 	if err != nil || codex == nil || claude == nil {
 		t.Fatalf("construction must not read a missing credential: %v", err)
@@ -22,21 +22,21 @@ func TestRuntimeCredentialResolversDeferReadsAndFreezeMappings(t *testing.T) {
 	// Neither later map changes nor ambient credentials can supply a fallback.
 	sources["selected"] = credentialSource{Provider: "claude-code", Mode: "dedicated-runtime-token", Path: filepath.Join(testkit.TempDir(t), "different")}
 	t.Setenv("OPENAI_API_KEY", "fake-ambient-key")
-	if got, err := codex(context.Background(), "selected"); !errors.Is(err, errCredentialRead) || got.APIKey != "" {
+	if got, err := codex(context.Background(), "selected"); !errors.Is(err, errCredentialRead) || len(got.RuntimeLogin) != 0 {
 		t.Fatalf("missing mapped file must refuse: %v", err)
 	}
 	writeFakeCredential(t, path, []byte("fake-key-first"))
 	got, err := codex(context.Background(), "selected")
-	if err != nil || got.Mode != "api-key" || got.APIKey != "fake-key-first" || got.RuntimeLogin != nil {
+	if err != nil || got.Mode != "dedicated-runtime-login" || string(got.RuntimeLogin) != "fake-key-first" {
 		t.Fatalf("exact frozen mapping did not resolve: %v", err)
 	}
 	writeFakeCredential(t, path, []byte("fake-key-next"))
 	got, err = codex(context.Background(), "selected")
-	if err != nil || got.APIKey != "fake-key-next" {
+	if err != nil || string(got.RuntimeLogin) != "fake-key-next" {
 		t.Fatalf("each invocation must read the selected source: %v", err)
 	}
 	for _, ref := range []string{"unknown", "selected ", "SELECTED"} {
-		if got, err := codex(context.Background(), ref); !errors.Is(err, errRuntimeCredential) || got.APIKey != "" {
+		if got, err := codex(context.Background(), ref); !errors.Is(err, errRuntimeCredential) || len(got.RuntimeLogin) != 0 {
 			t.Fatalf("inexact reference was admitted: %v", err)
 		}
 	}
@@ -61,7 +61,7 @@ func TestRuntimeCredentialResolversPreserveLiteralLoginAndToken(t *testing.T) {
 		t.Fatal(err)
 	}
 	got, err := codex(context.Background(), "subscription")
-	if err != nil || got.Mode != "dedicated-runtime-login" || got.APIKey != "" || !bytes.Equal(got.RuntimeLogin, login) {
+	if err != nil || got.Mode != "dedicated-runtime-login" || !bytes.Equal(got.RuntimeLogin, login) {
 		t.Fatalf("subscription bytes changed: %v", err)
 	}
 	got.RuntimeLogin[0] = '!'
@@ -84,19 +84,20 @@ func TestRuntimeCredentialMappingRefusesInvalidInputsWithoutIO(t *testing.T) {
 	for _, tc := range []struct {
 		name, ref, provider, mode, path string
 	}{
-		{"empty reference", "", "codex-app-server", "api-key", path},
-		{"reference whitespace", " key", "codex-app-server", "api-key", path},
-		{"reference control", "key\n", "codex-app-server", "api-key", path},
+		{"retired API key", "key", "codex-app-server", "api-key", path},
+		{"empty reference", "", "codex-app-server", "dedicated-runtime-login", path},
+		{"reference whitespace", " key", "codex-app-server", "dedicated-runtime-login", path},
+		{"reference control", "key\n", "codex-app-server", "dedicated-runtime-login", path},
 		{"unknown provider", "key", "other", "api-key", path},
 		{"ambient mode", "key", "codex-app-server", "environment", path},
 		{"desktop mode", "key", "codex-app-server", "desktop-login", path},
 		{"wrong Claude mode", "key", "claude-code", "api-key", path},
 		{"wrong Codex mode", "key", "codex-app-server", "dedicated-runtime-token", path},
-		{"relative path", "key", "codex-app-server", "api-key", "relative-key"},
-		{"normalized path", "key", "codex-app-server", "api-key", filepath.Dir(path) + string(filepath.Separator) + "." + string(filepath.Separator) + "key"},
-		{"alternate stream", "key", "codex-app-server", "api-key", path + ":stream"},
-		{"path control", "key", "codex-app-server", "api-key", path + "\n"},
-		{"path trailing dot", "key", "codex-app-server", "api-key", path + "."},
+		{"relative path", "key", "codex-app-server", "dedicated-runtime-login", "relative-key"},
+		{"normalized path", "key", "codex-app-server", "dedicated-runtime-login", filepath.Dir(path) + string(filepath.Separator) + "." + string(filepath.Separator) + "key"},
+		{"alternate stream", "key", "codex-app-server", "dedicated-runtime-login", path + ":stream"},
+		{"path control", "key", "codex-app-server", "dedicated-runtime-login", path + "\n"},
+		{"path trailing dot", "key", "codex-app-server", "dedicated-runtime-login", path + "."},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			codex, claude, err := newCredentialResolvers(map[string]credentialSource{tc.ref: {Provider: tc.provider, Mode: tc.mode, Path: tc.path}})
@@ -127,7 +128,7 @@ func TestRuntimeCredentialReadBoundsTypesAndSafeErrors(t *testing.T) {
 			path := filepath.Join(dir, tc.name+"-credential")
 			writeFakeCredential(t, path, tc.data)
 			codex, claude, err := newCredentialResolvers(map[string]credentialSource{
-				"key":   {Provider: "codex-app-server", Mode: "api-key", Path: path},
+				"key":   {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: path},
 				"token": {Provider: "claude-code", Mode: "dedicated-runtime-token", Path: path},
 			})
 			if err != nil {
@@ -135,11 +136,15 @@ func TestRuntimeCredentialReadBoundsTypesAndSafeErrors(t *testing.T) {
 			}
 			key, keyErr := codex(context.Background(), "key")
 			token, tokenErr := claude(context.Background(), "token")
-			if !errors.Is(keyErr, tc.want) || !errors.Is(tokenErr, tc.want) || key.APIKey != "" || token.Token != "" {
+			keyOK := errors.Is(keyErr, tc.want) && len(key.RuntimeLogin) == 0
+			if errors.Is(tc.want, errRuntimeCredential) {
+				keyOK = keyErr == nil && bytes.Equal(key.RuntimeLogin, tc.data)
+			}
+			if !keyOK || !errors.Is(tokenErr, tc.want) || token.Token != "" {
 				t.Fatalf("invalid file returned credential bytes: %v, %v", keyErr, tokenErr)
 			}
 			for _, err := range []error{keyErr, tokenErr} {
-				if strings.Contains(err.Error(), path) || strings.Contains(err.Error(), "fake-secret") {
+				if err != nil && (strings.Contains(err.Error(), path) || strings.Contains(err.Error(), "fake-secret")) {
 					t.Fatal("credential data escaped through an error")
 				}
 			}
@@ -166,7 +171,7 @@ func TestRuntimeCredentialReadBoundsTypesAndSafeErrors(t *testing.T) {
 	if got, err := codex(nil, "login"); err == nil || got.RuntimeLogin != nil {
 		t.Fatal("nil context resolution returned bytes")
 	}
-	directory, _, err := newCredentialResolvers(map[string]credentialSource{"dir": {Provider: "codex-app-server", Mode: "api-key", Path: dir}})
+	directory, _, err := newCredentialResolvers(map[string]credentialSource{"dir": {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: dir}})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -174,7 +179,7 @@ func TestRuntimeCredentialReadBoundsTypesAndSafeErrors(t *testing.T) {
 		t.Fatalf("directory was not refused as nonregular: %v", err)
 	}
 	missing := filepath.Join(dir, "fake-secret-path-must-not-leak")
-	resolver, _, err := newCredentialResolvers(map[string]credentialSource{"missing": {Provider: "codex-app-server", Mode: "api-key", Path: missing}})
+	resolver, _, err := newCredentialResolvers(map[string]credentialSource{"missing": {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: missing}})
 	if err != nil {
 		t.Fatal(err)
 	}

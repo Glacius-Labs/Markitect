@@ -4,20 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"regexp"
 	"slices"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 )
 
-var ErrSession = errors.New("Claude turn refused or incomplete")
+var ErrSession = errors.New("Claude session refused or incomplete")
 
 // Profile is one closed Agent profile of the Runtime profile: the immutable image, the exact
 // credential reference, the wire limit and the explicit provider settings. No
@@ -82,21 +79,21 @@ func validateSessionProfile(profile SessionProfile) error {
 // ProfileFromPrepared projects captured Claude v1 Runtime settings after complete
 // static preparation. It performs no acquisition, credential resolution or
 // runtime call; static preparation grants no execution authority.
-func ProfileFromPrepared(prepared apply.PreparedProfile) (Profile, error) {
+func ProfileFromPrepared(prepared runtimeconfig.PreparedProfile) (Profile, error) {
 	refuse := func(reason string) (Profile, error) {
 		return Profile{}, fmt.Errorf("%w: %s", ErrSession, reason)
 	}
 	input, observation := prepared.Input(), prepared.Observation()
-	if _, ok := prepared.Identity(); !ok || observation.Status != model.Passed || input.Namespace() != "agentProfiles" || input.Section() != "claudeCode" || input.Binding() == (apply.ProfileBinding{}) || observation.InputBinding != input.Binding() {
+	if _, ok := prepared.Identity(); !ok || observation.Status != model.Passed || input.Namespace() != "agentProfiles" || input.Section() != "claudeCode" || input.Binding() == (runtimeconfig.ProfileBinding{}) || observation.InputBinding != input.Binding() {
 		return refuse("complete source-bound Agent profile preparation is required")
 	}
-	p := preparation{input: input, out: apply.ProfileObservation{Status: model.Passed}}
+	p := preparation{input: input, out: runtimeconfig.ProfileObservation{Status: model.Passed}}
 	config, ok := p.decode(input.Inline())
 	if !ok {
 		return refuse("captured Claude configuration is invalid")
 	}
 	image := observation.AgentImage
-	if observation.Contract != (apply.ProfileContract{Name: "markitect.claude-code.image-metadata", Version: 1}) || image == nil || image.Provider != apply.AgentImageClaudeCode || image.ImageID != config.imageID || image.Metadata.Path != runtimeMetadataPath || image.CLIVersion != supportedClaudeVersion || image.AgentdVersion != config.agentd || image.RecordedCodexSchemaDigest != "" || !slices.Equal(observation.Instructions, config.instructions) {
+	if observation.Contract != (runtimeconfig.ProfileContract{Name: "markitect.claude-code.image-metadata", Version: 1}) || image == nil || image.Provider != runtimeconfig.AgentImageClaudeCode || image.ImageID != config.imageID || image.Metadata.Path != runtimeMetadataPath || image.CLIVersion != supportedClaudeVersion || image.AgentdVersion != config.agentd || image.RecordedCodexSchemaDigest != "" || !slices.Equal(observation.Instructions, config.instructions) {
 		return refuse("prepared Claude contract, image or instruction binding differs from captured configuration")
 	}
 	profile := Profile{ImageID: config.imageID, CredentialRef: config.credentialRef, MaxWireBytes: config.maxWireBytes, Session: config.session}
@@ -110,15 +107,3 @@ func ProfileFromPrepared(prepared apply.PreparedProfile) (Profile, error) {
 // Token must be a long-lived dedicated runtime Claude token, never desktop auth.
 type RuntimeCredential struct{ Token string }
 type CredentialResolver func(context.Context, string) (RuntimeCredential, error)
-
-// RuntimeSession is the existing container Session surface used by this adapter.
-type RuntimeSession interface {
-	StartProvider(context.Context, frame.Start) (frame.Started, error)
-	Stdout() io.Reader
-	WriteInput([]byte) error
-	ToolCalls() <-chan frame.ToolCall
-	Reply(frame.ToolReply) error
-	Stop(context.Context, int64) (frame.Exited, error)
-	Close() error
-}
-type RuntimeStarter func(context.Context, container.ContainerSpec) (RuntimeSession, error)

@@ -9,8 +9,8 @@ import (
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/githooks"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/modules/pipelines"
@@ -46,8 +46,8 @@ func Check(options Options) (Report, error) {
 		}
 	}
 	manifest, _ := snapshot.NewPath(".markitect/model.yaml")
-	result, err := apply.NewPreparationService(apply.NewModelService(repository, repository)).Preview(ctx, apply.PreviewRequest{
-		Selection: apply.InputSelection{Repository: root, Local: apply.ModelSelection{Boundary: ".", ManifestPath: manifest}},
+	result, err := project.NewPreparationService(project.NewModelService(repository, repository)).Preview(ctx, project.PreviewRequest{
+		Selection: project.InputSelection{Repository: root, Local: project.ModelSelection{Boundary: ".", ManifestPath: manifest}},
 		Revision:  revision,
 	}, model.Limits{})
 	if err != nil {
@@ -60,7 +60,7 @@ func Check(options Options) (Report, error) {
 	return checkPrepared(prepared, options)
 }
 
-func checkPrepared(prepared apply.PreviewPreparationAttempt, options Options) (Report, error) {
+func checkPrepared(prepared project.PreviewPreparationAttempt, options Options) (Report, error) {
 	inputs := prepared.Model().Inputs()
 	checked := prepared.Model().Checked()
 	registry, ok := prepared.Registry().Registry()

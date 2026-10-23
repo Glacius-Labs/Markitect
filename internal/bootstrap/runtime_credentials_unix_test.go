@@ -35,11 +35,11 @@ func TestRuntimeCredentialRefusesSymlinksAndFIFO(t *testing.T) {
 		path string
 		want error
 	}{{leaf, errCredentialPath}, {filepath.Join(parent, "credential"), errCredentialPath}, {fifo, errCredentialType}} {
-		resolver, _, err := newCredentialResolvers(map[string]credentialSource{"selected": {Provider: "codex-app-server", Mode: "api-key", Path: tc.path}})
+		resolver, _, err := newCredentialResolvers(map[string]credentialSource{"selected": {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: tc.path}})
 		if err != nil {
 			t.Fatal(err)
 		}
-		if got, err := resolver(context.Background(), "selected"); !errors.Is(err, tc.want) || got.APIKey != "" {
+		if got, err := resolver(context.Background(), "selected"); !errors.Is(err, tc.want) || len(got.RuntimeLogin) != 0 {
 			t.Fatalf("redirect/nonregular file was admitted: %v", err)
 		}
 	}

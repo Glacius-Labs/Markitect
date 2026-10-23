@@ -48,17 +48,17 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/realization", "internal/snapshot", true},
 		{"internal/run", "internal/model", false},
 		{"internal/run", "internal/snapshot", true},
-		{"internal/run", "internal/organization", false},
+		{"internal/run", "internal/organization", true},
 		{"internal/run", "internal/realization", false},
 		{"internal/run", "internal/apply", false},
 		{"internal/run", "internal/adapters/gitrepo", false},
 		{"internal/run", "internal/adapters/checks", false},
 		{"internal/run", "internal/adapters/claudecode", false},
 		{"internal/model", "internal/run", false},
-		{"internal/apply", "internal/organization", true},
-		{"internal/apply", "internal/run", true},
+		{"internal/apply", "internal/organization", false},
+		{"internal/apply", "internal/run", false},
 		{"internal/apply", "internal/adapters/gitrepo", false},
-		{"internal/modeldocs", "internal/apply", true},
+		{"internal/modeldocs", "internal/project", true},
 		{"internal/modeldocs", "internal/adapters/documents", false},
 		{"internal/adapters/cli", "internal/modeldocs", true},
 		{"internal/adapters/cli", "internal/tooling/licenses", true},
@@ -79,15 +79,17 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/gitrepo", "internal/adapters/checks", false},
 		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", false},
 		{"internal/adapters/gitrepo", "internal/tooling/source", false},
-		// Claude metadata uses Apply ports and pure values; sessions use Run and
-		// the container frame DTOs. Execution and sibling adapters stay separate.
-		{"internal/adapters/claudecode", "internal/apply", true},
+		// Native metadata consumes Project and runtime configuration; the unavailable
+		// Claude session boundary grants no legacy Apply or frame privileges.
+		{"internal/adapters/claudecode", "internal/apply", false},
+		{"internal/adapters/claudecode", "internal/project", true},
+		{"internal/adapters/claudecode", "internal/runtimeconfig", true},
 		{"internal/adapters/claudecode", "internal/model", true},
 		{"internal/adapters/claudecode", "internal/organization", true},
 		{"internal/adapters/claudecode", "internal/snapshot", true},
 		{"internal/adapters/claudecode", "internal/run", true},
 		{"internal/adapters/claudecode", "internal/adapters/container", true},
-		{"internal/adapters/claudecode", "internal/agentd/frame", true},
+		{"internal/adapters/claudecode", "internal/agentd/frame", false},
 		{"internal/adapters/claudecode", "internal/agentd", false},
 		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
 		{"internal/adapters/claudecode", "internal/adapters/gitrepo", false},
@@ -100,15 +102,23 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		// container API; agentd execution and other adapters remain separate.
 		{"internal/adapters/codexappserver", "internal/adapters/container", true},
 		{"internal/adapters/codexappserver", "internal/run", true},
+		{"internal/adapters/codexappserver", "internal/harness", true},
+		{"internal/adapters/codexappserver", "internal/project", true},
+		{"internal/adapters/codexappserver", "internal/runtimeconfig", true},
+		{"internal/adapters/codexappserver", "internal/apply", false},
+		{"internal/harness", "internal/project", true},
+		{"internal/harness", "internal/run", false},
+		{"internal/harness", "internal/adapters/codexappserver", false},
 		{"internal/adapters/codexappserver", "internal/agentd/frame", true},
 		{"internal/adapters/codexappserver", "internal/agentd", false},
 		{"internal/adapters/codexappserver", "internal/adapters/claudecode", false},
 		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", false},
+		{"internal/adapters/codexappserver", "internal/adapters/runstore", false},
 		{"internal/adapters/codexappserver", "internal/tooling/source", false},
-		{"internal/bootstrap", "internal/adapters/container", true},
+		{"internal/bootstrap", "internal/adapters/container", false},
 		{"internal/bootstrap", "internal/adapters/claudecode", true},
 		{"internal/bootstrap", "internal/model", true},
-		{"internal/bootstrap", "internal/snapshot", true},
+		{"internal/bootstrap", "internal/snapshot", false},
 		{"internal/model", "internal/bootstrap", false},
 		{"internal/snapshot", "internal/bootstrap", false},
 		{"internal/adapters/container", "internal/agentd/frame", true},
@@ -128,7 +138,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"cmd/markitect-release", "internal/bootstrap", false},
 		{"internal/tooling/release", "internal/tooling/source", true},
 		{"internal/tooling/release", "internal/apply", false},
-		{"internal/tooling/modulechecks", "internal/apply", true},
+		{"internal/tooling/modulechecks", "internal/project", true},
 		{"internal/tooling/modulechecks", "internal/adapters/checks", false},
 		{"internal/tooling/modules/githooks", "internal/tooling/modules/pipelines", false},
 		{"internal/tooling/release/install", "internal/tooling/release", true},
@@ -137,8 +147,12 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"tools/smoke", "internal/bootstrap", false},
 	} {
 		for _, test := range []bool{false, true} {
+			allowed := tc.allowed
+			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" || tc.from == "internal/adapters/codexappserver" && (tc.to == "internal/adapters/gitrepo" || tc.to == "internal/adapters/runstore") {
+				allowed = test
+			} // Actual controlled declared-check composition is test-only.
 			got := Check([]Edge{{From: tc.from, To: tc.to, Test: test}})
-			if (len(got) == 0) != tc.allowed {
+			if (len(got) == 0) != allowed {
 				t.Errorf("%s -> %s test=%v: %v", tc.from, tc.to, test, got)
 			}
 		}
@@ -169,27 +183,27 @@ func TestTestsAndPlatformsCannotBypassDirection(t *testing.T) {
 	}
 }
 
-func TestCheckWorkspaceCompositionEdgeStaysTestOnly(t *testing.T) {
-	// External checks tests compose the concrete workspace adapter with the
+func TestRealGitRecordCompositionEdgeStaysTestOnly(t *testing.T) {
+	// External gitrepo tests compose the concrete workspace adapter with the
 	// check runner; production continues to consume the Run workspace port.
 	for _, test := range []bool{false, true} {
-		got := Check([]Edge{{From: "internal/adapters/checks", To: "internal/adapters/gitrepo", Test: test}})
+		got := Check([]Edge{{From: "internal/adapters/gitrepo", To: "internal/adapters/runstore", Test: test}})
 		if (len(got) == 0) != test {
-			t.Errorf("checks -> gitrepo test=%v: %v", test, got)
+			t.Errorf("gitrepo -> gitrepo test=%v: %v", test, got)
 		}
 	}
 	for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
 		t.Run(file, func(t *testing.T) {
 			root := t.TempDir()
 			test := strings.HasSuffix(file, "_test.go")
-			pkg := "checks"
+			pkg := "gitrepo"
 			if test {
 				pkg += "_test"
 			}
 			writeFixture(t, root, map[string]string{
-				"README.md": "# Owner\n", CodeMapSource: "packages:\n" + mapEntry("internal/adapters/checks", "apply-adapter") + mapEntry("internal/adapters/gitrepo", "apply-adapter"),
-				"internal/adapters/gitrepo/producer.go": "package gitrepo\n",
-				"internal/adapters/checks/" + file:      "package " + pkg + "\nimport _ \"" + ModulePath + "internal/adapters/gitrepo\"\n",
+				"README.md": "# Owner\n", CodeMapSource: "packages:\n" + mapEntry("internal/adapters/gitrepo", "apply-adapter") + mapEntry("internal/adapters/runstore", "apply-adapter"),
+				"internal/adapters/runstore/producer.go": "package runstore\n",
+				"internal/adapters/gitrepo/" + file:      "package " + pkg + "\nimport _ \"" + ModulePath + "internal/adapters/runstore\"\n",
 			})
 			got, err := CheckRepository(root)
 			if err != nil {
@@ -199,7 +213,7 @@ func TestCheckWorkspaceCompositionEdgeStaysTestOnly(t *testing.T) {
 				if len(got) != 0 {
 					t.Fatal("external check test composition refused", got)
 				}
-			} else if len(got) != 1 || got[0].Edge.File != "internal/adapters/checks/"+file || !strings.Contains(got[0].Rule, "responsibility direction forbids") {
+			} else if len(got) != 1 || got[0].Edge.File != "internal/adapters/gitrepo/"+file || !strings.Contains(got[0].Rule, "responsibility direction forbids") {
 				t.Fatal("production check imported workspace adapter", got)
 			}
 		})
@@ -208,7 +222,8 @@ func TestCheckWorkspaceCompositionEdgeStaysTestOnly(t *testing.T) {
 
 func TestClaudeProfileImportsAcrossPlatforms(t *testing.T) {
 	for _, producer := range []struct{ path, layer, pkg string }{
-		{"internal/apply", "apply-usecase", "apply"},
+		{"internal/project", "apply-project", "project"},
+		{"internal/runtimeconfig", "runtime-config", "runtimeconfig"},
 		{"internal/model", "apply-model", "model"},
 		{"internal/organization", "apply-organization", "organization"},
 		{"internal/snapshot", "apply-snapshot", "snapshot"},
@@ -241,9 +256,9 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
 		{"internal/model", true, true},
 		{"internal/adapters/claudecode", true, true},
-		{"internal/snapshot", true, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
-		{"internal/organization", true, true}, {"internal/realization", true, true},
-		{"internal/adapters/container", true, true}, {"internal/adapters/unknown", false, false},
+		{"internal/snapshot", false, false}, {"internal/run", false, false}, {"internal/testkit", false, true},
+		{"internal/organization", false, false}, {"internal/realization", false, false},
+		{"internal/adapters/container", false, false}, {"internal/adapters/unknown", false, false},
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.production
@@ -256,11 +271,10 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 		}
 	}
 	for _, producer := range []struct{ path, layer, pkg string }{
-		{"internal/adapters/container", "apply-adapter", "container"},
+		{"internal/project", "apply-project", "project"},
 		{"internal/adapters/claudecode", "apply-adapter", "claudecode"},
 		{"internal/model", "apply-model", "model"},
-		{"internal/snapshot", "apply-snapshot", "snapshot"},
-		{"internal/run", "apply-run", "run"},
+		{"internal/runtimeconfig", "runtime-config", "runtimeconfig"},
 	} {
 		for _, file := range []string{"fixture_windows_test.go", "fixture_linux_test.go", "fixture_windows.go", "fixture_linux.go"} {
 			t.Run(producer.pkg+"/"+file, func(t *testing.T) {

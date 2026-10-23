@@ -6,10 +6,10 @@ import (
 	"encoding/hex"
 	"strconv"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 )
 
-func (a *acquisition) guard() apply.PublicationGuard {
+func (a *acquisition) guard() project.PublicationGuard {
 	hash := sha256.New()
 	write := func(text string) {
 		var length [8]byte
@@ -41,7 +41,7 @@ func (a *acquisition) guard() apply.PublicationGuard {
 		}
 		write(s.Files.Digest().String())
 	}
-	for _, group := range [][]apply.SourceFile{a.raw.Execution, a.raw.Registry, a.raw.Ignore, a.raw.RuntimeProfiles, a.raw.Instructions} {
+	for _, group := range [][]project.SourceFile{a.raw.Execution, a.raw.Registry, a.raw.Ignore, a.raw.RuntimeProfiles, a.raw.Instructions} {
 		write(strconv.Itoa(len(group)))
 		for _, file := range group {
 			write(file.Location.Boundary)
@@ -52,5 +52,5 @@ func (a *acquisition) guard() apply.PublicationGuard {
 			write(file.File.ContentID().String())
 		}
 	}
-	return apply.PublicationGuard("gitrepo-capture/1:" + hex.EncodeToString(hash.Sum(nil)))
+	return project.PublicationGuard("gitrepo-capture/1:" + hex.EncodeToString(hash.Sum(nil)))
 }
