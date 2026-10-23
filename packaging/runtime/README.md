@@ -1,69 +1,35 @@
 # Runtime base image
 
-Every Markitect Agent session and project check runs in its own Linux container ([DEC-037](../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). This directory defines the product's base image. It contains:
+This directory defines the Linux image used by the native adapter and container checks. It contains `markitect-agentd`, pinned Codex `0.162.0` and Claude Code `2.1.301`, Node, Git, Python 3 and CA certificates. Installed CLI binaries do not establish adapter support or provider qualification. The current Codex adapter implements Run Sessions; the Claude adapter returns unavailable before credential or container side effects.
 
-- the session helper `markitect-agentd`, built from this repository;
-- Codex `0.162.0` and Claude Code `2.1.301`, pinned in the [Dockerfile](Dockerfile);
-- Git, Python 3 and CA certificates.
-
-Build it from the repository root; the [ignore file](Dockerfile.dockerignore) sends only the agentd sources to the engine:
+Build explicitly from the repository root when a new image is required:
 
 ```text
 docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 ```
 
-## Contract
+The [Dockerfile ignore file](Dockerfile.dockerignore) bounds the build context. Runtime preparation selects an existing immutable engine image ID (`sha256:...`); a tag or a source checkout alone is not that identity. `/opt/markitect/runtime.env` records CLI versions, the generated Codex schema digest and the agentd build. The metadata reader copies it from a created, never-started container and checks image identity again.
 
-| Part | Rule |
-| --- | --- |
-| Entrypoint | `/usr/local/bin/markitect-agentd serve`. The Orchestrator talks to it over the container's standard streams. |
-| User | Numeric `1000:1000`. The Orchestrator refuses root. |
-| Writable paths | The Orchestrator mounts a provider-home volume at `/home/agent` and the workspace at `/work`, and a temporary directory at `/tmp`. The image owns both mount points by user 1000, so fresh volumes take over that ownership. The root filesystem is read-only. |
-| Metadata | `/opt/markitect/runtime.env` records the Codex and Claude Code versions, the digest of the generated Codex App Server schemas and the agentd build. Preparation copies it out of a created, never started container. |
-| Identity | The Orchestrator names an image by its engine image ID (`sha256:...`), which also exists for local builds. |
+## Container and workspace ownership
 
-A project builds its own image `FROM` this one and adds the toolchain its checks need. The [Go example](examples/go/Dockerfile) adds Go and a C toolchain for projects such as the library example, so cgo and `go test -race` work, and keeps Go's caches in the provider home. It leaves `GOTMPDIR` unset, because an independent assessment runs the image with a read-only root and no writable home; a check whose builds need more than the bounded `/tmp` of a check container (64 MiB) sets `GOTMPDIR=/home/agent` in its profile's `env`, as the library demonstration does. It also links `go` and `gofmt` into `/usr/local/bin`, because the Agent CLIs run commands in login shells, whose `/etc/profile` resets `PATH`. A project image keeps the entrypoint, the user and the two mount points.
+The entrypoint is `/usr/local/bin/markitect-agentd serve`; its framed standard streams connect the host adapter to the native process and MCP bridge. Containers run as numeric user `1000:1000`, with a read-only root filesystem and explicit CPU, memory, PID, temporary-storage and network limits.
 
-The [Python example](examples/python/Dockerfile) adds CPython 3.13 for the Roombook and Readinglog test projects:
+A Codex Agent assignment owns one container and one fresh private home at `/home/agent`. Its private Linux working-copy volume/subpath is mounted at `/work` without copy-up. The same native process and conversation serve subsequent messages until Session closure. Closing the assignment observes provider exit and removes its owned home; conversation continuity across replacement containers or retained homes is not the current contract.
 
-```text
-docker build -f packaging/runtime/examples/python/Dockerfile -t markitect-runtime-python .
-```
+LinuxGit holds one separate hardened Git service and private Linux volume per Run. Managers receive distinct working copies inside that volume. Durable candidate bundles live outside the disposable Run environment. Checks receive separate disposable input and home copies; they cannot alias the Manager working copy. See the [Git workspace guide](../../internal/adapters/gitrepo/WORKSPACES.md), [container adapter](../../internal/adapters/container/README.md) and [native Codex adapter](../../internal/adapters/codexappserver/README.md) for actual consumers and cleanup uncertainty.
 
-The base keeps Node and the Agent CLIs under `/usr/local`, so the image copies only the interpreter, its standard library and `libpython` from the pinned official `python:3.13-slim-bookworm` image (the base already carries the C libraries these modules link against; verified importing: `ssl`, `sqlite3`, `zlib`, `bz2`, `lzma`, `ctypes`, `readline`, `curses`, `dbm.ndbm`, `dbm.gnu`, `uuid`, `zoneinfo`; `tkinter` is not available). `python` and `python3` are links in `/usr/local/bin`, for the login-shell reason above. The interpreter itself is the regular file `/usr/local/bin/python3.13`. A container check profile names the small regular wrapper `/opt/markitect/bin/python` (`exec /usr/local/bin/python3.13 "$@"`) as its executable: metadata preparation refuses a symbolic link and checks the type of every ancestor directory, which is slow for `/usr/local` and fast for `/opt/markitect/bin`. The root filesystem is read-only, so the image sets `PYTHONDONTWRITEBYTECODE=1`; the projects still call `python -B`.
+`/tmp` is executable because native tools and project toolchains run build products there. A project image may extend this base with its required toolchain while preserving the entrypoint, numeric user and mount points. The [Go example](examples/go/Dockerfile) adds Go and a C toolchain; the [Python example](examples/python/Dockerfile) adds CPython 3.13. A selected check profile must explicitly provide its executable, arguments, limits and any required writable cache or temporary paths. Image contents alone do not qualify a project's checks or race tests.
 
-## Session facilities
+## Account login and instruction loading
 
-| Facility | Use |
-| --- | --- |
-| Census | agentd lists the processes in the container besides itself and init; zombies appear with state `Z`. The Orchestrator uses it to judge quiescence before a workspace-basis change. |
-| Helper containers | `Engine.RunHelper` runs one command, such as `/usr/bin/tee`, `/bin/cat` or `git`, under the same hardening, to fill, read or check a workspace volume. |
-| Conversation continuity | The provider home outlives its container. A new container on the same volumes can resume a conversation, for example with `claude --resume`. |
+The current Codex consumer accepts an explicitly selected dedicated normal account login. The host resolver supplies its bytes through private agentd initialization after model, workspace and harness admission. It does not pass credentials through argv, environment, product Git, harness or Notes, and it does not use helper containers to provision login. No Codex API-key execution route remains.
 
-`/tmp` is executable on purpose: the workspace is executable anyway, and toolchains such as Go run their build products from there.
+Only account ID, ID token and access token are installed in the fresh private home. Refresh authority is removed from that copy; the source login is not rewritten. This is access-only session evidence, not refresh, expiry, fresh-login or concurrent fan-out qualification. Login is cleared after observed provider exit; uncertain shutdown or home removal remains an error. Native tools run as the same user as the provider and can read the installed session login.
 
-## Credentials
+The native renderer supplies versioned working rules, checked project and Manager context, mandate, selected project instructions and selected runtime instructions. CLI controls disable automatic project-document loading and native delegation and keep `/work` untrusted. Actual loading priority, conflicting repository instructions and native tool behavior require their own bounded evidence. See the [harness guide](../../internal/harness/README.md) and [Codex adapter guide](../../internal/adapters/codexappserver/README.md).
 
-Runtime credentials are API keys or long-lived tokens, never copied desktop logins: providers rotate refresh tokens, so a copy can sign the desktop out. The Orchestrator passes a credential to agentd at start, and agentd gives it only to the provider process. Use scoped, spend-capped credentials, because the Agent can still read them.
+## Evidence and bounded probes
 
-A Codex subscription works through a dedicated runtime login:
+Source tests, image metadata and an installed CLI are separate from actual engine, login, provider, hierarchy and background-writer evidence. Real probes require a concrete finite coordinator dispatch with frozen source, binary, profile, existing image, resource ownership, time limits and independent closure observations. Preparation does not authorize build, pull, credentials, retries, inference or product Apply.
 
-1. Create it once with `codex login --device-auth`, inside its own volume, with a maintenance container as the only writer.
-2. Before a session starts, a helper writes a copy of that login into the session's provider home, with the refresh token removed. The session cannot rotate anything, and the access token outlives a run.
-3. Refreshing the runtime login stays a maintenance step between runs.
-
-The login volume holds `auth.json` at its root, written by user 1000.
-
-The session copy carries a full-account access token, not a scoped or spend-capped credential. The Agent runs as the same user and can read it. The copy also remains in the retained provider home after the session, so the Orchestrator removes it when the session ends.
-
-## Smoke
-
-The container adapter's tests drive this image when the engine and image are named:
-
-```text
-MARKITECT_TEST_ENGINE=/usr/bin/docker MARKITECT_TEST_RUNTIME_IMAGE=markitect-runtime \
-MARKITECT_TEST_GO_IMAGE=markitect-runtime-go \
-  go test ./internal/adapters/container -run 'TestRealEngine|TestRuntimeImage|TestClaude|TestCodex|TestProjectImage' -count=1
-```
-
-Without credentials, the smoke shows that both CLIs start in the hardened container and connect to the Orchestrator tools through `markitect-agentd mcp`. With a Codex credential (`OPENAI_API_KEY`, or `MARKITECT_TEST_CODEX_AUTH_VOLUME` naming a dedicated runtime login volume) and `ANTHROPIC_API_KEY` or `CLAUDE_CODE_OAUTH_TOKEN`, each CLI also changes a file, which a helper container reads back, and calls an Orchestrator tool. The probes use Codex Luna and Claude Haiku, both with high effort. Further probes resume a conversation in a new container after a workspace change, for both CLIs. With a Claude credential, one more probe continues a session across a barrier-protected workspace change. Repeat the smoke for every new image; the [capability record](../../docs/validation/runtime-capabilities-20261017.md) holds the first results.
+The opt-in offline CLI inventory uses a local HTTP recorder and no external inference. The native hierarchy probe separately exercises actual Run Sessions. Neither the old both-provider smoke commands nor API-key and cross-container resume examples describe current execution. Earlier [runtime capability records](../../docs/validation/runtime-capabilities-20261017.md) retain their historical source and scope; they do not qualify the replacement adapters or grant a rerun. Claude remains unavailable until separately implemented and qualified.

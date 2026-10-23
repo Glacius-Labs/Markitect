@@ -10,6 +10,7 @@ import (
 	"os/exec"
 	"os/signal"
 	"path/filepath"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -136,11 +137,29 @@ func mcpClient(tool string) int {
 // shortSocketPath stays within the Unix socket path limit on every host.
 func shortSocketPath(t *testing.T) string {
 	t.Helper()
-	dir, err := os.MkdirTemp("", "ad")
+	base := ""
+	if runtime.GOOS == "windows" {
+		// User-profile TEMP and cache paths can accept bind yet reject AF_UNIX
+		// connect on Windows. A short machine-temp directory supports the real
+		// bridge exchange and stays independent of full-suite TEMP overrides.
+		root := os.Getenv("SystemRoot")
+		if !filepath.IsAbs(root) {
+			t.Fatal("absolute Windows SystemRoot required for socket fixture")
+		}
+		base = filepath.Join(root, "Temp")
+	}
+	dir, err := os.MkdirTemp(base, "ad")
 	if err != nil {
 		t.Fatal(err)
 	}
-	t.Cleanup(func() { _ = os.RemoveAll(dir) })
+	t.Cleanup(func() {
+		if err := os.RemoveAll(dir); err != nil {
+			t.Error(err)
+		}
+	})
+	if len(filepath.Join(dir, "s")) > 103 {
+		t.Fatal("test socket exceeds portable AF_UNIX path bound")
+	}
 	return filepath.Join(dir, "s")
 }
 
