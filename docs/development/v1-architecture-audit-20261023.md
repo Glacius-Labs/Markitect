@@ -1,6 +1,6 @@
 # V1 architecture audit and v0.17 counter-review, 23 October 2026
 
-**Subsequent owner decision:** the counter-review below retains its planning-time evidence. The owner has since [accepted the corrected plan and authorized source implementation](../concepts/sources/v1-source-implementation-approval-20261023.md); historical hold statements below no longer block that source work. Real execution remains separately gated.
+**Subsequent owner decision:** the counter-review below retains its planning-time evidence. The owner has since [accepted the corrected plan and authorized source implementation](../concepts/sources/v1-source-implementation-approval-20261023.md); historical hold statements below no longer block that source work. The subsequent standing evidence authorization in that same record delegates useful bounded real proofs to the coordinator; it does not change the historical findings or their evidence limits.
 
 Result: support the narrow new execution core, with the concrete corrections below. This consolidates the prior audit rather than opening another plan series. The [latest owner request](../concepts/sources/v1-scope-clarification-20261023.md) is binding; the supplied v0.17 design is a proposal under review. Earlier v0.16 preservation requirements and this coordinator's earlier Root-only/consumer-migration recommendations are superseded. No implementation is authorized by this report.
 
