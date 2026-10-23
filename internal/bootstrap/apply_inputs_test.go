@@ -5,9 +5,12 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"testing"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -59,6 +62,90 @@ func TestApplyClosesRuntimeInstructionsThroughFreshCompleteCapture(t *testing.T)
 			}
 			if !found {
 				t.Fatal("new complete capture omitted exact instruction bytes")
+			}
+		})
+	}
+}
+
+func TestApplyCompositionPreparesFreshTranscriptDirectoryBeforeRunStartup(t *testing.T) {
+	enginePath, err := os.Executable()
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Binding this executable performs no engine command. The concrete command
+	// is inspected at the startup boundary, before any Run/container/provider.
+	engine, err := container.NewEngine(enginePath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	repository, err := gitrepo.New(gitrepo.Limits{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	checker, err := checks.NewCandidateRunner(nil, engine, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, blocked := range []bool{false, true} {
+		t.Run(fmt.Sprintf("blocked=%v", blocked), func(t *testing.T) {
+			cfg := runConfig{StateDirectory: filepath.Join(testkit.TempDir(t), "fresh", "state"), RepositoryIdentity: "fixture"}
+			const id = "first-apply"
+			parent := filepath.Join(cfg.StateDirectory, cfg.RepositoryIdentity, "transcripts")
+			if blocked {
+				if err := os.MkdirAll(filepath.Dir(parent), 0700); err != nil {
+					t.Fatal(err)
+				}
+				if err := os.WriteFile(parent, []byte("preserve existing file"), 0600); err != nil {
+					t.Fatal(err)
+				}
+			} else if _, err := os.Stat(cfg.StateDirectory); !os.IsNotExist(err) {
+				t.Fatal("fixture must begin without state", err)
+			}
+			sessions := &codexappserver.Agents{}
+			command, err := composeApplyCommand(cfg, id, repository, engine, sessions, checker, codexappserver.Profile{})
+			if blocked {
+				if err == nil || command.Executor != nil {
+					t.Fatal("unusable transcript parent admitted a Run", err)
+				}
+				if _, err := os.Stat(filepath.Join(cfg.StateDirectory, cfg.RepositoryIdentity, "temporary")); !os.IsNotExist(err) {
+					t.Fatal("workspace preparation began after evidence failure", err)
+				}
+				if data, err := os.ReadFile(parent); err != nil || string(data) != "preserve existing file" {
+					t.Fatal("blocking input was modified", err)
+				}
+				return
+			}
+			if err != nil {
+				t.Fatal(err)
+			}
+			executor := command.Executor.(workWindow).executor
+			actual, ok := executor.Sessions.(*codexappserver.Agents)
+			want := filepath.Join(parent, id)
+			if !ok || actual != sessions || actual.TranscriptRoot != want {
+				t.Fatal("native Sessions lost the invocation transcript destination")
+			}
+			info, err := os.Stat(actual.TranscriptRoot)
+			if err != nil || !info.IsDir() {
+				t.Fatal("native Session startup has no transcript directory", err)
+			}
+			if runtime.GOOS != "windows" && info.Mode().Perm() != 0700 {
+				t.Fatalf("transcript directory mode=%o, want 700", info.Mode().Perm())
+			}
+			// The adapter's exclusive create must work without test-side directory
+			// setup, and must still refuse a duplicate transcript identity.
+			path := filepath.Join(actual.TranscriptRoot, "manager.jsonl")
+			file, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
+			if err != nil {
+				t.Fatal("first transcript open failed", err)
+			}
+			if err := file.Close(); err != nil {
+				t.Fatal(err)
+			}
+			if duplicate, err := os.OpenFile(path, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600); !os.IsExist(err) {
+				if duplicate != nil {
+					_ = duplicate.Close()
+				}
+				t.Fatal("exclusive transcript creation changed", err)
 			}
 		})
 	}
