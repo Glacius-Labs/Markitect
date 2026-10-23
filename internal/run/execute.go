@@ -33,21 +33,23 @@ type managerState struct {
 	inbox                        chan Event
 }
 type execution struct {
-	executor  *Executor
-	request   Request
-	ctx       context.Context
-	cancel    context.CancelFunc
-	workspace WorkspaceService
-	mu        sync.Mutex
-	states    map[string]*managerState
-	result    Result
-	active    sync.WaitGroup
-	questions map[string]Question
-	answered  map[string]bool
-	sequence  int
-	closing   bool
-	asyncErr  error
-	calls     sync.WaitGroup
+	executor       *Executor
+	request        Request
+	ctx            context.Context
+	cancel         context.CancelFunc
+	workspace      WorkspaceService
+	mu             sync.Mutex
+	states         map[string]*managerState
+	result         Result
+	active         sync.WaitGroup
+	questions      map[string]Question
+	answered       map[string]bool
+	sequence       int
+	closing        bool
+	asyncErr       error
+	checks         []CheckObservation
+	receiptsClosed bool
+	calls          sync.WaitGroup
 }
 
 func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
@@ -254,6 +256,8 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		x.result.Technical = Incomplete
 		x.result.Errors = append(x.result.Errors, "Manager workers did not stop within cleanup bound")
 	}
+	// Cut off late check completion before any terminal result is assembled.
+	x.result.Checks = x.finishChecks()
 	x.result.Cleanup = append(x.result.Cleanup, Closure{Resource: "manager-workers", Closed: workersClosed})
 	for _, m := range r.Prepared.Topology().Managers() {
 		s := x.states[m.Package]
@@ -273,26 +277,27 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		closeOne("git-service", service.Close)
 	}
 	x.result.Messages = r.Allowance.Used() - used
+	terminal := copyResult(x.result)
 	persist, persistCancel := context.WithTimeout(context.WithoutCancel(ctx), r.PersistenceTimeout)
 	defer persistCancel()
-	if err := e.Records.Save(persist, x.result); err != nil {
-		x.result.Technical = Incomplete
-		x.result.Errors = append(x.result.Errors, "save terminal result: "+err.Error())
-		return x.result, errors.Join(workErr, err)
+	if err := e.Records.Save(persist, terminal); err != nil {
+		terminal.Technical = Incomplete
+		terminal.Errors = append(terminal.Errors, "save terminal result: "+err.Error())
+		return terminal, errors.Join(workErr, err)
 	}
 	stored, err := e.Records.Read(persist, r.Project, r.ID)
-	if err != nil || !reflect.DeepEqual(stored, x.result) {
+	if err != nil || !reflect.DeepEqual(stored, terminal) {
 		if err == nil {
 			err = fmt.Errorf("terminal result readback mismatch")
 		}
-		x.result.Technical = Incomplete
-		x.result.Errors = append(x.result.Errors, err.Error())
-		return x.result, errors.Join(workErr, err)
+		terminal.Technical = Incomplete
+		terminal.Errors = append(terminal.Errors, err.Error())
+		return terminal, errors.Join(workErr, err)
 	}
-	if x.result.Technical != Completed && workErr == nil {
+	if terminal.Technical != Completed && workErr == nil {
 		workErr = fmt.Errorf("Run resources not confirmed closed")
 	}
-	return stored, workErr
+	return terminal, workErr
 }
 
 func (x *execution) toolContext(caller context.Context) (context.Context, func()) {
@@ -606,9 +611,9 @@ func (x *execution) check(s *managerState, commit Commit, required bool) error {
 	}
 	if x.executor.Checks != nil {
 		observed, checkErr := x.executor.Checks.Check(x.ctx, declarations, s.copy, commit)
-		x.mu.Lock()
-		x.result.Checks = append(x.result.Checks, observed...)
-		x.mu.Unlock()
+		if err := x.recordChecks(observed); err != nil {
+			return errors.Join(checkErr, err)
+		}
 		if checkErr != nil {
 			return checkErr
 		}
@@ -648,6 +653,9 @@ func (x *execution) startWorker(s *managerState, task string, feedback []Finding
 	go func() {
 		defer x.active.Done()
 		h, err := x.work(s, task, feedback)
+		if err != nil {
+			x.stopPort(err)
+		}
 		x.finishedTask(s, err)
 		x.states[s.manager.Parent].done <- completion{h, err}
 	}()
@@ -660,4 +668,20 @@ func concreteFindings(findings []Finding) bool {
 		}
 	}
 	return false
+}
+
+func (x *execution) recordChecks(observed []CheckObservation) error {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	if x.receiptsClosed {
+		return fmt.Errorf("%w: terminal check collection is closed", ErrObservationIncomplete)
+	}
+	x.checks = append(x.checks, copyChecks(observed)...)
+	return nil
+}
+func (x *execution) finishChecks() []CheckObservation {
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	x.receiptsClosed = true
+	return copyChecks(x.checks)
 }

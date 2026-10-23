@@ -3,6 +3,7 @@ package run
 import (
 	"context"
 	"errors"
+	"reflect"
 	"sync"
 	"testing"
 	"time"
@@ -220,5 +221,36 @@ func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
 				t.Fatal("ignored port failure lost", x.ctx.Err(), x.asyncErr)
 			}
 		})
+	}
+}
+
+func TestTerminalReceiptCutRejectsLateCallbacksAndDetachesStoredValues(t *testing.T) {
+	x, _, _ := inboxExecution()
+	defer x.cancel()
+	observations := []CheckObservation{{ID: "observed", Receipt: CheckReceipt{Output: []byte("captured"), Directories: []string{"empty"}}}}
+	if err := x.recordChecks(observations); err != nil {
+		t.Fatal(err)
+	}
+	observations[0].Receipt.Output[0] = 'X'
+	observations[0].Receipt.Directories[0] = "changed"
+	x.result.Checks = x.finishChecks()
+	terminal := copyResult(x.result)
+	if string(terminal.Checks[0].Receipt.Output) != "captured" || terminal.Checks[0].Receipt.Directories[0] != "empty" {
+		t.Fatal("producer owns terminal receipt", terminal)
+	}
+	saved := copyResult(terminal)
+	// Deterministically exercise the same callback during Save and after return.
+	for _, phase := range []string{"during Save", "after return"} {
+		if err := x.recordChecks([]CheckObservation{{ID: phase}}); !errors.Is(err, ErrObservationIncomplete) {
+			t.Fatal("late receipt accepted", phase, err)
+		}
+		if !reflect.DeepEqual(saved, terminal) || len(x.checks) != 1 {
+			t.Fatal("terminal receipt collection changed", phase)
+		}
+	}
+	x.result.Checks[0].Receipt.Output[0] = 'Y'
+	x.checks[0].Receipt.Directories[0] = "late"
+	if !reflect.DeepEqual(saved, terminal) {
+		t.Fatal("worker collection owns persisted/caller result")
 	}
 }
