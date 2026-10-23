@@ -767,14 +767,76 @@ func TestNativeFinalAndTranscriptRedactLoginTokens(t *testing.T) {
 	}
 }
 
-func TestOrdinaryAnswerOnlyMessageNeedsNoRitualJudgment(t *testing.T) {
-	rt := newRuntime()
-	rt.autoJudge = false
-	rt.finalText = "I answered the pending question."
-	s := openSession(t, rt, testSessionSpec(t))
-	out, err := s.Exchange(context.Background(), run.Message{Task: "answer a late question"})
-	if err != nil || out.Decision != "" || len(out.Findings) != 0 {
-		t.Fatal(out, err)
+func TestNativeHarnessDistinguishesActiveContinuationFromFixedHandoffQuestions(t *testing.T) {
+	for _, mandate := range []run.Mandate{run.Implement, run.Assessment, run.Verify} {
+		t.Run(string(mandate), func(t *testing.T) {
+			rt := newRuntime()
+			spec := testSessionSpec(t)
+			spec.Mandate = mandate
+			awaits := 0
+			spec.Tools.Await = func(context.Context) (run.Event, error) {
+				awaits++
+				return run.Event{Answer: &run.Answer{ID: "pending", From: "a", Text: "Confirmed."}}, nil
+			}
+			decision := run.Approve
+			if mandate == run.Implement {
+				decision = run.Submitted
+			}
+			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[{"manager":".","text":"initial work"}]}`, decision)
+			s := openSession(t, rt, spec)
+			if out, err := s.Exchange(context.Background(), run.Message{Task: "Complete your assignment."}); err != nil || out.Decision != decision {
+				t.Fatal(out, err)
+			}
+			// The active continuation consumes an answer and explicitly judges
+			// this response. A later fixed-handoff message only consumes input.
+			rt.useTool, rt.toolName, rt.toolArgs = true, "await", "{}"
+			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[{"manager":".","text":"continuation complete"}]}`, decision)
+			continuation := run.Message{Task: "This is an active assignment continuation: return a fresh mandate-appropriate judgment after handling these Findings, even if they only resolve pending questions or answers. A judgment from an earlier exchange does not complete this continuation.", Feedback: []run.Finding{{Manager: ".", Text: "Resolve pending question pending before completing."}}}
+			if out, err := s.Exchange(context.Background(), continuation); err != nil || out.Decision != decision || len(out.Findings) != 1 || out.Findings[0].Text != "continuation complete" {
+				t.Fatal("active continuation did not return its fresh judgment", out, err)
+			}
+			rt.autoJudge = false
+			rt.finalText = "I received the answer and preserved the fixed handoff."
+			if out, err := s.Exchange(context.Background(), run.Message{Task: "Answer pending Manager questions using Await and Reply. Preserve the existing fixed handoff."}); err != nil || out.Decision != "" || len(out.Findings) != 0 {
+				t.Fatal("ordinary late message reused an assignment judgment", out, err)
+			}
+			if awaits != 2 {
+				t.Fatal("inbox-only messages did not consume actual native tools", awaits)
+			}
+			starts, turns := 0, 0
+			for _, raw := range rt.writes {
+				var message struct {
+					Method string
+					Params struct {
+						BaseInstructions string
+						Input            []struct{ Text string }
+					}
+				}
+				if err := json.Unmarshal([]byte(raw), &message); err != nil {
+					t.Fatal(err)
+				}
+				if message.Method == "thread/start" {
+					starts++
+					for _, boundary := range []string{"Every active assignment continuation requires a fresh mandate-appropriate judge call", "even if its Findings only resolve pending questions or answers", "A judgment from an earlier exchange does not complete this continuation", "An ordinary late-question message after a fixed handoff", "it needs no new assignment judgment"} {
+						if !strings.Contains(message.Params.BaseInstructions, boundary) {
+							t.Fatal("actual native prompt omits continuation boundary", boundary)
+						}
+					}
+				}
+				if message.Method == "turn/start" {
+					turns++
+					if turns == 2 {
+						var delivered run.Message
+						if len(message.Params.Input) != 1 || json.Unmarshal([]byte(message.Params.Input[0].Text), &delivered) != nil || !reflect.DeepEqual(delivered, continuation) {
+							t.Fatal("native continuation task/feedback changed")
+						}
+					}
+				}
+			}
+			if starts != 1 || turns != 3 {
+				t.Fatal("continuation did not use the same native Session", starts, turns)
+			}
+		})
 	}
 }
 func TestMalformedOrContradictoryJudgmentNeverHandsOffSuccess(t *testing.T) {
