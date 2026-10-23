@@ -15,6 +15,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 // Explicit coordinator opt-in only. The frozen packet supplies the immutable
@@ -38,14 +39,15 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 		t.Fatal(err)
 	}
 	type observation struct {
-		Action, Plain, Executable, GitMarker                string
+		Action, Plain, Executable, GitMarker, Ignored       string
 		PlainMode, ExecutableMode, ExecutableExit, UID, GID int
-		EmptyPackage, GitPresent                            bool
+		EmptyPackage, GitPresent, HomeEmpty                 bool
 	}
 	report := struct {
 		ProbeID, ImageID, Fixture                                                             string
 		Locations                                                                             []run.CopyLocation
 		Volumes                                                                               []string
+		CheckHome                                                                             run.CopyLocation
 		VolumeAbsent                                                                          map[string]bool
 		Native                                                                                []observation
 		Commands                                                                              []container.CommandResult
@@ -92,10 +94,15 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 	request := run.Request{ID: "copy-probe-" + nonce, Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement}
 	var service, reopened run.WorkspaceService
 	var owned []run.Copy
-	var scratch run.DisposableCopy
+	var scratch, home run.DisposableCopy
 	defer func() {
 		cleanup, done := context.WithTimeout(context.Background(), 60*time.Second)
 		defer done()
+		if home != nil {
+			if e := home.Close(cleanup); e != nil {
+				t.Error(e)
+			}
+		}
 		if scratch != nil {
 			if e := scratch.Close(cleanup); e != nil {
 				t.Error(e)
@@ -170,6 +177,10 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 		cs.Name = "copy-observe-" + nonce + "-" + fmt.Sprint(len(report.Native))
 		cs.Workdir = "/work"
 		cs.Mounts = []container.Mount{{Volume: location.Volume, Subpath: location.Subpath, Target: "/work", NoCopy: true}}
+		if action == "check" {
+			l := home.Location()
+			cs.Mounts = append(cs.Mounts, container.Mount{Volume: l.Volume, Subpath: l.Subpath, Target: "/home/agent", NoCopy: true})
+		}
 		result, e := engine.RunCommand(ctx, cs, []string{"/usr/local/bin/node", "-e", linuxCopyObservation, action, nonce}, nil, 32<<10)
 		report.Commands = append(report.Commands, result)
 		if e != nil || !result.Started || !result.Exited || result.ExitCode != 0 || result.Uncertain || result.Truncated || result.ImageID != image {
@@ -178,6 +189,9 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 		var value observation
 		if e = json.Unmarshal(result.Output, &value); e != nil {
 			t.Fatalf("native observation invalid: %v %s", e, result.Output)
+		}
+		if value.Ignored != "original ignored input\n" {
+			t.Fatal("accounted Gitignored bytes lost", value.Ignored)
 		}
 		report.Native = append(report.Native, value)
 		return value
@@ -214,14 +228,26 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !reflect.DeepEqual(scratch.Directories(), directories) {
+	if scratch.Tree() != inspected.Model().Inputs().Raw.Census.Digest() || !reflect.DeepEqual(scratch.Directories(), directories) {
 		t.Fatal("materialized directory observation differs")
 	}
 	if scratch.Location().Volume != first.Location().Volume || scratch.Location().Subpath == first.Location().Subpath {
 		t.Fatal("check copy is not a distinct same-service physical subpath")
 	}
+	empty, e := snapshot.NewTree(nil)
+	if e != nil {
+		t.Fatal(e)
+	}
+	home, err = first.Materialize(ctx, empty, nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+	report.CheckHome = home.Location()
+	if home.Tree() != empty.Digest() || home.Location().Volume != first.Location().Volume || home.Location().Subpath == first.Location().Subpath || home.Location().Subpath == scratch.Location().Subpath {
+		t.Fatal("check home is not a separate empty same-service copy")
+	}
 	disposable := observe(scratch.Location(), "check")
-	if !disposable.EmptyPackage || disposable.GitPresent || disposable.Plain != written.Plain || disposable.Executable != written.Executable || disposable.PlainMode != 0644 || disposable.ExecutableMode != 0755 {
+	if !disposable.HomeEmpty || !disposable.EmptyPackage || disposable.GitPresent || disposable.Plain != written.Plain || disposable.Executable != written.Executable || disposable.PlainMode != 0644 || disposable.ExecutableMode != 0755 {
 		t.Fatal("check copy lost bytes/modes/empty Package or includes Git", disposable)
 	}
 	afterScratch, e := first.Snapshot(ctx)
@@ -232,6 +258,10 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 		t.Fatal(err)
 	}
 	scratch = nil
+	if err = home.Close(ctx); err != nil {
+		t.Fatal(err)
+	}
+	home = nil
 	volume := first.Location().Volume
 	for _, copy := range owned {
 		if err = copy.Close(ctx); err != nil {
@@ -321,4 +351,4 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 	}
 }
 
-const linuxCopyObservation = `const fs=require('fs');const action=process.argv[1],nonce=process.argv[2];if(action==='write'){fs.writeFileSync('/work/out/a.txt','plain:'+nonce+'\n');fs.chmodSync('/work/out/a.txt',0o644);fs.writeFileSync('/work/out/deep.txt','#!/bin/sh\nexit 0\n');fs.chmodSync('/work/out/deep.txt',0o755);fs.writeFileSync('/work/.git/markitect-probe',nonce)}const plain=fs.readFileSync('/work/out/a.txt','utf8'),executable=fs.readFileSync('/work/out/deep.txt','utf8');const marker='/work/.git/markitect-probe';const execution=action==='isolation'?null:require('child_process').spawnSync('/work/out/deep.txt',[],{stdio:'ignore'});if(execution&&(execution.error||execution.status!==0))throw Error('executable fixture failed');if(action==='check')fs.writeFileSync('/work/out/a.txt','scratch:'+nonce);process.stdout.write(JSON.stringify({Action:action,Plain:plain,Executable:executable,PlainMode:fs.statSync('/work/out/a.txt').mode&0o777,ExecutableMode:fs.statSync('/work/out/deep.txt').mode&0o777,UID:process.getuid(),GID:process.getgid(),EmptyPackage:fs.statSync('/work/.markitect/model/b/empty').isDirectory(),GitPresent:fs.existsSync('/work/.git'),ExecutableExit:execution?execution.status:-1,GitMarker:fs.existsSync(marker)?fs.readFileSync(marker,'utf8'):''}));`
+const linuxCopyObservation = `const fs=require('fs');const action=process.argv[1],nonce=process.argv[2];if(action==='write'){fs.writeFileSync('/work/out/a.txt','plain:'+nonce+'\n');fs.chmodSync('/work/out/a.txt',0o644);fs.writeFileSync('/work/out/deep.txt','#!/bin/sh\nexit 0\n');fs.chmodSync('/work/out/deep.txt',0o755);fs.writeFileSync('/work/.git/markitect-probe',nonce)}const plain=fs.readFileSync('/work/out/a.txt','utf8'),executable=fs.readFileSync('/work/out/deep.txt','utf8');const marker='/work/.git/markitect-probe';const execution=action==='isolation'?null:require('child_process').spawnSync('/work/out/deep.txt',[],{stdio:'ignore'});if(execution&&(execution.error||execution.status!==0))throw Error('executable fixture failed');if(action==='check')fs.writeFileSync('/work/out/a.txt','scratch:'+nonce);process.stdout.write(JSON.stringify({Action:action,Plain:plain,Executable:executable,PlainMode:fs.statSync('/work/out/a.txt').mode&0o777,ExecutableMode:fs.statSync('/work/out/deep.txt').mode&0o777,UID:process.getuid(),GID:process.getgid(),EmptyPackage:fs.statSync('/work/.markitect/model/b/empty').isDirectory(),GitPresent:fs.existsSync('/work/.git'),Ignored:fs.readFileSync('/work/out/accounted.ignored','utf8'),HomeEmpty:action==='check'?fs.readdirSync('/home/agent').length===0:false,ExecutableExit:execution?execution.status:-1,GitMarker:fs.existsSync(marker)?fs.readFileSync(marker,'utf8'):''}));`
