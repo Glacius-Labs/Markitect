@@ -1,6 +1,6 @@
 # Cockpit app window and notifications — 21 October 2026
 
-**Scope:** the window and notification part of the [desktop-app Rule](../design/cockpit.md#the-cockpit-as-desktop-app) ([DEC-066](../concepts/register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply)), implemented in the [cockpit adapter](../../internal/adapters/cockpit/README.md#app-window-notifications-and-background). Starting and stopping runs, projects and guided setup are other slices. No provider run was involved.
+**Scope:** the window and notification part of the [desktop-app Rule](../design/cockpit.md#the-cockpit-as-desktop-app) ([DEC-066](../concepts/register.md#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply)), implemented in the [cockpit adapter](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/README.md#app-window-notifications-and-background). Starting and stopping runs, projects and guided setup are other slices. No provider run was involved.
 
 ## What was built
 

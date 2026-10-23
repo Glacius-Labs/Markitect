@@ -1,5 +1,7 @@
 # Claude cockpit implementation handoff
 
+**Retired assignment, 23 October 2026.** Cockpit and interactive authoring are excluded from the approved V1 scope and removed from active source. The instructions below are historical and grant no work. Follow the [current V1 plan](../implementation-plan.md) and its bounded assignments.
+
 **Status: prepared owner assignment, 20 October 2026.** The [owner commission](../concepts/sources/cockpit-commission-20261020.md) assigns cockpit implementation and visual design to Claude. This documentation delivery implements nothing and starts no session. The [cockpit concept](../design/cockpit.md) owns the requested user experience; the [delivery plan](../implementation-plan.md) owns current stabilization priorities, shared files and integration.
 
 ## Assignment and source map

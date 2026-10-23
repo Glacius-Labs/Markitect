@@ -1,6 +1,6 @@
 # Cockpit configuration proposals — 20 October 2026
 
-**Scope:** the fourth slice of the [cockpit](../design/cockpit.md#working-through-the-cockpit), adopted by the owner as [DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration): the execution settings form and the one proposal path it shares with the later model sessions, implemented in [authoring](../../internal/authoring/README.md) and the [cockpit adapter](../../internal/adapters/cockpit/README.md#proposals-for-the-execution-settings). No Apply and no provider run were involved.
+**Scope:** the fourth slice of the [cockpit](../design/cockpit.md#working-through-the-cockpit), adopted by the owner as [DEC-065](../concepts/register.md#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration): the execution settings form and the one proposal path it shares with the later model sessions, implemented in [authoring](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/authoring/README.md) and the [cockpit adapter](https://github.com/Glacius-Labs/Markitect/blob/447ac3b152de79b52de80513e14dc94349a060bd/internal/adapters/cockpit/README.md#proposals-for-the-execution-settings). No Apply and no provider run were involved.
 
 ## What was built
 

@@ -13,6 +13,18 @@ import (
 
 type resolver struct{ calls int }
 
+func TestCockpitIsNotAnOperationOrHelpEntry(t *testing.T) {
+	var out, stderr bytes.Buffer
+	c := New(nil, nil, nil, nil, nil, nil)
+	if code := c.Run(context.Background(), []string{"cockpit"}, &out, &stderr); code != 2 || !strings.Contains(stderr.String(), "unknown operation: cockpit") || out.Len() != 0 {
+		t.Fatalf("retired cockpit: code=%d stdout=%q stderr=%q", code, out.String(), stderr.String())
+	}
+	out.Reset()
+	if code := c.Run(context.Background(), []string{"help"}, &out, &stderr); code != 0 || strings.Contains(out.String(), "cockpit") {
+		t.Fatalf("help advertises retired cockpit: code=%d stdout=%q", code, out.String())
+	}
+}
+
 func (r *resolver) ResolveRevision(context.Context, string, string) (string, error) {
 	r.calls++
 	return strings.Repeat("a", 40), nil
