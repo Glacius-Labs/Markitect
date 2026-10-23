@@ -694,8 +694,6 @@ func hierarchyAssert(h *hierarchySessions, r *hierarchyReport) error {
 	delivered := map[string]bool{}
 	handoffs := map[string]bool{}
 	late := map[string]bool{}
-	openPeerQuestions := map[string]hierarchyCall{}
-	crossed := false
 	rejected, repaired, approved := false, false, false
 	for _, c := range r.Calls {
 		if c.Failed {
@@ -709,20 +707,11 @@ func hierarchyAssert(h *hierarchySessions, r *hierarchyReport) error {
 			if c.Event.Answer != nil {
 				if a, ok := asked[c.Event.Answer.ID]; ok && a.Manager == c.Manager {
 					delivered[c.Event.Answer.ID] = true
-					delete(openPeerQuestions, c.Event.Answer.ID)
 				}
 			}
 		}
 		if c.Tool == "ask" {
 			asked[c.ID] = c
-			if c.Manager == "a" && c.Target == "b" || c.Manager == "b" && c.Target == "a" {
-				for _, pending := range openPeerQuestions {
-					if pending.Manager == c.Target && pending.Target == c.Manager {
-						crossed = true
-					}
-				}
-				openPeerQuestions[c.ID] = c
-			}
 			if handoffs[c.Manager+"->"+c.Target] {
 				late[c.Target] = true
 			}
@@ -764,11 +753,44 @@ func hierarchyAssert(h *hierarchySessions, r *hierarchyReport) error {
 	if !peer["a"] || !peer["b"] || !rejected || !repaired || !approved {
 		return fmt.Errorf("peer questions or actual child rejection/repair missing")
 	}
-	r.CrossedQuestionsOverlap = crossed
-	if !crossed {
-		return fmt.Errorf("opposite peer questions never overlapped before answer acknowledgment")
+	r.CrossedQuestionsOverlap = hierarchyPeerOverlap(r.Calls)
+	if !r.CrossedQuestionsOverlap {
+		return fmt.Errorf("opposite peer questions never overlapped before either reply")
 	}
 	return nil
+}
+
+func hierarchyPeerOverlap(calls []hierarchyCall) bool {
+	open := map[string]hierarchyCall{}
+	for _, c := range calls {
+		if c.Failed {
+			continue
+		}
+		if c.Tool == "reply" {
+			delete(open, c.ID)
+		}
+		if c.Tool == "ask" && (c.Manager == "a" && c.Target == "b" || c.Manager == "b" && c.Target == "a") {
+			for _, pending := range open {
+				if pending.Manager == c.Target && pending.Target == c.Manager {
+					return true
+				}
+			}
+			open[c.ID] = c
+		}
+	}
+	return false
+}
+
+func TestNativePeerQuestionOracleRequiresBothBeforeEitherReply(t *testing.T) {
+	a := hierarchyCall{Manager: "a", Tool: "ask", Target: "b", ID: "a-question"}
+	b := hierarchyCall{Manager: "b", Tool: "ask", Target: "a", ID: "b-question"}
+	reply := hierarchyCall{Manager: "b", Tool: "reply", ID: a.ID}
+	if hierarchyPeerOverlap([]hierarchyCall{a, reply, b}) {
+		t.Fatal("an answered question awaiting event delivery is not overlapping")
+	}
+	if !hierarchyPeerOverlap([]hierarchyCall{a, b, reply}) {
+		t.Fatal("actual reciprocal asks before either reply must qualify")
+	}
 }
 func hierarchyNotes(nonce, runtimeCanary string, notes []run.Note) error {
 	seen := map[string]bool{}
