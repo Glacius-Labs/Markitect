@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/sha256"
 	"errors"
+	"io"
 	"os"
 	"path/filepath"
 	"strconv"
@@ -17,7 +18,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
-	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -33,10 +33,20 @@ func TestExplicitAccountConfigurationExamplesReachApply(t *testing.T) {
 	state := filepath.Join(runtimeDir, "state-not-created")
 	runtimePath := filepath.Join(runtimeDir, "runtime.yaml")
 	configPath := filepath.Join(runtimeDir, "run.json")
+	// Obtain the invocation's build assertion through the actual CLI port;
+	// Bootstrap does not own or import the build-information implementation.
+	var build string
+	probe := cli.New(nil, nil, nil, nil, nil, func(_ context.Context, request cli.ApplyRequest) (cli.ApplyReport, error) {
+		build = request.Build
+		return cli.ApplyReport{Status: model.NotCompleted}, nil
+	})
+	if code := probe.Run(context.Background(), []string{"apply", "--repo", repo.Dir, "--runtime-profile", runtimePath, "--run-config", configPath}, io.Discard, io.Discard); code != 3 || build == "" {
+		t.Fatalf("CLI build assertion unavailable: code=%d build=%q", code, build)
+	}
 	values := map[string]string{
 		"ENGINE_EXECUTABLE": engine, "ACCOUNT_LOGIN_PATH": login, "STATE_DIRECTORY": state,
 		"IMAGE_ID": bootstrapImageID, "AGENTD_BUILD": "development", "CODEX_SCHEMA_DIGEST": bootstrapSchema,
-		"ACCOUNT_MODEL": "explicit-test-account-model", "PRODUCT_BUILD": buildinfo.Build(),
+		"ACCOUNT_MODEL": "explicit-test-account-model", "PRODUCT_BUILD": build,
 	}
 	for _, file := range []struct{ source, target string }{
 		{"runtime-profile.example.yaml", runtimePath}, {"run.example.json", configPath},
@@ -75,7 +85,7 @@ func TestExplicitAccountConfigurationExamplesReachApply(t *testing.T) {
 	calls := 0
 	command := cli.New(preparation, agents, checker, repository, nil, func(ctx context.Context, request cli.ApplyRequest) (cli.ApplyReport, error) {
 		calls++
-		if request.RunConfig != configPath || request.Selection.Repository != repo.Dir || request.Build != buildinfo.Build() {
+		if request.RunConfig != configPath || request.Selection.Repository != repo.Dir || request.Build != build {
 			t.Fatalf("CLI changed explicit invocation: %+v", request)
 		}
 		cfg, err := loadRunConfig(ctx, request.RunConfig)

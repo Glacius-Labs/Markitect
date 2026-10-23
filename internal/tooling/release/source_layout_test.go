@@ -28,6 +28,47 @@ func rootLayoutFixture(t *testing.T) string {
 	return root
 }
 
+func TestCommandConfigurationExamplesSurviveLiveAndFixedPackaging(t *testing.T) {
+	root := rootLayoutFixture(t)
+	want := map[string][]byte{}
+	for _, name := range []string{"examples/runtime-profile.example.yaml", "examples/run.example.json"} {
+		data, err := os.ReadFile(filepath.Join(sourceModuleRoot(t), filepath.FromSlash(name)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		want[name] = bytes.ReplaceAll(data, []byte("\r\n"), []byte("\n"))
+		writeLayoutFile(t, root, name, string(data))
+	}
+	writeLayoutFile(t, root, "examples/unrelated.json", "do not package arbitrary examples\n")
+	live, _, err := Package(root, "1.2.3")
+	if err != nil {
+		t.Fatal(err)
+	}
+	selected, err := snapshotModuleFiles(fixedSourceSnapshot(t, root))
+	if err != nil {
+		t.Fatal(err)
+	}
+	files, err := collectModuleSnapshot(selected)
+	if err != nil {
+		t.Fatal(err)
+	}
+	fixed, err := makeArchive(files)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, archive := range [][]byte{live, fixed} {
+		contents := archiveContents(t, archive)
+		for name, data := range want {
+			if !bytes.Equal(contents[name], data) {
+				t.Errorf("configuration example omitted or changed: %s", name)
+			}
+		}
+		if _, found := contents["examples/unrelated.json"]; found {
+			t.Error("packaged an unrelated example")
+		}
+	}
+}
+
 func TestRootLayoutLiveAndFixedMatch(t *testing.T) {
 	root := rootLayoutFixture(t)
 	writeLayoutFile(t, root, "internal/model/vendor/ignored.go", "package ignored\n")

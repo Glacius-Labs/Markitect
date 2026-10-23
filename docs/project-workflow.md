@@ -44,7 +44,7 @@ Setup is retired. Copy [runtime-profile.example.yaml](../examples/runtime-profil
 - `IMAGE_ID`: an immutable image ID containing the selected provider, agentd, Git and the declared check executable. `AGENTD_BUILD` and `CODEX_SCHEMA_DIGEST` must match that image's observed `/opt/markitect/runtime.env` metadata.
 - `ACCOUNT_MODEL`: the explicitly selected model for the account. The examples use the profile names `markitect-agent` and `go` from this repository's execution settings; use the exact names your project selects.
 - `ACCOUNT_LOGIN_PATH`: a native absolute path to the selected dedicated normal account-login JSON, outside the repository. The `example-account` reference must match in both files. Native login provisioning, expiry and refresh remain provider-owned capabilities with their own evidence.
-- `STATE_DIRECTORY`: a native absolute state directory outside the repository. `PRODUCT_BUILD`: the exact build assertion for the binary you invoke. For a deterministic manual path, build with `go build -buildvcs=false -o ABSOLUTE_MARKITECT_BINARY ./cmd/markitect` and use that binary's `version` value as `PRODUCT_BUILD`; record the frozen source SHA separately. Invoke that same binary. A binary built with VCS metadata instead uses `VERSION+REVISION`, adding `-modified` for a dirty build; inspect `vcs.revision` and `vcs.modified` with `go version -m ABSOLUTE_MARKITECT_BINARY`.
+- `STATE_DIRECTORY`: a native absolute state directory outside the repository. `PRODUCT_BUILD`: the exact build assertion for the binary you invoke. For a deterministic manual path, build with `go build -buildvcs=false -o "ABSOLUTE_MARKITECT_BINARY" ./cmd/markitect` and use that binary's `version` value as `PRODUCT_BUILD`; record the frozen source SHA separately. Invoke that same binary. A binary built with VCS metadata instead uses `VERSION+REVISION`, adding `-modified` for a dirty build; inspect `vcs.revision` and `vcs.modified` with `go version -m "ABSOLUTE_MARKITECT_BINARY"`.
 
 The examples include positive message limits, a non-root workspace helper, finite capture/resource limits and Go cache/temp paths. Choose limits for your actual project. An optional UTC `deadline` may further bound the invocation. Actual preparation uses immutable image observations; missing/incorrect image metadata or profile bindings refuse before Agent work.
 
@@ -54,9 +54,13 @@ The [example test](../internal/bootstrap/configuration_examples_test.go) consume
 
 Use an existing committed repository, explicit dependency manifests, a Runtime profile document and an absolute invocation configuration path:
 
-```text
-ABSOLUTE_MARKITECT_BINARY apply --repo REPOSITORY --runtime-profile ABSOLUTE_RUNTIME_YAML --run-config ABSOLUTE_RUN_JSON
+In PowerShell, quote native paths and use the invocation operator:
+
+```powershell
+& "ABSOLUTE_MARKITECT_BINARY" apply --repo "REPOSITORY" --runtime-profile "ABSOLUTE_RUNTIME_YAML" --run-config "ABSOLUTE_RUN_JSON"
 ```
+
+In a POSIX shell, invoke the same quoted executable path without PowerShell's `&` operator.
 
 `apply` accepts the same `--model` and repeated `--dependency` selections as preparation. It captures committed inputs and passes structural/settings preparation before starting the required independent Manager assignments. Parents delegate, review and integrate fixed Git handoffs; focused model assessment and independent Verify surround Implement. Publication uses the guarded source boundary and never creates a user commit. This temporary composition retains its earlier Apply-wide Git lifetime until S2/S3 replace it. `--revision` and `--metadata` are preview-only options. Missing explicit execution inputs refuse before acquisition; the state-directory lock prevents a second command from acquiring the same state.
 
