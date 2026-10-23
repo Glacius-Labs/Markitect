@@ -24,6 +24,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	runexec "github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
+	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
 )
 
 // The optional work window is an additional cap on productive Runs, never a
@@ -47,6 +48,46 @@ func inside(root, selected string) bool {
 	return err == nil && rel != ".." && !strings.HasPrefix(rel, ".."+string(filepath.Separator))
 }
 
+func safeStateDestination(repository, state string) error {
+	existing := state
+	for {
+		info, err := os.Lstat(existing)
+		if err == nil {
+			if !info.IsDir() || guardedwrite.IsReparsePoint(info) {
+				return fmt.Errorf("state ancestor must be a real directory")
+			}
+			break
+		}
+		if !os.IsNotExist(err) {
+			return err
+		}
+		parent := filepath.Dir(existing)
+		if parent == existing {
+			return fmt.Errorf("state has no existing directory anchor")
+		}
+		existing = parent
+	}
+	if err := guardedwrite.RejectReparseAncestors(existing); err != nil {
+		return err
+	}
+	root, err := guardedwrite.CanonicalPathSpelling(repository)
+	if err != nil {
+		return err
+	}
+	anchor, err := guardedwrite.CanonicalPathSpelling(existing)
+	if err != nil {
+		return err
+	}
+	rel, err := filepath.Rel(existing, state)
+	if err != nil {
+		return err
+	}
+	if inside(root, filepath.Join(anchor, rel)) {
+		return fmt.Errorf("operator state must be outside the product repository")
+	}
+	return nil
+}
+
 func applyExecution(preparation *project.PreparationService, repository *gitrepo.Repository, agents runtimeconfig.AgentProfilePreparer, checkMetadata runtimeconfig.CheckProfilePreparer) cli.ApplyFunc {
 	return func(ctx context.Context, request cli.ApplyRequest) (out cli.ApplyReport, err error) {
 		out = cli.ApplyReport{FormatVersion: 1, Operation: "apply", Status: model.NotCompleted}
@@ -57,8 +98,8 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 		if cfg.ProductBuild != request.Build || !stateName.MatchString(cfg.RepositoryIdentity) || len(cfg.RepositoryIdentity) > 100 || !time.Now().Before(cfg.deadline()) || !cfg.workDeadline().IsZero() && !time.Now().Before(cfg.workDeadline()) {
 			return out, fmt.Errorf("invocation build, project identity or original deadline refused")
 		}
-		if inside(request.Selection.Repository, cfg.StateDirectory) {
-			return out, fmt.Errorf("operator state must be outside the product repository")
+		if err = safeStateDestination(request.Selection.Repository, cfg.StateDirectory); err != nil {
+			return out, err
 		}
 		for _, credential := range cfg.Credentials {
 			if inside(request.Selection.Repository, credential.Path) {
@@ -67,30 +108,14 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 		}
 		ctx, cancel := context.WithDeadline(ctx, cfg.deadline())
 		defer cancel()
-		captured, err := preparation.Capture(ctx, project.CaptureRequest{Selection: request.Selection}, model.Limits{})
+		prepared, metadata, status, err := captureApplyInputs(ctx, preparation, repository, request.Selection, agents, checkMetadata)
 		if err != nil {
-			return out, err
-		}
-		attempt, ok := captured.Prepared()
-		if !ok {
-			out.Status = captured.Status()
-			return out, fmt.Errorf("Apply structural preflight did not pass")
-		}
-		prepared, err := project.Prepare(attempt)
-		if err != nil {
+			out.Status = status
 			return out, err
 		}
 		count := len(prepared.Topology().Managers())
 		if count > cfg.MaxManagers || count*3 > cfg.MaxMessages {
 			return out, fmt.Errorf("complete Assessment, Implement and Verify hierarchy exceeds invocation capacity")
-		}
-		metadata, err := runtimeconfig.Prepare(ctx, attempt.Model().Inputs().Raw, agents, checkMetadata)
-		if err != nil {
-			return out, err
-		}
-		if metadata.Status != model.Passed || len(metadata.RequiredInstructions) != 0 {
-			out.Status = metadata.Status
-			return out, fmt.Errorf("complete captured native and check profile metadata required")
 		}
 		var selected *runtimeconfig.PreparedProfile
 		for _, profile := range metadata.Profiles {
@@ -145,6 +170,9 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 			return out, err
 		}
 		id := hex.EncodeToString(nonce[:])
+		if err = safeStateDestination(request.Selection.Repository, cfg.StateDirectory); err != nil {
+			return out, err
+		}
 		lock, err := lockStateWithin(ctx, cfg.StateDirectory, startLockWait)
 		if err != nil {
 			return out, err

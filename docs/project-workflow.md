@@ -1,6 +1,6 @@
 # Project workflow
 
-At the S2 source boundary, `check`, `context` and guarded `docs` consume structural Project preparation. The standalone Run uses a complete model-derived hierarchy for Assessment, Implement and Verify. CLI Apply explicitly reports unavailable until S3 integrates workflow composition and stored-candidate publication. Extract, Cockpit, interactive authoring and Setup are retired. The [delivery plan](implementation-plan.md) owns current implementation and evidence authority.
+At the S3 source boundary, `check`, `context` and guarded `docs` consume structural Project preparation. The standalone Run uses a complete model-derived hierarchy for Assessment, Implement and Verify. CLI Apply composes Assessment, Implement and Verify and publishes only the independently reopened stored acceptance after all Run resources close. Extract, Cockpit, interactive authoring and Setup are retired. The [delivery plan](implementation-plan.md) owns current implementation and evidence authority.
 
 ## Connect and inspect
 
@@ -40,19 +40,21 @@ Copy [runtime-profile.example.yaml](../examples/runtime-profile.example.yaml) an
 - `STATE_DIRECTORY` is an absolute path outside the repository. `PRODUCT_BUILD` is the operator's build assertion; retain the frozen source SHA separately.
 - `DEADLINE_UTC` is an absolute RFC3339 UTC deadline ending in `Z`. Manager count, messages, per-message timeout, cleanup and persistence all have finite positive limits.
 
-The [invocation example test](../internal/bootstrap/configuration_examples_test.go) loads the exact substituted JSON and verifies unavailable Apply routing without reading metadata or credentials or creating state. Static image metadata and physical execution have separate tests and evidence.
+The [invocation example test](../internal/bootstrap/configuration_examples_test.go) loads the exact substituted JSON and verifies invalid preflight stops before metadata, credential access or state creation. Static image metadata and physical execution have separate tests and evidence.
 
 ## Execute, verify, and apply
 
-The S2 command parses explicit selections and reports `not_completed`/`incomplete` with the unavailable reason:
+Use explicit committed selections and finite invocation limits:
+
+The target must be on an isolated non-protected branch, for example `git switch -c dev/realization`, with its tracked baseline committed. Apply checks this existing write policy before opening any Manager resources and again during publication. Accounted ignored inputs remain part of the captured baseline.
 
 ```powershell
 & "ABSOLUTE_MARKITECT_BINARY" apply --repo "REPOSITORY" --runtime-profile "ABSOLUTE_RUNTIME_YAML" --run-config "ABSOLUTE_RUN_JSON"
 ```
 
-Use the same quoted binary without `&` in a POSIX shell. `--model` and repeated `--dependency` select committed inputs. `--revision` and `--metadata` remain preparation options. This invocation currently starts no Run, checks or containers and performs no publication.
+Use the same quoted binary without `&` in a POSIX shell. `--model` and repeated `--dependency` select committed inputs. `--revision` and `--metadata` remain preparation options. A successful preflight starts real Run environments, provider Sessions and required checks. Exactly one executable Codex account profile is selected by its presence in the captured Runtime document; every profile uses the invocation engine. Claude is not an executable Apply provider.
 
-The standalone [Run](../internal/run/README.md) gives every Manager its own fresh environment and Git copy, direct delegation/questions and reviewed upward integration. Questions stay inside Root's hierarchy. A material missing decision or contradiction produces a model blocker; correct the model outside the Run. There is no answer command or preloaded owner decision. S3 must compose Assessment, Implement, fresh Verify, bounded correction and publication after every Run has closed.
+The standalone [Run](../internal/run/README.md) gives every Manager its own fresh environment and Git copy, direct delegation/questions and reviewed upward integration. Questions stay inside Root's hierarchy. A material missing decision or contradiction produces a model blocker; correct the model outside the Run. There is no answer command or preloaded owner decision. Assessment judges model readiness and Approve always leads to Implement, even for no-change. Implement submits a candidate; fresh Verify alone can approve publication. Verify Reject carries mandatory Findings into fresh Implement and Verify Runs with the original shared allowance and deadline. Assessment Reject, model blockers and technical or closure failures stop publication.
 
 ### Invocation configuration
 
@@ -64,7 +66,7 @@ Each exact credential reference selects a provider, mode and absolute native fil
 
 ### Results and evidence
 
-S2 CLI Apply reports its unavailable status and creates no result directory. Standalone Run persists the exact input reference, Project binding, technical and semantic outcomes, required findings, handoffs, actual check receipts and closure observations, plus concrete native identity observations when available. Candidates are independently verified self-contained bundles; external captured inputs remain in that same candidate directory. Shared Notes retain their Run/Manager/context and survive concurrent appends. New adapter instances reopen candidates/results after temporary environments close.
+The CLI names the project state directory and an immutable `<state>/<project>/applies/<id>.json` report. Run records live under `<state>/<project>/runs/`, candidates under `candidates/`, Notes under `notes/` and native transcripts under `transcripts/<apply-id>/`. The retained Apply report and printed JSON use the same final status/outcome projection. Standalone Run persists the exact input reference, Project binding, technical and semantic outcomes, required findings, handoffs, actual check receipts and closure observations, plus concrete native identity observations when available. Candidates are independently verified self-contained bundles; external captured inputs remain in that same candidate directory. Shared Notes retain their Run/Manager/context and survive concurrent appends. New adapter instances reopen candidates/results after temporary environments close.
 
 ## Existing repositories
 
@@ -74,7 +76,7 @@ There is no automatic conversion, scaffold or Brownfield runtime. Earlier workfl
 
 ## Record preparation and interrupted work
 
-Preparation and generated-document operations create no Run or candidate. Preserve actual diagnostics and completed document paths. A Run that exhausts its limits or has uncertain observation/closure remains incomplete; its mandatory result records what happened. Stored candidates and Notes survive closure, but no automatic resume of old Manager environments exists. S3 owns invocation locking and publication.
+Preparation and generated-document operations create no Run or candidate. Preserve actual diagnostics and completed document paths. A Run that exhausts its limits or has uncertain observation/closure remains incomplete; its mandatory result records what happened. Stored candidates and Notes survive closure, but no automatic resume of old Manager environments exists. Apply uses a state-directory invocation lock and guarded per-path publication, preserves intervening user changes, reports partial transfers and never commits or pushes the owner checkout.
 
 ## Acceptance and status
 

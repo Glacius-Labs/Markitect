@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"strings"
 	"time"
@@ -15,6 +16,7 @@ import (
 // candidate invalidity and cannot be waived by an approval.
 func ValidateCheckObservations(declarations []project.ExecutionCheck, observed []CheckObservation, fixed Commit, tree snapshot.Tree, dirs []snapshot.Path) error {
 	expected := map[string]bool{}
+	var invalid error
 	for _, d := range declarations {
 		expected[d.ID.Value] = true
 	}
@@ -27,14 +29,14 @@ func ValidateCheckObservations(declarations []project.ExecutionCheck, observed [
 			return fmt.Errorf("%w: check %s physical observations", ErrObservationIncomplete, c.ID)
 		}
 		if r.ExitCode != 0 {
-			return fmt.Errorf("%w: check %s exited %d", project.ErrCandidateInvalid, c.ID, r.ExitCode)
+			invalid = errors.Join(invalid, fmt.Errorf("%w: check %s exited %d", project.ErrCandidateInvalid, c.ID, r.ExitCode))
 		}
 		delete(expected, c.ID)
 	}
 	if len(expected) != 0 {
 		return fmt.Errorf("%w: declared check observations incomplete", ErrObservationIncomplete)
 	}
-	return nil
+	return invalid
 }
 
 // CheckID is the Orchestrator's identity of one check run.

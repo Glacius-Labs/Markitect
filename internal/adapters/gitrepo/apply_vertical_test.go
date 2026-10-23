@@ -23,6 +23,9 @@ type applyExecutor struct {
 	requests               []run.Request
 	managers               []*controlledManagers
 	noChange, rejectVerify bool
+	assessmentDecision     run.Decision
+	failClose              bool
+	records                run.Records
 }
 
 type deadlineCapture struct {
@@ -50,7 +53,7 @@ func TestApplyOriginalDeadlineBoundsCaptureBeforeAnyRunOrPublication(t *testing.
 		}
 		capture := &deadlineCapture{deadline: deadline}
 		executor := &applyExecutor{t: t, git: git, store: store}
-		command := apply.Command{Executor: executor, Candidates: capture, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+		command := apply.Command{Executor: executor, Candidates: capture, Records: store, Publisher: &unexpectedPublisher{}}
 		start := time.Now()
 		report, err := command.Execute(context.Background(), run.Request{ID: "deadline", Project: "fixture", Prepared: prepared, Allowance: run.NewAllowance(deadline, 100), MaxManagers: 5})
 		if err == nil || report.Status != model.NotCompleted || len(executor.requests) != 0 || report.Publication != nil || time.Since(start) > time.Second {
@@ -78,6 +81,10 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 		e.t.Fatal("correction reset allowance")
 	}
 	managers := &controlledManagers{crossed: make(chan struct{})}
+	if request.Mandate == run.Assessment {
+		managers.forceDecision = e.assessmentDecision
+	}
+	managers.failClose = e.failClose
 	if e.noChange {
 		managers.noChange = true
 		managers.acceptedRepair = true
@@ -90,7 +97,58 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 	}
 	e.requests = append(e.requests, request)
 	e.managers = append(e.managers, managers)
-	return (&run.Executor{Sessions: managers, Workspaces: e.git, Records: e.store}).Execute(ctx, request)
+	var records run.Records = e.store
+	if e.records != nil {
+		records = e.records
+	}
+	return (&run.Executor{Sessions: managers, Workspaces: e.git, Records: records}).Execute(ctx, request)
+}
+
+type unexpectedPublisher struct{ calls int }
+
+func (*unexpectedPublisher) Preflight(context.Context, project.Prepared) error { return nil }
+func (p *unexpectedPublisher) Publish(context.Context, apply.PublicationRequest) (apply.Publication, error) {
+	p.calls++
+	return apply.Publication{Readback: true}, nil
+}
+
+func TestApplyStopsForModelBlockerCleanupUncertaintyAndMandatoryStorageFailure(t *testing.T) {
+	_, prepared, git, _ := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	for _, kind := range []string{"blocker", "cleanup", "storage"} {
+		t.Run(kind, func(t *testing.T) {
+			executor := &applyExecutor{t: t, git: git, store: store}
+			switch kind {
+			case "blocker":
+				executor.assessmentDecision = run.ModelBlocker
+			case "cleanup":
+				executor.failClose = true
+			case "storage":
+				executor.records = failingRecords{Records: store, failSave: true}
+			}
+			publisher := &unexpectedPublisher{}
+			command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: publisher}
+			report, err := command.Execute(context.Background(), run.Request{ID: kind, Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+			if publisher.calls != 0 || report.Publication != nil || len(executor.requests) != 1 {
+				t.Fatal("failed Run reached publication/another Run", kind, publisher.calls)
+			}
+			if kind == "blocker" && (err != nil || report.Status != model.Failed) || kind != "blocker" && (err == nil || report.Status != model.NotCompleted) {
+				t.Fatal(kind, report.Status, err)
+			}
+		})
+	}
+}
+
+func TestApplyReopensStoredFinalVerifyAndRefusesSubstitutedAcceptance(t *testing.T) {
+	_, prepared, git, _ := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	executor := &applyExecutor{t: t, git: git, store: store, noChange: true}
+	publisher := &unexpectedPublisher{}
+	command := apply.Command{Executor: executor, Candidates: git, Records: failingRecords{Records: store, mismatch: true}, Publisher: publisher}
+	report, err := command.Execute(context.Background(), run.Request{ID: "stored", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	if err == nil || report.Status != model.NotCompleted || publisher.calls != 0 || len(executor.requests) != 3 {
+		t.Fatal(report.Status, publisher.calls, len(executor.requests), err)
+	}
 }
 
 func TestApplyCompleteControlledHierarchyPublishesOnlyStoredClosedVerify(t *testing.T) {

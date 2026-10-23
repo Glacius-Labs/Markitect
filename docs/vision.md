@@ -118,7 +118,7 @@ There are **three starting situations, but only two processes: Apply and Extract
 
 Building a new project and applying the model to an existing one are starting states of Apply, not separate processes or commands. These names describe the historical high-level direction of work; they establish neither executable availability nor a new implementation assignment. The current V1 scope excludes Extract, whose command and consumers are retired.
 
-The current V1 target uses structural preparation followed by Assessment, Implement and independent Verify, each in a fresh Run with the complete model-derived Manager hierarchy, including empty Packages. Children receive concrete tasks and integrate upward through reviewed Git handoffs. The standalone Run is implemented in S2; public Apply composition and guarded publication await S3. The [current architecture](design/v1-execution-architecture.md) and [delivery plan](implementation-plan.md) own this boundary. Earlier [runtime descriptions](design/canonical-model/manager-apply-runtime.md) retain their historical source scope.
+The current V1 target uses structural preparation followed by Assessment, Implement and independent Verify, each in a fresh Run with the complete model-derived Manager hierarchy, including empty Packages. Children receive concrete tasks and integrate upward through reviewed Git handoffs. The S3 source composes complete closed Runs and guarded publication; native workflow qualification and owner acceptance remain separate evidence. The [current architecture](design/v1-execution-architecture.md) and [delivery plan](implementation-plan.md) own this boundary. Earlier [runtime descriptions](design/canonical-model/manager-apply-runtime.md) retain their historical source scope.
 
 ### 1. Build from the model
 
@@ -136,7 +136,9 @@ Before children begin realization, each parent assesses its existing foundation 
 
 Parents assess their children's actual results and interactions. If children make contradictory claims during Apply or Verify, the parent investigates and resolves the conflict within the accepted intent and delegated freedom. Unsettled meaning or a decision outside that authority returns to the owner through Root. Read-only Verify reports the existing stand; authorized Apply changes the artifacts. The [command design](design/canonical-model/commands.md#one-organization-and-different-instructions) owns that distinction.
 
-### 3. Derive the model from existing artifacts
+### 3. Derive the model from existing artifacts (historical, outside V1)
+
+**Historical concept:** the following Extract workflow records the broader product direction and DEC-057. Its command and consumers are retired from current V1 and it grants no implementation or execution authority.
 
 This is Extract, the reverse direction Artifacts -> Model. Start from a fixed existing repository and named scope, without requiring a complete model. Root derives a first proposed responsibility/Package structure from the artifacts, and the initial Manager tree is formed from that provisional model outline. Parents provide the source and candidate context their children need to investigate. Managers then propose the meaning and structure of their areas and integrate the model upward; discovery can require a visible correction of the initial boundaries. Parents reconcile shared concepts, relationships and contradictory child statements. The process is interactive with the owner, especially where sources conflict or intended meaning cannot be established. Questions reach the owner through Root in understandable terms; the owner need not inspect YAML to decide them. The [first-candidate workflow](design/canonical-model/commands.md#build-the-first-candidate) owns the details. Adoption is the purpose of this starting situation; Extract names the process.
 
@@ -148,7 +150,7 @@ Existing artifacts stay unchanged during model derivation. A confirmed realizati
 
 At the [transition to Apply](design/canonical-model/commands.md#adopt-the-model-and-hand-findings-to-apply), adopt the model and registry as one coherent reviewed stand. Carry known artifact defects into the first regular authorized Apply, with their model references, source evidence and responsibilities preserved. Reassess them against the actual starting artifacts and treat them as repaired only after independent Verify supports resolution on the integrated candidate. Adoption introduces no exception for known defects and no special first-Apply route.
 
-### One organization, explicit scope
+### One organization, explicit scope (historical comparison)
 
 Apply and Extract reuse the recursive Manager organization. Apply covers cases 1 and 2 and changes artifacts against the accepted model. Extract covers case 3 and prepares model changes from existing artifacts. For Apply, the accepted model is the specification; for Extract, artifacts supply evidence for proposed intent, with unresolved meaning clarified by the owner. Similar coordination does not merge those write authorities. The cases can coexist in different areas of one project, so every assessment names its scope. An empty project with neither model nor artifacts enters case 1 once an initial model has been developed and accepted.
 

@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/bootstrap/apply_inputs_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface, product/apply/read-only-preparation]
+    why: "Exercises real repository and metadata acquisition for external and repository Runtime instructions, plus source-safe operator-state destination checks."
+  - path: "internal/bootstrap/apply_inputs.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface, product/apply/read-only-preparation]
+    why: "Closes captured Runtime instruction requirements through bounded fresh complete structural and metadata preparation with original-source guard confirmation."
   - path: "internal/bootstrap/apply.go"
     form: code
     realizes: [product/cli/honest-read-only-interface, product/run/confirmed-run-history]

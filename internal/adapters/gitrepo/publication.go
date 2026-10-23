@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -28,6 +29,25 @@ type Publisher struct {
 type publicationCheckCopy struct {
 	run.Copy
 	materialize func(context.Context, snapshot.Tree, []snapshot.Path) (run.DisposableCopy, error)
+}
+
+func (p *Publisher) Preflight(ctx context.Context, prepared project.Prepared) error {
+	if p == nil || p.Repository == nil || !prepared.Valid() {
+		return fmt.Errorf("checked publication target required")
+	}
+	current, err := p.Repository.Capture(ctx, project.CaptureRequest{Selection: prepared.Selection()})
+	if err != nil {
+		return err
+	}
+	if current.Guard != prepared.Attempt().Model().Inputs().Guard {
+		return fmt.Errorf("%w: publication target/source changed before Run", ErrChanged)
+	}
+	entries := current.Raw.Census.Entries()
+	if len(entries) == 0 {
+		return fmt.Errorf("empty publication source")
+	}
+	_, err = guardedwrite.CaptureV1Files(prepared.Selection().Repository, []string{entries[0].Path().String()})
+	return err
 }
 
 func (c publicationCheckCopy) Materialize(ctx context.Context, tree snapshot.Tree, dirs []snapshot.Path) (run.DisposableCopy, error) {
@@ -101,9 +121,14 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 	var changes []guardedwrite.Change
 	var selected []string
 	for _, d := range delta {
-		change := guardedwrite.Change{Path: d.Path().String(), Delete: d.Kind() == snapshot.Delete, Mode: 0644}
+		change := guardedwrite.Change{Path: d.Path().String(), Delete: d.Kind() == snapshot.Delete}
 		if e, exists := d.After(); exists {
+			beforeEntry, existed := d.Before()
+			if runtime.GOOS == "windows" && (existed && beforeEntry.Mode() != e.Mode() || !existed && e.Mode() == snapshot.Executable) {
+				return out, fmt.Errorf("%w: Windows publication cannot establish a changed executable mode at %s", ErrUnrepresentable, e.Path())
+			}
 			change.Bytes = e.Bytes()
+			change.Mode = 0644
 			if e.Mode() == snapshot.Executable {
 				change.Mode = 0755
 			}
@@ -115,7 +140,7 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 		// Acquire the cooperating lock and validate source/target even on no-change.
 		selected = []string{before.Entries()[0].Path().String()}
 	}
-	capture, err := guardedwrite.CaptureFiles(prepared.Selection().Repository, selected)
+	capture, err := guardedwrite.CaptureV1Files(prepared.Selection().Repository, selected)
 	if err != nil {
 		return out, err
 	}

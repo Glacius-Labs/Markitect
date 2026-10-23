@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/gitrepo/publication_registry_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Publishes a real retained and independently Verify-approved registry realization that adds and deletes valid empty Package shards after all resources close."
   - path: "internal/adapters/gitrepo/publication_copies.go"
     form: code
     realizes: [product/adapters/repository/repository-boundaries]

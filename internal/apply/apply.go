@@ -30,6 +30,7 @@ type Publication struct {
 	Readback       bool                   `json:"readback"`
 }
 type Publisher interface {
+	Preflight(context.Context, project.Prepared) error
 	Publish(context.Context, PublicationRequest) (Publication, error)
 }
 type Command struct {
@@ -61,6 +62,9 @@ func (c *Command) Execute(ctx context.Context, request run.Request) (out Report,
 	}
 	ctx, cancel := context.WithDeadline(ctx, request.Allowance.Deadline)
 	defer cancel()
+	if err = c.Publisher.Preflight(ctx, request.Prepared); err != nil {
+		return out, err
+	}
 	request.Input, err = c.Candidates.Capture(ctx, request.Project, request.Prepared)
 	if err != nil {
 		return out, err
