@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,6 +12,7 @@ import (
 	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
@@ -118,7 +120,7 @@ func (m *conflictManager) Exchange(ctx context.Context, message run.Message) (ru
 			if err = os.WriteFile(path, []byte("parent conflict\n"), 0600); err != nil {
 				return run.Response{}, err
 			}
-			if err = tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err == nil || !strings.Contains(strings.ToLower(err.Error()), "merge") {
+			if err = tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err == nil || !errors.Is(err, run.ErrMergeConflict) {
 				return run.Response{}, fmt.Errorf("actual conflict missing: %v", err)
 			}
 			data, readErr := os.ReadFile(path)
@@ -216,5 +218,152 @@ func TestResolvedMergeKeepsBothParentsWhenTreeMatchesChildHead(t *testing.T) {
 	pending, err := localCommand(ctx, r.Dir, nil, "rev-parse", "--revs-only", "--end-of-options", "MERGE_HEAD")
 	if err != nil || pending != "" {
 		t.Fatal("merge not closed", pending, err)
+	}
+}
+
+func TestIntegrationTechnicalFailureNeverBecomesRepairableConflict(t *testing.T) {
+	for _, stage := range []string{"fetch", "abort", "readback"} {
+		t.Run(stage, func(t *testing.T) {
+			r := testkit.NewRepo(t)
+			r.Write("same.txt", "base\n")
+			r.Commit("base")
+			r.Git("checkout", "-b", "child")
+			r.Write("same.txt", "child\n")
+			r.Commit("child")
+			ctx := context.Background()
+			child, err := object(ctx, r.Dir, "HEAD")
+			if err != nil {
+				t.Fatal(err)
+			}
+			r.Git("checkout", "-b", "parent", "HEAD~1")
+			r.Write("same.txt", "parent\n")
+			r.Commit("parent")
+			injected := errors.New("injected technical " + stage)
+			command := func(ctx context.Context, dir string, input []byte, args ...string) (string, error) {
+				if stage == "fetch" && args[0] == "fetch" || stage == "abort" && args[0] == "merge" && len(args) > 1 && args[1] == "--abort" || stage == "readback" && args[0] == "diff" && len(args) > 1 && args[1] == "--quiet" {
+					return "", injected
+				}
+				return localCommand(ctx, dir, input, args...)
+			}
+			_, err = integrateGit(ctx, r.Dir, r.Dir, child, command, func(context.Context) ([]string, error) { return nil, nil })
+			if !errors.Is(err, injected) || errors.Is(err, run.ErrMergeConflict) {
+				t.Fatal("technical failure became repairable", err)
+			}
+		})
+	}
+}
+
+type technicalWorkspaces struct {
+	run.Workspaces
+	failure error
+}
+
+func (w technicalWorkspaces) Open(ctx context.Context, r run.Request) (run.WorkspaceService, error) {
+	s, err := w.Workspaces.Open(ctx, r)
+	return technicalService{WorkspaceService: s, failure: w.failure}, err
+}
+
+type technicalService struct {
+	run.WorkspaceService
+	failure error
+}
+
+func (s technicalService) Copy(ctx context.Context, name string, base run.Commit) (run.Copy, error) {
+	c, err := s.WorkspaceService.Copy(ctx, name, base)
+	return technicalCopy{Copy: c, name: name, failure: s.failure}, err
+}
+func unwrapTechnical(c run.Copy) run.Copy {
+	if wrapped, ok := c.(technicalCopy); ok {
+		return wrapped.Copy
+	}
+	return c
+}
+func (s technicalService) Retain(ctx context.Context, c run.Copy, fixed run.Commit) (project.CandidateRef, error) {
+	return s.WorkspaceService.Retain(ctx, unwrapTechnical(c), fixed)
+}
+
+type technicalCopy struct {
+	run.Copy
+	name    string
+	failure error
+}
+
+func (c technicalCopy) Update(ctx context.Context, source run.Copy, base run.Commit) error {
+	return c.Copy.Update(ctx, unwrapTechnical(source), base)
+}
+func (c technicalCopy) Review(ctx context.Context, source run.Copy, base, result run.Commit) (string, error) {
+	return c.Copy.Review(ctx, unwrapTechnical(source), base, result)
+}
+func (c technicalCopy) Integrate(ctx context.Context, source run.Copy, result run.Commit) (run.Commit, error) {
+	if c.name == "." {
+		return run.Commit{}, c.failure
+	}
+	return c.Copy.Integrate(ctx, unwrapTechnical(source), result)
+}
+
+type ignoringManagers struct {
+	mu      sync.Mutex
+	ignored bool
+}
+
+func (m *ignoringManagers) Open(_ context.Context, s run.SessionSpec) (run.Session, error) {
+	return &ignoringManager{owner: m, spec: s}, nil
+}
+
+type ignoringManager struct {
+	owner *ignoringManagers
+	spec  run.SessionSpec
+}
+
+func (*ignoringManager) Close(context.Context) error { return nil }
+func (m *ignoringManager) Exchange(ctx context.Context, _ run.Message) (run.Response, error) {
+	tools := m.spec.Tools
+	if m.spec.Manager.Package != "." {
+		if _, err := tools.Await(ctx); err != nil {
+			return run.Response{Decision: run.Submitted}, nil
+		}
+	}
+	for _, child := range m.spec.Manager.Children {
+		if err := tools.Delegate(ctx, child, "Complete modeled work.", nil); err != nil {
+			return run.Response{Decision: run.Submitted}, nil
+		}
+	}
+	for range m.spec.Manager.Children {
+		event, err := tools.Await(ctx)
+		if err != nil {
+			return run.Response{Decision: run.Submitted}, nil
+		}
+		if event.Handoff == nil {
+			return run.Response{}, fmt.Errorf("missing handoff")
+		}
+		if err = tools.Review(ctx, event.Handoff.Manager, event.Handoff.Result.ID, run.Approve, nil); err != nil {
+			m.owner.mu.Lock()
+			m.owner.ignored = true
+			m.owner.mu.Unlock()
+		}
+	}
+	return run.Response{Decision: run.Submitted}, nil
+}
+
+func TestSessionCannotIgnoreTechnicalIntegrationFailure(t *testing.T) {
+	_, p, g, ref := runFixture(t)
+	store, err := runstore.New(g.StateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, stage := range []string{"fetch", "abort", "readback"} {
+		t.Run(stage, func(t *testing.T) {
+			injected := errors.New("injected technical " + stage)
+			sessions := &ignoringManagers{}
+			executor := run.Executor{Workspaces: technicalWorkspaces{Workspaces: g, failure: injected}, Sessions: sessions, Records: store}
+			result, err := executor.Execute(context.Background(), run.Request{MaxManagers: 5, ID: "ignored-" + stage, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Implement, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+			if !errors.Is(err, injected) || result.Technical == run.Completed || result.Candidate != nil || !sessions.ignored {
+				t.Fatal("ignored tool failure became success", result, err)
+			}
+			persisted, readErr := store.Read(context.Background(), "fixture", "ignored-"+stage)
+			if readErr != nil || persisted.Technical == run.Completed || persisted.Candidate != nil {
+				t.Fatal("terminal record erased technical failure", persisted, readErr)
+			}
+		})
 	}
 }

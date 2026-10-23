@@ -417,6 +417,13 @@ func (s *localService) Copy(ctx context.Context, manager string, base run.Commit
 }
 func (c *localCopy) Location() run.CopyLocation { return run.CopyLocation{Directory: c.location} }
 func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
+	dirs, err := c.directories(ctx)
+	if err != nil {
+		return run.Commit{}, err
+	}
+	return snapshotGit(ctx, c.location, localCommand, dirs)
+}
+func (c *localCopy) directories(ctx context.Context) ([]string, error) {
 	var err error
 	// Git's index omits empty directories. Canonical model Package directories
 	// are intent, so encode the actual complete inventory as real Git trees.
@@ -452,10 +459,11 @@ func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 			return nil
 		})
 		if err != nil {
-			return run.Commit{}, err
+			return nil, err
 		}
 	}
-	return snapshotGit(ctx, c.location, localCommand, dirs)
+	sort.Strings(dirs)
+	return dirs, nil
 }
 func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []string) (run.Commit, error) {
 	// A Manager must resolve and stage its conflict before submission. Never let
@@ -653,27 +661,85 @@ func (c *localCopy) Integrate(ctx context.Context, source run.Copy, commit run.C
 	if !ok || child.service != c.service {
 		return run.Commit{}, fmt.Errorf("foreign Run copy")
 	}
-	actual, err := object(ctx, child.location, commit.ID)
-	if err != nil || actual != commit {
-		return run.Commit{}, fmt.Errorf("fixed child commit mismatch")
-	}
-	if _, err = localCommand(ctx, c.location, nil, "fetch", "--quiet", "--no-tags", child.location, commit.ID); err != nil {
-		return run.Commit{}, err
-	}
-	before, err := c.Snapshot(ctx)
+	return integrateGit(ctx, c.location, child.location, commit, localCommand, c.directories)
+}
+
+// Only a verified merge conflict with successful abort and exact restored parent
+// state is repairable. Transport, object, abort and readback failures stay technical.
+func integrateGit(ctx context.Context, directory, source string, fixed run.Commit, command gitCommand, directories func(context.Context) ([]string, error)) (run.Commit, error) {
+	actual, err := objectUsing(ctx, source, fixed.ID, command)
 	if err != nil {
 		return run.Commit{}, err
 	}
-	if _, err = localCommand(ctx, c.location, nil, "merge", "--no-ff", "--no-edit", commit.ID); err != nil {
-		_, abort := localCommand(ctx, c.location, nil, "merge", "--abort")
-		restored, observed := c.Snapshot(ctx)
-		if observed == nil && restored != before {
-			observed = fmt.Errorf("failed integration changed fixed parent")
-		}
-		return run.Commit{}, errors.Join(err, abort, observed)
+	if actual != fixed {
+		return run.Commit{}, fmt.Errorf("fixed child identity mismatch")
 	}
-	return c.Snapshot(ctx)
+	if _, err = command(ctx, directory, nil, "fetch", "--quiet", "--no-tags", source, fixed.ID); err != nil {
+		return run.Commit{}, err
+	}
+	beforeDirs, err := directories(ctx)
+	if err != nil {
+		return run.Commit{}, err
+	}
+	before, err := snapshotGit(ctx, directory, command, beforeDirs)
+	if err != nil {
+		return run.Commit{}, err
+	}
+	if _, err = command(ctx, directory, nil, "merge", "--no-ff", "--no-edit", fixed.ID); err != nil {
+		conflicts, indexErr := command(ctx, directory, nil, "ls-files", "--unmerged", "-z")
+		mergeHead, headErr := objectUsing(ctx, directory, "MERGE_HEAD", command)
+		_, abort := command(ctx, directory, nil, "merge", "--abort")
+		readback := verifyRestoredGit(ctx, directory, before, beforeDirs, command, directories)
+		if indexErr == nil && conflicts != "" && headErr == nil && mergeHead == fixed && abort == nil && readback == nil {
+			return run.Commit{}, fmt.Errorf("%w: child %s conflicts with parent %s; parent was restored", run.ErrMergeConflict, fixed.ID, before.ID)
+		}
+		return run.Commit{}, errors.Join(err, indexErr, headErr, abort, readback)
+	}
+	dirs, err := directories(ctx)
+	if err != nil {
+		return run.Commit{}, err
+	}
+	return snapshotGit(ctx, directory, command, dirs)
 }
+
+// Observe restoration without staging, committing, resetting or hiding residue.
+func verifyRestoredGit(ctx context.Context, directory string, before run.Commit, beforeDirs []string, command gitCommand, directories func(context.Context) ([]string, error)) error {
+	restored, err := objectUsing(ctx, directory, "HEAD", command)
+	if err != nil {
+		return err
+	}
+	if restored != before {
+		return fmt.Errorf("failed integration changed fixed parent")
+	}
+	for _, args := range [][]string{{"diff", "--quiet", "--no-ext-diff", "--no-textconv", "--cached", "HEAD", "--"}, {"diff", "--quiet", "--no-ext-diff", "--no-textconv", "--"}} {
+		if _, err = command(ctx, directory, nil, args...); err != nil {
+			return fmt.Errorf("parent index/worktree restoration incomplete: %w", err)
+		}
+	}
+	untracked, err := command(ctx, directory, nil, "ls-files", "--others", "-z")
+	if err != nil {
+		return err
+	}
+	if untracked != "" {
+		return fmt.Errorf("parent restoration left untracked files")
+	}
+	pending, err := command(ctx, directory, nil, "rev-parse", "--revs-only", "--end-of-options", "MERGE_HEAD")
+	if err != nil {
+		return err
+	}
+	if pending != "" {
+		return fmt.Errorf("parent merge remains open after abort")
+	}
+	dirs, err := directories(ctx)
+	if err != nil {
+		return err
+	}
+	if !reflect.DeepEqual(beforeDirs, dirs) {
+		return fmt.Errorf("parent directory restoration incomplete")
+	}
+	return nil
+}
+
 func (s *localService) Retain(ctx context.Context, copy run.Copy, commit run.Commit) (project.CandidateRef, error) {
 	c, ok := copy.(*localCopy)
 	if !ok || c.service != s {
