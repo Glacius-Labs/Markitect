@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"encoding/hex"
 	"encoding/json"
 	"fmt"
 	"os"
@@ -34,9 +35,12 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 	}
 	ctx, cancel := context.WithTimeout(context.Background(), 180*time.Second)
 	defer cancel()
-	nonce, err := token()
-	if err != nil {
-		t.Fatal(err)
+	// The outer packet knows ownership before any native side effect, even if a
+	// hard process stop prevents the deferred report from being written.
+	nonce := os.Getenv("MARKITECT_TEST_LINUX_COPY_NONCE")
+	decoded, err := hex.DecodeString(nonce)
+	if err != nil || len(decoded) != 16 || nonce != strings.ToLower(nonce) {
+		t.Fatal("explicit frozen packet ownership nonce required")
 	}
 	type observation struct {
 		Action, Plain, Executable, GitMarker, Ignored       string
