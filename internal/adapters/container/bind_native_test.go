@@ -157,12 +157,12 @@ func TestLocalBindNativeProbe(t *testing.T) {
 	case <-ctx.Done():
 		t.Fatal("mapping program deadline exceeded")
 	}
-	if err := session.Close(); err != nil {
-		t.Fatal("mapping session closure failed")
-	}
 	output, err := io.ReadAll(io.LimitReader(session.Stdout(), 4097))
 	if writeErr := os.WriteFile(filepath.Join(*bindNative.evidence, "mapping.json"), output, 0600); writeErr != nil {
 		t.Fatal("mapping observation write failed")
+	}
+	if closeErr := session.Close(); closeErr != nil {
+		t.Fatal("mapping session closure failed")
 	}
 	var observed struct {
 		Nonce                               string
