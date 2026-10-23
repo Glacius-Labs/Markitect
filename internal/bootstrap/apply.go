@@ -178,21 +178,10 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 			return out, err
 		}
 		defer func() { err = errors.Join(err, lock.Release()) }()
-		temporary := filepath.Join(cfg.StateDirectory, cfg.RepositoryIdentity, "temporary")
-		if err = os.MkdirAll(temporary, 0700); err != nil {
-			return out, err
-		}
-		store := &gitrepo.LocalGit{StateRoot: cfg.StateDirectory, TempRoot: temporary}
-		records, err := runstore.New(cfg.StateDirectory)
+		command, err := composeApplyCommand(cfg, id, repository, engine, sessions, checker, profile)
 		if err != nil {
 			return out, err
 		}
-		spec := container.ContainerSpec{Image: profile.ImageID, Labels: labels, User: "1000:1000", CPUs: profile.Session.CPUs, MemoryBytes: profile.Session.MemoryBytes, Pids: profile.Session.Pids, TmpBytes: profile.Session.TmpBytes, Network: "none"}
-		workspaces := &gitrepo.LinuxGit{Engine: engine, Spec: spec, Store: store, MaxTransferBytes: 512 << 20}
-		executor := &runexec.Executor{Sessions: sessions, Workspaces: workspaces, Records: records, Checks: checker}
-		publisher := &gitrepo.Publisher{Repository: repository, Store: store, Checks: checker, CheckCopies: &gitrepo.LinuxCheckCopies{Engine: engine, Spec: spec, MaxTransferBytes: 512 << 20}}
-		command := apply.Command{Executor: workWindow{executor: executor, deadline: cfg.workDeadline()}, Candidates: store, Records: records, Publisher: publisher}
-		sessions.TranscriptRoot = filepath.Join(cfg.StateDirectory, cfg.RepositoryIdentity, "transcripts", id)
 		result, executionErr := command.Execute(ctx, runexec.Request{ID: id, Project: cfg.RepositoryIdentity, Prepared: prepared, Allowance: runexec.NewAllowance(cfg.deadline(), cfg.MaxMessages), MaxManagers: cfg.MaxManagers, MessageTimeout: time.Duration(cfg.MessageTimeoutSeconds) * time.Second, CleanupTimeout: time.Duration(cfg.CleanupTimeoutSeconds) * time.Second, PersistenceTimeout: time.Duration(cfg.PersistenceTimeoutSeconds) * time.Second})
 		if lockErr := lock.Release(); lockErr != nil {
 			executionErr = errors.Join(executionErr, lockErr)
@@ -221,4 +210,27 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 		}
 		return out, executionErr
 	}
+}
+
+// composeApplyCommand prepares host evidence before any Run can acquire resources.
+// The concrete native adapters retain their ordinary startup and closure contracts.
+func composeApplyCommand(cfg runConfig, id string, repository *gitrepo.Repository, engine *container.Engine, sessions *codexappserver.Agents, checker *checks.CandidateRunner, profile codexappserver.Profile) (apply.Command, error) {
+	sessions.TranscriptRoot = filepath.Join(cfg.StateDirectory, cfg.RepositoryIdentity, "transcripts", id)
+	if err := os.MkdirAll(sessions.TranscriptRoot, 0700); err != nil {
+		return apply.Command{}, fmt.Errorf("prepare Apply transcripts: %w", err)
+	}
+	temporary := filepath.Join(cfg.StateDirectory, cfg.RepositoryIdentity, "temporary")
+	if err := os.MkdirAll(temporary, 0700); err != nil {
+		return apply.Command{}, err
+	}
+	store := &gitrepo.LocalGit{StateRoot: cfg.StateDirectory, TempRoot: temporary}
+	records, err := runstore.New(cfg.StateDirectory)
+	if err != nil {
+		return apply.Command{}, err
+	}
+	spec := container.ContainerSpec{Image: profile.ImageID, Labels: map[string]string{"markitect.store": profile.Session.Store}, User: "1000:1000", CPUs: profile.Session.CPUs, MemoryBytes: profile.Session.MemoryBytes, Pids: profile.Session.Pids, TmpBytes: profile.Session.TmpBytes, Network: "none"}
+	workspaces := &gitrepo.LinuxGit{Engine: engine, Spec: spec, Store: store, MaxTransferBytes: 512 << 20}
+	executor := &runexec.Executor{Sessions: sessions, Workspaces: workspaces, Records: records, Checks: checker}
+	publisher := &gitrepo.Publisher{Repository: repository, Store: store, Checks: checker, CheckCopies: &gitrepo.LinuxCheckCopies{Engine: engine, Spec: spec, MaxTransferBytes: 512 << 20}}
+	return apply.Command{Executor: workWindow{executor: executor, deadline: cfg.workDeadline()}, Candidates: store, Records: records, Publisher: publisher}, nil
 }
