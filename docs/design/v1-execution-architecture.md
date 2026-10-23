@@ -75,6 +75,10 @@ The existing native adapters wait for a pending tool's response and cannot suppl
 
 Cleanup uncertainty, missing decisions and persistence failures block successful return/publication. Standalone caller provides finite limits. Apply supplies one shared concurrency-safe allowance and original deadline to every Run, including corrections. Resource counts have explicit technical meaning, not domain Turn semantics; no reset after Reject.
 
+The bounded native workspace probe at `ac293ffcd5d98f7d3b5710c2f359323dc85280f0` on 23 October 2026 observed both requested `0644` and `0755` files as `0777` through the Windows/Docker Desktop bind. Byte mapping, read-only refusal and cleanup passed; executable-mode fidelity failed. That host-directory binding therefore cannot qualify the native candidate workspace. The failed attempt is retained; successful byte transfer does not waive this boundary.
+
+Use the intended Run-owned Git service with private Linux-volume working copies for native execution. Git operations and each Manager operate on the same copy, with only that Manager's copy mounted into its container. Local Git remains useful for controlled tests; do not synchronize a second writable host mirror. Native/check attachment identifies the actual owned copy without interpreting a host directory as a volume. Export self-contained candidate bundles before closure and verify their commit, tree and file modes through Git objects in an independent empty repository; a Windows checkout is not a filesystem-mode oracle. Actual volume, copy isolation, retention and cleanup evidence is still required before native support is claimed.
+
 ## Candidates, state and publication
 
 Propose self-contained Git bundles with a named candidate ref and bound metadata in project-scoped operator state outside the repository. Include candidate objects and required ancestry without an old-volume or incremental-bundle dependency. Verify in an empty Git repository with exact commit/tree readback. A bundle is storage, not approval ([official Git documentation](https://git-scm.com/docs/git-bundle)). No new Git server or recovery framework.
