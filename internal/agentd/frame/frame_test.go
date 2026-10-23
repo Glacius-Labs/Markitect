@@ -87,6 +87,10 @@ func TestControlMessagesNeedExactlyTheirBody(t *testing.T) {
 		t.Fatalf("decode = %+v, %v", got, err)
 	}
 	bad := []frame.ControlMessage{
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{}},
+		{Type: frame.TypeInitialize, Initialize: &frame.Initialize{CodexAuth: make([]byte, frame.MaxPrivateAuthBytes+1)}},
+		{Type: frame.TypeInitialized, Initialized: &frame.Initialized{}, Start: &frame.Start{}},
+		{Type: frame.TypeClearPrivateHome},
 		{Type: frame.TypeStart, Start: &frame.Start{Dir: "/work"}},
 		{Type: frame.TypeStart},
 		{Type: frame.TypeHello, Hello: &frame.Hello{}, Exited: &frame.Exited{}},
@@ -106,6 +110,27 @@ func TestControlMessagesNeedExactlyTheirBody(t *testing.T) {
 		if _, err := frame.DecodeControl([]byte(raw)); err == nil {
 			t.Fatalf("invalid control payload decoded: %s", raw)
 		}
+	}
+}
+
+func TestPrivateInitializationIsOneBoundedStrictFrame(t *testing.T) {
+	for _, c := range []frame.ControlMessage{
+		{Type: frame.TypeInitialize, Request: 1, Initialize: &frame.Initialize{CodexAuth: make([]byte, frame.MaxPrivateAuthBytes)}},
+		{Type: frame.TypeInitialized, Request: 1, Initialized: &frame.Initialized{}},
+		{Type: frame.TypeClearPrivateHome, Request: 2, ClearPrivateHome: &frame.ClearPrivateHome{}},
+		{Type: frame.TypePrivateHomeCleared, Request: 2, PrivateHomeCleared: &frame.PrivateHomeCleared{}},
+	} {
+		payload, err := frame.EncodeControl(c)
+		if err != nil || len(payload) > frame.MaxPayload {
+			t.Fatal("private control exceeds its frame")
+		}
+		got, err := frame.DecodeControl(payload)
+		if err != nil || got.Type != c.Type || got.Request != c.Request {
+			t.Fatal("private control did not round trip")
+		}
+	}
+	if _, err := frame.DecodeControl([]byte(`{"type":"initialize","initialize":{"codexAuth":"eA==","path":"/work/auth.json"}}`)); err == nil {
+		t.Fatal("private initialization accepted an arbitrary file path")
 	}
 }
 

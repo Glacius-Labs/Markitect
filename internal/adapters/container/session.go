@@ -164,7 +164,7 @@ func (s *Session) demux(out io.Reader) {
 					continue
 				}
 				s.deliverReply(c)
-			case frame.TypeStarted, frame.TypeCensus:
+			case frame.TypeStarted, frame.TypeCensus, frame.TypeInitialized, frame.TypePrivateHomeCleared:
 				s.deliverReply(c)
 			default:
 				s.fail(fmt.Errorf("agentd sent an unexpected %q message", c.Type))
@@ -217,6 +217,32 @@ func (s *Session) request(ctx context.Context, c frame.ControlMessage, purpose s
 		abandon()
 		return frame.ControlMessage{}, ctx.Err()
 	}
+}
+
+// Initialize installs private login data on the existing agentd connection.
+// It never records the payload, adds environment values or starts a process.
+func (s *Session) Initialize(ctx context.Context, req frame.Initialize) error {
+	r, err := s.request(ctx, frame.ControlMessage{Type: frame.TypeInitialize, Initialize: &req}, "private initialization")
+	if err != nil {
+		return err
+	}
+	if r.Type != frame.TypeInitialized {
+		return errors.New("agentd did not confirm private initialization")
+	}
+	return nil
+}
+
+// ClearPrivateHome removes the login after provider exit, before Close ends
+// the container. agentd also attempts cleanup on connection loss.
+func (s *Session) ClearPrivateHome(ctx context.Context) error {
+	r, err := s.request(ctx, frame.ControlMessage{Type: frame.TypeClearPrivateHome, ClearPrivateHome: &frame.ClearPrivateHome{}}, "private cleanup")
+	if err != nil {
+		return err
+	}
+	if r.Type != frame.TypePrivateHomeCleared {
+		return errors.New("agentd did not confirm private cleanup")
+	}
+	return nil
 }
 
 // StartProvider asks agentd to start the provider and returns its process ID.

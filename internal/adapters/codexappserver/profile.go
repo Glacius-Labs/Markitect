@@ -72,6 +72,8 @@ type CredentialResolver func(context.Context, string) (RuntimeCredential, error)
 
 // RuntimeSession is the container Session surface used by this adapter.
 type RuntimeSession interface {
+	Initialize(context.Context, frame.Initialize) error
+	ClearPrivateHome(context.Context) error
 	StartProvider(context.Context, frame.Start) (frame.Started, error)
 	Stdout() io.Reader
 	WriteInput([]byte) error
@@ -81,7 +83,6 @@ type RuntimeSession interface {
 	Close() error
 }
 type RuntimeStarter func(context.Context, container.ContainerSpec) (RuntimeSession, error)
-type RuntimeHelper func(context.Context, container.ContainerSpec, []string, io.Reader, io.Writer) error
 
 var volumeName = regexp.MustCompile(`^[a-zA-Z0-9][a-zA-Z0-9_.-]{0,127}$`)
 var imageName = regexp.MustCompile(`^sha256:[0-9a-f]{64}$`)

@@ -54,14 +54,18 @@ type fakeRuntime struct {
 	stream *fakeStream
 	tools  chan frame.ToolCall
 
-	mu      sync.Mutex
-	spec    container.ContainerSpec
-	start   frame.Start
-	writes  []string
-	replies []frame.ToolReply
-	stops   int
-	starts  int
-	closed  bool
+	mu            sync.Mutex
+	spec          container.ContainerSpec
+	start         frame.Start
+	writes        []string
+	replies       []frame.ToolReply
+	stops         int
+	starts        int
+	closed        bool
+	homeCalls     []string
+	installed     []byte
+	initializeErr error
+	cleanupErr    error
 
 	closeErr       error
 	toolArgs       string
@@ -85,11 +89,25 @@ func newRuntime() *fakeRuntime {
 	return &fakeRuntime{stream: &fakeStream{chunks: make(chan []byte, 64), done: make(chan struct{})}, tools: make(chan frame.ToolCall, 16), toolName: "submit", toolArgs: `{"summary":"done"}`}
 }
 func (f *fakeRuntime) emit(raw string) { f.stream.chunks <- []byte(raw + "\n") }
+func (f *fakeRuntime) Initialize(_ context.Context, req frame.Initialize) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.homeCalls = append(f.homeCalls, "initialize")
+	f.installed = bytes.Clone(req.CodexAuth)
+	return f.initializeErr
+}
+func (f *fakeRuntime) ClearPrivateHome(context.Context) error {
+	f.mu.Lock()
+	defer f.mu.Unlock()
+	f.homeCalls = append(f.homeCalls, "clear")
+	return f.cleanupErr
+}
 func (f *fakeRuntime) StartProvider(_ context.Context, s frame.Start) (frame.Started, error) {
 	f.mu.Lock()
 	defer f.mu.Unlock()
 	f.start = s
 	f.starts++
+	f.homeCalls = append(f.homeCalls, "start")
 	return frame.Started{PID: 123}, nil
 }
 func (f *fakeRuntime) Stdout() io.Reader                { return f.stream }
@@ -167,6 +185,7 @@ func (f *fakeRuntime) Reply(r frame.ToolReply) error {
 func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 	f.mu.Lock()
 	f.stops++
+	f.homeCalls = append(f.homeCalls, "stop")
 	f.mu.Unlock()
 	if f.stopFail {
 		return frame.Exited{}, io.ErrClosedPipe
@@ -176,6 +195,7 @@ func (f *fakeRuntime) Stop(context.Context, int64) (frame.Exited, error) {
 func (f *fakeRuntime) Close() error {
 	f.mu.Lock()
 	f.closed = true
+	f.homeCalls = append(f.homeCalls, "close")
 	f.mu.Unlock()
 	f.stream.close()
 	return f.closeErr
@@ -198,7 +218,7 @@ func agentsFor(t *testing.T, rt *fakeRuntime) *Agents {
 		rt.spec = spec
 		rt.mu.Unlock()
 		return rt, nil
-	}, nil, map[string]Profile{"codex": testProfile()}, func(_ context.Context, ref string) (RuntimeCredential, error) {
+	}, map[string]Profile{"codex": testProfile()}, func(_ context.Context, ref string) (RuntimeCredential, error) {
 		if ref != "exact-credential" {
 			t.Errorf("unbound credential %s", ref)
 		}
@@ -667,7 +687,7 @@ func TestRunStartFailureBeforeAndAfterContainerCreation(t *testing.T) {
 		a, err := NewAgentsWithRuntime(func(context.Context, container.ContainerSpec) (RuntimeSession, error) {
 			starts++
 			return nil, errors.New("container creation result unknown")
-		}, nil, profiles, resolver)
+		}, profiles, resolver)
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -751,14 +771,14 @@ func TestNewAgentsRefusesInvalidInputs(t *testing.T) {
 		"settings":   bad(func(p *Profile) { p.Session.Effort = "max" }),
 		"name":       {"": testProfile()},
 	} {
-		if _, err := NewAgentsWithRuntime(start, nil, profiles, resolver); !errors.Is(err, ErrSession) {
+		if _, err := NewAgentsWithRuntime(start, profiles, resolver); !errors.Is(err, ErrSession) {
 			t.Fatalf("%s accepted", name)
 		}
 	}
-	if _, err := NewAgentsWithRuntime(nil, nil, nil, resolver); err == nil {
+	if _, err := NewAgentsWithRuntime(nil, nil, resolver); err == nil {
 		t.Fatal("accepted missing starter")
 	}
-	if _, err := NewAgentsWithRuntime(start, nil, nil, nil); err == nil {
+	if _, err := NewAgentsWithRuntime(start, nil, nil); err == nil {
 		t.Fatal("accepted missing resolver")
 	}
 	if _, err := NewAgents(nil, nil, resolver); err == nil {

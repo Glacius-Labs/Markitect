@@ -268,3 +268,58 @@ func TestALateReplyNeverAnswersALaterRequest(t *testing.T) {
 		t.Fatalf("second census = %+v, %v; the late reply must be dropped", processes, err)
 	}
 }
+
+func TestSessionPrivateInitializationAndCleanup(t *testing.T) {
+	s, a, err := connect(t, frame.ProtocolVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		f := a.read()
+		c, err := frame.DecodeControl(f.Payload)
+		if err != nil || c.Type != frame.TypeInitialize || string(c.Initialize.CodexAuth) != "synthetic-login" {
+			t.Error("private setup payload changed")
+			return
+		}
+		a.control(frame.ControlMessage{Type: frame.TypeInitialized, Request: c.Request, Initialized: &frame.Initialized{}})
+		f = a.read()
+		c, err = frame.DecodeControl(f.Payload)
+		if err != nil || c.Type != frame.TypeClearPrivateHome {
+			t.Error("private cleanup missing")
+			return
+		}
+		a.control(frame.ControlMessage{Type: frame.TypePrivateHomeCleared, Request: c.Request, PrivateHomeCleared: &frame.PrivateHomeCleared{}})
+		a.finish()
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := s.Initialize(ctx, frame.Initialize{CodexAuth: []byte("synthetic-login")}); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.ClearPrivateHome(ctx); err != nil {
+		t.Fatal(err)
+	}
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestSessionPrivateInitializationFailureIsNotSuccess(t *testing.T) {
+	s, a, err := connect(t, frame.ProtocolVersion)
+	if err != nil {
+		t.Fatal(err)
+	}
+	go func() {
+		c, _ := frame.DecodeControl(a.read().Payload)
+		a.control(frame.ControlMessage{Type: frame.TypeFailure, Request: c.Request, Failure: &frame.Failure{Message: "private home initialization failed"}})
+		a.finish()
+	}()
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	if err := s.Initialize(ctx, frame.Initialize{CodexAuth: []byte("synthetic-login")}); err == nil || strings.Contains(err.Error(), "synthetic-login") {
+		t.Fatal("private setup failure hidden or unsafe")
+	}
+	if err := s.Close(); err != nil {
+		t.Fatal(err)
+	}
+}

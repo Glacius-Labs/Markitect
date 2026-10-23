@@ -13,7 +13,7 @@ import (
 
 // ProtocolVersion identifies this frame format and its control messages.
 // The Orchestrator and agentd refuse each other when their versions differ.
-const ProtocolVersion = 2
+const ProtocolVersion = 3
 
 // MaxPayload bounds one frame. Larger provider output is split by the writer.
 const MaxPayload = 1 << 20
