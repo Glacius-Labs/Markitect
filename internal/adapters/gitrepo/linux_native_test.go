@@ -13,9 +13,12 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
+	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -26,6 +29,20 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 	if os.Getenv("MARKITECT_TEST_LINUX_COPY_PROBE") != "1" {
 		t.Skip("requires a concrete bounded LinuxGit probe dispatch")
 	}
+	linuxNativeCopyProbe(t, false)
+}
+
+// Separate opt-in: no provider or Apply is started. Publication copies must work
+// after the originating Run and its entire volume have already disappeared.
+func TestLinuxPublicationCheckCopyProbe(t *testing.T) {
+	if os.Getenv("MARKITECT_TEST_LINUX_PUBLICATION_COPY_PROBE") != "1" {
+		t.Skip("requires a concrete bounded publication-copy probe dispatch")
+	}
+	linuxNativeCopyProbe(t, true)
+}
+
+func linuxNativeCopyProbe(t *testing.T, publication bool) {
+	t.Helper()
 	enginePath, image, out := os.Getenv("MARKITECT_TEST_ENGINE"), os.Getenv("MARKITECT_TEST_RUNTIME_IMAGE"), os.Getenv("MARKITECT_TEST_LINUX_COPY_OUTPUT")
 	if !filepath.IsAbs(enginePath) || !filepath.IsAbs(out) || !strings.HasPrefix(image, "sha256:") || len(image) != 71 {
 		t.Fatal("explicit engine/image/new absolute evidence output required")
@@ -61,6 +78,7 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 		RunClosed, ReopenedRunClosed, FirstVolumeAbsent, AllContainersAbsent, SourceUnchanged bool
 		GitExecCount                                                                          int
 		Failed                                                                                bool
+		PublicationChecks                                                                     []run.CheckObservation
 	}{ProbeID: nonce, ImageID: image}
 	defer func() {
 		report.Failed = t.Failed()
@@ -79,6 +97,31 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 	// The existing real-Git fixture includes Root, siblings, a grandchild and an
 	// actual empty Package Git tree. Store proof bundles outside Go's temp cleanup.
 	source, prepared, _, _ := runFixture(t)
+	if publication {
+		// The declaration is captured before opening any Linux resource. It is
+		// part of the same fixed candidate inspected by the real check consumer.
+		source.Write(".markitect/execution.yaml", fmt.Sprintf("apiVersion: markitect.execution/v2\nchecks:\n  - id: publication-bytes\n    profile: publication-node\n    directory: .\n    args: ['-e', %q]\n    timeout: 30s\n", strings.ReplaceAll(linuxPublicationObservation, "PACKET_NONCE", nonce)))
+		source.Commit("Declare publication copy check")
+		tree, e := withDirectories(ctx, source.Dir, source.Git("rev-parse", "HEAD^{tree}"), []string{".markitect/model/b/empty"})
+		if e != nil {
+			t.Fatal(e)
+		}
+		id, e := localCommand(ctx, source.Dir, []byte("Preserve empty Package\n"), "commit-tree", tree, "-p", source.Git("rev-parse", "HEAD"))
+		if e != nil {
+			t.Fatal(e)
+		}
+		source.Git("reset", "--mixed", id)
+		repository := adapter(t)
+		captured, e := project.NewPreparationService(project.NewModelService(repository, repository)).Capture(ctx, project.CaptureRequest{Selection: prepared.Selection()}, model.Limits{})
+		a, ok := captured.Prepared()
+		if e != nil || !ok {
+			t.Fatal("declared fixture preparation", captured.Status(), e)
+		}
+		prepared, e = project.Prepare(a)
+		if e != nil {
+			t.Fatal(e)
+		}
+	}
 	report.Fixture = source.Dir
 	store := &LocalGit{StateRoot: filepath.Join(out, "durable"), TempRoot: filepath.Join(out, "temporary")}
 	for _, dir := range []string{store.StateRoot, store.TempRoot} {
@@ -318,6 +361,100 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 	if report.BareCommit != retained.Commit || report.BareTree != retained.Tree || report.BundleBytes != "plain:"+nonce+"\n" || !strings.HasPrefix(report.BundleExecutableMode, "100755 blob ") || report.EmptyPackageObject != "tree" {
 		t.Fatal("independent bare bundle readback differs")
 	}
+	if publication {
+		// This is Publisher's actual host-Git inspection and materializer wrapper,
+		// without publishing into a user checkout or opening another Run service.
+		dir := filepath.Join(out, "publication-host")
+		if err = os.Mkdir(dir, 0700); err != nil {
+			t.Fatal(err)
+		}
+		if err = store.Reopen(ctx, retained, dir); err != nil {
+			t.Fatal(err)
+		}
+		inputs, e := store.retained(ctx, retained, prepared)
+		if e != nil {
+			t.Fatal(e)
+		}
+		copy := &localCopy{service: &localService{request: run.Request{Prepared: prepared}, inputs: inputs}, location: dir}
+		a, e := copy.Inspect(ctx, fixed)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e = prepared.ValidateCandidate(a); e != nil {
+			t.Fatal(e)
+		}
+		tree := a.Model().Inputs().Raw.Census
+		dirs, e := project.CheckDirectories(a.Model().Inputs().Raw)
+		if e != nil {
+			t.Fatal(e)
+		}
+		materializer := &LinuxCheckCopies{Engine: engine, Spec: spec, MaxTransferBytes: 32 << 20}
+		var publicationCopies []run.DisposableCopy
+		defer func() {
+			cleanup, done := context.WithTimeout(context.Background(), 60*time.Second)
+			defer done()
+			for _, c := range publicationCopies {
+				if e := c.Close(cleanup); e != nil {
+					t.Error(e)
+				}
+			}
+		}()
+		wrapped := publicationCheckCopy{Copy: copy, materialize: func(ctx context.Context, tree snapshot.Tree, dirs []snapshot.Path) (run.DisposableCopy, error) {
+			c, e := materializer.Materialize(ctx, tree, dirs)
+			if c != nil {
+				publicationCopies = append(publicationCopies, c)
+				report.Volumes = append(report.Volumes, c.Location().Volume)
+				report.Locations = append(report.Locations, c.Location())
+			}
+			return c, e
+		}}
+		document := fmt.Sprintf("apiVersion: markitect.runtime/v1\nagentProfiles: {}\ncheckProfiles:\n  publication-node:\n    container:\n      profileVersion: 1\n      engineExecutable: %q\n      imageID: %s\n      executable: /usr/local/bin/node\n      argumentPrefix: []\n      env: []\n      limits: {milliCPUs: 1000, memoryBytes: 268435456, processes: 64}\n      maxOutputBytes: 4096\n", enginePath, image)
+		filePath := fixturePath(t, "runtime.yaml")
+		file, e := snapshot.NewEntry(filePath, snapshot.Regular, []byte(document))
+		if e != nil {
+			t.Fatal(e)
+		}
+		metadata, e := runtimeconfig.Prepare(ctx, project.RawInputs{RuntimeProfiles: []project.SourceFile{{Location: project.SourceLocation{Boundary: "publication-profile", Path: filePath}, File: file}}}, nil, checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader))
+		if e != nil || metadata.Status != model.Passed {
+			t.Fatal(metadata, e)
+		}
+		checker, e := checks.NewCandidateRunner(metadata.Profiles, engine, labels)
+		if e != nil {
+			t.Fatal(e)
+		}
+		report.PublicationChecks, e = checker.Check(ctx, prepared.Checks(), wrapped, fixed)
+		if e != nil {
+			t.Fatal(e)
+		}
+		if e = run.ValidateCheckObservations(prepared.Checks(), report.PublicationChecks, fixed, tree, dirs); e != nil {
+			t.Fatal(e)
+		}
+		if len(report.PublicationChecks) != 1 || len(publicationCopies) != 2 {
+			t.Fatal("missing real check receipt/input/home", report.PublicationChecks, len(publicationCopies))
+		}
+		for _, c := range publicationCopies {
+			if c.Location().Volume == volume {
+				t.Fatal("publication reused closed Run volume")
+			}
+			v, e := engine.InspectVolume(ctx, c.Location().Volume)
+			if e != nil || v.Exists {
+				t.Fatal("receipt closure did not remove publication volume", v, e)
+			}
+		}
+		repository, e := New(Limits{})
+		if e != nil {
+			t.Fatal(e)
+		}
+		recaptured, e := repository.Capture(ctx, prepared.Attempt().Model().Request())
+		if e != nil {
+			t.Fatal(e)
+		}
+		report.SourceUnchanged = recaptured.Raw.Census.Equal(prepared.Attempt().Model().Inputs().Raw.Census) && recaptured.Head == prepared.Attempt().Model().Inputs().Head
+		if !report.SourceUnchanged {
+			t.Fatal("source repository changed")
+		}
+		return
+	}
 	request.ID = "copy-reopen-" + nonce
 	request.Input = retained
 	reopened, err = adapter.Open(ctx, request)
@@ -356,3 +493,5 @@ func TestLinuxGitNativeCopyProbe(t *testing.T) {
 }
 
 const linuxCopyObservation = `const fs=require('fs');const action=process.argv[1],nonce=process.argv[2];if(action==='write'){fs.writeFileSync('/work/out/a.txt','plain:'+nonce+'\n');fs.chmodSync('/work/out/a.txt',0o644);fs.writeFileSync('/work/out/deep.txt','#!/bin/sh\nexit 0\n');fs.chmodSync('/work/out/deep.txt',0o755);fs.writeFileSync('/work/.git/markitect-probe',nonce)}const plain=fs.readFileSync('/work/out/a.txt','utf8'),executable=fs.readFileSync('/work/out/deep.txt','utf8');const marker='/work/.git/markitect-probe';const execution=action==='isolation'?null:require('child_process').spawnSync('/work/out/deep.txt',[],{stdio:'ignore'});if(execution&&(execution.error||execution.status!==0))throw Error('executable fixture failed');if(action==='check')fs.writeFileSync('/work/out/a.txt','scratch:'+nonce);process.stdout.write(JSON.stringify({Action:action,Plain:plain,Executable:executable,PlainMode:fs.statSync('/work/out/a.txt').mode&0o777,ExecutableMode:fs.statSync('/work/out/deep.txt').mode&0o777,UID:process.getuid(),GID:process.getgid(),EmptyPackage:fs.statSync('/work/.markitect/model/b/empty').isDirectory(),GitPresent:fs.existsSync('/work/.git'),Ignored:fs.readFileSync('/work/out/accounted.ignored','utf8'),HomeEmpty:action==='check'?fs.readdirSync('/home/agent').length===0:false,ExecutableExit:execution?execution.status:-1,GitMarker:fs.existsSync(marker)?fs.readFileSync(marker,'utf8'):''}));`
+
+const linuxPublicationObservation = `const fs=require('fs'),assert=require('assert');assert.strictEqual(process.getuid(),1000);assert.strictEqual(process.getgid(),1000);assert.strictEqual(fs.readFileSync('out/a.txt','utf8'),'plain:PACKET_NONCE\n');assert.strictEqual(fs.readFileSync('out/deep.txt','utf8'),'#!/bin/sh\nexit 0\n');assert.strictEqual(fs.statSync('out/a.txt').mode&0o777,0o644);assert.strictEqual(fs.statSync('out/deep.txt').mode&0o777,0o755);assert.strictEqual(fs.readFileSync('out/accounted.ignored','utf8'),'original ignored input\n');assert(fs.statSync('.markitect/model/b/empty').isDirectory());assert(!fs.existsSync('.git'));assert.deepStrictEqual(fs.readdirSync('/home/agent'),[]);const p=require('child_process').spawnSync('./out/deep.txt',[],{stdio:'ignore'});assert(!p.error);assert.strictEqual(p.status,0);process.stdout.write('publication copy bytes/modes/directories/home passed\n');`

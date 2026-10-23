@@ -83,8 +83,10 @@ func TestMain(m *testing.M) {
 			}
 		}
 		time.Sleep(time.Duration(step.SleepMillis) * time.Millisecond)
-		fmt.Fprint(os.Stdout, step.Out)
+		// Emit scripted diagnostics before stdout: an archive consumer may stop
+		// this producer as soon as it sees an invalid first header.
 		fmt.Fprint(os.Stderr, step.Err)
+		fmt.Fprint(os.Stdout, step.Out)
 		time.Sleep(time.Duration(step.LingerMillis) * time.Millisecond)
 		os.Exit(step.Code)
 	}

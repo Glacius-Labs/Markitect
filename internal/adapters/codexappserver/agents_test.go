@@ -352,8 +352,31 @@ func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
 			if !strings.Contains(doc.Developer, "every Manager including Root uses submitted") || !strings.Contains(doc.Developer, "Your own judge decision cannot be approve") {
 				t.Fatal("Implement native renderer does not communicate admitted judgment")
 			}
+			if strings.Contains(doc.Developer, "use approve or reject for model readiness") || strings.Contains(doc.Developer, "Do not repair the candidate during Verify") {
+				t.Fatal("Implement renderer received another mandate's duties")
+			}
 		} else if !strings.Contains(doc.Developer, "use approve or reject") || !strings.Contains(doc.Developer, "Do not use submitted") {
 			t.Fatal("review renderer does not communicate admitted judgment", mandate)
+		}
+		if mandate == run.Assessment {
+			for _, boundary := range []string{"checked model's consistency, sufficiency and realizability", "not grounds to reject model readiness", "always proceeds through Implement, even when no artifact changes are needed", "Material unresolved model decisions require model_blocker"} {
+				if !strings.Contains(doc.Developer, boundary) {
+					t.Fatal("Assessment native renderer omits model readiness boundary", boundary)
+				}
+			}
+			if strings.Contains(doc.Developer, "use approve or reject for the examined realization") || strings.Contains(doc.Developer, "fixed candidate's conformity") {
+				t.Fatal("Assessment renderer received Verify conformity duties")
+			}
+		}
+		if mandate == run.Verify {
+			for _, boundary := range []string{"fixed candidate's conformity to the checked model", "Do not repair the candidate during Verify", "host for a fresh Implement Run followed by a fresh Verify"} {
+				if !strings.Contains(doc.Developer, boundary) {
+					t.Fatal("Verify native renderer omits fixed candidate boundary", boundary)
+				}
+			}
+			if strings.Contains(doc.Developer, "use approve or reject for model readiness") || strings.Contains(doc.Developer, "always proceeds through Implement") {
+				t.Fatal("Verify renderer received Assessment readiness duties")
+			}
 		}
 	}
 	for _, tool := range toolSpecs() {

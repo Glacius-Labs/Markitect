@@ -56,7 +56,11 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/run", "internal/adapters/claudecode", false},
 		{"internal/model", "internal/run", false},
 		{"internal/apply", "internal/organization", false},
-		{"internal/apply", "internal/run", false},
+		{"internal/apply", "internal/run", true},
+		{"internal/apply", "internal/workflow", true},
+		{"internal/workflow", "internal/run", true},
+		{"internal/workflow", "internal/adapters/gitrepo", false},
+		{"internal/workflow", "internal/adapters/runstore", false},
 		{"internal/apply", "internal/adapters/gitrepo", false},
 		{"internal/modeldocs", "internal/project", true},
 		{"internal/modeldocs", "internal/adapters/documents", false},
@@ -115,7 +119,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", false},
 		{"internal/adapters/codexappserver", "internal/adapters/runstore", false},
 		{"internal/adapters/codexappserver", "internal/tooling/source", false},
-		{"internal/bootstrap", "internal/adapters/container", false},
+		{"internal/bootstrap", "internal/adapters/container", true},
 		{"internal/bootstrap", "internal/adapters/claudecode", true},
 		{"internal/bootstrap", "internal/model", true},
 		{"internal/bootstrap", "internal/snapshot", false},
@@ -148,7 +152,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.allowed
-			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" || tc.from == "internal/adapters/codexappserver" && (tc.to == "internal/adapters/gitrepo" || tc.to == "internal/adapters/runstore") {
+			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" || tc.from == "internal/adapters/codexappserver" && (tc.to == "internal/adapters/gitrepo" || tc.to == "internal/adapters/runstore") || tc.from == "internal/bootstrap" && tc.to == "internal/snapshot" {
 				allowed = test
 			} // Actual controlled declared-check composition is test-only.
 			got := Check([]Edge{{From: tc.from, To: tc.to, Test: test}})
@@ -256,9 +260,9 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
 		{"internal/model", true, true},
 		{"internal/adapters/claudecode", true, true},
-		{"internal/snapshot", false, false}, {"internal/run", false, false}, {"internal/testkit", false, true},
+		{"internal/snapshot", false, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
 		{"internal/organization", false, false}, {"internal/realization", false, false},
-		{"internal/adapters/container", false, false}, {"internal/adapters/unknown", false, false},
+		{"internal/adapters/container", true, true}, {"internal/adapters/unknown", false, false},
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.production

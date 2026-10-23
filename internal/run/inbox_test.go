@@ -259,6 +259,27 @@ func TestTerminalReceiptCutRejectsLateCallbacksAndDetachesStoredValues(t *testin
 
 type admissionSession struct{ calls atomic.Int32 }
 
+type timedMessageSession struct{}
+
+func (timedMessageSession) Exchange(ctx context.Context, _ Message) (Response, error) {
+	<-ctx.Done()
+	// Even a provider returning a nominal judgment at timeout cannot erase it.
+	return Response{Decision: Submitted}, nil
+}
+func (timedMessageSession) Close(context.Context) error { return nil }
+
+func TestExchangeEnforcesPerMessageLimitWithinOriginalRunDeadline(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	x := &execution{ctx: ctx, request: Request{MessageTimeout: 20 * time.Millisecond}}
+	start := time.Now()
+	_, err := x.exchange(&managerState{session: timedMessageSession{}}, Message{Task: "bounded"})
+	if !errors.Is(err, context.DeadlineExceeded) || time.Since(start) > time.Second || ctx.Err() != nil {
+		t.Fatal("message ignored its own limit or consumed whole-Run deadline", err, ctx.Err())
+	}
+	x.calls.Wait()
+}
+
 func (s *admissionSession) Exchange(context.Context, Message) (Response, error) {
 	s.calls.Add(1)
 	return Response{}, errors.New("unexpected admitted Session")

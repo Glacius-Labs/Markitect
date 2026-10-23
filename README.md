@@ -74,7 +74,7 @@ For the full explanation, read [Markitect in brief](docs/vision.md#markitect-in-
 
 ## Development status
 
-**Markitect is under active development. The standalone V1 Run is implemented in source; public Apply is unavailable until S3 composes the workflow and publication.**
+**Markitect is under active development. S3 composes complete fresh V1 Runs, independent stored Verify approval and guarded publication in source. Full native Apply qualification and owner acceptance remain separate.**
 
 Current source supports the Model check, repository file accounting, context preparation and a guarded readable model view. The standalone Run uses the complete model-derived Manager hierarchy for Assessment, Implement and Verify, with fresh environments and durable results. Extract, Cockpit and interactive authoring are retired. The [project workflow](docs/project-workflow.md#execute-verify-and-apply) describes the explicit configuration and current command boundary.
 

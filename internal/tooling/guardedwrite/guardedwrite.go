@@ -42,8 +42,21 @@ type Capture struct {
 	Branch string
 	Files  map[string]File
 
-	rootIdentity os.FileInfo
-	seal         string
+	rootIdentity  os.FileInfo
+	seal          string
+	lockDirectory string
+}
+
+// CaptureV1Files selects V1 administration explicitly, including custom model
+// manifest layouts. It preserves CaptureFiles' existing branch/write policy.
+func CaptureV1Files(root string, selectedPaths []string) (*Capture, error) {
+	capture, err := CaptureFiles(root, selectedPaths)
+	if err != nil {
+		return nil, err
+	}
+	capture.lockDirectory = ".markitect/state"
+	capture.seal, err = guardedCaptureSeal(capture)
+	return capture, err
 }
 
 // Change is one selected-path mutation. Delete removes an
@@ -198,7 +211,9 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 		return result, err
 	}
 	var unlock func()
-	if _, selectedProjectManifest := capture.Files[".markitect/project.yaml"]; selectedProjectManifest {
+	if capture.lockDirectory != "" {
+		unlock, err = writer.lockWriterAt(capture.lockDirectory, "write.lock")
+	} else if _, selectedProjectManifest := capture.Files[".markitect/project.yaml"]; selectedProjectManifest {
 		// Initialization captures the still-missing manifest, so select the
 		// project lock explicitly before its existence can drive LockWriter.
 		unlock, err = writer.lockWriterAt(".markitect", "write.lock")
@@ -497,12 +512,13 @@ func cloneGuardedWriteFiles(files map[string]File) map[string]File {
 
 func guardedCaptureSeal(capture *Capture) (string, error) {
 	data, err := json.Marshal(struct {
-		Root     string
-		Identity source.GitIdentity
-		Head     string
-		Branch   string
-		Files    map[string]File
-	}{capture.Root, capture.Identity, capture.Head, capture.Branch, capture.Files})
+		Root          string
+		Identity      source.GitIdentity
+		Head          string
+		Branch        string
+		Files         map[string]File
+		LockDirectory string
+	}{capture.Root, capture.Identity, capture.Head, capture.Branch, capture.Files, capture.lockDirectory})
 	if err != nil {
 		return "", err
 	}

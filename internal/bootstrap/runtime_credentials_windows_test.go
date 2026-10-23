@@ -47,3 +47,18 @@ func TestRuntimeCredentialRefusesWindowsJunctionAndAliases(t *testing.T) {
 		t.Fatal("inexact native case alias was admitted")
 	}
 }
+
+func TestStateDestinationRefusesOutsideJunctionResolvingIntoProduct(t *testing.T) {
+	repository := testkit.TempDir(t)
+	outside := testkit.TempDir(t)
+	junction := filepath.Join(outside, "into-product")
+	if out, err := exec.Command("cmd", "/c", "mklink", "/J", junction, repository).CombinedOutput(); err != nil {
+		t.Fatalf("create fixture junction: %v: %s", err, out)
+	}
+	if err := safeStateDestination(repository, filepath.Join(junction, "new-state")); err == nil {
+		t.Fatal("outside state alias resolved into product")
+	}
+	if _, err := os.Stat(filepath.Join(repository, "new-state")); !os.IsNotExist(err) {
+		t.Fatal("state created through junction", err)
+	}
+}

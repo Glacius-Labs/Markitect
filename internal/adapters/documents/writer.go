@@ -59,7 +59,7 @@ func (w Writer) Write(ctx context.Context, repository string, expected modeldocs
 	if err := ctx.Err(); err != nil {
 		return modeldocs.WriteResult{}, err
 	}
-	capture, err := guardedwrite.CaptureFiles(repository, []string{expected.Path})
+	capture, err := guardedwrite.CaptureV1Files(repository, []string{expected.Path})
 	if err != nil {
 		return modeldocs.WriteResult{}, err
 	}

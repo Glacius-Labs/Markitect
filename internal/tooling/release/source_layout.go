@@ -40,6 +40,7 @@ var sourceRoots = []string{
 	"internal/harness",
 	"internal/adapters/runstore",
 	"internal/apply",
+	"internal/workflow",
 	"internal/modeldocs",
 	"internal/buildinfo",
 	"internal/agentd",

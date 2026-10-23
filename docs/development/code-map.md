@@ -22,7 +22,8 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-project` | Checked structural input and immutable model-derived context. | `apply-project` | 1 |
 | `runtime-config` | Closed static native and check profile metadata. | `runtime-config` | 1 |
 | `native-harness` | Model-derived instructions and tools for concrete native Sessions. | `native-harness` | 1 |
-| `apply-usecase` | Product workflow composition; unavailable at the S2 source boundary. | `apply-usecase` | 1 |
+| `apply-usecase` | Checked capture, closed workflow and stored-candidate publication. | `apply-usecase` | 1 |
+| `apply-workflow` | Direct sequence of fully closed Runs using one shared allowance. | `apply-workflow` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
 | `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 8 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
@@ -88,7 +89,13 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/apply` | Explicit unavailable Apply boundary until S3 workflow composition. | [docs/development/modules.md](modules.md) |
+| `internal/apply` | Checked capture, closed workflow and stored-candidate publication. | [docs/development/modules.md](modules.md) |
+
+## Workflow
+
+| Package | Purpose | Owning document |
+|---|---|---|
+| `internal/workflow` | Direct Assessment, Implement and Verify sequence over fully closed Runs. | [internal/apply/README.md](../../internal/apply/README.md) |
 
 ## Model view
 

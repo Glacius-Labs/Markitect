@@ -13,8 +13,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/documents"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
-	"github.com/Glacius-Labs/Markitect/internal/apply"
-	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/modeldocs"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 )
@@ -34,8 +32,6 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 	views := modeldocs.New(models, preparation, documents.Writer{})
 	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(images), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
-	execution := func(context.Context, cli.ApplyRequest) (cli.ApplyReport, error) {
-		return cli.ApplyReport{Status: model.NotCompleted}, apply.ErrUnavailable
-	}
+	execution := applyExecution(preparation, repository, agents, checker)
 	return cli.New(preparation, agents, checker, repository, views, execution).Run(ctx, args, stdout, stderr)
 }

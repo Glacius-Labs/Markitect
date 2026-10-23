@@ -1,6 +1,6 @@
 <##
 .SYNOPSIS
-Build and run one fresh Library r2 Apply through the product command.
+Build and run one fresh canonical Library M1 Apply through the product command.
 .EXAMPLE
 ./scripts/run-library-apply.ps1 -CredentialPath 'C:\private\codex-auth.json'
 ##>
@@ -8,9 +8,9 @@ param(
     [Parameter(Mandatory = $true)][string]$CredentialPath,
     [string]$RunName = '',
     [string]$OutputRoot = (Join-Path ([Environment]::GetFolderPath('MyDocuments')) 'Codex\Markitect-Library-Runs'),
-    [int]$MaxMessages = 40,
+    [int]$MaxMessages = 128,
     [int]$Minutes = 45,
-    [int]$MessageTimeoutSeconds = 120
+    [int]$MessageTimeoutSeconds = 600
 )
 
 $ErrorActionPreference = 'Stop'
@@ -105,8 +105,41 @@ try {
     if ($records.agentd -ne $mainHead -or $records.codexSchema -notmatch '^sha256:[0-9a-f]{64}$') { throw 'Runtime build metadata does not match Main.' }
 
     New-Item -ItemType Directory -Path $fixture -ErrorAction Stop | Out-Null
-    Copy-Item -LiteralPath (Join-Path $source 'experiments\test-projects\library-r2\project\.markitect') -Destination $fixture -Recurse
-    Invoke-NativeChecked 'fixture init' { & $git -C $fixture init --initial-branch=dev/library-r2 }
+    $control = Join-Path $fixture '.markitect'
+    New-Item -ItemType Directory -Path $control -ErrorAction Stop | Out-Null
+    $canonical = Join-Path $source 'docs\design\canonical-model\library-example\m1'
+    foreach ($file in @('model.yaml', 'model-lock.yaml')) {
+        Copy-Item -LiteralPath (Join-Path $canonical $file) -Destination (Join-Path $control $file)
+    }
+    Copy-Item -LiteralPath (Join-Path $canonical 'model') -Destination $control -Recurse
+    $dependencies = Join-Path $control 'dependencies'
+    New-Item -ItemType Directory -Path $dependencies -ErrorAction Stop | Out-Null
+    Copy-Item -LiteralPath (Join-Path $source 'docs\design\canonical-model\library-example\vocabulary') -Destination (Join-Path $dependencies 'software') -Recurse
+    Copy-Item -LiteralPath (Join-Path $source 'docs\design\canonical-model\minimal-language\exchange-example\dependencies\core') -Destination (Join-Path $dependencies 'core') -Recurse
+    # Only execution controls are authored here. Canonical M1 bytes stay exact;
+    # hidden oracle expectations remain outside every Manager input.
+    $execution = @"
+apiVersion: markitect.execution/v2
+ownership:
+  - {path: ./, owner: .}
+  - {path: realization/catalog/, owner: catalog}
+  - {path: realization/lending/, owner: lending}
+  - {path: realization/lending/reminders/, owner: lending/reminders}
+  - {path: realization/application/, owner: library}
+  - {path: realization/members/, owner: members}
+  - {path: realization/cmd/library/, owner: library}
+checks:
+  - id: project-tests
+    profile: library-tests
+    directory: realization
+    args: [test, ./...]
+    requiredBy: library/callable-interface
+    timeout: 2m
+"@
+    [IO.File]::WriteAllText((Join-Path $control 'execution.yaml'), $execution + "`n", [Text.UTF8Encoding]::new($false))
+    New-Item -ItemType Directory -Path (Join-Path $control 'registry') -ErrorAction Stop | Out-Null
+    [IO.File]::WriteAllText((Join-Path $control 'registry\registry.yaml'), "apiVersion: markitect.registry/v1`nartifacts: []`n", [Text.UTF8Encoding]::new($false))
+    Invoke-NativeChecked 'fixture init' { & $git -C $fixture init --initial-branch=dev/library-m1 }
     Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local user.name 'Markitect Library Fixture' }
     Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local user.email 'fixture@markitect.invalid' }
     Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local author.name 'Markitect Library Fixture' }
@@ -114,11 +147,11 @@ try {
     Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local committer.name 'Markitect Library Fixture' }
     Invoke-NativeChecked 'fixture identity' { & $git -C $fixture config --local committer.email 'fixture@markitect.invalid' }
     Invoke-NativeChecked 'fixture add' { & $git -C $fixture add --all }
-    Invoke-NativeChecked 'fixture commit' { & $git -C $fixture commit -m 'Library r2 requirement baseline' }
+    Invoke-NativeChecked 'fixture commit' { & $git -C $fixture commit -m 'Canonical Library M1 requirement baseline' }
     $fixtureHead = (& $git -C $fixture rev-parse HEAD).Trim()
     $fixtureCheck = Join-Path $runDir 'fixture-check.json'
     & $binary check --repo $fixture --model .markitect/model.yaml --dependency .markitect/dependencies/software/model.yaml --dependency .markitect/dependencies/core/model.yaml --revision HEAD 1> $fixtureCheck
-    if ($LASTEXITCODE -ne 0) { throw 'Fresh Library fixture failed structural preparation.' }
+    if ($LASTEXITCODE -ne 0) { throw 'Fresh canonical Library M1 fixture failed structural preparation.' }
     New-Item -ItemType Directory -Path $state -ErrorAction Stop | Out-Null
 
     $engineLiteral = $docker.Replace("'", "''")
@@ -133,11 +166,11 @@ agentProfiles:
       agentdVersion: $mainHead
       recordedCodexSchemaDigest: $($records.codexSchema)
       instructions: []
-      credentialRef: library-luna-runtime-login
+      credentialRef: library-account-login
       maxWireBytes: 1048576
       session:
         version: 1
-        model: gpt-6-luna
+        model: gpt-6-sol
         effort: high
         baseInstructions: ''
         developerInstructions: ''
@@ -158,6 +191,7 @@ checkProfiles:
       env:
         - GOTOOLCHAIN=local
         - GOCACHE=/home/agent/.cache/go-build
+        - GOTMPDIR=/home/agent
       limits:
         milliCPUs: 1000
         memoryBytes: 2147483648
@@ -168,13 +202,11 @@ checkProfiles:
     [IO.File]::WriteAllText($profilePath, $profile + "`n", [Text.UTF8Encoding]::new($false))
     $deadline = [DateTime]::UtcNow.AddMinutes($Minutes).ToString('yyyy-MM-ddTHH:mm:ssZ')
     $config = [ordered]@{
-        formatVersion = 2; repositoryIdentity = 'library-r2'; productBuild = $productBuild
-        ownerRequest = 'Implement the complete fixed Library r2 M1 model and its declared Go JSONL interface. Preserve stated behavior and state boundaries. Ask your parent only when genuine ambiguity blocks conforming work.'
+        formatVersion = 3; repositoryIdentity = 'small-library'; productBuild = $productBuild
         stateDirectory = $state; engineExecutable = $docker; deadline = $deadline
-        maxMessages = $MaxMessages; messageTimeoutSeconds = $MessageTimeoutSeconds
-        workspaceHelper = [ordered]@{ name = "markitect-$runName"; image = $baseImage; labels = @{ 'markitect.store' = $runName }; user = '1000:1000'; cpus = 1; memoryBytes = 1073741824; pids = 64; tmpBytes = 268435456; network = '' }
-        harvest = @{ maxEntries = 1000; maxBytes = 16777216 }
-        credentials = @{ 'library-luna-runtime-login' = @{ provider = 'codex-app-server'; mode = 'dedicated-runtime-login'; path = $CredentialPath } }
+        maxManagers = 32; maxMessages = $MaxMessages; messageTimeoutSeconds = $MessageTimeoutSeconds
+        cleanupTimeoutSeconds = 60; persistenceTimeoutSeconds = 30
+        credentials = @{ 'library-account-login' = @{ provider = 'codex-app-server'; mode = 'dedicated-runtime-login'; path = $CredentialPath } }
     }
     $configPath = Join-Path $runDir 'run.json'
     [IO.File]::WriteAllText($configPath, (($config | ConvertTo-Json -Depth 12) + "`n"), [Text.UTF8Encoding]::new($false))

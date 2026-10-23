@@ -55,12 +55,12 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 	if err != nil {
 		return runConfig{}, err
 	}
-	// deadline and workDeadline are optional limit fields. Every other key is required, and any
+	// Only workDeadline is optional. Every other key is required, and any
 	// further key is refused, ownerDecisions included: no preloaded owner decision
 	// supplies model intent to a Run.
 	required := []string{"formatVersion", "repositoryIdentity", "productBuild", "stateDirectory", "engineExecutable", "deadline", "maxManagers", "maxMessages", "messageTimeoutSeconds", "cleanupTimeoutSeconds", "persistenceTimeoutSeconds", "credentials"}
 	for key := range root {
-		if !slices.Contains(required, key) && key != "deadline" && key != "workDeadline" && key != "maxMessages" && key != "messageTimeoutSeconds" {
+		if !slices.Contains(required, key) && key != "workDeadline" {
 			return runConfig{}, errRunConfig
 		}
 	}

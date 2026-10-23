@@ -13,7 +13,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
-func TestExplicitAccountConfigurationExampleLoadsAndApplyRemainsUnavailable(t *testing.T) {
+func TestExplicitAccountConfigurationExampleLoadsAndInvalidPreflightStartsNothing(t *testing.T) {
 	data, err := os.ReadFile("../../examples/run.example.json")
 	if err != nil {
 		t.Fatal(err)
@@ -38,7 +38,7 @@ func TestExplicitAccountConfigurationExampleLoadsAndApplyRemainsUnavailable(t *t
 	calls := 0
 	code := run(context.Background(), []string{"apply", "--repo", dir, "--runtime-profile", filepath.Join(dir, "never-read-runtime.yaml"), "--run-config", config}, &out, &stderr, func(codexappserver.EngineConfig) (codexappserver.ImageReader, error) {
 		calls++
-		t.Fatal("unavailable Apply acquired runtime metadata")
+		t.Fatal("invalid Apply preflight acquired runtime metadata")
 		return nil, nil
 	})
 	var report map[string]any
@@ -49,6 +49,6 @@ func TestExplicitAccountConfigurationExampleLoadsAndApplyRemainsUnavailable(t *t
 		t.Fatalf("code=%d report=%v stderr=%s", code, report, stderr.String())
 	}
 	if _, err = os.Stat(state); !os.IsNotExist(err) {
-		t.Fatal("unavailable Apply created state", err)
+		t.Fatal("invalid Apply preflight created state", err)
 	}
 }

@@ -4,7 +4,7 @@ The repository uses one Go module. Packages are organized by concrete responsibi
 
 ## Go capability packages
 
-Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Project owns structural acquisition, complete accounting and static model-derived contexts. Run consumes Project and organization directly, retaining one complete hierarchy per mandate. `runtimeconfig` owns closed static native/check metadata. Bootstrap composes actual services; public Apply is unavailable until S3.
+Pure model and snapshot packages consume supplied bytes and values. Organization and realization use those pure values. Project owns structural acquisition, complete accounting and static model-derived contexts. Run consumes Project and organization directly, retaining one complete hierarchy per mandate. `runtimeconfig` owns closed static native/check metadata. Workflow selects complete fresh Assessment, Implement and Verify Runs. Apply owns preflight and stored-candidate publication after closure; Bootstrap composes the concrete native and Git/check/store adapters. Native Apply qualification and owner acceptance remain separate.
 
 Run owns Session, WorkspaceService, CandidateChecks and Records ports. The repository adapter implements real private Git copies and self-contained stored candidates. The check adapter binds declared checks to prepared pinned container profiles and disposable input/home copies. The file record adapter provides immutable terminal results and concurrent project Notes. The native harness and provider adapters remain governed by their separately reviewed source and bounded feasibility evidence.
 
