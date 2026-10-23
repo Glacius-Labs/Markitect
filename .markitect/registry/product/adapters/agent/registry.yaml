@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/adapters/codexappserver/assignment_review_transport_test.go"
+    form: test
+    realizes: [product/ports-and-adapters, product/organization/delegated-context]
+    why: "Encodes actual scheduler review messages with the Codex codec and reads back complete UTF-8 differences and JSON-escaped summaries within the native frame limit, without provider execution."
   - path: "internal/adapters/codexappserver/agents_tools_runtime_test.go"
     form: test
     realizes: [product/ports-and-adapters]
