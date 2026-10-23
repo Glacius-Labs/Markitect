@@ -1,5 +1,33 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/v1-source-implementation-approval-20261023.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records owner acceptance and bounded source implementation authority separately from native execution and release.
+  - path: "docs/development/v1-source-archive-20261023.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records verified pre-cutover source retention and exact restoration instructions before consumer retirement.
+  - path: "docs/concepts/sources/v1-scope-clarification-20261023.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the latest owner scope and planning-only counter-review instruction overriding conflicting v0.16 preservation requirements.
+  - path: "docs/concepts/sources/v1-target-architecture-20261023.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-accepted V1 target version 0.16 and D1-D9 as historical source, refined by the later owner scope clarification.
+  - path: "docs/development/v1-architecture-audit-20261023.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Binds the consolidated v0.17 counter-review and corrections to actual Main source and separates static and executed evidence.
+  - path: "docs/design/v1-execution-architecture.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Defines concrete V1 package responsibilities and minimal shared contracts before dependent implementation proceeds.
+  - path: "docs/development/v1-workstream-assignments.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Supplies bounded independent implementation dispatches with ownership dependencies acceptance tests and integration requirements.
   - path: "docs/validation/apply-assignments-luna-20261023.md"
     form: doc
     realizes: [documentation/current-guidance]
