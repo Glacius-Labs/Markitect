@@ -27,13 +27,6 @@ func assessSpec() run.PassSpec {
 	return run.PassSpec{Purpose: run.Assess, Mandate: assessMandate, Review: true, Assesses: true, Guidance: assessGuidance, Corrections: []run.Purpose{"model_error", "model_gap", "unclassified"}}
 }
 
-// extractAssessSpec is the Model assessment that begins an Extract.
-func extractAssessSpec() run.PassSpec {
-	spec := assessSpec()
-	spec.Mandate, spec.Guidance = extractAssessMandate, extractAssessGuidance
-	return spec
-}
-
 // assess runs a Model assessment Pass; a Pass that only fresh disputes keep
 // from being clean is repeated on the unchanged stand within the Pass budget,
 // as Verify is. It reports whether the assessment accepted and, when it

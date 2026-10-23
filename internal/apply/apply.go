@@ -218,7 +218,7 @@ func VerifyCaptured(ctx context.Context, req ApplyRequest) (ApplyResult, error) 
 }
 
 // compose runs the work Passes in order and then the review, as the shared
-// workflow of Apply and Extract. The open work findings after a work Pass
+// workflow of Apply. The open work findings after a work Pass
 // repeat it or restart the work at an earlier purpose they name; a later
 // purpose they name comes in order, so no forward Pass is skipped and no review
 // starts while a work finding is open. A review that needs correction
@@ -548,8 +548,7 @@ func (r ApplyRequest) now() time.Time {
 }
 
 // runPorts is what ending one run needs: the ports that hold its work volume
-// "<runID>-work", its evidence and its provider homes. The Apply request and
-// each phase of an Extract provide one.
+// "<runID>-work", its evidence and its provider homes. Apply supplies them.
 type runPorts struct {
 	runID      string
 	workspaces run.Workspaces

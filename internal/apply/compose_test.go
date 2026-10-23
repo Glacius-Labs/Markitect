@@ -116,10 +116,6 @@ func TestEarliestNamesTheFirstWorkPurposeInPassOrder(t *testing.T) {
 	}
 }
 
-// The shared review method and envelope serve two authorities: Apply derives
-// its expectations from the bound model, Extract from the fixed artifacts and
-// their documented intent, where the proposal is never evidence for itself
-// (carried over from draft PR #536 and adapted to the receipt contract).
 func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
 	if mandate := Direct.verify().Mandate; !strings.Contains(mandate, "against the bound model") || !strings.Contains(mandate, "check with existing: true") || !strings.Contains(mandate, "probes for material gaps") {
 		t.Fatalf("Apply review lacks its bound-model expectations or probes: %s", mandate)
@@ -132,12 +128,6 @@ func TestReviewExpectationsFollowTheWorkflowAuthority(t *testing.T) {
 		if !strings.Contains(mandate, "no implementation choice") || !strings.Contains(mandate, "stays yours to decide and document") || !strings.Contains(mandate, "report it to your parent as a model problem") ||
 			strings.Contains(mandate, "the user") || !strings.Contains(s.rootDuty(), "instead of letting a Manager pick a default") {
 			t.Fatalf("%s lets a Manager settle a public behavior the model leaves open", s)
-		}
-	}
-	for _, phase := range []string{ExtractStructurePhase, ExtractModelPhase} {
-		_, mandate, _, _ := ExtractPhaseTexts(phase)
-		if !strings.Contains(mandate, "fixed artifacts and their documented intent") || !strings.Contains(mandate, "never evidence for itself") || strings.Contains(mandate, "bound model") {
-			t.Fatalf("Extract %s has circular or Apply review authority: %s", phase, mandate)
 		}
 	}
 }

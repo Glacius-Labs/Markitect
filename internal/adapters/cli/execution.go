@@ -202,14 +202,15 @@ func RunOutcome(status model.Status) string {
 
 type ApplyFunc func(context.Context, ApplyRequest) (ApplyReport, error)
 
-func (c *Command) execution(ctx context.Context, verb string, args []string, stdout, stderr io.Writer, emit func(any) int) int {
+func (c *Command) applyVerb(ctx context.Context, args []string, stdout, stderr io.Writer, emit func(any) int) int {
+	const verb = "apply"
 	incomplete := func(reason string) int {
 		if emit(map[string]string{"operation": verb, "status": "not_completed", "reason": reason}) != 0 {
 			return 3
 		}
 		return 3
 	}
-	if verb == "apply" && c.apply == nil || verb == "extract" && c.extract == nil {
+	if c.apply == nil {
 		return incomplete("Execution is unavailable because its concrete execution/publication ports are not configured.")
 	}
 	flags := flag.NewFlagSet(verb, flag.ContinueOnError)
@@ -218,11 +219,7 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 	var repo, manifest, runtimeProfile string
 	var dependencies manifestList
 	flags.StringVar(&repo, "repo", ".", "repository root")
-	if verb == "apply" {
-		flags.StringVar(&manifest, "model", ".markitect/model.yaml", "explicit model.yaml")
-	} else {
-		manifest = extractManifest
-	}
+	flags.StringVar(&manifest, "model", ".markitect/model.yaml", "explicit model.yaml")
 	flags.StringVar(&runtimeProfile, "runtime-profile", "", "explicit absolute Runtime profile document")
 	flags.Var(&dependencies, "dependency", "explicit dependency model.yaml; repeat")
 	if err := flags.Parse(args); err != nil {
@@ -264,19 +261,6 @@ func (c *Command) execution(ctx context.Context, verb string, args []string, std
 		return 2
 	}
 	selection.RuntimeProfiles = []apply.SourceLocation{{Boundary: filepath.Dir(runtimeProfile), Path: path}}
-	if verb == "extract" {
-		report, err := c.extract(ctx, ExtractRequest{Selection: selection, RunConfig: *config})
-		report.FormatVersion, report.Operation = 1, verb
-		if err != nil {
-			report.Error = err.Error()
-		}
-		if emit(report) != 0 {
-			return 3
-		}
-		// The account is the last thing the command writes to stderr.
-		io.WriteString(stderr, RenderExtractAccount(report))
-		return exitStatus(report.Status, err)
-	}
 	report, err := c.apply(ctx, ApplyRequest{Selection: selection, RunConfig: *config, Build: buildinfo.Build()})
 	report.FormatVersion, report.Operation = 1, verb
 	if err != nil {

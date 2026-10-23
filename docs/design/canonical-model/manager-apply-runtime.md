@@ -1,5 +1,7 @@
 # Implemented runtime contract of Apply
 
+**Historical source guide after V1 retirement, 23 October 2026.** Extract is removed from active source. The descriptions below retain their original source scope; the [current plan](../../implementation-plan.md) and [V1 architecture](../v1-execution-architecture.md) own replacement work.
+
 **Target/source boundary, 22 October 2026:** the owner accepted [Agent workspaces and reviewed handoffs](manager-apply-workflow.md) and its [documentation-only rebuild plan](../../implementation-plan.md#apply-rebuild-plan). The target uses one container/working copy per Agent assignment, reviewed Git handoffs and no domain Turns or required per-write enforcement. The executable instructions below describe the existing Pass implementation until migrated; they do not make the target available.
 
 **Accepted target update, 22 October 2026:** the owner adopted the [proportionate-process changes](manager-apply-workflow.md#proportionate-process-review-22-october-2026), including removal of universal basis approval, separate Verify preapproval and the global review barrier. The implementation descriptions below retain their source-bound status until migrated; they are not reasons to preserve superseded target rules. Adoption alone does not establish runtime completion or benefit.

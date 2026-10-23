@@ -3,6 +3,7 @@ package apply_test
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"os"
 	"path/filepath"
 	"regexp"
@@ -14,7 +15,10 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
+
+var decideRE = regexp.MustCompile(`- decide (P\d+),`)
 
 // assessmentReference is an expected copy only; execution uses the product's
 // built-in assessSpec through AssessCaptured, never this reference as input.
@@ -322,5 +326,79 @@ func TestAssessCapturedReassessesADisputedFinding(t *testing.T) {
 	}
 	if len(outcome.Findings) != 1 || !outcome.Findings[0].Closed || outcome.Findings[0].ClosedAs != run.ClosedDisproved || len(outcome.Findings[0].Disputes) != 1 {
 		t.Fatalf("findings %+v", outcome.Findings)
+	}
+}
+
+// memoryWorkspaces keeps volumes in memory; Agents write into them by volume name.
+type memoryWorkspaces struct {
+	mu     sync.Mutex
+	files  map[string]map[string]string // volume -> path -> content
+	ids    map[run.WorkspaceID]string
+	closed []run.WorkspaceID
+	refuse run.WorkspaceID // Materialize fails for this volume
+}
+
+func newMemoryWorkspaces() *memoryWorkspaces {
+	return &memoryWorkspaces{files: map[string]map[string]string{}, ids: map[run.WorkspaceID]string{}}
+}
+
+func (w *memoryWorkspaces) Materialize(_ context.Context, spec run.WorkspaceSpec) (run.WorkspaceObservation, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	if spec.ID == w.refuse {
+		return run.WorkspaceObservation{}, errors.New("no space left on device")
+	}
+	volume := "vol-" + string(spec.ID)
+	w.files[volume], w.ids[spec.ID] = map[string]string{}, volume
+	for _, e := range spec.Tree.Entries() {
+		w.files[volume][e.Path().String()] = string(e.Bytes())
+	}
+	return run.WorkspaceObservation{ID: spec.ID, Volume: volume, Tree: spec.Tree.Digest()}, nil
+}
+
+func (w *memoryWorkspaces) tree(id run.WorkspaceID) (snapshot.Tree, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	volume, ok := w.ids[id]
+	if !ok {
+		return snapshot.Tree{}, errors.New("no such volume")
+	}
+	var entries []snapshot.Entry
+	for name, content := range w.files[volume] {
+		p, err := snapshot.NewPath(name)
+		if err != nil {
+			return snapshot.Tree{}, err
+		}
+		e, err := snapshot.NewEntry(p, snapshot.Regular, []byte(content))
+		if err != nil {
+			return snapshot.Tree{}, err
+		}
+		entries = append(entries, e)
+	}
+	return snapshot.NewTree(entries)
+}
+
+func (w *memoryWorkspaces) Harvest(_ context.Context, r run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	tree, err := w.tree(r.ID)
+	return run.WorkspaceHarvest{ID: r.ID, Tree: tree}, err
+}
+
+func (w *memoryWorkspaces) Peek(ctx context.Context, r run.HarvestRequest) (run.WorkspaceHarvest, error) {
+	return w.Harvest(ctx, r)
+}
+
+func (w *memoryWorkspaces) Close(_ context.Context, id run.WorkspaceID) (run.WorkspaceObservation, error) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	w.closed = append(w.closed, id)
+	delete(w.ids, id)
+	return run.WorkspaceObservation{ID: id, Closed: true}, nil
+}
+
+func (w *memoryWorkspaces) write(volume string, files map[string]string) {
+	w.mu.Lock()
+	defer w.mu.Unlock()
+	for name, content := range files {
+		w.files[volume][name] = content
 	}
 }
