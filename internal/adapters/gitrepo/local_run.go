@@ -31,6 +31,7 @@ type localService struct {
 	root, seed string
 	mu         sync.Mutex
 	copies     []*localCopy
+	inputs     retainedInputs
 }
 type localCopy struct {
 	service  *localService
@@ -72,12 +73,18 @@ func localCommand(ctx context.Context, dir string, input []byte, args ...string)
 	}
 	return strings.TrimSpace(out.String()), nil
 }
+
+type gitCommand func(context.Context, string, []byte, ...string) (string, error)
+
 func object(ctx context.Context, dir, rev string) (run.Commit, error) {
-	id, err := localCommand(ctx, dir, nil, "rev-parse", "--verify", "--end-of-options", rev+"^{commit}")
+	return objectUsing(ctx, dir, rev, localCommand)
+}
+func objectUsing(ctx context.Context, dir, rev string, command gitCommand) (run.Commit, error) {
+	id, err := command(ctx, dir, nil, "rev-parse", "--verify", "--end-of-options", rev+"^{commit}")
 	if err != nil {
 		return run.Commit{}, err
 	}
-	tree, err := localCommand(ctx, dir, nil, "rev-parse", "--verify", id+"^{tree}")
+	tree, err := command(ctx, dir, nil, "rev-parse", "--verify", id+"^{tree}")
 	return run.Commit{ID: id, Tree: tree}, err
 }
 func (g *LocalGit) candidatePath(ref project.CandidateRef) (string, error) {
@@ -97,11 +104,7 @@ func (g *LocalGit) Capture(ctx context.Context, id string, p project.Prepared) (
 		return project.CandidateRef{}, err
 	}
 	raw := p.Attempt().Model().Inputs().Raw
-	for _, m := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
-		if m.RepositoryArea.String() == "" {
-			return project.CandidateRef{}, fmt.Errorf("local Run source must be repository-bound")
-		}
-	}
+
 	seed, err := os.MkdirTemp(g.TempRoot, "markitect-input-")
 	if err != nil {
 		return project.CandidateRef{}, err
@@ -145,6 +148,9 @@ func (g *LocalGit) Capture(ctx context.Context, id string, p project.Prepared) (
 		}
 	}
 	for _, m := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
+		if m.RepositoryArea.String() == "" {
+			continue
+		}
 		for _, e := range m.Source.Entries {
 			if e.Kind == model.Directory {
 				base := m.RepositoryArea.String()
@@ -157,7 +163,7 @@ func (g *LocalGit) Capture(ctx context.Context, id string, p project.Prepared) (
 			}
 		}
 	}
-	service := &localService{adapter: g, request: run.Request{Prepared: p}, root: filepath.Dir(seed)}
+	service := &localService{adapter: g, request: run.Request{Prepared: p}, root: filepath.Dir(seed), inputs: retainedFrom(p)}
 	copy := &localCopy{service: service, location: seed}
 	fixed, err := copy.Snapshot(ctx)
 	if err != nil {
@@ -173,49 +179,59 @@ func (g *LocalGit) Capture(ctx context.Context, id string, p project.Prepared) (
 	if attempt.Model().Inputs().Raw.Census.Digest() != raw.Census.Digest() {
 		return project.CandidateRef{}, fmt.Errorf("initial candidate does not preserve complete checked Census")
 	}
-	return g.retain(ctx, id, p.Binding(), seed, fixed)
+	return g.retain(ctx, id, p, seed, fixed)
 
 }
-func (g *LocalGit) retain(ctx context.Context, id, binding, repo string, c run.Commit) (project.CandidateRef, error) {
-	key, err := token()
-	if err != nil {
-		return project.CandidateRef{}, err
-	}
+func (g *LocalGit) retain(ctx context.Context, id string, p project.Prepared, repo string, c run.Commit) (project.CandidateRef, error) {
 	format, err := localCommand(ctx, repo, nil, "rev-parse", "--show-object-format")
 	if err != nil {
 		return project.CandidateRef{}, err
 	}
-	ref := project.CandidateRef{Project: id, Key: key, Format: format, Commit: c.ID, Tree: c.Tree, Binding: binding}
-	path, err := g.candidatePath(ref)
+	return g.storeBundle(ctx, id, p, format, c, func(ctx context.Context, key, bundle string) error {
+		export, err := os.MkdirTemp(g.TempRoot, "markitect-export-")
+		if err != nil {
+			return err
+		}
+		defer os.RemoveAll(export)
+		if _, err = localCommand(ctx, export, nil, "init", "--quiet", "--object-format="+format); err != nil {
+			return err
+		}
+		name := "refs/markitect/retain/" + key
+		if _, err = localCommand(ctx, export, nil, "fetch", "--quiet", "--no-tags", repo, c.ID+":"+name); err != nil {
+			return err
+		}
+		_, err = localCommand(ctx, export, nil, "bundle", "create", bundle, name)
+		return err
+	})
+}
+func (g *LocalGit) storeBundle(ctx context.Context, id string, p project.Prepared, format string, c run.Commit, write func(context.Context, string, string) error) (project.CandidateRef, error) {
+	key, err := token()
+	if err != nil {
+		return project.CandidateRef{}, err
+	}
+	ref := project.CandidateRef{Project: id, Key: key, Format: format, Commit: c.ID, Tree: c.Tree, Binding: p.Binding()}
+	destination, err := g.candidatePath(ref)
 	if err != nil {
 		return ref, err
 	}
-	if err = os.MkdirAll(filepath.Dir(path), 0700); err != nil {
+	if err = os.MkdirAll(filepath.Dir(destination), 0700); err != nil {
 		return ref, err
 	}
-	pending, err := os.MkdirTemp(filepath.Dir(path), ".pending-")
+	pending, err := os.MkdirTemp(filepath.Dir(destination), ".pending-")
 	if err != nil {
 		return ref, err
 	}
 	defer os.RemoveAll(pending)
-	export := filepath.Join(pending, "export")
-	if err = os.Mkdir(export, 0700); err != nil {
+	if err = write(ctx, key, filepath.Join(pending, "candidate.bundle")); err != nil {
 		return ref, err
 	}
-	if _, err = localCommand(ctx, export, nil, "init", "--quiet", "--object-format="+format); err != nil {
+	inputsData, err := json.Marshal(retainedFrom(p))
+	if err != nil {
 		return ref, err
 	}
-	name := "refs/markitect/retain/" + key
-	if _, err = localCommand(ctx, export, nil, "fetch", "--quiet", "--no-tags", repo, c.ID+":"+name); err != nil {
+	if err = os.WriteFile(filepath.Join(pending, "inputs.json"), inputsData, 0600); err != nil {
 		return ref, err
 	}
-	if _, err = localCommand(ctx, export, nil, "bundle", "create", filepath.Join(pending, "candidate.bundle"), name); err != nil {
-		return ref, err
-	}
-	if err = os.RemoveAll(export); err != nil {
-		return ref, err
-	}
-
 	data, err := json.Marshal(ref)
 	if err == nil {
 		err = os.WriteFile(filepath.Join(pending, "candidate.json"), data, 0600)
@@ -223,7 +239,7 @@ func (g *LocalGit) retain(ctx context.Context, id, binding, repo string, c run.C
 	if err != nil {
 		return ref, err
 	}
-	for _, n := range []string{"candidate.bundle", "candidate.json"} {
+	for _, n := range []string{"candidate.bundle", "candidate.json", "inputs.json"} {
 		f, err := os.OpenFile(filepath.Join(pending, n), os.O_RDWR, 0)
 		if err != nil {
 			return ref, err
@@ -242,16 +258,36 @@ func (g *LocalGit) retain(ctx context.Context, id, binding, repo string, c run.C
 		return ref, err
 	}
 	defer os.RemoveAll(probe)
-	if err = g.reopen(ctx, ref, pending, probe); err != nil {
+	if err = verifyBundle(ctx, ref, pending, probe); err != nil {
 		return ref, err
 	}
 	if err = ctx.Err(); err != nil {
 		return ref, err
 	}
-	if err = os.Rename(pending, path); err != nil {
+	if err = os.Rename(pending, destination); err != nil {
 		return ref, err
 	}
 	return ref, nil
+}
+
+// Verify Git objects in an independent bare repository. Host checkout modes
+// are not an oracle for Linux working-copy permissions.
+func verifyBundle(ctx context.Context, ref project.CandidateRef, stored, probe string) error {
+	if ref.Format != "sha1" && ref.Format != "sha256" {
+		return fmt.Errorf("unsupported Git object format")
+	}
+	if _, err := localCommand(ctx, probe, nil, "init", "--bare", "--quiet", "--object-format="+ref.Format); err != nil {
+		return err
+	}
+	if _, err := localCommand(ctx, probe, nil, "fetch", "--quiet", "--no-tags", filepath.Join(stored, "candidate.bundle"), "refs/markitect/retain/"+ref.Key+":refs/markitect/verify"); err != nil {
+		return err
+	}
+	actual, err := object(ctx, probe, ref.Commit)
+	if err != nil || actual.ID != ref.Commit || actual.Tree != ref.Tree {
+		return fmt.Errorf("independent bare candidate identity mismatch")
+	}
+	_, err = localCommand(ctx, probe, nil, "fsck", "--full", "--no-reflogs")
+	return err
 }
 
 // Reopen uses only durable state. The destination must be empty and independent.
@@ -315,11 +351,15 @@ func restoreDirectories(ctx context.Context, dir, commit string) error {
 	return nil
 }
 func (g *LocalGit) Open(ctx context.Context, r run.Request) (run.WorkspaceService, error) {
+	inputs, err := g.retained(ctx, r.Input, r.Prepared)
+	if err != nil {
+		return nil, err
+	}
 	root, err := os.MkdirTemp(g.TempRoot, "markitect-run-")
 	if err != nil {
 		return nil, err
 	}
-	s := &localService{adapter: g, request: r, root: root, seed: filepath.Join(root, "seed")}
+	s := &localService{adapter: g, request: r, root: root, seed: filepath.Join(root, "seed"), inputs: inputs}
 	if err = os.Mkdir(s.seed, 0700); err == nil {
 		err = g.Reopen(ctx, r.Input, s.seed)
 	}
@@ -363,13 +403,7 @@ func (s *localService) Copy(ctx context.Context, manager string, base run.Commit
 }
 func (c *localCopy) Location() run.CopyLocation { return run.CopyLocation{Directory: c.location} }
 func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
-	if _, err := localCommand(ctx, c.location, nil, "add", "--force", "--all", "--", "."); err != nil {
-		return run.Commit{}, err
-	}
-	tree, err := localCommand(ctx, c.location, nil, "write-tree")
-	if err != nil {
-		return run.Commit{}, err
-	}
+	var err error
 	// Git's index omits empty directories. Canonical model Package directories
 	// are intent, so encode the actual complete inventory as real Git trees.
 	raw := c.service.request.Prepared.Attempt().Model().Inputs().Raw
@@ -407,22 +441,32 @@ func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 			return run.Commit{}, err
 		}
 	}
-	tree, err = withDirectories(ctx, c.location, tree, dirs)
+	return snapshotGit(ctx, c.location, localCommand, dirs)
+}
+func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []string) (run.Commit, error) {
+	if _, err := command(ctx, dir, nil, "add", "--force", "--all", "--", "."); err != nil {
+		return run.Commit{}, err
+	}
+	tree, err := command(ctx, dir, nil, "write-tree")
 	if err != nil {
 		return run.Commit{}, err
 	}
-	before, err := object(ctx, c.location, "HEAD")
+	tree, err = withDirectoriesUsing(ctx, dir, tree, dirs, command)
+	if err != nil {
+		return run.Commit{}, err
+	}
+	before, err := objectUsing(ctx, dir, "HEAD", command)
 	if err != nil {
 		return run.Commit{}, err
 	}
 	if before.Tree == tree {
 		return before, nil
 	}
-	id, err := localCommand(ctx, c.location, []byte("Markitect fixed Manager candidate\n"), "commit-tree", tree, "-p", before.ID)
+	id, err := command(ctx, dir, []byte("Markitect fixed Manager candidate\n"), "commit-tree", tree, "-p", before.ID)
 	if err != nil {
 		return run.Commit{}, err
 	}
-	if _, err = localCommand(ctx, c.location, nil, "reset", "--mixed", id); err != nil {
+	if _, err = command(ctx, dir, nil, "reset", "--mixed", id); err != nil {
 		return run.Commit{}, err
 	}
 	return run.Commit{ID: id, Tree: tree}, nil
@@ -430,6 +474,9 @@ func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 
 // Build only missing tree nodes; file entries remain exact Git index objects.
 func withDirectories(ctx context.Context, repo, tree string, dirs []string) (string, error) {
+	return withDirectoriesUsing(ctx, repo, tree, dirs, localCommand)
+}
+func withDirectoriesUsing(ctx context.Context, repo, tree string, dirs []string, command gitCommand) (string, error) {
 	children := map[string][]string{}
 	for _, dir := range dirs {
 		head, tail, has := strings.Cut(dir, "/")
@@ -442,7 +489,7 @@ func withDirectories(ctx context.Context, repo, tree string, dirs []string) (str
 	if len(children) == 0 {
 		return tree, nil
 	}
-	data, err := localCommand(ctx, repo, nil, "ls-tree", "-z", tree)
+	data, err := command(ctx, repo, nil, "ls-tree", "-z", tree)
 	if err != nil {
 		return "", err
 	}
@@ -467,12 +514,12 @@ func withDirectories(ctx context.Context, repo, tree string, dirs []string) (str
 			}
 			child = fields[2]
 		} else {
-			child, err = localCommand(ctx, repo, []byte{}, "mktree")
+			child, err = command(ctx, repo, []byte{}, "mktree")
 			if err != nil {
 				return "", err
 			}
 		}
-		child, err = withDirectories(ctx, repo, child, nested)
+		child, err = withDirectoriesUsing(ctx, repo, child, nested, command)
 		if err != nil {
 			return "", err
 		}
@@ -488,21 +535,24 @@ func withDirectories(ctx context.Context, repo, tree string, dirs []string) (str
 		b.WriteString(entries[n])
 		b.WriteByte(0)
 	}
-	return localCommand(ctx, repo, []byte(b.String()), "mktree", "-z")
+	return command(ctx, repo, []byte(b.String()), "mktree", "-z")
 }
 func (c *localCopy) Inspect(ctx context.Context, fixed run.Commit) (project.PreviewPreparationAttempt, error) {
 	actual, err := object(ctx, c.location, fixed.ID)
 	if err != nil || actual != fixed {
 		return project.PreviewPreparationAttempt{}, fmt.Errorf("fixed candidate identity unavailable")
 	}
-	selection := c.service.request.Prepared.Selection()
+	return inspectCandidate(ctx, c.service.request.Prepared, c.location, fixed, c.service.inputs)
+}
+func inspectCandidate(ctx context.Context, p project.Prepared, directory string, fixed run.Commit, retained retainedInputs) (project.PreviewPreparationAttempt, error) {
+	selection := p.Selection()
 	original := selection.Repository
-	selection.Repository = c.location
+	selection.Repository = directory
 	remap := func(boundary string) string {
 		if filepath.IsAbs(boundary) {
 			relative, err := filepath.Rel(original, boundary)
 			if err == nil && relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
-				return filepath.Join(c.location, relative)
+				return filepath.Join(directory, relative)
 			}
 		}
 		return boundary
@@ -524,7 +574,8 @@ func (c *localCopy) Inspect(ctx context.Context, fixed run.Commit) (project.Prev
 	if err != nil {
 		return project.PreviewPreparationAttempt{}, err
 	}
-	prepared, err := project.NewPreparationService(project.NewModelService(repo, repo)).Preview(ctx, project.PreviewRequest{Selection: selection, Revision: fixed.ID}, c.service.request.Prepared.Attempt().Model().RequestedLimits())
+	repo.retained = retained
+	prepared, err := project.NewPreparationService(project.NewModelService(repo, repo)).Preview(ctx, project.PreviewRequest{Selection: selection, Revision: fixed.ID}, p.Attempt().Model().RequestedLimits())
 	attempts := prepared.Attempts()
 	if len(attempts) == 0 {
 		return project.PreviewPreparationAttempt{}, err
@@ -558,7 +609,7 @@ func (s *localService) Retain(ctx context.Context, copy run.Copy, commit run.Com
 	if err != nil || actual != commit {
 		return project.CandidateRef{}, fmt.Errorf("candidate identity unavailable")
 	}
-	return s.adapter.retain(ctx, s.request.Project, s.request.Prepared.Binding(), c.location, commit)
+	return s.adapter.retain(ctx, s.request.Project, s.request.Prepared, c.location, commit)
 }
 func removePrivate(ctx context.Context, parent, path string) error {
 	if err := ctx.Err(); err != nil {

@@ -74,7 +74,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/checks", "internal/agentd/frame", false},
 		{"internal/adapters/checks", "internal/tooling/source", false},
 		{"internal/adapters/gitrepo", "internal/run", true},
-		{"internal/adapters/gitrepo", "internal/adapters/container", false},
+		{"internal/adapters/gitrepo", "internal/adapters/container", true},
 		{"internal/adapters/gitrepo", "internal/agentd/frame", false},
 		{"internal/adapters/gitrepo", "internal/adapters/checks", false},
 		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", false},

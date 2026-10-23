@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"maps"
 
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
@@ -14,14 +15,15 @@ import (
 // and the exact fixed Git candidate. Every command receives its own copy/home.
 type CandidateRunner struct {
 	profiles map[string]ContainerProfile
-	runner   run.Checks
+	runtime  CommandRuntime
+	labels   map[string]string
 }
 
-func NewCandidateRunner(prepared []runtimeconfig.PreparedProfile, runner run.Checks) (*CandidateRunner, error) {
-	if runner == nil {
+func NewCandidateRunner(prepared []runtimeconfig.PreparedProfile, runtime CommandRuntime, labels map[string]string) (*CandidateRunner, error) {
+	if runtime == nil {
 		return nil, fmt.Errorf("missing concrete check runner")
 	}
-	c := &CandidateRunner{profiles: map[string]ContainerProfile{}, runner: runner}
+	c := &CandidateRunner{profiles: map[string]ContainerProfile{}, runtime: runtime, labels: maps.Clone(labels)}
 	for _, p := range prepared {
 		if p.Input().Namespace() != "checkProfiles" {
 			continue
@@ -61,17 +63,24 @@ func (c *CandidateRunner) Check(ctx context.Context, declared []project.Executio
 		if err != nil {
 			return observations, err
 		}
-		receipt, commandErr := c.runner.Run(ctx, req)
+		runner, err := NewRunnerWithRuntime(c.runtime, &copyMaterializer{source: copy, copies: map[CopyID]run.DisposableCopy{}}, c.labels)
+		if err != nil {
+			return observations, err
+		}
+		receipt, commandErr := runner.Run(ctx, req)
 		o := run.CheckObservation{ID: d.ID.Value, Commit: fixed.ID, Receipt: receipt}
 		if commandErr != nil {
 			o.Error = commandErr.Error()
 		}
 		observations = append(observations, o)
 		if commandErr != nil {
+			if receipt.Uncertain || receipt.TimedOut {
+				return observations, errors.Join(run.ErrObservationIncomplete, commandErr)
+			}
 			return observations, commandErr
 		}
 		if receipt.ID != req.ID || receipt.Tree != req.Tree.Digest() || receipt.ImageID != req.ImageID || !receipt.Started || !receipt.Exited || receipt.Uncertain || receipt.TimedOut || !receipt.CopiesClosed {
-			return observations, errors.New("check physical observations do not establish the fixed request")
+			return observations, fmt.Errorf("%w: check physical observations do not establish the fixed request", run.ErrObservationIncomplete)
 		}
 	}
 	return observations, nil

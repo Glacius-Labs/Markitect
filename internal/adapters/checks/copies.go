@@ -23,19 +23,16 @@ type CopySpec struct {
 type CopyObservation struct {
 	ID                CopyID
 	Volume            string
-	Directory         string
+	Subpath           string
 	Tree              snapshot.TreeID
 	Closed, Uncertain bool
 	Reason            string
 }
 
-func (c CopyObservation) usable() bool { return (c.Volume != "") != (c.Directory != "") }
+func (c CopyObservation) usable() bool { return c.Volume != "" }
 func (c CopyObservation) sameLocation(other CopyObservation) bool {
-	return c.Volume != "" && c.Volume == other.Volume || c.Directory != "" && c.Directory == other.Directory
+	return c.Volume == other.Volume && c.Subpath == other.Subpath
 }
 func (c CopyObservation) mount(target string) container.Mount {
-	if c.Directory != "" {
-		return container.Mount{BindDirectory: c.Directory, Target: target}
-	}
-	return container.Mount{Volume: c.Volume, Target: target, NoCopy: true}
+	return container.Mount{Volume: c.Volume, Subpath: c.Subpath, Target: target, NoCopy: true}
 }

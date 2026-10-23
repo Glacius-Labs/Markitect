@@ -80,7 +80,7 @@ var responsibilityImports = map[string][]string{
 	"internal/adapters/claudecode":     {"internal/apply", "internal/model", "internal/organization", "internal/snapshot", "internal/run", "internal/adapters/container", "internal/agentd/frame"},
 	"internal/adapters/container":      {"internal/agentd/frame"},
 	"internal/adapters/documents":      {"internal/modeldocs", "internal/tooling/guardedwrite"},
-	"internal/adapters/gitrepo":        {"internal/model", "internal/project", "internal/run", "internal/snapshot"},
+	"internal/adapters/gitrepo":        {"internal/adapters/container", "internal/model", "internal/project", "internal/run", "internal/snapshot"},
 	"internal/agentd":                  {"internal/agentd/frame"},
 	"internal/apply":                   {"internal/model", "internal/snapshot", "internal/organization", "internal/realization", "internal/run"},
 	"internal/bootstrap":               {"internal/adapters/checks", "internal/adapters/claudecode", "internal/adapters/cli", "internal/adapters/codexappserver", "internal/adapters/documents", "internal/adapters/gitrepo", "internal/apply", "internal/model", "internal/modeldocs", "internal/project", "internal/runtimeconfig"},

@@ -136,3 +136,19 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
     why: "Uses actual isolated Git repositories and self-contained bundles to preserve the complete checked Census and prove hierarchy, correction, closure and durable failure results."
+  - path: "internal/adapters/gitrepo/check_copy.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Preserves fixed Git candidates, retained external input bytes and complete inventories with isolated Run storage and bounded physical copy lifecycles."
+  - path: "internal/adapters/gitrepo/linux_run.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Preserves fixed Git candidates, retained external input bytes and complete inventories with isolated Run storage and bounded physical copy lifecycles."
+  - path: "internal/adapters/gitrepo/retained_inputs.go"
+    form: code
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Preserves fixed Git candidates, retained external input bytes and complete inventories with isolated Run storage and bounded physical copy lifecycles."
+  - path: "internal/adapters/gitrepo/retained_inputs_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Preserves fixed Git candidates, retained external input bytes and complete inventories with isolated Run storage and bounded physical copy lifecycles."
