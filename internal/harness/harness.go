@@ -112,6 +112,25 @@ func Build(p project.Prepared, manager organization.Manager, mandate string, fin
 	}
 	b.WriteString("\nEvery mandate uses the full hierarchy. Delegate direct children; review a fixed child commit by ID and accept or reject it with Findings. Await supplies tasks, questions, answers and child handoffs. Finish only after your required child work and inbox obligations are handled.\n")
 	b.WriteString(mandateDuties(mandate))
+	if mandate == "implement" {
+		shard := ".markitect/registry/registry.yaml"
+		if manager.Package != organization.Root {
+			shard = ".markitect/registry/" + manager.Package + "/registry.yaml"
+		}
+		fmt.Fprintf(&b, `
+Artifact accounting for Implement:
+Registry shards under .markitect/registry/ are writable realization accounting, not protected canonical intent. Keep the checked model, execution and bound instruction inputs unchanged.
+Register each new artifact exactly once in its owning Manager's shard, using its exact repository-relative file path, existing checked Definition links and a reason. Keep entries consistent when moving or deleting artifacts. Child registrations remain in the child's shard when you integrate its handoff. Gitignore does not supply accounting; do not ignore required realization to conceal missing registrations.
+Your registry shard is %s. Preserve existing entries; create this shard if needed. Its YAML shape is shown below; replace the placeholders with the actual artifact and checked Definition, and select form from code, test, doc, build or config:
+
+`+"```yaml\n"+`apiVersion: markitect.registry/v1
+artifacts:
+  - path: "<exact repository-relative file path>"
+    form: code
+    realizes: ["<existing Package/ID>"]
+    why: "<reason this artifact realizes those Definitions>"
+`+"```\n", shard)
+	}
 	return Document{Base: Rules, Developer: b.String()}, nil
 }
 
