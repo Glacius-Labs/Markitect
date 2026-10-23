@@ -31,21 +31,27 @@ type Config struct {
 	SocketPath string
 	// StopGrace bounds the polite stop when the Orchestrator connection closes.
 	StopGrace time.Duration
+	// PrivateHome is the fixed private container home; empty means /home/agent.
+	// Tests supply an isolated directory, never a real login home.
+	PrivateHome string
 }
 
 // Serve runs one session over the Orchestrator connection. It returns nil when the
 // Orchestrator closes the connection cleanly and the provider, if started, has been
 // stopped. An Orchestrator protocol violation returns an error after stopping the
 // provider, so the container ends instead of guessing.
-func Serve(ctx context.Context, orchestrator io.Reader, out io.Writer, cfg Config) error {
+func Serve(ctx context.Context, orchestrator io.Reader, out io.Writer, cfg Config) (err error) {
 	if cfg.SocketPath == "" {
 		cfg.SocketPath = DefaultSocketPath
 	}
 	if cfg.StopGrace <= 0 {
 		cfg.StopGrace = 5 * time.Second
 	}
+	if cfg.PrivateHome == "" {
+		cfg.PrivateHome = "/home/agent"
+	}
 	s := &server{cfg: cfg, out: &frameWriter{w: out}, pending: map[uint64]chan frame.ToolReply{}, stopping: make(chan struct{})}
-	defer s.shutdown()
+	defer func() { err = errors.Join(err, s.shutdown()) }()
 	if err := s.sendControl(frame.ControlMessage{Type: frame.TypeHello, Hello: &frame.Hello{Protocol: frame.ProtocolVersion, Version: cfg.Version}}); err != nil {
 		return err
 	}
@@ -83,16 +89,20 @@ type server struct {
 	cfg Config
 	out *frameWriter
 
-	mu       sync.Mutex
-	provider *provider
-	tools    map[string]frame.ToolSpec
-	toolList []frame.ToolSpec
-	listener net.Listener
-	pending  map[uint64]chan frame.ToolReply
-	nextID   uint64
-	closed   bool
-	stopping chan struct{}
-	reports  sync.WaitGroup
+	mu                sync.Mutex
+	provider          *provider
+	tools             map[string]frame.ToolSpec
+	toolList          []frame.ToolSpec
+	listener          net.Listener
+	pending           map[uint64]chan frame.ToolReply
+	nextID            uint64
+	closed            bool
+	stopping          chan struct{}
+	reports           sync.WaitGroup
+	home              *privateHome
+	homeAttempted     bool
+	homeReady         bool
+	providerAttempted bool
 }
 
 func (s *server) handle(f frame.Frame) error {
@@ -103,6 +113,10 @@ func (s *server) handle(f frame.Frame) error {
 			return err
 		}
 		switch c.Type {
+		case frame.TypeInitialize:
+			return s.initialize(c.Request, *c.Initialize)
+		case frame.TypeClearPrivateHome:
+			return s.clearPrivateHome(c.Request)
 		case frame.TypeStart:
 			return s.start(c.Request, *c.Start)
 		case frame.TypeStop:
@@ -131,6 +145,11 @@ func (s *server) handle(f frame.Frame) error {
 
 func (s *server) start(request uint64, req frame.Start) error {
 	s.mu.Lock()
+	if s.homeAttempted && !s.homeReady {
+		s.mu.Unlock()
+		return s.refuse(request, "private home is not ready")
+	}
+	s.providerAttempted = true
 	if s.provider != nil {
 		select {
 		case <-s.provider.reported:
@@ -293,7 +312,7 @@ func (s *server) sendControl(c frame.ControlMessage) error {
 
 // shutdown fails pending tool calls, stops the provider within the stop
 // grace and sends its exit report before Serve returns.
-func (s *server) shutdown() {
+func (s *server) shutdown() error {
 	s.mu.Lock()
 	s.closed = true
 	close(s.stopping)
@@ -310,6 +329,10 @@ func (s *server) shutdown() {
 	if l != nil {
 		_ = os.Remove(s.cfg.SocketPath)
 	}
+	if s.home != nil {
+		return errors.Join(s.home.clear(), s.home.close())
+	}
+	return nil
 }
 
 // frameWriter serializes whole frames from concurrent senders.

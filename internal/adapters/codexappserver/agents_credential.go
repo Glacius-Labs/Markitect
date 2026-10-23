@@ -1,13 +1,11 @@
 package codexappserver
 
 import (
-	"bytes"
 	"context"
 	"encoding/json"
-	"io"
 	"strings"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
+	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
 
 type runtimeLogin struct {
@@ -23,8 +21,8 @@ type runtimeLogin struct {
 }
 
 // credential validates the resolved credential, remembers its secrets for
-// redaction and returns the provider environment. A dedicated login is
-// installed into the provider home by a hardened helper first.
+// redaction and returns the provider environment. No private file is written
+// until the Manager container has started and announced agentd.
 func (t *turnRun) credential(ctx context.Context, c RuntimeCredential) ([]string, error) {
 	if c.Mode == "api-key" {
 		if c.APIKey == "" || c.RuntimeLogin != nil || strings.ContainsAny(c.APIKey, "\r\n\x00") {
@@ -33,7 +31,7 @@ func (t *turnRun) credential(ctx context.Context, c RuntimeCredential) ([]string
 		t.secrets = [][]byte{[]byte(c.APIKey)}
 		return []string{"CODEX_HOME=/home/agent/.codex", "OPENAI_API_KEY=" + c.APIKey}, nil
 	}
-	if c.Mode != "dedicated-runtime-login" || c.APIKey != "" || len(c.RuntimeLogin) > maxProtocolMessage || t.agents.helper == nil {
+	if c.Mode != "dedicated-runtime-login" || c.APIKey != "" || len(c.RuntimeLogin) > frame.MaxPrivateAuthBytes {
 		return nil, ErrSession
 	}
 	var login runtimeLogin
@@ -45,37 +43,40 @@ func (t *turnRun) credential(ctx context.Context, c RuntimeCredential) ([]string
 			t.secrets = append(t.secrets, []byte(secret))
 		}
 	}
-	login.Tokens.Refresh = ""
-	data, err := json.Marshal(login)
-	if err != nil {
-		return nil, ErrSession
-	}
-	// Mark a possible installation before the helper runs: a partial helper
-	// failure may still leave an access token in the retained provider home.
-	t.loginInstalled = true
-	write := []string{"/bin/sh", "-c", "mkdir -p /home/agent/.codex && umask 077 && rm -f /home/agent/.codex/auth.json && cat > /home/agent/.codex/auth.json"}
-	if err = t.agents.helper(ctx, t.credentialSpec("issue"), write, bytes.NewReader(data), io.Discard); err != nil {
-		return nil, t.safe(err)
-	}
 	return []string{"CODEX_HOME=/home/agent/.codex"}, nil
 }
 
-func (t *turnRun) credentialSpec(action string) container.ContainerSpec {
-	spec := turnSpec(t.name, t.turn, t.profile)
-	spec.Name += "-auth-" + action
-	spec.Workdir = "/home/agent"
-	spec.Mounts = []container.Mount{{Volume: t.turn.Home, Target: "/home/agent"}}
-	return spec
+func (t *turnRun) installCredential(ctx context.Context, c RuntimeCredential) error {
+	if c.Mode != "dedicated-runtime-login" {
+		return nil
+	}
+	var login runtimeLogin
+	if strictValue(c.RuntimeLogin, &login) != nil {
+		return ErrSession
+	}
+	// This slice preserves the existing access-only copy. Safe account refresh
+	// and fan-out remain subject to the separately authorized native probe.
+	login.Tokens.Refresh = ""
+	data, err := json.Marshal(login)
+	if err != nil || len(data) > frame.MaxPrivateAuthBytes {
+		return ErrSession
+	}
+	// A lost setup reply can still have installed a file; always attempt cleanup.
+	t.loginInstalled = true
+	if err := t.peer.Initialize(ctx, frame.Initialize{CodexAuth: data}); err != nil {
+		return t.safe(err)
+	}
+	return nil
 }
 
 func (t *turnRun) removeCredential(ctx context.Context) error {
 	if !t.loginInstalled {
 		return nil
 	}
-	if t.agents.helper == nil {
+	if t.peer == nil {
 		return ErrSession
 	}
-	if err := t.agents.helper(ctx, t.credentialSpec("remove"), []string{"/bin/rm", "-f", "/home/agent/.codex/auth.json"}, nil, io.Discard); err != nil {
+	if err := t.peer.ClearPrivateHome(ctx); err != nil {
 		return t.safe(err)
 	}
 	t.loginInstalled = false

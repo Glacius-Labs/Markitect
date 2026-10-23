@@ -4,6 +4,10 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters, product/organization/delegated-context]
     why: "Encodes actual scheduler review messages with the Codex codec and reads back complete UTF-8 differences and JSON-escaped summaries within the native frame limit, without provider execution."
+  - path: "internal/adapters/codexappserver/private_home_native_test.go"
+    form: test
+    realizes: [product/ports-and-adapters]
+    why: "Prepares an explicitly activated finite source/image-bound private-init, native instruction, conversation and cleanup probe; default tests never run it."
   - path: "internal/adapters/codexappserver/agents_tools_runtime_test.go"
     form: test
     realizes: [product/ports-and-adapters]
