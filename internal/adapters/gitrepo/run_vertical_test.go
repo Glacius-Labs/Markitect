@@ -30,19 +30,22 @@ type notesReadingSessions struct {
 type accountingRepairSessions struct {
 	controlled *controlledManagers
 	child      *accountingRepairSession
+	accounting bool
 }
 
 type accountingRepairSession struct {
 	run.Session
 	spec                  run.SessionSpec
 	attempts, assignments int
+	accounting            bool
+	question              string
 }
 
 func (s *accountingRepairSessions) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
 	if spec.Manager.Package != "a/deep" {
 		return s.controlled.Open(ctx, spec)
 	}
-	child := &accountingRepairSession{spec: spec}
+	child := &accountingRepairSession{spec: spec, accounting: s.accounting}
 	await := spec.Tools.Await
 	spec.Tools.Await = func(ctx context.Context) (run.Event, error) {
 		event, err := await(ctx)
@@ -68,63 +71,85 @@ func (s *accountingRepairSession) Exchange(ctx context.Context, message run.Mess
 			return run.Response{}, fmt.Errorf("candidate repair replayed consumed assignment: %s", message.Task)
 		}
 		text := fmt.Sprint(message.Feedback)
-		if !strings.Contains(text, "file.unexplained") || !strings.Contains(text, "out/unregistered.txt") || !strings.Contains(text, "neither a registered artifact") {
-			return run.Response{}, fmt.Errorf("candidate repair lost actionable accounting diagnostics: %s", text)
-		}
-		registry := filepath.Join(root, ".markitect/registry/a/deep/registry.yaml")
-		data, err := os.ReadFile(registry)
-		if err != nil {
-			return run.Response{}, err
-		}
-		data = append(data, []byte("  - path: out/unregistered.txt\n    form: code\n    realizes: [a/deep/item]\n    why: Register the actual child artifact after host rejection.\n")...)
-		if err := os.WriteFile(registry, data, 0600); err != nil {
-			return run.Response{}, err
+		if s.accounting {
+			if !strings.Contains(text, "file.unexplained") || !strings.Contains(text, "out/unregistered.txt") || !strings.Contains(text, "neither a registered artifact") {
+				return run.Response{}, fmt.Errorf("candidate repair lost actionable accounting diagnostics: %s", text)
+			}
+			registry := filepath.Join(root, ".markitect/registry/a/deep/registry.yaml")
+			data, err := os.ReadFile(registry)
+			if err != nil {
+				return run.Response{}, err
+			}
+			data = append(data, []byte("  - path: out/unregistered.txt\n    form: code\n    realizes: [a/deep/item]\n    why: Register the actual child artifact after host rejection.\n")...)
+			if err := os.WriteFile(registry, data, 0600); err != nil {
+				return run.Response{}, err
+			}
+		} else {
+			if !strings.Contains(text, "Resolve pending question "+s.question) {
+				return run.Response{}, fmt.Errorf("continuation lost pending question Findings: %s", text)
+			}
+			event, err := s.spec.Tools.Await(ctx)
+			if err != nil || event.Answer == nil || event.Answer.ID != s.question {
+				return run.Response{}, fmt.Errorf("continuation did not resolve the actual pending question: %v", err)
+			}
 		}
 	}
 	response, err := s.Session.Exchange(ctx, message)
 	if err == nil && s.attempts == 1 {
-		err = os.WriteFile(filepath.Join(root, "out/unregistered.txt"), []byte("child artifact\n"), 0600)
+		if s.accounting {
+			err = os.WriteFile(filepath.Join(root, "out/unregistered.txt"), []byte("child artifact\n"), 0600)
+		} else {
+			// The direct parent is already awaiting this child's handoff and
+			// handles incoming questions while waiting. Leave its answer pending.
+			s.question, err = s.spec.Tools.Ask(ctx, "a", "Explain this observation before I finish.")
+		}
 	}
 	return response, err
 }
 
 func TestRejectedChildCandidateRepairsActiveAssignmentAndReachesParent(t *testing.T) {
-	_, prepared, git, input := runFixture(t)
-	records, err := runstore.New(git.StateRoot)
-	if err != nil {
-		t.Fatal(err)
-	}
-	sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}}
-	request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
-	result, err := (&run.Executor{Sessions: sessions, Workspaces: git, Records: records}).Execute(context.Background(), request)
-	if err != nil || result.Technical != run.Completed || result.Candidate == nil {
-		t.Fatalf("child repair did not complete: %s %v", result.Technical, err)
-	}
-	if sessions.child.attempts != 2 || sessions.child.assignments != 1 || len(result.Handoffs) != 5 || len(sessions.controlled.sessions) != 5 {
-		t.Fatal("repair replaced the Session/assignment or lost the full hierarchy", sessions.child.attempts, sessions.child.assignments, len(result.Handoffs))
-	}
-	for _, closure := range result.Cleanup {
-		if !closure.Closed {
-			t.Fatal("repair left a live resource", closure)
-		}
-	}
-	found := false
-	for _, handoff := range result.Handoffs {
-		if handoff.Manager == "a" {
-			for _, child := range handoff.Children {
-				found = found || child.Manager == "a/deep"
+	for _, accounting := range []bool{true, false} {
+		t.Run(fmt.Sprintf("accounting=%v", accounting), func(t *testing.T) {
+			_, prepared, git, input := runFixture(t)
+			records, err := runstore.New(git.StateRoot)
+			if err != nil {
+				t.Fatal(err)
 			}
-		}
-	}
-	if !found {
-		t.Fatal("parent did not review and integrate the repaired child")
-	}
-	destination := t.TempDir()
-	if err := git.Reopen(context.Background(), *result.Candidate, destination); err != nil {
-		t.Fatal(err)
-	}
-	if data, err := os.ReadFile(filepath.Join(destination, "out/unregistered.txt")); err != nil || string(data) != "child artifact\n" {
-		t.Fatal("repaired artifact did not survive parent integration and closure", err)
+			sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, accounting: accounting}
+			request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+			result, err := (&run.Executor{Sessions: sessions, Workspaces: git, Records: records}).Execute(context.Background(), request)
+			if err != nil || result.Technical != run.Completed || result.Candidate == nil {
+				t.Fatalf("child repair did not complete: %s %v", result.Technical, err)
+			}
+			if sessions.child.attempts != 2 || sessions.child.assignments != 1 || len(result.Handoffs) != 5 || len(sessions.controlled.sessions) != 5 {
+				t.Fatal("repair replaced the Session/assignment or lost the full hierarchy", sessions.child.attempts, sessions.child.assignments, len(result.Handoffs))
+			}
+			for _, closure := range result.Cleanup {
+				if !closure.Closed {
+					t.Fatal("repair left a live resource", closure)
+				}
+			}
+			found := false
+			for _, handoff := range result.Handoffs {
+				if handoff.Manager == "a" {
+					for _, child := range handoff.Children {
+						found = found || child.Manager == "a/deep"
+					}
+				}
+			}
+			if !found {
+				t.Fatal("parent did not review and integrate the repaired child")
+			}
+			destination := t.TempDir()
+			if err := git.Reopen(context.Background(), *result.Candidate, destination); err != nil {
+				t.Fatal(err)
+			}
+			if accounting {
+				if data, err := os.ReadFile(filepath.Join(destination, "out/unregistered.txt")); err != nil || string(data) != "child artifact\n" {
+					t.Fatal("repaired artifact did not survive parent integration and closure", err)
+				}
+			}
+		})
 	}
 }
 
