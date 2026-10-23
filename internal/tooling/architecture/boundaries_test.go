@@ -55,8 +55,8 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/run", "internal/adapters/checks", false},
 		{"internal/run", "internal/adapters/claudecode", false},
 		{"internal/model", "internal/run", false},
-		{"internal/apply", "internal/organization", true},
-		{"internal/apply", "internal/run", true},
+		{"internal/apply", "internal/organization", false},
+		{"internal/apply", "internal/run", false},
 		{"internal/apply", "internal/adapters/gitrepo", false},
 		{"internal/modeldocs", "internal/project", true},
 		{"internal/modeldocs", "internal/adapters/documents", false},
@@ -79,15 +79,17 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/gitrepo", "internal/adapters/checks", false},
 		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", false},
 		{"internal/adapters/gitrepo", "internal/tooling/source", false},
-		// Claude metadata uses Apply ports and pure values; sessions use Run and
-		// the container frame DTOs. Execution and sibling adapters stay separate.
-		{"internal/adapters/claudecode", "internal/apply", true},
+		// Native metadata consumes Project and runtime configuration; the unavailable
+		// Claude session boundary grants no legacy Apply or frame privileges.
+		{"internal/adapters/claudecode", "internal/apply", false},
+		{"internal/adapters/claudecode", "internal/project", true},
+		{"internal/adapters/claudecode", "internal/runtimeconfig", true},
 		{"internal/adapters/claudecode", "internal/model", true},
 		{"internal/adapters/claudecode", "internal/organization", true},
 		{"internal/adapters/claudecode", "internal/snapshot", true},
 		{"internal/adapters/claudecode", "internal/run", true},
 		{"internal/adapters/claudecode", "internal/adapters/container", true},
-		{"internal/adapters/claudecode", "internal/agentd/frame", true},
+		{"internal/adapters/claudecode", "internal/agentd/frame", false},
 		{"internal/adapters/claudecode", "internal/agentd", false},
 		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
 		{"internal/adapters/claudecode", "internal/adapters/gitrepo", false},
@@ -100,6 +102,13 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		// container API; agentd execution and other adapters remain separate.
 		{"internal/adapters/codexappserver", "internal/adapters/container", true},
 		{"internal/adapters/codexappserver", "internal/run", true},
+		{"internal/adapters/codexappserver", "internal/harness", true},
+		{"internal/adapters/codexappserver", "internal/project", true},
+		{"internal/adapters/codexappserver", "internal/runtimeconfig", true},
+		{"internal/adapters/codexappserver", "internal/apply", false},
+		{"internal/harness", "internal/project", true},
+		{"internal/harness", "internal/run", false},
+		{"internal/harness", "internal/adapters/codexappserver", false},
 		{"internal/adapters/codexappserver", "internal/agentd/frame", true},
 		{"internal/adapters/codexappserver", "internal/agentd", false},
 		{"internal/adapters/codexappserver", "internal/adapters/claudecode", false},
@@ -138,7 +147,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 	} {
 		for _, test := range []bool{false, true} {
 			allowed := tc.allowed
-			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" {
+			if tc.from == "internal/adapters/gitrepo" && tc.to == "internal/adapters/checks" || tc.from == "internal/adapters/codexappserver" && tc.to == "internal/adapters/gitrepo" {
 				allowed = test
 			} // Actual controlled declared-check composition is test-only.
 			got := Check([]Edge{{From: tc.from, To: tc.to, Test: test}})
@@ -212,7 +221,8 @@ func TestRealGitRecordCompositionEdgeStaysTestOnly(t *testing.T) {
 
 func TestClaudeProfileImportsAcrossPlatforms(t *testing.T) {
 	for _, producer := range []struct{ path, layer, pkg string }{
-		{"internal/apply", "apply-usecase", "apply"},
+		{"internal/project", "apply-project", "project"},
+		{"internal/runtimeconfig", "runtime-config", "runtimeconfig"},
 		{"internal/model", "apply-model", "model"},
 		{"internal/organization", "apply-organization", "organization"},
 		{"internal/snapshot", "apply-snapshot", "snapshot"},

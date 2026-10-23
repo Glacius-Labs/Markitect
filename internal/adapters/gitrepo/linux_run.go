@@ -11,6 +11,7 @@ import (
 	"os"
 	"path"
 	"path/filepath"
+	"sort"
 	"strings"
 	"sync"
 
@@ -240,6 +241,13 @@ func (c *linuxCopy) Location() run.CopyLocation {
 // Enumerate actual model directory entries and reject unsupported realization
 // nodes before Git can silently omit them. No external symlink is followed.
 func (c *linuxCopy) Snapshot(ctx context.Context) (run.Commit, error) {
+	dirs, err := c.directories(ctx)
+	if err != nil {
+		return run.Commit{}, err
+	}
+	return snapshotGit(ctx, c.directory, c.service.command, dirs)
+}
+func (c *linuxCopy) directories(ctx context.Context) ([]string, error) {
 	raw := c.service.request.Prepared.Attempt().Model().Inputs().Raw
 	var roots []string
 	for _, m := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
@@ -252,16 +260,17 @@ func (c *linuxCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 	out := &boundedOutput{limit: 4 << 20}
 	err := c.service.node(ctx, `const fs=require('fs'),p=require('path');const base=process.argv[1],roots=JSON.parse(process.argv[2]),dirs=[];function walk(rel){const file=p.join(base,rel),s=fs.lstatSync(file);if(s.isSymbolicLink()||(!s.isDirectory()&&!s.isFile()))throw Error('unsupported working-copy node '+rel);if(s.isDirectory()){if(roots.some(r=>rel===r||rel.startsWith(r+'/')))dirs.push(rel);for(const n of fs.readdirSync(file)){if(rel===''&&n==='.git'){if(!fs.lstatSync(p.join(file,n)).isDirectory())throw Error('invalid Git directory');continue}walk(rel?p.join(rel,n):n)}}}walk('');for(const r of roots)if(!fs.lstatSync(p.join(base,r)).isDirectory())throw Error('missing model root');process.stdout.write(JSON.stringify(dirs))`, []string{c.directory, string(encoded)}, nil, out)
 	if err != nil {
-		return run.Commit{}, err
+		return nil, err
 	}
 	if out.limitExceeded {
-		return run.Commit{}, fmt.Errorf("model directory observation exceeds bound")
+		return nil, fmt.Errorf("model directory observation exceeds bound")
 	}
 	var dirs []string
 	if err = json.Unmarshal([]byte(out.String()), &dirs); err != nil {
-		return run.Commit{}, err
+		return nil, err
 	}
-	return snapshotGit(ctx, c.directory, c.service.command, dirs)
+	sort.Strings(dirs)
+	return dirs, nil
 }
 func (c *linuxCopy) Update(ctx context.Context, source run.Copy, base run.Commit) error {
 	parent, ok := source.(*linuxCopy)
@@ -276,8 +285,16 @@ func (c *linuxCopy) Update(ctx context.Context, source run.Copy, base run.Commit
 		return err
 	}
 	if _, err = c.service.command(ctx, c.directory, nil, "merge", "--no-edit", base.ID); err != nil {
+		conflicts, observed := c.service.command(ctx, c.directory, nil, "ls-files", "--unmerged", "-z")
+		if observed == nil && conflicts != "" {
+			mergeHead, observedHead := objectUsing(ctx, c.directory, "MERGE_HEAD", c.service.command)
+			if observedHead == nil && mergeHead == base {
+				return fmt.Errorf("%w: resolve and stage the child-side merge against parent %s", run.ErrMergeConflict, base.ID)
+			}
+			observed = errors.Join(observed, observedHead, fmt.Errorf("conflict parent identity mismatch"))
+		}
 		_, abort := c.service.command(ctx, c.directory, nil, "merge", "--abort")
-		return errors.Join(err, abort)
+		return errors.Join(err, observed, abort)
 	}
 	return c.service.restoreDirectories(ctx, c.directory, base.ID)
 }
@@ -300,18 +317,7 @@ func (c *linuxCopy) Integrate(ctx context.Context, source run.Copy, fixed run.Co
 	if !ok || child.service != c.service {
 		return run.Commit{}, fmt.Errorf("foreign child copy")
 	}
-	actual, err := objectUsing(ctx, child.directory, fixed.ID, c.service.command)
-	if err != nil || actual != fixed {
-		return run.Commit{}, fmt.Errorf("fixed child identity unavailable")
-	}
-	if _, err = c.service.command(ctx, c.directory, nil, "fetch", "--quiet", "--no-tags", child.directory, fixed.ID); err != nil {
-		return run.Commit{}, err
-	}
-	if _, err = c.service.command(ctx, c.directory, nil, "merge", "--no-ff", "--no-edit", fixed.ID); err != nil {
-		_, abort := c.service.command(ctx, c.directory, nil, "merge", "--abort")
-		return run.Commit{}, errors.Join(err, abort)
-	}
-	return c.Snapshot(ctx)
+	return integrateGit(ctx, c.directory, child.directory, fixed, c.service.command, c.directories)
 }
 
 func (s *linuxService) export(ctx context.Context, source string, fixed run.Commit, key, destination string) error {

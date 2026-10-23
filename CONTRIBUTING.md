@@ -61,7 +61,7 @@ Run the packaged source smoke in a fresh external work directory:
 go run ./tools/smoke -repo . -work ABSOLUTE_EMPTY_EXTERNAL_DIRECTORY
 ```
 
-It packages and builds root-layout source, tests the standalone bootstrap and drives actual Library M1/M2 preparation, static context, fixed-source refusals and Apply's refusal of a missing or outdated invocation configuration before any acquisition. It starts no Agent or container, so it does not run an Apply, implement the Library or establish provider/Apply/release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
+It packages and builds root-layout source, tests the standalone bootstrap and drives actual Library M1/M2 preparation, static context, fixed-source refusals and Apply's explicit unavailable boundary before any acquisition. It starts no Agent or container, so it does not run an Apply, implement the Library or establish provider/Apply/release acceptance. The `bundle` smoke belongs to separately authorized release work and writes an isolated consumer installation.
 
 ## Pull requests and parallel work
 

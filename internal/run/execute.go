@@ -300,6 +300,19 @@ func (x *execution) toolContext(caller context.Context) (context.Context, func()
 	stop := context.AfterFunc(caller, cancel)
 	return ctx, func() { stop(); cancel() }
 }
+
+// A Session may handle ordinary tool errors, but cannot erase a mandatory
+// technical port failure by ignoring the returned error.
+func (x *execution) stopPort(err error) {
+	if err == nil {
+		return
+	}
+	x.mu.Lock()
+	x.asyncErr = errors.Join(x.asyncErr, err)
+	x.mu.Unlock()
+	x.cancel()
+}
+
 func (x *execution) tools(s *managerState) Tools {
 	return Tools{
 		Ask:   func(ctx context.Context, to, text string) (string, error) { return x.ask(ctx, s, to, text) },
@@ -308,7 +321,9 @@ func (x *execution) tools(s *managerState) Tools {
 		ReadNotes: func(caller context.Context) ([]Note, error) {
 			ctx, stop := x.toolContext(caller)
 			defer stop()
-			return x.executor.Records.Notes(ctx, x.request.Project)
+			notes, err := x.executor.Records.Notes(ctx, x.request.Project)
+			x.stopPort(err)
+			return notes, err
 		},
 		AppendNote: func(caller context.Context, scope, text string) (Note, error) {
 			ctx, stop := x.toolContext(caller)
@@ -316,7 +331,9 @@ func (x *execution) tools(s *managerState) Tools {
 			if text == "" {
 				return Note{}, fmt.Errorf("empty Note")
 			}
-			return x.executor.Records.Append(ctx, Note{Project: x.request.Project, Run: x.request.ID, Manager: s.manager.Package, Context: scope, Text: text})
+			note, err := x.executor.Records.Append(ctx, Note{Project: x.request.Project, Run: x.request.ID, Manager: s.manager.Package, Context: scope, Text: text})
+			x.stopPort(err)
+			return note, err
 		},
 		Delegate: func(caller context.Context, child, task string, feedback []Finding) error {
 			ctx, stop := x.toolContext(caller)
@@ -355,10 +372,17 @@ func (x *execution) tools(s *managerState) Tools {
 				base, err = s.copy.Snapshot(ctx)
 				if err == nil {
 					err = target.copy.Update(ctx, s.copy, base)
+					if errors.Is(err, ErrMergeConflict) {
+						feedback = append(append([]Finding(nil), feedback...), Finding{Manager: s.manager.Package, Text: "Resolve the preserved child-side Git merge conflict against the current parent baseline: " + err.Error()})
+						err = nil
+					}
 				}
 			}
 			s.mu.Unlock()
 			if err != nil {
+				if !errors.Is(err, ErrMergeConflict) {
+					x.stopPort(err)
+				}
 				return err
 			}
 
@@ -418,6 +442,7 @@ func (x *execution) tools(s *managerState) Tools {
 				diff, err := s.copy.Review(ctx, child.copy, c.handoff.Base, c.handoff.Result)
 				s.mu.Unlock()
 				if err != nil {
+					x.stopPort(err)
 					return Event{}, err
 				}
 				c.handoff.Diff = diff
@@ -463,6 +488,9 @@ func (x *execution) tools(s *managerState) Tools {
 				}
 				s.mu.Unlock()
 				if err != nil {
+					if !errors.Is(err, ErrMergeConflict) {
+						x.stopPort(err)
+					}
 					target.handoff.Review = &ParentReview{Decision: Reject, Findings: []Finding{{Manager: s.manager.Package, Text: "Git integration failed: " + err.Error()}}}
 					return err
 				}
@@ -518,6 +546,10 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 			continue
 		}
 		commit, err := s.copy.Snapshot(x.ctx)
+		if errors.Is(err, ErrMergeConflict) {
+			feedback = []Finding{{Manager: s.manager.Package, Text: err.Error()}}
+			continue
+		}
 		if err != nil {
 			return Handoff{}, err
 		}

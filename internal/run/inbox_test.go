@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"errors"
 	"sync"
 	"testing"
 	"time"
@@ -117,5 +118,107 @@ func TestLateBlockerInvalidatesPreviouslyAcceptedHierarchy(t *testing.T) {
 	}
 	if concreteFindings([]Finding{{Text: " \n"}}) {
 		t.Fatal("blank finding authorized correction")
+	}
+}
+
+func TestOwnModelBlockerDominatesChildRejectAtCompletionAndAggregation(t *testing.T) {
+	x, parent, child := inboxExecution()
+	defer x.cancel()
+	child.working = false
+	child.judgment = Reject
+	child.handoff = Handoff{Manager: "a", Decision: Reject, Review: &ParentReview{Decision: Reject, Findings: []Finding{{Text: "child issue"}}}}
+	h := parent.finish(Commit{ID: "fixed", Tree: "tree"}, Response{Decision: ModelBlocker, Findings: []Finding{{Manager: ".", Text: "own fixed-model contradiction"}}}, Reject)
+	if h.Decision != ModelBlocker {
+		t.Fatal("child rejection downgraded own blocker", h)
+	}
+	decision, err := x.aggregate(parent)
+	if err != nil || decision != ModelBlocker || parent.handoff.Decision != ModelBlocker {
+		t.Fatal("aggregation downgraded own blocker", decision, err)
+	}
+}
+
+// These are controlled port peers. The real Git/record Executor test separately
+// proves that a Session ignoring an integration error cannot persist success.
+type toolFailureCopy struct {
+	Copy
+	stage   string
+	failure error
+}
+
+func (c toolFailureCopy) Snapshot(context.Context) (Commit, error) {
+	if c.stage == "snapshot" {
+		return Commit{}, c.failure
+	}
+	return Commit{ID: "fixed", Tree: "tree"}, nil
+}
+func (c toolFailureCopy) Update(context.Context, Copy, Commit) error {
+	if c.stage == "update" {
+		return c.failure
+	}
+	return nil
+}
+func (c toolFailureCopy) Review(context.Context, Copy, Commit, Commit) (string, error) {
+	if c.stage == "diff" {
+		return "", c.failure
+	}
+	return "full diff", nil
+}
+func (c toolFailureCopy) Integrate(context.Context, Copy, Commit) (Commit, error) {
+	if c.stage == "integrate" {
+		return Commit{}, c.failure
+	}
+	return Commit{ID: "fixed", Tree: "tree"}, nil
+}
+
+type toolFailureRecords struct {
+	Records
+	failure error
+}
+
+func (r toolFailureRecords) Notes(context.Context, string) ([]Note, error) { return nil, r.failure }
+func (r toolFailureRecords) Append(context.Context, Note) (Note, error)    { return Note{}, r.failure }
+
+func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
+	for _, stage := range []string{"notes", "append", "delegate-snapshot", "update", "diff", "review-snapshot", "integrate"} {
+		t.Run(stage, func(t *testing.T) {
+			x, parent, child := inboxExecution()
+			defer x.cancel()
+			injected := errors.New("actual port failure " + stage)
+			x.request.Mandate = Implement
+			x.executor = &Executor{Records: toolFailureRecords{failure: injected}}
+			parent.copy = toolFailureCopy{failure: injected}
+			child.copy = toolFailureCopy{stage: "update", failure: injected}
+			switch stage {
+			case "delegate-snapshot", "review-snapshot":
+				parent.copy = toolFailureCopy{stage: "snapshot", failure: injected}
+			case "diff":
+				parent.copy = toolFailureCopy{stage: "diff", failure: injected}
+			case "integrate":
+				parent.copy = toolFailureCopy{stage: "integrate", failure: injected}
+			}
+			tools := x.tools(parent)
+			switch stage {
+			case "notes":
+				_, _ = tools.ReadNotes(context.Background())
+			case "append":
+				_, _ = tools.AppendNote(context.Background(), "scope", "durable note")
+			case "delegate-snapshot", "update":
+				child.running = false
+				child.working = false
+				_ = tools.Delegate(context.Background(), "a", "concrete assignment", nil)
+			case "diff":
+				parent.done = make(chan completion, 1)
+				parent.done <- completion{handoff: Handoff{Manager: "a", Result: Commit{ID: "fixed", Tree: "tree"}}}
+				_, _ = tools.Await(context.Background())
+			default:
+				child.working = false
+				child.delivered = true
+				child.handoff = Handoff{Manager: "a", Result: Commit{ID: "fixed", Tree: "tree"}, Decision: Submitted}
+				_ = tools.Review(context.Background(), "a", "fixed", Approve, nil)
+			}
+			if x.ctx.Err() == nil || !errors.Is(x.asyncErr, injected) {
+				t.Fatal("ignored port failure lost", x.ctx.Err(), x.asyncErr)
+			}
+		})
 	}
 }

@@ -25,10 +25,7 @@ func (s *managerState) finish(commit Commit, response Response, child Decision) 
 	h.Base = s.base
 	h.Result = commit
 	h.Findings = append(h.Findings, response.Findings...)
-	h.Decision = response.Decision
-	if adverse := requiredDecision(s.lateDecision, child); adverse != "" {
-		h.Decision = adverse
-	}
+	h.Decision = requiredDecision(response.Decision, requiredDecision(s.lateDecision, child))
 	s.handoff = h
 	return h
 }
@@ -58,9 +55,7 @@ func (x *execution) aggregate(s *managerState) (Decision, error) {
 		adverse = requiredDecision(adverse, review.Decision)
 		child.mu.Unlock()
 	}
-	if adverse == Reject || adverse == ModelBlocker {
-		decision = adverse
-	}
+	decision = requiredDecision(decision, adverse)
 	s.mu.Lock()
 	s.handoff.Decision = decision
 	s.mu.Unlock()

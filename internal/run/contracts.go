@@ -297,6 +297,10 @@ type Executor struct {
 	Checks     CandidateChecks
 }
 
+// ErrMergeConflict identifies a verified unresolved Git index or preserved
+// child-side parent merge for ordinary Manager repair. Other Git errors are technical.
+var ErrMergeConflict = errors.New("parent baseline has unresolved Git conflicts")
+
 var ErrObservationIncomplete = errors.New("Run physical observation incomplete")
 
 var ErrBudget = errors.New("Run allowance exhausted")
