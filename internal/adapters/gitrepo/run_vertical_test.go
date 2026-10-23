@@ -70,6 +70,9 @@ func (s *accountingRepairSession) Exchange(ctx context.Context, message run.Mess
 		if strings.Contains(message.Task, "Receive your parent assignment with Await") || !strings.Contains(message.Task, "active assignment") {
 			return run.Response{}, fmt.Errorf("candidate repair replayed consumed assignment: %s", message.Task)
 		}
+		if s.spec.Mandate != run.Implement && strings.Contains(strings.ToLower(message.Task), "repair the candidate") {
+			return run.Response{}, fmt.Errorf("review continuation requests implementation: %s", message.Task)
+		}
 		text := fmt.Sprint(message.Feedback)
 		if s.accounting {
 			if !strings.Contains(text, "file.unexplained") || !strings.Contains(text, "out/unregistered.txt") || !strings.Contains(text, "neither a registered artifact") {
@@ -108,15 +111,18 @@ func (s *accountingRepairSession) Exchange(ctx context.Context, message run.Mess
 }
 
 func TestRejectedChildCandidateRepairsActiveAssignmentAndReachesParent(t *testing.T) {
-	for _, accounting := range []bool{true, false} {
-		t.Run(fmt.Sprintf("accounting=%v", accounting), func(t *testing.T) {
+	for _, scenario := range []struct {
+		mandate    run.Mandate
+		accounting bool
+	}{{run.Implement, true}, {run.Implement, false}, {run.Assessment, false}, {run.Verify, false}} {
+		t.Run(fmt.Sprintf("%s/accounting=%v", scenario.mandate, scenario.accounting), func(t *testing.T) {
 			_, prepared, git, input := runFixture(t)
 			records, err := runstore.New(git.StateRoot)
 			if err != nil {
 				t.Fatal(err)
 			}
-			sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, accounting: accounting}
-			request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+			sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, accounting: scenario.accounting}
+			request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: scenario.mandate, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 			result, err := (&run.Executor{Sessions: sessions, Workspaces: git, Records: records}).Execute(context.Background(), request)
 			if err != nil || result.Technical != run.Completed || result.Candidate == nil {
 				t.Fatalf("child repair did not complete: %s %v", result.Technical, err)
@@ -137,17 +143,20 @@ func TestRejectedChildCandidateRepairsActiveAssignmentAndReachesParent(t *testin
 					}
 				}
 			}
-			if !found {
+			if !found && scenario.mandate == run.Implement {
 				t.Fatal("parent did not review and integrate the repaired child")
 			}
 			destination := t.TempDir()
 			if err := git.Reopen(context.Background(), *result.Candidate, destination); err != nil {
 				t.Fatal(err)
 			}
-			if accounting {
+			if scenario.accounting {
 				if data, err := os.ReadFile(filepath.Join(destination, "out/unregistered.txt")); err != nil || string(data) != "child artifact\n" {
 					t.Fatal("repaired artifact did not survive parent integration and closure", err)
 				}
+			}
+			if scenario.mandate != run.Implement && (result.Decision != run.Approve || result.Candidate.Commit != input.Commit || result.Candidate.Tree != input.Tree) {
+				t.Fatal("review continuation changed its judgment mandate or fixed candidate", result.Decision, result.Candidate)
 			}
 		})
 	}

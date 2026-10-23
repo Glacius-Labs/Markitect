@@ -572,7 +572,7 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 			continue
 		}
 		if assignmentReceived {
-			task = "Continue your active assignment using these Findings. Repair the candidate, complete required child delegation and reviews, and resolve pending questions before submitting again. Continue in this same Session; do not await another initial parent assignment."
+			task = "Continue your active assignment under its bound mandate using these Findings. Complete required child delegation and reviews, and resolve pending questions before completing. Continue in this same Session; do not await another initial parent assignment."
 		}
 		for _, child := range s.manager.Children {
 			c := x.states[child]
