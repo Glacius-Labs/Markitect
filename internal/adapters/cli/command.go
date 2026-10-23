@@ -68,7 +68,7 @@ Common options:
   --runtime-profile PATH   explicit absolute Runtime profile document path
 
 Without --metadata, native/check metadata is not requested. A structural pass
-does not establish static profile metadata, rendered role context or runtime
+does not establish static profile metadata, native execution context or runtime
 support. Fixed previews refuse unbound present-day external Runtime inputs.
 
 docs options:
@@ -84,16 +84,12 @@ apply options:
   --runtime-profile PATH   explicit absolute versioned Runtime profile document
   --repo, --model and repeated --dependency select committed capture inputs.
   Revision previews and --metadata are preparation options, not apply flags.
-  Configuration supplies state storage, helper resources, harvest bounds,
-  productBuild assertion and dedicated credential references. No ambient defaults.
-  The JSON report lists preparation, assignment commits and messages,
-  actual assessment/reviews/checks and cleanup observations, publication,
-  outcome (success, failed or incomplete) and the evidence directory under
-  STATE/runs/RUN; only one run holds a state directory. A Run is closed: no
-  question or answer crosses Root to the user or the invoking AI, and no
-  preloaded owner decision supplies model intent. A Run that needs a material
-  decision the model lacks ends failed without publication and reports it;
-  amend the model and start a new Run.
+  Configuration formatVersion 3 requires a UTC deadline, Manager/message
+  limits, message timeout, cleanup/persistence bounds, state/build assertions
+  and dedicated normal-account credentials. No helper/harvest or API-key route.
+  At S2 Apply reports unavailable and creates no execution resources.
+  Standalone Run has a closed hierarchy: questions remain inside that Run.
+  S3 must integrate the full workflow and stored-candidate publication.
 
 Exit codes: 0 requested stage passed; 1 known failure; 2 usage;
 3 incomplete observation, I/O/budget refusal or unavailable operation.

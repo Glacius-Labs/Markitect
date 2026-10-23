@@ -40,10 +40,6 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Distinguishes literal command and resource binding, failed tree verification, known failed exits, cancellation and unconfirmed cleanup.
-  - path: "internal/adapters/checks/runtime_smoke_test.go"
-    form: test
-    realizes: [product/ports-and-adapters]
-    why: Defines an explicitly opted-in actual container Engine, repository Workspaces and Check Runner composition smoke with exact tree and image receipts, empty-volume copy-up challenges and observed disposable cleanup.
   - path: "internal/adapters/checks/container_setup.go"
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
@@ -60,7 +56,7 @@ artifacts:
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
     why: "Binds declared checks to closed static image metadata and exact disposable copies while retaining actual execution and cleanup observations."
-  - path: "internal/adapters/checks/local_copies.go"
+  - path: "internal/adapters/checks/copy_materializer.go"
     form: code
     realizes: [product/adapters/checks/closed-check-metadata]
-    why: "Binds declared checks to closed static image metadata and exact disposable copies while retaining actual execution and cleanup observations."
+    why: "Consumes exact disposable trees from the existing Run service and retains physical check and closure observations."

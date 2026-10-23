@@ -2,6 +2,7 @@ package run
 
 import (
 	"context"
+	"sync"
 	"testing"
 	"time"
 
@@ -14,6 +15,35 @@ func inboxExecution() (*execution, *managerState, *managerState) {
 	b := &managerState{manager: organization.Manager{Package: "a", Parent: "."}, running: true, working: true, accepting: true, inbox: make(chan Event, 1)}
 	x := &execution{ctx: ctx, cancel: cancel, request: Request{ID: "inbox-test", Allowance: NewAllowance(time.Now().Add(time.Second), 10)}, states: map[string]*managerState{".": a, "a": b}, questions: map[string]Question{}, answered: map[string]bool{}}
 	return x, a, b
+}
+
+func TestConcurrentLateFindingCannotBeOverwrittenByCandidateCompletion(t *testing.T) {
+	for i := 0; i < 100; i++ {
+		x, parent, child := inboxExecution()
+		parent.mu.Lock()
+		var started, done sync.WaitGroup
+		started.Add(2)
+		done.Add(2)
+		go func() {
+			defer done.Done()
+			started.Done()
+			parent.finish(Commit{ID: "fixed", Tree: "tree"}, Response{Decision: Submitted, Findings: []Finding{{Manager: ".", Text: "ordinary submission"}}}, "")
+		}()
+		go func() {
+			defer done.Done()
+			started.Done()
+			if err := x.observeLate(child, Response{Decision: ModelBlocker, Findings: []Finding{{Text: "late required blocker"}}}); err != nil {
+				t.Error(err)
+			}
+		}()
+		started.Wait()
+		parent.mu.Unlock()
+		done.Wait()
+		x.cancel()
+		if parent.handoff.Decision != ModelBlocker || len(parent.handoff.Findings) != 2 || x.lateDecision != ModelBlocker {
+			t.Fatal("candidate completion lost concurrent required finding", parent.handoff)
+		}
+	}
 }
 
 func TestAnswerPublicationIsRetryableAndAcknowledgedOnlyByRequester(t *testing.T) {

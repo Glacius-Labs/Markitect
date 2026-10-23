@@ -116,7 +116,7 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 	before, after := p.attempt.Model().Inputs().Raw, a.Model().Inputs().Raw
 	checked := a.Model().Checked()
 	if checked.Status == model.NotCompleted {
-		return fmt.Errorf("candidate Model observation incomplete")
+		return fmt.Errorf("%w: candidate Model observation incomplete", ErrIncompleteInputs)
 	}
 	t, err := organization.BuildTopology(checked)
 	if err != nil || !reflect.DeepEqual(p.topology.Managers(), t.Managers()) || p.topology.ModelID() != t.ModelID() || p.topology.ModelDigest() != t.ModelDigest() {
@@ -167,7 +167,7 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 		return fmt.Errorf("%w: structural checks failed", ErrCandidateInvalid)
 	}
 	if status != model.Passed {
-		return fmt.Errorf("candidate structural observation incomplete")
+		return fmt.Errorf("%w: candidate structural observation incomplete", ErrIncompleteInputs)
 	}
 	return nil
 }

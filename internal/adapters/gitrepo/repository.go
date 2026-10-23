@@ -44,7 +44,8 @@ func DefaultLimits() Limits {
 // Repository retains capture bindings and opaque publication permits in memory.
 // Each call owns its handles and Git processes. Construction performs no I/O.
 type Repository struct {
-	limits Limits
+	limits   Limits
+	retained retainedInputs
 	// A private deterministic scheduling seam for acquisition/publication races.
 	observe func(event, path string)
 }

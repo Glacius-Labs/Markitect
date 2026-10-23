@@ -136,3 +136,7 @@ artifacts:
     form: test
     realizes: [product/run/confirmed-run-history]
     why: "Executes or verifies a closed complete Manager hierarchy, exact durable handoffs, independent reopening and concurrent project Notes with bounded failure handling."
+  - path: "internal/run/handoff.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Serializes fixed handoff completion and late required findings while retaining exact closed Run outcomes."

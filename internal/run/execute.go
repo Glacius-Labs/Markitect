@@ -26,6 +26,7 @@ type managerState struct {
 	running, delivered, assigned bool
 	accepting                    bool
 	working                      bool
+	lateDecision                 Decision
 	idle                         chan struct{}
 	done                         chan completion
 	inbox                        chan Event
@@ -76,7 +77,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 			if workErr != nil {
 				break
 			}
-			if s.copy == nil {
+			if s.copy == nil || !s.copy.Location().Valid() {
 				workErr = fmt.Errorf("missing Manager copy")
 				break
 			}
@@ -88,6 +89,15 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 				workErr = fmt.Errorf("missing Manager session")
 				break
 			}
+			if observed, ok := s.session.(ObservedSession); ok {
+				value := observed.Observation()
+				if !imageIdentity(value.ProfileIdentity) || !imageIdentity(value.ImageID) || !imageIdentity(value.HarnessDigest) {
+					workErr = fmt.Errorf("native Session observation incomplete")
+					break
+				}
+				x.result.Sessions = append(x.result.Sessions, ManagerSessionObservation{Manager: m.Package, Observation: value})
+			}
+
 		}
 	}
 	var root Handoff
@@ -156,7 +166,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	if workErr != nil {
 		x.result.Errors = append(x.result.Errors, workErr.Error())
 		x.result.Technical = Failed
-		if x.ctx.Err() != nil || errors.Is(workErr, ErrUnavailable) || errors.Is(workErr, ErrBudget) {
+		if x.ctx.Err() != nil || errors.Is(workErr, ErrUnavailable) || errors.Is(workErr, ErrBudget) || errors.Is(workErr, context.Canceled) || errors.Is(workErr, context.DeadlineExceeded) || errors.Is(workErr, ErrObservationIncomplete) || errors.Is(workErr, project.ErrIncompleteInputs) {
 			x.result.Technical = Incomplete
 		}
 	} else {
@@ -509,23 +519,15 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 		for i := range r.Findings {
 			r.Findings[i].Manager = s.manager.Package
 		}
-		h := s.handoff
-		h.Manager = s.manager.Package
-		h.Base = s.base
-		h.Result = commit
-		h.Findings = append(h.Findings, r.Findings...)
-		h.Decision = r.Decision
+		childDecision := Decision("")
 		for _, child := range s.manager.Children {
 			c := x.states[child]
 			c.mu.Lock()
-			if c.handoff.Decision == ModelBlocker || c.handoff.Review.Decision == ModelBlocker {
-				h.Decision = ModelBlocker
-			} else if (c.handoff.Decision == Reject || c.handoff.Review.Decision == Reject) && h.Decision != ModelBlocker {
-				h.Decision = Reject
-			}
+			childDecision = requiredDecision(childDecision, c.handoff.Decision)
+			childDecision = requiredDecision(childDecision, c.handoff.Review.Decision)
 			c.mu.Unlock()
 		}
-		s.handoff = h
+		h := s.finish(commit, r, childDecision)
 		return h, nil
 	}
 }
@@ -562,7 +564,7 @@ func (x *execution) check(s *managerState, commit Commit, required bool) error {
 			}
 			receipt := c.Receipt
 			if !receipt.Started || !receipt.Exited || receipt.Uncertain || receipt.TimedOut || !receipt.CopiesClosed || !imageIdentity(receipt.ImageID) || c.Error != "" {
-				return fmt.Errorf("check %s physical observations incomplete", c.ID)
+				return fmt.Errorf("%w: check %s", ErrObservationIncomplete, c.ID)
 			}
 			if receipt.ExitCode != 0 {
 				return fmt.Errorf("%w: check %s exited %d", project.ErrCandidateInvalid, c.ID, receipt.ExitCode)

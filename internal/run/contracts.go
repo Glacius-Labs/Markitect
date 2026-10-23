@@ -14,6 +14,7 @@ import (
 
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
 type Mandate string
@@ -81,21 +82,32 @@ type Integration struct {
 	ParentBefore Commit `json:"parentBefore"`
 	ParentAfter  Commit `json:"parentAfter"`
 }
+
+// SessionObservation contains concrete native construction facts. Controlled
+// sessions omit this optional observation rather than fabricate native identity.
+type SessionObservation struct{ ProfileIdentity, ImageID, HarnessDigest string }
+type ManagerSessionObservation struct {
+	Manager     string             `json:"manager"`
+	Observation SessionObservation `json:"observation"`
+}
+type ObservedSession interface{ Observation() SessionObservation }
+
 type Result struct {
-	ID        string                `json:"id"`
-	Project   string                `json:"project"`
-	Binding   string                `json:"binding"`
-	Mandate   Mandate               `json:"mandate"`
-	Technical Technical             `json:"technical"`
-	Decision  Decision              `json:"decision,omitempty"`
-	Input     project.CandidateRef  `json:"input"`
-	Candidate *project.CandidateRef `json:"candidate,omitempty"`
-	Findings  []Finding             `json:"findings"`
-	Handoffs  []Handoff             `json:"handoffs"`
-	Checks    []CheckObservation    `json:"checks"`
-	Cleanup   []Closure             `json:"cleanup"`
-	Errors    []string              `json:"errors"`
-	Messages  int                   `json:"messages"`
+	ID        string                      `json:"id"`
+	Project   string                      `json:"project"`
+	Binding   string                      `json:"binding"`
+	Mandate   Mandate                     `json:"mandate"`
+	Technical Technical                   `json:"technical"`
+	Decision  Decision                    `json:"decision,omitempty"`
+	Sessions  []ManagerSessionObservation `json:"sessions"`
+	Input     project.CandidateRef        `json:"input"`
+	Candidate *project.CandidateRef       `json:"candidate,omitempty"`
+	Findings  []Finding                   `json:"findings"`
+	Handoffs  []Handoff                   `json:"handoffs"`
+	Checks    []CheckObservation          `json:"checks"`
+	Cleanup   []Closure                   `json:"cleanup"`
+	Errors    []string                    `json:"errors"`
+	Messages  int                         `json:"messages"`
 }
 type Closure struct {
 	Resource string `json:"resource"`
@@ -249,7 +261,16 @@ func (l CopyLocation) Valid() bool {
 	return true
 }
 
+// DisposableCopy owns one verified non-Git tree for one check. Its closure
+// belongs to that check; the enclosing Run service also owns failure cleanup.
+type DisposableCopy interface {
+	Location() CopyLocation
+	Tree() snapshot.TreeID
+	Close(context.Context) error
+}
+
 type Copy interface {
+	Materialize(context.Context, snapshot.Tree) (DisposableCopy, error)
 	Location() CopyLocation
 	Update(context.Context, Copy, Commit) error
 	Snapshot(context.Context) (Commit, error)
@@ -274,6 +295,8 @@ type Executor struct {
 	Records    Records
 	Checks     CandidateChecks
 }
+
+var ErrObservationIncomplete = errors.New("Run physical observation incomplete")
 
 var ErrBudget = errors.New("Run allowance exhausted")
 var ErrUnavailable = errors.New("native sessions unavailable: adapter capability is not ready")

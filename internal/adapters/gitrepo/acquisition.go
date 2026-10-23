@@ -112,6 +112,13 @@ func (r *Repository) acquire(ctx context.Context, selection project.InputSelecti
 		}
 	}
 	for _, target := range append([]*project.ModelSource{&a.raw.Local}, modelPointers(a.raw.Dependencies)...) {
+		if revision != "" {
+			retained, found := r.retained.model(target.Selection)
+			if found {
+				*target = retained
+				continue
+			}
+		}
 		m := &modelCapture{target: target, seen: make(map[string]snapshot.Entry)}
 		a.models = append(a.models, m)
 		if err = a.manifest(m); err != nil {
@@ -397,6 +404,17 @@ func (a *acquisition) account(key string, entry snapshot.Entry) error {
 func (a *acquisition) selectedFiles(locations []project.SourceLocation, target *[]project.SourceFile, local bool) error {
 	seen := make(map[string]bool)
 	for _, location := range locations {
+		if a.revision != "" && !local {
+			if file, found := a.repository.retained.instruction(location); found {
+				key := location.Boundary + "/" + location.Path.String()
+				if seen[key] {
+					return fmt.Errorf("%w: duplicate selected input", ErrUnsafe)
+				}
+				seen[key] = true
+				*target = append(*target, file)
+				continue
+			}
+		}
 		*target = append(*target, project.SourceFile{Location: location})
 		observed := &(*target)[len(*target)-1]
 		b, err := a.boundary(location.Boundary)
