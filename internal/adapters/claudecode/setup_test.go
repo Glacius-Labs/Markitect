@@ -8,8 +8,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"go.yaml.in/yaml/v3"
 )
 
@@ -41,7 +41,7 @@ func TestRuntimeSectionRoundTripsThroughTheMetadataDecoderAndProjection(t *testi
 	if err := yaml.Unmarshal(text, &document); err != nil {
 		t.Fatal(err)
 	}
-	p := preparation{out: apply.ProfileObservation{Status: model.Passed}}
+	p := preparation{out: runtimeconfig.ProfileObservation{Status: model.Passed}}
 	config, ok := p.decode(document.Content[0])
 	if !ok || p.out.Status != model.Passed {
 		t.Fatalf("the decoder refused the encoding: %+v\n%s", p.out.Diagnostics, text)

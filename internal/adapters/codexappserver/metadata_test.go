@@ -11,8 +11,8 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 )
 
@@ -62,10 +62,10 @@ func TestImageMetadataUsesSelectedConfigurationAndWholeActualBytes(t *testing.T)
 	if err != nil || out.Status != model.Passed {
 		t.Fatalf("%v %+v", err, out)
 	}
-	want := &apply.AgentImageObservation{Provider: apply.AgentImageCodexAppServer, ImageID: fixtureImage,
-		Metadata:   apply.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID(sha256.Sum256([]byte(fixtureMetadata))), Size: int64(len(fixtureMetadata))},
+	want := &runtimeconfig.AgentImageObservation{Provider: runtimeconfig.AgentImageCodexAppServer, ImageID: fixtureImage,
+		Metadata:   runtimeconfig.AgentImageMetadataFile{Path: runtimeMetadataPath, ContentID: snapshot.ContentID(sha256.Sum256([]byte(fixtureMetadata))), Size: int64(len(fixtureMetadata))},
 		CLIVersion: supportedCodexVersion, AgentdVersion: "development", RecordedCodexSchemaDigest: fixtureSchema}
-	if config.Executable != engine || !reflect.DeepEqual(out.AgentImage, want) || out.InputBinding != input.Binding() || out.Contract != (apply.ProfileContract{Name: "markitect.codex-app-server.image-metadata", Version: 1}) || len(out.Files) != 0 || len(out.Inventories) != 0 {
+	if config.Executable != engine || !reflect.DeepEqual(out.AgentImage, want) || out.InputBinding != input.Binding() || out.Contract != (runtimeconfig.ProfileContract{Name: "markitect.codex-app-server.image-metadata", Version: 1}) {
 		t.Fatalf("configuration/binding/evidence: %+v %+v", config, out)
 	}
 	wantCalls := []string{"inspect:" + fixtureImage, "read:" + fixtureImage + ":" + runtimeMetadataPath, "inspect:" + fixtureImage}
@@ -78,7 +78,7 @@ func TestApplyRetainsImageEvidenceAndInvalidatesChangedWholeMetadata(t *testing.
 	inline := imageProfile(filepath.Join(t.TempDir(), "engine"))
 	identity := func(data string) string {
 		prepared := consumeProfile(t, inline, nil, imagesPreparer(&fakeImages{data: []byte(data)}))
-		profiles := prepared.ProfileObservations()
+		profiles := prepared.Profiles
 		if len(profiles) != 1 || profiles[0].Observation().Status != model.Passed {
 			t.Fatalf("%+v", profiles)
 		}

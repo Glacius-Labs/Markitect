@@ -6,8 +6,9 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"go.yaml.in/yaml/v3"
 )
@@ -55,7 +56,7 @@ func TestDecoderRefusesDuplicatesAliasesAndRelativeEngineBeforeAcquisition(t *te
 		if err := yaml.Unmarshal([]byte(text), &document); err != nil {
 			t.Fatal(err)
 		}
-		p := preparation{out: apply.ProfileObservation{Status: model.Passed}}
+		p := preparation{out: runtimeconfig.ProfileObservation{Status: model.Passed}}
 		if _, ok := p.decode(document.Content[0]); ok || p.out.Status != model.Failed {
 			t.Fatal("closed decoder accepted ambiguous input", text)
 		}
@@ -64,16 +65,16 @@ func TestDecoderRefusesDuplicatesAliasesAndRelativeEngineBeforeAcquisition(t *te
 
 func TestInstructionsUseCapturedInputsOnlyAndRetainMissingRequest(t *testing.T) {
 	path := testPath(t, "instruction.md")
-	location := apply.SourceLocation{Boundary: "explicit-captured-instruction", Path: path}
+	location := project.SourceLocation{Boundary: "explicit-captured-instruction", Path: path}
 	entry, err := snapshot.NewEntry(path, snapshot.Regular, []byte("captured instructions only\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
 	inline := strings.Replace(imageProfile(filepath.Join(t.TempDir(), "engine")), "instructions: []", "instructions: [{boundary: explicit-captured-instruction, path: instruction.md}]", 1)
 	for _, captured := range []bool{false, true} {
-		var instructions []apply.SourceFile
+		var instructions []project.SourceFile
 		if captured {
-			instructions = []apply.SourceFile{{Location: location, File: entry}}
+			instructions = []project.SourceFile{{Location: location, File: entry}}
 		}
 		input := profileInput(t, inline, instructions)
 		f := &fakeImages{data: []byte(fixtureMetadata)}

@@ -7,15 +7,16 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
+	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"go.yaml.in/yaml/v3"
 )
 
 type metadataConfig struct {
 	engine, imageID, agentd string
-	instructions            []apply.SourceLocation
+	instructions            []project.SourceLocation
 	credentialRef           string
 	maxWireBytes            int64
 	session                 SessionProfile
@@ -52,7 +53,7 @@ func (p *preparation) decode(root *yaml.Node) (metadataConfig, bool) {
 			if err != nil {
 				p.issue(model.Failed, "instruction_path", field+"/path", err.Error())
 			}
-			c.instructions = append(c.instructions, apply.SourceLocation{Boundary: boundary, Path: path})
+			c.instructions = append(c.instructions, project.SourceLocation{Boundary: boundary, Path: path})
 		}
 	}
 	c.credentialRef = p.text(fields["credentialRef"], "/credentialRef")
