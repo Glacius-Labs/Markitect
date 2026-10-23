@@ -68,7 +68,10 @@ func TestRunFailuresPersistHonestTerminalStateAndCloseRealGit(t *testing.T) {
 			var records run.Records = store
 			var git run.Workspaces = g
 			release := make(chan struct{})
-			defer close(release)
+			var releaseOnce sync.Once
+			releaseBlocked := func() { releaseOnce.Do(func() { close(release) }) }
+			defer releaseBlocked()
+			entered, drained := make(chan struct{}), make(chan struct{})
 			deadline := time.Now().Add(45 * time.Second)
 			switch kind {
 			case "partial startup":
@@ -79,7 +82,7 @@ func TestRunFailuresPersistHonestTerminalStateAndCloseRealGit(t *testing.T) {
 				managers.closeBlock = release
 			case "stuck exchange":
 				managers.exchangeBlock = release
-				deadline = time.Now().Add(5 * time.Second)
+				managers.exchangeEntered, managers.exchangeDrained = entered, drained
 			case "storage failure":
 				records = failingRecords{Records: store, failSave: true}
 			case "readback substitution":
@@ -90,13 +93,43 @@ func TestRunFailuresPersistHonestTerminalStateAndCloseRealGit(t *testing.T) {
 			}
 			id := "failure-" + fmt.Sprintf("%x", []byte(kind))
 			e := run.Executor{Sessions: managers, Workspaces: git, Records: records}
-			started := time.Now()
-			r, err := e.Execute(context.Background(), run.Request{MaxManagers: 5, ID: id, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Assessment, Allowance: run.NewAllowance(deadline, 80), CleanupTimeout: time.Second, PersistenceTimeout: time.Second})
+			request := run.Request{MaxManagers: 5, ID: id, Project: "fixture", Prepared: p, Input: ref, Mandate: run.Assessment, Allowance: run.NewAllowance(deadline, 80), CleanupTimeout: time.Second, PersistenceTimeout: time.Second}
+			var r run.Result
+			var err error
+			if kind == "stuck exchange" {
+				// Real Git startup has the ordinary fixture allowance. Trigger
+				// cancellation only after the intended unresponsive call exists.
+				// Expiry before entry says nothing about Exchange drain.
+				ctx, cancel := context.WithCancel(context.Background())
+				defer cancel()
+				type outcome struct {
+					value run.Result
+					err   error
+				}
+				returned := make(chan outcome, 1)
+				go func() { value, err := e.Execute(ctx, request); returned <- outcome{value, err} }()
+				select {
+				case <-entered:
+				case out := <-returned:
+					t.Fatalf("Run ended before the blocked Exchange was entered: %s %v", out.value.Technical, out.err)
+				}
+				cancel()
+				select {
+				case out := <-returned:
+					r, err = out.value, out.err
+				case <-time.After(8 * time.Second):
+					t.Fatal("Exchange ignored finite work/cleanup bounds after cancellation")
+				}
+				select {
+				case <-drained:
+					t.Fatal("blocked Exchange drained before fixture release")
+				default:
+				}
+			} else {
+				r, err = e.Execute(context.Background(), request)
+			}
 			if err == nil || r.Technical == run.Completed {
 				t.Fatalf("technical failure became completed: %+v err=%v", r, err)
-			}
-			if kind == "stuck exchange" && time.Since(started) > 8*time.Second {
-				t.Fatal("Exchange ignored finite work/cleanup bounds")
 			}
 			if kind == "reject technical acquisition" && (r.Technical != run.Failed || !strings.Contains(strings.Join(r.Errors, " "), "injected acquisition failure")) {
 				t.Fatalf("semantic Reject swallowed technical acquisition: %+v", r)
@@ -122,6 +155,27 @@ func TestRunFailuresPersistHonestTerminalStateAndCloseRealGit(t *testing.T) {
 				}
 				if !found {
 					t.Fatal("unresponsive Session falsely reported closed")
+				}
+			}
+			if kind == "stuck exchange" {
+				workersUnclosed := false
+				for _, closure := range r.Cleanup {
+					if closure.Resource == "manager-workers" && !closure.Closed {
+						workersUnclosed = true
+					}
+				}
+				if !workersUnclosed {
+					t.Fatal("blocked Exchange was falsely reported drained")
+				}
+				before, readErr := store.Read(context.Background(), "fixture", id)
+				if readErr != nil {
+					t.Fatal(readErr)
+				}
+				releaseBlocked()
+				waitRunSignal(t, drained, "released Exchange to drain")
+				after, readErr := store.Read(context.Background(), "fixture", id)
+				if readErr != nil || !reflect.DeepEqual(before, after) {
+					t.Fatal("late Exchange completion changed the stored terminal record", readErr)
 				}
 			}
 		})

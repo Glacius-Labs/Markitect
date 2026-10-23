@@ -409,6 +409,8 @@ type controlledManagers struct {
 	didLateReject       bool
 	observation         *run.SessionObservation
 	exchangeBlock       <-chan struct{}
+	exchangeEntered     chan struct{}
+	exchangeDrained     chan struct{}
 	closeBlock          <-chan struct{}
 	noChange            bool
 }
@@ -453,6 +455,12 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 	m.calls++
 	tools := m.spec.Tools
 	if m.owner.exchangeBlock != nil && m.spec.Manager.Package == "." {
+		if m.owner.exchangeEntered != nil {
+			close(m.owner.exchangeEntered)
+		}
+		if m.owner.exchangeDrained != nil {
+			defer close(m.owner.exchangeDrained)
+		}
 		<-m.owner.exchangeBlock
 	}
 	if strings.HasPrefix(message.Task, "Answer pending Manager questions") {
