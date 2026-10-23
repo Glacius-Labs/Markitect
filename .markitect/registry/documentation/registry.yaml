@@ -1,5 +1,13 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/validation/apply-assignments-luna-20261023.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the integrated assignment Apply scope, retained Luna attempts, successful fresh Library result and remaining migration boundaries before chat archival.
+  - path: "docs/validation/apply-assignments-luna-20261023.json"
+    form: config
+    realizes: [documentation/current-guidance]
+    why: Retains parsed outcome snapshots and original evidence hashes for the eight Library attempts without copying credentials or native conversation contents.
   - path: "docs/concepts/sources/agent-workspaces-and-handoffs-20261022.md"
     form: doc
     realizes: [documentation/current-guidance]

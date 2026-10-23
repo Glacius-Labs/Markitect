@@ -1,6 +1,6 @@
 # Concept register
 
-**Latest accepted target, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) replaces conflicting shared-tree, Pass/Turn, evidence-protocol and per-write-enforcement directions. The [workflow](../design/canonical-model/manager-apply-workflow.md) owns the target and the [delivery plan](../implementation-plan.md#apply-rebuild-plan) owns future slices. Current code and canonical self-model are unchanged; this is documentation adoption, not implementation or runtime evidence.
+**Latest accepted target, 22 October 2026:** [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) replaces conflicting shared-tree, Pass/Turn, evidence-protocol and per-write-enforcement directions. The [workflow](../design/canonical-model/manager-apply-workflow.md) owns the target and the [delivery plan](../implementation-plan.md#apply-rebuild-plan) owns delivery. PR #609 adopted the documentation only; A1–A3 and the early A4 product start path have since integrated through #633. The [23 October validation record](../validation/apply-assignments-luna-20261023.md) bounds the first successful fresh Library Apply; full migration and acceptance remain separate.
 
 This register records Markitect's long-term vision, product-level decisions, clarifications, endorsed directions, promises, assumptions, concepts, future enhancements, ideas and open questions. Each entry has a status and an origin. "Owner" means Markitect's product owner. The [concept record guide](README.md) defines entry types, statuses and the rules for changing entries. The [vision](../vision.md) presents the thesis these entries support. Earlier collections from the Concepts and Ideas chats are preserved in the [sources](sources/README.md) and mapped [below](#imported-collections).
 
@@ -81,7 +81,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-064](#dec-064-checked-recursive-apply-passes-and-manager-teams) | Decision | Checked recursive Apply passes and Manager teams | Base integrated; evidence-driven hardening adopted, implementation and new evidence pending |
 | [DEC-065](#dec-065-work-through-the-cockpit-agent-proposed-model-changes-and-configuration) | Decision | Work through the cockpit: agent-proposed model changes and configuration | Accepted by the owner; implementation started |
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded |
-| [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted target; concept and rebuild plan only, implementation pending |
+| [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; A1–A3 and early A4 integrated, remaining migration tracked in the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |

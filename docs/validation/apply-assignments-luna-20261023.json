@@ -1,0 +1,1160 @@
+{
+  "formatVersion": 1,
+  "capturedAtUtc": "2026-10-23T07:34:51.0741925Z",
+  "auditedMain": "c1ead43dda1577652b2d8319f3166353fb49e85e",
+  "scope": "Retained parsed outcome snapshots and original-file hashes; native transcript contents and generated realizations remain in the original external archives.",
+  "archiveRoot": "Documents/Codex beneath the original Windows user profile",
+  "runs": [
+    {
+      "name": "library-luna-20261022-01",
+      "kind": "external-runner-attempt",
+      "archive": "A3-LIBRARY-LUNA-20261022/runs/library-luna-20261022-01",
+      "evidence": [
+        {
+          "path": "A3-LIBRARY-LUNA-20261022/runs/library-luna-20261022-01/start.json",
+          "sha256": "02d96a5baa3dae99e0482080c1c1cb5669be68caa807065620d9a34ed1a69628",
+          "bytes": 223
+        },
+        {
+          "path": "A3-LIBRARY-LUNA-20261022/runs/library-luna-20261022-01/invocation-result.json",
+          "sha256": "f5967a70a1e787a6333ba5ff33b9b3d8a0c0b9227431d42d4101a96aa7243cda",
+          "bytes": 1213
+        }
+      ],
+      "start": {
+        "runId": "library-luna-20261022-01",
+        "sourceHead": "20da7f11efb58a4037066dd3f24449d6486446eb",
+        "sourceTree": "b0ce9d9b3fd44874647e4865d6a53a9886b2e5bf",
+        "fixtureHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5"
+      },
+      "invocation-result": {
+        "runId": "library-luna-20261022-01",
+        "bundleSha256Verified": true,
+        "sourceHead": "20da7f11efb58a4037066dd3f24449d6486446eb",
+        "sourceTree": "b0ce9d9b3fd44874647e4865d6a53a9886b2e5bf",
+        "fixtureHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5",
+        "goTestExitCode": 1,
+        "goTestElapsedSeconds": 74.046,
+        "testFailure": "TestA3LibraryRealizationRunner failed at a3_library_runner_external_test.go:124: committed Library fixture and source-bound Runtime settings did not complete static preparation",
+        "stage": "static-runtime-settings-capture",
+        "realizeAssignmentsStarted": false,
+        "agentOrProviderStarted": false,
+        "projectCheckStarted": false,
+        "verifyStarted": false,
+        "acceptedCommit": null,
+        "publication": false,
+        "cleanup": "not applicable; no assignment-home volumes were created",
+        "runLabeledContainersAfterExit": [],
+        "runLabeledVolumesAfterExit": [],
+        "summaryJsonWritten": false,
+        "retainedEvidence": [
+          "start.json",
+          "invocation-result.json",
+          "provider-free-markitect-check.json",
+          "provider-free-markitect-check.stderr.txt",
+          "provider-free-markitect-check-summary.json",
+          "provider-free-static-capture.json"
+        ],
+        "cost": "unknown; no billing evidence"
+      }
+    },
+    {
+      "name": "library-luna-20261022-02",
+      "kind": "external-runner-attempt",
+      "archive": "A3-LIBRARY-LUNA-20261022-02/runs/library-luna-20261022-02",
+      "evidence": [
+        {
+          "path": "A3-LIBRARY-LUNA-20261022-02/runs/library-luna-20261022-02/start.json",
+          "sha256": "b264d45acdc34e7f53171777ecfd4744512c203675ad125de2166d7f8c406fb6",
+          "bytes": 223
+        },
+        {
+          "path": "A3-LIBRARY-LUNA-20261022-02/runs/library-luna-20261022-02/invocation-result.json",
+          "sha256": "7d2f232aa0fa57aedd9d446ae6a9176fe70cb6afd9223dc643397c844d8bd053",
+          "bytes": 1041
+        }
+      ],
+      "start": {
+        "runId": "library-luna-20261022-02",
+        "sourceHead": "20da7f11efb58a4037066dd3f24449d6486446eb",
+        "sourceTree": "b0ce9d9b3fd44874647e4865d6a53a9886b2e5bf",
+        "fixtureHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5"
+      },
+      "invocation-result": {
+        "runId": "library-luna-20261022-02",
+        "status": "incomplete",
+        "attempt": 1,
+        "invocationExitCode": 1,
+        "failure": {
+          "stage": "adapter-composition",
+          "message": "selected provider adapter does not implement assignment sessions",
+          "source": "runner_external_test.go:133"
+        },
+        "timing": {
+          "runnerTestSeconds": 60.4,
+          "goPackageSeconds": 61.359
+        },
+        "stages": {
+          "captureSettings": "passed (runner advanced past verifyA3LibraryPrepared)",
+          "providerAdapterComposition": "failed",
+          "realizeAssignments": "not called",
+          "providerMessages": 0,
+          "checks": "not started",
+          "verify": "not started",
+          "cleanup": "not applicable; no homes/agent containers were created"
+        },
+        "census": {
+          "runLabeledContainers": [],
+          "runLabeledVolumes": []
+        },
+        "acceptedCommit": null,
+        "published": false,
+        "outputPath": "C:\\Users\\Consiliari\\Documents\\Codex\\A3-LIBRARY-LUNA-20261022-02-preflight\\run02-invocation.txt",
+        "cost": "unknown; provider was not started"
+      }
+    },
+    {
+      "name": "library-luna-20261022-03",
+      "kind": "external-runner-attempt",
+      "archive": "A3-LIBRARY-LUNA-20261022-03/runs/library-luna-20261022-03",
+      "evidence": [
+        {
+          "path": "A3-LIBRARY-LUNA-20261022-03/runs/library-luna-20261022-03/start.json",
+          "sha256": "fb35949330f00d9fd2158e267195049d0896ef5f966ec3676a2258451ff572d5",
+          "bytes": 223
+        },
+        {
+          "path": "A3-LIBRARY-LUNA-20261022-03/runs/library-luna-20261022-03/invocation-result.json",
+          "sha256": "0876f8b1681274cbe4f196c59e5e6bb3d329f3b620a5bc0417fce400734ad384",
+          "bytes": 1584
+        },
+        {
+          "path": "A3-LIBRARY-LUNA-20261022-03/runs/library-luna-20261022-03/summary.json",
+          "sha256": "dfda900cbcc9c412702bd856cfaca516d40cca4efde1881a5bc86fc27f3bb88d",
+          "bytes": 6092
+        }
+      ],
+      "start": {
+        "runId": "library-luna-20261022-03",
+        "sourceHead": "20da7f11efb58a4037066dd3f24449d6486446eb",
+        "sourceTree": "b0ce9d9b3fd44874647e4865d6a53a9886b2e5bf",
+        "fixtureHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5"
+      },
+      "invocation-result": {
+        "runId": "library-luna-20261022-03",
+        "status": "incomplete",
+        "attempt": 1,
+        "invocationExitCode": 1,
+        "elapsedSeconds": 246.453,
+        "runnerTestSeconds": 245.51,
+        "stages": {
+          "staticCapture": "passed",
+          "directAssignmentWiring": "passed",
+          "providerAgentsStarted": true,
+          "assessment": {
+            "accepted": true,
+            "providerTurns": 3,
+            "modelProblem": false
+          },
+          "assignments": {
+            "outerMessagesAttempted": 3,
+            "completedMessages": 2,
+            "rootProviderTurns": 16,
+            "childCatalogAttemptIncomplete": true,
+            "otherChildrenStarted": false
+          },
+          "check": "not started",
+          "verify": "not started",
+          "acceptedCommit": "none",
+          "publication": "none",
+          "homeCleanup": "retained-incomplete"
+        },
+        "technicalErrorType": "*errors.joinError",
+        "checkReceiptsPresent": false,
+        "verifyAcceptedCommitsPresent": false,
+        "homeVolumes": [
+          "library-luna-20261022-03-assess-home",
+          "library-luna-20261022-03-work-0-home",
+          "library-luna-20261022-03-work-1-home",
+          "library-luna-20261022-03-work-2-home",
+          "library-luna-20261022-03-work-4-home",
+          "library-luna-20261022-03-work-5-home"
+        ],
+        "workspaceVolumesRetained": 6,
+        "activeLabeledContainersAfterExit": 0,
+        "cost": "unknown; no billing evidence",
+        "outputPath": "C:\\Users\\Consiliari\\Documents\\Codex\\A3-LIBRARY-LUNA-20261022-03-preflight\\run03-invocation.txt",
+        "summaryPath": "C:\\Users\\Consiliari\\Documents\\Codex\\A3-LIBRARY-LUNA-20261022-03\\runs\\library-luna-20261022-03\\summary.json"
+      },
+      "summary": {
+        "runId": "library-luna-20261022-03",
+        "sourceHead": "20da7f11efb58a4037066dd3f24449d6486446eb",
+        "fixtureHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5",
+        "modelHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5",
+        "rootCommit": "",
+        "acceptedCommit": "",
+        "messages": 3,
+        "assessmentAcceptedCommit": "71faff8bb491ebbcf14338771b7b3f698656c0e9",
+        "verifyAcceptedCommits": null,
+        "technicalErrorType": "*errors.joinError",
+        "technicalErrorCategories": null,
+        "technicalErrorReason": null,
+        "treeDigest": "c7c96e2bf802ddef8d8d6d3e44b36e3b90f5f9a2ca28265753e99eee34b5f9ca",
+        "managerContainerMaxConcurrentStarts": null
+      }
+    },
+    {
+      "name": "library-luna-20261022-04",
+      "kind": "external-runner-attempt",
+      "archive": "A3-LIBRARY-LUNA-20261022-04/runs/library-luna-20261022-04",
+      "evidence": [
+        {
+          "path": "A3-LIBRARY-LUNA-20261022-04/runs/library-luna-20261022-04/start.json",
+          "sha256": "aff2fd140aecad3c6b2db06d6255cb50a4b6102ca9e599c1600ae19d17e38292",
+          "bytes": 223
+        },
+        {
+          "path": "A3-LIBRARY-LUNA-20261022-04/runs/library-luna-20261022-04/summary.json",
+          "sha256": "70ef26c9ba3084914411c8f0599814f3bc4d6d04c9751da1bcc645f2d76981a6",
+          "bytes": 14095
+        }
+      ],
+      "start": {
+        "runId": "library-luna-20261022-04",
+        "sourceHead": "8566f1e9b6802d163782e766f5f71eed5d62f87f",
+        "sourceTree": "3a3e6eb6254fc2a0f24bfd9f0fe04baf9cebc1b3",
+        "fixtureHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5"
+      },
+      "summary": {
+        "runId": "library-luna-20261022-04",
+        "sourceHead": "8566f1e9b6802d163782e766f5f71eed5d62f87f",
+        "fixtureHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5",
+        "modelHead": "5bdf60cdf5e2da0bcb839899ab4657b1fa02eca5",
+        "rootCommit": "",
+        "acceptedCommit": "",
+        "messages": 11,
+        "assessmentAcceptedCommit": "77733587ce3fc7e597666db8da0d24b57275e38e",
+        "verifyAcceptedCommits": null,
+        "technicalErrorType": "*errors.joinError",
+        "technicalErrorCategories": [
+          "canceled"
+        ],
+        "technicalErrorReason": "technical run error; raw error text intentionally omitted",
+        "treeDigest": "c7c96e2bf802ddef8d8d6d3e44b36e3b90f5f9a2ca28265753e99eee34b5f9ca",
+        "managerContainerMaxConcurrentStarts": 3
+      }
+    },
+    {
+      "name": "library-luna-20261022-05",
+      "kind": "product-apply",
+      "archive": "Markitect-Library-Runs/library-luna-20261022-05",
+      "start": {
+        "mainHead": "4b3af86aab13ff06811b673125c9b88e94f9cc54",
+        "fixtureHead": "e799480f85680a77e816d7c740777ff06c07347e",
+        "productBuild": "0.14.1+4b3af86aab13ff06811b673125c9b88e94f9cc54",
+        "productExecutableSha256": "0583a20533e23e0670d58b085f69b6d03a3394f5dcab160bbcafeb178c34bda3",
+        "runtimeProfileSha256": "9563f25021a477b963cca08869642cb136f1bdc3b5d2627d3dae4f9e9f37c925",
+        "runConfigSha256": "1b2bb128106ef0da1b0c24629ad1565f30b96b3bd3f1fb65c756ad0510b893b2",
+        "fixtureCheckSha256": "e921dc6e20707d1c2e19f5dbc55515d7d0168a52c905ae572cd1927ba6d88fe8",
+        "baseImage": "sha256:f587140b381695a112120f60b52075141c379a225fbcf5396e4a644e3c614cca",
+        "goImage": "sha256:548f9fbf19169134f2657868334c2c5018adb6d206be4ea068a95691829c9015",
+        "runDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261022-05",
+        "deadline": "2026-10-22T22:34:25Z",
+        "maxMessages": 40,
+        "messageTimeoutSeconds": 120
+      },
+      "end": {
+        "endedAt": "2026-10-22T21:54:49Z",
+        "applyExit": 3,
+        "stdoutSha256": "b495df92c9e2360b2b633580e472424825765482ed694296453b94aafc6cb82a",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "report": {
+        "assignment": {
+          "assessment": {
+            "acceptedCommit": "303e78e5e17e8838066f2bd7e08c52059714893f",
+            "issues": [],
+            "reason": "The fixed model settles the public outcomes needed for registration, eligibility, copy availability, borrowing limits and due dates, returns, inspection, overdue assessment, input/refusal behavior, and the callable JSONL contract. The apparent boundaries (including date-range overflow, repeated returns, current-state overdue assessment, and sequential operation state) are explicitly resolved. Remaining freedom—such as error wording/precedence where permitted, loan-ID format, list ordering, and internal realization choices—is expressly delegated or implementation-only; I found no material contradiction or unassigned choice yielding incompatible required public outcomes."
+          },
+          "assessmentCommit": "303e78e5e17e8838066f2bd7e08c52059714893f",
+          "checkCount": 0,
+          "checks": [],
+          "gitContainerID": "efd4092356b59d4ca7dd35d55442ca1fc85881a9332983f914014c2d532a9145",
+          "gitExecCount": 74,
+          "homes": [
+            "20261022T214925Z-fc973258-assess-home",
+            "20261022T214925Z-fc973258-work-0-home",
+            "20261022T214925Z-fc973258-work-1-home",
+            "20261022T214925Z-fc973258-work-2-home",
+            "20261022T214925Z-fc973258-work-3-home",
+            "20261022T214925Z-fc973258-work-4-home",
+            "20261022T214925Z-fc973258-work-5-home"
+          ],
+          "homesRemoved": [],
+          "id": "20261022T214925Z-fc973258",
+          "messages": 2,
+          "modelHead": "e799480f85680a77e816d7c740777ff06c07347e",
+          "noChange": false,
+          "reviewCount": 0,
+          "reviews": []
+        },
+        "error": "context deadline exceeded\ncontext deadline exceeded",
+        "evidenceDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261022-05\\state\\runs\\20261022T214925Z-fc973258",
+        "formatVersion": 1,
+        "operation": "apply",
+        "outcome": "incomplete",
+        "preparation": {
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "contextStatus": "passed",
+              "defaultsDiagnostics": null,
+              "defaultsStatus": "passed",
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "head": "e799480f85680a77e816d7c740777ff06c07347e",
+              "modelDiagnostics": null,
+              "modelStatus": "passed",
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ],
+          "productBuildAssertion": "0.14.1+4b3af86aab13ff06811b673125c9b88e94f9cc54",
+          "status": "passed"
+        },
+        "status": "not_completed"
+      },
+      "evidence": [
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/start.json",
+          "sha256": "ee3ed7c8188b243bc6f71c535df4ca1ebb00c22826d9f6fdf98c0c9fd015be65",
+          "bytes": 957
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/end.json",
+          "sha256": "e5bd5b43895da58e04d83444bd5fe58dc2602c0f6048fe21e43b57f5b9d35570",
+          "bytes": 235
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/apply.stdout.json",
+          "sha256": "b495df92c9e2360b2b633580e472424825765482ed694296453b94aafc6cb82a",
+          "bytes": 2526
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/apply.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/events.jsonl",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/report.json",
+          "sha256": "b495df92c9e2360b2b633580e472424825765482ed694296453b94aafc6cb82a",
+          "bytes": 2526
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/transcripts/20261022T214925Z-fc973258-assess.jsonl",
+          "sha256": "7c1ae0f6835ea8fde6a67ff0c6daa604025af8a0bd574c72afa3aded10fe39ca",
+          "bytes": 133624
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/transcripts/20261022T214925Z-fc973258-work-0.jsonl",
+          "sha256": "249a70a8e926ab434ff1b519c9852ba26c3a88079b6a292437c099a5e6f0477b",
+          "bytes": 126402
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/transcripts/20261022T214925Z-fc973258-work-1.jsonl",
+          "sha256": "0835ffe3b372978a3b30f7cd1094c1505229ba1e169a33380fb3b10b6ef0a970",
+          "bytes": 620
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/transcripts/20261022T214925Z-fc973258-work-2.jsonl",
+          "sha256": "0889c454744f7c2e9915984dc5c7aa11e4395720d8a3d80d933ec53889f9ab0d",
+          "bytes": 622
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/transcripts/20261022T214925Z-fc973258-work-3.jsonl",
+          "sha256": "907292278949ca962dffa801a9275fb0a5398e97b4618ed2111728604ff3e041",
+          "bytes": 621
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/transcripts/20261022T214925Z-fc973258-work-4.jsonl",
+          "sha256": "329711801f13f5d9082babc407e74e6051759e7af44576a8f865808eab4bac6e",
+          "bytes": 621
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-05/state/runs/20261022T214925Z-fc973258/transcripts/20261022T214925Z-fc973258-work-5.jsonl",
+          "sha256": "ccac87b9603804907687e54137c43ee624c33ea50c9d8efbf27a92c5914e3715",
+          "bytes": 622
+        }
+      ]
+    },
+    {
+      "name": "library-luna-20261022-06",
+      "kind": "product-apply",
+      "archive": "Markitect-Library-Runs/library-luna-20261022-06",
+      "start": {
+        "mainHead": "22acde15fa714bac20af0f416e61dec9c5966296",
+        "fixtureHead": "9ecdc2e7611f53f593d16be1c2ce7aaaf48f92ae",
+        "productBuild": "0.14.1+22acde15fa714bac20af0f416e61dec9c5966296",
+        "productExecutableSha256": "706012d57e756d4b7dc626254e68f436e7e53ab62c3c2766fea3411f8aa7c8ca",
+        "runtimeProfileSha256": "8db926579eabba2cdfb6e9992ba8883b8d85ddbf62054ed010ce087f1acd0896",
+        "runConfigSha256": "9208deba53fd340b9748a0e451b8a02cdd36282a6816ae978b0a71d95e59d65a",
+        "fixtureCheckSha256": "11278da6fb7933e36f7a8bca75ca789eae18c8d87c4ea66b88c1ad6fd6524028",
+        "baseImage": "sha256:bf97113ebe3a50697a811417d00b03bd7ab7d87360c7a5a717d8706f066fa749",
+        "goImage": "sha256:5729859ab459f9bad41915e062484f8501b3134cc9acd2b9a737f53ab854c6ef",
+        "runDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261022-06",
+        "deadline": "2026-10-22T22:45:58Z",
+        "maxMessages": 40,
+        "messageTimeoutSeconds": 600
+      },
+      "end": {
+        "endedAt": "2026-10-22T22:07:25Z",
+        "applyExit": 1,
+        "stdoutSha256": "4bd273b59ac512b8e49ca14f247780e14c61dbbbde076fc89769eae3ec78de52",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "report": {
+        "assignment": {
+          "assessment": {
+            "acceptedCommit": "6024e7673dcafdd605611a90b7446b081facb651",
+            "issues": [],
+            "reason": "The fixed model settles the externally observable choices needed for the commissioned library: records and identifier behavior, registration and status changes, availability and one-open-loan-per-copy, the exact 14-day due-date interval and five-open-loan admission limit, Gregorian date bounds and refusal at the due-date boundary, return/repeated-return semantics, and current-state overdue assessment. The callable interface fixes the sequential JSONL process contract, operations, required fields, responses, and refusal behavior. Remaining discretion (such as loan-ID format, error wording/precedence where explicitly free, list ordering, and internal realization structure) is expressly delegated or does not create an unsettled required outcome. I found no material contradiction or missing decision."
+          },
+          "assessmentCommit": "6024e7673dcafdd605611a90b7446b081facb651",
+          "checkCount": 0,
+          "checks": [],
+          "gitContainerID": "dcdd4372b4d1ef618ff7d36341c4f14efd10e08bcfb50dca506382aa3caa88c3",
+          "gitExecCount": 198,
+          "homes": [
+            "20261022T220058Z-48deccc2-assess-home",
+            "20261022T220058Z-48deccc2-work-0-home",
+            "20261022T220058Z-48deccc2-work-1-home",
+            "20261022T220058Z-48deccc2-work-2-home",
+            "20261022T220058Z-48deccc2-work-3-home",
+            "20261022T220058Z-48deccc2-work-4-home",
+            "20261022T220058Z-48deccc2-work-5-home"
+          ],
+          "homesRemoved": [],
+          "id": "20261022T220058Z-48deccc2",
+          "messages": 10,
+          "modelHead": "9ecdc2e7611f53f593d16be1c2ce7aaaf48f92ae",
+          "modelProblem": true,
+          "modelProblemIssue": {
+            "Expected": "The callable-interface Definition requires `go build ./cmd/library` from `realization/` to succeed, while the required owned source package directory is `realization/library/`.",
+            "Obligation": "library/callable-interface, Program and build boundary: “From `realization/`, `go build ./cmd/library` builds the program”; fixed ownership also requires the library Manager area `realization/library/`.",
+            "Observed": "The delivered command's package basename is `library`; Go's required command attempts to write the executable as `realization/library`, which is already the required source directory. The actual `go build ./cmd/library` exits with `go: build output \"library\" already exists and is a directory`. The child verified that `go build -o /tmp/library-jsonl ./cmd/library` succeeds. Satisfying the declared exact build command appears incompatible with retaining the required `realization/library/` directory.",
+            "Owner": "."
+          },
+          "noChange": false,
+          "reviewCount": 0,
+          "reviews": []
+        },
+        "error": "Root confirmed a material problem of the fixed model\nManager \"lending\": context canceled\nManager \"lending/reminders\": context canceled\ncontext canceled\nRoot confirmed a material problem of the fixed model",
+        "evidenceDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261022-06\\state\\runs\\20261022T220058Z-48deccc2",
+        "formatVersion": 1,
+        "operation": "apply",
+        "outcome": "failed",
+        "preparation": {
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "contextStatus": "passed",
+              "defaultsDiagnostics": null,
+              "defaultsStatus": "passed",
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "head": "9ecdc2e7611f53f593d16be1c2ce7aaaf48f92ae",
+              "modelDiagnostics": null,
+              "modelStatus": "passed",
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ],
+          "productBuildAssertion": "0.14.1+22acde15fa714bac20af0f416e61dec9c5966296",
+          "status": "passed"
+        },
+        "status": "failed"
+      },
+      "evidence": [
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/start.json",
+          "sha256": "90231837ddc87d912d8b729ecdf9052551cb5d7faa8891ad2b1047e78adc1b3e",
+          "bytes": 957
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/end.json",
+          "sha256": "ae22bba51b7de8b56af13b1243e6d6efe4f09ce530b8ea67a861cb0a778ae08c",
+          "bytes": 235
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/apply.stdout.json",
+          "sha256": "4bd273b59ac512b8e49ca14f247780e14c61dbbbde076fc89769eae3ec78de52",
+          "bytes": 3836
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/apply.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/events.jsonl",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/report.json",
+          "sha256": "4bd273b59ac512b8e49ca14f247780e14c61dbbbde076fc89769eae3ec78de52",
+          "bytes": 3836
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/transcripts/20261022T220058Z-48deccc2-assess.jsonl",
+          "sha256": "803206275e2e225cff3d19422fb849aa218619ea8c791616264f4f93afc2a90e",
+          "bytes": 121147
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/transcripts/20261022T220058Z-48deccc2-work-0.jsonl",
+          "sha256": "90929e2ee1f25735b11045608c7df6e4a6665e77e68fc0d0aa5c942050cb1eda",
+          "bytes": 481718
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/transcripts/20261022T220058Z-48deccc2-work-1.jsonl",
+          "sha256": "4045b6726cd9e20b1ef245f0fb8237719eeb37f6dea6015f0308281140422d10",
+          "bytes": 233131
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/transcripts/20261022T220058Z-48deccc2-work-2.jsonl",
+          "sha256": "3165db4f2fd2f98c8b1984f94b69051d1a5e11396ecb6f2a68bcafda68649d68",
+          "bytes": 252006
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/transcripts/20261022T220058Z-48deccc2-work-3.jsonl",
+          "sha256": "1aafd8e34ba6aa466ceb3c5462e18a311ee62341e386cd03dcaea1f483809511",
+          "bytes": 176349
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/transcripts/20261022T220058Z-48deccc2-work-4.jsonl",
+          "sha256": "183f00db2e250f4f89e9ddde361ab028553bc07732af1bd23dd68abcf4a0d936",
+          "bytes": 680800
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261022-06/state/runs/20261022T220058Z-48deccc2/transcripts/20261022T220058Z-48deccc2-work-5.jsonl",
+          "sha256": "4be4a64c1f2b75b867bba14a3c789c1a486a5b9738513cf318c83b764e1c5d30",
+          "bytes": 338405
+        }
+      ]
+    },
+    {
+      "name": "library-luna-20261023-07",
+      "kind": "product-apply",
+      "archive": "Markitect-Library-Runs/library-luna-20261023-07",
+      "start": {
+        "mainHead": "e55005f48617ecf3568453ea661806e9df2baed3",
+        "fixtureHead": "7bb435949f2d81665ecbf03ad760db58cdbbf6b7",
+        "productBuild": "0.14.1+e55005f48617ecf3568453ea661806e9df2baed3",
+        "productExecutableSha256": "3d89553b39d6c3503e66a57cf90e97d40ba86cce8f695c93ffc519807fbc1e19",
+        "runtimeProfileSha256": "dc2d42d769dce34e3bd2bcfa558501cc92390c8ba5413da0f53407e17f9486b7",
+        "runConfigSha256": "08423bc03dfe461211541e23c29ea81ec7c9c57e06be45216cfa9b352a827477",
+        "fixtureCheckSha256": "331c3fae8a64b2b77cfe91af0803ff1b430ad0b80d2686c0c0301db8fa0db887",
+        "baseImage": "sha256:abbbc386aeb6d1611b6d736442f889288b5797fb2df9d6403e9f24dffb8181b4",
+        "goImage": "sha256:29dd4a684e3c983168ab5407363d867f41ee69eec819c0c40118f9adac96b191",
+        "runDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261023-07",
+        "deadline": "2026-10-22T22:58:48Z",
+        "maxMessages": 80,
+        "messageTimeoutSeconds": 600
+      },
+      "end": {
+        "endedAt": "2026-10-22T22:29:59Z",
+        "applyExit": 3,
+        "stdoutSha256": "b9875dfa99025f562aa286225de3b947c36f61735076ba76707b83c2021d83dc",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "report": {
+        "assignment": {
+          "assessment": {
+            "acceptedCommit": "33895d3fe980b201301c553c553590c690e159a7",
+            "issues": [],
+            "reason": "The fixed model settles all required public choices I assessed: loan admission and exact due-date arithmetic, date-range overflow refusal, current-state return and overdue behavior, duplicate/unknown input handling, and the JSONL request/response contract. Remaining freedoms—such as loan-ID format, error wording/precedence, list order, and internal realization layout—are expressly delegated as implementation choices and do not create incompatible required outcomes. I found no material contradiction or unresolved required matter."
+          },
+          "assessmentCommit": "33895d3fe980b201301c553c553590c690e159a7",
+          "checkCount": 0,
+          "checks": [],
+          "gitContainerID": "95b043741713cf996935ec767734c6c6e488381284023d8ba32ff90a6a2a43c7",
+          "gitExecCount": 719,
+          "homes": [
+            "20261022T221348Z-f6850d0f-assess-home",
+            "20261022T221348Z-f6850d0f-work-0-home",
+            "20261022T221348Z-f6850d0f-work-1-home",
+            "20261022T221348Z-f6850d0f-work-2-home",
+            "20261022T221348Z-f6850d0f-work-3-home",
+            "20261022T221348Z-f6850d0f-work-4-home",
+            "20261022T221348Z-f6850d0f-work-5-home"
+          ],
+          "homesRemoved": [],
+          "id": "20261022T221348Z-f6850d0f",
+          "messages": 51,
+          "modelHead": "7bb435949f2d81665ecbf03ad760db58cdbbf6b7",
+          "noChange": false,
+          "reviewCount": 0,
+          "reviews": [],
+          "rootCommit": "4da5d7d4ef7b672c670269cbc6db395da05ce823"
+        },
+        "error": "the context exceeds what the provider channel carries: the prompt of 3193935 bytes exceeds the 1048576 bytes the provider channel carries: Codex protocol message exceeds its byte or depth limit",
+        "evidenceDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261023-07\\state\\runs\\20261022T221348Z-f6850d0f",
+        "formatVersion": 1,
+        "operation": "apply",
+        "outcome": "incomplete",
+        "preparation": {
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "contextStatus": "passed",
+              "defaultsDiagnostics": null,
+              "defaultsStatus": "passed",
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "head": "7bb435949f2d81665ecbf03ad760db58cdbbf6b7",
+              "modelDiagnostics": null,
+              "modelStatus": "passed",
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ],
+          "productBuildAssertion": "0.14.1+e55005f48617ecf3568453ea661806e9df2baed3",
+          "status": "passed"
+        },
+        "status": "not_completed"
+      },
+      "evidence": [
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/start.json",
+          "sha256": "2583ce6e71e06749b181a1ada8f56eca09046d2d2364927878a3f5a7509f8901",
+          "bytes": 957
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/end.json",
+          "sha256": "e1c92051151429d32fd8e9656c1a0103fd89864df5e30f4380c12cc34b6ef3c8",
+          "bytes": 235
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/apply.stdout.json",
+          "sha256": "b9875dfa99025f562aa286225de3b947c36f61735076ba76707b83c2021d83dc",
+          "bytes": 2588
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/apply.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/events.jsonl",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/report.json",
+          "sha256": "b9875dfa99025f562aa286225de3b947c36f61735076ba76707b83c2021d83dc",
+          "bytes": 2588
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/transcripts/20261022T221348Z-f6850d0f-assess.jsonl",
+          "sha256": "92c9147a8368e113108aa9e19d59b4e3ff7c86b12e3af9e3a3d10aca40a5bd00",
+          "bytes": 137858
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/transcripts/20261022T221348Z-f6850d0f-work-0.jsonl",
+          "sha256": "0086ad902d4c8e38c373d2a7a195e8d8226d65d7cc844a5b87e1a271c30f2a00",
+          "bytes": 2363303
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/transcripts/20261022T221348Z-f6850d0f-work-1.jsonl",
+          "sha256": "5d0bc8c0f4cbe9e88c739ec0ef777e9f96f76cf234d8a55fd2c7283bd4666e45",
+          "bytes": 656887
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/transcripts/20261022T221348Z-f6850d0f-work-2.jsonl",
+          "sha256": "2e1964db7225b3f75200a01b6499a79f3a82ecef383cf2bf17a2832270e55365",
+          "bytes": 700374
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/transcripts/20261022T221348Z-f6850d0f-work-3.jsonl",
+          "sha256": "91165b3cb9eee3646d62a65c79d45ce74e67b820b0db6038039c3c5c3cb0cc07",
+          "bytes": 222606
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/transcripts/20261022T221348Z-f6850d0f-work-4.jsonl",
+          "sha256": "b4f66ebfd97dbbce14b397aa83029f49acb03f16e3a1c06a40bff254df22dea0",
+          "bytes": 1231111
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-07/state/runs/20261022T221348Z-f6850d0f/transcripts/20261022T221348Z-f6850d0f-work-5.jsonl",
+          "sha256": "fbf812b40562f347ea583338bb9b15ae10188f2cb0e4adfc77f925c44c406a31",
+          "bytes": 470778
+        }
+      ]
+    },
+    {
+      "name": "library-luna-20261023-08",
+      "kind": "product-apply",
+      "archive": "Markitect-Library-Runs/library-luna-20261023-08",
+      "start": {
+        "mainHead": "c1ead43dda1577652b2d8319f3166353fb49e85e",
+        "fixtureHead": "926777a1c707f35448ccedd838b88f892cfc27c4",
+        "productBuild": "0.14.1+c1ead43dda1577652b2d8319f3166353fb49e85e",
+        "productExecutableSha256": "11ba41860bb69eb032c31a17f91ae4257f6053b85ac10b379f2e865e099410c5",
+        "runtimeProfileSha256": "44a20e443d14304cd5c46b54750f9dcd44b71ab02827005c29a0ee035c7e0db8",
+        "runConfigSha256": "8513cc0fe38c5d912e05fdeb04d9b030e0a4aa9b9e227a5bf4cbac80de97a4a7",
+        "fixtureCheckSha256": "0641d9f7f9fee14d695aa000110ea181ce25cbab9becd7f9a0490e24a7b7f396",
+        "baseImage": "sha256:3f31b7d76aad333780f869c96b31d54e754cbb93f7f83e3d8ae395ec99328a3f",
+        "goImage": "sha256:7b8e85e3b50f6bb71665b62b50a459750b125d69332522340b1acf5d530ff965",
+        "runDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261023-08",
+        "deadline": "2026-10-22T23:37:32Z",
+        "maxMessages": 120,
+        "messageTimeoutSeconds": 600
+      },
+      "end": {
+        "endedAt": "2026-10-22T23:12:09Z",
+        "applyExit": 0,
+        "stdoutSha256": "8570b56e99d72e81c655545db8ce3c7327c3352e043aa4945ee7c85c0da32e15",
+        "stderrSha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      },
+      "report": {
+        "assignment": {
+          "acceptedCommit": "e10adff7ca4941bcccb2118854d80e9b41250c48",
+          "assessment": {
+            "acceptedCommit": "a175de16b9770bdb978df4aca1d0a09d8e81cafc",
+            "issues": [],
+            "reason": "The fixed model determines the externally meaningful behavior across registration, lending, returns, inspection, and overdue assessment, including admission limits, suspension, loan/date boundaries, state changes, refusals, and the callable JSONL contract. I found no material contradiction or unresolved choice that permits incompatible public outcomes; remaining freedoms (such as loan-ID format, response wording, ordering, and internal design) are expressly delegated."
+          },
+          "assessmentCommit": "a175de16b9770bdb978df4aca1d0a09d8e81cafc",
+          "checkCount": 1,
+          "checks": [
+            {
+              "commit": "e10adff7ca4941bcccb2118854d80e9b41250c48",
+              "name": "project-tests",
+              "passed": true,
+              "receipt": {
+                "ExitCode": 0,
+                "Exited": true,
+                "ID": "20261022T225232Z-7b3c7560-check-1",
+                "ImageID": "sha256:7b8e85e3b50f6bb71665b62b50a459750b125d69332522340b1acf5d530ff965",
+                "Output": "b2sgIAlsaWJyYXJ5L2FwcGxpY2F0aW9uCTAuMDAzcwpvayAgCWxpYnJhcnkvY2F0YWxvZwkwLjAwMnMKPyAgIAlsaWJyYXJ5L2NtZC9saWJyYXJ5CVtubyB0ZXN0IGZpbGVzXQpvayAgCWxpYnJhcnkvY29udHJhY3RzCTAuMDAycwpvayAgCWxpYnJhcnkvbGVuZGluZwkwLjAwMnMKb2sgIAlsaWJyYXJ5L2xlbmRpbmcvcmVtaW5kZXJzCTAuMDU2cwpvayAgCWxpYnJhcnkvbWVtYmVycwkwLjAwMnMK",
+                "Reason": "",
+                "Started": true,
+                "TimedOut": false,
+                "Tree": "64a44e423b5c9de9eaeae1bc09e540d5ea370648b5a25900997beacce8435ad0",
+                "Truncated": false,
+                "Uncertain": false
+              }
+            }
+          ],
+          "gitContainerID": "b189c65c2eed97fae8e43f4b0566dabb1a55720155312d70a3b5713e168b7d6a",
+          "gitExecCount": 583,
+          "homes": [
+            "20261022T225232Z-7b3c7560-assess-home",
+            "20261022T225232Z-7b3c7560-work-0-home",
+            "20261022T225232Z-7b3c7560-work-1-home",
+            "20261022T225232Z-7b3c7560-work-2-home",
+            "20261022T225232Z-7b3c7560-work-3-home",
+            "20261022T225232Z-7b3c7560-work-4-home",
+            "20261022T225232Z-7b3c7560-work-5-home",
+            "20261022T225232Z-7b3c7560-verify-1-home"
+          ],
+          "homesRemoved": [
+            "20261022T225232Z-7b3c7560-assess-home",
+            "20261022T225232Z-7b3c7560-work-0-home",
+            "20261022T225232Z-7b3c7560-work-1-home",
+            "20261022T225232Z-7b3c7560-work-2-home",
+            "20261022T225232Z-7b3c7560-work-3-home",
+            "20261022T225232Z-7b3c7560-work-4-home",
+            "20261022T225232Z-7b3c7560-work-5-home",
+            "20261022T225232Z-7b3c7560-verify-1-home"
+          ],
+          "id": "20261022T225232Z-7b3c7560",
+          "messages": 38,
+          "modelHead": "926777a1c707f35448ccedd838b88f892cfc27c4",
+          "noChange": false,
+          "reviewCount": 1,
+          "reviews": [
+            {
+              "acceptedCommit": "e10adff7ca4941bcccb2118854d80e9b41250c48",
+              "issues": [],
+              "reason": "Independently inspected the integrated Go services, JSONL transport and executable wiring, their assertions, README, execution configuration and all root/owner registry entries. The behavior matches the fixed policy, input, date, availability, suspension, return and overdue obligations; the public transport preserves state on refusals and the actual executable smoke test confirmed availability changes on borrow/return. Focused and package tests (`go test ./...`, `go test -race ./...`), build (`go build -o /dev/null ./cmd/library`), commit whitespace check, and registry artifact-path checks passed. No required defect or unsupported material claim remains."
+            }
+          ],
+          "rootCommit": "e10adff7ca4941bcccb2118854d80e9b41250c48"
+        },
+        "evidenceDirectory": "C:\\Users\\Consiliari\\Documents\\Codex\\Markitect-Library-Runs\\library-luna-20261023-08\\state\\runs\\20261022T225232Z-7b3c7560",
+        "formatVersion": 1,
+        "operation": "apply",
+        "outcome": "success",
+        "preparation": {
+          "attempts": [
+            {
+              "contextDiagnostics": null,
+              "contextStatus": "passed",
+              "defaultsDiagnostics": null,
+              "defaultsStatus": "passed",
+              "executionDiagnostics": null,
+              "fileDiagnostics": null,
+              "head": "926777a1c707f35448ccedd838b88f892cfc27c4",
+              "modelDiagnostics": null,
+              "modelStatus": "passed",
+              "registryDiagnostics": null,
+              "settingsDiagnostics": null
+            }
+          ],
+          "productBuildAssertion": "0.14.1+c1ead43dda1577652b2d8319f3166353fb49e85e",
+          "status": "passed"
+        },
+        "publication": {
+          "ID": "20261022T225232Z-7b3c7560",
+          "Outcome": "applied",
+          "Paths": [
+            {
+              "Path": ".markitect/registry/catalog/registry.yaml",
+              "State": "after"
+            },
+            {
+              "Path": ".markitect/registry/lending/registry.yaml",
+              "State": "after"
+            },
+            {
+              "Path": ".markitect/registry/lending/reminders/registry.yaml",
+              "State": "after"
+            },
+            {
+              "Path": ".markitect/registry/library/registry.yaml",
+              "State": "after"
+            },
+            {
+              "Path": ".markitect/registry/members/registry.yaml",
+              "State": "after"
+            },
+            {
+              "Path": ".markitect/registry/registry.yaml",
+              "State": "after"
+            },
+            {
+              "Path": "README.md",
+              "State": "after"
+            },
+            {
+              "Path": "realization/application/server.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/application/server_test.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/application/services_fake_test.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/catalog/catalog.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/catalog/catalog_test.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/cmd/library/main.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/contracts/contracts.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/contracts/contracts_test.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/go.mod",
+              "State": "after"
+            },
+            {
+              "Path": "realization/lending/api.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/lending/reminders/assess_overdue.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/lending/reminders/assess_overdue_test.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/lending/service.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/lending/service_test.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/members/members.go",
+              "State": "after"
+            },
+            {
+              "Path": "realization/members/members_test.go",
+              "State": "after"
+            }
+          ],
+          "Reason": ""
+        },
+        "status": "passed"
+      },
+      "evidence": [
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/start.json",
+          "sha256": "fd93a55dcabf3ff91873a8f2b3a023e2bf10f4d78cde6befa22d808e8c2eda19",
+          "bytes": 958
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/end.json",
+          "sha256": "093402fed98afba1a62a4551d0f08c3ac206e7e58a07120194b370b59fe857b9",
+          "bytes": 235
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/apply.stdout.json",
+          "sha256": "8570b56e99d72e81c655545db8ce3c7327c3352e043aa4945ee7c85c0da32e15",
+          "bytes": 6885
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/apply.stderr.log",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/events.jsonl",
+          "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+          "bytes": 0
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/report.json",
+          "sha256": "8570b56e99d72e81c655545db8ce3c7327c3352e043aa4945ee7c85c0da32e15",
+          "bytes": 6885
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-assess.jsonl",
+          "sha256": "c3281ef227e1a4dd4261280c45c1743be4f2036ad6b3802de3014bf057312806",
+          "bytes": 128925
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-verify-1.jsonl",
+          "sha256": "0e00dac7e4745c086b2f7a2fe89018082fc785c069407e2afb12c205eca1d690",
+          "bytes": 373634
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-work-0.jsonl",
+          "sha256": "8c59fbdb20d1397492a34d9d0b1858b62fe855276a5920ad11fae01e6e0ddad8",
+          "bytes": 1806399
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-work-1.jsonl",
+          "sha256": "91e84bd7008ea45a287ccc55c9ffe784587ccd656a66f39cf8a019b6ab4547a0",
+          "bytes": 230105
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-work-2.jsonl",
+          "sha256": "19419d5b8edc8124e96b82c0a84d1b6b8be6e50ee9cbccf52913f876212f5c50",
+          "bytes": 1002573
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-work-3.jsonl",
+          "sha256": "f391bea0c551018e89f31ef730510981595457ac561475ff0e5ebd6d3e266699",
+          "bytes": 241870
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-work-4.jsonl",
+          "sha256": "e8d592057245744088f2d5f1967f6958cff8efab31babde8ecd024f55411b72c",
+          "bytes": 1683042
+        },
+        {
+          "path": "Markitect-Library-Runs/library-luna-20261023-08/state/runs/20261022T225232Z-7b3c7560/transcripts/20261022T225232Z-7b3c7560-work-5.jsonl",
+          "sha256": "0df179268d4d947d7253d40884efb2c915e4ab1cf50bc3cb750fcbe291b5e23e",
+          "bytes": 303220
+        }
+      ],
+      "publicationReadback": {
+        "baselineHead": "926777a1c707f35448ccedd838b88f892cfc27c4",
+        "state": "23 new uncommitted files; paths match the publication receipt; working-tree structural check passed during the original readback",
+        "files": [
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/.markitect/registry/catalog/registry.yaml",
+            "sha256": "af58a5c964c977e872a77747595b5fae36d77884d2668371a57bf8be14f36dcb",
+            "bytes": 604
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/.markitect/registry/lending/registry.yaml",
+            "sha256": "2222c033cf0f473e267d2c88a7c60a76b2560647f5c36efc98ce21df21f3541f",
+            "bytes": 946
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/.markitect/registry/lending/reminders/registry.yaml",
+            "sha256": "0117b878b141fdcde5ca3be6bed5e9a5bddcb8bd0466949659999b25941e4e29",
+            "bytes": 486
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/.markitect/registry/library/registry.yaml",
+            "sha256": "c53314096536e8f046fe4c3ae4c7fc49367303908221195fc485c0e24b6ff527",
+            "bytes": 1950
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/.markitect/registry/members/registry.yaml",
+            "sha256": "88f3a96d7dde5cd7bc03d429b47c226b4d3a4fedfc346e05a3fc7a4cee3c77cb",
+            "bytes": 656
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/.markitect/registry/registry.yaml",
+            "sha256": "4f8a94817c16f9d1f7755ee75e6838d30e4fe8a0d4f66aafeb3f58842e17ae3b",
+            "bytes": 892
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/README.md",
+            "sha256": "10f7aa1ee1083e71ab5ff261d9c385c1ad882b71faa1832f52d89026bad80a67",
+            "bytes": 811
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/application/server.go",
+            "sha256": "6e21a1093eeaa75bd26526a67af0946d639d637a887edde5c5758fa7a0e3192d",
+            "bytes": 8608
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/application/server_test.go",
+            "sha256": "d4f3b2ee5a54f41166967aef98188c0df458f8f118467f83ad2e2834c8b5f9d4",
+            "bytes": 8415
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/application/services_fake_test.go",
+            "sha256": "818d5232b47e4f95967fb662ef0ad032b69984bc7eb09c3bea89a59bf73948b2",
+            "bytes": 6187
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/catalog/catalog.go",
+            "sha256": "510d6a80d131ca7f2f4bf18b598b55e8e9a843718d16f2f27075faa2eaa71416",
+            "bytes": 3118
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/catalog/catalog_test.go",
+            "sha256": "296cc8c9ad7ea7b40ec4fc6998fe5eba01a1f8028806d84987907c42be91cb2e",
+            "bytes": 2454
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/cmd/library/main.go",
+            "sha256": "5bd7e7c13f1e5b83fe4cf34b87b8f8662c3a8b752ae167501b4d95c9b47f7ce4",
+            "bytes": 683
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/contracts/contracts.go",
+            "sha256": "0d2a4770b005d5e0c636373879f07bf2b639fba151f2e278193d1550a28b3723",
+            "bytes": 3155
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/contracts/contracts_test.go",
+            "sha256": "a08d2094f37aae78037ddd66b881d9347e6e0ee56ee6df781bad017dfcfbec18",
+            "bytes": 796
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/go.mod",
+            "sha256": "d60d4cb674c6c5e02bb90177c98f85ee16efa2b7312fccbd974804513f53cbef",
+            "bytes": 27
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/lending/api.go",
+            "sha256": "c5382e57c7aabd97f6fdb656cdfcb3918305a6353f7fc0e89325309aabf8c1f7",
+            "bytes": 1953
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/lending/reminders/assess_overdue.go",
+            "sha256": "e46a8b2b394052cb3469e90e4a6ede6793ea329c56762547dbbdbd08d22ed244",
+            "bytes": 879
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/lending/reminders/assess_overdue_test.go",
+            "sha256": "98c050d46c8f1467d17fe855162cdfae8afb1503a3e447d246387c5a4c48fcb4",
+            "bytes": 1974
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/lending/service.go",
+            "sha256": "457723d5ddd9ac7915f95da25fa71a96cef7a38761767914eb0f97cb35ac316d",
+            "bytes": 4956
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/lending/service_test.go",
+            "sha256": "375fee4e1dcfa5efe6d0781180be04bed4ee48786c58913c7f9c51d2346c1260",
+            "bytes": 8064
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/members/members.go",
+            "sha256": "533c6fdbc66881e0149ed8613fb0df53d2bd963bfee598091ded9a7cdded7981",
+            "bytes": 2159
+          },
+          {
+            "path": "Markitect-Library-Runs/library-luna-20261023-08/fixture/realization/members/members_test.go",
+            "sha256": "4fcf936d92e3c84db44df7c4e4ab9be8c039263c9a1a31fa3e235c4bb693ab39",
+            "bytes": 2736
+          }
+        ]
+      }
+    }
+  ],
+  "lifecycle": {
+    "sourceHead": "5aa2cf5da6b637bb0052f6489117bbf1ab68c3e5",
+    "attempts": [
+      {
+        "id": "0eee498586678e21",
+        "evidence": [
+          {
+            "path": "A1-ASSIGNMENT-LIFECYCLE-20261022/runs/0eee498586678e21/codex.jsonl",
+            "sha256": "a0257a8c1ede3f3128a4bd8f8b2b97b14ee105a9cc36b27cef4d96a2863b777c",
+            "bytes": 48149
+          },
+          {
+            "path": "A1-ASSIGNMENT-LIFECYCLE-20261022/runs/0eee498586678e21/result.md",
+            "sha256": "0bab67a7476d5479e1977f203c7cf1aefdd836db87917dfe7c99b8736ed0a9f8",
+            "bytes": 3717
+          }
+        ]
+      },
+      {
+        "id": "185c3b845d13ad60",
+        "evidence": [
+          {
+            "path": "A1-ASSIGNMENT-LIFECYCLE-20261022/runs/185c3b845d13ad60/codex.jsonl",
+            "sha256": "7f579ff2cc1174daf29ae12334dbc660523fe162fddb52de1a6b19202607f520",
+            "bytes": 41970
+          }
+        ]
+      }
+    ],
+    "scope": "Two separate successful Codex Luna adapter lifecycle invocations, including the recorded accidental parallel invocation; no Claude or product Apply evidence."
+  },
+  "supersededDraft": {
+    "disposition": "Do not merge; superseded by PR #630. The original dirty worktree was preserved.",
+    "evidence": [
+      {
+        "path": "Markitect-Apply-Closeout-20261023/manifest.json",
+        "sha256": "3cec483325338b6ca9ecf69719a499c69e35ce0e8dec14c9b7cfdb8206850351",
+        "bytes": 1316
+      },
+      {
+        "path": "Markitect-Apply-Closeout-20261023/superseded-a4-draft.patch",
+        "sha256": "6765f11e77fd17c7728d7cae25c4e8694192b82451014c73e33d53e0e40774bf",
+        "bytes": 32815
+      },
+      {
+        "path": "Markitect-Apply-Closeout-20261023/superseded-run-apply.ps1",
+        "sha256": "8896728c668f719642cb179ed2da13bc06edee646e7d76bfeffa0871c060ced5",
+        "bytes": 6963
+      }
+    ]
+  }
+}

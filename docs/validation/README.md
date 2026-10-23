@@ -8,6 +8,7 @@ Records may link to files that were removed later; read them at release v0.14.1 
 
 ## Project workflow and integration reports
 
+- [Agent assignment Apply: Luna runs and Main closeout — 23 October 2026](apply-assignments-luna-20261023.md)
 - [Cockpit organization read model — 21 October 2026](cockpit-organization-read-model-20261021.md)
 - [Cockpit organization chart — 21 October 2026](cockpit-organization-chart-20261021.md)
 - [Cockpit Organization tab — 21 October 2026](cockpit-organization-tab-20261021.md)
