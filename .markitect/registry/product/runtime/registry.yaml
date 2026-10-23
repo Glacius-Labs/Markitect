@@ -1,5 +1,25 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/runtimeconfig/config_yaml.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
+    why: "Validates closed captured Runtime YAML without interpolation, ambient reads or execution."
+  - path: "internal/runtimeconfig/prepare.go"
+    form: code
+    realizes: [product/runtime/container-runtime, product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
+    why: "Composes static native and container-check metadata preparation over fixed captured inputs, retaining diagnostics and missing instruction coordinates."
+  - path: "internal/runtimeconfig/runtime_profiles.go"
+    form: code
+    realizes: [product/runtime/container-runtime, product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
+    why: "Defines immutable source-bound profile inputs, image metadata observations and complete prepared identities without Session or execution authority."
+  - path: "internal/runtimeconfig/runtime_profiles_decode.go"
+    form: code
+    realizes: [product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
+    why: "Selects closed native and container-check sections from captured Runtime documents and binds their declared instruction inputs."
+  - path: "internal/runtimeconfig/runtime_profiles_observe.go"
+    form: code
+    realizes: [product/runtime/container-runtime, product/adapters/agent/closed-agent-metadata, product/adapters/checks/closed-check-metadata]
+    why: "Validates actual static native/check image metadata, exact supplied input bindings and captured instruction selections before deriving a comparison identity."
   - path: "internal/adapters/container/exec_session.go"
     form: code
     realizes: [product/runtime/container-runtime]
