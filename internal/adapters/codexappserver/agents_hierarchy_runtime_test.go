@@ -250,6 +250,9 @@ type hierarchyReport struct {
 	Notes                                                            []run.Note
 	AbsentHomes                                                      []string
 	Loader                                                           json.RawMessage
+	LoaderExit                                                       *frame.Exited
+	LoaderExitObserved                                               bool
+	LoaderExitError                                                  string
 	BareCommit, BareTree                                             string
 	WriterBlobSHA256                                                 string
 	WriterBlobBytes                                                  int
@@ -1076,22 +1079,134 @@ func hierarchyLoader(ctx context.Context, h *hierarchySessions, p project.Prepar
 		Agents, V1, V2                                                                                                  bool
 		BaseObserved, DeveloperObserved, UnselectedAbsent, ProjectConfigExcluded, NativeToolsAbsent, Shell, Files, Host bool
 	}
-	e = json.NewDecoder(io.LimitReader(peer.Stdout(), 64<<10)).Decode(&value)
+	e = hierarchyLoaderCapture(ctx, peer, report)
 	if e != nil {
-		return fmt.Errorf("offline native loader observation incomplete")
+		return e
+	}
+	if e = json.Unmarshal(report.Loader, &value); e != nil {
+		return fmt.Errorf("offline native loader observation incomplete: %w", e)
 	}
 	if value.Model != "gpt-6-sol" || value.Agents || value.V1 || value.V2 || !value.BaseObserved || !value.DeveloperObserved || !value.UnselectedAbsent || !value.ProjectConfigExcluded || !value.NativeToolsAbsent || !value.Shell || !value.Files || !value.Host || value.BaseSHA256 != fmt.Sprintf("%x", sha256.Sum256([]byte(doc.Base))) || value.DeveloperSHA256 != fmt.Sprintf("%x", sha256.Sum256([]byte(doc.Developer))) {
 		return fmt.Errorf("actual native effective load differs")
 	}
-	exit, e := peer.Stop(ctx, 2000)
-	if e != nil || exit.Code != 0 || exit.Signal != "" {
-		return fmt.Errorf("offline recorder exit incomplete: %v", e)
+	return nil
+}
+
+// A flushed JSON object is not process completion: the recorder still has to
+// close its child and HTTP server. Runtime stdout closes on the observed exit
+// (or a broken connection). Wait for it before asking Stop for the exit report;
+// a broken connection still fails Stop. No production lifecycle change is needed.
+func hierarchyLoaderCapture(ctx context.Context, peer RuntimeSession, report *hierarchyReport) error {
+	type output struct {
+		data []byte
+		err  error
 	}
-	report.Loader, e = json.Marshal(value)
+	finished := make(chan output, 1)
+	go func() {
+		b, e := io.ReadAll(io.LimitReader(peer.Stdout(), 64<<10+1))
+		finished <- output{b, e}
+	}()
+	select {
+	case <-ctx.Done():
+		return fmt.Errorf("offline recorder stdout completion: %w", ctx.Err())
+	case got := <-finished:
+		if got.err != nil || len(got.data) > 64<<10 || !json.Valid(got.data) {
+			return fmt.Errorf("offline recorder output incomplete or invalid: bytes=%d error=%v", len(got.data), got.err)
+		}
+		report.Loader = append(json.RawMessage(nil), got.data...)
+	}
+	exit, e := peer.Stop(ctx, 2000)
+	report.LoaderExit = &exit
+	report.LoaderExitObserved = e == nil
 	if e != nil {
-		return e
+		report.LoaderExitError = e.Error()
+	}
+	if e != nil || exit.Code != 0 || exit.Signal != "" {
+		return fmt.Errorf("offline recorder exit incomplete: code=%d signal=%q error=%v", exit.Code, exit.Signal, e)
 	}
 	return nil
+}
+
+type hierarchyLoaderTestPeer struct {
+	RuntimeSession
+	stdout  io.Reader
+	stopped chan struct{}
+	exit    frame.Exited
+	stopErr error
+}
+
+func (p *hierarchyLoaderTestPeer) Stdout() io.Reader { return p.stdout }
+func (p *hierarchyLoaderTestPeer) Stop(context.Context, int64) (frame.Exited, error) {
+	close(p.stopped)
+	return p.exit, p.stopErr
+}
+
+func TestNativeLoaderWaitsForRecorderCompletion(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Second)
+	defer cancel()
+	r, w := io.Pipe()
+	defer r.Close()
+	defer w.Close()
+	peer := &hierarchyLoaderTestPeer{stdout: r, stopped: make(chan struct{})}
+	var report hierarchyReport
+	done := make(chan error, 1)
+	go func() { done <- hierarchyLoaderCapture(ctx, peer, &report) }()
+	if _, e := io.WriteString(w, `{"Model":"gpt-6-sol"}`); e != nil {
+		t.Fatal(e)
+	}
+	select {
+	case <-peer.stopped:
+		t.Fatal("Stop interrupted recorder cleanup after flushed JSON")
+	case <-time.After(25 * time.Millisecond):
+	}
+	if e := w.Close(); e != nil {
+		t.Fatal(e)
+	}
+	if e := <-done; e != nil || !report.LoaderExitObserved || report.LoaderExit == nil || report.LoaderExit.Code != 0 || string(report.Loader) != `{"Model":"gpt-6-sol"}` {
+		t.Fatalf("capture=%s exit=%+v error=%v", report.Loader, report.LoaderExit, e)
+	}
+}
+
+func TestNativeLoaderRejectsIncompleteRecorder(t *testing.T) {
+	for _, test := range []struct {
+		name, data string
+		exit       frame.Exited
+		stopErr    error
+	}{
+		{name: "signal", data: `{}`, exit: frame.Exited{Code: -1, Signal: "terminated"}},
+		{name: "nonzero", data: `{}`, exit: frame.Exited{Code: 1}},
+		{name: "broken connection", data: `{}`, stopErr: io.ErrUnexpectedEOF},
+		{name: "multiple values", data: `{} {}`},
+		{name: "oversized", data: strings.Repeat(" ", 64<<10) + `{}`},
+	} {
+		t.Run(test.name, func(t *testing.T) {
+			peer := &hierarchyLoaderTestPeer{stdout: strings.NewReader(test.data), stopped: make(chan struct{}), exit: test.exit, stopErr: test.stopErr}
+			var report hierarchyReport
+			if e := hierarchyLoaderCapture(context.Background(), peer, &report); e == nil {
+				t.Fatal("incomplete recorder accepted")
+			}
+			if json.Valid([]byte(test.data)) && len(test.data) <= 64<<10 && test.stopErr == nil && (report.LoaderExit == nil || *report.LoaderExit != test.exit) {
+				t.Fatal("observed exit not retained")
+			}
+		})
+	}
+	t.Run("deadline before EOF", func(t *testing.T) {
+		r, w := io.Pipe()
+		defer r.Close()
+		defer w.Close()
+		ctx, cancel := context.WithCancel(context.Background())
+		cancel()
+		peer := &hierarchyLoaderTestPeer{stdout: r, stopped: make(chan struct{})}
+		var report hierarchyReport
+		if e := hierarchyLoaderCapture(ctx, peer, &report); !errors.Is(e, context.Canceled) {
+			t.Fatalf("deadline not retained: %v", e)
+		}
+		select {
+		case <-peer.stopped:
+			t.Fatal("active recorder stopped to manufacture success")
+		default:
+		}
+	})
 }
 
 const hierarchyLoaderProgram = `
