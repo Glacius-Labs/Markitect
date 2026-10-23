@@ -17,6 +17,7 @@ These are concrete proposed locations, not preservation obligations for existing
 | `internal/model`, `internal/snapshot` | Preserved canonical checking and immutable source values | Existing pure dependencies |
 | `internal/organization`, `internal/realization` | Complete topology/context and registry/ownership/accounting | Model, snapshot; no executor |
 | `internal/project` (new) | Checked capture/preparation shared by check/context/docs, standalone Run and Apply | Foundations and its own source port; no Apply/Run |
+| `internal/runtimeconfig` (new) | Closed profile decoding and optional static metadata preparation for CLI/Bootstrap and native/check adapters | Captured Project source values; no Run, provider sessions or credential reads |
 | `internal/harness` (new) | Pure versioned rules, project/Manager context and mandate instructions consumed by native renderers in the two provider adapters | Project/context values; no Run, provider or I/O |
 | `internal/run` (replacement) | Sole public Execute lifecycle, hierarchy, messages, handoffs, feedback, durable result and cleanup | Project, harness, foundations, ports consumed here |
 | `internal/workflow` (new) | One direct Apply sequence; separate import gate prevents Git/publication/provider logic entering it | Run values and its own Executor interface only |
@@ -28,7 +29,9 @@ These are concrete proposed locations, not preservation obligations for existing
 | Bootstrap and CLI | Composition, parsing and result display | Actual application services; no second lifecycle |
 | Modeldocs/documents adapter | Existing readable canonical view and guarded write | Rebind preparation to project, model, snapshot; no executor |
 
-CLI -> Apply -> Workflow -> Run -> Project/foundations. Diagnostic commands call Project directly. Adapters are injected by Bootstrap. Run cannot import Apply/Workflow/adapters; foundation cannot import execution. Enforce directions for tests too. Four new package roots are justified by actual consumers, not a numerical limit. No shared-contracts mega-package, repository framework, DSL, event bus or duplicate model ontology.
+CLI -> Apply -> Workflow -> Run -> Project/foundations. Diagnostic commands call Project directly. Adapters are injected by Bootstrap. Run cannot import Apply/Workflow/adapters; foundation cannot import execution. Enforce directions for tests too. New package roots require actual consumers and a distinct responsibility. No shared-contracts mega-package, repository framework, DSL, event bus or duplicate model ontology.
+
+Runtimeconfig is the outer preparation consumer for native/check profile metadata. Project and Run do not import it. Its observations retain only the identities, instructions and diagnostics used by those consumers; old strategy, role, helper-team and Turn settings are removed rather than moved into this package.
 
 ## Minimal model connection
 
@@ -54,6 +57,10 @@ Land each contract with a caller and concrete implementation, never an interface
 | Apply: publication port | Git adapter -> command | Durable accepted candidate, source/target guards, transfer/readback; no living Run |
 
 The Run integration owner alone defines and changes the consumer-local Sessions/session port. The Harness/Provider owner implements it and supplies capability evidence; a joint reviewed handoff precedes contract freeze. Provider-dependent signature decisions stay provisional until the early native gate below. Use consumer-local interfaces. One concrete adapter can implement several small ports; no combined Git/source/publication interface. No session handle appears in persistent results. Technical completed/failed/incomplete is separate from semantic approve/reject/model blocker. Implement submits a checked candidate, not publication approval. Lost transport is not Reject. Host binds known identities; a small explicit tool records actual semantic judgment, without mandatory self-reported commit IDs or ritual completion JSON.
+
+Questions use a small Run-local inbox: Ask returns a correlation ID without waiting for an answer; Await can deliver an incoming question while an earlier answer is pending; Reply carries the addressed Manager's actual answer. A submitted task does not close that Manager's conversation. The host transports questions and answers and validates their association; it does not answer for a Manager.
+
+The existing native adapters wait for a pending tool's response and cannot supply synchronous Answer-during-Exchange. Reception therefore happens at supported tool/message boundaries, without assuming nested inference or immediate preemption. Direct delegation remains the Manager's responsibility. Source tests and the bounded one-session Codex observation establish only their respective scopes; two real Managers, the complete native hierarchy and each provider still require their own evidence.
 
 ## Complete Run lifecycle
 
