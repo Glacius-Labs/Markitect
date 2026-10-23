@@ -439,8 +439,16 @@ func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
 					}
 				}
 			}
-			delegates := 0
+			delegates, reviews := 0, 0
 			for _, tool := range rt.start.Tools {
+				if tool.Name == "review" {
+					reviews++
+					for _, boundary := range []string{"approve accepts the fixed handoff", "integrates it only for an Implement handoff judged submitted", "reject records parent-review Findings", "separate delegate call after review with concrete Findings", "model_blocker escalates a material model defect"} {
+						if !strings.Contains(tool.Description, boundary) {
+							t.Fatal("delivered native review metadata misstates handoff handling", boundary)
+						}
+					}
+				}
 				if tool.Name != "delegate" {
 					continue
 				}
@@ -451,8 +459,8 @@ func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
 					}
 				}
 			}
-			if starts != 1 || delegates != 1 {
-				t.Fatal("native prompt or delegate metadata not delivered", starts, delegates)
+			if starts != 1 || delegates != 1 || reviews != 1 {
+				t.Fatal("native prompt or handoff tool metadata not delivered", starts, delegates, reviews)
 			}
 		})
 	}
