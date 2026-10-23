@@ -2,11 +2,13 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 
 	"github.com/Glacius-Labs/Markitect/internal/apply"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/tooling/guardedwrite"
@@ -15,9 +17,21 @@ import (
 // Publisher uses host Git and durable state after every Run has closed. The
 // separate repository is never an Agent environment or a former live copy.
 type Publisher struct {
-	Repository *Repository
-	Store      *LocalGit
-	Checks     run.CandidateChecks
+	Repository  *Repository
+	Store       *LocalGit
+	Checks      run.CandidateChecks
+	CheckCopies interface {
+		Materialize(context.Context, snapshot.Tree, []snapshot.Path) (run.DisposableCopy, error)
+	}
+}
+
+type publicationCheckCopy struct {
+	run.Copy
+	materialize func(context.Context, snapshot.Tree, []snapshot.Path) (run.DisposableCopy, error)
+}
+
+func (c publicationCheckCopy) Materialize(ctx context.Context, tree snapshot.Tree, dirs []snapshot.Path) (run.DisposableCopy, error) {
+	return c.materialize(ctx, tree, dirs)
 }
 
 func (p *Publisher) Publish(ctx context.Context, request apply.PublicationRequest) (out apply.Publication, err error) {
@@ -41,7 +55,7 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 	defer func() {
 		if cleanupErr := os.RemoveAll(root); cleanupErr != nil {
 			out.Readback = false
-			err = fmt.Errorf("publication cleanup unconfirmed: %v; prior error: %w", cleanupErr, err)
+			err = errors.Join(err, fmt.Errorf("publication cleanup unconfirmed: %w", cleanupErr))
 		}
 	}()
 	dir := filepath.Join(root, "candidate")
@@ -64,18 +78,20 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 		if p.Checks == nil {
 			return out, fmt.Errorf("publication check runner unavailable")
 		}
-		out.Checks, err = p.Checks.Check(ctx, prepared.Checks(), copy, fixed)
+		var checkCopy run.Copy = copy
+		if p.CheckCopies != nil {
+			checkCopy = publicationCheckCopy{Copy: copy, materialize: p.CheckCopies.Materialize}
+		}
+		out.Checks, err = p.Checks.Check(ctx, prepared.Checks(), checkCopy, fixed)
 		if err != nil {
 			return out, err
 		}
-		if len(out.Checks) != len(prepared.Checks()) {
-			return out, fmt.Errorf("publication checks incomplete")
+		dirs, err := project.CheckDirectories(attempt.Model().Inputs().Raw)
+		if err != nil {
+			return out, err
 		}
-		for i, check := range out.Checks {
-			r := check.Receipt
-			if check.ID != prepared.Checks()[i].ID.Value || check.Commit != fixed.ID || check.Error != "" || r.Tree != attempt.Model().Inputs().Raw.Census.Digest() || !r.Started || !r.Exited || r.ExitCode != 0 || r.Uncertain || r.TimedOut || !r.CopiesClosed {
-				return out, fmt.Errorf("publication check did not pass on exact candidate")
-			}
+		if err = run.ValidateCheckObservations(prepared.Checks(), out.Checks, fixed, attempt.Model().Inputs().Raw.Census, dirs); err != nil {
+			return out, err
 		}
 	}
 	baseline := prepared.Attempt().Model().Inputs()
@@ -108,7 +124,11 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 		if err := ctx.Err(); err != nil {
 			return err
 		}
-		a, err := p.Repository.acquire(ctx, prepared.Selection(), "", false)
+		selection := prepared.Selection()
+		// Realization may add/delete registry shards. Their exact current bytes
+		// are covered by expected Census; no original shard is reacquired by name.
+		selection.Registry = nil
+		a, err := p.Repository.acquire(ctx, selection, "", false)
 		if err != nil {
 			return err
 		}

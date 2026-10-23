@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -11,6 +12,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
+	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
 
@@ -21,6 +23,43 @@ type applyExecutor struct {
 	requests               []run.Request
 	managers               []*controlledManagers
 	noChange, rejectVerify bool
+}
+
+type deadlineCapture struct {
+	calls    int
+	deadline time.Time
+}
+
+func (c *deadlineCapture) Capture(ctx context.Context, _ string, _ project.Prepared) (project.CandidateRef, error) {
+	c.calls++
+	deadline, ok := ctx.Deadline()
+	if !ok || deadline != c.deadline {
+		return project.CandidateRef{}, errors.New("original command deadline missing at capture")
+	}
+	<-ctx.Done()
+	return project.CandidateRef{}, ctx.Err()
+}
+
+func TestApplyOriginalDeadlineBoundsCaptureBeforeAnyRunOrPublication(t *testing.T) {
+	_, prepared, git, _ := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	for _, expired := range []bool{true, false} {
+		deadline := time.Now().Add(30 * time.Millisecond)
+		if expired {
+			deadline = time.Now().Add(-time.Second)
+		}
+		capture := &deadlineCapture{deadline: deadline}
+		executor := &applyExecutor{t: t, git: git, store: store}
+		command := apply.Command{Executor: executor, Candidates: capture, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+		start := time.Now()
+		report, err := command.Execute(context.Background(), run.Request{ID: "deadline", Project: "fixture", Prepared: prepared, Allowance: run.NewAllowance(deadline, 100), MaxManagers: 5})
+		if err == nil || report.Status != model.NotCompleted || len(executor.requests) != 0 || report.Publication != nil || time.Since(start) > time.Second {
+			t.Fatal("command escaped original deadline", err, report.Status)
+		}
+		if expired && capture.calls != 0 || !expired && (capture.calls != 1 || !errors.Is(err, context.DeadlineExceeded)) {
+			t.Fatal("deadline did not guard source capture", expired, capture.calls, err)
+		}
+	}
 }
 
 func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.Result, error) {
@@ -39,6 +78,10 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 		e.t.Fatal("correction reset allowance")
 	}
 	managers := &controlledManagers{crossed: make(chan struct{})}
+	if e.noChange {
+		managers.noChange = true
+		managers.acceptedRepair = true
+	}
 	if request.Mandate == run.Verify && e.rejectVerify {
 		managers.forceDecision = run.Reject
 	}
@@ -52,7 +95,6 @@ func (e *applyExecutor) Execute(ctx context.Context, request run.Request) (run.R
 
 func TestApplyCompleteControlledHierarchyPublishesOnlyStoredClosedVerify(t *testing.T) {
 	r, prepared, git, _ := runFixture(t)
-	r.Git("switch", "-c", "codex/controlled-apply")
 	head := r.Git("rev-parse", "HEAD")
 	store, err := runstore.New(git.StateRoot)
 	if err != nil {
@@ -95,5 +137,103 @@ func TestApplyCompleteControlledHierarchyPublishesOnlyStoredClosedVerify(t *test
 	}
 	if final.Input.Commit != final.Candidate.Commit || final.Input.Tree != final.Candidate.Tree || final.Input.Key == final.Candidate.Key {
 		t.Fatal("Verify did not keep exact input objects under independently retained output key")
+	}
+	// Reuse actual closed acceptance to exercise independent publication races.
+	// Only this disposable fixture is restored; each refusal preserves user data.
+	for _, kind := range []string{"branch", "index", "partial", "readback", "new file"} {
+		t.Run("publication-"+kind, func(t *testing.T) {
+			for _, entry := range prepared.Attempt().Model().Inputs().Raw.Census.Entries() {
+				if err := os.WriteFile(filepath.Join(r.Dir, filepath.FromSlash(entry.Path().String())), entry.Bytes(), 0644); err != nil {
+					t.Fatal(err)
+				}
+			}
+			repository := adapter(t)
+			userPath := filepath.Join(r.Dir, "out/deep.txt")
+			switch kind {
+			case "branch":
+				r.Git("switch", "-c", "codex/user-branch")
+				defer r.Git("switch", "codex/run-fixture")
+			case "index":
+				r.Write("out/a.txt", "user staged\n")
+				r.Git("add", "out/a.txt")
+				r.Write("out/a.txt", "initial\n")
+				defer r.Git("reset", "--mixed", head)
+			case "partial", "readback", "new file":
+				repository.observe = func(event, path string) {
+					if kind == "partial" && event == "publication-before-target" && path == "out/deep.txt" || kind == "readback" && event == "publication-readback" {
+						r.Write("out/deep.txt", "concurrent user\n")
+					}
+					if kind == "new file" && event == "publication-before-target" {
+						userPath = filepath.Join(r.Dir, "user-new.txt")
+						r.Write("user-new.txt", "concurrent user\n")
+					}
+				}
+			}
+			result, err := (&Publisher{Repository: repository, Store: git}).Publish(context.Background(), apply.PublicationRequest{Prepared: prepared, Approval: final})
+			if err == nil || result.Readback {
+				t.Fatal("publication accepted drift", kind, result)
+			}
+			if kind == "partial" && !reflect.DeepEqual(result.CompletedPaths, []string{"out/a.txt"}) {
+				t.Fatal("partial receipt changed", result)
+			}
+			if kind == "readback" && len(result.CompletedPaths) != 2 {
+				t.Fatal("readback hid actual transfers", result)
+			}
+			if kind == "partial" || kind == "readback" || kind == "new file" {
+				data, readErr := os.ReadFile(userPath)
+				if readErr != nil || string(data) != "concurrent user\n" {
+					t.Fatal("user change lost", string(data), readErr)
+				}
+			}
+			if kind == "index" && r.Git("show", ":out/a.txt") != "user staged" {
+				t.Fatal("user staged change lost")
+			}
+			if kind == "new file" {
+				if err := os.Remove(userPath); err != nil {
+					t.Fatal(err)
+				}
+			}
+		})
+	}
+}
+
+func TestApplyNoChangeStillRunsEveryMandateAndPreservesCapturedIgnoredInput(t *testing.T) {
+	_, prepared, git, input := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	executor := &applyExecutor{t: t, git: git, store: store, noChange: true}
+	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	report, err := command.Execute(context.Background(), run.Request{ID: "nochange", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 150), CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	if err != nil || report.Status != model.Passed || report.Publication == nil || !report.Publication.NoChange || !report.Publication.Readback || len(report.Publication.CompletedPaths) != 0 || len(executor.requests) != 3 {
+		t.Fatal(report.Status, report.Publication, err)
+	}
+	if input.Commit == prepared.Attempt().Model().Inputs().Head {
+		t.Fatal("fixture did not distinguish captured ignored input from HEAD")
+	}
+	for i, mandate := range []run.Mandate{run.Assessment, run.Implement, run.Verify} {
+		if executor.requests[i].Mandate != mandate {
+			t.Fatal(executor.requests[i].Mandate)
+		}
+	}
+}
+
+func TestApplyVerifyRejectionStartsFreshCorrectionWithOriginalAllowanceAndFindings(t *testing.T) {
+	_, prepared, git, _ := runFixture(t)
+	store, _ := runstore.New(git.StateRoot)
+	executor := &applyExecutor{t: t, git: git, store: store, rejectVerify: true}
+	allowance := run.NewAllowance(time.Now().Add(3*time.Minute), 150)
+	command := apply.Command{Executor: executor, Candidates: git, Records: store, Publisher: &Publisher{Repository: adapter(t), Store: git}}
+	report, err := command.Execute(context.Background(), run.Request{ID: "correction", Project: "fixture", Prepared: prepared, MaxManagers: 5, Allowance: allowance, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second})
+	if err != nil || report.Status != model.Passed || len(executor.requests) != 5 {
+		t.Fatal(report.Status, len(executor.requests), err)
+	}
+	if got := executor.requests[3]; got.Mandate != run.Implement || got.Input != *report.Workflow.Runs[2].Candidate || !reflect.DeepEqual(got.Findings, report.Workflow.Runs[2].Findings) || len(got.Findings) == 0 {
+		t.Fatal("fresh correction lost exact candidate or mandatory Findings", got)
+	}
+	used := 0
+	for _, result := range report.Workflow.Runs {
+		used += result.Messages
+	}
+	if used != allowance.Used() {
+		t.Fatal("message allowance reset", used, allowance.Used())
 	}
 }

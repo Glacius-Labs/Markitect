@@ -30,6 +30,8 @@ type acquisition struct {
 	repository             *Repository
 	git                    *gitRepository
 	head, revision, commit string
+	branch                 string
+	index                  string
 	committed              bool
 	raw                    project.RawInputs
 	boundaries             map[string]*sourceBoundary
@@ -88,6 +90,16 @@ func (r *Repository) acquire(ctx context.Context, selection project.InputSelecti
 	if err != nil {
 		return a, err
 	}
+	branch, err := a.git.run("rev-parse", "--symbolic-full-name", "HEAD")
+	if err != nil {
+		return a, err
+	}
+	a.branch = strings.TrimSpace(string(branch))
+	index, err := a.git.run("ls-files", "--stage", "-z")
+	if err != nil {
+		return a, err
+	}
+	a.index = string(index)
 	if revision != "" {
 		a.commit, err = a.git.commit(revision, true)
 	} else if committed {
@@ -192,6 +204,14 @@ func (r *Repository) acquire(ctx context.Context, selection project.InputSelecti
 	}
 	if currentHead != a.head {
 		return a, ErrChanged
+	}
+	branch, err = a.git.run("rev-parse", "--symbolic-full-name", "HEAD")
+	if err != nil || strings.TrimSpace(string(branch)) != a.branch {
+		return a, errors.Join(ErrChanged, err)
+	}
+	index, err = a.git.run("ls-files", "--stage", "-z")
+	if err != nil || string(index) != a.index {
+		return a, errors.Join(ErrChanged, err)
 	}
 	if committed {
 		if err = a.git.clean(); err != nil {

@@ -162,6 +162,11 @@ func (a *Allowance) valid() bool {
 	return a.remaining > 0 && time.Now().Before(a.Deadline)
 }
 
+// Ready observes capacity without granting messages or extending the deadline.
+func (a *Allowance) Ready(managers int) bool {
+	return managers > 0 && a.valid() && a.minimum(managers)
+}
+
 type Request struct {
 	MaxManagers        int
 	ID, Project        string

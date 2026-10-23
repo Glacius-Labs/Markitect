@@ -3,7 +3,6 @@ package apply
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"reflect"
 
@@ -12,9 +11,6 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/run"
 	"github.com/Glacius-Labs/Markitect/internal/workflow"
 )
-
-// ErrUnavailable is retained only for the bootstrap transition in this slice.
-var ErrUnavailable = errors.New("Apply unavailable until concrete native composition is configured")
 
 type Candidates interface {
 	Capture(context.Context, string, project.Prepared) (project.CandidateRef, error)
@@ -60,6 +56,11 @@ func (c *Command) Execute(ctx context.Context, request run.Request) (out Report,
 	if c == nil || c.Candidates == nil || c.Executor == nil || c.Records == nil || c.Publisher == nil || !request.Prepared.Valid() {
 		return out, fmt.Errorf("Apply requires checked preparation and concrete ports")
 	}
+	if !request.Allowance.Ready(3 * len(request.Prepared.Topology().Managers())) {
+		return out, fmt.Errorf("Apply requires an available finite original allowance")
+	}
+	ctx, cancel := context.WithDeadline(ctx, request.Allowance.Deadline)
+	defer cancel()
 	request.Input, err = c.Candidates.Capture(ctx, request.Project, request.Prepared)
 	if err != nil {
 		return out, err

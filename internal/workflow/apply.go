@@ -27,6 +27,9 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 	}
 	sequence := 0
 	execute := func(m run.Mandate) (run.Result, error) {
+		if err := ctx.Err(); err != nil {
+			return run.Result{}, err
+		}
 		sequence++
 		r := base
 		r.ID = base.ID + "-" + strconv.Itoa(sequence) + "-" + string(m)
@@ -62,6 +65,9 @@ func Apply(ctx context.Context, executor Executor, base run.Request) (out Result
 // ValidateClosed rejects incomplete, misbound or uncertain port results before
 // another Run can open. Review may retain identical objects under a new key.
 func ValidateClosed(value run.Result, request run.Request) error {
+	if !request.Prepared.Valid() {
+		return fmt.Errorf("closed result requires checked Project preparation")
+	}
 	if value.ID != request.ID || value.Project != request.Project || value.Binding != request.Prepared.Binding() || value.Mandate != request.Mandate || value.Input != request.Input || value.Technical != run.Completed || len(value.Errors) != 0 || value.Candidate == nil {
 		return fmt.Errorf("Run did not return a complete bound durable result")
 	}

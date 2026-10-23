@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/bootstrap/apply.go"
+    form: code
+    realizes: [product/cli/honest-read-only-interface, product/run/confirmed-run-history]
+    why: "Composes explicit closed configuration, complete structural preflight, native account Sessions, shared bounded workflow, durable publication and retained report."
   - path: "examples/runtime-profile.example.yaml"
     form: config
     realizes: [product/cli/honest-read-only-interface]

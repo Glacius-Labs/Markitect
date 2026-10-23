@@ -5,6 +5,7 @@ import (
 	"errors"
 	"flag"
 	"fmt"
+	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/buildinfo"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
@@ -18,10 +19,14 @@ type ApplyRequest struct {
 	RunConfig, Build string
 }
 type ApplyReport struct {
-	FormatVersion int          `json:"formatVersion"`
-	Operation     string       `json:"operation"`
-	Status        model.Status `json:"status"`
-	Error         string       `json:"error,omitempty"`
+	FormatVersion  int           `json:"formatVersion"`
+	Operation      string        `json:"operation"`
+	Status         model.Status  `json:"status"`
+	Error          string        `json:"error,omitempty"`
+	Apply          *apply.Report `json:"apply,omitempty"`
+	ID             string        `json:"id,omitempty"`
+	StateDirectory string        `json:"stateDirectory,omitempty"`
+	EvidencePath   string        `json:"evidencePath,omitempty"`
 }
 type ApplyFunc func(context.Context, ApplyRequest) (ApplyReport, error)
 

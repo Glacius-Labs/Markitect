@@ -17,12 +17,14 @@ func (a *acquisition) guard() project.PublicationGuard {
 		_, _ = hash.Write(length[:])
 		_, _ = hash.Write([]byte(text))
 	}
-	write("gitrepo-capture/1")
+	write("gitrepo-capture/2")
 	write(a.git.path)
 	write(a.git.gitDir)
 	write(a.git.commonDir)
 	write(a.git.format)
 	write(a.head)
+	write(a.branch)
+	write(a.index)
 	write(a.raw.Census.Digest().String())
 	write(strconv.Itoa(len(a.models)))
 	for _, m := range a.models {
@@ -52,5 +54,5 @@ func (a *acquisition) guard() project.PublicationGuard {
 			write(file.File.ContentID().String())
 		}
 	}
-	return project.PublicationGuard("gitrepo-capture/1:" + hex.EncodeToString(hash.Sum(nil)))
+	return project.PublicationGuard("gitrepo-capture/2:" + hex.EncodeToString(hash.Sum(nil)))
 }

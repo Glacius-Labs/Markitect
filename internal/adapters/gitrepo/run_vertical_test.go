@@ -22,6 +22,7 @@ import (
 func runFixture(t *testing.T) (*testkit.Repo, project.Prepared, *LocalGit, project.CandidateRef) {
 	t.Helper()
 	r := testkit.NewRepo(t)
+	r.Git("switch", "-c", "codex/run-fixture")
 	core := "../../../docs/design/canonical-model/minimal-language/exchange-example/dependencies/core"
 	if err := fs.WalkDir(os.DirFS(core), ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
@@ -108,6 +109,7 @@ type controlledManagers struct {
 	observation         *run.SessionObservation
 	exchangeBlock       <-chan struct{}
 	closeBlock          <-chan struct{}
+	noChange            bool
 }
 type controlledManager struct {
 	owner  *controlledManagers
@@ -378,6 +380,9 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 		}
 	}
 	if m.spec.Mandate == run.Implement {
+		if m.owner.noChange {
+			return run.Response{Decision: run.Submitted}, nil
+		}
 		path, value := "", ""
 		if m.spec.Manager.Package == "a" {
 			path, value = "out/a.txt", "parent result\n"
