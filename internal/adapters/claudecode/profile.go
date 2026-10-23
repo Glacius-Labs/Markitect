@@ -4,20 +4,17 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"io"
 	"math"
 	"regexp"
 	"slices"
 	"strings"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
-	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/runtimeconfig"
 )
 
-var ErrSession = errors.New("Claude turn refused or incomplete")
+var ErrSession = errors.New("Claude session refused or incomplete")
 
 // Profile is one closed Agent profile of the Runtime profile: the immutable image, the exact
 // credential reference, the wire limit and the explicit provider settings. No
@@ -110,15 +107,3 @@ func ProfileFromPrepared(prepared runtimeconfig.PreparedProfile) (Profile, error
 // Token must be a long-lived dedicated runtime Claude token, never desktop auth.
 type RuntimeCredential struct{ Token string }
 type CredentialResolver func(context.Context, string) (RuntimeCredential, error)
-
-// RuntimeSession is the existing container Session surface used by this adapter.
-type RuntimeSession interface {
-	StartProvider(context.Context, frame.Start) (frame.Started, error)
-	Stdout() io.Reader
-	WriteInput([]byte) error
-	ToolCalls() <-chan frame.ToolCall
-	Reply(frame.ToolReply) error
-	Stop(context.Context, int64) (frame.Exited, error)
-	Close() error
-}
-type RuntimeStarter func(context.Context, container.ContainerSpec) (RuntimeSession, error)

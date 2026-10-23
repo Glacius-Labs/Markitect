@@ -55,8 +55,13 @@ func (f *fakeStream) close() { f.once.Do(func() { close(f.done) }) }
 
 // fakeRuntime plays the provider side of one turn from a script of flags.
 type fakeRuntime struct {
-	stream *fakeStream
-	tools  chan frame.ToolCall
+	background      bool
+	killEntered     chan struct{}
+	releaseKill     chan struct{}
+	terminalFailure bool
+	listPagination  bool
+	stream          *fakeStream
+	tools           chan frame.ToolCall
 
 	mu            sync.Mutex
 	spec          container.ContainerSpec
@@ -138,6 +143,25 @@ func (f *fakeRuntime) WriteInput(data []byte) error {
 			thread = strings.ReplaceAll(thread, string(codecThreadID), "wrong-thread")
 		}
 		f.emit(`{"id":2,"result":{"thread":` + thread + `,"approvalPolicy":"never","approvalsReviewer":"user","cwd":"/work","model":"admitted-model","modelProvider":"markitect","sandbox":{"type":"dangerFullAccess"}}}`)
+	case "thread/backgroundTerminals/list":
+		if f.listPagination {
+			f.emit(fmt.Sprintf(`{"id":%d,"result":{"data":[],"nextCursor":"more"}}`, m.ID))
+		} else if f.background {
+			f.emit(fmt.Sprintf(`{"id":%d,"result":{"data":[{"processId":"1000"}],"nextCursor":null}}`, m.ID))
+		} else {
+			f.emit(fmt.Sprintf(`{"id":%d,"result":{"data":[],"nextCursor":null}}`, m.ID))
+		}
+	case "thread/backgroundTerminals/terminate":
+		if f.killEntered != nil {
+			close(f.killEntered)
+			<-f.releaseKill
+		}
+		if f.terminalFailure {
+			f.emit(fmt.Sprintf(`{"id":%d,"result":{"terminated":false}}`, m.ID))
+		} else {
+			f.background = false
+			f.emit(fmt.Sprintf(`{"id":%d,"result":{"terminated":true}}`, m.ID))
+		}
 	case "turn/start":
 		f.emit(fmt.Sprintf(`{"id":%d,"result":{"turn":{"id":"%s","status":"inProgress","items":[],"error":null}}}`, m.ID, codecTurnID))
 		for _, notification := range f.notifications {
@@ -464,5 +488,147 @@ func TestSessionInboxProjectionRefusalAndForeignCallRejection(t *testing.T) {
 				t.Fatal(err, rt.replies)
 			}
 		})
+	}
+}
+
+// The controlled peer reports native completion while a writer remains alive.
+// Termination cannot acknowledge until the writer and its actual file writes drain.
+func TestExchangeWaitsForBackgroundWriterTerminationAndEmptyReadback(t *testing.T) {
+	rt := newRuntime()
+	rt.background = true
+	rt.killEntered = make(chan struct{})
+	rt.releaseKill = make(chan struct{})
+	s := openSession(t, rt, testSessionSpec(t))
+	file := filepath.Join(t.TempDir(), "background-writes")
+	writerStop := make(chan struct{})
+	writerDone := make(chan struct{})
+	go func() {
+		defer close(writerDone)
+		for {
+			select {
+			case <-writerStop:
+				return
+			default:
+			}
+			f, e := os.OpenFile(file, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0600)
+			if e == nil {
+				_, _ = f.WriteString("write\n")
+				_ = f.Close()
+			}
+			time.Sleep(time.Millisecond)
+		}
+	}()
+	done := make(chan error, 1)
+	go func() {
+		_, e := s.Exchange(context.Background(), run.Message{Task: "complete while background writer remains"})
+		done <- e
+	}()
+	select {
+	case <-rt.killEntered:
+	case <-time.After(3 * time.Second):
+		close(writerStop)
+		<-writerDone
+		t.Fatal("no native termination request")
+	}
+	select {
+	case err := <-done:
+		close(writerStop)
+		<-writerDone
+		t.Fatal("Exchange returned before termination", err)
+	default:
+	}
+	close(writerStop)
+	<-writerDone
+	close(rt.releaseKill)
+	if err := <-done; err != nil {
+		t.Fatal(err)
+	}
+	last, err := os.ReadFile(file)
+	if err != nil {
+		t.Fatal(err)
+	}
+	time.Sleep(5 * time.Millisecond)
+	after, err := os.ReadFile(file)
+	if err != nil || !bytes.Equal(last, after) {
+		t.Fatal("background writes outlived Exchange", err)
+	}
+	lists, terminations := 0, 0
+	for _, raw := range rt.writes {
+		var m struct{ Method string }
+		_ = json.Unmarshal([]byte(raw), &m)
+		if m.Method == string(BackgroundList) {
+			lists++
+		}
+		if m.Method == string(BackgroundTerminate) {
+			terminations++
+		}
+	}
+	if lists != 2 || terminations != 1 {
+		t.Fatal("incomplete terminal readback", lists, terminations)
+	}
+}
+func TestExchangeRefusesUnconfirmedOrIncompleteTerminalDrain(t *testing.T) {
+	for _, kind := range []string{"termination refused", "pagination"} {
+		t.Run(kind, func(t *testing.T) {
+			rt := newRuntime()
+			rt.background = true
+			rt.terminalFailure = kind == "termination refused"
+			rt.listPagination = kind == "pagination"
+			s := openSession(t, rt, testSessionSpec(t))
+			if _, err := s.Exchange(context.Background(), run.Message{Task: "complete"}); err == nil || !rt.closed {
+				t.Fatal("unconfirmed background work handed off", err, rt.closed)
+			}
+		})
+	}
+}
+func TestActualNativeObservationBindsHarnessAndPreparedProfile(t *testing.T) {
+	rt := newRuntime()
+	spec := testSessionSpec(t)
+	manager, _ := spec.Prepared.Topology().Manager("a")
+	spec.Manager = manager
+	s := openSession(t, rt, spec)
+	value := s.Observation()
+	if value.ProfileIdentity != s.agents.identity || value.ImageID != fixtureImage || value.HarnessDigest != s.document.Digest() {
+		t.Fatal(value)
+	}
+	ctx, _ := spec.Prepared.Context("a")
+	for _, d := range ctx.Definitions() {
+		if !strings.Contains(s.document.Developer, d.Definition.Body) || !strings.Contains(s.document.Developer, d.ModelDigest) || !strings.Contains(s.document.Developer, d.Definition.Source.Digest) {
+			t.Fatal("selected canonical Definition lost", d.Definition.Identity)
+		}
+	}
+	before := value.HarnessDigest
+	s.document.Developer += "changed instruction"
+	if s.Observation().HarnessDigest == before {
+		t.Fatal("native instruction change did not change digest")
+	}
+	if (&nativeSession{}).Observation() != (run.SessionObservation{}) {
+		t.Fatal("unconstructed observation")
+	}
+}
+
+func TestNativeFinalAndTranscriptRedactLoginTokens(t *testing.T) {
+	rt := newRuntime()
+	rt.finalText = `{"decision":"submitted","findings":[{"manager":".","text":"private-access private-refresh"}]}`
+	a := agentsFor(t, rt)
+	a.TranscriptRoot = t.TempDir()
+	session, err := a.Open(context.Background(), testSessionSpec(t))
+	if err != nil {
+		t.Fatal(err)
+	}
+	res, err := session.Exchange(context.Background(), run.Message{Task: "work"})
+	if err != nil || len(res.Findings) != 1 || res.Findings[0].Text != "[REDACTED] [REDACTED]" {
+		t.Fatal(res, err)
+	}
+	if err = session.Close(context.Background()); err != nil {
+		t.Fatal(err)
+	}
+	files, err := os.ReadDir(a.TranscriptRoot)
+	if err != nil || len(files) != 1 {
+		t.Fatal(files, err)
+	}
+	data, err := os.ReadFile(filepath.Join(a.TranscriptRoot, files[0].Name()))
+	if err != nil || bytes.Contains(data, []byte("private-access")) || bytes.Contains(data, []byte("private-refresh")) || !bytes.Contains(data, []byte("[REDACTED]")) {
+		t.Fatal("transcript secret or missing evidence", err)
 	}
 }

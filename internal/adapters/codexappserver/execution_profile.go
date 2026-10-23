@@ -17,7 +17,7 @@ func ProfileFromPrepared(prepared runtimeconfig.PreparedProfile) (Profile, error
 		return Profile{}, fmt.Errorf("%w: %s", ErrSession, reason)
 	}
 	input, observation := prepared.Input(), prepared.Observation()
-	if _, ok := prepared.Identity(); !ok || observation.Status != model.Passed || input.Namespace() != "agentProfiles" || input.Binding() == (runtimeconfig.ProfileBinding{}) || observation.InputBinding != input.Binding() {
+	if _, ok := prepared.Identity(); !ok || observation.Status != model.Passed || input.Namespace() != "agentProfiles" || input.Section() != "codexAppServer" || input.Binding() == (runtimeconfig.ProfileBinding{}) || observation.InputBinding != input.Binding() {
 		return refuse("complete source-bound Agent profile preparation is required")
 	}
 	p := preparation{input: input, out: runtimeconfig.ProfileObservation{Status: model.Passed}}

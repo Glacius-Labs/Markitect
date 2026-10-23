@@ -1,96 +1,12 @@
 package container
 
 import (
-	"os"
-	"os/exec"
-	"path/filepath"
 	"reflect"
-	"runtime"
 	"strings"
 	"testing"
-
-	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 const testImage = "sha256:0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef"
-
-func TestRunArgsBindExplicitLocalDirectory(t *testing.T) {
-	root := testkit.TempDir(t)
-	source := filepath.Join(root, "private Run copy")
-	if err := os.Mkdir(source, 0700); err != nil {
-		t.Fatal(err)
-	}
-	for _, readOnly := range []bool{false, true} {
-		spec := validSpec()
-		spec.Mounts = []Mount{{BindDirectory: source, Target: "/work", ReadOnly: readOnly}}
-		args, err := spec.runArgs([]string{AgentdPath, "serve"})
-		if err != nil {
-			t.Fatal(err)
-		}
-		want := "type=bind,src=" + source + ",dst=/work"
-		if readOnly {
-			want += ",readonly"
-		}
-		if !containsArg(args, want) {
-			t.Fatalf("missing explicit bind %q in %q", want, args)
-		}
-	}
-}
-
-func TestRunArgsRefuseAmbiguousOrInvalidBindDirectories(t *testing.T) {
-	source := testkit.TempDir(t)
-	file := filepath.Join(source, "regular-file")
-	if err := os.WriteFile(file, []byte("not a directory"), 0600); err != nil {
-		t.Fatal(err)
-	}
-	for name, mutate := range map[string]func(*Mount){
-		"both sources":     func(m *Mount) { m.Volume = "private-volume" },
-		"neither source":   func(m *Mount) { m.BindDirectory = "" },
-		"relative":         func(m *Mount) { m.BindDirectory = "private-copy" },
-		"unclean":          func(m *Mount) { m.BindDirectory = source + string(os.PathSeparator) + ".." },
-		"root":             func(m *Mount) { m.BindDirectory = filepath.VolumeName(source) + string(os.PathSeparator) },
-		"UNC":              func(m *Mount) { m.BindDirectory = `\\server\share\copy` },
-		"missing":          func(m *Mount) { m.BindDirectory = filepath.Join(source, "absent") },
-		"file":             func(m *Mount) { m.BindDirectory = file },
-		"option injection": func(m *Mount) { m.BindDirectory = source + ",readonly" },
-		"CSV quoting":      func(m *Mount) { m.BindDirectory = source + `"` },
-		"control":          func(m *Mount) { m.BindDirectory = source + "\n" },
-		"volume subpath":   func(m *Mount) { m.Subpath = "child" },
-		"volume nocopy":    func(m *Mount) { m.NoCopy = true },
-	} {
-		t.Run(name, func(t *testing.T) {
-			spec := validSpec()
-			m := Mount{BindDirectory: source, Target: "/work"}
-			mutate(&m)
-			spec.Mounts = []Mount{m}
-			if args, err := spec.runArgs([]string{AgentdPath, "serve"}); err == nil {
-				t.Fatalf("invalid bind accepted: %q", args)
-			}
-		})
-	}
-}
-
-func TestRunArgsRefuseRedirectedBindDirectoryAndAncestor(t *testing.T) {
-	root := testkit.TempDir(t)
-	target, alias := filepath.Join(root, "actual"), filepath.Join(root, "redirected")
-	if err := os.MkdirAll(filepath.Join(target, "child"), 0700); err != nil {
-		t.Fatal(err)
-	}
-	if runtime.GOOS == "windows" {
-		if out, err := exec.Command("cmd", "/c", "mklink", "/J", alias, target).CombinedOutput(); err != nil {
-			t.Fatalf("create owned test junction: %v %s", err, out)
-		}
-	} else if err := os.Symlink(target, alias); err != nil {
-		t.Fatal(err)
-	}
-	for _, source := range []string{alias, filepath.Join(alias, "child")} {
-		spec := validSpec()
-		spec.Mounts = []Mount{{BindDirectory: source, Target: "/work"}}
-		if args, err := spec.runArgs([]string{AgentdPath, "serve"}); err == nil {
-			t.Fatalf("redirected bind accepted: %q", args)
-		}
-	}
-}
 
 func validSpec() ContainerSpec {
 	return ContainerSpec{

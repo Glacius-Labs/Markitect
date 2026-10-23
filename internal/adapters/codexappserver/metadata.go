@@ -70,7 +70,7 @@ func (m *MetadataPreparer) PrepareAgentProfile(ctx context.Context, input runtim
 		p.acquisition(err)
 		return p.out, p.err
 	}
-	if input.Namespace() != "agentProfiles" || input.Binding() == (runtimeconfig.ProfileBinding{}) {
+	if input.Namespace() != "agentProfiles" || input.Section() != "codexAppServer" || input.Binding() == (runtimeconfig.ProfileBinding{}) {
 		p.issue(model.Failed, "input", "", "A bound Agent profile input is required.")
 		return p.out, nil
 	}

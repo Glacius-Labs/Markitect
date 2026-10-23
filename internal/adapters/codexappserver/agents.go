@@ -9,6 +9,7 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"path/filepath"
 	"reflect"
 	"strings"
 	"sync"
@@ -28,11 +29,13 @@ const stopTimeout = 20 * time.Second
 // Agents is one prepared native profile implementing the actual Run session consumer.
 // Outer composition selects the profile; Project/Run never resolve runtime profiles.
 type Agents struct {
-	start       RuntimeStarter
-	prepared    runtimeconfig.PreparedProfile
-	profile     Profile
-	identity    string
-	credentials CredentialResolver
+	// TranscriptRoot is an optional explicit absolute evidence directory, fixed before Open.
+	TranscriptRoot string
+	start          RuntimeStarter
+	prepared       runtimeconfig.PreparedProfile
+	profile        Profile
+	identity       string
+	credentials    CredentialResolver
 }
 
 var _ run.Sessions = (*Agents)(nil)
@@ -150,7 +153,7 @@ type nativeSession struct {
 }
 
 func (a *Agents) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
-	if ctx == nil || ctx.Err() != nil || !spec.Prepared.Valid() || spec.Workspace == nil || strings.TrimSpace(spec.RunID) == "" {
+	if ctx == nil || ctx.Err() != nil || a.TranscriptRoot != "" && !filepath.IsAbs(a.TranscriptRoot) || !spec.Prepared.Valid() || spec.Workspace == nil || strings.TrimSpace(spec.RunID) == "" {
 		return nil, ErrSession
 	}
 	actual, ok := spec.Prepared.Topology().Manager(spec.Manager.Package)
@@ -208,6 +211,14 @@ func (a *Agents) Open(ctx context.Context, spec run.SessionSpec) (run.Session, e
 	dec, err := NewCodec(int(a.profile.MaxWireBytes))
 	if err != nil {
 		return nil, err
+	}
+	if a.TranscriptRoot != "" {
+		if !filepath.IsAbs(a.TranscriptRoot) {
+			return nil, ErrSession
+		}
+		if t.tr, err = openTranscript(filepath.Join(a.TranscriptRoot, name+".jsonl"), t.redact); err != nil {
+			return nil, err
+		}
 	}
 	t.peer, err = a.start(ctx, cs)
 	if err != nil {
@@ -276,7 +287,10 @@ func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (out 
 	if err = t.runTurn(active); err != nil {
 		return out, err
 	}
-	if err = strictValue([]byte(t.final), &out); err != nil {
+	if err = t.drainTerminals(active); err != nil {
+		return out, err
+	}
+	if err = strictValue(t.redact([]byte(t.final)), &out); err != nil {
 		return out, fmt.Errorf("%w: native final response is not the required decision JSON", ErrSession)
 	}
 	switch out.Decision {
@@ -736,4 +750,52 @@ func (t *nativeSession) safe(err error) error {
 		return fmt.Errorf("%w: %s", ErrSession, clean)
 	}
 	return err
+}
+
+// Observation is supplied only by an actually constructed native session.
+func (t *nativeSession) Observation() run.SessionObservation {
+	if !t.ready {
+		return run.SessionObservation{}
+	}
+	return run.SessionObservation{ProfileIdentity: t.agents.identity, ImageID: t.peer.ImageID(), HarnessDigest: t.document.Digest()}
+}
+func (t *nativeSession) drainTerminals(ctx context.Context) error {
+	list := func() (Response, error) {
+		t.nextRequest++
+		id := IntegerRequestID(t.nextRequest)
+		raw, err := t.enc.EncodeBackgroundList(id, t.thread)
+		if err != nil {
+			return Response{}, err
+		}
+		if err = t.send(ctx, raw); err != nil {
+			return Response{}, err
+		}
+		return t.response(ctx, id, BackgroundList)
+	}
+	first, err := list()
+	if err != nil {
+		return fmt.Errorf("%w: native background terminals unavailable: %v", ErrSession, err)
+	}
+	for _, terminal := range first.Terminals {
+		t.nextRequest++
+		id := IntegerRequestID(t.nextRequest)
+		raw, err := t.enc.EncodeBackgroundTerminate(id, t.thread, terminal.ProcessID)
+		if err != nil {
+			return err
+		}
+		if err = t.send(ctx, raw); err != nil {
+			return err
+		}
+		if _, err = t.response(ctx, id, BackgroundTerminate); err != nil {
+			return err
+		}
+	}
+	final, err := list()
+	if err != nil {
+		return err
+	}
+	if len(final.Terminals) != 0 {
+		return fmt.Errorf("%w: native background terminals remain after termination", ErrSession)
+	}
+	return nil
 }

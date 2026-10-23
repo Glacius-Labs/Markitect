@@ -24,7 +24,7 @@ func openTranscript(path string, redact func([]byte) []byte) (*transcript, error
 	if !filepath.IsAbs(path) {
 		return nil, ErrSession
 	}
-	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0o600)
+	f, err := os.OpenFile(path, os.O_CREATE|os.O_WRONLY|os.O_EXCL, 0o600)
 	if err != nil {
 		return nil, errors.Join(ErrSession, err)
 	}

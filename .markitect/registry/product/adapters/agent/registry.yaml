@@ -7,7 +7,7 @@ artifacts:
   - path: "internal/adapters/claudecode/README.md"
     form: doc
     realizes: [product/ports-and-adapters]
-    why: Documents the turn adapter, the selected pinned Claude wire shapes, provenance and source-only evidence limits.
+    why: "Documents static Claude metadata/wire support and the explicit unavailable replacement Session boundary."
   - path: "internal/adapters/claudecode/metadata.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
@@ -40,10 +40,6 @@ artifacts:
     form: test
     realizes: [product/ports-and-adapters]
     why: Supplies independently authored synthetic stream fixtures without provider captures or copied schemas.
-  - path: "internal/adapters/claudecode/context_transport_test.go"
-    form: test
-    realizes: [product/ports-and-adapters, product/organization/delegated-context]
-    why: Compares the user message and tool answer the Claude adapter actually writes with independently built context text, detects cut, changed and misaddressed payloads, refuses an oversized prompt instead of cutting it and passes on a reported compaction.
   - path: "internal/adapters/claudecode/codec_test.go"
     form: test
     realizes: [product/ports-and-adapters]
@@ -59,19 +55,15 @@ artifacts:
   - path: "internal/adapters/claudecode/agents.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: "Implements run.Agents: one Claude turn per container with Orchestrator tool answers, usage and an observed stop."
+    why: "Implements the actual Run Session port with explicit pre-side-effect refusal until Claude capability is qualified; no legacy engine route remains."
   - path: "internal/adapters/claudecode/agents_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: Distinguishes fake turn spec, invocation, tool round trips, timeout, cancellation, uncertain stop and validation.
+    why: "Checks explicit unsupported Session refusal and retained literal/escaped token redaction with error identity."
   - path: "internal/adapters/claudecode/transcript.go"
     form: code
     realizes: [product/ports-and-adapters]
     why: Writes the redacted JSON Lines turn transcript and keeps the runtime token out of every output.
-  - path: "internal/adapters/claudecode/agents_smoke_test.go"
-    form: test
-    realizes: [product/ports-and-adapters]
-    why: Prepares an explicitly opted-in real read-only turn with one Orchestrator tool; runtime evidence remains unexecuted.
   - path: "internal/adapters/codexappserver/README.md"
     form: doc
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
@@ -95,11 +87,11 @@ artifacts:
   - path: "internal/adapters/codexappserver/execution_profile.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
-    why: Projects only complete source-bound Codex v3 Runtime settings and the observed image into a turn Profile.
+    why: "Projects complete source-bound Codex v3 static Runtime settings into a native session Profile."
   - path: "internal/adapters/codexappserver/execution_profile_test.go"
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
-    why: Distinguishes literal execution settings, source binding, metadata-only profiles and incomplete evidence through the actual Apply consumer with fake image readers.
+    why: "Distinguishes literal settings, exact source binding, metadata-only profiles and incomplete static Runtime evidence."
   - path: "internal/adapters/codexappserver/metadata_decode.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata]
@@ -115,15 +107,15 @@ artifacts:
   - path: "internal/adapters/codexappserver/metadata_fixture_test.go"
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Supplies real Apply profile inputs from bounded model and source fixtures.
+    why: "Supplies captured profile/instruction inputs through the actual static Runtime preparation consumer."
   - path: "internal/adapters/codexappserver/metadata_test.go"
     form: test
     realizes: [product/adapters/agent/closed-agent-metadata]
-    why: Checks actual Apply image evidence, immutable identity, acquisition failures and factory boundaries with fake readers.
+    why: "Checks actual static Runtime image evidence, immutable identity, acquisition failures and reader boundaries."
   - path: "internal/adapters/codexappserver/agents.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Implements the run.Agents turn adapter, one container per turn with handshake, thread start or resume, Orchestrator tool answers, usage and observed stop.
+    why: "Implements actual Run Sessions with private volume/subpath copies, fresh owned home, native harness/inbox tools, message drain and truthful closure."
   - path: "internal/adapters/codexappserver/agents_credential.go"
     form: code
     realizes: [product/ports-and-adapters]
@@ -135,7 +127,7 @@ artifacts:
   - path: "internal/adapters/codexappserver/profile.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: Defines the per-profile turn settings, the explicit runtime credential resolver and the container and provider command a turn runs with.
+    why: "Defines explicit prepared session settings, normal-login-only credential input and direct private Linux volume/subpath projection."
   - path: "internal/adapters/codexappserver/transcript.go"
     form: code
     realizes: [product/ports-and-adapters]
@@ -143,7 +135,7 @@ artifacts:
   - path: "internal/adapters/codexappserver/agents_test.go"
     form: test
     realizes: [product/ports-and-adapters]
-    why: Exercises complete fake-runtime turns and distinguishes resume, read-only mounts, refusals, foreign calls, provider failure, timeout, cancellation and unobserved stop.
+    why: "Exercises actual Project/Runtime prepared native Sessions, persistent conversation, harness observations, callback and background-writer drain, refusals and partial cleanup."
   - path: "internal/adapters/claudecode/setup.go"
     form: code
     realizes: [product/adapters/agent/closed-agent-metadata, product/ports-and-adapters]
@@ -160,3 +152,7 @@ artifacts:
     form: code
     realizes: [product/ports-and-adapters, product/organization/delegated-context]
     why: "Builds complete versioned rules, checked project/Manager context and mandate instructions for actual native renderer use, retaining provenance and exact selected instruction bytes."
+  - path: "internal/harness/README.md"
+    form: doc
+    realizes: [product/ports-and-adapters, product/organization/delegated-context]
+    why: "Describes pure checked harness inputs, actual native renderer ownership and the boundary between supplied instruction bytes and provider loading evidence."
