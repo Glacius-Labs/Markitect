@@ -31,9 +31,6 @@ type CapturedModel struct {
 	inputs  CapturedInputs
 	checked model.Result
 	limits  model.Limits
-	// extract marks the start of an Extract: the artifacts are not registered yet,
-	// which file checking tolerates.
-	extract bool
 }
 
 func (m CapturedModel) Request() CaptureRequest {

@@ -50,9 +50,6 @@ type Candidates struct {
 	classifications []realization.Classification
 	protections     []realization.Protection
 	layout          realization.Layout
-	// guard, when set, replaces the protected-input check of Account: Extract
-	// guards a different set of inputs than Apply does.
-	guard func(snapshot.Tree) []CandidateFinding
 }
 
 // NewCandidates binds the gates to one passed preparation: its checked model,
@@ -242,11 +239,7 @@ func (c Candidates) account(tree snapshot.Tree) ([]CandidateFinding, *realizatio
 	}
 	registry, classifications := c.shards(tree, add)
 	changed := make(map[string]bool)
-	protected := c.protectedInputs
-	if c.guard != nil {
-		protected = c.guard
-	}
-	for _, finding := range protected(tree) {
+	for _, finding := range c.protectedInputs(tree) {
 		changed[finding.Path] = true
 		findings = append(findings, finding)
 	}
@@ -495,4 +488,41 @@ func ownerName(owner realization.Owner) string {
 		return name
 	}
 	return organization.Root
+}
+
+// rebindModelSource reads the manifest, the lock and the model tree of a
+// repository-local model from the tree. An external dependency is unchanged.
+func rebindModelSource(source ModelSource, tree snapshot.Tree) ModelSource {
+	area := source.RepositoryArea
+	if area.String() == "" {
+		return source
+	}
+	known := make(map[string]bool)
+	for _, entry := range source.Files.Entries() {
+		known[entry.Path().String()] = true
+	}
+	var files []snapshot.Entry
+	var entries []model.Entry
+	for _, entry := range tree.Entries() {
+		if !area.Contains(entry.Path()) {
+			continue
+		}
+		relative := entry.Path().String()
+		if !area.IsRoot() {
+			relative = strings.TrimPrefix(relative, area.String()+"/")
+		}
+		relativePath, err := snapshot.NewPath(relative)
+		if err != nil || !known[relative] && !source.Root.Contains(relativePath) {
+			continue
+		}
+		file, err := snapshot.NewEntry(relativePath, entry.Mode(), entry.Bytes())
+		if err != nil {
+			continue
+		}
+		files = append(files, file)
+		entries = append(entries, model.Entry{Path: relative, Kind: model.Regular, Bytes: entry.Bytes()})
+	}
+	source.Files, _ = snapshot.NewTree(files)
+	source.Source.Entries = entries
+	return source
 }

@@ -39,19 +39,11 @@ type Command struct {
 	revisions   RevisionResolver
 	documents   Documents
 	apply       ApplyFunc
-	extract     ExtractFunc
 	setup       SetupFunc
 }
 
 func New(preparation *apply.PreparationService, agents apply.AgentProfilePreparer, checks apply.CheckProfilePreparer, revisions RevisionResolver, documents Documents, applyRun ApplyFunc) *Command {
 	return &Command{preparation: preparation, agents: agents, checks: checks, revisions: revisions, documents: documents, apply: applyRun}
-}
-
-// WithExtract installs the Extract operation. Without it the command reports
-// that Extract is unavailable.
-func (c *Command) WithExtract(extract ExtractFunc) *Command {
-	c.extract = extract
-	return c
 }
 
 type manifestList []string
@@ -64,8 +56,7 @@ const help = `Markitect: canonical v1 model, preparation and recursive Apply
   check [options]           structural model, registry and file accounting
   context <package> [options]  actual static selection and inclusion reasons
   docs [options]            preview a generated v1 model view
-  apply [options]          realize the bound model: direct or staged work, then Verify
-  extract [options]        derive a model candidate from the existing artifacts
+  apply [options]          realize the bound model through reviewed Manager assignments
   setup --runtime DIR --image REF --credential FILE --agent-model M [options]
                             prepare a Runtime directory with runtime.yaml and run.json
   version | licenses | help
@@ -97,29 +88,14 @@ apply options:
   Revision previews and --metadata are preparation options, not apply flags.
   Configuration supplies state storage, helper resources, harvest bounds,
   productBuild assertion and dedicated credential references. No ambient defaults.
-  The JSON report lists the preparation, the run (passes with each Manager's
-  state, basis, result and verdict; findings, questions, problems, turns,
-  usage), the publication receipt, the Run outcome (success, failed or
-  incomplete) and the evidence directory. Evidence is kept under
+  The JSON report lists preparation, assignment commits and messages,
+  actual assessment/reviews/checks and cleanup observations, publication,
+  outcome (success, failed or incomplete) and the evidence directory under
   STATE/runs/RUN; only one run holds a state directory. A Run is closed: no
   question or answer crosses Root to the user or the invoking AI, and no
   preloaded owner decision supplies model intent. A Run that needs a material
   decision the model lacks ends failed without publication and reports it;
   amend the model and start a new Run.
-
-extract options:
-  --run-config PATH, --runtime-profile PATH and repeated --dependency as for apply;
-  --repo selects the repository. There is no --model: the Orchestrator prepares the
-  structural manifest and lock .markitect/model.yaml with no local Definitions,
-  the imported vocabulary, and .markitect/execution.yaml with budget, profiles,
-  ownership areas of the artifacts and checks. Phase one proposes the Packages
-  and their ownership areas, phase two derives the model of every Package and
-  registers the artifacts. Artifacts are never changed or published; a verified
-  model is published as the changed .markitect model, registry shards and
-  execution.yaml (ownership and proposed checks). The JSON report lists model
-  completion, the final Verify Pass, the realization deviations per Definition
-  (artifact findings), the proposedChecks, open questions, per-phase passes,
-  turns and usage and the publication. An Extract is closed like an Apply.
 
 setup options:
   --runtime DIR            absolute Runtime directory, outside the repository; created
@@ -175,8 +151,8 @@ func (c *Command) Run(ctx context.Context, args []string, stdout, stderr io.Writ
 	if verb == "setup" {
 		return c.setupVerb(ctx, args[1:], stdout, stderr, emit)
 	}
-	if verb == "apply" || verb == "extract" {
-		return c.execution(ctx, verb, args[1:], stdout, stderr, emit)
+	if verb == "apply" {
+		return c.applyVerb(ctx, args[1:], stdout, stderr, emit)
 	}
 	if verb != "check" && verb != "context" && verb != "docs" {
 		fmt.Fprintln(stderr, "unknown operation:", verb)

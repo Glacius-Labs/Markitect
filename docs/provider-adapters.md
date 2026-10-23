@@ -1,6 +1,6 @@
 # Provider adapters
 
-The public CLI exposes structural preparation, optional profile metadata preparation, `apply` and `extract`. Concrete Codex App Server and Claude Code Agent adapters, container workspaces, a check runner and a guarded publisher implement the ports of the recursive Apply ([runtime contract](design/canonical-model/manager-apply-runtime.md#ports-and-adapters)); bootstrap routes each turn to the adapter of its profile. The implementation is pending review, CI and owner acceptance. Source tests are not a real provider run.
+The public CLI exposes structural preparation, optional profile metadata preparation, `apply`. Concrete Codex App Server and Claude Code Agent adapters, container workspaces, a check runner and a guarded publisher implement the ports of the recursive Apply ([runtime contract](design/canonical-model/manager-apply-runtime.md#ports-and-adapters)); bootstrap routes each turn to the adapter of its profile. The implementation is pending review, CI and owner acceptance. Source tests are not a real provider run.
 
 ## Connect the outer client
 

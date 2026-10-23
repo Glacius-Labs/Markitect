@@ -1,10 +1,10 @@
 # Project workflow
 
-**Target/source boundary, 22 October 2026:** the owner accepted [Agent workspaces and reviewed handoffs](design/canonical-model/manager-apply-workflow.md) and its [documentation-only rebuild plan](implementation-plan.md#apply-rebuild-plan). The target uses one container/working copy per Agent assignment, reviewed Git handoffs and no domain Turns or required per-write enforcement. The executable instructions below describe the existing Pass implementation until migrated; they do not make the target available.
+**Target/source boundary, 23 October 2026:** the [approved V1 plan](implementation-plan.md#apply-rebuild-plan) commissions source replacement. The temporary public Apply already uses independent assignments, focused reviews and an Apply-wide Git lifetime. Fresh full-hierarchy Runs and closed-Run publication remain the S2/S3 target. Source implementation approval grants no real execution.
 
-Markitect's purpose is canonical model-first development with delegated realization. Current source exposes structural preparation, a guarded generated-model view and explicit controlled Apply and Extract commands. Apply composes recursive Managers (parallel Execute in one shared working tree, fresh recursive Verify of one immutable candidate), container sessions, candidate workspaces, container checks and guarded publication. Source availability does not establish provider readiness or successful complete realization; the [delivery plan](implementation-plan.md) and recorded validation evidence retain those separate scopes.
+Markitect's current command surface includes deterministic check/context/docs, explicit Apply and Setup during the S1 transition. Extract, Cockpit and interactive authoring are retired. Public Apply temporarily uses independent Manager assignments with focused model assessment/Verify and guarded publication. The [approved V1 plan](implementation-plan.md) replaces that runtime with fresh full-hierarchy Runs; source tests do not establish native readiness or owner acceptance.
 
-**Implemented, 21 October 2026:** [mandatory Model assessment and closed Runs](design/canonical-model/manager-apply-workflow.md#mandatory-model-assessment-and-closed-runs). Every Apply and Extract assesses its model read-only through the same recursive Pass before any work; internal tree questions remain, nobody outside the tree answers during a Run, Root-confirmed material gaps or errors end the Run Failed without publication, and corrected model input requires a new Run. All product strategies retain Managers. Source tests show the gate; they are no provider or runtime evidence of the assessment method.
+**Closed Runs:** no question or answer crosses Root to the user or invoking AI. A material missing decision or contradiction ends Apply without publication; correct the model outside the Run. The [V1 architecture](design/v1-execution-architecture.md) owns the replacement target.
 
 ## Connect and inspect
 
@@ -56,22 +56,18 @@ Use an existing committed repository, explicit dependency manifests, a Runtime p
 
 ```text
 go run ./cmd/markitect apply --repo REPOSITORY --runtime-profile ABSOLUTE_RUNTIME_YAML --run-config ABSOLUTE_RUN_JSON
-go run ./cmd/markitect extract --repo REPOSITORY --dependency DEPENDENCY_MODEL_YAML --runtime-profile ABSOLUTE_RUNTIME_YAML --run-config ABSOLUTE_RUN_JSON
 ```
 
-`apply` accepts the same `--model` and repeated `--dependency` selections as preparation. It captures the actual committed source and complete settings, takes the state directory's exclusive lock and refuses before any Agent work when the strict Model check or File check fails, when the project declares no `ownership` or an ownership shape the container mounts cannot enforce. It then runs the required Manager organization through the read-only Model assessment of the bound model and, only when that accepts it, through the work Passes of the `strategy` its execution settings select, Implement for `direct` and Plan, Prepare and Implement for `staged`, and an independent Verify of one captured candidate, routes genuine findings back through the necessary work Pass followed by a fresh complete Verify, and publishes only a cleanly verified candidate ([accepted workflow](design/canonical-model/manager-apply-workflow.md), [runtime contract](design/canonical-model/manager-apply-runtime.md)). `--revision` and `--metadata` are preview options and are refused here. Missing explicit execution inputs leave Apply unavailable before source acquisition. Only one run holds a state directory; a second one refuses at the lock before it captures anything.
+`apply` accepts the same `--model` and repeated `--dependency` selections as preparation. It captures committed inputs and passes structural/settings preparation before starting the required independent Manager assignments. Parents delegate, review and integrate fixed Git handoffs; focused model assessment and independent Verify surround Implement. Publication uses the guarded source boundary and never creates a user commit. This temporary composition retains its earlier Apply-wide Git lifetime until S2/S3 replace it. `--revision` and `--metadata` are preview-only options. Missing explicit execution inputs refuse before acquisition; the state-directory lock prevents a second command from acquiring the same state.
 
-`extract` is the first, bounded implementation of the reverse direction (artifacts to model, [DEC-057](concepts/register.md#dec-057-three-fundamental-starting-situations)) for a repository that has artifacts but no model. It takes `--repo`, repeated `--dependency`, `--runtime-profile` and `--run-config` like `apply` and no `--model`: the Orchestrator prepares `.markitect/model.yaml` and `.markitect/model-lock.yaml` with no local Definitions (the model root holds only a placeholder file Git can track), the imported vocabulary, and `.markitect/execution.yaml` with budget, profiles, `ownership` areas for the artifacts and checks without `requiredBy`. Extract refuses a model that already has Definitions (use `apply`) and a project without ownership areas. Phase one lets Root alone assess the mandate and the fixed inputs, then propose the Packages with an overview Definition each and the ownership areas they need; phase two runs the proposed Manager tree to derive the model of every Package and register the artifacts, and assesses the verified candidate as a model. Each phase is a work Pass followed by independent Verify on the same Pass process as Apply. A material decision the artifacts do not settle ends the run Failed with the unaccepted draft retained, for model authoring outside the run. Existing artifacts are never changed or published. A Verified second phase publishes the changed `.markitect` model, registry shards and `execution.yaml` (ownership and proposed checks) through the guarded Publisher, never a commit. The JSON report states model completion, the final Verify Pass, the realization deviations per Definition (artifact findings), the `proposedChecks`, per-phase Passes, turns and usage, and the publication. The [runtime contract](design/canonical-model/manager-apply-runtime.md#extract-first-bounded-implementation) owns the details and limits.
+Extract is retired from the active command and source tree. Its prior behavior remains in the [verified source archive](development/v1-source-archive-20261023.md).
 
 Managers ask along the tree only; nobody outside it answers during a run ([accepted workflow](design/canonical-model/manager-apply-workflow.md#questions-and-escalation)). A material decision the model leaves open without delegating it, or a contradiction, is a model problem: the Model assessment reports it as a finding, a Manager at work reports it to its parent, and Root's confirmation ends the run Failed without publishing. Author the correction of the model outside the run and start a new Apply, which assesses the corrected model again. No answer command, owner channel or preloaded owner decision exists; a run configuration that still has `ownerDecisions` is refused.
 
 ### Invocation configuration
 
-`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 2`. Every field below is required, including the empty network string and the explicit harvest bounds. Two limit fields are optional: `deadline` is an absolute wall-clock time in RFC 3339 UTC form (`2026-10-19T18:30:00Z`); the run's own deadline is the earlier of its start plus the project's `executionTime` budget and this value, so the run ends gracefully, with its evidence and report written, before an external hard stop. For Apply, `workDeadline` may reserve time inside that effective deadline for independent Verify.
-It is an RFC 3339 UTC cutoff, requires an explicit later `deadline`, and must also precede
-the project execution deadline. An active non-Verify Pass stops there Incomplete; Verify
-can use the remaining time. Supply both values in a bound invocation; setup does not
-choose the reserve. Stop/cleanup still needs its own finite time outside the Apply ceiling.
+`--run-config` selects a closed UTF-8 JSON object with `formatVersion: 2`. Public Apply requires positive `maxMessages` and `messageTimeoutSeconds` in addition to the required identity, state, engine, helper, harvest and credential mappings. Optional `deadline` is an absolute UTC RFC 3339 bound; it combines with the project execution-time limit. Public Apply refuses the legacy `workDeadline`.
+Cleanup still needs finite time outside the Apply ceiling.
 A Run is closed, so no owner decision is bound with it: `ownerDecisions` ([DEC-053](concepts/register.md#dec-053-owner-decisions-bind-the-whole-run), superseded) is refused like any unknown key. Unknown, duplicate, null, relative-path or invalid values refuse construction; files of the earlier version 1 (with `allocation`, `restoreLimits` and `engineLimits`) are refused. There are no environment defaults. This file supplies concrete invocation inputs; project policies and Agent/Check model, effort, image and resource settings remain in their existing execution and Runtime profile documents.
 
 The following is an illustrative shape. Supply actual native absolute paths, immutable images, dedicated credentials and limits appropriate to the frozen project; these example assertions do not certify a runtime:
@@ -84,6 +80,8 @@ The following is an illustrative shape. Supply actual native absolute paths, imm
   "ownerRequest": "Realize the captured model.",
   "stateDirectory": "/absolute/markitect-state",
   "engineExecutable": "/absolute/container-engine",
+  "maxMessages": 40,
+  "messageTimeoutSeconds": 60,
   "workspaceHelper": {
     "name": "library-workspace-helper",
     "image": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
@@ -102,14 +100,14 @@ The following is an illustrative shape. Supply actual native absolute paths, imm
   "credentials": {
     "runtime-credential-reference": {
       "provider": "codex-app-server",
-      "mode": "api-key",
-      "path": "/absolute/dedicated-runtime-credential"
+      "mode": "dedicated-runtime-login",
+      "path": "/absolute/dedicated-account-login.json"
     }
   }
 }
 ```
 
-`harvest` bounds every observation of the shared working tree: at most `maxEntries` entries and `maxBytes` bytes, within the Orchestrator's ceilings of 1048576 entries and 4 GiB; an observation that exceeds a bound is uncertain and ends the run incomplete. Interrupt and termination signals cancel the run the same way: every turn and container is stopped and the report is still written. Turn timeouts, Pass and turn budgets come from the project's execution settings, not from this file. `productBuild` is the operator's explicit assertion identifying the frozen build, not an automatically verified Git SHA.
+`harvest` bounds repository/candidate captures to `maxEntries` and `maxBytes`, within the technical ceilings of 1048576 entries and 4 GiB. A bound exceeded cannot establish a complete capture. `maxMessages` is the finite assignment invocation allowance; `messageTimeoutSeconds` bounds one message. Cancellation stops active assignments and retains reported partial observations. `productBuild` is the operator assertion identifying the frozen build, not an automatically verified Git SHA.
 
 `engineExecutable` must equal the already validated literal in every selected executable Agent and Check profile. The helper is its own explicit container capability for workspace transfer: immutable image ID, non-root numeric user/group, finite positive CPU/memory/process/tmp limits and labels are required. Its work directory is `/work`; invocation JSON cannot add mounts. Empty `network` explicitly leaves network selection to the engine; use `"none"` to disable networking. Host networking is refused. These helper fields do not replace Agent or Check profile resources.
 
@@ -121,9 +119,9 @@ API keys and Claude tokens retain literal file bytes. A dedicated Codex runtime 
 
 ### Results and evidence
 
-The JSON result includes the preparation status and diagnostics, the Run's `binding` (the entry, the `strategy` with its work sequence, correction purposes and composition digest, the build, the execution settings and product defaults with their content identities, the budget and deadline, every Manager's resolved profiles, helpers and instructions, and the required checks, as `run.start` recorded it before any Agent work), the run (`status`, `reason`, every Pass with its purpose, verdict, check results and each Manager's last state, accepted basis and result, findings with their closures and disputes, questions, problems, turns with usage and duration, and the total usage), the publication receipt with its read-back, the Run `outcome`, `retainedWork` (the shared work volume kept when the run did not verify, for inspection) and `evidenceDirectory`. `status` is `passed` and `outcome` is `success` only when a cleanly verified candidate was published as applied or no change without an error. A run that ended incomplete (budget, an unresolved wait or open question, uncertain observation), a failed run (a failed gate, Root's model-error decision) and a failed publication stay distinct; `answer` reports the file it wrote.
+The JSON result includes preparation, `assignment` (model/Root/accepted commits, messages, assessment, reviews, checks and cleanup observations), publication, `outcome` and `evidenceDirectory`. `status: passed` and `outcome: success` require accepted work, publication as applied/no change and no technical error. Model rejection, failed publication and incomplete technical observation remain distinct. Legacy Pass/Turn `run` projections belong to retained historical consumers.
 
-Evidence stays on the host machine under `STATE/runs/RUN/`: `events.jsonl` (one event per line, synced when recorded), `transcripts/TURN.jsonl` (each turn's provider stream with known secrets redacted) and `report.json` (the printed result, written at the end). Right after taking the state lock a run records itself in `STATE/current-run`; no question or answer file exists. Publication uses the same Git repository adapter that captured the source, checks the captured guard and protects model/control/instruction inputs. It does not create a Git commit or push. No MCP server is provided by these commands.
+Evidence remains under `STATE/runs/RUN`; the temporary assignment path retains its reported workspace volumes. There is no owner answer channel and no automatic resume. The V1 durable candidate/result replacement is separate source work.
 
 ## Existing repositories
 
@@ -133,7 +131,7 @@ There is no automatic conversion, scaffold or Brownfield runtime. Earlier workfl
 
 ## Record setup and interrupted work
 
-Preparation and generated-document operations create no run, task, budget, candidate or execution journal. Preserve their acquisition diagnostics and generated-document completed-path reports. Apply and Extract instead use the explicit state directory and its process lock. There is no journal and no restore: an interrupted Apply (deadline, signal or crash) ends incomplete, and a new Apply starts again from the committed repository, never from the earlier shared working tree. Evidence of every run stays under `STATE/runs/`. Preserve it and resolve the reported condition before starting again. No standalone recovery command is exposed here. The state directory must not be inside the repository or contain it.
+Preparation and generated-document operations create no run, task, budget, candidate or execution journal. Preserve their acquisition diagnostics and generated-document completed-path reports. Apply instead uses the explicit state directory and its process lock. There is no journal and no restore: an interrupted Apply (deadline, signal or crash) ends incomplete, and a new Apply starts again from the committed repository, never by resuming earlier assignment copies. Evidence of every run stays under `STATE/runs/`. Preserve it and resolve the reported condition before starting again. No standalone recovery command is exposed here. The state directory must not be inside the repository or contain it.
 
 ## Acceptance and status
 
