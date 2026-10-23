@@ -26,6 +26,7 @@ type managerState struct {
 	running, delivered, assigned bool
 	accepting                    bool
 	working                      bool
+	assignmentReceived           bool
 	lateDecision                 Decision
 	judgment                     Decision
 	idle                         chan struct{}
@@ -111,6 +112,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 			state.working = true
 		}
 		x.states[organization.Root].assigned = true
+		x.states[organization.Root].assignmentReceived = true
 		for _, m := range r.Prepared.Topology().Managers() {
 			if m.Package == organization.Root {
 				continue
@@ -434,6 +436,7 @@ func (x *execution) tools(s *managerState) Tools {
 			}
 			target.running = true
 			target.working = true
+			target.assignmentReceived = true // correction task is delivered directly by Exchange
 			target.idle = make(chan struct{})
 			x.active.Add(1)
 			x.mu.Unlock()
@@ -446,6 +449,11 @@ func (x *execution) tools(s *managerState) Tools {
 			defer stop()
 			select {
 			case event := <-s.inbox:
+				if event.Assignment != nil {
+					s.mu.Lock()
+					s.assignmentReceived = true
+					s.mu.Unlock()
+				}
 				if event.Answer != nil {
 					x.mu.Lock()
 					q, ok := x.questions[event.Answer.ID]
@@ -557,6 +565,7 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 
 		s.mu.Lock()
 		assigned := s.assigned
+		assignmentReceived := s.assignmentReceived
 		s.mu.Unlock()
 		if !assigned {
 			feedback = []Finding{{Manager: s.manager.Package, Text: "Await your direct parent assignment before submitting."}}
@@ -587,6 +596,9 @@ func (x *execution) work(s *managerState, task string, feedback []Finding) (Hand
 					return Handoff{}, err
 				}
 				feedback = []Finding{{Manager: s.manager.Package, Text: err.Error()}}
+				if assignmentReceived {
+					task = "Repair the submitted candidate for your active assignment using these Findings. Continue in this same Session; do not await another initial parent assignment. Preserve required child reviews and resolve pending questions before submitting again."
+				}
 				continue
 			}
 		}

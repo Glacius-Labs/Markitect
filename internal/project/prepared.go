@@ -164,12 +164,63 @@ func (p Prepared) ValidateCandidate(a PreviewPreparationAttempt) error {
 	}
 	status := structuralPreparationStatus(checked.Status, a.Registry().Status(), a.Files().Status(), a.Execution().Status(), a.Contexts().Status())
 	if status == model.Failed {
-		return fmt.Errorf("%w: structural checks failed", ErrCandidateInvalid)
+		return candidateStructuralError(a)
 	}
 	if status != model.Passed {
 		return fmt.Errorf("%w: candidate structural observation incomplete", ErrIncompleteInputs)
 	}
 	return nil
+}
+
+// Keep candidate repair feedback at the existing error seam. Only actual
+// structural diagnostics are projected, never raw files or runtime inputs.
+func candidateStructuralError(a PreviewPreparationAttempt) error {
+	const limit = 8192
+	var detail strings.Builder
+	omitted := false
+	clip := func(text string, size int) string {
+		if len(text) > size {
+			return strings.ToValidUTF8(text[:size], "") + "..."
+		}
+		return text
+	}
+	add := func(code, path, message string) {
+		if path != "" {
+			if _, err := snapshot.NewPath(path); err != nil {
+				path = "<external input>"
+			}
+		}
+		line := fmt.Sprintf("\n%s path=%q: %q", clip(code, 128), clip(path, 1024), clip(message, 1024))
+		if detail.Len()+len(line) > limit-256 {
+			omitted = true
+			return
+		}
+		detail.WriteString(line)
+	}
+	if accounting, ok := a.Files().Accounting(); ok {
+		for _, d := range accounting.Findings() {
+			add(d.Code, d.Path.String(), d.Message)
+		}
+	}
+	for _, d := range a.Registry().Diagnostics() {
+		add(d.Code, d.Source.String(), d.Message)
+	}
+	for _, d := range a.Files().Diagnostics() {
+		add(d.Code, d.Source.File, d.Message)
+	}
+	for _, d := range a.Model().Checked().Diagnostics {
+		add(d.Code, d.Source.Path, d.Message)
+	}
+	for _, d := range a.Execution().Diagnostics() {
+		add(d.Code, d.Source.File, d.Message)
+	}
+	for _, d := range a.Contexts().Diagnostics() {
+		add(d.Code, "", d.Message)
+	}
+	if omitted {
+		detail.WriteString("\nAdditional structural diagnostics omitted (feedback size limit).")
+	}
+	return fmt.Errorf("%w: structural checks failed%s", ErrCandidateInvalid, detail.String())
 }
 func sameSourceEntries(a, b []model.Entry) bool {
 	a = slices.Clone(a)
