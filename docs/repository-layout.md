@@ -9,7 +9,7 @@ Current source uses canonical language v1, explicit input selection and exact ar
   model.yaml                 canonical manifest
   model-lock.yaml            explicit dependency lock
   model/                     canonical Definition tree and local Packages
-  execution.yaml             budget, profiles, required checks and artifact layout
+  execution.yaml             v2 Package instructions and scoped required checks
   ignore.yaml                optional exact explained file exceptions
   registry/
     registry.yaml            Root's artifact shard
@@ -19,11 +19,11 @@ docs/markitect/project.md    official generated readable view
 
 Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Runtime profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
 
-Apply and Extract keep their state outside the repository, in the state directory of the run configuration: the lock, `runs/<runID>/` evidence and `current-run` ([runtime contract](design/canonical-model/manager-apply-runtime.md#evidence-and-state)). There is no journal. Read-only preparation creates no run evidence.
+Standalone Run keeps durable candidates, terminal records and project Notes outside the repository in the explicitly selected state root. Temporary Manager and Git environments close before successful return; stored data can be reopened independently. See the [Run](../internal/run/README.md) and [workspace service](../internal/adapters/gitrepo/WORKSPACES.md). Public Apply is unavailable until S3 and Extract is retired. Read-only preparation creates no Run state.
 
 ## Ownership and boundaries
 
-The canonical model owns intended behavior. Registry shards assign exact artifact paths to one responsibility and existing Definitions. Execution declarations own operational selections and ceilings. Embedded product defaults have their own versioned source. Orchestrator metadata owns literal executable/protocol observations. Captured canonical and control inputs are protected separately; an exact ignore cannot override input protection or satisfy missing realization.
+The canonical model owns intended behavior. Registry shards assign exact artifact paths to one responsibility and existing Definitions. Execution v2 declarations own Package instructions and scoped checks. Outer runtime configuration owns native/check profiles; invocation configuration owns finite limits and normal account-login references. Static metadata owns literal image/protocol observations. Captured canonical and control inputs are protected separately; an exact ignore cannot override input protection or satisfy missing realization.
 
 ## Source repository layout
 
@@ -37,7 +37,11 @@ internal/model/               canonical v1 Model check
 internal/snapshot/            pure fixed tree values
 internal/organization/        pure topology/context/settings
 internal/realization/         pure ownership/accounting/candidates
-internal/apply/               preparation and consumer ports
+internal/project/             structural preparation and candidate validation
+internal/run/                 closed complete Manager hierarchy and its ports
+internal/runtimeconfig/       acquired static native/check profile envelopes
+internal/harness/             pure model-derived native instructions
+internal/apply/               unavailable public Apply boundary until S3
 internal/modeldocs/           generated view and write plan
 internal/adapters/            explicit repository/profile/document adapters
 internal/bootstrap/           actual product composition

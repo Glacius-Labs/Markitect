@@ -1,35 +1,35 @@
 # Provider adapters
 
-The public CLI exposes structural preparation, optional profile metadata preparation, `apply`. Concrete Codex App Server and Claude Code Agent adapters, container workspaces, a check runner and a guarded publisher implement the ports of the recursive Apply ([runtime contract](design/canonical-model/manager-apply-runtime.md#ports-and-adapters)); bootstrap routes each turn to the adapter of its profile. The implementation is pending review, CI and owner acceptance. Source tests are not a real provider run.
+The CLI exposes structural `check`, `context` and guarded `docs`, with explicitly requested static Runtime metadata. Public `apply` reports unavailable until S3. The standalone [Run](../internal/run/README.md) owns the complete Manager hierarchy and direct Session, Git, check and record ports. It provides no product publication path.
 
-## Connect the outer client
+<a id="role-profiles"></a>
 
-Build `cmd/markitect` and use its CLI from the coding environment. `check` and `context` are structural by default. To request metadata/settings, supply `--metadata --runtime-profile ABSOLUTE_DOCUMENT_PATH`. Runtime profile selection is explicit; the product does not search local accounts or infer a provider configuration.
+## Explicit profiles and static metadata
 
-## Role profiles
+Build `cmd/markitect` and use its CLI from the coding environment. `check` and `context` are structural by default. Request static metadata with `--metadata --runtime-profile ABSOLUTE_DOCUMENT_PATH`. Runtime profile selection is explicit; the product does not discover accounts or infer provider configuration.
 
-The explicit Runtime profile document contains closed, typed Agent and Check profile sections consumed by the actual adapters. Project execution declarations select profile names. The Codex section uses `profileVersion: 2` for metadata only and `3` with explicit execution settings; the `claudeCode` section uses `profileVersion: 1` with its explicit session settings (model, effort, system prompt, tools and resource limits). Each names an explicit engine executable and immutable image ID. Agent preparation binds the actual whole `/opt/markitect/runtime.env` bytes, recorded Codex and agentd versions, and build-recorded Codex schema digest. That digest is an assertion, not an observed complete schema inventory. Instructions select only captured inputs. Check preparation retains its exact host-executable bytes, literal argument/environment policy and finite limits. Effective settings retain real source provenance and product defaults.
+The closed `markitect.runtime/v1` document contains native Agent and Check profiles. Outer composition selects native profiles. Project's `markitect.execution/v2` declarations contain Package instructions and scoped checks, without provider roles, teams, strategies or invocation budgets. Invocation limits and normal account-login references belong to the explicit outer run configuration.
 
-See the implemented [Codex metadata adapter](../internal/adapters/codexappserver/README.md) and [Check metadata adapter](../internal/adapters/checks/) for supported versioned fields and their contract tests, and [configuration assignments](history/apply-design-before-dec-056/manager-apply-configuration.md) for the separation of inputs.
+Codex profile version 2 supports metadata only; version 3 adds the closed native session settings. The [Codex adapter](../internal/adapters/codexappserver/README.md) documents exact fields and preparation evidence. Claude retains static profile preparation and protocol codecs, but its current `run.Sessions.Open` returns unavailable before credentials or containers are acquired. Static metadata does not qualify Claude execution. [Check profiles](../internal/adapters/checks/README.md) bind pinned images, literal commands, environment policy and finite limits.
 
-## Inner role execution and workspace boundary
+Codex metadata preparation may inspect a selected image and copy bounded whole `/opt/markitect/runtime.env` bytes from a created, never started container. It does not launch an Agent Session or provider. Check metadata preparation is process-free. Neither establishes effective native instructions, login, runtime support or semantic completion. Structural output never reports metadata as implicitly passed.
 
-Codex metadata preparation may run the configured engine to inspect the image and copy its metadata from a created, never started container. It never starts the image, an Agent Session or a provider, probes a CLI version, exports a schema, creates a workspace or invokes a model. Check metadata preparation remains process-free. A successful metadata result establishes neither runtime nor provider capability. Structural output never reports metadata as implicitly passed.
+Fixed previews refuse unbound present-day external profile or dependency inputs, even for HEAD. Working previews retain observed bytes. Neither preview supplies an artifact publication guard.
 
-Fixed previews refuse unbound present-day external profile or dependency inputs, even for HEAD. Working previews retain actual observed bytes. Neither preview supplies an artifact publication guard.
+<a id="container-runtime"></a>
 
-## Container runtime
+## Native Sessions and Git workspaces
 
-The [container runtime](../internal/adapters/container/README.md) starts each session in a hardened Linux container from the [base image](../packaging/runtime/README.md). `markitect-agentd` runs the provider CLI and serves the Orchestrator tools over MCP. Product metadata preparation uses only image inspection and metadata copying; it does not start a session.
+The concrete Codex adapter implements `run.Sessions`: one fresh private home and Manager container per Manager per Run, with an ordinary persistent native conversation until closure. It consumes the actual Linux volume/subpath supplied by [LinuxGit](../internal/adapters/gitrepo/WORKSPACES.md), without a writable Windows bind or a host credential home. One held Git service and private volume serve each Run; each Manager has its own repository. There is no legacy Pass/Turn execution fallback.
 
-The [Codex adapter](../internal/adapters/codexappserver/README.md) and [Claude adapter](../internal/adapters/claudecode/README.md) implement `run.Agents`: one container per turn, with the Orchestrator tools `send`, `finish` and `assess` served over MCP. [Container workspaces](../internal/adapters/gitrepo/WORKSPACES.md), [container checks](../internal/adapters/checks/README.md) and [guarded publication](../internal/adapters/gitrepo/PUBLISHER.md) have their own implementation and evidence boundaries. Their owning guides describe the supported contracts.
+The pure [harness](../internal/harness/README.md) supplies checked Project context, complete hierarchy, exact Manager, mandate and Findings. The native adapter supplies its actual rendering and loader controls. Seven direct Run tools provide delegation, awaiting input, exact child review, questions/replies and durable Notes. A provider-local judgment tool records the decision separately from final prose. The [session helper](../internal/agentd/) bridges native provider tools; the [container runtime](../internal/adapters/container/README.md) owns concrete resource lifetime.
 
-The prepared Agent, workspace and check smokes are opt-in and remain unexecuted by default. Earlier [runtime handshake](validation/runtime-handshake-20261017.md) and [capability probes](validation/runtime-capabilities-20261017.md) establish bounded CLI/runtime observations; they do not establish an integrated Manager Apply. No provider or container run follows from reading this guide.
+[Container checks](../internal/adapters/checks/README.md) use separate disposable input/home copies with verified bytes, modes and required directory inventories. Standalone Run retains independently reopenable candidates and terminal records after resource closure. [Publication](../internal/adapters/gitrepo/PUBLISHER.md) remains the S3 boundary.
 
-## Bring your own executor
+<a id="bring-your-own-executor"></a>
 
-An alternate runtime is not implemented by this metadata boundary. It requires a real consumer port, adapter, bounded readiness evidence and explicit execution authority. The previous [provider/runtime generation](https://github.com/Glacius-Labs/Markitect/blob/5ff3206917fa3b7482d9daedb903d57a919f56b8/docs/provider-adapters.md) remains a historical contract.
+## Evidence and alternate runtimes
 
-## Limits and evidence status
+Controlled Sessions and real local Git establish bounded source behavior. Actual Linux copies, effective harness loading, normal-login fan-out, native full-hierarchy completion and background-writer drain each need their own source-bound proof. The [accepted architecture](design/v1-execution-architecture.md) records the current evidence boundaries. Earlier [handshake](validation/runtime-handshake-20261017.md) and [capability probes](validation/runtime-capabilities-20261017.md) remain historical observations; they do not qualify this Run or a full Apply.
 
-Source tests and closed-format metadata checks establish only their declared inputs and scope. No source or metadata pass demonstrates a real session, completed work, cost measurement, operating-system sandbox, provider performance or acceptance.
+An alternate runtime needs a real consumer adapter and bounded capability evidence. No provider or container run follows from reading this guide. Source tests and metadata do not establish measured provider cost, performance, product Apply, hosted CI, release or owner acceptance.

@@ -74,9 +74,9 @@ For the full explanation, read [Markitect in brief](docs/vision.md#markitect-in-
 
 ## Development status
 
-**Markitect is under active development. Controlled Apply is exposed in current source; complete workflow validation is still in progress.**
+**Markitect is under active development. The standalone V1 Run is implemented in source; public Apply is unavailable until S3 composes the workflow and publication.**
 
-Current source supports the Model check, repository file accounting, context preparation and a guarded readable model view. The temporary Apply command uses independent Manager assignments, focused assessment/Verify and guarded publication while the approved V1 replacement is built. Extract, Cockpit and interactive authoring are retired. Apply requires explicit Runtime profiles and an invocation configuration; see the [project workflow](docs/project-workflow.md#execute-verify-and-apply).
+Current source supports the Model check, repository file accounting, context preparation and a guarded readable model view. The standalone Run uses the complete model-derived Manager hierarchy for Assessment, Implement and Verify, with fresh environments and durable results. Extract, Cockpit and interactive authoring are retired. The [project workflow](docs/project-workflow.md#execute-verify-and-apply) describes the explicit configuration and current command boundary.
 
 Real runtime probes and small single-agent library baselines have passed. They establish their [recorded scope](docs/validation/runtime-capabilities-20261017.md); they do not demonstrate the complete Manager organization or the two-Apply workflow.
 
