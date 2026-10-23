@@ -528,6 +528,9 @@ func (x *execution) tools(s *managerState) Tools {
 						x.stopPort(err)
 					}
 					target.handoff.Review = &ParentReview{Decision: Reject, Findings: []Finding{{Manager: s.manager.Package, Text: "Git integration failed: " + err.Error()}}}
+					if errors.Is(err, ErrMergeConflict) {
+						return fmt.Errorf("%w; this child handoff is already recorded as rejected; no child correction was started. Once the parent copy is ready, use delegate with a correction task and concrete Findings to merge the current parent baseline into the existing child copy and obtain a replacement fixed handoff", err)
+					}
 					return err
 				}
 			}

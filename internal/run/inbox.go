@@ -124,7 +124,7 @@ func (x *execution) wakeLocked(s *managerState) {
 			err := x.request.Allowance.take()
 			if err == nil {
 				var response Response
-				response, err = x.exchange(s, Message{Task: "Answer pending Manager questions using Await and Reply. Preserve the existing fixed handoff."})
+				response, err = x.exchange(s, Message{Task: "Answer pending Manager questions using Await and Reply. Preserve the existing fixed handoff. Handle the received pending question or answer and any needed related replies, then finish this native response. No new assignment judgment is required for an ordinary reply. Material new Findings, Reject or ModelBlocker must still be reported under the existing rules and retain their authority. Do not wait for future inbox events after resolving these obligations; they arrive in later messages in this same Session. While an answer to your own question is pending, use Await and answer incoming questions."})
 				if err == nil {
 					err = x.observeLate(s, response)
 				}
