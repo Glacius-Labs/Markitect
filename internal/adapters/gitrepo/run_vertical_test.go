@@ -626,4 +626,63 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 	}
 }
 
+func TestDurableCandidateRetentionAndReopenUnderLongPaths(t *testing.T) {
+	r, prepared, original, input := runFixture(t)
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	source := t.TempDir()
+	if err := original.Reopen(ctx, input, source); err != nil {
+		t.Fatal(err)
+	}
+	root := t.TempDir()
+	for len(root) < 170 {
+		root = filepath.Join(root, "long-state-path")
+	}
+	g := &LocalGit{StateRoot: filepath.Join(root, "state"), TempRoot: filepath.Join(root, "temporary")}
+	if err := os.MkdirAll(g.TempRoot, 0700); err != nil {
+		t.Fatal(err)
+	}
+	// Native Run retention supplies a bundle to this same host-side store. Use
+	// actual Git to make that bundle without a provider or container, then run
+	// the real independent bare fetch/validation before durable publication.
+	fixed := run.Commit{ID: input.Commit, Tree: input.Tree}
+	retained, err := g.storeBundle(ctx, "fixture", prepared, input.Format, fixed, func(ctx context.Context, key, bundle string) error {
+		name := "refs/markitect/retain/" + key
+		if _, err := localCommand(ctx, source, nil, "update-ref", name, fixed.ID); err != nil {
+			return err
+		}
+		_, err := localCommand(ctx, source, nil, "bundle", "create", bundle, name)
+		return err
+	})
+	if err != nil {
+		t.Fatal("retention under long state/temp paths failed", err)
+	}
+	if retained.Commit != fixed.ID || retained.Tree != fixed.Tree || retained.Binding != input.Binding {
+		t.Fatal("retention changed the fixed candidate", retained)
+	}
+	for _, directory := range []string{source, r.Dir, original.StateRoot, g.TempRoot} {
+		if err := os.RemoveAll(directory); err != nil {
+			t.Fatal(err)
+		}
+	}
+	destination := filepath.Join(root, "fresh-reopen")
+	if err := os.MkdirAll(destination, 0700); err != nil {
+		t.Fatal(err)
+	}
+	fresh := &LocalGit{StateRoot: g.StateRoot}
+	if err := fresh.Reopen(ctx, retained, destination); err != nil {
+		t.Fatal("long-path candidate depended on old workspaces or temporary state", err)
+	}
+	actual, err := object(ctx, destination, "HEAD")
+	if err != nil || actual != fixed {
+		t.Fatal("reopened commit/tree differs", actual, err)
+	}
+	if data, err := os.ReadFile(filepath.Join(destination, "out/accounted.ignored")); err != nil || string(data) != "original ignored input\n" {
+		t.Fatal("reopened candidate lost accounted bytes", err)
+	}
+	if info, err := os.Stat(filepath.Join(destination, ".markitect/model/b/empty")); err != nil || !info.IsDir() {
+		t.Fatal("reopened candidate lost empty Package", err)
+	}
+}
+
 func fixturePathForControlled(s string) snapshot.Path { p, _ := snapshot.NewPath(s); return p }
