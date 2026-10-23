@@ -10,6 +10,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"path"
 	"path/filepath"
 	"reflect"
 	"sort"
@@ -423,38 +424,47 @@ func (c *localCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 	}
 	return snapshotGit(ctx, c.location, localCommand, dirs)
 }
-func (c *localCopy) directories(ctx context.Context) ([]string, error) {
-	var err error
-	// Git's index omits empty directories. Canonical model Package directories
-	// are intent, so encode the actual complete inventory as real Git trees.
-	raw := c.service.request.Prepared.Attempt().Model().Inputs().Raw
-	var dirs []string
+func modelDirectoryRoots(raw project.RawInputs) []string {
+	var roots []string
 	for _, m := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
-		if m.RepositoryArea.String() == "" {
-			continue
+		if m.RepositoryArea.String() != "" {
+			root := path.Join(m.RepositoryArea.String(), m.Root.String())
+			if root == "." {
+				root = ""
+			}
+			roots = append(roots, root)
 		}
-		root := m.Root.String()
-		if root == "." {
-			root = ""
-		}
-		if !m.RepositoryArea.IsRoot() {
-			root = strings.Trim(m.RepositoryArea.String()+"/"+root, "/")
-		}
-		err = filepath.WalkDir(filepath.Join(c.location, filepath.FromSlash(root)), func(p string, d os.DirEntry, e error) error {
+	}
+	return roots
+}
+func (c *localCopy) directories(ctx context.Context) ([]string, error) {
+	return localModelDirectories(ctx, c.location, modelDirectoryRoots(c.service.request.Prepared.Attempt().Model().Inputs().Raw))
+}
+func localModelDirectories(ctx context.Context, location string, roots []string) ([]string, error) {
+	var err error
+	var dirs []string
+	for _, root := range roots {
+		err = filepath.WalkDir(filepath.Join(location, filepath.FromSlash(root)), func(p string, d os.DirEntry, e error) error {
 			if e != nil {
 				return e
+			}
+			relative, e := filepath.Rel(location, p)
+			if e != nil {
+				return e
+			}
+			name := filepath.ToSlash(relative)
+			// Match acquisition's administration exclusions before traversing them.
+			if technical(name) || d.IsDir() && name == ".markitect/state" {
+				if d.IsDir() {
+					return filepath.SkipDir
+				}
+				return nil
 			}
 			if d.Type()&os.ModeSymlink != 0 {
 				return fmt.Errorf("redirected model directory")
 			}
-			if d.IsDir() {
-				relative, e := filepath.Rel(c.location, p)
-				if e != nil {
-					return e
-				}
-				if relative != "." {
-					dirs = append(dirs, filepath.ToSlash(relative))
-				}
+			if d.IsDir() && name != "." {
+				dirs = append(dirs, name)
 			}
 			return nil
 		})
@@ -465,6 +475,7 @@ func (c *localCopy) directories(ctx context.Context) ([]string, error) {
 	sort.Strings(dirs)
 	return dirs, nil
 }
+
 func snapshotGit(ctx context.Context, dir string, command gitCommand, dirs []string) (run.Commit, error) {
 	// A Manager must resolve and stage its conflict before submission. Never let
 	// the ordinary snapshot's add-all turn unresolved index entries into success.

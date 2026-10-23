@@ -248,17 +248,10 @@ func (c *linuxCopy) Snapshot(ctx context.Context) (run.Commit, error) {
 	return snapshotGit(ctx, c.directory, c.service.command, dirs)
 }
 func (c *linuxCopy) directories(ctx context.Context) ([]string, error) {
-	raw := c.service.request.Prepared.Attempt().Model().Inputs().Raw
-	var roots []string
-	for _, m := range append([]project.ModelSource{raw.Local}, raw.Dependencies...) {
-		if m.RepositoryArea.String() == "" {
-			continue
-		}
-		roots = append(roots, path.Join(m.RepositoryArea.String(), m.Root.String()))
-	}
+	roots := modelDirectoryRoots(c.service.request.Prepared.Attempt().Model().Inputs().Raw)
 	encoded, _ := json.Marshal(roots)
 	out := &boundedOutput{limit: 4 << 20}
-	err := c.service.node(ctx, `const fs=require('fs'),p=require('path');const base=process.argv[1],roots=JSON.parse(process.argv[2]),dirs=[];function walk(rel){const file=p.join(base,rel),s=fs.lstatSync(file);if(s.isSymbolicLink()||(!s.isDirectory()&&!s.isFile()))throw Error('unsupported working-copy node '+rel);if(s.isDirectory()){if(roots.some(r=>rel===r||rel.startsWith(r+'/')))dirs.push(rel);for(const n of fs.readdirSync(file)){if(rel===''&&n==='.git'){if(!fs.lstatSync(p.join(file,n)).isDirectory())throw Error('invalid Git directory');continue}walk(rel?p.join(rel,n):n)}}}walk('');for(const r of roots)if(!fs.lstatSync(p.join(base,r)).isDirectory())throw Error('missing model root');process.stdout.write(JSON.stringify(dirs))`, []string{c.directory, string(encoded)}, nil, out)
+	err := c.service.node(ctx, `const fs=require('fs'),p=require('path');const base=process.argv[1],roots=JSON.parse(process.argv[2]),dirs=[];function walk(rel){const file=p.join(base,rel),s=fs.lstatSync(file);if(s.isSymbolicLink()||(!s.isDirectory()&&!s.isFile()))throw Error('unsupported working-copy node '+rel);if(s.isDirectory()){if(rel!==''&&roots.some(r=>r===''||rel===r||rel.startsWith(r+'/')))dirs.push(rel);for(const n of fs.readdirSync(file)){if(n==='.git'){if(rel===''&&!fs.lstatSync(p.join(file,n)).isDirectory())throw Error('invalid Git directory');continue}const next=rel?rel+'/'+n:n;if(next==='.markitect/state'&&fs.lstatSync(p.join(base,next)).isDirectory())continue;walk(next)}}}walk('');for(const r of roots)if(!fs.lstatSync(p.join(base,r)).isDirectory())throw Error('missing model root');process.stdout.write(JSON.stringify(dirs))`, []string{c.directory, string(encoded)}, nil, out)
 	if err != nil {
 		return nil, err
 	}
