@@ -82,7 +82,7 @@ The compiler knows the meaning of these fields and checks the supplied self-desc
 
 All nine files belong to the package markitect/core. They need no imports because their reference targets lie in their own package. Each file has the same complete envelope. The effective field name of each meta-Property corresponds to its short local ID; spec.name is therefore omitted throughout.
 
-Language note (DEC-069): the bodies of these nine definitions are canonical `markitect/core` content. They are reproduced below byte for byte in their canonical German wording; translating them would change the canonical content and digest of the Core (and every binding pinned to it) and requires a separate owner decision.
+Language note (DEC-069): the bodies of these nine definitions are canonical `markitect/core` content. They are reproduced below byte for byte in their canonical German wording. Translating them changes the canonical content and digest of the Core (and every binding pinned to it); the owner has decided to translate them as a new Core version in a separate slice ([DEC-069](../../../concepts/register.md#dec-069-documentation-is-written-in-english)).
 
 In the comparison with this fixed self-description, too, missing imports and explicitly set `imports: []` are equivalent according to Section 5.2. The authored form is preserved; an erroneous entry or a non-empty import list is not treated as an empty list.
 

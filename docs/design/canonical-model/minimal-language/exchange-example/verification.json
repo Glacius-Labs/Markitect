@@ -1156,7 +1156,7 @@
     "exchange-example/root_path_probes.py": "0b14e258e177929b707ca7a5d18715a5c8b14d1570b673d97eb9ef93cdc18133",
     "exchange-example/root_paths.py": "1bec4dba6a6dd1789c61a3bac191163dd68510dd294140f1638fa130395146e7",
     "exchange-example/verify.py": "a7f1e3a935d458ce2efb3bb0d97d8f7473c6ac09493f401f78959514b8d60ca5",
-    "language-contract.md": "24fd47d0aa8b41c8b817a4f68c08bc33814e118f458c28cdbd28dac4e552b8f2"
+    "language-contract.md": "faa280ba319ff8645674fc62e7028d7164f422e5002b32547415fadd8e9187f0"
   },
   "source_validation": {
     "diagnostics": [
