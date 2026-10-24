@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/parallel-writers-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision that more than two writers may run in parallel where useful.
   - path: "docs/concepts/sources/english-documentation-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]

@@ -18,7 +18,7 @@ import (
 
 const fixtureSchema = "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
 const fixtureImage = "sha256:bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"
-const fixtureMetadata = "codex=codex-cli 0.162.0\nclaude=2.1.301 (Claude Code)\ncodexSchema=" + fixtureSchema + "\nagentd=development\n"
+const fixtureMetadata = "codex=codex-cli 0.162.0\ncodexSchema=" + fixtureSchema + "\nagentd=development\n"
 
 func imageProfile(engine string) string {
 	return fmt.Sprintf("profileVersion: 2\nengineExecutable: %q\nimageID: %s\nagentdVersion: development\nrecordedCodexSchemaDigest: %s\ninstructions: []\n", engine, fixtureImage, fixtureSchema)

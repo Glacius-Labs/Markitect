@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Parallel writers](parallel-writers-20261024.md) | Direct owner decision, 24 October 2026; verbatim with English translation | More than two parallel writers where useful; exclusive scopes and review rules unchanged |
 | [English documentation](english-documentation-20261024.md) | Direct owner decision, 24 October 2026; verbatim with English translation | The concept and all documentation are written in English; verbatim sources and the core vocabulary are noted as separate questions |
 | [V1 concept decisions](v1-concept-decisions-20261024.md) | Direct owner decision, 24 October 2026; assistant proposals quoted | Acceptance of D10–D18 and the five-step plan; Codex-only V1 acceptance recorded with a recorder's note; clarifications after the Astra review |
 | [V1 concept v0.18](v1-concept-v018-20261024.md) ([English translation](v1-concept-v018-20261024-en.md)) | Owner-supplied consolidated concept, 24 October 2026; verbatim; the translation is labeled and adds nothing | Complete V1 target with D1–D9, scope, architecture, acceptance criteria V01–V16 and the open items A1–A6, R1–R3 |

@@ -29,7 +29,7 @@ func (r *bootstrapImageReader) ImageID(_ context.Context, id string) (string, er
 }
 func (r *bootstrapImageReader) ReadImageFile(_ context.Context, id, path string) ([]byte, error) {
 	r.calls = append(r.calls, "read:"+id+":"+path)
-	return []byte("codex=codex-cli 0.162.0\nclaude=2.1.301 (Claude Code)\ncodexSchema=" + bootstrapSchema + "\nagentd=development\n"), nil
+	return []byte("codex=codex-cli 0.162.0\ncodexSchema=" + bootstrapSchema + "\nagentd=development\n"), nil
 }
 
 func TestBootstrapImageFactoryUsesOnlySelectedSourceBoundConfiguration(t *testing.T) {
