@@ -10,6 +10,14 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
 
+// children names s's direct children for a refusal.
+func children(s *managerState) string {
+	if len(s.manager.Children) == 0 {
+		return "direct children, and you have none"
+	}
+	return "your direct children (" + strings.Join(s.manager.Children, ", ") + ")"
+}
+
 // changedState is the diagnostic for a judgment whose assessed state changed.
 func changedState(judged, current Commit) string {
 	return fmt.Sprintf("your working state changed after your judgment: %s became %s; check your current state and judge again", judged.ID, current.ID)
@@ -51,7 +59,9 @@ func (x *execution) workingLocked(s *managerState) error {
 	case active:
 		return nil
 	case fixed, reviewed:
-		return fmt.Errorf("your handoff %s is fixed for your parent's review; you act on your children again only after a new assignment; reply to questions addressed to you", s.a.handoff.Result.ID)
+		return fmt.Errorf("your handoff %s is fixed; you act on your children again only after a new assignment; reply to questions addressed to you", s.a.handoff.Result.ID)
+	case assigned:
+		return fmt.Errorf("your new assignment is waiting; await it")
 	}
 	return fmt.Errorf("you have no active assignment; your parent assigns your task; reply to questions addressed to you")
 }
@@ -66,7 +76,7 @@ func (x *execution) childrenLocked(s *managerState) error {
 		case assigned, active:
 			return fmt.Errorf("child %s is still working on its assignment; await its fixed handoff", name)
 		case fixed:
-			return fmt.Errorf("the review of child %s's fixed handoff %s is missing; review it", name, a.handoff.Result.ID)
+			return fmt.Errorf("the review of child %s's fixed handoff %s is missing; await it if it has not reached you, then review it", name, a.handoff.Result.ID)
 		}
 	}
 	return nil
@@ -96,7 +106,10 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 		return err
 	}
 	switch s.a.phase {
-	case unassigned, assigned:
+	case assigned:
+		x.mu.Unlock()
+		return fmt.Errorf("your new assignment is waiting; await it")
+	case unassigned:
 		x.mu.Unlock()
 		return fmt.Errorf("you have no active assignment to judge; a reply to a question needs no judgment")
 	case fixed, reviewed:
@@ -144,6 +157,10 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 			x.mu.Unlock()
 		}
 		if !j.check.Valid && (decision == Submitted || decision == Approve) {
+			if x.request.Mandate != Implement {
+				// The fixed input is not repaired to obtain a passing check.
+				return fmt.Errorf("the fixed input candidate %s fails its check: %s; judge reject or model_blocker with Findings", j.state.ID, j.check.Diagnostic)
+			}
 			return fmt.Errorf("your state %s fails its check: %s; correct your state and judge again, or judge reject or model_blocker with Findings", j.state.ID, j.check.Diagnostic)
 		}
 	}
@@ -316,7 +333,7 @@ func (x *execution) completeRoot() (Handoff, bool, error) {
 func (x *execution) review(ctx context.Context, s *managerState, child, commit string, decision Decision, findings []Finding) error {
 	target, ok := x.states[child]
 	if !ok || target.manager.Parent != s.manager.Package {
-		return fmt.Errorf("review covers only your direct children (%s)", strings.Join(s.manager.Children, ", "))
+		return fmt.Errorf("review covers only %s", children(s))
 	}
 	if decision != Approve && decision != Reject && decision != ModelBlocker {
 		return fmt.Errorf("a review is approve, reject or model_blocker; review again with one of them")
@@ -336,12 +353,15 @@ func (x *execution) review(ctx context.Context, s *managerState, child, commit s
 	case a.phase == reviewed:
 		x.mu.Unlock()
 		return fmt.Errorf("child %s's fixed handoff %s is already reviewed; it needs no further review", child, a.handoff.Result.ID)
+	case a.phase == unassigned:
+		x.mu.Unlock()
+		return fmt.Errorf("child %s has no assignment yet; delegate its task first", child)
 	case a.phase != fixed:
 		x.mu.Unlock()
 		return fmt.Errorf("child %s has no fixed handoff to review; await its handoff", child)
 	case a.sent != a.gen:
 		x.mu.Unlock()
-		return fmt.Errorf("child %s's fixed handoff changed after you received it; await it again", child)
+		return fmt.Errorf("child %s's current fixed handoff has not reached you yet; await it, then review it", child)
 	case a.handoff.Result.ID != commit:
 		x.mu.Unlock()
 		return fmt.Errorf("child %s's fixed handoff is %s, not %s; review that commit", child, a.handoff.Result.ID, commit)
@@ -401,7 +421,7 @@ func (x *execution) review(ctx context.Context, s *managerState, child, commit s
 func (x *execution) delegate(ctx context.Context, s *managerState, child, task string, findings []Finding) error {
 	target, ok := x.states[child]
 	if !ok || target.manager.Parent != s.manager.Package {
-		return fmt.Errorf("delegate reaches only your direct children (%s)", strings.Join(s.manager.Children, ", "))
+		return fmt.Errorf("delegate reaches only %s", children(s))
 	}
 	if strings.TrimSpace(task) == "" {
 		return fmt.Errorf("a delegation needs a concrete task; delegate again with a task text")
@@ -412,9 +432,9 @@ func (x *execution) delegate(ctx context.Context, s *managerState, child, task s
 		case a.phase == assigned || a.phase == active:
 			return fmt.Errorf("child %s is still working on its assignment; await its fixed handoff", child)
 		case a.phase != unassigned && a.blocked():
-			return fmt.Errorf("child %s reported a model blocker, which no correction in this Run resolves; review its handoff and judge your assignment, and the blocker travels upward", child)
+			return fmt.Errorf("child %s reported a model blocker, which no correction in this Run resolves; judge your assignment, after reviewing its handoff if you have not", child)
 		case a.phase == fixed:
-			return fmt.Errorf("review child %s's fixed handoff %s before a correction", child, a.handoff.Result.ID)
+			return fmt.Errorf("review child %s's fixed handoff %s before a correction; await it first if it has not reached you", child, a.handoff.Result.ID)
 		case a.phase == reviewed && !concreteFindings(findings):
 			return fmt.Errorf("a correction needs concrete Findings; delegate again with at least one Finding text")
 		}

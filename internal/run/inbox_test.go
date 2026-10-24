@@ -513,12 +513,13 @@ func TestRefusalsNameReasonAndNextStep(t *testing.T) {
 	}{
 		"judge with an unassigned child": {func() error { return tools.Judge(context.Background(), Submitted, nil) }, "child a/deep has no assignment yet; delegate its task"},
 		"judge reject without Findings":  {func() error { return tools.Judge(context.Background(), Reject, nil) }, "judge again with at least one Finding text"},
-		"review without a fixed handoff": {func() error { return tools.Review(context.Background(), "a/deep", "c", Approve, nil) }, "has no fixed handoff to review; await its handoff"},
+		"review an unassigned child":     {func() error { return tools.Review(context.Background(), "a/deep", "c", Approve, nil) }, "child a/deep has no assignment yet; delegate its task first"},
+		"review as a childless Manager":  {func() error { return x.tools(deep).Review(context.Background(), "x", "c", Approve, nil) }, "review covers only direct children, and you have none"},
 		"delegate without a task":        {func() error { return tools.Delegate(context.Background(), "a/deep", " ", nil) }, "delegate again with a task text"},
 		"reply to an unknown question":   {func() error { return tools.Reply(context.Background(), "missing", "answer") }, "reply only to question IDs delivered to you"},
-		"await with nothing to arrive":   {func() error { _, err := tools.Await(context.Background()); return err }, "continue your work or judge your assignment"},
+		"await with nothing to arrive":   {func() error { _, err := tools.Await(context.Background()); return err }, "none of your questions is open; child a/deep has no assignment yet; delegate its task"},
 		"judge without an assignment":    {func() error { return x.tools(deep).Judge(context.Background(), Submitted, nil) }, "a reply to a question needs no judgment"},
-		"delegate without an assignment": {func() error { return x.tools(deep).Delegate(context.Background(), "x", "task", nil) }, "delegate reaches only your direct children"},
+		"delegate without an assignment": {func() error { return x.tools(deep).Delegate(context.Background(), "x", "task", nil) }, "delegate reaches only direct children, and you have none"},
 		"act from a fixed handoff": {func() error {
 			accepted(root, "root")
 			return x.tools(root).Delegate(context.Background(), "a", "task", nil)
@@ -527,5 +528,39 @@ func TestRefusalsNameReasonAndNextStep(t *testing.T) {
 		if err := tc.call(); err == nil || !strings.Contains(err.Error(), tc.want) {
 			t.Fatal(name, err)
 		}
+	}
+}
+
+// Next steps depend on the state they are given in: each one names an action
+// the tools then accept.
+func TestRefusalNextStepsFollowTheState(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	root.running, a.running, deep.running = true, true, true
+	a.a.phase, a.a.version = active, 1
+	// A handoff fixed but not yet received is awaited, not reviewed.
+	deep.a.fix(Handoff{Manager: "a/deep", Result: Commit{ID: "c", Tree: "t"}, Decision: Submitted})
+	if err := x.tools(a).Review(context.Background(), "a/deep", "c", Approve, nil); err == nil || !strings.Contains(err.Error(), "has not reached you yet; await it, then review it") {
+		t.Fatal(err)
+	}
+	// A model blocker is judged, not corrected.
+	accepted(deep, "deep")
+	deep.a.handoff.Decision = ModelBlocker
+	if err := x.tools(a).Delegate(context.Background(), "a/deep", "correct", []Finding{{Text: "f"}}); err == nil || !strings.Contains(err.Error(), "judge your assignment, after reviewing its handoff if you have not") {
+		t.Fatal(err)
+	}
+	// A queued correction is awaited.
+	deep.a.phase = assigned
+	if err := x.tools(deep).Judge(context.Background(), Submitted, nil); err == nil || err.Error() != "your new assignment is waiting; await it" {
+		t.Fatal(err)
+	}
+	// Verify cannot repair its fixed input to pass the check.
+	x.request.Mandate = Verify
+	x.request.Input.Commit, x.request.Input.Tree = "input", "input-tree"
+	accepted(a, "a")
+	root.a.phase, root.a.version = active, 1
+	x.rootCheck = &Check{Commit: Commit{ID: "input", Tree: "input-tree"}, Diagnostic: "file.unexplained"}
+	if err := x.tools(root).Judge(context.Background(), Approve, nil); err == nil || err.Error() != "the fixed input candidate input fails its check: file.unexplained; judge reject or model_blocker with Findings" {
+		t.Fatal(err)
 	}
 }

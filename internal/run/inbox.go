@@ -429,6 +429,9 @@ func (x *execution) othersRunningLocked(s *managerState) bool {
 // nextStepLocked names what s can do instead of waiting.
 func (x *execution) nextStepLocked(s *managerState) string {
 	if s.a.phase == active && s.a.judgment == nil {
+		if err := x.childrenLocked(s); err != nil {
+			return err.Error()
+		}
 		return "continue your work or judge your assignment"
 	}
 	return "you have no open work to wait for"
