@@ -189,7 +189,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		if s.session != nil {
 			sessionCount++
 			go func() {
-				sessionClosures <- sessionClosure{"session:" + s.manager.Package, boundedClose(sessionCleanup, s.session.Close)}
+				sessionClosures <- sessionClosure{sessionResource(s.manager.Package), boundedClose(sessionCleanup, s.session.Close)}
 			}()
 		}
 	}
@@ -199,7 +199,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 		closures[c.name] = c.err
 	}
 	for _, m := range r.Prepared.Topology().Managers() {
-		name := "session:" + m.Package
+		name := sessionResource(m.Package)
 		err, ok := closures[name]
 		if !ok {
 			continue
@@ -226,11 +226,11 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	}
 	// Cut off late check completion before any terminal result is assembled.
 	x.result.Checks = x.finishChecks()
-	x.result.Cleanup = append(x.result.Cleanup, Closure{Resource: "manager-workers", Closed: workersClosed})
+	x.result.Cleanup = append(x.result.Cleanup, Closure{Resource: workersResource, Closed: workersClosed})
 	for _, m := range r.Prepared.Topology().Managers() {
 		s := x.states[m.Package]
 		if s.copy != nil {
-			closeOne("copy:"+m.Package, s.copy.Close)
+			closeOne(copyResource(m.Package), s.copy.Close)
 		}
 		if !workersClosed {
 			continue
@@ -248,7 +248,7 @@ func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {
 	}
 
 	if service != nil {
-		closeOne("git-service", service.Close)
+		closeOne(gitServiceResource, service.Close)
 	}
 	x.result.Messages = r.Allowance.Used() - used
 	terminal := copyResult(x.result)
