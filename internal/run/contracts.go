@@ -54,6 +54,24 @@ type Note struct {
 	Context string `json:"context"`
 	Text    string `json:"text"`
 }
+
+// Shared Note limits. A Note stays far below one tool reply even when every
+// byte needs escaping, and a page of Notes always fits the tool transport.
+const (
+	MaxNoteText    = 16 << 10
+	MaxNoteContext = 1 << 10
+	// NotePageBytes bounds the encoded size of the Notes in one page and
+	// NotePageCount their number; a page holds at least one Note.
+	NotePageBytes = 128 << 10
+	NotePageCount = 100
+)
+
+// NotePage is one page of Notes, oldest first. Next is the cursor of the
+// following page and empty after the last one.
+type NotePage struct {
+	Notes []Note `json:"notes"`
+	Next  string `json:"next"`
+}
 type Commit struct {
 	ID   string `json:"id"`
 	Tree string `json:"tree"`
@@ -262,7 +280,7 @@ type Tools struct {
 	Reply      func(context.Context, string, string) error
 	Judge      func(context.Context, Decision, []Finding) error
 	Check      func(context.Context) (Check, error)
-	ReadNotes  func(context.Context) ([]Note, error)
+	ReadNotes  func(context.Context, string) (NotePage, error)
 	AppendNote func(context.Context, string, string) (Note, error)
 }
 
@@ -319,7 +337,7 @@ type Copy interface {
 type Records interface {
 	Save(context.Context, Result) error
 	Read(context.Context, string, string) (Result, error)
-	Notes(context.Context, string) ([]Note, error)
+	Notes(context.Context, string, string) (NotePage, error)
 	Append(context.Context, Note) (Note, error)
 }
 type CandidateChecks interface {

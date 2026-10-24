@@ -3,6 +3,7 @@ package runstore
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"os"
 	"os/exec"
@@ -139,7 +140,7 @@ func TestIndependentProcessesAppendCompleteAttributedNotes(t *testing.T) {
 	tick := time.NewTicker(time.Millisecond)
 	defer tick.Stop()
 	for remaining > 0 {
-		notes, err := reader.Notes(ctx, "shared")
+		notes, err := allNotes(ctx, reader, "shared")
 		if err != nil {
 			t.Fatal("reader observed a partial record", err)
 		}
@@ -159,7 +160,7 @@ func TestIndependentProcessesAppendCompleteAttributedNotes(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	notes, err := fresh.Notes(ctx, "shared")
+	notes, err := allNotes(ctx, fresh, "shared")
 	if err != nil || len(notes) != workers*perWorker {
 		t.Fatal("a process append was lost", len(notes), err)
 	}
@@ -191,7 +192,7 @@ func TestIndependentInstancesAppendNotesWithoutOverwriteOrPartialRecords(t *test
 		}
 	}
 	s, _ := New(root)
-	notes, err := s.Notes(ctx, "project")
+	notes, err := allNotes(ctx, s, "project")
 	if err != nil || len(notes) != count {
 		t.Fatal(len(notes), err)
 	}
@@ -202,7 +203,7 @@ func TestIndependentInstancesAppendNotesWithoutOverwriteOrPartialRecords(t *test
 		}
 		seen[n.ID] = true
 	}
-	other, err := s.Notes(ctx, "other")
+	other, err := allNotes(ctx, s, "other")
 	if err != nil || len(other) != 0 {
 		t.Fatal("project Notes crossed boundary", other, err)
 	}
@@ -229,10 +230,180 @@ func TestTerminalRecordsAreCreateOnceAndIgnorePendingNotes(t *testing.T) {
 	if err = os.WriteFile(filepath.Join(filepath.Dir(p), ".pending-incomplete"), []byte("{"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if notes, err := s.Notes(ctx, "project"); err != nil || len(notes) != 0 {
+	if notes, err := allNotes(ctx, s, "project"); err != nil || len(notes) != 0 {
 		t.Fatal("partial Note visible", notes, err)
 	}
 	if _, err = s.Read(ctx, "../escape", "one"); err == nil {
 		t.Fatal("unsafe project path accepted")
+	}
+}
+
+// allNotes reads every page of project Notes in order.
+func allNotes(ctx context.Context, records interface {
+	Notes(context.Context, string, string) (run.NotePage, error)
+}, project string) ([]run.Note, error) {
+	var all []run.Note
+	for after := ""; ; {
+		page, err := records.Notes(ctx, project, after)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, page.Notes...)
+		if page.Next == "" {
+			return all, nil
+		}
+		after = page.Next
+	}
+}
+
+func appendSized(t *testing.T, s *Store, project string, count, size int) []run.Note {
+	t.Helper()
+	var stored []run.Note
+	for i := range count {
+		n, err := s.Append(context.Background(), run.Note{Project: project, Run: "run", Manager: "m", Context: "area", Text: fmt.Sprintf("%06d", i) + strings.Repeat("x", size-6)})
+		if err != nil {
+			t.Fatal(err)
+		}
+		stored = append(stored, n)
+	}
+	return stored
+}
+
+// Stored Notes whose total is far above one tool transport frame are read
+// completely, in creation order, in pages that each stay within the limits.
+func TestNotesExceedingOneFrameAreReadCompletelyInStablePages(t *testing.T) {
+	ctx := context.Background()
+	s, _ := New(t.TempDir())
+	const count = 160 // 160 * 16 KiB is about 2.5 MiB, above the 1 MiB frame
+	stored := appendSized(t, s, "p", count, run.MaxNoteText)
+	var got []run.Note
+	pages := 0
+	for after := ""; ; pages++ {
+		page, err := s.Notes(ctx, "p", after)
+		if err != nil {
+			t.Fatal(err)
+		}
+		encoded := 0
+		for _, n := range page.Notes {
+			raw, _ := json.Marshal(n)
+			encoded += len(raw)
+		}
+		if len(page.Notes) == 0 || len(page.Notes) > run.NotePageCount || encoded > run.NotePageBytes {
+			t.Fatal("page outside its limits", len(page.Notes), encoded)
+		}
+		got = append(got, page.Notes...)
+		if page.Next == "" {
+			break
+		}
+		if page.Next != page.Notes[len(page.Notes)-1].ID {
+			t.Fatal("cursor is not the last Note of the page", page.Next)
+		}
+		after = page.Next
+	}
+	if pages < 2 || len(got) != count {
+		t.Fatal("not every Note was returned", pages, len(got))
+	}
+	for i, n := range got {
+		if n.ID != stored[i].ID || n.Text != stored[i].Text {
+			t.Fatalf("Note %d out of creation order or altered", i)
+		}
+	}
+}
+
+func TestNotePagesStopAtTheCountLimitAndEmptyStoresHaveNoPages(t *testing.T) {
+	ctx := context.Background()
+	s, _ := New(t.TempDir())
+	if page, err := s.Notes(ctx, "none", ""); err != nil || len(page.Notes) != 0 || page.Next != "" || page.Notes == nil {
+		t.Fatal("empty project", page, err)
+	}
+	stored := appendSized(t, s, "p", run.NotePageCount+1, 10)
+	first, err := s.Notes(ctx, "p", "")
+	if err != nil || len(first.Notes) != run.NotePageCount || first.Next != stored[run.NotePageCount-1].ID {
+		t.Fatal("first page", len(first.Notes), first.Next, err)
+	}
+	last, err := s.Notes(ctx, "p", first.Next)
+	if err != nil || len(last.Notes) != 1 || last.Next != "" || last.Notes[0].ID != stored[run.NotePageCount].ID {
+		t.Fatal("last page", last, err)
+	}
+	if _, err = s.Notes(ctx, "p", "../escape"); err == nil || !strings.Contains(err.Error(), "next value") {
+		t.Fatal("invalid cursor accepted or unexplained", err)
+	}
+}
+
+func TestOversizedNotesAreRefusedWithReasonAndNothingIsStored(t *testing.T) {
+	ctx := context.Background()
+	s, _ := New(t.TempDir())
+	base := run.Note{Project: "p", Run: "run", Manager: "m", Context: "area", Text: "ok"}
+	long := base
+	long.Text = strings.Repeat("x", run.MaxNoteText+1)
+	if _, err := s.Append(ctx, long); err == nil || !strings.Contains(err.Error(), "shorten it") {
+		t.Fatal("oversized text accepted or unexplained", err)
+	}
+	wide := base
+	wide.Context = strings.Repeat("x", run.MaxNoteContext+1)
+	if _, err := s.Append(ctx, wide); err == nil || !strings.Contains(err.Error(), "more briefly") {
+		t.Fatal("oversized context accepted or unexplained", err)
+	}
+	edge := base
+	edge.Text, edge.Context = strings.Repeat("x", run.MaxNoteText), strings.Repeat("x", run.MaxNoteContext)
+	if _, err := s.Append(ctx, edge); err != nil {
+		t.Fatal("Note at the limit refused", err)
+	}
+	if all, err := allNotes(ctx, s, "p"); err != nil || len(all) != 1 {
+		t.Fatal("refused Notes were stored", len(all), err)
+	}
+}
+
+// Even a Note made only of bytes that need the longest JSON escape fits a page.
+func TestWorstCaseEscapedNotesStayWithinThePageBudget(t *testing.T) {
+	ctx := context.Background()
+	s, _ := New(t.TempDir())
+	for range 20 {
+		if _, err := s.Append(ctx, run.Note{Project: "p", Run: "run", Manager: "m", Context: strings.Repeat("\x01", run.MaxNoteContext), Text: strings.Repeat("\x01", run.MaxNoteText)}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	for after, seen := "", 0; ; {
+		page, err := s.Notes(ctx, "p", after)
+		if err != nil || len(page.Notes) == 0 {
+			t.Fatal(err, len(page.Notes))
+		}
+		raw, _ := json.Marshal(page)
+		if len(raw) > run.NotePageBytes+1024 {
+			t.Fatal("escaped page too large", len(raw))
+		}
+		if seen += len(page.Notes); page.Next == "" {
+			if seen != 20 {
+				t.Fatal("Notes lost", seen)
+			}
+			return
+		}
+		after = page.Next
+	}
+}
+
+// A Note stored before the size limits existed is never dropped or cut: the
+// page before it ends there, and reading it explains how to continue.
+func TestStoredNoteAbovePageSizeIsReportedNotTruncated(t *testing.T) {
+	ctx := context.Background()
+	s, _ := New(t.TempDir())
+	first := appendSized(t, s, "p", 1, 10)[0]
+	huge := run.Note{ID: first.ID + "-huge", Project: "p", Run: "run", Manager: "m", Context: "old", Text: strings.Repeat("y", 2*run.NotePageBytes)}
+	path, _ := s.path("p", "notes", huge.ID)
+	if err := write(ctx, path, huge); err != nil {
+		t.Fatal(err)
+	}
+	last := appendSized(t, s, "p", 1, 10)[0]
+	page, err := s.Notes(ctx, "p", "")
+	if err != nil || len(page.Notes) != 1 || page.Next != first.ID {
+		t.Fatal("page before the large Note", page.Next, err)
+	}
+	_, err = s.Notes(ctx, "p", page.Next)
+	if err == nil || !strings.Contains(err.Error(), "continue after it") {
+		t.Fatal("large Note not reported with a next step", err)
+	}
+	rest, err := s.Notes(ctx, "p", huge.ID)
+	if err != nil || len(rest.Notes) != 1 || rest.Notes[0].ID != last.ID {
+		t.Fatal("reading did not continue after the large Note", rest, err)
 	}
 }

@@ -209,7 +209,7 @@ func (s *notesReadingSessions) Open(ctx context.Context, spec run.SessionSpec) (
 }
 func (s *notesReadingSession) Exchange(ctx context.Context, message run.Message) error {
 	s.once.Do(func() {
-		notes, err := s.spec.Tools.ReadNotes(ctx)
+		notes, err := readAllNotes(ctx, s.spec.Tools.ReadNotes)
 		if err != nil {
 			s.readErr = err
 			return
@@ -260,7 +260,7 @@ func TestFreshRunManagersReadEarlierClosedRunNotesThroughActualTool(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	expected, err := secondStore.Notes(ctx, "fixture")
+	expected, err := allNotes(ctx, secondStore, "fixture")
 	if err != nil || len(expected) != 5 {
 		t.Fatal("first Run Notes unavailable after closure", len(expected), err)
 	}
@@ -298,7 +298,7 @@ func TestFreshRunManagersReadEarlierClosedRunNotesThroughActualTool(t *testing.T
 	if err != nil {
 		t.Fatal(err)
 	}
-	all, err := fresh.Notes(ctx, "fixture")
+	all, err := allNotes(ctx, fresh, "fixture")
 	if err != nil || len(all) != 10 {
 		t.Fatal("later Run overwrote earlier Notes", len(all), err)
 	}
@@ -837,7 +837,7 @@ func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *tes
 			if err != nil || saved.Technical != run.Completed {
 				t.Fatal(saved, err)
 			}
-			notes, err := fresh.Notes(ctx, "fixture")
+			notes, err := allNotes(ctx, fresh, "fixture")
 			if err != nil || len(notes) < 5 {
 				t.Fatal("Notes unavailable from new instance", notes, err)
 			}
@@ -1175,5 +1175,30 @@ func TestPartialLibraryHandoffDefersProjectSuiteToExactAggregateRoot(t *testing.
 				}
 			}
 		})
+	}
+}
+
+// allNotes reads every page of project Notes in order.
+func allNotes(ctx context.Context, records interface {
+	Notes(context.Context, string, string) (run.NotePage, error)
+}, project string) ([]run.Note, error) {
+	return readAllNotes(ctx, func(ctx context.Context, after string) (run.NotePage, error) {
+		return records.Notes(ctx, project, after)
+	})
+}
+
+// readAllNotes follows the page cursor to the last page.
+func readAllNotes(ctx context.Context, read func(context.Context, string) (run.NotePage, error)) ([]run.Note, error) {
+	var all []run.Note
+	for after := ""; ; {
+		page, err := read(ctx, after)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, page.Notes...)
+		if page.Next == "" {
+			return all, nil
+		}
+		after = page.Next
 	}
 }

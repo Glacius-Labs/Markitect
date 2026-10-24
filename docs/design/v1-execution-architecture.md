@@ -53,7 +53,7 @@ Land each contract with a caller and concrete implementation, never an interface
 | Workflow: Executor | Run -> direct Apply composition | One fully closed Run per call; workflow chooses subsequent call |
 | Run: Sessions/session | Native adapter -> executor | Open with harness/workspace, ordinary messages/tools, cancellation/closure and observations; no domain Turn/Pass |
 | Run: workspace/candidate port | Git adapter -> executor | Open one Run, task bases, fixed handoffs, reviewed integration, retain/reopen candidate and close; handles stay inside execution |
-| Run: records/Notes port | Runstore -> executor/Manager tools | Save/read closed record; append separate project Notes with origin/context and read them in bounded, stably ordered pages, each within the tool transport limit and without silent truncation |
+| Run: records/Notes port | Runstore -> executor/Manager tools | Save/read closed record; append separate project Notes with origin/context and read them in bounded pages ordered by creation time (the ID starts with it), each within the tool transport limit, with a cursor and without silent truncation. Append refuses oversized Notes with a reason. Notes storage failures are tool errors, not Run failures |
 | Run: checks port | Check adapter -> executor | Named check on exact candidate, actual exit/timeout/cleanup observations |
 | Apply: publication port | Git adapter -> command | Durable accepted candidate, source/target guards, transfer/readback; no living Run |
 

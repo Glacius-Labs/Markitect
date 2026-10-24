@@ -189,7 +189,7 @@ func TestRuntimeNativeHierarchy(t *testing.T) {
 	if err != nil || !reflect.DeepEqual(saved, report.Result) {
 		t.Fatal("fresh terminal record readback differs", err)
 	}
-	report.Notes, err = fresh.Notes(ctx, "native-hierarchy")
+	report.Notes, err = allNotes(ctx, fresh, "native-hierarchy")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -615,8 +615,8 @@ func (h *hierarchySessions) Open(ctx context.Context, s run.SessionSpec) (run.Se
 			h.record(hierarchyCall{Manager: manager, Tool: "check", Failed: e != nil})
 			return v, e
 		},
-		ReadNotes: func(c context.Context) ([]run.Note, error) {
-			v, e := tools.ReadNotes(c)
+		ReadNotes: func(c context.Context, after string) (run.NotePage, error) {
+			v, e := tools.ReadNotes(c, after)
 			h.record(hierarchyCall{Manager: manager, Tool: "read_notes", Failed: e != nil})
 			return v, e
 		},
@@ -1412,3 +1412,28 @@ try:
 finally:
  proc.kill();proc.wait(timeout=5);server.shutdown()
 `
+
+// allNotes reads every page of project Notes in order.
+func allNotes(ctx context.Context, records interface {
+	Notes(context.Context, string, string) (run.NotePage, error)
+}, project string) ([]run.Note, error) {
+	return readAllNotes(ctx, func(ctx context.Context, after string) (run.NotePage, error) {
+		return records.Notes(ctx, project, after)
+	})
+}
+
+// readAllNotes follows the page cursor to the last page.
+func readAllNotes(ctx context.Context, read func(context.Context, string) (run.NotePage, error)) ([]run.Note, error) {
+	var all []run.Note
+	for after := ""; ; {
+		page, err := read(ctx, after)
+		if err != nil {
+			return nil, err
+		}
+		all = append(all, page.Notes...)
+		if page.Next == "" {
+			return all, nil
+		}
+		after = page.Next
+	}
+}
