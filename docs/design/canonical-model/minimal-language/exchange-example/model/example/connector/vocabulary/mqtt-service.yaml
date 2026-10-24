@@ -1,9 +1,0 @@
-imports:
-  - package: markitect/core
-    as: Core
-id: MqttService
-kind: Kind
-body: >-
-  Describes the required MQTT infrastructure. It routes messages on the basis of topics
-  and subscriptions. Provisioning and access rules are described in the concrete body.
-spec: {}

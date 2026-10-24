@@ -1,7 +1,0 @@
-formatVersion: 1
-id: readinglog
-version: 0.3.0
-root: model
-dependencies:
-  markitect-core: "1.0.0"
-  software-basics: "0.1.0"

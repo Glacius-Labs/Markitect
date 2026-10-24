@@ -1,9 +1,0 @@
-id: Kind
-kind: Kind
-body: >-
-  Deklariert einen Typ. properties benennt die erlaubten Felder
-  der spec seiner Definitionen. Der body einer Typdefinition beschreibt
-  deren gemeinsame Bedeutung und geltende Festlegungen.
-spec:
-  properties:
-    - properties
