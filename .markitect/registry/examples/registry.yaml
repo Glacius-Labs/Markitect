@@ -164,6 +164,58 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Preserves the owner-authored language, Apply or concept contract as a reference.
+  - path: "tools/comparison/README.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Documents the tools of the predeclared single-agent comparison and their limits.
+  - path: "tools/comparison/assess_candidate.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Assesses every comparison candidate identically with the unchanged oracle, hidden probes, own checks and a census.
+  - path: "tools/comparison/packet/prompt.txt"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the single-agent arm's exact instruction, bound by the comparison protocol.
+  - path: "tools/comparison/packet/requirements-m1.md"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the single-agent arm's ordinary documentation, rendered verbatim from Library M1.
+  - path: "tools/comparison/packet/requirements-m2.md"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the single-agent arm's ordinary documentation, rendered verbatim from Library M2.
+  - path: "tools/comparison/probes.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Adds hidden behavior probes for stated Library obligations the unchanged oracle does not reach.
+  - path: "tools/comparison/requirements.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Renders and checks the ordinary documentation that carries the canonical Library intent verbatim.
+  - path: "tools/comparison/rubric.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: States the blinded review rubric that is kept outside both writers' inputs.
+  - path: "tools/comparison/runner.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Runs the single-agent arm in one bounded Codex session with a Manager session's image, limits and switches.
+  - path: "tools/comparison/test_assess_candidate.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests the census, blinded export and seed classification on real Git commits.
+  - path: "tools/comparison/test_probes.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests the probes against controlled transcripts and the oracle transport.
+  - path: "tools/comparison/test_requirements.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests that the committed documentation is the current verbatim rendering of the model.
+  - path: "tools/comparison/test_runner.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests fixtures, parity with the Manager session and the runner against a fake engine.
   - path: "tools/library-oracle/README.md"
     form: doc
     realizes: [examples/independent-oracles]
