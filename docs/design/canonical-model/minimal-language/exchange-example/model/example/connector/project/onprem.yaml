@@ -4,8 +4,8 @@ imports:
 id: onprem
 kind: Container
 body: >-
-  Die Anwendung läuft in der Kundenumgebung und baut ihre MQTT-Verbindung ausgehend auf. Sie
-  verarbeitet ausschließlich Aufträge für ihre autorisierte Umgebung. Der Zugriff auf die
-  Dokumentenverwaltung erfolgt innerhalb der Kundenumgebung unter den geltenden Benutzerberechtigungen.
+  The application runs in the customer environment and establishes its MQTT connection outbound. It
+  processes only requests for its authorized environment. Access to the
+  document management system takes place within the customer environment under the applicable user permissions.
 spec:
   location: onprem

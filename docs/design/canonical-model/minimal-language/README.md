@@ -1,186 +1,186 @@
-# Herleitung des minimalen Cores und Connector-Gegenproben
+# Derivation of the minimal Core and Connector counter-probes
 
-**Historisch und nicht normativ.** Die nachfolgenden Gesprächsstände, Varianten und Berichte behalten ihren ursprünglichen Geltungsbereich. Spätere Entscheidungen setzen sie nicht rückwirkend um.
+**Historical and not normative.** The discussion states, variants and reports below keep their original scope of validity. Later decisions are not applied to them retroactively.
 
 The [v1 language contract](language-contract.md) is the completed design baseline confirmed by the owner on 16 October 2026. This historical record contains no open v1 language decisions. As of 17 October 2026, the current source implements the v1 product compiler. The design probes below show only their recorded scope; the [delivery plan](../../../implementation-plan.md) owns current product status and remaining work.
 
-| Einstieg | Rolle |
+| Entry point | Role |
 | --- | --- |
-| [Sprachspezifikation v1](language-contract.md) | Alleinige normative Quelle der gewählten kanonischen Form. |
-| [Diagnosevertrag](diagnostic-contract.md) | Separates Werkzeugprofil für exakte Koordinaten; keine Voraussetzung des Modelldigests. |
-| [Sprachgeschichte](language-history.md) | Frühere zusammenhängende Herleitung, Änderungen und damalige Abschlussabgleiche. |
-| [Verfahrensvorschläge](procedure-proposals.md) | Noch nicht gewählte Ausarbeitungen zu Kontext, Auswirkungen und semantischem Index. |
-| [Exchange-Beispiel](exchange-example/README.md) | Aktuelle ausführbare Eingaben und begrenzte Prüfevidenz. |
+| [Language specification v1](language-contract.md) | Sole normative source of the chosen canonical form. |
+| [Diagnostic contract](diagnostic-contract.md) | Separate tool profile for exact coordinates; not a precondition of the model digest. |
+| [Language history](language-history.md) | Earlier coherent derivation, changes and the closing reconciliations of that time. |
+| [Procedure proposals](procedure-proposals.md) | Not yet chosen elaborations on context, impact and semantic index. |
+| [Exchange example](exchange-example/README.md) | Current executable inputs and bounded check evidence. |
 
-Die historischen Bootstrap-, Kompakt- und Identitätsproben weiter unten sind keine v1-Konformitätsnachweise. Der [gemeinsame Designstand](../consolidation.md) führt zu den übrigen Produktfragen.
+The historical bootstrap, compact and identity probes further below are not v1 conformance evidence. The [shared design state](../consolidation.md) leads to the remaining product questions.
 
-## 1. Kind war bereits der Ansatzpunkt
+## 1. Kind was already the starting point
 
-Die Erinnerung des Nutzers trifft zu. Zwei vorhandene Grundlagen weisen in diese Richtung:
+The user's recollection is correct. Two existing foundations point in this direction:
 
-- Der [strukturelle Core](../../../../src/internal/core/README.md) kompiliert explizit gelieferte Schemas und Definitionen. Ein Schema deklariert frei benannte Kinds und ihre geschlossenen, typisierten Properties. Referenzen binden gegen genaue Ziel-Kinds; daraus entstehen Graphkanten. `kindReference` kann auf einen Kind verweisen, definiert ihn aber nicht und aktiviert keine Ausfuehrungslogik. Der Compiler ist nicht auf die fuenf Kinds des gegenwaertigen Projektvokabulars beschraenkt.
-- Im [Proposal zu typisierter Prosa vom 14. Oktober](../../product-model-refinement/canonical-model-proposal.md#23-programmiernahe-arbeitsrichtung-typisierte-prosa) wird der Kind ausdruecklich als Sprachkonstrukt beschrieben, das die Interpretation seines individuellen Definitionskoerpers bestimmt. Bedeutung, Referenzen und erwartete Realisierung sollten bereits dort einmal am Kind erklaert werden.
+- The structural Core (`src/internal/core/README.md`) compiles explicitly supplied schemas and definitions. A schema declares freely named Kinds and their closed, typed Properties. References bind against exact target Kinds; graph edges arise from them. `kindReference` can point to a Kind, but does not define it and does not activate any execution logic. The compiler is not restricted to the five Kinds of the present project vocabulary.
+- The [proposal on typed prose of 14 October](../../product-model-refinement/canonical-model-proposal.md#23-programmiernahe-arbeitsrichtung-typisierte-prosa) explicitly describes the Kind as a language construct that determines the interpretation of its individual definition body. Meaning, references and expected realization were already meant to be explained once at the Kind there.
 
-Der jetzige [Projektworkflow](../../../../src/internal/core/projectmodel/projectmodel.go) verwendet trotzdem einen fest komponierten Vertrag mit Manager, Statement, Artifact, Check und Decision. Freie Schemadaten im Core sind nicht gleichbedeutend mit einem fertigen Projektloader, beliebigen Kontext-/Impactregeln oder Apply fuer benutzerdefinierte Kinds. Der [feste Main-Abgleich](../current-main-comparison.md) bleibt in seiner damaligen Rolle erhalten.
+The present project workflow (`src/internal/core/projectmodel/projectmodel.go`) nevertheless uses a fixed composed contract with Manager, Statement, Artifact, Check and Decision. Free schema data in the Core is not the same as a finished project loader, arbitrary context/impact rules or Apply for user-defined Kinds. The [fixed Main comparison](../current-main-comparison.md) keeps its role of that time.
 
-Dieser Entwurf verbindet den vorhandenen strukturellen Ansatz mit der jetzt beauftragten Erweiterbarkeit der typisierten Projektdokumentation. Er beginnt keine neue Sprachimplementierung und holt kein historisches Plugin-/Installationssystem zurueck.
+This draft connects the existing structural approach with the extensibility of typed project documentation that has now been commissioned. It does not start a new language implementation and does not bring back a historical plugin/installation system.
 
-## 2. Die kleine Grundlage
+## 2. The small foundation
 
-Dieser Abschnitt beschreibt die Ausgangsbasis aus dem vorhandenen Core. Die inzwischen gewaehlte einheitliche Definitionenform mit Kind und Property ist in Abschnitt 14 zusammengefasst.
+This section describes the starting basis from the existing Core. The uniform definition form with Kind and Property that has since been chosen is summarized in section 14.
 
-| Sprachbegriff | Funktion |
+| Language term | Function |
 | --- | --- |
-| **Schema / Vokabular** | Versionierter Vertrag der in diesem Modell verfuegbaren Typen und ihrer Bedeutung. |
-| **Kind** | Definiert eine Aussageart und deren erlaubte Properties. Seine Bedeutung erklaert, was eine konkrete Definition deklariert. |
-| **Property** | Benannter, typisierter Wert mit Kardinalitaet. Eine Property vom Typ reference definiert eine gerichtete, benannte Relation zu einem Ziel-Kind. |
-| **Definition** | Konkrete benannte Sollbeschreibung: Identitaet, Kind, individueller verbindlicher Koerper und strukturierte Werte beziehungsweise Beziehungen. |
+| **Schema / vocabulary** | Versioned contract of the types available in this model and their meaning. |
+| **Kind** | Defines a kind of statement and its permitted Properties. Its meaning explains what a concrete definition declares. |
+| **Property** | Named, typed value with cardinality. A Property of type reference defines a directed, named relation to a target Kind. |
+| **Definition** | Concrete named target description: identity, Kind, individual binding body and structured values or relationships. |
 
-Identitaet, Namensraum, Referenzaufloesung und kanonischer Inhaltsvergleich sind gemeinsame Sprachmechanismen. Sie sind keine weiteren fachlichen Projekt-Kinds. Der Kern muss weder System noch Command noch Rule fest einbauen. Auch eine spaeter gewuenschte eigenstaendige Rule-Definition wird durch ein Vokabular deklariert; die grundsaetzliche Verbindlichkeit kanonischer Aussagen benoetigt diesen speziellen Typ nicht.
+Identity, namespace, reference resolution and canonical content comparison are shared language mechanisms. They are not further domain project Kinds. The core needs to build in neither System nor Command nor Rule as fixed parts. Even an independent Rule definition wanted later is declared by a vocabulary; the fundamental normative force of canonical statements does not need this special type.
 
-**Minimaler Vorschlag:** Eigene Relationen werden zunaechst am Quell-Kind als Reference-Properties definiert. Deshalb ist `Component.provides` eine andere Deklaration als `System.provides`, auch wenn beide dasselbe Wort verwenden. Der aufgeloeste Bezug behaelt Quellidentitaet, Propertypfad und Zielidentitaet. Gleiche Namen fuehren nicht automatisch zu global gleicher Semantik.
+**Minimal proposal:** Custom relations are initially defined on the source Kind as reference Properties. Therefore `Component.provides` is a different declaration from `System.provides`, even if both use the same word. The resolved reference keeps source identity, property path and target identity. Equal names do not automatically lead to globally equal semantics.
 
-Ein eigenstaendiger Relation-Kind wird erst benoetigt, wenn Beziehungen selbst eine unabhaengige Identitaet, eigene Aussagen oder Beziehungen benoetigen. Attribute einer Beziehung koennen teilweise schon durch strukturierte Objekte mit Referenz-Properties ausgedrueckt werden. Es wird hier weder ein neues Primitive fuer beliebige Kanten noch eine allgemeine Graphregelmaschine eingefuehrt.
+An independent Relation Kind is only needed when relationships themselves need an independent identity, own statements or relationships. Attributes of a relationship can partly already be expressed by structured objects with reference Properties. Neither a new primitive for arbitrary edges nor a general graph rule engine is introduced here.
 
-### 2.1 Auftrag an den Core und Rolle der Bibliotheken
+### 2.1 Remit of the Core and role of the libraries
 
-Praezisierung des Nutzers im weiteren Gespraech: Der Core muss die fuer Markitect erforderlichen allgemeinen Ausdrucksmittel vollstaendig bereitstellen. Bibliotheken dienen ausschliesslich dazu, fertiges Vokabular zu importieren. Sie schalten keine zusaetzlichen Sprachfaehigkeiten frei. Der Nutzer beauftragt nun die Definition dieses Cores und seiner Bestandteile; die nachfolgende Zusammensetzung bleibt ein Diskussionsvorschlag.
+The user's clarification later in the conversation: The Core must completely provide the general means of expression required for Markitect. Libraries serve exclusively to import finished vocabulary. They do not unlock any additional language capabilities. The user now commissions the definition of this Core and its constituents; the composition below remains a discussion proposal.
 
-**Massstab:** Ein Projekt kann ohne importierte Vokabularbibliothek sein benoetigtes Vokabular selbst definieren und mit denselben Markitect-Faehigkeiten bearbeiten lassen. Ein lokaler Kind besitzt dieselbe sprachliche Stellung wie ein importierter Kind. Der Core kennt keinen privilegierten Component-, Rule- oder Mandate-Typ.
+**Yardstick:** A project can define the vocabulary it needs itself, without an imported vocabulary library, and have it worked on with the same Markitect capabilities. A local Kind has the same linguistic standing as an imported Kind. The Core knows no privileged Component, Rule or Mandate type.
 
-Allgemeine Ausdrucksfaehigkeit bedeutet dabei nicht, jede fachliche Wahrheit formal entscheiden zu koennen. Strukturierte Deklarationen und verbindliche Prosa tragen gemeinsam die Projektbeschreibung. Nicht formal pruefbare Aussagen bleiben verpflichtend und brauchen geeignete Beurteilung.
+General expressiveness does not mean being able to decide every domain truth formally. Structured declarations and binding prose together carry the project description. Statements that cannot be checked formally remain obligatory and need suitable assessment.
 
-### 2.2 Vorschlag: vier Grundbausteine und gemeinsame Sprachmechanismen
+### 2.2 Proposal: four basic building blocks and shared language mechanisms
 
-Die vier Grundbausteine aus Abschnitt 2 werden so konkretisiert:
+The four basic building blocks from section 2 are made concrete as follows:
 
-| Baustein | Mindestinhalt | Connector-Beispiel |
+| Building block | Minimum content | Connector example |
 | --- | --- | --- |
-| Schema | Identitaet und genaue Version eines Typvertrags, seine Bedeutung und enthaltenen Kinds. | Ein Schema deklariert das projektspezifische Kommunikationsvokabular. |
-| Kind | Identitaet im Schema, allgemeine Bedeutung, erlaubte Properties und geltende Anforderungen. | Exchange beschreibt einen vereinbarten Nachrichtenaustausch und seine Rollen. |
-| Property | Name, Bedeutung, Werttyp, Kardinalitaet und gegebenenfalls Referenzziel beziehungsweise Objektstruktur. | Exchange.sender referenziert genau einen Container. |
-| Definition | Identitaet, genauer Kind, individuelle Sollbeschreibung und Werte der deklarierten Properties. | list-documents bestimmt API, Connector, Kanaele und Wartefrist. |
+| Schema | Identity and exact version of a type contract, its meaning and contained Kinds. | A schema declares the project-specific communication vocabulary. |
+| Kind | Identity in the schema, general meaning, permitted Properties and applicable requirements. | Exchange describes an agreed message exchange and its roles. |
+| Property | Name, meaning, value type, cardinality and, where applicable, reference target or object structure. | Exchange.sender references exactly one Container. |
+| Definition | Identity, exact Kind, individual target description and values of the declared Properties. | list-documents determines API, Connector, channels and waiting period. |
 
-Schema ist hier der Sprachvertrag. Bibliothek bezeichnet dessen Bereitstellung beziehungsweise Zusammenstellung zur Wiederverwendung; sie ist keine zweite Art von Typdefinition. Ein Schema kann lokal geschrieben oder aus einer Bibliothek bezogen sein. Importauswahl und Dateiladen muessen einen eindeutigen Eingabesatz herstellen; Transport und Paketinstallation sind keine Bedeutung eines Kinds.
+Schema here is the language contract. Library denotes its provision or assembly for reuse; it is not a second sort of type definition. A schema can be written locally or obtained from a library. Import selection and file loading must produce an unambiguous input set; transport and package installation are not part of the meaning of a Kind.
 
-Dazu braucht der Core gemeinsame Mechanismen. Sie sind Bestandteile der Sprache, aber keine weiteren fachlichen Projekt-Kinds:
+For this the Core needs shared mechanisms. They are constituents of the language, but not further domain project Kinds:
 
-| Mechanismus | Vorgeschlagener Mindestvertrag | Stand gegenueber dem bisherigen Core |
+| Mechanism | Proposed minimum contract | Status compared with the previous Core |
 | --- | --- | --- |
-| Verbindlicher Koerper | Schema, Kind, Property und Definition tragen interpretierbare Prosa. Kind- und Propertyvertraege gelten fuer ihre Verwendungen; individuelle Aussagen ergaenzen sie und duerfen Widersprueche nicht still ueberschreiben. | Purpose-Felder vorhanden; vollstaendige Autoren- und Interpretationsregeln weiter zu praezisieren. |
-| Identitaet und Referenzen | Eindeutige Namen in einem definierten Namensraum und Schema-/Kindvertrag; Referenzen werden exakt aufgeloest. | Vorhanden. Die genaue Autorenform fuer Koerperlinks bleibt offen. |
-| Werte und Kardinalitaeten | Einfache Werte, strukturierte Objekte, Einzelwerte und Listen sowie Referenzen auf Definitionen und Kinds. | Vorhandene acht Werttypen sind der Ausgangspunkt; weitere Typkonstruktoren nur bei konkretem Bedarf. |
-| Anforderungen | Verbindliche Anforderungen stehen in den Koerpern. Ihr Gegenstand und Geltungsbereich werden dort erklaert. | Strukturpruefung vorhanden; requirements und roles sind vorerst zurueckgestellt. Zusaetzliche formale Constraintoperatoren bleiben eine eigene offene Erweiterungsfrage. |
-| Gebundener Modellstand | Alle verwendeten Typvertraege und Definitionen werden zusammen festgehalten; auch eine Bedeutungsabweichung bei unveraenderten Instanzen ist eine Aenderung. | Deterministische Normalisierung, Graph, Digest und Herkunft vorhanden; Bibliotheksauswahl und Produktanschluss bleiben zu entwerfen. |
+| Binding body | Schema, Kind, Property and Definition carry interpretable prose. Kind and property contracts apply to their uses; individual statements supplement them and must not silently override contradictions. | Purpose fields present; complete authoring and interpretation rules still to be specified more precisely. |
+| Identity and references | Unique names in a defined namespace and schema/Kind contract; references are resolved exactly. | Present. The exact authoring form for body links remains open. |
+| Values and cardinalities | Simple values, structured objects, single values and lists as well as references to definitions and Kinds. | The existing eight value types are the starting point; further type constructors only on concrete need. |
+| Requirements | Binding requirements stand in the bodies. Their subject and scope of validity are explained there. | Structure check present; requirements and roles are deferred for now. Additional formal constraint operators remain a separate open extension question. |
+| Bound model state | All type contracts and definitions used are recorded together; a deviation in meaning with unchanged instances is also a change. | Deterministic normalization, graph, digest and provenance present; library selection and product connection remain to be designed. |
 
-Eine Beziehung benoetigt damit vorerst kein fuenftes universelles Deklarationsformat: Ihre Rolle wird als Reference-Property deklariert, der konkrete Bezug steht an einer Definition. Wenn eine Beziehung selbst Identitaet, mehrere Beteiligte oder eigene Aussagen braucht, kann ein eigener Kind sie beschreiben. Exchange ist bereits ein solches Beispiel mit mehreren referenzierten Rollen. Ob das fuer alle relevanten Faelle ausreicht, bleibt eine ausdrueckliche Gegenprobe.
+A relationship therefore needs no fifth universal declaration format for now: its role is declared as a reference Property, the concrete reference stands at a definition. If a relationship itself needs identity, several participants or own statements, a dedicated Kind can describe it. Exchange is already such an example with several referenced roles. Whether this suffices for all relevant cases remains an explicit counter-probe.
 
-### 2.3 Was daraus fuer Markitect folgt
+### 2.3 What follows from this for Markitect
 
-Die Sprache muss den vollstaendigen geltenden Vertrag einer Definition zugaenglich machen: ihre eigene Beschreibung, ihren Kind, dessen Properties und Anforderungen sowie aufgeloeste Bezuege. Das Auslassen einer importierten oder lokal definierten Kind-Bedeutung darf nicht zur stillen Entpflichtung fuehren.
+The language must make the complete applicable contract of a definition accessible: its own description, its Kind, that Kind's Properties and requirements, and resolved references. Omitting an imported or locally defined Kind meaning must not lead to a silent release from obligation.
 
-Darauf bauen generische Kontextbildung, Aenderungsbewertung, Realisierung und unabhaengige Pruefung auf. Deren Verfahren gehoeren weiterhin zum Markitect-Produkt, auch wenn ihre Ausfuehrungsdaten nicht Teil der kanonischen Projektbeschreibung sind. Der bestehende Strukturcompiler allein erfuellt diesen Produktauftrag noch nicht. Die neue Richtung hebt die bestehenden Pflichten zur Delegation, unabhaengigen Pruefung oder Repositoryzuordnung nicht nebenbei auf; sie legt deren neue sprachliche Anbindung noch nicht fest.
+Generic context formation, change assessment, realization and independent checking build on this. Their procedures continue to belong to the Markitect product, even if their execution data is not part of the canonical project description. The existing structure compiler alone does not yet fulfil this product remit. The new direction does not incidentally lift the existing obligations of delegation, independent checking or repository assignment; it does not yet stipulate their new linguistic connection.
 
-Insbesondere ist **eine aufgeloeste Beziehung noch keine berechenbare Wirkungsvorschrift**. Der Core kann ihre Endpunkte, Deklaration und Bedeutung bereitstellen. Welche Kontexte und Pruefungen sie betrifft, muss entweder durch einen ausdruecklichen generischen Sprachmechanismus beschrieben oder als begruendete semantische Bewertung behandelt werden. Der Relationsname allein darf weder Baumsemantik noch Regelgeltung oder Schreibbefugnis ausloesen.
+In particular, **a resolved relationship is not yet a computable rule of effect**. The Core can provide its endpoints, declaration and meaning. Which contexts and checks it affects must either be described by an explicit generic language mechanism or be treated as a justified semantic assessment. The relation name alone must trigger neither tree semantics nor rule applicability nor write authority.
 
-Die naechsten Gegenproben betreffen deshalb: individuelle und allgemeine Anforderungen samt Geltungsbereich; Beziehungen mit eigener Beschreibung; explizite Bezuege im Koerper; sowie die Bedeutung einer Aenderung am Kind fuer dessen Definitionen. Vererbung, Zieltyp-Vereinigungen, ein eigenstaendiges Relation-Primitive und eine allgemeine formale Regelsprache sind weiterhin offene Erweiterungskandidaten. Diese Bestandsaufnahme entscheidet sie nicht vorab.
+The next counter-probes therefore concern: individual and general requirements including their scope of validity; relationships with their own description; explicit references in the body; and the meaning of a change at the Kind for its definitions. Inheritance, target type unions, an independent Relation primitive and a general formal rule language remain open extension candidates. This inventory does not decide them in advance.
 
-## 3. Bedeutung gehoert zum Sprachvertrag
+## 3. Meaning belongs to the language contract
 
-Der Kind-Koerper definiert seine allgemeine Bedeutung; der Definitionskoerper enthaelt die individuellen Sollaussagen. Die Beschreibung von `Exchange` erklaert beispielsweise einmal die Rollen sender und receiver und die Antwortzuordnung. Die konkrete Definition `list-documents` legt ihre Beteiligten, Kanaele, Operation und Besonderheiten fest.
+The Kind body defines its general meaning; the definition body contains the individual target statements. The description of `Exchange`, for example, explains once the roles sender and receiver and the reply mapping. The concrete definition `list-documents` stipulates its participants, channels, operation and particularities.
 
-Der Compiler prueft, ob ein sender eine existierende Definition des erlaubten Kinds Container referenziert. Er beweist dadurch nicht, dass der betreffende Prozess Nachrichten richtig versendet. Das gehoert zur Interpretation, Realisierung und semantischen Pruefung des beschriebenen Projekts. Die Sprachbedeutung ist keine Agentenrolle und kein Mandate.
+The compiler checks whether a sender references an existing definition of the permitted Kind Container. It does not thereby prove that the process concerned sends messages correctly. That belongs to the interpretation, realization and semantic checking of the described project. The language meaning is not an agent role and not a Mandate.
 
-Entsprechend bedeutet die Property `Channel.topicPattern: string` zunaechst nur, dass ein String vorhanden ist. Dass `{tenantId}` aus einem autorisierten Kontext einzusetzen ist und keine MQTT-Wildcards enthalten darf, ist eine erklaerte Verpflichtung des Projektvokabulars. Eine formale Vorlagenpruefung waere eine gesondert definierte Validierung. Ein neuer Typname installiert keinen Parser, Brokeradapter oder Codegenerator.
+Correspondingly, the Property `Channel.topicPattern: string` initially only means that a string is present. That `{tenantId}` is to be filled in from an authorized context and must not contain MQTT wildcards is a declared obligation of the project vocabulary. A formal template check would be a separately defined validation. A new type name installs no parser, broker adapter or code generator.
 
-Alle zur Interpretation benoetigten Schema-, Kind- und Propertykoerper gehoeren zum gebundenen Modellstand. Aendert sich die Bedeutung eines Kinds bei unveraenderten Instanzdateien, ist das weiterhin eine semantisch relevante Modellaenderung. Der existierende Core beruecksichtigt Schema-/Kind-/Property-Purpose bereits im Modelldigest; die neue Autorenform muss diesen Inhalt erhalten.
+All schema, Kind and Property bodies needed for interpretation belong to the bound model state. If the meaning of a Kind changes while the instance files are unchanged, this is still a semantically relevant model change. The existing Core already takes schema/Kind/Property purpose into account in the model digest; the new authoring form must preserve this content.
 
-### 3.1 Zwei Pruefgegenstaende und die Qualitaet des Vertrags
+### 3.1 Two subjects of checking and the quality of the contract
 
-Diskussionsvorschlag vom 15. Oktober auf die Frage des Nutzers, wie Bedeutung und Regeln eigener Kinds beschrieben und geprueft werden sollen. Die nachfolgenden Regeln und Felder sind Entwurf, keine zusaetzlich implementierten Core-Funktionen.
+Discussion proposal of 15 October on the user's question of how the meaning and rules of self-defined Kinds should be described and checked. The rules and fields below are a draft, not additionally implemented Core functions.
 
-Zuerst ist der **Pruefgegenstand** zu bestimmen. Eine Regel kann die gueltige Modellbeschreibung betreffen oder eine Pflicht der daraus entstehenden Software ausdruecken. Daneben braucht der Kind-Vertrag selbst eine fachliche Beurteilung seiner Verstaendlichkeit, Widerspruchsfreiheit und Eignung.
+First the **subject of checking** is to be determined. A rule can concern the valid model description or express an obligation of the software that arises from it. In addition, the Kind contract itself needs a domain assessment of its comprehensibility, freedom from contradiction and suitability.
 
-| Gegenstand | Leitfrage | Geeignete Pruefung |
+| Subject | Guiding question | Suitable check |
 | --- | --- | --- |
-| Modellkonformitaet | Erfuellt eine konkrete Definition den deklarierten Kind-Vertrag? | Compiler fuer ausdruecklich formal beschriebene Bedingungen; Agent fuer fachliche Prosa, Angemessenheit und Vollstaendigkeit. |
-| Vertragsqualitaet | Sind Kind, Regeln und Relationen sinnvoll, eindeutig und miteinander vereinbar? | Fachliches Modellreview; formale Gegenproben und Werkzeuge koennen Teilbefunde beitragen. |
-| Realisierungskonformitaet | Erfuellt der feste Umsetzungskandidat die geltenden Pflichten? | Deterministische Tests und Analysen, soweit geeignet, plus unabhaengige Agentenbewertung ihrer Aussagekraft und des Kandidaten. |
+| Model conformance | Does a concrete definition fulfil the declared Kind contract? | Compiler for explicitly formally described conditions; agent for domain prose, appropriateness and completeness. |
+| Contract quality | Are Kind, rules and relations sensible, unambiguous and compatible with one another? | Domain model review; formal counter-probes and tools can contribute partial findings. |
+| Realization conformance | Does the fixed implementation candidate fulfil the applicable obligations? | Deterministic tests and analyses, where suitable, plus independent agent assessment of their probative value and of the candidate. |
 
-Die Wahl der Pruefmethode folgt danach. Auch eine Realisierungspflicht kann maschinell getestet werden; diese Ausfuehrung gehoert jedoch nicht zum reinen Strukturcompiler. Umgekehrt benoetigt die Beurteilung einer Modelldefinition teilweise einen Agenten, wenn ihre Bedeutung in Prosa vorliegt. Die Einteilung in Modell und Realisierung ist deshalb keine Einteilung in automatisch und menschlich beziehungsweise agentisch.
+The choice of check method follows after that. A realization obligation can also be tested by machine; this execution, however, does not belong to the pure structure compiler. Conversely, the assessment of a model definition partly needs an agent when its meaning is given in prose. The division into model and realization is therefore not a division into automatic and human or agentic.
 
-### 3.2 Inhalt eines selbst definierten Kind-Vertrags
+### 3.2 Content of a self-defined Kind contract
 
-Ich wuerde am Kind vier Inhalte beschreiben: Bedeutung und Gegenstand seiner Definitionen; strukturierte Properties und Relationsrollen; Bedingungen fuer gueltige Modelldefinitionen; Pflichten, welche die Realisierung erfuellen muss. Fuer die letzten beiden Gruppen werden unterscheidbare Regelbezeichnungen vorgeschlagen, wenn sie unabhaengig betroffen oder beurteilt werden sollen.
+I would describe four contents at the Kind: meaning and subject of its definitions; structured Properties and relation roles; conditions for valid model definitions; obligations that the realization must fulfil. For the last two groups, distinguishable rule names are proposed if they are to be affected or assessed independently.
 
-Eine solche Regel erklaert ihren Gegenstand, ihre geltende Aussage und gegebenenfalls die Bedingung ihrer Anwendbarkeit. Eine formal beschriebene Bedingung kann ein zusaetzlicher, exakt pruefbarer Bestandteil dieser einen Regel sein. Die benannten Regeln werden einmal am Kind gepflegt und gelten fuer seine Definitionen gemaess ihrem erklaerten Geltungsbereich. Eine konkrete Definition ergaenzt ihre individuellen Pflichten; allgemeine Regeln werden dort nicht erneut kopiert. Der Kind-Koerper soll die Regelbedeutung nicht nochmals als unabhaengige zweite Wahrheit duplizieren.
+Such a rule explains its subject, its applicable statement and, where applicable, the condition of its applicability. A formally described condition can be an additional, exactly checkable constituent of this one rule. The named rules are maintained once at the Kind and apply to its definitions according to their declared scope of validity. A concrete definition supplements its individual obligations; general rules are not copied there again. The Kind body should not duplicate the rule meaning again as an independent second truth.
 
-Ein eingebauter Projekt-Kind namens Rule ist dafuer nicht erforderlich. Ein optionaler Regelabschnitt waere Teil des Meta-Vertrags fuer Kinds. Ob er eigene strukturierte Felder bekommt oder vorerst als benannte Absaetze im Koerper ausgedrueckt wird, ist eine Autorenformatentscheidung. Vorhandene verbindliche Prosa bleibt verpflichtend, auch wenn sie keinen formalen Constraint besitzt.
+A built-in project Kind named Rule is not required for this. An optional rule section would be part of the meta contract for Kinds. Whether it gets its own structured fields or is expressed for now as named paragraphs in the body is an authoring format decision. Existing binding prose remains obligatory, even if it has no formal constraint.
 
-### 3.3 Beispiel am Kind Exchange
+### 3.3 Example at the Kind Exchange
 
-| Aussage des Kind-Vertrags | Gegenstand | Was daraus folgt |
+| Statement of the Kind contract | Subject | What follows from it |
 | --- | --- | --- |
-| sender referenziert genau einen Container. | Modell | Bereits durch Reference-Ziel und Kardinalitaet im Core pruefbar. |
-| timeoutSeconds und maxAttempts sind positive Ganzzahlen. | Modell | Ganzzahltyp ist vorhanden; die positive Wertebereichsbedingung benoetigt eine ausdrueckliche neue Constraintfunktion oder ein Modellreview. minCount beschraenkt die Zahl der Werte, nicht ihren Zahlenwert. |
-| Sender und Empfaenger sind fuer die Operation passend gewaehlt. | Modell / Vertragsqualitaet | Der Compiler prueft die Zieltypen. Die fachliche Rollenverteilung benoetigt Review; eine spaetere vollstaendige formale Abbildung koennte Teilbedingungen pruefen. |
-| Eine Antwort erhaelt die MessageId des Requests. | Realisierung | Agent bewertet Umsetzung und geeignete Zuordnungspruefungen an einem festen Kandidaten; der Compiler kann dies nicht aus einem Referenzgraphen beweisen. |
-| Der Mandant stammt aus einem autorisierten Kontext. | Realisierung | Zugriffspfade, Eingabeherkunft und geeignete negative Tests untersuchen; ein vorhandenes tenantId-Feld reicht nicht als Nachweis. |
-| Jede Empfaengerreplika kann die an ihren Pool verteilte Operation bearbeiten. | Modell und Realisierung mit getrennten Erwartungen | Deklarierte Faehigkeiten koennten im Modell verglichen werden. Tatsaechliche Registrierung, Konfiguration und Betrieb brauchen eigene Nachweise. Die Deklaration beweist nicht ihre Umsetzung. |
+| sender references exactly one Container. | Model | Already checkable in the Core through reference target and cardinality. |
+| timeoutSeconds and maxAttempts are positive integers. | Model | The integer type is present; the positive value range condition needs an explicit new constraint function or a model review. minCount limits the number of values, not their numeric value. |
+| Sender and receiver are chosen appropriately for the operation. | Model / contract quality | The compiler checks the target types. The domain distribution of roles needs review; a later complete formal mapping could check partial conditions. |
+| A reply keeps the MessageId of the request. | Realization | An agent assesses the implementation and suitable mapping checks on a fixed candidate; the compiler cannot prove this from a reference graph. |
+| The tenant comes from an authorized context. | Realization | Examine access paths, input provenance and suitable negative tests; an existing tenantId field is not sufficient as evidence. |
+| Every receiver replica can process the operation distributed to its pool. | Model and realization with separate expectations | Declared capabilities could be compared in the model. Actual registration, configuration and operation need their own evidence. The declaration does not prove its implementation. |
 
-#### 3.3.1 Bedeutung und Properties des Exchange-Vertrags
+#### 3.3.1 Meaning and Properties of the Exchange contract
 
-Konkretisierung auf Auftrag des Nutzers: Die folgenden Felder sind ein zusammenhaengender Vertragsentwurf, keine bereits beschlossene oder implementierte Syntax. Die vorhandenen Beispieldateien und ihr begrenzter Strukturpruefbericht bleiben unveraendert.
+Made concrete at the user's request: The following fields are a coherent contract draft, not syntax that has already been decided or implemented. The existing example files and their bounded structure check report remain unchanged.
 
-Die anschliessende [Pruefung des Zusatznutzens](#36-brauchen-requirements-und-roles-eigene-core-semantik) stellt requirements und roles als eigene Sprachmittel infrage. Der Nutzer entscheidet danach ausdruecklich, sie vorerst wegzulassen. Die nachfolgende strukturierte Variante ist damit zurueckgestellt und bleibt nur zum Vergleich erhalten.
+The subsequent [check of the added value](#36-do-requirements-and-roles-need-their-own-core-semantics) questions requirements and roles as separate language means. The user then explicitly decides to leave them out for now. The structured variant below is therefore deferred and is kept only for comparison.
 
-Die allgemeine Bedeutung lautet: Eine Exchange-Definition beschreibt den gewuenschten Request-/Reply-Vertrag fuer eine Operation. Sie beschreibt weder einen einzelnen laufenden Austausch noch eine Nachricht. sender stellt die Operation aus; receiver bearbeitet sie. requestChannel und replyChannel beschreiben die Kommunikationswege. Der Kind bindet diese Rollen aneinander; seine Anforderungen praezisieren das erwartete Verhalten.
+The general meaning reads: An Exchange definition describes the desired request/reply contract for an operation. It describes neither a single running exchange nor a message. sender issues the operation; receiver processes it. requestChannel and replyChannel describe the communication paths. The Kind binds these roles to one another; its requirements specify the expected behaviour more precisely.
 
-| Property | Typ / Anzahl | Bedeutung |
+| Property | Type / count | Meaning |
 | --- | --- | --- |
-| sender | Container / genau 1 | Anwendung in der Auftraggeberrolle dieses Austauschs. |
-| receiver | Container / genau 1 | Anwendung in der Bearbeiterrolle dieses Austauschs. |
-| command | Command / genau 1 | Vertrag der angeforderten Operation. |
-| requestChannel | Channel / genau 1 | Kanal fuer die Auftragsrichtung. |
-| replyChannel | Channel / genau 1 | Kanal fuer Antworten an die ausstellende Instanz. |
-| timeoutSeconds | integer / genau 1 | Wartefrist pro Versuch in Sekunden. |
-| maxAttempts | integer / genau 1 | Maximale Versuchszahl einschliesslich des ersten Versuchs. |
+| sender | Container / exactly 1 | Application in the requester role of this exchange. |
+| receiver | Container / exactly 1 | Application in the processor role of this exchange. |
+| command | Command / exactly 1 | Contract of the requested operation. |
+| requestChannel | Channel / exactly 1 | Channel for the request direction. |
+| replyChannel | Channel / exactly 1 | Channel for replies to the issuing instance. |
+| timeoutSeconds | integer / exactly 1 | Waiting period per attempt in seconds. |
+| maxAttempts | integer / exactly 1 | Maximum number of attempts including the first attempt. |
 
-Diese Rollen sind Teil dieses Kinds. Der Core kennt weder sender noch die MQTT-Bedeutung von Channel vorab. Jede Property erhaelt ihre eigene Bedeutung und ihren Strukturvertrag. Dass eine Rolle auf Container zeigt, beschreibt keine Agentenzustaendigkeit und erteilt keine Schreibbefugnis.
+These roles are part of this Kind. The Core knows neither sender nor the MQTT meaning of Channel in advance. Every Property gets its own meaning and its structure contract. That a role points to Container describes no agent responsibility and grants no write authority.
 
-#### 3.3.2 Geltungsbereich einer Anforderung
+#### 3.3.2 Scope of validity of a requirement
 
-Der vorgeschlagene Meta-Abschnitt heisst hier `requirements`; er konkretisiert die fruehere illustrative `rules`-Skizze. Ein Requirement ist eine Unterstruktur des Kind- oder Definitionsvertrags, kein zusaetzlicher fest eingebauter fachlicher Rule-Kind.
+The proposed meta section is called `requirements` here; it makes the earlier illustrative `rules` sketch concrete. A requirement is a substructure of the Kind or definition contract, not an additional, fixed built-in domain Rule Kind.
 
-| Angabe | Vertrag |
+| Item | Contract |
 | --- | --- |
-| Deklarationsort | Am Kind gilt die Anforderung fuer jede Definition genau dieses Kinds. An einer Definition ergaenzt sie nur deren individuelle Pflichten. Es wird keine Typvererbung vorausgesetzt. |
-| id | Stabile lokale Bezeichnung innerhalb des deklarierenden Vertrags. Ihre qualifizierte Adresse schliesst Schema-/Kind- beziehungsweise Definitionsidentitaet ein. Ein gleicher lokaler Name an einer Definition ueberschreibt keine Kind-Anforderung. |
-| subject | `model` bezeichnet eine Anforderung an die Modellbeschreibung; `realization` bezeichnet eine Pflicht ihrer Umsetzung. Beide sind kanonische Sollaussagen. Die Auswahl legt nicht die Pruefmethode fest. |
-| roles | Optional: explizite Reference-Properties des deklarierenden Kinds, deren Beteiligte fuer diese Anforderung relevant sind. Jede Rolle wird relativ zur jeweils betrachteten Definition gebunden. Ohne roles bleibt der Gegenstand die Definition beziehungsweise ihre gesamte Realisierung im beschriebenen Umfang. |
-| definition | Verbindliche Aussage einschliesslich fachlicher Bedingungen ihrer Anwendbarkeit. Eine nicht formal ausdrueckbare Bedingung wird semantisch beurteilt und bei Unsicherheit als offen behandelt. |
-| constraint | Optional: formaler Anteil derselben Anforderung. Nur bekannte Operatoren und gueltige Bindungen sind zulaessig; die Skizze unten verwendet Property und numerische Untergrenze. |
+| Place of declaration | At the Kind, the requirement applies to every definition of exactly this Kind. At a definition, it only supplements that definition's individual obligations. No type inheritance is presupposed. |
+| id | Stable local name within the declaring contract. Its qualified address includes the schema/Kind or definition identity. An equal local name at a definition does not override a Kind requirement. |
+| subject | `model` denotes a requirement on the model description; `realization` denotes an obligation of its implementation. Both are canonical target statements. The selection does not stipulate the check method. |
+| roles | Optional: explicit reference Properties of the declaring Kind whose participants are relevant for this requirement. Every role is bound relative to the definition under consideration. Without roles, the subject remains the definition or its entire realization in the described scope. |
+| definition | Binding statement including domain conditions of its applicability. A condition that cannot be expressed formally is assessed semantically and treated as open in case of uncertainty. |
+| constraint | Optional: formal part of the same requirement. Only known operators and valid bindings are permitted; the sketch below uses Property and a numeric lower bound. |
 
-`roles` bezeichnet die betroffenen Beteiligten; die konkrete Pflichtenteilung steht in der Aussage. Es bedeutet weder, dass jeder Beteiligte jede Teilpflicht uebernimmt, noch bestimmt es die Agentenaufteilung. Im ersten Vorschlag sind ausschliesslich direkte Reference-Properties als Rollen erlaubt, keine frei formulierten Selektorausdruecke oder transitiven Graphpfade. Ein unbekannter Rollenname oder eine Wertproperty an dieser Stelle ist ein Strukturfehler dieses vorgeschlagenen Vertrags.
+`roles` denotes the affected participants; the concrete division of obligations stands in the statement. It means neither that every participant takes on every partial obligation, nor does it determine the division of agents. In the first proposal, only direct reference Properties are permitted as roles, no freely formulated selector expressions or transitive graph paths. An unknown role name or a value Property at this place is a structural error of this proposed contract.
 
-Insbesondere bleibt der Kontext **die einzelne Exchange-Definition**: Eine Anforderung fuer deren receiver betrifft den referenzierten Container in dieser Rolle und in diesem Austausch. Sie veraendert nicht dessen allgemeine Definition, gilt nicht automatisch fuer andere Exchanges und wandert nicht pauschal zu dessen Components. Bei der Realisierungspruefung muessen dennoch die relevanten implementierenden Teile betrachtet werden. Fachlicher Geltungsbereich und benoetigter Pruefkontext sind verschieden.
+In particular, the context remains **the single Exchange definition**: A requirement for its receiver concerns the referenced Container in this role and in this exchange. It does not change that Container's general definition, does not automatically apply to other Exchanges and does not migrate wholesale to its Components. In the realization check, the relevant implementing parts must nevertheless be considered. Domain scope of validity and the needed check context are different.
 
-#### 3.3.3 Vertragsausschnitt mit Anforderungen
+#### 3.3.3 Contract excerpt with requirements
 
-Der Ausschnitt steht innerhalb der Kind-Deklaration von Exchange. Die oben vollstaendig aufgefuehrten Propertyvertraege stehen daneben unter properties; sie werden hier nicht wiederholt.
+The excerpt stands within the Kind declaration of Exchange. The property contracts listed completely above stand next to it under properties; they are not repeated here.
 
 ```yaml
 requirements:
   - id: positive-timeout
     subject: model
-    definition: Die Wartefrist pro Versuch muss mindestens eine Sekunde betragen.
+    definition: The waiting period per attempt must be at least one second.
     constraint:
       property: timeoutSeconds
       minimum: 1
 
   - id: positive-attempts
     subject: model
-    definition: Das Versuchsbudget muss mindestens den ersten Versuch erlauben.
+    definition: The attempt budget must allow at least the first attempt.
     constraint:
       property: maxAttempts
       minimum: 1
@@ -189,47 +189,47 @@ requirements:
     subject: realization
     roles: [sender]
     definition: >-
-      Der Sender muss die Zuordnung eines wartenden Austauschs vor der
-      Publikation des Requests einrichten, sodass eine sofortige Antwort
-      dem wartenden Austausch zugeordnet werden kann.
+      The sender must set up the mapping of a waiting exchange before the
+      publication of the request, so that an immediate reply can be
+      mapped to the waiting exchange.
 
   - id: preserve-message-id
     subject: realization
     roles: [sender, receiver]
     definition: >-
-      Der Empfaenger muss eine Antwort mit der MessageId des Requests senden.
-      Der Sender muss die Antwort innerhalb seiner Instanz anhand dieser
-      MessageId dem wartenden Austausch zuordnen. Die CorrelationId dient
-      der uebergreifenden Nachverfolgung und ersetzt diese Zuordnung nicht.
+      The receiver must send a reply with the MessageId of the request.
+      The sender must map the reply within its instance to the waiting
+      exchange by this MessageId. The CorrelationId serves cross-cutting
+      tracing and does not replace this mapping.
 
   - id: reply-destination
     subject: realization
     roles: [sender, receiver]
     definition: >-
-      Der Sender muss dem Request eine fuer die ausstellende Instanz
-      autorisierte Antwortadresse gemaess replyChannel mitgeben. Der
-      Empfaenger muss die Antwort an diese Adresse senden. Die Zustellung
-      darf nicht an eine beliebige andere Senderinstanz verteilt werden.
+      The sender must give the request a reply address that is authorized
+      for the issuing instance, according to replyChannel. The receiver
+      must send the reply to this address. The delivery must not be
+      distributed to an arbitrary other sender instance.
 
   - id: bounded-retries
     subject: realization
     roles: [sender]
     definition: >-
-      Der Sender darf hoechstens maxAttempts Versuche ausloesen und muss
-      pro Versuch nach timeoutSeconds ohne Antwort die Wartefrist beenden.
-      Weitere Versuche verwenden dieselbe MessageId. Eine abgelaufene
-      Wartefrist beweist nicht, dass die Operation nicht ausgefuehrt wurde.
+      The sender may trigger at most maxAttempts attempts and must end the
+      waiting period per attempt after timeoutSeconds without a reply.
+      Further attempts use the same MessageId. An expired waiting period
+      does not prove that the operation was not executed.
 ```
 
-Diese Skizze ist nicht Teil der gegen den heutigen Core geprueften YAML-Dateien. Sie legt keine allgemeine Ausdruckssprache fest. Ein vorhandener allgemeiner Integer-Typ kann daraus nicht selbststaendig einen minimum-Operator lernen. Der Compiler muss den erlaubten Operator und seine Wert-/Typsemantik kennen und validieren. Unbekannte oder fehlerhaft gebundene formale Constraints sind ein Befund, keine still ignorierte Prosa. Ebenso ist ein Widerspruch zwischen formaler Bedingung und Regeltext ein zu klaerender Modellfehler; keine Darstellung gewinnt stillschweigend.
+This sketch is not part of the YAML files checked against today's Core. It does not stipulate a general expression language. An existing general integer type cannot learn a minimum operator from it on its own. The compiler must know and validate the permitted operator and its value/type semantics. Unknown or wrongly bound formal constraints are a finding, not silently ignored prose. Likewise, a contradiction between formal condition and rule text is a model error to be clarified; neither representation silently wins.
 
-Die gemeinsamen Pflichten werden in einer fertigen Autorenform einmal unter requirements gepflegt. Der vorhandene breite Exchange-Koerper in vocabulary.yaml beschreibt sie zum Teil noch in einem Absatz; dieser nachweisgebundene erste Durchstich wird hier absichtlich nicht umgeschrieben. Bei einer spaeteren Umstellung bleiben im allgemeinen Koerper die Bedeutung und die Rollenbeschreibung, waehrend die benannten Anforderungen ihre jeweilige Aussage tragen. Diese zwei Entwicklungsstaende sind keine Aufforderung, zwei unabhaengige Wahrheiten manuell synchron zu halten.
+In a finished authoring form, the shared obligations are maintained once under requirements. The existing broad Exchange body in vocabulary.yaml still describes them partly in one paragraph; this evidence-bound first vertical slice is deliberately not rewritten here. In a later conversion, the meaning and the role description remain in the general body, while the named requirements carry their respective statements. These two development states are not a request to keep two independent truths manually in sync.
 
-#### 3.3.4 Bindung an list-documents und Pruefung
+#### 3.3.4 Binding to list-documents and checking
 
-Fuer die vorhandene Definition list-documents werden sender an api, receiver an onprem, command an list-documents-command, requestChannel an requests und replyChannel an replies gebunden. Die Wartefrist betraegt 30 Sekunden pro Versuch, das Budget hoechstens zwei Versuche. Daraus folgt ohne zusaetzliche Festlegung weder eine feste Gesamtfrist von 60 Sekunden noch eine Garantie einmaliger fachlicher Ausfuehrung.
+For the existing definition list-documents, sender is bound to api, receiver to onprem, command to list-documents-command, requestChannel to requests and replyChannel to replies. The waiting period is 30 seconds per attempt, the budget at most two attempts. Without an additional stipulation, neither a fixed total period of 60 seconds nor a guarantee that the operation is executed exactly once in domain terms follows from this.
 
-Im vorgeschlagenen Format kann diese eine Definition zusaetzlich erklaeren:
+In the proposed format, this one definition can additionally declare:
 
 ```yaml
 requirements:
@@ -237,123 +237,123 @@ requirements:
     subject: realization
     roles: [sender]
     definition: >-
-      Antworten ohne passenden offenen Wartezustand werden verworfen und
-      duerfen keinen anderen wartenden Austausch abschliessen.
+      Replies without a matching open waiting state are discarded and
+      must not complete any other waiting exchange.
 ```
 
-Diese Anforderung ergaenzt nur list-documents. Sie wird fuer dieses Beispiel aus dem bereits vorhandenen Definitionskoerper herausgezogen, nicht als neue allgemeine Exchange-Pflicht eingefuehrt. Kind-Anforderungen und konkrete Anforderungen gelten gemeinsam. Auch die geltenden Vertraege des Commands und der Channels bleiben zu beruecksichtigen. Weder die Propertywerte noch die individuelle Prosa koennen die allgemeine Pflicht zur Antwortzuordnung still abschalten. Ein Widerspruch wird als zu klaerender Befund behandelt; ein kuenftiger ausdruecklicher Ausnahmemechanismus ist hier nicht entschieden.
+This requirement only supplements list-documents. For this example it is extracted from the already existing definition body, not introduced as a new general Exchange obligation. Kind requirements and concrete requirements apply together. The applicable contracts of the Command and the Channels also remain to be taken into account. Neither the property values nor the individual prose can silently switch off the general obligation of reply mapping. A contradiction is treated as a finding to be clarified; a future explicit exception mechanism is not decided here.
 
-Der heutige Compiler kann die Propertytypen, Kardinalitaeten und Referenzziele pruefen. Ein um diesen Vertrag erweiterter Compiler koennte zusaetzlich Rollenbindung, Requirementadressen und die beiden minimum-Constraints pruefen. Er kann aus diesen Deklarationen nicht feststellen, ob die laufende Implementierung die Wartezuordnung rechtzeitig registriert oder Antworten korrekt verarbeitet. Das braucht Implementierungs- und Integrationsnachweise sowie unabhaengige Bewertung gegen den festen Modell- und Kandidatenstand. MessageId ist hier eine im Protokoll beschriebene Laufzeitgroesse, keine bei jeder Exchange-Definition auszufuellende Property.
+Today's compiler can check the property types, cardinalities and reference targets. A compiler extended by this contract could additionally check role binding, requirement addresses and the two minimum constraints. From these declarations it cannot determine whether the running implementation registers the waiting mapping in time or processes replies correctly. That needs implementation and integration evidence as well as independent assessment against the fixed model and candidate state. MessageId is here a runtime quantity described in the protocol, not a Property to be filled in for every Exchange definition.
 
-### 3.4 Arbeitsteilung und Evidenz
+### 3.4 Division of labour and evidence
 
-Der Compiler kann exakt formulierte Bedingungen ueber den vollstaendig bereitgestellten Modellstand pruefen. Mit geeigneten ausdruecklichen Constraintfunktionen waeren spaeter auch Feldvergleiche, deklarierte Eindeutigkeit oder Zyklenfreiheit einer bestimmten Relation moeglich. Welche Relationen das verlangen, bestimmt der erklaerte Vokabularvertrag. Er darf weder `contains` allein anhand seines Namens mit Baumsemantik versehen noch aus einer fachlichen Verwendung eine Schreib- oder Delegationsbefugnis ableiten.
+The compiler can check exactly formulated conditions over the completely provided model state. With suitable explicit constraint functions, field comparisons, declared uniqueness or acyclicity of a particular relation would later also be possible. Which relations require this is determined by the declared vocabulary contract. It must neither give `contains` tree semantics on the basis of its name alone nor derive a write or delegation authority from a domain use.
 
-Ein Agent beurteilt die Verstaendlichkeit und ausreichende Festlegung der Prosa, fachliche Widersprueche, fehlende Beziehungen und die Eignung der gewaehlten Regeln. Ein unabhaengiger Verifier beurteilt den festen Realisierungskandidaten gegen diese Pflichten und benoetigt dafuer Kind-/Propertybedeutung, konkrete Definitionen, relevante Nachbarvertraege, Befunde und geeignete Ausfuehrungsnachweise. Implementierung und erfolgreiche eigene Tests sind fuer sich keine unabhaengige semantische Abnahme. Wenn der Vertrag unklar ist, wird ein Befund beziehungsweise eine vorgeschlagene Klaerung gemeldet; die Erfolgsbedingung wird nicht passend zur Umsetzung umgedeutet.
+An agent assesses the comprehensibility and sufficient specification of the prose, domain contradictions, missing relationships and the suitability of the chosen rules. An independent Verifier assesses the fixed realization candidate against these obligations and needs for this Kind/Property meaning, concrete definitions, relevant neighbouring contracts, findings and suitable execution evidence. Implementation and successful own tests are not, by themselves, an independent semantic acceptance. If the contract is unclear, a finding or a proposed clarification is reported; the success condition is not reinterpreted to fit the implementation.
 
-Ergebnisse werden auf ihre Aussage begrenzt: strukturell geprueft, durch ein bestimmtes Verfahren am festen Kandidaten belegt, verletzt oder noch offen. Nicht untersuchte oder unentscheidbare erforderliche Pflichten bleiben offen und werden nicht als erfuellt zusammengefasst. Die Eignung des Tests fuer die Verpflichtung muss ebenfalls beurteilt werden. Ergebnis- und Ausfuehrungsdaten gehoeren zum Nachweis; sie sind keine neuen kanonischen Sollregeln.
+Results are limited to what they state: structurally checked, evidenced by a particular procedure on the fixed candidate, violated or still open. Required obligations that were not examined or cannot be decided remain open and are not summarized as fulfilled. The suitability of the test for the obligation must also be assessed. Result and execution data belong to the evidence; they are not new canonical target rules.
 
-### 3.5 Vorschlag fuer den ersten Sprachumfang
+### 3.5 Proposal for the first language scope
 
-Zunaechst die vorhandene Strukturpruefung verwenden, alle Bedeutungs- und Realisierungspflichten verbindlich beschreiben und Modellreview sowie unabhaengige Realisierungspruefung als getrennte Nachweise behandeln. Zusaetzliche formale Constraints werden nur fuer konkrete, wiederkehrende Beschreibungsbedarfe eingefuehrt; positive Zahlenbereiche sind hier eine naheliegende erste Gegenprobe. Der Ansatz benoetigt zum Start weder beliebigen ausfuehrbaren Code im Modell noch einen allgemeinen Regelinterpreter.
+Initially use the existing structure check, describe all meaning and realization obligations bindingly, and treat model review and independent realization check as separate evidence. Additional formal constraints are only introduced for concrete, recurring description needs; positive number ranges are an obvious first counter-probe here. To start, the approach needs neither arbitrary executable code in the model nor a general rule interpreter.
 
-Wird ein Kind-Vertrag geaendert, sind seine Definitionen und die daraus entstandenen betroffenen Realisierungen erneut zu betrachten. Ein unveraendertes Instanzdokument belegt keine unveraenderte Pflicht. Der Digest erfasst die Aenderung bereits strukturell; die generische Kontext-/Impact- und Pruefsteuerung dafuer bleibt ein noch zu entwerfender Produktanschluss.
+If a Kind contract is changed, its definitions and the affected realizations that arose from them are to be considered again. An unchanged instance document does not evidence an unchanged obligation. The digest already captures the change structurally; the generic context/impact and check control for it remains a product connection still to be designed.
 
-### 3.6 Brauchen requirements und roles eigene Core-Semantik?
+### 3.6 Do requirements and roles need their own Core semantics?
 
-Weitere Nutzerfrage: Lassen sich Bedeutung, Anforderungen und ihr Geltungsbereich bereits durch verbindliche Prosa und Properties ausdruecken? Diese Gegenprobe prueft den Nutzen der vorgeschlagenen neuen Sprachmittel. Sie ist eine Empfehlung, keine bereits vom Nutzer beschlossene Streichung.
+A further user question: Can meaning, requirements and their scope of validity already be expressed through binding prose and Properties? This counter-probe checks the benefit of the proposed new language means. It is a recommendation, not a removal already decided by the user.
 
-**Nachfolgende Nutzerentscheidung:** requirements und roles werden vorerst weggelassen. Die hier begruendete schlanke Richtung ist fuer den naechsten Durchstich gewaehlt; daraus folgt noch keine Annahme einer bestimmten Dateisyntax oder Implementierung.
+**Subsequent user decision:** requirements and roles are left out for now. The lean direction justified here is chosen for the next vertical slice; this does not yet imply acceptance of a particular file syntax or implementation.
 
-**Ergebnis am Exchange:** Die bisher beschriebenen Pflichten brauchen weder einen privilegierten requirements-Abschnitt noch ein rollenbindendes roles-Feld, um ausgedrueckt und gegen die Umsetzung beurteilt werden zu koennen. Die verbindliche Beschreibung des Kinds gilt fuer jede seiner Definitionen. Die Propertyvertraege benennen die Beteiligten; die konkrete Definition bindet sie ueber typisierte Referenzen. Eine Aussage kann ihren Geltungsbereich ausdruecklich erklaeren.
+**Result at the Exchange:** The obligations described so far need neither a privileged requirements section nor a role-binding roles field in order to be expressed and assessed against the implementation. The binding description of the Kind applies to every one of its definitions. The property contracts name the participants; the concrete definition binds them through typed references. A statement can explicitly declare its scope of validity.
 
-Ein Ausschnitt des Kind-Koerpers kann lauten:
+An excerpt of the Kind body can read:
 
-> Jede Definition dieses Kinds beschreibt einen Request-/Reply-Vertrag fuer ihre angegebene Operation. Die folgenden Pflichten gelten fuer die unter sender und receiver referenzierten Anwendungen bei diesem Austausch.
+> Every definition of this Kind describes a request/reply contract for its specified operation. The following obligations apply to the applications referenced under sender and receiver in this exchange.
 >
-> Der sender muss die Wartezuordnung vor der Publikation des Requests einrichten. Der receiver muss die MessageId des Requests in der Antwort erhalten. Der sender muss die Antwort anhand dieser MessageId dem wartenden Austausch zuordnen; die CorrelationId ersetzt diese Zuordnung nicht.
+> The sender must set up the waiting mapping before the publication of the request. The receiver must preserve the MessageId of the request in the reply. The sender must map the reply to the waiting exchange by this MessageId; the CorrelationId does not replace this mapping.
 >
-> Pro Versuch gilt timeoutSeconds. Insgesamt sind hoechstens maxAttempts Versuche zulaessig, einschliesslich des ersten. Weitere Versuche verwenden dieselbe MessageId. Ein Timeout beweist nicht, dass die Operation nicht ausgefuehrt wurde.
+> timeoutSeconds applies per attempt. In total, at most maxAttempts attempts are permitted, including the first. Further attempts use the same MessageId. A timeout does not prove that the operation was not executed.
 
-Die Properties sender und receiver bleiben Reference-Properties auf Container mit genau einem Wert. timeoutSeconds und maxAttempts bleiben Integer-Properties, deren Bedeutung und Werteanforderungen an den Properties beschrieben werden. Die gemeinsam geltende Antwortzuordnung steht einmal im Kind-Koerper. Ein eigener Abschnitt muss diese Aussagen nicht parallel wiederholen.
+The Properties sender and receiver remain reference Properties to Container with exactly one value. timeoutSeconds and maxAttempts remain integer Properties whose meaning and value requirements are described at the Properties. The reply mapping that applies jointly stands once in the Kind body. A separate section need not repeat these statements in parallel.
 
-| Gewuenschter Nutzen | Prosa und Properties | Was requirements beziehungsweise roles zusaetzlich liefern wuerden |
+| Desired benefit | Prose and Properties | What requirements or roles would additionally provide |
 | --- | --- | --- |
-| Verbindliche Pflichten | Im Sprachvertrag bereits fuer saemtliche kanonische Prosa festgelegt. | Keine zusaetzliche Verbindlichkeit. |
-| Allgemeine gegenueber individuellen Pflichten | Kind-Koerper gilt fuer dessen Definitionen; individuelle Beschreibung ergaenzt die einzelne Definition. | Maschinenlesbare Untergliederung, ohne allein neue fachliche Bedeutung zu liefern. |
-| Geltungsbereich bei Sender und Empfaenger | Referenz-Properties binden die Beteiligten. Der Text beschreibt ihre Pflichten im Kontext dieser Exchange-Definition. | Ein roles-Feld kann Beteiligtenzuordnung und erlaubte Rollennamen unabhaengig vom Text strukturell pruefbar machen. Es beweist weder die inhaltliche Zuordnung des Textes noch die Vollstaendigkeit der Rollenliste. |
-| Pruefung des Laufzeitverhaltens | Umsetzung, Tests und unabhaengiges Review gegen den vollstaendigen Vertrag. | Ein Requirementdatensatz mit Prosa macht das Verhalten nicht automatisch entscheidbar. |
-| Exakte Adressierung einer einzelnen Pflicht | Zunaechst Verweis auf Kind-/Property-/Definitionsidentitaet und gebundenen Koerper mit Textstelle. | Eine eigene stabile Requirementidentitaet erleichtert pflichtgenaue Befunde, Referenzen und Nachweiszuordnung. Ein allgemeiner Koerperanker waere eine andere, gesondert zu definierende Loesung. |
-| Gezielte Kontexte und Aenderungsfolgen | Vollstaendiger Kind-Vertrag und relevante Property-/Definitionsvertraege als sichere, gegebenenfalls breite Grundlage. Semantische Zusammenhaenge brauchen Beurteilung. | Explizite Zuordnung kann deklarierte Beteiligte pro Pflicht berechenbar machen. Die konkrete Verarbeitungssemantik und der Umgang mit fehlenden Deklarationen muessten zusaetzlich festgelegt werden. |
-| Formale Wertebedingungen | Bekannte Constraints koennen grundsaetzlich direkt am Propertyvertrag ansetzen. | Ein universeller Requirementabschnitt ist fuer einen minimum-Operator nicht notwendig. Propertyuebergreifende oder graphweite Praedikate brauchen gegebenenfalls einen anderen Anknuepfungspunkt. |
+| Binding obligations | Already stipulated in the language contract for all canonical prose. | No additional normative force. |
+| General versus individual obligations | The Kind body applies to its definitions; the individual description supplements the single definition. | Machine-readable subdivision, without by itself providing new domain meaning. |
+| Scope of validity for sender and receiver | Reference Properties bind the participants. The text describes their obligations in the context of this Exchange definition. | A roles field can make participant assignment and permitted role names structurally checkable independently of the text. It proves neither the content assignment of the text nor the completeness of the role list. |
+| Checking runtime behaviour | Implementation, tests and independent review against the complete contract. | A requirement record with prose does not automatically make the behaviour decidable. |
+| Exact addressing of a single obligation | Initially a reference to Kind/Property/definition identity and the bound body with text location. | A dedicated stable requirement identity makes obligation-exact findings, references and evidence assignment easier. A general body anchor would be a different solution, to be defined separately. |
+| Targeted contexts and change consequences | Complete Kind contract and relevant property/definition contracts as a safe, possibly broad basis. Semantic relationships need assessment. | Explicit assignment can make declared participants per obligation computable. The concrete processing semantics and the handling of missing declarations would additionally have to be stipulated. |
+| Formal value conditions | Known constraints can in principle attach directly to the property contract. | A universal requirement section is not necessary for a minimum operator. Cross-property or graph-wide predicates may need a different point of attachment. |
 
-Die letzte Zeile ist kein Nachweis bereits implementierter Wertebereiche. Der jetzige Core kennt den Operator minimum nicht. **Formal pruefbare Bedingungen und strukturierte Anforderungskataloge sind verschiedene Designentscheidungen.** Wir koennen Erstere bei konkretem Bedarf ergaenzen, ohne dafuer saemtliche Prosa in Requirementobjekte umzuformen.
+The last row is not evidence of already implemented value ranges. The present Core does not know the operator minimum. **Formally checkable conditions and structured requirement catalogues are different design decisions.** We can add the former on concrete need, without reshaping all prose into requirement objects for it.
 
-Der Preis der schlankeren Form ist ausdruecklich: Der Compiler kann aus einem Prosaabsatz nicht verlaesslich einzelne Pflichten, Rollenbindung, Vollstaendigkeit oder fachliche Anwendungsbedingungen berechnen. Ohne Requirements ist ein Nachweis pro einzeln identifizierter Pflicht nicht allein durch das Autorenformat gewaehrleistet. Agenten koennen fuer einen festen Modellstand eine Pruefliste mit Quellverweisen ableiten; sie ist ein pruefbares Arbeitsergebnis mit Vollstaendigkeitsunsicherheit und kein zweiter kanonischer Vertrag. Bei Zweifeln wird der vollstaendige geltende Vertrag beruecksichtigt und fehlende Pruefung bleibt offen. Ein engerer Kontext allein aus einer ungesicherten Extraktion waere kein zuverlaessiger Ersatz.
+The price of the leaner form is explicit: The compiler cannot reliably compute individual obligations, role binding, completeness or domain conditions of application from a prose paragraph. Without requirements, evidence per individually identified obligation is not guaranteed by the authoring format alone. For a fixed model state, agents can derive a checklist with source references; it is a checkable work result with uncertainty about completeness and not a second canonical contract. In case of doubt, the complete applicable contract is taken into account and a missing check remains open. A narrower context derived solely from an unverified extraction would not be a reliable substitute.
 
-Ebenso sind eine in Prosa genannte Property und ein formal gebundener Koerperlink zu unterscheiden. Ein nacktes Wort sender erzeugt keine vom Compiler gepruefte Referenz zur Propertydeklaration. Ein spaeterer allgemeiner Symbol-/Linkmechanismus koennte solche Bindungen pruefen, ohne ein besonderes roles-Feld zu verlangen. Sein Vertrag ist weiter offen.
+Likewise, a Property named in prose and a formally bound body link are to be distinguished. A bare word sender creates no compiler-checked reference to the property declaration. A later general symbol/link mechanism could check such bindings without requiring a special roles field. Its contract is still open.
 
-**Empfehlung fuer den ersten Core-Vertrag:** Verbindliche Koerper an Schema, Kind, Property und Definition; typisierte Properties und Referenzen; Kind-Pflichten gelten fuer jede eigene Definition; individuelle Aussagen ergaenzen und heben allgemeine Pflichten nicht still auf. requirements, subject und roles erhalten vorerst keine besondere Core-Verarbeitung. Ihre bisher diskutierten Bedeutungen lassen sich fachlich im Koerper ausdruecken. Die strukturierte Variante aus Abschnitt 3.3 bleibt Kandidat, falls wir stabile Einzelpflichten und berechenbare Zuordnungen als notwendige Produktfaehigkeit belegen.
+**Recommendation for the first Core contract:** Binding bodies at Schema, Kind, Property and Definition; typed Properties and references; Kind obligations apply to every one of its own definitions; individual statements supplement and do not silently lift general obligations. requirements, subject and roles receive no special Core processing for now. Their meanings discussed so far can be expressed in domain terms in the body. The structured variant from section 3.3 remains a candidate in case we evidence stable individual obligations and computable assignments as a necessary product capability.
 
-Zusaetzliche Struktur ist weiterhin durch selbst definierte Kinds moeglich, etwa ein projektdefinierter Requirement-Kind mit Beziehungen und Prosa. Dessen Inhalt erhaelt dadurch nicht automatisch die Bedeutung eines speziellen Compileroperators oder eine neue Kontextsteuerung. Eine gewoehnliche Property an Exchange betrifft zudem ihre konkreten Definitionen; sie ist kein Ersatz fuer einen universellen Meta-Abschnitt am Kind. Das Ziel ist, einen solchen Spezialmechanismus erst bei belegtem Bedarf festzulegen.
+Additional structure remains possible through self-defined Kinds, for example a project-defined Requirement Kind with relationships and prose. Its content does not thereby automatically receive the meaning of a special compiler operator or a new context control. A normal Property at Exchange moreover concerns its concrete definitions; it is not a substitute for a universal meta section at the Kind. The goal is to stipulate such a special mechanism only when a need is evidenced.
 
-## 4. Konkrete Autorenform des Kandidaten
+## 4. Concrete authoring form of the candidate
 
-Die zwei Beispieldateien zeigen die Ebenen getrennt:
+The two example files show the levels separately:
 
-- [vocabulary.yaml](vocabulary.yaml) deklariert die acht projektspezifischen Kinds und ihre Properties, einschliesslich ihrer eigenen Relationen.
-- [connector.yaml](connector.yaml) enthaelt dreizehn konkrete Definitionen, die diese Typen verwenden. Es sind Projektbeschreibungen; einzelne Commands, Mandanten und Prozessinstanzen sind Laufzeitdaten.
+- [vocabulary.yaml](vocabulary.yaml) declares the eight project-specific Kinds and their Properties, including their own relations.
+- [connector.yaml](connector.yaml) contains thirteen concrete definitions that use these types. They are project descriptions; individual Commands, tenants and process instances are runtime data.
 
-Im Vokabular steht beispielsweise:
+The vocabulary contains, for example:
 
 ```yaml
 apiVersion: connector.example.org/v1alpha1
-definition: Vokabular des Connector-Projekts.
+definition: Vocabulary of the Connector project.
 kinds:
   Exchange:
-    definition: Beschreibt einen Request-/Reply-Vertrag zwischen zwei Anwendungen.
+    definition: Describes a request/reply contract between two applications.
     properties:
       sender:
-        definition: Die Anwendung in der ausstellenden Rolle.
+        definition: The application in the issuing role.
         type: reference
         target: {apiVersion: connector.example.org/v1alpha1, kind: Container}
         minCount: 1
         maxCount: 1
 ```
 
-Dieser Ausschnitt zeigt nur eine Relation. Das vollstaendige Vokabular enthaelt den Ziel-Kind und die weiteren Felder. Ein Definitionsausschnitt verwendet den Vertrag so:
+This excerpt shows only one relation. The complete vocabulary contains the target Kind and the further fields. A definition excerpt uses the contract like this:
 
 ```yaml
 apiVersion: connector.example.org/v1alpha1
 kind: Exchange
 metadata: {namespace: connector, name: list-documents}
-definition: Die API fordert die Dokumentmetadaten der autorisierten Kundenumgebung an.
+definition: The API requests the document metadata of the authorized customer environment.
 spec:
   sender: {namespace: connector, name: api}
 ```
 
-Die zwei Ausschnitte sind keine eigenstaendig vollstaendigen Modelle. Die beiden verlinkten Dateien bilden zusammen den ausgearbeiteten Durchstich. Die Kurzreferenz erhaelt ihren Ziel-Kind und ihre genaue API-Version aus dem Propertyvertrag. Keine Aufloesung auf die zufaellig neueste Version und keine Auswahl des ersten gleichnamigen Symbols.
+The two excerpts are not independently complete models. The two linked files together form the worked-out vertical slice. The short reference obtains its target Kind and its exact API version from the property contract. No resolution to whichever version happens to be newest and no selection of the first symbol of the same name.
 
-`definition` bezeichnet in den bisherigen Beispieldateien den Koerper fuer Schema, Kind, Property und konkrete Definition. Im weiteren Gespraech waehlt der Nutzer dafuer body; die alten Beispieldateien bleiben als gebundener Pruefstand erhalten. Ein Schema ist in diesem ersten Durchstich ein eigenes Dokumentformat mit fest bekannter Metastruktur. Ob Kinds und Properties selbst Definitionen mit gemeinsamer Grundform werden sollen, wird nun in Abschnitt 11 untersucht. Der erste Durchstich beweist diese neue Lade- und Bootstraprichtung nicht.
+`definition` denotes, in the example files so far, the body for Schema, Kind, Property and concrete definition. Later in the conversation the user chooses body for this; the old example files are kept as a bound test fixture. In this first vertical slice, a schema is a separate document format with a fixed, known meta structure. Whether Kinds and Properties should themselves become definitions with a shared basic form is now examined in section 11. The first vertical slice does not prove this new loading and bootstrap direction.
 
-Die Beispiele verwenden die vorhandene Core-Kardinalitaet: `maxCount: 1` bedeutet Einzelwert, andere Maximalwerte eine Liste; `-1` bedeutet strukturell unbegrenzt innerhalb der allgemeinen Compilergrenzen. Der erste Durchstich erlaubt pro Referenzfeld genau einen Ziel-Kind. Eine Relation fuer mehrere Ziel-Kinds ist noch zu entwerfen; die fruehere Referenzunion-Frage wird nicht als geloest ausgegeben.
+The examples use the existing Core cardinality: `maxCount: 1` means a single value, other maximum values a list; `-1` means structurally unbounded within the general compiler limits. The first vertical slice permits exactly one target Kind per reference field. A relation for several target Kinds is still to be designed; the earlier reference union question is not presented as solved.
 
-## 5. Eigene Typen und ihre Relationen im Connector-Beispiel
+## 5. Own types and their relations in the Connector example
 
-| Projektdefinierter Kind | Was er in diesem Vokabular beschreibt | Eigene Relationsfelder |
+| Project-defined Kind | What it describes in this vocabulary | Own relation fields |
 | --- | --- | --- |
-| System | Zusammengehoerige Loesung mit erklaerter Grenze. | containers -> Container; exchanges -> Exchange; provides -> Interface |
-| Container | Laufzeitanwendung und ihr vorgesehener Ort. | components -> Component |
-| Component | Funktionale Verantwortung innerhalb einer Anwendung. | provides/consumes -> Interface; emits/handles -> Command |
-| Interface | Vertrag eines externen oder internen Zugangs. | In diesem kleinen Ausschnitt keine strukturierten Relationsfelder. |
-| MqttService | Benoetigte MQTT-Laufzeitinfrastruktur. | In diesem kleinen Ausschnitt keine strukturierten Relationsfelder. |
-| Channel | Parametrisierte Adressfamilie und Zustellabsicht. | broker -> MqttService |
-| Command | Versionierter Operationsvertrag mit Eingaben und Resultat. | In diesem kleinen Ausschnitt keine strukturierten Relationsfelder. |
-| Exchange | Verbindet Teilnehmer, Operation, Requestkanal und Replykanal. | sender/receiver -> Container; command -> Command; requestChannel/replyChannel -> Channel |
+| System | Cohesive solution with a declared boundary. | containers -> Container; exchanges -> Exchange; provides -> Interface |
+| Container | Runtime application and its intended location. | components -> Component |
+| Component | Functional responsibility within an application. | provides/consumes -> Interface; emits/handles -> Command |
+| Interface | Contract of an external or internal access. | No structured relation fields in this small excerpt. |
+| MqttService | Required MQTT runtime infrastructure. | No structured relation fields in this small excerpt. |
+| Channel | Parameterized address family and delivery intent. | broker -> MqttService |
+| Command | Versioned operation contract with inputs and result. | No structured relation fields in this small excerpt. |
+| Exchange | Connects participants, operation, request channel and reply channel. | sender/receiver -> Container; command -> Command; requestChannel/replyChannel -> Channel |
 
-Das sind acht Typen **dieses Projekts**, keine acht neuen Markitect-Primitiven. C4-orientierte Architekturbegriffe und spezielle Kommunikationsbegriffe werden durch dieselben Sprachmechanismen deklariert. Die Wahl von MqttService loest die zuvor sichtbare Brokerfrage ohne eine neue universelle C4-Abstraktion: Ein Projekt darf den relevanten Infrastrukturgegenstand ausdruecklich typisieren. Wie eine C4- oder Bereitstellungssicht daraus abgeleitet wird, ist ein weiterer Vertrag.
+These are eight types **of this project**, not eight new Markitect primitives. C4-oriented architecture terms and special communication terms are declared through the same language mechanisms. The choice of MqttService resolves the previously visible broker question without a new universal C4 abstraction: A project may explicitly type the relevant infrastructure item. How a C4 or deployment view is derived from it is a further contract.
 
-Der gerichtete Zusammenhang lautet auszugsweise:
+The directed relationship reads, in excerpts:
 
 ```text
 platform:System --containers--> api:Container
@@ -373,87 +373,87 @@ dms-handler:Component --consumes--> dms-access:Interface
 dms:System --provides--> dms-access:Interface
 ```
 
-Der Graph wird aus den einmal deklarierten Referenzwerten abgeleitet. Die umgekehrte Sicht, welche Definitionen einen Vertrag benutzen, benoetigt keine zweite gepflegte Liste. Der Compiler erkennt aus einem Namen wie containers oder emits allein weder transitive Zusammensetzung noch Impactausbreitung oder eine Reihenfolge von Agentenarbeit.
+The graph is derived from the reference values declared once. The reverse view, which definitions use a contract, needs no second maintained list. From a name such as containers or emits alone, the compiler recognizes neither transitive composition nor impact propagation nor an order of agent work.
 
-## 6. Topicwahl und Antworten als typisierte Projektaussagen
+## 6. Topic selection and replies as typed project statements
 
-Die Beispieldateien verwenden bewusst synthetische Adressen. Sie behaupten keine neue Konfiguration des untersuchten DMS-Projekts. Die lokale Quellenanalyse und ihre tatsaechlichen Topicformen stehen im [ausfuehrlichen Connector-Beispiel](../connector-example.md).
+The example files deliberately use synthetic addresses. They do not claim a new configuration of the examined DMS project. The local source analysis and its actual topic forms are in the [detailed Connector example](../connector-example.md).
 
-`requests:Channel` deklariert `bridge/{tenantId}/requests`. Der Koerper beschreibt die autorisierte Herkunft von tenantId und die gemeinsame Abonnementgruppe. `replies:Channel` deklariert `bridge/replies/{senderInstanceId}` mit der Rolle einer ausstellenden API-Instanz. Beide referenzieren denselben beschriebenen MQTT-Dienst.
+`requests:Channel` declares `bridge/{tenantId}/requests`. The body describes the authorized origin of tenantId and the shared subscription group. `replies:Channel` declares `bridge/replies/{senderInstanceId}` with the role of an issuing API instance. Both reference the same described MQTT service.
 
-`list-documents:Exchange` verbindet diese Kanaele mit sender api, receiver onprem und dem Operationsvertrag `dms.documents.list.v1`. Die individuelle Definition setzt 30 Sekunden pro Versuch und zwei Versuche. Der Kind erklaert einmal die Erhaltung der MessageId und die unterschiedliche Aufgabe der CorrelationId. Der individuelle Koerper beschreibt Wiederholungs- und Fehlergrenzen.
+`list-documents:Exchange` connects these channels with sender api, receiver onprem and the operation contract `dms.documents.list.v1`. The individual definition sets 30 seconds per attempt and two attempts. The Kind explains once the preservation of the MessageId and the different task of the CorrelationId. The individual body describes repetition and error limits.
 
-So lassen sich die Rollen, parametrisierte Topicwahl, typisierte Operationsanforderung und Antwortzuordnung als Sollbeschreibung ausdruecken. Die Sprache muss selbst weder MQTT noch HTTP verstehen. Die technische Eignung, Sicherheit und korrekte Umsetzung dieser Aussagen muessen dennoch untersucht werden.
+In this way the roles, parameterized topic selection, typed operation request and reply mapping can be expressed as a target description. The language itself needs to understand neither MQTT nor HTTP. The technical suitability, security and correct implementation of these statements must nevertheless be examined.
 
-Der Durchstich ist auf eine lesende Dokumentlistenoperation begrenzt. Gesamtfrist, Retryverzoegerung, verteilte Idempotenz, Dateitransfer, vollstaendige Authentifizierung und Deployment sowie die Erweiterungen UserManagement/Winsolvenz bleiben ausserhalb dieser kleinen Instanz. Sie bleiben notwendige Beschreibungsfragen des groesseren Beispiels; sie wurden nicht durch ein gruennes Struktururteil erledigt.
+The vertical slice is limited to a reading document list operation. Total period, retry delay, distributed idempotency, file transfer, complete authentication and deployment as well as the UserManagement/Winsolvenz extensions remain outside this small instance. They remain necessary description questions of the larger example; they were not settled by a green structural verdict.
 
-## 7. Welche Pruefung ist bereits generisch moeglich?
+## 7. Which check is already generically possible?
 
-Mit dem vorhandenen Strukturprinzip pruefbar sind unter anderem: bekannte und eindeutige Kinds; bekannte und eindeutige Definitionen; geschlossene Felder; Werttypen und Kardinalitaeten; existierende exakt typisierte Referenzziele; eine deterministische Graphableitung und ein Inhaltsdigest.
+Checkable with the existing structural principle are, among others: known and unique Kinds; known and unique definitions; closed fields; value types and cardinalities; existing, exactly typed reference targets; a deterministic graph derivation and a content digest.
 
-Gegenproben des Entwurfs sind ein nicht vorhandener Empfaenger, ein Component an einem Container-only-Feld, ein fehlendes erforderliches Reply-Channel-Feld sowie ein unbekanntes Spec-Feld. Ein eigener Relationsname benoetigt keinen neuen Fall im Strukturcompiler.
+Counter-probes of the draft are a non-existent receiver, a Component on a Container-only field, a missing required reply channel field and an unknown spec field. An own relation name needs no new case in the structure compiler.
 
-Nicht allein dadurch geprueft sind die positive Bereichsregel fuer Fristen, die gueltigen Platzhalter einer Topicvorlage, die eindeutige Verwendung einer operationId im ganzen Projekt, passende Implementierungen aller angebotenen Interfaces, die erlaubte Zahl struktureller Parents und das tatsaechliche Laufzeitverhalten. Dafuer ist ein expliziter semantischer Pruefvertrag erforderlich. Der erste Entwurf verpflichtet sich weder auf einen Ausdrucksevaluator noch auf ausfuehrbaren Code in Vokabulardateien.
+Not checked by this alone are the positive range rule for periods, the valid placeholders of a topic template, the unique use of an operationId in the whole project, matching implementations of all offered Interfaces, the permitted number of structural parents and the actual runtime behaviour. For this an explicit semantic check contract is required. The first draft commits itself neither to an expression evaluator nor to executable code in vocabulary files.
 
-**Durchgefuehrte Gegenprobe:** Die beiden YAML-Dateien wurden eingelesen und ihre Koerperfelder explizit von `definition` auf die bestehenden Core-`purpose`-Felder abgebildet. Die restlichen Werte blieben erhalten; Ganzzahlwerte wurden als solche weitergegeben. Der unveraenderte aktuelle Core hat die acht Kinds, dreizehn Definitionen und siebzehn Referenzkanten erfolgreich kompiliert. Sechs ungueltige Varianten wurden wie erwartet abgewiesen: fehlende Pflichtrelation, falscher Ziel-Kind, unbekanntes Spec-Feld, nicht aufloesbares Ziel, unbekannter Definitions-Kind und doppelte Identitaet. Aenderungen am Definitionskoerper, an der Kind-Bedeutung und an der Relationsbedeutung veraenderten jeweils den Digest.
+**Counter-probe performed:** The two YAML files were read in and their body fields explicitly mapped from `definition` to the existing Core `purpose` fields. The remaining values were preserved; integer values were passed on as such. The unchanged current Core successfully compiled the eight Kinds, thirteen definitions and seventeen reference edges. Six invalid variants were rejected as expected: missing mandatory relation, wrong target Kind, unknown spec field, unresolvable target, unknown definition Kind and duplicate identity. Changes to the definition body, to the Kind meaning and to the relation meaning each changed the digest.
 
-Die Gegenprobe hat auch die Grenze bestaetigt: `maxAttempts: 0` wird als Integer strukturell akzeptiert, obwohl der erklaerte Exchange-Vertrag einen positiven Wert fordert. Der [begrenzte Pruefbericht](structural-probe.json) bindet die YAML-Eingaben ueber ihre SHA-256-Werte und nennt den unveraenderten Core-Quellstand. Die temporaere Probe veraenderte keine Implementierungsdateien im Repository. Sie ist keine neue Produktfunktion und kein generischer Validator fuer die vorgeschlagene Autorenform.
+The counter-probe also confirmed the limit: `maxAttempts: 0` is structurally accepted as an integer, although the declared Exchange contract demands a positive value. The [bounded check report](structural-probe.json) binds the YAML inputs through their SHA-256 values and names the unchanged Core source state. The temporary probe changed no implementation files in the repository. It is not a new product function and not a generic validator for the proposed authoring form.
 
-Die Beispieldateien sind damit weiterhin keine im aktuellen Projektworkflow direkt ladbaren `.markitect`-Modelle und kein Nachweis einer ausgefuehrten Connector-Loesung. Kontext, Impact und Apply fuer diese eigenen Kinds wurden dadurch nicht validiert.
+The example files are therefore still not `.markitect` models directly loadable in the current project workflow and not evidence of an executed Connector solution. Context, impact and Apply for these own Kinds were not validated by this.
 
-## 8. Bestehende Grundlage und noch zu entwerfende Anschluesse
+## 8. Existing foundation and connections still to be designed
 
-| Bereich | Vorhanden beziehungsweise hier vorgeschlagen |
+| Area | Present or proposed here |
 | --- | --- |
-| Frei benannte nominale Kinds und geschlossene Properties | Im strukturellen Core vorhanden. |
-| Typisierte Referenzen, Kardinalitaeten, Definitionengraph und Digest | Im Core vorhanden; Reference bindet genau einen Ziel-Kind. |
-| `kindReference` | Vorhanden fuer den Bezug auf einen Typ. Es ist weder eine Typdeklaration noch eine Ausfuehrungsanweisung. |
-| Koerper unter body | Vom Nutzer gewaehlter Feldname. Die aelteren Beispieldateien verwenden noch definition, der aktuelle Core verwendet purpose an Schema/Kind/Property/Definition. Die ausdrueckliche Abbildung kann den Inhalt erhalten; eine neue Produkt-Autorenform ist noch nicht implementiert. |
-| Projektdateien waehlen ihr Vokabular | Noch zu entwerfender Loader-/Auswahlvertrag. Ein vorhandener apiVersion-Wert installiert kein Vokabular. |
-| Eigene Referenznamen | Im Core als Properties strukturell ausdrueckbar. Ihre Aussagebedeutung stammt aus dem Vokabular; generischer Impact oder Apply folgt daraus noch nicht. |
-| Generische Kontexte, semantische Pruefung und Apply | Muessen an Definitionen und ihren Kind-/Propertyvertraegen ausgerichtet werden. Der bisherige Manager-/Statement-Projektworkflow leistet das nicht automatisch fuer beliebige Kinds. |
+| Freely named nominal Kinds and closed Properties | Present in the structural Core. |
+| Typed references, cardinalities, definition graph and digest | Present in the Core; Reference binds exactly one target Kind. |
+| `kindReference` | Present for referring to a type. It is neither a type declaration nor an execution instruction. |
+| Body under body | Field name chosen by the user. The older example files still use definition; the current Core uses purpose at Schema/Kind/Property/Definition. The explicit mapping can preserve the content; a new product authoring form is not yet implemented. |
+| Project files choose their vocabulary | Loader/selection contract still to be designed. An existing apiVersion value installs no vocabulary. |
+| Own reference names | Structurally expressible in the Core as Properties. Their statement meaning comes from the vocabulary; generic impact or Apply does not yet follow from this. |
+| Generic contexts, semantic checking and Apply | Must be aligned with definitions and their Kind/property contracts. The existing Manager/Statement project workflow does not achieve this automatically for arbitrary Kinds. |
 
-Ein Modellstand muss die verwendeten Vokabulare und Definitionen zusammen fest binden. Erst werden alle ausgewaehlten Schemas erfasst, danach Definitionen zugeordnet und Referenzen aufgeloest. Fuer den Durchstich werden die beiden Dateien ausdruecklich zusammen betrachtet. Die Auswahl-/Ladekonfiguration ist Werkzeugkonfiguration; ein Projektinhalt muss dafuer kein eingebauter Project-Kind sein.
+A model state must firmly bind the used vocabularies and definitions together. First all selected schemas are captured, then definitions are assigned and references resolved. For the vertical slice, the two files are explicitly considered together. The selection/loading configuration is tool configuration; project content need not be a built-in Project Kind for it.
 
-Fuer die erste Version empfehle ich exakte API-Versionen, vollstaendig bekannte Eingaben, keine implizite Vererbung, keine stillen Schemaerweiterungen und keine automatische Plugin-Ausfuehrung. Bei einer spaeteren Aufteilung in mehrere Vokabulare muessen ihre Referenzziele explizit im gebundenen Eingabesatz vorhanden sein. Der Core kann explizite Cross-Schema-Referenzen pruefen; die bequeme paketierte Bereitstellung und Versionierungs-/Migrationspolitik sind damit noch nicht entschieden.
+For the first version I recommend exact API versions, completely known inputs, no implicit inheritance, no silent schema extensions and no automatic plugin execution. In a later split into several vocabularies, their reference targets must be explicitly present in the bound input set. The Core can check explicit cross-schema references; convenient packaged provision and versioning/migration policy are not yet decided by this.
 
-Die bereits diskutierten expliziten Koerperlinks bleiben eine moegliche Autorenform fuer Verwendungsbezuege. Dieser Durchstich zeigt absichtlich strukturierte, typisierte Relationsfelder. Eine spaetere Linkform muss in dieselbe nachvollziehbare Referenzdarstellung normalisieren; doppelte manuelle uses-Listen und aus blossen Worttreffern erfundene Kanten werden dadurch nicht erforderlich. Der genaue Link-/Qualifizierungsvertrag bleibt offen.
+The explicit body links already discussed remain a possible authoring form for usage references. This vertical slice deliberately shows structured, typed relation fields. A later link form must normalize into the same traceable reference representation; duplicate manual uses lists and edges invented from mere word matches do not thereby become necessary. The exact link/qualification contract remains open.
 
-## 9. Naechste Entscheidungen
+## 9. Next decisions
 
-Der kleinste zusammenhaengende Vorschlag lautet: **Schema, Kind, Property und Definition mit verbindlicher Prosa; eine gerichtete Relation ist zunaechst eine typisierte Reference-Property.** System, Container, Component, Rule, Command oder andere Begriffe sind Inhalte eines gewaehlten Vokabulars.
+The smallest coherent proposal reads: **Schema, Kind, Property and Definition with binding prose; a directed relation is initially a typed reference Property.** System, Container, Component, Rule, Command or other terms are contents of a chosen vocabulary.
 
-Am Beispiel sind jetzt besonders zu entscheiden: Reicht die Relation am Quell-Kind oder benoetigen wir eigenstaendige Relationsdefinitionen? Welche wenigen strukturellen Bedingungen brauchen deklarative Pruefung ueber die vorhandenen Werttypen hinaus? Wie erhalten Kontext, Aenderungsvergleich und Realisierung die Bedeutung eines benutzerdefinierten Kinds und seiner Beziehungen? Erst danach sollte die genaue Autorenform als Sprachvertrag fixiert werden.
+In the example, the following are now particularly to be decided: Does the relation at the source Kind suffice, or do we need independent relation definitions? Which few structural conditions need declarative checking beyond the existing value types? How do context, change comparison and realization obtain the meaning of a user-defined Kind and its relationships? Only after that should the exact authoring form be fixed as a language contract.
 
-## 10. Vollstaendiger Exchange-Durchgang mit dem minimalen Core
+## 10. Complete Exchange walkthrough with the minimal Core
 
-Auftrag des Nutzers nach der Entscheidung, requirements und roles vorerst wegzulassen. Grundlage sind die vollstaendigen Dateien [vocabulary.yaml](vocabulary.yaml) und [connector.yaml](connector.yaml). Beide verwenden bereits ausschliesslich Schema, Kind, Property, Definition und verbindliche Koerper. Sie benoetigen keine Umstellung auf die zurueckgestellte strukturierte Variante. Das Beispiel ist eine Sollbeschreibung einer lesenden Dokumentlistenoperation, keine vollstaendige Produktionsspezifikation der Connector-Plattform.
+The user's request after the decision to leave out requirements and roles for now. The basis is the complete files [vocabulary.yaml](vocabulary.yaml) and [connector.yaml](connector.yaml). Both already use exclusively Schema, Kind, Property, Definition and binding bodies. They need no conversion to the deferred structured variant. The example is a target description of a reading document list operation, not a complete production specification of the Connector platform.
 
-### 10.1 Den Eingabesatz und die Sprache bestimmen
+### 10.1 Determining the input set and the language
 
-Fuer diesen Durchgang werden die beiden Dateien ausdruecklich gemeinsam geladen. vocabulary.yaml liefert das Schema connector.example.org/v1alpha1 mit acht projektspezifischen Kinds. connector.yaml liefert dreizehn konkrete Definitionen. Es wird keine Bibliothek importiert; dieselben Typvertraege koennten spaeter aus einer Bibliothek kommen. Die Sprache erhaelt dadurch keine anderen Faehigkeiten.
+For this walkthrough, the two files are explicitly loaded together. vocabulary.yaml provides the schema connector.example.org/v1alpha1 with eight project-specific Kinds. connector.yaml provides thirteen concrete definitions. No library is imported; the same type contracts could later come from a library. The language does not thereby gain other capabilities.
 
-Der gemeinsame Vertrag lautet: Kanonische Prosa ist verbindlich. Eine Kind-Beschreibung gilt fuer jede Definition genau dieses Kinds. Die Propertybeschreibung erklaert die Bedeutung ihrer Werte und Referenzen. Individuelle Beschreibungen ergaenzen die konkrete Definition; sie koennen allgemeine Pflichten nicht still aufheben. Fachliche Bedingungen und Grenzen werden in dieser Prosa beschrieben. Das Beispiel benoetigt weder requirements noch roles, subject oder eine allgemeine formale Constraint-Sprache.
+The shared contract reads: Canonical prose is binding. A Kind description applies to every definition of exactly this Kind. The property description explains the meaning of its values and references. Individual descriptions supplement the concrete definition; they cannot silently lift general obligations. Domain conditions and limits are described in this prose. The example needs neither requirements nor roles, subject or a general formal constraint language.
 
-Dieser gepruefte Durchstich benutzt noch definition fuer den Koerper von Schema, Kind, Property und Definition. Anschliessend waehlt der Nutzer body fuer die angestrebte Autorenform. Der heutige Core benutzt an diesen Stellen purpose; die begrenzte Probe bildet die damaligen Felder ausdruecklich ab. Der Produktloader wird durch diese Demonstration nicht geaendert.
+This checked vertical slice still uses definition for the body of Schema, Kind, Property and Definition. Afterwards the user chooses body for the intended authoring form. Today's Core uses purpose at these places; the bounded probe explicitly maps the fields of that time. The product loader is not changed by this demonstration.
 
-### 10.2 Exchange als Kind beschreiben
+### 10.2 Describing Exchange as a Kind
 
-Der allgemeine Koerper von Exchange in vocabulary.yaml beschreibt eine Request-/Reply-Vereinbarung: sender publiziert die unter command beschriebene Operation auf requestChannel und empfaengt ihre Antworten ueber eine instanzbezogene Adresse von replyChannel. receiver bearbeitet den Auftrag und antwortet an die mitgeteilte Adresse. Antworten erhalten die MessageId des Requests, die den wartenden Austausch identifiziert. CorrelationId dient der uebergreifenden Nachverfolgung. timeoutSeconds gilt pro Versuch; maxAttempts zaehlt den ersten Versuch mit. Beide Werte muessen positiv sein. Die Definition beschreibt den Vertrag, keinen einzelnen Laufzeitvorgang.
+The general body of Exchange in vocabulary.yaml describes a request/reply agreement: sender publishes the operation described under command on requestChannel and receives its replies through an instance-specific address of replyChannel. receiver processes the request and replies to the communicated address. Replies preserve the MessageId of the request, which identifies the waiting exchange. CorrelationId serves cross-cutting tracing. timeoutSeconds applies per attempt; maxAttempts counts the first attempt. Both values must be positive. The definition describes the contract, not a single runtime occurrence.
 
-Diese Aussagen gelten fuer alle Definitionen dieses Kinds im gebundenen Schema. Die vollstaendige Kind-Deklaration steht in vocabulary.yaml. Ihre Properties sind:
+These statements apply to all definitions of this Kind in the bound schema. The complete Kind declaration is in vocabulary.yaml. Its Properties are:
 
-| Property | Strukturvertrag | Bedeutung |
+| Property | Structure contract | Meaning |
 | --- | --- | --- |
-| sender | reference auf Container, genau 1 | Anwendung in der ausstellenden Rolle dieses Austauschs. |
-| receiver | reference auf Container, genau 1 | Anwendung in der bearbeitenden Rolle dieses Austauschs. |
-| command | reference auf Command, genau 1 | Vertrag der angeforderten Operation. |
-| requestChannel | reference auf Channel, genau 1 | Kanal der Auftragsrichtung. |
-| replyChannel | reference auf Channel, genau 1 | Kanal fuer Antworten an die ausstellende Instanz. |
-| timeoutSeconds | integer, genau 1 | Positive maximale Wartefrist eines Versuchs in Sekunden. |
-| maxAttempts | integer, genau 1 | Positives Versuchsbudget einschliesslich des ersten Versuchs. |
+| sender | reference to Container, exactly 1 | Application in the issuing role of this exchange. |
+| receiver | reference to Container, exactly 1 | Application in the processing role of this exchange. |
+| command | reference to Command, exactly 1 | Contract of the requested operation. |
+| requestChannel | reference to Channel, exactly 1 | Channel of the request direction. |
+| replyChannel | reference to Channel, exactly 1 | Channel for replies to the issuing instance. |
+| timeoutSeconds | integer, exactly 1 | Positive maximum waiting period of an attempt in seconds. |
+| maxAttempts | integer, exactly 1 | Positive attempt budget including the first attempt. |
 
-Der folgende reale Ausschnitt aus der Beispieldatei zeigt eine Propertydeklaration innerhalb von Exchange.properties:
+The following real excerpt from the example file (quoted unchanged) shows a property declaration within Exchange.properties:
 
 ```yaml
 sender:
@@ -464,28 +464,28 @@ sender:
   maxCount: 1
 ```
 
-Der Name sender ist projektspezifisch. Der Core prueft das Referenzziel und die Anzahl. Die Bedeutung als Auftraggeber kommt aus dem beschriebenen Vertrag. Die positive Werteanforderung der Integer-Properties bleibt verbindlich, obwohl der heutige Compiler sie nicht formal prueft.
+The name sender is project-specific. The Core checks the reference target and the count. The meaning as requester comes from the described contract. The positive value requirement of the integer Properties remains binding, although today's compiler does not check it formally.
 
-### 10.3 Die referenzierten Gegenstaende definieren
+### 10.3 Defining the referenced items
 
-Die folgenden Definitionen stehen ebenfalls in connector.yaml; es gibt keine unaufgeloesten Platzhalterdefinitionen:
+The following definitions are also in connector.yaml; there are no unresolved placeholder definitions:
 
-| Definition | Kind | Relevanter individueller Vertrag |
+| Definition | Kind | Relevant individual contract |
 | --- | --- | --- |
-| api | Container | Cloud-Anwendung; autorisierter Mandantenkontext, HTTP-Zugang und instanzbezogene Antworten. Ein Neustart uebernimmt keinen frueheren Wartezustand. |
-| onprem | Container | Anwendung in der Kundenumgebung; ausgehende MQTT-Verbindung und Bearbeitung nur fuer die autorisierte Umgebung. |
-| list-documents-command | Command | Operation dms.documents.list.v1; FolderId sowie optionale PageSize und ContinuationToken als Eingaben; Dokumentmetadaten, gegebenenfalls NextContinuationToken oder fachlicher Fehler als Ergebnis. Der Auftrag veraendert keine Dokumente. |
-| requests | Channel | Topicfamilie bridge/{tenantId}/requests; tenantId aus der autorisierten Zielumgebung; Shared Subscription fuer den passenden Connectorpool. Die Operation wird ueber ihre Kennung ausgewaehlt. |
-| replies | Channel | Topicfamilie bridge/replies/{senderInstanceId}; Antworten an die ausstellende API-Instanz, keine konkurrierende Shared Subscription fuer diese Adresse. |
-| messaging | MqttService | Getrennte Brokerlaufzeit, erreichbar aus Cloud und Kundenumgebung, mit autorisierten Publikations- und Abonnementadressen. |
+| api | Container | Cloud application; authorized tenant context, HTTP access and instance-specific replies. A restart does not take over an earlier waiting state. |
+| onprem | Container | Application in the customer environment; outgoing MQTT connection and processing only for the authorized environment. |
+| list-documents-command | Command | Operation dms.documents.list.v1; FolderId as well as optional PageSize and ContinuationToken as inputs; document metadata, where applicable NextContinuationToken, or a domain error as result. The request changes no documents. |
+| requests | Channel | Topic family bridge/{tenantId}/requests; tenantId from the authorized target environment; shared subscription for the matching connector pool. The operation is selected by its identifier. |
+| replies | Channel | Topic family bridge/replies/{senderInstanceId}; replies to the issuing API instance, no competing shared subscription for this address. |
+| messaging | MqttService | Separate broker runtime, reachable from cloud and customer environment, with authorized publication and subscription addresses. |
 
-Die beiden Channels referenzieren messaging und verlangen at-least-once als Transportabsicht. Das ist keine Garantie einmaliger fachlicher Ausfuehrung. Ihre Topicschablonen sind Stringwerte mit beschriebener Bedeutung; Markitect fuehrt sie nicht aus. Laufzeitwerte wie tenantId, senderInstanceId und MessageId sind hier keine eigenen kanonischen Definitionen.
+The two Channels reference messaging and require at-least-once as transport intent. That is no guarantee that the operation is executed exactly once in domain terms. Their topic templates are string values with described meaning; Markitect does not execute them. Runtime values such as tenantId, senderInstanceId and MessageId are not separate canonical definitions here.
 
-System-, Component- und Interface-Definitionen der vollstaendigen Datei geben den weiteren Architektur- und Zugangsrahmen. Sie werden fuer diesen Durchstich weder entfernt noch als neue Core-Begriffe behandelt.
+System, Component and Interface definitions of the complete file give the wider architecture and access frame. For this vertical slice they are neither removed nor treated as new Core terms.
 
-### 10.4 Die konkrete Exchange-Definition binden
+### 10.4 Binding the concrete Exchange definition
 
-Die nachfolgende Definition stammt unveraendert aus connector.yaml:
+The following definition is taken unchanged from connector.yaml:
 
 ```yaml
 apiVersion: connector.example.org/v1alpha1
@@ -512,82 +512,82 @@ spec:
   maxAttempts: 2
 ```
 
-Ihre Identitaet ist das Tupel (connector.example.org/v1alpha1, Exchange, connector, list-documents). Referenzwerte lassen Kind und API-Version aus, weil ihre Properties diese genau festlegen. Beispielsweise wird sender exakt gegen (connector.example.org/v1alpha1, Container, connector, api) aufgeloest. Ein anderes Schema mit demselben Namen oder die zufaellig neueste Version ist kein Ersatz.
+Its identity is the tuple (connector.example.org/v1alpha1, Exchange, connector, list-documents). Reference values omit Kind and API version because their Properties stipulate these exactly. For example, sender is resolved exactly against (connector.example.org/v1alpha1, Container, connector, api). Another schema with the same name or whichever version happens to be newest is no substitute.
 
-Der Compiler erzeugt aus den einmal gepflegten Referenzwerten fuenf ausgehende Kanten der Exchange-Definition. Die beiden Channel-Definitionen erzeugen ihre eigenen Kanten zum Broker. Eine zweite manuell gepflegte Rollen-, uses- oder Kantenliste ist nicht erforderlich.
+From the reference values maintained once, the compiler generates five outgoing edges of the Exchange definition. The two Channel definitions generate their own edges to the broker. A second manually maintained role, uses or edge list is not required.
 
-### 10.5 Den geltenden Vertrag zusammenstellen
+### 10.5 Assembling the applicable contract
 
-Zur Beurteilung von list-documents gehoeren mindestens der Schema-Koerper, der Exchange-Koerper und seine Propertyvertraege, die konkreten Werte und der individuelle Koerper sowie die einschlaegigen Vertraege der referenzierten Teilnehmer, Operation und Kanaele. Der vollstaendige Eingabesatz bleibt gebunden verfuegbar. Die genaue generische Kontextauswahl fuer das Produkt ist damit nicht bereits implementiert.
+The assessment of list-documents needs at least the schema body, the Exchange body and its property contracts, the concrete values and the individual body, as well as the pertinent contracts of the referenced participants, operation and channels. The complete input set remains available in bound form. The exact generic context selection for the product is not thereby already implemented.
 
-Der Kind beschreibt die allgemeine Antwortzuordnung. Die konkrete Definition ergaenzt fuer diesen Austausch unter anderem Registrierung vor Publikation, Wiederverwendung der MessageId und Verwerfen spaeter Antworten ohne Wartezustand. Die Channelvertraege erklaeren, wie Zielmandant und Senderinstanz die Adressen bestimmen. Diese Aussagen werden gemeinsam gelesen, ohne sie in eine zweite verbindliche Requirementliste zu kopieren.
+The Kind describes the general reply mapping. For this exchange, the concrete definition adds among other things registration before publication, reuse of the MessageId and discarding of late replies without a waiting state. The channel contracts explain how target tenant and sender instance determine the addresses. These statements are read together, without copying them into a second binding requirement list.
 
-Fuer die Rollenbindung reicht der beschriebene Zusammenhang: sender ist hier api; receiver ist onprem. Eine Aussage ueber sender betrifft api bei diesem Austausch. Sie wird weder zur globalen Pflicht aller API-Operationen noch zu einer automatischen Regel aller Components. Der Pruefkontext muss gleichwohl die relevanten implementierenden Teile erfassen.
+For the role binding, the described relationship suffices: sender is api here; receiver is onprem. A statement about sender concerns api in this exchange. It becomes neither a global obligation of all API operations nor an automatic rule of all Components. The check context must nonetheless capture the relevant implementing parts.
 
-### 10.6 Einen gewuenschten Laufzeitfall nachvollziehen
+### 10.6 Tracing a desired runtime case
 
-1. Die API nimmt einen autorisierten HTTP-Auftrag entgegen und bestimmt den Zielmandanten. Eingaben werden auf den Commandvertrag abgebildet.
-2. Die ausstellende Prozessinstanz richtet ihren Antwortempfang und die Wartezuordnung ein. Sie erzeugt beziehungsweise uebernimmt die MessageId und gibt ihre autorisierte Antwortadresse gemaess replies mit.
-3. Der Request wird ueber bridge/{tenantId}/requests publiziert. Die Operationskennung steht im Command beziehungsweise in der Nachrichtenhuelle, nicht im hier gewaehlten Topic.
-4. Eine passende Connectorreplika empfaengt den Request, waehlt anhand dms.documents.list.v1 die Auftragsbearbeitung und liest die erlaubten Dokumentmetadaten.
-5. Sie antwortet mit derselben MessageId an bridge/replies/{senderInstanceId}. Die API ordnet die Antwort ihrem wartenden Austausch zu und bildet das fachliche Ergebnis auf den HTTP-Vertrag ab.
-6. Ohne Antwort beendet sie nach 30 Sekunden die Wartefrist dieses Versuchs. Ein weiterer Versuch ist innerhalb des Budgets von hoechstens zwei Versuchen moeglich und verwendet dieselbe MessageId. Ein Timeout belegt keine Nichtausfuehrung. Gesamtfrist und Verzoegerung sind noch nicht festgelegt.
+1. The API accepts an authorized HTTP request and determines the target tenant. Inputs are mapped onto the Command contract.
+2. The issuing process instance sets up its reply reception and the waiting mapping. It generates or takes over the MessageId and passes along its authorized reply address according to replies.
+3. The request is published via bridge/{tenantId}/requests. The operation identifier stands in the Command or in the message envelope, not in the topic chosen here.
+4. A matching connector replica receives the request, selects the request processing by dms.documents.list.v1 and reads the permitted document metadata.
+5. It replies with the same MessageId to bridge/replies/{senderInstanceId}. The API maps the reply to its waiting exchange and maps the domain result onto the HTTP contract.
+6. Without a reply, it ends the waiting period of this attempt after 30 seconds. A further attempt is possible within the budget of at most two attempts and uses the same MessageId. A timeout does not evidence non-execution. Total period and delay are not yet stipulated.
 
-Die Beschreibung legt dieses gewuenschte Verhalten fest; sie ist kein Ablaufprogramm des Core-Compilers. Ein konkreter Runtimeaufruf benoetigt keinen neuen kanonischen Exchange-Datensatz. Agenten, Implementierung, Testfaelle und ausgefuehrte Pruefnachweise entstehen in der Realisierungsarbeit.
+The description stipulates this desired behaviour; it is not a sequence program of the Core compiler. A concrete runtime call needs no new canonical Exchange record. Agents, implementation, test cases and executed check evidence arise in the realization work.
 
-### 10.7 Gueltigkeit und Umsetzung getrennt pruefen
+### 10.7 Checking validity and implementation separately
 
-| Gegenprobe | Urteil des bestehenden Strukturcompilers | Weitere Beurteilung |
+| Counter-probe | Verdict of the existing structure compiler | Further assessment |
 | --- | --- | --- |
-| replyChannel fehlt | Abgewiesen: Pflichtproperty fehlt. | Keine fachliche Ersatzannahme. |
-| sender nennt einen anderen Kind | Abgewiesen: falscher Ziel-Kind. | Keine Deutung anhand aehnlicher Namen. |
-| Ein Ziel existiert nicht | Abgewiesen: nicht aufloesbare Referenz. | Fehlende Definition beziehungsweise Referenz korrigieren. |
-| maxAttempts ist 0 | Strukturell akzeptierter Integer. | Verletzt den beschriebenen positiven Wertebereich; Modellreview muss dies feststellen. |
-| replyChannel zeigt auf requests | Strukturell akzeptierte Channel-Referenz. | Die Eignung fuer den instanzbezogenen Antwortvertrag ist fachlich zu pruefen; ein passender Zieltyp allein genuegt nicht. |
-| Implementierung registriert erst nach Publikation | Aus der Modellstruktur nicht feststellbar. | Implementierungsreview und ein geeigneter Fall mit sofortiger Antwort koennen den Verstoss nachweisen. |
-| Antwort enthaelt eine andere MessageId | Aus der Modellstruktur nicht feststellbar. | Zuordnungs- und Integrationspruefung gegen den festen Umsetzungskandidaten. |
+| replyChannel is missing | Rejected: mandatory Property missing. | No domain substitute assumption. |
+| sender names a different Kind | Rejected: wrong target Kind. | No interpretation based on similar names. |
+| A target does not exist | Rejected: unresolvable reference. | Correct the missing definition or reference. |
+| maxAttempts is 0 | Structurally accepted integer. | Violates the described positive value range; model review must establish this. |
+| replyChannel points to requests | Structurally accepted Channel reference. | The suitability for the instance-specific reply contract is to be checked in domain terms; a matching target type alone is not enough. |
+| Implementation registers only after publication | Not determinable from the model structure. | Implementation review and a suitable case with an immediate reply can evidence the violation. |
+| Reply contains a different MessageId | Not determinable from the model structure. | Mapping and integration check against the fixed implementation candidate. |
 
-**Erneut ausgefuehrte Probe:** Frisch aus den beiden YAML-Dateien adaptierte Eingaben wurden gegen den unveraenderten Core kompiliert. Ergebnis: acht Kinds, dreizehn Definitionen, siebzehn Referenzkanten; fuenf ausgehende Kanten an list-documents. Die sechs negativen Strukturvarianten wurden erneut abgewiesen. Die beiden semantischen Grenzfaelle maxAttempts=0 und replyChannel=requests wurden strukturell akzeptiert. Koerper-, Kind- und Propertybedeutung blieben im Digest enthalten. Der [gebundene Durchgangsbericht](exchange-walkthrough-probe.json) nennt Eingabehashes, Quellstand, Adaptation und normalisierte Exchange-Bezuege. Die Abwesenheit der besonderen Requirementfelder wurde an den strukturierten Eingaben geprueft.
+**Probe executed again:** Inputs freshly adapted from the two YAML files were compiled against the unchanged Core. Result: eight Kinds, thirteen definitions, seventeen reference edges; five outgoing edges at list-documents. The six negative structural variants were rejected again. The two semantic borderline cases maxAttempts=0 and replyChannel=requests were structurally accepted. Body, Kind and Property meaning remained contained in the digest. The [bound walkthrough report](exchange-walkthrough-probe.json) names input hashes, source state, adaptation and normalized Exchange references. The absence of the special requirement fields was checked on the structured inputs.
 
-Das ist keine ausgefuehrte Connector-Integration und kein Beleg fuer bereits generischen Kontext, Impact oder Apply. Ein Agent kann gegen den vollstaendigen gebundenen Vertrag eine Pruefliste und passende Nachweise erarbeiten. Eine solche Liste ist ein abgeleitetes Arbeitsergebnis; ihre Vollstaendigkeit ist zu beurteilen, nicht durch ihr Format garantiert. Ergebnisse muessen auf den festen Modell- und Kandidatenstand bezogen sein. Nicht gepruefte Pflichten bleiben offen.
+This is not an executed Connector integration and not proof of already generic context, impact or Apply. An agent can work out a checklist and matching evidence against the complete bound contract. Such a list is a derived work result; its completeness is to be assessed, not guaranteed by its format. Results must refer to the fixed model and candidate state. Unchecked obligations remain open.
 
-### 10.8 Eine Aenderung weiterverfolgen
+### 10.8 Following a change through
 
-Wird timeoutSeconds von 30 auf 15 geaendert, bleiben die Kanten gleich, aber die konkrete Wartepflicht und der Modelldigest aendern sich. Wird die allgemeine Antwortzuordnung im Exchange-Kind geaendert, aendert sich der geltende Vertrag seiner Definitionen auch bei unveraenderten Instanzdateien. Eine Aenderung an replies.topicPattern betrifft dagegen einen referenzierten Vertrag; eingehende Kanten machen dessen direkte Verwendungen auffindbar.
+If timeoutSeconds is changed from 30 to 15, the edges stay the same, but the concrete waiting obligation and the model digest change. If the general reply mapping in the Exchange Kind is changed, the applicable contract of its definitions changes even with unchanged instance files. A change to replies.topicPattern, by contrast, concerns a referenced contract; incoming edges make its direct uses discoverable.
 
-Der Core liefert fuer diese Faelle Identitaeten, bekannte Bezuege und den gebundenen Inhalt. Er bestimmt daraus nicht automatisch die vollstaendige fachliche Aenderungswirkung oder eine Agentenaufteilung. Solange es keine engere zuverlaessige Regel gibt, darf eine semantische Bewertung relevante Pflichten nicht durch einen zu schmalen Kontext abschneiden.
+For these cases the Core provides identities, known references and the bound content. It does not automatically determine from this the complete domain change effect or a division of agents. As long as there is no narrower reliable rule, a semantic assessment must not cut off relevant obligations through too narrow a context.
 
-### 10.9 Was dieser Durchgang klaert und was offen bleibt
+### 10.9 What this walkthrough clarifies and what remains open
 
-Das Beispiel braucht als Sprachgrundlage vier Deklarationsbausteine: Schema, Kind, Property und Definition. Verbindliche Prosa, Identitaet, typisierte Werte, Referenzen und gemeinsame Modellbindung tragen den beschriebenen Vertrag. Exchange, Container, Command und Channel bleiben Inhalte dieses Projektvokabulars.
+As its language foundation, the example needs four declaration building blocks: Schema, Kind, Property and Definition. Binding prose, identity, typed values, references and shared model binding carry the described contract. Exchange, Container, Command and Channel remain contents of this project vocabulary.
 
-Offen bleiben die genaue allgemeine Koerperlink-Syntax, weitere formale Wertebedingungen, Loader-/Importkomfort sowie generische Kontext-, Impact- und Realisierungsverfahren. Fachlich ist dieser kleine Durchstich bewusst auf einen lesenden Austausch beschraenkt. Die noch offenen Fragen zu Gesamtfrist, Retryverzoegerung, Wiederholungswirkung schreibender Operationen und weiteren Betriebsbedingungen koennen durch zusaetzliche Prosa, Properties oder eigene Kinds beschrieben werden; ihre Loesung wird nicht durch ein erfolgreiches Struktururteil behauptet.
+What remains open is the exact general body link syntax, further formal value conditions, loader/import convenience as well as generic context, impact and realization procedures. In domain terms, this small vertical slice is deliberately limited to a reading exchange. The still open questions on total period, retry delay, repetition effect of writing operations and further operating conditions can be described through additional prose, Properties or own Kinds; their solution is not claimed by a successful structural verdict.
 
-## 11. Gemeinsame Grundform und body
+## 11. Shared basic form and body
 
-**Nutzerentscheidung:** Der verbindliche Koerper soll body heissen. Die Wahl gilt fuer die angestrebte Autorenform und vermeidet die doppelte Verwendung von Definition als Gegenstand und Textfeld. Eine Umbenennung des konkreten Modellgegenstands in Element war zuvor eine Empfehlung des Assistenten, keine vom Nutzer angenommene Sprachentscheidung.
+**User decision:** The binding body should be called body. The choice applies to the intended authoring form and avoids the double use of Definition as item and as text field. Renaming the concrete model item to Element was previously a recommendation of the assistant, not a language decision accepted by the user.
 
-**Untersuchungsauftrag:** Koennen Kind, Property und konkrete Elemente dieselbe Grundform haben, sodass Kinds selbst Definitionen sind? Die folgende Variante ist ein Diskussionsvorschlag. Sie ersetzt weder die heutigen Core-Datenstrukturen noch die nachgewiesene Compilerfunktion durch eine Behauptung bereits vorhandener Selbstbeschreibung.
+**Investigation assignment:** Can Kind, Property and concrete elements have the same basic form, so that Kinds are themselves definitions? The following variant is a discussion proposal. It replaces neither today's Core data structures nor the evidenced compiler function with a claim of already existing self-description.
 
-### 11.1 Zwei Arten von Vereinheitlichung unterscheiden
+### 11.1 Distinguishing two sorts of unification
 
-Eine gemeinsame Dokumenthuelle kann Identitaet, Typbezug, body und strukturierte Werte vereinheitlichen. Weitergehend koennen Kinds und Properties selbst referenzierbare Definitionen werden: Exchange ist eine Definition des eingebauten Kinds Kind, sender ist eine Definition des eingebauten Kinds Property, und list-documents ist eine Definition von Exchange.
+A shared document envelope can unify identity, type reference, body and structured values. Going further, Kinds and Properties can themselves become referenceable definitions: Exchange is a definition of the built-in Kind Kind, sender is a definition of the built-in Kind Property, and list-documents is a definition of Exchange.
 
-Beide Varianten teilen eine Darstellung. Erst die zweite macht die Typvertraege zu gewoehnlich adressierbaren Knoten des Modells. Sie kann Sonderformen fuer den Bezug auf Kinds und fuer die Darstellung ihrer Aenderungen vermindern. Die Bedeutung von Typdeklaration, Propertyvertrag und konkreter Verwendung bleibt dabei verschieden.
+Both variants share a representation. Only the second makes the type contracts ordinarily addressable nodes of the model. It can reduce special forms for referring to Kinds and for representing their changes. The meaning of type declaration, property contract and concrete use remains different in this.
 
-### 11.2 Eine gemeinsame Huelle am Exchange
+### 11.2 A shared envelope at the Exchange
 
-Die vorgeschlagene Grundform lautet: Identitaet, kind als Referenz auf die Typdefinition, verbindlicher body und spec als Werte gemaess diesem Typvertrag. Die folgenden IDs wie core.Kind und connector.Exchange sind **symbolische Kurzschreibweisen fuer die Diskussion**, keine bereits festgelegte Identitaetsgrammatik. Die endgueltige Form muss Namensraum, Version und eindeutige Aufloesung bewahren. Insbesondere wird hier die heutige Identitaet aus apiVersion, kind, namespace und name nicht still weiterverwendet: Im Kandidaten ist die Identitaet einer Typdefinition von ihrem eigenen Kind zu unterscheiden und der Typbezug ausdruecklich auf sie zu richten.
+The proposed basic form reads: identity, kind as a reference to the type definition, binding body and spec as values according to this type contract. The following IDs such as core.Kind and connector.Exchange are **symbolic shorthand notations for the discussion**, not an already stipulated identity grammar. The final form must preserve namespace, version and unambiguous resolution. In particular, today's identity from apiVersion, kind, namespace and name is not silently reused here: in the candidate, the identity of a type definition is to be distinguished from its own Kind, and the type reference is to be directed explicitly at it.
 
-Ein bewusst verkleinerter Ausschnitt mit sender und timeoutSeconds:
+A deliberately reduced excerpt with sender and timeoutSeconds:
 
 ```yaml
 id: connector.Exchange
 kind: core.Kind
 body: >-
-  Beschreibt einen Request-/Reply-Vertrag. sender bezeichnet die
-  auftraggebende Anwendung. Antworten behalten die MessageId des Requests.
-  timeoutSeconds gilt als Wartefrist pro Versuch.
+  Describes a request/reply contract. sender denotes the
+  requesting application. Replies keep the MessageId of the request.
+  timeoutSeconds applies as the waiting period per attempt.
 spec:
   properties:
     - connector.Exchange.sender
@@ -595,7 +595,7 @@ spec:
 ---
 id: connector.Exchange.sender
 kind: core.Property
-body: Anwendung in der Auftraggeberrolle dieses Austauschs.
+body: Application in the requester role of this exchange.
 spec:
   name: sender
   type: reference
@@ -605,7 +605,7 @@ spec:
 ---
 id: connector.Exchange.timeoutSeconds
 kind: core.Property
-body: Positive maximale Wartefrist pro Versuch in Sekunden.
+body: Positive maximum waiting period per attempt in seconds.
 spec:
   name: timeoutSeconds
   type: integer
@@ -615,91 +615,91 @@ spec:
 id: connector.list-documents
 kind: connector.Exchange
 body: >-
-  Die API fordert Dokumentmetadaten beim Connector an. Sie registriert
-  den wartenden Austausch vor der Publikation.
+  The API requests document metadata from the Connector. It registers
+  the waiting exchange before the publication.
 spec:
   sender: connector.api
   timeoutSeconds: 30
 ```
 
-Der Ausschnitt ist kein vollstaendiger neuer Modelldatensatz. core.Kind, core.Property, connector.Container und connector.api muessen mit ihren uebrigen Vertraegen bereitgestellt werden; receiver, command, Kanaele und Versuchszahl des vollen Beispiels sind hier nur zur Verdeutlichung der Huelle ausgelassen. Kein gezeigtes spec wird ausgefuehrt. Die MessageId bleibt eine beschriebene Laufzeitgroesse.
+The excerpt is not a complete new model record. core.Kind, core.Property, connector.Container and connector.api must be provided with their remaining contracts; receiver, command, channels and number of attempts of the full example are left out here only to illustrate the envelope. No spec shown is executed. The MessageId remains a described runtime quantity.
 
-| Definition | Ihr Kind | Interpretation |
+| Definition | Its Kind | Interpretation |
 | --- | --- | --- |
-| connector.Exchange | core.Kind | Deklariert einen Typ fuer weitere Definitionen. |
-| connector.Exchange.sender | core.Property | Deklariert eine benannte, typisierte Angabe dieses Typs. |
-| connector.list-documents | connector.Exchange | Beschreibt einen konkreten gewuenschten Austausch. |
+| connector.Exchange | core.Kind | Declares a type for further definitions. |
+| connector.Exchange.sender | core.Property | Declares a named, typed item of information of this type. |
+| connector.list-documents | connector.Exchange | Describes a concrete desired exchange. |
 
-Eine Property erhaelt ihren Platz in Exchange durch dessen properties-Bezug. Ihr spec.name legt den Wertschluessel in konkreten Exchanges fest; der Compiler soll ihn nicht aus dem letzten Segment ihrer ID erraten. Doppelte Namen in einem Kind und falsche Propertyziele muessen abgewiesen werden. Ein gleichnamiges sender in einem anderen Kind besitzt dadurch keine automatisch gleiche Bedeutung.
+A Property gets its place in Exchange through Exchange's properties reference. Its spec.name stipulates the value key in concrete Exchanges; the compiler should not guess it from the last segment of its ID. Duplicate names in a Kind and wrong property targets must be rejected. A sender of the same name in another Kind thereby does not have an automatically equal meaning.
 
-### 11.3 Der feste Anfang verschwindet nicht
+### 11.3 The fixed beginning does not disappear
 
-Der Core muss eine bekannte, versionierte Grunddefinition von core.Kind und core.Property mitbringen. Im selbstbeschreibenden Kandidaten hat core.Property den Kind core.Kind; core.Kind kann selbst den Kind core.Kind besitzen. Diese eine bekannte Selbstbindung ist ein festgelegter Anfang, keine Aufforderung, eine unendliche Folge von Metakinds zu laden. Die Grunddefinitionen werden gemeinsam bereitgestellt und vom Compiler mit fester Bedeutung erkannt. Projekte koennen sie weder durch gleichnamige lokale Definitionen ersetzen noch durch Prosa neue Compileroperatoren installieren.
+The Core must bring along a known, versioned basic definition of core.Kind and core.Property. In the self-describing candidate, core.Property has the Kind core.Kind; core.Kind can itself have the Kind core.Kind. This one known self-binding is a stipulated beginning, not a request to load an infinite sequence of meta-Kinds. The basic definitions are provided together and recognized by the compiler with a fixed meaning. Projects can neither replace them with local definitions of the same name nor install new compiler operators through prose.
 
-Die Selbstbeschreibung dokumentiert den Meta-Vertrag, beweist ihn aber nicht aus sich selbst. Der Compiler muss insbesondere weiter wissen: wie eine Typdeklaration die erlaubten Properties bestimmt, welche Werttypen existieren, wie Kardinalitaeten gelten, wie eine Reference an ein Ziel gebunden wird und wie body in Modellbindung und nachfolgende Beurteilung eingeht.
+The self-description documents the meta contract but does not prove it from itself. In particular, the compiler must still know: how a type declaration determines the permitted Properties, which value types exist, how cardinalities apply, how a Reference is bound to a target and how body enters model binding and subsequent assessment.
 
-Ein moeglicher enger Ladevertrag lautet:
+A possible narrow loading contract reads:
 
-1. Den festen, versionierten Core-Vertrag und den vollstaendigen Eingabesatz erfassen; Identitaeten auf Eindeutigkeit pruefen.
-2. Die als core.Kind deklarierten Typen und ihre core.Property-Vertraege mit den bekannten Metaregeln pruefen und aufloesen.
-3. Uebrige Definitionen gegen ihre nun bekannten Kinds pruefen; alle Referenzen aufloesen und den gemeinsamen Modellstand binden.
+1. Capture the fixed, versioned Core contract and the complete input set; check identities for uniqueness.
+2. Check and resolve the types declared as core.Kind and their core.Property contracts with the known meta rules.
+3. Check the remaining definitions against their now known Kinds; resolve all references and bind the shared model state.
 
-Ein kind-Bezug muss auf eine gueltige Typdefinition zeigen, nicht auf eine beliebige vorhandene Definition. Freie benutzerdefinierte Metaklassen oder eine beliebige Kette wechselnder Typinterpretationen werden fuer diesen Kandidaten nicht benoetigt. Alle benoetigten Typvertraege muessen im gebundenen Eingabesatz stehen; Dateireihenfolge darf ihre Verfuegbarkeit nicht bestimmen.
+A kind reference must point to a valid type definition, not to an arbitrary existing definition. Free user-defined metaclasses or an arbitrary chain of changing type interpretations are not needed for this candidate. All needed type contracts must be in the bound input set; file order must not determine their availability.
 
-### 11.4 Gewonnene Einfachheit und neue Kosten
+### 11.4 Simplicity gained and new costs
 
-| Frage | Gemeinsame Definitionen | Verbleibender Bedarf / Preis |
+| Question | Shared definitions | Remaining need / price |
 | --- | --- | --- |
-| Dokumentform | Eine Huelle fuer Typ, Property und konkreten Gegenstand. | spec hat je nach Kind weiterhin unterschiedliche Bedeutung und Struktur. |
-| Referenzen | Kinds und Properties koennen mit demselben Grundmechanismus referenziert werden wie andere Definitionen. | Ein Typbezug und eine gewoehnliche fachliche Referenz haben weiterhin verschiedene Rollen. Ein Ersatz fuer das bisherige kindReference muss ausdruecklich festgelegt werden. |
-| Aenderungsgraph | Kind- und Propertydefinitionen sind adressierbare Knoten; Verwendungen und Typbezuege koennen gemeinsam sichtbar werden. | Die vollstaendige fachliche Aenderungswirkung ist damit noch nicht bestimmt. Der heutige Core bildet Kindbezuege nicht als Definitionenkanten ab. |
-| Zahl der Grundformen | Eine allgemeine Definition statt getrennter Dokumentformen. | Kind und Property bleiben zwei vom Compiler verstandene Meta-Kinds; Werttypen, Bindung und Kardinalitaet bleiben feste Semantik. |
-| Properties als eigene Definitionen | Eigene Identitaet, Referenzierbarkeit, body und Herkunft pro Property. | Mehr Deklarationen und Verweise fuer kleine Vertraege; Versionierung und Zuordnung muessen eindeutig sein. |
-| Schema / Bibliothek | Vokabulare koennen als versionierte Zusammenstellungen von Definitionen bereitgestellt werden. | Auswahl, Namensraum, exakte Versionsbindung und geschlossene Typvertraege bleiben noetig. Ob ein Schema selbst ein Kind wird, ist noch offen. |
+| Document form | One envelope for type, Property and concrete item. | spec continues to have different meaning and structure depending on the Kind. |
+| References | Kinds and Properties can be referenced with the same basic mechanism as other definitions. | A type reference and an ordinary domain reference continue to have different roles. A replacement for the previous kindReference must be stipulated explicitly. |
+| Change graph | Kind and property definitions are addressable nodes; uses and type references can become visible together. | The complete domain change effect is not yet determined by this. Today's Core does not represent Kind references as definition edges. |
+| Number of basic forms | One general definition instead of separate document forms. | Kind and Property remain two meta-Kinds understood by the compiler; value types, binding and cardinality remain fixed semantics. |
+| Properties as definitions of their own | Own identity, referenceability, body and provenance per Property. | More declarations and references for small contracts; versioning and assignment must be unambiguous. |
+| Schema / library | Vocabularies can be provided as versioned collections of definitions. | Selection, namespace, exact version binding and closed type contracts remain necessary. Whether a schema itself becomes a Kind is still open. |
 
-Eine spaetere eingebettete Kurzform fuer Properties waere moeglich, wenn sie exakt auf dieselben adressierbaren Deklarationen normalisiert und keine zweite Bedeutung erfindet. Fuer die gegenwaertige Diskussion wird sie nicht zusaetzlich festgelegt. Eine einheitliche Huelle allein zwingt nicht dazu, jede kleine Property in eine eigene Datei auszulagern; mehrere Definitionen koennen in einem Dokument stehen.
+A later embedded short form for Properties would be possible if it normalizes exactly onto the same addressable declarations and invents no second meaning. For the present discussion it is not additionally stipulated. A uniform envelope alone does not force moving every small Property out into a file of its own; several definitions can stand in one document.
 
-### 11.5 Empfehlung und erforderliche Gegenproben
+### 11.5 Recommendation and required counter-probes
 
-**Empfehlung zur weiteren Pruefung:** Eine Definition als allgemeine Grundform untersuchen; Kind und Property als die vom Core verstandenen Typdefinitionen darin darstellen. Die konkrete Projektbeschreibung ist dann eine Definition eines selbst definierten Kinds. body ist in allen Faellen der verbindliche Koerper. Die bisherige Bezeichnung Element kann zur Erklaerung konkreter Gegenstaende dienen, ohne einen zusaetzlichen eingebauten Kind zu schaffen.
+**Recommendation for further checking:** Examine a definition as the general basic form; represent Kind and Property within it as the type definitions understood by the Core. The concrete project description is then a definition of a self-defined Kind. body is in all cases the binding body. The previous term Element can serve to explain concrete items, without creating an additional built-in Kind.
 
-Das verringert die Zahl der Darstellungsformen, nicht die Zahl aller erforderlichen Sprachregeln. Die naechsten Gegenproben sind ein vollstaendiger fester Core-Anfang, doppelte oder widerspruechliche Propertydeklarationen, falsche kind-Ziele, exakte Cross-Vokabular-Versionen sowie Aenderungen an Typ- und Propertybedeutung bei unveraenderten konkreten Definitionen. Es muss geprueft werden, ob die einheitlichen Bezuege Kontext und Aenderungsbewertung vereinfachen, statt nur YAML umzuschichten.
+This reduces the number of representation forms, not the number of all required language rules. The next counter-probes are a complete fixed Core beginning, duplicate or contradictory property declarations, wrong kind targets, exact cross-vocabulary versions as well as changes to type and property meaning with unchanged concrete definitions. It must be checked whether the uniform references simplify context and change assessment instead of merely rearranging YAML.
 
-Die bisherigen Strukturproben pruefen getrennte Schemas und Definitionen mit ausdruecklicher Koerperabbildung. Sie belegen weder die neue id-/kind-Huelle noch den selbstbeschreibenden Anfang oder einen generischen Meta-Compiler. In diesem Schritt wurden nur der Entwurf und der gewaehlte Feldname dokumentiert.
+The structural probes so far check separate schemas and definitions with explicit body mapping. They evidence neither the new id/kind envelope nor the self-describing beginning nor a generic meta compiler. In this step only the draft and the chosen field name were documented.
 
-## 12. Fester Anfang und Typaufloesung am Exchange
+## 12. Fixed beginning and type resolution at the Exchange
 
-Auftrag des Nutzers: Den festen Anfang mit Kind und Property sowie die vollstaendige Typaufloesung am Exchange durchspielen und die wirklich fest benoetigten Coreregeln sichtbar machen. Die folgenden Dateien bilden zusammen einen geschlossenen strukturellen Eingabesatz fuer diesen Kandidaten:
+The user's request: Play through the fixed beginning with Kind and Property as well as the complete type resolution at the Exchange, and make visible the Core rules that are really needed as fixed. The following files together form a closed structural input set for this candidate:
 
-- [bootstrap/core.yaml](bootstrap/core.yaml): zehn feste Core-Definitionen mit body.
-- [bootstrap/connector.yaml](bootstrap/connector.yaml): acht Projekt-Kinds, zwanzig Projekt-Properties und dreizehn konkrete Gegenstaende.
-- [bootstrap/probe.json](bootstrap/probe.json): Ergebnisse der begrenzten eigenstaendigen Entwurfsprobe, Eingabehashes und ausgewaehlte aufgeloeste Kanten.
+- [bootstrap/core.yaml](bootstrap/core.yaml): ten fixed Core definitions with body.
+- [bootstrap/connector.yaml](bootstrap/connector.yaml): eight project Kinds, twenty project Properties and thirteen concrete items.
+- [bootstrap/probe.json](bootstrap/probe.json): results of the bounded independent design probe, input hashes and selected resolved edges.
 
-Die neue Form ist ein Vorschlag. Die Probe ist kein Aufruf des bestehenden Go-Core-Compilers, keine neue Produktfunktion und keine ausgefuehrte Connector-Loesung. Sie untersucht ausschliesslich den endlichen Anfang, die Typ-/Propertyaufloesung, Strukturpruefung und gemeinsame Inhaltsbindung. body ist die bereits gewaehlte Autorenbezeichnung. requirements und roles bleiben weggelassen.
+The new form is a proposal. The probe is not an invocation of the existing Go Core compiler, not a new product function and not an executed Connector solution. It examines exclusively the finite beginning, the type/property resolution, structure check and shared content binding. body is the authoring name already chosen. requirements and roles remain left out.
 
-### 12.1 Die feste Dokumenthuelle
+### 12.1 The fixed document envelope
 
-Jede Definition besitzt genau id, kind, body und spec. id ist eine eindeutige, nichtleere Identitaet, kind ein exakter Bezug auf eine Typdefinition, body nichtleere verbindliche Prosa und spec ein Objekt mit den typgemaess erlaubten Werten. Ein mehrfach vorhandenes id ist ungueltig.
+Every definition has exactly id, kind, body and spec. id is a unique, non-empty identity, kind an exact reference to a type definition, body non-empty binding prose and spec an object with the values permitted according to the type. A duplicated id is invalid.
 
-Die Probe benutzt IDs wie core/v1/Kind, connector/v1/Exchange und project/v1/list-documents als exakte Strings. Die Versionsanteile sind ausdruecklich angegeben; es gibt weder Kurznamenssuche noch automatische Wahl der neuesten Version. Diese lesbare Notation ist weiterhin ein Kandidat fuer die Identitaetsform. Die Werte werden nicht aus Dateinamen oder aus den letzten ID-Segmenten erraten. core/ bezeichnet in der Probe den reservierten Grundvertrag; ein Projekt darf dort keine Definition ersetzen oder hinzufuegen.
+The probe uses IDs such as core/v1/Kind, connector/v1/Exchange and project/v1/list-documents as exact strings. The version parts are stated explicitly; there is neither a short-name search nor an automatic choice of the newest version. This readable notation is still a candidate for the identity form. The values are not guessed from file names or from the last ID segments. In the probe, core/ denotes the reserved basic contract; a project must not replace or add any definition there.
 
-### 12.2 Zwei Meta-Kinds und ihre acht eigenen Properties
+### 12.2 Two meta-Kinds and their eight own Properties
 
-Der feste Anfang umfasst nicht nur zwei Namen. Er muss auch deren Vertragsstruktur bereitstellen. Kompakt dargestellt:
+The fixed beginning comprises not only two names. It must also provide their contract structure. In compact form:
 
 ```yaml
 id: core/v1/Kind
 kind: core/v1/Kind
 body: >-
-  Deklariert einen Typ. properties benennt seine erlaubten Angaben.
-  Sein body beschreibt die gemeinsame Bedeutung seiner Definitionen.
+  Declares a type. properties names its permitted entries.
+  Its body describes the common meaning of its definitions.
 spec:
   properties:
     - core/v1/Kind/properties
 ---
 id: core/v1/Property
 kind: core/v1/Kind
-body: Deklariert eine benannte Eigenschaft oder Beziehung eines Typvertrags.
+body: Declares a named attribute or relation of a type contract.
 spec:
   properties:
     - core/v1/Property/name
@@ -711,29 +711,29 @@ spec:
     - core/v1/Property/properties
 ```
 
-Alle acht referenzierten Properties sind selbst Definitionen von core/v1/Property. Ihre Vertraege sind:
+All eight referenced Properties are themselves definitions of core/v1/Property. Their contracts are:
 
-| Property | Werttyp | Anzahl | Festgelegte Aufgabe |
+| Property | Value type | Count | Stipulated task |
 | --- | --- | --- | --- |
-| Kind.properties | reference auf Property | 0 bis beliebig viele | Verknuepft einen Typ mit seinen erlaubten Propertyvertraegen. |
-| Property.name | string | genau 1 | Benennt den Wertschluessel in einer konkreten spec. |
-| Property.type | enum | genau 1 | Waehlt einen bekannten Werttyp. |
-| Property.minCount | integer | genau 1 | Bestimmt die Mindestanzahl von Werten. |
-| Property.maxCount | integer | genau 1 | Bestimmt Hoechstanzahl und Einzelwert-/Listenform. |
-| Property.values | string | 0 bis beliebig viele | Legt die erlaubten Werte eines enum fest. |
-| Property.target | reference auf Kind | 0 oder 1 | Legt den Ziel-Kind einer reference fest. |
-| Property.properties | reference auf Property | 0 bis beliebig viele | Beschreibt die Felder eines object. |
+| Kind.properties | reference to Property | 0 to any number | Links a type to its permitted property contracts. |
+| Property.name | string | exactly 1 | Names the value key in a concrete spec. |
+| Property.type | enum | exactly 1 | Chooses a known value type. |
+| Property.minCount | integer | exactly 1 | Determines the minimum number of values. |
+| Property.maxCount | integer | exactly 1 | Determines the maximum number and the single-value/list form. |
+| Property.values | string | 0 to any number | Stipulates the permitted values of an enum. |
+| Property.target | reference to Kind | 0 or 1 | Stipulates the target Kind of a reference. |
+| Property.properties | reference to Property | 0 to any number | Describes the fields of an object. |
 
-Damit bestehen die zehn festen Definitionen aus zwei Typdefinitionen und acht Propertydefinitionen. Das ist ein vollstaendiger Anfang fuer den hier untersuchten Werteumfang, kein Beweis der kleinstmoeglichen Zahl aller notwendigen Deklarationen.
+The ten fixed definitions thus consist of two type definitions and eight property definitions. This is a complete beginning for the range of values examined here, not a proof of the smallest possible number of all necessary declarations.
 
-### 12.3 Die entscheidende zyklische Definition
+### 12.3 The decisive cyclic definition
 
-Der vollstaendige feste Datensatz enthaelt insbesondere:
+The complete fixed data set contains in particular:
 
 ```yaml
 id: core/v1/Kind/properties
 kind: core/v1/Property
-body: Die Propertyvertraege dieses Kinds mit innerhalb des Kinds eindeutigen Namen.
+body: The property contracts of this Kind, with names that are unique within the Kind.
 spec:
   name: properties
   type: reference
@@ -743,7 +743,7 @@ spec:
 ---
 id: core/v1/Property/target
 kind: core/v1/Property
-body: Nur bei reference erforderlich; bestimmt den exakten Ziel-Kind.
+body: Required only for reference; determines the exact target Kind.
 spec:
   name: target
   type: reference
@@ -752,20 +752,20 @@ spec:
   target: core/v1/Kind
 ```
 
-Kind.properties zeigt auf Properties; Property.target zeigt auf Kinds; Kind hat selbst den Kind Kind. Das ist ein endlicher Referenzgraph. Referenzpruefung bedeutet hier, Identitaet und deklarierten Ziel-Kind zu vergleichen. Sie bedeutet nicht, den gesamten Zielvertrag bei jedem Bezug rekursiv neu zu entfalten. Deshalb benoetigt dieser Anfang keinen Kind des Kind des Kind in unendlicher Folge.
+Kind.properties points to Properties; Property.target points to Kinds; Kind itself has the Kind Kind. This is a finite reference graph. Reference checking here means comparing identity and declared target Kind. It does not mean recursively unfolding the entire target contract anew for every reference. Therefore this beginning needs no Kind of the Kind of the Kind in an infinite sequence.
 
-Der Compiler beginnt trotzdem nicht mit unbekanntem YAML und glaubt dessen Selbstbeschreibung. Er startet mit den von der gewaehlten Core-Version fest mitgelieferten Meta-Vertraegen, prueft damit die Core-Definitionen und kontrolliert anschliessend, dass ihre daraus abgeleiteten Vertraege genau diesem Anfang entsprechen. Die Probe benutzt dazu zwei feste Metavertragstabellen. Der Core-Seed ist eine ausdruecklich vertrauenswuerdig bereitgestellte Eingabe der Probe; die Probe implementiert keine Paketinstallation, Signaturpruefung oder Produktions-Laderabsicherung.
+The compiler nevertheless does not start with unknown YAML and believe its self-description. It starts with the meta contracts shipped as fixed with the chosen Core version, checks the Core definitions with them and afterwards verifies that the contracts derived from these correspond exactly to this beginning. For this, the probe uses two fixed meta contract tables. The Core seed is an explicitly trusted provided input of the probe; the probe implements no package installation, signature check or production loader hardening.
 
-### 12.4 Das Exchange-Vokabular anschliessen
+### 12.4 Connecting the Exchange vocabulary
 
-Im vollstaendigen Connector-Datensatz ist Exchange eine Definition von core/v1/Kind. Seine properties-Liste referenziert die sieben Definitionen sender, receiver, command, requestChannel, replyChannel, timeoutSeconds und maxAttempts. Deren bodies beschreiben ihre Bedeutung; ihre specs deklarieren den Strukturvertrag.
+In the complete Connector data set, Exchange is a definition of core/v1/Kind. Its properties list references the seven definitions sender, receiver, command, requestChannel, replyChannel, timeoutSeconds and maxAttempts. Their bodies describe their meaning; their specs declare the structure contract.
 
-Beispielsweise:
+For example:
 
 ```yaml
 id: connector/v1/Exchange/sender
 kind: core/v1/Property
-body: Anwendung in der Rolle des ausstellenden Auftraggebers.
+body: Application in the role of the issuing requester.
 spec:
   name: sender
   type: reference
@@ -774,23 +774,23 @@ spec:
   maxCount: 1
 ```
 
-Die Typdefinition connector/v1/Container besitzt den Kind core/v1/Kind. Die konkrete API besitzt dagegen den Kind connector/v1/Container. Dieser Unterschied ist ausschlaggebend: sender.target darf Container referenzieren, nicht die konkrete API.
+The type definition connector/v1/Container has the Kind core/v1/Kind. The concrete API, by contrast, has the Kind connector/v1/Container. This difference is decisive: sender.target may reference Container, not the concrete API.
 
-Die konkrete Definition project/v1/list-documents hat den Kind connector/v1/Exchange. Sie setzt sender auf project/v1/api, receiver auf project/v1/onprem, command auf project/v1/list-documents-command, requestChannel auf project/v1/requests und replyChannel auf project/v1/replies. Ihre Werte timeoutSeconds=30 und maxAttempts=2 bleiben unveraendert. Der individuelle body beschreibt unter anderem Registrierung vor Publikation, Wiederholungen mit derselben MessageId und das Verwerfen spaeter Antworten ohne Wartezustand.
+The concrete definition project/v1/list-documents has the Kind connector/v1/Exchange. It sets sender to project/v1/api, receiver to project/v1/onprem, command to project/v1/list-documents-command, requestChannel to project/v1/requests and replyChannel to project/v1/replies. Its values timeoutSeconds=30 and maxAttempts=2 remain unchanged. The individual body describes, among other things, registration before publication, retries with the same MessageId and the discarding of late replies without a waiting state.
 
-Die neue Datei uebernimmt die acht Typkoerper, zwanzig Propertykoerper und dreizehn individuellen Koerper aus dem vorherigen Beispiel und stellt ihre Bezuege explizit dar. Sie ist kein Nachweis einer verlustfreien allgemeinen Migration des alten Schemaformats; insbesondere bleibt die allgemeine Paket-/Schemahuelle eine separate Designfrage.
+The new file takes over the eight type bodies, twenty property bodies and thirteen individual bodies from the previous example and represents their references explicitly. It is not evidence of a lossless general migration of the old schema format; in particular, the general package/schema envelope remains a separate design question.
 
-### 12.5 Typaufloesung ohne Abhaengigkeit von der Dateireihenfolge
+### 12.5 Type resolution without dependence on file order
 
-1. **Grundvertrag waehlen.** Den fest mitgelieferten Core-Vertrag fuer core/v1 bereitstellen. Ein Projektimport kann ihn nicht ueberschreiben.
-2. **Identitaeten erfassen.** Alle Core- und Projektdefinitionen gemeinsam indizieren. Huelle, Eindeutigkeit und reservierte IDs pruefen. Die Reihenfolge der Dokumente ist unerheblich.
-3. **Typbezug pruefen.** Jeder kind-Verweis muss auf eine vorhandene Definition zeigen, deren eigener kind exakt core/v1/Kind ist. Die feste Selbstbindung von core/v1/Kind ist gueltig. Beliebige selbsttypisierte Projektdefinitionen sind dadurch nicht zugelassen.
-4. **Metavertraege pruefen.** Definitionen von Kind und Property gegen den festen Anfang pruefen. Dann ihre zusaetzlichen Sprachinvarianten pruefen, etwa gueltige Kardinalitaeten und die Pflicht von target bei reference.
-5. **Typvertraege aufbauen.** Fuer jeden Kind die referenzierten Propertydefinitionen anhand spec.name sammeln. Doppelte Feldnamen sind Fehler. Objektvertraege werden begrenzt aufgebaut; zyklische unendlich zu entfaltende Objektfeldvertraege sind in diesem Kandidaten ungueltig. Gewoehnliche Referenzzyklen sind davon verschieden.
-6. **Alle Werte pruefen.** Jede Definition, einschliesslich der Core-Definitionen, gegen ihren so bekannten Kind pruefen. Unbekannte Felder, falsche Wertformen, fehlende Pflichtwerte oder falsche Referenzziele abweisen.
-7. **Modell binden.** Alle Definitionen samt bodies und strukturierter Vertraege normalisieren, Typ- und Wertreferenzen als unterscheidbare Kanten festhalten und einen gemeinsamen Inhaltsdigest bilden.
+1. **Choose the basic contract.** Provide the fixed shipped Core contract for core/v1. A project import cannot override it.
+2. **Capture identities.** Index all Core and project definitions together. Check envelope, uniqueness and reserved IDs. The order of the documents is irrelevant.
+3. **Check the type reference.** Every kind reference must point to an existing definition whose own kind is exactly core/v1/Kind. The fixed self-binding of core/v1/Kind is valid. Arbitrary self-typed project definitions are not thereby permitted.
+4. **Check meta contracts.** Check definitions of Kind and Property against the fixed beginning. Then check their additional language invariants, such as valid cardinalities and the obligation of target for reference.
+5. **Build type contracts.** For every Kind, collect the referenced property definitions by spec.name. Duplicate field names are errors. Object contracts are built in a bounded way; cyclic object field contracts that would have to be unfolded infinitely are invalid in this candidate. Ordinary reference cycles are different from this.
+6. **Check all values.** Check every definition, including the Core definitions, against its Kind as thus known. Reject unknown fields, wrong value forms, missing mandatory values or wrong reference targets.
+7. **Bind the model.** Normalize all definitions including bodies and structured contracts, record type and value references as distinguishable edges and form a shared content digest.
 
-Fuer Exchange.sender ergibt sich die konkrete Pruefkette:
+For Exchange.sender, the following concrete check chain results:
 
 ```text
 list-documents.kind -> Exchange
@@ -803,142 +803,142 @@ list-documents.spec.sender -> api
 api.kind -> Container
 ```
 
-Damit ist formal geprueft, dass sender eine existierende Container-Definition bezeichnet. Die Aussage, dass diese Anwendung fachlich als Sender geeignet ist und Nachrichten richtig behandelt, folgt nicht aus dieser Kette.
+This formally checks that sender denotes an existing Container definition. The statement that this application is suitable in domain terms as a sender and handles messages correctly does not follow from this chain.
 
-### 12.6 Welche Regeln wirklich fest im Core stehen
+### 12.6 Which rules really stand fixed in the Core
 
-| Feste Regel | Warum sie nicht allein aus dem body folgt |
+| Fixed rule | Why it does not follow from the body alone |
 | --- | --- |
-| Huelle und Identitaet | Der Compiler muss wissen, welche Felder Identitaet, Typbezug, Koerper und strukturierte Werte tragen. |
-| Bedeutung der zwei Meta-Kinds | Nur die fest gebundenen Kind-/Property-Identitaeten erzeugen Typ- und Feldvertraege. Ein Projekt-Kind mit dem Namen Kind hat keine Sonderrechte. |
-| Verbindung von Typ und Properties | spec.properties eines Kinds und spec.name einer Property bestimmen seine erlaubten Wertschluessel; ID-Segmente tun das nicht. |
-| Werttypsemantik | string, boolean, integer, number, enum, object und reference brauchen implementierte Pruefregeln. Ein neuer Enumtext installiert keinen neuen Operator. |
-| Kardinalitaetssemantik | minCount ist nichtnegativ; maxCount ist -1 oder mindestens minCount. maxCount=1 bedeutet Einzelwert, sonst Liste. Null und unbekannte Felder sind im Kandidaten ungueltig. |
-| Bedingte Metaregeln | reference erfordert target; enum erfordert eindeutige erlaubte Werte; object verwendet seine Feldvertraege. Unpassende Zusatzfelder sind Fehler. Diese Zusammenhaenge sind im Seed nicht durch blosses integer oder string ausgedrueckt. |
-| Exakte Referenzpruefung | Ein Ziel muss existieren und sein deklarierter Kind muss zum Propertyvertrag passen. Keine implizite Vererbung, Versionsergaenzung oder Suchheuristik. |
-| Bindung und allgemeine Koerpergeltung | Typ- und Propertykoerper gehoeren zum Vertrag ihrer Verwendungen; individuelle Aussagen ergaenzen sie. Widersprueche werden nicht durch stilles Ueberschreiben geloest. Der Digest muss die gesamten bodies erhalten. |
-| Endlichkeit und Grenzen | Die Verarbeitung muss mit festen Groessen-/Tiefengrenzen enden. Der Prototyp ist keine gehaertete Produktionsimplementierung aller Eingabegrenzen. |
+| Envelope and identity | The compiler must know which fields carry identity, type reference, body and structured values. |
+| Meaning of the two meta-Kinds | Only the fixed-bound Kind/Property identities produce type and field contracts. A project Kind with the name Kind has no special rights. |
+| Connection of type and Properties | spec.properties of a Kind and spec.name of a Property determine its permitted value keys; ID segments do not. |
+| Value type semantics | string, boolean, integer, number, enum, object and reference need implemented check rules. A new enum text installs no new operator. |
+| Cardinality semantics | minCount is non-negative; maxCount is -1 or at least minCount. maxCount=1 means a single value, otherwise a list. Null and unknown fields are invalid in the candidate. |
+| Conditional meta rules | reference requires target; enum requires unique permitted values; object uses its field contracts. Unsuitable additional fields are errors. These relationships are not expressed in the seed by mere integer or string. |
+| Exact reference check | A target must exist and its declared Kind must match the property contract. No implicit inheritance, version completion or search heuristics. |
+| Binding and general applicability of bodies | Type and property bodies belong to the contract of their uses; individual statements supplement them. Contradictions are not resolved by silent overriding. The digest must cover the entire bodies. |
+| Finiteness and limits | Processing must terminate with fixed size/depth limits. The prototype is not a hardened production implementation of all input limits. |
 
-Insbesondere ist die Bereichsregel fuer Property.minCount eine fest verstandene Sprachinvariante. Daraus folgt keine automatische Kenntnis des positiven Wertebereichs von Exchange.maxAttempts. Letzterer steht weiterhin in fachlicher Prosa und benoetigt semantische Beurteilung, solange kein allgemeiner Werteconstraint eingefuehrt wird.
+In particular, the range rule for Property.minCount is a language invariant understood as fixed. No automatic knowledge of the positive value range of Exchange.maxAttempts follows from this. The latter continues to stand in domain prose and needs semantic assessment, as long as no general value constraint is introduced.
 
-Ein eigener kindReference-Werttyp ist im Kandidaten nicht noetig: Ein Bezug auf einen Typ ist eine normale reference mit target core/v1/Kind. Der heutige Produkt-Core hat weiterhin seinen bisherigen kindReference-Typ; dessen Migration wird hier nicht implementiert.
+A separate kindReference value type is not necessary in the candidate: A reference to a type is a normal reference with target core/v1/Kind. Today's product Core still has its previous kindReference type; its migration is not implemented here.
 
-### 12.7 Tatsaechlich durchgefuehrte Entwurfsprobe
+### 12.7 Design probe actually performed
 
-Ein temporaerer eigenstaendiger Python-Prototyp hat den fest bereitgestellten Core-Vertrag und die neue Connector-Datei geladen. Die Basis wurde strukturell akzeptiert: zehn feste Core-Definitionen plus einundvierzig Projektdefinitionen ergeben einundfuenfzig Knoten, darunter zehn Kinds und achtundzwanzig Properties. Der abgeleitete Graph besitzt einhundertdreizehn Kanten, einschliesslich kind-Verweisen und den neuen Meta-Beziehungen. Er hat deshalb einen anderen Umfang als die siebzehn rein fachlichen Referenzkanten des frueheren Strukturbeispiels.
+A temporary independent Python prototype loaded the fixed provided Core contract and the new Connector file. The basis was structurally accepted: ten fixed Core definitions plus forty-one project definitions yield fifty-one nodes, among them ten Kinds and twenty-eight Properties. The derived graph has one hundred and thirteen edges, including kind references and the new meta relationships. It therefore has a different scope from the seventeen purely domain reference edges of the earlier structural example.
 
-Sechzehn ungueltige Varianten wurden gezielt abgewiesen, darunter: Core-Ueberschreibung, doppelte Identitaet, unbekannter Kind, konkretes Element als kind-Ziel, konkretes Element in einer Propertyliste, doppelte Propertynamen, konkretes Element als Property.target, fehlendes target, ungueltige Kardinalitaet, unbekannter Werttyp, unbekannter formaler Constraint, fehlende Pflichtproperty, falscher Referenz-Kind, fehlende genaue Version, unbekanntes Instanzfeld und beliebige Selbsttypisierung. Die Fehlercodes stehen im verlinkten Bericht.
+Sixteen invalid variants were rejected in a targeted way, among them: Core override, duplicate identity, unknown Kind, concrete element as kind target, concrete element in a property list, duplicate property names, concrete element as Property.target, missing target, invalid cardinality, unknown value type, unknown formal constraint, missing mandatory Property, wrong reference Kind, missing exact version, unknown instance field and arbitrary self-typing. The error codes are in the linked report.
 
-Die Probe bestaetigt ausserdem fuer diesen Datensatz die Selbstkonsistenz des festen Anfangs, Reihenfolgeunabhaengigkeit und die Beruecksichtigung geaenderter Kind-, Property- und individueller bodies im Digest. Ein zusaetzlicher gewoehnlicher Projekt-Kind namens Kind erhaelt keine besondere Sprachbedeutung. maxAttempts=0 und replyChannel=requests bleiben dagegen strukturell akzeptiert und verlangen dieselbe fachliche Beurteilung wie zuvor.
+For this record, the probe also confirms the self-consistency of the fixed beginning, order independence and the inclusion of changed Kind, Property and individual bodies in the digest. An additional ordinary project Kind named Kind receives no special language meaning. maxAttempts=0 and replyChannel=requests, by contrast, remain structurally accepted and require the same domain assessment as before.
 
-Der Bericht bindet die beiden Eingabedateien und den temporaeren Prototyp ueber SHA-256 und nennt den Repository-Quellstand als Kontext. Er ist Evidenz fuer diese begrenzte Entwurfsprobe, kein Ergebnis des heutigen Go-Core-Compilers oder ein universeller Sprachbeweis. Die neue Probe prueft keine selbststaendige semantische Interpretation von Prosa, keinen produktiven Loader, keine generische Delegation, keinen vollstaendigen Impact und keine Connector-Laufzeit.
+The report binds the two input files and the temporary prototype through SHA-256 and names the repository source state as context. It is evidence for this bounded design probe, not a result of today's Go Core compiler or a universal language proof. The new probe checks no independent semantic interpretation of prose, no production loader, no generic delegation, no complete impact and no Connector runtime.
 
-### 12.8 Bewertung dieses Kandidaten
+### 12.8 Assessment of this candidate
 
-Die gemeinsame Grundform kann den festen Anfang und das vollstaendige strukturierte Exchange-Beispiel tragen. Die Typ- und Propertybezuege sind nun im selben adressierbaren Graphen wie die konkreten Gegenstaende. Dazu muss der Core weiterhin zwei Meta-Kinds, die Interpretation ihrer Felder, Werttypen, Bindung und Kardinalitaeten fest verstehen.
+The shared basic form can carry the fixed beginning and the complete structured Exchange example. The type and property references are now in the same addressable graph as the concrete items. For this, the Core must still understand as fixed two meta-Kinds, the interpretation of their fields, value types, binding and cardinalities.
 
-Der Gewinn ist eine gemeinsame Definitionenform und ein gemeinsamer Bezugsmechanismus. Die festen Regeln sind durch die Selbstbeschreibung sichtbar und nachvollziehbar, aber nicht aus dem Compiler verschwunden. Ob das fuer Autoren und die nachfolgende Markitect-Verarbeitung insgesamt einfacher ist als getrennte Schema-/Definitionsformen, bleibt die naechste Bewertung. Es wird hier keine generelle Ausreichendheit allein aus erfolgreicher Strukturpruefung abgeleitet.
+The gain is a shared definition form and a shared reference mechanism. The fixed rules are visible and traceable through the self-description, but have not disappeared from the compiler. Whether this is simpler overall for authors and the subsequent Markitect processing than separate schema/definition forms remains the next assessment. No general sufficiency is derived here from a successful structure check alone.
 
-## 13. Vergleich und Empfehlung fuer Markitect
+## 13. Comparison and recommendation for Markitect
 
-Auftrag des Nutzers: Die gemeinsame Grundform mit dem bisherigen Core vergleichen, echte Einsparungen und neue Komplexitaet benennen und eine Variante empfehlen. Bewertet werden der vorhandene strukturelle Core und die begrenzte selbstbeschreibende Entwurfsprobe. Die aktuell fest akzeptierten Entscheidungen body sowie das vorlaeufige Weglassen von requirements und roles gelten unabhaengig von der Variantenwahl.
+The user's request: Compare the shared basic form with the previous Core, name real savings and new complexity and recommend a variant. Assessed are the existing structural Core and the bounded self-describing design probe. The currently firmly accepted decisions body and the provisional omission of requirements and roles apply independently of the choice of variant.
 
-**Nachfolgende Nutzerentscheidung:** Die einheitliche Grundform mit Kind und Property wird gewaehlt. Die Empfehlung in 13.4 ist damit ueberholt; die sachlichen Abwaegungen bleiben die Herleitung. Die aktuelle Richtung und die kompakte Propertyform stehen in Abschnitt 14.
+**Subsequent user decision:** The uniform basic form with Kind and Property is chosen. The recommendation in 13.4 is thereby superseded; the factual trade-offs remain the derivation. The current direction and the compact property form are in section 14.
 
-### 13.1 Was nicht eingespart wird
+### 13.1 What is not saved
 
-Kind bleibt ein Typvertrag, Property bleibt eine Feld-/Relationsdeklaration und ein konkreter Gegenstand bleibt eine Verwendung dieses Vertrags. Die gemeinsame Huelle kann diese Rollen ausdruecken, hebt sie aber nicht auf. Beide Varianten benoetigen Werttypen, Kardinalitaeten, exakte Referenzbindung, Namens-/Versionsregeln sowie verbindliche Prosa und geeignete semantische Beurteilung.
+Kind remains a type contract, Property remains a field/relation declaration and a concrete item remains a use of this contract. The shared envelope can express these roles but does not abolish them. Both variants need value types, cardinalities, exact reference binding, naming/version rules as well as binding prose and suitable semantic assessment.
 
-Frei definierbares Projektvokabular ist bereits im bisherigen Core moeglich. Weder Bibliotheksimporte noch ein verbindlicher Koerper noch die Beruecksichtigung einer Kind-Aenderung setzen einen selbsttypisierten Kind voraus. Der vorhandene Digest bindet bereits die Kind- und Propertybedeutung. Der bisherige Produktworkflow mit festem Manager-/Statement-Vokabular ist eine weitere Schicht und darf nicht mit der Ausdrucksfaehigkeit des strukturellen Cores verwechselt werden.
+Freely definable project vocabulary is already possible in the previous Core. Neither library imports nor a binding body nor the inclusion of a Kind change presuppose a self-typed Kind. The existing digest already binds the Kind and property meaning. The previous product workflow with fixed Manager/Statement vocabulary is a further layer and must not be confused with the expressiveness of the structural Core.
 
-### 13.2 Was die gemeinsame Grundform wirklich gewinnt
+### 13.2 What the shared basic form really gains
 
-| Bereich | Bisheriger expliziter Core | Selbstbeschreibender Kandidat | Tatsaechlicher Unterschied |
+| Area | Previous explicit Core | Self-describing candidate | Actual difference |
 | --- | --- | --- | --- |
-| Dokumentstruktur | Schema mit Kind-/Propertyvertraegen; konkrete Definitionen daneben. | Eine Huelle aus id, kind, body und spec. | Eine einheitliche Datensatzform. |
-| Kind und konkrete Gegenstaende | Unterschiedliche adressierbare Vertragstypen; kindReference als eigener Werttyp. | Kinds sind Definitionen des festen Meta-Kinds Kind. | Typziele koennen mit dem allgemeinen Referenzmechanismus adressiert werden. Die besondere Typpruefung bleibt. |
-| Properties | Im Typvertrag eingebettet und ueber ihren Namen beziehungsweise Pfad bestimmt. | Properties besitzen explizite Definitionenidentitaeten und werden vom Kind referenziert. | Erstklassige Propertyknoten fuer Anzeige, Herkunft und Bezuege. |
-| Gemeinsamer Propertyvertrag | Gleichartige Angaben stehen im bisherigen Core als eingebettete Deklarationen an ihren jeweiligen Kinds; eine Wiederverwendung braucht Autoren-/Loaderhilfe oder eine Erweiterung. | Mehrere Kinds koennen ausdruecklich dieselbe Propertydefinition referenzieren. | Ein gemeinsam gepflegter Feldvertrag wird strukturell unmittelbar moeglich. Gleichnamige Felder sind dadurch nicht automatisch gleich; der bisherige Exchange-Datensatz benoetigt diese Wiederverwendung nicht. |
-| Modellgraph | Der heutige Core liefert Kanten zwischen konkreten Definitionen; Typvertraege liegen daneben. | Der Prototyp stellt auch kind-Bezuege und Meta-Beziehungen als Kanten dar. | Gemeinsamer Graph wird unmittelbar sichtbar. Eine solche Sicht kann auch aus dem expliziten Core abgeleitet werden. |
-| Schema | Deklariert einen genauen versionierten Typvertrag. | Kann als Paket-/Importzusammenstellung ausserhalb der einheitlichen Definitionenform behandelt werden. | Das besondere Schemadokument kann entfallen; Gruppierung, Versionierung und Auswahl bleiben erforderlich. |
-| Identitaet | Konkrete Identitaet enthaelt den Kind. | Der Kandidat trennt id vom kind-Verweis. | Eine eigenstaendige Identitaetsentscheidung; sie ist nicht logisch an Selbstbeschreibung gebunden. |
+| Document structure | Schema with Kind/property contracts; concrete definitions next to it. | One envelope of id, kind, body and spec. | A uniform record form. |
+| Kind and concrete items | Different addressable contract types; kindReference as a separate value type. | Kinds are definitions of the fixed meta-Kind Kind. | Type targets can be addressed with the general reference mechanism. The special type check remains. |
+| Properties | Embedded in the type contract and determined by their name or path. | Properties have explicit definition identities and are referenced by the Kind. | First-class property nodes for display, provenance and references. |
+| Shared property contract | In the previous Core, entries of the same sort stand as embedded declarations at their respective Kinds; reuse needs authoring/loader help or an extension. | Several Kinds can explicitly reference the same property definition. | A jointly maintained field contract becomes structurally directly possible. Fields of the same name are not thereby automatically equal; the previous Exchange data set does not need this reuse. |
+| Model graph | Today's Core provides edges between concrete definitions; type contracts lie next to them. | The prototype also represents kind references and meta relationships as edges. | A shared graph becomes directly visible. Such a view can also be derived from the explicit Core. |
+| Schema | Declares an exact versioned type contract. | Can be treated as a package/import collection outside the uniform definition form. | The special schema document can be dropped; grouping, versioning and selection remain required. |
+| Identity | The concrete identity contains the Kind. | The candidate separates id from the kind reference. | A separate identity decision; it is not logically bound to self-description. |
 
-Eine gemeinsame Huelle und die Ablage im selben Graphen sind echte Vereinheitlichungen. Die Behauptung, vier notwendige semantische Konzepte auf eines reduziert zu haben, waere dagegen zu stark. Ein Grundformat enthaelt weiterhin zwei fest interpretierte Meta-Kinds und konkrete Verwendungen. Ebenso wird ein entfallendes kindReference durch die weiterhin erforderliche Unterscheidung zwischen Typziel und konkretem Ziel semantisch nicht voellig ersatzlos gestrichen.
+A shared envelope and storage in the same graph are real unifications. The claim of having reduced four necessary semantic concepts to one would, by contrast, be too strong. One basic format still contains two fixed-interpreted meta-Kinds and concrete uses. Likewise, a dropped kindReference is not semantically removed entirely without replacement, because of the still required distinction between type target and concrete target.
 
-### 13.3 Welche Komplexitaet hinzukommt
+### 13.3 What complexity is added
 
-Der explizite Core beginnt mit bekannten Datenstrukturen und prueft gelieferte Typvertraege. Der selbstbeschreibende Kandidat benoetigt zusaetzlich einen festen versionierten Anfang, seine Grunddefinitionen und den Abgleich zwischen ihrer deklarativen Darstellung und den implementierten Metaregeln. Kind.kind=Kind ist begrenzt handhabbar, muss aber eine ausdrueckliche Sprachregel und fuer Werkzeuge verstaendlich sein.
+The explicit Core starts with known data structures and checks supplied type contracts. The self-describing candidate additionally needs a fixed versioned beginning, its basic definitions and the reconciliation between their declarative representation and the implemented meta rules. Kind.kind=Kind can be handled in a bounded way, but must be an explicit language rule and understandable for tools.
 
-Bei einer vollstaendigen Vereinheitlichung kommen ausserdem folgende Aufgaben hinzu:
+With a complete unification, the following tasks are added as well:
 
-- Core-Identitaeten und der gelieferte Grundvertrag muessen von Projektdefinitionen unterscheidbar und gegen Ueberschreiben geschuetzt sein.
-- kind darf nur gueltige Typdefinitionen referenzieren. Beliebige vorhandene Knoten oder frei selbsttypisierte Projektknoten reichen nicht.
-- Properties erhalten eigene Identitaeten und einen zusaetzlichen Eintrag in der Propertyliste ihres Kinds. name und id besitzen unterschiedliche Aufgaben.
-- Ein kleiner Typvertrag wird in mehrere Datensaetze und Bezuege aufgeteilt. Eine eingebettete Autorenkurzform wuerde wiederum einen ausdruecklichen Normalisierungsvertrag brauchen.
-- Paketierung und Versionierung muessen fuer die neue Identitaetsform geklaert werden. Die bisherigen vierteiligen Definitionenidentitaeten gehen nicht automatisch darin auf.
+- Core identities and the supplied basic contract must be distinguishable from project definitions and protected against overriding.
+- kind may only reference valid type definitions. Arbitrary existing nodes or freely self-typed project nodes are not sufficient.
+- Properties get their own identities and an additional entry in the property list of their Kind. name and id have different tasks.
+- A small type contract is split into several records and references. An embedded authoring short form would in turn need an explicit normalization contract.
+- Packaging and versioning must be clarified for the new identity form. The previous four-part definition identities are not automatically absorbed into it.
 
-Die projektfachlichen Inhalte werden dadurch nicht weniger: Der alte Durchstich beschreibt acht Kinds, zwanzig Properties und dreizehn konkrete Gegenstaende. Die neue Datei beschreibt dieselben einundvierzig Projektbestandteile nun als explizite Definitionen und fuegt zehn feste Core-Definitionen hinzu. Dreizehn alte Definitionen mit einundfuenfzig neuen Knoten direkt zu vergleichen, waere irrefuehrend; die alten eingebetteten Vertraege duerfen nicht verschwinden. Genauso wenig belegt die neue Knoten- oder Kantenzahl fuer sich eine Laufzeit- oder Kontextkostensteigerung. Dafuer wurde keine Messung durchgefuehrt.
+The project domain contents do not become fewer through this: The old vertical slice describes eight Kinds, twenty Properties and thirteen concrete items. The new file describes the same forty-one project constituents now as explicit definitions and adds ten fixed Core definitions. Directly comparing thirteen old definitions with fifty-one new nodes would be misleading; the old embedded contracts must not disappear. Equally, the new node or edge count does not by itself evidence an increase in runtime or context cost. No measurement was performed for this.
 
-### 13.4 Empfehlung
+### 13.4 Recommendation
 
-**Damals abgegebene Assistentenempfehlung, inzwischen durch die Nutzerwahl abgeloest:** Fuer Markitect zunaechst den expliziten strukturellen Core weiterentwickeln. Kind- und Propertyvertraege bleiben unmittelbar deklarierte Typstruktur, konkrete Gegenstaende verwenden diese Typen. Alle Koerper heissen in der angestrebten Autorenform body. requirements und roles erhalten wie beschlossen keine besondere Verarbeitung.
+**Assistant recommendation given at the time, since superseded by the user's choice:** For Markitect, initially develop the explicit structural Core further. Kind and property contracts remain directly declared type structure; concrete items use these types. All bodies are called body in the intended authoring form. requirements and roles receive no special processing, as decided.
 
-Der relevante Gewinn der neuen Untersuchung soll erhalten bleiben: **Kind-, Property- und konkrete Definitionen sollen gemeinsam adressierbar und im Modellgraphen sichtbar sein.** Dafuer koennen bestehende Schema-/Kindidentitaeten und eindeutige Propertypfade verwendet beziehungsweise geeignet praezisiert werden. Typbezuege und Zuordnung der Properties werden daraus abgeleitet. Autoren muessen nicht zusaetzlich jede Property als eigenstaendige Instanz von core.Property pflegen. Eine solche Graphsicht und ihre genaue Adressierung sind eine geplante Erweiterung, keine bereits vorhandene Funktion des heutigen Definitionengraphen.
+The relevant gain of the new investigation should be preserved: **Kind, property and concrete definitions should be jointly addressable and visible in the model graph.** For this, existing schema/Kind identities and unique property paths can be used or suitably made more precise. Type references and the assignment of the Properties are derived from them. Authors need not additionally maintain every Property as an independent instance of core.Property. Such a graph view and its exact addressing are a planned extension, not an already existing function of today's definition graph.
 
-Das trennt eine einheitliche Sicht fuer Werkzeuge und Kontextbildung von einer vollstaendigen Selbstbeschreibung der Sprache. Eine eigene Referenz auf einen Kind kann im expliziten Sprachvertrag vorerst als kindReference bestehen bleiben. Referenzen auf Propertyvertraege und Koerperlinks brauchen gegebenenfalls einen allgemeinen Symboladressvertrag; dessen genaue Syntax ist weiterhin offen. Weder diese Adressierung noch eine neue unabhaengige Elementidentitaet werden hier nebenbei als akzeptiert vorausgesetzt.
+This separates a uniform view for tools and context formation from a complete self-description of the language. A dedicated reference to a Kind can remain as kindReference in the explicit language contract for now. References to property contracts and body links may need a general symbol address contract; its exact syntax is still open. Neither this addressing nor a new independent element identity is presupposed here incidentally as accepted.
 
-Entscheidend fuer die Empfehlung ist, dass die bisher gefundenen Beschreibungsbedarfe eine vollstaendige Behandlung der Typ- und Propertydeklarationen als gleichartige Autorendatensaetze noch nicht zwingend verlangen. Der feste selbstbeschreibende Anfang schafft vor allem Einheitlichkeit der Darstellung und unmittelbar referenzierbare, gegebenenfalls gemeinsam nutzbare Propertyvertraege. Die Arbeit an vollstaendigen geltenden Kontexten, semantischer Aenderungsbewertung und unabhaengiger Realisierungspruefung bleibt in beiden Varianten bestehen. Eine geringere Zahl sichtbarer Dokumentformen allein rechtfertigt den zusaetzlichen Meta-Vertrag deshalb vorerst nicht. Das ist eine begruendete Entwurfsentscheidung, keine Messung des spaeteren Implementierungs- oder Wartungsaufwands.
+Decisive for the recommendation is that the description needs found so far do not yet compellingly require a complete treatment of type and property declarations as authoring records of the same sort. The fixed self-describing beginning mainly creates uniformity of representation and directly referenceable, possibly jointly usable property contracts. The work on complete applicable contexts, semantic change assessment and independent realization checking remains in both variants. A smaller number of visible document forms alone therefore does not justify the additional meta contract for now. This is a justified design decision, not a measurement of the later implementation or maintenance effort.
 
-Die gemeinsame Definitionenform bleibt eine ernsthafte Alternative, wenn sich die unmittelbare Bearbeitung und Verknuepfung von Typ- und Propertydefinitionen als zentraler Arbeitsfall erweist und eine abgeleitete gemeinsame Sicht dafuer nicht ausreicht. Der bisherige Prototyp beweist weder diesen Zusatznutzen noch die generelle Ueberlegenheit einer Variante. Es wurde keine Implementierung auf den empfohlenen Weg umgestellt.
+The shared definition form remains a serious alternative if the direct editing and linking of type and property definitions turns out to be a central work case and a derived shared view does not suffice for it. The previous prototype proves neither this added value nor the general superiority of one variant. No implementation was converted to the recommended path.
 
-## 14. Gewaehlte Grundform und kompakte Properties
+## 14. Chosen basic form and compact Properties
 
-**Nutzerentscheidung:** Markitect verwendet als neue Designrichtung die einheitliche Grundform mit Kind und Property. Eine Typdefinition, eine Propertydefinition und die Beschreibung eines konkreten Projektgegenstands sind Definitionen mit Identitaet, kind-Bezug, verbindlichem body und strukturierten Werten. Kind und Property sind die fest verstandenen Grundtypen. Projektbegriffe werden als weitere Kinds definiert. Die Wahl von body und das vorlaeufige Weglassen von requirements und roles bleiben bestehen.
+**User decision:** As its new design direction, Markitect uses the uniform basic form with Kind and Property. A type definition, a property definition and the description of a concrete project item are definitions with identity, kind reference, binding body and structured values. Kind and Property are the basic types understood as fixed. Project terms are defined as further Kinds. The choice of body and the provisional omission of requirements and roles remain in place.
 
-**Zusaetzlicher Auftrag:** Properties kompakt direkt beim Kind darstellen. Die folgende Autorenform und ihre Normalisierung sind ein konkreter Vorschlag zu diesem Auftrag. Der Produktcompiler und sein heutiges Autorenformat wurden nicht geaendert.
+**Additional request:** Represent Properties compactly directly at the Kind. The following authoring form and its normalization are a concrete proposal for this assignment. The product compiler and its present authoring format were not changed.
 
-### 14.1 Eine eingebettete Property ist eine Kurzform ihrer Definition
+### 14.1 An embedded Property is a short form of its definition
 
-Unter spec.properties eines Kinds kann statt einer Liste ausgeschriebener Propertyreferenzen eine Zuordnung vom Feldnamen zu eingebetteten Propertyvertraegen stehen. Eine eingebettete Property enthaelt ihren body und ihre Vertragsfelder direkt. id, kind und name werden eindeutig aus dem Ort ergaenzt; sie werden nicht noch einmal gepflegt.
+Under spec.properties of a Kind, instead of a list of written-out property references, there can be a mapping from the field name to embedded property contracts. An embedded Property contains its body and its contract fields directly. id, kind and name are supplied unambiguously from the location; they are not maintained a second time.
 
-Ein gekuerzter Exchange-Ausschnitt:
+A shortened Exchange excerpt:
 
 ```yaml
 id: connector/v1/Exchange
 kind: core/v1/Kind
 body: >-
-  Beschreibt einen Request-/Reply-Vertrag zwischen sender und receiver.
-  Antworten behalten die MessageId des Requests.
-  timeoutSeconds gilt als Wartefrist pro Versuch.
+  Describes a request/reply contract between sender and receiver.
+  Replies keep the MessageId of the request.
+  timeoutSeconds applies as the waiting period per attempt.
 spec:
   properties:
     sender:
-      body: Anwendung in der Auftraggeberrolle dieses Austauschs.
+      body: Application in the requester role of this exchange.
       type: reference
       target: connector/v1/Container
       minCount: 1
       maxCount: 1
     receiver:
-      body: Anwendung in der Bearbeiterrolle dieses Austauschs.
+      body: Application in the handler role of this exchange.
       type: reference
       target: connector/v1/Container
       minCount: 1
       maxCount: 1
     timeoutSeconds:
-      body: Positive maximale Wartefrist pro Versuch in Sekunden.
+      body: Positive maximum waiting period per attempt in seconds.
       type: integer
       minCount: 1
       maxCount: 1
 ```
 
-Der Ausschnitt reduziert den Vertrag nur zur Erklaerung. Die [vollstaendige kompakte Connector-Datei](bootstrap/connector-compact.yaml) enthaelt alle acht Kinds und dreizehn konkreten Gegenstaende mit saemtlichen sieben Exchange-Properties und insgesamt zwanzig eingebetteten Propertydefinitionen.
+The excerpt reduces the contract only for explanation. The [complete compact Connector file](bootstrap/connector-compact.yaml) contains all eight Kinds and thirteen concrete items with all seven Exchange Properties and a total of twenty embedded property definitions.
 
-Der Ausschnitt sender wird vor der Typpruefung genau zu folgender ausgeschriebener Definition:
+Before the type check, the sender excerpt becomes exactly the following written-out definition:
 
 ```yaml
 id: connector/v1/Exchange/sender
 kind: core/v1/Property
-body: Anwendung in der Auftraggeberrolle dieses Austauschs.
+body: Application in the requester role of this exchange.
 spec:
   name: sender
   type: reference
@@ -947,25 +947,25 @@ spec:
   maxCount: 1
 ```
 
-Am ausgeschriebenen Exchange steht danach unter spec.properties die Referenz connector/v1/Exchange/sender, entsprechend fuer alle weiteren Properties. Das Modell enthaelt weiterhin dieselbe Propertydefinition mit eigener Identitaet und Bedeutung. Es gibt keine zwei parallel zu pflegenden kanonischen Beschreibungen; die ausgeschriebene Form ist das abgeleitete Ergebnis der kompakten Eingabe.
+At the written-out Exchange, the reference connector/v1/Exchange/sender then stands under spec.properties, and correspondingly for all further Properties. The model still contains the same property definition with its own identity and meaning. There are no two canonical descriptions to be maintained in parallel; the written-out form is the derived result of the compact input.
 
-### 14.2 Eindeutige Normalisierungsregeln
+### 14.2 Unambiguous normalization rules
 
-1. Die Kurzform gilt in den bekannten Metakontexten Kind.spec.properties und object-Property.spec.properties. Ein beliebiges fachliches Feld namens properties aktiviert sie nicht.
-2. Der Zuordnungsschluessel ist der Propertyname. Eine eingebettete Definition bekommt die ID aus der exakten Besitzer-ID, einem Trenner / und diesem Namen; kind ist core/v1/Property. spec.name wird aus dem Schluessel gesetzt.
-3. body wird unveraendert in die Propertydefinition uebernommen. type, target, minCount, maxCount sowie gegebenenfalls values und properties werden in ihre spec uebernommen. Es werden keine zusaetzlichen Kardinalitaetsdefaults eingefuehrt.
-4. Die eingebettete Form darf id, kind und name nicht widerspruechlich nochmals angeben. Unbekannte Felder sind Fehler. Der Prototyp verlangt einen nichtleeren Namen ohne /; damit ist der Trenner fuer die Ableitung eindeutig. Die endgueltige Identitaetsgrammatik bleibt zu spezifizieren.
-5. Die erzeugten Definitionen werden zusammen mit dem uebrigen Eingabesatz indiziert und typgeprueft. Eine Kollision mit einer anderen erzeugten oder ausgeschriebenen ID ist ein Fehler, auch bei gleichem Inhalt. Doppelte YAML-Schluessel werden bereits beim Einlesen abgewiesen.
-6. Die bisherige ausgeschriebene Referenzliste bleibt moeglich. Als kompakte Wiederverwendung kann ein Zuordnungswert direkt eine Property-ID sein; deren name muss mit dem Zuordnungsschluessel uebereinstimmen. Ein Alias, der die Property still umbenennt, ist nicht vorgesehen.
-7. Bei einem object koennen dessen Felder wiederum kompakt deklariert werden. Ihre IDs werden relativ zur umgebenden Property abgeleitet, beispielsweise Kind/envelope/messageId. Die bekannten Tiefengrenzen gelten weiter.
+1. The short form applies in the known meta contexts Kind.spec.properties and object-Property.spec.properties. An arbitrary domain field named properties does not activate it.
+2. The mapping key is the property name. An embedded definition gets its ID from the exact owner ID, a separator / and this name; kind is core/v1/Property. spec.name is set from the key.
+3. body is taken over unchanged into the property definition. type, target, minCount, maxCount as well as, where applicable, values and properties are taken over into its spec. No additional cardinality defaults are introduced.
+4. The embedded form must not state id, kind and name again in a contradictory way. Unknown fields are errors. The prototype requires a non-empty name without /; this makes the separator unambiguous for the derivation. The final identity grammar remains to be specified.
+5. The generated definitions are indexed and type-checked together with the remaining input set. A collision with another generated or written-out ID is an error, even with equal content. Duplicate YAML keys are already rejected when reading in.
+6. The previous written-out reference list remains possible. As compact reuse, a mapping value can directly be a property ID; its name must agree with the mapping key. An alias that silently renames the Property is not provided for.
+7. For an object, its fields can in turn be declared compactly. Their IDs are derived relative to the enclosing Property, for example Kind/envelope/messageId. The known depth limits continue to apply.
 
-Fuer eine spaetere produktive Umsetzung muss Herkunft erhalten bleiben: Ein Fehler an der erzeugten sender-Property soll auf die entsprechende eingebettete Angabe zeigen. Der Normalisierungsbericht dokumentiert dafuer Besitzer, Feldschluessel und erzeugte ID; er ist keine fertige Produktdiagnostik mit Dateizeilen.
+For a later production implementation, provenance must be preserved: An error at the generated sender Property should point to the corresponding embedded entry. For this, the normalization report documents owner, field key and generated ID; it is not finished product diagnostics with file lines.
 
-### 14.3 Referenzierbarkeit und Umbenennung
+### 14.3 Referenceability and renaming
 
-Der nachfolgende Identitaetsentwurf in Abschnitt 15 untersucht zusaetzlich eine optionale stabile lokale id fuer eingebettete Properties. Das ist eine ausdrueckliche Fortentwicklung der hier geprueften Kurzsyntax, die inline id noch abweist. Die bisherigen Proben bleiben unveraendert und belegen diese neue Ausnahme nicht; die neue begrenzte Probe in Abschnitt 16 untersucht sie separat.
+The subsequent identity draft in section 15 additionally examines an optional stable local id for embedded Properties. This is an explicit further development of the short syntax checked here, which still rejects inline id. The previous probes remain unchanged and do not evidence this new exception; the new bounded probe in section 16 examines it separately.
 
-Eine eingebettete Property ist weiterhin ueber ihre abgeleitete ID referenzierbar. Sie kann von einem weiteren Kind ohne Kopie wiederverwendet werden, wenn dessen Feldname derselbe bleibt. In der kompakten Form lautet ein solcher Ausschnitt:
+An embedded Property remains referenceable through its derived ID. It can be reused by a further Kind without a copy if that Kind's field name stays the same. In the compact form, such an excerpt reads:
 
 ```yaml
 spec:
@@ -973,41 +973,41 @@ spec:
     sender: connector/v1/Exchange/sender
 ```
 
-Das Wiederverwenden eines gemeinsamen Vertrags ist eine ausdrueckliche Autorenentscheidung, keine automatische Gleichsetzung aller gleichnamigen Felder. Fuer eine dauerhaft gemeinsam gepflegte Property kann ihre ausgeschriebene Definition an einer eigenen stabilen ID stehen. Ein Verschieben oder Umbenennen einer eingebetteten Property aendert dagegen ihre abgeleitete ID und muss bei bestehenden Referenzen als Modellaenderung behandelt werden. Es gibt kein stilles Auffinden ueber alte Namen.
+Reusing a shared contract is an explicit authoring decision, not an automatic equating of all fields of the same name. For a Property that is maintained jointly in the long term, its written-out definition can stand at its own stable ID. Moving or renaming an embedded Property, by contrast, changes its derived ID and must be treated as a model change for existing references. There is no silent lookup via old names.
 
-Die konkrete Definition list-documents aendert sich durch die Kurzform nicht. Sie referenziert weiterhin den Kind Exchange und setzt sender, receiver, command, Kanaele und Wartewerte. Sie muss weder die Propertydefinitionen noch deren bodies wiederholen.
+The concrete definition list-documents does not change through the short form. It still references the Kind Exchange and sets sender, receiver, command, channels and waiting values. It needs to repeat neither the property definitions nor their bodies.
 
-### 14.4 Ausgefuehrte begrenzte Probe
+### 14.4 Bounded probe executed
 
-Ein temporaerer Normalisierungsprototyp hat die kompakte Datei eingelesen, ihre zwanzig eingebetteten Properties ausgeschrieben und das Ergebnis mit der bisherigen ausgeschriebenen Connector-Datei verglichen. Die einundzwanzig direkt geschriebenen Definitionen ergeben nach Normalisierung dieselben einundvierzig Projektdefinitionen. Zusammen mit dem unveraenderten festen Anfang bleiben es einundfuenfzig Definitionen und einhundertdreizehn Kanten.
+A temporary normalization prototype read in the compact file, wrote out its twenty embedded Properties and compared the result with the previous written-out Connector file. After normalization, the twenty-one directly written definitions yield the same forty-one project definitions. Together with the unchanged fixed beginning, there remain fifty-one definitions and one hundred and thirteen edges.
 
-**Ergebnis:** Definitioneninhalte, Modelldigest und Kanten sind zwischen ausgeschriebener und kompakter Eingabe identisch. Neun ungueltige Autorenvarianten wurden abgewiesen: zusaetzliche inline id, kind oder name, fehlender body, ungueltiger Name, ungueltige Form, Kollision einer erzeugten ID, widerspruechlicher Name bei Propertywiederverwendung und doppelte YAML-Schluessel. Wiederverwendung ohne Propertykopie, geschachtelte Objektfelder und ein unveraendertes fachliches Datenfeld namens properties wurden ebenfalls gegengeprueft.
+**Result:** Definition contents, model digest and edges are identical between written-out and compact input. Nine invalid authoring variants were rejected: additional inline id, kind or name, missing body, invalid name, invalid form, collision of a generated ID, contradictory name in property reuse and duplicate YAML keys. Reuse without property copy, nested object fields and an unchanged domain data field named properties were also cross-checked.
 
-Der [kompakte Pruefbericht](bootstrap/compact-probe.json) bindet die drei Eingabedateien und beide temporaeren Prototypen ueber SHA-256. Die alte [Bootstrap-Probe](bootstrap/probe.json) und ihre Eingangsdaten bleiben unveraendert. Diese neue Probe belegt die begrenzte Normalisierung gegen denselben separaten Entwurfscompiler. Sie ist keine bereits implementierte Produktunterstuetzung und prueft weder semantische Prosa noch die Connector-Laufzeit.
+The [compact check report](bootstrap/compact-probe.json) binds the three input files and both temporary prototypes through SHA-256. The old [bootstrap probe](bootstrap/probe.json) and its input data remain unchanged. This new probe evidences the bounded normalization against the same separate design compiler. It is not already implemented product support and checks neither semantic prose nor the Connector runtime.
 
-## 15. Identitaeten, Imports, Versionen und Umbenennungen
+## 15. Identities, imports, versions and renamings
 
-**Nachfolgende Nutzerentscheidung:** Der hier entworfene und in Abschnitt 16 durchgespielte Identitätsvertrag wird gewählt. Seine aktuelle konsolidierte Fassung steht im [Sprachvertrag](language-contract.md#names). Dieser Abschnitt bleibt die frühere Ausarbeitung; noch offene lexikalische und produktive Details werden durch die Auswahl nicht als implementiert behandelt.
+**Subsequent user decision:** The identity contract drafted here and played through in section 16 is chosen. Its current consolidated version is in the [language contract](language-contract.md#names). This section remains the earlier elaboration; details still open at the lexical and production level are not treated as implemented because of the choice.
 
-Auftrag des Nutzers: Kinds, konkrete Definitionen und eingebettete Properties auch mit Imports, Versionen und Umbenennungen eindeutig adressieren. Der folgende Identitaetsvertrag ist ein zusammenhaengender Vorschlag. Gewaehlt bleiben die einheitliche Grundform, Kind und Property, body sowie die kompakte Darstellung; die neue Identitaetsnotation, ein optionales title und die nachfolgende Importpolitik werden durch diesen Entwurf nicht als bereits angenommen behandelt.
+The user's request: Address Kinds, concrete definitions and embedded Properties unambiguously, also with imports, versions and renamings. The following identity contract is a coherent proposal. The uniform basic form, Kind and Property, body and the compact representation remain chosen; the new identity notation, an optional title and the subsequent import policy are not treated as already accepted by this draft.
 
-### 15.1 Drei verschiedene Fragen
+### 15.1 Three different questions
 
-| Frage | Vorgeschlagene Antwort |
+| Question | Proposed answer |
 | --- | --- |
-| Welcher Gegenstand ist gemeint? | Stabile logische Identitaet aus Paket-ID und definitionslokaler id. Der Kind ist kein Teil dieser Identitaet. |
-| Wie heisst er fuer Leser? | Optionaler Anzeigename title; sonst kann die id angezeigt werden. Der Anzeigename ist kein Referenzziel. |
-| Welche Fassung gilt gerade? | Der gebundene Modellstand legt die exakten Paketversionen und Inhalte fest. |
+| Which item is meant? | Stable logical identity from package ID and definition-local id. The Kind is not part of this identity. |
+| What is it called for readers? | Optional display name title; otherwise the id can be displayed. The display name is not a reference target. |
+| Which version currently applies? | The bound model state stipulates the exact package versions and contents. |
 
-Beispiel einer logischen Identitaet: (example/connector-project, Exchange). Sie kann ueber mehrere Modellstaende bestehen bleiben. Die Adresse einer bestimmten Fassung benoetigt zusaetzlich deren Modell- beziehungsweise Paketbindung. Eine Referenz auf eine dauerhafte Identitaet allein verspricht keine unveraenderte Bedeutung ueber Versionswechsel hinweg.
+Example of a logical identity: (example/connector-project, Exchange). It can persist across several model states. The address of a particular version additionally needs its model or package binding. A reference to a lasting identity alone does not promise unchanged meaning across version changes.
 
-IDs duerfen lesbar sein. Eine einmal vergebene id wird jedoch nicht bei jeder sprachlichen Umbenennung angepasst und nicht absichtlich fuer einen anderen Gegenstand wiederverwendet. Universell vorgeschriebene UUIDs sind fuer diesen Vorschlag nicht erforderlich. Dass eine inhaltliche Aenderung dieselbe Sache fortentwickelt oder einen neuen Gegenstand schafft, ist teilweise eine fachliche Entscheidung, keine rein syntaktische Pruefung.
+IDs may be readable. An id once assigned, however, is not adjusted with every linguistic renaming and is not deliberately reused for a different item. Universally prescribed UUIDs are not required for this proposal. Whether a change of content develops the same thing further or creates a new item is partly a domain decision, not a purely syntactic check.
 
-### 15.2 Paket und Importkontext
+### 15.2 Package and import context
 
-Ein Paket liefert einen zusammengehoerigen Satz von Definitionen mit einer stabilen Paket-ID. Es kann Projektdefinitionen oder Bibliotheksvokabular enthalten. Paket- und Importangaben sind die Auswahl-/Ladehuelle um die einheitlichen Definitionen, keine neuen eingebauten fachlichen Kinds.
+A package supplies a cohesive set of definitions with a stable package ID. It can contain project definitions or library vocabulary. Package and import information are the selection/loading envelope around the uniform definitions, not new built-in domain Kinds.
 
-Ein beispielhafter Projektkopf koennte lauten:
+An exemplary project header could read:
 
 ```yaml
 package: example/connector-project
@@ -1020,135 +1020,135 @@ imports:
     version: "1.2.0"
 ```
 
-Diese Paketnamen und Versionswerte sind Designbeispiele, keine Behauptung verfuegbarer veroeffentlichter Bibliotheken. core und architecture sind nur lokale Importkuerzel. Sie gehoeren nicht zur dauerhaften Identitaet der importierten Definitionen. Die im Prototyp benutzten IDs wie connector/v1/Exchange bleiben der nachgewiesene vorherige Stand; die Trennung von Paket, lokaler Identitaet und Versionsbindung ist eine vorgeschlagene Weiterentwicklung.
+These package names and version values are design examples, not a claim of available published libraries. core and architecture are only local import aliases. They do not belong to the lasting identity of the imported definitions. The IDs used in the prototype such as connector/v1/Exchange remain the evidenced previous state; the separation of package, local identity and version binding is a proposed further development.
 
-Das Projekt deklariert seine eigenen Definitionen in example/connector-project. Innerhalb einer Bibliothek gelten deren eigener Paket- und Importkontext. Importkuerzel des Projekts werden nicht in Bibliotheken hineingetragen. Transitive Abhaengigkeiten koennen fuer die Aufloesung eines importierten Vertrags geladen werden; Autoren erhalten dadurch keine implizite globale Namenssuche ueber alle Abhaengigkeiten. Fuer einen eigenen qualifizierten Autorenbezug wird der betreffende Import ausdruecklich benannt.
+The project declares its own definitions in example/connector-project. Within a library, that library's own package and import context applies. Import aliases of the project are not carried into libraries. Transitive dependencies can be loaded for the resolution of an imported contract; authors do not thereby obtain an implicit global name search across all dependencies. For an own qualified authoring reference, the import concerned is named explicitly.
 
-Der Compiler muss den fest verstandenen Core an dessen tatsaechlich gebundener Paket-/Definitionsidentitaet erkennen. Ein Alias core oder ein lokaler Kind mit dem Namen Kind verleihen keine Sonderbedeutung. Der feste Core-Vertrag darf weiterhin nicht durch einen Projektimport ersetzt werden.
+The compiler must recognize the Core understood as fixed by its actually bound package/definition identity. An alias core or a local Kind with the name Kind confers no special meaning. The fixed Core contract must still not be replaced by a project import.
 
-### 15.3 Eine Referenzschreibweise fuer alle Ziele
+### 15.3 One reference notation for all targets
 
-| Autorenbezug | Aufloesung im Projektbeispiel |
+| Authoring reference | Resolution in the project example |
 | --- | --- |
-| Exchange | Lokale Definition (example/connector-project, Exchange). |
-| list-documents | Lokale Definition (example/connector-project, list-documents). |
-| Exchange/sender | Lokale Propertydefinition (example/connector-project, Exchange/sender). |
-| architecture:Container | Definition (markitect/architecture, Container) aus dem angegebenen Import. |
-| core:Kind | Fester Meta-Kind (markitect/core, Kind) aus dem gebundenen Core. |
+| Exchange | Local definition (example/connector-project, Exchange). |
+| list-documents | Local definition (example/connector-project, list-documents). |
+| Exchange/sender | Local property definition (example/connector-project, Exchange/sender). |
+| architecture:Container | Definition (markitect/architecture, Container) from the specified import. |
+| core:Kind | Fixed meta-Kind (markitect/core, Kind) from the bound Core. |
 
-Der vorgeschlagene Kurzvertrag ist: ein unqualifizierter Bezug sucht ausschliesslich im eigenen Paket; alias:id sucht ausschliesslich im benannten Import. Fehlende Ziele, unbekannte Aliase, doppelte lokale IDs oder doppelte Importkuerzel sind Fehler. Es gibt keine Suche nach Anzeigenamen, keine Auswahl anhand des erwarteten Zieltyps, keine Dateipfadauflosung und keinen Ersatz durch einen aehnlichen Namen.
+The proposed short contract is: an unqualified reference searches exclusively in its own package; alias:id searches exclusively in the named import. Missing targets, unknown aliases, duplicate local IDs or duplicate import aliases are errors. There is no search by display names, no selection by the expected target type, no file path resolution and no substitution by a similar name.
 
-Lokale IDs sind gross-/kleinschreibungssensitiv und werden exakt verglichen. Der Trenner : ist fuer die Importqualifizierung reserviert; leere Bestandteile und Pfadsegmente wie . oder .. sind in dieser Kurznotation nicht vorgesehen. / kann als expliziter Trenner von Unteridentitaeten verwendet werden, ist aber kein Dateisystempfad. Eine vollstaendige Grammatik und Escape-/Unicodepolitik muss vor einer Implementierung festgelegt werden; die Beispiele erzwingen hier keine stillen Normalisierungen.
+Local IDs are case-sensitive and are compared exactly. The separator : is reserved for import qualification; empty constituents and path segments such as . or .. are not provided for in this short notation. / can be used as an explicit separator of sub-identities, but is not a file system path. A complete grammar and escape/Unicode policy must be stipulated before an implementation; the examples here force no silent normalizations.
 
-Nach der Autorenaufloesung steht im Modell die kanonische Paket-/Definitionsidentitaet. Sie kann fuer Werkzeuge beispielsweise strukturiert als {package: markitect/architecture, id: Container} dargestellt werden. Ein weiteres langes Autorenformat wird dadurch noch nicht zwingend eingefuehrt. Alle nachfolgenden Typpruefungen verwenden die gebundenen Zielidentitaeten, nicht die lokalen Aliasstrings.
+After authoring resolution, the canonical package/definition identity stands in the model. For tools it can be represented, for example, in structured form as {package: markitect/architecture, id: Container}. A further long authoring format is not thereby necessarily introduced yet. All subsequent type checks use the bound target identities, not the local alias strings.
 
-kind, Property.target und konkrete reference-Werte benutzen denselben Adressmechanismus. Ihre Typanforderungen unterscheiden sich weiterhin: kind und ein Property.target muessen auf gueltige Kinds zeigen; Exchange.sender verlangt eine Container-Definition. Ein expliziter Koerperlink sollte spaeter dieselbe Zielaufloesung verwenden. Seine genaue Markupsyntax ist weiterhin offen, und ein normaler Worttreffer im body wird nicht zur kanonischen Referenz.
+kind, Property.target and concrete reference values use the same address mechanism. Their type requirements continue to differ: kind and a Property.target must point to valid Kinds; Exchange.sender requires a Container definition. An explicit body link should later use the same target resolution. Its exact markup syntax is still open, and a normal word match in the body does not become a canonical reference.
 
-### 15.4 Versionen an den Modellstand binden
+### 15.4 Binding versions to the model state
 
-**Vorschlag fuer den ersten Umfang:** Pro Paket-ID ist in einem gebundenen Modell genau eine Version zulaessig. Jeder Bibliotheksimport benennt eine genaue Version. Keine Versionbereiche, kein latest und keine Auswahl des zuerst gefundenen Pakets. Falls zwei direkte oder transitive Imports fuer dieselbe Paket-ID verschiedene Versionen benoetigen, wird ein Konflikt gemeldet.
+**Proposal for the first scope:** Per package ID, exactly one version is permitted in a bound model. Every library import names an exact version. No version ranges, no latest and no selection of the first package found. If two direct or transitive imports need different versions for the same package ID, a conflict is reported.
 
-Die gewaehlte Version wird zusammen mit einem Digest des konkreten Paketinhalts gebunden. Eine Versionsbezeichnung allein reicht nicht als Inhaltsnachweis. Gleiche Paket-ID und Version mit abweichenden Bytes duerfen einen bereits gebundenen Inhalt nicht still ersetzen. Die Auswahl- beziehungsweise Lockinformation muss auch die transitive Abhaengigkeitsschliessung eindeutig machen. Die genaue Datei-/Installationsform dieser Information bleibt offen; der Strukturcompiler soll dafuer kein Netzwerk oder Paketinstallationsprogramm ausfuehren.
+The chosen version is bound together with a digest of the concrete package content. A version label alone is not sufficient as evidence of content. The same package ID and version with deviating bytes must not silently replace an already bound content. The selection or lock information must also make the transitive dependency closure unambiguous. The exact file/installation form of this information remains open; the structure compiler should not run a network or package installation program for this.
 
-Das lokale Projekt benoetigt fuer jede uncommittete Aenderung keine neue Veroeffentlichungsnummer. Seine festen Eingaben werden durch den jeweiligen Quell-/Modellstand gebunden. Der gemeinsame Modellstand erfasst Projektinhalt, verwendete Core-/Bibliotheksvertraege und die ausgewaehlten Paketbindungen. Referenzen muessen dafuer nicht rekursiv den noch zu berechnenden Modelldigest in ihre eigenen Inhalte einsetzen.
+The local project needs no new release number for every uncommitted change. Its fixed inputs are bound by the respective source/model state. The shared model state captures project content, used Core/library contracts and the selected package bindings. For this, references need not recursively insert the model digest that is still to be computed into their own contents.
 
-Ein Paketupdate laesst beispielsweise die logische Identitaet Container bestehen, waehlt aber einen neuen Vertrag. Danach werden betroffene Definitionen und ihre Realisierungen gegen den neuen gebundenen Stand betrachtet. Die Versionsnummer allein beweist keine fachliche Kompatibilitaet. Fuer die Bewertung eines Nachweises wird die konkrete Modellbindung benoetigt, nicht bloss die dauerhafte Definitionen-ID.
+A package update, for example, lets the logical identity Container persist but selects a new contract. After that, affected definitions and their realizations are considered against the new bound state. The version number alone proves no domain compatibility. For the assessment of evidence, the concrete model binding is needed, not merely the lasting definition ID.
 
-Die Beschraenkung auf eine Version pro Paket ist eine bewusste Vereinfachung dieses Vorschlags, keine grundsaetzliche Unmoeglichkeit paralleler Versionen. Eine spaetere Mehrversionsloesung braeuchte ausdrueckliche Version-/Instanzqualifizierung und Typvergleiche innerhalb genau dieser Bindungen. Zwei Aliase auf verschiedene Versionen duerfen im ersten Umfang diese Regel nicht umgehen. Verschiedene fachliche Softwareversionen als Projektgegenstaende zu beschreiben, bleibt davon unberuehrt.
+The restriction to one version per package is a deliberate simplification of this proposal, not a fundamental impossibility of parallel versions. A later multi-version solution would need explicit version/instance qualification and type comparisons within exactly these bindings. In the first scope, two aliases to different versions must not circumvent this rule. Describing different domain software versions as project items remains unaffected by this.
 
-### 15.5 Exchange mit stabiler Identitaet und lesbarer Bezeichnung
+### 15.5 Exchange with stable identity and readable name
 
-Innerhalb des obigen Pakets kann ein Kind wie folgt deklariert werden:
+Within the package above, a Kind can be declared as follows:
 
 ```yaml
 id: Exchange
-title: Request-/Reply-Vertrag
+title: Request/reply contract
 kind: core:Kind
 body: >-
-  Beschreibt den Austausch eines Auftrags und seiner Antwort.
-  Der Empfaenger erhaelt die MessageId in der Antwort.
+  Describes the exchange of a request and its reply.
+  The receiver preserves the MessageId in the reply.
 spec:
   properties:
     sender:
-      body: Anwendung in der Auftraggeberrolle.
+      body: Application in the requester role.
       type: reference
       target: architecture:Container
       minCount: 1
       maxCount: 1
 ```
 
-Das ist ein Ausschnitt der vorgeschlagenen neuen Identitaetsform, kein gegen den bestehenden Produktcompiler gepruefter Eingabesatz. title ist ein optionaler Vorschlag fuer die gemeinsame Huelle; es ersetzt keinen body und keine Feldbedeutung. Ein title-Wechsel aendert nicht die Identitaet. Der gespeicherte Modellstand darf die geaenderte Darstellung trotzdem erfassen.
+This is an excerpt of the proposed new identity form, not an input set checked against the existing product compiler. title is an optional proposal for the shared envelope; it replaces no body and no field meaning. A change of title does not change the identity. The stored model state may nevertheless capture the changed representation.
 
-Die Property hat im Normalfall die logische Identitaet (example/connector-project, Exchange/sender). Eine konkrete Definition list-documents im selben Paket setzt kind auf Exchange und sender auf api. Ob die Dateien Exchange.yaml oder routing-model.yaml heissen, aendert diese Identitaeten nicht.
+In the normal case, the Property has the logical identity (example/connector-project, Exchange/sender). A concrete definition list-documents in the same package sets kind to Exchange and sender to api. Whether the files are called Exchange.yaml or routing-model.yaml does not change these identities.
 
-### 15.6 Anzeigename, Feldname und Identitaet umbenennen
+### 15.6 Renaming display name, field name and identity
 
-**Anzeigename:** Aus dem Titel Request-/Reply-Vertrag darf Auftragsaustausch werden. id Exchange, Typbezuege und Propertyidentitaeten bleiben gleich. Die Autorenbezeichnung muss nicht dauerhaft den historischen ID-Text spiegeln.
+**Display name:** The title Request/reply contract may become Request exchange. id Exchange, type references and property identities stay the same. The authoring name need not permanently mirror the historical ID text.
 
-**Propertyfeld:** Aus sender wird requester. Das ist eine Aenderung des Typvertrags, weil konkrete specs nun den neuen Schluessel verwenden muessen. Soll dieselbe Propertyidentitaet erhalten bleiben, schlage ich eine optionale stabile lokale id in der eingebetteten Form vor:
+**Property field:** sender becomes requester. This is a change of the type contract, because concrete specs must now use the new key. If the same property identity is to be preserved, I propose an optional stable local id in the embedded form:
 
 ```yaml
 spec:
   properties:
     requester:
       id: sender
-      body: Anwendung in der Auftraggeberrolle.
+      body: Application in the requester role.
       type: reference
       target: architecture:Container
       minCount: 1
       maxCount: 1
 ```
 
-Hier ist sender ein stabiler lokaler Identitaetsbaustein, keine Paketadresse und kein alternativer Feldname. Die Normalisierung erzeugt weiter id Exchange/sender und kind core:Property, setzt aber spec.name auf requester. body und Vertragsfelder werden wie bisher uebernommen. Ohne ausdrueckliche id ist der Baustein weiterhin der Zuordnungsschluessel. id darf keine fremde Paketadresse oder Besitzerhierarchie einschleusen; die genaue Segmentgrammatik ist noch festzulegen.
+Here sender is a stable local identity building block, not a package address and not an alternative field name. The normalization still produces id Exchange/sender and kind core:Property, but sets spec.name to requester. body and contract fields are taken over as before. Without an explicit id, the building block remains the mapping key. id must not smuggle in a foreign package address or owner hierarchy; the exact segment grammar is still to be stipulated.
 
-**Das erweitert den vorherigen Kurzsyntaxvorschlag bewusst.** Die Probe aus Abschnitt 14 weist inline id noch ab. Sie bleibt ein unveraenderter Nachweis der damaligen Syntax und belegt diese Erweiterung nicht. Eine zukuenftige Normalisierung muss die optionale id pruefen und Kollisionen abweisen. kind und ein separates name werden weiterhin nicht frei in die Kurzform hineingeschrieben.
+**This deliberately extends the previous short syntax proposal.** The probe from section 14 still rejects inline id. It remains unchanged evidence of the syntax of that time and does not evidence this extension. A future normalization must check the optional id and reject collisions. kind and a separate name are still not freely written into the short form.
 
-Die stabile Propertyidentitaet bewahrt Bezuege auf den Feldvertrag. Sie migriert nicht automatisch bestehende konkrete specs: sender muss dort zu requester werden. Auch relevante Prosa und Integrationserwartungen sind auf die Vertragsaenderung zu pruefen. Reine Textvorkommen sind keine vollstaendig vom Compiler erfassten Referenzen.
+The stable property identity preserves references to the field contract. It does not automatically migrate existing concrete specs: sender must become requester there. Relevant prose and integration expectations are also to be checked for the contract change. Mere text occurrences are not references completely captured by the compiler.
 
-**Echte ID-Aenderung:** Soll auch Exchange selbst eine neue id erhalten, ist das eine ausdrueckliche Identitaetsmigration. Bekannte kind-, target-, Wertreferenzen und explizite Koerperlinks muessen angepasst werden. Der Compiler meldet stehengebliebene alte Ziele als Fehler. Eine dauerhafte automatische Weiterleitung oder versteckte Namenshistorie wird fuer den minimalen Core nicht vorgeschlagen.
+**Real ID change:** If Exchange itself is also to get a new id, that is an explicit identity migration. Known kind, target and value references and explicit body links must be adjusted. The compiler reports old targets left behind as errors. A permanent automatic redirection or hidden name history is not proposed for the minimal Core.
 
-### 15.7 Verschieben, Imports umbenennen und Bibliotheken weiterentwickeln
+### 15.7 Moving, renaming imports and developing libraries further
 
-| Aenderung | Erwartetes Verhalten |
+| Change | Expected behaviour |
 | --- | --- |
-| Definition in eine andere Datei desselben Pakets verschieben | Identitaet und Referenzen bleiben bei gleichem Paket und id bestehen. Die Ladeauswahl muss die Datei weiterhin erfassen. |
-| Importkuerzel architecture zu arch aendern | Autorenbezuege dieses Pakets werden angepasst; die kanonischen Zielidentitaeten bleiben gleich. Andere Pakete behalten ihre eigenen Importkuerzel. |
-| Eingebettete Property ausschreiben | Im selben Paket mit derselben vollstaendigen lokalen id weiterfuehren, etwa Exchange/sender. Sie bleibt derselbe Gegenstand. |
-| Property unter einen anderen Kind verschieben | Standardableitung wuerde die ID aendern. Fuer Identitaetserhalt die bisherige Property ausschreiben und ausdruecklich wiederverwenden; keine heimliche neue Besitzeradresse erfinden. |
-| Definition in ein anderes Paket verschieben | Die Paket-ID ist Teil der Identitaet. Das ist eine ausdrueckliche Migration oder eine neue Definition, kein blosser Dateiumzug. |
-| Zwei Pakete liefern jeweils eine id Container | Kein Konflikt: Die Paket-IDs unterscheiden die Ziele. Lokale Aliasqualifizierung macht den Autorenbezug eindeutig. |
-| Bibliotheksversion aktualisieren | Geaenderte Inhalte neu binden und gegen den neuen Vertrag pruefen. Alte veroeffentlichte Staende und darauf bezogene Nachweise bleiben gebunden. |
-| Definition loeschen und unter aehnlichem Namen neu anlegen | Bestehende Referenzen brechen; keine automatische Zuordnung anhand des Namens. |
+| Move a definition into another file of the same package | Identity and references persist with the same package and id. The loading selection must still capture the file. |
+| Change the import alias architecture to arch | Authoring references of this package are adjusted; the canonical target identities stay the same. Other packages keep their own import aliases. |
+| Write out an embedded Property | Continue it in the same package with the same complete local id, for example Exchange/sender. It remains the same item. |
+| Move a Property under a different Kind | The standard derivation would change the ID. To preserve identity, write out the previous Property and reuse it explicitly; do not invent a secret new owner address. |
+| Move a definition into another package | The package ID is part of the identity. This is an explicit migration or a new definition, not a mere file move. |
+| Two packages each supply an id Container | No conflict: The package IDs distinguish the targets. Local alias qualification makes the authoring reference unambiguous. |
+| Update a library version | Bind changed contents anew and check them against the new contract. Old published states and evidence relating to them remain bound. |
+| Delete a definition and create it anew under a similar name | Existing references break; no automatic mapping by name. |
 
-Ein veroeffentlichter Bibliotheksstand wird nicht nachtraeglich fuer eine Umbenennung umgeschrieben. Eine neue Fassung kann IDs beibehalten, ihren Anzeigenamen aendern oder einen ausdruecklichen Migrationsschritt benoetigen. Ob alte Leser weiterhin funktionieren, haengt vom erhaltenen Vertrag ab. Der Core leitet daraus weder Entwicklungsprozesse noch Freigaberechte ab.
+A published library state is not rewritten after the fact for a renaming. A new version can keep IDs, change their display name or need an explicit migration step. Whether old readers continue to work depends on the preserved contract. The Core derives neither development processes nor approval rights from this.
 
-### 15.8 Was der Core beziehungsweise der Loader pruefen kann
+### 15.8 What the Core or the loader can check
 
-Loader und Importauswahl stellen einen eindeutigen Eingabesatz samt Paketbindungen her. Der strukturelle Core prueft auf dieser Grundlage eindeutige Identitaeten, exakte Referenzziele, passende Kinds, gueltige abgeleitete Property-IDs und widerspruchsfreie Feldnamen. Alle benoetigten Vertragstexte bleiben in der Modellbindung.
+Loader and import selection produce an unambiguous input set including package bindings. On this basis, the structural Core checks unique identities, exact reference targets, matching Kinds, valid derived property IDs and non-contradictory field names. All needed contract texts remain in the model binding.
 
-Dass zwei frei formulierte Beschreibungen denselben Gegenstand meinen, eine Umbenennung fachlich harmlos ist oder eine neue Version die Absicht bewahrt, bleibt Gegenstand von Review und geeigneten Nachweisen. Keine stabile ID ist ein semantischer Kompatibilitaetsbeweis.
+That two freely formulated descriptions mean the same item, that a renaming is harmless in domain terms or that a new version preserves the intent remains a subject of review and suitable evidence. No stable ID is a proof of semantic compatibility.
 
-**Empfohlener erster Vertrag:** Paket-ID plus stabile lokale ID; lokale und aliasqualifizierte Referenzen; ein exakt gebundener Inhalt pro Paket im Modell; optionaler Anzeigename; standardmaessig abgeleitete und bei Bedarf ausdruecklich stabilisierte Propertyidentitaeten. Keine automatische Namenssuche, Versionswahl oder Weiterleitung. Der Vorschlag bleibt zur Besprechung; der folgende Abschnitt 16 prueft seine Aufloesung und Bindung inzwischen in einem eigenstaendigen begrenzten Prototyp. Ein produktiver Importloader ist damit nicht implementiert.
+**Recommended first contract:** Package ID plus stable local ID; local and alias-qualified references; one exactly bound content per package in the model; optional display name; property identities derived by default and explicitly stabilized when needed. No automatic name search, version selection or redirection. The proposal remains for discussion; the following section 16 now checks its resolution and binding in a standalone bounded prototype. A production import loader is not thereby implemented.
 
-## 16. Identitaetsdurchgang mit Import, Update und Feldumbenennung
+## 16. Identity walkthrough with import, update and field renaming
 
-**Nachfolgende Nutzerentscheidung:** Der Identitätsvertrag dieses Durchgangs wird festgehalten und mit der gewählten Grundform als [zusammenhängender Sprachvertrag](language-contract.md) konsolidiert. Die folgenden Abschnitte dokumentieren den geprüften Entwurfsstand und dessen Grenzen.
+**Subsequent user decision:** The identity contract of this walkthrough is recorded and consolidated with the chosen basic form as a [coherent language contract](language-contract.md). The following sections document the checked draft state and its limits.
 
-Auftrag des Nutzers: Den Identitaetsvertrag am Exchange mit importiertem Vokabular, Versionsupdate und sender/requester vollstaendig durchspielen. Die Daten liegen unter identities/ und sind ein geschlossenes synthetisches Designbeispiel. Die Paketnamen behaupten keine existierenden veroeffentlichten Bibliotheken. Die gewaehlte Grundrichtung bleibt erhalten; die konkrete Paket-/Versionspolitik und die optionale stabile inline id bleiben untersuchte Vorschlaege.
+The user's request: Play through the identity contract completely at the Exchange with imported vocabulary, version update and sender/requester. The data lies under identities/ and is a closed synthetic design example. The package names do not claim existing published libraries. The chosen basic direction is preserved; the concrete package/version policy and the optional stable inline id remain examined proposals.
 
-### 16.1 Getrennte Paketverantwortung
+### 16.1 Separate package responsibility
 
-| Paket | Inhalt |
+| Package | Content |
 | --- | --- |
-| markitect/core, Version 1.0.0 | Fester Anfang aus Kind, Property und ihren acht Propertydefinitionen. |
-| example/connector-vocabulary | Importierbares Vokabular mit den acht Kinds und zwanzig Properties des Connector-Beispiels, darunter Exchange. |
-| example/connector-project | Die dreizehn konkreten Projektdefinitionen, darunter api, onprem, Kanaele, Command und list-documents. |
+| markitect/core, version 1.0.0 | Fixed beginning of Kind, Property and their eight property definitions. |
+| example/connector-vocabulary | Importable vocabulary with the eight Kinds and twenty Properties of the Connector example, among them Exchange. |
+| example/connector-project | The thirteen concrete project definitions, among them api, onprem, channels, Command and list-documents. |
 
-Der [Core-Artefakt](identities/core-1.0.0.yaml) besitzt einen bekannten Inhalt. Das Vokabular importiert core fuer seine Typdefinitionen. Das Projekt importiert core und das Vokabular unter connector. Die wiederholte Abhaengigkeit auf dieselbe Core-Version wird einmal gebunden; der Anfang wird nicht mehrfach instanziiert.
+The [Core artifact](identities/core-1.0.0.yaml) has a known content. The vocabulary imports core for its type definitions. The project imports core and the vocabulary under connector. The repeated dependency on the same Core version is bound once; the beginning is not instantiated several times.
 
-### 16.2 Stand A: Vokabular 1.0.0
+### 16.2 State A: vocabulary 1.0.0
 
-Der Projektkopf in [project-a.yaml](identities/project-a.yaml) lautet:
+The project header in [project-a.yaml](identities/project-a.yaml) reads:
 
 ```yaml
 package: example/connector-project
@@ -1161,90 +1161,90 @@ imports:
     version: "1.0.0"
 ```
 
-Die [Vokabulardatei 1.0.0](identities/vocabulary-1.0.0.yaml) importiert ihrerseits core und beschreibt Exchange, hier auf die Sender-Property gekuerzt:
+The [vocabulary file 1.0.0](identities/vocabulary-1.0.0.yaml) in turn imports core and describes Exchange, here shortened to the sender Property:
 
 ```yaml
 id: Exchange
 kind: core:Kind
 body: >-
-  Beschreibt den Request-/Reply-Vertrag zwischen sender und receiver.
-  Antworten behalten die MessageId des Requests.
+  Describes the request/reply contract between sender and receiver.
+  Replies keep the MessageId of the request.
 spec:
   properties:
     sender:
-      body: Anwendung in der Auftraggeberrolle.
+      body: Application in the requester role.
       type: reference
       target: Container
       minCount: 1
       maxCount: 1
 ```
 
-Container wird in dieser Vokabulardatei lokal aufgeloest. Das Projekt kuerzt nicht rueckwirkend die Importnamen innerhalb der Bibliothek um. Die konkrete Definition im Projekt ist dagegen von Kind connector:Exchange; sie setzt sender auf api, receiver auf onprem, command auf list-documents-command, requestChannel auf requests, replyChannel auf replies und die Werte auf 30 Sekunden beziehungsweise zwei Versuche.
+Container is resolved locally in this vocabulary file. The project does not retroactively rename the import names within the library. The concrete definition in the project, by contrast, is of Kind connector:Exchange; it sets sender to api, receiver to onprem, command to list-documents-command, requestChannel to requests, replyChannel to replies and the values to 30 seconds and two attempts respectively.
 
-Die kanonischen Zielidentitaeten lauten:
+The canonical target identities are:
 
-| Autorenbezug und Kontext | Kanonische Identitaet |
+| Authoring reference and context | Canonical identity |
 | --- | --- |
-| core:Kind im Vokabular | (markitect/core, Kind) |
-| connector:Exchange im Projekt | (example/connector-vocabulary, Exchange) |
-| connector:Exchange/sender im Projekt | (example/connector-vocabulary, Exchange/sender) |
-| Container als Propertyziel im Vokabular | (example/connector-vocabulary, Container) |
-| api als sender-Wert im Projekt | (example/connector-project, api) |
-| list-documents im Projekt | (example/connector-project, list-documents) |
+| core:Kind in the vocabulary | (markitect/core, Kind) |
+| connector:Exchange in the project | (example/connector-vocabulary, Exchange) |
+| connector:Exchange/sender in the project | (example/connector-vocabulary, Exchange/sender) |
+| Container as property target in the vocabulary | (example/connector-vocabulary, Container) |
+| api as sender value in the project | (example/connector-project, api) |
+| list-documents in the project | (example/connector-project, list-documents) |
 
-Die ersten beiden Paketfassungen sind mit ihren tatsaechlichen SHA-256-Digests in [locks.yaml, Bindung a](identities/locks.yaml) festgehalten. Der Projektinhalt und diese gebundenen Bibliotheksinhalte bilden den festen Stand A. Die konkrete Aufloesungskette ist:
+The first two package versions are recorded with their actual SHA-256 digests in [locks.yaml, binding a](identities/locks.yaml). The project content and these bound library contents form the fixed state A. The concrete resolution chain is:
 
 ```text
-Projekt.list-documents.kind -> Vokabular.Exchange
-Vokabular.Exchange.kind -> Core.Kind
-Vokabular.Exchange.properties -> Vokabular.Exchange/sender
-Vokabular.Exchange/sender.target -> Vokabular.Container
-Projekt.list-documents.sender -> Projekt.api
-Projekt.api.kind -> Vokabular.Container
+Project.list-documents.kind -> Vocabulary.Exchange
+Vocabulary.Exchange.kind -> Core.Kind
+Vocabulary.Exchange.properties -> Vocabulary.Exchange/sender
+Vocabulary.Exchange/sender.target -> Vocabulary.Container
+Project.list-documents.sender -> Project.api
+Project.api.kind -> Vocabulary.Container
 ```
 
-Alle sieben Exchange-Properties und saemtliche referenzierten Definitionen sind in den Dateien vorhanden. Die Darstellung oben ist nur der Ausschnitt fuer die Identitaetspruefung. Stand A wird strukturell akzeptiert.
+All seven Exchange Properties and all referenced definitions are present in the files. The representation above is only the excerpt for the identity check. State A is structurally accepted.
 
-### 16.3 Stand B: Update auf 1.1.0 bei unveraenderten Projektdefinitionen
+### 16.3 State B: update to 1.1.0 with unchanged project definitions
 
-Die [Vokabulardatei 1.1.0](identities/vocabulary-1.1.0.yaml) behaelt alle IDs und Propertyvertraege. Sie ergaenzt im Exchange-body eine neue allgemeine Pflicht:
+The [vocabulary file 1.1.0](identities/vocabulary-1.1.0.yaml) keeps all IDs and property contracts. In the Exchange body it adds a new general obligation:
 
-> Der Sender muss die Wartefrist jedes Versuchs anhand monotoner Zeitmessung bestimmen.
+> Der Sender muss die Wartefrist jedes Versuchs anhand monotoner Zeitmessung bestimmen. (English translation: “The sender must determine the waiting period of every attempt by monotonic time measurement.”)
 
-[project-b.yaml](identities/project-b.yaml) aendert nur den Versionsimport auf 1.1.0. Die zugehoerige Inhaltsbindung steht unter b in locks.yaml. Die konkreten Projektdefinitionen bleiben unveraendert und werden strukturell weiterhin akzeptiert. Auch die Referenzkanten bleiben gleich.
+[project-b.yaml](identities/project-b.yaml) changes only the version import to 1.1.0. The associated content binding is under b in locks.yaml. The concrete project definitions remain unchanged and continue to be structurally accepted. The reference edges also stay the same.
 
-Der gebundene Modellstand aendert sich trotzdem: Der Kind-Vertrag hat einen anderen body, das Paket besitzt einen anderen Inhalt und das Projekt waehlt diesen neuen Inhalt ausdruecklich. Eine alte Inhaltsbindung fuer 1.0.0 darf nicht als Bindung fuer 1.1.0 weiterverwendet werden.
+The bound model state changes nevertheless: The Kind contract has a different body, the package has a different content and the project explicitly selects this new content. An old content binding for 1.0.0 must not be reused as the binding for 1.1.0.
 
-**Die Strukturpruefung bestaetigt die neue Zeitmessung nicht.** Umsetzung und geeignete Nachweise muessen gegen die neue Pflicht betrachtet werden. Die Versionsnummer ist hier eine genaue Beispielbezeichnung, kein automatisch bewiesenes Kompatibilitaetsversprechen. Die Probe aendert oder prueft keinen laufenden Connector.
+**The structure check does not confirm the new time measurement.** Implementation and suitable evidence must be considered against the new obligation. The version number here is an exact example label, not an automatically proven compatibility promise. The probe neither changes nor checks any running Connector.
 
-### 16.4 Stand C: Version 2.0.0 benennt sender zu requester um
+### 16.4 State C: version 2.0.0 renames sender to requester
 
-Die [Vokabulardatei 2.0.0](identities/vocabulary-2.0.0.yaml) uebernimmt die Pflicht aus 1.1.0 und benennt den Exchange-Feldschluessel um. Sie behaelt die Propertyidentitaet ausdruecklich bei:
+The [vocabulary file 2.0.0](identities/vocabulary-2.0.0.yaml) takes over the obligation from 1.1.0 and renames the Exchange field key. It explicitly keeps the property identity:
 
 ```yaml
 spec:
   properties:
     requester:
       id: sender
-      body: Anwendung in der Auftraggeberrolle.
+      body: Application in the requester role.
       type: reference
       target: Container
       minCount: 1
       maxCount: 1
 ```
 
-Bei der Normalisierung wird daraus weiter die Definition (example/connector-vocabulary, Exchange/sender). Deren spec.name ist jetzt requester. Es entstehen weder eine zweite Property namens requester noch eine automatische Weiterleitung von alten Datenfeldern.
+In normalization this still becomes the definition (example/connector-vocabulary, Exchange/sender). Its spec.name is now requester. Neither a second Property named requester nor an automatic redirection of old data fields arises.
 
-Wird ausschliesslich der Import aktualisiert, scheitert der [veraltete Projektstand](identities/project-c-stale.yaml): sender ist in der neuen Exchange-spec nicht mehr erlaubt und requester ist erforderlich. Der Prototyp meldet zuerst spec.unknown-property fuer den alten Schluessel. Die stabile Property-ID macht den alten Feldschluessel nicht weiter gueltig.
+If only the import is updated, the [outdated project state](identities/project-c-stale.yaml) fails: sender is no longer permitted in the new Exchange spec and requester is required. The prototype first reports spec.unknown-property for the old key. The stable property ID does not keep the old field key valid.
 
-Der [migrierte Projektstand C](identities/project-c.yaml) setzt den neuen Schluessel; auf die relevanten Werte gekuerzt:
+The [migrated project state C](identities/project-c.yaml) sets the new key; shortened to the relevant values:
 
 ```yaml
 id: list-documents
 kind: connector:Exchange
 body: >-
-  Die API fordert Dokumentmetadaten an und registriert
-  den wartenden Austausch vor der Publikation.
+  The API requests document metadata and registers
+  the waiting exchange before publication.
 spec:
   requester: api
   receiver: onprem
@@ -1255,49 +1255,49 @@ spec:
   maxAttempts: 2
 ```
 
-Mit Bindung c wird dieser Stand strukturell akzeptiert. Ein ausdruecklicher Bezug connector:Exchange/sender findet in A, B und C dieselbe logische Propertyidentitaet. Die Wertebeziehung api bleibt dieselbe; ihr Feldpfad im konkreten Exchange aendert sich von spec.sender zu spec.requester. Die allgemeine Beschreibung wird in 2.0.0 auf requester angepasst. Ob jede weitere fachliche Prosa sinnvoll angepasst ist, kann reine Referenzaufloesung nicht entscheiden.
+With binding c this state is structurally accepted. An explicit reference connector:Exchange/sender finds the same logical property identity in A, B and C. The value relationship api stays the same; its field path in the concrete Exchange changes from spec.sender to spec.requester. The general description is adjusted to requester in 2.0.0. Whether every further domain prose has been sensibly adjusted cannot be decided by mere reference resolution.
 
-### 16.5 Was gleich bleibt und was sich aendert
+### 16.5 What stays the same and what changes
 
-| Merkmal | A | B | C, migriert |
+| Feature | A | B | C, migrated |
 | --- | --- | --- | --- |
-| Gebundenes Vokabular | 1.0.0 | 1.1.0 | 2.0.0 |
-| Logische Exchange-Identitaet | example/connector-vocabulary + Exchange | Gleich | Gleich |
-| Logische Propertyidentitaet | example/connector-vocabulary + Exchange/sender | Gleich | Gleich |
-| Konkrete Identitaet | example/connector-project + list-documents | Gleich | Gleich |
-| Feldschluessel | sender | sender | requester |
-| Zeitmessungspflicht | Noch nicht allgemein ergaenzt | Im Kind-body ergaenzt | Weiter geltend |
-| Strukturelles Ergebnis | Akzeptiert | Akzeptiert | Nach Feldmigration akzeptiert |
-| Gebundener Modellstand | A | Neu | Erneut neu |
+| Bound vocabulary | 1.0.0 | 1.1.0 | 2.0.0 |
+| Logical Exchange identity | example/connector-vocabulary + Exchange | Same | Same |
+| Logical property identity | example/connector-vocabulary + Exchange/sender | Same | Same |
+| Concrete identity | example/connector-project + list-documents | Same | Same |
+| Field key | sender | sender | requester |
+| Time measurement obligation | Not yet added generally | Added in the Kind body | Still applies |
+| Structural result | Accepted | Accepted | Accepted after field migration |
+| Bound model state | A | New | New again |
 
-Alle drei gueltigen Staende enthalten dieselben einundfuenfzig logischen Identitaeten und jeweils einhundertdreizehn Kanten. Die gleiche Anzahl bedeutet weder gleiche Inhalte noch gleiche Pflichten. Die konkreten Paketdigests und die drei unterschiedlichen Modelldigests stehen im [Pruefbericht](identities/probe.json).
+All three valid states contain the same fifty-one logical identities and one hundred and thirteen edges each. The equal count means neither equal contents nor equal obligations. The concrete package digests and the three different model digests are in the [check report](identities/probe.json).
 
-### 16.6 Gegenprobe: stabile ID bei der Umbenennung vergessen
+### 16.6 Counter-probe: stable ID forgotten during renaming
 
-Wird requester ohne id: sender deklariert, entsteht nach der Standardableitung die neue Propertyidentitaet Exchange/requester. Exchange/sender ist dann nicht mehr vorhanden. Der bereits migrierte konkrete Exchange kann trotzdem strukturell gueltig sein, wenn er keine alte Propertyadresse referenziert.
+If requester is declared without id: sender, the standard derivation produces the new property identity Exchange/requester. Exchange/sender then no longer exists. The already migrated concrete Exchange can nevertheless be structurally valid if it references no old property address.
 
-Das ist wichtig: Der Compiler kann aus dem Feldnamenwechsel allein nicht wissen, dass eine identitaetserhaltende Umbenennung beabsichtigt war. Der Vergleich zeigt dann geloeschte und hinzugefuegte Identitaeten; tatsaechliche alte Propertyreferenzen waeren unaufloesbar. Die ausdrueckliche stabile id unterscheidet die gewuenschte Umbenennung von der Anlage eines neuen Feldvertrags.
+This is important: From the change of field name alone, the compiler cannot know that an identity-preserving renaming was intended. The comparison then shows deleted and added identities; actual old property references would be unresolvable. The explicit stable id distinguishes the desired renaming from the creation of a new field contract.
 
-### 16.7 Ausgefuehrte Aufloesungs- und Bindungsprobe
+### 16.7 Resolution and binding probe executed
 
-Ein temporaerer eigenstaendiger Paket-/Referenzprototyp hat alle drei gueltigen Staende mit ihren jeweiligen Inhaltsbindungen aufgeloest. Er hat die aufgeloesten Paket-/ID-Paare als eindeutige JSON-Paare an den frueheren unabhaengigen Strukturprototyp weitergegeben. Der feste Anfang wurde auf die bekannten Core-Identitaeten gebunden; die Fachvokabulare erhielten dadurch keine besonderen Operatoren.
+A temporary standalone package/reference prototype resolved all three valid states with their respective content bindings. It passed the resolved package/ID pairs as unambiguous JSON pairs to the earlier independent structure prototype. The fixed beginning was bound to the known Core identities; the domain vocabularies did not thereby receive any special operators.
 
-Die Probe hat bestaetigt:
+The probe confirmed:
 
-- Alle drei gueltigen Staende besitzen dieselben logischen Identitaeten, aber unterschiedliche gebundene Modelldigests.
-- Stand B aendert den Kind-body ohne Aenderung der Felder oder Referenzkanten.
-- Die Property-ID bleibt bei sender/requester erhalten, wenn die ausdrueckliche stabile id gesetzt ist.
-- Ein Wechsel des lokalen Importkuerzels connector zu wire mit Anpassung der Autorenbezuege behaelt fuer dieses Beispiel die aufgeloesten Inhalte und die Bindung bei.
-- Ohne stabile inline id ist der alte Propertygegenstand weg und ein neuer vorhanden; das kann ohne alte Referenzen trotzdem strukturell gueltig sein.
+- All three valid states have the same logical identities, but different bound model digests.
+- State B changes the Kind body without changing the fields or reference edges.
+- The property ID is preserved for sender/requester when the explicit stable id is set.
+- A change of the local import alias connector to wire with adjustment of the authoring references keeps, for this example, the resolved contents and the binding.
+- Without a stable inline id, the old property item is gone and a new one exists; without old references this can nevertheless be structurally valid.
 
-Neun negative Varianten wurden abgewiesen: altes Projektfeld unter Version 2.0.0, neuer Import mit alter Lockbindung, nicht bereitgestellte genaue Version, zwei Versionen derselben Paket-ID, geaenderte Bytes unter derselben gebundenen Version, unbekannter Alias, unqualifizierte Suche nach einem nur importiert vorhandenen Kind, Verwendung eines Projektaliases innerhalb der Bibliothek sowie eine Typdefinition anstelle einer Containerinstanz als konkreter requester-Wert.
+Nine negative variants were rejected: old project field under version 2.0.0, new import with old lock binding, exact version not provided, two versions of the same package ID, changed bytes under the same bound version, unknown alias, unqualified search for a Kind present only by import, use of a project alias within the library, and a type definition instead of a Container instance as a concrete requester value.
 
-Der Bericht bindet neun YAML-Dateien, den temporaeren Resolver und den verwendeten separaten Strukturprototyp ueber SHA-256. Die bisherigen Compiler-/Normalisierungsproben und ihre Eingaben wurden nicht veraendert. Diese neue Probe ist kein Produktloader, keine Paketregistry, kein Signatur-/Vertrauensnachweis, kein allgemeiner Koerperlinkparser und keine ausgefuehrte Realisierungspruefung. Der optionale Anzeigename title wird fuer diesen Durchgang nicht benoetigt und bleibt eine separate Formatfrage.
+The report binds nine YAML files, the temporary resolver and the separate structure prototype used through SHA-256. The previous compiler/normalization probes and their inputs were not changed. This new probe is not a product loader, not a package registry, not signature/trust evidence, not a general body link parser and not an executed realization check. The optional display name title is not needed for this walkthrough and remains a separate format question.
 
-### 16.8 Ergebnis fuer die weitere Sprachentscheidung
+### 16.8 Result for the further language decision
 
-Der vorgeschlagene Identitaetsvertrag traegt dieses importierte, aktualisierte und umbenannte Exchange-Beispiel. Dauerhafte Identitaet, gebundener Vertragsstand und aktueller Feldname lassen sich unterscheiden. Die notwendige Feldmigration wird sichtbar, ohne alle Bezuege auf die Property zu zerbrechen.
+The proposed identity contract carries this imported, updated and renamed Exchange example. Lasting identity, bound contract state and current field name can be distinguished. The necessary field migration becomes visible without breaking all references to the Property.
 
-Die Versions-/Importpolitik und die optionale stabile inline id sind damit konkret und begrenzt untersucht. Ihre Uebernahme als allgemeiner Sprachvertrag, eine endgueltige Identitaetsgrammatik sowie produktive Lade-, Diagnose- und Migrationsverfahren bleiben zu entscheiden. Keine der erfolgreichen Strukturproben belegt die semantische Kompatibilitaet eines beliebigen Updates.
+The version/import policy and the optional stable inline id have thus been examined concretely and within bounds. Their adoption as a general language contract, a final identity grammar as well as production loading, diagnostic and migration procedures remain to be decided. None of the successful structural probes evidences the semantic compatibility of an arbitrary update.
 
-Zurueck zum [gemeinsamen Designstand](../consolidation.md) und zur [Begriffsuebersicht](../README.md).
+Back to the [shared design state](../consolidation.md) and to the [overview of terms](../README.md).

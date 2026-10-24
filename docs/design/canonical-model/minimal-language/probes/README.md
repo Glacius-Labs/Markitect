@@ -1,23 +1,23 @@
-# Archivierte Entwurfsproben
+# Archived design probes
 
-Diese Quellen waren bei den Designgesprächen temporäre Prüfprogramme. Sie sind hier bytegetreu archiviert, damit eine andere Session die Berichte nachvollziehen kann. Sie sind keine Markitect-Produktkomponenten und keine vollständige Implementierung des aktuellen [Sprachvertrags](../language-contract.md).
+These sources were temporary check programs during the design conversations. They are archived here byte for byte so that another session can trace the reports. They are not Markitect product components and not a complete implementation of the current [language contract](../language-contract.md).
 
-Die Python-Prototypen haben dieselben Inhaltsdigests wie die in bootstrap/probe.json, bootstrap/compact-probe.json und identities/probe.json gebundenen Quellen. Die beiden Go-Programme und inputs.json archivieren den älteren Durchstich gegen den bestehenden Core nach Adaption von definition auf purpose. Die Archive werden nicht nachträglich an neuere Designentscheidungen angepasst.
+The Python prototypes have the same content digests as the sources bound in bootstrap/probe.json, bootstrap/compact-probe.json and identities/probe.json. The two Go programs and inputs.json archive the older vertical slice against the existing Core after adaptation from definition to purpose. The archives are not adapted after the fact to newer design decisions.
 
-Vom Repositoryroot mit Python und PyYAML:
+From the repository root with Python and PyYAML:
 
 ```text
 python -B docs/design/canonical-model/minimal-language/probes/replay.py
 ```
 
-Mit der laut CONTRIBUTING passenden Go-Version zusätzlich:
+With the Go version that matches CONTRIBUTING, additionally:
 
 ```text
 python -B docs/design/canonical-model/minimal-language/probes/replay.py --with-go
 ```
 
-Der Replay prüft Eingabe-/Prototypdigests und führt die Proben in einem neuen temporären Arbeitsverzeichnis aus. Neu erzeugte Python-Berichte werden bis auf sourceRevision mit den historischen Berichten verglichen. Bei den älteren Go-Proben wird deren erzeugter Berichtsteil mit dem gespeicherten Bericht verglichen; seine später ergänzten Provenienzfelder bleiben erhalten. Die Originale werden nicht verändert. Unveränderte Ergebnisse am aktuellen Head sind eine erneute begrenzte Prüfung, keine rückwirkende Änderung der historischen Evidenz.
+The replay checks input/prototype digests and runs the probes in a new temporary working directory. Newly generated Python reports are compared with the historical reports except for sourceRevision. For the older Go probes, their generated report part is compared with the stored report; its later added provenance fields are preserved. The originals are not changed. Unchanged results at the current head are a renewed bounded check, not a retroactive change of the historical evidence.
 
-Die Python-Archive erwarten ihren damaligen Bootstrap-Import unter TEMP. Der Replay stellt genau diese Umgebung nur für seine Kindprozesse bereit. Ein Go-Overlay legt den virtuellen Einstieg unter src/cmd/markitect an, damit die bestehenden internal-Imports gültig bleiben; am Repository wird dabei keine Quelldatei erzeugt. Die Go-Quellen sind deshalb als .go.txt gespeichert und werden nicht versehentlich zu einem neuen Go-Paket.
+The Python archives expect their bootstrap import of that time under TEMP. The replay provides exactly this environment only for its child processes. A Go overlay creates the virtual entry point under src/cmd/markitect so that the existing internal imports stay valid; no source file is created in the repository in the process. The Go sources are therefore stored as .go.txt and do not accidentally become a new Go package.
 
-Der Compilerprototyp versteht keine vollständige Körperlinkgrammatik und keinen semantischen Index. Die M3/M4-Reviews im Sprachvertrag sind weiterhin angenommene Ergebnisse eines Designfalls. Es wird kein Connector, kein Broker und kein Agentenprovider gestartet.
+The compiler prototype understands no complete body link grammar and no semantic index. The M3/M4 reviews in the language contract are still assumed results of a design case. No Connector, no broker and no agent provider is started.

@@ -4,7 +4,7 @@ imports:
 
 id: command
 kind: Property
-body: Vertrag der angeforderten Operation.
+body: Contract of the requested operation.
 spec:
   type: reference
   target: Command

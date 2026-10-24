@@ -1,229 +1,231 @@
-# Markitect V1 – Konzepttreue und dominante Probleme
+> English translation of the German original at commit a1a308fc287b687f9f73219bcf70dc051ee33cc8.
 
-**Prüfdatum:** 24. Oktober 2026  
-**Fixierter Quellstand:** `6c7d758cbe55e079a7d0b6bcfdedb46e9ba58998`  
-**Vergleichsbasis:** Gemeinsame Konzeptentscheidungen D1–D9, konsolidierter Plan v0.17 und danach ausdrücklich akzeptierte enge S0–S5-Abgrenzung.  
-**Art:** Unabhängige statische Code- und Vertragsprüfung. Keine Implementierungsfreigabe und keine Änderung am Repository.
+# Markitect V1 – Concept conformance and dominant problems
 
-## 1. Ergebnis
+**Audit date:** 24 October 2026  
+**Fixed source state:** `6c7d758cbe55e079a7d0b6bcfdedb46e9ba58998`  
+**Comparison basis:** Shared concept decisions D1–D9, consolidated plan v0.17 and the narrow S0–S5 scoping that was explicitly accepted afterwards.  
+**Type:** Independent static code and contract review. No implementation approval and no change to the repository.
 
-Die tragende Architektur ist tatsächlich umgesetzt: erhaltenes Modellfundament, eigenständige Projektvorbereitung, gemeinsamer hierarchischer Run-Executor, direkte Apply-Komposition, frische Sessions und Arbeitsumgebungen, dauerhafte Kandidaten und Ergebnisse, Shared Notes sowie Publication nach Run-Ende.
+## 1. Result
 
-Das ist **nicht gleichbedeutend mit vollständiger Umsetzung aller vereinbarten Arbeitsweisen**. Konkrete Unterschiede bestehen bei den Kommunikationswegen, der Behandlung ungültiger Kinderübergaben und der Bindung fachlicher Abschlüsse an einzelne technische Nachrichten. Der Harness erfüllt Reproduzierbarkeit und native Instruktionsverwendung, aber nicht vollständig die ursprünglich angestrebte modulare, datei-/skillbasierte und gezielt nachladbare Arbeitsumgebung.
+The load-bearing architecture is actually implemented: preserved model foundation, independent project preparation, shared hierarchical Run executor, direct Apply composition, fresh sessions and working environments, durable candidates and results, Shared Notes and Publication after the end of the Run.
 
-Zudem bleiben der bestätigte Context-Verlust im Publication-Guard und ein statisch nachvollziehbarer Größenkonflikt zwischen Notes-Speicherung und Tooltransport. Diese Befunde sind von fehlender nativer Qualifikation und subjektiven Refactoring-Wünschen zu unterscheiden.
+This is **not the same as complete implementation of all agreed ways of working**. Concrete differences exist in the communication paths, in the handling of invalid child handoffs and in the binding of domain completions to individual technical messages. The Harness fulfills reproducibility and native use of instructions, but not completely the originally intended modular, file/skill-based working environment from which material can be loaded in a targeted way.
 
-**Empfehlung:** Kein erneuter Totalneubau. Den bestehenden Kern bewahren, konkrete Konzeptabweichungen explizit entscheiden beziehungsweise korrigieren und die betroffenen Übergänge mit gezielten Negativtests absichern. Ein grüner Library-Lauf ersetzt keine Prüfung der Organisations- und Verantwortungsregeln.
+In addition, the confirmed loss of Context in the Publication guard and a statically traceable size conflict between Notes storage and tool transport remain. These findings are to be distinguished from missing native qualification and from subjective refactoring wishes.
 
-## 2. Quellen und Grenzen
+**Recommendation:** No renewed complete rebuild. Preserve the existing core, decide explicitly on or correct concrete deviations from the concept, and secure the affected transitions with targeted negative tests. A green Library run does not replace a review of the organization and responsibility rules.
 
-Der ursprüngliche Plan `markitect-v1-plan-v0.17.md` wurde erneut gelesen. Relevant sind besonders §4 Verantwortlichkeiten, §5.2 Zusammenarbeit, §6.2 Kontrollpunkte, §8 Harness/Provider und §9 Notes/Verify. Frühere Vorschläge zur Extract-/UI-Erhaltung sind durch spätere Owner-Entscheidungen überholt und werden hier nicht als unerfüllte Anforderungen gezählt.
+## 2. Sources and limits
 
-Der aktuelle Main wurde zu Beginn und am Ende der Prüfung auf denselben SHA aufgelöst. Zentrale Produktionsdateien wurden direkt über GitHub gelesen, insbesondere Run, Workflow, Apply, Harness, Codex-/Claude-Adapter, Project-Validierung, Runstore, Publication und Git-Guards. Zusätzlich wurden Git-Unterbäume der bewahrten Grundlagen verglichen und die dokumentierten Qualifikationsgrenzen gelesen.
+The original plan `markitect-v1-plan-v0.17.md` was read again. Particularly relevant are §4 responsibilities, §5.2 collaboration, §6.2 control points, §8 Harness/provider and §9 Notes/Verify. Earlier proposals on preserving Extract/UI have been superseded by later owner decisions and are not counted here as unfulfilled requirements.
 
-In dieser Prüfung wurden **keine Go-, Container- oder Provider-Tests ausgeführt**. Der lokale Go-Stand ist älter als die Repository-Anforderung; ein unabhängiger Checkout stand nicht bereit. Dokumentierte native Erfolge werden als Repository-Evidenz wiedergegeben, nicht als selbst wiederholte Versuche. Die vollständigen lokalen Transkripte und Evidence-Pakete auf dem Windows-Host wurden nicht eingesehen. Dies ist keine vollständige Race-, Sicherheits- oder Zeile-für-Zeile-Prüfung des gesamten Repositorys.
+The current Main was resolved to the same SHA at the beginning and at the end of the review. Central production files were read directly via GitHub, in particular Run, Workflow, Apply, Harness, Codex/Claude adapters, project validation, Runstore, Publication and Git guards. In addition, Git subtrees of the preserved foundations were compared and the documented qualification limits were read.
 
-Die Kategorien bedeuten:
+In this review, **no Go, container or provider tests were run**. The local Go version is older than the repository requirement; an independent checkout was not available. Documented native successes are reproduced as repository evidence, not as attempts repeated by the reviewer. The complete local transcripts and evidence packages on the Windows host were not inspected. This is not a complete race, security or line-by-line review of the entire repository.
 
-- **Umgesetzt:** Im geprüften Produktpfad direkt erkennbar.
-- **Abweichung:** Konkreter Unterschied zu einer vereinbarten Arbeitsweise.
-- **Teilweise/anders:** Ein Teilziel ist erreicht, die ursprünglich vorgesehene Form oder Erweiterbarkeit nicht vollständig.
-- **Risiko:** Statisch begründete Fehlerbedingung; keine Behauptung eines neu ausgeführten Laufzeitfehlers.
-- **Nachweisgrenze:** Implementierung oder Komponentenbeweis vorhanden, breiterer Produktnachweis noch nicht erbracht.
+The categories mean:
 
-## 3. Anforderungsmatrix
+- **Implemented:** Directly recognizable in the reviewed product path.
+- **Deviation:** Concrete difference from an agreed way of working.
+- **Partial/different:** A partial goal is achieved; the originally intended form or extensibility is not completely achieved.
+- **Risk:** Statically substantiated failure condition; no claim of a newly executed runtime failure.
+- **Evidence limit:** Implementation or component proof exists; broader product evidence has not yet been provided.
 
-| Konzeptanforderung | Befund im fixierten Code | Einordnung |
+## 3. Requirements matrix
+
+| Concept requirement | Finding in the fixed code | Classification |
 |---|---|---|
-| Modell, Compiler, Snapshot, Organisation und Realization bewahren | Vier Git-Unterbäume sind gegenüber `447ac3b1` identisch | Umgesetzt |
-| Model→Artifacts; keine Modelländerung als Reparaturausweg | `Prepared.ValidateCandidate` bindet Modell-/Kontrollquellen; Registry darf sich ändern | Umgesetzt |
-| Deterministische Prüfung vor Agentenstart | Gültiges `Prepared` ist Voraussetzung für Command und Executor | Umgesetzt |
-| Ein Executor für Assessment, Implement, Verify | Alle drei verwenden `run.Executor.Execute` | Umgesetzt |
-| Gesamte modellierte Hierarchie in jedem Mandat | Environments und Sessions werden für alle Topologie-Manager angelegt; Kinderarbeit/-review wird erwartet | Umgesetzt |
-| Run unabhängig von Apply | Eigener Execute-Vertrag, Persistenz und Closure im Run | Umgesetzt |
-| Workflow koordiniert nur Runs | Sequenz ist klein; `ValidateClosed` kennt zusätzlich konkrete Ressourcenbezeichnungen | Weitgehend; begrenztes Verantwortungsleck |
-| Frische Gespräche und Workspaces je Run | Neue Open-Aufrufe, native Threads und private Homes je Execute | Umgesetzt |
-| Ein Git Workspace Service je Run | Run öffnet und schließt seine WorkspaceService-Instanz | Umgesetzt |
-| Parent delegiert/reviewt nur direkte Kinder | Entsprechende Parent-Prüfungen in `Delegate` und `Review` | Umgesetzt |
-| Fragen und Abstimmung entlang der Hierarchie | `Ask` erlaubt jeden anderen Manager desselben Runs | Abweichung A1 |
-| Kindercheck als Diagnose an den Vater | Bei ungültigem Submitted-Stand korrigiert der Host im Kind weiter, bevor dessen Handoff ausgeliefert wird | Abweichung A2 |
-| Erfolgreicher Root benötigt gültigen Kandidaten | Implement-Check, finale Aggregation, feste Kandidatenbindung | Umgesetzt |
-| Neue Implement-/Verify-Runs nach Reject | Workflow erzeugt neue Run-IDs und gibt tatsächliche Findings/Kandidaten weiter | Umgesetzt; öffentlicher nativer Zweignachweis offen |
-| Technischer Fehler, Reject und Modellblocker getrennt | Technischer Status und semantische Entscheidung sind getrennte Werte | Umgesetzt |
-| Kurzer Auftrag plus vorbereiteter Harness | Task/Feedback kompakt; Hintergrundwissen wird als umfangreicher Base-/Developer-Kontext injiziert | Teilweise/anders A4 |
-| Provider-native Dateien/Skills und generischer Fallback | Codex verwendet native Instruktionsparameter und MCP; automatische Projektdateien sind deaktiviert; kein produktiver generischer Fallback nachgewiesen | Teilweise/anders A4 |
-| Autonomie ohne fachliche Turn-Prozessmaschine | Alte Turn-Engine entfernt; aktive Nachrichten benötigen trotzdem jeweils ein neues `judge` | Spannung A3 |
-| Ownership und Registry | Statische Zuordnung und Schutz kontrollierter Eingaben; tatsächliche Zuständigkeitsbefolgung bleibt Parent-/Verify-Review | Entspricht der ausdrücklich erlaubten Grenze ohne per-write ACL |
-| Dauerhafte Kandidaten/Resultate nach Ressourcenende | Retain vor Cleanup, Terminal Save/Read danach; keine Live-Session im Ergebnis | Umgesetzt |
-| Shared Notes über Runs/Commands | Unabhängige persistente Records, Append und Read | Umgesetzt; Abrufgrenze R2 |
-| Normale CLI-Authentifizierung ohne API-Key-Pfad | Codex akzeptiert Account-Login und provisioniert über den Managercontainer | Umgesetzt |
-| Claude und weitere Provider | Claude.Open gibt stets unavailable zurück; generische Instruktion ersetzt keinen Runtimeadapter | Explizite Fähigkeitsgrenze, nicht lediglich fehlender Test |
-| Publication aus gespeicherter Zustimmung | Gespeicherter Verify-Result wird verglichen; Kandidat erneut geöffnet und geprüft | Umgesetzt |
-| Sicherer Umgang mit Nutzeränderungen | Drift wird abgelehnt; Teilübertragung wird berichtet; keine automatische semantische Zusammenführung | Akzeptierte V1-Vereinfachung |
-| Endliche Fristen bis Publication-Ende | Context geht in älteren Guard-/Git-Hilfen verloren | Bestätigter Mangel R1 |
-| Kleine, kohärente Komponenten | Gute Paketgrenzen; zentrale Run-Datei bündelt viele Lebenszyklus-/Kommunikationszustände | Qualitätsrisiko, kein Nachweis eines generellen Architekturversagens |
+| Preserve model, compiler, snapshot, organization and Realization | Four Git subtrees are identical to `447ac3b1` | Implemented |
+| Model→Artifacts; no model change as an escape route for repair | `Prepared.ValidateCandidate` binds model/control sources; registry may change | Implemented |
+| Deterministic check before agent start | A valid `Prepared` is a prerequisite for Command and Executor | Implemented |
+| One Executor for Assessment, Implement, Verify | All three use `run.Executor.Execute` | Implemented |
+| Entire modeled hierarchy in every mandate | Environments and sessions are created for all topology Managers; child work/review is expected | Implemented |
+| Run independent of Apply | Own Execute contract, persistence and closure in the Run | Implemented |
+| Workflow coordinates only Runs | Sequence is small; `ValidateClosed` additionally knows concrete resource names | Largely; limited responsibility leak |
+| Fresh conversations and workspaces per Run | New Open calls, native threads and private homes per Execute | Implemented |
+| One Git Workspace Service per Run | Run opens and closes its WorkspaceService instance | Implemented |
+| Parent delegates/reviews only direct children | Corresponding parent checks in `Delegate` and `Review` | Implemented |
+| Questions and coordination along the hierarchy | `Ask` permits every other Manager of the same Run | Deviation A1 |
+| Child check as diagnosis to the parent | With an invalid Submitted state, the host keeps correcting in the child before its handoff is delivered | Deviation A2 |
+| Successful Root requires a valid candidate | Implement check, final aggregation, fixed candidate binding | Implemented |
+| New Implement/Verify Runs after Reject | Workflow creates new Run IDs and passes on actual findings/candidates | Implemented; public native branch proof open |
+| Technical failure, Reject and model blocker separate | Technical status and semantic decision are separate values | Implemented |
+| Short assignment plus prepared Harness | Task/feedback compact; background knowledge is injected as extensive Base/Developer context | Partial/different A4 |
+| Provider-native files/skills and generic fallback | Codex uses native instruction parameters and MCP; automatic project files are disabled; no productive generic fallback demonstrated | Partial/different A4 |
+| Autonomy without a domain turn process machine | Old turn engine removed; active messages nevertheless each require a new `judge` | Tension A3 |
+| Ownership and registry | Static assignment and protection of controlled inputs; actual compliance with responsibilities remains parent/Verify review | Corresponds to the explicitly permitted boundary without per-write ACL |
+| Durable candidates/results after resource end | Retain before cleanup, terminal save/read afterwards; no live session in the result | Implemented |
+| Shared Notes across Runs/Commands | Independent persistent records, append and read | Implemented; retrieval limit R2 |
+| Normal CLI authentication without API-key path | Codex accepts account login and provisions via the Manager container | Implemented |
+| Claude and further providers | Claude.Open always returns unavailable; a generic instruction does not replace a runtime adapter | Explicit capability limit, not merely a missing test |
+| Publication from stored approval | Stored Verify result is compared; candidate reopened and checked | Implemented |
+| Safe handling of user changes | Drift is rejected; partial transfer is reported; no automatic semantic merge | Accepted V1 simplification |
+| Finite deadlines until the end of Publication | Context is lost in older guard/Git helpers | Confirmed defect R1 |
+| Small, coherent components | Good package boundaries; central Run file bundles many lifecycle/communication states | Quality risk, no evidence of a general architectural failure |
 
-### Unabhängiger Nachweis des bewahrten Fundaments
+### Independent evidence of the preserved foundation
 
-Die folgenden Git-Tree-Identitäten stimmen zwischen Ausgangsstand `447ac3b152de79b52de80513e14dc94349a060bd` und geprüftem Main überein. Damit ist nicht nur eine behauptete semantische Äquivalenz, sondern derselbe jeweilige Dateibaum belegt.
+The following Git tree identities match between the starting state `447ac3b152de79b52de80513e14dc94349a060bd` and the reviewed Main. This evidences the same respective file tree, not merely an asserted semantic equivalence.
 
-| Verzeichnis | Identischer Git-Tree |
+| Directory | Identical Git tree |
 |---|---|
 | `internal/model` | `ded9b19b4e7572b2fe04adebf4e9ed0094943fa8` |
 | `internal/snapshot` | `c2d6a7249fc4c6244dc105f1a04a7232ba593e9a` |
 | `internal/organization` | `06731ff5babb4dd33620780392919e82305665f0` |
 | `internal/realization` | `6f65fddf872ec3c1d35fb910ba782990c18d9204` |
 
-Dies behauptet keine unveränderte Runtime oder unverändertes kanonisches Selbstmodell. Deren Anpassung an die neue Architektur war ausdrücklich beabsichtigt. Quellen: [S01], [S02].
+This does not assert an unchanged runtime or an unchanged canonical self-model. Their adaptation to the new architecture was explicitly intended. Sources: [S01], [S02].
 
-## 4. Konkrete Abweichungen
+## 4. Concrete deviations
 
-### A1 – Geschwister und entfernte Manager können direkt miteinander sprechen
+### A1 – Siblings and distant Managers can talk to each other directly
 
-**Soll:** Die ursprünglichen Entscheidungen verlangen Kommunikation entlang der Hierarchie. Der v0.17-Plan nennt Geschwisterkoordination über gemeinsame Eltern und hält erforderliche Kommunikation auch im Notes-Abschnitt hierarchisch.
+**Target:** The original decisions require communication along the hierarchy. The v0.17 plan names sibling coordination via shared parents and also keeps required communication hierarchical in the Notes section.
 
-**Ist:** `run/inbox.go: ask` kontrolliert Existenz des Empfängers, ungleichen Absender und nichtleeren Text. Eine Parent-/Child-Beziehung wird nicht geprüft. `codexappserver/tools.go` beschreibt das Tool entsprechend als Frage an einen anderen Run-Manager. Dagegen erzwingen Delegation und Review tatsächlich die direkte Eltern-Kind-Beziehung. [S03], [S04], [S05]
+**Actual:** `run/inbox.go: ask` checks the existence of the recipient, a sender different from the recipient, and non-empty text. A parent/child relationship is not checked. `codexappserver/tools.go` correspondingly describes the tool as a question to another Run Manager. By contrast, delegation and review actually enforce the direct parent-child relationship. [S03], [S04], [S05]
 
-**Konsequenz:** Der Baum ist für Aufgaben und Integration verbindlich, für Fragen nur eine Auswahl möglicher Adressen. Ein Geschwister kann das andere direkt fragen; ein Enkel kann Ebenen überspringen. Das ist keine externe Kommunikation mit dem Owner, aber es ist eine andere interne Organisationsregel.
+**Consequence:** The tree is binding for tasks and integration, but for questions only a selection of possible addresses. A sibling can ask the other directly; a grandchild can skip levels. This is not external communication with the owner, but it is a different internal organization rule.
 
-**Warum:** Die Umsetzung erlaubt dies ausdrücklich. Eine dokumentierte Owner-Freigabe für die Lockerung wurde in den geprüften Vorgaben nicht gefunden. Das asynchrone Ask/Await/Reply-Protokoll ist mit den nachgewiesenen Providergrenzen begründet. Daraus folgt jedoch nicht, dass sämtliche Manager direkt erreichbar sein müssen: Auch hierarchische Nachbarn können asynchron miteinander sprechen.
+**Why:** The implementation permits this explicitly. A documented owner approval for the relaxation was not found in the reviewed specifications. The asynchronous Ask/Await/Reply protocol is justified by the demonstrated provider limits. It does not follow from this, however, that all Managers must be directly reachable: hierarchical neighbors, too, can talk to each other asynchronously.
 
-**Empfehlung:** Die erlaubten Nachbarschaftsbeziehungen aus der vorhandenen Topologie ableiten und testen oder die gelockerte Regel ausdrücklich vom Owner akzeptieren lassen. Keine neue allgemeine ACL-/Routingplattform. Das Gegenprüfungsbeispiel muss zwei Geschwister sowie Root/Enkel umfassen, nicht nur Root und direktes Kind.
+**Recommendation:** Derive the permitted neighbor relationships from the existing topology and test them, or have the owner explicitly accept the relaxed rule. No new general ACL/routing platform. The counter-check example must cover two siblings as well as Root/grandchild, not only Root and direct child.
 
-### A2 – Ungültige Kinderstände werden vor der Elternübergabe zurückgehalten
+### A2 – Invalid child states are held back before the parent handoff
 
-**Soll:** §6.2 des v0.17-Plans verlangt bei jeder Kinderübergabe die Diagnose an den Vater, mit Korrektur und Abstimmung innerhalb des Runs. Der endgültige Root-Stand bleibt ein hartes Gate.
+**Target:** §6.2 of the v0.17 plan requires, for every child handoff, the diagnosis to the parent, with correction and coordination within the Run. The final Root state remains a hard gate.
 
-**Ist:** `execution.work` erstellt nach `submitted` einen Snapshot und führt `x.check` aus. Bei `ErrCandidateInvalid` sendet der Host Findings direkt in eine neue Nachricht desselben Kindes und wiederholt die Schleife. Ein normales Handoff erreicht den Vater erst nach erfolgreicher Prüfung. Die Handoff-Struktur enthält keinen eigenständigen Bericht dieser vorherigen fehlgeschlagenen Prüfung. [S05], [S06]
+**Actual:** After `submitted`, `execution.work` creates a snapshot and runs `x.check`. On `ErrCandidateInvalid`, the host sends findings directly in a new message of the same child and repeats the loop. A normal handoff reaches the parent only after a successful check. The handoff structure contains no separate report of this earlier failed check. [S05], [S06]
 
-**Konsequenz:** Lokale Selbstkorrektur ist möglich, aber der vorgesehene automatische Informationsfluss zum Vater fehlt. Das Kind kann zwar selbst fragen oder ein Reject liefern; es ist nicht von jeder Kommunikation abgeschnitten. Der Host entscheidet trotzdem, dass ein invalides Submitted-Ergebnis zunächst beim Kind bleibt. Bereichsübergreifende Ursachen können dadurch später beim Verantwortlichen ankommen.
+**Consequence:** Local self-correction is possible, but the intended automatic flow of information to the parent is missing. The child can, it is true, itself ask questions or deliver a Reject; it is not cut off from every kind of communication. The host nevertheless decides that an invalid Submitted result initially stays with the child. Cross-area causes can thereby reach the responsible party later.
 
-**Warum:** Dieses Verfahren schützt die Eigenschaft „normal abgegebenes Implement-Handoff ist technisch gültig“. Das ist eine plausible technische Motivation, aber nicht dieselbe Verantwortungsverteilung wie „Übergabe plus Diagnose an den Vater“. Der dokumentierte Fehler, bei dem ein vollständiger Projekttest in einer unvollständigen Kinderkopie lief, zeigt, dass diese Grenze praktisch relevant ist. [S07]
+**Why:** This procedure protects the property “a normally submitted Implement handoff is technically valid”. That is a plausible technical motivation, but not the same distribution of responsibility as “handoff plus diagnosis to the parent”. The documented failure in which a complete project test ran in an incomplete child copy shows that this boundary is practically relevant. [S07]
 
-**Empfehlung:** Vor einer pauschalen Konzeptabnahme explizit entscheiden. Eine Angleichung muss nicht ungültiges Mergen erlauben: Der Vater kann Diagnose und Stand sehen, während erfolgreiche Integration und Root-Abschluss weiterhin gesperrt bleiben. Kein neues mehrstufiges Freigabeprotokoll einführen.
+**Recommendation:** Decide explicitly before a blanket concept acceptance. An alignment need not permit invalid merging: the parent can see the diagnosis and the state while successful integration and Root completion remain blocked. Do not introduce a new multi-stage approval protocol.
 
-### A3 – Fachlicher Abschluss hängt noch stark am Ende technischer Nachrichten
+### A3 – Domain completion still depends heavily on the end of technical messages
 
-**Soll:** Runs und Manageraufträge, keine fachliche Turn-Maschine und kein report-to-continue. Eine kleine explizite semantische Entscheidung ist erlaubt; sie soll nicht zu einem Ritual für gewöhnliche Kommunikation werden.
+**Target:** Runs and Manager assignments, no domain turn machine and no report-to-continue. A small explicit semantic decision is permitted; it should not become a ritual for ordinary communication.
 
-**Ist:** Jede aktive `Exchange`-Fortsetzung benötigt eine frische Entscheidung. Im Codex-Adapter wird das vorherige `judgment` pro Nachricht zurückgesetzt. Fehlt nach der Nachricht ein semantisches Resultat, beendet `work` den Auftrag mit Fehler. Die allgemeine Harness-Regel verlangt die neue Entscheidung ausdrücklich auch dann, wenn eine aktive Fortsetzung nur ausstehende Fragen/Antworten behandelt. Erst Nachrichten nach bereits fixierter Übergabe haben eine Antwort-ohne-neues-Urteil-Sonderbehandlung. [S05], [S08], [S09]
+**Actual:** Every active `Exchange` continuation requires a fresh decision. In the Codex adapter the previous `judgment` is reset per message. If a semantic result is missing after the message, `work` ends the assignment with an error. The general Harness rule explicitly requires the new decision even when an active continuation only handles outstanding questions/answers. Only messages after an already fixed handoff receive the special treatment of answer without new judgment. [S05], [S08], [S09]
 
-Die kurze Beschreibung des `judge`-Tools sagt zugleich allgemein, gewöhnliche Frage-/Antwortnachrichten benötigten kein neues Urteil. Der Unterschied zwischen „aktiver Fortsetzung“ und „später Nachricht nach fixiertem Handoff“ wird dort nicht ebenso präzise gemacht wie in den allgemeinen Regeln. Das ist zumindest eine vermeidbare Mehrdeutigkeit des gelieferten Protokolls. [S04]
+The short description of the `judge` tool at the same time says generally that ordinary question/answer messages need no new judgment. The difference between “active continuation” and “late message after a fixed handoff” is not made there as precisely as in the general rules. This is at least an avoidable ambiguity of the delivered protocol. [S04]
 
-**Konsequenz:** Der Agent muss die technischen Phasen des Hosts korrekt unterscheiden. Er kann fachlich korrekt antworten und trotzdem als technisch gescheitert gelten. Mehrere historische Fehlläufe betreffen genau alte Aufgaben, unerwartetes Warten, bereits registrierte Reviewentscheidungen und fehlende erneute Urteile. [S07]
+**Consequence:** The agent must correctly distinguish the technical phases of the host. It can answer correctly in domain terms and still count as technically failed. Several historical failed runs concern exactly old tasks, unexpected waiting, review decisions that were already registered, and missing repeated judgments. [S07]
 
-**Warum:** Die Regeln sollen veraltete Freigaben verhindern und Provider-Nachrichten mit fixierten Git-Handoffs synchronisieren. Der Hintergrund ist legitim. Die bisherige Stabilisierung hat aber zusätzliche Instruktionen und Zustandsunterscheidungen aufgebaut. Das ist keine Rückkehr der alten produktiven Turn-Engine, wohl aber eine konzeptionelle Spannung zur gewünschten einfachen Zusammenarbeit.
+**Why:** The rules are meant to prevent stale approvals and to synchronize provider messages with fixed Git handoffs. The background is legitimate. The stabilization so far has, however, built up additional instructions and state distinctions. This is not a return of the old productive turn engine, but it is a conceptual tension with the desired simple collaboration.
 
-**Empfehlung:** Auftrag, Nachricht und Gültigkeit des letzten fachlichen Abschlusses getrennt beurteilen. Eine tatsächlich geänderte Aufgabe, ein geänderter Kandidat oder neue verpflichtende Findings dürfen keine alte Zustimmung erben. Eine rein kommunikative Antwort sollte andererseits nicht unnötig erneut dieselbe Zustimmung formulieren müssen. Erst Gegenbeispiele und aktuelle Zustandsübergänge prüfen, dann gezielt vereinfachen; `judge` nicht blind entfernen und natürliche Prosa nicht als Erfolgsbeweis benutzen.
+**Recommendation:** Assess assignment, message and validity of the last domain completion separately. A task that has actually changed, a changed candidate or new mandatory findings must not inherit an old approval. A purely communicative answer, on the other hand, should not have to formulate the same approval again unnecessarily. First examine counterexamples and current state transitions, then simplify in a targeted way; do not remove `judge` blindly, and do not use natural prose as proof of success.
 
-Ein kleiner zusätzlicher Hinweis auf vermeidbare Protokollarbeit: Native Findings müssen ein `manager`-Feld enthalten, obwohl der Host im normalen Arbeits-/Reviewpfad den tatsächlichen Manager anschließend selbst einträgt. Das ist kein Hauptblocker, aber eine gute Probe für den Grundsatz „technisch Bekanntes nicht erneut vom Modell abfragen“. [S04], [S05]
+A small additional note on avoidable protocol work: native findings must contain a `manager` field, although in the normal work/review path the host afterwards enters the actual Manager itself. This is not a main blocker, but a good probe for the principle “do not ask the model again for what is technically known”. [S04], [S05]
 
-### A4 – Harness als native Instruktionsinjektion statt vollständig modularer Arbeitsumgebung
+### A4 – Harness as native instruction injection instead of a fully modular working environment
 
-**Soll:** Deterministische fünfteilige Zusammensetzung, kurze Aufgabenprompts, kontrollierte native Nutzung, kompakte Karte und gezielter Kontextzugriff. Ursprünglich wurden AGENTS.md/CLAUDE.md, Skills, Rules, Scripts und ein generischer Fallback konkret besprochen. v0.17 verlangt nicht jede native Funktion, aber eine tatsächlich nutzbare vorbereitete Umgebung.
+**Target:** Deterministic five-part composition, short task prompts, controlled native use, compact map and targeted context access. Originally AGENTS.md/CLAUDE.md, skills, rules, scripts and a generic fallback were discussed concretely. v0.17 does not require every native function, but an actually usable prepared environment.
 
-**Ist:** `harness.Document` enthält zwei Strings, `Base` und `Developer`. Der Builder fügt vollständige Topologie, Ownership, Manager, Mandat, Findings, sämtliche ausgewählten Definitionsbodies/Felder/Provenienz und ausgewählte Instruktionsdateien zusammen. Der Codex-Adapter übergibt diese beim Threadstart über native Base-/Developer-Instructions. Die eigentliche Arbeitsnachricht besteht dagegen korrekt nur aus Task und Feedback. MCP-Werkzeuge und private Umgebung sind real integriert. [S08], [S09], [S10]
+**Actual:** `harness.Document` contains two strings, `Base` and `Developer`. The builder puts together the complete topology, ownership, Manager, mandate, findings, all selected definition bodies/fields/provenance and selected instruction files. The Codex adapter passes these at thread start via native Base/Developer instructions. The actual work message, by contrast, correctly consists only of task and feedback. MCP tools and private environment are really integrated. [S08], [S09], [S10]
 
-Automatisches Laden von Projektinstruktionen wird ausdrücklich deaktiviert (`project_doc_max_bytes=0`, leere Fallback-Dateinamen). Der private Codex-Home enthält die explizit provisionierten Login-Daten; im überprüften Ausführungspfad entsteht keine entsprechende generierte AGENTS-/Skill-Struktur als primäre Wissensquelle. Ein ausführbarer generischer Providerfallback ist nicht vorhanden. [S11]
+Automatic loading of project instructions is explicitly disabled (`project_doc_max_bytes=0`, empty fallback file names). The private Codex home contains the explicitly provisioned login data; in the reviewed execution path no corresponding generated AGENTS/skill structure arises as the primary source of knowledge. An executable generic provider fallback does not exist. [S11]
 
-**Bewertung:** Das ist kein „fehlender Harness“ und keine bloße Attrappe. Native Instruktionsparameter sind reale Providermechanismen, die zentralen Regeln bleiben von Task-Nachrichten getrennt. Die Abschaltung unkontrollierter Repository-Instruktionen ist als Prioritäts-/Determinismusmaßnahme nachvollziehbar.
+**Assessment:** This is not a “missing Harness” and not a mere dummy. Native instruction parameters are real provider mechanisms, and the central rules remain separate from task messages. Disabling uncontrolled repository instructions is understandable as a measure for priority/determinism.
 
-Trotzdem ist die ursprüngliche Idee „Karte und abrufbare Arbeitsmittel statt große dauerhafte Kontextanleitung“ nur teilweise umgesetzt. Der notwendige statisch ausgewählte Kontext wird vollständig am Anfang injiziert; für Modellkontext gibt es im Run-Toolset keine nachladbare Leseoperation. Bei größerem Modell ist dies eine Skalierungs- und Klarheitsfrage, kein bereits gemessener allgemeiner Qualitätsverlust.
+Nevertheless, the original idea “map and retrievable working materials instead of a large permanent context guide” is only partially implemented. The necessary statically selected context is injected completely at the beginning; for model context there is no reloadable read operation in the Run toolset. With a larger model this is a question of scaling and clarity, not an already measured general loss of quality.
 
-**Empfehlung:** Den tatsächlichen Ersatz ausdrücklich dokumentieren und abnehmen. Modularität und gezieltes Nachladen nur dort ergänzen, wo ein konkreter Umfangs-/Bediennachweis ihren Nutzen zeigt. Keine Pflicht, jedes Providerfeature einzubauen; aber auch keine Behauptung, die ursprünglich diskutierte Datei-/Skill-/Fallback-Variante sei schon vollständig umgesetzt.
+**Recommendation:** Document and accept the actual replacement explicitly. Add modularity and targeted reloading only where concrete scale/usability evidence shows their benefit. No obligation to build in every provider feature; but also no claim that the file/skill/fallback variant discussed originally has already been completely implemented.
 
-### A5 – Workflow kontrolliert interne Ressourcenbezeichnungen des Runs
+### A5 – Workflow checks internal resource names of the Run
 
-Die eigentliche Apply-Sequenz ist klein und fachlich korrekt. `workflow.ValidateClosed` prüft zusätzlich `session:<package>`, `copy:<package>`, `manager-workers` und `git-service`. Der Workflow muss dadurch technische Closure-Bezeichnungen kennen, obwohl der Executor seinen geschlossenen Rückgabevertrag bereits verantwortet. Apply verwendet diese Funktion wiederum zur Prüfung gespeicherter Zustimmung. [S12], [S13]
+The actual Apply sequence is small and correct in domain terms. `workflow.ValidateClosed` additionally checks `session:<package>`, `copy:<package>`, `manager-workers` and `git-service`. The Workflow thereby has to know technical closure names, although the Executor already owns its closed return contract. Apply in turn uses this function to check stored approval. [S12], [S13]
 
-Die unabhängige Prüfung persistierter Ergebnisse ist sinnvoll und muss bleiben. Ihre Kenntnis der technischen Ressourcen sollte jedoch bei einer gemeinsam verwendeten Run-Resultatvalidierung liegen, statt die Workflow-Schicht an diese Namen zu koppeln. Dies ist ein begrenztes Architekturleck, keine zweite Orchestrierung und kein Anlass für ein neues Framework.
+The independent check of persisted results is sensible and must remain. Its knowledge of the technical resources should, however, sit in a jointly used Run result validation instead of coupling the Workflow layer to these names. This is a limited architectural leak, not a second orchestration and no reason for a new framework.
 
-### A6 – Universell für heutige Mandate, nicht bereits für beliebige neue Aufträge
+### A6 – Universal for today's mandates, not already for arbitrary new assignments
 
-`Request` und `harness.Build` akzeptieren ausschließlich Assessment, Implement und Verify. Der Root-Auftrag wird im Executor fest vorgegeben. Ein weiterer Workflow kann diese Runs kombinieren; ein neuer Mandatstyp verlangt Änderungen an Core-/Harness-Prüfungen. [S06], [S08]
+`Request` and `harness.Build` accept only Assessment, Implement and Verify. The Root assignment is fixed in the Executor. A further Workflow can combine these Runs; a new mandate type requires changes to Core/Harness checks. [S06], [S08]
 
-Für die enge V1 ist das vertretbar: Eine allgemeine Workflow-DSL wurde ausdrücklich vertagt. Es ist aber enger als das ursprüngliche langfristige Bild, in dem Mandate weitgehend vorbereitete Aufträge für denselben Mechanismus sind. Die vorhandene direkte Komposition nicht vorschnell durch eine universelle Engine ersetzen. Den Ausbaupunkt lediglich ehrlich benennen.
+For the narrow V1 this is defensible: a general Workflow DSL was explicitly deferred. It is, however, narrower than the original long-term picture, in which mandates are largely prepared assignments for the same mechanism. Do not hastily replace the existing direct composition with a universal engine. Merely name the extension point honestly.
 
-## 5. Bestätigte Mängel und konkrete Zuverlässigkeitsrisiken
+## 5. Confirmed defects and concrete reliability risks
 
-### R1 – Publication-Guards verlieren die Aufrufdeadline
+### R1 – Publication guards lose the call deadline
 
-Der Publisher besitzt einen Context. `CaptureV1Files` und `ApplyOrderedChecked` nehmen ihn jedoch nicht entgegen. Ihre Git-Guards verwenden unter anderem `IdentifyGit`, `BranchName` und `GitOutput`; der gemeinsame Git-Start verwendet `exec.Command` statt einer an den Aufruf gebundenen Ausführung. Checks in den äußeren Callbacks können einen bereits blockierten inneren Git-Prozess nicht abbrechen. [S14], [S15], [S16]
+The Publisher has a Context. `CaptureV1Files` and `ApplyOrderedChecked`, however, do not accept it. Their Git guards use, among others, `IdentifyGit`, `BranchName` and `GitOutput`; the shared Git start uses `exec.Command` instead of an execution bound to the call. Checks in the outer callbacks cannot abort an inner Git process that is already blocked. [S14], [S15], [S16]
 
-Dies bestätigt den P2 des neuen Coordinators. Die Korrektur muss den gesamten tatsächlich aufgerufenen Guard-Pfad abdecken, nicht nur eine Funktion umbenennen. Partial-Write-Bericht, Branch-/Identitäts-/Dateiguards und Readback bleiben erhalten. Ein isolierter Abbruchtest muss die blockierende Git-Abfrage tatsächlich erreichen; der vorherige Sammeltest-Timeout beweist ihre konkrete Ursache nicht.
+This confirms the new Coordinator's P2. The correction must cover the entire guard path that is actually called, not just rename one function. Partial-write report, branch/identity/file guards and readback are preserved. An isolated abort test must actually reach the blocking Git query; the earlier collective-test timeout does not prove its concrete cause.
 
-Es wurde in diesem Audit kein eigener Hänger provoziert. Eine garantierte sofortige Terminierung bei beliebigem Kernel-/Dateisystemstillstand wäre eine andere, hier nicht behauptete Eigenschaft.
+No hang of our own was provoked in this audit. A guaranteed immediate termination in case of an arbitrary kernel/filesystem stall would be a different property, not asserted here.
 
-### R2 – Der vollständige Notes-Abruf kann den Tooltransport übersteigen
+### R2 – The complete Notes retrieval can exceed the tool transport
 
-Der Store lässt Records bis 16 MiB zu und liest projektweit bis zu 10.000 Einträge beziehungsweise insgesamt 16 MiB Text/Kontext. `read_notes` besitzt keinen Filter und keine Pagination und serialisiert alle Ergebnisse in eine einzelne Toolantwort. Der agentd-Toolkanal transportiert eine ToolReply pro Frame; `MaxPayload` beträgt 1 MiB. [S17], [S04], [S18]
+The store permits records up to 16 MiB and reads project-wide up to 10,000 entries or 16 MiB of text/context in total. `read_notes` has no filter and no pagination and serializes all results into a single tool reply. The agentd tool channel transports one ToolReply per frame; `MaxPayload` is 1 MiB. [S17], [S04], [S18]
 
-Damit können gültig persistierte Notes bereits deutlich unter dem Speicherlimit nicht mehr als Ganzes zugestellt werden. JSON-/MCP-Einbettung verkleinert den verfügbaren Nutzraum zusätzlich. Das ist eine statisch nachvollziehbare Größeninkompatibilität; ein entsprechender neuer nativer Ausfall wurde hier nicht ausgeführt.
+Validly persisted Notes can therefore no longer be delivered as a whole well below the storage limit. JSON/MCP embedding reduces the usable space further. This is a statically traceable size incompatibility; a corresponding new native failure was not executed here.
 
-Ähnliche Ganzpaketgrenzen existieren bei umfangreichen Definitionskontexten und Textdiffs. Der bereits behobene Binärpatchfehler zeigt die praktische Relevanz der Transportgrenze, qualifiziert aber nicht beliebig große Text-/Notes-Antworten. [S19]
+Similar whole-package limits exist for extensive definition contexts and text diffs. The binary patch error that has already been fixed shows the practical relevance of the transport limit, but does not qualify arbitrarily large text/Notes replies. [S19]
 
-**Empfehlung:** Einen kleinen kontrollierten Grenztest schreiben; abrufbare Datenmenge an die tatsächliche Transportgrenze binden. Beispielsweise begrenzte Seiten mit Kontextfilter oder explizite Ergebnisreferenzen. Keine stumme Kürzung, keine Löschung historischer Notes, keine neue Vektordatenbank. Optionalität des Inhalts darf nicht bedeuten, dass beliebig wachsende optionale Historie spätere Arbeit regelmäßig blockiert.
+**Recommendation:** Write a small controlled boundary test; bind the retrievable amount of data to the actual transport limit. For example bounded pages with a context filter or explicit result references. No silent truncation, no deletion of historical Notes, no new vector database. The optionality of the content must not mean that arbitrarily growing optional history regularly blocks later work.
 
-### R3 – Prozesskomplexität sitzt an wenigen stark belasteten Stellen
+### R3 – Process complexity sits in a few heavily loaded places
 
-`run/execute.go` enthält Umgebungsaufbau, Ressourcenende, Toolcallbacks, Delegationszustände, Review/Integration, Korrekturschleife und Checksammlung. `inbox.go` ergänzt Wakeups, Fragekorrelation, Nachlaufurteile und Abbruch. Mehrere Boolesche Zustände müssen zusammen mit Mutexen, WaitGroups und Kanälen kohärent bleiben. [S05], [S06], [S03]
+`run/execute.go` contains environment setup, resource end, tool callbacks, delegation states, review/integration, correction loop and check collection. `inbox.go` adds wakeups, question correlation, trailing judgments and abort. Several Boolean states must stay coherent together with mutexes, WaitGroups and channels. [S05], [S06], [S03]
 
-Diese Synchronisation ist nicht automatisch überflüssig. Der Host muss echte parallele Provider und Schreibkopien beherrschen. Ein pauschaler Race-/Deadlockvorwurf wäre ohne Reproduktion unzulässig. Das dominante Wartbarkeitsrisiko ist dennoch die Kombination fachlicher Auftragszustände mit technischen Antwort-/Drainzuständen.
+This synchronization is not automatically superfluous. The host has to handle genuinely parallel providers and write copies. A blanket race/deadlock accusation would be impermissible without reproduction. The dominant maintainability risk is nevertheless the combination of domain assignment states with technical reply/drain states.
 
-Das erste Qualitätsziel sollte eine klarere Semantik dieser Zustände sein, nicht eine kosmetische Verteilung identischer Komplexität auf mehr Dateien.
+The first quality goal should be clearer semantics of these states, not a cosmetic distribution of the same complexity over more files.
 
-## 6. Bewusste Einschränkungen und fehlende Nachweise
+## 6. Deliberate limitations and missing evidence
 
-### Akzeptierte beziehungsweise offengelegte V1-Grenzen
+### Accepted or disclosed V1 limits
 
-Extract, Cockpit/UI, Authoring und Setup wurden aus dem aktiven Umfang entfernt. Das war später ausdrücklich freigegeben und ist kein unbemerkter Funktionsverlust dieses Audits. Ebenso sind Konfliktabbruch statt semantischem Merge bei Nutzeränderungen, persistente Bundles statt langlebiger Services und MCP statt neuer Code-Mode-Runtime mit dem engen Konzept vereinbar.
+Extract, Cockpit/UI, authoring and Setup were removed from the active scope. That was explicitly approved later and is not an unnoticed loss of function in this audit. Likewise, conflict abort instead of semantic merge for user changes, persistent bundles instead of long-lived services, and MCP instead of a new Code Mode runtime are compatible with the narrow concept.
 
-Kein per-write-Schutz ist ausdrücklich gewollt. Aus korrektem Registry-Accounting folgt trotzdem nicht, dass jeder handelnde Manager nur eigene Dateien geändert hat. Der vollständige Diff, Aufgabenbasis und akzeptierte Kinderintegration liefern dem fachlichen Review den entsprechenden Kontext. Hier ist keine fehlende deterministische Einzelwrite-ACL als Defekt zu zählen.
+The absence of per-write protection is explicitly intended. From correct registry accounting it nevertheless does not follow that every acting Manager changed only its own files. The complete diff, task basis and accepted child integration give the domain review the corresponding context. A missing deterministic single-write ACL is not to be counted here as a defect.
 
 ### Provider
 
-Claude ist nicht bloß ungetestet: `claudecode.Agents.Open` gibt im aktuellen Produktcode immer `ErrUnavailable` zurück. Codex kopiert absichtlich keine Refresh-Autorität in die Managerumgebung. Codex-native Erfolge bedeuten daher weder Claude-Funktionalität noch qualifizierte Login-Erneuerung. [S20], [S21]
+Claude is not merely untested: `claudecode.Agents.Open` always returns `ErrUnavailable` in the current product code. Codex intentionally does not copy any refresh authority into the Manager environment. Codex-native successes therefore mean neither Claude functionality nor qualified login renewal. [S20], [S21]
 
-Ein generischer AGENTS.md-Fallback wäre ohnehin nur Instruktionsdarstellung, kein ausführbarer unbekannter Provider. Das muss von einer behaupteten providerunabhängigen Produktbedienbarkeit getrennt bleiben.
+A generic AGENTS.md fallback would in any case be only an instruction representation, not an executable unknown provider. That must be kept separate from an asserted provider-independent product usability.
 
-### Qualifikation
+### Qualification
 
-Die Repository-Aufzeichnungen enthalten tatsächliche native M1- und M2-Realisierung, unabhängige Orakel, Preservation, Notes-Nutzung, Reparatur eines eingebauten Fehlers und striktes No-change. Das sind substanzielle Erfolge. Die Komponentenfolge Verify-Reject → frisches Implement → frisches Verify-Approve wurde ebenfalls nativ beobachtet; der äußere Controllerbericht bleibt wegen eines separat diagnostizierten Datumsvergleichsfehlers fehlgeschlagen. [S22]
+The repository records contain actual native M1 and M2 realization, independent oracles, preservation, Notes use, repair of a deliberately inserted (seeded) defect and strict no-change. These are substantial successes. The component sequence Verify-Reject → fresh Implement → fresh Verify-Approve was likewise observed natively; the outer controller report remains failed because of a separately diagnosed date comparison error. [S22]
 
-Der native Beweis, dass der **öffentliche Apply-Workflow selbst** diesen Reject-Zweig auswählt und den daraus reparierten Kandidaten anschließend veröffentlicht, ist davon getrennt und noch offen. Eine normale Reparatur im initialen Implement ist kein Beweis dieses Zweigs. Ebenso fehlen breite Wiederholbarkeit und Aussagen für beliebige Projektgrößen. Das ist eine Nachweisgrenze, nicht ein daraus bewiesener Funktionsfehler.
+The native proof that the **public Apply Workflow itself** selects this Reject branch and then publishes the candidate repaired from it is separate from this and still open. A normal repair in the initial Implement is no proof of this branch. Likewise, broad repeatability and statements for arbitrary project sizes are missing. This is an evidence limit, not a functional defect proven from it.
 
-## 7. Welche Probleme dominieren?
+## 7. Which problems dominate?
 
-### 7.1 Beobachtet: Verständigung zwischen Agent und Host
+### 7.1 Observed: communication between agent and host
 
-Die dokumentierten Fehlläufe häufen sich an Abschluss, Fragen, bereits konsumierten Aufträgen, Handoff-/Reviewzuständen und der Platzierung von Checks. Das ist eine qualitative Einordnung der vorliegenden Berichte, keine statistische Fehlerrate. Die Verknüpfung von A2 und A3 ist wichtiger als zusätzliche Produktfeatures: Ein simples fachliches Ziel wird teilweise durch mehrere technische Kommunikationsregeln überlagert. [S07]
+The documented failed runs cluster around completion, questions, tasks that have already been consumed, handoff/review states and the placement of checks. This is a qualitative classification of the reports at hand, not a statistical failure rate. The connection of A2 and A3 is more important than additional product features: a simple domain goal is in part overlaid by several technical communication rules. [S07]
 
-### 7.2 Beobachtet: Git-, Windows-, Container- und Transportgrenzen
+### 7.2 Observed: Git, Windows, container and transport boundaries
 
-Lange Pfade, Git-Konfigurationswirkung, Dateimodi, große Binärpatches und Cleanup unter Abbruch haben reale Korrekturen ausgelöst. Das sind überwiegend Infrastruktur-/Lebenszyklusprobleme, kein Beleg, dass die modellbasierte Organisation fachlich untauglich ist. Der aktuelle R1 und der skalierende R2 zeigen, dass zusammengesetzte technische Grenzen weiter wichtig bleiben. [S19], [S14], [S15], [S16], [S17], [S18]
+Long paths, Git configuration effects, file modes, large binary patches and cleanup under abort have triggered real corrections. These are predominantly infrastructure/lifecycle problems, no evidence that the model-based organization is unsuitable in domain terms. The current R1 and the scaling R2 show that composite technical boundaries continue to matter. [S19], [S14], [S15], [S16], [S17], [S18]
 
-### 7.3 Konzeptionell: Dokumentierte Zielregel und implementierter Vertrag driften
+### 7.3 Conceptual: Documented target rule and implemented contract drift apart
 
-Ein Code kann zum aktualisierten Repository-Architekturtext passen, obwohl dieser inzwischen einen ursprünglich strengeren Owner-Beschluss weniger deutlich ausdrückt. „Kommunikation innerhalb des Runs“ ist nicht gleich „Kommunikation entlang der Hierarchie“. „Fehler im Kind reparierbar“ ist nicht gleich „Diagnose an den Vater“. Deshalb ist ein Vergleich gegen die ursprünglichen Entscheidungen notwendig, nicht nur gegen aktuelle Package-Tabellen.
+Code can match the updated repository architecture text even though the latter has meanwhile expressed an originally stricter owner resolution less clearly. “Communication within the Run” is not the same as “communication along the hierarchy”. “Error repairable in the child” is not the same as “diagnosis to the parent”. A comparison against the original decisions is therefore necessary, not only against current package tables.
 
-### 7.4 Langfristig: Umfang und Nutzbarkeit
+### 7.4 Long term: scope and usability
 
-Große Vorabkontexte, vollständige Notes-Abrufe und umfangreiche prozessuale Hinweise skalieren nicht automatisch so gut wie die sauber getrennten Go-Packages. Aktuelle Library-Erfolge beantworten diese Frage nicht. Das ist ein begründeter nächster Messpunkt, keine Aufforderung zur großen Optimierungswelle.
+Large up-front contexts, complete Notes retrievals and extensive procedural notes do not automatically scale as well as the cleanly separated Go packages. Current Library successes do not answer this question. This is a justified next measurement point, not a call for a large optimization wave.
 
-## 8. Priorisierte nächste Schritte
+## 8. Prioritized next steps
 
-1. **R1 vollständig schließen:** Context bis zu allen tatsächlich genutzten Publication-Guard-Git-Aufrufen; beobachtete Abbruchregression; keine verlorenen Teilpfade.
-2. **A1/A2 gegen die Owner-Absicht gegenprüfen:** Kommunikationsgraph und Informationsfluss bei ungültiger Kinderabgabe konkret demonstrieren. Danach angleichen oder ausdrückliche bewusste Abweichung festhalten. Nicht allein aktuelle Docs als Freigabe interpretieren.
-3. **A3 mit wenigen Gegenbeispielen vereinfachen:** Antwort ohne neue fachliche Arbeit, aktiver Stand mit neuer verpflichtender Finding, bereits fixiertes Handoff und verspätete Frage. Keine Wiederverwendung veralteter Zustimmung; keine unnötige Neuentscheidung für bloße Kommunikation.
-4. **R2 kontrolliert reproduzieren und begrenzen:** Stored Notes unter Speicherlimit, aber über Toolframe; passende begrenzte Read-Schnittstelle statt größere pauschale Limits.
-5. **A4/A5/A6 als Umfangs- und Qualitätsthemen entscheiden:** Native Instruktionsinjektion klar benennen, Workflow-Resultatprüfung näher zum Run-Vertrag halten, nur belegten Kontextbedarf modularisieren. Keine allgemeine Workflow-/Skillplattform auf Vorrat.
-6. **Öffentlichen nativen Korrekturzweig gezielt nachweisen:** Auf fixiertem korrigiertem Stand, ohne erfolgreiche alte Nachweise umzudeuten. Danach begrenzte Codex-Abnahme mit klarer Provider- und Laufzeitmatrix.
+1. **Close R1 completely:** Context through to all Publication-guard Git calls actually used; observed abort regression; no lost partial paths.
+2. **Cross-check A1/A2 against the owner's intent:** Demonstrate the communication graph and the information flow for an invalid child submission concretely. Then align, or record an explicit deliberate deviation. Do not interpret current docs alone as approval.
+3. **Simplify A3 with a few counterexamples:** Answer without new domain work, active state with a new mandatory finding, already fixed handoff and late question. No reuse of stale approval; no unnecessary new decision for mere communication.
+4. **Reproduce and limit R2 in a controlled way:** Stored Notes below the storage limit but above the tool frame; a suitable bounded read interface instead of larger blanket limits.
+5. **Decide A4/A5/A6 as scope and quality topics:** Name native instruction injection clearly, keep Workflow result validation closer to the Run contract, modularize only demonstrated context needs. No general Workflow/skill platform in advance.
+6. **Prove the public native correction branch in a targeted way:** On a fixed corrected state, without reinterpreting successful old evidence. Afterwards a bounded Codex acceptance with a clear provider and runtime matrix.
 
-Ein neuer Gesamtneubau ist durch diese Prüfung nicht begründet. Ebenso wäre die Aussage „nur noch der Git-Timeout, sonst alles wie konzipiert“ zu pauschal. Die richtige nächste Arbeit sind wenige überprüfbare Vertragsschnitte.
+A new complete rebuild is not justified by this review. Equally, the statement “only the Git timeout remains, otherwise everything as designed” would be too sweeping. The right next work is a few verifiable contract slices.
 
-## 9. Quellen – auf den geprüften Commit gebunden
+## 9. Sources – bound to the reviewed commit
 
-Die folgenden Links enthalten den fixierten Commit, keine bewegliche Main-Referenz. Funktionsnamen im Text sind die gezielt geprüften Stellen.
+The following links contain the fixed commit, not a moving Main reference. Function names in the text are the specifically reviewed places.
 
 [S01]: https://api.github.com/repos/Glacius-Labs/Markitect/git/trees/6c7d758cbe55e079a7d0b6bcfdedb46e9ba58998:internal
 [S02]: https://api.github.com/repos/Glacius-Labs/Markitect/git/trees/447ac3b152de79b52de80513e14dc94349a060bd:internal

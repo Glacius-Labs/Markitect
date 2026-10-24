@@ -1,295 +1,295 @@
-# Connector-Plattform: Architektur und Kommunikationsvertrag
+# Connector platform: architecture and communication contract
 
-Stand: 15. Oktober 2026. Status: lokaler, quellengestützter Designversuch für das neue Markitect-Vokabular. Der Nutzer möchte System, Container, Component und ihre Relationen an einem vollständigen Request-/Reply-Beispiel prüfen. Die Einführung dieser Architektur-Kinds und die nachfolgenden Sollkandidaten sind noch keine abschließend akzeptierten Sprachverträge.
+As of: 15 October 2026. Status: local, source-based design attempt for the new Markitect vocabulary. The user wants to check System, Container, Component and their relations on a complete request/reply example. The introduction of these architecture Kinds and the target candidates that follow are not yet conclusively accepted language contracts.
 
-## Ausgangspunkt und Quellenstatus
+## Starting point and source status
 
-Das kanonische Modell beschreibt das beabsichtigte Projekt. Die bestehende Anwendung liefert hier Anschauungsmaterial und konkrete Gegenproben. Beobachteter Code wird nicht allein durch diese Analyse zur gewünschten Spezifikation. Insbesondere seine Einschränkungen werden nicht als akzeptierte Ziele übernommen.
+The canonical model describes the intended project. The existing application provides illustrative material and concrete counter-probes here. Observed code does not become the desired specification through this analysis alone. In particular, its limitations are not adopted as accepted goals.
 
-Untersuchte lokale Referenz: `C:\Users\EduardMarkgraf\STP\STP.Dms.Cloud.Api`, HEAD `37f8986f36fbdc76bcabd4f8616f7747e4fd98d8`. Die untersuchten Bereiche `src/` und `docs/` hatten keine Änderungen gegenüber HEAD. Andere lokale Änderungen und nicht versionierte Dateien wurden nicht als Referenzmaterial verwendet. Konfiguration mit Zugangsdaten wurde nicht eingelesen. Die Referenz wurde ausschließlich gelesen; keine Anwendung, kein DMS, Broker, Cloudkonto und keine Integrationstests wurden gestartet.
+Local reference examined: `C:\Users\EduardMarkgraf\STP\STP.Dms.Cloud.Api`, HEAD `37f8986f36fbdc76bcabd4f8616f7747e4fd98d8`. The examined areas `src/` and `docs/` had no changes relative to HEAD. Other local changes and unversioned files were not used as reference material. Configuration with credentials was not read. The reference was only read; no application, no DMS, broker, cloud account and no integration tests were started.
 
-Die Referenz bezeichnet sich als POC. Der aktuelle Host registriert DMS-Funktionen. UserManagement und Winsolvenz stammen aus dem gewünschten Gesamtbeispiel des Nutzers; ihre Anbindung wird in diesem Repository nicht als umgesetzt behauptet. Auch ein erfolgreicher echter DMS-Betrieb ist hier nicht nachgewiesen: Die Registrierung kann ohne DMS-Konfiguration eine Fake-Verbindung verwenden.
+The reference calls itself a POC. The current host registers DMS functions. UserManagement and Winsolvenz come from the user's desired overall example; their connection is not claimed as implemented in this repository. A successful real DMS operation is also not proven here: without DMS configuration, the registration can use a fake connection.
 
-Die Quellenbelege stehen am Ende dieser Seite. Das Beispiel entstand zunächst als lokale Analyse und wurde auf Nutzerauftrag mit dem vollständigen Designstand in die Dokumentation aufgenommen. Die referenzierte Anwendung selbst und ihre Konfiguration werden nicht mitgeliefert.
+The source evidence is at the end of this page. The example first arose as a local analysis and was included in the documentation, on user request, together with the complete design state. The referenced application itself and its configuration are not shipped.
 
-## Projektzweck und Umfang
+## Project purpose and scope
 
-**Project — Connector-Projekt:** Eine gemeinsame Cloud-API macht ausgewählte Funktionen eigenständiger On-Premise-Systeme zugänglich. Die Lösung übersetzt externe Anfragen in versionierte interne Aufträge, adressiert die richtige Kundenumgebung, führt die Arbeit dort aus und liefert Ergebnisse an den ursprünglichen Aufrufer zurück.
+**Project — Connector project:** A common cloud API makes selected functions of standalone on-premise systems accessible. The solution translates external requests into versioned internal jobs, addresses the right customer environment, performs the work there and returns results to the original caller.
 
-Die Zielbeschreibung umfasst sowohl die Zugriffs- und Kommunikationsregeln als auch die gewünschte Architektur. Dateinamen, Klassen und Assemblies sind Quellenbelege, keine automatisch vorgeschriebene Realisierung. Arbeitsaufträge an Agents und Entwicklungsprozesse über Pull Requests werden für diese Beschreibung nicht benötigt.
+The target description covers both the access and communication rules and the desired architecture. File names, classes and assemblies are source evidence, not an automatically prescribed realization. Work assignments to agents and development processes via pull requests are not needed for this description.
 
-## Systeme und ihre Grenzen
+## Systems and their boundaries
 
-| Identität und Kind | Beschreibung | Status im Beispiel |
+| Identity and Kind | Description | Status in the example |
 | --- | --- | --- |
-| `connector-platform` — System | Gemeinsame Zugangs-, Routing- und Integrationslösung. Ihre Grenze umfasst Cloud-API und On-Premise-Connector sowie die ihr zugeordneten Kommunikations- und Speicherdienste. Die Grenze überschreitet die Cloud-/On-Premise-Grenze. | Gewählte Arbeitsabgrenzung für diesen Entwurf. |
-| `dms` — System | Eigenständige Dokumentenverwaltung mit ihrem eigenen Verhalten und Berechtigungen. Die Plattform verwendet ihre veröffentlichten beziehungsweise technisch zugänglichen Verträge. | In der Referenz angebunden; tatsächlicher Livebetrieb hier nicht geprüft. |
-| `user-management` — System | Eigenständige lokale Benutzerverwaltung mit noch festzulegenden angebotenen Operationen. | Gewünschte Erweiterung; konkrete Anbindung offen. |
-| `winsolvenz` — System | Eigenständige Fachanwendung mit noch festzulegenden angebotenen Operationen. | Gewünschte Erweiterung; konkrete Anbindung offen. |
-| `identity-provider` — System | Liefert die Identität und autoritativen Mandanteninformationen für den Zugriff auf die Cloud-API. | In der Referenz über STP-IAM angebunden. |
+| `connector-platform` — System | Common access, routing and integration solution. Its boundary comprises cloud API and on-premise connector as well as the communication and storage services assigned to it. The boundary crosses the cloud/on-premise boundary. | Chosen working delimitation for this draft. |
+| `dms` — System | Standalone document management with its own behavior and permissions. The platform uses its published or technically accessible contracts. | Connected in the reference; actual live operation not checked here. |
+| `user-management` — System | Standalone local user management with offered operations still to be determined. | Desired extension; concrete connection open. |
+| `winsolvenz` — System | Standalone domain application with offered operations still to be determined. | Desired extension; concrete connection open. |
+| `identity-provider` — System | Supplies the identity and authoritative tenant information for access to the cloud API. | Connected in the reference via STP-IAM. |
 
-Extern bedeutet hier außerhalb der gewählten Connector-Systemgrenze. Es beschreibt weder den Netzwerkstandort noch automatisch fremdes organisatorisches Eigentum. DMS läuft On-Premise und bleibt dennoch ein eigenständiges Nachbarsystem.
+External here means outside the chosen Connector system boundary. It describes neither the network location nor automatically foreign organizational ownership. DMS runs on-premise and nevertheless remains a standalone neighboring system.
 
-## Laufzeiteinheiten und innere Bausteine
+## Runtime units and inner building blocks
 
-### Anwendungen und Infrastruktur
+### Applications and infrastructure
 
-| Identität | Rolle und Verantwortung | C4-Einordnung |
+| Identity | Role and responsibility | C4 classification |
 | --- | --- | --- |
-| `cloud-api` | Eigenständige API-Anwendung. Authentifiziert Aufrufer, löst Mandant und Operation auf, übersetzt Request in Command und Result in Response. | Container. |
-| `onprem-connector` | Eigenständige Anwendung in einer Kundenumgebung. Baut die Verbindung zum MQTT-Dienst ausgehend auf, empfängt Aufträge und verwendet lokale Systeme. | Container. |
-| `content-staging` | Logischer temporärer Objektspeicher für Dateiübertragungen über zeitlich begrenzte URLs. | Datenspeicher-Container; Implementierung in der Quelle S3, lokal ggf. MinIO. |
-| `mqtt-runtime` | Separater MQTT-Broker beziehungsweise verwalteter MQTT-Dienst, der die Kommunikationsinfrastruktur bereitstellt. | Eigenständige Laufzeitinfrastruktur. Strenges C4 stellt logische Topics/Kommunikationsbeziehungen und Brokerbereitstellung getrennt dar; siehe unten. |
+| `cloud-api` | Standalone API application. Authenticates callers, resolves tenant and operation, translates Request into Command and Result into Response. | Container. |
+| `onprem-connector` | Standalone application in a customer environment. Establishes the connection to the MQTT service outbound, receives jobs and uses local systems. | Container. |
+| `content-staging` | Logical temporary object store for file transfers via time-limited URLs. | Data store container; implemented as S3 in the source, locally possibly MinIO. |
+| `mqtt-runtime` | Separate MQTT broker or managed MQTT service that provides the communication infrastructure. | Standalone runtime infrastructure. Strict C4 presents logical topics/communication relationships and broker provisioning separately; see below. |
 
-API, MQTT-Dienst und Connector sind nach Nutzervorgabe getrennte Prozesse beziehungsweise Laufzeitumgebungen. Die physische Brokerinstanz wird dadurch nicht zu einem internen API-Modul. In einer C4-Sicht können Request-/Reply-Topics als logische Kommunikationsressourcen oder als benannte Kommunikationsbeziehungen erscheinen; der Brokerprozess gehört zusätzlich in die Bereitstellungssicht. Seine vorgeschriebene Existenz und Trennung dürfen dabei nicht aus dem Gesamtmodell verschwinden.
+According to the user's specification, API, MQTT service and connector are separate processes or runtime environments. The physical broker instance does not thereby become an internal API module. In a C4 view, request/reply topics can appear as logical communication resources or as named communication relationships; in addition, the broker process belongs in the deployment view. Its prescribed existence and separation must not disappear from the overall model in the process.
 
-**Offener Sprachpunkt:** Soll unser Container-Begriff ausdrücklich auch Infrastrukturprozesse aufnehmen oder folgt er der strengen C4-Projektion mit separater Bereitstellungsbeschreibung? Dieser Versuch macht die Entscheidung sichtbar. Er führt nicht stillschweigend einen vierten Architektur-Kind ein und bezeichnet den Broker nicht als C4-Component.
+**Open language point:** Is our Container term explicitly to include infrastructure processes as well, or does it follow the strict C4 projection with a separate deployment description? This attempt makes the decision visible. It does not silently introduce a fourth architecture Kind and does not designate the broker as a C4 Component.
 
-### Components innerhalb der API
+### Components within the API
 
-| Identität — Component | Verantwortung und Verträge |
+| Identity — Component | Responsibility and contracts |
 | --- | --- |
-| `api-access` | Authentifizierung, Mandantenauflösung und grobe Zugriffsprüfung. Liefert den vertrauenswürdigen Aufruferkontext an die Endpunktverarbeitung. |
-| `dms-http-edge` | Bietet die HTTP-DMS-Operationen an. Validiert ihre Eingaben, bildet Commands und stellt Ergebnisse im externen Responseformat dar. |
-| `command-dispatcher` | Bereitet den internen Austausch vor, verwaltet MessageId, Antwortadresse, Wartezustand, Fristen und begrenzte Wiederholungen. |
-| `api-mqtt-adapter` | Übersetzt logische Adressen in MQTT-Topics; veröffentlicht Requests und liefert eingehende Replies an den Dispatcher. |
-| `api-content-staging` | Organisiert Berechtigungen und URLs für direkte Dateiübertragungen zum Objektspeicher. |
-| `connector-monitor` | Empfängt Lebenszeichen und Fähigkeiten der Connectoren; konfigurationsabhängige Versions-/Verfügbarkeitsentscheidungen. |
+| `api-access` | Authentication, tenant resolution and coarse access check. Supplies the trusted caller context to the endpoint processing. |
+| `dms-http-edge` | Offers the HTTP DMS operations. Validates their inputs, forms Commands and presents results in the external response format. |
+| `command-dispatcher` | Prepares the internal exchange, manages MessageId, reply address, waiting state, deadlines and bounded retries. |
+| `api-mqtt-adapter` | Translates logical addresses into MQTT topics; publishes requests and delivers incoming replies to the dispatcher. |
+| `api-content-staging` | Organizes permissions and URLs for direct file transfers to the object store. |
+| `connector-monitor` | Receives heartbeats and capabilities of the connectors; configuration-dependent version/availability decisions. |
 
-### Components innerhalb des On-Premise-Connectors
+### Components within the on-premise connector
 
-| Identität — Component | Verantwortung und Verträge |
+| Identity — Component | Responsibility and contracts |
 | --- | --- |
-| `connector-mqtt-adapter` | Verbindet sich ausgehend mit dem Broker und stellt die logischen Request-/Reply-Adressoperationen bereit. |
-| `command-responder` | Empfängt und validiert Envelopes, begrenzt Parallelität, wählt einen Handler anhand der vollständigen Capability und veröffentlicht die Antwort. |
-| `dms-command-handling` | Führt die DMS-Operationen aus und erzeugt fachliche Results. |
-| `dms-adapter` | Stellt die benötigten DMS-Funktionen über die DMS-Integration bereit und verwendet den Benutzerkontext für lokale Berechtigungen. |
-| `connector-content-transfer` | Überträgt Dokumentinhalt über vorgegebene URLs statt als MQTT-Nutzlast. |
-| `connector-heartbeat` | Meldet Connector-Version und verfügbare Fähigkeiten an die Cloud. |
+| `connector-mqtt-adapter` | Connects outbound to the broker and provides the logical request/reply address operations. |
+| `command-responder` | Receives and validates envelopes, limits concurrency, selects a handler on the basis of the complete capability and publishes the reply. |
+| `dms-command-handling` | Executes the DMS operations and produces domain Results. |
+| `dms-adapter` | Provides the required DMS functions via the DMS integration and uses the user context for local permissions. |
+| `connector-content-transfer` | Transfers document content via given URLs instead of as an MQTT payload. |
+| `connector-heartbeat` | Reports connector version and available capabilities to the cloud. |
 
-Diese Granularität ist ein Vorschlag, keine Pflicht zu einer Component pro Klasse oder Bibliothek. Beispielsweise wird derselbe MQTT-Adaptercode in beiden Anwendungen verwendet; seine beiden Laufzeitverwendungen sind keine zusätzliche Anwendung. Ebenso kann eine fachliche Capability Beiträge mehrerer Components und beider Anwendungen benötigen.
+This granularity is a proposal, not an obligation to have one Component per class or library. For example, the same MQTT adapter code is used in both applications; its two runtime uses are not an additional application. Likewise, a domain capability may need contributions from several Components and from both applications.
 
 ```mermaid
 flowchart LR
-    Caller["Aufrufer"]
-    subgraph Platform["Connector-Plattform [System]"]
-        subgraph API["Cloud-API [Container]"]
-            Edge["HTTP-DMS-Edge [Component]"]
+    Caller["Caller"]
+    subgraph Platform["Connector platform [System]"]
+        subgraph API["Cloud API [Container]"]
+            Edge["HTTP DMS edge [Component]"]
             Dispatch["Dispatcher [Component]"]
-            Staging["Content-Staging [Component]"]
+            Staging["Content staging [Component]"]
             Edge -->|"Command / Result"| Dispatch
         end
-        MQTT["MQTT-Dienst [Laufzeitinfrastruktur]"]
-        subgraph Connector["On-Premise-Connector [Container]"]
+        MQTT["MQTT service [runtime infrastructure]"]
+        subgraph Connector["On-premise connector [Container]"]
             Respond["Responder [Component]"]
-            DmsWork["DMS-Handler und Adapter [Components]"]
+            DmsWork["DMS handler and adapter [Components]"]
             Respond -->|"Capability / Result"| DmsWork
         end
-        Store["Objektspeicher [Container]"]
+        Store["Object store [Container]"]
         Dispatch <-->|"Request / Reply"| MQTT
         MQTT <-->|"Request / Reply"| Respond
-        Staging -->|"Zugriffs-URLs organisieren"| Store
-        DmsWork <-->|"Dokumentinhalt via URL"| Store
+        Staging -->|"Organize access URLs"| Store
+        DmsWork <-->|"Document content via URL"| Store
     end
-    DMS["DMS [externes System]"]
-    IAM["Identity Provider [externes System]"]
-    Caller -->|"HTTP-API"| Edge
-    Edge -->|"Identitaetspruefung"| IAM
-    DmsWork -->|"DMS-Vertrag"| DMS
+    DMS["DMS [external system]"]
+    IAM["Identity provider [external system]"]
+    Caller -->|"HTTP API"| Edge
+    Edge -->|"Identity check"| IAM
+    DmsWork -->|"DMS contract"| DMS
 ```
 
-Diese kombinierte Übersicht zeigt Architekturgrenzen und logische Kommunikation. Sie ist kein einzelnes strenges C4-Level-Diagramm. MQTT-Adapter und weitere Querschnittsbausteine sind für die Lesbarkeit in den beteiligten Components zusammengefasst. Die optionale Gegenrichtung und die Erweiterungssysteme werden im Text gesondert beschrieben.
+This combined overview shows architecture boundaries and logical communication. It is not a single strict C4 level diagram. MQTT adapters and further cross-cutting building blocks are combined into the participating Components for readability. The optional opposite direction and the extension systems are described separately in the text.
 
-Die Referenz bietet derzeit sieben DMS-Capabilities: Dokumente auflisten, hochladen, herunterladen, anhand von Kontexten auflösen, Metadaten lesen, Versionshistorie lesen und Kontexte suchen. Ihre Namen sind `dms.documents.list.v1`, `upload.v1`, `download.v1`, `resolve.v1`, `get.v1`, `history.v1` unter demselben Dokumentpräfix sowie `dms.contexts.search.v1`.
+The reference currently offers seven DMS capabilities: list documents, upload, download, resolve by contexts, read metadata, read version history and search contexts. Their names are `dms.documents.list.v1`, `upload.v1`, `download.v1`, `resolve.v1`, `get.v1`, `history.v1` under the same document prefix as well as `dms.contexts.search.v1`.
 
-## Interfaces, Concepts und Relationen
+## Interfaces, Concepts and relations
 
-System/Container/Component beschreiben die Architekturgliederung. Der vollständige Vertrag verwendet zusätzlich bereits diskutierte Begriffe wie Interface, Concept, UseCase, Rule und Scenario. Ein vollständig beschriebenes Projekt besteht nicht allein aus der statischen Architekturhierarchie.
+System/Container/Component describe the architecture structure. The complete contract additionally uses terms already discussed, such as Interface, Concept, UseCase, Rule and Scenario. A completely described project does not consist of the static architecture hierarchy alone.
 
-### Benannte Vertragsflächen — Interface
+### Named contract surfaces — Interface
 
-| Identität | Was der Vertrag festlegt | Beteiligte |
+| Identity | What the contract stipulates | Participants |
 | --- | --- | --- |
-| `public-dms-api` | HTTP-Operationen, Authentifizierung, Eingaben, erfolgreiche Antworten und Fehler. | Aufrufer verwendet; HTTP-Edge stellt bereit. |
-| `command-exchange` | Versionierte Commands/Results, Envelopes, Adressbildung, Antwortadresse, Zuordnung, Fristen und Zustellgrenzen. | Dispatcher und Responder übernehmen jeweils eine Rolle desselben Vertrags. |
-| `mqtt-transport` | Veröffentlichung, Abonnement, Topicabbildung und Transportverhalten. Der Broker interpretiert keine DMS-Capability. | MQTT-Adapter verwenden; MQTT-Dienst stellt Transport bereit. |
-| `dms-access` | Für die ausgewählten UseCases benötigte DMS-Operationen und Fehler-/Berechtigungssemantik. | DMS stellt bereit; DMS-Adapter verwendet. |
-| `content-transfer` | Zugriffsberechtigte Übertragung über kurzlebige Objekt-URLs und deren Gültigkeit. | API organisiert; Connector und Aufrufer übertragen Daten zum/vom Speicher. |
+| `public-dms-api` | HTTP operations, authentication, inputs, successful responses and errors. | Caller uses; HTTP edge provides. |
+| `command-exchange` | Versioned Commands/Results, envelopes, address formation, reply address, correlation, deadlines and delivery boundaries. | Dispatcher and responder each take one role of the same contract. |
+| `mqtt-transport` | Publishing, subscription, topic mapping and transport behavior. The broker interprets no DMS capability. | MQTT adapters use; MQTT service provides transport. |
+| `dms-access` | DMS operations required for the selected UseCases and error/permission semantics. | DMS provides; DMS adapter uses. |
+| `content-transfer` | Access-authorized transfer via short-lived object URLs and their validity. | API organizes; connector and caller transfer data to/from the store. |
 
-`Interface` wird hier als Zusammenarbeit zwischen Softwarebausteinen und Systemen erprobt. Das ist weiter als die bisherige Arbeitsdefinition, die allein den Actor-Zugang zu UseCases beschreibt. Die bestehende Definitionsseite wird damit nicht automatisch geändert.
+`Interface` is tried out here as cooperation between software building blocks and systems. That is broader than the previous working definition, which describes solely the Actor access to UseCases. The existing definition page is thereby not changed automatically.
 
-### Benannte Bedeutungen — Concept
+### Named meanings — Concept
 
-Benötigte Projektbegriffe sind Mandant, Zielumgebung, Capability, Command, Result, RequestEnvelope, ResponseEnvelope, logische RequestInbox, ReplyInbox, MessageId, CorrelationId und Connector-/API-Instanz. Ein Command beschreibt eine konkrete Operationsanforderung; sein Result beschreibt das fachliche Ergebnis. Die Envelope ergänzt den Transportvertrag. Ob jeder dieser Begriffe eine eigene Definition braucht, hängt von seiner unabhängigen Verwendung ab.
+Required project terms are tenant, target environment, capability, Command, Result, RequestEnvelope, ResponseEnvelope, logical RequestInbox, ReplyInbox, MessageId, CorrelationId and connector/API instance. A Command describes a concrete operation request; its Result describes the domain result. The envelope supplements the transport contract. Whether each of these terms needs a Definition of its own depends on its independent use.
 
-`Capability` hat in der Quelle die vier Koordinaten Product, Module, Operation und Version. Das Segment `Module = documents` ist eine fachliche Operationsgruppierung. Es begründet keinen Architektur-Kind Module und keine zwingende Eins-zu-eins-Zuordnung zu einer Component.
+In the source, `Capability` has the four coordinates Product, Module, Operation and Version. The segment `Module = documents` is a domain operation grouping. It justifies neither an architecture Kind Module nor a mandatory one-to-one assignment to a Component.
 
-### Beziehungen mit konkreter Bedeutung
+### Relationships with concrete meaning
 
-| Beziehung | Beispiel | Was sie ausdrückt |
+| Relationship | Example | What it expresses |
 | --- | --- | --- |
-| System enthält Container | Plattform enthält API und Connector. | Zugehörigkeit zur Lösung, keine Aussage zum Netzwerkstandort. |
-| Container enthält Component | API enthält Dispatcher. | Funktionaler Beitrag innerhalb dieser Laufzeitgrenze. |
-| Component bietet Interface | HTTP-Edge bietet öffentliche DMS-API. | Verantwortung für einen beschriebenen Vertrag. |
-| Component verwendet Interface | DMS-Adapter verwendet DMS-Zugriff. | Abhängigkeit von einem Vertrag des Nachbarsystems. |
-| Component trägt zu UseCase bei | HTTP-Edge, Dispatcher, Responder und DMS-Adapter tragen zu „Dokumente auflisten“ bei. | Ein Verhalten erstreckt sich über mehrere Laufzeiteinheiten. |
-| Rule gilt für Vertrag/Definition | Antwortzuordnung gilt für Command-Austausch. | Die Verpflichtung erreicht die relevanten Beiträge. |
-| Check untersucht Erwartung | Gleichzeitige Requests erhalten jeweils ihre eigene Antwort. | Deklarierter Prüfauftrag, noch kein ausgeführtes Ergebnis. |
+| System contains Container | Platform contains API and connector. | Belonging to the solution, no statement about the network location. |
+| Container contains Component | API contains dispatcher. | Functional contribution within this runtime boundary. |
+| Component offers Interface | HTTP edge offers public DMS API. | Responsibility for a described contract. |
+| Component uses Interface | DMS adapter uses DMS access. | Dependency on a contract of the neighboring system. |
+| Component contributes to UseCase | HTTP edge, dispatcher, responder and DMS adapter contribute to “List documents”. | A behavior extends across several runtime units. |
+| Rule applies to contract/Definition | Reply correlation applies to Command exchange. | The obligation reaches the relevant contributions. |
+| Check examines expectation | Simultaneous requests each receive their own reply. | Declared check assignment, not yet an executed result. |
 
-Publish/Subscribe, Eingabeabbildung und Antwortbildung werden zunächst innerhalb des Kommunikationsvertrags und des UseCases präzisiert. Die Tabelle führt nicht für jedes Tätigkeitsverb einen neuen universellen Graphkantentyp ein. Vor einem maschinellen Sprachvertrag sind Richtung, erlaubte Ziele und abgeleitete Folgen jeder gewählten Relation zu bestimmen.
+Publish/subscribe, input mapping and response formation are initially made precise within the communication contract and the UseCase. The table does not introduce a new universal graph edge type for every activity verb. Before a machine-readable language contract, direction, permitted targets and derived consequences of each chosen relation are to be determined.
 
-## Topicwahl und Antwortvertrag
+## Topic selection and reply contract
 
-Die Quelle trifft zwei verschiedene Routingentscheidungen:
+The source makes two different routing decisions:
 
-1. **Wohin?** Die Zielumgebung bestimmt die logische RequestInbox und daraus das MQTT-Topic. Im Cloud-zu-Kunde-Fall ist das der Mandant.
-2. **Was?** Die Capability innerhalb der Envelope bestimmt auf dem Empfänger den Handler. Produkt, fachliche Modulgruppe, Operation und Version sind im aktuellen MQTT-Pfad keine zusätzlichen Topicsegmente.
+1. **Where to?** The target environment determines the logical RequestInbox and from it the MQTT topic. In the cloud-to-customer case, this is the tenant.
+2. **What?** The capability within the envelope determines the handler on the receiver. Product, domain module group, operation and version are not additional topic segments in the current MQTT path.
 
-| Zweck | Logische Adresse / Daten | MQTT-Abbildung der Quelle |
+| Purpose | Logical address / data | MQTT mapping of the source |
 | --- | --- | --- |
-| Request für Kunde | `RequestInbox([tenantId])` | `stp/dms/{tenantId}` |
-| Konkurrierende Connector-Empfänger | `SharedRequestInbox([tenantId])` | `$share/replicas/stp/dms/{tenantId}` als Abonnementfilter |
-| Antwort an API-Instanz | `ReplyInbox([cloud], instanceId)` | `stp/dms/cloud/{instanceId}` |
-| Operationsauswahl | `Capability(dms, documents, list, v1)` | Envelope-Feld, kein weiteres Routingtopic. |
+| Request for customer | `RequestInbox([tenantId])` | `stp/dms/{tenantId}` |
+| Competing connector receivers | `SharedRequestInbox([tenantId])` | `$share/replicas/stp/dms/{tenantId}` as subscription filter |
+| Reply to API instance | `ReplyInbox([cloud], instanceId)` | `stp/dms/cloud/{instanceId}` |
+| Operation selection | `Capability(dms, documents, list, v1)` | Envelope field, no further routing topic. |
 
-Der feste Präfix `stp/dms` ist in der Quelle ein Transport-/Policyvertrag; das darin stehende `dms` wird nicht dynamisch aus Capability.Product eingesetzt. Ein späterer Produktwechsel darf diese beiden Ebenen nicht verwechseln. Weitere Zielachsen und mehrteilige Adressen sind im Routingkern möglich; sie ersetzen die tatsächlich verwendete Mandantenadressierung nicht.
+The fixed prefix `stp/dms` is a transport/policy contract in the source; the `dms` contained in it is not inserted dynamically from Capability.Product. A later product change must not confuse these two levels. Further target axes and multipart addresses are possible in the routing core; they do not replace the tenant addressing actually used.
 
-Der Connector veröffentlicht eine Antwort an die aus `ReplyTarget` und `ReplyInstance` rekonstruierte logische Adresse. Dies sind Anwendungsfelder der Envelope. Der untersuchte Pfad verwendet dafür keine automatische MQTT-RPC-Funktion.
+The connector publishes a reply to the logical address reconstructed from `ReplyTarget` and `ReplyInstance`. These are application fields of the envelope. The examined path uses no automatic MQTT RPC function for this.
 
-Die Response behält die **MessageId des Requests**. Der Dispatcher verwendet diese ID als Schlüssel der wartenden Anfrage. Die **CorrelationId** wird zusätzlich erhalten und dient der übergreifenden Nachverfolgung, auch über mögliche weitere Hops. Sie ist im untersuchten Dispatcher nicht der Schlüssel für die lokale Antwortzustellung.
+The response retains the **MessageId of the request**. The dispatcher uses this ID as the key of the waiting request. The **CorrelationId** is additionally preserved and serves end-to-end tracing, also across possible further hops. In the examined dispatcher it is not the key for local reply delivery.
 
-Die Shared Subscription verteilt eine Zustellung auf einen passenden Connector-Abonnenten des gemeinsamen Pools. Daraus entsteht keine Garantie, dass ein fachlicher Auftrag über Verbindungsabbrüche, Wiederholungen und mehrere Replikas genau einmal ausgeführt wird.
+The shared subscription distributes one delivery to a matching connector subscriber of the common pool. No guarantee arises from this that a domain job is executed exactly once across connection drops, retries and several replicas.
 
-## UseCase: Dokumente eines Ordners auflisten
+## UseCase: list documents of a folder
 
-Die folgende Beschreibung ist ein Sollkandidat, der aus dem tatsächlichen Verarbeitungspfad gewonnen wird. Die Werte sind synthetische Beispiele.
+The following description is a target candidate derived from the actual processing path. The values are synthetic examples.
 
-**Erwartung:** Ein berechtigter Aufrufer erhält die Dokumentmetadaten des gewählten Ordners im DMS seiner Kundenumgebung. Er erhält entweder das erfolgreiche Ergebnis oder einen definierten Fehler. Der Aufruf einer anderen Kundenumgebung darf durch eine frei gesetzte Routingangabe nicht ermöglicht werden.
+**Expectation:** An authorized caller receives the document metadata of the chosen folder in the DMS of their customer environment. They receive either the successful result or a defined error. Calling another customer environment must not be made possible by a freely set routing entry.
 
-| Schritt | Beitrag und Aussage |
+| Step | Contribution and statement |
 | --- | --- |
-| 1 | Aufrufer sendet `POST /v1/dms/documents/list` mit `FolderId = root` und `PageSize = 100`. |
-| 2 | API prüft Identität und erforderlichen Scope. Der Mandant wird im aktuellen Code aus dem authentifizierten Tokenkontext bestimmt; das ältere README-Beispiel mit `X-Tenant-Id` ist dafür keine verlässliche aktuelle Quelle. Beispielmandant: `tenant-demo`. |
-| 3 | HTTP-Edge validiert die Eingabe und bildet `ListDocumentsCommand`. HTTP-Request und Command sind getrennte Beschreibungen mit expliziter Abbildung. |
-| 4 | Dispatcher übernimmt `Capability = dms.documents.list.v1`, adressiert `tenant-demo`, erzeugt beziehungsweise übernimmt die IDs und registriert den wartenden Austausch vor der Veröffentlichung. |
-| 5 | RequestEnvelope trägt beispielsweise `MessageId = m1`, `CorrelationId = c1`, `ReplyTarget = [cloud]`, `ReplyInstance = api-A`, SchemaVersion, Capability, Diagnostikziel, Fristheader und kodierten Command. Das Diagnosefeld Target selbst ist nicht die bereits verwendete Transportadresse. |
-| 6 | API-MQTT-Adapter veröffentlicht auf `stp/dms/tenant-demo`. Ein Connector empfängt über `$share/replicas/stp/dms/tenant-demo`. |
-| 7 | Responder validiert Envelope und Version, begrenzt die Arbeitsmenge und sucht den Handler für die vollständige Capability. |
-| 8 | DMS-Handler verwendet den DMS-Adapter. Der Adapter führt die Abfragen mit dem Benutzerkontext gegen DMS aus. Bei fehlender DMS-Konfiguration kann der Referenzhost stattdessen eine Fake-Verbindung einsetzen; das ist kein Live-DMS-Nachweis. |
-| 9 | Handler erzeugt ein ListDocumentsResult mit Dokumentmetadaten und gegebenenfalls Fortsetzungsinformation. Transporterfolg und fachlicher Resultstatus sind getrennt. |
-| 10 | Responder bildet ResponseEnvelope mit `MessageId = m1` und `CorrelationId = c1` und veröffentlicht auf `stp/dms/cloud/api-A`. |
-| 11 | Die Antwortadresse führt zur Reply-Inbox von API-Instanz `api-A`. Ihr Dispatcher findet über `m1` den wartenden Austausch und dekodiert das Result. Die technische Zugriffsbeschränkung auf Topics ist zusätzlich zu bestimmen. |
-| 12 | HTTP-Edge bildet ListDocumentsResponse beziehungsweise den definierten Fehler und beendet die HTTP-Anfrage. |
+| 1 | Caller sends `POST /v1/dms/documents/list` with `FolderId = root` and `PageSize = 100`. |
+| 2 | API checks identity and required scope. The tenant is determined in the current code from the authenticated token context; the older README example with `X-Tenant-Id` is not a reliable current source for this. Example tenant: `tenant-demo`. |
+| 3 | HTTP edge validates the input and forms `ListDocumentsCommand`. HTTP request and Command are separate descriptions with explicit mapping. |
+| 4 | Dispatcher adopts `Capability = dms.documents.list.v1`, addresses `tenant-demo`, generates or adopts the IDs and registers the waiting exchange before publication. |
+| 5 | RequestEnvelope carries for example `MessageId = m1`, `CorrelationId = c1`, `ReplyTarget = [cloud]`, `ReplyInstance = api-A`, SchemaVersion, capability, diagnostic target, deadline header and encoded Command. The diagnostic field Target itself is not the transport address already used. |
+| 6 | API MQTT adapter publishes to `stp/dms/tenant-demo`. A connector receives via `$share/replicas/stp/dms/tenant-demo`. |
+| 7 | Responder validates envelope and version, limits the amount of work in progress and looks for the handler for the complete capability. |
+| 8 | DMS handler uses the DMS adapter. The adapter executes the queries against DMS with the user context. If the DMS configuration is missing, the reference host can use a fake connection instead; this is no live-DMS evidence. |
+| 9 | Handler produces a ListDocumentsResult with document metadata and, where applicable, continuation information. Transport success and domain result status are separate. |
+| 10 | Responder forms ResponseEnvelope with `MessageId = m1` and `CorrelationId = c1` and publishes to `stp/dms/cloud/api-A`. |
+| 11 | The reply address leads to the reply inbox of API instance `api-A`. Its dispatcher finds the waiting exchange via `m1` and decodes the Result. The technical access restriction on topics is additionally to be determined. |
+| 12 | HTTP edge forms ListDocumentsResponse or the defined error and ends the HTTP request. |
 
 ```mermaid
 sequenceDiagram
-    participant Caller as Aufrufer
-    participant API as Cloud-API / Instanz api-A
-    participant MQTT as MQTT-Broker
-    participant Connector as On-Premise-Connector
+    participant Caller as Caller
+    participant API as Cloud API / instance api-A
+    participant MQTT as MQTT broker
+    participant Connector as On-premise connector
     participant DMS as DMS
-    Note over API: Reply-Inbox vor dem Austausch abonnieren
-    Note over Connector: Mandanten-Inbox als Shared Subscription abonnieren
-    Caller->>API: HTTP-Request fuer tenant-demo
-    Note over API: Request in Command abbilden; Waiter m1 registrieren
-    API->>MQTT: Request auf stp/dms/tenant-demo
-    MQTT->>Connector: Zustellung an einen Abonnenten
-    Note over Connector: Handler nach Capability waehlen
-    Connector->>DMS: Dokumente im Benutzerkontext lesen
-    DMS-->>Connector: Metadaten / fachlicher Fehler
-    Connector->>MQTT: Reply auf stp/dms/cloud/api-A mit m1
-    MQTT-->>API: Antwort an api-A
-    Note over API: Wartende Anfrage ueber MessageId m1 finden
-    API-->>Caller: HTTP-Response / definierter Fehler
+    Note over API: Subscribe to reply inbox before the exchange
+    Note over Connector: Subscribe to tenant inbox as shared subscription
+    Caller->>API: HTTP request for tenant-demo
+    Note over API: Map request to Command; register waiter m1
+    API->>MQTT: Request on stp/dms/tenant-demo
+    MQTT->>Connector: Delivery to one subscriber
+    Note over Connector: Choose handler by capability
+    Connector->>DMS: Read documents in user context
+    DMS-->>Connector: Metadata / domain error
+    Connector->>MQTT: Reply on stp/dms/cloud/api-A with m1
+    MQTT-->>API: Reply to api-A
+    Note over API: Find waiting request via MessageId m1
+    API-->>Caller: HTTP response / defined error
 ```
 
-Die Pfeile zeigen Nachrichtenfluss, keine eingehend zu öffnenden Netzwerkverbindungen beim Kunden. Die MQTT-Verbindung des Connectors wird ausgehend aufgebaut. Die HTTP-Anfrage wartet in diesem Pfad auf ein Result; die MQTT-Kommunikation selbst verwendet asynchrone Nachrichten.
+The arrows show message flow, not network connections to be opened inbound at the customer. The MQTT connection of the connector is established outbound. In this path the HTTP request waits for a Result; the MQTT communication itself uses asynchronous messages.
 
-## Regeln, Fehler und Grenzen
+## Rules, errors and boundaries
 
-Diese Tabelle trennt beobachteten Mechanismus und die daraus noch zu entscheidende Sollqualität. Konfigurationsdefaults sind keine Aussage über die aktive Kundenkonfiguration.
+This table separates the observed mechanism from the target quality still to be decided from it. Configuration defaults are no statement about the active customer configuration.
 
-| Gegenstand | Quellenbefund | Konsequenz für die Sollbeschreibung |
+| Item | Source finding | Consequence for the target description |
 | --- | --- | --- |
-| Mandant | Aktueller HTTP-Code verwendet den Tokenkontext. Ältere Orientierung nennt zusätzlich einen Header. | Eine einzige autoritative Herkunft bestimmen und Zugriffsgrenzen an den MQTT-Adressen beschreiben. |
-| Versionen und unbekannte Operationen | Unsupported RequestEnvelope-Version wird dead-lettered. Eine gültig dekodierte unbekannte Capability erhält einen Error-Reply. | Fehlerpfade getrennt beschreiben; eine ungültige Nachricht hat nicht automatisch einen auswertbaren Replyvertrag. |
-| Erfolg | Envelope-Status und fachlicher Resultstatus sind verschieden. Ein erfolgreicher Handleraufruf kann ein fachliches Fehlerresultat liefern. | Transporterfolg darf nicht als fachlicher Erfolg ausgegeben werden. |
-| Fehlerabbildung | Fachliche Berechtigungsverweigerung wird zu HTTP 403, Nichtgefunden zu 404, andere fachliche Fehler typischerweise zu 502. Dispatcher-Timeout wird zu 504, Dispatcher-Shutdown zu 503. | Pro Operation und Fehlerart konkrete Außenwirkung beschreiben. Quelle ist der aktuelle Exception-/Resultpfad, nicht allein ältere Dokumentation. |
-| Wartefrist | Default 30 Sekunden pro Dispatchversuch; Default zwei Versuche mit begrenzter Verzögerung. | Keine pauschale Gesamtfrist von 30 Sekunden behaupten. HTTP-Abbruch, Wiederholungsbudget und Gesamtfrist separat festlegen. |
-| Deadline | Jeder Versuch erhält eine neue absolute Deadline. Responder kann vor Arbeitsbeginn veraltete Aufträge abweisen. | Uhrabweichung und bereits laufende Arbeit berücksichtigen. Ein Timeout beweist keine Nichtausführung und löst keine automatische DMS-Rücknahme aus. |
-| Wiederholung | Dispatch-Retry verwendet dieselbe MessageId. Ein optionaler HTTP-Idempotency-Key kann die ID über einen erneuten HTTP-Aufruf erhalten. | Geltungsbereich, Konfliktbehandlung und Aufbewahrung des Idempotenzschlüssels festlegen. |
-| Idempotenz | Defaultspeicher ist pro Prozess im Speicher, mit begrenzter Aufbewahrung und Größe. Derselbe HTTP-Schlüssel mit anderem Body wird nicht auf einen Payloadkonflikt geprüft. | Keine allgemeine Exactly-once-Zusage. Verhalten über Replikas, Neustarts und widersprüchliche Wiederholungen ist offen. |
-| Replikas | Alle Connectoren desselben Zielpools teilen die Request-Inbox; Handler werden erst danach nach Capability gewählt. | Entweder muss jeder Empfänger des Pools die relevanten Capabilities beherrschen oder die Verteilung muss Fähigkeit und Version berücksichtigen. Heterogene Replikas sind eine Gegenprobe. |
-| Antwortzustand | Waiter liegen im Speicher der API-Instanz. InstanceId wird standardmäßig beim Start neu erzeugt. Verspätete Replies ohne Waiter werden ignoriert. | Neustart und verlorene Antworten sichtbar beschreiben; keine automatische Übernahme durch eine andere API-Instanz behaupten. |
-| MQTT | Publish-/Subscribe-QoS ist konfigurierbar, Default 1; Verbindungswiederaufbau und begrenzte Publish-Retries existieren. | Transportzustellung, Anwendungsausführung und Dauerhaftigkeit sind eigene Erwartungen. Broker-ACK ist keine DMS-Erfolgsmeldung. |
-| Parallelität | Responder hat eine begrenzte Inbox und Workerzahl, Default 16. | Lastverhalten, Reihenfolge und Wartezeiten entscheiden; keine automatische Reihenfolgegarantie aus dem Topic ableiten. |
-| Authentifizierung / Verschlüsselung | Die Hosts haben optionale zusätzliche Hop-Authentifizierung und Payloadverschlüsselung. Aktive Einstellungen wurden nicht erhoben. | Gewünschtes Sicherheitsprofil als Verpflichtung beschreiben; vorhandene Registrierungsoptionen sind kein Beweis, dass es aktiv ist. |
+| Tenant | Current HTTP code uses the token context. Older orientation additionally names a header. | Determine a single authoritative origin and describe access boundaries at the MQTT addresses. |
+| Versions and unknown operations | Unsupported RequestEnvelope version is dead-lettered. A validly decoded unknown capability receives an error reply. | Describe error paths separately; an invalid message does not automatically have an evaluable reply contract. |
+| Success | Envelope status and domain result status are different. A successful handler call can return a domain error result. | Transport success must not be presented as domain success. |
+| Error mapping | Domain permission denial becomes HTTP 403, not-found 404, other domain errors typically 502. Dispatcher timeout becomes 504, dispatcher shutdown 503. | Describe the concrete external effect per operation and error type. Source is the current exception/result path, not older documentation alone. |
+| Waiting period | Default 30 seconds per dispatch attempt; default two attempts with bounded delay. | Do not claim a blanket total deadline of 30 seconds. Determine HTTP abort, retry budget and total deadline separately. |
+| Deadline | Each attempt receives a new absolute deadline. Responder can reject outdated jobs before work begins. | Take clock deviation and already running work into account. A timeout does not prove non-execution and does not trigger an automatic DMS rollback. |
+| Retry | Dispatch retry uses the same MessageId. An optional HTTP idempotency key can preserve the ID across a repeated HTTP call. | Determine scope, conflict handling and retention of the idempotency key. |
+| Idempotency | Default store is in memory per process, with bounded retention and size. The same HTTP key with a different body is not checked for a payload conflict. | No general exactly-once promise. Behavior across replicas, restarts and contradictory retries is open. |
+| Replicas | All connectors of the same target pool share the request inbox; handlers are chosen by capability only afterwards. | Either every receiver of the pool must master the relevant capabilities or the distribution must take ability and version into account. Heterogeneous replicas are a counter-probe. |
+| Reply state | Waiters live in the memory of the API instance. InstanceId is newly generated at start by default. Late replies without waiter are ignored. | Describe restart and lost replies visibly; do not claim automatic takeover by another API instance. |
+| MQTT | Publish/subscribe QoS is configurable, default 1; connection re-establishment and bounded publish retries exist. | Transport delivery, application execution and durability are expectations of their own. Broker ACK is no DMS success message. |
+| Concurrency | Responder has a bounded inbox and worker count, default 16. | Decide load behavior, order and waiting times; do not derive an automatic order guarantee from the topic. |
+| Authentication / encryption | The hosts have optional additional hop authentication and payload encryption. Active settings were not collected. | Describe the desired security profile as an obligation; existing registration options are no proof that it is active. |
 
-## Weitere notwendige Sichten des Beispiels
+## Further necessary views of the example
 
-**Dokumentinhalt:** Upload und Download benötigen einen zusätzlichen Datenpfad über Objektspeicher und zeitlich begrenzte URLs. Die MQTT-Envelopes transportieren Aufträge, Metadaten und Übertragungsinformationen; ein Diagramm ausschließlich mit API, Broker und Connector lässt den dokumentierten Dateitransfer unvollständig. Zugang, Mandantenbindung, Ablauf und Bereinigung der zwischengelagerten Dateien sind eigene Verträge.
+**Document content:** Upload and download need an additional data path via object store and time-limited URLs. The MQTT envelopes transport jobs, metadata and transfer information; a diagram with only API, broker and connector leaves the documented file transfer incomplete. Access, tenant binding, expiry and cleanup of the temporarily stored files are contracts of their own.
 
-**Rollenrichtung:** Für konfigurierbares Multipart-Export-Staging kann der Connector auch Dispatcher und die Cloud API auch Responder sein. Die Rolle „Sender eines Auftrags“ ist keine unveränderliche Eigenschaft des Systemtyps Cloud oder On-Premise. Der wiederverwendbare Command-Austausch muss beide Richtungen erlauben, wo der betreffende UseCase das vorsieht.
+**Role direction:** For configurable multipart export staging, the connector can also be dispatcher and the cloud API also responder. The role “sender of a job” is not an unchangeable property of the system type cloud or on-premise. The reusable Command exchange must permit both directions where the UseCase concerned provides for it.
 
-**Optionale lokale Weiterleitung:** ProxyHandler und die LSB-/Produktadressierung zeigen eine vorbereitete weitere Weiterleitung in einer Kundenumgebung. Sie werden hier nicht als im normalen DMS-Host aktiv behauptet. Wenn sie gewählt wird, braucht der UseCase einen weiteren Hop mit eigener MessageId, erhaltener übergreifender CorrelationId und zugehörigen Antwort- und Fehlerregeln.
+**Optional local forwarding:** ProxyHandler and the LSB/product addressing show a prepared further forwarding in a customer environment. They are not claimed here as active in the normal DMS host. If it is chosen, the UseCase needs a further hop with its own MessageId, preserved end-to-end CorrelationId and associated reply and error rules.
 
-**Betrieb:** Connector-Lebenszeichen, verfügbare Fähigkeiten, Versionen und API-Gating sind in der Quelle vorgesehen. Für eine vollständige Betriebsbeschreibung fehlen sonst Verfügbarkeit und Versionskompatibilität. Daraus folgt kein erforderlicher Workflow für die Softwareentwicklung.
+**Operation:** Connector heartbeat, available capabilities, versions and API gating are provided for in the source. For a complete operations description, availability and version compatibility are otherwise missing. No required workflow for software development follows from this.
 
-## Prüfszenarien für die Modellvollständigkeit
+## Check scenarios for model completeness
 
-Die folgenden Checks sind Entwurfsaufträge. Die lokale Quellenanalyse führt sie nicht aus. Vorhandene Testdateien dienen als zusätzliche Belege dafür, welche Erwartungen im Projekt bereits formuliert sind.
+The following checks are design assignments. The local source analysis does not execute them. Existing test files serve as additional evidence of which expectations are already formulated in the project.
 
-| Scenario | Erwartung / Check |
+| Scenario | Expectation / Check |
 | --- | --- |
-| Normaler List-Aufruf | HTTP-Request, Command, Mandantenadresse, gewählter Handler, Result und HTTP-Response stimmen in Inhalt und Zuständigkeit überein. |
-| Zwei gleichzeitige Aufrufe auf derselben API-Instanz | Jeder Waiter erhält sein eigenes Result über die zugehörige MessageId; Antworten dürfen in anderer Reihenfolge ankommen. |
-| Zwei API-Instanzen | ReplyInbox führt zur ausstellenden Instanz, nicht zu einem beliebigen wartenden Prozess. |
-| Fremder Mandant | Aufrufer kann durch frei gewählte Eingaben weder fremde Aufträge auslösen noch fremde Antworten abonnieren. |
-| Anderes Produkt oder fachliches Modul | Topicwahl und vollständige Capability werden unabhängig geprüft; ein gleicher Operationsname erzeugt keine Handlerkollision. |
-| Heterogene Connector-Replikas | Ein Auftrag erreicht einen Empfänger, der die geforderte Capability und Version ausführen kann, oder ein definiertes ablehnendes Verhalten. |
-| Wiederholung / Neustart | Wiederholungswirkung entspricht der ausdrücklich gewählten Idempotenzgarantie; ein wiederholter Schreibauftrag erzeugt keine stillschweigend zugesagte Exactly-once-Eigenschaft. |
-| Timeout, späte Antwort, API-Neustart | Ausstehender Zustand und fachliche Ausführungsunsicherheit bleiben sichtbar; eine späte Antwort wird nicht als Antwort auf einen neuen Auftrag behandelt. |
-| Unbekannte Capability / kaputte Envelope | Definierter Error-Reply beziehungsweise Dead-Letter-Pfad; keine erfundene erfolgreiche Antwort. |
-| Größere Datei | Inhalt läuft über den vorgesehenen Speicherpfad; abgelaufene URL, Berechtigungsfehler und notwendige Bereinigung sind beschrieben. |
+| Normal list call | HTTP request, Command, tenant address, chosen handler, Result and HTTP response agree in content and responsibility. |
+| Two simultaneous calls on the same API instance | Each waiter receives its own Result via the associated MessageId; replies may arrive in a different order. |
+| Two API instances | ReplyInbox leads to the issuing instance, not to an arbitrary waiting process. |
+| Foreign tenant | Through freely chosen inputs, a caller can neither trigger foreign jobs nor subscribe to foreign replies. |
+| Other product or domain module | Topic selection and complete capability are checked independently; an identical operation name produces no handler collision. |
+| Heterogeneous connector replicas | A job reaches a receiver that can execute the required capability and version, or a defined rejecting behavior. |
+| Retry / restart | Retry effect corresponds to the explicitly chosen idempotency guarantee; a repeated write job produces no silently promised exactly-once property. |
+| Timeout, late reply, API restart | Pending state and domain execution uncertainty remain visible; a late reply is not treated as a reply to a new job. |
+| Unknown capability / broken envelope | Defined error reply or dead-letter path; no invented successful reply. |
+| Larger file | Content runs via the provided storage path; expired URL, permission error and necessary cleanup are described. |
 
-## Ergebnis für das Vokabular
+## Result for the vocabulary
 
-System, Container und Component geben dem Beispiel klare Lösungs-, Laufzeit- und Funktionsgrenzen. Der Begriff Module wird für die Architekturgliederung dieses Beispiels nicht zusätzlich benötigt. Das bestätigt noch nicht seine generelle Entbehrlichkeit; insbesondere ein Capability-Namenssegment und eine Codebibliothek sind andere Gegenstände als eine Component.
+System, Container and Component give the example clear solution, runtime and function boundaries. The term Module is not additionally needed for the architecture structure of this example. This does not yet confirm its general dispensability; in particular, a capability name segment and a code library are different items from a Component.
 
-Für eine ausreichende Projektbeschreibung werden außerdem Interface als interner/äußerer Vertrag, UseCase für die Operationswirkung, Concept für Nachrichten und Identitäten sowie Rule für Zuordnung, Frist und Fehlersemantik benötigt. Scenario und Check machen die erwarteten Folgen konkret. Ein neuer universeller Command-, Topic- oder Workflow-Kind ist durch dieses Beispiel noch nicht begründet; der unabhängige Bedarf solcher Definitionen ist am Ausdruck und an der Verwendung zu prüfen.
+For a sufficient project description, Interface as internal/external contract, UseCase for the operation effect, Concept for messages and identities as well as Rule for correlation, deadline and error semantics are additionally needed. Scenario and Check make the expected consequences concrete. A new universal Command, Topic or Workflow Kind is not yet justified by this example; the independent need for such Definitions is to be checked against the expression and the use.
 
-Die wichtigsten offenen Sprachfragen sind:
+The most important open language questions are:
 
-1. **Container und Infrastruktur:** Wie gehören Brokerprozess, logische Topics, Bereitstellungsumgebung und Instanzen in die typisierte Sollbeschreibung, ohne logische und physische Sichten gleichzusetzen?
-2. **Interface:** Reicht ein gemeinsamer Vertrag für Request, Antwort, Rollen und Regeln, und wie werden seine Beiträge den Components zugeordnet?
-3. **Parametrisierte Adressen:** Wie werden Topicfamilien und aus Laufzeitwerten gebildete Reply-Adressen beschrieben, ohne eine Modelldefinition pro konkretem Mandanten, Auftrag oder Prozessstart zu benötigen?
-4. **Verhalten über mehrere Bausteine:** Wie referenziert ein UseCase seine Beiträge, Übersetzungen und Prüfpflichten, sodass eine Vertragsänderung die betroffenen Sender und Empfänger erreicht?
-5. **Garantien:** Welche Zuordnungs-, Wiederholungs-, Kompatibilitäts- und Abbruchregeln werden tatsächlich gewünscht? Die vorhandene POC-Ausführung nimmt diese Entscheidungen nicht vorweg.
+1. **Container and infrastructure:** How do broker process, logical topics, deployment environment and instances belong in the typed target description without equating logical and physical views?
+2. **Interface:** Does a common contract suffice for request, reply, roles and rules, and how are its contributions assigned to the Components?
+3. **Parameterized addresses:** How are topic families, and reply addresses formed from runtime values, described, without needing a model definition per concrete tenant, job or process start?
+4. **Behavior across several building blocks:** How does a UseCase reference its contributions, translations and check obligations, so that a contract change reaches the affected senders and receivers?
+5. **Guarantees:** Which correlation, retry, compatibility and abort rules are actually desired? The existing POC implementation does not anticipate these decisions.
 
-Das Beispiel begründet keine Aufnahme von Agentenmandaten, konkreten Quelldateien oder PR-Arbeitsabläufen in das neue kanonische Projektvokabular.
+The example does not justify the inclusion of agent mandates, concrete source files or PR workflows in the new canonical project vocabulary.
 
-## Quellenbelege
+## Source evidence
 
-Alle folgenden Projektpfade liegen unter der oben genannten lokalen Referenz und wurden am fixierten HEAD gelesen. Die Pfade sind Provenienz; sie sind keine erwarteten Artifacts des vorgeschlagenen Modells.
+All project paths below lie under the local reference named above and were read at the fixed HEAD. The paths are provenance; they are not expected Artifacts of the proposed model.
 
-| Gegenstand | Referenzpfad und Einstieg |
+| Item | Reference path and entry point |
 | --- | --- |
-| HTTP-Request zu Command, Ziel und Result | `src/STP.Dms.Cloud.Dms/Documents/List/V1/ListDocumentsEndpoint.cs`, Zeile 39 ff.; `src/STP.Dms.Cloud.Common/Endpoints/Capabilities/CapabilityEndpoint.cs`, Zeile 37; `TenantResolution.cs`, Zeile 12. |
-| Identität der Operation | `src/STP.Dms.Core/Capability.cs`; `src/STP.Dms.Core.Dms/Capabilities.cs`; `src/STP.Dms.Core.Dms/Documents/List/V1/`. |
-| Logische Adressen / Topicabbildung | `src/STP.Dms.Core.Broker/Address.cs`; `src/STP.Dms.Core.Broker.Mqtt/MqttTopics.cs`, Zeilen 11 und 17–21. |
-| Versand, ReplyInbox und Waiter | `src/STP.Dms.Core.Routing/Dispatch/Dispatcher.cs`, Zeilen 45, 49, 93, 149–151 und 157 ff. |
-| Handlerauswahl, Response und Replyadresse | `src/STP.Dms.Core.Routing/Respond/Responder.cs`, Zeilen 54, 210 und 302 ff. |
-| Envelope-Felder | `src/STP.Dms.Core.Routing/Common/Envelope/RequestEnvelope.cs` und `ResponseEnvelope.cs`. |
-| Frist / Wiederholung | `src/STP.Dms.Core.Routing/DispatcherOptions.cs`; `Dispatch/Middlewares/RetryDispatchMiddleware.cs` und `DeadlineDispatchMiddleware.cs`; `Respond/Middlewares/DeadlineRespondMiddleware.cs`. |
-| Idempotenz und Grenzen | `src/STP.Dms.Core.Routing/Respond/Idempotency.cs`; `ResponderOptions.cs`; `Common/IdempotencyContext.cs`. |
-| MQTT-Verhalten | `src/STP.Dms.Core.Broker.Mqtt/MqttBroker.cs`, ab Zeile 95; `MqttBrokerOptions.cs`. |
-| DMS-Anbindung / Fake-Grenze | `src/STP.Dms.OnPremise.Dms/Common/DmsModuleExtensions.cs`, `DmsConnection.cs`, `IDmsConnection.cs`; `Documents/List/V1/ListDocumentsHandler.cs`. |
-| Tatsächliche Hostzusammensetzung | `src/STP.Dms.Cloud.Api/Program.cs`; `src/STP.Dms.OnPremise.Connector/ConnectorHost.cs`, Zeilen 49 und 73. |
-| Außenfehler | `src/STP.Dms.Cloud.Common/Endpoints/Capabilities/DispatchExtensions.cs` und `ProblemExceptionHandler.cs`. |
-| Dateitransfer / Gegenrichtung | `src/STP.Dms.Cloud.Common/Endpoints/Capabilities/Export/ExportCapabilityEndpoint.cs`, ab Zeile 86; Cloud-Host mit optionalem ExportStaging. |
-| Vorhandene Tests, nicht ausgeführt | `tests/STP.Dms.Core.Broker.Mqtt.Tests/MqttTopicsTests.cs`; `tests/STP.Dms.Cloud.Common.Tests/DispatcherRepliesTests.cs`; weitere Dispatcher-/Timeout-/Concurrency-Tests. |
-| Erläuterungen und ältere Aussagen | `docs/orientation.md`, `docs/architecture/flow.md`, `components.md`, `scaling.md`, `cross-cutting-concerns.md`. Aktueller Code geht bei belegter Abweichung vor, insbesondere bei Mandantenauflösung. |
+| HTTP request to Command, target and Result | `src/STP.Dms.Cloud.Dms/Documents/List/V1/ListDocumentsEndpoint.cs`, line 39 ff.; `src/STP.Dms.Cloud.Common/Endpoints/Capabilities/CapabilityEndpoint.cs`, line 37; `TenantResolution.cs`, line 12. |
+| Identity of the operation | `src/STP.Dms.Core/Capability.cs`; `src/STP.Dms.Core.Dms/Capabilities.cs`; `src/STP.Dms.Core.Dms/Documents/List/V1/`. |
+| Logical addresses / topic mapping | `src/STP.Dms.Core.Broker/Address.cs`; `src/STP.Dms.Core.Broker.Mqtt/MqttTopics.cs`, lines 11 and 17–21. |
+| Dispatch, ReplyInbox and waiter | `src/STP.Dms.Core.Routing/Dispatch/Dispatcher.cs`, lines 45, 49, 93, 149–151 and 157 ff. |
+| Handler selection, response and reply address | `src/STP.Dms.Core.Routing/Respond/Responder.cs`, lines 54, 210 and 302 ff. |
+| Envelope fields | `src/STP.Dms.Core.Routing/Common/Envelope/RequestEnvelope.cs` and `ResponseEnvelope.cs`. |
+| Deadline / retry | `src/STP.Dms.Core.Routing/DispatcherOptions.cs`; `Dispatch/Middlewares/RetryDispatchMiddleware.cs` and `DeadlineDispatchMiddleware.cs`; `Respond/Middlewares/DeadlineRespondMiddleware.cs`. |
+| Idempotency and boundaries | `src/STP.Dms.Core.Routing/Respond/Idempotency.cs`; `ResponderOptions.cs`; `Common/IdempotencyContext.cs`. |
+| MQTT behavior | `src/STP.Dms.Core.Broker.Mqtt/MqttBroker.cs`, from line 95; `MqttBrokerOptions.cs`. |
+| DMS connection / fake boundary | `src/STP.Dms.OnPremise.Dms/Common/DmsModuleExtensions.cs`, `DmsConnection.cs`, `IDmsConnection.cs`; `Documents/List/V1/ListDocumentsHandler.cs`. |
+| Actual host composition | `src/STP.Dms.Cloud.Api/Program.cs`; `src/STP.Dms.OnPremise.Connector/ConnectorHost.cs`, lines 49 and 73. |
+| External errors | `src/STP.Dms.Cloud.Common/Endpoints/Capabilities/DispatchExtensions.cs` and `ProblemExceptionHandler.cs`. |
+| File transfer / opposite direction | `src/STP.Dms.Cloud.Common/Endpoints/Capabilities/Export/ExportCapabilityEndpoint.cs`, from line 86; cloud host with optional ExportStaging. |
+| Existing tests, not executed | `tests/STP.Dms.Core.Broker.Mqtt.Tests/MqttTopicsTests.cs`; `tests/STP.Dms.Cloud.Common.Tests/DispatcherRepliesTests.cs`; further dispatcher/timeout/concurrency tests. |
+| Explanations and older statements | `docs/orientation.md`, `docs/architecture/flow.md`, `components.md`, `scaling.md`, `cross-cutting-concerns.md`. Current code takes precedence in the case of a proven deviation, in particular for tenant resolution. |
 
-Externe Begriffsquellen: [C4-Abstraktionen](https://c4model.com/abstractions), [Container](https://c4model.com/abstractions/container), [Component](https://c4model.com/abstractions/component), [Queues und Topics](https://c4model.com/abstractions/queues-and-topics), [Deployment](https://c4model.com/diagrams/deployment) und [dynamische Sichten](https://c4model.com/diagrams/dynamic). C4 trägt die Abgrenzungen und Sichten bei; die konkrete Plattformabbildung und die offenen Markitect-Sprachfragen sind die Schlussfolgerung dieses Designversuchs.
+External term sources: [C4 abstractions](https://c4model.com/abstractions), [Container](https://c4model.com/abstractions/container), [Component](https://c4model.com/abstractions/component), [Queues and topics](https://c4model.com/abstractions/queues-and-topics), [Deployment](https://c4model.com/diagrams/deployment) and [dynamic views](https://c4model.com/diagrams/dynamic). C4 contributes the delimitations and views; the concrete platform mapping and the open Markitect language questions are the conclusion of this design attempt.
 
-Zurück zur [Begriffsübersicht](README.md) und zum [gemeinsamen Designstand](consolidation.md).
+Back to the [term overview](README.md) and the [common design state](consolidation.md).

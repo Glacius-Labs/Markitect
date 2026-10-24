@@ -4,7 +4,7 @@ imports:
 id: requester
 kind: Property
 body: >-
-  Anwendung in der Auftraggeberrolle dieses Austauschs.
+  Application in the requester role of this exchange.
 spec:
   type: reference
   target: Container

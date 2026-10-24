@@ -4,8 +4,8 @@ imports:
 id: Container
 kind: Kind
 body: >-
-  Beschreibt eine Anwendung mit eigener Laufzeitgrenze und ihrer vorgesehenen Umgebung. Die
-  Definition beschreibt die beabsichtigte Anwendung, keine einzelne laufende Prozessinstanz.
+  Describes an application with its own runtime boundary and its intended environment. The
+  Definition describes the intended application, not a single running process instance.
 spec:
   properties:
   - location

@@ -4,8 +4,8 @@ imports:
 id: list-documents
 kind: Exchange
 body: >-
-  Die [[api|API]] fordert Dokumentmetadaten bei [[onprem|dem Connector]] an. Sie registriert
-  den wartenden Austausch vor der Publikation und verwirft verspätete Antworten nach Ablauf der Wartefrist.
+  The [[api|API]] requests document metadata from [[onprem|the Connector]]. It registers
+  the waiting exchange before publication and discards late replies after the waiting period has expired.
 spec:
   requester: api
   receiver: onprem

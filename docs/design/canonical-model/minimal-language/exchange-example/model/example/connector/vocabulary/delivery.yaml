@@ -4,7 +4,7 @@ imports:
 id: delivery
 kind: Property
 body: >-
-  Gewünschte Zustellsemantik des Nachrichtentransports.
+  Desired delivery semantics of the message transport.
 spec:
   type: enum
   values:
