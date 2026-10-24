@@ -420,7 +420,7 @@ func TestNativeHierarchyRequestAdmission(t *testing.T) {
 func hierarchyFixture(t *testing.T, ctx context.Context, nonce string) (*testkit.Repo, project.Prepared) {
 	t.Helper()
 	r := testkit.NewRepo(t)
-	core := "../../../docs/design/canonical-model/minimal-language/exchange-example/dependencies/core"
+	core := "../../../testdata/core"
 	if e := fs.WalkDir(os.DirFS(core), ".", func(p string, d fs.DirEntry, e error) error {
 		if e != nil || d.IsDir() {
 			return e

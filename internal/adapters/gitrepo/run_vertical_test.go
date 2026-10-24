@@ -317,7 +317,7 @@ func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, 
 	t.Helper()
 	r := testkit.NewRepo(t)
 	r.Git("switch", "-c", "codex/run-fixture")
-	core := "../../../docs/design/canonical-model/minimal-language/exchange-example/dependencies/core"
+	core := "../../../testdata/core"
 	if err := fs.WalkDir(os.DirFS(core), ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err

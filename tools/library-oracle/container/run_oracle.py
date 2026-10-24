@@ -11,7 +11,7 @@ import json
 import sys
 
 sys.path.insert(0, "/evaluator")
-import assess as oracle  # noqa: E402  (the evaluator from experiments/library-playground)
+import assess as oracle  # noqa: E402  (the evaluator from tools/library-oracle)
 
 p = argparse.ArgumentParser()
 p.add_argument("--label", required=True)

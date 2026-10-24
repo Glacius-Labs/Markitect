@@ -163,7 +163,7 @@ packages:
     layer: test-support
     purpose: Hermetic fixture support available only to tests.
     doc: docs/development/modules.md
-  - path: integration
+  - path: packaging/bootstrap
     layer: standalone
     purpose: Public bootstrap and source smoke with no product imports.
     doc: docs/development/modules.md

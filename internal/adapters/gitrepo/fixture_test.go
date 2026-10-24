@@ -29,11 +29,11 @@ func libraryFixture(t *testing.T) (*testkit.Repo, project.InputSelection, string
 	t.Helper()
 	repo := testkit.NewRepo(t)
 	repo.Git("config", "core.filemode", "false")
-	base := filepath.Join("..", "..", "..", "docs", "design", "canonical-model")
+	base := filepath.Join("..", "..", "..", "testdata")
 	for _, copy := range []struct{ from, to string }{
-		{filepath.Join(base, "library-example", "m1"), "inputs/local"},
-		{filepath.Join(base, "library-example", "vocabulary"), "inputs/vocabulary"},
-		{filepath.Join(base, "minimal-language", "exchange-example", "dependencies", "core"), "inputs/core"},
+		{filepath.Join(base, "library", "m1"), "inputs/local"},
+		{filepath.Join(base, "library", "vocabulary"), "inputs/vocabulary"},
+		{filepath.Join(base, "core"), "inputs/core"},
 	} {
 		err := fs.WalkDir(os.DirFS(copy.from), ".", func(p string, d fs.DirEntry, err error) error {
 			if err != nil {

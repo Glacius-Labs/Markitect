@@ -3,7 +3,7 @@
 The realization is Agent-produced code, so it is built and run only inside
 containers without network: the example Go runtime image builds
 `./cmd/library`, and a Python image runs the oracle from
-experiments/library-playground at a fixed Git revision of Markitect.
+tools/library-oracle at a fixed Git revision of Markitect.
 
 Usage (from any directory):
   python -I assess.py --realization DIR --profile m1 --out DIR [--label A1]
@@ -23,7 +23,7 @@ import tarfile
 import uuid
 
 HERE = pathlib.Path(__file__).resolve().parent
-DEFAULT_REPO = str(pathlib.Path(__file__).resolve().parents[2])
+DEFAULT_REPO = str(pathlib.Path(__file__).resolve().parents[3])
 DEFAULT_ENGINE = os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker"
 PYTHON_IMAGE = "python:3.12-slim@sha256:a6e34c598f2467ed0e9a8d349809fcd8b5c603269512df273a0bb1784edc11b1"
 # The realization is Agent-produced code: build and run it as a non-root user
@@ -49,10 +49,10 @@ def module_dir(path):
 
 def export_evaluator(repo, rev, dest):
     commit = run(["git", "-C", repo, "rev-parse", rev], capture_output=True, text=True).stdout.strip()
-    archive = run(["git", "-C", repo, "archive", commit, "experiments/library-playground"], capture_output=True).stdout
+    archive = run(["git", "-C", repo, "archive", commit, "tools/library-oracle"], capture_output=True).stdout
     with tarfile.open(fileobj=io.BytesIO(archive)) as tar:
         tar.extractall(dest, filter="data")
-    return commit, dest / "experiments" / "library-playground"
+    return commit, dest / "tools" / "library-oracle"
 
 
 def protected_hashes(evaluator):

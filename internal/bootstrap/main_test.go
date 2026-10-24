@@ -302,7 +302,7 @@ func moveFixtureCore(t *testing.T, repo *testkit.Repo, destination, rootDeclarat
 	if err := os.RemoveAll(filepath.Join(repo.Dir, ".markitect", "model", "markitect")); err != nil {
 		t.Fatal(err)
 	}
-	manifest, err := os.ReadFile("../../docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model.yaml")
+	manifest, err := os.ReadFile("../../testdata/core/model.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -315,7 +315,7 @@ func moveFixtureCore(t *testing.T, repo *testkit.Repo, destination, rootDeclarat
 		t.Fatal(err)
 	}
 	repo.Write(".markitect/model.yaml", strings.Replace(string(local), "dependencies: {}", "dependencies: {markitect-core: '1.0.0'}", 1))
-	lock, err := os.ReadFile("../../docs/design/canonical-model/library-example/m1/model-lock.yaml")
+	lock, err := os.ReadFile("../../testdata/library/m1/model-lock.yaml")
 	if err != nil {
 		t.Fatal(err)
 	}

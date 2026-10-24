@@ -42,11 +42,11 @@ func (s *smoke) libraryPreparation() error {
 	if err != nil {
 		return err
 	}
-	base := filepath.Join(s.repo, "docs", "design", "canonical-model")
+	base := filepath.Join(s.repo, "testdata")
 	for _, m := range []struct{ source, target string }{
-		{filepath.Join(base, "library-example", "m1"), filepath.Join(repo, ".markitect")},
-		{filepath.Join(base, "library-example", "vocabulary"), filepath.Join(repo, ".markitect", "dependencies", "software")},
-		{filepath.Join(base, "minimal-language", "exchange-example", "dependencies", "core"), filepath.Join(repo, ".markitect", "dependencies", "core")},
+		{filepath.Join(base, "library", "m1"), filepath.Join(repo, ".markitect")},
+		{filepath.Join(base, "library", "vocabulary"), filepath.Join(repo, ".markitect", "dependencies", "software")},
+		{filepath.Join(base, "core"), filepath.Join(repo, ".markitect", "dependencies", "core")},
 	} {
 		if err := copyModel(m.source, m.target); err != nil {
 			return err

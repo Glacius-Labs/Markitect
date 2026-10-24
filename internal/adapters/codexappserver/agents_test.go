@@ -258,7 +258,7 @@ func (f *fakeRuntime) ImageID() string { return fixtureImage }
 func testSessionSpec(t *testing.T) run.SessionSpec {
 	t.Helper()
 	r := testkit.NewRepo(t)
-	core := "../../../docs/design/canonical-model/minimal-language/exchange-example/dependencies/core"
+	core := "../../../testdata/core"
 	if err := fs.WalkDir(os.DirFS(core), ".", func(p string, d fs.DirEntry, err error) error {
 		if err != nil || d.IsDir() {
 			return err
