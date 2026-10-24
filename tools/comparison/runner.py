@@ -1,20 +1,24 @@
 """Arm B of the single-agent comparison: one Codex session, nothing else.
 
-One fresh `codex exec` session reads a repository whose only guidance is
-`requirements.md` and works in it until it ends or the deadline expires. The
-session container gets exactly the hardening, resource limits, network and
-Codex switches of a Markitect Manager session (internal/adapters/container
-and internal/adapters/codexappserver), minus the Markitect MCP tools and the
-Manager harness. The runner then removes the login, captures the working tree
-and the Codex session files, and removes everything it created.
+One `codex exec` session reads a repository whose only guidance is
+`requirements.md` and works in it until it ends or the deadline expires. Within
+a longitudinal chain the next step resumes the same Codex thread, the agent's
+normal continuation. The session container gets the hardening, network and
+Codex switches of a Markitect Manager session (internal/adapters/container and
+internal/adapters/codexappserver), without the Markitect MCP tools and the
+Manager harness, and the aggregate resource ceiling of the six Manager
+sessions an Apply can run at once. The runner then removes the login, captures
+the working tree and the Codex session files, and removes what it created.
 
 Fixtures are Git bundles built with plumbing, so bytes and modes are exact:
   python -I -B runner.py fixture new --requirements FILE --message MSG --out BUNDLE
   python -I -B runner.py fixture continue --from BUNDLE [--requirements FILE] --message MSG --out BUNDLE
   python -I -B runner.py fixture root --from BUNDLE --rev COMMIT --drop .markitect --requirements FILE --message MSG --out BUNDLE
+  python -I -B runner.py same-tree --a BUNDLE --a-rev COMMIT --b BUNDLE --b-rev COMMIT --exclude .markitect --exclude requirements.md
 
 One session (one attempt, no retry):
-  python -I -B runner.py run --fixture BUNDLE --image sha256:... --login AUTH_JSON --out NEW_DIR --label NAME [--lock FILE]
+  python -I -B runner.py run --fixture BUNDLE --image sha256:... --login AUTH_JSON --out NEW_DIR --label NAME
+      [--resume-sessions CODEX_SESSIONS_TAR --resume-thread THREAD_ID] [--lock FILE]
 
 The out directory must not exist. Agent-produced code and transcripts stay
 outside the repository. The login is read once, never printed or written to
@@ -39,13 +43,15 @@ MODEL, EFFORT = "gpt-6-sol", "high"
 LABEL_KEY = "markitect.comparison"
 FIXTURE_IDENTITY = ("Library Fixture", "fixture@library.invalid")
 FIXTURE_DATE = "2026-10-24T00:00:00Z"
-CAPTURE_IDENTITY = ("Comparison Capture", "capture@library.invalid")
 
-# Same as a Manager session: the example runtime profile's session limits.
+# One Manager session: the example runtime profile's session limits. An Apply
+# runs up to MANAGERS such sessions at once; arm B gets that aggregate ceiling.
 SESSION_LIMITS = {"cpus": "1", "memory": "2147483648", "pids": "192", "tmp": "268435456"}
+MANAGERS = 6
+ARM_LIMITS = {key: str(int(value) * MANAGERS) for key, value in SESSION_LIMITS.items()}
 # Same switches as providerArgv in internal/adapters/codexappserver/profile.go,
 # without the Markitect MCP server, plus the thread settings that adapter
-# sends (cwd /work, approval never, danger-full-access) and the effort.
+# sends (approval never, danger-full-access; cwd is the container's /work).
 CODEX_SWITCHES = [
     "--disable", "apps", "--disable", "memories", "--disable", "multi_agent", "--disable", "multi_agent_v2",
     "-c", "agents.enabled=false", "--disable", "image_generation", "--disable", "browser_use",
@@ -53,8 +59,11 @@ CODEX_SWITCHES = [
     "-c", "project_doc_max_bytes=0", "-c", "project_doc_fallback_filenames=[]",
     "-c", 'projects."/work".trust_level="untrusted"',
 ]
+THREAD_SETTINGS = ["-m", MODEL, "-c", 'model_reasoning_effort="' + EFFORT + '"',
+                   "-c", 'sandbox_mode="danger-full-access"', "-c", 'approval_policy="never"']
 LIMITS = {"deadline": 2700, "metadata": 20, "helper": 120, "kill": 8}
 LABEL = re.compile(r"^[a-z0-9][a-z0-9-]{2,62}$")
+THREAD = re.compile(r"^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$")
 
 
 class RunError(RuntimeError):
@@ -90,13 +99,13 @@ class native_lock:
 
 # --- Fixtures -----------------------------------------------------------------
 
-def git(repo, *args, data=None, env=None):
+def git(repo, *args, data=None, env=None, binary=False):
     full = dict(os.environ, **(env or {}))
     result = subprocess.run(["git", "-c", "core.autocrlf=false", "-C", str(repo), *args], input=data,
                             capture_output=True, env=full, timeout=120)
     if result.returncode != 0:
         raise RunError("git " + " ".join(args[:2]) + ": " + result.stderr.decode(errors="replace").strip())
-    return result.stdout.decode().strip()
+    return result.stdout if binary else result.stdout.decode().strip()
 
 
 def fixture_env():
@@ -105,21 +114,28 @@ def fixture_env():
             "GIT_COMMITTER_NAME": name, "GIT_COMMITTER_EMAIL": email, "GIT_COMMITTER_DATE": FIXTURE_DATE}
 
 
+def scratch_repo(tmp, *bundles):
+    repo = pathlib.Path(tmp) / "repo"
+    subprocess.run(["git", "init", "-q", str(repo)], check=True, capture_output=True)
+    heads = set()
+    for bundle in bundles:
+        heads |= {line.split()[0] for line in git(repo, "bundle", "unbundle", str(pathlib.Path(bundle).resolve())).splitlines()}
+    return repo, heads
+
+
 def build_fixture(kind, out, message, requirements=None, source=None, rev=None, drop=()):
     """Write a one-branch bundle and return its commit, tree and hashes."""
     out = pathlib.Path(out)
     if out.exists():
         raise RunError("fixture output exists: " + str(out))
+    if kind != "new" and not source:
+        raise RunError(kind + " needs --from")
     with tempfile.TemporaryDirectory() as tmp:
-        repo = pathlib.Path(tmp) / "repo"
-        subprocess.run(["git", "init", "-q", str(repo)], check=True, capture_output=True)
+        repo, heads = scratch_repo(tmp, *([source] if source else []))
         base = None
         if source:
-            heads = {line.split()[0] for line in git(repo, "bundle", "unbundle", str(pathlib.Path(source).resolve())).splitlines()}
             base = git(repo, "rev-parse", "--verify", (rev or (heads.pop() if len(heads) == 1 else "")) + "^{commit}")
             git(repo, "read-tree", base)
-        elif kind != "new":
-            raise RunError(kind + " needs --from")
         for path in drop:
             git(repo, "rm", "--cached", "-r", "-q", "--ignore-unmatch", "--", path)
         if requirements:
@@ -138,6 +154,23 @@ def build_fixture(kind, out, message, requirements=None, source=None, rev=None, 
                                  capture_output=True, text=True).stdout.strip() or None
     return {"kind": kind, "commit": commit, "tree": tree, "realization_tree": subtree, "base": base,
             "bundle_sha256": sha256_file(out), "requirements_sha256": sha256_file(requirements) if requirements else None}
+
+
+def same_tree(a, a_rev, b, b_rev, exclude):
+    """Compare every path, mode and blob of two commits outside the excluded paths."""
+    def entries(repo, rev):
+        rows = {}
+        for row in git(repo, "ls-tree", "-r", "-z", "--full-tree", rev).split("\0"):
+            if row:
+                meta, path = row.split("\t", 1)
+                if not any(path == e or path.startswith(e.rstrip("/") + "/") for e in exclude):
+                    rows[path] = meta
+        return rows
+    with tempfile.TemporaryDirectory() as tmp:
+        repo, _ = scratch_repo(tmp, a, b)
+        left, right = entries(repo, a_rev), entries(repo, b_rev)
+    differences = sorted(p for p in set(left) | set(right) if left.get(p) != right.get(p))
+    return {"equal": not differences, "paths": len(left), "differences": differences}
 
 
 # --- Session ------------------------------------------------------------------
@@ -162,13 +195,25 @@ def session_login(raw):
 
 
 def files_containing(out, secrets):
-    """Retained files that contain a login secret; transcripts are not redacted."""
-    found = []
+    """Retained files that contain a login secret, Git objects included.
+
+    Transcripts are not redacted, and the result bundle stores compressed
+    objects, so the bundle is scanned through its unpacked object contents.
+    """
+    found, unscanned = [], []
     for path in sorted(p for p in out.rglob("*") if p.is_file()):
         data = path.read_bytes()
+        if path.name == "result.bundle" and data:
+            try:
+                with tempfile.TemporaryDirectory() as tmp:
+                    repo, _ = scratch_repo(tmp, path)
+                    data = git(repo, "cat-file", "--batch-all-objects", "--batch", binary=True)
+            except RunError:
+                unscanned.append(path.relative_to(out).as_posix())
+                continue
         if any(secret in data for secret in secrets):
             found.append(path.relative_to(out).as_posix())
-    return found
+    return found, unscanned
 
 
 def hardening(user="1000:1000", tmp=SESSION_LIMITS["tmp"]):
@@ -176,15 +221,17 @@ def hardening(user="1000:1000", tmp=SESSION_LIMITS["tmp"]):
             "--tmpfs", "/tmp:rw,exec,nosuid,nodev,mode=1777,size=" + tmp]
 
 
-def session_argv(name, image, work, home, prompt):
-    return ["run", "--rm", "--init", "--name", name, *hardening(), "--workdir", "/work",
-            "--cpus", SESSION_LIMITS["cpus"], "--memory", SESSION_LIMITS["memory"], "--pids-limit", SESSION_LIMITS["pids"],
+def codex_argv(prompt, resume=None):
+    head = ["exec", "resume"] if resume else ["exec"]
+    return [*head, "--json", "--skip-git-repo-check", *CODEX_SWITCHES, *THREAD_SETTINGS, *([resume] if resume else []), prompt]
+
+
+def session_argv(name, image, work, home, prompt, resume=None):
+    return ["run", "--rm", "--init", "--name", name, *hardening(tmp=ARM_LIMITS["tmp"]), "--workdir", "/work",
+            "--cpus", ARM_LIMITS["cpus"], "--memory", ARM_LIMITS["memory"], "--pids-limit", ARM_LIMITS["pids"],
             "--label", LABEL_KEY + "=" + name,
             "--mount", "type=volume,src=" + work + ",dst=/work", "--mount", "type=volume,src=" + home + ",dst=/home/agent",
-            "-e", "CODEX_HOME=/home/agent/.codex", "--entrypoint", "/usr/local/bin/codex", image,
-            "exec", "--json", "--skip-git-repo-check", *CODEX_SWITCHES,
-            "-m", MODEL, "-c", 'model_reasoning_effort="' + EFFORT + '"',
-            "-s", "danger-full-access", "-c", 'approval_policy="never"', "-C", "/work", prompt]
+            "-e", "CODEX_HOME=/home/agent/.codex", "--entrypoint", "/usr/local/bin/codex", image, *codex_argv(prompt, resume)]
 
 
 def helper_argv(image, mounts, script, user="1000:1000"):
@@ -197,13 +244,20 @@ def helper_argv(image, mounts, script, user="1000:1000"):
 POPULATE = ("set -e; cat > /tmp/fixture.bundle; git clone -q -b main /tmp/fixture.bundle /work; cd /work; "
             "git remote remove origin; git config user.name '%s'; git config user.email '%s'; "
             "git rev-parse HEAD HEAD^{tree}") % FIXTURE_IDENTITY
+RESTORE_SESSIONS = "set -e; umask 077; mkdir -p /home/agent/.codex; tar -x -C /home/agent/.codex"
 INSTALL_LOGIN = "set -e; umask 077; mkdir -p /home/agent/.codex; cat > /home/agent/.codex/auth.json"
 REMOVE_LOGIN = "rm -f /home/agent/.codex/auth.json && test ! -e /home/agent/.codex/auth.json"
-RAW_TAR = "tar -c -C /work ."
+RAW_TAR = "tar -c -C /work --exclude=./.git ."
 STATUS = "cd /work && git -c core.fsmonitor=false status --porcelain=v1 --ignored -uall"
+# The candidate is the whole working tree the writer left. Files its own
+# .gitignore excludes stay out, except Go sources, module files and Markdown,
+# which an over-broad pattern (for example `library` matching cmd/library/)
+# could otherwise drop silently.
 CAPTURE = ("set -e; cd /work; G='git -c core.hooksPath=/dev/null -c core.fsmonitor=false -c commit.gpgsign=false'; "
-           "$G add -A; $G -c user.name='%s' -c user.email='%s' commit -q --allow-empty --no-verify -m 'Captured result'; "
-           "$G rev-parse HEAD HEAD^{tree} >&2; $G bundle create -q /tmp/result.bundle HEAD; cat /tmp/result.bundle") % CAPTURE_IDENTITY
+           "$G add -A; $G ls-files -z -o -i --exclude-standard | grep -z -E '(\\.go|\\.md|(^|/)go\\.(mod|sum))$' "
+           "| xargs -0 -r $G add -f --; "
+           "$G -c user.name='%s' -c user.email='%s' commit -q --allow-empty --no-verify -m 'Library work'; "
+           "$G rev-parse HEAD HEAD^{tree} >&2; $G bundle create -q /tmp/result.bundle HEAD; cat /tmp/result.bundle") % FIXTURE_IDENTITY
 SESSIONS_TAR = "cd /home/agent/.codex && if [ -d sessions ]; then tar -c sessions; else tar -c -T /dev/null; fi"
 
 
@@ -235,15 +289,26 @@ class Recorder:
 
 
 def census(rec, name, label):
-    rec(name + "-containers", ["ps", "-a", "--filter", "label=" + label, "--format", "{{.Names}}"], LIMITS["metadata"])
-    rec(name + "-volumes", ["volume", "ls", "--filter", "label=" + label, "--format", "{{.Name}}"], LIMITS["metadata"])
-    return rec.text(name + "-containers").split() + rec.text(name + "-volumes").split()
+    """Names of containers and volumes with the label; a failed query refuses."""
+    names = []
+    for kind, args in (("containers", ["ps", "-a", "--filter", "label=" + label, "--format", "{{.Names}}"]),
+                       ("volumes", ["volume", "ls", "--filter", "label=" + label, "--format", "{{.Name}}"])):
+        step = rec(name + "-" + kind, args, LIMITS["metadata"])
+        if step["exit"] != 0:
+            raise RunError("census query failed: " + name + "-" + kind)
+        names += rec.text(name + "-" + kind).split()
+    return names
+
+
+def session_absent(rec, label, step_name):
+    step = rec(step_name, ["ps", "-a", "--filter", "name=^/?" + label + "$", "--format", "{{.Names}}"], LIMITS["metadata"])
+    return step["exit"] == 0 and not rec.text(step_name).split()
 
 
 def summarize(transcript):
     """Counts, usage and the final message from the `codex exec --json` stream."""
     events, items, usage = {}, {}, {}
-    final, thread, failures, malformed = None, None, [], 0
+    final, thread, failures, errors, malformed = None, None, [], [], 0
     for line in transcript.read_text(encoding="utf-8", errors="replace").splitlines():
         try:
             event = json.loads(line)
@@ -266,27 +331,34 @@ def summarize(transcript):
             for key, value in event["usage"].items():
                 if isinstance(value, int):
                     usage[key] = usage.get(key, 0) + value
-        if kind in ("turn.failed", "error"):
+        # A turn failure ends the turn; a stream error may be retried by Codex,
+        # as the Manager adapter tolerates errors marked willRetry.
+        if kind == "turn.failed":
             failures.append(event)
+        if kind == "error":
+            errors.append(event)
     return {"thread_id": thread, "events": events, "completed_items": items, "usage": usage or None,
-            "final_message": final, "failures": failures, "malformed_lines": malformed,
+            "final_message": final, "failures": failures, "errors": errors, "malformed_lines": malformed,
             "turn_completed": events.get("turn.completed", 0) == 1}
 
 
-def run_session(engine, fixture, image, login_path, out, label, deadline):
+def run_session(engine, fixture, image, login_path, out, label, deadline, resume_sessions=None, resume_thread=None):
     if not LABEL.match(label):
         raise RunError("label must match " + LABEL.pattern)
+    if bool(resume_sessions) != bool(resume_thread) or (resume_thread and not THREAD.match(resume_thread)):
+        raise RunError("a resume needs both the Codex sessions archive and the thread UUID")
     out = pathlib.Path(out)
     out.mkdir(parents=True, exist_ok=False)
     rec = Recorder(engine, out)
     prompt = PROMPT.read_text(encoding="utf-8")
     result = {"label": label, "arm": "B", "model": MODEL, "effort": EFFORT, "image": image,
               "fixture_bundle_sha256": sha256_file(fixture), "prompt_sha256": sha256_file(PROMPT),
-              "runner_sha256": sha256_file(__file__), "limits": {**LIMITS, "deadline": deadline, **SESSION_LIMITS},
+              "runner_sha256": sha256_file(__file__), "limits": {**LIMITS, "deadline": deadline, **ARM_LIMITS},
+              "resume_thread": resume_thread, "resume_sessions_sha256": sha256_file(resume_sessions) if resume_sessions else None,
               "started_utc": datetime.datetime.now(datetime.timezone.utc).isoformat(), "status": "incomplete"}
     work, home = label + "-work", label + "-home"
     filter_label = LABEL_KEY + "=" + label
-    created, login_installed, secrets = [], False, []
+    created, login_installed, secrets, session_gone = [], False, [], True
     try:
         raw_login = pathlib.Path(login_path).read_bytes()
         result["login_sha256_before"] = hashlib.sha256(raw_login).hexdigest()
@@ -301,22 +373,33 @@ def run_session(engine, fixture, image, login_path, out, label, deadline):
             if rec("create-" + volume[len(label) + 1:], ["volume", "create", "--label", filter_label, volume], LIMITS["metadata"])["exit"] != 0:
                 raise RunError("volume creation failed")
             created.append(volume)
-        step = rec("populate", helper_argv(image, [(work, "/work")], POPULATE), LIMITS["helper"], data=pathlib.Path(fixture).read_bytes())
-        if step["exit"] != 0:
+        if rec("populate", helper_argv(image, [(work, "/work")], POPULATE), LIMITS["helper"], data=pathlib.Path(fixture).read_bytes())["exit"] != 0:
             raise RunError("populating /work failed")
         result["input_commit"], result["input_tree"] = rec.text("populate").split()[-2:]
+        if resume_sessions:
+            if rec("restore-sessions", helper_argv(image, [(home, "/home/agent")], RESTORE_SESSIONS), LIMITS["helper"],
+                   data=pathlib.Path(resume_sessions).read_bytes())["exit"] != 0:
+                raise RunError("restoring the Codex sessions failed")
         login_installed = True
         if rec("login", helper_argv(image, [(home, "/home/agent")], INSTALL_LOGIN), LIMITS["helper"], data=login, secret_input=True)["exit"] != 0:
             raise RunError("installing the login failed")
         del login
         started = time.monotonic()
         result["session_started_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
-        step = rec("session", session_argv(label, image, work, home, prompt), deadline, stdout_file=out / "transcript.jsonl")
+        session_gone = False
+        step = rec("session", session_argv(label, image, work, home, prompt, resume_thread), deadline, stdout_file=out / "transcript.jsonl")
         result["session_seconds"] = round(time.monotonic() - started, 3)
         result["session_exit"], result["session_timed_out"] = step["exit"], step["timed_out"]
         if step["timed_out"]:
             rec("kill", ["kill", label], LIMITS["kill"])
             rec("remove-session", ["rm", "-f", label], LIMITS["kill"])
+        # Never touch /work while the session container could still run.
+        session_gone = session_absent(rec, label, "session-container")
+        if not session_gone and step["timed_out"]:
+            rec("remove-session-again", ["rm", "-f", label], LIMITS["kill"])
+            session_gone = session_absent(rec, label, "session-container-again")
+        if not session_gone:
+            raise RunError("the session container is still present; nothing was captured")
         if rec("logout", helper_argv(image, [(home, "/home/agent")], REMOVE_LOGIN), LIMITS["helper"])["exit"] == 0:
             login_installed = False
         rec("status", helper_argv(image, [(work, "/work")], STATUS), LIMITS["helper"])
@@ -326,17 +409,23 @@ def run_session(engine, fixture, image, login_path, out, label, deadline):
             result["result_commit"], result["result_tree"] = rec.text("capture", "stderr").split()[-2:]
         rec("codex-sessions", helper_argv(image, [(home, "/home/agent")], SESSIONS_TAR), LIMITS["helper"], stdout_file=out / "codex-sessions.tar")
         result["transcript"] = summarize(out / "transcript.jsonl")
+        result["thread_id"] = result["transcript"]["thread_id"] or resume_thread
         technical = (step["exit"] == 0 and not step["timed_out"] and capture["exit"] == 0
                      and result["transcript"]["turn_completed"] and not result["transcript"]["failures"])
         result["status"] = "completed" if technical else "incomplete"
     except (RunError, OSError, ValueError) as exc:
+        result["status"] = "incomplete"
         result["error"] = str(exc)
     finally:
         if login_installed:
             rec("logout-final", helper_argv(image, [(home, "/home/agent")], REMOVE_LOGIN), LIMITS["helper"])
-        for volume in created:
-            rec("remove-" + volume[len(label) + 1:], ["volume", "rm", volume], LIMITS["kill"])
-        residue = census(rec, "census-after", filter_label)
+        if session_gone:
+            for volume in created:
+                rec("remove-" + volume[len(label) + 1:], ["volume", "rm", volume], LIMITS["kill"])
+        try:
+            residue = census(rec, "census-after", filter_label)
+        except RunError as exc:
+            residue = ["unknown: " + str(exc)]
         result["residue"] = residue
         if residue:
             result["status"] = "incomplete"
@@ -345,10 +434,9 @@ def run_session(engine, fixture, image, login_path, out, label, deadline):
         if result.get("login_sha256_before") and result["login_sha256_after"] != result["login_sha256_before"]:
             result["status"] = "incomplete"
             result.setdefault("error", "the login file changed")
-        result["secret_in_outputs"] = files_containing(out, secrets)
-        if result["secret_in_outputs"]:
-            result["status"] = "incomplete"
-            result.setdefault("error", "a login secret appears in retained outputs; quarantine before sharing")
+        # A secret in the outputs quarantines the evidence; it does not change the outcome.
+        result["secret_in_outputs"], result["secret_scan_unreadable"] = files_containing(out, secrets)
+        result["quarantine"] = bool(result["secret_in_outputs"] or result["secret_scan_unreadable"])
         del secrets
         result["ended_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
         result["steps"] = rec.steps
@@ -369,11 +457,17 @@ def main(argv=None):
     f.add_argument("--from", dest="source")
     f.add_argument("--rev")
     f.add_argument("--drop", action="append", default=[])
+    s = sub.add_parser("same-tree")
+    for name in ("--a", "--a-rev", "--b", "--b-rev"):
+        s.add_argument(name, required=True)
+    s.add_argument("--exclude", action="append", default=[])
     r = sub.add_parser("run")
     for name in ("--fixture", "--image", "--login", "--out", "--label"):
         r.add_argument(name, required=True)
     r.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
     r.add_argument("--deadline-seconds", type=int, default=LIMITS["deadline"])
+    r.add_argument("--resume-sessions", help="codex-sessions.tar of the chain's previous step")
+    r.add_argument("--resume-thread", help="thread UUID of the chain's previous step")
     r.add_argument("--lock", help="exclusive engine lock file shared with the arm-M controller")
     a = p.parse_args(argv)
     if a.command == "fixture":
@@ -381,11 +475,16 @@ def main(argv=None):
             p.error("fixture new needs --requirements")
         print(json.dumps(build_fixture(a.kind, a.out, a.message, a.requirements, a.source, a.rev, a.drop), indent=2))
         return 0
+    if a.command == "same-tree":
+        result = same_tree(a.a, a.a_rev, a.b, a.b_rev, a.exclude)
+        print(json.dumps(result, indent=2))
+        return 0 if result["equal"] else 1
     if not re.fullmatch(r"sha256:[0-9a-f]{64}", a.image):
         p.error("--image must be an engine image Id")
     with native_lock(a.lock, "comparison arm B", a.label):
-        result = run_session([a.engine], a.fixture, a.image, a.login, a.out, a.label, a.deadline_seconds)
-    print(json.dumps({k: result.get(k) for k in ("label", "status", "error", "session_seconds", "result_commit")}, indent=2))
+        result = run_session([a.engine], a.fixture, a.image, a.login, a.out, a.label, a.deadline_seconds,
+                             a.resume_sessions, a.resume_thread)
+    print(json.dumps({k: result.get(k) for k in ("label", "status", "error", "session_seconds", "result_commit", "thread_id", "quarantine")}, indent=2))
     return 0 if result["status"] == "completed" else 1
 
 

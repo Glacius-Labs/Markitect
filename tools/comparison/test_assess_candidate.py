@@ -48,10 +48,20 @@ class CensusTests(unittest.TestCase):
             self.assertEqual((policy["status"], policy["added"], policy["removed"]), ("M", "1", "1"))
 
             blind = Path(tmp) / "blind"
-            assess_candidate.export(repo, end, blind, (".markitect", "requirements.md"))
+            assess_candidate.export(repo, end, blind, (".markitect", "requirements.md"), strip_binaries=True)
             names = sorted(p.relative_to(blind).as_posix() for p in blind.rglob("*") if p.is_file())
-            self.assertEqual(names, ["realization/README.md", "realization/go.mod", "realization/lending/policy.go", "realization/library"])
+            self.assertEqual(names, ["realization/README.md", "realization/go.mod", "realization/lending/policy.go"])
             self.assertEqual((blind / "realization/lending/policy.go").read_bytes(), b"package lending\nconst Max = 3\n")
+            self.assertEqual(assess_candidate.binaries(repo, end), ["realization/library"])
+
+            # A committed binary rebuilt or deleted later is still build residue.
+            write(repo, "realization/library", b"\x7fELF rebuilt")
+            rebuilt = commit_all(repo, "rebuilt")
+            (repo / "realization/library").unlink()
+            deleted = commit_all(repo, "deleted")
+            for later, status in ((rebuilt, "M"), (deleted, "D")):
+                residue = assess_candidate.census(repo, end, later)["build_residue"]
+                self.assertEqual([(e["path"], e["status"]) for e in residue], [("realization/library", status)])
 
     def test_scope_patterns_and_seed_lines(self):
         with tempfile.TemporaryDirectory() as tmp:

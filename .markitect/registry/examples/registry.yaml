@@ -192,10 +192,18 @@ artifacts:
     form: code
     realizes: [examples/independent-oracles]
     why: Renders and checks the ordinary documentation that carries the canonical Library intent verbatim.
+  - path: "tools/comparison/review-prompt.md"
+    form: doc
+    realizes: [examples/independent-oracles]
+    why: Freezes the per-candidate reviewer and confirming reviewer prompts of the blinded review.
   - path: "tools/comparison/rubric.md"
     form: doc
     realizes: [examples/independent-oracles]
     why: States the blinded review rubric that is kept outside both writers' inputs.
+  - path: "tools/comparison/rubric_check.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Checks critical review findings mechanically before a second reviewer confirms them.
   - path: "tools/comparison/runner.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -212,6 +220,10 @@ artifacts:
     form: test
     realizes: [examples/independent-oracles]
     why: Tests that the committed documentation is the current verbatim rendering of the model.
+  - path: "tools/comparison/test_rubric_check.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests that a critical finding needs a real citation and a verbatim requirement.
   - path: "tools/comparison/test_runner.py"
     form: test
     realizes: [examples/independent-oracles]

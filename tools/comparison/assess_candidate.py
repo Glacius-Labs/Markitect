@@ -45,13 +45,17 @@ def _load(name, path):
 oracle_container = _load("oracle_container", REPO / "tools" / "library-oracle" / "container" / "assess.py")
 runner = _load("comparison_runner", HERE / "runner.py")
 
-LIMITS = {"oracle": 1200, "build": 300, "probes": 300, "own_build": 120, "own_test": 120, "cleanup": 20}
-# The project-tests check profile of a Markitect Apply: 1 CPU, 2 GiB, 64 processes, 2 minutes.
-OWN_CHECK = ["--network", "none", "--user", "1000:1000", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
-             "--read-only", "--tmpfs", "/tmp:rw,exec,nosuid,nodev,mode=1777,size=536870912",
-             "--cpus", "1", "--memory", "2147483648", "--pids-limit", "64",
-             "-e", "HOME=/tmp", "-e", "GOTOOLCHAIN=local", "-e", "GOCACHE=/tmp/gocache", "-e", "GOPATH=/tmp/gopath",
-             "-e", "GOTMPDIR=/tmp", "-e", "GOFLAGS=-buildvcs=false"]
+LIMITS = {"oracle": 1200, "build": 300, "probes": 300, "cleanup": 20}
+OWN_CHECK_BASE = ["--network", "none", "--user", "1000:1000", "--cap-drop", "ALL", "--security-opt", "no-new-privileges",
+                  "--read-only", "--tmpfs", "/tmp:rw,exec,nosuid,nodev,mode=1777,size=1073741824",
+                  "-e", "HOME=/tmp", "-e", "GOTOOLCHAIN=local", "-e", "GOCACHE=/tmp/gocache", "-e", "GOPATH=/tmp/gopath",
+                  "-e", "GOTMPDIR=/tmp", "-e", "GOFLAGS=-buildvcs=false"]
+# Primary: the writer arm's aggregate ceiling and 600 s. Secondary: the
+# project-tests check profile of a Markitect Apply (1 CPU, 2 GiB, 64 processes, 2 minutes).
+OWN_CHECK_PROFILES = {
+    "primary": (["--cpus", runner.ARM_LIMITS["cpus"], "--memory", runner.ARM_LIMITS["memory"], "--pids-limit", runner.ARM_LIMITS["pids"]], 600),
+    "project_tests": (["--cpus", "1", "--memory", "2147483648", "--pids-limit", "64"], 120),
+}
 PROTECTED = (".markitect/model.yaml", ".markitect/model-lock.yaml", ".markitect/model/", ".markitect/dependencies/",
              ".markitect/execution.yaml", "requirements.md")
 SCOPE_PATTERNS = {"machine_clock": r"\btime\.Now\(", "network": r'"net(/http)?"', "file_writes": r"\bos\.(WriteFile|Create|OpenFile)\("}
@@ -64,16 +68,33 @@ def git(repo, *args, binary=False):
     return result.stdout if binary else result.stdout.decode()
 
 
-def export(repo, commit, dest, exclude=()):
+def export(repo, commit, dest, exclude=(), strip_binaries=False):
     """Exact blob bytes of a commit, without Git or excluded top-level paths."""
     dest.mkdir(parents=True)
     with tarfile.open(fileobj=io.BytesIO(git(repo, "archive", "--format=tar", commit, binary=True))) as tar:
         members = [m for m in tar.getmembers() if not any(m.name == e or m.name.startswith(e + "/") for e in exclude)]
+        if strip_binaries:
+            members = [m for m in members if not (m.isfile() and tar.extractfile(m).read(4) == b"\x7fELF")]
         tar.extractall(dest, members=members, filter="data")
 
 
+def binaries(repo, rev):
+    rows = git(repo, "ls-tree", "-r", "-z", "--name-only", rev).split("\0")
+    return [path for path in rows if path and is_binary(repo, rev, path)]
+
+
+def is_binary(repo, rev, path):
+    """A compiled executable left in the tree: an ELF header at that revision."""
+    blob = subprocess.run(["git", "-C", str(repo), "cat-file", "blob", rev + ":" + path], capture_output=True)
+    return blob.returncode == 0 and blob.stdout[:4] == b"\x7fELF"
+
+
 def census(repo, start, commit):
-    """Every changed path against the start commit, by category."""
+    """Every changed path against the start commit, by category.
+
+    A path that is a compiled executable on either side is build residue,
+    whether it was added, rebuilt or deleted.
+    """
     out = {"comparable": [], "registry": [], "protected": [], "build_residue": []}
     raw = git(repo, "diff", "--no-renames", "--name-status", "-z", start, commit).split("\0")
     numstat = {}
@@ -86,7 +107,7 @@ def census(repo, start, commit):
             out["protected"].append(entry)
         elif path.startswith(".markitect/registry/"):
             out["registry"].append(entry)
-        elif status == "A" and git(repo, "cat-file", "blob", commit + ":" + path, binary=True)[:4] == b"\x7fELF":
+        elif is_binary(repo, commit, path) or is_binary(repo, start, path):
             out["build_residue"].append(entry)
         else:
             out["comparable"].append(entry)
@@ -115,13 +136,14 @@ def docker(engine, args, timeout):
 
 def own_checks(engine, image, module, out):
     results = {}
-    for name, command in (("build", "go build -o /tmp/library ./cmd/library"), ("test", "go test ./...")):
-        code, stdout, stderr, timed_out = docker(engine, ["run", "--rm", *OWN_CHECK,
-                                                          "--mount", f"type=bind,src={module},dst=/src,readonly",
-                                                          "--entrypoint", "/bin/sh", image, "-c", "cp -R /src /tmp/m && cd /tmp/m && " + command],
-                                                 LIMITS["own_" + name])
-        (out / f"own-{name}.log").write_bytes(stdout + stderr)
-        results[name] = {"exit": code, "timed_out": timed_out, "passed": code == 0 and not timed_out}
+    for profile, (limits, timeout) in OWN_CHECK_PROFILES.items():
+        for name, command in (("build", "go build -o /tmp/library ./cmd/library"), ("test", "go test ./...")):
+            code, stdout, stderr, timed_out = docker(engine, ["run", "--rm", *OWN_CHECK_BASE, *limits,
+                                                              "--mount", f"type=bind,src={module},dst=/src,readonly",
+                                                              "--entrypoint", "/bin/sh", image, "-c", "cp -R /src /tmp/m && cd /tmp/m && " + command],
+                                                     timeout)
+            (out / f"own-{profile}-{name}.log").write_bytes(stdout + stderr)
+            results.setdefault(profile, {})[name] = {"exit": code, "timed_out": timed_out, "passed": code == 0 and not timed_out}
     return results
 
 
@@ -222,11 +244,13 @@ def assess(a):
         if a.blind:
             if not re.fullmatch(r"[a-z0-9]{6,32}", a.token or ""):
                 raise SystemExit("--blind needs --token of 6-32 lowercase letters or digits")
+            # Arm markers and compiled executables never reach the reviewer.
             blind = pathlib.Path(a.blind) / a.token
-            export(repo, a.commit, blind / "candidate", (".markitect", "requirements.md"))
-            export(repo, a.start_commit, blind / "start", (".markitect", "requirements.md"))
+            export(repo, a.commit, blind / "candidate", (".markitect", "requirements.md"), strip_binaries=True)
+            export(repo, a.start_commit, blind / "start", (".markitect", "requirements.md"), strip_binaries=True)
+            hidden = sorted(set(binaries(repo, a.commit)) | set(binaries(repo, a.start_commit)))
             (blind / "diff.patch").write_bytes(git(repo, "diff", "--no-renames", a.start_commit, a.commit, "--", ".",
-                                                   ":!.markitect", ":!requirements.md", binary=True))
+                                                   ":!.markitect", ":!requirements.md", *[":!" + p for p in hidden], binary=True))
     module = candidate / "realization"
     if not (module / "go.mod").is_file():
         report.update(deliverable=False, mechanical_pass=False)
@@ -251,7 +275,7 @@ def assess(a):
         report["scope"] = scope_findings(module)
         report["mechanical_pass"] = (report["oracle"].get("exit") == 0 and report["oracle"].get("passed") is True
                                      and report["oracle"].get("discrimination") is True and report["probes"].get("passed") is True
-                                     and all(r["passed"] for r in report["own_checks"].values()) and not report["census"]["protected"])
+                                     and all(r["passed"] for r in report["own_checks"]["primary"].values()) and not report["census"]["protected"])
     if a.seed_lines:
         report["seed"] = seed_check(candidate, a.seed_lines)
     (out / "assessment.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

@@ -4,6 +4,7 @@ import json
 import os
 from pathlib import Path
 import re
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -120,9 +121,61 @@ class ParityTests(unittest.TestCase):
             self.assertIn(flag, spec)
             self.assertTrue(any(flag in a for a in argv), flag)
         self.assertNotIn("--network", argv)  # the engine default network, like the Manager session
+        # The aggregate ceiling of the six Manager sessions an Apply can run at once.
+        self.assertEqual(argv[argv.index("--cpus") + 1], "6")
+        self.assertEqual(argv[argv.index("--memory") + 1], str(6 * 2147483648))
+        self.assertEqual(argv[argv.index("--pids-limit") + 1], "1152")
         self.assertEqual(argv[-1], "prompt")
         self.assertIn('approval_policy="never"', argv)
-        self.assertEqual(argv[argv.index("-s") + 1], "danger-full-access")
+        self.assertIn('sandbox_mode="danger-full-access"', argv)
+        thread = "0199a213-81c0-7800-8aa1-bbab2a035a53"
+        resumed = runner.session_argv("mk-cmp-x", IMAGE, "w", "h", "prompt", thread)
+        codex = resumed[resumed.index(IMAGE) + 1:]
+        self.assertEqual(codex[:2], ["exec", "resume"])
+        self.assertEqual(codex[-2:], [thread, "prompt"])
+        self.assertEqual(codex[2:-2], argv[argv.index(IMAGE) + 2:-1])  # identical switches
+
+    def test_stream_errors_are_recorded_but_only_turn_failures_fail(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            transcript = Path(tmp) / "t.jsonl"
+            transcript.write_text("\n".join(json.dumps(e) for e in (
+                {"type": "thread.started", "thread_id": "x"}, {"type": "error", "message": "Reconnecting... 1/5"},
+                {"type": "turn.completed", "usage": {"input_tokens": 1}})) + "\nnot json\n", encoding="utf-8")
+            summary = runner.summarize(transcript)
+            self.assertTrue(summary["turn_completed"])
+            self.assertEqual((len(summary["errors"]), summary["failures"], summary["malformed_lines"]), (1, [], 1))
+
+    @unittest.skipUnless(shutil.which("sh") and shutil.which("xargs"), "needs a POSIX shell")
+    def test_capture_keeps_sources_an_over_broad_gitignore_would_drop(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            work = Path(tmp) / "work"
+            subprocess.run(["git", "init", "-q", str(work)], check=True)
+            for path, data in ((".gitignore", b"library\n*.out\n"), ("realization/go.mod", b"module library\n"),
+                               ("realization/cmd/library/main.go", b"package main\n"), ("realization/library", b"\x7fELF"),
+                               ("realization/cover.out", b"mode: set\n"), ("realization/README.md", b"usage\n")):
+                (work / path).parent.mkdir(parents=True, exist_ok=True)
+                (work / path).write_bytes(data)
+            script = runner.CAPTURE.replace("/work", work.as_posix()).replace("/tmp/", Path(tmp).as_posix() + "/")
+            subprocess.run([shutil.which("sh"), "-c", script.replace("; cat ", "; true ")], check=True, capture_output=True)
+            tracked = git("ls-tree", "-r", "--name-only", "HEAD", cwd=work).split()
+            self.assertIn("realization/cmd/library/main.go", tracked)  # ignored by "library", kept
+            self.assertIn("realization/README.md", tracked)
+            self.assertNotIn("realization/library", tracked)  # the build output stays ignored
+            self.assertNotIn("realization/cover.out", tracked)
+
+    def test_secret_scan_reads_compressed_git_objects(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            tmp = Path(tmp)
+            repo = tmp / "repo"
+            subprocess.run(["git", "init", "-q", str(repo)], check=True)
+            (repo / "notes.txt").write_bytes(b"token ACCESS-SECRET-VALUE here\n" * 50)
+            git("add", "-A", cwd=repo)
+            subprocess.run(["git", "-C", str(repo), "-c", "user.name=t", "-c", "user.email=t@t", "commit", "-qm", "x"], check=True)
+            out = tmp / "out"
+            out.mkdir()
+            subprocess.run(["git", "-C", str(repo), "bundle", "create", str(out / "result.bundle"), "HEAD"], check=True, capture_output=True)
+            self.assertNotIn(b"ACCESS-SECRET-VALUE", (out / "result.bundle").read_bytes())  # compressed
+            self.assertEqual(runner.files_containing(out, [b"ACCESS-SECRET-VALUE"]), (["result.bundle"], []))
 
     def test_session_login_drops_the_refresh_token(self):
         copy, secrets = runner.session_login(json.dumps(LOGIN).encode())
@@ -177,6 +230,7 @@ class SessionTests(unittest.TestCase):
             steps = [s["step"] for s in result["steps"]]
             self.assertLess(steps.index("logout"), steps.index("raw-tar"))
             self.assertEqual(result["secret_in_outputs"], [])
+            self.assertEqual(result["secret_scan_unreadable"], ["result.bundle"])  # the fake engine's bundle
             listed = (tmp / "out" / "files.sha256").read_text().splitlines()
             self.assertTrue(any(line.endswith("  result.json") for line in listed))
             self.assertFalse(any(line.endswith("files.sha256") for line in listed))
