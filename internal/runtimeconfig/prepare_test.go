@@ -48,6 +48,47 @@ func TestPrepareRejectsInvalidEnvelopesBeforeAdapters(t *testing.T) {
 		}
 	}
 }
+
+type agentPeer func(context.Context, ProfileInput) (ProfileObservation, error)
+
+func (f agentPeer) PrepareAgentProfile(ctx context.Context, p ProfileInput) (ProfileObservation, error) {
+	return f(ctx, p)
+}
+
+// Codex is the only Agent adapter; a Claude section is refused before any port runs.
+func TestPrepareRefusesClaudeAgentSection(t *testing.T) {
+	for _, tc := range []struct {
+		name, entry string
+		noSection   bool
+	}{
+		{"alone", "    claudeCode: {profileVersion: 1}\n", true},
+		{"alongside", "    codexAppServer: {profileVersion: 3}\n    claudeCode: {profileVersion: 1}\n", false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := "apiVersion: markitect.runtime/v1\nagentProfiles:\n  markitect-agent:\n" + tc.entry + "checkProfiles: {}\n"
+			calls := 0
+			r, err := Prepare(context.Background(), runtimeInputs(t, doc), agentPeer(func(context.Context, ProfileInput) (ProfileObservation, error) {
+				calls++
+				return ProfileObservation{}, nil
+			}), nil)
+			if err != nil || r.Status != model.Failed || calls != 0 || len(r.Profiles) != 0 {
+				t.Fatalf("status=%s calls=%d profiles=%d error=%v", r.Status, calls, len(r.Profiles), err)
+			}
+			found := map[string]string{}
+			for _, d := range r.Diagnostics {
+				found[d.Code+" "+d.Source.Field] = d.Message
+			}
+			if got := found["runtime.unknown_key /agentProfiles/markitect-agent/claudeCode"]; !strings.Contains(got, `"claudeCode"`) {
+				t.Fatalf("Claude section not named as unknown: %v", r.Diagnostics)
+			}
+			// Without a Codex section the refusal also names the only Agent section.
+			if got, ok := found["runtime.section /agentProfiles/markitect-agent"]; ok != tc.noSection || ok && !strings.HasSuffix(got, "adapter section: codexAppServer.") {
+				t.Fatalf("section refusal differs: %v", r.Diagnostics)
+			}
+		})
+	}
+}
+
 func TestPrepareBindsExactInputsAndOwnsObservations(t *testing.T) {
 	var portObservation ProfileObservation
 	r, err := Prepare(context.Background(), runtimeInputs(t, checkEnvelope), nil, checkPeer(func(_ context.Context, p ProfileInput) (ProfileObservation, error) {

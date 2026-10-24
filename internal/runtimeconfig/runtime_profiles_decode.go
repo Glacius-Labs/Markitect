@@ -113,7 +113,7 @@ func decodeRuntime(raw project.RawInputs) runtimeEnvelope {
 	for _, ns := range []struct {
 		name     string
 		sections []string
-	}{{"agentProfiles", []string{"codexAppServer", "claudeCode"}}, {"checkProfiles", []string{"container"}}} {
+	}{{"agentProfiles", []string{"codexAppServer"}}, {"checkProfiles", []string{"container"}}} {
 		catalog := d.required(fields, root, ns.name)
 		entries := d.object(catalog)
 		names := make([]string, 0, len(entries))
@@ -126,8 +126,13 @@ func decodeRuntime(raw project.RawInputs) runtimeEnvelope {
 			if strings.TrimSpace(name) == "" {
 				d.issue("name", entry, "Profile names must be nonempty literal strings.")
 			}
-			// Exactly one adapter section selects the profile's adapter.
+			// Exactly one known adapter section selects the profile's adapter.
 			wrapper := d.object(entry, ns.sections...)
+			for section := range wrapper {
+				if !slices.Contains(ns.sections, section) {
+					delete(wrapper, section)
+				}
+			}
 			if len(wrapper) != 1 {
 				d.issue("section", entry, "A profile selects exactly one adapter section: "+strings.Join(ns.sections, " or ")+".")
 				continue

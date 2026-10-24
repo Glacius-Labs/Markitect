@@ -35,7 +35,7 @@ func TestRuntimeCredentialRefusesSymlinksAndFIFO(t *testing.T) {
 		path string
 		want error
 	}{{leaf, errCredentialPath}, {filepath.Join(parent, "credential"), errCredentialPath}, {fifo, errCredentialType}} {
-		resolver, _, err := newCredentialResolvers(map[string]credentialSource{"selected": {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: tc.path}})
+		resolver, err := newCredentialResolver(map[string]credentialSource{"selected": {Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: tc.path}})
 		if err != nil {
 			t.Fatal(err)
 		}

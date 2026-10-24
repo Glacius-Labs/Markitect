@@ -17,7 +17,7 @@ An omitted revision observes the actual draft, including Gitignored files. `--re
 
 `check` defaults to the Model check, registry, complete file accounting, authored execution declarations and static contexts. `context <package>` reports selected Definitions, provenance and inclusion reasons for that Package, including ordinary Root `.`.
 
-`markitect.execution/v2` declares ordered Manager instruction lists, ownership, scope and project checks. Runtime profiles, provider settings and invocation limits have separate owners. `--metadata --runtime-profile ABSOLUTE_DOCUMENT_PATH` additionally prepares closed static native/check metadata from acquired bytes. The [Codex](../internal/adapters/codexappserver/README.md), [Claude](../internal/adapters/claudecode/README.md) and [check](../internal/adapters/checks/README.md) adapters own their exact profile versions and supported metadata. Image preparation starts no provider or project command. Host `process` check profiles are retired. Static success establishes no native runtime capability.
+`markitect.execution/v2` declares ordered Manager instruction lists, ownership, scope and project checks. Runtime profiles, provider settings and invocation limits have separate owners. `--metadata --runtime-profile ABSOLUTE_DOCUMENT_PATH` additionally prepares closed static native/check metadata from acquired bytes. The [Codex](../internal/adapters/codexappserver/README.md) and [check](../internal/adapters/checks/README.md) adapters own their exact profile versions and supported metadata. Image preparation starts no provider or project command. Host `process` check profiles are retired. Static success establishes no native runtime capability.
 
 ## Generated documentation
 
@@ -52,7 +52,7 @@ The target must be on an isolated non-protected branch, for example `git switch 
 & "ABSOLUTE_MARKITECT_BINARY" apply --repo "REPOSITORY" --runtime-profile "ABSOLUTE_RUNTIME_YAML" --run-config "ABSOLUTE_RUN_JSON"
 ```
 
-Use the same quoted binary without `&` in a POSIX shell. `--model` and repeated `--dependency` select committed inputs. `--revision` and `--metadata` remain preparation options. A successful preflight starts real Run environments, provider Sessions and required checks. Exactly one executable Codex account profile is selected by its presence in the captured Runtime document; every profile uses the invocation engine. Claude is not an executable Apply provider.
+Use the same quoted binary without `&` in a POSIX shell. `--model` and repeated `--dependency` select committed inputs. `--revision` and `--metadata` remain preparation options. A successful preflight starts real Run environments, provider Sessions and required checks. Exactly one executable Codex account profile is selected by its presence in the captured Runtime document; every profile uses the invocation engine.
 
 The standalone [Run](../internal/run/README.md) gives every Manager its own fresh environment and Git copy, direct delegation/questions and reviewed upward integration. Questions stay inside Root's hierarchy. A material missing decision or contradiction produces a model blocker; correct the model outside the Run. There is no answer command or preloaded owner decision. Assessment judges model readiness and Approve always leads to Implement, even for no-change. Implement submits a candidate; fresh Verify alone can approve publication. Verify Reject carries mandatory Findings into fresh Implement and Verify Runs with the original shared allowance and deadline. Assessment Reject, model blockers and technical or closure failures stop publication.
 
@@ -64,7 +64,7 @@ The example allows 600 seconds per message Exchange, including awaited child wor
 
 ### Dedicated credential references
 
-Each exact credential reference selects a provider, mode and absolute native file. Codex accepts `dedicated-runtime-login`; Claude accepts `dedicated-runtime-token`. The Codex API-key path is retired. Parsing and static metadata preparation do not read credentials. Only the native resolver reads the selected regular file with path/link checks, safe errors and a 1 MiB bound. The provider owns normal-login validation and the session copy; source files are not rotated by the resolver.
+Each exact credential reference selects a provider, mode and absolute native file. Codex accepts `dedicated-runtime-login`. The Codex API-key path is retired. Parsing and static metadata preparation do not read credentials. Only the native resolver reads the selected regular file with path/link checks, safe errors and a 1 MiB bound. The provider owns normal-login validation and the session copy; source files are not rotated by the resolver.
 
 ### Results and evidence
 

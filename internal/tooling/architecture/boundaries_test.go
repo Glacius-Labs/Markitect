@@ -53,7 +53,6 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/run", "internal/apply", false},
 		{"internal/run", "internal/adapters/gitrepo", false},
 		{"internal/run", "internal/adapters/checks", false},
-		{"internal/run", "internal/adapters/claudecode", false},
 		{"internal/model", "internal/run", false},
 		{"internal/apply", "internal/organization", false},
 		{"internal/apply", "internal/run", true},
@@ -83,25 +82,6 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/adapters/gitrepo", "internal/adapters/checks", false},
 		{"internal/adapters/gitrepo", "internal/adapters/codexappserver", false},
 		{"internal/adapters/gitrepo", "internal/tooling/source", false},
-		// Native metadata consumes Project and runtime configuration; the unavailable
-		// Claude session boundary grants no legacy Apply or frame privileges.
-		{"internal/adapters/claudecode", "internal/apply", false},
-		{"internal/adapters/claudecode", "internal/project", true},
-		{"internal/adapters/claudecode", "internal/runtimeconfig", true},
-		{"internal/adapters/claudecode", "internal/model", true},
-		{"internal/adapters/claudecode", "internal/organization", true},
-		{"internal/adapters/claudecode", "internal/snapshot", true},
-		{"internal/adapters/claudecode", "internal/run", true},
-		{"internal/adapters/claudecode", "internal/adapters/container", true},
-		{"internal/adapters/claudecode", "internal/agentd/frame", false},
-		{"internal/adapters/claudecode", "internal/agentd", false},
-		{"internal/adapters/claudecode", "internal/adapters/codexappserver", false},
-		{"internal/adapters/claudecode", "internal/adapters/gitrepo", false},
-		{"internal/adapters/claudecode", "internal/tooling/source", false},
-		{"internal/apply", "internal/adapters/claudecode", false},
-		{"internal/model", "internal/adapters/claudecode", false},
-		{"internal/organization", "internal/adapters/claudecode", false},
-		{"internal/snapshot", "internal/adapters/claudecode", false},
 		// Codex uses the Run session port and the frame DTOs exposed by the
 		// container API; agentd execution and other adapters remain separate.
 		{"internal/adapters/codexappserver", "internal/adapters/container", true},
@@ -115,12 +95,10 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/harness", "internal/adapters/codexappserver", false},
 		{"internal/adapters/codexappserver", "internal/agentd/frame", true},
 		{"internal/adapters/codexappserver", "internal/agentd", false},
-		{"internal/adapters/codexappserver", "internal/adapters/claudecode", false},
 		{"internal/adapters/codexappserver", "internal/adapters/gitrepo", false},
 		{"internal/adapters/codexappserver", "internal/adapters/runstore", false},
 		{"internal/adapters/codexappserver", "internal/tooling/source", false},
 		{"internal/bootstrap", "internal/adapters/container", true},
-		{"internal/bootstrap", "internal/adapters/claudecode", true},
 		{"internal/bootstrap", "internal/model", true},
 		{"internal/bootstrap", "internal/snapshot", false},
 		{"internal/model", "internal/bootstrap", false},
@@ -224,7 +202,7 @@ func TestRealGitRecordCompositionEdgeStaysTestOnly(t *testing.T) {
 	}
 }
 
-func TestClaudeProfileImportsAcrossPlatforms(t *testing.T) {
+func TestCodexProfileImportsAcrossPlatforms(t *testing.T) {
 	for _, producer := range []struct{ path, layer, pkg string }{
 		{"internal/project", "apply-project", "project"},
 		{"internal/runtimeconfig", "runtime-config", "runtimeconfig"},
@@ -235,15 +213,15 @@ func TestClaudeProfileImportsAcrossPlatforms(t *testing.T) {
 		for _, file := range []string{"profile_windows.go", "profile_linux.go", "profile_windows_test.go", "profile_linux_test.go"} {
 			t.Run(producer.pkg+"/"+file, func(t *testing.T) {
 				root := t.TempDir()
-				entries := mapEntry(producer.path, producer.layer) + mapEntry("internal/adapters/claudecode", "apply-adapter")
+				entries := mapEntry(producer.path, producer.layer) + mapEntry("internal/adapters/codexappserver", "apply-adapter")
 				writeFixture(t, root, map[string]string{
 					"README.md": "# Owner\n", CodeMapSource: "packages:\n" + entries,
-					producer.path + "/producer.go":         "package " + producer.pkg + "\n",
-					"internal/adapters/claudecode/" + file: "package claudecode\nimport _ \"" + ModulePath + producer.path + "\"\n",
+					producer.path + "/producer.go":             "package " + producer.pkg + "\n",
+					"internal/adapters/codexappserver/" + file: "package codexappserver\nimport _ \"" + ModulePath + producer.path + "\"\n",
 				})
 				got, err := CheckRepository(root)
 				if err != nil || len(got) != 0 {
-					t.Fatalf("Claude profile dependency refused: %v %v", got, err)
+					t.Fatalf("Codex profile dependency refused: %v %v", got, err)
 				}
 			})
 		}
@@ -259,7 +237,7 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 	}{
 		{"internal/apply", true, true}, {"internal/adapters/gitrepo", true, true},
 		{"internal/model", true, true},
-		{"internal/adapters/claudecode", true, true},
+		{"internal/adapters/codexappserver", true, true},
 		{"internal/snapshot", false, true}, {"internal/run", true, true}, {"internal/testkit", false, true},
 		{"internal/organization", false, false}, {"internal/realization", false, false},
 		{"internal/adapters/container", true, true}, {"internal/adapters/unknown", false, false},
@@ -276,7 +254,7 @@ func TestBootstrapExecutionCompositionPreservesFixtureBoundaries(t *testing.T) {
 	}
 	for _, producer := range []struct{ path, layer, pkg string }{
 		{"internal/project", "apply-project", "project"},
-		{"internal/adapters/claudecode", "apply-adapter", "claudecode"},
+		{"internal/adapters/codexappserver", "apply-adapter", "codexappserver"},
 		{"internal/model", "apply-model", "model"},
 		{"internal/runtimeconfig", "runtime-config", "runtimeconfig"},
 	} {

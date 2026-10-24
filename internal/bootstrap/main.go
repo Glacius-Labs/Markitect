@@ -8,7 +8,6 @@ import (
 	"io"
 
 	"github.com/Glacius-Labs/Markitect/internal/adapters/checks"
-	"github.com/Glacius-Labs/Markitect/internal/adapters/claudecode"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/cli"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/documents"
@@ -30,7 +29,7 @@ func run(ctx context.Context, args []string, stdout, stderr io.Writer, images co
 	models := project.NewModelService(repository, repository)
 	preparation := project.NewPreparationService(models)
 	views := modeldocs.New(models, preparation, documents.Writer{})
-	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(images), claude: claudecode.NewMetadataPreparer(claudecode.NewEngineImageReader)}
+	agents := codexappserver.NewMetadataPreparer(images)
 	checker := checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader)
 	execution := applyExecution(preparation, repository, agents, checker)
 	return cli.New(preparation, agents, checker, repository, views, execution).Run(ctx, args, stdout, stderr)

@@ -11,7 +11,6 @@ import (
 	"unicode"
 	"unicode/utf8"
 
-	"github.com/Glacius-Labs/Markitect/internal/adapters/claudecode"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/codexappserver"
 )
 
@@ -20,7 +19,7 @@ import (
 const maxRuntimeCredentialBytes = 1 << 20
 
 var (
-	errRuntimeCredential = errors.New("runtime credential mapping or token refused")
+	errRuntimeCredential = errors.New("runtime credential mapping refused")
 	errCredentialPath    = errors.New("runtime credential path is redirected or unsafe")
 	errCredentialType    = errors.New("runtime credential file is not regular")
 	errCredentialLimit   = errors.New("runtime credential file is empty or exceeds its byte limit")
@@ -36,60 +35,38 @@ type credentialSource struct {
 	Path     string `json:"path"`
 }
 
-// newCredentialResolvers validates and copies explicit mappings without any
-// filesystem or environment access. Only invoking a returned resolver reads its
-// selected file. The adapters own credential validation and session copies;
-// neither this constructor nor its resolvers rotate or rewrite source files.
-func newCredentialResolvers(sources map[string]credentialSource) (codexappserver.CredentialResolver, claudecode.CredentialResolver, error) {
+// newCredentialResolver validates and copies explicit mappings without any
+// filesystem or environment access. Only invoking the returned resolver reads
+// its selected file. The adapter owns credential validation and session copies;
+// neither this constructor nor its resolver rotates or rewrites source files.
+func newCredentialResolver(sources map[string]credentialSource) (codexappserver.CredentialResolver, error) {
 	if len(sources) == 0 {
-		return nil, nil, errRuntimeCredential
+		return nil, errRuntimeCredential
 	}
 	bound := make(map[string]credentialSource, len(sources))
 	for ref, source := range sources {
-		validMode := source.Provider == "codex-app-server" && source.Mode == "dedicated-runtime-login" || source.Provider == "claude-code" && source.Mode == "dedicated-runtime-token"
+		validMode := source.Provider == "codex-app-server" && source.Mode == "dedicated-runtime-login"
 		if ref == "" || strings.TrimSpace(ref) != ref || strings.ContainsFunc(ref, unicode.IsControl) || !utf8.ValidString(ref) || !validMode {
-			return nil, nil, errRuntimeCredential
+			return nil, errRuntimeCredential
 		}
 		if !credentialPath(source.Path) {
-			return nil, nil, errCredentialPath
+			return nil, errCredentialPath
 		}
 		bound[ref] = source
 	}
-	read := func(ctx context.Context, ref, provider string) (credentialSource, []byte, error) {
+	return func(ctx context.Context, ref string) (codexappserver.RuntimeCredential, error) {
 		source, found := bound[ref]
-		if !found || source.Provider != provider || ctx == nil {
-			return credentialSource{}, nil, errRuntimeCredential
+		if !found || ctx == nil {
+			return codexappserver.RuntimeCredential{}, errRuntimeCredential
 		}
 		data, err := readRuntimeCredential(ctx, source.Path)
 		if err != nil {
 			// Paths, reference strings and underlying errors may contain sensitive
 			// text. No native error or credential byte escapes this boundary.
-			return credentialSource{}, nil, credentialReadError(err)
-		}
-		return source, data, nil
-	}
-	codex := func(ctx context.Context, ref string) (codexappserver.RuntimeCredential, error) {
-		source, data, err := read(ctx, ref, "codex-app-server")
-		if err != nil {
-			return codexappserver.RuntimeCredential{}, err
+			return codexappserver.RuntimeCredential{}, credentialReadError(err)
 		}
 		return codexappserver.RuntimeCredential{Mode: source.Mode, RuntimeLogin: json.RawMessage(data)}, nil
-	}
-	claude := func(ctx context.Context, ref string) (claudecode.RuntimeCredential, error) {
-		_, data, err := read(ctx, ref, "claude-code")
-		if err != nil {
-			return claudecode.RuntimeCredential{}, err
-		}
-		if !credentialToken(data) {
-			return claudecode.RuntimeCredential{}, errRuntimeCredential
-		}
-		return claudecode.RuntimeCredential{Token: string(data)}, nil
-	}
-	return codex, claude, nil
-}
-
-func credentialToken(data []byte) bool {
-	return len(data) > 0 && utf8.Valid(data) && !strings.ContainsAny(string(data), "\r\n\x00")
+	}, nil
 }
 
 func credentialReadError(err error) error {

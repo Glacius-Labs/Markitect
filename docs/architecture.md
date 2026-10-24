@@ -78,7 +78,7 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 The [container runtime](../internal/adapters/container/README.md) implements the isolation boundary ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session containers from an immutable engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Orchestrator tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex and Claude Code.
 
-The [provider guide](provider-adapters.md#container-runtime) routes to the implemented Codex and Claude Agent adapters, container workspaces, check runner and guarded publisher. Their prepared adapter smokes and any real provider run need separate authority and remain unexecuted by source tests. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
+The [provider guide](provider-adapters.md#container-runtime) routes to the implemented Codex Agent adapter, container workspaces, check runner and guarded publisher. Their prepared adapter smokes and any real provider run need separate authority and remain unexecuted by source tests. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
 
 ## Operational record storage
 
