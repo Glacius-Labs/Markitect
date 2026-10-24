@@ -11,7 +11,10 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
-func TestMain(m *testing.M) { testkit.Main(m) }
+func TestMain(m *testing.M) {
+	publicationGitProcess()
+	testkit.Main(m)
+}
 
 func fixturePath(t *testing.T, p string) snapshot.Path {
 	t.Helper()

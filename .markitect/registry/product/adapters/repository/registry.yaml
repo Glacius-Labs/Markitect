@@ -192,3 +192,7 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
     why: "Explicitly dispatched actual LinuxGit copy proof for file modes, Manager isolation, empty Packages, disposable check copies, retained candidates and observed closure; no provider or full Run qualification."
+  - path: "internal/adapters/gitrepo/publication_cancellation_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries]
+    why: "Observes actual guard Git-process cancellation before mutation and during partial publication, retaining exact completed paths without successful readback."

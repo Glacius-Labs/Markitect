@@ -1,6 +1,7 @@
 package guardedwrite
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -29,7 +30,7 @@ func TestOrderedCheckedApplyKeepsLockThroughReadbackAndPreservesOrder(t *testing
 		return nil
 	}
 	seen := 0
-	result, err := ApplyOrderedChecked(root, capture, changes, func() error {
+	result, err := ApplyOrderedChecked(context.Background(), root, capture, changes, func() error {
 		// Changing caller-owned inputs after validation must not change the
 		// selected paths or the candidate bytes used by the writer.
 		changes[0].Path = "outside"
@@ -69,7 +70,7 @@ func TestOrderedCheckedApplyKeepsLockThroughReadbackAndPreservesOrder(t *testing
 		t.Fatal(err)
 	}
 	checked := false
-	result, err = ApplyOrderedChecked(root, capture, nil, assertLock, nil, func(result Result) error { checked = true; return assertLock() })
+	result, err = ApplyOrderedChecked(context.Background(), root, capture, nil, assertLock, nil, func(result Result) error { checked = true; return assertLock() })
 	if err != nil || !checked || len(result.CompletedPaths) != 0 {
 		t.Fatalf("no-op validation = %v, %v, checked=%v", result, err, checked)
 	}
@@ -90,7 +91,7 @@ func TestOrderedCheckedApplyReportsFailureAtEachGuardBoundary(t *testing.T) {
 			}
 			guardError := errors.New("caller validation failed")
 			seen := 0
-			result, err := ApplyOrderedChecked(root, capture, changes, func() error {
+			result, err := ApplyOrderedChecked(context.Background(), root, capture, changes, func() error {
 				if stage == "preflight" {
 					return guardError
 				}
@@ -138,7 +139,7 @@ func TestOrderedCheckedApplyRejectsInvalidScopeBeforeCallbacks(t *testing.T) {
 		{{Path: "outside", Bytes: []byte("x"), Mode: 0644}},
 		{{Path: "selected", Mode: 0644}, {Path: "selected", Mode: 0644}},
 	} {
-		result, err := ApplyOrderedChecked(root, capture, changes, func() error { called = true; return nil }, nil, nil)
+		result, err := ApplyOrderedChecked(context.Background(), root, capture, changes, func() error { called = true; return nil }, nil, nil)
 		if err == nil || called || len(result.CompletedPaths) != 0 {
 			t.Fatalf("invalid selection was applied: %v, %v", result, err)
 		}
@@ -154,7 +155,7 @@ func TestOrderedCheckedApplyRejectsCaptureMutationBeforeWriting(t *testing.T) {
 				t.Fatal(err)
 			}
 			before := mustRead(t, filepath.Join(root, "README.md"))
-			result, err := ApplyOrderedChecked(root, capture, []Change{{Path: "README.md", Bytes: []byte("candidate\n"), Mode: 0644}}, nil, func() error {
+			result, err := ApplyOrderedChecked(context.Background(), root, capture, []Change{{Path: "README.md", Bytes: []byte("candidate\n"), Mode: 0644}}, nil, func() error {
 				switch binding {
 				case "root":
 					capture.Root += "-changed"
@@ -212,7 +213,7 @@ func TestOrderedCheckedApplyRejectsReplacementCaptureAcrossCallbacks(t *testing.
 			if stage == "existing-preflight" {
 				result, err = ApplyChecked(root, capture, changes, preflight)
 			} else {
-				result, err = ApplyOrderedChecked(root, capture, changes, preflight, target, readback)
+				result, err = ApplyOrderedChecked(context.Background(), root, capture, changes, preflight, target, readback)
 			}
 			want := 0
 			if stage == "readback" {

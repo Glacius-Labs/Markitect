@@ -59,7 +59,7 @@ func (w Writer) Write(ctx context.Context, repository string, expected modeldocs
 	if err := ctx.Err(); err != nil {
 		return modeldocs.WriteResult{}, err
 	}
-	capture, err := guardedwrite.CaptureV1Files(repository, []string{expected.Path})
+	capture, err := guardedwrite.CaptureV1Files(ctx, repository, []string{expected.Path})
 	if err != nil {
 		return modeldocs.WriteResult{}, err
 	}
@@ -71,7 +71,7 @@ func (w Writer) Write(ctx context.Context, repository string, expected modeldocs
 	if expected.Exists {
 		mode = fs.FileMode(expected.Mode)
 	}
-	result, err := guardedwrite.ApplyOrderedChecked(repository, capture, []guardedwrite.Change{{Path: expected.Path, Bytes: content, Mode: mode}}, func() error {
+	result, err := guardedwrite.ApplyOrderedChecked(ctx, repository, capture, []guardedwrite.Change{{Path: expected.Path, Bytes: content, Mode: mode}}, func() error {
 		if err := ctx.Err(); err != nil {
 			return err
 		}
