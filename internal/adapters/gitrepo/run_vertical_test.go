@@ -52,6 +52,10 @@ func TestLinuxChildReviewPreservesCompleteContextWithoutBinaryPatch(t *testing.T
 	child.Git("checkout", "--quiet", "--detach", base.ID)
 	child.Write("text.txt", "after\n")
 	child.Write("review.bin", "\x00\x01\x02binary review\x00")
+	// Commit stages again, so Linux also needs the executable worktree mode.
+	if err := os.Chmod(filepath.Join(child.Dir, "review.bin"), 0755); err != nil {
+		t.Fatal(err)
+	}
 	child.Git("add", "review.bin")
 	child.Git("update-index", "--chmod=+x", "review.bin")
 	fixed := run.Commit{ID: child.Commit("binary and text child")}
