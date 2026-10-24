@@ -4,7 +4,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 
 | Document | Content |
 |---|---|
-| [V1 concept 1.0](v1-concept.md) | The consolidated V1 target in German: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
+| [V1 concept 1.0](v1-concept.md) | The consolidated V1 target: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
 | [Origin and rationale](origin-and-rationale.md) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register |
 | [Product reflections](reflections/README.md) | Dated discussions of future use, organizational ideas and trust, with owner wording and assistant interpretation kept distinct |
@@ -74,4 +74,4 @@ This record does not track whether work is scheduled or implemented. When an enh
 6. **Keep summaries in step.** When an entry changes, also correct any summary of it, for example in the vision's brief or its table of misreadings.
 7. **Ideas move on.** When an idea is evaluated, it becomes a decision, an enhancement or a rejected entry. Its ID stays in the cross-references.
 
-Write entries in English. Quotes in a source keep their original language.
+Write entries, and all other documentation, in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)). Under the record rules above, quotes in a source keep their original language; as noted in the DEC-069 scope notes, add an English translation when a source serves as a reference.

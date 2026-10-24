@@ -19,6 +19,10 @@ Start at the [documentation map](../README.md) and the nearest local map. Search
 
 Use the [Project World design map](../design/project-world/README.md), [Research map](../research/README.md), and [Strategy map](../strategy/README.md) to keep dated proposals and supplied research in their stated role. A proposal or assessment does not become product behavior merely because it is documented.
 
+## Write in English
+
+All documentation is written in English ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)). Under the concept record rules and the DEC-069 scope notes, verbatim owner statements under `docs/concepts/sources/` keep their original wording, with an English translation where a source serves as a reference. The [delivery plan](../implementation-plan.md#known-deviations-from-concept-10) lists existing German documents that still need translation.
+
 ## Maintain navigation and evidence boundaries
 
 When adding a document or directory, add a useful link to its local map and, when it creates a new route, to the parent map. Prefer links to the owner over copied status summaries. Keep the document's source, date, release, or experiment scope visible where it affects how readers should interpret the content. A dated report remains tied to its recorded inputs and conclusions; use the current owner document for later status.
