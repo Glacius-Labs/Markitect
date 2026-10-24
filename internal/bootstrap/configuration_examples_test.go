@@ -158,7 +158,7 @@ func TestExactConfigurationExamplesPrepareAndReachControlledApplyBoundary(t *tes
 			t.Fatal("CLI changed the exact example invocation", request)
 		}
 		cfg, err := loadRunConfig(ctx, request.RunConfig)
-		if err != nil || cfg.ProductBuild != request.Build || cfg.EngineExecutable != engine || cfg.Deadline != deadline || cfg.StateDirectory != state || cfg.MaxManagers != 32 || cfg.MaxMessages != 128 || cfg.MessageTimeoutSeconds != 120 || cfg.CleanupTimeoutSeconds != 45 || cfg.PersistenceTimeoutSeconds != 30 {
+		if err != nil || cfg.ProductBuild != request.Build || cfg.EngineExecutable != engine || cfg.Deadline != deadline || cfg.StateDirectory != state || cfg.MaxManagers != 32 || cfg.MaxMessages != 128 || cfg.MessageTimeoutSeconds != 600 || cfg.CleanupTimeoutSeconds != 45 || cfg.PersistenceTimeoutSeconds != 30 {
 			t.Fatal("example invocation did not retain its explicit values", cfg, err)
 		}
 		prepared, metadata, status, err := captureApplyInputs(ctx, preparation, repository, request.Selection, agents, checkMetadata)

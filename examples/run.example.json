@@ -7,7 +7,7 @@
   "deadline": "DEADLINE_UTC",
   "maxManagers": 32,
   "maxMessages": 128,
-  "messageTimeoutSeconds": 120,
+  "messageTimeoutSeconds": 600,
   "cleanupTimeoutSeconds": 45,
   "persistenceTimeoutSeconds": 30,
   "credentials": {
