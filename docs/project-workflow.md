@@ -60,6 +60,8 @@ The standalone [Run](../internal/run/README.md) gives every Manager its own fres
 
 The closed UTF-8 JSON uses `formatVersion: 3`. Required fields are `repositoryIdentity`, `productBuild`, `stateDirectory`, `engineExecutable`, `deadline`, `maxManagers`, `maxMessages`, `messageTimeoutSeconds`, `cleanupTimeoutSeconds`, `persistenceTimeoutSeconds` and `credentials`. Optional `workDeadline` reserves part of the whole deadline and must precede it. Unknown, duplicate, null, relative-path and invalid values are refused. Old strategy/role, ownerRequest, helper, harvest and ownerDecisions fields are not accepted. There are no ambient defaults. See the exact [example](../examples/run.example.json).
 
+The example allows 600 seconds per message Exchange, including awaited child work and terminal drain. An observed successful native Library Turn alone exceeded the previous 120-second example limit; 600 seconds was the finite bound used in that native evidence. Configure this limit for the project within the original overall deadline and message allowance; the example does not guarantee that every Exchange will fit.
+
 ### Dedicated credential references
 
 Each exact credential reference selects a provider, mode and absolute native file. Codex accepts `dedicated-runtime-login`; Claude accepts `dedicated-runtime-token`. The Codex API-key path is retired. Parsing and static metadata preparation do not read credentials. Only the native resolver reads the selected regular file with path/link checks, safe errors and a 1 MiB bound. The provider owns normal-login validation and the session copy; source files are not rotated by the resolver.
