@@ -25,6 +25,8 @@ The [V1 qualification record](validation/v1-qualification-20261024.md) holds the
 | D18: no non-functional Claude path | `internal/adapters/claudecode` keeps profile, codec, metadata and setup code while `Open` always returns unavailable; Bootstrap wires Claude credentials and metadata | 3 |
 | §5.5: the self-model describes the chosen architecture | Project, Workflow and Harness are owned by the `product/apply` and `product/adapters/agent` Packages; the Run Rule now states D10–D12 ahead of the code | 5 |
 
+Documentation language ([DEC-069](concepts/register.md#dec-069-documentation-is-written-in-english)): about 55 existing documents are still in German, mostly historical design records under `docs/design/project-world`, `docs/design/product-model-refinement` and `docs/design/canonical-model`, including the normative [language specification](design/canonical-model/minimal-language/language-contract.md), plus the archived [conformance audit](development/concept-conformance-audit-20261024.md). They are translated as separate documentation work outside the two code streams. The German bodies of the `markitect/core` vocabulary in `.markitect/model/markitect/core` and `internal/model/core.go` are protected model content and wait for an owner decision.
+
 Product guides such as the [architecture](architecture.md), the [project workflow](project-workflow.md) and the adapter READMEs describe implemented behavior. They change together with the code in steps 2 and 3.
 
 <a id="apply-rebuild-plan"></a>

@@ -2,7 +2,7 @@
 
 Markitect is model-first development with delegated realization. People maintain a canonical model; a Manager hierarchy derived from it realizes, reviews and integrates the artifacts, and the host keeps a few clear technical guarantees.
 
-**Current target:** [V1 concept 1.0](docs/concepts/v1-concept.md) ([DEC-068](docs/concepts/register.md#dec-068-v1-concept-10)), in German. V1 is Model → Artifacts: Assessment, Implement and Verify each run through the complete model-derived hierarchy in fresh Run environments; Apply publishes only a stored, verified candidate after every Run has closed. Extract, Cockpit/UI, interactive authoring and Setup are not part of V1. V1 acceptance covers Codex with normal account login. The [delivery plan](docs/implementation-plan.md) owns the current steps and the known deviations of the code from the concept.
+**Current target:** [V1 concept 1.0](docs/concepts/v1-concept.md) ([DEC-068](docs/concepts/register.md#dec-068-v1-concept-10)). V1 is Model → Artifacts: Assessment, Implement and Verify each run through the complete model-derived hierarchy in fresh Run environments; Apply publishes only a stored, verified candidate after every Run has closed. Extract, Cockpit/UI, interactive authoring and Setup are not part of V1. V1 acceptance covers Codex with normal account login. The [delivery plan](docs/implementation-plan.md) owns the current steps and the known deviations of the code from the concept.
 
 Before assessing product direction, read [Markitect in brief](docs/vision.md#markitect-in-brief), [Common misreadings](docs/vision.md#common-misreadings) and the [concept register](docs/concepts/register.md). Do not reopen an accepted entry without new evidence.
 
@@ -10,7 +10,8 @@ Before assessing product direction, read [Markitect in brief](docs/vision.md#mar
 
 - At most two writing chats at a time, each with its own worktree and exclusive file scope. One writer at a time for shared contracts, registry shards, the self-model and generated files. Codex development chats use Sol High, as [approved](docs/concepts/sources/v1-source-implementation-approval-20261023.md).
 - Real container, provider or Apply runs need a concrete bounded dispatch under the [standing evidence authorization](docs/concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization): source, limits, abort, cleanup and actual result. Failed attempts stay recorded. No release or deployment.
-- Fix host/agent interaction failures in host state or the tool contract, not with more prompt text ([concept §3.7](docs/concepts/v1-concept.md#37-aufgaben-statt-prozess-d13)).
+- Fix host/agent interaction failures in host state or the tool contract, not with more prompt text ([concept §3.7](docs/concepts/v1-concept.md#37-tasks-not-process-d13)).
+- Write all documentation in English ([DEC-069](docs/concepts/register.md#dec-069-documentation-is-written-in-english)). Verbatim owner statements in `docs/concepts/sources/` keep their original wording.
 
 ## Every task
 

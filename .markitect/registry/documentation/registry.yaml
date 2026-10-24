@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/english-documentation-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner decision that the concept and all documentation are written in English.
   - path: "docs/concepts/v1-concept.md"
     form: doc
     realizes: [documentation/current-guidance]

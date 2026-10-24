@@ -83,6 +83,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded |
 | [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10) |
 | [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan |
+| [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; translation of existing German documents tracked in the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -859,6 +860,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Supersedes:** conflicting statements in the [V1 scope clarification](sources/v1-scope-clarification-20261023.md), the v0.17-based [architecture](../design/v1-execution-architecture.md) as previously written and [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs), for example questions to any Manager of a Run and a fresh judgment after every active message. Their original sources remain unchanged.
 - **Provider scope:** D18 was proposed as a recommendation and accepted with the other proposals; see the recorder's note in the decision record.
 - **Owners and scope:** concept 1.0 owns target semantics; the [architecture](../design/v1-execution-architecture.md) owns concrete contracts; the [delivery plan](../implementation-plan.md) owns implementation steps and known deviations. No new execution authority; release and deployment remain excluded.
+
+### DEC-069 Documentation is written in English
+
+- **Status:** Accepted by the owner, 24 October 2026 ([verbatim source with translation](sources/english-documentation-20261024.md)).
+- **Decision:** The concept and all documentation in Markitect are always written in English. [Concept 1.0](v1-concept.md) was translated in the same change.
+- **Scope notes (recorder's interpretation):** verbatim owner statements in [sources](sources/README.md) keep their original wording and get an English translation where they serve as a reference. The German bodies of the canonical `markitect/core` vocabulary are model content in the protected language foundation; translating them changes the core identity and needs a separate owner decision. The [delivery plan](../implementation-plan.md#known-deviations-from-concept-10) tracks the remaining German documents.
 
 ## Promises
 

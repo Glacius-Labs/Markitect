@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [English documentation](english-documentation-20261024.md) | Direct owner decision, 24 October 2026; verbatim with English translation | The concept and all documentation are written in English; verbatim sources and the core vocabulary are noted as separate questions |
 | [V1 concept decisions](v1-concept-decisions-20261024.md) | Direct owner decision, 24 October 2026; assistant proposals quoted | Acceptance of D10–D18 and the five-step plan; Codex-only V1 acceptance recorded with a recorder's note |
 | [V1 concept v0.18](v1-concept-v018-20261024.md) | Owner-supplied consolidated concept, 24 October 2026; verbatim | Complete V1 target with D1–D9, scope, architecture, acceptance criteria V01–V16 and the open items A1–A6, R1–R3 |
 | [Agent workspaces and reviewed handoffs](agent-workspaces-and-handoffs-20261022.md) | Direct owner statements and adoption, 22 October 2026 | Separate mandates, one container/own stand per Agent, no domain Turns, delegation/questions and reviewed Git handoffs; proportionate protection and documentation-only rebuild plan |

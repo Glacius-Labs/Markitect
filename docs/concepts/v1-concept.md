@@ -1,810 +1,810 @@
-# Markitect V1 – Konzept
+# Markitect V1 concept
 
-**Modellbasierte Realisierung durch eine abgeleitete Managerorganisation**
+**Model-based realization through a derived Manager organization**
 
 | | |
 |---|---|
-| **Version** | 1.0 – festgehaltene Konzeptfassung |
-| **Stand** | 24. Oktober 2026 |
-| **Geltungsbereich** | Enge V1: Model → Artifacts |
-| **Grundlage** | Owner-Fassung [v0.18](sources/v1-concept-v018-20261024.md) und die am 24. Oktober angenommenen Entscheidungen D10–D18 ([Entscheidungsprotokoll](sources/v1-concept-decisions-20261024.md), [DEC-068](register.md#dec-068-v1-concept-10)) |
+| **Version** | 1.0 – recorded concept |
+| **Date** | 24 October 2026 |
+| **Scope** | Narrow V1: Model → Artifacts |
+| **Basis** | The owner's concept [v0.18](sources/v1-concept-v018-20261024.md) and decisions D10–D18 accepted on 24 October ([decision record](sources/v1-concept-decisions-20261024.md), [DEC-068](register.md#dec-068-v1-concept-10)) |
 
-> **Das kanonische Modell beschreibt die beabsichtigte Projektwelt. Die Managerorganisation wird daraus abgeleitet. Die Manager realisieren, prüfen und integrieren diese Welt; der Host stellt dafür wenige klare technische Garantien bereit.**
+> **The canonical model describes the intended project world. The Manager organization is derived from it. The Managers realize, review and integrate that world; the host provides a few clear technical guarantees for it.**
 
-Diese Fassung verdichtet v0.18 und schließt deren offene Punkte durch Entscheidungen. Für D10–D18 gilt das Entscheidungsprotokoll, für alle übrigen Inhalte die Owner-Fassung v0.18. Jede weitere Abweichung dieser Fassung ist ein Redaktionsfehler und wird dem Coordinator gemeldet. Das Dokument beschreibt das Soll. Umsetzungsstand und bekannte Abweichungen des Codes führt der [Delivery Plan](../implementation-plan.md). Es erteilt keine Implementierungs-, Release-, Deployment- oder Abnahmefreigabe.
+This version condenses v0.18 and closes its open items with decisions. The decision record governs D10–D18; the owner's v0.18 governs all other content. Any other divergence in this version is an editing error and is reported to the coordinator. The document describes the target. The [delivery plan](../implementation-plan.md) tracks implementation status and known deviations of the code. It grants no implementation, release, deployment or acceptance approval.
 
-## Leseregeln
+## Reading rules
 
-| Kategorie | Bedeutung |
+| Category | Meaning |
 |---|---|
-| **Festgelegt** | Beschlossene Produktsemantik oder unmittelbar daraus folgende Verantwortungsgrenze. Das ist der Normalfall in diesem Dokument. |
-| **Technisch auszugestalten** | Das Ziel steht fest; API, Speicherform, Providerabbildung oder Paketzuschnitt brauchen eine begründete Umsetzung. Gesammelt in Abschnitt 28. |
-| **Später** | Bewusst nicht Teil von V1. Darf den Kern nicht durch vorgezogene Kompatibilitätspflichten bestimmen. |
+| **Decided** | Accepted product semantics or a responsibility boundary that follows directly from it. This is the normal case in this document. |
+| **Technical design** | The goal is fixed; API, storage form, provider mapping or package cut need a reasoned implementation. Collected in section 28. |
+| **Later** | Deliberately not part of V1. Must not shape the core through premature compatibility obligations. |
 
-„Muss“ bezeichnet eine fachliche oder technische Invariante, keine vorgeschriebene Datei. „Beispielsweise“ nennt eine geeignete Form, keine Pflichttechnologie. Owner-Entscheidungen bestimmen die Produktsemantik; ein Architekturvorschlag, ein Audit oder ein grüner Test ändert sie nicht stillschweigend. Aktueller Code wird nicht nachträglich zur Sollvorgabe, nur weil er implementiert oder erfolgreich getestet ist, und ausdrücklich verworfene frühere Anforderungen kehren nicht zurück.
+"Must" denotes a domain or technical invariant, not a prescribed file. "For example" names a suitable form, not a mandatory technology. Owner decisions determine product semantics; an architecture proposal, an audit or a green test does not change them silently. Current code does not become the target merely because it is implemented or passes its tests, and explicitly rejected earlier requirements do not return.
 
 ---
 
-## 1. Produktidee
+## 1. Product idea
 
-### 1.1 Das Problem ist nicht fehlende Textproduktion
+### 1.1 The problem is not a lack of text production
 
-Mit KI-Agenten lassen sich Code, Tests, Dokumentation und Arbeitsanweisungen schnell erzeugen. Schwierig ist, ihre Bedeutung über längere Zeit konsistent zu halten. Eine Architekturentscheidung betrifft oft gleichzeitig Code, Schnittstellen, Tests, Konfiguration, Dokumentation und Agentenregeln; eine lokal erfolgreiche Änderung kann Verpflichtungen an anderer Stelle verletzen.
+AI agents produce code, tests, documentation and working instructions quickly. The hard part is keeping their meaning consistent over time. An architecture decision often affects code, interfaces, tests, configuration, documentation and agent rules at once; a change that succeeds locally can break obligations elsewhere.
 
-Ausgangspunkt waren wachsende, zunehmend widersprüchliche Sammlungen von Rules, Skills und Workflows. Reine Textpflege und wiederholte vollständige KI-Reviews reichten als Grundlage für Konsistenz nicht aus.
+The starting point was growing, increasingly contradictory collections of rules, skills and workflows. Maintaining text by hand and repeating complete AI reviews were not a sufficient basis for consistency.
 
-### 1.2 Ein kanonisches Modell statt konkurrierender Wahrheiten
+### 1.2 One canonical model instead of competing truths
 
-Markitect stellt die beabsichtigte Projektwelt in einem kanonischen Modell dar: fachliche Anforderungen, Architektur, Beziehungen, Regeln, Verantwortlichkeiten und Qualitätsverpflichtungen. Code, Tests, Dokumentation und Konfiguration sind Realisierungen dieser Absicht.
+Markitect represents the intended project world in a canonical model: domain requirements, architecture, relationships, rules, responsibilities and quality obligations. Code, tests, documentation and configuration are realizations of that intent.
 
 ```text
-Absicht und Architektur im kanonischen Modell
-    → deterministisch geprüfte Struktur
-    → daraus abgeleitete Managerorganisation
-    → Realisierung und Integration
-    → unabhängige Verifikation
-    → kontrolliert veröffentlichte Artefakte
+Intent and architecture in the canonical model
+    → deterministically checked structure
+    → Manager organization derived from it
+    → realization and integration
+    → independent verification
+    → artifacts published under control
 ```
 
-Die kanonische Sprache verwendet typisierte YAML-Definitionen mit bedeutungstragender Markdown-Prosa. Ihre Syntax regelt die bestehende Sprachreferenz.
+The canonical language uses typed YAML Definitions with meaningful Markdown prose. The existing language reference governs its syntax.
 
-### 1.3 Compiler und Agenten ergänzen sich
+### 1.3 Compiler and agents complement each other
 
-Der Compiler prüft ausdrückbare strukturelle Eigenschaften. Die Manager beurteilen semantische Fragen und setzen das Modell um. Weder soll ein Sprachmodell triviale Referenzfehler erraten, noch soll der Host fachliche Arbeit in einen deterministischen Prozess zwingen. Die Analogie zu typisierten Sprachen reicht bis zur frühen Erkennung ausdrückbarer Strukturfehler; sie beweist nicht, dass natürlichsprachige Anforderungen korrekt realisiert sind.
+The compiler checks expressible structural properties. The Managers judge semantic questions and realize the model. A language model should not guess trivial reference errors, and the host should not force domain work into a deterministic process. The analogy to typed languages extends to early detection of expressible structural errors; it does not prove that natural-language requirements are realized correctly.
 
-### 1.4 Produktthese und Nachweisgrenze
+### 1.4 Product thesis and limits of evidence
 
-Ein autoritatives Modell, abgegrenzte Verantwortung, hierarchische Reviews, unabhängige Prüfruns und kontrollierte Integration sollen konsistente Änderungen zuverlässiger ermöglichen als ein einzelner Agent, der alle Verpflichtungen allein im Blick behalten muss. Das ist eine zu prüfende These. Zuverlässigkeit, weniger menschlicher Prüfaufwand und Vorteile gegenüber einfacheren Agentenansätzen müssen an Vergleichen und realen Projekten belegt werden.
+An authoritative model, bounded responsibility, hierarchical reviews, independent review Runs and controlled integration should make consistent changes more reliable than a single agent that must keep every obligation in view alone. This is a thesis to be tested. Reliability, less human review effort and advantages over simpler agent approaches must be shown through comparisons and real projects.
 
-## 2. V1-Scope
+## 2. V1 scope
 
-### 2.1 Liefergegenstand
+### 2.1 Deliverable
 
-V1 liefert **Model → Artifacts**: deterministische Vorbereitung, Assessment, Implement, Verify, frische Korrekturruns, dauerhafte Ergebnisse und kontrollierte Publication. Bedient wird V1 über einen schmalen Apply-Einstieg und die Modellwerkzeuge Check, Context und Docs.
+V1 delivers **Model → Artifacts**: deterministic preparation, Assessment, Implement, Verify, fresh correction Runs, durable results and controlled publication. V1 is operated through a narrow Apply entry point and the model tools Check, Context and Docs.
 
-Dazu gehören Registry- und Ownership-Pflege, ein real nutzbarer Harness, normale CLI-Konto-Authentifizierung, Run-lokale Container und Git-Arbeitsstände, persistente Shared Notes sowie die nötigen technischen und fachlichen Nachweise.
+It includes registry and ownership maintenance, a harness that works in practice, normal CLI account authentication, Run-local containers and Git working copies, persistent Shared Notes and the necessary technical and domain evidence.
 
-### 2.2 Nicht beauftragt
+### 2.2 Not commissioned
 
-Extract und andere Artifacts→Model-Operationen, Cockpit beziehungsweise grafische UI, interaktives Modell-Authoring und die Migration dieser Altverbraucher gehören nicht zu V1. Ihre früheren Schnittstellen erzeugen keine Anforderungen an den Ausführungskern.
+Extract and other Artifacts→Model operations, the Cockpit or any graphical UI, interactive model authoring and the migration of these old consumers are not part of V1. Their earlier interfaces impose no requirements on the execution core.
 
-Setup gehört nicht zu V1. Getestete explizite Konfigurationsbeispiele ermöglichen den Apply-Aufruf; ein eigenes Onboarding-Produkt wird nicht gebaut. Normales Lesen vorhandener Artefakte bleibt notwendig. Ausgeschlossen ist, daraus während Apply eine neue kanonische Wahrheit zu machen.
+Setup is not part of V1. Tested explicit configuration examples make the Apply call possible; no separate onboarding product is built. Ordinary reading of existing artifacts remains necessary. What is excluded is turning them into a new canonical truth during Apply.
 
-### 2.3 Providerumfang (D18)
+### 2.3 Provider scope (D18)
 
-V1 wird mit **Codex** und normalem Konto-Login abgenommen. Claude ist die nächste Providerabbildung. Sie wird auf dem stabilisierten Session- und Werkzeugvertrag (Abschnitte 13 und 14) gebaut und eigenständig nachgewiesen. Bis dahin führt das Produkt keinen nicht funktionsfähigen Claude-Pfad mit.
+V1 is accepted with **Codex** and normal account login. Claude is the next provider mapping. It is built on the stabilized session and tool contract (sections 13 and 14) and qualified on its own. Until then the product carries no non-functional Claude path.
 
-Der Ansatz bleibt providerneutral. Jeder weitere Provider braucht einen eigenen Adapter und eigene Nachweise; ein erfolgreicher Codex-Lauf beweist nichts über einen anderen Provider.
+The approach stays provider-neutral. Every further provider needs its own adapter and its own evidence; a successful Codex run proves nothing about another provider.
 
-### 2.4 Später
+### 2.4 Later
 
-Weitere Commands und benutzerdefinierte Workflows sollen Runs künftig kombinieren können. Das setzt die unabhängige Run-Grenze voraus, aber keine Workflow-DSL in V1. Längerfristiges Managergedächtnis, semantische Suche, automatische Wissensverdichtung, ein grafischer Workflow-Designer, dynamische Organisation, langlebige Agentencontainer und eine eigene Code-Mode-Runtime sind keine V1-Anforderungen.
+Further commands and user-defined workflows should be able to combine Runs in the future. This requires the independent Run boundary, but no workflow DSL in V1. Longer-term Manager memory, semantic search, automatic knowledge condensation, a graphical workflow designer, dynamic organization, long-lived agent containers and a custom code-mode runtime are not V1 requirements.
 
-## 3. Qualitätsprinzipien
+## 3. Quality principles
 
-### 3.1 Architekturqualität vor Wiederverwendung
+### 3.1 Architectural quality before reuse
 
-Die Zielarchitektur bestimmt die Implementierung. Alte Typen, Paketgrenzen und Laufzeitpfade sind keine Vorgaben; historische Arbeit liefert Erkenntnisse und Regressionserwartungen. Ein Rewrite ist ebenso wenig Selbstzweck: Kohärente Grundlagen bleiben erhalten, und ein neu geschriebenes, überabstrahiertes System wäre ebenfalls am Ziel vorbei.
+The target architecture determines the implementation. Old types, package boundaries and runtime paths are not requirements; historical work supplies insights and regression expectations. A rewrite is not an end in itself either: coherent foundations are kept, and a newly written, over-abstracted system would miss the goal just as much.
 
-### 3.2 Pragmatischer Determinismus
+### 3.2 Pragmatic determinism
 
-Technisch eindeutig feststellbare und relevante Sachverhalte werden deterministisch ermittelt: Identitäten, Referenzen, fixierte Git-Stände, Dateizuordnung, tatsächliche Checkresultate und Ressourcenabschluss. Daraus folgt keine Pflicht, jeden Arbeitsschritt zu klassifizieren, freizugeben oder mit Belegprotokollen zu begleiten. Der Nutzen einer Kontrolle muss ihre Komplexität rechtfertigen.
+Facts that are technically unambiguous and relevant are established deterministically: identities, references, fixed Git states, file accounting, actual check results and resource closure. This creates no duty to classify, approve or accompany every work step with evidence protocols. The benefit of a control must justify its complexity.
 
-### 3.3 Managerautonomie mit klarer Verantwortung
+### 3.3 Manager autonomy with clear responsibility
 
-Manager arbeiten selbstständig in ihrem Bereich, planen lokal, koordinieren ihre Kinder und bewerten deren Ergebnisse. Der Host unterstützt diese Organisation. Er trifft keine fachlichen Architekturentscheidungen und ersetzt den Vater nicht durch eine Reparatur- oder Freigabemaschine.
+Managers work independently in their area, plan locally, coordinate their children and assess their results. The host supports this organization. It makes no domain architecture decisions and does not replace the parent with a repair or approval machine.
 
-### 3.4 Einfachheit und Kohäsion
+### 3.4 Simplicity and cohesion
 
-Wenige klare Verantwortlichkeiten, passende Abhängigkeitsrichtungen und gut lesbarer Code sind Abnahmekriterien. Mehr Packages, Interfaces oder Statuswerte bedeuten nicht mehr Qualität. Ein einziger großer Orchestrator ist aber auch keine Vereinfachung.
+Few clear responsibilities, fitting dependency directions and readable code are acceptance criteria. More packages, interfaces or status values do not mean more quality. A single large orchestrator is not a simplification either.
 
-### 3.5 Fokus und Erhaltung
+### 3.5 Focus and preservation
 
-Ein Auftrag umfasst das gültige Modell, tatsächliche Findings und notwendige Folgen. Konforme Artefakte werden bewahrt. Optionale Verbesserungen werden notiert, nicht ungefragt umgesetzt. Ein unveränderter, konformer Kandidat ist ein gültiges Ergebnis.
+An assignment covers the valid model, actual Findings and necessary consequences. Conforming artifacts are preserved. Optional improvements are noted, not implemented unasked. An unchanged, conforming candidate is a valid result.
 
-### 3.6 Ehrliche Ergebnisse
+### 3.6 Honest results
 
-Fachliche Zustimmung, technischer Erfolg, gespeicherte Ergebnisse, funktionierende Providerintegration und Owner-Abnahme sind verschiedene Aussagen. Unsichere oder unvollständige Zustände werden nicht zu Erfolgen umgedeutet. Spätere Erfolge ändern frühere Fehlschläge nicht.
+Domain approval, technical success, stored results, working provider integration and owner acceptance are different statements. Uncertain or incomplete states are not reinterpreted as success. Later successes do not change earlier failures.
 
-### 3.7 Aufgaben statt Prozess (D13)
+### 3.7 Tasks, not process (D13)
 
-Manager erhalten Rolle, Organisationsregeln, Kontext, Aufgabe und Antwortform – nicht die Prozesssteuerung des Hosts. Zulassung, Aufwecken, Drain, Abschluss und ähnliche Zustände verwaltet der Host selbst. Lehnt er eine Aktion ab, nennt das Werkzeugergebnis den konkreten Grund und die möglichen nächsten Schritte.
+Managers receive their role, organization rules, context, task and answer format – not the host's process control. The host manages admission, wake-ups, drain, completion and similar states itself. When it refuses an action, the tool result names the concrete reason and the possible next steps.
 
-Ein wiederkehrender Fehler im Zusammenspiel von Agent und Host wird im Host-Zustand oder im Werkzeugvertrag behoben, nicht durch zusätzlichen Prompttext.
+A recurring failure in the interaction between agent and host is fixed in host state or in the tool contract, not with additional prompt text.
 
-## 4. Begriffe
+## 4. Terms
 
-| Begriff | Bedeutung |
+| Term | Meaning |
 |---|---|
-| **Kanonisches Modell** | Autoritative Beschreibung der beabsichtigten Projektwelt. |
-| **Package / Definition** | Organisationseinheiten beziehungsweise typisierte Aussagen der kanonischen Sprache. |
-| **Artefakt** | Konkrete Realisierung, etwa Code, Test, Dokumentation, Build- oder Konfigurationsdatei. |
-| **Manager** | Agent mit aus dem Modell abgeleiteter Verantwortung. |
-| **Auftrag (Assignment)** | Fachliche Arbeit eines Managers innerhalb eines Runs. Nicht identisch mit einer Nachricht. |
-| **Run** | Eigenständig ausführbares Mandat durch die vollständige Managerorganisation. |
-| **Mandat** | Auftrag und Ergebniserwartung eines Runs; in V1 Assessment, Implement oder Verify. |
-| **Workflow** | Komposition von Runs, ihren Eingaben, Ergebnissen und Übergängen. |
-| **Command** | Benannte Anwendungsoperation einschließlich Voraussetzungen, Gesamtbudget und gegebenenfalls Workflow. |
-| **Harness** | Vorbereitete manager-, mandat- und providerspezifische Arbeitsumgebung. |
-| **Workspace** | Veränderliche, private Arbeitskopie eines Managers während eines Runs. |
-| **Übergabe (Handoff)** | Fixierter Arbeits- oder Prüfstand eines Managers mit dem für das Review nötigen Kontext. |
-| **Kandidat** | Fixierter, dauerhaft referenzierbarer Git-Realisierungsstand. |
-| **Urteil** | Fachliche Entscheidung eines Managers zu seinem eigenen Auftrag: Zustimmung, Ablehnung oder Modellblocker; bei Implement die Abgabe eines Kandidaten. Implement gibt sich nie selbst frei. |
-| **Review** | Entscheidung eines Vaters über die fixierte Übergabe eines direkten Kindes. |
-| **Finding** | Für das aktuelle Mandat erforderliche Feststellung oder Korrektur. |
-| **Shared Note** | Persistente, nichtkanonische Beobachtung ohne automatische Auftragswirkung. |
-| **Publication** | Kontrollierte Übertragung eines akzeptierten Kandidaten in das Nutzerrepository. Kein automatischer Commit oder Push. |
+| **Canonical model** | Authoritative description of the intended project world. |
+| **Package / Definition** | Organizational units and typed statements of the canonical language. |
+| **Artifact** | Concrete realization, for example code, test, documentation, build or configuration file. |
+| **Manager** | Agent with a responsibility derived from the model. |
+| **Assignment** | Domain work of one Manager within a Run. Not the same as a message. |
+| **Run** | Independently executable mandate through the complete Manager organization. |
+| **Mandate** | Task and expected result of a Run; in V1 Assessment, Implement or Verify. |
+| **Workflow** | Composition of Runs, their inputs, results and transitions. |
+| **Command** | Named application operation including preconditions, overall budget and, where needed, a workflow. |
+| **Harness** | Prepared working environment specific to Manager, mandate and provider. |
+| **Workspace** | Mutable, private working copy of a Manager during a Run. |
+| **Handoff** | Fixed work or review state of a Manager with the context its review needs. |
+| **Candidate** | Fixed, durably referenceable Git realization state. |
+| **Judgment** | A Manager's domain decision about its own assignment: approval, rejection or model blocker; in Implement, the submission of a candidate. Implement never approves itself. |
+| **Review** | A parent's decision about the fixed handoff of a direct child. |
+| **Finding** | A statement or correction required for the current mandate. |
+| **Shared Note** | Persistent, non-canonical observation without automatic effect on assignments. |
+| **Publication** | Controlled transfer of an accepted candidate into the user's repository. No automatic commit or push. |
 
-**Ein Run ist kein Workflow. Ein Command kann einen Workflow enthalten. Eine technische Nachricht ist weder ein Run noch automatisch ein neuer Auftrag.**
+**A Run is not a workflow. A command can contain a workflow. A technical message is neither a Run nor automatically a new assignment.**
 
-## 5. Kanonisches Modell und deterministische Vorbereitung
+## 5. Canonical model and deterministic preparation
 
-### 5.1 Bedeutung des Modells
+### 5.1 Meaning of the model
 
-Das Modell kann fachliche Konzepte, Use Cases, Architekturgrenzen, Regeln, Beziehungen und Entwicklungsverpflichtungen beschreiben. Identitäten, Kinds, Felder, Imports und Referenzen folgen der vorhandenen Sprache; freie Prosa ergänzt die typisierte Struktur dort, wo Bedeutung nicht sinnvoll auf entscheidbare Felder reduziert wird.
+The model can describe domain concepts, use cases, architecture boundaries, rules, relationships and development obligations. Identities, kinds, fields, imports and references follow the existing language; free prose complements the typed structure where meaning cannot sensibly be reduced to decidable fields.
 
-Dieses Konzept definiert keine zusätzliche Modellgrammatik und keine neuen Pflicht-Primitive. Eine Projektkonvention, etwa „ein Use Case, genau ein Handler“, kann modelliert werden, ohne in den Kern eingebaut zu werden.
+This concept defines no additional model grammar and no new mandatory primitives. A project convention such as "one use case, exactly one handler" can be modeled without being built into the core.
 
-### 5.2 Modellautorität
+### 5.2 Model authority
 
-Ein Apply arbeitet gegen eine fixierte, erfolgreich geprüfte Modellbasis und ihre kontrollierten Eingaben. Realisierungsagenten ändern nicht stillschweigend Anforderungen, Ownership-Regeln oder Ignore-Ausnahmen, um einen Konflikt zu beseitigen. Ein notwendiger materieller Modellentscheid wird als Blocker sichtbar, außerhalb des Apply geklärt und erst mit einer neu geprüften Modellbasis erneut realisiert.
+An Apply works against a fixed, successfully checked model basis and its controlled inputs. Realization agents do not silently change requirements, ownership rules or ignore exceptions to remove a conflict. A necessary material model decision becomes visible as a blocker, is settled outside the Apply and is realized again only on a newly checked model basis.
 
-### 5.3 Initiales Gate
+### 5.3 Initial gate
 
-Vor dem agentischen Workflow werden Modellbasis und relevante Projektstrukturen deterministisch geprüft. Bei ungültigem oder unvollständig erfasstem Ausgangsstand starten keine Manager; die tatsächlichen Diagnosen werden zurückgegeben. Die Projektvorbereitung verbindet den vorhandenen Compiler mit Registry, Accounting, Organisationsableitung und Kontextselektion. Es entsteht kein zweiter Compiler in der Agentenruntime.
+Before the agentic workflow, the model basis and relevant project structures are checked deterministically. With an invalid or incompletely captured starting state no Manager starts; the actual diagnostics are returned. Project preparation connects the existing compiler with registry, accounting, organization derivation and context selection. No second compiler arises inside the agent runtime.
 
-### 5.4 Grenzen der Prüfung
+### 5.4 Limits of the check
 
-Strukturelle Gültigkeit ist keine semantische Vollständigkeit. Eine korrekt registrierte Datei ist nicht automatisch fachlich richtig; eine gültige Definition beweist nicht, dass ihr Verhalten implementiert ist. Noch nicht erzeugte Artefakte sind bei frischer Realisierung kein Modellfehler – Assessment unterscheidet fehlende Realisierung von fehlender Modellentscheidung. Vorhandene unerklärte Dateien bleiben ein Accountingproblem des Ausgangsstands.
+Structural validity is not semantic completeness. A correctly registered file is not automatically right in domain terms; a valid Definition does not prove that its behavior is implemented. Artifacts not yet produced are no model error in a fresh realization – Assessment distinguishes missing realization from a missing model decision. Existing unexplained files remain an accounting problem of the starting state.
 
-### 5.5 Geschütztes Fundament und Selbstmodell
+### 5.5 Protected foundation and self-model
 
-Die Semantik von Sprache, Compiler, Snapshot-Werten, Organisationsableitung und Realisierungszuordnung bleibt geschützt; Strukturverbesserungen dürfen diese Garantien nicht beiläufig ändern. Markitects eigenes kanonisches Selbstmodell beschreibt die tatsächlich gewählte Architektur. Seine Pflege ist keine Änderung der Modellsprache.
+The semantics of language, compiler, snapshot values, organization derivation and realization accounting stay protected; structural improvements must not change these guarantees in passing. Markitect's own canonical self-model describes the architecture actually chosen. Maintaining it is not a change of the model language.
 
-## 6. Registry, Ownership und vollständige Dateizuordnung
+## 6. Registry, ownership and complete file accounting
 
-### 6.1 Lokale Shards und globale Sicht
+### 6.1 Local shards and global view
 
-Jeder verantwortliche Manager pflegt den Registry-Shard seines Packages. Er ordnet seine Artefakte den relevanten Definitionen zu und begründet die Zuordnung. Ein Artefakt kann mehrere Definitionen realisieren, hat aber genau eine Verantwortung.
+Each responsible Manager maintains the registry shard of its Package. It maps its artifacts to the relevant Definitions and gives a reason for each mapping. An artifact can realize several Definitions but has exactly one responsibility.
 
-Die globale Registry wird deterministisch aus den Shards abgeleitet, nicht als zweite Wahrheit gepflegt. Beim Integrieren eines Kinderergebnisses bleibt dessen Registrierung im Shard des Kindes.
+The global registry is derived deterministically from the shards, not maintained as a second truth. When a child's result is integrated, its registration stays in the child's shard.
 
-### 6.2 Vollständige Erfassung
+### 6.2 Complete accounting
 
-Für jede relevante beobachtete Datei steht eindeutig fest, zu welcher Kategorie sie gehört.
+For every relevant observed file it is unambiguous which category it belongs to.
 
-| Kategorie | Behandlung |
+| Category | Treatment |
 |---|---|
-| Realisierungsartefakt | Gültige Registrierung und Zuständigkeit erforderlich. |
-| Kanonische Modelleingabe | Autoritative, während Apply geschützte Projektabsicht. |
-| Markitect-Steuereingabe | Kontrollierte Eingabe, etwa Ausführungs- oder Ignore-Regeln. |
-| Operativer Zustand | Vom Produktkandidaten technisch abgegrenzt, nicht künstlich registriert. |
-| Ausdrücklich ignorierte Datei | Explizite Ausnahme, keine verdeckte Umgehung einer Modellpflicht. |
+| Realization artifact | Valid registration and responsibility required. |
+| Canonical model input | Authoritative project intent, protected during Apply. |
+| Markitect control input | Controlled input, for example execution or ignore rules. |
+| Operational state | Technically separated from the product candidate, not artificially registered. |
+| Explicitly ignored file | Explicit exception, not a hidden way around a model obligation. |
 
-`.markitect/ignore.yaml` ist maßgeblich; `.gitignore` ersetzt diese Zuordnung nicht. Kanonische Modell- und Registry-Dateien verschwinden nicht durch eine pauschale Verzeichnisausnahme aus der Validierung.
+`.markitect/ignore.yaml` governs; `.gitignore` does not replace this accounting. Canonical model and registry files do not disappear from validation through a blanket directory exception.
 
-### 6.3 Registry-Pflege ist Realisierung, Projektabsicht nicht
+### 6.3 Registry maintenance is realization, project intent is not
 
-Manager registrieren neue Artefakte, aktualisieren Zuordnungen bei Verschiebungen und bereinigen sie bei zulässigen Löschungen. Das ist Teil der Realisierung. Anforderungen, Ownership-Policy und Ignore-Regeln dürfen dagegen nicht geändert werden, um einen Check zu umgehen. „Modell unverändert“ heißt nicht „Registry eingefroren“.
+Managers register new artifacts, update mappings when artifacts move and clean them up on permitted deletions. That is part of realization. Requirements, ownership policy and ignore rules, by contrast, must not be changed to get around a check. "Model unchanged" does not mean "registry frozen".
 
-### 6.4 Zuordnung ist nicht Urheberschaft
+### 6.4 Accounting is not authorship
 
-Accounting sagt, wem eine Datei zugeordnet ist und welche Definitionen sie adressiert – nicht, wer sie geändert hat. Übergaben enthalten deshalb die tatsächliche Aufgabenbasis, den fixierten Ergebnisstand und den vollständigen Diff.
+Accounting says to whom a file is assigned and which Definitions it addresses – not who changed it. Handoffs therefore contain the actual task base, the fixed result state and the complete diff.
 
-Review und Verify berücksichtigen akzeptierte Kinderintegrationen; diese sind keine unerlaubte Eigenarbeit des Vaters. Kinderdateien werden aber nicht pauschal aus dem Diff des Vaters entfernt, sonst würden spätere eigene Eingriffe unsichtbar. Dafür genügen Git-Basen und Diffs. Ein per-write-ACL-System oder ein globales Herkunftsprotokoll ist nicht vorgesehen.
+Review and Verify take accepted child integrations into account; these are not unauthorized work by the parent. Child files are not removed wholesale from the parent's diff, though, or later edits of the parent's own would become invisible. Git bases and diffs are enough for this. A per-write ACL system or a global provenance ledger is not intended.
 
-## 7. Modellabgeleitete Managerorganisation
+## 7. Model-derived Manager organization
 
-### 7.1 Das Modell ist die Architektur
+### 7.1 The model is the architecture
 
-Die Organisation wird aus dem gültigen Modell abgeleitet. Es gibt keine zweite, manuell gepflegte Managerhierarchie. Sie umfasst Root und alle lokalen Package-Manager, einschließlich leerer und intermediärer Packages. Die bestehenden Regeln für externe Modellabhängigkeiten werden nicht beiläufig zu einer zusätzlichen ausführbaren Organisation erweitert.
+The organization is derived from the valid model. There is no second, manually maintained Manager hierarchy. It comprises Root and every local Package Manager, including empty and intermediate Packages. The existing rules for external model dependencies are not extended in passing into an additional executable organization.
 
-### 7.2 Vollständige Teilnahme in jedem Mandat
+### 7.2 Complete participation in every mandate
 
-Assessment, Implement und Verify verwenden dieselbe vollständige Organisation; das Mandat ändert die Aufgabe, nicht den Zuständigkeitsbaum. Root-only ist nur korrekt, wenn das Modell nur Root umfasst. Teilnahme heißt tatsächliche Bearbeitung der Verantwortung, nicht nur ein gestarteter Container.
+Assessment, Implement and Verify use the same complete organization; the mandate changes the task, not the tree of responsibility. Root-only is correct only when the model contains only Root. Participation means actually handling the responsibility, not just a started container.
 
-### 7.3 Verantwortung von Root und lokalen Managern
+### 7.3 Responsibility of Root and local Managers
 
-Ein lokaler Manager realisiert beziehungsweise prüft seine eigenen Verpflichtungen. Ein Vater verantwortet zusätzlich die Delegation an seine direkten Kinder, die Abstimmung ihrer Schnittstellen, ihre Reviews und die Integration nach oben.
+A local Manager realizes or reviews its own obligations. A parent is additionally responsible for delegating to its direct children, aligning their interfaces, reviewing them and integrating upward.
 
-Root bildet das integrierte Gesamtergebnis. Er übernimmt nicht routinemäßig die Facharbeit der Kinder, überspringt ihre Zuständigkeiten nicht und ersetzt erforderliche Kinderentscheidungen nicht durch eigene Zustimmung.
+Root forms the integrated overall result. It does not routinely take over its children's domain work, does not skip their responsibilities and does not replace required child decisions with its own approval.
 
-### 7.4 Keine zweite Delegationsorganisation
+### 7.4 No second delegation organization
 
-Native Provider-Unteragenten dürfen die modellierte Organisation nicht umgehen. Im V1-Produktpfad läuft Delegation über Markitects Managerstruktur. Die Chats, die Markitect entwickeln, dürfen im Rahmen ihrer Aufträge Subagenten einsetzen; Entwicklungsorganisation und Produktlaufzeit sind getrennte Ebenen.
+Native provider sub-agents must not bypass the modeled organization. In the V1 product path, delegation runs through Markitect's Manager structure. The chats that develop Markitect may use sub-agents within their assignments; development organization and product runtime are separate levels.
 
-## 8. Zusammenarbeit im Run
+## 8. Collaboration within a Run
 
-### 8.1 Lokale Planung und gemeinsame Voraussetzungen
+### 8.1 Local planning and shared prerequisites
 
-Jeder Manager plant innerhalb seines Auftrags. Eltern klären gemeinsame Schnittstellen und Voraussetzungen, bevor abhängige Kinderaufträge starten. Es gibt keinen globalen Plan-Run und keinen Host, der fachlich plant.
+Each Manager plans within its assignment. Parents settle shared interfaces and prerequisites before dependent child assignments start. There is no global planning Run and no host that plans the domain work.
 
-Unabhängige Kinder arbeiten parallel. Braucht ein Kind das integrierte Ergebnis eines Geschwisters, koordiniert der gemeinsame Vater die Reihenfolge. Eine bereits gestartete private Kopie erhält spätere Änderungen des Vaters oder der Geschwister nicht live, sondern nur an klaren Übergabegrenzen, etwa bei einer Korrekturdelegation.
+Independent children work in parallel. If a child needs a sibling's integrated result, the common parent coordinates the order. A private copy that has already started does not receive later changes of its parent or siblings live, only at clear handoff boundaries, for example with a correction delegation.
 
-### 8.2 Kommunikation entlang der Hierarchie (D10)
+### 8.2 Communication along the hierarchy (D10)
 
-Delegation, Fragen, Antworten, Abstimmung und Eskalation folgen dem Baum. Ein Manager fragt nur seinen direkten Vater oder seine direkten Kinder; Antworten gehen an den Fragenden zurück. Abstimmung zwischen Geschwistern läuft über den gemeinsamen Vater, der selbst weiterfragt oder entscheidet; Abstimmung über mehrere Ebenen läuft Schritt für Schritt über die Manager dazwischen. Root fragt niemanden außerhalb des Runs.
+Delegation, questions, answers, alignment and escalation follow the tree. A Manager asks only its direct parent or its direct children; answers go back to the asker. Siblings align through their common parent, who asks on or decides; alignment across several levels runs step by step through the Managers in between. Root asks no one outside the Run.
 
-Der Host leitet die erlaubten Beziehungen aus der Topologie ab und lehnt andere Adressen mit Begründung ab. Eine eigene ACL- oder Routingsprache gibt es nicht.
+The host derives the permitted relationships from the topology and refuses other addressees with a reason. There is no separate ACL or routing language.
 
-Antworten können asynchron eintreffen. Ein wartender Manager bearbeitet eingehende Fragen, statt seinen Partner zu blockieren. Der Host transportiert und korreliert Nachrichten; er beantwortet keine fachlichen Fragen.
+Answers can arrive asynchronously. A waiting Manager handles incoming questions instead of blocking its partner. The host transports and correlates messages; it does not answer domain questions.
 
-### 8.3 Übergabe, Review und Integration
+### 8.3 Handoff, review and integration
 
-Ein Kind liefert einen fixierten Stand und die für seine Bewertung nötigen Informationen. Der Vater prüft die tatsächliche Übergabe – den Diff, nicht eine Erfolgserzählung – und nimmt sie an, fordert eine Korrektur an oder eskaliert einen Modellblocker.
+A child delivers a fixed state and the information needed to assess it. The parent reviews the actual handoff – the diff, not a success story – and accepts it, requests a correction or escalates a model blocker.
 
-Angenommene Ergebnisse werden nach oben integriert, sobald sie vorliegen, ohne auf alle Geschwister zu warten. Abhängigkeiten oder Konflikte können eine andere Reihenfolge begründen; der zuständige Manager koordiniert sie, kein globales Host-Planungsframework.
+Accepted results are integrated upward as soon as they are available, without waiting for all siblings. Dependencies or conflicts can justify a different order; the responsible Manager coordinates it, not a global host planning framework.
 
-### 8.4 Fehlerhafte Übergaben sind Elternverantwortung (D11)
+### 8.4 Faulty handoffs are the parent's responsibility (D11)
 
-Bei Implement wird jeder abgegebene Kinderkandidat fixiert und zusammen mit dem Ergebnis der deterministischen Prüfung an den Vater übergeben – auch wenn die Prüfung fehlschlägt. Der Host schickt eine ungültige Abgabe nicht still an das Kind zurück.
+In Implement, every submitted child candidate is fixed and handed to the parent together with the result of the deterministic check – also when the check fails. The host does not silently send an invalid submission back to the child.
 
-Der Vater erkennt aus der Diagnose, ob lokale Korrektur, eine Schnittstellenklärung oder eine andere Integrationsreihenfolge nötig ist. Er weist die Abgabe mit Findings zurück, klärt die Schnittstelle oder eskaliert. Einen ungültigen Kandidaten kann er weder annehmen noch integrieren.
+From the diagnostic the parent sees whether a local correction, an interface clarification or a different integration order is needed. It rejects the submission with Findings, settles the interface or escalates. It can neither accept nor integrate an invalid candidate.
 
-Lokale Selbstkorrektur bleibt möglich: Ein Kind kann dieselbe deterministische Prüfung für seinen aktuellen Stand vor der Abgabe über ein Werkzeug abrufen (Abschnitt 14). Das ist ein Angebot, kein Pflichtschritt. Root hat keinen Vater; seine Diagnose liefert der Host direkt an Root zurück (Kontrollpunkt vor dem Root-Abschluss).
+Local self-correction remains possible: a child can run the same deterministic check on its current state through a tool before submitting (section 14). This is an offer, not a mandatory step. Root has no parent; the host returns Root's diagnostic directly to Root (the checkpoint before Root completion).
 
-In Assessment und Verify ist eine Kinderübergabe ein Urteil über den fixierten Eingabekandidaten. Hilfsdateien der privaten Kopie werden nicht übernommen. Ein Prüfergebnis zum Eingabekandidaten ist Information für das Urteil, keine Integrationssperre; ein begründetes Reject eines ungültigen Kandidaten ist ein reguläres Ergebnis.
+In Assessment and Verify a child handoff is a judgment about the fixed input candidate. Helper files in the private copy are not adopted. A check result about the input candidate informs the judgment and is no integration gate; a reasoned rejection of an invalid candidate is a regular result.
 
-### 8.5 Korrektur im Run und zwischen Runs
+### 8.5 Correction within a Run and between Runs
 
-Eine Rückgabe durch den Vater während Implement bleibt im selben Run. Das Kind behält Gespräch und Arbeitsstand und erhält die Findings sowie die aktuelle Basis des Vaters.
+A return by the parent during Implement stays within the same Run. The child keeps its conversation and working state and receives the Findings and the parent's current base.
 
-Ein Reject des unabhängigen Verify führt dagegen zu einem neuen Implement-Run; frühere Implement-Gespräche werden nicht fortgesetzt. Beide Korrekturarten werden technisch und in Berichten getrennt.
+A rejection by the independent Verify, by contrast, leads to a new Implement Run; earlier Implement conversations are not continued. The two kinds of correction are kept apart technically and in reports.
 
 ## 9. Run
 
-### 9.1 Eigenständige Aufrufgrenze
+### 9.1 Independent call boundary
 
-Ein Run führt genau ein Mandat durch die Managerorganisation aus. Er ist unabhängig von Apply ausführbar und testbar; Assessment oder Verify lassen sich isoliert untersuchen, ohne eigene Orchestrierungswege.
+A Run executes exactly one mandate through the Manager organization. It can be executed and tested independently of Apply; Assessment or Verify can be examined in isolation without separate orchestration paths.
 
-Eingaben sind eine geprüfte Modell- und Projektbindung, die abgeleitete Organisation, ein fixierter Ausgangskandidat, das Mandat, optionale verpflichtende Findings, Ausführungs- und Harnesskonfiguration sowie endliche Ressourcen.
+Its inputs are a checked model and project binding, the derived organization, a fixed starting candidate, the mandate, optional mandatory Findings, execution and harness configuration and finite resources.
 
-### 9.2 Verantwortung des Runs
+### 9.2 Responsibility of the Run
 
-Der Run verantwortet Umgebungsaufbau, Session- und Workspace-Lebensdauer, hierarchische Zusammenarbeit, Übergaben, Integration, die Kontrollpunkte im Run, Ergebnisfixierung, Kandidatensicherung, Cleanup und die Speicherung seines Endergebnisses.
+The Run is responsible for building its environment, session and workspace lifetime, hierarchical collaboration, handoffs, integration, the checkpoints within the Run, fixing the result, securing the candidate, cleanup and storing its final result.
 
-Er wählt nicht den nächsten Run und veröffentlicht nichts in das Nutzerrepository. Seine erfolgreiche Rückgabe hängt auch beim Standalone-Aufruf nicht davon ab, dass ein Aufrufer Abschlussarbeiten nachholt.
+It does not choose the next Run and publishes nothing into the user's repository. Its successful return does not depend on a caller finishing closing work, also in standalone use.
 
-### 9.3 Lebenszyklus
+### 9.3 Lifecycle
 
 ```text
-Gültige gebundene Run-Eingaben
-    → Run-Umgebung und Manager-Harnesses vorbereiten
-    → Run-lokalen Git Workspace Service und Manager starten
-    → Auftrag durch die vollständige Organisation bearbeiten
-    → tatsächliche Übergaben und Gesamtergebnis fixieren
-    → Kandidaten dauerhaft sichern und unabhängig wieder öffnen können
-    → alle Run-Ressourcen kontrolliert schließen
-    → technischen und fachlichen Ausgang speichern und zurücklesen
-    → geschlossenes Ergebnis an den Aufrufer liefern
+Valid bound Run inputs
+    → prepare the Run environment and Manager harnesses
+    → start the Run-local Git Workspace Service and the Managers
+    → work the assignment through the complete organization
+    → fix the actual handoffs and the overall result
+    → secure the candidate durably and make it independently reopenable
+    → close all Run resources under control
+    → store the technical and domain outcome and read it back
+    → return the closed result to the caller
 ```
 
-Das ist eine Host-Verantwortung, kein vom Agenten auszufüllendes Belegprotokoll. Ein Executor mit klaren Hilfsverantwortlichkeiten genügt; eine Kaskade von Lifecycle-Services ist nicht vorgesehen.
+This is a host responsibility, not an evidence protocol for the agent to fill in. One executor with clear helper responsibilities is enough; a cascade of lifecycle services is not intended.
 
-### 9.4 Erreichbarkeit innerhalb des Runs
+### 9.4 Reachability within the Run
 
-Das Ende einer Providerantwort beendet die Manager-Session nicht. Ein Manager, der abgegeben hat, bleibt für Fragen und Korrekturen im selben Run erreichbar; seine fixierte Übergabe und spätere Kommunikation sind unterscheidbar. Erst das Run-Ende schließt die Umgebung. Neue Runs erhalten neue Gespräche und Arbeitsumgebungen.
+The end of a provider response does not end the Manager session. A Manager that has submitted stays reachable for questions and corrections within the same Run; its fixed handoff and later communication remain distinguishable. Only the end of the Run closes the environment. New Runs get new conversations and working environments.
 
-## 10. Command, Workflow und Apply
+## 10. Command, workflow and Apply
 
 ### 10.1 Command
 
-Der Command stellt die benannte Produktoperation bereit. Er bindet Eingaben, veranlasst die Initialprüfung, besitzt das Gesamtbudget, ruft den Workflow auf und verantwortet Publication und Gesamtergebnis. CLI und spätere Oberflächen verwenden dieselbe Anwendungsoperation; der CLI-Parser enthält keine Fachlogik. Der Command implementiert weder Managerkommunikation noch Git-Merges.
+The command provides the named product operation. It binds inputs, triggers the initial check, owns the overall budget, calls the workflow and is responsible for publication and the overall result. The CLI and later interfaces use the same application operation; the CLI parser contains no domain logic. The command implements neither Manager communication nor Git merges.
 
 ### 10.2 Workflow
 
-Ein Workflow beschreibt Reihenfolge, Eingaben und Ergebnisübergaben von Runs, Verzweigungen, Wiederholungen, Erfolg und Abbruch. Er bleibt verständlich und später kombinierbar. Er kennt keine Container, Providerprozesse oder Arbeitskopien und arbeitet nur mit geschlossenen Run-Ergebnissen.
+A workflow describes the order, inputs and result handovers of Runs, branches, repetitions, success and abort. It stays understandable and composable later. It knows no containers, provider processes or working copies and works only with closed Run results.
 
-### 10.3 Gültigkeit geschlossener Ergebnisse (D15)
+### 10.3 Validity of closed results (D15)
 
-Ob ein Run-Ergebnis vollständig, gebunden und sauber geschlossen ist – Bindung, technischer Abschluss, Closure aller Run-Ressourcen, zulässige Entscheidung für das Mandat und Pflicht-Findings –, prüft genau eine Validierung. Sie gehört zum Run-Vertrag. Workflow und Publication verwenden sie, ohne interne Ressourcennamen des Runs zu kennen.
+Whether a Run result is complete, bound and cleanly closed – binding, technical completion, closure of all Run resources, a decision valid for the mandate and mandatory Findings – is checked by exactly one validation. It belongs to the Run contract. Workflow and publication use it without knowing the Run's internal resource names.
 
-### 10.4 Apply-Ablauf
+### 10.4 Apply flow
 
 ```text
-Initiale Modell- und Strukturprüfung
-    ├─ ungültig / unvollständig → Ende ohne Agentenstart
-    └─ gültig
+Initial model and structure check
+    ├─ invalid / incomplete → end without starting agents
+    └─ valid
          → Assessment
-             ├─ Reject / Modellblocker → Ende ohne Publication
+             ├─ Reject / model blocker → end without publication
              └─ Approve
                   → Implement
-                      ├─ nicht abgeschlossen / Modellblocker → Ende
-                      └─ gültiger fertiger Kandidat
+                      ├─ not completed / model blocker → end
+                      └─ valid finished candidate
                            → Verify
-                               ├─ Realisierungs-Reject
-                               │    → neues Implement mit Findings
-                               │    → neues Verify
-                               ├─ Modellblocker / technischer Abbruch → Ende
+                               ├─ realization Reject
+                               │    → new Implement with Findings
+                               │    → new Verify
+                               ├─ model blocker / technical abort → end
                                └─ Approve
-                                    → abschließende Checks und Guards
-                                    → kontrollierte Publication
+                                    → final checks and guards
+                                    → controlled publication
 ```
 
-Alle Iterationen teilen das ursprüngliche Command-Budget. Eine neue Run-ID setzt weder Zeit- noch Nachrichtenressourcen zurück. Die Schleife läuft bis zur Zustimmung oder zum ehrlichen Abbruch innerhalb endlicher Grenzen.
+All iterations share the original command budget. A new Run ID resets neither time nor message resources. The loop runs until approval or an honest abort within finite limits.
 
-### 10.5 Erweiterbarkeit (D16)
+### 10.5 Extensibility (D16)
 
-V1 kennt genau drei Mandate. Die Run-Aufrufgrenze ist für weitere Commands wiederverwendbar. Neue Mandate und ihre Ergebnis- oder Fähigkeitsanforderungen entstehen erst aus einem tatsächlichen späteren Command. V1 braucht weder DSL noch grafisches Workflow-System.
+V1 knows exactly three mandates. The Run call boundary can be reused by further commands. New mandates and their result or capability requirements arise only from an actual later command. V1 needs neither a DSL nor a graphical workflow system.
 
-## 11. Mandate
+## 11. Mandates
 
 ### 11.1 Assessment
 
-Assessment prüft die semantische Bereitschaft des strukturell gültigen Modells. Jeder Manager betrachtet seinen Bereich und relevante Schnittstellen. Materielle Widersprüche, notwendige offene Entscheidungen und nicht auflösbare Mehrdeutigkeiten werden mit Findings zurückgegeben.
+Assessment examines the semantic readiness of the structurally valid model. Each Manager looks at its area and relevant interfaces. Material contradictions, necessary open decisions and ambiguities that cannot be resolved are returned with Findings.
 
-Untersuchungen, Befehle und etwa ein begründeter Build-Versuch sind zulässig. Assessment implementiert keine Realisierung und verändert die Projektabsicht nicht; Hilfsdateien in privaten Kopien werden nicht übernommen. Fehlende oder veraltete Artefakte sind Implementierungsbedarf, kein Grund zur Ablehnung. Approve bedeutet „ausreichende Modellgrundlage für die Realisierung“, nicht „das Produkt ist korrekt“, und überspringt Implement nicht.
+Investigations, commands and, for example, a reasoned build attempt are allowed. Assessment implements no realization and does not change the project intent; helper files in private copies are not adopted. Missing or outdated artifacts are implementation needs, not a reason for rejection. Approve means "a sufficient model basis for realization", not "the product is correct", and does not skip Implement.
 
 ### 11.2 Implement
 
-Implement gleicht die bestehende Realisierung mit Modell, erforderlichen Checks und tatsächlichen Findings ab. Manager ändern die dafür nötigen Artefakte in ihrer Verantwortung, pflegen ihre Registry, delegieren und integrieren geprüfte Kinderergebnisse.
+Implement reconciles the existing realization with the model, required checks and actual Findings. Managers change the necessary artifacts within their responsibility, maintain their registry, delegate and integrate reviewed child results.
 
-Notwendige Folgeänderungen gehören dazu. Zusätzliche Testideen, kosmetische Änderungen oder Refactorings ohne Bezug zu geltenden Verpflichtungen werden nicht umgesetzt, nur um einen Diff zu erzeugen. Implement liefert einen fixierten integrierten Kandidaten und genehmigt dessen Publication nicht selbst. Ohne notwendige Änderungen ist die unveränderte Abgabe nach vollständiger Arbeitsteilung, Prüfung und Review gültig.
+Necessary follow-up changes are part of it. Extra test ideas, cosmetic changes or refactorings unrelated to applicable obligations are not made just to produce a diff. Implement delivers a fixed integrated candidate and does not approve its own publication. If no changes are needed, submitting the unchanged candidate is valid after complete delegation, checking and review.
 
 ### 11.3 Verify
 
-Verify ist ein frischer Run über exakt den zu prüfenden Kandidaten. Die vollständige Organisation bewertet unabhängig Modellkonformität, Fachlichkeit, Schnittstellen, Integration, relevante Tests und Realisierungszuordnung.
+Verify is a fresh Run over exactly the candidate under review. The complete organization independently assesses model conformance, domain behavior, interfaces, integration, relevant tests and realization accounting.
 
-Verify repariert den Kandidaten nicht; eigene Untersuchungen und Prüfdateien bleiben lokal. Das Ergebnis ist Approve, Reject mit notwendigen Realisierungsfindings oder ein Modellblocker. Ein Reject ist ein reguläres Prüfergebnis, kein technischer Fehlschlag.
+Verify does not repair the candidate; its own investigations and check files stay local. The result is Approve, Reject with the necessary realization Findings, or a model blocker. A Reject is a regular review result, not a technical failure.
 
-### 11.4 Korrekturen nach Verify
+### 11.4 Corrections after Verify
 
-Ein Realisierungs-Reject übergibt Modellbindung, letzten Kandidaten und tatsächliche Findings an einen neuen Implement-Run, danach folgt ein neues Verify. Weder wird die alte Implement-Organisation fortgesetzt noch erhält der neue Prüfer deren Selbstbewertung als Autorität. Ein spät entdeckter materieller Modellwiderspruch beendet den Command ohne Publication; die Modellfrage wird außerhalb geklärt.
+A realization Reject hands the model binding, the last candidate and the actual Findings to a new Implement Run, followed by a new Verify. The old Implement organization is not continued, and the new reviewer does not receive its self-assessment as authority. A material model contradiction discovered late ends the command without publication; the model question is settled outside.
 
-## 12. Prüfstrategie und vier Kontrollpunkte
+## 12. Checking strategy and four checkpoints
 
-### 12.1 Ein gemeinsamer Prüfmechanismus
+### 12.1 One shared checking mechanism
 
-Dieselben Compiler-, Registry- und Accountingmechanismen werden an verschiedenen Stellen auf passende fixierte Stände angewendet; es entstehen keine vier abweichenden Validatoren. Günstige Strukturchecks erfolgen häufig. Nicht jede isolierte Kinderkopie muss die vollständige Projekttestsuite ausführen: Herkunft einer Prüfverpflichtung und sinnvoller Ausführungsort eines Tests sind verschiedene Eigenschaften.
+The same compiler, registry and accounting mechanisms are applied at different points to suitable fixed states; there are no four diverging validators. Cheap structural checks run often. Not every isolated child copy must run the complete project test suite: the origin of a checking obligation and the sensible place to run a test are different properties.
 
-### 12.2 Die vier Kontrollpunkte
+### 12.2 The four checkpoints
 
-| Kontrollpunkt | Prüfung und Konsequenz |
+| Checkpoint | Check and consequence |
 |---|---|
-| **Vor Workflowbeginn** | Gültige Modellbasis und anwendbare Projektstruktur. Bei Fehler Abbruch vor dem agentischen Workflow und vor Run-Ressourcen. |
-| **Bei Kinderübergaben** | Fixierter Übergabestand und Accounting. Bei Implement geht die Diagnose immer mit der Übergabe an den Vater, und ein ungültiger Kandidat ist nicht integrierbar (D11). |
-| **Vor erfolgreichem Root-Abschluss** | Integrierter Gesamtstand, relevante Checks und Bindungen. Kein erfolgreiches Implement und kein Approve bei ungelöster technischer Ungültigkeit. |
-| **Vor Publication** | Exakt akzeptierter Kandidat, erforderliche Prüfungen und tatsächliche Quell- und Zielguards. Keine unzulässige Übertragung. |
+| **Before the workflow starts** | Valid model basis and applicable project structure. On failure, abort before the agentic workflow and before Run resources. |
+| **At child handoffs** | Fixed handoff state and accounting. In Implement the diagnostic always travels with the handoff to the parent, and an invalid candidate cannot be integrated (D11). |
+| **Before successful Root completion** | Integrated overall state, relevant checks and bindings. No successful Implement and no Approve with unresolved technical invalidity. |
+| **Before publication** | Exactly the accepted candidate, required checks and actual source and target guards. No impermissible transfer. |
 
-### 12.3 Zwischenstände und Prüfmandate
+### 12.3 Intermediate states and review mandates
 
-Zwischenstände können unvollständig sein, solange andere Kinder noch arbeiten; Diagnosen machen diesen Zusammenhang sichtbar. Der Host verwandelt vorübergehende Unvollständigkeit nicht in einen Command-Abbruch. Verify darf einen fehlerhaften Kandidaten regulär ablehnen und muss ihn nicht verändern, um den eigenen Abschlusscheck grün zu bekommen. Für eine Zustimmung bleiben die Gültigkeitsbedingungen verbindlich.
+Intermediate states can be incomplete while other children are still working; diagnostics make that context visible. The host does not turn temporary incompleteness into a command abort. Verify may regularly reject a faulty candidate and need not change it to make its own completion check green. The validity conditions stay binding for an approval.
 
-### 12.4 Keine Check-Rituale
+### 12.4 No check rituals
 
-Der Host ermittelt technische Resultate und stellt sie den Managern zur Verfügung. Manager tippen keine bekannten Identitäten erneut ein und erzeugen keine Check-Quittungen, Disputes oder Evidence-Matrizen, um gewöhnliche Arbeit fortsetzen zu dürfen.
+The host establishes technical results and makes them available to the Managers. Managers do not retype known identities and produce no check receipts, disputes or evidence matrices in order to be allowed to continue ordinary work.
 
-## 13. Auftrag, Nachricht und Urteil
+## 13. Assignment, message and judgment
 
-### 13.1 Die grundlegende Trennung
+### 13.1 The basic separation
 
-Ein Manager hat einen Auftrag. Nachrichten, Fragen und Antworten dienen seiner Erfüllung; sie sind keine neuen Aufträge. Das Ende einer Providerantwort ist kein fachlicher Abschluss des Managers oder des Runs. Freie Abschlussprosa ist kein technischer Erfolgsnachweis. Das fachliche Ergebnis hält der Manager über eine kleine explizite Entscheidung fest, das Urteil.
+A Manager has an assignment. Messages, questions and answers serve to fulfill it; they are not new assignments. The end of a provider response is not the domain completion of the Manager or the Run. Free closing prose is no technical proof of success. The Manager records the domain result through a small explicit decision, the judgment.
 
-### 13.2 Das Urteil gehört zum Auftrag (D12)
+### 13.2 The judgment belongs to the assignment (D12)
 
-Ein Urteil gilt für den aktuellen Auftragsstand – Aufgabe und verbindliche Findings – und für den bewerteten Stand: bei Implement den eigenen Arbeitsstand zum Zeitpunkt des Urteils, bei Assessment und Verify den fixierten Eingabekandidaten. Es bleibt gültig, bis sich eines davon ändert. Ungültig wird es durch:
+A judgment applies to the current state of the assignment – task and mandatory Findings – and to the assessed state: in Implement the Manager's own working state at the time of the judgment, in Assessment and Verify the fixed input candidate. It stays valid until one of these changes. It becomes invalid through:
 
-- eine Rückweisung oder Korrekturdelegation des Vaters mit Findings,
-- neue verpflichtende Findings, die den Auftrag betreffen,
-- eine Änderung des bewerteten Stands nach dem Urteil,
-- ein spätes verpflichtendes Finding, Reject oder einen Modellblocker eines Kindes zu einer bereits angenommenen Übergabe.
+- a rejection or correction delegation by the parent with Findings,
+- new mandatory Findings that affect the assignment,
+- a change of the assessed state after the judgment,
+- a late mandatory Finding, Reject or model blocker from a child about an already accepted handoff.
 
-Eine Nachricht, die nur Fragen oder Antworten behandelt, verlangt kein neues Urteil; ein gültiges Urteil bleibt bestehen. Fehlt am Ende einer Providerantwort für einen aktiven Auftrag ein gültiges Urteil, macht der Host den konkreten Grund sichtbar, etwa „dein Arbeitsstand hat sich nach deinem Urteil geändert“ oder „das Review von Kind X fehlt“. Das ist eine Diagnose des Hosts, keine allgemeine Promptregel; ihre Form ist technisch auszugestalten.
+A message that only handles questions or answers requires no new judgment; a valid judgment stays in force. If a provider response ends while an active assignment has no valid judgment, the host makes the concrete reason visible, for example "your working state changed after your judgment" or "the review of child X is missing". This is a diagnostic by the host, not a general prompt rule; its form is a technical design matter.
 
-Der Host führt dafür pro Manager einen kleinen, expliziten Auftragszustand statt verstreuter Einzelmerkmale. Jede Invalidierung folgt aus einem benennbaren Ereignis.
+For this, the host keeps a small, explicit assignment state per Manager instead of scattered individual flags. Every invalidation follows from a nameable event.
 
-### 13.3 Maßgebliche Gegenbeispiele
+### 13.3 Decisive counterexamples
 
-| Situation | Festgelegte Konsequenz |
+| Situation | Decided consequence |
 |---|---|
-| Eine Frage wird beantwortet | Kein neuer Auftrag und kein neues Urteil. |
-| Eine eigene Antwort steht noch aus | Eingehende Fragen bleiben bearbeitbar; kein Deadlock. |
-| Neue verpflichtende Findings kommen an | Das bisherige Urteil wird ungültig; ein neues ist nötig. |
-| Der bewertete Stand ändert sich | Eine Zustimmung zum alten Stand gilt nicht für den neuen. |
-| Eine fixierte Übergabe ist erfolgt | Spätere Kommunikation verändert den geprüften Stand nicht. |
-| Ein später Befund widerlegt eine Annahme | Ein spätes Reject oder ein Modellblocker mit Findings bleibt wirksam. Die Annahme des Vaters über diese Übergabe und jedes darauf beruhende Urteil darüber werden ungültig und müssen neu getroffen werden, bevor Root erfolgreich abschließen kann. Ein Modellblocker verhindert einen erfolgreichen Abschluss. |
+| A question is answered | No new assignment and no new judgment. |
+| The Manager's own answer is still pending | Incoming questions remain answerable; no deadlock. |
+| New mandatory Findings arrive | The previous judgment becomes invalid; a new one is needed. |
+| The assessed state changes | Approval of the old state does not apply to the new one. |
+| A fixed handoff has been made | Later communication does not change the reviewed state. |
+| A late finding refutes an assumption | A late Reject or model blocker with Findings stays in force. The parent's acceptance of that handoff and every judgment above it that rests on it become invalid and must be made again before Root can complete successfully. A model blocker prevents successful completion. |
 
-## 14. Manager-Werkzeuge (D13)
+## 14. Manager tools (D13)
 
-### 14.1 Fester kleiner Werkzeugsatz
+### 14.1 A fixed small tool set
 
-| Werkzeug | Zweck |
+| Tool | Purpose |
 |---|---|
-| `delegate` | Ein Vater erteilt einem direkten Kind eine Aufgabe mit Findings; nach einem Review auch eine Korrektur. |
-| `await` | Das nächste Ereignis empfangen: Auftrag, Frage, Antwort oder fixierte Kinderübergabe mit Prüfergebnis. |
-| `review` | Ein Vater entscheidet über die fixierte Übergabe eines direkten Kindes: annehmen, zurückweisen oder Modellblocker. |
-| `ask` / `reply` | Fragen und Antworten entlang der Hierarchie, asynchron. |
-| `judge` | Das eigene Urteil zum Auftrag mit Findings festhalten. |
-| `check` | Die deterministische Prüfung des eigenen aktuellen Stands abrufen, zur optionalen Selbstprüfung vor der Abgabe. |
-| `read_notes` / `append_note` | Shared Notes seitenweise lesen und Beobachtungen anhängen. |
+| `delegate` | A parent gives a direct child a task with Findings; after a review also a correction. |
+| `await` | Receive the next event: assignment, question, answer or fixed child handoff with its check result. |
+| `review` | A parent decides on a direct child's fixed handoff: accept, reject or model blocker. |
+| `ask` / `reply` | Questions and answers along the hierarchy, asynchronously. |
+| `judge` | Record the Manager's own judgment about its assignment, with Findings. |
+| `check` | Run the deterministic check of the Manager's own current state, for optional self-correction before submitting. |
+| `read_notes` / `append_note` | Read Shared Notes page by page and append observations. |
 
-Jeder fachliche Zweck hat genau ein Werkzeug.
+Each domain purpose has exactly one tool.
 
-### 14.2 Grundsätze
+### 14.2 Principles
 
-- Was der Host kennt, fragt er nicht ab: tatsächlicher Manager, Run, Mandat und eigene Commits. Findings brauchen keine Absenderangabe. Ein eindeutiger Verweis auf den geprüften Stand bleibt beim Review zulässig, damit keine veraltete Zustimmung entsteht.
-- Werkzeuge treiben den Host nicht über Quittungen an. Eine Ablehnung nennt den konkreten Grund und was möglich ist (Abschnitt 3.7).
-- Die Semantik jedes Werkzeugs hat genau eine Implementierung im Run. Provideradapter bilden sie nur ab. MCP, CLI oder typisierte APIs sind Transportwege, kein Architekturprinzip.
+- The host does not ask for what it knows: the actual Manager, Run, mandate and its own commits. Findings need no sender field. An unambiguous reference to the reviewed state stays allowed in reviews, so that no stale approval arises.
+- Tools do not drive the host through receipts. A refusal names the concrete reason and what is possible (section 3.7).
+- The semantics of each tool has exactly one implementation in Run. Provider adapters only map it. MCP, CLI or typed APIs are transports, not an architectural principle.
 
 ## 15. Harness
 
-### 15.1 Zweck
+### 15.1 Purpose
 
-Der Harness bereitet den Manager wie einen Mitarbeiter auf seine Verantwortung vor: Rolle, Organigramm, Zuständigkeit, Modellkontext, Arbeitsregeln und Werkzeuge sind verlässlich verfügbar. Die Auftragsnachricht bleibt kurz und auf die aktuelle Arbeit konzentriert. Ein Harness ist nicht nur ein Text mit Hash: Er muss vom tatsächlich gestarteten Provider geladen und im Container benutzt werden.
+The harness prepares a Manager for its responsibility like an employee: role, organization chart, responsibility, model context, working rules and tools are reliably available. The assignment message stays short and focused on the current work. A harness is not just a text with a hash: the provider actually started must load it and use it in the container.
 
-### 15.2 Fünf kontrollierte Quellen
+### 15.2 Five controlled sources
 
-| Quelle | Inhalt und Verantwortung |
+| Source | Content and responsibility |
 |---|---|
-| **Markitect Core** | Versionierte allgemeine Regeln für Delegation, Zusammenarbeit, Ownership, Registry, Reviews, Findings und Notes. Nicht von jedem Projekt neu zu definieren. |
-| **Projekt** | Kanonische Fachlichkeit, Architektur, Policies, Qualitätsverpflichtungen und ausdrücklich gebundene Projektkonventionen. |
-| **Manager** | Eigene Rolle, Vater, direkte Kinder, relevante Kollegen, Zuständigkeiten, Registry-Shard, Schnittstellen und Projektnavigation. |
-| **Run** | Mandat, fixierte Eingaben, relevante Findings, erlaubte Auswirkungen und Ergebniserwartung. |
-| **Provider** | Umsetzung durch tatsächlich unterstützte native Instruktionen, Werkzeuge und Konfiguration. |
+| **Markitect core** | Versioned general rules for delegation, collaboration, ownership, registry, reviews, Findings and Notes. Not to be redefined by every project. |
+| **Project** | Canonical domain, architecture, policies, quality obligations and explicitly bound project conventions. |
+| **Manager** | Its own role, parent, direct children, relevant colleagues, responsibilities, registry shard, interfaces and project navigation. |
+| **Run** | Mandate, fixed inputs, relevant Findings, permitted effects and expected result. |
+| **Provider** | Implementation through actually supported native instructions, tools and configuration. |
 
-Markitect definiert, wie seine Organisation arbeitet; das Projektmodell definiert, welche Welt sie realisiert. Provideranpassungen ändern diese Bedeutung nicht. Prozesssteuerung des Hosts gehört in keine dieser Quellen (Abschnitt 3.7).
+Markitect defines how its organization works; the project model defines which world it realizes. Provider adaptations do not change this meaning. The host's process control belongs in none of these sources (section 3.7).
 
-### 15.3 Reproduzierbarkeit und Identität
+### 15.3 Reproducibility and identity
 
-Gleiche gebundene Eingaben – Regelversion, Modellstand, Manager, Mandat, Providerprofil, Vorlagen und Werkzeugdefinitionen – erzeugen dieselbe wirksame Harness-Konfiguration. Eine nachvollziehbare Harness-Identität zeigt, welche Anweisungen und Fähigkeiten bereitgestellt wurden. Frische operative Namen, Containerkennungen oder Geheimnisse gehören nicht dazu. Deterministische Erzeugung bedeutet nicht deterministisches Modellverhalten.
+The same bound inputs – rule version, model state, Manager, mandate, provider profile, templates and tool definitions – produce the same effective harness configuration. A traceable harness identity shows which instructions and capabilities were provided. Fresh operational names, container identifiers or secrets are not part of it. Deterministic generation does not mean deterministic model behavior.
 
-### 15.4 Kontext
+### 15.4 Context
 
-Der Manager erhält eine kompakte Orientierung und den für seine Verantwortung notwendigen Kontext. Verbindliche Informationen werden weder still gekürzt noch versteckt. Historische Notizen und Prozessbeschreibungen werden nicht in jede Startinstruktion kopiert.
+The Manager receives a compact orientation and the context its responsibility needs. Binding information is neither silently truncated nor hidden. Historical notes and process descriptions are not copied into every start instruction.
 
-### 15.5 V1-Form des Harness (D14)
+### 15.5 V1 form of the harness (D14)
 
-In V1 wird der Harness über die nativen Base- und Developer-Instruktionen des Providers bereitgestellt. Sie enthalten die Markitect-Regeln und den vollständigen statisch ausgewählten Pflichtkontext. Automatisch geladene Repository-Instruktionen werden bewusst behandelt, etwa abgeschaltet; projektgebundene Instruktionen gelangen nur über den kontrollierten Harness in die Umgebung. So übersteuern weder Repository-Dateien noch Providerprofile die kanonische Absicht oder die Markitect-Regeln unkontrolliert. Semantisch unklare Konflikte zwischen Instruktionen bleiben sichtbar, statt durch ein Policy-Framework verdeckt zu werden. Übersteigt der Pflichtkontext eine Grenze, scheitert die Vorbereitung sichtbar; gekürzt wird nicht.
+In V1 the harness is provided through the provider's native base and developer instructions. They contain the Markitect rules and the complete statically selected mandatory context. Automatically loaded repository instructions are handled deliberately, for example switched off; project-bound instructions reach the environment only through the controlled harness. This way neither repository files nor provider profiles override the canonical intent or the Markitect rules uncontrolled. Semantically unclear conflicts between instructions stay visible instead of being hidden by a policy framework. If the mandatory context exceeds a limit, preparation fails visibly; nothing is truncated.
 
-Modulare Dateien, Skills oder nachladbarer Kontext kommen hinzu, sobald ein konkreter Größen- oder Bedienfall ihren Nutzen zeigt. Für unbekannte kompatible Provider ist ein generischer AGENTS.md-Harness als Best-Effort-Instruktionsdarstellung vorgesehen. Er ersetzt keinen ausführbaren Adapter, keine Managerkommunikation und keine notwendigen technischen Fähigkeiten; ein unbekannter Agent ist nicht allein durch diese Datei unterstützt. Ob er zum V1-Abnahmeumfang gehört, wird mit der Provider-Matrix festgehalten (Abschnitt 28.2).
+Modular files, skills or loadable context are added as soon as a concrete size or usability case shows their benefit. For unknown compatible providers a generic AGENTS.md harness is planned as a best-effort representation of the instructions. It replaces no executable adapter, no Manager communication and no necessary technical capabilities; an unknown agent is not supported merely because this file exists. Whether it belongs to the V1 acceptance scope is recorded with the provider matrix (section 28.2).
 
-### 15.6 Technische Grenzen bleiben außerhalb der Instruktionen
+### 15.6 Technical boundaries stay outside the instructions
 
-Wichtige Invarianten werden unabhängig vom Gehorsam des Agenten geprüft: Modellbindung, Registry, fixierte Git-Stände, tatsächliche Checks, Ressourcenabschluss und Publikationsvoraussetzungen. Das begründet keine per-write-Dateifreigaben und keine Belegprotokolle.
+Important invariants are checked independently of the agent's obedience: model binding, registry, fixed Git states, actual checks, resource closure and publication preconditions. This justifies no per-write file approvals and no evidence protocols.
 
-## 16. Provider und Authentifizierung
+## 16. Providers and authentication
 
-### 16.1 Providergrenze
+### 16.1 Provider boundary
 
-Der Provideradapter startet und beendet die native Runtime, überträgt Nachrichten, vermittelt Werkzeuge und beobachtet tatsächliche Antwort- und Prozesszustände. Er entscheidet weder über die nächste Workflowstufe noch über Modellkonformität. Native Protokollbegriffe wie `turn/start` existieren nur im Adapter; der Kern leitet daraus keine fachlichen Turns, Empty-Turn-Klassifikatoren oder eine Pass-Maschine ab.
+The provider adapter starts and ends the native runtime, transfers messages, mediates tools and observes actual response and process states. It decides neither the next workflow stage nor model conformance. Native protocol terms such as `turn/start` exist only in the adapter; the core derives no domain Turns, empty-Turn classifiers or Pass machine from them.
 
-### 16.2 Konto-Login und Geheimnisschutz
+### 16.2 Account login and protection of secrets
 
-Der V1-Produktpfad verwendet normale CLI-Konto-Authentifizierung. Eine API-Key-Produktvariante wird nicht mitgeführt. Zugangsdaten gehören nicht in Kandidaten, Harnesstexte, Shared Notes oder ungeschützte Protokolle; Vorbereitung und Entfernung erfolgen kontrolliert in der Managerumgebung. Eine Flotte kurzlebiger Auth-Container ist keine Standardlösung.
+The V1 product path uses normal CLI account authentication. An API-key product variant is not carried along. Credentials do not belong in candidates, harness texts, Shared Notes or unprotected logs; they are prepared and removed under control within the Manager environment. A fleet of short-lived auth containers is not a standard solution.
 
-Login-, Ablauf- und Refresh-Eigenschaften brauchen je Provider eigene Nachweise. Fehlende Fähigkeiten sind vor einer behaupteten Unterstützung erkennbar.
+Login, expiry and refresh properties need their own evidence per provider. Missing capabilities are recognizable before support is claimed.
 
-## 17. Container, Git-Arbeitsstände und dauerhafte Kandidaten
+## 17. Containers, Git working copies and durable candidates
 
-### 17.1 Lebensdauer pro Run
+### 17.1 Lifetime per Run
 
-Jeder Manager hat pro Run einen eigenen Container, ein eigenes Gespräch, einen eigenen Harness und einen eigenen Git-Arbeitsstand. Innerhalb des Runs bleiben sie über Delegation, Fragen und Korrekturen bestehen; zwischen Runs werden sie nicht wiederverwendet. Auch der Git Workspace Service lebt genau einen Run. Spätere Runs brauchen keine vorab reservierten Volumes oder Arbeitskopien.
+Each Manager has its own container, conversation, harness and Git working copy per Run. Within the Run they persist across delegation, questions and corrections; they are not reused between Runs. The Git Workspace Service also lives exactly one Run. Later Runs need no volumes or working copies reserved in advance.
 
 ### 17.2 Git Workspace Service
 
-Der Service bereitet Arbeitsstände vor, stellt Ausgangs-Commits bereit, fixiert Übergaben, unterstützt Eltern-Kind-Integration und die Aktualisierung von Kinderständen und meldet technische Git-Konflikte. Er ist kein Agent, kein allgemeiner Helper und kein Ort fachlicher Entscheidungen; Provider-Login, Projektchecks und Workflowsteuerung sind andere Verantwortungen.
+The service prepares working copies, provides starting commits, fixes handoffs, supports parent-child integration and the update of child copies and reports technical Git conflicts. It is not an agent, not a general helper and not a place for domain decisions; provider login, project checks and workflow control are other responsibilities.
 
-### 17.3 Isolation und Zusammenarbeit
+### 17.3 Isolation and collaboration
 
-Managerkopien sind unabhängig. Eltern integrieren Ergebnisse nach Review in ihre eigene Kopie; Änderungen werden nicht über ein gemeinsames beschreibbares Verzeichnis propagiert. Isolation ermöglicht die vereinbarte Zusammenarbeit; sie ersetzt kein Ownership-Review.
+Manager copies are independent. Parents integrate results into their own copy after review; changes are not propagated through a shared writable directory. Isolation enables the agreed collaboration; it does not replace the ownership review.
 
-### 17.4 Workspace und Kandidat sind verschiedene Zustände
+### 17.4 Workspace and candidate are different states
 
-Ein Workspace ist veränderlich und an die laufende Ausführung gebunden. Ein Kandidat ist ein fixierter Git-Stand mit dauerhaft verfügbaren Objekten. Modellidentität, Commitidentität und Bauminhalt sind verschiedene Größen und bleiben passend gebunden. Persistenz hängt nicht von laufenden Containern, temporären Volumes oder lebenden Objekten ab.
+A workspace is mutable and bound to the running execution. A candidate is a fixed Git state with durably available objects. Model identity, commit identity and tree content are different quantities and stay bound appropriately. Persistence does not depend on running containers, temporary volumes or live objects.
 
-### 17.5 Speicherform
+### 17.5 Storage form
 
-Selbstständige Git-Bundles mit gebundenen Metadaten sind der vorgesehene V1-Ansatz; eine gleichwertige einfachere Form wäre begründbar. Die Garantie ist die unabhängige Wiederöffnung, nicht das Format: Ein Persistenznachweis entfernt die temporären Arbeitsstände und öffnet exakt den Kandidaten in einer neuen Umgebung allein aus den gespeicherten Daten. Verify und Publication brauchen keine lebende Referenz auf den erzeugenden Run. Eine Git-Serverplattform ist nicht vorgesehen.
+Self-contained Git bundles with bound metadata are the intended V1 approach; an equivalent simpler form would be justifiable. The guarantee is independent reopening, not the format: a persistence proof removes the temporary working copies and opens exactly the candidate in a new environment from the stored data alone. Verify and publication need no live reference to the producing Run. A Git server platform is not intended.
 
-### 17.6 Checks und verbleibende Ressourcen
+### 17.6 Checks and remaining resources
 
-Eigene kurzlebige Check-Ausführungen sind zulässig, wenn sie nötige Isolation bieten; finale Checks vor Publication haben eigene, klar verantwortete Ressourcen und setzen keine Managercontainer fort. Ungewissheit über übrig gebliebene Ressourcen wird berichtet, ein unbekannter Restcontainer nicht pauschal gelöscht. Ein allgemeines Recovery-System nach hartem Hostabbruch ist nicht Teil von V1.
+Separate short-lived check executions are allowed where they provide necessary isolation; final checks before publication have their own clearly owned resources and do not continue Manager containers. Uncertainty about leftover resources is reported; an unknown leftover container is not deleted wholesale. A general recovery system after a hard host abort is not part of V1.
 
-## 18. Verbindliche Ergebnisse und Übergaben zwischen Runs
+## 18. Binding results and handovers between Runs
 
-### 18.1 Zwei getrennte Ergebnisarten
+### 18.1 Two separate kinds of result
 
-Verbindliche Run-Ergebnisse bestimmen die weitere Workflowausführung; Shared Notes bewahren optionale Informationen. Beide sind persistent, haben aber verschiedene Autorität.
+Binding Run results determine further workflow execution; Shared Notes preserve optional information. Both are persistent but have different authority.
 
-Ein Run-Ergebnis enthält nur die nötigen gebundenen Angaben: Runidentität und Mandat, Modell- und Projektbindung, Eingabekandidat, technischen Abschluss, fachliches Urteil, Ergebniskandidat, verpflichtende Findings und notwendige technische Beobachtungen einschließlich tatsächlicher Cleanup-Probleme.
+A Run result contains only the necessary bound facts: Run identity and mandate, model and project binding, input candidate, technical completion, domain judgment, result candidate, mandatory Findings and necessary technical observations including actual cleanup problems.
 
-### 18.2 Kein lebender Zustand im Ergebnis
+### 18.2 No live state in the result
 
-Sessions, aktive Managerbäume und temporäre Workspacehandles sind keine Voraussetzung, um ein abgeschlossenes Ergebnis zu lesen oder zu veröffentlichen. Ein neuer Run stellt seine Umgebung aus den dauerhaften Eingaben selbst her. Eine erfolgreiche Rückgabe setzt Speicherung und bestätigte Lesbarkeit voraus. Fehlgeschlagene oder unvollständige Runs dürfen diagnostizierbare Daten behalten, ohne einen erfolgreichen Kandidaten vorzutäuschen.
+Sessions, active Manager trees and temporary workspace handles are no precondition for reading or publishing a completed result. A new Run builds its environment from the durable inputs itself. A successful return requires storage and confirmed readability. Failed or incomplete Runs may keep diagnosable data without pretending a successful candidate.
 
-### 18.3 Findings als handlungsfähige Übergabe
+### 18.3 Findings as an actionable handover
 
-Ein Finding lässt erkennen, welche Verpflichtung betroffen ist, was beobachtet wurde, was erwartet wird und welche Stelle die Korrektur ermöglicht. Eine kleine verständliche Struktur genügt. Die Herkunft bestimmt der Host aus dem tatsächlichen Manager beziehungsweise Prüfmechanismus. Die nächste Organisation erhält die nötigen Findings ausdrücklich, nicht versteckt in einem früheren Chatverlauf.
+A Finding shows which obligation is affected, what was observed, what is expected and which place enables the correction. A small understandable structure is enough. The host determines the origin from the actual Manager or checking mechanism. The next organization receives the necessary Findings explicitly, not hidden in an earlier chat history.
 
-### 18.4 Konsistenz über Run-Grenzen
+### 18.4 Consistency across Run boundaries
 
-Ein neuer Run bearbeitet genau den referenzierten Kandidaten; Zustimmung und Kandidat passen zusammen. Eine neue Modellbasis macht frühere Bindungen nicht gültig. Kontinuität entsteht durch Modell, Kandidaten, Ergebnisse und Notes, nicht durch Wiedereinspielen alter Gespräche.
+A new Run works on exactly the referenced candidate; approval and candidate match. A new model basis does not make earlier bindings valid. Continuity comes from model, candidates, results and Notes, not from replaying old conversations.
 
-## 19. Shared Notes und unabhängige Verifikation
+## 19. Shared Notes and independent verification
 
-### 19.1 Shared Notes gehören zu V1
+### 19.1 Shared Notes are part of V1
 
-Manager halten Nebenbefunde, Verbesserungsvorschläge, Testlücken und hilfreiche Erkenntnisse dauerhaft fest. Notes überleben Runs und Commands innerhalb eines Projekts. Jede Note hat einen verständlichen Inhalt und nachvollziehbare Herkunft: Run, Manager, betroffener Bereich und geeignete Referenzen. Konkurrierende Schreiber überschreiben einander nicht.
+Managers durably record side findings, improvement suggestions, test gaps and helpful insights. Notes survive Runs and commands within a project. Every Note has understandable content and traceable origin: Run, Manager, affected area and suitable references. Competing writers do not overwrite each other.
 
-### 19.2 Keine automatische Autorität
+### 19.2 No automatic authority
 
-Eine Note ist keine Delegation, keine Modellpflicht und kein automatisch auszuführendes Ticket. Sie umgeht weder Hierarchie noch Review. Verpflichtende Probleme dürfen nicht in Notes verschoben werden, um eine Zustimmung zu ermöglichen; entscheidend ist ihre Bedeutung für das Mandat, nicht die gewählte Ablage.
+A Note is not a delegation, not a model obligation and not a ticket to be executed automatically. It bypasses neither hierarchy nor review. Mandatory problems must not be moved into Notes to make an approval possible; what counts is their meaning for the mandate, not where the agent filed them.
 
-### 19.3 Begrenzter Abruf (D17)
+### 19.3 Bounded retrieval (D17)
 
-Notes werden nicht pauschal in jeden Startprompt kopiert, bleiben aber bei Bedarf lesbar, auch wenn ihre Menge über viele Commands wächst. `read_notes` liefert begrenzte Seiten in stabiler Reihenfolge; jede Seite passt in die Transportgrenze. Keine stille Kürzung, kein Datenverlust, kein Löschen alter Notes, keine Vektordatenbank oder semantische Suche. Sortierschlüssel, Seitengröße, Filter und der Umgang mit einzelnen sehr großen Notes werden nach einer kontrollierten Reproduktion des Größenkonflikts gewählt (Abschnitt 28.1).
+Notes are not copied wholesale into every start prompt, but stay readable when needed, also as their number grows over many commands. `read_notes` returns bounded pages in a stable order; every page fits the transport limit. No silent truncation, no data loss, no deletion of old Notes, no vector database or semantic search. Sort key, page size, filter and the handling of individual very large Notes are chosen after a controlled reproduction of the size conflict (section 28.1).
 
-### 19.4 Verify-Unabhängigkeit
+### 19.4 Independence of Verify
 
-Verify erhält das gültige Modell, den exakten Kandidaten und nötige technische Informationen. Es übernimmt weder Implementierungsgespräche noch deren Selbstbewertung. Notes liefern Hinweise mit Herkunft, aber keine vorab festgelegte Wahrheit über den Kandidaten. Verborgene Erwartungen unabhängiger externer Orakel erreichen Implementierer nicht. Agentenerzeugte Tests ersetzen nicht allein den unabhängigen fachlichen Qualitätsnachweis.
+Verify receives the valid model, the exact candidate and necessary technical information. It takes over neither implementation conversations nor their self-assessment. Notes provide hints with their origin, but no predetermined truth about the candidate. Hidden expectations of independent external oracles do not reach implementers. Agent-written tests do not by themselves replace the independent domain quality proof.
 
-## 20. Fehler, Budgets und kontrolliertes Beenden
+## 20. Errors, budgets and controlled termination
 
-### 20.1 Fachliche und technische Ausgänge
+### 20.1 Domain and technical outcomes
 
-| Ausgang | Bedeutung und Folge |
+| Outcome | Meaning and consequence |
 |---|---|
-| **Fachlich angenommen** | Das Mandat wurde positiv beurteilt. Nur zusammen mit gültigem technischem Abschluss nutzbar. |
-| **Realisierungs-Reject** | Die Realisierung verletzt Anforderungen; Findings ermöglichen eine Korrektur. |
-| **Modellblocker** | Die gebundene Absicht ist materiell unzureichend oder widersprüchlich; kein endloser Reparaturversuch im Code. |
-| **Failed** | Ein tatsächlicher Fehler verhindert die Ausführung. Kein fachlicher Reject. |
-| **Incomplete** | Ein verlässlicher Abschluss ist nicht feststellbar, etwa bei Timeout, Abbruch oder ungewissem Cleanup. |
+| **Accepted** | The mandate was judged positively. Usable only together with a valid technical completion. |
+| **Realization Reject** | The realization violates requirements; Findings enable a correction. |
+| **Model blocker** | The bound intent is materially insufficient or contradictory; no endless repair attempt in the code. |
+| **Failed** | An actual error prevents execution. Not a domain Reject. |
+| **Incomplete** | A reliable completion cannot be established, for example on timeout, abort or uncertain cleanup. |
 
-Die Namen der Statuswerte sind Implementierungsdetail, ihre Bedeutungen werden nicht vermischt. Eine positive Agentenbehauptung heilt keinen Transport- oder Speicherfehler.
+The names of status values are an implementation detail; their meanings are not mixed. A positive agent claim does not heal a transport or storage error.
 
-### 20.2 Gemeinsame endliche Ressourcen
+### 20.2 Shared finite resources
 
-Der Command setzt ein endliches Gesamtbudget; neue Runs und Korrekturen schaffen kein neues Budget. Jeder Run verbraucht aus diesem gemeinsamen Budget, ohne die übergeordnete Komposition zu kennen. Per-Message-Limits begrenzen technische Aufrufe, ersetzen aber nicht den fachlichen Abschlussvertrag. Budgets werden nicht pauschal erhöht, um einen unverstandenen Deadlock oder Protokollfehler zu kaschieren.
+The command sets a finite overall budget; new Runs and corrections create no new budget. Each Run consumes from this shared budget without knowing the overarching composition. Per-message limits bound technical calls but do not replace the domain completion contract. Budgets are not raised wholesale to hide a deadlock or protocol error that is not understood.
 
-### 20.3 Deadline bis zum blockierenden Vorgang
+### 20.3 Deadlines reach the blocking operation
 
-Abbruch und Fristen reichen bis zu den kontrollierten Unterprozessen, insbesondere in Git-, Guard- und Publication-Pfaden. Eine äußere Fristprüfung reicht nicht, wenn ein innerer Prozess unbeschränkt weiterläuft. Cleanup und abschließende Persistenz erhalten eine kleine gesonderte Nachlaufgrenze, um diagnostizierbare Ergebnisse zu sichern. Der Nachlauf erlaubt keine neue fachliche Arbeit und keine verdeckte Verlängerung der Auftragsressourcen.
+Cancellation and deadlines reach the controlled subprocesses, in particular in Git, guard and publication paths. An outer deadline check is not enough when an inner process keeps running without bound. Cleanup and final persistence get a small separate grace bound to secure diagnosable results. The grace period allows no new domain work and no hidden extension of the assignment's resources.
 
-### 20.4 Ehrliches Cleanup
+### 20.4 Honest cleanup
 
-Teilweise gestartete Ressourcen werden soweit möglich geschlossen. Ein unklarer Abschluss wird als unklar gespeichert; eine spätere leere Containerliste macht einen zuvor fehlgeschlagenen Closure-Nachweis nicht nachträglich erfolgreich. Gewöhnliche Fehlerpfade räumen verlässlich auf. Eine Garantie für beliebige Kernel-, Dateisystem- oder Hostausfälle wird nicht behauptet.
+Partially started resources are closed as far as possible. An unclear completion is stored as unclear; a later empty container list does not retroactively turn an earlier failed closure proof into success. Ordinary error paths clean up reliably. A guarantee for arbitrary kernel, file system or host failures is not claimed.
 
-## 21. Kontrollierte Publication
+## 21. Controlled publication
 
-### 21.1 Freigabe des exakten Kandidaten
+### 21.1 Approval of the exact candidate
 
-Publication konsumiert einen dauerhaft gespeicherten Kandidaten und dessen gespeicherte, gebundene Verify-Zustimmung. Implement gibt sich nicht selbst frei; eine Zustimmung zu Kandidat A gilt nicht für Kandidat B. Vor der Übertragung werden Bindungen und erforderliche Checks erneut geprüft. Alle Run-Ressourcen sind dann geschlossen; der Publisher startet keine Managerkoordination.
+Publication consumes a durably stored candidate and its stored, bound Verify approval. Implement does not approve itself; an approval of candidate A does not apply to candidate B. Before transfer, bindings and required checks are checked again. All Run resources are closed by then; the publisher starts no Manager coordination.
 
-### 21.2 Nutzeränderungen und Konflikte
+### 21.2 User changes and conflicts
 
-Der Zielzustand muss zur gebundenen Ausgangslage passen. Zwischenzeitliche Nutzeränderungen werden nicht überschrieben; V1 endet bei relevanter Abweichung mit einem klaren Konflikt statt mit einem erfundenen semantischen Merge. Erzeugt eine spätere Funktion einen Merge, der vom geprüften Kandidaten abweicht, braucht sie eine eigene erneute Prüfung. Der letzte deterministische Check ersetzt keine unabhängige fachliche Zustimmung zu neuen Inhalten.
+The target state must match the bound starting point. User changes made in the meantime are not overwritten; with a relevant divergence V1 ends with a clear conflict instead of an invented semantic merge. If a later function produces a merge that differs from the reviewed candidate, it needs its own new review. The last deterministic check does not replace independent domain approval of new content.
 
-### 21.3 Teilübertragung und Readback
+### 21.3 Partial transfer and readback
 
-Eine Mehrdateiübertragung ist nicht automatisch atomar. Bei Fehler oder Abbruch bleibt erkennbar, welche Änderungen abgeschlossen sind; ausstehende erscheinen nicht als übertragen. Der finale Readback bestätigt die veröffentlichten Inhalte. Ein Fehler an dieser Grenze wird weder als Erfolg noch als unveränderter Zustand ausgegeben. Blindes Zurückrollen unter möglicher Nutzerdrift ist keine sichere Ersatzlösung.
+A multi-file transfer is not automatically atomic. On error or abort it stays visible which changes are complete; pending ones do not appear as transferred. The final readback confirms the published content. An error at this boundary is reported neither as success nor as an unchanged state. Blind rollback under possible user drift is not a safe substitute.
 
-### 21.4 Kein automatischer Nutzer-Commit
+### 21.4 No automatic user commit
 
-Publication erstellt keinen Commit, Push, Release oder Deployment im Nutzerprojekt. Private Git-Commits zur Fixierung von Kandidaten und Entwicklungs-PRs beim Bau von Markitect sind davon getrennt. Auch No-change durchläuft die Bindungs- und Zielprüfungen und veröffentlicht dann keine Änderungen.
+Publication creates no commit, push, release or deployment in the user's project. Private Git commits that fix candidates and development PRs while building Markitect are separate. A no-change result also goes through the binding and target checks and then publishes no changes.
 
-## 22. Logische Zielarchitektur
+## 22. Logical target architecture
 
-### 22.1 Verantwortlichkeiten
+### 22.1 Responsibilities
 
-| Verantwortlichkeit | Aufgabe | Gehört nicht dazu |
+| Responsibility | Task | Not part of it |
 |---|---|---|
-| **Model / Project State** | Modellkompilierung, Registry, Accounting, Snapshots, Organisation und Kontext. | Providerstart, Workflow oder Veröffentlichung. |
-| **Projektvorbereitung** | Explizite Eingaben zu einer geprüften fixierten Ausführungsbasis zusammenführen. | Zweiter Compiler oder alte Runtime. |
-| **Command-Anwendung** | Initialprüfung, Budget, Workflow und Gesamtergebnis. | Managerkommunikation oder Git-Mergelogik. |
-| **Workflow** | Runs und ihre fachlichen Übergänge koordinieren. | Container, Providerprotokolle oder Ressourcenverwaltung. |
-| **Run-Ausführung** | Ein Mandat durch die Organisation, mit Lebenszyklus, Ergebnis und der Validierung geschlossener Ergebnisse. | Nächsten Run wählen oder publizieren. |
-| **Harness** | Regeln, Kontext und Arbeitsmittel zusammensetzen. | Git-Integration oder Workflowentscheidung. |
-| **Workspace / Candidate Storage** | Private Kopien und unabhängige dauerhafte Kandidaten. | Reviewentscheidungen oder allgemeiner Helper. |
-| **Run Information** | Verbindliche Ergebnisse und getrennte Notes speichern und bereitstellen. | Aufgaben aus Notes erzeugen. |
-| **Publication** | Exakten akzeptierten Stand kontrolliert übertragen. | Fachliche Reparatur oder Agentenstart. |
-| **Infrastrukturadapter** | Provider, Container, Git, Checks, Dateisystem. | Projektfachlichkeit. |
+| **Model / project state** | Model compilation, registry, accounting, snapshots, organization and context. | Provider start, workflow or publication. |
+| **Project preparation** | Combine explicit inputs into a checked, fixed execution basis. | A second compiler or the old runtime. |
+| **Command application** | Initial check, budget, workflow and overall result. | Manager communication or Git merge logic. |
+| **Workflow** | Coordinate Runs and their domain transitions. | Containers, provider protocols or resource management. |
+| **Run execution** | One mandate through the organization, with lifecycle, result and the validation of closed results. | Choosing the next Run or publishing. |
+| **Harness** | Compose rules, context and working tools. | Git integration or workflow decisions. |
+| **Workspace / candidate storage** | Private copies and independent durable candidates. | Review decisions or a general helper. |
+| **Run information** | Store and provide binding results and separate Notes. | Creating tasks from Notes. |
+| **Publication** | Transfer exactly the accepted state under control. | Domain repair or starting agents. |
+| **Infrastructure adapters** | Providers, containers, Git, checks, file system. | Project domain. |
 
-Ein logischer Verantwortungsbereich ist nicht automatisch ein Go-Package, Interface, Service oder Container. Der Schnitt folgt Kohäsion, echten Verbrauchern und begründeten Infrastrukturgrenzen.
+A logical responsibility is not automatically a Go package, interface, service or container. The cut follows cohesion, actual consumers and reasoned infrastructure boundaries.
 
-### 22.2 Abhängigkeitsrichtung
+### 22.2 Dependency direction
 
 ```text
-CLI / sonstiger Einstieg
-    → Command-Anwendung
-         → Projektvorbereitung und deterministisches Fundament
-         → Workflow
-              → Run-Vertrag und Run-Ausführung
-                   → Modellorganisation und Harness
-                   → Workspace-, Session-, Check- und Speicherverträge
-         → Publication
+CLI / other entry point
+    → command application
+         → project preparation and deterministic foundation
+         → workflow
+              → Run contract and Run execution
+                   → model organization and harness
+                   → workspace, session, check and storage contracts
+         → publication
 
-Konkrete Infrastrukturadapter implementieren die benötigten Grenzen.
-Die Zusammensetzung liegt am äußeren Anwendungsrand.
+Concrete infrastructure adapters implement the required boundaries.
+Composition happens at the outer application edge.
 ```
 
-Der Compiler kennt weder Docker noch Codex oder Claude. Der Run kennt die Apply-Korrekturschleife nicht. Der Workflow implementiert keine Managerkoordination. Providerdetails bleiben aus der Organisation heraus.
+The compiler knows neither Docker nor Codex nor Claude. The Run does not know the Apply correction loop. The workflow implements no Manager coordination. Provider details stay out of the organization.
 
-### 22.3 Fachlichkeit, Anwendung und Infrastruktur
+### 22.3 Domain, application and infrastructure
 
-Domain, Application und Infrastructure sind eine logische Orientierung, keine Pflicht, jedes Feature in drei Dateigruppen zu zerlegen. Schmale Interfaces entstehen dort, wo eine Abhängigkeit tatsächlich getrennt werden muss. Kein universelles Repository-, Event-, Policy- oder Workflowframework nur um eines Musters willen; alte Package-Namen werden weder automatisch konserviert noch kosmetisch ersetzt.
+Domain, application and infrastructure are a logical orientation, not a duty to split every feature into three file groups. Narrow interfaces arise where a dependency actually has to be separated. No universal repository, event, policy or workflow framework just for the sake of a pattern; old package names are neither preserved automatically nor replaced cosmetically.
 
-## 23. Umgang mit Bestandscode
+## 23. Handling existing code
 
-Modellsprache, Compilersemantik und relevante deterministische Garantien sind das bewahrenswerte Fundament. Die historische agentische Ausführungsarchitektur hat keinen Bestandsschutz. Für betroffene Komponenten gilt Keep, Refactor, Replace oder Remove, entschieden nach Verantwortung, Kopplung, Verständlichkeit, Testbarkeit und benötigtem Verhalten, nicht nach investierter Zeit.
+Model language, compiler semantics and relevant deterministic guarantees are the foundation worth keeping. The historical agentic execution architecture has no protection as existing code. For affected components the choice is Keep, Refactor, Replace or Remove, decided by responsibility, coupling, understandability, testability and required behavior, not by time already invested.
 
-Adapter nur für alte interne APIs, dauerhafte Kompatibilitätsschichten, konkurrierende Runtimepfade und Sonderfälle für ausgeschlossene Verbraucher sind keine akzeptable Standardstrategie. Leitfrage: **Würden wir diesen Baustein so entwerfen, wenn die frühere Runtime nicht existierte?**
+Adapters only for old internal APIs, permanent compatibility layers, competing runtime paths and special cases for excluded consumers are no acceptable default strategy. Guiding question: **Would we design this building block this way if the earlier runtime did not exist?**
 
-Ein Rewrite ist kein Reflex. Der Korrekturbedarf wird an belegten Vertrags- und Zuverlässigkeitsproblemen bemessen. Eine große Datei ist ein Hinweis auf überladene Verantwortung, kein automatischer Defekt; unverstandene Zustandskomplexität auf mehr Dateien zu verteilen, verbessert nichts. Zuerst wird die Semantik klar.
+A rewrite is not a reflex. The need for correction is measured by demonstrated contract and reliability problems. A large file is a hint of overloaded responsibility, not an automatic defect; spreading misunderstood state complexity over more files improves nothing. First the semantics become clear.
 
-Selbstmodell, Registry-Shards, generierte Dokumentation und tatsächliche Verantwortlichkeiten werden gemeinsam konsistent gehalten. Aktive Einstiegsdokumente enthalten geltende Regeln, keine Folge historischer Arbeitsaufträge. Historische Erkenntnisse und Fehlschläge bleiben archiviert, werden aber nicht durch Nähe zum aktuellen Plan erneut verbindlich.
+Self-model, registry shards, generated documentation and actual responsibilities are kept consistent together. Active entry documents contain current rules, not a sequence of historical work orders. Historical insights and failures stay archived but do not become binding again by being close to the current plan.
 
-## 24. Entwicklungsorganisation
+## 24. Development organization
 
-### 24.1 Coordinator und Implementierungs-Chats
+### 24.1 Coordinator and implementation chats
 
-Ein Coordinator verantwortet Architektur, Abhängigkeiten, Aufträge, Integrationsreihenfolge und Qualitätskontrolle; er schreibt nicht konkurrierend in die Dateien anderer Chats. Implementierungs-Chats arbeiten in eigenen Worktrees und Branches mit exaktem Ausgangscommit, eindeutiger Schreibverantwortung und überprüfbaren Abnahmekriterien. Gemeinsame Verträge, Registry-Shards und generierte Dateien haben zu jedem Zeitpunkt genau einen Writer; Subagenten umgehen diese Grenze nicht.
+A coordinator is responsible for architecture, dependencies, assignments, integration order and quality control; it does not write competingly in other chats' files. Implementation chats work in their own worktrees and branches with an exact starting commit, unambiguous write responsibility and verifiable acceptance criteria. Shared contracts, registry shards and generated files have exactly one writer at any time; sub-agents do not bypass this boundary.
 
-### 24.2 Parallelität nach tatsächlicher Entkopplung
+### 24.2 Parallelism by actual decoupling
 
-Höchstens zwei schreibende Workstreams gleichzeitig. Lesende Analyse und unabhängige Reviews können parallel laufen. Abhängige Implementierung startet erst, wenn die gemeinsamen Verträge klar sind; keine Interfacehierarchie ohne Verbraucher. Frühe vertikale Nachweise testen zentrale Annahmen, bevor viel darauf aufbaut.
+At most two writing workstreams at a time. Read-only analysis and independent reviews can run in parallel. Dependent implementation starts only once the shared contracts are clear; no interface hierarchy without consumers. Early vertical proofs test central assumptions before much is built on them.
 
-### 24.3 Review und Integration
+### 24.3 Review and integration
 
-Wesentliche Änderungen brauchen einen unabhängigen vollständigen Diff-Review am tatsächlich integrierbaren Commit. Änderungen nach dem Review brauchen eine erneute Prüfung. Nach größeren Integrationsschritten wird die Gesamtarchitektur geprüft. Fremde Arbeit wird weder still verworfen noch per Reset überschrieben.
+Substantial changes need an independent complete-diff review of the commit that will actually be integrated. Changes after the review need a new review. After larger integration steps the overall architecture is reviewed. Others' work is neither silently discarded nor overwritten by a reset.
 
-### 24.4 Befugnisse
+### 24.4 Authority
 
-Routineentscheidungen innerhalb freigegebener Grenzen sind delegierbar. Änderungen der Produktsemantik, erhebliche Architekturkonflikte und die Owner-Abnahme werden ausdrücklich behandelt. Für sinnvolle reale Nachweise besteht eine stehende Freigabe; jeder Nachweis nennt Quelle, Grenzen, Abbruch, Cleanup und tatsächliches Ergebnis. Release und Deployment bleiben getrennte Entscheidungen.
+Routine decisions within approved limits can be delegated. Changes to product semantics, significant architecture conflicts and owner acceptance are handled explicitly. A standing approval exists for useful real proofs; every proof names source, limits, abort, cleanup and actual result. Release and deployment remain separate decisions.
 
-### 24.5 Coordinator-Wechsel
+### 24.5 Change of coordinator
 
-Lange Chats können nach kontrolliertem Handoff archiviert werden. Ein Handoff benennt Main, offene Arbeit, bestätigte Nachweise, Einschränkungen und nächste Aufgaben. Ein neuer Coordinator übernimmt den Repository- und Evidenzstand, nicht die alte Gesprächshistorie.
+Long chats can be archived after a controlled handoff. A handoff names Main, open work, confirmed evidence, limitations and next tasks. A new coordinator takes over the repository and evidence state, not the old conversation history.
 
-## 25. Abnahme
+## 25. Acceptance
 
-### 25.1 Arten von Evidenz
+### 25.1 Kinds of evidence
 
-| Nachweisart | Belegt | Belegt nicht |
+| Kind of evidence | Shows | Does not show |
 |---|---|---|
-| Statische Code- und Architekturprüfung | Verantwortlichkeiten und erkennbare Vertragsverletzungen. | Laufzeitverhalten, Race-Freiheit, Providergehorsam. |
-| Deterministische Tests | Verhalten der geprüften Fälle auf fixiertem Code. | Native Integration oder Fehlerfreiheit. |
-| Kontrollierte Sessions mit echtem Git | Zusammenspiel von Executor, Kandidaten, Reviews und Fehlerpfaden. | Dass ein echter Provider denselben Ablauf zuverlässig bedient. |
-| Native Komponentenprüfung | Eine konkrete Providerfähigkeit oder Run-Kette. | Öffentliche Workflowauswahl und Publication. |
-| Öffentlicher nativer Apply | Den Produktpfad auf benanntem Modell, Kandidaten und Runtimeprofil. | Universelle Zuverlässigkeit, andere Provider, beliebige Projektgrößen. |
-| Unabhängiges Orakel | Verhalten des erzeugten Kandidaten gegen unabhängige Erwartungen. | Nicht getestete Eigenschaften oder Migrationen. |
-| Owner-Abnahme | Bewusste Akzeptanz eines klar begrenzten Produktumfangs. | Release- oder Deploymentfreigabe. |
+| Static code and architecture review | Responsibilities and recognizable contract violations. | Runtime behavior, freedom from races, provider obedience. |
+| Deterministic tests | Behavior of the tested cases on fixed code. | Native integration or freedom from errors. |
+| Controlled sessions with real Git | Interplay of executor, candidates, reviews and error paths. | That a real provider serves the same flow reliably. |
+| Native component test | One concrete provider capability or Run chain. | Public workflow selection and publication. |
+| Public native Apply | The product path on a named model, candidate and runtime profile. | Universal reliability, other providers, arbitrary project sizes. |
+| Independent oracle | Behavior of the produced candidate against independent expectations. | Untested properties or migrations. |
+| Owner acceptance | Deliberate acceptance of a clearly bounded product scope. | Release or deployment approval. |
 
-### 25.2 Abnahmekriterien
+### 25.2 Acceptance criteria
 
-| ID | Erforderlicher Nachweis |
+| ID | Required evidence |
 |---|---|
-| **V01** | Ungültige Modell- oder Initialstruktur verhindert den agentischen Workflow. |
-| **V02** | Die vollständige Hierarchie arbeitet in Assessment, Implement und Verify, einschließlich Enkel, intermediärem und leerem Package. |
-| **V03** | Parallele Kinderarbeit; Fragen nur entlang erlaubter Pfade, Geschwister- und Ebenensprünge werden mit Begründung abgelehnt; überkreuzte Fragen und Abbruch funktionieren. |
-| **V04** | Review und Integration betreffen exakt die tatsächliche Aufgabenbasis und fixierte Übergabe. |
-| **V05** | Ein ungültiger Implement-Kinderkandidat erreicht den Vater mit Diagnose und ist nicht integrierbar; Root kann ungelöste technische Ungültigkeit nicht als Erfolg abschließen. |
-| **V06** | Verify-Reject erzeugt neue Implement- und Verify-Runs ohne alte Gespräche und ohne zurückgesetztes Gesamtbudget. |
-| **V07** | Spät erkannte Modellblocker beenden ohne Publication und ohne endlose Codereparatur. |
-| **V08** | Kandidaten lassen sich nach Entfernen der temporären Umgebungen exakt wiederöffnen. |
-| **V09** | Standalone-Runs liefern persistierte tatsächliche Endergebnisse; Speicher- und Cleanupfehler bleiben sichtbar. |
-| **V10** | Reproduzierbarer Harness wird nativ verwendet: kurze Aufgaben, Pflichtkontext, normale Kontoauthentifizierung, keine API-Key-Variante. |
-| **V11** | Notes überleben Runs und Commands, verlieren bei Parallelzugriff keine Einträge, erweitern den Auftrag nicht und sind an der Transportgrenze seitenweise vollständig lesbar. |
-| **V12** | Fresh Library, M1→M2 mit Grenzwert 5→3, Preservation, striktes No-change und unabhängiges Orakel. |
-| **V13** | Ein eingebauter Defekt wird erkannt und nach Korrektur erneut unabhängig geprüft; normaler Implement-Fix und echter Verify-Reject-Zweig bleiben unterscheidbar. |
-| **V14** | Eigene Änderungen, fremde Zuständigkeit und akzeptierte Kinderintegration werden sachgerecht reviewed. |
-| **V15** | Publication bindet gespeicherte Zustimmung und Kandidat, behandelt Drift und meldet Teiltransfer und Readback-Fehler korrekt. |
-| **V16** | Timeout, Providerfehler, Budgetende, Startfehler und unsicheres Cleanup erzeugen keine Scheinerfolge. |
-| **V17** | Die Gegenbeispiele aus Abschnitt 13.3 sind als kontrollierte Tests abgedeckt; Harness und Host-Nachrichten erklären keine internen Host-Zustände (Abschnitt 3.7). |
+| **V01** | An invalid model or initial structure prevents the agentic workflow. |
+| **V02** | The complete hierarchy works in Assessment, Implement and Verify, including grandchild, intermediate and empty Package. |
+| **V03** | Parallel child work; questions only along permitted paths, sibling and level-skipping questions are refused with a reason; crossed questions and abort work. |
+| **V04** | Review and integration concern exactly the actual task base and fixed handoff. |
+| **V05** | An invalid Implement child candidate reaches the parent with its diagnostic and cannot be integrated; Root cannot complete unresolved technical invalidity as success. |
+| **V06** | A Verify Reject produces new Implement and Verify Runs without old conversations and without a reset overall budget. |
+| **V07** | Material model blockers recognized late end without publication and without endless code repair. |
+| **V08** | Candidates can be reopened exactly after the temporary environments are removed. |
+| **V09** | Standalone Runs deliver persisted actual final results; storage and cleanup errors stay visible. |
+| **V10** | A reproducible harness is used natively: short tasks, mandatory context, normal account authentication, no API-key variant. |
+| **V11** | Notes survive Runs and commands, lose no entries under parallel access, do not extend the assignment and are completely readable page by page at the transport limit. |
+| **V12** | Fresh Library, M1→M2 with limit 5→3, preservation, strict no-change and independent oracle. |
+| **V13** | A seeded defect is detected and independently reviewed again after correction; an ordinary Implement fix and a genuine Verify-Reject branch stay distinguishable. |
+| **V14** | Own changes, other areas' responsibility and accepted child integration are reviewed appropriately. |
+| **V15** | Publication binds stored approval and candidate, handles drift and reports partial transfer and readback errors correctly. |
+| **V16** | Timeout, provider error, budget exhaustion, start failure and uncertain cleanup produce no false successes. |
+| **V17** | The counterexamples of section 13.3 are covered as controlled tests; harness and host messages do not explain internal host states (section 3.7). |
 
-### 25.3 Endstand und Wiederholbarkeit
+### 25.3 Final state and repeatability
 
-Vollständige lokale Tests, Architektur- und Dependency-Gates, Linux- und Windows-Kompatibilität, Race-Prüfungen und freigegebene Hosted CI werden am bereinigten Endstand belegt. Native Nachweise nennen Provider, Version, Runtime, Kandidat und Grenzen. Die Zahl unabhängiger Wiederholungen wird begründet festgelegt; Wiederholen bis zum ersten Erfolg ersetzt keine Zuverlässigkeitsbewertung. Frühere Erfolge qualifizieren geänderte Verträge nicht ohne Prüfung ihrer Auswirkung.
+Complete local tests, architecture and dependency gates, Linux and Windows compatibility, race checks and approved hosted CI are shown on the cleaned final state. Native evidence names provider, version, runtime, candidate and limits. The number of independent repetitions is set with a reason; repeating until the first success replaces no reliability assessment. Earlier successes do not qualify changed contracts without checking the impact.
 
-### 25.4 Qualität ist mehr als ein grünes Beispiel
+### 25.4 Quality is more than a green example
 
-Eine Library-Demonstration prüft die Idee konkret, ersetzt aber nicht die Produktdefinition. Die Abnahme beurteilt zusätzlich Verständlichkeit, Kohäsion, Zustandskomplexität, Erweiterbarkeit im Zielbild und die ehrliche Supportgrenze. Nicht qualifizierte Fähigkeiten – weitere Provider, Login-Erneuerung, harte Hostabbrüche, Live-Datenmigration – werden durch die Bezeichnung V1 nicht implizit versprochen.
+A Library demonstration tests the idea concretely but does not replace the product definition. Acceptance additionally assesses understandability, cohesion, state complexity, extensibility within the target picture and the honest support boundary. Unqualified capabilities – further providers, login refresh, hard host aborts, live data migration – are not implicitly promised by the name V1.
 
-## 26. Referenzszenarien
+## 26. Reference scenarios
 
-### 26.1 Frische Realisierung
+### 26.1 Fresh realization
 
-Das gültige Library-Modell enthält Verpflichtungen, Verantwortlichkeiten und Checks, aber noch keine Realisierung. Die Initialprüfung stellt strukturelle Gültigkeit fest, Assessment die Umsetzbarkeit. Implement erzeugt und registriert die Artefakte, Verify prüft unabhängig, danach erfolgt Publication. Das externe Orakel bewertet den Kandidaten außerhalb des Managerkontexts.
+The valid Library model contains obligations, responsibilities and checks but no realization yet. The initial check establishes structural validity, Assessment the feasibility. Implement produces and registers the artifacts, Verify reviews independently, then publication follows. The external oracle assesses the candidate outside the Manager context.
 
-### 26.2 Änderung von fünf auf drei Ausleihen
+### 26.2 Change from five to three loans
 
-Ausgangspunkt ist eine gültige Realisierung A1. Im Modell M2 ändert sich nur das Ausleihlimit von fünf auf drei. Markitect erzeugt eine angepasste Realisierung A2 und bewahrt die übrigen Verpflichtungen. Die Zahl geänderter Dateien ist nicht fest vorgegeben; jede Änderung ist durch Modell, Checks oder notwendige Folgen begründet. Eine Migration bestehender Laufzeitdaten wäre eine eigene Anforderung.
+The starting point is a valid realization A1. In model M2 only the loan limit changes from five to three. Markitect produces an adjusted realization A2 and preserves the other obligations. The number of changed files is not fixed in advance; every change is justified by the model, checks or necessary consequences. A migration of existing runtime data would be a separate requirement.
 
 ### 26.3 No-change
 
-Ein unverändertes Modell trifft auf eine konforme Realisierung. Alle Mandate und Reviews laufen vollständig, optionale Ideen landen in Notes, und das Ergebnis enthält keine unbegründete Artefaktänderung.
+An unchanged model meets a conforming realization. All mandates and reviews run completely, optional ideas go into Notes, and the result contains no unjustified artifact change.
 
-### 26.4 Fehlerhafte Kinderübergabe
+### 26.4 Faulty child handoff
 
-Ein Kind liefert ein Artefakt ohne gültigen Registry-Eintrag oder mit einem Schnittstellenproblem. Die Übergabe erreicht den Vater mit der tatsächlichen Diagnose. Er erkennt, ob lokale Registry-Pflege, eine gemeinsame Entscheidung oder eine andere Integrationsreihenfolge nötig ist, und weist mit Findings zurück oder klärt die Schnittstelle. Das Kind repariert lokal. Nichts wird veröffentlicht, weil ein Agent „fertig“ schreibt, und kein globaler Reparatur-Workflow startet.
+A child delivers an artifact without a valid registry entry or with an interface problem. The handoff reaches the parent with the actual diagnostic. The parent sees whether local registry maintenance, a shared decision or a different integration order is needed and rejects with Findings or settles the interface. The child repairs locally. Nothing is published because an agent writes "done", and no global repair workflow starts.
 
-### 26.5 Echte Verify-Korrekturschleife
+### 26.5 Genuine Verify correction loop
 
-Verify findet im Implement-Kandidaten einen Realisierungsfehler und liefert Reject mit Findings. Der öffentliche Workflow startet einen neuen Implement-Run mit frischen Gesprächen und danach ein neues Verify; erst dessen Zustimmung trägt die Publication. Eine Reparatur im ersten Implement ist ein anderes Szenario, und eine manuell verkettete Komponentenprüfung beweist nicht, dass der öffentliche Workflow den richtigen Zweig wählt.
+Verify finds a realization defect in the Implement candidate and returns Reject with Findings. The public workflow starts a new Implement Run with fresh conversations and then a new Verify; only its approval carries the publication. A repair already made in the first Implement is a different scenario, and a manually chained component test does not prove that the public workflow chooses the right branch.
 
-### 26.6 Nutzeränderung während Apply
+### 26.6 User change during Apply
 
-Der Nutzer ändert das Zielrepository, während die Manager isoliert arbeiten. Die Guards erkennen die Abweichung; V1 endet mit einem erkennbaren Konflikt statt blind zu überschreiben.
+The user changes the target repository while the Managers work in isolation. The guards detect the divergence; V1 ends with a recognizable conflict instead of overwriting blindly.
 
-### 26.7 Abbruch während Publication
+### 26.7 Abort during publication
 
-Ein Git-Aufruf blockiert, während die Frist abläuft. Die Frist erreicht den Unterprozess, keine weitere fachliche Arbeit startet, abgeschlossene Pfade werden korrekt berichtet und unvollständige Readbacks nicht als Erfolg gewertet. Der Test erreicht den blockierenden Aufruf tatsächlich.
+A Git call blocks while the deadline expires. The deadline reaches the subprocess, no further domain work starts, completed paths are reported correctly and incomplete readbacks do not count as success. The test actually reaches the blocking call.
 
-## 27. Entscheidungen
+## 27. Decisions
 
-### 27.1 Grundentscheidungen D1–D9
+### 27.1 Basic decisions D1–D9
 
-| ID | Entscheidung | Bedeutung |
+| ID | Decision | Meaning |
 |---|---|---|
-| **D1** | Universeller Run-Executor | Ein eigenständig verwendbarer Mechanismus für die vollständige Organisation und alle V1-Mandate. |
-| **D2** | Workflow als Run-Komposition | Schlanke Koordination von Runs; spätere Custom Commands möglich, keine DSL-Pflicht. |
-| **D3** | Container und Workspace Service je Run | Frische Managerumgebungen und ein Git-Service mit derselben Run-Lebensdauer. |
-| **D4** | Vier deterministische Kontrollpunkte | Initialprüfung, Kinderübergabe, Root-Abschluss und Publication. |
-| **D5** | Deterministischer Harness aus fünf Quellen | Produkt, Projekt, Manager, Run und Provider bleiben getrennte Quellen einer nutzbaren Umgebung. |
-| **D6** | Verbindliche Ergebnisse und Shared Notes | Explizite Übergaben zwischen Runs und dauerhafte nichtkanonische Beobachtungen in V1. |
-| **D7** | Architekturqualität vor Wiederverwendung | Fachliche und technische Qualität zählen zur Abnahme, nicht nur funktionale Tests. |
-| **D8** | Selektiver Clean-Slate-Rebuild | Modellfundament bewahren, ungeeignete Runtime ersetzen; kein Repository-Reset und kein fortlaufender Rewrite-Zwang. |
-| **D9** | Koordinierte Multi-Chat-Entwicklung | Coordinator, getrennte Worktrees, klare Writer, unabhängige Reviews und kontrollierte Integration. |
+| **D1** | Universal Run executor | One independently usable mechanism for the complete organization and all V1 mandates. |
+| **D2** | Workflow as Run composition | Lean coordination of Runs; custom commands possible later, no DSL obligation. |
+| **D3** | Containers and Workspace Service per Run | Fresh Manager environments and a Git service with the same Run lifetime. |
+| **D4** | Four deterministic checkpoints | Initial check, child handoff, Root completion and publication. |
+| **D5** | Deterministic harness from five sources | Product, project, Manager, Run and provider stay separate sources of a usable environment. |
+| **D6** | Binding results and Shared Notes | Explicit handovers between Runs and durable non-canonical observations in V1. |
+| **D7** | Architectural quality before reuse | Domain and technical quality count for acceptance, not only functional tests. |
+| **D8** | Selective clean-slate rebuild | Keep the model foundation, replace unsuitable runtime; no repository reset and no continuing rewrite compulsion. |
+| **D9** | Coordinated multi-chat development | Coordinator, separate worktrees, clear writers, independent reviews and controlled integration. |
 
-### 27.2 Entscheidungen vom 24. Oktober 2026 (D10–D18)
+### 27.2 Decisions of 24 October 2026 (D10–D18)
 
-Sie schließen die in v0.18 offenen Punkte A1–A6 und R1–R3. R1 (Deadline in der Publication) war bereits umgesetzt.
+They close the items A1–A6 and R1–R3 left open in v0.18. R1 (deadline in publication) was already implemented.
 
-| ID | Ursprung | Entscheidung | Abschnitt |
+| ID | Origin | Decision | Section |
 |---|---|---|---|
-| **D10** | A1 | Fragen nur an direkten Vater und direkte Kinder; Geschwister stimmen sich über den gemeinsamen Vater ab, mehrere Ebenen Schritt für Schritt über die Manager dazwischen. | 8.2 |
-| **D11** | A2 | Jeder Implement-Kinderkandidat geht mit Prüfergebnis an den Vater; ungültige Kandidaten sind nicht integrierbar; optionale Selbstprüfung per Werkzeug. | 8.4 |
-| **D12** | A3, R3 | Ein Urteil gehört zu Auftrag und bewertetem Stand, nicht zur Nachricht; expliziter Auftragszustand im Host. | 13.2 |
-| **D13** | Neu | Aufgaben statt Prozess; fester kleiner Werkzeugsatz mit genau einem Werkzeug je Zweck. | 3.7, 14 |
-| **D14** | A4 | V1-Harness über native Base-/Developer-Instruktionen; Skills und Nachladen erst bei belegtem Bedarf. | 15.5 |
-| **D15** | A5 | Validierung geschlossener Run-Ergebnisse gehört zum Run-Vertrag. | 10.3 |
-| **D16** | A6 | Genau drei Mandate in V1; neue Mandate erst mit einem echten Command. | 10.5 |
-| **D17** | R2 | Notes seitenweise und stabil sortiert, jede Seite innerhalb der Transportgrenze, ohne stille Kürzung. | 19.3 |
-| **D18** | Neu | V1-Abnahme mit Codex; Claude als nächste Providerabbildung auf dem stabilisierten Vertrag; kein nicht funktionsfähiger Claude-Pfad bis dahin. | 2.3 |
+| **D10** | A1 | Questions only to the direct parent and direct children; siblings align through their common parent, several levels step by step through the Managers in between. | 8.2 |
+| **D11** | A2 | Every Implement child candidate goes to the parent with its check result; invalid candidates cannot be integrated; optional self-check through a tool. | 8.4 |
+| **D12** | A3, R3 | A judgment belongs to the assignment and the assessed state, not to a message; explicit assignment state in the host. | 13.2 |
+| **D13** | New | Tasks, not process; a fixed small tool set with exactly one tool per purpose. | 3.7, 14 |
+| **D14** | A4 | V1 harness through native base/developer instructions; skills and loadable context only on demonstrated need. | 15.5 |
+| **D15** | A5 | The validation of closed Run results belongs to the Run contract. | 10.3 |
+| **D16** | A6 | Exactly three mandates in V1; new mandates only with an actual command. | 10.5 |
+| **D17** | R2 | Notes page by page and stably ordered, every page within the transport limit, without silent truncation. | 19.3 |
+| **D18** | New | V1 acceptance with Codex; Claude as the next provider mapping on the stabilized contract; no non-functional Claude path until then. | 2.3 |
 
-### 27.3 Präzisierungen gegenüber frühen Fassungen
+### 27.3 Clarifications compared with early versions
 
-| Früher diskutiert | Maßgeblich |
+| Discussed earlier | Governing |
 |---|---|
-| Einzelagent für Assessment oder Verify | Vollständige Modellhierarchie in jedem Mandat. |
-| Container je Apply oder langfristig weiterlaufend | Managercontainer und Git Workspace Service pro Run. |
-| Allgemeiner Helper für Git, Auth und Checks | Getrennte klare Verantwortungen; keine Kleinstcontainer je Operation. |
-| Extract-/UI-Erhaltung als Migrationspflicht | Ausgeschlossen; kein Einfluss auf Kernverträge. |
-| Wiederverwendung der Assignment-Runtime | Eignung entscheidet; kein Bestandsschutz. |
-| Feste Zahl neuer Packages | Keine künstliche Ober- oder Untergrenze. |
-| Pauschales Ignorieren von `.markitect` | Kanonische und kontrollierte Eingaben bleiben sichtbar; operative Daten werden gesondert behandelt. |
-| Harness zwingend als bestimmte Dateien | Native Instruktionsparameter sind die V1-Form (D14). |
-| Fragen an jeden Manager im Run | Nur entlang der Hierarchie (D10). |
-| Neues Urteil nach jeder aktiven Nachricht | Urteil gilt, bis Auftrag oder bewerteter Stand sich ändert (D12). |
-| Neuer Gesamtumbau bei jedem Auditbefund | Bestehenden Kern gezielt verbessern. |
+| A single agent for Assessment or Verify | The complete model hierarchy in every mandate. |
+| Containers per Apply or long-running | Manager containers and Git Workspace Service per Run. |
+| A general helper for Git, auth and checks | Separate clear responsibilities; no tiny containers per operation. |
+| Preserving Extract/UI as a migration duty | Excluded; no influence on core contracts. |
+| Reusing the assignment runtime | Suitability decides; no protection as existing code. |
+| A fixed number of new packages | No artificial upper or lower limit. |
+| Ignoring `.markitect` wholesale | Canonical and controlled inputs stay visible; operational data is handled separately. |
+| Harness necessarily as specific files | Native instruction parameters are the V1 form (D14). |
+| Questions to any Manager in the Run | Only along the hierarchy (D10). |
+| A new judgment after every active message | A judgment applies until the assignment or the assessed state changes (D12). |
+| A new complete rebuild for every audit finding | Improve the existing core in a targeted way. |
 
-## 28. Technisch auszugestalten und Nachweisgrenzen
+## 28. Technical design and limits of evidence
 
-### 28.1 Technisch auszugestalten
+### 28.1 Technical design
 
-| Thema | Festes Ziel | Offen für die Umsetzung |
+| Topic | Fixed goal | Open for implementation |
 |---|---|---|
-| Auftragszustand (D12) | Jede Invalidierung folgt aus einem benennbaren Ereignis; keine verstreuten Flags. | Konkrete Zustände und Übergänge, Form der Host-Diagnose bei fehlendem Urteil, Weitergabe später Befunde an die Väter. |
-| `check`-Werkzeug (D11) | Optionale Selbstprüfung mit demselben deterministischen Mechanismus wie die Übergabeprüfung. | Umfang (strukturell, projektbezogene Checks), Ausführungsort und Kosten. |
-| Notes-Abruf (D17) | Vollständig lesbar, begrenzt, stabil geordnet. | Erst den Größenkonflikt kontrolliert reproduzieren, dann die kleinste Leseschnittstelle wählen: Sortierschlüssel, Seitengröße, Cursorform, Kontextfilter, Umgang mit sehr großen einzelnen Notes und mit Speicherfehlern. |
-| Ergebnisvalidierung (D15) | Eine Validierung im Run-Vertrag. | Paketzuschnitt und Aufrufstellen. |
-| Generischer AGENTS.md-Harness | Best-Effort-Instruktionsdarstellung für unbekannte Provider, kein Adapter. | Zeitpunkt und Zugehörigkeit zur V1-Abnahme, festgehalten mit der Provider-Matrix. |
-| Selbstmodell | Beschreibt die gewählte Architektur. | Package-Zuschnitt für Projektvorbereitung, Workflow und Harness. |
+| Assignment state (D12) | Every invalidation follows from a nameable event; no scattered flags. | Concrete states and transitions, form of the host diagnostic for a missing judgment, passing late findings to the parents. |
+| `check` tool (D11) | Optional self-check with the same deterministic mechanism as the handoff check. | Scope (structural, project checks), place of execution and cost. |
+| Notes retrieval (D17) | Completely readable, bounded, stably ordered. | First reproduce the size conflict under control, then choose the smallest read interface: sort key, page size, cursor form, context filter, handling of very large individual Notes and of storage errors. |
+| Result validation (D15) | One validation in the Run contract. | Package cut and call sites. |
+| Generic AGENTS.md harness | Best-effort representation of instructions for unknown providers, not an adapter. | Timing and membership in V1 acceptance, recorded with the provider matrix. |
+| Self-model | Describes the chosen architecture. | Package cut for project preparation, workflow and harness. |
 
-### 28.2 Nachweisgrenzen und offene Abnahmeentscheidungen
+### 28.2 Limits of evidence and open acceptance decisions
 
-Vor der Owner-Abnahme werden Providerumfang, Laufzeitgrenzen, Wiederholungsnachweise und bekannte Einschränkungen in einer Provider-Matrix ausdrücklich festgehalten. Nachweise auf älteren Verträgen qualifizieren die nach D10–D17 geänderten Verträge nicht. Der öffentliche native Verify-Reject-Korrekturzweig mit anschließender Publication ist gesondert nachzuweisen. Ein sauberer Endstand kann begrenzt abgenommen werden, ohne universelle Zuverlässigkeit oder nicht implementierte Fähigkeiten zu versprechen.
+Before owner acceptance, provider scope, runtime limits, repetition evidence and known limitations are recorded explicitly in a provider matrix. Evidence on older contracts does not qualify the contracts changed by D10–D17. The public native Verify-Reject correction branch with subsequent publication must be shown separately. A clean final state can be accepted with limits without promising universal reliability or unimplemented capabilities.
 
-## 29. Quellen und Versionsführung
+## 29. Sources and versioning
 
-| Quelle | Rolle |
+| Source | Role |
 |---|---|
-| [Owner-Konzept v0.18](sources/v1-concept-v018-20261024.md), 24. Oktober 2026 | Wortlaut der konsolidierten Owner-Fassung mit D1–D9 und ihren Quellen Q1–Q4. |
-| [Entscheidungsprotokoll](sources/v1-concept-decisions-20261024.md), 24. Oktober 2026 | Owner-Annahme der Entscheidungsvorschläge D10–D18. |
-| [Konzepttreue-Prüfung](../development/concept-conformance-audit-20261024.md), 24. Oktober 2026 | Statische Prüfung an Commit `6c7d758c`; Ursprung von A1–A6 und R1–R3. Kein Ersatzkonzept. |
-| [V1 scope clarification](sources/v1-scope-clarification-20261023.md), [source implementation approval](sources/v1-source-implementation-approval-20261023.md) | Frühere Owner-Grundlagen, durch v0.18 und diese Fassung konsolidiert. |
+| [Owner concept v0.18](sources/v1-concept-v018-20261024.md), 24 October 2026 | Verbatim text of the consolidated owner version with D1–D9 and its sources Q1–Q4, in German. |
+| [Decision record](sources/v1-concept-decisions-20261024.md), 24 October 2026 | Owner acceptance of the proposed decisions D10–D18. |
+| [Conformance audit](../development/concept-conformance-audit-20261024.md), 24 October 2026 | Static review at commit `6c7d758c`; origin of A1–A6 and R1–R3. Not a replacement concept. |
+| [V1 scope clarification](sources/v1-scope-clarification-20261023.md), [source implementation approval](sources/v1-source-implementation-approval-20261023.md) | Earlier owner foundations, consolidated by v0.18 and this version. |
 
-Änderungen an diesem Dokument zeigen, ob sie das Soll ändern, eine technische Variante wählen oder nur Text verbessern. Eine Änderung des Solls braucht eine Owner-Entscheidung mit Register-Eintrag. Umsetzungsstand und Evidenz gehören in den Delivery Plan und in Validierungsberichte, nicht hierher.
+Changes to this document show whether they change the target, choose a technical variant or only improve the text. A change of the target needs an owner decision with a register entry. Implementation status and evidence belong in the delivery plan and in validation reports, not here. Like all Markitect documentation, this document is written in English.
 
 ---
 
-**Leitgedanke:** Das Modell bestimmt die Organisation. Die Manager tragen die fachliche Verantwortung. Der Host hält die technischen Garantien ein. Qualität entsteht aus dieser klaren Trennung – nicht aus möglichst vielen Agenten, Regeln, Interfaces oder Freigabeschritten.
+**Guiding idea:** The model determines the organization. The Managers carry the domain responsibility. The host keeps the technical guarantees. Quality comes from this clear separation – not from as many agents, rules, interfaces or approval steps as possible.
