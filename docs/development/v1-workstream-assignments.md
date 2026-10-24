@@ -10,14 +10,14 @@ Tests use controlled sessions and real local Git. Native runs belong to step 4 a
 
 ## Stream A: Run contract
 
-**Scope:** `internal/run`, `internal/harness`, `internal/workflow`, `internal/apply`, `internal/adapters/runstore`, the Codex adapter's tool, session and harness-rendering files with their tests, the real-Git vertical tests in `internal/adapters/gitrepo` that drive Run through controlled sessions, and the registry shards of these Packages. Project gains only what the `check` tool needs, coordinated in the dispatch.
+**Scope:** `internal/run`, `internal/harness`, `internal/workflow`, `internal/apply`, `internal/adapters/runstore`, the Codex adapter's tool, session and harness-rendering files with their tests, `internal/adapters/gitrepo/publication.go` for its use of approval validation, the real-Git vertical tests in `internal/adapters/gitrepo` that drive Run through controlled sessions, and the registry shards of these Packages. Project gains only what the `check` tool needs, coordinated in the dispatch.
 
 **PR A1 – collaboration (D10–D13):**
 
 1. Explicit per-Manager assignment state in Run replaces the separate booleans. Each transition follows a named event: assignment received, judgment recorded, handoff fixed, review recorded, correction delegated, late finding.
 2. `ask` accepts only the direct parent or a direct child; the refusal names the allowed addressees.
-3. A submitted child handoff is fixed, checked and delivered to the parent with its check result whether or not the check passes. Approval and integration of an invalid handoff are refused with the diagnostic. Root receives its own completion diagnostic.
-4. A `check` tool returns the deterministic check of the caller's current copy, using the same mechanism as the handoff check.
+3. In Implement a submitted child candidate is fixed, checked and delivered to the parent with its check result whether or not the check passes. Approval and integration of an invalid candidate are refused with the diagnostic. Root receives its own completion diagnostic. Assessment and Verify handoffs stay judgments about the fixed input; their check results are information, not an integration gate.
+4. A `check` tool returns the deterministic check of the caller's current copy for optional self-correction, using the same mechanism as the handoff check.
 5. A judgment is bound to the assignment and the assessed state (concept §13.2). A question-or-answer message needs no new judgment. When a native response ends with an active assignment and no valid judgment, Run sends one short message with the concrete reason. The Codex adapter keeps reporting the judgment recorded in a message; Run owns validity.
 6. Findings in native tool schemas carry no `manager` field; the host sets the origin.
 7. Harness rules and host messages keep role, organization rules, context, task and answer format. Remove the explanations of active continuations, drains and late-message handling.
@@ -26,11 +26,11 @@ Tests: one controlled-session test per counterexample in concept §13.3; sibling
 
 **PR A2 – closed-result validation (D15):** move the validation of closed results from `internal/workflow` into the Run contract; workflow and publication call it and no longer name Run resources.
 
-**PR A3 – Notes pages (D17):** `read_notes` returns bounded pages in creation order with an optional context filter; every page fits the agentd frame; appending a Note above the per-Note limit is refused with the reason. Notes carry a creation order the store can sort by. Test with stored Notes whose total exceeds one transport frame.
+**PR A3 – Notes pages (D17):** first reproduce the size conflict with stored Notes whose total exceeds one agentd frame, then choose the smallest read interface: bounded, stably ordered pages, each within the frame, with no silent truncation or loss. Sort key, page size, filter and the handling of a single very large Note are chosen and justified in the PR.
 
 ## Stream B: Provider scope
 
-**Scope:** `internal/adapters/claudecode`, the Claude parts of `internal/runtimeconfig`, `internal/bootstrap` and `internal/adapters/container`, the provider guide, configuration examples, the README provider row and the affected registry entries, architecture maps and code map as assigned in the dispatch.
+**Scope:** `internal/adapters/claudecode`, the Claude parts of `internal/runtimeconfig`, `internal/bootstrap`, `internal/adapters/container` and `internal/tooling/release/source_layout.go`, the provider guide, `docs/architecture.md`, configuration examples, the README provider row and the affected registry entries, architecture maps and code map as assigned in the dispatch.
 
 **PR B1 – remove the Claude path (D18):** remove the Claude adapter package, its profile decoding, metadata preparation, credential resolution and Bootstrap wiring, and the Claude branches in examples and guides. The runtime profile accepts only the Codex section. Git history keeps the removed code for the later Claude adapter.
 

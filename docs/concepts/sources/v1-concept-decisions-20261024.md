@@ -43,18 +43,18 @@ Recorder's note: the assistant compared v0.18 with Main `334e7c3133ff294c0b827e6
 
 ## Recorded meaning
 
-The owner accepts the proposals above as V1 product decisions, recorded as D10–D18 in [concept 1.0](../v1-concept.md#27-entscheidungen):
+Recorder's interpretation: the owner accepts the proposals above as V1 product decisions, recorded as D10–D18 in [concept 1.0](../v1-concept.md#27-entscheidungen):
 
 | ID | Decision |
 |---|---|
-| D10 | Questions go only to the direct parent or direct children; other coordination goes through the common parent. |
-| D11 | Every child submission reaches the parent with its deterministic check result; an invalid submission cannot be approved or integrated; a check tool supports optional self-correction. |
+| D10 | Questions go only to the direct parent or direct children; other coordination goes through the Managers in between. |
+| D11 | Every Implement child candidate reaches the parent with its deterministic check result; an invalid candidate cannot be approved or integrated; a child can use a check tool for optional self-correction. |
 | D12 | A judgment belongs to the assignment and the assessed state, not to a message; the host keeps an explicit assignment state per Manager. Closes A3 and R3. |
 | D13 | Agents get tasks, not process; a fixed small Manager tool set with one tool per purpose. |
-| D14 | The V1 harness uses native base/developer instructions; skills or loadable context only on demonstrated need; no generic AGENTS fallback in V1. |
+| D14 | The V1 harness uses native base/developer instructions. Recorder's note: "skills or loadable context only on demonstrated need" restates v0.18 section 15.4; the generic AGENTS.md representation planned in v0.18 section 15.5 stays planned. |
 | D15 | Validation of closed Run results belongs to the Run contract. |
 | D16 | V1 has exactly three mandates. |
-| D17 | Notes are read in bounded, stably ordered pages within the transport limit; oversized entries are refused on write. |
+| D17 | Notes are read in bounded, stably ordered pages within the transport limit, without silent truncation. The concrete interface follows a controlled reproduction of the size conflict, as v0.18 R2 asks. |
 | D18 | V1 acceptance covers Codex; Claude follows on the stabilized contract; no non-functional Claude path in the product until then. |
 
 The owner also accepts the five-step plan and starts step 1. The concept text may be condensed as proposed.

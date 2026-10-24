@@ -17,8 +17,8 @@ The [V1 qualification record](validation/v1-qualification-20261024.md) holds the
 | Concept | Current source | Step |
 |---|---|---|
 | D10: questions only to the direct parent or direct children | `ask` in `internal/run/inbox.go` accepts any other Manager of the Run | 2 |
-| D11: every child submission reaches the parent with its check result; invalid submissions are not integrable | `work` in `internal/run/execute.go` sends an invalid submission's findings back to the child; the parent receives only valid handoffs | 2 |
-| D12: a judgment belongs to the assignment and assessed state; explicit assignment state | every active continuation requires a fresh `judge`; the Codex adapter resets the judgment per message; Manager state is spread over many booleans | 2 |
+| D11: every Implement child candidate reaches the parent with its check result; invalid candidates are not integrable | `work` in `internal/run/execute.go` sends an invalid submission's findings back to the child; the parent receives only valid handoffs | 2 |
+| D12: a judgment belongs to the assignment and assessed state; explicit assignment state | every active continuation requires a fresh `judge`; the Codex adapter resets the judgment per message, and a response without a judgment fails the whole Run; Manager state is spread over many booleans | 2 |
 | D13: tasks, not process; fixed tool set with `check`; host-known identities not requested | harness rules and host messages explain continuations, drains and late messages; no `check` tool; native Findings must name a `manager` | 2 |
 | D15: closed-result validation in the Run contract | `workflow.ValidateClosed` checks Run resource names; `apply.ValidateApproval` calls it | 3 |
 | D17: bounded, ordered Notes pages within the transport limit | `read_notes` returns all Notes in one tool reply ordered by random ID; the store accepts 16 MiB against a 1 MiB frame; a read error cancels the Run | 3 |
@@ -35,7 +35,7 @@ Product guides such as the [architecture](architecture.md), the [project workflo
 |---|---|---|
 | 1. Record concept 1.0 | Concept, owner sources, decision record and register entry; entry documents, this plan, the architecture and the self-model Run Rule aligned; evidence moved to the qualification record | Structural check, documentation links, generated view and independent complete-diff review |
 | 2. Run collaboration contract | D10–D13: hierarchical questions, child diagnostics at the parent, judgment bound to assignment and assessed state with an explicit host-side state, the `check` tool and a fixed tool set; harness rules and host messages reduced to role, rules, context, task and answer format | Controlled-session tests for every counterexample in concept §13.3 and for V03, V05 and V17; existing real-Git vertical tests adjusted, not weakened; Run, harness and Codex adapter suites; architecture and accounting gates |
-| 3. Contract fixes and provider scope | D15 closed-result validation in the Run contract; D17 bounded Notes pages; D18 removal of the Claude adapter and its wiring, with guides and examples | Focused tests including a stored-Notes case above one transport frame; full build, vet, architecture and accounting; no remaining Claude product path |
+| 3. Contract fixes and provider scope | D15 closed-result validation in the Run contract; D17 bounded Notes pages after a controlled reproduction of the size conflict; D18 removal of the Claude adapter and its wiring, with guides and examples | Focused tests including a stored-Notes case above one transport frame; full build, vet, architecture and accounting; no remaining Claude product path |
 | 4. Native requalification (Codex) | Frozen source after steps 2 and 3: fresh M1, M2 5 → 3, strict no-change, seeded defect, the public Verify Reject → fresh Implement → fresh Verify → publication branch and outside oracles | Bounded dispatches under the standing evidence authorization with source, limits, abort, cleanup and actual results; failures retained |
 | 5. Final cleanup and acceptance package | Self-model Package cut for Project, Workflow and Harness; guides, code map and generated view; provider matrix and known limits | Full local suite, Linux, Windows and race, manual CI on the frozen head; independent architecture review; owner acceptance as a separate decision |
 
@@ -49,8 +49,8 @@ At most two writing chats at a time. Each dispatch records the exact integrated 
 
 | Stream | Exclusive scope | Sequence |
 |---|---|---|
-| A: Run contract | `internal/run`, `internal/harness`, `internal/workflow`, `internal/apply`, `internal/adapters/runstore`, the Codex adapter's tool, session and harness rendering files, their tests and real-Git vertical tests in `internal/adapters/gitrepo`, and the registry shards of those Packages | Step 2 first, then the D15 and D17 parts of step 3 as separate PRs |
-| B: Provider scope | `internal/adapters/claudecode`, Claude parts of `internal/runtimeconfig`, `internal/bootstrap` and `internal/adapters/container`, provider guides, examples, the README provider row and their registry entries | D18 part of step 3, in parallel with stream A |
+| A: Run contract | `internal/run`, `internal/harness`, `internal/workflow`, `internal/apply`, `internal/adapters/runstore`, the Codex adapter's tool, session and harness rendering files, `internal/adapters/gitrepo/publication.go`, their tests and real-Git vertical tests in `internal/adapters/gitrepo`, and the registry shards of those Packages | Step 2 first, then the D15 and D17 parts of step 3 as separate PRs |
+| B: Provider scope | `internal/adapters/claudecode`, Claude parts of `internal/runtimeconfig`, `internal/bootstrap`, `internal/adapters/container` and `internal/tooling/release/source_layout.go`, provider guides, `docs/architecture.md`, examples, the README provider row and their registry entries | D18 part of step 3, in parallel with stream A |
 
 The coordinator owns the concept, this plan, the architecture document, reviews and integration, and does not edit a writer's files. Shared files such as `internal/tooling/architecture` maps, `docs/development/code-map.md`, `.markitect/model/**` and the generated view have one writer at a time, assigned in the dispatch.
 
@@ -62,7 +62,7 @@ Use isolated worktrees from verified integrated bases, non-protected scoped bran
 
 ## Owner decisions
 
-Settled: concept 1.0 with D1–D18, including V1 acceptance with Codex only ([decision record](concepts/sources/v1-concept-decisions-20261024.md)). The [standing evidence authorization](concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization) lets the coordinator dispatch useful bounded real proofs. Release and deployment are excluded. Pending: owner acceptance after step 5 and the timing of the Claude adapter.
+Settled: concept 1.0 with D1–D18 ([decision record](concepts/sources/v1-concept-decisions-20261024.md)). V1 acceptance with Codex only (D18) was proposed as a recommendation and accepted with the other proposals; the owner can revise it. The [standing evidence authorization](concepts/sources/v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization) lets the coordinator dispatch useful bounded real proofs. Release and deployment are excluded. Pending: owner acceptance after step 5 and the timing of the Claude adapter.
 
 ## Historical references
 

@@ -11,7 +11,7 @@
 
 > **Das kanonische Modell beschreibt die beabsichtigte Projektwelt. Die Managerorganisation wird daraus abgeleitet. Die Manager realisieren, prüfen und integrieren diese Welt; der Host stellt dafür wenige klare technische Garantien bereit.**
 
-Diese Fassung verdichtet v0.18 und schließt deren offene Punkte durch Entscheidungen. Weicht sie von den Quellen ab, gelten die Quellen. Das Dokument beschreibt das Soll. Umsetzungsstand und bekannte Abweichungen des Codes führt der [Delivery Plan](../implementation-plan.md). Es erteilt keine Implementierungs-, Release-, Deployment- oder Abnahmefreigabe.
+Diese Fassung verdichtet v0.18 und schließt deren offene Punkte durch Entscheidungen. Für D10–D18 gilt das Entscheidungsprotokoll, für alle übrigen Inhalte die Owner-Fassung v0.18. Jede weitere Abweichung dieser Fassung ist ein Redaktionsfehler und wird dem Coordinator gemeldet. Das Dokument beschreibt das Soll. Umsetzungsstand und bekannte Abweichungen des Codes führt der [Delivery Plan](../implementation-plan.md). Es erteilt keine Implementierungs-, Release-, Deployment- oder Abnahmefreigabe.
 
 ## Leseregeln
 
@@ -21,7 +21,7 @@ Diese Fassung verdichtet v0.18 und schließt deren offene Punkte durch Entscheid
 | **Technisch auszugestalten** | Das Ziel steht fest; API, Speicherform, Providerabbildung oder Paketzuschnitt brauchen eine begründete Umsetzung. Gesammelt in Abschnitt 28. |
 | **Später** | Bewusst nicht Teil von V1. Darf den Kern nicht durch vorgezogene Kompatibilitätspflichten bestimmen. |
 
-„Muss“ bezeichnet eine fachliche oder technische Invariante, keine vorgeschriebene Datei. „Beispielsweise“ nennt eine geeignete Form, keine Pflichttechnologie. Owner-Entscheidungen bestimmen die Produktsemantik; ein Architekturvorschlag, ein Audit oder ein grüner Test ändert sie nicht stillschweigend.
+„Muss“ bezeichnet eine fachliche oder technische Invariante, keine vorgeschriebene Datei. „Beispielsweise“ nennt eine geeignete Form, keine Pflichttechnologie. Owner-Entscheidungen bestimmen die Produktsemantik; ein Architekturvorschlag, ein Audit oder ein grüner Test ändert sie nicht stillschweigend. Aktueller Code wird nicht nachträglich zur Sollvorgabe, nur weil er implementiert oder erfolgreich getestet ist, und ausdrücklich verworfene frühere Anforderungen kehren nicht zurück.
 
 ---
 
@@ -129,13 +129,13 @@ Ein wiederkehrender Fehler im Zusammenspiel von Agent und Host wird im Host-Zust
 | **Workspace** | Veränderliche, private Arbeitskopie eines Managers während eines Runs. |
 | **Übergabe (Handoff)** | Fixierter Arbeits- oder Prüfstand eines Managers mit dem für das Review nötigen Kontext. |
 | **Kandidat** | Fixierter, dauerhaft referenzierbarer Git-Realisierungsstand. |
-| **Urteil** | Fachliche Entscheidung eines Managers zu seinem eigenen Auftrag: `submitted` (nur Implement), `approve`, `reject` oder `model_blocker`. |
+| **Urteil** | Fachliche Entscheidung eines Managers zu seinem eigenen Auftrag: Zustimmung, Ablehnung oder Modellblocker; bei Implement die Abgabe eines Kandidaten. Implement gibt sich nie selbst frei. |
 | **Review** | Entscheidung eines Vaters über die fixierte Übergabe eines direkten Kindes. |
 | **Finding** | Für das aktuelle Mandat erforderliche Feststellung oder Korrektur. |
 | **Shared Note** | Persistente, nichtkanonische Beobachtung ohne automatische Auftragswirkung. |
 | **Publication** | Kontrollierte Übertragung eines akzeptierten Kandidaten in das Nutzerrepository. Kein automatischer Commit oder Push. |
 
-**Ein Run ist kein Workflow. Ein Command kann einen Workflow enthalten. Eine Nachricht ist weder ein Run noch ein neuer Auftrag.**
+**Ein Run ist kein Workflow. Ein Command kann einen Workflow enthalten. Eine technische Nachricht ist weder ein Run noch automatisch ein neuer Auftrag.**
 
 ## 5. Kanonisches Modell und deterministische Vorbereitung
 
@@ -197,7 +197,7 @@ Review und Verify berücksichtigen akzeptierte Kinderintegrationen; diese sind k
 
 ### 7.1 Das Modell ist die Architektur
 
-Die Organisation wird aus dem gültigen Modell abgeleitet. Es gibt keine zweite, manuell gepflegte Managerhierarchie. Sie umfasst Root und alle lokalen Package-Manager, einschließlich leerer und intermediärer Packages. Externe Modellabhängigkeiten werden nicht zu einer zusätzlichen ausführbaren Organisation.
+Die Organisation wird aus dem gültigen Modell abgeleitet. Es gibt keine zweite, manuell gepflegte Managerhierarchie. Sie umfasst Root und alle lokalen Package-Manager, einschließlich leerer und intermediärer Packages. Die bestehenden Regeln für externe Modellabhängigkeiten werden nicht beiläufig zu einer zusätzlichen ausführbaren Organisation erweitert.
 
 ### 7.2 Vollständige Teilnahme in jedem Mandat
 
@@ -223,7 +223,7 @@ Unabhängige Kinder arbeiten parallel. Braucht ein Kind das integrierte Ergebnis
 
 ### 8.2 Kommunikation entlang der Hierarchie (D10)
 
-Delegation, Fragen, Antworten, Abstimmung und Eskalation folgen dem Baum. Ein Manager fragt nur seinen direkten Vater oder seine direkten Kinder; Antworten gehen an den Fragenden zurück. Abstimmung zwischen Geschwistern oder über mehrere Ebenen läuft über den gemeinsamen Vater, der selbst weiterfragt oder entscheidet. Root fragt niemanden außerhalb des Runs.
+Delegation, Fragen, Antworten, Abstimmung und Eskalation folgen dem Baum. Ein Manager fragt nur seinen direkten Vater oder seine direkten Kinder; Antworten gehen an den Fragenden zurück. Abstimmung zwischen Geschwistern läuft über den gemeinsamen Vater, der selbst weiterfragt oder entscheidet; Abstimmung über mehrere Ebenen läuft Schritt für Schritt über die Manager dazwischen. Root fragt niemanden außerhalb des Runs.
 
 Der Host leitet die erlaubten Beziehungen aus der Topologie ab und lehnt andere Adressen mit Begründung ab. Eine eigene ACL- oder Routingsprache gibt es nicht.
 
@@ -237,11 +237,13 @@ Angenommene Ergebnisse werden nach oben integriert, sobald sie vorliegen, ohne a
 
 ### 8.4 Fehlerhafte Übergaben sind Elternverantwortung (D11)
 
-Jede Kinderabgabe wird fixiert und zusammen mit dem Ergebnis der deterministischen Prüfung an den Vater übergeben – auch wenn die Prüfung fehlschlägt. Der Host schickt eine ungültige Abgabe nicht still an das Kind zurück.
+Bei Implement wird jeder abgegebene Kinderkandidat fixiert und zusammen mit dem Ergebnis der deterministischen Prüfung an den Vater übergeben – auch wenn die Prüfung fehlschlägt. Der Host schickt eine ungültige Abgabe nicht still an das Kind zurück.
 
-Der Vater erkennt aus der Diagnose, ob lokale Korrektur, eine Schnittstellenklärung oder eine andere Integrationsreihenfolge nötig ist. Er weist die Abgabe mit Findings zurück, klärt die Schnittstelle oder eskaliert. Eine ungültige Abgabe kann er weder annehmen noch integrieren.
+Der Vater erkennt aus der Diagnose, ob lokale Korrektur, eine Schnittstellenklärung oder eine andere Integrationsreihenfolge nötig ist. Er weist die Abgabe mit Findings zurück, klärt die Schnittstelle oder eskaliert. Einen ungültigen Kandidaten kann er weder annehmen noch integrieren.
 
-Lokale Selbstkorrektur bleibt möglich: Jeder Manager kann dieselbe deterministische Prüfung für seinen aktuellen Stand vor der Abgabe über ein Werkzeug abrufen (Abschnitt 14). Das ist ein Angebot, kein Pflichtschritt. Root hat keinen Vater; seine Diagnose liefert der Host direkt an Root zurück (Kontrollpunkt vor dem Root-Abschluss).
+Lokale Selbstkorrektur bleibt möglich: Ein Kind kann dieselbe deterministische Prüfung für seinen aktuellen Stand vor der Abgabe über ein Werkzeug abrufen (Abschnitt 14). Das ist ein Angebot, kein Pflichtschritt. Root hat keinen Vater; seine Diagnose liefert der Host direkt an Root zurück (Kontrollpunkt vor dem Root-Abschluss).
+
+In Assessment und Verify ist eine Kinderübergabe ein Urteil über den fixierten Eingabekandidaten. Hilfsdateien der privaten Kopie werden nicht übernommen. Ein Prüfergebnis zum Eingabekandidaten ist Information für das Urteil, keine Integrationssperre; ein begründetes Reject eines ungültigen Kandidaten ist ein reguläres Ergebnis.
 
 ### 8.5 Korrektur im Run und zwischen Runs
 
@@ -360,7 +362,7 @@ Dieselben Compiler-, Registry- und Accountingmechanismen werden an verschiedenen
 | Kontrollpunkt | Prüfung und Konsequenz |
 |---|---|
 | **Vor Workflowbeginn** | Gültige Modellbasis und anwendbare Projektstruktur. Bei Fehler Abbruch vor dem agentischen Workflow und vor Run-Ressourcen. |
-| **Bei Kinderübergaben** | Fixierter Übergabestand und Accounting. Die Diagnose geht immer mit der Übergabe an den Vater (D11); eine ungültige Abgabe ist nicht integrierbar. |
+| **Bei Kinderübergaben** | Fixierter Übergabestand und Accounting. Bei Implement geht die Diagnose immer mit der Übergabe an den Vater, und ein ungültiger Kandidat ist nicht integrierbar (D11). |
 | **Vor erfolgreichem Root-Abschluss** | Integrierter Gesamtstand, relevante Checks und Bindungen. Kein erfolgreiches Implement und kein Approve bei ungelöster technischer Ungültigkeit. |
 | **Vor Publication** | Exakt akzeptierter Kandidat, erforderliche Prüfungen und tatsächliche Quell- und Zielguards. Keine unzulässige Übertragung. |
 
@@ -384,9 +386,10 @@ Ein Urteil gilt für den aktuellen Auftragsstand – Aufgabe und verbindliche Fi
 
 - eine Rückweisung oder Korrekturdelegation des Vaters mit Findings,
 - neue verpflichtende Findings, die den Auftrag betreffen,
-- eine Änderung des bewerteten Stands nach dem Urteil.
+- eine Änderung des bewerteten Stands nach dem Urteil,
+- ein spätes verpflichtendes Finding, Reject oder einen Modellblocker eines Kindes zu einer bereits angenommenen Übergabe.
 
-Eine Nachricht, die nur Fragen oder Antworten behandelt, verlangt kein neues Urteil; ein gültiges Urteil bleibt bestehen. Fehlt am Ende einer Providerantwort für einen aktiven Auftrag ein gültiges Urteil, sendet der Host eine kurze Nachricht mit dem konkreten Grund, etwa „dein Arbeitsstand hat sich nach deinem Urteil geändert“ oder „das Review von Kind X fehlt“. Das ist eine Diagnose des Hosts, keine allgemeine Promptregel.
+Eine Nachricht, die nur Fragen oder Antworten behandelt, verlangt kein neues Urteil; ein gültiges Urteil bleibt bestehen. Fehlt am Ende einer Providerantwort für einen aktiven Auftrag ein gültiges Urteil, macht der Host den konkreten Grund sichtbar, etwa „dein Arbeitsstand hat sich nach deinem Urteil geändert“ oder „das Review von Kind X fehlt“. Das ist eine Diagnose des Hosts, keine allgemeine Promptregel; ihre Form ist technisch auszugestalten.
 
 Der Host führt dafür pro Manager einen kleinen, expliziten Auftragszustand statt verstreuter Einzelmerkmale. Jede Invalidierung folgt aus einem benennbaren Ereignis.
 
@@ -399,7 +402,7 @@ Der Host führt dafür pro Manager einen kleinen, expliziten Auftragszustand sta
 | Neue verpflichtende Findings kommen an | Das bisherige Urteil wird ungültig; ein neues ist nötig. |
 | Der bewertete Stand ändert sich | Eine Zustimmung zum alten Stand gilt nicht für den neuen. |
 | Eine fixierte Übergabe ist erfolgt | Spätere Kommunikation verändert den geprüften Stand nicht. |
-| Ein später Befund widerlegt eine Annahme | Ein spätes Reject oder ein Modellblocker mit Findings bleibt wirksam; die betroffene Annahme des Vaters und darüber gilt nicht mehr ungeprüft, und Root berücksichtigt die Konsequenz. |
+| Ein später Befund widerlegt eine Annahme | Ein spätes Reject oder ein Modellblocker mit Findings bleibt wirksam. Die Annahme des Vaters über diese Übergabe und jedes darauf beruhende Urteil darüber werden ungültig und müssen neu getroffen werden, bevor Root erfolgreich abschließen kann. Ein Modellblocker verhindert einen erfolgreichen Abschluss. |
 
 ## 14. Manager-Werkzeuge (D13)
 
@@ -412,7 +415,7 @@ Der Host führt dafür pro Manager einen kleinen, expliziten Auftragszustand sta
 | `review` | Ein Vater entscheidet über die fixierte Übergabe eines direkten Kindes: annehmen, zurückweisen oder Modellblocker. |
 | `ask` / `reply` | Fragen und Antworten entlang der Hierarchie, asynchron. |
 | `judge` | Das eigene Urteil zum Auftrag mit Findings festhalten. |
-| `check` | Die deterministische Prüfung des eigenen aktuellen Stands abrufen. |
+| `check` | Die deterministische Prüfung des eigenen aktuellen Stands abrufen, zur optionalen Selbstprüfung vor der Abgabe. |
 | `read_notes` / `append_note` | Shared Notes seitenweise lesen und Beobachtungen anhängen. |
 
 Jeder fachliche Zweck hat genau ein Werkzeug.
@@ -435,7 +438,7 @@ Der Harness bereitet den Manager wie einen Mitarbeiter auf seine Verantwortung v
 |---|---|
 | **Markitect Core** | Versionierte allgemeine Regeln für Delegation, Zusammenarbeit, Ownership, Registry, Reviews, Findings und Notes. Nicht von jedem Projekt neu zu definieren. |
 | **Projekt** | Kanonische Fachlichkeit, Architektur, Policies, Qualitätsverpflichtungen und ausdrücklich gebundene Projektkonventionen. |
-| **Manager** | Eigene Rolle, Vater, direkte Kinder, Zuständigkeiten, Registry-Shard, Schnittstellen und Projektnavigation. |
+| **Manager** | Eigene Rolle, Vater, direkte Kinder, relevante Kollegen, Zuständigkeiten, Registry-Shard, Schnittstellen und Projektnavigation. |
 | **Run** | Mandat, fixierte Eingaben, relevante Findings, erlaubte Auswirkungen und Ergebniserwartung. |
 | **Provider** | Umsetzung durch tatsächlich unterstützte native Instruktionen, Werkzeuge und Konfiguration. |
 
@@ -451,9 +454,9 @@ Der Manager erhält eine kompakte Orientierung und den für seine Verantwortung 
 
 ### 15.5 V1-Form des Harness (D14)
 
-In V1 wird der Harness über die nativen Base- und Developer-Instruktionen des Providers bereitgestellt. Sie enthalten die Markitect-Regeln und den vollständigen statisch ausgewählten Pflichtkontext. Automatisch geladene Repository-Instruktionen sind abgeschaltet; projektgebundene Instruktionen gelangen nur über den kontrollierten Harness in die Umgebung. So übersteuern weder Repository-Dateien noch Providerprofile die kanonische Absicht oder die Markitect-Regeln unkontrolliert. Semantisch unklare Konflikte zwischen Instruktionen bleiben sichtbar, statt durch ein Policy-Framework verdeckt zu werden. Übersteigt der Pflichtkontext eine Grenze, scheitert die Vorbereitung sichtbar; gekürzt wird nicht.
+In V1 wird der Harness über die nativen Base- und Developer-Instruktionen des Providers bereitgestellt. Sie enthalten die Markitect-Regeln und den vollständigen statisch ausgewählten Pflichtkontext. Automatisch geladene Repository-Instruktionen werden bewusst behandelt, etwa abgeschaltet; projektgebundene Instruktionen gelangen nur über den kontrollierten Harness in die Umgebung. So übersteuern weder Repository-Dateien noch Providerprofile die kanonische Absicht oder die Markitect-Regeln unkontrolliert. Semantisch unklare Konflikte zwischen Instruktionen bleiben sichtbar, statt durch ein Policy-Framework verdeckt zu werden. Übersteigt der Pflichtkontext eine Grenze, scheitert die Vorbereitung sichtbar; gekürzt wird nicht.
 
-Modulare Dateien, Skills oder nachladbarer Kontext kommen hinzu, sobald ein konkreter Größen- oder Bedienfall ihren Nutzen zeigt. Ein generischer AGENTS.md-Fallback für unbekannte Provider ist nicht Teil von V1; er wäre ohnehin nur Instruktionsdarstellung und kein ausführbarer Adapter.
+Modulare Dateien, Skills oder nachladbarer Kontext kommen hinzu, sobald ein konkreter Größen- oder Bedienfall ihren Nutzen zeigt. Für unbekannte kompatible Provider ist ein generischer AGENTS.md-Harness als Best-Effort-Instruktionsdarstellung vorgesehen. Er ersetzt keinen ausführbaren Adapter, keine Managerkommunikation und keine notwendigen technischen Fähigkeiten; ein unbekannter Agent ist nicht allein durch diese Datei unterstützt. Ob er zum V1-Abnahmeumfang gehört, wird mit der Provider-Matrix festgehalten (Abschnitt 28.2).
 
 ### 15.6 Technische Grenzen bleiben außerhalb der Instruktionen
 
@@ -491,7 +494,7 @@ Ein Workspace ist veränderlich und an die laufende Ausführung gebunden. Ein Ka
 
 ### 17.5 Speicherform
 
-Selbstständige Git-Bundles mit gebundenen Metadaten sind die V1-Form. Die Garantie ist die unabhängige Wiederöffnung, nicht das Format: Ein Persistenznachweis entfernt die temporären Arbeitsstände und öffnet exakt den Kandidaten in einer neuen Umgebung allein aus den gespeicherten Daten. Verify und Publication brauchen keine lebende Referenz auf den erzeugenden Run. Eine Git-Serverplattform ist nicht vorgesehen.
+Selbstständige Git-Bundles mit gebundenen Metadaten sind der vorgesehene V1-Ansatz; eine gleichwertige einfachere Form wäre begründbar. Die Garantie ist die unabhängige Wiederöffnung, nicht das Format: Ein Persistenznachweis entfernt die temporären Arbeitsstände und öffnet exakt den Kandidaten in einer neuen Umgebung allein aus den gespeicherten Daten. Verify und Publication brauchen keine lebende Referenz auf den erzeugenden Run. Eine Git-Serverplattform ist nicht vorgesehen.
 
 ### 17.6 Checks und verbleibende Ressourcen
 
@@ -529,7 +532,7 @@ Eine Note ist keine Delegation, keine Modellpflicht und kein automatisch auszuf�
 
 ### 19.3 Begrenzter Abruf (D17)
 
-Notes werden nicht pauschal in jeden Startprompt kopiert, bleiben aber bei Bedarf lesbar, auch wenn ihre Menge über viele Commands wächst. `read_notes` liefert begrenzte Seiten in stabiler Reihenfolge der Erstellung, mit optionalem Kontextfilter; jede Seite passt in die Transportgrenze. Eine einzelne Note hat eine Größengrenze unterhalb der Transportgrenze; ein zu großer Eintrag wird beim Schreiben mit Begründung abgelehnt. Keine stille Kürzung, kein Löschen alter Notes, keine Vektordatenbank oder semantische Suche.
+Notes werden nicht pauschal in jeden Startprompt kopiert, bleiben aber bei Bedarf lesbar, auch wenn ihre Menge über viele Commands wächst. `read_notes` liefert begrenzte Seiten in stabiler Reihenfolge; jede Seite passt in die Transportgrenze. Keine stille Kürzung, kein Datenverlust, kein Löschen alter Notes, keine Vektordatenbank oder semantische Suche. Sortierschlüssel, Seitengröße, Filter und der Umgang mit einzelnen sehr großen Notes werden nach einer kontrollierten Reproduktion des Größenkonflikts gewählt (Abschnitt 28.1).
 
 ### 19.4 Verify-Unabhängigkeit
 
@@ -551,11 +554,11 @@ Die Namen der Statuswerte sind Implementierungsdetail, ihre Bedeutungen werden n
 
 ### 20.2 Gemeinsame endliche Ressourcen
 
-Der Command setzt ein endliches Gesamtbudget; neue Runs und Korrekturen schaffen kein neues Budget. Der Run verbraucht seinen Anteil, ohne die übergeordnete Komposition zu kennen. Per-Message-Limits begrenzen technische Aufrufe, ersetzen aber nicht den fachlichen Abschlussvertrag. Budgets werden nicht pauschal erhöht, um einen unverstandenen Deadlock oder Protokollfehler zu kaschieren.
+Der Command setzt ein endliches Gesamtbudget; neue Runs und Korrekturen schaffen kein neues Budget. Jeder Run verbraucht aus diesem gemeinsamen Budget, ohne die übergeordnete Komposition zu kennen. Per-Message-Limits begrenzen technische Aufrufe, ersetzen aber nicht den fachlichen Abschlussvertrag. Budgets werden nicht pauschal erhöht, um einen unverstandenen Deadlock oder Protokollfehler zu kaschieren.
 
 ### 20.3 Deadline bis zum blockierenden Vorgang
 
-Abbruch und Fristen reichen bis zu den kontrollierten Unterprozessen, insbesondere in Git-, Guard- und Publication-Pfaden. Cleanup und abschließende Persistenz erhalten eine kleine gesonderte Nachlaufgrenze, um diagnostizierbare Ergebnisse zu sichern. Der Nachlauf erlaubt keine neue fachliche Arbeit.
+Abbruch und Fristen reichen bis zu den kontrollierten Unterprozessen, insbesondere in Git-, Guard- und Publication-Pfaden. Eine äußere Fristprüfung reicht nicht, wenn ein innerer Prozess unbeschränkt weiterläuft. Cleanup und abschließende Persistenz erhalten eine kleine gesonderte Nachlaufgrenze, um diagnostizierbare Ergebnisse zu sichern. Der Nachlauf erlaubt keine neue fachliche Arbeit und keine verdeckte Verlängerung der Auftragsressourcen.
 
 ### 20.4 Ehrliches Cleanup
 
@@ -569,7 +572,7 @@ Publication konsumiert einen dauerhaft gespeicherten Kandidaten und dessen gespe
 
 ### 21.2 Nutzeränderungen und Konflikte
 
-Der Zielzustand muss zur gebundenen Ausgangslage passen. Zwischenzeitliche Nutzeränderungen werden nicht überschrieben; V1 endet bei relevanter Abweichung mit einem klaren Konflikt statt mit einem erfundenen semantischen Merge. Erzeugt eine spätere Funktion einen Merge, der vom geprüften Kandidaten abweicht, braucht sie eine eigene erneute Prüfung.
+Der Zielzustand muss zur gebundenen Ausgangslage passen. Zwischenzeitliche Nutzeränderungen werden nicht überschrieben; V1 endet bei relevanter Abweichung mit einem klaren Konflikt statt mit einem erfundenen semantischen Merge. Erzeugt eine spätere Funktion einen Merge, der vom geprüften Kandidaten abweicht, braucht sie eine eigene erneute Prüfung. Der letzte deterministische Check ersetzt keine unabhängige fachliche Zustimmung zu neuen Inhalten.
 
 ### 21.3 Teilübertragung und Readback
 
@@ -674,7 +677,7 @@ Lange Chats können nach kontrolliertem Handoff archiviert werden. Ein Handoff b
 | **V02** | Die vollständige Hierarchie arbeitet in Assessment, Implement und Verify, einschließlich Enkel, intermediärem und leerem Package. |
 | **V03** | Parallele Kinderarbeit; Fragen nur entlang erlaubter Pfade, Geschwister- und Ebenensprünge werden mit Begründung abgelehnt; überkreuzte Fragen und Abbruch funktionieren. |
 | **V04** | Review und Integration betreffen exakt die tatsächliche Aufgabenbasis und fixierte Übergabe. |
-| **V05** | Eine ungültige Kinderabgabe erreicht den Vater mit Diagnose und ist nicht integrierbar; Root kann ungelöste technische Ungültigkeit nicht als Erfolg abschließen. |
+| **V05** | Ein ungültiger Implement-Kinderkandidat erreicht den Vater mit Diagnose und ist nicht integrierbar; Root kann ungelöste technische Ungültigkeit nicht als Erfolg abschließen. |
 | **V06** | Verify-Reject erzeugt neue Implement- und Verify-Runs ohne alte Gespräche und ohne zurückgesetztes Gesamtbudget. |
 | **V07** | Spät erkannte Modellblocker beenden ohne Publication und ohne endlose Codereparatur. |
 | **V08** | Kandidaten lassen sich nach Entfernen der temporären Umgebungen exakt wiederöffnen. |
@@ -749,13 +752,13 @@ Sie schließen die in v0.18 offenen Punkte A1–A6 und R1–R3. R1 (Deadline in 
 | ID | Ursprung | Entscheidung | Abschnitt |
 |---|---|---|---|
 | **D10** | A1 | Fragen nur an direkten Vater und direkte Kinder; Abstimmung sonst über den gemeinsamen Vater. | 8.2 |
-| **D11** | A2 | Jede Kinderabgabe geht mit Prüfergebnis an den Vater; ungültige Abgaben sind nicht integrierbar; Selbstprüfung per Werkzeug. | 8.4 |
+| **D11** | A2 | Jeder Implement-Kinderkandidat geht mit Prüfergebnis an den Vater; ungültige Kandidaten sind nicht integrierbar; optionale Selbstprüfung per Werkzeug. | 8.4 |
 | **D12** | A3, R3 | Ein Urteil gehört zu Auftrag und bewertetem Stand, nicht zur Nachricht; expliziter Auftragszustand im Host. | 13.2 |
 | **D13** | Neu | Aufgaben statt Prozess; fester kleiner Werkzeugsatz mit genau einem Werkzeug je Zweck. | 3.7, 14 |
-| **D14** | A4 | V1-Harness über native Base-/Developer-Instruktionen; Skills und Nachladen erst bei belegtem Bedarf; kein generischer Fallback in V1. | 15.5 |
+| **D14** | A4 | V1-Harness über native Base-/Developer-Instruktionen; Skills und Nachladen erst bei belegtem Bedarf. | 15.5 |
 | **D15** | A5 | Validierung geschlossener Run-Ergebnisse gehört zum Run-Vertrag. | 10.3 |
 | **D16** | A6 | Genau drei Mandate in V1; neue Mandate erst mit einem echten Command. | 10.5 |
-| **D17** | R2 | Notes seitenweise, stabil sortiert, innerhalb der Transportgrenze; zu große Einträge werden beim Schreiben abgelehnt. | 19.3 |
+| **D17** | R2 | Notes seitenweise und stabil sortiert, jede Seite innerhalb der Transportgrenze, ohne stille Kürzung. | 19.3 |
 | **D18** | Neu | V1-Abnahme mit Codex; Claude als nächste Providerabbildung auf dem stabilisierten Vertrag; kein nicht funktionsfähiger Claude-Pfad bis dahin. | 2.3 |
 
 ### 27.3 Präzisierungen gegenüber frühen Fassungen
@@ -780,15 +783,16 @@ Sie schließen die in v0.18 offenen Punkte A1–A6 und R1–R3. R1 (Deadline in 
 
 | Thema | Festes Ziel | Offen für die Umsetzung |
 |---|---|---|
-| Auftragszustand (D12) | Jede Invalidierung folgt aus einem benennbaren Ereignis; keine verstreuten Flags. | Konkrete Zustände, Übergänge und ihre Abbildung im Run. |
-| `check`-Werkzeug (D11) | Selbstprüfung mit demselben deterministischen Mechanismus wie die Übergabeprüfung. | Umfang (strukturell, projektbezogene Checks), Ausführungsort und Kosten. |
-| Notes-Abruf (D17) | Vollständig lesbar, begrenzt, stabil geordnet. | Seitengröße, Cursorform, Kontextfilter, Behandlung von Speicherfehlern. |
+| Auftragszustand (D12) | Jede Invalidierung folgt aus einem benennbaren Ereignis; keine verstreuten Flags. | Konkrete Zustände und Übergänge, Form der Host-Diagnose bei fehlendem Urteil, Weitergabe später Befunde an die Väter. |
+| `check`-Werkzeug (D11) | Optionale Selbstprüfung mit demselben deterministischen Mechanismus wie die Übergabeprüfung. | Umfang (strukturell, projektbezogene Checks), Ausführungsort und Kosten. |
+| Notes-Abruf (D17) | Vollständig lesbar, begrenzt, stabil geordnet. | Erst den Größenkonflikt kontrolliert reproduzieren, dann die kleinste Leseschnittstelle wählen: Sortierschlüssel, Seitengröße, Cursorform, Kontextfilter, Umgang mit sehr großen einzelnen Notes und mit Speicherfehlern. |
 | Ergebnisvalidierung (D15) | Eine Validierung im Run-Vertrag. | Paketzuschnitt und Aufrufstellen. |
+| Generischer AGENTS.md-Harness | Best-Effort-Instruktionsdarstellung für unbekannte Provider, kein Adapter. | Zeitpunkt und Zugehörigkeit zur V1-Abnahme, festgehalten mit der Provider-Matrix. |
 | Selbstmodell | Beschreibt die gewählte Architektur. | Package-Zuschnitt für Projektvorbereitung, Workflow und Harness. |
 
 ### 28.2 Nachweisgrenzen und offene Abnahmeentscheidungen
 
-Vor der Owner-Abnahme werden Providerumfang, Laufzeitgrenzen, Wiederholungsnachweise und bekannte Einschränkungen ausdrücklich festgehalten. Nachweise auf älteren Verträgen qualifizieren die nach D10–D17 geänderten Verträge nicht. Der öffentliche native Verify-Reject-Korrekturzweig mit anschließender Publication ist gesondert nachzuweisen. Ein sauberer Endstand kann begrenzt abgenommen werden, ohne universelle Zuverlässigkeit oder nicht implementierte Fähigkeiten zu versprechen.
+Vor der Owner-Abnahme werden Providerumfang, Laufzeitgrenzen, Wiederholungsnachweise und bekannte Einschränkungen in einer Provider-Matrix ausdrücklich festgehalten. Nachweise auf älteren Verträgen qualifizieren die nach D10–D17 geänderten Verträge nicht. Der öffentliche native Verify-Reject-Korrekturzweig mit anschließender Publication ist gesondert nachzuweisen. Ein sauberer Endstand kann begrenzt abgenommen werden, ohne universelle Zuverlässigkeit oder nicht implementierte Fähigkeiten zu versprechen.
 
 ## 29. Quellen und Versionsführung
 
