@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "internal/bootstrap/native_correction_runtime_test.go"
+    form: test
+    realizes: [product/cli/honest-read-only-interface, product/run/confirmed-run-history]
+    why: "Provides separately dispatched opt-in native Verify rejection, fresh correction and Verify evidence through production composition, actual stored candidates and Findings, shared limits and complete closure without scripted judgments or a public Workflow claim."
   - path: "internal/bootstrap/apply_inputs_test.go"
     form: test
     realizes: [product/cli/honest-read-only-interface, product/apply/read-only-preparation]
