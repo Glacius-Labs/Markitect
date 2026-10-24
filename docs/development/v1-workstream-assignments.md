@@ -34,4 +34,6 @@ Tests: one controlled-session test per counterexample in concept §13.3; sibling
 
 **PR B1 – remove the Claude path (D18):** remove the Claude adapter package, its profile decoding, metadata preparation, credential resolution and Bootstrap wiring, and the Claude branches in examples and guides. The runtime profile accepts only the Codex section. Git history keeps the removed code for the later Claude adapter.
 
-Tests: full build, vet, architecture and accounting gates; configuration example tests; a runtime profile with a Claude section is refused with a clear diagnostic.
+Tests: full build, vet, architecture and accounting gates; configuration example tests; a runtime profile with a Claude section is refused with a clear diagnostic. B1 may also change the provider-mismatch case in `internal/adapters/codexappserver/execution_profile_test.go` to a neutral provider and remove the Claude sentences from `docs/project-workflow.md`.
+
+**PR B2 – runtime image (D18):** after stream A's Codex adapter changes have landed and before the step 4 native requalification, remove Claude Code from `packaging/runtime` (Dockerfile, README, the `claude=` record in `runtime.env`) and the matching record from the runtime metadata parser in `internal/adapters/codexappserver/metadata.go` with its fixtures and Bootstrap tests. The changed image is the one step 4 qualifies.

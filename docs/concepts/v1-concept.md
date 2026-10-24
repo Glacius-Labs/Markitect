@@ -7,7 +7,7 @@
 | **Version** | 1.0 – recorded concept |
 | **Date** | 24 October 2026 |
 | **Scope** | Narrow V1: Model → Artifacts |
-| **Basis** | The owner's concept [v0.18](sources/v1-concept-v018-20261024.md) and decisions D10–D18 accepted on 24 October ([decision record](sources/v1-concept-decisions-20261024.md), [DEC-068](register.md#dec-068-v1-concept-10)) |
+| **Basis** | The owner's concept [v0.18](sources/v1-concept-v018-20261024.md) and decisions D10–D18 accepted on 24 October ([decision record](sources/v1-concept-decisions-20261024.md), [DEC-068](register.md#dec-068-v1-concept-10)); English text per [DEC-069](register.md#dec-069-documentation-is-written-in-english) |
 
 > **The canonical model describes the intended project world. The Manager organization is derived from it. The Managers realize, review and integrate that world; the host provides a few clear technical guarantees for it.**
 
@@ -31,7 +31,7 @@ This version condenses v0.18 and closes its open items with decisions. The decis
 
 AI agents produce code, tests, documentation and working instructions quickly. The hard part is keeping their meaning consistent over time. An architecture decision often affects code, interfaces, tests, configuration, documentation and agent rules at once; a change that succeeds locally can break obligations elsewhere.
 
-The starting point was growing, increasingly contradictory collections of rules, skills and workflows. Maintaining text by hand and repeating complete AI reviews were not a sufficient basis for consistency.
+The starting point was growing, increasingly contradictory collections of rules, skills and workflows. Maintaining text alone and repeating complete AI reviews were not a sufficient basis for consistency.
 
 ### 1.2 One canonical model instead of competing truths
 
@@ -54,7 +54,7 @@ The compiler checks expressible structural properties. The Managers judge semant
 
 ### 1.4 Product thesis and limits of evidence
 
-An authoritative model, bounded responsibility, hierarchical reviews, independent review Runs and controlled integration should make consistent changes more reliable than a single agent that must keep every obligation in view alone. This is a thesis to be tested. Reliability, less human review effort and advantages over simpler agent approaches must be shown through comparisons and real projects.
+An authoritative model, bounded responsibility, hierarchical reviews, independent verification Runs and controlled integration should make consistent changes more reliable than a single agent that must keep every obligation in view alone. This is a thesis to be tested. Reliability, less human review effort and advantages over simpler agent approaches must be shown through comparisons and real projects.
 
 ## 2. V1 scope
 
@@ -345,11 +345,11 @@ Necessary follow-up changes are part of it. Extra test ideas, cosmetic changes o
 
 Verify is a fresh Run over exactly the candidate under review. The complete organization independently assesses model conformance, domain behavior, interfaces, integration, relevant tests and realization accounting.
 
-Verify does not repair the candidate; its own investigations and check files stay local. The result is Approve, Reject with the necessary realization Findings, or a model blocker. A Reject is a regular review result, not a technical failure.
+Verify does not repair the candidate; its own investigations and check files stay local. The result is Approve, Reject with the necessary realization Findings, or a model blocker. A Reject is a regular verification result, not a technical failure.
 
 ### 11.4 Corrections after Verify
 
-A realization Reject hands the model binding, the last candidate and the actual Findings to a new Implement Run, followed by a new Verify. The old Implement organization is not continued, and the new reviewer does not receive its self-assessment as authority. A material model contradiction discovered late ends the command without publication; the model question is settled outside.
+A realization Reject hands the model binding, the last candidate and the actual Findings to a new Implement Run, followed by a new Verify. The old Implement organization is not continued, and the new verifier does not receive its self-assessment as authority. A material model contradiction discovered late ends the command without publication; the model question is settled outside.
 
 ## 12. Checking strategy and four checkpoints
 
@@ -366,9 +366,9 @@ The same compiler, registry and accounting mechanisms are applied at different p
 | **Before successful Root completion** | Integrated overall state, relevant checks and bindings. No successful Implement and no Approve with unresolved technical invalidity. |
 | **Before publication** | Exactly the accepted candidate, required checks and actual source and target guards. No impermissible transfer. |
 
-### 12.3 Intermediate states and review mandates
+### 12.3 Intermediate states and checking mandates
 
-Intermediate states can be incomplete while other children are still working; diagnostics make that context visible. The host does not turn temporary incompleteness into a command abort. Verify may regularly reject a faulty candidate and need not change it to make its own completion check green. The validity conditions stay binding for an approval.
+Intermediate states can be incomplete while other children are still working; diagnostics make that context visible. The host does not turn temporary incompleteness into a command abort. Verify may reject a faulty candidate as a regular result and need not change it to make its own completion check green. The validity conditions stay binding for an approval.
 
 ### 12.4 No check rituals
 
@@ -398,7 +398,7 @@ For this, the host keeps a small, explicit assignment state per Manager instead 
 | Situation | Decided consequence |
 |---|---|
 | A question is answered | No new assignment and no new judgment. |
-| The Manager's own answer is still pending | Incoming questions remain answerable; no deadlock. |
+| An answer the Manager is waiting for is still pending | Incoming questions remain answerable; no deadlock. |
 | New mandatory Findings arrive | The previous judgment becomes invalid; a new one is needed. |
 | The assessed state changes | Approval of the old state does not apply to the new one. |
 | A fixed handoff has been made | Later communication does not change the reviewed state. |
@@ -415,14 +415,14 @@ For this, the host keeps a small, explicit assignment state per Manager instead 
 | `review` | A parent decides on a direct child's fixed handoff: accept, reject or model blocker. |
 | `ask` / `reply` | Questions and answers along the hierarchy, asynchronously. |
 | `judge` | Record the Manager's own judgment about its assignment, with Findings. |
-| `check` | Run the deterministic check of the Manager's own current state, for optional self-correction before submitting. |
+| `check` | Run the deterministic check of the Manager's own current state, for an optional self-check before submitting. |
 | `read_notes` / `append_note` | Read Shared Notes page by page and append observations. |
 
 Each domain purpose has exactly one tool.
 
 ### 14.2 Principles
 
-- The host does not ask for what it knows: the actual Manager, Run, mandate and its own commits. Findings need no sender field. An unambiguous reference to the reviewed state stays allowed in reviews, so that no stale approval arises.
+- The host does not ask for what it knows: the actual Manager, Run, mandate and the Manager's own commits. Findings need no sender field. An unambiguous reference to the reviewed state stays allowed in reviews, so that no stale approval arises.
 - Tools do not drive the host through receipts. A refusal names the concrete reason and what is possible (section 3.7).
 - The semantics of each tool has exactly one implementation in Run. Provider adapters only map it. MCP, CLI or typed APIs are transports, not an architectural principle.
 
@@ -544,7 +544,7 @@ Verify receives the valid model, the exact candidate and necessary technical inf
 
 | Outcome | Meaning and consequence |
 |---|---|
-| **Accepted** | The mandate was judged positively. Usable only together with a valid technical completion. |
+| **Domain-accepted** | The mandate was judged positively. Usable only together with a valid technical completion. |
 | **Realization Reject** | The realization violates requirements; Findings enable a correction. |
 | **Model blocker** | The bound intent is materially insufficient or contradictory; no endless repair attempt in the code. |
 | **Failed** | An actual error prevents execution. Not a domain Reject. |
@@ -679,7 +679,7 @@ Long chats can be archived after a controlled handoff. A handoff names Main, ope
 | **V04** | Review and integration concern exactly the actual task base and fixed handoff. |
 | **V05** | An invalid Implement child candidate reaches the parent with its diagnostic and cannot be integrated; Root cannot complete unresolved technical invalidity as success. |
 | **V06** | A Verify Reject produces new Implement and Verify Runs without old conversations and without a reset overall budget. |
-| **V07** | Material model blockers recognized late end without publication and without endless code repair. |
+| **V07** | Model blockers recognized late end without publication and without endless code repair. |
 | **V08** | Candidates can be reopened exactly after the temporary environments are removed. |
 | **V09** | Standalone Runs deliver persisted actual final results; storage and cleanup errors stay visible. |
 | **V10** | A reproducible harness is used natively: short tasks, mandatory context, normal account authentication, no API-key variant. |
@@ -697,7 +697,7 @@ Complete local tests, architecture and dependency gates, Linux and Windows compa
 
 ### 25.4 Quality is more than a green example
 
-A Library demonstration tests the idea concretely but does not replace the product definition. Acceptance additionally assesses understandability, cohesion, state complexity, extensibility within the target picture and the honest support boundary. Unqualified capabilities – further providers, login refresh, hard host aborts, live data migration – are not implicitly promised by the name V1.
+A Library demonstration tests the idea concretely but does not replace the product definition. Acceptance additionally assesses understandability, cohesion, state complexity, extensibility within the target picture and the honest support boundary. Capabilities that are not qualified – further providers, login refresh, hard host aborts, live data migration – are not implicitly promised by the name V1.
 
 ## 26. Reference scenarios
 
@@ -803,7 +803,7 @@ Before owner acceptance, provider scope, runtime limits, repetition evidence and
 | [Conformance audit](../development/concept-conformance-audit-20261024.md), 24 October 2026 | Static review at commit `6c7d758c`; origin of A1–A6 and R1–R3. Not a replacement concept. |
 | [V1 scope clarification](sources/v1-scope-clarification-20261023.md), [source implementation approval](sources/v1-source-implementation-approval-20261023.md) | Earlier owner foundations, consolidated by v0.18 and this version. |
 
-Changes to this document show whether they change the target, choose a technical variant or only improve the text. A change of the target needs an owner decision with a register entry. Implementation status and evidence belong in the delivery plan and in validation reports, not here. Like all Markitect documentation, this document is written in English.
+Changes to this document show whether they change the target, choose a technical variant or only improve the text. A change of the target needs an owner decision with a register entry. Implementation status and evidence belong in the delivery plan and in validation reports, not here. Like all Markitect documentation, this document is written in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)).
 
 ---
 

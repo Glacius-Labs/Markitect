@@ -74,4 +74,4 @@ This record does not track whether work is scheduled or implemented. When an enh
 6. **Keep summaries in step.** When an entry changes, also correct any summary of it, for example in the vision's brief or its table of misreadings.
 7. **Ideas move on.** When an idea is evaluated, it becomes a decision, an enhancement or a rejected entry. Its ID stays in the cross-references.
 
-Write entries, and all other documentation, in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)). Quotes in a source keep their original language; add an English translation when a source serves as a reference.
+Write entries, and all other documentation, in English ([DEC-069](register.md#dec-069-documentation-is-written-in-english)). Under the record rules above, quotes in a source keep their original language; as noted in the DEC-069 scope notes, add an English translation when a source serves as a reference.

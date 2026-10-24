@@ -6,13 +6,13 @@ Date: 24 October 2026. Source: the owner's direct message in a Claude Code sessi
 
 > Das Konzept und sämtliche Dokumentation in Markitect soll immer auf Englisch sein
 
-English translation: "The concept and all documentation in Markitect should always be in English."
+English translation: "The concept and all documentation in Markitect are always to be in English."
 
 ## Recorded meaning
 
 Recorder's interpretation:
 
-- The V1 concept and every maintained document in the repository are written in English, from now on and permanently.
+- The V1 concept and every document in the repository are written in English, from now on and permanently.
 - Concept 1.0 was translated into English in the same change.
 - Existing German documents are translated as separate work; the delivery plan lists them.
 

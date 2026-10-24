@@ -21,7 +21,7 @@ Use the [Project World design map](../design/project-world/README.md), [Research
 
 ## Write in English
 
-All documentation is written in English ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)). Verbatim owner statements under `docs/concepts/sources/` keep their original wording, with an English translation where a source serves as a reference. The [delivery plan](../implementation-plan.md#known-deviations-from-concept-10) lists existing German documents that still need translation.
+All documentation is written in English ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)). Under the concept record rules and the DEC-069 scope notes, verbatim owner statements under `docs/concepts/sources/` keep their original wording, with an English translation where a source serves as a reference. The [delivery plan](../implementation-plan.md#known-deviations-from-concept-10) lists existing German documents that still need translation.
 
 ## Maintain navigation and evidence boundaries
 
