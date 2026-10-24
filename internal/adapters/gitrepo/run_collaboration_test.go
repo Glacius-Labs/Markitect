@@ -246,7 +246,9 @@ func (c *collaboration) assertNoHostNarration(t *testing.T) {
 				t.Fatal("empty host message", name)
 			}
 			for _, f := range message.Feedback {
-				for _, narration := range []string{"native response", "continuation", "drain", "terminal", "subsequent message", "same Session", "late message", "fresh mandate-appropriate", "judge call", "inbox", "await"} {
+				// Naming a tool as the next step is allowed; describing the
+				// host's process is not.
+				for _, narration := range []string{"native response", "continuation", "drain", "terminal", "subsequent message", "same Session", "late message", "fresh mandate-appropriate", "judge call", "inbox", "driver", "schedul"} {
 					if strings.Contains(strings.ToLower(f.Text), narration) {
 						t.Fatal("host message explains host state", name, f.Text)
 					}
