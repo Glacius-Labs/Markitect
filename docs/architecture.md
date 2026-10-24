@@ -16,9 +16,9 @@ Apply performs structural and target preflight, then Workflow sequences complete
 
 Everything below is retained source/design history. It is not the current V1 implementation entry or acceptance scope. Use the consolidated proposal and plan above, including the source audit for the actual assignment entrypoint.
 
-**Target/source boundary, 22 October 2026:** the owner accepted [Agent workspaces and reviewed handoffs](design/canonical-model/manager-apply-workflow.md) and its [documentation-only rebuild plan](implementation-plan.md#apply-rebuild-plan). The target uses one container/working copy per Agent assignment, reviewed Git handoffs and no domain Turns or required per-write enforcement. The executable instructions below describe the existing Pass implementation until migrated; they do not make the target available.
+**Target/source boundary, 22 October 2026:** the owner accepted [Agent workspaces and reviewed handoffs](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-workflow.md) and its [documentation-only rebuild plan](implementation-plan.md#apply-rebuild-plan). The target uses one container/working copy per Agent assignment, reviewed Git handoffs and no domain Turns or required per-write enforcement. The executable instructions below describe the existing Pass implementation until migrated; they do not make the target available.
 
-Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. The historical pre-V1 source implemented complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), the selected `direct` work composition (Implement) or `staged` one (Plan, Prepare and Implement) and Verify as one recursive Pass process, plus a first Extract on the same process. Reliability and acceptance of that implementation remain unestablished; DEC-067 subsequently replaced that runtime in the current S3 source. The [runtime contract](design/canonical-model/manager-apply-runtime.md) owns its behavior.
+Markitect is canonical model-first development with delegated realization. The [vision](vision.md#markitect-in-brief) owns that purpose; the [delivery plan](implementation-plan.md) owns the staged rebuild. The historical pre-V1 source implemented complete v1 Model check and read-only preparation, a separately guarded generated view and the Apply of [DEC-064](concepts/register.md#dec-064-checked-recursive-apply-passes-and-manager-teams), the selected `direct` work composition (Implement) or `staged` one (Plan, Prepare and Implement) and Verify as one recursive Pass process, plus a first Extract on the same process. Reliability and acceptance of that implementation remain unestablished; DEC-067 subsequently replaced that runtime in the current S3 source. The [runtime contract](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-runtime.md) owns its behavior.
 
 ## Product flow
 
@@ -78,7 +78,7 @@ Bootstrap alone constructs concrete adapters. CLI code owns parsing/presentation
 
 The [container runtime](../internal/adapters/container/README.md) implements the isolation boundary ([DEC-037](concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session containers from an immutable engine image ID and speaks the frame protocol of `internal/agentd/frame` with `markitect-agentd`, which runs the provider CLI, relays its streams, serves the Orchestrator tools over MCP and reports exits. The [base image](../packaging/runtime/README.md) pins Codex.
 
-The [provider guide](provider-adapters.md#container-runtime) routes to the implemented Codex Agent adapter, container workspaces, check runner and guarded publisher. Their prepared adapter smokes and any real provider run need separate authority and remain unexecuted by source tests. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
+The [provider guide](guides/provider-adapters.md#container-runtime) routes to the implemented Codex Agent adapter, container workspaces, check runner and guarded publisher. Their prepared adapter smokes and any real provider run need separate authority and remain unexecuted by source tests. A structural or metadata pass cannot authorize execution effects or establish a complete Apply. There is no active legacy runtime or fallback execution engine, and the current CLI exposes no MCP server.
 
 ## Operational record storage
 
@@ -96,57 +96,8 @@ The generated view distinguishes canonical model, rendered content and source/ta
 
 ## Distribution and product boundary
 
-Source packaging, release publication, distribution and guarded installation remain independent maintenance services. Current source archives use root `cmd/` and `internal/`; legacy/mixed layouts are refused. Embedded licenses, strategy defaults and selected test data are preserved. Source-smoke checks do not publish a release or demonstrate provider/Apply acceptance. See [distribution](../integration/README.md) and [operations](operations.md#release-operations).
+Source packaging, release publication, distribution and guarded installation remain independent maintenance services. Current source archives use root `cmd/` and `internal/`; legacy/mixed layouts are refused. Embedded licenses, strategy defaults and selected test data are preserved. Source-smoke checks do not publish a release or demonstrate provider/Apply acceptance. See [distribution](../packaging/README.md) and [operations](guides/operations.md#release-operations).
 
 ## Historical Project/Domain architecture
 
 Published releases retain their immutable contracts. The removed product generation is reconstructible from [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).
-
-## Historical architecture links
-
-These retained anchors route existing links to the [history record](history/architecture-legacy-sections-20261010.md) of the earlier line.
-
-<a id="historical-projectdomain-and-projection-compatibility-architecture"></a>
-The [Project/Domain compatibility architecture](history/architecture-legacy-sections-20261010.md#historical-projectdomain-and-projection-compatibility-architecture) is historical.
-
-<a id="compiler-and-evidence-model"></a>
-The [compiler and evidence model](history/architecture-legacy-sections-20261010.md#compiler-and-evidence-model) of the Domain kernel is historical.
-
-<a id="current-implementation-boundary"></a>
-The [v0.11.0 implementation boundary](history/architecture-legacy-sections-20261010.md#current-implementation-boundary) is historical.
-
-<a id="v0120-bounded-resolved-target-equality"></a>
-The [v0.12.0 resolved-target equality](history/architecture-legacy-sections-20261010.md#v0120-bounded-resolved-target-equality) is historical.
-
-<a id="policy-failure-analysis-in-current-source"></a>
-<a id="policy-failure-analysis-in-v0130"></a>
-The [v0.13.0 policy failure analysis](history/architecture-legacy-sections-20261010.md#policy-failure-analysis-in-v0130) is historical.
-
-<a id="selective-adoption-preparation-in-current-source"></a>
-<a id="selective-adoption-preparation-in-v0130"></a>
-The [v0.13.0 selective adoption preparation](history/architecture-legacy-sections-20261010.md#selective-adoption-preparation-in-v0130) is historical.
-
-<a id="projection-first-source-direction-in-progress"></a>
-<a id="projection-first-reconciliation-experimental-preview"></a>
-The [projection-first reconciliation preview](history/architecture-legacy-sections-20261010.md#projection-first-reconciliation-experimental-preview) is historical.
-
-<a id="resource-model"></a>
-The [v0.13 resource model](history/architecture-legacy-sections-20261010.md#resource-model) is historical.
-
-<a id="deterministic-core-and-adapters"></a>
-The [deterministic core and adapters](history/architecture-legacy-sections-20261010.md#deterministic-core-and-adapters) of the Domain kernel are historical.
-
-<a id="go-implementation-boundaries"></a>
-<a id="go-ownership-and-final-dependency-model"></a>
-The [earlier Go ownership table](history/architecture-legacy-sections-20261010.md#go-ownership-and-final-dependency-model) is historical; current ownership is in [Layers](#layers) and the [code map](development/code-map.md).
-
-<a id="authoring-and-queries"></a>
-The [v0.13 authoring and queries](history/architecture-legacy-sections-20261010.md#authoring-and-queries) are historical.
-
-<a id="markitect-first-and-artifact-coverage-release-candidate"></a>
-<a id="markitect-first-and-artifact-coverage-published-v0130"></a>
-The [v0.13.0 Markitect-first workflow and artifact coverage](history/architecture-legacy-sections-20261010.md#markitect-first-and-artifact-coverage-published-v0130) are historical.
-
-<a id="canonical-reset-source-only-vnext-boundary"></a>
-<a id="canonical-reset-alpha-removed"></a>
-The [canonical reset alpha](history/architecture-legacy-sections-20261010.md#canonical-reset-alpha-removed) was removed from source.

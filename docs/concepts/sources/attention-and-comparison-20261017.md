@@ -16,5 +16,5 @@ The intended comparison gives an agent ordinary documentation with the same cont
 - The owner's relative-cost premise is not an independently measured wage/model-price comparison. No numerical cost advantage is inferred here.
 - Human organizational practices motivate the method; their transfer to AI and the method's effectiveness still need evidence.
 - Parallel execution is a later direction. The first selected Apply strategy retains its one-writer policy.
-- The baseline is semantically equivalent ordinary documentation and an agent, not an uninformed agent deprived of requirements. [Measurement](../../measurement.md) owns fair tools, settings, isolation, assessment and intervention accounting. This statement supplies no study result or execution grant.
-- The [marketing plan](../../strategy/marketing-plan.md) and README explain this story. Product and protocol decisions retain their existing owners.
+- The baseline is semantically equivalent ordinary documentation and an agent, not an uninformed agent deprived of requirements. [Measurement](../../guides/measurement.md) owns fair tools, settings, isolation, assessment and intervention accounting. This statement supplies no study result or execution grant.
+- The [marketing plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/strategy/marketing-plan.md) and README explain this story. Product and protocol decisions retain their existing owners.

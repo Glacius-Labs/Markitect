@@ -13,11 +13,13 @@ Start at the [documentation map](../README.md) and the nearest local map. Search
 | Current source scope and future implementation | [Implementation roadmap](../implementation-plan.md) |
 | Delivery scopes, dependencies and reservations | [Delivery plan](../implementation-plan.md); chats/PRs own candidate evidence |
 | Contribution and validation commands | [CONTRIBUTING.md](../../CONTRIBUTING.md) |
-| Product-specific future design records | [Design map](../design/README.md) |
+| Current design documents | [Design map](../design/README.md) |
+| Earlier designs, experiments and records | [Archive index](../archive.md) |
 | Fixed source, adoption, or method evidence | [Validation map](../validation/README.md) and the individual report |
-| Release asset claims | [Production assessment](../history/distribution/production-assessment.md) |
+| Release asset claims | [Production assessment](../validation/production-assessment.md) |
+| Repository layout and where new files go | [Repository layout](repository-layout.md) |
 
-Use the [Project World design map](../design/project-world/README.md), [Research map](../research/README.md), and [Strategy map](../strategy/README.md) to keep dated proposals and supplied research in their stated role. A proposal or assessment does not become product behavior merely because it is documented.
+Dated proposals, supplied research and earlier records are not kept on Main. They stay at the archive points listed in the [archive index](../archive.md), which is the one place to find them. A proposal or assessment does not become product behavior merely because it is documented. Material that becomes historical moves out of Main in one change: remove its files and registry entries, add an index entry and rewrite remaining links to full-SHA permalinks.
 
 ## Write in English
 
@@ -29,7 +31,7 @@ When adding a document or directory, add a useful link to its local map and, whe
 
 Markdown links help readers navigate but do not declare artifact or semantic dependencies. When a path changes, inspect its Markdown links and anchors, repository entrypoints, and model Artifact paths that name it. Generated views have canonical sources; update the source and regenerate the view as described in [CONTRIBUTING.md](../../CONTRIBUTING.md).
 
-The old Project documentation-router feature is preserved in the immutable [v0.14.1 release](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1). This guide describes where maintainers find and update current repository documentation.
+The old Project documentation-router feature is preserved in the immutable [v0.14.1 source](https://github.com/Glacius-Labs/Markitect/tree/7dbd599c81540c8203a1b7f83afbc335174f4f1f), which the archive ref `archive/pre-reset-7dbd599c` pins. This guide describes where maintainers find and update current repository documentation.
 
 ## Retire obsolete guidance without losing evidence
 
@@ -48,7 +50,7 @@ Before a cleanup, fetch Main and verify the isolated checkout, branch, full SHA 
 
 After moving or removing maintained documentation, update its local map, actual incoming links and exact registry accounting together. Keep original owner statements and fixed evidence in their original scope; a replacement guide can link to them without repeating their old instructions. Use the checks below and the relevant contributor gates. Report concrete findings and candidate evidence in the actual chat or PR instead of maintaining another cleanup backlog or status mirror.
 
-The [marketing working plan](../strategy/marketing-plan.md) owns pitch drafts and promotion recommendations. When a complete user workflow becomes available or its public instructions change, review the README's stage and invitation against the same evidence. A new package, passing check or design decision alone does not establish that workflow.
+The [archived marketing working plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/strategy/marketing-plan.md) owns pitch drafts and promotion recommendations. When a complete user workflow becomes available or its public instructions change, review the README's stage and invitation against the same evidence. A new package, passing check or design decision alone does not establish that workflow.
 
 ## Check changed navigation
 

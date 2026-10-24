@@ -1,9 +1,9 @@
 # Library oracle: APPLY-PLAY
 
 This first delivery implements the independent behavior oracle from the
-[evaluation contract](../../docs/design/canonical-model/library-example/evaluation-contract.md)
+[evaluation contract](evaluation-contract.md)
 and a bounded driver for the ten operations in the
-[callable interface](../../docs/design/canonical-model/library-example/m1/model/library/callable-interface.yaml)
+[callable interface](../../testdata/library/m1/model/library/callable-interface.yaml)
 of the library model M1.
 It uses Python 3.10 or later and the standard library only.
 
@@ -28,7 +28,7 @@ Manager scheduling, review, retry, publication or an alternate Apply.
 From the repository root:
 
 ```text
-python -B -m unittest discover -s experiments/library-playground -p "test_*.py" -v
+python -B -m unittest discover -s tools/library-oracle -p "test_*.py" -v
 ```
 
 Self-tests materialize controlled expected transcripts, then replay those exact
@@ -57,7 +57,7 @@ Agent, provider, build or network command itself.
 Print the evaluator and expectation hashes without running a program:
 
 ```text
-python -B experiments/library-playground/assess.py --hashes
+python -B tools/library-oracle/assess.py --hashes
 ```
 
 Freeze a JSON manifest outside the target. This shape shows required fields;
@@ -102,7 +102,7 @@ identity strings are caller-supplied bindings; this
 slice cannot verify production compiler, registry or history identities.
 
 ```text
-python -B experiments/library-playground/assess.py --manifest /absolute/manifest.json --output /absolute/new-assessment.json
+python -B tools/library-oracle/assess.py --manifest /absolute/manifest.json --output /absolute/new-assessment.json
 ```
 
 The output must be a new path: an earlier attempt is never overwritten. Exit zero
@@ -139,6 +139,25 @@ bytes; they do not prevent access or establish quiescence.
 
 Full preparation/freeze, immutable A1/A2 capture, consistent history export and
 real R1/R2 execution wait for the rebuilt product ports. The
-[Playground contract](../../docs/design/canonical-model/manager-apply-playground.md)
+[Playground contract](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-playground.md)
 owns that sequence. This package supplies no successful Apply simulation using
 the old CLI and makes no product-benefit claim.
+
+## Container harness
+
+`container/` builds an Agent-produced Library candidate offline and runs this oracle against it in a hardened container. The candidate is Agent-produced code, so both steps run non-root, without capabilities or network, with a read-only root filesystem and process and memory bounds. The built program stays read-only, and the report goes to standard output, out of the program's reach.
+
+| File | Use |
+| --- | --- |
+| [container/assess.py](container/assess.py) | Builds a realization's `./cmd/library` in the example Go runtime image and runs the oracle from `tools/library-oracle` at a fixed Git revision. |
+| [container/run_oracle.py](container/run_oracle.py) | Runs inside the assessment container. It binds the manifest to the program hash and the Host-computed evaluator hashes, runs the oracle in-process and prints the report to standard output. |
+
+Build the images from the repository root first:
+
+```text
+docker build -f packaging/runtime/Dockerfile -t markitect-runtime:dev .
+docker build -f packaging/runtime/examples/go/Dockerfile --build-arg BASE=markitect-runtime:dev -t markitect-runtime-go:dev .
+python -I tools/library-oracle/container/assess.py --realization PROJECT_OR_MODULE --profile m1 --out OUT --label A1
+```
+
+`MARKITECT_ENGINE` overrides the container engine executable. Exit 0 means every oracle case passed, including the opposite-profile discrimination. Agent-produced code and transcripts never enter the repository. The harness records the evaluator revision, not a verified model digest, and covers behavior only; source review, history and registry inspection remain separate evidence. The evaluator export at the fixed revision includes the whole `tools/library-oracle` folder.

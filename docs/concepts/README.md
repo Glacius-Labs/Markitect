@@ -24,8 +24,8 @@ Accepted and clarified entries are the current basis. Do not reopen them without
 | This record | Individual decisions, promises, assumptions, concepts, enhancements, ideas and open questions, with status and origin |
 | [Delivery plan](../implementation-plan.md) | Current delivery scope and coordination. Chats/PRs record candidate progress and exact evidence. |
 | [Architecture](../architecture.md) and the workflow guides | Implemented behavior |
-| [Measurement](../measurement.md) | Evaluation procedure |
-| [Strategy sources](../strategy/README.md) | Original strategy bundles from earlier phases, kept with their provenance |
+| [Measurement](../guides/measurement.md) | Evaluation procedure |
+| [Strategy sources](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/strategy/README.md) | Original strategy bundles from earlier phases, kept with their provenance |
 | [Design records](../design/README.md) | Proposals, assessments and design evidence from different stages |
 
 Summaries in the vision and other documents may restate entries. If a summary differs from an entry, the entry and its source govern; correct the summary.

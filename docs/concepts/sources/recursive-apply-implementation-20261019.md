@@ -1,6 +1,6 @@
 # Recursive Apply implementation dispatch — owner, 19 October 2026
 
-Recorder's note: verbatim excerpts from the owner's dispatch of the Claude implementation session for [DEC-056](../register.md#dec-056-recursive-reconciliation-with-a-shared-workspace). The [Apply concept](../../design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the behavior; this source records the implementation authority, the runtime model choice and the demonstration bounds.
+Recorder's note: verbatim excerpts from the owner's dispatch of the Claude implementation session for [DEC-056](../register.md#dec-056-recursive-reconciliation-with-a-shared-workspace). The [Apply concept](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md#current-agreed-concept--19-october-2026) owns the behavior; this source records the implementation authority, the runtime model choice and the demonstration bounds.
 
 ## Authority
 
@@ -18,7 +18,7 @@ Recorder's note: verbatim excerpts from the owner's dispatch of the Claude imple
 
 > Diese Anweisung ersetzt ausdrücklich die frühere Luna-Vorgabe im Bibliotheks-Walkthrough.
 
-Recorder's note: this replaces the Luna runtime preference recorded in the [library walkthrough](../../design/canonical-model/manager-apply-library-flow.md#current-library-walkthrough) for the demonstration. It does not remove the Codex adapter from the product.
+Recorder's note: this replaces the Luna runtime preference recorded in the [library walkthrough](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-library-flow.md#current-library-walkthrough) for the demonstration. It does not remove the Codex adapter from the product.
 
 ## Demonstration bounds
 

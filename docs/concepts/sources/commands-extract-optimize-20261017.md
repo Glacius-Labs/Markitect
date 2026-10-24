@@ -1,6 +1,6 @@
 # Commands, Extract and Optimize — 17 October 2026
 
-Recorder's note: direct owner discussion in the Codex chat **Commands**, thread `01a14ac0-d4c1-7cb0-a070-d677f0033b45`. Owner quotations retain their original wording. Assistant explanations and the synthesis are identified separately. The final request authorizes documenting this direction on Main, not implementation or runtime execution. The [command design](../../design/canonical-model/commands.md) owns the synthesis; the first reliable Apply remains the delivery target.
+Recorder's note: direct owner discussion in the Codex chat **Commands**, thread `01a14ac0-d4c1-7cb0-a070-d677f0033b45`. Owner quotations retain their original wording. Assistant explanations and the synthesis are identified separately. The final request authorizes documenting this direction on Main, not implementation or runtime execution. The [command design](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md) owns the synthesis; the first reliable Apply remains the delivery target.
 
 ## Owner command examples
 
@@ -69,7 +69,7 @@ The owner accepted the workflow and changed the criterion:
 
 > Das klingt gut. Halte den Ablauf in unseren Docs fest und passe das Extract-Abschlusskriterium an: Ein geprüfter Modellvorschlag darf mit bekannten Realisierungsabweichungen übernommen werden. Weiterhin keine Implementierung.
 
-Recorder's interpretation: the current [Extract contract](../../design/canonical-model/commands.md#completion-and-adoption-with-known-deviations) now allows adoption of a structurally valid, reviewed and integrated candidate with adequately supported known realization deviations. Material unresolved intent, inadequate model coverage and evidence gaps still prevent adoption readiness. Verify keeps its actual result, and deviations remain visible for later separately authorized artifact work. This is a documentation-only change to the later-operation design; it grants no runtime, model-writing implementation or artifact repair authority.
+Recorder's interpretation: the current [Extract contract](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md#completion-and-adoption-with-known-deviations) now allows adoption of a structurally valid, reviewed and integrated candidate with adequately supported known realization deviations. Material unresolved intent, inadequate model coverage and evidence gaps still prevent adoption readiness. Verify keeps its actual result, and deviations remain visible for later separately authorized artifact work. This is a documentation-only change to the later-operation design; it grants no runtime, model-writing implementation or artifact repair authority.
 
 ## Optimize search space and targeted reading
 
@@ -83,4 +83,4 @@ The owner accepted the proposal and requested Main documentation:
 
 > Klingt gut. Halte diesen Suchraum und den Ablauf für gezieltes Nachlesen in den Docs auf main fest. Weiterhin keine Implementierung.
 
-Recorder's interpretation: this selects the [search and targeted-reading workflow](../../design/canonical-model/commands.md#find-candidates-beyond-existing-links), resolving its earlier open product-scope question. Existing model authority, write ownership, source bindings and budgets remain. Exact search APIs, output formats and numeric limits are not selected; no implementation, provider, Docker, Apply or study authority is granted.
+Recorder's interpretation: this selects the [search and targeted-reading workflow](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md#find-candidates-beyond-existing-links), resolving its earlier open product-scope question. Existing model authority, write ownership, source bindings and budgets remain. Exact search APIs, output formats and numeric limits are not selected; no implementation, provider, Docker, Apply or study authority is granted.

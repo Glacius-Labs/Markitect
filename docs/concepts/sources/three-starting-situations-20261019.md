@@ -33,7 +33,7 @@ Recorder's summary, not verbatim owner text:
 - Adopt: Managers examine existing artifacts, propose and integrate their model, and refine it through read-only Verify and owner clarification. Observations, proposed intent, accepted decisions and open questions remain distinct. Existing artifacts stay unchanged during derivation; known defects are retained rather than promoted into desired behavior. Artifact repair subsequently uses reconciliation.
 - The situations share the Manager organization but have different change targets. Name the relevant project scope, since different areas can be in different situations. The owner works with understandable meaning rather than YAML.
 
-The existing [Extract design](../../design/canonical-model/commands.md#extract-the-existing-stand) already distinguishes adoption readiness with recorded deviations from a conforming realization. The discussion's target of passing Verify does not erase that distinction or authorize weakening the model to hide a defect.
+The existing [Extract design](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md#extract-the-existing-stand) already distinguishes adoption readiness with recorded deviations from a conforming realization. The discussion's target of passing Verify does not erase that distinction or authorize weakening the model to hide a defect.
 
 ## Owner accepts documentation
 

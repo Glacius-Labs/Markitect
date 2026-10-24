@@ -1,6 +1,6 @@
 # Coordinator assignment and next milestone — owner, 19 October 2026
 
-Recorder's note: verbatim owner statements from the Claude Coordinator session, after Main `f15ea723`. They continue the [division of 17 October 2026](architecture-review-20261017.md#division-of-work) and set the target of the [delivery plan](../../implementation-plan.md#target-and-baseline). They grant no release, provider-spending or study authority.
+Recorder's note: verbatim owner statements from the Claude Coordinator session, after Main `f15ea723`. They continue the [division of 17 October 2026](architecture-review-20261017.md#division-of-work) and set the target of the [delivery plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/implementation-plan.md#target-and-baseline). They grant no release, provider-spending or study authority.
 
 ## The assignment
 
@@ -31,7 +31,7 @@ Recorder's note: the owner gave the following instruction in the Codex roadmap c
 
 Recorder's interpretation of the referenced assessment: it called for Apply evidence covering model change, unchanged-intent drift repair, a justified owner question, and budget/deadline/interruption with retained evidence and the supported restart. For Extract, it called for completing the running fixed-build comparison on missing project obligations, incidental implementation choices made binding, and incorrect or unnecessary escalation. A no-change round trip alone does not establish extracted-model quality.
 
-Recorder's note: the current [delivery scope](../../implementation-plan.md#target-and-baseline) applies this instruction through existing issues #492 and #495. The outcome reports may be negative or inconclusive; they do not automatically authorize a larger process, more experiments or the deferred expansion queue. This records the current scope decision, not another permanent approval institution.
+Recorder's note: the current [delivery scope](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/implementation-plan.md#target-and-baseline) applies this instruction through existing issues #492 and #495. The outcome reports may be negative or inconclusive; they do not automatically authorize a larger process, more experiments or the deferred expansion queue. This records the current scope decision, not another permanent approval institution.
 
 ## Closeout and division, 20 October 2026
 
@@ -53,7 +53,7 @@ On the two owner decisions that the library demonstrations bound with each run:
 
 > Gib eine konkrete Empfehlung für den nächsten Schritt, beginne ihn aber nicht automatisch.
 
-Recorder's note: the assignment also asked for exactly one bounded confirmation run (M1 → A1, only `maxOpenLoans` 5 → 3, M2 → A2, then Apply again on the unchanged A2 with `no_change` expected) on one frozen build. Its result is the [closing record](../../validation/apply-extract-closeout-20261020.md).
+Recorder's note: the assignment also asked for exactly one bounded confirmation run (M1 → A1, only `maxOpenLoans` 5 → 3, M2 → A2, then Apply again on the unchanged A2 with `no_change` expected) on one frozen build. Its result is the [closing record](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/apply-extract-closeout-20261020.md).
 
 ## Accepted pilot roadmap, 20 October 2026
 
@@ -63,7 +63,7 @@ Recorder's note: posted on the owner's account in [#501](https://github.com/Glac
 
 > Only #492, #523 and #524 are currently in progress. This accepted destination and ordering do not start broader provider series, process changes, a new implementation stream or public release. Select the next bounded assignment from the three outcomes.
 
-The five-step sequence and the milestone priorities M1 to M5 stand in the linked comment; the [delivery plan](../../implementation-plan.md#target-and-baseline) carries them.
+The five-step sequence and the milestone priorities M1 to M5 stand in the linked comment; the [delivery plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/implementation-plan.md#target-and-baseline) carries them.
 
 ## Apply Pass stabilization first, 20 October 2026
 
@@ -71,7 +71,7 @@ Recorder's note: verbatim owner instruction in the Codex Big Picture conversatio
 
 > Passe Plan und Issues entsprechend an. Jetzt erst die konkreten Schwächen bei Apply und die Nachweise auf dem neuen Kern abschließen, bevor wir weiter ausbauen.
 
-Recorder's interpretation of the referenced assessment: prioritize the Verified depot result that retained a genuine defect, optional changes and missing conforming no-change evidence, unnecessary dependency/wait overhead, and bounded integrated-build evidence after correcting the independent trial references and DEC-064 expectations. Earlier Library and Extract reports retain their build scope. The pilot remains the destination; wider Extract, UX, release and other expansion wait for this checkpoint. Preserve running candidates and evidence, and use the [owning delivery plan](../../implementation-plan.md#current-checkpoint-concrete-apply-corrections-and-new-core-evidence) and existing issues rather than another status document.
+Recorder's interpretation of the referenced assessment: prioritize the Verified depot result that retained a genuine defect, optional changes and missing conforming no-change evidence, unnecessary dependency/wait overhead, and bounded integrated-build evidence after correcting the independent trial references and DEC-064 expectations. Earlier Library and Extract reports retain their build scope. The pilot remains the destination; wider Extract, UX, release and other expansion wait for this checkpoint. Preserve running candidates and evidence, and use the [owning delivery plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/implementation-plan.md#current-checkpoint-concrete-apply-corrections-and-new-core-evidence) and existing issues rather than another status document.
 
 ## Assessment and concept refinement, 20 October 2026
 
@@ -79,4 +79,4 @@ Recorder's note: the owner then corrected the live-session status in the same Bi
 
 > Die Claude Sessions sind bereits beendet. Wir werten gerade aus und verfeinern das Konzept
 
-The [delivery plan](../../implementation-plan.md#current-checkpoint-concrete-apply-corrections-and-new-core-evidence) records assessment and concept refinement as the current phase. Existing candidates and evidence are preserved for that discussion; implementation and runs require a later bounded assignment.
+The [delivery plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/implementation-plan.md#current-checkpoint-concrete-apply-corrections-and-new-core-evidence) records assessment and concept refinement as the current phase. Existing candidates and evidence are preserved for that discussion; implementation and runs require a later bounded assignment.

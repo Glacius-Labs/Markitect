@@ -2,7 +2,7 @@
 
 Date: 17 October 2026.
 
-Recorder's note: Direct owner message following the update of Markitect's foundations in PR #373. The two paragraphs below preserve the owner's original language and spelling. The preceding request was to inspect Claude and the Coordinator, remaining work before the first complete Apply, and their use of the updated documentation. The [vision](../../vision.md#the-thesis) owns the product priority; [Measurement](../../measurement.md#quality-first-comparative-evaluation) owns the comparison procedure. The statement supplies priorities and a baseline, not measured pricing, proven Agent reliability, a new first-Apply runtime strategy or authority to start experiments.
+Recorder's note: Direct owner message following the update of Markitect's foundations in PR #373. The two paragraphs below preserve the owner's original language and spelling. The preceding request was to inspect Claude and the Coordinator, remaining work before the first complete Apply, and their use of the updated documentation. The [vision](../../vision.md#the-thesis) owns the product priority; [Measurement](../../guides/measurement.md#quality-first-comparative-evaluation) owns the comparison procedure. The statement supplies priorities and a baseline, not measured pricing, proven Agent reliability, a new first-Apply runtime strategy or authority to start experiments.
 
 ## Attention and time
 

@@ -21,7 +21,7 @@ If the content check itself is not completed because of parser, resolution or re
 
 ## Report of the design probe
 
-The [Exchange verifier](exchange-example/verify.py) separates these results:
+The [Exchange verifier](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/exchange-example/verify.py) separates these results:
 
 | Report part | Scope |
 | --- | --- |
@@ -31,4 +31,4 @@ The [Exchange verifier](exchange-example/verify.py) separates these results:
 
 `diagnostic_coordinates.status` is `passed` if all occurrences considered there are completely mapped, and otherwise `not_completed`. For content not yet recognized or not resolved, the probe likewise claims no complete coordinate coverage. The status influences neither model validity, digest nor the overall status of the content check. A separate conformance judgment on this tool profile must consider it separately.
 
-[diagnostic_coordinates.py](exchange-example/diagnostic_coordinates.py) contains the source mapping; [diagnostic_probes.py](exchange-example/diagnostic_probes.py) checks its separation from the canonical evaluation. The existing counter-probes for exact byte/YAML ranges remain tool profile tests. Historical reports keep the structure and the limits of their statements that they had at the time.
+[diagnostic_coordinates.py](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/exchange-example/diagnostic_coordinates.py) contains the source mapping; [diagnostic_probes.py](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/exchange-example/diagnostic_probes.py) checks its separation from the canonical evaluation. The existing counter-probes for exact byte/YAML ranges remain tool profile tests. Historical reports keep the structure and the limits of their statements that they had at the time.

@@ -29,7 +29,7 @@ A lesson cannot waive a binding rule, and a different approach than before is as
 
 ## Worked example
 
-With [M1](../../design/canonical-model/library-example/README.md), suppose a candidate accepts a loan after the member was suspended. Investigation shows it reused an eligibility value from an earlier request. Lending repairs admission; review checks refusal without state change, continued return and reactivation; the model is unchanged. The lesson recorded is "test permission changes between operations", not "never cache membership data" and not "suspended members may do nothing", which would contradict the right to return. A later eligibility task receives the lesson as a question to examine, not as a ban.
+With [M1](../../../testdata/library/README.md), suppose a candidate accepts a loan after the member was suspended. Investigation shows it reused an eligibility value from an earlier request. Lending repairs admission; review checks refusal without state change, continued return and reactivation; the model is unchanged. The lesson recorded is "test permission changes between operations", not "never cache membership data" and not "suspended members may do nothing", which would contradict the right to return. A later eligibility task receives the lesson as a question to examine, not as a ban.
 
 ## Operational check through the Managers
 

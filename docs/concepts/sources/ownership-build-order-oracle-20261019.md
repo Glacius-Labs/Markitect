@@ -1,6 +1,6 @@
 # Responsibilities, build start and the oracle — owner, 19 October 2026
 
-Recorder's note: verbatim owner statements from the Claude implementation session, given after the first real library demonstration of the recursive Apply ([validation record](../../validation/recursive-apply-demonstration-20261019.md)). [DEC-059](../register.md#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) records the decision; the [runtime contract](../../design/canonical-model/manager-apply-runtime.md) owns the implemented behavior.
+Recorder's note: verbatim owner statements from the Claude implementation session, given after the first real library demonstration of the recursive Apply ([validation record](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/recursive-apply-demonstration-20261019.md)). [DEC-059](../register.md#dec-059-enforced-responsibilities-build-start-and-an-outside-oracle) records the decision; the [runtime contract](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-runtime.md) owns the implemented behavior.
 
 ## The oracle observes after each Apply
 

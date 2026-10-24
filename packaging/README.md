@@ -1,6 +1,10 @@
-# Distribution and integration
+# Packaging and distribution
 
-The owner retired the old Project/Domain releases and binary downloads on 17 October 2026. There is currently no supported binary release of the new product. Git tags are unchanged; [release identities, asset digests and attestations](../docs/history/distribution-retirement-20261017.md) are retained. Use [current source](../README.md#run-the-current-source), [Project workflow](../docs/project-workflow.md) and the [delivery plan](../docs/implementation-plan.md).
+The owner retired the old Project/Domain releases and binary downloads on 17 October 2026. There is currently no supported binary release of the new product. The Git tags no longer exist on GitHub; the commit behind each is recorded in the [retired release mapping](../docs/validation/retired-releases-20261017.json), and the 18 retired release versions `v0.1.0` to `v0.14.1` must not be reused. [Release identities, asset digests and attestations](../docs/validation/distribution-retirement-20261017.md) are retained. Use [current source](../README.md#run-the-current-source), [Project workflow](../docs/guides/project-workflow.md) and the [delivery plan](../docs/implementation-plan.md).
+
+## What lives here
+
+`packaging/` holds what ships besides the binary: [`runtime/`](runtime/README.md) (the runtime container image and its project-image examples), `bootstrap/` (the consumer bootstrap `run-markitect.go` that release bundles copy into `.markitect/bootstrap/run.go`, with its test) and this guide.
 
 ## Current source release tooling
 
@@ -29,17 +33,17 @@ Inspect the source-bound local bundle and its SHA-256, preview the operations, t
 The standalone `.markitect/bootstrap/run.go` imports only the Go standard library because it runs inside the consumer's module. It validates the lock and source archive before building the pinned CLI. Changes to that contract must keep bootstrap and release-side tests aligned.
 
 ```powershell
-go test ./integration/run-markitect.go ./integration/run-markitect_test.go -count=1
+go test ./packaging/bootstrap/run-markitect.go ./packaging/bootstrap/run-markitect_test.go -count=1
 ```
 
 ## Runtime requirements
 
-Use Git and the Go version in `go.mod`. Runtime containers and their separately authorized provider capabilities are described in [the runtime guide](../packaging/runtime/README.md). Packaging or installation is not a runtime or Apply demonstration.
+Use Git and the Go version in `go.mod`. Runtime containers and their separately authorized provider capabilities are described in [the runtime guide](runtime/README.md). Packaging or installation is not a runtime or Apply demonstration.
 
 ## Owner publication
 
-[Operations](../docs/operations.md#release-operations) owns publication requirements. The retained release workflow builds and checks new tagged source; it grants no authority to publish. Publication requires the owner's explicit release instruction and exact source/run/assets. Inspect the read-only publication plan before invoking its write operation, and verify the resulting release and every asset afterward.
+[Operations](../docs/guides/operations.md#release-operations) owns publication requirements. The retained release workflow builds and checks new tagged source; it grants no authority to publish. Publication requires the owner's explicit release instruction and exact source/run/assets. Inspect the read-only publication plan before invoking its write operation, and verify the resulting release and every asset afterward.
 
 ## Historical content-package command
 
-The old product, bootstrap formats, download walkthroughs and `markitect package` command remain at [the pre-retirement guide](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/integration/README.md) and the original version tags. They are historical contracts, not another active command surface.
+The old product, bootstrap formats, download walkthroughs and `markitect package` command remain at [the pre-retirement guide](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/integration/README.md), pinned by the archive ref `archive/pre-reset-1f4a1ede`. They are historical contracts, not another active command surface.

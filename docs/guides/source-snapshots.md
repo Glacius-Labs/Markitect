@@ -1,6 +1,6 @@
 # Source snapshots
 
-Product snapshot values, repository acquisition, canonical model digests and maintenance source packaging have different responsibilities. [Architecture](architecture.md) and [dependency rules](development/modules.md) describe their current owners.
+Product snapshot values, repository acquisition, canonical model digests and maintenance source packaging have different responsibilities. [Architecture](../architecture.md) and [dependency rules](../development/modules.md) describe their current owners.
 
 ## Current value
 

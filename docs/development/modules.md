@@ -57,4 +57,4 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 ## Historical module links
 
-Earlier capability/module and old product-layer contracts remain in the [historical guide](../history/development-modules-legacy-sections-20261010.md) and [preceding source](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).
+Earlier capability/module and old product-layer contracts remain in the [historical guide](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/development-modules-legacy-sections-20261010.md) and [preceding source](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).

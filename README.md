@@ -1,7 +1,7 @@
 <h1>
   <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="assets/markitect-wordmark-dark.svg">
-    <img src="assets/markitect-wordmark-light.svg" alt="Markitect" width="360">
+    <source media="(prefers-color-scheme: dark)" srcset="docs/assets/markitect-wordmark-dark.svg">
+    <img src="docs/assets/markitect-wordmark-light.svg" alt="Markitect" width="360">
   </picture>
 </h1>
 
@@ -96,7 +96,7 @@ Only the independently approved, reloaded candidate can be published. Markitect 
 
 Suppose a small library allows each member to borrow **five books**. Later, the limit changes to **three**.
 
-The [canonical Library example](docs/design/canonical-model/library-example/README.md) represents the limit and its meaning in a real YAML Definition:
+The [canonical Library example](testdata/library/README.md) represents the limit and its meaning in a real YAML Definition:
 
 ```yaml
 id: loan-policy
@@ -117,7 +117,7 @@ spec:
 
 Changing `maxOpenLoans: 5` to `maxOpenLoans: 3` is a change of **accepted intent**, not a request to edit a particular source file. A conforming realization must reflect the new boundary in behavior, tests, and relevant documentation **without** deleting existing loans or breaking returns. Already-correct artifacts should remain correct, not be rewritten merely because an agent prefers a different style.
 
-The broader [Library M1 → M2 evaluation](docs/measurement.md) tests whether Markitect can preserve those obligations across successive changes. That full preservation result is **not yet established** by the initial M1 success.
+The broader [Library M1 → M2 evaluation](docs/guides/measurement.md) tests whether Markitect can preserve those obligations across successive changes. That full preservation result is **not yet established** by the initial M1 success.
 
 ## The project model
 
@@ -135,7 +135,7 @@ A Markitect project explicitly owns its inputs and file relationships under `.ma
 
 The model is **not a mirror of the file tree**. You choose the level of conceptual detail. The registry describes how real files implement those concepts; Package structure determines responsibility; declared checks provide executable evidence where available.
 
-See [Markitect's own model](.markitect/README.md), the [canonical language v1 contract](docs/design/canonical-model/minimal-language/language-contract.md), and the [Library model](docs/design/canonical-model/library-example/README.md) for the actual format.
+See [Markitect's own model](.markitect/README.md), the [canonical language v1 contract](docs/design/language-contract.md), and the [Library model](testdata/library/README.md) for the actual format.
 
 <a id="run-the-current-source"></a>
 
@@ -168,7 +168,7 @@ go run ./cmd/markitect apply \
   --run-config /absolute/path/run.json
 ```
 
-`apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
+`apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/guides/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
 
 ## Current status
 
@@ -186,7 +186,7 @@ go run ./cmd/markitect apply \
 
 The compiler can reject malformed structure and missing declared relationships. **It cannot know whether the model omitted a real user need, whether an AI correctly understood prose, or whether green agent-written tests actually test the right thing.** Independent review, integration, project checks, and outside evaluation are intended to improve trust—not to turn agent work into a formal proof.
 
-Read the [live implementation plan](docs/implementation-plan.md) for up-to-date source/evidence status and [Measurement](docs/measurement.md) for how the method will be compared with ordinary agentic coding. Fewer tokens, more agents, or one successful demonstration are not acceptance criteria by themselves.
+Read the [live implementation plan](docs/implementation-plan.md) for up-to-date source/evidence status and [Measurement](docs/guides/measurement.md) for how the method will be compared with ordinary agentic coding. Fewer tokens, more agents, or one successful demonstration are not acceptance criteria by themselves.
 
 ## Direction
 
@@ -198,11 +198,11 @@ The measure of success is whether projects remain consistent through real change
 
 - [Product vision](docs/vision.md) — the thesis, responsibilities, and limitations
 - [Origin and rationale](docs/concepts/origin-and-rationale.md) — why the idea emerged
-- [Canonical language v1](docs/design/canonical-model/minimal-language/language-contract.md) — the authoritative model format
-- [Project workflow](docs/project-workflow.md) — exact commands and runtime prerequisites
+- [Canonical language v1](docs/design/language-contract.md) — the authoritative model format
+- [Project workflow](docs/guides/project-workflow.md) — exact commands and runtime prerequisites
 - [V1 execution architecture](docs/design/v1-execution-architecture.md) — Run, Workflow, Harness, storage, and publication boundaries
-- [Library example](docs/design/canonical-model/library-example/README.md) — the worked model and policy-change scenario
-- [Measurement](docs/measurement.md) — evaluation against conventional agentic work
+- [Library example](testdata/library/README.md) — the worked model and policy-change scenario
+- [Measurement](docs/guides/measurement.md) — evaluation against conventional agentic work
 - [Documentation map](docs/README.md) — all maintained references
 
 ## Contributing
@@ -211,7 +211,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source checks, import boundaries, art
 
 ## Distribution
 
-The earlier Project/Domain downloads were retired. There is currently no supported binary release of this model-first V1. Historical tags and release evidence remain available; see the [retirement record](docs/history/distribution-retirement-20261017.md).
+The earlier Project/Domain downloads were retired. There is currently no supported binary release of this model-first V1. Historical tags and release evidence remain available; see the [retirement record](docs/validation/distribution-retirement-20261017.md).
 
 <!-- markitect-release:install:start -->
 
@@ -225,7 +225,7 @@ Build from the current reviewed source using the Go version in `go.mod`. Publish
 
 ### Examples and evaluation
 
-Start with the [canonical Library model](docs/design/canonical-model/library-example/README.md), [project workflow](docs/project-workflow.md), and [independent Library Playground](experiments/library-playground/README.md). The complete two-Apply policy-change demonstration remains a separate acceptance target.
+Start with the [canonical Library model](testdata/library/README.md), [project workflow](docs/guides/project-workflow.md), and [independent Library oracle](tools/library-oracle/README.md). The complete two-Apply policy-change demonstration remains a separate acceptance target.
 
 <!-- markitect-release:try:end -->
 

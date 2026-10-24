@@ -1,6 +1,6 @@
 # What an extracted model contains — owner, 19 October 2026
 
-Recorder's note: owner decision in the Claude Extract session, after the [first library Extract runs](../../validation/library-extract-20261019.md). The owner asked the session to test, refine and stabilize Extract, to look at the concept and the earlier runs, and then to plan. The session proposed a four-step plan (measure first, decide the concept questions, fix in the Host rather than in prompts, then broaden and clean up) and asked three questions, each with a recommendation. [DEC-061](../register.md#dec-061-what-an-extracted-model-contains) records the decision.
+Recorder's note: owner decision in the Claude Extract session, after the [first library Extract runs](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/library-extract-20261019.md). The owner asked the session to test, refine and stabilize Extract, to look at the concept and the earlier runs, and then to plan. The session proposed a four-step plan (measure first, decide the concept questions, fix in the Host rather than in prompts, then broaden and clean up) and asked three questions, each with a recommendation. [DEC-061](../register.md#dec-061-what-an-extracted-model-contains) records the decision.
 
 ## The questions
 

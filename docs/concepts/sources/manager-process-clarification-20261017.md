@@ -1,6 +1,6 @@
 # Owner clarification: deterministic Manager process
 
-Date: 17 October 2026. Source: owner conversation `01a148ed-f2c8-7f91-85db-76be64df6bfe`. The German passages below preserve the owner's words. The current contract belongs in the [Apply concept](../../design/canonical-model/manager-apply-concept.md#tasks-and-delegation), not in this source record. This clarification supersedes the earlier parent-authored child prompts and root-planned order; it does not claim implementation or measured benefit.
+Date: 17 October 2026. Source: owner conversation `01a148ed-f2c8-7f91-85db-76be64df6bfe`. The German passages below preserve the owner's words. The current contract belongs in the [Apply concept](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md#tasks-and-delegation), not in this source record. This clarification supersedes the earlier parent-authored child prompts and root-planned order; it does not claim implementation or measured benefit.
 
 ## Concern about drift
 
@@ -84,7 +84,7 @@ The owner selected:
 
 > Ja, Zurückweisungen separat begrenzen
 
-The [execution contract](../../history/apply-design-before-dec-056/manager-apply-execution.md#admission-amendments-and-finite-correction) records this selected rule. Successful limited deliveries do not consume or replenish the rejection allowance; local and integration review remain distinct purposes. This supersedes the earlier submission-count design, not the finite assignment budget or mandatory evidence. Technical implementation and real Apply proof remain separate work.
+The [execution contract](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-execution.md#admission-amendments-and-finite-correction) records this selected rule. Successful limited deliveries do not consume or replenish the rejection allowance; local and integration review remain distinct purposes. This supersedes the earlier submission-count design, not the finite assignment budget or mandatory evidence. Technical implementation and real Apply proof remain separate work.
 
 ## Working bases and session continuity
 

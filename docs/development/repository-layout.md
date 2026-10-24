@@ -1,58 +1,35 @@
 # Repository layout
 
-Current source uses canonical language v1, explicit input selection and exact artifact registrations. [Project workflow](project-workflow.md) describes preparation; [Architecture](architecture.md) explains responsibility boundaries.
+This repository holds Markitect's source, its own canonical self-model and its documentation. For the layout of a project that uses Markitect, see [Project layout](../guides/project-workflow.md#project-layout).
 
-## Recommended target-project layout
+| Path | Holds |
+|---|---|
+| `cmd/` | Go entrypoints. `markitect` (the CLI) and `markitect-agentd` (runs inside the runtime container) ship; `markitect-check-architecture`, `markitect-check-modules` and `markitect-release` are maintenance commands. |
+| `internal/` | Private Go packages of the product and its maintenance services. The [code map](code-map.md) lists every Go package of the module, its layer and owning guide; [modules](modules.md) states the allowed imports. |
+| `.markitect/` | Markitect's own canonical model, registry shards, ignore rules, execution declarations and module pins. Every file in this repository is accounted for here. |
+| `docs/` | Concept and decisions, design, guides, development, current evidence and the archive index [`docs/archive.md`](../archive.md). |
+| `testdata/` | Byte-stable fixtures shared by several packages, the smoke and the qualification: the `markitect/core` dependency and the canonical Library model M1. |
+| `tools/` | Independent outside checks that import no product code: the packaged-source smoke and the Library oracle. |
+| `scripts/` | Maintainer scripts: documentation link check, CI test and flake reports, the native Library Apply operator script. |
+| `packaging/` | What ships besides the binary: the runtime image, the consumer bootstrap and the distribution guide. |
+| `examples/` | Copyable runtime-profile and run configuration examples; tests keep them valid. |
+| `.github/`, `.githooks/` | Manual CI, release and flake-report workflows; the pre-commit model check. |
 
-```text
-.markitect/
-  model.yaml                 canonical manifest
-  model-lock.yaml            explicit dependency lock
-  model/                     canonical Definition tree and local Packages
-  execution.yaml             v2 Package instructions and scoped required checks
-  ignore.yaml                optional exact explained file exceptions
-  registry/
-    registry.yaml            Root's artifact shard
-    package/registry.yaml    local Package shard, maintained by its Manager
-docs/markitect/project.md    official generated readable view
-```
+**Why there is no `src/`.** Markitect is one Go module. Go keeps `cmd/` and `internal/` at the module root, and the source packager refuses a `src/` layout.
 
-Model granularity and artifact locations remain the author's choice. Canonical dependency manifests are explicitly selected; they are not discovered under an assumed directory. The operator supplies an explicit Runtime profile document for requested metadata preparation. No automatic scaffold, configuration migration or execution is implied.
+**Why `.markitect/` is here.** Markitect is developed model-first with its own product. `markitect check` runs in CI and before every commit and fails on any file without a registration or an explained ignore entry. The self-model is [model.yaml](../../.markitect/model.yaml), [model-lock.yaml](../../.markitect/model-lock.yaml) and `.markitect/model/`; [project.md](../markitect/project.md) is its officially generated view. Keep new build caches and logs outside governed source inputs; Gitignore does not filter the census.
 
-Standalone Run keeps durable candidates, terminal records and project Notes outside the repository in the explicitly selected state root. Temporary Manager and Git environments close before successful return; stored data can be reopened independently. See the [Run](../internal/run/README.md) and [workspace service](../internal/adapters/gitrepo/WORKSPACES.md). S3 source composes public Apply, independently reopened stored Verify approval and guarded publication. Native Apply qualification remains separate and Extract is retired. Read-only preparation creates no Run state.
+**Where new things go.**
 
-## Ownership and boundaries
+| New item | Place | Also update |
+|---|---|---|
+| Go package | `internal/<responsibility>/` | Code map entry, import rules, registry entry |
+| Shipped command | `cmd/<name>/` | Source packaging roots, architecture gate |
+| Fixture used by one package | `<package>/testdata/` | Registry entry |
+| Fixture shared across packages or used by qualification | `testdata/` | Registry entry; keep bytes stable, locks pin them |
+| Outside check that must not import product code | `tools/` | Registry entry, CI step |
+| Maintainer script | `scripts/` | Registry entry, tests next to it |
+| Document | The owning folder under `docs/`, see [documentation maintenance](documentation.md) | Local map, registry entry |
+| Historical material | Not on Main: it stays at an archive point and [`docs/archive.md`](../archive.md) points to it | Index entry |
 
-The canonical model owns intended behavior. Registry shards assign exact artifact paths to one responsibility and existing Definitions. Execution v2 declarations own Package instructions and scoped checks. Outer runtime configuration owns native/check profiles; invocation configuration owns finite limits and normal account-login references. Static metadata owns literal image/protocol observations. Captured canonical and control inputs are protected separately; an exact ignore cannot override input protection or satisfy missing realization.
-
-## Source repository layout
-
-Markitect has one root Go module:
-
-```text
-cmd/markitect/                 product entrypoint
-cmd/markitect-release/         independent release maintenance entrypoint
-cmd/markitect-check-*/         repository gate entrypoints
-internal/model/               canonical v1 Model check
-internal/snapshot/            pure fixed tree values
-internal/organization/        pure topology/context/settings
-internal/realization/         pure ownership/accounting/candidates
-internal/project/             structural preparation and candidate validation
-internal/run/                 closed complete Manager hierarchy and its ports
-internal/runtimeconfig/       acquired static native/check profile envelopes
-internal/harness/             pure model-derived native instructions
-internal/apply/               command preflight, closed workflow and durable publication
-internal/workflow/            direct complete Assessment, Implement and Verify sequence
-internal/modeldocs/           generated view and write plan
-internal/adapters/            explicit repository/profile/document adapters
-internal/bootstrap/           actual product composition
-internal/buildinfo/           build version
-internal/tooling/             explicit independent maintenance services
-internal/testkit/             hermetic test-only support
-integration/                  standalone public bootstrap
-tools/smoke/                  source distribution consumer checks
-```
-
-The [code map](development/code-map.md) lists every actual Go package and its owning guide. Nested product modules and unknown responsibility paths fail source gates. Tests live with their consumers. Independent canonical fixtures and the Library oracle retain their original bytes.
-
-The self-model is [model.yaml](../.markitect/model.yaml), [model-lock.yaml](../.markitect/model-lock.yaml) and `.markitect/model/`; [project.md](markitect/project.md) is its officially generated view. [AGENTS.md](../AGENTS.md) routes work. `.github/` owns hosted workflows and `.githooks/` the staged-tree pre-commit check. Keep new build caches and logs outside governed source inputs; Gitignore does not filter the census.
+**What enforces this.** The architecture gate fails on Go code outside a mapped responsibility; the source packager fails on unknown roots inside `cmd/` and `internal/` and on nested modules; `markitect check` fails on unaccounted files; `scripts/check-docs.py` fails on broken local links.

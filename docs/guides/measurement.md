@@ -1,10 +1,10 @@
 # Measurement
 
-This document defines measurement procedure for Markitect product work. The [vision](vision.md) owns the quality and intent-fidelity thesis and the [delegated method](vision.md#the-delegated-method); the [roadmap](implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
+This document defines measurement procedure for Markitect product work. The [vision](../vision.md) owns the quality and intent-fidelity thesis and the [delegated method](../vision.md#the-delegated-method); the [roadmap](../implementation-plan.md) owns delivery order. Product tests and measurement fixtures use Go; any Markitect-owned persisted measurement record uses YAML.
 
 ## Evidence for the primary goal
 
-The [owner's clarified goal](vision.md#primary-goal-and-prerequisites) is trust earned through reliable model-to-artifact conformance. Assess semantic fidelity before time or cost. Keep structural coverage, semantic model assessment, artifact realization and parent integration as distinct claims. Use the existing cases and records, not a new general evaluation platform.
+The [owner's clarified goal](../vision.md#primary-goal-and-prerequisites) is trust earned through reliable model-to-artifact conformance. Assess semantic fidelity before time or cost. Keep structural coverage, semantic model assessment, artifact realization and parent integration as distinct claims. Use the existing cases and records, not a new general evaluation platform.
 
 | Risk | Discriminating evidence |
 | --- | --- |
@@ -19,7 +19,7 @@ Freeze expected outcomes before execution, independently validate faulty/conform
 
 Report behavior, test semantics, documentation/configuration consistency, ownership/integration, preservation, missed conditions, unsupported success, false blockers and unknowns separately. State actual assessed scope and evidence in readable results. A green status, an external behavioral oracle or a complete registry is not a holistic proof. Human attention includes model/packet authoring, maintenance and recovery; runtime and money remain separate secondary observations.
 
-The [A–D supplement](development/claude-direct-runtime-handoff-20261021.md#primary-goal-supplement-and-current-handoff) prioritizes current discriminating checks within existing responsibilities and ceilings. The authoring and longitudinal exercises remain later bounded scopes; this adoption starts no additional series, does not rescore historical results and adds no UI implementation assignment.
+The [A–D supplement](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/development/claude-direct-runtime-handoff-20261021.md#primary-goal-supplement-and-current-handoff) prioritizes current discriminating checks within existing responsibilities and ceilings. The authoring and longitudinal exercises remain later bounded scopes; this adoption starts no additional series, does not rescore historical results and adds no UI implementation assignment.
 
 ## Staged method readiness
 
@@ -41,7 +41,7 @@ Correct implementation with a stale model, correct model with a missed target, p
 
 ## Quality-first comparative evaluation
 
-The primary study asks whether the method better addresses the problems it is designed for: losing intent through forgotten obligations, overlooked consequences, contradictory representations or ignored rules. The owner [specified the primary comparison](concepts/sources/human-attention-and-baseline-20261017.md#comparison-baseline) on 17 October 2026: ordinary documentation containing the same intended meaning as the canonical model, given to one coding Agent with the instruction, "Lies dir die Doku durch und implementiere das so" (read the documentation and implement it accordingly). Markitect adds its typed model and systematic realization process. Count authoring and maintaining both the ordinary documentation and the canonical model as human work from the same predeclared starting point.
+The primary study asks whether the method better addresses the problems it is designed for: losing intent through forgotten obligations, overlooked consequences, contradictory representations or ignored rules. The owner [specified the primary comparison](../concepts/sources/human-attention-and-baseline-20261017.md#comparison-baseline) on 17 October 2026: ordinary documentation containing the same intended meaning as the canonical model, given to one coding Agent with the instruction, "Lies dir die Doku durch und implementiere das so" (read the documentation and implement it accordingly). Markitect adds its typed model and systematic realization process. Count authoring and maintaining both the ordinary documentation and the canonical model as human work from the same predeclared starting point.
 
 Give both sides equivalent requirements, rules, interfaces, relationships and acceptance obligations. Preserve the same project starting state, available implementation tools, execution environment, Agent model/effort settings and authorized freedom. The ordinary documentation may be well structured and linked, and the Agent may use ordinary build and test tools. Do not withhold a requirement from the documentation merely because Markitect expresses it in a typed Definition. Independent outcome assessment uses the same hidden expectations for both sides and remains outside both writers' control.
 
@@ -53,7 +53,7 @@ Keep initial setup, model maintenance, recovery and review effort visible. Recor
 
 ## Comparison factors and first results
 
-The [comparison source playground](../experiments/test-projects/comparison/playground/README.md) supplies a small curated set of fixed packets, not a study runner. Record exact model, effort and profile bindings. The primary paired comparison uses the same model and effort for the ordinary coding Agent and every Markitect role; mixed role profiles are a separately labeled secondary condition. Give each pair the same maximal resources, timeouts, permissions, implementation freedom and human-help allowance. Measure actual resource use, human attention, money and elapsed time separately; equal ceilings do not imply equal cost.
+The [comparison source playground](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/test-projects/comparison/playground/README.md) supplies a small curated set of fixed packets, not a study runner. Record exact model, effort and profile bindings. The primary paired comparison uses the same model and effort for the ordinary coding Agent and every Markitect role; mixed role profiles are a separately labeled secondary condition. Give each pair the same maximal resources, timeouts, permissions, implementation freedom and human-help allowance. Measure actual resource use, human attention, money and elapsed time separately; equal ceilings do not imply equal cost.
 
 Declare project size separately from dependency and rule complexity, and distinguish greenfield implementation from existing-system changes, local changes from rules spanning responsibilities, and no added seed from an ordinary or subtle deliberately seeded defect. Use a small selected set before a full factor combination. The first Library/Readinglog set changes domain, language and organization together; its project differences are descriptive and do not isolate a causal size or complexity effect. Compare methods within each identical scenario/profile, including each model-profile condition, before drawing a broader conclusion.
 
@@ -81,30 +81,30 @@ The owner's priority is fidelity to intended meaning with less human attention. 
 
 Record human interventions where they occur and preserve failures, exclusions, missing evidence and later corrections. Measure repeated architecture evolution as well as ordinary implementation so package, exception, mapping and projection upkeep is visible. Tokens and model/tool calls remain secondary observations only when instrumented; bytes, helper read events and agent duration are not token usage or cognition.
 
-The [real-code pilot](validation/real-project-adoption-pilot.md), [matched comparison](validation/agents-md-vs-markitect.md) and [consumer inventory](validation/parallel-wave-konfyra.md) retain contrary evidence and missing instrumentation. They do not establish human-attention reduction. Future studies must allow the simpler baseline to win and ask whether modeling costs more than the consistency work it replaces. This section specifies evaluation, not a telemetry implementation, benchmark run or automatic acceptance policy.
+The [real-code pilot](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/real-project-adoption-pilot.md), [matched comparison](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/agents-md-vs-markitect.md) and [consumer inventory](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/parallel-wave-konfyra.md) retain contrary evidence and missing instrumentation. They do not establish human-attention reduction. Future studies must allow the simpler baseline to win and ask whether modeling costs more than the consistency work it replaces. This section specifies evaluation, not a telemetry implementation, benchmark run or automatic acceptance policy.
 
 ## Evaluating the method separately from its runtime
 
-This is a proposed procedure. Markitect's product owner endorsed it on 10 October 2026, and the plan is still pending ([DEC-010](concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime)). Until the owner decides the plan, studies of the delegated method should follow it.
+This is a proposed procedure. Markitect's product owner endorsed it on 10 October 2026, and the plan is still pending ([DEC-010](../concepts/register.md#dec-010-evaluate-the-method-separately-from-its-execution-runtime)). Until the owner decides the plan, studies of the delegated method should follow it.
 
-The object of evaluation is the delegated method: computed scope, bounded Managers, independent review, integration, verification and guarded Apply. One particular execution runtime is not the object. The October 2026 comparison attempts were dominated by environment, runtime and harness failures and allow no conclusion about the method ([DEC-008](concepts/register.md#dec-008-the-delegated-method-has-not-yet-been-tested)). Earlier matched comparisons evaluated earlier product forms; their findings stand.
+The object of evaluation is the delegated method: computed scope, bounded Managers, independent review, integration, verification and guarded Apply. One particular execution runtime is not the object. The October 2026 comparison attempts were dominated by environment, runtime and harness failures and allow no conclusion about the method ([DEC-008](../concepts/register.md#dec-008-the-delegated-method-has-not-yet-been-tested)). Earlier matched comparisons evaluated earlier product forms; their findings stand.
 
 - **Stable environment.** Use a stable, isolated environment that is the same for every arm. Current evidence points to Linux. Classify failures as follows; neither kind is an outcome of the method:
   - A failure of Markitect's own runtime is a product finding, recorded with its cause.
   - A harness or environment failure is a measurement limitation.
-- **The product supplies the method.** A study harness chooses and configures the executors and models that the product offers. It does not reimplement Markitect's scoping, review, integration or verification. This follows the [work-item comparison decision](design/work-item-comparison-20261009.md). The product-side boundary for exchangeable executors is [ENH-005](concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method).
+- **The product supplies the method.** A study harness chooses and configures the executors and models that the product offers. It does not reimplement Markitect's scoping, review, integration or verification. This follows the [work-item comparison decision](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/work-item-comparison-20261009.md). The product-side boundary for exchangeable executors is [ENH-005](../concepts/register.md#enh-005-exchangeable-executor-for-the-delegated-method).
 - **Change sequences.** Apply the repeated, realistic change sequences required [above](#human-attention-and-delegated-work) to one long-lived project.
   - Include cross-cutting rules, a refactoring and a late change that touches earlier decisions.
-  - Predeclare ground truth where it is independently knowable: the obligations, files and Managers each change should affect; seeded cross-cutting rules; and hidden holdout checks. Whether to focus on such series is still an open question ([OQ-005](concepts/register.md#open-questions)).
+  - Predeclare ground truth where it is independently knowable: the obligations, files and Managers each change should affect; seeded cross-cutting rules; and hidden holdout checks. Whether to focus on such series is still an open question ([OQ-005](../concepts/register.md#open-questions)).
 - **What to score.**
   - Missed and unnecessary inclusions, rule violations and contradictions between representations.
   - Regressions, required and unnecessary escalations, and human attention.
   - Cost as a secondary observation.
-- **Configurations as factors.** Treat executor choice and per-role model choice as explicit experimental factors once the product offers them ([ENH-004](concepts/register.md#enh-004-per-role-agent-configuration-and-model-mixing)). Keep each run's actual configuration fixed and recorded.
+- **Configurations as factors.** Treat executor choice and per-role model choice as explicit experimental factors once the product offers them ([ENH-004](../concepts/register.md#enh-004-per-role-agent-configuration-and-model-mixing)). Keep each run's actual configuration fixed and recorded.
 
 ## Correctness first
 
-Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library Playground](../experiments/library-playground/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
+Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library Playground](../../tools/library-oracle/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
 
 The old authoring scenarios, `internal/app` examples and published-binary timing workload are retired. Their protocols and dated observations remain at [the pre-retirement measurement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/measurement.md) and [benchmark source](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426/benchmark). Removing obsolete commands does not rescore their results or establish a replacement benchmark. A new comparative study follows the current primary baseline above and requires its own authorization.
 
@@ -122,7 +122,7 @@ Capture only observed data: model-reported token usage, calls, tool calls, searc
 
 Review reuse should be exercised for identical inputs, relevant changes, removed edges, tool/config changes, and unknown files. Reuse makes no model call. Compare the full repeated task before claiming sustained savings.
 
-The [2026-10-01 documentation pilot](history/assessments/authoring-pilot-20261001.md) records an incomplete first exercise and a six-run repeat with the mutation boundary stated in the task card. All six repeated candidates passed fixed structural and output checks and the four-path boundary. The blind semantic review found a further wording difference between task and rubric, while token and cost measures remained unavailable. State every scored requirement in both task card and review rubric before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
+The [2026-10-01 documentation pilot](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/assessments/authoring-pilot-20261001.md) records an incomplete first exercise and a six-run repeat with the mutation boundary stated in the task card. All six repeated candidates passed fixed structural and output checks and the four-path boundary. The blind semantic review found a further wording difference between task and rubric, while token and cost measures remained unavailable. State every scored requirement in both task card and review rubric before running another comparison; keep structural validity, requested semantics, and a narrow mutation boundary as separate results.
 
 ## Optional local records
 

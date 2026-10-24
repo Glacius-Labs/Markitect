@@ -1,0 +1,95 @@
+# Archive index
+
+Main keeps what V1, its development and its qualification need. Everything else stays at a named archive point and is listed here: designs of earlier product lines, closed experiments, dated validation records, handoffs, strategy and research. Archived files keep their original bytes and wording; DEC-069 applies to the documentation on Main, not to the archive ([DEC-071](concepts/register.md#dec-071-repository-structure-and-archive)).
+
+Links to archived files use the full commit SHA, never a branch or tag name, because names can move or vanish, as the tags did. Each group below links its original folder at the archive point; replace the folder with the file path from the group's description to reach a single file.
+
+## Archive points
+
+| Archive point | Commit | What it holds |
+|---|---|---|
+| Branch `archive/main-pre-r2-20261024` | [`2389e252a85e3896da91f5f4649a3394b9222b2c`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c) (tree `fec8e0c2fc16413e2e206cfb220059791338dfc1`) | Main on 24 October 2026, immediately before the repository restructuring (R2). Contains every file removed or moved by R2, and is in Main's ancestry |
+| Branch `archive/v1-pre-cutover-20261023` | [`447ac3b152de79b52de80513e14dc94349a060bd`](https://github.com/Glacius-Labs/Markitect/tree/447ac3b152de79b52de80513e14dc94349a060bd) | The source snapshot of 23 October 2026 before the Extract, Cockpit, authoring and Setup retirement; see the [source archive record](development/v1-source-archive-20261023.md) |
+| Pre-reset commits | Six, below | History before the reset of 23 October 2026, which Main's history does not contain |
+
+The refs under `archive/` are protected against deletion and force-push by the ruleset "Protect archive refs". Both Main-derived points also exist as Git bundles outside the repository, so a second history reset cannot remove them.
+
+### Bundle of the R2 archive point
+
+- File: `C:\Users\Consiliari\Glacius Labs\Markitect-archives\main-pre-r2-20261024\markitect-2389e252.bundle`
+- SHA-256: `8db5fa6899fd0c8941901f4985a405e2bf3c056ea52ff0168e4caf76d30905e9`. The bundle holds the full history (222 commits) under the ref `archive/main-pre-r2-20261024`.
+- A restore check (clone, `git fsck --full`, exact commit and tree, empty status) sits beside it in `restore-check`.
+
+Restore from the named reference or, if it is unavailable, from the bundle after verifying its hash. Use a new empty destination outside existing checkouts:
+
+```text
+git clone --branch archive/main-pre-r2-20261024 https://github.com/Glacius-Labs/Markitect.git NEW_EMPTY_DESTINATION
+git clone --branch archive/main-pre-r2-20261024 PATH_TO_BUNDLE NEW_EMPTY_DESTINATION
+```
+
+Require commit `2389e252a85e3896da91f5f4649a3394b9222b2c`, tree `fec8e0c2fc16413e2e206cfb220059791338dfc1` and an empty status. The restore procedure of the pre-cutover bundle is in its [record](development/v1-source-archive-20261023.md).
+
+### Pre-reset commits
+
+The history reset of 23 October 2026 removed these commits from every branch. Each is pinned by an archive ref, which keeps it reachable on GitHub.
+
+| Ref | Commit | Date | What it holds | Cited by |
+|---|---|---|---|---|
+| `archive/pre-reset-7dbd599c` | [`7dbd599c81540c8203a1b7f83afbc335174f4f1f`](https://github.com/Glacius-Labs/Markitect/tree/7dbd599c81540c8203a1b7f83afbc335174f4f1f) | 7 Oct 2026 | Source of release `v0.14.1`, the last Project/Domain release | [Production assessment](validation/production-assessment.md), [documentation maintenance](development/documentation.md), [CONTRIBUTING](../CONTRIBUTING.md) |
+| `archive/pre-reset-3ebe3c6e` | [`3ebe3c6e6d283b998020350334e24a7303b089b7`](https://github.com/Glacius-Labs/Markitect/tree/3ebe3c6e6d283b998020350334e24a7303b089b7) | 16 Oct 2026 | The evening rules and the consistency review of the working-day reflection | [Reflections](concepts/reflections/README.md), [working-day discussion](concepts/sources/working-day-discussion-20261016.md) |
+| `archive/pre-reset-bc4b49e7` | [`bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310`](https://github.com/Glacius-Labs/Markitect/tree/bc4b49e76f9b9e4b3ec98033a0b8c73d5013b310) | 16 Oct 2026 | Main with the work-item backlog (`docs/work-items/backlog.yaml`) | [Concept register](concepts/register.md) |
+| `archive/pre-reset-5ff32069` | [`5ff3206917fa3b7482d9daedb903d57a919f56b8`](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8) | 17 Oct 2026 | The removed product generation before the Apply rebuild | [Architecture](architecture.md), [CONTRIBUTING](../CONTRIBUTING.md), [Project operations](guides/project-operations.md) |
+| `archive/pre-reset-1f4a1ede` | [`1f4a1ede214d05fd2fee615b3905207df7702426`](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426) | 17 Oct 2026 | The complete pre-retirement tree, the basis of the [retirement record](validation/distribution-retirement-20261017.md) | [Measurement](guides/measurement.md), [packaging guide](../packaging/README.md), [examples](../examples/README.md) |
+| `archive/pre-reset-0c28097c` | [`0c28097c030bc5d031b501002bc85634cd66a4c8`](https://github.com/Glacius-Labs/Markitect/tree/0c28097c030bc5d031b501002bc85634cd66a4c8) | 20 Oct 2026 | Main when the Apply workflow terminology was recorded | [Apply workflow conversation](concepts/sources/terminology-and-file-accounting-20261020.md) |
+
+The 18 retired release versions `v0.1.0` to `v0.14.1` no longer exist as Git tags. The mapping from each former tag to its commit is [retired-releases-20261017.json](validation/retired-releases-20261017.json); only the commit of `v0.14.1` is pinned.
+
+## Archived groups
+
+The register entries that cite a group are listed for orientation; the register links the individual files.
+
+| Group | Original location at the archive point | What it holds and why it still matters | Register |
+|---|---|---|---|
+| Pre-V1 product design | [`docs/design/*.md`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design) (32 files) and [`docs/design/project-world/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/project-world) (28 files, with the shop example) | Designs of the Project/Domain and projection line, adoption and Init, the skills, Cockpit, the verb table and the earlier model-first workflow. Cockpit, Setup and authoring are outside V1 | DEC-004, DEC-010, DEC-065, DEC-066, VIS-001 |
+| Apply and canonical-model design | [`docs/design/canonical-model/*.md`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model) (35 files) | The Apply designs behind DEC-024 to DEC-067 (concept, plan, runtime, workflow, playground, library flow), the commands design, model consolidation, the standard library and its working-vocabulary pages. Concept 1.0 supersedes the Apply designs | CPT-004, DEC-002, DEC-024 to DEC-026, DEC-031, DEC-033 to DEC-037, DEC-039, DEC-040, DEC-042, DEC-044, DEC-045, DEC-053, DEC-056 to DEC-058, DEC-061 to DEC-064, DEC-067, ENH-001 to ENH-003, ENH-006, IDEA-001, IDEA-017, VIS-001 |
+| Language and model design history | [`docs/design/canonical-model/minimal-language/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language) (88 files without the specification and the Core dependency), [`library-example/verify-model.py` and `verification.json`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/library-example), [`docs/design/product-model-refinement/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/product-model-refinement), [`task-management/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/task-management) and [`task-management-model/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/task-management-model) | The evidence behind the language v1 baseline: probes, identities, the exchange example with its verification reports, the Command/command collision example, earlier model drafts and the Tasks counter-probe. Nothing runs the Python probes any more | none |
+| Handoffs and contracts | [`docs/development/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/development): the Claude and Codex Apply and Cockpit handoffs of 20 and 21 October, `night-apply-stability-20261021.md`, `shared-contracts.md`, `session-handoff.md` | Pre-V1 assignments and the v0.13 contract table. They grant no current work | DEC-037, DEC-064, ENH-002, IDEA-018, VIS-001 |
+| Validation records | [`docs/validation/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation) (77 files including 8 screenshots; the qualification record, the A1 proof and the release evidence stay on Main) | Dated evidence about retired source: the runtime probes of 17 October, Apply, Extract and recursive-Apply runs of 19 to 23 October, Cockpit records, the Project/Domain line, comparisons and pilots | DEC-008, DEC-037, DEC-056 to DEC-061, DEC-064, DEC-066, ENH-006 |
+| History | [`docs/history/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history) (35 files; the release evidence stays on Main) | Earlier plans, handoffs, surveys, assessments, the WinGet and source-release distribution notes and the Apply design before DEC-056 | DEC-003, DEC-017, DEC-030, DEC-035, DEC-037 to DEC-039, DEC-041, DEC-043, DEC-045 to DEC-050, DEC-052 to DEC-055, ENH-005 |
+| Strategy and marketing | [`docs/strategy/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/strategy) (33 files), including the [marketing working plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/strategy/marketing-plan.md) | Supplied strategy bundles, `explainer.md`, `short-posts.md` and the marketing working plan of 17 October. Restore it from here when marketing work resumes | none |
+| Research | [`docs/research/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/research) (6 files) | Supplied research orientation and protocol-v1 capability records | DEC-018, IDEA-016 |
+| Work items | [`docs/work-items/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/work-items) | A pointer to the archived surveys | none |
+| Apply trials | [`experiments/apply-trials/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/apply-trials) (273 files) | CCF, NIGHT, D-series and plan comparison cases with answer keys, built on the pre-V1 Pass engine; the series is closed | none |
+| Recursive Apply demo | [`experiments/recursive-apply-demo/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/recursive-apply-demo) (23 files) | The DEC-056 two-Apply Library demonstration and Extract runs | none |
+| Model assessment | [`experiments/model-assessment/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/model-assessment) (8 files) | The Session C method trial of the Pass-process assessment | none |
+| Test projects | [`experiments/test-projects/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/test-projects) (183 files) | Library r2, Readinglog, Roombook and the ordinary-documentation comparison with its packet tool. A dispatch that needs them restores them into `testdata/projects/` from here | none |
+| Runtime baseline | [`experiments/runtime-baseline/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/runtime-baseline) (`README.md`, `baseline.py`, `codex_login.py`) | The single-agent provider baseline on the pre-V1 runtime (Claude Haiku, Codex Luna). The two files that assess a candidate with the oracle moved to `tools/library-oracle/container/` | none |
+| Experiments map | [`experiments/README.md`](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/experiments/README.md) | The index of the former folder | none |
+
+### Accepted later directions
+
+These designs are accepted as later directions but have no V1 consumer. They stay findable here instead of on Main.
+
+| Direction | Where it lives at the archive point |
+|---|---|
+| Standard library | [`docs/design/canonical-model/standard-library*.md`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model) and its working-vocabulary pages in the same folder |
+| Commands (Extract, Verify, Optimize) | [`docs/design/canonical-model/commands.md`](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md) |
+| Init, adoption and skills | [`docs/design/`](https://github.com/Glacius-Labs/Markitect/tree/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design): `init-adoption-preparation.md`, `selective-adoption-handoff.md`, `brownfield-representation-adoption.md`, `project-capability-skills-20261009.md`, `modeling-skill-guidance.md` |
+
+## Moved, not archived
+
+These files are still on Main under new paths; their content is unchanged.
+
+| Former path | Current path |
+|---|---|
+| `assets/` | [`docs/assets/`](assets) |
+| `docs/project-workflow.md`, `project-operations.md`, `provider-adapters.md`, `operations.md`, `measurement.md`, `source-snapshots.md` | [`docs/guides/`](guides/) |
+| `docs/repository-layout.md` | [`docs/development/repository-layout.md`](development/repository-layout.md) (rewritten) |
+| `docs/design/canonical-model/minimal-language/language-contract.md`, `diagnostic-contract.md` | [`docs/design/`](design/) |
+| `docs/design/canonical-model/sources/` | [`docs/concepts/sources/`](concepts/sources/) |
+| `docs/history/distribution-retirement-20261017.md`, `retired-releases-20261017.json`, `distribution/production-assessment.md` | [`docs/validation/`](validation/) |
+| `docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/` | [`testdata/core/`](../testdata/core/) |
+| `docs/design/canonical-model/library-example/` (model M1, vocabulary, business rules) | [`testdata/library/`](../testdata/library/) |
+| `docs/design/canonical-model/library-example/evaluation-contract.md`, `experiments/library-playground/` | [`tools/library-oracle/`](../tools/library-oracle/) |
+| `experiments/runtime-baseline/assess.py`, `run_oracle.py` | [`tools/library-oracle/container/`](../tools/library-oracle/container/) |
+| `integration/README.md`, `run-markitect.go`, `run-markitect_test.go` | [`packaging/README.md`](../packaging/README.md), [`packaging/bootstrap/`](../packaging/bootstrap/) |

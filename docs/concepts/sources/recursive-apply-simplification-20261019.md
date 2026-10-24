@@ -1,6 +1,6 @@
 # Recursive Apply simplification — owner discussion, 19 October 2026
 
-Recorder's note: these are verbatim excerpts from the direct owner discussion in this chat. The English [Apply concept](../../design/canonical-model/manager-apply-concept.md) consolidates the direction. Assistant proposals and reviewer recommendations are not owner quotations. The owner requested documentation for a later Claude implementation session and explicitly prohibited implementation in this session.
+Recorder's note: these are verbatim excerpts from the direct owner discussion in this chat. The English [Apply concept](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md) consolidates the direction. Assistant proposals and reviewer recommendations are not owner quotations. The owner requested documentation for a later Claude implementation session and explicitly prohibited implementation in this session.
 
 ## Responsibility and participation
 

@@ -486,7 +486,7 @@ Diese Gegenbelege sind eigene analytische Ergänzungen. Sie wurden nicht als beo
 
 ## Verwandte Produktdokumente und Varianten
 
-Das [Standardbetriebsmodell](../../../design/standard-operating-model.md) behandelt delegierte Arbeit, unabhängige Prüfung und Erfassung betroffener Bereiche. Es ist ein thematisch verwandter Produktentwurf, weder Ursprung der hier erhaltenen Nutzerbeschreibung noch Fähigkeitsnachweis für die hier notierten Erwartungen.
+Das [Standardbetriebsmodell](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/standard-operating-model.md) behandelt delegierte Arbeit, unabhängige Prüfung und Erfassung betroffener Bereiche. Es ist ein thematisch verwandter Produktentwurf, weder Ursprung der hier erhaltenen Nutzerbeschreibung noch Fähigkeitsnachweis für die hier notierten Erwartungen.
 
 Die [Architektur](../../../architecture.md) und die [Refinement-Entscheidungen](../../../refinement.md) behandeln explizite Struktur, Beziehungen und Produktgrenzen des hier gelesenen Checkouts. Ihr Inhalt dient zur Orientierung über verwandte Begriffe. Die neuen Konzepte überschreiben ihre Verträge nicht.
 
