@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/gitrepo"
+	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 	"github.com/Glacius-Labs/Markitect/internal/harness"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -294,7 +295,7 @@ func testSessionSpec(t *testing.T) run.SessionSpec {
 	manager, _ := p.Topology().Manager(".")
 	tools := run.Tools{Delegate: func(context.Context, string, string, []run.Finding) error { return nil }, Await: func(context.Context) (run.Event, error) {
 		return run.Event{Question: &run.Question{ID: "pending", From: "a", To: ".", Text: "counter-question"}}, nil
-	}, Review: func(context.Context, string, string, run.Decision, []run.Finding) error { return nil }, Ask: func(context.Context, string, string) (string, error) { return "new-id", nil }, Reply: func(context.Context, string, string) error { return nil }, ReadNotes: func(context.Context) ([]run.Note, error) { return nil, nil }, AppendNote: func(context.Context, string, string) (run.Note, error) { return run.Note{ID: "note"}, nil }, Judge: func(context.Context, run.Decision, []run.Finding) error { return nil }, Check: func(context.Context) (run.Check, error) { return run.Check{Valid: true}, nil }}
+	}, Review: func(context.Context, string, string, run.Decision, []run.Finding) error { return nil }, Ask: func(context.Context, string, string) (string, error) { return "new-id", nil }, Reply: func(context.Context, string, string) error { return nil }, ReadNotes: func(context.Context, string) (run.NotePage, error) { return run.NotePage{}, nil }, AppendNote: func(context.Context, string, string) (run.Note, error) { return run.Note{ID: "note"}, nil }, Judge: func(context.Context, run.Decision, []run.Finding) error { return nil }, Check: func(context.Context) (run.Check, error) { return run.Check{Valid: true}, nil }}
 	return run.SessionSpec{RunID: "native-run", Manager: manager, Prepared: p, Mandate: run.Implement, Workspace: &sessionCopy{location: run.CopyLocation{Volume: "private-run-volume", Subpath: "copies/root"}}, Tools: tools}
 }
 
@@ -1297,5 +1298,75 @@ func TestSessionHarnessAccountingExamplePreparesActualArtifacts(t *testing.T) {
 				}
 			}
 		})
+	}
+}
+
+// Notes whose total exceeds one frame are read page by page through the actual
+// native tool path; every encoded reply fits the transport frame, even for
+// bytes that need the longest JSON escapes.
+func TestReadNotesPagesFitTheToolTransportFrame(t *testing.T) {
+	ctx := context.Background()
+	store, err := runstore.New(t.TempDir())
+	if err != nil {
+		t.Fatal(err)
+	}
+	const count = 120
+	for i := range count {
+		text := strings.Repeat("\x01", run.MaxNoteText)
+		if i%2 == 0 {
+			text = strings.Repeat(`"\`, run.MaxNoteText/2)
+		}
+		if _, err = store.Append(ctx, run.Note{Project: "p", Run: "r", Manager: "m", Context: "c", Text: text}); err != nil {
+			t.Fatal(err)
+		}
+	}
+	tools := run.Tools{ReadNotes: func(c context.Context, after string) (run.NotePage, error) { return store.Notes(c, "p", after) }}
+	seen, pages := 0, 0
+	for after := ""; ; pages++ {
+		raw, _ := json.Marshal(map[string]string{"after": after})
+		if after == "" {
+			raw = []byte(`{}`)
+		}
+		if err = validateArguments("read_notes", raw); err != nil {
+			t.Fatal(err)
+		}
+		text, err := dispatch(ctx, tools, "read_notes", raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		reply, err := frame.EncodeToolReply(frame.ToolReply{ID: 1, Result: toolResult(text, false)})
+		if err != nil || len(reply) > frame.MaxPayload {
+			t.Fatal("reply does not fit the frame", len(reply), err)
+		}
+		var page run.NotePage
+		if err = json.Unmarshal([]byte(text), &page); err != nil || len(page.Notes) == 0 {
+			t.Fatal("page not decodable or empty", err)
+		}
+		seen += len(page.Notes)
+		if page.Next == "" {
+			break
+		}
+		after = page.Next
+	}
+	if seen != count || pages < 2 {
+		t.Fatal("not every Note was read", seen, pages)
+	}
+}
+
+func TestReadNotesAcceptsOnlyAnOptionalCursorString(t *testing.T) {
+	for _, ok := range []string{`{}`, `{"after":""}`, `{"after":"id"}`} {
+		if err := validateArguments("read_notes", []byte(ok)); err != nil {
+			t.Fatal(ok, err)
+		}
+	}
+	for _, bad := range []string{`{"after":1}`, `{"after":null}`, `{"cursor":"x"}`, `{"after":"x","extra":"y"}`, `[]`} {
+		if err := validateArguments("read_notes", []byte(bad)); err == nil {
+			t.Fatal("accepted", bad)
+		}
+	}
+	for _, name := range []string{"await", "check"} {
+		if err := validateArguments(name, []byte(`{"after":"x"}`)); err == nil {
+			t.Fatal(name, "accepted an argument")
+		}
 	}
 }

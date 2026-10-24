@@ -218,11 +218,13 @@ type toolFailureRecords struct {
 	failure error
 }
 
-func (r toolFailureRecords) Notes(context.Context, string) ([]Note, error) { return nil, r.failure }
-func (r toolFailureRecords) Append(context.Context, Note) (Note, error)    { return Note{}, r.failure }
+func (r toolFailureRecords) Notes(context.Context, string, string) (NotePage, error) {
+	return NotePage{}, r.failure
+}
+func (r toolFailureRecords) Append(context.Context, Note) (Note, error) { return Note{}, r.failure }
 
 func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
-	for _, stage := range []string{"notes", "append", "delegate-snapshot", "update", "diff", "review-snapshot", "integrate", "judge-snapshot", "check-snapshot"} {
+	for _, stage := range []string{"delegate-snapshot", "update", "diff", "review-snapshot", "integrate", "judge-snapshot", "check-snapshot"} {
 		t.Run(stage, func(t *testing.T) {
 			x, _, parent, child := inboxExecution()
 			defer x.cancel()
@@ -248,10 +250,6 @@ func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
 			}
 			tools := x.tools(parent)
 			switch stage {
-			case "notes":
-				_, _ = tools.ReadNotes(context.Background())
-			case "append":
-				_, _ = tools.AppendNote(context.Background(), "scope", "durable note")
 			case "delegate-snapshot":
 				_ = tools.Delegate(context.Background(), "a/deep", "concrete assignment", nil)
 			case "update":
@@ -276,6 +274,25 @@ func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
 				t.Fatal("ignored port failure lost", x.ctx.Err(), x.asyncErr)
 			}
 		})
+	}
+}
+
+// Notes are optional information: their storage failures reach the Manager as
+// tool errors and leave the Run running.
+func TestNotesStorageFailuresAreToolErrorsNotRunFailures(t *testing.T) {
+	x, _, parent, _ := inboxExecution()
+	defer x.cancel()
+	injected := errors.New("actual Notes storage failure")
+	x.executor = &Executor{Records: toolFailureRecords{failure: injected}}
+	tools := x.tools(parent)
+	if _, err := tools.ReadNotes(context.Background(), ""); !errors.Is(err, injected) {
+		t.Fatal("read failure not reported to the Manager", err)
+	}
+	if _, err := tools.AppendNote(context.Background(), "scope", "durable note"); !errors.Is(err, injected) {
+		t.Fatal("append failure not reported to the Manager", err)
+	}
+	if x.ctx.Err() != nil || x.asyncErr != nil {
+		t.Fatal("optional Notes failure stopped the Run", x.ctx.Err(), x.asyncErr)
 	}
 }
 

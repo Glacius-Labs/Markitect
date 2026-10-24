@@ -409,10 +409,7 @@ func (t *nativeSession) answer(ctx context.Context, call frame.ToolCall) error {
 		t.tr.record("tool-call", raw)
 	}
 	result, err := dispatch(ctx, t.spec.Tools, call.Name, t.redact(call.Arguments))
-	content, _ := json.Marshal(struct {
-		Content []map[string]string `json:"content"`
-		IsError bool                `json:"isError"`
-	}{[]map[string]string{{"type": "text", "text": string(t.redact([]byte(result)))}}, err != nil})
+	content := toolResult(string(t.redact([]byte(result))), err != nil)
 	if errors.Is(err, errUnknownTool) {
 		return ErrProtocol
 	}
