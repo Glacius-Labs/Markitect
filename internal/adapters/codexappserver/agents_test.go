@@ -294,7 +294,7 @@ func testSessionSpec(t *testing.T) run.SessionSpec {
 	manager, _ := p.Topology().Manager(".")
 	tools := run.Tools{Delegate: func(context.Context, string, string, []run.Finding) error { return nil }, Await: func(context.Context) (run.Event, error) {
 		return run.Event{Question: &run.Question{ID: "pending", From: "a", To: ".", Text: "counter-question"}}, nil
-	}, Review: func(context.Context, string, string, run.Decision, []run.Finding) error { return nil }, Ask: func(context.Context, string, string) (string, error) { return "new-id", nil }, Reply: func(context.Context, string, string) error { return nil }, ReadNotes: func(context.Context) ([]run.Note, error) { return nil, nil }, AppendNote: func(context.Context, string, string) (run.Note, error) { return run.Note{ID: "note"}, nil }}
+	}, Review: func(context.Context, string, string, run.Decision, []run.Finding) error { return nil }, Ask: func(context.Context, string, string) (string, error) { return "new-id", nil }, Reply: func(context.Context, string, string) error { return nil }, ReadNotes: func(context.Context) ([]run.Note, error) { return nil, nil }, AppendNote: func(context.Context, string, string) (run.Note, error) { return run.Note{ID: "note"}, nil }, Judge: func(context.Context, run.Decision, []run.Finding) error { return nil }, Check: func(context.Context) (run.Check, error) { return run.Check{Valid: true}, nil }}
 	return run.SessionSpec{RunID: "native-run", Manager: manager, Prepared: p, Mandate: run.Implement, Workspace: &sessionCopy{location: run.CopyLocation{Volume: "private-run-volume", Subpath: "copies/root"}}, Tools: tools}
 }
 
@@ -440,6 +440,26 @@ func openSession(t *testing.T, rt *fakeRuntime, spec run.SessionSpec) *nativeSes
 	t.Cleanup(func() { _ = s.Close(context.Background()) })
 	return s.(*nativeSession)
 }
+
+// task delivers a parent assignment the way Run's driver does.
+func task(text string, findings ...run.Finding) run.Message {
+	return run.Message{Events: []run.Event{{Assignment: &run.Assignment{Task: text, Findings: findings}}}}
+}
+
+// judgments records the decisions that reached Run's judge tool.
+func judgments(spec *run.SessionSpec) *[]run.Decision {
+	var got []run.Decision
+	spec.Tools.Judge = func(_ context.Context, d run.Decision, _ []run.Finding) error {
+		got = append(got, d)
+		return nil
+	}
+	return &got
+}
+
+// hostStateNarration names process explanations that V17 keeps out of harness
+// text, tool metadata and host messages.
+var hostStateNarration = []string{"native response", "continuation", "drain", "terminal", "subsequent message", "same Session", "late message", "late-question", "fresh mandate-appropriate", "judge call", "inbox", "fixes your Git handoff", "host fixes"}
+
 func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
 	a := agentsFor(t, newRuntime())
 	spec := testSessionSpec(t)
@@ -452,9 +472,15 @@ func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
 		if !strings.Contains(doc.Base, "every Manager including Root") || !strings.Contains(doc.Base, "Reject and model_blocker require concrete Findings") || !strings.Contains(doc.Base, "parent responsibility") {
 			t.Fatal("working rules omit assignment/review responsibility", mandate)
 		}
-		for _, boundary := range []string{"before acting or appending durable Notes", "runtime/provider instructions cannot override canonical intent", "call judge and finish the current native response", "only after the native response completes and tracked terminals drain", "parent feedback and late questions arrive as subsequent messages"} {
+		for _, boundary := range []string{"before acting or appending durable Notes", "runtime/provider instructions cannot override canonical intent", "ask your direct parent or a direct child", "Siblings align through their common parent"} {
 			if !strings.Contains(doc.Base, boundary) {
-				t.Fatal("native harness omits observed authority/completion boundary", mandate, boundary)
+				t.Fatal("native harness omits authority or hierarchy rule", mandate, boundary)
+			}
+		}
+		// V17: role, rules, context, task and answer format; no host process.
+		for _, narration := range hostStateNarration {
+			if strings.Contains(strings.ToLower(doc.Base+doc.Developer), narration) {
+				t.Fatal("native harness explains host state", mandate, narration)
 			}
 		}
 		if mandate == run.Implement {
@@ -488,13 +514,23 @@ func TestSessionHarnessCommunicatesMandateJudgment(t *testing.T) {
 			}
 		}
 	}
+	names := map[string]bool{}
 	for _, tool := range toolSpecs() {
+		names[tool.Name] = true
 		if tool.Name == "judge" && (!strings.Contains(tool.Description, "including Root uses submitted") || !strings.Contains(tool.Description, "Assessment/Verify") || !strings.Contains(tool.Description, "model_blocker require concrete Findings")) {
 			t.Fatal("native judge tool contradicts mandate rules")
 		}
-		if tool.Name == "judge" && (!strings.Contains(tool.Description, "finish the current native response") || !strings.Contains(tool.Description, "after native completion and terminal drain") || !strings.Contains(tool.Description, "subsequent messages in the same Session")) {
-			t.Fatal("judge tool omits native completion and later-message boundary")
+		for _, narration := range hostStateNarration {
+			if strings.Contains(strings.ToLower(tool.Description), narration) {
+				t.Fatal("native tool metadata explains host state", tool.Name, narration)
+			}
 		}
+		if strings.Contains(string(tool.InputSchema), `"manager":{"type":"string"}}`) && strings.Contains(string(tool.InputSchema), `"text"`) && strings.Contains(string(tool.InputSchema), `"required":["manager","text"]`) {
+			t.Fatal("native Findings still request the host-known origin", tool.Name)
+		}
+	}
+	if len(names) != 9 || !names["check"] || !names["judge"] {
+		t.Fatal("native tool set differs from Run's fixed set", names)
 	}
 }
 
@@ -511,22 +547,23 @@ func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
 				decision = run.Submitted
 			}
 			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[]}`, decision)
+			got := judgments(&spec)
 			rt.useTool, rt.toolName = true, "delegate"
 			rt.toolArgs = `{"manager":"a","task":"Complete owned child work.","findings":[]}`
 			calls := 0
-			var child, task string
+			var child, delegated string
 			var findings []run.Finding
 			spec.Tools.Delegate = func(_ context.Context, manager, assignment string, feedback []run.Finding) error {
 				calls++
-				child, task, findings = manager, assignment, feedback
+				child, delegated, findings = manager, assignment, feedback
 				return nil
 			}
 			s := openSession(t, rt, spec)
-			if out, err := s.Exchange(context.Background(), run.Message{Task: "Complete the bound mandate."}); err != nil || out.Decision != decision {
-				t.Fatal(out, err)
+			if err := s.Exchange(context.Background(), task("Complete the bound mandate.")); err != nil || !reflect.DeepEqual(*got, []run.Decision{decision}) {
+				t.Fatal(*got, err)
 			}
-			if calls != 1 || child != "a" || task != "Complete owned child work." || len(findings) != 0 {
-				t.Fatal("native delegation callback changed", calls, child, task, findings)
+			if calls != 1 || child != "a" || delegated != "Complete owned child work." || len(findings) != 0 {
+				t.Fatal("native delegation callback changed", calls, child, delegated, findings)
 			}
 			starts := 0
 			for _, raw := range rt.writes {
@@ -541,7 +578,7 @@ func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
 					continue
 				}
 				starts++
-				for _, boundary := range []string{"For Implement, delegate snapshots your current working copy", "within your ownership", "do not appear live", "After a fixed child handoff and parent review", "requires concrete Findings", "merges the then-current parent baseline", "does not reset the child's work", "Assessment and Verify retain their fixed input candidate", "Every active assignment continuation requires a fresh mandate-appropriate judge call"} {
+				for _, boundary := range []string{"For Implement, a delegation gives the child your current working state as its baseline", "within your ownership", "reach a child only through a correction", "A correction after your review needs concrete Findings", "merges your current baseline into the child's existing work", "Assessment and Verify keep their fixed input candidate"} {
 					if !strings.Contains(message.Params.BaseInstructions, boundary) {
 						t.Fatal("delivered native Rules omit copy boundary", boundary)
 					}
@@ -551,7 +588,7 @@ func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
 			for _, tool := range rt.start.Tools {
 				if tool.Name == "review" {
 					reviews++
-					for _, boundary := range []string{"approve accepts the fixed handoff", "integrates it only for an Implement handoff judged submitted", "reject records parent-review Findings", "separate delegate call after review with concrete Findings", "model_blocker escalates a material model defect"} {
+					for _, boundary := range []string{"by its commit", "approve accepts it and integrates an Implement submission", "reject returns it with Findings", "model_blocker escalates a material model defect"} {
 						if !strings.Contains(tool.Description, boundary) {
 							t.Fatal("delivered native review metadata misstates handoff handling", boundary)
 						}
@@ -561,7 +598,7 @@ func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
 					continue
 				}
 				delegates++
-				for _, boundary := range []string{"For Implement", "snapshots your current working copy", "owned shared prerequisites", "not propagated live", "fixed child handoff, parent review and concrete Findings", "merges the current parent baseline into existing child work", "Assessment and Verify retain their fixed input candidate"} {
+				for _, boundary := range []string{"direct child", "After you reviewed its fixed handoff, a correction needs concrete Findings", "For Implement, the child works from your current working state"} {
 					if !strings.Contains(tool.Description, boundary) {
 						t.Fatal("delivered native delegate metadata omits copy boundary", boundary)
 					}
@@ -596,10 +633,10 @@ func TestNativeImplementReconcilesBeforeChangingArtifacts(t *testing.T) {
 				decision = run.Submitted
 			}
 			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[]}`, decision)
+			got := judgments(&spec)
 			s := openSession(t, rt, spec)
-			out, err := s.Exchange(context.Background(), run.Message{Task: "Complete the bound mandate.", Feedback: tc.findings})
-			if err != nil || out.Decision != decision {
-				t.Fatal("mandate judgment transport changed", out, err)
+			if err := s.Exchange(context.Background(), task("Complete the bound mandate.", tc.findings...)); err != nil || !reflect.DeepEqual(*got, []run.Decision{decision}) {
+				t.Fatal("mandate judgment transport changed", *got, err)
 			}
 			starts := 0
 			for _, raw := range rt.writes {
@@ -660,7 +697,9 @@ func TestNativeImplementReconcilesBeforeChangingArtifacts(t *testing.T) {
 
 func TestSessionUsesHarnessCopySubpathAndPersistentNativeThread(t *testing.T) {
 	rt := newRuntime()
-	s := openSession(t, rt, testSessionSpec(t))
+	spec := testSessionSpec(t)
+	got := judgments(&spec)
+	s := openSession(t, rt, spec)
 	if rt.starts != 1 || len(rt.writes) != 2 {
 		t.Fatal("Open eagerly started inference", rt.starts, rt.writes)
 	}
@@ -670,11 +709,13 @@ func TestSessionUsesHarnessCopySubpathAndPersistentNativeThread(t *testing.T) {
 	if rt.spec.Mounts[1].Target != "/home/agent" || rt.spec.Mounts[1].Volume == rt.spec.Mounts[0].Volume {
 		t.Fatal("home aliases workspace")
 	}
-	for _, task := range []string{"first task", "recall first task"} {
-		res, err := s.Exchange(context.Background(), run.Message{Task: task})
-		if err != nil || res.Decision != run.Submitted {
-			t.Fatal(res, err)
+	for _, text := range []string{"first task", "recall first task"} {
+		if err := s.Exchange(context.Background(), task(text)); err != nil {
+			t.Fatal(err)
 		}
+	}
+	if !reflect.DeepEqual(*got, []run.Decision{run.Submitted, run.Submitted}) {
+		t.Fatal("judge did not reach Run's tool", *got)
 	}
 	starts := 0
 	for _, raw := range rt.writes {
@@ -730,7 +771,7 @@ func TestSessionCloseCancelsAndDrainsInboxCallback(t *testing.T) {
 	}
 	s := openSession(t, rt, spec)
 	done := make(chan error, 1)
-	go func() { _, e := s.Exchange(context.Background(), run.Message{Task: "wait"}); done <- e }()
+	go func() { done <- s.Exchange(context.Background(), task("wait")) }()
 	select {
 	case <-entered:
 	case <-time.After(3 * time.Second):
@@ -820,21 +861,17 @@ func TestSessionPartialStartupRetainsHandleAndUncertainClose(t *testing.T) {
 	}
 }
 func TestSessionNativeFailuresCloseBeforeExchangeReturns(t *testing.T) {
-	for _, kind := range []string{"malformed", "decision", "provider", "secret"} {
+	for _, kind := range []string{"provider", "secret"} {
 		t.Run(kind, func(t *testing.T) {
 			rt := newRuntime()
 			switch kind {
-			case "malformed":
-				rt.judgmentText = "not JSON"
-			case "decision":
-				rt.judgmentText = `{"decision":"success","findings":[]}`
 			case "provider":
 				rt.terminalStatus = "failed"
 			case "secret":
 				rt.errorText = "private-access"
 			}
 			s := openSession(t, rt, testSessionSpec(t))
-			_, err := s.Exchange(context.Background(), run.Message{Task: "work"})
+			err := s.Exchange(context.Background(), task("work"))
 			if err == nil || !rt.closed || strings.Contains(err.Error(), "private-access") {
 				t.Fatal(err, rt.closed)
 			}
@@ -878,7 +915,7 @@ func TestSessionInboxProjectionRefusalAndForeignCallRejection(t *testing.T) {
 				spec.Tools.Ask = func(context.Context, string, string) (string, error) { return "", errors.New("refused private-access") }
 			}
 			s := openSession(t, rt, spec)
-			_, err := s.Exchange(context.Background(), run.Message{Task: "coordinate"})
+			err := s.Exchange(context.Background(), task("coordinate"))
 			if strings.HasPrefix(kind, "foreign") {
 				if err == nil || len(rt.replies) != 0 {
 					t.Fatal("foreign call accepted")
@@ -921,8 +958,7 @@ func TestExchangeWaitsForBackgroundWriterTerminationAndEmptyReadback(t *testing.
 	}()
 	done := make(chan error, 1)
 	go func() {
-		_, e := s.Exchange(context.Background(), run.Message{Task: "complete while background writer remains"})
-		done <- e
+		done <- s.Exchange(context.Background(), task("complete while background writer remains"))
 	}()
 	select {
 	case <-rt.killEntered:
@@ -976,7 +1012,7 @@ func TestExchangeRefusesUnconfirmedOrIncompleteTerminalDrain(t *testing.T) {
 			rt.terminalFailure = kind == "termination refused"
 			rt.listPagination = kind == "pagination"
 			s := openSession(t, rt, testSessionSpec(t))
-			if _, err := s.Exchange(context.Background(), run.Message{Task: "complete"}); err == nil || !rt.closed {
+			if err := s.Exchange(context.Background(), task("complete")); err == nil || !rt.closed {
 				t.Fatal("unconfirmed background work handed off", err, rt.closed)
 			}
 		})
@@ -1010,17 +1046,19 @@ func TestActualNativeObservationBindsHarnessAndPreparedProfile(t *testing.T) {
 
 func TestNativeFinalAndTranscriptRedactLoginTokens(t *testing.T) {
 	rt := newRuntime()
-	rt.judgmentText = `{"decision":"submitted","findings":[{"manager":".","text":"private-access private-refresh"}]}`
+	rt.judgmentText = `{"decision":"submitted","findings":[{"text":"private-access private-refresh"}]}`
 	rt.finalText = "Independent final prose private-access"
 	a := agentsFor(t, rt)
 	a.TranscriptRoot = t.TempDir()
-	session, err := a.Open(context.Background(), testSessionSpec(t))
+	spec := testSessionSpec(t)
+	var findings []run.Finding
+	spec.Tools.Judge = func(_ context.Context, _ run.Decision, f []run.Finding) error { findings = f; return nil }
+	session, err := a.Open(context.Background(), spec)
 	if err != nil {
 		t.Fatal(err)
 	}
-	res, err := session.Exchange(context.Background(), run.Message{Task: "work"})
-	if err != nil || len(res.Findings) != 1 || res.Findings[0].Text != "[REDACTED] [REDACTED]" {
-		t.Fatal(res, err)
+	if err = session.Exchange(context.Background(), task("work")); err != nil || len(findings) != 1 || findings[0] != (run.Finding{Text: "[REDACTED] [REDACTED]"}) {
+		t.Fatal(findings, err)
 	}
 	if err = session.Close(context.Background()); err != nil {
 		t.Fatal(err)
@@ -1035,49 +1073,44 @@ func TestNativeFinalAndTranscriptRedactLoginTokens(t *testing.T) {
 	}
 }
 
-func TestNativeHarnessDistinguishesActiveContinuationFromFixedHandoffQuestions(t *testing.T) {
+// One persistent Session receives an assignment, a question-only message and a
+// host diagnostic. The judgment is a Run tool call; a message that only
+// handles a question ends without one and is not a failure.
+func TestNativeMessagesCarryEventsWithoutDemandingAJudgment(t *testing.T) {
 	for _, mandate := range []run.Mandate{run.Implement, run.Assessment, run.Verify} {
 		t.Run(string(mandate), func(t *testing.T) {
 			rt := newRuntime()
 			spec := testSessionSpec(t)
 			spec.Mandate = mandate
-			awaits := 0
-			spec.Tools.Await = func(context.Context) (run.Event, error) {
-				awaits++
-				return run.Event{Answer: &run.Answer{ID: "pending", From: "a", Text: "Confirmed."}}, nil
-			}
 			decision := run.Approve
 			if mandate == run.Implement {
 				decision = run.Submitted
 			}
-			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[{"manager":".","text":"initial work"}]}`, decision)
+			got := judgments(&spec)
+			var replies []string
+			spec.Tools.Reply = func(_ context.Context, id, _ string) error { replies = append(replies, id); return nil }
+			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[{"text":"initial work"}]}`, decision)
 			s := openSession(t, rt, spec)
-			if out, err := s.Exchange(context.Background(), run.Message{Task: "Complete your assignment."}); err != nil || out.Decision != decision {
-				t.Fatal(out, err)
+			if err := s.Exchange(context.Background(), task("Complete your assignment.")); err != nil || !reflect.DeepEqual(*got, []run.Decision{decision}) {
+				t.Fatal(*got, err)
 			}
-			// The active continuation consumes an answer and explicitly judges
-			// this response. A later fixed-handoff message only consumes input.
-			rt.useTool, rt.toolName, rt.toolArgs = true, "await", "{}"
-			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[{"manager":".","text":"continuation complete"}]}`, decision)
-			continuation := run.Message{Task: "This is an active assignment continuation: return a fresh mandate-appropriate judgment after handling these Findings, even if they only resolve pending questions or answers. A judgment from an earlier exchange does not complete this continuation.", Feedback: []run.Finding{{Manager: ".", Text: "Resolve pending question pending before completing."}}}
-			if out, err := s.Exchange(context.Background(), continuation); err != nil || out.Decision != decision || len(out.Findings) != 1 || out.Findings[0].Text != "continuation complete" {
-				t.Fatal("active continuation did not return its fresh judgment", out, err)
-			}
+			question := run.Message{Events: []run.Event{{Question: &run.Question{ID: "q-1", From: "a", To: ".", Text: "Explain your fixed handoff."}}}}
 			rt.autoJudge = false
-			rt.finalText = "I received the answer and preserved the fixed handoff."
-			if out, err := s.Exchange(context.Background(), run.Message{Task: "Answer pending Manager questions using Await and Reply. Preserve the existing fixed handoff."}); err != nil || out.Decision != "" || len(out.Findings) != 0 {
-				t.Fatal("ordinary late message reused an assignment judgment", out, err)
+			rt.useTool, rt.toolName, rt.toolArgs = true, "reply", `{"id":"q-1","text":"It realizes the obligation."}`
+			if err := s.Exchange(context.Background(), question); err != nil || len(*got) != 1 || !reflect.DeepEqual(replies, []string{"q-1"}) {
+				t.Fatal("a question-only message demanded or produced a judgment", *got, replies, err)
 			}
-			if awaits != 2 {
-				t.Fatal("inbox-only messages did not consume actual native tools", awaits)
+			rt.useTool, rt.autoJudge = false, true
+			diagnostic := run.Message{Feedback: []run.Finding{{Text: "your working state changed after your judgment: a became b"}}}
+			if err := s.Exchange(context.Background(), diagnostic); err != nil || len(*got) != 2 {
+				t.Fatal("a renewed judgment did not reach Run", *got, err)
 			}
 			starts, turns := 0, 0
 			for _, raw := range rt.writes {
 				var message struct {
 					Method string
 					Params struct {
-						BaseInstructions string
-						Input            []struct{ Text string }
+						Input []struct{ Text string }
 					}
 				}
 				if err := json.Unmarshal([]byte(raw), &message); err != nil {
@@ -1085,52 +1118,52 @@ func TestNativeHarnessDistinguishesActiveContinuationFromFixedHandoffQuestions(t
 				}
 				if message.Method == "thread/start" {
 					starts++
-					for _, boundary := range []string{"Every active assignment continuation requires a fresh mandate-appropriate judge call", "even if its Findings only resolve pending questions or answers", "A judgment from an earlier exchange does not complete this continuation", "An ordinary late-question message after a fixed handoff", "it needs no new assignment judgment"} {
-						if !strings.Contains(message.Params.BaseInstructions, boundary) {
-							t.Fatal("actual native prompt omits continuation boundary", boundary)
-						}
-					}
 				}
-				if message.Method == "turn/start" {
-					turns++
-					if turns == 2 {
-						var delivered run.Message
-						if len(message.Params.Input) != 1 || json.Unmarshal([]byte(message.Params.Input[0].Text), &delivered) != nil || !reflect.DeepEqual(delivered, continuation) {
-							t.Fatal("native continuation task/feedback changed")
-						}
-					}
+				if message.Method != "turn/start" {
+					continue
+				}
+				turns++
+				var delivered run.Message
+				if len(message.Params.Input) != 1 || json.Unmarshal([]byte(message.Params.Input[0].Text), &delivered) != nil {
+					t.Fatal("native message is not the Run message")
+				}
+				want := []run.Message{task("Complete your assignment."), question, diagnostic}[turns-1]
+				if !reflect.DeepEqual(delivered, want) {
+					t.Fatal("native message changed", delivered, want)
 				}
 			}
 			if starts != 1 || turns != 3 {
-				t.Fatal("continuation did not use the same native Session", starts, turns)
+				t.Fatal("messages did not use the same native Session", starts, turns)
 			}
 		})
 	}
 }
-func TestMalformedOrContradictoryJudgmentNeverHandsOffSuccess(t *testing.T) {
-	for _, raw := range []string{`{"decision":"submitted"}`, `{"decision":"submitted","findings":null}`, `{"decision":"submitted","findings":[{}]}`, `{"decision":"submitted","findings":[{"manager":".","text":null}]}`, `{"Decision":"submitted","findings":[]}`, `{"decision":"submitted","findings":[],"commit":"invented"}`} {
+
+// Invalid judge input is an ordinary tool refusal: the provider receives the
+// reason, Run receives no judgment and the Session stays usable.
+func TestInvalidJudgeArgumentsAreRefusedWithoutJudgment(t *testing.T) {
+	for _, raw := range []string{`{"decision":"submitted"}`, `{"decision":"submitted","findings":null}`, `{"decision":"submitted","findings":[{}]}`, `{"decision":"submitted","findings":[{"text":null}]}`, `{"decision":"submitted","findings":[{"manager":".","text":"origin is host-known"}]}`, `{"Decision":"submitted","findings":[]}`, `{"decision":"submitted","findings":[],"commit":"invented"}`, `{"decision":"success","findings":[]}`} {
 		t.Run(raw, func(t *testing.T) {
 			rt := newRuntime()
 			rt.judgmentText = raw
-			s := openSession(t, rt, testSessionSpec(t))
-			out, err := s.Exchange(context.Background(), run.Message{Task: "work"})
-			if err == nil || out.Decision != "" || !rt.closed {
-				t.Fatal("malformed judgment accepted", out, err)
+			spec := testSessionSpec(t)
+			got := judgments(&spec)
+			s := openSession(t, rt, spec)
+			if err := s.Exchange(context.Background(), task("work")); err != nil || len(*got) != 0 || rt.closed {
+				t.Fatal("invalid judgment reached Run or closed the Session", *got, err)
+			}
+			var content struct{ IsError bool }
+			if len(rt.replies) != 1 || json.Unmarshal(rt.replies[0].Result, &content) != nil || !content.IsError || !strings.Contains(string(rt.replies[0].Result), "invalid judge arguments") {
+				t.Fatal("refusal did not name its reason", rt.replies)
 			}
 		})
 	}
-	rt := newRuntime()
-	rt.secondJudgment = `{"decision":"reject","findings":[{"manager":".","text":"contradictory"}]}`
-	s := openSession(t, rt, testSessionSpec(t))
-	out, err := s.Exchange(context.Background(), run.Message{Task: "work"})
-	if err == nil || out.Decision != "" {
-		t.Fatal("contradictory semantic judgment accepted", out, err)
-	}
 }
+
 func TestMissingRequiredToolFieldsCauseNoCallbackOrDurableWrite(t *testing.T) {
 	calls := 0
-	tools := run.Tools{AppendNote: func(context.Context, string, string) (run.Note, error) { calls++; return run.Note{}, nil }, Delegate: func(context.Context, string, string, []run.Finding) error { calls++; return nil }}
-	for _, tc := range []struct{ name, raw string }{{"append_note", `{"text":"note"}`}, {"append_note", `{"Context":"context","text":"note"}`}, {"append_note", `{"context":null,"text":"note"}`}, {"delegate", `{"manager":"a","task":"work"}`}, {"delegate", `{"manager":"a","task":"work","findings":null}`}} {
+	tools := run.Tools{AppendNote: func(context.Context, string, string) (run.Note, error) { calls++; return run.Note{}, nil }, Delegate: func(context.Context, string, string, []run.Finding) error { calls++; return nil }, Judge: func(context.Context, run.Decision, []run.Finding) error { calls++; return nil }, Check: func(context.Context) (run.Check, error) { calls++; return run.Check{}, nil }}
+	for _, tc := range []struct{ name, raw string }{{"append_note", `{"text":"note"}`}, {"append_note", `{"Context":"context","text":"note"}`}, {"append_note", `{"context":null,"text":"note"}`}, {"delegate", `{"manager":"a","task":"work"}`}, {"delegate", `{"manager":"a","task":"work","findings":null}`}, {"delegate", `{"manager":"a","task":"work","findings":[{"manager":".","text":"origin is host-known"}]}`}, {"judge", `{"decision":"submitted"}`}, {"judge", `{"decision":"success","findings":[]}`}, {"judge", `{"decision":"submitted","findings":[],"commit":"invented"}`}, {"check", `{"manager":"a"}`}} {
 		if _, err := dispatch(context.Background(), tools, tc.name, json.RawMessage(tc.raw)); err == nil {
 			t.Fatal("invalid native input admitted", tc)
 		}
@@ -1143,13 +1176,16 @@ func TestMissingRequiredToolFieldsCauseNoCallbackOrDurableWrite(t *testing.T) {
 func TestFatalNativeErrorDuringDrainOverridesReportedJudgment(t *testing.T) {
 	rt := newRuntime()
 	rt.quiescenceError = true
-	s := openSession(t, rt, testSessionSpec(t))
-	out, err := s.Exchange(context.Background(), run.Message{Task: "work"})
-	if err == nil || out.Decision != "" || !rt.closed || !strings.Contains(err.Error(), "drain failed") || strings.Contains(err.Error(), "private-access") {
-		t.Fatal("reported judgment bypassed native failure", out, err, rt.closed)
+	spec := testSessionSpec(t)
+	got := judgments(&spec)
+	s := openSession(t, rt, spec)
+	err := s.Exchange(context.Background(), task("work"))
+	if err == nil || !rt.closed || !strings.Contains(err.Error(), "drain failed") || strings.Contains(err.Error(), "private-access") {
+		t.Fatal("recorded judgment bypassed native failure", err, rt.closed)
 	}
-	if s.judgment == nil || s.judgment.Decision != run.Submitted {
-		t.Fatal("regression never reached a reported judgment")
+	// Run never fixes a handoff from an Exchange that failed.
+	if !reflect.DeepEqual(*got, []run.Decision{run.Submitted}) {
+		t.Fatal("regression never reached a recorded judgment", *got)
 	}
 }
 func TestFatalNativeHandshakeErrorRetainsPartialHandleAndCloses(t *testing.T) {

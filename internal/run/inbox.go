@@ -4,184 +4,371 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"slices"
+	"strings"
+
+	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
 
-// ask publishes the correlation and event under the target's lifetime lock.
-// No ID escapes for an event that was not actually enqueued.
-func (x *execution) ask(caller context.Context, from *managerState, to, text string) (string, error) {
-	ctx, stop := x.toolContext(caller)
-	defer stop()
+// queueLocked delivers an event to s's next await or next message.
+func (x *execution) queueLocked(s *managerState, e entry) {
+	s.queue = append(s.queue, e)
+	select {
+	case s.signal <- struct{}{}:
+	default:
+	}
+	x.scheduleLocked(s)
+}
+
+func (x *execution) queueHandoffLocked(child *managerState) {
+	x.queueLocked(x.states[child.manager.Parent], entry{child: child.manager.Package, gen: child.a.gen})
+}
+
+// waitingLocked reports whether something s expects can still arrive: the
+// handoff of a working direct child or the answer to its own open question.
+func (x *execution) waitingLocked(s *managerState) bool {
+	for _, name := range s.manager.Children {
+		if p := x.states[name].a.phase; p == assigned || p == active {
+			return true
+		}
+	}
+	for _, q := range x.questions {
+		if q.From == s.manager.Package && !q.answered {
+			return true
+		}
+	}
+	return false
+}
+
+// neededLocked reports whether s has something to handle: queued events, or an
+// active assignment without judgment that waits for nobody.
+func (x *execution) neededLocked(s *managerState) bool {
+	if len(s.queue) != 0 {
+		return true
+	}
+	return s.a.phase == active && s.a.judgment == nil && !x.waitingLocked(s)
+}
+
+// scheduleLocked starts s's driver when s has something to handle and no
+// driver owns its Session yet.
+func (x *execution) scheduleLocked(s *managerState) {
+	if s.running || x.admissionErrorLocked() != nil || !x.neededLocked(s) {
+		return
+	}
+	s.running = true
+	x.active.Add(1)
+	go x.drive(s)
+}
+
+// settleLocked starts every Manager with something to handle and reports
+// whether the whole hierarchy is quiet. A quiet hierarchy signals completion.
+func (x *execution) settleLocked() bool {
+	quiet := true
+	for _, s := range x.states {
+		x.scheduleLocked(s)
+		quiet = quiet && !s.running
+	}
+	if quiet {
+		select {
+		case x.settled <- struct{}{}:
+		default:
+		}
+	}
+	return quiet
+}
+
+// drive sends s one message per native response while s has something to
+// handle. The end of a response is no judgment: an active assignment without
+// judgment continues once nothing it waits for is outstanding.
+func (x *execution) drive(s *managerState) {
+	defer x.active.Done()
+	for {
+		message, ok, err := x.next(s)
+		if err == nil && ok {
+			err = x.request.Allowance.take()
+		}
+		if err == nil && ok {
+			err = x.exchange(s, message)
+		}
+		if err == nil && ok {
+			err = x.responded(s)
+		}
+		if err != nil {
+			x.stopPort(err)
+			x.mu.Lock()
+			s.running = false
+			x.mu.Unlock()
+			return
+		}
+		if !ok {
+			return
+		}
+	}
+}
+
+// next assembles the message for s, or releases s's driver when s has nothing
+// to handle. Both happen under one lock so no queued event is missed.
+func (x *execution) next(s *managerState) (Message, bool, error) {
+	var m Message
+	for {
+		x.mu.Lock()
+		if err := x.admissionErrorLocked(); err != nil {
+			s.running = false
+			x.mu.Unlock()
+			return m, false, err
+		}
+		if len(s.queue) == 0 {
+			m.Feedback = append(m.Feedback, s.a.feedback...)
+			s.a.feedback = nil
+			continued := s.a.phase == active && s.a.judgment == nil && !x.waitingLocked(s)
+			if len(m.Events) == 0 && len(m.Feedback) == 0 {
+				if !continued {
+					s.running = false
+					x.settleLocked()
+					x.mu.Unlock()
+					return m, false, nil
+				}
+				m.Feedback = []Finding{{Text: "Continue your assignment."}}
+			}
+			x.mu.Unlock()
+			return m, true, nil
+		}
+		e := s.queue[0]
+		s.queue = s.queue[1:]
+		x.mu.Unlock()
+		event, ok, err := x.deliver(x.ctx, s, e)
+		if err != nil {
+			x.mu.Lock()
+			s.running = false
+			x.mu.Unlock()
+			return m, false, err
+		}
+		if ok {
+			m.Events = append(m.Events, event)
+		}
+	}
+}
+
+// responded follows the end of one native response: unanswered questions stay
+// open for the next message, and an active judged assignment is fixed.
+func (x *execution) responded(s *managerState) error {
+	x.mu.Lock()
+	for _, q := range x.sortedQuestionsLocked() {
+		if q.To == s.manager.Package && q.delivered && !q.answered {
+			q.delivered = false
+			x.queueLocked(s, entry{event: Event{Question: &q.Question}})
+		}
+	}
+	j := s.a.judgment
+	fixable := s.a.phase == active && j != nil && s.manager.Package != organization.Root
+	x.mu.Unlock()
+	if !fixable {
+		return nil
+	}
+	return x.fix(s, j)
+}
+
+func (x *execution) sortedQuestionsLocked() []*question {
+	out := make([]*question, 0, len(x.questions))
+	for _, q := range x.questions {
+		out = append(out, q)
+	}
+	slices.SortFunc(out, func(a, b *question) int { return strings.Compare(a.ID, b.ID) })
+	return out
+}
+
+// deliver turns one queued entry into the event s receives. A received task
+// opens the assignment; in Implement the child's copy first merges the parent
+// baseline fixed at delegation. A superseded handoff generation is skipped.
+func (x *execution) deliver(ctx context.Context, s *managerState, e entry) (Event, bool, error) {
+	switch {
+	case e.event.Assignment != nil:
+		task := *e.event.Assignment
+		task.Findings = slices.Clone(task.Findings)
+		if x.request.Mandate == Implement && s.manager.Package != organization.Root {
+			s.git.Lock()
+			err := s.copy.Update(ctx, x.states[s.manager.Parent].copy, task.Base)
+			s.git.Unlock()
+			if errors.Is(err, ErrMergeConflict) {
+				task.Findings = append(task.Findings, Finding{Manager: s.manager.Parent, Text: "Resolve the preserved Git merge conflict against your parent's baseline: " + err.Error()})
+			} else if err != nil {
+				return Event{}, false, err
+			}
+		}
+		x.mu.Lock()
+		defer x.mu.Unlock()
+		if err := x.admissionErrorLocked(); err != nil {
+			return Event{}, false, err
+		}
+		s.a.receive(task)
+		return Event{Assignment: &task}, true, nil
+	case e.event.Question != nil:
+		x.mu.Lock()
+		defer x.mu.Unlock()
+		q, ok := x.questions[e.event.Question.ID]
+		if !ok || q.answered {
+			return Event{}, false, nil
+		}
+		q.delivered = true
+		value := q.Question
+		return Event{Question: &value}, true, nil
+	case e.event.Answer != nil:
+		x.mu.Lock()
+		defer x.mu.Unlock()
+		q, ok := x.questions[e.event.Answer.ID]
+		if !ok || q.From != s.manager.Package || !q.answered {
+			return Event{}, false, fmt.Errorf("answer correlation mismatch")
+		}
+		delete(x.questions, q.ID)
+		answer := *e.event.Answer
+		return Event{Answer: &answer}, true, nil
+	}
+	child := x.states[e.child]
+	x.mu.Lock()
+	if child.a.phase != fixed || child.a.gen != e.gen {
+		x.mu.Unlock()
+		return Event{}, false, nil
+	}
+	h := copyHandoff(child.a.handoff)
+	x.mu.Unlock()
+	s.git.Lock()
+	diff, err := s.copy.Review(ctx, child.copy, h.Base, h.Result)
+	s.git.Unlock()
+	if err != nil {
+		x.stopPort(err)
+		return Event{}, false, err
+	}
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	if child.a.phase != fixed || child.a.gen != e.gen {
+		return Event{}, false, nil
+	}
+	child.a.handoff.Diff = diff
+	child.a.sent = e.gen
+	h.Diff = diff
+	return Event{Handoff: &h}, true, nil
+}
+
+// await returns the next event. It refuses at once when nothing can arrive,
+// so a Manager never waits for an event that no one will send.
+func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
+	for {
+		x.mu.Lock()
+		if err := x.admissionErrorLocked(); err != nil {
+			x.mu.Unlock()
+			return Event{}, err
+		}
+		if len(s.queue) != 0 {
+			e := s.queue[0]
+			s.queue = s.queue[1:]
+			x.mu.Unlock()
+			event, ok, err := x.deliver(ctx, s, e)
+			if err != nil {
+				x.stopPort(err)
+				return Event{}, err
+			}
+			if ok {
+				return event, nil
+			}
+			continue
+		}
+		if !x.waitingLocked(s) {
+			x.mu.Unlock()
+			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open")
+		}
+		x.mu.Unlock()
+		select {
+		case <-s.signal:
+		case <-ctx.Done():
+			return Event{}, ctx.Err()
+		}
+	}
+}
+
+// ask follows the hierarchy: only the direct parent or a direct child.
+func (x *execution) ask(ctx context.Context, from *managerState, to, text string) (string, error) {
 	if err := ctx.Err(); err != nil {
 		return "", err
 	}
-	target, ok := x.states[to]
-	if !ok || target == from || text == "" {
-		return "", fmt.Errorf("invalid Manager question")
+	allowed := slices.Clone(from.manager.Children)
+	if from.manager.Parent != "" {
+		allowed = append([]string{from.manager.Parent}, allowed...)
+	}
+	if !slices.Contains(allowed, to) {
+		reach := "nobody"
+		if len(allowed) != 0 {
+			reach = strings.Join(allowed, ", ")
+		}
+		return "", fmt.Errorf("ask reaches only your direct parent or direct children (%s); reach other Managers through the Managers in between", reach)
+	}
+	if strings.TrimSpace(text) == "" {
+		return "", fmt.Errorf("empty Manager question")
 	}
 	if err := x.request.Allowance.take(); err != nil {
 		return "", err
 	}
-	target.mu.Lock()
-	defer target.mu.Unlock()
 	x.mu.Lock()
-	if x.closing || !target.accepting {
-		x.mu.Unlock()
-		return "", fmt.Errorf("Run question target closed")
+	defer x.mu.Unlock()
+	if err := x.admissionErrorLocked(); err != nil {
+		return "", err
 	}
 	x.sequence++
-	id := fmt.Sprintf("%s-q%d", x.request.ID, x.sequence)
-	q := Question{id, from.manager.Package, to, text}
-	x.questions[id] = q
-	x.mu.Unlock()
-	select {
-	case target.inbox <- Event{Question: &q}:
-		x.wakeLocked(target)
-		return id, nil
-	case <-ctx.Done():
-		x.mu.Lock()
-		delete(x.questions, id)
-		x.mu.Unlock()
-		return "", ctx.Err()
-	}
+	q := &question{Question: Question{ID: fmt.Sprintf("%s-q%d", x.request.ID, x.sequence), From: from.manager.Package, To: to, Text: text}}
+	x.questions[q.ID] = q
+	x.queueLocked(x.states[to], entry{event: Event{Question: &q.Question}})
+	return q.ID, nil
 }
-func (x *execution) reply(caller context.Context, from *managerState, id, text string) error {
-	ctx, stop := x.toolContext(caller)
-	defer stop()
+
+func (x *execution) reply(ctx context.Context, from *managerState, id, text string) error {
 	if err := ctx.Err(); err != nil {
 		return err
 	}
-	if text == "" {
+	if strings.TrimSpace(text) == "" {
 		return fmt.Errorf("empty Manager answer")
 	}
-	// Keep the correlation locked until actual publication. A duplicate or
-	// canceled response can neither consume nor fabricate another Manager's ID.
 	x.mu.Lock()
+	defer x.mu.Unlock()
+	if err := x.admissionErrorLocked(); err != nil {
+		return err
+	}
 	q, ok := x.questions[id]
-	if !ok || q.To != from.manager.Package || x.answered[id] {
-		x.mu.Unlock()
-		return fmt.Errorf("unknown, closed or foreign question")
+	if !ok || q.To != from.manager.Package || q.answered {
+		return fmt.Errorf("no open question %s is addressed to you", id)
 	}
-	answer := Answer{id, from.manager.Package, text}
-	target := x.states[q.From]
-	select {
-	case target.inbox <- Event{Answer: &answer}:
-		x.answered[id] = true
-		x.mu.Unlock()
-		target.mu.Lock()
-		x.wakeLocked(target)
-		target.mu.Unlock()
-		return nil
-	default:
-		x.mu.Unlock()
-		return fmt.Errorf("Manager answer inbox full; retry the same question ID")
-	}
-
-}
-func (x *execution) hasQuestionsLocked(manager string) bool {
-	for _, q := range x.questions {
-		if q.From == manager || q.To == manager {
-			return true
-		}
-	}
-	return false
-}
-func (x *execution) pendingInputLocked(manager string) bool {
-	for id, q := range x.questions {
-		if q.To == manager && !x.answered[id] || q.From == manager && x.answered[id] {
-			return true
-		}
-	}
-	return false
-}
-func (x *execution) finishedTask(s *managerState, err error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-	s.running = false
-	s.working = false
-	close(s.idle)
-	if err == nil {
-		x.wakeLocked(s)
-	}
+	q.answered = true
+	x.queueLocked(x.states[q.From], entry{event: Event{Answer: &Answer{ID: id, From: from.manager.Package, Text: text}}})
+	return nil
 }
 
-// A submitted child retains its ordinary conversation. A later parent question
-// wakes it with an ordinary message, without nested provider inference or any
-// change to the already fixed Git handoff.
-func (x *execution) wakeLocked(s *managerState) {
-	x.mu.Lock()
-	needed := x.admissionErrorLocked() == nil && x.pendingInputLocked(s.manager.Package)
-	if s.running || !needed || !s.accepting {
-		x.mu.Unlock()
-		return
-	}
-	s.running = true
-	s.idle = make(chan struct{})
-	x.active.Add(1)
-	x.mu.Unlock()
-	go func() {
-		defer x.active.Done()
-		for {
-			err := x.request.Allowance.take()
-			if err == nil {
-				var response Response
-				response, err = x.exchange(s, Message{Task: "Answer pending Manager questions using Await and Reply. Preserve the existing fixed handoff. Handle the received pending question or answer and any needed related replies, then finish this native response. No new assignment judgment is required for an ordinary reply. Material new Findings, Reject or ModelBlocker must still be reported under the existing rules and retain their authority. Do not wait for future inbox events after resolving these obligations; they arrive in later messages in this same Session. While an answer to your own question is pending, use Await and answer incoming questions."})
-				if err == nil {
-					err = x.observeLate(s, response)
-				}
-			}
-			s.mu.Lock()
-			x.mu.Lock()
-			needed := x.pendingInputLocked(s.manager.Package)
-			if err != nil {
-				x.asyncErr = errors.Join(x.asyncErr, err)
-				x.cancel()
-			}
-			if err != nil || !needed || x.closing {
-				s.running = false
-				close(s.idle)
-				x.mu.Unlock()
-				s.mu.Unlock()
-				return
-			}
-			x.mu.Unlock()
-			s.mu.Unlock()
-		}
-	}()
-}
+func (x *execution) root() *managerState { return x.states[organization.Root] }
 
-type sessionResponse struct {
-	response Response
-	err      error
-}
-
-func (x *execution) exchange(s *managerState, m Message) (Response, error) {
+func (x *execution) exchange(s *managerState, m Message) error {
 	messageContext := x.ctx
 	cancel := func() {}
 	if x.request.MessageTimeout > 0 {
 		messageContext, cancel = context.WithTimeout(x.ctx, x.request.MessageTimeout)
 	}
 	defer cancel()
-	returned := make(chan sessionResponse, 1)
+	returned := make(chan error, 1)
 	x.mu.Lock()
 	if err := x.admissionErrorLocked(); err != nil {
 		x.mu.Unlock()
-		return Response{}, err
+		return err
 	}
 	x.calls.Add(1)
 	x.mu.Unlock()
 	go func() {
 		defer x.calls.Done()
-		r, err := s.session.Exchange(messageContext, m)
-		returned <- sessionResponse{r, err}
+		returned <- s.session.Exchange(messageContext, m)
 	}()
 	select {
-	case r := <-returned:
-		if err := messageContext.Err(); err != nil {
-			return Response{}, err
+	case err := <-returned:
+		if ctxErr := messageContext.Err(); ctxErr != nil {
+			return ctxErr
 		}
-		return r.response, r.err
+		return err
 	case <-messageContext.Done():
-		return Response{}, messageContext.Err()
+		return messageContext.Err()
 	}
 }
 
@@ -196,46 +383,4 @@ func boundedClose(ctx context.Context, close func(context.Context) error) error 
 	case <-ctx.Done():
 		return fmt.Errorf("resource closure unconfirmed: %w", ctx.Err())
 	}
-}
-
-// A later required finding remains semantic authority even when the Git result
-// was already accepted. Invalidate affected acceptance through the real parents.
-func (x *execution) observeLate(s *managerState, r Response) error {
-	if r.Decision != "" && r.Decision != Approve && r.Decision != Reject && r.Decision != ModelBlocker {
-		return fmt.Errorf("invalid late Manager judgment")
-	}
-	if r.Decision != Reject && r.Decision != ModelBlocker && !concreteFindings(r.Findings) {
-		return nil
-	}
-	if !concreteFindings(r.Findings) {
-		return fmt.Errorf("late rejection or blocker requires concrete findings")
-	}
-	decision := Reject
-	if r.Decision == ModelBlocker {
-		decision = ModelBlocker
-	}
-	findings := append([]Finding(nil), r.Findings...)
-	for i := range findings {
-		findings[i].Manager = s.manager.Package
-	}
-	for current := s; current != nil; current = x.states[current.manager.Parent] {
-		current.mu.Lock()
-		if current == s || decision == ModelBlocker {
-			current.lateDecision = requiredDecision(current.lateDecision, decision)
-		}
-		if current.handoff.Decision != ModelBlocker {
-			current.handoff.Decision = decision
-		}
-		current.handoff.Findings = append(current.handoff.Findings, findings...)
-		if current.handoff.Review != nil {
-			current.handoff.Review.Decision = decision
-			current.handoff.Review.Findings = append(current.handoff.Review.Findings, findings...)
-		}
-		current.mu.Unlock()
-		if current.manager.Package == "." {
-			break
-		}
-	}
-
-	return nil
 }

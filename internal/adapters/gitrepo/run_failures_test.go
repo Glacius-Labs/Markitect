@@ -373,20 +373,13 @@ type workerErrorSession struct {
 }
 
 func (workerErrorSession) Close(context.Context) error { return nil }
-func (s workerErrorSession) Exchange(ctx context.Context, _ run.Message) (run.Response, error) {
+func (s workerErrorSession) Exchange(ctx context.Context, _ run.Message) error {
 	tools := s.spec.Tools
-	if s.spec.Manager.Package != "." {
-		event, err := tools.Await(ctx)
-		if err != nil {
-			return run.Response{Decision: run.Submitted}, nil
-		}
-		if event.Assignment == nil {
-			return run.Response{}, fmt.Errorf("assignment missing")
-		}
-	}
+	// Every refusal and failure below is deliberately ignored by this Session.
 	for _, child := range s.spec.Manager.Children {
 		if err := tools.Delegate(ctx, child, "Complete owned work.", nil); err != nil {
-			return run.Response{Decision: run.Submitted}, nil
+			_ = tools.Judge(ctx, run.Submitted, nil)
+			return nil
 		}
 	}
 	for range s.spec.Manager.Children {
@@ -396,20 +389,23 @@ func (s workerErrorSession) Exchange(ctx context.Context, _ run.Message) (run.Re
 		event, err := tools.Await(ctx)
 		if err != nil {
 			s.owner.ignoreOnce.Do(func() { close(s.owner.ignored) })
-			return run.Response{Decision: run.Submitted}, nil
+			_ = tools.Judge(ctx, run.Submitted, nil)
+			return nil
 		}
 		if event.Handoff == nil {
-			return run.Response{}, fmt.Errorf("child handoff missing")
+			return fmt.Errorf("child handoff missing")
 		}
 		if err = tools.Review(ctx, event.Handoff.Manager, event.Handoff.Result.ID, run.Approve, nil); err != nil {
-			return run.Response{Decision: run.Submitted}, nil
+			_ = tools.Judge(ctx, run.Submitted, nil)
+			return nil
 		}
 	}
 	if s.spec.Manager.Package == "a/deep" && s.owner.stage == "exchange" {
 		<-s.owner.awaiting
-		return run.Response{}, s.owner.failure
+		return s.owner.failure
 	}
-	return run.Response{Decision: run.Submitted}, nil
+	_ = tools.Judge(ctx, run.Submitted, nil)
+	return nil
 }
 
 type workerErrorWorkspaces struct {

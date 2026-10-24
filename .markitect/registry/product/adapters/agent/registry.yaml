@@ -83,7 +83,7 @@ artifacts:
   - path: "internal/adapters/codexappserver/tools.go"
     form: code
     realizes: [product/ports-and-adapters]
-    why: "Projects the actual Run inbox, delegation, review and shared Notes callbacks directly into native MCP tools without a second scheduler."
+    why: "Maps Run's fixed Manager tool set, including judge and check, directly into native MCP tools; Findings carry no host-known origin."
   - path: "internal/harness/harness.go"
     form: code
     realizes: [product/ports-and-adapters, product/organization/delegated-context]

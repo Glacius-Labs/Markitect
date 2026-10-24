@@ -127,8 +127,6 @@ type enginePeer struct{ *container.Session }
 func (*enginePeer) ImageID() string { return "" } // only ownedRuntime reports a confirmed image
 
 type nativeSession struct {
-	judgment                          *run.Response
-	judgmentErr                       error
 	ready                             bool
 	agents                            *Agents
 	spec                              run.SessionSpec
@@ -229,20 +227,21 @@ func (a *Agents) Open(ctx context.Context, spec run.SessionSpec) (run.Session, e
 	return t, nil
 }
 
-// Exchange serializes one native message; direct inbox callbacks drain before
-// return. Close first cancels the active callback/message, then joins its closure.
-func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (out run.Response, err error) {
+// Exchange serializes one native message; direct Run tool callbacks drain
+// before return. Close first cancels the active callback/message, then joins
+// its closure. The judgment is a Run tool call, not part of the response.
+func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (err error) {
 	t.mu.Lock()
 	defer t.mu.Unlock()
-	if !t.ready || t.closed || ctx == nil || strings.TrimSpace(message.Task) == "" {
-		return out, ErrSession
+	if !t.ready || t.closed || ctx == nil || len(message.Events) == 0 && len(message.Feedback) == 0 {
+		return ErrSession
 	}
 	active, cancel := context.WithCancel(ctx)
 	defer cancel()
 	t.abortMu.Lock()
 	if t.closing {
 		t.abortMu.Unlock()
-		return out, context.Canceled
+		return context.Canceled
 	}
 	t.cancel = cancel
 	t.abortMu.Unlock()
@@ -256,29 +255,15 @@ func (t *nativeSession) Exchange(ctx context.Context, message run.Message) (out 
 			err = errors.Join(err, t.closeErr)
 		}
 	}()
-	payload, err := json.Marshal(struct {
-		Task     string        `json:"task"`
-		Feedback []run.Finding `json:"feedback"`
-	}{message.Task, message.Feedback})
+	payload, err := json.Marshal(message)
 	if err != nil {
-		return out, err
+		return err
 	}
 	t.prompt, t.final, t.turnID = string(payload), "", ""
-	t.judgment, t.judgmentErr = nil, nil
 	if err = t.runTurn(active); err != nil {
-		return out, err
+		return err
 	}
-	if err = t.drainTerminals(active); err != nil {
-		return out, err
-	}
-	if t.judgmentErr != nil {
-		return out, t.judgmentErr
-	}
-	if t.judgment != nil {
-		out = *t.judgment
-		out.Findings = append([]run.Finding(nil), out.Findings...)
-	}
-	return out, nil
+	return t.drainTerminals(active)
 }
 func (t *nativeSession) Close(ctx context.Context) error {
 	t.abortMu.Lock()
@@ -423,20 +408,7 @@ func (t *nativeSession) answer(ctx context.Context, call frame.ToolCall) error {
 	if raw, err := frame.EncodeToolCall(call); err == nil {
 		t.tr.record("tool-call", raw)
 	}
-	var result string
-	var err error
-	arguments := t.redact(call.Arguments)
-	if call.Name == "judge" {
-		err = t.recordJudgment(arguments)
-		if err != nil {
-			t.judgmentErr = err
-			result = err.Error()
-		} else {
-			result = `{"recorded":true}`
-		}
-	} else {
-		result, err = dispatch(ctx, t.spec.Tools, call.Name, arguments)
-	}
+	result, err := dispatch(ctx, t.spec.Tools, call.Name, t.redact(call.Arguments))
 	content, _ := json.Marshal(struct {
 		Content []map[string]string `json:"content"`
 		IsError bool                `json:"isError"`
@@ -794,24 +766,6 @@ func (t *nativeSession) drainTerminals(ctx context.Context) error {
 	if len(final.Terminals) != 0 {
 		return fmt.Errorf("%w: native background terminals remain after termination", ErrSession)
 	}
-	return nil
-}
-
-func (t *nativeSession) recordJudgment(raw []byte) error {
-	if err := validateArguments("judge", raw); err != nil {
-		return fmt.Errorf("%w: invalid semantic judgment", ErrSession)
-	}
-	var response run.Response
-	if strictValue(raw, &response) != nil {
-		return ErrSession
-	}
-	if t.judgment != nil {
-		return fmt.Errorf("%w: multiple or contradictory semantic judgments in one message", ErrSession)
-	}
-	if (response.Decision == run.Reject || response.Decision == run.ModelBlocker) && len(response.Findings) == 0 {
-		return fmt.Errorf("%w: negative semantic judgment requires concrete Findings", ErrSession)
-	}
-	t.judgment = &response
 	return nil
 }
 
