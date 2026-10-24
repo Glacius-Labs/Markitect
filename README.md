@@ -181,7 +181,7 @@ go run ./cmd/markitect apply \
 | Standalone hierarchical Run and stored Git candidates/results/Notes | Implemented, with controlled tests and a bounded native Codex hierarchy proof. |
 | `apply`: Assessment → Implement → Verify → guarded publication | Implemented. **One complete native Codex Library M1 realization** has been recorded, using fresh six-Manager hierarchies in all three mandates and publishing 21 paths. [Evidence: PR #660](https://github.com/Glacius-Labs/Markitect/pull/660). |
 | Reliability across changes | **Not yet established.** M1 → M2 preservation, no-change, deliberate defects, independent functional oracles and repeated-run evaluation remain qualification work. |
-| Provider support | Native Codex with dedicated normal-account login, with bounded evidence. V1 carries no other provider path; Claude follows later as its own adapter ([D18](docs/concepts/v1-concept.md#23-providerumfang-d18)). |
+| Provider support | Native Codex with dedicated normal-account login, with bounded evidence. V1 carries no other provider path; Claude follows later as its own adapter ([D18](docs/concepts/v1-concept.md#23-provider-scope-d18)). |
 | Other product surfaces | Extract, Cockpit/UI, interactive model authoring and the former Setup command are outside this narrow V1 scope. |
 
 The compiler can reject malformed structure and missing declared relationships. **It cannot know whether the model omitted a real user need, whether an AI correctly understood prose, or whether green agent-written tests actually test the right thing.** Independent review, integration, project checks, and outside evaluation are intended to improve trust—not to turn agent work into a formal proof.
