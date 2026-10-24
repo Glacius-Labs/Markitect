@@ -71,7 +71,7 @@ This semantic analysis is fallible and needs independent review. If it cannot bo
 
 ### 11.4 Exchange counter-probes
 
-For list-documents from section 4, its seven Property contracts, the Exchange body and the concretely referenced participants and the Command and Channel contracts belong to the initial context. Incoming statements and the analysis from section 11.3 complement it. The example yields these different cases:
+For list-documents from section 4, its seven Property contracts, the Exchange body and the concretely referenced participants, Command contracts and Channel contracts belong to the initial context. Incoming statements and the analysis from section 11.3 complement it. The example yields these different cases:
 
 | Change | Structural reason | Consequence to be clarified in content |
 | --- | --- | --- |
@@ -380,7 +380,7 @@ sources each contain definition as ModelRef, definitionDigest, pointer, startByt
 
 scope.inventory of an interpretation binds the initial space considered at its creation, not a list of matches closed forever. The general meaning “all Exchanges” can remain unchanged while its current case set is re-evaluated. A successful re-evaluation may replace only this set-related observation; statements and other direct meaning bases must still be verified as unchanged.
 
-An application entry with subject onprem, context [check-status], property Exchange/sender and result excluded states exclusively: the referenced interpretation produces no such obligation for this participant in this exchange. It contains neither a global exemption of onprem nor a prohibition of the described action. uncertain and conflict are actual results in need of clarification and not negative applicability evidence. force denotes a derived interpretation, not a new language means for requirements in the model.
+An application entry with subject onprem, context [check-status], property Exchange/sender and result excluded states exclusively: the referenced interpretation produces no such obligation for this participant in this exchange. It contains neither a global exemption of onprem nor a prohibition of the described action. uncertain and conflict are actual results in need of clarification and not negative applicability evidence. force denotes a derived interpretation, not a new language feature for requirements in the model.
 
 #### Dependencies as closed variants
 

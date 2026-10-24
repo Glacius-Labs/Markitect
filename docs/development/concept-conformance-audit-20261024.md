@@ -190,7 +190,7 @@ A generic AGENTS.md fallback would in any case be only an instruction representa
 
 ### Qualification
 
-The repository records contain actual native M1 and M2 realization, independent oracles, preservation, Notes use, repair of a deliberately inserted (seeded) defect and strict no-change. These are substantial successes. The component sequence Verify-Reject → fresh Implement → fresh Verify-Approve was likewise observed natively; the outer controller report remains failed because of a separately diagnosed date comparison error. [S22]
+The repository records contain actual native M1 and M2 realization, independent oracles, preservation, Notes use, repair of a deliberately inserted defect and strict no-change. These are substantial successes. The component sequence Verify-Reject → fresh Implement → fresh Verify-Approve was likewise observed natively; the outer controller report remains failed because of a separately diagnosed date comparison error. [S22]
 
 The native proof that the **public Apply Workflow itself** selects this Reject branch and then publishes the candidate repaired from it is separate from this and still open. A normal repair in the initial Implement is no proof of this branch. Likewise, broad repeatability and statements for arbitrary project sizes are missing. This is an evidence limit, not a functional defect proven from it.
 

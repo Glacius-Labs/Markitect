@@ -24,7 +24,7 @@ The design of the full v1 language is complete. As of 17 October 2026, the curre
 
 The canonical model describes the intended project world: what should hold and come into being. Binding prose and typed entries carry this description together. The files that have actually come into being, running processes and executed evidence are to be distinguished from it.
 
-The Core provides the general means of the language completely. Projects can define their vocabulary themselves. Libraries supply reusable definitions; they grant imported Kinds no additional language capabilities or execution rights.
+The Core provides the general language features completely. Projects can define their vocabulary themselves. Libraries supply reusable definitions; they grant imported Kinds no additional language capabilities or execution rights.
 
 System, Container, Component, Command, Exchange, Rule or other domain terms are possible contents of a vocabulary. They are not privileged Core Kinds. The model requires neither a built-in Project nor a predefined software architecture taxonomy.
 
@@ -316,7 +316,7 @@ In ordinary text, the active double-bracket notation takes precedence over ordin
 
 **Grammar:** An active link has exactly the form `[[target]]` or `[[target|display text]]`. The target is a complete authored reference according to Sections 7 and 8. It must not be empty and contains no surrounding spaces; it is neither trimmed nor rewritten. NFC, declared spelling, import boundaries, collision and ambiguity rules apply unchanged. The link can address any definition category. Field paths, URL targets, title or similarity search are not added.
 
-The optional display text is plain Unicode text. It is preserved after the escapes below and is not evaluated again as Markdown, character reference, model link or expression. It must not be empty or consist exclusively of Unicode White_Space characters of the bound Unicode version. Formatting stands outside, for example `**[[api|Cloud API]]**`. Within an active link, LF, CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR as well as nested unprotected brackets are excluded.
+The optional display text is plain Unicode text. It is preserved after the escapes below and is not evaluated again as Markdown, character reference, model link or expression. It must not be empty or consist exclusively of Unicode White_Space characters of the bound Unicode version. Formatting stands outside, for example `**[[api|Cloud-API]]**`. Within an active link, LF, CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR as well as nested unprotected brackets are excluded.
 
 The preservation requirement explicitly includes U+0000 (NUL) if it is present in the display text after YAML decoding. There it MUST NOT be replaced by U+FFFD or another character. The CommonMark normalization for recognizing the surrounding Markdown context does not change this literal value of the body link extension. An actually written U+FFFD remains distinct from NUL. For example, `body: "[[api|A\0B]]"` decodes to a link with the display text characters U+0041, U+0000 and U+0042. This introduces no additional body link escape; `\0` within an already YAML-decoded link remains impermissible according to the following escape rule.
 
@@ -465,17 +465,17 @@ A local ID is a single name according to the convention of its definition catego
 
 For identity and collision checking, case makes no difference. Within a package, therefore, IDs of different Kinds also must not be distinguishable solely by case. The permitted authored form is nevertheless strict and must be adhered to exactly: a deviating spelling is an error, not an accepted alternative reference. The verifier does not automatically correct or normalize any source file. Readable IDs are not changed at every change of the preferred designation, nor deliberately reused for other items. An optional title is not an alternative address.
 
-Resolution of authored references uses directly available names and, where needed, explicitly qualified names. Only its own package and the imports declared in the respective definition file are visible; supplying a model alone opens no foreign names:
+Resolution of authored references uses directly available names and, where needed, explicitly qualified names. Only the definition's own package and the imports declared in the respective definition file are visible; supplying a model alone opens no foreign names:
 
-- A complete id is resolved against the definitions of its own package and of all packages directly imported in this definition file. Exactly one canonical target must match. Example: Kind comes from the imported Core package, Exchange from the imported vocabulary, api from the own project package.
+- A complete id is resolved against the definitions of the definition's own package and of all packages directly imported in this definition file. Exactly one canonical target must match. Example: Kind comes from the imported Core package, Exchange from the imported vocabulary, api from the project's own package.
 - Several different targets with the same visible id are ambiguous even if they differ merely in case. There is neither a silent precedence of local definitions nor a selection by the expected Kind or the order of the imports. The reference must be explicitly qualified or the name collision resolved.
-- Full qualification uses `package/id`, for example `markitect/core/Kind` or `example/connector/vocabulary/requester`. The last `/` separates Package and local ID. The own Package is always also available fully qualified, without an import of its own. A foreign Package is available fully qualified only after explicit import. Alias qualification has exactly the form `Alias.id`, for example `Core.Kind` or `Connector.requester`, with exactly one dot. Neither alias nor local ID itself contains dots. There is no stepwise namespace or file path search and no field dereferencing.
+- Full qualification uses `package/id`, for example `markitect/core/Kind` or `example/connector/vocabulary/requester`. The last `/` separates Package and local ID. A definition's own Package is always also available fully qualified, without an import of its own. A foreign Package is available fully qualified only after explicit import. Alias qualification has exactly the form `Alias.id`, for example `Core.Kind` or `Connector.requester`, with exactly one dot. Neither alias nor local ID itself contains dots. There is no stepwise namespace or file path search and no field dereferencing.
 - Identical visible short IDs do not by themselves make the import selection invalid. Only the use of a reference spelling with several different target identities is an error. An unambiguous alias or full qualification denotes the desired own or imported target. A local ID cannot syntactically coincide with an alias qualification.
 - Only direct imports make names available. Further supplied Packages and the contents of transitive model dependencies are not automatically included in the visible namespace of a file. Access to them requires a separate explicit import in the using definition file.
 
 All reference positions use this target resolution: kind, Property.target, reference values in spec and body links. kind and Property.target must denote type definitions; a concrete requester value must, for example, denote a Container definition. The expected target type is checked only after unambiguous resolution and is not used as a search heuristic.
 
-Missing or ambiguous names, unknown import aliases and contradictory import entries are errors. There is no search outside its own package and the direct imports of this file, no automatic version selection, no file path interpretation and no resolution via similar names. After resolution, canonical package/ID targets are used. Short and qualified references may denote the same target but do not create different identities.
+Missing or ambiguous names, unknown import aliases and contradictory import entries are errors. There is no search outside the definition's own package and the direct imports of this file, no automatic version selection, no file path interpretation and no resolution via similar names. After resolution, canonical package/ID targets are used. Short and qualified references may denote the same target but do not create different identities.
 
 <a id="spelling"></a>
 
@@ -725,7 +725,7 @@ Processing takes place independently of document order:
 
 1. Provide the known Core contract and the explicitly bound packages.
 2. Capture exactly one complete definition from each definition file; check the uniform envelope, preserve provenance and reject identity collisions. Embedded property declarations and definition collections are errors.
-3. Resolve references unambiguously in its own package and the imports of the respective definition file.
+3. Resolve references unambiguously in the definition's own package and the imports of the respective definition file.
 4. Check meta-Kinds and property contracts against the fixed beginning and its language invariants.
 5. Form closed type contracts from the valid Kind/property definitions; determine the effective field name from spec.name or the complete local Property ID and reject name collisions.
 6. Check all definitions against their Kind, value types, cardinalities and reference targets.

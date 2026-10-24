@@ -12,7 +12,7 @@ Sections 1–10 and 12 below come from the language contract immediately before 
 
 The canonical model describes the intended project world: what should hold and come into being. Binding prose and typed entries carry this description together. The files that have actually come into being, running processes and executed evidence are to be distinguished from it.
 
-The Core provides the general means of the language completely. Projects can define their vocabulary themselves. Libraries supply reusable definitions; they grant imported Kinds no additional language capabilities or execution rights.
+The Core provides the general language features completely. Projects can define their vocabulary themselves. Libraries supply reusable definitions; they grant imported Kinds no additional language capabilities or execution rights.
 
 System, Container, Component, Command, Exchange, Rule or other domain terms are possible contents of a vocabulary. They are not privileged Core Kinds. The model requires neither a built-in Project nor a predefined software architecture taxonomy.
 
@@ -350,8 +350,8 @@ The authored form is `[[target]]` or `[[target|display text]]`. The target is an
 | Body link in the project package | Target in the example |
 | --- | --- |
 | `[[Exchange|exchange]]` | The Kind definition Exchange in the imported vocabulary. |
-| `[[list-documents|document query]]` | The concrete described exchange in its own package. |
-| `[[api|Cloud API]]` | The concrete API definition in its own package. |
+| `[[list-documents|document query]]` | The concrete described exchange in the project's own package. |
+| `[[api|Cloud API]]` | The concrete API definition in the project's own package. |
 | `[[requester]]` | The property definition with the stable id requester and the current field name requester. |
 
 Every Property is addressable via its explicitly declared local id. There is neither a separate property link syntax nor automatic search for a field name. A field label does not automatically become an additional Property ID.
@@ -453,7 +453,7 @@ In ordinary text, the active double-bracket notation takes precedence over ordin
 
 **Grammar:** An active link has exactly the form `[[target]]` or `[[target|display text]]`. The target is a complete authored reference according to Sections 7 and 8. It must not be empty and contains no surrounding spaces; it is neither trimmed nor rewritten. NFC, declared spelling, import boundaries, collision and ambiguity rules apply unchanged. The link can address any definition category. Field paths, URL targets, title or similarity search are not added.
 
-The optional display text is plain Unicode text. It is preserved after the escapes below and is not evaluated again as Markdown, character reference, model link or expression. It must not be empty or consist exclusively of Unicode White_Space characters of the bound Unicode version. Formatting stands outside, for example `**[[api|Cloud API]]**`. Within an active link, LF, CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR as well as nested unprotected brackets are excluded.
+The optional display text is plain Unicode text. It is preserved after the escapes below and is not evaluated again as Markdown, character reference, model link or expression. It must not be empty or consist exclusively of Unicode White_Space characters of the bound Unicode version. Formatting stands outside, for example `**[[api|Cloud-API]]**`. Within an active link, LF, CR, NEL, LINE SEPARATOR and PARAGRAPH SEPARATOR as well as nested unprotected brackets are excluded.
 
 **Escapes:** Outside the link, the CommonMark rules apply. `\[[api]]` makes the notation literal; a backslash protected by a further backslash does not prevent a link that then begins normally. In the display text, exactly `\|`, `\[`, `\]` and `\\` are permitted for the corresponding literal characters. Other backslash sequences inside the link are errors. In the target, no escapes are needed or permitted; its characters follow the name grammar. An additional unprotected |, an unprotected single bracket or an active [[ without matching closure is a markup error. An isolated ]] outside an active link remains ordinary text.
 
@@ -769,9 +769,9 @@ The Package names are synthetic examples with / between the folder components. A
 
 For identity and collision checking, case makes no difference. Within a package, therefore, IDs of different Kinds also must not be distinguishable solely by case. The permitted authored form is nevertheless strict and must be adhered to exactly: a deviating spelling is an error, not an accepted alternative reference. The verifier does not automatically correct or normalize any source file. Readable IDs are not changed at every change of the preferred designation, nor deliberately reused for other items. An optional title is not an alternative address.
 
-Resolution of authored references uses directly available names and, where needed, explicitly qualified names. Only its own package and the imports declared in the respective definition file are visible; supplying a model alone opens no foreign names:
+Resolution of authored references uses directly available names and, where needed, explicitly qualified names. Only the definition's own package and the imports declared in the respective definition file are visible; supplying a model alone opens no foreign names:
 
-- A complete id is resolved against the definitions of its own package and of all packages directly imported in this definition file. Exactly one canonical target must match. Example: Kind comes from the imported Core package, Exchange from the imported vocabulary, api from the own project package.
+- A complete id is resolved against the definitions of the definition's own package and of all packages directly imported in this definition file. Exactly one canonical target must match. Example: Kind comes from the imported Core package, Exchange from the imported vocabulary, api from the project's own package.
 - Several different targets with the same visible id are ambiguous even if they differ only in letter case. There is neither a silent precedence of local definitions nor a selection by the expected Kind or the order of the imports. The reference must be explicitly qualified or the name collision resolved.
 - Full qualification uses importedPackagePath/id, for example markitect/core/Kind or example/connector/vocabulary/exchange.sender. The last / separates the Package and the complete local ID. An explicitly declared short alias, by contrast, is used with a dot: Core.Kind or Connector.exchange.sender. Both forms denote exactly one Package imported in this definition file. Dots in a local ID remain part of this ID. Alias qualification can still collide with a directly available structured ID; different targets are an error. There is no step-by-step namespace or file path search.
 - Import aliases must not shadow directly available complete IDs with a different meaning. If the same spelling were both an ID and an alias qualification with a different target, that is an error; the alias or the ID must be changed.
@@ -779,7 +779,7 @@ Resolution of authored references uses directly available names and, where neede
 
 All reference positions use this target resolution: kind, Property.target, reference values in spec and body links. kind and Property.target must denote type definitions; a concrete requester value must, for example, denote a Container definition. The expected target type is checked only after unambiguous resolution and is not used as a search heuristic.
 
-Missing or ambiguous names, unknown import aliases and contradictory import entries are errors. There is no search outside its own package and the direct imports of this file, no automatic version selection, no file path interpretation and no resolution via similar names. After resolution, canonical package/ID targets are used. Short and qualified references may denote the same target but do not create different identities.
+Missing or ambiguous names, unknown import aliases and contradictory import entries are errors. There is no search outside the definition's own package and the direct imports of this file, no automatic version selection, no file path interpretation and no resolution via similar names. After resolution, canonical package/ID targets are used. Short and qualified references may denote the same target but do not create different identities.
 
 ### 7.1 Binding spelling conventions and collision checking
 
@@ -807,7 +807,7 @@ Collisions are checked independently of case: package IDs, definition IDs within
 
 The comparison serves exclusively identity, conflict detection and diagnostics. Source text, stored canonical spelling and references are not automatically rewritten. A wrong reference with an unambiguous target is a spelling error; several target identities that match after normalization remain ambiguous and are not selected by the expected category or an exactly written subset. Data values, enum values, body, title, topic patterns and operation identifiers are not generally compared case-insensitively; the respective data contract applies to them.
 
-The Unicode basis and the exact name comparison are in section 7.2. The earlier ASCII-restricted profile is superseded. The permitted characters follow the Unicode profile bound there; body link escapes and source positions are stipulated in section 4.5. The YAML/value profile is in section 5.1.
+The Unicode basis and the exact name comparison are in section 7.2. The earlier, restricted ASCII profile is superseded. The permitted characters follow the Unicode profile bound there; body link escapes and source positions are stipulated in section 4.5. The YAML/value profile is in section 5.1.
 
 The existing Exchange file collection still contains the definition conflict Command/command. The user requested a modeling discussion before any renaming or merging. This conflict therefore remains explicitly visible and must be rejected by the current verifier. The earlier passed reports refer to the previous, still case-sensitive rule; they are not a confirmation of the current state.
 
@@ -1098,7 +1098,7 @@ Processing takes place independently of document order:
 
 1. Provide the known Core contract and the explicitly bound packages.
 2. Capture exactly one complete definition from each definition file; check the uniform envelope, preserve provenance and reject identity collisions. Embedded property declarations and definition collections are errors.
-3. Resolve references unambiguously in its own package and the imports of the respective definition file.
+3. Resolve references unambiguously in the definition's own package and the imports of the respective definition file.
 4. Check meta-Kinds and property contracts against the fixed beginning and its language invariants.
 5. Form closed type contracts from the valid Kind/property definitions; determine the effective field name from spec.name or the complete local Property ID and reject name collisions.
 6. Check all definitions against their Kind, value types, cardinalities and reference targets.
@@ -1153,7 +1153,7 @@ For production, a Go compiler, an implementation-independent valid/invalid refer
 
 The bounded manifest verifier now rejects model cycles as failed and delivers no digest for them; the earlier provisional classification as not_completed is superseded. Counter-probes distinguish self, mutual, longer and transitive cycles from valid chains and jointly used libraries. The check applies both in the physical manifest binding and before the canonical projection. The resource limits of the tool remain separate from this.
 
-In the rest of the language scope chosen so far, this reconciliation has identified no further open fundamental decision. This is no proof of suitability for every conceivable project or of complete parser conformance. Further formal value conditions, multi-version imports and additional language means remain explicitly optional extensions.
+In the rest of the language scope chosen so far, this reconciliation has identified no further open fundamental decision. This is no proof of suitability for every conceivable project or of complete parser conformance. Further formal value conditions, multi-version imports and additional language features remain explicitly optional extensions.
 
 **Separate further work:** Prose and spec are binding together. A contradiction remains a semantic finding even if the structural check passes; there is no automatic precedence rule. Context, semantic index, updating, realization mapping, check planning and Apply from section 11 are elaborated procedure proposals and have not, as a whole, been chosen as parts of the canonical form. Their execution data require no additional Core Kinds. Product implementation, check evidence and domain acceptance remain separate.
 
@@ -1167,7 +1167,7 @@ The status statements below come from the navigation before the v1 consolidation
 
 As of: 15 October 2026. **Status: conversation derivation, earlier variants and bounded check reports.** The current coherent state is in the [consolidated language contract](language-contract.md). The user has meanwhile also chosen the identity contract and commissioned the consolidation. Earlier proposal and status statements on this page document their respective point in the conversation; they do not override the later decisions. Product support of the new overall contract is not claimed.
 
-**Currently chosen direction:** The user decides on **one uniform definition form with the Kinds Kind and Property understood as fixed**. In the continuation of the conversation, the user stipulates **one file per definition**, including every Property and every concrete item, and excludes compact or embedded special Property forms. [Section 6 of the language contract](language-contract.md#property-names) is authoritative. body remains the binding body; requirements and roles are dropped as special language means for the time being. [Section 14](README.md#14-chosen-basic-form-and-compact-properties) documents the compact authoring form, since superseded, and its probes of the time; a new product implementation is not claimed by this.
+**Currently chosen direction:** The user decides on **one uniform definition form with the Kinds Kind and Property understood as fixed**. In the continuation of the conversation, the user stipulates **one file per definition**, including every Property and every concrete item, and excludes compact or embedded special Property forms. [Section 6 of the language contract](language-contract.md#property-names) is authoritative. body remains the binding body; requirements and roles are dropped as special language features for the time being. [Section 14](README.md#14-chosen-basic-form-and-compact-properties) documents the compact authoring form, since superseded, and its probes of the time; a new product implementation is not claimed by this.
 
 **Further chosen direction:** Package is the only namespace; every folder under the model root forms a Package whose name follows from the relative path. An additional namespace field is dropped. Since the user decision of 16 October, Package is no longer a versioning/distribution unit; this unit is called model. Direct imports in the respective definition file make complete definition IDs available without a prefix. The provision and version binding of models that belong together is stipulated separately and opens no names. Package names and full Package qualification use /; structured local IDs and necessary alias qualification still use dots. Ambiguities are rejected. [Sections 7 and 8 of the language contract](language-contract.md#names) own this later decision; the following historical examples and probes keep their earlier notation.
 

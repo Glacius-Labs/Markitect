@@ -132,7 +132,7 @@ A built-in project Kind named Rule is not required for this. An optional rule se
 
 Made concrete at the user's request: The following fields are a coherent contract draft, not syntax that has already been decided or implemented. The existing example files and their bounded structure check report remain unchanged.
 
-The subsequent [check of the added value](#36-do-requirements-and-roles-need-their-own-core-semantics) questions requirements and roles as separate language means. The user then explicitly decides to leave them out for now. The structured variant below is therefore deferred and is kept only for comparison.
+The subsequent [check of the added value](#36-do-requirements-and-roles-need-their-own-core-semantics) questions requirements and roles as separate language features. The user then explicitly decides to leave them out for now. The structured variant below is therefore deferred and is kept only for comparison.
 
 The general meaning reads: An Exchange definition describes the desired request/reply contract for an operation. It describes neither a single running exchange nor a message. sender issues the operation; receiver processes it. requestChannel and replyChannel describe the communication paths. The Kind binds these roles to one another; its requirements specify the expected behaviour more precisely.
 
@@ -261,7 +261,7 @@ If a Kind contract is changed, its definitions and the affected realizations tha
 
 ### 3.6 Do requirements and roles need their own Core semantics?
 
-A further user question: Can meaning, requirements and their scope of validity already be expressed through binding prose and Properties? This counter-probe checks the benefit of the proposed new language means. It is a recommendation, not a removal already decided by the user.
+A further user question: Can meaning, requirements and their scope of validity already be expressed through binding prose and Properties? This counter-probe checks the benefit of the proposed new language feature. It is a recommendation, not a removal already decided by the user.
 
 **Subsequent user decision:** requirements and roles are left out for now. The lean direction justified here is chosen for the next vertical slice; this does not yet imply acceptance of a particular file syntax or implementation.
 
@@ -867,7 +867,7 @@ A shared envelope and storage in the same graph are real unifications. The claim
 
 ### 13.3 What complexity is added
 
-The explicit Core starts with known data structures and checks supplied type contracts. The self-describing candidate additionally needs a fixed versioned beginning, its basic definitions and the reconciliation between their declarative representation and the implemented meta rules. Kind.kind=Kind can be handled in a bounded way, but must be an explicit language rule and understandable for tools.
+The explicit Core starts with known data structures and checks supplied type contracts. The self-describing candidate additionally needs a fixed versioned beginning, its basic definitions and the reconciliation between their declarative representation and the implemented meta rules. Kind.kind=Kind is manageable within limits, but must be an explicit language rule and understandable for tools.
 
 With a complete unification, the following tasks are added as well:
 
@@ -895,7 +895,7 @@ The shared definition form remains a serious alternative if the direct editing a
 
 **User decision:** As its new design direction, Markitect uses the uniform basic form with Kind and Property. A type definition, a property definition and the description of a concrete project item are definitions with identity, kind reference, binding body and structured values. Kind and Property are the basic types understood as fixed. Project terms are defined as further Kinds. The choice of body and the provisional omission of requirements and roles remain in place.
 
-**Additional request:** Represent Properties compactly directly at the Kind. The following authoring form and its normalization are a concrete proposal for this assignment. The product compiler and its present authoring format were not changed.
+**Additional request:** Represent Properties compactly directly at the Kind. The following authoring form and its normalization are a concrete proposal for this request. The product compiler and its present authoring format were not changed.
 
 ### 14.1 An embedded Property is a short form of its definition
 

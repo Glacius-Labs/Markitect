@@ -111,7 +111,7 @@ System/Container/Component describe the architecture structure. The complete con
 | Identity | What the contract stipulates | Participants |
 | --- | --- | --- |
 | `public-dms-api` | HTTP operations, authentication, inputs, successful responses and errors. | Caller uses; HTTP edge provides. |
-| `command-exchange` | Versioned Commands/Results, envelopes, address formation, reply address, correlation, deadlines and delivery boundaries. | Dispatcher and responder each take one role of the same contract. |
+| `command-exchange` | Versioned Commands/Results, envelopes, address formation, reply address, reply matching, deadlines and delivery boundaries. | Dispatcher and responder each take one role of the same contract. |
 | `mqtt-transport` | Publishing, subscription, topic mapping and transport behavior. The broker interprets no DMS capability. | MQTT adapters use; MQTT service provides transport. |
 | `dms-access` | DMS operations required for the selected UseCases and error/permission semantics. | DMS provides; DMS adapter uses. |
 | `content-transfer` | Access-authorized transfer via short-lived object URLs and their validity. | API organizes; connector and caller transfer data to/from the store. |
@@ -133,7 +133,7 @@ In the source, `Capability` has the four coordinates Product, Module, Operation 
 | Component offers Interface | HTTP edge offers public DMS API. | Responsibility for a described contract. |
 | Component uses Interface | DMS adapter uses DMS access. | Dependency on a contract of the neighboring system. |
 | Component contributes to UseCase | HTTP edge, dispatcher, responder and DMS adapter contribute to “List documents”. | A behavior extends across several runtime units. |
-| Rule applies to contract/Definition | Reply correlation applies to Command exchange. | The obligation reaches the relevant contributions. |
+| Rule applies to contract/Definition | Reply matching applies to Command exchange. | The obligation reaches the relevant contributions. |
 | Check examines expectation | Simultaneous requests each receive their own reply. | Declared check assignment, not yet an executed result. |
 
 Publish/subscribe, input mapping and response formation are initially made precise within the communication contract and the UseCase. The table does not introduce a new universal graph edge type for every activity verb. Before a machine-readable language contract, direction, permitted targets and derived consequences of each chosen relation are to be determined.
@@ -174,7 +174,7 @@ The following description is a target candidate derived from the actual processi
 | 4 | Dispatcher adopts `Capability = dms.documents.list.v1`, addresses `tenant-demo`, generates or adopts the IDs and registers the waiting exchange before publication. |
 | 5 | RequestEnvelope carries for example `MessageId = m1`, `CorrelationId = c1`, `ReplyTarget = [cloud]`, `ReplyInstance = api-A`, SchemaVersion, capability, diagnostic target, deadline header and encoded Command. The diagnostic field Target itself is not the transport address already used. |
 | 6 | API MQTT adapter publishes to `stp/dms/tenant-demo`. A connector receives via `$share/replicas/stp/dms/tenant-demo`. |
-| 7 | Responder validates envelope and version, limits the amount of work in progress and looks for the handler for the complete capability. |
+| 7 | Responder validates envelope and version, limits the amount of work and looks for the handler for the complete capability. |
 | 8 | DMS handler uses the DMS adapter. The adapter executes the queries against DMS with the user context. If the DMS configuration is missing, the reference host can use a fake connection instead; this is no live-DMS evidence. |
 | 9 | Handler produces a ListDocumentsResult with document metadata and, where applicable, continuation information. Transport success and domain result status are separate. |
 | 10 | Responder forms ResponseEnvelope with `MessageId = m1` and `CorrelationId = c1` and publishes to `stp/dms/cloud/api-A`. |
@@ -256,7 +256,7 @@ The following checks are design assignments. The local source analysis does not 
 
 System, Container and Component give the example clear solution, runtime and function boundaries. The term Module is not additionally needed for the architecture structure of this example. This does not yet confirm its general dispensability; in particular, a capability name segment and a code library are different items from a Component.
 
-For a sufficient project description, Interface as internal/external contract, UseCase for the operation effect, Concept for messages and identities as well as Rule for correlation, deadline and error semantics are additionally needed. Scenario and Check make the expected consequences concrete. A new universal Command, Topic or Workflow Kind is not yet justified by this example; the independent need for such Definitions is to be checked against the expression and the use.
+For a sufficient project description, Interface as internal/external contract, UseCase for the operation effect, Concept for messages and identities as well as Rule for reply matching, deadline and error semantics are additionally needed. Scenario and Check make the expected consequences concrete. A new universal Command, Topic or Workflow Kind is not yet justified by this example; the independent need for such Definitions is to be checked against the expression and the use.
 
 The most important open language questions are:
 
@@ -264,7 +264,7 @@ The most important open language questions are:
 2. **Interface:** Does a common contract suffice for request, reply, roles and rules, and how are its contributions assigned to the Components?
 3. **Parameterized addresses:** How are topic families, and reply addresses formed from runtime values, described, without needing a model definition per concrete tenant, job or process start?
 4. **Behavior across several building blocks:** How does a UseCase reference its contributions, translations and check obligations, so that a contract change reaches the affected senders and receivers?
-5. **Guarantees:** Which correlation, retry, compatibility and abort rules are actually desired? The existing POC implementation does not anticipate these decisions.
+5. **Guarantees:** Which reply-matching, retry, compatibility and abort rules are actually desired? The existing POC implementation does not anticipate these decisions.
 
 The example does not justify the inclusion of agent mandates, concrete source files or PR workflows in the new canonical project vocabulary.
 
