@@ -69,7 +69,8 @@ func gitEnvironment() []string {
 }
 
 func (g *gitRepository) command(args ...string) *exec.Cmd {
-	prefix := []string{"--no-replace-objects", "--literal-pathspecs", "-c", "safe.directory=" + filepath.ToSlash(g.path), "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false", "-c", "core.hooksPath=", "-C", g.path}
+	// Acquisition also reads objects in the Run adapter's long state paths.
+	prefix := []string{"--no-replace-objects", "--literal-pathspecs", "-c", "core.longpaths=true", "-c", "safe.directory=" + filepath.ToSlash(g.path), "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false", "-c", "core.hooksPath=", "-C", g.path}
 	cmd := exec.CommandContext(g.ctx, "git", append(prefix, args...)...)
 	cmd.Env = gitEnvironment()
 	cmd.WaitDelay = time.Second
