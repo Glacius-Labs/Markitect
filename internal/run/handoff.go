@@ -10,6 +10,11 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
 
+// changedState is the diagnostic for a judgment whose assessed state changed.
+func changedState(judged, current Commit) string {
+	return fmt.Sprintf("your working state changed after your judgment: %s became %s; check your current state and judge again", judged.ID, current.ID)
+}
+
 // requiredDecision propagates required adverse findings without treating a
 // previous ordinary submission as fresh acceptance during correction.
 func requiredDecision(current, next Decision) Decision {
@@ -46,9 +51,9 @@ func (x *execution) workingLocked(s *managerState) error {
 	case active:
 		return nil
 	case fixed, reviewed:
-		return fmt.Errorf("your handoff %s is fixed; you act on your children again only within a new assignment", s.a.handoff.Result.ID)
+		return fmt.Errorf("your handoff %s is fixed for your parent's review; you act on your children again only after a new assignment; reply to questions addressed to you", s.a.handoff.Result.ID)
 	}
-	return fmt.Errorf("you have no active assignment")
+	return fmt.Errorf("you have no active assignment; your parent assigns your task; reply to questions addressed to you")
 }
 
 // childrenLocked names the first direct child whose work blocks s's judgment.
@@ -57,11 +62,11 @@ func (x *execution) childrenLocked(s *managerState) error {
 		a := x.states[name].a
 		switch a.phase {
 		case unassigned:
-			return fmt.Errorf("child %s has no assignment yet", name)
+			return fmt.Errorf("child %s has no assignment yet; delegate its task", name)
 		case assigned, active:
-			return fmt.Errorf("child %s is still working on its assignment", name)
+			return fmt.Errorf("child %s is still working on its assignment; await its fixed handoff", name)
 		case fixed:
-			return fmt.Errorf("the review of child %s's fixed handoff %s is missing", name, a.handoff.Result.ID)
+			return fmt.Errorf("the review of child %s's fixed handoff %s is missing; review it", name, a.handoff.Result.ID)
 		}
 	}
 	return nil
@@ -69,13 +74,13 @@ func (x *execution) childrenLocked(s *managerState) error {
 
 func (x *execution) decisionError(d Decision, findings []Finding) error {
 	if x.request.Mandate == Implement && d != Submitted && d != Reject && d != ModelBlocker {
-		return fmt.Errorf("an Implement judgment is submitted, reject or model_blocker")
+		return fmt.Errorf("an Implement judgment is submitted, reject or model_blocker; judge again with one of them")
 	}
 	if x.request.Mandate != Implement && d != Approve && d != Reject && d != ModelBlocker {
-		return fmt.Errorf("a %s judgment is approve, reject or model_blocker", x.request.Mandate)
+		return fmt.Errorf("a %s judgment is approve, reject or model_blocker; judge again with one of them", x.request.Mandate)
 	}
 	if d != Submitted && d != Approve && !concreteFindings(findings) {
-		return fmt.Errorf("reject and model_blocker need concrete Findings")
+		return fmt.Errorf("reject and model_blocker need concrete Findings; judge again with at least one Finding text")
 	}
 	return nil
 }
@@ -93,11 +98,11 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 	switch s.a.phase {
 	case unassigned, assigned:
 		x.mu.Unlock()
-		return fmt.Errorf("you have no active assignment to judge")
+		return fmt.Errorf("you have no active assignment to judge; a reply to a question needs no judgment")
 	case fixed, reviewed:
 		defer x.mu.Unlock()
 		if decision != Reject && decision != ModelBlocker || !concreteFindings(findings) {
-			return fmt.Errorf("your handoff %s is fixed; a later judgment of it is reject or model_blocker with concrete Findings", s.a.handoff.Result.ID)
+			return fmt.Errorf("your handoff %s is fixed; no further judgment is needed, unless you report reject or model_blocker about it with concrete Findings", s.a.handoff.Result.ID)
 		}
 		x.lateLocked(s, decision, findings)
 		return nil
@@ -139,7 +144,7 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 			x.mu.Unlock()
 		}
 		if !j.check.Valid && (decision == Submitted || decision == Approve) {
-			return fmt.Errorf("your state %s fails its check: %s", j.state.ID, j.check.Diagnostic)
+			return fmt.Errorf("your state %s fails its check: %s; correct your state and judge again, or judge reject or model_blocker with Findings", j.state.ID, j.check.Diagnostic)
 		}
 	}
 	x.mu.Lock()
@@ -148,7 +153,7 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 		return err
 	}
 	if s.a.phase != active || s.a.version != version {
-		return fmt.Errorf("your assignment changed while you judged it")
+		return fmt.Errorf("your assignment changed while you judged it; judge your current assignment")
 	}
 	if err := x.childrenLocked(s); err != nil {
 		return err
@@ -164,8 +169,12 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 func (x *execution) lateLocked(s *managerState, decision Decision, findings []Finding) {
 	s.a.lateFinding(decision, findings)
 	x.queueHandoffLocked(s)
-	reason := fmt.Sprintf("%s reported %s about its fixed handoff %s", s.manager.Package, decision, s.a.handoff.Result.ID)
-	for p := x.states[s.manager.Parent]; p != nil; p = x.states[p.manager.Parent] {
+	reported := fmt.Sprintf("%s reported %s about its fixed handoff %s", s.manager.Package, decision, s.a.handoff.Result.ID)
+	reason := reported + "; review its changed handoff and judge again"
+	for c, p := s, x.states[s.manager.Parent]; p != nil; c, p = p, x.states[p.manager.Parent] {
+		if c != s {
+			reason = fmt.Sprintf("%s, so %s works on its assignment again; await its renewed handoff, review it and judge again", reported, c.manager.Package)
+		}
 		if p.a.phase != fixed && p.a.phase != reviewed {
 			p.a.invalidate(reason)
 			x.scheduleLocked(p)
@@ -203,7 +212,7 @@ func (x *execution) fix(s *managerState, j *judgment) error {
 	case x.request.Mandate == Implement && state != j.state:
 		x.mu.Lock()
 		if s.a.judgment == j {
-			s.a.invalidate(fmt.Sprintf("your working state changed after your judgment: %s became %s", j.state.ID, state.ID))
+			s.a.invalidate(changedState(j.state, state))
 		}
 		x.mu.Unlock()
 		return nil
@@ -260,7 +269,7 @@ func (x *execution) completeRoot() (Handoff, bool, error) {
 	state, err := s.copy.Snapshot(x.ctx)
 	s.git.Unlock()
 	if errors.Is(err, ErrMergeConflict) || err == nil && x.request.Mandate == Implement && state != j.state {
-		reason := fmt.Sprintf("your working state changed after your judgment: %s became %s", j.state.ID, state.ID)
+		reason := changedState(j.state, state)
 		if err != nil {
 			reason = err.Error()
 		}
@@ -310,10 +319,10 @@ func (x *execution) review(ctx context.Context, s *managerState, child, commit s
 		return fmt.Errorf("review covers only your direct children (%s)", strings.Join(s.manager.Children, ", "))
 	}
 	if decision != Approve && decision != Reject && decision != ModelBlocker {
-		return fmt.Errorf("a review is approve, reject or model_blocker")
+		return fmt.Errorf("a review is approve, reject or model_blocker; review again with one of them")
 	}
 	if decision != Approve && !concreteFindings(findings) {
-		return fmt.Errorf("reject and model_blocker need concrete Findings")
+		return fmt.Errorf("reject and model_blocker need concrete Findings; review again with at least one Finding text")
 	}
 	findings = origin(findings, s.manager.Package)
 	x.mu.Lock()
@@ -326,16 +335,16 @@ func (x *execution) review(ctx context.Context, s *managerState, child, commit s
 	switch {
 	case a.phase == reviewed:
 		x.mu.Unlock()
-		return fmt.Errorf("child %s's fixed handoff %s is already reviewed", child, a.handoff.Result.ID)
+		return fmt.Errorf("child %s's fixed handoff %s is already reviewed; it needs no further review", child, a.handoff.Result.ID)
 	case a.phase != fixed:
 		x.mu.Unlock()
-		return fmt.Errorf("child %s has no fixed handoff to review", child)
+		return fmt.Errorf("child %s has no fixed handoff to review; await its handoff", child)
 	case a.sent != a.gen:
 		x.mu.Unlock()
 		return fmt.Errorf("child %s's fixed handoff changed after you received it; await it again", child)
 	case a.handoff.Result.ID != commit:
 		x.mu.Unlock()
-		return fmt.Errorf("child %s's fixed handoff is %s, not %s", child, a.handoff.Result.ID, commit)
+		return fmt.Errorf("child %s's fixed handoff is %s, not %s; review that commit", child, a.handoff.Result.ID, commit)
 	}
 	integrate := decision == Approve && x.request.Mandate == Implement && a.handoff.Decision == Submitted
 	if integrate && (a.handoff.Check == nil || !a.handoff.Check.Valid) {
@@ -395,19 +404,19 @@ func (x *execution) delegate(ctx context.Context, s *managerState, child, task s
 		return fmt.Errorf("delegate reaches only your direct children (%s)", strings.Join(s.manager.Children, ", "))
 	}
 	if strings.TrimSpace(task) == "" {
-		return fmt.Errorf("a delegation needs a concrete task")
+		return fmt.Errorf("a delegation needs a concrete task; delegate again with a task text")
 	}
 	findings = origin(findings, s.manager.Package)
 	refusal := func(a assignment) error {
 		switch {
 		case a.phase == assigned || a.phase == active:
-			return fmt.Errorf("child %s is still working on its assignment", child)
+			return fmt.Errorf("child %s is still working on its assignment; await its fixed handoff", child)
 		case a.phase != unassigned && a.blocked():
-			return fmt.Errorf("child %s reported a model blocker; it needs a new model and Run", child)
+			return fmt.Errorf("child %s reported a model blocker, which no correction in this Run resolves; review its handoff and judge your assignment, and the blocker travels upward", child)
 		case a.phase == fixed:
 			return fmt.Errorf("review child %s's fixed handoff %s before a correction", child, a.handoff.Result.ID)
 		case a.phase == reviewed && !concreteFindings(findings):
-			return fmt.Errorf("a correction needs concrete Findings")
+			return fmt.Errorf("a correction needs concrete Findings; delegate again with at least one Finding text")
 		}
 		return nil
 	}
@@ -444,7 +453,7 @@ func (x *execution) delegate(ctx context.Context, s *managerState, child, task s
 	assignment := Assignment{Task: task, Findings: findings, Base: base}
 	target.a.assign(assignment)
 	// The judgment rested on the child's previous handoff.
-	s.a.invalidate(fmt.Sprintf("you delegated to %s after your judgment", child))
+	s.a.invalidate(fmt.Sprintf("you delegated to %s after your judgment; await its new handoff, review it and judge again", child))
 	x.queueLocked(target, entry{event: Event{Assignment: &assignment}})
 	return nil
 }

@@ -463,7 +463,7 @@ func TestStateChangeAfterJudgmentRequiresANewJudgment(t *testing.T) {
 			}
 			return true, m.write("out/deep.txt", "after judgment\n")
 		case 2:
-			if len(message.Events) != 0 || !strings.Contains(feedbackText(message), "your working state changed after your judgment") {
+			if len(message.Events) != 0 || !strings.Contains(feedbackText(message), "your working state changed after your judgment") || !strings.Contains(feedbackText(message), "check your current state and judge again") {
 				return true, fmt.Errorf("changed state did not invalidate the judgment: %+v", message)
 			}
 			return true, m.judge(ctx, run.Submitted, nil)
@@ -515,7 +515,7 @@ func TestRootCompletionRefusesAnEarlierJudgmentAfterItsStateChanged(t *testing.T
 				}
 				return true, nil
 			case 3:
-				if len(message.Events) != 0 || !strings.Contains(feedbackText(message), "your working state changed after your judgment") {
+				if len(message.Events) != 0 || !strings.Contains(feedbackText(message), "your working state changed after your judgment") || !strings.Contains(feedbackText(message), "check your current state and judge again") {
 					return true, fmt.Errorf("Root completion relied on its earlier judgment: %+v", message)
 				}
 				return true, m.judge(ctx, run.Submitted, nil)
@@ -627,7 +627,7 @@ func TestLateFindingInvalidatesAcceptanceAndJudgmentsAbove(t *testing.T) {
 			// names the concrete reason together with a's renewed handoff.
 			explained := false
 			for _, message := range root.messages {
-				explained = explained || strings.Contains(feedbackText(message), "a/deep reported "+string(late)+" about its fixed handoff "+stale.Result.ID)
+				explained = explained || strings.Contains(feedbackText(message), "a/deep reported "+string(late)+" about its fixed handoff "+stale.Result.ID+", so a works on its assignment again; await its renewed handoff, review it and judge again")
 			}
 			if !explained {
 				t.Fatal("Root's invalidated judgment was not explained", root.messages)
@@ -729,7 +729,7 @@ func TestRepeatedNoProgressEndsTheRunIncomplete(t *testing.T) {
 	if !strings.Contains(strings.Join(result.Errors, " "), "Manager a/deep made no progress in 2 continued responses") {
 		t.Fatal("stop lacks its concrete diagnostic", result.Errors)
 	}
-	if len(deep.messages) != 3 || feedbackText(deep.messages[1]) != "Continue your assignment: Realize your modeled responsibility." || feedbackText(deep.messages[2]) != "Your last response made no progress on your assignment: Realize your modeled responsibility." {
+	if len(deep.messages) != 3 || feedbackText(deep.messages[1]) != "Continue your assignment: Realize your modeled responsibility." || feedbackText(deep.messages[2]) != "Your last response made no progress; act on your assignment or judge it: Realize your modeled responsibility." {
 		t.Fatal("continuations were not bounded and concrete", deep.messages)
 	}
 }

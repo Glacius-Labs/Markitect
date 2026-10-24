@@ -373,7 +373,7 @@ func (x *execution) tools(s *managerState) Tools {
 		AppendNote: func(caller context.Context, scope, text string) (note Note, err error) {
 			err = call(caller, true, func(ctx context.Context) error {
 				if text == "" {
-					return fmt.Errorf("empty Note")
+					return fmt.Errorf("empty Note; append it again with a text")
 				}
 				note, err = x.executor.Records.Append(ctx, Note{Project: x.request.Project, Run: x.request.ID, Manager: s.manager.Package, Context: scope, Text: text})
 				x.stopPort(err)

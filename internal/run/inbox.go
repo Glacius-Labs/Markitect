@@ -151,7 +151,7 @@ func (x *execution) next(s *managerState) (m Message, continued, ok bool, err er
 				}
 				text := "Continue your assignment: "
 				if s.stalled > 0 {
-					text = "Your last response made no progress on your assignment: "
+					text = "Your last response made no progress; act on your assignment or judge it: "
 				}
 				m.Feedback = []Finding{{Text: text + s.a.task.Task}}
 			}
@@ -340,12 +340,16 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 		}
 		if !x.waitingLocked(s) {
 			x.mu.Unlock()
-			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open")
+			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open; %s", x.nextStepLocked(s))
 		}
 		if !x.othersRunningLocked(s) {
 			// Everyone else is idle: only an answer from this Manager unblocks them.
+			next := x.openQuestionsLocked(s)
+			if next == "" {
+				next = "; " + x.nextStepLocked(s)
+			}
 			x.mu.Unlock()
-			return Event{}, fmt.Errorf("nothing can arrive: every other Manager is waiting%s", x.openQuestionsLocked(s))
+			return Event{}, fmt.Errorf("nothing can arrive: every other Manager is waiting%s", next)
 		}
 		x.mu.Unlock()
 		select {
@@ -373,7 +377,7 @@ func (x *execution) ask(ctx context.Context, from *managerState, to, text string
 		return "", fmt.Errorf("ask reaches only your direct parent or direct children (%s); reach other Managers through the Managers in between", reach)
 	}
 	if strings.TrimSpace(text) == "" {
-		return "", fmt.Errorf("empty Manager question")
+		return "", fmt.Errorf("empty Manager question; ask again with a question text")
 	}
 	if err := x.request.Allowance.take(); err != nil {
 		return "", err
@@ -395,7 +399,7 @@ func (x *execution) reply(ctx context.Context, from *managerState, id, text stri
 		return err
 	}
 	if strings.TrimSpace(text) == "" {
-		return fmt.Errorf("empty Manager answer")
+		return fmt.Errorf("empty Manager answer; reply again with an answer text")
 	}
 	x.mu.Lock()
 	defer x.mu.Unlock()
@@ -404,7 +408,7 @@ func (x *execution) reply(ctx context.Context, from *managerState, id, text stri
 	}
 	q, ok := x.questions[id]
 	if !ok || q.To != from.manager.Package || q.answered {
-		return fmt.Errorf("no open question %s is addressed to you", id)
+		return fmt.Errorf("no open question %s is addressed to you; reply only to question IDs delivered to you", id)
 	}
 	q.answered = true
 	x.queueLocked(x.states[q.From], entry{event: Event{Answer: &Answer{ID: id, From: from.manager.Package, Text: text}}})
@@ -420,6 +424,14 @@ func (x *execution) othersRunningLocked(s *managerState) bool {
 		}
 	}
 	return false
+}
+
+// nextStepLocked names what s can do instead of waiting.
+func (x *execution) nextStepLocked(s *managerState) string {
+	if s.a.phase == active && s.a.judgment == nil {
+		return "continue your work or judge your assignment"
+	}
+	return "you have no open work to wait for"
 }
 
 // openQuestionsLocked names the questions s received and has not answered.

@@ -51,7 +51,7 @@ func TestLateRejectInvalidatesAcceptanceWithoutRejectingAncestors(t *testing.T) 
 	if f := deep.a.handoff.Findings; len(f) != 1 || f[0].Manager != "a/deep" {
 		t.Fatal("late Finding lost its host-set origin", f)
 	}
-	if a.a.judgment != nil || len(a.a.feedback) != 1 || !strings.Contains(a.a.feedback[0].Text, "a/deep reported reject") {
+	if a.a.judgment != nil || len(a.a.feedback) != 1 || !strings.Contains(a.a.feedback[0].Text, "a/deep reported reject") || !strings.HasSuffix(a.a.feedback[0].Text, "; review its changed handoff and judge again") {
 		t.Fatal("parent judgment resting on the acceptance stayed valid", a.a)
 	}
 	if len(a.queue) != 1 || a.queue[0].child != "a/deep" || a.queue[0].gen != 2 {
@@ -87,7 +87,7 @@ func TestLateBlockerReopensHandedOffAncestorsUpToTheActiveOne(t *testing.T) {
 	if a.a.phase != active || a.a.judgment != nil || a.a.handoff.Decision != Submitted || len(a.a.feedback) != 1 {
 		t.Fatal("handed-off parent was not reopened or its decision was forced", a.a)
 	}
-	if root.a.judgment != nil || root.a.phase != active || len(root.a.feedback) != 1 {
+	if root.a.judgment != nil || root.a.phase != active || len(root.a.feedback) != 1 || !strings.HasSuffix(root.a.feedback[0].Text, "so a works on its assignment again; await its renewed handoff, review it and judge again") {
 		t.Fatal("Root judgment resting on the reopened handoff stayed valid", root.a)
 	}
 	x.mu.Lock()
@@ -129,7 +129,7 @@ func TestAskFollowsTheHierarchyAndAwaitNeverWaitsForNothing(t *testing.T) {
 		}
 	}
 	x.closing = false
-	if _, err := x.await(context.Background(), a); err == nil || !strings.Contains(err.Error(), "nothing can arrive") {
+	if _, err := x.await(context.Background(), a); err == nil || !strings.Contains(err.Error(), "nothing can arrive") || !strings.Contains(err.Error(), "you have no open work to wait for") {
 		t.Fatal("await waited without anything that can arrive", err)
 	}
 	// A working child that is idle itself waits for a: nothing can arrive.
@@ -442,7 +442,7 @@ func TestDelegationAfterJudgmentInvalidatesIt(t *testing.T) {
 	if err := x.tools(a).Delegate(context.Background(), "a/deep", "correct", []Finding{{Text: "concrete correction"}}); err != nil {
 		t.Fatal(err)
 	}
-	if a.a.judgment != nil || len(a.a.feedback) != 1 || a.a.feedback[0].Text != "you delegated to a/deep after your judgment" {
+	if a.a.judgment != nil || len(a.a.feedback) != 1 || a.a.feedback[0].Text != "you delegated to a/deep after your judgment; await its new handoff, review it and judge again" {
 		t.Fatal("judgment survived a later delegation", a.a)
 	}
 	if err := x.fix(a, old); err != nil || a.a.phase != active {
@@ -497,5 +497,35 @@ func TestReleasedDriverWakesBlockedAwait(t *testing.T) {
 		}
 	case <-time.After(time.Second):
 		t.Fatal("released driver left await blocked")
+	}
+}
+
+// §3.7: a refused call names the concrete reason and the possible next step.
+func TestRefusalsNameReasonAndNextStep(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	root.running, a.running, deep.running = true, true, true
+	tools := x.tools(a)
+	a.a.phase, a.a.version = active, 1
+	for name, tc := range map[string]struct {
+		call func() error
+		want string
+	}{
+		"judge with an unassigned child": {func() error { return tools.Judge(context.Background(), Submitted, nil) }, "child a/deep has no assignment yet; delegate its task"},
+		"judge reject without Findings":  {func() error { return tools.Judge(context.Background(), Reject, nil) }, "judge again with at least one Finding text"},
+		"review without a fixed handoff": {func() error { return tools.Review(context.Background(), "a/deep", "c", Approve, nil) }, "has no fixed handoff to review; await its handoff"},
+		"delegate without a task":        {func() error { return tools.Delegate(context.Background(), "a/deep", " ", nil) }, "delegate again with a task text"},
+		"reply to an unknown question":   {func() error { return tools.Reply(context.Background(), "missing", "answer") }, "reply only to question IDs delivered to you"},
+		"await with nothing to arrive":   {func() error { _, err := tools.Await(context.Background()); return err }, "continue your work or judge your assignment"},
+		"judge without an assignment":    {func() error { return x.tools(deep).Judge(context.Background(), Submitted, nil) }, "a reply to a question needs no judgment"},
+		"delegate without an assignment": {func() error { return x.tools(deep).Delegate(context.Background(), "x", "task", nil) }, "delegate reaches only your direct children"},
+		"act from a fixed handoff": {func() error {
+			accepted(root, "root")
+			return x.tools(root).Delegate(context.Background(), "a", "task", nil)
+		}, "reply to questions addressed to you"},
+	} {
+		if err := tc.call(); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Fatal(name, err)
+		}
 	}
 }
