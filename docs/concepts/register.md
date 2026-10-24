@@ -85,6 +85,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan |
 | [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; translation of existing German documents and of the core vocabulary tracked in the delivery plan |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
+| [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2 |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -875,6 +876,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted by the owner, 24 October 2026 ([verbatim source with translation](sources/parallel-writers-20261024.md)).
 - **Decision:** The coordinator is not limited to two parallel writers; more run in parallel where it is useful.
 - **Recorded meaning (recorder's interpretation):** the fixed limit in [concept 1.0](v1-concept.md) §24.2 is replaced by "as many as are useful and actually decoupled". Exclusive file scopes, one writer at a time per shared contract, registry shard, self-model and generated file, independent review and exact-head integration stay unchanged.
+
+### DEC-071 Repository structure and archive
+
+- **Status:** Accepted by the owner, 24 October 2026 ([verbatim source](sources/repository-structure-decisions-20261024.md)).
+- **Decision:** The target layout and the six recommendations of the [repository structure](../development/repository-structure.md) inventory are accepted: archive 873 files including the marketing plan, do not translate archived records, protect `archive/**` refs, pin the six pre-reset commits, change the tag Rule instead of restoring tags, and move `internal/` packages in step 5.
+- **Owners and scope:** slice R2 in the [delivery plan](../implementation-plan.md#repository-structure) executes it; the archive ruleset is already active. Archived material stays traceable through the archive refs, bundles and `docs/archive.md`.
 
 ## Promises
 

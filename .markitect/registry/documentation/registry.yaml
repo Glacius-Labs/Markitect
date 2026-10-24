@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/repository-structure-decisions-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner acceptance of the six R1 repository structure recommendations.
   - path: "docs/development/repository-structure.md"
     form: doc
     realizes: [documentation/current-guidance]

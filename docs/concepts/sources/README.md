@@ -4,6 +4,7 @@ Sources preserve where the [register](../register.md) entries come from. Owner s
 
 | Source | Origin | Content |
 |---|---|---|
+| [Repository structure decisions](repository-structure-decisions-20261024.md) | Direct owner decision, 24 October 2026; verbatim | Acceptance of the six R1 recommendations: archive scope, no translation of archived records, protected archive refs, pinned pre-reset commits, changed tag Rule, `internal/` moves in step 5 |
 | [Parallel writers](parallel-writers-20261024.md) | Direct owner decision, 24 October 2026; verbatim with English translation | More than two parallel writers where useful; exclusive scopes and review rules unchanged |
 | [English documentation](english-documentation-20261024.md) | Direct owner decision, 24 October 2026; verbatim with English translation | The concept and all documentation are written in English; verbatim sources and the core vocabulary are noted as separate questions |
 | [V1 concept decisions](v1-concept-decisions-20261024.md) | Direct owner decision, 24 October 2026; assistant proposals quoted | Acceptance of D10–D18 and the five-step plan; Codex-only V1 acceptance recorded with a recorder's note; clarifications after the Astra review |
