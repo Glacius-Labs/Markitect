@@ -1,6 +1,6 @@
 # Repository structure: inventory and target layout (R1)
 
-Slice R1 of [step 3 of the delivery plan](../implementation-plan.md#repository-structure), written on 24 October 2026 against Main `79b9baa55f6e1dce89005f91878de0ae7f139ed3`. It classifies every tracked file, proposes the target layout and gives R2 an ordered, mechanical work list. It moves, deletes and rewrites nothing. The owner sees this proposal before R2 starts; until then it is a proposal, not a decision.
+Slice R1 of [step 3 of the delivery plan](../implementation-plan.md#repository-structure), written on 24 October 2026 against Main `79b9baa55f6e1dce89005f91878de0ae7f139ed3` and checked again after merging Main `41e661e0`. That later Main adds two owner sources to the concept record (`parallel-writers-20261024.md` and the English translation `v1-concept-v018-20261024-en.md`, both current), lands B2 and translates the canonical-model documents; the counts below refer to the base. It classifies every tracked file, proposes the target layout and gives R2 an ordered, mechanical work list. It moves, deletes and rewrites nothing. The owner sees this proposal before R2 starts; until then it is a proposal, not a decision.
 
 ## 1. Result
 
@@ -223,7 +223,7 @@ Both existing points are listed in the same index: the pre-cutover branch and th
 
 ## 9. Work list for R2
 
-R2 runs after A1–A3, B2, C1 and the documentation translation have landed and the owner has accepted this layout. Paths below are relative to the repository root. Use `git mv` for moves so the rename history stays exact; keep pure moves, removals and edits in separate commits.
+R2 runs after A1–A3 and C1 have landed (B2 and the canonical-model translation landed on 24 October) and the owner has accepted this layout. Paths below are relative to the repository root. Use `git mv` for moves so the rename history stays exact; keep pure moves, removals and edits in separate commits.
 
 ### 9.1 Preconditions
 
@@ -315,7 +315,7 @@ Directories removed completely: `docs/design/canonical-model/minimal-language/` 
 |---|---|
 | About 650 link edits break links or anchors | Scripted rewrite; check-docs on every remaining Markdown file, not only the default corpus; permalink existence check (§9.8) |
 | Byte-pinned Core fixture changes on the move (line endings, `.gitattributes`) | Pure `git mv` commit keeps the blobs; the `-text` rule follows in the same PR (§9.5) before any checkout-based check; lock resolution check |
-| Collision with active writers (stream A owns the gitrepo and codexappserver tests, B2 `packaging/runtime`, C1 the Core files, the translation the canonical-model documents) | R2 runs after all of them; precondition 9.1 re-checks paths |
+| Collision with active writers (stream A owns the gitrepo and codexappserver tests, C1 the Core files; any further translation of held-back records) | R2 runs after them; precondition 9.1 re-checks paths |
 | C1 translates files that R2 then archives | C1 should exclude the paths classified as archive here: `exchange-example/canonical/core.json`, `bootstrap/core.yaml`, `identities/core-1.0.0.yaml`, `identities/probe.json` and the three vendored Core copies under `experiments/test-projects`; C1's Core work moves to `testdata/core/` |
 | A future history reset loses the archive point | Bundle per §8.2; owner-protected `archive/**` refs (§11) |
 | Pre-reset commits disappear on GitHub | Owner decision §11, item 4 |
@@ -328,7 +328,7 @@ Content follow-ups outside R2 (meaning, not paths), for the coordinator: `docs/a
 ## 11. Decisions for the owner before R2
 
 1. **Archive scope.** Remove the 874 archived files from Main, including the marketing working plan, the test projects and the accepted-but-later designs (standard library, commands, Init and skills), which the archive index keeps findable. Alternative: keep `docs/strategy/marketing-plan.md` on Main if marketing work continues.
-2. **No translation of archived records.** Of the 78 German files in the translation dispatch's scope list, 72 (35 documents and 37 YAML or example files) are archived by this proposal and would not be translated. The six that stay are the language specification and diagnostic contract, the two supplied attachments of the manager-realization source, the conformance audit and the concept v0.18 source.
+2. **No translation of archived records.** The translation dispatch's scope list has 78 German files. PR #679 has already translated 37 of them, 32 of which this proposal archives. Of the 41 not yet translated, 40 are the held-back historical records (`product-model-refinement`, `project-world` with the shop example, the Tasks source description, the work-item comparison and the Astra assessment); all are archive and would not be translated. The 41st is the verbatim concept v0.18 source, which keeps its wording beside its new English translation.
 3. **Protect the archive refs.** A ruleset that forbids deleting or force-pushing `refs/heads/archive/**` (a repository setting, so the owner's call).
 4. **Pre-reset commits.** Either pin the six pre-reset commits of §8.1 with archive refs (this makes old history that the reset removed from the branch graph reachable again), or accept that those links may break and rely on the archive index.
 5. **Self-model statement about tags.** The Rule `tooling/maintenance-boundaries` says "Preserve Git tag identities and required historical release evidence". The release evidence stays on Main under this proposal (§5.1); the tags do not exist on GitHub. Restore them from `retired-releases-20261017.json`, or change the Rule.
