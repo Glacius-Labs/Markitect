@@ -271,9 +271,16 @@ Root `C:\Users\Consiliari\Documents\Codex\Markitect-V1-Comparison\<F first 12 he
 
 It covers one small greenfield Library project, one model and effort, one provider and one machine. It cannot show benefits in larger projects, cross-area composition defects, sustained coherence over many changes, human-attention savings in real use, other providers, or reliability beyond the stated intervals. A positive result supports the thesis on this suite only; a tie or a negative result does not refute the method for larger projects, but it removes this suite as evidence for it.
 
-## Addendum: Phase B (draft, not approved)
+## Addendum: Phase B
 
-Status: **draft for the coordinator's separate approval. Nothing in Phase B may run before that approval.** Phase A's text, tools and decision rule above stay unchanged; Phase B is read by its own rule and never pooled with Phase A.
+Status: **approved by the coordinator on 24 October 2026 at commit `4708c1b55aa90cdb6b95ecc3c4ec04d1e9c8b77e`, with the N = 5 option of B5, under four conditions:**
+
+1. The two extra chains per arm run S1–S3 first. Their S1–S3 results are reported separately as additional observations and are not counted in Phase A's predeclared N = 3 analysis; only their T1–T4 segments count as Phase B units.
+2. This addendum is frozen on Main by an exact-head merge before any Phase B run. Then the model snapshots are materialized, the renderer is extended and the hidden cases are written, and an independent review of them is recorded here or in the results before the first Phase B run.
+3. Phase B starts only after every Phase A run is done and assessed, and keeps the same serial engine discipline with step 4.
+4. If a stop condition or a systematic infrastructure failure uses up the budget, the study stops and reports instead of extending ceilings.
+
+Phase A's text, tools and decision rule above stay unchanged; Phase B is read by its own rule and never pooled with Phase A.
 
 ### B1. Why another phase, and which project
 
@@ -322,10 +329,10 @@ The rest of the assessment (own checks, census, blinded per-candidate review wit
 ### B5. Outcomes, N and decision rule
 
 - **Primary outcome per run:** conforming, defined as in Phase A with C2 and C3 replaced by "all carried and new hidden cases for the step pass", and C6 strict no-change for T4. T3 judges stale documentation and tests through the rubric (R2, R3a) and the hidden cases.
-- **N:** the three Phase A chains per arm continue, 12 Phase B runs per arm. **Unit:** a chain's Phase B segment, conforming when T1–T4 all conform.
-- **Rule:** with 3 units per arm, "supports" needs complete separation, 3 of 3 against 0 of 3 (one-sided Fisher exact p = 0.05). Anything else is a tendency, a tie or against, read as in section 8, with the same error-type downgrade.
+- **N:** the three Phase A chains per arm continue, and two fresh chains per arm are added (approved option below). **Unit:** a chain's Phase B segment, conforming when T1–T4 all conform.
+- **Rule:** "supports" needs one-sided Fisher exact p ≤ 0.05 on the units, M not below B at any step, and no error type that only M shows. Anything else is a tendency, a tie or against, read as in section 8, with the same error-type downgrade. Without the option, 3 units per arm would have needed complete separation, 3 of 3 against 0 of 3.
 - **Secondary, never folded in:** conforming step counts per arm (k of 12), missed hidden cases per run, stale obligations (documentation or tests still describing removed behavior), regressions of earlier families, unnecessary changes, time and tokens.
-- **Option for the coordinator:** two more fresh chains per arm (S1–S3 and T1–T4) would give 5 units per arm, and "supports" would then need 5 of 5 against at most 1 of 5, or 4 of 5 against 0 of 5. This costs 14 more runs per arm.
+- **Approved option, N = 5:** two more fresh chains per arm (S1–S3 and T1–T4) give 5 units per arm, and "supports" then needs 5 of 5 against at most 1 of 5, or 4 of 5 against 0 of 5 (one-sided Fisher exact p ≤ 0.05). This costs 14 more runs per arm; the extra chains' S1–S3 results are additional observations only (condition 1). The extra chains run in the same counterbalanced pairs: chain 4 with M first, chain 5 with B first.
 
 ### B6. Budget
 
