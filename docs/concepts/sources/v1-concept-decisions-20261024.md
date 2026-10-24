@@ -1,0 +1,64 @@
+# Owner decisions: V1 concept 1.0
+
+Date: 24 October 2026. Source: the owner's direct messages in a Claude Code session. The owner statements below are verbatim. The assistant proposals are quoted verbatim from the assistant's reply and labeled as such. Recorder's notes are marked.
+
+## Owner request
+
+The owner supplied the consolidated concept v0.18 ([verbatim](v1-concept-v018-20261024.md), SHA-256 `7a1dee4fce1c5d0edeb24d0c5c45b496e0671cbdf4264be0636405536ce82ba0`) and wrote:
+
+> Prüfe den aktuellen Stand von Markitect gegen das Konzept hier. Unser Ziel ist es dieses Konzept noch einmal final zu reviewen und zu verfeinern und anschließend festzuhalten. Dann wollen wir die v1 stabil und sauber implementieren. Die höchste Priorität liegt auf Qualität, Sauberkeit und exzellenter Architektur. Wir präferieren generell Simplicity. Bevor du anfängst etwas zu implementieren gib mir dein Assessment und deinen Plan wie wir weiter vorgehen sollten
+
+Recorder's note: the assistant compared v0.18 with Main `334e7c3133ff294c0b827e623d80185e3d3ac9af` and the supplied [static audit](../../development/concept-conformance-audit-20261024.md). It confirmed the audit's A1, A2, A3, A5 and R2 observations in source and found R1 already fixed by PR #672.
+
+## Assistant proposals (quoted)
+
+> **Was ich für v1.0 am Konzept ändern würde:**
+> - **Kapitel 28 schließen** statt offen lassen. Meine Vorschläge:
+>   - A1: Fragen nur an Vater und Kinder.
+>   - A2: Eine ungültige Abgabe geht mit Diagnose an den Vater; Approve und Integration bleiben gesperrt. Optional bekommt das Kind ein `check`-Tool zur Selbstprüfung.
+>   - A3: Ein Urteil gilt für Auftrag plus Kandidat. Eine bloße Antwort braucht kein neues.
+>   - R3: erledigt sich mit A2/A3 über einen klaren Manager-Zustand.
+>   - A4: Native Base-/Developer-Instruktionen sind die V1-Form des Harness.
+>   - A5: Die Ergebnisprüfung wandert in den Run-Vertrag.
+>   - A6: feste Mandatsmenge in V1.
+>   - R2: Notes seitenweise und stabil sortiert.
+> - **Neu aufnehmen:**
+>   - den kleinen Werkzeugsatz der Manager als Vertrag; dass er fehlt, hat A3 erst möglich gemacht,
+>   - die Regel „Agenten bekommen Aufgaben, nicht Prozess“,
+>   - den ausdrücklich benannten Providerumfang.
+> - **Kürzen:** viele Verneinungen und Historie raus; die Historie gehört ins Register.
+>
+> **Plan:**
+> 1. Konzept v1.0 im Repo festhalten: Quelle plus Register-Eintrag. Dazu AGENTS.md und den Plan auf die geltenden Regeln kürzen, das Evidenz-Log nach `docs/validation` verschieben und das Selbstmodell anpassen.
+> 2. A1, A2, A3 und R3 als ein zusammenhängender Schnitt mit einem Writer, getestet an den Gegenbeispielen aus §14.3.
+> 3. Parallel in anderen Dateien: A5, R2 und die Bereinigung beim Provider.
+> 4. Native Neuqualifikation mit Codex. Die alten Nachweise gelten für den geänderten Vertrag nicht mehr. Dabei wird auch der noch offene Zweig nachgewiesen: Verify-Reject → frische Korrektur → Publication über den öffentlichen Apply.
+> 5. Gates, Doku und eine Provider-Matrix mit den bekannten Grenzen, danach deine Abnahme.
+>
+> **Eine Produktentscheidung brauche ich für v1.0:** Welche Provider gehören in V1? Ich empfehle V1 nur mit Codex. Claude käme als nächster Schritt auf dem neuen Session-Vertrag, und den heutigen Claude-Code würde ich bis dahin entfernen. Oder soll Claude Teil der V1-Abnahme sein?
+
+## Owner decision (verbatim)
+
+> Ja, starte mit Schritt 1: Konzept v1.0 mit deinen Entscheidungsvorschlägen schreiben und im Repo festhalten.
+
+## Recorded meaning
+
+Recorder's interpretation: the owner accepts the proposals above as V1 product decisions, recorded as D10–D18 in [concept 1.0](../v1-concept.md#27-entscheidungen):
+
+| ID | Decision |
+|---|---|
+| D10 | Questions go only to the direct parent or direct children; other coordination goes through the Managers in between. |
+| D11 | Every Implement child candidate reaches the parent with its deterministic check result; an invalid candidate cannot be approved or integrated; a child can use a check tool for optional self-correction. |
+| D12 | A judgment belongs to the assignment and the assessed state, not to a message; the host keeps an explicit assignment state per Manager. Closes A3 and R3. |
+| D13 | Agents get tasks, not process; a fixed small Manager tool set with one tool per purpose. |
+| D14 | The V1 harness uses native base/developer instructions. Recorder's note: "skills or loadable context only on demonstrated need" restates v0.18 section 15.4; the generic AGENTS.md representation planned in v0.18 section 15.5 stays planned. |
+| D15 | Validation of closed Run results belongs to the Run contract. |
+| D16 | V1 has exactly three mandates. |
+| D17 | Notes are read in bounded, stably ordered pages within the transport limit, without silent truncation. The concrete interface follows a controlled reproduction of the size conflict, as v0.18 R2 asks. |
+| D18 | V1 acceptance covers Codex; Claude follows on the stabilized contract; no non-functional Claude path in the product until then. |
+
+The owner also accepts the five-step plan and starts step 1. The concept text may be condensed as proposed.
+
+Recorder's note on D18: the assistant phrased the provider scope as a question with a recommendation. The owner's reply accepts "deinen Entscheidungsvorschlägen" without answering the question separately. It is recorded as accepted with the recommendation, and the assistant's report states this so the owner can revise it.
+
+This record grants no new execution authority. The [standing evidence authorization](v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization) is unchanged. Release and deployment remain excluded.

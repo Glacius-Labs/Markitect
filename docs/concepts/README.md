@@ -4,6 +4,7 @@ This is the home of Markitect's long-term vision, product-level decisions, clari
 
 | Document | Content |
 |---|---|
+| [V1 concept 1.0](v1-concept.md) | The consolidated V1 target in German: scope, principles, organization, Run, workflow, harness, acceptance and decisions D1–D18 ([DEC-068](register.md#dec-068-v1-concept-10)) |
 | [Register](register.md) | All entries with ID, status, origin and links, and the mapping of earlier collections |
 | [Origin and rationale](origin-and-rationale.md) | The owner's originating project, causal sequence, problems, concepts and assumptions, connected to the existing register |
 | [Product reflections](reflections/README.md) | Dated discussions of future use, organizational ideas and trust, with owner wording and assistant interpretation kept distinct |

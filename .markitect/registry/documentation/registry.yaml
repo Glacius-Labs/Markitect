@@ -1,5 +1,25 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/v1-concept.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: States the consolidated V1 concept 1.0 with decisions D1-D18 as the current target reference.
+  - path: "docs/concepts/sources/v1-concept-v018-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the owner-supplied V1 concept v0.18 verbatim as the source of concept 1.0.
+  - path: "docs/concepts/sources/v1-concept-decisions-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner's acceptance of decisions D10-D18 and the five-step plan with the quoted proposals.
+  - path: "docs/development/concept-conformance-audit-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Preserves the supplied static conformance audit at Main 6c7d758c that raised A1-A6 and R1-R3.
+  - path: "docs/validation/v1-qualification-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Retains the V1 source checkpoints, bounded probes and native Library evidence with their sources and limits.
   - path: "docs/concepts/sources/v1-source-implementation-approval-20261023.md"
     form: doc
     realizes: [documentation/current-guidance]
