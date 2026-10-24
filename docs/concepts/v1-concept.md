@@ -11,7 +11,7 @@
 
 > **The canonical model describes the intended project world. The Manager organization is derived from it. The Managers realize, review and integrate that world; the host provides a few clear technical guarantees for it.**
 
-This version condenses v0.18 and closes its open items with decisions. The decision record governs D10–D18; the owner's v0.18 governs all other content. Any other divergence in this version is an editing error and is reported to the coordinator. The document describes the target. The [delivery plan](../implementation-plan.md) tracks implementation status and known deviations of the code. It grants no implementation, release, deployment or acceptance approval.
+This version condenses v0.18 and closes its open items with decisions. The decision record governs D10–D18, later owner decisions in the register govern their subjects (DEC-069, DEC-070), and the owner's v0.18 governs all other content. Any other divergence in this version is an editing error and is reported to the coordinator. The document describes the target. The [delivery plan](../implementation-plan.md) tracks implementation status and known deviations of the code. It grants no implementation, release, deployment or acceptance approval.
 
 ## Reading rules
 
@@ -644,7 +644,7 @@ A coordinator is responsible for architecture, dependencies, assignments, integr
 
 ### 24.2 Parallelism by actual decoupling
 
-At most two writing workstreams at a time. Read-only analysis and independent reviews can run in parallel. Dependent implementation starts only once the shared contracts are clear; no interface hierarchy without consumers. Early vertical proofs test central assumptions before much is built on them.
+As many writing workstreams run at a time as are useful and actually decoupled; each keeps its exclusive file scope ([DEC-070](register.md#dec-070-parallel-writers-where-useful)). Read-only analysis and independent reviews can run in parallel. Dependent implementation starts only once the shared contracts are clear; no interface hierarchy without consumers. Early vertical proofs test central assumptions before much is built on them.
 
 ### 24.3 Review and integration
 
