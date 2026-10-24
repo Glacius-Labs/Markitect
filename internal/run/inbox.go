@@ -84,11 +84,21 @@ func (x *execution) drive(s *managerState) {
 	defer x.active.Done()
 	for {
 		message, ok, err := x.next(s)
+		// A message without events continues an open assignment. Its response
+		// must act or change the working state; repeated idleness ends the Run.
+		continued := ok && len(message.Events) == 0
+		var before Commit
+		if err == nil && continued {
+			before, err = x.state(s)
+		}
 		if err == nil && ok {
 			err = x.request.Allowance.take()
 		}
 		if err == nil && ok {
 			err = x.exchange(s, message)
+		}
+		if err == nil && ok {
+			err = x.progressed(s, continued, before)
 		}
 		if err == nil && ok {
 			err = x.responded(s)
@@ -128,7 +138,11 @@ func (x *execution) next(s *managerState) (Message, bool, error) {
 					x.mu.Unlock()
 					return m, false, nil
 				}
-				m.Feedback = []Finding{{Text: "Continue your assignment."}}
+				text := "Continue your assignment: "
+				if s.stalled > 0 {
+					text = "Your last response made no progress on your assignment: "
+				}
+				m.Feedback = []Finding{{Text: text + s.a.task.Task}}
 			}
 			x.mu.Unlock()
 			return m, true, nil
@@ -147,6 +161,46 @@ func (x *execution) next(s *managerState) (Message, bool, error) {
 			m.Events = append(m.Events, event)
 		}
 	}
+}
+
+// maxStalled bounds continued responses in a row that make no progress.
+const maxStalled = 2
+
+// state observes s's working copy; an unresolved merge has no comparable state.
+func (x *execution) state(s *managerState) (Commit, error) {
+	s.git.Lock()
+	defer s.git.Unlock()
+	state, err := s.copy.Snapshot(x.ctx)
+	if errors.Is(err, ErrMergeConflict) {
+		return Commit{}, nil
+	}
+	return state, err
+}
+
+// progressed records whether a continued response acted or changed the
+// working state. An event message resets the count.
+func (x *execution) progressed(s *managerState, continued bool, before Commit) error {
+	changed := false
+	if continued {
+		after, err := x.state(s)
+		if err != nil {
+			return err
+		}
+		changed = after != before || after == Commit{}
+	}
+	x.mu.Lock()
+	defer x.mu.Unlock()
+	acted := s.progress
+	s.progress = false
+	if !continued || acted || changed {
+		s.stalled = 0
+		return nil
+	}
+	s.stalled++
+	if s.stalled < maxStalled {
+		return nil
+	}
+	return fmt.Errorf("%w: Manager %s made no progress in %d continued responses in a row on its assignment %q", ErrNoProgress, s.manager.Package, s.stalled, s.a.task.Task)
 }
 
 // responded follows the end of one native response: unanswered questions stay

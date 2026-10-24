@@ -340,6 +340,10 @@ var ErrMergeConflict = errors.New("parent baseline has unresolved Git conflicts"
 var ErrObservationIncomplete = errors.New("Run physical observation incomplete")
 
 var ErrBudget = errors.New("Run allowance exhausted")
+
+// ErrNoProgress ends a Run whose Manager repeatedly leaves its open assignment
+// without any action or working-state change; the result is incomplete.
+var ErrNoProgress = errors.New("Manager made no progress on its open assignment")
 var ErrUnavailable = errors.New("native sessions unavailable: adapter capability is not ready")
 
 type UnavailableSessions struct{}

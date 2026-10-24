@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -22,6 +23,8 @@ type collaboration struct {
 	managers  map[string]*collaborator
 	script    func(context.Context, *collaborator, run.Message) (bool, error)
 	candidate string
+	stops     bool  // the Run is expected to end without technical completion
+	err       error // its returned error
 }
 
 type collaborator struct {
@@ -198,6 +201,11 @@ func (c *collaboration) execute(t *testing.T, id string, mandate run.Mandate) ru
 	}
 	request := run.Request{ID: id, Project: "fixture", Prepared: prepared, Input: input, Mandate: mandate, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(90*time.Second), 100), MessageTimeout: 45 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 	result, err := (&run.Executor{Sessions: c, Workspaces: git, Records: records}).Execute(context.Background(), request)
+	if c.stops {
+		c.assertNoHostNarration(t)
+		c.err = err
+		return result
+	}
 	if err != nil || result.Technical != run.Completed {
 		t.Fatalf("Run did not complete: %s %v %v", result.Technical, result.Errors, err)
 	}
@@ -411,7 +419,7 @@ func TestCorrectionFindingsRequireANewJudgment(t *testing.T) {
 				}
 				return true, nil
 			case 3:
-				if len(message.Events) != 0 || feedbackText(message) != "Continue your assignment." {
+				if len(message.Events) != 0 || feedbackText(message) != "Continue your assignment: Correct out/deep.txt." {
 					return true, fmt.Errorf("active assignment was not continued plainly: %+v", message)
 				}
 				if err := m.write("out/deep.txt", "corrected\n"); err != nil {
@@ -665,5 +673,79 @@ func TestQuestionsOutsideTheHierarchyAreRefused(t *testing.T) {
 		if !strings.Contains(refusals[manager], allowed) || !strings.Contains(refusals[manager], "through the Managers in between") {
 			t.Fatal("refusal does not name the allowed addressees", manager, refusals[manager])
 		}
+	}
+}
+
+// A response that only handled communication neither ends the assignment
+// falsely nor leaves it stalled: Run continues it once, naming the task.
+func TestCommunicationOnlyResponseIsContinuedNotEnded(t *testing.T) {
+	c := &collaboration{}
+	c.script = func(ctx context.Context, m *collaborator, message run.Message) (bool, error) {
+		if m.spec.Manager.Package != "b/empty" {
+			return false, nil
+		}
+		switch len(m.messages) {
+		case 1:
+			if err := m.handle(ctx, message.Events[0]); err != nil {
+				return true, err
+			}
+			answer, err := m.ask(ctx, "b", "Which bytes does an empty Package own?")
+			if err == nil && answer != "answer from b" {
+				err = fmt.Errorf("answer %q", answer)
+			}
+			return true, err
+		case 2:
+			if len(message.Events) != 0 || feedbackText(message) != "Continue your assignment: Realize your modeled responsibility." {
+				return true, fmt.Errorf("open assignment was not continued purposefully: %+v", message)
+			}
+			return true, m.judge(ctx, run.Submitted, nil)
+		}
+		return false, nil
+	}
+	result := c.execute(t, "communication-only", run.Implement)
+	if result.Decision != run.Submitted || len(c.manager("b/empty").messages) != 2 || len(c.manager("b").handoffs) != 1 {
+		t.Fatal("communication ended the assignment, or it stalled", result.Decision, len(c.manager("b/empty").messages), len(c.manager("b").handoffs))
+	}
+}
+
+// Continued responses without any action or working-state change do not loop:
+// the Run ends technically incomplete with a diagnostic naming the Manager.
+func TestRepeatedNoProgressEndsTheRunIncomplete(t *testing.T) {
+	c := &collaboration{stops: true}
+	c.script = func(_ context.Context, m *collaborator, _ run.Message) (bool, error) {
+		return m.spec.Manager.Package == "a/deep", nil
+	}
+	result := c.execute(t, "no-progress", run.Implement)
+	deep := c.manager("a/deep")
+	if !errors.Is(c.err, run.ErrNoProgress) || result.Technical != run.Incomplete || result.Candidate != nil || result.Messages > 20 {
+		t.Fatal("idle Manager looped or ended as success", result.Technical, result.Messages, c.err)
+	}
+	if !strings.Contains(strings.Join(result.Errors, " "), "Manager a/deep made no progress in 2 continued responses") {
+		t.Fatal("stop lacks its concrete diagnostic", result.Errors)
+	}
+	if len(deep.messages) != 3 || feedbackText(deep.messages[1]) != "Continue your assignment: Realize your modeled responsibility." || feedbackText(deep.messages[2]) != "Your last response made no progress on your assignment: Realize your modeled responsibility." {
+		t.Fatal("continuations were not bounded and concrete", deep.messages)
+	}
+}
+
+// Work in the private copy is progress even without a Run tool call.
+func TestProgressingContinuationsAreNotStopped(t *testing.T) {
+	c := &collaboration{}
+	c.script = func(ctx context.Context, m *collaborator, message run.Message) (bool, error) {
+		if m.spec.Manager.Package != "a/deep" {
+			return false, nil
+		}
+		step := len(m.messages)
+		if step > 1 && feedbackText(message) != "Continue your assignment: Realize your modeled responsibility." {
+			return true, fmt.Errorf("progress was treated as idleness: %+v", message)
+		}
+		if step < 4 {
+			return true, m.write("out/deep.txt", fmt.Sprintf("step %d\n", step))
+		}
+		return true, m.judge(ctx, run.Submitted, nil)
+	}
+	result := c.execute(t, "progress", run.Implement)
+	if result.Decision != run.Submitted || len(c.manager("a/deep").messages) != 4 || c.read(t, "out/deep.txt") != "step 3\n" {
+		t.Fatal("progressing Manager was stopped or lost its work", result.Decision, len(c.manager("a/deep").messages))
 	}
 }
