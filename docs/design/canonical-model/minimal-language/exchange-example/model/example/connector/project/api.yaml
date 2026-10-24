@@ -4,8 +4,8 @@ imports:
 id: api
 kind: Connector.Container
 body: >-
-  Die Cloud-Anwendung stellt den HTTP-Zugang bereit. Sie bestimmt den Mandanten aus dem authentifizierten
-  Kontext und wartet auf das Resultat des Auftrags. Jede Prozessinstanz besitzt eine eigene
-  Antwortadresse. Ein Neustart übernimmt keinen vorherigen Wartezustand.
+  The cloud application provides HTTP access. It determines the tenant from the authenticated
+  context and waits for the result of the request. Each process instance has its own reply
+  address. A restart does not take over any previous waiting state.
 spec:
   location: cloud

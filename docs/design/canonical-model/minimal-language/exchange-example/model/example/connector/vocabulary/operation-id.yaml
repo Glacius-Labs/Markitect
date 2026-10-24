@@ -4,7 +4,7 @@ imports:
 id: operationId
 kind: Property
 body: >-
-  Stabile Kennung der versionierten Operation.
+  Stable identifier of the versioned operation.
 spec:
   type: string
   minCount: 1

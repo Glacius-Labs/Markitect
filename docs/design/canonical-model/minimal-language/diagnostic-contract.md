@@ -1,34 +1,34 @@
-# Diagnosekoordinaten: separater Werkzeugvertrag
+# Diagnostic coordinates: separate tool contract
 
-**Status:** Gewählter Werkzeugvertrag, getrennt von der [normativen Sprachspezifikation v1](language-contract.md). Dieses Profil legt die Bedeutung exakter Körperlinkkoordinaten fest. Es ist keine zusätzliche Voraussetzung für Sprachkonformität oder kanonische Bytes und keine neue Core-Definition. Eine vollständige Unterstützung durch den Go-Produktcompiler wird damit nicht behauptet.
+**Status:** Chosen tool contract, separate from the [normative language specification v1](language-contract.md). This profile stipulates the meaning of exact body link coordinates. It is not an additional prerequisite for language conformance or canonical bytes and not a new Core definition. Complete support by the Go product compiler is not claimed by this.
 
-Werkzeuge dürfen dieses Profil anbieten. Wenn sie eine genaue Koordinate ausgeben, MUSS sie die nachfolgenden Regeln erfüllen; sie dürfen keine Positionen erraten. Für das Profil gelten MUSS, DARF und DARF NICHT als verpflichtende Regel, Erlaubnis und Verbot.
+Tools may offer this profile. If they output an exact coordinate, it MUST satisfy the following rules; they must not guess positions. For the profile, MUST, MAY and MUST NOT apply as mandatory rule, permission and prohibition.
 
-## Koordinatenform
+## Coordinate form
 
-- Jedes zugeordnete Körperlinkvorkommen erhält `startByte` und `endByte`: einen nullbasierten, am Ende exklusiven UTF-8-Bytebereich `[startByte, endByte)` im dekodierten ursprünglichen `body`. Er umfasst die vollständige Linknotation einschließlich beider Doppelklammern. Er darf nicht gegen gerenderten oder für Markdown normalisierten Text gezählt werden.
-- Die Zuordnung zum ursprünglichen YAML erhält zusätzlich `source.file`, `source.start` und `source.end`. Start und exklusives Ende verwenden einbasierte Zeile und Spalte. Spalten zählen Unicode-Codepoints, keine UTF-8-Bytes oder Bildschirmbreiten. CRLF zählt als ein Zeilenumbruch.
-- YAML-Escapes, Faltung, Anführungszeichen und Markdown-Container müssen in der Abbildung berücksichtigt werden. Ein über Dateizeilen gefalteter Link darf einen mehrzeiligen YAML-Quellbereich besitzen, obwohl der dekodierte Link einzeilig ist.
-- Wiederholte Links bleiben einzelne, geordnete Vorkommen. Gleiche Ziele oder Koordinaten dürfen keine Deduplizierung auslösen. Koordinaten sind keine zusätzliche Identität und werden nicht in kanonische Modellbytes aufgenommen.
+- Every mapped body link occurrence receives `startByte` and `endByte`: a zero-based, end-exclusive UTF-8 byte range `[startByte, endByte)` in the decoded original `body`. It covers the complete link notation including both double brackets. It must not be counted against rendered text or text normalized for Markdown.
+- The mapping to the original YAML additionally receives `source.file`, `source.start` and `source.end`. Start and exclusive end use one-based line and column. Columns count Unicode code points, not UTF-8 bytes or screen widths. CRLF counts as one line break.
+- YAML escapes, folding, quotation marks and Markdown containers must be taken into account in the mapping. A link folded across file lines may have a multi-line YAML source range even though the decoded link is single-line.
+- Repeated links remain individual, ordered occurrences. Identical targets or coordinates must not trigger deduplication. Coordinates are not an additional identity and are not included in canonical model bytes.
 
-## Fehlende oder nicht belegbare Koordinaten
+## Missing or unverifiable coordinates
 
-Die Linkerkennung und Zielauflösung MÜSSEN von der Koordinatenberechnung unabhängig bleiben. Fehlende, veraltete oder nicht belegbare Quellenabbildung und reine Ressourcenabbrüche der Koordinatenphase dürfen weder bekannte Linkvorkommen entfernen noch ein Inhaltsurteil ersetzen. Sie dürfen insbesondere keine erfolgreich abgeschlossene kanonische Projektion verhindern.
+Link recognition and target resolution MUST remain independent of coordinate computation. Missing, outdated or unverifiable source mapping and pure resource aborts of the coordinate phase must neither remove known link occurrences nor replace a content judgment. In particular, they must not prevent a successfully completed canonical projection.
 
-Ein Werkzeug MUSS fehlende Profilabdeckung ausdrücklich ausweisen. Vorhandene belegbare Teilkoordinaten dürfen erhalten bleiben; fehlende Koordinaten dürfen weder mit Nullwerten noch mit geschätzten Werten als vollständig ausgegeben werden. Die Definition und die Reihenfolge ihrer erkannten Vorkommen bleiben auch ohne exakte Koordinaten bekannt.
+A tool MUST explicitly report missing profile coverage. Existing verifiable partial coordinates may be retained; missing coordinates must not be output as complete, neither with zero values nor with estimated values. The definition and the order of its recognized occurrences remain known even without exact coordinates.
 
-Wenn die Inhaltsprüfung selbst wegen Parser-, Auflösungs- oder Ressourcenproblemen nicht abgeschlossen ist, bleiben die Regeln der Sprachspezifikation wirksam: Für diesen Modellumfang gibt es keinen gültigen Digest. Bereits nachgewiesene Sprachfehler bleiben Fehler. Ein unabhängiges Koordinatenergebnis ist kein Nachweis vollständiger Inhaltsprüfung.
+If the content check itself is not completed because of parser, resolution or resource problems, the rules of the language specification remain in force: for this model scope there is no valid digest. Language errors already established remain errors. An independent coordinate result is not evidence of a complete content check.
 
-## Bericht der Entwurfsprobe
+## Report of the design probe
 
-Der [Exchange-Prüfer](exchange-example/verify.py) trennt diese Ergebnisse:
+The [Exchange verifier](exchange-example/verify.py) separates these results:
 
-| Berichtsteil | Umfang |
+| Report part | Scope |
 | --- | --- |
-| `body_link_validation` | Syntax und aufgelöste geordnete Linkvorkommen, ohne vorgeschriebene Koordinaten. |
-| `canonical_models` | Vollständig geprüfte kanonische Modellbytes und Digests je Modellumfang. |
-| `diagnostic_coordinates` | Getrennte Abbildung nach diesem Profil mit eigenen Vorkommen und Angaben zur fehlenden Abdeckung. |
+| `body_link_validation` | Syntax and resolved ordered link occurrences, without prescribed coordinates. |
+| `canonical_models` | Completely checked canonical model bytes and digests per model scope. |
+| `diagnostic_coordinates` | Separate mapping according to this profile with its own occurrences and entries on missing coverage. |
 
-`diagnostic_coordinates.status` ist `passed`, wenn alle dort betrachteten Vorkommen vollständig zugeordnet sind, und sonst `not_completed`. Bei noch nicht erkannten oder nicht aufgelösten Inhalten beansprucht die Probe ebenfalls keine vollständige Koordinatenabdeckung. Der Status beeinflusst weder Modellgültigkeit, Digest noch den Gesamtstatus der Inhaltsprüfung. Ein eigenes Konformitätsurteil über dieses Werkzeugprofil muss ihn gesondert betrachten.
+`diagnostic_coordinates.status` is `passed` if all occurrences considered there are completely mapped, and otherwise `not_completed`. For content not yet recognized or not resolved, the probe likewise claims no complete coordinate coverage. The status influences neither model validity, digest nor the overall status of the content check. A separate conformance judgment on this tool profile must consider it separately.
 
-[diagnostic_coordinates.py](exchange-example/diagnostic_coordinates.py) enthält die Quellenabbildung; [diagnostic_probes.py](exchange-example/diagnostic_probes.py) prüft ihre Trennung von der kanonischen Auswertung. Die existierenden Gegenproben für genaue Byte-/YAML-Bereiche bleiben Werkzeugprofiltests. Historische Berichte behalten ihre damalige Struktur und Aussagegrenze.
+[diagnostic_coordinates.py](exchange-example/diagnostic_coordinates.py) contains the source mapping; [diagnostic_probes.py](exchange-example/diagnostic_probes.py) checks its separation from the canonical evaluation. The existing counter-probes for exact byte/YAML ranges remain tool profile tests. Historical reports keep the structure and the limits of their statements that they had at the time.

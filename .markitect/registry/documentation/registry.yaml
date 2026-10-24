@@ -16,6 +16,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Preserves the owner-supplied V1 concept v0.18 verbatim as the source of concept 1.0.
+  - path: "docs/concepts/sources/v1-concept-v018-20261024-en.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Provides the labeled English translation of the owner-supplied V1 concept v0.18 under DEC-069 without changing the verbatim source.
   - path: "docs/concepts/sources/v1-concept-decisions-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]

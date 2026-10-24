@@ -21,7 +21,7 @@
           "id": "list-documents",
           "package": "example/connector/project"
         },
-        "display": "dem Connector",
+        "display": "the Connector",
         "target": {
           "id": "onprem",
           "package": "example/connector/project"
@@ -99,20 +99,20 @@
           "id": "list-documents",
           "package": "example/connector/project"
         },
-        "display": "dem Connector",
-        "endByte": 70,
+        "display": "the Connector",
+        "endByte": 72,
         "source": {
           "end": {
-            "column": 73,
+            "column": 75,
             "line": 7
           },
           "file": "model/example/connector/project/list-documents.yaml",
           "start": {
-            "column": 49,
+            "column": 51,
             "line": 7
           }
         },
-        "startByte": 46,
+        "startByte": 48,
         "target": {
           "id": "onprem",
           "package": "example/connector/project"
@@ -1101,8 +1101,8 @@
     "status": "passed"
   },
   "sha256": {
-    "diagnostic-contract.md": "d6fffbb42ae1487a6cfe46965bf46df7d03bfd423d916fd0efdc13a7a9c5a77d",
-    "exchange-example/README.md": "85cddfa0e56e9cdffd9b8c5471e42eea8d4c38601a0f4ea6936ce36284f32691",
+    "diagnostic-contract.md": "8ea813a27905c61ee95222244d9e4cfc2a3eee03eaf877db3c9b8eb427dd1287",
+    "exchange-example/README.md": "8a1a1eb6ed9a7bdcdf20474fbf7caa399a0ffff029587f67eb09b394e18784e3",
     "exchange-example/body_links.py": "e458d2ef9980a29bbae562d67c1ed34c75ff78e1732325415efb657c715a51cc",
     "exchange-example/canonical/core.json": "562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1",
     "exchange-example/canonical_bytes.py": "c10833859420919a83eaff8290cf1dc8f64b223d60ace8e42a85fd97942d237a",
@@ -1122,30 +1122,30 @@
     "exchange-example/diagnostic_probes.py": "46ccad41536ad66dba29895a59f7d7a82f66f41bcd3d4044b385feb82624b6dd",
     "exchange-example/model-lock.yaml": "b60d59db0f746e8135af8f31ba8597a8b9ef927580bb5e4b83cc0ca7d628623c",
     "exchange-example/model.yaml": "ac0ad628f214d3fb32e51ec892c76ac48c964785ba8b9ffb5b10938e1fa146ac",
-    "exchange-example/model/example/connector/project/api.yaml": "97e56cbf116da4ae89cb435bc11a8cc46630eb1d20b9963bfbeefc4033a30b39",
-    "exchange-example/model/example/connector/project/list-documents-command.yaml": "ff2848c36c82fcbed63e59e2d06c927d821715d6446940c4d87567bd7bd5da61",
-    "exchange-example/model/example/connector/project/list-documents.yaml": "ec01f9c03bb40f64d5e1dfe8d167612d72a6b52b6ff423e1a13e80f3d72deb11",
-    "exchange-example/model/example/connector/project/messaging.yaml": "0c90a7354dd40c01870354eb3c53a0630d947fd82194f399dfadb2cca0a9be5e",
-    "exchange-example/model/example/connector/project/onprem.yaml": "22bd789f6764f0c9ac61d1546d43033c0bcfa3769c415b5fbda1532ce576479c",
-    "exchange-example/model/example/connector/project/replies.yaml": "66cff40ba22d9a1f6c4282ce9e7d113d20b13aa5128fee3d55dfd347db7b9a94",
-    "exchange-example/model/example/connector/project/requests.yaml": "6c4f36bd508bfeb2ab09f0cc37f492c5981d524a79506940942a5786c9cd7cdf",
-    "exchange-example/model/example/connector/vocabulary/broker.yaml": "dd298400dfe3df975fbc0f54aabdfff26fc1e2c1fb83f35c2f57c7904200090d",
-    "exchange-example/model/example/connector/vocabulary/channel.yaml": "38225ba9b4f4f9dcfdfe7d3d64f825d3089ec47f4b20ea5f34c049405909300d",
-    "exchange-example/model/example/connector/vocabulary/command-kind.yaml": "c24f9f023d7b9d78dd047d3ea1ca4527eedc903a2ea2fd8ce3418cd509732ccb",
-    "exchange-example/model/example/connector/vocabulary/command-property.yaml": "6e3ee63d85b509679352c7b0b2cd6bca6383102adb996e9160968932f7c944e2",
-    "exchange-example/model/example/connector/vocabulary/container.yaml": "a1ff6b75323420608fdd616706cf300c6531db6e39dbaa16cc2af4418915ddd3",
-    "exchange-example/model/example/connector/vocabulary/delivery.yaml": "99c91444704608df07d1f444ba5373c1376e1144451bc68bf9aeb12e2b28c0b6",
-    "exchange-example/model/example/connector/vocabulary/exchange.yaml": "e2787f819b0671edc9774b32d03bd606c07c869d80abc2efb3867dacfb1c00f9",
-    "exchange-example/model/example/connector/vocabulary/location.yaml": "5397072ace56da7ddad8301549156184c66920bcd12fedff68296656cc3f0916",
-    "exchange-example/model/example/connector/vocabulary/max-attempts.yaml": "9134932d3db5fc171da35a4456e3c926a5b27b7ecba8a39199cb7237faa15916",
-    "exchange-example/model/example/connector/vocabulary/mqtt-service.yaml": "7e3fa168ca6bd57bc43e0285fea78963cfc1dd362957792827158d119a8d758e",
-    "exchange-example/model/example/connector/vocabulary/operation-id.yaml": "9a50a3d962cbced5e61b7c1a0491bc4ee1a874590db36b69979459e3c883c46d",
-    "exchange-example/model/example/connector/vocabulary/receiver.yaml": "ec0d7d40684ab97c0e9efe4a56ba0baeeafdf684e43e05d6e24a5fea004b3b61",
-    "exchange-example/model/example/connector/vocabulary/reply-channel.yaml": "264d8eb1dab2475ff3f616b16dc2d0f46668f7a529f030e4c1b4c56aed34b85a",
-    "exchange-example/model/example/connector/vocabulary/request-channel.yaml": "7d12a675a66bcc1efad19027cfac42a3950311e556833dd561dda8110bc1018e",
-    "exchange-example/model/example/connector/vocabulary/requester.yaml": "266e48705f6fe8eb2c356c20718ffea78af784255dab2be3a1792b638f20fb2e",
-    "exchange-example/model/example/connector/vocabulary/timeout-seconds.yaml": "91a6dfc1d39a55a44b2eb98eaeb5dc8c5ba678d55f17af25d59aaf81b2140df7",
-    "exchange-example/model/example/connector/vocabulary/topic-pattern.yaml": "a949cdd5b8f875071803034e2fbfa2f348a0fdd4780332db67254f849a1ee0d3",
+    "exchange-example/model/example/connector/project/api.yaml": "3acd28699f77c5d6df4214df785afda17648e50a18f6c51570b4a8ad90696d64",
+    "exchange-example/model/example/connector/project/list-documents-command.yaml": "18f8768321e4e1c3d5e858007ac8d5d111c75d5775930af47b4514829e6ba3e8",
+    "exchange-example/model/example/connector/project/list-documents.yaml": "42eefc0a4978b7037d813f59b3d75c646b30cf362f63c18423b36b21d2ab66d0",
+    "exchange-example/model/example/connector/project/messaging.yaml": "5c742bb4583000ce7dc41f9c13d7a4a3676094ec2b1a2fab0437c5e2473bb1b7",
+    "exchange-example/model/example/connector/project/onprem.yaml": "c2b256b41029e2e7d53278c841dd308d10d152dd98eecc75711098a3a5021ce7",
+    "exchange-example/model/example/connector/project/replies.yaml": "daa424a82150b39885e23ff71e9b3a6c96619ce8f2a247c45fd2955cb30413e9",
+    "exchange-example/model/example/connector/project/requests.yaml": "f5fe1d061171f72c0974a2be465903ce57f653e5eb593f2f2223bf7308e2daec",
+    "exchange-example/model/example/connector/vocabulary/broker.yaml": "1309868b544531a0d62e877524c44517db6d4dec0c6d93a3e0cc2fcfdaf75cd5",
+    "exchange-example/model/example/connector/vocabulary/channel.yaml": "abf819bb1640301a123fe26ef0ca95ca07e978e51c4e94fba495fa08a5ab9c85",
+    "exchange-example/model/example/connector/vocabulary/command-kind.yaml": "fead08ac09d8af79d72cb9e8244784669c238d4fa5c3db918617dd14c99bc633",
+    "exchange-example/model/example/connector/vocabulary/command-property.yaml": "ca8bdbd764f1cb8038fe70a50a4d8feea3fe12aab0209bed701c1f948243f704",
+    "exchange-example/model/example/connector/vocabulary/container.yaml": "3a9d79322db41c28c58a2d5088c30ddcf865ed3b01342a6db2d0985e015c15ef",
+    "exchange-example/model/example/connector/vocabulary/delivery.yaml": "3840464d4d65c3e01be053269634432f6e9ef48c44bc3979c02bc06b7d269444",
+    "exchange-example/model/example/connector/vocabulary/exchange.yaml": "707e36ffe47c785b5b27e217ede8cd49071c705065b1c07a24c60f4711c78cb0",
+    "exchange-example/model/example/connector/vocabulary/location.yaml": "5e106830788a41fb133c7205c340584f13c0e7fd0be2395cd1c7974f888cff03",
+    "exchange-example/model/example/connector/vocabulary/max-attempts.yaml": "6774f714e7da0ab29e2912a4e8cd706e2299ef2a97a4b7ffa595e7e4b5d7fca7",
+    "exchange-example/model/example/connector/vocabulary/mqtt-service.yaml": "9dd9b77bda1b791334d8fdace803df79c38113ce96d08667b05d1a5463c4bafb",
+    "exchange-example/model/example/connector/vocabulary/operation-id.yaml": "6cc5aa36ed086dd4a8b6eacf1bfcc071ae484f97051a065f733cfe785ac4097c",
+    "exchange-example/model/example/connector/vocabulary/receiver.yaml": "e8e6cbd923e9a04614da796ee5c1c2d34f2d62806bb2e8fff7e2dae1ffb7c5df",
+    "exchange-example/model/example/connector/vocabulary/reply-channel.yaml": "5c7cd5ae3e1d9ab6cd32ac1be789f04e89f9cc6654ed04756ccf8f81ed51a131",
+    "exchange-example/model/example/connector/vocabulary/request-channel.yaml": "8595dec46b3cef7fbca56165ba6ec95600be99be3b8f9d8e90e9e51f0b483f78",
+    "exchange-example/model/example/connector/vocabulary/requester.yaml": "b6030311743da13ebe20468b3090b4974056b42d2c4488579f72a8869c00b631",
+    "exchange-example/model/example/connector/vocabulary/timeout-seconds.yaml": "8ed4efdb695b307eaa1102b57ad8acf6c728bb4fbfcae7621bde8c4e35bc8cc0",
+    "exchange-example/model/example/connector/vocabulary/topic-pattern.yaml": "0b0d1b6b789c799bc31d48da298cb40212758297ffb0e516cdea7205a4215a14",
     "exchange-example/model_lock.py": "34dbde5566dd23ee5f6a523ed8bf45c14509bb52c54e3c18d84a084f446049ab",
     "exchange-example/model_manifest.py": "e9d6d807d43695b72920b34bfea24f62f3927b260fb48f1347b538a3a3bcc685",
     "exchange-example/name_profile.py": "bf128321211efe0cf6574befd3cdc9a60a1115458a95ce2292cca12d22bd0ecf",
@@ -1156,7 +1156,7 @@
     "exchange-example/root_path_probes.py": "0b14e258e177929b707ca7a5d18715a5c8b14d1570b673d97eb9ef93cdc18133",
     "exchange-example/root_paths.py": "1bec4dba6a6dd1789c61a3bac191163dd68510dd294140f1638fa130395146e7",
     "exchange-example/verify.py": "a7f1e3a935d458ce2efb3bb0d97d8f7473c6ac09493f401f78959514b8d60ca5",
-    "language-contract.md": "30c97f44d78eb7fc131cd8a40ae6a39564ae6e42e990ef0ba873d91b91b51aa1"
+    "language-contract.md": "faa280ba319ff8645674fc62e7028d7164f422e5002b32547415fadd8e9187f0"
   },
   "source_validation": {
     "diagnostics": [

@@ -4,9 +4,9 @@ imports:
 id: Exchange
 kind: Kind
 body: >-
-  Beschreibt einen Request-/Reply-Vertrag zwischen requester und receiver. Antworten behalten
-  die MessageId des Requests. timeoutSeconds gilt pro Versuch; maxAttempts zählt den ersten
-  Versuch mit.
+  Describes a Request/Reply contract between requester and receiver. Replies keep
+  the MessageId of the Request. timeoutSeconds applies per attempt; maxAttempts includes the first
+  attempt.
 spec:
   properties:
   - requester
