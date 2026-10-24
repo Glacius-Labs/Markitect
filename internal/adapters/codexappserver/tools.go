@@ -172,7 +172,7 @@ func validateArguments(name string, raw []byte) error {
 		return ErrSession
 	}
 	// One optional string argument is allowed beyond the required keys.
-	if value, ok := object[optional]; ok {
+	if value, ok := object[optional]; ok && optional != "" {
 		if _, err = protocolString(value); err != nil {
 			return err
 		}

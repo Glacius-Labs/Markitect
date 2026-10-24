@@ -192,10 +192,13 @@ func (s *Store) Notes(ctx context.Context, project, after string) (run.NotePage,
 	for _, id := range ids {
 		var n run.Note
 		if err = read(ctx, filepath.Join(dir, id+".json"), &n); err != nil {
-			return page, err
+			if ctx.Err() != nil {
+				return page, err
+			}
+			return page, fmt.Errorf("stored Note %s is unreadable (%w); continue after it with cursor %q", id, err, id)
 		}
 		if n.Project != project || n.ID != id {
-			return page, fmt.Errorf("Note identity mismatch")
+			return page, fmt.Errorf("stored Note %s does not match its identity; continue after it with cursor %q", id, id)
 		}
 		encoded, err := json.Marshal(n)
 		if err != nil {

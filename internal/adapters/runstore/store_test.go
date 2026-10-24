@@ -407,3 +407,45 @@ func TestStoredNoteAbovePageSizeIsReportedNotTruncated(t *testing.T) {
 		t.Fatal("reading did not continue after the large Note", rest, err)
 	}
 }
+
+// A stored Note that cannot be read is named, so a Manager can read past it.
+func TestUnreadableStoredNoteIsNamedAndReadingContinuesAfterIt(t *testing.T) {
+	ctx := context.Background()
+	s, _ := New(t.TempDir())
+	first := appendSized(t, s, "p", 1, 10)[0]
+	broken, _ := s.path("p", "notes", first.ID+"-broken")
+	if err := os.WriteFile(broken, []byte("{"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	last := appendSized(t, s, "p", 1, 10)[0]
+	page, err := s.Notes(ctx, "p", first.ID)
+	if err == nil || !strings.Contains(err.Error(), first.ID+"-broken") || !strings.Contains(err.Error(), "continue after it") {
+		t.Fatal("unreadable Note not named with a next step", page, err)
+	}
+	rest, err := s.Notes(ctx, "p", first.ID+"-broken")
+	if err != nil || len(rest.Notes) != 1 || rest.Notes[0].ID != last.ID {
+		t.Fatal("reading did not continue after the unreadable Note", rest, err)
+	}
+}
+
+// Notes stored under the earlier random IDs stay readable and complete.
+func TestRandomIDNotesFromEarlierStoresStayReadable(t *testing.T) {
+	ctx := context.Background()
+	s, _ := New(t.TempDir())
+	old := run.Note{ID: "a3f09c1d2b4e5f60718293a4b5c6d7e8", Project: "p", Run: "run", Manager: "m", Context: "old", Text: "earlier Note"}
+	path, _ := s.path("p", "notes", old.ID)
+	if err := write(ctx, path, old); err != nil {
+		t.Fatal(err)
+	}
+	appendSized(t, s, "p", 2, 10)
+	all, err := allNotes(ctx, s, "p")
+	if err != nil || len(all) != 3 {
+		t.Fatal(len(all), err)
+	}
+	again, _ := allNotes(ctx, s, "p")
+	for i := range all {
+		if all[i].ID != again[i].ID {
+			t.Fatal("order is not stable")
+		}
+	}
+}
