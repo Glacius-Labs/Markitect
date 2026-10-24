@@ -36,6 +36,7 @@ type entry struct {
 	event Event
 	child string
 	gen   int
+	again bool // an unanswered question delivered once more
 }
 
 type question struct {
@@ -61,6 +62,7 @@ type execution struct {
 	checks         []CheckObservation
 	receiptsClosed bool
 	settled        chan struct{}
+	rootCheck      *Check // Root's check of its last judged state
 }
 
 func (e *Executor) Execute(ctx context.Context, r Request) (Result, error) {

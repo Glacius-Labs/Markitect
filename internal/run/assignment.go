@@ -19,7 +19,6 @@ const (
 type judgment struct {
 	decision Decision
 	findings []Finding
-	version  int
 	state    Commit
 	check    *Check // Root only: the completion check of state
 }

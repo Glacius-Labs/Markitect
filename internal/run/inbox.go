@@ -83,10 +83,10 @@ func (x *execution) settleLocked() bool {
 func (x *execution) drive(s *managerState) {
 	defer x.active.Done()
 	for {
-		message, ok, err := x.next(s)
-		// A message without events continues an open assignment. Its response
-		// must act or change the working state; repeated idleness ends the Run.
-		continued := ok && len(message.Events) == 0
+		// A message without new events continues an open assignment. Its
+		// response must act or change the working state; repeated idleness ends
+		// the Run.
+		message, continued, ok, err := x.next(s)
 		var before Commit
 		if err == nil && continued {
 			before, err = x.state(s)
@@ -104,6 +104,7 @@ func (x *execution) drive(s *managerState) {
 			err = x.responded(s)
 		}
 		if err != nil {
+			// Stop the Run first: no second driver can be admitted afterwards.
 			x.stopPort(err)
 			x.mu.Lock()
 			s.running = false
@@ -117,26 +118,27 @@ func (x *execution) drive(s *managerState) {
 }
 
 // next assembles the message for s, or releases s's driver when s has nothing
-// to handle. Both happen under one lock so no queued event is missed.
-func (x *execution) next(s *managerState) (Message, bool, error) {
-	var m Message
+// to handle. Both happen under one lock so no queued event is missed. The
+// message continues s's assignment unless it delivers a new event; a question
+// delivered again because it stayed unanswered is not new.
+func (x *execution) next(s *managerState) (m Message, continued, ok bool, err error) {
+	fresh := false
 	for {
 		x.mu.Lock()
 		if err := x.admissionErrorLocked(); err != nil {
-			s.running = false
 			x.mu.Unlock()
-			return m, false, err
+			return m, false, false, err
 		}
 		if len(s.queue) == 0 {
 			m.Feedback = append(m.Feedback, s.a.feedback...)
 			s.a.feedback = nil
-			continued := s.a.phase == active && s.a.judgment == nil && !x.waitingLocked(s)
+			open := s.a.phase == active && s.a.judgment == nil && !x.waitingLocked(s)
 			if len(m.Events) == 0 && len(m.Feedback) == 0 {
-				if !continued {
+				if !open {
 					s.running = false
 					x.settleLocked()
 					x.mu.Unlock()
-					return m, false, nil
+					return m, false, false, nil
 				}
 				text := "Continue your assignment: "
 				if s.stalled > 0 {
@@ -145,20 +147,18 @@ func (x *execution) next(s *managerState) (Message, bool, error) {
 				m.Feedback = []Finding{{Text: text + s.a.task.Task}}
 			}
 			x.mu.Unlock()
-			return m, true, nil
+			return m, !fresh, true, nil
 		}
 		e := s.queue[0]
 		s.queue = s.queue[1:]
 		x.mu.Unlock()
-		event, ok, err := x.deliver(x.ctx, s, e)
+		event, delivered, err := x.deliver(x.ctx, s, e)
 		if err != nil {
-			x.mu.Lock()
-			s.running = false
-			x.mu.Unlock()
-			return m, false, err
+			return m, false, false, err
 		}
-		if ok {
+		if delivered {
 			m.Events = append(m.Events, event)
+			fresh = fresh || !e.again
 		}
 	}
 }
@@ -186,7 +186,7 @@ func (x *execution) progressed(s *managerState, continued bool, before Commit) e
 		if err != nil {
 			return err
 		}
-		changed = after != before || after == Commit{}
+		changed = after != before
 	}
 	x.mu.Lock()
 	defer x.mu.Unlock()
@@ -210,7 +210,7 @@ func (x *execution) responded(s *managerState) error {
 	for _, q := range x.sortedQuestionsLocked() {
 		if q.To == s.manager.Package && q.delivered && !q.answered {
 			q.delivered = false
-			x.queueLocked(s, entry{event: Event{Question: &q.Question}})
+			x.queueLocked(s, entry{event: Event{Question: &q.Question}, again: true})
 		}
 	}
 	j := s.a.judgment
@@ -330,6 +330,11 @@ func (x *execution) await(ctx context.Context, s *managerState) (Event, error) {
 			x.mu.Unlock()
 			return Event{}, fmt.Errorf("nothing can arrive: no direct child of yours is working and none of your questions is open")
 		}
+		if !x.othersRunningLocked(s) {
+			// Everyone else is idle: only an answer from this Manager unblocks them.
+			x.mu.Unlock()
+			return Event{}, fmt.Errorf("nothing can arrive: every other Manager is waiting%s", x.openQuestionsLocked(s))
+		}
 		x.mu.Unlock()
 		select {
 		case <-s.signal:
@@ -395,6 +400,29 @@ func (x *execution) reply(ctx context.Context, from *managerState, id, text stri
 }
 
 func (x *execution) root() *managerState { return x.states[organization.Root] }
+
+func (x *execution) othersRunningLocked(s *managerState) bool {
+	for _, other := range x.states {
+		if other != s && other.running {
+			return true
+		}
+	}
+	return false
+}
+
+// openQuestionsLocked names the questions s received and has not answered.
+func (x *execution) openQuestionsLocked(s *managerState) string {
+	var open []string
+	for _, q := range x.sortedQuestionsLocked() {
+		if q.To == s.manager.Package && !q.answered {
+			open = append(open, q.ID+" from "+q.From)
+		}
+	}
+	if len(open) == 0 {
+		return ""
+	}
+	return "; answer your open questions: " + strings.Join(open, ", ")
+}
 
 func (x *execution) exchange(s *managerState, m Message) error {
 	messageContext := x.ctx

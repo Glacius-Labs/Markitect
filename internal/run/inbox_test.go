@@ -29,7 +29,7 @@ func inboxExecution() (*execution, *managerState, *managerState, *managerState) 
 func accepted(s *managerState, commit string) {
 	s.a.phase = reviewed
 	s.a.version = 1
-	s.a.judgment = &judgment{decision: Submitted, version: 1}
+	s.a.judgment = &judgment{decision: Submitted}
 	s.a.handoff = Handoff{Manager: s.manager.Package, Result: Commit{ID: commit, Tree: commit + "-tree"}, Decision: Submitted, Review: &ParentReview{Decision: Approve}}
 	s.a.gen, s.a.sent = 1, 1
 }
@@ -40,7 +40,7 @@ func TestLateRejectInvalidatesAcceptanceWithoutRejectingAncestors(t *testing.T) 
 	x.closing = true // observe state only; no driver starts
 	accepted(deep, "deep")
 	a.a.phase, a.a.version = active, 1
-	a.a.judgment = &judgment{decision: Submitted, version: 1}
+	a.a.judgment = &judgment{decision: Submitted}
 	root.a.phase, root.a.version = active, 1
 	x.mu.Lock()
 	x.lateLocked(deep, Reject, origin([]Finding{{Text: "late required correction"}}, "a/deep"))
@@ -75,7 +75,7 @@ func TestLateBlockerReopensHandedOffAncestorsUpToTheActiveOne(t *testing.T) {
 	accepted(deep, "deep")
 	accepted(a, "a")
 	root.a.phase, root.a.version = active, 1
-	root.a.judgment = &judgment{decision: Submitted, version: 1}
+	root.a.judgment = &judgment{decision: Submitted}
 	x.mu.Lock()
 	x.lateLocked(deep, ModelBlocker, []Finding{{Manager: "a/deep", Text: "required model condition contradicts itself"}})
 	x.mu.Unlock()
@@ -132,7 +132,13 @@ func TestAskFollowsTheHierarchyAndAwaitNeverWaitsForNothing(t *testing.T) {
 	if _, err := x.await(context.Background(), a); err == nil || !strings.Contains(err.Error(), "nothing can arrive") {
 		t.Fatal("await waited without anything that can arrive", err)
 	}
+	// A working child that is idle itself waits for a: nothing can arrive.
 	deep.a.phase = active
+	x.questions["q"] = &question{Question: Question{ID: "q", From: "a/deep", To: "a", Text: "open"}, delivered: true}
+	if _, err := x.await(context.Background(), a); err == nil || !strings.Contains(err.Error(), "answer your open questions: q from a/deep") {
+		t.Fatal("await waited although every other Manager waits for it", err)
+	}
+	deep.running = true
 	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
 	defer cancel()
 	if _, err := x.await(ctx, a); !errors.Is(err, context.DeadlineExceeded) {
@@ -418,5 +424,49 @@ func TestShutdownRefusesDriverAndExchangeAdmission(t *testing.T) {
 				t.Fatal("shutdown launched native work")
 			}
 		})
+	}
+}
+
+// A judgment rests on the reviewed children. Delegating a correction after it
+// invalidates it, so no handoff is fixed from the old judgment.
+func TestDelegationAfterJudgmentInvalidatesIt(t *testing.T) {
+	x, _, a, deep := inboxExecution()
+	defer x.cancel()
+	x.executor = &Executor{}
+	a.copy, deep.copy = toolFailureCopy{}, toolFailureCopy{}
+	a.running, deep.running = true, true
+	accepted(deep, "deep")
+	a.a.phase, a.a.version = active, 1
+	old := &judgment{decision: Submitted, state: Commit{ID: "fixed", Tree: "tree"}}
+	a.a.judge(old)
+	if err := x.tools(a).Delegate(context.Background(), "a/deep", "correct", []Finding{{Text: "concrete correction"}}); err != nil {
+		t.Fatal(err)
+	}
+	if a.a.judgment != nil || len(a.a.feedback) != 1 || a.a.feedback[0].Text != "you delegated to a/deep after your judgment" {
+		t.Fatal("judgment survived a later delegation", a.a)
+	}
+	if err := x.fix(a, old); err != nil || a.a.phase != active {
+		t.Fatal("a handoff was fixed from the invalidated judgment", a.a.phase, err)
+	}
+}
+
+// A reopened Manager's own late model blocker stays in force when it judges
+// and fixes its handoff again.
+func TestReopenedManagerKeepsItsOwnLateBlocker(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	x.request.Mandate = Verify
+	x.executor = &Executor{}
+	a.copy = toolFailureCopy{}
+	root.running = true
+	accepted(deep, "deep")
+	a.a.phase, a.a.late = active, ModelBlocker
+	j := &judgment{decision: Approve}
+	a.a.judge(j)
+	if err := x.fix(a, j); err != nil {
+		t.Fatal(err)
+	}
+	if a.a.phase != fixed || a.a.handoff.Decision != ModelBlocker {
+		t.Fatal("own late model blocker was lost on reopening", a.a.phase, a.a.handoff.Decision)
 	}
 }

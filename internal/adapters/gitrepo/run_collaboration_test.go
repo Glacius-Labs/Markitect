@@ -277,6 +277,12 @@ func feedbackText(message run.Message) string {
 // and is no failure; an answered question is no new assignment or judgment;
 // later communication does not change a reviewed fixed handoff.
 func TestQuestionsBeforeAndAfterJudgmentNeedNoJudgment(t *testing.T) {
+	for _, mandate := range []run.Mandate{run.Assessment, run.Implement, run.Verify} {
+		t.Run(string(mandate), func(t *testing.T) { questionsBeforeAndAfterJudgment(t, mandate) })
+	}
+}
+
+func questionsBeforeAndAfterJudgment(t *testing.T, mandate run.Mandate) {
 	aIdle, aAnswered := make(chan struct{}), make(chan struct{})
 	var reviewedB run.Handoff
 	c := &collaboration{}
@@ -348,8 +354,8 @@ func TestQuestionsBeforeAndAfterJudgmentNeedNoJudgment(t *testing.T) {
 		}
 		return false, nil
 	}
-	result := c.execute(t, "questions", run.Implement)
-	if result.Decision != run.Submitted {
+	result := c.execute(t, "questions-"+string(mandate), mandate)
+	if want := map[run.Mandate]run.Decision{run.Assessment: run.Approve, run.Implement: run.Submitted, run.Verify: run.Approve}[mandate]; result.Decision != want {
 		t.Fatal("Run outcome changed", result.Decision)
 	}
 	a := c.manager("a")

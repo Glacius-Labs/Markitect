@@ -111,7 +111,7 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 	if err != nil {
 		return err
 	}
-	j := &judgment{decision: decision, findings: findings, version: version, state: Commit{x.request.Input.Commit, x.request.Input.Tree}}
+	j := &judgment{decision: decision, findings: findings, state: Commit{x.request.Input.Commit, x.request.Input.Tree}}
 	if x.request.Mandate == Implement {
 		s.git.Lock()
 		j.state, err = s.copy.Snapshot(ctx)
@@ -125,9 +125,18 @@ func (x *execution) judge(ctx context.Context, s *managerState, decision Decisio
 		}
 	}
 	if s.manager.Package == organization.Root && (x.request.Mandate != Implement || decision == Submitted) {
-		if j.check, err = x.check(ctx, s, j.state); err != nil {
-			x.stopPort(err)
-			return err
+		// A fixed state keeps its check result; only a new state is checked again.
+		x.mu.Lock()
+		j.check = x.rootCheck
+		x.mu.Unlock()
+		if j.check == nil || j.check.Commit != j.state {
+			if j.check, err = x.check(ctx, s, j.state); err != nil {
+				x.stopPort(err)
+				return err
+			}
+			x.mu.Lock()
+			x.rootCheck = j.check
+			x.mu.Unlock()
 		}
 		if !j.check.Valid && (decision == Submitted || decision == Approve) {
 			return fmt.Errorf("your state %s fails its check: %s", j.state.ID, j.check.Diagnostic)
@@ -171,6 +180,12 @@ func (x *execution) lateLocked(s *managerState, decision Decision, findings []Fi
 // native response ended. A changed assessed state invalidates the judgment.
 // Every Implement submission carries its check result to the parent, valid or not.
 func (x *execution) fix(s *managerState, j *judgment) error {
+	x.mu.Lock()
+	current := s.a.judgment == j && s.a.phase == active
+	x.mu.Unlock()
+	if !current {
+		return nil
+	}
 	s.git.Lock()
 	state, err := s.copy.Snapshot(x.ctx)
 	s.git.Unlock()
@@ -202,7 +217,13 @@ func (x *execution) fix(s *managerState, j *judgment) error {
 	if s.a.judgment != j || s.a.phase != active {
 		return nil
 	}
-	s.a.fix(Handoff{Manager: s.manager.Package, Base: s.a.task.Base, Result: state, Children: slices.Clone(s.integrations), Findings: slices.Clone(j.findings), Decision: requiredDecision(j.decision, x.childOutcomeLocked(s)), Check: check})
+	if err := x.childrenLocked(s); err != nil {
+		s.a.invalidate(err.Error())
+		return nil
+	}
+	// A late adverse judgment of its own stays in force across reopening.
+	decision := requiredDecision(requiredDecision(j.decision, s.a.late), x.childOutcomeLocked(s))
+	s.a.fix(Handoff{Manager: s.manager.Package, Base: s.a.task.Base, Result: state, Children: slices.Clone(s.integrations), Findings: slices.Clone(j.findings), Decision: decision, Check: check})
 	x.queueHandoffLocked(s)
 	return nil
 }
@@ -221,6 +242,18 @@ func (x *execution) completeRoot() (Handoff, bool, error) {
 		s.a.invalidate(err.Error())
 		x.mu.Unlock()
 		return Handoff{}, false, nil
+	}
+	// The quiet hierarchy is complete: every Manager's handoff is reviewed and
+	// no question is open. Anything else is a broken observation, not success.
+	for name, m := range x.states {
+		if m != s && m.a.phase != reviewed {
+			x.mu.Unlock()
+			return Handoff{}, false, fmt.Errorf("%w: Manager %s has no reviewed handoff at Root completion", ErrObservationIncomplete, name)
+		}
+	}
+	if len(x.questions) != 0 {
+		x.mu.Unlock()
+		return Handoff{}, false, fmt.Errorf("%w: Manager questions remain open at Root completion", ErrObservationIncomplete)
 	}
 	x.mu.Unlock()
 	s.git.Lock()
@@ -344,6 +377,9 @@ func (x *execution) review(ctx context.Context, s *managerState, child, commit s
 		return err
 	}
 	if target.a.phase != fixed || target.a.gen != gen {
+		if integrate {
+			return fmt.Errorf("child %s's fixed handoff changed during your review; commit %s is already merged into your copy, but your approval is not recorded; await the changed handoff and review it again", child, commit)
+		}
 		return fmt.Errorf("child %s's fixed handoff changed during your review; await it again", child)
 	}
 	target.a.review(ParentReview{Decision: decision, Findings: findings})
@@ -407,6 +443,8 @@ func (x *execution) delegate(ctx context.Context, s *managerState, child, task s
 	}
 	assignment := Assignment{Task: task, Findings: findings, Base: base}
 	target.a.assign(assignment)
+	// The judgment rested on the child's previous handoff.
+	s.a.invalidate(fmt.Sprintf("you delegated to %s after your judgment", child))
 	x.queueLocked(target, entry{event: Event{Assignment: &assignment}})
 	return nil
 }
