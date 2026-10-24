@@ -1,0 +1,12 @@
+imports:
+  - package: software
+    as: Software
+  - package: library
+    as: Library
+id: inspect-member
+kind: Software.UseCase
+body: >-
+  Given a known [[member]] identifier, return that member's identifier and
+  name. Apply [[Library.inputs]] to unknown or invalid identifiers. Inspection
+  is read-only and never creates a member.
+spec: {}

@@ -6,9 +6,14 @@ text in LINKS, and SUBSTITUTIONS replace the few phrases that name the model
 itself. The policy values come from the loan-policy spec. Nothing else is
 added except headings, one introductory sentence and the policy table frame.
 
+Profiles m1 and m2 are Phase A's Library M1 and M2. Phase B's m3, m4 and m5
+apply the overlays under phase-b/ cumulatively on top of m2: each overlay
+replaces or adds Definition files and may list deleted ones in deleted.txt.
+
 Usage, from the repository root:
   python -I -B tools/comparison/requirements.py render --profile m1 [--model DIR] [--out FILE]
   python -I -B tools/comparison/requirements.py check --profile m1 --doc FILE [--model DIR]
+  python -I -B tools/comparison/requirements.py materialize --profile m3 --out NEW_DIR [--model DIR]
 
 `check` re-renders, compares the bytes and confirms that every Definition body
 occurs in the document; it prints the per-Definition binding as JSON.
@@ -22,6 +27,8 @@ import sys
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
 DEFAULT_MODEL = REPO / "testdata" / "library" / "m1"
+PHASE_B = pathlib.Path(__file__).resolve().parent / "phase-b"
+PROFILES = ("m1", "m2", "m3", "m4", "m5")
 
 # Document order: (heading level, title, Definition keys "package/id").
 SECTIONS = [
@@ -41,10 +48,12 @@ SECTIONS = [
     (3, "Register a copy", ["catalog/register-copy"]),
     (3, "Inspect a copy", ["catalog/inspect-copy"]),
     (2, "Lending", []),
-    (3, "Lending policy", ["lending/LendingPolicy", "lending/maxOpenLoans", "lending/loanPeriodDays", "lending/loan-policy"]),
+    (3, "Lending policy", ["lending/LendingPolicy", "lending/maxOpenLoans", "lending/loanPeriodDays",
+                           "lending/shortLoanPeriodDays", "lending/maxRenewals", "lending/loan-policy"]),
     (3, "Loan", ["lending/loan"]),
     (3, "Borrow", ["lending/borrow"]),
     (3, "Return", ["lending/return"]),
+    (3, "Renew", ["lending/renew"]),
     (3, "Inspect loans", ["lending/inspect-loans"]),
     (2, "Overdue notices", []),
     (3, "Assess overdue loans", ["lending/reminders/assess-overdue"]),
@@ -68,6 +77,9 @@ LINKS = {
     "lending/LendingPolicy": ("the lending policy", "Lending policy"),
     "lending/maxOpenLoans": ("maximum open loans", "Lending policy"),
     "lending/loanPeriodDays": ("loan period", "Lending policy"),
+    "lending/shortLoanPeriodDays": ("short loan period", "Lending policy"),
+    "lending/maxRenewals": ("maximum renewals", "Lending policy"),
+    "lending/renew": ("renewal", "Renew"),
     "lending/loan-policy": ("the lending policy", "Lending policy"),
     "lending/loan": ("loan", "Loan"),
     "lending/borrow": ("borrowing", "Borrow"),
@@ -85,7 +97,8 @@ SUBSTITUTIONS = [
     ("library/realization", "must agree with the model.", "must agree with this document.", 1),
 ]
 
-POLICY_ROWS = [("lending/maxOpenLoans", "Maximum open loans"), ("lending/loanPeriodDays", "Loan period in calendar days")]
+POLICY_ROWS = [("lending/maxOpenLoans", "Maximum open loans"), ("lending/loanPeriodDays", "Loan period in calendar days"),
+               ("lending/shortLoanPeriodDays", "Short loan period in calendar days"), ("lending/maxRenewals", "Maximum renewals per loan")]
 INTRO = "This document describes the small library application to build. Links point to the related sections."
 FORBIDDEN = ("[[", "]]", "model", "Definition", "definition", "spec", "Package")
 M2_EDIT = ("  maxOpenLoans: 5\n", "  maxOpenLoans: 3\n")
@@ -175,27 +188,51 @@ def parse_definition(text):
     return definition
 
 
+def model_files(model_dir, profile):
+    """The profile's Definition files as {"model/...": bytes}."""
+    if profile not in PROFILES:
+        raise ModelError("unknown profile " + profile)
+    base = pathlib.Path(model_dir)
+    files = {path.relative_to(base).as_posix(): path.read_bytes() for path in sorted((base / "model").rglob("*.yaml"))}
+    if profile != "m1":
+        text = files["model/lending/loan-policy.yaml"].decode("utf-8")
+        if text.count(M2_EDIT[0]) != 1:
+            raise ModelError("the M2 edit needs exactly one maxOpenLoans: 5 line")
+        files["model/lending/loan-policy.yaml"] = text.replace(*M2_EDIT).encode("utf-8")
+    for stage in PROFILES[2:PROFILES.index(profile) + 1]:
+        overlay = PHASE_B / stage
+        for path in sorted((overlay / "model").rglob("*.yaml")):
+            files[path.relative_to(overlay).as_posix()] = path.read_bytes()
+        deleted = overlay / "deleted.txt"
+        for name in deleted.read_text(encoding="utf-8").split() if deleted.is_file() else []:
+            if name not in files:
+                raise ModelError("deleted file is not in the model: " + name)
+            del files[name]
+    return dict(sorted(files.items()))
+
+
+def present_sections(definitions):
+    """SECTIONS restricted to the profile's Definitions; headings without any left are dropped."""
+    out = []
+    for level, title, keys in SECTIONS:
+        kept = [key for key in keys if key in definitions]
+        if kept or not keys:
+            out.append((level, title, kept))
+    return out
+
+
 def load_model(model_dir, profile):
     """Load every local Definition of the Library model, keyed "package/id"."""
-    root = pathlib.Path(model_dir) / "model"
     definitions = {}
-    for path in sorted(root.rglob("*.yaml")):
-        raw = path.read_bytes()
-        text = raw.decode("utf-8")
-        package = path.parent.relative_to(root).as_posix()
-        if profile == "m2" and path.name == "loan-policy.yaml":
-            if text.count(M2_EDIT[0]) != 1:
-                raise ModelError("the M2 edit needs exactly one maxOpenLoans: 5 line")
-            text = text.replace(*M2_EDIT)
-            raw = text.encode("utf-8")
-        definition = parse_definition(text)
-        definition.update(package=package, file=path.relative_to(pathlib.Path(model_dir)).as_posix(),
-                          sha256=hashlib.sha256(raw).hexdigest())
+    for name, raw in model_files(model_dir, profile).items():
+        definition = parse_definition(raw.decode("utf-8"))
+        package = pathlib.PurePosixPath(name).parent.relative_to("model").as_posix()
+        definition.update(package=package, file=name, sha256=hashlib.sha256(raw).hexdigest())
         key = package + "/" + definition["id"]
         if key in definitions:
             raise ModelError("duplicate Definition " + key)
         definitions[key] = definition
-    covered = [key for _, _, keys in SECTIONS for key in keys]
+    covered = [key for _, _, keys in present_sections(definitions) for key in keys]
     if sorted(covered) != sorted(definitions) or len(set(covered)) != len(covered):
         raise ModelError("sections do not cover exactly the model's Definitions")
     return definitions
@@ -253,15 +290,18 @@ def render(model_dir, profile):
     definitions = load_model(model_dir, profile)
     policy = definitions["lending/loan-policy"]["spec"]
     out = ["# Small library requirements", "", INTRO, ""]
-    for level, title, keys in SECTIONS:
+    rows = [key for key, _ in POLICY_ROWS]
+    for level, title, keys in present_sections(definitions):
         out += ["#" * level + " " + title, ""]
         for key in keys:
-            if key in ("lending/maxOpenLoans", "lending/loanPeriodDays"):
+            if key in rows:
                 continue
             out += [render_body(definitions[key], key), ""]
             if key == "lending/LendingPolicy":
                 out += ["| Policy value | Value | Meaning |", "| --- | --- | --- |"]
                 for row_key, label in POLICY_ROWS:
+                    if row_key not in definitions:
+                        continue
                     prop = definitions[row_key]
                     meaning = render_body(prop, row_key) + " " + property_meaning(prop)
                     out.append(f"| {label} (`{prop['id']}`) | {policy[prop['id']]} | {meaning} |")
@@ -278,7 +318,7 @@ def check(model_dir, profile, doc_path):
     actual = pathlib.Path(doc_path).read_bytes()
     doc = normalize(actual.decode("utf-8"))
     bindings = []
-    for _, title, keys in SECTIONS:
+    for _, title, keys in present_sections(definitions):
         for key in keys:
             body = render_body(definitions[key], key)
             bindings.append({"definition": key, "file": definitions[key]["file"],
@@ -291,14 +331,31 @@ def check(model_dir, profile, doc_path):
     return result
 
 
+def materialize(model_dir, profile, out):
+    """Write the profile's complete model (manifest, lock, Definitions) to a new directory."""
+    out = pathlib.Path(out)
+    out.mkdir(parents=True, exist_ok=False)
+    for name in ("model.yaml", "model-lock.yaml"):
+        (out / name).write_bytes((pathlib.Path(model_dir) / name).read_bytes())
+    for name, raw in model_files(model_dir, profile).items():
+        (out / name).parent.mkdir(parents=True, exist_ok=True)
+        (out / name).write_bytes(raw)
+    return sorted(p.relative_to(out).as_posix() for p in out.rglob("*") if p.is_file())
+
+
 def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
-    p.add_argument("command", choices=["render", "check"])
-    p.add_argument("--profile", choices=["m1", "m2"], required=True)
+    p.add_argument("command", choices=["render", "check", "materialize"])
+    p.add_argument("--profile", choices=PROFILES, required=True)
     p.add_argument("--model", default=str(DEFAULT_MODEL))
     p.add_argument("--out")
     p.add_argument("--doc")
     a = p.parse_args(argv)
+    if a.command == "materialize":
+        if not a.out:
+            p.error("materialize needs --out")
+        print(json.dumps(materialize(a.model, a.profile, a.out), indent=2))
+        return 0
     if a.command == "render":
         text, _ = render(a.model, a.profile)
         if a.out:

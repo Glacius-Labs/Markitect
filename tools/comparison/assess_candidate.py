@@ -5,6 +5,8 @@ started from. The assessment runs, in containers without network:
 
   1. the unchanged Library oracle harness (tools/library-oracle/container/assess.py),
   2. the hidden supplementary probes (probes.py) through the oracle's transport,
+     or, for Phase B's profiles m3-m5, instead of 1 and 2, every carried and
+     new hidden case of phase_b_cases.py through the same transport,
   3. the candidate's own `go build ./cmd/library` and `go test ./...` with the
      limits of the Markitect `project-tests` check profile,
 
@@ -13,7 +15,7 @@ blinded copy for the rubric review. Evaluator and probe bytes come from the
 frozen Markitect revision, never from the working tree.
 
   python -I -B assess_candidate.py --candidate BUNDLE --commit SHA --start BUNDLE --start-commit SHA \
-      --profile m1|m2 --run-id ID --out NEW_DIR --rev FROZEN_SHA --go-image sha256:... \
+      --profile m1|m2|m3|m4|m5 --run-id ID --out NEW_DIR --rev FROZEN_SHA --go-image sha256:... \
       [--seed-lines SEED.json] [--blind DIR --token TOKEN]
 """
 import argparse
@@ -147,7 +149,8 @@ def own_checks(engine, image, module, out):
     return results
 
 
-def probes(engine, image, module, out, repo, oracle_rev, rev):
+def probes(engine, image, module, out, repo, oracle_rev, rev, script="probes.py", extra=(), timeout=LIMITS["probes"]):
+    """Build the program and run a harness script of tools/comparison at rev against it."""
     exports = out / "frozen"
     commit, evaluator = oracle_container.export_evaluator(str(repo), oracle_rev, exports)
     archive = git(repo, "archive", "--format=tar", rev, "tools/comparison", binary=True)
@@ -157,6 +160,11 @@ def probes(engine, image, module, out, repo, oracle_rev, rev):
     protected = {name: hashlib.sha256(path.read_bytes()).hexdigest()
                  for name, path in {"evaluator/assess.py": evaluator / "assess.py", "evaluator/driver.py": evaluator / "driver.py",
                                     "evaluator/oracle.py": evaluator / "oracle.py", "harness/probes.py": harness / "probes.py"}.items()}
+    if script != "probes.py":
+        protected["harness/" + script] = hashlib.sha256((harness / script).read_bytes()).hexdigest()
+        for name in ("expectations/m1.json", "expectations/m2.json"):
+            protected["evaluator/" + name] = hashlib.sha256((evaluator / name).read_bytes()).hexdigest()
+    name = pathlib.Path(script).stem
     volume = "mk-cmp-probe-" + uuid.uuid4().hex[:12]
     report = {"commit": commit, "protected_sha256": protected}
     docker(engine, ["volume", "create", volume], LIMITS["cleanup"])
@@ -168,7 +176,7 @@ def probes(engine, image, module, out, repo, oracle_rev, rev):
                                                           "--mount", f"type=volume,src={volume},dst=/out", "-w", "/src",
                                                           "-e", "GOCACHE=/tmp/gocache", "-e", "GOPATH=/tmp/gopath", "-e", "GOFLAGS=-buildvcs=false",
                                                           image, "build", "-o", "/out/library", "./cmd/library"], LIMITS["build"])
-        (out / "probe-build.log").write_bytes(stdout + stderr)
+        (out / f"{name}-build.log").write_bytes(stdout + stderr)
         if code != 0:
             report.update(built=False, passed=False, timed_out=timed_out)
             return report
@@ -177,18 +185,21 @@ def probes(engine, image, module, out, repo, oracle_rev, rev):
                                                           "--mount", f"type=bind,src={module},dst=/assess/realization,readonly",
                                                           "--mount", f"type=bind,src={evaluator},dst=/evaluator,readonly",
                                                           "--mount", f"type=bind,src={harness},dst=/harness,readonly",
-                                                          oracle_container.PYTHON_IMAGE, "python", "-I", "/harness/probes.py",
+                                                          oracle_container.PYTHON_IMAGE, "python", "-I", "/harness/" + script, *extra,
                                                           "--source", str(module), "--commit", commit,
                                                           "--limits", json.dumps(oracle_container.LIMITS), "--protected", json.dumps(protected)],
-                                                 LIMITS["probes"])
-        (out / "probes-report.json").write_bytes(stdout)
-        (out / "probes.log").write_bytes(stderr)
+                                                 timeout)
+        (out / f"{name}-report.json").write_bytes(stdout)
+        (out / f"{name}.log").write_bytes(stderr)
         try:
             data = json.loads(stdout or b"{}")
         except ValueError:
             data = {"passed": False, "errors": ["probe output is not JSON"]}
         report.update(built=True, timed_out=timed_out, passed=bool(data.get("passed")) and not timed_out,
                       errors=data.get("errors"), cases={c["id"]: {"passed": c["passed"], "errors": c["errors"][:5]} for c in data.get("cases", [])})
+        if "discrimination" in data:
+            report["discrimination"] = data["discrimination"].get("expected_mismatch_confirmed")
+        report["program_sha256"] = data.get("program_sha256")
         return report
     finally:
         docker(engine, ["volume", "rm", "-f", volume], LIMITS["cleanup"])
@@ -208,7 +219,7 @@ def main(argv=None):
     p = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     for name in ("--candidate", "--commit", "--start", "--start-commit", "--run-id", "--out", "--rev", "--go-image"):
         p.add_argument(name, required=True)
-    p.add_argument("--profile", choices=["m1", "m2"], required=True)
+    p.add_argument("--profile", choices=["m1", "m2", "m3", "m4", "m5"], required=True)
     p.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
     p.add_argument("--repo", default=str(REPO))
     p.add_argument("--oracle-rev", help="revision of tools/library-oracle, the frozen source F; default --rev")
@@ -256,6 +267,15 @@ def assess(a):
         report.update(deliverable=False, mechanical_pass=False)
     else:
         report["deliverable"] = True
+        if a.profile not in ("m1", "m2"):
+            report["phase_b"] = probes(a.engine, a.go_image, module, out, a.repo, a.oracle_rev, a.rev,
+                                       "phase_b_cases.py", ("--profile", a.profile), LIMITS["oracle"] + LIMITS["probes"])
+            report["own_checks"] = own_checks(a.engine, a.go_image, module, out)
+            report["scope"] = scope_findings(module)
+            report["mechanical_pass"] = (report["phase_b"].get("passed") is True
+                                         and all(r["passed"] for r in report["own_checks"]["primary"].values())
+                                         and not report["census"]["protected"])
+            return finish(a, out, report, candidate)
         oracle_out = out / "oracle"
         try:
             result = subprocess.run([sys.executable, "-I", str(REPO / "tools/library-oracle/container/assess.py"), "--realization", str(candidate),
@@ -276,6 +296,10 @@ def assess(a):
         report["mechanical_pass"] = (report["oracle"].get("exit") == 0 and report["oracle"].get("passed") is True
                                      and report["oracle"].get("discrimination") is True and report["probes"].get("passed") is True
                                      and all(r["passed"] for r in report["own_checks"]["primary"].values()) and not report["census"]["protected"])
+    return finish(a, out, report, candidate)
+
+
+def finish(a, out, report, candidate):
     if a.seed_lines:
         report["seed"] = seed_check(candidate, a.seed_lines)
     (out / "assessment.json").write_text(json.dumps(report, indent=2), encoding="utf-8")

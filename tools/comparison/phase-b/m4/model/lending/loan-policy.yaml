@@ -1,0 +1,23 @@
+imports:
+  - package: catalog
+    as: Catalog
+id: loan-policy
+kind: LendingPolicy
+body: >-
+  For [[borrow]], the resulting current open-loan count of the member must not
+  exceed the value of [[maxOpenLoans]] in this definition's spec. Count every
+  open [[loan]], including overdue loans, and exclude closed loans. An overdue
+  loan adds no separate borrowing restriction. A new loan's due date is its
+  borrowing date plus the value of [[loanPeriodDays]] for a standard
+  [[Catalog.copy]], or plus the value of [[shortLoanPeriodDays]] for a short
+  copy, both in this definition's spec. A loan can be renewed at most as often
+  as the value of [[maxRenewals]] allows; each [[renew]] replaces the loan's due
+  date with the later one, which is then the loan's current due date.
+  [[return]] remains possible regardless of the current limit or overdue state.
+  A lower limit neither deletes existing loans nor forces their return; while at
+  or above that limit, the member cannot start another loan.
+spec:
+  maxOpenLoans: 3
+  loanPeriodDays: 14
+  shortLoanPeriodDays: 7
+  maxRenewals: 1

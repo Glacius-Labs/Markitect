@@ -1,0 +1,18 @@
+imports:
+  - package: software
+    as: Software
+  - package: library
+    as: Library
+  - package: lending
+    as: Lending
+id: copy
+kind: Software.Concept
+body: >-
+  A copy is one physical book in [[Library.library]], with a unique stable
+  identifier, a nonempty title under [[Library.inputs]] and a loan class,
+  either standard or short. Different copies may have the same title and are
+  borrowed independently. Identifier, title and loan class remain unchanged
+  after registration. The loan class selects the loan period under
+  [[Lending.loan-policy]]. There is no separate title or edition catalogue.
+  The copy's current availability follows [[availability]].
+spec: {}

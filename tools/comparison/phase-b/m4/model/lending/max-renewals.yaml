@@ -1,0 +1,12 @@
+imports:
+  - package: markitect/core
+    as: Core
+id: maxRenewals
+kind: Core.Property
+body: >-
+  Positive integer giving how many times one loan can be renewed. Each renewal
+  moves its due date forward once.
+spec:
+  type: integer
+  minCount: 1
+  maxCount: 1

@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: library
+    as: Library
+id: register-copy
+kind: Software.UseCase
+body: >-
+  The operator supplies a new identifier, a title and optionally a loan class
+  under [[Library.inputs]] to register one [[copy]] in [[Library.library]].
+  Without a loan class the copy is standard; a loan class other than exactly
+  standard or short is refused without changing any state. The copy initially
+  has no loans and is available according to [[availability]]. Reusing an
+  existing copy identifier is refused without replacing that record or
+  changing any state. Matching an existing title alone is not a duplicate
+  registration.
+spec: {}
