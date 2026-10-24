@@ -37,8 +37,8 @@ func toolSpecs() []frame.ToolSpec {
 	add("reply", "Answer a question addressed to you, by its ID.", map[string]any{"id": text, "text": text}, "id", "text")
 	add("judge", "Record your judgment of your assignment with Findings. Implement: submitted, reject or model_blocker; every Manager including Root uses submitted for completed candidate work, never approve. Assessment/Verify: approve, reject or model_blocker. Reject and model_blocker require concrete Findings. Reviewing a child with review is separate.", map[string]any{"decision": map[string]any{"type": "string", "enum": []string{"approve", "reject", "model_blocker", "submitted"}}, "findings": finding}, "decision", "findings")
 	add("check", "Run the deterministic check of your current state: structural validity, accounting and the project checks placed in your copy. It lists the checks that ran.", map[string]any{})
-	add("read_notes", "Read durable project Notes, including earlier Runs. Notes do not override canonical intent.", map[string]any{})
-	add("append_note", "Append a durable observation with its context to shared project Notes. Never include credentials.", map[string]any{"context": text, "text": text}, "context", "text")
+	add("read_notes", "Read durable project Notes, including earlier Runs, oldest first and one page at a time. The reply lists notes and next. Pass next as after to read the following page; an empty next marks the last page. Notes do not override canonical intent.", map[string]any{"after": text})
+	add("append_note", fmt.Sprintf("Append a durable observation with its context to shared project Notes. The text may have up to %d bytes and the context up to %d bytes. Never include credentials.", run.MaxNoteText, run.MaxNoteContext), map[string]any{"context": text, "text": text}, "context", "text")
 	return out
 }
 
@@ -111,9 +111,9 @@ func dispatch(ctx context.Context, t run.Tools, name string, raw []byte) (string
 			value, err = t.Check(ctx)
 		}
 	case "read_notes":
-		var a struct{}
+		var a struct{ After string }
 		if err = strictValue(raw, &a); err == nil {
-			value, err = t.ReadNotes(ctx)
+			value, err = t.ReadNotes(ctx, a.After)
 		}
 	case "append_note":
 		var a struct{ Context, Text string }
@@ -133,15 +133,27 @@ func dispatch(ctx context.Context, t run.Tools, name string, raw []byte) (string
 	return string(data), err
 }
 
+// toolResult is the MCP tools/call result that carries one tool's text.
+func toolResult(text string, failed bool) json.RawMessage {
+	content, _ := json.Marshal(struct {
+		Content []map[string]string `json:"content"`
+		IsError bool                `json:"isError"`
+	}{[]map[string]string{{"type": "text", "text": text}}, failed})
+	return content
+}
+
 // Validate the concrete native tool envelope before any callback or durable write.
 // These are closed provider-local inputs, not a general JSON Schema framework.
 func validateArguments(name string, raw []byte) error {
 	var keys []string
+	optional := ""
 	switch name {
 	case "delegate":
 		keys = []string{"manager", "task", "findings"}
-	case "await", "check", "read_notes":
+	case "await", "check":
 		keys = []string{}
+	case "read_notes":
+		keys, optional = []string{}, "after"
 	case "review":
 		keys = []string{"manager", "commit", "decision", "findings"}
 	case "ask":
@@ -156,7 +168,17 @@ func validateArguments(name string, raw []byte) error {
 		return errUnknownTool
 	}
 	object, err := protocolObject(raw)
-	if err != nil || len(object) != len(keys) {
+	if err != nil {
+		return ErrSession
+	}
+	// One optional string argument is allowed beyond the required keys.
+	if value, ok := object[optional]; ok && optional != "" {
+		if _, err = protocolString(value); err != nil {
+			return err
+		}
+		keys = append(keys, optional)
+	}
+	if len(object) != len(keys) {
 		return ErrSession
 	}
 	for _, key := range keys {
