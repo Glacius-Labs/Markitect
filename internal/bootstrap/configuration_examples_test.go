@@ -176,7 +176,7 @@ func TestExactConfigurationExamplesPrepareAndReachControlledApplyBoundary(t *tes
 				if len(cfg.Credentials) != 1 || cfg.Credentials[profile.CredentialRef] != (credentialSource{Provider: "codex-app-server", Mode: "dedicated-runtime-login", Path: login}) {
 					t.Fatal("normal account reference differs between examples")
 				}
-				resolve, _, err := newCredentialResolvers(cfg.Credentials)
+				resolve, err := newCredentialResolver(cfg.Credentials)
 				if err != nil {
 					t.Fatal(err)
 				}

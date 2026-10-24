@@ -48,10 +48,6 @@ artifacts:
     form: test
     realizes: [product/cli/honest-read-only-interface]
     why: Verifies complete explicit invocation values, closed JSON objects, refused historical sections and no referenced credential reads during parsing.
-  - path: "internal/bootstrap/profile_router.go"
-    form: code
-    realizes: [product/cli/honest-read-only-interface]
-    why: Routes each selected captured Agent profile section to its concrete metadata adapter without a provider fallback or duplicate decoder.
   - path: "internal/bootstrap/runtime_credentials.go"
     form: code
     realizes: [product/cli/honest-read-only-interface]

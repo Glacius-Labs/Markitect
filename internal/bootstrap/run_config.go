@@ -83,7 +83,7 @@ func decodeRunConfig(data []byte) (runConfig, error) {
 		return runConfig{}, errRunConfig
 	}
 	// Constructor validation performs no credential file I/O.
-	if _, _, err := newCredentialResolvers(cfg.Credentials); err != nil {
+	if _, err := newCredentialResolver(cfg.Credentials); err != nil {
 		return runConfig{}, errRunConfig
 	}
 	return cfg, nil

@@ -152,7 +152,7 @@ func applyExecution(preparation *project.PreparationService, repository *gitrepo
 		if err != nil {
 			return out, err
 		}
-		resolve, _, err := newCredentialResolvers(cfg.Credentials)
+		resolve, err := newCredentialResolver(cfg.Credentials)
 		if err != nil {
 			return out, err
 		}
