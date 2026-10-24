@@ -4,6 +4,7 @@ import (
 	"context"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -49,13 +50,14 @@ func TestKnownInvalidManifestCandidateReturnsToItsManagerForRepair(t *testing.T)
 	if err != nil || r.Technical != run.Completed || r.Decision != run.Submitted {
 		t.Fatal(r, err)
 	}
-	rootCalls := 0
-	for _, s := range sessions.sessions {
-		if s.spec.Manager.Package == "." {
-			rootCalls = s.calls
-		}
+	// Root has no parent: its completion check returns the diagnostic to Root,
+	// which repairs its own state and judges again.
+	if len(sessions.refusals) != 1 || !strings.Contains(sessions.refusals[0], "invalid candidate manifest") {
+		t.Fatal("invalid manifest did not reach Root as its completion diagnostic", sessions.refusals)
 	}
-	if rootCalls < 2 {
-		t.Fatal("invalid manifest did not cause ordinary Manager correction")
+	for _, s := range sessions.sessions {
+		if s.spec.Manager.Package == "." && s.judgments != 1 {
+			t.Fatal("Root judgment count changed", s.judgments)
+		}
 	}
 }

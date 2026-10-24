@@ -188,6 +188,10 @@ artifacts:
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
     why: Actual Git conflict returns to the owning Manager and requires repair and renewed exact review before integration.
+  - path: "internal/adapters/gitrepo/run_collaboration_test.go"
+    form: test
+    realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]
+    why: "Proves each assignment, message and judgment counterexample of the collaboration contract and hierarchical questions with controlled Sessions on actual Git."
   - path: "internal/adapters/gitrepo/linux_native_test.go"
     form: test
     realizes: [product/adapters/repository/repository-boundaries, product/run/confirmed-run-history]

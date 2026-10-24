@@ -187,7 +187,7 @@ try:
         if item.get('type') == 'additional_tools':
             tools += item.get('tools', [])
     declaration = json.dumps(tools)
-    host = any(s['name'] == 'markitect' and s.get('toolsError') is None and all(name in s.get('tools', {}) for name in ['delegate','await','review','ask','reply','read_notes','append_note','judge']) for s in mcp['data'])
+    host = any(s['name'] == 'markitect' and s.get('toolsError') is None and all(name in s.get('tools', {}) for name in ['delegate','await','review','ask','reply','read_notes','append_note','judge','check']) for s in mcp['data'])
     print(json.dumps({'version':subprocess.check_output(['/usr/local/bin/codex','--version'],text=True).strip(), 'model':body['model'], 'agents':config['agents']['enabled'], 'v1':config['features']['multi_agent'], 'v2':config['features']['multi_agent_v2'], 'names':names(tools), 'shell':'exec_command' in declaration, 'files':'apply_patch' in declaration, 'host':host, 'catalog':'ALL_TOOLS' in declaration, 'deferred':'mcp__markitect__delegate' not in declaration}), flush=True)
 finally:
     proc.kill()

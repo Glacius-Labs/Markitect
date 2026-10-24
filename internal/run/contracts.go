@@ -59,7 +59,7 @@ type Commit struct {
 	Tree string `json:"tree"`
 }
 
-// Handoff preserves actual task base/result and accepted child commits. Review
+// Handoff preserves actual task base/result and integrated child commits. Review
 // sees the complete diff; no accepted child paths are subtracted from it.
 type ParentReview struct {
 	Decision Decision  `json:"decision"`
@@ -74,6 +74,19 @@ type Handoff struct {
 	Children []Integration `json:"children"`
 	Findings []Finding     `json:"findings"`
 	Decision Decision      `json:"decision"`
+	// Check is the deterministic check of Result. Every Implement submission
+	// carries it; nil means no check ran.
+	Check *Check `json:"check,omitempty"`
+}
+
+// Check is the deterministic check of one fixed state: structural validity,
+// accounting and the declared checks placed in that Manager's copy. Checks
+// lists the declared checks that ran; a check not listed did not run.
+type Check struct {
+	Commit     Commit   `json:"commit"`
+	Valid      bool     `json:"valid"`
+	Diagnostic string   `json:"diagnostic,omitempty"`
+	Checks     []string `json:"checks"`
 }
 type Integration struct {
 	Manager      string `json:"manager"`
@@ -198,42 +211,57 @@ type SessionSpec struct {
 	Tools     Tools
 }
 
-// Exchange returns only after its active writes and tool handlers have drained.
-// Close must interrupt an active Exchange and report actual process/home closure.
+// Exchange is one native response to a Message. It returns only after its
+// active writes and tool handlers have drained. Its end is not a judgment: the
+// Manager judges through the Judge tool. Close must interrupt an active
+// Exchange and report actual process/home closure.
 type Session interface {
-	Exchange(context.Context, Message) (Response, error)
+	Exchange(context.Context, Message) error
 	Close(context.Context) error
 }
+
+// Message carries the events delivered to an idle Manager and the host's
+// diagnostics about its active assignment.
 type Message struct {
-	Task     string
-	Feedback []Finding
-}
-type Response struct {
-	Decision Decision
-	Findings []Finding
+	Events   []Event   `json:"events,omitempty"`
+	Feedback []Finding `json:"feedback,omitempty"`
 }
 
-// Inbox events are private to one Run. Ask returns immediately; Await delivers
-// actual incoming questions, replies, parent tasks or fixed child handoffs.
-type Question struct{ ID, From, To, Text string }
-type Answer struct{ ID, From, Text string }
+// Events are private to one Run. Ask returns immediately; Await delivers
+// actual parent assignments, incoming questions, answers or fixed child handoffs.
+type Question struct {
+	ID   string `json:"id"`
+	From string `json:"from"`
+	To   string `json:"to"`
+	Text string `json:"text"`
+}
+type Answer struct {
+	ID   string `json:"id"`
+	From string `json:"from"`
+	Text string `json:"text"`
+}
 type Assignment struct {
-	Task     string
-	Feedback []Finding
-	Base     Commit
+	Task     string    `json:"task"`
+	Findings []Finding `json:"findings"`
+	Base     Commit    `json:"base"`
 }
 type Event struct {
-	Question   *Question
-	Answer     *Answer
-	Assignment *Assignment
-	Handoff    *Handoff
+	Assignment *Assignment `json:"assignment,omitempty"`
+	Question   *Question   `json:"question,omitempty"`
+	Answer     *Answer     `json:"answer,omitempty"`
+	Handoff    *Handoff    `json:"handoff,omitempty"`
 }
+
+// Tools is the fixed Manager tool set. Each one acts for the Manager that owns
+// the Session; Run sets the origin of every Finding.
 type Tools struct {
 	Delegate   func(context.Context, string, string, []Finding) error
 	Await      func(context.Context) (Event, error)
 	Review     func(context.Context, string, string, Decision, []Finding) error
 	Ask        func(context.Context, string, string) (string, error)
 	Reply      func(context.Context, string, string) error
+	Judge      func(context.Context, Decision, []Finding) error
+	Check      func(context.Context) (Check, error)
 	ReadNotes  func(context.Context) ([]Note, error)
 	AppendNote func(context.Context, string, string) (Note, error)
 }
@@ -312,6 +340,10 @@ var ErrMergeConflict = errors.New("parent baseline has unresolved Git conflicts"
 var ErrObservationIncomplete = errors.New("Run physical observation incomplete")
 
 var ErrBudget = errors.New("Run allowance exhausted")
+
+// ErrNoProgress ends a Run whose Manager repeatedly leaves its open assignment
+// without any action or working-state change; the result is incomplete.
+var ErrNoProgress = errors.New("Manager made no progress on its open assignment")
 var ErrUnavailable = errors.New("native sessions unavailable: adapter capability is not ready")
 
 type UnavailableSessions struct{}

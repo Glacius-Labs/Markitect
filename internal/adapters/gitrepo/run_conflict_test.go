@@ -73,43 +73,43 @@ func (m *conflictManagers) Open(_ context.Context, s run.SessionSpec) (run.Sessi
 }
 
 type conflictManager struct {
-	owner *conflictManagers
-	spec  run.SessionSpec
-	calls int
+	owner        *conflictManagers
+	spec         run.SessionSpec
+	calls, tasks int
 }
 
 func (*conflictManager) Close(context.Context) error { return nil }
-func (m *conflictManager) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
+func (m *conflictManager) Exchange(ctx context.Context, message run.Message) error {
 	m.calls++
 	tools := m.spec.Tools
-	if m.spec.Manager.Package != "." && m.calls == 1 {
-		event, err := tools.Await(ctx)
-		if err != nil {
-			return run.Response{}, err
+	var task *run.Assignment
+	for _, e := range message.Events {
+		if e.Assignment != nil {
+			task = e.Assignment
+			m.tasks++
 		}
-		if event.Assignment == nil {
-			return run.Response{}, fmt.Errorf("expected assignment")
-		}
-		message.Feedback = event.Assignment.Feedback
 	}
-	if m.calls == 1 {
+	if task == nil {
+		return fmt.Errorf("expected an assignment, got %+v", message)
+	}
+	if m.tasks == 1 {
 		for _, child := range m.spec.Manager.Children {
 			if err := tools.Delegate(ctx, child, "Implement your responsibility.", nil); err != nil {
-				return run.Response{}, err
+				return err
 			}
 		}
 	}
 	remaining := 0
-	if m.calls == 1 {
+	if m.tasks == 1 {
 		remaining = len(m.spec.Manager.Children)
 	}
 	for remaining > 0 {
 		event, err := tools.Await(ctx)
 		if err != nil {
-			return run.Response{}, err
+			return err
 		}
 		if event.Handoff == nil {
-			return run.Response{}, fmt.Errorf("expected fixed child handoff")
+			return fmt.Errorf("expected fixed child handoff")
 		}
 		h := event.Handoff
 		m.owner.mu.Lock()
@@ -118,78 +118,77 @@ func (m *conflictManager) Exchange(ctx context.Context, message run.Message) (ru
 		if inject {
 			path := filepath.Join(m.spec.Workspace.Location().Directory, "out/deep.txt")
 			if err = os.WriteFile(path, []byte("parent conflict\n"), 0600); err != nil {
-				return run.Response{}, err
+				return err
 			}
 			if err = tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err == nil || !errors.Is(err, run.ErrMergeConflict) {
-				return run.Response{}, fmt.Errorf("actual conflict missing: %v", err)
+				return fmt.Errorf("actual conflict missing: %v", err)
 			}
-			// The native caller must learn that the failed approval already
-			// recorded Reject: no repair or replacement handoff starts until
-			// this parent delegates correction with concrete Findings.
-			for _, detail := range []string{"already recorded as rejected", "no child correction was started", "delegate", "concrete Findings"} {
+			// The caller learns that the failed approval already recorded Reject
+			// and that only its correction with Findings starts the repair.
+			for _, detail := range []string{"recorded as reject", "delegate a correction with Findings", "child's copy"} {
 				if !strings.Contains(err.Error(), detail) {
-					return run.Response{}, fmt.Errorf("conflict feedback hides recorded review or next action (%s): %w", detail, err)
+					return fmt.Errorf("conflict feedback hides recorded review or next action (%s): %w", detail, err)
 				}
 			}
 			if repeated := tools.Review(ctx, h.Manager, h.Result.ID, run.Reject, []run.Finding{{Text: "Request conflict correction."}}); repeated == nil {
-				return run.Response{}, fmt.Errorf("already reviewed fixed child accepted another Review")
+				return fmt.Errorf("already reviewed fixed child accepted another Review")
 			}
 			data, readErr := os.ReadFile(path)
 			if readErr != nil || string(data) != "parent conflict\n" {
-				return run.Response{}, fmt.Errorf("failed merge changed parent: %q %v", data, readErr)
+				return fmt.Errorf("failed merge changed parent: %q %v", data, readErr)
 			}
 			m.owner.mu.Lock()
 			m.owner.conflicts++
 			m.owner.rejectedCommit = h.Result.ID
 			m.owner.mu.Unlock()
 			if err = tools.Delegate(ctx, h.Manager, "Repair the child change on the current parent baseline.", []run.Finding{{Text: "Git conflict in out/deep.txt: preserve the parent baseline and return a concrete child repair."}}); err != nil {
-				return run.Response{}, err
+				return err
 			}
 			continue
 		}
 		if err = tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err != nil {
-			return run.Response{}, err
+			return err
 		}
 		remaining--
 	}
 	if m.spec.Manager.Package == "a/deep" {
 		value := "child original\n"
-		if m.calls > 1 {
-			if m.calls == 2 && (len(message.Feedback) != 2 || !strings.Contains(message.Feedback[0].Text, "Git conflict")) || m.calls == 3 && (len(message.Feedback) != 1 || !strings.Contains(message.Feedback[0].Text, "unresolved Git index")) {
-				return run.Response{}, fmt.Errorf("owning child lost concrete conflict feedback")
+		if m.tasks > 1 {
+			if len(task.Findings) != 2 || !strings.Contains(task.Findings[0].Text, "Git conflict") || !strings.Contains(task.Findings[1].Text, "preserved Git merge conflict") {
+				return fmt.Errorf("owning child lost concrete conflict feedback: %+v", task.Findings)
 			}
 			data, err := os.ReadFile(filepath.Join(m.spec.Workspace.Location().Directory, "out/deep.txt"))
 			if err != nil || (!strings.Contains(string(data), "parent conflict\n") || !strings.Contains(string(data), "child original\n") || !strings.Contains(string(data), "<<<<<<<")) {
-				return run.Response{}, fmt.Errorf("repair lacks actual parent baseline: %q %v", data, err)
+				return fmt.Errorf("repair lacks actual parent baseline: %q %v", data, err)
 			}
 			if _, err = m.spec.Workspace.Snapshot(ctx); err == nil || !strings.Contains(err.Error(), "unresolved Git index") {
-				return run.Response{}, fmt.Errorf("unresolved merge snapshot was not refused: %v", err)
+				return fmt.Errorf("unresolved merge snapshot was not refused: %v", err)
 			}
-			if m.calls == 2 {
-				// Deliberately submit while unresolved: Run must return ordinary feedback
-				// to this same Manager, without accepting or terminating technically.
-				m.owner.mu.Lock()
-				m.owner.refusals++
-				m.owner.mu.Unlock()
-				return run.Response{Decision: run.Submitted}, nil
+			// Deliberately judge while unresolved: Run refuses the judgment with
+			// the concrete reason, without accepting or terminating technically.
+			if err = tools.Judge(ctx, run.Submitted, nil); err == nil || !strings.Contains(err.Error(), "unresolved Git index") {
+				return fmt.Errorf("unresolved judgment was not refused: %v", err)
 			}
+			m.owner.mu.Lock()
+			m.owner.refusals++
+			m.owner.mu.Unlock()
 			value = "child repaired parent conflict\n"
 			m.owner.mu.Lock()
 			m.owner.repairs++
 			m.owner.mu.Unlock()
 		}
 		if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "out/deep.txt"), []byte(value), 0600); err != nil {
-			return run.Response{}, err
+			return err
 		}
-		if m.calls > 1 {
+		if m.tasks > 1 {
 			// This is the owning child's ordinary workspace action, after resolving
 			// the file. The executor never stages an unresolved conflict for it.
 			if _, err := localCommand(ctx, m.spec.Workspace.Location().Directory, nil, "add", "--", "out/deep.txt"); err != nil {
-				return run.Response{}, err
+				return err
 			}
 		}
 	}
-	return run.Response{Decision: run.Submitted}, nil
+	return tools.Judge(ctx, run.Submitted, nil)
 }
 
 func TestResolvedMergeKeepsBothParentsWhenTreeMatchesChildHead(t *testing.T) {
@@ -327,25 +326,20 @@ type ignoringManager struct {
 }
 
 func (*ignoringManager) Close(context.Context) error { return nil }
-func (m *ignoringManager) Exchange(ctx context.Context, _ run.Message) (run.Response, error) {
+func (m *ignoringManager) Exchange(ctx context.Context, _ run.Message) error {
 	tools := m.spec.Tools
-	if m.spec.Manager.Package != "." {
-		if _, err := tools.Await(ctx); err != nil {
-			return run.Response{Decision: run.Submitted}, nil
-		}
-	}
 	for _, child := range m.spec.Manager.Children {
 		if err := tools.Delegate(ctx, child, "Complete modeled work.", nil); err != nil {
-			return run.Response{Decision: run.Submitted}, nil
+			return tools.Judge(ctx, run.Submitted, nil)
 		}
 	}
 	for range m.spec.Manager.Children {
 		event, err := tools.Await(ctx)
 		if err != nil {
-			return run.Response{Decision: run.Submitted}, nil
+			return tools.Judge(ctx, run.Submitted, nil)
 		}
 		if event.Handoff == nil {
-			return run.Response{}, fmt.Errorf("missing handoff")
+			return fmt.Errorf("missing handoff")
 		}
 		if err = tools.Review(ctx, event.Handoff.Manager, event.Handoff.Result.ID, run.Approve, nil); err != nil {
 			m.owner.mu.Lock()
@@ -353,7 +347,9 @@ func (m *ignoringManager) Exchange(ctx context.Context, _ run.Message) (run.Resp
 			m.owner.mu.Unlock()
 		}
 	}
-	return run.Response{Decision: run.Submitted}, nil
+	// Ignore every returned error, including the judgment's own refusal.
+	_ = tools.Judge(ctx, run.Submitted, nil)
+	return nil
 }
 
 func TestSessionCannotIgnoreTechnicalIntegrationFailure(t *testing.T) {

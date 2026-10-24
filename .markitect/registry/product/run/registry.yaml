@@ -143,4 +143,8 @@ artifacts:
   - path: "internal/run/handoff.go"
     form: code
     realizes: [product/run/confirmed-run-history]
-    why: "Serializes fixed handoff completion and late required findings while retaining exact closed Run outcomes."
+    why: "Fixes checked handoffs, reviews, delegations and Root completion against the assignment state; a late finding invalidates the acceptances resting on it."
+  - path: "internal/run/assignment.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Holds the explicit per-Manager assignment state whose named events bind a judgment to its task and assessed state."

@@ -93,168 +93,102 @@ type notesReadingSessions struct {
 }
 
 type accountingRepairSessions struct {
-	controlled               *controlledManagers
-	child                    *accountingRepairSession
-	accounting               bool
-	omitContinuationJudgment bool
+	controlled *controlledManagers
+	child      *accountingRepairSession
 }
 
+// accountingRepairSession first submits an unregistered artifact, then repairs
+// its registry from the parent's correction Findings.
 type accountingRepairSession struct {
-	run.Session
-	spec                     run.SessionSpec
-	attempts, assignments    int
-	accounting               bool
-	question                 string
-	omitContinuationJudgment bool
-	judgments                int
+	*controlledManager
+	attempts int
 }
 
 func (s *accountingRepairSessions) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
+	session, err := s.controlled.Open(ctx, spec)
 	if spec.Manager.Package != "a/deep" {
-		return s.controlled.Open(ctx, spec)
+		return session, err
 	}
-	child := &accountingRepairSession{spec: spec, accounting: s.accounting, omitContinuationJudgment: s.omitContinuationJudgment}
-	await := spec.Tools.Await
-	spec.Tools.Await = func(ctx context.Context) (run.Event, error) {
-		event, err := await(ctx)
-		if event.Assignment != nil {
-			child.assignments++
-		}
-		return event, err
-	}
-	var err error
-	child.Session, err = s.controlled.Open(ctx, spec)
-	s.child = child
-	return child, err
+	s.child = &accountingRepairSession{controlledManager: session.(*controlledManager)}
+	return s.child, err
 }
 
-func (s *accountingRepairSession) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
-	if strings.HasPrefix(message.Task, "Answer pending Manager questions") {
-		return s.Session.Exchange(ctx, message)
-	}
-	s.attempts++
-	root := s.spec.Workspace.Location().Directory
-	if s.attempts == 2 {
-		if strings.Contains(message.Task, "Receive your parent assignment with Await") || !strings.Contains(message.Task, "active assignment") {
-			return run.Response{}, fmt.Errorf("candidate repair replayed consumed assignment: %s", message.Task)
+func (s *accountingRepairSession) Exchange(ctx context.Context, message run.Message) error {
+	for _, e := range message.Events {
+		if e.Assignment == nil {
+			continue
 		}
-		if s.spec.Mandate != run.Implement && strings.Contains(strings.ToLower(message.Task), "repair the candidate") {
-			return run.Response{}, fmt.Errorf("review continuation requests implementation: %s", message.Task)
+		s.attempts++
+		root := s.spec.Workspace.Location().Directory
+		if s.attempts == 1 {
+			if err := os.WriteFile(filepath.Join(root, "out/unregistered.txt"), []byte("child artifact\n"), 0600); err != nil {
+				return err
+			}
+			continue
 		}
-		text := fmt.Sprint(message.Feedback)
-		if s.accounting {
-			if !strings.Contains(text, "file.unexplained") || !strings.Contains(text, "out/unregistered.txt") || !strings.Contains(text, "neither a registered artifact") {
-				return run.Response{}, fmt.Errorf("candidate repair lost actionable accounting diagnostics: %s", text)
-			}
-			registry := filepath.Join(root, ".markitect/registry/a/deep/registry.yaml")
-			data, err := os.ReadFile(registry)
-			if err != nil {
-				return run.Response{}, err
-			}
-			data = append(data, []byte("  - path: out/unregistered.txt\n    form: code\n    realizes: [a/deep/item]\n    why: Register the actual child artifact after host rejection.\n")...)
-			if err := os.WriteFile(registry, data, 0600); err != nil {
-				return run.Response{}, err
-			}
-		} else {
-			if !strings.Contains(text, "Resolve pending question "+s.question) {
-				return run.Response{}, fmt.Errorf("continuation lost pending question Findings: %s", text)
-			}
-			event, err := s.spec.Tools.Await(ctx)
-			if err != nil || event.Answer == nil || event.Answer.ID != s.question {
-				return run.Response{}, fmt.Errorf("continuation did not resolve the actual pending question: %v", err)
-			}
-			// Match the retained lending exchange: the previous response judged
-			// the assignment, while this response only consumes its pending Answer.
-			// The scripted consumer judges again only when the host expressly asks
-			// for a fresh judgment, even for question-only continuation feedback.
-			fresh := strings.Contains(message.Task, "fresh mandate-appropriate judgment") && strings.Contains(message.Task, "even if they only resolve pending questions or answers")
-			if !fresh || s.omitContinuationJudgment {
-				return run.Response{}, nil
-			}
+		text := fmt.Sprint(e.Assignment.Findings)
+		if !strings.Contains(text, "file.unexplained") || !strings.Contains(text, "out/unregistered.txt") || !strings.Contains(text, "neither a registered artifact") {
+			return fmt.Errorf("correction lost the actionable accounting diagnostic: %s", text)
+		}
+		registry := filepath.Join(root, ".markitect/registry/a/deep/registry.yaml")
+		data, err := os.ReadFile(registry)
+		if err != nil {
+			return err
+		}
+		data = append(data, []byte("  - path: out/unregistered.txt\n    form: code\n    realizes: [a/deep/item]\n    why: Register the actual child artifact after parent rejection.\n")...)
+		if err := os.WriteFile(registry, data, 0600); err != nil {
+			return err
 		}
 	}
-	response, err := s.Session.Exchange(ctx, message)
-	if response.Decision != "" {
-		s.judgments++
-	}
-	if err == nil && s.attempts == 1 {
-		if s.accounting {
-			err = os.WriteFile(filepath.Join(root, "out/unregistered.txt"), []byte("child artifact\n"), 0600)
-		} else {
-			// The direct parent is already awaiting this child's handoff and
-			// handles incoming questions while waiting. Leave its answer pending.
-			s.question, err = s.spec.Tools.Ask(ctx, "a", "Explain this observation before I finish.")
-		}
-	}
-	return response, err
+	return s.controlledManager.Exchange(ctx, message)
 }
 
-func TestRejectedChildCandidateRepairsActiveAssignmentAndReachesParent(t *testing.T) {
-	for _, scenario := range []struct {
-		mandate                  run.Mandate
-		accounting               bool
-		omitContinuationJudgment bool
-	}{{run.Implement, true, false}, {run.Implement, false, false}, {run.Assessment, false, false}, {run.Verify, false, false}, {run.Implement, false, true}, {run.Assessment, false, true}, {run.Verify, false, true}} {
-		t.Run(fmt.Sprintf("%s/accounting=%v/omit=%v", scenario.mandate, scenario.accounting, scenario.omitContinuationJudgment), func(t *testing.T) {
-			_, prepared, git, input := runFixture(t)
-			records, err := runstore.New(git.StateRoot)
-			if err != nil {
-				t.Fatal(err)
+// V05 and scenario 26.4: an invalid Implement child candidate reaches its
+// parent with the actual diagnostic; the parent cannot accept or integrate
+// it, rejects it with Findings, and the child repairs it locally.
+func TestInvalidChildCandidateReachesParentAndIsCorrected(t *testing.T) {
+	_, prepared, git, input := runFixture(t)
+	records, err := runstore.New(git.StateRoot)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}}
+	request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
+	result, err := (&run.Executor{Sessions: sessions, Workspaces: git, Records: records}).Execute(context.Background(), request)
+	if err != nil || result.Technical != run.Completed || result.Decision != run.Submitted || result.Candidate == nil {
+		t.Fatalf("child repair did not complete: %s %s %v", result.Technical, result.Decision, err)
+	}
+	if sessions.child.attempts != 2 || sessions.child.tasks != 2 || sessions.child.judgments != 2 || len(result.Handoffs) != 5 || len(sessions.controlled.sessions) != 5 {
+		t.Fatal("repair replaced the Session or lost the full hierarchy", sessions.child.attempts, sessions.child.tasks, sessions.child.judgments, len(result.Handoffs))
+	}
+	if len(sessions.controlled.refusals) != 1 || !strings.Contains(sessions.controlled.refusals[0], "fails its check and cannot be accepted or integrated") || !strings.Contains(sessions.controlled.refusals[0], "out/unregistered.txt") {
+		t.Fatal("invalid child candidate did not reach its parent with the refused approval", sessions.controlled.refusals)
+	}
+	integrated := false
+	for _, h := range result.Handoffs {
+		if h.Manager == "a/deep" && (h.Check == nil || !h.Check.Valid || h.Review == nil || h.Review.Decision != run.Approve) {
+			t.Fatal("repaired child handoff lacks its passing check or acceptance", h.Check, h.Review)
+		}
+		if h.Manager == "a" {
+			for _, child := range h.Children {
+				integrated = integrated || child.Manager == "a/deep"
 			}
-			sessions := &accountingRepairSessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, accounting: scenario.accounting, omitContinuationJudgment: scenario.omitContinuationJudgment}
-			request := run.Request{ID: "accounting-repair", Project: "fixture", Prepared: prepared, Input: input, Mandate: scenario.mandate, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(time.Minute), 100), MessageTimeout: 30 * time.Second, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
-			result, err := (&run.Executor{Sessions: sessions, Workspaces: git, Records: records}).Execute(context.Background(), request)
-			if scenario.omitContinuationJudgment {
-				if err == nil || !strings.Contains(err.Error(), "Manager a/deep supplied no semantic result") || result.Technical == run.Completed || result.Candidate != nil || sessions.child.judgments != 1 {
-					t.Fatal("an old judgment was reused for an empty active response", result.Technical, err, sessions.child.judgments)
-				}
-				for _, closure := range result.Cleanup {
-					if !closure.Closed {
-						t.Fatal("empty active response left a live resource", closure)
-					}
-				}
-				return
-			}
-			if err != nil || result.Technical != run.Completed || result.Candidate == nil {
-				t.Fatalf("child repair did not complete: %s %v", result.Technical, err)
-			}
-			if sessions.child.attempts != 2 || sessions.child.assignments != 1 || sessions.child.judgments != 2 || len(result.Handoffs) != 5 || len(sessions.controlled.sessions) != 5 {
-				t.Fatal("repair replaced the Session/assignment or lost the full hierarchy", sessions.child.attempts, sessions.child.assignments, len(result.Handoffs))
-			}
-			// Ordinary post-handoff question replies return an empty Response in
-			// controlledManager. They must still complete without another judgment.
-			if sessions.controlled.receiptCalls < 4 {
-				t.Fatal("fixed handoff receipt-only wakeups were not exercised", sessions.controlled.receiptCalls)
-			}
-			for _, closure := range result.Cleanup {
-				if !closure.Closed {
-					t.Fatal("repair left a live resource", closure)
-				}
-			}
-			found := false
-			for _, handoff := range result.Handoffs {
-				if handoff.Manager == "a" {
-					for _, child := range handoff.Children {
-						found = found || child.Manager == "a/deep"
-					}
-				}
-			}
-			if !found && scenario.mandate == run.Implement {
-				t.Fatal("parent did not review and integrate the repaired child")
-			}
-			destination := t.TempDir()
-			if err := git.Reopen(context.Background(), *result.Candidate, destination); err != nil {
-				t.Fatal(err)
-			}
-			if scenario.accounting {
-				if data, err := os.ReadFile(filepath.Join(destination, "out/unregistered.txt")); err != nil || string(data) != "child artifact\n" {
-					t.Fatal("repaired artifact did not survive parent integration and closure", err)
-				}
-			}
-			if scenario.mandate != run.Implement && (result.Decision != run.Approve || result.Candidate.Commit != input.Commit || result.Candidate.Tree != input.Tree) {
-				t.Fatal("review continuation changed its judgment mandate or fixed candidate", result.Decision, result.Candidate)
-			}
-		})
+		}
+	}
+	if !integrated {
+		t.Fatal("parent did not review and integrate the repaired child")
+	}
+	for _, closure := range result.Cleanup {
+		if !closure.Closed {
+			t.Fatal("repair left a live resource", closure)
+		}
+	}
+	destination := t.TempDir()
+	if err := git.Reopen(context.Background(), *result.Candidate, destination); err != nil {
+		t.Fatal(err)
+	}
+	if data, err := os.ReadFile(filepath.Join(destination, "out/unregistered.txt")); err != nil || string(data) != "child artifact\n" {
+		t.Fatal("repaired artifact did not survive parent integration and closure", err)
 	}
 }
 
@@ -273,7 +207,7 @@ func (s *notesReadingSessions) Open(ctx context.Context, spec run.SessionSpec) (
 	}
 	return &notesReadingSession{Session: session, owner: s, spec: spec}, err
 }
-func (s *notesReadingSession) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
+func (s *notesReadingSession) Exchange(ctx context.Context, message run.Message) error {
 	s.once.Do(func() {
 		notes, err := s.spec.Tools.ReadNotes(ctx)
 		if err != nil {
@@ -295,7 +229,7 @@ func (s *notesReadingSession) Exchange(ctx context.Context, message run.Message)
 		s.owner.mu.Unlock()
 	})
 	if s.readErr != nil {
-		return run.Response{}, s.readErr
+		return s.readErr
 	}
 	return s.Session.Exchange(ctx, message)
 }
@@ -475,16 +409,31 @@ type controlledManagers struct {
 	exchangeDrained     chan struct{}
 	closeBlock          <-chan struct{}
 	noChange            bool
+	refusals            []string
+	messages            []run.Message
+	// realization replaces the default Implement writes; it may judge itself.
+	realization func(context.Context, *controlledManager) error
 }
+
+// controlledManager scripts a well-behaved Manager under the Run tool
+// contract: it handles delivered events, works on its active task, reviews
+// every direct child and records its judgment through the judge tool.
 type controlledManager struct {
-	owner  *controlledManagers
-	spec   run.SessionSpec
-	calls  int
-	closed bool
+	owner     *controlledManagers
+	spec      run.SessionSpec
+	calls     int
+	closed    bool
+	task      *run.Assignment
+	tasks     int
+	started   bool
+	judged    bool
+	judgments int
+	pending   []run.Handoff
+	answers   map[string]string
 }
 
 func (c *controlledManagers) Open(_ context.Context, s run.SessionSpec) (run.Session, error) {
-	m := &controlledManager{owner: c, spec: s}
+	m := &controlledManager{owner: c, spec: s, answers: map[string]string{}}
 	c.mu.Lock()
 	c.sessions = append(c.sessions, m)
 	c.mu.Unlock()
@@ -513,9 +462,18 @@ func (m *controlledManager) Close(context.Context) error {
 	}
 	return nil
 }
-func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
+
+func (c *controlledManagers) refused(err error) {
+	c.mu.Lock()
+	c.refusals = append(c.refusals, err.Error())
+	c.mu.Unlock()
+}
+
+func (m *controlledManager) Exchange(ctx context.Context, message run.Message) error {
 	m.calls++
-	tools := m.spec.Tools
+	m.owner.mu.Lock()
+	m.owner.messages = append(m.owner.messages, message)
+	m.owner.mu.Unlock()
 	if m.owner.exchangeBlock != nil && m.spec.Manager.Package == "." {
 		if m.owner.exchangeEntered != nil {
 			close(m.owner.exchangeEntered)
@@ -525,272 +483,318 @@ func (m *controlledManager) Exchange(ctx context.Context, message run.Message) (
 		}
 		<-m.owner.exchangeBlock
 	}
-	if strings.HasPrefix(message.Task, "Answer pending Manager questions") {
-		for _, detail := range []string{"finish this native response", "No new assignment judgment is required for an ordinary reply", "Material new Findings, Reject or ModelBlocker must still be reported", "future inbox events", "later messages in this same Session"} {
-			if !strings.Contains(message.Task, detail) {
-				return run.Response{}, fmt.Errorf("fixed-handoff inbox task omits completion boundary: %s", detail)
-			}
+	var later []run.Event
+	for _, e := range message.Events {
+		if e.Assignment != nil {
+			m.task = e.Assignment
+			m.tasks++
+			continue
 		}
-		event, err := tools.Await(ctx)
-		if err != nil {
-			return run.Response{}, err
+		later = append(later, e)
+	}
+	question := ""
+	if m.task != nil && !m.started {
+		m.started = true
+		var err error
+		if question, err = m.start(ctx); err != nil {
+			return err
 		}
-		if event.Answer != nil {
-			return run.Response{}, nil
+	}
+	for _, e := range later {
+		if err := m.handle(ctx, e); err != nil {
+			return err
 		}
-		if event.Question == nil {
-			return run.Response{}, fmt.Errorf("receipt message lost event")
+	}
+	if question != "" {
+		if err := m.answer(ctx, question); err != nil {
+			return err
 		}
-		if event.Question.Text == "Reassess the already accepted handoff." {
-			if err = tools.Reply(ctx, event.Question.ID, "late required correction"); err != nil {
-				return run.Response{}, err
-			}
-			return run.Response{Decision: run.Reject, Findings: []run.Finding{{Text: "Late required correction discovered after accepted integration."}}}, nil
+		other := "a"
+		if m.spec.Manager.Package == "a" {
+			other = "."
 		}
-		if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
-			return run.Response{}, err
+		if m.answers[question] != "controlled answer from "+other {
+			return fmt.Errorf("wrong correlated answer %q", m.answers[question])
 		}
+	}
+	if m.task == nil {
 		m.owner.mu.Lock()
 		m.owner.receiptCalls++
 		m.owner.mu.Unlock()
-		return run.Response{}, nil
+		return nil
 	}
-	if m.spec.Manager.Package != "." && m.calls == 1 {
-		for {
-			e, err := tools.Await(ctx)
-			if err != nil {
-				return run.Response{}, err
-			}
-			if e.Question != nil {
-				if err = tools.Reply(ctx, e.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
-					return run.Response{}, err
-				}
-			}
-			if e.Assignment != nil {
-				message.Feedback = e.Assignment.Feedback
-				break
-			}
+	return m.work(ctx)
+}
+
+// start delegates every direct child and, for Root and a, crosses one question
+// along the hierarchy: both ask before either answers.
+func (m *controlledManager) start(ctx context.Context) (string, error) {
+	tools := m.spec.Tools
+	for _, child := range m.spec.Manager.Children {
+		if err := tools.Delegate(ctx, child, "Realize or review your own modeled responsibility.", nil); err != nil {
+			return "", err
 		}
 	}
-	if m.calls == 1 {
-		for _, child := range m.spec.Manager.Children {
-			if err := tools.Delegate(ctx, child, "Realize or review your own modeled responsibility.", nil); err != nil {
-				return run.Response{}, err
-			}
-		}
+	if m.owner.crossed == nil || m.spec.Manager.Package != "." && m.spec.Manager.Package != "a" {
+		return "", nil
 	}
-	var pending []*run.Handoff
-	if m.calls == 1 && (m.spec.Manager.Package == "a" || m.spec.Manager.Package == "b") {
-		other := "a"
-		if m.spec.Manager.Package == "a" {
-			other = "b"
+	other := "a"
+	if m.spec.Manager.Package == "a" {
+		other = "."
+	}
+	id, err := tools.Ask(ctx, other, "What is your controlled observation?")
+	if err != nil {
+		return "", err
+	}
+	m.owner.mu.Lock()
+	m.owner.asked++
+	if m.owner.asked == 2 {
+		close(m.owner.crossed)
+	}
+	m.owner.mu.Unlock()
+	select {
+	case <-m.owner.crossed:
+	case <-ctx.Done():
+		return "", ctx.Err()
+	}
+	return id, nil
+}
+
+// handle answers incoming questions and keeps answers and child handoffs. A
+// reviewed child asked to reassess reports a late Reject through judge.
+func (m *controlledManager) handle(ctx context.Context, e run.Event) error {
+	tools := m.spec.Tools
+	switch {
+	case e.Question != nil:
+		if e.Question.Text == "Reassess the already accepted handoff." {
+			if err := tools.Reply(ctx, e.Question.ID, "late required correction"); err != nil {
+				return err
+			}
+			return tools.Judge(ctx, run.Reject, []run.Finding{{Text: "Late required correction discovered after accepted integration."}})
 		}
-		id, err := tools.Ask(ctx, other, "What is your controlled observation?")
+		return tools.Reply(ctx, e.Question.ID, "controlled answer from "+m.spec.Manager.Package)
+	case e.Answer != nil:
+		m.answers[e.Answer.ID] = e.Answer.Text
+	case e.Handoff != nil:
+		m.pending = append(m.pending, *e.Handoff)
+	}
+	return nil
+}
+
+// answer awaits the answer to the asker's own question, handling other events.
+func (m *controlledManager) answer(ctx context.Context, id string) error {
+	for {
+		if _, ok := m.answers[id]; ok {
+			return nil
+		}
+		e, err := m.spec.Tools.Await(ctx)
 		if err != nil {
-			return run.Response{}, err
+			return err
 		}
-		m.owner.mu.Lock()
-		m.owner.asked++
-		if m.owner.asked == 2 {
-			close(m.owner.crossed)
-		}
-		m.owner.mu.Unlock()
-		select {
-		case <-m.owner.crossed:
-		case <-ctx.Done():
-			return run.Response{}, ctx.Err()
-		}
-		for {
-			e, err := tools.Await(ctx)
-			if err != nil {
-				return run.Response{}, err
-			}
-			if e.Question != nil {
-				if err = tools.Reply(ctx, e.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
-					return run.Response{}, err
-				}
-			}
-			if e.Handoff != nil {
-				pending = append(pending, e.Handoff)
-			}
-			if e.Answer != nil && e.Answer.ID == id {
-				if e.Answer.Text != "controlled answer from "+other {
-					return run.Response{}, fmt.Errorf("wrong correlated answer")
-				}
-				break
-			}
+		if err = m.handle(ctx, e); err != nil {
+			return err
 		}
 	}
-	remaining := 0
-	if m.calls == 1 {
-		remaining = len(m.spec.Manager.Children)
-	}
-	for remaining > 0 {
-		var h *run.Handoff
-		if len(pending) > 0 {
-			h = pending[0]
-			pending = pending[1:]
-		} else {
-			e, err := tools.Await(ctx)
-			if err != nil {
-				return run.Response{}, err
-			}
-			if e.Question != nil {
-				if err = tools.Reply(ctx, e.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
-					return run.Response{}, err
-				}
-			}
-			h = e.Handoff
-			if h == nil {
-				continue
-			}
+}
+
+func (m *controlledManager) handoff(ctx context.Context) (run.Handoff, error) {
+	for len(m.pending) == 0 {
+		e, err := m.spec.Tools.Await(ctx)
+		if err != nil {
+			return run.Handoff{}, err
 		}
-		// The child already supplied a fixed handoff. Its same Session must
-		// remain reachable through an ordinary follow-up message.
+		if err = m.handle(ctx, e); err != nil {
+			return run.Handoff{}, err
+		}
+	}
+	h := m.pending[0]
+	m.pending = m.pending[1:]
+	return h, nil
+}
+
+func (m *controlledManager) work(ctx context.Context) error {
+	tools := m.spec.Tools
+	open := map[string]bool{}
+	if m.tasks == 1 {
+		for _, child := range m.spec.Manager.Children {
+			open[child] = true
+		}
+	}
+	for len(open) != 0 {
+		h, err := m.handoff(ctx)
+		if err != nil {
+			return err
+		}
+		// A fixed child stays reachable for questions in its own Session.
 		id, err := tools.Ask(ctx, h.Manager, "Explain your completed fixed handoff.")
 		if err != nil {
-			return run.Response{}, err
+			return err
 		}
-		for {
-			event, err := tools.Await(ctx)
-			if err != nil {
-				return run.Response{}, err
-			}
-			if event.Handoff != nil {
-				pending = append(pending, event.Handoff)
-			}
-			if event.Question != nil {
-				if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
-					return run.Response{}, err
-				}
-			}
-			if event.Answer != nil && event.Answer.ID == id {
-				if event.Answer.Text != "controlled answer from "+h.Manager {
-					return run.Response{}, fmt.Errorf("late answer mismatch")
-				}
-				break
-			}
+		if err = m.answer(ctx, id); err != nil {
+			return err
+		}
+		if m.answers[id] != "controlled answer from "+h.Manager {
+			return fmt.Errorf("late answer mismatch %q", m.answers[id])
 		}
 		m.owner.mu.Lock()
 		m.owner.lateQuestions++
 		m.owner.mu.Unlock()
-		if m.spec.Mandate == run.Implement && h.Manager == "a/deep" && strings.Contains(h.Diff, "+wrong") {
-			finding := []run.Finding{{Text: "The complete fixed diff shows wrong; correct the child artifact."}}
-			if err := tools.Review(ctx, h.Manager, h.Result.ID, run.Reject, finding); err != nil {
-				return run.Response{}, err
+		correct := func(text, task string) error {
+			findings := []run.Finding{{Text: text}}
+			if err := tools.Review(ctx, h.Manager, h.Result.ID, run.Reject, findings); err != nil {
+				return err
 			}
-			if err := tools.Delegate(ctx, h.Manager, "Correct the reviewed child artifact.", finding); err != nil {
-				return run.Response{}, err
+			if err := tools.Delegate(ctx, h.Manager, task, findings); err != nil {
+				return err
 			}
 			m.owner.mu.Lock()
 			m.owner.corrections++
 			m.owner.mu.Unlock()
+			return nil
+		}
+		switch {
+		case h.Decision == run.Submitted && h.Check != nil && !h.Check.Valid:
+			refusal := tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil)
+			if refusal == nil {
+				return fmt.Errorf("invalid child candidate %s was accepted", h.Result.ID)
+			}
+			m.owner.refused(refusal)
+			if err = correct(h.Check.Diagnostic, "Repair the rejected child candidate."); err != nil {
+				return err
+			}
+			continue
+		case m.spec.Mandate == run.Implement && h.Manager == "a/deep" && strings.Contains(h.Diff, "+wrong"):
+			if err = correct("The complete fixed diff shows wrong; correct the child artifact.", "Correct the reviewed child artifact."); err != nil {
+				return err
+			}
+			continue
+		case h.Decision == run.Reject && m.owner.lateReject && h.Manager == "a/deep":
+			if err = correct("Correct the actual late required finding.", "Correct late rejection."); err != nil {
+				return err
+			}
 			continue
 		}
-		if err := tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err != nil {
-			return run.Response{}, err
+		if err = tools.Review(ctx, h.Manager, h.Result.ID, run.Approve, nil); err != nil {
+			return err
 		}
+		delete(open, h.Manager)
 		if m.owner.lateReject && h.Manager == "a/deep" && !m.owner.didLateReject {
 			m.owner.didLateReject = true
+			open[h.Manager] = true
 			id, err := tools.Ask(ctx, h.Manager, "Reassess the already accepted handoff.")
 			if err != nil {
-				return run.Response{}, err
+				return err
 			}
-			for {
-				event, err := tools.Await(ctx)
-				if err != nil {
-					return run.Response{}, err
-				}
-				if event.Question != nil {
-					if err = tools.Reply(ctx, event.Question.ID, "controlled answer from "+m.spec.Manager.Package); err != nil {
-						return run.Response{}, err
-					}
-				}
-				if event.Handoff != nil {
-					pending = append(pending, event.Handoff)
-				}
-				if event.Answer != nil && event.Answer.ID == id {
-					if event.Answer.Text != "late required correction" {
-						return run.Response{}, fmt.Errorf("late finding not actually delivered")
-					}
-					break
-				}
+			if err = m.answer(ctx, id); err != nil {
+				return err
 			}
-			findings := []run.Finding{{Text: "Correct the actual late required finding."}}
-			if err = tools.Delegate(ctx, h.Manager, "Correct late rejection.", findings); err != nil {
-				return run.Response{}, err
+			if m.answers[id] != "late required correction" {
+				return fmt.Errorf("late finding not actually delivered")
 			}
-			m.owner.corrections++
 			continue
 		}
 		if m.spec.Mandate == run.Implement && h.Manager == "a/deep" && !m.owner.acceptedRepair && !m.owner.lateReject {
 			m.owner.acceptedRepair = true
+			open[h.Manager] = true
 			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "out/deep.txt"), []byte("parent revision\n"), 0600); err != nil {
-				return run.Response{}, err
+				return err
 			}
 			findings := []run.Finding{{Text: "Correct accepted child work on the integrated parent baseline."}}
 			if err := tools.Delegate(ctx, h.Manager, "Repair after parent integration.", findings); err != nil {
-				return run.Response{}, err
+				return err
 			}
 			m.owner.mu.Lock()
 			m.owner.corrections++
 			m.owner.mu.Unlock()
-			continue
 		}
-		remaining--
 	}
 	if _, err := tools.AppendNote(ctx, "controlled test", m.spec.Manager.Package+" participated"); err != nil {
-		return run.Response{}, err
+		return err
 	}
-	if m.spec.Mandate == run.Implement && m.owner.badManifest && m.spec.Manager.Package == "." {
+	decision, findings := run.Submitted, []run.Finding(nil)
+	if m.spec.Mandate == run.Implement {
+		realize := m.realize
+		if m.owner.realization != nil {
+			realize = func(ctx context.Context) error { return m.owner.realization(ctx, m) }
+		}
+		if err := realize(ctx); err != nil {
+			return err
+		}
+		if m.judged {
+			m.task, m.judged = nil, false
+			return nil
+		}
+	} else {
+		// Review scratch is deliberately invalid product content; it must never
+		// replace the fixed input candidate returned by Assessment or Verify.
+		if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "review-scratch.txt"), []byte("scratch"), 0600); err != nil {
+			return err
+		}
+		decision = run.Approve
+		if m.owner.forceDecision != "" {
+			decision, findings = m.owner.forceDecision, []run.Finding{{Text: "controlled semantic rejection"}}
+		}
+	}
+	if err := m.judge(ctx, decision, findings); err != nil {
+		return err
+	}
+	m.task, m.judged = nil, false
+	return nil
+}
+
+func (m *controlledManager) judge(ctx context.Context, decision run.Decision, findings []run.Finding) error {
+	err := m.spec.Tools.Judge(ctx, decision, findings)
+	if err == nil {
+		m.judgments++
+		m.judged = true
+	}
+	return err
+}
+
+func (m *controlledManager) realize(ctx context.Context) error {
+	root := m.spec.Workspace.Location().Directory
+	if m.owner.badManifest && m.spec.Manager.Package == "." {
 		entry, found := m.spec.Prepared.Attempt().Model().Inputs().Raw.Census.Lookup(fixturePathForControlled(".markitect/model.yaml"))
 		if !found {
-			return run.Response{}, fmt.Errorf("captured manifest absent")
+			return fmt.Errorf("captured manifest absent")
 		}
-		data := entry.Bytes()
-		if m.calls == 1 {
-			data = []byte("formatVersion: invalid\nid: run-fixture\n")
+		manifest := filepath.Join(root, ".markitect/model.yaml")
+		if err := os.WriteFile(manifest, []byte("formatVersion: invalid\nid: run-fixture\n"), 0600); err != nil {
+			return err
 		}
-		if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, ".markitect/model.yaml"), data, 0600); err != nil {
-			return run.Response{}, err
+		// Root has no parent: its own completion check refuses the judgment.
+		err := m.judge(ctx, run.Submitted, nil)
+		if err == nil {
+			return fmt.Errorf("invalid Root manifest was accepted")
+		}
+		m.owner.refused(err)
+		if err := os.WriteFile(manifest, entry.Bytes(), 0600); err != nil {
+			return err
 		}
 	}
-	if m.spec.Mandate == run.Implement {
-		if m.owner.noChange {
-			return run.Response{Decision: run.Submitted}, nil
-		}
-		path, value := "", ""
-		if m.spec.Manager.Package == "a" {
-			path, value = "out/a.txt", "parent result\n"
-		}
-		if m.spec.Manager.Package == "a/deep" {
-			path, value = "out/deep.txt", "wrong\n"
-			if len(message.Feedback) > 0 {
-				value = "corrected\n"
-				if message.Task == "Correct late rejection." {
-					value = "late corrected\n"
-				}
-				if message.Task == "Repair after parent integration." {
-					value = "repaired after integration\n"
-				}
+	if m.owner.noChange {
+		return nil
+	}
+	path, value := "", ""
+	if m.spec.Manager.Package == "a" {
+		path, value = "out/a.txt", "parent result\n"
+	}
+	if m.spec.Manager.Package == "a/deep" {
+		path, value = "out/deep.txt", "wrong\n"
+		if len(m.task.Findings) > 0 {
+			value = "corrected\n"
+			if m.task.Task == "Correct late rejection." {
+				value = "late corrected\n"
+			}
+			if m.task.Task == "Repair after parent integration." {
+				value = "repaired after integration\n"
 			}
 		}
-		if path != "" {
-			if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, filepath.FromSlash(path)), []byte(value), 0600); err != nil {
-				return run.Response{}, err
-			}
-		}
-		return run.Response{Decision: run.Submitted}, nil
 	}
-	// Review scratch is deliberately invalid product content; it must never
-	// replace the fixed input candidate returned by Assessment or Verify.
-	if err := os.WriteFile(filepath.Join(m.spec.Workspace.Location().Directory, "review-scratch.txt"), []byte("scratch"), 0600); err != nil {
-		return run.Response{}, err
+	if path == "" {
+		return nil
 	}
-	if m.owner.forceDecision != "" {
-		return run.Response{Decision: m.owner.forceDecision, Findings: []run.Finding{{Text: "controlled semantic rejection"}}}, nil
-	}
-	return run.Response{Decision: run.Approve}, nil
+	return os.WriteFile(filepath.Join(root, filepath.FromSlash(path)), []byte(value), 0600)
 }
 
 func TestCompleteHierarchyUsesRealGitAndClosedDurableStateForEveryMandate(t *testing.T) {
@@ -987,36 +991,23 @@ type partialLibrarySessions struct {
 	controlled      *controlledManagers
 	libraryAttempts int
 	fail            bool
+	rootRefusal     string
 }
-type partialLibrarySession struct {
-	run.Session
-	owner *partialLibrarySessions
-	spec  run.SessionSpec
+
+func newPartialLibrarySessions(fail bool) *partialLibrarySessions {
+	s := &partialLibrarySessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, fail: fail}
+	s.controlled.realization = s.realize
+	return s
 }
 
 func (s *partialLibrarySessions) Open(ctx context.Context, spec run.SessionSpec) (run.Session, error) {
-	base, err := s.controlled.Open(ctx, spec)
-	if err != nil {
-		return nil, err
-	}
-	return &partialLibrarySession{Session: base, owner: s, spec: spec}, nil
+	return s.controlled.Open(ctx, spec)
 }
-func (s *partialLibrarySession) Exchange(ctx context.Context, message run.Message) (run.Response, error) {
-	if strings.HasPrefix(message.Task, "Answer pending Manager questions") {
-		return s.Session.Exchange(ctx, message)
-	}
-	feedback := fmt.Sprint(message.Feedback)
-	if strings.Contains(feedback, "check project-tests exited") {
-		if s.spec.Manager.Package != "." {
-			return run.Response{}, fmt.Errorf("project-wide check blocked partial library before handoff: %s", feedback)
-		}
-		return run.Response{Decision: run.Reject, Findings: []run.Finding{{Text: "The exact aggregate Go suite failed; this candidate is not acceptable."}}}, nil
-	}
-	response, err := s.Session.Exchange(ctx, message)
-	if err != nil {
-		return response, err
-	}
-	root := s.spec.Workspace.Location().Directory
+
+// realize writes each Manager's part after its delegation and child reviews.
+// Root's own completion check runs the aggregate suite on its judged state.
+func (s *partialLibrarySessions) realize(ctx context.Context, m *controlledManager) error {
+	root := m.spec.Workspace.Location().Directory
 	write := func(name, content string) error {
 		path := filepath.Join(root, filepath.FromSlash(name))
 		if err := os.MkdirAll(filepath.Dir(path), 0700); err != nil {
@@ -1044,50 +1035,50 @@ func (s *partialLibrarySession) Exchange(ctx context.Context, message run.Messag
 		content = append(content, []byte("  - path: "+name+"\n    form: "+form+"\n    realizes: [a/Thing]\n    why: Controlled aggregate Go regression.\n")...)
 		return write(shard, string(content))
 	}
-	switch s.spec.Manager.Package {
+	switch m.spec.Manager.Package {
 	case "a":
-		s.owner.libraryAttempts++
+		s.libraryAttempts++
 		// Root scaffolding and peer code were authored after initial delegation.
 		// They must not appear through live propagation into this private copy.
 		for _, path := range []string{"realization/go.mod", "realization/peer/peer.go"} {
 			if _, err := os.Stat(filepath.Join(root, path)); !errors.Is(err, os.ErrNotExist) {
-				return run.Response{}, fmt.Errorf("partial library unexpectedly has %s: %v", path, err)
+				return fmt.Errorf("partial library unexpectedly has %s: %v", path, err)
 			}
 		}
-		if s.owner.libraryAttempts == 1 {
-			if err := write("realization/library/library_test.go", "package library\nimport (\"testing\"; \"fixture/peer\")\nfunc TestIntegratedPeer(t *testing.T){if peer.Value()!=1{t.Fatal(\"peer integration failed\")}}\n"); err != nil {
-				return response, err
-			}
-			// First submission is deliberately unregistered: structural validation
-			// must still refuse it before a valid partial handoff can reach Root.
-		} else {
-			if !strings.Contains(feedback, "file.unexplained") || !strings.Contains(feedback, "realization/library/library_test.go") {
-				return run.Response{}, fmt.Errorf("missing child structural refusal: %s", feedback)
-			}
-			if err := register("a", "realization/library/library_test.go"); err != nil {
-				return response, err
-			}
+		if s.libraryAttempts == 1 {
+			// First submission is deliberately unregistered: its parent receives it
+			// with the failing structural check and cannot accept it.
+			return write("realization/library/library_test.go", "package library\nimport (\"testing\"; \"fixture/peer\")\nfunc TestIntegratedPeer(t *testing.T){if peer.Value()!=1{t.Fatal(\"peer integration failed\")}}\n")
 		}
+		feedback := fmt.Sprint(m.task.Findings)
+		if !strings.Contains(feedback, "file.unexplained") || !strings.Contains(feedback, "realization/library/library_test.go") {
+			return fmt.Errorf("missing child structural refusal: %s", feedback)
+		}
+		return register("a", "realization/library/library_test.go")
 	case "b":
 		value := "1"
-		if s.owner.fail {
+		if s.fail {
 			value = "2"
 		}
 		if err := write("realization/peer/peer.go", "package peer\nfunc Value()int{return "+value+"}\n"); err != nil {
-			return response, err
+			return err
 		}
-		if err := register("b", "realization/peer/peer.go"); err != nil {
-			return response, err
-		}
+		return register("b", "realization/peer/peer.go")
 	case ".":
 		if err := write("realization/go.mod", "module fixture\ngo 1.23\n"); err != nil {
-			return response, err
+			return err
 		}
 		if err := register(".", "realization/go.mod"); err != nil {
-			return response, err
+			return err
 		}
+		err := m.judge(ctx, run.Submitted, nil)
+		if err == nil || !strings.Contains(err.Error(), "check project-tests exited") {
+			return err
+		}
+		s.rootRefusal = err.Error()
+		return m.judge(ctx, run.Reject, []run.Finding{{Text: "The exact aggregate Go suite failed; this candidate is not acceptable."}})
 	}
-	return response, nil
+	return nil
 }
 
 // The failing path traverses the actual Apply/Workflow gate and must never
@@ -1116,7 +1107,7 @@ func TestPartialLibraryHandoffDefersProjectSuiteToExactAggregateRoot(t *testing.
 			if err != nil {
 				t.Fatal(err)
 			}
-			sessions := &partialLibrarySessions{controlled: &controlledManagers{crossed: make(chan struct{}), noChange: true, acceptedRepair: true}, fail: fail}
+			sessions := newPartialLibrarySessions(fail)
 			request := run.Request{ID: "partial-library", Project: "fixture", Prepared: prepared, Input: input, Mandate: run.Implement, MaxManagers: 5, Allowance: run.NewAllowance(time.Now().Add(2*time.Minute), 100), MessageTimeout: time.Minute, CleanupTimeout: 3 * time.Second, PersistenceTimeout: 3 * time.Second}
 			executor := partialLibraryExecutor{sessions: sessions, git: git, records: records}
 			var result run.Result
@@ -1133,8 +1124,8 @@ func TestPartialLibraryHandoffDefersProjectSuiteToExactAggregateRoot(t *testing.
 			if err != nil || result.Technical != run.Completed {
 				t.Fatalf("partial handoff did not reach checked aggregate: %s %v", result.Technical, err)
 			}
-			if sessions.libraryAttempts != 2 {
-				t.Fatal("invalid child was not repaired before delivery", sessions.libraryAttempts)
+			if sessions.libraryAttempts != 2 || len(sessions.controlled.refusals) != 1 || !strings.Contains(sessions.controlled.refusals[0], "realization/library/library_test.go") {
+				t.Fatal("invalid child did not reach its parent and get repaired", sessions.libraryAttempts, sessions.controlled.refusals)
 			}
 			var root run.Handoff
 			for _, h := range result.Handoffs {
@@ -1144,6 +1135,14 @@ func TestPartialLibraryHandoffDefersProjectSuiteToExactAggregateRoot(t *testing.
 				if h.Manager == "a" && (h.Review == nil || h.Review.Decision != run.Approve) {
 					t.Fatal("partial library did not reach parent review", h)
 				}
+				// The library imports sibling code integrated only at Root. That
+				// outstanding integration is not invalidity of the child state.
+				if h.Manager == "a" && (h.Check == nil || !h.Check.Valid || len(h.Check.Checks) != 0) {
+					t.Fatal("child lacking only a sibling's integration was judged invalid or reported an unrun check", h.Check)
+				}
+			}
+			if fail != (sessions.rootRefusal != "") {
+				t.Fatal("Root completion diagnostic did not match the aggregate suite", sessions.rootRefusal)
 			}
 			if len(result.Checks) != 1 || result.Checks[0].Commit != root.Result.ID || result.Checks[0].ID != "project-tests" {
 				t.Fatal("full suite lost exact aggregate binding", result.Checks, root.Result)

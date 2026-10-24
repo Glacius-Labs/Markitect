@@ -5,7 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"reflect"
-	"sync"
+	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
@@ -13,111 +13,88 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/organization"
 )
 
-func inboxExecution() (*execution, *managerState, *managerState) {
+// inboxExecution builds Root ".", its child "a" and grandchild "a/deep" with
+// controlled ports; no Session runs unless a test supplies one.
+func inboxExecution() (*execution, *managerState, *managerState, *managerState) {
 	ctx, cancel := context.WithCancel(context.Background())
-	a := &managerState{manager: organization.Manager{Package: ".", Children: []string{"a"}}, running: true, working: true, accepting: true, inbox: make(chan Event, 1)}
-	b := &managerState{manager: organization.Manager{Package: "a", Parent: "."}, running: true, working: true, accepting: true, inbox: make(chan Event, 1)}
-	x := &execution{ctx: ctx, cancel: cancel, request: Request{ID: "inbox-test", Allowance: NewAllowance(time.Now().Add(time.Second), 10)}, states: map[string]*managerState{".": a, "a": b}, questions: map[string]Question{}, answered: map[string]bool{}}
-	return x, a, b
+	root := &managerState{manager: organization.Manager{Package: ".", Children: []string{"a"}}, signal: make(chan struct{}, 1)}
+	a := &managerState{manager: organization.Manager{Package: "a", Parent: ".", Children: []string{"a/deep"}}, signal: make(chan struct{}, 1)}
+	deep := &managerState{manager: organization.Manager{Package: "a/deep", Parent: "a"}, signal: make(chan struct{}, 1)}
+	x := &execution{ctx: ctx, cancel: cancel, settled: make(chan struct{}, 1), request: Request{ID: "inbox-test", Mandate: Implement, Allowance: NewAllowance(time.Now().Add(time.Minute), 10)}, states: map[string]*managerState{".": root, "a": a, "a/deep": deep}, questions: map[string]*question{}}
+	return x, root, a, deep
 }
 
-func TestConcurrentLateFindingCannotBeOverwrittenByCandidateCompletion(t *testing.T) {
-	for i := 0; i < 100; i++ {
-		x, parent, child := inboxExecution()
-		parent.mu.Lock()
-		var started, done sync.WaitGroup
-		started.Add(2)
-		done.Add(2)
-		go func() {
-			defer done.Done()
-			started.Done()
-			parent.finish(Commit{ID: "fixed", Tree: "tree"}, Response{Decision: Submitted, Findings: []Finding{{Manager: ".", Text: "ordinary submission"}}}, "")
-		}()
-		go func() {
-			defer done.Done()
-			started.Done()
-			if err := x.observeLate(child, Response{Decision: ModelBlocker, Findings: []Finding{{Text: "late required blocker"}}}); err != nil {
-				t.Error(err)
-			}
-		}()
-		started.Wait()
-		parent.mu.Unlock()
-		done.Wait()
-		x.cancel()
-		if parent.handoff.Decision != ModelBlocker || len(parent.handoff.Findings) != 2 {
-			t.Fatal("candidate completion lost concurrent required finding", parent.handoff)
-		}
-	}
+// accepted puts s into the reviewed phase with an approved fixed handoff and
+// the judgment that produced it.
+func accepted(s *managerState, commit string) {
+	s.a.phase = reviewed
+	s.a.version = 1
+	s.a.judgment = &judgment{decision: Submitted}
+	s.a.handoff = Handoff{Manager: s.manager.Package, Result: Commit{ID: commit, Tree: commit + "-tree"}, Decision: Submitted, Review: &ParentReview{Decision: Approve}}
+	s.a.gen, s.a.sent = 1, 1
 }
 
-func TestAnswerPublicationIsRetryableAndAcknowledgedOnlyByRequester(t *testing.T) {
-	x, a, b := inboxExecution()
+func TestLateRejectInvalidatesAcceptanceWithoutRejectingAncestors(t *testing.T) {
+	x, root, a, deep := inboxExecution()
 	defer x.cancel()
-	id, err := x.ask(x.ctx, a, "a", "actual question")
-	if err != nil {
-		t.Fatal(err)
+	x.closing = true // observe state only; no driver starts
+	accepted(deep, "deep")
+	a.a.phase, a.a.version = active, 1
+	a.a.judgment = &judgment{decision: Submitted}
+	root.a.phase, root.a.version = active, 1
+	x.mu.Lock()
+	x.lateLocked(deep, Reject, origin([]Finding{{Text: "late required correction"}}, "a/deep"))
+	x.mu.Unlock()
+	if deep.a.phase != fixed || deep.a.handoff.Review != nil || deep.a.handoff.Decision != Reject || deep.a.late != Reject || deep.a.gen != 2 {
+		t.Fatal("late finding did not stay in force or keep the old acceptance", deep.a)
 	}
-	event, err := x.tools(b).Await(x.ctx)
-	if err != nil || event.Question.ID != id {
-		t.Fatal(event, err)
+	if f := deep.a.handoff.Findings; len(f) != 1 || f[0].Manager != "a/deep" {
+		t.Fatal("late Finding lost its host-set origin", f)
 	}
-	// Saturating the asker's inbox cannot hold the global correlation lock.
-	a.inbox <- Event{Question: &Question{ID: "unrelated"}}
-	if err = x.reply(x.ctx, b, id, "actual answer"); err == nil {
-		t.Fatal("full inbox fabricated publication")
+	if a.a.judgment != nil || len(a.a.feedback) != 1 || !strings.Contains(a.a.feedback[0].Text, "a/deep reported reject") || !strings.HasSuffix(a.a.feedback[0].Text, "; review its changed handoff and judge again") {
+		t.Fatal("parent judgment resting on the acceptance stayed valid", a.a)
 	}
-	if x.answered[id] || len(x.questions) != 1 {
-		t.Fatal("failed publication consumed correlation")
+	if len(a.queue) != 1 || a.queue[0].child != "a/deep" || a.queue[0].gen != 2 {
+		t.Fatal("parent did not receive the changed handoff", a.queue)
 	}
-	cancelled, cancel := context.WithCancel(x.ctx)
-	cancel()
-	if err = x.reply(cancelled, b, id, "canceled"); err == nil {
-		t.Fatal("canceled reply published")
+	if root.a.phase != active || root.a.handoff.Decision != "" || len(root.a.feedback) != 0 {
+		t.Fatal("late finding touched an ancestor above the nearest active one", root.a)
 	}
-	<-a.inbox
-	if err = x.reply(x.ctx, a, id, "forged"); err == nil {
-		t.Fatal("foreign Manager replied")
-	}
-	if err = x.reply(x.ctx, b, id, "actual answer"); err != nil {
-		t.Fatal(err)
-	}
-	if len(x.questions) != 1 || !x.answered[id] || x.pendingInputLocked("a") || !x.pendingInputLocked(".") {
-		t.Fatal("answered inbound question caused extra inference or unread answer counted as resolved")
-	}
-	if err = x.reply(x.ctx, b, id, "duplicate"); err == nil {
-		t.Fatal("duplicate reply admitted")
-	}
-	event, err = x.tools(a).Await(x.ctx)
-	if err != nil || event.Answer.ID != id || event.Answer.Text != "actual answer" || len(x.questions) != 0 {
-		t.Fatal(event, err)
+	// A correction resolves the late Reject; a model blocker never is.
+	deep.a.review(ParentReview{Decision: Reject})
+	deep.a.assign(Assignment{Task: "correct"})
+	if deep.a.late != "" || deep.a.phase != assigned {
+		t.Fatal("correction kept the resolved late Reject", deep.a)
 	}
 }
 
-func TestCanceledQuestionEnqueueLeavesNoCorrelation(t *testing.T) {
-	x, a, b := inboxExecution()
+func TestLateBlockerReopensHandedOffAncestorsUpToTheActiveOne(t *testing.T) {
+	x, root, a, deep := inboxExecution()
 	defer x.cancel()
-	b.inbox <- Event{}
-	ctx, cancel := context.WithTimeout(x.ctx, time.Millisecond)
-	defer cancel()
-	id, err := x.ask(ctx, a, "a", "cannot enqueue")
-	if err == nil || id != "" || len(x.questions) != 0 {
-		t.Fatal("unpublished question escaped", id, err)
+	x.closing = true
+	accepted(deep, "deep")
+	accepted(a, "a")
+	root.a.phase, root.a.version = active, 1
+	root.a.judgment = &judgment{decision: Submitted}
+	x.mu.Lock()
+	x.lateLocked(deep, ModelBlocker, []Finding{{Manager: "a/deep", Text: "required model condition contradicts itself"}})
+	x.mu.Unlock()
+	if !deep.a.blocked() || deep.a.handoff.Decision != ModelBlocker {
+		t.Fatal("late blocker was discarded", deep.a)
 	}
-}
-
-func TestLateBlockerInvalidatesPreviouslyAcceptedHierarchy(t *testing.T) {
-	x, a, b := inboxExecution()
-	defer x.cancel()
-	a.handoff = Handoff{Manager: ".", Decision: Submitted}
-	b.handoff = Handoff{Manager: "a", Decision: Submitted, Review: &ParentReview{Decision: Approve}}
-	if err := x.observeLate(b, Response{}); err != nil || b.handoff.Review.Decision != Approve {
-		t.Fatal("answer-only message changed acceptance", err)
+	// a's handoff rests on its acceptance of a/deep: a works again, and Root's
+	// judgment resting on a's handoff no longer holds. No decision is forced.
+	if a.a.phase != active || a.a.judgment != nil || a.a.handoff.Decision != Submitted || len(a.a.feedback) != 1 {
+		t.Fatal("handed-off parent was not reopened or its decision was forced", a.a)
 	}
-	if err := x.observeLate(b, Response{Decision: ModelBlocker, Findings: []Finding{{Text: "required model condition contradicts itself"}}}); err != nil {
-		t.Fatal(err)
+	if root.a.judgment != nil || root.a.phase != active || len(root.a.feedback) != 1 || !strings.HasSuffix(root.a.feedback[0].Text, "so a works on its assignment again; await its renewed handoff, review it and judge again") {
+		t.Fatal("Root judgment resting on the reopened handoff stayed valid", root.a)
 	}
-	if a.handoff.Decision != ModelBlocker || b.handoff.Review.Decision != ModelBlocker || a.handoff.Findings[0].Manager != "a" {
-		t.Fatal("late blocker was discarded")
+	x.mu.Lock()
+	err := x.childrenLocked(root)
+	x.mu.Unlock()
+	if err == nil || !strings.Contains(err.Error(), "child a is still working") {
+		t.Fatal("Root could judge over a reopened child", err)
 	}
 	if concreteFindings([]Finding{{Text: " \n"}}) {
 		t.Fatal("blank finding authorized correction")
@@ -125,18 +102,81 @@ func TestLateBlockerInvalidatesPreviouslyAcceptedHierarchy(t *testing.T) {
 }
 
 func TestOwnModelBlockerDominatesChildRejectAtCompletionAndAggregation(t *testing.T) {
-	x, parent, child := inboxExecution()
+	x, root, a, _ := inboxExecution()
 	defer x.cancel()
-	child.working = false
-	child.judgment = Reject
-	child.handoff = Handoff{Manager: "a", Decision: Reject, Review: &ParentReview{Decision: Reject, Findings: []Finding{{Text: "child issue"}}}}
-	h := parent.finish(Commit{ID: "fixed", Tree: "tree"}, Response{Decision: ModelBlocker, Findings: []Finding{{Manager: ".", Text: "own fixed-model contradiction"}}}, Reject)
-	if h.Decision != ModelBlocker {
-		t.Fatal("child rejection downgraded own blocker", h)
+	a.a.phase = reviewed
+	a.a.handoff = Handoff{Manager: "a", Decision: Reject, Review: &ParentReview{Decision: Reject, Findings: []Finding{{Text: "child issue"}}}}
+	if got := requiredDecision(ModelBlocker, x.childOutcomeLocked(root)); got != ModelBlocker {
+		t.Fatal("child rejection downgraded own blocker", got)
 	}
-	decision, err := x.aggregate(parent)
-	if err != nil || decision != ModelBlocker || parent.handoff.Decision != ModelBlocker {
-		t.Fatal("aggregation downgraded own blocker", decision, err)
+	if got := requiredDecision(Submitted, x.childOutcomeLocked(root)); got != Reject {
+		t.Fatal("rejected child became submitted", got)
+	}
+}
+
+func TestAskFollowsTheHierarchyAndAwaitNeverWaitsForNothing(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	x.closing = true // questions are refused at admission; refusal names come first
+	for _, tc := range []struct {
+		from *managerState
+		to   string
+		want string
+	}{{deep, ".", "(a)"}, {root, "a/deep", "(a)"}, {a, "b", "(., a/deep)"}, {deep, "a/deep", "(a)"}} {
+		_, err := x.ask(context.Background(), tc.from, tc.to, "question")
+		if err == nil || !strings.Contains(err.Error(), tc.want) || !strings.Contains(err.Error(), "through the Managers in between") {
+			t.Fatal("question outside the hierarchy was not refused with its addressees", tc.from.manager.Package, tc.to, err)
+		}
+	}
+	x.closing = false
+	if _, err := x.await(context.Background(), a); err == nil || !strings.Contains(err.Error(), "nothing can arrive") || !strings.Contains(err.Error(), "you have no open work to wait for") {
+		t.Fatal("await waited without anything that can arrive", err)
+	}
+	// A working child that is idle itself waits for a: nothing can arrive.
+	deep.a.phase = active
+	x.questions["q"] = &question{Question: Question{ID: "q", From: "a/deep", To: "a", Text: "open"}, delivered: true}
+	if _, err := x.await(context.Background(), a); err == nil || !strings.Contains(err.Error(), "answer your open questions: q from a/deep") {
+		t.Fatal("await waited although every other Manager waits for it", err)
+	}
+	deep.running = true
+	ctx, cancel := context.WithTimeout(context.Background(), 20*time.Millisecond)
+	defer cancel()
+	if _, err := x.await(ctx, a); !errors.Is(err, context.DeadlineExceeded) {
+		t.Fatal("await did not wait for a working child", err)
+	}
+}
+
+func TestQuestionAnswerNeitherJudgesNorChangesTheAssignment(t *testing.T) {
+	x, root, a, _ := inboxExecution()
+	defer x.cancel()
+	accepted(a, "a")
+	root.a.phase, root.a.version = active, 1
+	before := a.a
+	// Keep drivers from starting: Sessions are absent in this unit test.
+	root.running, a.running = true, true
+	id, err := x.ask(context.Background(), root, "a", "Explain your fixed handoff.")
+	if err != nil {
+		t.Fatal(err)
+	}
+	event, err := x.await(context.Background(), a)
+	if err != nil || event.Question == nil || event.Question.ID != id {
+		t.Fatal(event, err)
+	}
+	if err = x.reply(context.Background(), root, id, "forged"); err == nil {
+		t.Fatal("foreign Manager replied")
+	}
+	if err = x.reply(context.Background(), a, id, "answer"); err != nil {
+		t.Fatal(err)
+	}
+	if err = x.reply(context.Background(), a, id, "duplicate"); err == nil {
+		t.Fatal("duplicate reply admitted")
+	}
+	event, err = x.await(context.Background(), root)
+	if err != nil || event.Answer == nil || event.Answer.Text != "answer" || len(x.questions) != 0 {
+		t.Fatal(event, err)
+	}
+	if !reflect.DeepEqual(a.a, before) || root.a.judgment != nil || root.a.phase != active {
+		t.Fatal("question and answer changed an assignment", a.a, root.a)
 	}
 }
 
@@ -182,22 +222,29 @@ func (r toolFailureRecords) Notes(context.Context, string) ([]Note, error) { ret
 func (r toolFailureRecords) Append(context.Context, Note) (Note, error)    { return Note{}, r.failure }
 
 func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
-	for _, stage := range []string{"notes", "append", "delegate-snapshot", "update", "diff", "review-snapshot", "integrate"} {
+	for _, stage := range []string{"notes", "append", "delegate-snapshot", "update", "diff", "review-snapshot", "integrate", "judge-snapshot", "check-snapshot"} {
 		t.Run(stage, func(t *testing.T) {
-			x, parent, child := inboxExecution()
+			x, _, parent, child := inboxExecution()
 			defer x.cancel()
 			injected := errors.New("actual port failure " + stage)
-			x.request.Mandate = Implement
 			x.executor = &Executor{Records: toolFailureRecords{failure: injected}}
 			parent.copy = toolFailureCopy{failure: injected}
-			child.copy = toolFailureCopy{stage: "update", failure: injected}
+			child.copy = toolFailureCopy{failure: injected}
+			parent.a.phase, parent.a.version = active, 1
+			// No driver starts: this test calls the tools directly.
+			parent.running, child.running = true, true
 			switch stage {
-			case "delegate-snapshot", "review-snapshot":
+			case "delegate-snapshot", "review-snapshot", "judge-snapshot", "check-snapshot":
 				parent.copy = toolFailureCopy{stage: "snapshot", failure: injected}
+				if stage == "judge-snapshot" {
+					accepted(child, "deep")
+				}
 			case "diff":
 				parent.copy = toolFailureCopy{stage: "diff", failure: injected}
 			case "integrate":
 				parent.copy = toolFailureCopy{stage: "integrate", failure: injected}
+			case "update":
+				child.copy = toolFailureCopy{stage: "update", failure: injected}
 			}
 			tools := x.tools(parent)
 			switch stage {
@@ -205,19 +252,25 @@ func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
 				_, _ = tools.ReadNotes(context.Background())
 			case "append":
 				_, _ = tools.AppendNote(context.Background(), "scope", "durable note")
-			case "delegate-snapshot", "update":
-				child.running = false
-				child.working = false
-				_ = tools.Delegate(context.Background(), "a", "concrete assignment", nil)
+			case "delegate-snapshot":
+				_ = tools.Delegate(context.Background(), "a/deep", "concrete assignment", nil)
+			case "update":
+				if err := tools.Delegate(context.Background(), "a/deep", "concrete assignment", nil); err != nil {
+					t.Fatal(err)
+				}
+				_, _ = x.tools(child).Await(context.Background())
 			case "diff":
-				parent.done = make(chan completion, 1)
-				parent.done <- completion{handoff: Handoff{Manager: "a", Result: Commit{ID: "fixed", Tree: "tree"}}}
+				child.a.fix(Handoff{Manager: "a/deep", Result: Commit{ID: "fixed", Tree: "tree"}, Decision: Submitted})
+				x.queueHandoffLocked(child)
 				_, _ = tools.Await(context.Background())
+			case "judge-snapshot":
+				_ = tools.Judge(context.Background(), Submitted, nil)
+			case "check-snapshot":
+				_, _ = tools.Check(context.Background())
 			default:
-				child.working = false
-				child.delivered = true
-				child.handoff = Handoff{Manager: "a", Result: Commit{ID: "fixed", Tree: "tree"}, Decision: Submitted}
-				_ = tools.Review(context.Background(), "a", "fixed", Approve, nil)
+				child.a.fix(Handoff{Manager: "a/deep", Result: Commit{ID: "fixed", Tree: "tree"}, Decision: Submitted, Check: &Check{Valid: true}})
+				child.a.sent = child.a.gen
+				_ = tools.Review(context.Background(), "a/deep", "fixed", Approve, nil)
 			}
 			if x.ctx.Err() == nil || !errors.Is(x.asyncErr, injected) {
 				t.Fatal("ignored port failure lost", x.ctx.Err(), x.asyncErr)
@@ -227,7 +280,7 @@ func TestIgnoredToolPortErrorsStillStopExecution(t *testing.T) {
 }
 
 func TestTerminalReceiptCutRejectsLateCallbacksAndDetachesStoredValues(t *testing.T) {
-	x, _, _ := inboxExecution()
+	x, _, _, _ := inboxExecution()
 	defer x.cancel()
 	observations := []CheckObservation{{ID: "observed", Receipt: CheckReceipt{Output: []byte("captured"), Directories: []string{"empty"}}}}
 	if err := x.recordChecks(observations); err != nil {
@@ -261,10 +314,10 @@ type admissionSession struct{ calls atomic.Int32 }
 
 type timedMessageSession struct{}
 
-func (timedMessageSession) Exchange(ctx context.Context, _ Message) (Response, error) {
+func (timedMessageSession) Exchange(ctx context.Context, _ Message) error {
 	<-ctx.Done()
-	// Even a provider returning a nominal judgment at timeout cannot erase it.
-	return Response{Decision: Submitted}, nil
+	// Even a provider returning without error at timeout cannot erase it.
+	return nil
 }
 func (timedMessageSession) Close(context.Context) error { return nil }
 
@@ -273,16 +326,16 @@ func TestExchangeEnforcesPerMessageLimitWithinOriginalRunDeadline(t *testing.T) 
 	defer cancel()
 	x := &execution{ctx: ctx, request: Request{MessageTimeout: 20 * time.Millisecond}}
 	start := time.Now()
-	_, err := x.exchange(&managerState{session: timedMessageSession{}}, Message{Task: "bounded"})
+	err := x.exchange(&managerState{session: timedMessageSession{}}, Message{Feedback: []Finding{{Text: "bounded"}}})
 	if !errors.Is(err, context.DeadlineExceeded) || time.Since(start) > time.Second || ctx.Err() != nil {
 		t.Fatal("message ignored its own limit or consumed whole-Run deadline", err, ctx.Err())
 	}
 	x.calls.Wait()
 }
 
-func (s *admissionSession) Exchange(context.Context, Message) (Response, error) {
+func (s *admissionSession) Exchange(context.Context, Message) error {
 	s.calls.Add(1)
-	return Response{}, errors.New("unexpected admitted Session")
+	return errors.New("unexpected admitted Session")
 }
 func (*admissionSession) Close(context.Context) error { return nil }
 
@@ -291,37 +344,30 @@ type admissionCopy struct {
 	entered, release chan struct{}
 }
 
-func (c admissionCopy) Update(context.Context, Copy, Commit) error {
+func (c admissionCopy) Snapshot(context.Context) (Commit, error) {
 	close(c.entered)
 	<-c.release
-	return nil
+	return Commit{ID: "fixed", Tree: "tree"}, nil
 }
 
 func TestDelegateCannotPublishAssignmentAfterExternalGitReturnsToShutdown(t *testing.T) {
 	for _, correction := range []bool{false, true} {
 		for _, stop := range []string{"closing", "context"} {
 			t.Run(fmt.Sprintf("correction=%v/%s", correction, stop), func(t *testing.T) {
-				x, parent, child := inboxExecution()
+				x, _, parent, child := inboxExecution()
 				defer x.cancel()
-				parent.done = make(chan completion, 1)
-				x.request.Mandate = Implement
-				parent.copy = toolFailureCopy{}
+				parent.a.phase, parent.a.version = active, 1
 				entered, release := make(chan struct{}), make(chan struct{})
-				child.copy = admissionCopy{entered: entered, release: release}
+				parent.copy = admissionCopy{entered: entered, release: release}
 				session := &admissionSession{}
 				child.session = session
-				child.assigned = correction
-				child.running = false
-				child.working = false
 				if correction {
-					child.delivered = true
-					child.handoff = Handoff{Manager: "a", Result: Commit{ID: "old", Tree: "old-tree"}, Review: &ParentReview{Decision: Approve}}
+					accepted(child, "old")
 				}
-				before := copyResult(Result{Handoffs: []Handoff{child.handoff}}).Handoffs[0]
-				oldIdle, oldBase := child.idle, child.base
+				before := child.a
 				returned := make(chan error, 1)
 				go func() {
-					returned <- x.tools(parent).Delegate(context.Background(), "a", "late task", []Finding{{Text: "concrete correction"}})
+					returned <- x.tools(parent).Delegate(context.Background(), "a/deep", "late task", []Finding{{Text: "concrete correction"}})
 				}()
 				<-entered
 				x.mu.Lock()
@@ -342,49 +388,179 @@ func TestDelegateCannotPublishAssignmentAfterExternalGitReturnsToShutdown(t *tes
 				}
 				x.active.Wait()
 				x.calls.Wait()
-				child.mu.Lock()
-				defer child.mu.Unlock()
-				if child.assigned != correction || child.running || child.working || child.idle != oldIdle || child.base != oldBase || !reflect.DeepEqual(before, child.handoff) || len(child.inbox) != 0 || session.calls.Load() != 0 {
-					t.Fatal("late delegation changed task state", child.handoff)
+				x.mu.Lock()
+				defer x.mu.Unlock()
+				if !reflect.DeepEqual(before, child.a) || child.running || len(child.queue) != 0 || session.calls.Load() != 0 {
+					t.Fatal("late delegation changed task state", child.a)
 				}
 			})
 		}
 	}
 }
 
-func TestShutdownRefusesWakeWorkerAndExchangeAdmission(t *testing.T) {
+func TestShutdownRefusesDriverAndExchangeAdmission(t *testing.T) {
 	for _, stop := range []string{"closing", "context"} {
 		t.Run(stop, func(t *testing.T) {
-			x, parent, child := inboxExecution()
+			x, _, _, child := inboxExecution()
 			defer x.cancel()
-			parent.done = make(chan completion, 1)
-			child.running = false
-			child.working = false
 			session := &admissionSession{}
 			child.session = session
-			oldIdle := child.idle
-			x.questions["pending"] = Question{ID: "pending", From: ".", To: "a", Text: "queued question"}
+			x.questions["pending"] = &question{Question: Question{ID: "pending", From: "a", To: "a/deep", Text: "queued question"}}
 			x.mu.Lock()
 			if stop == "closing" {
 				x.closing = true
 			} else {
 				x.cancel()
 			}
+			x.queueLocked(child, entry{event: Event{Question: &x.questions["pending"].Question}})
+			x.settleLocked()
 			x.mu.Unlock()
-			child.mu.Lock()
-			x.wakeLocked(child)
-			child.mu.Unlock()
-			if err := x.startWorker(child, "late initial worker", nil); err == nil {
-				t.Fatal("late worker admitted")
-			}
-			if _, err := x.exchange(child, Message{Task: "late exchange"}); err == nil {
+			if err := x.exchange(child, Message{Feedback: []Finding{{Text: "late exchange"}}}); err == nil {
 				t.Fatal("late Exchange admitted")
 			}
 			x.active.Wait()
 			x.calls.Wait()
-			if child.running || child.working || child.idle != oldIdle || session.calls.Load() != 0 {
-				t.Fatal("shutdown launched native work or changed conversation state")
+			if child.running || session.calls.Load() != 0 {
+				t.Fatal("shutdown launched native work")
 			}
 		})
+	}
+}
+
+// A judgment rests on the reviewed children. Delegating a correction after it
+// invalidates it, so no handoff is fixed from the old judgment.
+func TestDelegationAfterJudgmentInvalidatesIt(t *testing.T) {
+	x, _, a, deep := inboxExecution()
+	defer x.cancel()
+	x.executor = &Executor{}
+	a.copy, deep.copy = toolFailureCopy{}, toolFailureCopy{}
+	a.running, deep.running = true, true
+	accepted(deep, "deep")
+	a.a.phase, a.a.version = active, 1
+	old := &judgment{decision: Submitted, state: Commit{ID: "fixed", Tree: "tree"}}
+	a.a.judge(old)
+	if err := x.tools(a).Delegate(context.Background(), "a/deep", "correct", []Finding{{Text: "concrete correction"}}); err != nil {
+		t.Fatal(err)
+	}
+	if a.a.judgment != nil || len(a.a.feedback) != 1 || a.a.feedback[0].Text != "you delegated to a/deep after your judgment; await its new handoff, review it and judge again" {
+		t.Fatal("judgment survived a later delegation", a.a)
+	}
+	if err := x.fix(a, old); err != nil || a.a.phase != active {
+		t.Fatal("a handoff was fixed from the invalidated judgment", a.a.phase, err)
+	}
+}
+
+// A reopened Manager's own late model blocker stays in force when it judges
+// and fixes its handoff again.
+func TestReopenedManagerKeepsItsOwnLateBlocker(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	x.request.Mandate = Verify
+	x.executor = &Executor{}
+	a.copy = toolFailureCopy{}
+	root.running = true
+	accepted(deep, "deep")
+	a.a.phase, a.a.late = active, ModelBlocker
+	j := &judgment{decision: Approve}
+	a.a.judge(j)
+	if err := x.fix(a, j); err != nil {
+		t.Fatal(err)
+	}
+	if a.a.phase != fixed || a.a.handoff.Decision != ModelBlocker {
+		t.Fatal("own late model blocker was lost on reopening", a.a.phase, a.a.handoff.Decision)
+	}
+}
+
+// The last other driver releasing wakes a blocked await, which then refuses
+// instead of waiting for an answer only its caller can give.
+func TestReleasedDriverWakesBlockedAwait(t *testing.T) {
+	x, _, a, deep := inboxExecution()
+	defer x.cancel()
+	// a awaits inside its own response, so its driver runs too.
+	deep.a.phase, deep.running, a.running = active, true, true
+	x.questions["q"] = &question{Question: Question{ID: "q", From: "a/deep", To: "a", Text: "open"}, delivered: true}
+	returned := make(chan error, 1)
+	go func() { _, err := x.await(context.Background(), a); returned <- err }()
+	select {
+	case err := <-returned:
+		t.Fatal("await returned while another driver ran", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+	x.mu.Lock()
+	deep.running = false
+	x.settleLocked()
+	x.mu.Unlock()
+	select {
+	case err := <-returned:
+		if err == nil || !strings.Contains(err.Error(), "answer your open questions: q from a/deep") {
+			t.Fatal("await did not name the open question", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("released driver left await blocked")
+	}
+}
+
+// §3.7: a refused call names the concrete reason and the possible next step.
+func TestRefusalsNameReasonAndNextStep(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	root.running, a.running, deep.running = true, true, true
+	tools := x.tools(a)
+	a.a.phase, a.a.version = active, 1
+	for name, tc := range map[string]struct {
+		call func() error
+		want string
+	}{
+		"judge with an unassigned child": {func() error { return tools.Judge(context.Background(), Submitted, nil) }, "child a/deep has no assignment yet; delegate its task"},
+		"judge reject without Findings":  {func() error { return tools.Judge(context.Background(), Reject, nil) }, "judge again with at least one Finding text"},
+		"review an unassigned child":     {func() error { return tools.Review(context.Background(), "a/deep", "c", Approve, nil) }, "child a/deep has no assignment yet; delegate its task first"},
+		"review as a childless Manager":  {func() error { return x.tools(deep).Review(context.Background(), "x", "c", Approve, nil) }, "review covers only direct children, and you have none"},
+		"delegate without a task":        {func() error { return tools.Delegate(context.Background(), "a/deep", " ", nil) }, "delegate again with a task text"},
+		"reply to an unknown question":   {func() error { return tools.Reply(context.Background(), "missing", "answer") }, "reply only to question IDs delivered to you"},
+		"await with nothing to arrive":   {func() error { _, err := tools.Await(context.Background()); return err }, "none of your questions is open; child a/deep has no assignment yet; delegate its task"},
+		"judge without an assignment":    {func() error { return x.tools(deep).Judge(context.Background(), Submitted, nil) }, "a reply to a question needs no judgment"},
+		"delegate without an assignment": {func() error { return x.tools(deep).Delegate(context.Background(), "x", "task", nil) }, "delegate reaches only direct children, and you have none"},
+		"act from a fixed handoff": {func() error {
+			accepted(root, "root")
+			return x.tools(root).Delegate(context.Background(), "a", "task", nil)
+		}, "reply to questions addressed to you"},
+	} {
+		if err := tc.call(); err == nil || !strings.Contains(err.Error(), tc.want) {
+			t.Fatal(name, err)
+		}
+	}
+}
+
+// Next steps depend on the state they are given in: each one names an action
+// the tools then accept.
+func TestRefusalNextStepsFollowTheState(t *testing.T) {
+	x, root, a, deep := inboxExecution()
+	defer x.cancel()
+	root.running, a.running, deep.running = true, true, true
+	a.a.phase, a.a.version = active, 1
+	// A handoff fixed but not yet received is awaited, not reviewed.
+	deep.a.fix(Handoff{Manager: "a/deep", Result: Commit{ID: "c", Tree: "t"}, Decision: Submitted})
+	if err := x.tools(a).Review(context.Background(), "a/deep", "c", Approve, nil); err == nil || !strings.Contains(err.Error(), "has not reached you yet; await it, then review it") {
+		t.Fatal(err)
+	}
+	// A model blocker is judged, not corrected.
+	accepted(deep, "deep")
+	deep.a.handoff.Decision = ModelBlocker
+	if err := x.tools(a).Delegate(context.Background(), "a/deep", "correct", []Finding{{Text: "f"}}); err == nil || !strings.Contains(err.Error(), "judge your assignment, after reviewing its handoff if you have not") {
+		t.Fatal(err)
+	}
+	// A queued correction is awaited.
+	deep.a.phase = assigned
+	if err := x.tools(deep).Judge(context.Background(), Submitted, nil); err == nil || err.Error() != "your new assignment is waiting; await it" {
+		t.Fatal(err)
+	}
+	// Verify cannot repair its fixed input to pass the check.
+	x.request.Mandate = Verify
+	x.request.Input.Commit, x.request.Input.Tree = "input", "input-tree"
+	accepted(a, "a")
+	root.a.phase, root.a.version = active, 1
+	x.rootCheck = &Check{Commit: Commit{ID: "input", Tree: "input-tree"}, Diagnostic: "file.unexplained"}
+	if err := x.tools(root).Judge(context.Background(), Approve, nil); err == nil || err.Error() != "the fixed input candidate input fails its check: file.unexplained; judge reject or model_blocker with Findings" {
+		t.Fatal(err)
 	}
 }
