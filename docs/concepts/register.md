@@ -83,7 +83,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-066](#dec-066-the-cockpit-is-markitects-desktop-app-and-starts-and-stops-apply) | Decision | The cockpit is Markitect's desktop app and starts and stops Apply | Accepted by the owner; implemented; first real acceptance recorded |
 | [DEC-067](#dec-067-agent-workspaces-and-reviewed-handoffs) | Decision | Agent workspaces and reviewed handoffs | Accepted; partially superseded by the V1 scope clarification and [DEC-068](#dec-068-v1-concept-10) |
 | [DEC-068](#dec-068-v1-concept-10) | Decision | V1 concept 1.0 | Accepted; implementation tracked in the delivery plan |
-| [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; translation of existing German documents and of the core vocabulary tracked in the delivery plan |
+| [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; canonical-model documents translated (#679), historical records archived (#688), core vocabulary translated (#690) |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
 | [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2 |
 | [DEC-072](#dec-072-stable-v1-justified-by-data) | Decision | Stable V1 justified by data | Accepted; stability and comparison evidence tracked in the delivery plan |
