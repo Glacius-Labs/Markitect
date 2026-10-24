@@ -241,6 +241,8 @@ In Implement, every submitted child candidate is fixed and handed to the parent 
 
 From the diagnostic the parent sees whether a local correction, an interface clarification or a different integration order is needed. It rejects the submission with Findings, settles the interface or escalates. It can neither accept nor integrate an invalid candidate.
 
+Invalid refers to the invariants and checks that actually apply to the fixed child state: for example structural validity, registry and accounting, and project checks whose placement allows them to run in that copy. Integration that is still outstanding elsewhere does not by itself make a child submission invalid. Checks that do not apply or have not run are not reported as passed; the required overall checks stay binding on the integrated Root state and before publication. An unregistered artifact remains a concrete error.
+
 Local self-correction remains possible: a child can run the same deterministic check on its current state through a tool before submitting (section 14). This is an offer, not a mandatory step. Root has no parent; the host returns Root's diagnostic directly to Root (the checkpoint before Root completion).
 
 In Assessment and Verify a child handoff is a judgment about the fixed input candidate. Helper files in the private copy are not adopted. A check result about the input candidate informs the judgment and is no integration gate; a reasoned rejection of an invalid candidate is a regular result.
@@ -362,7 +364,7 @@ The same compiler, registry and accounting mechanisms are applied at different p
 | Checkpoint | Check and consequence |
 |---|---|
 | **Before the workflow starts** | Valid model basis and applicable project structure. On failure, abort before the agentic workflow and before Run resources. |
-| **At child handoffs** | Fixed handoff state and accounting. In Implement the diagnostic always travels with the handoff to the parent, and an invalid candidate cannot be integrated (D11). |
+| **At child handoffs** | Fixed handoff state and accounting. In Implement the diagnostic always travels with the handoff to the parent, and an invalid candidate cannot be integrated (D11); invalidity refers to the checks that apply to that state (section 8.4). |
 | **Before successful Root completion** | Integrated overall state, relevant checks and bindings. No successful Implement and no Approve with unresolved technical invalidity. |
 | **Before publication** | Exactly the accepted candidate, required checks and actual source and target guards. No impermissible transfer. |
 
@@ -389,15 +391,16 @@ A judgment applies to the current state of the assignment – task and mandatory
 - a change of the assessed state after the judgment,
 - a late mandatory Finding, Reject or model blocker from a child about an already accepted handoff.
 
-A message that only handles questions or answers requires no new judgment; a valid judgment stays in force. If a provider response ends while an active assignment has no valid judgment, the host makes the concrete reason visible, for example "your working state changed after your judgment" or "the review of child X is missing". This is a diagnostic by the host, not a general prompt rule; its form is a technical design matter.
+A message that only handles questions or answers requires no judgment – also when no judgment has yet been given for the active assignment. The end of a provider response is not a completion attempt: without a judgment the assignment simply stays active, and the host neither demands a judgment nor treats the response as a failure. Whether a completion is valid is checked against the assignment state when the Manager actually completes by giving its judgment; an earlier judgment never completes an assignment whose assessed state has changed since. When a completion is not valid, the host names the concrete reason, for example "your working state changed after your judgment" or "the review of child X is missing". This is a diagnostic by the host, not a general prompt rule; how the host continues an active assignment after a response ends is a technical design matter.
 
-For this, the host keeps a small, explicit assignment state per Manager instead of scattered individual flags. Every invalidation follows from a nameable event.
+For this, the host keeps a small, explicit assignment state per Manager instead of scattered individual flags. Every invalidation follows from a nameable event. The explicit state is a means, not proof of quality: it succeeds when domain events become clearer and the agent has to handle fewer technical special cases. Replacing flags with a large state machine is not an improvement by itself.
 
 ### 13.3 Decisive counterexamples
 
 | Situation | Decided consequence |
 |---|---|
 | A question is answered | No new assignment and no new judgment. |
+| A question is answered before the first judgment | No judgment is required; the assignment stays active. |
 | An answer the Manager is waiting for is still pending | Incoming questions remain answerable; no deadlock. |
 | New mandatory Findings arrive | The previous judgment becomes invalid; a new one is needed. |
 | The assessed state changes | Approval of the old state does not apply to the new one. |
@@ -677,7 +680,7 @@ Long chats can be archived after a controlled handoff. A handoff names Main, ope
 | **V02** | The complete hierarchy works in Assessment, Implement and Verify, including grandchild, intermediate and empty Package. |
 | **V03** | Parallel child work; questions only along permitted paths, sibling and level-skipping questions are refused with a reason; crossed questions and abort work. |
 | **V04** | Review and integration concern exactly the actual task base and fixed handoff. |
-| **V05** | An invalid Implement child candidate reaches the parent with its diagnostic and cannot be integrated; Root cannot complete unresolved technical invalidity as success. |
+| **V05** | An invalid Implement child candidate reaches the parent with its diagnostic and cannot be integrated; a child state that only lacks integration still outstanding elsewhere is not treated as invalid; Root cannot complete unresolved technical invalidity as success. |
 | **V06** | A Verify Reject produces new Implement and Verify Runs without old conversations and without a reset overall budget. |
 | **V07** | Model blockers recognized late end without publication and without endless code repair. |
 | **V08** | Candidates can be reopened exactly after the temporary environments are removed. |
@@ -689,7 +692,7 @@ Long chats can be archived after a controlled handoff. A handoff names Main, ope
 | **V14** | Own changes, other areas' responsibility and accepted child integration are reviewed appropriately. |
 | **V15** | Publication binds stored approval and candidate, handles drift and reports partial transfer and readback errors correctly. |
 | **V16** | Timeout, provider error, budget exhaustion, start failure and uncertain cleanup produce no false successes. |
-| **V17** | The counterexamples of section 13.3 are covered as controlled tests; harness and host messages do not explain internal host states (section 3.7). |
+| **V17** | The counterexamples of section 13.3, including a question answered before the first judgment, are covered as controlled tests; harness and host messages do not explain internal host states (section 3.7). |
 
 ### 25.3 Final state and repeatability
 
@@ -783,8 +786,8 @@ They close the items A1–A6 and R1–R3 left open in v0.18. R1 (deadline in pub
 
 | Topic | Fixed goal | Open for implementation |
 |---|---|---|
-| Assignment state (D12) | Every invalidation follows from a nameable event; no scattered flags. | Concrete states and transitions, form of the host diagnostic for a missing judgment, passing late findings to the parents. |
-| `check` tool (D11) | Optional self-check with the same deterministic mechanism as the handoff check. | Scope (structural, project checks), place of execution and cost. |
+| Assignment state (D12) | Every invalidation follows from a nameable event; no scattered flags. | Concrete states and transitions, how the host continues an active assignment after a response without judgment, form of the diagnostic for an invalid completion, passing late findings to the parents. |
+| `check` tool (D11) | Optional self-check with the same deterministic mechanism as the handoff check. | Which checks apply to a child state (structural, placed project checks), place of execution and cost. |
 | Notes retrieval (D17) | Completely readable, bounded, stably ordered. | First reproduce the size conflict under control, then choose the smallest read interface: sort key, page size, cursor form, context filter, handling of very large individual Notes and of storage errors. |
 | Result validation (D15) | One validation in the Run contract. | Package cut and call sites. |
 | Generic AGENTS.md harness | Best-effort representation of instructions for unknown providers, not an adapter. | Timing and membership in V1 acceptance, recorded with the provider matrix. |

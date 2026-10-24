@@ -67,4 +67,20 @@ The owner also accepts the five-step plan and starts step 1. The concept text ma
 
 Recorder's note on D18: the assistant phrased the provider scope as a question with a recommendation. The owner's reply accepts "deinen Entscheidungsvorschlägen" without answering the question separately. It is recorded as accepted with the recommendation, and the assistant's report states this so the owner can revise it.
 
+## Clarifications after the Astra review
+
+The owner forwarded an independent review of concept 1.0 at Main `c9f7cb45`, written by Astra, with the words:
+
+> Hier ist das Urteil von Astra:
+
+English translation: "Here is Astra's verdict:"
+
+Recorder's note: the review recommends concept 1.0 as the working basis and asks for three precisions before implementation. They were incorporated as clarifications of the accepted decisions, without new product semantics:
+
+1. D12: a message that only handles questions or answers needs no judgment, also before the first judgment of the assignment. The end of a provider response is not a completion attempt; completion validity is checked when the Manager judges. This restates v0.18 §14.2, which forbids forcing a decision at every message end.
+2. D11: invalidity of a child candidate refers to the checks that apply to that fixed state; integration still outstanding elsewhere is not invalidity, and checks that did not run are not reported as passed. This follows v0.18 §13.1 and §13.3.
+3. Plan: step 2 includes one bounded native contract proof before the changed session contract is fixed, as v0.18 §24.2 and the architecture's early native gate require; the full requalification stays in step 4.
+
+The review also noted that an explicit assignment state is a means, not proof of quality, and a stale reference to two provider adapters in the architecture; both were corrected.
+
 This record grants no new execution authority. The [standing evidence authorization](v1-source-implementation-approval-20261023.md#subsequent-standing-evidence-authorization) is unchanged. Release and deployment remain excluded.
