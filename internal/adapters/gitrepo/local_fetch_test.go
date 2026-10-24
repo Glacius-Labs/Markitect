@@ -15,9 +15,20 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/model"
 	"github.com/Glacius-Labs/Markitect/internal/project"
 	"github.com/Glacius-Labs/Markitect/internal/run"
+	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
 
 func TestLocalFetchPackedNoChange(t *testing.T) {
+	// Generic acquisition drops GIT_* overrides, then reads HOME's config.
+	// Override only this test-owned home; the shared testkit config is immutable.
+	isolatedHome := t.TempDir()
+	globalPath := filepath.Join(isolatedHome, ".gitconfig")
+	globalConfig := []byte(testkit.GlobalConfig + "\n[core]\n\tlongpaths = false\n")
+	if err := os.WriteFile(globalPath, globalConfig, 0600); err != nil {
+		t.Fatal(err)
+	}
+	t.Setenv("HOME", isolatedHome)
+	t.Setenv("XDG_CONFIG_HOME", filepath.Join(isolatedHome, ".config"))
 	_, _, original, input := runFixture(t)
 	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Minute)
 	defer cancel()
@@ -72,6 +83,10 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	}
 	if bytes.Contains(beforeConfig, []byte("longpaths")) {
 		t.Fatal("fixture unexpectedly persisted a user-repository longpaths setting")
+	}
+	probe := &gitRepository{ctx: ctx, path: source}
+	if value, err := probe.run("config", "--global", "--get", "core.longpaths"); err != nil || strings.TrimSpace(string(value)) != "false" {
+		t.Fatal("test-owned global longpaths=false control was not observed", string(value), err)
 	}
 	if packs, err := filepath.Glob(filepath.Join(source, ".git/objects/pack/*.pack")); err != nil || len(packs) == 0 {
 		t.Fatal("fixture did not use packed objects", packs, err)
@@ -144,5 +159,8 @@ func TestLocalFetchPackedNoChange(t *testing.T) {
 	}
 	if info, err := os.Stat(filepath.Join(reopened, ".markitect/model/b/empty")); err != nil || !info.IsDir() {
 		t.Fatal("reopening lost the empty Package", err)
+	}
+	if actual, err := os.ReadFile(globalPath); err != nil || !bytes.Equal(actual, globalConfig) {
+		t.Fatal("transport or acquisition changed the isolated global configuration", err)
 	}
 }

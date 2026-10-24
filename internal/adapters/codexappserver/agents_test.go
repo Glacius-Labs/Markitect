@@ -466,6 +466,90 @@ func TestNativeDelegationDescribesParentBaselineTiming(t *testing.T) {
 	}
 }
 
+// Observe preservation and legitimate repair duties at the actual thread/start
+// boundary. The scripted provider proves delivery, not semantic obedience.
+func TestNativeImplementReconcilesBeforeChangingArtifacts(t *testing.T) {
+	for _, tc := range []struct {
+		name     string
+		mandate  run.Mandate
+		findings []run.Finding
+	}{
+		{name: "implement-without-initial-findings", mandate: run.Implement},
+		{name: "implement-with-required-test-gap", mandate: run.Implement, findings: []run.Finding{{Manager: ".", Text: "Required refusal coverage is missing."}}},
+		{name: "assessment", mandate: run.Assessment},
+		{name: "verify", mandate: run.Verify},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			rt := newRuntime()
+			spec := testSessionSpec(t)
+			spec.Mandate, spec.Findings = tc.mandate, tc.findings
+			decision := run.Approve
+			if tc.mandate == run.Implement {
+				decision = run.Submitted
+			}
+			rt.judgmentText = fmt.Sprintf(`{"decision":%q,"findings":[]}`, decision)
+			s := openSession(t, rt, spec)
+			out, err := s.Exchange(context.Background(), run.Message{Task: "Complete the bound mandate.", Feedback: tc.findings})
+			if err != nil || out.Decision != decision {
+				t.Fatal("mandate judgment transport changed", out, err)
+			}
+			starts := 0
+			for _, raw := range rt.writes {
+				var message struct {
+					Method string
+					Params struct{ DeveloperInstructions string }
+				}
+				if err := json.Unmarshal([]byte(raw), &message); err != nil {
+					t.Fatal(err)
+				}
+				if message.Method != "thread/start" {
+					continue
+				}
+				starts++
+				instructions := message.Params.DeveloperInstructions
+				_, tail, ok := strings.Cut(instructions, "Initial Findings:\n")
+				if !ok {
+					t.Fatal("actual Findings were not delivered")
+				}
+				line, _, _ := strings.Cut(tail, "\n")
+				var delivered []run.Finding
+				if err := json.Unmarshal([]byte(line), &delivered); err != nil || len(delivered) != len(tc.findings) {
+					t.Fatal("delivered Findings changed", delivered, err)
+				}
+				for i := range delivered {
+					if delivered[i] != tc.findings[i] {
+						t.Fatal("actual required repair Finding was lost", delivered)
+					}
+				}
+				if !strings.Contains(instructions, "Every mandate uses the full hierarchy") {
+					t.Fatal("preservation skipped the required hierarchy")
+				}
+				if tc.mandate == run.Implement {
+					for _, duty := range []string{
+						"first reconcile the existing realization",
+						"checked model's obligations, required checks and actual Findings",
+						"Preserve conforming artifacts, including code, tests, documentation and registry entries",
+						"optional coverage, refactoring or cosmetic changes solely to produce a diff",
+						"Repair genuine defects and missing required tests you discover",
+						"when needed for those modeled obligations, required checks or actual Findings",
+						"Assessment approval does not replace this reconciliation",
+						"complete all modeled delegation, child reviews and required checks, then submit the unchanged candidate",
+					} {
+						if !strings.Contains(instructions, duty) {
+							t.Fatal("delivered Implement instructions omit reconciliation duty", duty)
+						}
+					}
+				} else if strings.Contains(instructions, "first reconcile the existing realization") || strings.Contains(instructions, "then submit the unchanged candidate") {
+					t.Fatal("review mandate received Implement duties", tc.mandate)
+				}
+			}
+			if starts != 1 {
+				t.Fatal("native instructions were not delivered exactly once", starts)
+			}
+		})
+	}
+}
+
 func TestSessionUsesHarnessCopySubpathAndPersistentNativeThread(t *testing.T) {
 	rt := newRuntime()
 	s := openSession(t, rt, testSessionSpec(t))
