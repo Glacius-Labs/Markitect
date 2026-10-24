@@ -99,6 +99,9 @@ func publicationGitShim(t *testing.T) string {
 	}
 	t.Setenv("MARKITECT_TEST_PUBLICATION_GIT", dir)
 	t.Setenv("MARKITECT_TEST_PUBLICATION_REAL_GIT", realGit)
+	// The copied binary may carry -race. Do not charge its default exit sleep
+	// once per forwarded Git query against the original test execution window.
+	t.Setenv("GORACE", strings.TrimSpace(os.Getenv("GORACE")+" atexit_sleep_ms=0"))
 	t.Setenv("PATH", dir+string(os.PathListSeparator)+os.Getenv("PATH"))
 	return dir
 }
