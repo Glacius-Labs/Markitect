@@ -16,10 +16,7 @@ The [V1 qualification record](validation/v1-qualification-20261024.md) holds the
 
 | Concept | Current source | Step |
 |---|---|---|
-| D10: questions only to the direct parent or direct children | `ask` in `internal/run/inbox.go` accepts any other Manager of the Run | 2 |
-| D11: every Implement child candidate reaches the parent with its check result; invalid candidates are not integrable | `work` in `internal/run/execute.go` sends an invalid submission's findings back to the child; the parent receives only valid handoffs | 2 |
-| D12: a judgment belongs to the assignment and assessed state; explicit assignment state | every active continuation requires a fresh `judge`; the Codex adapter resets the judgment per message, and a response without a judgment fails the whole Run; a late adverse finding forces Reject onto every ancestor instead of invalidating their judgments; Manager state is spread over many booleans | 2 |
-| D13: tasks, not process; fixed tool set with `check`; host-known identities not requested | harness rules and host messages explain continuations, drains and late messages; no `check` tool; native Findings must name a `manager` | 2 |
+| D10–D13: hierarchical questions, child diagnostics at the parent, assignment-bound judgments, tasks not process | Resolved in source by A1 ([PR #683](https://github.com/Glacius-Labs/Markitect/pull/683)) with controlled tests and a bounded [native contract proof](validation/a1-native-contract-proof-20261024.md) on f76826c3; the later wording delta of host messages is requalified in step 4 | 2 |
 | D15: closed-result validation in the Run contract | `workflow.ValidateClosed` checks Run resource names; `apply.ValidateApproval` calls it | 3 |
 | D17: bounded, ordered Notes pages within the transport limit | `read_notes` returns all Notes in one tool reply ordered by random ID; the store accepts 16 MiB against a 1 MiB frame; a read error cancels the Run | 3 |
 | D18: no non-functional Claude path | Resolved in source: B1 ([PR #674](https://github.com/Glacius-Labs/Markitect/pull/674)) removed the Claude adapter and its wiring, B2 ([PR #678](https://github.com/Glacius-Labs/Markitect/pull/678)) removed Claude Code from the runtime image recipe and the `claude=` metadata record; the changed image is built and qualified in step 4 | 3 |
@@ -28,6 +25,16 @@ The [V1 qualification record](validation/v1-qualification-20261024.md) holds the
 Documentation language ([DEC-069](concepts/register.md#dec-069-documentation-is-written-in-english)): [PR #679](https://github.com/Glacius-Labs/Markitect/pull/679) translated the current canonical-model documents, including the normative [language specification](design/canonical-model/minimal-language/language-contract.md) and the exchange example, the archived [conformance audit](development/concept-conformance-audit-20261024.md) and, as a new reference translation, [concept v0.18](concepts/sources/v1-concept-v018-20261024-en.md). Three groups are still German. First, the historical design records under `docs/design/project-world`, `docs/design/product-model-refinement`, `docs/design/work-item-comparison-20261009.md`, `docs/design/task-management-model` and `docs/validation/astra-assessment-2026-10-06.md`; R2 archives them, and archived records are not translated ([DEC-071](concepts/register.md#dec-071-repository-structure-and-archive)). Second, the digest-pinned probe fixtures under `docs/design/canonical-model/minimal-language`, handled as the [repository structure](development/repository-structure.md) document classifies them. Third, the `markitect/core` vocabulary bodies in `internal/model/core.go` and `.markitect/model/markitect/core` and the examples that copy them, translated in step 3 ([owner decision](concepts/sources/english-documentation-20261024.md#follow-up-owner-decision-core-vocabulary)); as recorded there, this is planned as a new core version with unchanged meaning. Two links in deferred records still point at old German headings of the consolidation page and are fixed when those records are translated or archived.
 
 Product guides such as the [architecture](architecture.md), the [project workflow](project-workflow.md) and the adapter READMEs describe implemented behavior. They change together with the code in steps 2 and 3.
+
+## Technical decisions from implementation
+
+Decisions taken within concept 1.0 while implementing; they do not change product semantics.
+
+- **Bounded no-progress stop (A1):** an open assignment is continued with a message that names the task. After two continued responses in a row with no Run tool action and no change of the working state, the Run ends technically incomplete with a diagnostic that names the Manager. This keeps concept §13.2 – a single response end is never a failure and never demands a judgment – while honoring §20 finite limits and honest results.
+- **`judge` is a Run tool (A1):** like every other Manager tool, its semantics live in Run (concept §14.2); the provider adapter only maps it.
+- **Failure classes (A1):** port or provider failures that stop a Run are reported as failed; deadline, budget, observation and no-progress stops stay incomplete (concept §20.1).
+- **Review mandates (A1):** Assessment and Verify child handoffs carry no check result; reviewers run `check` themselves when they need one.
+- **Host messages (A1):** every refusal and diagnostic names the concrete reason and a next step that the tools accept (concept §3.7).
 
 <a id="apply-rebuild-plan"></a>
 
