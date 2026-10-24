@@ -16,6 +16,7 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 	"io"
 	"io/fs"
+	"math/rand"
 	"os"
 	"path/filepath"
 	"reflect"
@@ -295,6 +296,113 @@ func testSessionSpec(t *testing.T) run.SessionSpec {
 		return run.Event{Question: &run.Question{ID: "pending", From: "a", To: ".", Text: "counter-question"}}, nil
 	}, Review: func(context.Context, string, string, run.Decision, []run.Finding) error { return nil }, Ask: func(context.Context, string, string) (string, error) { return "new-id", nil }, Reply: func(context.Context, string, string) error { return nil }, ReadNotes: func(context.Context) ([]run.Note, error) { return nil, nil }, AppendNote: func(context.Context, string, string) (run.Note, error) { return run.Note{ID: "note"}, nil }}
 	return run.SessionSpec{RunID: "native-run", Manager: manager, Prepared: p, Mandate: run.Implement, Workspace: &sessionCopy{location: run.CopyLocation{Volume: "private-run-volume", Subpath: "copies/root"}}, Tools: tools}
+}
+
+// Exercise the real Git review producer and native Event/MCP/frame consumer.
+// No Engine, provider or native Session is started by this controlled test.
+func TestBinaryChildReviewFitsActualAwaitToolFrame(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	spec := testSessionSpec(t)
+	git := &gitrepo.LocalGit{StateRoot: testkit.TempDir(t), TempRoot: testkit.TempDir(t)}
+	input, err := git.Capture(ctx, "native-fixture", spec.Prepared)
+	if err != nil {
+		t.Fatal(err)
+	}
+	service, err := git.Open(ctx, run.Request{ID: "binary-review", Project: input.Project, Prepared: spec.Prepared, Input: input})
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := service.Close(context.Background()); err != nil {
+			t.Error(err)
+		}
+	})
+	base := run.Commit{ID: input.Commit, Tree: input.Tree}
+	parent, err := service.Copy(ctx, ".", base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	child, err := service.Copy(ctx, "a", base)
+	if err != nil {
+		t.Fatal(err)
+	}
+	location := child.Location().Directory
+	binary := make([]byte, 2<<20)
+	_, _ = rand.New(rand.NewSource(1)).Read(binary)
+	binary[0] = 0 // Git must classify this as binary, not a large text diff.
+	if err := os.WriteFile(filepath.Join(location, "review.bin"), binary, 0755); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.WriteFile(filepath.Join(location, "guide.md"), []byte("Complete <&> review text.\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	testkit.Git(t, location, "add", "review.bin")
+	testkit.Git(t, location, "update-index", "--chmod=+x", "review.bin")
+	fixed, err := child.Snapshot(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	diff, err := parent.Review(ctx, child, base, fixed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	handoff := run.Handoff{Manager: "a", Base: base, Result: fixed, Diff: diff, Decision: run.Approve, Findings: []run.Finding{{Manager: "a", Text: "Actual fixed child reviewed."}}}
+	event := run.Event{Handoff: &handoff}
+	spec.Tools.Await = func(context.Context) (run.Event, error) { return event, nil }
+	rt := newRuntime()
+	defer rt.Close()
+	native := &nativeSession{thread: "review-thread", spec: spec, peer: rt}
+	if err := native.answer(ctx, frame.ToolCall{ID: 3, Name: "await", Arguments: json.RawMessage(`{}`), Meta: json.RawMessage(`{"threadId":"review-thread"}`)}); err != nil {
+		t.Fatal(err)
+	}
+	if len(rt.replies) != 1 {
+		t.Fatal("expected one actual native tool response")
+	}
+	payload, err := frame.EncodeToolReply(rt.replies[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := frame.Write(io.Discard, frame.Frame{Channel: frame.Tool, Payload: payload}); err != nil {
+		t.Fatalf("actual Await Event/MCP reply is %d bytes: %v", len(payload), err)
+	}
+	t.Logf("actual review %d bytes; encoded Await Event/MCP frame %d bytes", len(diff), len(payload))
+	var content struct {
+		Content []struct{ Text string }
+		IsError bool
+	}
+	var decoded run.Event
+	if err := json.Unmarshal(rt.replies[0].Result, &content); err != nil || content.IsError || len(content.Content) != 1 {
+		t.Fatal("invalid actual MCP result", err)
+	}
+	if err := json.Unmarshal([]byte(content.Content[0].Text), &decoded); err != nil || !reflect.DeepEqual(decoded, event) {
+		t.Fatal("Event serialization lost exact handoff metadata or review context", err)
+	}
+	blob := testkit.Git(t, location, "rev-parse", fixed.ID+":review.bin")
+	for _, required := range []string{"diff --git a/review.bin b/review.bin", "new file mode 100755", strings.Repeat("0", len(blob)) + ".." + blob, "Binary files /dev/null and b/review.bin differ"} {
+		if !strings.Contains(diff, required) {
+			t.Fatal("review omitted binary path, mode or complete object identity", required)
+		}
+	}
+	if strings.Contains(diff, "GIT binary patch") {
+		t.Fatal("review context transported opaque binary patch data")
+	}
+	// Compare every text hunk with the old binary-patch mode using full IDs;
+	// abbreviated legacy index lines are intentionally replaced by full IDs.
+	text := testkit.Git(t, parent.Location().Directory, "diff", "--no-ext-diff", "--no-textconv", "--binary", "--full-index", base.ID, fixed.ID, "--", "guide.md")
+	if !strings.Contains(diff, text) {
+		t.Fatal("complete text diff changed or was omitted")
+	}
+	if actual, err := parent.Snapshot(ctx); err != nil || actual != base {
+		t.Fatal("review changed the parent working tree", actual, err)
+	}
+	if actual, err := parent.Integrate(ctx, child, fixed); err != nil || actual.Tree != fixed.Tree {
+		t.Fatal("review representation changed exact child integration", actual, err)
+	}
+	data, err := os.ReadFile(filepath.Join(parent.Location().Directory, "review.bin"))
+	if err != nil || !bytes.Equal(data, binary) {
+		t.Fatal("full binary content was not preserved by commit integration", err)
+	}
 }
 
 type sessionCopy struct {

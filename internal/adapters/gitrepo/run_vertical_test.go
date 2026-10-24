@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"io"
 	"io/fs"
 	"os"
 	"os/exec"
@@ -14,6 +15,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/Glacius-Labs/Markitect/internal/adapters/container"
 	"github.com/Glacius-Labs/Markitect/internal/adapters/runstore"
 	"github.com/Glacius-Labs/Markitect/internal/apply"
 	"github.com/Glacius-Labs/Markitect/internal/model"
@@ -22,6 +24,62 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/snapshot"
 	"github.com/Glacius-Labs/Markitect/internal/testkit"
 )
+
+// Run the Linux Review consumer's actual Git commands on local repositories.
+// This test double starts no Engine and claims no container isolation or physical Linux modes.
+type reviewHostGit struct{ container.ExecSession }
+
+func (reviewHostGit) Exec(ctx context.Context, argv []string, input io.Reader, output io.Writer) error {
+	if len(argv) == 0 || argv[0] != "/usr/bin/git" {
+		return fmt.Errorf("expected the Linux Review Git command")
+	}
+	command := exec.CommandContext(ctx, "git", argv[1:]...)
+	command.Env = testkit.GitEnv()
+	command.Stdin, command.Stdout = input, output
+	command.WaitDelay = time.Second
+	return command.Run()
+}
+
+func TestLinuxChildReviewPreservesCompleteContextWithoutBinaryPatch(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	parent := testkit.NewRepo(t)
+	parent.Write("text.txt", "before\n")
+	base := run.Commit{ID: parent.Commit("review base")}
+	base.Tree = parent.Git("rev-parse", "HEAD^{tree}")
+	child := testkit.NewRepo(t)
+	child.Git("fetch", "--quiet", parent.Dir, base.ID)
+	child.Git("checkout", "--quiet", "--detach", base.ID)
+	child.Write("text.txt", "after\n")
+	child.Write("review.bin", "\x00\x01\x02binary review\x00")
+	child.Git("add", "review.bin")
+	child.Git("update-index", "--chmod=+x", "review.bin")
+	fixed := run.Commit{ID: child.Commit("binary and text child")}
+	fixed.Tree = child.Git("rev-parse", "HEAD^{tree}")
+	service := &linuxService{exec: reviewHostGit{}}
+	p := &linuxCopy{service: service, directory: parent.Dir}
+	c := &linuxCopy{service: service, directory: child.Dir}
+	diff, err := p.Review(ctx, c, base, fixed)
+	if err != nil {
+		t.Fatal(err)
+	}
+	blob := child.Git("rev-parse", fixed.ID+":review.bin")
+	for _, required := range []string{"diff --git a/review.bin b/review.bin", "new file mode 100755", strings.Repeat("0", len(blob)) + ".." + blob, "Binary files /dev/null and b/review.bin differ"} {
+		if !strings.Contains(diff, required) {
+			t.Fatal("Linux review lost binary path, mode or complete object identity", required)
+		}
+	}
+	if strings.Contains(diff, "GIT binary patch") {
+		t.Fatal("Linux review transported opaque binary patch data")
+	}
+	text := parent.Git("diff", "--no-ext-diff", "--no-textconv", "--binary", "--full-index", base.ID, fixed.ID, "--", "text.txt")
+	if !strings.Contains(diff, text) {
+		t.Fatal("Linux review changed or omitted the complete text diff")
+	}
+	if parent.Git("rev-parse", "HEAD") != base.ID || parent.Git("cat-file", "-s", fixed.ID+":review.bin") != "17" {
+		t.Fatal("Review must import the complete fixed child without changing the parent")
+	}
+}
 
 type notesReadingSessions struct {
 	controlled *controlledManagers
