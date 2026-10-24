@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const core10Digest = "sha256:b912d62b4e7ecdb181291f1dafa712e8a0f407ad35d336ac2c3420a523ec3de4"
+const core10Digest = "sha256:8b8e63a958eab6b5cc79fe3b8eeb25fbec6765fb81ba813eeaa1b9b7dace1213"
 
 func withLock(source SourceModel, text string, present bool) SourceModel {
 	path := joinPath(parent(source.ManifestPath), "model-lock.yaml")
@@ -274,7 +274,7 @@ func TestLockExactUnicodeAndLiteralVersionLabels(t *testing.T) {
 		input.Dependencies[0].Entries[0].Bytes = bytes.Replace(input.Dependencies[0].Entries[0].Bytes, []byte("version: '1.0'"), []byte("version: '"+version+"'"), 1)
 		// Derive the expected version-only change from the independent fixed
 		// Core byte vector, not from the product canonicalizer.
-		expected := strings.Replace(canonicalCoreVector, `"version":"1.0.0"`, `"version":"`+version+`"`, 1)
+		expected := strings.Replace(canonicalCoreVector, `"version":"1.1.0"`, `"version":"`+version+`"`, 1)
 		digest := fmt.Sprintf("sha256:%x", sha256.Sum256([]byte(expected)))
 		input.Root = withLock(input.Root, "formatVersion: 1\nmodels:\n  markitect-core: {version: '"+version+"', digest: '"+digest+"'}", true)
 		requireChecked(t, input)

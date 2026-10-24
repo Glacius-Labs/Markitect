@@ -82,7 +82,7 @@ The compiler knows the meaning of these fields and checks the supplied self-desc
 
 All nine files belong to the package markitect/core. They need no imports because their reference targets lie in their own package. Each file has the same complete envelope. The effective field name of each meta-Property corresponds to its short local ID; spec.name is therefore omitted throughout.
 
-Language note (DEC-069): the bodies of these nine definitions are canonical `markitect/core` content. They are reproduced below byte for byte in their canonical German wording. Translating them changes the canonical content and digest of the Core (and every binding pinned to it); the owner has decided to translate them as a new Core version in a separate slice ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)).
+Language note (DEC-069): the bodies of these nine definitions are the English wording of `markitect-core` 1.1.0, translated with unchanged meaning from the German bodies of 1.0.0 ([DEC-069](../concepts/register.md#dec-069-documentation-is-written-in-english)). Only this wording is the fixed Core. The German wording of 1.0.0 is preserved at the [archive point](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/language-contract.md#core-definitions).
 
 In the comparison with this fixed self-description, too, missing imports and explicitly set `imports: []` are equivalent according to Section 5.2. The authored form is preserved; an erroneous entry or a non-empty import list is not treated as an empty list.
 
@@ -94,9 +94,9 @@ The comparison checks the effective content according to the general language ru
 id: Kind
 kind: Kind
 body: >-
-  Deklariert einen Typ. properties benennt die erlaubten Felder
-  der spec seiner Definitionen. Der body einer Typdefinition beschreibt
-  deren gemeinsame Bedeutung und geltende Festlegungen.
+  Declares a type. properties names the permitted fields of the spec
+  of its definitions. The body of a type definition describes their
+  shared meaning and applicable stipulations.
 spec:
   properties:
     - properties
@@ -108,9 +108,9 @@ spec:
 id: Property
 kind: Kind
 body: >-
-  Deklariert einen Feldvertrag mit Werttyp und Kardinalität.
-  Der body beschreibt die Bedeutung seiner Werte oder Beziehungen.
-  Bei type object benennt properties die erlaubten Felder des Objektwerts.
+  Declares a field contract with value type and cardinality.
+  The body describes the meaning of its values or relationships.
+  For type object, properties names the permitted fields of the object value.
 spec:
   properties:
     - name
@@ -128,10 +128,10 @@ spec:
 id: name
 kind: Property
 body: >-
-  Optionaler ausdrücklich abweichender nichtleerer Feldname.
-  Ohne Angabe gilt die vollständige lokale ID der Property als Feldname.
-  Der effektive Feldname muss innerhalb jedes verwendenden Vertrags
-  eindeutig sein.
+  Optional explicitly deviating non-empty field name.
+  If omitted, the complete local ID of the Property applies as the field name.
+  The effective field name must be unique within every contract
+  that uses it.
 spec:
   type: string
   minCount: 0
@@ -143,7 +143,7 @@ spec:
 ```yaml
 id: type
 kind: Property
-body: Der vom Core verstandene Werttyp dieser Property.
+body: The value type of this Property, as understood by the Core.
 spec:
   type: enum
   minCount: 1
@@ -163,7 +163,7 @@ spec:
 ```yaml
 id: minCount
 kind: Property
-body: Nichtnegative Mindestanzahl vorhandener Werte.
+body: Non-negative minimum number of present values.
 spec:
   type: integer
   minCount: 1
@@ -176,10 +176,10 @@ spec:
 id: maxCount
 kind: Property
 body: >-
-  Höchstanzahl vorhandener Werte. Der Wert -1 erlaubt beliebig viele Werte
-  innerhalb der Werkzeuggrenzen. Andere Werte müssen mindestens minCount
-  entsprechen. Genau 1 bezeichnet einen Einzelwert; andere Höchstwerte
-  eine Liste.
+  Maximum number of present values. The value -1 permits any number of values
+  within the tool limits. Other values must be at least minCount.
+  Exactly 1 denotes a single value; other maximum values denote
+  a list.
 spec:
   type: integer
   minCount: 1
@@ -192,9 +192,9 @@ spec:
 id: values
 kind: Property
 body: >-
-  Erlaubte Stringwerte einer enum-Property.
-  Bei type enum ist eine nichtleere Liste eindeutiger Werte erforderlich.
-  Bei anderen Werttypen ist diese Angabe nicht zulässig.
+  Permitted string values of an enum Property.
+  For type enum, a non-empty list of distinct values is required.
+  For other value types, this entry is not permitted.
 spec:
   type: string
   minCount: 0
@@ -207,9 +207,9 @@ spec:
 id: target
 kind: Property
 body: >-
-  Der verlangte Kind der referenzierten Definitionen.
-  Bei type reference ist diese Angabe erforderlich.
-  Bei anderen Werttypen ist sie nicht zulässig.
+  The Kind required of the referenced definitions.
+  For type reference, this entry is required.
+  For other value types, it is not permitted.
 spec:
   type: reference
   target: Kind
@@ -223,8 +223,8 @@ spec:
 id: properties
 kind: Property
 body: >-
-  Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts.
-  Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.
+  References the permitted field contracts of the object described here.
+  The effective field names must be unique within this contract.
 spec:
   type: reference
   target: Property

@@ -330,8 +330,8 @@ func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, 
 	}); err != nil {
 		t.Fatal(err)
 	}
-	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: run-fixture\nroot: model\ndependencies: {markitect-core: '1.0.0'}\n")
-	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.0.0', digest: 'sha256:562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1'}\n")
+	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: run-fixture\nroot: model\ndependencies: {markitect-core: '1.1.0'}\n")
+	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.1.0', digest: 'sha256:82dce6b82c00a753b8b51d82e473d2544ea6eef0b482dbfa4023aafbd467adfc'}\n")
 	r.Write(".markitect/model/a/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: A tiny realization obligation.\nspec: {}\n")
 	r.Write(".markitect/model/a/deep/item.yaml", "imports: [{package: a}]\nid: item\nkind: a/Thing\nbody: A child artifact.\nspec: {}\n")
 	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nchecks: []\n")

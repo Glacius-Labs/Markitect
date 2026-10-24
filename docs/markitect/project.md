@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:65a5bff86156a6765fa9693c2f655a7bc2561743719cf91d64c42b58c619b628`.
+Canonical model digest: `sha256:e90871ba28bb91188686e85ea7bb3806bc17648e305a6e59f5246615d784fc10`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -22,9 +22,9 @@ Keep canonical Library M1/M2 rules and the independent oracle unchanged. Treat c
 
 ### markitect/core/Kind
 
-Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/kind.yaml` (original bytes `sha256:b8694323468d4d8c90e64740b39a10045fd21ae759066c4d99c9bc1d82003ebe`).
+Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/kind.yaml` (original bytes `sha256:94c9b4aed3c0acdedac13375d56039eb18554b2b28686a7becc3642fd81f2411`).
 
-Deklariert einen Typ. properties benennt die erlaubten Felder der spec seiner Definitionen. Der body einer Typdefinition beschreibt deren gemeinsame Bedeutung und geltende Festlegungen.
+Declares a type. properties names the permitted fields of the spec of its definitions. The body of a type definition describes their shared meaning and applicable stipulations.
 
 Fields:
 
@@ -32,9 +32,9 @@ Fields:
 
 ### markitect/core/Property
 
-Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/property.yaml` (original bytes `sha256:be6149acf2d5ebcca9e18bad13932ca3be9bb6d838ac5a142dd83d7bc6143590`).
+Kind: `markitect/core/Kind`. Source: `.markitect/model/markitect/core/property.yaml` (original bytes `sha256:46a615230b96ff6ceb6dfc4582fff98d9b8678ee9f81b725def9f851ec8a1e8b`).
 
-Deklariert einen Feldvertrag mit Werttyp und Kardinalität. Der body beschreibt die Bedeutung seiner Werte oder Beziehungen. Bei type object benennt properties die erlaubten Felder des Objektwerts.
+Declares a field contract with value type and cardinality. The body describes the meaning of its values or relationships. For type object, properties names the permitted fields of the object value.
 
 Fields:
 
@@ -42,9 +42,9 @@ Fields:
 
 ### markitect/core/maxCount
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/max-count.yaml` (original bytes `sha256:206aa732af928dafc01b6949eca98db1fb5f9e3a001046d7adf889a1a1303789`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/max-count.yaml` (original bytes `sha256:7965ac2a6c4d014f9279fccb7899a4111649d78c3e6fdc1b2c2c081b190b8049`).
 
-Höchstanzahl vorhandener Werte. Der Wert -1 erlaubt beliebig viele Werte innerhalb der Werkzeuggrenzen. Andere Werte müssen mindestens minCount entsprechen. Genau 1 bezeichnet einen Einzelwert; andere Höchstwerte eine Liste.
+Maximum number of present values. The value -1 permits any number of values within the tool limits. Other values must be at least minCount. Exactly 1 denotes a single value; other maximum values denote a list.
 
 Fields:
 
@@ -55,9 +55,9 @@ Fields:
 
 ### markitect/core/minCount
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/min-count.yaml` (original bytes `sha256:d2f2c064071c75f3f4b41cef16bd94cc7a3a7ef036f9eb7e8226559425a38744`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/min-count.yaml` (original bytes `sha256:21b55a98cea8e61741cd569a61b35d464048751eaeb1da607d6e8da7aa005fee`).
 
-Nichtnegative Mindestanzahl vorhandener Werte.
+Non-negative minimum number of present values.
 
 Fields:
 
@@ -68,9 +68,9 @@ Fields:
 
 ### markitect/core/name
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/name.yaml` (original bytes `sha256:ec8abd72a1f308f00f905dacf2d8959054961f55e84b6c894aa3214a5da30d10`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/name.yaml` (original bytes `sha256:0026b9de7a20f82c0b69a90fdbf1679369f69ff7a21c2227175b5b956c68da26`).
 
-Optionaler ausdrücklich abweichender nichtleerer Feldname. Ohne Angabe gilt die vollständige lokale ID der Property als Feldname. Der effektive Feldname muss innerhalb jedes verwendenden Vertrags eindeutig sein.
+Optional explicitly deviating non-empty field name. If omitted, the complete local ID of the Property applies as the field name. The effective field name must be unique within every contract that uses it.
 
 Fields:
 
@@ -81,9 +81,9 @@ Fields:
 
 ### markitect/core/properties
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/properties.yaml` (original bytes `sha256:e3f430b729a355704ba208bcfb95bd206b66e91307f43a6af1af263f3c9879b8`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/properties.yaml` (original bytes `sha256:fb82b590b233aea97e905bfa582cc9d8b793c839361b194be2fe33f2d0f566bb`).
 
-Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts. Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.
+References the permitted field contracts of the object described here. The effective field names must be unique within this contract.
 
 Fields:
 
@@ -95,9 +95,9 @@ Fields:
 
 ### markitect/core/target
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/target.yaml` (original bytes `sha256:06dc15e8673124553bd2b71a73e1b7bb75a237d2b0a01e690da3230a467a0a63`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/target.yaml` (original bytes `sha256:91fa530485a5dc91d8a52f2de3b58eb05f426bb5dc3d823e44352aaf01076ad4`).
 
-Der verlangte Kind der referenzierten Definitionen. Bei type reference ist diese Angabe erforderlich. Bei anderen Werttypen ist sie nicht zulässig.
+The Kind required of the referenced definitions. For type reference, this entry is required. For other value types, it is not permitted.
 
 Fields:
 
@@ -109,9 +109,9 @@ Fields:
 
 ### markitect/core/type
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/type.yaml` (original bytes `sha256:acbcb268f34a4aedfcde704af97648dbda499c6a8d22522c3e4b93f2802d9579`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/type.yaml` (original bytes `sha256:9cbe3ee9abfa60915edf65f626934e046c4ae0a377a044ebfb934702c9b194cf`).
 
-Der vom Core verstandene Werttyp dieser Property.
+The value type of this Property, as understood by the Core.
 
 Fields:
 
@@ -123,9 +123,9 @@ Fields:
 
 ### markitect/core/values
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/values.yaml` (original bytes `sha256:e69f9a0d9720055274bf0854072e2cce495e94630359599bd73d4f5a2589fffd`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/values.yaml` (original bytes `sha256:f6de4bd1609a1ecf09777a27e1dffa9eebc5ff9db74058bb070b00b3926f7791`).
 
-Erlaubte Stringwerte einer enum-Property. Bei type enum ist eine nichtleere Liste eindeutiger Werte erforderlich. Bei anderen Werttypen ist diese Angabe nicht zulässig.
+Permitted string values of an enum Property. For type enum, a non-empty list of distinct values is required. For other value types, this entry is not permitted.
 
 Fields:
 

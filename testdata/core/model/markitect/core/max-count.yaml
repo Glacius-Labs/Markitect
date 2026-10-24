@@ -1,10 +1,10 @@
 id: maxCount
 kind: Property
 body: >-
-  Höchstanzahl vorhandener Werte. Der Wert -1 erlaubt beliebig viele Werte
-  innerhalb der Werkzeuggrenzen. Andere Werte müssen mindestens minCount
-  entsprechen. Genau 1 bezeichnet einen Einzelwert; andere Höchstwerte
-  eine Liste.
+  Maximum number of present values. The value -1 permits any number of values
+  within the tool limits. Other values must be at least minCount.
+  Exactly 1 denotes a single value; other maximum values denote
+  a list.
 spec:
   type: integer
   minCount: 1

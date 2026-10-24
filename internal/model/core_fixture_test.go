@@ -7,9 +7,9 @@ func completeCoreSource() SourceModel {
 		{Path: "model/markitect/core/kind.yaml", Kind: Regular, Bytes: []byte(`id: Kind
 kind: Kind
 body: >-
-  Deklariert einen Typ. properties benennt die erlaubten Felder
-  der spec seiner Definitionen. Der body einer Typdefinition beschreibt
-  deren gemeinsame Bedeutung und geltende Festlegungen.
+  Declares a type. properties names the permitted fields of the spec
+  of its definitions. The body of a type definition describes their
+  shared meaning and applicable stipulations.
 spec:
   properties:
     - properties
@@ -17,9 +17,9 @@ spec:
 		{Path: "model/markitect/core/property.yaml", Kind: Regular, Bytes: []byte(`id: Property
 kind: Kind
 body: >-
-  Deklariert einen Feldvertrag mit Werttyp und Kardinalität.
-  Der body beschreibt die Bedeutung seiner Werte oder Beziehungen.
-  Bei type object benennt properties die erlaubten Felder des Objektwerts.
+  Declares a field contract with value type and cardinality.
+  The body describes the meaning of its values or relationships.
+  For type object, properties names the permitted fields of the object value.
 spec:
   properties:
     - name
@@ -33,10 +33,10 @@ spec:
 		{Path: "model/markitect/core/name.yaml", Kind: Regular, Bytes: []byte(`id: name
 kind: Property
 body: >-
-  Optionaler ausdrücklich abweichender nichtleerer Feldname.
-  Ohne Angabe gilt die vollständige lokale ID der Property als Feldname.
-  Der effektive Feldname muss innerhalb jedes verwendenden Vertrags
-  eindeutig sein.
+  Optional explicitly deviating non-empty field name.
+  If omitted, the complete local ID of the Property applies as the field name.
+  The effective field name must be unique within every contract
+  that uses it.
 spec:
   type: string
   minCount: 0
@@ -44,7 +44,7 @@ spec:
 `)},
 		{Path: "model/markitect/core/type.yaml", Kind: Regular, Bytes: []byte(`id: type
 kind: Property
-body: Der vom Core verstandene Werttyp dieser Property.
+body: The value type of this Property, as understood by the Core.
 spec:
   type: enum
   minCount: 1
@@ -60,7 +60,7 @@ spec:
 `)},
 		{Path: "model/markitect/core/min-count.yaml", Kind: Regular, Bytes: []byte(`id: minCount
 kind: Property
-body: Nichtnegative Mindestanzahl vorhandener Werte.
+body: Non-negative minimum number of present values.
 spec:
   type: integer
   minCount: 1
@@ -69,10 +69,10 @@ spec:
 		{Path: "model/markitect/core/max-count.yaml", Kind: Regular, Bytes: []byte(`id: maxCount
 kind: Property
 body: >-
-  Höchstanzahl vorhandener Werte. Der Wert -1 erlaubt beliebig viele Werte
-  innerhalb der Werkzeuggrenzen. Andere Werte müssen mindestens minCount
-  entsprechen. Genau 1 bezeichnet einen Einzelwert; andere Höchstwerte
-  eine Liste.
+  Maximum number of present values. The value -1 permits any number of values
+  within the tool limits. Other values must be at least minCount.
+  Exactly 1 denotes a single value; other maximum values denote
+  a list.
 spec:
   type: integer
   minCount: 1
@@ -81,9 +81,9 @@ spec:
 		{Path: "model/markitect/core/values.yaml", Kind: Regular, Bytes: []byte(`id: values
 kind: Property
 body: >-
-  Erlaubte Stringwerte einer enum-Property.
-  Bei type enum ist eine nichtleere Liste eindeutiger Werte erforderlich.
-  Bei anderen Werttypen ist diese Angabe nicht zulässig.
+  Permitted string values of an enum Property.
+  For type enum, a non-empty list of distinct values is required.
+  For other value types, this entry is not permitted.
 spec:
   type: string
   minCount: 0
@@ -92,9 +92,9 @@ spec:
 		{Path: "model/markitect/core/target.yaml", Kind: Regular, Bytes: []byte(`id: target
 kind: Property
 body: >-
-  Der verlangte Kind der referenzierten Definitionen.
-  Bei type reference ist diese Angabe erforderlich.
-  Bei anderen Werttypen ist sie nicht zulässig.
+  The Kind required of the referenced definitions.
+  For type reference, this entry is required.
+  For other value types, it is not permitted.
 spec:
   type: reference
   target: Kind
@@ -104,8 +104,8 @@ spec:
 		{Path: "model/markitect/core/properties.yaml", Kind: Regular, Bytes: []byte(`id: properties
 kind: Property
 body: >-
-  Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts.
-  Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.
+  References the permitted field contracts of the object described here.
+  The effective field names must be unique within this contract.
 spec:
   type: reference
   target: Property
@@ -127,6 +127,6 @@ func coreModelInput(definitions ...Entry) Input {
 	}
 	// Independently fixed by replacing only version in the normative Core JSON
 	// vector, rather than asking the implementation to generate its own lock.
-	input.Root.Entries[len(input.Root.Entries)-1].Bytes = []byte("formatVersion: 1\nmodels:\n  markitect-core:\n    version: '1.0'\n    digest: sha256:b912d62b4e7ecdb181291f1dafa712e8a0f407ad35d336ac2c3420a523ec3de4\n")
+	input.Root.Entries[len(input.Root.Entries)-1].Bytes = []byte("formatVersion: 1\nmodels:\n  markitect-core:\n    version: '1.0'\n    digest: sha256:8b8e63a958eab6b5cc79fe3b8eeb25fbec6765fb81ba813eeaa1b9b7dace1213\n")
 	return input
 }

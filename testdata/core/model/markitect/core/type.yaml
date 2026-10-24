@@ -1,6 +1,6 @@
 id: type
 kind: Property
-body: Der vom Core verstandene Werttyp dieser Property.
+body: The value type of this Property, as understood by the Core.
 spec:
   type: enum
   minCount: 1

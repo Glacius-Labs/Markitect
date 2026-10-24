@@ -6,7 +6,7 @@ M1 describes one library's members, physical book copies, loans, returns and cal
 
 ## Small vocabulary
 
-The ordinary imported [software-basics model](vocabulary/model.yaml), version 0.1.0, contains three Kinds:
+The ordinary imported [software-basics model](vocabulary/model.yaml), version 0.2.0, contains three Kinds:
 
 | Kind | Meaning |
 | --- | --- |

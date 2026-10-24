@@ -1,10 +1,10 @@
 id: name
 kind: Property
 body: >-
-  Optionaler ausdrücklich abweichender nichtleerer Feldname.
-  Ohne Angabe gilt die vollständige lokale ID der Property als Feldname.
-  Der effektive Feldname muss innerhalb jedes verwendenden Vertrags
-  eindeutig sein.
+  Optional explicitly deviating non-empty field name.
+  If omitted, the complete local ID of the Property applies as the field name.
+  The effective field name must be unique within every contract
+  that uses it.
 spec:
   type: string
   minCount: 0

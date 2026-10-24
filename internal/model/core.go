@@ -8,15 +8,15 @@ type fixedCoreDefinition struct {
 }
 
 var fixedCore = map[string]fixedCoreDefinition{
-	"Kind":       {body: "Deklariert einen Typ. properties benennt die erlaubten Felder der spec seiner Definitionen. Der body einer Typdefinition beschreibt deren gemeinsame Bedeutung und geltende Festlegungen.", fields: []string{"properties"}},
-	"Property":   {body: "Deklariert einen Feldvertrag mit Werttyp und Kardinalität. Der body beschreibt die Bedeutung seiner Werte oder Beziehungen. Bei type object benennt properties die erlaubten Felder des Objektwerts.", fields: []string{"name", "type", "minCount", "maxCount", "values", "target", "properties"}},
-	"name":       {body: "Optionaler ausdrücklich abweichender nichtleerer Feldname. Ohne Angabe gilt die vollständige lokale ID der Property als Feldname. Der effektive Feldname muss innerhalb jedes verwendenden Vertrags eindeutig sein.", valueType: "string", min: "0", max: "1"},
-	"type":       {body: "Der vom Core verstandene Werttyp dieser Property.", valueType: "enum", min: "1", max: "1", values: []string{"string", "boolean", "integer", "number", "enum", "object", "reference"}},
-	"minCount":   {body: "Nichtnegative Mindestanzahl vorhandener Werte.", valueType: "integer", min: "1", max: "1"},
-	"maxCount":   {body: "Höchstanzahl vorhandener Werte. Der Wert -1 erlaubt beliebig viele Werte innerhalb der Werkzeuggrenzen. Andere Werte müssen mindestens minCount entsprechen. Genau 1 bezeichnet einen Einzelwert; andere Höchstwerte eine Liste.", valueType: "integer", min: "1", max: "1"},
-	"values":     {body: "Erlaubte Stringwerte einer enum-Property. Bei type enum ist eine nichtleere Liste eindeutiger Werte erforderlich. Bei anderen Werttypen ist diese Angabe nicht zulässig.", valueType: "string", min: "0", max: "-1"},
-	"target":     {body: "Der verlangte Kind der referenzierten Definitionen. Bei type reference ist diese Angabe erforderlich. Bei anderen Werttypen ist sie nicht zulässig.", valueType: "reference", min: "0", max: "1", target: "Kind"},
-	"properties": {body: "Referenziert die erlaubten Feldverträge des hier beschriebenen Objekts. Die effektiven Feldnamen müssen innerhalb dieses Vertrags eindeutig sein.", valueType: "reference", min: "0", max: "-1", target: "Property"},
+	"Kind":       {body: "Declares a type. properties names the permitted fields of the spec of its definitions. The body of a type definition describes their shared meaning and applicable stipulations.", fields: []string{"properties"}},
+	"Property":   {body: "Declares a field contract with value type and cardinality. The body describes the meaning of its values or relationships. For type object, properties names the permitted fields of the object value.", fields: []string{"name", "type", "minCount", "maxCount", "values", "target", "properties"}},
+	"name":       {body: "Optional explicitly deviating non-empty field name. If omitted, the complete local ID of the Property applies as the field name. The effective field name must be unique within every contract that uses it.", valueType: "string", min: "0", max: "1"},
+	"type":       {body: "The value type of this Property, as understood by the Core.", valueType: "enum", min: "1", max: "1", values: []string{"string", "boolean", "integer", "number", "enum", "object", "reference"}},
+	"minCount":   {body: "Non-negative minimum number of present values.", valueType: "integer", min: "1", max: "1"},
+	"maxCount":   {body: "Maximum number of present values. The value -1 permits any number of values within the tool limits. Other values must be at least minCount. Exactly 1 denotes a single value; other maximum values denote a list.", valueType: "integer", min: "1", max: "1"},
+	"values":     {body: "Permitted string values of an enum Property. For type enum, a non-empty list of distinct values is required. For other value types, this entry is not permitted.", valueType: "string", min: "0", max: "-1"},
+	"target":     {body: "The Kind required of the referenced definitions. For type reference, this entry is required. For other value types, it is not permitted.", valueType: "reference", min: "0", max: "1", target: "Kind"},
+	"properties": {body: "References the permitted field contracts of the object described here. The effective field names must be unique within this contract.", valueType: "reference", min: "0", max: "-1", target: "Property"},
 }
 
 func (c *contractChecker) checkCore() Status {
