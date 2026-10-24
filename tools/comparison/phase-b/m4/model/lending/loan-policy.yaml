@@ -12,11 +12,10 @@ body: >-
   [[Catalog.copy]], or plus the value of [[shortLoanPeriodDays]] for a short
   copy, both in this definition's spec. A loan can be renewed at most as often
   as the value of [[maxRenewals]] allows; each [[renew]] replaces the loan's due
-  date with the later one, which is then the loan's current due date for every
-  rule that uses it. [[return]] remains possible regardless of the current limit
-  or overdue state. A lower limit neither deletes existing loans nor forces
-  their return; while at or above that limit, the member cannot start another
-  loan.
+  date with the later one, which is then the loan's current due date.
+  [[return]] remains possible regardless of the current limit or overdue state.
+  A lower limit neither deletes existing loans nor forces their return; while at
+  or above that limit, the member cannot start another loan.
 spec:
   maxOpenLoans: 3
   loanPeriodDays: 14

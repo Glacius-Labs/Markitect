@@ -149,7 +149,7 @@ def own_checks(engine, image, module, out):
     return results
 
 
-def probes(engine, image, module, out, repo, oracle_rev, rev, script="probes.py", extra=()):
+def probes(engine, image, module, out, repo, oracle_rev, rev, script="probes.py", extra=(), timeout=LIMITS["probes"]):
     """Build the program and run a harness script of tools/comparison at rev against it."""
     exports = out / "frozen"
     commit, evaluator = oracle_container.export_evaluator(str(repo), oracle_rev, exports)
@@ -162,6 +162,8 @@ def probes(engine, image, module, out, repo, oracle_rev, rev, script="probes.py"
                                     "evaluator/oracle.py": evaluator / "oracle.py", "harness/probes.py": harness / "probes.py"}.items()}
     if script != "probes.py":
         protected["harness/" + script] = hashlib.sha256((harness / script).read_bytes()).hexdigest()
+        for name in ("expectations/m1.json", "expectations/m2.json"):
+            protected["evaluator/" + name] = hashlib.sha256((evaluator / name).read_bytes()).hexdigest()
     name = pathlib.Path(script).stem
     volume = "mk-cmp-probe-" + uuid.uuid4().hex[:12]
     report = {"commit": commit, "protected_sha256": protected}
@@ -186,7 +188,7 @@ def probes(engine, image, module, out, repo, oracle_rev, rev, script="probes.py"
                                                           oracle_container.PYTHON_IMAGE, "python", "-I", "/harness/" + script, *extra,
                                                           "--source", str(module), "--commit", commit,
                                                           "--limits", json.dumps(oracle_container.LIMITS), "--protected", json.dumps(protected)],
-                                                 LIMITS["probes"])
+                                                 timeout)
         (out / f"{name}-report.json").write_bytes(stdout)
         (out / f"{name}.log").write_bytes(stderr)
         try:
@@ -197,6 +199,7 @@ def probes(engine, image, module, out, repo, oracle_rev, rev, script="probes.py"
                       errors=data.get("errors"), cases={c["id"]: {"passed": c["passed"], "errors": c["errors"][:5]} for c in data.get("cases", [])})
         if "discrimination" in data:
             report["discrimination"] = data["discrimination"].get("expected_mismatch_confirmed")
+        report["program_sha256"] = data.get("program_sha256")
         return report
     finally:
         docker(engine, ["volume", "rm", "-f", volume], LIMITS["cleanup"])
@@ -266,7 +269,7 @@ def assess(a):
         report["deliverable"] = True
         if a.profile not in ("m1", "m2"):
             report["phase_b"] = probes(a.engine, a.go_image, module, out, a.repo, a.oracle_rev, a.rev,
-                                       "phase_b_cases.py", ("--profile", a.profile))
+                                       "phase_b_cases.py", ("--profile", a.profile), LIMITS["oracle"] + LIMITS["probes"])
             report["own_checks"] = own_checks(a.engine, a.go_image, module, out)
             report["scope"] = scope_findings(module)
             report["mechanical_pass"] = (report["phase_b"].get("passed") is True

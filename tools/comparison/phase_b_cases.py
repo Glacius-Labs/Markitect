@@ -202,7 +202,7 @@ def t2_cases(profile):
     forward by the loan period of the loan's copy ... counted from the current due
     date, adds one to the loan's renewal count and returns the loan."
     loan-policy: "each renewal replaces the loan's due date with the later one,
-    which is then the loan's current due date for every rule that uses it."
+    which is then the loan's current due date."
     eligibility: "Suspension prevents new borrowing and renewal" (M4 only).
     callable-interface: loan records carry "`renewals` (integer, `0` until renewed)";
     `renew` takes `loanId`, `renewalDate`; unknown fields are invalid.
@@ -294,9 +294,9 @@ def t2_cases(profile):
 def t3_cases():
     """Removal of member suspension (M5).
 
-    callable-interface: "No operation changes a member after registration; a
-    `setMemberStatus` request names an unknown operation." An unknown operation
-    "returns `status: invalidRequest`". Member records carry `memberId`, `name`.
+    callable-interface: its operations table no longer lists `setMemberStatus`,
+    and "A malformed JSON line, an invalid request envelope or an unknown operation
+    returns `status: invalidRequest`". Member records carry `memberId`, `name`.
     eligibility: "membership never blocks borrowing, renewal or return once the
     member is registered".
     """
@@ -360,6 +360,8 @@ def main():
     a = p.parse_args()
     paths = probes.protected_paths(EVALUATOR, HERE)
     paths["harness/phase_b_cases.py"] = HERE / "phase_b_cases.py"
+    for name in ("expectations/m1.json", "expectations/m2.json"):
+        paths["evaluator/" + name] = EVALUATOR / name
     expected = json.loads(a.protected)
     report = {"profile": a.profile, "commit": a.commit, "source": a.source, "protected_sha256": expected, "cases": [], "errors": []}
     with open("/out/library", "rb") as f:

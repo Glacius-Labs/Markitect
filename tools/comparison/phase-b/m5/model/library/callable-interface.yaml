@@ -111,9 +111,6 @@ body: |-
   | `renew` | `loanId`, `renewalDate` | `loan` | [[Lending.renew]] |
   | `assessOverdue` | `assessmentDate` | `notices` (overdue notices) | [[Reminders.assess-overdue]] |
 
-  No operation changes a member after registration; a `setMemberStatus`
-  request names an unknown operation.
-
   `registerCopy` also accepts an optional `loanClass` string, `standard` or
   `short`; without it the copy is standard.
 

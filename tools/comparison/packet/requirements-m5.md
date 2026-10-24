@@ -115,9 +115,6 @@ visible in the response and in later inspection.
 | `renew` | `loanId`, `renewalDate` | `loan` | [renewal](#renew) |
 | `assessOverdue` | `assessmentDate` | `notices` (overdue notices) | [overdue assessment](#assess-overdue-loans) |
 
-No operation changes a member after registration; a `setMemberStatus`
-request names an unknown operation.
-
 `registerCopy` also accepts an optional `loanClass` string, `standard` or
 `short`; without it the copy is standard.
 
@@ -175,7 +172,7 @@ The lending policy states the numeric admission limit, the calendar-day duration
 | Short loan period in calendar days (`shortLoanPeriodDays`) | 7 | Positive integer giving the number of calendar days added to the borrowing date to determine a new loan's due date for a short copy. Weekends and holidays do not alter this interval. This does not describe a time of day or a scheduled job. Exactly one integer value is required. |
 | Maximum renewals per loan (`maxRenewals`) | 1 | Positive integer giving how many times one loan can be renewed. Each renewal moves its due date forward once. Exactly one integer value is required. |
 
-For [borrowing](#borrow), the resulting current open-loan count of the member must not exceed the value of [maximum open loans](#lending-policy) in the table above. Count every open [loan](#loan), including overdue loans, and exclude closed loans. An overdue loan adds no separate borrowing restriction. A new loan's due date is its borrowing date plus the value of [loan period](#lending-policy) for a standard [copy](#copy), or plus the value of [short loan period](#lending-policy) for a short copy, both in the table above. A loan can be renewed at most as often as the value of [maximum renewals](#lending-policy) allows; each [renewal](#renew) replaces the loan's due date with the later one, which is then the loan's current due date for every rule that uses it. [Return](#return) remains possible regardless of the current limit or overdue state. A lower limit neither deletes existing loans nor forces their return; while at or above that limit, the member cannot start another loan.
+For [borrowing](#borrow), the resulting current open-loan count of the member must not exceed the value of [maximum open loans](#lending-policy) in the table above. Count every open [loan](#loan), including overdue loans, and exclude closed loans. An overdue loan adds no separate borrowing restriction. A new loan's due date is its borrowing date plus the value of [loan period](#lending-policy) for a standard [copy](#copy), or plus the value of [short loan period](#lending-policy) for a short copy, both in the table above. A loan can be renewed at most as often as the value of [maximum renewals](#lending-policy) allows; each [renewal](#renew) replaces the loan's due date with the later one, which is then the loan's current due date. [Return](#return) remains possible regardless of the current limit or overdue state. A lower limit neither deletes existing loans nor forces their return; while at or above that limit, the member cannot start another loan.
 
 ### Loan
 

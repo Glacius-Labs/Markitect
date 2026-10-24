@@ -31,7 +31,7 @@ class RequirementsTests(unittest.TestCase):
         self.assertIn("### Set member status", docs["m4"])
         self.assertNotIn("### Set member status", docs["m5"])
         self.assertNotIn("| `setMemberStatus` |", docs["m5"])
-        self.assertIn("request names an unknown operation", docs["m5"])
+        self.assertNotIn("setMemberStatus", docs["m5"])
         # The overdue Definition deliberately keeps its wording from M2 to M4.
         overdue = [d.split("### Assess overdue loans")[1] for d in (docs["m2"], docs["m3"], docs["m4"])]
         self.assertEqual(len(set(overdue)), 1)
@@ -55,11 +55,13 @@ class RequirementsTests(unittest.TestCase):
         self.assertEqual(changed[0][1:].replace("| 5 |", "| 3 |", 1), changed[1][1:])
 
     def test_every_body_link_resolves_and_no_model_vocabulary_remains(self):
-        text = (PACKET / "requirements-m1.md").read_text(encoding="utf-8")
-        self.assertNotIn("[[", text)
-        anchors = {requirements.slug(title) for _, title, _ in requirements.SECTIONS}
-        for target in requirements.re.findall(r"\]\(#([a-z0-9-]+)\)", text):
-            self.assertIn(target, anchors)
+        for profile in requirements.PROFILES:
+            with self.subTest(profile):
+                text = (PACKET / f"requirements-{profile}.md").read_text(encoding="utf-8")
+                self.assertNotIn("[[", text)
+                anchors = {requirements.slug(line.lstrip("#").strip()) for line in text.splitlines() if line.startswith("#")}
+                for target in requirements.re.findall(r"\]\(#([a-z0-9-]+)\)", text):
+                    self.assertIn(target, anchors)
 
     def test_parser_refuses_unsupported_yaml(self):
         for text in ("id: x\nkind: K\nbody: |\n  text\n", "id: x\nkind: K\nbody: >-\n  text\n    more\n",
