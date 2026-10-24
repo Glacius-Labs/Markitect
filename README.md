@@ -7,124 +7,228 @@
 
 **Don't chase the code. Let the code chase you.**
 
-You shape the idea. Markitect organizes the work that brings your project into alignment.
+**Model-first software engineering with a compiler-checked canonical model and AI teams derived from your architecture.**
 
 [![CI](https://github.com/Glacius-Labs/Markitect/actions/workflows/ci.yaml/badge.svg)](https://github.com/Glacius-Labs/Markitect/actions/workflows/ci.yaml)
 [![License: Apache-2.0](https://img.shields.io/badge/License-Apache--2.0-blue.svg)](LICENSE)
 [![Status: In development](https://img.shields.io/badge/Status-In%20development-orange.svg)](docs/implementation-plan.md)
 
-[Why Markitect](#why-markitect) · [Working with a model](#working-with-a-model) · [An example](#let-the-project-do-the-catching-up) · [Development status](#development-status) · [Explore the source](#run-the-current-source)
+[The idea](#the-idea) · [How it works](#how-it-works) · [A concrete example](#a-concrete-example) · [Try it](#try-it-from-source) · [Current status](#current-status) · [Documentation](#documentation)
 
-Markitect is model-first development with delegated AI realization. You describe your project's intended world in a canonical model: its behavior, concepts, architecture and rules. Markitect is being built to organize its realization across code, tests, configuration and documentation.
+---
 
-Think of it as programming through documentation: the model defines what the project should be, and becomes the starting point for making it so.
+## The idea
 
-![Planned workflow: you define the canonical model; the project aligns to it. Markitect organizes responsibilities, AI work, independent review, integration and checks. Full Apply is under development.](docs/strategy/assets/model-realization.svg)
+AI can write code. Keeping **an entire project aligned with what it is supposed to be** is harder.
 
-## Why Markitect
+A decision about behavior or architecture rarely lives in one place. Its consequences appear in source code, tests, documentation, configuration, dependencies, and sometimes the instructions given to coding agents. As those representations evolve, an agent can complete its immediate task while missing a rule elsewhere, introducing a contradiction, or leaving previously correct behavior broken.
 
-The difficult question after an AI implementation is:
+Markitect starts from a different premise:
 
-> Does what the AI built actually match what I intended?
+> **Define the intended system once. Treat code, tests, configuration, documentation, and agent guidance as realizations of that intent.**
 
-A feature can work while an existing rule is overlooked, another area breaks or the documentation describes something different. You have to find the gap, prompt again and check the repair. Some omissions may never be noticed.
+You maintain a **canonical project model**. Markitect checks the model's expressible structure, accounts for repository files, derives a team of responsible Managers from the modeled architecture, and coordinates AI work to bring the repository into alignment. Independent verification and deterministic checks stand between the resulting candidate and publication.
 
-The bottleneck is **human attention**. Another agent can check the work, but it can overlook things too. Markitect aims to make that checking a dependable part of the organization, so you can concentrate on the intended system and decisions that need your judgment.
+The goal is not to generate more documentation or orchestrate more agents. It is to make **long-lived consistency and trustworthy change** achievable without requiring a human to rediscover every obligation and inspect every routine diff.
 
-The goal is a clean, uniform and understandable repository, without drift, forgotten rules or contradictions.
+**Markitect = Markdown + Architect.** The name reflects its origins in engineering documentation, Rules, Skills, Workflows, and agent instructions. The canonical v1 language uses **typed YAML Definitions with normative Markdown prose**; Markdown itself is not the compiler's input format.
 
-## Working with a model
+## Beyond prompt files and linters
 
-1. **Shape the idea.** Work with AI to explore and author the model, or edit it directly. Make the decisions that define your project.
-2. **Apply it.** The planned realization workflow assigns work to responsible agents, brings their contributions together and verifies the result.
-3. **Evolve the model.** Change your intent as your understanding develops. The next realization carries that change through while preserving the obligations that still apply. Deviations can also be repaired against unchanged intent.
+An `AGENTS.md` file can tell one agent how to behave. A linter can validate a known rule. **Neither alone establishes which project facts are authoritative, which artifacts realize them, who owns each area, or whether independently reviewed changes still conform after integration.**
 
-## Let the project do the catching up.
+Markitect connects those responsibilities: **the canonical model defines intent; deterministic software validates explicit structure; model-derived AI Managers perform and review semantic work.** These layers complement ordinary agent tools rather than replacing them. The promise of greater reliability remains a hypothesis to test, not an automatic consequence of adding structure.
 
-Imagine a library where a member may borrow five books. The rule changes: members may now borrow three.
-
-You change the rule in the model. The intended result reaches every affected part of the project:
+## How it works
 
 ```mermaid
-flowchart TB
-    accTitle: One model change across the project
-    accDescr: Planned realization of a library policy change. Changing the loan limit from five to three in the model updates the implementation, boundary tests and usage guide. Existing rules still apply.
-    model["Model<br/>Loan limit: 5 → 3"] --> code["Code<br/>Enforce the new limit"]
-    model --> tests["Tests<br/>Check the new boundary"]
-    model --> guide["Usage guide<br/>Explain the changed rule"]
-    classDef intent fill:#c9dff6,stroke:#7ab1e0,color:#212121
-    classDef realization fill:#262626,stroke:#9aa0a6,color:#ececec
-    class model intent
-    class code,tests,guide realization
+flowchart TD
+    Human["Human: define and evolve intent"] --> Model["Canonical model<br/>Packages, Definitions, rules, relationships"]
+    Model --> Prepare["Deterministic preparation<br/>Types, references, registry, file accounting"]
+    Prepare --> Assess["Assessment Run<br/>Complete model-derived Manager hierarchy"]
+    Assess --> Implement["Implement Run<br/>Delegate, change, review, integrate"]
+    Implement --> Verify["Independent Verify Run<br/>Fresh Managers, fixed candidate"]
+    Verify -->|"Required findings: new Run"| Implement
+    Verify -->|"Approved exact candidate"| Publish["Guarded publication<br/>No automatic user commit or push"]
 ```
 
-Existing rules, including returning books and handling suspended members, still hold.
+### 1. Describe the intended project
 
-This is the [two-Apply library demonstration](docs/design/canonical-model/manager-apply-playground.md) we are building toward: realize the original model, then apply the changed policy to that actual result.
+The model expresses concepts, use cases, rules, architectural boundaries, responsibilities, and development obligations. Definitions have stable identities, declared Kinds and typed fields; Markdown bodies state the meaning that cannot be reduced to a type. Explicit imports and `[[Definition]]` links connect related statements.
 
-## Where trust should come from
+**The model is the architecture; the agent organization follows it.** Markitect derives Root and one Manager for every local modeled Package, including intermediate and empty Packages. You do not maintain an independent manager chart that can silently disagree with the system design.
 
-Markitect combines **AI judgment with deterministic structure**. Its method draws on familiar practices from human teams: clear responsibilities, delegation, escalation, the four-eyes principle and integration of independently reviewed work. Focused context helps each agent attend to its own obligations; explicit relationships and required checks make the process inspectable.
+### 2. Compile what can be checked deterministically
 
-The ambition is to make routine human implementation review unnecessary. Implementation, tests and review can still share a mistaken assumption, so the effectiveness of this organization must be demonstrated in use.
+Before AI work begins, Markitect validates supplied model sources, identities, Kinds, property contracts, imports, references, and fixed inputs. It also checks the repository's **realization registry**: the explicit relationship between files, their owners, and the Definitions they implement.
 
-Agent calls, elapsed time and human attention are different costs. Lower-cost models can make focused collaboration practical; reducing spending is not the product goal. Parallel execution is a later opportunity to reduce elapsed time.
+Every observed file must be accounted for as a protected input, a registered artifact, an operational file, or an explicitly explained exception. **`.gitignore` is not an exemption from accounting.** One artifact may realize several Definitions; one Definition need not correspond to one file.
 
-For the full explanation, read [Markitect in brief](docs/vision.md#markitect-in-brief) and [origin and rationale](docs/concepts/origin-and-rationale.md).
+This is the type-system analogy: catch *expressible structural errors* before spending agent time. The compiler does **not** prove that arbitrary natural-language requirements have been correctly implemented.
 
-## Development status
+### 3. Give each Manager a bounded responsibility
 
-**Markitect is under active development. S3 composes complete fresh V1 Runs, independent stored Verify approval and guarded publication in source. Full native Apply qualification and owner acceptance remain separate.**
+Every Run uses the **complete hierarchy derived from the checked model**. Each Manager receives its relevant model context, a fresh isolated environment, and its own Git working copy. Parents delegate to direct children, answer questions, review fixed child results, and integrate accepted changes. Children can receive concrete corrections without restarting unrelated work within that Run.
 
-Current source supports the Model check, repository file accounting, context preparation and a guarded readable model view. The standalone Run uses the complete model-derived Manager hierarchy for Assessment, Implement and Verify, with fresh environments and durable results. Extract, Cockpit and interactive authoring are retired. The [project workflow](docs/project-workflow.md#execute-verify-and-apply) describes the explicit configuration and current command boundary.
+The host handles technical coordination, finite limits, Git identities, and checks. **AI Managers judge meaning and integration.** There is no domain-level Turn/Pass micromanagement protocol.
 
-Real runtime probes and small single-agent library baselines have passed. They establish their [recorded scope](docs/validation/runtime-capabilities-20261017.md); they do not demonstrate the complete Manager organization or the two-Apply workflow.
+### 4. Assess, implement, verify — independently
 
-We plan to compare this approach with an agent given ordinary documentation containing the same intent and the instruction to implement it. [Evaluation](docs/measurement.md) will examine fidelity and required human correction through successive changes. Follow the [delivery plan](docs/implementation-plan.md) for scope and dependencies.
+`apply` composes three distinct mandates using the same Run executor:
 
-## Run the current source
+| Mandate | Responsibility |
+| --- | --- |
+| **Assessment** | Determine whether the fixed model is sufficiently coherent to realize. Missing or outdated code is not, by itself, a model defect. |
+| **Implement** | Bring artifacts into conformity while preserving what already conforms. Each parent reviews and integrates its children's work. |
+| **Verify** | Have a **fresh** complete Manager hierarchy assess the exact integrated candidate independently; do not reuse Implement conversations or modify the candidate being judged. |
 
-Use Git and the Go version in `go.mod`, then run from this checkout:
+A Verify rejection with actionable realization findings starts a **new Implement Run**, followed by a new Verify Run, under the original finite command budget. A material contradiction or missing decision in the model stops the command for human resolution; agents do not silently rewrite accepted intent.
+
+Deterministic checks occur before execution, on fixed child handoffs where applicable, at successful Implement Root completion, and before publication. A provider reporting “done” is not equivalent to an accepted result.
+
+### 5. Keep results, not running containers
+
+Each Run closes its Manager environments and Git Workspace Service. Exact candidates survive independently as retained Git objects; mandatory Run results record decisions, findings, checks, and cleanup observations. **Shared Notes** preserve attributed observations across Runs and commands, but never replace the model or turn optional ideas into required work.
+
+Only the independently approved, reloaded candidate can be published. Markitect checks the target for intervening changes and reports conflicts or partial transfers rather than silently inheriting a previous approval. It does **not** commit or push the user's repository.
+
+## A concrete example
+
+Suppose a small library allows each member to borrow **five books**. Later, the limit changes to **three**.
+
+The [canonical Library example](docs/design/canonical-model/library-example/README.md) represents the limit and its meaning in a real YAML Definition:
+
+```yaml
+id: loan-policy
+kind: LendingPolicy
+body: >-
+  For [[borrow]], the resulting current open-loan count of the member must not
+  exceed the value of [[maxOpenLoans]] in this definition's spec. Count every
+  open [[loan]], including overdue loans, and exclude closed loans. An overdue
+  loan adds no separate borrowing restriction. A new loan's due date is its
+  borrowing date plus the value of [[loanPeriodDays]] in this definition's spec.
+  [[return]] remains possible regardless of the current limit or overdue state.
+  A lower limit neither deletes existing loans nor forces their return; while
+  at or above that limit, the member cannot start another loan.
+spec:
+  maxOpenLoans: 5
+  loanPeriodDays: 14
+```
+
+Changing `maxOpenLoans: 5` to `maxOpenLoans: 3` is a change of **accepted intent**, not a request to edit a particular source file. A conforming realization must reflect the new boundary in behavior, tests, and relevant documentation **without** deleting existing loans or breaking returns. Already-correct artifacts should remain correct, not be rewritten merely because an agent prefers a different style.
+
+The broader [Library M1 → M2 evaluation](docs/measurement.md) tests whether Markitect can preserve those obligations across successive changes. That full preservation result is **not yet established** by the initial M1 success.
+
+## The project model
+
+A Markitect project explicitly owns its inputs and file relationships under `.markitect/`:
 
 ```text
+.markitect/
+├── model.yaml            # Canonical model manifest
+├── model-lock.yaml       # Exact external dependency bindings
+├── model/                # Packages and typed Definitions
+├── registry/             # Artifact paths, owners and Definition links
+├── execution.yaml        # Ownership areas and declared project checks
+└── ignore.yaml           # Explicit, justified exceptions
+```
+
+The model is **not a mirror of the file tree**. You choose the level of conceptual detail. The registry describes how real files implement those concepts; Package structure determines responsibility; declared checks provide executable evidence where available.
+
+See [Markitect's own model](.markitect/README.md), the [canonical language v1 contract](docs/design/canonical-model/minimal-language/language-contract.md), and the [Library model](docs/design/canonical-model/library-example/README.md) for the actual format.
+
+<a id="run-the-current-source"></a>
+
+## Try it from source
+
+**Prerequisites:** Git and the Go version declared in [`go.mod`](go.mod) (currently Go **1.27.1**). There is no supported V1 binary release yet.
+
+```bash
+git clone https://github.com/Glacius-Labs/Markitect.git
+cd Markitect
+
 go run ./cmd/markitect help
 go run ./cmd/markitect check --repo .
-go run ./cmd/markitect context product/model --repo .
+go run ./cmd/markitect context product --repo .
 go run ./cmd/markitect docs --repo .
 ```
 
-These commands inspect and prepare the model. They do not start a realization. The [project workflow](docs/project-workflow.md) explains current commands, and the [self-model](.markitect/README.md) provides a complete authoring example.
+These commands inspect the repository's own canonical model; they **do not launch agents**. `docs` previews the readable model view. To write a view, use `docs --expect PREVIEW_DIGEST --write` with the digest returned by a current preview.
 
-## Contribute
+### Running Apply (advanced, experimental)
 
-Start with [CONTRIBUTING](CONTRIBUTING.md), the [delivery plan](docs/implementation-plan.md) and the [documentation map](docs/README.md). Concrete feedback about the model, workflow and missing obligations is useful alongside implementation contributions.
+The current source includes `apply`, but it is **not** a one-command install or an automatic brownfield migration. It requires a reviewed and committed project model, explicit registry/ownership declarations, a clean target on an isolated non-protected Git branch, a pinned Linux container/runtime setup, normal Codex account credentials, and finite invocation limits.
 
-## Distribution status
+Start from [the runtime profile example](examples/runtime-profile.example.yaml) and [invocation example](examples/run.example.json). Copy them **outside** the repository and replace all placeholders, using actual runtime/image/build identities. Then invoke:
 
-The previous Project/Domain releases and their binary downloads were retired by the owner on 17 October 2026. There is currently no supported binary release of the new model-first product. Build the current source as described above; an old version tag is a historical source reference.
+```bash
+go run ./cmd/markitect apply \
+  --repo . \
+  --runtime-profile /absolute/path/runtime-profile.yaml \
+  --run-config /absolute/path/run.json
+```
+
+`apply` starts real provider and check processes and may modify files in the selected repository after verified publication. Read the [exact execution and safety requirements](docs/project-workflow.md#execute-verify-and-apply) before using it. No general-purpose `init`, setup wizard, or Extract path is currently provided.
+
+## Current status
+
+**Active development — source available, not a supported V1 release.**
+
+| Capability | Current evidence and limits |
+| --- | --- |
+| Canonical v1 language, compiler and explicit file accounting | Implemented with source tests and model/architecture checks. |
+| `check`, `context` and guarded `docs` | Implemented in the current CLI. |
+| Standalone hierarchical Run and stored Git candidates/results/Notes | Implemented, with controlled tests and a bounded native Codex hierarchy proof. |
+| `apply`: Assessment → Implement → Verify → guarded publication | Implemented. **One complete native Codex Library M1 realization** has been recorded, using fresh six-Manager hierarchies in all three mandates and publishing 21 paths. [Evidence: PR #660](https://github.com/Glacius-Labs/Markitect/pull/660). |
+| Reliability across changes | **Not yet established.** M1 → M2 preservation, no-change, deliberate defects, independent functional oracles and repeated-run evaluation remain qualification work. |
+| Provider support | Native Codex with dedicated normal-account login has bounded evidence. Claude Code Apply Sessions are **not yet supported**. |
+| Other product surfaces | Extract, Cockpit/UI, interactive model authoring and the former Setup command are outside this narrow V1 scope. |
+
+The compiler can reject malformed structure and missing declared relationships. **It cannot know whether the model omitted a real user need, whether an AI correctly understood prose, or whether green agent-written tests actually test the right thing.** Independent review, integration, project checks, and outside evaluation are intended to improve trust—not to turn agent work into a formal proof.
+
+Read the [live implementation plan](docs/implementation-plan.md) for up-to-date source/evidence status and [Measurement](docs/measurement.md) for how the method will be compared with ordinary agentic coding. Fewer tokens, more agents, or one successful demonstration are not acceptance criteria by themselves.
+
+## Direction
+
+The present V1 focuses on **Model → Artifacts**: making a project conform to its accepted model. The longer-term idea reaches further: the same canonical source can govern engineering processes and AI-facing rules, while separately authorized agents could eventually help propose or maintain parts of the model itself. Those are **directions, not current CLI capabilities**.
+
+The measure of success is whether projects remain consistent through real changes with **less routine human supervision**—while people retain responsibility for architecture, requirements, material exceptions, and acceptance.
+
+## Documentation
+
+- [Product vision](docs/vision.md) — the thesis, responsibilities, and limitations
+- [Origin and rationale](docs/concepts/origin-and-rationale.md) — why the idea emerged
+- [Canonical language v1](docs/design/canonical-model/minimal-language/language-contract.md) — the authoritative model format
+- [Project workflow](docs/project-workflow.md) — exact commands and runtime prerequisites
+- [V1 execution architecture](docs/design/v1-execution-architecture.md) — Run, Workflow, Harness, storage, and publication boundaries
+- [Library example](docs/design/canonical-model/library-example/README.md) — the worked model and policy-change scenario
+- [Measurement](docs/measurement.md) — evaluation against conventional agentic work
+- [Documentation map](docs/README.md) — all maintained references
+
+## Contributing
+
+See [CONTRIBUTING.md](CONTRIBUTING.md) for source checks, import boundaries, artifact registration, and independent review. Use [GitHub Issues](https://github.com/Glacius-Labs/Markitect/issues) for concrete defects or proposals. The project currently prioritizes fidelity to modeled intent, a small coherent architecture, and honest evidence over feature breadth.
+
+## Distribution
+
+The earlier Project/Domain downloads were retired. There is currently no supported binary release of this model-first V1. Historical tags and release evidence remain available; see the [retirement record](docs/history/distribution-retirement-20261017.md).
 
 <!-- markitect-release:install:start -->
 
-## Install Markitect
+### Installation
 
-Build from current reviewed source. A future published release needs its own source-bound verification before installation instructions are added here.
+Build from the current reviewed source using the Go version in `go.mod`. Published binary installation instructions will be added only after source-bound release qualification.
 
 <!-- markitect-release:install:end -->
 
 <!-- markitect-release:try:start -->
 
-## Examples
+### Examples and evaluation
 
-Use the [canonical Library model](docs/design/canonical-model/library-example/README.md), current [source workflow](docs/project-workflow.md) and [independent Playground](experiments/library-playground/README.md). The complete two-Apply demonstration remains a separate validation target.
+Start with the [canonical Library model](docs/design/canonical-model/library-example/README.md), [project workflow](docs/project-workflow.md), and [independent Library Playground](experiments/library-playground/README.md). The complete two-Apply policy-change demonstration remains a separate acceptance target.
 
 <!-- markitect-release:try:end -->
 
-Historical Git tags remain unchanged. The [retirement record](docs/history/distribution-retirement-20261017.md) preserves release identities, asset digests and attestations. The [distribution guide](integration/README.md) describes local packaging and future publication.
-
-## Documentation
-
-[Vision](docs/vision.md) · [Origin](docs/concepts/origin-and-rationale.md) · [Workflow](docs/project-workflow.md) · [Design](docs/design/canonical-model/README.md) · [Evidence](docs/validation/README.md) · [All documentation](docs/README.md)
-
 ## License
 
-Markitect is licensed under [Apache-2.0](LICENSE). Third-party notices are available through `markitect licenses` and [the canonical notice file](internal/tooling/licenses/notices.md).
+Apache-2.0. See [LICENSE](LICENSE) and [third-party notices](internal/tooling/licenses/notices.md).
