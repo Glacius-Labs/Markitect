@@ -62,11 +62,20 @@ func (x *execution) scheduleLocked(s *managerState) {
 
 // settleLocked starts every Manager with something to handle and reports
 // whether the whole hierarchy is quiet. A quiet hierarchy signals completion.
+// A running Manager blocked in await rechecks whether anything can arrive.
 func (x *execution) settleLocked() bool {
 	quiet := true
 	for _, s := range x.states {
 		x.scheduleLocked(s)
 		quiet = quiet && !s.running
+	}
+	for _, s := range x.states {
+		if s.running {
+			select {
+			case s.signal <- struct{}{}:
+			default:
+			}
+		}
 	}
 	if quiet {
 		select {
@@ -199,6 +208,9 @@ func (x *execution) progressed(s *managerState, continued bool, before Commit) e
 	s.stalled++
 	if s.stalled < maxStalled {
 		return nil
+	}
+	if s.a.phase != active {
+		return fmt.Errorf("%w: Manager %s made no progress in %d continued responses in a row%s", ErrNoProgress, s.manager.Package, s.stalled, x.openQuestionsLocked(s))
 	}
 	return fmt.Errorf("%w: Manager %s made no progress in %d continued responses in a row on its assignment %q", ErrNoProgress, s.manager.Package, s.stalled, s.a.task.Task)
 }

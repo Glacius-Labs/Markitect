@@ -470,3 +470,32 @@ func TestReopenedManagerKeepsItsOwnLateBlocker(t *testing.T) {
 		t.Fatal("own late model blocker was lost on reopening", a.a.phase, a.a.handoff.Decision)
 	}
 }
+
+// The last other driver releasing wakes a blocked await, which then refuses
+// instead of waiting for an answer only its caller can give.
+func TestReleasedDriverWakesBlockedAwait(t *testing.T) {
+	x, _, a, deep := inboxExecution()
+	defer x.cancel()
+	// a awaits inside its own response, so its driver runs too.
+	deep.a.phase, deep.running, a.running = active, true, true
+	x.questions["q"] = &question{Question: Question{ID: "q", From: "a/deep", To: "a", Text: "open"}, delivered: true}
+	returned := make(chan error, 1)
+	go func() { _, err := x.await(context.Background(), a); returned <- err }()
+	select {
+	case err := <-returned:
+		t.Fatal("await returned while another driver ran", err)
+	case <-time.After(50 * time.Millisecond):
+	}
+	x.mu.Lock()
+	deep.running = false
+	x.settleLocked()
+	x.mu.Unlock()
+	select {
+	case err := <-returned:
+		if err == nil || !strings.Contains(err.Error(), "answer your open questions: q from a/deep") {
+			t.Fatal("await did not name the open question", err)
+		}
+	case <-time.After(time.Second):
+		t.Fatal("released driver left await blocked")
+	}
+}
