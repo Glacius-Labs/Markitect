@@ -59,7 +59,7 @@ type Commit struct {
 	Tree string `json:"tree"`
 }
 
-// Handoff preserves actual task base/result and accepted child commits. Review
+// Handoff preserves actual task base/result and integrated child commits. Review
 // sees the complete diff; no accepted child paths are subtracted from it.
 type ParentReview struct {
 	Decision Decision  `json:"decision"`
