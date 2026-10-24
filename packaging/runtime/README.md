@@ -1,6 +1,6 @@
 # Runtime base image
 
-This directory defines the Linux image used by the native adapter and container checks. It contains `markitect-agentd`, pinned Codex `0.162.0` and Claude Code `2.1.301`, Node, Git, Python 3 and CA certificates. Installed CLI binaries do not establish adapter support or provider qualification. The current Codex adapter implements Run Sessions; the Claude adapter returns unavailable before credential or container side effects.
+This directory defines the Linux image used by the native adapter and container checks. It contains `markitect-agentd`, pinned Codex `0.162.0`, Node, Git, Python 3 and CA certificates. Installed CLI binaries do not establish adapter support or provider qualification. The current Codex adapter implements Run Sessions; Codex is the only Agent provider in V1.
 
 Build explicitly from the repository root when a new image is required:
 
@@ -8,7 +8,7 @@ Build explicitly from the repository root when a new image is required:
 docker build -f packaging/runtime/Dockerfile -t markitect-runtime .
 ```
 
-The [Dockerfile ignore file](Dockerfile.dockerignore) bounds the build context. Runtime preparation selects an existing immutable engine image ID (`sha256:...`); a tag or a source checkout alone is not that identity. `/opt/markitect/runtime.env` records CLI versions, the generated Codex schema digest and the agentd build. The metadata reader copies it from a created, never-started container and checks image identity again.
+The [Dockerfile ignore file](Dockerfile.dockerignore) bounds the build context. Runtime preparation selects an existing immutable engine image ID (`sha256:...`); a tag or a source checkout alone is not that identity. `/opt/markitect/runtime.env` records the Codex version, the generated Codex schema digest and the agentd build. The metadata reader copies it from a created, never-started container and checks image identity again.
 
 ## Container and workspace ownership
 
@@ -32,4 +32,4 @@ The native renderer supplies versioned working rules, checked project and Manage
 
 Source tests, image metadata and an installed CLI are separate from actual engine, login, provider, hierarchy and background-writer evidence. Real probes require a concrete finite coordinator dispatch with frozen source, binary, profile, existing image, resource ownership, time limits and independent closure observations. Preparation does not authorize build, pull, credentials, retries, inference or product Apply.
 
-The opt-in offline CLI inventory uses a local HTTP recorder and no external inference. The native hierarchy probe separately exercises actual Run Sessions. Neither the old both-provider smoke commands nor API-key and cross-container resume examples describe current execution. Earlier [runtime capability records](../../docs/validation/runtime-capabilities-20261017.md) retain their historical source and scope; they do not qualify the replacement adapters or grant a rerun. Claude remains unavailable until separately implemented and qualified.
+The opt-in offline CLI inventory uses a local HTTP recorder and no external inference. The native hierarchy probe separately exercises actual Run Sessions. Neither the old both-provider smoke commands nor API-key and cross-container resume examples describe current execution. Earlier [runtime capability records](../../docs/validation/runtime-capabilities-20261017.md) retain their historical source and scope; they do not qualify the replacement adapters or grant a rerun.

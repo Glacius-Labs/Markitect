@@ -4,6 +4,6 @@ imports:
 id: MqttService
 kind: Kind
 body: >-
-  Beschreibt die benötigte MQTT-Infrastruktur. Sie vermittelt Nachrichten anhand von Topics
-  und Abonnements. Bereitstellung und Zugriffsvorgaben werden im konkreten body beschrieben.
+  Describes the required MQTT infrastructure. It routes messages on the basis of topics
+  and subscriptions. Provisioning and access rules are described in the concrete body.
 spec: {}

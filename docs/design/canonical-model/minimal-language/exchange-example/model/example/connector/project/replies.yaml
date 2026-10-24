@@ -4,10 +4,10 @@ imports:
 id: replies
 kind: Channel
 body: >-
-  senderInstanceId bezeichnet die ausstellende API-Prozessinstanz. Die API übergibt ihre konkrete
-  Antwortadresse im Auftrag. Antworten behalten die MessageId des Requests und werden innerhalb
-  dieser Instanz dem wartenden Austausch zugeordnet. Für die Antwortadresse wird keine konkurrierende
-  Shared Subscription verwendet. Zugriffe sind auf die autorisierten Teilnehmer begrenzt.
+  senderInstanceId denotes the issuing API process instance. The API passes its concrete
+  reply address in the request. Replies keep the MessageId of the Request and are assigned, within
+  this instance, to the waiting exchange. No competing Shared Subscription is used for the
+  reply address. Access is limited to the authorized participants.
 spec:
   topicPattern: bridge/replies/{senderInstanceId}
   delivery: at-least-once

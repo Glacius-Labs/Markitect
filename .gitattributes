@@ -10,8 +10,9 @@ docs/research/ontology-projection-assurance.md -text whitespace=-blank-at-eof,-b
 # Preserve the owner-supplied V1 target exactly, including Markdown hard breaks.
 /docs/concepts/sources/v1-target-architecture-20261023.md -text whitespace=-blank-at-eof,-blank-at-eol
 
-# Preserve the owner-supplied V1 concept v0.18 and the supplied audit exactly, including Markdown hard breaks.
+# Preserve the owner-supplied V1 concept v0.18 exactly, including Markdown hard breaks. The supplied audit and the English translation of the concept (DEC-069) keep the same hard breaks.
 /docs/concepts/sources/v1-concept-v018-20261024.md -text whitespace=-blank-at-eof,-blank-at-eol
+/docs/concepts/sources/v1-concept-v018-20261024-en.md whitespace=-blank-at-eof,-blank-at-eol
 /docs/development/concept-conformance-audit-20261024.md -text whitespace=-blank-at-eof,-blank-at-eol
 
 /docs/strategy/sources/canonical-reset/*.md -text whitespace=-blank-at-eof,-blank-at-eol

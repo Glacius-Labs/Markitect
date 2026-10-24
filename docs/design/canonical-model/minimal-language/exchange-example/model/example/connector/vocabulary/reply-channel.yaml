@@ -4,7 +4,7 @@ imports:
 id: replyChannel
 kind: Property
 body: >-
-  Kommunikationsweg für Antworten an die ausstellende Instanz.
+  Communication path for replies to the issuing instance.
 spec:
   type: reference
   target: Channel

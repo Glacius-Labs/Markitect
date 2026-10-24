@@ -4,9 +4,9 @@ imports:
 id: Command
 kind: Kind
 body: >-
-  Beschreibt den Vertrag einer versionierten Operationsanforderung. Der body legt Eingaben,
-  Ergebnisse und fachliche Fehler fest. operationId identifiziert die Operation innerhalb
-  des Projekts eindeutig. Einzelne versendete Aufträge sind Laufzeitdaten.
+  Describes the contract of a versioned operation request. The body stipulates inputs,
+  results and domain errors. operationId uniquely identifies the operation within
+  the project. Individual dispatched requests are runtime data.
 spec:
   properties:
   - operationId

@@ -4,7 +4,7 @@ imports:
 id: maxAttempts
 kind: Property
 body: >-
-  Positives Versuchsbudget einschließlich des ersten Versuchs.
+  Positive attempt budget including the first attempt.
 spec:
   type: integer
   minCount: 1
