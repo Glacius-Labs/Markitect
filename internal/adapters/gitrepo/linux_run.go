@@ -303,7 +303,7 @@ func (c *linuxCopy) Review(ctx context.Context, source run.Copy, base, result ru
 	if _, err = c.service.command(ctx, c.directory, nil, "fetch", "--quiet", "--no-tags", child.directory, result.ID); err != nil {
 		return "", err
 	}
-	return c.service.command(ctx, c.directory, nil, "diff", "--no-ext-diff", "--no-textconv", "--binary", base.ID, result.ID, "--")
+	return c.service.command(ctx, c.directory, nil, "diff", "--no-ext-diff", "--no-textconv", "--full-index", base.ID, result.ID, "--")
 }
 func (c *linuxCopy) Integrate(ctx context.Context, source run.Copy, fixed run.Commit) (run.Commit, error) {
 	child, ok := source.(*linuxCopy)
