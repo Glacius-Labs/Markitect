@@ -104,7 +104,7 @@ The object of evaluation is the delegated method: computed scope, bounded Manage
 
 ## Correctness first
 
-Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library Playground](../../tools/library-oracle/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
+Current component and oracle tests establish only their actual assertions and source. [CONTRIBUTING](../../CONTRIBUTING.md#verify-a-change) owns executable gates; the [Library oracle](../../tools/library-oracle/README.md) owns independent behavior expectations. A successful source check does not establish semantic realization or attention savings.
 
 The old authoring scenarios, `internal/app` examples and published-binary timing workload are retired. Their protocols and dated observations remain at [the pre-retirement measurement record](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/measurement.md) and [benchmark source](https://github.com/Glacius-Labs/Markitect/tree/1f4a1ede214d05fd2fee615b3905207df7702426/benchmark). Removing obsolete commands does not rescore their results or establish a replacement benchmark. A new comparative study follows the current primary baseline above and requires its own authorization.
 

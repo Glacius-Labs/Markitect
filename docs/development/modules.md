@@ -47,7 +47,7 @@ Coordinate shared contracts first. Add a concrete responsibility/import decision
 
 `go run ./cmd/markitect-check-architecture --repo .` inspects all production, test and platform Go files. It checks unknown/removed packages, exact responsibility edges, absent producers, map completeness, owner-document links, external-test self imports and test-only testkit use. The document adapter may use only the reviewed guarded-write selectors. Third-party imports remain permitted; this is a Markitect dependency check, not a general proof of I/O purity.
 
-`internal/testkit` imports no Markitect package. Only test files may import it. The standalone integration bootstrap and source smoke import no Markitect packages. Go fixture directories and independent evaluation assets are not product package ownership exemptions.
+`internal/testkit` imports no Markitect package. Only test files may import it. The standalone consumer bootstrap (`packaging/bootstrap`) and source smoke import no Markitect packages. Go fixture directories and independent evaluation assets are not product package ownership exemptions.
 
 Regenerate the view with:
 

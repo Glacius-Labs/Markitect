@@ -211,7 +211,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md) for source checks, import boundaries, art
 
 ## Distribution
 
-The earlier Project/Domain downloads were retired. There is currently no supported binary release of this model-first V1. Historical tags and release evidence remain available; see the [retirement record](docs/validation/distribution-retirement-20261017.md).
+The earlier Project/Domain downloads were retired. There is currently no supported binary release of this model-first V1. The release evidence remains on Main and the former tags are mapped to commits in the [retired release mapping](docs/validation/retired-releases-20261017.json); see the [retirement record](docs/validation/distribution-retirement-20261017.md).
 
 <!-- markitect-release:install:start -->
 
