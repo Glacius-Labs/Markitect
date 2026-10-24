@@ -86,6 +86,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 | [DEC-069](#dec-069-documentation-is-written-in-english) | Decision | Documentation is written in English | Accepted; translation of existing German documents and of the core vocabulary tracked in the delivery plan |
 | [DEC-070](#dec-070-parallel-writers-where-useful) | Decision | Parallel writers where useful | Accepted |
 | [DEC-071](#dec-071-repository-structure-and-archive) | Decision | Repository structure and archive | Accepted; execution in slice R2 |
+| [DEC-072](#dec-072-stable-v1-justified-by-data) | Decision | Stable V1 justified by data | Accepted; stability and comparison evidence tracked in the delivery plan |
 | [PRM-001 to PRM-007](#promises) | Promise | Target outcomes | Target |
 | [ASM-001 to ASM-006](#assumptions-and-hypotheses) | Assumption | Assumptions and hypotheses | See entries |
 | [CPT-001](#cpt-001-federalism) | Concept | Federalism | Accepted |
@@ -882,6 +883,12 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted by the owner, 24 October 2026 ([verbatim source](sources/repository-structure-decisions-20261024.md)).
 - **Decision:** The target layout and the six recommendations of the [repository structure](../development/repository-structure.md) inventory are accepted: archive 873 files including the marketing plan, do not translate archived records, protect `archive/**` refs, pin the six pre-reset commits, change the tag Rule instead of restoring tags, and move `internal/` packages in step 5.
 - **Owners and scope:** slice R2 in the [delivery plan](../implementation-plan.md#repository-structure) executes it; the archive ruleset is already active. Archived material stays traceable through the archive refs, bundles and `docs/archive.md`.
+
+### DEC-072 Stable V1 justified by data
+
+- **Status:** Accepted by the owner, 24 October 2026 ([verbatim source with translation](sources/v1-evidence-goal-20261024.md)).
+- **Decision:** V1 must be stable, and data must justify that it is stable and better than one agent doing everything.
+- **Recorded meaning (recorder's interpretation):** repeated native runs of the reference scenarios on the frozen final source provide the stability data. A controlled comparison against the owner's documentation-plus-one-Agent baseline in the [measurement guide](../guides/measurement.md#quality-first-comparative-evaluation) provides the comparison data. The study is authorized as bounded evidence work; release and deployment remain excluded.
 
 ## Promises
 

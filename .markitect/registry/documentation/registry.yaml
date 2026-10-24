@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/concepts/sources/v1-evidence-goal-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Records the owner goal that V1 stability and its advantage over one agent are justified by data.
   - path: "docs/concepts/sources/repository-structure-decisions-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]
