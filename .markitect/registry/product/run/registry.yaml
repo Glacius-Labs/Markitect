@@ -44,3 +44,11 @@ artifacts:
     form: code
     realizes: [product/run/confirmed-run-history]
     why: "Holds the explicit per-Manager assignment state whose named events bind a judgment to its task and assessed state."
+  - path: "internal/run/validate.go"
+    form: code
+    realizes: [product/run/confirmed-run-history]
+    why: "Holds the one validation of closed Run results and the Run-internal closure names it requires, so workflow and publication name no Run resource."
+  - path: "internal/run/validate_test.go"
+    form: test
+    realizes: [product/run/confirmed-run-history]
+    why: "Proves the closed-result validation accepts every mandate and refuses each broken binding, decision, Findings, closure and hierarchy property."

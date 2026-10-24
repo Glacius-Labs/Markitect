@@ -49,7 +49,7 @@ func ValidateApproval(p project.Prepared, value run.Result) error {
 	if value.Mandate != run.Verify || value.Decision != run.Approve {
 		return fmt.Errorf("publication requires final Verify approval")
 	}
-	return workflow.ValidateClosed(value, run.Request{ID: value.ID, Project: value.Project, Prepared: p, Input: value.Input, Mandate: run.Verify})
+	return run.ValidateClosed(value, run.Request{ID: value.ID, Project: value.Project, Prepared: p, Input: value.Input, Mandate: run.Verify})
 }
 
 func (c *Command) Execute(ctx context.Context, request run.Request) (out Report, err error) {

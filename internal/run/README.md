@@ -26,6 +26,10 @@ Every Implement submission is fixed, checked and delivered to the parent with it
 
 The check is structural validation and accounting, then the declared checks placed in that Manager's copy (Assessment runs only the structural part). Declared checks additionally require obligation eligibility and directory ownership confined to the Manager subtree, including nested exact-file areas. Root runs the complete suite; checks without `requiredBy` remain Root-only. A child state that only lacks integration still outstanding elsewhere is therefore not invalid; `Check.Checks` lists the checks that ran, and a check that did not run is never reported as passed. Assessment and Verify retain their fixed input; review scratch cannot replace product bytes. Implement submission establishes no independent approval or publication.
 
+## Validity of closed results
+
+`ValidateClosed` (`validate.go`) is the one check that a returned or stored result is complete: bound to its request and checked preparation, technically completed, with a candidate that keeps its fixed input for Assessment and Verify, a decision valid for the mandate, mandatory Findings for a rejection or model blocker, every Manager's session and copy, the workers and the Git service closed once and the complete hierarchy handed off. The closure names stay inside Run; workflow and publication call this function and name no Run resource.
+
 ## Limits and evidence
 
 The shared allowance bounds all messages and questions; the request bounds Manager count, cleanup and terminal persistence separately. Partial startup, blocked adapters, cancellation, observation failures and storage/read-back failures cannot produce successful technical completion. Cleanup records actual outcomes and uncertainty; a timeout never claims a process was killed.

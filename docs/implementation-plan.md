@@ -17,8 +17,8 @@ The [V1 qualification record](validation/v1-qualification-20261024.md) holds the
 | Concept | Current source | Step |
 |---|---|---|
 | D10–D13: hierarchical questions, child diagnostics at the parent, assignment-bound judgments, tasks not process | Resolved in source by A1 ([PR #683](https://github.com/Glacius-Labs/Markitect/pull/683)) with controlled tests and a bounded [native contract proof](validation/a1-native-contract-proof-20261024.md) on f76826c3; the later wording delta of host messages is requalified in step 4 | 2 |
-| D15: closed-result validation in the Run contract | `workflow.ValidateClosed` checks Run resource names; `apply.ValidateApproval` calls it | 3 |
-| D17: bounded, ordered Notes pages within the transport limit | `read_notes` returns all Notes in one tool reply ordered by random ID; the store accepts 16 MiB against a 1 MiB frame; a read error cancels the Run | 3 |
+| D15: closed-result validation in the Run contract | Resolved in source by A2 ([PR #686](https://github.com/Glacius-Labs/Markitect/pull/686)): `run.ValidateClosed` is the one validation; workflow and publication name no Run resources | 3 |
+| D17: bounded, ordered Notes pages within the transport limit | Resolved in source by A3 ([PR #685](https://github.com/Glacius-Labs/Markitect/pull/685)): creation-ordered IDs, `after` cursor, 128 KiB pages, 16 KiB per Note refused above the limit, and Notes errors no longer stop a Run | 3 |
 | D18: no non-functional Claude path | Resolved in source: B1 ([PR #674](https://github.com/Glacius-Labs/Markitect/pull/674)) removed the Claude adapter and its wiring, B2 ([PR #678](https://github.com/Glacius-Labs/Markitect/pull/678)) removed Claude Code from the runtime image recipe and the `claude=` metadata record; the changed image is built and qualified in step 4 | 3 |
 | §5.5: the self-model describes the chosen architecture | Project, Workflow and Harness are owned by the `product/apply` and `product/adapters/agent` Packages; the Run Rule now states D10–D12 ahead of the code | 5 |
 
