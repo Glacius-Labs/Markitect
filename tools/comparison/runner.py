@@ -14,7 +14,7 @@ Fixtures are Git bundles built with plumbing, so bytes and modes are exact:
   python -I -B runner.py fixture root --from BUNDLE --rev COMMIT --drop .markitect --requirements FILE --message MSG --out BUNDLE
 
 One session (one attempt, no retry):
-  python -I -B runner.py run --fixture BUNDLE --image sha256:... --login AUTH_JSON --out NEW_DIR --label NAME
+  python -I -B runner.py run --fixture BUNDLE --image sha256:... --login AUTH_JSON --out NEW_DIR --label NAME [--lock FILE]
 
 The out directory must not exist. Agent-produced code and transcripts stay
 outside the repository. The login is read once, never printed or written to
@@ -59,6 +59,33 @@ LABEL = re.compile(r"^[a-z0-9][a-z0-9-]{2,62}$")
 
 class RunError(RuntimeError):
     pass
+
+
+class native_lock:
+    """Exclusive use of the engine and account, shared with the arm-M controller.
+
+    The lock file is created exclusively before the first engine call and
+    removed after the final census, only by its holder. A held lock refuses.
+    """
+
+    def __init__(self, path, holder, run_id):
+        self.path, self.record = (pathlib.Path(path) if path else None), {"holder": holder, "run": run_id}
+
+    def __enter__(self):
+        if self.path:
+            self.record["started_utc"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            try:
+                fd = os.open(self.path, os.O_CREAT | os.O_EXCL | os.O_WRONLY)
+            except FileExistsError:
+                raise RunError("the engine is busy: " + self.path.read_text(encoding="utf-8", errors="replace").strip())
+            with os.fdopen(fd, "w", encoding="utf-8") as f:
+                json.dump(self.record, f)
+        return self
+
+    def __exit__(self, *exc):
+        if self.path:
+            self.path.unlink()
+        return False
 
 
 # --- Fixtures -----------------------------------------------------------------
@@ -347,6 +374,7 @@ def main(argv=None):
         r.add_argument(name, required=True)
     r.add_argument("--engine", default=os.environ.get("MARKITECT_ENGINE") or shutil.which("docker") or "docker")
     r.add_argument("--deadline-seconds", type=int, default=LIMITS["deadline"])
+    r.add_argument("--lock", help="exclusive engine lock file shared with the arm-M controller")
     a = p.parse_args(argv)
     if a.command == "fixture":
         if a.kind == "new" and not a.requirements:
@@ -355,7 +383,8 @@ def main(argv=None):
         return 0
     if not re.fullmatch(r"sha256:[0-9a-f]{64}", a.image):
         p.error("--image must be an engine image Id")
-    result = run_session([a.engine], a.fixture, a.image, a.login, a.out, a.label, a.deadline_seconds)
+    with native_lock(a.lock, "comparison arm B", a.label):
+        result = run_session([a.engine], a.fixture, a.image, a.login, a.out, a.label, a.deadline_seconds)
     print(json.dumps({k: result.get(k) for k in ("label", "status", "error", "session_seconds", "result_commit")}, indent=2))
     return 0 if result["status"] == "completed" else 1
 

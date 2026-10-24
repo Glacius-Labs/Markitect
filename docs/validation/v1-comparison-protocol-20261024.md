@@ -53,7 +53,9 @@ Longitudinal rules: S2 and S3 continue each arm's actual frozen prior result, in
 
 **S4 base and seed.** The base is the first arm-M S2 candidate, in execution order, that passes C2–C4 below. If no M candidate qualifies, the first qualifying B S2 candidate is used, with an empty registry for M, and the extra registration work is reported. The seed is the step-4 P5 coherent seed class, with the rule the coordinator approves for step 4 (recommended: the overdue assessment includes loans returned after the assessment date, contradicting the last sentence of `lending/reminders/assess-overdue`). Code, its unit test and one usage-documentation sentence agree with the wrong behavior, so the candidate's own tests pass. Before any S4 run: the unseeded base passes C2–C4 (positive control); the seeded tree fails the oracle only in the E10 returned-loan assertions, passes the probes and its own tests (negative control); the coordinator approves the exact diff and the list of seeded lines. Seed descriptions, diffs and locations stay outside both writers' inputs; commit message, branch and identity are neutral.
 
-**M-specific observation.** When an M run in S4 or elsewhere takes the public Verify Reject → fresh Implement → fresh Verify branch, it is recorded as an M-specific observation. B has no equivalent and nothing about it enters the comparison.
+S4 inputs follow the step-4 P5 rules in both arms: unchanged M2 intent, a single neutral root commit with neutral branch and identity, no seed wording in any file, message, ref or Note, and fresh state for every run.
+
+**M-specific observation.** When an M run in S4 or elsewhere takes the public Verify Reject → fresh Implement → fresh Verify → publication branch, it is recorded as an M-specific observation; step 4 counts such an S4 run as its P5 proof and runs a separate P5 only if none of the three does, which the coordinator decides. B has no equivalent and nothing about the branch enters the comparison.
 
 ## 4. Equivalent requirements
 
@@ -113,7 +115,7 @@ Every candidate of both arms is assessed by [`assess_candidate.py`](../../tools/
 
 | Step | What runs | Limits |
 | --- | --- | --- |
-| Oracle | The unchanged [container harness](../../tools/library-oracle/README.md#container-harness) for the scenario's profile: 12 cases E01–E12 and the paired witness, plus the opposite-profile discrimination | Oracle's own 2 s per request, 30 s per process; outer 1,200 s |
+| Oracle | The unchanged [container harness](../../tools/library-oracle/README.md#container-harness) with its evaluator exported at F, for the scenario's profile: 12 cases E01–E12 and the paired witness, plus the opposite-profile discrimination. The assessor refuses to run if `tools/library-oracle` differs between F and R. Its record binds the candidate commit, tree and program SHA-256; it is the oracle of record for both arms, so step 4 runs no separate oracle on these candidates. | Oracle's own 2 s per request, 30 s per process; outer 1,200 s |
 | Probes | [`probes.py`](../../tools/comparison/probes.py), X01–X06 above, built with the oracle's helpers and run through its transport and state snapshots; evaluator and probe bytes are hashed on the host and checked in the container | Same oracle limits; outer 300 s |
 | Own checks | `go build ./cmd/library` and `go test ./...` from `realization/`, as the `project-tests` check profile: 1 CPU, 2 GiB, 64 processes, no network | 120 s each |
 | Census | Every changed path against the start commit: comparable files, M registry files, protected inputs (M model and control files, B `requirements.md`), Go build outputs left in the tree | – |
@@ -162,17 +164,15 @@ Reported separately per arm and scenario, never folded into the primary outcome:
 
 **N = 3 per arm and scenario**: three longitudinal chains S1 → S2 → S3 per arm and three S4 runs per arm, 24 counting runs. Reason: the measurement guide asks for at least three before describing a trend, and three already cost about seven hours of serial engine time. With a likely ceiling on behavior, only a large difference can show; N = 5 would roughly double cost without making a modest difference demonstrable at this scale. N is fixed: no extension, no early stop for success, no retry-until-green. A later study with a new protocol may follow.
 
-**Order** (serial; one Docker engine and one account user at a time), counterbalanced by block:
+**Order** (serial; one Docker engine and one account user at a time), counterbalanced scenario by scenario: in repetition r, each scenario runs as a pair, M first when r is odd and B first when r is even.
 
-| Block | Runs in order |
+| Repetition | Runs in order |
 | --- | --- |
-| 1 | M chain 1 (S1, S2, S3), then B chain 1 (S1, S2, S3) |
-| — | Fix the S4 base, author and approve the seed, run its controls |
-| 2 | S4 pair 1 (M, then B); B chain 2; M chain 2 |
-| 3 | S4 pair 2 (B, then M); M chain 3; B chain 3 |
-| 4 | S4 pair 3 (M, then B) |
+| 1 | M-S1, B-S1, M-S2, B-S2, M-S3, B-S3; then fix the S4 base, author and approve the seed and run its controls; then M-S4, B-S4 |
+| 2 | B-S1, M-S1, B-S2, M-S2, B-S3, M-S3, B-S4, M-S4 |
+| 3 | M-S1, B-S1, M-S2, B-S2, M-S3, B-S3, M-S4, B-S4 |
 
-If no S4 base exists after block 1, the S4 pairs move behind the first block that yields one, keeping their internal order.
+If no S4 base exists after repetition 1, all S4 pairs move behind the first repetition that yields one, keeping their internal order. Every engine use, writer runs and assessments alike, holds the shared exclusive lock `NATIVE-RUN.lock` in the session notes folder: created exclusively before the first engine or provider call, holding holder, run and start time, and removed only by its holder after the final census. Assessments run between writer runs when the lock is free; an assessment never overlaps a writer run.
 
 **One attempt per planned run.** A run may be replaced once only for a documented infrastructure failure before the writer produced any change: provider unreachable or erroring, account limit or expired access, engine or host failure, shown by the transcript or logs and classified before the candidate is assessed. The failed attempt stays recorded. A Markitect runtime failure, an incomplete or failed Apply, a no-progress stop, a model blocker, or a B session that ran and did not deliver is a result, not an infrastructure failure.
 
@@ -203,7 +203,7 @@ Also against Markitect, whatever D is: an M publication that fails the hidden as
 | Dependence within chains | Chain-level sensitivity count; p labeled descriptive |
 | Assessor bias | Oracle and probes mechanical and fixed before runs; rubric reviewer blinded, of another model family, evidence-cited; analyst does not re-judge findings |
 | Arm hints in blinded trees (package layout from M's ownership, registry-shaped READMEs) | Objective rubric items with citations; limit reported |
-| S4 base written by an M run | Byte-identical for both arms; neutral single root commit; neither writer has memory of it |
+| S4 base written by an M run | Byte-identical for both arms; neutral single root commit; neither writer has memory of it. It carries Markitect's package layout into B (its registry is dropped for B); this is a stated limit |
 | Seed leakage through history, messages or Notes | Single neutral root commit, neutral identity and branch, fresh state directories, as step 4 learned from its earlier seed runs (section 11) |
 | Hidden material reachable by a writer | Writers see only `/work` and their home; `tools/` and evidence never mounted |
 | Aggregate compute differs | Per-session ceilings equal; aggregate is the treatment; actual use reported |
@@ -230,8 +230,9 @@ Step-4 runs outside this protocol (for example the P4 ordinary seed) are stabili
 | B session | 2,700 s; helper containers 120 s each; metadata 20 s; kill and remove 8 s |
 | M Apply | The step-4 limits (packet 3,300 s, Apply 2,700 s, 128 messages, 600 s per message) |
 | Assessment | Oracle 1,200 s, probe build and run 300 s each, own build and test 120 s each |
-| Abort the series | Drift of any bound byte (packets, prompt, tools at R, image Id, login fingerprint); residue after cleanup; a login secret in retained B outputs (quarantine); an assessor defect that makes runs incomparable. Everything is kept and the coordinator receives a diagnosis. |
-| Account limit reached | Pause and resume in the same order; the gap is recorded |
+| Continue | Every outcome is recorded, failures included, and the series continues while the environment is clean: no residue, source, bound bytes and login unchanged. |
+| Abort the series | Drift of any bound byte (packets, prompt, tools at R, image Id, login fingerprint); residue after cleanup; environment doubt; a login secret in retained B outputs (quarantine); an assessor defect that makes runs incomparable; a product defect that would fail every later run. Everything is kept and the coordinator receives a diagnosis. A product fix starts a new series on a new source, under a new protocol. |
+| Account limit or token expiry | Pause and resume in the same order; the gap is recorded. Markitect does not qualify login refresh, and B's copy has no refresh token either, so expiry is an environment limit for both arms. |
 | Cleanup | B: the runner removes the login copy before capturing, then exactly its two labeled volumes; census before and after must be empty. M: the step-4 cleanup rules. Assessment: its own labeled volume. |
 
 **Budget.** Expected serial engine time about 7 hours: M 12 Applies about 3.5 h, B 12 sessions about 1.5 h, 24 assessments about 2 h. Hard ceilings, never all reached: M 12 × 55 min, B 12 × 50 min, assessments 24 × 30 min, about 33 h. Messages: M at most 128 per Apply (ceiling 1,536, expected about 500); B exactly one input message per run (12), its internal tool calls bounded only by the deadline and reported. Claude: four blinded rubric reviews and one independent results review.

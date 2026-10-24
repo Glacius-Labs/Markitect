@@ -134,6 +134,19 @@ class ParityTests(unittest.TestCase):
                 runner.session_login(json.dumps(wrong).encode())
 
 
+class LockTests(unittest.TestCase):
+    def test_lock_is_exclusive_and_removed_only_by_its_holder(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "NATIVE-RUN.lock"
+            with runner.native_lock(path, "comparison arm B", "run-1"):
+                self.assertEqual(json.loads(path.read_text())["run"], "run-1")
+                with self.assertRaises(runner.RunError):
+                    with runner.native_lock(path, "other", "run-2"):
+                        pass
+                self.assertTrue(path.exists())
+            self.assertFalse(path.exists())
+
+
 class SessionTests(unittest.TestCase):
     def run_fake(self, tmp, **env):
         engine = tmp / "engine.py"
