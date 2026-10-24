@@ -108,7 +108,7 @@ func TestExecutionProfileRefusesMetadataOnlyAndIncompleteOrForeignEvidence(t *te
 				case "contract":
 					o.Contract.Version = 1
 				case "provider":
-					o.AgentImage.Provider = runtimeconfig.AgentImageClaudeCode
+					o.AgentImage.Provider = runtimeconfig.AgentImageProvider("other")
 					o.AgentImage.RecordedCodexSchemaDigest = ""
 				case "image":
 					o.AgentImage.ImageID = "sha256:" + strings.Repeat("c", 64)

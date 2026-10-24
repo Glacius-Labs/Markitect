@@ -25,7 +25,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | `apply-usecase` | Checked capture, closed workflow and stored-candidate publication. | `apply-usecase` | 1 |
 | `apply-workflow` | Direct sequence of fully closed Runs using one shared allowance. | `apply-workflow` | 1 |
 | `model-view` | Deterministic readable view and reviewed source-bound write plan. | `model-view` | 1 |
-| `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 8 |
+| `apply-adapter` | Concrete repository, container engine, Agent and check adapters, profile metadata and document I/O. | `apply-adapter` | 7 |
 | `apply-bootstrap` | Constructs actual services and their adapters. | `apply-bootstrap` | 1 |
 | `apply-command` | Thin entrypoint to product composition. | `apply-command` | 1 |
 | `agent-protocol` | Frame protocol between the Orchestrator and the session helper. | `agent-protocol` | 1 |
@@ -108,7 +108,6 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 | Package | Purpose | Owning document |
 |---|---|---|
 | `internal/adapters/checks` | Check profile metadata and bounded container execution. | [docs/development/modules.md](modules.md) |
-| `internal/adapters/claudecode` | Claude static image metadata and retained protocol codecs; native Run Sessions are explicitly unavailable. | [internal/adapters/claudecode/README.md](../../internal/adapters/claudecode/README.md) |
 | `internal/adapters/cli` | Command parsing and JSON reports for check, context, docs and explicit Apply. | [docs/development/modules.md](modules.md) |
 | `internal/adapters/codexappserver` | Codex native Manager Sessions, model-derived harness loading and direct Run tools in private assignment volumes. | [internal/adapters/codexappserver/README.md](../../internal/adapters/codexappserver/README.md) |
 | `internal/adapters/container` | Container engine client and the Orchestrator side of the agentd connection. | [docs/development/modules.md](modules.md) |

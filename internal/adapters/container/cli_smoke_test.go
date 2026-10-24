@@ -15,9 +15,9 @@ import (
 	"github.com/Glacius-Labs/Markitect/internal/agentd/frame"
 )
 
-// The CLI smoke repeats for every runtime image: both provider CLIs start in
-// the hardened container and connect to the Orchestrator tools through
-// `markitect-agentd mcp`. With a runtime credential the smoke also lets each
+// The CLI smoke repeats for every runtime image: the Codex CLI starts in the
+// hardened container and connects to the Orchestrator tools through
+// `markitect-agentd mcp`. With a runtime credential the smoke also lets the
 // CLI change a file and call an Orchestrator tool.
 //
 //	MARKITECT_TEST_ENGINE         absolute container engine path
@@ -25,7 +25,6 @@ import (
 //	OPENAI_API_KEY or MARKITECT_TEST_CODEX_AUTH_VOLUME  optional Codex credential: an API key,
 //	                              or a dedicated runtime login volume with auth.json at its
 //	                              root, written by uid 1000
-//	ANTHROPIC_API_KEY or CLAUDE_CODE_OAUTH_TOKEN  optional Claude Code credential
 
 const submitPrompt = `Create the file hello.txt containing the single line "hello from markitect". ` +
 	`Then call the submit_work tool with a one-sentence summary. After the tool answers, reply with the delivery id it returned.`
@@ -136,12 +135,10 @@ func credentialEnv(names ...string) []string {
 	return env
 }
 
-// The owner-selected models for real probes: Codex Luna and Claude Sonnet,
-// both with high effort.
+// The owner-selected model for real probes: Codex Luna with high effort.
 const (
 	codexModel  = "gpt-6-luna"
 	codexEffort = "high"
-	claudeModel = "claude-sonnet-5-5"
 )
 
 // codexCredential prepares a session's provider home for a real Codex turn.
@@ -260,64 +257,6 @@ func TestRuntimeImageCodexReachesOrchestratorTools(t *testing.T) {
 	codexTurn(rpc, threadID, submitPrompt)
 	expectToolCall(t, calls)
 	if got := r.readFile("codex-check", mounts, "/work/hello.txt"); strings.TrimSpace(got) != "hello from markitect" {
-		t.Fatalf("hello.txt = %q", got)
-	}
-}
-
-func TestRuntimeImageClaudeCodeReachesOrchestratorTools(t *testing.T) {
-	r := newRuntimeSmoke(t)
-	mounts := r.volumes("claude")
-	s := r.start("claude", mounts)
-	credentials := credentialEnv("ANTHROPIC_API_KEY", "CLAUDE_CODE_OAUTH_TOKEN")
-	mcp := `{"mcpServers":{"markitect":{"type":"stdio","command":"` + container.AgentdPath + `","args":["mcp"]}}}`
-	if _, err := s.StartProvider(r.ctx, frame.Start{
-		Argv: []string{"claude", "-p", "--input-format", "stream-json", "--output-format", "stream-json", "--verbose",
-			"--strict-mcp-config", "--mcp-config", mcp, "--tools", "Read,Write",
-			"--allowedTools", "mcp__markitect__submit_work", "Read", "Write",
-			"--permission-mode", "dontAsk", "--no-session-persistence", "--model", claudeModel, "--effort", "high"},
-		Dir: "/work", Env: credentials, Tools: []frame.ToolSpec{orchestratorTool},
-	}); err != nil {
-		t.Fatal(err)
-	}
-	calls := make(chan frame.ToolCall, 4)
-	go answerTools(s, calls)
-	message, _ := json.Marshal(map[string]any{"type": "user", "message": map[string]any{"role": "user", "content": submitPrompt}})
-	if err := s.WriteInput(append(message, '\n')); err != nil {
-		t.Fatal(err)
-	}
-	events := bufio.NewScanner(s.Stdout())
-	events.Buffer(make([]byte, 64<<10), frame.MaxPayload)
-	var connected bool
-	for events.Scan() {
-		var e map[string]any
-		if json.Unmarshal(events.Bytes(), &e) != nil {
-			continue
-		}
-		if e["type"] == "system" && e["subtype"] == "init" {
-			servers, _ := json.Marshal(e["mcp_servers"])
-			var list []struct{ Name, Status string }
-			_ = json.Unmarshal(servers, &list)
-			connected = len(list) == 1 && list[0].Name == "markitect" && list[0].Status == "connected"
-			if !connected {
-				t.Fatalf("Orchestrator tool server not connected: %s; diagnostics %q", servers, s.Diagnostics())
-			}
-			if len(credentials) == 0 {
-				t.Log("Orchestrator tool server connected; no Claude credential, so no turn ran")
-				return
-			}
-		}
-		if e["type"] == "result" {
-			if e["is_error"] == true {
-				t.Fatalf("Claude Code result: %v", e["result"])
-			}
-			break
-		}
-	}
-	if !connected {
-		t.Fatalf("no init event; diagnostics %q", s.Diagnostics())
-	}
-	expectToolCall(t, calls)
-	if got := r.readFile("claude-check", mounts, "/work/hello.txt"); strings.TrimSpace(got) != "hello from markitect" {
 		t.Fatalf("hello.txt = %q", got)
 	}
 }

@@ -47,10 +47,6 @@ packages:
     layer: apply-adapter
     purpose: Check profile metadata and bounded container execution.
     doc: docs/development/modules.md
-  - path: internal/adapters/claudecode
-    layer: apply-adapter
-    purpose: Claude static image metadata and retained protocol codecs; native Run Sessions are explicitly unavailable.
-    doc: internal/adapters/claudecode/README.md
   - path: internal/adapters/cli
     layer: apply-adapter
     purpose: Command parsing and JSON reports for check, context, docs and explicit Apply.

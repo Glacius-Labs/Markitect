@@ -121,13 +121,9 @@ func (p *PreparedProfile) validateAgentImage() {
 	if p.input.namespace != "agentProfiles" || o.CheckImage != nil {
 		p.problem(model.Failed, "image_evidence", "Agent image evidence is agent-only and cannot mix with file/inventory evidence.")
 	}
-	if complete || image.Provider != "" {
-		if image.Provider != AgentImageCodexAppServer && image.Provider != AgentImageClaudeCode {
-			p.problem(model.Failed, "image_provider", "Unknown agent image provider discriminator.")
-		}
-		if want := map[string]AgentImageProvider{"codexAppServer": AgentImageCodexAppServer, "claudeCode": AgentImageClaudeCode}[p.input.section]; image.Provider != want {
-			p.problem(model.Failed, "image_provider", "The agent image provider does not match the profile's adapter section.")
-		}
+	// Decoding admits only the codexAppServer section for an Agent profile.
+	if (complete || image.Provider != "") && image.Provider != AgentImageCodexAppServer {
+		p.problem(model.Failed, "image_provider", "Unknown agent image provider discriminator.")
 	}
 	if complete || image.ImageID != "" {
 		if !profileSHA256(image.ImageID) {
@@ -154,15 +150,8 @@ func (p *PreparedProfile) validateAgentImage() {
 	if complete && !agentImageLiteral(o.Contract.Name) {
 		p.problem(model.Failed, "image_contract", "Image validation contract name must be a bounded nonblank literal without controls.")
 	}
-	switch image.Provider {
-	case AgentImageCodexAppServer:
-		if (complete || image.RecordedCodexSchemaDigest != "") && !profileSHA256(image.RecordedCodexSchemaDigest) {
-			p.problem(model.Failed, "image_recorded_schema", "Codex image evidence requires the literal build-recorded sha256 schema digest, not an inventory assertion.")
-		}
-	case AgentImageClaudeCode:
-		if image.RecordedCodexSchemaDigest != "" {
-			p.problem(model.Failed, "image_recorded_schema", "Claude image evidence cannot claim Codex-specific schema evidence.")
-		}
+	if (complete || image.RecordedCodexSchemaDigest != "") && !profileSHA256(image.RecordedCodexSchemaDigest) {
+		p.problem(model.Failed, "image_recorded_schema", "Codex image evidence requires the literal build-recorded sha256 schema digest, not an inventory assertion.")
 	}
 }
 

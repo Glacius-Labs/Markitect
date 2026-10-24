@@ -41,14 +41,12 @@ These rules come from real runs, recorded in the [handshake record](../../../doc
 - **Codex runs with sandbox `danger-full-access`.** Its own sandbox cannot start in an unprivileged container. With `read-only` or `workspace-write`, every shell command fails, and the Agent may still report success. Read-only roles get read-only mounts instead.
 - **Orchestrator tools go through MCP.**
   - Codex: `-c mcp_servers.markitect.command="/usr/local/bin/markitect-agentd"` and `-c mcp_servers.markitect.args=["mcp"]`, with the features `apps`, `memories`, `multi_agent`, `image_generation`, `browser_use` and `computer_use` disabled.
-  - Claude Code: `--strict-mcp-config --mcp-config '{"mcpServers":{"markitect":{"type":"stdio","command":"/usr/local/bin/markitect-agentd","args":["mcp"]}}}'`, an explicit `--tools` and `--allowedTools` list, and `--permission-mode dontAsk`.
   - [cli_smoke_test.go](cli_smoke_test.go) and [cli_continuity_test.go](cli_continuity_test.go) show complete invocations.
 - **A conversation that may continue must be persistent.**
   - Codex threads are not ephemeral, and `CODEX_HOME` stays in the provider home (`/home/agent/.codex`).
-  - Claude Code runs without `--no-session-persistence`.
-  - A new container on the same provider-home volume then resumes: Claude Code with `claude --resume <session>`, and Codex with `thread/resume`. Both are demonstrated.
+  - A new container on the same provider-home volume then resumes the thread with `thread/resume`, as demonstrated.
 - **Credentials:**
-  - An API key or Claude Code's long-lived token goes in `frame.Start.Env`, never into container environment or arguments. Record that message with the value redacted.
+  - An API key goes in `frame.Start.Env`, never into container environment or arguments. Record that message with the value redacted.
   - A Codex subscription uses a dedicated runtime login, never the desktop login. Before a session starts, a helper writes a copy of that login into the provider home with the refresh token removed. The session then cannot refresh or rotate the login, and the access token outlives a run.
   - That access token is a full-account credential that the Agent can read. Remove the copy from the provider home when the session ends.
 - **Provider messages can be large.** A tool result can carry a whole file, so size per-message limits for that.

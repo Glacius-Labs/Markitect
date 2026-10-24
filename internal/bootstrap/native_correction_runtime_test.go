@@ -148,7 +148,7 @@ func TestNativeFreshCorrectionRunChain(t *testing.T) {
 		RuntimeProfiles: []project.SourceLocation{{Boundary: filepath.Dir(runtimePath), Path: runtimeFile}},
 	}
 	preparation := project.NewPreparationService(project.NewModelService(repository, repository))
-	agents := agentMetadataRouter{codex: codexappserver.NewMetadataPreparer(codexappserver.NewEngineImageReader)}
+	agents := codexappserver.NewMetadataPreparer(codexappserver.NewEngineImageReader)
 	prepared, metadata, status, err := captureApplyInputs(ctx, preparation, repository, selection, agents, checks.NewMetadataPreparer(checks.NewEngineImageReaders().Reader))
 	if err != nil || status != model.Passed || !prepared.Valid() {
 		fail(fmt.Errorf("actual seed preparation failed: %w", err))
@@ -219,7 +219,7 @@ func TestNativeFreshCorrectionRunChain(t *testing.T) {
 			report.FinalScopedAbsence = true
 		}
 	}()
-	resolve, _, err := newCredentialResolvers(cfg.Credentials)
+	resolve, err := newCredentialResolver(cfg.Credentials)
 	if err != nil {
 		fail(err)
 	}
