@@ -12,18 +12,6 @@ artifacts:
     form: code
     realizes: [tooling/maintenance-boundaries]
     why: Implements the stated responsibility within its declared boundary.
-  - path: "integration/README.md"
-    form: doc
-    realizes: [tooling/maintenance-boundaries]
-    why: Documents the stated responsibility or preserves its historical evidence.
-  - path: "integration/run-markitect.go"
-    form: code
-    realizes: [tooling/maintenance-boundaries]
-    why: Implements the stated responsibility within its declared boundary.
-  - path: "integration/run-markitect_test.go"
-    form: test
-    realizes: [tooling/maintenance-boundaries]
-    why: Tests the stated responsibility and retains negative boundaries.
   - path: "internal/tooling/guardedwrite/guardedwrite.go"
     form: code
     realizes: [tooling/maintenance-boundaries]
@@ -305,6 +293,18 @@ artifacts:
     realizes: [tooling/maintenance-boundaries]
     why: Implements the stated responsibility within its declared boundary.
   - path: "internal/tooling/source/working_tree_test.go"
+    form: test
+    realizes: [tooling/maintenance-boundaries]
+    why: Tests the stated responsibility and retains negative boundaries.
+  - path: "packaging/README.md"
+    form: doc
+    realizes: [tooling/maintenance-boundaries]
+    why: Documents the stated responsibility or preserves its historical evidence.
+  - path: "packaging/bootstrap/run-markitect.go"
+    form: code
+    realizes: [tooling/maintenance-boundaries]
+    why: Implements the stated responsibility within its declared boundary.
+  - path: "packaging/bootstrap/run-markitect_test.go"
     form: test
     realizes: [tooling/maintenance-boundaries]
     why: Tests the stated responsibility and retains negative boundaries.
