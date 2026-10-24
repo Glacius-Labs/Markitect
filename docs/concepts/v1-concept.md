@@ -751,7 +751,7 @@ Sie schließen die in v0.18 offenen Punkte A1–A6 und R1–R3. R1 (Deadline in 
 
 | ID | Ursprung | Entscheidung | Abschnitt |
 |---|---|---|---|
-| **D10** | A1 | Fragen nur an direkten Vater und direkte Kinder; Abstimmung sonst über den gemeinsamen Vater. | 8.2 |
+| **D10** | A1 | Fragen nur an direkten Vater und direkte Kinder; Geschwister stimmen sich über den gemeinsamen Vater ab, mehrere Ebenen Schritt für Schritt über die Manager dazwischen. | 8.2 |
 | **D11** | A2 | Jeder Implement-Kinderkandidat geht mit Prüfergebnis an den Vater; ungültige Kandidaten sind nicht integrierbar; optionale Selbstprüfung per Werkzeug. | 8.4 |
 | **D12** | A3, R3 | Ein Urteil gehört zu Auftrag und bewertetem Stand, nicht zur Nachricht; expliziter Auftragszustand im Host. | 13.2 |
 | **D13** | Neu | Aufgaben statt Prozess; fester kleiner Werkzeugsatz mit genau einem Werkzeug je Zweck. | 3.7, 14 |
