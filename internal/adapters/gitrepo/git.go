@@ -72,7 +72,9 @@ func (g *gitRepository) command(args ...string) *exec.Cmd {
 	// Acquisition also reads objects in the Run adapter's long state paths.
 	prefix := []string{"--no-replace-objects", "--literal-pathspecs", "-c", "core.longpaths=true", "-c", "safe.directory=" + filepath.ToSlash(g.path), "-c", "core.fsmonitor=false", "-c", "core.untrackedCache=false", "-c", "core.hooksPath=", "-C", g.path}
 	cmd := exec.CommandContext(g.ctx, "git", append(prefix, args...)...)
-	cmd.Env = gitEnvironment()
+	// Git for Windows can cache host longpaths before reading command options.
+	// Keep acquisition independent of system/global config, like Run's Git.
+	cmd.Env = append(gitEnvironment(), "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL="+os.DevNull)
 	cmd.WaitDelay = time.Second
 	return cmd
 }
