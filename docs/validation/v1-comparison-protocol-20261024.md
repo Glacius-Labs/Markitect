@@ -270,3 +270,74 @@ Root `C:\Users\Consiliari\Documents\Codex\Markitect-V1-Comparison\<F first 12 he
 ## 14. What this study cannot show
 
 It covers one small greenfield Library project, one model and effort, one provider and one machine. It cannot show benefits in larger projects, cross-area composition defects, sustained coherence over many changes, human-attention savings in real use, other providers, or reliability beyond the stated intervals. A positive result supports the thesis on this suite only; a tie or a negative result does not refute the method for larger projects, but it removes this suite as evidence for it.
+
+## Addendum: Phase B (draft, not approved)
+
+Status: **draft for the coordinator's separate approval. Nothing in Phase B may run before that approval.** Phase A's text, tools and decision rule above stay unchanged; Phase B is read by its own rule and never pooled with Phase A.
+
+### B1. Why another phase, and which project
+
+Phase A is likely to tie, because the fresh Library is small enough for one agent to keep every obligation in view. The [measurement guide](../guides/measurement.md#evidence-for-the-primary-goal) names the risks Markitect is meant to address: an omitted condition inside a covered rule, artifacts that disagree, local success hiding a composition failure, and coherence decaying over successive changes. Its prescribed test for the last one is a bounded sequence that continues each arm's own output "through creation, a cross-area model change, removal of a requirement and unchanged Apply".
+
+Of the archived test projects ([archive index](../archive.md)), Readinglog and Roombook each have one domain Package, so Markitect's hierarchy would be one Manager below Root and no rule could span responsibilities. Library r2 is the same project as Library M1 with an equivalent model. Library is the only one with five Packages, cross-Package references and six Managers. Phase B therefore uses a **larger Library variant**: it continues each Phase A chain through four more ordinary product changes that each cut across areas, which is the guide's sequence on the one archived project with real cross-area structure.
+
+### B2. Change sequence
+
+Each step is a complete model snapshot, written as a canonical model change and rendered for B by the same verbatim renderer. Each chain continues from its own Phase A S3 result; S1–S3 plus T1–T4 make a seven-step trajectory per chain.
+
+| Step | Ordinary change | Areas it cuts across | Easy-to-miss consequences |
+| --- | --- | --- | --- |
+| T1 (M3) | **Short-loan copies.** A copy has a loan class, `standard` (default) or `short`, set at registration; short copies are lent for 7 days, standard for 14. | catalog (copy, registration, inspection), lending (policy, due date), interface (optional `loanClass` argument, copy record field), delivery | The 9999-12-31 due-date limit now depends on the class; overdue notices for short loans; an invalid or wrongly cased class is a refusal; a missing class means `standard` |
+| T2 (M4) | **Renewals.** An open loan can be renewed once, on or before its due date, which extends the due date by its copy's loan period. | lending (new `renew` use case, loan record, policy `maxRenewals`), members (eligibility: suspension also blocks renewal), reminders (no text change), library scope (renewals no longer excluded), interface (`renew` operation, `renewals` field in every loan record) | Overdue assessment must use the renewed due date although its Definition does not change; renewal by a suspended member is refused; the due-date limit applies to renewals; short copies renew by 7 days; the scope sentence "no … renewals" in documentation becomes wrong |
+| T3 (M5) | **Removal of member suspension.** The library stops suspending members: there is no member status and no `setMemberStatus` operation. | members (member, eligibility; `set-member-status` deleted), lending (borrow, renew, return), reminders (suspended-member sentence removed), library scope, interface (member record, operations table) | `setMemberStatus` becomes an unknown operation (`invalidRequest`); borrowing and renewal are never refused for status; documentation and tests that describe suspension become stale |
+| T4 (M5) | **Unchanged re-application** after the sequence | all | Strict no-change, as S3 |
+
+Predeclared intended behavior after the removal (T3), as the guide requires: `setMemberStatus` requests return `invalidRequest`; member records need only `memberId` and `name` and may still carry a constant extra field, because responses may carry additional fields; unreachable suspension code may remain. Documentation that describes suspension as existing behavior, and tests that expect a working `setMemberStatus`, contradict the requirements.
+
+The exact Definition edits are written in prose here and are materialized as model files only after approval, then checked by `markitect check` and against this table by the independent reviewer:
+
+- **T1:** `catalog/copy` gains the loan class sentence and links the lending policy; `catalog/register-copy` accepts the optional class and refuses other values; `catalog/inspect-copy` returns the class; `LendingPolicy` gains the Property `shortLoanPeriodDays` (new Definition, value 7); `loanPeriodDays` is stated for standard copies; `loan-policy` states the due date per class; `callable-interface` adds the optional argument and the record field; `realization` asks for tests of both loan classes.
+- **T2:** new UseCase `lending/renew` (open loan, member active, renewal date from the borrowing date to the current due date, fewer renewals than `maxRenewals`, new due date not after 9999-12-31; the due date extends by the copy's period from the current due date; count, availability and borrowing date unchanged; refusals without state change); `LendingPolicy` gains `maxRenewals` (new Definition, value 1); `loan` records its renewal count; `members/eligibility` adds renewal to what suspension prevents; `library/library` drops renewals from the exclusions; `callable-interface` adds the operation and the `renewals` field; `realization` asks for renewal tests. `lending/reminders/assess-overdue` is deliberately left unchanged.
+- **T3:** `members/set-member-status` is deleted; `members/member` and `members/eligibility` lose status and suspension; `lending/borrow`, `lending/renew` and `lending/return` lose their status conditions; `lending/reminders/assess-overdue` loses the suspended-member sentence; `library/library` and `callable-interface` lose status, the status values and the operation; `realization` drops suspension tests.
+
+No step is seeded. Every Phase B difficulty comes from an ordinary change.
+
+### B3. Equivalence, conditions and fixtures
+
+The Phase A conditions, arms, prompt, continuation, resources, lock, order principle and assessment apply unchanged. The renderer gains the new Definitions as sections; its check proves again that every body of each snapshot is in B's document verbatim, and the item table of section 4 is extended with every new hidden case family. M's fixture for step k is its own previous candidate plus one commit replacing the model snapshot; B's is its own previous capture plus one commit replacing `requirements.md`. The step-4 controller keeps the chain's state directory, B resumes its thread.
+
+### B4. Hidden expectations
+
+The unchanged Library oracle cannot judge M3–M5: T3 removes behavior that several of its cases exercise. Phase B therefore adds one assessor module in `tools/comparison` that reuses the oracle's case builder, helpers, transport and state snapshots without changing the oracle:
+
+- **Carried cases:** the oracle's m2 cases and the six Phase A probes, cumulative at every step. For M5 they are transformed mechanically: steps calling `setMemberStatus` are dropped, the suspension case E05 is dropped, and member expectations no longer require `status`; snapshots are regenerated from the transformed steps. The same transform applies to the T1 and T2 families at M5.
+- **New families, cumulative from their step on:**
+  - T1: registration with and without a class, invalid and wrongly cased classes, 7- and 14-day due dates, the due-date limit per class (short 9999-12-24 admitted, 9999-12-25 refused; standard 9999-12-24 refused), overdue notices for short loans.
+  - T2: one renewal admitted and a second refused; renewal on the due date admitted and after it refused; a suspended member's renewal refused until reactivation (M4 only); closed, unknown and invalid renewals refused; overdue assessment after renewal uses the renewed due date (the composition check); short copies renew by 7 days; renewals hitting the due-date limit refused; `renewals` present in every loan record; argument and unknown-field validation for `renew`.
+  - T3: `setMemberStatus` returns `invalidRequest` and changes nothing; member records valid without `status`.
+- Each family cites the sentence of its snapshot that it checks; the independent reviewer confirms the citation in both representations before any run. A self-test replays every expected transcript and one wrong transcript per family, as for the Phase A probes.
+
+The rest of the assessment (own checks, census, blinded per-candidate review with confirmation, contamination audit) is Phase A's, with the rubric judged against the current snapshot.
+
+### B5. Outcomes, N and decision rule
+
+- **Primary outcome per run:** conforming, defined as in Phase A with C2 and C3 replaced by "all carried and new hidden cases for the step pass", and C6 strict no-change for T4. T3 judges stale documentation and tests through the rubric (R2, R3a) and the hidden cases.
+- **N:** the three Phase A chains per arm continue, 12 Phase B runs per arm. **Unit:** a chain's Phase B segment, conforming when T1–T4 all conform.
+- **Rule:** with 3 units per arm, "supports" needs complete separation, 3 of 3 against 0 of 3 (one-sided Fisher exact p = 0.05). Anything else is a tendency, a tie or against, read as in section 8, with the same error-type downgrade.
+- **Secondary, never folded in:** conforming step counts per arm (k of 12), missed hidden cases per run, stale obligations (documentation or tests still describing removed behavior), regressions of earlier families, unnecessary changes, time and tokens.
+- **Option for the coordinator:** two more fresh chains per arm (S1–S3 and T1–T4) would give 5 units per arm, and "supports" would then need 5 of 5 against at most 1 of 5, or 4 of 5 against 0 of 5. This costs 14 more runs per arm.
+
+### B6. Budget
+
+| Item | N = 3 chains | With the option (N = 5) |
+| --- | --- | --- |
+| M Applies | 12, expected about 4.5 h | 26, about 9.5 h |
+| B sessions | 12, about 2 h | 26, about 4 h |
+| Assessments | 24, about 2.5 h | 52, about 5 h |
+| Expected serial engine time | about 9 h | about 18.5 h |
+| Hard ceilings | M 12 × 55 min, B 12 × 50 min, assessments 24 × 40 min: about 37 h | about 80 h |
+| Messages | M at most 128 per Apply (ceiling 1,536, expected about 500); B 12 | M ceiling 3,328; B 26 |
+| Claude | 24 blinded reviews plus confirmations | 52 plus confirmations |
+| Preparation before approval of runs | three model snapshots, renderer extension, hidden-case module and self-tests, one independent review | same |
+
+Phase B starts only after every Phase A run is complete, so it never delays Phase A. If Phase B also ties, that is its result.
