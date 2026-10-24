@@ -44,6 +44,10 @@ artifacts:
     form: doc
     realizes: [documentation/current-guidance]
     why: Retains the V1 source checkpoints, bounded probes and native Library evidence with their sources and limits.
+  - path: "docs/validation/v1-comparison-protocol-20261024.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Predeclares the DEC-072 comparison of Markitect with one agent given ordinary documentation, before any run.
   - path: "docs/validation/a1-native-contract-proof-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]

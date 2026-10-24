@@ -1,0 +1,7 @@
+Read the documentation in requirements.md and implement it accordingly.
+
+Work as one coding agent in this repository, using the build, test and file tools available here. Deliver the implementation, automated tests and usage documentation that requirements.md requires. Do not change requirements.md.
+
+If an implementation already exists, first reconcile it with requirements.md. Change files only where requirements.md, its required build and test commands, or necessary consequences of that work require it. Preserve conforming code, tests and documentation; do not add optional coverage, refactoring or cosmetic changes solely to produce a diff. Repair genuine defects you find against requirements.md.
+
+When you finish, report the files you changed, the checks you actually ran and any requirement you could not resolve.
