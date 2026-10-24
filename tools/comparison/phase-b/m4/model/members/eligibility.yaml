@@ -1,0 +1,17 @@
+imports:
+  - package: software
+    as: Software
+  - package: lending
+    as: Lending
+id: eligibility
+kind: Software.Rule
+body: >-
+  Only a registered active [[member]] may start [[Lending.borrow|a new loan]]
+  or [[Lending.renew|renew a loan]]. Suspension prevents new borrowing and
+  renewal but preserves every existing [[Lending.loan]], including its due date
+  and open state. It does not prevent [[Lending.return]]. Restoring active
+  status removes the suspension restriction; all other borrowing and renewal
+  conditions still apply. Lending must enforce this membership rule when
+  admitting a new loan or a renewal, rather than relying on membership status
+  being checked somewhere else.
+spec: {}

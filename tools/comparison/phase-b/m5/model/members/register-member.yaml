@@ -1,0 +1,13 @@
+imports:
+  - package: software
+    as: Software
+  - package: library
+    as: Library
+id: register-member
+kind: Software.UseCase
+body: >-
+  The operator supplies a new identifier and name under [[Library.inputs]] to
+  register a [[member]] in [[Library.library]]. Success creates exactly one
+  member with those values. Reusing an existing member identifier is refused
+  without replacing the existing record or changing other state.
+spec: {}

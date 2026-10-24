@@ -1,0 +1,15 @@
+imports:
+  - package: software
+    as: Software
+  - package: lending
+    as: Lending
+id: eligibility
+kind: Software.Rule
+body: >-
+  Only a registered [[member]] may start [[Lending.borrow|a new loan]] or
+  [[Lending.renew|renew a loan]]. There is no suspension: membership never
+  blocks borrowing, renewal or [[Lending.return]] once the member is
+  registered, and all other borrowing and renewal conditions still apply.
+  Lending must enforce this membership rule when admitting a new loan or a
+  renewal, rather than relying on it being checked somewhere else.
+spec: {}

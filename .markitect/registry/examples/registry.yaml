@@ -184,6 +184,142 @@ artifacts:
     form: config
     realizes: [examples/independent-oracles]
     why: Supplies the single-agent arm's ordinary documentation, rendered verbatim from Library M2.
+  - path: "tools/comparison/packet/requirements-m3.md"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the single-agent arm's ordinary documentation, rendered verbatim from Phase B snapshot M3.
+  - path: "tools/comparison/packet/requirements-m4.md"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the single-agent arm's ordinary documentation, rendered verbatim from Phase B snapshot M4.
+  - path: "tools/comparison/packet/requirements-m5.md"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies the single-agent arm's ordinary documentation, rendered verbatim from Phase B snapshot M5.
+  - path: "tools/comparison/phase-b/m3/model/catalog/copy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/catalog/inspect-copy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/catalog/register-copy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/lending/lending-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/lending/loan-period-days.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/lending/loan-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/lending/short-loan-period-days.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/library/callable-interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m3/model/library/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M3 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/lending/lending-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/lending/loan-policy.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/lending/loan.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/lending/max-renewals.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/lending/renew.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/library/callable-interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/library/library.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/library/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m4/model/members/eligibility.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M4 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/deleted.txt"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Lists the Definition files the Phase B snapshot M5 deletes.
+  - path: "tools/comparison/phase-b/m5/model/lending/borrow.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/lending/reminders/assess-overdue.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/lending/renew.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/lending/return.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/library/callable-interface.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/library/library.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/library/realization.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/members/eligibility.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/members/inspect-member.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/members/member.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase-b/m5/model/members/register-member.yaml"
+    form: config
+    realizes: [examples/independent-oracles]
+    why: Supplies a Definition of the Phase B snapshot M5 as an overlay on the canonical Library model.
+  - path: "tools/comparison/phase_b_cases.py"
+    form: code
+    realizes: [examples/independent-oracles]
+    why: Builds the hidden Phase B cases on the unchanged oracle's helpers, transport and witness discrimination.
   - path: "tools/comparison/probes.py"
     form: code
     realizes: [examples/independent-oracles]
@@ -212,6 +348,10 @@ artifacts:
     form: test
     realizes: [examples/independent-oracles]
     why: Tests the census, blinded export and seed classification on real Git commits.
+  - path: "tools/comparison/test_phase_b_cases.py"
+    form: test
+    realizes: [examples/independent-oracles]
+    why: Tests the Phase B cases against controlled transcripts, wrong behaviors and the witness.
   - path: "tools/comparison/test_probes.py"
     form: test
     realizes: [examples/independent-oracles]
