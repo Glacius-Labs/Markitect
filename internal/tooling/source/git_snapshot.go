@@ -3,6 +3,7 @@ package source
 import (
 	"bufio"
 	"bytes"
+	"context"
 	"encoding/hex"
 	"errors"
 	"fmt"
@@ -12,6 +13,7 @@ import (
 	"path/filepath"
 	"strconv"
 	"strings"
+	"time"
 )
 
 type treeFile struct {
@@ -214,6 +216,29 @@ func GitOutput(root string, args ...string) ([]byte, error) {
 	return nil, err
 }
 
+// GitOutputContext binds the Git process and pipe drain to the caller's
+// original execution window. Cancellation is reported only after Wait returns.
+func GitOutputContext(ctx context.Context, root string, args ...string) ([]byte, error) {
+	return gitOutputContext(ctx, root, CleanGitEnv(), args...)
+}
+
+func gitOutputContext(ctx context.Context, root string, env []string, args ...string) ([]byte, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
+	cmd := gitCommandWithEnvContext(ctx, root, env, args...)
+	cmd.WaitDelay = time.Second
+	out, err := cmd.Output()
+	if ctx.Err() != nil {
+		return nil, ctx.Err()
+	}
+	var exit *exec.ExitError
+	if errors.As(err, &exit) {
+		return nil, fmt.Errorf("%w: %s", err, strings.TrimSpace(string(exit.Stderr)))
+	}
+	return out, err
+}
+
 // GitOutputInput runs Git against root with input on stdin while preserving
 // the same explicit-repository and sanitized-environment guarantees as
 // GitOutput. It is intended for operations such as hashing an already-captured
@@ -253,6 +278,10 @@ func gitCommand(root string, args ...string) *exec.Cmd {
 }
 
 func gitCommandWithEnv(root string, env []string, args ...string) *exec.Cmd {
+	return gitCommandWithEnvContext(context.Background(), root, env, args...)
+}
+
+func gitCommandWithEnvContext(ctx context.Context, root string, env []string, args ...string) *exec.Cmd {
 	abs, err := filepath.Abs(root)
 	if err != nil {
 		// Callers validate and resolve root before invoking Git. Preserve a
@@ -260,7 +289,7 @@ func gitCommandWithEnv(root string, env []string, args ...string) *exec.Cmd {
 		abs = root
 	}
 	gitArgs := append([]string{"--no-replace-objects", "-c", "safe.directory=" + filepath.ToSlash(abs), "-C", abs}, args...)
-	cmd := exec.Command("git", gitArgs...)
+	cmd := exec.CommandContext(ctx, "git", gitArgs...)
 	cmd.Env = env
 	return cmd
 }

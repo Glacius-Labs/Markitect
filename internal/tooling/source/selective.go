@@ -2,6 +2,7 @@ package source
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha1"
 	"crypto/sha256"
 	"encoding/hex"
@@ -38,6 +39,15 @@ type SelectedSnapshot struct {
 // repository and returns its canonical worktree and Git-directory identity.
 func IdentifyGit(root string) (GitIdentity, error) {
 	identity, _, err := identifyGit(root, selectiveGitOutput)
+	return identity, err
+}
+
+// IdentifyGitContext uses one caller context for the combined metadata query
+// and every fallback query, preserving the same repository identity checks.
+func IdentifyGitContext(ctx context.Context, root string) (GitIdentity, error) {
+	identity, _, err := identifyGit(root, func(root string, args ...string) ([]byte, error) {
+		return gitOutputContext(ctx, root, selectiveGitEnvironment(), args...)
+	})
 	return identity, err
 }
 

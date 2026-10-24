@@ -120,7 +120,7 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `internal/bootstrap` | Composes structural Project, generated views, optional static metadata and the explicit unavailable Apply boundary. | [docs/development/modules.md](modules.md) |
+| `internal/bootstrap` | Composes structural Project, generated views, static metadata and closed Apply with guarded publication. | [docs/development/modules.md](modules.md) |
 
 ## Product command
 

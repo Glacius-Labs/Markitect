@@ -2,6 +2,7 @@ package releaseinstall
 
 import (
 	"bytes"
+	"context"
 	"errors"
 	"fmt"
 	"io/fs"
@@ -152,7 +153,7 @@ func Install(root string, bundle *release.Bundle, write bool) (*InstallPlan, err
 		return nil
 	}
 
-	result, applyErr := guardedwrite.ApplyOrderedChecked(rootAbs, capture, changes, preflight, beforeTarget, readback)
+	result, applyErr := guardedwrite.ApplyOrderedChecked(context.Background(), rootAbs, capture, changes, preflight, beforeTarget, readback)
 	plan.Written = append([]string(nil), result.CompletedPaths...)
 	if applyErr != nil {
 		return installWriteFailure(plan, state, applyErr)

@@ -77,7 +77,7 @@ packages:
     doc: internal/run/README.md
   - path: internal/bootstrap
     layer: apply-bootstrap
-    purpose: Composes structural Project, generated views, optional static metadata and the explicit unavailable Apply boundary.
+    purpose: Composes structural Project, generated views, static metadata and closed Apply with guarded publication.
     doc: docs/development/modules.md
   - path: cmd/markitect
     layer: apply-command

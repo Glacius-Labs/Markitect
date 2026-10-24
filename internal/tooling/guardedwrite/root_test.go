@@ -1,6 +1,7 @@
 package guardedwrite
 
 import (
+	"context"
 	"errors"
 	"os"
 	"path/filepath"
@@ -8,6 +9,43 @@ import (
 	"strings"
 	"testing"
 )
+
+func TestCanceledAtomicWriteDoesNotCreateParentsReplaceOrRemoveTargets(t *testing.T) {
+	dir := testDirectory(t)
+	root, err := OpenRoot(dir)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if err := root.atomicWriteWithHooks(ctx, "missing/deep/target", []byte("new"), 0644, nil, nil); !errors.Is(err, context.Canceled) {
+		t.Fatal(err)
+	}
+	if _, err := os.Stat(filepath.Join(dir, "missing")); !os.IsNotExist(err) {
+		t.Fatal("canceled write created parent directories", err)
+	}
+	if err := root.AtomicWrite("existing", []byte("original"), 0644); err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel = context.WithCancel(context.Background())
+	defer cancel()
+	err = root.atomicWriteWithHooks(ctx, "existing", []byte("replacement"), 0644, nil, func() error { cancel(); return nil })
+	if !errors.Is(err, context.Canceled) {
+		t.Fatal("final replacement ignored cancellation", err)
+	}
+	if err := root.removeRegular(ctx, "existing"); !errors.Is(err, context.Canceled) {
+		t.Fatal("removal ignored cancellation", err)
+	}
+	data, err := os.ReadFile(filepath.Join(dir, "existing"))
+	if err != nil || string(data) != "original" {
+		t.Fatal("cancellation changed target", string(data), err)
+	}
+	entries, err := os.ReadDir(dir)
+	if err != nil || len(entries) != 1 {
+		t.Fatal("canceled write left a temporary file", entries, err)
+	}
+}
 
 func TestSafeDestinationRejectsCaseOnlySymlinkAncestor(t *testing.T) {
 	if runtime.GOOS == "windows" {
@@ -233,7 +271,7 @@ func TestAnchoredAtomicWriteRejectsInRootAliasAtPreRenameBoundary(t *testing.T) 
 	original := filepath.Join(rootPath, "target-original")
 	var hookReached, injected bool
 	var injectionErr error
-	err = anchored.atomicWriteWithHooks("target/escaped.txt", []byte("must not write\n"), 0644, nil, func() error {
+	err = anchored.atomicWriteWithHooks(context.Background(), "target/escaped.txt", []byte("must not write\n"), 0644, nil, func() error {
 		hookReached = true
 		if err := os.Rename(parent, original); err != nil {
 			injectionErr = err
@@ -441,7 +479,7 @@ func TestAnchoredAtomicWriteRetainsRootLevelPublicationAfterRootMove(t *testing.
 	defer root.Close()
 	original := filepath.Join(base, "repo-original")
 	var moved bool
-	err = root.atomicWriteWithHooks("escaped.txt", []byte("published\n"), 0644, nil, func() error {
+	err = root.atomicWriteWithHooks(context.Background(), "escaped.txt", []byte("published\n"), 0644, nil, func() error {
 		if err := os.Rename(rootPath, original); err != nil {
 			return err
 		}

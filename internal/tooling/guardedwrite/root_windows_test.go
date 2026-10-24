@@ -3,6 +3,7 @@
 package guardedwrite
 
 import (
+	"context"
 	"errors"
 	"os"
 	"os/exec"
@@ -318,7 +319,7 @@ func TestAnchoredAtomicWriteRejectsInRootJunctionAtPreRenameBoundary(t *testing.
 	original := filepath.Join(root, "target-original")
 	var hookReached, injected bool
 	var injectionErr error
-	err = anchored.atomicWriteWithHooks("target/escaped.txt", []byte("must not write\n"), 0644, nil, func() error {
+	err = anchored.atomicWriteWithHooks(context.Background(), "target/escaped.txt", []byte("must not write\n"), 0644, nil, func() error {
 		hookReached = true
 		if err := os.Rename(parent, original); err != nil {
 			injectionErr = err

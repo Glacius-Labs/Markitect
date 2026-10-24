@@ -1,6 +1,7 @@
 package guardedwrite
 
 import (
+	"context"
 	"crypto/rand"
 	"encoding/hex"
 	"errors"
@@ -341,6 +342,13 @@ func (w *Root) checkNamedDirectoryIdentity(name string, expected *os.Root) error
 }
 
 func (w *Root) openDirectory(name string, create bool, mode os.FileMode) (*os.Root, func(*os.Root) error, error) {
+	return w.openDirectoryContext(context.Background(), name, create, mode)
+}
+
+func (w *Root) openDirectoryContext(ctx context.Context, name string, create bool, mode os.FileMode) (*os.Root, func(*os.Root) error, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, nil, err
+	}
 	if name == "" || name == "." {
 		return w.root, func(*os.Root) error { return nil }, nil
 	}
@@ -360,6 +368,10 @@ func (w *Root) openDirectory(name string, create bool, mode os.FileMode) (*os.Ro
 	for _, part := range strings.Split(name, "/") {
 		info, err := current.Lstat(part)
 		if os.IsNotExist(err) && create {
+			if err := ctx.Err(); err != nil {
+				closeCurrent()
+				return nil, nil, err
+			}
 			err = current.Mkdir(part, mode)
 			if err == nil || os.IsExist(err) {
 				info, err = current.Lstat(part)
@@ -502,6 +514,10 @@ func (w *Root) Lstat(name string) (os.FileInfo, error) {
 // It refuses directories, links and reparse points, and reports a published
 // removal if the named parent changes after the mutation.
 func (w *Root) RemoveRegular(name string) error {
+	return w.removeRegular(context.Background(), name)
+}
+
+func (w *Root) removeRegular(ctx context.Context, name string) error {
 	if err := w.checkPath(name); err != nil {
 		return err
 	}
@@ -531,6 +547,9 @@ func (w *Root) RemoveRegular(name string) error {
 	if IsReparsePoint(current) || !current.Mode().IsRegular() || !os.SameFile(info, current) {
 		return fmt.Errorf("output file changed before removal: %s", name)
 	}
+	if err := ctx.Err(); err != nil {
+		return err
+	}
 	if err := parent.Remove(leaf); err != nil {
 		return err
 	}
@@ -541,16 +560,16 @@ func (w *Root) RemoveRegular(name string) error {
 }
 
 func (w *Root) AtomicWrite(name string, data []byte, mode os.FileMode) error {
-	return w.atomicWriteWithHooks(name, data, mode, nil, nil)
+	return w.atomicWriteWithHooks(context.Background(), name, data, mode, nil, nil)
 }
 
 // atomicWriteWithHook exposes the final pre-open boundary to focused tests so
 // a directory swap can be injected in the exact former path-based race window.
 func (w *Root) atomicWriteWithHook(name string, data []byte, mode os.FileMode, beforeOpen func() error) error {
-	return w.atomicWriteWithHooks(name, data, mode, beforeOpen, nil)
+	return w.atomicWriteWithHooks(context.Background(), name, data, mode, beforeOpen, nil)
 }
 
-func (w *Root) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, beforeOpen, beforeRename func() error) error {
+func (w *Root) atomicWriteWithHooks(ctx context.Context, name string, data []byte, mode os.FileMode, beforeOpen, beforeRename func() error) error {
 	if err := w.checkPath(name); err != nil {
 		return err
 	}
@@ -558,7 +577,7 @@ func (w *Root) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, 
 	if err := w.CheckIdentity(); err != nil {
 		return err
 	}
-	parent, closeParent, err := w.openDirectory(parentName, true, 0755)
+	parent, closeParent, err := w.openDirectoryContext(ctx, parentName, true, 0755)
 	if err != nil {
 		return err
 	}
@@ -582,6 +601,9 @@ func (w *Root) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, 
 				return err
 			}
 			hookCalled = true
+		}
+		if err := ctx.Err(); err != nil {
+			return err
 		}
 		created, openErr := parent.OpenFile(temporary, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 		if openErr == nil {
@@ -634,6 +656,10 @@ func (w *Root) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, 
 			return err
 		}
 	}
+	if err := ctx.Err(); err != nil {
+		cleanup()
+		return err
+	}
 	if err := parent.Rename(temporary, leaf); err != nil {
 		cleanup()
 		return err
@@ -645,12 +671,16 @@ func (w *Root) atomicWriteWithHooks(name string, data []byte, mode os.FileMode, 
 }
 
 func (w *Root) LockWriter() (func(), error) {
+	return w.lockWriter(context.Background())
+}
+
+func (w *Root) lockWriter(ctx context.Context) (func(), error) {
 	// V1 administrative files are excluded from the complete source Census.
 	if manifest, err := w.Lstat(".markitect/model.yaml"); err == nil {
 		if IsReparsePoint(manifest) || !manifest.Mode().IsRegular() {
 			return nil, errors.New("V1 model manifest must be a regular file before selecting its writer lock")
 		}
-		return w.lockWriterAt(".markitect/state", "write.lock")
+		return w.lockWriterAtContext(ctx, ".markitect/state", "write.lock")
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("inspect V1 model manifest before selecting writer lock: %w", err)
 	}
@@ -664,13 +694,17 @@ func (w *Root) LockWriter() (func(), error) {
 	} else if !os.IsNotExist(err) {
 		return nil, fmt.Errorf("inspect project manifest before selecting writer lock: %w", err)
 	}
-	return w.lockWriterAt(lockDirectory, "write.lock")
+	return w.lockWriterAtContext(ctx, lockDirectory, "write.lock")
 }
 
 // lockWriterAt acquires the shared write lock at an explicit project-relative
 // directory. It uses the same pinned-root and parent-identity checks as the
 // compatibility LockWriter path.
 func (w *Root) lockWriterAt(lockDirectory, leaf string) (func(), error) {
+	return w.lockWriterAtContext(context.Background(), lockDirectory, leaf)
+}
+
+func (w *Root) lockWriterAtContext(ctx context.Context, lockDirectory, leaf string) (func(), error) {
 	if err := validateWritePath(lockDirectory); err != nil {
 		return nil, fmt.Errorf("unsafe writer lock directory: %w", err)
 	}
@@ -678,11 +712,15 @@ func (w *Root) lockWriterAt(lockDirectory, leaf string) (func(), error) {
 		return nil, fmt.Errorf("unsafe writer lock filename %q", leaf)
 	}
 	lockPath := lockDirectory + "/" + leaf
-	parent, closeParent, err := w.openDirectory(lockDirectory, true, 0755)
+	parent, closeParent, err := w.openDirectoryContext(ctx, lockDirectory, true, 0755)
 	if err != nil {
 		return nil, err
 	}
 	if err := w.CheckIdentity(); err != nil {
+		_ = closeParent(parent)
+		return nil, err
+	}
+	if err := ctx.Err(); err != nil {
 		_ = closeParent(parent)
 		return nil, err
 	}
@@ -752,11 +790,15 @@ func HasGitMetadata(root string) bool {
 
 // BranchName returns the named, non-protected Git branch for a write.
 func BranchName(root string) (string, error) {
+	return branchName(context.Background(), root)
+}
+
+func branchName(ctx context.Context, root string) (string, error) {
 	absolute, err := filepath.Abs(root)
 	if err != nil {
 		return "", err
 	}
-	branch, err := source.GitOutput(absolute, "branch", "--show-current")
+	branch, err := source.GitOutputContext(ctx, absolute, "branch", "--show-current")
 	if err != nil {
 		return "", fmt.Errorf("writing canonical sources requires an isolated Git branch: %w", err)
 	}
@@ -770,7 +812,11 @@ func BranchName(root string) (string, error) {
 // EnsureBranch catches a branch switch, including one to a different
 // branch at the same HEAD, during a multi-file write.
 func EnsureBranch(root, expected string) error {
-	current, err := BranchName(root)
+	return ensureBranch(context.Background(), root, expected)
+}
+
+func ensureBranch(ctx context.Context, root, expected string) error {
+	current, err := branchName(ctx, root)
 	if err != nil {
 		return fmt.Errorf("write branch changed or became protected: %w", err)
 	}

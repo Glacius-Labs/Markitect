@@ -46,7 +46,7 @@ func (p *Publisher) Preflight(ctx context.Context, prepared project.Prepared) er
 	if len(entries) == 0 {
 		return fmt.Errorf("empty publication source")
 	}
-	_, err = guardedwrite.CaptureV1Files(prepared.Selection().Repository, []string{entries[0].Path().String()})
+	_, err = guardedwrite.CaptureV1Files(ctx, prepared.Selection().Repository, []string{entries[0].Path().String()})
 	return err
 }
 
@@ -140,7 +140,7 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 		// Acquire the cooperating lock and validate source/target even on no-change.
 		selected = []string{before.Entries()[0].Path().String()}
 	}
-	capture, err := guardedwrite.CaptureV1Files(prepared.Selection().Repository, selected)
+	capture, err := guardedwrite.CaptureV1Files(ctx, prepared.Selection().Repository, selected)
 	if err != nil {
 		return out, err
 	}
@@ -206,7 +206,7 @@ func (p *Publisher) Publish(ctx context.Context, request apply.PublicationReques
 		}
 		return nil
 	}
-	result, err := guardedwrite.ApplyOrderedChecked(prepared.Selection().Repository, capture, changes, guard, beforeTarget, readback)
+	result, err := guardedwrite.ApplyOrderedChecked(ctx, prepared.Selection().Repository, capture, changes, guard, beforeTarget, readback)
 	out.CompletedPaths = result.CompletedPaths
 	out.Readback = err == nil
 	return out, err

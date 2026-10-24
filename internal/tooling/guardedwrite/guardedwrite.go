@@ -6,6 +6,7 @@ package guardedwrite
 
 import (
 	"bytes"
+	"context"
 	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
@@ -49,8 +50,8 @@ type Capture struct {
 
 // CaptureV1Files selects V1 administration explicitly, including custom model
 // manifest layouts. It preserves CaptureFiles' existing branch/write policy.
-func CaptureV1Files(root string, selectedPaths []string) (*Capture, error) {
-	capture, err := CaptureFiles(root, selectedPaths)
+func CaptureV1Files(ctx context.Context, root string, selectedPaths []string) (*Capture, error) {
+	capture, err := captureFiles(ctx, root, selectedPaths)
 	if err != nil {
 		return nil, err
 	}
@@ -79,6 +80,13 @@ type Result struct {
 // from a Git worktree on a writable named branch. Selected paths are an exact
 // allowlist for the later Apply call.
 func CaptureFiles(root string, selectedPaths []string) (*Capture, error) {
+	return captureFiles(context.Background(), root, selectedPaths)
+}
+
+func captureFiles(ctx context.Context, root string, selectedPaths []string) (*Capture, error) {
+	if err := ctx.Err(); err != nil {
+		return nil, err
+	}
 	paths, err := normalizeGuardedPaths(selectedPaths)
 	if err != nil {
 		return nil, err
@@ -88,7 +96,7 @@ func CaptureFiles(root string, selectedPaths []string) (*Capture, error) {
 		return nil, err
 	}
 	defer writer.Close()
-	identity, branch, head, err := guardedGitState(root)
+	identity, branch, head, err := guardedGitState(ctx, root)
 	if err != nil {
 		return nil, err
 	}
@@ -113,7 +121,7 @@ func CaptureFiles(root string, selectedPaths []string) (*Capture, error) {
 	if err := writer.CheckIdentity(); err != nil {
 		return nil, err
 	}
-	if err := ensureGuardedGitState(root, identity, branch, head); err != nil {
+	if err := ensureGuardedGitState(ctx, root, identity, branch, head); err != nil {
 		return nil, err
 	}
 	capture.seal, err = guardedCaptureSeal(capture)
@@ -143,20 +151,23 @@ func ApplyChecked(root string, capture *Capture, changes []Change, validate func
 // callbacks run under the shared writer lock: preflight before mutation, the
 // target guard before each path, and readback after the complete change set.
 // A callback error returns the actual completed paths without claiming success.
-func ApplyOrderedChecked(root string, capture *Capture, changes []Change, preflight, beforeTarget func() error, readback func(Result) error) (Result, error) {
+func ApplyOrderedChecked(ctx context.Context, root string, capture *Capture, changes []Change, preflight, beforeTarget func() error, readback func(Result) error) (Result, error) {
 	var guard func(string) error
 	if beforeTarget != nil {
 		guard = func(string) error { return beforeTarget() }
 	}
-	return applyGuardedWriteWithReadback(root, capture, changes, preflight, guard, true, readback)
+	return applyGuardedWriteWithReadback(ctx, root, capture, changes, preflight, guard, true, readback)
 }
 
 func applyGuardedWrite(root string, capture *Capture, changes []Change, validate func() error, beforeTarget func(string) error) (Result, error) {
-	return applyGuardedWriteWithReadback(root, capture, changes, validate, beforeTarget, false, nil)
+	return applyGuardedWriteWithReadback(context.Background(), root, capture, changes, validate, beforeTarget, false, nil)
 }
 
-func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Change, validate func() error, beforeTarget func(string) error, ordered bool, readback func(Result) error) (Result, error) {
+func applyGuardedWriteWithReadback(ctx context.Context, root string, capture *Capture, changes []Change, validate func() error, beforeTarget func(string) error, ordered bool, readback func(Result) error) (Result, error) {
 	result := Result{CompletedPaths: []string{}}
+	if err := ctx.Err(); err != nil {
+		return result, err
+	}
 	if capture == nil || capture.rootIdentity == nil || len(capture.seal) == 0 {
 		return result, errors.New("guarded apply requires an intact Orchestrator capture")
 	}
@@ -204,7 +215,7 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 	if !os.SameFile(capture.rootIdentity, writer.identity) {
 		return result, errors.New("guarded apply root identity changed since capture")
 	}
-	if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
+	if err := ensureGuardedGitState(ctx, root, capture.Identity, capture.Branch, capture.Head); err != nil {
 		return result, err
 	}
 	if err := compareGuardedFiles(writer, capture.Files); err != nil {
@@ -212,13 +223,13 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 	}
 	var unlock func()
 	if capture.lockDirectory != "" {
-		unlock, err = writer.lockWriterAt(capture.lockDirectory, "write.lock")
+		unlock, err = writer.lockWriterAtContext(ctx, capture.lockDirectory, "write.lock")
 	} else if _, selectedProjectManifest := capture.Files[".markitect/project.yaml"]; selectedProjectManifest {
 		// Initialization captures the still-missing manifest, so select the
 		// project lock explicitly before its existence can drive LockWriter.
-		unlock, err = writer.lockWriterAt(".markitect", "write.lock")
+		unlock, err = writer.lockWriterAtContext(ctx, ".markitect", "write.lock")
 	} else {
-		unlock, err = writer.LockWriter()
+		unlock, err = writer.lockWriter(ctx)
 	}
 	if err != nil {
 		return result, err
@@ -230,7 +241,7 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 	if !os.SameFile(capture.rootIdentity, writer.identity) {
 		return result, errors.New("guarded apply root identity changed while acquiring lock")
 	}
-	if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
+	if err := ensureGuardedGitState(ctx, root, capture.Identity, capture.Branch, capture.Head); err != nil {
 		return result, err
 	}
 	if err := compareGuardedFiles(writer, capture.Files); err != nil {
@@ -250,7 +261,7 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 		if !os.SameFile(capture.rootIdentity, writer.identity) {
 			return result, errors.New("guarded apply root identity changed during precondition validation")
 		}
-		if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
+		if err := ensureGuardedGitState(ctx, root, capture.Identity, capture.Branch, capture.Head); err != nil {
 			return result, err
 		}
 		if err := compareGuardedFiles(writer, capture.Files); err != nil {
@@ -271,11 +282,14 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 		if err := writer.CheckIdentity(); err != nil {
 			return result, err
 		}
-		if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
+		if err := ensureGuardedGitState(ctx, root, capture.Identity, capture.Branch, capture.Head); err != nil {
 			return result, err
 		}
 		if err := compareGuardedFiles(writer, expectedFiles); err != nil {
 			return result, fmt.Errorf("selected files changed during guarded apply: %w", err)
+		}
+		if err := ctx.Err(); err != nil {
+			return result, err
 		}
 		before := expectedFiles[change.Path]
 		current, err := readGuardedWriteFile(writer, change.Path)
@@ -289,7 +303,7 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 			if !current.Exists {
 				continue
 			}
-			if err := writer.RemoveRegular(change.Path); err != nil {
+			if err := writer.removeRegular(ctx, change.Path); err != nil {
 				if WasPublished(err) {
 					result.CompletedPaths = append(result.CompletedPaths, change.Path)
 				}
@@ -302,7 +316,7 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 		if current.Exists && bytes.Equal(current.Bytes, change.Bytes) && current.Mode == change.Mode.Perm() {
 			continue
 		}
-		if err := writer.AtomicWrite(change.Path, change.Bytes, change.Mode.Perm()); err != nil {
+		if err := writer.atomicWriteWithHooks(ctx, change.Path, change.Bytes, change.Mode.Perm(), ctx.Err, ctx.Err); err != nil {
 			if WasPublished(err) {
 				result.CompletedPaths = append(result.CompletedPaths, change.Path)
 			}
@@ -330,14 +344,14 @@ func applyGuardedWriteWithReadback(root string, capture *Capture, changes []Chan
 		if err := writer.CheckIdentity(); err != nil {
 			return result, err
 		}
-		if err := ensureGuardedGitState(root, capture.Identity, capture.Branch, capture.Head); err != nil {
+		if err := ensureGuardedGitState(ctx, root, capture.Identity, capture.Branch, capture.Head); err != nil {
 			return result, err
 		}
 		if err := compareGuardedFiles(writer, expectedFiles); err != nil {
 			return result, fmt.Errorf("selected files changed during readback: %w", err)
 		}
 	}
-	return result, nil
+	return result, ctx.Err()
 }
 
 func normalizeGuardedPaths(input []string) ([]string, error) {
@@ -397,18 +411,18 @@ func normalizeGuardedChanges(changes []Change, selected map[string]File) ([]Chan
 	return result, nil
 }
 
-func guardedGitState(root string) (source.GitIdentity, string, string, error) {
-	identity, err := source.IdentifyGit(root)
+func guardedGitState(ctx context.Context, root string) (source.GitIdentity, string, string, error) {
+	identity, err := source.IdentifyGitContext(ctx, root)
 	if err != nil {
 		return source.GitIdentity{}, "", "", fmt.Errorf("identify guarded write repository: %w", err)
 	}
-	branch, err := BranchName(root)
+	branch, err := branchName(ctx, root)
 	if err != nil {
 		return source.GitIdentity{}, "", "", err
 	}
-	head, err := source.GitOutput(root, "rev-parse", "--verify", "HEAD^{commit}")
+	head, err := source.GitOutputContext(ctx, root, "rev-parse", "--verify", "HEAD^{commit}")
 	if err != nil {
-		headRef, refErr := source.GitOutput(root, "symbolic-ref", "--quiet", "HEAD")
+		headRef, refErr := source.GitOutputContext(ctx, root, "symbolic-ref", "--quiet", "HEAD")
 		if refErr != nil {
 			return source.GitIdentity{}, "", "", fmt.Errorf("read guarded write HEAD: %w", err)
 		}
@@ -416,7 +430,7 @@ func guardedGitState(root string) (source.GitIdentity, string, string, error) {
 		if ref != "refs/heads/"+branch {
 			return source.GitIdentity{}, "", "", fmt.Errorf("unborn guarded write HEAD %q does not match named branch %q", ref, branch)
 		}
-		if _, branchRefErr := source.GitOutput(root, "show-ref", "--verify", "--quiet", ref); branchRefErr == nil {
+		if _, branchRefErr := source.GitOutputContext(ctx, root, "show-ref", "--verify", "--quiet", ref); branchRefErr == nil {
 			return source.GitIdentity{}, "", "", fmt.Errorf("named branch ref %s exists but guarded HEAD does not resolve to a commit: %w", ref, err)
 		} else if !gitExitedWithCode(branchRefErr, 1) {
 			return source.GitIdentity{}, "", "", fmt.Errorf("verify guarded unborn branch ref %s: %w", ref, branchRefErr)
@@ -431,15 +445,15 @@ func gitExitedWithCode(err error, code int) bool {
 	return errors.As(err, &exit) && exit.ExitCode() == code
 }
 
-func ensureGuardedGitState(root string, expectedIdentity source.GitIdentity, expectedBranch, expectedHead string) error {
-	identity, branch, head, err := guardedGitState(root)
+func ensureGuardedGitState(ctx context.Context, root string, expectedIdentity source.GitIdentity, expectedBranch, expectedHead string) error {
+	identity, branch, head, err := guardedGitState(ctx, root)
 	if err != nil {
 		return err
 	}
 	if identity != expectedIdentity {
 		return errors.New("Git repository identity changed since guarded capture")
 	}
-	if err := EnsureBranch(root, expectedBranch); err != nil {
+	if err := ensureBranch(ctx, root, expectedBranch); err != nil {
 		return err
 	}
 	if branch != expectedBranch {
