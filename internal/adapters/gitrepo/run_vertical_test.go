@@ -331,7 +331,7 @@ func runFixture(t *testing.T, configure ...func(*testkit.Repo)) (*testkit.Repo, 
 		t.Fatal(err)
 	}
 	r.Write(".markitect/model.yaml", "formatVersion: 1\nid: run-fixture\nroot: model\ndependencies: {markitect-core: '1.1.0'}\n")
-	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.1.0', digest: 'sha256:82dce6b82c00a753b8b51d82e473d2544ea6eef0b482dbfa4023aafbd467adfc'}\n")
+	r.Write(".markitect/model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.1.0', digest: 'sha256:9552a7cdd560d8822854c286cd74d7dbb5d4277ee1fd16b25ef275213868e043'}\n")
 	r.Write(".markitect/model/a/thing.yaml", "imports: [{package: markitect/core, as: Core}]\nid: Thing\nkind: Core.Kind\nbody: A tiny realization obligation.\nspec: {}\n")
 	r.Write(".markitect/model/a/deep/item.yaml", "imports: [{package: a}]\nid: item\nkind: a/Thing\nbody: A child artifact.\nspec: {}\n")
 	r.Write(".markitect/execution.yaml", "apiVersion: markitect.execution/v2\nchecks: []\n")

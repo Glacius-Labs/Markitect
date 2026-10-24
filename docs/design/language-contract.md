@@ -143,7 +143,7 @@ spec:
 ```yaml
 id: type
 kind: Property
-body: The value type of this Property, as understood by the Core.
+body: The value type of this Property, understood by the Core.
 spec:
   type: enum
   minCount: 1

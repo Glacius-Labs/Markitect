@@ -8,7 +8,7 @@ import (
 	"testing"
 )
 
-const core10Digest = "sha256:8b8e63a958eab6b5cc79fe3b8eeb25fbec6765fb81ba813eeaa1b9b7dace1213"
+const core10Digest = "sha256:9f1a646b76796282c8e3fea2f6d0d5eb1276f954ca3894f3488763512b7d82d1"
 
 func withLock(source SourceModel, text string, present bool) SourceModel {
 	path := joinPath(parent(source.ManifestPath), "model-lock.yaml")

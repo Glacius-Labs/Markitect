@@ -74,7 +74,7 @@ func TestCoreComparesEffectiveContent(t *testing.T) {
 
 func TestFixedCoreRejectsContentReplacements(t *testing.T) {
 	for _, tt := range []struct{ name, path, before, after, code string }{
-		{"body", "type.yaml", "The value type of this Property, as understood by the Core.", "Another body.", "core.content"},
+		{"body", "type.yaml", "The value type of this Property, understood by the Core.", "Another body.", "core.content"},
 		{"title", "kind.yaml", "id: Kind", "title: Extra\nid: Kind", "core.content"},
 		{"cardinality", "name.yaml", "maxCount: 1", "maxCount: -1", "core.content"},
 		{"field default", "name.yaml", "spec:", "spec:\n  name: other", "core.content"},

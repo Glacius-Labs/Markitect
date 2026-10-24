@@ -73,7 +73,7 @@ func TestActualLibraryRootDotPreservesInventoryAndExcludesStateMarker(t *testing
 func TestRunRepositoryRootModelSnapshotsKeepEmptyPackagesOutsideGitAdministration(t *testing.T) {
 	repo := testkit.NewRepo(t)
 	repo.Write("model.yaml", "formatVersion: 1\nid: root-run\nroot: .\ndependencies: {markitect-core: '1.1.0'}\n")
-	repo.Write("model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.1.0', digest: 'sha256:82dce6b82c00a753b8b51d82e473d2544ea6eef0b482dbfa4023aafbd467adfc'}\n")
+	repo.Write("model-lock.yaml", "formatVersion: 1\nmodels:\n  markitect-core: {version: '1.1.0', digest: 'sha256:9552a7cdd560d8822854c286cd74d7dbb5d4277ee1fd16b25ef275213868e043'}\n")
 	core := testkit.TempDir(t)
 	original := "../../../testdata/core"
 	if err := fs.WalkDir(os.DirFS(original), ".", func(name string, d fs.DirEntry, err error) error {

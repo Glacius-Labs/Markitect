@@ -44,7 +44,7 @@ spec:
 `)},
 		{Path: "model/markitect/core/type.yaml", Kind: Regular, Bytes: []byte(`id: type
 kind: Property
-body: The value type of this Property, as understood by the Core.
+body: The value type of this Property, understood by the Core.
 spec:
   type: enum
   minCount: 1
@@ -127,6 +127,6 @@ func coreModelInput(definitions ...Entry) Input {
 	}
 	// Independently fixed by replacing only version in the normative Core JSON
 	// vector, rather than asking the implementation to generate its own lock.
-	input.Root.Entries[len(input.Root.Entries)-1].Bytes = []byte("formatVersion: 1\nmodels:\n  markitect-core:\n    version: '1.0'\n    digest: sha256:8b8e63a958eab6b5cc79fe3b8eeb25fbec6765fb81ba813eeaa1b9b7dace1213\n")
+	input.Root.Entries[len(input.Root.Entries)-1].Bytes = []byte("formatVersion: 1\nmodels:\n  markitect-core:\n    version: '1.0'\n    digest: sha256:9f1a646b76796282c8e3fea2f6d0d5eb1276f954ca3894f3488763512b7d82d1\n")
 	return input
 }

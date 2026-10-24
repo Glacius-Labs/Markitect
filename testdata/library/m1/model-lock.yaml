@@ -2,7 +2,7 @@ formatVersion: 1
 models:
   markitect-core:
     version: 1.1.0
-    digest: sha256:82dce6b82c00a753b8b51d82e473d2544ea6eef0b482dbfa4023aafbd467adfc
+    digest: sha256:9552a7cdd560d8822854c286cd74d7dbb5d4277ee1fd16b25ef275213868e043
   software-basics:
     version: 0.2.0
     digest: sha256:1bc4076a43cac40937d44fe20fdcfe23c3ce2fda44652690eb1d916c7d182037

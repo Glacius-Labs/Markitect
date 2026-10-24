@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:e90871ba28bb91188686e85ea7bb3806bc17648e305a6e59f5246615d784fc10`.
+Canonical model digest: `sha256:122bb3f0040a95b3319c9018394757697d62bd1b07260cd347ae357e309c841b`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -109,9 +109,9 @@ Fields:
 
 ### markitect/core/type
 
-Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/type.yaml` (original bytes `sha256:9cbe3ee9abfa60915edf65f626934e046c4ae0a377a044ebfb934702c9b194cf`).
+Kind: `markitect/core/Property`. Source: `.markitect/model/markitect/core/type.yaml` (original bytes `sha256:efb5851ff1f2c255384d89c382b6abe08aea1e1ff4c7d133825a856d8b00ecbd`).
 
-The value type of this Property, as understood by the Core.
+The value type of this Property, understood by the Core.
 
 Fields:
 

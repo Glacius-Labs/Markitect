@@ -48,7 +48,7 @@ spec:
 `)},
 		{Path: "model/markitect/core/type.yaml", Kind: model.Regular, Bytes: []byte(`id: type
 kind: Property
-body: The value type of this Property, as understood by the Core.
+body: The value type of this Property, understood by the Core.
 spec:
   type: enum
   minCount: 1
