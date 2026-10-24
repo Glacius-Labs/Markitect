@@ -5,6 +5,7 @@ Start engineering work through [AGENTS.md](../../AGENTS.md), the [working method
 | Document | Owns |
 |---|---|
 | [V1 bounded assignments](v1-workstream-assignments.md) | Current writer scopes for steps 2 and 3 of the delivery plan: Run contract (D10–D13, D15, D17) and provider scope (D18) |
+| [Repository structure](repository-structure.md) | R1 inventory of every file, the proposed target layout, the archive mechanism and the ordered R2 work list; a proposal until the owner accepts it |
 | [Concept conformance audit](concept-conformance-audit-20261024.md) | Supplied static audit of Main `6c7d758c` against the V1 concept; origin of A1–A6 and R1–R3, closed by concept 1.0 |
 | [V1 counter-review](v1-architecture-audit-20261023.md) and [source archive](v1-source-archive-20261023.md) | Source-bound v0.17 counter-review and the verified pre-cutover archive |
 | [Codex Apply conformance handoff](codex-apply-conformance-handoff-20261021.md) | Historical, superseded by V1: bounded correction: material-condition evidence before Implement acceptance, parent integration, independently derived Verify coverage, adjudicated controls and a new finite targeted series; prior series is exhausted |

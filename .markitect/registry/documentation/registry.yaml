@@ -1,5 +1,9 @@
 apiVersion: markitect.registry/v1
 artifacts:
+  - path: "docs/development/repository-structure.md"
+    form: doc
+    realizes: [documentation/current-guidance]
+    why: Classifies every repository file with its evidence and proposes the target layout, archive mechanism and R2 work list.
   - path: "docs/concepts/sources/english-documentation-20261024.md"
     form: doc
     realizes: [documentation/current-guidance]
