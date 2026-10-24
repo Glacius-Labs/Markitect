@@ -867,7 +867,7 @@ The owner's [origin account of 15 October 2026](sources/owner-origin-20261015.md
 - **Status:** Accepted by the owner, 24 October 2026 ([verbatim source with translation](sources/english-documentation-20261024.md)).
 - **Decision:** The concept and all documentation in Markitect are always written in English. [Concept 1.0](v1-concept.md) was translated in the same change.
 - **Scope notes (recorder's interpretation):** verbatim owner statements in [sources](sources/README.md) keep their original wording and get an English translation where they serve as a reference. The [delivery plan](../implementation-plan.md#known-deviations-from-concept-10) tracks the remaining German documents.
-- **Core vocabulary, 24 October 2026:** the owner decided that the canonical `markitect/core` vocabulary is also English ([verbatim follow-up](sources/english-documentation-20261024.md#follow-up-owner-decision-core-vocabulary)). Its bodies are translated with unchanged meaning as a new core version, together with their copies in the language specification. The changed core identity is re-established by the step 4 native requalification.
+- **Core vocabulary, 24 October 2026:** the owner decided that the canonical `markitect/core` vocabulary is also English ([verbatim follow-up](sources/english-documentation-20261024.md#follow-up-owner-decision-core-vocabulary)). Recorder's interpretation: its bodies are translated with unchanged meaning as a new core version, together with their copies in the language specification, and the changed core identity is re-established by the native requalification.
 
 ## Promises
 
