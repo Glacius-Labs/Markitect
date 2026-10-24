@@ -13,6 +13,7 @@ import (
 	"path"
 	"path/filepath"
 	"reflect"
+	"runtime"
 	"sort"
 	"strings"
 	"sync"
@@ -62,6 +63,12 @@ func safeKey(s string) bool {
 func localCommand(ctx context.Context, dir string, input []byte, args ...string) (string, error) {
 	// Git for Windows also needs long paths for its state-owned pack files.
 	prefix := []string{"--no-replace-objects", "--literal-pathspecs", "-c", "core.longpaths=true", "-c", "core.hooksPath=", "-c", "core.fsmonitor=false", "-c", "core.autocrlf=false", "-c", "commit.gpgsign=false", "-c", "user.name=Markitect Run", "-c", "user.email=run@markitect.invalid", "-C", dir}
+	if runtime.GOOS == "windows" && len(args) > 0 && args[0] == "fetch" {
+		// The local upload-pack server needs its own long-path setting. Client
+		// -c does not cover its source object reads. Keep source paths separate
+		// from this static command and leave user repository config untouched.
+		args = append([]string{"fetch", "--upload-pack=git -c core.longpaths=true upload-pack"}, args[1:]...)
+	}
 	cmd := exec.CommandContext(ctx, "git", append(prefix, args...)...)
 	cmd.Env = append(gitEnvironment(), "GIT_ALLOW_PROTOCOL=file", "GIT_CONFIG_NOSYSTEM=1", "GIT_CONFIG_GLOBAL="+os.DevNull)
 	cmd.WaitDelay = time.Second
