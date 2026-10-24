@@ -362,13 +362,15 @@ func (x *execution) tools(s *managerState) Tools {
 			err = call(caller, false, func(ctx context.Context) error { result, err = x.checkTool(ctx, s); return err })
 			return result, err
 		},
-		ReadNotes: func(caller context.Context) (notes []Note, err error) {
+		// Notes are optional information: a storage failure is reported to the
+		// Manager, which sees that nothing was read or kept, and does not stop
+		// the Run. Mandatory results are stored separately and still stop it.
+		ReadNotes: func(caller context.Context, after string) (page NotePage, err error) {
 			err = call(caller, false, func(ctx context.Context) error {
-				notes, err = x.executor.Records.Notes(ctx, x.request.Project)
-				x.stopPort(err)
+				page, err = x.executor.Records.Notes(ctx, x.request.Project, after)
 				return err
 			})
-			return notes, err
+			return page, err
 		},
 		AppendNote: func(caller context.Context, scope, text string) (note Note, err error) {
 			err = call(caller, true, func(ctx context.Context) error {
@@ -376,7 +378,6 @@ func (x *execution) tools(s *managerState) Tools {
 					return fmt.Errorf("empty Note; append it again with a text")
 				}
 				note, err = x.executor.Records.Append(ctx, Note{Project: x.request.Project, Run: x.request.ID, Manager: s.manager.Package, Context: scope, Text: text})
-				x.stopPort(err)
 				return err
 			})
 			return note, err

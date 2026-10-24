@@ -12,6 +12,7 @@ import (
 	"path/filepath"
 	"sort"
 	"strings"
+	"time"
 
 	"github.com/Glacius-Labs/Markitect/internal/run"
 )
@@ -132,55 +133,86 @@ func (s *Store) Read(ctx context.Context, project, id string) (run.Result, error
 	}
 	return r, err
 }
+
+// Append stores one Note under an ID that starts with its creation time, so
+// the files sort in creation order without any lock between processes. Notes
+// beyond the size limits are refused with the reason: a stored Note must always
+// fit into a page the tool transport can carry.
 func (s *Store) Append(ctx context.Context, n run.Note) (run.Note, error) {
 	if !valid(n.Run) || n.Manager == "" || n.Text == "" || n.ID != "" {
 		return run.Note{}, fmt.Errorf("invalid Note provenance or content")
 	}
-	var id [16]byte
-	if _, err := rand.Read(id[:]); err != nil {
+	if len(n.Text) > run.MaxNoteText {
+		return run.Note{}, fmt.Errorf("Note text is %d bytes, above the limit of %d; shorten it or split it into several Notes", len(n.Text), run.MaxNoteText)
+	}
+	if len(n.Context) > run.MaxNoteContext {
+		return run.Note{}, fmt.Errorf("Note context is %d bytes, above the limit of %d; name the affected area more briefly", len(n.Context), run.MaxNoteContext)
+	}
+	var suffix [8]byte
+	if _, err := rand.Read(suffix[:]); err != nil {
 		return run.Note{}, err
 	}
-	n.ID = hex.EncodeToString(id[:])
+	n.ID = fmt.Sprintf("%020d-%s", time.Now().UTC().UnixNano(), hex.EncodeToString(suffix[:]))
 	p, err := s.path(n.Project, "notes", n.ID)
 	if err == nil {
 		err = write(ctx, p, n)
 	}
 	return n, err
 }
-func (s *Store) Notes(ctx context.Context, project string) ([]run.Note, error) {
+
+// Notes returns the page of project Notes that follows the cursor after (empty
+// for the first page), ordered by ID. The page ends before the Note that would
+// exceed the byte or count limit; Next then names the last Note of the page.
+// Only the files of the page are read.
+func (s *Store) Notes(ctx context.Context, project, after string) (run.NotePage, error) {
+	page := run.NotePage{Notes: []run.Note{}}
+	if after != "" && !valid(after) {
+		return page, fmt.Errorf("invalid cursor %q; pass the next value of the previous page, or omit it for the first page", after)
+	}
 	p, err := s.path(project, "notes", "unused")
 	if err != nil {
-		return nil, err
+		return page, err
 	}
-	entries, err := os.ReadDir(filepath.Dir(p))
+	dir := filepath.Dir(p)
+	entries, err := os.ReadDir(dir)
 	if os.IsNotExist(err) {
-		return nil, nil
+		return page, nil
 	}
 	if err != nil {
-		return nil, err
+		return page, err
 	}
-	if len(entries) > 10000 {
-		return nil, fmt.Errorf("Note count exceeds finite read limit")
-	}
-	var notes []run.Note
-	total := 0
+	var ids []string
 	for _, e := range entries {
-		if !strings.HasSuffix(e.Name(), ".json") {
-			continue
+		if id, ok := strings.CutSuffix(e.Name(), ".json"); ok && id > after {
+			ids = append(ids, id)
 		}
-		var n run.Note
-		if err = read(ctx, filepath.Join(filepath.Dir(p), e.Name()), &n); err != nil {
-			return nil, err
-		}
-		if n.Project != project || e.Name() != n.ID+".json" {
-			return nil, fmt.Errorf("Note identity mismatch")
-		}
-		total += len(n.Text) + len(n.Context)
-		if total > maxBytes {
-			return nil, fmt.Errorf("Note byte limit exceeded")
-		}
-		notes = append(notes, n)
 	}
-	sort.Slice(notes, func(i, j int) bool { return notes[i].ID < notes[j].ID })
-	return notes, nil
+	sort.Strings(ids)
+	size := 0
+	for _, id := range ids {
+		var n run.Note
+		if err = read(ctx, filepath.Join(dir, id+".json"), &n); err != nil {
+			if ctx.Err() != nil {
+				return page, err
+			}
+			return page, fmt.Errorf("stored Note %s is unreadable (%w); continue after it with cursor %q", id, err, id)
+		}
+		if n.Project != project || n.ID != id {
+			return page, fmt.Errorf("stored Note %s does not match its identity; continue after it with cursor %q", id, id)
+		}
+		encoded, err := json.Marshal(n)
+		if err != nil {
+			return page, err
+		}
+		if len(page.Notes) == 0 && len(encoded) > run.NotePageBytes {
+			return page, fmt.Errorf("stored Note %s is %d bytes, more than a page can carry; continue after it with cursor %q", id, len(encoded), id)
+		}
+		if len(page.Notes) == run.NotePageCount || size+len(encoded) > run.NotePageBytes {
+			page.Next = page.Notes[len(page.Notes)-1].ID
+			return page, nil
+		}
+		size += len(encoded)
+		page.Notes = append(page.Notes, n)
+	}
+	return page, nil
 }
