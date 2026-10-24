@@ -1,6 +1,6 @@
 # Markitect self-model
 
-[model.yaml](model.yaml) selects this repository's canonical language v1 tree under `model/`; [model-lock.yaml](model-lock.yaml) records explicit dependencies. This self-model is self-contained. Its nine fixed Core Definitions are byte-identical copies of the normative Core fixture under `docs/design/canonical-model/minimal-language/exchange-example/dependencies/core/model/markitect/core/`. Ordinary Rule and Check Definitions state responsibilities and maintenance obligations; there is no canonical Manager DTO.
+[model.yaml](model.yaml) selects this repository's canonical language v1 tree under `model/`; [model-lock.yaml](model-lock.yaml) records explicit dependencies. This self-model is self-contained. Its nine fixed Core Definitions are byte-identical copies of the normative Core fixture under `testdata/core/model/markitect/core/`. Ordinary Rule and Check Definitions state responsibilities and maintenance obligations; there is no canonical Manager DTO.
 
 [execution.yaml](execution.yaml) declares finite settings and named profile selections. It does not provide Runtime executable metadata, grant runtime authority or make Apply executable. [ignore.yaml](ignore.yaml) lists exact explained file exceptions and is empty by default.
 

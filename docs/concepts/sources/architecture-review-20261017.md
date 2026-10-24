@@ -1,6 +1,6 @@
 # Owner instructions: architecture review and concept freeze
 
-Date: 17 October 2026. Source: the owner's Claude Code session in which the assistant was appointed project architect. The German passages below preserve the owner's words. The [architecture review](../../design/canonical-model/apply-architecture-review-20261017.md) holds the assessment, and [DEC-040](../register.md#dec-040-concept-freeze-until-the-core-runs) records the decision.
+Date: 17 October 2026. Source: the owner's Claude Code session in which the assistant was appointed project architect. The German passages below preserve the owner's words. The [architecture review](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/apply-architecture-review-20261017.md) holds the assessment, and [DEC-040](../register.md#dec-040-concept-freeze-until-the-core-runs) records the decision.
 
 ## Request for the review
 

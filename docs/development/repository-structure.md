@@ -1,6 +1,6 @@
 # Repository structure: inventory and target layout (R1)
 
-Slice R1 of [step 3 of the delivery plan](../implementation-plan.md#repository-structure), written on 24 October 2026 against Main `79b9baa55f6e1dce89005f91878de0ae7f139ed3` and checked again after merging Main `41e661e0`. That later Main adds two owner sources to the concept record (`parallel-writers-20261024.md` and the English translation `v1-concept-v018-20261024-en.md`, both current), lands B2 and translates the canonical-model documents; the counts below refer to the base. It classifies every tracked file, proposes the target layout and gives R2 an ordered, mechanical work list. It moves, deletes and rewrites nothing. The owner sees this proposal before R2 starts; until then it is a proposal, not a decision.
+Slice R1 of [step 3 of the delivery plan](../implementation-plan.md#repository-structure), written on 24 October 2026 against Main `79b9baa55f6e1dce89005f91878de0ae7f139ed3` and checked again after merging Main `41e661e0`. That later Main adds two owner sources to the concept record (`parallel-writers-20261024.md` and the English translation `v1-concept-v018-20261024-en.md`, both current), lands B2 and translates the canonical-model documents; the counts below refer to the base. It classifies every tracked file, proposes the target layout and gives R2 an ordered, mechanical work list. It moves, deletes and rewrites nothing. The owner accepted all six recommendations on 24 October 2026 ([DEC-071](../concepts/register.md#dec-071-repository-structure-and-archive)) and R2 executed this work list; the document stays as the record of the inventory. Paths below name the layout before R2.
 
 ## 1. Result
 
@@ -166,7 +166,7 @@ Proposal:
 
 ### 7.3 Release tooling
 
-`internal/tooling/release` (package, bundle, install) is current: CI `publish-source-artifact` runs `markitect-release package`, `release.yaml` runs `bundle`, and `tools/smoke` packages and builds the source on every CI run. `internal/tooling/publish` (verified GitHub release publication and WinGet manifest generation) has no CI or V1 consumer; only `markitect-release` without subcommand and `markitect-release distribution` call it. The [retirement record](../history/distribution-retirement-20261017.md) kept "the source release workflow, local package/bundle/install tools and future distribution-generation markers" on purpose, and release is excluded from V1, not abandoned. Recommendation: keep both unchanged in R2; decide `publish` when the owner schedules a release.
+`internal/tooling/release` (package, bundle, install) is current: CI `publish-source-artifact` runs `markitect-release package`, `release.yaml` runs `bundle`, and `tools/smoke` packages and builds the source on every CI run. `internal/tooling/publish` (verified GitHub release publication and WinGet manifest generation) has no CI or V1 consumer; only `markitect-release` without subcommand and `markitect-release distribution` call it. The [retirement record](../validation/distribution-retirement-20261017.md) kept "the source release workflow, local package/bundle/install tools and future distribution-generation markers" on purpose, and release is excluded from V1, not abandoned. Recommendation: keep both unchanged in R2; decide `publish` when the owner schedules a release.
 
 ### 7.4 Documentation shape
 
@@ -206,7 +206,7 @@ No package is moved in R2. Two responsibilities are clearly misplaced and are pr
 ### 8.1 Existing state
 
 - Main's history starts at `447ac3b1` ("Preserve Markitect source snapshot; reset history", 23 October 2026). The remote branch `archive/v1-pre-cutover-20261023` points at that commit, with a verified local bundle ([record](v1-source-archive-20261023.md)). The branch is not protected.
-- GitHub has no tags. The [retirement record](../history/distribution-retirement-20261017.md) of 17 October still counted 261 tag refs; `retired-releases-20261017.json` keeps their tag-to-commit mapping (for example `v0.14.1` → `7dbd599c81540c8203a1b7f83afbc335174f4f1f`).
+- GitHub has no tags. The [retirement record](../validation/distribution-retirement-20261017.md) of 17 October still counted 261 tag refs; `retired-releases-20261017.json` keeps their tag-to-commit mapping (for example `v0.14.1` → `7dbd599c81540c8203a1b7f83afbc335174f4f1f`).
 - Remaining files cite five commits from before the reset (linked from 7, 5, 3, 2 and 1 files: `5ff32069`, `1f4a1ede`, `3ebe3c6e`, `bc4b49e7`, `0c28097c`; three more files mention the last three in plain text); `7dbd599c` is the commit behind the dead `v0.14.1` links. None of the six is in a branch on GitHub. GitHub still serves them, but no ref pins them.
 
 ### 8.2 Proposal

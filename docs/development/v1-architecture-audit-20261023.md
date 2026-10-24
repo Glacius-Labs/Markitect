@@ -63,7 +63,7 @@ During this v0.17 counter-review, production source remained unchanged:
 
 Previous audit in this same task had additionally passed focused assignment/Git/bootstrap tests with selector `^(TestAssignment|TestFocusedReview|TestApplyGit|TestIndependentAssignment|TestControlledRootLibrary|TestChildGit)` in run/apply/gitrepo/bootstrap. Those tests were not rerun for this static counter-review and do not qualify the proposed replacement. The supplied independent review reports static evidence only; its claims were not converted into self-run tests here.
 
-No full Go suite/build, Linux/race, hosted CI, container, real provider, product Apply, release or deployment ran in this counter-review. Source tests do not prove native harness/auth, cross-Run candidate retention or target semantic reliability. Earlier [Library Run 08](../validation/apply-assignments-luna-20261023.md) retains its own historical source and failures; it is not v0.17 qualification, M1 -> M2 preservation evidence or successful Claude support.
+No full Go suite/build, Linux/race, hosted CI, container, real provider, product Apply, release or deployment ran in this counter-review. Source tests do not prove native harness/auth, cross-Run candidate retention or target semantic reliability. Earlier [Library Run 08](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/apply-assignments-luna-20261023.md) retains its own historical source and failures; it is not v0.17 qualification, M1 -> M2 preservation evidence or successful Claude support.
 
 ## Independent review and closure
 

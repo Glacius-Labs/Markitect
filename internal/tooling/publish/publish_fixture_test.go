@@ -18,14 +18,14 @@ import (
 func makeAssets(t *testing.T, tag, runID string, attempt int, commit string) (string, namedBytes) {
 	t.Helper()
 	files := map[string][]byte{
-		"go.mod":                            []byte("module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n"),
-		"go.sum":                            []byte("example.com/dependency v1.0.0 h1:checksum\n"),
-		"LICENSE":                           []byte("Apache License\nVersion 2.0\n"),
-		"internal/buildinfo/version.go":     []byte("package main\nvar version = \"1.2.3\"\nfunc main() {}\n"),
-		"cmd/markitect/main.go":             []byte("package main\nfunc main(){}\n"),
-		"internal/model/model.go":           []byte("package model\nfunc Ready() bool { return true }\n"),
-		"integration/run-markitect.go":      []byte("package main\nfunc main() {}\n"),
-		"integration/run-markitect_test.go": []byte("package main\nimport \"testing\"\nfunc TestReady(t *testing.T) {}\n"),
+		"go.mod":                               []byte("module github.com/Glacius-Labs/Markitect\n\ngo 1.27.1\n"),
+		"go.sum":                               []byte("example.com/dependency v1.0.0 h1:checksum\n"),
+		"LICENSE":                              []byte("Apache License\nVersion 2.0\n"),
+		"internal/buildinfo/version.go":        []byte("package main\nvar version = \"1.2.3\"\nfunc main() {}\n"),
+		"cmd/markitect/main.go":                []byte("package main\nfunc main(){}\n"),
+		"internal/model/model.go":              []byte("package model\nfunc Ready() bool { return true }\n"),
+		"packaging/bootstrap/run-markitect.go": []byte("package main\nfunc main() {}\n"),
+		"packaging/bootstrap/run-markitect_test.go": []byte("package main\nimport \"testing\"\nfunc TestReady(t *testing.T) {}\n"),
 	}
 	snapshot := &source.Input{ID: commit, Files: files, Modes: map[string]string{}}
 	for name := range files {

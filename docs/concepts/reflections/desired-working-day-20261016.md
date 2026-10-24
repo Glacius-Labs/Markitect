@@ -1,6 +1,6 @@
 # A working day with delegated realization
 
-Date: 16 October 2026. The desired user experience from the [owner discussion](../sources/working-day-discussion-20261016.md), which the owner asked to keep, and the scope of a first usable version. The interaction choices are assistant proposals. The [Apply concept](../../design/canonical-model/manager-apply-concept.md) and its contracts own the rules; this note keeps the picture and the reasons. It builds on [trust through organized agent work](organization-and-trust-20261016.md).
+Date: 16 October 2026. The desired user experience from the [owner discussion](../sources/working-day-discussion-20261016.md), which the owner asked to keep, and the scope of a first usable version. The interaction choices are assistant proposals. The [Apply concept](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md) and its contracts own the rules; this note keeps the picture and the reasons. It builds on [trust through organized agent work](organization-and-trust-20261016.md).
 
 The person changes and approves intent. The organization realizes it, handles ordinary implementation and review, and asks for a decision only when its authority or the model is insufficient. The person can inspect progress without coordinating every Agent exchange.
 
@@ -29,7 +29,7 @@ Hierarchy alone grants no authority over intended behavior; the root cannot inve
 
 ### Derive the Lending mandate from its sources
 
-The mandate is a readable view assembled from existing sources, not another authored policy ([configuration](../../history/apply-design-before-dec-056/manager-apply-configuration.md#the-mandate-section)). For lending:
+The mandate is a readable view assembled from existing sources, not another authored policy ([configuration](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-configuration.md#the-mandate-section)). For lending:
 
 > **Assignment:** Realize lending as code, tests and documentation, including reminders through its child Manager.
 >
@@ -80,7 +80,7 @@ Accepting A authorizes exactly the displayed edit, without a second confirmation
 | Existing work | Exact candidates and their registry can become starting material, with their findings visible. That is not approval. |
 | Approval and evidence | Reviews and checks keep their original subjects. Required assessment runs again on the new basis. |
 
-The answer is bound to the question version; the run quiesces and finishes Incomplete, awaiting the model change; the owner commits the edit; the continuation captures the new model and selects retained work; Managers reassess; guarded publication follows. Each step is reported only when observed ([journal](../../history/apply-design-before-dec-056/manager-apply-journal.md#questions-answers-and-model-changes)).
+The answer is bound to the question version; the run quiesces and finishes Incomplete, awaiting the model change; the owner commits the edit; the continuation captures the new model and selects retained work; Managers reassess; guarded publication follows. Each step is reported only when observed ([journal](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-journal.md#questions-answers-and-model-changes)).
 
 ### A simple rule for carrying work forward
 
@@ -92,11 +92,11 @@ If a new eligibility check accidentally blocks returns for suspended members, th
 
 ### Detect stalled work and bound internal correction
 
-After an unsuccessful attempt, the Manager records what remains unresolved, what improved or was learned, and what the next attempt does differently with an observable target. A new prompt or a promise to try again is not progress. After the second rejected submission the parent assesses that plan before the third ([execution](../../history/apply-design-before-dec-056/manager-apply-execution.md#admission-amendments-and-finite-correction)). If no justified attempt fits, the affected work ends honestly with its candidates and evidence.
+After an unsuccessful attempt, the Manager records what remains unresolved, what improved or was learned, and what the next attempt does differently with an observable target. A new prompt or a promise to try again is not progress. After the second rejected submission the parent assesses that plan before the third ([execution](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-execution.md#admission-amendments-and-finite-correction)). If no justified attempt fits, the affected work ends honestly with its candidates and evidence.
 
 ## Share an assignment budget and protect completion work
 
-The assignment has one budget; delegation creates no extra capacity. A completion reserve keeps room for the required reviews and checks: writing work is admitted only while the reserve stays covered ([execution](../../history/apply-design-before-dec-056/manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Waiting for the owner costs nothing. When capacity runs out, the run ends Incomplete with retained work, and a concrete extension request states what the capacity is for and what happens without it. Budget pressure never weakens a rule or drops a review. The earlier proposal of bounded allocations per Manager is kept in the [north star](../../design/canonical-model/manager-realization-north-star.md#simplified-for-the-first-version) as a later option.
+The assignment has one budget; delegation creates no extra capacity. A completion reserve keeps room for the required reviews and checks: writing work is admitted only while the reserve stays covered ([execution](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-execution.md#one-ledger-with-protected-completion-capacity)). Waiting for the owner costs nothing. When capacity runs out, the run ends Incomplete with retained work, and a concrete extension request states what the capacity is for and what happens without it. Budget pressure never weakens a rule or drops a review. The earlier proposal of bounded allocations per Manager is kept in the [north star](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-realization-north-star.md#simplified-for-the-first-version) as a later option.
 
 ## A compact organization status report
 

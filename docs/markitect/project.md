@@ -4,7 +4,7 @@ Generated from acquired canonical v1 source bytes. This view is not execution or
 
 ## markitect
 
-Canonical model digest: `sha256:b1bea49a983e4fc5eca74a5417105f2159532668a10c74337f56513f62dd9b7e`.
+Canonical model digest: `sha256:65a5bff86156a6765fa9693c2f655a7bc2561743719cf91d64c42b58c619b628`.
 
 Manifest: `.markitect/model.yaml` (original bytes `sha256:d40feb9e02db275aed89d53b0a88849e463acaca076c8fa70fad38b367a68559`).
 
@@ -235,9 +235,9 @@ At design and delivery milestones, the responsible chat gives the owner a short 
 
 ### tooling/maintenance-boundaries
 
-Kind: `vocabulary/Rule`. Source: `.markitect/model/tooling/maintenance-boundaries.yaml` (original bytes `sha256:633fbc919470ea2717d400147e6f27c8349365cca9032c81b17e4414ae9c0615`).
+Kind: `vocabulary/Rule`. Source: `.markitect/model/tooling/maintenance-boundaries.yaml` (original bytes `sha256:562ee375e5d23a79f3d25473ae1b4f7a2c48c66c15fb332e6d85ce9d0c630539`).
 
-Maintain strict root-layout source packaging, deterministic release archives, licenses, distribution and guarded installation as independent maintenance services. Reject unsupported files, redirection, nested modules and archive collisions. Preserve Git tag identities and required historical release evidence. Retire public release pages and downloads only on explicit owner instruction; retain their source/asset identities and attestations without implying current availability. A source smoke is not release, installation, provider or Apply acceptance.
+Maintain strict root-layout source packaging, deterministic release archives, licenses, distribution and guarded installation as independent maintenance services. Reject unsupported files, redirection, nested modules and archive collisions. Keep required historical release evidence and the named archive refs. Retire public release pages and downloads only on explicit owner instruction; retain their source/asset identities and attestations without implying current availability. A source smoke is not release, installation, provider or Apply acceptance.
 
 ### tooling/gates/architecture
 
@@ -291,13 +291,13 @@ Fields:
 
 ### tooling/gates/library-oracle
 
-Kind: `vocabulary/Check`. Source: `.markitect/model/tooling/gates/library-oracle.yaml` (original bytes `sha256:9476604c25ff1e2ba800d9023949ede73a79f5c5b4cc70bbef53501e6c34a06c`).
+Kind: `vocabulary/Check`. Source: `.markitect/model/tooling/gates/library-oracle.yaml` (original bytes `sha256:3007de0954ce6dfab6cca0a5e44aeeed02e8afadb900ad9e75d600f1177651ff`).
 
 Run the declared library-oracle source maintenance check and retain failures separately from runtime and acceptance evidence.
 
 Fields:
 
-- `command`: "python -B -m unittest discover -s experiments/library-playground"
+- `command`: "python -B -m unittest discover -s tools/library-oracle"
 
 ### tooling/gates/modules
 

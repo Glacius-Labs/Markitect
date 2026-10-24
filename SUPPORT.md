@@ -4,7 +4,7 @@
 
 For general questions about Markitect, open a GitHub issue and describe what you are trying to do. Include the Markitect version, operating system, relevant command, and a minimal example when possible. Remove credentials, secrets, and private repository content before posting.
 
-For unexpected behavior, choose the **Bug report** issue form. For a proposed capability or improvement, choose **Feature request**. Start with the [documentation map](docs/README.md). [Project workflow](docs/project-workflow.md) and [Project operations](docs/project-operations.md) describe the model-first source workflow; [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md) links the immutable earlier release guide. [Architecture](docs/architecture.md) and [Operations](docs/operations.md) own current product boundaries and development or release process.
+For unexpected behavior, choose the **Bug report** issue form. For a proposed capability or improvement, choose **Feature request**. Start with the [documentation map](docs/README.md). [Project workflow](docs/guides/project-workflow.md) and [Project operations](docs/guides/project-operations.md) describe the model-first source workflow; [Usage](https://github.com/Glacius-Labs/Markitect/blob/1f4a1ede214d05fd2fee615b3905207df7702426/docs/usage.md) links the immutable earlier release guide. [Architecture](docs/architecture.md) and [Operations](docs/guides/operations.md) own current product boundaries and development or release process.
 
 ## Project-specific questions
 

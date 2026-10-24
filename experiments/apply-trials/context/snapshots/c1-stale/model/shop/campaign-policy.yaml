@@ -1,8 +1,0 @@
-id: campaign-policy
-kind: Policy
-title: Fresh campaign prices
-body: |-
-  A campaign never shows a price that is older than one calendar day.
-spec:
-  applies:
-    - shop/marketing

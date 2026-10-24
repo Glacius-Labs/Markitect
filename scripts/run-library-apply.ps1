@@ -107,15 +107,15 @@ try {
     New-Item -ItemType Directory -Path $fixture -ErrorAction Stop | Out-Null
     $control = Join-Path $fixture '.markitect'
     New-Item -ItemType Directory -Path $control -ErrorAction Stop | Out-Null
-    $canonical = Join-Path $source 'docs\design\canonical-model\library-example\m1'
+    $canonical = Join-Path $source 'testdata\library\m1'
     foreach ($file in @('model.yaml', 'model-lock.yaml')) {
         Copy-Item -LiteralPath (Join-Path $canonical $file) -Destination (Join-Path $control $file)
     }
     Copy-Item -LiteralPath (Join-Path $canonical 'model') -Destination $control -Recurse
     $dependencies = Join-Path $control 'dependencies'
     New-Item -ItemType Directory -Path $dependencies -ErrorAction Stop | Out-Null
-    Copy-Item -LiteralPath (Join-Path $source 'docs\design\canonical-model\library-example\vocabulary') -Destination (Join-Path $dependencies 'software') -Recurse
-    Copy-Item -LiteralPath (Join-Path $source 'docs\design\canonical-model\minimal-language\exchange-example\dependencies\core') -Destination (Join-Path $dependencies 'core') -Recurse
+    Copy-Item -LiteralPath (Join-Path $source 'testdata\library\vocabulary') -Destination (Join-Path $dependencies 'software') -Recurse
+    Copy-Item -LiteralPath (Join-Path $source 'testdata\core') -Destination (Join-Path $dependencies 'core') -Recurse
     # Only execution controls are authored here. Canonical M1 bytes stay exact;
     # hidden oracle expectations remain outside every Manager input.
     $execution = @"

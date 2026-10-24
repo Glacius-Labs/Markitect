@@ -89,12 +89,12 @@ func fixtureModel(t *testing.T, directory, boundary string) project.ModelSource 
 
 func libraryInputs(t *testing.T) (project.InputSelection, project.RawInputs) {
 	t.Helper()
-	base := "../../docs/design/canonical-model"
+	base := "../../testdata"
 	raw := project.RawInputs{
-		Local: fixtureModel(t, base+"/library-example/m1", ".markitect"),
+		Local: fixtureModel(t, base+"/library/m1", ".markitect"),
 		Dependencies: []project.ModelSource{
-			fixtureModel(t, base+"/library-example/vocabulary", "selected/vocabulary"),
-			fixtureModel(t, base+"/minimal-language/exchange-example/dependencies/core", "selected/core"),
+			fixtureModel(t, base+"/library/vocabulary", "selected/vocabulary"),
+			fixtureModel(t, base+"/core", "selected/core"),
 		},
 	}
 	raw.Local.RepositoryArea = area(t, ".markitect")

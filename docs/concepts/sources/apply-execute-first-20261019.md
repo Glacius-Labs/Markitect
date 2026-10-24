@@ -1,6 +1,6 @@
 # Execute-first Apply — 19 October 2026
 
-Recorder's note: direct owner discussion in the Codex chat **Workflow**, thread `01a1542d-641c-7643-86e9-ffcf003e1420`. Owner quotations preserve their original wording. Assistant proposals and interpretation are labeled separately. [DEC-058](../register.md#dec-058-apply-always-executes-before-independent-verify) records acceptance; the [Apply concept](../../design/canonical-model/manager-apply-concept.md#shared-working-tree-and-reconciliation-cycle) owns the target. This record supplies no implementation or runtime evidence.
+Recorder's note: direct owner discussion in the Codex chat **Workflow**, thread `01a1542d-641c-7643-86e9-ffcf003e1420`. Owner quotations preserve their original wording. Assistant proposals and interpretation are labeled separately. [DEC-058](../register.md#dec-058-apply-always-executes-before-independent-verify) records acceptance; the [Apply concept](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-apply-concept.md#shared-working-tree-and-reconciliation-cycle) owns the target. This record supplies no implementation or runtime evidence.
 
 ## Owner challenges initial Verify
 

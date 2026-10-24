@@ -1,5 +1,5 @@
 // Fixed normative Core vector, copied from the selected language contract artifact.
-// Source: docs/design/canonical-model/minimal-language/exchange-example/canonical/core.json
+// Source: https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/minimal-language/exchange-example/canonical/core.json
 // SHA-256: 562a20613c64fb9cd3425ff39b5f9fb826b75deb153cdfac48b00fce6f5c19f1
 // Kept as Go test source so source distributions need no testdata files.
 package model

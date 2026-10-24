@@ -223,7 +223,7 @@ func (s *smoke) packageSource(pkg string) error {
 		return err
 	}
 	for source, target := range map[string]string{"run-markitect.go": "run.go", "run-markitect_test.go": "run_test.go"} {
-		data, err := os.ReadFile(filepath.Join(s.repo, "integration", source))
+		data, err := os.ReadFile(filepath.Join(s.repo, "packaging", "bootstrap", source))
 		if err != nil {
 			return err
 		}

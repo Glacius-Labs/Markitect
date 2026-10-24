@@ -47,7 +47,7 @@ Coordinate shared contracts first. Add a concrete responsibility/import decision
 
 `go run ./cmd/markitect-check-architecture --repo .` inspects all production, test and platform Go files. It checks unknown/removed packages, exact responsibility edges, absent producers, map completeness, owner-document links, external-test self imports and test-only testkit use. The document adapter may use only the reviewed guarded-write selectors. Third-party imports remain permitted; this is a Markitect dependency check, not a general proof of I/O purity.
 
-`internal/testkit` imports no Markitect package. Only test files may import it. The standalone integration bootstrap and source smoke import no Markitect packages. Go fixture directories and independent evaluation assets are not product package ownership exemptions.
+`internal/testkit` imports no Markitect package. Only test files may import it. The standalone consumer bootstrap (`packaging/bootstrap`) and source smoke import no Markitect packages. Go fixture directories and independent evaluation assets are not product package ownership exemptions.
 
 Regenerate the view with:
 
@@ -57,4 +57,4 @@ go test ./internal/tooling/architecture -run TestCodeMapPage -update
 
 ## Historical module links
 
-Earlier capability/module and old product-layer contracts remain in the [historical guide](../history/development-modules-legacy-sections-20261010.md) and [preceding source](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).
+Earlier capability/module and old product-layer contracts remain in the [historical guide](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/development-modules-legacy-sections-20261010.md) and [preceding source](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8).

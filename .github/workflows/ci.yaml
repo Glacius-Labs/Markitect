@@ -117,10 +117,7 @@ jobs:
         run: python -B scripts/check-docs.py
 
       - name: Check independent library oracle and bounded transport
-        run: python -B -m unittest discover -s experiments/library-playground
-
-      - name: Check comparison source packets
-        run: python -B -m unittest discover -s experiments/test-projects/comparison/playground -p 'test_*.py'
+        run: python -B -m unittest discover -s tools/library-oracle
 
       - name: Upload Go test results
         if: always()
@@ -202,8 +199,8 @@ jobs:
           package_dir="$RUNNER_TEMP/markitect-source-$GITHUB_SHA"
           go run ./cmd/markitect-release package --repo . --output "$package_dir"
           mkdir -p "$package_dir/.markitect/bootstrap"
-          cp integration/run-markitect.go "$package_dir/.markitect/bootstrap/run.go"
-          cp integration/run-markitect_test.go "$package_dir/.markitect/bootstrap/run_test.go"
+          cp packaging/bootstrap/run-markitect.go "$package_dir/.markitect/bootstrap/run.go"
+          cp packaging/bootstrap/run-markitect_test.go "$package_dir/.markitect/bootstrap/run_test.go"
 
       - name: Upload commit-scoped source artifact
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1

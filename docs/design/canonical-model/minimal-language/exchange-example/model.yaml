@@ -1,5 +1,0 @@
-formatVersion: 1
-id: connector-example
-root: model
-dependencies:
-  markitect-core: "1.0.0"

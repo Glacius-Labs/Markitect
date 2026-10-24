@@ -125,7 +125,7 @@ func TestConcreteResponsibilityBoundaries(t *testing.T) {
 		{"internal/tooling/modules/githooks", "internal/tooling/modules/pipelines", false},
 		{"internal/tooling/release/install", "internal/tooling/release", true},
 		{"internal/tooling/source", "internal/model", false},
-		{"integration", "internal/model", false},
+		{"packaging/bootstrap", "internal/model", false},
 		{"tools/smoke", "internal/bootstrap", false},
 	} {
 		for _, test := range []bool{false, true} {
@@ -325,7 +325,7 @@ func TestSelfImportsRequireExternalTestsAndTestkitStaysStandalone(t *testing.T) 
 			t.Fatalf("%+v: %v %v", tc, v, err)
 		}
 	}
-	for _, edge := range []Edge{{From: "internal/model", To: "internal/testkit"}, {From: "internal/testkit", To: "internal/model", Test: true}, {From: "integration", To: "internal/testkit", Test: true}} {
+	for _, edge := range []Edge{{From: "internal/model", To: "internal/testkit"}, {From: "internal/testkit", To: "internal/model", Test: true}, {From: "packaging/bootstrap", To: "internal/testkit", Test: true}} {
 		if len(Check([]Edge{edge})) != 1 {
 			t.Errorf("forbidden fixture edge %v", edge)
 		}

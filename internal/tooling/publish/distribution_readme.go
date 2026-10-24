@@ -46,7 +46,7 @@ Remove-Item -LiteralPath $source, $download
   "$HOME/.local/bin/markitect" version
 )
 export PATH="$HOME/.local/bin:$PATH"
-` + "```\n\n" + `Add ` + "`~/.local/bin`" + ` to your shell startup file if it is not already on ` + "`PATH`" + `. For developers who already use Go 1.27.1 or later, ` + "`go install github.com/Glacius-Labs/Markitect/cmd/markitect@{{TAG}}`" + ` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](integration/README.md). Current source prepares project pins through the separate ` + "`markitect-release install`" + ` tooling; that operation does not install the CLI on your computer.
+` + "```\n\n" + `Add ` + "`~/.local/bin`" + ` to your shell startup file if it is not already on ` + "`PATH`" + `. For developers who already use Go 1.27.1 or later, ` + "`go install github.com/Glacius-Labs/Markitect/cmd/markitect@{{TAG}}`" + ` is a shorter source-build option. macOS and arm64 binaries are not currently released. For signed release and asset attestation verification, project pinning, and upgrades, follow the [distribution guide](packaging/README.md). Current source prepares project pins through the separate ` + "`markitect-release install`" + ` tooling; that operation does not install the CLI on your computer.
 
 <!-- markitect-release:install:end -->`
 	try := `## Try the installed CLI
@@ -74,7 +74,7 @@ markitect check --repo ./markitect-sample-{{TAG}}
 markitect context product/model --repo ./markitect-sample-{{TAG}}
 ~~~
 
-The [project workflow](docs/project-workflow.md) explains explicit manifests and dependencies, the structural and metadata stages, and the unavailable execution boundary. Published older releases retain their own immutable usage guides.
+The [project workflow](docs/guides/project-workflow.md) explains explicit manifests and dependencies, the structural and metadata stages, and the unavailable execution boundary. Published older releases retain their own immutable usage guides.
 
 <!-- markitect-release:try:end -->`
 

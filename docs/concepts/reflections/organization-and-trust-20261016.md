@@ -45,7 +45,7 @@ An implementation prompt directs attention to the requested feature, and a PR re
 
 ### Local authority and escalation boundaries
 
-Delegated judgment needs relevant context, goals and binding constraints, authority within the area and criteria for involving others or escalating. The [mandate section](../../history/apply-design-before-dec-056/manager-apply-configuration.md#the-mandate-section) and the [escalation rules](desired-working-day-20261016.md#decision-authority-and-escalation) express them.
+Delegated judgment needs relevant context, goals and binding constraints, authority within the area and criteria for involving others or escalating. The [mandate section](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-configuration.md#the-mandate-section) and the [escalation rules](desired-working-day-20261016.md#decision-authority-and-escalation) express them.
 
 ### Leadership reports and process oversight
 
@@ -72,7 +72,7 @@ Configurable teams are the place for distinct responsibilities without a Manager
 | Documentation | Do the usage instructions still describe the realized behavior? |
 | Maintainability | Does the change follow agreed patterns without unnecessary mechanisms? |
 
-The [north star's team variants](../../design/canonical-model/manager-realization-north-star.md#team-variants) keep the options; the first strategy is Manager plus reviewer.
+The [north star's team variants](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/manager-realization-north-star.md#team-variants) keep the options; the first strategy is Manager plus reviewer.
 
 ### Four eyes and correlated mistakes
 

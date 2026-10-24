@@ -92,7 +92,7 @@ func Inspect(root string) ([]Edge, error) {
 		}
 		rel = filepath.ToSlash(rel)
 		// Only product source and explicitly classified test/tool harnesses.
-		if !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "integration/") && !strings.HasPrefix(rel, "experiments/") && !strings.HasPrefix(rel, "benchmark/") {
+		if !strings.HasPrefix(rel, "cmd/") && !strings.HasPrefix(rel, "internal/") && !strings.HasPrefix(rel, "src/") && !strings.HasPrefix(rel, "tools/") && !strings.HasPrefix(rel, "examples/") && !strings.HasPrefix(rel, "packaging/") && !strings.HasPrefix(rel, "benchmark/") {
 			return nil
 		}
 		packagePath := filepath.ToSlash(filepath.Dir(rel))

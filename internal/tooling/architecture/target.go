@@ -52,7 +52,7 @@ var targetRoots = []struct{ path, layer string }{
 	{"internal/workflow", "apply-workflow"},
 	{"internal/model", "apply-model"},
 	{"cmd/markitect", "apply-command"},
-	{"integration", "standalone"},
+	{"packaging/bootstrap", "standalone"},
 	{"tools/smoke", "standalone"},
 }
 

@@ -187,5 +187,5 @@ Tests in `internal/tooling/architecture` require every actual Go package to have
 
 | Package | Purpose | Owning document |
 |---|---|---|
-| `integration` | Public bootstrap and source smoke with no product imports. | [docs/development/modules.md](modules.md) |
+| `packaging/bootstrap` | Public bootstrap and source smoke with no product imports. | [docs/development/modules.md](modules.md) |
 | `tools/smoke` | Public bootstrap and source smoke with no product imports. | [docs/development/modules.md](modules.md) |

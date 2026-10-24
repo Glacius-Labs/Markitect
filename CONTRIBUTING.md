@@ -6,7 +6,7 @@ Markitect is built around canonical language v1 and delegated realization. Curre
 
 All maintained Go code belongs to one root module. `cmd/markitect` delegates to `internal/bootstrap`; pure model, snapshot, organization and realization values have no infrastructure dependency. `internal/project` owns structural preparation and candidate validation. `internal/run` owns closed hierarchical execution; `internal/runtimeconfig` owns static native/check metadata. Concrete adapters implement repository capture, static profile metadata and document writes. Independent maintenance services have explicit `internal/tooling/` responsibilities; that parent grants no general import exemption.
 
-The [code map](docs/development/code-map.md), [architecture](docs/architecture.md) and [dependency rules](docs/development/modules.md) describe actual packages. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `integration` and source smoke in `tools/smoke` import no product package.
+The [code map](docs/development/code-map.md), [architecture](docs/architecture.md) and [dependency rules](docs/development/modules.md) describe actual packages. Shared hermetic `internal/testkit` is test-only and imports no Markitect package. The standalone bootstrap in `packaging/bootstrap` and source smoke in `tools/smoke` import no product package.
 
 The self-model is `.markitect/model.yaml`, its `model-lock.yaml` and Definition tree. An exact registry entry assigns each artifact to one responsibility and actual Definition basis. Canonical/control inputs are protected separately. An exact ignore needs a reason and never supplies missing realization. Implementation-only changes need not alter intent.
 
@@ -35,7 +35,7 @@ go run ./cmd/markitect check --repo . --revision HEAD
 go run ./cmd/markitect-check-modules --repo . --hooks .markitect/modules/githooks.config --pipelines .markitect/modules/pipelines.config
 python -B -m unittest discover -s scripts -p test_*.py
 python -B scripts/check-docs.py
-python -B -m unittest discover -s experiments/library-playground
+python -B -m unittest discover -s tools/library-oracle
 ```
 
 Run `gofmt` on changed Go files and `git diff --check`. CI checks tracked Go formatting, every production/test/platform import, actual package-map entries, complete working/fixed accounting, selected hook/pipeline pins and generated view freshness. The independent Library oracle and bounded transport checks retain their scope. Obsolete engines and their tests/gates are removed together; no skips or success stubs may replace required checks.
@@ -71,8 +71,8 @@ Before integration, obtain independent complete-diff review, run relevant local 
 
 ## Historical Project/Domain contracts
 
-The retired v0.14.1 distribution and its [preserved source and guide](https://github.com/Glacius-Labs/Markitect/tree/v0.14.1) retain their contract. The preceding source generation remains at [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). Current consumers do not reinterpret those formats or revive their runtime.
+The retired v0.14.1 distribution and its [preserved source and guide](https://github.com/Glacius-Labs/Markitect/tree/7dbd599c81540c8203a1b7f83afbc335174f4f1f) retain their contract. The preceding source generation remains at [5ff32069](https://github.com/Glacius-Labs/Markitect/tree/5ff3206917fa3b7482d9daedb903d57a919f56b8). Current consumers do not reinterpret those formats or revive their runtime.
 
 ## Release work
 
-[Operations](docs/operations.md) and [distribution](integration/README.md) own separate release work. Maintenance entrypoints are under `cmd/markitect-release`, `cmd/markitect-check-architecture` and `cmd/markitect-check-modules`. Source packages retain the root license, embedded [notices](internal/tooling/licenses/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.
+[Operations](docs/guides/operations.md) and [distribution](packaging/README.md) own separate release work. Maintenance entrypoints are under `cmd/markitect-release`, `cmd/markitect-check-architecture` and `cmd/markitect-check-modules`. Source packages retain the root license, embedded [notices](internal/tooling/licenses/notices.md), required test data and explicit invocation examples. Use an external build cache when needed; Gitignore does not filter the complete product census. A source version does not establish a published or accepted release.

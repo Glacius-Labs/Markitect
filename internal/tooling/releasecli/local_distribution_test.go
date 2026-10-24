@@ -37,7 +37,7 @@ func TestLocalReleaseCommandHelpAndArgumentValidation(t *testing.T) {
 func TestPackageBundleAndInstallUseFixedSourceAndExplicitDigest(t *testing.T) {
 	sourceRepo := newReleaseSource(t)
 	commit := sourceRepo.Commit("source release candidate")
-	sourceRepo.Write("integration/run-markitect.go", "package main\nfunc main() { panic(\"working tree must not be bundled\") }\n")
+	sourceRepo.Write("packaging/bootstrap/run-markitect.go", "package main\nfunc main() { panic(\"working tree must not be bundled\") }\n")
 	bundlePath := filepath.Join(testkit.TempDir(t), "bundle.zip")
 	code, out, stderr := invokeRelease(t, "bundle", "--repo", sourceRepo.Dir, "--revision", commit, "--output", bundlePath)
 	if code != 0 || stderr != "" || !strings.Contains(out, commit) {
@@ -102,7 +102,7 @@ func newReleaseSource(t *testing.T) *testkit.Repo {
 	repo.Write("internal/buildinfo/version.go", "package buildinfo\nvar version = \""+buildinfo.Version()+"\"\n")
 	repo.Write("cmd/markitect/main.go", "package main\nfunc main() {}\n")
 	repo.Write("internal/model/core.go", "package core\n")
-	repo.Write("integration/run-markitect.go", "package main\nfunc main() {}\n")
-	repo.Write("integration/run-markitect_test.go", "package main\n")
+	repo.Write("packaging/bootstrap/run-markitect.go", "package main\nfunc main() {}\n")
+	repo.Write("packaging/bootstrap/run-markitect_test.go", "package main\n")
 	return repo
 }

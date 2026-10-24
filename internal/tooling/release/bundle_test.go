@@ -71,8 +71,8 @@ func TestBuildBundleRejectsUnfixedOrUnboundSource(t *testing.T) {
 			s.Files["go.mod"] = []byte("module example.invalid/foreign\n\ngo 1.27.1\n")
 		}, version: "1.2.3"},
 		{name: "missing paired test", change: func(s *source.Input) {
-			delete(s.Files, "integration/run-markitect_test.go")
-			delete(s.Modes, "integration/run-markitect_test.go")
+			delete(s.Files, "packaging/bootstrap/run-markitect_test.go")
+			delete(s.Modes, "packaging/bootstrap/run-markitect_test.go")
 		}, version: "1.2.3"},
 		{name: "missing license", change: func(s *source.Input) {
 			delete(s.Files, "LICENSE")

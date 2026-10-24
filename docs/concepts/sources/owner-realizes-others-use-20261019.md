@@ -1,6 +1,6 @@
 # Owners realize, others use — owner, 19 October 2026
 
-Recorder's note: verbatim owner statement from the Claude implementation session, after the [three repeated demonstrations](../../validation/recursive-apply-repetitions-20261019.md). Their source audit found a cross-area rule (`members/eligibility`) re-implemented in lending while the owner's realization was dead code, and availability held twice. Fresh Verify did not block it. [DEC-060](../register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) records the decision.
+Recorder's note: verbatim owner statement from the Claude implementation session, after the [three repeated demonstrations](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/recursive-apply-repetitions-20261019.md). Their source audit found a cross-area rule (`members/eligibility`) re-implemented in lending while the owner's realization was dead code, and availability held twice. Fresh Verify did not block it. [DEC-060](../register.md#dec-060-owners-realize-others-use-parents-settle-cross-area-matters) records the decision.
 
 ## The question
 

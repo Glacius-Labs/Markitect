@@ -11,7 +11,7 @@ Dated discussions about Markitect's purpose, future use and organizational ideas
 
 ## How reflections relate to other records
 
-The [concept register](../register.md) owns decisions and their status. The [Apply design](../../design/canonical-model/README.md#apply-design) owns the rules. Reflections keep the picture and the reasons; they create no second decision register, schedule nothing and hold no runtime rules of their own. A new outcome of a discussion becomes a register entry or an edit to the contract that owns its subject; a reflection grows only when the picture itself changes.
+The [concept register](../register.md) owns decisions and their status. The [Apply design](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/README.md#apply-design) owns the rules. Reflections keep the picture and the reasons; they create no second decision register, schedule nothing and hold no runtime rules of their own. A new outcome of a discussion becomes a register entry or an edit to the contract that owns its subject; a reflection grows only when the picture itself changes.
 
 At the [owner's request](../sources/working-day-discussion-20261016.md#preserve-the-working-day-demonstration), developed discussion outcomes are recorded directly, without asking each time. That authorizes documentation, not acceptance of proposals, implementation or publication.
 

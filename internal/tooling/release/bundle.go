@@ -87,11 +87,11 @@ func BuildBundle(snapshot *source.Input, version string) ([]byte, error) {
 		"source: " + strconv.Quote(sourcePath) + "\n" +
 		"sha256: " + strconv.Quote(sourceDigest) + "\n")
 
-	runner, err := snapshotText(snapshot, "integration/run-markitect.go")
+	runner, err := snapshotText(snapshot, "packaging/bootstrap/run-markitect.go")
 	if err != nil {
 		return nil, err
 	}
-	test, err := snapshotText(snapshot, "integration/run-markitect_test.go")
+	test, err := snapshotText(snapshot, "packaging/bootstrap/run-markitect_test.go")
 	if err != nil {
 		return nil, err
 	}

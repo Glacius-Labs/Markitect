@@ -1,6 +1,6 @@
 # Container runtime adapter
 
-This package is the Orchestrator's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. The [rebuild plan](../../../docs/history/apply-design-before-dec-056/manager-apply-rebuild-plan.md#container-runtime) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
+This package is the Orchestrator's client of the container engine ([DEC-037](../../../docs/concepts/register.md#dec-037-agent-sessions-and-checks-run-in-linux-containers)). It starts hardened session and helper containers, speaks the [agentd frame protocol](../../agentd/frame/frame.go) and manages volumes and images. It knows no tasks, models or reviews. The [rebuild plan](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/history/apply-design-before-dec-056/manager-apply-rebuild-plan.md#container-runtime) owns the runtime contract, and the [base image](../../../packaging/runtime/README.md) its image contract.
 
 ## API
 
@@ -36,7 +36,7 @@ A directory probe costs the size of its subtree. Docker 29.4 builds the whole ar
 
 ## Integrating a session adapter
 
-These rules come from real runs, recorded in the [handshake record](../../../docs/validation/runtime-handshake-20261017.md) and the [capability record](../../../docs/validation/runtime-capabilities-20261017.md).
+These rules come from real runs, recorded in the [handshake record](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/runtime-handshake-20261017.md) and the [capability record](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/validation/runtime-capabilities-20261017.md).
 
 - **Codex runs with sandbox `danger-full-access`.** Its own sandbox cannot start in an unprivileged container. With `read-only` or `workspace-write`, every shell command fails, and the Agent may still report success. Read-only roles get read-only mounts instead.
 - **Orchestrator tools go through MCP.**

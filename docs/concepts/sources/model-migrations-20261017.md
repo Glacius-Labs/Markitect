@@ -1,6 +1,6 @@
 # Model restructuring and migration — 17 October 2026
 
-Recorder's note: direct owner discussion in the Codex chat **Commands**, thread `01a14ac0-d4c1-7cb0-a070-d677f0033b45`, following the [Optimize workflow](commands-extract-optimize-20261017.md#optimize-workflow-clarification). Owner quotations retain their original wording. The assistant summary below identifies the proposal accepted by the final documentation request; it is not verbatim owner text. The [command design](../../design/canonical-model/commands.md#model-restructuring-as-an-explicit-migration) owns the current workflow. No implementation or runtime evidence was produced.
+Recorder's note: direct owner discussion in the Codex chat **Commands**, thread `01a14ac0-d4c1-7cb0-a070-d677f0033b45`, following the [Optimize workflow](commands-extract-optimize-20261017.md#optimize-workflow-clarification). Owner quotations retain their original wording. The assistant summary below identifies the proposal accepted by the final documentation request; it is not verbatim owner text. The [command design](https://github.com/Glacius-Labs/Markitect/blob/2389e252a85e3896da91f5f4649a3394b9222b2c/docs/design/canonical-model/commands.md#model-restructuring-as-an-explicit-migration) owns the current workflow. No implementation or runtime evidence was produced.
 
 ## Owner direction
 
