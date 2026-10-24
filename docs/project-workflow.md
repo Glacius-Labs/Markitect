@@ -40,7 +40,7 @@ Copy [runtime-profile.example.yaml](../examples/runtime-profile.example.yaml) an
 - `STATE_DIRECTORY` is an absolute path outside the repository. `PRODUCT_BUILD` is the operator's build assertion; retain the frozen source SHA separately.
 - `DEADLINE_UTC` is an absolute RFC3339 UTC deadline ending in `Z`. Manager count, messages, per-message timeout, cleanup and persistence all have finite positive limits.
 
-The [invocation example test](../internal/bootstrap/configuration_examples_test.go) loads the exact substituted JSON and verifies invalid preflight stops before metadata, credential access or state creation. Static image metadata and physical execution have separate tests and evidence.
+The [example tests](../internal/bootstrap/configuration_examples_test.go) substitute both exact files, route the explicit Apply invocation through the CLI, and prepare the captured Runtime with controlled image metadata. They check native v3 settings, the shared account reference, and declared Check requests, then stop at a deliberate boundary before runtime startup or credential reads. A separate negative case keeps invalid preflight free of metadata and state acquisition. These are static composition and CLI transport tests; actual account login and Apply execution require separate native evidence.
 
 ## Execute, verify, and apply
 
